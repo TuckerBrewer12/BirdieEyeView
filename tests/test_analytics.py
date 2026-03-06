@@ -6,6 +6,7 @@ from analytics.stats import (
     average_score_relative_to_par_by_hole,
     gir_comparison,
     gir_per_round,
+    gir_percentage_by_hole,
     gir_vs_non_gir_score_distribution,
     overall_gir_percentage,
     overall_putts_per_gir,
@@ -257,6 +258,24 @@ def test_average_score_relative_to_par_by_hole():
     assert by_hole[2]["average_score"] == pytest.approx(4.0)
     assert by_hole[2]["average_to_par"] == pytest.approx(1.0)
     assert by_hole[2]["sample_size"] == 2
+
+
+def test_gir_percentage_by_hole():
+    rounds = _build_rounds()
+    rows = gir_percentage_by_hole(rounds)
+
+    assert len(rows) == 18
+    by_hole = {row["hole_number"]: row for row in rows}
+
+    # Hole 1: GIR true in round 1, false in round 2 -> 50%
+    assert by_hole[1]["sample_size"] == 2
+    assert by_hole[1]["gir_hits"] == 1
+    assert by_hole[1]["gir_percentage"] == pytest.approx(50.0)
+
+    # Hole 2: GIR true in both rounds -> 100%
+    assert by_hole[2]["sample_size"] == 2
+    assert by_hole[2]["gir_hits"] == 2
+    assert by_hole[2]["gir_percentage"] == pytest.approx(100.0)
 
 
 def test_score_type_distribution_per_round():
