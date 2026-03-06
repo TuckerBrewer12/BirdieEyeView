@@ -5,6 +5,7 @@ import pytest
 from analytics.stats import (
     average_score_relative_to_par_by_hole,
     average_putts_by_hole,
+    course_difficulty_profile_by_hole,
     gir_comparison,
     gir_per_round,
     gir_percentage_by_hole,
@@ -260,6 +261,23 @@ def test_average_score_relative_to_par_by_hole():
     assert by_hole[2]["average_score"] == pytest.approx(4.0)
     assert by_hole[2]["average_to_par"] == pytest.approx(1.0)
     assert by_hole[2]["sample_size"] == 2
+
+
+def test_course_difficulty_profile_by_hole():
+    rounds = _build_rounds()
+    rows = course_difficulty_profile_by_hole(rounds)
+
+    assert len(rows) == 18
+    assert rows[0]["average_to_par"] >= rows[1]["average_to_par"]
+    assert rows[0]["difficulty_rank"] == 1
+    assert rows[1]["difficulty_rank"] == 2
+
+    # Synthetic data: hole 1 is hardest at +1.5
+    assert rows[0]["hole_number"] == 1
+    assert rows[0]["average_to_par"] == pytest.approx(1.5)
+
+    # Lowest-difficulty hole should be under par on this dataset.
+    assert rows[-1]["average_to_par"] == pytest.approx(-1.0)
 
 
 def test_gir_percentage_by_hole():

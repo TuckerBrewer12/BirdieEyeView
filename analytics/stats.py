@@ -536,6 +536,19 @@ def average_score_relative_to_par_by_hole(rounds: Iterable[Round]) -> List[Dict[
     return results
 
 
+def course_difficulty_profile_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
+    """
+    Return hole difficulty sorted from hardest to easiest for a single course.
+
+    Hardest is defined as the highest average score-to-par.
+    """
+    rows = average_score_relative_to_par_by_hole(rounds)
+    rows.sort(key=lambda row: (-row["average_to_par"], row["hole_number"]))
+    for index, row in enumerate(rows, start=1):
+        row["difficulty_rank"] = index
+    return rows
+
+
 def gir_percentage_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """Aggregate GIR percentage by hole number for rounds on the same course."""
     by_hole: Dict[int, Dict[str, Any]] = {}
