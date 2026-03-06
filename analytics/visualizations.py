@@ -6,6 +6,7 @@ from typing import Iterable, Optional, Sequence
 from models.round import Round
 
 from .stats import (
+    average_score_relative_to_par_by_hole,
     gir_per_round,
     overall_gir_percentage,
     overall_putts_per_gir,
@@ -382,6 +383,28 @@ def plot_scoring_by_par(rounds: Iterable[Round]):
     ax.bar(pars, avg_to_par)
     ax.set_title("Average Score To Par By Hole Par")
     ax.set_xlabel("Hole Type")
+    ax.set_ylabel("Average To Par")
+    ax.axhline(0, color="black", linewidth=1, alpha=0.6)
+    ax.grid(axis="y", alpha=0.2)
+    fig.tight_layout()
+    return fig, ax
+
+
+def plot_average_score_relative_to_par_by_hole(
+    rounds: Iterable[Round], course_label: Optional[str] = None
+):
+    """Bar chart: average score-to-par by hole for a specific course."""
+    plt = _load_plt()
+    rows = average_score_relative_to_par_by_hole(rounds)
+    hole_numbers = [str(row["hole_number"]) for row in rows]
+    avg_to_par = [row["average_to_par"] for row in rows]
+    colors = ["#059669" if value <= 0 else "#f87171" for value in avg_to_par]
+
+    fig, ax = plt.subplots(figsize=(12, 5))
+    ax.bar(hole_numbers, avg_to_par, color=colors)
+    title_prefix = f"{course_label}: " if course_label else ""
+    ax.set_title(f"{title_prefix}Average Score To Par By Hole")
+    ax.set_xlabel("Hole")
     ax.set_ylabel("Average To Par")
     ax.axhline(0, color="black", linewidth=1, alpha=0.6)
     ax.grid(axis="y", alpha=0.2)

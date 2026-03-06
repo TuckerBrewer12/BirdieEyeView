@@ -492,6 +492,50 @@ def scoring_vs_hole_handicap(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     return results
 
 
+def average_score_relative_to_par_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
+    """
+    Aggregate average score and average score-to-par by hole number.
+
+    Intended for rounds played on the same course.
+    """
+    by_hole: Dict[int, Dict[str, Any]] = {}
+
+    for round_obj in rounds:
+        if not round_obj.course:
+            continue
+
+        for hole_score in _valid_hole_scores(round_obj):
+            if hole_score.hole_number is None or hole_score.strokes is None:
+                continue
+            hole = round_obj.course.get_hole(hole_score.hole_number)
+            if not hole or hole.par is None:
+                continue
+
+            entry = by_hole.setdefault(
+                hole_score.hole_number,
+                {"hole_number": hole_score.hole_number, "par": hole.par, "strokes": [], "to_par": []},
+            )
+            entry["strokes"].append(hole_score.strokes)
+            entry["to_par"].append(hole_score.strokes - hole.par)
+
+    results: List[Dict[str, Any]] = []
+    for hole_number in sorted(by_hole):
+        entry = by_hole[hole_number]
+        strokes: List[int] = entry["strokes"]
+        to_par: List[int] = entry["to_par"]
+        results.append(
+            {
+                "hole_number": hole_number,
+                "par": entry["par"],
+                "average_score": sum(strokes) / len(strokes),
+                "average_to_par": sum(to_par) / len(to_par),
+                "sample_size": len(strokes),
+            }
+        )
+
+    return results
+
+
 def scoring_by_par(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     Aggregate scoring performance by hole par (3, 4, 5).
