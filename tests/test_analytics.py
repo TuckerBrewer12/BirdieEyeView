@@ -3,6 +3,7 @@ from datetime import datetime
 import pytest
 
 from analytics.stats import (
+    average_score_relative_to_par_by_hole,
     gir_comparison,
     gir_per_round,
     gir_vs_non_gir_score_distribution,
@@ -238,6 +239,24 @@ def test_scoring_by_par():
     assert by_par[3]["average_to_par"] == pytest.approx(1.25)
     assert by_par[4]["average_to_par"] == pytest.approx(0.25)
     assert by_par[5]["average_to_par"] == pytest.approx(-0.75)
+
+
+def test_average_score_relative_to_par_by_hole():
+    rounds = _build_rounds()
+    rows = average_score_relative_to_par_by_hole(rounds)
+
+    assert len(rows) == 18
+    by_hole = {row["hole_number"]: row for row in rows}
+
+    assert by_hole[1]["par"] == 3
+    assert by_hole[1]["average_score"] == pytest.approx(4.5)
+    assert by_hole[1]["average_to_par"] == pytest.approx(1.5)
+    assert by_hole[1]["sample_size"] == 2
+
+    assert by_hole[2]["par"] == 3
+    assert by_hole[2]["average_score"] == pytest.approx(4.0)
+    assert by_hole[2]["average_to_par"] == pytest.approx(1.0)
+    assert by_hole[2]["sample_size"] == 2
 
 
 def test_score_type_distribution_per_round():
