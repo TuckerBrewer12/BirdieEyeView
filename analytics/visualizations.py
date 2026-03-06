@@ -7,6 +7,7 @@ from models.round import Round
 
 from .stats import (
     average_score_relative_to_par_by_hole,
+    gir_percentage_by_hole,
     gir_per_round,
     overall_gir_percentage,
     overall_putts_per_gir,
@@ -407,6 +408,25 @@ def plot_average_score_relative_to_par_by_hole(
     ax.set_xlabel("Hole")
     ax.set_ylabel("Average To Par")
     ax.axhline(0, color="black", linewidth=1, alpha=0.6)
+    ax.grid(axis="y", alpha=0.2)
+    fig.tight_layout()
+    return fig, ax
+
+
+def plot_gir_percentage_by_hole(rounds: Iterable[Round], course_label: Optional[str] = None):
+    """Bar chart: GIR percentage by hole for a specific course."""
+    plt = _load_plt()
+    rows = gir_percentage_by_hole(rounds)
+    hole_numbers = [str(row["hole_number"]) for row in rows]
+    values = [row["gir_percentage"] for row in rows]
+
+    fig, ax = plt.subplots(figsize=(12, 5))
+    ax.bar(hole_numbers, values, color="#059669", alpha=0.9)
+    title_prefix = f"{course_label}: " if course_label else ""
+    ax.set_title(f"{title_prefix}GIR Percentage By Hole")
+    ax.set_xlabel("Hole")
+    ax.set_ylabel("GIR %")
+    ax.set_ylim(0, 100)
     ax.grid(axis="y", alpha=0.2)
     fig.tight_layout()
     return fig, ax

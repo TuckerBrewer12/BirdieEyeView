@@ -7,6 +7,7 @@ from typing import List
 
 from analytics.visualizations import (
     plot_average_score_relative_to_par_by_hole,
+    plot_gir_percentage_by_hole,
     plot_gir_comparison,
     plot_gir_per_round,
     plot_gir_vs_non_gir_score_distribution,
@@ -305,6 +306,11 @@ async def main_async() -> None:
         course_hole_path = course_player_dir / "average_score_relative_to_par_by_hole.png"
         fig.savefig(course_hole_path, dpi=150)
         written.append(course_hole_path)
+
+        fig, _ = plot_gir_percentage_by_hole(course_rounds, course_label=course_label)
+        course_gir_hole_path = course_player_dir / "gir_percentage_by_hole.png"
+        fig.savefig(course_gir_hole_path, dpi=150)
+        written.append(course_gir_hole_path)
     else:
         print("Skipping course-hole chart: no rounds with course data.")
 

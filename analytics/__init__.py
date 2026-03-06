@@ -1,5 +1,6 @@
 from .stats import (
     average_score_relative_to_par_by_hole,
+    gir_percentage_by_hole,
     gir_comparison,
     gir_per_round,
     overall_gir_percentage,
@@ -22,6 +23,7 @@ from .stats import (
 )
 from .visualizations import (
     plot_average_score_relative_to_par_by_hole,
+    plot_gir_percentage_by_hole,
     plot_gir_comparison,
     plot_gir_per_round,
     plot_gir_vs_non_gir_score_distribution,
@@ -47,6 +49,7 @@ from .visualizations import (
 __all__ = [
     "round_summary",
     "average_score_relative_to_par_by_hole",
+    "gir_percentage_by_hole",
     "score_comparison",
     "putts_per_round",
     "putts_comparison",
@@ -67,6 +70,7 @@ __all__ = [
     "three_putts_per_round",
     "plot_score_comparison",
     "plot_average_score_relative_to_par_by_hole",
+    "plot_gir_percentage_by_hole",
     "plot_putts_comparison",
     "plot_putts_per_round",
     "plot_putts_per_gir_comparison",
