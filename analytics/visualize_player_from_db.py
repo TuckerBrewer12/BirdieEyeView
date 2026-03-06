@@ -8,6 +8,7 @@ from typing import List
 from analytics.visualizations import (
     plot_average_putts_by_hole,
     plot_average_score_relative_to_par_by_hole,
+    plot_course_difficulty_profile_by_hole,
     plot_gir_percentage_by_hole,
     plot_gir_comparison,
     plot_gir_per_round,
@@ -323,6 +324,11 @@ async def main_async() -> None:
         course_score_type_hole_path = course_player_dir / "score_type_distribution_by_hole.png"
         fig.savefig(course_score_type_hole_path, dpi=150)
         written.append(course_score_type_hole_path)
+
+        fig, _ = plot_course_difficulty_profile_by_hole(course_rounds, course_label=course_label)
+        course_difficulty_path = course_player_dir / "course_difficulty_profile_by_hole.png"
+        fig.savefig(course_difficulty_path, dpi=150)
+        written.append(course_difficulty_path)
     else:
         print("Skipping course-hole chart: no rounds with course data.")
 

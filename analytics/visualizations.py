@@ -6,6 +6,7 @@ from typing import Iterable, Optional, Sequence
 from models.round import Round
 
 from .stats import (
+    course_difficulty_profile_by_hole,
     average_score_relative_to_par_by_hole,
     average_putts_by_hole,
     gir_percentage_by_hole,
@@ -411,6 +412,27 @@ def plot_average_score_relative_to_par_by_hole(
     ax.set_ylabel("Average To Par")
     ax.axhline(0, color="black", linewidth=1, alpha=0.6)
     ax.grid(axis="y", alpha=0.2)
+    fig.tight_layout()
+    return fig, ax
+
+
+def plot_course_difficulty_profile_by_hole(rounds: Iterable[Round], course_label: Optional[str] = None):
+    """Horizontal bar chart of hole difficulty ranked hardest to easiest."""
+    plt = _load_plt()
+    rows = course_difficulty_profile_by_hole(rounds)
+    hole_numbers = [f"Hole {row['hole_number']}" for row in rows]
+    avg_to_par = [row["average_to_par"] for row in rows]
+    colors = ["#f87171" if value > 0 else "#059669" for value in avg_to_par]
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.barh(hole_numbers, avg_to_par, color=colors)
+    ax.invert_yaxis()
+    title_prefix = f"{course_label}: " if course_label else ""
+    ax.set_title(f"{title_prefix}Course Difficulty Profile (Hardest To Easiest)")
+    ax.set_xlabel("Average To Par")
+    ax.set_ylabel("Hole")
+    ax.axvline(0, color="black", linewidth=1, alpha=0.6)
+    ax.grid(axis="x", alpha=0.2)
     fig.tight_layout()
     return fig, ax
 
