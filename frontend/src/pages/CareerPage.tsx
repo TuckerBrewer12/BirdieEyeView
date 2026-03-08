@@ -43,7 +43,7 @@ function eventMeta(event: { date: string; course: string } | null | undefined): 
   return `${event.date} — ${event.course}`;
 }
 
-export function NotableAchievementsPage({ userId }: { userId: string }) {
+export function CareerPage({ userId }: { userId: string }) {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -58,7 +58,7 @@ export function NotableAchievementsPage({ userId }: { userId: string }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-400">Loading notable achievements...</div>
+        <div className="text-gray-400">Loading career...</div>
       </div>
     );
   }
@@ -86,7 +86,7 @@ export function NotableAchievementsPage({ userId }: { userId: string }) {
 
   return (
     <div>
-      <PageHeader title="Notable Achievements" subtitle="Structured player achievement records" />
+      <PageHeader title="Career" subtitle="Structured player achievement records" />
 
       <div className="space-y-8">
         <div>
@@ -110,8 +110,9 @@ export function NotableAchievementsPage({ userId }: { userId: string }) {
               <MetricRow label="Total Hole-in-Ones" value={career_totals.lifetime.total_hole_in_ones} />
               <MetricRow label="Total Pars" value={career_totals.lifetime.total_pars} />
               <MetricRow label="Total Bogeys" value={career_totals.lifetime.total_bogeys} />
-              <MetricRow label="Total Double Bogeys+" value={career_totals.lifetime.total_double_bogeys_plus} />
+              <MetricRow label="Total Double Bogeys" value={career_totals.lifetime.total_double_bogeys} />
               <MetricRow label="Total Triple Bogeys" value={career_totals.lifetime.total_triple_bogeys} />
+              <MetricRow label="Total Quad Bogeys+" value={career_totals.lifetime.total_quad_bogeys_plus} />
               <MetricRow label="Total GIR" value={career_totals.lifetime.total_gir} />
               <MetricRow label="Total 3-Putts" value={career_totals.lifetime.total_3_putts} />
             </SectionCard>
@@ -191,7 +192,9 @@ export function NotableAchievementsPage({ userId }: { userId: string }) {
               <MetricRow label="Eagles" value={career_totals.one_year.eagles} />
               <MetricRow label="Hole-in-Ones" value={career_totals.one_year.hole_in_ones} />
               <MetricRow label="GIR" value={career_totals.one_year.gir} />
+              <MetricRow label="Double Bogeys" value={career_totals.one_year.double_bogeys} />
               <MetricRow label="Triple Bogeys" value={career_totals.one_year.triple_bogeys} />
+              <MetricRow label="Quad Bogeys+" value={career_totals.one_year.quad_bogeys_plus} />
               <MetricRow label="3-Putts" value={career_totals.one_year.three_putts} />
             </SectionCard>
 
