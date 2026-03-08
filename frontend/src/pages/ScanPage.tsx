@@ -1,8 +1,8 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Upload, Camera, Loader2, CheckCircle, AlertTriangle, X, Zap, Search, ScanLine, MapPin } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { formatToPar } from "@/types/golf";
+import { formatToPar, calcCourseHandicap, calcNetScore } from "@/types/golf";
 import type { CourseSummary } from "@/types/golf";
 import type { ScanState, ScanResult, ExtractedHoleScore, FieldConfidence } from "@/types/scan";
 import { initialScanState } from "@/types/scan";
@@ -22,6 +22,13 @@ export function ScanPage({ userId, scanState, setScanState }: ScanPageProps) {
   // Transient UI state — fine to reset on navigation
   const [saving, setSaving] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [handicapIndex, setHandicapIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (step === "review") {
+      api.getUserHandicap(userId).then((r) => setHandicapIndex(r.handicap_index)).catch(() => {});
+    }
+  }, [step, userId]);
 
   // Course search state (fast scan)
   const [courseQuery, setCourseQuery] = useState("");
@@ -686,27 +693,52 @@ export function ScanPage({ userId, scanState, setScanState }: ScanPageProps) {
         </div>
       </div>
 
-      {/* Stat cards — same layout as rounds page */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <div className="text-xs text-gray-500 mb-1">Front 9</div>
-          <div className="text-3xl font-bold text-gray-900">{frontNine ?? "-"}</div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <div className="text-xs text-gray-500 mb-1">Back 9</div>
-          <div className="text-3xl font-bold text-gray-900">{backNine ?? "-"}</div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <div className="text-xs text-gray-500 mb-1">Total</div>
-          <div className="text-3xl font-bold text-gray-900">{totalStrokes || "-"}</div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-          <div className="text-xs text-gray-500 mb-1">To Par</div>
-          <div className={`text-3xl font-bold ${toPar !== null && toPar < 0 ? "text-green-600" : toPar !== null && toPar > 0 ? "text-red-500" : "text-gray-900"}`}>
-            {formatToPar(toPar)}
+      {/* Stat cards */}
+      {(() => {
+        const selectedTee = editedTeeBox
+          ? rd.course?.tees?.find((t) => t.color?.toLowerCase() === editedTeeBox.toLowerCase()) ?? null
+          : null;
+        const courseHandicap =
+          handicapIndex != null &&
+          selectedTee?.slope_rating != null &&
+          selectedTee?.course_rating != null &&
+          coursePar != null
+            ? calcCourseHandicap(handicapIndex, selectedTee.slope_rating, selectedTee.course_rating, coursePar)
+            : null;
+        const netScore = courseHandicap != null && totalStrokes > 0
+          ? calcNetScore(totalStrokes, courseHandicap)
+          : null;
+
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+              <div className="text-xs text-gray-500 mb-1">Front 9</div>
+              <div className="text-3xl font-bold text-gray-900">{frontNine ?? "-"}</div>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+              <div className="text-xs text-gray-500 mb-1">Back 9</div>
+              <div className="text-3xl font-bold text-gray-900">{backNine ?? "-"}</div>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+              <div className="text-xs text-gray-500 mb-1">Total</div>
+              <div className="text-3xl font-bold text-gray-900">{totalStrokes || "-"}</div>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+              <div className="text-xs text-gray-500 mb-1">To Par</div>
+              <div className={`text-3xl font-bold ${toPar !== null && toPar < 0 ? "text-green-600" : toPar !== null && toPar > 0 ? "text-red-500" : "text-gray-900"}`}>
+                {formatToPar(toPar)}
+              </div>
+            </div>
+            <div className={`bg-white rounded-xl border border-gray-200 border-l-4 p-4 text-center ${netScore != null && coursePar != null ? netScore <= coursePar ? "border-l-birdie" : "border-l-bogey" : "border-l-gray-300"}`}>
+              <div className="text-xs text-gray-500 mb-1">Net Score</div>
+              <div className={`text-3xl font-bold ${netScore != null && coursePar != null ? netScore <= coursePar ? "text-birdie" : "text-bogey" : "text-gray-900"}`}>{netScore ?? "-"}</div>
+              {courseHandicap != null && (
+                <div className="text-xs text-gray-400 mt-0.5">HCP {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}</div>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Top: image + metadata side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

@@ -7,6 +7,7 @@ from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, NotFoundError
 from api.dependencies import get_db
 from models import UserTee
+from analytics import handicap as hcap
 
 router = APIRouter()
 
@@ -40,6 +41,15 @@ async def get_user(user_id: str, db: DatabaseManager = Depends(get_db)):
     if not user:
         raise HTTPException(404, "User not found")
     return user
+
+
+@router.get("/{user_id}/handicap")
+async def get_user_handicap(user_id: str, db: DatabaseManager = Depends(get_db)):
+    """Return the user's current WHS Handicap Index."""
+    rounds = await db.rounds.get_rounds_for_user(user_id)
+    rounds_chrono = list(reversed(rounds))
+    hi = hcap.handicap_index(rounds_chrono)
+    return {"handicap_index": hi}
 
 
 # ================================================================

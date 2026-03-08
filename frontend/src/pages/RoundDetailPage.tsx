@@ -4,7 +4,7 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from "recharts";
 import { api } from "@/lib/api";
 import type { Round } from "@/types/golf";
-import { formatToPar } from "@/types/golf";
+import { formatToPar, calcCourseHandicap, calcNetScore } from "@/types/golf";
 import type { RoundComparison, ComparisonRow } from "@/types/analytics";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
@@ -75,6 +75,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const [editedTeeBox, setEditedTeeBox] = useState("");
   const [availableTees, setAvailableTees] = useState<string[]>([]);
   const [comparison, setComparison] = useState<RoundComparison | null>(null);
+  const [handicapIndex, setHandicapIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!roundId) return;
@@ -83,6 +84,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       setLoading(false);
     });
     api.getRoundComparison(userId, roundId).then(setComparison).catch(() => {});
+    api.getUserHandicap(userId).then((r) => setHandicapIndex(r.handicap_index)).catch(() => {});
   }, [roundId, userId]);
 
 
@@ -281,44 +283,56 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-primary p-4 text-center shadow-sm">
-          <div className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Score</div>
-          <div className="text-4xl font-bold text-gray-900">{totalScore || "-"}</div>
-        </div>
-        <div
-          className={`bg-white rounded-xl border border-gray-200 border-l-4 p-4 text-center shadow-sm ${
-            toPar !== null && toPar < 0
-              ? "border-l-birdie"
-              : toPar !== null && toPar > 0
-              ? "border-l-bogey"
-              : "border-l-gray-300"
-          }`}
-        >
-          <div className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">To Par</div>
-          <div
-            className={`text-4xl font-bold ${
-              toPar !== null && toPar < 0
-                ? "text-birdie"
-                : toPar !== null && toPar > 0
-                ? "text-bogey"
-                : "text-gray-900"
-            }`}
-          >
-            {formatToPar(toPar)}
+      {(() => {
+        const activeTeeBox = editMode ? editedTeeBox : round.tee_box;
+        const tee = activeTeeBox
+          ? round.course?.tees.find((t) => t.color?.toLowerCase() === activeTeeBox.toLowerCase()) ?? null
+          : null;
+        const courseHandicap =
+          handicapIndex != null &&
+          tee?.slope_rating != null &&
+          tee?.course_rating != null &&
+          coursePar != null
+            ? calcCourseHandicap(handicapIndex, tee.slope_rating, tee.course_rating, coursePar)
+            : null;
+        const netScore = courseHandicap != null && totalScore > 0
+          ? calcNetScore(totalScore, courseHandicap)
+          : null;
+
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+            <div className="bg-white rounded-xl border border-gray-200 border-l-4 border-l-primary p-4 text-center shadow-sm">
+              <div className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Score</div>
+              <div className="text-4xl font-bold text-gray-900">{totalScore || "-"}</div>
+            </div>
+            <div
+              className={`bg-white rounded-xl border border-gray-200 border-l-4 p-4 text-center shadow-sm ${
+                toPar !== null && toPar < 0 ? "border-l-birdie" : toPar !== null && toPar > 0 ? "border-l-bogey" : "border-l-gray-300"
+              }`}
+            >
+              <div className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">To Par</div>
+              <div className={`text-4xl font-bold ${toPar !== null && toPar < 0 ? "text-birdie" : toPar !== null && toPar > 0 ? "text-bogey" : "text-gray-900"}`}>
+                {formatToPar(toPar)}
+              </div>
+            </div>
+            <div className={`bg-white rounded-xl border border-gray-200 border-l-4 p-4 text-center shadow-sm ${netScore != null && coursePar != null ? netScore <= coursePar ? "border-l-birdie" : "border-l-bogey" : "border-l-gray-300"}`}>
+              <div className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Net Score</div>
+              <div className={`text-4xl font-bold ${netScore != null && coursePar != null ? netScore <= coursePar ? "text-birdie" : "text-bogey" : "text-gray-900"}`}>{netScore ?? "-"}</div>
+              {courseHandicap != null && (
+                <div className="text-xs text-gray-400 mt-0.5">HCP {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}</div>
+              )}
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
+              <div className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Tee</div>
+              <div className="text-xl font-semibold text-gray-900">{activeTeeBox || "-"}</div>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
+              <div className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Course Par</div>
+              <div className="text-xl font-semibold text-gray-900">{coursePar ?? "-"}</div>
+            </div>
           </div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
-          <div className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Tee</div>
-          <div className="text-xl font-semibold text-gray-900">
-            {(editMode ? editedTeeBox : round.tee_box) || "-"}
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center shadow-sm">
-          <div className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Course Par</div>
-          <div className="text-xl font-semibold text-gray-900">{coursePar ?? "-"}</div>
-        </div>
-      </div>
+        );
+      })()}
 
       <ScorecardGrid
         round={round}
