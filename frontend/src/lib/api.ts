@@ -87,6 +87,9 @@ export const api = {
   getUserByEmail: (email: string) =>
     fetchJSON<User>(`/users/by-email/${encodeURIComponent(email)}`),
 
+  getUserHandicap: (userId: string) =>
+    fetchJSON<{ handicap_index: number | null }>(`/users/${userId}/handicap`),
+
   getAnalytics: (userId: string, limit = 50) =>
     fetchJSON<AnalyticsData>(`/stats/analytics/${userId}?limit=${limit}`),
 
