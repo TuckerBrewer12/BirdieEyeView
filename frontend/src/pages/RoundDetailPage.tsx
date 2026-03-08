@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Pencil, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from "recharts";
 import { api } from "@/lib/api";
 import type { Round } from "@/types/golf";
@@ -75,7 +75,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const [editedTeeBox, setEditedTeeBox] = useState("");
   const [availableTees, setAvailableTees] = useState<string[]>([]);
   const [comparison, setComparison] = useState<RoundComparison | null>(null);
-  const [showComparison, setShowComparison] = useState(false);
 
   useEffect(() => {
     if (!roundId) return;
@@ -83,7 +82,8 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       setRound(r);
       setLoading(false);
     });
-  }, [roundId]);
+    api.getRoundComparison(userId, roundId).then(setComparison).catch(() => {});
+  }, [roundId, userId]);
 
 
   const enterEditMode = useCallback(async () => {
@@ -330,39 +330,20 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         onTeeBoxChange={setEditedTeeBox}
       />
 
-      {/* Round comparison panel */}
-      <div className="mt-4 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <button
-          onClick={async () => {
-            if (!showComparison && !comparison && roundId) {
-              try {
-                const c = await api.getRoundComparison(userId, roundId);
-                setComparison(c);
-              } catch {
-                // silently skip if not enough history
-              }
-            }
-            setShowComparison((v) => !v);
-          }}
-          className="w-full flex items-center justify-between px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <span>How did this round compare?</span>
-          {showComparison ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-
-        {showComparison && comparison && (
-          <div className="px-5 pb-5 border-t border-gray-100">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-              <ComparisonChartCard title="Score Comparison" rows={comparison.score} primaryLabel="score" />
-              <ComparisonChartCard title="Putts Comparison" rows={comparison.putts} primaryLabel="putts" />
-              <ComparisonChartCard title="GIR Comparison" rows={comparison.gir} primaryLabel="GIR" />
-              <ComparisonChartCard title="3-Putts Comparison" rows={comparison.three_putts} primaryLabel="3-putts" />
-              <ComparisonChartCard title="Putts per GIR Comparison" rows={comparison.putts_per_gir} primaryLabel="putts/GIR" />
-              <ComparisonChartCard title="Scrambling Comparison" rows={comparison.scrambling} primaryLabel="scramble successes" />
-            </div>
+      {/* Round comparison */}
+      {comparison && (
+        <div className="mt-4 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="text-sm font-semibold text-gray-700 mb-4">Round Comparison</div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ComparisonChartCard title="Score" rows={comparison.score} primaryLabel="score" />
+            <ComparisonChartCard title="Putts" rows={comparison.putts} primaryLabel="putts" />
+            <ComparisonChartCard title="GIR" rows={comparison.gir} primaryLabel="GIR" />
+            <ComparisonChartCard title="3-Putts" rows={comparison.three_putts} primaryLabel="3-putts" />
+            <ComparisonChartCard title="Putts per GIR" rows={comparison.putts_per_gir} primaryLabel="putts/GIR" />
+            <ComparisonChartCard title="Scrambling" rows={comparison.scrambling} primaryLabel="scramble successes" />
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

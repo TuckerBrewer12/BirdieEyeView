@@ -114,13 +114,6 @@ def notable_achievements(
     def _count_score_type(rows: List[Dict[str, Any]], score_type: str) -> int:
         return sum(1 for row in rows if row["score_type"] == score_type)
 
-    def _count_double_plus(rows: List[Dict[str, Any]]) -> int:
-        return sum(
-            1
-            for row in rows
-            if row["score_type"] in ("double_bogey", "triple_bogey", "quad_bogey")
-        )
-
     def _count_three_putts(rows: List[Dict[str, Any]]) -> int:
         return sum(1 for row in rows if row["putts"] is not None and row["putts"] >= 3)
 
@@ -330,8 +323,9 @@ def notable_achievements(
             "total_hole_in_ones": sum(1 for row in lifetime_holes if row["is_hio"]),
             "total_pars": _count_score_type(lifetime_holes, "par"),
             "total_bogeys": _count_score_type(lifetime_holes, "bogey"),
-            "total_double_bogeys_plus": _count_double_plus(lifetime_holes),
+            "total_double_bogeys": _count_score_type(lifetime_holes, "double_bogey"),
             "total_triple_bogeys": _count_score_type(lifetime_holes, "triple_bogey"),
+            "total_quad_bogeys_plus": _count_score_type(lifetime_holes, "quad_bogey"),
             "total_gir": sum(1 for row in lifetime_holes if row["gir"]),
             "total_3_putts": _count_three_putts(lifetime_holes),
         },
@@ -341,7 +335,9 @@ def notable_achievements(
             "eagles": _count_score_type(year_holes, "eagle"),
             "hole_in_ones": sum(1 for row in year_holes if row["is_hio"]),
             "gir": sum(1 for row in year_holes if row["gir"]),
+            "double_bogeys": _count_score_type(year_holes, "double_bogey"),
             "triple_bogeys": _count_score_type(year_holes, "triple_bogey"),
+            "quad_bogeys_plus": _count_score_type(year_holes, "quad_bogey"),
             "three_putts": _count_three_putts(year_holes),
         },
     }

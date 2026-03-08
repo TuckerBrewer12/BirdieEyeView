@@ -123,7 +123,7 @@ export function AnalyticsPage({ userId }: { userId: string }) {
             aria-label="Analytics section"
           >
             <option value="round_trends">Round Trends</option>
-            <option value="overall_player">Overall Player</option>
+            <option value="overall_player">Player Stats</option>
           </select>
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500">Last</span>
@@ -235,7 +235,7 @@ export function AnalyticsPage({ userId }: { userId: string }) {
 
       {view === "overall_player" && (
         <>
-          <SectionTitle>Overall Player</SectionTitle>
+          <SectionTitle>Player Stats</SectionTitle>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
             <ChartCard title="Avg Score to Par by Hole Par">
               <ResponsiveContainer width="100%" height={220}>
