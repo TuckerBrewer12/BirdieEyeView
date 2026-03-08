@@ -57,7 +57,7 @@ export function NotableAchievementsPage({ userId }: { userId: string }) {
     return <div className="text-gray-500">Unable to load achievements.</div>;
   }
 
-  const { scoring_records, window_days } = data.notable_achievements;
+  const { scoring_records, career_totals, window_days } = data.notable_achievements;
 
   return (
     <div>
@@ -81,6 +81,34 @@ export function NotableAchievementsPage({ userId }: { userId: string }) {
               <Card title="Most Birdies in a Round" value={scoring_records.one_year.most_birdies_in_round} />
               <Card title="Most GIR in a Round" value={scoring_records.one_year.most_gir_in_round} />
               <Card title="Fewest Putts in a Round" value={scoring_records.one_year.fewest_putts_in_round} />
+            </Group>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">2. Career Totals</h2>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            <Group title="Lifetime">
+              <Card title="Total Rounds Played" value={career_totals.lifetime.total_rounds_played} />
+              <Card title="Total Holes Played" value={career_totals.lifetime.total_holes_played} />
+              <Card title="Total Birdies" value={career_totals.lifetime.total_birdies} />
+              <Card title="Total Eagles" value={career_totals.lifetime.total_eagles} />
+              <Card title="Total Hole-in-Ones" value={career_totals.lifetime.total_hole_in_ones} />
+              <Card title="Total Pars" value={career_totals.lifetime.total_pars} />
+              <Card title="Total Bogeys" value={career_totals.lifetime.total_bogeys} />
+              <Card title="Total Double Bogeys+" value={career_totals.lifetime.total_double_bogeys_plus} />
+              <Card title="Total Triple Bogeys" value={career_totals.lifetime.total_triple_bogeys} />
+              <Card title="Total GIR" value={career_totals.lifetime.total_gir} />
+              <Card title="Total 3-Putts" value={career_totals.lifetime.total_3_putts} />
+            </Group>
+            <Group title={`Last ${window_days} Days`}>
+              <Card title="Rounds Played" value={career_totals.one_year.rounds_played} />
+              <Card title="Birdies" value={career_totals.one_year.birdies} />
+              <Card title="Eagles" value={career_totals.one_year.eagles} />
+              <Card title="Hole-in-Ones" value={career_totals.one_year.hole_in_ones} />
+              <Card title="GIR" value={career_totals.one_year.gir} />
+              <Card title="Triple Bogeys" value={career_totals.one_year.triple_bogeys} />
+              <Card title="3-Putts" value={career_totals.one_year.three_putts} />
             </Group>
           </div>
         </div>
