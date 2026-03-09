@@ -17,7 +17,7 @@ interface ScanPageProps {
 
 export function ScanPage({ userId, scanState, setScanState }: ScanPageProps) {
   const navigate = useNavigate();
-  const { step, scanMode, selectedCourseId, selectedCourseName, scoringFormat, file, preview, result, editedScores, editedNotes, editedDate, editedTeeBox, error, userContext } = scanState;
+  const { step, scanMode, selectedCourseId, selectedCourseName, scoringFormat, file, preview, result, editedScores, editedNotes, editedDate, editedTeeBox, error, userContext, reviewCourseId, reviewCourseName } = scanState;
   const update = (patch: Partial<ScanState>) => setScanState(prev => ({ ...prev, ...patch }));
 
   // Transient UI state — fine to reset on navigation
@@ -30,6 +30,32 @@ export function ScanPage({ userId, scanState, setScanState }: ScanPageProps) {
       api.getUserHandicap(userId).then((r) => setHandicapIndex(r.handicap_index)).catch(() => {});
     }
   }, [step, userId]);
+
+  // Review step: course search state
+  const [reviewCourseQuery, setReviewCourseQuery] = useState("");
+  const [reviewCourseResults, setReviewCourseResults] = useState<CourseSummary[]>([]);
+  const [reviewSearching, setReviewSearching] = useState(false);
+  const reviewSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleReviewCourseQuery = useCallback((q: string) => {
+    setReviewCourseQuery(q);
+    if (reviewSearchTimer.current) clearTimeout(reviewSearchTimer.current);
+    if (q.trim().length < 2) { setReviewCourseResults([]); return; }
+    reviewSearchTimer.current = setTimeout(async () => {
+      setReviewSearching(true);
+      try {
+        const results = await api.searchCourses(q.trim(), userId);
+        setReviewCourseResults(results);
+      } catch { setReviewCourseResults([]); }
+      finally { setReviewSearching(false); }
+    }, 300);
+  }, [userId]);
+
+  const selectReviewCourse = useCallback((course: CourseSummary) => {
+    update({ reviewCourseId: course.id, reviewCourseName: course.name ?? course.id });
+    setReviewCourseQuery("");
+    setReviewCourseResults([]);
+  }, []);
 
   // Course search state (fast scan)
   const [courseQuery, setCourseQuery] = useState("");
@@ -117,8 +143,12 @@ export function ScanPage({ userId, scanState, setScanState }: ScanPageProps) {
           ? data.round.date.substring(0, 10)
           : new Date().toISOString().substring(0, 10),
         editedTeeBox: data.round.tee_box ?? null,
+        reviewCourseId: null,
+        reviewCourseName: data.round.course?.name ?? null,
         step: "review",
       });
+      // Pre-fill the review search box with whatever the LLM extracted
+      setReviewCourseQuery(data.round.course?.name ?? "");
     } catch (err) {
       update({ error: err instanceof Error ? err.message : "Extraction failed", step: "upload" });
     }
@@ -145,7 +175,9 @@ export function ScanPage({ userId, scanState, setScanState }: ScanPageProps) {
         headers: { "Content-Type": "application/json", ...(saveToken ? { Authorization: `Bearer ${saveToken}` } : {}) },
         body: JSON.stringify({
           user_id: userId,
-          course_name: result.round.course?.name,
+          ...(reviewCourseId
+            ? { course_id: reviewCourseId }
+            : { course_name: reviewCourseName ?? result.round.course?.name }),
           course_location: result.round.course?.location,
           tee_box: editedTeeBox,
           ...(() => {
@@ -675,7 +707,7 @@ export function ScanPage({ userId, scanState, setScanState }: ScanPageProps) {
   return (
     <div>
       <PageHeader
-        title={rd.course?.name ?? "Review Extraction"}
+        title={reviewCourseName ?? rd.course?.name ?? "Review Extraction"}
         subtitle={rd.course?.location ?? "Verify and edit the extracted data"}
       />
 
@@ -755,10 +787,80 @@ export function ScanPage({ userId, scanState, setScanState }: ScanPageProps) {
         <div className="space-y-4">
           {/* Course info */}
           <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-            <div className="text-lg font-bold text-gray-900">{rd.course?.name ?? "Unknown"}</div>
+            <div className="text-lg font-bold text-gray-900">
+              {reviewCourseId ? reviewCourseName : reviewCourseName ?? "Unknown Course"}
+            </div>
             {rd.course?.location && <div className="text-sm text-gray-500">{rd.course.location}</div>}
             <div className="flex gap-4 mt-2 text-sm text-gray-600">
               <span>Par: {coursePar ?? "-"}</span>
+            </div>
+
+            {/* Course link / search */}
+            <div className="mt-3">
+              {reviewCourseId ? (
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                  <CheckCircle size={14} className="text-green-600 shrink-0" />
+                  <span className="text-sm font-medium text-green-800 flex-1">Linked: {reviewCourseName}</span>
+                  <button
+                    onClick={() => {
+                      update({ reviewCourseId: null });
+                      setReviewCourseQuery(reviewCourseName ?? "");
+                    }}
+                    className="text-green-600 hover:text-green-800"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Link to saved course or enter name</label>
+                  <div className="relative">
+                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={reviewCourseQuery}
+                      onChange={(e) => handleReviewCourseQuery(e.target.value)}
+                      placeholder="Search courses…"
+                      className="w-full pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                    />
+                    {reviewSearching && (
+                      <Loader2 size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 animate-spin" />
+                    )}
+                  </div>
+                  {reviewCourseResults.length > 0 && (
+                    <ul className="mt-1 bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden divide-y divide-gray-100">
+                      {reviewCourseResults.map((c) => (
+                        <li key={c.id}>
+                          <button
+                            onClick={() => selectReviewCourse(c)}
+                            className="w-full flex items-start gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors"
+                          >
+                            <MapPin size={13} className="text-gray-400 mt-0.5 shrink-0" />
+                            <div>
+                              <div className="text-sm font-medium text-gray-800">{c.name}</div>
+                              {c.location && <div className="text-xs text-gray-500">{c.location}</div>}
+                            </div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {reviewCourseQuery.trim().length >= 2 && !reviewSearching && reviewCourseResults.length === 0 && (
+                    <div className="mt-1 flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                      <span className="text-xs text-gray-500">No match — save as new course</span>
+                      <button
+                        onClick={() => {
+                          update({ reviewCourseName: reviewCourseQuery.trim(), reviewCourseId: null });
+                          setReviewCourseResults([]);
+                        }}
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        Use "{reviewCourseQuery.trim()}"
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             {/* Tee selector — only when matched course has tee data */}
             {rd.course?.tees && rd.course.tees.length > 0 ? (() => {
