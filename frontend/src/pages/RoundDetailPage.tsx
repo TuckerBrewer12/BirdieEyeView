@@ -9,7 +9,7 @@ import type { RoundComparison, ComparisonRow } from "@/types/analytics";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
 
-type EditedScores = Record<number, { strokes: number | null; putts: number | null }>;
+type EditedScores = Record<number, { strokes: number | null; putts: number | null; gir?: boolean | null }>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Fmt = (v: any, name: any, props: any) => any;
 
@@ -134,12 +134,13 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         .filter((s) => s.hole_number != null)
         .map((s) => {
           const edited = editedScores[s.hole_number!];
+          const girValue = edited?.gir !== undefined ? edited.gir : s.green_in_regulation;
           return {
             hole_number: s.hole_number!,
             strokes: edited?.strokes ?? s.strokes,
             putts: edited?.putts ?? s.putts,
             fairway_hit: s.fairway_hit,
-            green_in_regulation: s.green_in_regulation,
+            green_in_regulation: girValue,
           };
         });
       const updated = await api.updateRound(roundId, {
@@ -166,6 +167,16 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       setEditedScores((prev) => ({
         ...prev,
         [holeNumber]: { ...prev[holeNumber], [field]: value },
+      }));
+    },
+    []
+  );
+
+  const handleGirChange = useCallback(
+    (holeNumber: number, value: boolean | null) => {
+      setEditedScores((prev) => ({
+        ...prev,
+        [holeNumber]: { ...prev[holeNumber], gir: value },
       }));
     },
     []
@@ -342,6 +353,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         availableTees={availableTees}
         onScoreChange={handleScoreChange}
         onTeeBoxChange={setEditedTeeBox}
+        onGirChange={handleGirChange}
       />
 
       {/* Round comparison */}

@@ -60,6 +60,9 @@ export interface ScanState {
   editedTeeBox: string | null;
   error: string | null;
   userContext: string;
+  // Review step: user-selected course override
+  reviewCourseId: string | null;
+  reviewCourseName: string | null;
 }
 
 export const initialScanState: ScanState = {
@@ -77,4 +80,6 @@ export const initialScanState: ScanState = {
   editedTeeBox: null,
   error: null,
   userContext: "",
+  reviewCourseId: null,
+  reviewCourseName: null,
 };
