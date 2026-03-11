@@ -21,13 +21,13 @@ function LevelDots({
   onSelect: (level: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2">
       {[1, 2, 3, 4, 5].map((level) => (
         <button
           key={level}
           type="button"
           onClick={() => onSelect(level)}
-          className={`h-3.5 w-3.5 rounded-full border transition ${
+          className={`h-3.5 w-3.5 rounded-full border transition focus:outline-none focus:ring-2 focus:ring-emerald-400/50 ${
             selected >= level
               ? "bg-emerald-500 border-emerald-400"
               : "bg-white border-emerald-200 hover:border-emerald-300"
@@ -54,29 +54,30 @@ function ChallengeRow({
   const Icon = challenge.icon;
 
   return (
-    <div className="relative rounded-2xl border border-emerald-300 bg-emerald-400/15 shadow-sm overflow-hidden">
-      <div className="absolute left-4 -top-2.5">
-        <div className="rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1">
+    <div className="rounded-2xl border border-emerald-300 bg-emerald-400/15 shadow-sm p-6 md:p-8">
+      <div className="flex items-center justify-between gap-4 pb-4 mb-5 border-b border-emerald-300/70">
+        <div className="text-xs font-semibold uppercase tracking-wider text-emerald-900/70">Challenge Level</div>
+        <div className="rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1.5">
           <LevelDots selected={level} onSelect={onLevelChange} />
         </div>
       </div>
-      <div className="p-5 pt-8 flex items-center gap-4">
-        <div className="h-12 w-12 rounded-xl bg-emerald-500/20 border border-emerald-300 flex items-center justify-center">
-          <Icon size={22} className="text-emerald-800" />
+      <div className="grid grid-cols-1 md:grid-cols-[auto,1fr,auto] md:items-start gap-5 md:gap-6">
+        <div className="h-14 w-14 rounded-xl bg-emerald-500/20 border border-emerald-300 flex items-center justify-center">
+          <Icon size={24} className="text-emerald-800" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-extrabold tracking-wide text-emerald-900 uppercase">{challenge.title}</div>
-          <div className="text-sm text-emerald-900/80">{challenge.subtitle}</div>
-          <div className="mt-3 h-2.5 rounded-full bg-white/80 border border-emerald-200 overflow-hidden">
+          <div className="text-2xl font-extrabold tracking-wide text-emerald-900 uppercase">{challenge.title}</div>
+          <div className="mt-1 text-lg text-emerald-900/80">{challenge.subtitle}</div>
+          <div className="mt-5 h-3 rounded-full bg-white/80 border border-emerald-200 overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-amber-400 to-orange-500"
               style={{ width: `${percent}%` }}
             />
           </div>
         </div>
-        <div className="text-right pl-3">
-          <div className="text-xl font-extrabold text-emerald-950">{progress}/{target}</div>
-          <div className="text-xs font-semibold uppercase text-emerald-900/70">Level {level}</div>
+        <div className="text-left md:text-right md:pl-3">
+          <div className="text-4xl font-extrabold text-emerald-950 leading-none">{progress}/{target}</div>
+          <div className="mt-1 text-sm font-semibold uppercase tracking-wide text-emerald-900/70">Level {level}</div>
         </div>
       </div>
     </div>
@@ -149,9 +150,9 @@ export function ProgressModePage({ userId }: { userId: string }) {
   }
 
   return (
-    <div>
+    <div className="mx-auto max-w-6xl">
       <PageHeader title="Progress Mode" subtitle="Gamified milestone grind across GIR, putting, and scoring" />
-      <div className="space-y-4">
+      <div className="space-y-6 md:space-y-8">
         {challenges.map((challenge) => (
           <ChallengeRow
             key={challenge.key}
