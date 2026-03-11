@@ -15,14 +15,16 @@ type Challenge = {
 
 function LevelDots({
   selected,
+  totalLevels,
   onSelect,
 }: {
   selected: number;
+  totalLevels: number;
   onSelect: (level: number) => void;
 }) {
   return (
     <div className="flex items-center gap-2">
-      {[1, 2, 3, 4, 5].map((level) => (
+      {Array.from({ length: totalLevels }, (_, i) => i + 1).map((level) => (
         <button
           key={level}
           type="button"
@@ -58,7 +60,7 @@ function ChallengeRow({
       <div className="flex items-center justify-between gap-4 pb-4 mb-5 border-b border-emerald-300/70">
         <div className="text-xs font-semibold uppercase tracking-wider text-emerald-900/70">Challenge Level</div>
         <div className="rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1.5">
-          <LevelDots selected={level} onSelect={onLevelChange} />
+          <LevelDots selected={level} totalLevels={challenge.targets.length} onSelect={onLevelChange} />
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-[auto,1fr,auto] md:items-start gap-5 md:gap-6">
@@ -103,11 +105,7 @@ export function ProgressModePage({ userId }: { userId: string }) {
 
     const girAchieved = a.gir_milestones.lifetime.gir_breaks.filter((row) => row.achievement).length;
     const puttingAchieved = a.putting_milestones.lifetime.putt_breaks.filter((row) => row.achievement).length;
-    const scoringAchieved =
-      a.round_milestones.lifetime.score_breaks.filter((row) => row.achievement).length +
-      (a.round_milestones.lifetime.first_round_under_par ? 1 : 0) +
-      (a.round_milestones.lifetime.first_eagle ? 1 : 0) +
-      (a.round_milestones.lifetime.first_hole_in_one ? 1 : 0);
+    const scoringAchieved = a.round_milestones.lifetime.score_breaks.filter((row) => row.achievement).length;
 
     return [
       {
@@ -116,7 +114,7 @@ export function ProgressModePage({ userId }: { userId: string }) {
         subtitle: "Complete GIR milestones to level up approach consistency.",
         icon: Target,
         achieved: girAchieved,
-        targets: [1, 2, 3, 4, 6],
+        targets: [1, 2, 3, 4, 5, 6],
       },
       {
         key: "putting",
@@ -124,15 +122,15 @@ export function ProgressModePage({ userId }: { userId: string }) {
         subtitle: "Unlock putting milestones by lowering total putts in rounds.",
         icon: Flag,
         achieved: puttingAchieved,
-        targets: [2, 4, 6, 8, 9],
+        targets: [1, 2, 3, 4, 5, 6, 7, 8, 9],
       },
       {
         key: "scoring",
         title: "Score Crusher",
-        subtitle: "Push scoring milestones: break score thresholds and firsts.",
+        subtitle: "Push scoring milestones by breaking lower score thresholds.",
         icon: Trophy,
         achieved: scoringAchieved,
-        targets: [3, 6, 9, 12, 14],
+        targets: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
       },
     ];
   }, [data]);
