@@ -7,11 +7,12 @@ import {
   Line,
 } from "recharts";
 import { api } from "@/lib/api";
-import type { DashboardData } from "@/types/golf";
+import type { DashboardData, Milestone } from "@/types/golf";
 import type { AnalyticsData } from "@/types/analytics";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { RecentRoundsTable } from "@/components/dashboard/RecentRoundsTable";
+import { MilestoneFeed } from "@/components/dashboard/MilestoneFeed";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { NarrativeInsight } from "@/components/analytics/NarrativeInsight";
 import { formatToPar } from "@/types/golf";
@@ -58,6 +59,7 @@ interface DashboardPageProps {
 export function DashboardPage({ userId }: DashboardPageProps) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [trends, setTrends] = useState<AnalyticsData | null>(null);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -65,9 +67,11 @@ export function DashboardPage({ userId }: DashboardPageProps) {
     Promise.all([
       api.getDashboard(userId),
       api.getAnalytics(userId, 20),
-    ]).then(([dash, analytics]) => {
+      api.getMilestones(userId, 12),
+    ]).then(([dash, analytics, ms]) => {
       setData(dash);
       setTrends(analytics);
+      setMilestones(ms.milestones);
       setLoading(false);
     });
   }, [userId]);
@@ -253,20 +257,29 @@ export function DashboardPage({ userId }: DashboardPageProps) {
       <div className="-mx-8 px-8 py-10 bg-white">
         <ScrollSection>
           <SectionLabel>Recent Activity</SectionLabel>
-          <RecentRoundsTable rounds={data.recent_rounds} />
-          <div className="mt-5 flex gap-3">
-            <Link
-              to="/rounds"
-              className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm"
-            >
-              View All Rounds
-            </Link>
-            <Link
-              to="/courses"
-              className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
-            >
-              Browse Courses
-            </Link>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <RecentRoundsTable rounds={data.recent_rounds} />
+              <div className="mt-5 flex gap-3">
+                <Link
+                  to="/rounds"
+                  className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm"
+                >
+                  View All Rounds
+                </Link>
+                <Link
+                  to="/courses"
+                  className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Browse Courses
+                </Link>
+              </div>
+            </div>
+
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div className="text-sm font-semibold text-gray-800 mb-4">Milestones</div>
+              <MilestoneFeed milestones={milestones} />
+            </div>
           </div>
         </ScrollSection>
       </div>

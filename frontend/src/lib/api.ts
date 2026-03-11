@@ -1,4 +1,4 @@
-import type { DashboardData, RoundSummary, Round, CourseSummary, Course, User } from "@/types/golf";
+import type { DashboardData, RoundSummary, Round, CourseSummary, Course, User, Milestone } from "@/types/golf";
 import type { AnalyticsData, CourseAnalyticsData, RoundComparison } from "@/types/analytics";
 import { getToken } from "@/lib/auth";
 
@@ -130,4 +130,7 @@ export const api = {
 
   getCourseAnalytics: (userId: string, courseId: string) =>
     fetchJSON<CourseAnalyticsData>(`/stats/course-analytics/${userId}/${courseId}`),
+
+  getMilestones: (userId: string, limit = 12) =>
+    fetchJSON<{ milestones: Milestone[] }>(`/stats/milestones/${userId}?limit=${limit}`),
 };
