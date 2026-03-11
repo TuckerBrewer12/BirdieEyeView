@@ -24,12 +24,44 @@ const rowVariants = {
   }),
 };
 
+function SortHeader({
+  label,
+  field,
+  sortKey,
+  sortAsc,
+  onSort,
+}: {
+  label: string;
+  field: SortKey;
+  sortKey: SortKey;
+  sortAsc: boolean;
+  onSort: (key: SortKey) => void;
+}) {
+  const active = sortKey === field;
+  return (
+    <th
+      className={`px-6 py-3 cursor-pointer select-none transition-colors ${
+        active ? "text-primary" : "text-gray-400 hover:text-gray-600"
+      }`}
+      onClick={() => onSort(field)}
+    >
+      <span className="flex items-center gap-1">
+        {label}
+        <span className={`text-[10px] transition-opacity ${active ? "opacity-100" : "opacity-0"}`}>
+          {sortAsc ? "↑" : "↓"}
+        </span>
+      </span>
+    </th>
+  );
+}
+
 export function RoundsPage({ userId }: RoundsPageProps) {
   const [rounds, setRounds] = useState<RoundSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortAsc, setSortAsc] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(20);
 
   // Link-course state
   const [linkingRoundId, setLinkingRoundId] = useState<string | null>(null);
@@ -40,7 +72,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
   const linkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    api.getRoundsForUser(userId, 200).then((r) => {
+    api.getRoundsForUser(userId, 100).then((r) => {
       setRounds(r);
       setLoading(false);
     });
@@ -126,33 +158,14 @@ export function RoundsPage({ userId }: RoundsPageProps) {
     return result;
   }, [rounds, search, sortKey, sortAsc]);
 
-  function handleSort(key: SortKey) {
+  const handleSort = useCallback((key: SortKey) => {
     if (sortKey === key) {
-      setSortAsc(!sortAsc);
+      setSortAsc((prev) => !prev);
     } else {
       setSortKey(key);
       setSortAsc(key === "course_name");
     }
-  }
-
-  function SortHeader({ label, field }: { label: string; field: SortKey }) {
-    const active = sortKey === field;
-    return (
-      <th
-        className={`px-6 py-3 cursor-pointer select-none transition-colors ${
-          active ? "text-primary" : "text-gray-400 hover:text-gray-600"
-        }`}
-        onClick={() => handleSort(field)}
-      >
-        <span className="flex items-center gap-1">
-          {label}
-          <span className={`text-[10px] transition-opacity ${active ? "opacity-100" : "opacity-0"}`}>
-            {sortAsc ? "↑" : "↓"}
-          </span>
-        </span>
-      </th>
-    );
-  }
+  }, [sortKey]);
 
   if (loading) {
     return (
@@ -194,18 +207,18 @@ export function RoundsPage({ userId }: RoundsPageProps) {
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50/60 text-left text-[10px] font-bold uppercase tracking-widest">
-                <SortHeader label="Date" field="date" />
-                <SortHeader label="Course" field="course_name" />
+                <SortHeader label="Date" field="date" sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+                <SortHeader label="Course" field="course_name" sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort} />
                 <th className="px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Front</th>
                 <th className="px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Back</th>
-                <SortHeader label="Score" field="total_score" />
-                <SortHeader label="To Par" field="to_par" />
+                <SortHeader label="Score" field="total_score" sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort} />
+                <SortHeader label="To Par" field="to_par" sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort} />
                 <th className="px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Putts</th>
                 <th className="px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tournament</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filtered.map((r, i) => (
+              {filtered.slice(0, visibleCount).map((r, i) => (
                 <AnimatePresence key={r.id} mode="wait">
                   <motion.tr
                     key={r.id}
@@ -310,6 +323,17 @@ export function RoundsPage({ userId }: RoundsPageProps) {
             </div>
           )}
         </div>
+
+        {visibleCount < filtered.length && (
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => setVisibleCount((n) => n + 50)}
+              className="px-5 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              Load more ({filtered.length - visibleCount} remaining)
+            </button>
+          </div>
+        )}
       </ScrollSection>
     </div>
   );
