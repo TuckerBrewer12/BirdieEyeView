@@ -120,6 +120,9 @@ async def search_courses(
 
     for item in ext_items:
         ext_summary = _summarize_external_course(item)
+        # External selections must carry a stable provider ID.
+        if not ext_summary.external_course_id:
+            continue
         ext_key = (
             (ext_summary.name or "").strip().lower(),
             (ext_summary.location or "").strip().lower(),
