@@ -107,12 +107,7 @@ class GolfCourseAPIService:
     def _normalize_items(self, items: List[Dict[str, Any]], *, limit: int) -> List[Dict[str, Any]]:
         out: List[Dict[str, Any]] = []
         for row in items:
-            external_id = (
-                row.get("id")
-                or row.get("course_id")
-                or row.get("uuid")
-                or row.get("external_course_id")
-            )
+            external_id = self._extract_external_id(row)
             out.append(
                 {
                     "external_course_id": str(external_id) if external_id is not None else None,
@@ -126,3 +121,35 @@ class GolfCourseAPIService:
             if len(out) >= max(1, limit):
                 break
         return out
+
+    def _extract_external_id(self, row: Dict[str, Any]) -> Optional[Any]:
+        """Best-effort external ID extraction across common API response shapes."""
+        direct_keys = (
+            "id",
+            "course_id",
+            "courseId",
+            "golf_course_id",
+            "facility_id",
+            "club_id",
+            "uuid",
+            "external_course_id",
+        )
+        for key in direct_keys:
+            value = row.get(key)
+            if value not in (None, ""):
+                return value
+
+        nested_candidates = (
+            row.get("course"),
+            row.get("facility"),
+            row.get("club"),
+            row.get("data"),
+        )
+        for nested in nested_candidates:
+            if not isinstance(nested, dict):
+                continue
+            for key in direct_keys:
+                value = nested.get(key)
+                if value not in (None, ""):
+                    return value
+        return None

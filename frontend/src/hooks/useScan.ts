@@ -56,10 +56,15 @@ export function useScan(
 
   const selectReviewCourse = useCallback((course: CourseSummary) => {
     const isExternal = course.source === "external" || course.id.startsWith("external:");
+    if (isExternal && !course.external_course_id) {
+      update({ error: "External course result is missing provider ID. Please choose another match or enter a custom name." });
+      return;
+    }
     update({
       reviewCourseId: isExternal ? null : course.id,
       reviewExternalCourseId: isExternal ? (course.external_course_id ?? null) : null,
       reviewCourseName: course.name ?? course.id,
+      error: null,
     });
     setReviewCourseQuery("");
     setReviewCourseResults([]);
