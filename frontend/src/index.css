@@ -53,8 +53,16 @@ body {
   background-color: rgba(24, 25, 26, 0.85) !important;
 }
 
+:root.dark .bg-gray-50\/80 {
+  background-color: rgba(24, 25, 26, 0.92) !important;
+}
+
 :root.dark .bg-gray-100 {
   background-color: #222426 !important;
+}
+
+:root.dark .bg-gray-200 {
+  background-color: #2a2d30 !important;
 }
 
 :root.dark .bg-emerald-50\/40 {
