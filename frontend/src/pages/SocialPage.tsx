@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { Inbox } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import type { Friendship } from "@/types/golf";
@@ -64,7 +64,20 @@ export function SocialPage() {
 
   return (
     <div>
-      <PageHeader title="Social" subtitle="Add friends with friend code" />
+      <div className="mb-8 border-b border-gray-100 pb-6 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Social</h1>
+          <p className="text-sm text-gray-500 mt-1.5">Add friends with friend code</p>
+        </div>
+        <Link
+          to="/inbox"
+          title="Open inbox"
+          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+        >
+          <Inbox size={16} />
+          Inbox
+        </Link>
+      </div>
 
       <div className="max-w-2xl space-y-4">
         <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
@@ -92,11 +105,7 @@ export function SocialPage() {
           </div>
           {message ? <p className="text-sm text-gray-700">{message}</p> : null}
           <p className="text-xs text-gray-500">
-            You can track sent and received requests in your{" "}
-            <Link to="/inbox" className="text-primary underline">
-              Inbox
-            </Link>
-            .
+            Use the inbox button in the top-right to view sent and received requests.
           </p>
         </section>
 
