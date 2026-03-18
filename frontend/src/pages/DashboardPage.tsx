@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 import {
@@ -118,9 +119,12 @@ interface DashboardPageProps {
 }
 
 export function DashboardPage({ userId }: DashboardPageProps) {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [trends, setTrends] = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: fetched, isLoading: loading } = useQuery({
+    queryKey: ["dashboard", userId],
+    queryFn: () => Promise.all([api.getDashboard(userId), api.getAnalytics(userId, 20)]),
+  });
+  const data = fetched?.[0] ?? null;
+  const trends = fetched?.[1] ?? null;
   const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
   const colorBlindPalette = useMemo(
     () => getColorBlindPalette(colorBlindMode),
@@ -140,18 +144,6 @@ export function DashboardPage({ userId }: DashboardPageProps) {
     { key: "bogey", label: "Bogey", color: scoreColors.bogey },
     { key: "double_bogey", label: "Double+", color: scoreColors.double_bogey },
   ] as const;
-
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      api.getDashboard(userId),
-      api.getAnalytics(userId, 20),
-    ]).then(([dash, analytics]) => {
-      setData(dash);
-      setTrends(analytics);
-      setLoading(false);
-    });
-  }, [userId]);
 
   const recentMilestones = useMemo<Milestone[]>(() => {
     if (!trends) return [];
