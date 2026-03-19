@@ -107,7 +107,11 @@ class AIService:
         )
         rounds = list(reversed(rounds_desc))  # chronological order
 
-        hi = hcap.handicap_index(rounds, seed_handicap=(user.handicap if user else None))
+        hi = hcap.handicap_index(
+            rounds,
+            seed_handicap=(user.handicap if user else None),
+            seed_set_at=(user.last_handicap_update if user else None),
+        )
         if target_handicap is not None:
             benchmark, _ = _get_benchmark(target_handicap)
             hi_label = _TARGET_LABELS.get(target_handicap, _get_benchmark(target_handicap)[1])
