@@ -116,7 +116,11 @@ async def get_user_handicap(
         raise HTTPException(404, "User not found")
     rounds = await db.rounds.get_rounds_for_user(user_id)
     rounds_chrono = list(reversed(rounds))
-    hi = hcap.handicap_index(rounds_chrono, seed_handicap=user.handicap)
+    hi = hcap.handicap_index(
+        rounds_chrono,
+        seed_handicap=user.handicap,
+        seed_set_at=user.last_handicap_update,
+    )
     return {"handicap_index": hi}
 
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date, datetime
 from typing import Any, Dict, Iterable, List, Optional
 
 from models.round import Round
@@ -72,20 +73,38 @@ def _eligible_differentials(
     *,
     seed_handicap: Optional[float] = None,
     transition_rounds: int = 10,
+    seed_set_at: Optional[datetime] = None,
 ) -> List[float]:
     """
     Build the differential list used for HI calculations.
 
-    If seed_handicap is provided, the first `transition_rounds` valid rounds only
-    contribute when they improve on the seed (lower differential). After that,
-    all valid rounds contribute.
+    If seed_handicap is provided:
+    - with seed_set_at: rounds before seed_set_at only contribute when they
+      improve on the seed; rounds on/after seed_set_at all contribute.
+    - without seed_set_at: onboarding behavior where first `transition_rounds`
+      valid rounds only contribute when they improve on the seed.
     """
+    if seed_handicap is None:
+        diffs = [_get_differential_for_round(r) for r in rounds]
+        return [d for d in diffs if d is not None]
+
+    if seed_set_at is not None:
+        cutoff: date = seed_set_at.date()
+        before: List[float] = []
+        after: List[float] = []
+        for r in rounds:
+            d = _get_differential_for_round(r)
+            if d is None:
+                continue
+            round_day = r.date.date() if isinstance(r.date, datetime) else r.date
+            if round_day is not None and round_day < cutoff:
+                before.append(d)
+            else:
+                after.append(d)
+        return [d for d in before if d < seed_handicap] + after
+
     diffs = [_get_differential_for_round(r) for r in rounds]
     valid = [d for d in diffs if d is not None]
-
-    if seed_handicap is None:
-        return valid
-
     early = valid[:transition_rounds]
     late = valid[transition_rounds:]
     early_improving = [d for d in early if d < seed_handicap]
@@ -98,6 +117,7 @@ def handicap_index(
     *,
     seed_handicap: Optional[float] = None,
     transition_rounds: int = 10,
+    seed_set_at: Optional[datetime] = None,
 ) -> Optional[float]:
     """
     Calculate the current WHS Handicap Index.
@@ -111,6 +131,7 @@ def handicap_index(
         all_rounds,
         seed_handicap=seed_handicap,
         transition_rounds=transition_rounds,
+        seed_set_at=seed_set_at,
     )
     # Take only last N eligible differentials
     recent = eligible[-use_last_n:]
@@ -143,6 +164,7 @@ def handicap_trend(
     *,
     seed_handicap: Optional[float] = None,
     transition_rounds: int = 10,
+    seed_set_at: Optional[datetime] = None,
 ) -> List[Dict[str, Any]]:
     """
     Rolling handicap index after each round (oldest-first).
@@ -159,6 +181,7 @@ def handicap_trend(
             all_rounds[:i],
             seed_handicap=seed_handicap,
             transition_rounds=transition_rounds,
+            seed_set_at=seed_set_at,
         )
         results.append(
             {
