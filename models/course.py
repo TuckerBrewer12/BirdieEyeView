@@ -21,8 +21,10 @@ class Course(BaseGolfModel):
     tees: List[Tee] = Field(default_factory=list)
     user_id: Optional[str] = None  # None = master course; set = user-owned custom course
 
-    def get_tee(self, color: str) -> Optional[Tee]:
+    def get_tee(self, color: Optional[str]) -> Optional[Tee]:
         """Get a tee by its color."""
+        if not color:
+            return None
         for tee in self.tees:
             if tee.color and tee.color.lower() == color.lower():
                 return tee

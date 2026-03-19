@@ -65,8 +65,7 @@ export function YardageTargetScatter({ rawScores, bucketLabel }: YardageTargetSc
   }>({ x: 0, y: 0, toPar: 0, yardage: 0, visible: false });
 
   const dots = useMemo(() => {
-    const capped = rawScores.slice(0, 60);
-    return capped.map((score, idx) => {
+    return rawScores.map((score, idx) => {
       const [rMin, rMax] = getRingRange(score.to_par);
       const radialFrac = ((idx * 1234567891) % 1000) / 1000;
       const r = rMin + radialFrac * (rMax - rMin);
