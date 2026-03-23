@@ -1,9 +1,10 @@
 """Scorecard scan/upload API endpoints."""
 
 import asyncio
+import hashlib
 import math
 import logging
-import shutil
+import os
 import tempfile
 from pathlib import Path
 from typing import Optional
@@ -30,6 +31,8 @@ OCR_LONG_EDGE_TARGET = 1800
 OCR_JPEG_QUALITY = 75
 BW_FALLBACK_TRIGGER = 0.65
 BW_FALLBACK_MIN_IMPROVEMENT = 0.03
+PREPROCESS_CACHE_VERSION = "v1"
+PREPROCESS_CACHE_DIR = Path(tempfile.gettempdir()) / "scanscore_ocr_cache"
 
 
 class ScanResponse(BaseModel):
@@ -46,6 +49,24 @@ def _normalize_angle_deg(angle: float) -> float:
     while angle < -90.0:
         angle += 180.0
     return angle
+
+
+def _get_preprocess_cache_path(upload_digest: str) -> Path:
+    PREPROCESS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    key = f"{PREPROCESS_CACHE_VERSION}_le{OCR_LONG_EDGE_TARGET}_q{OCR_JPEG_QUALITY}_{upload_digest}"
+    return PREPROCESS_CACHE_DIR / f"{key}.jpg"
+
+
+def _save_jpeg(path: Path, img: Image.Image) -> None:
+    img.save(
+        path,
+        format="JPEG",
+        quality=OCR_JPEG_QUALITY,
+        optimize=True,
+        progressive=True,
+        exif=b"",
+        icc_profile=None,
+    )
 
 
 def _deskew_scorecard(img: Image.Image) -> tuple[Image.Image, bool, float]:
@@ -140,7 +161,7 @@ def _crop_to_scorecard_region(img: Image.Image) -> tuple[Image.Image, bool]:
     return img.crop((x1, y1, x2 + 1, y2 + 1)), True
 
 
-def _normalize_upload_for_ocr(path: Path) -> Path:
+def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, bool]:
     """
     Normalize uploaded images to JPEG for faster, consistent OCR payloads.
 
@@ -149,6 +170,10 @@ def _normalize_upload_for_ocr(path: Path) -> Path:
       Falls back to original PDF if rendering is unavailable.
     - If normalization fails (e.g., unsupported HEIC decoder), fall back to original.
     """
+    cache_path = _get_preprocess_cache_path(upload_digest)
+    if cache_path.exists():
+        return cache_path, True
+
     is_pdf = path.suffix.lower() == ".pdf"
     try:
         with Image.open(path) as img:
@@ -185,17 +210,11 @@ def _normalize_upload_for_ocr(path: Path) -> Path:
             stripped = Image.new("RGB", img.size)
             stripped.paste(img)
 
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as out:
-                normalized_path = Path(out.name)
-            stripped.save(
-                normalized_path,
-                format="JPEG",
-                quality=OCR_JPEG_QUALITY,
-                optimize=True,
-                progressive=True,
-                exif=b"",
-                icc_profile=None,
-            )
+            # Save into cache atomically.
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg", dir=PREPROCESS_CACHE_DIR) as out:
+                temp_cache_path = Path(out.name)
+            _save_jpeg(temp_cache_path, stripped)
+            os.replace(temp_cache_path, cache_path)
             logger.info(
                 "OCR preprocess image: source=%s original=%sx%s cropped=%s deskewed=%s angle=%.2f resized_to=%sx%s",
                 "pdf" if is_pdf else "image",
@@ -207,7 +226,7 @@ def _normalize_upload_for_ocr(path: Path) -> Path:
                 stripped.size[0],
                 stripped.size[1],
             )
-            return normalized_path
+            return cache_path, False
     except Exception as e:
         logger.warning(
             "Image normalization failed; using original upload. file=%s source=%s err=%s",
@@ -215,7 +234,7 @@ def _normalize_upload_for_ocr(path: Path) -> Path:
             "pdf" if is_pdf else "image",
             e,
         )
-        return path
+        return path, False
 
 
 def _build_bw_fallback_variant(path: Path) -> Optional[Path]:
@@ -280,15 +299,23 @@ async def extract_scan(
 
     # Save upload to temp file
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        shutil.copyfileobj(file.file, tmp)
+        hasher = hashlib.sha256()
+        while True:
+            chunk = file.file.read(1024 * 1024)
+            if not chunk:
+                break
+            tmp.write(chunk)
+            hasher.update(chunk)
         original_tmp_path = Path(tmp.name)
+    upload_digest = hasher.hexdigest()
 
-    ocr_path = _normalize_upload_for_ocr(original_tmp_path)
+    ocr_path, cache_hit = _normalize_upload_for_ocr(original_tmp_path, upload_digest)
     logger.info(
-        "Scan preprocessing complete: original=%s ocr_input=%s normalized=%s",
+        "Scan preprocessing complete: original=%s ocr_input=%s normalized=%s cache_hit=%s",
         original_tmp_path.name,
         ocr_path.name,
         ocr_path != original_tmp_path,
+        cache_hit,
     )
 
     bw_fallback_path: Optional[Path] = None
@@ -378,9 +405,10 @@ async def extract_scan(
     finally:
         if bw_fallback_path is not None:
             bw_fallback_path.unlink(missing_ok=True)
-        ocr_path.unlink(missing_ok=True)
-        if ocr_path != original_tmp_path:
-            original_tmp_path.unlink(missing_ok=True)
+        # Keep cached normalized artifacts; remove ephemeral files only.
+        if not cache_hit and ocr_path != original_tmp_path:
+            ocr_path.unlink(missing_ok=True)
+        original_tmp_path.unlink(missing_ok=True)
 
 
 @router.post("/save")
