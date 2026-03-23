@@ -28,6 +28,8 @@ router = APIRouter()
 
 OCR_LONG_EDGE_TARGET = 1800
 OCR_JPEG_QUALITY = 75
+BW_FALLBACK_TRIGGER = 0.65
+BW_FALLBACK_MIN_IMPROVEMENT = 0.03
 
 
 class ScanResponse(BaseModel):
@@ -209,6 +211,41 @@ def _normalize_upload_for_ocr(path: Path) -> Path:
         return path
 
 
+def _build_bw_fallback_variant(path: Path) -> Optional[Path]:
+    """
+    Build a high-contrast B/W variant for low-confidence retry.
+
+    Returns None if variant generation fails.
+    """
+    if path.suffix.lower() == ".pdf":
+        return None
+
+    try:
+        with Image.open(path) as img:
+            gray = img.convert("L")
+            gray = ImageOps.autocontrast(gray, cutoff=1)
+            arr = np.asarray(gray, dtype=np.uint8)
+            # Simple dynamic threshold around mean intensity.
+            thr = int(np.clip(arr.mean(), 100, 180))
+            bw = gray.point(lambda p: 255 if p >= thr else 0, mode="1").convert("RGB")
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as out:
+                out_path = Path(out.name)
+            bw.save(
+                out_path,
+                format="JPEG",
+                quality=OCR_JPEG_QUALITY,
+                optimize=True,
+                progressive=True,
+                exif=b"",
+                icc_profile=None,
+            )
+            return out_path
+    except Exception as e:
+        logger.warning("B/W fallback generation failed; skipping. file=%s err=%s", path.name, e)
+        return None
+
+
 @router.post("/extract")
 async def extract_scan(
     file: UploadFile = File(...),
@@ -247,6 +284,7 @@ async def extract_scan(
         ocr_path != original_tmp_path,
     )
 
+    bw_fallback_path: Optional[Path] = None
     try:
         # Resolve scoring format flag: "to_par" → True, "strokes" → False, else None
         to_par_scoring: Optional[bool] = None
@@ -271,10 +309,9 @@ async def extract_scan(
         # Build course repo for SMART strategy — pass the running loop so DB
         # calls from the extractor thread are scheduled on it (uses its pool)
         course_repo = SyncCourseRepositoryAdapter(db.courses, loop)
-        result: ExtractionResult = await loop.run_in_executor(
-            None,
-            lambda: extract_scorecard(
-                str(ocr_path),
+        def run_extract(input_path: Path) -> ExtractionResult:
+            return extract_scorecard(
+                str(input_path),
                 user_context=user_context,
                 include_raw_response=False,
                 strategy=strat,
@@ -282,8 +319,37 @@ async def extract_scan(
                 course_repo=course_repo,
                 to_par_scoring=to_par_scoring,
                 player_name=user_context or None,
-            ),
-        )
+            )
+
+        result: ExtractionResult = await loop.run_in_executor(None, lambda: run_extract(ocr_path))
+
+        # Conditional B/W fallback retry only for low-confidence results.
+        if result.confidence.overall < BW_FALLBACK_TRIGGER:
+            bw_fallback_path = _build_bw_fallback_variant(ocr_path)
+            if bw_fallback_path is not None:
+                logger.info(
+                    "Low confidence %.2f; retrying with B/W fallback image.",
+                    result.confidence.overall,
+                )
+                fallback_result: ExtractionResult = await loop.run_in_executor(
+                    None,
+                    lambda: run_extract(bw_fallback_path),  # type: ignore[arg-type]
+                )
+                improvement = fallback_result.confidence.overall - result.confidence.overall
+                if improvement >= BW_FALLBACK_MIN_IMPROVEMENT:
+                    logger.info(
+                        "B/W fallback selected: confidence improved by %.2f (%.2f -> %.2f).",
+                        improvement,
+                        result.confidence.overall,
+                        fallback_result.confidence.overall,
+                    )
+                    result = fallback_result
+                else:
+                    logger.info(
+                        "B/W fallback discarded: improvement %.2f below threshold %.2f.",
+                        improvement,
+                        BW_FALLBACK_MIN_IMPROVEMENT,
+                    )
 
         # Serialize the round and confidence for the frontend
         round_data = result.round.model_dump(mode="json")
@@ -303,6 +369,8 @@ async def extract_scan(
         logger.exception("Scan extraction error")
         raise HTTPException(500, f"Extraction failed: {type(e).__name__}: {str(e) or repr(e)}")
     finally:
+        if bw_fallback_path is not None:
+            bw_fallback_path.unlink(missing_ok=True)
         ocr_path.unlink(missing_ok=True)
         if ocr_path != original_tmp_path:
             original_tmp_path.unlink(missing_ok=True)
