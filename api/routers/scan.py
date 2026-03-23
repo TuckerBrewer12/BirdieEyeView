@@ -49,10 +49,21 @@ def _normalize_upload_for_ocr(path: Path) -> Path:
             img = ImageOps.exif_transpose(img)
             if img.mode != "RGB":
                 img = img.convert("RGB")
+            # Explicitly strip metadata by creating a fresh pixel-only image.
+            # This prevents EXIF/ICC/comment payloads from carrying into OCR input.
+            stripped = Image.new("RGB", img.size)
+            stripped.paste(img)
 
             with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as out:
                 normalized_path = Path(out.name)
-            img.save(normalized_path, format="JPEG", quality=80, optimize=True)
+            stripped.save(
+                normalized_path,
+                format="JPEG",
+                quality=80,
+                optimize=True,
+                exif=b"",
+                icc_profile=None,
+            )
             return normalized_path
     except Exception as e:
         logger.warning(
