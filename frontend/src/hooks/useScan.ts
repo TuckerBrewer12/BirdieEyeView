@@ -182,15 +182,24 @@ export function useScan(
 
   const handleExtract = useCallback(async () => {
     if (!file) return;
+    if (scanMode === "fast" && !selectedCourseId) {
+      update({ error: "Fast scan requires a pre-selected course.", step: "upload" });
+      return;
+    }
     update({ step: "processing", error: null });
 
     const formData = new FormData();
     formData.append("file", file);
     if (selectedCourseId) {
       formData.append("course_id", selectedCourseId);
-      if (scoringFormat) formData.append("scoring_format", scoringFormat);
+      if (scanMode === "fast") {
+        formData.append("strategy", "scores_only");
+        if (scoringFormat) formData.append("scoring_format", scoringFormat);
+      } else {
+        formData.append("strategy", "full");
+      }
     } else {
-      formData.append("strategy", "smart");
+      formData.append("strategy", "full");
     }
     if (userContext.trim()) {
       formData.append("user_context", userContext.trim());
