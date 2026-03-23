@@ -186,7 +186,7 @@ export function useScan(
 
     const formData = new FormData();
     formData.append("file", file);
-    if (scanMode === "fast" && selectedCourseId) {
+    if (selectedCourseId) {
       formData.append("course_id", selectedCourseId);
       if (scoringFormat) formData.append("scoring_format", scoringFormat);
     } else {
