@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+import numpy as np
 from pydantic import BaseModel
 from PIL import Image, ImageOps
 
@@ -35,6 +36,60 @@ class ScanResponse(BaseModel):
     fields_needing_review: list
 
 
+def _crop_to_scorecard_region(img: Image.Image) -> tuple[Image.Image, bool]:
+    """
+    Conservative background crop:
+    - Estimate background from border pixels.
+    - Find foreground bbox by color distance.
+    - Apply only when crop looks safe; otherwise keep full image.
+    """
+    arr = np.asarray(img)
+    if arr.ndim != 3 or arr.shape[0] < 50 or arr.shape[1] < 50:
+        return img, False
+
+    h, w, _ = arr.shape
+    border = max(4, int(min(h, w) * 0.03))
+    top = arr[:border, :, :]
+    bottom = arr[h - border :, :, :]
+    left = arr[:, :border, :]
+    right = arr[:, w - border :, :]
+    border_pixels = np.concatenate(
+        [top.reshape(-1, 3), bottom.reshape(-1, 3), left.reshape(-1, 3), right.reshape(-1, 3)],
+        axis=0,
+    )
+    bg = np.median(border_pixels, axis=0)
+
+    # Manhattan distance from estimated background color.
+    dist = np.abs(arr.astype(np.int16) - bg.astype(np.int16)).sum(axis=2)
+    mask = dist > 25
+    ys, xs = np.where(mask)
+    if ys.size == 0 or xs.size == 0:
+        return img, False
+
+    x1, x2 = int(xs.min()), int(xs.max())
+    y1, y2 = int(ys.min()), int(ys.max())
+
+    # Add small padding to avoid clipping edges/text near the border.
+    pad_x = max(8, int(w * 0.04))
+    pad_y = max(8, int(h * 0.04))
+    x1 = max(0, x1 - pad_x)
+    y1 = max(0, y1 - pad_y)
+    x2 = min(w - 1, x2 + pad_x)
+    y2 = min(h - 1, y2 + pad_y)
+
+    crop_w = x2 - x1 + 1
+    crop_h = y2 - y1 + 1
+    area_ratio = (crop_w * crop_h) / float(w * h)
+
+    # Safety gates: only keep moderate crops; skip extreme/low-confidence crops.
+    if area_ratio < 0.45 or area_ratio > 0.98:
+        return img, False
+    if crop_w < int(w * 0.6) or crop_h < int(h * 0.6):
+        return img, False
+
+    return img.crop((x1, y1, x2 + 1, y2 + 1)), True
+
+
 def _normalize_upload_for_ocr(path: Path) -> Path:
     """
     Normalize uploaded images to JPEG for faster, consistent OCR payloads.
@@ -52,6 +107,8 @@ def _normalize_upload_for_ocr(path: Path) -> Path:
             img = ImageOps.exif_transpose(img)
             if img.mode != "RGB":
                 img = img.convert("RGB")
+            original_size = img.size
+            img, cropped = _crop_to_scorecard_region(img)
             # Resize large images before OCR (keep aspect ratio, do not upscale).
             width, height = img.size
             long_edge = max(width, height)
@@ -74,6 +131,14 @@ def _normalize_upload_for_ocr(path: Path) -> Path:
                 progressive=True,
                 exif=b"",
                 icc_profile=None,
+            )
+            logger.info(
+                "OCR preprocess image: original=%sx%s cropped=%s resized_to=%sx%s",
+                original_size[0],
+                original_size[1],
+                cropped,
+                stripped.size[0],
+                stripped.size[1],
             )
             return normalized_path
     except Exception as e:
