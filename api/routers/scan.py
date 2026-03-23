@@ -18,7 +18,6 @@ from PIL import Image, ImageOps, ImageEnhance
 logger = logging.getLogger(__name__)
 
 from database.db_manager import DatabaseManager
-from database.sync_adapter import SyncCourseRepositoryAdapter
 from api.dependencies import get_current_user, get_db
 from api.request_models import SaveRoundRequest
 from models import User
@@ -300,7 +299,7 @@ def _build_bw_fallback_variant(path: Path) -> Optional[Path]:
 async def extract_scan(
     file: UploadFile = File(...),
     user_context: Optional[str] = Form(None),
-    strategy: str = Form("smart"),
+    strategy: str = Form("full"),
     course_id: Optional[str] = Form(None),
     scoring_format: Optional[str] = Form(None),  # "to_par" | "strokes" | None (auto-detect)
     db: DatabaseManager = Depends(get_db),
@@ -355,22 +354,26 @@ async def extract_scan(
         elif scoring_format == "strokes":
             to_par_scoring = False
 
-        # Fast scan: course pre-selected by user — use SCORES_ONLY with Flash
+        # Strategy routing:
+        # - scores_only requires a selected course_id (fast scan path)
+        # - full can run with or without course_id
         course_model = None
         if course_id:
             course_model = await db.courses.get_course(course_id)
             if course_model is None:
                 raise HTTPException(404, f"Course {course_id} not found")
+        if strategy == "scores_only":
+            if course_model is None:
+                raise HTTPException(400, "scores_only strategy requires course_id")
             strat = ExtractionStrategy.SCORES_ONLY
+        elif strategy == "full":
+            strat = ExtractionStrategy.FULL
         else:
-            strat = ExtractionStrategy(strategy) if strategy in ("full", "scores_only", "smart") else ExtractionStrategy.FULL
+            strat = ExtractionStrategy.FULL
 
         # Run sync extraction in thread pool to avoid blocking
         loop = asyncio.get_event_loop()
 
-        # Build course repo for SMART strategy — pass the running loop so DB
-        # calls from the extractor thread are scheduled on it (uses its pool)
-        course_repo = SyncCourseRepositoryAdapter(db.courses, loop)
         def run_extract(input_path: Path) -> ExtractionResult:
             return extract_scorecard(
                 str(input_path),
@@ -378,7 +381,6 @@ async def extract_scan(
                 include_raw_response=False,
                 strategy=strat,
                 course=course_model,
-                course_repo=course_repo,
                 to_par_scoring=to_par_scoring,
                 player_name=user_context or None,
             )
@@ -393,8 +395,9 @@ async def extract_scan(
             (t_extract_end - t_extract_start) * 1000.0,
         )
 
-        # Conditional B/W fallback retry only for low-confidence results.
-        if result.confidence.overall < BW_FALLBACK_TRIGGER:
+        # Conditional B/W fallback retry only for low-confidence scores-only runs.
+        # Full extraction fallback is expensive and can add significant latency.
+        if strat == ExtractionStrategy.SCORES_ONLY and result.confidence.overall < BW_FALLBACK_TRIGGER:
             bw_fallback_path = _build_bw_fallback_variant(ocr_path)
             if bw_fallback_path is not None:
                 logger.info(
