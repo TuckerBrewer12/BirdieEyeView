@@ -26,7 +26,6 @@ export function ScanPage({ userId, scanState, setScanState }: ScanPageProps) {
         result={scan.result}
         scanMode={scan.scanMode}
         editedScores={scan.editedScores}
-        editedNotes={scan.editedNotes}
         editedDate={scan.editedDate}
         editedTeeBox={scan.editedTeeBox}
         error={scan.error}
