@@ -136,9 +136,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
-        (r) =>
-          r.course_name?.toLowerCase().includes(q) ||
-          r.notes?.toLowerCase().includes(q)
+        (r) => r.course_name?.toLowerCase().includes(q)
       );
     }
     result.sort((a, b) => {
