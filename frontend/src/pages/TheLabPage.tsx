@@ -1,148 +1,17 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import {
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip,
-} from "recharts";
 import { Target, Trophy, CheckCircle2, BarChart2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { ComparisonTargetToggle } from "@/components/suggestions/ComparisonTargetToggle";
 import { BentoCard } from "@/components/ui/BentoCard";
 import { GoalSaverCard } from "@/components/goals/GoalSaverCard";
-import type { AnalyticsKPIs, ScoringByParRow, ScoreTypeRow } from "@/types/analytics";
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const GOAL_OPTIONS = [
-  { label: "Break 100", value: 99 },
-  { label: "Break 95",  value: 94 },
-  { label: "Break 90",  value: 89 },
-  { label: "Break 85",  value: 84 },
-  { label: "Break 80",  value: 79 },
-  { label: "Break 75",  value: 74 },
-  { label: "Break 72",  value: 71 },
-] as const;
-
-interface BenchmarkProfile {
-  gir: number; scrambling: number; putting: number;
-  par3: number; par4: number; par5: number;
-}
-
-// Normalized 0–100 per axis representing a golfer at that scoring level.
-// GIR & Scrambling values are also real percentages (0–100).
-// Putting & par scores are normalized via the same formula as buildRadarData.
-const GOAL_BENCHMARK: Record<number, BenchmarkProfile> = {
-  99: { gir: 14, scrambling: 13, putting: 42, par3: 32, par4: 22, par5: 28 },
-  94: { gir: 21, scrambling: 20, putting: 52, par3: 40, par4: 29, par5: 36 },
-  89: { gir: 30, scrambling: 28, putting: 61, par3: 50, par4: 38, par5: 46 },
-  84: { gir: 42, scrambling: 38, putting: 69, par3: 60, par4: 48, par5: 56 },
-  79: { gir: 55, scrambling: 48, putting: 77, par3: 70, par4: 59, par5: 66 },
-  74: { gir: 65, scrambling: 57, putting: 83, par3: 76, par4: 67, par5: 74 },
-  71: { gir: 72, scrambling: 64, putting: 88, par3: 81, par4: 73, par5: 80 },
-};
-
-// ComparisonTargetToggle handicap values → benchmark profiles
-const HANDICAP_BENCHMARK: Record<number, BenchmarkProfile> = {
-  0:  { gir: 72, scrambling: 64, putting: 88, par3: 81, par4: 73, par5: 80 },
-  5:  { gir: 65, scrambling: 57, putting: 83, par3: 76, par4: 67, par5: 74 },
-  10: { gir: 55, scrambling: 48, putting: 77, par3: 70, par4: 59, par5: 66 },
-  15: { gir: 42, scrambling: 38, putting: 69, par3: 60, par4: 48, par5: 56 },
-  20: { gir: 30, scrambling: 28, putting: 61, par3: 50, par4: 38, par5: 46 },
-  28: { gir: 14, scrambling: 13, putting: 42, par3: 32, par4: 22, par5: 28 },
-};
-
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-type RadarEntry = {
-  axis: string;
-  value: number;       // 0–100 normalized user score
-  benchmark: number;   // 0–100 normalized benchmark score
-  userRaw: string;     // human-readable user stat
-  benchRaw: string;    // human-readable benchmark stat
-  hasData: boolean;    // false when underlying kpi is null/untracked
-};
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function fmtSign(v: number) {
-  return (v >= 0 ? "+" : "") + v.toFixed(1);
-}
-
-function buildRadarData(
-  kpis: AnalyticsKPIs,
-  scoringByPar: ScoringByParRow[],
-  profile: BenchmarkProfile,
-): RadarEntry[] {
-  const clamp = (v: number) => Math.max(0, Math.min(100, v));
-
-  const hasGir  = kpis.gir_percentage != null;
-  const hasScr  = kpis.scrambling_percentage != null;
-  const hasPutt = kpis.putts_per_gir != null;
-
-  const girPct   = kpis.gir_percentage ?? 0;
-  const scrPct   = kpis.scrambling_percentage ?? 0;
-  const puttsRaw = kpis.putts_per_gir ?? 3.5;
-
-  const parRow = (par: number) => scoringByPar.find((r) => r.par === par && r.sample_size > 0);
-
-  // Inverted benchmark raw values (back-calculate from normalized 0–100 scores)
-  const benchPutts = 3.5 - (profile.putting * 2.0) / 100;
-  const benchPar3  = 2.0 - (profile.par3  * 2.5) / 100;
-  const benchPar4  = 2.0 - (profile.par4  * 2.5) / 100;
-  const benchPar5  = 2.0 - (profile.par5  * 2.5) / 100;
-
-  return [
-    {
-      axis: "GIR",
-      value: clamp(girPct),
-      benchmark: profile.gir,
-      userRaw: girPct.toFixed(0) + "%",
-      benchRaw: profile.gir + "%",
-      hasData: hasGir,
-    },
-    {
-      axis: "Scrambling",
-      value: clamp(scrPct),
-      benchmark: profile.scrambling,
-      userRaw: scrPct.toFixed(0) + "%",
-      benchRaw: profile.scrambling + "%",
-      hasData: hasScr,
-    },
-    {
-      axis: "Putting",
-      value: clamp(((3.5 - puttsRaw) / 2.0) * 100),
-      benchmark: profile.putting,
-      userRaw: puttsRaw.toFixed(2) + "/GIR",
-      benchRaw: benchPutts.toFixed(2) + "/GIR",
-      hasData: hasPutt,
-    },
-    {
-      axis: "Par 3s",
-      value: clamp(((2.0 - (parRow(3)?.average_to_par ?? 2.0)) / 2.5) * 100),
-      benchmark: profile.par3,
-      userRaw: parRow(3) ? fmtSign(parRow(3)!.average_to_par) : "—",
-      benchRaw: fmtSign(benchPar3),
-      hasData: !!parRow(3),
-    },
-    {
-      axis: "Par 4s",
-      value: clamp(((2.0 - (parRow(4)?.average_to_par ?? 2.0)) / 2.5) * 100),
-      benchmark: profile.par4,
-      userRaw: parRow(4) ? fmtSign(parRow(4)!.average_to_par) : "—",
-      benchRaw: fmtSign(benchPar4),
-      hasData: !!parRow(4),
-    },
-    {
-      axis: "Par 5s",
-      value: clamp(((2.0 - (parRow(5)?.average_to_par ?? 2.0)) / 2.5) * 100),
-      benchmark: profile.par5,
-      userRaw: parRow(5) ? fmtSign(parRow(5)!.average_to_par) : "—",
-      benchRaw: fmtSign(benchPar5),
-      hasData: !!parRow(5),
-    },
-  ];
-}
+import type { BenchmarkProfile } from "@/components/the-lab/constants";
+import { GOAL_OPTIONS, GOAL_BENCHMARK, HANDICAP_BENCHMARK } from "@/components/the-lab/constants";
+import { ProgressRing } from "@/components/the-lab/ProgressRing";
+import { AttemptsTimeline } from "@/components/the-lab/AttemptsTimeline";
+import { buildRadarData, UserRadarChart } from "@/components/analytics/UserRadarChart";
+import type { ScoreTypeRow } from "@/types/analytics";
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -166,89 +35,6 @@ function LoadingSkeleton() {
         <div className="h-32 rounded-2xl bg-gray-100" />
       </div>
       <div className="h-80 rounded-2xl bg-gray-100" />
-    </div>
-  );
-}
-
-function ProgressRing({ gap, onTrack }: { gap: number; onTrack: boolean }) {
-  const r = 54; const strokeW = 9; const size = 148; const c = size / 2;
-  const circ = 2 * Math.PI * r;
-  const progress = onTrack ? 1 : Math.max(0.04, 1 - gap / 16);
-  const offset = circ * (1 - progress);
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={c} cy={c} r={r} fill="none" stroke="#f1f5f9" strokeWidth={strokeW} />
-      <motion.circle
-        cx={c} cy={c} r={r} fill="none"
-        stroke={onTrack ? "#059669" : "#2d7a3a"}
-        strokeWidth={strokeW} strokeLinecap="round"
-        strokeDasharray={circ}
-        initial={{ strokeDashoffset: circ }}
-        animate={{ strokeDashoffset: offset }}
-        transition={{ duration: 1.2, ease: "easeOut", delay: 0.15 }}
-        transform={`rotate(-90 ${c} ${c})`}
-      />
-    </svg>
-  );
-}
-
-function AttemptsTimeline({ scores, goal }: { scores: { total_score: number | null; round_index: number }[]; goal: number }) {
-  const valid = scores.filter((r) => r.total_score != null).slice(-24);
-  if (valid.length < 3) return null;
-  const W = 560; const H = 96; const PX = 8; const PY = 14;
-  const vals = valid.map((r) => r.total_score!);
-  const minV = Math.min(...vals, goal) - 4;
-  const maxV = Math.max(...vals, goal) + 4;
-  const toX = (i: number) => PX + (i / (valid.length - 1)) * (W - PX * 2);
-  const toY = (v: number) => PY + ((v - minV) / (maxV - minV)) * (H - PY * 2);
-  const goalY = toY(goal);
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} overflow="visible">
-      <line x1={PX} y1={goalY} x2={W - PX - 28} y2={goalY}
-        stroke="#2d7a3a" strokeWidth={1.5} strokeDasharray="5 4" opacity={0.4} />
-      <text x={W - PX - 24} y={goalY + 4} fontSize={9} fill="#2d7a3a" opacity={0.55} fontWeight="600">Goal</text>
-      <polyline
-        points={valid.map((r, i) => `${toX(i)},${toY(r.total_score!)}`).join(" ")}
-        fill="none" stroke="#e5e7eb" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round"
-      />
-      {valid.map((r, i) => {
-        const beat = r.total_score! <= goal;
-        return (
-          <motion.circle key={i} cx={toX(i)} cy={toY(r.total_score!)}
-            r={beat ? 5.5 : 4}
-            fill={beat ? "#059669" : "#f3f4f6"}
-            stroke={beat ? "#059669" : "#d1d5db"}
-            strokeWidth={beat ? 0 : 1.5}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.3 + i * 0.025, duration: 0.3, ease: "easeOut" }}
-          />
-        );
-      })}
-    </svg>
-  );
-}
-
-// Custom tooltip shown on radar hover
-function RadarTooltipContent({ payload }: { payload?: Array<{ payload: RadarEntry }> }) {
-  if (!payload?.length) return null;
-  const entry = payload[0]?.payload as RadarEntry | undefined;
-  if (!entry?.axis) return null;
-  return (
-    <div className="bg-white/95 backdrop-blur-sm rounded-xl border border-gray-100 shadow-lg px-3 py-2.5 text-xs">
-      <p className="font-bold text-gray-800 mb-2">{entry.axis}</p>
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: "#2d7a3a" }} />
-          <span className="text-gray-500">You</span>
-          <span className="font-bold text-gray-900 ml-auto">{entry.userRaw}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full shrink-0 bg-gray-300" />
-          <span className="text-gray-500">Target</span>
-          <span className="font-semibold text-gray-500 ml-auto">{entry.benchRaw}</span>
-        </div>
-      </div>
     </div>
   );
 }
@@ -330,7 +116,6 @@ export function TheLabPage({ userId }: TheLabPageProps) {
     const allRows = analytics.score_type_distribution;
     if (!peakRows.length) return null;
 
-    // Values are percentages (0–100); convert back to counts via holes_counted
     const avgCount = (rows: ScoreTypeRow[], key: keyof ScoreTypeRow) =>
       rows.reduce((s, r) => s + ((r[key] as number) / 100) * r.holes_counted, 0) / rows.length;
     const doublesPlus = (rows: ScoreTypeRow[]) =>
@@ -353,45 +138,14 @@ export function TheLabPage({ userId }: TheLabPageProps) {
   // Active profile: switches between peer benchmark and peak game
   const activeProfile = radarMode === "peak" ? peakProfile : benchmarkProfile;
 
-  // Radar data — always build from user analytics; benchmark overlay is optional
-  const { radarData, missingAxes } = useMemo(() => {
-    if (!analytics?.kpis) return { radarData: null, missingAxes: [] };
-    // Use a zero-profile when no overlay is selected so user shape always renders
+  // Missing axes for the "no data" notice in the left panel
+  const missingAxes = useMemo(() => {
+    if (!analytics?.kpis) return [];
     const profile = activeProfile ?? { gir: 0, scrambling: 0, putting: 0, par3: 0, par4: 0, par5: 0 };
-    const all = buildRadarData(analytics.kpis, analytics.scoring_by_par ?? [], profile);
-    const missing = all.filter((e) => !e.hasData).map((e) => e.axis);
-    const data = all.filter((e) => e.hasData);
-    return { radarData: data.length >= 3 ? data : null, missingAxes: missing };
+    return buildRadarData(analytics.kpis, analytics.scoring_by_par ?? [], profile)
+      .filter((e) => !e.hasData)
+      .map((e) => e.axis);
   }, [analytics, activeProfile]);
-
-  // Custom axis tick that shows axis name + user's raw value below
-  const renderTick = useCallback(
-    (props: { cx: number; cy: number; x: number; y: number; payload: { value: string } }) => {
-      const { cx, cy, x, y, payload } = props;
-      const entry = radarData?.find((e) => e.axis === payload.value);
-      const dx = x - cx;
-      const anchor = Math.abs(dx) < 15 ? "middle" : dx > 0 ? "start" : "end";
-      // Shift lines: name always at y, value slightly below
-      const nameY = y;
-      const valY = y + 16;
-      return (
-        <g>
-          <text x={x} y={nameY} textAnchor={anchor} fill="#6b7280" fontSize={13} fontWeight={600}>
-            {payload.value}
-          </text>
-          {entry && (
-            <text x={x} y={valY} textAnchor={anchor} fontSize={12} fontWeight={700}>
-              <tspan fill="#2d7a3a">{entry.userRaw}</tspan>
-              {activeProfile && (
-                <tspan fill="#6b7280"> vs {entry.benchRaw}</tspan>
-              )}
-            </text>
-          )}
-        </g>
-      );
-    },
-    [radarData, activeProfile],
-  );
 
   const goalLabel = GOAL_OPTIONS.find((o) => o.value === currentGoal)?.label ?? null;
 
@@ -488,43 +242,23 @@ export function TheLabPage({ userId }: TheLabPageProps) {
 
               {/* Right panel: radar chart */}
               <div className="flex-1 min-w-0">
-                {radarData ? (
-                  <ResponsiveContainer width="100%" height={420}>
-                    <RadarChart data={radarData} outerRadius={155} margin={{ top: 24, right: 44, bottom: 24, left: 44 }}>
-                      <PolarGrid stroke="#e5e7eb" />
-                      <PolarAngleAxis dataKey="axis" tick={renderTick as never} />
-                      <Radar
-                        dataKey="value"
-                        stroke="#2d7a3a"
-                        fill="#2d7a3a"
-                        fillOpacity={0.18}
-                        strokeWidth={2}
-                        dot={{ r: 4, fill: "#2d7a3a", strokeWidth: 0 }}
-                        activeDot={{ r: 6, fill: "#2d7a3a", stroke: "white", strokeWidth: 2 }}
-                      />
-                      {activeProfile && (
-                        <Radar
-                          dataKey="benchmark"
-                          stroke="#9ca3af"
-                          fill="#9ca3af"
-                          fillOpacity={0.07}
-                          strokeWidth={1.5}
-                          strokeDasharray="4 3"
-                          dot={{ r: 3, fill: "#9ca3af", strokeWidth: 0 }}
-                        />
-                      )}
-                      <Tooltip
-                        content={<RadarTooltipContent />}
-                        wrapperStyle={{ outline: "none" }}
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-48 text-sm text-gray-400">
-                    {currentGoal
-                      ? "Play more rounds to build your performance shape."
-                      : "Set a target above to see your benchmark comparison."}
-                  </div>
+                {analytics?.kpis && (
+                  <UserRadarChart
+                    kpis={analytics.kpis}
+                    scoringByPar={analytics.scoring_by_par ?? []}
+                    profile={activeProfile ?? undefined}
+                    height={420}
+                    outerRadius={155}
+                    primaryColor="#2d7a3a"
+                    gridColor="#e5e7eb"
+                    showTooltip
+                    emptyMessage={
+                      currentGoal
+                        ? "Play more rounds to build your performance shape."
+                        : "Set a target above to see your benchmark comparison."
+                    }
+                    margin={{ top: 24, right: 44, bottom: 24, left: 44 }}
+                  />
                 )}
               </div>
 
@@ -670,7 +404,6 @@ export function TheLabPage({ userId }: TheLabPageProps) {
 
           {/* Score type breakdown: peak vs average */}
           {peakScoreTypes && (() => {
-            // Stroke multipliers: each birdie/bogey = 1 stroke, each double+ ≈ 2 strokes
             const metrics = [
               {
                 label: "Birdies",
@@ -706,7 +439,6 @@ export function TheLabPage({ userId }: TheLabPageProps) {
                   {metrics.map(({ label, peak, avg, higherIsBetter, strokeMult, color }) => {
                     const diff = peak - avg;
                     const good = higherIsBetter ? diff > 0 : diff < 0;
-                    // Strokes gained = good direction × count diff × stroke value
                     const strokeImpact = (higherIsBetter ? diff : -diff) * strokeMult;
                     const maxVal = Math.max(peak, avg, 0.1) * 1.2;
                     const peakPct = (peak / maxVal) * 100;
@@ -766,7 +498,6 @@ export function TheLabPage({ userId }: TheLabPageProps) {
           </div>
         </div>
       )}
-
 
     </div>
   );
