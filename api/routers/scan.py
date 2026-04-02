@@ -179,6 +179,11 @@ def _build_round_from_parsed_rows(
     gir_vals = list(parsed.gir_row[:hole_count])
     while len(gir_vals) < hole_count:
         gir_vals.append(None)
+    shots_vals = list(parsed.shots_to_green_row[:hole_count])
+    while len(shots_vals) < hole_count:
+        shots_vals.append(None)
+
+    effective_to_par = to_par_scoring if to_par_scoring is not None else (parsed.score_to_par_hint is True)
 
     hole_scores: List[Dict] = []
     for i in range(1, hole_count + 1):
@@ -187,7 +192,7 @@ def _build_round_from_parsed_rows(
         if raw_score is None:
             strokes = None
             fields_needing_review.append(f"Hole {i} strokes missing")
-        elif to_par_scoring is True:
+        elif effective_to_par is True:
             par_i = hole_par_lookup.get(i)
             if par_i is None:
                 strokes = None
@@ -208,13 +213,21 @@ def _build_round_from_parsed_rows(
             putts = None
             fields_needing_review.append(f"Hole {i} putts exceed strokes")
 
+        gir_val = gir_vals[i - 1]
+        if gir_val is None and shots_vals[i - 1] is not None and hole_par_lookup.get(i) is not None:
+            # Derive GIR from shots-to-green row when present:
+            # GIR if reached green in <= par-2 strokes.
+            par_i = hole_par_lookup[i]  # guarded above
+            if par_i is not None:
+                gir_val = shots_vals[i - 1] <= max(1, par_i - 2)
+
         hole_scores.append(
             {
                 "hole_number": i,
                 "strokes": strokes,
                 "putts": putts,
                 "fairway_hit": None,
-                "green_in_regulation": gir_vals[i - 1],
+                "green_in_regulation": gir_val,
             }
         )
 
@@ -585,11 +598,13 @@ async def extract_scan(
         confidence_data = _build_confidence_payload(round_data.get("hole_scores", []), fields_needing_review)
         t_parse_end = time.perf_counter()
         logger.info(
-            "Scan stage complete: stage=mistral_parse parse_ms=%.1f score_cells=%d putt_cells=%d gir_cells=%d warnings=%d",
+            "Scan stage complete: stage=mistral_parse parse_ms=%.1f score_cells=%d putt_cells=%d gir_cells=%d shots_cells=%d to_par_hint=%s warnings=%d",
             (t_parse_end - t_parse_start) * 1000.0,
             len([h for h in round_data.get("hole_scores", []) if h.get("strokes") is not None]),
             len([h for h in round_data.get("hole_scores", []) if h.get("putts") is not None]),
             len([h for h in round_data.get("hole_scores", []) if h.get("green_in_regulation") is not None]),
+            len([v for v in parsed_rows.shots_to_green_row if v is not None]),
+            parsed_rows.score_to_par_hint is True,
             len(fields_needing_review),
         )
 

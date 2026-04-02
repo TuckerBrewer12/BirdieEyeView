@@ -25,6 +25,8 @@ class ParsedScorecardRows(BaseGolfModel):
     tee_rows: List[ParsedTeeRow] = Field(default_factory=list)
     handicap_row: List[Optional[int]] = Field(default_factory=list)
     player_name: Optional[str] = None
+    score_to_par_hint: Optional[bool] = None
+    shots_to_green_row: List[Optional[int]] = Field(default_factory=list)
     score_row: List[Optional[int]] = Field(default_factory=list)
     putts_row: List[Optional[int]] = Field(default_factory=list)
     gir_row: List[Optional[bool]] = Field(default_factory=list)
@@ -66,7 +68,9 @@ def parse_mistral_scorecard_rows(
         parsed.warnings.append("No OCR text lines found")
         return parsed
 
+    row_hints = _extract_row_hints(user_context)
     parsed.player_name = _extract_player_name_hint(user_context)
+    parsed.score_to_par_hint = row_hints["score_to_par"]
     parsed.course_name = _extract_course_name(lines)
     parsed.hole_numbers = _extract_hole_numbers(lines)
     if len(parsed.hole_numbers) < 9:
@@ -79,19 +83,46 @@ def parse_mistral_scorecard_rows(
     tee_rows = _extract_tee_rows(lines)
     parsed.tee_rows = [ParsedTeeRow(label=label, yardages=_coerce_18_ints(vals)) for label, vals in tee_rows]
 
-    score_idx, score_vals = _extract_score_row(lines, parsed.player_name, tee_rows, handicap_idx)
-    if score_vals:
-        parsed.score_row = _coerce_18_ints(score_vals, max_abs=15)
-    else:
+    anchor_idx, anchor_vals = _extract_score_row(lines, parsed.player_name, tee_rows, handicap_idx)
+    if anchor_idx is None:
         parsed.warnings.append("Could not detect player score row")
+        return parsed
 
-    if score_idx is not None:
-        putts_vals = _extract_next_small_int_row(lines, score_idx + 1, max_abs=6)
+    # Context-aware row mapping:
+    # e.g. "first row shots onto green, second row putts, third row final score (to par)"
+    if row_hints["row_order_explicit"]:
+        parsed.shots_to_green_row = _coerce_18_ints(anchor_vals, max_abs=10)
+        putts_vals = _extract_next_small_int_row(lines, anchor_idx + 1, max_abs=6)
+        score_vals = _extract_next_small_int_row(lines, anchor_idx + 2, max_abs=15)
         if putts_vals:
             parsed.putts_row = _coerce_18_ints(putts_vals, max_abs=6)
-        gir_vals = _extract_next_gir_like_row(lines, score_idx + 2)
-        if gir_vals:
-            parsed.gir_row = _coerce_18_bools(gir_vals)
+        if score_vals:
+            parsed.score_row = _coerce_18_ints(score_vals, max_abs=15)
+        else:
+            parsed.warnings.append("Could not detect final score row at expected third row")
+        # Try to derive GIR from shots-to-green when hole pars are known later.
+        return parsed
+
+    # Default mapping: anchor row is score.
+    parsed.score_row = _coerce_18_ints(anchor_vals, max_abs=15)
+    putts_vals = _extract_next_small_int_row(lines, anchor_idx + 1, max_abs=6)
+    if putts_vals:
+        parsed.putts_row = _coerce_18_ints(putts_vals, max_abs=6)
+    gir_vals = _extract_next_gir_like_row(lines, anchor_idx + 2)
+    if gir_vals:
+        parsed.gir_row = _coerce_18_bools(gir_vals)
+
+    # Heuristic correction: if anchor looks like shots-to-green and third row looks like to-par scores,
+    # remap to [shots, putts, score].
+    if _looks_like_shots_row(parsed.score_row) and not parsed.gir_row:
+        alt_putts = _extract_next_small_int_row(lines, anchor_idx + 1, max_abs=6)
+        alt_score = _extract_next_small_int_row(lines, anchor_idx + 2, max_abs=6)
+        if alt_putts and alt_score and _looks_like_to_par_row(_coerce_18_ints(alt_score, max_abs=6)):
+            parsed.shots_to_green_row = parsed.score_row
+            parsed.putts_row = _coerce_18_ints(alt_putts, max_abs=6)
+            parsed.score_row = _coerce_18_ints(alt_score, max_abs=6)
+            parsed.score_to_par_hint = True
+            parsed.warnings.append("Row remap applied: interpreted third row as to-par scores")
 
     return parsed
 
@@ -119,6 +150,21 @@ def _extract_player_name_hint(user_context: Optional[str]) -> Optional[str]:
     if not m:
         return None
     return " ".join(w.capitalize() for w in m.group(1).split())
+
+
+def _extract_row_hints(user_context: Optional[str]) -> dict:
+    ctx = (user_context or "").lower()
+    return {
+        "row_order_explicit": (
+            ("first row" in ctx or "first is" in ctx)
+            and ("second row" in ctx or "second is" in ctx)
+            and ("third row" in ctx or "third is" in ctx)
+            and ("shots onto green" in ctx or "shots to green" in ctx)
+            and ("putts" in ctx)
+            and ("score" in ctx or "final score" in ctx)
+        ),
+        "score_to_par": ("to par" in ctx) or ("scored to par" in ctx) or ("score-to-par" in ctx),
+    }
 
 
 def _extract_course_name(lines: List[str]) -> Optional[str]:
@@ -266,3 +312,20 @@ def _coerce_18_bools(values: List[Optional[bool]]) -> List[Optional[bool]]:
         out.append(None)
     return out
 
+
+def _looks_like_to_par_row(values: List[Optional[int]]) -> bool:
+    nums = [v for v in values if v is not None]
+    if len(nums) < 9:
+        return False
+    in_range = [v for v in nums if -4 <= v <= 4]
+    if len(in_range) < int(0.9 * len(nums)):
+        return False
+    zeros_ones = [v for v in nums if v in {0, 1, -1}]
+    return len(zeros_ones) >= int(0.6 * len(nums))
+
+
+def _looks_like_shots_row(values: List[Optional[int]]) -> bool:
+    nums = [v for v in values if v is not None]
+    if len(nums) < 9:
+        return False
+    return all(1 <= v <= 6 for v in nums) and (sum(nums) / len(nums) <= 3.5)
