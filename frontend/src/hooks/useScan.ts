@@ -66,7 +66,7 @@ export function useScan(
   setScanState: React.Dispatch<React.SetStateAction<ScanState>>
 ) {
   const navigate = useNavigate();
-  const { step, scanMode, selectedCourseId, selectedCourseName, scoringFormat, file, result, editedScores, editedDate, editedTeeBox, userContext, reviewCourseId, reviewExternalCourseId, reviewCourseName, manualCourseHoles, manualCourseTees } = scanState;
+  const { step, scanMode, selectedCourseId, selectedCourseName, file, result, editedScores, editedDate, editedTeeBox, userContext, reviewCourseId, reviewExternalCourseId, reviewCourseName, manualCourseHoles, manualCourseTees } = scanState;
 
   const update = useCallback(
     (patch: Partial<ScanState>) => setScanState((prev) => ({ ...prev, ...patch })),
@@ -125,7 +125,7 @@ export function useScan(
     setReviewCourseResults([]);
   }, [update]);
 
-  // Course search state (fast scan / manual)
+  // Course search state (upload/manual)
   const [courseQuery, setCourseQuery] = useState("");
   const [courseResults, setCourseResults] = useState<CourseSummary[]>([]);
   const [searching, setSearching] = useState(false);
@@ -182,24 +182,12 @@ export function useScan(
 
   const handleExtract = useCallback(async () => {
     if (!file) return;
-    if (scanMode === "fast" && !selectedCourseId) {
-      update({ error: "Fast scan requires a pre-selected course.", step: "upload" });
-      return;
-    }
     update({ step: "processing", error: null });
 
     const formData = new FormData();
     formData.append("file", file);
     if (selectedCourseId) {
       formData.append("course_id", selectedCourseId);
-      if (scanMode === "fast") {
-        formData.append("strategy", "scores_only");
-        if (scoringFormat) formData.append("scoring_format", scoringFormat);
-      } else {
-        formData.append("strategy", "full");
-      }
-    } else {
-      formData.append("strategy", "full");
     }
     if (userContext.trim()) {
       formData.append("user_context", userContext.trim());
@@ -241,7 +229,7 @@ export function useScan(
       });
       // For new-course full scans (no preselected course), keep review course search empty.
       // OCR course names are often noisy and should not auto-populate the search box.
-      const shouldPrefillReviewSearch = Boolean(selectedCourseId) || scanMode === "fast";
+      const shouldPrefillReviewSearch = Boolean(selectedCourseId);
       if (shouldPrefillReviewSearch) {
         const extractedCourseName = normalizeCourseQueryForSearch(data.round.course?.name ?? "");
         setReviewCourseQuery(extractedCourseName);
@@ -255,7 +243,7 @@ export function useScan(
     } catch (err) {
       update({ error: err instanceof Error ? err.message : "Extraction failed", step: "upload" });
     }
-  }, [file, scanMode, selectedCourseId, scoringFormat, userContext, update, userId, handleReviewCourseQuery]);
+  }, [file, selectedCourseId, userContext, update, userId, handleReviewCourseQuery]);
 
   const handleScoreChange = useCallback((index: number, field: keyof ExtractedHoleScore, value: string) => {
     const next = [...editedScores];
@@ -421,7 +409,6 @@ export function useScan(
     scanMode,
     selectedCourseId,
     selectedCourseName,
-    scoringFormat,
     file,
     result,
     editedScores,

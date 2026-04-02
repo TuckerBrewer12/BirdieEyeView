@@ -110,6 +110,10 @@ def _build_round_from_parsed_rows(
     course_model: Optional[object],
     to_par_scoring: Optional[bool],
 ) -> tuple[Dict, List[str]]:
+    def _safe_list_attr(name: str):
+        value = getattr(parsed, name, [])
+        return value if isinstance(value, list) else []
+
     fields_needing_review: List[str] = list(parsed.warnings)
 
     known_course = course_model is not None
@@ -151,11 +155,21 @@ def _build_round_from_parsed_rows(
     else:
         # Unknown-course path uses parsed OCR rows.
         course_name = parsed.course_name
+        parsed_pars = list(_safe_list_attr("par_row")[:hole_count])
+        while len(parsed_pars) < hole_count:
+            parsed_pars.append(None)
         for i in range(1, hole_count + 1):
-            handicap = parsed.handicap_row[i - 1] if i - 1 < len(parsed.handicap_row) else None
-            course_holes.append({"number": i, "par": None, "handicap": handicap})
-            hole_par_lookup[i] = None
-        for tr in parsed.tee_rows:
+            handicap_row = _safe_list_attr("handicap_row")
+            handicap = handicap_row[i - 1] if i - 1 < len(handicap_row) else None
+            par_i = parsed_pars[i - 1]
+            if par_i is not None and not (3 <= par_i <= 6):
+                par_i = None
+            course_holes.append({"number": i, "par": par_i, "handicap": handicap})
+            hole_par_lookup[i] = par_i
+        par_vals = [p for p in parsed_pars if p is not None]
+        if len(par_vals) >= 9:
+            course_par = sum(par_vals)
+        for tr in _safe_list_attr("tee_rows"):
             yardage_map = {
                 str(i + 1): y
                 for i, y in enumerate(tr.yardages[:hole_count])
@@ -170,16 +184,16 @@ def _build_round_from_parsed_rows(
                 }
             )
 
-    score_vals = list(parsed.score_row[:hole_count])
+    score_vals = list(_safe_list_attr("score_row")[:hole_count])
     while len(score_vals) < hole_count:
         score_vals.append(None)
-    putt_vals = list(parsed.putts_row[:hole_count])
+    putt_vals = list(_safe_list_attr("putts_row")[:hole_count])
     while len(putt_vals) < hole_count:
         putt_vals.append(None)
-    gir_vals = list(parsed.gir_row[:hole_count])
+    gir_vals = list(_safe_list_attr("gir_row")[:hole_count])
     while len(gir_vals) < hole_count:
         gir_vals.append(None)
-    shots_vals = list(parsed.shots_to_green_row[:hole_count])
+    shots_vals = list(_safe_list_attr("shots_to_green_row")[:hole_count])
     while len(shots_vals) < hole_count:
         shots_vals.append(None)
 
@@ -521,20 +535,16 @@ def _build_bw_fallback_variant(path: Path) -> Optional[Path]:
 async def extract_scan(
     file: UploadFile = File(...),
     user_context: Optional[str] = Form(None),
-    strategy: str = Form("full"),
     course_id: Optional[str] = Form(None),
-    scoring_format: Optional[str] = Form(None),  # "to_par" | "strokes" | None (auto-detect)
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Upload a scorecard image, run OCR extraction, return results for review."""
     request_t0 = time.perf_counter()
     logger.info(
-        "Scan extract request received: filename=%s strategy=%s course_id=%s scoring_format=%s user_id=%s",
+        "Scan extract request received: filename=%s course_id=%s user_id=%s",
         file.filename,
-        strategy,
         course_id,
-        scoring_format,
         current_user.id,
     )
     # Validate file type
@@ -568,16 +578,10 @@ async def extract_scan(
     )
 
     try:
-        # Resolve scoring format flag: "to_par" → True, "strokes" → False, else None
+        # Scoring format is inferred from row parser + user_context hints.
         to_par_scoring: Optional[bool] = None
-        if scoring_format == "to_par":
-            to_par_scoring = True
-        elif scoring_format == "strokes":
-            to_par_scoring = False
 
-        # Strategy routing:
-        # - scores_only requires a selected course_id (fast scan path)
-        # - full can run with or without course_id
+        # Optional known course preload; extraction is always full Mistral parse.
         course_model = None
         t_course_lookup_start = time.perf_counter()
         if course_id:
@@ -591,9 +595,6 @@ async def extract_scan(
             course_model is not None,
             (t_course_lookup_end - t_course_lookup_start) * 1000.0,
         )
-        if strategy == "scores_only" and course_model is None:
-            raise HTTPException(400, "scores_only strategy requires course_id")
-
         ocr_client = MistralOCRService(model=MISTRAL_OCR_MODEL)
         t_extract_start = time.perf_counter()
         ocr_response = await ocr_client.ocr_file(ocr_path)
