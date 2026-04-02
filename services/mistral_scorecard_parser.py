@@ -1,0 +1,268 @@
+"""Row-oriented parser adapter for Mistral OCR scorecard output."""
+
+from __future__ import annotations
+
+import re
+from typing import List, Optional, Tuple
+
+from pydantic import Field
+
+from models.base import BaseGolfModel
+
+
+class ParsedTeeRow(BaseGolfModel):
+    """A detected tee/yardage row."""
+
+    label: str
+    yardages: List[Optional[int]] = Field(default_factory=list)
+
+
+class ParsedScorecardRows(BaseGolfModel):
+    """Structured row extraction from raw OCR markdown/text."""
+
+    course_name: Optional[str] = None
+    hole_numbers: List[int] = Field(default_factory=list)
+    tee_rows: List[ParsedTeeRow] = Field(default_factory=list)
+    handicap_row: List[Optional[int]] = Field(default_factory=list)
+    player_name: Optional[str] = None
+    score_row: List[Optional[int]] = Field(default_factory=list)
+    putts_row: List[Optional[int]] = Field(default_factory=list)
+    gir_row: List[Optional[bool]] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    markdown: str = ""
+
+
+_INT_RE = re.compile(r"(?<!\d)-?\d{1,4}(?!\d)")
+_ROMAN_RE = re.compile(r"^(?:i|ii|iii|iv|v|vi|vii|viii|ix|x)$", re.IGNORECASE)
+_COURSE_RE = re.compile(r"^[A-Z0-9 '&.-]{3,}$")
+_NAME_RE = re.compile(r"\bmy name is\s+([a-z][a-z '\-]{1,40})\b", re.IGNORECASE)
+
+_CIRCLED_TO_DIGIT = {
+    "⓪": "0",
+    "①": "1",
+    "❶": "1",
+    "➀": "1",
+    "⓿": "0",
+}
+
+
+def parse_mistral_scorecard_rows(
+    markdown_text: str,
+    *,
+    user_context: Optional[str] = None,
+) -> ParsedScorecardRows:
+    """Parse row-level scorecard data from Mistral OCR markdown/text.
+
+    This parser is intentionally conservative and best-effort:
+    - Detects hole header row (1..18)
+    - Detects tee/yardage rows (roman/tee labels + large numbers)
+    - Detects handicap row
+    - Detects player's score row (+ next two rows for putts/GIR when available)
+    """
+    text = (markdown_text or "").strip()
+    lines = _normalize_lines(text)
+    parsed = ParsedScorecardRows(markdown=text)
+    if not lines:
+        parsed.warnings.append("No OCR text lines found")
+        return parsed
+
+    parsed.player_name = _extract_player_name_hint(user_context)
+    parsed.course_name = _extract_course_name(lines)
+    parsed.hole_numbers = _extract_hole_numbers(lines)
+    if len(parsed.hole_numbers) < 9:
+        parsed.warnings.append("Could not confidently detect hole header row")
+
+    handicap_idx, handicap_vals = _extract_handicap_row(lines)
+    if handicap_vals:
+        parsed.handicap_row = _coerce_18_ints(handicap_vals)
+
+    tee_rows = _extract_tee_rows(lines)
+    parsed.tee_rows = [ParsedTeeRow(label=label, yardages=_coerce_18_ints(vals)) for label, vals in tee_rows]
+
+    score_idx, score_vals = _extract_score_row(lines, parsed.player_name, tee_rows, handicap_idx)
+    if score_vals:
+        parsed.score_row = _coerce_18_ints(score_vals, max_abs=15)
+    else:
+        parsed.warnings.append("Could not detect player score row")
+
+    if score_idx is not None:
+        putts_vals = _extract_next_small_int_row(lines, score_idx + 1, max_abs=6)
+        if putts_vals:
+            parsed.putts_row = _coerce_18_ints(putts_vals, max_abs=6)
+        gir_vals = _extract_next_gir_like_row(lines, score_idx + 2)
+        if gir_vals:
+            parsed.gir_row = _coerce_18_bools(gir_vals)
+
+    return parsed
+
+
+def _normalize_lines(text: str) -> List[str]:
+    out: List[str] = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        # Convert markdown table separators and normalize spacing.
+        if line.startswith("|") and line.endswith("|"):
+            line = line.strip("|").replace("|", " ")
+        line = re.sub(r"\s+", " ", line).strip()
+        if line and not set(line).issubset({"-", ":", " "}):
+            out.append(line)
+    return out
+
+
+def _extract_player_name_hint(user_context: Optional[str]) -> Optional[str]:
+    ctx = (user_context or "").strip()
+    if not ctx:
+        return None
+    m = _NAME_RE.search(ctx)
+    if not m:
+        return None
+    return " ".join(w.capitalize() for w in m.group(1).split())
+
+
+def _extract_course_name(lines: List[str]) -> Optional[str]:
+    for line in lines[:12]:
+        # Example: "FALLS Hole Location Hole Assignment ..."
+        first = line.split(" ", 1)[0].strip(":")
+        if _COURSE_RE.match(first) and first.lower() not in {"hole", "out", "in", "tot"}:
+            return first.title()
+    return None
+
+
+def _line_ints(line: str, *, max_abs: Optional[int] = None) -> List[int]:
+    replaced = line
+    for k, v in _CIRCLED_TO_DIGIT.items():
+        replaced = replaced.replace(k, v)
+    nums = [int(x) for x in _INT_RE.findall(replaced)]
+    if max_abs is not None:
+        nums = [n for n in nums if abs(n) <= max_abs]
+    return nums
+
+
+def _extract_hole_numbers(lines: List[str]) -> List[int]:
+    best: List[int] = []
+    for line in lines:
+        if "hole" not in line.lower():
+            continue
+        nums = _line_ints(line, max_abs=30)
+        seq = [n for n in nums if 1 <= n <= 18]
+        if len(seq) > len(best):
+            best = seq
+    # prefer unique ordered 1..18-ish sequence
+    dedup: List[int] = []
+    seen = set()
+    for n in best:
+        if n not in seen:
+            dedup.append(n)
+            seen.add(n)
+    return dedup[:18]
+
+
+def _extract_handicap_row(lines: List[str]) -> Tuple[Optional[int], List[int]]:
+    for i, line in enumerate(lines):
+        if "handicap" in line.lower() or "hdcp" in line.lower():
+            nums = [n for n in _line_ints(line, max_abs=18) if 1 <= n <= 18]
+            return i, nums
+    return None, []
+
+
+def _extract_tee_rows(lines: List[str]) -> List[Tuple[str, List[int]]]:
+    rows: List[Tuple[str, List[int]]] = []
+    for line in lines:
+        lower = line.lower()
+        if "handicap" in lower or "hole" in lower or "derek" in lower:
+            continue
+        parts = line.split()
+        if not parts:
+            continue
+        label = parts[0]
+        nums = _line_ints(line)
+        large = [n for n in nums if n >= 80]
+        label_is_tee = _ROMAN_RE.match(label) is not None or "combo" in lower or label.lower() in {
+            "blue",
+            "white",
+            "gold",
+            "red",
+            "black",
+            "green",
+        }
+        if label_is_tee and len(large) >= 9:
+            rows.append((label.upper(), large[:18]))
+    return rows
+
+
+def _extract_score_row(
+    lines: List[str],
+    player_name: Optional[str],
+    tee_rows: List[Tuple[str, List[int]]],
+    handicap_idx: Optional[int],
+) -> Tuple[Optional[int], List[int]]:
+    tee_labels = {label.lower() for label, _ in tee_rows}
+    start = (handicap_idx + 1) if handicap_idx is not None else 0
+    preferred_name = (player_name or "").lower().strip()
+
+    # Pass 1: row containing player name hint.
+    if preferred_name:
+        for i in range(start, len(lines)):
+            line = lines[i]
+            if preferred_name in line.lower():
+                nums = _line_ints(line, max_abs=15)
+                if len(nums) >= 9:
+                    return i, nums[:18]
+
+    # Pass 2: first small-number row after handicap that doesn't look like tee row.
+    for i in range(start, len(lines)):
+        line = lines[i]
+        lower = line.lower()
+        first = lower.split(" ", 1)[0]
+        if first in tee_labels:
+            continue
+        if "handicap" in lower or "hole" in lower or "par" in lower:
+            continue
+        nums = _line_ints(line, max_abs=15)
+        if len(nums) >= 9:
+            return i, nums[:18]
+    return None, []
+
+
+def _extract_next_small_int_row(lines: List[str], start_idx: int, *, max_abs: int) -> List[int]:
+    for i in range(max(0, start_idx), min(len(lines), start_idx + 6)):
+        nums = _line_ints(lines[i], max_abs=max_abs)
+        if len(nums) >= 9:
+            return nums[:18]
+    return []
+
+
+def _extract_next_gir_like_row(lines: List[str], start_idx: int) -> List[Optional[bool]]:
+    for i in range(max(0, start_idx), min(len(lines), start_idx + 8)):
+        line = lines[i]
+        # Convert common circle markers to digits first.
+        normalized = line
+        for k, v in _CIRCLED_TO_DIGIT.items():
+            normalized = normalized.replace(k, v)
+        # Keep only explicit 0/1 tokens.
+        tokens = re.findall(r"(?<!\d)[01](?!\d)", normalized)
+        if len(tokens) >= 9:
+            return [t == "1" for t in tokens[:18]]
+    return []
+
+
+def _coerce_18_ints(values: List[int], *, max_abs: Optional[int] = None) -> List[Optional[int]]:
+    out: List[Optional[int]] = []
+    for n in values[:18]:
+        if max_abs is not None and abs(n) > max_abs:
+            out.append(None)
+        else:
+            out.append(n)
+    while len(out) < 18:
+        out.append(None)
+    return out
+
+
+def _coerce_18_bools(values: List[Optional[bool]]) -> List[Optional[bool]]:
+    out = list(values[:18])
+    while len(out) < 18:
+        out.append(None)
+    return out
+
