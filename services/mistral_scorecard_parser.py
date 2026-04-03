@@ -40,16 +40,22 @@ _ROMAN_RE = re.compile(r"^(?:i|ii|iii|iv|v|vi|vii|viii|ix|x)$", re.IGNORECASE)
 _COURSE_RE = re.compile(r"^[A-Z0-9 '&.-]{3,}$")
 _NAME_RE = re.compile(r"\bmy name is\s+([a-z][a-z '\-]{1,40})\b", re.IGNORECASE)
 _ROW_NAME_RE = re.compile(r"\b(?:scan|read|use)\s+([a-z][a-z '\-]{1,40})\s+row\b", re.IGNORECASE)
-_TO_PAR_TOKEN_RE = re.compile(r"[+\-−]?\d+|[①❶➀⓿⓪]|[eE]")
+_TO_PAR_TOKEN_RE = re.compile(r"[+\-−]?\d+|[①②③④⑤⑥⑦⑧⑨❶❷❸❹❺❻❼❽❾➀➁➂➃➄➅➆➇➈⓿⓪]|[eE]")
 _NAME_ON_ROW_RE = re.compile(r"name on (shots?(?: to green)?|putts?|score)\s+row", re.IGNORECASE)
 _SIMPLE_ROW_ORDER_RE = re.compile(r"row order:\s*([a-z ,]+?)(?:\.|$)", re.IGNORECASE)
 
 _CIRCLED_TO_DIGIT = {
-    "⓪": "0",
-    "①": "1",
-    "❶": "1",
-    "➀": "1",
-    "⓿": "0",
+    # Standard circled ①-⑨
+    "①": "1", "②": "2", "③": "3", "④": "4", "⑤": "5",
+    "⑥": "6", "⑦": "7", "⑧": "8", "⑨": "9",
+    # Bold/negative circled ❶-❾
+    "❶": "1", "❷": "2", "❸": "3", "❹": "4", "❺": "5",
+    "❻": "6", "❼": "7", "❽": "8", "❾": "9",
+    # Dingbat circled ➀-➈
+    "➀": "1", "➁": "2", "➂": "3", "➃": "4", "➄": "5",
+    "➅": "6", "➆": "7", "➇": "8", "➈": "9",
+    # Zero variants
+    "⓪": "0", "⓿": "0",
 }
 
 
@@ -132,7 +138,14 @@ def parse_mistral_scorecard_rows(
         return parsed
 
     # Default mapping: anchor row is score.
-    parsed.score_row = _coerce_18_ints(anchor_vals, max_abs=15)
+    # 0 or negative can't be total strokes. Re-extract with the to-par parser so circled
+    # symbols get correct signs (① = -1, not 1 — _line_ints always returns positive face value).
+    if any(v <= 0 for v in anchor_vals):
+        to_par_vals = _extract_to_par_at(lines, anchor_idx)
+        parsed.score_row = _coerce_18_ints(to_par_vals or anchor_vals, max_abs=9)
+        parsed.score_to_par_hint = True
+    else:
+        parsed.score_row = _coerce_18_ints(anchor_vals, max_abs=15)
     if not row_hints["suppress_putts"]:
         putts_vals = _extract_next_small_int_row(lines, anchor_idx + 1, max_abs=6)
         if putts_vals:
@@ -359,7 +372,7 @@ def _extract_course_name(lines: List[str]) -> Optional[str]:
 
 
 def _line_ints(line: str, *, max_abs: Optional[int] = None) -> List[int]:
-    replaced = line
+    replaced = line.replace("−", "-")  # normalize Unicode minus sign
     for k, v in _CIRCLED_TO_DIGIT.items():
         replaced = replaced.replace(k, v)
     nums = [int(x) for x in _INT_RE.findall(replaced)]
@@ -446,14 +459,19 @@ def _extract_score_row(
     preferred_name = (player_name or "").lower().strip()
 
     # Pass 1: row containing player name hint.
+    # Search ±2 lines around the named line in case OCR splits name from scores.
     if preferred_name:
-        for i in range(start, len(lines)):
-            line = lines[i]
-            if preferred_name in line.lower():
-                nums = _line_ints(line, max_abs=15)
+        for i in range(len(lines)):
+            if preferred_name not in lines[i].lower():
+                continue
+            for delta in (0, 1, -1, 2, -2):
+                j = i + delta
+                if j < start or j >= len(lines):
+                    continue
+                nums = _line_ints(lines[j], max_abs=15)
                 normalized = _normalize_hole_values(nums)
                 if len(normalized) >= 9:
-                    return i, normalized[:18]
+                    return j, normalized[:18]
 
     # Pass 2: first small-number row after handicap that doesn't look like tee row.
     for i in range(start, len(lines)):
@@ -534,11 +552,10 @@ def _line_to_par_values(line: str) -> List[int]:
     tokens = _TO_PAR_TOKEN_RE.findall(raw)
     vals: List[int] = []
     for tok in tokens:
-        if tok in {"①", "❶", "➀"}:
-            vals.append(-1)
-            continue
-        if tok in {"⓿", "⓪", "E", "e"}:
-            vals.append(0)
+        # Circled digit on a to-par card = negative (① = -1 birdie, ② = -2 eagle, ⓪ = 0 par)
+        if tok in _CIRCLED_TO_DIGIT:
+            digit = int(_CIRCLED_TO_DIGIT[tok])
+            vals.append(-digit if digit > 0 else 0)
             continue
         try:
             n = int(tok)
