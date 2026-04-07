@@ -29,6 +29,7 @@ router = APIRouter()
 OCR_LONG_EDGE_TARGET = 1800
 OCR_JPEG_QUALITY = 75
 PREPROCESS_CACHE_VERSION = "v2"
+MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
 PREPROCESS_CACHE_DIR = Path(tempfile.gettempdir()) / "scanscore_ocr_cache"
 MISTRAL_OCR_MODEL = os.environ.get("MISTRAL_OCR_MODEL") or "mistral-ocr-latest"
 
@@ -398,10 +399,15 @@ async def prefetch_ocr(
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         hasher = hashlib.sha256()
+        total_bytes = 0
         while True:
             chunk = file.file.read(1024 * 1024)
             if not chunk:
                 break
+            total_bytes += len(chunk)
+            if total_bytes > MAX_UPLOAD_BYTES:
+                Path(tmp.name).unlink(missing_ok=True)
+                raise HTTPException(413, "File too large. Maximum size is 20 MB.")
             tmp.write(chunk)
             hasher.update(chunk)
         original_tmp_path = Path(tmp.name)
@@ -412,9 +418,11 @@ async def prefetch_ocr(
         markdown_text = await _run_ocr_pipeline(ocr_path)
         logger.info("Prefetch OCR complete: user=%s chars=%d", current_user.id, len(markdown_text))
         return {"ocr_text": markdown_text}
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         logger.exception("Prefetch OCR failed")
-        raise HTTPException(500, f"OCR failed: {type(e).__name__}: {str(e)}")
+        raise HTTPException(500, "OCR failed. Please try again.")
     finally:
         with contextlib.suppress(OSError):
             original_tmp_path.unlink()
@@ -446,10 +454,15 @@ async def extract_scan(
     # Save upload to temp file
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         hasher = hashlib.sha256()
+        total_bytes = 0
         while True:
             chunk = file.file.read(1024 * 1024)
             if not chunk:
                 break
+            total_bytes += len(chunk)
+            if total_bytes > MAX_UPLOAD_BYTES:
+                Path(tmp.name).unlink(missing_ok=True)
+                raise HTTPException(413, "File too large. Maximum size is 20 MB.")
             tmp.write(chunk)
             hasher.update(chunk)
         original_tmp_path = Path(tmp.name)
@@ -531,9 +544,11 @@ async def extract_scan(
         raise HTTPException(400, "Uploaded file could not be processed")
     except EnvironmentError as e:
         raise HTTPException(500, str(e))
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
         logger.exception("Scan extraction error")
-        raise HTTPException(500, f"Extraction failed: {type(e).__name__}: {str(e) or repr(e)}")
+        raise HTTPException(500, "Extraction failed. Please try again.")
     finally:
         logger.info(
             "Scan extract request complete: total_ms=%.1f",
@@ -564,6 +579,6 @@ async def save_round(
         service = ScanService(db)
         saved = await service.save_reviewed_scan(req)
         return {"id": saved.id, "total_score": saved.calculate_total_score()}
-    except Exception as e:
+    except Exception:
         logger.exception("Save round error")
-        raise HTTPException(500, f"Save failed: {type(e).__name__}: {str(e)}")
+        raise HTTPException(500, "Save failed. Please try again.")
