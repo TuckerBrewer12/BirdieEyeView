@@ -13,7 +13,7 @@ from typing import Dict, List, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 import numpy as np
 from pydantic import BaseModel
-from PIL import Image, ImageDraw, ImageFilter, ImageOps, ImageEnhance
+from PIL import Image, ImageFilter, ImageOps, ImageEnhance
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -21,6 +21,7 @@ from database.db_manager import DatabaseManager
 from api.dependencies import get_current_user, get_db
 from api.request_models import SaveRoundRequest
 from models import User
+from services.gemini_table_merger import merge_split_tables
 from services.mistral_ocr_service import MistralOCRService
 from services.mistral_scorecard_parser import ParsedScorecardRows, parse_mistral_scorecard_rows
 from services.scan_service import ScanService
@@ -284,6 +285,14 @@ def _build_round_from_parsed_rows(
     return round_payload, fields_needing_review
 
 
+async def _run_ocr_pipeline(ocr_path: Path) -> str:
+    """Mistral OCR → Gemini merge → raw markdown string."""
+    svc = MistralOCRService()
+    ocr_resp = await svc.ocr_file(ocr_path)
+    raw_markdown = MistralOCRService.extract_markdown_text(ocr_resp)
+    return await merge_split_tables(raw_markdown)
+
+
 def _blur_fold_line(img: Image.Image) -> Image.Image:
     """Blur a narrow vertical strip at the center crease to prevent Mistral
     from reading the fold as a table divider and splitting the OCR output."""
@@ -482,9 +491,6 @@ def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, boo
             # This prevents EXIF/ICC/comment payloads from carrying into OCR input.
             stripped = Image.new("RGB", img.size)
             stripped.paste(img)
-            # Thin border signals to Mistral that this is one bounded object.
-            draw = ImageDraw.Draw(stripped)
-            draw.rectangle([(0, 0), (stripped.width - 1, stripped.height - 1)], outline=(180, 180, 180), width=2)
 
             # Save into cache atomically.
             with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg", dir=PREPROCESS_CACHE_DIR) as out:
@@ -588,9 +594,7 @@ async def prefetch_ocr(
 
     try:
         ocr_path, _ = _normalize_upload_for_ocr(original_tmp_path, upload_digest)
-        ocr_client = MistralOCRService(model=MISTRAL_OCR_MODEL)
-        ocr_response = await ocr_client.ocr_file(ocr_path)
-        markdown_text = MistralOCRService.extract_markdown_text(ocr_response)
+        markdown_text = await _run_ocr_pipeline(ocr_path)
         logger.info("Prefetch OCR complete: user=%s chars=%d", current_user.id, len(markdown_text))
         return {"ocr_text": markdown_text}
     except Exception as e:
@@ -668,19 +672,18 @@ async def extract_scan(
         )
         t_extract_start = time.perf_counter()
         if ocr_text:
+            # Prefetch already ran OCR + Gemini merge — use it directly.
             markdown_text = ocr_text
             logger.info("Scan using prefetched OCR text: chars=%d", len(markdown_text))
         else:
-            ocr_client = MistralOCRService(model=MISTRAL_OCR_MODEL)
-            ocr_response = await ocr_client.ocr_file(ocr_path)
-            markdown_text = MistralOCRService.extract_markdown_text(ocr_response)
+            markdown_text = await _run_ocr_pipeline(ocr_path)
             logger.info(
-                "Scan extraction primary call complete: provider=mistral model=%s extract_ms=%.1f",
-                MISTRAL_OCR_MODEL,
+                "Scan OCR+merge complete: extract_ms=%.1f chars=%d",
                 (time.perf_counter() - t_extract_start) * 1000.0,
+                len(markdown_text),
             )
 
-        logger.info("=== MISTRAL OCR RAW OUTPUT ===\n%s\n=== END OCR OUTPUT ===", markdown_text)
+        logger.info("=== MERGED MARKDOWN ===\n%s\n=== END MERGED MARKDOWN ===", markdown_text)
 
         t_parse_start = time.perf_counter()
         parsed_rows = parse_mistral_scorecard_rows(markdown_text, user_context=user_context)

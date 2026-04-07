@@ -42,8 +42,8 @@ class ParsedScorecardRows(BaseGolfModel):
 _INT_RE = re.compile(r"(?<!\d)-?\d{1,4}(?!\d)")
 _ROMAN_RE = re.compile(r"^(?:i|ii|iii|iv|v|vi|vii|viii|ix|x)$", re.IGNORECASE)
 _COURSE_RE = re.compile(r"^[A-Z0-9 '&.-]{3,}$")
-_NAME_RE = re.compile(r"\bmy name is\s+([a-z][a-z '.\-]{0,40})\b", re.IGNORECASE)
-_ROW_NAME_RE = re.compile(r"\b(?:scan|read|use)\s+([a-z][a-z '\-]{1,40})\s+row\b", re.IGNORECASE)
+_NAME_RE = re.compile(r"\bmy name is\s+([a-z0-9][a-z0-9 '.\-]{0,40})\b", re.IGNORECASE)
+_ROW_NAME_RE = re.compile(r"\b(?:scan|read|use)\s+([a-z0-9][a-z0-9 '\-]{1,40})\s+row\b", re.IGNORECASE)
 _TO_PAR_TOKEN_RE = re.compile(r"[+\-−]?\d+|[①②③④⑤⑥⑦⑧⑨❶❷❸❹❺❻❼❽❾➀➁➂➃➄➅➆➇➈⓿⓪]|[eE]")
 _NAME_ON_ROW_RE = re.compile(r"name on (shots?(?: to green)?|putts?|score)\s+row", re.IGNORECASE)
 _SIMPLE_ROW_ORDER_RE = re.compile(r"row order:\s*([a-z ,]+?)(?:\.|$)", re.IGNORECASE)
@@ -63,6 +63,9 @@ _CIRCLED_TO_DIGIT = {
 }
 
 
+
+
+
 def parse_mistral_scorecard_rows(
     markdown_text: str,
     *,
@@ -77,6 +80,8 @@ def parse_mistral_scorecard_rows(
     - Detects player's score row (+ next two rows for putts/GIR when available)
     """
     text = (markdown_text or "").strip()
+
+
 
     # 2D pre-pass: extract by column map for precise hole-number alignment.
     raw_lines = text.splitlines()
@@ -94,15 +99,19 @@ def parse_mistral_scorecard_rows(
     split_maps = _find_split_col_maps(raw_lines)
     if split_maps is not None:
         (front_lines, front_map, front_hdr_idx), (back_lines, back_map, back_hdr_idx) = split_maps
+
+        # Use require_name_match when a player name is given so we don't accidentally
+        # pick up a different player's row as the anchor (e.g. G's row for player T).
         front_result, front_anchor_idx = _extract_2d_from_raw_lines(
-            front_lines, front_map, player_name_2d, row_hints_2d, min_scores=4
+            front_lines, front_map, player_name_2d, row_hints_2d, min_scores=4,
+            require_name_match=bool(player_name_2d),
         )
         if front_result is not None and front_anchor_idx >= 0:
             # Reuse the same row offset in the back-9 block.
             # front_anchor_idx is absolute to front_lines. back_lines starts dynamically at its header.
             # So offset = absolute - header.
             header_offset = front_anchor_idx - front_hdr_idx
-            
+
             back_result, _ = _extract_2d_from_raw_lines(
                 back_lines, back_map, player_name_2d, row_hints_2d,
                 min_scores=4, forced_anchor_line_idx=header_offset,
@@ -112,6 +121,34 @@ def parse_mistral_scorecard_rows(
                 merged.markdown = text
                 _apply_field_suppression(merged, row_hints_2d)
                 return merged
+
+        # Second-pass: player's 18-hole section is entirely within back_lines.
+        # This happens when multiple scorecards share one page — the second player's
+        # front nine appears in the back section using front_map column alignment.
+        if player_name_2d and front_result is None:
+            front_in_back, back_front_anchor = _extract_2d_from_raw_lines(
+                back_lines, front_map, player_name_2d, row_hints_2d, min_scores=4,
+                require_name_match=True,
+            )
+            if front_in_back is not None and back_front_anchor >= 0:
+                # Found player's front nine in back_lines. Now find their back nine
+                # which occupies a sub-section with a different (unlabeled) col_map.
+                unlabeled = _find_unlabeled_section_col_map(
+                    back_lines, start_after_idx=back_front_anchor + 2, start_hole=10
+                )
+                if unlabeled is not None:
+                    back_nine_col_map, par_row_idx = unlabeled
+                    # Score row is typically 1-2 rows after the par row (skip blank).
+                    back_nine_score_approx = par_row_idx + 2
+                    back_in_back, _ = _extract_2d_from_raw_lines(
+                        back_lines, back_nine_col_map, player_name_2d, row_hints_2d,
+                        min_scores=4, forced_anchor_line_idx=back_nine_score_approx,
+                    )
+                    if back_in_back is not None:
+                        merged = _merge_parsed_halves(front_in_back, back_in_back)
+                        merged.markdown = text
+                        _apply_field_suppression(merged, row_hints_2d)
+                        return merged
 
     # Single full-table path.
     col_map = _find_hole_column_map(raw_lines)
@@ -436,6 +473,42 @@ def _find_split_col_maps(
     return (front_lines, front_map, front_header_idx), (back_lines, back_map, back_header_idx)  # type: ignore[return-value]
 
 
+def _find_unlabeled_section_col_map(
+    lines: List[str],
+    start_after_idx: int,
+    *,
+    start_hole: int = 10,
+) -> Optional[Tuple[Dict[int, int], int]]:
+    """Find a 9-hole col_map from an unlabeled par row (no text label in col0).
+
+    Used to locate a player's back-nine section when the OCR renders it as a
+    separate mini-table without a P|10-18 hole-number header.
+
+    Returns (col_map, row_idx_in_lines) or None.
+    col_map maps {10:0, 11:1, ..., 18:8} (col0 = first data column).
+    """
+    for i, line in enumerate(lines):
+        if i <= start_after_idx:
+            continue
+        cells = _split_pipe_row(line)
+        if len(cells) < 9:
+            continue
+        # col0 must be a number, not a text label
+        try:
+            first_val = int(cells[0].strip())
+        except ValueError:
+            continue
+        # First 9 cells must all be valid par values (3-6)
+        try:
+            par_vals = [int(cells[j].strip()) for j in range(9)]
+        except (ValueError, IndexError):
+            continue
+        if all(3 <= v <= 6 for v in par_vals) and 25 <= sum(par_vals) <= 45:
+            col_map = {start_hole + j: j for j in range(9)}
+            return col_map, i
+    return None
+
+
 def _merge_parsed_halves(
     front: "ParsedScorecardRows",
     back: "ParsedScorecardRows",
@@ -564,6 +637,7 @@ def _extract_2d_from_raw_lines(
     *,
     min_scores: int = 9,
     forced_anchor_line_idx: Optional[int] = None,
+    require_name_match: bool = False,
 ) -> Tuple[Optional[ParsedScorecardRows], int]:
     """Extract all scorecard data using hole-column alignment.
 
@@ -571,6 +645,10 @@ def _extract_2d_from_raw_lines(
     raw_lines of the score anchor row (-1 if not found). The caller can pass
     this value back as forced_anchor_line_idx to extract a second half-table
     at the same row offset, skipping the anchor search entirely.
+
+    When require_name_match=True and a player_name is given, the fallback
+    (first score_candidate after handicap) is disabled — returns (None, -1)
+    if the name is not found. This prevents wrong-player anchor selection.
 
     Returns (None, -1) if fewer than min_scores values could be extracted.
     """
@@ -653,10 +731,29 @@ def _extract_2d_from_raw_lines(
 
         if preferred_name:
             for i, (label, cells, _) in enumerate(classified):
-                if preferred_name in cells[0].lower() or any(preferred_name in c.lower() for c in cells[:3]):
+                # Require an exact-token match in cells[0] to avoid e.g. "t" matching
+                # "White M: 69.1/123". We check cells[0] stripped, and also accept
+                # cells[0] as a prefix like "Tucker (index)".
+                label_cell = cells[0].strip().lower()
+                name_matched = (
+                    label_cell == preferred_name
+                    or label_cell.startswith(preferred_name + " ")
+                    or label_cell.startswith(preferred_name + "(")
+                )
+                if not name_matched:
+                    continue
+                # Validate: row must have at least a few parseable score-range values.
+                d = _extract_values_by_col_map(
+                    cells, col_map, parse_fn=lambda c: _parse_int_cell(c, max_abs=15)
+                )
+                if sum(1 for v in d.values() if v is not None) >= max(2, min_scores // 2):
                     anchor_classified_idx = i
                     anchor_cells = cells
                     break
+
+        if anchor_cells is None and require_name_match and preferred_name:
+            logger.info("2D extract: require_name_match=True but name not found — returning None")
+            return None, -1
 
         if anchor_cells is None:
             for i, (label, cells, raw_idx) in enumerate(classified):
@@ -805,7 +902,12 @@ def _extract_player_name_hint(user_context: Optional[str]) -> Optional[str]:
         m = _ROW_NAME_RE.search(ctx)
     if not m:
         return None
-    return " ".join(w.capitalize() for w in m.group(1).split())
+    name = m.group(1).strip()
+    # Truncate at the first sentence-ending period so "T. scores written…"
+    # yields "T" rather than "T. Scores Written To Par…".
+    if "." in name:
+        name = name[: name.index(".")].strip()
+    return " ".join(w.capitalize() for w in name.split()) or None
 
 
 def _extract_row_hints(user_context: Optional[str]) -> dict:
