@@ -92,7 +92,11 @@ async def list_courses(
     offset: int = Query(0, ge=0),
     user_id: Optional[str] = Query(None),
     db: DatabaseManager = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user),
 ):
+    if user_id:
+        if not current_user or str(current_user.id) != user_id:
+            raise HTTPException(403, "Forbidden")
     courses = await db.courses.list_courses(limit=limit, offset=offset, user_id=user_id)
     return [_summarize_course(c) for c in courses]
 
@@ -108,6 +112,9 @@ async def search_courses(
     db: DatabaseManager = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
+    if user_id:
+        if not current_user or str(current_user.id) != user_id:
+            raise HTTPException(403, "Forbidden")
     effective_user_id = user_id or (str(current_user.id) if current_user else None)
     courses = await db.courses.search_courses(q, user_id=effective_user_id)
     out = [_summarize_course(c) for c in courses]
@@ -201,10 +208,16 @@ async def search_courses(
 
 
 @router.get("/{course_id}")
-async def get_course(course_id: str, db: DatabaseManager = Depends(get_db)):
+async def get_course(
+    course_id: str,
+    db: DatabaseManager = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
     course = await db.courses.get_course(course_id)
     if not course:
         raise HTTPException(404, "Course not found")
+    if course.user_id and (not current_user or str(current_user.id) != str(course.user_id)):
+        raise HTTPException(403, "Forbidden")
     return course
 
 
@@ -227,6 +240,8 @@ async def create_course(
         for t in req.tees
     ]
     effective_user_id = user_id or str(current_user.id)
+    if user_id and user_id != str(current_user.id):
+        raise HTTPException(403, "Forbidden")
 
     course = Course(
         name=req.name,
@@ -273,6 +288,11 @@ async def clone_course(
 ):
     """Clone a master course as a user-owned custom course."""
     try:
+        source = await db.courses.get_course(course_id)
+        if not source:
+            raise HTTPException(404, "Source course not found")
+        if source.user_id and str(source.user_id) != str(current_user.id):
+            raise HTTPException(403, "Forbidden")
         cloned = await db.courses.clone_course(course_id, str(current_user.id))
         return _summarize_course(cloned)
     except NotFoundError:

@@ -527,6 +527,8 @@ async def extract_scan(
             course_model = await db.courses.get_course(course_id)
             if course_model is None:
                 raise HTTPException(404, f"Course {course_id} not found")
+            if course_model.user_id and str(course_model.user_id) != str(current_user.id):
+                raise HTTPException(403, "Forbidden")
         t_course_lookup_end = time.perf_counter()
         logger.info(
             "Scan stage complete: stage=course_lookup has_course_id=%s found=%s lookup_ms=%.1f",

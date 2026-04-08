@@ -90,11 +90,11 @@ async def get_user(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    if str(current_user.id) != user_id:
+        raise HTTPException(403, "Forbidden")
     user = await db.users.get_user(user_id)
     if not user:
         raise HTTPException(404, "User not found")
-    if str(current_user.id) != user_id:
-        return {"id": str(user.id), "name": user.name, "friend_code": user.friend_code}
     return user
 
 
@@ -124,6 +124,8 @@ async def get_user_handicap(
     current_user: User = Depends(get_current_user),
 ):
     """Return the user's current WHS Handicap Index."""
+    if str(current_user.id) != user_id:
+        raise HTTPException(403, "Forbidden")
     user = await db.users.get_user(user_id)
     if not user:
         raise HTTPException(404, "User not found")
@@ -193,7 +195,7 @@ async def update_user_tee(
     if "hole_yardages" in updates and updates["hole_yardages"] is not None:
         updates["hole_yardages"] = {int(k): v for k, v in updates["hole_yardages"].items()}
     try:
-        return await db.user_tees.update_user_tee(tee_id, **updates)
+        return await db.user_tees.update_user_tee(tee_id, user_id=user_id, **updates)
     except NotFoundError:
         raise HTTPException(404, "User tee not found")
 
@@ -208,7 +210,7 @@ async def delete_user_tee(
     """Delete a user tee configuration."""
     if str(current_user.id) != user_id:
         raise HTTPException(403, "Forbidden")
-    deleted = await db.user_tees.delete_user_tee(tee_id)
+    deleted = await db.user_tees.delete_user_tee(tee_id, user_id=user_id)
     if not deleted:
         raise HTTPException(404, "User tee not found")
 

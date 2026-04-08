@@ -106,6 +106,15 @@ async def _check_round_ownership(round_id: str, current_user: User, db: Database
         raise HTTPException(403, "Forbidden")
 
 
+async def _check_course_access(course_id: str, current_user: User, db: DatabaseManager):
+    course = await db.courses.get_course(course_id)
+    if not course:
+        raise HTTPException(404, "Course not found")
+    if course.user_id and str(course.user_id) != str(current_user.id):
+        raise HTTPException(403, "Forbidden")
+    return course
+
+
 @router.get("/{round_id}")
 async def get_round(
     round_id: str,
@@ -145,7 +154,11 @@ async def update_round(
                 )
                 for hs in req.hole_scores
             ]
-            updated = await db.rounds.update_hole_scores(round_id, hole_score_models)
+            updated = await db.rounds.update_hole_scores(
+                round_id,
+                hole_score_models,
+                user_id=str(current_user.id),
+            )
         else:
             updated = await db.rounds.get_round(round_id)
 
@@ -162,7 +175,11 @@ async def update_round(
             meta_updates["tee_box_played"] = req.tee_box
 
         if meta_updates:
-            updated = await db.rounds.update_round(round_id, **meta_updates)
+            updated = await db.rounds.update_round(
+                round_id,
+                user_id=str(current_user.id),
+                **meta_updates,
+            )
 
         return updated
 
@@ -187,10 +204,7 @@ async def link_course_to_round(
     """
     await _check_round_ownership(round_id, current_user, db)
     try:
-        # Verify course exists
-        course = await db.courses.get_course(req.course_id)
-        if not course:
-            raise HTTPException(404, "Course not found")
+        await _check_course_access(req.course_id, current_user, db)
 
         # Fill course gaps from the round's par_played values
         round_ = await db.rounds.get_round(round_id)
@@ -205,7 +219,11 @@ async def link_course_to_round(
         if scan_holes:
             await db.courses.fill_course_gaps(req.course_id, scan_holes)
 
-        updated = await db.rounds.link_course_to_round(round_id, req.course_id)
+        updated = await db.rounds.link_course_to_round(
+            round_id,
+            req.course_id,
+            user_id=str(current_user.id),
+        )
         if not updated:
             raise HTTPException(404, "Round not found")
         return summarize_round(updated)
@@ -223,4 +241,4 @@ async def delete_round(
     current_user: User = Depends(get_current_user),
 ):
     await _check_round_ownership(round_id, current_user, db)
-    await db.rounds.delete_round(round_id)
+    await db.rounds.delete_round(round_id, user_id=str(current_user.id))

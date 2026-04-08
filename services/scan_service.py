@@ -57,6 +57,8 @@ class ScanService:
             except Exception as exc:  # noqa: BLE001
                 raise ValueError("Selected course_id is invalid.") from exc
             if course:
+                if course.user_id and str(course.user_id) != str(req.user_id):
+                    raise ValueError("Selected course is not accessible for this user.")
                 course = await self._maybe_backfill_external_id(course, req)
                 await self._fill_gaps(str(course.id), scan_holes, tees)
                 return course, str(course.id)
@@ -104,17 +106,7 @@ class ScanService:
             await self._fill_gaps(str(course.id), scan_holes, tees)
             return course, str(course.id)
 
-        # Tier 3: another user's course → fill gaps + promote to master
-        course = await self._db.courses.find_any_user_course_by_name(
-            req.course_name, req.course_location
-        )
-        if course:
-            course = await self._maybe_backfill_external_id(course, req)
-            await self._fill_gaps(str(course.id), scan_holes, tees)
-            course = await self._db.courses.promote_to_master(str(course.id))
-            return course, str(course.id)
-
-        # Tier 4: nobody has it → create user-owned course from scan data
+        # Tier 3: nobody has it → create user-owned course from scan data
         holes = [
             Hole(
                 number=h.hole_number,
@@ -213,6 +205,7 @@ class ScanService:
             req.external_course_id
             and course.id
             and not course.external_course_id
+            and (not course.user_id or str(course.user_id) == str(req.user_id))
         ):
             updated = await self._db.courses.update_course(
                 str(course.id),
