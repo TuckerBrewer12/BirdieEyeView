@@ -44,3 +44,13 @@ Copy `.env.example` to `.env` and fill required keys (`GOOGLE_API_KEY`, `MISTRAL
 For production hardening (HTTPS, secret handling, DB network restrictions, security logging), see:
 
 - `SECURITY_DEPLOYMENT.md`
+
+## Secret Safety Checks
+
+Run this before pushing:
+
+```bash
+bash scripts/security/scan_secrets.sh
+```
+
+This fails if common key/token formats are committed, if frontend code references secret env vars, or if frontend tries to call AI providers directly.

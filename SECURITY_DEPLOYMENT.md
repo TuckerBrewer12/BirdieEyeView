@@ -24,6 +24,8 @@ This app now includes runtime security controls, but infra hardening still matte
   - `GOOGLE_API_KEY`
   - `MISTRAL_API_KEY`
   - `GOLFCOURSE_API_KEY`
+- Run `bash scripts/security/scan_secrets.sh` before push.
+- CI also enforces secret scanning via `.github/workflows/secret-scan.yml`.
 
 ## 3) Restrict Direct Database Exposure
 
