@@ -142,6 +142,42 @@ class _TrafficBucket:
     last_alert_ts: float = 0.0
 
 
+@dataclass
+class _RateLimitBucket:
+    events: deque[float] = field(default_factory=deque)
+
+
+class SlidingWindowRateLimiter:
+    """Simple in-memory sliding-window limiter.
+
+    Note: process-local only. For multi-instance deployments, use Redis/shared store.
+    """
+
+    def __init__(self):
+        self._buckets: dict[str, _RateLimitBucket] = defaultdict(_RateLimitBucket)
+
+    def _prune(self, bucket: _RateLimitBucket, now: float, window_seconds: int) -> None:
+        floor = now - window_seconds
+        while bucket.events and bucket.events[0] < floor:
+            bucket.events.popleft()
+
+    def check(self, key: str, *, limit: int, window_seconds: int) -> tuple[bool, int]:
+        """Return (allowed, retry_after_seconds)."""
+        now = time.time()
+        safe_limit = max(1, int(limit))
+        safe_window = max(1, int(window_seconds))
+        bucket = self._buckets[key]
+        self._prune(bucket, now, safe_window)
+
+        if len(bucket.events) >= safe_limit:
+            oldest = bucket.events[0]
+            retry_after = int(max(1.0, safe_window - (now - oldest))) + 1
+            return False, retry_after
+
+        bucket.events.append(now)
+        return True, 0
+
+
 class SecurityTrafficMonitor:
     """In-memory traffic monitor for suspicious request patterns."""
 
@@ -222,4 +258,3 @@ class SecurityTrafficMonitor:
                 auth_fail_count,
                 self._auth_failure_threshold,
             )
-

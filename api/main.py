@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import JSONResponse
 
 logging.basicConfig(
     level=logging.INFO,
@@ -18,12 +19,14 @@ logging.getLogger("llm").setLevel(logging.DEBUG)
 
 from api.security import (
     SecurityTrafficMonitor,
+    SlidingWindowRateLimiter,
     enforce_https_if_needed,
     env_bool,
     env_int,
     parse_allowed_hosts,
     validate_deployment_security,
 )
+from api.auth_utils import get_access_token_cookie_name
 
 APP_ENV = os.environ.get("APP_ENV", "development").strip().lower()
 IS_PROD_LIKE = APP_ENV in {"production", "prod", "staging"}
@@ -78,6 +81,32 @@ def create_app() -> FastAPI:
         auth_failure_threshold=env_int("AUTH_FAILURE_THRESHOLD", 20),
         alert_cooldown_sec=env_int("TRAFFIC_ALERT_COOLDOWN_SECONDS", 60),
     )
+    api_rate_limiter = SlidingWindowRateLimiter()
+    api_rate_window_sec = env_int("API_RATE_LIMIT_WINDOW_SECONDS", 60)
+    api_rate_max_requests = env_int("API_RATE_LIMIT_MAX_REQUESTS", 240)
+    api_rate_max_unauth_requests = env_int("API_RATE_LIMIT_MAX_UNAUTH_REQUESTS", 90)
+    api_scrape_window_sec = env_int("API_SCRAPE_LIMIT_WINDOW_SECONDS", 60)
+    api_scrape_max_requests = env_int("API_SCRAPE_LIMIT_MAX_REQUESTS", 60)
+    api_bot_window_sec = env_int("API_BOT_LIMIT_WINDOW_SECONDS", 60)
+    api_bot_max_requests = env_int("API_BOT_LIMIT_MAX_REQUESTS", 30)
+    api_rate_exempt_paths = {"/api/health"}
+    scrape_heavy_prefixes = ("/api/courses", "/api/stats", "/api/rounds/user")
+
+    def _scrape_group(path: str) -> str:
+        if path.startswith("/api/courses"):
+            return "courses"
+        if path.startswith("/api/stats"):
+            return "stats"
+        if path.startswith("/api/rounds/user"):
+            return "rounds_user"
+        return "other"
+
+    def _looks_like_bot_ua(user_agent: str) -> bool:
+        ua = (user_agent or "").lower()
+        if not ua:
+            return True
+        bot_markers = ("bot", "crawler", "spider", "scrapy", "curl", "wget", "python-requests", "httpx")
+        return any(marker in ua for marker in bot_markers)
 
     def _client_ip(request: Request) -> str:
         fwd = request.headers.get("x-forwarded-for")
@@ -94,6 +123,91 @@ def create_app() -> FastAPI:
         t0 = time.perf_counter()
         ip = _client_ip(request)
         user_agent = request.headers.get("user-agent", "")[:200]
+        path = request.url.path
+
+        if request.method != "OPTIONS" and path.startswith("/api") and path not in api_rate_exempt_paths:
+            cookie_name = get_access_token_cookie_name()
+            has_auth = bool(request.headers.get("authorization")) or bool(request.cookies.get(cookie_name))
+
+            allowed, retry_after = api_rate_limiter.check(
+                f"api:global:{ip}",
+                limit=api_rate_max_requests,
+                window_seconds=api_rate_window_sec,
+            )
+            if not allowed:
+                logging.getLogger(__name__).warning(
+                    "API rate-limit hit: category=global ip=%s method=%s path=%s retry_after=%s",
+                    ip,
+                    request.method,
+                    path,
+                    retry_after,
+                )
+                return JSONResponse(
+                    status_code=429,
+                    content={"detail": "Too many requests. Please slow down."},
+                    headers={"Retry-After": str(retry_after)},
+                )
+
+            if not has_auth:
+                allowed, retry_after = api_rate_limiter.check(
+                    f"api:unauth:{ip}",
+                    limit=api_rate_max_unauth_requests,
+                    window_seconds=api_rate_window_sec,
+                )
+                if not allowed:
+                    logging.getLogger(__name__).warning(
+                        "API rate-limit hit: category=unauth ip=%s method=%s path=%s retry_after=%s",
+                        ip,
+                        request.method,
+                        path,
+                        retry_after,
+                    )
+                    return JSONResponse(
+                        status_code=429,
+                        content={"detail": "Too many unauthenticated requests."},
+                        headers={"Retry-After": str(retry_after)},
+                    )
+
+            if request.method == "GET" and path.startswith(scrape_heavy_prefixes):
+                allowed, retry_after = api_rate_limiter.check(
+                    f"api:scrape:{ip}:{_scrape_group(path)}",
+                    limit=api_scrape_max_requests,
+                    window_seconds=api_scrape_window_sec,
+                )
+                if not allowed:
+                    logging.getLogger(__name__).warning(
+                        "API rate-limit hit: category=scrape ip=%s path=%s retry_after=%s ua=%s",
+                        ip,
+                        path,
+                        retry_after,
+                        user_agent,
+                    )
+                    return JSONResponse(
+                        status_code=429,
+                        content={"detail": "Request rate exceeded for this endpoint."},
+                        headers={"Retry-After": str(retry_after)},
+                    )
+
+            if _looks_like_bot_ua(user_agent):
+                allowed, retry_after = api_rate_limiter.check(
+                    f"api:bot:{ip}",
+                    limit=api_bot_max_requests,
+                    window_seconds=api_bot_window_sec,
+                )
+                if not allowed:
+                    logging.getLogger(__name__).warning(
+                        "API rate-limit hit: category=bot ip=%s path=%s retry_after=%s ua=%s",
+                        ip,
+                        path,
+                        retry_after,
+                        user_agent,
+                    )
+                    return JSONResponse(
+                        status_code=429,
+                        content={"detail": "Automated traffic limit reached."},
+                        headers={"Retry-After": str(retry_after)},
+                    )
+
         try:
             response = await call_next(request)
         except Exception:
@@ -102,7 +216,7 @@ def create_app() -> FastAPI:
                 "Unhandled API exception: ip=%s method=%s path=%s latency_ms=%.1f ua=%s",
                 ip,
                 request.method,
-                request.url.path,
+                path,
                 latency_ms,
                 user_agent,
             )
@@ -110,7 +224,7 @@ def create_app() -> FastAPI:
                 ip=ip,
                 status_code=500,
                 method=request.method,
-                path=request.url.path,
+                path=path,
                 latency_ms=latency_ms,
                 user_agent=user_agent,
             )
@@ -121,7 +235,7 @@ def create_app() -> FastAPI:
             ip=ip,
             status_code=response.status_code,
             method=request.method,
-            path=request.url.path,
+            path=path,
             latency_ms=latency_ms,
             user_agent=user_agent,
         )

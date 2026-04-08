@@ -50,7 +50,25 @@ Recommended:
   - spikes in 5xx
   - unusual request volume per IP
 
-## 5) Baseline Production Environment
+## 5) Abuse Protection / Bot Throttling
+
+Rate limiting is enforced in three places:
+- Login attempts (`/api/auth/login`) with lockout behavior.
+- Account creation (`/api/auth/register`) with IP + email-fingerprint limits.
+- Global API middleware limits (including stricter unauthenticated and scrape-heavy GET limits).
+
+Optional AI throttles are also enforced on `GET /api/ai-insights/{user_id}`.
+
+Key environment controls:
+- `API_RATE_LIMIT_*`
+- `API_SCRAPE_LIMIT_*`
+- `API_BOT_LIMIT_*`
+- `LOGIN_RATE_LIMIT_*`
+- `REGISTER_RATE_LIMIT_*`
+- `FORGOT_PASSWORD_RATE_LIMIT_*`
+- `AI_RATE_LIMIT_*`
+
+## 6) Baseline Production Environment
 
 - `APP_ENV=production`
 - `LOAD_DOTENV=false`
@@ -61,4 +79,4 @@ Recommended:
 - `REQUIRE_DB_SSL=true`
 - `CORS_ALLOW_ORIGINS=https://your-frontend-domain`
 - `ALLOWED_HOSTS=api.your-domain.com`
-
+- `API_RATE_LIMIT_MAX_UNAUTH_REQUESTS=60` (or lower for public deployments)

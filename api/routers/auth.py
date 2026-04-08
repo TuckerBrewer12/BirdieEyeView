@@ -34,6 +34,7 @@ from api.auth_utils import (
 )
 from api.dependencies import get_current_user, get_db
 from api.login_rate_limiter import InMemoryLoginRateLimiter
+from api.security import SlidingWindowRateLimiter
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError
 from models import User
@@ -57,6 +58,8 @@ login_rate_limiter = InMemoryLoginRateLimiter(
     window_seconds=max(_env_int("LOGIN_RATE_LIMIT_WINDOW_SECONDS", 15 * 60), 30),
     lock_seconds=max(_env_int("LOGIN_RATE_LIMIT_LOCK_SECONDS", 15 * 60), 30),
 )
+register_rate_limiter = SlidingWindowRateLimiter()
+auth_request_rate_limiter = SlidingWindowRateLimiter()
 
 
 def _normalize_email(email: str) -> str:
@@ -73,6 +76,28 @@ def _client_ip(request: Request) -> str:
     if fwd:
         return fwd.split(",")[0].strip()
     return request.client.host if request.client else "unknown"
+
+
+def _check_auth_rate_limit(
+    *,
+    limiter: SlidingWindowRateLimiter,
+    key: str,
+    limit: int,
+    window_seconds: int,
+    detail: str,
+) -> int:
+    allowed, retry_after = limiter.check(
+        key,
+        limit=max(1, limit),
+        window_seconds=max(1, window_seconds),
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail=detail,
+            headers={"Retry-After": str(retry_after)},
+        )
+    return retry_after
 
 
 def _build_verification_url(request: Request, token: str) -> str:
@@ -131,6 +156,20 @@ async def _issue_verification_token(db: DatabaseManager, user: User, request: Re
 async def register(req: RegisterRequest, request: Request, db: DatabaseManager = Depends(get_db)):
     normalized_email = _normalize_email(req.email)
     client_ip = _client_ip(request)
+    _check_auth_rate_limit(
+        limiter=register_rate_limiter,
+        key=f"register:ip:{client_ip}",
+        limit=_env_int("REGISTER_RATE_LIMIT_MAX_ATTEMPTS", 5),
+        window_seconds=_env_int("REGISTER_RATE_LIMIT_WINDOW_SECONDS", 3600),
+        detail="Too many account creation attempts. Please try again later.",
+    )
+    _check_auth_rate_limit(
+        limiter=register_rate_limiter,
+        key=f"register:email:{_email_fingerprint(normalized_email)}",
+        limit=_env_int("REGISTER_RATE_LIMIT_PER_EMAIL_ATTEMPTS", 3),
+        window_seconds=_env_int("REGISTER_RATE_LIMIT_PER_EMAIL_WINDOW_SECONDS", 3600),
+        detail="Too many account creation attempts for this email. Please try again later.",
+    )
     existing = await db.users.get_user_by_email(normalized_email)
     if existing:
         logger.warning(
@@ -245,6 +284,13 @@ async def login(
 ):
     normalized_email = _normalize_email(req.email)
     client_ip = _client_ip(request)
+    _check_auth_rate_limit(
+        limiter=auth_request_rate_limiter,
+        key=f"login:req:ip:{client_ip}",
+        limit=_env_int("LOGIN_REQUEST_RATE_LIMIT_MAX_ATTEMPTS", 30),
+        window_seconds=_env_int("LOGIN_REQUEST_RATE_LIMIT_WINDOW_SECONDS", 60),
+        detail="Too many login requests. Please try again shortly.",
+    )
 
     ip_key = f"ip:{client_ip}"
     email_key = f"email:{normalized_email}"
@@ -321,6 +367,13 @@ async def forgot_password(
 ):
     normalized_email = _normalize_email(req.email)
     client_ip = _client_ip(request)
+    _check_auth_rate_limit(
+        limiter=auth_request_rate_limiter,
+        key=f"forgot:req:ip:{client_ip}",
+        limit=_env_int("FORGOT_PASSWORD_RATE_LIMIT_MAX_ATTEMPTS", 10),
+        window_seconds=_env_int("FORGOT_PASSWORD_RATE_LIMIT_WINDOW_SECONDS", 300),
+        detail="Too many reset attempts. Please try again later.",
+    )
     user = await db.users.get_user_by_email(normalized_email)
     if user and user.email_verified:
         cooldown_floor = datetime.now(timezone.utc) - timedelta(seconds=60)
