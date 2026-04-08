@@ -7,7 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from database.db_manager import DatabaseManager
-from api.dependencies import get_current_user, get_db
+from api.dependencies import client_ip, get_current_user, get_db
 from models import User
 from api.schemas import AISuggestionsResponse
 from api.security import SlidingWindowRateLimiter, env_int
@@ -17,14 +17,6 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 ai_rate_limiter = SlidingWindowRateLimiter()
 
-
-def _client_ip(request: Optional[Request]) -> str:
-    if request is None:
-        return "unknown"
-    fwd = request.headers.get("x-forwarded-for")
-    if fwd:
-        return fwd.split(",")[0].strip()
-    return request.client.host if request.client else "unknown"
 
 
 @router.get("/{user_id}", response_model=AISuggestionsResponse)
@@ -39,7 +31,7 @@ async def get_ai_suggestions(
     user_id_str = str(user_id)
     if str(current_user.id) != user_id_str:
         raise HTTPException(403, "Forbidden")
-    ip = _client_ip(request)
+    ip = client_ip(request)
     allowed, retry_after = ai_rate_limiter.check(
         key=f"ai:ip:{ip}",
         limit=env_int("AI_RATE_LIMIT_MAX_REQUESTS", 12),

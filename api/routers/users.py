@@ -15,6 +15,23 @@ from analytics import handicap as hcap
 router = APIRouter()
 
 
+def _validate_hole_yardages_dict(value: Optional[dict]) -> Optional[dict]:
+    if value is None:
+        return None
+    out = {}
+    for raw_k, raw_v in value.items():
+        try:
+            hole_num = int(raw_k)
+        except Exception as exc:  # noqa: BLE001
+            raise ValueError("hole_yardages keys must be numeric hole numbers.") from exc
+        if not (1 <= hole_num <= 18):
+            raise ValueError("hole_yardages hole number must be between 1 and 18.")
+        if raw_v is not None and not (50 <= int(raw_v) <= 900):
+            raise ValueError("hole_yardages value must be between 50 and 900.")
+        out[hole_num] = int(raw_v) if raw_v is not None else None
+    return out
+
+
 class CreateUserTeeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
@@ -32,20 +49,7 @@ class CreateUserTeeRequest(BaseModel):
     @field_validator("hole_yardages")
     @classmethod
     def _validate_hole_yardages(cls, value: Optional[dict]) -> Optional[dict]:
-        if value is None:
-            return None
-        out = {}
-        for raw_k, raw_v in value.items():
-            try:
-                hole_num = int(raw_k)
-            except Exception as exc:  # noqa: BLE001
-                raise ValueError("hole_yardages keys must be numeric hole numbers.") from exc
-            if not (1 <= hole_num <= 18):
-                raise ValueError("hole_yardages hole number must be between 1 and 18.")
-            if raw_v is not None and not (50 <= int(raw_v) <= 900):
-                raise ValueError("hole_yardages value must be between 50 and 900.")
-            out[hole_num] = int(raw_v) if raw_v is not None else None
-        return out
+        return _validate_hole_yardages_dict(value)
 
 
 class UpdateUserTeeRequest(BaseModel):
@@ -66,20 +70,7 @@ class UpdateUserTeeRequest(BaseModel):
     @field_validator("hole_yardages")
     @classmethod
     def _validate_hole_yardages(cls, value: Optional[dict]) -> Optional[dict]:
-        if value is None:
-            return None
-        out = {}
-        for raw_k, raw_v in value.items():
-            try:
-                hole_num = int(raw_k)
-            except Exception as exc:  # noqa: BLE001
-                raise ValueError("hole_yardages keys must be numeric hole numbers.") from exc
-            if not (1 <= hole_num <= 18):
-                raise ValueError("hole_yardages hole number must be between 1 and 18.")
-            if raw_v is not None and not (50 <= int(raw_v) <= 900):
-                raise ValueError("hole_yardages value must be between 50 and 900.")
-            out[hole_num] = int(raw_v) if raw_v is not None else None
-        return out
+        return _validate_hole_yardages_dict(value)
 
 
 class UpdateUserRequest(BaseModel):
@@ -310,11 +301,6 @@ async def send_friend_request(
     """Send (or re-open) a friend request to another user."""
     addressee_user_id: Optional[str] = str(req.addressee_user_id) if req.addressee_user_id else None
     addressee_friend_code = (req.addressee_friend_code or "").strip().upper()
-
-    if addressee_user_id and addressee_friend_code:
-        raise HTTPException(400, "Provide either addressee_user_id or addressee_friend_code, not both")
-    if not addressee_user_id and not addressee_friend_code:
-        raise HTTPException(400, "Provide addressee_friend_code")
 
     if addressee_friend_code:
         target_user = await db.users.get_user_by_friend_code(addressee_friend_code)

@@ -1,7 +1,6 @@
 """Course API endpoints."""
 
 import logging
-import re
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -13,6 +12,7 @@ from api.input_validation import sanitize_search_query, sanitize_user_text
 from api.schemas import CourseSummaryResponse
 from models import Course, Hole, Tee, User
 from services import GolfCourseAPIService
+from services.golfcourse_api_service import _normalize_course_name
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -131,15 +131,6 @@ def _summarize_external_course(item: dict) -> CourseSummaryResponse:
     )
 
 
-def _norm_name(value: Optional[str]) -> str:
-    base = re.sub(r"[^a-z0-9]+", " ", (value or "").lower()).strip()
-    base = re.sub(
-        r"\b(golf|course|club|country|links|gc|cc)\b",
-        " ",
-        base,
-    )
-    return " ".join(base.split())
-
 
 @router.get("", response_model=List[CourseSummaryResponse])
 async def list_courses(
@@ -201,7 +192,7 @@ async def search_courses(
     for i, c in enumerate(out):
         name_key = (c.name or "").strip().lower()
         local_indices_by_name.setdefault(name_key, []).append(i)
-        norm_name_key = _norm_name(c.name)
+        norm_name_key = _normalize_course_name(c.name)
         local_indices_by_norm_name.setdefault(norm_name_key, []).append(i)
     seen_local_external_ids = {
         (c.external_course_id or "").strip()
@@ -219,7 +210,7 @@ async def search_courses(
             (ext_summary.location or "").strip().lower(),
         )
         ext_name_key = (ext_summary.name or "").strip().lower()
-        ext_norm_name = _norm_name(ext_summary.name)
+        ext_norm_name = _normalize_course_name(ext_summary.name)
         if ext_summary.external_course_id and ext_summary.external_course_id in seen_local_external_ids:
             continue
         if ext_key in seen_local_keys:
@@ -333,7 +324,7 @@ async def update_course(
     if existing.user_id != str(current_user.id):
         raise HTTPException(403, "Cannot edit a master course. Clone it first.")
 
-    updates = {k: v for k, v in req.model_dump().items() if v is not None}
+    updates = req.model_dump(exclude_unset=True)
     updated = await db.courses.update_course(str(course_id), user_id=str(current_user.id), **updates)
     if not updated:
         raise HTTPException(404, "Course not found or not owned by user")

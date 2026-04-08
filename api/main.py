@@ -27,6 +27,7 @@ from api.security import (
     validate_deployment_security,
 )
 from api.auth_utils import get_access_token_cookie_name
+from api.dependencies import client_ip
 
 APP_ENV = os.environ.get("APP_ENV", "development").strip().lower()
 IS_PROD_LIKE = APP_ENV in {"production", "prod", "staging"}
@@ -108,12 +109,6 @@ def create_app() -> FastAPI:
         bot_markers = ("bot", "crawler", "spider", "scrapy", "curl", "wget", "python-requests", "httpx")
         return any(marker in ua for marker in bot_markers)
 
-    def _client_ip(request: Request) -> str:
-        fwd = request.headers.get("x-forwarded-for")
-        if fwd:
-            return fwd.split(",")[0].strip()
-        return request.client.host if request.client else "unknown"
-
     @app.middleware("http")
     async def security_middleware(request: Request, call_next):
         redirect = enforce_https_if_needed(request)
@@ -121,7 +116,7 @@ def create_app() -> FastAPI:
             return redirect
 
         t0 = time.perf_counter()
-        ip = _client_ip(request)
+        ip = client_ip(request)
         user_agent = request.headers.get("user-agent", "")[:200]
         path = request.url.path
 

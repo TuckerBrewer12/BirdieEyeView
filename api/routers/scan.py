@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 from PIL import Image, ImageOps
 
-logger = logging.getLogger("uvicorn.error")
+logger = logging.getLogger(__name__)
 
 from database.db_manager import DatabaseManager
 from api.dependencies import get_current_user, get_db
@@ -340,6 +340,24 @@ def _build_round_from_parsed_rows(
     return round_payload, fields_needing_review
 
 
+def _save_upload_to_temp(file: UploadFile, suffix: str) -> tuple[Path, str]:
+    """Stream upload to a temp file enforcing max size. Returns (path, sha256_hex)."""
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        hasher = hashlib.sha256()
+        total_bytes = 0
+        while True:
+            chunk = file.file.read(1024 * 1024)
+            if not chunk:
+                break
+            total_bytes += len(chunk)
+            if total_bytes > MAX_UPLOAD_BYTES:
+                Path(tmp.name).unlink(missing_ok=True)
+                raise HTTPException(413, "File too large. Maximum size is 20 MB.")
+            tmp.write(chunk)
+            hasher.update(chunk)
+        return Path(tmp.name), hasher.hexdigest()
+
+
 async def _run_ocr_pipeline(ocr_path: Path) -> str:
     """Mistral OCR → Gemini merge → raw markdown string."""
     svc = MistralOCRService()
@@ -480,22 +498,7 @@ async def prefetch_ocr(
     complete by the time the user clicks Extract.
     """
     suffix = _extract_upload_suffix(file)
-
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        hasher = hashlib.sha256()
-        total_bytes = 0
-        while True:
-            chunk = file.file.read(1024 * 1024)
-            if not chunk:
-                break
-            total_bytes += len(chunk)
-            if total_bytes > MAX_UPLOAD_BYTES:
-                Path(tmp.name).unlink(missing_ok=True)
-                raise HTTPException(413, "File too large. Maximum size is 20 MB.")
-            tmp.write(chunk)
-            hasher.update(chunk)
-        original_tmp_path = Path(tmp.name)
-    upload_digest = hasher.hexdigest()
+    original_tmp_path, upload_digest = _save_upload_to_temp(file, suffix)
 
     ocr_path = original_tmp_path
     cache_hit = False
@@ -561,22 +564,7 @@ async def extract_scan(
         except ValueError as exc:
             raise HTTPException(422, str(exc))
 
-    # Save upload to temp file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        hasher = hashlib.sha256()
-        total_bytes = 0
-        while True:
-            chunk = file.file.read(1024 * 1024)
-            if not chunk:
-                break
-            total_bytes += len(chunk)
-            if total_bytes > MAX_UPLOAD_BYTES:
-                Path(tmp.name).unlink(missing_ok=True)
-                raise HTTPException(413, "File too large. Maximum size is 20 MB.")
-            tmp.write(chunk)
-            hasher.update(chunk)
-        original_tmp_path = Path(tmp.name)
-    upload_digest = hasher.hexdigest()
+    original_tmp_path, upload_digest = _save_upload_to_temp(file, suffix)
 
     ocr_path = original_tmp_path
     cache_hit = False

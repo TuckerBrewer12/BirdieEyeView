@@ -523,9 +523,8 @@ async def get_course_analytics(
     if not user:
         raise HTTPException(404, "User not found")
 
-    rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=500, offset=0)
-    rounds = list(reversed(rounds_desc))  # chronological order
-    course_rounds = [r for r in rounds if r.course and str(r.course.id) == str(course_id)]
+    rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=500, offset=0, course_id=str(course_id))
+    course_rounds = list(reversed(rounds_desc))
 
     return {
         "course_id": str(course_id),
