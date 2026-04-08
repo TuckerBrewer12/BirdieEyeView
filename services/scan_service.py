@@ -1,14 +1,13 @@
 """Scan save service — orchestrates course resolution, par lookup, and round creation."""
 
 import logging
-import re
 from datetime import datetime
 from typing import List, Optional, Tuple
 
 from api.request_models import CourseHoleInput, SaveRoundRequest, TeeInput
 from database.db_manager import DatabaseManager
 from models import Course, Hole, HoleScore, Round, Tee, UserTee
-from services.golfcourse_api_service import GolfCourseAPIService
+from services.golfcourse_api_service import GolfCourseAPIService, _normalize_course_name
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,11 @@ class ScanService:
         self, req: SaveRoundRequest
     ) -> Tuple[Optional[Course], Optional[str]]:
         """5-tier course resolution. Returns (course, course_id_str)."""
-        await self._maybe_lookup_external_id_from_name(req)
+        ext_id, location = await self._maybe_lookup_external_id_from_name(req)
+        if ext_id:
+            req.external_course_id = ext_id
+        if location:
+            req.course_location = location
         tees = self._build_tees(req)
         scan_holes = req.course_holes or []
 
@@ -138,19 +141,24 @@ class ScanService:
         course = await self._db.courses.create_course(new_course, user_id=req.user_id)
         return course, str(course.id) if course else None
 
-    async def _maybe_lookup_external_id_from_name(self, req: SaveRoundRequest) -> None:
-        """Best-effort provider lookup when UI did not send external_course_id."""
+    async def _maybe_lookup_external_id_from_name(
+        self, req: SaveRoundRequest
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """Best-effort provider lookup when UI did not send external_course_id.
+
+        Returns (external_course_id, location) to apply on the request; both None if not found.
+        """
         if req.external_course_id or not req.course_name:
-            return
+            return None, None
         try:
             rows = await self._course_api.search_external_courses(req.course_name, limit=8)
         except Exception as exc:  # noqa: BLE001
             logger.info("External lookup skipped for '%s': %s", req.course_name, exc)
-            return
+            return None, None
         if not rows:
-            return
+            return None, None
 
-        target = self._normalize_name(req.course_name)
+        target = _normalize_course_name(req.course_name)
 
         # Prefer exact-ish normalized name match; avoid weak fallback binds.
         chosen = None
@@ -161,7 +169,7 @@ class ScanService:
             if not external_id:
                 continue
             name = row.get("name") or ""
-            norm = self._normalize_name(name)
+            norm = _normalize_course_name(name)
             if norm == target or target in norm or norm in target:
                 chosen = row
                 break
@@ -174,26 +182,20 @@ class ScanService:
                 best_overlap = overlap
 
         if chosen and chosen.get("external_course_id"):
-            req.external_course_id = chosen["external_course_id"]
+            ext_id = chosen["external_course_id"]
+            location = None
             if not req.course_location:
                 city = chosen.get("city")
                 state = chosen.get("state")
-                req.course_location = ", ".join([p for p in [city, state] if p]) or None
+                location = ", ".join([p for p in [city, state] if p]) or None
             logger.info(
                 "External lookup resolved for '%s': external_course_id=%s",
                 req.course_name,
-                req.external_course_id,
+                ext_id,
             )
+            return ext_id, location
 
-    @staticmethod
-    def _normalize_name(value: str) -> str:
-        base = re.sub(r"[^a-z0-9]+", " ", (value or "").lower()).strip()
-        base = re.sub(
-            r"\b(golf|course|club|country|links|gc|cc)\b",
-            " ",
-            base,
-        )
-        return " ".join(base.split())
+        return None, None
 
     async def _maybe_backfill_external_id(
         self,
@@ -277,9 +279,9 @@ class ScanService:
             hs_dict = hs.model_dump()
             hole_num = hs_dict.get("hole_number")
             if hole_num is not None:
-                if not hs_dict.get("par_played"):
+                if hs_dict.get("par_played") is None:
                     hs_dict["par_played"] = par_by_hole.get(hole_num)
-                if not hs_dict.get("handicap_played"):
+                if hs_dict.get("handicap_played") is None:
                     hs_dict["handicap_played"] = handicap_by_hole.get(hole_num)
             # Guard against putts > strokes (can occur when score row is to-par
             # and the to-par→absolute conversion didn't happen at extract time).

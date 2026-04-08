@@ -165,8 +165,8 @@ def parse_mistral_scorecard_rows(
         parsed.warnings.append("No OCR text lines found")
         return parsed
 
-    row_hints = _extract_row_hints(user_context)
-    parsed.player_name = _extract_player_name_hint(user_context)
+    row_hints = row_hints_2d
+    parsed.player_name = player_name_2d
     parsed.score_to_par_hint = row_hints["score_to_par"]
     parsed.course_name = _extract_course_name(lines)
     parsed.hole_numbers = _extract_hole_numbers(lines)

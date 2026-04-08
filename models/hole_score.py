@@ -12,7 +12,7 @@ class HoleScore(BaseGolfModel):
     putts: Optional[int] = Field(None, ge=0, le=10)
     shots_to_green: Optional[int] = Field(None, ge=1, le=10)
     fairway_hit: Optional[bool] = None
-    green_in_regulation: Optional[bool] = None
+    green_in_regulation: Optional[bool] = Nonew
     par_played: Optional[int] = Field(None, ge=3, le=6)
     handicap_played: Optional[int] = Field(None, ge=1, le=18)
 
