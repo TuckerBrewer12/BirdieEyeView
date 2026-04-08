@@ -38,16 +38,14 @@ async function callAuth(path: string, body: object) {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const initialToken = localStorage.getItem(TOKEN_KEY);
   const [state, setState] = useState<AuthState>({ userId: null, name: null, email: null });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(initialToken));
 
   // On mount, try to re-hydrate from stored token
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
     fetch("/api/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -99,9 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }
-

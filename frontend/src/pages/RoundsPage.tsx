@@ -263,7 +263,11 @@ export function RoundsPage({ userId }: RoundsPageProps) {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              linkingRoundId === r.id ? closeLink() : openLink(r.id);
+                              if (linkingRoundId === r.id) {
+                                closeLink();
+                              } else {
+                                openLink(r.id);
+                              }
                             }}
                             title="Link to a saved course"
                             className="text-gray-300 hover:text-primary transition-colors shrink-0 opacity-0 group-hover:opacity-100"

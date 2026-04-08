@@ -206,7 +206,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
     } finally {
       setSaving(false);
     }
-  }, [round, roundId, editedScores, editedTeeBox]);
+  }, [round, roundId, editedScores, editedTeeBox, queryClient, userId]);
 
   const handleDelete = useCallback(async () => {
     if (!roundId || deletingRef.current) return;
@@ -270,7 +270,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
     } finally {
       setLinking(false);
     }
-  }, [roundId]);
+  }, [roundId, queryClient]);
 
   if (!round) {
     return (

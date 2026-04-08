@@ -301,7 +301,7 @@ export function useScan(
     } catch (err) {
       update({ error: err instanceof Error ? err.message : "Extraction failed", step: "upload" });
     }
-  }, [file, selectedCourseId, userContext, prefetchedOcrText, update, userId, handleReviewCourseQuery]);
+  }, [file, selectedCourseId, userContext, prefetchedOcrText, update, handleReviewCourseQuery]);
 
   const handleScoreChange = useCallback((index: number, field: "strokes" | "putts" | "hole_number", value: string) => {
     const next = [...editedScores];

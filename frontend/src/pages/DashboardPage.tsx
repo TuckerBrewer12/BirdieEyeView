@@ -16,9 +16,6 @@ import { RecentRoundsTable } from "@/components/dashboard/RecentRoundsTable";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { BentoCard } from "@/components/ui/BentoCard";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Fmt = (v: any, name: any, props: any) => any;
-
 const tooltipStyle = {
   fontSize: 12,
   borderRadius: 12,
@@ -324,7 +321,16 @@ export function DashboardPage({ userId }: DashboardPageProps) {
                   <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#9ca3af" }} tickLine={false} axisLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} tickLine={false} axisLine={false} unit="%" />
                   <Tooltip contentStyle={tooltipStyle}
-                    formatter={((v: number, _: unknown, props: any) => [`${v.toFixed(1)}%`, props.payload.label]) as Fmt}
+                    formatter={(
+                      value: number | string | ReadonlyArray<number | string> | undefined,
+                      _name: string | number | undefined,
+                      item: { payload?: { label?: string } },
+                    ) => {
+                      const base = Array.isArray(value) ? value[0] : value;
+                      const n = typeof base === "number" ? base : Number(base);
+                      const display = Number.isFinite(n) ? `${n.toFixed(1)}%` : `${String(base ?? "")}%`;
+                      return [display, item.payload?.label ?? ""];
+                    }}
                   />
                   <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={28}>
                     {recentDistribution.map((entry) => (

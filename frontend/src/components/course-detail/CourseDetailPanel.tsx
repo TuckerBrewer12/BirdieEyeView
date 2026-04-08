@@ -365,7 +365,6 @@ export function CourseDetailPanel({ courseId, userId, onBack }: CourseDetailPane
 
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
     Promise.all([
       api.getCourse(courseId),
       api.getCourseAnalytics(userId, courseId),
