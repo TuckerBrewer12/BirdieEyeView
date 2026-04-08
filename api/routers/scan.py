@@ -17,6 +17,7 @@ logger = logging.getLogger("uvicorn.error")
 
 from database.db_manager import DatabaseManager
 from api.dependencies import get_current_user, get_db
+from api.input_validation import ensure_uuid_str, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
 from models import User
 from services.gemini_table_merger import merge_split_tables
@@ -30,9 +31,24 @@ OCR_LONG_EDGE_TARGET = 1800
 OCR_JPEG_QUALITY = 75
 PREPROCESS_CACHE_VERSION = "v2"
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
+MAX_OCR_TEXT_CHARS = 300_000
+MAX_USER_CONTEXT_CHARS = 1_500
+MAX_IMAGE_PIXELS = 40_000_000
+MAX_IMAGE_SIDE = 12_000
 PREPROCESS_CACHE_DIR = Path(tempfile.gettempdir()) / "scanscore_ocr_cache"
 PREPROCESS_CACHE_ENABLED = False
 MISTRAL_OCR_MODEL = os.environ.get("MISTRAL_OCR_MODEL") or "mistral-ocr-latest"
+ALLOWED_UPLOAD_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".pdf"}
+ALLOWED_UPLOAD_MIME_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+    "application/pdf",
+    "application/octet-stream",  # some mobile clients use this for HEIC
+}
+ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP", "HEIC", "HEIF"}
 
 
 class ScanResponse(BaseModel):
@@ -40,6 +56,47 @@ class ScanResponse(BaseModel):
     round: dict
     confidence: dict
     fields_needing_review: list
+
+
+def _extract_upload_suffix(file: UploadFile) -> str:
+    filename = (file.filename or "").strip()
+    if not filename:
+        raise HTTPException(400, "Filename is required.")
+    suffix = Path(filename).suffix.lower()
+    if suffix not in ALLOWED_UPLOAD_SUFFIXES:
+        raise HTTPException(400, f"Unsupported file type: {suffix}. Allowed: {', '.join(sorted(ALLOWED_UPLOAD_SUFFIXES))}")
+    content_type = (file.content_type or "").lower().strip()
+    if content_type and content_type not in ALLOWED_UPLOAD_MIME_TYPES:
+        raise HTTPException(400, f"Unsupported upload content type: {content_type}")
+    return suffix
+
+
+def _validate_upload_payload(path: Path, suffix: str) -> None:
+    if suffix == ".pdf":
+        with open(path, "rb") as fh:
+            header = fh.read(5)
+        if header != b"%PDF-":
+            raise HTTPException(400, "Invalid PDF upload.")
+        return
+
+    try:
+        with Image.open(path) as img:
+            img.verify()
+        with Image.open(path) as img:
+            fmt = (img.format or "").upper()
+            if fmt not in ALLOWED_IMAGE_FORMATS:
+                raise HTTPException(400, f"Unsupported image format: {fmt or 'unknown'}")
+            width, height = img.size
+            if width <= 0 or height <= 0:
+                raise HTTPException(400, "Invalid image dimensions.")
+            if width > MAX_IMAGE_SIDE or height > MAX_IMAGE_SIDE:
+                raise HTTPException(400, "Image dimensions exceed allowed size.")
+            if width * height > MAX_IMAGE_PIXELS:
+                raise HTTPException(400, "Image pixel count exceeds allowed size.")
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(400, "Invalid or unreadable image upload.") from exc
 
 
 def _confidence_level(score: float) -> str:
@@ -422,10 +479,7 @@ async def prefetch_ocr(
     Called immediately on file selection so the slow OCR step is already
     complete by the time the user clicks Extract.
     """
-    suffix = Path(file.filename or "upload.jpg").suffix.lower()
-    allowed = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".pdf"}
-    if suffix not in allowed:
-        raise HTTPException(400, f"Unsupported file type: {suffix}")
+    suffix = _extract_upload_suffix(file)
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         hasher = hashlib.sha256()
@@ -446,6 +500,7 @@ async def prefetch_ocr(
     ocr_path = original_tmp_path
     cache_hit = False
     try:
+        _validate_upload_payload(original_tmp_path, suffix)
         ocr_path, cache_hit = _normalize_upload_for_ocr(original_tmp_path, upload_digest)
         markdown_text = await _run_ocr_pipeline(ocr_path)
         logger.info("Prefetch OCR complete: user=%s chars=%d", current_user.id, len(markdown_text))
@@ -480,11 +535,31 @@ async def extract_scan(
         course_id,
         current_user.id,
     )
-    # Validate file type
-    suffix = Path(file.filename or "upload.jpg").suffix.lower()
-    allowed = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".pdf"}
-    if suffix not in allowed:
-        raise HTTPException(400, f"Unsupported file type: {suffix}. Allowed: {', '.join(allowed)}")
+    # Validate file type + metadata.
+    suffix = _extract_upload_suffix(file)
+    if user_context is not None:
+        try:
+            user_context = sanitize_user_text(
+                user_context,
+                field_name="user_context",
+                max_length=MAX_USER_CONTEXT_CHARS,
+                allow_newlines=True,
+                allow_empty=True,
+            )
+        except ValueError as exc:
+            raise HTTPException(422, str(exc))
+    if course_id is not None and course_id.strip():
+        try:
+            course_id = ensure_uuid_str(course_id, "course_id")
+        except ValueError as exc:
+            raise HTTPException(422, str(exc))
+    elif course_id is not None:
+        course_id = None
+    if ocr_text is not None:
+        try:
+            ocr_text = sanitize_ocr_text(ocr_text, max_length=MAX_OCR_TEXT_CHARS)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc))
 
     # Save upload to temp file
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
@@ -503,20 +578,25 @@ async def extract_scan(
         original_tmp_path = Path(tmp.name)
     upload_digest = hasher.hexdigest()
 
-    t_pre_start = time.perf_counter()
-    ocr_path, cache_hit = _normalize_upload_for_ocr(original_tmp_path, upload_digest)
-    t_pre_end = time.perf_counter()
-    logger.info(
-        "Scan preprocessing complete: original=%s ocr_input=%s normalized=%s cache_enabled=%s cache_hit=%s pre_ms=%.1f",
-        original_tmp_path.name,
-        ocr_path.name,
-        ocr_path != original_tmp_path,
-        PREPROCESS_CACHE_ENABLED,
-        cache_hit,
-        (t_pre_end - t_pre_start) * 1000.0,
-    )
+    ocr_path = original_tmp_path
+    cache_hit = False
 
     try:
+        _validate_upload_payload(original_tmp_path, suffix)
+
+        t_pre_start = time.perf_counter()
+        ocr_path, cache_hit = _normalize_upload_for_ocr(original_tmp_path, upload_digest)
+        t_pre_end = time.perf_counter()
+        logger.info(
+            "Scan preprocessing complete: original=%s ocr_input=%s normalized=%s cache_enabled=%s cache_hit=%s pre_ms=%.1f",
+            original_tmp_path.name,
+            ocr_path.name,
+            ocr_path != original_tmp_path,
+            PREPROCESS_CACHE_ENABLED,
+            cache_hit,
+            (t_pre_end - t_pre_start) * 1000.0,
+        )
+
         # Scoring format is inferred from row parser + user_context hints.
         to_par_scoring: Optional[bool] = None
 

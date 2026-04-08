@@ -229,7 +229,7 @@ async def verify_email(req: VerifyEmailRequest, db: DatabaseManager = Depends(ge
 
 @router.get("/verify-email", response_model=MessageResponse)
 async def verify_email_from_link(
-    token: str = Query(..., min_length=20),
+    token: str = Query(..., min_length=20, max_length=512),
     db: DatabaseManager = Depends(get_db),
 ):
     return await _verify_email_token(token, db)
