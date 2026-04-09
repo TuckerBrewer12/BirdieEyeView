@@ -257,7 +257,8 @@ export function ScanUploadStep({
                 onClick={onExtract}
                 className="mt-4 w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition-opacity shadow-sm"
               >
-                <><ScanLine size={17} />Extract Scorecard</>
+                <ScanLine size={17} />
+                Extract Scorecard
               </button>
             </div>
           </motion.div>
