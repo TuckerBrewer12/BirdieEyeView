@@ -149,7 +149,14 @@ async def _issue_verification_token(db: DatabaseManager, user: User, request: Re
         expires_at=expires_at,
     )
     verify_url = _build_verification_url(request, raw_token)
-    send_verification_email(user.email or "", verify_url)
+    try:
+        send_verification_email(user.email or "", verify_url)
+    except Exception:  # noqa: BLE001
+        logger.exception(
+            "Auth verification email send failed: user_id=%s email_fp=%s",
+            user.id,
+            _email_fingerprint(user.email or ""),
+        )
 
 
 @router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
@@ -393,7 +400,15 @@ async def forgot_password(
                 expires_at=expires_at,
             )
             reset_url = _build_password_reset_url(request, raw_token)
-            send_password_reset_email(user.email or "", reset_url)
+            try:
+                send_password_reset_email(user.email or "", reset_url)
+            except Exception:  # noqa: BLE001
+                logger.exception(
+                    "Auth forgot-password email send failed: user_id=%s email_fp=%s ip=%s",
+                    user.id,
+                    _email_fingerprint(normalized_email),
+                    client_ip,
+                )
             logger.info(
                 "Auth forgot-password success: user_id=%s email_fp=%s ip=%s",
                 user.id,
