@@ -16,7 +16,7 @@ from PIL import Image, ImageOps
 logger = logging.getLogger(__name__)
 
 from database.db_manager import DatabaseManager
-from api.dependencies import get_current_user, get_db
+from api.dependencies import get_current_user, get_optional_current_user, get_db
 from api.input_validation import ensure_uuid_str, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
 from models import User
@@ -490,7 +490,7 @@ def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, boo
 @router.post("/ocr")
 async def prefetch_ocr(
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     """Run OCR on an uploaded image and return the raw markdown text.
 
@@ -506,7 +506,7 @@ async def prefetch_ocr(
         _validate_upload_payload(original_tmp_path, suffix)
         ocr_path, cache_hit = _normalize_upload_for_ocr(original_tmp_path, upload_digest)
         markdown_text = await _run_ocr_pipeline(ocr_path)
-        logger.info("Prefetch OCR complete: user=%s chars=%d", current_user.id, len(markdown_text))
+        logger.info("Prefetch OCR complete: user=%s chars=%d", getattr(current_user, "id", "anonymous"), len(markdown_text))
         return {"ocr_text": markdown_text}
     except HTTPException:
         raise
@@ -528,7 +528,7 @@ async def extract_scan(
     course_id: Optional[str] = Form(None),
     ocr_text: Optional[str] = Form(None),
     db: DatabaseManager = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     """Upload a scorecard image, run OCR extraction, return results for review."""
     request_t0 = time.perf_counter()
@@ -536,7 +536,7 @@ async def extract_scan(
         "Scan extract request received: filename=%s course_id=%s user_id=%s",
         file.filename,
         course_id,
-        current_user.id,
+        getattr(current_user, "id", "anonymous"),
     )
     # Validate file type + metadata.
     suffix = _extract_upload_suffix(file)
@@ -595,7 +595,7 @@ async def extract_scan(
             course_model = await db.courses.get_course(course_id)
             if course_model is None:
                 raise HTTPException(404, f"Course {course_id} not found")
-            if course_model.user_id and str(course_model.user_id) != str(current_user.id):
+            if course_model.user_id and (current_user is None or str(course_model.user_id) != str(current_user.id)):
                 raise HTTPException(403, "Forbidden")
         t_course_lookup_end = time.perf_counter()
         logger.info(
