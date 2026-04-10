@@ -77,7 +77,7 @@ class UpdateUserRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     home_course_id: Optional[UUID] = None
-    handicap: Optional[float] = Field(default=None, ge=-10, le=54)
+    handicap: Optional[float] = Field(default=None, gt=0, le=54)
     scoring_goal: Optional[int] = Field(default=None, ge=50, le=150)
 
 
@@ -183,7 +183,13 @@ async def update_user(
 
     updates = req.model_dump(exclude_unset=True)
     if "home_course_id" in updates and updates["home_course_id"] is not None:
-        updates["home_course_id"] = str(updates["home_course_id"])
+        home_course_id = str(updates["home_course_id"])
+        course = await db.courses.get_course(home_course_id)
+        if not course:
+            raise HTTPException(400, "Selected home course was not found")
+        if course.user_id and str(course.user_id) != str(current_user.id):
+            raise HTTPException(403, "Forbidden")
+        updates["home_course_id"] = home_course_id
     if "handicap" in updates:
         updates["handicap_index"] = updates.pop("handicap")
     user = await db.users.update_user(str(user_id), **updates)

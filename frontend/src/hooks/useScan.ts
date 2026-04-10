@@ -151,6 +151,7 @@ export function useScan(
   const [courseQuery, setCourseQuery] = useState("");
   const [courseResults, setCourseResults] = useState<CourseSummary[]>([]);
   const [searching, setSearching] = useState(false);
+  const [prefetchStatus, setPrefetchStatus] = useState<"idle" | "running" | "ready" | "failed">("idle");
 
   const handleCourseQuery = useCallback((q: string) => {
     setCourseQuery(q);
@@ -174,10 +175,13 @@ export function useScan(
   }, [update]);
 
   const activePrefetch = useRef<string | null>(null);
+  const activePrefetchPromise = useRef<{ fileId: string; promise: Promise<string | null> } | null>(null);
 
   const handleFile = useCallback((f: File) => {
     const fileId = `${f.name}-${f.size}-${Date.now()}`;
     activePrefetch.current = fileId;
+    activePrefetchPromise.current = null;
+    setPrefetchStatus("running");
 
     void (async () => {
       const t0 = performance.now();
@@ -198,8 +202,8 @@ export function useScan(
 
       update({ file: processed, preview: URL.createObjectURL(processed), error: null, prefetchedOcrText: null });
 
-      // Kick off OCR immediately in the background so it's ready when user hits Extract
-      void (async () => {
+      // Kick off OCR immediately in the background so it's ready when user hits Extract.
+      const prefetchPromise = (async () => {
         try {
           const ocrForm = new FormData();
           ocrForm.append("file", processed);
@@ -213,14 +217,21 @@ export function useScan(
             // Ensure we don't set state if the user discarded this file or uploaded a new one
             if (activePrefetch.current === fileId) {
                 update({ prefetchedOcrText: ocr_text });
+                setPrefetchStatus("ready");
                 console.info("[scan] OCR prefetch complete: chars=%d", ocr_text.length);
             }
+            return ocr_text;
+          } else if (activePrefetch.current === fileId) {
+            setPrefetchStatus("failed");
           }
         } catch {
           // Prefetch failed silently — extract will fall back to running OCR itself
+          if (activePrefetch.current === fileId) setPrefetchStatus("failed");
           console.info("[scan] OCR prefetch failed, will retry on extract");
         }
+        return null;
       })();
+      activePrefetchPromise.current = { fileId, promise: prefetchPromise };
     })();
   }, [update]);
 
@@ -238,6 +249,13 @@ export function useScan(
     if (!file) return;
     update({ step: "processing", error: null });
 
+    let ocrTextToUse = prefetchedOcrText;
+    const inflight = activePrefetchPromise.current;
+    if (!ocrTextToUse && inflight && activePrefetch.current === inflight.fileId) {
+      const waited = await inflight.promise;
+      if (waited) ocrTextToUse = waited;
+    }
+
     const formData = new FormData();
     formData.append("file", file);
     if (selectedCourseId) {
@@ -246,8 +264,8 @@ export function useScan(
     if (userContext.trim()) {
       formData.append("user_context", userContext.trim());
     }
-    if (prefetchedOcrText) {
-      formData.append("ocr_text", prefetchedOcrText);
+    if (ocrTextToUse) {
+      formData.append("ocr_text", ocrTextToUse);
     }
 
     try {
@@ -304,6 +322,14 @@ export function useScan(
       update({ error: err instanceof Error ? err.message : "Extraction failed", step: "upload" });
     }
   }, [file, selectedCourseId, userContext, prefetchedOcrText, update, handleReviewCourseQuery]);
+
+  useEffect(() => {
+    if (!file) {
+      activePrefetch.current = null;
+      activePrefetchPromise.current = null;
+      setPrefetchStatus("idle");
+    }
+  }, [file]);
 
   const handleScoreChange = useCallback((index: number, field: "strokes" | "putts" | "hole_number", value: string) => {
     const next = [...editedScores];
@@ -524,6 +550,7 @@ export function useScan(
     manualTeeBox,
     setManualTeeBox,
     loadingCourse,
+    prefetchStatus,
 
     // Review course search
     reviewCourseQuery,

@@ -123,9 +123,9 @@ class UserRepositoryDB:
                            (friend_code, name, email, handicap_index, home_course_id, password_hash,
                             email_verified, email_verified_at, last_handicap_update)
                            VALUES ($1, $2, $3, $4, $5, $6,
-                                   COALESCE($7, FALSE),
-                                   CASE WHEN COALESCE($7, FALSE) THEN NOW() ELSE NULL END,
-                                   CASE WHEN $4 IS NULL THEN NULL ELSE NOW() END)
+                                   COALESCE($7::boolean, FALSE),
+                                   CASE WHEN COALESCE($7::boolean, FALSE) THEN NOW() ELSE NULL END,
+                                   CASE WHEN $4::numeric IS NULL THEN NULL ELSE NOW() END)
                            RETURNING *""",
                         friend_code,
                         data["name"],

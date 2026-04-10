@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { parseHandicapInput } from "@/lib/handicap";
 import type { CourseSummary } from "@/types/golf";
 import { Flag } from "lucide-react";
 
@@ -27,6 +28,7 @@ export function RegisterPage() {
   const [homeCourseQuery, setHomeCourseQuery] = useState("");
   const [homeCourseId, setHomeCourseId] = useState<string>("");
   const [courseResults, setCourseResults] = useState<CourseSummary[]>([]);
+  const [searchingCourses, setSearchingCourses] = useState(false);
   const [showCourseResults, setShowCourseResults] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -35,14 +37,27 @@ export function RegisterPage() {
     const q = homeCourseQuery.trim();
     if (q.length < 2) {
       setCourseResults([]);
+      setSearchingCourses(false);
       return;
     }
+    let active = true;
+    setSearchingCourses(true);
     const handle = window.setTimeout(() => {
       api.searchCourses(q)
-        .then((rows) => setCourseResults(rows))
-        .catch(() => setCourseResults([]));
+        .then((rows) => {
+          if (active) setCourseResults(rows);
+        })
+        .catch(() => {
+          if (active) setCourseResults([]);
+        })
+        .finally(() => {
+          if (active) setSearchingCourses(false);
+        });
     }, 250);
-    return () => window.clearTimeout(handle);
+    return () => {
+      active = false;
+      window.clearTimeout(handle);
+    };
   }, [homeCourseQuery]);
 
   const selectCourse = (course: CourseSummary) => {
@@ -63,27 +78,27 @@ export function RegisterPage() {
       return;
     }
     const trimmedCourse = homeCourseQuery.trim();
-    if (trimmedCourse.length > 0 && !homeCourseId) {
-      setError("Select a home course from the list, or leave it blank.");
-      return;
+    const shouldIgnoreUnmatchedHomeCourse = trimmedCourse.length > 0 && !homeCourseId;
+    if (shouldIgnoreUnmatchedHomeCourse) {
+      setHomeCourseQuery("");
+      setShowCourseResults(false);
     }
 
-    let parsedHandicap: number | null = null;
-    if (handicap.trim() !== "") {
-      parsedHandicap = Number(handicap);
-      if (Number.isNaN(parsedHandicap) || parsedHandicap < -10 || parsedHandicap > 54) {
-        setError("Handicap must be between +10 and 54.");
-        return;
-      }
+    const { value: parsedHandicap, error: handicapError } = parseHandicapInput(handicap);
+    if (handicapError) {
+      setError(handicapError);
+      return;
     }
 
     setLoading(true);
     try {
       const message = await register(name, email, password, {
         handicap: parsedHandicap,
-        home_course_id: homeCourseId || null,
+        home_course_id: shouldIgnoreUnmatchedHomeCourse ? null : homeCourseId || null,
       });
-      navigate("/login", { state: { flash: message, email } });
+      navigate(`/verify-pending?email=${encodeURIComponent(email.trim())}`, {
+        state: { flash: message, email: email.trim() },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
@@ -198,14 +213,12 @@ export function RegisterPage() {
               <label htmlFor="reg-handicap" className="block text-xs font-semibold text-gray-500 mb-1.5">Handicap (optional)</label>
               <input
                 id="reg-handicap"
-                type="number"
+                type="text"
+                inputMode="decimal"
                 value={handicap}
                 onChange={(e) => setHandicap(e.target.value)}
-                min={-10}
-                max={54}
-                step="0.1"
                 className={inputClass}
-                placeholder="e.g. 14.2"
+                placeholder="e.g. +5.0"
               />
             </div>
 
@@ -224,23 +237,31 @@ export function RegisterPage() {
                 className={inputClass}
                 placeholder="Type course name..."
               />
-              {showCourseResults && courseResults.length > 0 ? (
+              {showCourseResults && homeCourseQuery.trim().length >= 2 ? (
                 <div className="absolute z-10 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-lg shadow-gray-200/50 max-h-56 overflow-auto">
-                  {courseResults.map((course) => (
-                    <button
-                      key={course.id}
-                      type="button"
-                      onMouseDown={() => selectCourse(course)}
-                      className="w-full text-left px-4 py-2.5 text-sm rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="text-gray-900">{course.name ?? "Unnamed Course"}</div>
-                      {course.location ? <div className="text-xs text-gray-500">{course.location}</div> : null}
-                    </button>
-                  ))}
+                  {searchingCourses ? (
+                    <div className="px-4 py-2.5 text-sm text-gray-500">Searching courses...</div>
+                  ) : courseResults.length > 0 ? (
+                    courseResults.map((course) => (
+                      <button
+                        key={course.id}
+                        type="button"
+                        onMouseDown={() => selectCourse(course)}
+                        className="w-full text-left px-4 py-2.5 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="text-gray-900">{course.name ?? "Unnamed Course"}</div>
+                        {course.location ? <div className="text-xs text-gray-500">{course.location}</div> : null}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2.5 text-sm text-gray-500">
+                      No matching saved course found.
+                    </div>
+                  )}
                 </div>
               ) : null}
               <p className="mt-1 text-xs text-gray-500">
-                Must be selected from existing courses. If it is not in the DB yet, set it later in Settings.
+                Select from suggestions if available. If not found, leave it blank and set it later in Settings.
               </p>
             </div>
 
