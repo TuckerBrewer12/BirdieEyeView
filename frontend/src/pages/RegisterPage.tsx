@@ -96,7 +96,9 @@ export function RegisterPage() {
         handicap: parsedHandicap,
         home_course_id: shouldIgnoreUnmatchedHomeCourse ? null : homeCourseId || null,
       });
-      navigate("/login", { state: { flash: message, email } });
+      navigate(`/verify-pending?email=${encodeURIComponent(email.trim())}`, {
+        state: { flash: message, email: email.trim() },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {

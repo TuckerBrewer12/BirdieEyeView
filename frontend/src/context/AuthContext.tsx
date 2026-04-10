@@ -15,6 +15,7 @@ interface AuthContextValue extends AuthState {
     password: string,
     options?: { handicap?: number | null; home_course_id?: string | null },
   ) => Promise<string>;
+  resendVerification: (email: string) => Promise<string>;
   logout: () => Promise<void>;
   loading: boolean;
 }
@@ -29,6 +30,10 @@ interface AuthUserPayload {
 interface RegisterPayload {
   message: string;
   requires_email_verification: boolean;
+}
+
+interface MessagePayload {
+  message: string;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -105,6 +110,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return data.message;
   };
 
+  const resendVerification = async (email: string) => {
+    const data = await callAuth<MessagePayload>("/resend-verification", { email });
+    return data.message;
+  };
+
   const logout = async () => {
     try {
       await callAuth<{ message: string }>("/logout", {});
@@ -114,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ ...state, login, register, resendVerification, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -126,4 +136,3 @@ export function useAuth(): AuthContextValue {
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }
-

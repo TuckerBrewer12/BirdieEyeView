@@ -5,6 +5,7 @@ import { ScanProvider } from "./context/ScanContext";
 import { AppLayout } from "./components/layout/AppLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { VerifyPendingPage } from "./pages/VerifyPendingPage";
 import { LandingPage } from "./pages/public/LandingPage";
 import { applyTheme, getStoredPublicTheme, getStoredTheme } from "./lib/theme";
 
@@ -38,7 +39,12 @@ function AppRoutes() {
       applyTheme(getStoredTheme());
       return;
     }
-    if (location.pathname === "/" || location.pathname === "/login" || location.pathname === "/register") {
+    if (
+      location.pathname === "/" ||
+      location.pathname === "/login" ||
+      location.pathname === "/register" ||
+      location.pathname === "/verify-pending"
+    ) {
       applyTheme(getStoredPublicTheme());
     }
   }, [userId, location.pathname]);
@@ -57,6 +63,7 @@ function AppRoutes() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-pending" element={<VerifyPendingPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
