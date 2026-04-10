@@ -77,7 +77,7 @@ class UpdateUserRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     home_course_id: Optional[UUID] = None
-    handicap: Optional[float] = Field(default=None, ge=-10, le=54)
+    handicap: Optional[float] = Field(default=None, gt=0, le=54)
     scoring_goal: Optional[int] = Field(default=None, ge=50, le=150)
 
 
