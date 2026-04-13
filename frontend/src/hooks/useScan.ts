@@ -376,7 +376,7 @@ export function useScan(
         ),
       }));
       update({
-        manualCourseHoles: full.holes.map((h) => ({ number: h.number, par: h.par })),
+        manualCourseHoles: full.holes.map((h) => ({ number: h.number, par: h.par, handicap: h.handicap ?? null })),
         manualCourseTees: tees,
       });
     } catch { /* holes/tees stay empty — user can still enter scores */ }
@@ -386,7 +386,7 @@ export function useScan(
   const handleStartEntry = useCallback(() => {
     const holes18 = manualCourseHoles.length > 0
       ? manualCourseHoles
-      : Array.from({ length: 18 }, (_, i) => ({ number: i + 1, par: null }));
+      : Array.from({ length: 18 }, (_, i) => ({ number: i + 1, par: null, handicap: null }));
 
     const emptyScores: ExtractedHoleScore[] = holes18.map((h) => ({
       hole_number: h.number,
