@@ -5,6 +5,7 @@ import type { CourseSummary } from "@/types/golf";
 import type { ScanState, ScanResult, ExtractedHoleScore, ManualTee } from "@/types/scan";
 import { initialScanState } from "@/types/scan";
 import { api } from "@/lib/api";
+import { apiUrl } from "@/lib/apiBase";
 import { initializeScores, countBadScanNulls } from "@/lib/scanUtils";
 
 function normalizeCourseQueryForSearch(value: string): string {
@@ -207,7 +208,7 @@ export function useScan(
         try {
           const ocrForm = new FormData();
           ocrForm.append("file", processed);
-          const res = await fetch("/api/scan/ocr", {
+          const res = await fetch(apiUrl("/api/scan/ocr"), {
             method: "POST",
             credentials: "include",
             body: ocrForm,
@@ -269,7 +270,7 @@ export function useScan(
     }
 
     try {
-      const res = await fetch("/api/scan/extract", {
+      const res = await fetch(apiUrl("/api/scan/extract"), {
         method: "POST",
         credentials: "include",
         body: formData,
@@ -439,7 +440,7 @@ export function useScan(
     update({ error: null });
 
     try {
-      const res = await fetch("/api/scan/save", {
+      const res = await fetch(apiUrl("/api/scan/save"), {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

@@ -1,10 +1,9 @@
 import type { DashboardData, RoundSummary, Round, CourseSummary, Course, User, Milestone, Friendship } from "@/types/golf";
 import type { AnalyticsData, AnalyticsFilters, CourseAnalyticsData, RoundComparison, GoalReport } from "@/types/analytics";
-
-const BASE_URL = "/api";
+import { apiUrl } from "@/lib/apiBase";
 
 async function fetchJSON<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(apiUrl(`/api${path}`), {
     credentials: "include",
   });
   if (!res.ok) {
@@ -14,7 +13,7 @@ async function fetchJSON<T>(path: string): Promise<T> {
 }
 
 async function postJSON<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(apiUrl(`/api${path}`), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -30,7 +29,7 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function putJSON<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(apiUrl(`/api${path}`), {
     method: "PUT",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -46,7 +45,7 @@ async function putJSON<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function patchJSON<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(apiUrl(`/api${path}`), {
     method: "PATCH",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -85,7 +84,7 @@ export const api = {
     postJSON<RoundSummary>(`/rounds/${roundId}/link-course`, { course_id: courseId }),
 
   deleteRound: (roundId: string) =>
-    fetch(`${BASE_URL}/rounds/${roundId}`, {
+    fetch(apiUrl(`/api/rounds/${roundId}`), {
       method: "DELETE",
       credentials: "include",
     }).then((res) => {

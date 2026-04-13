@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { apiUrl } from "@/lib/apiBase";
 import type { ScanResult } from "@/types/scan";
 
 type PublicScanStep = "upload" | "processing" | "review";
@@ -90,7 +91,7 @@ export function usePublicScan() {
         try {
           const form = new FormData();
           form.append("file", processed);
-          const res = await fetch("/api/scan/ocr", {
+          const res = await fetch(apiUrl("/api/scan/ocr"), {
             method: "POST",
             credentials: "include",
             body: form,
@@ -120,7 +121,7 @@ export function usePublicScan() {
       if (userContext.trim()) form.append("user_context", userContext.trim());
       if (prefetchedOcrText.current) form.append("ocr_text", prefetchedOcrText.current);
 
-      const res = await fetch("/api/scan/extract", {
+      const res = await fetch(apiUrl("/api/scan/extract"), {
         method: "POST",
         credentials: "include",
         body: form,

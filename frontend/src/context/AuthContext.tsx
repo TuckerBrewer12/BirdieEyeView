@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { setStoredColorBlindMode } from "@/lib/accessibility";
+import { apiUrl } from "@/lib/apiBase";
 import { applyTheme, setStoredPublicTheme, setStoredTheme } from "@/lib/theme";
 
 interface AuthState {
@@ -45,7 +46,7 @@ interface MessagePayload {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 async function callAuth<T>(path: string, body: object): Promise<T> {
-  const res = await fetch(`/api/auth${path}`, {
+  const res = await fetch(apiUrl(`/api/auth${path}`), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -71,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshSession = useCallback(async (): Promise<AuthState | null> => {
     try {
-      const res = await fetch("/api/auth/me", { credentials: "include" });
+      const res = await fetch(apiUrl("/api/auth/me"), { credentials: "include" });
       if (!res.ok) throw new Error("unauthenticated");
       const data = (await res.json()) as AuthUserPayload;
       const nextState: AuthState = {
