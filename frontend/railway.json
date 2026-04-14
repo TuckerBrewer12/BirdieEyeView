@@ -7,6 +7,6 @@
   "deploy": {
     "startCommand": "npm run serve",
     "healthcheckPath": "/",
-    "healthcheckTimeout": 30
+    "healthcheckTimeout": 120
   }
 }
