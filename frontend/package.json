@@ -11,7 +11,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "serve": "sh -c 'vite preview --host 0.0.0.0 --port ${PORT:-4173} --strictPort'"
+    "serve": "node server.js"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.91.0",
