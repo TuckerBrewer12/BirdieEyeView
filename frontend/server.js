@@ -25,8 +25,24 @@ const mimeTypes = {
   ".txt": "text/plain; charset=utf-8",
 };
 
-function send(res, status, body, contentType = "text/plain; charset=utf-8") {
-  res.writeHead(status, { "Content-Type": contentType });
+const baseSecurityHeaders = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+};
+
+function send(
+  res,
+  status,
+  body,
+  contentType = "text/plain; charset=utf-8",
+  extraHeaders = {},
+) {
+  res.writeHead(status, {
+    ...baseSecurityHeaders,
+    "Content-Type": contentType,
+    ...extraHeaders,
+  });
   res.end(body);
 }
 
@@ -43,18 +59,25 @@ function serveFile(res, filePath) {
 
 const server = http.createServer((req, res) => {
   const rawUrl = req.url || "/";
-  const pathname = decodeURIComponent(rawUrl.split("?")[0] || "/");
+  let pathname = "/";
+  try {
+    pathname = decodeURIComponent(rawUrl.split("?")[0] || "/");
+  } catch {
+    send(res, 400, "Bad Request");
+    return;
+  }
 
   if (pathname === "/health") {
-    send(res, 200, "ok");
+    send(res, 200, "ok", "text/plain; charset=utf-8", { "Cache-Control": "no-store" });
     return;
   }
 
   let requestPath = pathname;
   if (requestPath.endsWith("/")) requestPath += "index.html";
-  const candidate = path.normalize(path.join(distDir, requestPath.replace(/^\/+/, "")));
+  const candidate = path.resolve(distDir, requestPath.replace(/^\/+/, ""));
+  const relative = path.relative(distDir, candidate);
 
-  if (!candidate.startsWith(distDir)) {
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
     send(res, 400, "Bad Request");
     return;
   }

@@ -161,8 +161,11 @@ def parse_allowed_hosts() -> list[str]:
         for name in ("RAILWAY_PROJECT_ID", "RAILWAY_SERVICE_ID", "RAILWAY_ENVIRONMENT_ID")
     )
     if on_railway:
-        # Health checks and routed traffic may arrive on public or internal domains.
-        hosts.extend(["*.up.railway.app", "*.railway.app", "*.railway.internal"])
+        # Railway verification/health probes may use this host.
+        hosts.append("healthcheck.railway.app")
+        # Keep broad Railway host globs only as a fallback when ALLOWED_HOSTS is unset.
+        if not raw:
+            hosts.extend(["*.up.railway.app", "*.railway.app", "*.railway.internal"])
 
     deduped: list[str] = []
     seen = set()
