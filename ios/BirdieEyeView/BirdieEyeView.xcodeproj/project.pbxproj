@@ -1,0 +1,633 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		029EEFBB573A960D59B9D075 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6E9692FDE3849FD1FF379B7 /* AuthManager.swift */; };
+		05E7FBC34500C9D01E52CD8A /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 909FD9913CD3723498CE41C9 /* AppContainer.swift */; };
+		0A90DE0653076156A6675583 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 161D3820894F0CFA4420CE3B /* SettingsView.swift */; };
+		0E73184BA3CBDE8C8F811FF2 /* MetricCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61413D9C82D8725866FB9F00 /* MetricCard.swift */; };
+		108E3BFB422BDB5AC495408F /* AnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D4BEE17A768DC8B28D37C3 /* AnalyticsView.swift */; };
+		2E5C64CABCE6ECF47173BA1E /* APIConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735CFFF16B719F07F2B62F7B /* APIConfig.swift */; };
+		2F0003F460CF2991A5E8491C /* BirdieEyeViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E354FF13A7D8E2CAF2753E47 /* BirdieEyeViewTests.swift */; };
+		329CD07CCEE0D3524EC77877 /* PlaceholderPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9E215D48758C97A12E09FFC /* PlaceholderPageView.swift */; };
+		4F0F364CFE5C5E2B51152281 /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9551AA88BF90E86BEBC7F08 /* MoreView.swift */; };
+		4F4788BFC6178137339B561C /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 631A655A3CB034168897CA0D /* DashboardView.swift */; };
+		552259F21AC2ADC8003E6F0D /* AnalyticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F63D2CEB8F25384A14C75B12 /* AnalyticsViewModel.swift */; };
+		723EFF08BABECC53CFB24AA7 /* KeychainTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF754996A2B0263BAB0AF325 /* KeychainTokenStore.swift */; };
+		75B44DAA11AA1C352A5EAEB6 /* GolfModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFF132D6C73004B324CFA3EF /* GolfModels.swift */; };
+		7CF3CD79BC17870FC668BBFD /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D2B63D9FC9547AED2BB2DE3 /* DashboardViewModel.swift */; };
+		7D40D8A910536DA59C9BF039 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C7551F3B4C53A40D1FC0FCB /* MainTabView.swift */; };
+		892E274F2F2B0E80CEA080CA /* BirdieService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82F8719B09CFA246981F2606 /* BirdieService.swift */; };
+		893737E8D567AABE4CE4002B /* AnalyticsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5327BEAFA05AD9686ACF188F /* AnalyticsModels.swift */; };
+		A38E03E5A0B97C152668E640 /* RoundsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DA393648CDA09DCB41AE353 /* RoundsViewModel.swift */; };
+		A4893CD39C0A8E4047A3525E /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A51BA0872B63E54C5C996B4 /* SettingsViewModel.swift */; };
+		ACAAE5D9EED426435BF74FF3 /* Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA350650381314E0D8AB2A7 /* Formatting.swift */; };
+		B38103A5B1402642B45EADB2 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ACCD337AF656DF498315050 /* RootView.swift */; };
+		BD21606BECF618B07596726F /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 354C90A315B960F458BA3381 /* APIClient.swift */; };
+		C73D81D491B5B7E2A340BAEE /* AuthGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528E74445312BD491A7408E6 /* AuthGateView.swift */; };
+		D70E07FF2E3FF8289295C31C /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6727123910165B01ED1BDC /* APIError.swift */; };
+		E4195572F24E664336AA3E36 /* ScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46310D692E2F6AACB0461D40 /* ScanView.swift */; };
+		E8663C74097162D71C920442 /* BirdieEyeViewApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EF307BFA07B833A283804B3 /* BirdieEyeViewApp.swift */; };
+		F4D3B65D9957A24CDF25DD8A /* RoundsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83017586391E483E543B01FD /* RoundsView.swift */; };
+		FBDA1B104B37066DD0EAC35E /* AuthModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABD5DF58EA1CE9E8E21A8489 /* AuthModels.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		113A07E32D5C5C5576368845 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 89ED56C305CB67568A3A9369 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 482EEA4D09D877E4DF580E36;
+			remoteInfo = BirdieEyeView;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0ACCD337AF656DF498315050 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		11D4BEE17A768DC8B28D37C3 /* AnalyticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsView.swift; sourceTree = "<group>"; };
+		161D3820894F0CFA4420CE3B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		2EF307BFA07B833A283804B3 /* BirdieEyeViewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BirdieEyeViewApp.swift; sourceTree = "<group>"; };
+		301960E6937C456FBEDB6255 /* BirdieEyeViewTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = BirdieEyeViewTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		354C90A315B960F458BA3381 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		46310D692E2F6AACB0461D40 /* ScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanView.swift; sourceTree = "<group>"; };
+		528E74445312BD491A7408E6 /* AuthGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthGateView.swift; sourceTree = "<group>"; };
+		5327BEAFA05AD9686ACF188F /* AnalyticsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsModels.swift; sourceTree = "<group>"; };
+		5A51BA0872B63E54C5C996B4 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
+		5FA350650381314E0D8AB2A7 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
+		61413D9C82D8725866FB9F00 /* MetricCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricCard.swift; sourceTree = "<group>"; };
+		631A655A3CB034168897CA0D /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		735CFFF16B719F07F2B62F7B /* APIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfig.swift; sourceTree = "<group>"; };
+		7D2B63D9FC9547AED2BB2DE3 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
+		82F8719B09CFA246981F2606 /* BirdieService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BirdieService.swift; sourceTree = "<group>"; };
+		83017586391E483E543B01FD /* RoundsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundsView.swift; sourceTree = "<group>"; };
+		8C7551F3B4C53A40D1FC0FCB /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		8DA393648CDA09DCB41AE353 /* RoundsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundsViewModel.swift; sourceTree = "<group>"; };
+		909FD9913CD3723498CE41C9 /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
+		A9551AA88BF90E86BEBC7F08 /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreView.swift; sourceTree = "<group>"; };
+		ABD5DF58EA1CE9E8E21A8489 /* AuthModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthModels.swift; sourceTree = "<group>"; };
+		C9E215D48758C97A12E09FFC /* PlaceholderPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderPageView.swift; sourceTree = "<group>"; };
+		CDDF78C5B17E8623D00C9ADB /* BirdieEyeView.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BirdieEyeView.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D6E9692FDE3849FD1FF379B7 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		DF754996A2B0263BAB0AF325 /* KeychainTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainTokenStore.swift; sourceTree = "<group>"; };
+		E354FF13A7D8E2CAF2753E47 /* BirdieEyeViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BirdieEyeViewTests.swift; sourceTree = "<group>"; };
+		EA6727123910165B01ED1BDC /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
+		F63D2CEB8F25384A14C75B12 /* AnalyticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsViewModel.swift; sourceTree = "<group>"; };
+		FFF132D6C73004B324CFA3EF /* GolfModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GolfModels.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		026DC0A2F9BB5D6C0FF0AAD8 /* BirdieEyeViewTests */ = {
+			isa = PBXGroup;
+			children = (
+				E354FF13A7D8E2CAF2753E47 /* BirdieEyeViewTests.swift */,
+			);
+			path = BirdieEyeViewTests;
+			sourceTree = "<group>";
+		};
+		0E569CE35B3A75FFBFD576AD /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				631A655A3CB034168897CA0D /* DashboardView.swift */,
+				7D2B63D9FC9547AED2BB2DE3 /* DashboardViewModel.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		1511C1523851A497595C8F79 /* BirdieEyeView */ = {
+			isa = PBXGroup;
+			children = (
+				DB0F03934E96609B38DEE6B3 /* App */,
+				3F5B256FB780FD170AADABFF /* Core */,
+				DBECA1A72FEE2D8009B65F5F /* Features */,
+				69537DCC2C42965E83DEBE72 /* Models */,
+				5ECBDA909F0AA2DEDCEB5784 /* Utils */,
+			);
+			path = BirdieEyeView;
+			sourceTree = "<group>";
+		};
+		1DA4013E1C48BDE3C2EBF746 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				DF754996A2B0263BAB0AF325 /* KeychainTokenStore.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		2911BEA48272EACC83E05F93 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				354C90A315B960F458BA3381 /* APIClient.swift */,
+				735CFFF16B719F07F2B62F7B /* APIConfig.swift */,
+				EA6727123910165B01ED1BDC /* APIError.swift */,
+				82F8719B09CFA246981F2606 /* BirdieService.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		3F5B256FB780FD170AADABFF /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				DC1FDC3C287564F7E4B25C90 /* Auth */,
+				2911BEA48272EACC83E05F93 /* Networking */,
+				1DA4013E1C48BDE3C2EBF746 /* Storage */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		42160801F86F211EC79CCB4C /* Analytics */ = {
+			isa = PBXGroup;
+			children = (
+				11D4BEE17A768DC8B28D37C3 /* AnalyticsView.swift */,
+				F63D2CEB8F25384A14C75B12 /* AnalyticsViewModel.swift */,
+			);
+			path = Analytics;
+			sourceTree = "<group>";
+		};
+		5262D59D1B5CC207512C2842 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				61413D9C82D8725866FB9F00 /* MetricCard.swift */,
+				C9E215D48758C97A12E09FFC /* PlaceholderPageView.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		5ECBDA909F0AA2DEDCEB5784 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				5FA350650381314E0D8AB2A7 /* Formatting.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		69537DCC2C42965E83DEBE72 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				5327BEAFA05AD9686ACF188F /* AnalyticsModels.swift */,
+				ABD5DF58EA1CE9E8E21A8489 /* AuthModels.swift */,
+				FFF132D6C73004B324CFA3EF /* GolfModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		75260AC11B002B45A4480CD5 /* Scan */ = {
+			isa = PBXGroup;
+			children = (
+				46310D692E2F6AACB0461D40 /* ScanView.swift */,
+			);
+			path = Scan;
+			sourceTree = "<group>";
+		};
+		7F63CF21FAA45E25CF0FBD3F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CDDF78C5B17E8623D00C9ADB /* BirdieEyeView.app */,
+				301960E6937C456FBEDB6255 /* BirdieEyeViewTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		963ED2606DDE1ACD2713901A /* More */ = {
+			isa = PBXGroup;
+			children = (
+				A9551AA88BF90E86BEBC7F08 /* MoreView.swift */,
+				161D3820894F0CFA4420CE3B /* SettingsView.swift */,
+				5A51BA0872B63E54C5C996B4 /* SettingsViewModel.swift */,
+			);
+			path = More;
+			sourceTree = "<group>";
+		};
+		B10AF427412BAA41D9D27469 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				528E74445312BD491A7408E6 /* AuthGateView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		CC060E1CB1035CE7966A36DB = {
+			isa = PBXGroup;
+			children = (
+				1511C1523851A497595C8F79 /* BirdieEyeView */,
+				026DC0A2F9BB5D6C0FF0AAD8 /* BirdieEyeViewTests */,
+				7F63CF21FAA45E25CF0FBD3F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DB0F03934E96609B38DEE6B3 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				909FD9913CD3723498CE41C9 /* AppContainer.swift */,
+				2EF307BFA07B833A283804B3 /* BirdieEyeViewApp.swift */,
+				0ACCD337AF656DF498315050 /* RootView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		DBECA1A72FEE2D8009B65F5F /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				8C7551F3B4C53A40D1FC0FCB /* MainTabView.swift */,
+				42160801F86F211EC79CCB4C /* Analytics */,
+				B10AF427412BAA41D9D27469 /* Auth */,
+				0E569CE35B3A75FFBFD576AD /* Dashboard */,
+				963ED2606DDE1ACD2713901A /* More */,
+				EF96624FFB13663356AAC623 /* Rounds */,
+				75260AC11B002B45A4480CD5 /* Scan */,
+				5262D59D1B5CC207512C2842 /* Shared */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		DC1FDC3C287564F7E4B25C90 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				D6E9692FDE3849FD1FF379B7 /* AuthManager.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		EF96624FFB13663356AAC623 /* Rounds */ = {
+			isa = PBXGroup;
+			children = (
+				83017586391E483E543B01FD /* RoundsView.swift */,
+				8DA393648CDA09DCB41AE353 /* RoundsViewModel.swift */,
+			);
+			path = Rounds;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		482EEA4D09D877E4DF580E36 /* BirdieEyeView */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1D3F5E1CFED19231A8BDA531 /* Build configuration list for PBXNativeTarget "BirdieEyeView" */;
+			buildPhases = (
+				53342D9679E46845CA9A5D01 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BirdieEyeView;
+			packageProductDependencies = (
+			);
+			productName = BirdieEyeView;
+			productReference = CDDF78C5B17E8623D00C9ADB /* BirdieEyeView.app */;
+			productType = "com.apple.product-type.application";
+		};
+		9592015570E4E86D418AD5B2 /* BirdieEyeViewTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4F7274F866A0E7AD808CF449 /* Build configuration list for PBXNativeTarget "BirdieEyeViewTests" */;
+			buildPhases = (
+				9A18091D175BC2C72A0CFAE9 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E2DF7AA5741B63A659ACED74 /* PBXTargetDependency */,
+			);
+			name = BirdieEyeViewTests;
+			packageProductDependencies = (
+			);
+			productName = BirdieEyeViewTests;
+			productReference = 301960E6937C456FBEDB6255 /* BirdieEyeViewTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		89ED56C305CB67568A3A9369 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					482EEA4D09D877E4DF580E36 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					9592015570E4E86D418AD5B2 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 09EBA33980084A9AC6B6F6E7 /* Build configuration list for PBXProject "BirdieEyeView" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = CC060E1CB1035CE7966A36DB;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 7F63CF21FAA45E25CF0FBD3F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				482EEA4D09D877E4DF580E36 /* BirdieEyeView */,
+				9592015570E4E86D418AD5B2 /* BirdieEyeViewTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		53342D9679E46845CA9A5D01 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BD21606BECF618B07596726F /* APIClient.swift in Sources */,
+				2E5C64CABCE6ECF47173BA1E /* APIConfig.swift in Sources */,
+				D70E07FF2E3FF8289295C31C /* APIError.swift in Sources */,
+				893737E8D567AABE4CE4002B /* AnalyticsModels.swift in Sources */,
+				108E3BFB422BDB5AC495408F /* AnalyticsView.swift in Sources */,
+				552259F21AC2ADC8003E6F0D /* AnalyticsViewModel.swift in Sources */,
+				05E7FBC34500C9D01E52CD8A /* AppContainer.swift in Sources */,
+				C73D81D491B5B7E2A340BAEE /* AuthGateView.swift in Sources */,
+				029EEFBB573A960D59B9D075 /* AuthManager.swift in Sources */,
+				FBDA1B104B37066DD0EAC35E /* AuthModels.swift in Sources */,
+				E8663C74097162D71C920442 /* BirdieEyeViewApp.swift in Sources */,
+				892E274F2F2B0E80CEA080CA /* BirdieService.swift in Sources */,
+				4F4788BFC6178137339B561C /* DashboardView.swift in Sources */,
+				7CF3CD79BC17870FC668BBFD /* DashboardViewModel.swift in Sources */,
+				ACAAE5D9EED426435BF74FF3 /* Formatting.swift in Sources */,
+				75B44DAA11AA1C352A5EAEB6 /* GolfModels.swift in Sources */,
+				723EFF08BABECC53CFB24AA7 /* KeychainTokenStore.swift in Sources */,
+				7D40D8A910536DA59C9BF039 /* MainTabView.swift in Sources */,
+				0E73184BA3CBDE8C8F811FF2 /* MetricCard.swift in Sources */,
+				4F0F364CFE5C5E2B51152281 /* MoreView.swift in Sources */,
+				329CD07CCEE0D3524EC77877 /* PlaceholderPageView.swift in Sources */,
+				B38103A5B1402642B45EADB2 /* RootView.swift in Sources */,
+				F4D3B65D9957A24CDF25DD8A /* RoundsView.swift in Sources */,
+				A38E03E5A0B97C152668E640 /* RoundsViewModel.swift in Sources */,
+				E4195572F24E664336AA3E36 /* ScanView.swift in Sources */,
+				0A90DE0653076156A6675583 /* SettingsView.swift in Sources */,
+				A4893CD39C0A8E4047A3525E /* SettingsViewModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9A18091D175BC2C72A0CFAE9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2F0003F460CF2991A5E8491C /* BirdieEyeViewTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E2DF7AA5741B63A659ACED74 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 482EEA4D09D877E4DF580E36 /* BirdieEyeView */;
+			targetProxy = 113A07E32D5C5C5576368845 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0CBDA2FAAF6D3F5D126C3135 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BirdieEyeView.app/BirdieEyeView";
+			};
+			name = Release;
+		};
+		1F99BCB0DE58906552C5DFFB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.birdieeyeview.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		28C57BB8A75C0158C606D6B7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = BirdieEyeView/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.birdieeyeview.ios;
+				PRODUCT_NAME = BirdieEyeView;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2923030DBD52DE3D0EA8AEF2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = BirdieEyeView/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.birdieeyeview.ios;
+				PRODUCT_NAME = BirdieEyeView;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		404FB556C1E827B3FFB80DA0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.birdieeyeview.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B55A283499C037343791A5D0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BirdieEyeView.app/BirdieEyeView";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		09EBA33980084A9AC6B6F6E7 /* Build configuration list for PBXProject "BirdieEyeView" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				404FB556C1E827B3FFB80DA0 /* Debug */,
+				1F99BCB0DE58906552C5DFFB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		1D3F5E1CFED19231A8BDA531 /* Build configuration list for PBXNativeTarget "BirdieEyeView" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				28C57BB8A75C0158C606D6B7 /* Debug */,
+				2923030DBD52DE3D0EA8AEF2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4F7274F866A0E7AD808CF449 /* Build configuration list for PBXNativeTarget "BirdieEyeViewTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B55A283499C037343791A5D0 /* Debug */,
+				0CBDA2FAAF6D3F5D126C3135 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 89ED56C305CB67568A3A9369 /* Project object */;
+}

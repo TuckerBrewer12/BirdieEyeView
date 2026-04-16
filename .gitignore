@@ -18,3 +18,10 @@ frontend/dist/
 
 # Session notes
 sessions/
+
+# macOS / Xcode
+.DS_Store
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
