@@ -51,6 +51,17 @@ ALLOWED_UPLOAD_MIME_TYPES = {
 ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP", "HEIC", "HEIF"}
 
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+# Disabled by default to avoid leaking OCR/user content into aggregated logs.
+LOG_SENSITIVE_OCR_DEBUG = _env_bool("LOG_SENSITIVE_OCR_DEBUG", False)
+
+
 class ScanResponse(BaseModel):
     """Response from scorecard extraction."""
     round: dict
@@ -247,28 +258,38 @@ def _build_round_from_parsed_rows(
     putt_vals = list(_safe_list_attr("putts_row")[:hole_count])
     while len(putt_vals) < hole_count:
         putt_vals.append(None)
+    raw_putt_vals = list(_safe_list_attr("raw_putts_row")[:hole_count])
+    while len(raw_putt_vals) < hole_count:
+        raw_putt_vals.append(None)
     gir_vals = list(_safe_list_attr("gir_row")[:hole_count])
     while len(gir_vals) < hole_count:
         gir_vals.append(None)
     shots_vals = list(_safe_list_attr("shots_to_green_row")[:hole_count])
     while len(shots_vals) < hole_count:
         shots_vals.append(None)
+    raw_shots_vals = list(_safe_list_attr("raw_shots_to_green_row")[:hole_count])
+    while len(raw_shots_vals) < hole_count:
+        raw_shots_vals.append(None)
 
     effective_to_par = to_par_scoring if to_par_scoring is not None else (parsed.score_to_par_hint is True)
 
     hole_scores: List[Dict] = []
     for i in range(1, hole_count + 1):
         raw_score = score_vals[i - 1]
+        sign_putts = raw_putt_vals[i - 1] if raw_putt_vals[i - 1] is not None else putt_vals[i - 1]
+        sign_shots = raw_shots_vals[i - 1] if raw_shots_vals[i - 1] is not None else shots_vals[i - 1]
         if (
             effective_to_par is True
             and raw_score == 1
-            and shots_vals[i - 1] is not None
-            and putt_vals[i - 1] is not None
+            and sign_shots is not None
+            and sign_putts is not None
+            and 1 <= sign_shots <= 10
+            and 0 <= sign_putts <= 6
             and hole_par_lookup.get(i) is not None
         ):
             # OCR can miss the minus sign and read "-1" as "1".
             # Use shots+putts vs par to disambiguate when possible.
-            est = (shots_vals[i - 1] + putt_vals[i - 1]) - hole_par_lookup[i]  # type: ignore[index]
+            est = (sign_shots + sign_putts) - hole_par_lookup[i]  # type: ignore[index]
             if est in (-1, 1):
                 if est != raw_score:
                     fields_needing_review.append(
@@ -364,7 +385,7 @@ async def _run_ocr_pipeline(ocr_path: Path) -> str:
     ocr_resp = await svc.ocr_file(ocr_path)
 
     pages = ocr_resp.get("pages")
-    if isinstance(pages, list):
+    if LOG_SENSITIVE_OCR_DEBUG and isinstance(pages, list):
         for page_idx, page in enumerate(pages):
             if not isinstance(page, dict):
                 continue
@@ -376,15 +397,18 @@ async def _run_ocr_pipeline(ocr_path: Path) -> str:
                     continue
                 html_table = table.get("content")
                 if isinstance(html_table, str) and html_table.strip():
-                    logger.info(
-                        "=== MISTRAL HTML TABLE page=%d table=%d ===\n%s\n=== END MISTRAL HTML TABLE ===",
+                    logger.debug(
+                        "Mistral HTML table page=%d table=%d:\n%s",
                         page_idx,
                         table_idx,
                         html_table,
                     )
 
     raw_markdown = MistralOCRService.extract_markdown_text(ocr_resp)
-    logger.info("=== MISTRAL RAW MARKDOWN ===\n%s\n=== END MISTRAL RAW MARKDOWN ===", raw_markdown)
+    if LOG_SENSITIVE_OCR_DEBUG:
+        logger.debug("Mistral raw markdown:\n%s", raw_markdown)
+    else:
+        logger.info("Mistral OCR produced markdown chars=%d", len(raw_markdown))
     return await merge_split_tables(raw_markdown)
 
 
@@ -617,7 +641,10 @@ async def extract_scan(
                 len(markdown_text),
             )
 
-        logger.info("=== MERGED MARKDOWN ===\n%s\n=== END MERGED MARKDOWN ===", markdown_text)
+        if LOG_SENSITIVE_OCR_DEBUG:
+            logger.debug("Merged markdown:\n%s", markdown_text)
+        else:
+            logger.info("Merged OCR markdown chars=%d", len(markdown_text))
 
         t_parse_start = time.perf_counter()
         parsed_rows = parse_mistral_scorecard_rows(markdown_text, user_context=user_context)
