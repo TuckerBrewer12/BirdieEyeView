@@ -46,33 +46,33 @@ export function StickyScoreBar({ kpis, triggerAt = 300 }: StickyScoreBarProps) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -44 }}
           transition={{ duration: 0.28, ease: "easeInOut" }}
-          className="sticky-score-bar fixed top-0 left-56 right-0 z-40 bg-white/85 backdrop-blur-md border-b border-gray-100 shadow-sm"
+          className="sticky-score-bar fixed top-0 left-0 md:left-56 right-0 z-40 bg-white/85 backdrop-blur-md border-b border-gray-100 shadow-sm"
         >
-          <div className="px-8 py-2 flex items-center gap-8">
-            <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">
+          <div className="px-4 md:px-8 py-2 flex items-center gap-4 md:gap-8">
+            <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest hidden sm:block">
               Your Stats
             </span>
-            <div className="flex items-center gap-6 divide-x divide-gray-100">
+            <div className="flex items-center gap-4 md:gap-6 divide-x divide-gray-100 overflow-x-auto">
               <StatPill label="HI" value={formatHI(kpis.handicap_index)} />
-              <div className="pl-6">
+              <div className="pl-4 md:pl-6">
                 <StatPill
                   label="Avg"
                   value={kpis.scoring_average != null ? String(kpis.scoring_average) : "—"}
                 />
               </div>
-              <div className="pl-6">
+              <div className="pl-4 md:pl-6">
                 <StatPill
                   label="GIR"
                   value={kpis.gir_percentage != null ? `${kpis.gir_percentage}%` : "—"}
                 />
               </div>
-              <div className="pl-6">
+              <div className="pl-4 md:pl-6 hidden sm:block">
                 <StatPill
                   label="Putts/GIR"
                   value={kpis.putts_per_gir != null ? String(kpis.putts_per_gir) : "—"}
                 />
               </div>
-              <div className="pl-6">
+              <div className="pl-4 md:pl-6 hidden sm:block">
                 <StatPill
                   label="Scrambling"
                   value={kpis.scrambling_percentage != null ? `${kpis.scrambling_percentage}%` : "—"}

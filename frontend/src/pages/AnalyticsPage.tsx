@@ -21,6 +21,7 @@ import { StickyScoreBar } from "@/components/analytics/StickyScoreBar";
 import { BestRoundCard } from "@/components/analytics/BestRoundCard";
 import { ParMatrixGrid } from "@/components/analytics/ParMatrixGrid";
 import { AnalyticsFilterBar } from "@/components/analytics/AnalyticsFilterBar";
+import { MobileAnalyticsPage } from "@/components/analytics/MobileAnalyticsPage";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -379,6 +380,35 @@ export function AnalyticsPage({ userId }: { userId: string }) {
 
   return (
     <div>
+      {/* ── Mobile layout ─────────────────────────────────────────────────── */}
+      <div className="md:hidden">
+        <MobileAnalyticsPage
+          data={data}
+          filters={filters}
+          setFilters={setFilters}
+          playedCourses={playedCourses}
+          hasHomeCourse={!!user?.home_course_id}
+          scoreTrendWithAvg={scoreTrendWithAvg}
+          donutData={donutData}
+          girData={girData}
+          threePuttsData={threePuttsData}
+          insights={insights}
+          bestRound={bestRound}
+          avgPutts={avgPutts}
+          trendPrimary={trendPrimary}
+          trendSecondary={trendSecondary}
+          trendTertiary={trendTertiary}
+          successColor={successColor}
+          dangerColor={dangerColor}
+          neutralColor={neutralColor}
+          gridColor={gridColor}
+          mutedFill={mutedFill}
+          scoreColors={scoreColors}
+        />
+      </div>
+
+      {/* ── Desktop layout ────────────────────────────────────────────────── */}
+      <div className="hidden md:block">
       {/* ── Sticky bar ────────────────────────────────────────────────────── */}
       <StickyScoreBar kpis={kpis} />
 
@@ -729,6 +759,7 @@ export function AnalyticsPage({ userId }: { userId: string }) {
 
         </div>
       </ScrollSection>
+      </div>{/* end desktop */}
     </div>
   );
 }

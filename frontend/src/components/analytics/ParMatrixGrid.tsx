@@ -47,9 +47,11 @@ export function ParMatrixGrid({ rows }: ParMatrixGridProps) {
 
       {/* Card grid */}
       {filteredRows.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-2 md:overflow-x-visible lg:grid-cols-3">
           {filteredRows.map(row => (
-            <YardageAnalysisCard key={`${row.par}-${row.bucket_label}`} row={row} />
+            <div key={`${row.par}-${row.bucket_label}`} className="shrink-0 w-[200px] md:w-auto">
+              <YardageAnalysisCard row={row} />
+            </div>
           ))}
         </div>
       ) : (
