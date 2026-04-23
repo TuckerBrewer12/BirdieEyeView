@@ -12,6 +12,7 @@ interface BestRoundCardProps {
   scoreTrend: ScoreTrendRow[];
   netScoreTrend: NetScoreTrendRow[];
   achievements: NotableAchievements;
+  compact?: boolean;
 }
 
 function formatToPar(v: number | null | undefined): string {
@@ -85,7 +86,7 @@ function MiniScorecard({ round, palette }: { round: Round; palette?: ChartPalett
   );
 }
 
-export function BestRoundCard({ scoreTrend, netScoreTrend, achievements }: BestRoundCardProps) {
+export function BestRoundCard({ scoreTrend, netScoreTrend, achievements, compact = false }: BestRoundCardProps) {
   const [roundDetail, setRoundDetail] = useState<Round | null>(null);
   const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
   const colorBlindPalette = useMemo(() => getColorBlindPalette(colorBlindMode), [colorBlindMode]);
@@ -100,6 +101,25 @@ export function BestRoundCard({ scoreTrend, netScoreTrend, achievements }: BestR
     if (!best?.round_id) return null;
     return netScoreTrend.find((r) => r.round_id === best.round_id) ?? null;
   }, [best, netScoreTrend]);
+
+  const scoreCounts = useMemo(() => {
+    if (!roundDetail) return null;
+    const holes = roundDetail.hole_scores.filter((h) => h.strokes != null && h.par_played != null);
+    const eagles  = holes.filter((h) => h.strokes! - h.par_played! <= -2).length;
+    const birdies = holes.filter((h) => h.strokes! - h.par_played! === -1).length;
+    const pars    = holes.filter((h) => h.strokes! - h.par_played! === 0).length;
+    const bogeys  = holes.filter((h) => h.strokes! - h.par_played! === 1).length;
+    const doubles = holes.filter((h) => h.strokes! - h.par_played! === 2).length;
+    const triples = holes.filter((h) => h.strokes! - h.par_played! >= 3).length;
+    return [
+      ...(eagles  > 0 ? [{ n: eagles,  label: "Eagle+", color: "#b45309" }] : []),
+      ...(birdies > 0 ? [{ n: birdies, label: "Birdie", color: "#059669" }] : []),
+      ...(pars    > 0 ? [{ n: pars,    label: "Par",    color: "#9ca3af" }] : []),
+      ...(bogeys  > 0 ? [{ n: bogeys,  label: "Bogey",  color: "#ef4444" }] : []),
+      ...(doubles > 0 ? [{ n: doubles, label: "Double", color: "#3b82f6" }] : []),
+      ...(triples > 0 ? [{ n: triples, label: "Triple+",color: "#8b5cf6" }] : []),
+    ];
+  }, [roundDetail]);
 
   useEffect(() => {
     if (best?.round_id) {
@@ -118,53 +138,71 @@ export function BestRoundCard({ scoreTrend, netScoreTrend, achievements }: BestR
       className="relative overflow-hidden rounded-2xl bg-white border border-gray-100 text-gray-900 p-4 shadow-sm"
     >
 
-      <div className="flex items-start justify-between gap-4">
-        {/* Left — score info */}
-        <div className="shrink-0">
-          <div className="flex items-center gap-2 mb-2">
-            <Trophy size={13} className="text-amber-400" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-              Best Round
-            </span>
-          </div>
-          <div className="text-5xl font-black tracking-tight leading-none">
-            {best.total_score}
-          </div>
-          <div className="mt-1.5 flex items-baseline gap-2.5">
-            <span
-              className={`text-xl font-bold ${(best.to_par ?? 0) <= 0 ? "text-primary" : ""}`}
-              style={(best.to_par ?? 0) > 0 ? { color: colorBlindPalette?.score.bogey ?? "#ef4444" } : undefined}
-            >
-              {formatToPar(best.to_par)}
-            </span>
-            {event && (
-              <span className="text-xs text-gray-400">
-                {event.course}
-                {event.date ? ` · ${new Date(event.date).toLocaleDateString()}` : ""}
-              </span>
-            )}
-          </div>
-          {bestNet?.net_score != null && (
-            <div className="mt-2 flex items-baseline gap-1.5">
-              <span className="text-sm font-semibold text-gray-700">{bestNet.net_score}</span>
-              <span className="text-xs text-gray-400">net</span>
-              {bestNet.course_handicap != null && (
-                <span className="text-xs text-gray-400">· hdcp {bestNet.course_handicap}</span>
+      {compact ? (
+        <div className="flex flex-col gap-3">
+          {/* Top row: score left, chips + net/hdcp right */}
+          <div className="flex items-start justify-between gap-3">
+            {/* Left: score */}
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <Trophy size={13} className="text-amber-400" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Best Round
+                </span>
+              </div>
+              <div className="text-3xl font-black tracking-tight leading-none">{best.total_score}</div>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span
+                  className={`text-base font-bold ${(best.to_par ?? 0) <= 0 ? "text-primary" : ""}`}
+                  style={(best.to_par ?? 0) > 0 ? { color: colorBlindPalette?.score.bogey ?? "#ef4444" } : undefined}
+                >
+                  {formatToPar(best.to_par)}
+                </span>
+                {event?.course && (
+                  <span className="text-xs text-gray-400 truncate max-w-[90px]">{event.course}</span>
+                )}
+              </div>
+              {best.round_id && (
+                <Link
+                  to={`/rounds/${best.round_id}`}
+                  className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-gray-400 hover:text-primary transition-colors"
+                >
+                  View <ArrowRight size={10} />
+                </Link>
               )}
             </div>
-          )}
-          {best.round_id && (
-            <Link
-              to={`/rounds/${best.round_id}`}
-              className="inline-flex items-center gap-1.5 mt-3 text-xs font-semibold text-gray-400 hover:text-primary transition-colors"
-            >
-              View scorecard <ArrowRight size={11} />
-            </Link>
-          )}
-        </div>
 
-        {/* Right — mini scorecard */}
-        <div className="flex-1 min-w-0">
+            {/* Right: chips + net/hdcp */}
+            <div className="flex flex-col items-end gap-2">
+              {scoreCounts && scoreCounts.length > 0 && (
+                <div className="flex flex-wrap justify-end gap-1">
+                  {scoreCounts.map((chip) => (
+                    <div
+                      key={chip.label}
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded-md"
+                      style={{ background: chip.color }}
+                    >
+                      <span className="text-xs font-black text-white leading-none">{chip.n}</span>
+                      <span className="text-[9px] font-bold text-white/80 uppercase tracking-wide leading-none">
+                        {chip.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {bestNet?.net_score != null && (
+                <div className="flex items-baseline gap-1">
+                  <span className="text-sm font-semibold text-gray-700">{bestNet.net_score}</span>
+                  <span className="text-xs text-gray-400">net</span>
+                  {bestNet.course_handicap != null && (
+                    <span className="text-xs text-gray-400">· hdcp {bestNet.course_handicap}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Hole grid */}
           {roundDetail ? (
             <MiniScorecard round={roundDetail} palette={colorBlindPalette} />
           ) : (
@@ -172,18 +210,75 @@ export function BestRoundCard({ scoreTrend, netScoreTrend, achievements }: BestR
               {[0, 1].map((row) => (
                 <div key={row} className="flex gap-1">
                   {Array.from({ length: 9 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="flex-1 rounded animate-pulse"
-                      style={{ height: 22, background: "#f3f4f6" }}
-                    />
+                    <div key={i} className="flex-1 rounded animate-pulse" style={{ height: 22, background: "#f3f4f6" }} />
                   ))}
                 </div>
               ))}
             </div>
           )}
         </div>
-      </div>
+      ) : (
+        <div className="flex items-start justify-between gap-4">
+          {/* Score info */}
+          <div className="shrink-0">
+            <div className="flex items-center gap-2 mb-2">
+              <Trophy size={13} className="text-amber-400" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                Best Round
+              </span>
+            </div>
+            <div className="text-5xl font-black tracking-tight leading-none">{best.total_score}</div>
+            <div className="mt-1.5 flex items-baseline gap-2.5">
+              <span
+                className={`text-xl font-bold ${(best.to_par ?? 0) <= 0 ? "text-primary" : ""}`}
+                style={(best.to_par ?? 0) > 0 ? { color: colorBlindPalette?.score.bogey ?? "#ef4444" } : undefined}
+              >
+                {formatToPar(best.to_par)}
+              </span>
+              {event && (
+                <span className="text-xs text-gray-400">
+                  {event.course}
+                  {event.date ? ` · ${new Date(event.date).toLocaleDateString()}` : ""}
+                </span>
+              )}
+            </div>
+            {bestNet?.net_score != null && (
+              <div className="mt-2 flex items-baseline gap-1.5">
+                <span className="text-sm font-semibold text-gray-700">{bestNet.net_score}</span>
+                <span className="text-xs text-gray-400">net</span>
+                {bestNet.course_handicap != null && (
+                  <span className="text-xs text-gray-400">· hdcp {bestNet.course_handicap}</span>
+                )}
+              </div>
+            )}
+            {best.round_id && (
+              <Link
+                to={`/rounds/${best.round_id}`}
+                className="inline-flex items-center gap-1.5 mt-3 text-xs font-semibold text-gray-400 hover:text-primary transition-colors"
+              >
+                View scorecard <ArrowRight size={11} />
+              </Link>
+            )}
+          </div>
+
+          {/* Mini scorecard */}
+          <div className="flex-1 min-w-0">
+            {roundDetail ? (
+              <MiniScorecard round={roundDetail} palette={colorBlindPalette} />
+            ) : (
+              <div className="flex flex-col gap-1">
+                {[0, 1].map((row) => (
+                  <div key={row} className="flex gap-1">
+                    {Array.from({ length: 9 }).map((_, i) => (
+                      <div key={i} className="flex-1 rounded animate-pulse" style={{ height: 22, background: "#f3f4f6" }} />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

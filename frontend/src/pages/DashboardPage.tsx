@@ -8,6 +8,7 @@ import {
 } from "recharts";
 import { SVGScoreHandicapTrend } from "@/components/dashboard/SVGScoreHandicapTrend";
 import { MilestoneFeed } from "@/components/dashboard/MilestoneFeed";
+import { MobileDashboard } from "@/components/dashboard/MobileDashboard";
 import { api } from "@/lib/api";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette } from "@/lib/chartPalettes";
@@ -283,6 +284,30 @@ export function DashboardPage({ userId }: DashboardPageProps) {
 
   return (
     <div>
+      {/* Mobile layout */}
+      <div className="md:hidden">
+        <MobileDashboard
+          data={data}
+          trends={trends}
+          user={user ?? null}
+          goalReport={goalReport ?? null}
+          dualData={dualData}
+          recentMilestones={recentMilestones}
+          last20ScoringAvg={last20ScoringAvg}
+          girPct={girPct}
+          recentDistribution={recentDistribution}
+          scramblingPct={scramblingPct}
+          upAndDownPct={upAndDownPct}
+          putts={putts}
+          scoreLineColor={scoreLineColor}
+          handicapLineColor={handicapLineColor}
+          girColor={girColor}
+          mutedFill={mutedFill}
+        />
+      </div>
+
+      {/* Desktop layout */}
+      <div className="hidden md:block">
       <ScrollSection>
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
@@ -486,7 +511,9 @@ export function DashboardPage({ userId }: DashboardPageProps) {
 
           {/* 10. Recent Rounds — fills remaining cols of last row */}
           <BentoCard title="Recent Rounds" className="md:col-span-2 lg:col-span-3 overflow-hidden" interactive>
-            <RecentRoundsTable rounds={data.recent_rounds.slice(0, 2)} />
+            <div className="overflow-x-auto -mx-5 px-5">
+              <RecentRoundsTable rounds={data.recent_rounds.slice(0, 2)} />
+            </div>
             <div className="mt-4 flex gap-3">
               <Link to="/rounds" className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm">
                 All Rounds
@@ -499,6 +526,7 @@ export function DashboardPage({ userId }: DashboardPageProps) {
 
         </div>
       </ScrollSection>
+      </div>
     </div>
   );
 }

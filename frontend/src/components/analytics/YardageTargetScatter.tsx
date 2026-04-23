@@ -114,7 +114,7 @@ export function YardageTargetScatter({ rawScores, bucketLabel }: YardageTargetSc
   const toParSign = (n: number) => n > 0 ? `+${n}` : n === 0 ? "E" : `${n}`;
 
   return (
-    <div className="relative w-full max-w-[320px] mx-auto aspect-square">
+    <div className="relative w-full max-w-[160px] md:max-w-[320px] mx-auto aspect-square">
       <svg
         ref={svgRef}
         viewBox="0 0 200 200"
