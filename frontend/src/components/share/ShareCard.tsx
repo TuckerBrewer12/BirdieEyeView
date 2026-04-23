@@ -179,7 +179,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
       { key: "bogey",         label: "Bogeys",                                     n: counts.bogey },
       { key: "double-bogey",  label: "Doubles",                                    n: counts["double-bogey"] },
       { key: "worse",         label: "Triple+",                                    n: counts.worse },
-    ].filter((c) => c.n > 0 || c.key === "par");
+    ].filter((c) => c.n > 0 || c.key === "par") as { key: ScoreKey; label: string; n: number }[];
 
     const toParStr = formatToPar(toPar);
     const toParColor =

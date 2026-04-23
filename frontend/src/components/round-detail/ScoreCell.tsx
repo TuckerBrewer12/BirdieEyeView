@@ -13,8 +13,8 @@ const cx = S / 2;
 function ScoreSvg({ strokes, diff }: { strokes: number; diff: number }) {
   const { eagle, birdie, par, bogey, double: dbl, triple } = SCORE_SYMBOL_COLORS;
 
-  let bg = par.bg;
-  let fg = par.fg;
+  let bg: string = par.bg;
+  let fg: string = par.fg;
   if (diff <= -2) { bg = eagle.bg;  fg = eagle.fg; }
   else if (diff === -1) { bg = birdie.bg; fg = birdie.fg; }
   else if (diff === 0)  { bg = par.bg;    fg = par.fg; }
