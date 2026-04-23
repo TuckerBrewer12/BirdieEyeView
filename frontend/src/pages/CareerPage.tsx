@@ -15,6 +15,7 @@ import type { ScoreTypeRow } from "@/types/analytics";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { SVGHandicapTrend } from "@/components/analytics/SVGHandicapTrend";
+import { MobileCareerPage } from "@/components/analytics/MobileCareerPage";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -232,8 +233,21 @@ export function CareerPage({ userId }: { userId: string }) {
   const scoreBreaksAbove70 = round_milestones.lifetime.score_breaks.filter((row) => row.threshold > 70);
   const scoreBreaks70AndBelow = round_milestones.lifetime.score_breaks.filter((row) => row.threshold <= 70);
 
+  const mobileProps = {
+    data, timeWindow, setTimeWindow,
+    donutData, recordRows,
+    scoreBreaksAbove70, scoreBreaks70AndBelow,
+    totalHoles, gaugeData, hiColor, hiDisplay,
+    trendPrimary, successColor, warningColor, dangerColor,
+    neutralColor, gridColor, mutedFill, scoreColors,
+  };
+
   return (
     <div>
+      <div className="md:hidden">
+        <MobileCareerPage {...mobileProps} />
+      </div>
+      <div className="hidden md:block">
       <div className="mb-6">
         <PageHeader title="Career" subtitle="Player achievement records" scrollThreshold={100} />
         <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-4">Career</h1>
@@ -325,7 +339,8 @@ export function CareerPage({ userId }: { userId: string }) {
 
           {/* ── Round Records Table ──────────────────────────────────────── */}
           <ChartCard title="Round Records" className="xl:col-span-2">
-            <table className="w-full text-sm">
+            <div className="w-full overflow-x-auto">
+            <table className="w-full min-w-[400px] text-sm">
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="text-left text-[10px] uppercase tracking-widest text-gray-400 font-semibold pb-2 w-[30%]">Record</th>
@@ -343,6 +358,7 @@ export function CareerPage({ userId }: { userId: string }) {
                 ))}
               </tbody>
             </table>
+            </div>
           </ChartCard>
 
           {/* ── Handicap Index Gauge ─────────────────────────────────────── */}
@@ -378,7 +394,7 @@ export function CareerPage({ userId }: { userId: string }) {
             title={w === "lifetime" ? "Career Totals" : "Year Totals"}
             className="xl:col-span-2"
           >
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
               {w === "lifetime" ? (
                 <>
                   <StatTile label="Rounds" value={career_totals.lifetime.total_rounds_played} />
@@ -410,7 +426,7 @@ export function CareerPage({ userId }: { userId: string }) {
           {/* ── Career Milestones ────────────────────────────────────────── */}
           <ChartCard title="Career Milestones" className="xl:col-span-2">
             {w === "lifetime" ? (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {scoreBreaksAbove70.map((row) => (
                   <MilestoneBar
                     key={row.threshold}
@@ -498,6 +514,7 @@ export function CareerPage({ userId }: { userId: string }) {
 
         </div>
       </ScrollSection>
-    </div>
+      </div>
+      </div>
   );
 }
