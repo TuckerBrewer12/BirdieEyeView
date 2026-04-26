@@ -9,6 +9,21 @@ R 1 2 1 1 0 3 0 2 1 11 2 3 2 1 1 1 0 2 1 13 24
 PAR 5 3 4 4 3 5 4 4 5 37 4 5 4 4 3 4 3 4 4 35 72
 """.strip()
 
+SAMPLE_SHORT_NAME_AMBIGUOUS = """
+HOLE 1 2 3 4 5 6 7 8 9
+HANDICAP 9 1 7 3 5 2 8 4 6
+TOT 9 9 9 9 9 9 9 9 9
+T 1 1 1 1 1 1 1 1 1
+""".strip()
+
+SAMPLE_PIPE_G_ONLY = """
+| HOLE | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+| Handicap | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+| G | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 1 |
+|  | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
+|  | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+""".strip()
+
 
 def test_single_row_hint_keeps_score_row_and_skips_putts_row() -> None:
     parsed = parse_mistral_scorecard_rows(
@@ -37,3 +52,22 @@ def test_no_putting_or_gir_hint_suppresses_extra_rows() -> None:
     assert parsed.score_row[:9] == [1, 1, 0, 0, 0, 3, 2, 0, 1]
     assert parsed.putts_row == []
     assert parsed.gir_row == []
+
+
+def test_single_letter_name_does_not_match_tot_substring_row() -> None:
+    parsed = parse_mistral_scorecard_rows(
+        SAMPLE_SHORT_NAME_AMBIGUOUS,
+        user_context="my name is T. scores written as raw strokes.",
+    )
+
+    assert parsed.score_row[:9] == [1, 1, 1, 1, 1, 1, 1, 1, 1]
+
+
+def test_missing_named_player_row_does_not_fall_back_to_other_player() -> None:
+    parsed = parse_mistral_scorecard_rows(
+        SAMPLE_PIPE_G_ONLY,
+        user_context="my name is T. scores written to par. name on score row.",
+    )
+
+    assert parsed.score_row == []
+    assert "Could not detect player score row" in parsed.warnings

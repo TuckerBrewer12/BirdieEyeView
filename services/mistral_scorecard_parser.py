@@ -69,6 +69,29 @@ _CIRCLED_TO_DIGIT = {
 }
 
 
+def _tokenize_nameish(value: str) -> List[str]:
+    """Normalize free-form OCR/name text into lowercase alphanumeric tokens."""
+    return re.findall(r"[a-z0-9]+", (value or "").lower())
+
+
+def _name_matches_tokens(candidate_text: str, preferred_name: str) -> bool:
+    """Token-aware match that avoids short-name substring false positives."""
+    candidate_tokens = _tokenize_nameish(candidate_text)
+    preferred_tokens = _tokenize_nameish(preferred_name)
+    if not candidate_tokens or not preferred_tokens:
+        return False
+
+    # Single-letter names (e.g. "T") must match an isolated token.
+    if len(preferred_tokens) == 1 and len(preferred_tokens[0]) == 1:
+        return preferred_tokens[0] in candidate_tokens
+
+    width = len(preferred_tokens)
+    for i in range(len(candidate_tokens) - width + 1):
+        if candidate_tokens[i:i + width] == preferred_tokens:
+            return True
+    return False
+
+
 
 
 
@@ -159,7 +182,13 @@ def parse_mistral_scorecard_rows(
     # Single full-table path.
     col_map = _find_hole_column_map(raw_lines)
     if col_map is not None:
-        result_2d, _ = _extract_2d_from_raw_lines(raw_lines, col_map, player_name_2d, row_hints_2d)
+        result_2d, _ = _extract_2d_from_raw_lines(
+            raw_lines,
+            col_map,
+            player_name_2d,
+            row_hints_2d,
+            require_name_match=bool(player_name_2d),
+        )
         if result_2d is not None:
             result_2d.markdown = text
             _apply_field_suppression(result_2d, row_hints_2d)
@@ -189,7 +218,13 @@ def parse_mistral_scorecard_rows(
     tee_rows = _extract_tee_rows(lines)
     parsed.tee_rows = [ParsedTeeRow(label=label, yardages=_coerce_18_ints(vals)) for label, vals in tee_rows]
 
-    anchor_idx, anchor_vals = _extract_score_row(lines, parsed.player_name, tee_rows, handicap_idx)
+    anchor_idx, anchor_vals = _extract_score_row(
+        lines,
+        parsed.player_name,
+        tee_rows,
+        handicap_idx,
+        require_name_match=bool(parsed.player_name),
+    )
     if anchor_idx is None:
         parsed.warnings.append("Could not detect player score row")
         _apply_field_suppression(parsed, row_hints)
@@ -753,18 +788,8 @@ def _extract_2d_from_raw_lines(
 
         if preferred_name:
             for i, (label, cells, _) in enumerate(classified):
-                # Require an exact-token match in cells[0] to avoid e.g. "t" matching
-                # "White M: 69.1/123". We check cells[0] stripped, and also accept
-                # cells[0] as a prefix like "Tucker (index)".
-                label_cell = cells[0].strip().lower()
-                pref_lower = preferred_name.lower()
-                name_matched = (
-                    label_cell == pref_lower
-                    or label_cell.startswith(pref_lower + " ")
-                    or label_cell.startswith(pref_lower + "(")
-                    or label_cell.endswith(" " + pref_lower)
-                    or f" {pref_lower} " in label_cell
-                )
+                label_cell = cells[0].strip()
+                name_matched = _name_matches_tokens(label_cell, preferred_name)
                 if not name_matched:
                     continue
                 # Validate: row must have at least a few parseable score-range values.
@@ -1103,6 +1128,8 @@ def _extract_score_row(
     player_name: Optional[str],
     tee_rows: List[Tuple[str, List[int]]],
     handicap_idx: Optional[int],
+    *,
+    require_name_match: bool = False,
 ) -> Tuple[Optional[int], List[int]]:
     tee_labels = {label.lower() for label, _ in tee_rows}
     start = (handicap_idx + 1) if handicap_idx is not None else 0
@@ -1112,7 +1139,7 @@ def _extract_score_row(
     # Search ±2 lines around the named line in case OCR splits name from scores.
     if preferred_name:
         for i in range(len(lines)):
-            if preferred_name not in lines[i].lower():
+            if not _name_matches_tokens(lines[i], preferred_name):
                 continue
             for delta in (0, 1, -1, 2, -2):
                 j = i + delta
@@ -1122,6 +1149,8 @@ def _extract_score_row(
                 normalized = _normalize_hole_values(nums)
                 if len(normalized) >= 9:
                     return j, normalized[:18]
+        if require_name_match:
+            return None, []
 
     # Pass 2: first small-number row after handicap that doesn't look like tee row.
     for i in range(start, len(lines)):
