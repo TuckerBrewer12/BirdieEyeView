@@ -414,7 +414,7 @@ export function ScorecardGrid({
         <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between header-gradient rounded-t-xl">
           <div>
             <div className="font-bold text-white text-base">
-              {formatCourseName(round.course?.name ?? round.course_name_played)}
+              {formatCourseName(round.course_name_played ?? round.course?.name)}
             </div>
             {round.course?.location && (
               <div className="text-xs text-white/50">{round.course.location}</div>

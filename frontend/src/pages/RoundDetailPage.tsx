@@ -26,6 +26,7 @@ const tooltipStyle = {
   boxShadow: "0 4px 24px rgba(0,0,0,0.07)",
   background: "rgba(255,255,255,0.97)",
 };
+const TEE_COLOR_TOKENS = ["black", "blue", "white", "gold", "red", "green", "silver", "yellow", "orange", "purple", "brown", "combo"];
 
 function SectionLabel({ children }: { children: string }) {
   return (
@@ -137,7 +138,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
   const colorBlindPalette = useMemo(() => getColorBlindPalette(colorBlindMode), [colorBlindMode]);
   const { cardRef: shareCardRef, share: shareRound, sharing } = useShareRound();
-
   const { data: round } = useQuery({
     queryKey: ["round", roundId],
     queryFn: () => api.getRound(roundId!),
@@ -155,6 +155,73 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   });
   const handicapIndex = handicapData?.handicap_index ?? null;
 
+  const extractTeeColorToken = useCallback((value: string | null | undefined): string | null => {
+    const text = (value ?? "").toLowerCase();
+    if (!text) return null;
+    for (const token of TEE_COLOR_TOKENS) {
+      if (text.includes(token)) return token;
+    }
+    return null;
+  }, []);
+
+  const chooseCompatibleTee = useCallback((current: string, teeColors: string[]): string | null => {
+    const trimmed = current.trim();
+    if (!trimmed || teeColors.length === 0) return null;
+    const exact = teeColors.find((c) => c.toLowerCase() === trimmed.toLowerCase());
+    if (exact) return exact;
+    const currentToken = extractTeeColorToken(trimmed);
+    if (!currentToken) return null;
+    return teeColors.find((c) => extractTeeColorToken(c) === currentToken) ?? null;
+  }, [extractTeeColorToken]);
+
+  const loadTeesForCourse = useCallback(async (
+    courseId: string | null | undefined,
+    fallback: string[] = [],
+  ): Promise<string[]> => {
+    if (!courseId) {
+      setAvailableTees(fallback);
+      return fallback;
+    }
+    try {
+      const full = await api.getCourse(courseId);
+      const teeColors = full.tees.map((t) => t.color).filter((c): c is string => !!c);
+      setAvailableTees(teeColors);
+      return teeColors;
+    } catch {
+      setAvailableTees(fallback);
+      return fallback;
+    }
+  }, []);
+
+  const restoreAvailableTeesFromRound = useCallback(async () => {
+    if (!round) return;
+    const fallbackColors = round.course?.tees
+      .map((t) => t.color)
+      .filter((c): c is string => !!c) ?? [];
+    const teeColors = await loadTeesForCourse(round.course?.id, fallbackColors);
+    setEditedTeeBox((prev) => {
+      if (!prev) return prev;
+      if (teeColors.length === 0) return prev;
+      return chooseCompatibleTee(prev, teeColors) ?? "";
+    });
+  }, [round, loadTeesForCourse, chooseCompatibleTee]);
+
+  const handleSelectEditCourse = useCallback(async (course: CourseSummary) => {
+    setEditCoursePendingLink(course);
+    setEditCourseChanging(false);
+    setEditCourseQuery("");
+    setEditCourseResults([]);
+    const teeColors = await loadTeesForCourse(course.id, []);
+    setEditedTeeBox((prev) => {
+      const current = (prev ?? "").trim();
+      if (teeColors.length === 0) return prev;
+      if (current) {
+        const matched = chooseCompatibleTee(current, teeColors);
+        if (matched) return matched;
+      }
+      return teeColors.length === 1 ? teeColors[0] : "";
+    });
+  }, [loadTeesForCourse, chooseCompatibleTee]);
 
   const enterEditMode = useCallback(async () => {
     if (!round) return;
@@ -174,30 +241,20 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       .map((t) => t.color)
       .filter((c): c is string => !!c) ?? [];
 
-    const courseId = round.course?.id;
-    if (courseId) {
-      try {
-        const full = await api.getCourse(courseId);
-        setAvailableTees(full.tees.map((t) => t.color).filter((c): c is string => !!c));
-      } catch {
-        setAvailableTees(fallbackColors);
-      }
-    } else {
-      setAvailableTees(fallbackColors);
-    }
+    await loadTeesForCourse(round.course?.id, fallbackColors);
 
     // Init course edit state from current round
-    const hasCustomName = !!(round.course_name_played && !round.course);
+    const hasCustomName = !!round.course_name_played;
     setEditCoursePendingLink(null);
     setEditCourseChanging(false);
     setEditCourseNameValue(hasCustomName ? round.course_name_played! : "");
     setEditCourseNameConfirmed(hasCustomName);
-    setEditCourseQuery(hasCustomName ? "" : (round.course_name_played ?? ""));
+    setEditCourseQuery("");
     setEditCourseResults([]);
 
     setEditMode(true);
     setConfirmDelete(false);
-  }, [round]);
+  }, [round, loadTeesForCourse]);
 
   const cancelEdit = useCallback(() => {
     setEditMode(false);
@@ -233,14 +290,12 @@ export function RoundDetailPage({ userId }: { userId: string }) {
           };
         });
 
-      // Determine course_name_played for unlinked rounds
+      // Determine display title override (course_name_played), even for linked rounds.
       let courseNamePlayed: string | null | undefined;
-      if (!round.course && !editCoursePendingLink) {
-        if (editCourseNameConfirmed && editCourseNameValue) {
-          courseNamePlayed = editCourseNameValue;
-        } else if (round.course_name_played && !editCourseNameConfirmed) {
-          courseNamePlayed = null; // user cleared the name
-        }
+      if (editCourseNameConfirmed && editCourseNameValue) {
+        courseNamePlayed = editCourseNameValue;
+      } else if (round.course_name_played && !editCourseNameConfirmed) {
+        courseNamePlayed = null; // user cleared previously saved override
       }
 
       const updated = await api.updateRound(roundId, {
@@ -367,7 +422,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
     : null;
   const toPar = coursePar !== null ? totalScore - coursePar : null;
 
-  const courseName = formatCourseName(round.course?.name ?? round.course_name_played);
+  const courseName = formatCourseName(round.course_name_played ?? round.course?.name);
 
   return (
     <div>
@@ -596,7 +651,13 @@ export function RoundDetailPage({ userId }: { userId: string }) {
           {editCoursePendingLink ? (
             <CourseLinkChip
               name={editCoursePendingLink.name ?? ""}
-              onClear={() => { setEditCoursePendingLink(null); setEditCourseChanging(false); setEditCourseQuery(""); setEditCourseResults([]); }}
+              onClear={() => {
+                setEditCoursePendingLink(null);
+                setEditCourseChanging(false);
+                setEditCourseQuery("");
+                setEditCourseResults([]);
+                void restoreAvailableTeesFromRound();
+              }}
             />
           ) : round.course && !editCourseChanging ? (
             <div className="flex items-center gap-2">
@@ -618,12 +679,25 @@ export function RoundDetailPage({ userId }: { userId: string }) {
                   results={editCourseResults}
                   searching={editCourseSearching}
                   onQueryChange={handleEditCourseQuery}
-                  onSelectCourse={(c) => { setEditCoursePendingLink(c); setEditCourseChanging(false); setEditCourseQuery(""); setEditCourseResults([]); }}
-                  onClose={() => { setEditCourseChanging(false); setEditCourseQuery(""); setEditCourseResults([]); }}
-                  reviewVariant={!round.course}
-                  onUseCustomName={!round.course ? (name) => { setEditCourseNameValue(name); setEditCourseNameConfirmed(true); } : undefined}
+                  onSelectCourse={(c) => { void handleSelectEditCourse(c); }}
+                  onClose={() => {
+                    setEditCourseChanging(false);
+                    setEditCourseQuery("");
+                    setEditCourseResults([]);
+                    void restoreAvailableTeesFromRound();
+                  }}
+                  reviewVariant
+                  onUseCustomName={(name) => {
+                    setEditCourseNameValue(name);
+                    setEditCourseNameConfirmed(true);
+                    setEditCoursePendingLink(null);
+                    setEditCourseChanging(false);
+                    setEditCourseQuery("");
+                    setEditCourseResults([]);
+                    void restoreAvailableTeesFromRound();
+                  }}
                 />
-                {!round.course && round.course_name_played && !editCourseQuery && !editCourseNameConfirmed && (
+                {round.course_name_played && !editCourseQuery && !editCourseNameConfirmed && (
                   <button
                     type="button"
                     onClick={() => { setEditCourseNameValue(round.course_name_played!); setEditCourseNameConfirmed(true); }}

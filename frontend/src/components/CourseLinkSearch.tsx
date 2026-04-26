@@ -78,20 +78,22 @@ export function CourseLinkSearch({
     </ul>
   );
 
-  const noMatch = query.trim().length >= 2 && !searching && results.length === 0 && (
-    reviewVariant && onUseCustomName ? (
-      <div className="mt-1 flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
-        <span className="text-xs text-gray-500">No match found</span>
-        <button
-          onClick={() => onUseCustomName(query.trim())}
-          className="text-xs font-medium text-primary hover:underline"
-        >
-          Save as "{query.trim()}"
-        </button>
-      </div>
-    ) : (
-      <p className="mt-1.5 text-xs text-gray-400">No courses found</p>
-    )
+  const customNameAction = query.trim().length >= 2 && !searching && reviewVariant && onUseCustomName && (
+    <div className="mt-1 flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+      <span className="text-xs text-gray-500">
+        {results.length > 0 ? "Not the right course?" : "No match found"}
+      </span>
+      <button
+        onClick={() => onUseCustomName(query.trim())}
+        className="text-xs font-medium text-primary hover:underline"
+      >
+        Save as "{query.trim()}"
+      </button>
+    </div>
+  );
+
+  const noMatchText = query.trim().length >= 2 && !searching && results.length === 0 && !reviewVariant && (
+    <p className="mt-1.5 text-xs text-gray-400">No courses found</p>
   );
 
   if (title) {
@@ -105,7 +107,8 @@ export function CourseLinkSearch({
         </div>
         {input}
         {resultsList}
-        {noMatch}
+        {customNameAction}
+        {noMatchText}
       </div>
     );
   }
@@ -114,7 +117,8 @@ export function CourseLinkSearch({
     <>
       {input}
       {resultsList}
-      {noMatch}
+      {customNameAction}
+      {noMatchText}
     </>
   );
 }

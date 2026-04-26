@@ -68,6 +68,10 @@ export function TheLabPage({ userId }: TheLabPageProps) {
   const [targetHandicap, setTargetHandicap] = useState<ComparisonTargetValue>(null);
   const [radarMode, setRadarMode] = useState<"benchmark" | "peak">("benchmark");
   const [selectedFriendId, setSelectedFriendId] = useState("");
+  const [compactRadarLayout, setCompactRadarLayout] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 1023px)").matches;
+  });
 
   // Queries
   const { data: user } = useQuery({
@@ -118,6 +122,20 @@ export function TheLabPage({ userId }: TheLabPageProps) {
       setSelectedFriendId(friendOptions[0].id);
     }
   }, [friendOptions, selectedFriendId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(max-width: 1023px)");
+    const apply = (matches: boolean) => setCompactRadarLayout(matches);
+    apply(media.matches);
+    const listener = (event: MediaQueryListEvent) => apply(event.matches);
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", listener);
+      return () => media.removeEventListener("change", listener);
+    }
+    media.addListener(listener);
+    return () => media.removeListener(listener);
+  }, []);
 
   const selectedFriend = useMemo(
     () => friendOptions.find((friend) => friend.id === selectedFriendId) ?? null,
@@ -345,7 +363,7 @@ export function TheLabPage({ userId }: TheLabPageProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex justify-end mb-2 min-h-11">
                   {comparingFriend && (
-                    <div className="w-full max-w-64">
+                    <div className="w-full lg:max-w-64">
                       <label htmlFor="friend-compare-select" className="sr-only">
                         Select friend to compare
                       </label>
@@ -374,8 +392,8 @@ export function TheLabPage({ userId }: TheLabPageProps) {
                     kpis={analytics.kpis}
                     scoringByPar={analytics.scoring_by_par ?? []}
                     profile={activeProfile ?? undefined}
-                    height={360}
-                    outerRadius={130}
+                    height={compactRadarLayout ? 320 : 360}
+                    outerRadius={compactRadarLayout ? 110 : 130}
                     primaryColor="#2d7a3a"
                     gridColor="#e5e7eb"
                     showTooltip
@@ -390,7 +408,9 @@ export function TheLabPage({ userId }: TheLabPageProps) {
                         ? "Play more rounds to build your performance shape."
                         : "Set a target above to see your benchmark comparison."
                     }
-                    margin={{ top: 24, right: 44, bottom: 24, left: 44 }}
+                    margin={compactRadarLayout
+                      ? { top: 20, right: 20, bottom: 20, left: 20 }
+                      : { top: 24, right: 44, bottom: 24, left: 44 }}
                   />
                 )}
               </div>

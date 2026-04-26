@@ -74,10 +74,10 @@ export function BottomNav() {
             onClick={() => setMoreOpen(false)}
           />
           <div
-            className="md:hidden fixed left-3 right-3 z-[60] rounded-2xl border border-gray-200 bg-white/95 backdrop-blur-sm shadow-xl"
+            className="md:hidden fixed left-3 right-3 z-[60] rounded-2xl border border-gray-200 bg-white/95 backdrop-blur-sm shadow-xl dark:border-[#2a2d30] dark:bg-[#18191A]/95"
             style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
           >
-            <div className="px-4 pt-4 pb-2 text-xs font-bold uppercase tracking-[0.18em] text-gray-400">
+            <div className="px-4 pt-4 pb-2 text-xs font-bold uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500">
               More
             </div>
             <div className="px-2 pb-2 grid grid-cols-2 gap-1">
@@ -87,7 +87,9 @@ export function BottomNav() {
                   to={to}
                   className={({ isActive }) =>
                     `flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm transition-colors ${
-                      isActive ? "bg-emerald-50 text-primary font-semibold" : "text-gray-600 hover:bg-gray-100"
+                      isActive
+                        ? "bg-emerald-50 text-primary font-semibold dark:bg-primary/25"
+                        : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-[#222426]"
                     }`
                   }
                   onClick={() => setMoreOpen(false)}
@@ -102,7 +104,7 @@ export function BottomNav() {
                 type="button"
                 onClick={() => void handleLogout()}
                 disabled={logoutPending}
-                className="w-full flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
+                className="w-full flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-900/20"
               >
                 <LogOut size={16} />
                 {logoutPending ? "Signing out..." : "Logout"}
@@ -113,7 +115,7 @@ export function BottomNav() {
       )}
 
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-[61] bg-white border-t border-gray-100"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-[61] bg-white border-t border-gray-100 dark:bg-[#18191A] dark:border-[#2a2d30]"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <div className="flex items-stretch h-14">
@@ -124,7 +126,7 @@ export function BottomNav() {
               end={to === "/"}
               className={({ isActive }) =>
                 `flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${
-                  isActive ? "text-primary" : "text-gray-400"
+                  isActive ? "text-primary" : "text-gray-400 dark:text-gray-500"
                 }`
               }
             >
@@ -141,7 +143,7 @@ export function BottomNav() {
             type="button"
             onClick={() => setMoreOpen((prev) => !prev)}
             className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${
-              moreOpen || moreActive ? "text-primary" : "text-gray-400"
+              moreOpen || moreActive ? "text-primary" : "text-gray-400 dark:text-gray-500"
             }`}
           >
             <Menu size={20} strokeWidth={moreOpen || moreActive ? 2.25 : 1.75} />

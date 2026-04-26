@@ -38,15 +38,15 @@ function AppRoutes() {
   const location = useLocation();
 
   useEffect(() => {
-    if (
+    const isPublicRoute =
       location.pathname === "/" ||
       location.pathname === "/login" ||
       location.pathname === "/register" ||
       location.pathname === "/forgot-password" ||
       location.pathname === "/reset-password" ||
       location.pathname === "/verify-email" ||
-      location.pathname === "/verify-pending"
-    ) {
+      location.pathname === "/verify-pending";
+    if (!userId && isPublicRoute) {
       applyTheme(getStoredPublicTheme());
       return;
     }
