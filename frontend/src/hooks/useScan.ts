@@ -296,6 +296,9 @@ export function useScan(
         data.fields_needing_review,
         data.round.course?.holes ?? []
       );
+      const inferredTeeBox =
+        data.round.tee_box
+        ?? (data.round.course?.tees?.length === 1 ? (data.round.course.tees[0].color ?? null) : null);
       update({
         result: data,
         editedScores: initialScores,
@@ -303,7 +306,7 @@ export function useScan(
         editedDate: data.round.date
           ? data.round.date.substring(0, 10)
           : new Date().toISOString().substring(0, 10),
-        editedTeeBox: data.round.tee_box ?? null,
+        editedTeeBox: inferredTeeBox,
         reviewCourseId: null,
         reviewExternalCourseId: null,
         reviewCourseName: data.round.course?.name ?? null,

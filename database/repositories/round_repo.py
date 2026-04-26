@@ -211,7 +211,7 @@ class RoundRepositoryDB:
                 """SELECT
                     r.id, r.course_id, r.tee_box_played AS tee_box,
                     r.round_date, r.notes, r.course_name_played,
-                    COALESCE(c.name, r.course_name_played) AS course_name,
+                    COALESCE(r.course_name_played, c.name) AS course_name,
                     c.location AS course_location,
                     c.par AS course_par,
                     SUM(hs.strokes)  AS total_score,
@@ -379,16 +379,37 @@ class RoundRepositoryDB:
         allowed = {
             "round_date", "total_score", "adjusted_gross_score",
             "score_differential", "is_complete", "holes_played",
-            "weather_conditions", "notes", "course_name_played", "tee_box_played",
+            "weather_conditions", "notes", "course_name_played", "tee_box_played", "tee_id",
         }
         updates = {k: v for k, v in fields.items() if k in allowed}
         if not updates:
             return await self.get_round(round_id)
 
-        set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates))
-        values = [UUID(round_id)] + list(updates.values())
-
         async with self._pool.acquire() as conn:
+            # Keep tee_id aligned with tee_box_played edits so tee-dependent views
+            # remain consistent after saving.
+            if "tee_box_played" in updates and "tee_id" not in updates:
+                if user_id:
+                    base_row = await conn.fetchrow(
+                        "SELECT course_id FROM users.rounds WHERE id = $1 AND user_id = $2",
+                        UUID(round_id),
+                        UUID(user_id),
+                    )
+                else:
+                    base_row = await conn.fetchrow(
+                        "SELECT course_id FROM users.rounds WHERE id = $1",
+                        UUID(round_id),
+                    )
+                course_id = base_row["course_id"] if base_row else None
+                tee_color = updates.get("tee_box_played")
+                if course_id and tee_color:
+                    updates["tee_id"] = await self._resolve_tee_id(conn, course_id, tee_color)
+                else:
+                    updates["tee_id"] = None
+
+            set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates))
+            values = [UUID(round_id)] + list(updates.values())
+
             where_clause = "id = $1"
             where_values = []
             if user_id:

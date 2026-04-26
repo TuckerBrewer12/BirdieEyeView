@@ -95,7 +95,7 @@ def summarize_round(r) -> RoundSummaryResponse:
     return RoundSummaryResponse(
         id=r.id,
         course_id=str(r.course.id) if r.course and r.course.id else None,
-        course_name=r.course.name if r.course else r.course_name_played,
+        course_name=r.course_name_played or (r.course.name if r.course else None),
         course_location=r.course.location if r.course else None,
         course_par=r.get_par(),
         tee_box=r.tee_box,
@@ -270,6 +270,44 @@ async def link_course_to_round(
         ]
         if scan_holes:
             await db.courses.fill_course_gaps(str(req.course_id), scan_holes)
+
+        # If round carries tee details (user tee or linked course tee), merge them
+        # into the destination course before linking so tee selection remains usable.
+        source_tee_name: Optional[str] = None
+        source_slope: Optional[float] = None
+        source_rating: Optional[float] = None
+        source_yardages: dict = {}
+
+        if round_.user_tee:
+            source_tee_name = round_.user_tee.name
+            source_slope = round_.user_tee.slope_rating
+            source_rating = round_.user_tee.course_rating
+            source_yardages = {
+                str(k): v
+                for k, v in (round_.user_tee.hole_yardages or {}).items()
+                if v is not None
+            }
+        elif round_.course and round_.tee_box:
+            tee = round_.course.get_tee(round_.tee_box)
+            if tee:
+                source_tee_name = tee.color
+                source_slope = tee.slope_rating
+                source_rating = tee.course_rating
+                source_yardages = {
+                    str(k): v
+                    for k, v in (tee.hole_yardages or {}).items()
+                    if v is not None
+                }
+
+        if source_tee_name:
+            await db.courses.fill_course_gaps(
+                str(req.course_id),
+                [],
+                source_tee_name,
+                source_slope,
+                source_rating,
+                source_yardages,
+            )
 
         updated = await db.rounds.link_course_to_round(
             str(round_id),

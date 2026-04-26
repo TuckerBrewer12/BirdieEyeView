@@ -2,7 +2,7 @@
 
 import logging
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from api.request_models import CourseHoleInput, SaveRoundRequest, TeeInput
 from database.db_manager import DatabaseManager
@@ -10,6 +10,10 @@ from models import Course, Hole, HoleScore, Round, Tee, UserTee
 from services.golfcourse_api_service import GolfCourseAPIService, _normalize_course_name
 
 logger = logging.getLogger(__name__)
+_TEE_COLOR_TOKENS = (
+    "black", "blue", "white", "gold", "red", "green",
+    "silver", "yellow", "orange", "purple", "brown", "combo",
+)
 
 
 class ScanService:
@@ -63,6 +67,7 @@ class ScanService:
                 if course.user_id and str(course.user_id) != str(req.user_id):
                     raise ValueError("Selected course is not accessible for this user.")
                 course = await self._maybe_backfill_external_id(course, req)
+                req.tee_box = self._canonicalize_played_tee_box(course, req.tee_box, tees)
                 await self._fill_gaps(str(course.id), scan_holes, tees)
                 return course, str(course.id)
             raise ValueError(f"Selected course not found: {req.course_id}")
@@ -76,6 +81,7 @@ class ScanService:
             )
             if course:
                 course = await self._maybe_backfill_external_id(course, req)
+                req.tee_box = self._canonicalize_played_tee_box(course, req.tee_box, tees)
                 await self._fill_gaps(str(course.id), scan_holes, tees)
                 return course, str(course.id)
 
@@ -87,6 +93,7 @@ class ScanService:
                 )
                 if existing_by_name:
                     course = await self._maybe_backfill_external_id(existing_by_name, req)
+                    req.tee_box = self._canonicalize_played_tee_box(course, req.tee_box, tees)
                     await self._fill_gaps(str(course.id), scan_holes, tees)
                     return course, str(course.id)
 
@@ -97,6 +104,7 @@ class ScanService:
         course = await self._db.courses.find_course_by_name(req.course_name, req.course_location)
         if course:
             course = await self._maybe_backfill_external_id(course, req)
+            req.tee_box = self._canonicalize_played_tee_box(course, req.tee_box, tees)
             await self._fill_gaps(str(course.id), scan_holes, tees)
             return course, str(course.id)
 
@@ -106,6 +114,7 @@ class ScanService:
         )
         if course:
             course = await self._maybe_backfill_external_id(course, req)
+            req.tee_box = self._canonicalize_played_tee_box(course, req.tee_box, tees)
             await self._fill_gaps(str(course.id), scan_holes, tees)
             return course, str(course.id)
 
@@ -138,8 +147,124 @@ class ScanService:
             holes=holes,
             tees=model_tees,
         )
+        if not req.tee_box and len(model_tees) == 1 and model_tees[0].color:
+            req.tee_box = model_tees[0].color
         course = await self._db.courses.create_course(new_course, user_id=req.user_id)
         return course, str(course.id) if course else None
+
+    @staticmethod
+    def _extract_tee_color_token(value: Optional[str]) -> Optional[str]:
+        text = (value or "").strip().lower()
+        if not text:
+            return None
+        for token in _TEE_COLOR_TOKENS:
+            if token in text.split():
+                return token
+            if f"{token} " in text or f" {token}" in text:
+                return token
+            if text.startswith(token):
+                return token
+        return None
+
+    @staticmethod
+    def _tee_input_yardages(tee: TeeInput) -> Dict[int, int]:
+        out: Dict[int, int] = {}
+        for k, v in (tee.hole_yardages or {}).items():
+            if v is None:
+                continue
+            try:
+                hole_num = int(k)
+            except Exception:  # noqa: BLE001
+                continue
+            out[hole_num] = int(v)
+        return out
+
+    @staticmethod
+    def _tee_yardage_similarity(
+        incoming: Dict[int, int],
+        existing: Dict[int, int],
+        *,
+        tolerance_yards: int = 25,
+    ) -> Tuple[float, int]:
+        if not incoming or not existing:
+            return 0.0, 0
+        overlap = sorted(set(incoming.keys()) & set(existing.keys()))
+        if not overlap:
+            return 0.0, 0
+        similar = sum(1 for h in overlap if abs(int(incoming[h]) - int(existing[h])) <= tolerance_yards)
+        return similar / len(overlap), len(overlap)
+
+    def _best_matching_course_tee_color(
+        self,
+        course: Course,
+        tee: TeeInput,
+    ) -> Optional[str]:
+        incoming = self._tee_input_yardages(tee)
+        if not incoming:
+            return None
+        best_color: Optional[str] = None
+        best_ratio = 0.0
+        best_overlap = 0
+        for course_tee in course.tees or []:
+            if not course_tee.color:
+                continue
+            ratio, overlap = self._tee_yardage_similarity(
+                incoming,
+                {int(h): int(y) for h, y in (course_tee.hole_yardages or {}).items()},
+            )
+            if ratio > best_ratio or (ratio == best_ratio and overlap > best_overlap):
+                best_ratio = ratio
+                best_overlap = overlap
+                best_color = course_tee.color
+        if best_color and best_overlap >= 6 and best_ratio >= 0.7:
+            return best_color
+        return None
+
+    def _canonicalize_played_tee_box(
+        self,
+        course: Optional[Course],
+        tee_box: Optional[str],
+        scan_tees: List[TeeInput],
+    ) -> Optional[str]:
+        if not course or not (course.tees or []):
+            return tee_box
+
+        # Exact match already uses canonical course naming.
+        exact = course.get_tee(tee_box)
+        if exact and exact.color:
+            return exact.color
+
+        # Try matching the selected scanned tee to an existing course tee by yardage.
+        chosen_scan_tee = None
+        if tee_box:
+            for tee in scan_tees:
+                if tee.color and tee.color.strip().lower() == tee_box.strip().lower():
+                    chosen_scan_tee = tee
+                    break
+        if chosen_scan_tee:
+            matched = self._best_matching_course_tee_color(course, chosen_scan_tee)
+            if matched:
+                return matched
+
+        # Fallback: color token extraction (e.g. "WHITE M: 69.1/123" -> "White").
+        if tee_box:
+            token = self._extract_tee_color_token(tee_box)
+            if token:
+                for course_tee in course.tees:
+                    if course_tee.color and self._extract_tee_color_token(course_tee.color) == token:
+                        return course_tee.color
+
+        # If user didn't pick a tee, choose the only course tee when unambiguous.
+        if not tee_box:
+            available = [t.color for t in course.tees if t.color]
+            if len(available) == 1:
+                return available[0]
+            if len(scan_tees) == 1:
+                matched = self._best_matching_course_tee_color(course, scan_tees[0])
+                if matched:
+                    return matched
+
+        return tee_box
 
     async def _maybe_lookup_external_id_from_name(
         self, req: SaveRoundRequest

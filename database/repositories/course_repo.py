@@ -1,12 +1,28 @@
 """CRUD operations for the courses schema (courses, holes, tees, tee_yardages)."""
 
 import asyncpg
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 from models import Course, Hole, Tee
 from database.converters import course_from_rows, course_to_row, tee_yardages_to_rows
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
+
+
+def _tee_yardage_similarity(
+    incoming: Dict[int, int],
+    existing: Dict[int, int],
+    *,
+    tolerance_yards: int = 25,
+) -> Tuple[float, int]:
+    """Return (match_ratio, overlap_holes) for two tee yardage maps."""
+    if not incoming or not existing:
+        return 0.0, 0
+    overlap = sorted(set(incoming.keys()) & set(existing.keys()))
+    if not overlap:
+        return 0.0, 0
+    similar = sum(1 for h in overlap if abs(int(incoming[h]) - int(existing[h])) <= tolerance_yards)
+    return similar / len(overlap), len(overlap)
 
 
 class CourseRepositoryDB:
@@ -359,11 +375,52 @@ class CourseRepositoryDB:
                 # Use explicit SELECT + INSERT/UPDATE to handle case-insensitive color
                 # matching and avoid ON CONFLICT dependency on live-DB constraint state.
                 if tee_color:
+                    normalized_yardages: Dict[int, int] = {}
+                    for hole_num_str, yardage in (yardages or {}).items():
+                        if yardage is None:
+                            continue
+                        normalized_yardages[int(hole_num_str)] = int(yardage)
+
                     existing_tee = await conn.fetchrow(
                         "SELECT id, slope_rating, course_rating FROM courses.tees "
                         "WHERE course_id = $1 AND LOWER(color) = LOWER($2)",
                         cid, tee_color,
                     )
+                    # If color doesn't match but yardages are mostly the same, map to
+                    # the existing course tee so we keep one canonical tee name/source.
+                    if not existing_tee and normalized_yardages:
+                        candidate_rows = await conn.fetch(
+                            "SELECT id, color, slope_rating, course_rating "
+                            "FROM courses.tees WHERE course_id = $1",
+                            cid,
+                        )
+                        if candidate_rows:
+                            candidate_ids = [r["id"] for r in candidate_rows]
+                            y_rows = await conn.fetch(
+                                "SELECT tee_id, hole_number, yardage FROM courses.tee_yardages "
+                                "WHERE tee_id = ANY($1::uuid[])",
+                                candidate_ids,
+                            )
+                            yards_by_tee: Dict[UUID, Dict[int, int]] = {}
+                            for row in y_rows:
+                                tee_id = row["tee_id"]
+                                yards_by_tee.setdefault(tee_id, {})[int(row["hole_number"])] = int(row["yardage"])
+
+                            best_match = None
+                            best_ratio = 0.0
+                            best_overlap = 0
+                            for candidate in candidate_rows:
+                                ratio, overlap = _tee_yardage_similarity(
+                                    normalized_yardages,
+                                    yards_by_tee.get(candidate["id"], {}),
+                                )
+                                if ratio > best_ratio or (ratio == best_ratio and overlap > best_overlap):
+                                    best_match = candidate
+                                    best_ratio = ratio
+                                    best_overlap = overlap
+                            if best_match and best_overlap >= 6 and best_ratio >= 0.7:
+                                existing_tee = best_match
+
                     if existing_tee:
                         tee_id = existing_tee["id"]
                         # Fill NULL slots only — never overwrite existing data
@@ -389,21 +446,19 @@ class CourseRepositoryDB:
                         )
                         tee_id = tee_row["id"]
 
-                    if yardages:
-                        for hole_num_str, yardage in yardages.items():
-                            if yardage is not None:
-                                hole_num = int(hole_num_str)
-                                exists = await conn.fetchval(
-                                    "SELECT 1 FROM courses.tee_yardages "
-                                    "WHERE tee_id = $1 AND hole_number = $2",
-                                    tee_id, hole_num,
+                    if normalized_yardages:
+                        for hole_num, yds in normalized_yardages.items():
+                            exists = await conn.fetchval(
+                                "SELECT 1 FROM courses.tee_yardages "
+                                "WHERE tee_id = $1 AND hole_number = $2",
+                                tee_id, hole_num,
+                            )
+                            if not exists:
+                                await conn.execute(
+                                    """INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage)
+                                       VALUES ($1, $2, $3)""",
+                                    tee_id, hole_num, yds,
                                 )
-                                if not exists:
-                                    await conn.execute(
-                                        """INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage)
-                                           VALUES ($1, $2, $3)""",
-                                        tee_id, hole_num, yardage,
-                                    )
 
     async def promote_to_master(self, course_id: str) -> Course:
         """Promote a user-owned course to master by setting user_id = NULL.
