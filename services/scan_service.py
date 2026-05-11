@@ -68,7 +68,7 @@ class ScanService:
                     raise ValueError("Selected course is not accessible for this user.")
                 course = await self._maybe_backfill_external_id(course, req)
                 req.tee_box = self._canonicalize_played_tee_box(course, req.tee_box, tees)
-                await self._fill_gaps(str(course.id), scan_holes, tees)
+                await self._fill_gaps(course, scan_holes, tees, req.user_id)
                 return course, str(course.id)
             raise ValueError(f"Selected course not found: {req.course_id}")
 
@@ -82,7 +82,7 @@ class ScanService:
             if course:
                 course = await self._maybe_backfill_external_id(course, req)
                 req.tee_box = self._canonicalize_played_tee_box(course, req.tee_box, tees)
-                await self._fill_gaps(str(course.id), scan_holes, tees)
+                await self._fill_gaps(course, scan_holes, tees, req.user_id)
                 return course, str(course.id)
 
             # If provider ID is new but a local course already exists by name,
@@ -94,7 +94,7 @@ class ScanService:
                 if existing_by_name:
                     course = await self._maybe_backfill_external_id(existing_by_name, req)
                     req.tee_box = self._canonicalize_played_tee_box(course, req.tee_box, tees)
-                    await self._fill_gaps(str(course.id), scan_holes, tees)
+                    await self._fill_gaps(course, scan_holes, tees, req.user_id)
                     return course, str(course.id)
 
         if not req.course_name:
@@ -105,7 +105,7 @@ class ScanService:
         if course:
             course = await self._maybe_backfill_external_id(course, req)
             req.tee_box = self._canonicalize_played_tee_box(course, req.tee_box, tees)
-            await self._fill_gaps(str(course.id), scan_holes, tees)
+            await self._fill_gaps(course, scan_holes, tees, req.user_id)
             return course, str(course.id)
 
         # Tier 2: current user's own course
@@ -115,7 +115,7 @@ class ScanService:
         if course:
             course = await self._maybe_backfill_external_id(course, req)
             req.tee_box = self._canonicalize_played_tee_box(course, req.tee_box, tees)
-            await self._fill_gaps(str(course.id), scan_holes, tees)
+            await self._fill_gaps(course, scan_holes, tees, req.user_id)
             return course, str(course.id)
 
         # Tier 3: nobody has it → create user-owned course from scan data
@@ -332,7 +332,8 @@ class ScanService:
             req.external_course_id
             and course.id
             and not course.external_course_id
-            and (not course.user_id or str(course.user_id) == str(req.user_id))
+            and course.user_id
+            and str(course.user_id) == str(req.user_id)
         ):
             updated = await self._db.courses.update_course(
                 str(course.id),
@@ -357,14 +358,17 @@ class ScanService:
 
     async def _fill_gaps(
         self,
-        course_id: str,
+        course: Course,
         scan_holes: List[CourseHoleInput],
         tees: List[TeeInput],
+        user_id: str,
     ) -> None:
         """Fill null fields on an existing course from scan data (fill-only, never overwrites)."""
+        if not course.id or not course.user_id or str(course.user_id) != str(user_id):
+            return
         for t in tees:
             await self._db.courses.fill_course_gaps(
-                course_id, scan_holes,
+                str(course.id), scan_holes,
                 t.color, t.slope_rating, t.course_rating, t.hole_yardages,
             )
 

@@ -402,10 +402,6 @@ export function ScorecardGrid({
   const back = [10, 11, 12, 13, 14, 15, 16, 17, 18];
 
   const activeTeeBox = editMode ? editedTeeBox : round.tee_box;
-  const tee =
-    round.course?.tees.find(
-      (t) => t.color?.toLowerCase() === activeTeeBox?.toLowerCase()
-    ) ?? round.user_tee ?? null;
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">

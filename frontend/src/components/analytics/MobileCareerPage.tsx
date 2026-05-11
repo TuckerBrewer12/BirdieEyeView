@@ -98,6 +98,9 @@ export function MobileCareerPage({
   scoreColors,
 }: MobileCareerPageProps) {
   const [milestoneTab, setMilestoneTab] = useState<"career" | "putting" | "gir">("career");
+  void _gaugeData;
+  void _hiColor;
+  void _mutedFill;
 
   const { notable_achievements: na } = data;
   const { career_totals, putting_milestones, gir_milestones, round_milestones, window_days } = na;

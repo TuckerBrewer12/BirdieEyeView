@@ -203,6 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const verifyEmail = async (token: string) => {
     const data = await callAuth<MessagePayload>("/verify-email", { token });
+    await refreshSession();
     return data.message;
   };
 

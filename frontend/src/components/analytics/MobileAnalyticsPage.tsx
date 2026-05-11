@@ -1,5 +1,11 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Fmt = (v: any, name: any, props: any) => any;
+import type { ReactNode } from "react";
+
+type Fmt = (value: unknown, name: unknown, props: unknown) => ReactNode | [ReactNode, string];
+type DivergingTooltipPayload = {
+  value?: unknown;
+  dataKey?: unknown;
+  fill?: string;
+};
 
 import { useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -415,17 +421,18 @@ export function MobileAnalyticsPage({
               <CartesianGrid stroke={gridColor} horizontal={false} />
               <ReferenceLine x={0} stroke="#d1d5db" strokeWidth={1.5} />
               <Tooltip
-                content={({ payload, label }: any) => {
+                content={({ payload, label }: { payload?: readonly DivergingTooltipPayload[]; label?: unknown }) => {
                   if (!payload?.length) return null;
-                  const visible = payload.filter((p: any) => Math.abs(p.value) > 0.05);
+                  const visible = payload.filter((p) => Math.abs(Number(p.value ?? 0)) > 0.05);
                   if (!visible.length) return null;
+                  const labelText = String(label ?? "");
                   return (
                     <div style={{ ...tooltipStyle, padding: "8px 10px" }}>
-                      <div className="font-semibold text-[11px] mb-1" style={{ color: label === "GIR" ? successColor : dangerColor }}>{label}</div>
-                      {visible.map((p: any) => (
-                        <div key={p.dataKey} className="flex items-center justify-between gap-3">
-                          <span style={{ color: p.fill }} className="text-[11px]">{p.dataKey}</span>
-                          <span style={{ color: p.fill }} className="font-bold text-[11px]">{Math.abs(p.value).toFixed(1)}%</span>
+                      <div className="font-semibold text-[11px] mb-1" style={{ color: labelText === "GIR" ? successColor : dangerColor }}>{labelText}</div>
+                      {visible.map((p) => (
+                        <div key={String(p.dataKey)} className="flex items-center justify-between gap-3">
+                          <span style={{ color: p.fill }} className="text-[11px]">{String(p.dataKey ?? "")}</span>
+                          <span style={{ color: p.fill }} className="font-bold text-[11px]">{Math.abs(Number(p.value ?? 0)).toFixed(1)}%</span>
                         </div>
                       ))}
                     </div>

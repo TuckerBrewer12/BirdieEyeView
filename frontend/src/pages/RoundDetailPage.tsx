@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo, useEffect } from "react";
+import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Pencil, Trash2, Link2, CalendarDays, Share2 } from "lucide-react";
@@ -40,8 +40,7 @@ function SectionLabel({ children }: { children: string }) {
 }
 
 type EditedScores = Record<number, { strokes: number | null; putts: number | null; gir?: boolean | null }>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Fmt = (v: any, name: any, props: any) => any;
+type Fmt = (value: unknown, name: unknown, props: unknown) => ReactNode | [ReactNode, string];
 
 function formatNumber(value: number | null): string {
   if (value == null) return "—";
@@ -120,6 +119,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const [linkResults, setLinkResults] = useState<CourseSummary[]>([]);
   const [linkSearching, setLinkSearching] = useState(false);
   const [linking, setLinking] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const linkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Edit-mode course state
   const [editCoursePendingLink, setEditCoursePendingLink] = useState<CourseSummary | null>(null);
@@ -133,7 +133,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   useEffect(() => () => {
     if (linkTimer.current) clearTimeout(linkTimer.current);
     if (editCourseTimer.current) clearTimeout(editCourseTimer.current);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
   const colorBlindPalette = useMemo(() => getColorBlindPalette(colorBlindMode), [colorBlindMode]);
@@ -270,6 +269,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const handleSave = useCallback(async () => {
     if (!round || !roundId) return;
     setSaving(true);
+    setActionError(null);
     try {
       // Link to DB course if user picked one
       if (editCoursePendingLink) {
@@ -314,6 +314,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       setEditCourseNameConfirmed(false);
     } catch (err) {
       console.error("Save failed:", err);
+      setActionError(err instanceof Error ? err.message : "Could not save this round.");
     } finally {
       setSaving(false);
     }
@@ -385,6 +386,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const handleSelectCourse = useCallback(async (course: CourseSummary) => {
     if (!roundId) return;
     setLinking(true);
+    setActionError(null);
     try {
       await api.linkCourse(roundId, course.id);
       await queryClient.invalidateQueries({ queryKey: ["round", roundId] });
@@ -393,6 +395,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       setLinkResults([]);
     } catch (err) {
       console.error("Link failed:", err);
+      setActionError(err instanceof Error ? err.message : "Could not link this round to that course.");
     } finally {
       setLinking(false);
     }
@@ -438,6 +441,12 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         <ArrowLeft size={16} />
         Back to Rounds
       </Link>
+
+      {actionError && (
+        <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {actionError}
+        </div>
+      )}
 
       <PageHeader
         title={courseName}

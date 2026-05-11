@@ -1,36 +1,17 @@
-const ACCESS_TOKEN_KEY = "bev_access_token";
-
-function getStorage(): Storage | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
-
-export function getSessionToken(): string | null {
-  const storage = getStorage();
-  if (!storage) return null;
-  const token = storage.getItem(ACCESS_TOKEN_KEY)?.trim() ?? "";
-  return token || null;
-}
+const LEGACY_ACCESS_TOKEN_KEYS = ["bev_access_token", "scanscore_access_token"];
 
 export function setSessionToken(token: string | null): void {
-  const storage = getStorage();
-  if (!storage) return;
-  if (!token) {
-    storage.removeItem(ACCESS_TOKEN_KEY);
-    return;
+  if (typeof window === "undefined") return;
+  try {
+    for (const key of LEGACY_ACCESS_TOKEN_KEYS) {
+      window.localStorage.removeItem(key);
+    }
+  } catch {
+    // Storage can be unavailable in hardened browser contexts.
   }
-  storage.setItem(ACCESS_TOKEN_KEY, token);
+  void token;
 }
 
 export function withAuthHeaders(init: HeadersInit = {}): Headers {
-  const headers = new Headers(init);
-  const token = getSessionToken();
-  if (token && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-  return headers;
+  return new Headers(init);
 }

@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import type { CourseSummary } from "@/types/golf";
 import type { ScanState, ScanResult, ExtractedHoleScore, ManualTee } from "@/types/scan";
 import { initialScanState } from "@/types/scan";
@@ -67,7 +66,6 @@ export function useScan(
   scanState: ScanState,
   setScanState: React.Dispatch<React.SetStateAction<ScanState>>
 ) {
-  const navigate = useNavigate();
   const { step, scanMode, selectedCourseId, selectedCourseName, file, result, editedScores, scoreMetadata, editedDate, editedTeeBox, userContext, prefetchedOcrText, reviewCourseId, reviewExternalCourseId, reviewCourseName, manualCourseHoles, manualCourseTees, savedRoundId } = scanState;
 
   const update = useCallback(
@@ -518,7 +516,7 @@ export function useScan(
     }
     // Note: setSaving(false) is intentionally omitted on success because we
     // navigate away immediately; keeping it true prevents double-submit during navigation.
-  }, [result, userId, reviewCourseId, reviewExternalCourseId, reviewCourseName, editedTeeBox, editedDate, editedScores, update, setScanState, navigate]);
+  }, [result, userId, reviewCourseId, reviewExternalCourseId, reviewCourseName, editedTeeBox, editedDate, editedScores, update, setScanState]);
 
   const badScanNullCount = countBadScanNulls(editedScores);
 

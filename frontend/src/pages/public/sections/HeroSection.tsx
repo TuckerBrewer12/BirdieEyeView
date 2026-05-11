@@ -75,6 +75,22 @@ function CrispDigitalTable() {
   );
 }
 
+function TypewriterLabel({ text }: { text: string }) {
+  return (
+    <motion.span
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ staggerChildren: 0.1 }}
+    >
+      {text.split('').map((char, i) => (
+        <motion.span key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.15 }}>
+          {char}
+        </motion.span>
+      ))}
+    </motion.span>
+  );
+}
+
 function InteractiveScannerDemo() {
   const [step, setStep] = useState(0);
 
@@ -90,22 +106,6 @@ function InteractiveScannerDemo() {
 
     return () => clearTimeout(timeout);
   }, [step]);
-
-  const TypewriterLabel = ({ text }: { text: string }) => {
-    return (
-      <motion.span
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ staggerChildren: 0.1 }}
-      >
-        {text.split('').map((char, i) => (
-          <motion.span key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.15 }}>
-            {char}
-          </motion.span>
-        ))}
-      </motion.span>
-    );
-  };
 
   return (
     <div className="relative w-full max-w-lg aspect-[4/3] sm:aspect-[1.1] rounded-2xl shadow-2xl shadow-gray-200/50 border border-gray-200 overflow-hidden bg-white perspective-1000 flex items-center justify-center">

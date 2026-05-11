@@ -360,6 +360,15 @@ class CourseRepositoryDB:
                     handicap = h.get("handicap")
                     if hole_num is None:
                         continue
+                    if handicap is not None:
+                        conflicting_hole_num = await conn.fetchval(
+                            """SELECT hole_number FROM courses.holes
+                               WHERE course_id = $1 AND handicap = $2 AND hole_number <> $3
+                               LIMIT 1""",
+                            cid, handicap, hole_num,
+                        )
+                        if conflicting_hole_num is not None:
+                            handicap = None
                     await conn.execute(
                         """INSERT INTO courses.holes (course_id, hole_number, par, handicap)
                            VALUES ($1, $2, $3, $4)

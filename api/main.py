@@ -144,6 +144,9 @@ def create_app() -> FastAPI:
     api_rate_window_sec = env_int("API_RATE_LIMIT_WINDOW_SECONDS", 60)
     api_rate_max_requests = env_int("API_RATE_LIMIT_MAX_REQUESTS", 240)
     api_rate_max_unauth_requests = env_int("API_RATE_LIMIT_MAX_UNAUTH_REQUESTS", 90)
+    api_scan_window_sec = env_int("API_SCAN_LIMIT_WINDOW_SECONDS", 3600)
+    api_scan_max_requests = env_int("API_SCAN_LIMIT_MAX_REQUESTS", 60)
+    api_scan_max_unauth_requests = env_int("API_SCAN_LIMIT_MAX_UNAUTH_REQUESTS", 6)
     api_scrape_window_sec = env_int("API_SCRAPE_LIMIT_WINDOW_SECONDS", 60)
     api_scrape_max_requests = env_int("API_SCRAPE_LIMIT_MAX_REQUESTS", 60)
     api_bot_window_sec = env_int("API_BOT_LIMIT_WINDOW_SECONDS", 60)
@@ -218,6 +221,26 @@ def create_app() -> FastAPI:
                     return JSONResponse(
                         status_code=429,
                         content={"detail": "Too many unauthenticated requests."},
+                        headers={"Retry-After": str(retry_after)},
+                    )
+
+            if request.method == "POST" and path in {"/api/scan/ocr", "/api/scan/extract"}:
+                allowed, retry_after = api_rate_limiter.check(
+                    f"api:scan:{'auth' if has_auth else 'unauth'}:{ip}",
+                    limit=api_scan_max_requests if has_auth else api_scan_max_unauth_requests,
+                    window_seconds=api_scan_window_sec,
+                )
+                if not allowed:
+                    logging.getLogger(__name__).warning(
+                        "API rate-limit hit: category=scan ip=%s auth=%s path=%s retry_after=%s",
+                        ip,
+                        has_auth,
+                        path,
+                        retry_after,
+                    )
+                    return JSONResponse(
+                        status_code=429,
+                        content={"detail": "Scorecard scan limit reached. Please try again later."},
                         headers={"Retry-After": str(retry_after)},
                     )
 

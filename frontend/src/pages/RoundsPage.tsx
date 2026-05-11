@@ -89,6 +89,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
   const [linkResults, setLinkResults] = useState<CourseSummary[]>([]);
   const [linkSearching, setLinkSearching] = useState(false);
   const [linking, setLinking] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
   const linkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (linkTimer.current) clearTimeout(linkTimer.current); }, []);
   const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
@@ -110,6 +111,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
   const handleSelectCourse = useCallback(async (roundId: string, course: CourseSummary) => {
     setLinking(true);
+    setLinkError(null);
     try {
       const updated = await api.linkCourse(roundId, course.id);
       queryClient.setQueryData<RoundSummary[]>(["rounds", userId], (prev) =>
@@ -120,6 +122,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
       setLinkResults([]);
     } catch (err) {
       console.error("Link failed:", err);
+      setLinkError(err instanceof Error ? err.message : "Could not link that round to the selected course.");
     } finally {
       setLinking(false);
     }
@@ -129,12 +132,14 @@ export function RoundsPage({ userId }: RoundsPageProps) {
     setLinkingRoundId(roundId);
     setLinkQuery("");
     setLinkResults([]);
+    setLinkError(null);
   }, []);
 
   const closeLink = useCallback(() => {
     setLinkingRoundId(null);
     setLinkQuery("");
     setLinkResults([]);
+    setLinkError(null);
   }, []);
 
   const filtered = useMemo(() => {
@@ -211,6 +216,11 @@ export function RoundsPage({ userId }: RoundsPageProps) {
             expandedWidth={280}
           />
         </div>
+        {linkError && (
+          <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {linkError}
+          </div>
+        )}
 
         {/* Table */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

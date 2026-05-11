@@ -113,21 +113,17 @@ export function TheLabPage({ userId }: TheLabPageProps) {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [acceptedFriendships, userId]);
 
-  useEffect(() => {
-    if (!friendOptions.length) {
-      setSelectedFriendId("");
-      return;
+  const effectiveSelectedFriendId = useMemo(() => {
+    if (friendOptions.some((friend) => friend.id === selectedFriendId)) {
+      return selectedFriendId;
     }
-    if (!selectedFriendId || !friendOptions.some((f) => f.id === selectedFriendId)) {
-      setSelectedFriendId(friendOptions[0].id);
-    }
+    return friendOptions[0]?.id ?? "";
   }, [friendOptions, selectedFriendId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const media = window.matchMedia("(max-width: 1023px)");
     const apply = (matches: boolean) => setCompactRadarLayout(matches);
-    apply(media.matches);
     const listener = (event: MediaQueryListEvent) => apply(event.matches);
     if (typeof media.addEventListener === "function") {
       media.addEventListener("change", listener);
@@ -138,15 +134,15 @@ export function TheLabPage({ userId }: TheLabPageProps) {
   }, []);
 
   const selectedFriend = useMemo(
-    () => friendOptions.find((friend) => friend.id === selectedFriendId) ?? null,
-    [friendOptions, selectedFriendId],
+    () => friendOptions.find((friend) => friend.id === effectiveSelectedFriendId) ?? null,
+    [effectiveSelectedFriendId, friendOptions],
   );
 
   const comparingFriend = radarMode === "benchmark" && targetHandicap === "friend";
   const { data: friendAnalytics, isLoading: friendAnalyticsLoading } = useQuery({
-    queryKey: ["analytics", "friend-compare", selectedFriendId, { limit: 20 }],
-    queryFn: () => api.getAnalytics(selectedFriendId, { limit: 20, timeframe: "all", courseId: "all" }),
-    enabled: comparingFriend && !!selectedFriendId,
+    queryKey: ["analytics", "friend-compare", effectiveSelectedFriendId, { limit: 20 }],
+    queryFn: () => api.getAnalytics(effectiveSelectedFriendId, { limit: 20, timeframe: "all", courseId: "all" }),
+    enabled: comparingFriend && !!effectiveSelectedFriendId,
   });
 
   // Goal mutation
@@ -538,9 +534,9 @@ export function TheLabPage({ userId }: TheLabPageProps) {
                                   setSelectedFriendId(f.id);
                                   setFriendOpen(false);
                                 }}
-                                className={`px-3 py-2 text-xs cursor-pointer hover:bg-gray-50 flex items-center gap-2 ${selectedFriendId === f.id ? "bg-emerald-50/50 text-emerald-700 font-semibold" : "text-gray-700"}`}
+                                className={`px-3 py-2 text-xs cursor-pointer hover:bg-gray-50 flex items-center gap-2 ${effectiveSelectedFriendId === f.id ? "bg-emerald-50/50 text-emerald-700 font-semibold" : "text-gray-700"}`}
                               >
-                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold uppercase shrink-0 ${selectedFriendId === f.id ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold uppercase shrink-0 ${effectiveSelectedFriendId === f.id ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>
                                   {f.name.substring(0, 2)}
                                 </div>
                                 <span className="truncate">{f.name}</span>

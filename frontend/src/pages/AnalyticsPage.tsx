@@ -1,10 +1,16 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Fmt = (v: any, name: any, props: any) => any;
+import type { ReactNode } from "react";
+
+type Fmt = (value: unknown, name: unknown, props: unknown) => ReactNode | [ReactNode, string];
+type DivergingTooltipPayload = {
+  value?: unknown;
+  dataKey?: unknown;
+  fill?: string;
+};
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  BarChart, Bar, PieChart, Pie, Cell, Sector,
+  BarChart, Bar, PieChart, Pie, Cell,
   CartesianGrid, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer,
 } from "recharts";
 import { SVGTimeSeriesArea } from "@/components/analytics/SVGTimeSeriesArea";
@@ -308,22 +314,6 @@ export function AnalyticsPage({ userId }: { userId: string }) {
     }));
   }, [data?.gir_vs_non_gir]);
 
-  // ── Active shape for interactive donut ─────────��─────────────────────────
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderActiveShape = (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
-    return (
-      <Sector
-        cx={cx as number} cy={cy as number}
-        innerRadius={(innerRadius as number) - 3}
-        outerRadius={(outerRadius as number) + 7}
-        startAngle={startAngle as number}
-        endAngle={endAngle as number}
-        fill={fill as string}
-      />
-    );
-  };
-
   // ── Guards ─────────────────────────────────���──────────────────────────────
   if (loading) {
     return (
@@ -623,17 +613,18 @@ export function AnalyticsPage({ userId }: { userId: string }) {
                   <div className="relative h-[180px] w-[180px] shrink-0">
                     <ResponsiveContainer width={180} height={180}>
                       <PieChart>
-                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                        <Pie {...({
-                          data: donutData,
-                          cx: "50%", cy: "50%",
-                          innerRadius: 52, outerRadius: 72,
-                          paddingAngle: 2, dataKey: "value", stroke: "none",
-                          activeIndex: donutData.findIndex((d) => d.name === activeSlice),
-                          activeShape: renderActiveShape,
-                          onMouseEnter: (_: unknown, index: number) => setActiveSlice(donutData[index]?.name ?? null),
-                          onMouseLeave: () => setActiveSlice(null),
-                        } as any)}>
+                        <Pie
+                          data={donutData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={52}
+                          outerRadius={72}
+                          paddingAngle={2}
+                          dataKey="value"
+                          stroke="none"
+                          onMouseEnter={(_: unknown, index: number) => setActiveSlice(donutData[index]?.name ?? null)}
+                          onMouseLeave={() => setActiveSlice(null)}
+                        >
                           {donutData.map((entry) => (
                             <Cell key={entry.name} fill={(scoreColors as Record<string, string>)[entry.name]} />
                           ))}
@@ -784,17 +775,18 @@ export function AnalyticsPage({ userId }: { userId: string }) {
                     <CartesianGrid stroke="#d1d5db" horizontal={false} />
                     <ReferenceLine x={0} stroke="#d1d5db" strokeWidth={1.5} />
                     <Tooltip
-                      content={({ payload, label }: any) => {
+                      content={({ payload, label }: { payload?: readonly DivergingTooltipPayload[]; label?: unknown }) => {
                         if (!payload?.length) return null;
-                        const visible = payload.filter((p: any) => Math.abs(p.value) > 0.05);
+                        const visible = payload.filter((p) => Math.abs(Number(p.value ?? 0)) > 0.05);
                         if (!visible.length) return null;
+                        const labelText = String(label ?? "");
                         return (
                           <div style={{ ...tooltipStyle, padding: "10px 12px" }}>
-                            <div className="font-semibold text-[11px] mb-1.5" style={{ color: label === "GIR" ? successColor : dangerColor }}>{label}</div>
-                            {visible.map((p: any) => (
-                              <div key={p.dataKey} className="flex items-center justify-between gap-4">
-                                <span style={{ color: p.fill }}>{p.dataKey}</span>
-                                <span style={{ color: p.fill }} className="font-bold">{Math.abs(p.value).toFixed(1)}%</span>
+                            <div className="font-semibold text-[11px] mb-1.5" style={{ color: labelText === "GIR" ? successColor : dangerColor }}>{labelText}</div>
+                            {visible.map((p) => (
+                              <div key={String(p.dataKey)} className="flex items-center justify-between gap-4">
+                                <span style={{ color: p.fill }}>{String(p.dataKey ?? "")}</span>
+                                <span style={{ color: p.fill }} className="font-bold">{Math.abs(Number(p.value ?? 0)).toFixed(1)}%</span>
                               </div>
                             ))}
                           </div>

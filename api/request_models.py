@@ -52,8 +52,8 @@ class TeeInput(BaseModel):
                 raise ValueError("hole_yardages keys must be hole numbers (1-18).") from exc
             if not (1 <= hole_num <= 18):
                 raise ValueError("hole_yardages hole number must be between 1 and 18.")
-            if raw_v is not None and not (50 <= int(raw_v) <= 900):
-                raise ValueError("hole_yardages value must be between 50 and 900.")
+            if raw_v is not None and not (50 <= int(raw_v) <= 700):
+                raise ValueError("hole_yardages value must be between 50 and 700.")
             out[str(hole_num)] = int(raw_v) if raw_v is not None else None
         return out
 
