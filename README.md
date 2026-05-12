@@ -1,6 +1,6 @@
 # ScanScorecards
 
-Snap a photo of your scorecard. Get a full round breakdown, your stats over time, and personalized tips to shoot lower.
+Photograph a physical scorecard. A Mistral OCR + Gemini LLM pipeline extracts scores, putts, GIR, and tee boxes into a complete digital round — with course and player analytics across all your rounds.
 
 ---
 

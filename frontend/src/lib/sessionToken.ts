@@ -1,6 +1,6 @@
 const LEGACY_ACCESS_TOKEN_KEYS = ["bev_access_token", "scanscore_access_token"];
 
-export function setSessionToken(token: string | null): void {
+export function setSessionToken(): void {
   if (typeof window === "undefined") return;
   try {
     for (const key of LEGACY_ACCESS_TOKEN_KEYS) {
@@ -9,7 +9,6 @@ export function setSessionToken(token: string | null): void {
   } catch {
     // Storage can be unavailable in hardened browser contexts.
   }
-  void token;
 }
 
 export function withAuthHeaders(init: HeadersInit = {}): Headers {

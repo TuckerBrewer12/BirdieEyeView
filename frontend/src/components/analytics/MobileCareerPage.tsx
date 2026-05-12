@@ -87,20 +87,14 @@ export function MobileCareerPage({
   scoreBreaksAbove70,
   scoreBreaks70AndBelow,
   totalHoles,
-  gaugeData: _gaugeData,
-  hiColor: _hiColor,
   hiDisplay,
   trendPrimary,
   successColor,
   neutralColor,
   gridColor,
-  mutedFill: _mutedFill,
   scoreColors,
 }: MobileCareerPageProps) {
   const [milestoneTab, setMilestoneTab] = useState<"career" | "putting" | "gir">("career");
-  void _gaugeData;
-  void _hiColor;
-  void _mutedFill;
 
   const { notable_achievements: na } = data;
   const { career_totals, putting_milestones, gir_milestones, round_milestones, window_days } = na;

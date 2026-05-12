@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Pencil, Trash2, Link2, CalendarDays, Share2 } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Link2, CalendarDays, Share2, Flag } from "lucide-react";
 import { ShareCard } from "@/components/share/ShareCard";
 import { useShareRound } from "@/hooks/useShareRound";
 import type { CourseSummary } from "@/types/golf";
@@ -14,9 +14,8 @@ import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
 import { formatCourseName } from "@/lib/courseName";
 import { formatToPar, calcCourseHandicap, calcNetScore } from "@/types/golf";
 import type { ComparisonRow } from "@/types/analytics";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
-import { RoundStory } from "@/components/round-detail/RoundStory";
+import { RoundInNumbers } from "@/components/round-detail/RoundStory";
 import { RoundFlowTimeline } from "@/components/analytics/RoundFlowTimeline";
 
 const tooltipStyle = {
@@ -427,6 +426,33 @@ export function RoundDetailPage({ userId }: { userId: string }) {
 
   const courseName = formatCourseName(round.course_name_played ?? round.course?.name);
 
+  const activeTeeBox = editMode ? editedTeeBox : round.tee_box;
+  const tee = activeTeeBox
+    ? round.course?.tees.find((t) => t.color?.toLowerCase() === activeTeeBox.toLowerCase()) ?? null
+    : null;
+  const courseHandicap =
+    handicapIndex != null &&
+    tee?.slope_rating != null &&
+    tee?.course_rating != null &&
+    coursePar != null
+      ? calcCourseHandicap(handicapIndex, tee.slope_rating, tee.course_rating, coursePar)
+      : null;
+  const netScore = courseHandicap != null && totalScore > 0
+    ? calcNetScore(totalScore, courseHandicap)
+    : null;
+
+  const courseHoles = round.course?.holes ?? [];
+  const front9Par = courseHoles.length > 0
+    ? courseHoles.filter(h => (h.number ?? 0) <= 9).reduce((s, h) => s + (h.par ?? 0), 0) || null
+    : round.hole_scores.filter(s => (s.hole_number ?? 0) <= 9 && s.par_played != null).length > 0
+      ? round.hole_scores.filter(s => (s.hole_number ?? 0) <= 9).reduce((s, hs) => s + (hs.par_played ?? 0), 0)
+      : null;
+  const back9Par = courseHoles.length > 0
+    ? courseHoles.filter(h => (h.number ?? 0) >= 10).reduce((s, h) => s + (h.par ?? 0), 0) || null
+    : round.hole_scores.filter(s => (s.hole_number ?? 0) >= 10 && s.par_played != null).length > 0
+      ? round.hole_scores.filter(s => (s.hole_number ?? 0) >= 10).reduce((s, hs) => s + (hs.par_played ?? 0), 0)
+      : null;
+
   return (
     <div>
       {/* Hidden share card for image capture */}
@@ -448,20 +474,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         </div>
       )}
 
-      <PageHeader
-        title={courseName}
-        subtitle={
-          round.date
-            ? new Date(round.date).toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })
-            : undefined
-        }
-      />
-
       {/* ── Inline Hero Header ── */}
       <div className="py-2 mb-4">
         <div className="flex items-start justify-between gap-4">
@@ -470,28 +482,43 @@ export function RoundDetailPage({ userId }: { userId: string }) {
             <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-gray-900 leading-tight truncate">
               {courseName}
             </h1>
-            <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+            <div className="flex items-center gap-1.5 mt-1.5 text-sm text-gray-500 flex-wrap">
               {round.date && (
-                <div className="flex items-center gap-1.5 text-sm text-gray-400">
-                  <CalendarDays size={13} />
+                <>
+                  <CalendarDays size={13} className="shrink-0" />
                   <span>
                     {new Date(round.date).toLocaleDateString("en-US", {
-                      weekday: "long",
+                      weekday: "short",
                       year: "numeric",
-                      month: "long",
+                      month: "short",
                       day: "numeric",
                     })}
                   </span>
-                </div>
+                </>
+              )}
+              {activeTeeBox && (
+                <>
+                  <span className="text-gray-300">·</span>
+                  <Flag size={12} className="shrink-0" />
+                  <span>
+                    {activeTeeBox} tees
+                    {tee?.course_rating != null && tee?.slope_rating != null && (
+                      <span className="text-gray-400"> · {tee.course_rating}/{tee.slope_rating}</span>
+                    )}
+                  </span>
+                </>
               )}
               {!round.course && !showLinkCourse && (
-                <button
-                  onClick={() => setShowLinkCourse(true)}
-                  className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-primary transition-colors"
-                >
-                  <Link2 size={12} />
-                  Link course
-                </button>
+                <>
+                  <span className="text-gray-300">·</span>
+                  <button
+                    onClick={() => setShowLinkCourse(true)}
+                    className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-primary transition-colors"
+                  >
+                    <Link2 size={12} />
+                    Link course
+                  </button>
+                </>
               )}
             </div>
             {showLinkCourse && (
@@ -532,10 +559,10 @@ export function RoundDetailPage({ userId }: { userId: string }) {
                 {!confirmDelete ? (
                   <button
                     onClick={() => setConfirmDelete(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50"
+                    title="Delete round"
+                    className="p-2 text-red-400 bg-white border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
                   >
-                    <Trash2 size={14} />
-                    Delete
+                    <Trash2 size={15} />
                   </button>
                 ) : (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg">
@@ -568,91 +595,79 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         </div>
       </div>
 
-      {(() => {
-        const activeTeeBox = editMode ? editedTeeBox : round.tee_box;
-        const tee = activeTeeBox
-          ? round.course?.tees.find((t) => t.color?.toLowerCase() === activeTeeBox.toLowerCase()) ?? null
-          : null;
-        const courseHandicap =
-          handicapIndex != null &&
-          tee?.slope_rating != null &&
-          tee?.course_rating != null &&
-          coursePar != null
-            ? calcCourseHandicap(handicapIndex, tee.slope_rating, tee.course_rating, coursePar)
-            : null;
-        const netScore = courseHandicap != null && totalScore > 0
-          ? calcNetScore(totalScore, courseHandicap)
-          : null;
-
-        return (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-6">
-            {/* Mobile: 2-row grid */}
-            <div className="md:hidden">
-              <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100">
-                <div className="flex flex-col items-center justify-center px-3 py-3">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Score</div>
-                  <div className="text-2xl font-bold text-gray-900">{totalScore || "–"}</div>
-                </div>
-                <div className="flex flex-col items-center justify-center px-3 py-3">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">To Par</div>
-                  <div className={`text-2xl font-bold ${toPar !== null && toPar < 0 ? "text-emerald-600" : toPar !== null && toPar > 0 ? "text-red-500" : "text-gray-900"}`}>
-                    {formatToPar(toPar)}
-                  </div>
-                </div>
-                <div className="flex flex-col items-center justify-center px-3 py-3">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Net</div>
-                  <div className={`text-2xl font-bold ${netScore != null && coursePar != null ? netScore <= coursePar ? "text-emerald-600" : "text-red-500" : "text-gray-900"}`}>
-                    {netScore ?? "–"}
-                  </div>
-                  {courseHandicap != null && (
-                    <div className="text-[9px] text-gray-400 mt-0.5">HCP {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}</div>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 divide-x divide-gray-100">
-                <div className="flex flex-col items-center justify-center px-3 py-3">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Tee</div>
-                  <div className="text-2xl font-bold text-gray-900">{activeTeeBox || "–"}</div>
-                </div>
-                <div className="flex flex-col items-center justify-center px-3 py-3">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Par</div>
-                  <div className="text-2xl font-bold text-gray-900">{coursePar ?? "–"}</div>
-                </div>
-              </div>
+      {/* ── Stat cards (4 columns) ── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-5">
+        {/* Mobile: 2×2 grid */}
+        <div className="md:hidden grid grid-cols-2 divide-x divide-y divide-gray-100">
+          <div className="flex flex-col items-center justify-center px-3 py-4">
+            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Score</div>
+            <div className="text-3xl font-bold text-gray-900">{totalScore || "–"}</div>
+          </div>
+          <div className="flex flex-col items-center justify-center px-3 py-4">
+            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">To Par</div>
+            <div className={`text-3xl font-bold ${toPar !== null && toPar < 0 ? "text-emerald-600" : toPar !== null && toPar > 0 ? "text-red-500" : "text-gray-900"}`}>
+              {formatToPar(toPar)}
             </div>
-            {/* Desktop: single-row flex */}
-            <div className="hidden md:flex items-stretch divide-x divide-gray-100">
-              <div className="flex-1 flex flex-col items-center justify-center px-4 py-4">
-                <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Score</div>
-                <div className="text-4xl font-bold text-gray-900">{totalScore || "–"}</div>
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-center px-4 py-4">
-                <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">To Par</div>
-                <div className={`text-4xl font-bold ${toPar !== null && toPar < 0 ? "text-emerald-600" : toPar !== null && toPar > 0 ? "text-red-500" : "text-gray-900"}`}>
-                  {formatToPar(toPar)}
+          </div>
+          <div className="flex flex-col items-center justify-center px-3 py-4">
+            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Net Score</div>
+            {netScore != null ? (
+              <>
+                <div className={`text-3xl font-bold ${netScore <= (coursePar ?? Infinity) ? "text-emerald-600" : "text-red-500"}`}>
+                  {netScore}
                 </div>
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-center px-4 py-4">
-                <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Net</div>
-                <div className={`text-4xl font-bold ${netScore != null && coursePar != null ? netScore <= coursePar ? "text-emerald-600" : "text-red-500" : "text-gray-900"}`}>
-                  {netScore ?? "–"}
+                {courseHandicap != null && (
+                  <div className="text-[9px] text-gray-400 mt-0.5">HCP {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}</div>
+                )}
+              </>
+            ) : (
+              <Link to="/settings" className="text-xs text-primary/70 hover:text-primary transition-colors mt-1">Add handicap</Link>
+            )}
+          </div>
+          <div className="flex flex-col items-center justify-center px-3 py-4">
+            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Course Par</div>
+            <div className="text-3xl font-bold text-gray-900">{coursePar ?? "–"}</div>
+            {front9Par != null && back9Par != null && (
+              <div className="text-[9px] text-gray-400 mt-0.5">{front9Par} · {back9Par}</div>
+            )}
+          </div>
+        </div>
+        {/* Desktop: single-row flex */}
+        <div className="hidden md:flex items-stretch divide-x divide-gray-100">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-5">
+            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Score</div>
+            <div className="text-4xl font-bold text-gray-900">{totalScore || "–"}</div>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-5">
+            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">To Par</div>
+            <div className={`text-4xl font-bold ${toPar !== null && toPar < 0 ? "text-emerald-600" : toPar !== null && toPar > 0 ? "text-red-500" : "text-gray-900"}`}>
+              {formatToPar(toPar)}
+            </div>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-5">
+            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Net Score</div>
+            {netScore != null ? (
+              <>
+                <div className={`text-4xl font-bold ${netScore <= (coursePar ?? Infinity) ? "text-emerald-600" : "text-red-500"}`}>
+                  {netScore}
                 </div>
                 {courseHandicap != null && (
                   <div className="text-[11px] text-gray-400 mt-0.5">HCP {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}</div>
                 )}
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-center px-4 py-4">
-                <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Tee</div>
-                <div className="text-4xl font-bold text-gray-900">{activeTeeBox || "–"}</div>
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-center px-4 py-4">
-                <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Par</div>
-                <div className="text-4xl font-bold text-gray-900">{coursePar ?? "–"}</div>
-              </div>
-            </div>
+              </>
+            ) : (
+              <Link to="/settings" className="text-sm text-primary/70 hover:text-primary transition-colors mt-1">Add handicap</Link>
+            )}
           </div>
-        );
-      })()}
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-5">
+            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Course Par</div>
+            <div className="text-4xl font-bold text-gray-900">{coursePar ?? "–"}</div>
+            {front9Par != null && back9Par != null && (
+              <div className="text-xs text-gray-400 mt-1">Front {front9Par} · Back {back9Par}</div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Course link / name section — visible in edit mode */}
       {editMode && (
@@ -721,10 +736,10 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         </div>
       )}
 
-      {/* Story view (normal) / Scorecard grid (edit) */}
-      {!editMode && <RoundStory round={round} />}
+      {/* Pill row */}
+      {!editMode && <RoundInNumbers round={round} />}
 
-      <div className={!editMode ? "mt-5" : ""}>
+      <div className={!editMode ? "mt-2" : ""}>
         <ScorecardGrid
           round={round}
           editMode={editMode}

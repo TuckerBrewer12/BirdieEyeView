@@ -320,7 +320,10 @@ function NineTable({
                 }`}
                 style={(data[i].score?.putts ?? 0) >= 3 ? { color: palette?.ui.danger ?? "#ef4444" } : undefined}
               >
-                {data[i].score?.putts ?? "-"}
+                {data[i].score?.putts != null
+                  ? data[i].score.putts
+                  : <span style={{ color: "#d1d5db" }}>·</span>
+                }
               </td>
             )
           )}
@@ -354,21 +357,29 @@ function NineTable({
                       const next = gir === null ? true : gir === true ? false : null;
                       onGirChange?.(n, next);
                     }}
-                    className="w-7 h-7 flex items-center justify-center mx-auto rounded-full hover:bg-gray-100 focus:outline-none"
+                    className="w-7 h-7 flex items-center justify-center mx-auto rounded hover:bg-gray-100 focus:outline-none"
                     title={gir === true ? "GIR hit — click to mark missed" : gir === false ? "GIR missed — click to clear" : "GIR unknown — click to mark hit"}
                   >
-                    <span style={{ color: gir === true ? (palette?.ui.success ?? "#16a34a") : "#9ca3af" }}>
-                      {gir === true ? "●" : gir === false ? "○" : "–"}
-                    </span>
+                    {gir === true ? (
+                      <span className="inline-block w-3 h-3 rounded-sm" style={{ background: palette?.ui.success ?? "#16a34a" }} />
+                    ) : gir === false ? (
+                      <span className="inline-block w-3 h-3 rounded-sm bg-red-200" />
+                    ) : (
+                      <span className="inline-block w-3 h-3 rounded-sm bg-gray-200" />
+                    )}
                   </button>
                 </td>
               );
             }
             return (
               <td key={n} className="px-2 py-2 text-center">
-                <span style={{ color: gir === true ? (palette?.ui.success ?? "#16a34a") : "#9ca3af" }}>
-                  {gir === true ? "●" : gir === false ? "○" : "-"}
-                </span>
+                {gir === true ? (
+                  <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: palette?.ui.success ?? "#16a34a" }} />
+                ) : gir === false ? (
+                  <span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-200" />
+                ) : (
+                  <span style={{ color: "#e5e7eb" }}>·</span>
+                )}
               </td>
             );
           })}
@@ -416,46 +427,32 @@ export function ScorecardGrid({
               <div className="text-xs text-white/50">{round.course.location}</div>
             )}
           </div>
-          <div className="text-right text-sm text-white/80 space-y-0.5">
-            {editMode ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-white/60">Tee:</span>
-                {availableTees && availableTees.length > 0 ? (
-                  <select
-                    value={editedTeeBox ?? ""}
-                    onChange={(e) => onTeeBoxChange?.(e.target.value)}
-                    className="text-sm text-gray-800 bg-amber-50 border border-amber-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary/50"
-                  >
-                    <option value="">Select tee…</option>
-                    {availableTees.map((color) => (
-                      <option key={color} value={color}>{color}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="text"
-                    autoComplete="off"
-                    value={editedTeeBox ?? ""}
-                    onChange={(e) => onTeeBoxChange?.(e.target.value)}
-                    placeholder="e.g. White"
-                    className="text-sm text-gray-800 bg-amber-50 border border-amber-200 rounded px-2 py-1 w-28 focus:outline-none focus:ring-1 focus:ring-primary/50"
-                  />
-                )}
-              </div>
-            ) : (
-              <>
-                {round.tee_box && (
-                  <div><span className="font-medium text-white">{round.tee_box} tees</span></div>
-                )}
-                {tee && (
-                  <div className="text-xs text-white/50">
-                    {tee.course_rating != null && `Rating ${tee.course_rating}`}
-                    {tee.slope_rating != null && ` / Slope ${tee.slope_rating}`}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          {editMode && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-white/60">Tee:</span>
+              {availableTees && availableTees.length > 0 ? (
+                <select
+                  value={editedTeeBox ?? ""}
+                  onChange={(e) => onTeeBoxChange?.(e.target.value)}
+                  className="text-sm text-gray-800 bg-amber-50 border border-amber-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                >
+                  <option value="">Select tee…</option>
+                  {availableTees.map((color) => (
+                    <option key={color} value={color}>{color}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  autoComplete="off"
+                  value={editedTeeBox ?? ""}
+                  onChange={(e) => onTeeBoxChange?.(e.target.value)}
+                  placeholder="e.g. White"
+                  className="text-sm text-gray-800 bg-amber-50 border border-amber-200 rounded px-2 py-1 w-28 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                />
+              )}
+            </div>
+          )}
         </div>
 
         <NineTable
