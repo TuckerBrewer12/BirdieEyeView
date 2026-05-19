@@ -1,52 +1,26 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { line, area, curveMonotoneX } from "d3-shape";
-import { TrendingUp, TrendingDown, ChevronRight, X } from "lucide-react";
+import { X } from "lucide-react";
 import type { DashboardData } from "@/types/golf";
 import type { AnalyticsData, GoalReport } from "@/types/analytics";
+import type { DualTrendPoint, ScoreDistItem } from "@/hooks/useDashboardViewModel";
 import { formatCourseName } from "@/lib/courseName";
-import { formatToPar } from "@/types/golf";
-import { trendDelta } from "@/lib/stats";
+import { api } from "@/lib/api";
 
-interface DualTrendPoint {
-  round_index: number;
-  total_score: number | null;
-  to_par: number | null;
-  handicap_index: number | null;
-  course_name?: string | null;
-  used_in_hi?: boolean | null;
-  differential?: number | null;
-  hi_threshold?: number | null;
-}
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const INK     = "#131613";
+const MUTED   = "#6b7765";
+const LINE    = "#e4e9e1";
+const TICK    = "#1b2b1e";
+const PRIMARY = "#2d7a3a";
+const SANS    = '"DM Sans", system-ui, sans-serif';
+const MONO    = '"DM Mono", monospace';
 
-interface ScoreDistItem {
-  name: string;
-  label: string;
-  value: number;
-  color: string;
-}
-
-export interface MobileDashboardProps {
-  data: DashboardData;
-  trends: AnalyticsData | null;
-  user: { name?: string | null; scoring_goal?: number | null } | null;
-  goalReport: GoalReport | null;
-  dualData: DualTrendPoint[];
-  recentMilestones: { type: string; label: string; date: string; course: string }[];
-  last20ScoringAvg: number | null;
-  girPct: number;
-  recentDistribution: ScoreDistItem[];
-  scramblingPct: number | null;
-  upAndDownPct: number | null;
-  putts: number;
-  scoreLineColor: string;
-  handicapLineColor: string;
-  girColor: string;
-  mutedFill: string;
-}
-
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatHI(hi: number | null | undefined): string {
   if (hi == null) return "—";
   if (hi < 0) return `+${Math.abs(hi).toFixed(1)}`;
@@ -64,141 +38,156 @@ function getDotColor(toPar: number | null): string {
 function getBarColor(d: DualTrendPoint): string {
   if (d.used_in_hi == null) return "#9ca3af";
   if (d.used_in_hi) return "#059669";
-  if (d.hi_threshold != null && d.differential != null && d.differential - d.hi_threshold <= 2) return "#d97706";
+  if (d.hi_threshold != null && d.differential != null && d.differential - d.hi_threshold <= 2)
+    return "#d97706";
   return "#dc2626";
 }
 
-// ─── Mini sparkline for header ────────────────────────────────────────────────
-function MiniSparkline({ data }: { data: DualTrendPoint[] }) {
+function fmtDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+type HoleKey = "eagle" | "birdie" | "par" | "bogey" | "double_bogey" | "triple_bogey" | "quad_bogey";
+
+function getScoreKey(strokes: number | null | undefined, par: number | null | undefined): HoleKey {
+  if (strokes == null || par == null) return "par";
+  const diff = strokes - par;
+  if (diff <= -2) return "eagle";
+  if (diff === -1) return "birdie";
+  if (diff === 0) return "par";
+  if (diff === 1) return "bogey";
+  if (diff === 2) return "double_bogey";
+  if (diff === 3) return "triple_bogey";
+  return "quad_bogey";
+}
+
+function scoreBarHeightPct(strokes: number | null | undefined, par: number | null | undefined): number {
+  if (strokes == null || par == null) return 38;
+  const diff = strokes - par;
+  if (diff <= -1) return 22;
+  if (diff === 0) return 38;
+  return Math.min(100, 38 + diff * 14);
+}
+
+// ─── Dot separator ────────────────────────────────────────────────────────────
+function Dot() {
+  return (
+    <span style={{
+      display: "inline-block",
+      width: 3, height: 3,
+      borderRadius: "50%",
+      background: "currentColor",
+      opacity: 0.5,
+      verticalAlign: "middle",
+      margin: "0 4px",
+    }} />
+  );
+}
+
+// ─── Hero sparkline ───────────────────────────────────────────────────────────
+function HeroSparkline({ data }: { data: DualTrendPoint[] }) {
   const valid = data.filter((d) => d.total_score != null);
   if (valid.length < 3) return null;
 
-  const W = 88;
-  const H = 40;
-  const PAD = 5;
+  const W = 300;
+  const H = 56;
+  const PAD = { top: 5, right: 5, bottom: 5, left: 5 };
+
   const scores = valid.map((d) => d.total_score!);
-  const min = Math.min(...scores);
-  const max = Math.max(...scores);
-  const range = Math.max(max - min, 1);
-  const xs = valid.map((_, i) => PAD + (i / (valid.length - 1)) * (W - PAD * 2));
-  const ys = scores.map((s) => H - PAD - ((s - min) / range) * (H - PAD * 2));
-  const pts = xs.map((x, i) => `${x},${ys[i]}`).join(" ");
+  const minS = Math.min(...scores);
+  const maxS = Math.max(...scores);
+  const range = maxS - minS || 1;
 
-  // improving = most recent score lower than earliest in this window
-  const improving = scores[scores.length - 1] <= scores[0];
-  const trendColor = improving ? "#059669" : "#ef4444";
+  const xScale = scaleLinear().domain([0, valid.length - 1]).range([PAD.left, W - PAD.right]);
+  const yScale = scaleLinear().domain([minS - range * 0.15, maxS + range * 0.15]).range([H - PAD.bottom, PAD.top]);
+
+  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const meanY = yScale(mean);
+
+  const lineFn = line<DualTrendPoint>()
+    .x((_, i) => xScale(i))
+    .y((d) => yScale(d.total_score!))
+    .curve(curveMonotoneX);
+
+  const areaFn = area<DualTrendPoint>()
+    .x((_, i) => xScale(i))
+    .y0(H - PAD.bottom)
+    .y1((d) => yScale(d.total_score!))
+    .curve(curveMonotoneX);
+
+  const pathD = lineFn(valid) ?? "";
+  const areaD = areaFn(valid) ?? "";
+  const lastX = xScale(valid.length - 1);
+  const lastY = yScale(valid[valid.length - 1].total_score!);
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <svg width={W} height={H} overflow="visible">
-        <polyline
-          points={pts}
-          fill="none"
-          stroke={trendColor}
-          strokeWidth={2}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          opacity={0.85}
-        />
-        {valid.map((_, i) => (
-          <circle
-            key={i}
-            cx={xs[i]}
-            cy={ys[i]}
-            r={i === valid.length - 1 ? 3.5 : 2}
-            fill={i === valid.length - 1 ? trendColor : "white"}
-            stroke={trendColor}
-            strokeWidth={1.5}
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} style={{ overflow: "visible", display: "block" }}>
+      <defs>
+        <linearGradient id="heroAreaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={PRIMARY} stopOpacity={0.22} />
+          <stop offset="100%" stopColor={PRIMARY} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <line
+        x1={PAD.left} x2={W - PAD.right}
+        y1={meanY} y2={meanY}
+        stroke="#cdd6c8" strokeWidth={1} strokeDasharray="3 3"
+      />
+      <path d={areaD} fill="url(#heroAreaGrad)" stroke="none" />
+      <path d={pathD} fill="none" stroke={PRIMARY} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={lastX} cy={lastY} r={3.5} fill="white" stroke={PRIMARY} strokeWidth={2} />
+    </svg>
+  );
+}
+
+// ─── Per-hole micro bar strip ─────────────────────────────────────────────────
+type HoleScore = { hole_number: number; strokes?: number | null; par_played?: number | null };
+
+function MicroBars({ holes, scoreColors }: { holes: HoleScore[]; scoreColors: Record<string, string> }) {
+  const sorted = [...holes].sort((a, b) => a.hole_number - b.hole_number);
+  if (!sorted.length) return null;
+  return (
+    <div style={{ display: "flex", gap: 3, height: 28, alignItems: "flex-end", width: "100%" }}>
+      {sorted.map((h) => {
+        const key = getScoreKey(h.strokes, h.par_played);
+        const heightPct = scoreBarHeightPct(h.strokes, h.par_played);
+        return (
+          <div
+            key={h.hole_number}
+            style={{
+              flex: 1,
+              height: `${heightPct}%`,
+              borderRadius: "2px 2px 0 0",
+              background: scoreColors[key] ?? "#9ca3af",
+              opacity: key === "par" ? 0.35 : 1,
+            }}
           />
-        ))}
-      </svg>
-      <div
-        className="text-[10px] font-bold uppercase tracking-wide"
-        style={{ color: trendColor }}
-      >
-        {improving ? "↓ trending down" : "↑ trending up"}
-      </div>
+        );
+      })}
     </div>
   );
 }
 
-// ─── Compact stat cell ────────────────────────────────────────────────────────
-function StatCell({
-  label,
-  value,
-  sub,
-  onClick,
-}: {
-  label: string;
-  value: string | number | null;
-  sub?: string | null;
-  onClick?: () => void;
-}) {
+// ─── Solid mini strip (for rounds without per-hole data) ──────────────────────
+function SolidMiniStrip({ toPar }: { toPar: number | null }) {
+  const color = toPar == null ? "#9ca3af" : toPar <= 0 ? "#059669" : toPar <= 14 ? "#f87171" : "#60a5fa";
+  return <div style={{ width: 78, height: 16, borderRadius: 2, background: color, opacity: 0.7 }} />;
+}
+
+// ─── Benchmark bar (short game) ───────────────────────────────────────────────
+function BenchmarkBar({ value, tour }: { value: number | null; tour: number }) {
+  const pct = Math.min(100, Math.max(0, value ?? 0));
   return (
-    <div
-      className={`bg-gray-50 rounded-xl px-3 py-2.5 ${onClick ? "cursor-pointer active:bg-gray-100 transition-colors" : ""}`}
-      onClick={onClick}
-    >
-      <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-1">
-        {label}
-      </div>
-      <div className="text-2xl font-bold tracking-tight text-gray-900 leading-none tabular-nums">
-        {value ?? "—"}
-      </div>
-      {sub && (
-        <div className="text-[10px] text-gray-400 mt-1 truncate leading-tight">{sub}</div>
-      )}
+    <div style={{ position: "relative", height: 6, background: "#e5e7eb", borderRadius: 99, marginTop: 6, marginBottom: 4 }}>
+      <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: `${pct}%`, background: PRIMARY, borderRadius: 99 }} />
+      <div style={{ position: "absolute", top: -2, left: `${tour}%`, width: 2, height: 10, background: TICK, borderRadius: 99 }} />
     </div>
   );
 }
 
-// ─── Short game progress row ──────────────────────────────────────────────────
-function ShortGameRow({
-  label,
-  value,
-  delta,
-}: {
-  label: string;
-  value: number | null;
-  delta: number | null;
-}) {
-  if (value == null) return null;
-  const significant = delta != null && Math.abs(delta) > 0.5;
-  const DeltaIcon = significant ? (delta! > 0 ? TrendingUp : TrendingDown) : null;
-  const deltaColor = significant
-    ? delta! > 0
-      ? "text-emerald-500"
-      : "text-red-400"
-    : "text-gray-300";
-
-  return (
-    <div className="flex items-center gap-3">
-      <div className="text-sm text-gray-500 w-24 shrink-0">{label}</div>
-      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <motion.div
-          className="h-full rounded-full bg-primary"
-          initial={{ width: 0 }}
-          animate={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-          transition={{ duration: 0.9, ease: "easeOut" }}
-        />
-      </div>
-      <div className="flex items-center gap-1 shrink-0">
-        <span className="text-sm font-semibold text-gray-900 tabular-nums">
-          {value.toFixed(0)}%
-        </span>
-        {DeltaIcon && <DeltaIcon size={11} className={deltaColor} />}
-        {significant && (
-          <span className={`text-[10px] font-semibold ${deltaColor}`}>
-            {delta! > 0 ? "+" : ""}
-            {delta!.toFixed(0)}%
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Interactive score / HCP trend chart ─────────────────────────────────────
+// ─── Interactive score / HCP trend chart — KEEP UNCHANGED ─────────────────────
 function MobileScoreTrend({
   dualData,
   scoreColor,
@@ -232,9 +221,7 @@ function MobileScoreTrend({
     .domain([0, dualData.length - 1])
     .range([PAD.left, W - PAD.right]);
 
-  const nums = valid.map((d) =>
-    view === "score" ? d.total_score! : d.handicap_index!,
-  );
+  const nums = valid.map((d) => (view === "score" ? d.total_score! : d.handicap_index!));
   const minV = Math.min(...nums);
   const maxV = Math.max(...nums);
   const yScale = scaleLinear()
@@ -274,10 +261,7 @@ function MobileScoreTrend({
     e.currentTarget.releasePointerCapture(e.pointerId);
     const rect = e.currentTarget.getBoundingClientRect();
     const svgX = (e.clientX - rect.left) * (W / rect.width);
-    const idx = Math.max(
-      0,
-      Math.min(dualData.length - 1, Math.round(xScale.invert(svgX))),
-    );
+    const idx = Math.max(0, Math.min(dualData.length - 1, Math.round(xScale.invert(svgX))));
     const point = dualData[idx];
     if (point) setSelected({ point, idx });
   };
@@ -315,13 +299,9 @@ function MobileScoreTrend({
             transition={{ duration: 0.12 }}
           >
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-gray-900">
-                Round {selected.point.round_index}
-              </div>
+              <div className="font-semibold text-gray-900">Round {selected.point.round_index}</div>
               {selected.point.course_name && (
-                <div className="text-gray-400 truncate mt-0.5">
-                  {selected.point.course_name}
-                </div>
+                <div className="text-gray-400 truncate mt-0.5">{selected.point.course_name}</div>
               )}
             </div>
             <div className="flex items-start gap-3 shrink-0">
@@ -373,8 +353,11 @@ function MobileScoreTrend({
           {yTicks.map((v) => (
             <g key={v}>
               <line x1={PAD.left} x2={W - PAD.right} y1={yScale(v)} y2={yScale(v)} stroke="#d1d5db" strokeWidth={1} />
-              <text x={PAD.left - 7} y={yScale(v) + 4} textAnchor="end" fontSize={11} fontWeight="bold" fill="#6b7280"
-                paintOrder="stroke" stroke="white" strokeWidth={4} strokeLinejoin="round">
+              <text
+                x={PAD.left - 7} y={yScale(v) + 4}
+                textAnchor="end" fontSize={11} fontWeight="bold" fill="#6b7280"
+                paintOrder="stroke" stroke="white" strokeWidth={4} strokeLinejoin="round"
+              >
                 {view === "hcp" ? formatHI(v) : v}
               </text>
             </g>
@@ -388,7 +371,6 @@ function MobileScoreTrend({
             </text>
           ))}
 
-          {/* Bars: baseline → data point (score view only) */}
           {view === "score" && dualData.map((d, i) => {
             if (d.total_score == null) return null;
             const barTop = yScale(d.total_score);
@@ -416,7 +398,6 @@ function MobileScoreTrend({
             />
           )}
 
-          {/* Area fill */}
           <motion.path
             key={`area-${view}`}
             d={areaD}
@@ -427,7 +408,6 @@ function MobileScoreTrend({
             transition={{ duration: 1.2, ease: "easeInOut" }}
           />
 
-          {/* Line */}
           <motion.path
             key={`line-${view}`}
             d={pathD}
@@ -463,11 +443,30 @@ function MobileScoreTrend({
               </g>
             );
           })}
-
         </svg>
       </div>
     </div>
   );
+}
+
+// ─── Props ────────────────────────────────────────────────────────────────────
+export interface MobileDashboardProps {
+  data: DashboardData;
+  trends: AnalyticsData | null;
+  user: { name?: string | null; scoring_goal?: number | null } | null;
+  goalReport: GoalReport | null;
+  dualData: DualTrendPoint[];
+  last20ScoringAvg: number | null;
+  l5ScoringAvg: number | null;
+  handicapDelta: number | null;
+  l20ScoreMix: ScoreDistItem[];
+  girPct: number;
+  scramblingPct: number | null;
+  upAndDownPct: number | null;
+  putts: number;
+  scoreColors: Record<string, string>;
+  scoreLineColor: string;
+  handicapLineColor: string;
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -478,153 +477,308 @@ export function MobileDashboard({
   goalReport,
   dualData,
   last20ScoringAvg,
+  l5ScoringAvg,
+  handicapDelta,
+  l20ScoreMix,
+  girPct,
   scramblingPct,
   upAndDownPct,
   putts,
+  scoreColors,
   scoreLineColor,
   handicapLineColor,
 }: MobileDashboardProps) {
   const navigate = useNavigate();
   const firstName = user?.name?.split(" ")[0] ?? "Golfer";
-
-  const scramblingDelta = trendDelta(trends?.scrambling_trend ?? [], (r) => r.scrambling_percentage);
-  const upDownDelta = trendDelta(trends?.up_and_down_trend ?? [], (r) => r.percentage);
-
   const lastRound = data.recent_rounds[0] ?? null;
   const recentRounds = data.recent_rounds.slice(0, 3);
-  const sparklineData = dualData.slice(-7);
 
-  function roundAccentColor(toPar: number | null): string {
-    if (toPar == null) return "bg-gray-200";
-    if (toPar <= -1) return "bg-emerald-400";
-    if (toPar >= 4) return "bg-red-300";
-    if (toPar >= 2) return "bg-orange-300";
-    return "bg-gray-200";
-  }
+  // Fetch per-hole data for micro-bars (mobile-only, lazy)
+  const round0Id = data.recent_rounds[0]?.id ?? null;
+  const round1Id = data.recent_rounds[1]?.id ?? null;
+  const round2Id = data.recent_rounds[2]?.id ?? null;
+  const { data: r0 } = useQuery({ queryKey: ["round", round0Id], queryFn: () => api.getRound(round0Id!), enabled: !!round0Id });
+  const { data: r1 } = useQuery({ queryKey: ["round", round1Id], queryFn: () => api.getRound(round1Id!), enabled: !!round1Id });
+  const { data: r2 } = useQuery({ queryKey: ["round", round2Id], queryFn: () => api.getRound(round2Id!), enabled: !!round2Id });
+  type RecentHole = { hole_number: number; strokes?: number | null; par_played?: number | null };
+  const toHoles = (d: typeof r0): RecentHole[] => (d?.hole_scores ?? []) as RecentHole[];
+  const recentRoundHoles: RecentHole[][] = [toHoles(r0), toHoles(r1), toHoles(r2)];
+  const lastRoundHoles = recentRoundHoles[0];
+
+  // Top strip date
+  const now = new Date();
+  const dayLabel = now.toLocaleDateString("en-US", { weekday: "short" });
+  const dateLabel = now.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+  // Handicap delta display
+  const hiDeltaText = handicapDelta != null && Math.abs(handicapDelta) >= 0.1
+    ? `${handicapDelta < 0 ? "↓" : "↑"} ${Math.abs(handicapDelta).toFixed(1)}`
+    : null;
+  const hiDeltaColor = handicapDelta != null && handicapDelta < 0 ? "#059669" : "#f87171";
+
+  // Scoring avg delta: L20 avg vs most-recent-5 avg
+  const scoreDelta = last20ScoringAvg != null && l5ScoringAvg != null
+    ? last20ScoringAvg - l5ScoringAvg   // positive = L5 is lower = improving
+    : null;
+  const scoreDeltaText = scoreDelta != null && Math.abs(scoreDelta) >= 0.1
+    ? `${scoreDelta > 0 ? "↓" : "↑"} ${Math.abs(scoreDelta).toFixed(1)} vs L5`
+    : null;
+  const scoreDeltaImproving = scoreDelta != null && scoreDelta > 0;  // L5 lower than L20 = improving
+
+  // Score mix legend groups
+  const birdiesPlusPct = (l20ScoreMix.find((d) => d.name === "eagle")?.value ?? 0)
+    + (l20ScoreMix.find((d) => d.name === "birdie")?.value ?? 0);
+  const parPct         = l20ScoreMix.find((d) => d.name === "par")?.value ?? 0;
+  const bogeyPct       = l20ScoreMix.find((d) => d.name === "bogey")?.value ?? 0;
+  const doublePct      = l20ScoreMix.find((d) => d.name === "double_bogey")?.value ?? 0;
+  const triplePlusPct  = (l20ScoreMix.find((d) => d.name === "triple_bogey")?.value ?? 0)
+    + (l20ScoreMix.find((d) => d.name === "quad_bogey")?.value ?? 0);
+
+  const legendItems = [
+    { label: "Birdie+", pct: birdiesPlusPct, color: scoreColors.birdie },
+    { label: "Par",     pct: parPct,         color: scoreColors.par },
+    { label: "Bogey",   pct: bogeyPct,       color: scoreColors.bogey },
+    { label: "Dbl",     pct: doublePct,      color: scoreColors.double_bogey },
+    { label: "Tpl+",    pct: triplePlusPct,  color: scoreColors.triple_bogey },
+  ];
+
+  const totalL20Holes = (trends?.score_type_distribution ?? []).reduce(
+    (s, r) => s + r.holes_counted, 0,
+  );
+
+  // Last round footer chips
+  const footerChips = (() => {
+    if (!lastRoundHoles.length) return [];
+    const counts: Partial<Record<HoleKey, number>> = {};
+    for (const h of lastRoundHoles) {
+      const k = getScoreKey(h.strokes, h.par_played);
+      counts[k] = (counts[k] ?? 0) + 1;
+    }
+    const items: { label: string; count: number; color: string }[] = [];
+    const birdiesPlus = (counts.eagle ?? 0) + (counts.birdie ?? 0);
+    if (birdiesPlus > 0) items.push({ label: "Birdie+", count: birdiesPlus, color: scoreColors.birdie ?? "#059669" });
+    if (counts.par)          items.push({ label: "Par",    count: counts.par,          color: scoreColors.par     ?? "#9ca3af" });
+    if (counts.bogey)        items.push({ label: "Bogey",  count: counts.bogey,        color: scoreColors.bogey   ?? "#f87171" });
+    if (counts.double_bogey) items.push({ label: "Double", count: counts.double_bogey, color: scoreColors.double_bogey ?? "#60a5fa" });
+    return items;
+  })();
+
+  // Goal progress
+  const goalProgress = (() => {
+    if (!user?.scoring_goal) return null;
+    const current = goalReport?.scoring_average ?? last20ScoringAvg;
+    if (current == null) return null;
+    if (goalReport?.on_track) return 100;
+    const validScores = dualData.filter((d) => d.total_score != null);
+    if (!validScores.length) return null;
+    const startAvg = validScores[0].total_score!;
+    const goalTarget = user.scoring_goal;
+    const range = startAvg - goalTarget;
+    if (range <= 0) return 100;
+    return Math.min(100, Math.max(0, ((startAvg - current) / range) * 100));
+  })();
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, paddingTop: 8 }}>
 
-      {/* ── Hero header ─────────────────────────────────────────────────────── */}
-      <div
-        className="-mx-4 px-4 pt-3 pb-7"
-        style={{
-          background: "linear-gradient(175deg, rgba(238,247,240,0.75) 0%, transparent 90%)",
-        }}
-      >
-        {/* Top row */}
-        <div className="flex items-start justify-between mb-5">
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-              Welcome back
-            </div>
-            <div className="text-xl font-extrabold tracking-tight text-gray-900 leading-tight">
-              Hello, {firstName}
-            </div>
+      {/* ── 1. Top Strip ─────────────────────────────────────────────────────── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "0 4px 6px" }}>
+        <div>
+          <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: "1.3px", textTransform: "uppercase", color: MUTED, marginBottom: 3 }}>
+            {dayLabel} · {dateLabel}
           </div>
-          {data.handicap_index != null && (
-            <div className="flex flex-col items-end">
-              <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">
-                Handicap
-              </span>
-              <span className="text-2xl font-bold text-gray-900 tabular-nums leading-tight">
-                {formatHI(data.handicap_index)}
-              </span>
+          <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 700, letterSpacing: "-0.4px", color: INK, lineHeight: 1 }}>
+            Hi {firstName}
+          </div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontFamily: SANS, fontSize: 9, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: MUTED, marginBottom: 2 }}>
+            Handicap
+          </div>
+          <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 700, letterSpacing: "-0.5px", color: INK, lineHeight: 1 }}>
+            {formatHI(data.handicap_index)}
+          </div>
+          {hiDeltaText && (
+            <div style={{ fontFamily: MONO, fontSize: 10, color: hiDeltaColor, whiteSpace: "nowrap", marginTop: 2 }}>
+              {hiDeltaText}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── 2. Hero Card ─────────────────────────────────────────────────────── */}
+      <div style={{
+        background: `radial-gradient(ellipse at 90% 10%, rgba(45,122,58,0.07) 0%, transparent 55%), radial-gradient(ellipse at 5% 90%, rgba(245,158,11,0.07) 0%, transparent 55%), #fafbf5`,
+        border: `1px solid ${LINE}`,
+        borderRadius: 20,
+        padding: "18px 18px 16px",
+      }}>
+        {/* 2a. Label + delta pill */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: "1.6px", textTransform: "uppercase", color: MUTED, whiteSpace: "nowrap" }}>
+            Scoring Avg · L20
+          </div>
+          {scoreDeltaText && (
+            <div style={{
+              fontFamily: MONO, fontSize: 11, fontWeight: 600,
+              color: scoreDeltaImproving ? "#059669" : "#f87171",
+              background: scoreDeltaImproving ? "rgba(5,150,105,0.1)" : "rgba(248,113,113,0.1)",
+              padding: "3px 8px", borderRadius: 99, whiteSpace: "nowrap",
+            }}>
+              {scoreDeltaText}
             </div>
           )}
         </div>
 
-        {/* Scoring avg + sparkline */}
-        <div className="flex items-end justify-between">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-primary/60 mb-1.5">
-              Scoring Avg · Last 20
+        {/* 2b. Big number + sparkline */}
+        <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 14, alignItems: "center", marginBottom: 16 }}>
+          <div style={{ fontFamily: SANS, fontSize: 64, fontWeight: 700, letterSpacing: "-2.4px", lineHeight: 1, color: INK }}>
+            {last20ScoringAvg != null ? last20ScoringAvg.toFixed(1) : "—"}
+          </div>
+          <HeroSparkline data={dualData} />
+        </div>
+
+        {/* 2c. Score Mix bar */}
+        {l20ScoreMix.some((d) => d.value > 0) && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: MUTED }}>
+                Score Mix · L20
+              </div>
+              {totalL20Holes > 0 && (
+                <div style={{ fontFamily: MONO, fontSize: 10, color: MUTED, whiteSpace: "nowrap" }}>
+                  {totalL20Holes} holes
+                </div>
+              )}
             </div>
-            <div className="text-6xl font-black tracking-tighter text-gray-900 leading-none tabular-nums">
-              {last20ScoringAvg != null ? last20ScoringAvg.toFixed(1) : "—"}
+            <div style={{ display: "flex", gap: 2, height: 9, borderRadius: 3, overflow: "hidden" }}>
+              {l20ScoreMix.filter((d) => d.value > 0.5).map((d) => (
+                <div key={d.name} style={{ flex: d.value, background: scoreColors[d.name] ?? d.color, minWidth: 2 }} />
+              ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", marginTop: 8 }}>
+              {legendItems.map((item) => (
+                <div key={item.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: INK }}>
+                    {item.pct.toFixed(0)}%
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: 1, background: item.color, flexShrink: 0 }} />
+                    <div style={{ fontFamily: SANS, fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px", color: MUTED }}>
+                      {item.label}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-          <MiniSparkline data={sparklineData} />
+        )}
+
+        {/* 2d. Metadata strip */}
+        <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: 12, marginTop: 2 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", textAlign: "center" }}>
+            {([
+              { label: "BEST",   value: data.best_round?.toString() ?? "—" },
+              { label: "ROUNDS", value: data.total_rounds?.toString() ?? "—" },
+              { label: "PUTTS",  value: putts > 0 ? putts.toFixed(1) : "—" },
+              { label: "GIR",    value: girPct > 0 ? `${girPct.toFixed(0)}%` : "—" },
+            ] as const).map(({ label, value }) => (
+              <div key={label} style={{ padding: "0 2px" }}>
+                <div style={{ fontFamily: SANS, fontSize: 9, fontWeight: 700, letterSpacing: "1.2px", textTransform: "uppercase", color: MUTED, marginBottom: 3 }}>
+                  {label}
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 600, color: INK, lineHeight: 1 }}>
+                  {value}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* ── Your Game compact 2×2 ───────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
-        <div className="flex items-center justify-between mb-2.5">
-          <div className="text-sm font-semibold text-gray-800">Your Game</div>
-          <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
-            All time
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <StatCell
-            label="Last Round"
-            value={lastRound?.total_score ?? null}
-            sub={lastRound?.course_name ? formatCourseName(lastRound.course_name) : null}
-            onClick={lastRound ? () => navigate(`/rounds/${lastRound.id}`) : undefined}
-          />
-          <StatCell label="Best Round" value={data.best_round ?? null} />
-          <StatCell
-            label="Total Rounds"
-            value={data.total_rounds}
-          />
-          <StatCell
-            label="Avg Putts"
-            value={putts > 0 ? putts.toFixed(1) : null}
-            sub="per round"
-          />
-        </div>
-      </div>
-
-      {/* ── Goal progress ──────────────────────────────────────────────────── */}
-      {user?.scoring_goal && goalReport && (
-        <button
-          type="button"
-          onClick={() => navigate("/the-lab")}
-          className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 text-left active:bg-gray-50 transition-colors"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-semibold text-gray-800">Scoring Goal</div>
-            <div className="flex items-center gap-0.5 text-xs font-semibold text-primary">
-              Break {user.scoring_goal + 1}
-              <ChevronRight size={13} />
+      {/* ── 3. Last Round Ticket ──────────────────────────────────────────────── */}
+      {lastRound && (
+        <div style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 16, padding: "16px 18px 14px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ flex: 1, minWidth: 0, marginRight: 12 }}>
+              <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: MUTED, letterSpacing: "1px", marginBottom: 4 }}>
+                Last Round
+              </div>
+              <div style={{ fontFamily: SANS, fontSize: 17, fontWeight: 700, color: INK, letterSpacing: "-0.3px", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {lastRound.course_name ? formatCourseName(lastRound.course_name) : "Unknown course"}
+              </div>
+              <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED, whiteSpace: "nowrap", marginTop: 3, display: "flex", alignItems: "center" }}>
+                {fmtDate(lastRound.date)}
+                {lastRound.tee_box && <><Dot />{lastRound.tee_box}</>}
+              </div>
+            </div>
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
+              <div style={{ fontFamily: MONO, fontSize: 38, fontWeight: 600, letterSpacing: "-1px", lineHeight: 1, color: INK }}>
+                {lastRound.total_score ?? "—"}
+              </div>
+              {lastRound.to_par != null && (
+                <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: lastRound.to_par > 0 ? "#f87171" : "#059669" }}>
+                  {lastRound.to_par > 0 ? `+${lastRound.to_par}` : lastRound.to_par === 0 ? "E" : lastRound.to_par}
+                </div>
+              )}
             </div>
           </div>
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full rounded-full"
-              style={{
-                background: goalReport.on_track
-                  ? "#059669"
-                  : "linear-gradient(90deg, #2d7a3a, #9ca3af)",
-              }}
-              initial={{ width: 0 }}
-              animate={{
-                width: `${Math.min(100, Math.max(5,
-                  goalReport.on_track ? 100
-                  : goalReport.gap == null ? 5
-                  : (1 - goalReport.gap / Math.max(goalReport.scoring_average ?? 1, 1)) * 100,
-                ))}%`,
-              }}
-              transition={{ duration: 0.9, ease: "easeOut" }}
-            />
+
+          {lastRoundHoles.length > 0 && (
+            <div style={{ marginTop: 14 }}>
+              <MicroBars holes={lastRoundHoles} scoreColors={scoreColors} />
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                {["1", "9", "18"].map((n) => (
+                  <div key={n} style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>{n}</div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={{ borderTop: `1px dashed ${LINE}`, paddingTop: 12, marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {footerChips.map((chip) => (
+                <div key={chip.label} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: SANS, fontSize: 10, color: MUTED }}>
+                  <div style={{ width: 8, height: 8, borderRadius: 2, background: chip.color, flexShrink: 0 }} />
+                  <span>{chip.count} {chip.label}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate(`/rounds/${lastRound.id}`)}
+              style={{ fontFamily: SANS, fontSize: 12, fontWeight: 600, color: PRIMARY, background: "none", border: "none", cursor: "pointer", padding: 0, whiteSpace: "nowrap" }}
+            >
+              Open card →
+            </button>
           </div>
-          <div className="flex justify-between text-[10px] text-gray-400 mt-2">
-            <span>Avg {goalReport.scoring_average?.toFixed(1)}</span>
-            {goalReport.savers[0] && (
-              <span className="text-primary font-semibold truncate ml-2 max-w-[180px]">
-                {goalReport.savers[0].headline}
-              </span>
-            )}
-          </div>
-        </button>
+        </div>
       )}
 
-      {/* ── Score trend ────────────────────────────────────────────────────── */}
-      <div
-        className="rounded-2xl border border-gray-100 shadow-sm p-4"
-        style={{ background: "linear-gradient(180deg, rgba(238,247,240,0.4) 0%, white 50%)" }}
-      >
+      {/* ── 4. Inline Goal Row ────────────────────────────────────────────────── */}
+      {user?.scoring_goal != null && goalProgress != null && (
+        <div style={{ padding: "6px 6px 0" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+            <span style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: INK }}>Goal</span>
+            <span style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: PRIMARY, marginLeft: 4 }}>
+              Break {user.scoring_goal + 1}
+            </span>
+          </div>
+          <div style={{ height: 5, background: "#e5e7eb", borderRadius: 99, position: "relative", overflow: "visible" }}>
+            <div style={{ height: "100%", width: `${goalProgress}%`, background: PRIMARY, borderRadius: 99 }} />
+            <div style={{
+              position: "absolute",
+              top: -3, left: `${goalProgress}%`,
+              width: 2, height: 11,
+              background: TICK, borderRadius: 99,
+              transform: "translateX(-50%)",
+            }} />
+          </div>
+        </div>
+      )}
+
+      {/* ── 5. Score History — KEEP EXISTING ─────────────────────────────────── */}
+      <div style={{ borderRadius: 16, border: `1px solid ${LINE}`, padding: 16, background: "linear-gradient(180deg, rgba(238,247,240,0.4) 0%, white 50%)" }}>
         <MobileScoreTrend
           dualData={dualData}
           scoreColor={scoreLineColor}
@@ -632,75 +786,132 @@ export function MobileDashboard({
         />
       </div>
 
-      {/* ── Short game ─────────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
-        <div className="text-sm font-semibold text-gray-800 mb-4">Short Game</div>
-        <div className="space-y-4">
-          <ShortGameRow label="Scrambling" value={scramblingPct} delta={scramblingDelta} />
-          <ShortGameRow label="Up & Down" value={upAndDownPct} delta={upDownDelta} />
+      {/* ── 6. Short Game Card ───────────────────────────────────────────────── */}
+      <div style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 16, padding: "16px 18px 14px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: INK }}>Short Game</span>
+            <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 500, color: MUTED }}>L5</span>
+          </div>
+          <Link to="/the-lab" style={{ fontFamily: SANS, fontSize: 11, fontWeight: 600, color: PRIMARY, textDecoration: "none" }}>
+            Open Lab →
+          </Link>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          {([
+            { label: "Scrambling", value: scramblingPct, tour: 57 },
+            { label: "Up & Down",  value: upAndDownPct,  tour: 50 },
+          ] as const).map(({ label, value, tour }) => (
+            <div key={label}>
+              <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "1.3px", textTransform: "uppercase", color: MUTED, marginBottom: 4 }}>
+                {label}
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: 26, fontWeight: 600, letterSpacing: "-0.5px", color: INK, lineHeight: 1 }}>
+                {value != null ? value.toFixed(0) : "—"}
+                <span style={{ fontSize: 16, fontWeight: 500, color: MUTED }}>%</span>
+              </div>
+              <BenchmarkBar value={value} tour={tour} />
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>You {value != null ? `${value.toFixed(0)}%` : "—"}</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>Tour {tour}%</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* ── Recent Rounds ──────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-5 pt-4 pb-3">
-          <div className="text-sm font-semibold text-gray-800">Recent Rounds</div>
-          <Link
-            to="/rounds"
-            className="text-xs font-semibold text-primary flex items-center gap-0.5"
-          >
-            View all <ChevronRight size={12} />
+      {/* ── 7. Recent Rounds Card ────────────────────────────────────────────── */}
+      <div style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 16, padding: "16px 4px 4px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 14px", marginBottom: 4 }}>
+          <span style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: INK }}>Recent Rounds</span>
+          <Link to="/rounds" style={{ fontFamily: SANS, fontSize: 11, fontWeight: 600, color: PRIMARY, textDecoration: "none" }}>
+            View all →
           </Link>
         </div>
-        <div className="divide-y divide-gray-50">
-          {recentRounds.length === 0 && (
-            <div className="px-5 py-4 text-sm text-gray-400">No rounds yet</div>
-          )}
-          {recentRounds.map((r) => (
+
+        {recentRounds.length === 0 && (
+          <div style={{ padding: "16px 14px", fontFamily: SANS, fontSize: 14, color: MUTED }}>No rounds yet</div>
+        )}
+
+        {recentRounds.map((r, idx) => {
+          const accentColor = r.to_par == null ? "#9ca3af"
+            : r.to_par <= 0  ? "#059669"
+            : r.to_par <= 14 ? "#f87171"
+            : "#60a5fa";
+          const isLast = idx === recentRounds.length - 1;
+
+          return (
             <button
               key={r.id}
               type="button"
               onClick={() => navigate(`/rounds/${r.id}`)}
-              className="w-full flex items-center gap-3 px-5 py-3.5 text-left active:bg-gray-50 transition-colors"
+              style={{
+                width: "100%",
+                display: "grid",
+                gridTemplateColumns: "52px 1fr auto",
+                gap: 12,
+                alignItems: "center",
+                padding: "12px 14px 12px 10px",
+                borderBottom: isLast ? "none" : `1px solid ${LINE}`,
+                borderTop: "none",
+                borderLeft: "none",
+                borderRight: "none",
+                position: "relative",
+                background: "none",
+                borderRadius: 0,
+                cursor: "pointer",
+                textAlign: "left",
+              }}
             >
-              {/* Accent bar */}
-              <div className={`w-1 h-9 rounded-full shrink-0 ${roundAccentColor(r.to_par)}`} />
-              {/* Score */}
-              <div className="text-2xl font-black text-gray-900 tabular-nums w-10 shrink-0 leading-none">
-                {r.total_score ?? "—"}
+              <div style={{ position: "absolute", left: 0, top: 14, bottom: 14, width: 3, borderRadius: 99, background: accentColor }} />
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: 28, fontWeight: 700, letterSpacing: "-1px", color: INK, lineHeight: 1 }}>
+                  {r.total_score ?? "—"}
+                </div>
+                {r.to_par != null && (
+                  <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, color: r.to_par > 0 ? "#f87171" : "#059669" }}>
+                    {r.to_par > 0 ? `+${r.to_par}` : r.to_par === 0 ? "E" : r.to_par}
+                  </div>
+                )}
               </div>
-              {/* Course + date */}
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-gray-800 truncate leading-tight">
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, letterSpacing: "-0.2px", color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {r.course_name ? formatCourseName(r.course_name) : "Unknown course"}
                 </div>
-                <div className="text-xs text-gray-400 mt-0.5">
-                  {r.date
-                    ? new Date(r.date).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "—"}
+                <div style={{ fontFamily: SANS, fontSize: 11, color: MUTED, whiteSpace: "nowrap", marginTop: 2, display: "flex", alignItems: "center" }}>
+                  {fmtDate(r.date)}
+                  {r.tee_box && <><Dot />{r.tee_box}</>}
                 </div>
               </div>
-              {/* To par badge */}
-              {r.to_par != null && (
-                <div
-                  className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    r.to_par < 0
-                      ? "bg-emerald-100 text-emerald-700"
-                      : r.to_par > 0
-                      ? "bg-red-100 text-red-600"
-                      : "bg-gray-100 text-gray-500"
-                  }`}
-                >
-                  {formatToPar(r.to_par)}
-                </div>
-              )}
+              {(() => {
+                const holes = recentRoundHoles[idx] ?? [];
+                return holes.length > 0 ? (
+                  <div style={{ width: 78, height: 16, display: "flex", gap: 1.5, alignItems: "flex-end", flexShrink: 0 }}>
+                    {[...holes].sort((a, b) => a.hole_number - b.hole_number).map((h) => {
+                      const key = getScoreKey(h.strokes, h.par_played);
+                      return (
+                        <div
+                          key={h.hole_number}
+                          style={{
+                            flex: 1,
+                            height: "100%",
+                            borderRadius: 1.5,
+                            background: scoreColors[key] ?? "#9ca3af",
+                            opacity: key === "par" ? 0.35 : 1,
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div style={{ flexShrink: 0 }}>
+                    <SolidMiniStrip toPar={r.to_par} />
+                  </div>
+                );
+              })()}
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
     </div>

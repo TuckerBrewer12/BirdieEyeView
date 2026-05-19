@@ -36,6 +36,9 @@ export interface DashboardViewModel {
   dualData: DualTrendPoint[];
   recentMilestones: Milestone[];
   last20ScoringAvg: number | null;
+  l5ScoringAvg: number | null;
+  handicapDelta: number | null;
+  l20ScoreMix: ScoreDistItem[];
   hiTrend: "up" | "down" | "flat" | null;
   girPct: number;
   girDonutData: { value: number }[];
@@ -197,6 +200,41 @@ export function useDashboardViewModel(userId: string): DashboardViewModel {
     return valid.reduce((s, r) => s + r.total_score!, 0) / valid.length;
   }, [trends]);
 
+  const l5ScoringAvg = useMemo(() => {
+    const valid = (trends?.score_trend ?? []).filter((r) => r.total_score != null);
+    if (valid.length < 2) return null;
+    const slice = valid.slice(-5);
+    return slice.reduce((s, r) => s + r.total_score!, 0) / slice.length;
+  }, [trends]);
+
+  const handicapDelta = useMemo(() => {
+    const valid = (trends?.handicap_trend ?? []).filter((r) => r.handicap_index != null);
+    if (valid.length < 2) return null;
+    const recent = valid[valid.length - 1].handicap_index!;
+    const prev = valid[Math.max(0, valid.length - 6)].handicap_index!;
+    return +(recent - prev).toFixed(1);
+  }, [trends]);
+
+  const l20ScoreMix = useMemo<ScoreDistItem[]>(() => {
+    const rows = trends?.score_type_distribution ?? [];
+    if (!rows.length) return [];
+    let total = 0;
+    const sums: Record<string, number> = {};
+    for (const row of rows) {
+      total += row.holes_counted;
+      for (const key of SCORE_KEYS) {
+        sums[key] = (sums[key] ?? 0) + ((row[key] as number) / 100) * row.holes_counted;
+      }
+    }
+    return SCORE_KEYS.map((key) => ({
+      name: key,
+      label: SCORE_LABELS[key] as string,
+      value: total > 0 ? (sums[key] / total) * 100 : 0,
+      color: scoreColors[key],
+    }));
+  }, [trends, scoreColors]);
+
+
   const hiTrend = useMemo(() => {
     if (!trends) return null;
     const valid = trends.handicap_trend.filter((r) => r.handicap_index != null);
@@ -268,6 +306,9 @@ export function useDashboardViewModel(userId: string): DashboardViewModel {
     dualData,
     recentMilestones,
     last20ScoringAvg,
+    l5ScoringAvg,
+    handicapDelta,
+    l20ScoreMix,
     hiTrend,
     girPct,
     girDonutData,

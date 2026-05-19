@@ -12,7 +12,6 @@ import { getColorBlindPalette } from "@/lib/chartPalettes";
 import type { RoundSummary, CourseSummary } from "@/types/golf";
 import { formatToPar } from "@/types/golf";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { ScrollSection } from "@/components/analytics/ScrollSection";
 
 interface RoundsPageProps {
   userId: string;
@@ -29,14 +28,6 @@ function withAlpha(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-const rowVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const, delay: Math.min(i * 0.03, 0.3) },
-  }),
-};
 
 function SortHeader({
   label,
@@ -204,7 +195,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
         scrollThreshold={100}
       />
 
-      <ScrollSection>
+      <div>
         <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-5">Rounds</h1>
         {/* Search bar */}
         <div className="mb-5">
@@ -245,13 +236,9 @@ export function RoundsPage({ userId }: RoundsPageProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filtered.slice(0, visibleCount).map((r, i) => (
+              {filtered.slice(0, visibleCount).map((r) => (
                 <Fragment key={r.id}>
-                  <motion.tr
-                    custom={i}
-                    variants={rowVariants}
-                    initial="hidden"
-                    animate="visible"
+                  <tr
                     className="cursor-pointer hover:bg-emerald-50/40 border-l-2 border-transparent hover:border-primary/30 transition-all duration-150 group"
                     onClick={() => {
                       if (linkingRoundId === r.id) return;
@@ -336,7 +323,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
                     <td className="px-6 py-3.5 text-sm text-center text-gray-400">
                       {r.total_putts ?? "—"}
                     </td>
-                  </motion.tr>
+                  </tr>
 
                   {/* Inline link-course panel */}
                   <AnimatePresence>
@@ -386,7 +373,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
             </button>
           </div>
         )}
-      </ScrollSection>
+      </div>
     </div>
   );
 }

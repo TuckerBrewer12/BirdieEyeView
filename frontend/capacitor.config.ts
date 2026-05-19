@@ -13,6 +13,15 @@ const config: CapacitorConfig = {
     Camera: {
       permissions: ['camera', 'photos'],
     },
+    StatusBar: {
+      overlaysWebView: false,
+      style: 'DEFAULT',
+      backgroundColor: '#f8faf8',
+    },
+  },
+  server: {
+    url: 'http://172.31.40.188:5173',
+    cleartext: true,
   },
   ios: {
     contentInset: 'automatic',
