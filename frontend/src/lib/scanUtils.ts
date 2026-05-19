@@ -1,5 +1,80 @@
-import type { ExtractedHoleScore, ScoreMetadata } from "@/types/scan";
+import type { ExtractedHoleScore, ScoreMetadata, ScanResult } from "@/types/scan";
 import { defaultMetadata } from "@/types/scan";
+
+export type ScanWarningKey = "course_uncertain" | "back_nine_missing" | "player_row_misaligned" | "putts_not_found";
+
+export interface ScanWarning {
+  key: ScanWarningKey;
+  label: string;
+}
+
+export function classifyScanWarnings(
+  result: ScanResult,
+  editedScores: ExtractedHoleScore[],
+  puttsNotRecorded: boolean,
+): ScanWarning[] {
+  const warnings: ScanWarning[] = [];
+  if (!result.round.course?.name && !result.round.course?.location)
+    warnings.push({ key: "course_uncertain", label: "Scores are readable, course details are uncertain" });
+  if (editedScores.slice(0, 9).some(s => s.strokes !== null) &&
+      editedScores.slice(9).every(s => s.strokes === null))
+    warnings.push({ key: "back_nine_missing", label: "Front nine detected, back nine missing" });
+  if (result.fields_needing_review.some(f =>
+      f.includes("Could not detect player score row") || f.startsWith("Row remap applied")))
+    warnings.push({ key: "player_row_misaligned", label: "Player row may be misaligned" });
+  if (puttsNotRecorded)
+    warnings.push({ key: "putts_not_found", label: "Putts not found on card" });
+  return warnings;
+}
+
+export interface ReviewItem {
+  key: string;
+  label: string;
+  holeIndex: number | null;
+}
+
+export function buildReviewItems(result: ScanResult, editedScores: ExtractedHoleScore[]): ReviewItem[] {
+  const items: ReviewItem[] = [];
+  const lowConfHoles = new Set(
+    result.confidence.hole_scores
+      .filter(h => ["low", "very_low"].includes(h.fields["strokes"]?.level ?? ""))
+      .map(h => h.hole_number)
+  );
+  editedScores.forEach((s, i) => {
+    if (s.strokes === null || lowConfHoles.has(s.hole_number ?? i + 1)) {
+      items.push({ key: `hole-${s.hole_number}-strokes`, label: `Hole ${s.hole_number} score`, holeIndex: i });
+    }
+  });
+  return items;
+}
+
+export interface CompletenessStats {
+  scores: { complete: number; total: number };
+  pars: { complete: number; total: number };
+  putts: { complete: number; total: number } | null;
+  courseLinked: boolean;
+  courseName: string | null;
+}
+
+export function buildCompletenessStats(
+  editedScores: ExtractedHoleScore[],
+  result: ScanResult,
+  reviewCourseId: string | null,
+  reviewExternalCourseId: string | null,
+  reviewCourseName: string | null,
+  puttsNotRecorded: boolean,
+): CompletenessStats {
+  const holes = result.round.course?.holes ?? [];
+  const parComplete = editedScores.filter(s =>
+    holes.find(h => h.number === s.hole_number)?.par != null).length;
+  return {
+    scores: { complete: editedScores.filter(s => s.strokes !== null).length, total: editedScores.length },
+    pars: { complete: parComplete, total: editedScores.length },
+    putts: puttsNotRecorded ? null : { complete: editedScores.filter(s => s.putts !== null).length, total: editedScores.length },
+    courseLinked: !!(reviewCourseId || reviewExternalCourseId),
+    courseName: reviewCourseName,
+  };
+}
 
 /**
  * Counts holes with missing strokes, excluding trailing nulls after the last played hole.

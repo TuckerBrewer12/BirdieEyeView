@@ -6,7 +6,7 @@ import { initialScanState } from "@/types/scan";
 import { api } from "@/lib/api";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
-import { initializeScores, countBadScanNulls } from "@/lib/scanUtils";
+import { initializeScores } from "@/lib/scanUtils";
 
 function normalizeCourseQueryForSearch(value: string): string {
   return value.trim().replace(/\s+/g, " ");
@@ -518,8 +518,6 @@ export function useScan(
     // navigate away immediately; keeping it true prevents double-submit during navigation.
   }, [result, userId, reviewCourseId, reviewExternalCourseId, reviewCourseName, editedTeeBox, editedDate, editedScores, update, setScanState]);
 
-  const badScanNullCount = countBadScanNulls(editedScores);
-
   return {
     // Derived state from scanState
     step,
@@ -530,7 +528,6 @@ export function useScan(
     result,
     editedScores,
     scoreMetadata,
-    badScanNullCount,
     editedDate,
     editedTeeBox,
     userContext,
