@@ -20,7 +20,7 @@ const config: CapacitorConfig = {
     },
   },
   server: {
-    url: 'http://172.31.40.188:5173',
+    url: 'http://10.2.1.202:5173',
     cleartext: true,
   },
   ios: {

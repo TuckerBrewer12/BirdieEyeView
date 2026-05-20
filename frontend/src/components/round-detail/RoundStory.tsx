@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { Round } from "@/types/golf";
 import { SCORE_COLORS } from "@/lib/colors";
 
-interface HoleData {
+export interface HoleData {
   hole: number;
   strokes: number;
   par: number;
@@ -12,7 +12,7 @@ interface HoleData {
   fairway: boolean | null;
 }
 
-function useRoundHoles(round: Round): HoleData[] {
+export function useRoundHoles(round: Round): HoleData[] {
   return useMemo(() => {
     return round.hole_scores
       .filter(s => s.hole_number != null && s.strokes != null)

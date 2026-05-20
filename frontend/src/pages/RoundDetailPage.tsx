@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Pencil, Trash2, Link2, CalendarDays, Share2, Flag } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Link2 } from "lucide-react";
 import { ShareCard } from "@/components/share/ShareCard";
 import { useShareRound } from "@/hooks/useShareRound";
 import type { CourseSummary } from "@/types/golf";
@@ -12,10 +12,10 @@ import { api } from "@/lib/api";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
 import { formatCourseName } from "@/lib/courseName";
-import { formatToPar, calcCourseHandicap, calcNetScore } from "@/types/golf";
+import { calcCourseHandicap, calcNetScore } from "@/types/golf";
 import type { ComparisonRow } from "@/types/analytics";
 import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
-import { RoundInNumbers } from "@/components/round-detail/RoundStory";
+import { RoundDetailHeader } from "@/components/round-detail/RoundDetailHeader";
 import { RoundFlowTimeline } from "@/components/analytics/RoundFlowTimeline";
 
 const tooltipStyle = {
@@ -441,18 +441,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
     ? calcNetScore(totalScore, courseHandicap)
     : null;
 
-  const courseHoles = round.course?.holes ?? [];
-  const front9Par = courseHoles.length > 0
-    ? courseHoles.filter(h => (h.number ?? 0) <= 9).reduce((s, h) => s + (h.par ?? 0), 0) || null
-    : round.hole_scores.filter(s => (s.hole_number ?? 0) <= 9 && s.par_played != null).length > 0
-      ? round.hole_scores.filter(s => (s.hole_number ?? 0) <= 9).reduce((s, hs) => s + (hs.par_played ?? 0), 0)
-      : null;
-  const back9Par = courseHoles.length > 0
-    ? courseHoles.filter(h => (h.number ?? 0) >= 10).reduce((s, h) => s + (h.par ?? 0), 0) || null
-    : round.hole_scores.filter(s => (s.hole_number ?? 0) >= 10 && s.par_played != null).length > 0
-      ? round.hole_scores.filter(s => (s.hole_number ?? 0) >= 10).reduce((s, hs) => s + (hs.par_played ?? 0), 0)
-      : null;
-
   return (
     <div>
       {/* Hidden share card for image capture */}
@@ -460,214 +448,61 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         <ShareCard ref={shareCardRef} round={round} courseName={courseName} />
       </div>
 
-      <Link
-        to="/rounds"
-        className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary mb-4"
-      >
-        <ArrowLeft size={16} />
-        Back to Rounds
-      </Link>
-
       {actionError && (
         <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
           {actionError}
         </div>
       )}
 
-      {/* ── Inline Hero Header ── */}
-      <div className="py-2 mb-4">
-        <div className="flex items-start justify-between gap-4">
-          {/* Left: identity */}
-          <div className="min-w-0">
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-gray-900 leading-tight truncate">
-              {courseName}
-            </h1>
-            <div className="flex items-center gap-1.5 mt-1.5 text-sm text-gray-500 flex-wrap">
-              {round.date && (
-                <>
-                  <CalendarDays size={13} className="shrink-0" />
-                  <span>
-                    {new Date(round.date).toLocaleDateString("en-US", {
-                      weekday: "short",
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                </>
-              )}
-              {activeTeeBox && (
-                <>
-                  <span className="text-gray-300">·</span>
-                  <Flag size={12} className="shrink-0" />
-                  <span>
-                    {activeTeeBox} tees
-                    {tee?.course_rating != null && tee?.slope_rating != null && (
-                      <span className="text-gray-400"> · {tee.course_rating}/{tee.slope_rating}</span>
-                    )}
-                  </span>
-                </>
-              )}
-              {!round.course && !showLinkCourse && (
-                <>
-                  <span className="text-gray-300">·</span>
-                  <button
-                    onClick={() => setShowLinkCourse(true)}
-                    className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-primary transition-colors"
-                  >
-                    <Link2 size={12} />
-                    Link course
-                  </button>
-                </>
-              )}
-            </div>
-            {showLinkCourse && (
-              <div className="mt-3">
-                <CourseLinkSearch
-                  title="Link to a saved course"
-                  query={linkQuery}
-                  results={linkResults}
-                  searching={linkSearching}
-                  linking={linking}
-                  onQueryChange={handleLinkQuery}
-                  onSelectCourse={handleSelectCourse}
-                  onClose={() => { setShowLinkCourse(false); setLinkQuery(""); setLinkResults([]); }}
-                />
-              </div>
-            )}
-          </div>
+      <RoundDetailHeader
+        round={round}
+        courseName={courseName}
+        totalScore={totalScore}
+        toPar={toPar}
+        netScore={netScore}
+        courseHandicap={courseHandicap}
+        tee={tee}
+        editMode={editMode}
+        saving={saving}
+        confirmDelete={confirmDelete}
+        deleting={deleting}
+        sharing={sharing}
+        onEdit={enterEditMode}
+        onSave={handleSave}
+        onCancelEdit={cancelEdit}
+        onShare={() => shareRound(round, courseName)}
+        onDelete={() => setConfirmDelete(true)}
+        onConfirmDelete={handleDelete}
+        onCancelDelete={() => setConfirmDelete(false)}
+        onBack={() => navigate(-1)}
+      />
 
-          {/* Right: action buttons */}
-          <div className="flex items-center gap-2 shrink-0">
-            {!editMode ? (
-              <>
-                <button
-                  onClick={() => shareRound(round, courseName)}
-                  disabled={sharing}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <Share2 size={14} />
-                  {sharing ? "…" : "Share"}
-                </button>
-                <button
-                  onClick={enterEditMode}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-                >
-                  <Pencil size={14} />
-                  Edit
-                </button>
-                {!confirmDelete ? (
-                  <button
-                    onClick={() => setConfirmDelete(true)}
-                    title="Delete round"
-                    className="p-2 text-red-400 bg-white border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg">
-                    <span className="text-sm text-red-700 font-medium">Delete this round?</span>
-                    <button onClick={handleDelete} disabled={deleting} className="text-sm font-semibold text-red-700 hover:text-red-900 disabled:opacity-50">
-                      {deleting ? "Deleting…" : "Yes"}
-                    </button>
-                    <button onClick={() => setConfirmDelete(false)} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="px-3 py-1.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50"
-                >
-                  {saving ? "Saving…" : "Save"}
-                </button>
-                <button
-                  onClick={cancelEdit}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-              </>
-            )}
-          </div>
+      {/* Course link button — visible in view mode when not linked */}
+      {!editMode && !round.course && !showLinkCourse && (
+        <div className="mb-3 -mt-2">
+          <button
+            onClick={() => setShowLinkCourse(true)}
+            className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-primary transition-colors"
+          >
+            <Link2 size={12} />
+            Link course
+          </button>
         </div>
-      </div>
-
-      {/* ── Stat cards (4 columns) ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-5">
-        {/* Mobile: 2×2 grid */}
-        <div className="md:hidden grid grid-cols-2 divide-x divide-y divide-gray-100">
-          <div className="flex flex-col items-center justify-center px-3 py-4">
-            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Score</div>
-            <div className="text-3xl font-bold text-gray-900">{totalScore || "–"}</div>
-          </div>
-          <div className="flex flex-col items-center justify-center px-3 py-4">
-            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">To Par</div>
-            <div className={`text-3xl font-bold ${toPar !== null && toPar < 0 ? "text-emerald-600" : toPar !== null && toPar > 0 ? "text-red-500" : "text-gray-900"}`}>
-              {formatToPar(toPar)}
-            </div>
-          </div>
-          <div className="flex flex-col items-center justify-center px-3 py-4">
-            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Net Score</div>
-            {netScore != null ? (
-              <>
-                <div className={`text-3xl font-bold ${netScore <= (coursePar ?? Infinity) ? "text-emerald-600" : "text-red-500"}`}>
-                  {netScore}
-                </div>
-                {courseHandicap != null && (
-                  <div className="text-[9px] text-gray-400 mt-0.5">HCP {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}</div>
-                )}
-              </>
-            ) : (
-              <Link to="/settings" className="text-xs text-primary/70 hover:text-primary transition-colors mt-1">Add handicap</Link>
-            )}
-          </div>
-          <div className="flex flex-col items-center justify-center px-3 py-4">
-            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Course Par</div>
-            <div className="text-3xl font-bold text-gray-900">{coursePar ?? "–"}</div>
-            {front9Par != null && back9Par != null && (
-              <div className="text-[9px] text-gray-400 mt-0.5">{front9Par} · {back9Par}</div>
-            )}
-          </div>
+      )}
+      {showLinkCourse && (
+        <div className="mb-4">
+          <CourseLinkSearch
+            title="Link to a saved course"
+            query={linkQuery}
+            results={linkResults}
+            searching={linkSearching}
+            linking={linking}
+            onQueryChange={handleLinkQuery}
+            onSelectCourse={handleSelectCourse}
+            onClose={() => { setShowLinkCourse(false); setLinkQuery(""); setLinkResults([]); }}
+          />
         </div>
-        {/* Desktop: single-row flex */}
-        <div className="hidden md:flex items-stretch divide-x divide-gray-100">
-          <div className="flex-1 flex flex-col items-center justify-center px-4 py-5">
-            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Score</div>
-            <div className="text-4xl font-bold text-gray-900">{totalScore || "–"}</div>
-          </div>
-          <div className="flex-1 flex flex-col items-center justify-center px-4 py-5">
-            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">To Par</div>
-            <div className={`text-4xl font-bold ${toPar !== null && toPar < 0 ? "text-emerald-600" : toPar !== null && toPar > 0 ? "text-red-500" : "text-gray-900"}`}>
-              {formatToPar(toPar)}
-            </div>
-          </div>
-          <div className="flex-1 flex flex-col items-center justify-center px-4 py-5">
-            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Net Score</div>
-            {netScore != null ? (
-              <>
-                <div className={`text-4xl font-bold ${netScore <= (coursePar ?? Infinity) ? "text-emerald-600" : "text-red-500"}`}>
-                  {netScore}
-                </div>
-                {courseHandicap != null && (
-                  <div className="text-[11px] text-gray-400 mt-0.5">HCP {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}</div>
-                )}
-              </>
-            ) : (
-              <Link to="/settings" className="text-sm text-primary/70 hover:text-primary transition-colors mt-1">Add handicap</Link>
-            )}
-          </div>
-          <div className="flex-1 flex flex-col items-center justify-center px-4 py-5">
-            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Course Par</div>
-            <div className="text-4xl font-bold text-gray-900">{coursePar ?? "–"}</div>
-            {front9Par != null && back9Par != null && (
-              <div className="text-xs text-gray-400 mt-1">Front {front9Par} · Back {back9Par}</div>
-            )}
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Course link / name section — visible in edit mode */}
       {editMode && (
@@ -735,9 +570,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
           ) : null}
         </div>
       )}
-
-      {/* Pill row */}
-      {!editMode && <RoundInNumbers round={round} />}
 
       <div className={!editMode ? "mt-2" : ""}>
         <ScorecardGrid
