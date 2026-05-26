@@ -8,6 +8,7 @@ from api.auth_utils import (
     hash_password,
     verify_password,
 )
+from api.google_identity import GoogleIdentity, is_authoritative_google_email
 from api.login_rate_limiter import InMemoryLoginRateLimiter
 
 
@@ -45,6 +46,34 @@ def test_one_time_token_hashing():
     assert token_hash == hash_one_time_token(token)
     assert token_hash != hash_one_time_token(generate_one_time_token())
     assert len(token_hash) == 64
+
+
+def test_google_authoritative_email_rules():
+    assert is_authoritative_google_email(
+        GoogleIdentity(
+            subject="google-user-1",
+            email="player@gmail.com",
+            email_verified=True,
+            name="Player",
+        )
+    )
+    assert is_authoritative_google_email(
+        GoogleIdentity(
+            subject="google-user-2",
+            email="player@example.com",
+            email_verified=True,
+            name="Player",
+            hosted_domain="example.com",
+        )
+    )
+    assert not is_authoritative_google_email(
+        GoogleIdentity(
+            subject="google-user-3",
+            email="player@example.com",
+            email_verified=True,
+            name="Player",
+        )
+    )
 
 
 def test_login_rate_limiter_locks_after_limit():

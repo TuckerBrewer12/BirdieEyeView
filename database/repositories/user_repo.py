@@ -110,6 +110,28 @@ class UserRepositoryDB:
                 "email_verified": bool(row["email_verified"]),
             }
 
+    async def get_auth_user_by_identity(self, provider: str, provider_user_id: str) -> Optional[dict]:
+        """Return auth fields for a user linked to an external identity."""
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """SELECT u.id, u.name, u.email, u.password_hash, u.email_verified
+                   FROM users.user_identities i
+                   JOIN users.users u ON u.id = i.user_id
+                   WHERE i.provider = $1
+                     AND i.provider_user_id = $2""",
+                provider,
+                provider_user_id,
+            )
+            if not row:
+                return None
+            return {
+                "id": str(row["id"]),
+                "name": row["name"],
+                "email": row["email"],
+                "password_hash": row["password_hash"],
+                "email_verified": bool(row["email_verified"]),
+            }
+
     async def create_user(self, user: User, *, password_hash: Optional[str] = None) -> User:
         """Create a new user. Returns User with DB-generated id."""
         data = user_to_row(user)
@@ -217,6 +239,39 @@ class UserRepositoryDB:
             )
             if result == "UPDATE 0":
                 raise NotFoundError(f"User {user_id} not found")
+
+    async def link_auth_identity(
+        self,
+        *,
+        user_id: str,
+        provider: str,
+        provider_user_id: str,
+        provider_email: str,
+        email_verified: bool,
+    ) -> None:
+        """Link or refresh an external sign-in identity for a user."""
+        async with self._pool.acquire() as conn:
+            try:
+                result = await conn.execute(
+                    """INSERT INTO users.user_identities
+                       (user_id, provider, provider_user_id, provider_email, email_verified)
+                       VALUES ($1, $2, $3, $4, $5)
+                       ON CONFLICT (provider, provider_user_id)
+                       DO UPDATE SET
+                         provider_email = EXCLUDED.provider_email,
+                         email_verified = EXCLUDED.email_verified,
+                         updated_at = NOW()
+                       WHERE users.user_identities.user_id = EXCLUDED.user_id""",
+                    UUID(user_id),
+                    provider,
+                    provider_user_id,
+                    self._normalize_email(provider_email),
+                    email_verified,
+                )
+                if result.endswith(" 0"):
+                    raise DuplicateError("Identity already linked to another user")
+            except asyncpg.UniqueViolationError as e:
+                raise DuplicateError(f"Identity already linked: {e}") from e
 
     async def create_auth_token(
         self,

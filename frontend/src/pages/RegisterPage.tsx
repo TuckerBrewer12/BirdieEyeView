@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { parseHandicapInput } from "@/lib/handicap";
@@ -18,7 +19,7 @@ function Logo() {
 }
 
 export function RegisterPage() {
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -108,6 +109,16 @@ export function RegisterPage() {
     }
   };
 
+  const handleGoogleCredential = useCallback(async (credential: string) => {
+    setError(null);
+    await loginWithGoogle(credential);
+    navigate("/");
+  }, [loginWithGoogle, navigate]);
+
+  const handleGoogleError = useCallback((message: string) => {
+    setError(message);
+  }, []);
+
   const inputClass =
     "w-full px-4 py-3 border border-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary";
 
@@ -154,6 +165,24 @@ export function RegisterPage() {
                 {error}
               </div>
             )}
+
+            <GoogleSignInButton
+              text="signup_with"
+              disabled={loading}
+              onCredential={handleGoogleCredential}
+              onError={handleGoogleError}
+            />
+
+            <div className="relative py-1">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-gray-100" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  or create with email
+                </span>
+              </div>
+            </div>
 
             <div>
               <label htmlFor="reg-name" className="block text-xs font-semibold text-gray-500 mb-1.5">Name</label>

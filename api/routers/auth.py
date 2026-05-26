@@ -11,6 +11,7 @@ from api.auth_notifications import send_password_reset_email, send_verification_
 from api.auth_schemas import (
     AuthUserResponse,
     ForgotPasswordRequest,
+    GoogleAuthRequest,
     LoginRequest,
     MessageResponse,
     RegisterRequest,
@@ -33,6 +34,7 @@ from api.auth_utils import (
     verify_password,
 )
 from api.dependencies import client_ip, get_current_user, get_db
+from api.google_identity import is_authoritative_google_email, verify_google_credential
 from api.login_rate_limiter import InMemoryLoginRateLimiter
 from api.security import SlidingWindowRateLimiter
 from database.db_manager import DatabaseManager
@@ -374,6 +376,110 @@ async def login(
         user_id=auth_user["id"],
         name=auth_user["name"] or "",
         email=auth_user["email"] or "",
+        email_verified=True,
+        access_token=token,
+    )
+
+
+@router.post("/google", response_model=AuthUserResponse)
+async def google_login(
+    req: GoogleAuthRequest,
+    request: Request,
+    response: Response,
+    db: DatabaseManager = Depends(get_db),
+):
+    request_ip = client_ip(request)
+    _check_auth_rate_limit(
+        limiter=auth_request_rate_limiter,
+        key=f"google:req:ip:{request_ip}",
+        limit=_env_int("GOOGLE_LOGIN_RATE_LIMIT_MAX_ATTEMPTS", 30),
+        window_seconds=_env_int("GOOGLE_LOGIN_RATE_LIMIT_WINDOW_SECONDS", 60),
+        detail="Too many Google sign-in requests. Please try again shortly.",
+    )
+
+    identity = verify_google_credential(req.credential)
+    auth_user = await db.users.get_auth_user_by_identity("google", identity.subject)
+
+    if not auth_user:
+        existing = await db.users.get_auth_user_by_email(identity.email)
+        if existing:
+            if not is_authoritative_google_email(identity):
+                logger.warning(
+                    "Auth Google link rejected: user_id=%s email_fp=%s ip=%s reason=non_authoritative_email",
+                    existing["id"],
+                    _email_fingerprint(identity.email),
+                    request_ip,
+                )
+                raise HTTPException(
+                    409,
+                    "An account with this email already exists. Sign in with email and password before linking Google.",
+                )
+            try:
+                await db.users.link_auth_identity(
+                    user_id=existing["id"],
+                    provider="google",
+                    provider_user_id=identity.subject,
+                    provider_email=identity.email,
+                    email_verified=identity.email_verified,
+                )
+            except DuplicateError:
+                logger.warning(
+                    "Auth Google link rejected: user_id=%s email_fp=%s ip=%s reason=identity_conflict",
+                    existing["id"],
+                    _email_fingerprint(identity.email),
+                    request_ip,
+                )
+                raise HTTPException(409, "This Google account is already linked to another user")
+            if not existing["email_verified"]:
+                await db.users.mark_email_verified(existing["id"])
+            auth_user = {
+                **existing,
+                "email_verified": True,
+            }
+        else:
+            try:
+                user = await db.users.create_user(
+                    User(
+                        name=identity.name,
+                        email=identity.email,
+                        email_verified=True,
+                    ),
+                    password_hash=None,
+                )
+                await db.users.link_auth_identity(
+                    user_id=str(user.id),
+                    provider="google",
+                    provider_user_id=identity.subject,
+                    provider_email=identity.email,
+                    email_verified=identity.email_verified,
+                )
+            except DuplicateError:
+                logger.warning(
+                    "Auth Google create rejected: email_fp=%s ip=%s reason=duplicate",
+                    _email_fingerprint(identity.email),
+                    request_ip,
+                )
+                raise HTTPException(409, "An account with this email already exists")
+            auth_user = {
+                "id": str(user.id),
+                "name": user.name or "",
+                "email": user.email or identity.email,
+                "password_hash": None,
+                "email_verified": True,
+            }
+
+    token = create_access_token(auth_user["id"])
+    _set_auth_cookie(response, token)
+    logger.info(
+        "Auth Google success: user_id=%s email_fp=%s ip=%s",
+        auth_user["id"],
+        _email_fingerprint(auth_user["email"] or identity.email),
+        request_ip,
+    )
+    return AuthUserResponse(
+        user_id=auth_user["id"],
+        name=auth_user["name"] or "",
+        email=auth_user["email"] or identity.email,
         email_verified=True,
         access_token=token,
     )

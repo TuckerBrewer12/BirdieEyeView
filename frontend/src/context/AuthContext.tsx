@@ -13,6 +13,7 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<void>;
   register: (
     name: string,
     email: string,
@@ -175,6 +176,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const loginWithGoogle = async (credential: string) => {
+    const data = await callAuth<AuthUserPayload>("/google", { credential });
+    setSessionToken(data.access_token ?? null);
+    setState({
+      userId: data.user_id,
+      name: data.name,
+      email: data.email,
+      emailVerified: !!data.email_verified,
+    });
+  };
+
   const register = async (
     name: string,
     email: string,
@@ -230,6 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         ...state,
         login,
+        loginWithGoogle,
         register,
         resendVerification,
         verifyEmail,

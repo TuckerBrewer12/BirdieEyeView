@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { useAuth } from "@/context/AuthContext";
 import { Eye, EyeOff, Flag } from "lucide-react";
 
@@ -15,7 +16,7 @@ function Logo() {
 }
 
 export function LoginPage() {
-  const { login, resendVerification } = useAuth();
+  const { login, loginWithGoogle, resendVerification } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const initialEmail = ((location.state as { email?: string } | null)?.email ?? "").trim();
@@ -42,6 +43,18 @@ export function LoginPage() {
       setLoading(false);
     }
   };
+
+  const handleGoogleCredential = useCallback(async (credential: string) => {
+    setError(null);
+    setResendMessage(null);
+    await loginWithGoogle(credential);
+    navigate("/");
+  }, [loginWithGoogle, navigate]);
+
+  const handleGoogleError = useCallback((message: string) => {
+    setError(message);
+    setResendMessage(null);
+  }, []);
 
   const handleResendVerification = async () => {
     const normalizedEmail = email.trim();
@@ -114,6 +127,24 @@ export function LoginPage() {
                 {resendMessage}
               </div>
             )}
+
+            <GoogleSignInButton
+              text="signin_with"
+              disabled={loading || resendLoading}
+              onCredential={handleGoogleCredential}
+              onError={handleGoogleError}
+            />
+
+            <div className="relative py-1">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-gray-100" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  or sign in with email
+                </span>
+              </div>
+            </div>
 
             <div>
               <label htmlFor="login-email" className="block text-xs font-semibold text-gray-500 mb-1.5">Email</label>

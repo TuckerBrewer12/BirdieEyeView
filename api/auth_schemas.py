@@ -54,6 +54,12 @@ class LoginRequest(BaseModel):
         return normalize_email(v)
 
 
+class GoogleAuthRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    credential: str = Field(..., min_length=100, max_length=8192)
+
+
 class AuthUserResponse(BaseModel):
     user_id: str
     name: str
