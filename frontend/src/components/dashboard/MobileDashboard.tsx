@@ -17,8 +17,8 @@ const MUTED   = "#6b7765";
 const LINE    = "#e4e9e1";
 const TICK    = "#1b2b1e";
 const PRIMARY = "#2d7a3a";
-const SANS    = '"DM Sans", system-ui, sans-serif';
-const MONO    = '"DM Mono", monospace';
+const SANS    = '"Inter", system-ui, -apple-system, sans-serif';
+const MONO    = '"Inter", system-ui, -apple-system, sans-serif';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatHI(hi: number | null | undefined): string {
@@ -608,7 +608,7 @@ export function MobileDashboard({
 
       {/* ── 2. Hero Card ─────────────────────────────────────────────────────── */}
       <div style={{
-        background: `radial-gradient(ellipse at 90% 10%, rgba(45,122,58,0.07) 0%, transparent 55%), radial-gradient(ellipse at 5% 90%, rgba(245,158,11,0.07) 0%, transparent 55%), #fafbf5`,
+        background: `radial-gradient(ellipse at 90% 10%, rgba(45,122,58,0.07) 0%, transparent 55%), #f9fafb`,
         border: `1px solid ${LINE}`,
         borderRadius: 20,
         padding: "18px 18px 16px",

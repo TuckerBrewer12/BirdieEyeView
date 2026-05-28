@@ -1,5 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+const devServerUrl = process.env.CAPACITOR_SERVER_URL?.trim();
+
 const config: CapacitorConfig = {
   appId: 'com.tuckerbrewer.golfscorecard',
   appName: 'Golf Scorecard',
@@ -19,10 +21,14 @@ const config: CapacitorConfig = {
       backgroundColor: '#f8faf8',
     },
   },
-  server: {
-    url: 'http://10.2.1.202:5173',
-    cleartext: true,
-  },
+  ...(devServerUrl
+    ? {
+        server: {
+          url: devServerUrl,
+          cleartext: devServerUrl.startsWith('http://'),
+        },
+      }
+    : {}),
   ios: {
     contentInset: 'automatic',
   },

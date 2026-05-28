@@ -51,6 +51,7 @@ For production hardening (HTTPS, secret handling, DB network restrictions, secur
 Run this before pushing:
 
 ```bash
+
 bash scripts/security/scan_secrets.sh
 ```
 

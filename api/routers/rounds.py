@@ -143,6 +143,7 @@ async def get_rounds_for_user(
             total_gir=row["total_gir"],
             fairways_hit=row["fairways_hit"],
             notes=row["notes"],
+            hole_scores_summary=row.get("hole_scores_summary"),
         )
         for row in rows
     ]

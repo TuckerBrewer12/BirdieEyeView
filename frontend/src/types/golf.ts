@@ -63,6 +63,7 @@ export interface RoundSummary {
   total_gir: number | null;
   fairways_hit: number | null;
   notes: string | null;
+  hole_scores_summary?: Array<{ h: number; s: number | null; p: number | null }> | null;
 }
 
 export interface DashboardData {
