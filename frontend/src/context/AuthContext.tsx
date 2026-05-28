@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { Capacitor } from "@capacitor/core";
+import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 import { setStoredColorBlindMode } from "@/lib/accessibility";
 import { apiUrl } from "@/lib/apiBase";
 import { setSessionToken, withAuthHeaders } from "@/lib/sessionToken";
@@ -232,6 +234,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await callAuth<{ message: string }>("/logout", {});
     } finally {
+      if (Capacitor.isNativePlatform()) {
+        await GoogleSignIn.signOut().catch(() => undefined);
+      }
       setSessionToken(null);
       setState(EMPTY_AUTH_STATE);
     }

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { Capacitor } from "@capacitor/core";
+import { ErrorCode, GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 
 type GoogleButtonText = "signin_with" | "signup_with" | "continue_with";
 
@@ -44,6 +46,8 @@ declare global {
 }
 
 let googleScriptPromise: Promise<void> | null = null;
+let nativeGoogleClientId: string | null = null;
+let nativeGoogleInitializePromise: Promise<void> | null = null;
 
 function loadGoogleScript(): Promise<void> {
   if (window.google?.accounts?.id) return Promise.resolve();
@@ -74,6 +78,22 @@ function getGoogleClientId(): string {
   return ((import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) ?? "").trim();
 }
 
+async function initializeNativeGoogle(clientId: string): Promise<void> {
+  if (nativeGoogleInitializePromise && nativeGoogleClientId === clientId) {
+    return nativeGoogleInitializePromise;
+  }
+
+  nativeGoogleClientId = clientId;
+  nativeGoogleInitializePromise = GoogleSignIn.initialize({ clientId });
+  return nativeGoogleInitializePromise;
+}
+
+function getNativeErrorCode(err: unknown): string | null {
+  if (!err || typeof err !== "object" || !("code" in err)) return null;
+  const code = (err as { code?: unknown }).code;
+  return typeof code === "string" ? code : null;
+}
+
 export function GoogleSignInButton({
   text,
   disabled = false,
@@ -85,6 +105,7 @@ export function GoogleSignInButton({
   const onErrorRef = useRef(onError);
   const [loading, setLoading] = useState(false);
   const clientId = getGoogleClientId();
+  const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
     onCredentialRef.current = onCredential;
@@ -92,7 +113,7 @@ export function GoogleSignInButton({
   }, [onCredential, onError]);
 
   useEffect(() => {
-    if (!clientId) return;
+    if (!clientId || isNative) return;
 
     let cancelled = false;
     let renderedElement: HTMLDivElement | null = null;
@@ -143,13 +164,50 @@ export function GoogleSignInButton({
       renderedElement?.replaceChildren();
       window.google?.accounts?.id?.cancel();
     };
-  }, [clientId, text]);
+  }, [clientId, isNative, text]);
+
+  const handleNativeSignIn = async () => {
+    if (disabled || loading) return;
+
+    setLoading(true);
+    try {
+      await initializeNativeGoogle(clientId);
+      const result = await GoogleSignIn.signIn();
+      if (!result.idToken) {
+        onError("Google did not return a sign-in credential.");
+        return;
+      }
+      await onCredential(result.idToken);
+    } catch (err) {
+      if (getNativeErrorCode(err) === ErrorCode.SignInCanceled) return;
+      onError(err instanceof Error ? err.message : "Google sign-in failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!clientId) {
     return (
       <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
         Google sign-in needs VITE_GOOGLE_CLIENT_ID.
       </div>
+    );
+  }
+
+  if (isNative) {
+    const label = text === "signup_with" ? "Sign up with Google" : "Sign in with Google";
+    return (
+      <button
+        type="button"
+        onClick={handleNativeSignIn}
+        disabled={disabled || loading}
+        className="inline-flex min-h-[44px] w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-60"
+      >
+        <span className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 text-xs font-bold text-gray-700">
+          G
+        </span>
+        {loading ? "Connecting..." : label}
+      </button>
     );
   }
 

@@ -8,7 +8,7 @@ from api.auth_utils import (
     hash_password,
     verify_password,
 )
-from api.google_identity import GoogleIdentity, is_authoritative_google_email
+from api.google_identity import GoogleIdentity, get_google_oauth_client_ids, is_authoritative_google_email
 from api.login_rate_limiter import InMemoryLoginRateLimiter
 
 
@@ -74,6 +74,19 @@ def test_google_authoritative_email_rules():
             name="Player",
         )
     )
+
+
+def test_google_client_ids_are_deduped(monkeypatch):
+    monkeypatch.setenv("GOOGLE_OAUTH_CLIENT_IDS", "web.apps.googleusercontent.com, ios.apps.googleusercontent.com")
+    monkeypatch.setenv("GOOGLE_OAUTH_CLIENT_ID", "web.apps.googleusercontent.com")
+    monkeypatch.setenv("GOOGLE_IOS_CLIENT_ID", "ios.apps.googleusercontent.com")
+    monkeypatch.setenv("GOOGLE_ANDROID_CLIENT_ID", "android.apps.googleusercontent.com")
+
+    assert get_google_oauth_client_ids() == [
+        "web.apps.googleusercontent.com",
+        "ios.apps.googleusercontent.com",
+        "android.apps.googleusercontent.com",
+    ]
 
 
 def test_login_rate_limiter_locks_after_limit():

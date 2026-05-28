@@ -14,12 +14,20 @@ class GoogleIdentity:
     hosted_domain: str | None = None
 
 
-def get_google_oauth_client_id() -> str:
-    return (
-        os.environ.get("GOOGLE_OAUTH_CLIENT_ID")
-        or os.environ.get("GOOGLE_WEB_CLIENT_ID")
-        or ""
-    ).strip()
+def get_google_oauth_client_ids() -> list[str]:
+    configured = os.environ.get("GOOGLE_OAUTH_CLIENT_IDS", "")
+    client_ids = [value.strip() for value in configured.split(",") if value.strip()]
+    client_ids.extend(
+        value.strip()
+        for value in (
+            os.environ.get("GOOGLE_OAUTH_CLIENT_ID", ""),
+            os.environ.get("GOOGLE_WEB_CLIENT_ID", ""),
+            os.environ.get("GOOGLE_IOS_CLIENT_ID", ""),
+            os.environ.get("GOOGLE_ANDROID_CLIENT_ID", ""),
+        )
+        if value.strip()
+    )
+    return list(dict.fromkeys(client_ids))
 
 
 def is_authoritative_google_email(identity: GoogleIdentity) -> bool:
@@ -29,8 +37,8 @@ def is_authoritative_google_email(identity: GoogleIdentity) -> bool:
 
 
 def verify_google_credential(credential: str) -> GoogleIdentity:
-    client_id = get_google_oauth_client_id()
-    if not client_id:
+    client_ids = get_google_oauth_client_ids()
+    if not client_ids:
         raise HTTPException(500, "Google sign-in is not configured")
 
     try:
@@ -43,7 +51,7 @@ def verify_google_credential(credential: str) -> GoogleIdentity:
         payload = id_token.verify_oauth2_token(
             credential,
             google_requests.Request(),
-            client_id,
+            client_ids,
         )
     except ValueError as exc:
         raise HTTPException(401, "Invalid Google sign-in token") from exc

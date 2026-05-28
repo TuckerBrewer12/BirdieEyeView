@@ -1,5 +1,18 @@
 # React + TypeScript + Vite
 
+## Google Sign-In Setup
+
+The website and native app both use the Google web OAuth client ID in `VITE_GOOGLE_CLIENT_ID`.
+
+For the backend, configure `GOOGLE_OAUTH_CLIENT_ID` with the web client ID. If native iOS or Android ID tokens use platform-specific audiences, also configure `GOOGLE_IOS_CLIENT_ID` and `GOOGLE_ANDROID_CLIENT_ID`, or provide all allowed audiences in `GOOGLE_OAUTH_CLIENT_IDS`.
+
+For iOS, replace the placeholders in `ios/App/App/Info.plist`:
+
+- `REPLACE_WITH_GOOGLE_IOS_CLIENT_ID.apps.googleusercontent.com`
+- `REPLACE_WITH_GOOGLE_IOS_REVERSED_CLIENT_ID`
+
+For Android, create an Android OAuth client in Google Cloud using the app package name and signing certificate SHA fingerprints. The app package is `com.tuckerbrewer.golfscorecard`.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
