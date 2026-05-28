@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import { AppleSignInButton } from "@/components/auth/AppleSignInButton";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { useAuth } from "@/context/AuthContext";
 import { Eye, EyeOff, Flag } from "lucide-react";
@@ -16,7 +17,7 @@ function Logo() {
 }
 
 export function LoginPage() {
-  const { login, loginWithGoogle, resendVerification } = useAuth();
+  const { login, loginWithApple, loginWithGoogle, resendVerification } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const initialEmail = ((location.state as { email?: string } | null)?.email ?? "").trim();
@@ -52,6 +53,18 @@ export function LoginPage() {
   }, [loginWithGoogle, navigate]);
 
   const handleGoogleError = useCallback((message: string) => {
+    setError(message);
+    setResendMessage(null);
+  }, []);
+
+  const handleAppleCredential = useCallback(async (identityToken: string, name?: string) => {
+    setError(null);
+    setResendMessage(null);
+    await loginWithApple(identityToken, name);
+    navigate("/");
+  }, [loginWithApple, navigate]);
+
+  const handleAppleError = useCallback((message: string) => {
     setError(message);
     setResendMessage(null);
   }, []);
@@ -133,6 +146,12 @@ export function LoginPage() {
               disabled={loading || resendLoading}
               onCredential={handleGoogleCredential}
               onError={handleGoogleError}
+            />
+
+            <AppleSignInButton
+              disabled={loading || resendLoading}
+              onCredential={handleAppleCredential}
+              onError={handleAppleError}
             />
 
             <div className="relative py-1">

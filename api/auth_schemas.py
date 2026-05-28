@@ -60,6 +60,20 @@ class GoogleAuthRequest(BaseModel):
     credential: str = Field(..., min_length=100, max_length=8192)
 
 
+class AppleAuthRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    identity_token: str = Field(..., min_length=100, max_length=8192)
+    name: str | None = Field(default=None, max_length=100)
+
+    @field_validator("name")
+    @classmethod
+    def _validate_name(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        return sanitize_user_text(v, field_name="name", max_length=100)
+
+
 class AuthUserResponse(BaseModel):
     user_id: str
     name: str

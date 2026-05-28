@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response,
 
 from api.auth_notifications import send_password_reset_email, send_verification_email
 from api.auth_schemas import (
+    AppleAuthRequest,
     AuthUserResponse,
     ForgotPasswordRequest,
     GoogleAuthRequest,
@@ -33,6 +34,7 @@ from api.auth_utils import (
     hash_password,
     verify_password,
 )
+from api.apple_identity import verify_apple_identity_token
 from api.dependencies import client_ip, get_current_user, get_db
 from api.google_identity import is_authoritative_google_email, verify_google_credential
 from api.login_rate_limiter import InMemoryLoginRateLimiter
@@ -480,6 +482,121 @@ async def google_login(
         user_id=auth_user["id"],
         name=auth_user["name"] or "",
         email=auth_user["email"] or identity.email,
+        email_verified=True,
+        access_token=token,
+    )
+
+
+@router.post("/apple", response_model=AuthUserResponse)
+async def apple_login(
+    req: AppleAuthRequest,
+    request: Request,
+    response: Response,
+    db: DatabaseManager = Depends(get_db),
+):
+    request_ip = client_ip(request)
+    _check_auth_rate_limit(
+        limiter=auth_request_rate_limiter,
+        key=f"apple:req:ip:{request_ip}",
+        limit=_env_int("APPLE_LOGIN_RATE_LIMIT_MAX_ATTEMPTS", 30),
+        window_seconds=_env_int("APPLE_LOGIN_RATE_LIMIT_WINDOW_SECONDS", 60),
+        detail="Too many Apple sign-in requests. Please try again shortly.",
+    )
+
+    identity = verify_apple_identity_token(req.identity_token, req.name)
+    if identity.email and not identity.email_verified:
+        logger.warning(
+            "Auth Apple rejected: email_fp=%s ip=%s reason=email_unverified",
+            _email_fingerprint(identity.email),
+            request_ip,
+        )
+        raise HTTPException(403, "Apple account email is not verified")
+    auth_user = await db.users.get_auth_user_by_identity("apple", identity.subject)
+
+    if not auth_user:
+        if not identity.email:
+            logger.warning("Auth Apple rejected: ip=%s reason=missing_email", request_ip)
+            raise HTTPException(400, "Apple did not return an email for this account")
+
+        existing = await db.users.get_auth_user_by_email(identity.email)
+        if existing:
+            if not identity.email_verified:
+                logger.warning(
+                    "Auth Apple link rejected: user_id=%s email_fp=%s ip=%s reason=email_unverified",
+                    existing["id"],
+                    _email_fingerprint(identity.email),
+                    request_ip,
+                )
+                raise HTTPException(
+                    409,
+                    "An account with this email already exists. Sign in with email and password before linking Apple.",
+                )
+            try:
+                await db.users.link_auth_identity(
+                    user_id=existing["id"],
+                    provider="apple",
+                    provider_user_id=identity.subject,
+                    provider_email=identity.email,
+                    email_verified=identity.email_verified,
+                )
+            except DuplicateError:
+                logger.warning(
+                    "Auth Apple link rejected: user_id=%s email_fp=%s ip=%s reason=identity_conflict",
+                    existing["id"],
+                    _email_fingerprint(identity.email),
+                    request_ip,
+                )
+                raise HTTPException(409, "This Apple account is already linked to another user")
+            if not existing["email_verified"]:
+                await db.users.mark_email_verified(existing["id"])
+            auth_user = {
+                **existing,
+                "email_verified": True,
+            }
+        else:
+            try:
+                user = await db.users.create_user(
+                    User(
+                        name=identity.name or identity.email.split("@")[0],
+                        email=identity.email,
+                        email_verified=identity.email_verified,
+                    ),
+                    password_hash=None,
+                )
+                await db.users.link_auth_identity(
+                    user_id=str(user.id),
+                    provider="apple",
+                    provider_user_id=identity.subject,
+                    provider_email=identity.email,
+                    email_verified=identity.email_verified,
+                )
+            except DuplicateError:
+                logger.warning(
+                    "Auth Apple create rejected: email_fp=%s ip=%s reason=duplicate",
+                    _email_fingerprint(identity.email),
+                    request_ip,
+                )
+                raise HTTPException(409, "An account with this email already exists")
+            auth_user = {
+                "id": str(user.id),
+                "name": user.name or "",
+                "email": user.email or identity.email,
+                "password_hash": None,
+                "email_verified": bool(user.email_verified),
+            }
+
+    token = create_access_token(auth_user["id"])
+    _set_auth_cookie(response, token)
+    logger.info(
+        "Auth Apple success: user_id=%s email_fp=%s ip=%s",
+        auth_user["id"],
+        _email_fingerprint(auth_user["email"] or identity.email or ""),
+        request_ip,
+    )
+    return AuthUserResponse(
+        user_id=auth_user["id"],
+        name=auth_user["name"] or "",
+        email=auth_user["email"] or identity.email or "",
         email_verified=True,
         access_token=token,
     )

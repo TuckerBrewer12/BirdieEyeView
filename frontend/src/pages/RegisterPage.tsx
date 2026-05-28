@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { AppleSignInButton } from "@/components/auth/AppleSignInButton";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
@@ -19,7 +20,7 @@ function Logo() {
 }
 
 export function RegisterPage() {
-  const { register, loginWithGoogle } = useAuth();
+  const { register, loginWithApple, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -119,6 +120,16 @@ export function RegisterPage() {
     setError(message);
   }, []);
 
+  const handleAppleCredential = useCallback(async (identityToken: string, name?: string) => {
+    setError(null);
+    await loginWithApple(identityToken, name);
+    navigate("/");
+  }, [loginWithApple, navigate]);
+
+  const handleAppleError = useCallback((message: string) => {
+    setError(message);
+  }, []);
+
   const inputClass =
     "w-full px-4 py-3 border border-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary";
 
@@ -171,6 +182,12 @@ export function RegisterPage() {
               disabled={loading}
               onCredential={handleGoogleCredential}
               onError={handleGoogleError}
+            />
+
+            <AppleSignInButton
+              disabled={loading}
+              onCredential={handleAppleCredential}
+              onError={handleAppleError}
             />
 
             <div className="relative py-1">

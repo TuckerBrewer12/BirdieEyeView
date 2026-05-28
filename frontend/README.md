@@ -13,6 +13,12 @@ For iOS, replace the placeholders in `ios/App/App/Info.plist`:
 
 For Android, create an Android OAuth client in Google Cloud using the app package name and signing certificate SHA fingerprints. The app package is `com.tuckerbrewer.golfscorecard`.
 
+## Apple Sign-In Setup
+
+The website Apple sign-in button uses `VITE_APPLE_CLIENT_ID`, which should be the Apple Services ID once the Apple Developer account is available. Set `VITE_APPLE_REDIRECT_URI` to a return URL configured on that Services ID.
+
+For the backend, configure `APPLE_CLIENT_ID` with the same Services ID. If you later add native Apple sign-in too, use `APPLE_CLIENT_IDS` to allow both the Services ID and native Bundle ID audiences.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

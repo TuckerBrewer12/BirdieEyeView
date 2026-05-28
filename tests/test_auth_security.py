@@ -8,6 +8,7 @@ from api.auth_utils import (
     hash_password,
     verify_password,
 )
+from api.apple_identity import _parse_email_verified, get_apple_client_ids
 from api.google_identity import GoogleIdentity, get_google_oauth_client_ids, is_authoritative_google_email
 from api.login_rate_limiter import InMemoryLoginRateLimiter
 
@@ -87,6 +88,21 @@ def test_google_client_ids_are_deduped(monkeypatch):
         "ios.apps.googleusercontent.com",
         "android.apps.googleusercontent.com",
     ]
+
+
+def test_apple_client_ids_are_deduped(monkeypatch):
+    monkeypatch.setenv("APPLE_CLIENT_IDS", "web.service.id, native.bundle.id")
+    monkeypatch.setenv("APPLE_CLIENT_ID", "web.service.id")
+    monkeypatch.setenv("APPLE_BUNDLE_ID", "native.bundle.id")
+
+    assert get_apple_client_ids() == ["web.service.id", "native.bundle.id"]
+
+
+def test_apple_email_verified_claim_parsing():
+    assert _parse_email_verified(True) is True
+    assert _parse_email_verified("true") is True
+    assert _parse_email_verified("false") is False
+    assert _parse_email_verified(None) is False
 
 
 def test_login_rate_limiter_locks_after_limit():
