@@ -17,7 +17,11 @@ For Android, create an Android OAuth client in Google Cloud using the app packag
 
 The website Apple sign-in button uses `VITE_APPLE_CLIENT_ID`, which should be the Apple Services ID once the Apple Developer account is available. Set `VITE_APPLE_REDIRECT_URI` to a return URL configured on that Services ID.
 
-For the backend, configure `APPLE_CLIENT_ID` with the same Services ID. If you later add native Apple sign-in too, use `APPLE_CLIENT_IDS` to allow both the Services ID and native Bundle ID audiences.
+For the backend, configure `APPLE_CLIENT_ID` with the same Services ID. Native iOS Apple sign-in uses the Bundle ID audience, so use `APPLE_CLIENT_IDS` to allow both the Services ID and Bundle ID, for example `com.example.web.service,com.tuckerbrewer.golfscorecard`.
+
+For iOS, the project includes `ios/App/App/App.entitlements`; the Apple Developer App ID still needs the **Sign in with Apple** capability enabled before device/archive signing works.
+
+For Android, the Capacitor Apple Sign-In plugin uses Apple's web flow, so the Apple Services ID must allow the configured `VITE_APPLE_REDIRECT_URI`.
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

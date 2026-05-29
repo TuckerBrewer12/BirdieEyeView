@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Capacitor } from "@capacitor/core";
+import { AppleSignIn, ErrorCode, SignInScope } from "@capawesome/capacitor-apple-sign-in";
 import { Apple } from "lucide-react";
 
 interface AppleSignInButtonProps {
@@ -41,6 +42,8 @@ declare global {
 }
 
 let appleScriptPromise: Promise<void> | null = null;
+let nativeAppleClientId: string | null = null;
+let nativeAppleInitializePromise: Promise<void> | null = null;
 
 function loadAppleScript(): Promise<void> {
   if (window.AppleID?.auth) return Promise.resolve();
@@ -82,9 +85,32 @@ function randomState(): string {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+async function initializeNativeApple(clientId: string): Promise<void> {
+  if (Capacitor.getPlatform() === "ios") return;
+  if (nativeAppleInitializePromise && nativeAppleClientId === clientId) {
+    return nativeAppleInitializePromise;
+  }
+
+  nativeAppleClientId = clientId;
+  nativeAppleInitializePromise = AppleSignIn.initialize({ clientId });
+  return nativeAppleInitializePromise;
+}
+
+function getNativeErrorCode(err: unknown): string | null {
+  if (!err || typeof err !== "object" || !("code" in err)) return null;
+  const code = (err as { code?: unknown }).code;
+  return typeof code === "string" ? code : null;
+}
+
 function formatAppleName(response: AppleAuthResponse): string | undefined {
   const firstName = response.user?.name?.firstName?.trim() ?? "";
   const lastName = response.user?.name?.lastName?.trim() ?? "";
+  return `${firstName} ${lastName}`.trim() || undefined;
+}
+
+function formatNativeAppleName(result: { givenName: string | null; familyName: string | null }): string | undefined {
+  const firstName = result.givenName?.trim() ?? "";
+  const lastName = result.familyName?.trim() ?? "";
   return `${firstName} ${lastName}`.trim() || undefined;
 }
 
@@ -96,10 +122,7 @@ export function AppleSignInButton({
   const [loading, setLoading] = useState(false);
   const stateRef = useRef<string>("");
   const clientId = getAppleClientId();
-
-  if (Capacitor.isNativePlatform()) {
-    return null;
-  }
+  const isNative = Capacitor.isNativePlatform();
 
   if (!clientId) {
     return (
@@ -109,7 +132,36 @@ export function AppleSignInButton({
     );
   }
 
-  const handleSignIn = async () => {
+  const handleNativeSignIn = async () => {
+    if (disabled || loading) return;
+
+    setLoading(true);
+    try {
+      const state = randomState();
+      await initializeNativeApple(clientId);
+      const result = await AppleSignIn.signIn({
+        redirectUrl: getAppleRedirectUri(),
+        scopes: [SignInScope.Email, SignInScope.FullName],
+        state,
+      });
+      if (result.state && result.state !== state) {
+        onError("Apple sign-in state did not match.");
+        return;
+      }
+      if (!result.idToken) {
+        onError("Apple did not return a sign-in credential.");
+        return;
+      }
+      await onCredential(result.idToken, formatNativeAppleName(result));
+    } catch (err) {
+      if (getNativeErrorCode(err) === ErrorCode.SignInCanceled) return;
+      onError(err instanceof Error ? err.message : "Apple sign-in failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleWebSignIn = async () => {
     if (disabled || loading) return;
 
     setLoading(true);
@@ -153,7 +205,7 @@ export function AppleSignInButton({
   return (
     <button
       type="button"
-      onClick={handleSignIn}
+      onClick={isNative ? handleNativeSignIn : handleWebSignIn}
       disabled={disabled || loading}
       className="inline-flex min-h-[44px] w-full items-center justify-center gap-3 rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-gray-900 disabled:pointer-events-none disabled:opacity-60"
     >
