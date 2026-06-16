@@ -1,4 +1,6 @@
-# ScanScorecards
+# BirdieEyeView
+[birdie-eye-view.com
+](https://www.birdie-eye-view.com/)
 
 Photograph a physical scorecard. A Mistral OCR + Gemini LLM pipeline extracts scores, putts, GIR, and tee boxes into a complete digital round — with course and player analytics across all your rounds.
 
