@@ -247,26 +247,41 @@ export function RoundsPage({ userId }: RoundsPageProps) {
           <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: INK }}>
             {mobileFiltered.length} {mobileFiltered.length === 1 ? "round" : "rounds"}
           </span>
-          <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-            <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, color: PRIMARY, pointerEvents: "none" }}>
-              {filterMode === "best" ? "Score ↑" : sortKey === "date" ? `Date ${sortAsc ? "↑" : "↓"}` : sortKey === "total_score" ? `Score ${sortAsc ? "↑" : "↓"}` : sortKey === "to_par" ? `To Par ${sortAsc ? "↑" : "↓"}` : `Course ${sortAsc ? "↑" : "↓"}`}
-            </span>
-            <select
-              value={filterMode === "best" ? "total_score" : sortKey}
-              onChange={(e) => {
-                if (filterMode === "best") setFilterMode("all");
-                handleSort(e.target.value as SortKey);
-              }}
+          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+            {/* Field label — tap to pick sort field via native iOS picker */}
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, color: PRIMARY, pointerEvents: "none", paddingRight: 2 }}>
+                {filterMode === "best" ? "Score" : sortKey === "date" ? "Date" : sortKey === "total_score" ? "Score" : sortKey === "to_par" ? "To Par" : "Course"}
+              </span>
+              <select
+                value={filterMode === "best" ? "total_score" : sortKey}
+                onChange={(e) => {
+                  if (filterMode === "best") setFilterMode("all");
+                  handleSort(e.target.value as SortKey);
+                }}
+                style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%", height: "100%" }}
+              >
+                <option value="date">Date</option>
+                <option value="total_score">Score</option>
+                <option value="to_par">To Par</option>
+                <option value="course_name">Course</option>
+              </select>
+            </div>
+            {/* Direction toggle — tap to flip asc/desc */}
+            <button
+              type="button"
+              onClick={() => setSortAsc((prev) => !prev)}
+              disabled={filterMode === "best"}
               style={{
-                position: "absolute", inset: 0, opacity: 0, cursor: "pointer",
-                width: "100%", height: "100%",
+                fontFamily: FONT, fontSize: 13, fontWeight: 700, color: PRIMARY,
+                background: "none", border: "none", padding: "2px 4px",
+                cursor: filterMode === "best" ? "default" : "pointer",
+                opacity: filterMode === "best" ? 0.4 : 1,
+                lineHeight: 1,
               }}
             >
-              <option value="date">Date</option>
-              <option value="total_score">Score</option>
-              <option value="to_par">To Par</option>
-              <option value="course_name">Course</option>
-            </select>
+              {filterMode === "best" || sortAsc ? "↑" : "↓"}
+            </button>
           </div>
         </div>
 
@@ -292,12 +307,15 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
             return (
               <Fragment key={r.id}>
-                <div
+                <motion.div
                   style={{
                     background: "#fff", border: `1px solid ${LINE}`, borderRadius: 10,
                     display: "grid", gridTemplateColumns: "54px 1fr auto",
                     gap: 10, alignItems: "center", cursor: "pointer", overflow: "hidden",
                   }}
+                  whileHover={{ scale: 1.015, boxShadow: "0 6px 20px rgba(0,0,0,0.08)" }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   onClick={() => { if (linkingRoundId === r.id) return; navigate(`/rounds/${r.id}`); }}
                 >
                   {/* Date block */}
@@ -376,7 +394,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
                       </span>
                     )}
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Inline link-course panel */}
                 <AnimatePresence>
