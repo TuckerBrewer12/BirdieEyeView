@@ -1,13 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import type { CourseSummary } from "@/types/golf";
 import type { ScanState, ScanResult, ExtractedHoleScore, ManualTee } from "@/types/scan";
 import { initialScanState } from "@/types/scan";
 import { api } from "@/lib/api";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
-import { initializeScores, countBadScanNulls } from "@/lib/scanUtils";
+import { initializeScores } from "@/lib/scanUtils";
 
 function normalizeCourseQueryForSearch(value: string): string {
   return value.trim().replace(/\s+/g, " ");
@@ -67,7 +66,6 @@ export function useScan(
   scanState: ScanState,
   setScanState: React.Dispatch<React.SetStateAction<ScanState>>
 ) {
-  const navigate = useNavigate();
   const { step, scanMode, selectedCourseId, selectedCourseName, file, result, editedScores, scoreMetadata, editedDate, editedTeeBox, userContext, prefetchedOcrText, reviewCourseId, reviewExternalCourseId, reviewCourseName, manualCourseHoles, manualCourseTees, savedRoundId } = scanState;
 
   const update = useCallback(
@@ -518,9 +516,7 @@ export function useScan(
     }
     // Note: setSaving(false) is intentionally omitted on success because we
     // navigate away immediately; keeping it true prevents double-submit during navigation.
-  }, [result, userId, reviewCourseId, reviewExternalCourseId, reviewCourseName, editedTeeBox, editedDate, editedScores, update, setScanState, navigate]);
-
-  const badScanNullCount = countBadScanNulls(editedScores);
+  }, [result, userId, reviewCourseId, reviewExternalCourseId, reviewCourseName, editedTeeBox, editedDate, editedScores, update, setScanState]);
 
   return {
     // Derived state from scanState
@@ -532,7 +528,6 @@ export function useScan(
     result,
     editedScores,
     scoreMetadata,
-    badScanNullCount,
     editedDate,
     editedTeeBox,
     userContext,

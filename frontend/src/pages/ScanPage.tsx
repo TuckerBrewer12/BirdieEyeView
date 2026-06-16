@@ -63,7 +63,6 @@ export function ScanPage({ userId }: { userId: string }) {
         onSelectReviewCourse={scan.selectReviewCourse}
         onUpdate={scan.update}
         scoreMetadata={scan.scoreMetadata}
-        badScanNullCount={scan.badScanNullCount}
         onScoreChange={scan.handleScoreChange}
         onGirChange={scan.handleGirChange}
         onSave={scan.handleSave}

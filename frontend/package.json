@@ -14,6 +14,9 @@
     "preview": "vite preview",
     "serve": "node server.js",
     "sync": "npm run build:native && npx cap sync",
+    "sync:live": "CAPACITOR_SERVER_URL=${CAPACITOR_SERVER_URL:-http://10.2.1.202:5173} npx cap sync",
+    "sync:live:ios": "CAPACITOR_SERVER_URL=${CAPACITOR_SERVER_URL:-http://10.2.1.202:5173} npx cap sync ios",
+    "sync:live:android": "CAPACITOR_SERVER_URL=${CAPACITOR_SERVER_URL:-http://10.2.1.202:5173} npx cap sync android",
     "open:ios": "npx cap open ios",
     "open:android": "npx cap open android",
     "gen-icons": "npx @capacitor/assets generate"

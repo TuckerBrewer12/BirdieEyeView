@@ -2,7 +2,7 @@
 [birdie-eye-view.com
 ](https://www.birdie-eye-view.com/)
 
-Snap a photo of your scorecard. MistralOCR + Gemini pipeline extracts the information into a digital scorecard. Get a full round breakdown, your stats over time, + more.
+Photograph a physical scorecard. A Mistral OCR + Gemini LLM pipeline extracts scores, putts, GIR, and tee boxes into a complete digital round — with course and player analytics across all your rounds.
 
 ---
 
@@ -39,4 +39,22 @@ cd frontend
 npm run dev
 ```
 
-Open localhost
+Open [http://localhost:5173](http://localhost:5173). Backend runs on port 8000; the frontend proxies to it automatically.
+
+Copy `.env.example` to `.env` and fill required keys (`GOOGLE_API_KEY`, `MISTRAL_API_KEY`, `SECRET_KEY`, `DATABASE_URL`).  
+For auth emails in production, also set `RESEND_API_KEY` and `AUTH_FROM_EMAIL`.
+
+For production hardening (HTTPS, secret handling, DB network restrictions, security logging), see:
+
+- `SECURITY_DEPLOYMENT.md`
+
+## Secret Safety Checks
+
+Run this before pushing:
+
+```bash
+
+bash scripts/security/scan_secrets.sh
+```
+
+This fails if common key/token formats are committed, if frontend code references secret env vars, or if frontend tries to call AI providers directly.

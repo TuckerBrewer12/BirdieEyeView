@@ -226,7 +226,11 @@ class RoundRepositoryDB:
                          ELSE NULL END AS front_nine,
                     CASE WHEN COUNT(CASE WHEN hs.hole_number >= 10 AND hs.strokes IS NOT NULL THEN 1 END) = 9
                          THEN SUM(CASE WHEN hs.hole_number >= 10 THEN hs.strokes ELSE 0 END)
-                         ELSE NULL END AS back_nine
+                         ELSE NULL END AS back_nine,
+                    json_agg(
+                        json_build_object('h', hs.hole_number, 's', hs.strokes, 'p', hs.par_played)
+                        ORDER BY hs.hole_number
+                    ) FILTER (WHERE hs.hole_number IS NOT NULL) AS hole_scores_summary
                 FROM users.rounds r
                 LEFT JOIN courses.courses c ON r.course_id = c.id
                 LEFT JOIN users.hole_scores hs ON hs.round_id = r.id
@@ -236,7 +240,14 @@ class RoundRepositoryDB:
                 LIMIT $2 OFFSET $3""",
                 UUID(user_id), limit, offset,
             )
-            return [dict(r) for r in rows]
+            result = []
+            for r in rows:
+                d = dict(r)
+                raw = d.get("hole_scores_summary")
+                if raw is not None and isinstance(raw, str):
+                    d["hole_scores_summary"] = json.loads(raw)
+                result.append(d)
+            return result
 
     async def get_rounds_for_user(
         self, user_id: str, *, limit: int = 20, offset: int = 0,

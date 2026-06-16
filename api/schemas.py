@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Any, List, Optional
 
 
 class RoundSummaryResponse(BaseModel):
@@ -22,6 +22,7 @@ class RoundSummaryResponse(BaseModel):
     total_gir: Optional[int] = None
     fairways_hit: Optional[int] = None
     notes: Optional[str] = None
+    hole_scores_summary: Optional[List[Any]] = None
 
 
 class DashboardResponse(BaseModel):

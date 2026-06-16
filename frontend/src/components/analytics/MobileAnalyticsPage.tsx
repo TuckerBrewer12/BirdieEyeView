@@ -1,5 +1,11 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Fmt = (v: any, name: any, props: any) => any;
+import type { ReactNode } from "react";
+
+type Fmt = (value: unknown, name: unknown, props: unknown) => ReactNode | [ReactNode, string];
+type DivergingTooltipPayload = {
+  value?: unknown;
+  dataKey?: unknown;
+  fill?: string;
+};
 
 import { useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,7 +18,7 @@ import { SVGTimeSeriesArea } from "@/components/analytics/SVGTimeSeriesArea";
 import { BestRoundCard } from "@/components/analytics/BestRoundCard";
 import { NarrativeInsight } from "@/components/analytics/NarrativeInsight";
 import { ParMatrixGrid } from "@/components/analytics/ParMatrixGrid";
-import { AnalyticsFilterBar } from "@/components/analytics/AnalyticsFilterBar";
+import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
 import { average, trendDelta } from "@/lib/stats";
 import type {
   AnalyticsData, AnalyticsFilters, ScoreTrendRow,
@@ -69,11 +75,6 @@ const tooltipStyle = {
   WebkitBackdropFilter: "blur(12px)",
 };
 
-function formatHI(hi: number | null | undefined): string {
-  if (hi == null) return "—";
-  if (hi < 0) return `+${Math.abs(hi).toFixed(1)}`;
-  return hi.toFixed(1);
-}
 
 function ChartCard({ title, subtitle, children }: {
   title: string;
@@ -91,23 +92,6 @@ function ChartCard({ title, subtitle, children }: {
   );
 }
 
-function StatCell({ label, value, sub, accent }: {
-  label: string;
-  value: string | number | null;
-  sub?: string | null;
-  accent: string;
-}) {
-  return (
-    <div className="px-3 py-2.5 relative">
-      <div className="absolute top-0 left-3 right-3 h-[2px] rounded-full" style={{ background: accent }} />
-      <div className="text-[8px] font-bold uppercase tracking-widest text-gray-400 mt-1 mb-0.5">{label}</div>
-      <div className="text-xl font-bold tracking-tight text-gray-900 leading-none tabular-nums">
-        {value ?? "—"}
-      </div>
-      {sub && <div className="text-[9px] text-gray-400 mt-0.5 truncate">{sub}</div>}
-    </div>
-  );
-}
 
 function ShortGameRow({ label, value, delta }: {
   label: string;
@@ -259,24 +243,6 @@ export function MobileAnalyticsPage({
     })),
   [gir_vs_non_gir]);
 
-  const bestRoundCourse = (() => {
-    const ev = notable_achievements?.scoring_records_events?.lifetime?.lowest_score;
-    return ev?.course ?? null;
-  })();
-
-  const filterDesc = (() => {
-    const parts: string[] = [];
-    parts.push(filters.limit === 500 ? "All rounds" : `Last ${filters.limit} rounds`);
-    if (filters.courseId === "home") parts.push("Home Course");
-    else if (filters.courseId !== "all") {
-      const c = playedCourses.find((pc) => pc.id === filters.courseId);
-      if (c) parts.push(c.name ?? "Selected Course");
-    }
-    if (filters.timeframe === "ytd") parts.push("YTD");
-    if (filters.timeframe === "1y") parts.push("Last 12 mo");
-    return parts.join(" · ");
-  })();
-
   // ── Tab content renderers ────────────────────────────────────────────────
 
   function renderScoring() {
@@ -415,17 +381,18 @@ export function MobileAnalyticsPage({
               <CartesianGrid stroke={gridColor} horizontal={false} />
               <ReferenceLine x={0} stroke="#d1d5db" strokeWidth={1.5} />
               <Tooltip
-                content={({ payload, label }: any) => {
+                content={({ payload, label }: { payload?: readonly DivergingTooltipPayload[]; label?: unknown }) => {
                   if (!payload?.length) return null;
-                  const visible = payload.filter((p: any) => Math.abs(p.value) > 0.05);
+                  const visible = payload.filter((p) => Math.abs(Number(p.value ?? 0)) > 0.05);
                   if (!visible.length) return null;
+                  const labelText = String(label ?? "");
                   return (
                     <div style={{ ...tooltipStyle, padding: "8px 10px" }}>
-                      <div className="font-semibold text-[11px] mb-1" style={{ color: label === "GIR" ? successColor : dangerColor }}>{label}</div>
-                      {visible.map((p: any) => (
-                        <div key={p.dataKey} className="flex items-center justify-between gap-3">
-                          <span style={{ color: p.fill }} className="text-[11px]">{p.dataKey}</span>
-                          <span style={{ color: p.fill }} className="font-bold text-[11px]">{Math.abs(p.value).toFixed(1)}%</span>
+                      <div className="font-semibold text-[11px] mb-1" style={{ color: labelText === "GIR" ? successColor : dangerColor }}>{labelText}</div>
+                      {visible.map((p) => (
+                        <div key={String(p.dataKey)} className="flex items-center justify-between gap-3">
+                          <span style={{ color: p.fill }} className="text-[11px]">{String(p.dataKey ?? "")}</span>
+                          <span style={{ color: p.fill }} className="font-bold text-[11px]">{Math.abs(Number(p.value ?? 0)).toFixed(1)}%</span>
                         </div>
                       ))}
                     </div>
@@ -622,63 +589,60 @@ export function MobileAnalyticsPage({
   return (
     <div className="space-y-4">
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div>
-        <div className="flex items-baseline justify-between mb-1">
-          <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">Analytics</h1>
-          <span className="text-xs text-gray-400 font-medium">{filterDesc}</span>
-        </div>
-        <AnalyticsFilterBar
-          filters={filters}
-          onChange={setFilters}
-          playedCourses={playedCourses}
-          hasHomeCourse={hasHomeCourse}
-        />
-      </div>
-
-      {/* ── KPI strip ──────────────────────────────────────────────────────── */}
-      <div className="space-y-2">
-        <div className="bg-primary rounded-xl px-4 py-2.5 flex items-center justify-between">
-          <div>
-            <div className="text-[9px] font-bold uppercase tracking-widest text-white/50 mb-0.5">
-              Handicap Index
-            </div>
-            <div className="text-2xl font-black text-white tabular-nums leading-none">
-              {formatHI(kpis.handicap_index)}
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-[9px] font-bold uppercase tracking-widest text-white/50 mb-0.5">
-              Rounds
-            </div>
-            <div className="text-2xl font-black text-white tabular-nums leading-none">
-              {kpis.total_rounds}
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden grid grid-cols-2 divide-x divide-y divide-gray-100">
-          <StatCell label="Scoring Avg" value={kpis.scoring_average ?? null} accent="#2d7a3a" />
-          <StatCell label="Avg Putts" value={avgPutts} sub="per round" accent="#6b7280" />
-          <StatCell label="Best Round" value={bestRound?.total_score ?? null} sub={bestRoundCourse} accent="#f59e0b" />
-          <StatCell label="GIR %" value={kpis.gir_percentage != null ? `${kpis.gir_percentage}%` : null} accent="#059669" />
-        </div>
-      </div>
+      {/* ── Header (title + filter + stat strip) ─────────────────────────── */}
+      <AnalyticsHeader
+        totalRounds={kpis.total_rounds}
+        handicapIndex={kpis.handicap_index}
+        scoringAvg={kpis.scoring_average}
+        bestScore={bestRound?.total_score ?? null}
+        avgPutts={avgPutts}
+        girPct={kpis.gir_percentage}
+        filters={filters}
+        setFilters={setFilters}
+        playedCourses={playedCourses}
+        hasHomeCourse={hasHomeCourse}
+        accentHcap={trendPrimary}
+        accentAvg={scoreColors.bogey ?? "#f87171"}
+        accentBest={scoreColors.double_bogey ?? "#60a5fa"}
+        accentPutts={scoreColors.triple_bogey ?? "#a78bfa"}
+        accentGir={successColor}
+      />
 
       {/* ── Tab bar ────────────────────────────────────────────────────────── */}
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-0.5 px-0.5 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-        {TABS.map((tab, i) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(i)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-              activeTab === i
-                ? "bg-primary text-white"
-                : "bg-gray-100 text-gray-600"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+      <div style={{
+        borderTop: "1px solid #e4e9e1",
+        padding: "8px 16px 0",
+        display: "flex",
+        gap: 18,
+        overflowX: "auto",
+        scrollbarWidth: "none",
+      }} className="[&::-webkit-scrollbar]:hidden">
+        {TABS.map((tab, i) => {
+          const isActive = activeTab === i;
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(i)}
+              style={{
+                flexShrink: 0,
+                padding: "10px 0 12px",
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: '"DM Sans", system-ui, sans-serif',
+                color: isActive ? "#131613" : "#6b7765",
+                background: "none",
+                border: "none",
+                borderBottom: isActive ? "2px solid #2d7a3a" : "2px solid transparent",
+                marginBottom: -1,
+                cursor: "pointer",
+                lineHeight: 1,
+                transition: "color 0.15s, border-color 0.15s",
+              }}
+            >
+              {tab}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── Active tab content ─────────────────────────────────────────────── */}

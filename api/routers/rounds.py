@@ -143,6 +143,7 @@ async def get_rounds_for_user(
             total_gir=row["total_gir"],
             fairways_hit=row["fairways_hit"],
             notes=row["notes"],
+            hole_scores_summary=row.get("hole_scores_summary"),
         )
         for row in rows
     ]
@@ -262,13 +263,19 @@ async def link_course_to_round(
         round_ = await db.rounds.get_round(str(round_id))
         if not round_:
             raise HTTPException(404, "Round not found")
+        destination_course = await db.courses.get_course(str(req.course_id))
+        fill_destination_course = bool(
+            destination_course
+            and destination_course.user_id
+            and str(destination_course.user_id) == str(current_user.id)
+        )
 
         scan_holes = [
             {"hole_number": hs.hole_number, "par": hs.par_played, "handicap": hs.handicap_played}
             for hs in round_.hole_scores
             if hs.hole_number is not None and hs.par_played is not None
         ]
-        if scan_holes:
+        if scan_holes and fill_destination_course:
             await db.courses.fill_course_gaps(str(req.course_id), scan_holes)
 
         # If round carries tee details (user tee or linked course tee), merge them
@@ -299,7 +306,7 @@ async def link_course_to_round(
                     if v is not None
                 }
 
-        if source_tee_name:
+        if source_tee_name and fill_destination_course:
             await db.courses.fill_course_gaps(
                 str(req.course_id),
                 [],

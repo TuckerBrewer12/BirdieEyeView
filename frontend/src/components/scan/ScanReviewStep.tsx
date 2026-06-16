@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { CheckCircle, AlertTriangle, Loader2, X } from "lucide-react";
+import { CheckCircle, AlertTriangle, Loader2, X, ChevronDown, Info } from "lucide-react";
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { CourseLinkSearch, CourseLinkChip, CustomNameChip } from "@/components/CourseLinkSearch";
@@ -10,6 +10,16 @@ import type { ScanState, ScanResult, ExtractedHoleScore, FieldConfidence, ScoreM
 import { initialScanState } from "@/types/scan";
 import { formatCourseName } from "@/lib/courseName";
 import { scoreInputStyle } from "@/lib/scoreSymbol";
+import { classifyScanWarnings, buildReviewItems, buildCompletenessStats } from "@/lib/scanUtils";
+import type { ScanWarningKey } from "@/lib/scanUtils";
+
+type ConfTier = "high" | "medium" | "low" | null;
+function strokeConfTier(sc: FieldConfidence | null): ConfTier {
+  if (!sc) return null;
+  if (sc.level === "high") return "high";
+  if (sc.level === "medium") return "medium";
+  return "low";
+}
 
 interface ScanReviewStepProps {
   result: ScanResult;
@@ -33,7 +43,6 @@ interface ScanReviewStepProps {
   onSelectReviewCourse: (course: CourseSummary) => void;
 
   scoreMetadata: ScoreMetadata[];
-  badScanNullCount: number;
 
   // Callbacks
   onUpdate: (patch: Partial<ScanState>) => void;
@@ -115,7 +124,6 @@ export function ScanReviewStep({
   scanMode,
   editedScores,
   scoreMetadata,
-  badScanNullCount,
   editedDate,
   editedTeeBox,
   error,
@@ -138,8 +146,11 @@ export function ScanReviewStep({
   setReviewCourseResults,
   setScanState,
 }: ScanReviewStepProps) {
-  const [badScanDismissed, setBadScanDismissed] = useState(false);
+  const [dismissedWarnings, setDismissedWarnings] = useState<Set<ScanWarningKey>>(new Set());
   const [customNameConfirmed, setCustomNameConfirmed] = useState(false);
+  const [trayOpen, setTrayOpen] = useState(true);
+  const [imageOverlayOpen, setImageOverlayOpen] = useState(false);
+  const cellRefs = useRef<Map<string, HTMLElement>>(new Map());
   const rd = result.round;
   const coursePar = rd.course?.par ?? null;
   const totalStrokes = editedScores.reduce((s, h) => s + (h.strokes ?? 0), 0);
@@ -256,10 +267,17 @@ export function ScanReviewStep({
               const holeNum = hs.hole_number ?? startIdx + si + 1;
               const par = rd.course?.holes.find((h) => h.number === holeNum)?.par ?? null;
               const sc = getFieldConfidence(hs.hole_number, origIdx, "strokes");
-              const isLowConf = sc !== null && (sc.level === "low" || sc.final_confidence < 0.7);
+              const tier = strokeConfTier(sc);
               const diff = hs.strokes != null && par != null ? hs.strokes - par : null;
+              const cellStyle: React.CSSProperties = (() => {
+                if (tier === "low") return { fontSize: "16px", border: "1.5px solid #ef4444", background: "#fef2f2", color: "#991b1b", borderRadius: 4 };
+                if (tier === "medium") return { fontSize: "16px", border: "1.5px solid #f59e0b", background: "#fffbeb", color: "#92400e", borderRadius: 4 };
+                if (tier === "high") return { fontSize: "16px", ...scoreInputStyle(diff), boxShadow: "inset 0 0 0 1.5px #22c55e" };
+                return { fontSize: "16px", ...scoreInputStyle(diff) };
+              })();
               return (
-                <td key={si} className="px-0.5 py-1 text-center">
+                <td key={si} className="px-0.5 py-1 text-center"
+                  ref={(el) => { if (el) cellRefs.current.set(`hole-${origIdx}`, el); }}>
                   <div className="inline-flex items-center gap-0.5">
                     <DragScrubCell
                       value={hs.strokes}
@@ -276,14 +294,11 @@ export function ScanReviewStep({
                           value={hs.strokes ?? ""}
                           onChange={(e) => onScoreChange(origIdx, "strokes", e.target.value)}
                           className="w-7 h-7 text-center px-0 py-0 text-sm font-semibold focus:outline-none"
-                          style={isLowConf
-                            ? { fontSize: "16px", border: "1px solid #f59e0b", background: "#fffbeb", color: "#92400e", borderRadius: 4 }
-                            : { fontSize: "16px", ...scoreInputStyle(diff) }
-                          }
+                          style={cellStyle}
                         />
-                        {isLowConf && (
+                        {tier === "low" && (
                           <motion.div
-                            className="absolute inset-0 rounded border-2 border-amber-400 pointer-events-none"
+                            className="absolute inset-0 rounded border-2 border-red-400 pointer-events-none"
                             animate={{ opacity: [1, 0.2, 1] }}
                             transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
                           />
@@ -301,9 +316,28 @@ export function ScanReviewStep({
                       >▼</button>
                     </div>
                   </div>
-                  {isLowConf && (
-                    <div className="text-[8px] font-bold text-amber-500 leading-none mt-0.5 uppercase tracking-wide">check</div>
+                  {tier === "low" && !hs.strokes && (
+                    <div className="text-[8px] font-bold text-red-500 leading-none mt-0.5 uppercase tracking-wide">check</div>
                   )}
+                  {tier === "medium" && (
+                    <div className="text-[8px] font-bold text-amber-500 leading-none mt-0.5 uppercase tracking-wide">review</div>
+                  )}
+                  {(tier === "low" || hs.strokes === null) && (() => {
+                    const center = hs.strokes ?? par ?? 4;
+                    const chips = [center - 1, center, center + 1].filter(v => v >= 1 && v <= 15);
+                    return (
+                      <div className="flex justify-center gap-0.5 mt-0.5">
+                        {chips.map(v => (
+                          <button key={v}
+                            onClick={() => onScoreChange(origIdx, "strokes", String(v))}
+                            className={`w-5 h-5 text-[10px] font-semibold rounded ${
+                              v === hs.strokes ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            }`}
+                          >{v}</button>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </td>
               );
             })}
@@ -458,31 +492,29 @@ export function ScanReviewStep({
         </div>
       </div>
 
-      {/* Bad scan warning */}
-      <AnimatePresence>
-        {badScanNullCount > 5 && !badScanDismissed && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="mb-4 p-3 bg-amber-50 border border-amber-300 rounded-lg text-sm text-amber-800 flex items-start gap-2"
-          >
-            <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-500" />
-            <div className="flex-1">
-              <span className="font-semibold">Scan may be incomplete</span>
-              {" — "}{badScanNullCount} holes appear to be missing scores. Check the original image and fill in any gaps.
-            </div>
-            <button
-              onClick={() => setBadScanDismissed(true)}
-              className="ml-2 text-amber-400 hover:text-amber-700 focus:outline-none shrink-0"
-              aria-label="Dismiss warning"
-            >
-              <X size={14} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Structured scan warnings */}
+      {scanMode !== "manual" && (() => {
+        const warnings = classifyScanWarnings(result, editedScores, puttsNotRecorded)
+          .filter(w => !dismissedWarnings.has(w.key));
+        if (!warnings.length) return null;
+        return (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {warnings.map(w => (
+              <motion.div key={w.key}
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-full text-xs text-amber-800"
+              >
+                <AlertTriangle size={12} className="shrink-0 text-amber-500" />
+                {w.label}
+                <button onClick={() => setDismissedWarnings(prev => new Set([...prev, w.key]))}
+                  className="ml-1 text-amber-400 hover:text-amber-700 focus:outline-none" aria-label="Dismiss">
+                  <X size={11} />
+                </button>
+              </motion.div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Stat cards */}
       {(() => {
@@ -501,40 +533,48 @@ export function ScanReviewStep({
           : null;
 
         return (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <div className="text-xs text-gray-500 mb-1">Front 9</div>
-              <div className="text-3xl font-bold text-gray-900">{frontNine ?? "-"}</div>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <div className="text-xs text-gray-500 mb-1">Back 9</div>
-              <div className="text-3xl font-bold text-gray-900">{backNine ?? "-"}</div>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <div className="text-xs text-gray-500 mb-1">Total</div>
-              <div className="text-3xl font-bold text-gray-900">{totalStrokes ?? "-"}</div>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-              <div className="text-xs text-gray-500 mb-1">To Par</div>
-              <div className={`text-3xl font-bold ${toPar !== null && toPar < 0 ? "text-green-600" : toPar !== null && toPar > 0 ? "text-red-500" : "text-gray-900"}`}>
-                {formatToPar(toPar)}
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-3">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+                <div className="text-xs text-gray-500 mb-1">Front 9</div>
+                <div className="text-3xl font-bold text-gray-900">{frontNine ?? "-"}</div>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+                <div className="text-xs text-gray-500 mb-1">Back 9</div>
+                <div className="text-3xl font-bold text-gray-900">{backNine ?? "-"}</div>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+                <div className="text-xs text-gray-500 mb-1">Total</div>
+                <div className="text-3xl font-bold text-gray-900">{totalStrokes ?? "-"}</div>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+                <div className="text-xs text-gray-500 mb-1">To Par</div>
+                <div className={`text-3xl font-bold ${toPar !== null && toPar < 0 ? "text-green-600" : toPar !== null && toPar > 0 ? "text-red-500" : "text-gray-900"}`}>
+                  {formatToPar(toPar)}
+                </div>
+              </div>
+              <div className={`bg-white rounded-xl border border-gray-200 border-l-4 p-4 text-center ${netScore != null && coursePar != null ? netScore <= coursePar ? "border-l-birdie" : "border-l-bogey" : "border-l-gray-300"}`}>
+                <div className="text-xs text-gray-500 mb-1">Net Score</div>
+                <div className={`text-3xl font-bold ${netScore != null && coursePar != null ? netScore <= coursePar ? "text-birdie" : "text-bogey" : "text-gray-900"}`}>{netScore ?? "-"}</div>
+                {courseHandicap != null && (
+                  <div className="text-xs text-gray-400 mt-0.5">HCP {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}</div>
+                )}
               </div>
             </div>
-            <div className={`bg-white rounded-xl border border-gray-200 border-l-4 p-4 text-center ${netScore != null && coursePar != null ? netScore <= coursePar ? "border-l-birdie" : "border-l-bogey" : "border-l-gray-300"}`}>
-              <div className="text-xs text-gray-500 mb-1">Net Score</div>
-              <div className={`text-3xl font-bold ${netScore != null && coursePar != null ? netScore <= coursePar ? "text-birdie" : "text-bogey" : "text-gray-900"}`}>{netScore ?? "-"}</div>
-              {courseHandicap != null && (
-                <div className="text-xs text-gray-400 mt-0.5">HCP {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}</div>
-              )}
-            </div>
-          </div>
+            {scanMode !== "manual" && !reviewCourseId && !reviewExternalCourseId && (
+              <div className="mb-4 flex items-start gap-2 px-3 py-2.5 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700">
+                <Info size={13} className="mt-0.5 shrink-0 text-blue-400" />
+                Round will be saved without a linked course. Par values from this scan are stored.
+              </div>
+            )}
+          </>
         );
       })()}
 
       {/* Top: image + metadata side by side */}
       <div className={`grid grid-cols-1 gap-6 mb-6 ${scanMode !== "manual" ? "lg:grid-cols-2" : ""}`}>
         {scanMode !== "manual" && (
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm sticky top-20 self-start">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Original Image</h3>
             {preview && <img src={preview} alt="Scorecard" className="w-full rounded-lg" />}
           </div>
@@ -643,6 +683,24 @@ export function ScanReviewStep({
               className="w-full mt-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm" />
           </div>
 
+          {/* Completeness meter */}
+          {(() => {
+            const cs = buildCompletenessStats(editedScores, result, reviewCourseId, reviewExternalCourseId, reviewCourseName, puttsNotRecorded);
+            const sc = (n: number, t: number) => n === t ? "text-green-700" : n === 0 ? "text-gray-400" : "text-amber-600";
+            return (
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-3 text-gray-500">
+                <span className={sc(cs.scores.complete, cs.scores.total)}>{cs.scores.complete}/{cs.scores.total} scores</span>
+                <span className={sc(cs.pars.complete, cs.pars.total)}>{cs.pars.complete}/{cs.pars.total} pars</span>
+                {cs.putts
+                  ? <span className={sc(cs.putts.complete, cs.putts.total)}>{cs.putts.complete}/{cs.putts.total} putts</span>
+                  : <span className="text-gray-400">Putts: not detected</span>}
+                <span className={cs.courseLinked ? "text-green-700" : "text-amber-600"}>
+                  {cs.courseLinked ? `Course: ${cs.courseName ?? "matched"}` : "Course: not matched"}
+                </span>
+              </div>
+            );
+          })()}
+
           {/* Actions */}
           <div className="flex gap-3">
             <button onClick={onSave} disabled={saving}
@@ -661,6 +719,40 @@ export function ScanReviewStep({
         </div>
       </div>
 
+      {/* Review needed tray */}
+      {scanMode !== "manual" && (() => {
+        const items = buildReviewItems(result, editedScores);
+        if (!items.length) return null;
+        const scrollToHole = (holeIndex: number | null) => {
+          if (holeIndex === null) return;
+          cellRefs.current.get(`hole-${holeIndex}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        };
+        return (
+          <div className="mb-4 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <button onClick={() => setTrayOpen(o => !o)}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+              <span>{items.length} item{items.length > 1 ? "s" : ""} to review</span>
+              <ChevronDown size={15} className={`transition-transform ${trayOpen ? "rotate-180" : ""}`} />
+            </button>
+            <AnimatePresence>
+              {trayOpen && (
+                <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }}
+                  className="overflow-hidden">
+                  <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+                    {items.map(item => (
+                      <button key={item.key} onClick={() => scrollToHole(item.holeIndex)}
+                        className="px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-full text-xs text-amber-800 hover:bg-amber-100 transition-colors">
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })()}
+
       {/* Horizontal scorecard */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
         <div className="min-w-[680px]">
@@ -669,6 +761,33 @@ export function ScanReviewStep({
           {renderNine(9, "IN", true, scanMode === "manual")}
         </div>
       </div>
+
+      {/* Mobile: sticky image thumbnail + full-screen overlay */}
+      {scanMode !== "manual" && preview && (
+        <>
+          <button onClick={() => setImageOverlayOpen(true)}
+            className="fixed bottom-24 right-4 z-30 md:hidden w-14 h-14 rounded-xl shadow-lg border border-gray-200 overflow-hidden bg-white"
+            aria-label="View scorecard image">
+            <img src={preview} alt="" className="w-full h-full object-cover" />
+          </button>
+          <AnimatePresence>
+            {imageOverlayOpen && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 md:hidden"
+                onClick={() => setImageOverlayOpen(false)}>
+                <motion.img initial={{ scale: 0.92 }} animate={{ scale: 1 }}
+                  src={preview} alt="Scorecard"
+                  className="max-w-full max-h-full rounded-xl object-contain"
+                  onClick={(e) => e.stopPropagation()} />
+                <button onClick={() => setImageOverlayOpen(false)}
+                  className="absolute top-4 right-4 text-white/80 hover:text-white">
+                  <X size={24} />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
     </div>
   );
 }
