@@ -111,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: withAuthHeaders(),
       });
       if (res.status === 401 || res.status === 403) {
-        setSessionToken();
+        setSessionToken(null);
         setState((prev) =>
           prev.userId === null && prev.name === null && prev.email === null && prev.emailVerified === false
             ? prev
@@ -166,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const data = await callAuth<AuthUserPayload>("/login", { email, password });
-    setSessionToken();
+    setSessionToken(data.access_token ?? null);
     setState({
       userId: data.user_id,
       name: data.name,
@@ -221,7 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await callAuth<{ message: string }>("/logout", {});
     } finally {
-      setSessionToken();
+      setSessionToken(null);
       setState(EMPTY_AUTH_STATE);
     }
   };
