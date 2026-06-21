@@ -574,7 +574,7 @@ export function ScanReviewStep({
       {/* Top: image + metadata side by side */}
       <div className={`grid grid-cols-1 gap-6 mb-6 ${scanMode !== "manual" ? "lg:grid-cols-2" : ""}`}>
         {scanMode !== "manual" && (
-          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm sticky top-20 self-start">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm lg:sticky lg:top-20 lg:self-start">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Original Image</h3>
             {preview && <img src={preview} alt="Scorecard" className="w-full rounded-lg" />}
           </div>
