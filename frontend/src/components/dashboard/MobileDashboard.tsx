@@ -10,6 +10,7 @@ import type { AnalyticsData, GoalReport } from "@/types/analytics";
 import type { DualTrendPoint, ScoreDistItem } from "@/hooks/useDashboardViewModel";
 import { formatCourseName } from "@/lib/courseName";
 import { api } from "@/lib/api";
+import { HandicapBreakdownSheet } from "@/components/dashboard/HandicapBreakdownSheet";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const INK     = "#131613";
@@ -489,6 +490,7 @@ export function MobileDashboard({
   handicapLineColor,
 }: MobileDashboardProps) {
   const navigate = useNavigate();
+  const [handicapSheetOpen, setHandicapSheetOpen] = useState(false);
   const firstName = user?.name?.split(" ")[0] ?? "Golfer";
   const lastRound = data.recent_rounds[0] ?? null;
   const recentRounds = data.recent_rounds.slice(0, 3);
@@ -591,7 +593,11 @@ export function MobileDashboard({
             Hi {firstName}
           </div>
         </div>
-        <div style={{ textAlign: "right" }}>
+        <button
+          type="button"
+          onClick={() => setHandicapSheetOpen(true)}
+          style={{ textAlign: "right", background: "none", border: "none", cursor: "pointer", padding: "4px 0", borderRadius: 8 }}
+        >
           <div style={{ fontFamily: SANS, fontSize: 9, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: MUTED, marginBottom: 2 }}>
             Handicap
           </div>
@@ -603,7 +609,7 @@ export function MobileDashboard({
               {hiDeltaText}
             </div>
           )}
-        </div>
+        </button>
       </div>
 
       {/* ── 2. Hero Card ─────────────────────────────────────────────────────── */}
@@ -819,6 +825,16 @@ export function MobileDashboard({
           ))}
         </div>
       </div>
+
+      {/* ── Handicap Breakdown Sheet ─────────────────────────────────────────── */}
+      <HandicapBreakdownSheet
+        open={handicapSheetOpen}
+        onClose={() => setHandicapSheetOpen(false)}
+        handicapIndex={data.handicap_index}
+        dualData={dualData}
+        scoreDifferentials={trends?.score_differentials ?? []}
+        scoreTrend={trends?.score_trend ?? []}
+      />
 
       {/* ── 7. Recent Rounds Card ────────────────────────────────────────────── */}
       <div style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 16, padding: "16px 4px 4px" }}>

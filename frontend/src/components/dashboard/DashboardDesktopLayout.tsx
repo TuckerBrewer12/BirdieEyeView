@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 import {
@@ -12,6 +13,7 @@ import { ScanActionCard } from "@/components/dashboard/ScanActionCard";
 import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
 import { BestRoundHighlight } from "@/components/dashboard/BestRoundHighlight";
 import { RecentRoundsTable } from "@/components/dashboard/RecentRoundsTable";
+import { HandicapBreakdownSheet } from "@/components/dashboard/HandicapBreakdownSheet";
 import type { DashboardViewModel } from "@/hooks/useDashboardViewModel";
 
 const tooltipStyle = {
@@ -76,6 +78,7 @@ function MiniKpi({ label, value, trend }: {
 
 export function DashboardDesktopLayout(vm: DashboardViewModel) {
   const navigate = useNavigate();
+  const [handicapSheetOpen, setHandicapSheetOpen] = useState(false);
   const {
     data, trends, user, goalReport,
     dualData, recentMilestones, last20ScoringAvg, hiTrend,
@@ -92,7 +95,11 @@ export function DashboardDesktopLayout(vm: DashboardViewModel) {
 
         {/* Left Main Content */}
         <div className="flex-1 min-w-0 flex flex-col">
-          <ProfileHeroBanner user={user ?? null} handicapIndex={data.handicap_index} />
+          <ProfileHeroBanner
+            user={user ?? null}
+            handicapIndex={data.handicap_index}
+            onHandicapClick={() => setHandicapSheetOpen(true)}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 auto-rows-min mt-6">
 
@@ -300,6 +307,15 @@ export function DashboardDesktopLayout(vm: DashboardViewModel) {
         </div>
 
       </div>
+
+      <HandicapBreakdownSheet
+        open={handicapSheetOpen}
+        onClose={() => setHandicapSheetOpen(false)}
+        handicapIndex={data.handicap_index}
+        dualData={dualData}
+        scoreDifferentials={trends?.score_differentials ?? []}
+        scoreTrend={trends?.score_trend ?? []}
+      />
     </div>
   );
 }
