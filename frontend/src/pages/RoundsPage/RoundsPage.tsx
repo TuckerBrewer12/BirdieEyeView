@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { RoundPreview } from "@/brand/components/RoundPreview";
+import { FilterChip, FilterChipRow } from "@/brand/components/FilterChip";
+import { SearchField } from "@/brand/components/SearchField";
 import { colors } from "@/brand/theme";
 import { CourseLinkSearch } from "@/components/CourseLinkSearch";
 import { api } from "@/lib/api";
@@ -147,53 +149,26 @@ export function RoundsPage({ userId }: RoundsPageProps) {
           Rounds
         </div>
 
-        {/* Search pill */}
-        <div style={{ position: "relative" }}>
-          <svg
-            style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
-            width={14} height={14} viewBox="0 0 20 20" fill="none"
-          >
-            <circle cx="9" cy="9" r="6" stroke={t.fgMuted} strokeWidth="2" />
-            <path d="M13.5 13.5L17 17" stroke={t.fgMuted} strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <input
-            type="search"
-            placeholder="Search by course…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: "100%", height: 36, paddingLeft: 34, paddingRight: 12,
-              fontSize: 13, color: t.fg,
-              background: t.card, border: `1px solid ${t.border}`, borderRadius: 99,
-              outline: "none", boxSizing: "border-box",
-            }}
-          />
-        </div>
+        <SearchField
+          placeholder="Search by course…"
+          value={search}
+          onChange={setSearch}
+        />
 
-        {/* Filter chip row */}
-        <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
+        <FilterChipRow>
           {(["All", "L20", "Best", ...courseChips] as const).map((chip) => {
             const mode: FilterMode = chip === "All" ? "all" : chip === "L20" ? "l20" : chip === "Best" ? "best" : chip;
             const active = filterMode === mode;
             return (
-              <button
+              <FilterChip
                 key={chip}
-                type="button"
+                label={chip === "All" || chip === "L20" || chip === "Best" ? chip : formatCourseName(chip)}
+                active={active}
                 onClick={() => setFilterMode(active ? "all" : mode)}
-                style={{
-                  padding: "5px 11px", borderRadius: 99, fontSize: 11, fontWeight: 600,
-                  whiteSpace: "nowrap", flexShrink: 0, cursor: "pointer",
-                  border: `1px solid ${active ? colors.primary : t.border}`,
-                  background: active ? colors.primary : t.card,
-                  color: active ? colors.onPrimary : t.fgMuted,
-                  transition: "all 0.15s",
-                }}
-              >
-                {chip === "All" ? "All" : chip === "L20" ? "L20" : chip === "Best" ? "Best" : formatCourseName(chip)}
-              </button>
+              />
             );
           })}
-        </div>
+        </FilterChipRow>
 
         {/* Count + sort strip */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 4px 0" }}>
