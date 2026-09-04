@@ -1,0 +1,49 @@
+name: Brand Kit Bot
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "frontend/src/components/**"
+      - "frontend/src/pages/**"
+
+concurrency:
+  group: brand-kit-bot-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  brand-kit:
+    name: Brand Kit Bot
+    runs-on: ubuntu-latest
+
+    # Skip drafts, skip on the `skip-bots` label, and skip fork PRs, which
+    # cannot read OPENCODE_API_KEY.
+    if: >-
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-bots') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install opencode
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          for d in "$HOME/.opencode/bin" "$HOME/.local/bin" "$HOME/bin"; do
+            [ -x "$d/opencode" ] && echo "$d" >> "$GITHUB_PATH"
+          done
+
+      - name: Review
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        run: bash .github/review-bots/run-bot.sh
