@@ -27,7 +27,7 @@ export OPENCODE_CONFIG_CONTENT='{
   "tools": { "write": false, "edit": false, "patch": false, "bash": false, "webfetch": false }
 }'
 
-if ! opencode run --quiet --model "$MODEL" "$(cat "$WORK/prompt.txt")" > "$WORK/findings.json"; then
+if ! opencode run --model "$MODEL" "$(cat "$WORK/prompt.txt")" > "$WORK/findings.json"; then
   echo "::warning title=Brand Kit Bot::opencode failed; not reviewing."; exit 0
 fi
 
