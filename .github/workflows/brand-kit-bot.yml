@@ -32,12 +32,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The installer adds ~/.opencode/bin to $GITHUB_PATH itself.
       - name: Install opencode
-        run: |
-          curl -fsSL https://opencode.ai/install | bash
-          for d in "$HOME/.opencode/bin" "$HOME/.local/bin" "$HOME/bin"; do
-            [ -x "$d/opencode" ] && echo "$d" >> "$GITHUB_PATH"
-          done
+        run: curl -fsSL https://opencode.ai/install | bash
 
       - name: Review
         env:
