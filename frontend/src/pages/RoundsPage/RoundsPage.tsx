@@ -1,56 +1,22 @@
 import { useState, useMemo, useCallback, useRef, useEffect, Fragment } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Link2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { RoundPreview } from "@/brand/components/RoundPreview";
+import { colors } from "@/brand/theme";
 import { CourseLinkSearch } from "@/components/CourseLinkSearch";
 import { api } from "@/lib/api";
 import { formatCourseName } from "@/lib/courseName";
-import { getStoredColorBlindMode } from "@/lib/accessibility";
-import { getColorBlindPalette } from "@/lib/chartPalettes";
 import type { RoundSummary, CourseSummary } from "@/types/golf";
 import { PageHeader } from "@/components/layout/PageHeader";
 
-// ─── Design tokens (mobile) ───────────────────────────────────────────────────
-const FONT  = '"Inter", system-ui, -apple-system, sans-serif';
-const INK   = "#131613";
-const MUTED = "#6b7765";
-const LINE  = "#e4e9e1";
-const PRIMARY = "#2d7a3a";
-const PRIMARY_DK = "#1b2b1e";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function getShapeKey(strokes: number | null | undefined, par: number | null | undefined): string {
-  if (strokes == null || par == null) return "par";
-  const d = strokes - par;
-  if (d <= -2) return "eagle";
-  if (d === -1) return "birdie";
-  if (d === 0) return "par";
-  if (d === 1) return "bogey";
-  if (d === 2) return "double_bogey";
-  if (d === 3) return "triple_bogey";
-  return "quad_bogey";
-}
-
-function parseDateParts(dateStr: string | null | undefined) {
-  if (!dateStr) return null;
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return null;
-  return {
-    month: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
-    day: String(d.getDate()),
-    year: `'${String(d.getFullYear()).slice(2)}`,
-  };
-}
-
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface RoundsPageProps { userId: string; }
 type SortKey = "date" | "total_score" | "to_par" | "course_name";
 type FilterMode = "all" | "l20" | "best" | string;
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export function RoundsPage({ userId }: RoundsPageProps) {
+  const { light: t } = colors;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: rounds = [], isLoading: loading } = useQuery({
@@ -73,19 +39,6 @@ export function RoundsPage({ userId }: RoundsPageProps) {
   const [linkError, setLinkError] = useState<string | null>(null);
   const linkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (linkTimer.current) clearTimeout(linkTimer.current); }, []);
-
-  const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
-  const colorBlindPalette = useMemo(() => getColorBlindPalette(colorBlindMode), [colorBlindMode]);
-
-  // Score colors for shape strip
-  const scoreColors = useMemo((): Record<string, string> => {
-    const cb = colorBlindPalette?.score as Record<string, string> | undefined;
-    if (cb) return cb;
-    return {
-      eagle: "#f59e0b", birdie: "#059669", par: "#9ca3af",
-      bogey: "#f87171", double_bogey: "#60a5fa", triple_bogey: "#a78bfa", quad_bogey: "#6d28d9",
-    };
-  }, [colorBlindPalette]);
 
   // Course chips (top 6 by round count)
   const courseChips = useMemo(() => {
@@ -190,7 +143,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
       <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingBottom: 24 }}>
 
         {/* Title */}
-        <div style={{ padding: "4px 0 0", fontFamily: FONT, fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", color: INK }}>
+        <div style={{ padding: "4px 0 0", fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", color: t.fg }}>
           Rounds
         </div>
 
@@ -200,8 +153,8 @@ export function RoundsPage({ userId }: RoundsPageProps) {
             style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
             width={14} height={14} viewBox="0 0 20 20" fill="none"
           >
-            <circle cx="9" cy="9" r="6" stroke={MUTED} strokeWidth="2" />
-            <path d="M13.5 13.5L17 17" stroke={MUTED} strokeWidth="2" strokeLinecap="round" />
+            <circle cx="9" cy="9" r="6" stroke={t.fgMuted} strokeWidth="2" />
+            <path d="M13.5 13.5L17 17" stroke={t.fgMuted} strokeWidth="2" strokeLinecap="round" />
           </svg>
           <input
             type="search"
@@ -210,8 +163,8 @@ export function RoundsPage({ userId }: RoundsPageProps) {
             onChange={(e) => setSearch(e.target.value)}
             style={{
               width: "100%", height: 36, paddingLeft: 34, paddingRight: 12,
-              fontFamily: FONT, fontSize: 13, color: INK,
-              background: "#fff", border: `1px solid ${LINE}`, borderRadius: 99,
+              fontSize: 13, color: t.fg,
+              background: t.card, border: `1px solid ${t.border}`, borderRadius: 99,
               outline: "none", boxSizing: "border-box",
             }}
           />
@@ -229,10 +182,10 @@ export function RoundsPage({ userId }: RoundsPageProps) {
                 onClick={() => setFilterMode(active ? "all" : mode)}
                 style={{
                   padding: "5px 11px", borderRadius: 99, fontSize: 11, fontWeight: 600,
-                  fontFamily: FONT, whiteSpace: "nowrap", flexShrink: 0, cursor: "pointer",
-                  border: `1px solid ${active ? PRIMARY_DK : LINE}`,
-                  background: active ? PRIMARY_DK : "#fff",
-                  color: active ? "#fff" : MUTED,
+                  whiteSpace: "nowrap", flexShrink: 0, cursor: "pointer",
+                  border: `1px solid ${active ? colors.primary : t.border}`,
+                  background: active ? colors.primary : t.card,
+                  color: active ? colors.onPrimary : t.fgMuted,
                   transition: "all 0.15s",
                 }}
               >
@@ -244,13 +197,13 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
         {/* Count + sort strip */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 4px 0" }}>
-          <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: INK }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: t.fg }}>
             {mobileFiltered.length} {mobileFiltered.length === 1 ? "round" : "rounds"}
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
             {/* Field label — tap to pick sort field via native iOS picker */}
             <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-              <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, color: PRIMARY, pointerEvents: "none", paddingRight: 2 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: colors.primary, pointerEvents: "none", paddingRight: 2 }}>
                 {filterMode === "best" ? "Score" : sortKey === "date" ? "Date" : sortKey === "total_score" ? "Score" : sortKey === "to_par" ? "To Par" : "Course"}
               </span>
               <select
@@ -273,7 +226,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
               onClick={() => setSortAsc((prev) => !prev)}
               disabled={filterMode === "best"}
               style={{
-                fontFamily: FONT, fontSize: 13, fontWeight: 700, color: PRIMARY,
+                fontSize: 13, fontWeight: 700, color: colors.primary,
                 background: "none", border: "none", padding: "2px 4px",
                 cursor: filterMode === "best" ? "default" : "pointer",
                 opacity: filterMode === "best" ? 0.4 : 1,
@@ -287,114 +240,31 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
         {/* Link error */}
         {linkError && (
-          <div style={{ borderRadius: 12, border: "1px solid #fecaca", background: "#fff1f2", padding: "10px 14px", fontFamily: FONT, fontSize: 13, color: "#b91c1c" }}>
+          <div style={{ borderRadius: 12, border: `1px solid ${colors.score.bogey.text}`, background: t.card, padding: "10px 14px", fontSize: 13, color: colors.score.bogey.text }}>
             {linkError}
           </div>
         )}
 
         {/* Round cards */}
         {mobileFiltered.length === 0 ? (
-          <div style={{ padding: "32px 0", textAlign: "center", fontFamily: FONT, fontSize: 14, color: MUTED }}>
+          <div style={{ padding: "32px 0", textAlign: "center", fontSize: 14, color: t.fgMuted }}>
             No rounds found.
           </div>
         ) : (
           mobileFiltered.slice(0, visibleCount).map((r) => {
-            const dateParts = parseDateParts(r.date);
-            const toPar = r.to_par;
-            const toParText = toPar == null ? null : toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : `${toPar}`;
-            const toParColor = toPar == null ? MUTED : toPar > 0 ? "#f87171" : toPar < 0 ? "#059669" : MUTED;
-            const holes = r.hole_scores_summary ?? [];
-
             return (
               <Fragment key={r.id}>
-                <motion.div
-                  style={{
-                    background: "#fff", border: `1px solid ${LINE}`, borderRadius: 10,
-                    display: "grid", gridTemplateColumns: "54px 1fr auto",
-                    gap: 10, alignItems: "center", cursor: "pointer", overflow: "hidden",
+                <RoundPreview
+                  round={r}
+                  onClick={() => {
+                    if (linkingRoundId === r.id) return;
+                    navigate(`/rounds/${r.id}`);
                   }}
-                  whileHover={{ scale: 1.015, boxShadow: "0 6px 20px rgba(0,0,0,0.08)" }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  onClick={() => { if (linkingRoundId === r.id) return; navigate(`/rounds/${r.id}`); }}
-                >
-                  {/* Date block */}
-                  <div style={{
-                    background: "#f4f6f0", borderRadius: "8px 0 0 8px",
-                    padding: "10px 0", textAlign: "center",
-                    display: "flex", flexDirection: "column", alignItems: "center",
-                    gap: 2, alignSelf: "stretch", justifyContent: "center",
-                  }}>
-                    {dateParts ? (
-                      <>
-                        <span style={{ fontFamily: FONT, fontSize: 9, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: MUTED }}>{dateParts.month}</span>
-                        <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: INK, lineHeight: 1 }}>{dateParts.day}</span>
-                        <span style={{ fontFamily: FONT, fontSize: 9, color: MUTED }}>{dateParts.year}</span>
-                      </>
-                    ) : (
-                      <span style={{ fontFamily: FONT, fontSize: 9, color: MUTED }}>—</span>
-                    )}
-                  </div>
-
-                  {/* Course + stats + shape strip */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: "10px 0", minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
-                      <span style={{
-                        fontFamily: FONT, fontSize: 16, fontWeight: 700, letterSpacing: "-0.3px",
-                        color: INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                        minWidth: 0, flex: 1,
-                      }}>
-                        {r.course_name ? formatCourseName(r.course_name) : "Unknown course"}
-                      </span>
-                      {!r.course_id && (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); if (linkingRoundId === r.id) { closeLink(); } else { openLink(r.id); } }}
-                          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: MUTED, flexShrink: 0, display: "flex", alignItems: "center" }}
-                        >
-                          <Link2 size={11} />
-                        </button>
-                      )}
-                    </div>
-
-                    <div style={{ fontFamily: FONT, fontSize: 10, color: MUTED, display: "flex", gap: 8, alignItems: "center" }}>
-                      {r.front_nine != null && r.back_nine != null && (
-                        <span><strong style={{ color: INK, fontWeight: 700 }}>{r.front_nine}·{r.back_nine}</strong></span>
-                      )}
-                      {r.total_putts != null && (
-                        <span><strong style={{ color: INK, fontWeight: 700 }}>{r.total_putts}</strong> putts</span>
-                      )}
-                      {r.tee_box && <span>{r.tee_box}</span>}
-                    </div>
-
-                    {holes.length > 0 && (
-                      <div style={{ display: "flex", gap: 1.5, marginTop: 4, height: 10 }}>
-                        {holes.map((h) => {
-                          const key = getShapeKey(h.s, h.p);
-                          return (
-                            <div key={h.h} style={{
-                              flex: 1, borderRadius: 1.5,
-                              background: scoreColors[key] ?? "#9ca3af",
-                              opacity: key === "par" ? 0.35 : 1,
-                            }} />
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Score + to par */}
-                  <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, paddingRight: 14, whiteSpace: "nowrap" }}>
-                    <span style={{ fontFamily: FONT, fontSize: 24, fontWeight: 700, letterSpacing: "-0.8px", lineHeight: 1, color: INK }}>
-                      {r.total_score ?? "—"}
-                    </span>
-                    {toParText && (
-                      <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 700, color: toParColor }}>
-                        {toParText}
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
+                  onLinkClick={() => {
+                    if (linkingRoundId === r.id) closeLink();
+                    else openLink(r.id);
+                  }}
+                />
 
                 {/* Inline link-course panel */}
                 <AnimatePresence>
@@ -432,8 +302,8 @@ export function RoundsPage({ userId }: RoundsPageProps) {
             type="button"
             onClick={() => setVisibleCount((n) => n + 50)}
             style={{
-              padding: "10px", fontFamily: FONT, fontSize: 13, fontWeight: 600,
-              color: MUTED, background: "#fff", border: `1px solid ${LINE}`,
+              padding: "10px", fontSize: 13, fontWeight: 600,
+              color: t.fgMuted, background: t.card, border: `1px solid ${t.border}`,
               borderRadius: 10, cursor: "pointer", width: "100%",
             }}
           >
