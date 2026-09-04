@@ -349,7 +349,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
                       {!r.course_id && (
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); linkingRoundId === r.id ? closeLink() : openLink(r.id); }}
+                          onClick={(e) => { e.stopPropagation(); if (linkingRoundId === r.id) { closeLink(); } else { openLink(r.id); } }}
                           style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: MUTED, flexShrink: 0, display: "flex", alignItems: "center" }}
                         >
                           <Link2 size={11} />

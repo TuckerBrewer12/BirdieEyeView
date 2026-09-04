@@ -57,5 +57,5 @@ uvicorn==0.41.0
 uvloop==0.22.1
 watchfiles==1.1.1
 websockets==15.0.1
-beautifulsoup4
-google-genai
+beautifulsoup4==4.15.0
+google-genai==2.22.0

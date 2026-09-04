@@ -607,7 +607,7 @@ class CourseRepositoryDB:
         Copies the course, all its holes, all its tees, and all tee yardages.
         Returns the newly created custom Course.
         """
-        uid = UUID(user_id)
+        UUID(user_id)  # validate the caller-supplied id up front
         async with self._pool.acquire() as conn:
             # Load the source course
             source_row = await conn.fetchrow(

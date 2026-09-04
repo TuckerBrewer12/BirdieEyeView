@@ -1,0 +1,65 @@
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+exclude = [
+    ".venv",
+    "frontend",
+    "data",
+    "database/migrations",
+]
+
+[tool.ruff.lint]
+# Deliberately narrow. These are correctness/dead-code rules, not style rules.
+# Style-only families (E501 line length, UP modernization) are intentionally
+# excluded so the signal here stays actionable. Widen this list over time.
+select = [
+    "E4",   # imports
+    "E7",   # statement-level mistakes
+    "E9",   # syntax / IO errors
+    "F",    # pyflakes: undefined names, unused imports/vars
+    "B",    # flake8-bugbear: likely bugs
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "RET",  # flake8-return
+]
+ignore = [
+    "B008",   # function-call-in-default-argument: this IS the FastAPI Depends() idiom
+    "B904",   # raise-without-from-inside-except: 25 existing sites, cosmetic
+    "B905",   # zip-without-explicit-strict
+    "E402",   # module-import-not-at-top: intentional in scripts//conftest sys.path shims
+    "E731",   # lambda-assignment
+    "RET504", # unnecessary-assign: often clearer with the named intermediate
+    "SIM102", # collapsible-if
+    "SIM105", # suppressible-exception
+    "SIM112", # uncapitalized-environment-variables
+    "SIM117", # multiple-with-statements
+    "C420",   # unnecessary-dict-comprehension-for-iterable
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["F401", "F811"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.coverage.run]
+source = ["api", "services", "database", "analytics", "models"]
+omit = [
+    "*/__init__.py",
+    "analytics/demo.py",
+    "analytics/visualize_player_from_db.py",
+    "analytics/visualizations.py",
+]
+
+[tool.coverage.report]
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+
+[tool.bandit]
+exclude_dirs = [".venv", "tests", "frontend", "data"]
