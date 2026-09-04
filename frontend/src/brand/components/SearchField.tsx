@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { colors } from "@/brand/theme";
+import { useTheme } from "@/brand/theme";
 
 interface SearchFieldProps {
   value: string;
@@ -8,13 +8,13 @@ interface SearchFieldProps {
 }
 
 export function SearchField({ value, onChange, placeholder }: SearchFieldProps) {
-  const { light: t } = colors;
+  const theme = useTheme();
 
   return (
     <div style={{ position: "relative" }}>
       <Search
         size={14}
-        color={t.fgMuted}
+        color={theme.fgMuted}
         style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
       />
       <input
@@ -28,9 +28,9 @@ export function SearchField({ value, onChange, placeholder }: SearchFieldProps) 
           paddingLeft: 34,
           paddingRight: 12,
           fontSize: 13,
-          color: t.fg,
-          background: t.card,
-          border: `1px solid ${t.border}`,
+          color: theme.fg,
+          background: theme.card,
+          border: `1px solid ${theme.border}`,
           borderRadius: 99,
           outline: "none",
           boxSizing: "border-box",

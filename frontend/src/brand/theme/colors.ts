@@ -19,6 +19,8 @@ export const colors = {
     card: "#ffffff",
     border: "#e4e9e1",
     mutedFill: "#f4f6f0",
+    infoFill: "#eff6ff",
+    infoBorder: "#bfdbfe",
   },
   dark: {
     page: "#111213",
@@ -27,5 +29,7 @@ export const colors = {
     card: "#18191A",
     border: "#2a2d30",
     mutedFill: "#222426",
+    infoFill: "#152033",
+    infoBorder: "#1e3a5f",
   },
 } as const;

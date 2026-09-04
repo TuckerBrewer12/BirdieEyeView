@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { colors } from "@/brand/theme";
+import { useTheme } from "@/brand/theme";
 
 interface FilterChipProps {
   label: string;
@@ -8,7 +8,7 @@ interface FilterChipProps {
 }
 
 export function FilterChip({ label, active, onClick }: FilterChipProps) {
-  const { light: t } = colors;
+  const theme = useTheme();
 
   return (
     <button
@@ -22,9 +22,9 @@ export function FilterChip({ label, active, onClick }: FilterChipProps) {
         whiteSpace: "nowrap",
         flexShrink: 0,
         cursor: "pointer",
-        border: `1px solid ${active ? colors.primary : t.border}`,
-        background: active ? colors.primary : t.card,
-        color: active ? colors.onPrimary : t.fgMuted,
+        border: `1px solid ${active ? theme.primary : theme.border}`,
+        background: active ? theme.primary : theme.card,
+        color: active ? theme.onPrimary : theme.fgMuted,
         transition: "all 0.15s",
       }}
     >

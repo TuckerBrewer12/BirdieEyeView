@@ -1,8 +1,8 @@
 import { Link2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { colors } from "@/brand/theme";
+import { scoreFill, toParColor, toParLabel, useTheme } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
-import { getScoreType, type RoundSummary } from "@/types/golf";
+import type { RoundSummary } from "@/types/golf";
 
 interface RoundPreviewProps {
   round: RoundSummary;
@@ -21,34 +21,8 @@ function parseDateParts(dateStr: string | null | undefined) {
   };
 }
 
-function holeFill(strokes: number | null, par: number | null): { fill: string; isPar: boolean } {
-  if (strokes == null || par == null) {
-    return { fill: colors.score.par.fill, isPar: true };
-  }
-  const type = getScoreType(strokes, par);
-  if (type === "double-bogey") return { fill: colors.score.double.fill, isPar: false };
-  if (type === "worse") {
-    const fill = strokes - par >= 4 ? colors.score.quad.fill : colors.score.triple.fill;
-    return { fill, isPar: false };
-  }
-  return { fill: colors.score[type].fill, isPar: type === "par" };
-}
-
-function toParLabel(toPar: number | null): string | null {
-  if (toPar == null) return null;
-  if (toPar === 0) return "E";
-  if (toPar > 0) return `+${toPar}`;
-  return `${toPar}`;
-}
-
-function toParColor(toPar: number | null): string {
-  if (toPar == null || toPar === 0) return colors.light.fgMuted;
-  if (toPar < 0) return colors.score.birdie.text;
-  return colors.score.bogey.text;
-}
-
 export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps) {
-  const { light: t } = colors;
+  const theme = useTheme();
   const dateParts = parseDateParts(round.date);
   const toParText = toParLabel(round.to_par);
   const holes = round.hole_scores_summary ?? [];
@@ -56,8 +30,8 @@ export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps)
   return (
     <motion.div
       style={{
-        background: t.card,
-        border: `1px solid ${t.border}`,
+        background: theme.card,
+        border: `1px solid ${theme.border}`,
         borderRadius: 10,
         display: "grid",
         gridTemplateColumns: "54px 1fr auto",
@@ -73,7 +47,7 @@ export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps)
     >
       <div
         style={{
-          background: t.mutedFill,
+          background: theme.mutedFill,
           borderRadius: "8px 0 0 8px",
           padding: "10px 0",
           textAlign: "center",
@@ -87,16 +61,16 @@ export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps)
       >
         {dateParts ? (
           <>
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: t.fgMuted }}>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: theme.fgMuted }}>
               {dateParts.month}
             </span>
-            <span style={{ fontSize: 18, fontWeight: 700, color: t.fg, lineHeight: 1 }}>
+            <span style={{ fontSize: 18, fontWeight: 700, color: theme.fg, lineHeight: 1 }}>
               {dateParts.day}
             </span>
-            <span style={{ fontSize: 9, color: t.fgMuted }}>{dateParts.year}</span>
+            <span style={{ fontSize: 9, color: theme.fgMuted }}>{dateParts.year}</span>
           </>
         ) : (
-          <span style={{ fontSize: 9, color: t.fgMuted }}>—</span>
+          <span style={{ fontSize: 9, color: theme.fgMuted }}>—</span>
         )}
       </div>
 
@@ -107,7 +81,7 @@ export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps)
               fontSize: 16,
               fontWeight: 700,
               letterSpacing: "-0.3px",
-              color: t.fg,
+              color: theme.fg,
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -129,7 +103,7 @@ export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps)
                 border: "none",
                 padding: 0,
                 cursor: "pointer",
-                color: t.fgMuted,
+                color: theme.fgMuted,
                 flexShrink: 0,
                 display: "flex",
                 alignItems: "center",
@@ -140,17 +114,17 @@ export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps)
           )}
         </div>
 
-        <div style={{ fontSize: 10, color: t.fgMuted, display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ fontSize: 10, color: theme.fgMuted, display: "flex", gap: 8, alignItems: "center" }}>
           {round.front_nine != null && round.back_nine != null && (
             <span>
-              <strong style={{ color: t.fg, fontWeight: 700 }}>
+              <strong style={{ color: theme.fg, fontWeight: 700 }}>
                 {round.front_nine}·{round.back_nine}
               </strong>
             </span>
           )}
           {round.total_putts != null && (
             <span>
-              <strong style={{ color: t.fg, fontWeight: 700 }}>{round.total_putts}</strong> putts
+              <strong style={{ color: theme.fg, fontWeight: 700 }}>{round.total_putts}</strong> putts
             </span>
           )}
           {round.tee_box && <span>{round.tee_box}</span>}
@@ -159,7 +133,8 @@ export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps)
         {holes.length > 0 && (
           <div style={{ display: "flex", gap: 1.5, marginTop: 4, height: 10 }}>
             {holes.map((h) => {
-              const { fill, isPar } = holeFill(h.s, h.p);
+              const fill = scoreFill(h.s, h.p);
+              const isPar = h.s == null || h.p == null || h.s === h.p;
               return (
                 <div
                   key={h.h}
@@ -187,11 +162,11 @@ export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps)
           whiteSpace: "nowrap",
         }}
       >
-        <span style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.8px", lineHeight: 1, color: t.fg }}>
+        <span style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.8px", lineHeight: 1, color: theme.fg }}>
           {round.total_score ?? "—"}
         </span>
         {toParText && (
-          <span style={{ fontSize: 10, fontWeight: 700, color: toParColor(round.to_par) }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: toParColor(round.to_par, theme.fgMuted) }}>
             {toParText}
           </span>
         )}
