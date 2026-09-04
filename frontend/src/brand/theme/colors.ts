@@ -15,9 +15,21 @@ export const colors = {
   light: {
     page: "#f8faf8",
     fg: "#1a2e1a",
+    fgMuted: "#6b7765",
+    card: "#ffffff",
+    border: "#e4e9e1",
+    mutedFill: "#f4f6f0",
+    infoFill: "#eff6ff",
+    infoBorder: "#bfdbfe",
   },
   dark: {
     page: "#111213",
     fg: "#e6edf3",
+    fgMuted: "#9aa4b2",
+    card: "#18191A",
+    border: "#2a2d30",
+    mutedFill: "#222426",
+    infoFill: "#152033",
+    infoBorder: "#1e3a5f",
   },
 } as const;
