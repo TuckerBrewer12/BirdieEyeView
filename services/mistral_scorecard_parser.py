@@ -86,10 +86,10 @@ def _name_matches_tokens(candidate_text: str, preferred_name: str) -> bool:
         return preferred_tokens[0] in candidate_tokens
 
     width = len(preferred_tokens)
-    for i in range(len(candidate_tokens) - width + 1):
-        if candidate_tokens[i:i + width] == preferred_tokens:
-            return True
-    return False
+    return any(
+        candidate_tokens[i:i + width] == preferred_tokens
+        for i in range(len(candidate_tokens) - width + 1)
+    )
 
 
 
@@ -542,7 +542,7 @@ def _find_unlabeled_section_col_map(
             continue
         # col0 must be a number, not a text label
         try:
-            first_val = int(cells[0].strip())
+            int(cells[0].strip())
         except ValueError:
             continue
         # First 9 cells must all be valid par values (3-6)
@@ -787,7 +787,7 @@ def _extract_2d_from_raw_lines(
         )
 
         if preferred_name:
-            for i, (label, cells, _) in enumerate(classified):
+            for i, (_label, cells, _) in enumerate(classified):
                 label_cell = cells[0].strip()
                 name_matched = _name_matches_tokens(label_cell, preferred_name)
                 if not name_matched:
@@ -806,7 +806,7 @@ def _extract_2d_from_raw_lines(
             return None, -1
 
         if anchor_cells is None:
-            for i, (label, cells, raw_idx) in enumerate(classified):
+            for i, (label, cells, _raw_idx) in enumerate(classified):
                 if i <= handicap_classified_idx:
                     continue
                 if label != "score_candidate":

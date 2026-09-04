@@ -1,9 +1,9 @@
 """Unified database interface composing all repositories."""
 
 import asyncpg
-from typing import List, Optional
+from typing import Optional
 
-from models import Course, Hole, Tee, HoleScore, Round, User, UserTee
+from models import Course, Round, User
 from database.repositories.course_repo import CourseRepositoryDB
 from database.repositories.user_repo import UserRepositoryDB
 from database.repositories.round_repo import RoundRepositoryDB

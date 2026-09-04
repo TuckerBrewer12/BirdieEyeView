@@ -11,6 +11,8 @@
     "build": "tsc -b && vite build",
     "build:native": "tsc -b && vite build --mode native",
     "lint": "eslint .",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
     "preview": "vite preview",
     "serve": "node server.js",
     "sync": "npm run build:native && npx cap sync",

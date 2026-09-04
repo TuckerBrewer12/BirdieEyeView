@@ -5,7 +5,7 @@ import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette } from "@/lib/chartPalettes";
 import { formatToPar } from "@/types/golf";
 import type { Round, Tee } from "@/types/golf";
-import { useRoundHoles } from "@/components/round-detail/RoundStory";
+import { useRoundHoles } from "@/hooks/useRoundHoles";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const INK     = "#131613";
