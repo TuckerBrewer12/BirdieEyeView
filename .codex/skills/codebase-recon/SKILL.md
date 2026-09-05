@@ -7,17 +7,18 @@ description: Project-specific reconnaissance skill for the Golf ScoreCard app. U
 
 ## Purpose
 
-Inspect the Golf ScoreCard repository for the requested change and write the recon findings into the branch-named change artifact. Do not modify application or test code during recon.
+Inspect the Golf ScoreCard repository for the requested change and write the findings into the branch-named recon artifact. Do not modify application or test code during recon.
 
 ## Artifact
 
-Use the artifact path defined by `$make-code-change`:
+Create and own this artifact path defined by `$make-code-change`:
 
 ```text
-.codex/change-artifacts/<branch-slug>.md
+.codex/change-artifacts/recon/<branch-slug>.md
 ```
 
 Create the parent directory when needed. Start the file if it does not exist. Preserve existing user-authored notes if the file already exists.
+Do not create or modify the implementation artifact.
 
 ## Recon Steps
 

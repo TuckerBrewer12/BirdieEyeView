@@ -11,13 +11,14 @@ Implement the approved plan, add or update tests, run validation, and iterate un
 
 ## Inputs
 
-Read the branch-named artifact:
+Read both branch-named artifacts:
 
 ```text
-.codex/change-artifacts/<branch-slug>.md
+.codex/change-artifacts/recon/<branch-slug>.md
+.codex/change-artifacts/implementation/<branch-slug>.md
 ```
 
-Confirm it contains both `## Recon` and `## Implementation Plan`. If approval is ambiguous or missing from the conversation, stop and ask for confirmation.
+Confirm the recon artifact contains `## Recon` and the implementation artifact contains `## Implementation Plan`. If approval is ambiguous or missing from the conversation, stop and ask for confirmation. Treat both artifacts as read-only during implementation.
 
 ## Implementation Loop
 
@@ -30,7 +31,7 @@ Repeat until the change meets the user's request and the acceptance criteria:
 5. Run the most focused relevant test/check.
 6. If it fails, diagnose from the failure, make the smallest reasonable fix, and rerun.
 7. Broaden validation when the changed surface is shared, user-facing, or cross-layer.
-8. Update the artifact with implementation notes and test results.
+8. Keep the user updated with concise implementation progress and test results.
 
 Do not commit. Do not revert unrelated dirty work.
 
@@ -42,7 +43,7 @@ The loop is complete when:
 - The code is clean, local to the planned surface, and consistent with existing patterns.
 - Relevant unit tests have been added or updated.
 - Focused tests/checks pass, or any inability to run them is clearly explained.
-- The artifact records what changed and what validation was run.
+- The final response records what changed and what validation was run.
 
 ## Project-Specific Guidance
 
@@ -66,28 +67,13 @@ Tests:
 - Use mocks/fakes for LLM, DB, and external services unless an integration test is explicitly needed.
 - For frontend, inspect `frontend/package.json` and run the available focused script first, then build/typecheck if appropriate.
 
-## Artifact Update
-
-Append or update:
-
-```markdown
-## Implementation Notes
-- `<path>`: <what changed>
-
-## Validation
-- `<command>`: <pass/fail and key result>
-
-## Final Review Notes
-- <anything the user should look at during their final code review>
-```
-
 ## Final Response
 
 Finish with:
 
 - changed files
 - tests/checks run and their result
-- artifact path
+- recon and implementation artifact paths
 - residual risks or review notes
 
 Keep it concise and do not ask whether to commit.
