@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implementation Loop"
+  short_description: "Implement and test approved changes"
+  default_prompt: "Use $implementation-loop to implement the approved project plan and add tests."
