@@ -37,17 +37,57 @@ def added_lines(diff: str) -> dict[str, set[int]]:
     return out
 
 
+def extract_array(text: str) -> str:
+    """Pull the first balanced JSON array out of the model's stdout.
+
+    `opencode run` has no quiet flag, so its default output wraps the reply in
+    session chrome. Scanning for a balanced [...] survives that, and a code
+    fence, and any stray prose the model adds.
+    """
+    start = text.find("[")
+    if start == -1:
+        return ""
+
+    depth = 0
+    in_string = False
+    escaped = False
+
+    for i, ch in enumerate(text[start:], start):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+
+        if ch == '"':
+            in_string = True
+        elif ch == "[":
+            depth += 1
+        elif ch == "]":
+            depth -= 1
+            if depth == 0:
+                return text[start : i + 1]
+
+    return ""
+
+
 def main() -> int:
     findings_path, diff_path, commit_sha, out_path = sys.argv[1:5]
 
     raw = Path(findings_path).read_text().strip()
-    # Tolerate a stray code fence around the JSON.
-    fence = re.fullmatch(r"```(?:json)?\s*\n(.*?)\n?```", raw, re.DOTALL)
-    if fence:
-        raw = fence.group(1).strip()
+    array = extract_array(raw)
+    if not array:
+        # Prose instead of JSON means the model didn't do the task. Warn rather
+        # than posting a clean review it never actually earned.
+        detail = " ".join(raw.split())[:200] or "(no output)"
+        print(f"::warning title=Brand Kit Bot::no JSON array in model output: {detail}")
+        return 1
 
     try:
-        findings = json.loads(raw) if raw else []
+        findings = json.loads(array)
     except json.JSONDecodeError as exc:
         print(f"::warning title=Brand Kit Bot::model did not return JSON ({exc}).")
         return 1
