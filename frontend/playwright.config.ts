@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./src/pages",
+  testDir: "./src",
   testMatch: "**/*.screenshot.spec.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -11,7 +11,7 @@ export default defineConfig({
   expect: {
     toHaveScreenshot: {
       animations: "disabled",
-      maxDiffPixelRatio: 0.02,
+      maxDiffPixels: 100,
     },
   },
   use: {
@@ -37,6 +37,7 @@ export default defineConfig({
     },
     {
       name: "mobile",
+      testIgnore: "**/brand/**",
       use: {
         ...devices["iPhone 14"],
         browserName: "chromium",

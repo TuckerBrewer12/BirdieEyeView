@@ -19,8 +19,8 @@ permissions:
   contents: read
 
 jobs:
-  rounds:
-    name: Rounds page
+  screenshots:
+    name: Screenshot tests
     runs-on: macos-latest
     defaults:
       run:
