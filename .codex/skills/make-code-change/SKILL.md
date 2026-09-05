@@ -15,13 +15,16 @@ Use this parent skill to run a full, confirmation-gated code change in the Golf 
 
 Skills do not execute each other automatically. As the agent, explicitly read the sibling skill file before starting each phase and follow its instructions.
 
-## Artifact
+## Artifacts
 
-Create and maintain one Markdown artifact for the change:
+Create two Markdown artifacts for the change. Each phase owns its own file:
 
 ```text
-.codex/change-artifacts/<branch-slug>.md
+.codex/change-artifacts/recon/<branch-slug>.md
+.codex/change-artifacts/implementation/<branch-slug>.md
 ```
+
+`$codebase-recon` creates the recon artifact. `$implementation-plan` reads the recon artifact and creates the implementation artifact. `$implementation-loop` reads both artifacts but does not modify either one.
 
 Derive `<branch-slug>` from the current git branch:
 
@@ -31,9 +34,14 @@ Derive `<branch-slug>` from the current git branch:
 4. Lowercase the result.
 5. Remove a leading intent verb when present: `add-`, `create-`, `implement-`, `fix-`, `update-`, `refactor-`, or `test-`.
 
-Example: branch `add scorecard unit test` becomes `.codex/change-artifacts/scorecard-unit-test.md`.
+Example: branch `add scorecard unit test` produces:
 
-If the branch is missing or unusable, use a short slug from the user request and note the fallback in the artifact.
+```text
+.codex/change-artifacts/recon/scorecard-unit-test.md
+.codex/change-artifacts/implementation/scorecard-unit-test.md
+```
+
+If the branch is missing or unusable, use a short slug from the user request and note the fallback in both artifacts.
 
 ## Workflow
 
@@ -42,13 +50,13 @@ If the branch is missing or unusable, use a short slug from the user request and
 3. Read and run `$implementation-plan`.
 4. Stop and ask the user to confirm the plan. Do not edit application or test code before explicit approval.
 5. After approval, read and run `$implementation-loop`.
-6. End with a concise summary of changed files, tests run, residual risks, and the artifact path. Do not commit.
+6. End with a concise summary of changed files, tests run, residual risks, and both artifact paths. Do not commit.
 
 ## Confirmation Gate
 
 The confirmation step is mandatory for every use of this skill. The response after planning must include:
 
-- The artifact path.
+- Both artifact paths.
 - A short summary of the intended changes.
 - Known blockers or risks.
 - The exact question: `Do you want me to implement this plan?`

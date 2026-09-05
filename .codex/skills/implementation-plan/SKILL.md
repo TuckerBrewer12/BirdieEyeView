@@ -11,13 +11,21 @@ Convert recon findings and the user's request into a practical implementation pl
 
 ## Inputs
 
-Read the branch-named artifact created by `$codebase-recon`:
+Read the branch-named recon artifact created by `$codebase-recon`:
 
 ```text
-.codex/change-artifacts/<branch-slug>.md
+.codex/change-artifacts/recon/<branch-slug>.md
 ```
 
 If the recon section is missing, stop and run `$codebase-recon` first.
+
+Create and own a separate implementation artifact:
+
+```text
+.codex/change-artifacts/implementation/<branch-slug>.md
+```
+
+Create the parent directory when needed. Preserve existing user-authored notes if the file already exists. Do not modify the recon artifact.
 
 ## Planning Rules
 
@@ -44,7 +52,7 @@ Good clarification topics include:
 
 Ask only the questions needed to plan responsibly. If the best path is clear from the codebase and user request, proceed without asking.
 
-If clarification is needed, stop after asking and do not write the final `## Implementation Plan` section until the user answers. After the user answers, incorporate the decisions into the artifact and then ask for implementation approval.
+If clarification is needed, stop after asking and do not write the final `## Implementation Plan` section until the user answers. After the user answers, incorporate the decisions into the implementation artifact and then ask for implementation approval.
 
 ## Project-Specific Testing Guidance
 
@@ -60,9 +68,11 @@ Use the smallest meaningful test set first, then broaden when risk warrants it:
 
 ## Output Format
 
-Append or replace this section in the artifact:
+Write or update this content in the implementation artifact:
 
 ```markdown
+# <Change Title>
+
 ## Implementation Plan
 
 ### Goal
