@@ -23,6 +23,7 @@ import { TheLabPage } from "./pages/TheLabPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { FriendsInboxPage } from "./pages/FriendsInboxPage";
 import { SocialPage } from "./pages/SocialPage";
+import { BrandHarness } from "./brand/BrandHarness";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -31,6 +32,24 @@ function ScrollToTop() {
     if (navType !== "POP") window.scrollTo(0, 0);
   }, [pathname, navType]);
   return null;
+}
+
+function BrandRoutes() {
+  return (
+    <Routes>
+      <Route path="/__brand__/:story" element={<BrandHarness />} />
+    </Routes>
+  );
+}
+
+function RootRoutes() {
+  const location = useLocation();
+
+  if (import.meta.env.DEV && location.pathname.startsWith("/__brand__")) {
+    return <BrandRoutes />;
+  }
+
+  return <AppRoutes />;
 }
 
 function AppRoutes() {
@@ -113,7 +132,7 @@ export default function App() {
       <AuthProvider>
         <ScanProvider>
           <ScrollToTop />
-          <AppRoutes />
+          <RootRoutes />
         </ScanProvider>
       </AuthProvider>
     </BrowserRouter>
