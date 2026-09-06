@@ -272,7 +272,7 @@ def _build_round_from_parsed_rows(
                 par_i = None
             course_holes.append({"number": i, "par": par_i, "handicap": handicap})
             hole_par_lookup[i] = par_i
-        par_vals = [p for p in parsed_pars if p is not None]
+        par_vals = [p for p in hole_par_lookup.values() if p is not None]
         if len(par_vals) >= 9:
             course_par = sum(par_vals)
         for tr in _safe_list_attr("tee_rows"):
