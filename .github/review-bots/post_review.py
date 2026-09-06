@@ -6,11 +6,16 @@ Usage: post_review.py <findings.json> <diff.patch> <commit_sha> <out.json>
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+
+BOT_NAME = os.environ.get("BOT_NAME", "Review Bot")
+BOT_CLEAN = os.environ.get("BOT_CLEAN", "Nothing to flag in this PR.")
+BOT_LEAD = os.environ.get("BOT_LEAD", "to look at")
 
 
 def added_lines(diff: str) -> dict[str, set[int]]:
@@ -83,17 +88,17 @@ def main() -> int:
         # Prose instead of JSON means the model didn't do the task. Warn rather
         # than posting a clean review it never actually earned.
         detail = " ".join(raw.split())[:200] or "(no output)"
-        print(f"::warning title=Brand Kit Bot::no JSON array in model output: {detail}")
+        print(f"::warning title={BOT_NAME}::no JSON array in model output: {detail}")
         return 1
 
     try:
         findings = json.loads(array)
     except json.JSONDecodeError as exc:
-        print(f"::warning title=Brand Kit Bot::model did not return JSON ({exc}).")
+        print(f"::warning title={BOT_NAME}::model did not return JSON ({exc}).")
         return 1
 
     if not isinstance(findings, list):
-        print("::warning title=Brand Kit Bot::expected a JSON array.")
+        print(f"::warning title={BOT_NAME}::expected a JSON array.")
         return 1
 
     valid = added_lines(Path(diff_path).read_text())
@@ -118,10 +123,10 @@ def main() -> int:
 
     total = len(inline) + len(orphans)
     if total == 0:
-        summary = "### 🎨 Brand Kit Bot\n\n✅ No hardcoded colors in this PR's UI changes."
+        summary = f"### {BOT_NAME}\n\n✅ {BOT_CLEAN}"
     else:
         noun = "finding" if total == 1 else "findings"
-        summary = f"### 🎨 Brand Kit Bot\n\n{total} {noun} — hardcoded colors that should come from the brand kit."
+        summary = f"### {BOT_NAME}\n\n{total} {noun} {BOT_LEAD}."
         if inline:
             plural = "" if len(inline) == 1 else "s"
             summary += f"\n\n{len(inline)} left as inline comment{plural} on the diff."

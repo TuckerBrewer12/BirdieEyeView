@@ -1,15 +1,16 @@
-name: Brand Kit Bot
+name: MVVM Bot
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - "frontend/src/components/**"
       - "frontend/src/pages/**"
+      - "frontend/src/components/**"
+      - "frontend/src/hooks/**"
       - "frontend/src/brand/**"
 
 concurrency:
-  group: brand-kit-bot-${{ github.event.pull_request.number }}
+  group: mvvm-bot-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
@@ -17,8 +18,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  brand-kit:
-    name: Brand Kit Bot
+  mvvm:
+    name: MVVM Bot
     runs-on: ubuntu-latest
 
     # Skip drafts, skip on the `skip-bots` label, and skip fork PRs, which
@@ -39,11 +40,11 @@ jobs:
 
       - name: Review
         env:
-          BOT_NAME: "🎨 Brand Kit Bot"
-          BOT_PROMPT: .github/review-bots/brand-kit.md
-          BOT_PATHSPEC: "frontend/src/components frontend/src/pages frontend/src/brand"
-          BOT_CLEAN: "Nothing to flag against the brand kit in this PR."
-          BOT_LEAD: "against the brand kit"
+          BOT_NAME: "🧩 MVVM Bot"
+          BOT_PROMPT: .github/review-bots/mvvm.md
+          BOT_PATHSPEC: "frontend/src/pages frontend/src/components frontend/src/hooks frontend/src/brand"
+          BOT_CLEAN: "No view-model or brand kit issues in this PR."
+          BOT_LEAD: "— logic or UI that belongs elsewhere"
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
