@@ -125,6 +125,7 @@ class AIService:
                 handicap_range_label=hi_label,
                 insights=[],
                 strengths=[],
+                comparisons=[],
                 rounds_analyzed=0,
                 generated_at=datetime.now(timezone.utc).isoformat(),
             )

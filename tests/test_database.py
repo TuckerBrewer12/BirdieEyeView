@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 from database.repositories.course_repo import CourseRepositoryDB
@@ -15,18 +15,6 @@ from database.converters import (
     user_from_row,
 )
 from models import Course, Hole, Tee, Round, HoleScore, UserTee, User
-
-
-# ================================================================
-# Fixtures
-# ================================================================
-
-@pytest.fixture
-def mock_pool():
-    pool = MagicMock()
-    conn = AsyncMock()
-    pool.acquire.return_value.__aenter__.return_value = conn
-    return pool, conn
 
 
 def _round_row(round_id, *, course_id=None, course_name_played=None, tee_box_played=None, total_score=80):
@@ -214,9 +202,6 @@ async def test_course_repo_create_course(mock_pool):
     pool, conn = mock_pool
     repo = CourseRepositoryDB(pool)
 
-    conn.transaction = MagicMock()
-    conn.transaction.return_value.__aenter__.return_value = AsyncMock()
-
     course_id = uuid4()
     tee_id = uuid4()
     conn.fetchrow.side_effect = [
@@ -244,9 +229,6 @@ async def test_course_repo_create_course_persists_external_course_id(mock_pool):
     """Creating a course from an external match keeps external_course_id in DB writes and model output."""
     pool, conn = mock_pool
     repo = CourseRepositoryDB(pool)
-
-    conn.transaction = MagicMock()
-    conn.transaction.return_value.__aenter__.return_value = AsyncMock()
 
     course_id = uuid4()
     conn.fetchrow.side_effect = [
@@ -361,9 +343,6 @@ async def test_round_repo_create_round_no_course(mock_pool):
     pool, conn = mock_pool
     repo = RoundRepositoryDB(pool, course_repo=AsyncMock())
 
-    conn.transaction = MagicMock()
-    conn.transaction.return_value.__aenter__.return_value = AsyncMock()
-
     round_id = uuid4()
     row = _round_row(round_id, course_name_played="New Round")
     # fetchrow called twice: INSERT round, then SELECT in get_round
@@ -394,9 +373,6 @@ async def test_round_repo_create_round_populates_par_from_course(mock_pool):
     pool, conn = mock_pool
     course_repo_mock = AsyncMock()
     repo = RoundRepositoryDB(pool, course_repo=course_repo_mock)
-
-    conn.transaction = MagicMock()
-    conn.transaction.return_value.__aenter__.return_value = AsyncMock()
 
     round_id = uuid4()
     hole_id = uuid4()
