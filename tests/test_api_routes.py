@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from api.routers import ai_insights, courses, rounds, stats, users
-from database.exceptions import DuplicateError, NotFoundError
+from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from models import Course, Hole, HoleScore, Round, User, UserTee
 from tests.helpers import make_http_request, make_mock_database
 
@@ -160,6 +160,15 @@ async def test_course_create_update_clone_and_error_mapping():
     with pytest.raises(HTTPException) as exc:
         await courses.create_course(request, None, db, user)
     assert exc.value.status_code == 409
+
+    sql_error = "insert on courses.tees violates constraint courses_tees_course_id_fkey"
+    db.courses.create_course.side_effect = IntegrityError(sql_error)
+    with pytest.raises(HTTPException) as exc:
+        await courses.create_course(request, None, db, user)
+    assert exc.value.status_code == 500
+    assert exc.value.detail == "We couldn't save this course. Please try again."
+    assert sql_error not in exc.value.detail
+
     db.courses.clone_course.side_effect = NotFoundError()
     with pytest.raises(HTTPException) as exc:
         await courses.clone_course(course_id, db, user)

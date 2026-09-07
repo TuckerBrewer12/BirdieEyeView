@@ -7,6 +7,12 @@ import { api } from "@/lib/api";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
 import { initializeScores } from "@/lib/scanUtils";
+import {
+  fetchWithUserFacingError,
+  getUserFacingError,
+  parseJsonResponse,
+  USER_FACING_ERRORS,
+} from "@/lib/userFacingErrors";
 
 function normalizeCourseQueryForSearch(value: string): string {
   return value.trim().replace(/\s+/g, " ");
@@ -270,25 +276,17 @@ export function useScan(
     }
 
     try {
-      const res = await fetch(apiUrl("/api/scan/extract"), {
+      const res = await fetchWithUserFacingError(apiUrl("/api/scan/extract"), {
         method: "POST",
         credentials: "include",
         headers: withAuthHeaders(),
         body: formData,
-      });
+      }, USER_FACING_ERRORS.scan);
       if (!res.ok) {
-        const errText = await res.text();
-        let message = `Error ${res.status}`;
-        try {
-          const errJson = JSON.parse(errText);
-          if (errJson.detail) message = errJson.detail;
-        } catch {
-          if (errText) message = errText;
-        }
-        throw new Error(message);
+        throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.scan));
       }
 
-      const data: ScanResult = await res.json();
+      const data = await parseJsonResponse<ScanResult>(res, USER_FACING_ERRORS.scan);
       const { editedScores: initialScores, scoreMetadata: initialMeta } = initializeScores(
         data.round.hole_scores,
         data.fields_needing_review,
@@ -444,7 +442,7 @@ export function useScan(
     update({ error: null });
 
     try {
-      const res = await fetch(apiUrl("/api/scan/save"), {
+      const res = await fetchWithUserFacingError(apiUrl("/api/scan/save"), {
         method: "POST",
         credentials: "include",
         headers: withAuthHeaders({ "Content-Type": "application/json" }),
@@ -495,19 +493,13 @@ export function useScan(
               hole_yardages: t.hole_yardages ?? {},
             })),
         }),
-      });
+      }, USER_FACING_ERRORS.saveRound);
 
       if (!res.ok) {
-        const errText = await res.text();
-        let message = "Failed to save round";
-        try {
-          const errJson = JSON.parse(errText);
-          if (errJson.detail) message = errJson.detail;
-        } catch { if (errText) message = errText; }
-        throw new Error(message);
+        throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.saveRound));
       }
 
-      const saved = await res.json();
+      const saved = await parseJsonResponse<{ id: string }>(res, USER_FACING_ERRORS.saveRound);
       setScanState({ ...initialScanState, step: "success", savedRoundId: saved.id });
       setSaving(false);
     } catch (err) {
