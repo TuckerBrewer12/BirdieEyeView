@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 from database.db_manager import DatabaseManager
 from api.dependencies import get_current_user, get_optional_current_user, get_db
+from api.error_responses import ROUND_SAVE_FAILED, SCAN_FAILED
 from api.input_validation import ensure_uuid_str, normalize_course_display_name, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
 from models import User
@@ -728,8 +729,9 @@ async def extract_scan(
 
     except FileNotFoundError:
         raise HTTPException(400, "Uploaded file could not be processed")
-    except EnvironmentError as e:
-        raise HTTPException(500, str(e))
+    except EnvironmentError:
+        logger.exception("Scan extraction service unavailable")
+        raise HTTPException(500, SCAN_FAILED)
     except HTTPException:
         raise
     except Exception:
@@ -765,8 +767,9 @@ async def save_round(
         service = ScanService(db)
         saved = await service.save_reviewed_scan(req)
         return {"id": saved.id, "total_score": saved.calculate_total_score()}
-    except ValueError as e:
-        raise HTTPException(400, str(e))
+    except ValueError:
+        logger.exception("Save round validation failed")
+        raise HTTPException(400, ROUND_SAVE_FAILED)
     except Exception:
         logger.exception("Save round error")
         raise HTTPException(500, "Save failed. Please try again.")

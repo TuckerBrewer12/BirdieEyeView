@@ -29,6 +29,7 @@ from api.security import (
 )
 from api.auth_utils import get_access_token_cookie_name
 from api.dependencies import client_ip
+from api.error_responses import UNEXPECTED_ERROR
 
 APP_ENV = os.environ.get("APP_ENV", "development").strip().lower()
 IS_PROD_LIKE = APP_ENV in {"production", "prod", "staging"}
@@ -296,15 +297,10 @@ def create_app() -> FastAPI:
                 latency_ms,
                 user_agent,
             )
-            traffic_monitor.record(
-                ip=ip,
+            response = JSONResponse(
                 status_code=500,
-                method=request.method,
-                path=path,
-                latency_ms=latency_ms,
-                user_agent=user_agent,
+                content={"detail": UNEXPECTED_ERROR},
             )
-            raise
 
         latency_ms = (time.perf_counter() - t0) * 1000.0
         traffic_monitor.record(

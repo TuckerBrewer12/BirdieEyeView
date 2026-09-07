@@ -175,6 +175,8 @@ def test_dependency_network_and_database_helpers(monkeypatch):
     with pytest.raises(HTTPException) as exc:
         dependencies.get_db(make_http_request())
     assert exc.value.status_code == 503
+    assert exc.value.detail == "Service is temporarily unavailable. Please try again shortly."
+    assert "database" not in exc.value.detail.lower()
 
 
 @pytest.mark.asyncio
@@ -282,6 +284,29 @@ def test_app_root_health_headers_and_global_rate_limit(monkeypatch):
     assert first.status_code == 404
     assert second.status_code == 429
     assert second.json()["detail"] == "Too many requests. Please slow down."
+
+
+def test_unhandled_api_errors_return_generic_detail():
+    app = api_main.create_app()
+
+    @app.get("/api/test-internal-error")
+    async def internal_error():
+        raise RuntimeError("password=secret courses.tees foreign_key_violation")
+
+    client = TestClient(
+        app,
+        base_url="http://localhost",
+        raise_server_exceptions=False,
+    )
+    response = client.get(
+        "/api/test-internal-error",
+        headers={"user-agent": "browser"},
+    )
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Something went wrong. Please try again."}
+    assert "secret" not in response.text
+    assert "foreign_key" not in response.text
 
 
 @pytest.mark.asyncio

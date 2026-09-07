@@ -8,6 +8,7 @@ from typing import List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from api.dependencies import get_db, get_optional_current_user, get_current_user
+from api.error_responses import COURSE_SAVE_FAILED
 from api.input_validation import normalize_course_display_name, sanitize_search_query, sanitize_user_text
 from api.schemas import CourseSummaryResponse
 from models import Course, Hole, Tee, User
@@ -310,8 +311,9 @@ async def create_course(
         return _summarize_course(created)
     except DuplicateError:
         raise HTTPException(409, "A course with that name already exists for this user")
-    except IntegrityError as e:
-        raise HTTPException(400, str(e))
+    except IntegrityError:
+        logger.exception("Course creation integrity failure")
+        raise HTTPException(500, COURSE_SAVE_FAILED)
 
 
 @router.put("/{course_id}")

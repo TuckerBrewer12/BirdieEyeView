@@ -211,12 +211,51 @@ async def test_save_round_maps_success_and_errors(monkeypatch):
     assert save_response == {"id": saved.id, "total_score": None}
     assert request.user_id == user.id
 
-    scan_service.save_reviewed_scan.side_effect = ValueError("invalid round")
+    validation_error = "course_id references users.private_courses"
+    scan_service.save_reviewed_scan.side_effect = ValueError(validation_error)
     with pytest.raises(HTTPException) as exc:
         await scan.save_round(request, SimpleNamespace(), user)
     assert exc.value.status_code == 400
+    assert exc.value.detail == "We couldn't save this round. Please try again."
+    assert validation_error not in exc.value.detail
 
-    scan_service.save_reviewed_scan.side_effect = RuntimeError("db")
+    database_error = "duplicate key violates users.rounds_pkey"
+    scan_service.save_reviewed_scan.side_effect = RuntimeError(database_error)
     with pytest.raises(HTTPException) as exc:
         await scan.save_round(request, SimpleNamespace(), user)
     assert exc.value.status_code == 500
+    assert exc.value.detail == "Save failed. Please try again."
+    assert database_error not in exc.value.detail
+
+
+@pytest.mark.asyncio
+async def test_extract_scan_hides_provider_configuration_errors(monkeypatch):
+    image_bytes = BytesIO()
+    Image.new("RGB", (20, 10), "white").save(image_bytes, format="PNG")
+    upload = _make_upload("card.png", "image/png", image_bytes.getvalue())
+    provider_error = "MISTRAL_API_KEY environment variable is not set"
+
+    monkeypatch.setattr(
+        scan,
+        "_normalize_upload_for_ocr",
+        lambda path, digest: (path, False),
+    )
+    monkeypatch.setattr(
+        scan,
+        "_run_ocr_pipeline",
+        AsyncMock(side_effect=EnvironmentError(provider_error)),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        await scan.extract_scan(
+            upload,
+            user_context=None,
+            course_id=None,
+            ocr_text=None,
+            db=SimpleNamespace(),
+            current_user=None,
+        )
+
+    assert exc.value.status_code == 500
+    assert exc.value.detail == "We couldn't scan this scorecard. Please try again."
+    assert provider_error not in exc.value.detail

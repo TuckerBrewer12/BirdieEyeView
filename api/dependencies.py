@@ -4,6 +4,8 @@ import os
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from api.error_responses import SERVICE_UNAVAILABLE
+
 
 def _env_bool(name: str, default: bool) -> bool:
     raw = os.environ.get(name)
@@ -52,7 +54,7 @@ def get_db(request: Request) -> DatabaseManager:
     """FastAPI dependency that provides the DatabaseManager."""
     db_manager = getattr(request.app.state, "db_manager", None)
     if db_manager is None:
-        raise HTTPException(503, "Database is unavailable. Please retry shortly.")
+        raise HTTPException(503, SERVICE_UNAVAILABLE)
     return db_manager
 
 
