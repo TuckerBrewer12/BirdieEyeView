@@ -1,6 +1,12 @@
 import { useState, useRef, useCallback } from "react";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
+import {
+  fetchWithUserFacingError,
+  getUserFacingError,
+  parseJsonResponse,
+  USER_FACING_ERRORS,
+} from "@/lib/userFacingErrors";
 import type { ScanResult } from "@/types/scan";
 
 type PublicScanStep = "upload" | "processing" | "review";
@@ -123,17 +129,16 @@ export function usePublicScan() {
       if (userContext.trim()) form.append("user_context", userContext.trim());
       if (prefetchedOcrText.current) form.append("ocr_text", prefetchedOcrText.current);
 
-      const res = await fetch(apiUrl("/api/scan/extract"), {
+      const res = await fetchWithUserFacingError(apiUrl("/api/scan/extract"), {
         method: "POST",
         credentials: "include",
         headers: withAuthHeaders(),
         body: form,
-      });
+      }, USER_FACING_ERRORS.scan);
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as { detail?: string }).detail ?? "Extraction failed. Please try again.");
+        throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.scan));
       }
-      const data: ScanResult = await res.json();
+      const data = await parseJsonResponse<ScanResult>(res, USER_FACING_ERRORS.scan);
       setResult(data);
       setStep("review");
     } catch (err) {
