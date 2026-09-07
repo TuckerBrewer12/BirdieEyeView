@@ -1,14 +1,15 @@
-import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode } from "react";
+import { useState, useCallback, useRef, useMemo, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { Link2 } from "lucide-react";
 import { ShareCard } from "@/components/share/ShareCard";
 import { useShareRound } from "@/hooks/useShareRound";
 import type { CourseSummary } from "@/types/golf";
-import { CourseLinkSearch, CourseLinkChip, CustomNameChip } from "@/components/CourseLinkSearch";
+import { CourseLinkSearch } from "@/brand";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from "recharts";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { api } from "@/lib/api";
+import { useCourseSearch } from "@/hooks/useCourseSearch";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
 import { formatCourseName } from "@/lib/courseName";
@@ -114,25 +115,17 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const [editedTeeBox, setEditedTeeBox] = useState("");
   const [availableTees, setAvailableTees] = useState<string[]>([]);
   const [showLinkCourse, setShowLinkCourse] = useState(false);
-  const [linkQuery, setLinkQuery] = useState("");
-  const [linkResults, setLinkResults] = useState<CourseSummary[]>([]);
-  const [linkSearching, setLinkSearching] = useState(false);
   const [linking, setLinking] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const linkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const linkSearch = useCourseSearch(userId);
+  const { reset: resetLinkSearch } = linkSearch;
   // Edit-mode course state
   const [editCoursePendingLink, setEditCoursePendingLink] = useState<CourseSummary | null>(null);
   const [editCourseChanging, setEditCourseChanging] = useState(false);
   const [editCourseNameValue, setEditCourseNameValue] = useState("");
   const [editCourseNameConfirmed, setEditCourseNameConfirmed] = useState(false);
-  const [editCourseQuery, setEditCourseQuery] = useState("");
-  const [editCourseResults, setEditCourseResults] = useState<CourseSummary[]>([]);
-  const [editCourseSearching, setEditCourseSearching] = useState(false);
-  const editCourseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (linkTimer.current) clearTimeout(linkTimer.current);
-    if (editCourseTimer.current) clearTimeout(editCourseTimer.current);
-  }, []);
+  const editCourseSearch = useCourseSearch(userId);
+  const { reset: resetEditCourseSearch } = editCourseSearch;
   const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
   const colorBlindPalette = useMemo(() => getColorBlindPalette(colorBlindMode), [colorBlindMode]);
   const { cardRef: shareCardRef, share: shareRound, sharing } = useShareRound();
@@ -207,8 +200,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const handleSelectEditCourse = useCallback(async (course: CourseSummary) => {
     setEditCoursePendingLink(course);
     setEditCourseChanging(false);
-    setEditCourseQuery("");
-    setEditCourseResults([]);
+    resetEditCourseSearch();
     const teeColors = await loadTeesForCourse(course.id, []);
     setEditedTeeBox((prev) => {
       const current = (prev ?? "").trim();
@@ -219,7 +211,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       }
       return teeColors.length === 1 ? teeColors[0] : "";
     });
-  }, [loadTeesForCourse, chooseCompatibleTee]);
+  }, [loadTeesForCourse, chooseCompatibleTee, resetEditCourseSearch]);
 
   const enterEditMode = useCallback(async () => {
     if (!round) return;
@@ -247,12 +239,11 @@ export function RoundDetailPage({ userId }: { userId: string }) {
     setEditCourseChanging(false);
     setEditCourseNameValue(hasCustomName ? round.course_name_played! : "");
     setEditCourseNameConfirmed(hasCustomName);
-    setEditCourseQuery("");
-    setEditCourseResults([]);
+    resetEditCourseSearch();
 
     setEditMode(true);
     setConfirmDelete(false);
-  }, [round, loadTeesForCourse]);
+  }, [round, loadTeesForCourse, resetEditCourseSearch]);
 
   const cancelEdit = useCallback(() => {
     setEditMode(false);
@@ -261,9 +252,8 @@ export function RoundDetailPage({ userId }: { userId: string }) {
     setEditCourseChanging(false);
     setEditCourseNameValue("");
     setEditCourseNameConfirmed(false);
-    setEditCourseQuery("");
-    setEditCourseResults([]);
-  }, []);
+    resetEditCourseSearch();
+  }, [resetEditCourseSearch]);
 
   const handleSave = useCallback(async () => {
     if (!round || !roundId) return;
@@ -354,34 +344,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
     []
   );
 
-  const handleLinkQuery = useCallback((q: string) => {
-    setLinkQuery(q);
-    if (linkTimer.current) clearTimeout(linkTimer.current);
-    if (q.trim().length < 2) { setLinkResults([]); return; }
-    linkTimer.current = setTimeout(async () => {
-      setLinkSearching(true);
-      try {
-        const results = await api.searchCourses(q.trim(), userId);
-        setLinkResults(results);
-      } catch { setLinkResults([]); }
-      finally { setLinkSearching(false); }
-    }, 300);
-  }, [userId]);
-
-  const handleEditCourseQuery = useCallback((q: string) => {
-    setEditCourseQuery(q);
-    if (editCourseTimer.current) clearTimeout(editCourseTimer.current);
-    if (q.trim().length < 2) { setEditCourseResults([]); return; }
-    editCourseTimer.current = setTimeout(async () => {
-      setEditCourseSearching(true);
-      try {
-        const results = await api.searchCourses(q.trim(), userId);
-        setEditCourseResults(results);
-      } catch { setEditCourseResults([]); }
-      finally { setEditCourseSearching(false); }
-    }, 300);
-  }, [userId]);
-
   const handleSelectCourse = useCallback(async (course: CourseSummary) => {
     if (!roundId) return;
     setLinking(true);
@@ -390,15 +352,14 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       await api.linkCourse(roundId, course.id);
       await queryClient.invalidateQueries({ queryKey: ["round", roundId] });
       setShowLinkCourse(false);
-      setLinkQuery("");
-      setLinkResults([]);
+      resetLinkSearch();
     } catch (err) {
       console.error("Link failed:", err);
       setActionError(err instanceof Error ? err.message : "Could not link this round to that course.");
     } finally {
       setLinking(false);
     }
-  }, [roundId, queryClient]);
+  }, [roundId, queryClient, resetLinkSearch]);
 
   if (!round) {
     return (
@@ -425,6 +386,12 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const toPar = coursePar !== null ? totalScore - coursePar : null;
 
   const courseName = formatCourseName(round.course_name_played ?? round.course?.name);
+  const editLinkedName = editCoursePendingLink?.name
+    ?? (!editCourseChanging ? round.course?.name ?? undefined : undefined);
+  const editCustomName = !editLinkedName && editCourseNameConfirmed && editCourseNameValue
+    ? editCourseNameValue
+    : undefined;
+  const editPickingCourse = !editLinkedName && !editCustomName;
 
   const activeTeeBox = editMode ? editedTeeBox : round.tee_box;
   const tee = activeTeeBox
@@ -493,81 +460,65 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         <div className="mb-4">
           <CourseLinkSearch
             title="Link to a saved course"
-            query={linkQuery}
-            results={linkResults}
-            searching={linkSearching}
+            query={linkSearch.query}
+            results={linkSearch.results}
+            searching={linkSearch.searching}
             linking={linking}
-            onQueryChange={handleLinkQuery}
+            onQueryChange={linkSearch.setQuery}
             onSelectCourse={handleSelectCourse}
-            onClose={() => { setShowLinkCourse(false); setLinkQuery(""); setLinkResults([]); }}
+            onClose={() => { setShowLinkCourse(false); resetLinkSearch(); }}
           />
         </div>
       )}
 
-      {/* Course link / name section — visible in edit mode */}
       {editMode && (
         <div className="mb-4">
-          {editCoursePendingLink ? (
-            <CourseLinkChip
-              name={editCoursePendingLink.name ?? ""}
-              onClear={() => {
+          <CourseLinkSearch
+            query={editCourseSearch.query}
+            results={editCourseSearch.results}
+            searching={editCourseSearch.searching}
+            onQueryChange={editCourseSearch.setQuery}
+            onSelectCourse={(c) => { void handleSelectEditCourse(c); }}
+            onClose={() => {
+              setEditCourseChanging(false);
+              resetEditCourseSearch();
+              void restoreAvailableTeesFromRound();
+            }}
+            reviewVariant
+            onUseCustomName={(name) => {
+              setEditCourseNameValue(name);
+              setEditCourseNameConfirmed(true);
+              setEditCoursePendingLink(null);
+              setEditCourseChanging(false);
+              resetEditCourseSearch();
+              void restoreAvailableTeesFromRound();
+            }}
+            linkedName={editLinkedName}
+            customName={editCustomName}
+            onClear={() => {
+              if (editCoursePendingLink) {
                 setEditCoursePendingLink(null);
                 setEditCourseChanging(false);
-                setEditCourseQuery("");
-                setEditCourseResults([]);
+                resetEditCourseSearch();
                 void restoreAvailableTeesFromRound();
-              }}
-            />
-          ) : round.course && !editCourseChanging ? (
-            <div className="flex items-center gap-2">
-              <CourseLinkChip
-                name={round.course.name ?? ""}
-                onClear={() => setEditCourseChanging(true)}
-              />
-            </div>
-          ) : editCourseChanging || !round.course ? (
-            editCourseNameConfirmed && editCourseNameValue ? (
-              <CustomNameChip
-                name={editCourseNameValue}
-                onClear={() => { setEditCourseNameConfirmed(false); setEditCourseNameValue(""); setEditCourseQuery(""); }}
-              />
-            ) : (
-              <div>
-                <CourseLinkSearch
-                  query={editCourseQuery}
-                  results={editCourseResults}
-                  searching={editCourseSearching}
-                  onQueryChange={handleEditCourseQuery}
-                  onSelectCourse={(c) => { void handleSelectEditCourse(c); }}
-                  onClose={() => {
-                    setEditCourseChanging(false);
-                    setEditCourseQuery("");
-                    setEditCourseResults([]);
-                    void restoreAvailableTeesFromRound();
-                  }}
-                  reviewVariant
-                  onUseCustomName={(name) => {
-                    setEditCourseNameValue(name);
-                    setEditCourseNameConfirmed(true);
-                    setEditCoursePendingLink(null);
-                    setEditCourseChanging(false);
-                    setEditCourseQuery("");
-                    setEditCourseResults([]);
-                    void restoreAvailableTeesFromRound();
-                  }}
-                />
-                {round.course_name_played && !editCourseQuery && !editCourseNameConfirmed && (
-                  <button
-                    type="button"
-                    onClick={() => { setEditCourseNameValue(round.course_name_played!); setEditCourseNameConfirmed(true); }}
-                    className="mt-1.5 text-xs text-gray-400 hover:text-primary transition-colors"
-                  >
-                    Keep "{round.course_name_played}" without linking →
-                  </button>
-                )}
-              </div>
-            )
-          ) : null}
+              } else if (round.course && !editCourseChanging) {
+                setEditCourseChanging(true);
+              } else {
+                setEditCourseNameConfirmed(false);
+                setEditCourseNameValue("");
+                resetEditCourseSearch();
+              }
+            }}
+          />
+          {editPickingCourse && round.course_name_played && !editCourseSearch.query && !editCourseNameConfirmed && (
+            <button
+              type="button"
+              onClick={() => { setEditCourseNameValue(round.course_name_played!); setEditCourseNameConfirmed(true); }}
+              className="mt-1.5 text-xs text-gray-400 hover:text-primary transition-colors"
+            >
+              Keep "{round.course_name_played}" without linking →
+            </button>
+          )}
         </div>
       )}
 

@@ -7,13 +7,12 @@ import {
   FilterChip,
   FilterChipRow,
   PageTitle,
-  Panel,
   RoundPreview,
   SearchField,
   SortControl,
+  CourseLinkSearch,
   useTheme,
 } from "@/brand";
-import { CourseLinkSearch } from "@/components/CourseLinkSearch";
 import { formatCourseName } from "@/lib/courseName";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useRoundsPageViewModel } from "./useRoundsPageViewModel";
@@ -112,18 +111,16 @@ export function RoundsPage({ userId }: RoundsPageProps) {
                       transition={{ duration: 0.2 }}
                       style={{ overflow: "hidden" }}
                     >
-                      <Panel tone="info">
-                        <CourseLinkSearch
-                          title={`Link "${r.course_name ? formatCourseName(r.course_name) : "this round"}" to a saved course`}
-                          query={viewModel.linkQuery}
-                          results={viewModel.linkResults}
-                          searching={viewModel.linkSearching}
-                          linking={viewModel.linking}
-                          onQueryChange={viewModel.handleLinkQuery}
-                          onSelectCourse={(c) => viewModel.handleSelectCourse(r.id, c)}
-                          onClose={viewModel.closeLink}
-                        />
-                      </Panel>
+                      <CourseLinkSearch
+                        title={`Link "${r.course_name ? formatCourseName(r.course_name) : "this round"}" to a saved course`}
+                        query={viewModel.linkQuery}
+                        results={viewModel.linkResults}
+                        searching={viewModel.linkSearching}
+                        linking={viewModel.linking}
+                        onQueryChange={viewModel.handleLinkQuery}
+                        onSelectCourse={(c) => viewModel.handleSelectCourse(r.id, c)}
+                        onClose={viewModel.closeLink}
+                      />
                     </motion.div>
                   )}
                 </AnimatePresence>
