@@ -2,6 +2,7 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/brand/cn";
 import { Input } from "./Input";
+import { Button } from "./Button";
 
 function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
@@ -81,13 +82,18 @@ const inputGroupButtonVariants = cva(
 function InputGroupButton({
   className,
   type = "button",
+  variant = "ghost",
   size = "xs",
   ...props
-}: React.ComponentProps<"button"> & VariantProps<typeof inputGroupButtonVariants>) {
+}: Omit<React.ComponentProps<typeof Button>, "size" | "type"> &
+  VariantProps<typeof inputGroupButtonVariants> & {
+    type?: "button" | "submit" | "reset";
+  }) {
   return (
-    <button
+    <Button
       type={type}
       data-size={size}
+      variant={variant}
       className={cn(inputGroupButtonVariants({ size }), className)}
       {...props}
     />

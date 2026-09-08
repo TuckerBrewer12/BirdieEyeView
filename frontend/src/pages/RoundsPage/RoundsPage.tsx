@@ -133,7 +133,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
         )}
 
         {viewModel.remainingCount > 0 && (
-          <Button block onClick={viewModel.loadMore}>
+          <Button variant="outline" className="w-full" onClick={viewModel.loadMore}>
             Load more ({viewModel.remainingCount} remaining)
           </Button>
         )}

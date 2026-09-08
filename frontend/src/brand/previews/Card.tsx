@@ -18,7 +18,7 @@ export default function CardPreview() {
           <CardTitle>Pebble Beach Golf Links</CardTitle>
           <CardDescription>Pebble Beach, CA</CardDescription>
           <CardAction>
-            <Button>Link</Button>
+            <Button variant="outline" size="xs">Link</Button>
           </CardAction>
         </CardHeader>
         <CardContent>Four tees · Par 72</CardContent>

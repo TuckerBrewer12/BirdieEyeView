@@ -10,7 +10,7 @@ export {
   CardDescription,
   CardContent,
 } from "./components/Card";
-export { Button } from "./components/Button";
+export { Button, buttonVariants } from "./components/Button";
 export { Input } from "./components/Input";
 export {
   InputGroup,
