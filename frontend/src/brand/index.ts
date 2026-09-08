@@ -11,6 +11,14 @@ export {
   CardContent,
 } from "./components/Card";
 export { Button } from "./components/Button";
+export { Input } from "./components/Input";
+export {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupText,
+  InputGroupInput,
+} from "./components/InputGroup";
 export { FilterChip, FilterChipRow } from "./components/FilterChip";
 export { PageTitle } from "./components/PageTitle";
 export { Panel } from "./components/Panel";
