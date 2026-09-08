@@ -7,6 +7,7 @@ export default function SearchFieldPreview() {
     <>
       <SearchField placeholder="Search by course…" value="" onChange={() => {}} />
       <SearchField placeholder="Search by course…" value={query} onChange={setQuery} />
+      <SearchField placeholder="Search courses…" value="peb" onChange={() => {}} loading />
     </>
   );
 }

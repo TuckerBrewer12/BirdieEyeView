@@ -4,6 +4,7 @@
    Plain @theme would bake the value at build time and the dark override would no-op. */
 
 :root {
+  --radius: 0.5rem;
   --brand-background: #f8faf8;
   --brand-foreground: #1a2e1a;
   --brand-card: #ffffff;
@@ -11,6 +12,8 @@
   --brand-muted: #f4f6f0;
   --brand-muted-foreground: #6b7765;
   --brand-border: #e4e9e1;
+  --brand-input: #e4e9e1;
+  --brand-ring: #2d7a3a;
   --brand-destructive: #dc2626;
 }
 
@@ -22,6 +25,8 @@
   --brand-muted: #222426;
   --brand-muted-foreground: #9aa4b2;
   --brand-border: #2a2d30;
+  --brand-input: #2a2d30;
+  --brand-ring: #34d399;
   --brand-destructive: #fca5a5;
 }
 
@@ -33,5 +38,7 @@
   --color-muted: var(--brand-muted);
   --color-muted-foreground: var(--brand-muted-foreground);
   --color-border: var(--brand-border);
+  --color-input: var(--brand-input);
+  --color-ring: var(--brand-ring);
   --color-destructive: var(--brand-destructive);
 }

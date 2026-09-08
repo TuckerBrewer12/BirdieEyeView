@@ -26,6 +26,7 @@
     "gen-icons": "npx @capacitor/assets generate"
   },
   "dependencies": {
+    "@base-ui/react": "^1.8.0",
     "@capacitor/android": "^8.3.1",
     "@capacitor/camera": "^8.2.0",
     "@capacitor/cli": "^8.3.1",
