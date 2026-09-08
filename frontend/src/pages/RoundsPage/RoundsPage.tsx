@@ -2,7 +2,8 @@ import { Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ErrorBanner,
+  Alert,
+  AlertDescription,
   Button,
   FilterChip,
   FilterChipRow,
@@ -78,7 +79,9 @@ export function RoundsPage({ userId }: RoundsPageProps) {
         </div>
 
         {viewModel.linkError && (
-          <ErrorBanner>{viewModel.linkError}</ErrorBanner>
+          <Alert variant="destructive">
+            <AlertDescription>{viewModel.linkError}</AlertDescription>
+          </Alert>
         )}
 
         {viewModel.filteredRounds.length === 0 ? (

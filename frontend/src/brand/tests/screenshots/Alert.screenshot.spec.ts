@@ -1,13 +1,13 @@
 import { test } from "@playwright/test";
 import { capturePreview, enableDark } from "../previewScreenshot";
 
-test.describe("ErrorBanner", () => {
+test.describe("Alert", () => {
   test("light", async ({ page }) => {
-    await capturePreview(page, "ErrorBanner", "error-banner.png");
+    await capturePreview(page, "Alert", "alert.png");
   });
 
   test("dark", async ({ page }) => {
     await enableDark(page);
-    await capturePreview(page, "ErrorBanner", "error-banner-dark.png");
+    await capturePreview(page, "Alert", "alert-dark.png");
   });
 });
