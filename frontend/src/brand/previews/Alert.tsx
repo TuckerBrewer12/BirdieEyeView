@@ -26,7 +26,7 @@ export default function AlertPreview() {
           This round isn't linked to a course, so par is taken from the card.
         </AlertDescription>
         <AlertAction>
-          <Button>Link</Button>
+          <Button variant="outline" size="xs">Link</Button>
         </AlertAction>
       </Alert>
     </>

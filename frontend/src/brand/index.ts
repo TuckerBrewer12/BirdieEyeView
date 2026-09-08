@@ -11,6 +11,7 @@ export {
   CardContent,
 } from "./components/Card";
 export { Button } from "./components/Button";
+export { buttonVariants } from "./components/buttonVariants";
 export { Input } from "./components/Input";
 export {
   InputGroup,
