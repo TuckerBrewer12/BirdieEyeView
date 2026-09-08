@@ -1,0 +1,37 @@
+/* Brand design tokens.
+   Raw values flip on :root.dark; @theme inline keeps the var() reference live so
+   Tailwind utilities and inline styles resolve to the same value in both modes.
+   Plain @theme would bake the value at build time and the dark override would no-op. */
+
+:root {
+  --brand-background: #f8faf8;
+  --brand-foreground: #1a2e1a;
+  --brand-card: #ffffff;
+  --brand-card-foreground: #1a2e1a;
+  --brand-muted: #f4f6f0;
+  --brand-muted-foreground: #6b7765;
+  --brand-border: #e4e9e1;
+  --brand-destructive: #dc2626;
+}
+
+:root.dark {
+  --brand-background: #111213;
+  --brand-foreground: #e6edf3;
+  --brand-card: #18191a;
+  --brand-card-foreground: #e6edf3;
+  --brand-muted: #222426;
+  --brand-muted-foreground: #9aa4b2;
+  --brand-border: #2a2d30;
+  --brand-destructive: #fca5a5;
+}
+
+@theme inline {
+  --color-background: var(--brand-background);
+  --color-foreground: var(--brand-foreground);
+  --color-card: var(--brand-card);
+  --color-card-foreground: var(--brand-card-foreground);
+  --color-muted: var(--brand-muted);
+  --color-muted-foreground: var(--brand-muted-foreground);
+  --color-border: var(--brand-border);
+  --color-destructive: var(--brand-destructive);
+}
