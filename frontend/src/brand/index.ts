@@ -8,3 +8,4 @@ export { Panel } from "./components/Panel";
 export { RoundPreview } from "./components/RoundPreview";
 export { SearchField } from "./components/SearchField";
 export { SortControl } from "./components/SortControl";
+export { CourseLinkSearch } from "./components/CourseLinkSearch";

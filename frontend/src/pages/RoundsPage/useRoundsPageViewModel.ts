@@ -1,7 +1,8 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { formatCourseName } from "@/lib/courseName";
+import { useCourseSearch } from "@/hooks/useCourseSearch";
 import type { RoundSummary, CourseSummary } from "@/types/golf";
 
 export type SortKey = "date" | "total_score" | "to_par" | "course_name";
@@ -71,14 +72,16 @@ export function useRoundsPageViewModel(userId: string): RoundsPageViewModel {
   const [visibleCount, setVisibleCount] = useState(20);
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
 
+  const {
+    query: linkQuery,
+    setQuery: handleLinkQuery,
+    results: linkResults,
+    searching: linkSearching,
+    reset: resetCourseSearch,
+  } = useCourseSearch(userId);
   const [linkingRoundId, setLinkingRoundId] = useState<string | null>(null);
-  const [linkQuery, setLinkQuery] = useState("");
-  const [linkResults, setLinkResults] = useState<CourseSummary[]>([]);
-  const [linkSearching, setLinkSearching] = useState(false);
   const [linking, setLinking] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
-  const linkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (linkTimer.current) clearTimeout(linkTimer.current); }, []);
 
   const chips = useMemo<FilterChipItem[]>(() => {
     const counts = new Map<string, number>();
@@ -99,47 +102,34 @@ export function useRoundsPageViewModel(userId: string): RoundsPageViewModel {
     ].map((chip) => ({ ...chip, active: filterMode === chip.mode }));
   }, [rounds, filterMode]);
 
-  const handleLinkQuery = useCallback((q: string) => {
-    setLinkQuery(q);
-    if (linkTimer.current) clearTimeout(linkTimer.current);
-    if (q.trim().length < 2) { setLinkResults([]); return; }
-    linkTimer.current = setTimeout(async () => {
-      setLinkSearching(true);
-      try {
-        const results = await api.searchCourses(q.trim(), userId);
-        setLinkResults(results);
-      } catch { setLinkResults([]); }
-      finally { setLinkSearching(false); }
-    }, 300);
-  }, [userId]);
-
   const handleSelectCourse = useCallback(async (roundId: string, course: CourseSummary) => {
     setLinking(true);
     setLinkError(null);
     try {
       const updated = await api.linkCourse(roundId, course.id);
       queryClient.setQueryData<RoundSummary[]>(["rounds", userId], (prev) =>
-        prev ? prev.map((r) => r.id === roundId ? updated : r) : [updated]
+        prev ? prev.map((r) => (r.id === roundId ? updated : r)) : [updated],
       );
       setLinkingRoundId(null);
-      setLinkQuery("");
-      setLinkResults([]);
+      resetCourseSearch();
     } catch (err) {
       setLinkError(err instanceof Error ? err.message : "Could not link that round to the selected course.");
     } finally {
       setLinking(false);
     }
-  }, [queryClient, userId]);
+  }, [queryClient, userId, resetCourseSearch]);
 
   const openLink = useCallback((roundId: string) => {
     setLinkingRoundId(roundId);
-    setLinkQuery(""); setLinkResults([]); setLinkError(null);
-  }, []);
+    resetCourseSearch();
+    setLinkError(null);
+  }, [resetCourseSearch]);
 
   const closeLink = useCallback(() => {
     setLinkingRoundId(null);
-    setLinkQuery(""); setLinkResults([]); setLinkError(null);
-  }, []);
+    resetCourseSearch();
+    setLinkError(null);
+  }, [resetCourseSearch]);
 
   const handleSort = useCallback((key: SortKey) => {
     if (sortKey === key) { setSortAsc((prev) => !prev); }
