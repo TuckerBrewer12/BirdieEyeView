@@ -5,13 +5,13 @@ import {
   Alert,
   AlertDescription,
   Button,
-  FilterChip,
-  FilterChipRow,
   PageTitle,
   RoundPreview,
   SearchField,
   SortControl,
   CourseLinkSearch,
+  ToggleGroup,
+  ToggleGroupItem,
   useTheme,
 } from "@/brand";
 import { formatCourseName } from "@/lib/courseName";
@@ -47,16 +47,19 @@ export function RoundsPage({ userId }: RoundsPageProps) {
           onChange={viewModel.setSearch}
         />
 
-        <FilterChipRow>
+        <ToggleGroup
+          variant="outline"
+          spacing={2}
+          value={[viewModel.filterMode]}
+          onValueChange={(values) => viewModel.setFilterMode(values[0] ?? "all")}
+          className="max-w-full overflow-x-auto [scrollbar-width:none]"
+        >
           {viewModel.chips.map((chip) => (
-            <FilterChip
-              key={chip.key}
-              label={chip.label}
-              active={chip.active}
-              onClick={() => viewModel.setFilterMode(chip.active ? "all" : chip.mode)}
-            />
+            <ToggleGroupItem key={chip.key} value={chip.mode}>
+              {chip.label}
+            </ToggleGroupItem>
           ))}
-        </FilterChipRow>
+        </ToggleGroup>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 4px 0" }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: theme.fg }}>
