@@ -23,6 +23,11 @@
   --radius-sm: 0.25rem;
 }
 
+:root {
+  /* Base radius the brand components derive from, e.g. calc(var(--radius)-5px). */
+  --radius: 0.5rem;
+}
+
 /* iOS WebView: remove tap highlight and 300ms click delay */
 * {
   -webkit-tap-highlight-color: transparent;
@@ -34,7 +39,7 @@ button, a, [role="button"], label {
 }
 
 html {
-  background-color: #f8faf8;
+  background-color: var(--background);
 }
 
 body {
@@ -42,17 +47,11 @@ body {
   font-family: "Inter", system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8faf8;
-  color: #1a2e1a;
+  background-color: var(--background);
+  color: var(--foreground);
   -webkit-overflow-scrolling: touch;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
-}
-
-:root.dark html,
-:root.dark body {
-  background-color: #111213;
-  color: #e6edf3;
 }
 
 :root.dark .bg-white {

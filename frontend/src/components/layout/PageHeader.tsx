@@ -11,43 +11,22 @@ export function PageHeader({ title, subtitle, scrollThreshold = 40 }: PageHeader
   const start = Math.max(0, scrollThreshold - 30);
   const end = scrollThreshold;
 
-  const bgColor = useTransform(
-    scrollY,
-    [start, end],
-    ["rgba(248,250,248,0)", "rgba(248,250,248,0.92)"],
-  );
-  const borderColor = useTransform(
-    scrollY,
-    [start, end],
-    ["rgba(241,245,249,0)", "rgba(241,245,249,1)"],
-  );
-  const boxShadow = useTransform(
-    scrollY,
-    [start, end],
-    ["0 1px 0 rgba(0,0,0,0)", "0 1px 0 rgba(0,0,0,0.05)"],
-  );
+  // The whole header fades in, so the surface, hairline and shadow ride that
+  // one opacity rather than each interpolating its own color. Interpolating
+  // them here would mean literal rgba(), which cannot follow the color mode.
   const opacity = useTransform(scrollY, [start, end], [0, 1]);
 
   return (
     <motion.header
-      className="fixed top-0 left-0 md:left-64 right-0 z-40 flex items-center px-4 md:px-8 py-3"
-      style={{
-        backgroundColor: bgColor,
-        borderBottomWidth: 1,
-        borderBottomStyle: "solid",
-        borderBottomColor: borderColor,
-        boxShadow,
-        opacity,
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-      }}
+      className="fixed top-0 right-0 left-0 z-40 flex items-center border-b border-border bg-background/90 px-4 py-3 shadow-hairline backdrop-blur-[20px] md:left-64 md:px-8"
+      style={{ opacity }}
     >
-      <div className="flex items-baseline gap-3 min-w-0">
-        <h1 className="text-lg font-bold tracking-tight text-gray-900 whitespace-nowrap">
+      <div className="flex min-w-0 items-baseline gap-3">
+        <h1 className="text-lg font-bold tracking-tight whitespace-nowrap text-foreground">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-sm text-gray-400 truncate">{subtitle}</p>
+          <p className="truncate text-sm text-muted-foreground">{subtitle}</p>
         )}
       </div>
     </motion.header>

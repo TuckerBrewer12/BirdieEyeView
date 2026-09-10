@@ -1,4 +1,3 @@
 export { colors } from "./colors";
-export { scoreFill, toParColor, toParLabel } from "./score";
-export { useTheme } from "./useTheme";
-export type { BrandTheme, ColorMode, ColorScheme } from "./useTheme";
+export { scoreFill, scoreKeyFor, toParLabel, toParTextClass } from "./score";
+export type { ScoreKey } from "./score";

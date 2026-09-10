@@ -1,35 +1,49 @@
+/**
+ * Every brand color, as a reference to the token that holds its value.
+ *
+ * The values themselves live once, in `tokens.css`. These are `var()` strings,
+ * so they resolve in CSS and follow the color mode with no React involvement:
+ *
+ *     <div style={{ background: colors.card }} />
+ *
+ * In ordinary markup prefer the Tailwind utility — `bg-card` over
+ * `style={{ background: colors.card }}`. Reach for this when the color is
+ * dynamic and a static class cannot express it, as with a per-hole score fill.
+ *
+ * Because these are references and not literals, they do not work anywhere
+ * that parses the string as a color — canvas, or a chart library that inspects
+ * it. For those, resolve against the document:
+ *
+ *     getComputedStyle(document.documentElement).getPropertyValue("--card")
+ *
+ * `tokens.test.ts` fails if a name here has no definition in tokens.css.
+ */
 export const colors = {
-  primary: "#2d7a3a",
-  onPrimary: "#ffffff",
+  background: "var(--background)",
+  foreground: "var(--foreground)",
+  card: "var(--card)",
+  cardForeground: "var(--card-foreground)",
+  muted: "var(--muted)",
+  mutedForeground: "var(--muted-foreground)",
+  border: "var(--border)",
+  input: "var(--input)",
+  ring: "var(--ring)",
+  primary: "var(--primary)",
+  primaryForeground: "var(--primary-foreground)",
+  secondary: "var(--secondary)",
+  secondaryForeground: "var(--secondary-foreground)",
+  accent: "var(--accent)",
+  accentForeground: "var(--accent-foreground)",
+  destructive: "var(--destructive)",
+  shadow: "var(--shadow)",
 
   score: {
-    eagle:  { fill: "#a16207", onFill: "#ffffff", text: "#a16207" },
-    birdie: { fill: "#0b8a5e", onFill: "#ffffff", text: "#0b8a5e" },
-    par:    { fill: "#e5e7eb", onFill: "#4b5563", text: "#9ca3af" },
-    bogey:  { fill: "#ef4444", onFill: "#7f1d1d", text: "#dc2626" },
-    double: { fill: "#3b78e0", onFill: "#ffffff", text: "#3b78e0" },
-    triple: { fill: "#7c52e0", onFill: "#ffffff", text: "#7c52e0" },
-    quad:   { fill: "#6d28d9", onFill: "#ffffff", text: "#6d28d9" },
-  },
-
-  light: {
-    page: "#f8faf8",
-    fg: "#1a2e1a",
-    fgMuted: "#6b7765",
-    card: "#ffffff",
-    border: "#e4e9e1",
-    mutedFill: "#f4f6f0",
-    infoFill: "#eff6ff",
-    infoBorder: "#bfdbfe",
-  },
-  dark: {
-    page: "#111213",
-    fg: "#e6edf3",
-    fgMuted: "#9aa4b2",
-    card: "#18191A",
-    border: "#2a2d30",
-    mutedFill: "#222426",
-    infoFill: "#152033",
-    infoBorder: "#1e3a5f",
+    eagle:  { fill: "var(--score-eagle-fill)",  onFill: "var(--score-eagle-on-fill)",  text: "var(--score-eagle-text)" },
+    birdie: { fill: "var(--score-birdie-fill)", onFill: "var(--score-birdie-on-fill)", text: "var(--score-birdie-text)" },
+    par:    { fill: "var(--score-par-fill)",    onFill: "var(--score-par-on-fill)",    text: "var(--score-par-text)" },
+    bogey:  { fill: "var(--score-bogey-fill)",  onFill: "var(--score-bogey-on-fill)",  text: "var(--score-bogey-text)" },
+    double: { fill: "var(--score-double-fill)", onFill: "var(--score-double-on-fill)", text: "var(--score-double-text)" },
+    triple: { fill: "var(--score-triple-fill)", onFill: "var(--score-triple-on-fill)", text: "var(--score-triple-text)" },
+    quad:   { fill: "var(--score-quad-fill)",   onFill: "var(--score-quad-on-fill)",   text: "var(--score-quad-text)" },
   },
 } as const;

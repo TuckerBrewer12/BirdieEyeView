@@ -12,7 +12,6 @@ import {
   CourseLinkSearch,
   ToggleGroup,
   ToggleGroupItem,
-  useTheme,
 } from "@/brand";
 import { formatCourseName } from "@/lib/courseName";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -21,14 +20,13 @@ import { useRoundsPageViewModel } from "./useRoundsPageViewModel";
 interface RoundsPageProps { userId: string; }
 
 export function RoundsPage({ userId }: RoundsPageProps) {
-  const theme = useTheme();
   const navigate = useNavigate();
   const viewModel = useRoundsPageViewModel(userId);
 
   if (viewModel.loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-400">Loading rounds...</div>
+        <div className="text-muted-foreground">Loading rounds...</div>
       </div>
     );
   }
@@ -62,7 +60,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
         </ToggleGroup>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 4px 0" }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: theme.fg }}>
+          <span className="text-[13px] font-bold text-foreground">
             {viewModel.filteredRounds.length} {viewModel.filteredRounds.length === 1 ? "round" : "rounds"}
           </span>
           <SortControl
@@ -88,7 +86,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
         )}
 
         {viewModel.filteredRounds.length === 0 ? (
-          <div style={{ padding: "32px 0", textAlign: "center", fontSize: 14, color: theme.fgMuted }}>
+          <div className="py-8 text-center text-sm leading-normal text-muted-foreground">
             No rounds found.
           </div>
         ) : (
