@@ -18,7 +18,7 @@ export class FakeRoundsRepository implements RoundsRepository {
     this.linkError = seed.linkError ?? null;
   }
 
-  async getRoundsForUser(_userId: string, _limit?: number): Promise<RoundSummary[]> {
+  async getRoundsForUser(): Promise<RoundSummary[]> {
     return this.rounds;
   }
 

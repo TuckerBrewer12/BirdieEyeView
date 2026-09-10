@@ -146,7 +146,7 @@ export class RoundsRobot {
 }
 
 export const test = base.extend<{ rounds: RoundsRobot }>({
-  rounds: async ({ page }, use) => {
-    await use(new RoundsRobot(page));
+  rounds: async ({ page }, provide) => {
+    await provide(new RoundsRobot(page));
   },
 });
