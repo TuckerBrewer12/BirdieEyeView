@@ -1,10 +1,12 @@
 """CRUD operations for the users.users table."""
 
-import asyncpg
+import json
 import secrets
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
+
+import asyncpg
 
 from models import User
 from database.converters import user_from_row, user_to_row
@@ -138,9 +140,17 @@ class UserRepositoryDB:
                     return user_from_row(row)
                 except asyncpg.UniqueViolationError as e:
                     # Retry for friend_code collisions; fail fast for email collisions.
-                    if e.constraint_name in {"users_users_email_key", "idx_users_email"}:
+                    if e.constraint_name in {
+                        "users_email_key",
+                        "users_users_email_key",
+                        "idx_users_email",
+                    }:
                         raise DuplicateError(f"Email already in use: {e}") from e
-                    if e.constraint_name in {"users_users_friend_code_key", "idx_users_friend_code"}:
+                    if e.constraint_name in {
+                        "users_friend_code_key",
+                        "users_users_friend_code_key",
+                        "idx_users_friend_code",
+                    }:
                         data["friend_code"] = None
                         continue
                     raise
@@ -162,6 +172,8 @@ class UserRepositoryDB:
         # Convert home_course_id string to UUID if present
         if "home_course_id" in updates and updates["home_course_id"] is not None:
             updates["home_course_id"] = UUID(updates["home_course_id"])
+        if "preferences" in updates and updates["preferences"] is not None:
+            updates["preferences"] = json.dumps(updates["preferences"])
 
         set_parts = []
         values = [UUID(user_id)]

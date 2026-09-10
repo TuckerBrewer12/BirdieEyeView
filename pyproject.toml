@@ -43,6 +43,9 @@ ignore = [
 testpaths = ["tests"]
 pythonpath = ["."]
 filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "integration: requires an explicitly configured disposable PostgreSQL database",
+]
 
 [tool.coverage.run]
 source = ["api", "services", "database", "analytics", "models"]
