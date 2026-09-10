@@ -31,6 +31,7 @@ export class RoundsRobot {
     await this.page.goto("/rounds");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.getByPlaceholder("Search by course…")).toBeVisible();
+    await this.seesChipPressed("All");
     return this;
   }
 
@@ -52,8 +53,15 @@ export class RoundsRobot {
     return this;
   }
 
-  async sortBy(label: string): Promise<this> {
+  async openSortMenu(): Promise<this> {
     await this.page.getByRole("combobox", { name: "Sort by" }).click();
+    await expect(this.page.getByRole("listbox")).toBeVisible();
+    await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
+    return this;
+  }
+
+  async sortBy(label: string): Promise<this> {
+    await this.openSortMenu();
     await this.page.getByRole("option", { name: label, exact: true }).click();
     return this;
   }

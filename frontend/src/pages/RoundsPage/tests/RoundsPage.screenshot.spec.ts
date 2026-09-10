@@ -24,6 +24,11 @@ test("course link panel open", async ({ rounds }) => {
   await rounds.open(populatedRounds);
   await rounds.openLinkFor("Scanned Scorecard");
   await rounds.seesLinkPanel("Scanned Scorecard");
-  await rounds.seesChipPressed("All");
   await rounds.capture("rounds-link-open.png");
+});
+
+test("sort menu open", async ({ rounds }) => {
+  await rounds.open(populatedRounds);
+  await rounds.openSortMenu();
+  await rounds.capture("rounds-sort-open.png");
 });

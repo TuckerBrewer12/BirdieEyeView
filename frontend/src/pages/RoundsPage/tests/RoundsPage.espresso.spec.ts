@@ -2,6 +2,11 @@ import { test } from "./RoundsPage.robot";
 import { searchableCourses } from "../../../testing/fixtures/courses";
 import { nRounds, populatedRounds } from "../../../testing/fixtures/rounds";
 
+test("All chip is pressed by default", async ({ rounds }) => {
+  await rounds.open(populatedRounds);
+  await rounds.seesChipPressed("All");
+});
+
 test("search keeps matching courses and hides the rest", async ({ rounds }) => {
   await rounds.open(populatedRounds);
   await rounds.search("Blue");
