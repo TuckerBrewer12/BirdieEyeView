@@ -17,6 +17,7 @@ export {
   inputGroupAddonVariants,
   inputGroupButtonVariants,
   pageTitleVariants,
+  toggleVariants,
 } from "./components/variants";
 export { Input } from "./components/Input";
 export {
@@ -26,8 +27,9 @@ export {
   InputGroupText,
   InputGroupInput,
 } from "./components/InputGroup";
-export { FilterChip, FilterChipRow } from "./components/FilterChip";
 export { PageTitle } from "./components/PageTitle";
+export { Toggle } from "./components/Toggle";
+export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
 export { Panel } from "./components/Panel";
 export { RoundPreview } from "./components/RoundPreview";
 export { SearchField } from "./components/SearchField";

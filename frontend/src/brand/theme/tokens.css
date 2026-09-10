@@ -23,6 +23,8 @@
   --destructive: #dc2626;
   --secondary: #f4f6f0;
   --secondary-foreground: #1a2e1a;
+  --accent: #e8f5e9;
+  --accent-foreground: #1a2e1a;
 }
 
 :root.dark {
@@ -38,6 +40,8 @@
   --destructive: #f87171;
   --secondary: #222426;
   --secondary-foreground: #e6edf3;
+  --accent: #1a3a1f;
+  --accent-foreground: #e6edf3;
 }
 
 @theme inline {
@@ -53,4 +57,6 @@
   --color-destructive: var(--destructive);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
 }
