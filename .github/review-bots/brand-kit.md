@@ -28,8 +28,8 @@ is missing either one.
 **Mocks.** `vi.mock`, `vi.fn`, `mockResolvedValue` / `mockRejectedValue`, or a
 canned `page.route` fulfill (hardcoded status/JSON). Brand kit screenshots are
 isolated — `BrandKitRobot.open()` must not intercept `/api`. Page tests seed
-`FakeBackend` (`FakeFetch` / `FakeSession`); they do not mock modules.
-Fakes are named `Fake…`.
+`FakeBackend` via `FakeSession` for Playwright. View-model tests inject
+`FakeRoundsRepository`. Fakes are named `Fake…`.
 
 Report every one you find. Do not stop at a fixed number.
 

@@ -1,11 +1,13 @@
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
 import { populatedRounds, nRounds } from "@/testing/fixtures/rounds";
 import { pebbleBeach } from "@/testing/fixtures/courses";
-import { FakeBackend, type FakeBackendSeed } from "@/testing/fakes/FakeBackend";
-import { FakeFetch } from "@/testing/fakes/FakeFetch";
+import {
+  FakeRoundsRepository,
+  type FakeRoundsRepositorySeed,
+} from "@/testing/fakes/FakeRoundsRepository";
 import { useRoundsPageViewModel } from "./useRoundsPageViewModel";
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -15,14 +17,10 @@ function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-function renderVm(seed: FakeBackendSeed = { rounds: populatedRounds }) {
-  FakeFetch.install(new FakeBackend(seed));
-  return renderHook(() => useRoundsPageViewModel("user-1"), { wrapper });
+function renderVm(seed: FakeRoundsRepositorySeed = { rounds: populatedRounds }) {
+  const repository = new FakeRoundsRepository(seed);
+  return renderHook(() => useRoundsPageViewModel("user-1", repository), { wrapper });
 }
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
 
 describe("useRoundsPageViewModel", () => {
   it("exposes All / L20 / Best chips plus top courses", async () => {

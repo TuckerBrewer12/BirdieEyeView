@@ -5,7 +5,11 @@ import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 
 /** Screen robot for /rounds — same idea as an Android Espresso robot. */
 export class RoundsRobot {
-  constructor(private readonly page: Page) {}
+  private readonly page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
 
   private courseLabel(name: string): Locator {
     return this.page.locator("span").filter({ hasText: new RegExp(`^${name}$`) });

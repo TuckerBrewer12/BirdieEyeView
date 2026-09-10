@@ -1,9 +1,9 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
 import { formatCourseName } from "@/lib/courseName";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
 import type { RoundSummary, CourseSummary } from "@/types/golf";
+import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 
 export type SortKey = "date" | "total_score" | "to_par" | "course_name";
 export type FilterMode = "all" | "l20" | "best" | string;
@@ -15,34 +15,34 @@ export interface FilterChipItem {
   mode: FilterMode;
 }
 
-export interface RoundsPageViewModel {
+export interface RoundsUiState {
   loading: boolean;
   rounds: RoundSummary[];
   filteredRounds: RoundSummary[];
   visibleRounds: RoundSummary[];
   remainingCount: number;
-  loadMore: () => void;
-
   search: string;
-  setSearch: (q: string) => void;
   filterMode: FilterMode;
-  setFilterMode: (mode: FilterMode) => void;
   chips: FilterChipItem[];
-
   sortKey: SortKey;
   sortAsc: boolean;
   sortLabel: string;
   effectiveSortKey: SortKey;
   sortLocked: boolean;
-  selectSortKey: (key: SortKey) => void;
-  toggleSortDirection: () => void;
-
   linkingRoundId: string | null;
   linkQuery: string;
   linkResults: CourseSummary[];
   linkSearching: boolean;
   linking: boolean;
   linkError: string | null;
+}
+
+export interface RoundsPageViewModel extends RoundsUiState {
+  loadMore: () => void;
+  setSearch: (q: string) => void;
+  setFilterMode: (mode: FilterMode) => void;
+  selectSortKey: (key: SortKey) => void;
+  toggleSortDirection: () => void;
   handleLinkQuery: (q: string) => void;
   handleSelectCourse: (roundId: string, course: CourseSummary) => void;
   openLink: (roundId: string) => void;
@@ -59,11 +59,14 @@ function sortLabelFor(filterMode: FilterMode, sortKey: SortKey): string {
   }
 }
 
-export function useRoundsPageViewModel(userId: string): RoundsPageViewModel {
+export function useRoundsPageViewModel(
+  userId: string,
+  repository: RoundsRepository = roundsRepository,
+): RoundsPageViewModel {
   const queryClient = useQueryClient();
   const { data: rounds = [], isLoading: loading } = useQuery({
     queryKey: ["rounds", userId],
-    queryFn: () => api.getRoundsForUser(userId, 100),
+    queryFn: () => repository.getRoundsForUser(userId, 100),
   });
 
   const [search, setSearch] = useState("");
@@ -106,7 +109,7 @@ export function useRoundsPageViewModel(userId: string): RoundsPageViewModel {
     setLinking(true);
     setLinkError(null);
     try {
-      const updated = await api.linkCourse(roundId, course.id);
+      const updated = await repository.linkCourse(roundId, course.id);
       queryClient.setQueryData<RoundSummary[]>(["rounds", userId], (prev) =>
         prev ? prev.map((r) => (r.id === roundId ? updated : r)) : [updated],
       );
@@ -117,7 +120,7 @@ export function useRoundsPageViewModel(userId: string): RoundsPageViewModel {
     } finally {
       setLinking(false);
     }
-  }, [queryClient, userId, resetCourseSearch]);
+  }, [queryClient, userId, repository, resetCourseSearch]);
 
   const openLink = useCallback((roundId: string) => {
     setLinkingRoundId(roundId);

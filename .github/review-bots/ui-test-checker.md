@@ -19,18 +19,18 @@ Playwright is this repo's Espresso. Vitest is for view-model logic.
 - Page screenshots use the robot `capture()` (full page, desktop+mobile).
   Brand kit uses `BrandKitRobot` and `previewScreenshot` (element, desktop).
 - Robots install `FakeSession` + `FakeBackend` in `open()`. Tests never hit
-  a live backend. Fakes are named `Fake…` (`FakeBackend`, `FakeFetch`,
-  `FakeSession`) — never `Mock*` or `installFake*`.
+  a live backend. View-model unit tests inject `FakeRoundsRepository`.
+  Fakes are named `Fake…` — never `Mock*` or `installFake*`.
 - Screenshots wait for a visible state then capture look. Espresso drives
   the robot and asserts behavior. Unit tests cover view-model logic.
 
 ## What to look for
 
 **A mock.** `vi.mock`, `vi.fn`, `vi.mocked`, `mockResolvedValue`,
-`mockRejectedValue`, or a `page.route` that returns canned JSON. Seed
-`FakeBackend` instead (`FakeFetch.install` in Vitest, `FakeSession.install`
-in Playwright). `page.route` is only allowed inside `FakeSession`. Same
-idea as Android fakes over Mockito. Fakes must be named `Fake…`.
+`mockRejectedValue`, or a `page.route` that returns canned JSON. View-model
+tests inject `FakeRoundsRepository`. Playwright robots seed `FakeBackend`
+via `FakeSession.install`. `page.route` is only allowed inside `FakeSession`.
+Same idea as Android fakes over Mockito. Fakes must be named `Fake…`.
 
 **A user flow with no test.** Every reasonable flow this diff adds or
 changes needs an espresso spec, a screenshot spec, or both. Skip hover,
@@ -82,5 +82,5 @@ Example:
   {"path": "frontend/src/pages/RoundsPage/RoundsPage.tsx", "line": 50, "body": "Search can filter the list, but there is no espresso spec that types a query and asserts the matching round stays and the others leave. Add it to `tests/RoundsPage.espresso.spec.ts` via the robot."},
   {"path": "frontend/src/pages/RoundsPage/RoundsPage.tsx", "line": 120, "body": "Opening the course-link panel is a look change with no screenshot. Drive it from the robot and `capture()` in `RoundsPage.screenshot.spec.ts`."},
   {"path": "frontend/src/pages/RoundsPage/useRoundsPageViewModel.ts", "line": 152, "body": "Filter/sort lives in the view model but has no Vitest coverage. Add `useRoundsPageViewModel.test.tsx` next to the hook."},
-  {"path": "frontend/src/pages/RoundsPage/useRoundsPageViewModel.test.tsx", "line": 10, "body": "`vi.mock('@/lib/api')` is a mock. Seed `FakeBackend` and call `FakeFetch.install` so the real `api` client runs against the fake."}
+  {"path": "frontend/src/pages/RoundsPage/useRoundsPageViewModel.test.tsx", "line": 10, "body": "`vi.mock('@/lib/api')` is a mock. Inject `FakeRoundsRepository` into `useRoundsPageViewModel` so the view model does not know about fetch."}
 ]
