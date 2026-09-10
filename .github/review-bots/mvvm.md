@@ -4,7 +4,7 @@ Pages in this app are MVVM: a `use<Page>ViewModel` hook holding all state and
 logic, plus a view that only renders. Shared UI lives in the brand kit at
 `frontend/src/brand/`.
 
-Read `frontend/src/pages/RoundsPage/` — that is the reference for the shape
+Read `frontend/src/pages/rounds/` — that is the reference for the shape
 we want.
 
 ## What to look for
@@ -46,6 +46,6 @@ If you find nothing, reply with exactly `[]`.
 Example:
 
 [
-  {"path": "frontend/src/pages/RoundsPage/RoundsPage.tsx", "line": 47, "body": "The chip label and filter-mode mapping is built in JSX. Have the view model expose the finished chips as `{ key, label, active }` so the view only maps over them."},
+  {"path": "frontend/src/pages/rounds/RoundsPage.tsx", "line": 47, "body": "The chip label and filter-mode mapping is built in JSX. Have the view model expose the finished chips as `{ key, label, active }` so the view only maps over them."},
   {"path": "frontend/src/pages/CoursesPage/CoursesPage.tsx", "line": 88, "body": "This is a hand-rolled filter chip. `FilterChip` in `@/brand/components/FilterChip` already does this — use it instead."}
 ]

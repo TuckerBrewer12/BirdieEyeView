@@ -1,5 +1,5 @@
 import type { CourseSummary, RoundSummary } from "../../types/golf";
-import type { RoundsRepository } from "../../pages/RoundsPage/roundsRepository";
+import type { RoundsRepository } from "../../pages/rounds/roundsRepository";
 
 export interface FakeRoundsRepositorySeed {
   rounds?: RoundSummary[];
