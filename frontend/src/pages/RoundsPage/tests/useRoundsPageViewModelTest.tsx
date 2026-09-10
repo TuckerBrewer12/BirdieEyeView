@@ -92,6 +92,75 @@ describe("useRoundsPageViewModel", () => {
     );
   });
 
+  it("counts every round in the header and only the filtered ones in the toolbar", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.headerSubtitle).toBe("4 rounds played");
+    expect(result.current.resultCountLabel).toBe("4 rounds");
+
+    act(() => result.current.setSearch("blue"));
+    expect(result.current.resultCountLabel).toBe("1 round");
+    expect(result.current.headerSubtitle).toBe("4 rounds played");
+  });
+
+  it("offers a sort option for every sort key", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.sortOptions).toEqual([
+      { value: "date", label: "Date" },
+      { value: "total_score", label: "Score" },
+      { value: "to_par", label: "To Par" },
+      { value: "course_name", label: "Course" },
+    ]);
+  });
+
+  it("sortLabel follows the chosen key, and reads Score while Best locks it", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.sortLabel).toBe("Date");
+
+    act(() => result.current.selectSortKey("to_par"));
+    expect(result.current.sortLabel).toBe("To Par");
+
+    act(() => result.current.setFilterMode("best"));
+    expect(result.current.sortLabel).toBe("Score");
+  });
+
+  it("toggleLink opens a panel and closes the one already open", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.isLinkOpen("round-4")).toBe(false);
+
+    act(() => result.current.toggleLink("round-4"));
+    expect(result.current.isLinkOpen("round-4")).toBe(true);
+
+    act(() => result.current.toggleLink("round-4"));
+    expect(result.current.isLinkOpen("round-4")).toBe(false);
+  });
+
+  it("toggleLink moves the panel rather than opening a second one", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.toggleLink("round-4"));
+    act(() => result.current.toggleLink("round-1"));
+
+    expect(result.current.isLinkOpen("round-4")).toBe(false);
+    expect(result.current.isLinkOpen("round-1")).toBe(true);
+  });
+
+  it("names the round in the link title, falling back when there is no course", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const scanned = result.current.rounds.find((r) => r.id === "round-4")!;
+
+    expect(result.current.linkTitleFor(scanned)).toBe(
+      'Link "Scanned Scorecard" to a saved course',
+    );
+    expect(result.current.linkTitleFor({ ...scanned, course_name: null })).toBe(
+      'Link "this round" to a saved course',
+    );
+  });
+
   it("a failed link sets linkError and leaves the panel open", async () => {
     const { result } = renderVm({ rounds: populatedRounds, linkError: "nope" });
     await waitFor(() => expect(result.current.loading).toBe(false));

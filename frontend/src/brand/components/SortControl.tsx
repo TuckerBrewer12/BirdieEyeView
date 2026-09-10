@@ -10,7 +10,7 @@ interface SortOption<T extends string> {
 interface SortControlProps<T extends string> {
   label: string;
   value: T;
-  options: SortOption<T>[];
+  options: readonly SortOption<T>[];
   onChange: (value: T) => void;
   ascending: boolean;
   onToggleDirection: () => void;

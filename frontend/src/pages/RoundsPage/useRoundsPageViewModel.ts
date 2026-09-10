@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
+import { pluralize } from "@/lib/pluralize";
 import type { RoundSummary, CourseSummary } from "@/types/golf";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 
@@ -11,8 +12,12 @@ export type FilterMode = "all" | "l20" | "best" | string;
 export interface FilterChipItem {
   key: string;
   label: string;
-  active: boolean;
   mode: FilterMode;
+}
+
+export interface SortOption {
+  value: SortKey;
+  label: string;
 }
 
 export interface RoundsUiState {
@@ -21,12 +26,16 @@ export interface RoundsUiState {
   filteredRounds: RoundSummary[];
   visibleRounds: RoundSummary[];
   remainingCount: number;
+  /** "12 rounds played" — the count of everything, for the sticky header. */
+  headerSubtitle: string;
+  /** "4 rounds" — the count after filtering and search, for the list toolbar. */
+  resultCountLabel: string;
   search: string;
   filterMode: FilterMode;
   chips: FilterChipItem[];
-  sortKey: SortKey;
   sortAsc: boolean;
   sortLabel: string;
+  sortOptions: readonly SortOption[];
   effectiveSortKey: SortKey;
   sortLocked: boolean;
   linkingRoundId: string | null;
@@ -47,16 +56,31 @@ export interface RoundsPageViewModel extends RoundsUiState {
   handleSelectCourse: (roundId: string, course: CourseSummary) => void;
   openLink: (roundId: string) => void;
   closeLink: () => void;
+  /** Whether this round's course-link panel is the one showing. */
+  isLinkOpen: (roundId: string) => boolean;
+  toggleLink: (roundId: string) => void;
+  linkTitleFor: (round: RoundSummary) => string;
 }
 
+/**
+ * The one place a sort key's label is written. Typing it as Record<SortKey, …>
+ * makes a new key a compile error until it is labelled here, and sortOptions is
+ * derived from it so the menu cannot drift from the label on the trigger.
+ */
+const SORT_LABELS: Record<SortKey, string> = {
+  date: "Date",
+  total_score: "Score",
+  to_par: "To Par",
+  course_name: "Course",
+};
+
+const SORT_OPTIONS: readonly SortOption[] = (
+  Object.keys(SORT_LABELS) as SortKey[]
+).map((value) => ({ value, label: SORT_LABELS[value] }));
+
+/** Best mode sorts by score whatever the chosen key is, so it labels as Score. */
 function sortLabelFor(filterMode: FilterMode, sortKey: SortKey): string {
-  if (filterMode === "best") return "Score";
-  switch (sortKey) {
-    case "date": return "Date";
-    case "total_score": return "Score";
-    case "to_par": return "To Par";
-    case "course_name": return "Course";
-  }
+  return SORT_LABELS[filterMode === "best" ? "total_score" : sortKey];
 }
 
 export function useRoundsPageViewModel(
@@ -102,8 +126,8 @@ export function useRoundsPageViewModel(
         label: formatCourseName(name),
         mode: name,
       })),
-    ].map((chip) => ({ ...chip, active: filterMode === chip.mode }));
-  }, [rounds, filterMode]);
+    ];
+  }, [rounds]);
 
   const handleSelectCourse = useCallback(async (roundId: string, course: CourseSummary) => {
     setLinking(true);
@@ -133,6 +157,27 @@ export function useRoundsPageViewModel(
     resetCourseSearch();
     setLinkError(null);
   }, [resetCourseSearch]);
+
+  const isLinkOpen = useCallback(
+    (roundId: string) => linkingRoundId === roundId,
+    [linkingRoundId],
+  );
+
+  // Only one panel is open at a time, so tapping the link icon on the open row
+  // closes it and tapping any other row moves the panel there.
+  const toggleLink = useCallback(
+    (roundId: string) => {
+      if (linkingRoundId === roundId) closeLink();
+      else openLink(roundId);
+    },
+    [linkingRoundId, closeLink, openLink],
+  );
+
+  const linkTitleFor = useCallback(
+    (round: RoundSummary) =>
+      `Link "${round.course_name ? formatCourseName(round.course_name) : "this round"}" to a saved course`,
+    [],
+  );
 
   const handleSort = useCallback((key: SortKey) => {
     if (sortKey === key) { setSortAsc((prev) => !prev); }
@@ -192,15 +237,17 @@ export function useRoundsPageViewModel(
     filteredRounds,
     visibleRounds,
     remainingCount,
+    headerSubtitle: `${pluralize(rounds.length, "round")} played`,
+    resultCountLabel: pluralize(filteredRounds.length, "round"),
     loadMore,
     search,
     setSearch,
     filterMode,
     setFilterMode,
     chips,
-    sortKey,
     sortAsc,
     sortLabel: sortLabelFor(filterMode, sortKey),
+    sortOptions: SORT_OPTIONS,
     effectiveSortKey,
     sortLocked,
     selectSortKey,
@@ -215,5 +262,8 @@ export function useRoundsPageViewModel(
     handleSelectCourse,
     openLink,
     closeLink,
+    isLinkOpen,
+    toggleLink,
+    linkTitleFor,
   };
 }

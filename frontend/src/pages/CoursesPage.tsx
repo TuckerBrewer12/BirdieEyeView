@@ -4,6 +4,7 @@ import { MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { api } from "@/lib/api";
 import { formatCourseName } from "@/lib/courseName";
+import { pluralize } from "@/lib/pluralize";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { CourseDetailPanel } from "@/components/course-detail/CourseDetailPanel";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
@@ -60,7 +61,7 @@ export function CoursesPage({ userId }: { userId: string }) {
     <div>
       <PageHeader
         title="Courses"
-        subtitle={`${visibleCourses.length} courses`}
+        subtitle={pluralize(visibleCourses.length, "course")}
         scrollThreshold={100}
       />
 

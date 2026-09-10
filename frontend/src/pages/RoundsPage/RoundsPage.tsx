@@ -14,7 +14,6 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import { formatCourseName } from "@/lib/courseName";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useRoundsPageViewModel } from "./useRoundsPageViewModel";
 
@@ -30,7 +29,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
   return (
     <div>
-      <PageHeader title="Rounds" subtitle={`${viewModel.rounds.length} rounds played`} scrollThreshold={100} />
+      <PageHeader title="Rounds" subtitle={viewModel.headerSubtitle} scrollThreshold={100} />
 
       <div className="flex flex-col gap-2.5 pb-6">
 
@@ -58,17 +57,12 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
         <div className="flex items-center justify-between px-1 pt-0.5">
           <span className="text-[13px] font-bold text-foreground">
-            {viewModel.filteredRounds.length} {viewModel.filteredRounds.length === 1 ? "round" : "rounds"}
+            {viewModel.resultCountLabel}
           </span>
           <SortControl
             label={viewModel.sortLabel}
             value={viewModel.effectiveSortKey}
-            options={[
-              { value: "date", label: "Date" },
-              { value: "total_score", label: "Score" },
-              { value: "to_par", label: "To Par" },
-              { value: "course_name", label: "Course" },
-            ]}
+            options={viewModel.sortOptions}
             onChange={viewModel.selectSortKey}
             ascending={viewModel.sortAsc}
             onToggleDirection={viewModel.toggleSortDirection}
@@ -91,18 +85,15 @@ export function RoundsPage({ userId }: RoundsPageProps) {
               <RoundPreview
                 round={r}
                 onClick={() => {
-                  if (viewModel.linkingRoundId === r.id) return;
+                  if (viewModel.isLinkOpen(r.id)) return;
                   navigate(`/rounds/${r.id}`);
                 }}
-                onLinkClick={() => {
-                  if (viewModel.linkingRoundId === r.id) viewModel.closeLink();
-                  else viewModel.openLink(r.id);
-                }}
+                onLinkClick={() => viewModel.toggleLink(r.id)}
               />
 
-              <Collapse open={viewModel.linkingRoundId === r.id}>
+              <Collapse open={viewModel.isLinkOpen(r.id)}>
                 <CourseLinkSearch
-                  title={`Link "${r.course_name ? formatCourseName(r.course_name) : "this round"}" to a saved course`}
+                  title={viewModel.linkTitleFor(r)}
                   query={viewModel.linkQuery}
                   results={viewModel.linkResults}
                   searching={viewModel.linkSearching}
