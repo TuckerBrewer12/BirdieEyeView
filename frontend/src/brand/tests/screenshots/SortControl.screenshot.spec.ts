@@ -17,17 +17,6 @@ test.describe("SortControl", () => {
       await kit.open("SortControl");
       await page.getByRole("combobox", { name: "Sort by" }).first().click();
       await expect(page.getByRole("listbox")).toBeVisible();
-      const info = await page.getByRole("listbox").evaluate((el) => ({
-        display: getComputedStyle(el).display,
-        role: el.getAttribute("role"),
-        children: [...el.children].map((c) => ({
-          display: getComputedStyle(c).display,
-          width: Math.round((c as HTMLElement).getBoundingClientRect().width),
-          text: c.textContent,
-          className: (c as HTMLElement).className,
-        })),
-      }));
-      console.log(JSON.stringify(info, null, 2));
       await expect(page.getByRole("listbox")).toHaveScreenshot("sort-control-menu.png");
     });
   });
