@@ -17,7 +17,9 @@ test.describe("SortControl", () => {
       await kit.open("SortControl");
       await page.getByRole("combobox", { name: "Sort by" }).first().click();
       await expect(page.getByRole("listbox")).toBeVisible();
-      await expect(page.getByRole("listbox")).toHaveScreenshot("sort-control-menu.png");
+      await expect(page.locator("[data-slot=sort-menu]")).toHaveScreenshot(
+        "sort-control-menu.png",
+      );
     });
   });
 
@@ -27,7 +29,7 @@ test.describe("SortControl", () => {
       await kit.open("SortControl");
       await page.getByRole("combobox", { name: "Sort by" }).first().click();
       await expect(page.getByRole("listbox")).toBeVisible();
-      await expect(page.getByRole("listbox")).toHaveScreenshot("sort-control-menu-dark.png");
+      await expect(page.locator("[data-slot=sort-menu]")).toHaveScreenshot("sort-control-menu-dark.png");
     });
   });
 });

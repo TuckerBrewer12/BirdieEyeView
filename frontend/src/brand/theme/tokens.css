@@ -20,6 +20,8 @@
   --border: #e4e9e1;
   --input: #e4e9e1;
   --ring: #2d7a3a;
+  --primary: #2d7a3a;
+  --primary-foreground: #ffffff;
   --destructive: #dc2626;
   --secondary: #f4f6f0;
   --secondary-foreground: #1a2e1a;
@@ -37,6 +39,8 @@
   --border: #2a2d30;
   --input: #2a2d30;
   --ring: #34d399;
+  --primary: #2d7a3a;
+  --primary-foreground: #ffffff;
   --destructive: #f87171;
   --secondary: #222426;
   --secondary-foreground: #e6edf3;
@@ -54,6 +58,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
   --color-destructive: var(--destructive);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);

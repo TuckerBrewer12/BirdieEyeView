@@ -3,8 +3,6 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-primary: #2d7a3a;
-  --color-primary-foreground: #ffffff;
   --color-primary-light: #e8f5e9;
 
   /* Score colors — refined, premium palette */
