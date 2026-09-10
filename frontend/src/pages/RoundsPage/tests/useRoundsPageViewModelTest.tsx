@@ -8,7 +8,7 @@ import {
   FakeRoundsRepository,
   type FakeRoundsRepositorySeed,
 } from "@/testing/fakes/FakeRoundsRepository";
-import { useRoundsPageViewModel } from "./useRoundsPageViewModel";
+import { useRoundsPageViewModel } from "../useRoundsPageViewModel";
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({

@@ -14,8 +14,9 @@ Playwright is this repo's Espresso. Vitest is for view-model logic.
   that file and take `{ rounds }` — no `page`, no callback wrapper. Locators
   and actions stay on the robot.
 - Screenshots are `*.screenshot.spec.ts` (Playwright, look). Espresso is
-  `*.espresso.spec.ts` (Playwright, behavior). View models are `*.test.ts`
-  or `*.test.tsx` (Vitest). Never a bare `*.spec.ts` — Vitest would pick it up.
+  `*.espresso.spec.ts` (Playwright, behavior). View models are
+  `tests/use<Page>ViewModelTest.tsx` (Vitest, Android `*Test` naming).
+  Never a bare `*.spec.ts` — Vitest would pick it up.
 - Page screenshots use the robot `capture()` (full page, desktop+mobile).
   Brand kit uses `BrandKitRobot` and `previewScreenshot` (element, desktop).
 - Robots install `FakeSession` + `FakeBackend` in `open()`. Tests never hit
@@ -45,7 +46,7 @@ tapping this row navigates. If a screenshot spec is asserting a side
 effect, or an espresso spec is only checking pixels, say so.
 
 **View-model logic in Playwright.** Filter, sort, search, pagination, and
-error mapping belong in `use<Page>ViewModel.test.tsx`. Playwright should
+error mapping belong in `tests/use<Page>ViewModelTest.tsx`. Playwright should
 not re-prove that logic.
 
 **Locators in a spec.** If a spec calls `page.getBy…` instead of a robot
@@ -81,6 +82,6 @@ Example:
 [
   {"path": "frontend/src/pages/RoundsPage/RoundsPage.tsx", "line": 50, "body": "Search can filter the list, but there is no espresso spec that types a query and asserts the matching round stays and the others leave. Add it to `tests/RoundsPage.espresso.spec.ts` via the robot."},
   {"path": "frontend/src/pages/RoundsPage/RoundsPage.tsx", "line": 120, "body": "Opening the course-link panel is a look change with no screenshot. Drive it from the robot and `capture()` in `RoundsPage.screenshot.spec.ts`."},
-  {"path": "frontend/src/pages/RoundsPage/useRoundsPageViewModel.ts", "line": 152, "body": "Filter/sort lives in the view model but has no Vitest coverage. Add `useRoundsPageViewModel.test.tsx` next to the hook."},
-  {"path": "frontend/src/pages/RoundsPage/useRoundsPageViewModel.test.tsx", "line": 10, "body": "`vi.mock('@/lib/api')` is a mock. Inject `FakeRoundsRepository` into `useRoundsPageViewModel` so the view model does not know about fetch."}
+  {"path": "frontend/src/pages/RoundsPage/useRoundsPageViewModel.ts", "line": 152, "body": "Filter/sort lives in the view model but has no Vitest coverage. Add `tests/useRoundsPageViewModelTest.tsx`."},
+  {"path": "frontend/src/pages/RoundsPage/tests/useRoundsPageViewModelTest.tsx", "line": 10, "body": "`vi.mock('@/lib/api')` is a mock. Inject `FakeRoundsRepository` into `useRoundsPageViewModel` so the view model does not know about fetch."}
 ]
