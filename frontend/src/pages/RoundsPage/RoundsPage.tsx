@@ -1,10 +1,11 @@
-import { Fragment } from "react";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import {
   Alert,
   AlertDescription,
   Button,
+  Collapse,
+  Collection,
+  LoadingState,
   PageTitle,
   RoundPreview,
   SearchField,
@@ -24,18 +25,14 @@ export function RoundsPage({ userId }: RoundsPageProps) {
   const viewModel = useRoundsPageViewModel(userId);
 
   if (viewModel.loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-muted-foreground">Loading rounds...</div>
-      </div>
-    );
+    return <LoadingState>Loading rounds...</LoadingState>;
   }
 
   return (
     <div>
       <PageHeader title="Rounds" subtitle={`${viewModel.rounds.length} rounds played`} scrollThreshold={100} />
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingBottom: 24 }}>
+      <div className="flex flex-col gap-2.5 pb-6">
 
         <PageTitle>Rounds</PageTitle>
 
@@ -59,7 +56,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
           ))}
         </ToggleGroup>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "2px 4px 0" }}>
+        <div className="flex items-center justify-between px-1 pt-0.5">
           <span className="text-[13px] font-bold text-foreground">
             {viewModel.filteredRounds.length} {viewModel.filteredRounds.length === 1 ? "round" : "rounds"}
           </span>
@@ -85,53 +82,39 @@ export function RoundsPage({ userId }: RoundsPageProps) {
           </Alert>
         )}
 
-        {viewModel.filteredRounds.length === 0 ? (
-          <div className="py-8 text-center text-sm leading-normal text-muted-foreground">
-            No rounds found.
-          </div>
-        ) : (
-          viewModel.visibleRounds.map((r) => {
-            return (
-              <Fragment key={r.id}>
-                <RoundPreview
-                  round={r}
-                  onClick={() => {
-                    if (viewModel.linkingRoundId === r.id) return;
-                    navigate(`/rounds/${r.id}`);
-                  }}
-                  onLinkClick={() => {
-                    if (viewModel.linkingRoundId === r.id) viewModel.closeLink();
-                    else viewModel.openLink(r.id);
-                  }}
-                />
+        <Collection
+          items={viewModel.visibleRounds}
+          keyFor={(r) => r.id}
+          empty="No rounds found."
+          renderItem={(r) => (
+            <>
+              <RoundPreview
+                round={r}
+                onClick={() => {
+                  if (viewModel.linkingRoundId === r.id) return;
+                  navigate(`/rounds/${r.id}`);
+                }}
+                onLinkClick={() => {
+                  if (viewModel.linkingRoundId === r.id) viewModel.closeLink();
+                  else viewModel.openLink(r.id);
+                }}
+              />
 
-                <AnimatePresence>
-                  {viewModel.linkingRoundId === r.id && (
-                    <motion.div
-                      key={`${r.id}-link`}
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      style={{ overflow: "hidden" }}
-                    >
-                      <CourseLinkSearch
-                        title={`Link "${r.course_name ? formatCourseName(r.course_name) : "this round"}" to a saved course`}
-                        query={viewModel.linkQuery}
-                        results={viewModel.linkResults}
-                        searching={viewModel.linkSearching}
-                        linking={viewModel.linking}
-                        onQueryChange={viewModel.handleLinkQuery}
-                        onSelectCourse={(c) => viewModel.handleSelectCourse(r.id, c)}
-                        onClose={viewModel.closeLink}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </Fragment>
-            );
-          })
-        )}
+              <Collapse open={viewModel.linkingRoundId === r.id}>
+                <CourseLinkSearch
+                  title={`Link "${r.course_name ? formatCourseName(r.course_name) : "this round"}" to a saved course`}
+                  query={viewModel.linkQuery}
+                  results={viewModel.linkResults}
+                  searching={viewModel.linkSearching}
+                  linking={viewModel.linking}
+                  onQueryChange={viewModel.handleLinkQuery}
+                  onSelectCourse={(c) => viewModel.handleSelectCourse(r.id, c)}
+                  onClose={viewModel.closeLink}
+                />
+              </Collapse>
+            </>
+          )}
+        />
 
         {viewModel.remainingCount > 0 && (
           <Button variant="outline" className="w-full" onClick={viewModel.loadMore}>

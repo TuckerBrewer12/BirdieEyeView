@@ -11,6 +11,10 @@ export {
   CardContent,
 } from "./components/Card";
 export { Button } from "./components/Button";
+export { Collapse } from "./components/Collapse";
+export type { CollapseProps } from "./components/Collapse";
+export { Collection } from "./components/Collection";
+export type { CollectionProps, CollectionLayout } from "./components/Collection";
 export {
   alertVariants,
   buttonVariants,
@@ -20,6 +24,7 @@ export {
   toggleVariants,
 } from "./components/variants";
 export { Input } from "./components/Input";
+export { LoadingState } from "./components/LoadingState";
 export {
   InputGroup,
   InputGroupAddon,
