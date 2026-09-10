@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
+import { pluralize } from "@/lib/pluralize";
 import type { RoundSummary, CourseSummary } from "@/types/golf";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 
@@ -80,10 +81,6 @@ const SORT_OPTIONS: readonly SortOption[] = (
 /** Best mode sorts by score whatever the chosen key is, so it labels as Score. */
 function sortLabelFor(filterMode: FilterMode, sortKey: SortKey): string {
   return SORT_LABELS[filterMode === "best" ? "total_score" : sortKey];
-}
-
-function pluralizeRounds(n: number): string {
-  return `${n} ${n === 1 ? "round" : "rounds"}`;
 }
 
 export function useRoundsPageViewModel(
@@ -240,8 +237,8 @@ export function useRoundsPageViewModel(
     filteredRounds,
     visibleRounds,
     remainingCount,
-    headerSubtitle: `${rounds.length} rounds played`,
-    resultCountLabel: pluralizeRounds(filteredRounds.length),
+    headerSubtitle: `${pluralize(rounds.length, "round")} played`,
+    resultCountLabel: pluralize(filteredRounds.length, "round"),
     loadMore,
     search,
     setSearch,
