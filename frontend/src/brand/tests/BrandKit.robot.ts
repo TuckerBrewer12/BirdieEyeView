@@ -2,11 +2,7 @@ import { expect, type Page } from "@playwright/test";
 
 /** Screen robot for isolated brand-kit stories. */
 export class BrandKitRobot {
-  private readonly page: Page;
-
-  constructor(page: Page) {
-    this.page = page;
-  }
+  constructor(private readonly page: Page) {}
 
   async open(story: string): Promise<this> {
     await this.page.goto(`/__brand__/${story}`);
@@ -19,11 +15,4 @@ export class BrandKitRobot {
     await expect(this.page.getByTestId("brand-stage")).toHaveScreenshot(name);
     return this;
   }
-}
-
-export async function onBrandKit(
-  page: Page,
-  run: (kit: BrandKitRobot) => Promise<void>,
-): Promise<void> {
-  await run(new BrandKitRobot(page));
 }

@@ -1,18 +1,22 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import { test as base, expect, type Locator, type Page } from "@playwright/test";
 import type { RoundSummary } from "../../../types/golf";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 
-/** Screen robot for /rounds — same idea as Android Espresso/Kakao robots. */
+/** Screen robot for /rounds — same idea as an Android Espresso robot. */
 export class RoundsRobot {
-  private readonly page: Page;
-
-  constructor(page: Page) {
-    this.page = page;
-  }
+  constructor(private readonly page: Page) {}
 
   private courseLabel(name: string): Locator {
     return this.page.locator("span").filter({ hasText: new RegExp(`^${name}$`) });
+  }
+
+  async dark(): Promise<this> {
+    await this.page.addInitScript(() => {
+      localStorage.setItem("settings_theme", "dark");
+      localStorage.setItem("public_theme", "dark");
+    });
+    return this;
   }
 
   async open(
@@ -137,9 +141,8 @@ export class RoundsRobot {
   }
 }
 
-export async function onRounds(
-  page: Page,
-  run: (rounds: RoundsRobot) => Promise<void>,
-): Promise<void> {
-  await run(new RoundsRobot(page));
-}
+export const test = base.extend<{ rounds: RoundsRobot }>({
+  rounds: async ({ page }, use) => {
+    await use(new RoundsRobot(page));
+  },
+});

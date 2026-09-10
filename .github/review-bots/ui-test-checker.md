@@ -10,8 +10,9 @@ Playwright is this repo's Espresso. Vitest is for view-model logic.
 
 - Page tests live in `pages/<Page>/tests/` next to the view and view model.
   Shared fixtures and the fake backend live in `src/testing/`.
-- One fluent robot per screen (`<Page>.robot.ts`) plus `on<Page>(page, run)`.
-  Specs stay thin; locators and actions stay on the robot.
+- One fluent robot per screen (`<Page>.robot.ts`). Specs import `test` from
+  that file and take `{ rounds }` — no `page`, no callback wrapper. Locators
+  and actions stay on the robot.
 - Screenshots are `*.screenshot.spec.ts` (Playwright, look). Espresso is
   `*.espresso.spec.ts` (Playwright, behavior). View models are `*.test.ts`
   or `*.test.tsx` (Vitest). Never a bare `*.spec.ts` — Vitest would pick it up.
@@ -48,7 +49,8 @@ error mapping belong in `use<Page>ViewModel.test.tsx`. Playwright should
 not re-prove that logic.
 
 **Locators in a spec.** If a spec calls `page.getBy…` instead of a robot
-method, the locator belongs on the robot.
+method, the locator belongs on the robot. Specs should look like an
+Android robot test: `await rounds.open(…); await rounds.tapChip("Best");`.
 
 **A missing file.** A new page with no `tests/` folder, robot, screenshot
 spec, or espresso spec. Anchor on the new page file.
