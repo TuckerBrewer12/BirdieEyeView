@@ -9,9 +9,6 @@ export class BrandKitRobot {
   }
 
   async open(story: string): Promise<this> {
-    await this.page.route("**/api/**", async (route) => {
-      await route.fulfill({ status: 401, contentType: "application/json", body: "{}" });
-    });
     await this.page.goto(`/__brand__/${story}`);
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.getByTestId("brand-stage")).toBeVisible();

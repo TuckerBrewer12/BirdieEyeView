@@ -72,7 +72,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        check: [test, lint, types, build]
+        check: [test, lint, types, build, espresso]
     steps:
       - uses: actions/checkout@v4
 
@@ -100,6 +100,14 @@ jobs:
       - name: Production build
         if: matrix.check == 'build'
         run: npm run build
+
+      - name: Install Playwright Chromium
+        if: matrix.check == 'espresso'
+        run: npx playwright install --with-deps chromium
+
+      - name: Espresso tests
+        if: matrix.check == 'espresso'
+        run: npm run test:espresso
 
   invariants:
     name: Repo invariants

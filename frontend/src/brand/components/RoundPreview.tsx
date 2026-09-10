@@ -94,6 +94,7 @@ export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps)
           {!round.course_id && onLinkClick && (
             <button
               type="button"
+              aria-label={`Link ${round.course_name ? formatCourseName(round.course_name) : "this round"} to a saved course`}
               onClick={(e) => {
                 e.stopPropagation();
                 onLinkClick();

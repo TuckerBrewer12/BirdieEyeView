@@ -30,4 +30,13 @@ test.describe("Rounds page screenshots", () => {
       await rounds.capture("rounds-empty.png");
     });
   });
+
+  test("course link panel open", async ({ page }) => {
+    await onRounds(page, async (rounds) => {
+      await rounds.open(populatedRounds);
+      await rounds.openLinkFor("Scanned Scorecard");
+      await rounds.seesLinkPanel("Scanned Scorecard");
+      await rounds.capture("rounds-link-open.png");
+    });
+  });
 });

@@ -25,6 +25,12 @@ enough that another page will want it. Say so, and where it should live.
 `frontend/src/brand/tests/screenshots/`. Flag any component this diff adds that
 is missing either one.
 
+**Mocks.** `vi.mock`, `vi.fn`, `mockResolvedValue` / `mockRejectedValue`, or a
+canned `page.route` fulfill (hardcoded status/JSON). Brand kit screenshots are
+isolated — `BrandKitRobot.open()` must not intercept `/api`. Page tests seed
+`FakeBackend` (`FakeFetch` / `FakeSession`); they do not mock modules.
+Fakes are named `Fake…`.
+
 Report every one you find. Do not stop at a fixed number.
 
 ## Rules
@@ -52,5 +58,6 @@ Example:
 [
   {"path": "frontend/src/pages/RoundsPage/RoundsPage.tsx", "line": 88, "body": "`#059669` is `colors.score.birdie.text` — import it from `@/brand/theme` instead of hardcoding."},
   {"path": "frontend/src/pages/CoursesPage/CoursesPage.tsx", "line": 42, "body": "This is a hand-rolled filter chip. `FilterChip` in `@/brand/components/FilterChip` already does this — use it instead."},
-  {"path": "frontend/src/brand/components/Badge.tsx", "line": 1, "body": "New kit component with no screenshot coverage. Add `previews/Badge.tsx` and `tests/screenshots/Badge.screenshot.spec.ts`."}
+  {"path": "frontend/src/brand/components/Badge.tsx", "line": 1, "body": "New kit component with no screenshot coverage. Add `previews/Badge.tsx` and `tests/screenshots/Badge.screenshot.spec.ts`."},
+  {"path": "frontend/src/brand/tests/BrandKit.robot.ts", "line": 12, "body": "This canned `page.route` fulfill is a mock. Brand screenshots are isolated and must not intercept `/api`."}
 ]

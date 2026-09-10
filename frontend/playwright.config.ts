@@ -2,7 +2,6 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./src",
-  testMatch: "**/*.screenshot.spec.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -30,6 +29,7 @@ export default defineConfig({
   projects: [
     {
       name: "desktop",
+      testMatch: "**/*.screenshot.spec.ts",
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 720 },
@@ -37,10 +37,19 @@ export default defineConfig({
     },
     {
       name: "mobile",
+      testMatch: "**/*.screenshot.spec.ts",
       testIgnore: "**/brand/**",
       use: {
         ...devices["iPhone 14"],
         browserName: "chromium",
+      },
+    },
+    {
+      name: "espresso",
+      testMatch: "**/*.espresso.spec.ts",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1280, height: 720 },
       },
     },
   ],

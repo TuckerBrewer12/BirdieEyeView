@@ -49,7 +49,13 @@ function RootRoutes() {
     return <BrandRoutes />;
   }
 
-  return <AppRoutes />;
+  return (
+    <AuthProvider>
+      <ScanProvider>
+        <AppRoutes />
+      </ScanProvider>
+    </AuthProvider>
+  );
 }
 
 function AppRoutes() {
@@ -129,12 +135,8 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <ScanProvider>
-          <ScrollToTop />
-          <RootRoutes />
-        </ScanProvider>
-      </AuthProvider>
+      <ScrollToTop />
+      <RootRoutes />
     </BrowserRouter>
   );
 }
