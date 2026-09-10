@@ -1,5 +1,5 @@
-export { colors, scoreFill, toParColor, toParLabel, useTheme } from "./theme";
-export type { BrandTheme, ColorMode, ColorScheme } from "./theme";
+export { colors, scoreFill, scoreKeyFor, toParLabel, toParTextClass } from "./theme";
+export type { ScoreKey } from "./theme";
 export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/Alert";
 export {
   Card,
@@ -30,7 +30,6 @@ export {
 export { PageTitle } from "./components/PageTitle";
 export { Toggle } from "./components/Toggle";
 export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
-export { Panel } from "./components/Panel";
 export { RoundPreview } from "./components/RoundPreview";
 export { SearchField } from "./components/SearchField";
 export { SortControl } from "./components/SortControl";

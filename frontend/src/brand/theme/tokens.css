@@ -1,4 +1,8 @@
-/* Brand design tokens.
+/* The brand palette. This file is the source of truth for every color in the
+   app -- nothing else should hold a hex value. colors.ts mirrors these names
+   as var() references so TypeScript can reach them; tokens.test.ts fails if a
+   name there has no definition here.
+
    Raw values use shadcn's unprefixed names so pasted components resolve them
    verbatim -- a component referencing var(--secondary) against a --brand-
    prefixed layer yields an undefined var, which makes the declaration invalid
@@ -9,8 +13,6 @@
    would no-op. */
 
 :root {
-  --radius: 0.5rem;
-  --radius-md: 0.375rem;
   --background: #f8faf8;
   --foreground: #1a2e1a;
   --card: #ffffff;
@@ -22,11 +24,36 @@
   --ring: #2d7a3a;
   --primary: #2d7a3a;
   --primary-foreground: #ffffff;
-  --destructive: #dc2626;
   --secondary: #f4f6f0;
   --secondary-foreground: #1a2e1a;
   --accent: #e8f5e9;
   --accent-foreground: #1a2e1a;
+  --destructive: #dc2626;
+  /* Ambient shadow for lifted surfaces; alpha so it reads on any backdrop. */
+  --shadow: rgb(15 23 42 / 0.10);
+
+  /* Score colors encode data, so they do not flip with the color mode. */
+  --score-eagle-fill: #a16207;
+  --score-eagle-on-fill: #ffffff;
+  --score-eagle-text: #a16207;
+  --score-birdie-fill: #0b8a5e;
+  --score-birdie-on-fill: #ffffff;
+  --score-birdie-text: #0b8a5e;
+  --score-par-fill: #e5e7eb;
+  --score-par-on-fill: #4b5563;
+  --score-par-text: #9ca3af;
+  --score-bogey-fill: #ef4444;
+  --score-bogey-on-fill: #7f1d1d;
+  --score-bogey-text: #dc2626;
+  --score-double-fill: #3b78e0;
+  --score-double-on-fill: #ffffff;
+  --score-double-text: #3b78e0;
+  --score-triple-fill: #7c52e0;
+  --score-triple-on-fill: #ffffff;
+  --score-triple-text: #7c52e0;
+  --score-quad-fill: #6d28d9;
+  --score-quad-on-fill: #ffffff;
+  --score-quad-text: #6d28d9;
 }
 
 :root.dark {
@@ -41,11 +68,13 @@
   --ring: #34d399;
   --primary: #2d7a3a;
   --primary-foreground: #ffffff;
-  --destructive: #f87171;
   --secondary: #222426;
   --secondary-foreground: #e6edf3;
   --accent: #1a3a1f;
   --accent-foreground: #e6edf3;
+  --destructive: #f87171;
+  /* Black reads as nothing on a dark page, so lift with a stronger halo. */
+  --shadow: rgb(0 0 0 / 0.55);
 }
 
 @theme inline {
@@ -60,9 +89,23 @@
   --color-ring: var(--ring);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-destructive: var(--destructive);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+
+  /* Only the text variant becomes a utility; fills are applied dynamically
+     per hole, which a static class cannot express. */
+  --color-score-eagle: var(--score-eagle-text);
+  --color-score-birdie: var(--score-birdie-text);
+  --color-score-par: var(--score-par-text);
+  --color-score-bogey: var(--score-bogey-text);
+  --color-score-double: var(--score-double-text);
+  --color-score-triple: var(--score-triple-text);
+  --color-score-quad: var(--score-quad-text);
+
+  /* Shadows track --shadow, so they invert in dark mode. */
+  --shadow-card: 0 6px 20px var(--shadow);
+  --shadow-hairline: 0 1px 0 var(--shadow);
 }

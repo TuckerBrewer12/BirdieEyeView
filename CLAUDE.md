@@ -271,9 +271,20 @@ Common SVG patterns:
 "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
 ```
 
+### Brand tokens (`src/brand/`)
+
+**`src/brand/theme/tokens.css` is the source of truth for every color.** Nothing else holds a hex value. `colors.ts` mirrors the same names as `var()` references so TypeScript can reach them — it holds no values of its own.
+
+- Add a color by declaring it in `tokens.css` (both `:root` and `:root.dark`), adding a `--color-*` line to `@theme inline` if it needs a Tailwind utility, and adding the matching `var()` reference to `colors.ts`.
+- Brand components style with **token utilities only** (`bg-card`, `border-border`, `text-primary`). No hex, no `rgba()`, no raw palette classes like `text-gray-400`. `tokens.test.ts` scans `src/brand/**` and fails the build on any violation, naming the file and the offending value. It also fails if `colors.ts` points at a token `tokens.css` doesn't define.
+- Reach for `colors.*` only when the color is dynamic and a static class can't express it — `scoreFill()` for a per-hole fill is the motivating case. Prefer the utility everywhere else.
+- Because `colors.*` returns `var()` references, they don't work where the string is parsed as a color (canvas, some chart libraries). Resolve those against the document: `getComputedStyle(document.documentElement).getPropertyValue("--card")`.
+- Score colors are `--score-<key>-fill` / `-on-fill` / `-text`, plus `text-score-<key>` utilities. Use `toParTextClass()` for to-par text.
+- Not yet unified: `src/lib/colors.ts` (`SCORE_COLORS`, `UI_COLORS`) and the `@theme` block in `index.css` still hold their own palettes for the analytics/chart layer. Folding those into the brand tokens is the next step.
+
 ### Dark Mode
 
-Implemented via `:root.dark` in `index.css`. Card bg: `#18191A`, borders: `#2a2d30`, text: `#f1f5f9` → `#9aa4b2`. Color-blind palette support via `getStoredColorBlindMode()` / `getColorBlindPalette()` in `src/lib/accessibility.ts` — always use `colorBlindPalette` overrides when rendering score colors in charts.
+Implemented via `:root.dark` in `brand/theme/tokens.css`. Color-blind palette support via `getStoredColorBlindMode()` / `getColorBlindPalette()` in `src/lib/accessibility.ts` — always use `colorBlindPalette` overrides when rendering score colors in charts.
 
 ---
 
