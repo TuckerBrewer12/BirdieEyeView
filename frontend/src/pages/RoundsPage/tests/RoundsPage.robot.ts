@@ -29,7 +29,7 @@ export class RoundsRobot {
   }
 
   async capture(name: string): Promise<this> {
-    await expect(this.page).toHaveScreenshot(name, { fullPage: true, maxDiffPixels: 400 });
+    await expect(this.page).toHaveScreenshot(name, { fullPage: true });
     return this;
   }
 }
