@@ -95,3 +95,15 @@ export const populatedRounds: RoundSummary[] = [
     ),
   },
 ];
+
+export function nRounds(count: number): RoundSummary[] {
+  return Array.from({ length: count }, (_, i) => ({
+    ...populatedRounds[0],
+    id: `round-n-${i + 1}`,
+    course_id: `course-n-${i + 1}`,
+    course_name: `Course ${i + 1}`,
+    date: `2026-01-${String((i % 28) + 1).padStart(2, "0")}T18:00:00.000Z`,
+    total_score: 70 + i,
+    to_par: i - 2,
+  }));
+}

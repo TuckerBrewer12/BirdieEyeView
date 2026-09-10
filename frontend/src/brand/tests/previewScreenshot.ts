@@ -1,11 +1,10 @@
 import { type Page } from "@playwright/test";
-import { onBrandKit } from "./BrandKit.robot";
+import { BrandKitRobot } from "./BrandKit.robot";
 
 export async function capturePreview(page: Page, name: string, file: string) {
-  await onBrandKit(page, async (kit) => {
-    await kit.open(name);
-    await kit.capture(file);
-  });
+  const kit = new BrandKitRobot(page);
+  await kit.open(name);
+  await kit.capture(file);
 }
 
 export async function enableDark(page: Page) {

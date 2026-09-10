@@ -14,8 +14,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: false,
     setupFiles: ['./src/test-setup.ts'],
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['src/**/*.screenshot.spec.ts'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'src/**/*Test.{ts,tsx}'],
+    exclude: ['src/**/*.screenshot.spec.ts', 'src/**/*.espresso.spec.ts'],
   },
   server: {
     host: true,
