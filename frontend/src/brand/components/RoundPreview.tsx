@@ -1,6 +1,7 @@
 import { Link2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { scoreFill, toParColor, toParLabel, useTheme } from "@/brand/theme";
+import { cn } from "@/brand/cn";
+import { scoreFill, toParLabel, toParTextClass } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
 import type { RoundSummary } from "@/types/golf";
 
@@ -22,128 +23,83 @@ function parseDateParts(dateStr: string | null | undefined) {
 }
 
 export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps) {
-  const theme = useTheme();
   const dateParts = parseDateParts(round.date);
   const toParText = toParLabel(round.to_par);
   const holes = round.hole_scores_summary ?? [];
 
   return (
     <motion.div
-      style={{
-        background: theme.card,
-        border: `1px solid ${theme.border}`,
-        borderRadius: 10,
-        display: "grid",
-        gridTemplateColumns: "54px 1fr auto",
-        gap: 10,
-        alignItems: "center",
-        cursor: onClick ? "pointer" : "default",
-        overflow: "hidden",
-      }}
-      whileHover={onClick ? { scale: 1.015, boxShadow: "0 6px 20px rgba(0,0,0,0.08)" } : undefined}
+      data-slot="round-preview"
+      className={cn(
+        "grid grid-cols-[54px_1fr_auto] items-center gap-2.5 overflow-hidden rounded-[10px] border border-border bg-card transition-shadow",
+        onClick ? "cursor-pointer hover:shadow-card" : "cursor-default",
+      )}
+      whileHover={onClick ? { scale: 1.015 } : undefined}
       whileTap={onClick ? { scale: 0.98 } : undefined}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       onClick={onClick}
     >
-      <div
-        style={{
-          background: theme.mutedFill,
-          borderRadius: "8px 0 0 8px",
-          padding: "10px 0",
-          textAlign: "center",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 2,
-          alignSelf: "stretch",
-          justifyContent: "center",
-        }}
-      >
+      <div className="flex flex-col items-center justify-center gap-0.5 self-stretch rounded-l-lg bg-muted py-2.5 text-center">
         {dateParts ? (
           <>
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: theme.fgMuted }}>
+            <span className="text-[9px] font-bold uppercase tracking-[1px] text-muted-foreground">
               {dateParts.month}
             </span>
-            <span style={{ fontSize: 18, fontWeight: 700, color: theme.fg, lineHeight: 1 }}>
+            <span className="text-[18px] font-bold leading-none text-foreground">
               {dateParts.day}
             </span>
-            <span style={{ fontSize: 9, color: theme.fgMuted }}>{dateParts.year}</span>
+            <span className="text-[9px] text-muted-foreground">{dateParts.year}</span>
           </>
         ) : (
-          <span style={{ fontSize: 9, color: theme.fgMuted }}>—</span>
+          <span className="text-[9px] text-muted-foreground">—</span>
         )}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: "10px 0", minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
-          <span
-            style={{
-              fontSize: 16,
-              fontWeight: 700,
-              letterSpacing: "-0.3px",
-              color: theme.fg,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              minWidth: 0,
-              flex: 1,
-            }}
-          >
+      <div className="flex min-w-0 flex-col gap-0.5 py-2.5">
+        <div className="flex min-w-0 items-center gap-[5px]">
+          <span className="min-w-0 flex-1 truncate text-base font-bold tracking-[-0.3px] text-foreground">
             {round.course_name ? formatCourseName(round.course_name) : "Unknown course"}
           </span>
           {!round.course_id && onLinkClick && (
             <button
               type="button"
+              aria-label="Link this round to a course"
               onClick={(e) => {
                 e.stopPropagation();
                 onLinkClick();
               }}
-              style={{
-                background: "none",
-                border: "none",
-                padding: 0,
-                cursor: "pointer",
-                color: theme.fgMuted,
-                flexShrink: 0,
-                display: "flex",
-                alignItems: "center",
-              }}
+              className="flex shrink-0 items-center border-none bg-transparent p-0 text-muted-foreground hover:text-foreground"
             >
               <Link2 size={11} />
             </button>
           )}
         </div>
 
-        <div style={{ fontSize: 10, color: theme.fgMuted, display: "flex", gap: 8, alignItems: "center" }}>
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
           {round.front_nine != null && round.back_nine != null && (
             <span>
-              <strong style={{ color: theme.fg, fontWeight: 700 }}>
+              <strong className="font-bold text-foreground">
                 {round.front_nine}·{round.back_nine}
               </strong>
             </span>
           )}
           {round.total_putts != null && (
             <span>
-              <strong style={{ color: theme.fg, fontWeight: 700 }}>{round.total_putts}</strong> putts
+              <strong className="font-bold text-foreground">{round.total_putts}</strong> putts
             </span>
           )}
           {round.tee_box && <span>{round.tee_box}</span>}
         </div>
 
         {holes.length > 0 && (
-          <div style={{ display: "flex", gap: 1.5, marginTop: 4, height: 10 }}>
+          <div className="mt-1 flex h-2.5 gap-[1.5px]">
             {holes.map((h) => {
-              const fill = scoreFill(h.s, h.p);
               const isPar = h.s == null || h.p == null || h.s === h.p;
               return (
                 <div
                   key={h.h}
-                  style={{
-                    flex: 1,
-                    borderRadius: 1.5,
-                    background: fill,
-                    opacity: isPar ? 0.35 : 1,
-                  }}
+                  className={cn("flex-1 rounded-[1.5px]", isPar && "opacity-35")}
+                  style={{ background: scoreFill(h.s, h.p) }}
                 />
               );
             })}
@@ -151,22 +107,12 @@ export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps)
         )}
       </div>
 
-      <div
-        style={{
-          textAlign: "right",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-end",
-          gap: 2,
-          paddingRight: 14,
-          whiteSpace: "nowrap",
-        }}
-      >
-        <span style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.8px", lineHeight: 1, color: theme.fg }}>
+      <div className="flex flex-col items-end gap-0.5 whitespace-nowrap pr-3.5 text-right">
+        <span className="text-2xl font-bold leading-none tracking-[-0.8px] text-foreground">
           {round.total_score ?? "—"}
         </span>
         {toParText && (
-          <span style={{ fontSize: 10, fontWeight: 700, color: toParColor(round.to_par, theme.fgMuted) }}>
+          <span className={cn("text-[10px] font-bold", toParTextClass(round.to_par))}>
             {toParText}
           </span>
         )}
