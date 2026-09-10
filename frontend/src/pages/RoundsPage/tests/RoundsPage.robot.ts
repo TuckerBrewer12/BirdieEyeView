@@ -36,6 +36,14 @@ export class RoundsRobot {
     return this;
   }
 
+  async seesChipPressed(label: string): Promise<this> {
+    await expect(this.page.getByRole("button", { name: label, exact: true })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    return this;
+  }
+
   async sortBy(label: string): Promise<this> {
     await this.page.getByRole("combobox", { name: "Sort by" }).click();
     await this.page.getByRole("option", { name: label, exact: true }).click();
@@ -90,10 +98,20 @@ export class RoundsRobot {
   }
 
   async seesLinkPanel(courseName: string): Promise<this> {
+    const search = this.page.getByPlaceholder("Search courses…");
     await expect(
       this.page.getByText(`Link "${courseName}" to a saved course`),
     ).toBeVisible();
-    await this.page.getByPlaceholder("Search courses…").scrollIntoViewIfNeeded();
+    await search.evaluate((el) => {
+      el.scrollIntoView({ block: "end", inline: "nearest" });
+      const nav = document.querySelector("nav.fixed.bottom-0");
+      const extra =
+        nav instanceof HTMLElement && getComputedStyle(nav).display !== "none"
+          ? nav.getBoundingClientRect().height
+          : 0;
+      if (extra) window.scrollBy(0, extra);
+    });
+    await expect(search).toBeVisible();
     return this;
   }
 

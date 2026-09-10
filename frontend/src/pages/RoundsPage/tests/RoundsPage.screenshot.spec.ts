@@ -36,6 +36,7 @@ test.describe("Rounds page screenshots", () => {
       await rounds.open(populatedRounds);
       await rounds.openLinkFor("Scanned Scorecard");
       await rounds.seesLinkPanel("Scanned Scorecard");
+      await rounds.seesChipPressed("All");
       await rounds.capture("rounds-link-open.png");
     });
   });
