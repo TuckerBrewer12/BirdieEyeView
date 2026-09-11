@@ -1,23 +1,18 @@
-import { useState, useCallback, useRef, useMemo, type ReactNode } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState, type ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Link2 } from "lucide-react";
 import { ShareCard } from "@/components/share/ShareCard";
 import { useShareRound } from "@/hooks/useShareRound";
-import type { CourseSummary } from "@/types/golf";
-import { CourseLinkSearch } from "@/brand";
+import { Alert, AlertDescription, CourseLinkSearch, LoadingState } from "@/brand";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from "recharts";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
-import { api } from "@/lib/api";
-import { useCourseSearch } from "@/hooks/useCourseSearch";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
-import { formatCourseName } from "@/lib/courseName";
-import { calcCourseHandicap, calcNetScore } from "@/types/golf";
-import type { ComparisonRow } from "@/types/analytics";
+import type { ComparisonRow, RoundComparison } from "@/types/analytics";
 import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
 import { RoundDetailHeader } from "@/components/round-detail/RoundDetailHeader";
 import { RoundFlowTimeline } from "@/components/analytics/RoundFlowTimeline";
+import { useRoundDetailPageViewModel } from "./useRoundDetailPageViewModel";
 
 const tooltipStyle = {
   fontSize: 12,
@@ -26,7 +21,30 @@ const tooltipStyle = {
   boxShadow: "0 4px 24px rgba(0,0,0,0.07)",
   background: "rgba(255,255,255,0.97)",
 };
-const TEE_COLOR_TOKENS = ["black", "blue", "white", "gold", "red", "green", "silver", "yellow", "orange", "purple", "brown", "combo"];
+
+type ChartGroup = "score" | "short_game" | "gir";
+
+const CHART_TABS: { key: ChartGroup; label: string }[] = [
+  { key: "score", label: "Score" },
+  { key: "short_game", label: "Short Game" },
+  { key: "gir", label: "GIR" },
+];
+
+function comparisonCharts(comparison: RoundComparison): {
+  title: string;
+  rows: ComparisonRow[];
+  primaryLabel: string;
+  group: ChartGroup;
+}[] {
+  return [
+    { title: "Score", rows: comparison.score, primaryLabel: "score", group: "score" },
+    { title: "Putts", rows: comparison.putts, primaryLabel: "putts", group: "short_game" },
+    { title: "GIR", rows: comparison.gir, primaryLabel: "GIR", group: "gir" },
+    { title: "3-Putts", rows: comparison.three_putts, primaryLabel: "3-putts", group: "short_game" },
+    { title: "Putts per GIR", rows: comparison.putts_per_gir, primaryLabel: "putts/GIR", group: "short_game" },
+    { title: "Scrambling", rows: comparison.scrambling, primaryLabel: "scramble successes", group: "short_game" },
+  ];
+}
 
 function SectionLabel({ children }: { children: string }) {
   return (
@@ -39,7 +57,6 @@ function SectionLabel({ children }: { children: string }) {
   );
 }
 
-type EditedScores = Record<number, { strokes: number | null; putts: number | null; gir?: boolean | null }>;
 type Fmt = (value: unknown, name: unknown, props: unknown) => ReactNode | [ReactNode, string];
 
 function formatNumber(value: number | null): string {
@@ -104,351 +121,70 @@ function ComparisonChartCard({
 export function RoundDetailPage({ userId }: { userId: string }) {
   const { roundId } = useParams<{ roundId: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [editMode, setEditMode] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [chartTab, setChartTab] = useState<"score" | "short_game" | "gir">("score");
-  const [deleting, setDeleting] = useState(false);
-  const deletingRef = useRef(false);
-  const [saving, setSaving] = useState(false);
-  const [editedScores, setEditedScores] = useState<EditedScores>({});
-  const [editedTeeBox, setEditedTeeBox] = useState("");
-  const [availableTees, setAvailableTees] = useState<string[]>([]);
-  const [showLinkCourse, setShowLinkCourse] = useState(false);
-  const [linking, setLinking] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const linkSearch = useCourseSearch(userId);
-  const { reset: resetLinkSearch } = linkSearch;
-  // Edit-mode course state
-  const [editCoursePendingLink, setEditCoursePendingLink] = useState<CourseSummary | null>(null);
-  const [editCourseChanging, setEditCourseChanging] = useState(false);
-  const [editCourseNameValue, setEditCourseNameValue] = useState("");
-  const [editCourseNameConfirmed, setEditCourseNameConfirmed] = useState(false);
-  const editCourseSearch = useCourseSearch(userId);
-  const { reset: resetEditCourseSearch } = editCourseSearch;
+  const viewModel = useRoundDetailPageViewModel(userId, roundId);
+  const [chartTab, setChartTab] = useState<ChartGroup>("score");
   const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
   const colorBlindPalette = useMemo(() => getColorBlindPalette(colorBlindMode), [colorBlindMode]);
   const { cardRef: shareCardRef, share: shareRound, sharing } = useShareRound();
-  const { data: round } = useQuery({
-    queryKey: ["round", roundId],
-    queryFn: () => api.getRound(roundId!),
-    enabled: !!roundId,
-    staleTime: 5 * 60 * 1000,
-  });
-  const { data: comparison } = useQuery({
-    queryKey: ["round-comparison", userId, roundId],
-    queryFn: () => api.getRoundComparison(userId, roundId!),
-    enabled: !!roundId,
-  });
-  const { data: handicapData } = useQuery({
-    queryKey: ["handicap", userId],
-    queryFn: () => api.getUserHandicap(userId),
-  });
-  const handicapIndex = handicapData?.handicap_index ?? null;
 
-  const extractTeeColorToken = useCallback((value: string | null | undefined): string | null => {
-    const text = (value ?? "").toLowerCase();
-    if (!text) return null;
-    for (const token of TEE_COLOR_TOKENS) {
-      if (text.includes(token)) return token;
-    }
-    return null;
-  }, []);
-
-  const chooseCompatibleTee = useCallback((current: string, teeColors: string[]): string | null => {
-    const trimmed = current.trim();
-    if (!trimmed || teeColors.length === 0) return null;
-    const exact = teeColors.find((c) => c.toLowerCase() === trimmed.toLowerCase());
-    if (exact) return exact;
-    const currentToken = extractTeeColorToken(trimmed);
-    if (!currentToken) return null;
-    return teeColors.find((c) => extractTeeColorToken(c) === currentToken) ?? null;
-  }, [extractTeeColorToken]);
-
-  const loadTeesForCourse = useCallback(async (
-    courseId: string | null | undefined,
-    fallback: string[] = [],
-  ): Promise<string[]> => {
-    if (!courseId) {
-      setAvailableTees(fallback);
-      return fallback;
-    }
-    try {
-      const full = await api.getCourse(courseId);
-      const teeColors = full.tees.map((t) => t.color).filter((c): c is string => !!c);
-      setAvailableTees(teeColors);
-      return teeColors;
-    } catch {
-      setAvailableTees(fallback);
-      return fallback;
-    }
-  }, []);
-
-  const restoreAvailableTeesFromRound = useCallback(async () => {
-    if (!round) return;
-    const fallbackColors = round.course?.tees
-      .map((t) => t.color)
-      .filter((c): c is string => !!c) ?? [];
-    const teeColors = await loadTeesForCourse(round.course?.id, fallbackColors);
-    setEditedTeeBox((prev) => {
-      if (!prev) return prev;
-      if (teeColors.length === 0) return prev;
-      return chooseCompatibleTee(prev, teeColors) ?? "";
-    });
-  }, [round, loadTeesForCourse, chooseCompatibleTee]);
-
-  const handleSelectEditCourse = useCallback(async (course: CourseSummary) => {
-    setEditCoursePendingLink(course);
-    setEditCourseChanging(false);
-    resetEditCourseSearch();
-    const teeColors = await loadTeesForCourse(course.id, []);
-    setEditedTeeBox((prev) => {
-      const current = (prev ?? "").trim();
-      if (teeColors.length === 0) return prev;
-      if (current) {
-        const matched = chooseCompatibleTee(current, teeColors);
-        if (matched) return matched;
-      }
-      return teeColors.length === 1 ? teeColors[0] : "";
-    });
-  }, [loadTeesForCourse, chooseCompatibleTee, resetEditCourseSearch]);
-
-  const enterEditMode = useCallback(async () => {
-    if (!round) return;
-    const initial: EditedScores = {};
-    for (const s of round.hole_scores) {
-      if (s.hole_number != null) {
-        initial[s.hole_number] = { strokes: s.strokes, putts: s.putts };
-      }
-    }
-    setEditedScores(initial);
-    setEditedTeeBox(round.tee_box ?? "");
-
-    // Always fetch the full course fresh from the DB so we get every tee that
-    // has been saved (including tees added by later scans via fill_course_gaps).
-    // Fall back to whatever tees are already on the round object if the fetch fails.
-    const fallbackColors = round.course?.tees
-      .map((t) => t.color)
-      .filter((c): c is string => !!c) ?? [];
-
-    await loadTeesForCourse(round.course?.id, fallbackColors);
-
-    // Init course edit state from current round
-    const hasCustomName = !!round.course_name_played;
-    setEditCoursePendingLink(null);
-    setEditCourseChanging(false);
-    setEditCourseNameValue(hasCustomName ? round.course_name_played! : "");
-    setEditCourseNameConfirmed(hasCustomName);
-    resetEditCourseSearch();
-
-    setEditMode(true);
-    setConfirmDelete(false);
-  }, [round, loadTeesForCourse, resetEditCourseSearch]);
-
-  const cancelEdit = useCallback(() => {
-    setEditMode(false);
-    setEditedScores({});
-    setEditCoursePendingLink(null);
-    setEditCourseChanging(false);
-    setEditCourseNameValue("");
-    setEditCourseNameConfirmed(false);
-    resetEditCourseSearch();
-  }, [resetEditCourseSearch]);
-
-  const handleSave = useCallback(async () => {
-    if (!round || !roundId) return;
-    setSaving(true);
-    setActionError(null);
-    try {
-      // Link to DB course if user picked one
-      if (editCoursePendingLink) {
-        await api.linkCourse(roundId, editCoursePendingLink.id);
-      }
-
-      const holeScores = round.hole_scores
-        .filter((s) => s.hole_number != null)
-        .map((s) => {
-          const edited = editedScores[s.hole_number!];
-          const girValue = edited?.gir !== undefined ? edited.gir : s.green_in_regulation;
-          return {
-            hole_number: s.hole_number!,
-            strokes: edited?.strokes ?? s.strokes,
-            putts: edited?.putts ?? s.putts,
-            fairway_hit: s.fairway_hit,
-            green_in_regulation: girValue,
-          };
-        });
-
-      // Determine display title override (course_name_played), even for linked rounds.
-      let courseNamePlayed: string | null | undefined;
-      if (editCourseNameConfirmed && editCourseNameValue) {
-        courseNamePlayed = editCourseNameValue;
-      } else if (round.course_name_played && !editCourseNameConfirmed) {
-        courseNamePlayed = null; // user cleared previously saved override
-      }
-
-      const updated = await api.updateRound(roundId, {
-        hole_scores: holeScores,
-        tee_box: editedTeeBox || null,
-        ...(courseNamePlayed !== undefined ? { course_name_played: courseNamePlayed } : {}),
-      });
-      queryClient.setQueryData(["round", roundId], updated);
-      queryClient.invalidateQueries({ queryKey: ["round-comparison", userId, roundId] });
-      queryClient.invalidateQueries({ queryKey: ["career-analytics", userId] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard", userId] });
-      setEditMode(false);
-      setEditCoursePendingLink(null);
-      setEditCourseChanging(false);
-      setEditCourseNameValue("");
-      setEditCourseNameConfirmed(false);
-    } catch (err) {
-      console.error("Save failed:", err);
-      setActionError(err instanceof Error ? err.message : "Could not save this round.");
-    } finally {
-      setSaving(false);
-    }
-  }, [round, roundId, editedScores, editedTeeBox, editCoursePendingLink, editCourseNameConfirmed, editCourseNameValue, queryClient, userId]);
-
-  const handleDelete = useCallback(async () => {
-    if (!roundId || deletingRef.current) return;
-    deletingRef.current = true;
-    setDeleting(true);
-    try {
-      await api.deleteRound(roundId);
-    } catch {
-      // already deleted — treat as success
-    }
-    queryClient.invalidateQueries({ queryKey: ["rounds", userId] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard", userId] });
-    queryClient.invalidateQueries({ queryKey: ["career-analytics", userId] });
-    navigate("/rounds");
-  }, [roundId, userId, queryClient, navigate]);
-
-  const handleScoreChange = useCallback(
-    (holeNumber: number, field: "strokes" | "putts", value: number | null) => {
-      setEditedScores((prev) => ({
-        ...prev,
-        [holeNumber]: { ...prev[holeNumber], [field]: value },
-      }));
-    },
-    []
-  );
-
-  const handleGirChange = useCallback(
-    (holeNumber: number, value: boolean | null) => {
-      setEditedScores((prev) => ({
-        ...prev,
-        [holeNumber]: { ...prev[holeNumber], gir: value },
-      }));
-    },
-    []
-  );
-
-  const handleSelectCourse = useCallback(async (course: CourseSummary) => {
-    if (!roundId) return;
-    setLinking(true);
-    setActionError(null);
-    try {
-      await api.linkCourse(roundId, course.id);
-      await queryClient.invalidateQueries({ queryKey: ["round", roundId] });
-      setShowLinkCourse(false);
-      resetLinkSearch();
-    } catch (err) {
-      console.error("Link failed:", err);
-      setActionError(err instanceof Error ? err.message : "Could not link this round to that course.");
-    } finally {
-      setLinking(false);
-    }
-  }, [roundId, queryClient, resetLinkSearch]);
-
-  if (!round) {
+  if (viewModel.loading) {
+    return <LoadingState>Loading round...</LoadingState>;
+  }
+  if (viewModel.loadError || !viewModel.round) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-400">Loading round...</div>
-      </div>
+      <Alert variant="destructive">
+        <AlertDescription>{viewModel.loadError ?? "Could not load this round."}</AlertDescription>
+      </Alert>
     );
   }
 
-  // Totals: use edited strokes in edit mode for live feedback.
-  // Use key-existence so explicitly cleared scores (null) don't fall back to original.
-  const totalScore = round.hole_scores.reduce((sum, s) => {
-    const strokes =
-      editMode && s.hole_number != null && s.hole_number in editedScores
-        ? editedScores[s.hole_number].strokes
-        : s.strokes;
-    return sum + (strokes ?? 0);
-  }, 0);
-  const coursePar = round.course
-    ? round.course.holes.reduce((sum, h) => sum + (h.par ?? 0), 0) || null
-    : round.hole_scores.some((s) => s.par_played != null)
-    ? round.hole_scores.reduce((sum, s) => sum + (s.par_played ?? 0), 0)
-    : null;
-  const toPar = coursePar !== null ? totalScore - coursePar : null;
-
-  const courseName = formatCourseName(round.course_name_played ?? round.course?.name);
-  const editLinkedName = editCoursePendingLink?.name
-    ?? (!editCourseChanging ? round.course?.name ?? undefined : undefined);
-  const editCustomName = !editLinkedName && editCourseNameConfirmed && editCourseNameValue
-    ? editCourseNameValue
-    : undefined;
-  const editPickingCourse = !editLinkedName && !editCustomName;
-
-  const activeTeeBox = editMode ? editedTeeBox : round.tee_box;
-  const tee = activeTeeBox
-    ? round.course?.tees.find((t) => t.color?.toLowerCase() === activeTeeBox.toLowerCase()) ?? null
-    : null;
-  const courseHandicap =
-    handicapIndex != null &&
-    tee?.slope_rating != null &&
-    tee?.course_rating != null &&
-    coursePar != null
-      ? calcCourseHandicap(handicapIndex, tee.slope_rating, tee.course_rating, coursePar)
-      : null;
-  const netScore = courseHandicap != null && totalScore > 0
-    ? calcNetScore(totalScore, courseHandicap)
-    : null;
+  const round = viewModel.round;
+  const comparison = viewModel.comparison;
+  const charts = comparison ? comparisonCharts(comparison) : [];
 
   return (
     <div>
-      {/* Hidden share card for image capture */}
       <div style={{ position: "fixed", left: -9999, top: 0, pointerEvents: "none" }}>
-        <ShareCard ref={shareCardRef} round={round} courseName={courseName} />
+        <ShareCard ref={shareCardRef} round={round} courseName={viewModel.courseName} />
       </div>
 
-      {actionError && (
-        <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {actionError}
-        </div>
+      {viewModel.actionError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{viewModel.actionError}</AlertDescription>
+        </Alert>
       )}
 
       <RoundDetailHeader
         round={round}
-        courseName={courseName}
-        totalScore={totalScore}
-        toPar={toPar}
-        netScore={netScore}
-        courseHandicap={courseHandicap}
-        tee={tee}
-        editMode={editMode}
-        saving={saving}
-        confirmDelete={confirmDelete}
-        deleting={deleting}
+        courseName={viewModel.courseName}
+        totalScore={viewModel.totalScore}
+        toPar={viewModel.toPar}
+        netScore={viewModel.netScore}
+        courseHandicap={viewModel.courseHandicap}
+        tee={viewModel.tee}
+        editMode={viewModel.editMode}
+        saving={viewModel.saving}
+        confirmDelete={viewModel.confirmDelete}
+        deleting={viewModel.deleting}
         sharing={sharing}
-        onEdit={enterEditMode}
-        onSave={handleSave}
-        onCancelEdit={cancelEdit}
-        onShare={() => shareRound(round, courseName)}
-        onDelete={() => setConfirmDelete(true)}
-        onConfirmDelete={handleDelete}
-        onCancelDelete={() => setConfirmDelete(false)}
+        onEdit={viewModel.enterEditMode}
+        onSave={() => { void viewModel.save(); }}
+        onCancelEdit={viewModel.cancelEdit}
+        onShare={() => shareRound(round, viewModel.courseName)}
+        onDelete={viewModel.requestDelete}
+        onConfirmDelete={() => {
+          void viewModel.confirmDeleteRound().then((ok) => {
+            if (ok) navigate("/rounds");
+          });
+        }}
+        onCancelDelete={viewModel.cancelDelete}
         onBack={() => navigate(-1)}
       />
 
-      {/* Course link button — visible in view mode when not linked */}
-      {!editMode && !round.course && !showLinkCourse && (
+      {viewModel.showLinkButton && (
         <div className="mb-3 -mt-2">
           <button
-            onClick={() => setShowLinkCourse(true)}
+            onClick={viewModel.openLinkCourse}
             className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-primary transition-colors"
           >
             <Link2 size={12} />
@@ -456,87 +192,63 @@ export function RoundDetailPage({ userId }: { userId: string }) {
           </button>
         </div>
       )}
-      {showLinkCourse && (
+      {viewModel.showLinkCourse && (
         <div className="mb-4">
           <CourseLinkSearch
             title="Link to a saved course"
-            query={linkSearch.query}
-            results={linkSearch.results}
-            searching={linkSearch.searching}
-            linking={linking}
-            onQueryChange={linkSearch.setQuery}
-            onSelectCourse={handleSelectCourse}
-            onClose={() => { setShowLinkCourse(false); resetLinkSearch(); }}
+            query={viewModel.courseQuery}
+            results={viewModel.courseResults}
+            searching={viewModel.courseSearching}
+            linking={viewModel.linking}
+            onQueryChange={viewModel.handleCourseQuery}
+            onSelectCourse={(c) => { void viewModel.handleSelectCourse(c); }}
+            onClose={viewModel.closeLinkCourse}
           />
         </div>
       )}
 
-      {editMode && (
+      {viewModel.editMode && (
         <div className="mb-4">
           <CourseLinkSearch
-            query={editCourseSearch.query}
-            results={editCourseSearch.results}
-            searching={editCourseSearch.searching}
-            onQueryChange={editCourseSearch.setQuery}
-            onSelectCourse={(c) => { void handleSelectEditCourse(c); }}
-            onClose={() => {
-              setEditCourseChanging(false);
-              resetEditCourseSearch();
-              void restoreAvailableTeesFromRound();
-            }}
+            query={viewModel.courseQuery}
+            results={viewModel.courseResults}
+            searching={viewModel.courseSearching}
+            onQueryChange={viewModel.handleCourseQuery}
+            onSelectCourse={(c) => { void viewModel.handleSelectEditCourse(c); }}
+            onClose={viewModel.closeEditCourseSearch}
             reviewVariant
-            onUseCustomName={(name) => {
-              setEditCourseNameValue(name);
-              setEditCourseNameConfirmed(true);
-              setEditCoursePendingLink(null);
-              setEditCourseChanging(false);
-              resetEditCourseSearch();
-              void restoreAvailableTeesFromRound();
-            }}
-            linkedName={editLinkedName}
-            customName={editCustomName}
-            onClear={() => {
-              if (editCoursePendingLink) {
-                setEditCoursePendingLink(null);
-                setEditCourseChanging(false);
-                resetEditCourseSearch();
-                void restoreAvailableTeesFromRound();
-              } else if (round.course && !editCourseChanging) {
-                setEditCourseChanging(true);
-              } else {
-                setEditCourseNameConfirmed(false);
-                setEditCourseNameValue("");
-                resetEditCourseSearch();
-              }
-            }}
+            onUseCustomName={viewModel.useCustomName}
+            linkedName={viewModel.editLinkedName}
+            customName={viewModel.editCustomName}
+            onClear={viewModel.startChangingCourse}
+            clearLabel="Change course"
           />
-          {editPickingCourse && round.course_name_played && !editCourseSearch.query && !editCourseNameConfirmed && (
+          {viewModel.showKeepUnlinkedName && viewModel.playedCourseName && (
             <button
               type="button"
-              onClick={() => { setEditCourseNameValue(round.course_name_played!); setEditCourseNameConfirmed(true); }}
+              onClick={() => viewModel.useCustomName(viewModel.playedCourseName!)}
               className="mt-1.5 text-xs text-gray-400 hover:text-primary transition-colors"
             >
-              Keep "{round.course_name_played}" without linking →
+              Keep "{viewModel.playedCourseName}" without linking →
             </button>
           )}
         </div>
       )}
 
-      <div className={!editMode ? "mt-2" : ""}>
+      <div className={!viewModel.editMode ? "mt-2" : ""}>
         <ScorecardGrid
           round={round}
-          editMode={editMode}
-          editedScores={editedScores}
-          editedTeeBox={editedTeeBox}
-          availableTees={availableTees}
-          onScoreChange={handleScoreChange}
-          onTeeBoxChange={setEditedTeeBox}
-          onGirChange={handleGirChange}
+          editMode={viewModel.editMode}
+          editedScores={viewModel.editedScores}
+          editedTeeBox={viewModel.editedTeeBox}
+          availableTees={viewModel.availableTees}
+          onScoreChange={viewModel.handleScoreChange}
+          onTeeBoxChange={viewModel.setEditedTeeBox}
+          onGirChange={viewModel.handleGirChange}
         />
       </div>
 
-      {/* Round Flow */}
-      {round.hole_scores.filter((s) => s.strokes != null).length >= 3 && (
+      {viewModel.showMomentum && (
         <div className="mt-6">
           <SectionLabel>Momentum</SectionLabel>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-x-auto">
@@ -547,19 +259,13 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         </div>
       )}
 
-      {/* Round comparison */}
       {comparison && (
         <div className="mt-8">
           <SectionLabel>Round Comparison</SectionLabel>
           <ScrollSection>
-            {/* Mobile: tabbed pills */}
             <div className="md:hidden">
               <div className="flex gap-2 mb-4">
-                {([
-                  { key: "score", label: "Score" },
-                  { key: "short_game", label: "Short Game" },
-                  { key: "gir", label: "GIR" },
-                ] as const).map(({ key, label }) => (
+                {CHART_TABS.map(({ key, label }) => (
                   <button
                     key={key}
                     onClick={() => setChartTab(key)}
@@ -571,29 +277,28 @@ export function RoundDetailPage({ userId }: { userId: string }) {
                   </button>
                 ))}
               </div>
-              {chartTab === "score" && (
-                <ComparisonChartCard title="Score" rows={comparison.score} primaryLabel="score" palette={colorBlindPalette} />
-              )}
-              {chartTab === "gir" && (
-                <ComparisonChartCard title="GIR" rows={comparison.gir} primaryLabel="GIR" palette={colorBlindPalette} />
-              )}
-              {chartTab === "short_game" && (
-                <div className="grid grid-cols-2 gap-3">
-                  <ComparisonChartCard title="Putts" rows={comparison.putts} primaryLabel="putts" palette={colorBlindPalette} />
-                  <ComparisonChartCard title="3-Putts" rows={comparison.three_putts} primaryLabel="3-putts" palette={colorBlindPalette} />
-                  <ComparisonChartCard title="Putts/GIR" rows={comparison.putts_per_gir} primaryLabel="putts/GIR" palette={colorBlindPalette} />
-                  <ComparisonChartCard title="Scrambling" rows={comparison.scrambling} primaryLabel="scramble" palette={colorBlindPalette} />
-                </div>
-              )}
+              <div className={chartTab === "short_game" ? "grid grid-cols-2 gap-3" : undefined}>
+                {charts.filter((chart) => chart.group === chartTab).map((chart) => (
+                  <ComparisonChartCard
+                    key={chart.title}
+                    title={chart.title}
+                    rows={chart.rows}
+                    primaryLabel={chart.primaryLabel}
+                    palette={colorBlindPalette}
+                  />
+                ))}
+              </div>
             </div>
-            {/* Desktop: full grid */}
             <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <ComparisonChartCard title="Score" rows={comparison.score} primaryLabel="score" palette={colorBlindPalette} />
-              <ComparisonChartCard title="Putts" rows={comparison.putts} primaryLabel="putts" palette={colorBlindPalette} />
-              <ComparisonChartCard title="GIR" rows={comparison.gir} primaryLabel="GIR" palette={colorBlindPalette} />
-              <ComparisonChartCard title="3-Putts" rows={comparison.three_putts} primaryLabel="3-putts" palette={colorBlindPalette} />
-              <ComparisonChartCard title="Putts per GIR" rows={comparison.putts_per_gir} primaryLabel="putts/GIR" palette={colorBlindPalette} />
-              <ComparisonChartCard title="Scrambling" rows={comparison.scrambling} primaryLabel="scramble successes" palette={colorBlindPalette} />
+              {charts.map((chart) => (
+                <ComparisonChartCard
+                  key={chart.title}
+                  title={chart.title}
+                  rows={chart.rows}
+                  primaryLabel={chart.primaryLabel}
+                  palette={colorBlindPalette}
+                />
+              ))}
             </div>
           </ScrollSection>
         </div>
