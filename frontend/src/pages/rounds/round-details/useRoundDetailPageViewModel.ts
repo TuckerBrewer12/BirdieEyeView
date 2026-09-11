@@ -5,7 +5,7 @@ import { chooseCompatibleTee } from "@/lib/teeColor";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
 import { calcCourseHandicap, calcNetScore } from "@/types/golf";
 import type { Course, CourseSummary, Round, Tee } from "@/types/golf";
-import type { RoundComparison } from "@/types/analytics";
+import type { ComparisonRow, RoundComparison } from "@/types/analytics";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
 
 export type EditedScores = Record<number, { strokes: number | null; putts: number | null; gir?: boolean | null }>;
@@ -14,6 +14,38 @@ export type CourseEdit =
   | { status: "linked"; course: Course }
   | { status: "custom"; name: string }
   | { status: "picking" };
+
+export type ChartTabKey = "score" | "short_game" | "gir";
+
+export interface ChartTabItem {
+  key: ChartTabKey;
+  label: string;
+  active: boolean;
+}
+
+export interface ComparisonChartItem {
+  title: string;
+  rows: ComparisonRow[];
+  primaryLabel: string;
+  group: ChartTabKey;
+}
+
+const CHART_TABS: { key: ChartTabKey; label: string }[] = [
+  { key: "score", label: "Score" },
+  { key: "short_game", label: "Short Game" },
+  { key: "gir", label: "GIR" },
+];
+
+function chartsFrom(comparison: RoundComparison): ComparisonChartItem[] {
+  return [
+    { title: "Score", rows: comparison.score, primaryLabel: "score", group: "score" },
+    { title: "Putts", rows: comparison.putts, primaryLabel: "putts", group: "short_game" },
+    { title: "GIR", rows: comparison.gir, primaryLabel: "GIR", group: "gir" },
+    { title: "3-Putts", rows: comparison.three_putts, primaryLabel: "3-putts", group: "short_game" },
+    { title: "Putts per GIR", rows: comparison.putts_per_gir, primaryLabel: "putts/GIR", group: "short_game" },
+    { title: "Scrambling", rows: comparison.scrambling, primaryLabel: "scramble successes", group: "short_game" },
+  ];
+}
 
 export interface RoundDetailUiState {
   loading: boolean;
@@ -46,6 +78,10 @@ export interface RoundDetailUiState {
   showKeepUnlinkedName: boolean;
   playedCourseName: string | null;
   showMomentum: boolean;
+  showComparison: boolean;
+  charts: ComparisonChartItem[];
+  selectedCharts: ComparisonChartItem[];
+  chartTabs: ChartTabItem[];
 }
 
 export interface RoundDetailPageViewModel extends RoundDetailUiState {
@@ -66,6 +102,7 @@ export interface RoundDetailPageViewModel extends RoundDetailUiState {
   closeEditCourseSearch: () => void;
   useCustomName: (name: string) => void;
   startChangingCourse: () => void;
+  selectChartTab: (key: string) => void;
 }
 
 function courseParFor(round: Round, activeCourse: Course | null): number | null {
@@ -108,6 +145,7 @@ export function useRoundDetailPageViewModel(
   const [linking, setLinking] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [courseEdit, setCourseEdit] = useState<CourseEdit>({ status: "picking" });
+  const [chartTab, setChartTab] = useState<ChartTabKey>("score");
   const courseSearch = useCourseSearch(userId);
   const { reset: resetCourseSearch } = courseSearch;
 
@@ -318,6 +356,12 @@ export function useRoundDetailPageViewModel(
   const netScore = courseHandicap != null && totalScore > 0
     ? calcNetScore(totalScore, courseHandicap)
     : null;
+  const charts = comparison ? chartsFrom(comparison) : [];
+  const selectedCharts = charts.filter((chart) => chart.group === chartTab);
+  const chartTabs = CHART_TABS.map((tab) => ({
+    ...tab,
+    active: tab.key === chartTab,
+  }));
 
   return {
     loading: isLoading,
@@ -355,6 +399,10 @@ export function useRoundDetailPageViewModel(
     ),
     playedCourseName: round?.course_name_played ?? null,
     showMomentum: (round?.hole_scores.filter((s) => s.strokes != null).length ?? 0) >= 3,
+    showComparison: comparison != null,
+    charts,
+    selectedCharts,
+    chartTabs,
     enterEditMode,
     save,
     cancelEdit,
@@ -386,6 +434,11 @@ export function useRoundDetailPageViewModel(
     startChangingCourse: () => {
       setCourseEdit({ status: "picking" });
       resetCourseSearch();
+    },
+    selectChartTab: (key: string) => {
+      if (CHART_TABS.some((tab) => tab.key === key)) {
+        setChartTab(key as ChartTabKey);
+      }
     },
   };
 }

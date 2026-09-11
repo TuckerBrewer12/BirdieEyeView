@@ -1,14 +1,21 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Link2 } from "lucide-react";
 import { ShareCard } from "@/components/share/ShareCard";
 import { useShareRound } from "@/hooks/useShareRound";
-import { Alert, AlertDescription, CourseLinkSearch, LoadingState } from "@/brand";
+import {
+  Alert,
+  AlertDescription,
+  CourseLinkSearch,
+  LoadingState,
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/brand";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from "recharts";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
-import type { ComparisonRow, RoundComparison } from "@/types/analytics";
+import type { ComparisonRow } from "@/types/analytics";
 import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
 import { RoundDetailHeader } from "@/components/round-detail/RoundDetailHeader";
 import { RoundFlowTimeline } from "@/components/analytics/RoundFlowTimeline";
@@ -21,30 +28,6 @@ const tooltipStyle = {
   boxShadow: "0 4px 24px rgba(0,0,0,0.07)",
   background: "rgba(255,255,255,0.97)",
 };
-
-type ChartGroup = "score" | "short_game" | "gir";
-
-const CHART_TABS: { key: ChartGroup; label: string }[] = [
-  { key: "score", label: "Score" },
-  { key: "short_game", label: "Short Game" },
-  { key: "gir", label: "GIR" },
-];
-
-function comparisonCharts(comparison: RoundComparison): {
-  title: string;
-  rows: ComparisonRow[];
-  primaryLabel: string;
-  group: ChartGroup;
-}[] {
-  return [
-    { title: "Score", rows: comparison.score, primaryLabel: "score", group: "score" },
-    { title: "Putts", rows: comparison.putts, primaryLabel: "putts", group: "short_game" },
-    { title: "GIR", rows: comparison.gir, primaryLabel: "GIR", group: "gir" },
-    { title: "3-Putts", rows: comparison.three_putts, primaryLabel: "3-putts", group: "short_game" },
-    { title: "Putts per GIR", rows: comparison.putts_per_gir, primaryLabel: "putts/GIR", group: "short_game" },
-    { title: "Scrambling", rows: comparison.scrambling, primaryLabel: "scramble successes", group: "short_game" },
-  ];
-}
 
 function SectionLabel({ children }: { children: string }) {
   return (
@@ -122,7 +105,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const { roundId } = useParams<{ roundId: string }>();
   const navigate = useNavigate();
   const viewModel = useRoundDetailPageViewModel(userId, roundId);
-  const [chartTab, setChartTab] = useState<ChartGroup>("score");
   const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
   const colorBlindPalette = useMemo(() => getColorBlindPalette(colorBlindMode), [colorBlindMode]);
   const { cardRef: shareCardRef, share: shareRound, sharing } = useShareRound();
@@ -139,8 +121,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   }
 
   const round = viewModel.round;
-  const comparison = viewModel.comparison;
-  const charts = comparison ? comparisonCharts(comparison) : [];
 
   return (
     <div>
@@ -259,26 +239,29 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         </div>
       )}
 
-      {comparison && (
+      {viewModel.showComparison && (
         <div className="mt-8">
           <SectionLabel>Round Comparison</SectionLabel>
           <ScrollSection>
             <div className="md:hidden">
-              <div className="flex gap-2 mb-4">
-                {CHART_TABS.map(({ key, label }) => (
-                  <button
-                    key={key}
-                    onClick={() => setChartTab(key)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      chartTab === key ? "bg-primary text-white shadow-sm" : "bg-gray-100 text-gray-500"
-                    }`}
-                  >
-                    {label}
-                  </button>
+              <ToggleGroup
+                variant="outline"
+                spacing={2}
+                value={viewModel.chartTabs.filter((tab) => tab.active).map((tab) => tab.key)}
+                onValueChange={(values) => {
+                  const next = values[0];
+                  if (next) viewModel.selectChartTab(next);
+                }}
+                className="mb-4 max-w-full overflow-x-auto [scrollbar-width:none]"
+              >
+                {viewModel.chartTabs.map((tab) => (
+                  <ToggleGroupItem key={tab.key} value={tab.key}>
+                    {tab.label}
+                  </ToggleGroupItem>
                 ))}
-              </div>
-              <div className={chartTab === "short_game" ? "grid grid-cols-2 gap-3" : undefined}>
-                {charts.filter((chart) => chart.group === chartTab).map((chart) => (
+              </ToggleGroup>
+              <div className={viewModel.selectedCharts.length > 1 ? "grid grid-cols-2 gap-3" : undefined}>
+                {viewModel.selectedCharts.map((chart) => (
                   <ComparisonChartCard
                     key={chart.title}
                     title={chart.title}
@@ -290,7 +273,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
               </div>
             </div>
             <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {charts.map((chart) => (
+              {viewModel.charts.map((chart) => (
                 <ComparisonChartCard
                   key={chart.title}
                   title={chart.title}
