@@ -26,6 +26,7 @@ interface CourseLinkSearchProps {
   linkedName?: string;
   customName?: string;
   onClear?: () => void;
+  clearLabel?: string;
 }
 
 export function CourseLinkSearch({
@@ -43,6 +44,7 @@ export function CourseLinkSearch({
   linkedName,
   customName,
   onClear,
+  clearLabel = "Unlink course",
 }: CourseLinkSearchProps) {
   if (linkedName && onClear) {
     return (
@@ -51,7 +53,7 @@ export function CourseLinkSearch({
           <CardTitle>Linked</CardTitle>
           <CardDescription>{linkedName}</CardDescription>
           <CardAction>
-            <ClearButton onClick={onClear} label="Unlink course" />
+            <ClearButton onClick={onClear} label={clearLabel} />
           </CardAction>
         </CardHeader>
       </Card>
