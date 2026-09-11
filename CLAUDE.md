@@ -294,7 +294,7 @@ Key files:
 - `src/types/scan.ts` — shared scan types/constants (kept out of ScanPage to avoid Fast Refresh warning)
 - `src/types/analytics.ts` — analytics types including `GoalReport` and `GoalSaver`
 - `src/pages/ScanPage.tsx` — upload → process → review scan flow; passes `result.round.course?.holes` as `course_holes` on save
-- `src/pages/RoundDetailPage.tsx` — round detail view with editing
+- `src/pages/rounds/round-details/RoundDetailPage.tsx` — round detail view with editing
 - `src/pages/CoursesPage.tsx` — course browser with clone/edit
 - `src/pages/SuggestionsPage.tsx` — Peer Comparison page; hosts Goal Selector (7 thresholds: 100/95/90/85/80/75/72), GoalReportSection (saver bento grid), and peer comparison stats. Goals section is below the comparison UI.
 - `src/pages/DashboardPage.tsx` — dashboard bento grid; includes goal widget (`lg:col-span-2`) showing progress bar + top saver insight

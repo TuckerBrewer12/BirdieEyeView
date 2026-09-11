@@ -13,8 +13,7 @@ import { LandingPage } from "./pages/public/LandingPage";
 import { applyTheme, getStoredPublicTheme, getStoredTheme } from "./lib/theme";
 
 import { DashboardPage } from "./pages/DashboardPage";
-import { RoundsPage } from "./pages/RoundsPage";
-import { RoundDetailPage } from "./pages/RoundDetailPage";
+import { RoundsPage, RoundDetailPage } from "./pages/rounds";
 import { CoursesPage } from "./pages/CoursesPage";
 import { ScanPage } from "./pages/ScanPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";

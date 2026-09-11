@@ -56,7 +56,7 @@ If you find nothing, reply with exactly `[]`.
 Example:
 
 [
-  {"path": "frontend/src/pages/RoundsPage/RoundsPage.tsx", "line": 88, "body": "`#059669` is `colors.score.birdie.text` — import it from `@/brand/theme` instead of hardcoding."},
+  {"path": "frontend/src/pages/rounds/RoundsPage.tsx", "line": 88, "body": "`#059669` is `colors.score.birdie.text` — import it from `@/brand/theme` instead of hardcoding."},
   {"path": "frontend/src/pages/CoursesPage/CoursesPage.tsx", "line": 42, "body": "This is a hand-rolled filter chip. `FilterChip` in `@/brand/components/FilterChip` already does this — use it instead."},
   {"path": "frontend/src/brand/components/Badge.tsx", "line": 1, "body": "New kit component with no screenshot coverage. Add `previews/Badge.tsx` and `tests/screenshots/Badge.screenshot.spec.ts`."},
   {"path": "frontend/src/brand/tests/BrandKit.robot.ts", "line": 12, "body": "This canned `page.route` fulfill is a mock. Brand screenshots are isolated and must not intercept `/api`."}
