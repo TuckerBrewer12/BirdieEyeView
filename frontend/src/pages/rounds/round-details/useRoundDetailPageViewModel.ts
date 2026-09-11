@@ -75,12 +75,12 @@ export interface RoundDetailUiState {
   courseEdit: CourseEdit;
   editLinkedName: string | undefined;
   editCustomName: string | undefined;
-  showKeepUnlinkedName: boolean;
-  playedCourseName: string | null;
+  keepUnlinkedNameLabel: string | null;
   showMomentum: boolean;
   showComparison: boolean;
   charts: ComparisonChartItem[];
   selectedCharts: ComparisonChartItem[];
+  chartTab: ChartTabKey;
   chartTabs: ChartTabItem[];
 }
 
@@ -101,6 +101,7 @@ export interface RoundDetailPageViewModel extends RoundDetailUiState {
   handleSelectEditCourse: (course: CourseSummary) => Promise<void>;
   closeEditCourseSearch: () => void;
   useCustomName: (name: string) => void;
+  keepUnlinkedName: () => void;
   startChangingCourse: () => void;
   selectChartTab: (key: string) => void;
 }
@@ -362,6 +363,11 @@ export function useRoundDetailPageViewModel(
     ...tab,
     active: tab.key === chartTab,
   }));
+  const playedCourseName = round?.course_name_played ?? null;
+  const keepUnlinkedNameLabel =
+    editMode && courseEdit.status === "picking" && playedCourseName && !courseSearch.query
+      ? `Keep "${playedCourseName}" without linking →`
+      : null;
 
   return {
     loading: isLoading,
@@ -391,17 +397,12 @@ export function useRoundDetailPageViewModel(
     courseEdit,
     editLinkedName,
     editCustomName,
-    showKeepUnlinkedName: !!(
-      editMode &&
-      courseEdit.status === "picking" &&
-      round?.course_name_played &&
-      !courseSearch.query
-    ),
-    playedCourseName: round?.course_name_played ?? null,
+    keepUnlinkedNameLabel,
     showMomentum: (round?.hole_scores.filter((s) => s.strokes != null).length ?? 0) >= 3,
     showComparison: comparison != null,
     charts,
     selectedCharts,
+    chartTab,
     chartTabs,
     enterEditMode,
     save,
@@ -429,6 +430,11 @@ export function useRoundDetailPageViewModel(
     },
     useCustomName: (name: string) => {
       setCourseEdit({ status: "custom", name });
+      resetCourseSearch();
+    },
+    keepUnlinkedName: () => {
+      if (!playedCourseName) return;
+      setCourseEdit({ status: "custom", name: playedCourseName });
       resetCourseSearch();
     },
     startChangingCourse: () => {

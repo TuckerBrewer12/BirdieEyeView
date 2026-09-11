@@ -6,6 +6,8 @@ import { useShareRound } from "@/hooks/useShareRound";
 import {
   Alert,
   AlertDescription,
+  Button,
+  chartTooltipStyle,
   CourseLinkSearch,
   LoadingState,
   ToggleGroup,
@@ -20,14 +22,6 @@ import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
 import { RoundDetailHeader } from "@/components/round-detail/RoundDetailHeader";
 import { RoundFlowTimeline } from "@/components/analytics/RoundFlowTimeline";
 import { useRoundDetailPageViewModel } from "./useRoundDetailPageViewModel";
-
-const tooltipStyle = {
-  fontSize: 12,
-  borderRadius: 12,
-  border: "1px solid #f1f5f9",
-  boxShadow: "0 4px 24px rgba(0,0,0,0.07)",
-  background: "rgba(255,255,255,0.97)",
-};
 
 function SectionLabel({ children }: { children: string }) {
   return (
@@ -67,9 +61,9 @@ function ComparisonChartCard({
   const selectedFill = palette ? (palette.trend.primary ?? "#2563EB") : "url(#selectedBarGrad)";
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-gray-200/50">
-      <div className="text-sm font-bold text-gray-900 mb-1">{title}</div>
-      <div className="text-xs text-gray-400 mb-3">
+    <div className="bg-card rounded-2xl border border-border shadow-sm p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card">
+      <div className="text-sm font-bold text-card-foreground mb-1">{title}</div>
+      <div className="text-xs text-muted-foreground mb-3">
         <span className="font-bold text-primary">{formatNumber(rows[0]?.primary_value ?? null)}</span>
         {" "}{primaryLabel} this round
       </div>
@@ -88,7 +82,7 @@ function ComparisonChartCard({
               formatNumber(v),
               `${primaryLabel} (${props.payload.sampleSize} round${props.payload.sampleSize === 1 ? "" : "s"})`,
             ]) as Fmt}
-            contentStyle={tooltipStyle}
+            contentStyle={chartTooltipStyle}
           />
           <Bar dataKey="value" radius={[6, 6, 0, 0]}>
             {chartData.map((d) => (
@@ -163,13 +157,15 @@ export function RoundDetailPage({ userId }: { userId: string }) {
 
       {viewModel.showLinkButton && (
         <div className="mb-3 -mt-2">
-          <button
+          <Button
+            variant="linkMuted"
+            size="xs"
+            className="h-auto p-0"
             onClick={viewModel.openLinkCourse}
-            className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-primary transition-colors"
           >
-            <Link2 size={12} />
+            <Link2 />
             Link course
-          </button>
+          </Button>
         </div>
       )}
       {viewModel.showLinkCourse && (
@@ -203,14 +199,15 @@ export function RoundDetailPage({ userId }: { userId: string }) {
             onClear={viewModel.startChangingCourse}
             clearLabel="Change course"
           />
-          {viewModel.showKeepUnlinkedName && viewModel.playedCourseName && (
-            <button
-              type="button"
-              onClick={() => viewModel.useCustomName(viewModel.playedCourseName!)}
-              className="mt-1.5 text-xs text-gray-400 hover:text-primary transition-colors"
+          {viewModel.keepUnlinkedNameLabel && (
+            <Button
+              variant="linkMuted"
+              size="xs"
+              className="mt-1.5 h-auto p-0"
+              onClick={viewModel.keepUnlinkedName}
             >
-              Keep "{viewModel.playedCourseName}" without linking →
-            </button>
+              {viewModel.keepUnlinkedNameLabel}
+            </Button>
           )}
         </div>
       )}
@@ -231,7 +228,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       {viewModel.showMomentum && (
         <div className="mt-6">
           <SectionLabel>Momentum</SectionLabel>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 overflow-x-auto">
+          <div className="bg-card rounded-2xl border border-border shadow-sm p-5 overflow-x-auto">
             <div className="min-w-[720px]">
               <RoundFlowTimeline round={round} />
             </div>
@@ -247,7 +244,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
               <ToggleGroup
                 variant="outline"
                 spacing={2}
-                value={viewModel.chartTabs.filter((tab) => tab.active).map((tab) => tab.key)}
+                value={[viewModel.chartTab]}
                 onValueChange={(values) => {
                   const next = values[0];
                   if (next) viewModel.selectChartTab(next);

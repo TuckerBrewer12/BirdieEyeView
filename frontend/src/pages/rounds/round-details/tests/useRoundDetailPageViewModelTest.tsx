@@ -241,14 +241,17 @@ describe("useRoundDetailPageViewModel", () => {
     expect(saved.course_name_played).toBeNull();
   });
 
-  it("useCustomName is keep-played-name, and save writes that override", async () => {
+  it("keepUnlinkedName is keep-played-name, and save writes that override", async () => {
     const { result, repository } = renderVm("round-4", { detailRounds: [scannedRound] });
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.enterEditMode());
     act(() => result.current.startChangingCourse());
-    expect(result.current.showKeepUnlinkedName).toBe(true);
-    act(() => result.current.useCustomName("Scanned Scorecard"));
+    expect(result.current.keepUnlinkedNameLabel).toBe(
+      'Keep "Scanned Scorecard" without linking →',
+    );
+    act(() => result.current.keepUnlinkedName());
     expect(result.current.courseEdit).toEqual({ status: "custom", name: "Scanned Scorecard" });
+    expect(result.current.keepUnlinkedNameLabel).toBeNull();
     await act(async () => {
       await result.current.save();
     });
@@ -293,6 +296,7 @@ describe("useRoundDetailPageViewModel", () => {
       "Putts per GIR",
       "Scrambling",
     ]);
+    expect(result.current.chartTab).toBe("score");
     expect(result.current.chartTabs).toEqual([
       { key: "score", label: "Score", active: true },
       { key: "short_game", label: "Short Game", active: false },
@@ -301,6 +305,7 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.selectedCharts.map((c) => c.title)).toEqual(["Score"]);
 
     act(() => result.current.selectChartTab("short_game"));
+    expect(result.current.chartTab).toBe("short_game");
     expect(result.current.selectedCharts.map((c) => c.title)).toEqual([
       "Putts",
       "3-Putts",
