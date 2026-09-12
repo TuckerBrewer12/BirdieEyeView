@@ -1,4 +1,4 @@
-export { colors, chartTooltipStyle, scoreFill, scoreKeyFor, toParLabel, toParTextClass } from "./theme";
+export { colors, fonts, chartTooltipStyle, scoreFill, scoreKeyFor, toParLabel, toParTextClass } from "./theme";
 export type { ScoreKey } from "./theme";
 export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/Alert";
 export {
