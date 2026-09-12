@@ -1,7 +1,8 @@
-/* The brand palette. This file is the source of truth for every color in the
-   app -- nothing else should hold a hex value. colors.ts mirrors these names
-   as var() references so TypeScript can reach them; tokens.test.ts fails if a
-   name there has no definition here.
+/* The brand palette. This file is the source of truth for every color and
+   typeface in the app -- nothing else should hold a hex value or a font
+   family. colors.ts and fonts.ts mirror these names as var() references so
+   TypeScript can reach them; tokens.test.ts fails if a name there has no
+   definition here.
 
    Raw values use shadcn's unprefixed names so pasted components resolve them
    verbatim -- a component referencing var(--secondary) against a --brand-
@@ -31,6 +32,9 @@
   --destructive: #dc2626;
   /* Ambient shadow for lifted surfaces; alpha so it reads on any backdrop. */
   --shadow: rgb(15 23 42 / 0.10);
+
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-mono: "DM Mono", monospace;
 
   /* Score colors encode data, so they do not flip with the color mode. */
   --score-eagle-fill: #a16207;
@@ -108,4 +112,7 @@
   /* Shadows track --shadow, so they invert in dark mode. */
   --shadow-card: 0 6px 20px var(--shadow);
   --shadow-hairline: 0 1px 0 var(--shadow);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
