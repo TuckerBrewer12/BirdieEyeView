@@ -35,9 +35,12 @@ export {
 export { PageTitle } from "./components/PageTitle";
 export { Toggle } from "./components/Toggle";
 export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
+export { ComparisonChartCard } from "./components/ComparisonChartCard";
+export type { ComparisonBar, ComparisonChartCardProps } from "./components/ComparisonChartCard";
 export { RoundDetailHeader } from "./components/RoundDetailHeader";
 export type { RoundDetailHeaderProps } from "./components/RoundDetailHeader";
 export { RoundPreview } from "./components/RoundPreview";
+export { SectionLabel } from "./components/SectionLabel";
 export { SearchField } from "./components/SearchField";
 export { SortControl } from "./components/SortControl";
 export { CourseLinkSearch } from "./components/CourseLinkSearch";
