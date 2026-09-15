@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { scoreFill, toParLabel, toParTextClass } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
+import { roundDateParts } from "@/lib/roundDate";
 import type { RoundSummary } from "@/types/golf";
 
 interface RoundPreviewProps {
@@ -11,19 +12,8 @@ interface RoundPreviewProps {
   onLinkClick?: () => void;
 }
 
-function parseDateParts(dateStr: string | null | undefined) {
-  if (!dateStr) return null;
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return null;
-  return {
-    month: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
-    day: String(d.getDate()),
-    year: `'${String(d.getFullYear()).slice(2)}`,
-  };
-}
-
 export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps) {
-  const dateParts = parseDateParts(round.date);
+  const dateParts = roundDateParts(round.date);
   const toParText = toParLabel(round.to_par);
   const holes = round.hole_scores_summary ?? [];
 

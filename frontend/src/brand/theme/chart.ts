@@ -13,3 +13,9 @@ export const chartTooltipStyle: CSSProperties = {
   boxShadow: "var(--shadow-card)",
   background: colors.card,
 };
+
+export const chartColors = {
+  axis: "var(--chart-axis)",
+  muted: "var(--chart-muted)",
+  accent: "var(--chart-accent)",
+} as const;

@@ -1,4 +1,5 @@
 import type { Course, CourseSummary, HoleScore, Round, RoundSummary } from "../../types/golf";
+import type { RoundComparison } from "../../types/analytics";
 import { populatedRounds } from "./rounds";
 
 export function toCourseSummary(course: Course): CourseSummary {
@@ -142,4 +143,44 @@ export const scannedRound: Round = {
   total_gir: 4,
   course_name_played: "Scanned Scorecard",
   user_tee: null,
+};
+
+/** Comparison cohorts for a round: this round first, then the baselines. */
+export const roundComparison: RoundComparison = {
+  score: [
+    { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 78, secondary_value: null },
+    { label: "Last 5", sample_size: 5, round_id: null, primary_value: 81.4, secondary_value: null },
+    { label: "Last 20", sample_size: 20, round_id: null, primary_value: 83.2, secondary_value: null },
+    { label: "All time", sample_size: 42, round_id: null, primary_value: 84.9, secondary_value: null },
+  ],
+  putts: [
+    { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 32, secondary_value: null },
+    { label: "Last 5", sample_size: 5, round_id: null, primary_value: 33.6, secondary_value: null },
+    { label: "Last 20", sample_size: 20, round_id: null, primary_value: 34.1, secondary_value: null },
+    { label: "All time", sample_size: 42, round_id: null, primary_value: 34.8, secondary_value: null },
+  ],
+  gir: [
+    { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 7, secondary_value: null },
+    { label: "Last 5", sample_size: 5, round_id: null, primary_value: 5.8, secondary_value: null },
+    { label: "Last 20", sample_size: 20, round_id: null, primary_value: 5.2, secondary_value: null },
+    { label: "All time", sample_size: 42, round_id: null, primary_value: 4.9, secondary_value: null },
+  ],
+  three_putts: [
+    { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 1, secondary_value: null },
+    { label: "Last 5", sample_size: 5, round_id: null, primary_value: 1.8, secondary_value: null },
+    { label: "Last 20", sample_size: 20, round_id: null, primary_value: 2.1, secondary_value: null },
+    { label: "All time", sample_size: 42, round_id: null, primary_value: 2.4, secondary_value: null },
+  ],
+  putts_per_gir: [
+    { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 1.7, secondary_value: null },
+    { label: "Last 5", sample_size: 5, round_id: null, primary_value: 1.9, secondary_value: null },
+    { label: "Last 20", sample_size: 20, round_id: null, primary_value: 2.0, secondary_value: null },
+    { label: "All time", sample_size: 42, round_id: null, primary_value: 2.1, secondary_value: null },
+  ],
+  scrambling: [
+    { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 4, secondary_value: null },
+    { label: "Last 5", sample_size: 5, round_id: null, primary_value: 3.2, secondary_value: null },
+    { label: "Last 20", sample_size: 20, round_id: null, primary_value: 2.8, secondary_value: null },
+    { label: "All time", sample_size: 42, round_id: null, primary_value: 2.6, secondary_value: null },
+  ],
 };

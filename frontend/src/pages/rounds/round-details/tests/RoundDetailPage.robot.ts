@@ -24,6 +24,7 @@ export class RoundDetailRobot {
     round: Round,
     seed: Omit<FakeBackendSeed, "detailRounds"> = {},
   ): Promise<this> {
+    await this.page.emulateMedia({ reducedMotion: "reduce" });
     await FakeSession.install(this.page, { detailRounds: [round], ...seed });
     await this.page.goto(`/rounds/${round.id}`);
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
@@ -103,7 +104,18 @@ export class RoundDetailRobot {
     return this;
   }
 
+  async seesComparison(): Promise<this> {
+    await expect(this.page.getByText("Round Comparison")).toBeVisible();
+    const bar = this.page.locator(".recharts-bar-rectangle path").locator("visible=true").nth(1);
+    await expect(bar).toBeVisible();
+    await expect.poll(async () => (await bar.boundingBox())?.height ?? 0).toBeGreaterThan(10);
+    return this;
+  }
+
   async capture(name: string): Promise<this> {
+    if (await this.page.getByText("Momentum").isVisible()) {
+      await expect(this.page.locator("svg circle").last()).toBeVisible();
+    }
     await expect(this.page).toHaveScreenshot(name, { fullPage: true });
     return this;
   }

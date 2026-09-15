@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { line, curveMonotoneX } from "d3-shape";
 import type { Round } from "@/types/golf";
@@ -50,6 +50,7 @@ function getYAxisColor(v: number): string {
 }
 
 export function RoundFlowTimeline({ round }: RoundFlowTimelineProps) {
+  const reduceMotion = useReducedMotion();
   const [hovered, setHovered] = useState<HolePoint | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
@@ -146,7 +147,8 @@ export function RoundFlowTimeline({ round }: RoundFlowTimelineProps) {
           />
         )}
 
-        {/* Main line — solid gray */}
+        {/* Main line — solid gray. Reduced motion skips the 1.4s draw so a
+            screenshot is the finished chart, not a random frame. */}
         <motion.path
           d={pathD}
           fill="none"
@@ -154,9 +156,9 @@ export function RoundFlowTimeline({ round }: RoundFlowTimelineProps) {
           strokeWidth={2.5}
           strokeLinecap="round"
           strokeLinejoin="round"
-          initial={{ pathLength: 0, opacity: 0 }}
+          initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 1.4, ease: "easeInOut" }}
+          transition={{ duration: reduceMotion ? 0 : 1.4, ease: "easeInOut" }}
         />
 
         {/* Score dots */}
@@ -170,9 +172,13 @@ export function RoundFlowTimeline({ round }: RoundFlowTimelineProps) {
             stroke="white"
             strokeWidth={1.5}
             style={{ cursor: "crosshair" }}
-            initial={{ scale: 0, opacity: 0 }}
+            initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 1.2 + i * 0.04, duration: 0.25, ease: "backOut" }}
+            transition={
+              reduceMotion
+                ? { duration: 0 }
+                : { delay: 1.2 + i * 0.04, duration: 0.25, ease: "backOut" }
+            }
           />
         ))}
 

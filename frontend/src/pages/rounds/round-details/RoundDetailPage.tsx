@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Link2 } from "lucide-react";
 import { ShareCard } from "@/components/share/ShareCard";
@@ -7,20 +7,21 @@ import {
   Alert,
   AlertDescription,
   Button,
+  chartColors,
   chartTooltipStyle,
+  colors,
   CourseLinkSearch,
   LoadingState,
+  RoundDetailHeader,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from "recharts";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
-import { getStoredColorBlindMode } from "@/lib/accessibility";
-import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
 import type { ComparisonRow } from "@/types/analytics";
 import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
-import { RoundDetailHeader } from "@/components/round-detail/RoundDetailHeader";
 import { RoundFlowTimeline } from "@/components/analytics/RoundFlowTimeline";
+import { RoundActions } from "./RoundActions";
 import { useRoundDetailPageViewModel } from "./useRoundDetailPageViewModel";
 
 function SectionLabel({ children }: { children: string }) {
@@ -45,12 +46,10 @@ function ComparisonChartCard({
   title,
   rows,
   primaryLabel,
-  palette,
 }: {
   title: string;
   rows: ComparisonRow[];
   primaryLabel: string;
-  palette?: ChartPalette | null;
 }) {
   const chartData = rows.map((row, i) => ({
     label: row.label,
@@ -58,7 +57,9 @@ function ComparisonChartCard({
     sampleSize: row.sample_size,
     isSelected: i === 0,
   }));
-  const selectedFill = palette ? (palette.trend.primary ?? "#2563EB") : "url(#selectedBarGrad)";
+  // Mobile and desktop both mount these cards, so a shared gradient id
+  // would resolve to the hidden copy and the selected bar would not paint.
+  const selectedFill = `selectedBarGrad${useId().replace(/:/g, "")}`;
 
   return (
     <div className="bg-card rounded-2xl border border-border shadow-sm p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card">
@@ -70,13 +71,13 @@ function ComparisonChartCard({
       <ResponsiveContainer width="100%" height={180}>
         <BarChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
           <defs>
-            <linearGradient id="selectedBarGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={palette?.trend.secondary ?? "#4ade80"} stopOpacity={1} />
-              <stop offset="100%" stopColor={palette?.trend.primary ?? "#2d7a3a"} stopOpacity={1} />
+            <linearGradient id={selectedFill} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={chartColors.accent} stopOpacity={1} />
+              <stop offset="100%" stopColor={colors.primary} stopOpacity={1} />
             </linearGradient>
           </defs>
-          <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#9ca3af" }} tickLine={false} axisLine={false} />
-          <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} tickLine={false} axisLine={false} />
+          <XAxis dataKey="label" tick={{ fontSize: 11, fill: chartColors.axis }} tickLine={false} axisLine={false} />
+          <YAxis tick={{ fontSize: 11, fill: chartColors.axis }} tickLine={false} axisLine={false} />
           <Tooltip
             formatter={((v: number, _name: string, props: { payload: { sampleSize: number } }) => [
               formatNumber(v),
@@ -84,9 +85,10 @@ function ComparisonChartCard({
             ]) as Fmt}
             contentStyle={chartTooltipStyle}
           />
-          <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+          {/* Recharts grows bars with CSS; Playwright's screenshot pass freezes that at height 0. */}
+          <Bar dataKey="value" radius={[6, 6, 0, 0]} isAnimationActive={false}>
             {chartData.map((d) => (
-              <Cell key={d.label} fill={d.isSelected ? selectedFill : (palette?.ui.mutedFill ?? "#e5e7eb")} />
+              <Cell key={d.label} fill={d.isSelected ? `url(#${selectedFill})` : chartColors.muted} />
             ))}
           </Bar>
         </BarChart>
@@ -99,8 +101,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const { roundId } = useParams<{ roundId: string }>();
   const navigate = useNavigate();
   const viewModel = useRoundDetailPageViewModel(userId, roundId);
-  const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
-  const colorBlindPalette = useMemo(() => getColorBlindPalette(colorBlindMode), [colorBlindMode]);
   const { cardRef: shareCardRef, share: shareRound, sharing } = useShareRound();
 
   if (viewModel.loading) {
@@ -128,14 +128,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         </Alert>
       )}
 
-      <RoundDetailHeader
-        round={round}
-        courseName={viewModel.courseName}
-        totalScore={viewModel.totalScore}
-        toPar={viewModel.toPar}
-        netScore={viewModel.netScore}
-        courseHandicap={viewModel.courseHandicap}
-        tee={viewModel.tee}
+      <RoundActions
         editMode={viewModel.editMode}
         saving={viewModel.saving}
         confirmDelete={viewModel.confirmDelete}
@@ -153,6 +146,21 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         }}
         onCancelDelete={viewModel.cancelDelete}
         onBack={() => navigate(-1)}
+      />
+
+      <RoundDetailHeader
+        courseName={viewModel.courseName}
+        dateLabel={viewModel.dateLabel}
+        tee={{ box: round.tee_box, rating: viewModel.teeRating }}
+        score={{
+          total: viewModel.totalScore,
+          toPar: viewModel.toPar,
+          net: viewModel.netScore,
+          courseHandicap: viewModel.courseHandicap,
+        }}
+        nines={{ front: viewModel.frontNine, back: viewModel.backNine }}
+        stats={{ putts: round.total_putts, gir: round.total_gir }}
+        counts={viewModel.scoreCounts}
       />
 
       {viewModel.showLinkButton && (
@@ -264,7 +272,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
                     title={chart.title}
                     rows={chart.rows}
                     primaryLabel={chart.primaryLabel}
-                    palette={colorBlindPalette}
                   />
                 ))}
               </div>
@@ -276,7 +283,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
                   title={chart.title}
                   rows={chart.rows}
                   primaryLabel={chart.primaryLabel}
-                  palette={colorBlindPalette}
                 />
               ))}
             </div>
