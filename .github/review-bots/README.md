@@ -2,7 +2,10 @@
 
 On every non-draft PR the Brand Kit and MVVM bots leave inline comments and
 open a second PR that implements the finding, targeting the original PR's
-branch.
+branch. The Frontend coverage bot is separate: it posts one sticky comment
+with Vitest changed-line coverage plus an AI count of reasonable screenshot
+and espresso screens. It does not open fix PRs. UI Test Checker still flags
+missing tests as review comments.
 
 From a finding you can:
 
@@ -23,8 +26,10 @@ follows neighbouring code. Styling is Tailwind token classes
 
 | File | What it is |
 | --- | --- |
-| `brand-kit.md`, `mvvm.md` | Review prompts |
+| `brand-kit.md`, `mvvm.md`, `ui-test-checker.md` | Review prompts |
 | `run-bot.sh` | Shared reviewer: diff → model → GitHub review |
 | `post_review.py` | JSON findings → review payload + fixable list |
 | `fix.md` + `run-fix.sh` | Apply one finding and open a PR |
 | `links.py` | Discuss-in-Conductor (Grok) URLs |
+| `frontend-coverage.md` + `run-coverage.sh` | Coverage reporter: Vitest % + AI screen counts → sticky comment |
+| `coverage_report.py` | Changed-line %, test inventory, comment upsert |

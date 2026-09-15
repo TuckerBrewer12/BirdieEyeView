@@ -56,6 +56,7 @@ CI must never do this for you — a run that regenerates baselines can't fail.
 |---|---|---|
 | `Frontend (test \| lint \| types \| build \| espresso)` | `tests.yml` | Unit tests, ESLint, tsc, production build, behavior |
 | `Frontend visual regression` | `screenshots.yml` | Rendered output against committed baselines |
+| `Frontend coverage comment` | `frontend-coverage-bot.yml` | PR comment: Vitest changed-line % plus AI screenshot/espresso counts |
 | `Repo invariants` | `tests.yml` | Includes the no-baseline-regeneration rule |
 
 On a backend-only PR the frontend steps skip (via the `changes` job) but the
