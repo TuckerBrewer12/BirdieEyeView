@@ -53,9 +53,7 @@ def skip_as_non_executable(text: str) -> bool:
         return True
     if stripped.startswith(("import ", "export type ", "export interface ", "type ", "interface ")):
         return True
-    if stripped.startswith("export {") and " from " in stripped:
-        return True
-    return False
+    return stripped.startswith("export {") and " from " in stripped
 
 
 def added_source(diff: str) -> dict[str, dict[int, str]]:

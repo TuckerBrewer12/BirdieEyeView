@@ -13,10 +13,10 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 COVERAGE_JSON="${COVERAGE_JSON:-$REPO_ROOT/frontend/coverage/coverage-final.json}"
 
 BASE="$(git merge-base "$BASE_SHA" "$HEAD_SHA")"
-git diff --unified=6 "$BASE" "$HEAD_SHA" -- frontend/src > "$WORK/diff.patch"
+git diff --unified=6 "$BASE" "$HEAD_SHA" -- frontend > "$WORK/diff.patch"
 
 if [[ ! -s "$WORK/diff.patch" ]]; then
-  echo "No changes under frontend/src."
+  echo "No changes under frontend/."
   exit 0
 fi
 
