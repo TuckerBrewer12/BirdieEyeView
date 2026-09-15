@@ -4,6 +4,7 @@ import {
   halfMoonBayCourse,
   halfMoonBayRound,
   pebbleBeachCourse,
+  roundComparison,
   scannedRound,
 } from "../../../../testing/fixtures/roundDetails";
 
@@ -41,9 +42,17 @@ test("course link panel open", async ({ roundDetail }) => {
 test("delete confirmation", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapDelete();
-  // Scoped to the action row: a full-page shot would race the momentum
-  // chart's 1.4s draw.
-  await roundDetail.captureActions("round-detail-delete-confirm.png");
+  await roundDetail.capture("round-detail-delete-confirm.png");
+});
+
+test("comparison charts", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, {
+    fullCourses: [halfMoonBayCourse],
+    comparison: roundComparison,
+  });
+  await roundDetail.seesCourse("Half Moon Bay");
+  await roundDetail.seesComparison();
+  await roundDetail.capture("round-detail-comparison.png");
 });
 
 test("edit mode", async ({ roundDetail }) => {

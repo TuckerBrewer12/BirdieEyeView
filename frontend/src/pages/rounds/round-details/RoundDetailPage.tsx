@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Link2 } from "lucide-react";
 import { ShareCard } from "@/components/share/ShareCard";
@@ -57,6 +57,9 @@ function ComparisonChartCard({
     sampleSize: row.sample_size,
     isSelected: i === 0,
   }));
+  // Mobile and desktop both mount these cards, so a shared gradient id
+  // would resolve to the hidden copy and the selected bar would not paint.
+  const selectedFill = `selectedBarGrad${useId().replace(/:/g, "")}`;
 
   return (
     <div className="bg-card rounded-2xl border border-border shadow-sm p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card">
@@ -68,7 +71,7 @@ function ComparisonChartCard({
       <ResponsiveContainer width="100%" height={180}>
         <BarChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
           <defs>
-            <linearGradient id="selectedBarGrad" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={selectedFill} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={chartColors.accent} stopOpacity={1} />
               <stop offset="100%" stopColor={colors.primary} stopOpacity={1} />
             </linearGradient>
@@ -82,9 +85,10 @@ function ComparisonChartCard({
             ]) as Fmt}
             contentStyle={chartTooltipStyle}
           />
-          <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+          {/* Recharts grows bars with CSS; Playwright's screenshot pass freezes that at height 0. */}
+          <Bar dataKey="value" radius={[6, 6, 0, 0]} isAnimationActive={false}>
             {chartData.map((d) => (
-              <Cell key={d.label} fill={d.isSelected ? "url(#selectedBarGrad)" : chartColors.muted} />
+              <Cell key={d.label} fill={d.isSelected ? `url(#${selectedFill})` : chartColors.muted} />
             ))}
           </Bar>
         </BarChart>
