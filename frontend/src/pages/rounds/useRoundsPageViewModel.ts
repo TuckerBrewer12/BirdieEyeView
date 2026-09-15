@@ -105,7 +105,7 @@ export function useRoundsPageViewModel(
     results: linkResults,
     searching: linkSearching,
     reset: resetCourseSearch,
-  } = useCourseSearch(userId);
+  } = useCourseSearch(userId, repository);
   const [linkingRoundId, setLinkingRoundId] = useState<string | null>(null);
   const [linking, setLinking] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);

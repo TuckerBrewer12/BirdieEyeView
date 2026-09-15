@@ -47,7 +47,12 @@ export class FakeBackend {
 
     if (verb === "GET" && path.includes("/api/courses/search")) {
       const q = parsed.searchParams.get("q") ?? "";
-      return { status: 200, body: this.store.searchCourses(q) };
+      try {
+        return { status: 200, body: this.store.searchCourses(q) };
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : "Could not search courses.";
+        return { status: this.store.searchError ? 500 : 404, body: { detail } };
+      }
     }
 
     if (verb === "GET" && /\/api\/rounds\/user\//.test(path)) {

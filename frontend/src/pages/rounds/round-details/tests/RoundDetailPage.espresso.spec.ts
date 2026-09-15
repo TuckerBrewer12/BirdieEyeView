@@ -53,3 +53,30 @@ test("linking a course updates the round and hides the link button", async ({ ro
   await roundDetail.seesCourse("Pebble Beach");
   await roundDetail.doesNotSeeLinkCourse();
 });
+
+test("saving an unmatched name keeps the round on that custom name", async ({ roundDetail }) => {
+  await roundDetail.open(scannedRound, { courses: searchableCourses });
+  await roundDetail.tapEdit();
+  await roundDetail.tapEditCourseName();
+  await roundDetail.searchCourses("Torrey Pines");
+  await roundDetail.saveAsCustomName("Torrey Pines");
+  await roundDetail.seesCustomNameCard("Torrey Pines");
+});
+
+test("changing course on a linked round returns to the search field", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.tapEdit();
+  await roundDetail.seesLinkedCard("Half Moon Bay");
+  await roundDetail.tapChangeCourse();
+  await roundDetail.seesCourseSearchField();
+});
+
+test("editing the name on a custom-named round returns to the search field", async ({
+  roundDetail,
+}) => {
+  await roundDetail.open(scannedRound);
+  await roundDetail.tapEdit();
+  await roundDetail.seesCustomNameCard("Scanned Scorecard");
+  await roundDetail.tapEditCourseName();
+  await roundDetail.seesCourseSearchField();
+});

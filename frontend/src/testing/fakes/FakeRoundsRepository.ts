@@ -1,4 +1,4 @@
-import type { Course, Round, RoundSummary } from "../../types/golf";
+import type { Course, CourseSummary, Round, RoundSummary } from "../../types/golf";
 import type { RoundComparison } from "../../types/analytics";
 import type { RoundsRepository, UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { InMemoryRounds, type InMemoryRoundsSeed } from "./InMemoryRounds";
@@ -7,6 +7,7 @@ export type FakeRoundsRepositorySeed = InMemoryRoundsSeed;
 
 export class FakeRoundsRepository implements RoundsRepository {
   readonly store: InMemoryRounds;
+  readonly searchedQueries: string[] = [];
 
   constructor(seed: FakeRoundsRepositorySeed = {}) {
     this.store = new InMemoryRounds(seed);
@@ -46,5 +47,12 @@ export class FakeRoundsRepository implements RoundsRepository {
 
   async getUserHandicap(): Promise<{ handicap_index: number | null }> {
     return this.store.getUserHandicap();
+  }
+
+  async searchCourses(query: string): Promise<CourseSummary[]> {
+    this.searchedQueries.push(query);
+    const delay = this.store.nextSearchDelayMs();
+    if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
+    return this.store.searchCourses(query);
   }
 }

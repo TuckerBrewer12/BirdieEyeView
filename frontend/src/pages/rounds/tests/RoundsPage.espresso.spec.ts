@@ -73,3 +73,22 @@ test("load more reveals the remaining rounds", async ({ rounds }) => {
   await rounds.loadMore();
   await rounds.seesCourse("Course 1");
 });
+
+test("a one-character course query does not search", async ({ rounds }) => {
+  await rounds.open(populatedRounds, { courses: searchableCourses });
+  await rounds.openLinkFor("Scanned Scorecard");
+  await rounds.searchCourses("P");
+  await rounds.seesNoCourseResults();
+  await rounds.doesNotSeeNoCoursesFound();
+
+  // Two characters reach the backend, so only the length held the first one back.
+  await rounds.searchCourses("Pe");
+  await rounds.seesCourseResult("Pebble Beach");
+});
+
+test("a course search with no hits says so", async ({ rounds }) => {
+  await rounds.open(populatedRounds, { courses: searchableCourses });
+  await rounds.openLinkFor("Scanned Scorecard");
+  await rounds.searchCourses("zzzz");
+  await rounds.seesNoCoursesFound();
+});

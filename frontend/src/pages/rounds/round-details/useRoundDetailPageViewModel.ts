@@ -169,7 +169,7 @@ export function useRoundDetailPageViewModel(
   const [actionError, setActionError] = useState<string | null>(null);
   const [courseEdit, setCourseEdit] = useState<CourseEdit>({ status: "picking" });
   const [chartTab, setChartTab] = useState<ChartTabKey>("score");
-  const courseSearch = useCourseSearch(userId);
+  const courseSearch = useCourseSearch(userId, repository);
   const { reset: resetCourseSearch } = courseSearch;
 
   const {
