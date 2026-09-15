@@ -295,8 +295,6 @@ def render_comment(lines: dict, ai: dict) -> str:
         *fmt_layer("Screenshots", ai["screenshots"], "screens"),
         "",
         *fmt_layer("Espresso", ai["espresso"], "flows"),
-        "",
-        "<sub>Unit % is changed production lines hit by Vitest. Screenshot and espresso counts are an AI judgment of reasonable screens this diff touches — light+dark or desktop+mobile is one screen. UI Test Checker still flags missing tests as review comments.</sub>",
     ]
     return "\n".join(body) + "\n"
 
