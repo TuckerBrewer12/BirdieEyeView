@@ -103,6 +103,21 @@ export class RoundDetailRobot {
     return this;
   }
 
+  /** Recharts paints with var() fills; a dangling token would render black. */
+  async seesResolvedChartTokens(): Promise<this> {
+    await expect(this.page.locator(".recharts-cartesian-axis-tick-value").first())
+      .toHaveCSS("fill", "rgb(156, 163, 175)");
+    await expect(this.page.locator(".recharts-bar-rectangle path").nth(1))
+      .toHaveCSS("fill", "rgb(229, 231, 235)");
+    return this;
+  }
+
+  /** Screenshots just the action row, for states that do not involve the rest of the page. */
+  async captureActions(name: string): Promise<this> {
+    await expect(this.page.locator("[data-slot=round-actions]")).toHaveScreenshot(name);
+    return this;
+  }
+
   async capture(name: string): Promise<this> {
     await expect(this.page).toHaveScreenshot(name, { fullPage: true });
     return this;

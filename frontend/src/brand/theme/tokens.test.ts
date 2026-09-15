@@ -29,11 +29,11 @@ const COLOR_LITERAL =
   /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch)\(|\b(?:bg|text|border|ring|fill|stroke|from|via|to|divide|shadow|outline|placeholder|accent|decoration)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/g;
 
 describe("brand tokens", () => {
-  it("defines every token colors.ts and fonts.ts point at", () => {
+  it("defines every token colors.ts, fonts.ts and chart.ts point at", () => {
     const tokensCss = read(join(themeDir, "tokens.css"));
     const declared = new Set(tokensCss.match(/^\s*(--[\w-]+):/gm)?.map((d) => d.trim().slice(0, -1)));
 
-    const referenced = ["colors.ts", "fonts.ts"].flatMap(
+    const referenced = ["colors.ts", "fonts.ts", "chart.ts"].flatMap(
       (file) => read(join(themeDir, file)).match(/var\((--[\w-]+)\)/g) ?? [],
     );
     const dangling = [...new Set(referenced.map((r) => r.slice(4, -1)))].filter(

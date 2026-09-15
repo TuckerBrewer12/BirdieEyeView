@@ -1,10 +1,13 @@
-import { useState, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
+import { formatRoundDateLong } from "@/lib/roundDate";
+import { scoreKeyFor, type ScoreKey } from "@/brand/theme";
+import { useRoundHoles, type HoleData } from "@/hooks/useRoundHoles";
 import { chooseCompatibleTee } from "@/lib/teeColor";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
 import { calcCourseHandicap, calcNetScore } from "@/types/golf";
-import type { Course, CourseSummary, Round, Tee } from "@/types/golf";
+import type { Course, CourseSummary, Round } from "@/types/golf";
 import type { ComparisonRow, RoundComparison } from "@/types/analytics";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
 
@@ -47,6 +50,11 @@ function chartsFrom(comparison: RoundComparison): ComparisonChartItem[] {
   ];
 }
 
+export interface Nine {
+  holes: HoleData[];
+  total: number | null;
+}
+
 export interface RoundDetailUiState {
   loading: boolean;
   loadError: string | null;
@@ -57,7 +65,11 @@ export interface RoundDetailUiState {
   toPar: number | null;
   netScore: number | null;
   courseHandicap: number | null;
-  tee: Tee | null;
+  dateLabel: string | null;
+  teeRating: string | null;
+  frontNine: Nine;
+  backNine: Nine;
+  scoreCounts: Partial<Record<ScoreKey, number>>;
   editMode: boolean;
   saving: boolean;
   confirmDelete: boolean;
@@ -124,6 +136,16 @@ function courseEditFromRound(round: Round): CourseEdit {
   if (round.course) return { status: "linked", course: round.course };
   if (round.course_name_played) return { status: "custom", name: round.course_name_played };
   return { status: "picking" };
+}
+
+/** useRoundHoles needs a Round; this stands in while one is still loading. */
+const EMPTY_ROUND = { hole_scores: [], course: null } as unknown as Round;
+
+function nineFrom(holes: HoleData[]): Nine {
+  return {
+    holes,
+    total: holes.length === 9 ? holes.reduce((sum, h) => sum + h.strokes, 0) : null,
+  };
 }
 
 function messageFrom(err: unknown, fallback: string): string {
@@ -341,12 +363,33 @@ export function useRoundDetailPageViewModel(
   const coursePar = round ? courseParFor(round, activeCourse) : null;
   const toPar = coursePar !== null ? totalScore - coursePar : null;
   const courseName = formatCourseName(round?.course_name_played ?? round?.course?.name);
+
+  // front_nine/back_nine and the score-type counts arrive precomputed on the
+  // round list, but the detail endpoint returns a bare Round, so they are
+  // derived here rather than in the view.
+  const holes = useRoundHoles(round ?? EMPTY_ROUND);
+  const frontNine = useMemo(() => nineFrom(holes.filter((h) => h.hole <= 9)), [holes]);
+  const backNine = useMemo(() => nineFrom(holes.filter((h) => h.hole >= 10)), [holes]);
+  const scoreCounts = useMemo(() => {
+    const counts: Partial<Record<ScoreKey, number>> = {};
+    for (const h of holes) {
+      const key = scoreKeyFor(h.strokes, h.par);
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }, [holes]);
+
   const editLinkedName = courseEdit.status === "linked" ? courseEdit.course.name ?? undefined : undefined;
   const editCustomName = courseEdit.status === "custom" ? courseEdit.name : undefined;
   const activeTeeBox = editMode ? editedTeeBox : round?.tee_box;
   const tee = activeTeeBox
     ? activeCourse?.tees.find((t) => t.color?.toLowerCase() === activeTeeBox.toLowerCase()) ?? null
     : null;
+  const teeRating =
+    tee?.course_rating != null && tee?.slope_rating != null
+      ? `${tee.course_rating} / ${tee.slope_rating}`
+      : null;
+
   const courseHandicap =
     handicapIndex != null &&
     tee?.slope_rating != null &&
@@ -379,7 +422,11 @@ export function useRoundDetailPageViewModel(
     toPar,
     netScore,
     courseHandicap,
-    tee,
+    dateLabel: formatRoundDateLong(round?.date),
+    teeRating,
+    frontNine,
+    backNine,
+    scoreCounts,
     editMode,
     saving,
     confirmDelete,

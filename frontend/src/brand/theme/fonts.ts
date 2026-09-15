@@ -13,6 +13,6 @@
  * `tokens.test.ts` fails if a name here has no definition in tokens.css.
  */
 export const fonts = {
-  sans: "var(--font-sans)",
-  mono: "var(--font-mono)",
+  sans: "var(--brand-font-sans)",
+  mono: "var(--brand-font-mono)",
 } as const;

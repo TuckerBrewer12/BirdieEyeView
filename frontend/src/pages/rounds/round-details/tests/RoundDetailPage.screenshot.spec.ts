@@ -38,8 +38,17 @@ test("course link panel open", async ({ roundDetail }) => {
   await roundDetail.capture("round-detail-link-open.png");
 });
 
+test("delete confirmation", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.tapDelete();
+  // Scoped to the action row: a full-page shot would race the momentum
+  // chart's 1.4s draw.
+  await roundDetail.captureActions("round-detail-delete-confirm.png");
+});
+
 test("edit mode", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapEdit();
   await roundDetail.capture("round-detail-edit.png");
 });
+

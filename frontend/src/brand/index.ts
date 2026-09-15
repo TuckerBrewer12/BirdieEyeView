@@ -1,4 +1,4 @@
-export { colors, fonts, chartTooltipStyle, scoreFill, scoreKeyFor, toParLabel, toParTextClass } from "./theme";
+export { colors, fonts, chartTooltipStyle, chartColors, scoreFill, scoreKeyFor, toParLabel, toParTextClass } from "./theme";
 export type { ScoreKey } from "./theme";
 export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/Alert";
 export {
@@ -35,6 +35,8 @@ export {
 export { PageTitle } from "./components/PageTitle";
 export { Toggle } from "./components/Toggle";
 export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
+export { RoundDetailHeader } from "./components/RoundDetailHeader";
+export type { RoundDetailHeaderProps } from "./components/RoundDetailHeader";
 export { RoundPreview } from "./components/RoundPreview";
 export { SearchField } from "./components/SearchField";
 export { SortControl } from "./components/SortControl";

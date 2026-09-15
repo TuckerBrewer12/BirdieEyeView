@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { pluralize } from "./pluralize";
+import { pluralize, pluralNoun } from "./pluralize";
+
+describe("pluralNoun", () => {
+  it("gives the bare noun, for callers that render the count themselves", () => {
+    expect(pluralNoun(1, "Birdie")).toBe("Birdie");
+    expect(pluralNoun(2, "Birdie")).toBe("Birdies");
+    expect(pluralNoun(0, "Par")).toBe("Pars");
+  });
+
+  it("takes an explicit plural", () => {
+    expect(pluralNoun(1, "Triple+", "Triples+")).toBe("Triple+");
+    expect(pluralNoun(3, "Triple+", "Triples+")).toBe("Triples+");
+  });
+});
 
 describe("pluralize", () => {
   it("uses the singular for exactly one", () => {

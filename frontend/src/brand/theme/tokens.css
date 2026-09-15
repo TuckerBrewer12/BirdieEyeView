@@ -33,28 +33,34 @@
   /* Ambient shadow for lifted surfaces; alpha so it reads on any backdrop. */
   --shadow: rgb(15 23 42 / 0.10);
 
-  --font-sans: "DM Sans", system-ui, sans-serif;
-  --font-mono: "DM Mono", monospace;
+  /* Chart chrome. Data colours are the --score-* tokens; these are the
+     surrounding furniture, which does follow the colour mode. */
+  --chart-axis: #9ca3af;
+  --chart-muted: #e5e7eb;
+  --chart-accent: #4ade80;
+
+  --brand-font-sans: "DM Sans", system-ui, sans-serif;
+  --brand-font-mono: "DM Mono", monospace;
 
   /* Score colors encode data, so they do not flip with the color mode. */
-  --score-eagle-fill: #a16207;
+  --score-eagle-fill: #f59e0b;
   --score-eagle-on-fill: #ffffff;
-  --score-eagle-text: #a16207;
-  --score-birdie-fill: #0b8a5e;
+  --score-eagle-text: #f59e0b;
+  --score-birdie-fill: #059669;
   --score-birdie-on-fill: #ffffff;
-  --score-birdie-text: #0b8a5e;
-  --score-par-fill: #e5e7eb;
-  --score-par-on-fill: #4b5563;
+  --score-birdie-text: #059669;
+  --score-par-fill: #9ca3af;
+  --score-par-on-fill: #ffffff;
   --score-par-text: #9ca3af;
-  --score-bogey-fill: #ef4444;
-  --score-bogey-on-fill: #7f1d1d;
-  --score-bogey-text: #dc2626;
-  --score-double-fill: #3b78e0;
+  --score-bogey-fill: #f87171;
+  --score-bogey-on-fill: #ffffff;
+  --score-bogey-text: #f87171;
+  --score-double-fill: #60a5fa;
   --score-double-on-fill: #ffffff;
-  --score-double-text: #3b78e0;
-  --score-triple-fill: #7c52e0;
+  --score-double-text: #60a5fa;
+  --score-triple-fill: #a78bfa;
   --score-triple-on-fill: #ffffff;
-  --score-triple-text: #7c52e0;
+  --score-triple-text: #a78bfa;
   --score-quad-fill: #6d28d9;
   --score-quad-on-fill: #ffffff;
   --score-quad-text: #6d28d9;
@@ -79,6 +85,9 @@
   --destructive: #f87171;
   /* Black reads as nothing on a dark page, so lift with a stronger halo. */
   --shadow: rgb(0 0 0 / 0.55);
+
+  --chart-axis: #6b7280;
+  --chart-muted: #2a2d30;
 }
 
 @theme inline {
@@ -113,6 +122,6 @@
   --shadow-card: 0 6px 20px var(--shadow);
   --shadow-hairline: 0 1px 0 var(--shadow);
 
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
+  --font-sans: var(--brand-font-sans);
+  --font-mono: var(--brand-font-mono);
 }

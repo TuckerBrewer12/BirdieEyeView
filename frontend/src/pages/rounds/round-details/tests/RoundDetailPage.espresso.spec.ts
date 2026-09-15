@@ -4,6 +4,7 @@ import {
   halfMoonBayCourse,
   halfMoonBayRound,
   pebbleBeachCourse,
+  roundComparison,
   scannedRound,
 } from "../../../../testing/fixtures/roundDetails";
 import { populatedRounds } from "../../../../testing/fixtures/rounds";
@@ -52,4 +53,16 @@ test("linking a course updates the round and hides the link button", async ({ ro
   await roundDetail.pickCourse("Pebble Beach");
   await roundDetail.seesCourse("Pebble Beach");
   await roundDetail.doesNotSeeLinkCourse();
+});
+
+// Recharts takes colours as SVG attributes, not classes, so the kit tokens are
+// passed as var() references. This checks the browser actually resolves them —
+// a dangling var would silently paint the chart black.
+test("comparison chart colours resolve from the kit tokens", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, {
+    fullCourses: [halfMoonBayCourse],
+    comparison: roundComparison,
+  });
+  await roundDetail.seesCourse("Half Moon Bay");
+  await roundDetail.seesResolvedChartTokens();
 });
