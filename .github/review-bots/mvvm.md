@@ -40,12 +40,14 @@ Reply with a JSON array and nothing else. No prose, no code fence.
 - `line` — line number in the new file, counted from the `@@` hunk header.
   Must be a line this diff adds.
 - `body` — what is wrong and what to do instead. One or two sentences.
+- `recipe` — optional. One of the ids from the Fix recipes list, if and only
+  if the finding matches that recipe's `when`. Omit it when none match.
 
 If you find nothing, reply with exactly `[]`.
 
 Example:
 
 [
-  {"path": "frontend/src/pages/rounds/RoundsPage.tsx", "line": 47, "body": "The chip label and filter-mode mapping is built in JSX. Have the view model expose the finished chips as `{ key, label, active }` so the view only maps over them."},
-  {"path": "frontend/src/pages/CoursesPage/CoursesPage.tsx", "line": 88, "body": "This is a hand-rolled filter chip. `FilterChip` in `@/brand/components/FilterChip` already does this — use it instead."}
+  {"path": "frontend/src/pages/rounds/RoundsPage.tsx", "line": 47, "body": "The chip label and filter-mode mapping is built in JSX. Have the view model expose the finished chips as `{ key, label, active }` so the view only maps over them.", "recipe": "view-model-extraction"},
+  {"path": "frontend/src/pages/CoursesPage/CoursesPage.tsx", "line": 88, "body": "This is a hand-rolled filter chip. `FilterChip` in `@/brand/components/FilterChip` already does this — use it instead.", "recipe": "kit-component"}
 ]

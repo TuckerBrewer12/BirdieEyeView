@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Turn the bot's JSON findings into a GitHub review payload.
 
-Usage: post_review.py <findings.json> <diff.patch> <commit_sha> <out.json>
+Usage: post_review.py <findings.json> <diff.patch> <commit_sha> <out.json> [fixable.json]
 """
 from __future__ import annotations
 
@@ -10,6 +10,12 @@ import os
 import re
 import sys
 from pathlib import Path
+
+_BOTS = Path(__file__).resolve().parent
+if str(_BOTS) not in sys.path:
+    sys.path.insert(0, str(_BOTS))
+
+import findings
 
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 
@@ -79,8 +85,68 @@ def extract_array(text: str) -> str:
     return ""
 
 
+def _context() -> dict[str, str]:
+    repo = os.environ.get("GITHUB_REPOSITORY", "")
+    pr_number = os.environ.get("PR_NUMBER", "")
+    pr_url = os.environ.get("PR_URL") or (
+        f"https://github.com/{repo}/pull/{pr_number}" if repo and pr_number else ""
+    )
+    return {
+        "repo": repo,
+        "pr_number": pr_number,
+        "pr_url": pr_url,
+        "bot_name": BOT_NAME,
+        "head_sha": os.environ.get("HEAD_SHA", ""),
+    }
+
+
+def decorate(path: str, line: object, body: str, recipe: str, auto_fix: bool) -> tuple[str, str]:
+    ctx = _context()
+    return findings.decorate_body(
+        body=body,
+        path=path,
+        line=line,
+        recipe=recipe,
+        auto_fix=auto_fix,
+        repo=ctx["repo"],
+        pr_number=ctx["pr_number"],
+        pr_url=ctx["pr_url"],
+        bot_name=ctx["bot_name"],
+        head_sha=ctx["head_sha"],
+    )
+
+
+def collect_findings(raw_findings: list[object], valid: dict[str, set[int]]) -> tuple[list[dict], list[dict]]:
+    """Split model output into inline-able findings and orphans, with recipes attached."""
+    staged: list[dict] = []
+    for item in raw_findings:
+        if not isinstance(item, dict):
+            continue
+        path, line, body = item.get("path"), item.get("line"), item.get("body")
+        if not path or not body:
+            continue
+        recipe = findings.recipe_id_of(item.get("recipe"))
+        staged.append(
+            {
+                "path": path,
+                "line": line,
+                "body": str(body).strip(),
+                "recipe": recipe,
+                "inline": isinstance(line, int) and line in valid.get(path, set()),
+            }
+        )
+
+    findings.assign_auto_fix(staged)
+    return staged, [s for s in staged if s.get("recipe") and s.get("auto_fix")]
+
+
 def main() -> int:
+    if len(sys.argv) < 5:
+        print("usage: post_review.py <findings.json> <diff.patch> <commit_sha> <out.json> [fixable.json]", file=sys.stderr)
+        return 2
+
     findings_path, diff_path, commit_sha, out_path = sys.argv[1:5]
+    fixable_path = sys.argv[5] if len(sys.argv) > 5 else ""
 
     raw = Path(findings_path).read_text().strip()
     array = extract_array(raw)
@@ -92,34 +158,34 @@ def main() -> int:
         return 1
 
     try:
-        findings = json.loads(array)
+        parsed = json.loads(array)
     except json.JSONDecodeError as exc:
         print(f"::warning title={BOT_NAME}::model did not return JSON ({exc}).")
         return 1
 
-    if not isinstance(findings, list):
+    if not isinstance(parsed, list):
         print(f"::warning title={BOT_NAME}::expected a JSON array.")
         return 1
 
     valid = added_lines(Path(diff_path).read_text())
+    staged, auto = collect_findings(parsed, valid)
 
     inline: list[dict] = []
     orphans: list[str] = []
+    ctx = _context()
 
-    for f in findings:
-        if not isinstance(f, dict):
-            continue
-        path, line, body = f.get("path"), f.get("line"), f.get("body")
-        if not path or not body:
-            continue
-
-        if isinstance(line, int) and line in valid.get(path, set()):
+    for item in staged:
+        decorated, fid = decorate(
+            item["path"], item["line"], item["body"], item["recipe"], item["auto_fix"]
+        )
+        item["id"] = fid
+        if item["inline"]:
             inline.append(
-                {"path": path, "line": line, "side": "RIGHT", "body": body}
+                {"path": item["path"], "line": item["line"], "side": "RIGHT", "body": decorated}
             )
         else:
-            where = f"{path}:{line}" if line else path
-            orphans.append(f"- **`{where}`** — {body}")
+            where = f"{item['path']}:{item['line']}" if item["line"] else item["path"]
+            orphans.append(f"- **`{where}`** — {decorated}")
 
     total = len(inline) + len(orphans)
     if total == 0:
@@ -130,6 +196,12 @@ def main() -> int:
         if inline:
             plural = "" if len(inline) == 1 else "s"
             summary += f"\n\n{len(inline)} left as inline comment{plural} on the diff."
+        if auto:
+            summary += (
+                f"\n\n{len(auto)} will open as "
+                f"{'a fix PR' if len(auto) == 1 else 'fix PRs'} targeting this branch. "
+                "Merge one to take it as a commit, or use the discuss link on the comment."
+            )
         if orphans:
             summary += (
                 "\n\nThese could not be anchored to a diff line:\n\n"
@@ -143,7 +215,25 @@ def main() -> int:
         "comments": inline,
     }
     Path(out_path).write_text(json.dumps(payload))
-    print(f"{len(inline)} inline, {len(orphans)} in summary.")
+
+    fixable = []
+    for item in auto:
+        fixable.append(
+            findings.fix_payload(
+                fid=item["id"],
+                recipe=item["recipe"],
+                path=item["path"],
+                line=item["line"],
+                body=item["body"],
+                bot_name=ctx["bot_name"],
+                auto_fix=True,
+                pr_number=ctx["pr_number"],
+            )
+        )
+    if fixable_path:
+        Path(fixable_path).write_text(json.dumps(fixable))
+
+    print(f"{len(inline)} inline, {len(orphans)} in summary, {len(fixable)} fix PRs.")
     return 0
 
 
