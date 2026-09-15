@@ -37,7 +37,7 @@ jobs:
           pip install ruff "bandit[toml]"
 
       # Unit tests. The suite is fully mocked (asyncpg is stubbed with AsyncMock),
-      # so no live Postgres is needed. Baseline at time of writing: 253 passed, 4 skipped.
+      # so no live Postgres is needed.
       - name: Unit tests + coverage
         if: matrix.check == 'test'
         run: pytest -q --ignore=tests/integration --cov --cov-report=term-missing --cov-fail-under=75

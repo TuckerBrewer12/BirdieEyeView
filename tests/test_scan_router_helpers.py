@@ -14,7 +14,7 @@ from models import Course, Hole, Round, Tee, User
 from services.mistral_scorecard_parser import ParsedScorecardRows, ParsedTeeRow
 
 
-def _make_upload(name: str, content_type: str, data: bytes = b"data") -> UploadFile:
+def make_upload(name: str, content_type: str, data: bytes = b"data") -> UploadFile:
     return UploadFile(
         file=BytesIO(data),
         filename=name,
@@ -22,86 +22,128 @@ def _make_upload(name: str, content_type: str, data: bytes = b"data") -> UploadF
     )
 
 
-def test_upload_suffix_and_environment_helpers(monkeypatch):
-    monkeypatch.delenv("SCAN_TEST_BOOL", raising=False)
-    assert scan._env_bool("SCAN_TEST_BOOL", True) is True
-    monkeypatch.setenv("SCAN_TEST_BOOL", "yes")
-    assert scan._env_bool("SCAN_TEST_BOOL") is True
-    monkeypatch.setenv("SCAN_TEST_BOOL", "no")
-    assert scan._env_bool("SCAN_TEST_BOOL") is False
+@pytest.mark.parametrize(
+    ("configured", "default", "expected"),
+    [(None, True, True), ("yes", False, True), ("no", True, False)],
+)
+def test_scan_boolean_environment(monkeypatch, configured, default, expected):
+    if configured is None:
+        monkeypatch.delenv("SCAN_TEST_BOOL", raising=False)
+    else:
+        monkeypatch.setenv("SCAN_TEST_BOOL", configured)
 
-    assert scan._extract_upload_suffix(_make_upload("card.JPG", "image/jpeg")) == ".jpg"
-    with pytest.raises(HTTPException, match="Filename is required"):
-        scan._extract_upload_suffix(_make_upload("", "image/jpeg"))
-    with pytest.raises(HTTPException, match="Unsupported file type"):
-        scan._extract_upload_suffix(_make_upload("card.exe", "application/octet-stream"))
-    with pytest.raises(HTTPException, match="Unsupported upload content type"):
-        scan._extract_upload_suffix(_make_upload("card.jpg", "text/plain"))
+    assert scan._env_bool("SCAN_TEST_BOOL", default) is expected
 
 
-def test_upload_payload_validation_and_streaming(monkeypatch, tmp_path):
-    valid_pdf = tmp_path / "card.pdf"
-    valid_pdf.write_bytes(b"%PDF-rest")
-    scan._validate_upload_payload(valid_pdf, ".pdf")
-    invalid_pdf = tmp_path / "bad.pdf"
-    invalid_pdf.write_bytes(b"wrong")
+def test_upload_suffix_normalizes_extension():
+    assert scan._extract_upload_suffix(make_upload("card.JPG", "image/jpeg")) == ".jpg"
+
+
+@pytest.mark.parametrize(
+    ("upload", "message"),
+    [
+        (make_upload("", "image/jpeg"), "Filename is required"),
+        (make_upload("card.exe", "application/octet-stream"), "Unsupported file type"),
+        (make_upload("card.jpg", "text/plain"), "Unsupported upload content type"),
+    ],
+)
+def test_upload_suffix_rejects_invalid_upload(upload, message):
+    with pytest.raises(HTTPException, match=message):
+        scan._extract_upload_suffix(upload)
+
+
+def test_validate_pdf_upload(tmp_path):
+    path = tmp_path / "card.pdf"
+    path.write_bytes(b"%PDF-rest")
+
+    scan._validate_upload_payload(path, ".pdf")
+
+
+def test_validate_pdf_upload_rejects_bad_signature(tmp_path):
+    path = tmp_path / "bad.pdf"
+    path.write_bytes(b"wrong")
+
     with pytest.raises(HTTPException, match="Invalid PDF"):
-        scan._validate_upload_payload(invalid_pdf, ".pdf")
+        scan._validate_upload_payload(path, ".pdf")
 
-    image_path = tmp_path / "card.png"
-    Image.new("RGB", (20, 10), "white").save(image_path)
-    scan._validate_upload_payload(image_path, ".png")
-    invalid_image = tmp_path / "bad.png"
-    invalid_image.write_bytes(b"not-an-image")
+
+def test_validate_image_upload(tmp_path):
+    path = tmp_path / "card.png"
+    Image.new("RGB", (20, 10), "white").save(path)
+
+    scan._validate_upload_payload(path, ".png")
+
+
+def test_validate_image_upload_rejects_unreadable_file(tmp_path):
+    path = tmp_path / "bad.png"
+    path.write_bytes(b"not-an-image")
+
     with pytest.raises(HTTPException, match="Invalid or unreadable"):
-        scan._validate_upload_payload(invalid_image, ".png")
+        scan._validate_upload_payload(path, ".png")
 
-    uploaded = _make_upload("card.png", "image/png", b"abc")
-    saved_path, digest = scan._save_upload_to_temp(uploaded, ".png")
+
+def test_save_upload_streams_content_to_temp_file():
+    saved_path, digest = scan._save_upload_to_temp(make_upload("card.png", "image/png", b"abc"), ".png")
     try:
         assert saved_path.read_bytes() == b"abc"
         assert len(digest) == 64
     finally:
         saved_path.unlink(missing_ok=True)
 
+
+def test_save_upload_enforces_size_limit(monkeypatch):
     monkeypatch.setattr(scan, "MAX_UPLOAD_BYTES", 3)
-    with pytest.raises(HTTPException) as exc:
-        scan._save_upload_to_temp(_make_upload("large.png", "image/png", b"abcd"), ".png")
-    assert exc.value.status_code == 413
+
+    with pytest.raises(HTTPException) as raised:
+        scan._save_upload_to_temp(make_upload("large.png", "image/png", b"abcd"), ".png")
+
+    assert raised.value.status_code == 413
 
 
-def test_image_normalization_cache_path_and_fallback(monkeypatch, tmp_path):
+def test_preprocess_cache_path_creates_cache_directory(monkeypatch, tmp_path):
     monkeypatch.setattr(scan, "PREPROCESS_CACHE_DIR", tmp_path / "cache")
+
     cache_path = scan._get_preprocess_cache_path("digest")
+
     assert cache_path.parent.exists()
     assert "digest" in cache_path.name
 
+
+def test_image_normalization_resizes_and_converts(monkeypatch, tmp_path):
     source = tmp_path / "large.png"
     Image.new("RGBA", (2000, 1000), (255, 255, 255, 128)).save(source)
     monkeypatch.setattr(scan, "PREPROCESS_CACHE_ENABLED", False)
+
     normalized, cache_hit = scan._normalize_upload_for_ocr(source, "digest")
     try:
-        assert normalized != source
-        assert cache_hit is False
         with Image.open(normalized) as result:
-            assert result.mode == "RGB"
-            assert max(result.size) == scan.OCR_LONG_EDGE_TARGET
+            assert (result.mode, max(result.size)) == (
+                "RGB",
+                scan.OCR_LONG_EDGE_TARGET,
+            )
+        assert normalized != source and cache_hit is False
     finally:
         normalized.unlink(missing_ok=True)
 
-    bad = tmp_path / "bad.jpg"
-    bad.write_bytes(b"bad")
-    fallback, cache_hit = scan._normalize_upload_for_ocr(bad, "bad")
-    assert fallback == bad
-    assert cache_hit is False
+
+def test_image_normalization_falls_back_for_unreadable_image(tmp_path):
+    path = tmp_path / "bad.jpg"
+    path.write_bytes(b"bad")
+
+    normalized, cache_hit = scan._normalize_upload_for_ocr(path, "bad")
+
+    assert (normalized, cache_hit) == (path, False)
 
 
-def test_confidence_payload_levels_and_penalty():
-    assert scan._confidence_level(0.9) == "high"
-    assert scan._confidence_level(0.7) == "medium"
-    assert scan._confidence_level(0.5) == "low"
-    assert scan._confidence_level(0.1) == "very_low"
+@pytest.mark.parametrize(
+    ("score", "expected"),
+    [(0.9, "high"), (0.7, "medium"), (0.5, "low"), (0.1, "very_low")],
+)
+def test_confidence_level_maps_score(score, expected):
+    assert scan._confidence_level(score) == expected
 
+
+def test_confidence_payload_scores_complete_and_missing_holes():
     payload = scan._build_confidence_payload(
         [
             {"hole_number": 1, "strokes": 4, "putts": 2, "green_in_regulation": True},
@@ -109,13 +151,19 @@ def test_confidence_payload_levels_and_penalty():
         ],
         ["review"],
     )
+
     assert payload["overall"] == pytest.approx(0.48)
-    assert payload["hole_scores"][0]["fields"]["strokes"]["level"] == "high"
-    assert payload["hole_scores"][1]["level"] == "very_low"
+    assert (
+        payload["hole_scores"][0]["fields"]["strokes"]["level"],
+        payload["hole_scores"][1]["level"],
+    ) == ("high", "very_low")
+
+
+def test_confidence_payload_without_holes_has_zero_confidence():
     assert scan._build_confidence_payload([], ["warning"])["overall"] == 0
 
 
-def test_build_round_from_known_course_covers_score_guards():
+def make_known_course_rows():
     course = Course(
         name="Pebble Beach",
         location="Monterey",
@@ -124,7 +172,14 @@ def test_build_round_from_known_course_covers_score_guards():
             Hole(number=2, par=3, handicap=18),
             Hole(number=3, par=None),
         ],
-        tees=[Tee(color="Blue", slope_rating=125, course_rating=72, hole_yardages={1: 400})],
+        tees=[
+            Tee(
+                color="Blue",
+                slope_rating=125,
+                course_rating=72,
+                hole_yardages={1: 400},
+            )
+        ],
     )
     parsed = ParsedScorecardRows(
         score_row=[0, 20, 1],
@@ -134,24 +189,41 @@ def test_build_round_from_known_course_covers_score_guards():
         score_to_par_hint=True,
         warnings=["existing warning"],
     )
+    return scan._build_round_from_parsed_rows(parsed, course_model=course, to_par_scoring=None)
 
-    payload, warnings = scan._build_round_from_parsed_rows(
-        parsed, course_model=course, to_par_scoring=None
-    )
+
+def test_known_course_round_preserves_course_metadata():
+    payload, _ = make_known_course_rows()
 
     assert payload["course"]["name"] == "Pebble Beach"
     assert payload["course"]["tees"][0]["hole_yardages"] == {"1": 400}
-    assert payload["hole_scores"][0]["strokes"] == 4
-    assert payload["hole_scores"][0]["green_in_regulation"] is True
-    assert payload["hole_scores"][1]["strokes"] is None
-    assert payload["hole_scores"][1]["putts"] is None
-    assert payload["hole_scores"][2]["strokes"] is None
-    assert payload["hole_scores"][2]["shots_to_green"] is None
+
+
+def test_known_course_round_guards_invalid_scores():
+    payload, _ = make_known_course_rows()
+
+    assert (
+        payload["hole_scores"][0]["strokes"],
+        payload["hole_scores"][0]["green_in_regulation"],
+    ) == (4, True)
+    assert (
+        payload["hole_scores"][1]["strokes"],
+        payload["hole_scores"][1]["putts"],
+    ) == (None, None)
+    assert (
+        payload["hole_scores"][2]["strokes"],
+        payload["hole_scores"][2]["shots_to_green"],
+    ) == (None, None)
+
+
+def test_known_course_round_preserves_and_adds_warnings():
+    _, warnings = make_known_course_rows()
+
     assert "existing warning" in warnings
     assert any("without known par" in warning for warning in warnings)
 
 
-def test_build_round_from_unknown_course_uses_ocr_metadata():
+def make_unknown_course_rows():
     parsed = ParsedScorecardRows(
         course_name="  PEBBLE   BEACH  ",
         par_row=[4] * 9 + [7],
@@ -161,25 +233,31 @@ def test_build_round_from_unknown_course_uses_ocr_metadata():
         putts_row=[5, 2, 1],
         shots_to_green_row=[2, 2, 2],
     )
+    return scan._build_round_from_parsed_rows(parsed, course_model=None, to_par_scoring=False)
 
-    payload, warnings = scan._build_round_from_parsed_rows(
-        parsed, course_model=None, to_par_scoring=False
+
+def test_unknown_course_round_builds_ocr_course_metadata():
+    payload, _ = make_unknown_course_rows()
+
+    assert (payload["course"]["name"], payload["course"]["par"]) == (
+        "Pebble Beach",
+        36,
     )
-
-    assert payload["course"]["name"] == "Pebble Beach"
-    assert payload["course"]["par"] == 36
     assert payload["course"]["holes"][9]["par"] is None
     assert payload["course"]["tees"][0]["hole_yardages"] == {"1": 400, "3": 180}
+
+
+def test_unknown_course_round_warns_about_invalid_scores():
+    payload, warnings = make_unknown_course_rows()
+
     assert payload["hole_scores"][0]["putts"] is None
     assert any("putts exceed strokes" in warning for warning in warnings)
     assert any("strokes missing" in warning for warning in warnings)
 
 
 @pytest.mark.asyncio
-async def test_ocr_pipeline_uses_service_and_merger(monkeypatch, tmp_path):
-    ocr_service = SimpleNamespace(
-        ocr_file=AsyncMock(return_value={"pages": [{"markdown": "raw markdown"}]})
-    )
+async def test_ocr_pipeline_merges_extracted_markdown(monkeypatch, tmp_path):
+    ocr_service = SimpleNamespace(ocr_file=AsyncMock(return_value={"pages": [{"markdown": "raw markdown"}]}))
     monkeypatch.setattr(scan, "MistralOCRService", lambda: ocr_service)
     monkeypatch.setattr(
         scan.MistralOCRService,
@@ -190,63 +268,73 @@ async def test_ocr_pipeline_uses_service_and_merger(monkeypatch, tmp_path):
     merger = AsyncMock(return_value="merged markdown")
     monkeypatch.setattr(scan, "merge_split_tables", merger)
 
-    assert await scan._run_ocr_pipeline(tmp_path / "card.jpg") == "merged markdown"
+    result = await scan._run_ocr_pipeline(tmp_path / "card.jpg")
+
+    assert result == "merged markdown"
     merger.assert_awaited_once_with("raw markdown")
 
 
-@pytest.mark.asyncio
-async def test_save_round_maps_success_and_errors(monkeypatch):
-    user = User(id=str(uuid4()), name="Ada", email="ada@example.com")
-    request = SaveRoundRequest.model_validate(
+def make_save_round_request():
+    return SaveRoundRequest.model_validate(
         {
             "hole_scores": [{"hole_number": 1, "strokes": 4}],
             "course_name": "Pebble Beach",
         }
     )
-    saved = Round(id=str(uuid4()), hole_scores=[])
-    scan_service = SimpleNamespace(save_reviewed_scan=AsyncMock(return_value=saved))
-    monkeypatch.setattr(scan, "ScanService", lambda db: scan_service)
-
-    save_response = await scan.save_round(request, SimpleNamespace(), user)
-    assert save_response == {"id": saved.id, "total_score": None}
-    assert request.user_id == user.id
-
-    validation_error = "course_id references users.private_courses"
-    scan_service.save_reviewed_scan.side_effect = ValueError(validation_error)
-    with pytest.raises(HTTPException) as exc:
-        await scan.save_round(request, SimpleNamespace(), user)
-    assert exc.value.status_code == 400
-    assert exc.value.detail == "We couldn't save this round. Please try again."
-    assert validation_error not in exc.value.detail
-
-    database_error = "duplicate key violates users.rounds_pkey"
-    scan_service.save_reviewed_scan.side_effect = RuntimeError(database_error)
-    with pytest.raises(HTTPException) as exc:
-        await scan.save_round(request, SimpleNamespace(), user)
-    assert exc.value.status_code == 500
-    assert exc.value.detail == "Save failed. Please try again."
-    assert database_error not in exc.value.detail
 
 
 @pytest.mark.asyncio
-async def test_extract_scan_hides_provider_configuration_errors(monkeypatch):
+async def test_save_round_assigns_authenticated_user(monkeypatch):
+    user = User(id=str(uuid4()), name="Ada", email="ada@example.com")
+    request = make_save_round_request()
+    saved = Round(id=str(uuid4()), hole_scores=[])
+    service = SimpleNamespace(save_reviewed_scan=AsyncMock(return_value=saved))
+    monkeypatch.setattr(scan, "ScanService", lambda db: service)
+
+    response = await scan.save_round(request, SimpleNamespace(), user)
+
+    assert response == {"id": saved.id, "total_score": None}
+    assert request.user_id == user.id
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("error", "status_code", "detail"),
+    [
+        (
+            ValueError("course_id references users.private_courses"),
+            400,
+            "We couldn't save this round. Please try again.",
+        ),
+        (RuntimeError("duplicate key violates users.rounds_pkey"), 500, "Save failed. Please try again."),
+    ],
+)
+async def test_save_round_hides_internal_error(monkeypatch, error, status_code, detail):
+    request = make_save_round_request()
+    service = SimpleNamespace(save_reviewed_scan=AsyncMock(side_effect=error))
+    monkeypatch.setattr(scan, "ScanService", lambda db: service)
+
+    with pytest.raises(HTTPException) as raised:
+        await scan.save_round(request, SimpleNamespace(), User(id=str(uuid4())))
+
+    assert (raised.value.status_code, raised.value.detail) == (status_code, detail)
+    assert str(error) not in raised.value.detail
+
+
+@pytest.mark.asyncio
+async def test_extract_scan_hides_provider_configuration_error(monkeypatch):
     image_bytes = BytesIO()
     Image.new("RGB", (20, 10), "white").save(image_bytes, format="PNG")
-    upload = _make_upload("card.png", "image/png", image_bytes.getvalue())
+    upload = make_upload("card.png", "image/png", image_bytes.getvalue())
     provider_error = "MISTRAL_API_KEY environment variable is not set"
-
-    monkeypatch.setattr(
-        scan,
-        "_normalize_upload_for_ocr",
-        lambda path, digest: (path, False),
-    )
+    monkeypatch.setattr(scan, "_normalize_upload_for_ocr", lambda path, digest: (path, False))
     monkeypatch.setattr(
         scan,
         "_run_ocr_pipeline",
         AsyncMock(side_effect=EnvironmentError(provider_error)),
     )
 
-    with pytest.raises(HTTPException) as exc:
+    with pytest.raises(HTTPException) as raised:
         await scan.extract_scan(
             upload,
             user_context=None,
@@ -256,6 +344,8 @@ async def test_extract_scan_hides_provider_configuration_errors(monkeypatch):
             current_user=None,
         )
 
-    assert exc.value.status_code == 500
-    assert exc.value.detail == "We couldn't scan this scorecard. Please try again."
-    assert provider_error not in exc.value.detail
+    assert (raised.value.status_code, raised.value.detail) == (
+        500,
+        "We couldn't scan this scorecard. Please try again.",
+    )
+    assert provider_error not in raised.value.detail
