@@ -27,7 +27,6 @@ def discussion_prompt(
     path: str,
     line: object,
     body: str,
-    recipe_url: str = "",
 ) -> str:
     where = f"{path}:{line}" if line else path
     lines = [
@@ -36,10 +35,6 @@ def discussion_prompt(
         f"File: {where}",
         f"Reviewer: {bot_name}",
         f"Finding: {body}",
-    ]
-    if recipe_url:
-        lines.append(f"The repo's standard for this: {recipe_url}")
-    lines += [
         f"PR: {pr_url}",
         "",
         "Is this worth doing, and what should the change actually look like?",
@@ -56,23 +51,9 @@ def conductor_url(prompt: str) -> str:
     return f"conductor://prompt={q}&agent={CONDUCTOR_AGENT}&model={CONDUCTOR_MODEL}"
 
 
-def recipe_blob_url(repo: str, sha: str, recipe_id: str) -> str:
-    if not repo or not recipe_id:
-        return ""
-    ref = sha or "main"
-    return f"https://github.com/{repo}/blob/{ref}/.github/review-bots/recipes/{recipe_id}.md"
-
-
-def comment_actions(discuss_url: str, *, auto_fix: bool, has_recipe: bool) -> str:
-    """The human-facing footer: discuss, or wait for / retry a fix PR."""
-    lines = [f"[{DISCUSS_LABEL}]({discuss_url})"]
-    if auto_fix:
-        lines.append(
-            "Opening a PR with this change — merge it into this branch if it looks "
-            "right. Reply `/fix` to retry."
-        )
-    elif has_recipe:
-        lines.append("Reply `/fix` to open a PR that implements this.")
-    else:
-        lines.append("Reply `/fix` to attempt a fix PR.")
-    return "\n\n".join(lines)
+def comment_actions(discuss_url: str) -> str:
+    return (
+        f"[{DISCUSS_LABEL}]({discuss_url})\n\n"
+        "Opening a PR with this change — merge it into this branch if it looks "
+        "right. Reply `/fix` to retry."
+    )

@@ -16,7 +16,6 @@ if str(BOTS) not in sys.path:
 import findings
 import links
 import post_review
-import recipes
 
 
 DIFF = """\
@@ -25,7 +24,7 @@ diff --git a/frontend/src/brand/components/Badge.tsx b/frontend/src/brand/compon
 +++ b/frontend/src/brand/components/Badge.tsx
 @@ -0,0 +1,4 @@
 +export function Badge() {
-+  return <span style={{ color: "#2d7a3a" }}>x</span>
++  return <span className="text-[#2d7a3a]">x</span>
 +}
 +
 """
@@ -38,48 +37,15 @@ def bot_env(monkeypatch):
     monkeypatch.setenv("PR_NUMBER", "42")
     monkeypatch.setenv("PR_URL", "https://github.com/owner/birdie/pull/42")
     monkeypatch.setenv("HEAD_SHA", "abc123def")
-    # Re-read module-level names that captured env at import.
     monkeypatch.setattr(post_review, "BOT_NAME", "Brand Kit Bot")
 
 
-def test_catalog_lists_known_recipes_and_hides_generic():
-    catalog = recipes.catalog()
-    assert "`screenshot-coverage`" in catalog
-    assert "`brand-token`" in catalog
-    assert "`kit-component`" in catalog
-    assert "`view-model-extraction`" in catalog
-    assert "`generic`" not in catalog
-    assert "generic" not in recipes.known_ids()
-
-
-def test_load_falls_back_to_generic():
-    loaded = recipes.load("not-a-recipe")
-    assert loaded.id == "generic"
-    assert recipes.load("screenshot-coverage").setup == "frontend-playwright"
-    assert recipes.runner_for("frontend-playwright") == "macos-latest"
-    assert recipes.runner_for("frontend") == "ubuntu-latest"
-
-
-def test_info_resolves_defaults():
-    info = recipes.info(recipes.load("generic"))
-    assert info["setup"] == "none"
-    assert info["runner"] == "ubuntu-latest"
-    assert info["title"]
-
-
 def test_finding_id_ignores_line_number():
-    a = findings.finding_id("a.tsx", "brand-token", "use a token")
-    b = findings.finding_id("a.tsx", "brand-token", "use a token")
-    c = findings.finding_id("a.tsx", "brand-token", "different")
+    a = findings.finding_id("a.tsx", "use a token")
+    b = findings.finding_id("a.tsx", "use a token")
+    c = findings.finding_id("a.tsx", "different")
     assert a == b
     assert a != c
-
-
-def test_unknown_recipe_is_dropped():
-    assert findings.recipe_id_of("screenshot-coverage") == "screenshot-coverage"
-    assert findings.recipe_id_of("generic") == ""
-    assert findings.recipe_id_of("nope") == ""
-    assert findings.recipe_id_of(None) == ""
 
 
 def test_comment_round_trip_metadata(bot_env):
@@ -87,13 +53,10 @@ def test_comment_round_trip_metadata(bot_env):
         body="Add a preview for Badge.",
         path="frontend/src/brand/components/Badge.tsx",
         line=1,
-        recipe="screenshot-coverage",
-        auto_fix=True,
         repo="owner/birdie",
         pr_number="42",
         pr_url="https://github.com/owner/birdie/pull/42",
         bot_name="Brand Kit Bot",
-        head_sha="abc123def",
     )
     assert "Discuss in Conductor" in body
     assert "conductor://prompt=" in body
@@ -103,9 +66,9 @@ def test_comment_round_trip_metadata(bot_env):
     meta = findings.parse_metadata(body)
     assert meta is not None
     assert meta["id"] == fid
-    assert meta["recipe"] == "screenshot-coverage"
     assert meta["path"].endswith("Badge.tsx")
     assert meta["line"] == 1
+    assert "recipe" not in meta
     stripped = findings._body_without_markup(body)
     assert stripped == "Add a preview for Badge."
     assert "Discuss" not in stripped
@@ -117,17 +80,6 @@ def test_is_fix_command_does_not_match_bot_footer():
     assert findings.is_fix_command("/fix please") is True
     assert findings.is_fix_command(footer) is False
     assert findings.is_fix_command("please /fix this") is False
-
-
-def test_assign_auto_fix_all_recipe_findings():
-    items = [
-        {"recipe": "brand-token", "path": f"f{i}.tsx", "body": f"x{i}"}
-        for i in range(8)
-    ]
-    items.append({"recipe": "", "path": "other.tsx", "body": "no recipe"})
-    findings.assign_auto_fix(items)
-    assert all(i["auto_fix"] for i in items if i["recipe"])
-    assert items[-1]["auto_fix"] is False
 
 
 def test_extract_array_survives_chrome():
@@ -143,7 +95,7 @@ def test_added_lines_from_new_file():
     assert lines["frontend/src/brand/components/Badge.tsx"] == {1, 2, 3, 4}
 
 
-def test_post_review_writes_fixable_payload(tmp_path, bot_env, monkeypatch):
+def test_post_review_writes_fixable_payload_for_every_finding(tmp_path, bot_env, monkeypatch):
     findings_path = tmp_path / "findings.json"
     findings_path.write_text(
         json.dumps(
@@ -152,12 +104,11 @@ def test_post_review_writes_fixable_payload(tmp_path, bot_env, monkeypatch):
                     "path": "frontend/src/brand/components/Badge.tsx",
                     "line": 1,
                     "body": "New kit component with no screenshot coverage.",
-                    "recipe": "screenshot-coverage",
                 },
                 {
                     "path": "frontend/src/brand/components/Badge.tsx",
                     "line": 2,
-                    "body": "A design question with no recipe.",
+                    "body": "`#2d7a3a` should be `text-primary`.",
                 },
             ]
         )
@@ -185,30 +136,24 @@ def test_post_review_writes_fixable_payload(tmp_path, bot_env, monkeypatch):
     assert review["event"] == "COMMENT"
     assert len(review["comments"]) == 2
     assert "Discuss in Conductor" in review["comments"][0]["body"]
-    assert "screenshot-coverage" in review["comments"][0]["body"]
-    assert "Reply `/fix`" in review["comments"][1]["body"]
+    assert "recipe" not in review["comments"][0]["body"]
 
     fixable = json.loads(fixable_path.read_text())
-    assert len(fixable) == 1
-    assert fixable[0]["recipe"] == "screenshot-coverage"
-    assert fixable[0]["runner"] == "macos-latest"
-    assert fixable[0]["setup"] == "frontend-playwright"
-    assert fixable[0]["branch"].startswith("bot-fix/pr-42/screenshot-coverage-")
+    assert len(fixable) == 2
+    assert fixable[0]["branch"].startswith("bot-fix/pr-42/")
+    assert "recipe" not in fixable[0]
     assert "fix PR" in review["body"]
 
 
 def test_from_comment_builds_payload(monkeypatch, bot_env):
     original, fid = findings.decorate_body(
         body="Swap this button for the kit Button.",
-        path="frontend/src/pages/RoundsPage/RoundsPage.tsx",
+        path="frontend/src/pages/rounds/RoundsPage.tsx",
         line=10,
-        recipe="kit-component",
-        auto_fix=True,
         repo="owner/birdie",
         pr_number="42",
         pr_url="https://github.com/owner/birdie/pull/42",
         bot_name="Brand Kit Bot",
-        head_sha="abc123def",
     )
     monkeypatch.setenv("COMMENT_BODY", "/fix")
     monkeypatch.setenv("PARENT_BODY", original)
@@ -219,9 +164,8 @@ def test_from_comment_builds_payload(monkeypatch, bot_env):
     payload = json.loads(buf.getvalue())
     assert len(payload) == 1
     assert payload[0]["id"] == fid
-    assert payload[0]["recipe"] == "kit-component"
     assert payload[0]["body"] == "Swap this button for the kit Button."
-    assert payload[0]["runner"] == "ubuntu-latest"
+    assert "recipe" not in payload[0]
 
 
 def test_from_comment_ignores_non_command(monkeypatch):
@@ -251,18 +195,17 @@ def test_discussion_prompt_truncates():
     assert "model=grok-4.6" in url
 
 
-def test_build_prompt_includes_recipe():
+def test_build_prompt_is_just_the_finding():
     payload = findings.fix_payload(
         fid="deadbeef",
-        recipe="screenshot-coverage",
         path="frontend/src/brand/components/Badge.tsx",
         line=1,
         body="Add a preview.",
         bot_name="Brand Kit Bot",
-        auto_fix=True,
         pr_number="42",
     )
     prompt = findings.build_prompt(payload)
     assert "Add a preview." in prompt
-    assert "previews/<Name>.tsx" in prompt
+    assert "recipe" not in prompt.lower()
+    assert "Tailwind" in prompt
     assert payload["title"]

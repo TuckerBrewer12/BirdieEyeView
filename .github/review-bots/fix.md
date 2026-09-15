@@ -1,16 +1,15 @@
 You are applying one review finding to this repository.
 
-The recipe below is the repo's written-down answer to this class of finding.
-Follow it. Copy the shape of the worked example. Stop when the "Done when"
-checklist would all tick.
+Read the file the finding points at, and neighbouring code in the same area,
+and make the smallest change that addresses what the finding asked for.
+Match the style of the neighbouring code — this app styles with Tailwind
+token classes (`bg-primary`, `text-muted-foreground`, …), not `useTheme()`
+or hardcoded colors. Do not invent APIs, tokens, or components.
 
 ## Rules
 
 - Change only what the finding asks for. Do not restyle, rename, or "while
   you're here" adjacent code.
 - Do not commit, push, or run git.
-- Do not run the recipe's verify command — the runner does that after you finish.
-- If the recipe's "when this does not apply" section matches, change nothing
-  and stop.
-- If a required token, component, or API does not exist, change nothing and
-  stop. Do not invent one.
+- If the finding is a design question rather than a concrete change, change
+  nothing and stop.

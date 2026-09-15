@@ -55,14 +55,14 @@ jobs:
           PY
 
   apply:
-    name: Fix (${{ matrix.finding.recipe }})
+    name: Fix (${{ matrix.finding.id }})
     needs: plan
     if: needs.plan.outputs.empty == 'false'
     strategy:
       fail-fast: false
       matrix:
         finding: ${{ fromJson(needs.plan.outputs.findings) }}
-    runs-on: ${{ matrix.finding.runner }}
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -83,23 +83,6 @@ jobs:
           git archive "origin/${DEFAULT_BRANCH}" .github/review-bots \
             | tar -x -C "$RUNNER_TEMP/review-bots-src"
           echo "BOTS_DIR=$RUNNER_TEMP/review-bots-src/.github/review-bots" >> "$GITHUB_ENV"
-
-      - uses: actions/setup-node@v4
-        if: matrix.finding.setup != 'none'
-        with:
-          node-version: "20"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install frontend
-        if: matrix.finding.setup == 'frontend' || matrix.finding.setup == 'frontend-playwright'
-        run: npm ci
-        working-directory: frontend
-
-      - name: Install Playwright Chromium
-        if: matrix.finding.setup == 'frontend-playwright'
-        run: npx playwright install --with-deps chromium
-        working-directory: frontend
 
       - name: Install opencode
         run: curl -fsSL https://opencode.ai/install | bash

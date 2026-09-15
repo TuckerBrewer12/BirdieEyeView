@@ -23,39 +23,26 @@ if str(_BOTS) not in sys.path:
     sys.path.insert(0, str(_BOTS))
 
 import links
-import recipes
 
-# GitHub branch names: "bot-fix/pr-12/screenshot-coverage-a1b2c3d4"
 BRANCH_PREFIX = "bot-fix"
 
 META_RE = re.compile(r"<!-- review-bot:(\{.*?\}) -->", re.DOTALL)
 
 
-def finding_id(path: str, recipe: str, body: str) -> str:
+def finding_id(path: str, body: str) -> str:
     """Stable across line-number shifts so a synchronize does not open a second PR."""
-    key = f"{path}\n{recipe}\n{body.strip()}".encode()
-    return hashlib.sha1(key).hexdigest()[:8]
-
-
-def recipe_id_of(raw: Any) -> str:
-    value = raw if isinstance(raw, str) else ""
-    value = value.strip()
-    if value in recipes.known_ids():
-        return value
-    return ""
+    return hashlib.sha1(f"{path}\n{body.strip()}".encode()).hexdigest()[:8]
 
 
 def metadata_blob(
     *,
     finding_id: str,
-    recipe: str,
     path: str,
     line: object,
     bot_name: str,
 ) -> str:
     payload = {
         "id": finding_id,
-        "recipe": recipe,
         "path": path,
         "line": line if isinstance(line, int) else None,
         "bot": bot_name,
@@ -88,17 +75,13 @@ def decorate_body(
     body: str,
     path: str,
     line: object,
-    recipe: str,
-    auto_fix: bool,
     repo: str,
     pr_number: str,
     pr_url: str,
     bot_name: str,
-    head_sha: str,
 ) -> tuple[str, str]:
     """Return (comment markdown, finding id)."""
-    fid = finding_id(path, recipe, body)
-    recipe_url = links.recipe_blob_url(repo, head_sha, recipe) if recipe else ""
+    fid = finding_id(path, body)
     prompt = links.discussion_prompt(
         repo=repo,
         pr_number=str(pr_number),
@@ -107,16 +90,10 @@ def decorate_body(
         path=path,
         line=line,
         body=body,
-        recipe_url=recipe_url,
     )
-    actions = links.comment_actions(
-        links.conductor_url(prompt),
-        auto_fix=auto_fix,
-        has_recipe=bool(recipe),
-    )
+    actions = links.comment_actions(links.conductor_url(prompt))
     meta = metadata_blob(
         finding_id=fid,
-        recipe=recipe,
         path=path,
         line=line,
         bot_name=bot_name,
@@ -124,62 +101,45 @@ def decorate_body(
     return f"{body.strip()}\n\n{actions}\n\n{meta}", fid
 
 
-def branch_name(pr_number: str | int, recipe: str, fid: str) -> str:
-    recipe_part = recipe or recipes.FALLBACK_ID
-    return f"{BRANCH_PREFIX}/pr-{pr_number}/{recipe_part}-{fid}"
+def branch_name(pr_number: str | int, fid: str) -> str:
+    return f"{BRANCH_PREFIX}/pr-{pr_number}/{fid}"
+
+
+def title_for(body: str, path: str) -> str:
+    first = body.strip().splitlines()[0] if body.strip() else path
+    if len(first) > 72:
+        first = first[:71] + "…"
+    return first
 
 
 def fix_payload(
     *,
     fid: str,
-    recipe: str,
     path: str,
     line: object,
     body: str,
     bot_name: str,
-    auto_fix: bool,
     pr_number: str,
 ) -> dict[str, Any]:
-    loaded = recipes.load(recipe or None)
-    info = recipes.info(loaded)
     return {
         "id": fid,
-        "recipe": info["id"],
-        "title": info["title"],
-        "setup": info["setup"],
-        "verify": info["verify"],
-        "runner": info["runner"],
+        "title": title_for(body, path),
         "path": path,
         "line": line if isinstance(line, int) else 0,
         "body": body.strip(),
         "bot_name": bot_name,
-        "auto_fix": auto_fix,
-        "branch": branch_name(pr_number, info["id"], fid),
+        "branch": branch_name(pr_number, fid),
     }
 
 
-def assign_auto_fix(items: list[dict[str, Any]]) -> None:
-    """Every recipe-tagged finding gets its own fix PR; mutates in place."""
-    for item in items:
-        item["auto_fix"] = bool(item.get("recipe"))
-
-
 def build_prompt(finding: dict[str, Any]) -> str:
-    recipe = recipes.load(finding.get("recipe"))
     where = finding.get("path") or ""
     line = finding.get("line")
     if line:
         where = f"{where}:{line}"
     body = (finding.get("body") or "").strip()
     template = (_BOTS / "fix.md").read_text()
-    return (
-        f"{template.rstrip()}\n\n"
-        f"## The finding\n\n"
-        f"File: `{where}`\n\n"
-        f"{body}\n\n"
-        f"## The recipe (`{recipe.id}`)\n\n"
-        f"{recipe.body}\n"
-    )
+    return f"{template.rstrip()}\n\n## The finding\n\nFile: `{where}`\n\n{body}\n"
 
 
 def _env_context() -> dict[str, str]:
@@ -193,7 +153,6 @@ def _env_context() -> dict[str, str]:
         "pr_number": pr_number,
         "pr_url": pr_url,
         "bot_name": os.environ.get("BOT_NAME", "Review Bot"),
-        "head_sha": os.environ.get("HEAD_SHA", ""),
     }
 
 
@@ -201,17 +160,12 @@ def cmd_fields() -> int:
     finding = json.loads(os.environ["FINDING_JSON"])
     env = {
         "FINDING_ID": finding["id"],
-        "RECIPE": finding.get("recipe") or recipes.FALLBACK_ID,
-        "RECIPE_TITLE": finding.get("title") or "",
-        "SETUP": finding.get("setup") or "none",
-        "VERIFY": finding.get("verify") or "",
-        "RUNNER": finding.get("runner") or recipes.DEFAULT_RUNNER,
+        "FINDING_TITLE": finding.get("title") or "",
         "FINDING_PATH": finding.get("path") or "",
         "FINDING_LINE": str(finding.get("line") or ""),
         "FINDING_BODY": finding.get("body") or "",
         "BRANCH": finding.get("branch") or "",
         "BOT_NAME": finding.get("bot_name") or "Review Bot",
-        "AUTO_FIX": "1" if finding.get("auto_fix") else "0",
     }
     for key, value in env.items():
         print(f"{key}={shlex.quote(str(value))}")
@@ -248,17 +202,14 @@ def cmd_from_comment() -> int:
 
     ctx = _env_context()
     path = str(meta.get("path") or "")
-    recipe = recipe_id_of(meta.get("recipe"))
     finding_body = _body_without_markup(parent or body)
-    fid = str(meta.get("id") or finding_id(path, recipe, finding_body))
+    fid = str(meta.get("id") or finding_id(path, finding_body))
     payload = fix_payload(
         fid=fid,
-        recipe=recipe,
         path=path,
         line=meta.get("line"),
         body=finding_body,
         bot_name=str(meta.get("bot") or ctx["bot_name"]),
-        auto_fix=True,
         pr_number=ctx["pr_number"],
     )
     json.dump([payload], sys.stdout)
@@ -269,7 +220,6 @@ def cmd_from_comment() -> int:
 def _body_without_markup(comment: str) -> str:
     """Strip the footer/metadata so the fix bot sees the original finding text."""
     text = META_RE.sub("", comment).strip()
-    # Drop the actions footer: it starts at the discuss link we appended.
     marker = f"[{links.DISCUSS_LABEL}]("
     idx = text.find(marker)
     if idx != -1:

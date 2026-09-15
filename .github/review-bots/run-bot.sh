@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Shared review bot runner.
 # Posts a review: one inline comment per finding, plus a summary.
-# Recipe-tagged findings are written to GITHUB_OUTPUT so a follow-up job can
-# open one fix PR per finding against this branch.
+# Every finding is written to GITHUB_OUTPUT so a follow-up job can open one
+# fix PR per finding against this branch.
 #
 # Per-bot env: BOT_NAME BOT_PROMPT BOT_PATHSPEC BOT_CLEAN BOT_LEAD
 set -euo pipefail
@@ -29,8 +29,6 @@ fi
 
 {
   cat "$BOT_PROMPT"
-  printf '\n'
-  python3 .github/review-bots/recipes.py catalog
   printf '\n---\n\n## The diff to review\n\n```diff\n'
   cat "$WORK/diff.patch"
   printf '\n```\n'

@@ -100,24 +100,21 @@ def _context() -> dict[str, str]:
     }
 
 
-def decorate(path: str, line: object, body: str, recipe: str, auto_fix: bool) -> tuple[str, str]:
+def decorate(path: str, line: object, body: str) -> tuple[str, str]:
     ctx = _context()
     return findings.decorate_body(
         body=body,
         path=path,
         line=line,
-        recipe=recipe,
-        auto_fix=auto_fix,
         repo=ctx["repo"],
         pr_number=ctx["pr_number"],
         pr_url=ctx["pr_url"],
         bot_name=ctx["bot_name"],
-        head_sha=ctx["head_sha"],
     )
 
 
-def collect_findings(raw_findings: list[object], valid: dict[str, set[int]]) -> tuple[list[dict], list[dict]]:
-    """Split model output into inline-able findings and orphans, with recipes attached."""
+def collect_findings(raw_findings: list[object], valid: dict[str, set[int]]) -> list[dict]:
+    """Normalize model output into findings that can be commented and auto-fixed."""
     staged: list[dict] = []
     for item in raw_findings:
         if not isinstance(item, dict):
@@ -125,19 +122,15 @@ def collect_findings(raw_findings: list[object], valid: dict[str, set[int]]) -> 
         path, line, body = item.get("path"), item.get("line"), item.get("body")
         if not path or not body:
             continue
-        recipe = findings.recipe_id_of(item.get("recipe"))
         staged.append(
             {
                 "path": path,
                 "line": line,
                 "body": str(body).strip(),
-                "recipe": recipe,
                 "inline": isinstance(line, int) and line in valid.get(path, set()),
             }
         )
-
-    findings.assign_auto_fix(staged)
-    return staged, [s for s in staged if s.get("recipe") and s.get("auto_fix")]
+    return staged
 
 
 def main() -> int:
@@ -168,16 +161,14 @@ def main() -> int:
         return 1
 
     valid = added_lines(Path(diff_path).read_text())
-    staged, auto = collect_findings(parsed, valid)
+    staged = collect_findings(parsed, valid)
 
     inline: list[dict] = []
     orphans: list[str] = []
     ctx = _context()
 
     for item in staged:
-        decorated, fid = decorate(
-            item["path"], item["line"], item["body"], item["recipe"], item["auto_fix"]
-        )
+        decorated, fid = decorate(item["path"], item["line"], item["body"])
         item["id"] = fid
         if item["inline"]:
             inline.append(
@@ -196,10 +187,10 @@ def main() -> int:
         if inline:
             plural = "" if len(inline) == 1 else "s"
             summary += f"\n\n{len(inline)} left as inline comment{plural} on the diff."
-        if auto:
+        if staged:
             summary += (
-                f"\n\n{len(auto)} will open as "
-                f"{'a fix PR' if len(auto) == 1 else 'fix PRs'} targeting this branch. "
+                f"\n\n{len(staged)} will open as "
+                f"{'a fix PR' if len(staged) == 1 else 'fix PRs'} targeting this branch. "
                 "Merge one to take it as a commit, or use the discuss link on the comment."
             )
         if orphans:
@@ -216,20 +207,17 @@ def main() -> int:
     }
     Path(out_path).write_text(json.dumps(payload))
 
-    fixable = []
-    for item in auto:
-        fixable.append(
-            findings.fix_payload(
-                fid=item["id"],
-                recipe=item["recipe"],
-                path=item["path"],
-                line=item["line"],
-                body=item["body"],
-                bot_name=ctx["bot_name"],
-                auto_fix=True,
-                pr_number=ctx["pr_number"],
-            )
+    fixable = [
+        findings.fix_payload(
+            fid=item["id"],
+            path=item["path"],
+            line=item["line"],
+            body=item["body"],
+            bot_name=ctx["bot_name"],
+            pr_number=ctx["pr_number"],
         )
+        for item in staged
+    ]
     if fixable_path:
         Path(fixable_path).write_text(json.dumps(fixable))
 
