@@ -24,6 +24,7 @@ export class RoundDetailRobot {
     round: Round,
     seed: Omit<FakeBackendSeed, "detailRounds"> = {},
   ): Promise<this> {
+    await this.page.emulateMedia({ reducedMotion: "reduce" });
     await FakeSession.install(this.page, { detailRounds: [round], ...seed });
     await this.page.goto(`/rounds/${round.id}`);
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
@@ -112,6 +113,9 @@ export class RoundDetailRobot {
   }
 
   async capture(name: string): Promise<this> {
+    if (await this.page.getByText("Momentum").isVisible()) {
+      await expect(this.page.locator("svg circle").last()).toBeVisible();
+    }
     await expect(this.page).toHaveScreenshot(name, { fullPage: true });
     return this;
   }
