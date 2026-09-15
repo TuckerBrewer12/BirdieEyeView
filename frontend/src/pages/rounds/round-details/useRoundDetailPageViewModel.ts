@@ -23,14 +23,13 @@ export type ChartTabKey = "score" | "short_game" | "gir";
 export interface ChartTabItem {
   key: ChartTabKey;
   label: string;
-  active: boolean;
 }
 
 export interface ComparisonChartItem {
   title: string;
-  rows: ComparisonRow[];
   primaryLabel: string;
   group: ChartTabKey;
+  bars: { label: string; value: number | null; sampleSize: number }[];
 }
 
 const CHART_TABS: { key: ChartTabKey; label: string }[] = [
@@ -39,14 +38,22 @@ const CHART_TABS: { key: ChartTabKey; label: string }[] = [
   { key: "gir", label: "GIR" },
 ];
 
+function barsFrom(rows: ComparisonRow[]) {
+  return rows.map((row) => ({
+    label: row.label,
+    value: row.primary_value,
+    sampleSize: row.sample_size,
+  }));
+}
+
 function chartsFrom(comparison: RoundComparison): ComparisonChartItem[] {
   return [
-    { title: "Score", rows: comparison.score, primaryLabel: "score", group: "score" },
-    { title: "Putts", rows: comparison.putts, primaryLabel: "putts", group: "short_game" },
-    { title: "GIR", rows: comparison.gir, primaryLabel: "GIR", group: "gir" },
-    { title: "3-Putts", rows: comparison.three_putts, primaryLabel: "3-putts", group: "short_game" },
-    { title: "Putts per GIR", rows: comparison.putts_per_gir, primaryLabel: "putts/GIR", group: "short_game" },
-    { title: "Scrambling", rows: comparison.scrambling, primaryLabel: "scramble successes", group: "short_game" },
+    { title: "Score", primaryLabel: "score", group: "score", bars: barsFrom(comparison.score) },
+    { title: "Putts", primaryLabel: "putts", group: "short_game", bars: barsFrom(comparison.putts) },
+    { title: "GIR", primaryLabel: "GIR", group: "gir", bars: barsFrom(comparison.gir) },
+    { title: "3-Putts", primaryLabel: "3-putts", group: "short_game", bars: barsFrom(comparison.three_putts) },
+    { title: "Putts per GIR", primaryLabel: "putts/GIR", group: "short_game", bars: barsFrom(comparison.putts_per_gir) },
+    { title: "Scrambling", primaryLabel: "scramble successes", group: "short_game", bars: barsFrom(comparison.scrambling) },
   ];
 }
 
@@ -92,6 +99,8 @@ export interface RoundDetailUiState {
   showComparison: boolean;
   charts: ComparisonChartItem[];
   selectedCharts: ComparisonChartItem[];
+  /** Two-up on mobile when the active tab has more than one chart. */
+  packSelectedCharts: boolean;
   chartTab: ChartTabKey;
   chartTabs: ChartTabItem[];
 }
@@ -402,10 +411,7 @@ export function useRoundDetailPageViewModel(
     : null;
   const charts = comparison ? chartsFrom(comparison) : [];
   const selectedCharts = charts.filter((chart) => chart.group === chartTab);
-  const chartTabs = CHART_TABS.map((tab) => ({
-    ...tab,
-    active: tab.key === chartTab,
-  }));
+  const chartTabs = CHART_TABS;
   const playedCourseName = round?.course_name_played ?? null;
   const keepUnlinkedNameLabel =
     editMode && courseEdit.status === "picking" && playedCourseName && !courseSearch.query
@@ -449,6 +455,7 @@ export function useRoundDetailPageViewModel(
     showComparison: comparison != null,
     charts,
     selectedCharts,
+    packSelectedCharts: selectedCharts.length > 1,
     chartTab,
     chartTabs,
     enterEditMode,

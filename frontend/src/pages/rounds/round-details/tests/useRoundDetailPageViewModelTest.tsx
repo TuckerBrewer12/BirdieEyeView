@@ -301,11 +301,17 @@ describe("useRoundDetailPageViewModel", () => {
     ]);
     expect(result.current.chartTab).toBe("score");
     expect(result.current.chartTabs).toEqual([
-      { key: "score", label: "Score", active: true },
-      { key: "short_game", label: "Short Game", active: false },
-      { key: "gir", label: "GIR", active: false },
+      { key: "score", label: "Score" },
+      { key: "short_game", label: "Short Game" },
+      { key: "gir", label: "GIR" },
     ]);
+    expect(result.current.charts[0]?.bars[0]).toEqual({
+      label: "This round",
+      value: 78,
+      sampleSize: 4,
+    });
     expect(result.current.selectedCharts.map((c) => c.title)).toEqual(["Score"]);
+    expect(result.current.packSelectedCharts).toBe(false);
 
     act(() => result.current.selectChartTab("short_game"));
     expect(result.current.chartTab).toBe("short_game");
@@ -315,6 +321,7 @@ describe("useRoundDetailPageViewModel", () => {
       "Putts per GIR",
       "Scrambling",
     ]);
+    expect(result.current.packSelectedCharts).toBe(true);
   });
 
   it("totals each nine from the hole scores", async () => {
