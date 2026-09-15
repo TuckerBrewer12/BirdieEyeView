@@ -35,6 +35,11 @@ Do not create or modify the implementation artifact.
    - frontend package checks or component tests if present
    - DB-dependent areas that may need mock repositories or isolated unit coverage
 7. Note assumptions, unknowns, and possible blockers.
+8. Decide whether any assumption, unknown, or implementation choice materially affects scope, behavior, structure, reliability, or review expectations.
+9. If user direction is needed, finish the recon artifact, ask the clarification question immediately, and stop. Do not run `$implementation-plan` yet.
+10. After the user answers, update the recon artifact so the resolution is explicit, then allow the parent workflow to proceed to planning.
+
+Do not convert an unresolved question into a decision merely because one option seems preferable. Include a concise recommendation when useful, but wait for the user's answer. Do not ask about choices that are already answered by the request or dictated by the repository.
 
 ## Golf ScoreCard Map
 
@@ -73,6 +78,9 @@ Write or update this section in the artifact:
 
 ### Assumptions And Unknowns
 - <item>
+
+### Clarifications And Decisions
+- <user-confirmed resolution, or "None needed">
 
 ### Risks Or Blockers
 - <item>

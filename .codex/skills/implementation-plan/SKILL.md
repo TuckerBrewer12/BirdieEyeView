@@ -35,11 +35,14 @@ Create the parent directory when needed. Preserve existing user-authored notes i
 - Include database migrations only when schema changes are required.
 - Include frontend visual verification when changing meaningful UI behavior or layout.
 - Ask the user concise clarification questions when implementation preferences affect the user experience, API contract, data model, test depth, rollout risk, or long-term maintainability.
+- Treat file organization, helper abstractions, dependency placement, CI job structure, testing-layer ownership, parameterization, and narrow-versus-broad cleanup as clarification topics when multiple reasonable choices would materially change the result.
+- Do not record an unresolved preference as a decision. A recommended approach is not user confirmation.
+- Do not repeat a question already answered in the request or recon artifact.
 - Avoid committing changes; final review and commits belong to the user.
 
 ## Clarification Checkpoint
 
-Before writing the final plan, decide whether the recon leaves meaningful implementation choices unresolved. Ask the user for clarification when multiple reasonable paths exist and the choice would change behavior, structure, scope, or review expectations.
+While writing the plan, decide whether the recon leaves meaningful implementation choices unresolved or whether planning reveals a new one. Ask the user immediately when multiple reasonable paths exist and the choice would change behavior, structure, scope, reliability, or review expectations.
 
 Do not silently turn an unresolved implementation preference into a `Decision` in the plan. Before writing the plan, review every proposed item for `### Risks, Blockers, And Decisions` and classify it:
 
@@ -66,11 +69,11 @@ Good clarification topics include:
 - persistence, migrations, and data backfill decisions
 - performance, privacy, or reliability tradeoffs
 
-Ask only the questions needed to plan responsibly. If the best path is clear from the codebase and user request, proceed without asking.
+Ask only the questions needed to plan responsibly. If the best path is clear from the codebase and user request, proceed without asking. Final blanket approval of the plan is not a substitute for resolving a material implementation preference.
 
 Do not repeat a question the user has already answered. When several unresolved choices are related, ask them together in a concise numbered list and explain the practical consequence of each option.
 
-If clarification is needed, stop after asking and do not write the final `## Implementation Plan` section until the user answers. After the user answers, incorporate the decisions into the implementation artifact and then ask for implementation approval.
+If clarification is needed, preserve the useful planning work already completed, mark the unresolved item clearly, and do not present the plan as final. Ask immediately and stop. After the user answers, update the implementation artifact with the user-confirmed decision, finish the plan, and then ask for implementation approval.
 
 ## Project-Specific Testing Guidance
 
