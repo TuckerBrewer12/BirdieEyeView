@@ -13,6 +13,8 @@ export interface InMemoryRoundsSeed {
   linkError?: string | null;
   updateError?: string | null;
   deleteError?: string | null;
+  searchError?: string | null;
+  searchDelaysMs?: number[];
 }
 
 function applyUpdate(round: Round, body: UpdateRoundBody): Round {
@@ -82,6 +84,9 @@ export class InMemoryRounds {
   linkError: string | null;
   updateError: string | null;
   deleteError: string | null;
+  searchError: string | null;
+  searchDelaysMs: number[];
+  private searchCalls = 0;
   deletedIds: string[];
 
   constructor(seed: InMemoryRoundsSeed = {}) {
@@ -97,10 +102,17 @@ export class InMemoryRounds {
     this.linkError = seed.linkError ?? null;
     this.updateError = seed.updateError ?? null;
     this.deleteError = seed.deleteError ?? null;
+    this.searchError = seed.searchError ?? null;
+    this.searchDelaysMs = [...(seed.searchDelaysMs ?? [])];
     this.deletedIds = [];
   }
 
+  nextSearchDelayMs(): number {
+    return this.searchDelaysMs[this.searchCalls++] ?? 0;
+  }
+
   searchCourses(query: string): CourseSummary[] {
+    if (this.searchError) throw new Error(this.searchError);
     const q = query.toLowerCase();
     const byId = new Map<string, CourseSummary>();
     for (const course of this.fullCourses) {

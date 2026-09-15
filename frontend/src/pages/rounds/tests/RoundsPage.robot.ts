@@ -93,6 +93,33 @@ export class RoundsRobot {
     return this;
   }
 
+  private async settleCourseSearch(): Promise<void> {
+    await this.page.waitForTimeout(500);
+  }
+
+  async seesCourseResult(name: string): Promise<this> {
+    await expect(
+      this.page.locator("[data-slot=course-result]").filter({ hasText: name }),
+    ).toBeVisible();
+    return this;
+  }
+
+  async seesNoCourseResults(): Promise<this> {
+    await this.settleCourseSearch();
+    await expect(this.page.locator("[data-slot=course-result]")).toHaveCount(0);
+    return this;
+  }
+
+  async seesNoCoursesFound(): Promise<this> {
+    await expect(this.page.getByText("No courses found")).toBeVisible();
+    return this;
+  }
+
+  async doesNotSeeNoCoursesFound(): Promise<this> {
+    await expect(this.page.getByText("No courses found")).toHaveCount(0);
+    return this;
+  }
+
   async loadMore(): Promise<this> {
     await this.page.getByRole("button", { name: /Load more/ }).click();
     return this;

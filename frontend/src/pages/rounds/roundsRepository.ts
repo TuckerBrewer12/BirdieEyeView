@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import type { Course, Round, RoundSummary } from "@/types/golf";
+import type { Course, CourseSummary, Round, RoundSummary } from "@/types/golf";
 import type { RoundComparison } from "@/types/analytics";
 
 export type UpdateRoundBody = {
@@ -25,7 +25,10 @@ export interface RoundsRepository {
   getCourse(courseId: string): Promise<Course>;
   getRoundComparison(userId: string, roundId: string): Promise<RoundComparison | null>;
   getUserHandicap(userId: string): Promise<{ handicap_index: number | null }>;
+  searchCourses(query: string, userId?: string): Promise<CourseSummary[]>;
 }
+
+export type CourseSearchRepository = Pick<RoundsRepository, "searchCourses">;
 
 export const roundsRepository: RoundsRepository = {
   getRoundsForUser: (userId, limit = 100) => api.getRoundsForUser(userId, limit),
@@ -36,4 +39,5 @@ export const roundsRepository: RoundsRepository = {
   getCourse: (courseId) => api.getCourse(courseId),
   getRoundComparison: (userId, roundId) => api.getRoundComparison(userId, roundId),
   getUserHandicap: (userId) => api.getUserHandicap(userId),
+  searchCourses: (query, userId) => api.searchCourses(query, userId),
 };

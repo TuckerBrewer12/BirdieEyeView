@@ -1,5 +1,9 @@
 name: Screenshots
 
+# NOTE: this `paths:` filter must move to the `changes`-job pattern used in
+# tests.yml before this check is ever marked required — a paths-filtered
+# workflow never reports at all on a backend-only PR, which would hang the
+# merge rather than pass it.
 on:
   push:
     branches: [main]
@@ -20,7 +24,11 @@ permissions:
 
 jobs:
   screenshots:
-    name: Screenshot tests
+    # Pairs with "Frontend (espresso)" in tests.yml: that one gates behavior,
+    # this one gates look.
+    name: Frontend visual regression
+    # macos-latest matches the committed *-darwin.png baselines. The repo is
+    # public, so these runner minutes are free.
     runs-on: macos-latest
     defaults:
       run:

@@ -40,8 +40,8 @@ export class RoundDetailRobot {
   }
 
   async tapEdit(): Promise<this> {
-    await this.page.getByRole("button", { name: "Edit" }).click();
-    await expect(this.page.getByRole("button", { name: "Save" })).toBeVisible();
+    await this.page.getByRole("button", { name: "Edit", exact: true }).click();
+    await expect(this.page.getByRole("button", { name: "Save", exact: true })).toBeVisible();
     return this;
   }
 
@@ -86,6 +86,40 @@ export class RoundDetailRobot {
 
   async pickCourse(name: string): Promise<this> {
     await this.page.getByRole("button", { name: new RegExp(name) }).click();
+    return this;
+  }
+
+  async seesCourseSearchField(): Promise<this> {
+    await expect(this.page.getByPlaceholder("Search courses…")).toBeVisible();
+    return this;
+  }
+
+  async saveAsCustomName(name: string): Promise<this> {
+    await this.page.getByRole("button", { name: `Save as "${name}"` }).click();
+    return this;
+  }
+
+  async seesCustomNameCard(name: string): Promise<this> {
+    await expect(this.page.getByText(name).first()).toBeVisible();
+    await expect(this.page.getByText("Saving without a linked course")).toBeVisible();
+    await expect(this.page.getByPlaceholder("Search courses…")).toHaveCount(0);
+    return this;
+  }
+
+  async seesLinkedCard(name: string): Promise<this> {
+    await expect(this.page.getByText("Linked", { exact: true })).toBeVisible();
+    await expect(this.page.getByText(name).first()).toBeVisible();
+    await expect(this.page.getByPlaceholder("Search courses…")).toHaveCount(0);
+    return this;
+  }
+
+  async tapChangeCourse(): Promise<this> {
+    await this.page.getByRole("button", { name: "Change course" }).click();
+    return this;
+  }
+
+  async tapEditCourseName(): Promise<this> {
+    await this.page.getByRole("button", { name: "Edit name" }).click();
     return this;
   }
 
