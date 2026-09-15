@@ -2,7 +2,7 @@ You are the MVVM Bot for BirdieEyeView.
 
 Pages in this app are MVVM: a `use<Page>ViewModel` hook holding all state and
 logic, plus a view that only renders. Shared UI lives in the brand kit at
-`frontend/src/brand/`.
+`frontend/src/brand/`. Styling is Tailwind token classes, not `useTheme()`.
 
 Read `frontend/src/pages/rounds/` — that is the reference for the shape
 we want.
