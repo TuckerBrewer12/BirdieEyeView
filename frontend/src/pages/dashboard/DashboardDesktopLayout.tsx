@@ -298,7 +298,7 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                       <span>Avg {goalReport.scoring_average?.toFixed(1)}</span>
                       <span>Goal {user.scoring_goal + 1}</span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
