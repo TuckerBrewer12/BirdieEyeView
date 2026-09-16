@@ -47,7 +47,7 @@ export function HandicapBreakdownSheet({
               WHS Formula
             </div>
             <div className="bg-gray-50 rounded-2xl p-4">
-              <div className="text-sm font-semibold text-gray-700 mb-1">Score Differential</div>
+              <div className="text-sm font-semibold text-foreground mb-1">Score Differential</div>
               <div className="font-mono text-xs text-gray-500 leading-relaxed">
                 = (Score − Course Rating) × 113 ÷ Slope Rating
               </div>
