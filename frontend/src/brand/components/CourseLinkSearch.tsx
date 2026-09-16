@@ -167,7 +167,7 @@ function ResultRow({
     >
       <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
       <div>
-        <div className="text-[13px] font-semibold text-foreground">{course.name}</div>
+        <div className="text-body font-semibold text-foreground">{course.name}</div>
         {course.location && (
           <div className="text-xs text-muted-foreground">{course.location}</div>
         )}

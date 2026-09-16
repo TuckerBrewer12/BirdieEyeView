@@ -1,8 +1,9 @@
-/* The brand palette. This file is the source of truth for every color and
-   typeface in the app -- nothing else should hold a hex value or a font
-   family. colors.ts and fonts.ts mirror these names as var() references so
+/* The brand palette. This file is the source of truth for every color,
+   typeface, size, space, radius, and related measure in the app -- nothing
+   else should hold a hex, a font family, or a raw px/rem/em. colors.ts,
+   fonts.ts, type.ts, and space.ts mirror these names as var() references so
    TypeScript can reach them; tokens.test.ts fails if a name there has no
-   definition here.
+   definition here, and if any other brand file holds a unit literal.
 
    Raw values use shadcn's unprefixed names so pasted components resolve them
    verbatim -- a component referencing var(--secondary) against a --brand-
@@ -64,6 +65,62 @@
   --score-quad-fill: #6d28d9;
   --score-quad-on-fill: #ffffff;
   --score-quad-text: #6d28d9;
+
+  /* Type. Roles, not pixel sizes — components use text-caption, not text-[9px]. */
+  --brand-text-caption: 9px;
+  --brand-text-meta: 10px;
+  --brand-text-label: 11px;
+  --brand-text-body-sm: 12px;
+  --brand-text-body: 13px;
+  --brand-text-button-sm: 0.8rem;
+  --brand-text-title: 26px;
+  --brand-text-hero: 44px;
+
+  --brand-leading-display: 1.1;
+
+  --brand-tracking-name: -0.3px;
+  --brand-tracking-title: -0.5px;
+  --brand-tracking-display: -0.6px;
+  --brand-tracking-stat: -0.8px;
+  --brand-tracking-hero: -1.8px;
+  --brand-tracking-chip: 0.5px;
+  --brand-tracking-kicker: 1px;
+  --brand-tracking-net: 1.2px;
+  --brand-tracking-eyebrow: 1.4px;
+  --brand-tracking-section: 0.18em;
+
+  /* Radius. --radius is the shadcn base; named steps and the two calc()
+     derivatives (addon, control) live here so components never subtract px. */
+  --radius: 0.5rem;
+  --brand-radius-sm: 0.25rem;
+  --brand-radius-md: 0.375rem;
+  --brand-radius-lg: 0.5rem;
+  --brand-radius-xl: 0.75rem;
+  --brand-radius-bar: 1.5px;
+  --brand-radius-tick: 2px;
+  --brand-radius-card: 10px;
+  --brand-radius-tooltip: 12px;
+  --brand-space-nudge: 5px;
+  --brand-space-nudge-sm: 3px;
+  --brand-radius-addon: calc(var(--radius) - var(--brand-space-nudge));
+  --brand-radius-control: calc(var(--radius) - var(--brand-space-nudge-sm));
+
+  /* Space and sizes that are not on the 4px scale. */
+  --brand-space-bar: 1.5px;
+  --brand-space-hair: 2.5px;
+  --brand-space-chip: 3px;
+  --brand-space-dot: 3px;
+  --brand-space-tight: 5px;
+  --brand-space-addon: 0.3rem;
+  --brand-space-addon-kbd: 0.15rem;
+  --brand-size-date-rail: 54px;
+  --brand-size-preview: 390px;
+  --brand-size-chart: 180px;
+  --brand-size-icon-xs: 11px;
+  --brand-ring-width: 3px;
+  --brand-border-width: 1px;
+
+  --brand-opacity-recessed: 35%;
 }
 
 :root.dark {
@@ -124,4 +181,55 @@
 
   --font-sans: var(--brand-font-sans);
   --font-mono: var(--brand-font-mono);
+
+  --text-caption: var(--brand-text-caption);
+  --text-meta: var(--brand-text-meta);
+  --text-label: var(--brand-text-label);
+  --text-body-sm: var(--brand-text-body-sm);
+  --text-body: var(--brand-text-body);
+  --text-button-sm: var(--brand-text-button-sm);
+  --text-title: var(--brand-text-title);
+  --text-hero: var(--brand-text-hero);
+
+  --leading-display: var(--brand-leading-display);
+
+  --tracking-name: var(--brand-tracking-name);
+  --tracking-title: var(--brand-tracking-title);
+  --tracking-display: var(--brand-tracking-display);
+  --tracking-stat: var(--brand-tracking-stat);
+  --tracking-hero: var(--brand-tracking-hero);
+  --tracking-chip: var(--brand-tracking-chip);
+  --tracking-kicker: var(--brand-tracking-kicker);
+  --tracking-net: var(--brand-tracking-net);
+  --tracking-eyebrow: var(--brand-tracking-eyebrow);
+  --tracking-section: var(--brand-tracking-section);
+
+  --radius-sm: var(--brand-radius-sm);
+  --radius-md: var(--brand-radius-md);
+  --radius-lg: var(--brand-radius-lg);
+  --radius-xl: var(--brand-radius-xl);
+  --radius-bar: var(--brand-radius-bar);
+  --radius-tick: var(--brand-radius-tick);
+  --radius-card: var(--brand-radius-card);
+  --radius-tooltip: var(--brand-radius-tooltip);
+  --radius-addon: var(--brand-radius-addon);
+  --radius-control: var(--brand-radius-control);
+
+  --spacing-bar: var(--brand-space-bar);
+  --spacing-hair: var(--brand-space-hair);
+  --spacing-chip: var(--brand-space-chip);
+  --spacing-dot: var(--brand-space-dot);
+  --spacing-tight: var(--brand-space-tight);
+  --spacing-addon: var(--brand-space-addon);
+  --spacing-addon-kbd: var(--brand-space-addon-kbd);
+  --spacing-date-rail: var(--brand-size-date-rail);
+  --spacing-preview: var(--brand-size-preview);
+  --spacing-chart: var(--brand-size-chart);
+  --spacing-icon-xs: var(--brand-size-icon-xs);
+
+  --ring-width-3: var(--brand-ring-width);
+
+  --opacity-recessed: var(--brand-opacity-recessed);
+
+  --grid-template-columns-round-preview: var(--brand-size-date-rail) 1fr auto;
 }

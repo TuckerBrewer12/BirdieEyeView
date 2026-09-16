@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/brand/cn";
+import { motion as motionTokens } from "@/brand/theme";
 
 interface CollapseProps {
   open: boolean;
@@ -27,7 +28,7 @@ function Collapse({ open, children, className }: CollapseProps) {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: motionTokens.duration.collapse }}
           // Clips the content while the box is shorter than it is.
           className={cn("overflow-hidden", className)}
         >

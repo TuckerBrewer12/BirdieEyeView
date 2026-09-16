@@ -54,14 +54,14 @@ function Nine({ nine, label, className }: {
   if (nine.holes.length === 0) return null;
   return (
     <div className={cn("min-w-0 flex-1", className)}>
-      <div className="flex h-6 items-end gap-[2.5px]">
+      <div className="flex h-6 items-end gap-hair">
         {nine.holes.map((h) => {
           const key = scoreKeyFor(h.strokes, h.par);
           return (
             <div
               key={h.hole}
               // Par is the baseline, so it recedes and the misses stand out.
-              className={cn("flex-1 rounded-t-[2px]", key === "par" && "opacity-35")}
+              className={cn("flex-1 rounded-t-tick", key === "par" && "opacity-(--brand-opacity-recessed)")}
               style={{
                 height: `${BAR_HEIGHTS[key]}%`,
                 background: scoreFill(h.strokes, h.par),
@@ -71,7 +71,7 @@ function Nine({ nine, label, className }: {
         })}
       </div>
       {nine.total != null && (
-        <div className="mt-1 text-[9px] font-bold uppercase tracking-[1px] text-muted-foreground">
+        <div className="mt-1 text-caption font-bold uppercase tracking-kicker text-muted-foreground">
           {label} <span className="font-mono">{nine.total}</span>
         </div>
       )}
@@ -99,17 +99,17 @@ export function RoundDetailHeader({
     <div data-slot="round-detail-header" className={cn("mb-4", className)}>
       <div className="pb-3.5">
         {dateLabel && (
-          <div className="mb-1 text-[10px] font-bold uppercase tracking-[1.4px] text-muted-foreground">
+          <div className="mb-1 text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
             {dateLabel}
           </div>
         )}
-        <PageTitle className="pt-0 leading-[1.1] tracking-[-0.6px]">{courseName || "—"}</PageTitle>
+        <PageTitle className="pt-0 leading-display tracking-display">{courseName || "—"}</PageTitle>
         {(tee?.box || tee?.rating) && (
           <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
             {tee.box && <span className="capitalize">{tee.box} tees</span>}
             {tee.rating && (
               <>
-                <span className="inline-block size-[3px] rounded-full bg-current opacity-50" />
+                <span className="inline-block size-dot rounded-full bg-current opacity-50" />
                 <span>{tee.rating}</span>
               </>
             )}
@@ -120,7 +120,7 @@ export function RoundDetailHeader({
       <div className="flex items-end gap-3.5 border-y border-border py-3.5">
         <div className="flex shrink-0 items-end">
           <div>
-            <div className="font-mono text-[44px] font-bold leading-none tracking-[-1.8px] text-foreground">
+            <div className="font-mono text-hero font-bold leading-none tracking-hero text-foreground">
               {score.total || "—"}
             </div>
             {score.toPar != null && (
@@ -139,7 +139,7 @@ export function RoundDetailHeader({
             <>
               <div className="mx-3.5 h-11 w-px shrink-0 bg-border" />
               <div>
-                <div className="mb-[3px] text-[9px] font-bold uppercase tracking-[1.2px] text-muted-foreground">
+                <div className="mb-chip text-caption font-bold uppercase tracking-net text-muted-foreground">
                   Net{score.courseHandicap != null
                     ? ` · hcp ${score.courseHandicap < 0 ? `+${Math.abs(score.courseHandicap)}` : score.courseHandicap}`
                     : ""}
@@ -181,11 +181,11 @@ export function RoundDetailHeader({
           return (
             <div
               key={key}
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-[3px]"
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-chip"
               style={{ background: tone.fill, color: tone.onFill }}
             >
-              <span className="font-mono text-[11px] font-semibold">{count}</span>
-              <span className="text-[10px] font-bold tracking-[0.5px]">
+              <span className="font-mono text-label font-semibold">{count}</span>
+              <span className="text-meta font-bold tracking-chip">
                 {pluralNoun(count, noun, plural)}
               </span>
             </div>
