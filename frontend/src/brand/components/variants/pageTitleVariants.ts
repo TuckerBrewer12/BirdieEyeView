@@ -1,11 +1,11 @@
 import { cva } from "class-variance-authority";
 
 const pageTitleVariants = cva(
-  "m-0 pt-1 font-bold tracking-[-0.5px] text-foreground",
+  "m-0 pt-1 font-bold tracking-title text-foreground",
   {
     variants: {
       size: {
-        default: "text-[26px]",
+        default: "text-title",
         compact: "text-xl",
         lg: "text-3xl font-extrabold tracking-tight",
       },

@@ -40,7 +40,7 @@ function SortControl<T extends string>({
       >
         <Select.Trigger
           aria-label="Sort by"
-          className="rounded-sm px-0.5 text-[11px] font-semibold text-primary outline-none select-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="rounded-sm px-0.5 text-label font-semibold text-primary outline-none select-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           {label}
         </Select.Trigger>

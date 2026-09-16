@@ -21,15 +21,7 @@ export function BrandHarness() {
   return (
     <MotionConfig reducedMotion="always">
       <div className="min-h-screen bg-background p-6">
-        <div
-          data-testid="brand-stage"
-          style={{
-            width: 390,
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
+        <div data-testid="brand-stage" className="flex w-preview flex-col gap-3">
           {Preview ? <Preview /> : <div>Unknown preview: {story}</div>}
         </div>
       </div>

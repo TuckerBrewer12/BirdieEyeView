@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from "react";
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { cn } from "@/brand/cn";
-import { chartColors, chartTooltipStyle, colors } from "@/brand/theme";
+import { chartColors, chartLayout, chartTickStyle, chartTooltipStyle, colors } from "@/brand/theme";
 import { pluralize } from "@/lib/pluralize";
 
 export interface ComparisonBar {
@@ -59,31 +59,33 @@ function ComparisonChartCard({
         <span className="font-bold text-primary">{formatNumber(bars[0]?.value ?? null)}</span>
         {" "}{primaryLabel} this round
       </div>
-      <ResponsiveContainer width="100%" height={180}>
-        <BarChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-          <defs>
-            <linearGradient id={selectedFill} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={chartColors.accent} stopOpacity={1} />
-              <stop offset="100%" stopColor={colors.primary} stopOpacity={1} />
-            </linearGradient>
-          </defs>
-          <XAxis dataKey="label" tick={{ fontSize: 11, fill: chartColors.axis }} tickLine={false} axisLine={false} />
-          <YAxis tick={{ fontSize: 11, fill: chartColors.axis }} tickLine={false} axisLine={false} />
-          <Tooltip
-            formatter={((v: number, _name: string, props: { payload: { sampleSize: number } }) => [
-              formatNumber(v),
-              `${primaryLabel} (${pluralize(props.payload.sampleSize, "round")})`,
-            ]) as Fmt}
-            contentStyle={chartTooltipStyle}
-          />
-          {/* Recharts grows bars with CSS; Playwright's screenshot pass freezes that at height 0. */}
-          <Bar dataKey="value" radius={[6, 6, 0, 0]} isAnimationActive={false}>
-            {chartData.map((d) => (
-              <Cell key={d.label} fill={d.isSelected ? `url(#${selectedFill})` : chartColors.muted} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+      <div className="h-chart">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData} margin={chartLayout.margin}>
+            <defs>
+              <linearGradient id={selectedFill} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={chartColors.accent} stopOpacity={1} />
+                <stop offset="100%" stopColor={colors.primary} stopOpacity={1} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="label" tick={{ ...chartTickStyle, fill: chartColors.axis }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ ...chartTickStyle, fill: chartColors.axis }} tickLine={false} axisLine={false} />
+            <Tooltip
+              formatter={((v: number, _name: string, props: { payload: { sampleSize: number } }) => [
+                formatNumber(v),
+                `${primaryLabel} (${pluralize(props.payload.sampleSize, "round")})`,
+              ]) as Fmt}
+              contentStyle={chartTooltipStyle}
+            />
+            {/* Recharts grows bars with CSS; Playwright's screenshot pass freezes that at height 0. */}
+            <Bar dataKey="value" radius={chartLayout.barRadius} isAnimationActive={false}>
+              {chartData.map((d) => (
+                <Cell key={d.label} fill={d.isSelected ? `url(#${selectedFill})` : chartColors.muted} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

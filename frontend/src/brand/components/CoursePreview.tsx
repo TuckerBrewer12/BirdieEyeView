@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
+import { motion as motionTokens } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
 import type { CourseSummary } from "@/types/golf";
 
@@ -41,23 +42,23 @@ export function CoursePreview({ course, onClick, focused = false }: CoursePrevie
           onClick();
         }
       } : undefined}
-      whileHover={onClick ? { scale: 1.015 } : undefined}
-      whileTap={onClick ? { scale: 0.98 } : undefined}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      whileHover={onClick ? { scale: motionTokens.hoverScale } : undefined}
+      whileTap={onClick ? { scale: motionTokens.tapScale } : undefined}
+      transition={motionTokens.spring}
       className={cn(
-        "flex flex-col gap-2 overflow-hidden rounded-[10px] border border-border bg-card p-4 transition-shadow",
+        "flex flex-col gap-2 overflow-hidden rounded-card border border-border bg-card p-4 transition-shadow",
         onClick ? "cursor-pointer hover:shadow-card" : "cursor-default",
         onClick && "focus-visible:outline-none",
         showFocus && "ring-2 ring-primary ring-offset-2",
       )}
     >
-      <span className="truncate text-base font-bold tracking-[-0.3px] text-foreground">
+      <span className="truncate text-base font-bold tracking-name text-foreground">
         {name}
       </span>
 
       {course.location && (
         <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-          <MapPin size={12} className="shrink-0" />
+          <MapPin className="size-3 shrink-0" />
           <span className="truncate">{course.location}</span>
         </div>
       )}
