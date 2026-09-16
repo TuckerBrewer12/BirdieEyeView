@@ -7,7 +7,13 @@ import {
 } from "recharts";
 import { SVGScoreHandicapTrend } from "@/components/dashboard/SVGScoreHandicapTrend";
 import { MilestoneFeed } from "@/components/dashboard/MilestoneFeed";
-import { BentoCard } from "@/components/ui/BentoCard";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/brand";
 import { ProfileHeroBanner } from "@/components/dashboard/ProfileHeroBanner";
 import { ScanActionCard } from "@/components/dashboard/ScanActionCard";
 import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
@@ -103,127 +109,179 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 auto-rows-min mt-6">
 
-            <BentoCard className="lg:col-span-3">
-              <BestRoundHighlight rounds={data.recent_rounds} />
-            </BentoCard>
+            <Card className="lg:col-span-3">
+              <CardContent>
+                <BestRoundHighlight rounds={data.recent_rounds} />
+              </CardContent>
+            </Card>
 
-            <BentoCard className="lg:col-span-1">
-              <div className="flex flex-col gap-5 h-full justify-between">
-                <MiniKpi label="Scoring Avg (L20)" value={last20ScoringAvg != null ? last20ScoringAvg.toFixed(1) : null} trend={hiTrend} />
-                <MiniKpi label="Total Rounds" value={data.total_rounds} />
-              </div>
-            </BentoCard>
-
-            <BentoCard title="Score & Handicap Trend" subtitle="Last 20 rounds" className="md:col-span-2 lg:col-span-2">
-              <SVGScoreHandicapTrend
-                data={dualData}
-                scoreColor={scoreLineColor}
-                handicapColor={handicapLineColor}
-                gridColor={gridColor}
-              />
-            </BentoCard>
-
-            <BentoCard title="GIR %" subtitle="Last 5 rounds" className="lg:col-span-1">
-              <div className="relative">
-                <ResponsiveContainer width="100%" height={160}>
-                  <PieChart>
-                    <Pie data={girDonutData} dataKey="value"
-                      innerRadius={50} outerRadius={68} stroke="none"
-                      startAngle={90} endAngle={-270}>
-                      <Cell fill={girColor} />
-                      <Cell fill={mutedFill} />
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <div className="text-4xl font-semibold tracking-tighter text-gray-900">{girPct.toFixed(0)}%</div>
-                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">GIR</div>
+            <Card className="lg:col-span-1">
+              <CardContent>
+                <div className="flex flex-col gap-5 h-full justify-between">
+                  <MiniKpi label="Scoring Avg (L20)" value={last20ScoringAvg != null ? last20ScoringAvg.toFixed(1) : null} trend={hiTrend} />
+                  <MiniKpi label="Total Rounds" value={data.total_rounds} />
                 </div>
-              </div>
-            </BentoCard>
+              </CardContent>
+            </Card>
 
-            <BentoCard title="Score Mix" subtitle="Last 5 rounds · % of holes" className="lg:col-span-1 overflow-hidden">
-              {recentDistribution.length > 0 ? (
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={recentDistribution} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
-                    <CartesianGrid stroke={gridColor} vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#6b7280", fontWeight: 700 }} tickLine={false} axisLine={false} />
-                    <YAxis tick={{ fontSize: 10, fill: "#6b7280", fontWeight: 700 }} tickLine={false} axisLine={false} unit="%" />
-                    <Tooltip contentStyle={tooltipStyle}
-                      formatter={(value: number | string | ReadonlyArray<number | string> | undefined) => {
-                        const base = Array.isArray(value) ? value[0] : value;
-                        const n = typeof base === "number" ? base : Number(base);
-                        return [Number.isFinite(n) ? `${n.toFixed(1)}%` : `${String(base ?? "")}%`, ""];
-                      }}
-                    />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={28}>
-                      {recentDistribution.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="text-sm text-gray-400 text-center py-8">No data yet</div>
-              )}
-            </BentoCard>
-
-            <BentoCard title="Short Game" subtitle="Last 5 rounds" className="lg:col-span-1 !p-3">
-              <div className="flex items-center justify-around mt-6">
-                <div className="text-center">
-                  <div className="text-4xl font-semibold text-gray-900 tracking-tighter">
-                    {scramblingPct != null ? `${scramblingPct.toFixed(0)}%` : "—"}
-                  </div>
-                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Scrambling</div>
-                </div>
-                <div className="w-px h-8 bg-gray-100" />
-                <div className="text-center">
-                  <div className="text-4xl font-semibold text-gray-900 tracking-tighter">
-                    {upAndDownPct != null ? `${upAndDownPct.toFixed(0)}%` : "—"}
-                  </div>
-                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Up & Down</div>
-                </div>
-              </div>
-              {trends && (
-                <ShortGameSparkline
-                  scrambling={trends.scrambling_trend}
-                  upAndDown={trends.up_and_down_trend}
+            <Card className="md:col-span-2 lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Score & Handicap Trend</CardTitle>
+                <CardDescription>Last 20 rounds</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SVGScoreHandicapTrend
+                  data={dualData}
+                  scoreColor={scoreLineColor}
+                  handicapColor={handicapLineColor}
+                  gridColor={gridColor}
                 />
-              )}
-            </BentoCard>
+              </CardContent>
+            </Card>
 
-            <BentoCard title="Avg Putts" subtitle="Last 5 rounds" className="lg:col-span-1 !p-3">
-              <div className="mx-auto w-full max-w-[260px]">
-                <div className="relative" style={{ height: 120 }}>
-                  <ResponsiveContainer width="100%" height={120}>
+            <Card className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle>GIR %</CardTitle>
+                <CardDescription>Last 5 rounds</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="relative">
+                  <ResponsiveContainer width="100%" height={160}>
                     <PieChart>
-                      <Pie data={puttsGaugeData} cx="50%" cy="100%"
-                        startAngle={180} endAngle={0}
-                        innerRadius={52} outerRadius={72}
-                        dataKey="value" stroke="none">
-                        <Cell fill={puttsColor} />
+                      <Pie data={girDonutData} dataKey="value"
+                        innerRadius={50} outerRadius={68} stroke="none"
+                        startAngle={90} endAngle={-270}>
+                        <Cell fill={girColor} />
                         <Cell fill={mutedFill} />
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
-                  <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pointer-events-none">
-                    <div className="text-2xl font-bold text-gray-900">{putts.toFixed(1)}</div>
-                    <div className="text-[9px] text-gray-400 uppercase tracking-wide">Putts</div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <div className="text-4xl font-semibold tracking-tighter text-gray-900">{girPct.toFixed(0)}%</div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">GIR</div>
                   </div>
                 </div>
-              </div>
-              <div className="flex justify-center gap-3 text-[9px] text-gray-300 font-semibold uppercase tracking-wider mt-2">
-                <span style={{ color: girColor }}>{"<30 great"}</span>
-                <span style={{ color: warningColor }}>30-35</span>
-                <span style={{ color: dangerColor }}>35+ work</span>
-              </div>
-            </BentoCard>
+              </CardContent>
+            </Card>
 
-            <BentoCard title="Milestones" className="lg:col-span-1 overflow-hidden">
-              <MilestoneFeed milestones={recentMilestones} />
-            </BentoCard>
+            <Card className="lg:col-span-1 overflow-hidden">
+              <CardHeader>
+                <CardTitle>Score Mix</CardTitle>
+                <CardDescription>Last 5 rounds · % of holes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {recentDistribution.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={recentDistribution} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                      <CartesianGrid stroke={gridColor} vertical={false} />
+                      <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#6b7280", fontWeight: 700 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: "#6b7280", fontWeight: 700 }} tickLine={false} axisLine={false} unit="%" />
+                      <Tooltip contentStyle={tooltipStyle}
+                        formatter={(value: number | string | ReadonlyArray<number | string> | undefined) => {
+                          const base = Array.isArray(value) ? value[0] : value;
+                          const n = typeof base === "number" ? base : Number(base);
+                          return [Number.isFinite(n) ? `${n.toFixed(1)}%` : `${String(base ?? "")}%`, ""];
+                        }}
+                      />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={28}>
+                        {recentDistribution.map((entry) => (
+                          <Cell key={entry.name} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-sm text-gray-400 text-center py-8">No data yet</div>
+                )}
+              </CardContent>
+            </Card>
 
-            <BentoCard className="lg:col-span-1 !p-4" interactive onClick={() => navigate("/the-lab")}>
+            <Card size="sm" className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle>Short Game</CardTitle>
+                <CardDescription>Last 5 rounds</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-around mt-6">
+                  <div className="text-center">
+                    <div className="text-4xl font-semibold text-gray-900 tracking-tighter">
+                      {scramblingPct != null ? `${scramblingPct.toFixed(0)}%` : "—"}
+                    </div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Scrambling</div>
+                  </div>
+                  <div className="w-px h-8 bg-gray-100" />
+                  <div className="text-center">
+                    <div className="text-4xl font-semibold text-gray-900 tracking-tighter">
+                      {upAndDownPct != null ? `${upAndDownPct.toFixed(0)}%` : "—"}
+                    </div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Up & Down</div>
+                  </div>
+                </div>
+                {trends && (
+                  <ShortGameSparkline
+                    scrambling={trends.scrambling_trend}
+                    upAndDown={trends.up_and_down_trend}
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            <Card size="sm" className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle>Avg Putts</CardTitle>
+                <CardDescription>Last 5 rounds</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mx-auto w-full max-w-[260px]">
+                  <div className="relative" style={{ height: 120 }}>
+                    <ResponsiveContainer width="100%" height={120}>
+                      <PieChart>
+                        <Pie data={puttsGaugeData} cx="50%" cy="100%"
+                          startAngle={180} endAngle={0}
+                          innerRadius={52} outerRadius={72}
+                          dataKey="value" stroke="none">
+                          <Cell fill={puttsColor} />
+                          <Cell fill={mutedFill} />
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pointer-events-none">
+                      <div className="text-2xl font-bold text-gray-900">{putts.toFixed(1)}</div>
+                      <div className="text-[9px] text-gray-400 uppercase tracking-wide">Putts</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-center gap-3 text-[9px] text-gray-300 font-semibold uppercase tracking-wider mt-2">
+                  <span style={{ color: girColor }}>{"<30 great"}</span>
+                  <span style={{ color: warningColor }}>30-35</span>
+                  <span style={{ color: dangerColor }}>35+ work</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-1 overflow-hidden">
+              <CardHeader>
+                <CardTitle>Milestones</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MilestoneFeed milestones={recentMilestones} />
+              </CardContent>
+            </Card>
+
+            <Card
+              className="lg:col-span-1 cursor-pointer"
+              size="sm"
+              onClick={() => navigate("/the-lab")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate("/the-lab");
+                }
+              }}
+            >
+              <CardContent>
               {user?.scoring_goal && goalReport ? (
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -269,7 +327,8 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                   </button>
                 </div>
               )}
-            </BentoCard>
+              </CardContent>
+            </Card>
 
             <div className="lg:col-span-3 flex justify-end gap-3 mt-4 lg:hidden">
               <Link to="/rounds" className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm">
@@ -287,23 +346,31 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
         <div className="w-[300px] shrink-0 hidden xl:flex flex-col gap-6 sticky top-20 self-start">
           <ScanActionCard />
 
-          <BentoCard title="Activity" subtitle="Last 30 days" className="!p-4">
-            <ActivityHeatmap rounds={data.recent_rounds} />
-          </BentoCard>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>Activity</CardTitle>
+              <CardDescription>Last 30 days</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ActivityHeatmap rounds={data.recent_rounds} />
+            </CardContent>
+          </Card>
 
-          <BentoCard className="!px-0 !py-3 overflow-hidden" interactive>
-            <div className="px-5 mb-2">
-              <div className="text-sm font-semibold text-gray-800 dark:text-white">Recent Rounds</div>
-            </div>
-            <div className="max-h-[600px] overflow-y-auto px-4 -mx-1">
-              <RecentRoundsTable rounds={data.recent_rounds.slice(0, 10)} />
-            </div>
-            <div className="mt-4 px-4 pb-1">
-              <Link to="/rounds" className="w-full flex items-center justify-center px-4 py-2 bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-xs font-semibold hover:bg-gray-100 transition-colors">
-                View All Round History
-              </Link>
-            </div>
-          </BentoCard>
+          <Card className="overflow-hidden">
+            <CardHeader>
+              <CardTitle>Recent Rounds</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="max-h-[600px] overflow-y-auto -mx-1">
+                <RecentRoundsTable rounds={data.recent_rounds.slice(0, 10)} />
+              </div>
+              <div className="mt-4">
+                <Link to="/rounds" className="w-full flex items-center justify-center px-4 py-2 bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-xs font-semibold hover:bg-gray-100 transition-colors">
+                  View All Round History
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
       </div>

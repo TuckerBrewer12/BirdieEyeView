@@ -1,8 +1,8 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle, Circle } from "lucide-react";
+import { CheckCircle, Circle } from "lucide-react";
 import type { DualTrendPoint } from "./useDashboardPageViewModel";
 import type { ScoreDifferentialRow, ScoreTrendRow } from "@/types/analytics";
 import { formatCourseName } from "@/lib/courseName";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/brand";
 
 // WHS table: indexed by (n - 3), capped at 17 (for 20+ rounds)
 const WHS_TABLE: Array<[number, number]> = [
@@ -95,50 +95,16 @@ export function HandicapBreakdownSheet({
   const hasRatedRounds = rows.some((r) => r.course_rating != null);
 
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            className="fixed inset-0 z-40 bg-black/40"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-          />
+    <Sheet open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+      <SheetContent className="sm:max-w-[480px]">
+        <SheetHeader>
+          <SheetTitle>Handicap Index</SheetTitle>
+          <SheetDescription>
+            {formatHI(handicapIndex)} HCP
+          </SheetDescription>
+        </SheetHeader>
 
-          {/* Sheet — slides in from right */}
-          <motion.div
-            className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] bg-white shadow-2xl overflow-y-auto"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 340, damping: 34 }}
-          >
-            {/* Header */}
-            <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-5 py-4 z-10">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500"
-                  aria-label="Close"
-                >
-                  <X size={18} />
-                </button>
-                <div className="flex-1">
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    Handicap Index
-                  </div>
-                  <div className="text-2xl font-black text-gray-900 leading-tight tracking-tight">
-                    {formatHI(handicapIndex)}
-                    <span className="text-sm font-semibold text-gray-400 ml-1.5">HCP</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-5 py-5 space-y-6">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-4">
 
               {/* Formula */}
               <div>
@@ -287,10 +253,8 @@ export function HandicapBreakdownSheet({
                 The World Handicap System uses your best {countUsed || "N"} differentials from the last 20 rounds. Differentials measure how well you played relative to the course difficulty.
               </div>
 
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
