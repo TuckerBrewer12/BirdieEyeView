@@ -3,14 +3,8 @@ import type { User } from "@/types/golf";
 interface ProfileHeroBannerProps {
   user: User | null;
   handicapIndex: number | null;
-  handicapLabel?: string;
+  handicapLabel: string;
   onHandicapClick?: () => void;
-}
-
-function formatHI(hi: number | null | undefined): string {
-  if (hi == null) return "—";
-  if (hi < 0) return `+${Math.abs(hi).toFixed(1)}`;
-  return hi.toFixed(1);
 }
 
 export function ProfileHeroBanner({ user, handicapIndex, handicapLabel, onHandicapClick }: ProfileHeroBannerProps) {
@@ -51,7 +45,7 @@ export function ProfileHeroBanner({ user, handicapIndex, handicapLabel, onHandic
               Handicap
             </div>
             <div className="text-3xl font-black text-gray-900 leading-none flex items-baseline gap-1">
-              {handicapLabel ?? formatHI(handicapIndex)}
+              {handicapLabel}
               <span className="text-sm font-semibold text-gray-400 tracking-wide">HCP</span>
             </div>
           </button>
