@@ -40,6 +40,7 @@ export type { ComparisonBar, ComparisonChartCardProps } from "./components/Compa
 export { RoundDetailHeader } from "./components/RoundDetailHeader";
 export type { RoundDetailHeaderProps } from "./components/RoundDetailHeader";
 export { RoundPreview } from "./components/RoundPreview";
+export { CoursePreview } from "./components/CoursePreview";
 export { SectionLabel } from "./components/SectionLabel";
 export { SearchField } from "./components/SearchField";
 export { SortControl } from "./components/SortControl";

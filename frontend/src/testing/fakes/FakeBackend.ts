@@ -55,6 +55,15 @@ export class FakeBackend {
       }
     }
 
+    if (verb === "GET" && /\/api\/courses\/?$/.test(path)) {
+      try {
+        return { status: 200, body: this.store.getCourses() };
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : "Could not load courses.";
+        return { status: 400, body: { detail } };
+      }
+    }
+
     if (verb === "GET" && /\/api\/rounds\/user\//.test(path)) {
       return { status: 200, body: this.store.getRoundsForUser() };
     }

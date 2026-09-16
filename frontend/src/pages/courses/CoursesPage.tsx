@@ -1,51 +1,21 @@
-import { useState, useCallback, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { MapPin } from "lucide-react";
-import { motion } from "framer-motion";
-import { api } from "@/lib/api";
-import { formatCourseName } from "@/lib/courseName";
-import { pluralize } from "@/lib/pluralize";
+import { useState } from "react";
+import {
+  Alert,
+  AlertDescription,
+  Collection,
+  CoursePreview,
+  PageTitle,
+  SearchField,
+} from "@/brand";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { CourseDetailPanel } from "@/components/course-detail/CourseDetailPanel";
-import { ScrollSection } from "@/components/analytics/ScrollSection";
-import { GooeyInput } from "@/components/ui/gooey-input";
+import { useCoursesPageViewModel } from "./useCoursesPageViewModel";
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 24, scale: 0.98 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const, delay: i * 0.05 },
-  }),
-};
+interface CoursesPageProps { userId: string; }
 
-function isApiTestCourse(name: string | null | undefined): boolean {
-  if (!name) return false;
-  const normalized = name.trim().toLowerCase();
-  return normalized === "api test course" || normalized.startsWith("api test course ");
-}
-
-export function CoursesPage({ userId }: { userId: string }) {
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+export function CoursesPage({ userId }: CoursesPageProps) {
+  const viewModel = useCoursesPageViewModel(userId);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (debounceTimer.current) clearTimeout(debounceTimer.current); }, []);
-
-  const { data: courses = [], isLoading: loading } = useQuery({
-    queryKey: ["courses", userId, debouncedSearch],
-    queryFn: () => debouncedSearch
-      ? api.searchCourses(debouncedSearch, userId)
-      : api.getCourses(userId),
-  });
-  const visibleCourses = courses.filter((c) => !isApiTestCourse(c.name));
-
-  const handleSearchChange = useCallback((value: string) => {
-    setSearch(value);
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => setDebouncedSearch(value), 300);
-  }, []);
 
   if (selectedCourseId) {
     return (
@@ -59,82 +29,39 @@ export function CoursesPage({ userId }: { userId: string }) {
 
   return (
     <div>
-      <PageHeader
-        title="Courses"
-        subtitle={pluralize(visibleCourses.length, "course")}
-        scrollThreshold={100}
-      />
+      <PageHeader title="Courses" subtitle={viewModel.headerSubtitle} scrollThreshold={100} />
 
-      <ScrollSection>
-        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-5">Courses</h1>
-        {/* Search */}
-        <div className="mb-6">
-          <GooeyInput
-            placeholder="Search courses..."
-            value={search}
-            onValueChange={handleSearchChange}
-            collapsedWidth={200}
-            expandedWidth={280}
-          />
-        </div>
+      <div className="flex flex-col gap-2.5 pb-6">
+        <PageTitle>Courses</PageTitle>
 
-        {loading ? (
-          <div className="flex items-center justify-center h-32">
-            <div className="text-gray-400 text-sm">Loading courses...</div>
-          </div>
-        ) : visibleCourses.length === 0 ? (
-          <div className="flex items-center justify-center h-32">
-            <div className="text-gray-400 text-sm">No courses found.</div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {visibleCourses.map((c, i) => {
-              const displayName = formatCourseName(c.name);
-              return (
-                <motion.div
-                  key={c.id}
-                  custom={i}
-                  variants={cardVariants}
-                  initial="hidden"
-                  animate="visible"
-                  whileHover={{ y: -3, boxShadow: "0 12px 36px rgba(0,0,0,0.10)" }}
-                  transition={{ type: "spring", stiffness: 380, damping: 28 }}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setSelectedCourseId(c.id)}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedCourseId(c.id); } }}
-                  aria-label={`View ${displayName} details`}
-                  className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 p-5 shadow-sm cursor-pointer hover:border-primary/30 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                >
-                  <h3 className="font-semibold text-gray-900 mb-1 truncate">
-                    {displayName}
-                  </h3>
-                  {c.location && (
-                    <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-3">
-                      <MapPin size={12} className="shrink-0" />
-                      <span className="truncate">{c.location}</span>
-                    </div>
-                  )}
-                  <div className="flex gap-4 mt-auto pt-1">
-                    <Stat label="Par" value={c.par ?? "—"} />
-                    <Stat label="Holes" value={c.total_holes} />
-                    <Stat label="Tees" value={c.tee_count} />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+        <SearchField
+          placeholder="Search courses..."
+          value={viewModel.search}
+          onChange={viewModel.setSearch}
+          loading={viewModel.loading}
+        />
+
+        {viewModel.error && (
+          <Alert variant="destructive">
+            <AlertDescription>{viewModel.error}</AlertDescription>
+          </Alert>
         )}
-      </ScrollSection>
-    </div>
-  );
-}
 
-function Stat({ label, value }: { label: string; value: string | number | null }) {
-  return (
-    <div className="text-xs">
-      <span className="text-gray-400">{label} </span>
-      <span className="font-semibold text-gray-700">{value ?? "—"}</span>
+        <Collection
+          layout="grid"
+          items={viewModel.visibleCourses}
+          keyFor={(course) => course.id}
+          loading={viewModel.loading}
+          loadingLabel="Loading courses..."
+          empty={viewModel.showEmpty ? "No courses found." : undefined}
+          renderItem={(course) => (
+            <CoursePreview
+              course={course}
+              onClick={() => setSelectedCourseId(course.id)}
+            />
+          )}
+        />
+      </div>
     </div>
   );
 }

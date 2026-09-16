@@ -14,6 +14,7 @@ export interface InMemoryRoundsSeed {
   updateError?: string | null;
   deleteError?: string | null;
   searchError?: string | null;
+  coursesError?: string | null;
   searchDelaysMs?: number[];
 }
 
@@ -85,6 +86,7 @@ export class InMemoryRounds {
   updateError: string | null;
   deleteError: string | null;
   searchError: string | null;
+  coursesError: string | null;
   searchDelaysMs: number[];
   private searchCalls = 0;
   deletedIds: string[];
@@ -103,6 +105,7 @@ export class InMemoryRounds {
     this.updateError = seed.updateError ?? null;
     this.deleteError = seed.deleteError ?? null;
     this.searchError = seed.searchError ?? null;
+    this.coursesError = seed.coursesError ?? null;
     this.searchDelaysMs = [...(seed.searchDelaysMs ?? [])];
     this.deletedIds = [];
   }
@@ -122,6 +125,11 @@ export class InMemoryRounds {
       byId.set(course.id, course);
     }
     return [...byId.values()].filter((course) => (course.name ?? "").toLowerCase().includes(q));
+  }
+
+  getCourses(): CourseSummary[] {
+    if (this.coursesError) throw new Error(this.coursesError);
+    return this.courses;
   }
 
   getRoundsForUser(): RoundSummary[] {
