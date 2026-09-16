@@ -67,7 +67,7 @@ export function HandicapBreakdownSheet({
               <div className="bg-[#f0f7f1] rounded-2xl p-4 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Rounds in window</span>
-                  <span className="font-semibold text-gray-900">{windowSize} of 20</span>
+                  <span className="font-semibold text-foreground">{windowSize} of 20</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Best differentials used</span>
