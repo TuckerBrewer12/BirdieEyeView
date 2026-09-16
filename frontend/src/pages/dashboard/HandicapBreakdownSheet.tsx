@@ -139,7 +139,7 @@ export function HandicapBreakdownSheet({
                     </div>
                     <div className={`text-sm font-mono font-bold text-right w-16 ${
                       !row.hasDifferential
-                        ? "text-gray-300"
+                        ? "text-muted-foreground"
                         : row.used
                           ? "text-[#2d7a3a]"
                           : "text-gray-500"
