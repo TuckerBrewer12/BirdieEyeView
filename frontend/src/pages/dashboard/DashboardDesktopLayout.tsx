@@ -251,7 +251,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pointer-events-none">
-                      <div className="text-2xl font-bold text-gray-900">{puttsLabel}</div>
+                      <div className="text-2xl font-bold text-foreground">{puttsLabel}</div>
                       <div className="text-[9px] text-gray-400 uppercase tracking-wide">Putts</div>
                     </div>
                   </div>
