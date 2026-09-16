@@ -232,4 +232,5 @@
   --opacity-recessed: var(--brand-opacity-recessed);
 
   --grid-template-columns-round-preview: var(--brand-size-date-rail) 1fr auto;
+  --grid-template-columns-handicap-breakdown: 1fr auto auto auto;
 }
