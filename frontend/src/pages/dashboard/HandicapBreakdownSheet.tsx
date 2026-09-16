@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCircle, Circle } from "lucide-react";
-import type { DualTrendPoint } from "@/hooks/useDashboardViewModel";
+import type { DualTrendPoint } from "./useDashboardPageViewModel";
 import type { ScoreDifferentialRow, ScoreTrendRow } from "@/types/analytics";
 import { formatCourseName } from "@/lib/courseName";
 

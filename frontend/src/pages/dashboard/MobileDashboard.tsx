@@ -7,10 +7,10 @@ import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
 import type { DashboardData } from "@/types/golf";
 import type { AnalyticsData, GoalReport } from "@/types/analytics";
-import type { DualTrendPoint, ScoreDistItem } from "@/hooks/useDashboardViewModel";
+import type { DualTrendPoint, ScoreDistItem } from "./useDashboardPageViewModel";
 import { formatCourseName } from "@/lib/courseName";
 import { api } from "@/lib/api";
-import { HandicapBreakdownSheet } from "@/components/dashboard/HandicapBreakdownSheet";
+import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const INK     = "#131613";
