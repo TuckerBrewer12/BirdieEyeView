@@ -85,7 +85,7 @@ export function HandicapBreakdownSheet({
                     <span className="font-semibold text-gray-900 font-mono">{adjustmentLabel}</span>
                   </div>
                 )}
-                <div className="border-t border-[#c8e6cc] pt-3 flex justify-between">
+                <div className="border-t border-border pt-3 flex justify-between">
                   <span className="text-sm font-bold text-[#2d7a3a]">Handicap Index</span>
                   <span className="text-sm font-black text-[#2d7a3a] font-mono">
                     {handicapIndexLabel}
