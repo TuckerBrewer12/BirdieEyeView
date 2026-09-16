@@ -365,7 +365,7 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                 <RecentRoundsTable rounds={data.recent_rounds.slice(0, 10)} />
               </div>
               <div className="mt-4">
-                <Link to="/rounds" className="w-full flex items-center justify-center px-4 py-2 bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-xs font-semibold hover:bg-gray-100 transition-colors">
+                <Link to="/rounds" className="w-full flex items-center justify-center px-4 py-2 bg-muted border border-border text-secondary-foreground rounded-xl text-xs font-semibold hover:bg-muted/80 transition-colors">
                   View All Round History
                 </Link>
               </div>
