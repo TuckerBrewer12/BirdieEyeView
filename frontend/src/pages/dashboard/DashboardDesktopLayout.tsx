@@ -318,7 +318,7 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
               ) : (
                 <div className="flex flex-col items-start justify-center h-full gap-2">
                   <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Scoring Goal</div>
-                  <p className="text-sm text-gray-500">Set a scoring goal to track your progress.</p>
+                  <p className="text-sm text-muted-foreground">Set a scoring goal to track your progress.</p>
                   <button
                     onClick={() => navigate("/the-lab")}
                     className="text-xs font-semibold text-primary hover:underline"
