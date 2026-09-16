@@ -715,11 +715,10 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
               </div>
               <div style={{ fontFamily: MONO, fontSize: 26, fontWeight: 600, letterSpacing: "-0.5px", color: INK, lineHeight: 1 }}>
                 {display}
-                {value != null && <span style={{ fontSize: 16, fontWeight: 500, color: MUTED }}>%</span>}
               </div>
               <BenchmarkBar value={value} tour={tour} />
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>You {value != null ? `${display}%` : "—"}</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>You {display}</span>
                 <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>Tour {tour}%</span>
               </div>
             </div>

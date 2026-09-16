@@ -528,8 +528,8 @@ export function useDashboardPageViewModel(
     last20ScoringAvg != null ? last20ScoringAvg.toFixed(1) : "—";
   const puttsLabel = putts > 0 ? putts.toFixed(1) : "—";
   const girPctLabel = girPct > 0 ? `${girPct.toFixed(0)}%` : "—";
-  const scramblingPctLabel = scramblingPct != null ? scramblingPct.toFixed(0) : "—";
-  const upAndDownPctLabel = upAndDownPct != null ? upAndDownPct.toFixed(0) : "—";
+  const scramblingPctLabel = scramblingPct != null ? `${scramblingPct.toFixed(0)}%` : "—";
+  const upAndDownPctLabel = upAndDownPct != null ? `${upAndDownPct.toFixed(0)}%` : "—";
 
   const mixLegend = useMemo<MixLegendItem[]>(() => {
     const birdiesPlus =
