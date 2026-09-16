@@ -64,7 +64,7 @@ export function HandicapBreakdownSheet({
               <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">
                 Current Calculation
               </div>
-              <div className="bg-[#f0f7f1] rounded-2xl p-4 space-y-3">
+              <div className="bg-accent rounded-2xl p-4 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Rounds in window</span>
                   <span className="font-semibold text-gray-900">{windowSize} of 20</span>
