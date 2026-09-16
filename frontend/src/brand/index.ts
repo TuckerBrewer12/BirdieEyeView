@@ -44,3 +44,13 @@ export { SectionLabel } from "./components/SectionLabel";
 export { SearchField } from "./components/SearchField";
 export { SortControl } from "./components/SortControl";
 export { CourseLinkSearch } from "./components/CourseLinkSearch";
+export {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from "./components/Sheet";
