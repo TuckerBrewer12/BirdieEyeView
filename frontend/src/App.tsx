@@ -12,7 +12,7 @@ import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { LandingPage } from "./pages/public/LandingPage";
 import { applyTheme, getStoredPublicTheme, getStoredTheme } from "./lib/theme";
 
-import { DashboardPage } from "./pages/DashboardPage";
+import { DashboardPage } from "./pages/dashboard";
 import { RoundsPage, RoundDetailPage } from "./pages/rounds";
 import { CoursesPage } from "./pages/CoursesPage";
 import { ScanPage } from "./pages/ScanPage";
