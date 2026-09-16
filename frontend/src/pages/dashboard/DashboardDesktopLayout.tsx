@@ -305,10 +305,9 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full transition-all"
+                        className={`h-full rounded-full transition-all ${goalOnTrack ? "bg-score-birdie" : "bg-primary"}`}
                         style={{
                           width: `${goalBarPct}%`,
-                          background: goalOnTrack ? "#059669" : "linear-gradient(90deg, #2d7a3a, #9ca3af)",
                         }}
                       />
                     </div>
