@@ -8,11 +8,17 @@ import {
 import { SVGScoreHandicapTrend } from "@/components/dashboard/SVGScoreHandicapTrend";
 import { MilestoneFeed } from "@/components/dashboard/MilestoneFeed";
 import {
+  Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  chartColors,
+  chartLayout,
+  chartTickStyle,
+  chartTooltipStyle,
+  colors,
 } from "@/brand";
 import { ProfileHeroBanner } from "@/components/dashboard/ProfileHeroBanner";
 import { ScanActionCard } from "@/components/dashboard/ScanActionCard";
@@ -21,16 +27,6 @@ import { BestRoundHighlight } from "@/components/dashboard/BestRoundHighlight";
 import { RecentRoundsTable } from "@/components/dashboard/RecentRoundsTable";
 import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
-
-const tooltipStyle = {
-  fontSize: 12,
-  borderRadius: 12,
-  border: "1px solid rgba(255,255,255,0.6)",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
-  background: "rgba(255,255,255,0.75)",
-  backdropFilter: "blur(16px)",
-  WebkitBackdropFilter: "blur(16px)",
-};
 
 function ShortGameSparkline({
   scrambling,
@@ -52,14 +48,14 @@ function ShortGameSparkline({
   return (
     <div className="mt-3 px-1">
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} overflow="visible">
-        <polyline points={scrPts} fill="none" stroke="#f97316" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" opacity={0.8} />
-        <polyline points={udPts} fill="none" stroke="#a855f7" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" opacity={0.8} />
-        <circle cx={xs[xs.length - 1]} cy={toY(paired[paired.length - 1].scrambling_percentage)} r={2.5} fill="#f97316" />
-        <circle cx={xs[xs.length - 1]} cy={toY(udMap.get(paired[paired.length - 1].round_index)!)} r={2.5} fill="#a855f7" />
+        <polyline points={scrPts} fill="none" stroke={colors.primary} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" opacity={0.8} />
+        <polyline points={udPts} fill="none" stroke={colors.score.triple.text} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" opacity={0.8} />
+        <circle cx={xs[xs.length - 1]} cy={toY(paired[paired.length - 1].scrambling_percentage)} r={2.5} fill={colors.primary} />
+        <circle cx={xs[xs.length - 1]} cy={toY(udMap.get(paired[paired.length - 1].round_index)!)} r={2.5} fill={colors.score.triple.text} />
       </svg>
       <div className="flex items-center gap-3 mt-1.5">
-        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400" /><span className="text-[9px] text-gray-400">Scr</span></div>
-        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-400" /><span className="text-[9px] text-gray-400">U&D</span></div>
+        <div className="flex items-center gap-1"><div className="size-2 rounded-full bg-primary" /><span className="text-caption text-muted-foreground">Scr</span></div>
+        <div className="flex items-center gap-1"><div className="size-2 rounded-full bg-score-triple" /><span className="text-caption text-muted-foreground">U&D</span></div>
       </div>
     </div>
   );
@@ -70,14 +66,14 @@ function MiniKpi({ label, value, trend }: {
   trend?: "up" | "down" | "flat" | null;
 }) {
   const Icon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
-  const trendColor = trend === "down" ? "text-emerald-500" : trend === "up" ? "text-red-400" : "text-gray-300";
+  const trendColor = trend === "down" ? "text-score-birdie" : trend === "up" ? "text-destructive" : "text-muted-foreground";
   return (
     <div className="flex items-center justify-between">
       <div>
-        <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">{label}</div>
-        <div className="text-4xl font-semibold tracking-tighter text-gray-900 leading-tight">{value ?? "—"}</div>
+        <div className="text-meta uppercase tracking-eyebrow text-muted-foreground font-bold">{label}</div>
+        <div className="text-4xl font-semibold tracking-stat text-card-foreground leading-tight">{value ?? "—"}</div>
       </div>
-      {trend && <Icon size={16} className={trendColor} />}
+      {trend && <Icon className={`size-4 ${trendColor}`} />}
     </div>
   );
 }
@@ -97,7 +93,7 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
 
   return (
     <div className="pb-12">
-      <div className="flex gap-6 max-w-[1400px] mx-auto items-start">
+      <div className="flex gap-6 max-w-7xl mx-auto items-start">
 
         {/* Left Main Content */}
         <div className="flex-1 min-w-0 flex flex-col">
@@ -145,8 +141,8 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                 <CardDescription>Last 5 rounds</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="relative">
-                  <ResponsiveContainer width="100%" height={160}>
+                <div className="relative h-chart">
+                  <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie data={girDonutData} dataKey="value"
                         innerRadius={50} outerRadius={68} stroke="none"
@@ -157,8 +153,8 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <div className="text-4xl font-semibold tracking-tighter text-gray-900">{girPct.toFixed(0)}%</div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">GIR</div>
+                    <div className="text-4xl font-semibold tracking-stat text-card-foreground">{girPct.toFixed(0)}%</div>
+                    <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow">GIR</div>
                   </div>
                 </div>
               </CardContent>
@@ -171,27 +167,29 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
               </CardHeader>
               <CardContent>
                 {recentDistribution.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={recentDistribution} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                  <div className="h-chart">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={recentDistribution} margin={chartLayout.margin}>
                       <CartesianGrid stroke={gridColor} vertical={false} />
-                      <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#6b7280", fontWeight: 700 }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 10, fill: "#6b7280", fontWeight: 700 }} tickLine={false} axisLine={false} unit="%" />
-                      <Tooltip contentStyle={tooltipStyle}
+                      <XAxis dataKey="label" tick={{ ...chartTickStyle, fill: chartColors.axis, fontWeight: 700 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ ...chartTickStyle, fill: chartColors.axis, fontWeight: 700 }} tickLine={false} axisLine={false} unit="%" />
+                      <Tooltip contentStyle={chartTooltipStyle}
                         formatter={(value: number | string | ReadonlyArray<number | string> | undefined) => {
                           const base = Array.isArray(value) ? value[0] : value;
                           const n = typeof base === "number" ? base : Number(base);
                           return [Number.isFinite(n) ? `${n.toFixed(1)}%` : `${String(base ?? "")}%`, ""];
                         }}
                       />
-                      <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={28}>
+                      <Bar dataKey="value" radius={chartLayout.barRadius} maxBarSize={28}>
                         {recentDistribution.map((entry) => (
                           <Cell key={entry.name} fill={entry.color} />
                         ))}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
+                  </div>
                 ) : (
-                  <div className="text-sm text-gray-400 text-center py-8">No data yet</div>
+                  <div className="text-sm text-muted-foreground text-center py-8">No data yet</div>
                 )}
               </CardContent>
             </Card>
@@ -204,17 +202,17 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
               <CardContent>
                 <div className="flex items-center justify-around mt-6">
                   <div className="text-center">
-                    <div className="text-4xl font-semibold text-gray-900 tracking-tighter">
+                    <div className="text-4xl font-semibold text-card-foreground tracking-stat">
                       {scramblingPct != null ? `${scramblingPct.toFixed(0)}%` : "—"}
                     </div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Scrambling</div>
+                    <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow mt-0.5">Scrambling</div>
                   </div>
-                  <div className="w-px h-8 bg-gray-100" />
+                  <div className="w-px h-8 bg-muted" />
                   <div className="text-center">
-                    <div className="text-4xl font-semibold text-gray-900 tracking-tighter">
+                    <div className="text-4xl font-semibold text-card-foreground tracking-stat">
                       {upAndDownPct != null ? `${upAndDownPct.toFixed(0)}%` : "—"}
                     </div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Up & Down</div>
+                    <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow mt-0.5">Up & Down</div>
                   </div>
                 </div>
                 {trends && (
@@ -232,9 +230,9 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                 <CardDescription>Last 5 rounds</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="mx-auto w-full max-w-[260px]">
-                  <div className="relative" style={{ height: 120 }}>
-                    <ResponsiveContainer width="100%" height={120}>
+                <div className="mx-auto w-full max-w-xs">
+                  <div className="relative h-30">
+                    <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie data={puttsGaugeData} cx="50%" cy="100%"
                           startAngle={180} endAngle={0}
@@ -246,12 +244,12 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pointer-events-none">
-                      <div className="text-2xl font-bold text-gray-900">{putts.toFixed(1)}</div>
-                      <div className="text-[9px] text-gray-400 uppercase tracking-wide">Putts</div>
+                      <div className="text-2xl font-bold text-card-foreground">{putts.toFixed(1)}</div>
+                      <div className="text-caption text-muted-foreground uppercase tracking-kicker">Putts</div>
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-center gap-3 text-[9px] text-gray-300 font-semibold uppercase tracking-wider mt-2">
+                <div className="flex justify-center gap-3 text-caption text-muted-foreground font-semibold uppercase tracking-kicker mt-2">
                   <span style={{ color: girColor }}>{"<30 great"}</span>
                   <span style={{ color: warningColor }}>30-35</span>
                   <span style={{ color: dangerColor }}>35+ work</span>
@@ -286,64 +284,68 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Scoring Goal</div>
-                      <div className="text-sm font-bold text-gray-900">
+                      <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground mb-0.5">Scoring Goal</div>
+                      <div className="text-sm font-bold text-card-foreground">
                         Target: Break {user.scoring_goal + 1}
                       </div>
                     </div>
-                    <span className="text-[11px] font-semibold text-primary">Goals →</span>
+                    <span className="text-label font-semibold text-primary">Goals →</span>
                   </div>
                   <div className="mb-3">
-                    <div className="flex justify-between text-[10px] text-gray-400 mb-1">
+                    <div className="flex justify-between text-meta text-muted-foreground mb-1">
                       <span>Avg {goalReport.scoring_average?.toFixed(1)}</span>
                       <span>Goal {user.scoring_goal + 1}</span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
                           width: `${Math.min(100, Math.max(5, goalReport.on_track ? 100 : goalReport.gap == null ? 5 : (1 - goalReport.gap / Math.max(goalReport.scoring_average ?? 1, 1)) * 100))}%`,
-                          background: goalReport.on_track ? "#059669" : "linear-gradient(90deg, #2d7a3a, #9ca3af)",
+                          background: goalReport.on_track ? colors.score.birdie.fill : `linear-gradient(90deg, ${colors.primary}, ${chartColors.axis})`,
                         }}
                       />
                     </div>
                   </div>
                   {goalReport.savers[0] && (
-                    <p className="text-[11px] text-gray-500 leading-relaxed">
-                      <span className="font-semibold text-gray-700">Focus: </span>
+                    <p className="text-label text-muted-foreground leading-relaxed">
+                      <span className="font-semibold text-secondary-foreground">Focus: </span>
                       {goalReport.savers[0].headline}
                     </p>
                   )}
                 </div>
               ) : (
                 <div className="flex flex-col items-start justify-center h-full gap-2">
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Scoring Goal</div>
-                  <p className="text-sm text-gray-500">Set a scoring goal to track your progress.</p>
-                  <button
-                    onClick={() => navigate("/the-lab")}
-                    className="text-xs font-semibold text-primary hover:underline"
+                  <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">Scoring Goal</div>
+                  <p className="text-sm text-muted-foreground">Set a scoring goal to track your progress.</p>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/the-lab");
+                    }}
                   >
                     Set a goal →
-                  </button>
+                  </Button>
                 </div>
               )}
               </CardContent>
             </Card>
 
             <div className="lg:col-span-3 flex justify-end gap-3 mt-4 lg:hidden">
-              <Link to="/rounds" className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity shadow-sm">
+              <Button nativeButton={false} render={<Link to="/rounds" />}>
                 All Rounds
-              </Link>
-              <Link to="/courses" className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-semibold hover:bg-gray-50 transition-colors">
+              </Button>
+              <Button variant="outline" nativeButton={false} render={<Link to="/courses" />}>
                 Browse Courses
-              </Link>
+              </Button>
             </div>
 
           </div>
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-[300px] shrink-0 hidden xl:flex flex-col gap-6 sticky top-20 self-start">
+        <div className="w-72 shrink-0 hidden xl:flex flex-col gap-6 sticky top-20 self-start">
           <ScanActionCard />
 
           <Card size="sm">
@@ -361,13 +363,18 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
               <CardTitle>Recent Rounds</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="max-h-[600px] overflow-y-auto -mx-1">
+              <div className="max-h-96 overflow-y-auto -mx-1">
                 <RecentRoundsTable rounds={data.recent_rounds.slice(0, 10)} />
               </div>
               <div className="mt-4">
-                <Link to="/rounds" className="w-full flex items-center justify-center px-4 py-2 bg-gray-50 border border-gray-200 text-gray-700 rounded-xl text-xs font-semibold hover:bg-gray-100 transition-colors">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  nativeButton={false}
+                  render={<Link to="/rounds" />}
+                >
                   View All Round History
-                </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
