@@ -10,7 +10,7 @@ describe("cn", () => {
   });
 
   it("keeps white label on a primary sm button", () => {
-    const classes = cn(buttonVariants({ variant: "default", size: "sm", className: "px-3.5 text-[13px]" }));
+    const classes = cn(buttonVariants({ variant: "default", size: "sm", className: "px-3.5 text-body" }));
     expect(classes).toContain("text-primary-foreground");
   });
 });
