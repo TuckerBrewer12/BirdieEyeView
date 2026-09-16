@@ -15,21 +15,29 @@ concurrency:
   group: ui-test-bot-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+# Write is for the fix job only. The review job below drops it back to read.
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
   ui-test:
     name: UI Test Checker
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      has_fixes: ${{ steps.review.outputs.has_fixes }}
+      findings: ${{ steps.review.outputs.findings }}
 
-    # Skip drafts, skip on the `skip-bots` label, and skip fork PRs, which
-    # cannot read OPENCODE_API_KEY.
+    # Skip drafts, skip-bots, fork PRs (no OPENCODE_API_KEY), and the PRs
+    # this bot itself opens.
     if: >-
       github.event.pull_request.draft == false &&
       !contains(github.event.pull_request.labels.*.name, 'skip-bots') &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !startsWith(github.head_ref, 'bot-fix/')
 
     steps:
       - uses: actions/checkout@v4
@@ -41,6 +49,7 @@ jobs:
         run: curl -fsSL https://opencode.ai/install | bash
 
       - name: Review
+        id: review
         env:
           BOT_NAME: "🧪 UI Test Checker"
           BOT_PROMPT: .github/review-bots/ui-test-checker.md
@@ -53,3 +62,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: bash .github/review-bots/run-bot.sh
+
+  fix:
+    name: Open fix PRs
+    needs: ui-test
+    if: needs.ui-test.outputs.has_fixes == 'true'
+    uses: ./.github/workflows/review-fix.yml
+    with:
+      pr_number: ${{ github.event.pull_request.number }}
+      head_ref: ${{ github.event.pull_request.head.ref }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      findings_json: ${{ needs.ui-test.outputs.findings }}
+      bot_name: "🧪 UI Test Checker"
+    secrets: inherit

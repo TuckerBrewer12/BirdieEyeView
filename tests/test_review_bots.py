@@ -62,7 +62,7 @@ def test_comment_round_trip_metadata(bot_env):
     assert "conductor://prompt=" in body
     assert "agent=cursor" in body
     assert "model=grok-4.6" in body
-    assert "Opening a PR with this change" in body
+    assert "open a PR with this change" in body
     meta = findings.parse_metadata(body)
     assert meta is not None
     assert meta["id"] == fid

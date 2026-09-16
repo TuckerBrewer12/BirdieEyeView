@@ -33,7 +33,7 @@ if [[ -n "$existing" ]]; then
   url="$(printf '%s\n' "$existing" | python3 -c 'import json,sys; print(json.load(sys.stdin)["url"])')"
   num="$(printf '%s\n' "$existing" | python3 -c 'import json,sys; print(json.load(sys.stdin)["number"])')"
   echo "Fix PR already open: $url"
-  comment "Already opened #${num} with this change. Merge it into this branch if it looks right."
+  comment "Already opened [#${num}](${url}) with this change. Merge it into this branch if it looks right."
   exit 0
 fi
 
@@ -93,23 +93,26 @@ The review bot flagged this. Merge to take the change as a commit on #${PR_NUMBE
 EOF
 )"
 
-if ! pr_url="$(
+create_pr() {
   gh pr create --repo "$GITHUB_REPOSITORY" \
     --base "$HEAD_REF" \
-    --head "$BRANCH" \
+    --head "${OWNER}:${BRANCH}" \
     --title "[bot] ${FINDING_TITLE}" \
-    --label skip-bots \
-    --body "$body"
-)"; then
-  pr_url="$(
-    gh pr create --repo "$GITHUB_REPOSITORY" \
-      --base "$HEAD_REF" \
-      --head "$BRANCH" \
-      --title "[bot] ${FINDING_TITLE}" \
-      --body "$body"
-  )"
+    "$@"
+}
+
+pr_url=""
+if pr_url="$(create_pr --label skip-bots --body "$body")"; then
+  :
+elif pr_url="$(create_pr --body "$body")"; then
+  :
+else
+  compare="https://github.com/${GITHUB_REPOSITORY}/compare/${HEAD_REF}...${BRANCH}?expand=1"
+  echo "::error title=${BOT_NAME}::Could not open a fix PR. Enable Settings → Actions → General → Allow GitHub Actions to create and approve pull requests."
+  comment "Pushed this change to \`${BRANCH}\` but could not open a PR. [Open it here](${compare}). Reply \`/fix\` to retry."
+  exit 1
 fi
 
 pr_num="${pr_url##*/}"
-comment "Opened #${pr_num} with this change. Merge it into this branch if it looks right."
+comment "Opened [#${pr_num}](${pr_url}) with this change. Merge it into this branch if it looks right."
 echo "$pr_url"

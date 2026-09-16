@@ -54,6 +54,6 @@ def conductor_url(prompt: str) -> str:
 def comment_actions(discuss_url: str) -> str:
     return (
         f"[{DISCUSS_LABEL}]({discuss_url})\n\n"
-        "Opening a PR with this change — merge it into this branch if it looks "
-        "right. Reply `/fix` to retry."
+        "A follow-up job will open a PR with this change and reply with the "
+        "link. Merge it into this branch if it looks right. Reply `/fix` to retry."
     )
