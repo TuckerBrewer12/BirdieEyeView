@@ -148,7 +148,7 @@ export function HandicapBreakdownSheet({
                     </div>
                     <div className="w-5 flex justify-center">
                       {row.used ? (
-                        <CheckCircle size={14} className="text-[#2d7a3a] shrink-0" />
+                        <CheckCircle size={14} className="text-primary shrink-0" />
                       ) : row.hasDifferential ? (
                         <Circle size={14} className="text-gray-200 shrink-0" />
                       ) : null}
