@@ -9,6 +9,13 @@ function parse(dateStr: string | null | undefined): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+/** "Jun 15" — compact date on dashboard tickets. */
+export function formatRoundDateShort(dateStr: string | null | undefined): string | null {
+  const d = parse(dateStr);
+  if (!d) return null;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 /** "Mon · Jun 15 · 2026" — the eyebrow above a round's course name. */
 export function formatRoundDateLong(dateStr: string | null | undefined): string | null {
   const d = parse(dateStr);

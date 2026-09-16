@@ -3,6 +3,7 @@ import type { User } from "@/types/golf";
 interface ProfileHeroBannerProps {
   user: User | null;
   handicapIndex: number | null;
+  handicapLabel?: string;
   onHandicapClick?: () => void;
 }
 
@@ -12,7 +13,7 @@ function formatHI(hi: number | null | undefined): string {
   return hi.toFixed(1);
 }
 
-export function ProfileHeroBanner({ user, handicapIndex, onHandicapClick }: ProfileHeroBannerProps) {
+export function ProfileHeroBanner({ user, handicapIndex, handicapLabel, onHandicapClick }: ProfileHeroBannerProps) {
   const firstName = user?.name ? user.name.split(" ")[0] : "Golfer";
   const initials = user?.name
     ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -50,7 +51,7 @@ export function ProfileHeroBanner({ user, handicapIndex, onHandicapClick }: Prof
               Handicap
             </div>
             <div className="text-3xl font-black text-gray-900 leading-none flex items-baseline gap-1">
-              {formatHI(handicapIndex)}
+              {handicapLabel ?? formatHI(handicapIndex)}
               <span className="text-sm font-semibold text-gray-400 tracking-wide">HCP</span>
             </div>
           </button>
