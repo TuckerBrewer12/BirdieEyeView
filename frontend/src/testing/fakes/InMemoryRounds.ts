@@ -1,5 +1,5 @@
 import type { Course, CourseSummary, Round, RoundSummary } from "../../types/golf";
-import type { RoundComparison } from "../../types/analytics";
+import type { CourseAnalyticsData, RoundComparison } from "../../types/analytics";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { roundFromSummary, toCourseSummary } from "../fixtures/roundDetails";
 
@@ -196,6 +196,21 @@ export class InMemoryRounds {
     const course = this.fullCourses.find((c) => c.id === courseId);
     if (!course) throw new Error("Course not found.");
     return course;
+  }
+
+  getCourseAnalytics(courseId: string): CourseAnalyticsData {
+    return {
+      course_id: courseId,
+      rounds_played: 0,
+      score_trend_on_course: [],
+      average_score_relative_to_par_by_hole: [],
+      gir_percentage_by_hole: [],
+      average_putts_by_hole: [],
+      score_type_distribution_by_hole: [],
+      course_difficulty_profile_by_hole: [],
+      average_score_when_gir_vs_missed: [],
+      score_variance_by_hole: [],
+    };
   }
 
   getRoundComparison(): RoundComparison | null {

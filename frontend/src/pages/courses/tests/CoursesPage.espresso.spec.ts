@@ -1,5 +1,6 @@
 import { test } from "./CoursesPage.robot";
 import { populatedCourses } from "../../../testing/fixtures/courses";
+import { halfMoonBayCourse } from "../../../testing/fixtures/roundDetails";
 
 test("API test courses do not appear in the list", async ({ courses }) => {
   await courses.open(populatedCourses);
@@ -12,4 +13,10 @@ test("search keeps matching courses and hides the rest", async ({ courses }) => 
   await courses.search("Blue");
   await courses.seesCourse("Blue Rock");
   await courses.doesNotSeeCourse("Half Moon Bay");
+});
+
+test("tapping a course opens its detail", async ({ courses }) => {
+  await courses.open(populatedCourses, { fullCourses: [halfMoonBayCourse] });
+  await courses.tapCourse("Half Moon Bay");
+  await courses.seesDetail("Half Moon Bay");
 });

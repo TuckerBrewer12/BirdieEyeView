@@ -137,6 +137,11 @@ export class FakeBackend {
       return { status: 200, body: this.store.getUserHandicap() };
     }
 
+    if (verb === "GET" && /\/api\/stats\/course-analytics\//.test(path)) {
+      const courseId = path.split("/").pop() ?? "";
+      return { status: 200, body: this.store.getCourseAnalytics(courseId) };
+    }
+
     if (verb === "GET" && /\/api\/stats\/compare\//.test(path)) {
       return { status: 200, body: this.store.getRoundComparison() };
     }
