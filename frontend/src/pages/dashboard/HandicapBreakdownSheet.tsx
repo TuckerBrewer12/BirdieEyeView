@@ -43,7 +43,7 @@ export function HandicapBreakdownSheet({
 
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-4">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
               WHS Formula
             </div>
             <div className="bg-gray-50 rounded-2xl p-4">
