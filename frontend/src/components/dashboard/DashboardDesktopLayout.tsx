@@ -13,8 +13,8 @@ import { ScanActionCard } from "@/components/dashboard/ScanActionCard";
 import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
 import { BestRoundHighlight } from "@/components/dashboard/BestRoundHighlight";
 import { RecentRoundsTable } from "@/components/dashboard/RecentRoundsTable";
-import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
-import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
+import { HandicapBreakdownSheet } from "@/components/dashboard/HandicapBreakdownSheet";
+import type { DashboardViewModel } from "@/hooks/useDashboardViewModel";
 
 const tooltipStyle = {
   fontSize: 12,
@@ -76,7 +76,7 @@ function MiniKpi({ label, value, trend }: {
   );
 }
 
-export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
+export function DashboardDesktopLayout(vm: DashboardViewModel) {
   const navigate = useNavigate();
   const [handicapSheetOpen, setHandicapSheetOpen] = useState(false);
   const {

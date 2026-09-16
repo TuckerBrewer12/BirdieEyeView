@@ -25,7 +25,7 @@ export interface ScoreDistItem {
   color: string;
 }
 
-export interface DashboardPageViewModel {
+export interface DashboardViewModel {
   data: DashboardData | null;
   trends: AnalyticsData | null;
   user: Awaited<ReturnType<typeof api.getUser>> | null | undefined;
@@ -59,7 +59,7 @@ export interface DashboardPageViewModel {
   mutedFill: string;
 }
 
-export function useDashboardPageViewModel(userId: string): DashboardPageViewModel {
+export function useDashboardViewModel(userId: string): DashboardViewModel {
   const { data: fetched, isLoading: loading, error, refetch } = useQuery({
     queryKey: ["dashboard", userId],
     queryFn: async () => {
