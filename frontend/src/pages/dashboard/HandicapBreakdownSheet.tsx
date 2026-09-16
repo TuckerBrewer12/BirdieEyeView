@@ -150,7 +150,7 @@ export function HandicapBreakdownSheet({
                       {row.used ? (
                         <CheckCircle size={14} className="text-[#2d7a3a] shrink-0" />
                       ) : row.hasDifferential ? (
-                        <Circle size={14} className="text-gray-200 shrink-0" />
+                        <Circle size={14} className="text-muted-foreground shrink-0" />
                       ) : null}
                     </div>
                   </div>
