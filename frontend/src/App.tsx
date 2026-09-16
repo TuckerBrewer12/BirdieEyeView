@@ -14,7 +14,7 @@ import { applyTheme, getStoredPublicTheme, getStoredTheme } from "./lib/theme";
 
 import { DashboardPage } from "./pages/dashboard";
 import { RoundsPage, RoundDetailPage } from "./pages/rounds";
-import { CoursesPage } from "./pages/CoursesPage";
+import { CoursesPage } from "./pages/courses";
 import { ScanPage } from "./pages/ScanPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { CareerPage } from "./pages/CareerPage";
