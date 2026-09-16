@@ -310,7 +310,7 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                   </div>
                   {goalReport.savers[0] && (
                     <p className="text-[11px] text-gray-500 leading-relaxed">
-                      <span className="font-semibold text-gray-700">Focus: </span>
+                      <span className="font-semibold text-card-foreground">Focus: </span>
                       {goalReport.savers[0].headline}
                     </p>
                   )}
