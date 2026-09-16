@@ -29,11 +29,21 @@ const buttonVariants = cva(
         "icon-sm":
           "size-7 rounded-md in-data-[slot=button-group]:rounded-lg",
         "icon-lg": "size-9",
+        /* Marketing-sized. The landing page's calls to action sit alone on a
+           wide section and have to carry it; the in-app sizes read as chrome
+           at that scale. */
+        cta: "h-12 gap-2 px-7 text-base has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5 [&_svg:not([class*='size-'])]:size-[18px]",
+      },
+      /* Declared after size so the radius here wins the twMerge. */
+      shape: {
+        default: "",
+        pill: "rounded-full",
       },
     },
     defaultVariants: {
       variant: "default",
       size: "default",
+      shape: "default",
     },
   },
 );
