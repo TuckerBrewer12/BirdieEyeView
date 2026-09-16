@@ -6,7 +6,6 @@ import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
 import { chartColors } from "@/brand/theme";
 import type { DashboardPageViewModel, DualTrendPoint, RecentHole, TrendTabItem, TrendView } from "./useDashboardPageViewModel";
-import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const INK     = "#131613";
@@ -454,9 +453,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
     scoreDeltaText,
     scoreDeltaColor,
     heroKpis,
-    handicapSheetOpen,
     openHandicapSheet,
-    closeHandicapSheet,
     trendView,
     setTrendView,
     trendTabs,
@@ -467,16 +464,6 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
     goalProgressPct,
     goalTargetLabel,
     hasScoringGoal,
-    whsRows,
-    whsWindowSize,
-    whsCountUsed,
-    whsAdjustment,
-    whsAdjustmentLabel,
-    whsDiffAvgLabel,
-    whsHasRatedRounds,
-    whsShowCalculation,
-    whsUsedLegend,
-    whsContextNote,
   } = vm;
 
   if (!data) return null;
@@ -725,22 +712,6 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
       </div>
 
       {/* ── Handicap Breakdown Sheet ─────────────────────────────────────────── */}
-      <HandicapBreakdownSheet
-        open={handicapSheetOpen}
-        onClose={closeHandicapSheet}
-        handicapIndexLabel={handicapIndexLabel}
-        rows={whsRows}
-        windowSize={whsWindowSize}
-        countUsed={whsCountUsed}
-        adjustment={whsAdjustment}
-        adjustmentLabel={whsAdjustmentLabel}
-        diffAvgLabel={whsDiffAvgLabel}
-        hasRatedRounds={whsHasRatedRounds}
-        showCalculation={whsShowCalculation}
-        usedLegend={whsUsedLegend}
-        contextNote={whsContextNote}
-      />
-
       {/* ── 7. Recent Rounds Card ────────────────────────────────────────────── */}
       <div style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 16, padding: "16px 4px 4px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 14px", marginBottom: 4 }}>

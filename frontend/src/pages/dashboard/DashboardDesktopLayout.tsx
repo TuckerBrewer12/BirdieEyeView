@@ -24,7 +24,6 @@ import { ScanActionCard } from "@/components/dashboard/ScanActionCard";
 import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
 import { BestRoundHighlight } from "@/components/dashboard/BestRoundHighlight";
 import { RecentRoundsTable } from "@/components/dashboard/RecentRoundsTable";
-import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
 
 function ShortGameSparkline({
@@ -88,9 +87,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
     scoreLineColor, handicapLineColor, gridColor, girColor, warningColor, dangerColor, mutedFill,
     handicapIndexLabel, firstName, bestRound, bestRoundDetail, sidebarRounds,
     hasScoringGoal, goalTargetLabel, goalNumberLabel, goalAverageLabel, goalBarPct, goalFocusHeadline, goalOnTrack,
-    handicapSheetOpen, openHandicapSheet, closeHandicapSheet,
-    whsRows, whsWindowSize, whsCountUsed, whsAdjustment, whsAdjustmentLabel,
-    whsDiffAvgLabel, whsHasRatedRounds, whsShowCalculation, whsUsedLegend, whsContextNote,
+    openHandicapSheet,
   } = vm;
 
   if (!data) return null;
@@ -387,22 +384,6 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
         </div>
 
       </div>
-
-      <HandicapBreakdownSheet
-        open={handicapSheetOpen}
-        onClose={closeHandicapSheet}
-        handicapIndexLabel={handicapIndexLabel}
-        rows={whsRows}
-        windowSize={whsWindowSize}
-        countUsed={whsCountUsed}
-        adjustment={whsAdjustment}
-        adjustmentLabel={whsAdjustmentLabel}
-        diffAvgLabel={whsDiffAvgLabel}
-        hasRatedRounds={whsHasRatedRounds}
-        showCalculation={whsShowCalculation}
-        usedLegend={whsUsedLegend}
-        contextNote={whsContextNote}
-      />
     </div>
   );
 }

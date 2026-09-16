@@ -1,6 +1,7 @@
 import { useDashboardPageViewModel } from "./useDashboardPageViewModel";
 import { MobileDashboard } from "./MobileDashboard";
 import { DashboardDesktopLayout } from "./DashboardDesktopLayout";
+import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 import { ResponsivePage } from "@/components/layout/ResponsivePage";
 import {
   Alert,
@@ -37,9 +38,26 @@ export function DashboardPage({ userId }: DashboardPageProps) {
   }
 
   return (
-    <ResponsivePage
-      mobile={<MobileDashboard vm={vm} />}
-      desktop={<DashboardDesktopLayout vm={vm} />}
-    />
+    <>
+      <ResponsivePage
+        mobile={<MobileDashboard vm={vm} />}
+        desktop={<DashboardDesktopLayout vm={vm} />}
+      />
+      <HandicapBreakdownSheet
+        open={vm.handicapSheetOpen}
+        onClose={vm.closeHandicapSheet}
+        handicapIndexLabel={vm.handicapIndexLabel}
+        rows={vm.whsRows}
+        windowSize={vm.whsWindowSize}
+        countUsed={vm.whsCountUsed}
+        adjustment={vm.whsAdjustment}
+        adjustmentLabel={vm.whsAdjustmentLabel}
+        diffAvgLabel={vm.whsDiffAvgLabel}
+        hasRatedRounds={vm.whsHasRatedRounds}
+        showCalculation={vm.whsShowCalculation}
+        usedLegend={vm.whsUsedLegend}
+        contextNote={vm.whsContextNote}
+      />
+    </>
   );
 }

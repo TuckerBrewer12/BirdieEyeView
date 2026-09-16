@@ -1,5 +1,7 @@
 import { InMemoryRounds, type InMemoryRoundsSeed } from "./InMemoryRounds";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
+import type { DashboardData, User } from "../../types/golf";
+import type { AnalyticsData, GoalReport } from "../../types/analytics";
 
 export const TEST_USER = {
   user_id: "user-1",
@@ -10,6 +12,10 @@ export const TEST_USER = {
 
 export interface FakeBackendSeed extends InMemoryRoundsSeed {
   user?: typeof TEST_USER;
+  profile?: User;
+  dashboard?: DashboardData;
+  analytics?: AnalyticsData | null;
+  goalReport?: GoalReport | null;
 }
 
 export interface FakeReply {
@@ -20,11 +26,19 @@ export interface FakeReply {
 /** Points HTTP at InMemoryRounds. Same store FakeRoundsRepository uses. */
 export class FakeBackend {
   user: typeof TEST_USER;
+  profile: User | undefined;
+  dashboard: DashboardData | undefined;
+  analytics: AnalyticsData | null | undefined;
+  goalReport: GoalReport | null | undefined;
   readonly store: InMemoryRounds;
 
   constructor(seed: FakeBackendSeed = {}) {
-    const { user, ...storeSeed } = seed;
+    const { user, profile, dashboard, analytics, goalReport, ...storeSeed } = seed;
     this.user = user ?? TEST_USER;
+    this.profile = profile;
+    this.dashboard = dashboard;
+    this.analytics = analytics;
+    this.goalReport = goalReport;
     this.store = new InMemoryRounds(storeSeed);
   }
 
@@ -140,6 +154,43 @@ export class FakeBackend {
     if (verb === "GET" && /\/api\/stats\/course-analytics\//.test(path)) {
       const courseId = path.split("/").pop() ?? "";
       return { status: 200, body: this.store.getCourseAnalytics(courseId) };
+    }
+
+    if (verb === "GET" && /\/api\/users\/[^/]+$/.test(path)) {
+      if (this.profile) return { status: 200, body: this.profile };
+      return {
+        status: 200,
+        body: {
+          id: this.user.user_id,
+          name: this.user.name,
+          email: this.user.email,
+          home_course_id: null,
+          handicap: this.store.handicapIndex,
+          created_at: null,
+          scoring_goal: null,
+        } satisfies User,
+      };
+    }
+
+    if (verb === "GET" && /\/api\/stats\/dashboard\/[^/]+$/.test(path)) {
+      if (!this.dashboard) {
+        return { status: 404, body: { detail: "Dashboard data failed to load." } };
+      }
+      return { status: 200, body: this.dashboard };
+    }
+
+    if (verb === "GET" && /\/api\/stats\/analytics\/[^/]+$/.test(path)) {
+      if (this.analytics == null) {
+        return { status: 404, body: { detail: "Analytics failed to load." } };
+      }
+      return { status: 200, body: this.analytics };
+    }
+
+    if (verb === "GET" && /\/api\/stats\/[^/]+\/goal-report$/.test(path)) {
+      if (!this.goalReport) {
+        return { status: 404, body: { detail: "No goal report." } };
+      }
+      return { status: 200, body: this.goalReport };
     }
 
     if (verb === "GET" && /\/api\/stats\/compare\//.test(path)) {
