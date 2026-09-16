@@ -1,11 +1,10 @@
 # Review bots
 
-On every non-draft PR the Brand Kit and MVVM bots leave inline comments and
-open a second PR that implements the finding, targeting the original PR's
-branch. The Frontend coverage bot is separate: it posts one sticky comment
-with Vitest changed-line coverage plus an AI count of reasonable screenshot
-and espresso screens. It does not open fix PRs. UI Test Checker still flags
-missing tests as review comments.
+On every non-draft PR the Brand Kit, MVVM, and UI Test Checker bots leave
+inline comments and open a second PR that implements the finding, targeting
+the original PR's branch. The Frontend coverage bot is separate: it posts one
+sticky comment with Vitest changed-line coverage plus an AI count of
+reasonable screenshot and espresso screens. It does not open fix PRs.
 
 From a finding you can:
 
@@ -17,6 +16,12 @@ From a finding you can:
 Fix PRs are labelled `skip-bots` and live on `bot-fix/pr-<n>/…` branches so
 they do not re-trigger the review bots. GitHub does not run CI on PRs opened
 with `GITHUB_TOKEN`; merging into the original branch will run CI there.
+
+The repo must allow Actions to open those PRs: **Settings → Actions →
+General → Allow GitHub Actions to create and approve pull requests**. Without
+that, the bot can push `bot-fix/…` branches but `gh pr create` is rejected,
+and the review comment never gets a PR link. If create still fails, the bot
+replies with a compare URL so the PR can be opened in one click.
 
 The fix bot gets the finding text and the repo — no extra recipe file. It
 follows neighbouring code. Styling is Tailwind token classes
