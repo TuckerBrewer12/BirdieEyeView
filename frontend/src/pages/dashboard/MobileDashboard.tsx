@@ -758,7 +758,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
         )}
 
         {recentRoundRows.map((r, idx) => {
-          const accentColor = r.toPar == null ? "#9ca3af"
+          const accentColor = r.toPar == null ? "currentColor"
             : r.toPar <= 0  ? "#059669"
             : r.toPar <= 14 ? "#f87171"
             : "#60a5fa";
@@ -787,7 +787,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                 textAlign: "left",
               }}
             >
-              <div style={{ position: "absolute", left: 0, top: 14, bottom: 14, width: 3, borderRadius: 99, background: accentColor }} />
+              <div className={r.toPar == null ? "text-score-par" : undefined} style={{ position: "absolute", left: 0, top: 14, bottom: 14, width: 3, borderRadius: 99, background: accentColor }} />
               <div>
                 <div style={{ fontFamily: MONO, fontSize: 28, fontWeight: 700, letterSpacing: "-1px", color: INK, lineHeight: 1 }}>
                   {r.scoreLabel}
