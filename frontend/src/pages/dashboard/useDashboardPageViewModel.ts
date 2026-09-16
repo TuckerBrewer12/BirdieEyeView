@@ -44,6 +44,13 @@ function holeColorKey(
   return "quad_bogey";
 }
 
+function getRecentRoundAccentColor(toPar: number | null): string {
+  if (toPar == null) return "#9ca3af";
+  if (toPar <= 0) return "#059669";
+  if (toPar <= 14) return "#f87171";
+  return "#60a5fa";
+}
+
 function pickBestRound(rounds: RoundSummary[]): RoundSummary | null {
   const valid = rounds.filter((r) => r.total_score != null);
   if (!valid.length) return null;
@@ -139,6 +146,7 @@ export interface RecentRoundRow {
   scoreLabel: string;
   toPar: number | null;
   toParLabel: string | null;
+  accentColor: string;
   courseLabel: string;
   dateLabel: string;
   teeBox: string | null;
@@ -586,6 +594,7 @@ export function useDashboardPageViewModel(
       toPar,
       toParLabel:
         toPar == null ? null : toPar > 0 ? `+${toPar}` : toPar === 0 ? "E" : String(toPar),
+      accentColor: getRecentRoundAccentColor(toPar),
       courseLabel: summary.course_name ? formatCourseName(summary.course_name) : "Unknown course",
       dateLabel: formatRoundDateShort(summary.date) ?? "—",
       teeBox: summary.tee_box,
