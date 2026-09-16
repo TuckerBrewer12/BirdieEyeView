@@ -294,7 +294,7 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                     <span className="text-[11px] font-semibold text-primary">Goals →</span>
                   </div>
                   <div className="mb-3">
-                    <div className="flex justify-between text-[10px] text-gray-400 mb-1">
+                    <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
                       <span>Avg {goalReport.scoring_average?.toFixed(1)}</span>
                       <span>Goal {user.scoring_goal + 1}</span>
                     </div>
