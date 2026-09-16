@@ -54,8 +54,25 @@ if ! python3 .github/review-bots/post_review.py \
   exit 0
 fi
 
-gh api -X POST "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
-  --input "$WORK/review.json" --jq '.html_url'
+# GitHub often 422s "Line could not be resolved" if the PR diff is still
+# indexing. Retry here so a later Re-run is only needed when it stays broken.
+MAX_ATTEMPTS="${BOT_POST_ATTEMPTS:-5}"
+delay="${BOT_POST_RETRY_DELAY:-5}"
+attempt=1
+until gh api -X POST "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
+      --input "$WORK/review.json" --jq '.html_url'
+do
+  status=$?
+  if (( attempt >= MAX_ATTEMPTS )); then
+    echo "::error title=${BOT_NAME}::Failed to post review after ${MAX_ATTEMPTS} attempts. Re-run this job from the Actions tab or the PR checks list."
+    emit_no_fixes
+    exit "$status"
+  fi
+  echo "Posting review failed (attempt ${attempt}/${MAX_ATTEMPTS}); retrying in ${delay}s..."
+  sleep "$delay"
+  attempt=$((attempt + 1))
+  delay=$((delay * 2))
+done
 
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
   fixable="$(cat "$WORK/fixable.json")"
