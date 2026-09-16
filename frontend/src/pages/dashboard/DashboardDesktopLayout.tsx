@@ -8,6 +8,7 @@ import {
 import { SVGScoreHandicapTrend } from "@/components/dashboard/SVGScoreHandicapTrend";
 import { MilestoneFeed } from "@/components/dashboard/MilestoneFeed";
 import {
+  Button,
   Card,
   CardContent,
   CardDescription,
@@ -319,12 +320,14 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                 <div className="flex flex-col items-start justify-center h-full gap-2">
                   <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Scoring Goal</div>
                   <p className="text-sm text-gray-500">Set a scoring goal to track your progress.</p>
-                  <button
+                  <Button
+                    variant="link"
+                    size="xs"
+                    className="h-auto p-0 text-xs font-semibold"
                     onClick={() => navigate("/the-lab")}
-                    className="text-xs font-semibold text-primary hover:underline"
                   >
                     Set a goal →
-                  </button>
+                  </Button>
                 </div>
               )}
               </CardContent>
