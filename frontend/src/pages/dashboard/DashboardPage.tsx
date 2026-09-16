@@ -1,6 +1,6 @@
-import { useDashboardViewModel } from "@/hooks/useDashboardViewModel";
-import { MobileDashboard } from "@/components/dashboard/MobileDashboard";
-import { DashboardDesktopLayout } from "@/components/dashboard/DashboardDesktopLayout";
+import { useDashboardPageViewModel } from "./useDashboardPageViewModel";
+import { MobileDashboard } from "./MobileDashboard";
+import { DashboardDesktopLayout } from "./DashboardDesktopLayout";
 import { ResponsivePage } from "@/components/layout/ResponsivePage";
 
 interface DashboardPageProps {
@@ -8,7 +8,7 @@ interface DashboardPageProps {
 }
 
 export function DashboardPage({ userId }: DashboardPageProps) {
-  const vm = useDashboardViewModel(userId);
+  const vm = useDashboardPageViewModel(userId);
 
   if (vm.loading) {
     return (
