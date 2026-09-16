@@ -793,7 +793,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                   {r.scoreLabel}
                 </div>
                 {r.toParLabel && (
-                  <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, color: (r.toPar ?? 0) > 0 ? "#f87171" : "#059669" }}>
+                  <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600 }} className={(r.toPar ?? 0) > 0 ? "text-score-bogey" : "text-score-birdie" }}>
                     {r.toParLabel}
                   </div>
                 )}
