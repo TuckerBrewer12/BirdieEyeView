@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Alert,
   AlertDescription,
@@ -8,24 +8,13 @@ import {
   SearchField,
 } from "@/brand";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { CourseDetailPanel } from "@/components/course-detail/CourseDetailPanel";
 import { useCoursesPageViewModel } from "./useCoursesPageViewModel";
 
 interface CoursesPageProps { userId: string; }
 
 export function CoursesPage({ userId }: CoursesPageProps) {
+  const navigate = useNavigate();
   const viewModel = useCoursesPageViewModel(userId);
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
-
-  if (selectedCourseId) {
-    return (
-      <CourseDetailPanel
-        courseId={selectedCourseId}
-        userId={userId}
-        onBack={() => setSelectedCourseId(null)}
-      />
-    );
-  }
 
   return (
     <div>
@@ -57,7 +46,7 @@ export function CoursesPage({ userId }: CoursesPageProps) {
           renderItem={(course) => (
             <CoursePreview
               course={course}
-              onClick={() => setSelectedCourseId(course.id)}
+              onClick={() => navigate(`/courses/${course.id}`)}
             />
           )}
         />
