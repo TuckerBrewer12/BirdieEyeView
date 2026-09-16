@@ -133,7 +133,7 @@ function MicroBars({ holes, scoreColors }: { holes: RecentHole[]; scoreColors: R
               flex: 1,
               height: `${heightPct}%`,
               borderRadius: "2px 2px 0 0",
-              background: scoreColors[h.colorKey] ?? "#9ca3af",
+              background: scoreColors[h.colorKey] ?? "var(--color-score-par)",
               opacity: h.colorKey === "par" ? 0.35 : 1,
             }}
           />
