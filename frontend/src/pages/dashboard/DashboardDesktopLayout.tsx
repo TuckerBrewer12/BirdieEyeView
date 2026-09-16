@@ -300,10 +300,9 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full transition-all"
+                        className={`h-full rounded-full transition-all ${goalReport.on_track ? "bg-score-birdie" : "bg-gradient-to-r from-primary to-[var(--chart-axis)]"}`}
                         style={{
                           width: `${Math.min(100, Math.max(5, goalReport.on_track ? 100 : goalReport.gap == null ? 5 : (1 - goalReport.gap / Math.max(goalReport.scoring_average ?? 1, 1)) * 100))}%`,
-                          background: goalReport.on_track ? "#059669" : "linear-gradient(90deg, #2d7a3a, #9ca3af)",
                         }}
                       />
                     </div>
