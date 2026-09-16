@@ -609,7 +609,7 @@ export function useDashboardPageViewModel(
     if (birdiesPlus > 0) {
       items.push({ label: "Birdie+", count: birdiesPlus, color: scoreColors.birdie ?? "#059669" });
     }
-    if (counts.par) items.push({ label: "Par", count: counts.par, color: scoreColors.par ?? "#9ca3af" });
+    if (counts.par) items.push({ label: "Par", count: counts.par, color: scoreColors.par ?? "var(--score-par-text)" });
     if (counts.bogey) items.push({ label: "Bogey", count: counts.bogey, color: scoreColors.bogey ?? "#f87171" });
     if (counts.double_bogey) {
       items.push({
