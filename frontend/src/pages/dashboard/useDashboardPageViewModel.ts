@@ -615,7 +615,7 @@ export function useDashboardPageViewModel(
       items.push({
         label: "Double",
         count: counts.double_bogey,
-        color: scoreColors.double_bogey ?? "#60a5fa",
+        color: scoreColors.double_bogey ?? "text-score-double",
       });
     }
     return items;
