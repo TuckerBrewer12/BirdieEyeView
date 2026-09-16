@@ -43,8 +43,19 @@ export class CoursesRobot {
     return this;
   }
 
+  async tapCourse(name: string): Promise<this> {
+    await this.page.getByRole("button", { name: `View ${name} details` }).click();
+    return this;
+  }
+
   async seesCourse(name: string): Promise<this> {
     await expect(this.page.getByText(name).first()).toBeVisible();
+    return this;
+  }
+
+  async seesDetail(name: string): Promise<this> {
+    await expect(this.page.getByRole("button", { name: "Back to courses" })).toBeVisible();
+    await expect(this.page.getByRole("heading", { name })).toBeVisible();
     return this;
   }
 
