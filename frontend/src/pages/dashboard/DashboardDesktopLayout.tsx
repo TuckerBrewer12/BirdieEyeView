@@ -287,7 +287,7 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Scoring Goal</div>
-                      <div className="text-sm font-bold text-gray-900">
+                      <div className="text-sm font-bold text-card-foreground">
                         Target: Break {user.scoring_goal + 1}
                       </div>
                     </div>
