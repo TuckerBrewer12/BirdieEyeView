@@ -251,7 +251,7 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-center gap-3 text-[9px] text-gray-300 font-semibold uppercase tracking-wider mt-2">
+                <div className="flex justify-center gap-3 text-[9px] text-muted-foreground font-semibold uppercase tracking-wider mt-2">
                   <span style={{ color: girColor }}>{"<30 great"}</span>
                   <span style={{ color: warningColor }}>30-35</span>
                   <span style={{ color: dangerColor }}>35+ work</span>
