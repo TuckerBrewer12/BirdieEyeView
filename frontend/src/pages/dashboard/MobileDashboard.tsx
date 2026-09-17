@@ -619,7 +619,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                 {lastRound.scoreLabel}
               </div>
               {lastRound.toParLabel && (
-                <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: (lastRound.toPar ?? 0) > 0 ? "#f87171" : "#059669" }}>
+                <div className={`text-body-sm ${(lastRound.toPar ?? 0) > 0 ? "text-score-bogey" : "text-score-birdie"}`} style={{ fontFamily: MONO, fontWeight: 600 }}>
                   {lastRound.toParLabel}
                 </div>
               )}
