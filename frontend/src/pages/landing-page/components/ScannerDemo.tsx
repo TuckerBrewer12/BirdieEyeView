@@ -1,5 +1,6 @@
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { motion as motionTokens } from "@/brand/theme";
 import {
   useScannerDemoViewModel,
   type DemoScorecardRow,
@@ -204,7 +205,7 @@ function MappingPanel() {
             <motion.div
               initial={{ x: "120%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 2.9, type: "spring", damping: 15 }}
+              transition={{ ...motionTokens.spring, delay: 2.9 }}
               className="flex w-full items-center gap-2 rounded-md bg-demo-row-shots px-3 py-2 text-xs font-semibold text-white"
             >
               <GripVertical className="size-3.5 opacity-50" /> Shots to Green
