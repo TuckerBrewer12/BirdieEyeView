@@ -39,6 +39,7 @@ class ParsedScorecardRows(BaseGolfModel):
     # even when the user opted not to track/display putts or shots.
     raw_shots_to_green_row: List[Optional[int]] = Field(default_factory=list)
     raw_putts_row: List[Optional[int]] = Field(default_factory=list)
+    sign_evidence_trusted: bool = False
     warnings: List[str] = Field(default_factory=list)
     markdown: str = ""
     extraction_mode: str = "positional"
@@ -125,6 +126,19 @@ def parse_mistral_scorecard_rows(
         row_hints_2d.get("row_order"),
     )
 
+    block_split_result = _extract_split_table_blocks(
+        raw_lines,
+        player_name_2d,
+        row_hints_2d,
+    )
+    if block_split_result is not None:
+        block_split_result.markdown = text
+        positional_par = _extract_par_row(_normalize_lines(text))
+        if positional_par and not block_split_result.par_row:
+            block_split_result.par_row = _coerce_18_ints(positional_par, max_abs=10)
+        _apply_field_suppression(block_split_result, row_hints_2d)
+        return block_split_result
+
     split_maps = _find_split_col_maps(raw_lines)
     if split_maps is not None:
         (front_lines, front_map, front_hdr_idx), (back_lines, back_map, back_hdr_idx) = split_maps
@@ -143,7 +157,7 @@ def parse_mistral_scorecard_rows(
 
             back_result, _ = _extract_2d_from_raw_lines(
                 back_lines, back_map, player_name_2d, row_hints_2d,
-                min_scores=4, forced_anchor_line_idx=header_offset,
+                min_scores=len(back_map), forced_anchor_line_idx=header_offset,
             )
             if back_result is not None:
                 merged = _merge_parsed_halves(front_result, back_result)
@@ -171,13 +185,24 @@ def parse_mistral_scorecard_rows(
                     back_nine_score_approx = par_row_idx + 2
                     back_in_back, _ = _extract_2d_from_raw_lines(
                         back_lines, back_nine_col_map, player_name_2d, row_hints_2d,
-                        min_scores=4, forced_anchor_line_idx=back_nine_score_approx,
+                        min_scores=len(back_nine_col_map),
+                        forced_anchor_line_idx=back_nine_score_approx,
                     )
                     if back_in_back is not None:
                         merged = _merge_parsed_halves(front_in_back, back_in_back)
                         merged.markdown = text
                         _apply_field_suppression(merged, row_hints_2d)
                         return merged
+
+        # Once a front/back structure is proven, do not reinterpret one half as
+        # a complete scorecard. A missing or shifted half must be surfaced for
+        # review instead of silently assigning header values as player scores.
+        if player_name_2d:
+            return ParsedScorecardRows(
+                player_name=player_name_2d,
+                markdown=text,
+                warnings=["Player score row is incomplete across split tables"],
+            )
 
     # Single full-table path.
     col_map = _find_hole_column_map(raw_lines)
@@ -193,6 +218,22 @@ def parse_mistral_scorecard_rows(
             result_2d.markdown = text
             _apply_field_suppression(result_2d, row_hints_2d)
             return result_2d
+        if player_name_2d:
+            named_row_present = any(
+                (cells := _split_pipe_row(line))
+                and _name_matches_tokens(cells[0], player_name_2d)
+                for line in raw_lines
+            )
+            rejected = ParsedScorecardRows(
+                player_name=player_name_2d,
+                markdown=text,
+                warnings=[
+                    "Named player row is incomplete"
+                    if named_row_present
+                    else "Could not detect player score row"
+                ],
+            )
+            return rejected
 
     lines = _normalize_lines(text)
     parsed = ParsedScorecardRows(markdown=text)
@@ -480,6 +521,128 @@ def _find_hole_column_map(raw_lines: List[str]) -> Optional[Dict[int, int]]:
     return col_map
 
 
+def _split_pipe_blocks(raw_lines: List[str]) -> List[List[str]]:
+    """Return consecutive markdown pipe-table blocks, preserving row order."""
+    blocks: List[List[str]] = []
+    current: List[str] = []
+    for line in raw_lines:
+        if _split_pipe_row(line):
+            current.append(line)
+        elif current:
+            blocks.append(current)
+            current = []
+    if current:
+        blocks.append(current)
+    return blocks
+
+
+def _looks_like_handicap_values(cells: List[str], col_map: Dict[int, int]) -> bool:
+    values = _extract_values_by_col_map(cells, col_map, parse_fn=_parse_int_cell)
+    nums = [value for value in values.values() if value is not None]
+    return (
+        len(nums) == len(col_map)
+        and len(set(nums)) == len(nums)
+        and all(1 <= value <= 18 for value in nums)
+        and any(value > 9 for value in nums)
+    )
+
+
+def _score_candidates_for_block(
+    block: List[str],
+    col_map: Dict[int, int],
+) -> List[Tuple[List[str], int]]:
+    candidates: List[Tuple[List[str], int]] = []
+    for raw_idx, line in enumerate(block):
+        cells = _split_pipe_row(line)
+        if not cells or max(col_map.values()) >= len(cells):
+            continue
+        label = _identify_row_label(cells)
+        if label in {"separator", "hole", "par", "handicap", "tee"}:
+            continue
+        if _looks_like_handicap_values(cells, col_map):
+            continue
+        values = _extract_values_by_col_map(
+            cells,
+            col_map,
+            parse_fn=lambda cell: _parse_int_cell(cell, max_abs=15),
+        )
+        if sum(value is not None for value in values.values()) == len(col_map):
+            candidates.append((cells, raw_idx))
+    return candidates
+
+
+def _parsed_half_from_cells(
+    cells: List[str],
+    col_map: Dict[int, int],
+    player_name: Optional[str],
+    row_hints: dict,
+) -> ParsedScorecardRows:
+    parse_fn: Callable[[str], Optional[int]] = (
+        _parse_to_par_cell
+        if row_hints.get("score_to_par")
+        else lambda cell: _parse_int_cell(cell, max_abs=15)
+    )
+    parsed = ParsedScorecardRows(
+        player_name=player_name,
+        score_to_par_hint=True if row_hints.get("score_to_par") else None,
+        extraction_mode="2d_column",
+    )
+    parsed.score_row = _col_map_to_18_list(
+        _extract_values_by_col_map(cells, col_map, parse_fn=parse_fn)
+    )
+    return parsed
+
+
+def _extract_split_table_blocks(
+    raw_lines: List[str],
+    player_name: Optional[str],
+    row_hints: dict,
+) -> Optional[ParsedScorecardRows]:
+    """Pair front/back OCR tables by player ordinal when the match is provable."""
+    if not player_name:
+        return None
+
+    front: Optional[Tuple[List[str], Dict[int, int]]] = None
+    back: Optional[Tuple[List[str], Dict[int, int]]] = None
+    for block in _split_pipe_blocks(raw_lines):
+        col_map = _find_col_map_in_lines(block, min_holes=9)
+        if col_map is None:
+            continue
+        holes = sorted(col_map)
+        if holes == list(range(1, 10)) and front is None:
+            front = (block, col_map)
+        elif holes == list(range(10, 19)) and back is None:
+            back = (block, col_map)
+
+    if front is None or back is None:
+        return None
+
+    front_candidates = _score_candidates_for_block(*front)
+    back_candidates = _score_candidates_for_block(*back)
+    named_index = next(
+        (
+            idx
+            for idx, (cells, _raw_idx) in enumerate(front_candidates)
+            if _name_matches_tokens(cells[0], player_name)
+        ),
+        None,
+    )
+    if (
+        named_index is None
+        or len(front_candidates) != len(back_candidates)
+        or named_index >= len(back_candidates)
+    ):
+        return None
+
+    front_result = _parsed_half_from_cells(
+        front_candidates[named_index][0], front[1], player_name, row_hints
+    )
+    back_result = _parsed_half_from_cells(
+        back_candidates[named_index][0], back[1], player_name, row_hints
+    )
+    return _merge_parsed_halves(front_result, back_result)
+
+
 def _find_split_col_maps(
     raw_lines: List[str],
 ) -> Optional[Tuple[Tuple[List[str], Dict[int, int], int], Tuple[List[str], Dict[int, int], int]]]:
@@ -583,6 +746,14 @@ def _merge_parsed_halves(
     merged.putts_row = _merge_lists(front.putts_row, back.putts_row)
     merged.gir_row = _merge_lists(front.gir_row, back.gir_row)
     merged.shots_to_green_row = _merge_lists(front.shots_to_green_row, back.shots_to_green_row)
+    merged.raw_putts_row = _merge_lists(front.raw_putts_row, back.raw_putts_row)
+    merged.raw_shots_to_green_row = _merge_lists(
+        front.raw_shots_to_green_row,
+        back.raw_shots_to_green_row,
+    )
+    merged.sign_evidence_trusted = (
+        front.sign_evidence_trusted and back.sign_evidence_trusted
+    )
 
     # Merge tee rows by label.
     tee_dict: Dict[str, "ParsedTeeRow"] = {}
@@ -913,6 +1084,13 @@ def _extract_2d_from_raw_lines(
                 parsed.shots_to_green_row = _col_map_to_18_list(d)
                 logger.debug("2D extract: shots_values_detected=%d", sum(v is not None for v in parsed.shots_to_green_row))
 
+        parsed.sign_evidence_trusted = (
+            putts_offset is not None
+            and shots_offset is not None
+            and sum(value is not None for value in parsed.putts_row) == len(col_map)
+            and sum(value is not None for value in parsed.shots_to_green_row) == len(col_map)
+        )
+
     else:
         logger.debug("2D extract: no row_order/name_on_row, using default putts scan")
         # Default: anchor is score row, putts is the next candidate row below it.
@@ -937,13 +1115,18 @@ def _extract_2d_from_raw_lines(
                         logger.info("2D extract: internal secondary row captured for sign disambiguation")
                         break
 
-    if sum(1 for v in parsed.score_row if v is not None) < min_scores:
+    score_count = sum(1 for v in parsed.score_row if v is not None)
+    required_scores = len(col_map) if require_name_match and player_name else min_scores
+    if score_count < required_scores:
         logger.debug(
             "2D extract: score row has too few values (%d < %d)",
-            sum(v is not None for v in parsed.score_row),
-            min_scores,
+            score_count,
+            required_scores,
         )
         return None, -1
+
+    if not parsed.sign_evidence_trusted:
+        parsed.sign_evidence_trusted = _sign_evidence_is_consistent(parsed, len(col_map))
 
     logger.debug(
         "2D extract: final score=%s putts=%s shots=%s",
@@ -953,6 +1136,22 @@ def _extract_2d_from_raw_lines(
     )
 
     return parsed, anchor_raw_line_idx
+
+
+def _sign_evidence_is_consistent(parsed: ParsedScorecardRows, expected_count: int) -> bool:
+    """Trust inferred auxiliary rows only when they reproduce known score cells."""
+    putts = parsed.raw_putts_row or parsed.putts_row
+    shots = parsed.raw_shots_to_green_row or parsed.shots_to_green_row
+    comparable = 0
+    matching = 0
+    for score, par, putt, shot in zip(parsed.score_row, parsed.par_row, putts, shots):
+        if score is None or score == 1 or par is None or putt is None or shot is None:
+            continue
+        comparable += 1
+        if shot + putt - par == score:
+            matching += 1
+    minimum = max(3, expected_count // 3)
+    return comparable >= minimum and matching == comparable
 
 
 # ================================================================

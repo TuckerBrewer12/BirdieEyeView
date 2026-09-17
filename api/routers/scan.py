@@ -320,6 +320,7 @@ def _build_round_from_parsed_rows(
         if (
             effective_to_par is True
             and raw_score == 1
+            and parsed.sign_evidence_trusted
             and sign_shots is not None
             and sign_putts is not None
             and 1 <= sign_shots <= 10
