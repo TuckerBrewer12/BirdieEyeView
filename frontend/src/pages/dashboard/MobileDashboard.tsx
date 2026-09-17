@@ -6,6 +6,7 @@ import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
 import type { DashboardPageViewModel, DualTrendPoint, RecentHole, TrendTabItem, TrendView } from "./useDashboardPageViewModel";
 import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
+import { colors } from "@/brand/theme";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const INK     = "#131613";
@@ -621,7 +622,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                 {lastRound.scoreLabel}
               </div>
               {lastRound.toParLabel && (
-                <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: (lastRound.toPar ?? 0) > 0 ? "#f87171" : "#059669" }}>
+                <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: (lastRound.toPar ?? 0) > 0 ? colors.score.bogey.fill : colors.score.birdie.fill }}>
                   {lastRound.toParLabel}
                 </div>
               )}
