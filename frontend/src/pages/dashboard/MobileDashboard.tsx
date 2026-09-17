@@ -780,7 +780,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                 textAlign: "left",
               }}
             >
-              <div style={{ position: "absolute", left: 0, top: 14, bottom: 14, width: 3, borderRadius: 99, background: r.accentColor }} />
+              <div className="absolute left-0 top-3.5 bottom-3.5 w-chip rounded-full" style={{ background: r.accentColor }} />
               <div>
                 <div style={{ fontFamily: MONO, fontSize: 28, fontWeight: 700, letterSpacing: "-1px", color: INK, lineHeight: 1 }}>
                   {r.scoreLabel}
