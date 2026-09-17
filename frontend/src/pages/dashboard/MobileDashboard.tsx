@@ -716,8 +716,8 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
               </div>
               <BenchmarkBar value={value} tour={tour} />
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>You {display}</span>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>Tour {tour}%</span>
+                <span className="text-caption" style={{ fontFamily: MONO, color: MUTED }}>You {display}</span>
+                <span className="text-caption" style={{ fontFamily: MONO, color: MUTED }}>Tour {tour}%</span>
               </div>
             </div>
           ))}
