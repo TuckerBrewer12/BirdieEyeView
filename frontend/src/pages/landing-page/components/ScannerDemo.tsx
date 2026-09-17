@@ -1,6 +1,7 @@
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  DEMO_MOTION,
   useScannerDemoViewModel,
   type DemoScorecardRow,
 } from "./useScannerDemoViewModel";
@@ -12,14 +13,14 @@ function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
       initial={{ opacity: 0, scale: 1.05 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.8 }}
+      transition={{ duration: DEMO_MOTION.crossfade }}
       className="pointer-events-none absolute inset-0 z-10 flex h-full w-full flex-col overflow-hidden rounded-2xl bg-card p-4 md:p-6"
     >
-      <div className="flex items-center justify-between rounded-t-lg bg-demo-card-header p-3 text-xs text-white shadow-md md:text-sm">
+      <div className="flex items-center justify-between rounded-t-lg bg-demo-card-header p-3 text-xs text-primary-foreground shadow-md md:text-sm">
         <span className="font-semibold">Half Moon Bay Golf Course</span>
         <div className="text-right">
-          <div className="text-caption font-bold uppercase tracking-chip text-white/90 sm:text-xs">Blue tees</div>
-          <div className="text-caption text-white/70">Rating 70.8 / Slope 127</div>
+          <div className="text-caption font-bold uppercase tracking-chip text-primary-foreground/90 sm:text-xs">Blue tees</div>
+          <div className="text-caption text-primary-foreground/70">Rating 70.8 / Slope 127</div>
         </div>
       </div>
 
@@ -43,7 +44,7 @@ function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
           {rows.map((row) => (
             <div key={row.hole} className="py-1">
               <span
-                className="inline-block h-5 w-5 rounded-sm leading-5 text-white sm:h-6 sm:w-6 sm:leading-6"
+                className="inline-block h-5 w-5 rounded-sm leading-5 text-primary-foreground sm:h-6 sm:w-6 sm:leading-6"
                 style={{ background: row.fill }}
               >
                 {row.strokes}
@@ -119,7 +120,7 @@ function MappingPanel() {
               <TypewriterLabel text="T" />
               <motion.div
                 animate={{ opacity: [1, 0] }}
-                transition={{ repeat: Infinity, duration: 0.8 }}
+                transition={{ repeat: Infinity, duration: DEMO_MOTION.caretBlink }}
                 className="ml-1 h-4 w-0.5 bg-muted-foreground"
               />
             </div>
@@ -133,7 +134,7 @@ function MappingPanel() {
               <motion.div
                 initial={{ opacity: 1 }}
                 animate={{ opacity: 0.4 }}
-                transition={{ delay: 1.2, duration: 0.3 }}
+                transition={{ delay: 1.2, duration: DEMO_MOTION.emphasis }}
                 className="flex flex-1 flex-col justify-center rounded-md border border-border p-2"
               >
                 <div className="text-xs font-bold text-foreground">Total strokes</div>
@@ -143,13 +144,13 @@ function MappingPanel() {
               <motion.div
                 initial={{ opacity: 0.5 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 1.2, duration: 0.2 }}
+                transition={{ delay: 1.2, duration: DEMO_MOTION.select }}
                 className="flex flex-1 flex-col justify-center rounded-md border-2 border-score-birdie bg-accent p-2"
               >
                 <motion.div
                   initial={{ scale: 1 }}
                   animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ delay: 1.2, duration: 0.3 }}
+                  transition={{ delay: 1.2, duration: DEMO_MOTION.emphasis }}
                 >
                   <div className="text-xs font-bold text-score-birdie">To par</div>
                   <div className="text-caption text-score-birdie/70">e.g. +1, -1, E</div>
@@ -168,7 +169,7 @@ function MappingPanel() {
                   key={label}
                   initial={{ opacity: 0.4, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 1.8 + i * 0.4, duration: 0.3 }}
+                  transition={{ delay: 1.8 + i * 0.4, duration: DEMO_MOTION.emphasis }}
                   className="flex items-center gap-2 rounded-md border border-score-birdie/40 bg-accent px-3 py-1.5"
                 >
                   <motion.div
@@ -188,14 +189,14 @@ function MappingPanel() {
         <div className="overflow-hidden bg-muted p-4 sm:p-5">
           <div className="relative mb-4 flex flex-col gap-2">
             <div className="relative flex gap-2">
-              <div className="z-10 flex w-16 items-center justify-center rounded-md bg-demo-row-name text-xs font-bold text-white shadow-card">
+              <div className="z-10 flex w-16 items-center justify-center rounded-md bg-demo-row-name text-xs font-bold text-primary-foreground shadow-card">
                 NAME
               </div>
               <motion.div
                 initial={{ x: "120%", opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 2.6, type: "spring", damping: 15 }}
-                className="flex flex-1 items-center gap-2 rounded-md bg-demo-row-score px-3 py-2 text-xs font-semibold text-white"
+                transition={{ delay: 2.6, ...DEMO_MOTION.rowSpring }}
+                className="flex flex-1 items-center gap-2 rounded-md bg-demo-row-score px-3 py-2 text-xs font-semibold text-primary-foreground"
               >
                 <GripVertical className="size-3.5 opacity-50" /> Score
               </motion.div>
@@ -204,8 +205,8 @@ function MappingPanel() {
             <motion.div
               initial={{ x: "120%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 2.9, type: "spring", damping: 15 }}
-              className="flex w-full items-center gap-2 rounded-md bg-demo-row-shots px-3 py-2 text-xs font-semibold text-white"
+              transition={{ delay: 2.9, ...DEMO_MOTION.rowSpring }}
+              className="flex w-full items-center gap-2 rounded-md bg-demo-row-shots px-3 py-2 text-xs font-semibold text-primary-foreground"
             >
               <GripVertical className="size-3.5 opacity-50" /> Shots to Green
             </motion.div>
@@ -213,8 +214,8 @@ function MappingPanel() {
             <motion.div
               initial={{ x: "120%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 3.2, type: "spring", damping: 15 }}
-              className="flex w-full items-center gap-2 rounded-md bg-demo-row-putts px-3 py-2 text-xs font-semibold text-white"
+              transition={{ delay: 3.2, ...DEMO_MOTION.rowSpring }}
+              className="flex w-full items-center gap-2 rounded-md bg-demo-row-putts px-3 py-2 text-xs font-semibold text-primary-foreground"
             >
               <GripVertical className="size-3.5 opacity-50" /> Putts
             </motion.div>
@@ -223,8 +224,8 @@ function MappingPanel() {
           <motion.div
             initial={{ scale: 1 }}
             animate={{ scale: [1, 0.95, 1] }}
-            transition={{ delay: 3.8, duration: 0.3 }}
-            className="flex items-center justify-center gap-2 rounded-md bg-demo-row-score py-3 text-center text-sm font-bold text-white shadow-card"
+            transition={{ delay: 3.8, duration: DEMO_MOTION.emphasis }}
+            className="flex items-center justify-center gap-2 rounded-md bg-demo-row-score py-3 text-center text-sm font-bold text-primary-foreground shadow-card"
           >
             <ScanLine className="size-4" /> Extract Scorecard
           </motion.div>
@@ -249,7 +250,7 @@ export function ScannerDemo() {
           opacity: phase === "result" ? 0 : 1,
           scale: phase === "result" ? 0.95 : 1,
         }}
-        transition={{ duration: 0.8 }}
+        transition={{ duration: DEMO_MOTION.crossfade }}
       />
 
       <AnimatePresence>
@@ -263,7 +264,7 @@ export function ScannerDemo() {
             initial={{ top: "-20%" }}
             animate={{ top: "120%" }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.5, ease: "linear" }}
+            transition={{ duration: DEMO_MOTION.sweep, ease: "linear" }}
             className="pointer-events-none absolute right-0 left-0 z-30 h-32 border-b-2 border-primary bg-gradient-to-b from-transparent via-primary/10 to-primary/40"
           />
         )}
