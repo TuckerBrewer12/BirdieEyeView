@@ -55,6 +55,33 @@ const SCORECARD: DemoScorecardRow[] = SAMPLE.par.map((par, i) => ({
   fill: scoreFill(SAMPLE.strokes[i], par),
 }));
 
+/**
+ * The demo's cinematic timings, in seconds.
+ *
+ * Deliberately not the kit's motion tokens. Those describe interaction —
+ * `duration.collapse` is the 0.2s a panel takes to open, `hoverScale` the
+ * 1.5% a card lifts under a cursor. Nothing here is an interaction: the sweep
+ * is a scanner crossing a card, the crossfade is one image replacing another.
+ * Collapsing them onto the interaction tokens would erase the effect rather
+ * than standardise it. They live together here so the demo's rework can tune
+ * them as a set.
+ */
+export const DEMO_MOTION = {
+  /** One image replacing another — the card giving way to the scorecard. */
+  crossfade: 0.8,
+  /** The scan line's full travel, top to bottom. */
+  sweep: 1.5,
+  /** A field or chip drawing the eye as the form fills itself in. */
+  emphasis: 0.3,
+  /** A choice registering, matching the kit's collapse. */
+  select: 0.2,
+  /** One on/off of the text caret in the name field. */
+  caretBlink: 0.8,
+  /** Mapped rows sliding in from the right. Looser than the kit's spring so
+   *  the rows overshoot enough to read as dropped into place. */
+  rowSpring: { type: "spring" as const, damping: 15 },
+} as const;
+
 export interface ScannerDemoViewModel {
   phase: ScannerPhase;
   label: string;
