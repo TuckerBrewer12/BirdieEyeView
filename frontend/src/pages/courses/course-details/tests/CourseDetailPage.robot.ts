@@ -38,6 +38,50 @@ export class CourseDetailRobot {
     return this;
   }
 
+  async tapPerformance(): Promise<this> {
+    await this.page.getByRole("button", { name: "My Performance" }).click();
+    return this;
+  }
+
+  async seesPerformance(): Promise<this> {
+    await expect(this.page.getByText("Rounds Played")).toBeVisible();
+    await expect(this.page.getByText("Score Trend", { exact: true })).toBeVisible();
+    await expect(this.page.getByText("Round History", { exact: true })).toBeVisible();
+    return this;
+  }
+
+  async tapHistoryRound(dateLabel: string): Promise<this> {
+    await this.page.getByText(dateLabel, { exact: true }).click();
+    return this;
+  }
+
+  async isAtRound(id: string): Promise<this> {
+    await expect(this.page).toHaveURL(new RegExp(`/rounds/${id}`));
+    return this;
+  }
+
+  async tapTee(color: string): Promise<this> {
+    await this.page.getByRole("button", { name: new RegExp(`^${color}\\b`) }).click();
+    return this;
+  }
+
+  async seesSelectedTee(color: string): Promise<this> {
+    await expect(this.page.getByRole("button", { name: new RegExp(`^${color}\\b`) })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    return this;
+  }
+
+  async openMissing(): Promise<this> {
+    await this.page.emulateMedia({ reducedMotion: "reduce" });
+    await FakeSession.install(this.page, {});
+    await this.page.goto("/courses/missing");
+    await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
+    await expect(this.page.getByRole("alert")).toBeVisible();
+    return this;
+  }
+
   async goBack(): Promise<this> {
     await this.page.getByRole("button", { name: "Back to courses" }).click();
     await expect(this.page.getByPlaceholder("Search courses...")).toBeVisible();

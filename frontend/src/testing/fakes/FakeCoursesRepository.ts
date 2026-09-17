@@ -1,11 +1,17 @@
-import type { CourseSummary } from "../../types/golf";
+import type { Course, CourseSummary } from "../../types/golf";
+import type { CourseAnalyticsData } from "../../types/analytics";
 import type { CoursesRepository } from "../../pages/courses/coursesRepository";
+import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
 
 export class FakeCoursesRepository implements CoursesRepository {
   readonly getCoursesCalls: string[] = [];
   readonly searchQueries: string[] = [];
   courses: CourseSummary[];
+  fullCourses: Course[] = [];
+  analytics: CourseAnalyticsData | null = null;
+  handicapIndex: number | null = null;
   error: Error | null = null;
+  courseError: Error | null = null;
 
   constructor(courses: CourseSummary[] = []) {
     this.courses = [...courses];
@@ -25,5 +31,31 @@ export class FakeCoursesRepository implements CoursesRepository {
       course.name?.toLowerCase().includes(needle)
       || course.location?.toLowerCase().includes(needle),
     );
+  }
+
+  async getCourse(courseId: string): Promise<Course> {
+    if (this.courseError) throw this.courseError;
+    const full = this.fullCourses.find((course) => course.id === courseId);
+    if (full) return full;
+    const summary = this.courses.find((course) => course.id === courseId);
+    if (summary) {
+      return {
+        id: summary.id,
+        name: summary.name,
+        location: summary.location,
+        par: summary.par,
+        holes: [],
+        tees: [],
+      };
+    }
+    throw new Error("Course not found.");
+  }
+
+  async getCourseAnalytics(_userId: string, courseId: string): Promise<CourseAnalyticsData> {
+    return this.analytics ?? emptyCourseAnalytics(courseId);
+  }
+
+  async getUserHandicap(): Promise<{ handicap_index: number | null }> {
+    return { handicap_index: this.handicapIndex };
   }
 }

@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateLong } from "@/lib/roundDate";
+import { messageFrom } from "@/lib/userFacingErrors";
 import { scoreKeyFor, type ScoreKey } from "@/brand/theme";
 import { useRoundHoles, type HoleData } from "@/hooks/useRoundHoles";
 import { chooseCompatibleTee } from "@/lib/teeColor";
@@ -155,10 +156,6 @@ function nineFrom(holes: HoleData[]): Nine {
     holes,
     total: holes.length === 9 ? holes.reduce((sum, h) => sum + h.strokes, 0) : null,
   };
-}
-
-function messageFrom(err: unknown, fallback: string): string {
-  return err instanceof Error ? err.message : fallback;
 }
 
 export function useRoundDetailPageViewModel(

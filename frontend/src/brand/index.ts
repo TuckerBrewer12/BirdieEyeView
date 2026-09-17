@@ -19,6 +19,7 @@ export {
   scoreKeyFor,
   toParLabel,
   toParTextClass,
+  toParBadgeClass,
 } from "./theme";
 export type { ScoreKey } from "./theme";
 export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/Alert";

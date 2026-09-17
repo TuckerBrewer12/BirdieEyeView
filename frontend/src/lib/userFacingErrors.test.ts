@@ -2,12 +2,20 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fetchWithUserFacingError,
   getUserFacingError,
+  messageFrom,
   parseJsonResponse,
   USER_FACING_ERRORS,
 } from "./userFacingErrors";
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+describe("messageFrom", () => {
+  it("keeps an Error message and falls back otherwise", () => {
+    expect(messageFrom(new Error("Course not found."), "Missing.")).toBe("Course not found.");
+    expect(messageFrom("nope", "Missing.")).toBe("Missing.");
+  });
 });
 
 describe("fetchWithUserFacingError", () => {

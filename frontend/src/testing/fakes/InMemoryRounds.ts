@@ -1,6 +1,7 @@
 import type { Course, CourseSummary, Round, RoundSummary } from "../../types/golf";
 import type { CourseAnalyticsData, RoundComparison } from "../../types/analytics";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
+import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
 import { roundFromSummary, toCourseSummary } from "../fixtures/roundDetails";
 
 export interface InMemoryRoundsSeed {
@@ -8,6 +9,7 @@ export interface InMemoryRoundsSeed {
   courses?: CourseSummary[];
   detailRounds?: Round[];
   fullCourses?: Course[];
+  courseAnalytics?: CourseAnalyticsData | null;
   comparison?: RoundComparison | null;
   handicapIndex?: number | null;
   linkError?: string | null;
@@ -80,6 +82,7 @@ export class InMemoryRounds {
   courses: CourseSummary[];
   detailRounds: Round[];
   fullCourses: Course[];
+  courseAnalytics: CourseAnalyticsData | null;
   comparison: RoundComparison | null;
   handicapIndex: number | null;
   linkError: string | null;
@@ -99,6 +102,7 @@ export class InMemoryRounds {
       hole_scores: round.hole_scores.map((score) => ({ ...score })),
     }));
     this.fullCourses = [...(seed.fullCourses ?? [])];
+    this.courseAnalytics = seed.courseAnalytics ?? null;
     this.comparison = seed.comparison ?? null;
     this.handicapIndex = seed.handicapIndex ?? null;
     this.linkError = seed.linkError ?? null;
@@ -210,18 +214,7 @@ export class InMemoryRounds {
   }
 
   getCourseAnalytics(courseId: string): CourseAnalyticsData {
-    return {
-      course_id: courseId,
-      rounds_played: 0,
-      score_trend_on_course: [],
-      average_score_relative_to_par_by_hole: [],
-      gir_percentage_by_hole: [],
-      average_putts_by_hole: [],
-      score_type_distribution_by_hole: [],
-      course_difficulty_profile_by_hole: [],
-      average_score_when_gir_vs_missed: [],
-      score_variance_by_hole: [],
-    };
+    return this.courseAnalytics ?? emptyCourseAnalytics(courseId);
   }
 
   getRoundComparison(): RoundComparison | null {
