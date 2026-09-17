@@ -1,5 +1,6 @@
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { motion as motionTokens } from "@/brand/theme";
 import {
   useScannerDemoViewModel,
   type DemoScorecardRow,
@@ -148,7 +149,7 @@ function MappingPanel() {
               >
                 <motion.div
                   initial={{ scale: 1 }}
-                  animate={{ scale: [1, 1.05, 1] }}
+                  animate={{ scale: [1, motionTokens.hoverScale, 1] }}
                   transition={{ delay: 1.2, duration: 0.3 }}
                 >
                   <div className="text-xs font-bold text-score-birdie">To par</div>
