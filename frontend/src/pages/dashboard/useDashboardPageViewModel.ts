@@ -45,6 +45,10 @@ function holeColorKey(
   return "quad_bogey";
 }
 
+function holeFill(key: HoleColorKey, scoreColors: Record<string, string>): string {
+  return scoreColors[key] ?? colors.score.par.fill;
+}
+
 function toParAccent(toPar: number | null, scoreColors: Record<string, string>): string {
   if (toPar == null) return scoreColors.par ?? colors.score.par.fill;
   if (toPar <= 0) return scoreColors.birdie ?? colors.score.birdie.fill;
@@ -147,6 +151,7 @@ export interface RecentHole {
   strokes: number | null;
   par_played: number | null;
   colorKey: HoleColorKey;
+  fill: string;
 }
 
 export interface RecentRoundRow {
@@ -205,8 +210,10 @@ export interface DashboardPageViewModel {
   greetingDateLabel: string;
   handicapIndexLabel: string;
   hiDeltaText: string | null;
+  hiDeltaColor: string;
   hiDeltaImproving: boolean;
   scoreDeltaText: string | null;
+  scoreDeltaColor: string;
   scoreDeltaImproving: boolean;
   heroKpis: { label: string; value: string }[];
   handicapSheetOpen: boolean;
@@ -531,6 +538,9 @@ export function useDashboardPageViewModel(
       ? `${handicapDelta < 0 ? "↓" : "↑"} ${Math.abs(handicapDelta).toFixed(1)}`
       : null;
   const hiDeltaImproving = handicapDelta != null && handicapDelta < 0;
+  const hiDeltaColor = hiDeltaImproving
+    ? (scoreColors.birdie ?? colors.score.birdie.fill)
+    : (scoreColors.bogey ?? colors.score.bogey.fill);
 
   const scoreDelta =
     last20ScoringAvg != null && l5ScoringAvg != null
@@ -541,6 +551,9 @@ export function useDashboardPageViewModel(
       ? `${scoreDelta > 0 ? "↓" : "↑"} ${Math.abs(scoreDelta).toFixed(1)} vs L5`
       : null;
   const scoreDeltaImproving = scoreDelta != null && scoreDelta > 0;
+  const scoreDeltaColor = scoreDeltaImproving
+    ? (scoreColors.birdie ?? colors.score.birdie.fill)
+    : (scoreColors.bogey ?? colors.score.bogey.fill);
   const last20ScoringAvgLabel =
     last20ScoringAvg != null ? last20ScoringAvg.toFixed(1) : "—";
   const puttsLabel = putts > 0 ? putts.toFixed(1) : "—";
@@ -590,13 +603,17 @@ export function useDashboardPageViewModel(
     return (round?.hole_scores ?? [])
       .slice()
       .sort((a, b) => (a.hole_number ?? 0) - (b.hole_number ?? 0))
-      .map((h) => ({
-        hole_number: h.hole_number ?? 0,
-        strokes: h.strokes ?? null,
-        par_played: h.par_played ?? null,
-        colorKey: holeColorKey(h.strokes, h.par_played),
-      }));
-  }, []);
+      .map((h) => {
+        const colorKey = holeColorKey(h.strokes, h.par_played);
+        return {
+          hole_number: h.hole_number ?? 0,
+          strokes: h.strokes ?? null,
+          par_played: h.par_played ?? null,
+          colorKey,
+          fill: holeFill(colorKey, scoreColors),
+        };
+      });
+  }, [scoreColors]);
 
   const toRoundRow = useCallback((summary: RoundSummary): RecentRoundRow => {
     const toPar = summary.to_par;
@@ -783,8 +800,10 @@ export function useDashboardPageViewModel(
     greetingDateLabel,
     handicapIndexLabel,
     hiDeltaText,
+    hiDeltaColor,
     hiDeltaImproving,
     scoreDeltaText,
+    scoreDeltaColor,
     scoreDeltaImproving,
     heroKpis,
     handicapSheetOpen,

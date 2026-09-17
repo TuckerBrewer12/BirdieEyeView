@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
+import { chartColors } from "@/brand/theme";
 import type { DashboardPageViewModel, DualTrendPoint, RecentHole, TrendTabItem, TrendView } from "./useDashboardPageViewModel";
 import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 
@@ -119,7 +120,7 @@ function HeroSparkline({ data }: { data: DualTrendPoint[] }) {
 }
 
 // ─── Per-hole micro bar strip ─────────────────────────────────────────────────
-function MicroBars({ holes, scoreColors }: { holes: RecentHole[]; scoreColors: Record<string, string> }) {
+function MicroBars({ holes }: { holes: RecentHole[] }) {
   if (!holes.length) return null;
   return (
     <div style={{ display: "flex", gap: 3, height: 28, alignItems: "flex-end", width: "100%" }}>
@@ -132,7 +133,7 @@ function MicroBars({ holes, scoreColors }: { holes: RecentHole[]; scoreColors: R
               flex: 1,
               height: `${heightPct}%`,
               borderRadius: "2px 2px 0 0",
-              background: scoreColors[h.colorKey] ?? "#9ca3af",
+              background: h.fill,
               opacity: h.colorKey === "par" ? 0.35 : 1,
             }}
           />
@@ -151,7 +152,7 @@ function SolidMiniStrip({ color }: { color: string }) {
 function BenchmarkBar({ value, tour }: { value: number | null; tour: number }) {
   const pct = Math.min(100, Math.max(0, value ?? 0));
   return (
-    <div style={{ position: "relative", height: 6, background: "#e5e7eb", borderRadius: 99, marginTop: 6, marginBottom: 4 }}>
+    <div style={{ position: "relative", height: 6, background: chartColors.muted, borderRadius: 99, marginTop: 6, marginBottom: 4 }}>
       <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: `${pct}%`, background: PRIMARY, borderRadius: 99 }} />
       <div style={{ position: "absolute", top: -2, left: `${tour}%`, width: 2, height: 10, background: TICK, borderRadius: 99 }} />
     </div>
@@ -443,16 +444,15 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
     scramblingPctLabel,
     upAndDownPct,
     upAndDownPctLabel,
-    scoreColors,
     scoreLineColor,
     handicapLineColor,
     firstName,
     greetingDateLabel,
     handicapIndexLabel,
     hiDeltaText,
-    hiDeltaImproving,
+    hiDeltaColor,
     scoreDeltaText,
-    scoreDeltaImproving,
+    scoreDeltaColor,
     heroKpis,
     handicapSheetOpen,
     openHandicapSheet,
@@ -506,7 +506,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
             {handicapIndexLabel}
           </div>
           {hiDeltaText && (
-            <div style={{ fontFamily: MONO, fontSize: 10, color: hiDeltaImproving ? "#059669" : "#f87171", whiteSpace: "nowrap", marginTop: 2 }}>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: hiDeltaColor, whiteSpace: "nowrap", marginTop: 2 }}>
               {hiDeltaText}
             </div>
           )}
@@ -528,8 +528,8 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
           {scoreDeltaText && (
             <div style={{
               fontFamily: MONO, fontSize: 11, fontWeight: 600,
-              color: scoreDeltaImproving ? "#059669" : "#f87171",
-              background: scoreDeltaImproving ? "rgba(5,150,105,0.1)" : "rgba(248,113,113,0.1)",
+              color: scoreDeltaColor,
+              background: `color-mix(in srgb, ${scoreDeltaColor} 10%, transparent)`,
               padding: "3px 8px", borderRadius: 99, whiteSpace: "nowrap",
             }}>
               {scoreDeltaText}
@@ -560,7 +560,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
             </div>
             <div style={{ display: "flex", gap: 2, height: 9, borderRadius: 3, overflow: "hidden" }}>
               {l20ScoreMix.filter((d) => d.value > 0.5).map((d) => (
-                <div key={d.name} style={{ flex: d.value, background: scoreColors[d.name] ?? d.color, minWidth: 2 }} />
+                <div key={d.name} style={{ flex: d.value, background: d.color, minWidth: 2 }} />
               ))}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", marginTop: 8 }}>
@@ -619,7 +619,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                 {lastRound.scoreLabel}
               </div>
               {lastRound.toParLabel && (
-                <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: (lastRound.toPar ?? 0) > 0 ? "#f87171" : "#059669" }}>
+                <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: lastRound.toParColor }}>
                   {lastRound.toParLabel}
                 </div>
               )}
@@ -628,7 +628,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
 
           {lastRoundHoles.length > 0 && (
             <div style={{ marginTop: 14 }}>
-              <MicroBars holes={lastRoundHoles} scoreColors={scoreColors} />
+              <MicroBars holes={lastRoundHoles} />
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
                 {["1", "9", "18"].map((n) => (
                   <div key={n} style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>{n}</div>
@@ -666,7 +666,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
               {goalTargetLabel}
             </span>
           </div>
-          <div style={{ height: 5, background: "#e5e7eb", borderRadius: 99, position: "relative", overflow: "visible" }}>
+          <div style={{ height: 5, background: chartColors.muted, borderRadius: 99, position: "relative", overflow: "visible" }}>
             <div style={{ height: "100%", width: `${goalProgressPct}%`, background: PRIMARY, borderRadius: 99 }} />
             <div style={{
               position: "absolute",
@@ -809,7 +809,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                         flex: 1,
                         height: "100%",
                         borderRadius: 1.5,
-                        background: scoreColors[h.colorKey] ?? "#9ca3af",
+                        background: h.fill,
                         opacity: h.colorKey === "par" ? 0.35 : 1,
                       }}
                     />
