@@ -1,5 +1,6 @@
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { motion as motionTokens } from "@/brand/theme";
 import {
   useScannerDemoViewModel,
   type DemoScorecardRow,
@@ -263,7 +264,7 @@ export function ScannerDemo() {
             initial={{ top: "-20%" }}
             animate={{ top: "120%" }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.5, ease: "linear" }}
+            transition={{ duration: motionTokens.duration.collapse, ease: "linear" }}
             className="pointer-events-none absolute right-0 left-0 z-30 h-32 border-b-2 border-primary bg-gradient-to-b from-transparent via-primary/10 to-primary/40"
           />
         )}
