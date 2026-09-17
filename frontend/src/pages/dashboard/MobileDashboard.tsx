@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
+import { chartColors } from "@/brand";
 import type { DashboardPageViewModel, DualTrendPoint, RecentHole, TrendTabItem, TrendView } from "./useDashboardPageViewModel";
 import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 
@@ -668,7 +669,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
               {goalTargetLabel}
             </span>
           </div>
-          <div style={{ height: 5, background: "#e5e7eb", borderRadius: 99, position: "relative", overflow: "visible" }}>
+          <div style={{ height: 5, background: chartColors.muted, borderRadius: 99, position: "relative", overflow: "visible" }}>
             <div style={{ height: "100%", width: `${goalProgressPct}%`, background: PRIMARY, borderRadius: 99 }} />
             <div style={{
               position: "absolute",
