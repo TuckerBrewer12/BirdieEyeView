@@ -672,7 +672,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
             <div style={{ height: "100%", width: `${goalProgressPct}%`, background: PRIMARY, borderRadius: 99 }} />
             <div style={{
               position: "absolute",
-              top: -3, left: `${goalProgressPct}%`,
+              top: "calc(var(--brand-space-chip) * -1)", left: `${goalProgressPct}%`,
               width: 2, height: 11,
               background: TICK, borderRadius: 99,
               transform: "translateX(-50%)",
