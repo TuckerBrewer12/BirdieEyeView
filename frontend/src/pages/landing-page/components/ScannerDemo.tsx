@@ -1,5 +1,6 @@
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { motion as motionTokens } from "@/brand/theme";
 import {
   useScannerDemoViewModel,
   type DemoScorecardRow,
@@ -9,7 +10,7 @@ import {
 function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 1.05 }}
+      initial={{ opacity: 0, scale: motionTokens.hoverScale }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.8 }}
