@@ -239,7 +239,7 @@ export function ScannerDemo() {
   const { phase, label, scorecard } = useScannerDemoViewModel();
 
   return (
-    <div className="perspective-1000 relative flex aspect-[4/3] w-full max-w-lg items-center justify-center overflow-hidden rounded-2xl border border-border bg-card shadow-card sm:aspect-[1.1]">
+    <div className="perspective-1000 relative flex aspect-4/3 w-full max-w-lg items-center justify-center overflow-hidden rounded-2xl border border-border bg-card shadow-card sm:aspect-[1.1]">
       <motion.img
         src="/hero/physical-card.jpg"
         alt="A paper golf scorecard being scanned"
