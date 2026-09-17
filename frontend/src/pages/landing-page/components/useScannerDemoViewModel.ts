@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import { scoreFill } from "@/brand";
+import { motion } from "@/brand/theme";
 
 export type ScannerPhase = "photo" | "mapping" | "scanning" | "result";
 
@@ -58,17 +59,16 @@ const SCORECARD: DemoScorecardRow[] = SAMPLE.par.map((par, i) => ({
 /**
  * The demo's cinematic timings, in seconds.
  *
- * Deliberately not the kit's motion tokens. Those describe interaction —
- * `duration.collapse` is the 0.2s a panel takes to open, `hoverScale` the
- * 1.5% a card lifts under a cursor. Nothing here is an interaction: the sweep
- * is a scanner crossing a card, the crossfade is one image replacing another.
- * Collapsing them onto the interaction tokens would erase the effect rather
- * than standardise it. They live together here so the demo's rework can tune
- * them as a set.
+ * Mostly not the kit's motion tokens. Those describe interaction —
+ * `hoverScale` the 1.5% a card lifts under a cursor, while the sweep here is
+ * a scanner crossing a card. Collapsing those onto the interaction tokens
+ * would erase the effect rather than standardise it. They live together here
+ * so the demo's rework can tune them as a set. The crossfade reuses
+ * `duration.collapse`.
  */
 export const DEMO_MOTION = {
   /** One image replacing another — the card giving way to the scorecard. */
-  crossfade: 0.8,
+  crossfade: motion.duration.collapse,
   /** The scan line's full travel, top to bottom. */
   sweep: 1.5,
   /** A field or chip drawing the eye as the form fills itself in. */
