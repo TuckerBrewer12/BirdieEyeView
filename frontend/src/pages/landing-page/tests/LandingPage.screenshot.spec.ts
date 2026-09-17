@@ -19,5 +19,6 @@ test("mobile nav menu open", async ({ landing, isMobile }) => {
   test.skip(!isMobile, "No menu button at desktop width.");
   await landing.open();
   await landing.openMenu();
+  await landing.seesMenuOpen(true);
   await landing.capture("landing-menu-open.png");
 });
