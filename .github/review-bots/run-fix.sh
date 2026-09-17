@@ -37,6 +37,21 @@ if [[ -n "$existing" ]]; then
   exit 0
 fi
 
+# Same issue, different finding id (the model rephrased on a later commit).
+open_prs="$(gh pr list --repo "$GITHUB_REPOSITORY" --base "$HEAD_REF" --state open \
+  --json number,url,title,body,headRefName || echo '[]')"
+similar="$(FINDING_JSON="$FINDING_JSON" OPEN_PRS="$open_prs" PR_NUMBER="$PR_NUMBER" \
+  python3 "$BOTS/previous.py" already-open)"
+if [[ "$similar" != "{}" && -n "$similar" ]]; then
+  url="$(printf '%s\n' "$similar" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("url") or "")')"
+  num="$(printf '%s\n' "$similar" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("number") or "")')"
+  if [[ -n "$url" ]]; then
+    echo "Similar fix PR already open: $url"
+    comment "Already opened [#${num}](${url}) with this change. Merge it into this branch if it looks right."
+    exit 0
+  fi
+fi
+
 git checkout -B "$BRANCH"
 
 # The model may edit files, but not run a shell or reach the network.
