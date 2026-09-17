@@ -152,7 +152,7 @@ function SolidMiniStrip({ color }: { color: string }) {
 function BenchmarkBar({ value, tour }: { value: number | null; tour: number }) {
   const pct = Math.min(100, Math.max(0, value ?? 0));
   return (
-    <div style={{ position: "relative", height: 6, background: chartColors.muted, borderRadius: 99, marginTop: 6, marginBottom: 4 }}>
+    <div className="h-tight rounded-card mt-tight mb-tight" style={{ position: "relative", background: chartColors.muted }}>
       <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: `${pct}%`, background: PRIMARY, borderRadius: 99 }} />
       <div style={{ position: "absolute", top: -2, left: `${tour}%`, width: 2, height: 10, background: TICK, borderRadius: 99 }} />
     </div>
