@@ -11,7 +11,7 @@ import {
 
 export default function SheetPreview() {
   return (
-    <div className="relative h-[420px] overflow-hidden rounded-xl bg-muted ring-1 ring-border">
+    <div className="relative h-preview overflow-hidden rounded-xl bg-muted ring-1 ring-border">
       <Sheet defaultOpen modal={false}>
         <div className="p-4">
           <SheetTrigger render={<Button variant="outline" />}>Open</SheetTrigger>
