@@ -109,9 +109,9 @@ def test_preprocess_cache_path_creates_cache_directory(monkeypatch, tmp_path):
     assert "digest" in cache_path.name
 
 
-def test_image_normalization_resizes_and_converts(monkeypatch, tmp_path):
+def test_image_normalization_resizes_and_converts_at_ui_quality(monkeypatch, tmp_path):
     source = tmp_path / "large.png"
-    Image.new("RGBA", (2000, 1000), (255, 255, 255, 128)).save(source)
+    Image.new("RGBA", (2400, 1200), (255, 255, 255, 128)).save(source)
     monkeypatch.setattr(scan, "PREPROCESS_CACHE_ENABLED", False)
 
     normalized, cache_hit = scan._normalize_upload_for_ocr(source, "digest")
@@ -121,7 +121,44 @@ def test_image_normalization_resizes_and_converts(monkeypatch, tmp_path):
                 "RGB",
                 scan.OCR_LONG_EDGE_TARGET,
             )
+            assert result.format == "JPEG"
+        assert scan.OCR_LONG_EDGE_TARGET == 2000
+        assert scan.OCR_JPEG_QUALITY == 80
         assert normalized != source and cache_hit is False
+    finally:
+        normalized.unlink(missing_ok=True)
+
+
+def test_image_normalization_passes_through_ready_jpeg(monkeypatch, tmp_path):
+    source = tmp_path / "prepared.jpg"
+    Image.new("RGB", (2000, 1200), "white").save(source, format="JPEG", quality=80)
+    original_bytes = source.read_bytes()
+    monkeypatch.setattr(scan, "PREPROCESS_CACHE_ENABLED", False)
+
+    normalized, cache_hit = scan._normalize_upload_for_ocr(source, "digest")
+
+    assert (normalized, cache_hit) == (source, False)
+    assert normalized.read_bytes() == original_bytes
+
+
+def test_image_normalization_reencodes_metadata_bearing_jpeg(monkeypatch, tmp_path):
+    source = tmp_path / "metadata.jpg"
+    exif = Image.Exif()
+    exif[274] = 1
+    Image.new("RGB", (1200, 800), "white").save(
+        source,
+        format="JPEG",
+        quality=80,
+        exif=exif,
+    )
+    monkeypatch.setattr(scan, "PREPROCESS_CACHE_ENABLED", False)
+
+    normalized, cache_hit = scan._normalize_upload_for_ocr(source, "digest")
+    try:
+        assert normalized != source
+        assert cache_hit is False
+        with Image.open(normalized) as result:
+            assert not result.getexif()
     finally:
         normalized.unlink(missing_ok=True)
 

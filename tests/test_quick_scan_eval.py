@@ -1,9 +1,12 @@
 import json
+from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from PIL import Image
 
+import scripts.quick_scan_eval as quick_eval
 from scripts.quick_scan_eval import (
     CaseResult,
     CellMismatch,
@@ -13,6 +16,7 @@ from scripts.quick_scan_eval import (
     exit_code_for_run,
     grade_case,
     load_cases,
+    prepare_image_for_upload,
     render_report,
     run_suite,
     summarize,
@@ -50,6 +54,8 @@ def test_committed_manifest_defines_four_cases_and_expected_cell_counts():
         "eagle_vines_tucker",
     ]
     assert [case.expected_cells for case in cases] == [54, 54, 18, 18]
+    assert cases[2].user_context == "my name is Tucker. no putts recorded"
+    assert cases[3].user_context == "my name is Tucker. no putts recorded. scores written to par"
 
 
 def test_manifest_requires_complete_hole_coverage(tmp_path):
@@ -98,6 +104,23 @@ def test_grader_matches_by_field_and_hole_number():
     ]
 
 
+def test_prepare_image_for_upload_matches_ui_policy():
+    source = BytesIO()
+    Image.new("RGBA", (2400, 1200), (255, 255, 255, 128)).save(source, format="PNG")
+
+    prepared_name, prepared_bytes = prepare_image_for_upload(
+        "scorecard.png",
+        source.getvalue(),
+    )
+
+    assert prepared_name == "scorecard.jpg"
+    with Image.open(BytesIO(prepared_bytes)) as prepared:
+        assert prepared.format == "JPEG"
+        assert prepared.mode == "RGB"
+        assert max(prepared.size) == 2000
+    assert quick_eval.EVAL_UPLOAD_QUALITY == 80
+
+
 def test_summary_buckets_are_cumulative_and_errors_fail():
     results = [
         make_result("perfect", 10),
@@ -137,22 +160,32 @@ def test_report_includes_cumulative_counts_mismatches_errors_and_timing():
 
 
 @pytest.mark.asyncio
-async def test_runner_scans_shared_image_once_and_extracts_each_case(tmp_path):
+async def test_runner_prepares_shared_image_once_and_reuses_bytes(monkeypatch, tmp_path):
     image_path = tmp_path / "card.png"
-    image_path.write_bytes(b"image bytes")
+    Image.new("RGB", (1200, 800), "white").save(image_path)
     cases = [make_case("first"), make_case("second")]
-    calls = {"prefetch": 0, "extract": 0}
+    calls = {"prepare": 0, "prefetch": 0, "extract": 0}
+    uploaded_payloads = []
+    real_prepare = quick_eval.prepare_image_for_upload
+
+    def counted_prepare(image_name, image_bytes):
+        calls["prepare"] += 1
+        return real_prepare(image_name, image_bytes)
+
+    monkeypatch.setattr(quick_eval, "prepare_image_for_upload", counted_prepare)
 
     async def fake_prefetch(upload, *, current_user):
         calls["prefetch"] += 1
-        assert upload.filename == "card.png"
+        assert upload.filename == "card.jpg"
         assert current_user is None
+        uploaded_payloads.append(upload.file.read())
         return {"ocr_text": "merged markdown"}
 
     async def fake_extract(upload, **kwargs):
         calls["extract"] += 1
-        assert upload.filename == "card.png"
+        assert upload.filename == "card.jpg"
         assert kwargs["ocr_text"] == "merged markdown"
+        uploaded_payloads.append(upload.file.read())
         return SimpleNamespace(
             round={
                 "hole_scores": [
@@ -169,7 +202,10 @@ async def test_runner_scans_shared_image_once_and_extracts_each_case(tmp_path):
         extract=fake_extract,
     )
 
-    assert calls == {"prefetch": 1, "extract": 2}
+    assert calls == {"prepare": 1, "prefetch": 1, "extract": 2}
+    assert len(set(uploaded_payloads)) == 1
+    with Image.open(BytesIO(uploaded_payloads[0])) as prepared:
+        assert (prepared.format, max(prepared.size)) == ("JPEG", 1200)
     assert [result.matched_cells for result in run.case_results] == [18, 18]
 
 

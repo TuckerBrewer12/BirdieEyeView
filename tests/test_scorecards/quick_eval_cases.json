@@ -54,7 +54,7 @@
       "image": "blue_rock_round.png",
       "player_name": "Tucker",
       "source_score_format": "raw_strokes",
-      "user_context": "my name is Tucker. scores written as raw strokes. final scores only.",
+      "user_context": "my name is Tucker. no putts recorded",
       "expected": {
         "strokes": {
           "1": 4, "2": 4, "3": 4, "4": 5, "5": 6, "6": 4,
@@ -68,7 +68,7 @@
       "image": "eaglevins_90.jpg",
       "player_name": "Tucker",
       "source_score_format": "to_par",
-      "user_context": "my name is Tucker. scores written to par. final scores only.",
+      "user_context": "my name is Tucker. no putts recorded. scores written to par",
       "expected": {
         "strokes": {
           "1": 6, "2": 4, "3": 4, "4": 4, "5": 3, "6": 6,
