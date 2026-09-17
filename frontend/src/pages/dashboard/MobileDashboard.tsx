@@ -668,7 +668,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
               {goalTargetLabel}
             </span>
           </div>
-          <div style={{ height: 5, background: "#e5e7eb", borderRadius: 99, position: "relative", overflow: "visible" }}>
+          <div className="h-tight rounded-full" style={{ background: "#e5e7eb", position: "relative", overflow: "visible" }}>
             <div style={{ height: "100%", width: `${goalProgressPct}%`, background: PRIMARY, borderRadius: 99 }} />
             <div style={{
               position: "absolute",
