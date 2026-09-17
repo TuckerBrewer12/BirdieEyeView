@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GripVertical } from "lucide-react";
+import { cn } from "@/brand/cn";
 
 type DataRow = "score" | "putts" | "shots";
 
-const ROW_CONFIG: Record<DataRow, { label: string; color: string; bg: string; border: string }> = {
-  score: { label: "Score",          color: "#ffffff", bg: "#2d7a3a", border: "#2d7a3a" },
-  putts: { label: "Putts",          color: "#ffffff", bg: "#0369a1", border: "#0369a1" },
-  shots: { label: "Shots to Green", color: "#ffffff", bg: "#6d28d9", border: "#6d28d9" },
+const ROW_CONFIG: Record<DataRow, { label: string; tone: string }> = {
+  score: { label: "Score", tone: "border-scan-row-score bg-scan-row-score" },
+  putts: { label: "Putts", tone: "border-scan-row-putts bg-scan-row-putts" },
+  shots: { label: "Shots to Green", tone: "border-scan-row-shots bg-scan-row-shots" },
 };
 
 interface ScorecardLayoutPickerProps {
@@ -143,7 +144,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
     <div className="space-y-3">
       {/* Player name */}
       <div>
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-[0.14em] mb-1.5">
+        <p className="text-meta font-semibold text-muted-foreground uppercase tracking-eyebrow mb-1.5">
           Your name on the card
         </p>
         <input
@@ -151,13 +152,13 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
           value={playerName}
           onChange={(e) => setPlayerName(e.target.value)}
           placeholder="e.g. Tucker"
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+          className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
 
       {/* Scoring format selector */}
       <div>
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-[0.14em] mb-1.5">
+        <p className="text-meta font-semibold text-muted-foreground uppercase tracking-eyebrow mb-1.5">
           Scoring format
         </p>
         <div className="grid grid-cols-2 gap-2">
@@ -172,13 +173,13 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
               className={`flex flex-col items-start px-3 py-2.5 rounded-xl border text-left transition-all ${
                 isTopar === value
                   ? "border-primary bg-primary/5 shadow-sm"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  : "border-input bg-card hover:border-border"
               }`}
             >
-              <span className={`text-xs font-semibold ${isTopar === value ? "text-primary" : "text-gray-700"}`}>
+              <span className={`text-xs font-semibold ${isTopar === value ? "text-primary" : "text-foreground"}`}>
                 {label}
               </span>
-              <span className="text-[10px] text-gray-400 mt-0.5">{sub}</span>
+              <span className="text-meta text-muted-foreground mt-0.5">{sub}</span>
             </button>
           ))}
         </div>
@@ -186,7 +187,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
 
       {/* What else is on the card */}
       <div>
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-[0.14em] mb-1.5">
+        <p className="text-meta font-semibold text-muted-foreground uppercase tracking-eyebrow mb-1.5">
           Also on the card
         </p>
         <div className="flex flex-wrap gap-2">
@@ -201,17 +202,17 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
                 active
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
+                  : "border-input bg-card text-muted-foreground hover:border-border"
               }`}
             >
               <span
-                className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center flex-shrink-0 transition-colors ${
-                  active ? "bg-primary border-primary" : "border-gray-300 bg-white"
+                className={`w-3.5 h-3.5 rounded-tick border flex items-center justify-center flex-shrink-0 transition-colors ${
+                  active ? "bg-primary border-primary" : "border-input bg-card"
                 }`}
               >
                 {active && (
-                  <svg viewBox="0 0 8 7" className="w-2 h-2" fill="none">
-                    <polyline points="1,3.5 3,5.5 7,1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg viewBox="0 0 8 7" className="size-2 text-primary-foreground" fill="none">
+                    <polyline points="1,3.5 3,5.5 7,1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
               </span>
@@ -233,13 +234,13 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
             className="overflow-hidden"
           >
             <div className="pt-1">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-[0.14em] mb-2">
+              <p className="text-meta font-semibold text-muted-foreground uppercase tracking-eyebrow mb-2">
                 Drag rows to match your card · drag Name to its row
               </p>
 
               <div className="flex flex-col gap-1.5">
                 {rowOrder.map((row, i) => {
-                  const { label, color, bg, border } = ROW_CONFIG[row];
+                  const { label, tone } = ROW_CONFIG[row];
                   const nameHere = i === safeNameRowIndex;
                   return (
                     <div
@@ -261,15 +262,15 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
                             onTouchStart={() => { dragging.current = { type: "name" }; }}
                             onTouchEnd={endPointerDrag}
                             onTouchCancel={endPointerDrag}
-                            className="h-full min-h-[38px] flex items-center justify-center rounded-lg border border-gray-500 bg-gray-600 cursor-grab active:cursor-grabbing select-none touch-none"
+                            className="flex h-full min-h-9.5 cursor-grab touch-none items-center justify-center rounded-lg border border-scan-row-name bg-scan-row-name select-none active:cursor-grabbing"
                           >
-                            <span className="text-[10px] font-bold text-white uppercase tracking-wide">
+                            <span className="text-meta font-bold text-primary-foreground uppercase tracking-chip">
                               Name
                             </span>
                           </div>
                         ) : (
                           // invisible drop target so Name can be dragged here
-                          <div className="h-full min-h-[38px] rounded-lg" />
+                          <div className="h-full min-h-9.5 rounded-lg" />
                         )}
                       </div>
 
@@ -282,13 +283,13 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
                         onTouchMove={handleTouchMove}
                         onTouchEnd={endPointerDrag}
                         onTouchCancel={endPointerDrag}
-                        className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border cursor-grab active:cursor-grabbing select-none touch-none"
-                        style={{ backgroundColor: bg, borderColor: border }}
+                        className={cn(
+                          "flex flex-1 cursor-grab touch-none items-center gap-2 rounded-lg border px-3 py-2.5 select-none active:cursor-grabbing",
+                          tone,
+                        )}
                       >
-                        <GripVertical size={13} className="text-white/50 shrink-0" />
-                        <span className="text-xs font-semibold" style={{ color }}>
-                          {label}
-                        </span>
+                        <GripVertical size={13} className="shrink-0 text-primary-foreground/50" />
+                        <span className="text-xs font-semibold text-primary-foreground">{label}</span>
                       </div>
                     </div>
                   );

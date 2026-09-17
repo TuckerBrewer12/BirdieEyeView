@@ -189,14 +189,14 @@ function MappingPanel() {
         <div className="overflow-hidden bg-muted p-4 sm:p-5">
           <div className="relative mb-4 flex flex-col gap-2">
             <div className="relative flex gap-2">
-              <div className="z-10 flex w-16 items-center justify-center rounded-md bg-demo-row-name text-xs font-bold text-primary-foreground shadow-card">
+              <div className="z-10 flex w-16 items-center justify-center rounded-md bg-scan-row-name text-xs font-bold text-primary-foreground shadow-card">
                 NAME
               </div>
               <motion.div
                 initial={{ x: "120%", opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 2.6, ...DEMO_MOTION.rowSpring }}
-                className="flex flex-1 items-center gap-2 rounded-md bg-demo-row-score px-3 py-2 text-xs font-semibold text-primary-foreground"
+                className="flex flex-1 items-center gap-2 rounded-md bg-scan-row-score px-3 py-2 text-xs font-semibold text-primary-foreground"
               >
                 <GripVertical className="size-3.5 opacity-50" /> Score
               </motion.div>
@@ -206,7 +206,7 @@ function MappingPanel() {
               initial={{ x: "120%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 2.9, ...DEMO_MOTION.rowSpring }}
-              className="flex w-full items-center gap-2 rounded-md bg-demo-row-shots px-3 py-2 text-xs font-semibold text-primary-foreground"
+              className="flex w-full items-center gap-2 rounded-md bg-scan-row-shots px-3 py-2 text-xs font-semibold text-primary-foreground"
             >
               <GripVertical className="size-3.5 opacity-50" /> Shots to Green
             </motion.div>
@@ -215,7 +215,7 @@ function MappingPanel() {
               initial={{ x: "120%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 3.2, ...DEMO_MOTION.rowSpring }}
-              className="flex w-full items-center gap-2 rounded-md bg-demo-row-putts px-3 py-2 text-xs font-semibold text-primary-foreground"
+              className="flex w-full items-center gap-2 rounded-md bg-scan-row-putts px-3 py-2 text-xs font-semibold text-primary-foreground"
             >
               <GripVertical className="size-3.5 opacity-50" /> Putts
             </motion.div>
@@ -225,7 +225,7 @@ function MappingPanel() {
             initial={{ scale: 1 }}
             animate={{ scale: [1, 0.95, 1] }}
             transition={{ delay: 3.8, duration: DEMO_MOTION.emphasis }}
-            className="flex items-center justify-center gap-2 rounded-md bg-demo-row-score py-3 text-center text-sm font-bold text-primary-foreground shadow-card"
+            className="flex items-center justify-center gap-2 rounded-md bg-scan-row-score py-3 text-center text-sm font-bold text-primary-foreground shadow-card"
           >
             <ScanLine className="size-4" /> Extract Scorecard
           </motion.div>

@@ -62,11 +62,14 @@ export const colors = {
     quad:   { base: "var(--score-quad-base)",   muted: "var(--score-quad-muted)",   onBase: "var(--score-quad-on-base)",   onMuted: "var(--score-quad-on-muted)",   text: "var(--score-quad-text)" },
   } satisfies Record<ScoreKind, ScoreSwatch>,
 
+  scanRow: {
+    name: "var(--scan-row-name)",
+    score: "var(--scan-row-score)",
+    putts: "var(--scan-row-putts)",
+    shots: "var(--scan-row-shots)",
+  },
+
   demo: {
     cardHeader: "var(--demo-card-header)",
-    rowName: "var(--demo-row-name)",
-    rowScore: "var(--demo-row-score)",
-    rowShots: "var(--demo-row-shots)",
-    rowPutts: "var(--demo-row-putts)",
   },
 } as const;
