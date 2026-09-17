@@ -28,7 +28,7 @@ function FieldLabel({ className, ...props }: React.ComponentProps<"label">) {
     <label
       data-slot="field-label"
       className={cn(
-        "text-xs font-semibold text-muted-foreground select-none has-disabled:opacity-50",
+        "text-xs font-semibold text-muted-foreground select-none group-has-disabled/field:opacity-50",
         className,
       )}
       {...props}
