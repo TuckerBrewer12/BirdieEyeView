@@ -85,7 +85,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
   const {
     data, user, goalReport, trends,
-    dualData, recentMilestones, last20ScoringAvgLabel, hiTrend,
+    dualData, recentMilestones, last20ScoringAvgValue, hiTrend,
     girPctLabel, girDonutData, recentDistribution, scramblingPct, scramblingPctLabel,
     upAndDownPct, upAndDownPctLabel,
     puttsLabel, puttsGaugeData, puttsColor,
@@ -123,7 +123,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
             <Card className="lg:col-span-1">
               <CardContent>
                 <div className="flex flex-col gap-5 h-full justify-between">
-                  <MiniKpi label="Scoring Avg (L20)" value={last20ScoringAvgLabel === "—" ? null : last20ScoringAvgLabel} trend={hiTrend} />
+                  <MiniKpi label="Scoring Avg (L20)" value={last20ScoringAvgValue} trend={hiTrend} />
                   <MiniKpi label="Total Rounds" value={data.total_rounds} />
                 </div>
               </CardContent>

@@ -157,6 +157,7 @@ export interface DashboardPageViewModel {
   recentMilestones: Milestone[];
   last20ScoringAvg: number | null;
   last20ScoringAvgLabel: string;
+  last20ScoringAvgValue: string | null;
   l5ScoringAvg: number | null;
   handicapDelta: number | null;
   l20ScoreMix: ScoreDistItem[];
@@ -526,6 +527,8 @@ export function useDashboardPageViewModel(
   const scoreDeltaImproving = scoreDelta != null && scoreDelta > 0;
   const last20ScoringAvgLabel =
     last20ScoringAvg != null ? last20ScoringAvg.toFixed(1) : "—";
+  const last20ScoringAvgValue =
+    last20ScoringAvg != null ? last20ScoringAvg.toFixed(1) : null;
   const puttsLabel = putts > 0 ? putts.toFixed(1) : "—";
   const girPctLabel = girPct > 0 ? `${girPct.toFixed(0)}%` : "—";
   const scramblingPctLabel = scramblingPct != null ? scramblingPct.toFixed(0) : "—";
@@ -730,6 +733,7 @@ export function useDashboardPageViewModel(
     recentMilestones,
     last20ScoringAvg,
     last20ScoringAvgLabel,
+    last20ScoringAvgValue,
     l5ScoringAvg,
     handicapDelta,
     l20ScoreMix,
