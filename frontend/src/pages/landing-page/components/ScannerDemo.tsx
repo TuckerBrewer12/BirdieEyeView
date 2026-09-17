@@ -58,7 +58,7 @@ function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
           {rows.map((row) => (
             <div
               key={row.hole}
-              className={`py-2 font-semibold ${row.overPar ? "text-score-bogey" : "text-muted-foreground"}`}
+              className={`py-2 font-semibold ${row.toParTextClass}`}
             >
               {row.toPar}
             </div>

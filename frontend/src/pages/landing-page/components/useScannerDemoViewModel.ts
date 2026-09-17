@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
-import { scoreFill } from "@/brand";
+import { scoreFill, toParTextClass } from "@/brand";
 
 export type ScannerPhase = "photo" | "mapping" | "scanning" | "result";
 
@@ -26,7 +26,7 @@ export interface DemoScorecardRow {
   putts: number;
   greenInRegulation: boolean;
   toPar: string;
-  overPar: boolean;
+  toParTextClass: string;
   fill: string;
 }
 
@@ -50,7 +50,7 @@ const SCORECARD: DemoScorecardRow[] = SAMPLE.par.map((par, i) => ({
   putts: SAMPLE.putts[i],
   greenInRegulation: SAMPLE.gir[i],
   toPar: toParLabelFor(SAMPLE.strokes[i], par),
-  overPar: SAMPLE.strokes[i] > par,
+  toParTextClass: toParTextClass(SAMPLE.strokes[i] - par),
   // The real score palette, so the demo teaches the legend the app uses.
   fill: scoreFill(SAMPLE.strokes[i], par),
 }));
