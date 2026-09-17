@@ -49,6 +49,14 @@ function holeFill(key: HoleColorKey, scoreColors: Record<string, string>): strin
   return scoreColors[key] ?? colors.score.par.fill;
 }
 
+function scoreBarHeightPct(strokes: number | null | undefined, par: number | null | undefined): number {
+  if (strokes == null || par == null) return 38;
+  const diff = strokes - par;
+  if (diff <= -1) return 22;
+  if (diff === 0) return 38;
+  return Math.min(100, 38 + diff * 14);
+}
+
 function toParAccent(toPar: number | null, scoreColors: Record<string, string>): string {
   if (toPar == null) return scoreColors.par ?? colors.score.par.fill;
   if (toPar <= 0) return scoreColors.birdie ?? colors.score.birdie.fill;
@@ -152,6 +160,7 @@ export interface RecentHole {
   par_played: number | null;
   colorKey: HoleColorKey;
   fill: string;
+  heightPct: number;
 }
 
 export interface RecentRoundRow {
@@ -611,6 +620,7 @@ export function useDashboardPageViewModel(
           par_played: h.par_played ?? null,
           colorKey,
           fill: holeFill(colorKey, scoreColors),
+          heightPct: scoreBarHeightPct(h.strokes, h.par_played),
         };
       });
   }, [scoreColors]);

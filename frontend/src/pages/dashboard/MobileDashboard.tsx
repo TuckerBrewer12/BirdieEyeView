@@ -40,14 +40,6 @@ function getBarColor(d: DualTrendPoint): string {
   return "#dc2626";
 }
 
-function scoreBarHeightPct(strokes: number | null | undefined, par: number | null | undefined): number {
-  if (strokes == null || par == null) return 38;
-  const diff = strokes - par;
-  if (diff <= -1) return 22;
-  if (diff === 0) return 38;
-  return Math.min(100, 38 + diff * 14);
-}
-
 // ─── Dot separator ────────────────────────────────────────────────────────────
 function Dot() {
   return (
@@ -125,13 +117,12 @@ function MicroBars({ holes }: { holes: RecentHole[] }) {
   return (
     <div style={{ display: "flex", gap: 3, height: 28, alignItems: "flex-end", width: "100%" }}>
       {holes.map((h) => {
-        const heightPct = scoreBarHeightPct(h.strokes, h.par_played);
         return (
           <div
             key={h.hole_number}
             style={{
               flex: 1,
-              height: `${heightPct}%`,
+              height: `${h.heightPct}%`,
               borderRadius: "2px 2px 0 0",
               background: h.fill,
               opacity: h.colorKey === "par" ? 0.35 : 1,
