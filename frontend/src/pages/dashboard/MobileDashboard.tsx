@@ -758,10 +758,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
         )}
 
         {recentRoundRows.map((r, idx) => {
-          const accentColor = r.toPar == null ? "#9ca3af"
-            : r.toPar <= 0  ? "#059669"
-            : r.toPar <= 14 ? "#f87171"
-            : "#60a5fa";
+          const accentColor = r.accentColor;
           const isLast = idx === recentRoundRows.length - 1;
 
           return (
