@@ -667,7 +667,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
             </span>
           </div>
           <div style={{ height: 5, background: chartColors.muted, borderRadius: 99, position: "relative", overflow: "visible" }}>
-            <div style={{ height: "100%", width: `${goalProgressPct}%`, background: PRIMARY, borderRadius: 99 }} />
+            <div className="rounded-card" style={{ height: "100%", width: `${goalProgressPct}%`, background: PRIMARY }} />
             <div style={{
               position: "absolute",
               top: -3, left: `${goalProgressPct}%`,
