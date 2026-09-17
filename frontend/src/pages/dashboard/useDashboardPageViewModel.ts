@@ -571,12 +571,14 @@ export function useDashboardPageViewModel(
   ];
 
   const holesFromRound = useCallback((round: Round | undefined): RecentHole[] => {
-    return (round?.hole_scores ?? []).map((h) => ({
-      hole_number: h.hole_number ?? 0,
-      strokes: h.strokes ?? null,
-      par_played: h.par_played ?? null,
-      colorKey: holeColorKey(h.strokes, h.par_played),
-    }));
+    return (round?.hole_scores ?? [])
+      .map((h) => ({
+        hole_number: h.hole_number ?? 0,
+        strokes: h.strokes ?? null,
+        par_played: h.par_played ?? null,
+        colorKey: holeColorKey(h.strokes, h.par_played),
+      }))
+      .sort((a, b) => a.hole_number - b.hole_number);
   }, []);
 
   const toRoundRow = useCallback((summary: RoundSummary): RecentRoundRow => {
