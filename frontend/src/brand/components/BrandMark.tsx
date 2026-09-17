@@ -7,7 +7,8 @@ import { cn } from "@/brand/cn";
  *
  * The landing nav and both auth screens each had their own `Logo()` with the
  * same markup, so a change to the mark meant finding all three. `iconOnly`
- * drops the wordmark for places too narrow to carry it.
+ * drops the wordmark for places too narrow to carry it, and labels the badge
+ * "BirdieEyeView" so the mark still has an accessible name.
  */
 const SIZES = {
   default: { root: "gap-2.5", badge: "size-9 [&_svg]:size-[17px]", word: "text-xl" },
@@ -29,6 +30,7 @@ function BrandMark({
     <div
       data-slot="brand-mark"
       className={cn("inline-flex items-center", sizing.root, className)}
+      {...(iconOnly ? { role: "img" as const, "aria-label": "BirdieEyeView" } : {})}
       {...props}
     >
       <div

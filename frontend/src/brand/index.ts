@@ -40,6 +40,8 @@ export type { CollectionProps, CollectionLayout } from "./components/Collection"
 export {
   alertVariants,
   buttonVariants,
+  inputVariants,
+  inputGroupVariants,
   inputGroupAddonVariants,
   inputGroupButtonVariants,
   pageTitleVariants,
