@@ -120,11 +120,10 @@ function HeroSparkline({ data }: { data: DualTrendPoint[] }) {
 
 // ─── Per-hole micro bar strip ─────────────────────────────────────────────────
 function MicroBars({ holes, scoreColors }: { holes: RecentHole[]; scoreColors: Record<string, string> }) {
-  const sorted = [...holes].sort((a, b) => a.hole_number - b.hole_number);
-  if (!sorted.length) return null;
+  if (!holes.length) return null;
   return (
     <div style={{ display: "flex", gap: 3, height: 28, alignItems: "flex-end", width: "100%" }}>
-      {sorted.map((h) => {
+      {holes.map((h) => {
         const heightPct = scoreBarHeightPct(h.strokes, h.par_played);
         return (
           <div
@@ -144,8 +143,7 @@ function MicroBars({ holes, scoreColors }: { holes: RecentHole[]; scoreColors: R
 }
 
 // ─── Solid mini strip (for rounds without per-hole data) ──────────────────────
-function SolidMiniStrip({ toPar }: { toPar: number | null }) {
-  const color = toPar == null ? "#9ca3af" : toPar <= 0 ? "#059669" : toPar <= 14 ? "#f87171" : "#60a5fa";
+function SolidMiniStrip({ color }: { color: string }) {
   return <div style={{ width: 78, height: 16, borderRadius: 2, background: color, opacity: 0.7 }} />;
 }
 
@@ -715,11 +713,10 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
               </div>
               <div style={{ fontFamily: MONO, fontSize: 26, fontWeight: 600, letterSpacing: "-0.5px", color: INK, lineHeight: 1 }}>
                 {display}
-                {value != null && <span style={{ fontSize: 16, fontWeight: 500, color: MUTED }}>%</span>}
               </div>
               <BenchmarkBar value={value} tour={tour} />
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>You {value != null ? `${display}%` : "—"}</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>You {display}</span>
                 <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>Tour {tour}%</span>
               </div>
             </div>
@@ -758,10 +755,6 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
         )}
 
         {recentRoundRows.map((r, idx) => {
-          const accentColor = r.toPar == null ? "#9ca3af"
-            : r.toPar <= 0  ? "#059669"
-            : r.toPar <= 14 ? "#f87171"
-            : "#60a5fa";
           const isLast = idx === recentRoundRows.length - 1;
 
           return (
@@ -787,13 +780,13 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                 textAlign: "left",
               }}
             >
-              <div style={{ position: "absolute", left: 0, top: 14, bottom: 14, width: 3, borderRadius: 99, background: accentColor }} />
+              <div style={{ position: "absolute", left: 0, top: 14, bottom: 14, width: 3, borderRadius: 99, background: r.accentColor }} />
               <div>
                 <div style={{ fontFamily: MONO, fontSize: 28, fontWeight: 700, letterSpacing: "-1px", color: INK, lineHeight: 1 }}>
                   {r.scoreLabel}
                 </div>
                 {r.toParLabel && (
-                  <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, color: (r.toPar ?? 0) > 0 ? "#f87171" : "#059669" }}>
+                  <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, color: r.toParColor }}>
                     {r.toParLabel}
                   </div>
                 )}
@@ -809,7 +802,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
               </div>
               {r.holes.length > 0 ? (
                 <div style={{ width: 78, height: 16, display: "flex", gap: 1.5, alignItems: "flex-end", flexShrink: 0 }}>
-                  {[...r.holes].sort((a, b) => a.hole_number - b.hole_number).map((h) => (
+                  {r.holes.map((h) => (
                     <div
                       key={h.hole_number}
                       style={{
@@ -824,7 +817,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                 </div>
               ) : (
                 <div style={{ flexShrink: 0 }}>
-                  <SolidMiniStrip toPar={r.toPar} />
+                  <SolidMiniStrip color={r.accentColor} />
                 </div>
               )}
             </button>

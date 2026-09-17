@@ -98,6 +98,13 @@ describe("useDashboardPageViewModel", () => {
     expect(result.current.recentRoundRows.map((r) => r.id)).toEqual(
       populatedRounds.slice(0, 3).map((r) => r.id),
     );
+    const holes = result.current.recentRoundRows[0]?.holes ?? [];
+    const numbers = holes.map((h) => h.hole_number);
+    expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
+    expect(result.current.recentRoundRows[0]?.accentColor).toBeTruthy();
+    expect(
+      result.current.scramblingPctLabel.endsWith("%") || result.current.scramblingPctLabel === "—",
+    ).toBe(true);
     expect(repository.fetchedRoundIds).toEqual(
       expect.arrayContaining(populatedRounds.slice(0, 3).map((r) => r.id)),
     );
