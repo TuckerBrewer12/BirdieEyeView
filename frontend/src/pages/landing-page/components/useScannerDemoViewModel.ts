@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import { scoreFill } from "@/brand";
+import { motion } from "@/brand/theme";
 
 export type ScannerPhase = "photo" | "mapping" | "scanning" | "result";
 
@@ -74,7 +75,7 @@ export const DEMO_MOTION = {
   /** A field or chip drawing the eye as the form fills itself in. */
   emphasis: 0.3,
   /** A choice registering, matching the kit's collapse. */
-  select: 0.2,
+  select: motion.duration.collapse,
   /** One on/off of the text caret in the name field. */
   caretBlink: 0.8,
   /** Mapped rows sliding in from the right. Looser than the kit's spring so
