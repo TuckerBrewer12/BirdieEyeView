@@ -10,6 +10,8 @@ export const TEST_USER = {
 
 export interface FakeBackendSeed extends InMemoryRoundsSeed {
   user?: typeof TEST_USER;
+  /** No one is signed in — `/api/auth/me` answers 401, as the real API does. */
+  signedOut?: boolean;
 }
 
 export interface FakeReply {
@@ -20,11 +22,13 @@ export interface FakeReply {
 /** Points HTTP at InMemoryRounds. Same store FakeRoundsRepository uses. */
 export class FakeBackend {
   user: typeof TEST_USER;
+  readonly signedOut: boolean;
   readonly store: InMemoryRounds;
 
   constructor(seed: FakeBackendSeed = {}) {
-    const { user, ...storeSeed } = seed;
+    const { user, signedOut, ...storeSeed } = seed;
     this.user = user ?? TEST_USER;
+    this.signedOut = signedOut ?? false;
     this.store = new InMemoryRounds(storeSeed);
   }
 
@@ -42,6 +46,7 @@ export class FakeBackend {
     const path = parsed.pathname;
 
     if (verb === "GET" && path.includes("/api/auth/me")) {
+      if (this.signedOut) return { status: 401, body: { detail: "Not authenticated" } };
       return { status: 200, body: this.user };
     }
 

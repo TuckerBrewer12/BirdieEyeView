@@ -66,6 +66,14 @@
   --score-quad-on-fill: #ffffff;
   --score-quad-text: #6d28d9;
 
+  /* The landing hero's sample scorecard. Like the score colours these label
+     rows in a fixed illustration, so they do not flip with the colour mode. */
+  --demo-card-header: #2d4c3b;
+  --demo-row-name: #475569;
+  --demo-row-score: #388e3c;
+  --demo-row-shots: #7e57c2;
+  --demo-row-putts: #0277bd;
+
   /* Type. Roles, not pixel sizes — components use text-caption, not text-[9px]. */
   --brand-text-caption: 9px;
   --brand-text-meta: 10px;
@@ -175,6 +183,12 @@
   --color-score-double: var(--score-double-text);
   --color-score-triple: var(--score-triple-text);
   --color-score-quad: var(--score-quad-text);
+
+  --color-demo-card-header: var(--demo-card-header);
+  --color-demo-row-name: var(--demo-row-name);
+  --color-demo-row-score: var(--demo-row-score);
+  --color-demo-row-shots: var(--demo-row-shots);
+  --color-demo-row-putts: var(--demo-row-putts);
 
   /* Shadows track --shadow, so they invert in dark mode. */
   --shadow-card: 0 6px 20px var(--shadow);

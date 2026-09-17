@@ -46,4 +46,12 @@ export const colors = {
     triple: { fill: "var(--score-triple-fill)", onFill: "var(--score-triple-on-fill)", text: "var(--score-triple-text)" },
     quad:   { fill: "var(--score-quad-fill)",   onFill: "var(--score-quad-on-fill)",   text: "var(--score-quad-text)" },
   },
+
+  demo: {
+    cardHeader: "var(--demo-card-header)",
+    rowName: "var(--demo-row-name)",
+    rowScore: "var(--demo-row-score)",
+    rowShots: "var(--demo-row-shots)",
+    rowPutts: "var(--demo-row-putts)",
+  },
 } as const;
