@@ -5,6 +5,7 @@ import { scaleLinear } from "d3-scale";
 import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
 import type { DashboardPageViewModel, DualTrendPoint, RecentHole, TrendTabItem, TrendView } from "./useDashboardPageViewModel";
+import { colors } from "@/brand/theme";
 import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -133,7 +134,7 @@ function MicroBars({ holes, scoreColors }: { holes: RecentHole[]; scoreColors: R
               flex: 1,
               height: `${heightPct}%`,
               borderRadius: "2px 2px 0 0",
-              background: scoreColors[h.colorKey] ?? "#9ca3af",
+              background: scoreColors[h.colorKey] ?? colors.score.par.fill,
               opacity: h.colorKey === "par" ? 0.35 : 1,
             }}
           />
@@ -816,7 +817,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                         flex: 1,
                         height: "100%",
                         borderRadius: 1.5,
-                        background: scoreColors[h.colorKey] ?? "#9ca3af",
+              background: scoreColors[h.colorKey] ?? "#9ca3af",
                         opacity: h.colorKey === "par" ? 0.35 : 1,
                       }}
                     />
