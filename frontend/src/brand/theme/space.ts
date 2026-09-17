@@ -26,6 +26,8 @@ export const size = {
   chart: "var(--brand-size-chart)",
   sheet: "var(--brand-size-sheet)",
   iconXs: "var(--brand-size-icon-xs)",
+  holeW: "var(--brand-size-hole-w)",
+  holeH: "var(--brand-size-hole-h)",
 } as const;
 
 export const radius = {

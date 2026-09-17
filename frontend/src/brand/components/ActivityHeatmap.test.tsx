@@ -15,60 +15,57 @@ describe("ActivityHeatmap", () => {
     };
 
     const dateA = new Date(today);
-    dateA.setDate(dateA.getDate() - 1); // Yesterday
+    dateA.setDate(dateA.getDate() - 1);
 
     const dateB = new Date(today);
-    dateB.setDate(dateB.getDate() - 2); // 2 Days ago
+    dateB.setDate(dateB.getDate() - 2);
 
     const dateC = new Date(today);
-    dateC.setDate(dateC.getDate() - 100); // Outside 5-week window — should not appear
+    dateC.setDate(dateC.getDate() - 100);
 
     const rounds: RoundSummary[] = [
       {
         id: "1",
-        date: formatDateStr(dateA) + "T14:30:00Z", // ISO with trailing time
+        date: formatDateStr(dateA) + "T14:30:00Z",
         course_id: null, course_name: null, course_location: null,
         course_par: null, tee_box: null, total_score: 80, to_par: null,
         front_nine: null, back_nine: null, total_putts: null, total_gir: null,
-        fairways_hit: null, notes: null
+        fairways_hit: null, notes: null,
       },
       {
         id: "2",
-        date: formatDateStr(dateA) + "T08:00:00", // Two rounds same day
+        date: formatDateStr(dateA) + "T08:00:00",
         course_id: null, course_name: null, course_location: null, course_par: null,
         tee_box: null, total_score: 82, to_par: null, front_nine: null, back_nine: null,
-        total_putts: null, total_gir: null, fairways_hit: null, notes: null
+        total_putts: null, total_gir: null, fairways_hit: null, notes: null,
       },
       {
         id: "3",
-        date: formatDateStr(dateB), // Plain YYYY-MM-DD
+        date: formatDateStr(dateB),
         course_id: null, course_name: null, course_location: null, course_par: null,
         tee_box: null, total_score: 75, to_par: null, front_nine: null, back_nine: null,
-        total_putts: null, total_gir: null, fairways_hit: null, notes: null
+        total_putts: null, total_gir: null, fairways_hit: null, notes: null,
       },
       {
         id: "4",
-        date: formatDateStr(dateC).replace(/-/g, "/"), // Slash-separated fallback
+        date: formatDateStr(dateC).replace(/-/g, "/"),
         course_id: null, course_name: null, course_location: null, course_par: null,
         tee_box: null, total_score: 75, to_par: null, front_nine: null, back_nine: null,
-        total_putts: null, total_gir: null, fairways_hit: null, notes: null
-      }
+        total_putts: null, total_gir: null, fairways_hit: null, notes: null,
+      },
     ];
 
-    const { container } = render(<ActivityHeatmap rounds={rounds} />);
+    const { container } = render(<ActivityHeatmap rounds={rounds} today={today} />);
 
-    // dateA has 2 rounds — should render an active square with bg-[#059669]
     const twoRoundsSquare = container.querySelector(`[title="2 rounds on ${formatDateStr(dateA)}"]`);
     expect(twoRoundsSquare).not.toBeNull();
-    expect(twoRoundsSquare?.className).toContain("bg-[#059669]");
+    expect(twoRoundsSquare?.className).toContain("bg-score-birdie");
 
-    // dateB has 1 round — same active style
-    const oneRoundSquare = container.querySelector(`[title="1 rounds on ${formatDateStr(dateB)}"]`);
+    const oneRoundSquare = container.querySelector(`[title="1 round on ${formatDateStr(dateB)}"]`);
     expect(oneRoundSquare).not.toBeNull();
-    expect(oneRoundSquare?.className).toContain("bg-[#059669]");
+    expect(oneRoundSquare?.className).toContain("bg-score-birdie");
 
-    // dateC is outside the 5-week window — no square should match
-    const fallbackSquare = container.querySelector(`[title="1 rounds on ${formatDateStr(dateC)}"]`);
+    const fallbackSquare = container.querySelector(`[title="1 round on ${formatDateStr(dateC)}"]`);
     expect(fallbackSquare).toBeNull();
   });
 });

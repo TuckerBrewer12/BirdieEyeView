@@ -25,6 +25,17 @@ export const chartTickStyle = {
 export const chartLayout = {
   barRadius: [6, 6, 0, 0] as [number, number, number, number],
   margin: { top: 4, right: 8, left: -20, bottom: 0 },
+  /** Unitless SVG plot. Matches `--brand-size-chart` for height. */
+  plot: {
+    width: 560,
+    height: 180,
+    pad: { top: 12, right: 64, bottom: 20, left: 52 },
+    barMin: 4,
+    barMax: 14,
+    barGap: 2,
+    dot: 3.5,
+    dotHover: 6,
+  },
 };
 
 export const chartColors = {
