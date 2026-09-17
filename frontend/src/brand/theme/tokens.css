@@ -130,6 +130,9 @@
   --brand-border-width: 1px;
 
   --brand-opacity-recessed: 35%;
+
+  /* Blur for the landing hero ambient glow. */
+  --brand-blur-hero: 120px;
 }
 
 :root.dark {
@@ -246,6 +249,8 @@
   --ring-width-3: var(--brand-ring-width);
 
   --opacity-recessed: var(--brand-opacity-recessed);
+
+  --blur-hero: var(--brand-blur-hero);
 
   --grid-template-columns-round-preview: var(--brand-size-date-rail) 1fr auto;
   --grid-template-columns-handicap-breakdown: 1fr auto auto auto;
