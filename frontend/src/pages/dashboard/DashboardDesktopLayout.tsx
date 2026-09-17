@@ -4,27 +4,26 @@ import {
   BarChart, Bar, PieChart, Pie, Cell,
   CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { SVGScoreHandicapTrend } from "@/components/dashboard/SVGScoreHandicapTrend";
-import { MilestoneFeed } from "@/components/dashboard/MilestoneFeed";
 import {
+  ActivityHeatmap,
+  BestRoundHighlight,
   Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  MilestoneFeed,
+  ProfileHeroBanner,
+  RecentRoundsTable,
+  ScanActionCard,
+  SVGScoreHandicapTrend,
   chartColors,
   chartLayout,
   chartTickStyle,
   chartTooltipStyle,
   colors,
 } from "@/brand";
-import { ProfileHeroBanner } from "@/components/dashboard/ProfileHeroBanner";
-import { ScanActionCard } from "@/components/dashboard/ScanActionCard";
-import { ActivityHeatmap } from "@/components/dashboard/ActivityHeatmap";
-import { BestRoundHighlight } from "@/components/dashboard/BestRoundHighlight";
-import { RecentRoundsTable } from "@/components/dashboard/RecentRoundsTable";
-import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
 
 function ShortGameSparkline({
@@ -88,9 +87,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
     scoreLineColor, handicapLineColor, gridColor, girColor, warningColor, dangerColor, mutedFill,
     handicapIndexLabel, firstName, bestRound, bestRoundDetail, sidebarRounds,
     hasScoringGoal, goalTargetLabel, goalNumberLabel, goalAverageLabel, goalBarPct, goalFocusHeadline, goalOnTrack,
-    handicapSheetOpen, openHandicapSheet, closeHandicapSheet,
-    whsRows, whsWindowSize, whsCountUsed, whsAdjustment, whsAdjustmentLabel,
-    whsDiffAvgLabel, whsHasRatedRounds, whsShowCalculation, whsUsedLegend, whsContextNote,
+    openHandicapSheet,
   } = vm;
 
   if (!data) return null;
@@ -113,7 +110,11 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
 
             <Card className="lg:col-span-3">
               <CardContent>
-                <BestRoundHighlight round={bestRound} detail={bestRoundDetail} />
+                <BestRoundHighlight
+                  round={bestRound}
+                  detail={bestRoundDetail}
+                  onClick={bestRound ? () => navigate(`/rounds/${bestRound.id}`) : undefined}
+                />
               </CardContent>
             </Card>
 
@@ -268,7 +269,10 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                 <CardTitle>Milestones</CardTitle>
               </CardHeader>
               <CardContent>
-                <MilestoneFeed milestones={recentMilestones} />
+                <MilestoneFeed
+                  milestones={recentMilestones}
+                  onRoundClick={(id) => navigate(`/rounds/${id}`)}
+                />
               </CardContent>
             </Card>
 
@@ -352,7 +356,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
 
         {/* Right Sidebar */}
         <div className="w-72 shrink-0 hidden xl:flex flex-col gap-6 sticky top-20 self-start">
-          <ScanActionCard />
+          <ScanActionCard onClick={() => navigate("/scan")} />
 
           <Card size="sm">
             <CardHeader>
@@ -370,7 +374,10 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
             </CardHeader>
             <CardContent>
               <div className="max-h-96 overflow-y-auto -mx-1">
-                <RecentRoundsTable rounds={sidebarRounds} />
+                <RecentRoundsTable
+                  rounds={sidebarRounds}
+                  onRoundClick={(id) => navigate(`/rounds/${id}`)}
+                />
               </div>
               <div className="mt-4">
                 <Button
@@ -387,22 +394,6 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
         </div>
 
       </div>
-
-      <HandicapBreakdownSheet
-        open={handicapSheetOpen}
-        onClose={closeHandicapSheet}
-        handicapIndexLabel={handicapIndexLabel}
-        rows={whsRows}
-        windowSize={whsWindowSize}
-        countUsed={whsCountUsed}
-        adjustment={whsAdjustment}
-        adjustmentLabel={whsAdjustmentLabel}
-        diffAvgLabel={whsDiffAvgLabel}
-        hasRatedRounds={whsHasRatedRounds}
-        showCalculation={whsShowCalculation}
-        usedLegend={whsUsedLegend}
-        contextNote={whsContextNote}
-      />
     </div>
   );
 }
