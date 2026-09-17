@@ -260,7 +260,7 @@ function MobileScoreTrend({
               type="button"
               onClick={() => onViewChange(tab.key)}
               className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all ${
-                tab.active ? "bg-white text-gray-800 shadow-sm" : "text-gray-400"
+                tab.active ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"
               }`}
             >
               {tab.label}
