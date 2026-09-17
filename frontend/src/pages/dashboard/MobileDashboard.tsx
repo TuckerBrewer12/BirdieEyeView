@@ -786,7 +786,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                   {r.scoreLabel}
                 </div>
                 {r.toParLabel && (
-                  <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, color: r.toParColor }}>
+                  <div className="text-meta" style={{ fontFamily: MONO, fontWeight: 600, color: r.toParColor }}>
                     {r.toParLabel}
                   </div>
                 )}
