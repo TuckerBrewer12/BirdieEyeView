@@ -11,8 +11,8 @@ import { cn } from "@/brand/cn";
  * "BirdieEyeView" so the mark still has an accessible name.
  */
 const SIZES = {
-  default: { root: "gap-2.5", badge: "size-9 [&_svg]:size-[17px]", word: "text-xl" },
-  sm: { root: "gap-2", badge: "size-8 [&_svg]:size-[15px]", word: "text-[17px]" },
+  default: { root: "gap-2.5", badge: "size-9 [&_svg]:size-4", word: "text-xl" },
+  sm: { root: "gap-2", badge: "size-8 [&_svg]:size-3.5", word: "text-lg" },
 } as const;
 
 function BrandMark({
@@ -45,7 +45,7 @@ function BrandMark({
       {!iconOnly && (
         <span
           data-slot="brand-mark-word"
-          className={cn("font-bold tracking-[-0.4px] text-foreground", sizing.word)}
+          className={cn("font-bold tracking-title text-foreground", sizing.word)}
         >
           BirdieEyeView
         </span>
