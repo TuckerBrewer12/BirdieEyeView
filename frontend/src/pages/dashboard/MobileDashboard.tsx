@@ -443,8 +443,10 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
     mixHoleCountLabel,
     scramblingPct,
     scramblingPctLabel,
+    scramblingPctDisplay,
     upAndDownPct,
     upAndDownPctLabel,
+    upAndDownPctDisplay,
     scoreColors,
     scoreLineColor,
     handicapLineColor,
@@ -706,9 +708,9 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           {([
-            { label: "Scrambling", value: scramblingPct, display: scramblingPctLabel, tour: 57 },
-            { label: "Up & Down",  value: upAndDownPct,  display: upAndDownPctLabel,  tour: 50 },
-          ] as const).map(({ label, value, display, tour }) => (
+            { label: "Scrambling", value: scramblingPct, display: scramblingPctLabel, youDisplay: scramblingPctDisplay, tour: 57 },
+            { label: "Up & Down",  value: upAndDownPct,  display: upAndDownPctLabel,  youDisplay: upAndDownPctDisplay,  tour: 50 },
+          ] as const).map(({ label, value, display, youDisplay, tour }) => (
             <div key={label}>
               <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "1.3px", textTransform: "uppercase", color: MUTED, marginBottom: 4 }}>
                 {label}
@@ -719,7 +721,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
               </div>
               <BenchmarkBar value={value} tour={tour} />
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>You {value != null ? `${display}%` : "—"}</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>You {youDisplay}</span>
                 <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>Tour {tour}%</span>
               </div>
             </div>

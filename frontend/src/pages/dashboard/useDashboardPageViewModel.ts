@@ -170,8 +170,10 @@ export interface DashboardPageViewModel {
   recentDistribution: ScoreDistItem[];
   scramblingPct: number | null;
   scramblingPctLabel: string;
+  scramblingPctDisplay: string;
   upAndDownPct: number | null;
   upAndDownPctLabel: string;
+  upAndDownPctDisplay: string;
   putts: number;
   puttsLabel: string;
   puttsClamped: number;
@@ -531,6 +533,8 @@ export function useDashboardPageViewModel(
   const girPctLabel = girPct > 0 ? `${girPct.toFixed(0)}%` : "—";
   const scramblingPctLabel = scramblingPct != null ? scramblingPct.toFixed(0) : "—";
   const upAndDownPctLabel = upAndDownPct != null ? upAndDownPct.toFixed(0) : "—";
+  const scramblingPctDisplay = scramblingPct != null ? `${scramblingPct.toFixed(0)}%` : "—";
+  const upAndDownPctDisplay = upAndDownPct != null ? `${upAndDownPct.toFixed(0)}%` : "—";
 
   const mixLegend = useMemo<MixLegendItem[]>(() => {
     const birdiesPlus =
@@ -743,8 +747,10 @@ export function useDashboardPageViewModel(
     recentDistribution,
     scramblingPct,
     scramblingPctLabel,
+    scramblingPctDisplay,
     upAndDownPct,
     upAndDownPctLabel,
+    upAndDownPctDisplay,
     putts,
     puttsLabel,
     puttsClamped,
