@@ -1,5 +1,6 @@
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { motion as motionTokens } from "@/brand/theme";
 import {
   useScannerDemoViewModel,
   type DemoScorecardRow,
@@ -166,7 +167,7 @@ function MappingPanel() {
               {["Putts", "Shots to green"].map((label, i) => (
                 <motion.div
                   key={label}
-                  initial={{ opacity: 0.4, scale: 0.95 }}
+                  initial={{ opacity: 0.4, scale: motionTokens.tapScale }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 1.8 + i * 0.4, duration: 0.3 }}
                   className="flex items-center gap-2 rounded-md border border-score-birdie/40 bg-accent px-3 py-1.5"
