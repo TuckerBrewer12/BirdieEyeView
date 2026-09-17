@@ -668,9 +668,9 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
           </div>
           <div style={{ height: 5, background: chartColors.muted, borderRadius: 99, position: "relative", overflow: "visible" }}>
             <div style={{ height: "100%", width: `${goalProgressPct}%`, background: PRIMARY, borderRadius: 99 }} />
-            <div style={{
+            <div className="-top-chip" style={{
               position: "absolute",
-              top: -3, left: `${goalProgressPct}%`,
+              left: `${goalProgressPct}%`,
               width: 2, height: 11,
               background: TICK, borderRadius: 99,
               transform: "translateX(-50%)",
