@@ -27,6 +27,9 @@ import links
 BRANCH_PREFIX = "bot-fix"
 
 META_RE = re.compile(r"<!-- review-bot:(\{.*?\}) -->", re.DOTALL)
+SUGGESTION_FENCE_RE = re.compile(
+    r"^```(?:suggestion|tsx|ts|jsx|js|css|html)?\n(.*)\n```$", re.DOTALL
+)
 
 
 def finding_id(path: str, body: str) -> str:
@@ -70,6 +73,28 @@ def is_fix_command(body: str) -> bool:
     return first == "/fix"
 
 
+def normalize_suggestion(raw: object) -> str | None:
+    """Turn a model `suggestion` field into source text, or None if unusable."""
+    if raw is None:
+        return None
+    if isinstance(raw, list):
+        text = "\n".join(str(line).rstrip("\n") for line in raw)
+    else:
+        text = str(raw).replace("\r\n", "\n")
+    text = text.strip("\n")
+    fenced = SUGGESTION_FENCE_RE.match(text)
+    if fenced:
+        text = fenced.group(1).strip("\n")
+    if not text.strip():
+        return None
+    return text
+
+
+def suggestion_fence(text: str) -> str:
+    """GitHub's commit-suggestion block. Accepting it replaces the commented lines."""
+    return f"```suggestion\n{text.rstrip()}\n```"
+
+
 def decorate_body(
     *,
     body: str,
@@ -79,6 +104,7 @@ def decorate_body(
     pr_number: str,
     pr_url: str,
     bot_name: str,
+    suggestion: str | None = None,
 ) -> tuple[str, str]:
     """Return (comment markdown, finding id)."""
     fid = finding_id(path, body)
@@ -91,14 +117,21 @@ def decorate_body(
         line=line,
         body=body,
     )
-    actions = links.comment_actions(links.conductor_url(prompt))
+    actions = links.comment_actions(
+        links.conductor_url(prompt), has_suggestion=bool(suggestion)
+    )
     meta = metadata_blob(
         finding_id=fid,
         path=path,
         line=line,
         bot_name=bot_name,
     )
-    return f"{body.strip()}\n\n{actions}\n\n{meta}", fid
+    parts = [body.strip()]
+    if suggestion:
+        parts.append(suggestion_fence(suggestion))
+    parts.append(actions)
+    parts.append(meta)
+    return "\n\n".join(parts), fid
 
 
 def branch_name(pr_number: str | int, fid: str) -> str:
@@ -217,14 +250,20 @@ def cmd_from_comment() -> int:
     return 0
 
 
-def _body_without_markup(comment: str) -> str:
-    """Strip the footer/metadata so the fix bot sees the original finding text."""
+def finding_text(comment: str) -> str:
+    """Strip the footer/metadata so later steps see the original finding text."""
     text = META_RE.sub("", comment).strip()
-    marker = f"[{links.DISCUSS_LABEL}]("
-    idx = text.find(marker)
-    if idx != -1:
-        text = text[:idx].strip()
+    cuts: list[int] = []
+    for marker in (f"[{links.DISCUSS_LABEL}](", "```suggestion"):
+        idx = text.find(marker)
+        if idx != -1:
+            cuts.append(idx)
+    if cuts:
+        text = text[: min(cuts)].strip()
     return text
+
+
+_body_without_markup = finding_text
 
 
 def main() -> int:
