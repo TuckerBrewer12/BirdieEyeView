@@ -1,12 +1,17 @@
-import { useEffect, useState } from "react";
 import { Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
-import { api } from "@/lib/api";
 import { SCORE_SYMBOL_COLORS } from "@/lib/scoreSymbol";
-import type { RoundSummary, Round } from "@/types/golf";
+import type { Round } from "@/types/golf";
 
 interface BestRoundHighlightProps {
-  rounds: RoundSummary[];
+  round: {
+    id: string;
+    courseName: string;
+    dateLabel: string;
+    toParLabel: string;
+    totalScore: number | null;
+  } | null;
+  detail: Round | null;
 }
 
 const CW = 30;
@@ -90,21 +95,8 @@ function MiniScorecard({ round }: { round: Round }) {
   );
 }
 
-export function BestRoundHighlight({ rounds }: BestRoundHighlightProps) {
-  const validRounds = rounds.filter((r) => r.total_score != null);
-  const [roundDetail, setRoundDetail] = useState<Round | null>(null);
-
-  const best = validRounds.length > 0
-    ? validRounds.reduce((prev, curr) => curr.total_score! < prev.total_score! ? curr : prev)
-    : null;
-
-  useEffect(() => {
-    if (best?.id) {
-      api.getRound(best.id).then(setRoundDetail).catch(() => {});
-    }
-  }, [best?.id]);
-
-  if (!best) {
+export function BestRoundHighlight({ round, detail }: BestRoundHighlightProps) {
+  if (!round) {
     return (
       <div className="text-center text-sm text-gray-500 p-4">
         Play a round to unlock highlights!
@@ -112,13 +104,10 @@ export function BestRoundHighlight({ rounds }: BestRoundHighlightProps) {
     );
   }
 
-  const parsedDate = best.date ? new Date(best.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
-  const diffStr = best.to_par != null ? `To Par: ${best.to_par > 0 ? "+" + best.to_par : best.to_par}` : "";
-
   const skeleton = (
     <div className="flex flex-col gap-[3px]">
-      {[0, 1].map((row) => (
-        <div key={row} className="flex gap-[3px]">
+      {[0, 1].map((rowIdx) => (
+        <div key={rowIdx} className="flex gap-[3px]">
           {Array.from({ length: 9 }).map((_, i) => (
             <div key={i} className="animate-pulse rounded" style={{ width: CW, height: CH, background: "#f3f4f6" }} />
           ))}
@@ -128,7 +117,7 @@ export function BestRoundHighlight({ rounds }: BestRoundHighlightProps) {
   );
 
   return (
-    <Link to={`/rounds/${best.id}`} className="flex items-center gap-4 group">
+    <Link to={`/rounds/${round.id}`} className="flex items-center gap-4 group">
       <div className="flex items-center gap-3 shrink-0">
         <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shadow-sm border border-amber-200">
           <Trophy size={22} className="mt-0.5" />
@@ -138,21 +127,21 @@ export function BestRoundHighlight({ rounds }: BestRoundHighlightProps) {
             Best Recent Round
           </div>
           <div className="font-bold text-gray-900 leading-tight group-hover:text-primary transition-colors">
-            {best.course_name ?? "Unknown Course"}
+            {round.courseName}
           </div>
           <div className="text-xs text-gray-500 mt-0.5">
-            {parsedDate} {diffStr ? `· ${diffStr}` : ""}
+            {round.dateLabel} {round.toParLabel ? `· ${round.toParLabel}` : ""}
           </div>
         </div>
       </div>
 
       <div className="flex-1 flex justify-center">
-        {roundDetail ? <MiniScorecard round={roundDetail} /> : skeleton}
+        {detail ? <MiniScorecard round={detail} /> : skeleton}
       </div>
 
       <div className="shrink-0 text-right">
         <div className="text-4xl font-black text-gray-900 tracking-tighter group-hover:text-primary transition-colors">
-          {best.total_score}
+          {round.totalScore}
         </div>
       </div>
     </Link>
