@@ -6,6 +6,7 @@ import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
 import type { DashboardPageViewModel, DualTrendPoint, RecentHole, TrendTabItem, TrendView } from "./useDashboardPageViewModel";
 import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
+import { colors } from "@/brand";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const INK     = "#131613";
@@ -760,7 +761,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
         {recentRoundRows.map((r, idx) => {
           const accentColor = r.toPar == null ? "#9ca3af"
             : r.toPar <= 0  ? "#059669"
-            : r.toPar <= 14 ? "#f87171"
+            : r.toPar <= 14 ? colors.score.bogey.fill
             : "#60a5fa";
           const isLast = idx === recentRoundRows.length - 1;
 
