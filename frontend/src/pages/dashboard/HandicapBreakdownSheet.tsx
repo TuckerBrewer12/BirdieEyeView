@@ -1,8 +1,16 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle, Circle } from "lucide-react";
+import { CheckCircle, Circle } from "lucide-react";
 import type { DualTrendPoint } from "./useDashboardPageViewModel";
 import type { ScoreDifferentialRow, ScoreTrendRow } from "@/types/analytics";
 import { formatCourseName } from "@/lib/courseName";
+import {
+  Alert,
+  AlertDescription,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/brand";
 
 // WHS table: indexed by (n - 3), capped at 17 (for 20+ rounds)
 const WHS_TABLE: Array<[number, number]> = [
@@ -95,65 +103,33 @@ export function HandicapBreakdownSheet({
   const hasRatedRounds = rows.some((r) => r.course_rating != null);
 
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            className="fixed inset-0 z-40 bg-black/40"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-          />
+    <Sheet open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Handicap Index</SheetTitle>
+          <SheetDescription>
+            {formatHI(handicapIndex)} HCP
+          </SheetDescription>
+        </SheetHeader>
 
-          {/* Sheet — slides in from right */}
-          <motion.div
-            className="fixed inset-y-0 right-0 z-50 w-full sm:w-[480px] bg-white shadow-2xl overflow-y-auto"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 340, damping: 34 }}
-          >
-            {/* Header */}
-            <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-5 py-4 z-10">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500"
-                  aria-label="Close"
-                >
-                  <X size={18} />
-                </button>
-                <div className="flex-1">
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    Handicap Index
-                  </div>
-                  <div className="text-2xl font-black text-gray-900 leading-tight tracking-tight">
-                    {formatHI(handicapIndex)}
-                    <span className="text-sm font-semibold text-gray-400 ml-1.5">HCP</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-5 py-5 space-y-6">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-4">
 
               {/* Formula */}
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">
+                <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground mb-3">
                   WHS Formula
                 </div>
-                <div className="bg-gray-50 rounded-2xl p-4">
-                  <div className="text-sm font-semibold text-gray-700 mb-1">Score Differential</div>
-                  <div className="font-mono text-xs text-gray-500 leading-relaxed">
+                <div className="bg-muted rounded-card p-4">
+                  <div className="text-sm font-semibold text-secondary-foreground mb-1">Score Differential</div>
+                  <div className="font-mono text-xs text-muted-foreground leading-relaxed">
                     = (Score − Course Rating) × 113 ÷ Slope Rating
                   </div>
                   {!hasRatedRounds && (
-                    <div className="mt-2 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5">
-                      Your rounds don't have slope/rating data — using score-to-par as differential
-                    </div>
+                    <Alert className="mt-2">
+                      <AlertDescription>
+                        Your rounds don't have slope/rating data — using score-to-par as differential
+                      </AlertDescription>
+                    </Alert>
                   )}
                 </div>
               </div>
@@ -161,44 +137,44 @@ export function HandicapBreakdownSheet({
               {/* The math */}
               {handicapIndex != null && tableIdx >= 0 && (
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">
+                  <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground mb-3">
                     Current Calculation
                   </div>
-                  <div className="bg-[#f0f7f1] rounded-2xl p-4 space-y-3">
+                  <div className="bg-accent rounded-card p-4 space-y-3">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Rounds in window</span>
-                      <span className="font-semibold text-gray-900">{n} of 20</span>
+                      <span className="text-muted-foreground">Rounds in window</span>
+                      <span className="font-semibold text-card-foreground">{n} of 20</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Best differentials used</span>
-                      <span className="font-semibold text-gray-900">{countUsed}</span>
+                      <span className="text-muted-foreground">Best differentials used</span>
+                      <span className="font-semibold text-card-foreground">{countUsed}</span>
                     </div>
                     {usedDiffs.length > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Their average</span>
-                        <span className="font-semibold text-gray-900 font-mono">
+                        <span className="text-muted-foreground">Their average</span>
+                        <span className="font-semibold text-card-foreground font-mono">
                           {diffAvg?.toFixed(2)}
                         </span>
                       </div>
                     )}
                     {adjustment !== 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">WHS adjustment</span>
-                        <span className="font-semibold text-gray-900 font-mono">
+                        <span className="text-muted-foreground">WHS adjustment</span>
+                        <span className="font-semibold text-card-foreground font-mono">
                           {adjustment > 0 ? `+${adjustment}` : adjustment}
                         </span>
                       </div>
                     )}
-                    <div className="border-t border-[#c8e6cc] pt-3 flex justify-between">
-                      <span className="text-sm font-bold text-[#2d7a3a]">Handicap Index</span>
-                      <span className="text-sm font-black text-[#2d7a3a] font-mono">
+                    <div className="border-t border-border pt-3 flex justify-between">
+                      <span className="text-sm font-bold text-primary">Handicap Index</span>
+                      <span className="text-sm font-black text-primary font-mono">
                         {formatHI(handicapIndex)}
                       </span>
                     </div>
                   </div>
 
                   {adjustment !== 0 && (
-                    <div className="mt-2 px-1 text-[11px] text-gray-400 leading-relaxed">
+                    <div className="mt-2 px-1 text-label text-muted-foreground leading-relaxed">
                       With only {n} rounds, WHS applies a {adjustment} adjustment to encourage more play before the index fully stabilizes.
                     </div>
                   )}
@@ -207,16 +183,16 @@ export function HandicapBreakdownSheet({
 
               {/* Per-round table */}
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">
+                <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground mb-3">
                   Recent Rounds · Last {rows.length}
                 </div>
 
                 {rows.length === 0 ? (
-                  <div className="text-sm text-gray-400 text-center py-8">No rounds yet</div>
+                  <div className="text-sm text-muted-foreground text-center py-8">No rounds yet</div>
                 ) : (
-                  <div className="rounded-2xl border border-gray-100 overflow-hidden divide-y divide-gray-50">
+                  <div className="rounded-card border border-border overflow-hidden divide-y divide-border">
                     {/* Column headers */}
-                    <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 px-4 py-2 bg-gray-50 text-[10px] font-bold uppercase tracking-wide text-gray-400">
+                    <div className="grid grid-cols-handicap-breakdown gap-2 px-4 py-2 bg-muted text-meta font-bold uppercase tracking-kicker text-muted-foreground">
                       <span>Course</span>
                       <span className="text-right w-10">Score</span>
                       <span className="text-right w-16">Diff</span>
@@ -229,31 +205,31 @@ export function HandicapBreakdownSheet({
                       return (
                         <div
                           key={row.round_index}
-                          className={`grid grid-cols-[1fr_auto_auto_auto] gap-2 px-4 py-3 items-center ${
-                            isUsed ? "bg-[#f0f7f1]" : ""
+                          className={`grid grid-cols-handicap-breakdown gap-2 px-4 py-3 items-center ${
+                            isUsed ? "bg-accent" : ""
                           }`}
                         >
                           <div className="min-w-0">
-                            <div className="text-sm font-medium text-gray-800 truncate">
+                            <div className="text-sm font-medium text-card-foreground truncate">
                               {row.course_name
                                 ? formatCourseName(row.course_name)
                                 : `Round ${row.round_index}`}
                             </div>
                             {row.course_rating != null && row.slope_rating != null && (
-                              <div className="text-[10px] text-gray-400 font-mono mt-0.5">
+                              <div className="text-meta text-muted-foreground font-mono mt-0.5">
                                 {row.course_rating} / {row.slope_rating}
                               </div>
                             )}
                           </div>
-                          <div className="text-sm font-mono font-semibold text-gray-700 text-right w-10">
+                          <div className="text-sm font-mono font-semibold text-secondary-foreground text-right w-10">
                             {row.score ?? "—"}
                           </div>
                           <div className={`text-sm font-mono font-bold text-right w-16 ${
                             noData
-                              ? "text-gray-300"
+                              ? "text-muted-foreground"
                               : isUsed
-                                ? "text-[#2d7a3a]"
-                                : "text-gray-500"
+                                ? "text-primary"
+                                : "text-muted-foreground"
                           }`}>
                             {row.differential != null
                               ? row.differential >= 0
@@ -263,9 +239,9 @@ export function HandicapBreakdownSheet({
                           </div>
                           <div className="w-5 flex justify-center">
                             {isUsed ? (
-                              <CheckCircle size={14} className="text-[#2d7a3a] shrink-0" />
+                              <CheckCircle className="size-3.5 text-primary shrink-0" />
                             ) : row.differential != null ? (
-                              <Circle size={14} className="text-gray-200 shrink-0" />
+                              <Circle className="size-3.5 text-muted-foreground shrink-0" />
                             ) : null}
                           </div>
                         </div>
@@ -275,22 +251,20 @@ export function HandicapBreakdownSheet({
                 )}
 
                 {usedDiffs.length > 0 && (
-                  <div className="mt-3 flex items-center gap-2 text-[11px] text-gray-400 px-1">
-                    <CheckCircle size={12} className="text-[#2d7a3a] shrink-0" />
+                  <div className="mt-3 flex items-center gap-2 text-label text-muted-foreground px-1">
+                    <CheckCircle className="size-3 text-primary shrink-0" />
                     <span>Green rows are the {countUsed} best differential{countUsed !== 1 ? "s" : ""} used in your index</span>
                   </div>
                 )}
               </div>
 
               {/* WHS context note */}
-              <div className="text-[11px] text-gray-400 leading-relaxed pb-4 px-1">
+              <div className="text-label text-muted-foreground leading-relaxed pb-4 px-1">
                 The World Handicap System uses your best {countUsed || "N"} differentials from the last 20 rounds. Differentials measure how well you played relative to the course difficulty.
               </div>
 
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
