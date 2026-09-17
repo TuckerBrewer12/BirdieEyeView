@@ -107,7 +107,7 @@ export function BestRoundHighlight({ round, detail }: BestRoundHighlightProps) {
   const skeleton = (
     <div className="flex flex-col gap-[3px]">
       {[0, 1].map((rowIdx) => (
-        <div key={rowIdx} className="flex gap-[3px]">
+        <div key={rowIdx} className="flex gap-chip">
           {Array.from({ length: 9 }).map((_, i) => (
             <div key={i} className="animate-pulse rounded" style={{ width: CW, height: CH, background: "#f3f4f6" }} />
           ))}
