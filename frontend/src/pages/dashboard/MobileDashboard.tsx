@@ -805,10 +805,10 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                   {r.holes.map((h) => (
                     <div
                       key={h.hole_number}
+                      className="rounded-bar"
                       style={{
                         flex: 1,
                         height: "100%",
-                        borderRadius: 1.5,
                         background: h.fill,
                         opacity: h.colorKey === "par" ? 0.35 : 1,
                       }}
