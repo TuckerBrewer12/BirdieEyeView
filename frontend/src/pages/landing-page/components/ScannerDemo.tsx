@@ -1,5 +1,6 @@
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { motion as motionTokens } from "@/brand/theme";
 import {
   useScannerDemoViewModel,
   type DemoScorecardRow,
@@ -119,7 +120,7 @@ function MappingPanel() {
               <TypewriterLabel text="T" />
               <motion.div
                 animate={{ opacity: [1, 0] }}
-                transition={{ repeat: Infinity, duration: 0.8 }}
+                transition={{ repeat: Infinity, duration: motionTokens.duration.collapse }}
                 className="ml-1 h-4 w-0.5 bg-muted-foreground"
               />
             </div>
