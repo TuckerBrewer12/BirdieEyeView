@@ -24,6 +24,7 @@ export const size = {
   dateRail: "var(--brand-size-date-rail)",
   preview: "var(--brand-size-preview)",
   chart: "var(--brand-size-chart)",
+  sheet: "var(--brand-size-sheet)",
   iconXs: "var(--brand-size-icon-xs)",
 } as const;
 

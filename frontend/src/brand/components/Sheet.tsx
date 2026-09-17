@@ -65,7 +65,7 @@ function SheetContent({
       <SheetPrimitive.Popup
         data-slot="sheet-content"
         className={cn(
-          "relative z-50 flex h-full w-full max-w-md flex-col border-l border-border bg-card text-card-foreground shadow-card outline-none transition-transform duration-200 ease-out data-ending-style:translate-x-full data-starting-style:translate-x-full",
+          "relative z-50 flex h-full w-full max-w-sheet flex-col border-l border-border bg-card text-card-foreground shadow-card outline-none transition-transform duration-200 ease-out data-ending-style:translate-x-full data-starting-style:translate-x-full",
           contained ? "absolute inset-y-0 right-0" : "fixed inset-y-0 right-0",
           className,
         )}

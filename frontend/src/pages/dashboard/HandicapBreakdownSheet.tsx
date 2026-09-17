@@ -192,7 +192,7 @@ export function HandicapBreakdownSheet({
                 ) : (
                   <div className="rounded-card border border-border overflow-hidden divide-y divide-border">
                     {/* Column headers */}
-                    <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 px-4 py-2 bg-muted text-meta font-bold uppercase tracking-kicker text-muted-foreground">
+                    <div className="grid grid-cols-handicap-breakdown gap-2 px-4 py-2 bg-muted text-meta font-bold uppercase tracking-kicker text-muted-foreground">
                       <span>Course</span>
                       <span className="text-right w-10">Score</span>
                       <span className="text-right w-16">Diff</span>
@@ -205,7 +205,7 @@ export function HandicapBreakdownSheet({
                       return (
                         <div
                           key={row.round_index}
-                          className={`grid grid-cols-[1fr_auto_auto_auto] gap-2 px-4 py-3 items-center ${
+                          className={`grid grid-cols-handicap-breakdown gap-2 px-4 py-3 items-center ${
                             isUsed ? "bg-accent" : ""
                           }`}
                         >

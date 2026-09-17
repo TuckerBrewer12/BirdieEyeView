@@ -16,7 +16,7 @@ export default function SheetPreview() {
         <div className="p-4">
           <SheetTrigger render={<Button variant="outline" />}>Open</SheetTrigger>
         </div>
-        <SheetContent contained initialFocus={false} className="max-w-[240px]">
+        <SheetContent contained initialFocus={false}>
           <SheetHeader>
             <SheetTitle>Handicap Index</SheetTitle>
             <SheetDescription>12.4 HCP</SheetDescription>
