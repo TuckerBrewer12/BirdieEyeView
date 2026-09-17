@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
-import { chartColors } from "@/brand/theme";
+import { chartColors, space } from "@/brand/theme";
 import type { DashboardPageViewModel, DualTrendPoint, RecentHole, TrendTabItem, TrendView } from "./useDashboardPageViewModel";
 import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 
@@ -560,7 +560,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
             </div>
             <div style={{ display: "flex", gap: 2, height: 9, borderRadius: 3, overflow: "hidden" }}>
               {l20ScoreMix.filter((d) => d.value > 0.5).map((d) => (
-                <div key={d.name} style={{ flex: d.value, background: d.color, minWidth: 2 }} />
+                <div key={d.name} style={{ flex: d.value, background: d.color, minWidth: space.hair }} />
               ))}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", marginTop: 8 }}>
