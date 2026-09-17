@@ -1,15 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
-import type { DashboardData } from "@/types/golf";
-import type { AnalyticsData, GoalReport } from "@/types/analytics";
-import type { DualTrendPoint, ScoreDistItem } from "./useDashboardPageViewModel";
-import { formatCourseName } from "@/lib/courseName";
-import { api } from "@/lib/api";
+import type { DashboardPageViewModel, DualTrendPoint, RecentHole, TrendTabItem, TrendView } from "./useDashboardPageViewModel";
 import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -42,26 +37,6 @@ function getBarColor(d: DualTrendPoint): string {
   if (d.hi_threshold != null && d.differential != null && d.differential - d.hi_threshold <= 2)
     return "#d97706";
   return "#dc2626";
-}
-
-function fmtDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "—";
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-type HoleKey = "eagle" | "birdie" | "par" | "bogey" | "double_bogey" | "triple_bogey" | "quad_bogey";
-
-function getScoreKey(strokes: number | null | undefined, par: number | null | undefined): HoleKey {
-  if (strokes == null || par == null) return "par";
-  const diff = strokes - par;
-  if (diff <= -2) return "eagle";
-  if (diff === -1) return "birdie";
-  if (diff === 0) return "par";
-  if (diff === 1) return "bogey";
-  if (diff === 2) return "double_bogey";
-  if (diff === 3) return "triple_bogey";
-  return "quad_bogey";
 }
 
 function scoreBarHeightPct(strokes: number | null | undefined, par: number | null | undefined): number {
@@ -144,15 +119,12 @@ function HeroSparkline({ data }: { data: DualTrendPoint[] }) {
 }
 
 // ─── Per-hole micro bar strip ─────────────────────────────────────────────────
-type HoleScore = { hole_number: number; strokes?: number | null; par_played?: number | null };
-
-function MicroBars({ holes, scoreColors }: { holes: HoleScore[]; scoreColors: Record<string, string> }) {
+function MicroBars({ holes, scoreColors }: { holes: RecentHole[]; scoreColors: Record<string, string> }) {
   const sorted = [...holes].sort((a, b) => a.hole_number - b.hole_number);
   if (!sorted.length) return null;
   return (
     <div style={{ display: "flex", gap: 3, height: 28, alignItems: "flex-end", width: "100%" }}>
       {sorted.map((h) => {
-        const key = getScoreKey(h.strokes, h.par_played);
         const heightPct = scoreBarHeightPct(h.strokes, h.par_played);
         return (
           <div
@@ -161,8 +133,8 @@ function MicroBars({ holes, scoreColors }: { holes: HoleScore[]; scoreColors: Re
               flex: 1,
               height: `${heightPct}%`,
               borderRadius: "2px 2px 0 0",
-              background: scoreColors[key] ?? "#9ca3af",
-              opacity: key === "par" ? 0.35 : 1,
+              background: scoreColors[h.colorKey] ?? "#9ca3af",
+              opacity: h.colorKey === "par" ? 0.35 : 1,
             }}
           />
         );
@@ -193,13 +165,22 @@ function MobileScoreTrend({
   dualData,
   scoreColor,
   handicapColor,
+  view,
+  trendTabs,
+  onViewChange,
 }: {
   dualData: DualTrendPoint[];
   scoreColor: string;
   handicapColor: string;
+  view: TrendView;
+  trendTabs: TrendTabItem[];
+  onViewChange: (view: TrendView) => void;
 }) {
-  const [view, setView] = useState<"score" | "hcp">("score");
   const [selected, setSelected] = useState<{ point: DualTrendPoint; idx: number } | null>(null);
+
+  useEffect(() => {
+    setSelected(null);
+  }, [view]);
 
   const W = 320;
   const H = 210;
@@ -274,16 +255,16 @@ function MobileScoreTrend({
       <div className="flex items-center justify-between mb-4">
         <div className="text-sm font-semibold text-gray-800">Score History</div>
         <div className="flex bg-gray-100 rounded-lg p-0.5">
-          {(["score", "hcp"] as const).map((v) => (
+          {trendTabs.map((tab) => (
             <button
-              key={v}
+              key={tab.key}
               type="button"
-              onClick={() => { setView(v); setSelected(null); }}
+              onClick={() => onViewChange(tab.key)}
               className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all ${
-                view === v ? "bg-white text-gray-800 shadow-sm" : "text-gray-400"
+                tab.active ? "bg-white text-gray-800 shadow-sm" : "text-gray-400"
               }`}
             >
-              {v === "score" ? "Score" : "HCP"}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -451,134 +432,56 @@ function MobileScoreTrend({
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
-export interface MobileDashboardProps {
-  data: DashboardData;
-  trends: AnalyticsData | null;
-  user: { name?: string | null; scoring_goal?: number | null } | null;
-  goalReport: GoalReport | null;
-  dualData: DualTrendPoint[];
-  last20ScoringAvg: number | null;
-  l5ScoringAvg: number | null;
-  handicapDelta: number | null;
-  l20ScoreMix: ScoreDistItem[];
-  girPct: number;
-  scramblingPct: number | null;
-  upAndDownPct: number | null;
-  putts: number;
-  scoreColors: Record<string, string>;
-  scoreLineColor: string;
-  handicapLineColor: string;
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
-export function MobileDashboard({
-  data,
-  trends,
-  user,
-  goalReport,
-  dualData,
-  last20ScoringAvg,
-  l5ScoringAvg,
-  handicapDelta,
-  l20ScoreMix,
-  girPct,
-  scramblingPct,
-  upAndDownPct,
-  putts,
-  scoreColors,
-  scoreLineColor,
-  handicapLineColor,
-}: MobileDashboardProps) {
+export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
-  const [handicapSheetOpen, setHandicapSheetOpen] = useState(false);
-  const firstName = user?.name?.split(" ")[0] ?? "Golfer";
-  const lastRound = data.recent_rounds[0] ?? null;
-  const recentRounds = data.recent_rounds.slice(0, 3);
+  const {
+    data,
+    dualData,
+    last20ScoringAvgLabel,
+    l20ScoreMix,
+    mixLegend,
+    mixHoleCountLabel,
+    scramblingPct,
+    scramblingPctLabel,
+    upAndDownPct,
+    upAndDownPctLabel,
+    scoreColors,
+    scoreLineColor,
+    handicapLineColor,
+    firstName,
+    greetingDateLabel,
+    handicapIndexLabel,
+    hiDeltaText,
+    hiDeltaImproving,
+    scoreDeltaText,
+    scoreDeltaImproving,
+    heroKpis,
+    handicapSheetOpen,
+    openHandicapSheet,
+    closeHandicapSheet,
+    trendView,
+    setTrendView,
+    trendTabs,
+    lastRound,
+    lastRoundHoles,
+    lastRoundChips,
+    recentRoundRows,
+    goalProgressPct,
+    goalTargetLabel,
+    hasScoringGoal,
+    whsRows,
+    whsWindowSize,
+    whsCountUsed,
+    whsAdjustment,
+    whsAdjustmentLabel,
+    whsDiffAvgLabel,
+    whsHasRatedRounds,
+    whsShowCalculation,
+    whsUsedLegend,
+    whsContextNote,
+  } = vm;
 
-  // Fetch per-hole data for micro-bars (mobile-only, lazy)
-  const round0Id = data.recent_rounds[0]?.id ?? null;
-  const round1Id = data.recent_rounds[1]?.id ?? null;
-  const round2Id = data.recent_rounds[2]?.id ?? null;
-  const { data: r0 } = useQuery({ queryKey: ["round", round0Id], queryFn: () => api.getRound(round0Id!), enabled: !!round0Id });
-  const { data: r1 } = useQuery({ queryKey: ["round", round1Id], queryFn: () => api.getRound(round1Id!), enabled: !!round1Id });
-  const { data: r2 } = useQuery({ queryKey: ["round", round2Id], queryFn: () => api.getRound(round2Id!), enabled: !!round2Id });
-  type RecentHole = { hole_number: number; strokes?: number | null; par_played?: number | null };
-  const toHoles = (d: typeof r0): RecentHole[] => (d?.hole_scores ?? []) as RecentHole[];
-  const recentRoundHoles: RecentHole[][] = [toHoles(r0), toHoles(r1), toHoles(r2)];
-  const lastRoundHoles = recentRoundHoles[0];
-
-  // Top strip date
-  const now = new Date();
-  const dayLabel = now.toLocaleDateString("en-US", { weekday: "short" });
-  const dateLabel = now.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
-  // Handicap delta display
-  const hiDeltaText = handicapDelta != null && Math.abs(handicapDelta) >= 0.1
-    ? `${handicapDelta < 0 ? "↓" : "↑"} ${Math.abs(handicapDelta).toFixed(1)}`
-    : null;
-  const hiDeltaColor = handicapDelta != null && handicapDelta < 0 ? "#059669" : "#f87171";
-
-  // Scoring avg delta: L20 avg vs most-recent-5 avg
-  const scoreDelta = last20ScoringAvg != null && l5ScoringAvg != null
-    ? last20ScoringAvg - l5ScoringAvg   // positive = L5 is lower = improving
-    : null;
-  const scoreDeltaText = scoreDelta != null && Math.abs(scoreDelta) >= 0.1
-    ? `${scoreDelta > 0 ? "↓" : "↑"} ${Math.abs(scoreDelta).toFixed(1)} vs L5`
-    : null;
-  const scoreDeltaImproving = scoreDelta != null && scoreDelta > 0;  // L5 lower than L20 = improving
-
-  // Score mix legend groups
-  const birdiesPlusPct = (l20ScoreMix.find((d) => d.name === "eagle")?.value ?? 0)
-    + (l20ScoreMix.find((d) => d.name === "birdie")?.value ?? 0);
-  const parPct         = l20ScoreMix.find((d) => d.name === "par")?.value ?? 0;
-  const bogeyPct       = l20ScoreMix.find((d) => d.name === "bogey")?.value ?? 0;
-  const doublePct      = l20ScoreMix.find((d) => d.name === "double_bogey")?.value ?? 0;
-  const triplePlusPct  = (l20ScoreMix.find((d) => d.name === "triple_bogey")?.value ?? 0)
-    + (l20ScoreMix.find((d) => d.name === "quad_bogey")?.value ?? 0);
-
-  const legendItems = [
-    { label: "Birdie+", pct: birdiesPlusPct, color: scoreColors.birdie },
-    { label: "Par",     pct: parPct,         color: scoreColors.par },
-    { label: "Bogey",   pct: bogeyPct,       color: scoreColors.bogey },
-    { label: "Dbl",     pct: doublePct,      color: scoreColors.double_bogey },
-    { label: "Tpl+",    pct: triplePlusPct,  color: scoreColors.triple_bogey },
-  ];
-
-  const totalL20Holes = (trends?.score_type_distribution ?? []).reduce(
-    (s, r) => s + r.holes_counted, 0,
-  );
-
-  // Last round footer chips
-  const footerChips = (() => {
-    if (!lastRoundHoles.length) return [];
-    const counts: Partial<Record<HoleKey, number>> = {};
-    for (const h of lastRoundHoles) {
-      const k = getScoreKey(h.strokes, h.par_played);
-      counts[k] = (counts[k] ?? 0) + 1;
-    }
-    const items: { label: string; count: number; color: string }[] = [];
-    const birdiesPlus = (counts.eagle ?? 0) + (counts.birdie ?? 0);
-    if (birdiesPlus > 0) items.push({ label: "Birdie+", count: birdiesPlus, color: scoreColors.birdie ?? "#059669" });
-    if (counts.par)          items.push({ label: "Par",    count: counts.par,          color: scoreColors.par     ?? "#9ca3af" });
-    if (counts.bogey)        items.push({ label: "Bogey",  count: counts.bogey,        color: scoreColors.bogey   ?? "#f87171" });
-    if (counts.double_bogey) items.push({ label: "Double", count: counts.double_bogey, color: scoreColors.double_bogey ?? "#60a5fa" });
-    return items;
-  })();
-
-  // Goal progress
-  const goalProgress = (() => {
-    if (!user?.scoring_goal) return null;
-    const current = goalReport?.scoring_average ?? last20ScoringAvg;
-    if (current == null) return null;
-    if (goalReport?.on_track) return 100;
-    const validScores = dualData.filter((d) => d.total_score != null);
-    if (!validScores.length) return null;
-    const startAvg = validScores[0].total_score!;
-    const goalTarget = user.scoring_goal;
-    const range = startAvg - goalTarget;
-    if (range <= 0) return 100;
-    return Math.min(100, Math.max(0, ((startAvg - current) / range) * 100));
-  })();
+  if (!data) return null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, paddingTop: 8 }}>
@@ -587,7 +490,7 @@ export function MobileDashboard({
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "0 4px 6px" }}>
         <div>
           <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: "1.3px", textTransform: "uppercase", color: MUTED, marginBottom: 3 }}>
-            {dayLabel} · {dateLabel}
+            {greetingDateLabel}
           </div>
           <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 700, letterSpacing: "-0.4px", color: INK, lineHeight: 1 }}>
             Hi {firstName}
@@ -595,17 +498,17 @@ export function MobileDashboard({
         </div>
         <button
           type="button"
-          onClick={() => setHandicapSheetOpen(true)}
+          onClick={openHandicapSheet}
           style={{ textAlign: "right", background: "none", border: "none", cursor: "pointer", padding: "4px 0", borderRadius: 8 }}
         >
           <div style={{ fontFamily: SANS, fontSize: 9, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: MUTED, marginBottom: 2 }}>
             Handicap
           </div>
           <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 700, letterSpacing: "-0.5px", color: INK, lineHeight: 1 }}>
-            {formatHI(data.handicap_index)}
+            {handicapIndexLabel}
           </div>
           {hiDeltaText && (
-            <div style={{ fontFamily: MONO, fontSize: 10, color: hiDeltaColor, whiteSpace: "nowrap", marginTop: 2 }}>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: hiDeltaImproving ? "#059669" : "#f87171", whiteSpace: "nowrap", marginTop: 2 }}>
               {hiDeltaText}
             </div>
           )}
@@ -639,7 +542,7 @@ export function MobileDashboard({
         {/* 2b. Big number + sparkline */}
         <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 14, alignItems: "center", marginBottom: 16 }}>
           <div style={{ fontFamily: SANS, fontSize: 64, fontWeight: 700, letterSpacing: "-2.4px", lineHeight: 1, color: INK }}>
-            {last20ScoringAvg != null ? last20ScoringAvg.toFixed(1) : "—"}
+            {last20ScoringAvgLabel}
           </div>
           <HeroSparkline data={dualData} />
         </div>
@@ -651,9 +554,9 @@ export function MobileDashboard({
               <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: MUTED }}>
                 Score Mix · L20
               </div>
-              {totalL20Holes > 0 && (
+              {mixHoleCountLabel && (
                 <div style={{ fontFamily: MONO, fontSize: 10, color: MUTED, whiteSpace: "nowrap" }}>
-                  {totalL20Holes} holes
+                  {mixHoleCountLabel}
                 </div>
               )}
             </div>
@@ -663,10 +566,10 @@ export function MobileDashboard({
               ))}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", marginTop: 8 }}>
-              {legendItems.map((item) => (
+              {mixLegend.map((item) => (
                 <div key={item.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                   <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: INK }}>
-                    {item.pct.toFixed(0)}%
+                    {item.pctLabel}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
                     <div style={{ width: 6, height: 6, borderRadius: 1, background: item.color, flexShrink: 0 }} />
@@ -683,12 +586,7 @@ export function MobileDashboard({
         {/* 2d. Metadata strip */}
         <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: 12, marginTop: 2 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", textAlign: "center" }}>
-            {([
-              { label: "BEST",   value: data.best_round?.toString() ?? "—" },
-              { label: "ROUNDS", value: data.total_rounds?.toString() ?? "—" },
-              { label: "PUTTS",  value: putts > 0 ? putts.toFixed(1) : "—" },
-              { label: "GIR",    value: girPct > 0 ? `${girPct.toFixed(0)}%` : "—" },
-            ] as const).map(({ label, value }) => (
+            {heroKpis.map(({ label, value }) => (
               <div key={label} style={{ padding: "0 2px" }}>
                 <div style={{ fontFamily: SANS, fontSize: 9, fontWeight: 700, letterSpacing: "1.2px", textTransform: "uppercase", color: MUTED, marginBottom: 3 }}>
                   {label}
@@ -711,20 +609,20 @@ export function MobileDashboard({
                 Last Round
               </div>
               <div style={{ fontFamily: SANS, fontSize: 17, fontWeight: 700, color: INK, letterSpacing: "-0.3px", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {lastRound.course_name ? formatCourseName(lastRound.course_name) : "Unknown course"}
+                {lastRound.courseLabel}
               </div>
               <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED, whiteSpace: "nowrap", marginTop: 3, display: "flex", alignItems: "center" }}>
-                {fmtDate(lastRound.date)}
-                {lastRound.tee_box && <><Dot />{lastRound.tee_box}</>}
+                {lastRound.dateLabel}
+                {lastRound.teeBox && <><Dot />{lastRound.teeBox}</>}
               </div>
             </div>
             <div style={{ textAlign: "right", flexShrink: 0 }}>
               <div style={{ fontFamily: MONO, fontSize: 38, fontWeight: 600, letterSpacing: "-1px", lineHeight: 1, color: INK }}>
-                {lastRound.total_score ?? "—"}
+                {lastRound.scoreLabel}
               </div>
-              {lastRound.to_par != null && (
-                <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: lastRound.to_par > 0 ? "#f87171" : "#059669" }}>
-                  {lastRound.to_par > 0 ? `+${lastRound.to_par}` : lastRound.to_par === 0 ? "E" : lastRound.to_par}
+              {lastRound.toParLabel && (
+                <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: (lastRound.toPar ?? 0) > 0 ? "#f87171" : "#059669" }}>
+                  {lastRound.toParLabel}
                 </div>
               )}
             </div>
@@ -743,7 +641,7 @@ export function MobileDashboard({
 
           <div style={{ borderTop: `1px dashed ${LINE}`, paddingTop: 12, marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {footerChips.map((chip) => (
+              {lastRoundChips.map((chip) => (
                 <div key={chip.label} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: SANS, fontSize: 10, color: MUTED }}>
                   <div style={{ width: 8, height: 8, borderRadius: 2, background: chip.color, flexShrink: 0 }} />
                   <span>{chip.count} {chip.label}</span>
@@ -762,19 +660,19 @@ export function MobileDashboard({
       )}
 
       {/* ── 4. Inline Goal Row ────────────────────────────────────────────────── */}
-      {user?.scoring_goal != null && goalProgress != null && (
+      {hasScoringGoal && goalProgressPct != null && (
         <div style={{ padding: "6px 6px 0" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
             <span style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: INK }}>Goal</span>
             <span style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: PRIMARY, marginLeft: 4 }}>
-              Break {user.scoring_goal + 1}
+              {goalTargetLabel}
             </span>
           </div>
           <div style={{ height: 5, background: "#e5e7eb", borderRadius: 99, position: "relative", overflow: "visible" }}>
-            <div style={{ height: "100%", width: `${goalProgress}%`, background: PRIMARY, borderRadius: 99 }} />
+            <div style={{ height: "100%", width: `${goalProgressPct}%`, background: PRIMARY, borderRadius: 99 }} />
             <div style={{
               position: "absolute",
-              top: -3, left: `${goalProgress}%`,
+              top: -3, left: `${goalProgressPct}%`,
               width: 2, height: 11,
               background: TICK, borderRadius: 99,
               transform: "translateX(-50%)",
@@ -789,6 +687,9 @@ export function MobileDashboard({
           dualData={dualData}
           scoreColor={scoreLineColor}
           handicapColor={handicapLineColor}
+          view={trendView}
+          trendTabs={trendTabs}
+          onViewChange={setTrendView}
         />
       </div>
 
@@ -805,20 +706,20 @@ export function MobileDashboard({
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           {([
-            { label: "Scrambling", value: scramblingPct, tour: 57 },
-            { label: "Up & Down",  value: upAndDownPct,  tour: 50 },
-          ] as const).map(({ label, value, tour }) => (
+            { label: "Scrambling", value: scramblingPct, display: scramblingPctLabel, tour: 57 },
+            { label: "Up & Down",  value: upAndDownPct,  display: upAndDownPctLabel,  tour: 50 },
+          ] as const).map(({ label, value, display, tour }) => (
             <div key={label}>
               <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "1.3px", textTransform: "uppercase", color: MUTED, marginBottom: 4 }}>
                 {label}
               </div>
               <div style={{ fontFamily: MONO, fontSize: 26, fontWeight: 600, letterSpacing: "-0.5px", color: INK, lineHeight: 1 }}>
-                {value != null ? value.toFixed(0) : "—"}
-                <span style={{ fontSize: 16, fontWeight: 500, color: MUTED }}>%</span>
+                {display}
+                {value != null && <span style={{ fontSize: 16, fontWeight: 500, color: MUTED }}>%</span>}
               </div>
               <BenchmarkBar value={value} tour={tour} />
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>You {value != null ? `${value.toFixed(0)}%` : "—"}</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>You {value != null ? `${display}%` : "—"}</span>
                 <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>Tour {tour}%</span>
               </div>
             </div>
@@ -829,11 +730,18 @@ export function MobileDashboard({
       {/* ── Handicap Breakdown Sheet ─────────────────────────────────────────── */}
       <HandicapBreakdownSheet
         open={handicapSheetOpen}
-        onClose={() => setHandicapSheetOpen(false)}
-        handicapIndex={data.handicap_index}
-        dualData={dualData}
-        scoreDifferentials={trends?.score_differentials ?? []}
-        scoreTrend={trends?.score_trend ?? []}
+        onClose={closeHandicapSheet}
+        handicapIndexLabel={handicapIndexLabel}
+        rows={whsRows}
+        windowSize={whsWindowSize}
+        countUsed={whsCountUsed}
+        adjustment={whsAdjustment}
+        adjustmentLabel={whsAdjustmentLabel}
+        diffAvgLabel={whsDiffAvgLabel}
+        hasRatedRounds={whsHasRatedRounds}
+        showCalculation={whsShowCalculation}
+        usedLegend={whsUsedLegend}
+        contextNote={whsContextNote}
       />
 
       {/* ── 7. Recent Rounds Card ────────────────────────────────────────────── */}
@@ -845,16 +753,16 @@ export function MobileDashboard({
           </Link>
         </div>
 
-        {recentRounds.length === 0 && (
+        {recentRoundRows.length === 0 && (
           <div style={{ padding: "16px 14px", fontFamily: SANS, fontSize: 14, color: MUTED }}>No rounds yet</div>
         )}
 
-        {recentRounds.map((r, idx) => {
-          const accentColor = r.to_par == null ? "#9ca3af"
-            : r.to_par <= 0  ? "#059669"
-            : r.to_par <= 14 ? "#f87171"
+        {recentRoundRows.map((r, idx) => {
+          const accentColor = r.toPar == null ? "#9ca3af"
+            : r.toPar <= 0  ? "#059669"
+            : r.toPar <= 14 ? "#f87171"
             : "#60a5fa";
-          const isLast = idx === recentRounds.length - 1;
+          const isLast = idx === recentRoundRows.length - 1;
 
           return (
             <button
@@ -882,49 +790,43 @@ export function MobileDashboard({
               <div style={{ position: "absolute", left: 0, top: 14, bottom: 14, width: 3, borderRadius: 99, background: accentColor }} />
               <div>
                 <div style={{ fontFamily: MONO, fontSize: 28, fontWeight: 700, letterSpacing: "-1px", color: INK, lineHeight: 1 }}>
-                  {r.total_score ?? "—"}
+                  {r.scoreLabel}
                 </div>
-                {r.to_par != null && (
-                  <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, color: r.to_par > 0 ? "#f87171" : "#059669" }}>
-                    {r.to_par > 0 ? `+${r.to_par}` : r.to_par === 0 ? "E" : r.to_par}
+                {r.toParLabel && (
+                  <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, color: (r.toPar ?? 0) > 0 ? "#f87171" : "#059669" }}>
+                    {r.toParLabel}
                   </div>
                 )}
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, letterSpacing: "-0.2px", color: INK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {r.course_name ? formatCourseName(r.course_name) : "Unknown course"}
+                  {r.courseLabel}
                 </div>
                 <div style={{ fontFamily: SANS, fontSize: 11, color: MUTED, whiteSpace: "nowrap", marginTop: 2, display: "flex", alignItems: "center" }}>
-                  {fmtDate(r.date)}
-                  {r.tee_box && <><Dot />{r.tee_box}</>}
+                  {r.dateLabel}
+                  {r.teeBox && <><Dot />{r.teeBox}</>}
                 </div>
               </div>
-              {(() => {
-                const holes = recentRoundHoles[idx] ?? [];
-                return holes.length > 0 ? (
-                  <div style={{ width: 78, height: 16, display: "flex", gap: 1.5, alignItems: "flex-end", flexShrink: 0 }}>
-                    {[...holes].sort((a, b) => a.hole_number - b.hole_number).map((h) => {
-                      const key = getScoreKey(h.strokes, h.par_played);
-                      return (
-                        <div
-                          key={h.hole_number}
-                          style={{
-                            flex: 1,
-                            height: "100%",
-                            borderRadius: 1.5,
-                            background: scoreColors[key] ?? "#9ca3af",
-                            opacity: key === "par" ? 0.35 : 1,
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div style={{ flexShrink: 0 }}>
-                    <SolidMiniStrip toPar={r.to_par} />
-                  </div>
-                );
-              })()}
+              {r.holes.length > 0 ? (
+                <div style={{ width: 78, height: 16, display: "flex", gap: 1.5, alignItems: "flex-end", flexShrink: 0 }}>
+                  {[...r.holes].sort((a, b) => a.hole_number - b.hole_number).map((h) => (
+                    <div
+                      key={h.hole_number}
+                      style={{
+                        flex: 1,
+                        height: "100%",
+                        borderRadius: 1.5,
+                        background: scoreColors[h.colorKey] ?? "#9ca3af",
+                        opacity: h.colorKey === "par" ? 0.35 : 1,
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div style={{ flexShrink: 0 }}>
+                  <SolidMiniStrip toPar={r.toPar} />
+                </div>
+              )}
             </button>
           );
         })}

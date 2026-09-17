@@ -38,27 +38,8 @@ export function DashboardPage({ userId }: DashboardPageProps) {
 
   return (
     <ResponsivePage
-      mobile={
-        <MobileDashboard
-          data={vm.data!}
-          trends={vm.trends}
-          user={vm.user ?? null}
-          goalReport={vm.goalReport ?? null}
-          dualData={vm.dualData}
-          last20ScoringAvg={vm.last20ScoringAvg}
-          l5ScoringAvg={vm.l5ScoringAvg}
-          handicapDelta={vm.handicapDelta}
-          l20ScoreMix={vm.l20ScoreMix}
-          girPct={vm.girPct}
-          scramblingPct={vm.scramblingPct}
-          upAndDownPct={vm.upAndDownPct}
-          putts={vm.putts}
-          scoreColors={vm.scoreColors}
-          scoreLineColor={vm.scoreLineColor}
-          handicapLineColor={vm.handicapLineColor}
-        />
-      }
-      desktop={<DashboardDesktopLayout {...vm} />}
+      mobile={<MobileDashboard vm={vm} />}
+      desktop={<DashboardDesktopLayout vm={vm} />}
     />
   );
 }

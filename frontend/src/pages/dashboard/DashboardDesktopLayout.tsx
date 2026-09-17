@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 import {
@@ -78,15 +77,20 @@ function MiniKpi({ label, value, trend }: {
   );
 }
 
-export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
+export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
-  const [handicapSheetOpen, setHandicapSheetOpen] = useState(false);
   const {
-    data, trends, user, goalReport,
-    dualData, recentMilestones, last20ScoringAvg, hiTrend,
-    girPct, girDonutData, recentDistribution, scramblingPct, upAndDownPct,
-    putts, puttsGaugeData, puttsColor,
+    data, user, goalReport, trends,
+    dualData, recentMilestones, last20ScoringAvgLabel, hiTrend,
+    girPctLabel, girDonutData, recentDistribution, scramblingPct, scramblingPctLabel,
+    upAndDownPct, upAndDownPctLabel,
+    puttsLabel, puttsGaugeData, puttsColor,
     scoreLineColor, handicapLineColor, gridColor, girColor, warningColor, dangerColor, mutedFill,
+    handicapIndexLabel, firstName, bestRound, bestRoundDetail, sidebarRounds,
+    hasScoringGoal, goalTargetLabel, goalNumberLabel, goalAverageLabel, goalBarPct, goalFocusHeadline, goalOnTrack,
+    handicapSheetOpen, openHandicapSheet, closeHandicapSheet,
+    whsRows, whsWindowSize, whsCountUsed, whsAdjustment, whsAdjustmentLabel,
+    whsDiffAvgLabel, whsHasRatedRounds, whsShowCalculation, whsUsedLegend, whsContextNote,
   } = vm;
 
   if (!data) return null;
@@ -100,21 +104,23 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
           <ProfileHeroBanner
             user={user ?? null}
             handicapIndex={data.handicap_index}
-            onHandicapClick={() => setHandicapSheetOpen(true)}
+            handicapLabel={handicapIndexLabel}
+            firstName={firstName}
+            onHandicapClick={openHandicapSheet}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 auto-rows-min mt-6">
 
             <Card className="lg:col-span-3">
               <CardContent>
-                <BestRoundHighlight rounds={data.recent_rounds} />
+                <BestRoundHighlight round={bestRound} detail={bestRoundDetail} />
               </CardContent>
             </Card>
 
             <Card className="lg:col-span-1">
               <CardContent>
                 <div className="flex flex-col gap-5 h-full justify-between">
-                  <MiniKpi label="Scoring Avg (L20)" value={last20ScoringAvg != null ? last20ScoringAvg.toFixed(1) : null} trend={hiTrend} />
+                  <MiniKpi label="Scoring Avg (L20)" value={last20ScoringAvgLabel === "—" ? null : last20ScoringAvgLabel} trend={hiTrend} />
                   <MiniKpi label="Total Rounds" value={data.total_rounds} />
                 </div>
               </CardContent>
@@ -153,7 +159,7 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <div className="text-4xl font-semibold tracking-stat text-card-foreground">{girPct.toFixed(0)}%</div>
+                    <div className="text-4xl font-semibold tracking-stat text-card-foreground">{girPctLabel}</div>
                     <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow">GIR</div>
                   </div>
                 </div>
@@ -203,14 +209,14 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                 <div className="flex items-center justify-around mt-6">
                   <div className="text-center">
                     <div className="text-4xl font-semibold text-card-foreground tracking-stat">
-                      {scramblingPct != null ? `${scramblingPct.toFixed(0)}%` : "—"}
+                      {scramblingPct != null ? `${scramblingPctLabel}%` : "—"}
                     </div>
                     <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow mt-0.5">Scrambling</div>
                   </div>
                   <div className="w-px h-8 bg-muted" />
                   <div className="text-center">
                     <div className="text-4xl font-semibold text-card-foreground tracking-stat">
-                      {upAndDownPct != null ? `${upAndDownPct.toFixed(0)}%` : "—"}
+                      {upAndDownPct != null ? `${upAndDownPctLabel}%` : "—"}
                     </div>
                     <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow mt-0.5">Up & Down</div>
                   </div>
@@ -244,7 +250,7 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pointer-events-none">
-                      <div className="text-2xl font-bold text-card-foreground">{putts.toFixed(1)}</div>
+                      <div className="text-2xl font-bold text-card-foreground">{puttsLabel}</div>
                       <div className="text-caption text-muted-foreground uppercase tracking-kicker">Putts</div>
                     </div>
                   </div>
@@ -280,36 +286,36 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
               }}
             >
               <CardContent>
-              {user?.scoring_goal && goalReport ? (
+              {hasScoringGoal && goalReport ? (
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground mb-0.5">Scoring Goal</div>
                       <div className="text-sm font-bold text-card-foreground">
-                        Target: Break {user.scoring_goal + 1}
+                        Target: {goalTargetLabel}
                       </div>
                     </div>
                     <span className="text-label font-semibold text-primary">Goals →</span>
                   </div>
                   <div className="mb-3">
                     <div className="flex justify-between text-meta text-muted-foreground mb-1">
-                      <span>Avg {goalReport.scoring_average?.toFixed(1)}</span>
-                      <span>Goal {user.scoring_goal + 1}</span>
+                      <span>{goalAverageLabel}</span>
+                      <span>Goal {goalNumberLabel}</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
-                          width: `${Math.min(100, Math.max(5, goalReport.on_track ? 100 : goalReport.gap == null ? 5 : (1 - goalReport.gap / Math.max(goalReport.scoring_average ?? 1, 1)) * 100))}%`,
-                          background: goalReport.on_track ? colors.score.birdie.fill : `linear-gradient(90deg, ${colors.primary}, ${chartColors.axis})`,
+                          width: `${goalBarPct}%`,
+                          background: goalOnTrack ? colors.score.birdie.fill : `linear-gradient(90deg, ${colors.primary}, ${chartColors.axis})`,
                         }}
                       />
                     </div>
                   </div>
-                  {goalReport.savers[0] && (
+                  {goalFocusHeadline && (
                     <p className="text-label text-muted-foreground leading-relaxed">
                       <span className="font-semibold text-secondary-foreground">Focus: </span>
-                      {goalReport.savers[0].headline}
+                      {goalFocusHeadline}
                     </p>
                   )}
                 </div>
@@ -364,7 +370,7 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
             </CardHeader>
             <CardContent>
               <div className="max-h-96 overflow-y-auto -mx-1">
-                <RecentRoundsTable rounds={data.recent_rounds.slice(0, 10)} />
+                <RecentRoundsTable rounds={sidebarRounds} />
               </div>
               <div className="mt-4">
                 <Button
@@ -384,11 +390,18 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
 
       <HandicapBreakdownSheet
         open={handicapSheetOpen}
-        onClose={() => setHandicapSheetOpen(false)}
-        handicapIndex={data.handicap_index}
-        dualData={dualData}
-        scoreDifferentials={trends?.score_differentials ?? []}
-        scoreTrend={trends?.score_trend ?? []}
+        onClose={closeHandicapSheet}
+        handicapIndexLabel={handicapIndexLabel}
+        rows={whsRows}
+        windowSize={whsWindowSize}
+        countUsed={whsCountUsed}
+        adjustment={whsAdjustment}
+        adjustmentLabel={whsAdjustmentLabel}
+        diffAvgLabel={whsDiffAvgLabel}
+        hasRatedRounds={whsHasRatedRounds}
+        showCalculation={whsShowCalculation}
+        usedLegend={whsUsedLegend}
+        contextNote={whsContextNote}
       />
     </div>
   );
