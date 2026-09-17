@@ -2,7 +2,8 @@ import { Share2, ArrowRight, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { ShareCard } from "@/components/share/ShareCard";
 import { useShareRound } from "@/hooks/useShareRound";
-import { formatToPar } from "@/types/golf";
+import { toParDisplay } from "@/brand/theme";
+import { roundToPar, totalStrokes } from "@/domain/round";
 import { formatCourseName } from "@/lib/courseName";
 import type { Round } from "@/types/golf";
 
@@ -15,14 +16,9 @@ export function ScanSuccessStep({ round, onView }: ScanSuccessStepProps) {
   const courseName = formatCourseName(round.course?.name ?? round.course_name_played);
   const { cardRef, share, sharing } = useShareRound();
 
-  const totalScore = round.hole_scores.reduce((s, h) => s + (h.strokes ?? 0), 0);
-  const coursePar = round.course
-    ? round.course.holes.reduce((s, h) => s + (h.par ?? 0), 0) || null
-    : round.hole_scores.some((s) => s.par_played != null)
-    ? round.hole_scores.reduce((s, h) => s + (h.par_played ?? 0), 0)
-    : null;
-  const toPar = coursePar !== null && totalScore > 0 ? totalScore - coursePar : null;
-  const toParStr = formatToPar(toPar);
+  const totalScore = totalStrokes(round);
+  const toPar = roundToPar(round);
+  const toParStr = toParDisplay(toPar, "-");
   const toParColor =
     toPar === null ? "text-gray-500" : toPar < 0 ? "text-emerald-600" : toPar > 0 ? "text-red-500" : "text-gray-500";
 

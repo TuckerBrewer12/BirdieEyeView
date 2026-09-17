@@ -9,6 +9,9 @@ import type { DashboardData } from "@/types/golf";
 import type { AnalyticsData, GoalReport } from "@/types/analytics";
 import type { DualTrendPoint, ScoreDistItem } from "./useDashboardPageViewModel";
 import { formatCourseName } from "@/lib/courseName";
+import { toParDisplay } from "@/brand/theme";
+import { formatHandicapIndex } from "@/domain/handicap";
+import { queryKeys } from "@/data/queryKeys";
 import { api } from "@/lib/api";
 import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 
@@ -22,12 +25,6 @@ const SANS    = '"Inter", system-ui, -apple-system, sans-serif';
 const MONO    = '"Inter", system-ui, -apple-system, sans-serif';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function formatHI(hi: number | null | undefined): string {
-  if (hi == null) return "—";
-  if (hi < 0) return `+${Math.abs(hi).toFixed(1)}`;
-  return hi.toFixed(1);
-}
-
 function getDotColor(toPar: number | null): string {
   if (toPar == null) return "#9ca3af";
   if (toPar <= -2) return "#b45309";
@@ -312,14 +309,14 @@ function MobileScoreTrend({
                     <div className="font-bold text-gray-900 text-sm tabular-nums">{selValue}</div>
                     {selected.point.to_par != null && (
                       <div className="text-[11px] font-semibold" style={{ color: getDotColor(selected.point.to_par) }}>
-                        {selected.point.to_par > 0 ? `+${selected.point.to_par}` : selected.point.to_par}
+                        {toParDisplay(selected.point.to_par)}
                       </div>
                     )}
                   </>
                 )}
                 {view === "hcp" && (
                   <div className="font-bold text-sm tabular-nums" style={{ color }}>
-                    {formatHI(selValue)}
+                    {formatHandicapIndex(selValue)}
                   </div>
                 )}
               </div>
@@ -359,7 +356,7 @@ function MobileScoreTrend({
                 textAnchor="end" fontSize={11} fontWeight="bold" fill="#6b7280"
                 paintOrder="stroke" stroke="white" strokeWidth={4} strokeLinejoin="round"
               >
-                {view === "hcp" ? formatHI(v) : v}
+                {view === "hcp" ? formatHandicapIndex(v) : v}
               </text>
             </g>
           ))}
@@ -499,9 +496,9 @@ export function MobileDashboard({
   const round0Id = data.recent_rounds[0]?.id ?? null;
   const round1Id = data.recent_rounds[1]?.id ?? null;
   const round2Id = data.recent_rounds[2]?.id ?? null;
-  const { data: r0 } = useQuery({ queryKey: ["round", round0Id], queryFn: () => api.getRound(round0Id!), enabled: !!round0Id });
-  const { data: r1 } = useQuery({ queryKey: ["round", round1Id], queryFn: () => api.getRound(round1Id!), enabled: !!round1Id });
-  const { data: r2 } = useQuery({ queryKey: ["round", round2Id], queryFn: () => api.getRound(round2Id!), enabled: !!round2Id });
+  const { data: r0 } = useQuery({ queryKey: queryKeys.round(round0Id ?? undefined), queryFn: () => api.getRound(round0Id!), enabled: !!round0Id });
+  const { data: r1 } = useQuery({ queryKey: queryKeys.round(round1Id ?? undefined), queryFn: () => api.getRound(round1Id!), enabled: !!round1Id });
+  const { data: r2 } = useQuery({ queryKey: queryKeys.round(round2Id ?? undefined), queryFn: () => api.getRound(round2Id!), enabled: !!round2Id });
   type RecentHole = { hole_number: number; strokes?: number | null; par_played?: number | null };
   const toHoles = (d: typeof r0): RecentHole[] => (d?.hole_scores ?? []) as RecentHole[];
   const recentRoundHoles: RecentHole[][] = [toHoles(r0), toHoles(r1), toHoles(r2)];
@@ -602,7 +599,7 @@ export function MobileDashboard({
             Handicap
           </div>
           <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 700, letterSpacing: "-0.5px", color: INK, lineHeight: 1 }}>
-            {formatHI(data.handicap_index)}
+            {formatHandicapIndex(data.handicap_index)}
           </div>
           {hiDeltaText && (
             <div style={{ fontFamily: MONO, fontSize: 10, color: hiDeltaColor, whiteSpace: "nowrap", marginTop: 2 }}>
@@ -724,7 +721,7 @@ export function MobileDashboard({
               </div>
               {lastRound.to_par != null && (
                 <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: lastRound.to_par > 0 ? "#f87171" : "#059669" }}>
-                  {lastRound.to_par > 0 ? `+${lastRound.to_par}` : lastRound.to_par === 0 ? "E" : lastRound.to_par}
+                  {toParDisplay(lastRound.to_par)}
                 </div>
               )}
             </div>
@@ -886,7 +883,7 @@ export function MobileDashboard({
                 </div>
                 {r.to_par != null && (
                   <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, color: r.to_par > 0 ? "#f87171" : "#059669" }}>
-                    {r.to_par > 0 ? `+${r.to_par}` : r.to_par === 0 ? "E" : r.to_par}
+                    {toParDisplay(r.to_par)}
                   </div>
                 )}
               </div>

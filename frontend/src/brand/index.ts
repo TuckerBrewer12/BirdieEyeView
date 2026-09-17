@@ -18,6 +18,7 @@ export {
   scoreFill,
   scoreKeyFor,
   toParLabel,
+  toParDisplay,
   toParTextClass,
 } from "./theme";
 export type { ScoreKey } from "./theme";

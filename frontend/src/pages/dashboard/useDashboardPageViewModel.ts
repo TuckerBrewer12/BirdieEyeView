@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/data/queryKeys";
+import { userRepository } from "@/data/userRepository";
 import { api } from "@/lib/api";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette } from "@/lib/chartPalettes";
@@ -61,7 +63,7 @@ export interface DashboardPageViewModel {
 
 export function useDashboardPageViewModel(userId: string): DashboardPageViewModel {
   const { data: fetched, isLoading: loading, error, refetch } = useQuery({
-    queryKey: ["dashboard", userId],
+    queryKey: queryKeys.dashboard(userId),
     queryFn: async () => {
       const [dashboardResult, analyticsResult] = await Promise.allSettled([
         api.getDashboard(userId),
@@ -76,12 +78,12 @@ export function useDashboardPageViewModel(userId: string): DashboardPageViewMode
   });
 
   const { data: user } = useQuery({
-    queryKey: ["user", userId],
-    queryFn: () => api.getUser(userId),
+    queryKey: queryKeys.user(userId),
+    queryFn: () => userRepository.getUser(userId),
   });
 
   const { data: goalReport } = useQuery({
-    queryKey: ["goal-report", userId],
+    queryKey: queryKeys.goalReport(userId),
     queryFn: () => api.getGoalReport(userId, 20),
     enabled: !!user?.scoring_goal,
     retry: false,

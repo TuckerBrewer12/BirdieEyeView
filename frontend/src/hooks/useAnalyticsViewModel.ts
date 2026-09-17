@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { queryKeys } from "@/data/queryKeys";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette } from "@/lib/chartPalettes";
 import { SCORE_COLORS, SCORE_KEYS } from "@/lib/colors";
@@ -176,17 +177,17 @@ export function useAnalyticsViewModel(userId: string): AnalyticsViewModel {
   const [filters, setFilters] = useState<AnalyticsFilters>(DEFAULT_FILTERS);
 
   const { data, isLoading: loading } = useQuery({
-    queryKey: ["analytics", userId, filters],
+    queryKey: queryKeys.analytics(userId, filters),
     queryFn: () => api.getAnalytics(userId, filters),
   });
 
   const { data: playedCourses = [] } = useQuery({
-    queryKey: ["played-courses", userId],
+    queryKey: queryKeys.playedCourses(userId),
     queryFn: () => api.getPlayedCourses(userId),
   });
 
   const { data: user } = useQuery({
-    queryKey: ["user", userId],
+    queryKey: queryKeys.user(userId),
     queryFn: () => api.getUser(userId),
   });
 

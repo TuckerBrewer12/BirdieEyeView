@@ -4,26 +4,28 @@ import { Camera, Upload, RotateCcw, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { usePublicScan } from "@/hooks/usePublicScan";
 import { ScorecardLayoutPicker } from "@/components/scan/ScorecardLayoutPicker";
+import { toParDisplay } from "@/brand/theme";
+import { scoreKind, strokesToPar } from "@/domain/score";
 import type { ExtractedHoleScore, ScanResult } from "@/types/scan";
 
-// ── Score helpers (identical to ScanReviewStep) ──────────────────────────────
+const SCORE_CELL_CLASS: Record<NonNullable<ReturnType<typeof scoreKind>>, string> = {
+  eagle: "border-yellow-500 bg-yellow-50 text-yellow-900",
+  birdie: "border-green-500 bg-green-50 text-green-900",
+  par: "border-gray-300 bg-white text-gray-800",
+  bogey: "border-red-300 bg-red-50 text-red-800",
+  double: "border-orange-400 bg-orange-100 text-orange-900",
+  triple: "border-rose-400 bg-rose-100 text-rose-900",
+  quad: "border-red-600 bg-red-200 text-red-950",
+};
 
 function getScoreColorClass(strokes: number | null, par: number | null): string {
-  if (strokes === null || par === null) return "border-gray-200 text-gray-400";
-  const diff = strokes - par;
-  if (diff <= -2) return "border-yellow-500 bg-yellow-50 text-yellow-900";
-  if (diff === -1) return "border-green-500 bg-green-50 text-green-900";
-  if (diff === 0)  return "border-gray-300 bg-white text-gray-800";
-  if (diff === 1)  return "border-red-300 bg-red-50 text-red-800";
-  if (diff === 2)  return "border-orange-400 bg-orange-100 text-orange-900";
-  if (diff === 3)  return "border-rose-400 bg-rose-100 text-rose-900";
-  return "border-red-600 bg-red-200 text-red-950";
+  const kind = scoreKind(strokes, par);
+  if (kind == null) return "border-gray-200 text-gray-400";
+  return SCORE_CELL_CLASS[kind];
 }
 
 function toParStr(strokes: number | null, par: number | null): string {
-  if (strokes === null || par === null) return "-";
-  const d = strokes - par;
-  return d === 0 ? "E" : d > 0 ? `+${d}` : `${d}`;
+  return toParDisplay(strokesToPar(strokes, par), "-");
 }
 
 function toParCls(strokes: number | null, par: number | null): string {
@@ -253,11 +255,11 @@ function NineTable({
             );
           })}
           <td className={`px-2 py-1.5 text-center bg-gray-50 font-bold ${nineToPar === null ? "text-gray-400" : nineToPar < 0 ? "text-green-600" : nineToPar > 0 ? "text-red-500" : "text-gray-600"}`}>
-            {nineToPar === null ? "-" : nineToPar === 0 ? "E" : nineToPar > 0 ? `+${nineToPar}` : nineToPar}
+            {toParDisplay(nineToPar, "-")}
           </td>
           {showGrandTotal && (
             <td className={`px-2 py-1.5 text-center bg-gray-100 font-bold text-sm ${totalToPar === null ? "text-gray-400" : totalToPar < 0 ? "text-green-600" : totalToPar > 0 ? "text-red-500" : "text-gray-600"}`}>
-              {totalToPar === null ? "-" : totalToPar === 0 ? "E" : totalToPar > 0 ? `+${totalToPar}` : totalToPar}
+              {toParDisplay(totalToPar, "-")}
             </td>
           )}
         </tr>

@@ -6,7 +6,8 @@ import { api } from "@/lib/api";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
 import { SCORE_COLORS } from "@/lib/colors";
-import { formatToPar } from "@/types/golf";
+import { toParDisplay } from "@/brand/theme";
+import { scoreKind } from "@/domain/score";
 import type { ScoreTrendRow, NotableAchievements, NetScoreTrendRow } from "@/types/analytics";
 import type { Round } from "@/types/golf";
 
@@ -18,13 +19,18 @@ interface BestRoundCardProps {
 }
 
 function scoreColor(strokes: number | null, par: number | null, palette?: ChartPalette | null): string {
-  if (strokes == null || par == null) return "#f3f4f6";
-  const d = strokes - par;
-  if (d <= -2) return palette?.score.eagle    ?? SCORE_COLORS.eagle;
-  if (d === -1) return palette?.score.birdie  ?? SCORE_COLORS.birdie;
-  if (d === 0)  return palette?.score.par     ?? SCORE_COLORS.par;
-  if (d === 1)  return palette?.score.bogey   ?? SCORE_COLORS.bogey;
-  return palette?.score.double_bogey ?? SCORE_COLORS.double_bogey;
+  const kind = scoreKind(strokes, par);
+  if (kind == null) return "#f3f4f6";
+  const fills = {
+    eagle: palette?.score.eagle ?? SCORE_COLORS.eagle,
+    birdie: palette?.score.birdie ?? SCORE_COLORS.birdie,
+    par: palette?.score.par ?? SCORE_COLORS.par,
+    bogey: palette?.score.bogey ?? SCORE_COLORS.bogey,
+    double: palette?.score.double_bogey ?? SCORE_COLORS.double_bogey,
+    triple: palette?.score.triple_bogey ?? SCORE_COLORS.triple_bogey,
+    quad: palette?.score.quad_bogey ?? SCORE_COLORS.quad_bogey,
+  };
+  return fills[kind];
 }
 
 function scoreTextColor(strokes: number | null, par: number | null): string {
@@ -152,7 +158,7 @@ export function BestRoundCard({ scoreTrend, netScoreTrend, achievements, compact
                   className={`text-base font-bold ${(best.to_par ?? 0) <= 0 ? "text-primary" : ""}`}
                   style={(best.to_par ?? 0) > 0 ? { color: colorBlindPalette?.score.bogey ?? "#ef4444" } : undefined}
                 >
-                  {formatToPar(best.to_par)}
+                  {toParDisplay(best.to_par)}
                 </span>
                 {event?.course && (
                   <span className="text-xs text-gray-400 truncate max-w-[90px]">{event.course}</span>
@@ -229,7 +235,7 @@ export function BestRoundCard({ scoreTrend, netScoreTrend, achievements, compact
                 className={`text-xl font-bold ${(best.to_par ?? 0) <= 0 ? "text-primary" : ""}`}
                 style={(best.to_par ?? 0) > 0 ? { color: colorBlindPalette?.score.bogey ?? "#ef4444" } : undefined}
               >
-                {formatToPar(best.to_par)}
+                {toParDisplay(best.to_par)}
               </span>
               {event && (
                 <span className="text-xs text-gray-400">

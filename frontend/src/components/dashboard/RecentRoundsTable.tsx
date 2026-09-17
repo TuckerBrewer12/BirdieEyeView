@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import { toParDisplay } from "@/brand/theme";
 import type { RoundSummary } from "@/types/golf";
-import { formatToPar } from "@/types/golf";
 import { formatCourseName } from "@/lib/courseName";
 
 interface RecentRoundsTableProps {
@@ -49,7 +49,7 @@ export function RecentRoundsTable({ rounds }: RecentRoundsTableProps) {
                         : "bg-gray-100 text-gray-500"
                     }`}
                   >
-                    {formatToPar(r.to_par)}
+                    {toParDisplay(r.to_par, "-")}
                   </span>
                 </td>
               </tr>

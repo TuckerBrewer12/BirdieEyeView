@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api";
+import { queryKeys } from "@/data/queryKeys";
 import type { Friendship } from "@/types/golf";
 
 type Tab = "received" | "sent";
@@ -20,7 +21,7 @@ export function FriendsInboxPage({ userId }: { userId: string }) {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const { data: items = [], isLoading: loading, refetch } = useQuery({
-    queryKey: ["friendships-all"],
+    queryKey: queryKeys.friendshipsAll,
     queryFn: () => api.getFriendships(),
   });
 

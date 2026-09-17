@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { queryKeys } from "@/data/queryKeys";
 import { type ComparisonTargetValue } from "@/components/suggestions/ComparisonTargetToggle";
 import type { BenchmarkProfile } from "@/components/the-lab/constants";
 import { GOAL_OPTIONS, GOAL_BENCHMARK, HANDICAP_BENCHMARK } from "@/components/the-lab/constants";
@@ -77,25 +78,25 @@ export function useLabViewModel(userId: string): LabViewModel {
   const [selectedFriendId, setSelectedFriendId] = useState("");
 
   const { data: user } = useQuery({
-    queryKey: ["user", userId],
+    queryKey: queryKeys.user(userId),
     queryFn: () => api.getUser(userId),
   });
   const currentGoal = user?.scoring_goal ?? null;
 
   const { data: goalReport } = useQuery({
-    queryKey: ["goal-report", userId],
+    queryKey: queryKeys.goalReport(userId),
     queryFn: () => api.getGoalReport(userId, 20),
     enabled: !!currentGoal,
     retry: false,
   });
 
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
-    queryKey: ["analytics", userId, { limit: 20 }],
+    queryKey: queryKeys.analytics(userId, { limit: 20 }),
     queryFn: () => api.getAnalytics(userId, { limit: 20, timeframe: "all", courseId: "all" }),
   });
 
   const { data: acceptedFriendships = [] } = useQuery({
-    queryKey: ["friendships", "accepted"],
+    queryKey: queryKeys.friendshipsAccepted,
     queryFn: () => api.getFriendships("accepted"),
   });
 
@@ -126,7 +127,7 @@ export function useLabViewModel(userId: string): LabViewModel {
   const comparingFriend = radarMode === "benchmark" && targetHandicap === "friend";
 
   const { data: friendAnalytics, isLoading: friendAnalyticsLoading } = useQuery({
-    queryKey: ["analytics", "friend-compare", effectiveSelectedFriendId, { limit: 20 }],
+    queryKey: queryKeys.friendCompare(effectiveSelectedFriendId),
     queryFn: () => api.getAnalytics(effectiveSelectedFriendId, { limit: 20, timeframe: "all", courseId: "all" }),
     enabled: comparingFriend && !!effectiveSelectedFriendId,
   });
@@ -134,8 +135,8 @@ export function useLabViewModel(userId: string): LabViewModel {
   const { mutate: setGoal, isPending: settingGoal } = useMutation({
     mutationFn: (value: number) => api.updateUser(userId, { scoring_goal: value }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user", userId] });
-      queryClient.invalidateQueries({ queryKey: ["goal-report", userId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.user(userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.goalReport(userId) });
     },
   });
 

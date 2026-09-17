@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/data/queryKeys";
 import { pluralize } from "@/lib/pluralize";
 import type { CourseSummary } from "@/types/golf";
 import { coursesRepository, type CoursesRepository } from "./coursesRepository";
@@ -17,12 +18,6 @@ export interface CoursesPageViewModel {
   setSearch: (q: string) => void;
 }
 
-function isApiTestCourse(name: string | null | undefined): boolean {
-  if (!name) return false;
-  const normalized = name.trim().toLowerCase();
-  return normalized === "api test course" || normalized.startsWith("api test course ");
-}
-
 export function useCoursesPageViewModel(
   userId: string,
   repository: CoursesRepository = coursesRepository,
@@ -36,17 +31,14 @@ export function useCoursesPageViewModel(
   }, [search]);
 
   const { data: courses = [], isLoading: loading, isError, error } = useQuery({
-    queryKey: ["courses", userId, debouncedSearch],
+    queryKey: queryKeys.courses(userId, debouncedSearch),
     queryFn: () =>
       debouncedSearch
         ? repository.searchCourses(debouncedSearch, userId)
         : repository.getCourses(userId),
   });
 
-  const visibleCourses = useMemo(
-    () => courses.filter((course) => !isApiTestCourse(course.name)),
-    [courses],
-  );
+  const visibleCourses = courses;
 
   const loadError = isError
     ? (error instanceof Error ? error.message : "Could not load courses.")

@@ -1,21 +1,26 @@
 import { forwardRef } from "react";
 import type { Round } from "@/types/golf";
-import { getScoreType } from "@/types/golf";
+import { toParDisplay } from "@/brand/theme";
+import { getTee, teeYards } from "@/domain/course";
+import { scoreKind, type ScoreKind } from "@/domain/score";
+import { holePar, roundPar, totalStrokes } from "@/domain/round";
 
 interface ShareCardProps {
   round: Round;
   courseName: string;
 }
 
-type ScoreKey = "eagle" | "birdie" | "par" | "bogey" | "double-bogey" | "worse";
+type ScoreKey = ScoreKind | "worse";
 
 const COLORS: Record<ScoreKey, { bg: string; fg: string }> = {
-  eagle:          { bg: "#a16207", fg: "#fff" },
-  birdie:         { bg: "#0b8a5e", fg: "#fff" },
-  par:            { bg: "#e5e7eb", fg: "#4b5563" },
-  bogey:          { bg: "#d94040", fg: "#fff" },
-  "double-bogey": { bg: "#3b78e0", fg: "#fff" },
-  worse:          { bg: "#7c52e0", fg: "#fff" },
+  eagle:  { bg: "#a16207", fg: "#fff" },
+  birdie: { bg: "#0b8a5e", fg: "#fff" },
+  par:    { bg: "#e5e7eb", fg: "#4b5563" },
+  bogey:  { bg: "#d94040", fg: "#fff" },
+  double: { bg: "#3b78e0", fg: "#fff" },
+  triple: { bg: "#7c52e0", fg: "#fff" },
+  quad:   { bg: "#7c52e0", fg: "#fff" },
+  worse:  { bg: "#7c52e0", fg: "#fff" },
 };
 
 // SVG cell using traditional golf scorecard symbols
@@ -57,7 +62,7 @@ function HoleCell({ strokes, type }: { strokes: number | null; type: ScoreKey | 
       )}
 
       {/* Double bogey — double square */}
-      {type === "double-bogey" && (
+      {type === "double" && (
         <>
           <rect x={4.5} y={4.5} width={S - 9} height={S - 9} rx={2} fill={color} />
           <rect x={1} y={1} width={S - 2} height={S - 2} rx={4} fill="none" stroke={color} strokeWidth={1.5} />
@@ -65,7 +70,7 @@ function HoleCell({ strokes, type }: { strokes: number | null; type: ScoreKey | 
       )}
 
       {/* Triple+ — hatched square with /// slashes behind the number */}
-      {type === "worse" && (
+      {(type === "worse" || type === "triple" || type === "quad") && (
         <>
           <rect x={1} y={1} width={S - 2} height={S - 2} rx={3} fill={color} />
           {/* Four parallel "/" slashes, evenly distributed across the cell */}
@@ -107,45 +112,18 @@ function formatDate(dateStr: string | null): string {
   return `${months[parseInt(m[2]) - 1]} ${parseInt(m[3])}, ${m[1]}`;
 }
 
-function formatToPar(toPar: number | null): string {
-  if (toPar === null) return "";
-  if (toPar === 0) return "E";
-  return toPar > 0 ? `+${toPar}` : `${toPar}`;
-}
-
 export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
   ({ round, courseName }, ref) => {
     const scores = [...round.hole_scores].sort(
       (a, b) => (a.hole_number ?? 0) - (b.hole_number ?? 0)
     );
 
-    const getHolePar = (s: typeof scores[0]) =>
-      s.par_played ??
-      round.course?.holes.find((h) => h.number === s.hole_number)?.par ??
-      null;
+    const totalScore = totalStrokes(round);
+    const courseParValue = roundPar(round);
+    const toPar = courseParValue !== null && totalScore > 0 ? totalScore - courseParValue : null;
 
-    const totalScore = scores.reduce((s, h) => s + (h.strokes ?? 0), 0);
-    const coursePar = round.course
-      ? round.course.holes.reduce((s, h) => s + (h.par ?? 0), 0) || null
-      : scores.some((s) => s.par_played != null)
-      ? scores.reduce((s, h) => s + (h.par_played ?? 0), 0)
-      : null;
-    const toPar = coursePar !== null && totalScore > 0 ? totalScore - coursePar : null;
-
-    // Yardage
-    const matchedTee = round.tee_box
-      ? round.course?.tees.find(
-          (t) => t.color?.toLowerCase() === round.tee_box!.toLowerCase()
-        ) ?? null
-      : null;
-    const totalYardage =
-      matchedTee?.total_yardage ??
-      (matchedTee?.hole_yardages && Object.keys(matchedTee.hole_yardages).length > 0
-        ? Object.values(matchedTee.hole_yardages).reduce((s, y) => s + (y as number), 0)
-        : null) ??
-      (round.user_tee?.hole_yardages && Object.keys(round.user_tee.hole_yardages).length > 0
-        ? Object.values(round.user_tee.hole_yardages).reduce((s, y) => s + (y as number), 0)
-        : null);
+    const matchedTee = getTee(round.course, round.tee_box);
+    const totalYardage = teeYards(matchedTee) ?? teeYards(round.user_tee);
 
     // Putts
     const puttHoles = scores.filter((s) => s.putts != null);
@@ -163,25 +141,26 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
         ? `${girCount}/${girHoles.length}`
         : null;
 
-    // Score type counts
-    const counts: Record<ScoreKey, number> = {
-      eagle: 0, birdie: 0, par: 0, bogey: 0, "double-bogey": 0, worse: 0,
+    const counts: Record<ScoreKind, number> = {
+      eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0,
     };
     for (const s of scores) {
-      if (s.strokes == null) continue;
-      const p = getHolePar(s);
-      if (p != null) counts[getScoreType(s.strokes, p) as ScoreKey]++;
+      if (s.strokes == null || s.hole_number == null) continue;
+      const kind = scoreKind(s.strokes, holePar(round, s.hole_number));
+      if (kind) counts[kind]++;
     }
-    const chips: { key: ScoreKey; label: string; n: number }[] = [
-      { key: "eagle",         label: counts.eagle  === 1 ? "Eagle"  : "Eagles",  n: counts.eagle },
-      { key: "birdie",        label: counts.birdie === 1 ? "Birdie" : "Birdies", n: counts.birdie },
-      { key: "par",           label: "Pars",                                       n: counts.par },
-      { key: "bogey",         label: "Bogeys",                                     n: counts.bogey },
-      { key: "double-bogey",  label: "Doubles",                                    n: counts["double-bogey"] },
-      { key: "worse",         label: "Triple+",                                    n: counts.worse },
-    ].filter((c) => c.n > 0 || c.key === "par") as { key: ScoreKey; label: string; n: number }[];
+    const chips = (
+      [
+        { key: "eagle" as const,  label: counts.eagle  === 1 ? "Eagle"  : "Eagles",  n: counts.eagle },
+        { key: "birdie" as const, label: counts.birdie === 1 ? "Birdie" : "Birdies", n: counts.birdie },
+        { key: "par" as const,    label: "Pars",                                     n: counts.par },
+        { key: "bogey" as const,  label: "Bogeys",                                   n: counts.bogey },
+        { key: "double" as const, label: "Doubles",                                  n: counts.double },
+        { key: "worse" as const,  label: "Triple+",                                  n: counts.triple + counts.quad },
+      ] satisfies { key: ScoreKey; label: string; n: number }[]
+    ).filter((c) => c.n > 0 || c.key === "par");
 
-    const toParStr = formatToPar(toPar);
+    const toParStr = toParDisplay(toPar, "");
     const toParColor =
       toPar === null ? "#111827" : toPar < 0 ? "#0b8a5e" : toPar > 0 ? "#d94040" : "#111827";
 
@@ -270,8 +249,8 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                   alignItems: "center",
                 }}
               >
-                {coursePar && <span>par {coursePar}</span>}
-                {coursePar && totalYardage && <span style={{ color: "#d1d5db" }}>·</span>}
+                {courseParValue && <span>par {courseParValue}</span>}
+                {courseParValue && totalYardage && <span style={{ color: "#d1d5db" }}>·</span>}
                 {totalYardage && <span>{totalYardage.toLocaleString()} yds</span>}
               </div>
             </div>
@@ -308,10 +287,9 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
               {/* Score cells */}
               <div style={{ display: "flex", gap: 3 }}>
                 {scores.slice(offset, offset + 9).map((s) => {
-                  const p = getHolePar(s);
                   const type =
-                    s.strokes != null && p != null
-                      ? (getScoreType(s.strokes, p) as ScoreKey)
+                    s.strokes != null && s.hole_number != null
+                      ? scoreKind(s.strokes, holePar(round, s.hole_number))
                       : null;
                   return (
                     <HoleCell key={s.hole_number} strokes={s.strokes} type={type} />

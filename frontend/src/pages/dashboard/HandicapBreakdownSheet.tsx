@@ -2,6 +2,7 @@ import { CheckCircle, Circle } from "lucide-react";
 import type { DualTrendPoint } from "./useDashboardPageViewModel";
 import type { ScoreDifferentialRow, ScoreTrendRow } from "@/types/analytics";
 import { formatCourseName } from "@/lib/courseName";
+import { formatHandicapIndex, whsWindow } from "@/domain/handicap";
 import {
   Alert,
   AlertDescription,
@@ -11,34 +12,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/brand";
-
-// WHS table: indexed by (n - 3), capped at 17 (for 20+ rounds)
-const WHS_TABLE: Array<[number, number]> = [
-  [1, -2.0], // 3
-  [1, -1.0], // 4
-  [1,  0.0], // 5
-  [2, -1.0], // 6
-  [2,  0.0], // 7
-  [2,  0.0], // 8
-  [3,  0.0], // 9
-  [3,  0.0], // 10
-  [3,  0.0], // 11
-  [4,  0.0], // 12
-  [4,  0.0], // 13
-  [4,  0.0], // 14
-  [5,  0.0], // 15
-  [5,  0.0], // 16
-  [6,  0.0], // 17
-  [6,  0.0], // 18
-  [7,  0.0], // 19
-  [8,  0.0], // 20+
-];
-
-function formatHI(hi: number | null | undefined): string {
-  if (hi == null) return "—";
-  if (hi < 0) return `+${Math.abs(hi).toFixed(1)}`;
-  return hi.toFixed(1);
-}
 
 interface Row {
   round_index: number;
@@ -90,8 +63,7 @@ export function HandicapBreakdownSheet({
     .filter((r) => r.differential != null)
     .map((r) => r.differential!);
   const n = Math.min(validDiffs.length, 20);
-  const tableIdx = n < 3 ? -1 : Math.min(n - 3, WHS_TABLE.length - 1);
-  const [countUsed, adjustment] = tableIdx >= 0 ? WHS_TABLE[tableIdx] : [0, 0];
+  const { countUsed, adjustment } = whsWindow(n);
 
   const usedDiffs = rows
     .filter((r) => r.used_in_hi === true && r.differential != null)
@@ -108,7 +80,7 @@ export function HandicapBreakdownSheet({
         <SheetHeader>
           <SheetTitle>Handicap Index</SheetTitle>
           <SheetDescription>
-            {formatHI(handicapIndex)} HCP
+            {formatHandicapIndex(handicapIndex)} HCP
           </SheetDescription>
         </SheetHeader>
 
@@ -135,7 +107,7 @@ export function HandicapBreakdownSheet({
               </div>
 
               {/* The math */}
-              {handicapIndex != null && tableIdx >= 0 && (
+              {handicapIndex != null && n >= 3 && (
                 <div>
                   <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground mb-3">
                     Current Calculation
@@ -168,7 +140,7 @@ export function HandicapBreakdownSheet({
                     <div className="border-t border-border pt-3 flex justify-between">
                       <span className="text-sm font-bold text-primary">Handicap Index</span>
                       <span className="text-sm font-black text-primary font-mono">
-                        {formatHI(handicapIndex)}
+                        {formatHandicapIndex(handicapIndex)}
                       </span>
                     </div>
                   </div>

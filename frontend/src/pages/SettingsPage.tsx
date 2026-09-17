@@ -4,6 +4,7 @@ import { Moon, Sun } from "lucide-react";
 import { useBeforeUnload, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { api } from "@/lib/api";
+import { queryKeys } from "@/data/queryKeys";
 import { formatHandicapInputValue, parseHandicapInput } from "@/lib/handicap";
 import { applyTheme, getStoredTheme, setStoredTheme } from "@/lib/theme";
 import { getStoredColorBlindMode, setStoredColorBlindMode } from "@/lib/accessibility";
@@ -47,7 +48,7 @@ export function SettingsPage({ userId }: { userId: string }) {
   } | null>(null);
 
   const { data: settingsData, isLoading: loading } = useQuery({
-    queryKey: ["settings", userId],
+    queryKey: queryKeys.settings(userId),
     queryFn: async () => {
       const [user, globalCoursesResult, userCoursesResult] = await Promise.all([
         api.getUser(userId),

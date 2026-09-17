@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { queryKeys } from "@/data/queryKeys";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette } from "@/lib/chartPalettes";
 import { SCORE_COLORS, SCORE_KEYS } from "@/lib/colors";
@@ -69,7 +70,7 @@ export function useCareerViewModel(userId: string): CareerViewModel {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>("lifetime");
 
   const { data, isLoading: loading } = useQuery({
-    queryKey: ["career-analytics", userId],
+    queryKey: queryKeys.careerAnalytics(userId),
     queryFn: () => api.getAnalytics(userId, 200),
   });
 
