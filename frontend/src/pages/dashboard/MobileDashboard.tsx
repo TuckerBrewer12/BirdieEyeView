@@ -506,7 +506,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
             {handicapIndexLabel}
           </div>
           {hiDeltaText && (
-            <div style={{ fontFamily: MONO, fontSize: 10, color: hiDeltaImproving ? "#059669" : "#f87171", whiteSpace: "nowrap", marginTop: 2 }}>
+            <div className={`text-meta ${hiDeltaImproving ? "text-score-birdie" : "text-score-bogey"}`} style={{ fontFamily: MONO, whiteSpace: "nowrap", marginTop: 2 }}>
               {hiDeltaText}
             </div>
           )}
