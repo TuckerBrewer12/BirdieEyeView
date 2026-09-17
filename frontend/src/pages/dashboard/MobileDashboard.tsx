@@ -801,7 +801,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                 </div>
               </div>
               {r.holes.length > 0 ? (
-                <div style={{ width: 78, height: 16, display: "flex", gap: 1.5, alignItems: "flex-end", flexShrink: 0 }}>
+                <div className="flex gap-bar" style={{ width: 78, height: 16, alignItems: "flex-end", flexShrink: 0 }}>
                   {r.holes.map((h) => (
                     <div
                       key={h.hole_number}
