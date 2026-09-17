@@ -37,6 +37,7 @@ export interface LandingPageViewModel {
   heroSecondary: LandingAction;
   isDark: boolean;
   themeToggleLabel: string;
+  themeToggleAriaLabel: string;
   toggleTheme: () => void;
 }
 
@@ -97,6 +98,7 @@ export function useLandingPageViewModel(): LandingPageViewModel {
     },
     isDark: theme === "dark",
     themeToggleLabel: theme === "dark" ? "Light Mode" : "Dark Mode",
+    themeToggleAriaLabel: theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode",
     toggleTheme,
   };
 }

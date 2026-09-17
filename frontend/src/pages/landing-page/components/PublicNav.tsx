@@ -35,7 +35,7 @@ export function PublicNav({ viewModel }: PublicNavProps) {
             size="icon"
             shape="pill"
             onClick={viewModel.toggleTheme}
-            aria-label={`Switch to ${viewModel.themeToggleLabel}`}
+            aria-label={viewModel.themeToggleAriaLabel}
           >
             {viewModel.isDark ? <Sun /> : <Moon />}
           </Button>
