@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import { scoreFill } from "@/brand";
+import { motion } from "@/brand/theme";
 
 export type ScannerPhase = "photo" | "mapping" | "scanning" | "result";
 
@@ -76,7 +77,7 @@ export const DEMO_MOTION = {
   /** A choice registering, matching the kit's collapse. */
   select: 0.2,
   /** One on/off of the text caret in the name field. */
-  caretBlink: 0.8,
+  caretBlink: motion.duration.collapse,
   /** Mapped rows sliding in from the right. Looser than the kit's spring so
    *  the rows overshoot enough to read as dropped into place. */
   rowSpring: { type: "spring" as const, damping: 15 },
