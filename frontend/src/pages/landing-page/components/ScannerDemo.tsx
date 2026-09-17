@@ -1,5 +1,6 @@
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { motion as motionTokens } from "@/brand/theme";
 import {
   DEMO_MOTION,
   useScannerDemoViewModel,
@@ -105,7 +106,7 @@ function MappingPanel() {
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+      exit={{ opacity: 0, scale: motionTokens.tapScale }}
       className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center p-4 sm:p-6"
     >
       <div className="flex w-full max-w-md flex-col overflow-hidden rounded-xl bg-card font-sans shadow-card">
