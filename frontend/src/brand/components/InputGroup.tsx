@@ -3,19 +3,31 @@ import { type VariantProps } from "class-variance-authority";
 import { cn } from "@/brand/cn";
 import { Input } from "./Input";
 import { Button } from "./Button";
-import { inputGroupAddonVariants, inputGroupButtonVariants } from "./variants";
+import {
+  inputGroupVariants,
+  inputGroupAddonVariants,
+  inputGroupButtonVariants,
+} from "./variants";
 
-function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
+const InputGroupSizeContext = React.createContext<
+  NonNullable<VariantProps<typeof inputGroupVariants>["size"]>
+>("default");
+
+function InputGroup({
+  className,
+  size = "default",
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof inputGroupVariants>) {
   return (
-    <div
-      data-slot="input-group"
-      role="group"
-      className={cn(
-        "group/input-group relative flex h-8 w-full min-w-0 items-center rounded-lg border border-input transition-colors outline-none in-data-[slot=combobox-content]:focus-within:border-inherit in-data-[slot=combobox-content]:focus-within:ring-0 has-disabled:bg-input/50 has-disabled:opacity-50 has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-3 has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 has-[[data-slot][aria-invalid=true]]:border-destructive has-[[data-slot][aria-invalid=true]]:ring-3 has-[[data-slot][aria-invalid=true]]:ring-destructive/20 has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>textarea]:h-auto dark:bg-input/30 dark:has-disabled:bg-input/80 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/30 has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5",
-        className,
-      )}
-      {...props}
-    />
+    <InputGroupSizeContext.Provider value={size ?? "default"}>
+      <div
+        data-slot="input-group"
+        data-size={size}
+        role="group"
+        className={cn(inputGroupVariants({ size }), className)}
+        {...props}
+      />
+    </InputGroupSizeContext.Provider>
   );
 }
 
@@ -76,13 +88,19 @@ function InputGroupText({ className, ...props }: React.ComponentProps<"span">) {
 
 function InputGroupInput({
   className,
+  size,
   ...props
-}: React.ComponentProps<"input">) {
+}: Omit<React.ComponentProps<typeof Input>, "size"> & {
+  size?: VariantProps<typeof inputGroupVariants>["size"];
+}) {
+  const groupSize = React.useContext(InputGroupSizeContext);
+
   return (
     <Input
       data-slot="input-group-control"
+      size={size ?? groupSize}
       className={cn(
-        "flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent",
+        "h-full flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent",
         className,
       )}
       {...props}

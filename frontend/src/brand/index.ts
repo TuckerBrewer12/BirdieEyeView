@@ -31,6 +31,7 @@ export {
   CardDescription,
   CardContent,
 } from "./components/Card";
+export { BrandMark } from "./components/BrandMark";
 export { Button } from "./components/Button";
 export { Collapse } from "./components/Collapse";
 export type { CollapseProps } from "./components/Collapse";
@@ -39,11 +40,14 @@ export type { CollectionProps, CollectionLayout } from "./components/Collection"
 export {
   alertVariants,
   buttonVariants,
+  inputVariants,
+  inputGroupVariants,
   inputGroupAddonVariants,
   inputGroupButtonVariants,
   pageTitleVariants,
   toggleVariants,
 } from "./components/variants";
+export { Field, FieldLabel, FieldDescription, FieldError } from "./components/Field";
 export { Input } from "./components/Input";
 export { LoadingState } from "./components/LoadingState";
 export {
