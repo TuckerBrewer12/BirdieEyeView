@@ -122,6 +122,13 @@ export interface ScoreChip {
   color: string;
 }
 
+export interface ShortGameBenchmarkRow {
+  label: string;
+  value: number | null;
+  display: string;
+  tour: number;
+}
+
 export interface TrendTabItem {
   key: TrendView;
   label: string;
@@ -193,6 +200,7 @@ export interface DashboardPageViewModel {
   scramblingPctLabel: string;
   upAndDownPct: number | null;
   upAndDownPctLabel: string;
+  shortGameBenchmarks: ShortGameBenchmarkRow[];
   putts: number;
   puttsLabel: string;
   puttsClamped: number;
@@ -594,6 +602,11 @@ export function useDashboardPageViewModel(
     { label: "GIR", value: girPctLabel },
   ];
 
+  const shortGameBenchmarks: ShortGameBenchmarkRow[] = [
+    { label: "Scrambling", value: scramblingPct, display: scramblingPctLabel, tour: 57 },
+    { label: "Up & Down", value: upAndDownPct, display: upAndDownPctLabel, tour: 50 },
+  ];
+
   const trendTabs: TrendTabItem[] = [
     { key: "score", label: "Score", active: trendView === "score" },
     { key: "hcp", label: "HCP", active: trendView === "hcp" },
@@ -783,6 +796,7 @@ export function useDashboardPageViewModel(
     scramblingPctLabel,
     upAndDownPct,
     upAndDownPctLabel,
+    shortGameBenchmarks,
     putts,
     puttsLabel,
     puttsClamped,

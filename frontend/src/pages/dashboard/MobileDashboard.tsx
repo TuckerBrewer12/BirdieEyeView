@@ -440,10 +440,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
     l20ScoreMix,
     mixLegend,
     mixHoleCountLabel,
-    scramblingPct,
-    scramblingPctLabel,
-    upAndDownPct,
-    upAndDownPctLabel,
+    shortGameBenchmarks,
     scoreLineColor,
     handicapLineColor,
     firstName,
@@ -703,10 +700,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
           </Link>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          {([
-            { label: "Scrambling", value: scramblingPct, display: scramblingPctLabel, tour: 57 },
-            { label: "Up & Down",  value: upAndDownPct,  display: upAndDownPctLabel,  tour: 50 },
-          ] as const).map(({ label, value, display, tour }) => (
+          {shortGameBenchmarks.map(({ label, value, display, tour }) => (
             <div key={label}>
               <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "1.3px", textTransform: "uppercase", color: MUTED, marginBottom: 4 }}>
                 {label}
