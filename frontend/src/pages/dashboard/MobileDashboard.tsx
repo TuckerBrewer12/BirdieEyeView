@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
+import { colors } from "@/brand";
 import type { DashboardPageViewModel, DualTrendPoint, RecentHole, TrendTabItem, TrendView } from "./useDashboardPageViewModel";
 import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 
@@ -759,7 +760,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
 
         {recentRoundRows.map((r, idx) => {
           const accentColor = r.toPar == null ? "#9ca3af"
-            : r.toPar <= 0  ? "#059669"
+            : r.toPar <= 0  ? colors.score.birdie.fill
             : r.toPar <= 14 ? "#f87171"
             : "#60a5fa";
           const isLast = idx === recentRoundRows.length - 1;
