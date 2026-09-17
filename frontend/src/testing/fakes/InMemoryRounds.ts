@@ -194,8 +194,19 @@ export class InMemoryRounds {
 
   getCourse(courseId: string): Course {
     const course = this.fullCourses.find((c) => c.id === courseId);
-    if (!course) throw new Error("Course not found.");
-    return course;
+    if (course) return course;
+    const summary = this.courses.find((c) => c.id === courseId);
+    if (summary) {
+      return {
+        id: summary.id,
+        name: summary.name,
+        location: summary.location,
+        par: summary.par,
+        holes: [],
+        tees: [],
+      };
+    }
+    throw new Error("Course not found.");
   }
 
   getCourseAnalytics(courseId: string): CourseAnalyticsData {

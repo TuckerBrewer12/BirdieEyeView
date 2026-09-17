@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Fmt = (v: any, name: any, props: any) => any;
 import { ArrowLeft, MapPin } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { line, area, curveMonotoneX } from "d3-shape";
@@ -25,10 +25,8 @@ import { formatToPar } from "@/types/golf";
 import type { CourseAnalyticsData } from "@/types/analytics";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 
-interface CourseDetailPanelProps {
-  courseId: string;
+interface CourseDetailPageProps {
   userId: string;
-  onBack: () => void;
 }
 
 const tooltipStyle = {
@@ -349,7 +347,9 @@ function CourseScoreTrendSVG({ data, strokeColor }: { data: TrendPoint[]; stroke
   );
 }
 
-export function CourseDetailPanel({ courseId, userId, onBack }: CourseDetailPanelProps) {
+export function CourseDetailPage({ userId }: CourseDetailPageProps) {
+  const { courseId = "" } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
   const [course, setCourse] = useState<Course | null>(null);
   const [analytics, setAnalytics] = useState<CourseAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -454,7 +454,7 @@ export function CourseDetailPanel({ courseId, userId, onBack }: CourseDetailPane
     <div>
       {/* Back button */}
       <button
-        onClick={onBack}
+        onClick={() => navigate("/courses")}
         className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
       >
         <ArrowLeft size={16} />

@@ -14,7 +14,7 @@ import { applyTheme, getStoredPublicTheme, getStoredTheme } from "./lib/theme";
 
 import { DashboardPage } from "./pages/dashboard";
 import { RoundsPage, RoundDetailPage } from "./pages/rounds";
-import { CoursesPage } from "./pages/courses";
+import { CoursesPage, CourseDetailPage } from "./pages/courses";
 import { ScanPage } from "./pages/ScanPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { CareerPage } from "./pages/CareerPage";
@@ -118,6 +118,7 @@ function AppRoutes() {
           <Route path="/rounds" element={<RoundsPage userId={userId} />} />
           <Route path="/rounds/:roundId" element={<RoundDetailPage userId={userId} />} />
           <Route path="/courses" element={<CoursesPage userId={userId} />} />
+          <Route path="/courses/:courseId" element={<CourseDetailPage userId={userId} />} />
           <Route path="/scan" element={<ScanPage userId={userId} />} />
           <Route path="/analytics" element={<AnalyticsPage userId={userId} />} />
           <Route path="/the-lab" element={<TheLabPage userId={userId} />} />

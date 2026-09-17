@@ -48,6 +48,18 @@ export class CoursesRobot {
     return this;
   }
 
+  async isAtCourse(id: string): Promise<this> {
+    await expect(this.page).toHaveURL(new RegExp(`/courses/${id}`));
+    await expect(this.page.getByRole("button", { name: "Back to courses" })).toBeVisible();
+    return this;
+  }
+
+  async goBack(): Promise<this> {
+    await this.page.getByRole("button", { name: "Back to courses" }).click();
+    await expect(this.page.getByPlaceholder("Search courses...")).toBeVisible();
+    return this;
+  }
+
   async seesCourse(name: string): Promise<this> {
     await expect(this.page.getByText(name).first()).toBeVisible();
     return this;
