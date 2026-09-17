@@ -82,8 +82,8 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const {
     data, user, goalReport, trends,
     dualData, recentMilestones, last20ScoringAvgLabel, hiTrend,
-    girPctLabel, girDonutData, recentDistribution, scramblingPct, scramblingPctLabel,
-    upAndDownPct, upAndDownPctLabel,
+    girPctLabel, girDonutData, recentDistribution, scramblingPctLabel,
+    upAndDownPctLabel,
     puttsLabel, puttsGaugeData, puttsColor,
     scoreLineColor, handicapLineColor, gridColor, girColor, warningColor, dangerColor, mutedFill,
     handicapIndexLabel, firstName, bestRound, bestRoundDetail, sidebarRounds,
@@ -209,14 +209,14 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                 <div className="flex items-center justify-around mt-6">
                   <div className="text-center">
                     <div className="text-4xl font-semibold text-card-foreground tracking-stat">
-                      {scramblingPct != null ? `${scramblingPctLabel}%` : "—"}
+                      {scramblingPctLabel}
                     </div>
                     <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow mt-0.5">Scrambling</div>
                   </div>
                   <div className="w-px h-8 bg-muted" />
                   <div className="text-center">
                     <div className="text-4xl font-semibold text-card-foreground tracking-stat">
-                      {upAndDownPct != null ? `${upAndDownPctLabel}%` : "—"}
+                      {upAndDownPctLabel}
                     </div>
                     <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow mt-0.5">Up & Down</div>
                   </div>
