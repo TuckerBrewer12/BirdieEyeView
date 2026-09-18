@@ -1,3 +1,8 @@
+/** Prefer an Error message when the repository already threw one we can show. */
+export function messageFrom(err: unknown, fallback: string): string {
+  return err instanceof Error ? err.message : fallback;
+}
+
 export const USER_FACING_ERRORS = {
   request: "We couldn't complete your request. Please try again.",
   account: "We couldn't complete this account request. Please try again.",

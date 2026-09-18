@@ -7,6 +7,8 @@ export const queryKeys = {
   careerAnalytics: (userId: string) => ["career-analytics", userId] as const,
   courses: (userId: string, search = "") => ["courses", userId, search] as const,
   course: (courseId: string | undefined) => ["course", courseId] as const,
+  courseAnalytics: (userId: string, courseId: string | undefined) =>
+    ["course-analytics", userId, courseId] as const,
   handicap: (userId: string) => ["handicap", userId] as const,
   user: (userId: string) => ["user", userId] as const,
   goalReport: (userId: string) => ["goal-report", userId] as const,

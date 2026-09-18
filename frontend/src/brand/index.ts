@@ -23,6 +23,7 @@ export {
   toParLabel,
   toParDisplay,
   toParTextClass,
+  toParBadgeClass,
 } from "./theme";
 export type { ScoreKey, ScoreSwatch, ScoreTone } from "./theme";
 export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/Alert";
