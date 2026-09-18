@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
-import { chartColors } from "@/brand/theme";
+import { chartColors, colors, toParFill } from "@/brand/theme";
+import { formatHandicapIndex } from "@/domain/handicap";
 import type { DashboardPageViewModel, DualTrendPoint, RecentHole, TrendTabItem, TrendView } from "./useDashboardPageViewModel";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -17,26 +18,17 @@ const SANS    = '"Inter", system-ui, -apple-system, sans-serif';
 const MONO    = '"Inter", system-ui, -apple-system, sans-serif';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function formatHI(hi: number | null | undefined): string {
-  if (hi == null) return "—";
-  if (hi < 0) return `+${Math.abs(hi).toFixed(1)}`;
-  return hi.toFixed(1);
-}
-
 function getDotColor(toPar: number | null): string {
-  if (toPar == null) return "#9ca3af";
-  if (toPar <= -2) return "#b45309";
-  if (toPar === -1) return "#059669";
-  if (toPar === 0) return "#9ca3af";
-  return "#ef4444";
+  return toParFill(toPar);
 }
 
 function getBarColor(d: DualTrendPoint): string {
-  if (d.used_in_hi == null) return "#9ca3af";
-  if (d.used_in_hi) return "#059669";
-  if (d.hi_threshold != null && d.differential != null && d.differential - d.hi_threshold <= 2)
-    return "#d97706";
-  return "#dc2626";
+  if (d.used_in_hi == null) return colors.score.par.base;
+  if (d.used_in_hi) return colors.score.birdie.base;
+  if (d.hi_threshold != null && d.differential != null && d.differential - d.hi_threshold <= 2) {
+    return colors.score.eagle.base;
+  }
+  return colors.destructive;
 }
 
 function scoreBarHeightPct(strokes: number | null | undefined, par: number | null | undefined): number {
@@ -298,7 +290,7 @@ function MobileScoreTrend({
                 )}
                 {view === "hcp" && (
                   <div className="font-bold text-sm tabular-nums" style={{ color }}>
-                    {formatHI(selValue)}
+                    {formatHandicapIndex(selValue)}
                   </div>
                 )}
               </div>
@@ -338,7 +330,7 @@ function MobileScoreTrend({
                 textAnchor="end" fontSize={11} fontWeight="bold" fill="#6b7280"
                 paintOrder="stroke" stroke="white" strokeWidth={4} strokeLinejoin="round"
               >
-                {view === "hcp" ? formatHI(v) : v}
+                {view === "hcp" ? formatHandicapIndex(v) : v}
               </text>
             </g>
           ))}
