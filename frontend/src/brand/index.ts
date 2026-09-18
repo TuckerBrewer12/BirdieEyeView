@@ -15,13 +15,18 @@ export {
   chartTickStyle,
   chartLayout,
   chartColors,
+  SCORE_KEYS,
   scoreFill,
+  scoreFills,
   scoreKeyFor,
+  scoreOnFill,
+  scoreTone,
+  toParFill,
   toParLabel,
   toParDisplay,
   toParTextClass,
 } from "./theme";
-export type { ScoreKey } from "./theme";
+export type { ScoreKey, ScoreTone } from "./theme";
 export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/Alert";
 export {
   Card,

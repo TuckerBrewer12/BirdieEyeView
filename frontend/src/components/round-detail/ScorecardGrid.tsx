@@ -5,7 +5,7 @@ import { useMemo, type CSSProperties } from "react";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
 import { formatCourseName } from "@/lib/courseName";
-import { toParDisplay } from "@/brand/theme";
+import { toParDisplay, toParTextClass } from "@/brand/theme";
 import { getHole, getTee } from "@/domain/course";
 
 type EditedScores = Record<number, { strokes: number | null; putts: number | null; gir?: boolean | null }>;
@@ -66,10 +66,7 @@ function sumEffectivePars(pars: (number | null)[]): number | null {
 
 function toParColorClass(diff: number | null, palette?: ChartPalette | null): string {
   if (palette) return "font-semibold";
-  if (diff === null) return "text-gray-400";
-  if (diff < 0) return "text-birdie font-semibold";
-  if (diff > 0) return "text-bogey";
-  return "text-gray-600";
+  return toParTextClass(diff);
 }
 
 function toParColorStyle(diff: number | null, palette?: ChartPalette | null): CSSProperties | undefined {

@@ -1,6 +1,6 @@
 import { cn } from "@/brand/cn";
 import { PageTitle } from "./PageTitle";
-import { colors, scoreFill, scoreKeyFor, toParDisplay, type ScoreKey } from "@/brand/theme";
+import { scoreFill, scoreKeyFor, scoreTone, toParDisplay, type ScoreKey } from "@/brand/theme";
 import { pluralNoun } from "@/lib/pluralize";
 
 const BAR_HEIGHTS: Record<ScoreKey, number> = {
@@ -176,7 +176,7 @@ export function RoundDetailHeader({
         {CHIPS.map(({ key, noun, plural, absorbs }) => {
           const count = (counts[key] ?? 0) + (absorbs ? counts[absorbs] ?? 0 : 0);
           if (!count) return null;
-          const tone = colors.score[key];
+          const tone = scoreTone(key);
           return (
             <div
               key={key}

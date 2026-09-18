@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { userRepository } from "@/data/userRepository";
 import { api } from "@/lib/api";
+import { SCORE_KEYS, scoreFills, type ScoreKey } from "@/brand/theme";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
-import { getColorBlindPalette } from "@/lib/chartPalettes";
-import { SCORE_COLORS, SCORE_KEYS, SCORE_LABELS } from "@/lib/colors";
+import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
 import type { Milestone, DashboardData } from "@/types/golf";
 import type { AnalyticsData, GoalReport } from "@/types/analytics";
 
@@ -20,8 +20,56 @@ export interface DualTrendPoint {
   hi_threshold?: number | null;
 }
 
+/** Analytics payload names → brand `ScoreKey`. */
+const ANALYTICS_SCORE_FIELDS = [
+  "eagle",
+  "birdie",
+  "par",
+  "bogey",
+  "double_bogey",
+  "triple_bogey",
+  "quad_bogey",
+] as const;
+
+type AnalyticsScoreField = (typeof ANALYTICS_SCORE_FIELDS)[number];
+
+const ANALYTICS_TO_BRAND: Record<AnalyticsScoreField, ScoreKey> = {
+  eagle: "eagle",
+  birdie: "birdie",
+  par: "par",
+  bogey: "bogey",
+  double_bogey: "double",
+  triple_bogey: "triple",
+  quad_bogey: "quad",
+};
+
+const SCORE_LABELS: Record<ScoreKey, string> = {
+  eagle: "Eagle+",
+  birdie: "Birdie",
+  par: "Par",
+  bogey: "Bogey",
+  double: "Double",
+  triple: "Triple",
+  quad: "Quad+",
+};
+
+function scoreColorsFromPalette(
+  palette: ChartPalette["score"] | null | undefined,
+): Record<ScoreKey, string> {
+  if (!palette) return scoreFills();
+  return {
+    eagle: palette.eagle,
+    birdie: palette.birdie,
+    par: palette.par,
+    bogey: palette.bogey,
+    double: palette.double_bogey,
+    triple: palette.triple_bogey,
+    quad: palette.quad_bogey,
+  };
+}
+
 export interface ScoreDistItem {
-  name: string;
+  name: ScoreKey;
   label: string;
   value: number;
   color: string;
@@ -51,7 +99,7 @@ export interface DashboardPageViewModel {
   puttsClamped: number;
   puttsGaugeData: { value: number }[];
   puttsColor: string;
-  scoreColors: Record<string, string>;
+  scoreColors: Record<ScoreKey, string>;
   scoreLineColor: string;
   handicapLineColor: string;
   girColor: string;
@@ -94,7 +142,7 @@ export function useDashboardPageViewModel(userId: string): DashboardPageViewMode
 
   const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
   const colorBlindPalette = useMemo(() => getColorBlindPalette(colorBlindMode), [colorBlindMode]);
-  const scoreColors = (colorBlindPalette?.score ?? SCORE_COLORS) as Record<string, string>;
+  const scoreColors = scoreColorsFromPalette(colorBlindPalette?.score);
   const scoreLineColor = colorBlindPalette?.trend.primary ?? "#2d7a3a";
   const handicapLineColor = colorBlindPalette?.trend.secondary ?? "#60a5fa";
   const girColor = colorBlindPalette?.ui.success ?? "#059669";
@@ -181,16 +229,19 @@ export function useDashboardPageViewModel(userId: string): DashboardPageViewMode
     const last5 = (trends.score_type_distribution ?? []).slice(-5);
     if (!last5.length) return [];
     let total = 0;
-    const sums: Record<string, number> = {};
+    const sums: Record<ScoreKey, number> = {
+      eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0,
+    };
     for (const row of last5) {
       total += row.holes_counted;
-      for (const key of SCORE_KEYS) {
-        sums[key] = (sums[key] ?? 0) + ((row[key] as number) / 100) * row.holes_counted;
+      for (const field of ANALYTICS_SCORE_FIELDS) {
+        const key = ANALYTICS_TO_BRAND[field];
+        sums[key] += (row[field] / 100) * row.holes_counted;
       }
     }
     return SCORE_KEYS.map((key) => ({
       name: key,
-      label: SCORE_LABELS[key] as string,
+      label: SCORE_LABELS[key],
       value: total > 0 ? Math.round((sums[key] / total) * 1000) / 10 : 0,
       color: scoreColors[key],
     })).filter((d) => d.value > 0);
@@ -221,16 +272,19 @@ export function useDashboardPageViewModel(userId: string): DashboardPageViewMode
     const rows = trends?.score_type_distribution ?? [];
     if (!rows.length) return [];
     let total = 0;
-    const sums: Record<string, number> = {};
+    const sums: Record<ScoreKey, number> = {
+      eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0,
+    };
     for (const row of rows) {
       total += row.holes_counted;
-      for (const key of SCORE_KEYS) {
-        sums[key] = (sums[key] ?? 0) + ((row[key] as number) / 100) * row.holes_counted;
+      for (const field of ANALYTICS_SCORE_FIELDS) {
+        const key = ANALYTICS_TO_BRAND[field];
+        sums[key] += (row[field] / 100) * row.holes_counted;
       }
     }
     return SCORE_KEYS.map((key) => ({
       name: key,
-      label: SCORE_LABELS[key] as string,
+      label: SCORE_LABELS[key],
       value: total > 0 ? (sums[key] / total) * 100 : 0,
       color: scoreColors[key],
     }));

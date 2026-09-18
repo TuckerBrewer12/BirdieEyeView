@@ -9,7 +9,7 @@ import type { DashboardData } from "@/types/golf";
 import type { AnalyticsData, GoalReport } from "@/types/analytics";
 import type { DualTrendPoint, ScoreDistItem } from "./useDashboardPageViewModel";
 import { formatCourseName } from "@/lib/courseName";
-import { toParDisplay } from "@/brand/theme";
+import { scoreKeyFor, toParDisplay, toParFill, type ScoreKey } from "@/brand/theme";
 import { formatHandicapIndex } from "@/domain/handicap";
 import { queryKeys } from "@/data/queryKeys";
 import { api } from "@/lib/api";
@@ -25,14 +25,6 @@ const SANS    = '"Inter", system-ui, -apple-system, sans-serif';
 const MONO    = '"Inter", system-ui, -apple-system, sans-serif';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function getDotColor(toPar: number | null): string {
-  if (toPar == null) return "#9ca3af";
-  if (toPar <= -2) return "#b45309";
-  if (toPar === -1) return "#059669";
-  if (toPar === 0) return "#9ca3af";
-  return "#ef4444";
-}
-
 function getBarColor(d: DualTrendPoint): string {
   if (d.used_in_hi == null) return "#9ca3af";
   if (d.used_in_hi) return "#059669";
@@ -45,20 +37,6 @@ function fmtDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-type HoleKey = "eagle" | "birdie" | "par" | "bogey" | "double_bogey" | "triple_bogey" | "quad_bogey";
-
-function getScoreKey(strokes: number | null | undefined, par: number | null | undefined): HoleKey {
-  if (strokes == null || par == null) return "par";
-  const diff = strokes - par;
-  if (diff <= -2) return "eagle";
-  if (diff === -1) return "birdie";
-  if (diff === 0) return "par";
-  if (diff === 1) return "bogey";
-  if (diff === 2) return "double_bogey";
-  if (diff === 3) return "triple_bogey";
-  return "quad_bogey";
 }
 
 function scoreBarHeightPct(strokes: number | null | undefined, par: number | null | undefined): number {
@@ -143,13 +121,13 @@ function HeroSparkline({ data }: { data: DualTrendPoint[] }) {
 // ─── Per-hole micro bar strip ─────────────────────────────────────────────────
 type HoleScore = { hole_number: number; strokes?: number | null; par_played?: number | null };
 
-function MicroBars({ holes, scoreColors }: { holes: HoleScore[]; scoreColors: Record<string, string> }) {
+function MicroBars({ holes, scoreColors }: { holes: HoleScore[]; scoreColors: Record<ScoreKey, string> }) {
   const sorted = [...holes].sort((a, b) => a.hole_number - b.hole_number);
   if (!sorted.length) return null;
   return (
     <div style={{ display: "flex", gap: 3, height: 28, alignItems: "flex-end", width: "100%" }}>
       {sorted.map((h) => {
-        const key = getScoreKey(h.strokes, h.par_played);
+        const key = scoreKeyFor(h.strokes ?? null, h.par_played ?? null);
         const heightPct = scoreBarHeightPct(h.strokes, h.par_played);
         return (
           <div
@@ -158,7 +136,7 @@ function MicroBars({ holes, scoreColors }: { holes: HoleScore[]; scoreColors: Re
               flex: 1,
               height: `${heightPct}%`,
               borderRadius: "2px 2px 0 0",
-              background: scoreColors[key] ?? "#9ca3af",
+              background: scoreColors[key],
               opacity: key === "par" ? 0.35 : 1,
             }}
           />
@@ -170,8 +148,7 @@ function MicroBars({ holes, scoreColors }: { holes: HoleScore[]; scoreColors: Re
 
 // ─── Solid mini strip (for rounds without per-hole data) ──────────────────────
 function SolidMiniStrip({ toPar }: { toPar: number | null }) {
-  const color = toPar == null ? "#9ca3af" : toPar <= 0 ? "#059669" : toPar <= 14 ? "#f87171" : "#60a5fa";
-  return <div style={{ width: 78, height: 16, borderRadius: 2, background: color, opacity: 0.7 }} />;
+  return <div style={{ width: 78, height: 16, borderRadius: 2, background: toParFill(toPar), opacity: 0.7 }} />;
 }
 
 // ─── Benchmark bar (short game) ───────────────────────────────────────────────
@@ -308,7 +285,7 @@ function MobileScoreTrend({
                   <>
                     <div className="font-bold text-gray-900 text-sm tabular-nums">{selValue}</div>
                     {selected.point.to_par != null && (
-                      <div className="text-[11px] font-semibold" style={{ color: getDotColor(selected.point.to_par) }}>
+                      <div className="text-[11px] font-semibold" style={{ color: toParFill(selected.point.to_par) }}>
                         {toParDisplay(selected.point.to_par)}
                       </div>
                     )}
@@ -431,7 +408,7 @@ function MobileScoreTrend({
                 <motion.circle
                   cx={cx} cy={cy}
                   r={isSel ? 5.5 : 3.5}
-                  fill={view === "score" ? getDotColor(d.to_par) : color}
+                  fill={view === "score" ? toParFill(d.to_par) : color}
                   stroke="white"
                   strokeWidth={isSel ? 2 : 1.5}
                   initial={{ scale: 0, opacity: 0 }}
@@ -462,7 +439,7 @@ export interface MobileDashboardProps {
   scramblingPct: number | null;
   upAndDownPct: number | null;
   putts: number;
-  scoreColors: Record<string, string>;
+  scoreColors: Record<ScoreKey, string>;
   scoreLineColor: string;
   handicapLineColor: string;
 }
@@ -529,16 +506,16 @@ export function MobileDashboard({
     + (l20ScoreMix.find((d) => d.name === "birdie")?.value ?? 0);
   const parPct         = l20ScoreMix.find((d) => d.name === "par")?.value ?? 0;
   const bogeyPct       = l20ScoreMix.find((d) => d.name === "bogey")?.value ?? 0;
-  const doublePct      = l20ScoreMix.find((d) => d.name === "double_bogey")?.value ?? 0;
-  const triplePlusPct  = (l20ScoreMix.find((d) => d.name === "triple_bogey")?.value ?? 0)
-    + (l20ScoreMix.find((d) => d.name === "quad_bogey")?.value ?? 0);
+  const doublePct      = l20ScoreMix.find((d) => d.name === "double")?.value ?? 0;
+  const triplePlusPct  = (l20ScoreMix.find((d) => d.name === "triple")?.value ?? 0)
+    + (l20ScoreMix.find((d) => d.name === "quad")?.value ?? 0);
 
   const legendItems = [
     { label: "Birdie+", pct: birdiesPlusPct, color: scoreColors.birdie },
     { label: "Par",     pct: parPct,         color: scoreColors.par },
     { label: "Bogey",   pct: bogeyPct,       color: scoreColors.bogey },
-    { label: "Dbl",     pct: doublePct,      color: scoreColors.double_bogey },
-    { label: "Tpl+",    pct: triplePlusPct,  color: scoreColors.triple_bogey },
+    { label: "Dbl",     pct: doublePct,      color: scoreColors.double },
+    { label: "Tpl+",    pct: triplePlusPct,  color: scoreColors.triple },
   ];
 
   const totalL20Holes = (trends?.score_type_distribution ?? []).reduce(
@@ -548,17 +525,17 @@ export function MobileDashboard({
   // Last round footer chips
   const footerChips = (() => {
     if (!lastRoundHoles.length) return [];
-    const counts: Partial<Record<HoleKey, number>> = {};
+    const counts: Partial<Record<ScoreKey, number>> = {};
     for (const h of lastRoundHoles) {
-      const k = getScoreKey(h.strokes, h.par_played);
+      const k = scoreKeyFor(h.strokes ?? null, h.par_played ?? null);
       counts[k] = (counts[k] ?? 0) + 1;
     }
     const items: { label: string; count: number; color: string }[] = [];
     const birdiesPlus = (counts.eagle ?? 0) + (counts.birdie ?? 0);
-    if (birdiesPlus > 0) items.push({ label: "Birdie+", count: birdiesPlus, color: scoreColors.birdie ?? "#059669" });
-    if (counts.par)          items.push({ label: "Par",    count: counts.par,          color: scoreColors.par     ?? "#9ca3af" });
-    if (counts.bogey)        items.push({ label: "Bogey",  count: counts.bogey,        color: scoreColors.bogey   ?? "#f87171" });
-    if (counts.double_bogey) items.push({ label: "Double", count: counts.double_bogey, color: scoreColors.double_bogey ?? "#60a5fa" });
+    if (birdiesPlus > 0) items.push({ label: "Birdie+", count: birdiesPlus, color: scoreColors.birdie });
+    if (counts.par)    items.push({ label: "Par",    count: counts.par,    color: scoreColors.par });
+    if (counts.bogey)  items.push({ label: "Bogey",  count: counts.bogey,  color: scoreColors.bogey });
+    if (counts.double) items.push({ label: "Double", count: counts.double, color: scoreColors.double });
     return items;
   })();
 
@@ -720,7 +697,7 @@ export function MobileDashboard({
                 {lastRound.total_score ?? "—"}
               </div>
               {lastRound.to_par != null && (
-                <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: lastRound.to_par > 0 ? "#f87171" : "#059669" }}>
+                <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: toParFill(lastRound.to_par) }}>
                   {toParDisplay(lastRound.to_par)}
                 </div>
               )}
@@ -847,10 +824,7 @@ export function MobileDashboard({
         )}
 
         {recentRounds.map((r, idx) => {
-          const accentColor = r.to_par == null ? "#9ca3af"
-            : r.to_par <= 0  ? "#059669"
-            : r.to_par <= 14 ? "#f87171"
-            : "#60a5fa";
+          const accentColor = toParFill(r.to_par);
           const isLast = idx === recentRounds.length - 1;
 
           return (
@@ -882,7 +856,7 @@ export function MobileDashboard({
                   {r.total_score ?? "—"}
                 </div>
                 {r.to_par != null && (
-                  <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, color: r.to_par > 0 ? "#f87171" : "#059669" }}>
+                  <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, color: toParFill(r.to_par) }}>
                     {toParDisplay(r.to_par)}
                   </div>
                 )}
@@ -901,7 +875,7 @@ export function MobileDashboard({
                 return holes.length > 0 ? (
                   <div style={{ width: 78, height: 16, display: "flex", gap: 1.5, alignItems: "flex-end", flexShrink: 0 }}>
                     {[...holes].sort((a, b) => a.hole_number - b.hole_number).map((h) => {
-                      const key = getScoreKey(h.strokes, h.par_played);
+                      const key = scoreKeyFor(h.strokes ?? null, h.par_played ?? null);
                       return (
                         <div
                           key={h.hole_number}
@@ -909,7 +883,7 @@ export function MobileDashboard({
                             flex: 1,
                             height: "100%",
                             borderRadius: 1.5,
-                            background: scoreColors[key] ?? "#9ca3af",
+                            background: scoreColors[key],
                             opacity: key === "par" ? 0.35 : 1,
                           }}
                         />
