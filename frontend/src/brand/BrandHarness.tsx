@@ -2,16 +2,18 @@ import type { ComponentType } from "react";
 import { useParams } from "react-router-dom";
 import { MotionConfig } from "framer-motion";
 
-const modules = import.meta.glob("./previews/*.tsx", {
+const modules = import.meta.glob("./previews/*/*.tsx", {
   eager: true,
 }) as Record<string, { default: ComponentType }>;
 
-const previews: Record<string, ComponentType> = Object.fromEntries(
-  Object.entries(modules).map(([path, module]) => [
-    path.slice(path.lastIndexOf("/") + 1, -".tsx".length),
-    module.default,
-  ]),
-);
+// Stories are addressed by file name alone, so `components/` and `charts/`
+// share one namespace — a name in both would silently shadow the other.
+const previews: Record<string, ComponentType> = {};
+for (const [path, module] of Object.entries(modules)) {
+  const story = path.slice(path.lastIndexOf("/") + 1, -".tsx".length);
+  if (previews[story]) throw new Error(`Duplicate brand preview: ${story}`);
+  previews[story] = module.default;
+}
 
 /** Hosts one Preview at a time — the Compose preview activity. */
 export function BrandHarness() {

@@ -72,17 +72,11 @@ export { ScorecardTable } from "./components/ScorecardTable";
 export type { ScorecardHole } from "./components/ScorecardTable";
 export { Toggle } from "./components/Toggle";
 export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
-export { ComparisonChartCard } from "./components/ComparisonChartCard";
-export type { ComparisonBar, ComparisonChartCardProps } from "./components/ComparisonChartCard";
 export { ProfileHeroBanner } from "./components/ProfileHeroBanner";
 export { ScanActionCard } from "./components/ScanActionCard";
 export { MilestoneFeed } from "./components/MilestoneFeed";
 export { RecentRoundsTable } from "./components/RecentRoundsTable";
-export { ActivityHeatmap, buildActivityHeatmapDays } from "./components/ActivityHeatmap";
-export type { HeatmapDay } from "./components/ActivityHeatmap";
 export { BestRoundHighlight } from "./components/BestRoundHighlight";
-export { SVGScoreHandicapTrend } from "./components/SVGScoreHandicapTrend";
-export type { ScoreHandicapTrendPoint } from "./components/SVGScoreHandicapTrend";
 export { RoundDetailHeader } from "./components/RoundDetailHeader";
 export type { RoundDetailHeaderProps } from "./components/RoundDetailHeader";
 export { RoundPreview } from "./components/RoundPreview";
@@ -101,3 +95,11 @@ export {
   SheetTitle,
   SheetDescription,
 } from "./components/Sheet";
+
+// Charts
+export { ActivityHeatmap, buildActivityHeatmapDays } from "./charts/ActivityHeatmap";
+export type { HeatmapDay } from "./charts/ActivityHeatmap";
+export { ComparisonChartCard } from "./charts/ComparisonChartCard";
+export type { ComparisonBar, ComparisonChartCardProps } from "./charts/ComparisonChartCard";
+export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
+export type { ScoreHandicapTrendPoint } from "./charts/SVGScoreHandicapTrend";
