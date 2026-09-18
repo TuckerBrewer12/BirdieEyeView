@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { BrandKitRobot } from "../../BrandKit.robot";
-import { enableDark } from "../../previewScreenshot";
+import { BrandKitRobot } from "../../../../../brand/tests/BrandKit.robot";
+import { enableDark } from "../../../../../brand/tests/previewScreenshot";
 
 test.describe("ComparisonChartCard", () => {
   test("light", async ({ page }) => {

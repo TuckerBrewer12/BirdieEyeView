@@ -1,4 +1,4 @@
-import { ScanActionCard } from "@/brand/components/ScanActionCard";
+import { ScanActionCard } from "../components/ScanActionCard";
 
 export default function ScanActionCardPreview() {
   return <ScanActionCard onClick={() => {}} />;

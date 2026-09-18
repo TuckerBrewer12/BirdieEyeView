@@ -1,4 +1,4 @@
-import { ProfileHeroBanner } from "@/brand/components/ProfileHeroBanner";
+import { ProfileHeroBanner } from "../components/ProfileHeroBanner";
 import { dashboardUser } from "@/testing/fixtures/dashboard";
 
 export default function ProfileHeroBannerPreview() {

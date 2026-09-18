@@ -9,7 +9,7 @@ import {
   Zap,
 } from "lucide-react";
 import type { Milestone } from "@/types/golf";
-import { Collection } from "./Collection";
+import { Collection } from "@/brand";
 
 const ICON_MAP: Record<Milestone["type"], ElementType> = {
   score_break: Trophy,

@@ -13,10 +13,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  MilestoneFeed,
-  ProfileHeroBanner,
-  RecentRoundsTable,
-  ScanActionCard,
   SVGScoreHandicapTrend,
   chartColors,
   chartLayout,
@@ -24,6 +20,10 @@ import {
   chartTooltipStyle,
   colors,
 } from "@/brand";
+import { MilestoneFeed } from "./components/MilestoneFeed";
+import { ProfileHeroBanner } from "./components/ProfileHeroBanner";
+import { RecentRoundsTable } from "./components/RecentRoundsTable";
+import { ScanActionCard } from "./components/ScanActionCard";
 import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
 
 function ShortGameSparkline({

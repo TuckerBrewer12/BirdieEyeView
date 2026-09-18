@@ -1,5 +1,5 @@
 import { cn } from "@/brand/cn";
-import { PageTitle } from "./PageTitle";
+import { PageTitle } from "@/brand";
 import { colors, scoreFill, scoreKeyFor, toParDisplay, type ScoreKey } from "@/brand/theme";
 import { pluralNoun } from "@/lib/pluralize";
 

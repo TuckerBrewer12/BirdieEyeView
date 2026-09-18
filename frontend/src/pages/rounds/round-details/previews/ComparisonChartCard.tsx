@@ -1,4 +1,4 @@
-import { ComparisonChartCard } from "@/brand/charts/ComparisonChartCard";
+import { ComparisonChartCard } from "../components/ComparisonChartCard";
 
 /** Integer headline, four cohorts, first bar selected. */
 const score = [

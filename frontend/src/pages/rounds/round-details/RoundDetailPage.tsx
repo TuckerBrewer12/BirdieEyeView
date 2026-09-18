@@ -6,14 +6,14 @@ import {
   Alert,
   AlertDescription,
   Button,
-  ComparisonChartCard,
   CourseLinkSearch,
   LoadingState,
-  RoundDetailHeader,
   SectionLabel,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
+import { ComparisonChartCard } from "./components/ComparisonChartCard";
+import { RoundDetailHeader } from "./components/RoundDetailHeader";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
 import { RoundFlowTimeline } from "@/components/analytics/RoundFlowTimeline";
