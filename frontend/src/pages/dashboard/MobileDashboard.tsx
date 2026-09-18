@@ -6,7 +6,26 @@ import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
 import { chartColors, colors, toParFill } from "@/brand/theme";
 import { formatHandicapIndex } from "@/domain/handicap";
-import type { DashboardPageViewModel, DualTrendPoint, RecentHole, TrendTabItem, TrendView } from "./useDashboardPageViewModel";
+import type { DashboardPageViewModel, DualTrendPoint, TrendView } from "./useDashboardPageViewModel";
+import {
+  avgLabel,
+  dashboardPalette,
+  deltaColor,
+  deltaText,
+  firstNameOf,
+  greetingDateLabel,
+  heroKpis,
+  lastRoundChips,
+  mixHoleCountLabel,
+  mixLegend,
+  colorizeMix,
+  pctLabel,
+  scoreDelta,
+  toRoundRow,
+  trendTabs,
+  type PaintedHole,
+  type TrendTabItem,
+} from "./present";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const INK     = "#131613";
@@ -111,7 +130,7 @@ function HeroSparkline({ data }: { data: DualTrendPoint[] }) {
 }
 
 // ─── Per-hole micro bar strip ─────────────────────────────────────────────────
-function MicroBars({ holes }: { holes: RecentHole[] }) {
+function MicroBars({ holes }: { holes: PaintedHole[] }) {
   if (!holes.length) return null;
   return (
     <div style={{ display: "flex", gap: 3, height: 28, alignItems: "flex-end", width: "100%" }}>
@@ -425,39 +444,59 @@ function MobileScoreTrend({
 // ─── Props ────────────────────────────────────────────────────────────────────
 export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
+  const palette = dashboardPalette;
   const {
     data,
     dualData,
-    last20ScoringAvgLabel,
+    last20ScoringAvg,
+    l5ScoringAvg,
     l20ScoreMix,
-    mixLegend,
-    mixHoleCountLabel,
+    mixHoleCount,
     scramblingPct,
-    scramblingPctLabel,
     upAndDownPct,
-    upAndDownPctLabel,
-    scoreLineColor,
-    handicapLineColor,
-    firstName,
-    greetingDateLabel,
-    handicapIndexLabel,
-    hiDeltaText,
-    hiDeltaColor,
-    scoreDeltaText,
-    scoreDeltaColor,
-    heroKpis,
+    handicapDelta,
     openHandicapSheet,
     trendView,
     setTrendView,
-    trendTabs,
-    lastRound,
-    lastRoundHoles,
-    lastRoundChips,
-    recentRoundRows,
+    recentSummaries,
+    roundsById,
     goalProgressPct,
-    goalTargetLabel,
-    hasScoringGoal,
+    scoringGoal,
   } = vm;
+
+  const firstName = firstNameOf(vm.user);
+  const last20ScoringAvgLabel = avgLabel(last20ScoringAvg);
+  const coloredMix = colorizeMix(l20ScoreMix);
+  const legend = mixLegend(l20ScoreMix);
+  const mixCountLabel = mixHoleCountLabel(mixHoleCount);
+  const scramblingPctLabel = pctLabel(scramblingPct);
+  const upAndDownPctLabel = pctLabel(upAndDownPct);
+  const scoreLineColor = palette.scoreLineColor;
+  const handicapLineColor = palette.handicapLineColor;
+  const dateLabel = greetingDateLabel();
+  const handicapIndexLabel = formatHandicapIndex(data?.handicap_index);
+  const hiDeltaText = deltaText(handicapDelta);
+  const hiDeltaColor = deltaColor(handicapDelta != null && handicapDelta < 0);
+  const scoreDeltaValue = scoreDelta(last20ScoringAvg, l5ScoringAvg);
+  const scoreDeltaText = deltaText(scoreDeltaValue, { vsL5: true });
+  const scoreDeltaColor = deltaColor(scoreDeltaValue != null && scoreDeltaValue > 0);
+  const kpis = heroKpis({
+    bestRound: data?.best_round,
+    totalRounds: data?.total_rounds,
+    putts: vm.putts,
+    girPct: vm.girPct,
+  });
+  const tabs = trendTabs(trendView);
+  const lastRound = recentSummaries[0]
+    ? toRoundRow(recentSummaries[0], roundsById.get(recentSummaries[0].id))
+    : null;
+  const lastRoundHoles = lastRound?.holes ?? [];
+  const chips = lastRoundChips(lastRoundHoles);
+  const recentRoundRows = recentSummaries.map((summary) =>
+    toRoundRow(summary, roundsById.get(summary.id)),
+  );
+  const goalTarget = scoringGoal != null ? `Break ${scoringGoal + 1}` : null;
+  const hasScoringGoal = scoringGoal != null;
 
   if (!data) return null;
 
@@ -468,7 +507,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "0 4px 6px" }}>
         <div>
           <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: "1.3px", textTransform: "uppercase", color: MUTED, marginBottom: 3 }}>
-            {greetingDateLabel}
+            {dateLabel}
           </div>
           <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 700, letterSpacing: "-0.4px", color: INK, lineHeight: 1 }}>
             Hi {firstName}
@@ -526,25 +565,25 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
         </div>
 
         {/* 2c. Score Mix bar */}
-        {l20ScoreMix.some((d) => d.value > 0) && (
+        {coloredMix.some((d) => d.value > 0) && (
           <div style={{ marginBottom: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
               <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: MUTED }}>
                 Score Mix · L20
               </div>
-              {mixHoleCountLabel && (
+              {mixCountLabel && (
                 <div style={{ fontFamily: MONO, fontSize: 10, color: MUTED, whiteSpace: "nowrap" }}>
-                  {mixHoleCountLabel}
+                  {mixCountLabel}
                 </div>
               )}
             </div>
             <div style={{ display: "flex", gap: 2, height: 9, borderRadius: 3, overflow: "hidden" }}>
-              {l20ScoreMix.filter((d) => d.value > 0.5).map((d) => (
+              {coloredMix.filter((d) => d.value > 0.5).map((d) => (
                 <div key={d.name} style={{ flex: d.value, background: d.color, minWidth: 2 }} />
               ))}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", marginTop: 8 }}>
-              {mixLegend.map((item) => (
+              {legend.map((item) => (
                 <div key={item.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                   <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: INK }}>
                     {item.pctLabel}
@@ -564,7 +603,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
         {/* 2d. Metadata strip */}
         <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: 12, marginTop: 2 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", textAlign: "center" }}>
-            {heroKpis.map(({ label, value }) => (
+            {kpis.map(({ label, value }) => (
               <div key={label} style={{ padding: "0 2px" }}>
                 <div style={{ fontFamily: SANS, fontSize: 9, fontWeight: 700, letterSpacing: "1.2px", textTransform: "uppercase", color: MUTED, marginBottom: 3 }}>
                   {label}
@@ -619,7 +658,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
 
           <div style={{ borderTop: `1px dashed ${LINE}`, paddingTop: 12, marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {lastRoundChips.map((chip) => (
+              {chips.map((chip) => (
                 <div key={chip.label} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: SANS, fontSize: 10, color: MUTED }}>
                   <div style={{ width: 8, height: 8, borderRadius: 2, background: chip.color, flexShrink: 0 }} />
                   <span>{chip.count} {chip.label}</span>
@@ -643,7 +682,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
           <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
             <span style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: INK }}>Goal</span>
             <span style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: PRIMARY, marginLeft: 4 }}>
-              {goalTargetLabel}
+              {goalTarget}
             </span>
           </div>
           <div style={{ height: 5, background: chartColors.muted, borderRadius: 99, position: "relative", overflow: "visible" }}>
@@ -666,7 +705,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
           scoreColor={scoreLineColor}
           handicapColor={handicapLineColor}
           view={trendView}
-          trendTabs={trendTabs}
+          trendTabs={tabs}
           onViewChange={setTrendView}
         />
       </div>

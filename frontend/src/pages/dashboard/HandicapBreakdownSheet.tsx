@@ -8,39 +8,45 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/brand";
-import type { WhsRoundRow } from "./useDashboardPageViewModel";
+import { formatHandicapIndex } from "@/domain/handicap";
+import type { WhsBreakdown } from "./model";
+import {
+  adjustmentLabel,
+  courseLabelForWhs,
+  differentialLabel,
+  ratingLabelForWhs,
+  usedLegend,
+  whsContextNote,
+} from "./present";
 
 interface HandicapBreakdownSheetProps {
   open: boolean;
   onClose: () => void;
-  handicapIndexLabel: string;
-  rows: WhsRoundRow[];
-  windowSize: number;
-  countUsed: number;
-  adjustment: number;
-  adjustmentLabel: string | null;
-  diffAvgLabel: string | null;
-  hasRatedRounds: boolean;
-  showCalculation: boolean;
-  usedLegend: string | null;
-  contextNote: string;
+  handicapIndex: number | null | undefined;
+  whs: WhsBreakdown;
 }
 
 export function HandicapBreakdownSheet({
   open,
   onClose,
-  handicapIndexLabel,
-  rows,
-  windowSize,
-  countUsed,
-  adjustment,
-  adjustmentLabel,
-  diffAvgLabel,
-  hasRatedRounds,
-  showCalculation,
-  usedLegend,
-  contextNote,
+  handicapIndex,
+  whs,
 }: HandicapBreakdownSheetProps) {
+  const handicapIndexLabel = formatHandicapIndex(handicapIndex);
+  const {
+    rows,
+    windowSize,
+    countUsed,
+    adjustment,
+    diffAvg,
+    hasRatedRounds,
+    showCalculation,
+  } = whs;
+  const adjustmentText = adjustmentLabel(adjustment);
+  const diffAvgLabel = diffAvg != null ? diffAvg.toFixed(2) : null;
+  const legend = usedLegend(countUsed, rows.filter((r) => r.used).length);
+  const contextNote = whsContextNote(countUsed);
+
   return (
     <Sheet open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
       <SheetContent>
@@ -91,10 +97,10 @@ export function HandicapBreakdownSheet({
                     <span className="font-semibold text-card-foreground font-mono">{diffAvgLabel}</span>
                   </div>
                 )}
-                {adjustmentLabel && (
+                {adjustmentText && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">WHS adjustment</span>
-                    <span className="font-semibold text-card-foreground font-mono">{adjustmentLabel}</span>
+                    <span className="font-semibold text-card-foreground font-mono">{adjustmentText}</span>
                   </div>
                 )}
                 <div className="border-t border-border pt-3 flex justify-between">
@@ -138,30 +144,30 @@ export function HandicapBreakdownSheet({
                   >
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-card-foreground truncate">
-                        {row.courseLabel}
+                        {courseLabelForWhs(row)}
                       </div>
-                      {row.ratingLabel && (
+                      {ratingLabelForWhs(row) && (
                         <div className="text-meta text-muted-foreground font-mono mt-0.5">
-                          {row.ratingLabel}
+                          {ratingLabelForWhs(row)}
                         </div>
                       )}
                     </div>
                     <div className="text-sm font-mono font-semibold text-secondary-foreground text-right w-10">
-                      {row.scoreLabel}
+                      {row.score != null ? String(row.score) : "—"}
                     </div>
                     <div className={`text-sm font-mono font-bold text-right w-16 ${
-                      !row.hasDifferential
+                      row.differential == null
                         ? "text-muted-foreground"
                         : row.used
                           ? "text-primary"
                           : "text-muted-foreground"
                     }`}>
-                      {row.differentialLabel}
+                      {differentialLabel(row.differential)}
                     </div>
                     <div className="w-5 flex justify-center">
                       {row.used ? (
                         <CheckCircle className="size-3.5 text-primary shrink-0" />
-                      ) : row.hasDifferential ? (
+                      ) : row.differential != null ? (
                         <Circle className="size-3.5 text-muted-foreground shrink-0" />
                       ) : null}
                     </div>
@@ -170,10 +176,10 @@ export function HandicapBreakdownSheet({
               </div>
             )}
 
-            {usedLegend && (
+            {legend && (
               <div className="mt-3 flex items-center gap-2 text-label text-muted-foreground px-1">
                 <CheckCircle className="size-3 text-primary shrink-0" />
-                <span>{usedLegend}</span>
+                <span>{legend}</span>
               </div>
             )}
           </div>

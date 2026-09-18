@@ -1,7 +1,7 @@
 import { Camera, Bot, TrendingUp } from "lucide-react";
 import { Reveal } from "@/brand";
 import { TryItYourselfSection } from "./TryItYourselfSection";
-import { LANDING_SECTIONS } from "../useLandingPageViewModel";
+import { LANDING_SECTIONS } from "../sections";
 
 const STEPS = [
   {

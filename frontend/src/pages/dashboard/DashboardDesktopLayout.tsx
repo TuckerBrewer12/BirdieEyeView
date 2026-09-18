@@ -20,11 +20,27 @@ import {
   chartTooltipStyle,
   colors,
 } from "@/brand";
+import { formatHandicapIndex } from "@/domain/handicap";
 import { MilestoneFeed } from "./components/MilestoneFeed";
 import { ProfileHeroBanner } from "./components/ProfileHeroBanner";
 import { RecentRoundsTable } from "./components/RecentRoundsTable";
 import { ScanActionCard } from "./components/ScanActionCard";
 import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
+import {
+  avgLabel,
+  colorizeMix,
+  dashboardPalette,
+  firstNameOf,
+  girDonutData,
+  goalAverageLabel,
+  goalNumberLabel,
+  goalTargetLabel,
+  pctLabel,
+  presentBestRound,
+  puttsColor,
+  puttsGaugeData,
+  puttsLabel,
+} from "./present";
 
 function ShortGameSparkline({
   scrambling,
@@ -78,19 +94,39 @@ function MiniKpi({ label, value, trend }: {
 
 export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
+  const palette = dashboardPalette;
   const {
     data, user, goalReport, trends,
-    dualData, recentMilestones, last20ScoringAvgLabel, hiTrend,
-    girPctLabel, girDonutData, recentDistribution, scramblingPctLabel,
-    upAndDownPctLabel,
-    puttsLabel, puttsGaugeData, puttsColor,
-    scoreLineColor, handicapLineColor, gridColor, girColor, warningColor, dangerColor, mutedFill,
-    handicapIndexLabel, firstName, bestRound, bestRoundDetail, sidebarRounds,
-    hasScoringGoal, goalTargetLabel, goalNumberLabel, goalAverageLabel, goalBarPct, goalFocusHeadline, goalOnTrack,
+    dualData, recentMilestones, last20ScoringAvg, hiTrend,
+    girPct, recentDistribution, scramblingPct,
+    upAndDownPct, putts,
+    bestRound, bestRoundDetail, sidebarRounds,
+    scoringGoal, goalBarPct, goalOnTrack,
     openHandicapSheet,
   } = vm;
 
   if (!data) return null;
+
+  const last20ScoringAvgLabel = avgLabel(last20ScoringAvg);
+  const girPctLabel = pctLabel(girPct);
+  const girDonut = girDonutData(girPct);
+  const coloredDistribution = colorizeMix(recentDistribution);
+  const scramblingPctLabel = pctLabel(scramblingPct);
+  const upAndDownPctLabel = pctLabel(upAndDownPct);
+  const puttsText = puttsLabel(putts);
+  const puttsGauge = puttsGaugeData(putts);
+  const puttsFill = puttsColor(putts, palette);
+  const handicapIndexLabel = formatHandicapIndex(data.handicap_index);
+  const firstName = firstNameOf(user);
+  const best = presentBestRound(bestRound);
+  const hasScoringGoal = scoringGoal != null;
+  const targetLabel = goalTargetLabel(scoringGoal);
+  const numberLabel = goalNumberLabel(scoringGoal);
+  const averageLabel = goalAverageLabel(goalReport);
+  const goalFocusHeadline = goalReport?.savers[0]?.headline ?? null;
+  const {
+    scoreLineColor, handicapLineColor, gridColor, girColor, warningColor, dangerColor, mutedFill,
+  } = palette;
 
   return (
     <div className="pb-12">
@@ -111,7 +147,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
             <Card className="lg:col-span-3">
               <CardContent>
                 <BestRoundHighlight
-                  round={bestRound}
+                  round={best}
                   detail={bestRoundDetail}
                   onClick={bestRound ? () => navigate(`/rounds/${bestRound.id}`) : undefined}
                 />
@@ -151,7 +187,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                 <div className="relative h-chart">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={girDonutData} dataKey="value"
+                      <Pie data={girDonut} dataKey="value"
                         innerRadius={50} outerRadius={68} stroke="none"
                         startAngle={90} endAngle={-270}>
                         <Cell fill={girColor} />
@@ -173,10 +209,10 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                 <CardDescription>Last 5 rounds · % of holes</CardDescription>
               </CardHeader>
               <CardContent>
-                {recentDistribution.length > 0 ? (
+                {coloredDistribution.length > 0 ? (
                   <div className="h-chart">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={recentDistribution} margin={chartLayout.margin}>
+                    <BarChart data={coloredDistribution} margin={chartLayout.margin}>
                       <CartesianGrid stroke={gridColor} vertical={false} />
                       <XAxis dataKey="label" tick={{ ...chartTickStyle, fill: chartColors.axis, fontWeight: 700 }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ ...chartTickStyle, fill: chartColors.axis, fontWeight: 700 }} tickLine={false} axisLine={false} unit="%" />
@@ -188,7 +224,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                         }}
                       />
                       <Bar dataKey="value" radius={chartLayout.barRadius} maxBarSize={28}>
-                        {recentDistribution.map((entry) => (
+                        {coloredDistribution.map((entry) => (
                           <Cell key={entry.name} fill={entry.color} />
                         ))}
                       </Bar>
@@ -241,17 +277,17 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                   <div className="relative h-30">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <Pie data={puttsGaugeData} cx="50%" cy="100%"
+                        <Pie data={puttsGauge} cx="50%" cy="100%"
                           startAngle={180} endAngle={0}
                           innerRadius={52} outerRadius={72}
                           dataKey="value" stroke="none">
-                          <Cell fill={puttsColor} />
+                          <Cell fill={puttsFill} />
                           <Cell fill={mutedFill} />
                         </Pie>
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pointer-events-none">
-                      <div className="text-2xl font-bold text-card-foreground">{puttsLabel}</div>
+                      <div className="text-2xl font-bold text-card-foreground">{puttsText}</div>
                       <div className="text-caption text-muted-foreground uppercase tracking-kicker">Putts</div>
                     </div>
                   </div>
@@ -296,15 +332,15 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                     <div>
                       <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground mb-0.5">Scoring Goal</div>
                       <div className="text-sm font-bold text-card-foreground">
-                        Target: {goalTargetLabel}
+                        Target: {targetLabel}
                       </div>
                     </div>
                     <span className="text-label font-semibold text-primary">Goals →</span>
                   </div>
                   <div className="mb-3">
                     <div className="flex justify-between text-meta text-muted-foreground mb-1">
-                      <span>{goalAverageLabel}</span>
-                      <span>Goal {goalNumberLabel}</span>
+                      <span>{averageLabel}</span>
+                      <span>Goal {numberLabel}</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
