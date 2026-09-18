@@ -2,14 +2,22 @@ import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
-import { getColorBlindPalette } from "@/lib/chartPalettes";
-import { SCORE_COLORS, SCORE_KEYS, SCORE_LABELS } from "@/lib/colors";
-import { colors } from "@/brand/theme";
+import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
+import {
+  SCORE_KEYS,
+  colors,
+  scoreKeyFor,
+  toParDisplay,
+  toParFill,
+  toParTone,
+  type ScoreKey,
+} from "@/brand/theme";
 import { formatHandicapIndex, whsWindow } from "@/domain/handicap";
+import { holePar } from "@/domain/round";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateShort } from "@/lib/roundDate";
 import type { Milestone, DashboardData, Round, RoundSummary, User } from "@/types/golf";
-import type { AnalyticsData, GoalReport } from "@/types/analytics";
+import type { AnalyticsData, GoalReport, ScoreTypeRow } from "@/types/analytics";
 import {
   dashboardRepository,
   type DashboardRepository,
@@ -17,46 +25,77 @@ import {
 
 export type TrendView = "score" | "hcp";
 
-type HoleColorKey =
-  | "eagle"
-  | "birdie"
-  | "par"
-  | "bogey"
-  | "double_bogey"
-  | "triple_bogey"
-  | "quad_bogey";
+/** Analytics payload names → brand `ScoreKey`. */
+const ANALYTICS_SCORE_FIELDS = [
+  "eagle",
+  "birdie",
+  "par",
+  "bogey",
+  "double_bogey",
+  "triple_bogey",
+  "quad_bogey",
+] as const;
 
-function holeColorKey(
-  strokes: number | null | undefined,
-  par: number | null | undefined,
-): HoleColorKey {
-  if (strokes == null || par == null) return "par";
-  const diff = strokes - par;
-  if (diff <= -2) return "eagle";
-  if (diff === -1) return "birdie";
-  if (diff === 0) return "par";
-  if (diff === 1) return "bogey";
-  if (diff === 2) return "double_bogey";
-  if (diff === 3) return "triple_bogey";
-  return "quad_bogey";
+type AnalyticsScoreField = (typeof ANALYTICS_SCORE_FIELDS)[number];
+
+const ANALYTICS_TO_BRAND: Record<AnalyticsScoreField, ScoreKey> = {
+  eagle: "eagle",
+  birdie: "birdie",
+  par: "par",
+  bogey: "bogey",
+  double_bogey: "double",
+  triple_bogey: "triple",
+  quad_bogey: "quad",
+};
+
+const SCORE_LABELS: Record<ScoreKey, string> = {
+  eagle: "Eagle+",
+  birdie: "Birdie",
+  par: "Par",
+  bogey: "Bogey",
+  double: "Double",
+  triple: "Triple",
+  quad: "Quad+",
+};
+
+function scoreColorsFromPalette(
+  palette: ChartPalette["score"] | null | undefined,
+): Record<ScoreKey, string> {
+  return {
+    eagle: palette?.eagle ?? colors.score.eagle.base,
+    birdie: palette?.birdie ?? colors.score.birdie.base,
+    par: palette?.par ?? colors.score.par.base,
+    bogey: palette?.bogey ?? colors.score.bogey.base,
+    double: palette?.double_bogey ?? colors.score.double.base,
+    triple: palette?.triple_bogey ?? colors.score.triple.base,
+    quad: palette?.quad_bogey ?? colors.score.quad.base,
+  };
 }
 
-function holeFill(key: HoleColorKey, scoreColors: Record<string, string>): string {
-  return scoreColors[key] ?? colors.score.par.base;
-}
-
-function toParAccent(toPar: number | null, scoreColors: Record<string, string>): string {
-  if (toPar == null) return scoreColors.par ?? colors.score.par.base;
-  if (toPar <= 0) return scoreColors.birdie ?? colors.score.birdie.base;
-  if (toPar <= 14) return scoreColors.bogey ?? colors.score.bogey.base;
-  return scoreColors.double_bogey ?? colors.score.double.base;
-}
-
-function toParTextColor(toPar: number | null, scoreColors: Record<string, string>): string {
-  if (toPar == null) return scoreColors.par ?? colors.score.par.text;
-  return toPar > 0
-    ? (scoreColors.bogey ?? colors.score.bogey.text)
-    : (scoreColors.birdie ?? colors.score.birdie.text);
+function mixFromRows(
+  rows: ScoreTypeRow[],
+  scoreColors: Record<ScoreKey, string>,
+  roundTenths: boolean,
+): ScoreDistItem[] {
+  let total = 0;
+  const sums: Record<ScoreKey, number> = {
+    eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0,
+  };
+  for (const row of rows) {
+    total += row.holes_counted;
+    for (const field of ANALYTICS_SCORE_FIELDS) {
+      sums[ANALYTICS_TO_BRAND[field]] += (row[field] / 100) * row.holes_counted;
+    }
+  }
+  return SCORE_KEYS.map((key) => {
+    const raw = total > 0 ? (sums[key] / total) * 100 : 0;
+    return {
+      name: key,
+      label: SCORE_LABELS[key],
+      value: roundTenths ? Math.round(raw * 10) / 10 : raw,
+      color: scoreColors[key],
+    };
+  });
 }
 
 function pickBestRound(rounds: RoundSummary[]): RoundSummary | null {
@@ -79,7 +118,7 @@ export interface DualTrendPoint {
 }
 
 export interface ScoreDistItem {
-  name: string;
+  name: ScoreKey;
   label: string;
   value: number;
   color: string;
@@ -125,7 +164,7 @@ export interface RecentHole {
   hole_number: number;
   strokes: number | null;
   par_played: number | null;
-  colorKey: HoleColorKey;
+  colorKey: ScoreKey;
   fill: string;
 }
 
@@ -296,7 +335,7 @@ export function useDashboardPageViewModel(
 
   const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
   const colorBlindPalette = useMemo(() => getColorBlindPalette(colorBlindMode), [colorBlindMode]);
-  const scoreColors = (colorBlindPalette?.score ?? SCORE_COLORS) as Record<string, string>;
+  const scoreColors = scoreColorsFromPalette(colorBlindPalette?.score);
   const scoreLineColor = colorBlindPalette?.trend.primary ?? colors.primary;
   const handicapLineColor = colorBlindPalette?.trend.secondary ?? colors.score.double.text;
   const girColor = colorBlindPalette?.ui.success ?? colors.score.birdie.base;
@@ -382,20 +421,7 @@ export function useDashboardPageViewModel(
     if (!trends) return [];
     const last5 = (trends.score_type_distribution ?? []).slice(-5);
     if (!last5.length) return [];
-    let total = 0;
-    const sums: Record<string, number> = {};
-    for (const row of last5) {
-      total += row.holes_counted;
-      for (const key of SCORE_KEYS) {
-        sums[key] = (sums[key] ?? 0) + ((row[key] as number) / 100) * row.holes_counted;
-      }
-    }
-    return SCORE_KEYS.map((key) => ({
-      name: key,
-      label: SCORE_LABELS[key] as string,
-      value: total > 0 ? Math.round((sums[key] / total) * 1000) / 10 : 0,
-      color: scoreColors[key],
-    })).filter((d) => d.value > 0);
+    return mixFromRows(last5, scoreColors, true).filter((d) => d.value > 0);
   }, [trends, scoreColors]);
 
   const last20ScoringAvg = useMemo(() => {
@@ -422,20 +448,7 @@ export function useDashboardPageViewModel(
   const l20ScoreMix = useMemo<ScoreDistItem[]>(() => {
     const rows = trends?.score_type_distribution ?? [];
     if (!rows.length) return [];
-    let total = 0;
-    const sums: Record<string, number> = {};
-    for (const row of rows) {
-      total += row.holes_counted;
-      for (const key of SCORE_KEYS) {
-        sums[key] = (sums[key] ?? 0) + ((row[key] as number) / 100) * row.holes_counted;
-      }
-    }
-    return SCORE_KEYS.map((key) => ({
-      name: key,
-      label: SCORE_LABELS[key] as string,
-      value: total > 0 ? (sums[key] / total) * 100 : 0,
-      color: scoreColors[key],
-    }));
+    return mixFromRows(rows, scoreColors, false);
   }, [trends, scoreColors]);
 
 
@@ -514,8 +527,8 @@ export function useDashboardPageViewModel(
       : null;
   const hiDeltaImproving = handicapDelta != null && handicapDelta < 0;
   const hiDeltaColor = hiDeltaImproving
-    ? (scoreColors.birdie ?? colors.score.birdie.base)
-    : (scoreColors.bogey ?? colors.score.bogey.base);
+    ? scoreColors.birdie
+    : scoreColors.bogey;
 
   const scoreDelta =
     last20ScoringAvg != null && l5ScoringAvg != null
@@ -527,8 +540,8 @@ export function useDashboardPageViewModel(
       : null;
   const scoreDeltaImproving = scoreDelta != null && scoreDelta > 0;
   const scoreDeltaColor = scoreDeltaImproving
-    ? (scoreColors.birdie ?? colors.score.birdie.base)
-    : (scoreColors.bogey ?? colors.score.bogey.base);
+    ? scoreColors.birdie
+    : scoreColors.bogey;
   const last20ScoringAvgLabel =
     last20ScoringAvg != null ? last20ScoringAvg.toFixed(1) : "—";
   const puttsLabel = putts > 0 ? putts.toFixed(1) : "—";
@@ -544,10 +557,10 @@ export function useDashboardPageViewModel(
       { label: "Birdie+", value: birdiesPlus, color: scoreColors.birdie },
       { label: "Par", value: l20ScoreMix.find((d) => d.name === "par")?.value ?? 0, color: scoreColors.par },
       { label: "Bogey", value: l20ScoreMix.find((d) => d.name === "bogey")?.value ?? 0, color: scoreColors.bogey },
-      { label: "Dbl", value: l20ScoreMix.find((d) => d.name === "double_bogey")?.value ?? 0, color: scoreColors.double_bogey },
+      { label: "Dbl", value: l20ScoreMix.find((d) => d.name === "double")?.value ?? 0, color: scoreColors.double },
       { label: "Tpl+", value:
-        (l20ScoreMix.find((d) => d.name === "triple_bogey")?.value ?? 0) +
-        (l20ScoreMix.find((d) => d.name === "quad_bogey")?.value ?? 0), color: scoreColors.triple_bogey },
+        (l20ScoreMix.find((d) => d.name === "triple")?.value ?? 0) +
+        (l20ScoreMix.find((d) => d.name === "quad")?.value ?? 0), color: scoreColors.triple },
     ];
     return items.map((item) => ({
       label: item.label,
@@ -575,37 +588,39 @@ export function useDashboardPageViewModel(
   ];
 
   const holesFromRound = useCallback((round: Round | undefined): RecentHole[] => {
-    return (round?.hole_scores ?? [])
+    if (!round) return [];
+    return round.hole_scores
       .slice()
       .sort((a, b) => (a.hole_number ?? 0) - (b.hole_number ?? 0))
       .map((h) => {
-        const colorKey = holeColorKey(h.strokes, h.par_played);
+        const par = h.hole_number != null ? holePar(round, h.hole_number) : null;
+        const colorKey = scoreKeyFor(h.strokes, par);
         return {
           hole_number: h.hole_number ?? 0,
           strokes: h.strokes ?? null,
-          par_played: h.par_played ?? null,
+          par_played: par,
           colorKey,
-          fill: holeFill(colorKey, scoreColors),
+          fill: scoreColors[colorKey],
         };
       });
   }, [scoreColors]);
 
   const toRoundRow = useCallback((summary: RoundSummary): RecentRoundRow => {
     const toPar = summary.to_par;
+    const tone = toParTone(toPar);
     return {
       id: summary.id,
       scoreLabel: summary.total_score != null ? String(summary.total_score) : "—",
       toPar,
-      toParLabel:
-        toPar == null ? null : toPar > 0 ? `+${toPar}` : toPar === 0 ? "E" : String(toPar),
-      toParColor: toParTextColor(toPar, scoreColors),
-      accentColor: toParAccent(toPar, scoreColors),
+      toParLabel: toPar == null ? null : toParDisplay(toPar),
+      toParColor: tone.text,
+      accentColor: toParFill(toPar),
       courseLabel: summary.course_name ? formatCourseName(summary.course_name) : "Unknown course",
       dateLabel: formatRoundDateShort(summary.date) ?? "—",
       teeBox: summary.tee_box,
       holes: holesFromRound(roundsById.get(summary.id)),
     };
-  }, [holesFromRound, roundsById, scoreColors]);
+  }, [holesFromRound, roundsById]);
 
   const lastRound = recentSummaries[0] ? toRoundRow(recentSummaries[0]) : null;
   const lastRoundHoles = lastRound?.holes ?? [];
@@ -614,22 +629,22 @@ export function useDashboardPageViewModel(
 
   const lastRoundChips = useMemo<ScoreChip[]>(() => {
     if (!lastRoundHoles.length) return [];
-    const counts: Partial<Record<HoleColorKey, number>> = {};
+    const counts: Partial<Record<ScoreKey, number>> = {};
     for (const h of lastRoundHoles) {
       counts[h.colorKey] = (counts[h.colorKey] ?? 0) + 1;
     }
     const items: ScoreChip[] = [];
     const birdiesPlus = (counts.eagle ?? 0) + (counts.birdie ?? 0);
     if (birdiesPlus > 0) {
-      items.push({ label: "Birdie+", count: birdiesPlus, color: scoreColors.birdie ?? colors.score.birdie.base });
+      items.push({ label: "Birdie+", count: birdiesPlus, color: scoreColors.birdie });
     }
-    if (counts.par) items.push({ label: "Par", count: counts.par, color: scoreColors.par ?? colors.score.par.base });
-    if (counts.bogey) items.push({ label: "Bogey", count: counts.bogey, color: scoreColors.bogey ?? colors.score.bogey.base });
-    if (counts.double_bogey) {
+    if (counts.par) items.push({ label: "Par", count: counts.par, color: scoreColors.par });
+    if (counts.bogey) items.push({ label: "Bogey", count: counts.bogey, color: scoreColors.bogey });
+    if (counts.double) {
       items.push({
         label: "Double",
-        count: counts.double_bogey,
-        color: scoreColors.double_bogey ?? colors.score.double.base,
+        count: counts.double,
+        color: scoreColors.double,
       });
     }
     return items;
@@ -642,7 +657,7 @@ export function useDashboardPageViewModel(
       id: bestSummary.id,
       courseName: bestSummary.course_name ?? "Unknown Course",
       dateLabel: formatRoundDateShort(bestSummary.date) ?? "",
-      toParLabel: toPar == null ? "" : `To Par: ${toPar > 0 ? `+${toPar}` : toPar}`,
+      toParLabel: toPar == null ? "" : `To Par: ${toParDisplay(toPar)}`,
       totalScore: bestSummary.total_score,
     };
   }, [bestSummary]);
