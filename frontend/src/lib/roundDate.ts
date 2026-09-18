@@ -44,3 +44,22 @@ export function roundDateParts(dateStr: string | null | undefined): RoundDatePar
     year: `'${String(d.getFullYear()).slice(2)}`,
   };
 }
+
+/** "Jun 15, 2026" — round history rows. UTC so the label does not shift by viewer timezone. */
+export function formatRoundDateHistory(dateStr: string | null | undefined): string | null {
+  const d = parse(dateStr);
+  if (!d) return null;
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/** "06-15" — chart tick from an ISO date, independent of timezone. */
+export function formatRoundDateTick(dateStr: string | null | undefined): string | null {
+  if (!dateStr) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr);
+  return match ? `${match[2]}-${match[3]}` : null;
+}

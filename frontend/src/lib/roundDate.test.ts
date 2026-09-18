@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatRoundDateLong, formatRoundDateShort, roundDateParts } from "./roundDate";
+import { formatRoundDateHistory, formatRoundDateLong, formatRoundDateShort, formatRoundDateTick, roundDateParts } from "./roundDate";
 
 describe("formatRoundDateLong", () => {
   it("reads weekday · month day · year", () => {
@@ -37,5 +37,27 @@ describe("roundDateParts", () => {
   it("is null for a missing or unparseable date", () => {
     expect(roundDateParts(null)).toBeNull();
     expect(roundDateParts("not a date")).toBeNull();
+  });
+});
+
+describe("formatRoundDateHistory", () => {
+  it("reads month day, year in UTC", () => {
+    expect(formatRoundDateHistory("2026-06-15T00:00:00.000Z")).toBe("Jun 15, 2026");
+  });
+
+  it("is null for a missing or unparseable date", () => {
+    expect(formatRoundDateHistory(null)).toBeNull();
+    expect(formatRoundDateHistory("not a date")).toBeNull();
+  });
+});
+
+describe("formatRoundDateTick", () => {
+  it("reads MM-DD from the ISO date, not the local clock", () => {
+    expect(formatRoundDateTick("2026-03-09T18:00:00.000Z")).toBe("03-09");
+  });
+
+  it("is null for a missing or unparseable date", () => {
+    expect(formatRoundDateTick(null)).toBeNull();
+    expect(formatRoundDateTick("Monday")).toBeNull();
   });
 });

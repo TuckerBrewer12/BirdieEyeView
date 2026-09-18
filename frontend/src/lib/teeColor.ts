@@ -21,3 +21,33 @@ export function chooseCompatibleTee(current: string, teeColors: string[]): strin
   if (!currentToken) return null;
   return teeColors.find((c) => extractTeeColorToken(c) === currentToken) ?? null;
 }
+
+/** Fill class for a tee chip or scorecard tee badge. */
+export function teeSwatchClass(color: string | null): string {
+  switch ((color ?? "").toLowerCase()) {
+    case "black":
+      return "bg-foreground";
+    case "white":
+      return "bg-card ring-1 ring-border";
+    case "blue":
+      return "bg-score-double";
+    case "gold":
+    case "yellow":
+      return "bg-score-eagle";
+    case "red":
+      return "bg-score-bogey";
+    case "green":
+      return "bg-primary";
+    case "silver":
+      return "bg-muted-foreground";
+    default:
+      return "bg-muted";
+  }
+}
+
+/** Text class that stays readable on teeSwatchClass. */
+export function teeSwatchTextClass(color: string | null): string {
+  const key = (color ?? "").toLowerCase();
+  if (key === "white" || key === "yellow" || key === "gold") return "text-foreground";
+  return "text-primary-foreground";
+}

@@ -1,18 +1,42 @@
 import { Link2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
-import { motion as motionTokens, scoreFill, toParLabel, toParTextClass } from "@/brand/theme";
+import { motion as motionTokens, scoreFill, toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
-import { roundDateParts } from "@/lib/roundDate";
+import { formatRoundDateHistory, roundDateParts } from "@/lib/roundDate";
 import type { RoundSummary } from "@/types/golf";
 
 interface RoundPreviewProps {
   round: RoundSummary;
+  variant?: "history";
   onClick?: () => void;
   onLinkClick?: () => void;
 }
 
-export function RoundPreview({ round, onClick, onLinkClick }: RoundPreviewProps) {
+export function RoundPreview({ round, variant, onClick, onLinkClick }: RoundPreviewProps) {
+  if (variant === "history") {
+    return (
+      <div
+        data-slot="round-preview"
+        className={cn(
+          "flex items-center justify-between px-5 py-3",
+          onClick && "cursor-pointer hover:bg-muted",
+        )}
+        onClick={onClick}
+      >
+        <span className="text-sm text-muted-foreground">
+          {formatRoundDateHistory(round.date) ?? "—"}
+        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-bold text-foreground">{round.total_score ?? "—"}</span>
+          <span className={cn("rounded px-1.5 py-0.5 text-xs font-semibold", toParBadgeClass(round.to_par))}>
+            {toParLabel(round.to_par) ?? "—"}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   const dateParts = roundDateParts(round.date);
   const toParText = toParLabel(round.to_par);
   const holes = round.hole_scores_summary ?? [];

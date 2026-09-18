@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateLong } from "@/lib/roundDate";
+import { messageFrom } from "@/lib/userFacingErrors";
 import { scoreKeyFor, type ScoreKey } from "@/brand/theme";
 import { queryKeys } from "@/data/queryKeys";
 import {
@@ -145,10 +146,6 @@ function courseEditFromRound(round: Round): CourseEdit {
 
 function nineFrom(holes: PlayedHole[]): Nine {
   return { holes, total: nineTotal(holes) };
-}
-
-function messageFrom(err: unknown, fallback: string): string {
-  return err instanceof Error ? err.message : fallback;
 }
 
 export function useRoundDetailPageViewModel(
