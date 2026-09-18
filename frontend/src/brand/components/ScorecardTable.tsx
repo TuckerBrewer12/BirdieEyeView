@@ -1,5 +1,6 @@
 import { cn } from "@/brand/cn";
-import { scoreFill, toParLabel, toParTextClass } from "@/brand/theme";
+import { strokesToPar } from "@/domain";
+import { scoreFill, toParDisplay, toParTextClass } from "@/brand/theme";
 
 export interface ScorecardHole {
   hole: number;
@@ -39,16 +40,13 @@ function ScorecardTable({ holes, label, roundTotal, className }: ScorecardTableP
   const ninePar = sum(holes.map((hole) => hole.par));
   const nineStrokes = sum(holes.map((hole) => hole.strokes));
   const scored = holes.some((hole) => hole.strokes != null);
-  const nineToPar = scored && ninePar > 0 ? nineStrokes - ninePar : null;
+  const nineToPar = scored && ninePar > 0 ? strokesToPar(nineStrokes, ninePar) : null;
 
   const showPutts = holes.some((hole) => hole.putts != null);
   const showGir = holes.some((hole) => hole.greenInRegulation != null);
   const showShots = holes.some((hole) => hole.shotsToGreen != null);
 
-  const roundToPar =
-    roundTotal?.strokes != null && roundTotal.par != null
-      ? roundTotal.strokes - roundTotal.par
-      : null;
+  const roundToPar = strokesToPar(roundTotal?.strokes, roundTotal?.par);
 
   return (
     <table data-slot="scorecard-table" className={cn("w-full border-collapse", className)}>
@@ -93,17 +91,17 @@ function ScorecardTable({ holes, label, roundTotal, className }: ScorecardTableP
         <tr className={cn("text-xs", (showPutts || showGir || showShots) && "border-b border-border")}>
           <td className="px-3 py-1.5 font-medium text-muted-foreground">To Par</td>
           {holes.map((hole) => {
-            const toPar = hole.strokes != null && hole.par != null ? hole.strokes - hole.par : null;
+            const toPar = strokesToPar(hole.strokes, hole.par);
             return (
               <td key={hole.hole} className={cn(CELL, toParTextClass(toPar))}>
-                {toParLabel(toPar) ?? "-"}
+                {toParDisplay(toPar, "-")}
               </td>
             );
           })}
-          <td className={cn(NINE_CELL, toParTextClass(nineToPar))}>{toParLabel(nineToPar) ?? "-"}</td>
+          <td className={cn(NINE_CELL, toParTextClass(nineToPar))}>{toParDisplay(nineToPar, "-")}</td>
           {roundTotal && (
             <td className={cn(TOTAL_CELL, "text-sm", toParTextClass(roundToPar))}>
-              {toParLabel(roundToPar) ?? "-"}
+              {toParDisplay(roundToPar, "-")}
             </td>
           )}
         </tr>

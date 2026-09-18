@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
-import { scoreFill } from "@/brand";
+import { scoreFill, toParDisplay } from "@/brand";
+import { strokesToPar } from "@/domain";
 
 export type ScannerPhase = "photo" | "mapping" | "scanning" | "result";
 
@@ -37,19 +38,13 @@ const SAMPLE = {
   gir: [false, false, true, false, false, true, true, false, false],
 };
 
-function toParLabelFor(strokes: number, par: number): string {
-  const diff = strokes - par;
-  if (diff === 0) return "E";
-  return diff > 0 ? `+${diff}` : `${diff}`;
-}
-
 const SCORECARD: DemoScorecardRow[] = SAMPLE.par.map((par, i) => ({
   hole: i + 1,
   par,
   strokes: SAMPLE.strokes[i],
   putts: SAMPLE.putts[i],
   greenInRegulation: SAMPLE.gir[i],
-  toPar: toParLabelFor(SAMPLE.strokes[i], par),
+  toPar: toParDisplay(strokesToPar(SAMPLE.strokes[i], par)),
   overPar: SAMPLE.strokes[i] > par,
   // The real score palette, so the demo teaches the legend the app uses.
   fill: scoreFill(SAMPLE.strokes[i], par),

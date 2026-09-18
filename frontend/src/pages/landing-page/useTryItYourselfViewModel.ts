@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePublicScan } from "@/hooks/usePublicScan";
 import type { ScorecardHole } from "@/brand";
+import { coursePar, getHole } from "@/domain";
 import type { ExtractedHoleScore, ScanResult } from "@/types/scan";
 
 const PHASES = [
@@ -38,8 +39,7 @@ export interface TryItYourselfViewModel {
 }
 
 function parFor(result: ScanResult, score: ExtractedHoleScore, index: number): number | null {
-  const holeNumber = score.hole_number ?? index + 1;
-  return result.round.course?.holes.find((hole) => hole.number === holeNumber)?.par ?? null;
+  return getHole(result.round.course, score.hole_number ?? index + 1)?.par ?? null;
 }
 
 function toRows(result: ScanResult | null, from: number, to: number): ScorecardHole[] {
@@ -102,7 +102,7 @@ export function useTryItYourselfViewModel(): TryItYourselfViewModel {
     frontNine: toRows(result, 0, 9),
     backNine: toRows(result, 9, 18),
     roundTotal: {
-      par: result?.round.course?.par ?? null,
+      par: coursePar(result?.round.course),
       strokes: scores.reduce((total, score) => total + (score.strokes ?? 0), 0) || null,
     },
     hasScores: scores.length > 0,
