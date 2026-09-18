@@ -10,6 +10,12 @@ export const TEST_USER = {
   email_verified: true,
 };
 
+/** An account the fake will sign in, keyed by email. */
+export interface FakeAccount {
+  password: string;
+  verified: boolean;
+}
+
 export interface FakeBackendSeed extends InMemoryRoundsSeed {
   user?: typeof TEST_USER;
   profile?: User;
@@ -18,6 +24,8 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   goalReport?: GoalReport | null;
   /** No one is signed in — `/api/auth/me` answers 401, as the real API does. */
   signedOut?: boolean;
+  /** Accounts `/api/auth/login` accepts. Defaults to `TEST_USER` with `password`. */
+  accounts?: Record<string, FakeAccount>;
 }
 
 export interface FakeReply {
@@ -32,18 +40,40 @@ export class FakeBackend {
   dashboard: DashboardData | undefined;
   analytics: AnalyticsData | null | undefined;
   goalReport: GoalReport | null | undefined;
-  readonly signedOut: boolean;
+  /** Flips to false on a successful login, so the app's next `/me` sees the session. */
+  signedOut: boolean;
+  readonly accounts: Record<string, FakeAccount>;
+  /** Addresses `/api/auth/resend-verification` was asked to mail. */
+  readonly verificationResends: string[] = [];
   readonly store: InMemoryRounds;
 
   constructor(seed: FakeBackendSeed = {}) {
-    const { user, profile, dashboard, analytics, goalReport, signedOut, ...storeSeed } = seed;
+    const { user, profile, dashboard, analytics, goalReport, signedOut, accounts, ...storeSeed } = seed;
     this.user = user ?? TEST_USER;
     this.profile = profile;
     this.dashboard = dashboard;
     this.analytics = analytics;
     this.goalReport = goalReport;
     this.signedOut = signedOut ?? false;
+    this.accounts = accounts ?? { [this.user.email]: { password: "password", verified: true } };
     this.store = new InMemoryRounds(storeSeed);
+  }
+
+  /** Mirrors `api/routers/auth.py` login: 401 for bad credentials, 403 when unverified. */
+  private login(body: unknown): FakeReply {
+    const { email = "", password = "" } = (body ?? {}) as { email?: string; password?: string };
+    const account = this.accounts[email.trim().toLowerCase()];
+    if (!account || account.password !== password) {
+      return { status: 401, body: { detail: "Invalid email or password" } };
+    }
+    if (!account.verified) {
+      return {
+        status: 403,
+        body: { detail: "Email not verified. Please verify your email before signing in." },
+      };
+    }
+    this.signedOut = false;
+    return { status: 200, body: { ...this.user, email, access_token: "fake-token" } };
   }
 
   get rounds() {
@@ -58,6 +88,20 @@ export class FakeBackend {
     const verb = method.toUpperCase();
     const parsed = new URL(url, "http://local.test");
     const path = parsed.pathname;
+
+    if (verb === "POST" && path.endsWith("/api/auth/login")) {
+      return this.login(body);
+    }
+
+    if (verb === "POST" && path.endsWith("/api/auth/resend-verification")) {
+      const email = String((body as { email?: unknown } | undefined)?.email ?? "");
+      this.verificationResends.push(email);
+      // The real endpoint answers the same whether or not the address exists.
+      return {
+        status: 200,
+        body: { message: "If this account exists, a verification email has been sent." },
+      };
+    }
 
     if (verb === "GET" && path.includes("/api/auth/me")) {
       if (this.signedOut) return { status: 401, body: { detail: "Not authenticated" } };

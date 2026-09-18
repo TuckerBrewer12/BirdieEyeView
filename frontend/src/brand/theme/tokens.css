@@ -31,6 +31,8 @@
   --accent: #e8f5e9;
   --accent-foreground: #1a2e1a;
   --destructive: #dc2626;
+  /* A request that went through: a link sent, a password reset. */
+  --success: #047857;
   /* Ambient shadow for lifted surfaces; alpha so it reads on any backdrop. */
   --shadow: rgb(15 23 42 / 0.10);
 
@@ -168,6 +170,7 @@
   --accent: #1a3a1f;
   --accent-foreground: #e6edf3;
   --destructive: #f87171;
+  --success: #34d399;
   /* Black reads as nothing on a dark page, so lift with a stronger halo. */
   --shadow: rgb(0 0 0 / 0.55);
 
@@ -192,6 +195,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
 
   /* text-score-eagle, bg-score-eagle-base, bg-score-eagle-muted. Per-hole
      fills still go through colors.score[key].base when the key is dynamic. */

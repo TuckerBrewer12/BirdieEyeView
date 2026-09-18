@@ -11,6 +11,12 @@ export default function AlertPreview() {
         </AlertDescription>
       </Alert>
 
+      <Alert variant="success" role="status">
+        <AlertDescription>
+          If this account exists, a verification email has been sent.
+        </AlertDescription>
+      </Alert>
+
       <Alert variant="destructive">
         <CircleAlert />
         <AlertTitle>Scan failed</AlertTitle>
