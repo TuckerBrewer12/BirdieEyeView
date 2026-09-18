@@ -46,17 +46,8 @@ export function DashboardPage({ userId }: DashboardPageProps) {
       <HandicapBreakdownSheet
         open={vm.handicapSheetOpen}
         onClose={vm.closeHandicapSheet}
-        handicapIndexLabel={vm.handicapIndexLabel}
-        rows={vm.whsRows}
-        windowSize={vm.whsWindowSize}
-        countUsed={vm.whsCountUsed}
-        adjustment={vm.whsAdjustment}
-        adjustmentLabel={vm.whsAdjustmentLabel}
-        diffAvgLabel={vm.whsDiffAvgLabel}
-        hasRatedRounds={vm.whsHasRatedRounds}
-        showCalculation={vm.whsShowCalculation}
-        usedLegend={vm.whsUsedLegend}
-        contextNote={vm.whsContextNote}
+        handicapIndex={vm.data.handicap_index}
+        whs={vm.whs}
       />
     </>
   );

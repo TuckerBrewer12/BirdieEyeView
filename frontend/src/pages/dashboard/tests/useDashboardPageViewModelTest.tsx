@@ -13,6 +13,8 @@ import {
 } from "@/testing/fixtures/dashboard";
 import { FakeDashboardRepository } from "@/testing/fakes/FakeDashboardRepository";
 import { useDashboardPageViewModel } from "../useDashboardPageViewModel";
+import { pickBestRound, whsBreakdown, dualTrendFrom } from "../model";
+import { mixLegend } from "../present";
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -37,13 +39,13 @@ function renderVm(seed: ConstructorParameters<typeof FakeDashboardRepository>[0]
 }
 
 describe("useDashboardPageViewModel", () => {
-  it("exposes scoring average, handicap label, and mix after load", async () => {
+  it("exposes scoring average, handicap, and mix after load", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.last20ScoringAvgLabel).toBe("76.8");
-    expect(result.current.handicapIndexLabel).toBe("12.4");
-    expect(result.current.firstName).toBe("Test");
-    expect(result.current.mixLegend.map((i) => i.label)).toEqual([
+    expect(result.current.last20ScoringAvg).toBeCloseTo(76.8, 1);
+    expect(result.current.data?.handicap_index).toBe(12.4);
+    expect(result.current.user?.name).toBe("Test Golfer");
+    expect(mixLegend(result.current.l20ScoreMix, {}).map((i) => i.label)).toEqual([
       "Birdie+",
       "Par",
       "Bogey",
@@ -65,46 +67,29 @@ describe("useDashboardPageViewModel", () => {
   it("builds WHS rows from differentials and marks the used round", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.whsRows.length).toBe(5);
-    expect(result.current.whsShowCalculation).toBe(true);
-    expect(result.current.whsCountUsed).toBe(1);
-    const used = result.current.whsRows.filter((r) => r.used);
+    expect(result.current.whs.rows.length).toBe(5);
+    expect(result.current.whs.showCalculation).toBe(true);
+    expect(result.current.whs.countUsed).toBe(1);
+    const used = result.current.whs.rows.filter((r) => r.used);
     expect(used).toHaveLength(1);
-    expect(used[0]?.courseLabel).toBe("Blue Rock");
-  });
-
-  it("formats a plus handicap", async () => {
-    const { result } = renderVm({
-      dashboard: { ...populatedDashboard, handicap_index: -1.2 },
-      analytics: populatedAnalytics,
-      rounds: dashboardDetailRounds,
-    });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.handicapIndexLabel).toBe("+1.2");
+    expect(used[0]?.courseName).toBe("Blue Rock");
   });
 
   it("picks the lowest scoring round as best and fetches its detail", async () => {
     const { result, repository } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     await waitFor(() => expect(result.current.bestRound?.id).toBe("round-3"));
-    expect(result.current.bestRound?.totalScore).toBe(69);
+    expect(result.current.bestRound?.total_score).toBe(69);
     expect(repository.fetchedRoundIds).toContain("round-3");
   });
 
   it("fetches the three most recent rounds for hole strips", async () => {
     const { result, repository } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    await waitFor(() => expect(result.current.recentRoundRows).toHaveLength(3));
-    expect(result.current.recentRoundRows.map((r) => r.id)).toEqual(
+    await waitFor(() => expect(result.current.recentSummaries).toHaveLength(3));
+    expect(result.current.recentSummaries.map((r) => r.id)).toEqual(
       populatedRounds.slice(0, 3).map((r) => r.id),
     );
-    const holes = result.current.recentRoundRows[0]?.holes ?? [];
-    const numbers = holes.map((h) => h.hole_number);
-    expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
-    expect(result.current.recentRoundRows[0]?.accentColor).toBeTruthy();
-    expect(
-      result.current.scramblingPctLabel.endsWith("%") || result.current.scramblingPctLabel === "—",
-    ).toBe(true);
     expect(repository.fetchedRoundIds).toEqual(
       expect.arrayContaining(populatedRounds.slice(0, 3).map((r) => r.id)),
     );
@@ -114,7 +99,6 @@ describe("useDashboardPageViewModel", () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.trendView).toBe("score");
-    expect(result.current.trendTabs.find((t) => t.active)?.key).toBe("score");
     act(() => result.current.setTrendView("hcp"));
     expect(result.current.trendView).toBe("hcp");
   });
@@ -140,23 +124,36 @@ describe("useDashboardPageViewModel", () => {
     expect(result.current.dualData).toEqual([]);
   });
 
-  it("exposes goal labels from the report", async () => {
+  it("exposes the scoring goal from the user and report", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.hasScoringGoal).toBe(true);
-    expect(result.current.goalTargetLabel).toBe("Break 80");
-    expect(result.current.goalNumberLabel).toBe("80");
-    expect(result.current.goalFocusHeadline).toBe("Fewer three-putts");
+    expect(result.current.scoringGoal).toBe(79);
+    expect(result.current.goalOnTrack).toBe(false);
+    expect(result.current.goalReport?.savers[0]?.headline).toBe("Fewer three-putts");
   });
 
-  it("shows a dash handicap when there is no index", async () => {
+  it("has no best round or WHS rows when there is no index", async () => {
     const { result } = renderVm({
       dashboard: { ...populatedDashboard, handicap_index: null, recent_rounds: [] },
       analytics: emptyAnalytics(),
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.handicapIndexLabel).toBe("—");
+    expect(result.current.data?.handicap_index).toBeNull();
     expect(result.current.bestRound).toBeNull();
-    expect(result.current.whsRows).toEqual([]);
+    expect(result.current.whs.rows).toEqual([]);
+  });
+});
+
+describe("dashboard model", () => {
+  it("picks the lowest score as best", () => {
+    expect(pickBestRound(populatedRounds)?.id).toBe("round-3");
+    expect(pickBestRound([])).toBeNull();
+  });
+
+  it("marks used WHS rounds from dual trend", () => {
+    const dual = dualTrendFrom(populatedAnalytics);
+    const whs = whsBreakdown(dual, populatedAnalytics, 12.4);
+    expect(whs.rows.filter((r) => r.used)).toHaveLength(1);
+    expect(whs.showCalculation).toBe(true);
   });
 });
