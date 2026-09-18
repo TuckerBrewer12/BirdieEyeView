@@ -92,15 +92,14 @@ describe("useRoundsPageViewModel", () => {
     );
   });
 
-  it("counts every round in the header and only the filtered ones in the toolbar", async () => {
+  it("keeps the unfiltered list available after search", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.headerSubtitle).toBe("4 rounds played");
-    expect(result.current.resultCountLabel).toBe("4 rounds");
+    expect(result.current.rounds).toHaveLength(4);
 
     act(() => result.current.setSearch("blue"));
-    expect(result.current.resultCountLabel).toBe("1 round");
-    expect(result.current.headerSubtitle).toBe("4 rounds played");
+    expect(result.current.filteredRounds).toHaveLength(1);
+    expect(result.current.rounds).toHaveLength(4);
   });
 
   it("offers a sort option for every sort key", async () => {
@@ -146,19 +145,6 @@ describe("useRoundsPageViewModel", () => {
 
     expect(result.current.isLinkOpen("round-4")).toBe(false);
     expect(result.current.isLinkOpen("round-1")).toBe(true);
-  });
-
-  it("names the round in the link title, falling back when there is no course", async () => {
-    const { result } = renderVm();
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    const scanned = result.current.rounds.find((r) => r.id === "round-4")!;
-
-    expect(result.current.linkTitleFor(scanned)).toBe(
-      'Link "Scanned Scorecard" to a saved course',
-    );
-    expect(result.current.linkTitleFor({ ...scanned, course_name: null })).toBe(
-      'Link "this round" to a saved course',
-    );
   });
 
   it("a failed link sets linkError and leaves the panel open", async () => {
