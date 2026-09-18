@@ -21,7 +21,7 @@ import { api } from "@/lib/api";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
 import type { Course, Tee } from "@/types/golf";
-import { toParDisplay } from "@/brand/theme";
+import { toParDisplay, toParFill, toParTone } from "@/brand/theme";
 import { BACK_HOLES, FRONT_HOLES, getHole, getTee, longestTee, teeYards } from "@/domain/course";
 import { ratedCourseHandicap } from "@/domain/handicap";
 import { userRepository } from "@/data/userRepository";
@@ -238,14 +238,6 @@ function formatDate(dateStr: string | null): string {
 
 type TrendPoint = { round_index: number; total_score: number | null; to_par: number | null; date: string | null };
 
-function getDotColor(toPar: number | null): string {
-  if (toPar == null) return "#9ca3af";
-  if (toPar <= -2) return "#f59e0b";
-  if (toPar === -1) return "#059669";
-  if (toPar === 0)  return "#9ca3af";
-  return "#ef4444";
-}
-
 function CourseScoreTrendSVG({ data, strokeColor }: { data: TrendPoint[]; strokeColor: string }) {
   const [hovered, setHovered] = useState<TrendPoint | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -308,7 +300,7 @@ function CourseScoreTrendSVG({ data, strokeColor }: { data: TrendPoint[]; stroke
         {valid.map((d, i) => (
           <motion.circle key={i} cx={xSc(i)} cy={ySc(d.total_score!)}
             r={hovered === d ? 6 : 4}
-            fill={getDotColor(d.to_par)} stroke="white" strokeWidth={1.5}
+            fill={toParFill(d.to_par)} stroke="white" strokeWidth={1.5}
             initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 1.0 + i * 0.06, duration: 0.25, ease: "backOut" }} />
         ))}
@@ -339,7 +331,7 @@ function CourseScoreTrendSVG({ data, strokeColor }: { data: TrendPoint[]; stroke
             )}
             <div className="font-bold text-gray-900 text-sm">{hovered.total_score}</div>
             {hovered.to_par != null && (
-              <div className="text-xs mt-0.5 font-semibold" style={{ color: getDotColor(hovered.to_par) }}>
+              <div className="text-xs mt-0.5 font-semibold" style={{ color: toParFill(hovered.to_par) }}>
                 {toParDisplay(hovered.to_par, "-")}
               </div>
             )}
@@ -604,6 +596,7 @@ export function CourseDetailPage({ userId }: CourseDetailPageProps) {
                     .slice()
                     .reverse()
                     .map((row, i) => {
+                      const toPar = toParTone(row.to_par);
                       const inner = (
                         <div className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors">
                           <span className="text-sm text-gray-500">{formatDate(row.date)}</span>
@@ -611,10 +604,7 @@ export function CourseDetailPage({ userId }: CourseDetailPageProps) {
                             <span className="text-sm font-bold text-gray-900">{row.total_score ?? "-"}</span>
                             <span
                               className="text-xs font-semibold px-1.5 py-0.5 rounded"
-                              style={{
-                                color: row.to_par == null ? "#9ca3af" : row.to_par < 0 ? "#059669" : row.to_par === 0 ? "#6b7280" : "#ef4444",
-                                background: row.to_par == null ? "#f3f4f6" : row.to_par < 0 ? "#ecfdf5" : row.to_par === 0 ? "#f3f4f6" : "#fef2f2",
-                              }}
+                              style={{ color: toPar.onMuted, background: toPar.muted }}
                             >
                               {toParDisplay(row.to_par, "-")}
                             </span>

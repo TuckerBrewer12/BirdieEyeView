@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { userRepository } from "@/data/userRepository";
 import { api } from "@/lib/api";
-import { SCORE_KEYS, scoreFills, type ScoreKey } from "@/brand/theme";
+import { SCORE_KEYS, colors, type ScoreKey } from "@/brand/theme";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
 import type { Milestone, DashboardData } from "@/types/golf";
@@ -56,15 +56,14 @@ const SCORE_LABELS: Record<ScoreKey, string> = {
 function scoreColorsFromPalette(
   palette: ChartPalette["score"] | null | undefined,
 ): Record<ScoreKey, string> {
-  if (!palette) return scoreFills();
   return {
-    eagle: palette.eagle,
-    birdie: palette.birdie,
-    par: palette.par,
-    bogey: palette.bogey,
-    double: palette.double_bogey,
-    triple: palette.triple_bogey,
-    quad: palette.quad_bogey,
+    eagle: palette?.eagle ?? colors.score.eagle.base,
+    birdie: palette?.birdie ?? colors.score.birdie.base,
+    par: palette?.par ?? colors.score.par.base,
+    bogey: palette?.bogey ?? colors.score.bogey.base,
+    double: palette?.double_bogey ?? colors.score.double.base,
+    triple: palette?.triple_bogey ?? colors.score.triple.base,
+    quad: palette?.quad_bogey ?? colors.score.quad.base,
   };
 }
 

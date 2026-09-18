@@ -3,10 +3,7 @@ import { CheckCircle, AlertTriangle, Loader2, X, ChevronDown, Info } from "lucid
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { CourseLinkSearch } from "@/brand";
-import { toParDisplay } from "@/brand/theme";
-import { getHole, getTee } from "@/domain/course";
-import { netScore, ratedCourseHandicap } from "@/domain/handicap";
-import { strokesToPar } from "@/domain/score";
+import { formatToPar, calcCourseHandicap, calcNetScore } from "@/types/golf";
 import { toParTextClass } from "@/lib/colors";
 import type { CourseSummary } from "@/types/golf";
 import type { ScanState, ScanResult, ExtractedHoleScore, FieldConfidence, ScoreMetadata } from "@/types/scan";
@@ -191,23 +188,25 @@ export function ScanReviewStep({
     const slice = editedScores.slice(startIdx, startIdx + 9);
     const ninePar = slice.reduce((s, hs, si) => {
       const holeNum = hs.hole_number ?? startIdx + si + 1;
-      return s + (getHole(rd.course, holeNum)?.par ?? 0);
+      return s + (rd.course?.holes.find((h) => h.number === holeNum)?.par ?? 0);
     }, 0);
     const nineScore = slice.reduce((s, hs) => s + (hs.strokes ?? 0), 0);
     const hasScores = slice.some((hs) => hs.strokes != null);
     const nineToPar = hasScores && ninePar > 0 ? nineScore - ninePar : null;
 
-    const selectedTee = getTee(rd.course, editedTeeBox);
+    const selectedTee = editedTeeBox
+      ? (rd.course?.tees ?? []).find((t) => t.color?.toLowerCase() === editedTeeBox.toLowerCase()) ?? null
+      : null;
     const nineYardage = selectedTee
       ? slice.reduce((sum, hs, si) => {
           const holeNum = hs.hole_number ?? startIdx + si + 1;
-          return sum + (selectedTee.hole_yardages[holeNum] ?? 0);
+          return sum + (selectedTee.hole_yardages[String(holeNum)] ?? 0);
         }, 0)
       : null;
     const totalYardage = selectedTee
       ? editedScores.reduce((sum, hs, i) => {
           const holeNum = hs.hole_number ?? i + 1;
-          return sum + (selectedTee.hole_yardages[holeNum] ?? 0);
+          return sum + (selectedTee.hole_yardages[String(holeNum)] ?? 0);
         }, 0)
       : null;
 
@@ -232,7 +231,7 @@ export function ScanReviewStep({
               <td className="px-3 py-1.5 font-medium">Yds</td>
               {slice.map((hs, si) => {
                 const holeNum = hs.hole_number ?? startIdx + si + 1;
-                const yds = selectedTee.hole_yardages[holeNum];
+                const yds = selectedTee.hole_yardages[String(holeNum)];
                 return <td key={si} className="px-1 py-1.5 text-center">{yds ?? "-"}</td>;
               })}
               <td className="px-2 py-1.5 text-center bg-gray-50 font-bold">{nineYardage ?? "-"}</td>
@@ -242,13 +241,13 @@ export function ScanReviewStep({
           {/* Handicap — shown when any hole has a handicap value */}
           {slice.some((hs, si) => {
             const holeNum = hs.hole_number ?? startIdx + si + 1;
-            return getHole(rd.course, holeNum)?.handicap != null;
+            return rd.course?.holes.find((h) => h.number === holeNum)?.handicap != null;
           }) && (
             <tr className="border-b border-gray-100 text-xs text-gray-400">
               <td className="px-3 py-1.5 font-medium">Hdcp</td>
               {slice.map((hs, si) => {
                 const holeNum = hs.hole_number ?? startIdx + si + 1;
-                const hdcp = getHole(rd.course, holeNum)?.handicap;
+                const hdcp = rd.course?.holes.find((h) => h.number === holeNum)?.handicap;
                 return <td key={si} className="px-1 py-1.5 text-center">{hdcp ?? "-"}</td>;
               })}
               <td className="px-2 py-1.5 text-center bg-gray-50" />
@@ -260,7 +259,7 @@ export function ScanReviewStep({
             <td className="px-3 py-1.5 font-medium">Par</td>
             {slice.map((hs, si) => {
               const holeNum = hs.hole_number ?? startIdx + si + 1;
-              const par = getHole(rd.course, holeNum)?.par;
+              const par = rd.course?.holes.find((h) => h.number === holeNum)?.par;
               return <td key={si} className="px-1 py-1.5 text-center">{par ?? "-"}</td>;
             })}
             <td className="px-2 py-1.5 text-center bg-gray-50 font-bold">{ninePar ?? "-"}</td>
@@ -273,7 +272,7 @@ export function ScanReviewStep({
             {slice.map((hs, si) => {
               const origIdx = startIdx + si;
               const holeNum = hs.hole_number ?? startIdx + si + 1;
-              const par = getHole(rd.course, holeNum)?.par ?? null;
+              const par = rd.course?.holes.find((h) => h.number === holeNum)?.par ?? null;
               const sc = getFieldConfidence(hs.hole_number, origIdx, "strokes");
               const tier = strokeConfTier(sc);
               const diff = hs.strokes != null && par != null ? hs.strokes - par : null;
@@ -364,19 +363,19 @@ export function ScanReviewStep({
             <td className="px-3 py-1.5 text-gray-500 font-medium">To Par</td>
             {slice.map((hs, si) => {
               const holeNum = hs.hole_number ?? startIdx + si + 1;
-              const par = getHole(rd.course, holeNum)?.par ?? null;
+              const par = rd.course?.holes.find((h) => h.number === holeNum)?.par ?? null;
               return (
                 <td key={si} className={`px-1 py-1.5 text-center ${toParTextClass(hs.strokes != null && par != null ? hs.strokes - par : null)}`}>
-                  {toParDisplay(strokesToPar(hs.strokes, par), "-")}
+                  {formatToPar(hs.strokes != null && par != null ? hs.strokes - par : null)}
                 </td>
               );
             })}
             <td className={`px-2 py-1.5 text-center bg-gray-50 font-bold ${nineToPar === null ? "text-gray-400" : nineToPar < 0 ? "text-green-600" : nineToPar > 0 ? "text-red-500" : "text-gray-600"}`}>
-              {toParDisplay(nineToPar, "-")}
+              {nineToPar === null ? "-" : nineToPar === 0 ? "E" : nineToPar > 0 ? `+${nineToPar}` : nineToPar}
             </td>
             {showGrandTotal && (
               <td className={`px-2 py-1.5 text-center bg-gray-100 font-bold text-sm ${toPar === null ? "text-gray-400" : toPar < 0 ? "text-green-600" : toPar > 0 ? "text-red-500" : "text-gray-600"}`}>
-                {toParDisplay(toPar, "-")}
+                {formatToPar(toPar)}
               </td>
             )}
           </tr>
@@ -526,10 +525,18 @@ export function ScanReviewStep({
 
       {/* Stat cards */}
       {(() => {
-        const selectedTee = getTee(rd.course, editedTeeBox);
-        const courseHandicap = ratedCourseHandicap(handicapIndex, selectedTee, coursePar);
-        const net = courseHandicap != null && totalStrokes > 0
-          ? netScore(totalStrokes, courseHandicap)
+        const selectedTee = editedTeeBox
+          ? rd.course?.tees?.find((t) => t.color?.toLowerCase() === editedTeeBox.toLowerCase()) ?? null
+          : null;
+        const courseHandicap =
+          handicapIndex != null &&
+          selectedTee?.slope_rating != null &&
+          selectedTee?.course_rating != null &&
+          coursePar != null
+            ? calcCourseHandicap(handicapIndex, selectedTee.slope_rating, selectedTee.course_rating, coursePar)
+            : null;
+        const netScore = courseHandicap != null && totalStrokes > 0
+          ? calcNetScore(totalStrokes, courseHandicap)
           : null;
 
         return (
@@ -550,12 +557,12 @@ export function ScanReviewStep({
               <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
                 <div className="text-xs text-gray-500 mb-1">To Par</div>
                 <div className={`text-3xl font-bold ${toPar !== null && toPar < 0 ? "text-green-600" : toPar !== null && toPar > 0 ? "text-red-500" : "text-gray-900"}`}>
-                  {toParDisplay(toPar, "-")}
+                  {formatToPar(toPar)}
                 </div>
               </div>
-              <div className={`bg-white rounded-xl border border-gray-200 border-l-4 p-4 text-center ${net != null && coursePar != null ? net <= coursePar ? "border-l-birdie" : "border-l-bogey" : "border-l-gray-300"}`}>
+              <div className={`bg-white rounded-xl border border-gray-200 border-l-4 p-4 text-center ${netScore != null && coursePar != null ? netScore <= coursePar ? "border-l-birdie" : "border-l-bogey" : "border-l-gray-300"}`}>
                 <div className="text-xs text-gray-500 mb-1">Net Score</div>
-                <div className={`text-3xl font-bold ${net != null && coursePar != null ? net <= coursePar ? "text-birdie" : "text-bogey" : "text-gray-900"}`}>{net ?? "-"}</div>
+                <div className={`text-3xl font-bold ${netScore != null && coursePar != null ? netScore <= coursePar ? "text-birdie" : "text-bogey" : "text-gray-900"}`}>{netScore ?? "-"}</div>
                 {courseHandicap != null && (
                   <div className="text-xs text-gray-400 mt-0.5">HCP {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}</div>
                 )}
@@ -631,7 +638,9 @@ export function ScanReviewStep({
             </div>
             {/* Tee selector — only when matched course has tee data */}
             {rd.course?.tees && rd.course.tees.length > 0 ? (() => {
-              const selectedTee = getTee(rd.course, editedTeeBox);
+              const selectedTee = rd.course!.tees.find(
+                (t) => t.color?.toLowerCase() === editedTeeBox?.toLowerCase()
+              ) ?? null;
               return (
                 <div className="mt-3">
                   <label className="text-xs text-gray-500 block mb-1">Tee Played</label>

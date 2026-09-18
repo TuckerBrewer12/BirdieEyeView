@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { scoreKind, strokesToPar } from "./score";
+import { SCORE_KINDS, scoreKind, strokesToPar } from "./score";
 
 describe("scoreKind", () => {
   it("returns null when strokes or par is missing", () => {
     expect(scoreKind(null, 4)).toBeNull();
     expect(scoreKind(4, null)).toBeNull();
     expect(scoreKind(undefined, 4)).toBeNull();
+  });
+
+  it("exposes the seven buckets in display order", () => {
+    expect(SCORE_KINDS).toEqual([
+      "eagle", "birdie", "par", "bogey", "double", "triple", "quad",
+    ]);
   });
 
   it("buckets relative to par, with eagle+ and quad+ at the ends", () => {

@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Inbox } from "lucide-react";
 import { api } from "@/lib/api";
-import { queryKeys } from "@/data/queryKeys";
 import { useAuth } from "@/context/AuthContext";
 
 export function SocialPage() {
@@ -13,7 +12,7 @@ export function SocialPage() {
   const [message, setMessage] = useState("");
 
   const { data: friends = [], isLoading: loadingFriends, refetch: refetchFriends } = useQuery({
-    queryKey: queryKeys.friendshipsAccepted,
+    queryKey: ["friendships", "accepted"],
     queryFn: () => api.getFriendships("accepted"),
   });
 

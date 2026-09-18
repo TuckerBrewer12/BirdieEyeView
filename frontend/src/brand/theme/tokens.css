@@ -43,27 +43,43 @@
   --brand-font-sans: "DM Sans", system-ui, sans-serif;
   --brand-font-mono: "DM Mono", monospace;
 
-  /* Score colors encode data, so they do not flip with the color mode. */
-  --score-eagle-fill: #f59e0b;
-  --score-eagle-on-fill: #ffffff;
+  /* Score colors encode data, so they do not flip with the color mode.
+     `base` is the saturated fill; `muted` is the wash behind a score on a
+     light surface. Reach for colors.score.eagle.base / .muted in TypeScript. */
+  --score-eagle-base: #f59e0b;
+  --score-eagle-muted: #fef3c7;
+  --score-eagle-on-base: #ffffff;
+  --score-eagle-on-muted: #92400e;
   --score-eagle-text: #f59e0b;
-  --score-birdie-fill: #059669;
-  --score-birdie-on-fill: #ffffff;
+  --score-birdie-base: #059669;
+  --score-birdie-muted: #d1fae5;
+  --score-birdie-on-base: #ffffff;
+  --score-birdie-on-muted: #065f46;
   --score-birdie-text: #059669;
-  --score-par-fill: #9ca3af;
-  --score-par-on-fill: #ffffff;
+  --score-par-base: #9ca3af;
+  --score-par-muted: #f3f4f6;
+  --score-par-on-base: #ffffff;
+  --score-par-on-muted: #374151;
   --score-par-text: #9ca3af;
-  --score-bogey-fill: #f87171;
-  --score-bogey-on-fill: #ffffff;
+  --score-bogey-base: #f87171;
+  --score-bogey-muted: #fee2e2;
+  --score-bogey-on-base: #ffffff;
+  --score-bogey-on-muted: #991b1b;
   --score-bogey-text: #f87171;
-  --score-double-fill: #60a5fa;
-  --score-double-on-fill: #ffffff;
+  --score-double-base: #60a5fa;
+  --score-double-muted: #dbeafe;
+  --score-double-on-base: #ffffff;
+  --score-double-on-muted: #1e40af;
   --score-double-text: #60a5fa;
-  --score-triple-fill: #a78bfa;
-  --score-triple-on-fill: #ffffff;
+  --score-triple-base: #a78bfa;
+  --score-triple-muted: #ede9fe;
+  --score-triple-on-base: #ffffff;
+  --score-triple-on-muted: #5b21b6;
   --score-triple-text: #a78bfa;
-  --score-quad-fill: #6d28d9;
-  --score-quad-on-fill: #ffffff;
+  --score-quad-base: #6d28d9;
+  --score-quad-muted: #ddd6fe;
+  --score-quad-on-base: #ffffff;
+  --score-quad-on-muted: #4c1d95;
   --score-quad-text: #6d28d9;
 
   /* Type. Roles, not pixel sizes — components use text-caption, not text-[9px]. */
@@ -166,15 +182,29 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
 
-  /* Only the text variant becomes a utility; fills are applied dynamically
-     per hole, which a static class cannot express. */
+  /* text-score-eagle, bg-score-eagle-base, bg-score-eagle-muted. Per-hole
+     fills still go through colors.score[key].base when the key is dynamic. */
   --color-score-eagle: var(--score-eagle-text);
+  --color-score-eagle-base: var(--score-eagle-base);
+  --color-score-eagle-muted: var(--score-eagle-muted);
   --color-score-birdie: var(--score-birdie-text);
+  --color-score-birdie-base: var(--score-birdie-base);
+  --color-score-birdie-muted: var(--score-birdie-muted);
   --color-score-par: var(--score-par-text);
+  --color-score-par-base: var(--score-par-base);
+  --color-score-par-muted: var(--score-par-muted);
   --color-score-bogey: var(--score-bogey-text);
+  --color-score-bogey-base: var(--score-bogey-base);
+  --color-score-bogey-muted: var(--score-bogey-muted);
   --color-score-double: var(--score-double-text);
+  --color-score-double-base: var(--score-double-base);
+  --color-score-double-muted: var(--score-double-muted);
   --color-score-triple: var(--score-triple-text);
+  --color-score-triple-base: var(--score-triple-base);
+  --color-score-triple-muted: var(--score-triple-muted);
   --color-score-quad: var(--score-quad-text);
+  --color-score-quad-base: var(--score-quad-base);
+  --color-score-quad-muted: var(--score-quad-muted);
 
   /* Shadows track --shadow, so they invert in dark mode. */
   --shadow-card: 0 6px 20px var(--shadow);

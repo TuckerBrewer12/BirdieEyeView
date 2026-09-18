@@ -4,8 +4,6 @@ import type { CourseSummary } from "@/types/golf";
 import type { ScanState, ScanResult, ExtractedHoleScore, ManualTee } from "@/types/scan";
 import { initialScanState } from "@/types/scan";
 import { api } from "@/lib/api";
-import { queryKeys } from "@/data/queryKeys";
-import { userRepository } from "@/data/userRepository";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
 import { initializeScores } from "@/lib/scanUtils";
@@ -90,8 +88,8 @@ export function useScan(
   const [loadingCourse, setLoadingCourse] = useState(false);
 
   const { data: handicapData } = useQuery({
-    queryKey: queryKeys.handicap(userId),
-    queryFn: () => userRepository.getUserHandicap(userId),
+    queryKey: ["handicap", userId],
+    queryFn: () => api.getUserHandicap(userId),
     enabled: step === "review",
   });
   const handicapIndex = handicapData?.handicap_index ?? null;

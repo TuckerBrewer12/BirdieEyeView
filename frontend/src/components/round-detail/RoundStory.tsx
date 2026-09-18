@@ -4,8 +4,8 @@ import { SCORE_COLORS } from "@/lib/colors";
 import { useRoundHoles, type HoleData } from "@/hooks/useRoundHoles";
 
 function buildNarrative(holes: HoleData[]): string {
-  const birdies  = holes.filter(h => h.toPar != null && h.toPar <= -1);
-  const blowups  = holes.filter(h => h.toPar != null && h.toPar >= 3);
+  const birdies  = holes.filter(h => h.toPar <= -1);
+  const blowups  = holes.filter(h => h.toPar >= 3);
   const doubles  = holes.filter(h => h.toPar === 2);
   const front9   = holes.filter(h => h.hole <= 9);
   const back9    = holes.filter(h => h.hole >= 10);
@@ -20,22 +20,22 @@ function buildNarrative(holes: HoleData[]): string {
   }
 
   if (blowups.length > 0) {
-    const worst = blowups.reduce((a, b) => (a.toPar ?? 0) > (b.toPar ?? 0) ? a : b);
+    const worst = blowups.reduce((a, b) => a.toPar > b.toPar ? a : b);
     parts.push(`hole ${worst.hole} a blowup (+${worst.toPar})`);
   } else if (doubles.length > 1) {
     parts.push(`${doubles.length} doubles added up`);
   }
 
   if (hasBoth) {
-    const ftp = front9.reduce((s, h) => s + (h.toPar ?? 0), 0);
-    const btp = back9.reduce((s, h) => s + (h.toPar ?? 0), 0);
+    const ftp = front9.reduce((s, h) => s + h.toPar, 0);
+    const btp = back9.reduce((s, h) => s + h.toPar, 0);
     if (Math.abs(ftp - btp) >= 4) {
       parts.push(ftp < btp ? "stronger front nine" : "stronger back nine");
     }
   }
 
   if (parts.length === 0) {
-    const total = holes.reduce((s, h) => s + (h.toPar ?? 0), 0);
+    const total = holes.reduce((s, h) => s + h.toPar, 0);
     if (total <= 0) return "Clean, disciplined round — no blowups.";
     if (birdies.length === 0) return "Consistent but couldn't get birdies going.";
     return "Up and down — birdies offset by a few mistakes.";
@@ -61,12 +61,12 @@ export function RoundInNumbers({ round }: { round: Round }) {
   const holes = useRoundHoles(round);
 
   const s = useMemo(() => {
-    const eagles  = holes.filter(h => h.toPar != null && h.toPar <= -2).length;
+    const eagles  = holes.filter(h => h.toPar <= -2).length;
     const birdies = holes.filter(h => h.toPar === -1).length;
     const pars    = holes.filter(h => h.toPar === 0).length;
     const bogeys  = holes.filter(h => h.toPar === 1).length;
     const doubles = holes.filter(h => h.toPar === 2).length;
-    const triples = holes.filter(h => h.toPar != null && h.toPar >= 3).length;
+    const triples = holes.filter(h => h.toPar >= 3).length;
 
     const puttsHoles = holes.filter(h => h.putts != null);
     const totalPutts = puttsHoles.reduce((a, h) => a + (h.putts ?? 0), 0);

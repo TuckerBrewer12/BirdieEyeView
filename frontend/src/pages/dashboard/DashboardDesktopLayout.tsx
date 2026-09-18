@@ -301,7 +301,7 @@ export function DashboardDesktopLayout(vm: DashboardPageViewModel) {
                         className="h-full rounded-full transition-all"
                         style={{
                           width: `${Math.min(100, Math.max(5, goalReport.on_track ? 100 : goalReport.gap == null ? 5 : (1 - goalReport.gap / Math.max(goalReport.scoring_average ?? 1, 1)) * 100))}%`,
-                          background: goalReport.on_track ? colors.score.birdie.fill : `linear-gradient(90deg, ${colors.primary}, ${chartColors.axis})`,
+                          background: goalReport.on_track ? colors.score.birdie.base : `linear-gradient(90deg, ${colors.primary}, ${chartColors.axis})`,
                         }}
                       />
                     </div>

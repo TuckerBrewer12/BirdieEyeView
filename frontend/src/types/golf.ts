@@ -128,3 +128,48 @@ export interface Friendship {
   addressee_name?: string | null;
   addressee_email?: string | null;
 }
+
+/** Legacy copies for unmigrated pages. New pages use `@/domain` and `@/brand`. */
+export type ScoreType = "eagle" | "birdie" | "par" | "bogey" | "double-bogey" | "worse";
+
+export function getScoreType(strokes: number, par: number): ScoreType {
+  const diff = strokes - par;
+  if (diff <= -2) return "eagle";
+  if (diff === -1) return "birdie";
+  if (diff === 0) return "par";
+  if (diff === 1) return "bogey";
+  if (diff === 2) return "double-bogey";
+  return "worse";
+}
+
+export function getScoreColor(strokes: number, par: number): string {
+  const diff = strokes - par;
+  if (diff <= -2) return "bg-eagle text-white ring-2 ring-yellow-300";
+  if (diff === -1) return "bg-birdie text-white";
+  if (diff === 0) return "bg-gray-100 text-gray-700";
+  if (diff === 1) return "bg-red-400 text-white";
+  if (diff === 2) return "bg-blue-500 text-white";
+  return "bg-purple-600 text-white";
+}
+
+export function formatToPar(toPar: number | null): string {
+  if (toPar === null) return "-";
+  if (toPar === 0) return "E";
+  if (toPar > 0) return `+${toPar}`;
+  return `${toPar}`;
+}
+
+/** WHS course handicap: (HI × Slope / 113) + (Course Rating - Par), rounded. */
+export function calcCourseHandicap(
+  hi: number,
+  slope: number,
+  courseRating: number,
+  par: number,
+): number {
+  return Math.round((hi * slope) / 113 + (courseRating - par));
+}
+
+/** Net score = gross score - course handicap. */
+export function calcNetScore(grossScore: number, courseHandicap: number): number {
+  return grossScore - courseHandicap;
+}

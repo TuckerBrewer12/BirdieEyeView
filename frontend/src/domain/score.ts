@@ -1,12 +1,15 @@
 /** The seven score buckets the app uses. ≤ −2 is eagle (eagle+). ≥ +4 is quad. */
-export type ScoreKind =
-  | "eagle"
-  | "birdie"
-  | "par"
-  | "bogey"
-  | "double"
-  | "triple"
-  | "quad";
+export const SCORE_KINDS = [
+  "eagle",
+  "birdie",
+  "par",
+  "bogey",
+  "double",
+  "triple",
+  "quad",
+] as const;
+
+export type ScoreKind = (typeof SCORE_KINDS)[number];
 
 /**
  * Classify a hole from strokes and par. Unknown inputs return null —

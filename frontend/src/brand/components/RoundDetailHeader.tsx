@@ -1,6 +1,6 @@
 import { cn } from "@/brand/cn";
 import { PageTitle } from "./PageTitle";
-import { scoreFill, scoreKeyFor, scoreTone, toParDisplay, type ScoreKey } from "@/brand/theme";
+import { colors, scoreFill, scoreKeyFor, toParDisplay, type ScoreKey } from "@/brand/theme";
 import { pluralNoun } from "@/lib/pluralize";
 
 const BAR_HEIGHTS: Record<ScoreKey, number> = {
@@ -176,12 +176,12 @@ export function RoundDetailHeader({
         {CHIPS.map(({ key, noun, plural, absorbs }) => {
           const count = (counts[key] ?? 0) + (absorbs ? counts[absorbs] ?? 0 : 0);
           if (!count) return null;
-          const tone = scoreTone(key);
+          const tone = colors.score[key];
           return (
             <div
               key={key}
               className="inline-flex items-center gap-1 rounded-full px-2.5 py-chip"
-              style={{ background: tone.fill, color: tone.onFill }}
+              style={{ background: tone.base, color: tone.onBase }}
             >
               <span className="font-mono text-label font-semibold">{count}</span>
               <span className="text-meta font-bold tracking-chip">

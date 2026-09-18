@@ -1,4 +1,4 @@
-import { scoreKeyFor, scoreTone } from "@/brand/theme";
+import { SCORE_SYMBOL_COLORS } from "@/lib/scoreSymbol";
 import type { ChartPalette } from "@/lib/chartPalettes";
 
 interface ScoreCellProps {
@@ -10,11 +10,17 @@ interface ScoreCellProps {
 const S = 28;
 const cx = S / 2;
 
-function ScoreSvg({ strokes, par }: { strokes: number; par: number }) {
-  const tone = scoreTone(scoreKeyFor(strokes, par));
-  const diff = strokes - par;
-  const bg = tone.fill;
-  const fg = tone.onFill;
+function ScoreSvg({ strokes, diff }: { strokes: number; diff: number }) {
+  const { eagle, birdie, par, bogey, double: dbl, triple } = SCORE_SYMBOL_COLORS;
+
+  let bg: string = par.bg;
+  let fg: string = par.fg;
+  if (diff <= -2) { bg = eagle.bg;  fg = eagle.fg; }
+  else if (diff === -1) { bg = birdie.bg; fg = birdie.fg; }
+  else if (diff === 0)  { bg = par.bg;    fg = par.fg; }
+  else if (diff === 1)  { bg = bogey.bg;  fg = bogey.fg; }
+  else if (diff === 2)  { bg = dbl.bg;    fg = dbl.fg; }
+  else                  { bg = triple.bg; fg = triple.fg; }
 
   return (
     <svg width={S} height={S} viewBox={`0 0 ${S} ${S}`} style={{ display: "block", margin: "0 auto" }}>
@@ -106,7 +112,7 @@ export function ScoreCell({ strokes, par, palette }: ScoreCellProps) {
 
   return (
     <td className="px-1 py-1 text-center">
-      <ScoreSvg strokes={strokes} par={par} />
+      <ScoreSvg strokes={strokes} diff={diff} />
     </td>
   );
 }

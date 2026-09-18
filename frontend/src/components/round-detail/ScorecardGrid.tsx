@@ -5,8 +5,6 @@ import { useMemo, type CSSProperties } from "react";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
 import { formatCourseName } from "@/lib/courseName";
-import { toParDisplay, toParTextClass } from "@/brand/theme";
-import { getHole, getTee } from "@/domain/course";
 
 type EditedScores = Record<number, { strokes: number | null; putts: number | null; gir?: boolean | null }>;
 
@@ -23,8 +21,11 @@ interface ScorecardGridProps {
 
 function getHoleData(round: Round, holeNum: number, activeTeeBox?: string | null) {
   const score = round.hole_scores.find((s) => s.hole_number === holeNum);
-  const hole = getHole(round.course, holeNum);
-  const tee = getTee(round.course, activeTeeBox ?? round.tee_box);
+  const hole = round.course?.holes.find((h) => h.number === holeNum);
+  const teeColor = activeTeeBox ?? round.tee_box;
+  const tee = round.course?.tees.find(
+    (t) => t.color?.toLowerCase() === teeColor?.toLowerCase()
+  );
   const yardage = tee?.hole_yardages?.[holeNum] ?? round.user_tee?.hole_yardages?.[holeNum];
   const effectivePar: number | null = hole?.par ?? score?.par_played ?? null;
   return { score, hole, yardage, effectivePar };
@@ -64,9 +65,19 @@ function sumEffectivePars(pars: (number | null)[]): number | null {
   return valid.reduce((sum, p) => sum + p, 0);
 }
 
+function formatToPar(diff: number | null): string {
+  if (diff === null) return "-";
+  if (diff === 0) return "E";
+  if (diff > 0) return `+${diff}`;
+  return `${diff}`;
+}
+
 function toParColorClass(diff: number | null, palette?: ChartPalette | null): string {
   if (palette) return "font-semibold";
-  return toParTextClass(diff);
+  if (diff === null) return "text-gray-400";
+  if (diff < 0) return "text-birdie font-semibold";
+  if (diff > 0) return "text-bogey";
+  return "text-gray-600";
 }
 
 function toParColorStyle(diff: number | null, palette?: ChartPalette | null): CSSProperties | undefined {
@@ -266,16 +277,16 @@ function NineTable({
                 : null;
             return (
               <td key={n} className={`px-2 py-2 text-center ${toParColorClass(diff, palette)}`} style={toParColorStyle(diff, palette)}>
-                {toParDisplay(diff, "-")}
+                {formatToPar(diff)}
               </td>
             );
           })}
           <td className={`px-2 py-2 text-center font-bold ${toParColorClass(outToPar, palette)}`} style={toParColorStyle(outToPar, palette)}>
-            {toParDisplay(outToPar, "-")}
+            {formatToPar(outToPar)}
           </td>
           {showTotal && (
             <td className={`px-2 py-2 text-center font-bold text-sm ${toParColorClass(totalToPar, palette)}`} style={toParColorStyle(totalToPar, palette)}>
-              {toParDisplay(totalToPar, "-")}
+              {formatToPar(totalToPar)}
             </td>
           )}
         </tr>

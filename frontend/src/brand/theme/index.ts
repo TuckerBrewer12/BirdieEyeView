@@ -1,4 +1,5 @@
 export { colors } from "./colors";
+export type { ScoreSwatch } from "./colors";
 export { fonts } from "./fonts";
 export { typography, tracking, leading } from "./type";
 export { space, size, radius, borderWidth, ringWidth, opacityRecessed } from "./space";
@@ -7,11 +8,9 @@ export { chartTooltipStyle, chartTickStyle, chartLayout, chartColors } from "./c
 export {
   SCORE_KEYS,
   scoreFill,
-  scoreFills,
   scoreKeyFor,
-  scoreOnFill,
-  scoreTone,
   toParFill,
+  toParTone,
   toParLabel,
   toParDisplay,
   toParTextClass,

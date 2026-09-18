@@ -9,7 +9,6 @@ import { ScanSuccessStep } from "@/components/scan/ScanSuccessStep";
 import { useScanState } from "@/context/ScanContext";
 import { initialScanState } from "@/types/scan";
 import { api } from "@/lib/api";
-import { queryKeys } from "@/data/queryKeys";
 
 export function ScanPage({ userId }: { userId: string }) {
   const { scanState, setScanState } = useScanState();
@@ -17,7 +16,7 @@ export function ScanPage({ userId }: { userId: string }) {
   const scan = useScan(userId, scanState, setScanState);
 
   const { data: savedRound } = useQuery({
-    queryKey: queryKeys.round(scan.savedRoundId ?? undefined),
+    queryKey: ["round", scan.savedRoundId],
     queryFn: () => api.getRound(scan.savedRoundId!),
     enabled: scan.step === "success" && !!scan.savedRoundId,
   });

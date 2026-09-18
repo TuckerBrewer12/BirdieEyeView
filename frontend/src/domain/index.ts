@@ -1,4 +1,4 @@
-export { scoreKind, strokesToPar } from "./score";
+export { SCORE_KINDS, scoreKind, strokesToPar } from "./score";
 export type { ScoreKind } from "./score";
 
 export {

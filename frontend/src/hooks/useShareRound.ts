@@ -1,8 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { toPng } from "html-to-image";
-import { toParDisplay } from "@/brand/theme";
-import { roundToPar, totalStrokes } from "@/domain/round";
 import type { Round } from "@/types/golf";
+import { formatToPar } from "@/types/golf";
 
 export function useShareRound() {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -15,9 +14,14 @@ export function useShareRound() {
       try {
         const dataUrl = await toPng(cardRef.current, { pixelRatio: 2, cacheBust: true });
 
-        const totalScore = totalStrokes(round);
-        const toPar = roundToPar(round);
-        const toParStr = toParDisplay(toPar, "-");
+        const totalScore = round.hole_scores.reduce((s, h) => s + (h.strokes ?? 0), 0);
+        const coursePar = round.course
+          ? round.course.holes.reduce((s, h) => s + (h.par ?? 0), 0) || null
+          : round.hole_scores.some((s) => s.par_played != null)
+          ? round.hole_scores.reduce((s, h) => s + (h.par_played ?? 0), 0)
+          : null;
+        const toPar = coursePar !== null && totalScore > 0 ? totalScore - coursePar : null;
+        const toParStr = formatToPar(toPar);
         const text = `Check out my ${totalScore} (${toParStr}) at ${courseName}! ⛳`;
 
         const blob = await (await fetch(dataUrl)).blob();
