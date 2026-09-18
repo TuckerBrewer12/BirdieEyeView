@@ -28,9 +28,9 @@ from services.scan_service import ScanService
 
 router = APIRouter()
 
-OCR_LONG_EDGE_TARGET = 1800
-OCR_JPEG_QUALITY = 75
-PREPROCESS_CACHE_VERSION = "v2"
+OCR_LONG_EDGE_TARGET = 2000
+OCR_JPEG_QUALITY = 80
+PREPROCESS_CACHE_VERSION = "v3"
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
 MAX_OCR_TEXT_CHARS = 300_000
 MAX_USER_CONTEXT_CHARS = 1_500
@@ -469,6 +469,35 @@ def _save_jpeg(path: Path, img: Image.Image) -> None:
     )
 
 
+def _is_ocr_ready_jpeg(path: Path, img: Image.Image) -> bool:
+    """Return whether a browser-prepared JPEG can go to OCR unchanged."""
+    if path.suffix.lower() not in {".jpg", ".jpeg"}:
+        return False
+    if img.format != "JPEG" or img.mode != "RGB":
+        return False
+    if max(img.size) > OCR_LONG_EDGE_TARGET:
+        return False
+    if img.getexif():
+        return False
+
+    # Canvas-created JPEGs contain only ordinary JFIF/encoding information.
+    # Re-encode anything carrying payload metadata before sending it onward.
+    safe_info_keys = {
+        "dpi",
+        "jfif",
+        "jfif_density",
+        "jfif_unit",
+        "jfif_version",
+        "progression",
+        "progressive",
+    }
+    return not any(
+        value
+        for key, value in img.info.items()
+        if key not in safe_info_keys
+    )
+
+
 def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, bool]:
     """
     Normalize uploaded images to JPEG for faster, consistent OCR payloads.
@@ -484,6 +513,14 @@ def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, boo
     try:
         with Image.open(path) as img:
             t_open = time.perf_counter()
+            if _is_ocr_ready_jpeg(path, img):
+                logger.info(
+                    "OCR preprocess pass-through: format=JPEG size=%sx%s bytes=%s",
+                    img.width,
+                    img.height,
+                    path.stat().st_size,
+                )
+                return path, False
             if is_pdf:
                 # First page only for scorecard PDFs.
                 try:

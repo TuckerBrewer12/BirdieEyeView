@@ -26,6 +26,7 @@ from typing import Any, Awaitable, Callable, Iterable, Mapping, Optional
 
 from dotenv import load_dotenv
 from fastapi import UploadFile
+from PIL import Image, ImageOps
 from starlette.datastructures import Headers
 
 
@@ -35,6 +36,8 @@ DEFAULT_MANIFEST_PATH = SCORECARD_DIR / "quick_eval_cases.json"
 SUPPORTED_FIELDS = frozenset({"strokes", "putts", "shots_to_green"})
 SUPPORTED_SCORE_FORMATS = frozenset({"raw_strokes", "to_par"})
 ALL_HOLES = frozenset(range(1, 19))
+EVAL_UPLOAD_LONG_EDGE = 2000
+EVAL_UPLOAD_QUALITY = 80
 
 PrefetchCallable = Callable[..., Awaitable[Any]]
 ExtractCallable = Callable[..., Awaitable[Any]]
@@ -277,6 +280,45 @@ def _make_upload(image_name: str, image_bytes: bytes) -> UploadFile:
     )
 
 
+def prepare_image_for_upload(image_name: str, image_bytes: bytes) -> tuple[str, bytes]:
+    """Apply the Scan UI's 2000px/Q80 image policy to one eval fixture."""
+    content_type = mimetypes.guess_type(image_name)[0] or ""
+    if not content_type.startswith("image/") or content_type == "image/gif":
+        return image_name, image_bytes
+
+    try:
+        with Image.open(BytesIO(image_bytes)) as opened:
+            image = ImageOps.exif_transpose(opened)
+            if image.mode != "RGB":
+                image = image.convert("RGB")
+
+            long_edge = max(image.size)
+            if long_edge > EVAL_UPLOAD_LONG_EDGE:
+                scale = EVAL_UPLOAD_LONG_EDGE / float(long_edge)
+                image = image.resize(
+                    (
+                        max(1, round(image.width * scale)),
+                        max(1, round(image.height * scale)),
+                    ),
+                    Image.Resampling.LANCZOS,
+                )
+
+            output = BytesIO()
+            image.save(
+                output,
+                format="JPEG",
+                quality=EVAL_UPLOAD_QUALITY,
+                optimize=True,
+                progressive=True,
+                exif=b"",
+                icc_profile=None,
+            )
+    except Exception:  # noqa: BLE001 - production endpoints report invalid inputs
+        return image_name, image_bytes
+
+    return f"{Path(image_name).stem}.jpg", output.getvalue()
+
+
 def _error_text(exc: Exception) -> str:
     detail = getattr(exc, "detail", None)
     if isinstance(detail, str) and detail:
@@ -311,8 +353,11 @@ async def run_suite(
 
     for image_name, image_cases in grouped.items():
         image_path = scorecard_dir / image_name
-        image_bytes = image_path.read_bytes()
-        ocr_upload = _make_upload(image_name, image_bytes)
+        prepared_name, image_bytes = prepare_image_for_upload(
+            image_name,
+            image_path.read_bytes(),
+        )
+        ocr_upload = _make_upload(prepared_name, image_bytes)
         ocr_start = clock()
         try:
             response = await prefetch(ocr_upload, current_user=None)
@@ -341,7 +386,7 @@ async def run_suite(
             await ocr_upload.close()
 
         for case in image_cases:
-            extract_upload = _make_upload(image_name, image_bytes)
+            extract_upload = _make_upload(prepared_name, image_bytes)
             extract_start = clock()
             try:
                 response = await extract(
