@@ -1,5 +1,5 @@
 import { ArrowRight, Camera } from "lucide-react";
-import { Card, CardContent } from "./Card";
+import { Card, CardContent } from "@/brand";
 
 interface ScanActionCardProps {
   onClick?: () => void;

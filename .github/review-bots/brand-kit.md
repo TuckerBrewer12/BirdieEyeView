@@ -52,6 +52,14 @@ is missing either one.
 anything that plots data (SVG plots, Recharts, heatmaps, bar strips) — live in
 `charts/`. `components/` is UI chrome: buttons, chips, search, previews, cards.
 
+**A page-specific piece in the kit.** Anything under `brand/` must make sense
+on any page. A component or chart built for one page — page copy baked in
+("Welcome back", "Best Recent Round"), or a layout only that page uses —
+belongs in `pages/<page>/components/`, with its preview in
+`pages/<page>/previews/` and its spec in `pages/<page>/tests/screenshots/`.
+Being used by one page today is not enough on its own: a generic `Sheet` or
+`SortControl` stays in the kit.
+
 **Mocks.** `vi.mock`, `vi.fn`, `mockResolvedValue` / `mockRejectedValue`, or a
 canned `page.route` fulfill (hardcoded status/JSON). Brand kit screenshots are
 isolated — `BrandKitRobot.open()` must not intercept `/api`. Page tests seed

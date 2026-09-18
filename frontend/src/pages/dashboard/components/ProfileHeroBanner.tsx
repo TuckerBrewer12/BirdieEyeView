@@ -1,7 +1,7 @@
 import type { User } from "@/types/golf";
-import { Button } from "./Button";
-import { Card, CardContent } from "./Card";
-import { PageTitle } from "./PageTitle";
+import { Button } from "@/brand";
+import { Card, CardContent } from "@/brand";
+import { PageTitle } from "@/brand";
 
 interface ProfileHeroBannerProps {
   user: User | null;
