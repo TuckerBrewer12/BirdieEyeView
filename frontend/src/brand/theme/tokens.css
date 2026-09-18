@@ -82,6 +82,15 @@
   --score-quad-on-muted: #4c1d95;
   --score-quad-text: #6d28d9;
 
+  /* Scorecard rows. The layout picker's chips and the landing hero's demo of
+     it share one set, so the demo shows the colours the picker will use. Fixed
+     like the score colours: they label rows, not surfaces. */
+  --scan-row-name: #475569;
+  --scan-row-score: #2d7a3a;
+  --scan-row-putts: #0369a1;
+  --scan-row-shots: #6d28d9;
+  --demo-card-header: #2d4c3b;
+
   /* Type. Roles, not pixel sizes — components use text-caption, not text-[9px]. */
   --brand-text-caption: 9px;
   --brand-text-meta: 10px;
@@ -205,6 +214,12 @@
   --color-score-quad: var(--score-quad-text);
   --color-score-quad-base: var(--score-quad-base);
   --color-score-quad-muted: var(--score-quad-muted);
+
+  --color-scan-row-name: var(--scan-row-name);
+  --color-scan-row-score: var(--scan-row-score);
+  --color-scan-row-putts: var(--scan-row-putts);
+  --color-scan-row-shots: var(--scan-row-shots);
+  --color-demo-card-header: var(--demo-card-header);
 
   /* Shadows track --shadow, so they invert in dark mode. */
   --shadow-card: 0 6px 20px var(--shadow);

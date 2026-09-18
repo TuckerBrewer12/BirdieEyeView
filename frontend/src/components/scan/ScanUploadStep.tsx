@@ -1,6 +1,6 @@
 import { Camera, AlertTriangle, X, Search, ScanLine, MapPin, CheckCircle, Loader2, PenLine, Images } from "lucide-react";
 import { isNative, pickImageNative } from "@/lib/nativeCamera";
-import { ScorecardLayoutPicker } from "./ScorecardLayoutPicker";
+import { ScorecardLayoutPicker } from "@/brand";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageHeader } from "@/components/layout/PageHeader";
 import type { ScanState } from "@/types/scan";
