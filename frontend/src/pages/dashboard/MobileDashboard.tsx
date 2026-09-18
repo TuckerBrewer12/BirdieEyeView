@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { scaleLinear } from "d3-scale";
@@ -167,10 +167,11 @@ function MobileScoreTrend({
   onViewChange: (view: TrendView) => void;
 }) {
   const [selected, setSelected] = useState<{ point: DualTrendPoint; idx: number } | null>(null);
-
-  useEffect(() => {
+  const [selectedView, setSelectedView] = useState(view);
+  if (view !== selectedView) {
+    setSelectedView(view);
     setSelected(null);
-  }, [view]);
+  }
 
   const W = 320;
   const H = 210;
