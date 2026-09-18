@@ -9,7 +9,7 @@ import { VerifyPendingPage } from "./pages/VerifyPendingPage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
-import { LandingPage } from "./pages/public/LandingPage";
+import { LandingPage } from "./pages/landing-page";
 import { applyTheme, getStoredPublicTheme, getStoredTheme } from "./lib/theme";
 
 import { DashboardPage } from "./pages/dashboard";

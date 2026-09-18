@@ -31,12 +31,4 @@ export const populatedCourses: CourseSummary[] = [
     total_holes: 18,
     tee_count: 5,
   },
-  {
-    id: "course-api-test",
-    name: "API Test Course",
-    location: "Testville",
-    par: 72,
-    total_holes: 18,
-    tee_count: 1,
-  },
 ];

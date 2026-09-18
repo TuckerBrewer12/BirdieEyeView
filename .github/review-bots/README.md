@@ -6,12 +6,25 @@ the original PR's branch. The Frontend coverage bot is separate: it posts one
 sticky comment with Vitest changed-line coverage plus an AI count of
 reasonable screenshot and espresso screens. It does not open fix PRs.
 
+A later commit does not re-open the same finding. The bot that left the
+comment rechecks it: ✅ if the latest commit fixed it, ❌ if it is still
+there. New issues introduced by that commit are still reported and still
+get a fix PR.
+
+When the fix is a local line edit (swap a token class, a hex, a size), the
+comment includes a GitHub **commit suggestion**. Accept it on the comment to
+apply the change immediately. Findings that need new files or a view-model
+API still open a fix PR.
+
 From a finding you can:
 
-1. **Merge the fix PR** — it lands as one commit on the original branch.
-2. **Discuss in Conductor** — every comment has a link that opens a Grok chat
+1. **Commit the suggestion** on the comment — the fast path for token swaps
+   and other one-line edits.
+2. **Merge the fix PR** — for findings that need new files or a view-model
+   change. It lands as one commit on the original branch.
+3. **Discuss in Conductor** — every comment has a link that opens a Grok chat
    already seeded with the file and the finding.
-3. **Reply `/fix`** — retry.
+4. **Reply `/fix`** — open (or retry) a fix PR.
 
 Fix PRs are labelled `skip-bots` and live on `bot-fix/pr-<n>/…` branches so
 they do not re-trigger the review bots. GitHub does not run CI on PRs opened
@@ -33,6 +46,7 @@ follows neighbouring code. Styling is Tailwind token classes
 | --- | --- |
 | `brand-kit.md`, `mvvm.md`, `ui-test-checker.md` | Review prompts |
 | `run-bot.sh` | Shared reviewer: diff → model → GitHub review |
+| `previous.py` | Match earlier comments, ✅/❌ recheck, skip duplicate fix PRs |
 | `post_review.py` | JSON findings → review payload + fixable list |
 | `fix.md` + `run-fix.sh` | Apply one finding and open a PR |
 | `links.py` | Discuss-in-Conductor (Grok) URLs |

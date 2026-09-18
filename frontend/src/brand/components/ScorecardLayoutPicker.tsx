@@ -1,0 +1,304 @@
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { GripVertical } from "lucide-react";
+import { cn } from "@/brand/cn";
+
+type DataRow = "score" | "putts" | "shots";
+
+const ROW_CONFIG: Record<DataRow, { label: string; tone: string }> = {
+  score: { label: "Score", tone: "border-scan-row-score bg-scan-row-score" },
+  putts: { label: "Putts", tone: "border-scan-row-putts bg-scan-row-putts" },
+  shots: { label: "Shots to Green", tone: "border-scan-row-shots bg-scan-row-shots" },
+};
+
+interface ScorecardLayoutPickerProps {
+  onContextChange: (ctx: string) => void;
+}
+
+export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPickerProps) {
+  const [playerName, setPlayerName] = useState("");
+  const [hasPutts, setHasPutts] = useState(false);
+  const [hasShotsToGreen, setHasShotsToGreen] = useState(false);
+  const [isTopar, setIsTopar] = useState(false);
+  const [rowOrder, setRowOrder] = useState<DataRow[]>(["score"]);
+  // which data-row index the Name label sits beside
+  const [nameRowIndex, setNameRowIndex] = useState(0);
+
+  // "row" drag = reordering data rows; "name" drag = repositioning Name label
+  const dragging = useRef<{ type: "row"; src: number } | { type: "name" } | null>(null);
+
+  const syncRowOrder = (prev: DataRow[], nextHasPutts: boolean, nextHasShots: boolean): DataRow[] => {
+    let next = prev.filter(
+      (r) => r === "score" || (r === "putts" && nextHasPutts) || (r === "shots" && nextHasShots)
+    );
+    if (!next.includes("score")) next = ["score", ...next];
+    if (nextHasPutts && !next.includes("putts")) next = [...next, "putts"];
+    if (nextHasShots && !next.includes("shots")) next = [...next, "shots"];
+    return next;
+  };
+
+  const safeNameRowIndex = Math.min(nameRowIndex, rowOrder.length - 1);
+
+  const reorderRow = (from: number, to: number) => {
+    if (from === to || to < 0 || to >= rowOrder.length) return;
+    setRowOrder((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      return next;
+    });
+  };
+
+  // Build user_context string
+  useEffect(() => {
+    const parts: string[] = [];
+    if (playerName.trim()) parts.push(`my name is ${playerName.trim()}`);
+    if (!hasPutts) parts.push("no putts recorded");
+    if (isTopar) parts.push("scores written to par");
+
+    // Always send row order + name position when the picker is active
+    if (hasPutts || hasShotsToGreen) {
+      const nameRowType = rowOrder[safeNameRowIndex] ?? "score";
+      const nameLabel = nameRowType === "shots" ? "shots to green" : nameRowType;
+      parts.push(`name on ${nameLabel} row`);
+
+      const rowLabels = rowOrder.map((r) => (r === "shots" ? "shots to green" : r));
+      parts.push(`row order: ${rowLabels.join(", ")}`);
+    }
+
+    onContextChange(parts.join(". "));
+  }, [playerName, hasPutts, hasShotsToGreen, isTopar, rowOrder, safeNameRowIndex, onContextChange]);
+
+  // dragover handler shared by each row slot
+  const handleRowDragOver = (e: React.DragEvent, i: number) => {
+    e.preventDefault();
+    if (!dragging.current) return;
+    if (dragging.current.type === "name") {
+      setNameRowIndex(i);
+    } else if (dragging.current.type === "row") {
+      const src = dragging.current.src;
+      if (src === i) return;
+      setRowOrder((prev) => {
+        const next = [...prev];
+        const [item] = next.splice(src, 1);
+        next.splice(i, 0, item);
+        return next;
+      });
+      dragging.current = { type: "row", src: i };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!dragging.current) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    const el = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement | null;
+    const rowHost = el?.closest("[data-row-index]") as HTMLElement | null;
+    if (!rowHost) return;
+    const idxRaw = rowHost.dataset.rowIndex;
+    if (idxRaw == null) return;
+    const i = Number.parseInt(idxRaw, 10);
+    if (Number.isNaN(i)) return;
+
+    e.preventDefault();
+    if (dragging.current.type === "name") {
+      setNameRowIndex(i);
+      return;
+    }
+
+    const src = dragging.current.src;
+    if (src === i) return;
+    reorderRow(src, i);
+    dragging.current = { type: "row", src: i };
+  };
+
+  const endPointerDrag = () => {
+    dragging.current = null;
+  };
+
+  const showPicker = hasPutts || hasShotsToGreen;
+  const togglePutts = () => {
+    setHasPutts((prev) => {
+      const nextHasPutts = !prev;
+      setRowOrder((orderPrev) => {
+        const nextOrder = syncRowOrder(orderPrev, nextHasPutts, hasShotsToGreen);
+        setNameRowIndex((idxPrev) => Math.min(idxPrev, nextOrder.length - 1));
+        return nextOrder;
+      });
+      return nextHasPutts;
+    });
+  };
+  const toggleShotsToGreen = () => {
+    setHasShotsToGreen((prev) => {
+      const nextHasShots = !prev;
+      setRowOrder((orderPrev) => {
+        const nextOrder = syncRowOrder(orderPrev, hasPutts, nextHasShots);
+        setNameRowIndex((idxPrev) => Math.min(idxPrev, nextOrder.length - 1));
+        return nextOrder;
+      });
+      return nextHasShots;
+    });
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Player name */}
+      <div>
+        <p className="text-meta font-semibold text-muted-foreground uppercase tracking-eyebrow mb-1.5">
+          Your name on the card
+        </p>
+        <input
+          type="text"
+          value={playerName}
+          onChange={(e) => setPlayerName(e.target.value)}
+          placeholder="e.g. Tucker"
+          className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        />
+      </div>
+
+      {/* Scoring format selector */}
+      <div>
+        <p className="text-meta font-semibold text-muted-foreground uppercase tracking-eyebrow mb-1.5">
+          Scoring format
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            { value: false, label: "Total strokes", sub: "e.g. 4, 5, 3" },
+            { value: true,  label: "To par",        sub: "e.g. +1, −1, E" },
+          ] as const).map(({ value, label, sub }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => setIsTopar(value)}
+              className={`flex flex-col items-start px-3 py-2.5 rounded-xl border text-left transition-all ${
+                isTopar === value
+                  ? "border-primary bg-primary/5 shadow-sm"
+                  : "border-input bg-card hover:border-border"
+              }`}
+            >
+              <span className={`text-xs font-semibold ${isTopar === value ? "text-primary" : "text-foreground"}`}>
+                {label}
+              </span>
+              <span className="text-meta text-muted-foreground mt-0.5">{sub}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* What else is on the card */}
+      <div>
+        <p className="text-meta font-semibold text-muted-foreground uppercase tracking-eyebrow mb-1.5">
+          Also on the card
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {([
+            { label: "Putts",          active: hasPutts,         toggle: togglePutts },
+            { label: "Shots to green", active: hasShotsToGreen,  toggle: toggleShotsToGreen },
+          ] as const).map(({ label, active, toggle }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={toggle}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                active
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-input bg-card text-muted-foreground hover:border-border"
+              }`}
+            >
+              <span
+                className={`w-3.5 h-3.5 rounded-tick border flex items-center justify-center flex-shrink-0 transition-colors ${
+                  active ? "bg-primary border-primary" : "border-input bg-card"
+                }`}
+              >
+                {active && (
+                  <svg viewBox="0 0 8 7" className="size-2 text-primary-foreground" fill="none">
+                    <polyline points="1,3.5 3,5.5 7,1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Row order picker */}
+      <AnimatePresence>
+        {showPicker && (
+          <motion.div
+            key="picker"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="pt-1">
+              <p className="text-meta font-semibold text-muted-foreground uppercase tracking-eyebrow mb-2">
+                Drag rows to match your card · drag Name to its row
+              </p>
+
+              <div className="flex flex-col gap-1.5">
+                {rowOrder.map((row, i) => {
+                  const { label, tone } = ROW_CONFIG[row];
+                  const nameHere = i === safeNameRowIndex;
+                  return (
+                    <div
+                      key={row}
+                      data-row-index={i}
+                      className="flex gap-2"
+                      onDragOver={(e) => handleRowDragOver(e, i)}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={endPointerDrag}
+                      onTouchCancel={endPointerDrag}
+                    >
+                      {/* Left column: Name indicator or empty drop target */}
+                      <div className="w-16 shrink-0">
+                        {nameHere ? (
+                          <div
+                            draggable
+                            onDragStart={() => { dragging.current = { type: "name" }; }}
+                            onDragEnd={() => { dragging.current = null; }}
+                            onTouchStart={() => { dragging.current = { type: "name" }; }}
+                            onTouchEnd={endPointerDrag}
+                            onTouchCancel={endPointerDrag}
+                            className="flex h-full min-h-9.5 cursor-grab touch-none items-center justify-center rounded-lg border border-scan-row-name bg-scan-row-name select-none active:cursor-grabbing"
+                          >
+                            <span className="text-meta font-bold text-primary-foreground uppercase tracking-chip">
+                              Name
+                            </span>
+                          </div>
+                        ) : (
+                          // invisible drop target so Name can be dragged here
+                          <div className="h-full min-h-9.5 rounded-lg" />
+                        )}
+                      </div>
+
+                      {/* Right column: draggable data row */}
+                      <div
+                        draggable
+                        onDragStart={() => { dragging.current = { type: "row", src: i }; }}
+                        onDragEnd={() => { dragging.current = null; }}
+                        onTouchStart={() => { dragging.current = { type: "row", src: i }; }}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={endPointerDrag}
+                        onTouchCancel={endPointerDrag}
+                        className={cn(
+                          "flex flex-1 cursor-grab touch-none items-center gap-2 rounded-lg border px-3 py-2.5 select-none active:cursor-grabbing",
+                          tone,
+                        )}
+                      >
+                        <GripVertical size={13} className="shrink-0 text-primary-foreground/50" />
+                        <span className="text-xs font-semibold text-primary-foreground">{label}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

@@ -23,8 +23,8 @@ const holeR = 9.5;
 
 function MiniScoreSvg({ strokes, par }: { strokes: number; par: number }) {
   const key = scoreKeyFor(strokes, par);
-  const fill = colors.score[key].fill;
-  const onFill = colors.score[key].onFill;
+  const fill = colors.score[key].base;
+  const onFill = colors.score[key].onBase;
 
   return (
     <svg viewBox={`0 0 ${HOLE_VB_W} ${HOLE_VB_H}`} className="h-hole-h w-hole-w">

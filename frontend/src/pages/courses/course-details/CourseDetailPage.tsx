@@ -21,7 +21,10 @@ import { api } from "@/lib/api";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
 import type { Course, Tee } from "@/types/golf";
-import { formatToPar } from "@/types/golf";
+import { toParDisplay, toParFill, toParTone } from "@/brand/theme";
+import { BACK_HOLES, FRONT_HOLES, getHole, getTee, longestTee, teeYards } from "@/domain/course";
+import { ratedCourseHandicap } from "@/domain/handicap";
+import { userRepository } from "@/data/userRepository";
 import type { CourseAnalyticsData } from "@/types/analytics";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 
@@ -110,15 +113,15 @@ function NineTable({
 }) {
   const allHoles = Array.from({ length: 18 }, (_, i) => i + 1);
 
-  const parRow = holes.map((n) => course.holes.find((h) => h.number === n)?.par ?? null);
-  const hdcpRow = holes.map((n) => course.holes.find((h) => h.number === n)?.handicap ?? null);
+  const parRow = holes.map((n) => getHole(course, n)?.par ?? null);
+  const hdcpRow = holes.map((n) => getHole(course, n)?.handicap ?? null);
 
   const outPar = parRow.every((p) => p != null)
     ? parRow.reduce((s, p) => s + p!, 0)
     : null;
   const totalPar = showTotal
-    ? allHoles.every((n) => course.holes.find((h) => h.number === n)?.par != null)
-      ? allHoles.reduce((s, n) => s + (course.holes.find((h) => h.number === n)?.par ?? 0), 0)
+    ? allHoles.every((n) => getHole(course, n)?.par != null)
+      ? allHoles.reduce((s, n) => s + (getHole(course, n)?.par ?? 0), 0)
       : null
     : null;
 
@@ -235,14 +238,6 @@ function formatDate(dateStr: string | null): string {
 
 type TrendPoint = { round_index: number; total_score: number | null; to_par: number | null; date: string | null };
 
-function getDotColor(toPar: number | null): string {
-  if (toPar == null) return "#9ca3af";
-  if (toPar <= -2) return "#f59e0b";
-  if (toPar === -1) return "#059669";
-  if (toPar === 0)  return "#9ca3af";
-  return "#ef4444";
-}
-
 function CourseScoreTrendSVG({ data, strokeColor }: { data: TrendPoint[]; strokeColor: string }) {
   const [hovered, setHovered] = useState<TrendPoint | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -305,7 +300,7 @@ function CourseScoreTrendSVG({ data, strokeColor }: { data: TrendPoint[]; stroke
         {valid.map((d, i) => (
           <motion.circle key={i} cx={xSc(i)} cy={ySc(d.total_score!)}
             r={hovered === d ? 6 : 4}
-            fill={getDotColor(d.to_par)} stroke="white" strokeWidth={1.5}
+            fill={toParFill(d.to_par)} stroke="white" strokeWidth={1.5}
             initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 1.0 + i * 0.06, duration: 0.25, ease: "backOut" }} />
         ))}
@@ -336,8 +331,8 @@ function CourseScoreTrendSVG({ data, strokeColor }: { data: TrendPoint[]; stroke
             )}
             <div className="font-bold text-gray-900 text-sm">{hovered.total_score}</div>
             {hovered.to_par != null && (
-              <div className="text-xs mt-0.5 font-semibold" style={{ color: getDotColor(hovered.to_par) }}>
-                {formatToPar(hovered.to_par)}
+              <div className="text-xs mt-0.5 font-semibold" style={{ color: toParFill(hovered.to_par) }}>
+                {toParDisplay(hovered.to_par, "-")}
               </div>
             )}
           </motion.div>
@@ -365,21 +360,14 @@ export function CourseDetailPage({ userId }: CourseDetailPageProps) {
     Promise.all([
       api.getCourse(courseId),
       api.getCourseAnalytics(userId, courseId),
-      api.getUserHandicap(userId).catch(() => ({ handicap_index: null })),
+      userRepository.getUserHandicap(userId).catch(() => ({ handicap_index: null })),
     ])
       .then(([c, a, h]) => {
         if (!isMounted) return;
         setCourse(c);
         setAnalytics(a);
         setHandicapIndex(h.handicap_index);
-        const longest = c.tees.reduce<Tee | null>((best, t) => {
-          const yards = t.total_yardage ?? Object.values(t.hole_yardages).reduce((s, y) => s + y, 0);
-          const bestYards = best
-            ? (best.total_yardage ?? Object.values(best.hole_yardages).reduce((s, y) => s + y, 0))
-            : -1;
-          return yards > bestYards ? t : best;
-        }, null);
-        setSelectedTeeColor(longest?.color ?? null);
+        setSelectedTeeColor(longestTee(c)?.color ?? null);
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -425,12 +413,10 @@ export function CourseDetailPage({ userId }: CourseDetailPageProps) {
     return <div className="text-gray-500">Course not found.</div>;
   }
 
-  const front = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-  const back = [10, 11, 12, 13, 14, 15, 16, 17, 18];
+  const front = [...FRONT_HOLES];
+  const back = [...BACK_HOLES];
 
-  const selectedTee = course.tees.find(
-    (t) => t.color?.toLowerCase() === selectedTeeColor?.toLowerCase()
-  ) ?? null;
+  const selectedTee = getTee(course, selectedTeeColor);
   const scoreTrendStroke = colorBlindPalette?.trend.primary ?? "#2d7a3a";
   const gridLineColor = colorBlindPalette?.ui.grid ?? "#d1d5db";
   const successColor = colorBlindPalette?.ui.success ?? "#059669";
@@ -444,8 +430,7 @@ export function CourseDetailPage({ userId }: CourseDetailPageProps) {
   const coursePar = course.par;
 
   function courseHandicap(tee: Tee): number | null {
-    if (handicapIndex == null || tee.slope_rating == null || tee.course_rating == null || coursePar == null) return null;
-    return Math.round(handicapIndex * (tee.slope_rating / 113) + (tee.course_rating - coursePar));
+    return ratedCourseHandicap(handicapIndex, tee, coursePar);
   }
 
   const hasPerformance = analytics != null && analytics.rounds_played > 0;
@@ -509,10 +494,7 @@ export function CourseDetailPage({ userId }: CourseDetailPageProps) {
           {/* Tee selector */}
           {course.tees.length > 0 && (
             <div className="flex flex-wrap gap-3 mb-5">
-              {[...course.tees].sort((a, b) => {
-                const yards = (t: Tee) => t.total_yardage ?? Object.values(t.hole_yardages).reduce((s, y) => s + y, 0);
-                return yards(b) - yards(a);
-              }).map((tee) => {
+              {[...course.tees].sort((a, b) => (teeYards(b) ?? 0) - (teeYards(a) ?? 0)).map((tee) => {
                 const isSelected = tee.color?.toLowerCase() === selectedTeeColor?.toLowerCase();
                 return (
                   <button
@@ -614,6 +596,7 @@ export function CourseDetailPage({ userId }: CourseDetailPageProps) {
                     .slice()
                     .reverse()
                     .map((row, i) => {
+                      const toPar = toParTone(row.to_par);
                       const inner = (
                         <div className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors">
                           <span className="text-sm text-gray-500">{formatDate(row.date)}</span>
@@ -621,12 +604,9 @@ export function CourseDetailPage({ userId }: CourseDetailPageProps) {
                             <span className="text-sm font-bold text-gray-900">{row.total_score ?? "-"}</span>
                             <span
                               className="text-xs font-semibold px-1.5 py-0.5 rounded"
-                              style={{
-                                color: row.to_par == null ? "#9ca3af" : row.to_par < 0 ? "#059669" : row.to_par === 0 ? "#6b7280" : "#ef4444",
-                                background: row.to_par == null ? "#f3f4f6" : row.to_par < 0 ? "#ecfdf5" : row.to_par === 0 ? "#f3f4f6" : "#fef2f2",
-                              }}
+                              style={{ color: toPar.onMuted, background: toPar.muted }}
                             >
-                              {formatToPar(row.to_par)}
+                              {toParDisplay(row.to_par, "-")}
                             </span>
                           </div>
                         </div>

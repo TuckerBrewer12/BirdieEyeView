@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/data/queryKeys";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette } from "@/lib/chartPalettes";
 import { SCORE_COLORS, SCORE_KEYS, SCORE_LABELS } from "@/lib/colors";
 import { colors } from "@/brand/theme";
+import { formatHandicapIndex, whsWindow } from "@/domain/handicap";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateShort } from "@/lib/roundDate";
 import type { Milestone, DashboardData, Round, RoundSummary, User } from "@/types/golf";
@@ -24,12 +26,6 @@ type HoleColorKey =
   | "triple_bogey"
   | "quad_bogey";
 
-function formatHI(hi: number | null | undefined): string {
-  if (hi == null) return "—";
-  if (hi < 0) return `+${Math.abs(hi).toFixed(1)}`;
-  return hi.toFixed(1);
-}
-
 function holeColorKey(
   strokes: number | null | undefined,
   par: number | null | undefined,
@@ -46,14 +42,14 @@ function holeColorKey(
 }
 
 function holeFill(key: HoleColorKey, scoreColors: Record<string, string>): string {
-  return scoreColors[key] ?? colors.score.par.fill;
+  return scoreColors[key] ?? colors.score.par.base;
 }
 
 function toParAccent(toPar: number | null, scoreColors: Record<string, string>): string {
-  if (toPar == null) return scoreColors.par ?? colors.score.par.fill;
-  if (toPar <= 0) return scoreColors.birdie ?? colors.score.birdie.fill;
-  if (toPar <= 14) return scoreColors.bogey ?? colors.score.bogey.fill;
-  return scoreColors.double_bogey ?? colors.score.double.fill;
+  if (toPar == null) return scoreColors.par ?? colors.score.par.base;
+  if (toPar <= 0) return scoreColors.birdie ?? colors.score.birdie.base;
+  if (toPar <= 14) return scoreColors.bogey ?? colors.score.bogey.base;
+  return scoreColors.double_bogey ?? colors.score.double.base;
 }
 
 function toParTextColor(toPar: number | null, scoreColors: Record<string, string>): string {
@@ -70,27 +66,6 @@ function pickBestRound(rounds: RoundSummary[]): RoundSummary | null {
     curr.total_score! < best.total_score! ? curr : best,
   );
 }
-
-const WHS_TABLE: Array<[number, number]> = [
-  [1, -2.0],
-  [1, -1.0],
-  [1, 0.0],
-  [2, -1.0],
-  [2, 0.0],
-  [2, 0.0],
-  [3, 0.0],
-  [3, 0.0],
-  [3, 0.0],
-  [4, 0.0],
-  [4, 0.0],
-  [4, 0.0],
-  [5, 0.0],
-  [5, 0.0],
-  [6, 0.0],
-  [6, 0.0],
-  [7, 0.0],
-  [8, 0.0],
-];
 
 export interface DualTrendPoint {
   round_index: number;
@@ -257,7 +232,7 @@ export function useDashboardPageViewModel(
   const [trendView, setTrendView] = useState<TrendView>("score");
 
   const { data: fetched, isLoading: loading, error, refetch } = useQuery({
-    queryKey: ["dashboard", userId],
+    queryKey: queryKeys.dashboard(userId),
     queryFn: async () => {
       const [dashboardResult, analyticsResult] = await Promise.allSettled([
         repository.getDashboard(userId),
@@ -272,12 +247,12 @@ export function useDashboardPageViewModel(
   });
 
   const { data: user } = useQuery({
-    queryKey: ["user", userId],
+    queryKey: queryKeys.user(userId),
     queryFn: () => repository.getUser(userId),
   });
 
   const { data: goalReport } = useQuery({
-    queryKey: ["goal-report", userId],
+    queryKey: queryKeys.goalReport(userId),
     queryFn: () => repository.getGoalReport(userId, 20),
     enabled: !!user?.scoring_goal,
     retry: false,
@@ -324,8 +299,8 @@ export function useDashboardPageViewModel(
   const scoreColors = (colorBlindPalette?.score ?? SCORE_COLORS) as Record<string, string>;
   const scoreLineColor = colorBlindPalette?.trend.primary ?? colors.primary;
   const handicapLineColor = colorBlindPalette?.trend.secondary ?? colors.score.double.text;
-  const girColor = colorBlindPalette?.ui.success ?? colors.score.birdie.fill;
-  const warningColor = colorBlindPalette?.ui.warning ?? colors.score.eagle.fill;
+  const girColor = colorBlindPalette?.ui.success ?? colors.score.birdie.base;
+  const warningColor = colorBlindPalette?.ui.warning ?? colors.score.eagle.base;
   const dangerColor = colorBlindPalette?.ui.danger ?? colors.destructive;
   const gridColor = colorBlindPalette?.ui.grid ?? colors.border;
   const mutedFill = colorBlindPalette?.ui.mutedFill ?? colors.muted;
@@ -519,7 +494,7 @@ export function useDashboardPageViewModel(
   );
   const puttsColor =
     putts < 30
-      ? (colorBlindPalette?.ui.success ?? colors.score.birdie.fill)
+      ? (colorBlindPalette?.ui.success ?? colors.score.birdie.base)
       : putts <= 35
         ? warningColor
         : dangerColor;
@@ -532,15 +507,15 @@ export function useDashboardPageViewModel(
     return `${day} · ${date}`;
   }, []);
 
-  const handicapIndexLabel = formatHI(data?.handicap_index);
+  const handicapIndexLabel = formatHandicapIndex(data?.handicap_index);
   const hiDeltaText =
     handicapDelta != null && Math.abs(handicapDelta) >= 0.1
       ? `${handicapDelta < 0 ? "↓" : "↑"} ${Math.abs(handicapDelta).toFixed(1)}`
       : null;
   const hiDeltaImproving = handicapDelta != null && handicapDelta < 0;
   const hiDeltaColor = hiDeltaImproving
-    ? (scoreColors.birdie ?? colors.score.birdie.fill)
-    : (scoreColors.bogey ?? colors.score.bogey.fill);
+    ? (scoreColors.birdie ?? colors.score.birdie.base)
+    : (scoreColors.bogey ?? colors.score.bogey.base);
 
   const scoreDelta =
     last20ScoringAvg != null && l5ScoringAvg != null
@@ -552,8 +527,8 @@ export function useDashboardPageViewModel(
       : null;
   const scoreDeltaImproving = scoreDelta != null && scoreDelta > 0;
   const scoreDeltaColor = scoreDeltaImproving
-    ? (scoreColors.birdie ?? colors.score.birdie.fill)
-    : (scoreColors.bogey ?? colors.score.bogey.fill);
+    ? (scoreColors.birdie ?? colors.score.birdie.base)
+    : (scoreColors.bogey ?? colors.score.bogey.base);
   const last20ScoringAvgLabel =
     last20ScoringAvg != null ? last20ScoringAvg.toFixed(1) : "—";
   const puttsLabel = putts > 0 ? putts.toFixed(1) : "—";
@@ -646,15 +621,15 @@ export function useDashboardPageViewModel(
     const items: ScoreChip[] = [];
     const birdiesPlus = (counts.eagle ?? 0) + (counts.birdie ?? 0);
     if (birdiesPlus > 0) {
-      items.push({ label: "Birdie+", count: birdiesPlus, color: scoreColors.birdie ?? colors.score.birdie.fill });
+      items.push({ label: "Birdie+", count: birdiesPlus, color: scoreColors.birdie ?? colors.score.birdie.base });
     }
-    if (counts.par) items.push({ label: "Par", count: counts.par, color: scoreColors.par ?? colors.score.par.fill });
-    if (counts.bogey) items.push({ label: "Bogey", count: counts.bogey, color: scoreColors.bogey ?? colors.score.bogey.fill });
+    if (counts.par) items.push({ label: "Par", count: counts.par, color: scoreColors.par ?? colors.score.par.base });
+    if (counts.bogey) items.push({ label: "Bogey", count: counts.bogey, color: scoreColors.bogey ?? colors.score.bogey.base });
     if (counts.double_bogey) {
       items.push({
         label: "Double",
         count: counts.double_bogey,
-        color: scoreColors.double_bogey ?? colors.score.double.fill,
+        color: scoreColors.double_bogey ?? colors.score.double.base,
       });
     }
     return items;
@@ -701,8 +676,7 @@ export function useDashboardPageViewModel(
     });
     const validCount = rows.filter((r) => r.hasDifferential).length;
     const n = Math.min(validCount, 20);
-    const tableIdx = n < 3 ? -1 : Math.min(n - 3, WHS_TABLE.length - 1);
-    const [countUsed, adjustment] = tableIdx >= 0 ? WHS_TABLE[tableIdx] : [0, 0];
+    const { countUsed, adjustment } = whsWindow(n);
     const usedDiffs = rowsSource
       .filter((r) => r.used_in_hi === true && r.differential != null)
       .map((r) => r.differential!);
@@ -719,7 +693,7 @@ export function useDashboardPageViewModel(
         adjustment === 0 ? null : adjustment > 0 ? `+${adjustment}` : String(adjustment),
       diffAvgLabel: diffAvg != null ? diffAvg.toFixed(2) : null,
       hasRatedRounds,
-      showCalculation: data?.handicap_index != null && tableIdx >= 0,
+      showCalculation: data?.handicap_index != null && n >= 3,
       usedLegend:
         usedDiffs.length > 0
           ? `Green rows are the ${countUsed} best differential${countUsed !== 1 ? "s" : ""} used in your index`

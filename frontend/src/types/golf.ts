@@ -129,6 +129,7 @@ export interface Friendship {
   addressee_email?: string | null;
 }
 
+/** Legacy copies for unmigrated pages. New pages use `@/domain` and `@/brand`. */
 export type ScoreType = "eagle" | "birdie" | "par" | "bogey" | "double-bogey" | "worse";
 
 export function getScoreType(strokes: number, par: number): ScoreType {

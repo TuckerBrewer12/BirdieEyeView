@@ -10,6 +10,7 @@ import {
   motion as motionTokens,
   typography,
 } from "@/brand/theme";
+import { formatHandicapIndex } from "@/domain/handicap";
 
 export interface ScoreHandicapTrendPoint {
   round_index: number;
@@ -29,25 +30,19 @@ interface SVGScoreHandicapTrendProps {
   gridColor: string;
 }
 
-function formatHI(hi: number | null | undefined): string {
-  if (hi == null) return "—";
-  if (hi < 0) return `+${Math.abs(hi).toFixed(1)}`;
-  return hi.toFixed(1);
-}
-
 function getDotColor(toPar: number | null): string {
-  if (toPar == null || toPar === 0) return colors.score.par.fill;
-  if (toPar <= -2) return colors.score.eagle.fill;
-  if (toPar === -1) return colors.score.birdie.fill;
-  if (toPar === 1) return colors.score.bogey.fill;
-  return colors.score.double.fill;
+  if (toPar == null || toPar === 0) return colors.score.par.base;
+  if (toPar <= -2) return colors.score.eagle.base;
+  if (toPar === -1) return colors.score.birdie.base;
+  if (toPar === 1) return colors.score.bogey.base;
+  return colors.score.double.base;
 }
 
 function getBarColor(d: ScoreHandicapTrendPoint): string {
-  if (d.used_in_hi == null) return colors.score.par.fill;
-  if (d.used_in_hi) return colors.score.birdie.fill;
+  if (d.used_in_hi == null) return colors.score.par.base;
+  if (d.used_in_hi) return colors.score.birdie.base;
   if (d.hi_threshold != null && d.differential != null && d.differential - d.hi_threshold <= 2) {
-    return colors.score.eagle.fill;
+    return colors.score.eagle.base;
   }
   return colors.destructive;
 }
@@ -218,7 +213,7 @@ export function SVGScoreHandicapTrend({
               strokeWidth={4}
               strokeLinejoin="round"
             >
-              {formatHI(v)}
+              {formatHandicapIndex(v)}
             </text>
           ))}
 
@@ -346,7 +341,7 @@ export function SVGScoreHandicapTrend({
               <div className="mt-0.5 flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">HI</span>
                 <span className="font-semibold" style={{ color: handicapColor }}>
-                  {formatHI(hovered.handicap_index)}
+                  {formatHandicapIndex(hovered.handicap_index)}
                 </span>
               </div>
             )}

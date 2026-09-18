@@ -15,12 +15,16 @@ export {
   chartTickStyle,
   chartLayout,
   chartColors,
+  SCORE_KEYS,
   scoreFill,
   scoreKeyFor,
+  toParFill,
+  toParTone,
   toParLabel,
+  toParDisplay,
   toParTextClass,
 } from "./theme";
-export type { ScoreKey } from "./theme";
+export type { ScoreKey, ScoreSwatch, ScoreTone } from "./theme";
 export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/Alert";
 export {
   Card,
@@ -33,6 +37,8 @@ export {
 } from "./components/Card";
 export { BrandMark } from "./components/BrandMark";
 export { Button } from "./components/Button";
+export { Dropzone } from "./components/Dropzone";
+export { FileChip } from "./components/FileChip";
 export { Collapse } from "./components/Collapse";
 export type { CollapseProps } from "./components/Collapse";
 export { Collection } from "./components/Collection";
@@ -58,6 +64,11 @@ export {
   InputGroupInput,
 } from "./components/InputGroup";
 export { PageTitle } from "./components/PageTitle";
+export { Reveal } from "./components/Reveal";
+export { ScanProgress } from "./components/ScanProgress";
+export { ScorecardLayoutPicker } from "./components/ScorecardLayoutPicker";
+export { ScorecardTable } from "./components/ScorecardTable";
+export type { ScorecardHole } from "./components/ScorecardTable";
 export { Toggle } from "./components/Toggle";
 export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
 export { ComparisonChartCard } from "./components/ComparisonChartCard";

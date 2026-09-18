@@ -311,7 +311,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                         className="h-full rounded-full transition-all"
                         style={{
                           width: `${goalBarPct}%`,
-                          background: goalOnTrack ? colors.score.birdie.fill : `linear-gradient(90deg, ${colors.primary}, ${chartColors.axis})`,
+                          background: goalOnTrack ? colors.score.birdie.base : `linear-gradient(90deg, ${colors.primary}, ${chartColors.axis})`,
                         }}
                       />
                     </div>
