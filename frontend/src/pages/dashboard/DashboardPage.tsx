@@ -1,6 +1,7 @@
 import { useDashboardPageViewModel } from "./useDashboardPageViewModel";
 import { MobileDashboard } from "./MobileDashboard";
 import { DashboardDesktopLayout } from "./DashboardDesktopLayout";
+import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
 import { ResponsivePage } from "@/components/layout/ResponsivePage";
 import {
   Alert,
@@ -37,28 +38,26 @@ export function DashboardPage({ userId }: DashboardPageProps) {
   }
 
   return (
-    <ResponsivePage
-      mobile={
-        <MobileDashboard
-          data={vm.data!}
-          trends={vm.trends}
-          user={vm.user ?? null}
-          goalReport={vm.goalReport ?? null}
-          dualData={vm.dualData}
-          last20ScoringAvg={vm.last20ScoringAvg}
-          l5ScoringAvg={vm.l5ScoringAvg}
-          handicapDelta={vm.handicapDelta}
-          l20ScoreMix={vm.l20ScoreMix}
-          girPct={vm.girPct}
-          scramblingPct={vm.scramblingPct}
-          upAndDownPct={vm.upAndDownPct}
-          putts={vm.putts}
-          scoreColors={vm.scoreColors}
-          scoreLineColor={vm.scoreLineColor}
-          handicapLineColor={vm.handicapLineColor}
-        />
-      }
-      desktop={<DashboardDesktopLayout {...vm} />}
-    />
+    <>
+      <ResponsivePage
+        mobile={<MobileDashboard vm={vm} />}
+        desktop={<DashboardDesktopLayout vm={vm} />}
+      />
+      <HandicapBreakdownSheet
+        open={vm.handicapSheetOpen}
+        onClose={vm.closeHandicapSheet}
+        handicapIndexLabel={vm.handicapIndexLabel}
+        rows={vm.whsRows}
+        windowSize={vm.whsWindowSize}
+        countUsed={vm.whsCountUsed}
+        adjustment={vm.whsAdjustment}
+        adjustmentLabel={vm.whsAdjustmentLabel}
+        diffAvgLabel={vm.whsDiffAvgLabel}
+        hasRatedRounds={vm.whsHasRatedRounds}
+        showCalculation={vm.whsShowCalculation}
+        usedLegend={vm.whsUsedLegend}
+        contextNote={vm.whsContextNote}
+      />
+    </>
   );
 }

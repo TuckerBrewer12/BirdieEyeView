@@ -143,6 +143,8 @@
   --brand-size-chart: 180px;
   --brand-size-sheet: 28rem;
   --brand-size-icon-xs: 11px;
+  --brand-size-hole-w: 30px;
+  --brand-size-hole-h: 22px;
   --brand-ring-width: 3px;
   --brand-border-width: 1px;
 
@@ -273,6 +275,8 @@
   --spacing-chart: var(--brand-size-chart);
   --spacing-sheet: var(--brand-size-sheet);
   --spacing-icon-xs: var(--brand-size-icon-xs);
+  --spacing-hole-w: var(--brand-size-hole-w);
+  --spacing-hole-h: var(--brand-size-hole-h);
 
   --ring-width-3: var(--brand-ring-width);
 
@@ -280,4 +284,5 @@
 
   --grid-template-columns-round-preview: var(--brand-size-date-rail) 1fr auto;
   --grid-template-columns-handicap-breakdown: 1fr auto auto auto;
+  --grid-template-columns-recent-rounds: 1fr auto auto;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatRoundDateHistory, formatRoundDateLong, formatRoundDateTick, roundDateParts } from "./roundDate";
+import { formatRoundDateHistory, formatRoundDateLong, formatRoundDateShort, formatRoundDateTick, roundDateParts } from "./roundDate";
 
 describe("formatRoundDateLong", () => {
   it("reads weekday · month day · year", () => {
@@ -11,6 +11,17 @@ describe("formatRoundDateLong", () => {
     expect(formatRoundDateLong(undefined)).toBeNull();
     expect(formatRoundDateLong("")).toBeNull();
     expect(formatRoundDateLong("not a date")).toBeNull();
+  });
+});
+
+describe("formatRoundDateShort", () => {
+  it("reads month day", () => {
+    expect(formatRoundDateShort("2026-06-15T00:00:00")).toBe("Jun 15");
+  });
+
+  it("is null for a missing or unparseable date", () => {
+    expect(formatRoundDateShort(null)).toBeNull();
+    expect(formatRoundDateShort("not a date")).toBeNull();
   });
 });
 
