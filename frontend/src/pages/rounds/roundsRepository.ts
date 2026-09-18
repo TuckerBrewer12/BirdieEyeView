@@ -1,3 +1,4 @@
+import { userRepository } from "@/data/userRepository";
 import { api } from "@/lib/api";
 import type { Course, CourseSummary, Round, RoundSummary } from "@/types/golf";
 import type { RoundComparison } from "@/types/analytics";
@@ -38,6 +39,6 @@ export const roundsRepository: RoundsRepository = {
   linkCourse: (roundId, courseId) => api.linkCourse(roundId, courseId),
   getCourse: (courseId) => api.getCourse(courseId),
   getRoundComparison: (userId, roundId) => api.getRoundComparison(userId, roundId),
-  getUserHandicap: (userId) => api.getUserHandicap(userId),
+  getUserHandicap: (userId) => userRepository.getUserHandicap(userId),
   searchCourses: (query, userId) => api.searchCourses(query, userId),
 };

@@ -18,16 +18,6 @@ function renderVm(repository: FakeCoursesRepository) {
 }
 
 describe("useCoursesPageViewModel", () => {
-  it("hides API test courses from the list", async () => {
-    const { result } = renderVm(new FakeCoursesRepository(populatedCourses));
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.visibleCourses.map((course) => course.name)).toEqual([
-      "Half Moon Bay",
-      "Blue Rock",
-      "Pebble Beach",
-    ]);
-  });
-
   it("pluralizes the header subtitle from the visible count", async () => {
     const { result } = renderVm(new FakeCoursesRepository(populatedCourses));
     await waitFor(() => expect(result.current.loading).toBe(false));

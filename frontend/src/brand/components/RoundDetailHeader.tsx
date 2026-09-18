@@ -1,8 +1,7 @@
 import { cn } from "@/brand/cn";
 import { PageTitle } from "./PageTitle";
-import { colors, scoreFill, scoreKeyFor, type ScoreKey } from "@/brand/theme";
+import { colors, scoreFill, scoreKeyFor, toParDisplay, type ScoreKey } from "@/brand/theme";
 import { pluralNoun } from "@/lib/pluralize";
-import { formatToPar } from "@/types/golf";
 
 const BAR_HEIGHTS: Record<ScoreKey, number> = {
   eagle: 28, birdie: 40, par: 52, bogey: 72, double: 92, triple: 100, quad: 100,
@@ -20,7 +19,7 @@ const CHIPS: { key: ScoreKey; noun: string; plural?: string; absorbs?: ScoreKey 
 export interface HeaderHole {
   hole: number;
   strokes: number;
-  par: number;
+  par: number | null;
 }
 
 export interface HeaderNine {
@@ -131,7 +130,7 @@ export function RoundDetailHeader({
                   score.toPar <= 0 ? "text-score-birdie" : "text-score-bogey",
                 )}
               >
-                {formatToPar(score.toPar)}
+                {toParDisplay(score.toPar, "-")}
               </div>
             )}
           </div>
@@ -182,7 +181,7 @@ export function RoundDetailHeader({
             <div
               key={key}
               className="inline-flex items-center gap-1 rounded-full px-2.5 py-chip"
-              style={{ background: tone.fill, color: tone.onFill }}
+              style={{ background: tone.base, color: tone.onBase }}
             >
               <span className="font-mono text-label font-semibold">{count}</span>
               <span className="text-meta font-bold tracking-chip">

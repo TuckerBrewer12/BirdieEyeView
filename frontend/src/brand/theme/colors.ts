@@ -1,3 +1,5 @@
+import type { ScoreKind } from "@/domain/score";
+
 /**
  * Every brand color, as a reference to the token that holds its value.
  *
@@ -18,6 +20,19 @@
  *
  * `tokens.test.ts` fails if a name here has no definition in tokens.css.
  */
+export type ScoreSwatch = {
+  /** Saturated fill — bars, chips, filled score cells. */
+  base: string;
+  /** Light wash — table cells, history pills. */
+  muted: string;
+  /** Ink that sits on `base`. */
+  onBase: string;
+  /** Ink that sits on `muted`. */
+  onMuted: string;
+  /** Ink on the page background (`text-score-birdie`). */
+  text: string;
+};
+
 export const colors = {
   background: "var(--background)",
   foreground: "var(--foreground)",
@@ -38,12 +53,12 @@ export const colors = {
   shadow: "var(--shadow)",
 
   score: {
-    eagle:  { fill: "var(--score-eagle-fill)",  onFill: "var(--score-eagle-on-fill)",  text: "var(--score-eagle-text)" },
-    birdie: { fill: "var(--score-birdie-fill)", onFill: "var(--score-birdie-on-fill)", text: "var(--score-birdie-text)" },
-    par:    { fill: "var(--score-par-fill)",    onFill: "var(--score-par-on-fill)",    text: "var(--score-par-text)" },
-    bogey:  { fill: "var(--score-bogey-fill)",  onFill: "var(--score-bogey-on-fill)",  text: "var(--score-bogey-text)" },
-    double: { fill: "var(--score-double-fill)", onFill: "var(--score-double-on-fill)", text: "var(--score-double-text)" },
-    triple: { fill: "var(--score-triple-fill)", onFill: "var(--score-triple-on-fill)", text: "var(--score-triple-text)" },
-    quad:   { fill: "var(--score-quad-fill)",   onFill: "var(--score-quad-on-fill)",   text: "var(--score-quad-text)" },
-  },
+    eagle:  { base: "var(--score-eagle-base)",  muted: "var(--score-eagle-muted)",  onBase: "var(--score-eagle-on-base)",  onMuted: "var(--score-eagle-on-muted)",  text: "var(--score-eagle-text)" },
+    birdie: { base: "var(--score-birdie-base)", muted: "var(--score-birdie-muted)", onBase: "var(--score-birdie-on-base)", onMuted: "var(--score-birdie-on-muted)", text: "var(--score-birdie-text)" },
+    par:    { base: "var(--score-par-base)",    muted: "var(--score-par-muted)",    onBase: "var(--score-par-on-base)",    onMuted: "var(--score-par-on-muted)",    text: "var(--score-par-text)" },
+    bogey:  { base: "var(--score-bogey-base)",  muted: "var(--score-bogey-muted)",  onBase: "var(--score-bogey-on-base)",  onMuted: "var(--score-bogey-on-muted)",  text: "var(--score-bogey-text)" },
+    double: { base: "var(--score-double-base)", muted: "var(--score-double-muted)", onBase: "var(--score-double-on-base)", onMuted: "var(--score-double-on-muted)", text: "var(--score-double-text)" },
+    triple: { base: "var(--score-triple-base)", muted: "var(--score-triple-muted)", onBase: "var(--score-triple-on-base)", onMuted: "var(--score-triple-on-muted)", text: "var(--score-triple-text)" },
+    quad:   { base: "var(--score-quad-base)",   muted: "var(--score-quad-muted)",   onBase: "var(--score-quad-on-base)",   onMuted: "var(--score-quad-on-muted)",   text: "var(--score-quad-text)" },
+  } satisfies Record<ScoreKind, ScoreSwatch>,
 } as const;
