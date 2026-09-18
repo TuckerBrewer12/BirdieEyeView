@@ -623,7 +623,7 @@ export function useDashboardPageViewModel(
   }, [holesFromRound, roundsById]);
 
   const lastRound = recentSummaries[0] ? toRoundRow(recentSummaries[0]) : null;
-  const lastRoundHoles = lastRound?.holes ?? [];
+  const lastRoundHoles = useMemo(() => lastRound?.holes ?? [], [lastRound]);
   const recentRoundRows = recentSummaries.map(toRoundRow);
   const sidebarRounds = (data?.recent_rounds ?? []).slice(0, 10);
 
@@ -744,7 +744,7 @@ export function useDashboardPageViewModel(
     const range = startAvg - user.scoring_goal;
     if (range <= 0) return 100;
     return Math.min(100, Math.max(0, ((startAvg - current) / range) * 100));
-  }, [user?.scoring_goal, goalReport, last20ScoringAvg, dualData]);
+  }, [user, goalReport, last20ScoringAvg, dualData]);
 
   return {
     data,
