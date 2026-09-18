@@ -21,11 +21,6 @@ export interface Course {
   tees: Tee[];
 }
 
-/** Standard 18-hole numbering. Scorecards and course nines both read from these. */
-export const FRONT_HOLES = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-export const BACK_HOLES = [10, 11, 12, 13, 14, 15, 16, 17, 18];
-export const ALL_HOLES = [...FRONT_HOLES, ...BACK_HOLES];
-
 export interface HoleScore {
   hole_number: number | null;
   strokes: number | null;
@@ -134,6 +129,7 @@ export interface Friendship {
   addressee_email?: string | null;
 }
 
+/** Legacy copies for unmigrated pages. New pages use `@/domain` and `@/brand`. */
 export type ScoreType = "eagle" | "birdie" | "par" | "bogey" | "double-bogey" | "worse";
 
 export function getScoreType(strokes: number, par: number): ScoreType {

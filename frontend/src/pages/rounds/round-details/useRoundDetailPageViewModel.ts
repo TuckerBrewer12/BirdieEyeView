@@ -4,10 +4,20 @@ import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateLong } from "@/lib/roundDate";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { scoreKeyFor, type ScoreKey } from "@/brand/theme";
-import { useRoundHoles, type HoleData } from "@/hooks/useRoundHoles";
+import { queryKeys } from "@/data/queryKeys";
+import {
+  backNine as backNineHoles,
+  frontNine as frontNineHoles,
+  nineTotal,
+  playedHoles,
+  roundPar,
+  totalStrokes,
+  type PlayedHole,
+} from "@/domain/round";
+import { getTee, teeColors } from "@/domain/course";
+import { netScore, ratedCourseHandicap } from "@/domain/handicap";
 import { chooseCompatibleTee } from "@/lib/teeColor";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
-import { calcCourseHandicap, calcNetScore } from "@/types/golf";
 import type { Course, CourseSummary, Round } from "@/types/golf";
 import type { ComparisonRow, RoundComparison } from "@/types/analytics";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
@@ -59,7 +69,7 @@ function chartsFrom(comparison: RoundComparison): ComparisonChartItem[] {
 }
 
 export interface Nine {
-  holes: HoleData[];
+  holes: PlayedHole[];
   total: number | null;
 }
 
@@ -128,34 +138,14 @@ export interface RoundDetailPageViewModel extends RoundDetailUiState {
   selectChartTab: (key: string) => void;
 }
 
-function courseParFor(round: Round, activeCourse: Course | null): number | null {
-  if (activeCourse) {
-    return activeCourse.holes.reduce((sum, h) => sum + (h.par ?? 0), 0) || null;
-  }
-  if (round.hole_scores.some((s) => s.par_played != null)) {
-    return round.hole_scores.reduce((sum, s) => sum + (s.par_played ?? 0), 0);
-  }
-  return null;
-}
-
-function teeColorsFrom(course: Course | null | undefined): string[] {
-  return course?.tees.map((t) => t.color).filter((c): c is string => !!c) ?? [];
-}
-
 function courseEditFromRound(round: Round): CourseEdit {
   if (round.course) return { status: "linked", course: round.course };
   if (round.course_name_played) return { status: "custom", name: round.course_name_played };
   return { status: "picking" };
 }
 
-/** useRoundHoles needs a Round; this stands in while one is still loading. */
-const EMPTY_ROUND = { hole_scores: [], course: null } as unknown as Round;
-
-function nineFrom(holes: HoleData[]): Nine {
-  return {
-    holes,
-    total: holes.length === 9 ? holes.reduce((sum, h) => sum + h.strokes, 0) : null,
-  };
+function nineFrom(holes: PlayedHole[]): Nine {
+  return { holes, total: nineTotal(holes) };
 }
 
 export function useRoundDetailPageViewModel(
@@ -184,18 +174,18 @@ export function useRoundDetailPageViewModel(
     isError,
     error: roundError,
   } = useQuery({
-    queryKey: ["round", roundId],
+    queryKey: queryKeys.round(roundId),
     queryFn: () => repository.getRound(roundId!),
     enabled: !!roundId,
     staleTime: 5 * 60 * 1000,
   });
   const { data: comparison } = useQuery({
-    queryKey: ["round-comparison", userId, roundId],
+    queryKey: queryKeys.roundComparison(userId, roundId),
     queryFn: () => repository.getRoundComparison(userId, roundId!),
     enabled: !!roundId,
   });
   const { data: handicapData } = useQuery({
-    queryKey: ["handicap", userId],
+    queryKey: queryKeys.handicap(userId),
     queryFn: () => repository.getUserHandicap(userId),
   });
   const handicapIndex = handicapData?.handicap_index ?? null;
@@ -263,10 +253,10 @@ export function useRoundDetailPageViewModel(
         tee_box: editedTeeBox || null,
         ...(courseNamePlayed !== undefined ? { course_name_played: courseNamePlayed } : {}),
       });
-      queryClient.setQueryData(["round", roundId], updated);
-      queryClient.invalidateQueries({ queryKey: ["round-comparison", userId, roundId] });
-      queryClient.invalidateQueries({ queryKey: ["career-analytics", userId] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard", userId] });
+      queryClient.setQueryData(queryKeys.round(roundId), updated);
+      queryClient.invalidateQueries({ queryKey: queryKeys.roundComparison(userId, roundId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.careerAnalytics(userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard(userId) });
       setEditMode(false);
       setCourseEdit({ status: "picking" });
     } catch (err) {
@@ -283,9 +273,9 @@ export function useRoundDetailPageViewModel(
     setActionError(null);
     try {
       await repository.deleteRound(roundId);
-      queryClient.invalidateQueries({ queryKey: ["rounds", userId] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard", userId] });
-      queryClient.invalidateQueries({ queryKey: ["career-analytics", userId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.rounds(userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard(userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.careerAnalytics(userId) });
       return true;
     } catch (err) {
       console.error("Delete failed:", err);
@@ -321,7 +311,7 @@ export function useRoundDetailPageViewModel(
     setActionError(null);
     try {
       await repository.linkCourse(roundId, course.id);
-      await queryClient.invalidateQueries({ queryKey: ["round", roundId] });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.round(roundId) });
       setShowLinkCourse(false);
       resetCourseSearch();
     } catch (err) {
@@ -337,16 +327,16 @@ export function useRoundDetailPageViewModel(
     resetCourseSearch();
     try {
       const full = await repository.getCourse(course.id);
-      const teeColors = teeColorsFrom(full);
+      const teeColorsForCourse = teeColors(full);
       setCourseEdit({ status: "linked", course: full });
       setEditedTeeBox((prev) => {
         const current = prev.trim();
-        if (teeColors.length === 0) return prev;
+        if (teeColorsForCourse.length === 0) return prev;
         if (current) {
-          const matched = chooseCompatibleTee(current, teeColors);
+          const matched = chooseCompatibleTee(current, teeColorsForCourse);
           if (matched) return matched;
         }
-        return teeColors.length === 1 ? teeColors[0] : "";
+        return teeColorsForCourse.length === 1 ? teeColorsForCourse[0] : "";
       });
     } catch (err) {
       setActionError(messageFrom(err, "Could not load that course."));
@@ -357,28 +347,21 @@ export function useRoundDetailPageViewModel(
     editMode && courseEdit.status === "linked"
       ? courseEdit.course
       : round?.course ?? null;
-  const totalScore = round
-    ? round.hole_scores.reduce((sum, s) => {
-        const strokes =
-          editMode && s.hole_number != null && s.hole_number in editedScores
-            ? editedScores[s.hole_number].strokes
-            : s.strokes;
-        return sum + (strokes ?? 0);
-      }, 0)
-    : 0;
-  const coursePar = round ? courseParFor(round, activeCourse) : null;
+  const totalScore = round ? totalStrokes(round, editMode ? editedScores : undefined) : 0;
+  const coursePar = round ? roundPar(round, activeCourse) : null;
   const toPar = coursePar !== null ? totalScore - coursePar : null;
   const courseName = formatCourseName(round?.course_name_played ?? round?.course?.name);
 
-  // front_nine/back_nine and the score-type counts arrive precomputed on the
-  // round list, but the detail endpoint returns a bare Round, so they are
-  // derived here rather than in the view.
-  const holes = useRoundHoles(round ?? EMPTY_ROUND);
-  const frontNine = useMemo(() => nineFrom(holes.filter((h) => h.hole <= 9)), [holes]);
-  const backNine = useMemo(() => nineFrom(holes.filter((h) => h.hole >= 10)), [holes]);
+  const holes = useMemo(
+    () => (round ? playedHoles(round, activeCourse) : []),
+    [round, activeCourse],
+  );
+  const frontNine = useMemo(() => nineFrom(frontNineHoles(holes)), [holes]);
+  const backNine = useMemo(() => nineFrom(backNineHoles(holes)), [holes]);
   const scoreCounts = useMemo(() => {
     const counts: Partial<Record<ScoreKey, number>> = {};
     for (const h of holes) {
+      if (h.par == null) continue;
       const key = scoreKeyFor(h.strokes, h.par);
       counts[key] = (counts[key] ?? 0) + 1;
     }
@@ -388,23 +371,15 @@ export function useRoundDetailPageViewModel(
   const editLinkedName = courseEdit.status === "linked" ? courseEdit.course.name ?? undefined : undefined;
   const editCustomName = courseEdit.status === "custom" ? courseEdit.name : undefined;
   const activeTeeBox = editMode ? editedTeeBox : round?.tee_box;
-  const tee = activeTeeBox
-    ? activeCourse?.tees.find((t) => t.color?.toLowerCase() === activeTeeBox.toLowerCase()) ?? null
-    : null;
+  const tee = getTee(activeCourse, activeTeeBox);
   const teeRating =
     tee?.course_rating != null && tee?.slope_rating != null
       ? `${tee.course_rating} / ${tee.slope_rating}`
       : null;
 
-  const courseHandicap =
-    handicapIndex != null &&
-    tee?.slope_rating != null &&
-    tee?.course_rating != null &&
-    coursePar != null
-      ? calcCourseHandicap(handicapIndex, tee.slope_rating, tee.course_rating, coursePar)
-      : null;
-  const netScore = courseHandicap != null && totalScore > 0
-    ? calcNetScore(totalScore, courseHandicap)
+  const courseHandicap = ratedCourseHandicap(handicapIndex, tee, coursePar);
+  const netScoreValue = courseHandicap != null && totalScore > 0
+    ? netScore(totalScore, courseHandicap)
     : null;
   const charts = comparison ? chartsFrom(comparison) : [];
   const selectedCharts = charts.filter((chart) => chart.group === chartTab);
@@ -423,7 +398,7 @@ export function useRoundDetailPageViewModel(
     courseName,
     totalScore,
     toPar,
-    netScore,
+    netScore: netScoreValue,
     courseHandicap,
     dateLabel: formatRoundDateLong(round?.date),
     teeRating,
@@ -437,7 +412,7 @@ export function useRoundDetailPageViewModel(
     actionError,
     editedScores,
     editedTeeBox,
-    availableTees: teeColorsFrom(activeCourse),
+    availableTees: teeColors(activeCourse),
     showLinkCourse,
     showLinkButton: !!round && !editMode && !round.course && !showLinkCourse,
     linking,

@@ -73,14 +73,21 @@ Each element:
 - `line` — line number in the **new** file, taken by counting from the hunk
   header `@@ -old,n +new,n @@`. Must be a line the diff adds.
 - `body` — one or two sentences: what is wrong and what to do instead.
+- `suggestion` — optional. The exact replacement for the flagged line, with
+  indentation, as it should appear in the file. Only when the fix is an
+  in-place edit of that line (swap a class, hex, or size). Omit it when the
+  change needs new files, a different component, or more than a local
+  replacement.
+- `start_line` — optional. First line of a multi-line replacement; `line` is
+  the last. Both must be added lines. Omit for a single-line suggestion.
 
 If you find nothing, reply with exactly `[]`.
 
 Example:
 
 [
-  {"path": "frontend/src/pages/rounds/RoundsPage.tsx", "line": 88, "body": "`#059669` is `text-score-birdie` — use the Tailwind token instead of hardcoding."},
-  {"path": "frontend/src/brand/components/Chip.tsx", "line": 12, "body": "`text-[11px]` is `text-label`. Use the type token instead of an arbitrary size."},
+  {"path": "frontend/src/pages/rounds/RoundsPage.tsx", "line": 88, "body": "`#059669` is `text-score-birdie` — use the Tailwind token instead of hardcoding.", "suggestion": "      <span className=\"text-score-birdie\">Birdie</span>"},
+  {"path": "frontend/src/brand/components/Chip.tsx", "line": 12, "body": "`text-[11px]` is `text-label`. Use the type token instead of an arbitrary size.", "suggestion": "      <span className=\"text-label\">{label}</span>"},
   {"path": "frontend/src/brand/components/RoundCard.tsx", "line": 24, "body": "`grid-cols-[54px_1fr_auto]` is `grid-cols-round-preview`. Do not hardcode the date-rail width."},
   {"path": "frontend/src/pages/CoursesPage/CoursesPage.tsx", "line": 42, "body": "This is a hand-rolled filter chip. `ToggleGroup` in `@/brand` already does this — use it instead."},
   {"path": "frontend/src/brand/components/Badge.tsx", "line": 1, "body": "New kit component with no screenshot coverage. Add `previews/Badge.tsx` and `tests/screenshots/Badge.screenshot.spec.ts`."},

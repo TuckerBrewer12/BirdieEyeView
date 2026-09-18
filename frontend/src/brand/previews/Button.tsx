@@ -42,6 +42,14 @@ export default function ButtonPreview() {
       <Button variant="outline" className="w-full">
         Load more
       </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="cta" shape="pill">
+          Start tracking
+        </Button>
+        <Button variant="outline" size="cta" shape="pill">
+          Sign in
+        </Button>
+      </div>
     </>
   );
 }

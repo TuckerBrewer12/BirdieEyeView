@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Shared review bot runner.
-# Posts a review: one inline comment per finding, plus a summary.
-# Every finding is written to GITHUB_OUTPUT so a follow-up job can open one
+# Posts a review: one inline comment per *new* finding, plus a summary.
+# Rechecks comments this bot already left (✅ fixed / ❌ still open).
+# New findings are written to GITHUB_OUTPUT so a follow-up job can open one
 # fix PR per finding against this branch.
 #
 # Per-bot env: BOT_NAME BOT_PROMPT BOT_PATHSPEC BOT_CLEAN BOT_LEAD
 set -euo pipefail
 
+BOTS="$(cd "$(dirname "$0")" && pwd)"
 MODEL="${BOT_MODEL:-opencode/muse-spark-1.3-contributor-free}"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 
@@ -27,12 +29,37 @@ if [[ ! -s "$WORK/diff.patch" ]]; then
   exit 0
 fi
 
+gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" \
+  > "$WORK/comments.json" || echo '[]' > "$WORK/comments.json"
+gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
+  > "$WORK/reviews.json" || echo '[]' > "$WORK/reviews.json"
+
+COMMENTS_JSON="$WORK/comments.json" REVIEWS_JSON="$WORK/reviews.json" \
+  python3 "$BOTS/previous.py" collect > "$WORK/previous.json"
+
 {
   cat "$BOT_PROMPT"
   printf '\n---\n\n## The diff to review\n\n```diff\n'
   cat "$WORK/diff.patch"
   printf '\n```\n'
 } > "$WORK/prompt.txt"
+
+BOTS_DIR="$BOTS" PREVIOUS_JSON="$WORK/previous.json" python3 - "$WORK/prompt.txt" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+sys.path.insert(0, os.environ["BOTS_DIR"])
+import previous as previous_mod
+
+prompt_path = Path(sys.argv[1])
+raw = Path(os.environ["PREVIOUS_JSON"]).read_text().strip() or "[]"
+items = json.loads(raw)
+if not isinstance(items, list):
+    items = []
+prompt_path.write_text(prompt_path.read_text() + previous_mod.prompt_appendix(items))
+PY
 
 # The model may read the repo, but not modify it or reach the network.
 export OPENCODE_CONFIG_CONTENT='{
@@ -48,8 +75,9 @@ fi
 
 export PR_URL="${PR_URL:-https://github.com/${GITHUB_REPOSITORY}/pull/${PR_NUMBER}}"
 
-if ! python3 .github/review-bots/post_review.py \
-     "$WORK/findings.json" "$WORK/diff.patch" "$HEAD_SHA" "$WORK/review.json" "$WORK/fixable.json"; then
+if ! python3 "$BOTS/post_review.py" \
+     "$WORK/findings.json" "$WORK/diff.patch" "$HEAD_SHA" "$WORK/review.json" \
+     "$WORK/fixable.json" "$WORK/previous.json" "$WORK/replies.json"; then
   emit_no_fixes
   exit 0
 fi
@@ -73,6 +101,36 @@ do
   attempt=$((attempt + 1))
   delay=$((delay * 2))
 done
+
+if [[ -s "$WORK/replies.json" && "$(cat "$WORK/replies.json")" != "[]" ]]; then
+  python3 - "$WORK/replies.json" <<'PY'
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+replies = json.loads(Path(sys.argv[1]).read_text())
+repo = os.environ["GITHUB_REPOSITORY"]
+pr = os.environ["PR_NUMBER"]
+workdir = Path(os.environ.get("RUNNER_TEMP") or "/tmp")
+for i, reply in enumerate(replies):
+    payload = workdir / f"review-bot-reply-{i}.json"
+    payload.write_text(json.dumps(reply))
+    subprocess.run(
+        [
+            "gh",
+            "api",
+            "-X",
+            "POST",
+            f"repos/{repo}/pulls/{pr}/comments",
+            "--input",
+            str(payload),
+        ],
+        check=False,
+    )
+PY
+fi
 
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
   fixable="$(cat "$WORK/fixable.json")"

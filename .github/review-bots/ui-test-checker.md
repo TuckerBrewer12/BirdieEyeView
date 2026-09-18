@@ -74,6 +74,9 @@ Reply with a JSON array and nothing else. No prose, no code fence.
 - `line` — line number in the new file, counted from the `@@` hunk header.
   Must be a line this diff adds.
 - `body` — what is wrong and what to do instead. One or two sentences.
+- `suggestion` — optional. The exact replacement for the flagged line, with
+  indentation. Only when the fix is an in-place edit of that line. Omit it
+  when the change needs a new spec, robot method, or file.
 
 If you find nothing, reply with exactly `[]`.
 

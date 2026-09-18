@@ -6,7 +6,20 @@ import { teeSwatchClass, teeSwatchTextClass } from "@/lib/teeColor";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette } from "@/lib/chartPalettes";
-import { ALL_HOLES, BACK_HOLES, FRONT_HOLES, calcCourseHandicap, type Course, type Tee } from "@/types/golf";
+import { queryKeys } from "@/data/queryKeys";
+import {
+  ALL_HOLES,
+  BACK_HOLES,
+  FRONT_HOLES,
+  coursePar as courseParOf,
+  getHole,
+  getTee,
+  longestTee,
+  teeYards,
+  teeYardsForHoles,
+} from "@/domain/course";
+import { ratedCourseHandicap } from "@/domain/handicap";
+import type { Course, Tee } from "@/types/golf";
 import type { CourseAnalyticsData, CourseScoreTrendRow } from "@/types/analytics";
 import { chartColors, colors, toParLabel } from "@/brand/theme";
 import { coursesRepository, type CoursesRepository } from "../coursesRepository";
@@ -201,24 +214,9 @@ const EMPTY_ANALYTICS: CourseAnalyticsData = {
   score_variance_by_hole: [],
 };
 
-function teeYards(tee: Tee): number {
-  return tee.total_yardage ?? Object.values(tee.hole_yardages).reduce((sum, yards) => sum + yards, 0);
-}
-
-function longestTee(course: Course): Tee | null {
-  return course.tees.reduce<Tee | null>((best, tee) => {
-    if (!best) return tee;
-    return teeYards(tee) > teeYards(best) ? tee : best;
-  }, null);
-}
-
 function dash(value: string | number | null | undefined): string {
   if (value == null || value === "") return "—";
   return String(value);
-}
-
-function sumYardages(tee: Tee, holes: number[]): number {
-  return holes.reduce((sum, n) => sum + (tee.hole_yardages[n] ?? 0), 0);
 }
 
 function toParFill(toPar: number | null, theme: CourseChartTheme): string {
@@ -230,21 +228,21 @@ function toParFill(toPar: number | null, theme: CourseChartTheme): string {
 
 function buildNine(
   course: Course,
-  holes: number[],
+  holes: readonly number[],
   label: string,
   showTotal: boolean,
   selectedTee: Tee | null,
   personalParByHole: Record<number, number> | undefined,
 ): ScorecardNine {
-  const parRow = holes.map((n) => course.holes.find((hole) => hole.number === n)?.par ?? null);
+  const parRow = holes.map((n) => getHole(course, n)?.par ?? null);
   const ninePar = parRow.every((par) => par != null) ? parRow.reduce((sum, par) => sum + par!, 0) : null;
   const totalPar = showTotal
-    ? ALL_HOLES.every((n) => course.holes.find((hole) => hole.number === n)?.par != null)
-      ? ALL_HOLES.reduce((sum, n) => sum + (course.holes.find((hole) => hole.number === n)?.par ?? 0), 0)
+    ? ALL_HOLES.every((n) => getHole(course, n)?.par != null)
+      ? ALL_HOLES.reduce((sum, n) => sum + (getHole(course, n)?.par ?? 0), 0)
       : null
     : null;
-  const nineYards = selectedTee ? sumYardages(selectedTee, holes) : null;
-  const totalYards = selectedTee && showTotal ? sumYardages(selectedTee, ALL_HOLES) : null;
+  const nineYards = selectedTee ? teeYardsForHoles(selectedTee, holes) : null;
+  const totalYards = selectedTee && showTotal ? teeYardsForHoles(selectedTee, ALL_HOLES) : null;
   const ninePersonalAvg = personalParByHole
     ? holes.reduce((sum, n) => sum + (personalParByHole[n] ?? 0), 0)
     : null;
@@ -262,8 +260,8 @@ function buildNine(
     teeSwatchTextClass: teeSwatchTextClass(selectedTee?.color ?? null),
     holes: holes.map((n) => ({
       hole: n,
-      par: dash(course.holes.find((hole) => hole.number === n)?.par),
-      handicap: dash(course.holes.find((hole) => hole.number === n)?.handicap),
+      par: dash(getHole(course, n)?.par),
+      handicap: dash(getHole(course, n)?.handicap),
       yards: selectedTee ? dash(selectedTee.hole_yardages[n] || null) : "—",
       personalAvg: personalParByHole?.[n] != null ? personalParByHole[n].toFixed(1) : null,
     })),
@@ -312,27 +310,27 @@ function chartThemeFrom(): CourseChartTheme {
     trend: colors.primary,
     grid: chartColors.muted,
     axis: chartColors.axis,
-    muted: colors.score.par.fill,
-    success: colors.score.birdie.fill,
-    danger: colors.score.bogey.fill,
+    muted: colors.score.par.base,
+    success: colors.score.birdie.base,
+    danger: colors.score.bogey.base,
     girTop: chartColors.accent,
     girBottom: colors.primary,
     puttsTop: colors.muted,
     puttsBottom: colors.mutedForeground,
-    varianceTop: colors.score.eagle.fill,
-    varianceBottom: colors.score.bogey.fill,
+    varianceTop: colors.score.eagle.base,
+    varianceBottom: colors.score.bogey.base,
     card: colors.card,
     foreground: colors.foreground,
     mutedForeground: colors.mutedForeground,
     border: colors.border,
     scoreTypeSeries: [
-      { key: "eagle", name: "Eagle+", fill: colors.score.eagle.fill },
-      { key: "birdie", name: "Birdie", fill: colors.score.birdie.fill },
-      { key: "par", name: "Par", fill: colors.score.par.fill },
-      { key: "bogey", name: "Bogey", fill: colors.score.bogey.fill },
-      { key: "double_bogey", name: "Double", fill: colors.score.double.fill },
-      { key: "triple_bogey", name: "Triple", fill: colors.score.triple.fill },
-      { key: "quad_bogey", name: "Quad+", fill: colors.score.quad.fill },
+      { key: "eagle", name: "Eagle+", fill: colors.score.eagle.base },
+      { key: "birdie", name: "Birdie", fill: colors.score.birdie.base },
+      { key: "par", name: "Par", fill: colors.score.par.base },
+      { key: "bogey", name: "Bogey", fill: colors.score.bogey.base },
+      { key: "double_bogey", name: "Double", fill: colors.score.double.base },
+      { key: "triple_bogey", name: "Triple", fill: colors.score.triple.base },
+      { key: "quad_bogey", name: "Quad+", fill: colors.score.quad.base },
     ],
   };
 }
@@ -441,19 +439,19 @@ export function useCourseDetailPageViewModel(
     isError: courseFailed,
     error: courseError,
   } = useQuery({
-    queryKey: ["course", courseId],
+    queryKey: queryKeys.course(courseId),
     queryFn: () => repository.getCourse(courseId!),
     enabled: !!courseId,
   });
 
   const { data: analytics = EMPTY_ANALYTICS, isLoading: analyticsLoading } = useQuery({
-    queryKey: ["course-analytics", userId, courseId],
+    queryKey: queryKeys.courseAnalytics(userId, courseId),
     queryFn: () => repository.getCourseAnalytics(userId, courseId!),
     enabled: !!courseId,
   });
 
   const { data: handicapData } = useQuery({
-    queryKey: ["handicap", userId],
+    queryKey: queryKeys.handicap(userId),
     queryFn: async () => {
       try {
         return await repository.getUserHandicap(userId);
@@ -466,9 +464,7 @@ export function useCourseDetailPageViewModel(
   const handicapIndex = handicapData?.handicap_index ?? null;
   const defaultTee = course ? longestTee(course) : null;
   const selectedTeeColor = teeOverride === undefined ? defaultTee?.color ?? null : teeOverride;
-  const selectedTee = selectedTeeColor
-    ? course?.tees.find((tee) => tee.color?.toLowerCase() === selectedTeeColor.toLowerCase()) ?? null
-    : null;
+  const selectedTee = getTee(course, selectedTeeColor);
 
   const personalParByHole = useMemo(() => {
     if (analytics.rounds_played === 0) return undefined;
@@ -479,7 +475,7 @@ export function useCourseDetailPageViewModel(
     return Object.keys(result).length > 0 ? result : undefined;
   }, [analytics]);
 
-  const coursePar = course?.par ?? null;
+  const par = courseParOf(course);
   const showPerformanceTab = analytics.rounds_played > 0;
   const scoreTrend = useMemo(
     () => trendFrom(analytics.score_trend_on_course, chartTheme),
@@ -493,16 +489,11 @@ export function useCourseDetailPageViewModel(
 
   const teeChips: TeeChip[] = (course?.tees ?? [])
     .slice()
-    .sort((a, b) => teeYards(b) - teeYards(a))
+    .sort((a, b) => (teeYards(b) ?? 0) - (teeYards(a) ?? 0))
     .flatMap((tee) => {
       if (!tee.color) return [];
       const selected = tee.color.toLowerCase() === selectedTeeColor?.toLowerCase();
-      const ch = handicapIndex != null
-        && tee.slope_rating != null
-        && tee.course_rating != null
-        && coursePar != null
-        ? calcCourseHandicap(handicapIndex, tee.slope_rating, tee.course_rating, coursePar)
-        : null;
+      const ch = ratedCourseHandicap(handicapIndex, tee, par);
       return [{
         color: tee.color,
         selected,
@@ -522,7 +513,7 @@ export function useCourseDetailPageViewModel(
     courseName: formatCourseName(course?.name),
     location: course?.location ?? null,
     headerStats: [
-      { label: "Par", value: dash(course?.par) },
+      { label: "Par", value: dash(par) },
       { label: "Holes", value: String(course?.holes.length ?? 0) },
       { label: "Tees", value: String(course?.tees.length ?? 0) },
     ],

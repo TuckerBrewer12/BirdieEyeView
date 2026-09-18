@@ -1,4 +1,5 @@
-import { BACK_HOLES, FRONT_HOLES, type Round } from "@/types/golf";
+import type { Round } from "@/types/golf";
+import { BACK_HOLES, FRONT_HOLES } from "@/domain/course";
 import { scoreInputStyle } from "@/lib/scoreSymbol";
 import { ScoreCell } from "./ScoreCell";
 import { useMemo, type CSSProperties } from "react";
@@ -409,8 +410,8 @@ export function ScorecardGrid({
 }: ScorecardGridProps) {
   const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
   const colorBlindPalette = useMemo(() => getColorBlindPalette(colorBlindMode), [colorBlindMode]);
-  const front = FRONT_HOLES;
-  const back = BACK_HOLES;
+  const front = [...FRONT_HOLES];
+  const back = [...BACK_HOLES];
 
   const activeTeeBox = editMode ? editedTeeBox : round.tee_box;
 

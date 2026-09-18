@@ -51,9 +51,15 @@ def conductor_url(prompt: str) -> str:
     return f"conductor://prompt={q}&agent={CONDUCTOR_AGENT}&model={CONDUCTOR_MODEL}"
 
 
-def comment_actions(discuss_url: str) -> str:
-    return (
-        f"[{DISCUSS_LABEL}]({discuss_url})\n\n"
-        "A follow-up job will open a PR with this change and reply with the "
-        "link. Merge it into this branch if it looks right. Reply `/fix` to retry."
-    )
+def comment_actions(discuss_url: str, *, has_suggestion: bool = False) -> str:
+    if has_suggestion:
+        extra = (
+            "Commit the suggestion on this comment to apply it here. "
+            "Reply `/fix` if you'd rather have a fix PR."
+        )
+    else:
+        extra = (
+            "A follow-up job will open a PR with this change and reply with the "
+            "link. Merge it into this branch if it looks right. Reply `/fix` to retry."
+        )
+    return f"[{DISCUSS_LABEL}]({discuss_url})\n\n{extra}"

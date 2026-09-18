@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import { userRepository } from "@/data/userRepository";
 import type { Course, CourseSummary } from "@/types/golf";
 import type { CourseAnalyticsData } from "@/types/analytics";
 
@@ -15,5 +16,5 @@ export const coursesRepository: CoursesRepository = {
   searchCourses: (query, userId, includeExternal) => api.searchCourses(query, userId, includeExternal),
   getCourse: (courseId) => api.getCourse(courseId),
   getCourseAnalytics: (userId, courseId) => api.getCourseAnalytics(userId, courseId),
-  getUserHandicap: (userId) => api.getUserHandicap(userId),
+  getUserHandicap: (userId) => userRepository.getUserHandicap(userId),
 };

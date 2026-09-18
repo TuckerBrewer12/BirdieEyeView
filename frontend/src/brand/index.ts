@@ -15,13 +15,17 @@ export {
   chartTickStyle,
   chartLayout,
   chartColors,
+  SCORE_KEYS,
   scoreFill,
   scoreKeyFor,
+  toParFill,
+  toParTone,
   toParLabel,
+  toParDisplay,
   toParTextClass,
   toParBadgeClass,
 } from "./theme";
-export type { ScoreKey } from "./theme";
+export type { ScoreKey, ScoreSwatch, ScoreTone } from "./theme";
 export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/Alert";
 export {
   Card,
@@ -32,6 +36,7 @@ export {
   CardDescription,
   CardContent,
 } from "./components/Card";
+export { BrandMark } from "./components/BrandMark";
 export { Button } from "./components/Button";
 export { Collapse } from "./components/Collapse";
 export type { CollapseProps } from "./components/Collapse";
@@ -40,11 +45,14 @@ export type { CollectionProps, CollectionLayout } from "./components/Collection"
 export {
   alertVariants,
   buttonVariants,
+  inputVariants,
+  inputGroupVariants,
   inputGroupAddonVariants,
   inputGroupButtonVariants,
   pageTitleVariants,
   toggleVariants,
 } from "./components/variants";
+export { Field, FieldLabel, FieldDescription, FieldError } from "./components/Field";
 export { Input } from "./components/Input";
 export { LoadingState } from "./components/LoadingState";
 export {
@@ -67,3 +75,13 @@ export { SectionLabel } from "./components/SectionLabel";
 export { SearchField } from "./components/SearchField";
 export { SortControl } from "./components/SortControl";
 export { CourseLinkSearch } from "./components/CourseLinkSearch";
+export {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from "./components/Sheet";

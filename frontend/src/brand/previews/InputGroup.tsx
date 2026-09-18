@@ -43,6 +43,10 @@ export default function InputGroupPreview() {
           <InputGroupButton>Search</InputGroupButton>
         </InputGroupAddon>
       </InputGroup>
+
+      <InputGroup size="cta">
+        <InputGroupInput placeholder="you@example.com" defaultValue="tiger@example.com" />
+      </InputGroup>
     </>
   );
 }

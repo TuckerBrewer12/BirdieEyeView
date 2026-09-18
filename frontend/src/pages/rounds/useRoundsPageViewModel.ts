@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
+import { queryKeys } from "@/data/queryKeys";
 import { pluralize } from "@/lib/pluralize";
 import type { RoundSummary, CourseSummary } from "@/types/golf";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
@@ -89,7 +90,7 @@ export function useRoundsPageViewModel(
 ): RoundsPageViewModel {
   const queryClient = useQueryClient();
   const { data: rounds = [], isLoading: loading } = useQuery({
-    queryKey: ["rounds", userId],
+    queryKey: queryKeys.rounds(userId),
     queryFn: () => repository.getRoundsForUser(userId, 100),
   });
 
@@ -134,7 +135,7 @@ export function useRoundsPageViewModel(
     setLinkError(null);
     try {
       const updated = await repository.linkCourse(roundId, course.id);
-      queryClient.setQueryData<RoundSummary[]>(["rounds", userId], (prev) =>
+      queryClient.setQueryData<RoundSummary[]>(queryKeys.rounds(userId), (prev) =>
         prev ? prev.map((r) => (r.id === roundId ? updated : r)) : [updated],
       );
       setLinkingRoundId(null);
