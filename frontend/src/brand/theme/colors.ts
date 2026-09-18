@@ -50,6 +50,7 @@ export const colors = {
   accent: "var(--accent)",
   accentForeground: "var(--accent-foreground)",
   destructive: "var(--destructive)",
+  success: "var(--success)",
   shadow: "var(--shadow)",
 
   score: {

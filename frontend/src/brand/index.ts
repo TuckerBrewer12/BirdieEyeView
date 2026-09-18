@@ -36,6 +36,7 @@ export {
   CardDescription,
   CardContent,
 } from "./components/Card";
+export { AuthSplitLayout } from "./components/AuthSplitLayout";
 export { BrandMark } from "./components/BrandMark";
 export { Button } from "./components/Button";
 export { Dropzone } from "./components/Dropzone";
