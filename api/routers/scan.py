@@ -39,6 +39,7 @@ MAX_IMAGE_SIDE = 12_000
 PREPROCESS_CACHE_DIR = Path(tempfile.gettempdir()) / "scanscore_ocr_cache"
 PREPROCESS_CACHE_ENABLED = False
 MISTRAL_OCR_MODEL = os.environ.get("MISTRAL_OCR_MODEL") or "mistral-ocr-latest"
+MIN_SCORE_BREAKDOWN_EVIDENCE_HOLES = 9
 
 
 def _initialize_heic_decoder() -> bool:
@@ -211,6 +212,24 @@ def _build_confidence_payload(
     }
 
 
+def _score_breakdown_rows_are_trusted(hole_scores: List[Dict]) -> bool:
+    """Return whether enough complete holes prove the auxiliary-row alignment."""
+    complete = [
+        score
+        for score in hole_scores
+        if score["strokes"] is not None
+        and score["putts"] is not None
+        and score["shots_to_green"] is not None
+    ]
+    return (
+        len(complete) >= MIN_SCORE_BREAKDOWN_EVIDENCE_HOLES
+        and all(
+            score["strokes"] == score["shots_to_green"] + score["putts"]
+            for score in complete
+        )
+    )
+
+
 def _build_round_from_parsed_rows(
     parsed: ParsedScorecardRows,
     *,
@@ -313,6 +332,7 @@ def _build_round_from_parsed_rows(
     effective_to_par = to_par_scoring if to_par_scoring is not None else (parsed.score_to_par_hint is True)
 
     hole_scores: List[Dict] = []
+    invalid_auxiliary_fields: Dict[int, Dict[str, str]] = {}
     for i in range(1, hole_count + 1):
         raw_score = score_vals[i - 1]
         sign_putts = raw_putt_vals[i - 1] if raw_putt_vals[i - 1] is not None else putt_vals[i - 1]
@@ -353,25 +373,26 @@ def _build_round_from_parsed_rows(
         else:
             strokes = raw_score if 1 <= raw_score <= 15 else None
 
+        invalid_fields: Dict[str, str] = {}
+
         putts = putt_vals[i - 1]
         if putts is not None and not (0 <= putts <= 10):
             putts = None
-            fields_needing_review.append(f"Hole {i} putts out of range")
+            invalid_fields["putts"] = f"Hole {i} putts out of range"
         if putts is not None and strokes is not None and putts > strokes:
             putts = None
-            fields_needing_review.append(f"Hole {i} putts exceed strokes")
-
-        gir_val = gir_vals[i - 1]
-        if gir_val is None and shots_vals[i - 1] is not None and hole_par_lookup.get(i) is not None:
-            # Derive GIR from shots-to-green row when present:
-            # GIR if reached green in <= par-2 strokes.
-            par_i = hole_par_lookup[i]  # guarded above
-            if par_i is not None:
-                gir_val = shots_vals[i - 1] <= max(1, par_i - 2)
+            invalid_fields["putts"] = f"Hole {i} putts exceed strokes"
 
         shots_val = shots_vals[i - 1]
         if shots_val is not None and not (1 <= shots_val <= 10):
             shots_val = None
+            invalid_fields["shots_to_green"] = f"Hole {i} shots to green out of range"
+        if shots_val is not None and strokes is not None and shots_val > strokes:
+            shots_val = None
+            invalid_fields["shots_to_green"] = f"Hole {i} shots to green exceed strokes"
+
+        if invalid_fields:
+            invalid_auxiliary_fields[i] = invalid_fields
 
         hole_scores.append(
             {
@@ -380,9 +401,49 @@ def _build_round_from_parsed_rows(
                 "putts": putts,
                 "shots_to_green": shots_val,
                 "fairway_hit": None,
-                "green_in_regulation": gir_val,
+                "green_in_regulation": gir_vals[i - 1],
             }
         )
+
+    rows_are_trusted = _score_breakdown_rows_are_trusted(hole_scores)
+    for score in hole_scores:
+        hole_number = score["hole_number"]
+        strokes = score["strokes"]
+        putts = score["putts"]
+        shots_val = score["shots_to_green"]
+
+        if rows_are_trusted and strokes is not None:
+            if putts is None and shots_val is not None:
+                recovered_putts = strokes - shots_val
+                if 0 <= recovered_putts <= 10:
+                    score["putts"] = recovered_putts
+                    putts = recovered_putts
+                    invalid_auxiliary_fields.get(hole_number, {}).pop("putts", None)
+            elif shots_val is None and putts is not None:
+                recovered_shots = strokes - putts
+                if 1 <= recovered_shots <= 10:
+                    score["shots_to_green"] = recovered_shots
+                    shots_val = recovered_shots
+                    invalid_auxiliary_fields.get(hole_number, {}).pop("shots_to_green", None)
+
+        if (
+            strokes is not None
+            and putts is not None
+            and shots_val is not None
+            and strokes != shots_val + putts
+        ):
+            fields_needing_review.append(
+                f"Hole {hole_number} score breakdown conflicts with total strokes"
+            )
+
+        unresolved_fields = invalid_auxiliary_fields.get(hole_number, {})
+        fields_needing_review.extend(unresolved_fields.values())
+
+        if score["green_in_regulation"] is None and shots_val is not None:
+            par_i = hole_par_lookup.get(hole_number)
+            if par_i is not None:
+                # GIR if the green was reached in no more than par minus two strokes.
+                score["green_in_regulation"] = shots_val <= max(1, par_i - 2)
 
     round_payload = {
         "course": {
