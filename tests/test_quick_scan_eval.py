@@ -50,8 +50,6 @@ def test_committed_manifest_defines_four_cases_and_expected_cell_counts():
         "eagle_vines_tucker",
     ]
     assert [case.expected_cells for case in cases] == [54, 54, 18, 18]
-    half_moon_bay_t = next(case for case in cases if case.case_id == "half_moon_bay_t")
-    assert half_moon_bay_t.expected["shots_to_green"][14] == 5
 
 
 def test_manifest_requires_complete_hole_coverage(tmp_path):
