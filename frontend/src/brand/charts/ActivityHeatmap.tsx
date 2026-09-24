@@ -2,9 +2,7 @@ import { useMemo } from "react";
 import type { RoundSummary } from "@/types/golf";
 import { pluralize } from "@/lib/pluralize";
 import { cn } from "@/brand/cn";
-import { buildActivityHeatmapDays } from "./activityHeatmapDays";
-
-export type { HeatmapDay } from "./activityHeatmapDays";
+import { activityDays } from "@/domain/activity";
 
 interface ActivityHeatmapProps {
   rounds?: RoundSummary[];
@@ -16,7 +14,7 @@ const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"] as const;
 
 export function ActivityHeatmap({ rounds = [], today }: ActivityHeatmapProps) {
   const layout = useMemo(
-    () => buildActivityHeatmapDays(rounds, today ?? new Date()),
+    () => activityDays(rounds, today ?? new Date()),
     [rounds, today],
   );
 
