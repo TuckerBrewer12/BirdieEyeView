@@ -30,6 +30,7 @@ export default defineConfig({
         'src/**/tests/**',
         'src/testing/**',
         'src/brand/previews/**',
+        'src/pages/**/previews/**',
         'src/brand/tests/**',
       ],
     },

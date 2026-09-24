@@ -1,7 +1,7 @@
 import {
   RoundDetailHeader,
   type HeaderHole,
-} from "@/brand/components/RoundDetailHeader";
+} from "../components/RoundDetailHeader";
 
 /** strokes-to-par per hole, turned into the {hole, strokes, par} the bars take. */
 function nine(from: number, toPars: number[]): HeaderHole[] {

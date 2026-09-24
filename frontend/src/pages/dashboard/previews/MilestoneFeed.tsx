@@ -1,4 +1,4 @@
-import { MilestoneFeed } from "@/brand/components/MilestoneFeed";
+import { MilestoneFeed } from "../components/MilestoneFeed";
 import type { Milestone } from "@/types/golf";
 
 const milestones: Milestone[] = [

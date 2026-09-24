@@ -1,4 +1,4 @@
-import { RecentRoundsTable } from "@/brand/components/RecentRoundsTable";
+import { RecentRoundsTable } from "../components/RecentRoundsTable";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 
 export default function RecentRoundsTablePreview() {

@@ -1,5 +1,5 @@
 import { test } from "@playwright/test";
-import { capturePreview, enableDark } from "../../previewScreenshot";
+import { capturePreview, enableDark } from "../../../../brand/tests/previewScreenshot";
 
 test.describe("ProfileHeroBanner", () => {
   test("light", async ({ page }) => {
