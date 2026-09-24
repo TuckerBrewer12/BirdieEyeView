@@ -8,7 +8,8 @@ const [overPar, evenPar, best, unlinked] = populatedRounds;
 export default function RoundPreviewPreview() {
   return (
     <>
-      <RoundPreview round={best} variant="highlight" label="Best Recent Round" onClick={() => {}} />
+      <RoundPreview round={best} variant="highlight" onClick={() => {}} />
+      <RoundPreview round={null} variant="highlight" />
       <RoundPreview round={overPar} />
       <RoundPreview round={evenPar} />
       <RoundPreview round={unlinked} onLinkClick={() => {}} />

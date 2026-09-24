@@ -8,14 +8,21 @@ import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateHistory, formatRoundDateShort, roundDateParts } from "@/lib/roundDate";
 import type { RoundSummary } from "@/types/golf";
 
-interface RoundPreviewProps {
+interface RoundListProps {
   round: RoundSummary;
-  variant?: "history" | "highlight";
-  /** The eyebrow over a highlight — why this round is the one on show. */
-  label?: string;
+  variant?: "history";
   onClick?: () => void;
   onLinkClick?: () => void;
 }
+
+interface RoundHighlightProps {
+  /** Null while the player has no round to celebrate yet. */
+  round: RoundSummary | null;
+  variant: "highlight";
+  onClick?: () => void;
+}
+
+type RoundPreviewProps = RoundListProps | RoundHighlightProps;
 
 function holesOf(round: RoundSummary): HoleScore[] {
   return (round.hole_scores_summary ?? []).map((hole) => ({
@@ -25,7 +32,13 @@ function holesOf(round: RoundSummary): HoleScore[] {
   }));
 }
 
-export function RoundPreview({ round, variant, label, onClick, onLinkClick }: RoundPreviewProps) {
+export function RoundPreview(props: RoundPreviewProps) {
+  if (props.variant === "highlight") {
+    return <RoundHighlight round={props.round} onClick={props.onClick} />;
+  }
+
+  const { round, variant, onClick, onLinkClick } = props;
+
   if (variant === "history") {
     return (
       <div
@@ -46,54 +59,6 @@ export function RoundPreview({ round, variant, label, onClick, onLinkClick }: Ro
           </span>
         </div>
       </div>
-    );
-  }
-
-  if (variant === "highlight") {
-    const dateLabel = formatRoundDateShort(round.date);
-    const toParText = toParLabel(round.to_par);
-
-    return (
-      <button
-        type="button"
-        data-slot="round-preview"
-        onClick={onClick}
-        disabled={!onClick}
-        className={cn(
-          "group flex w-full flex-wrap items-center gap-4 text-left",
-          onClick ? "cursor-pointer" : "cursor-default",
-        )}
-      >
-        <div className="flex shrink-0 items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-full border border-score-eagle/30 bg-score-eagle/15 text-score-eagle">
-            <Trophy className="size-5" />
-          </div>
-          <div>
-            {label && (
-              <div className="mb-1 text-xs font-bold uppercase tracking-eyebrow text-muted-foreground">
-                {label}
-              </div>
-            )}
-            <div className="font-bold leading-tight text-card-foreground transition-colors group-hover:text-primary">
-              {round.course_name ? formatCourseName(round.course_name) : "Unknown course"}
-            </div>
-            <div className="mt-0.5 text-xs text-muted-foreground">
-              {dateLabel ?? "—"}
-              {toParText ? ` · ${toParText}` : ""}
-            </div>
-          </div>
-        </div>
-
-        <div className="shrink-0 overflow-x-auto">
-          <HoleScoreShapes holes={holesOf(round)} />
-        </div>
-
-        <div className="shrink-0 text-right">
-          <div className="text-4xl font-black tracking-tighter text-card-foreground transition-colors group-hover:text-primary">
-            {round.total_score ?? "—"}
-          </div>
-        </div>
-      </button>
     );
   }
 
@@ -179,5 +144,66 @@ export function RoundPreview({ round, variant, label, onClick, onLinkClick }: Ro
         )}
       </div>
     </motion.div>
+  );
+}
+
+/** The round worth showing off: the trophy, the marked card, the number. */
+function RoundHighlight({
+  round,
+  onClick,
+}: {
+  round: RoundSummary | null;
+  onClick?: () => void;
+}) {
+  if (!round) {
+    return (
+      <div data-slot="round-preview" className="p-4 text-center text-sm text-muted-foreground">
+        Play a round to unlock highlights!
+      </div>
+    );
+  }
+
+  const dateLabel = formatRoundDateShort(round.date);
+  const toParText = toParLabel(round.to_par);
+
+  return (
+    <button
+      type="button"
+      data-slot="round-preview"
+      onClick={onClick}
+      disabled={!onClick}
+      className={cn(
+        "group flex w-full flex-wrap items-center gap-4 text-left",
+        onClick ? "cursor-pointer" : "cursor-default",
+      )}
+    >
+      <div className="flex shrink-0 items-center gap-3">
+        <div className="flex size-12 items-center justify-center rounded-full border border-score-eagle/30 bg-score-eagle/15 text-score-eagle">
+          <Trophy className="size-5" />
+        </div>
+        <div>
+          <div className="mb-1 text-xs font-bold uppercase tracking-eyebrow text-muted-foreground">
+            Best Recent Round
+          </div>
+          <div className="font-bold leading-tight text-card-foreground transition-colors group-hover:text-primary">
+            {round.course_name ? formatCourseName(round.course_name) : "Unknown course"}
+          </div>
+          <div className="mt-0.5 text-xs text-muted-foreground">
+            {dateLabel ?? "—"}
+            {toParText ? ` · ${toParText}` : ""}
+          </div>
+        </div>
+      </div>
+
+      <div className="shrink-0 overflow-x-auto">
+        <HoleScoreShapes holes={holesOf(round)} />
+      </div>
+
+      <div className="shrink-0 text-right">
+        <div className="text-4xl font-black tracking-tighter text-card-foreground transition-colors group-hover:text-primary">
+          {round.total_score ?? "—"}
+        </div>
+      </div>
+    </button>
   );
 }
