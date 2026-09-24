@@ -72,7 +72,6 @@ export { ScorecardTable } from "./components/ScorecardTable";
 export type { ScorecardHole } from "./components/ScorecardTable";
 export { Toggle } from "./components/Toggle";
 export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
-export { BestRoundHighlight } from "./components/BestRoundHighlight";
 export { RoundPreview } from "./components/RoundPreview";
 export { CoursePreview } from "./components/CoursePreview";
 export { SectionLabel } from "./components/SectionLabel";
@@ -92,6 +91,9 @@ export {
 
 // Charts
 export { ActivityHeatmap, buildActivityHeatmapDays } from "./charts/ActivityHeatmap";
+export { HoleScoreBars } from "./charts/HoleScoreBars";
+export type { HoleScore } from "./charts/HoleScoreBars";
+export { HoleScoreShapes } from "./charts/HoleScoreShapes";
 export type { HeatmapDay } from "./charts/ActivityHeatmap";
 export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
 export type { ScoreHandicapTrendPoint } from "./charts/SVGScoreHandicapTrend";

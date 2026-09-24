@@ -1,19 +1,31 @@
-import { Link2 } from "lucide-react";
+import { Link2, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
-import { motion as motionTokens, scoreFill, toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
+import { HoleScoreBars, type HoleScore } from "@/brand/charts/HoleScoreBars";
+import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
+import { motion as motionTokens, toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
-import { formatRoundDateHistory, roundDateParts } from "@/lib/roundDate";
+import { formatRoundDateHistory, formatRoundDateShort, roundDateParts } from "@/lib/roundDate";
 import type { RoundSummary } from "@/types/golf";
 
 interface RoundPreviewProps {
   round: RoundSummary;
-  variant?: "history";
+  variant?: "history" | "highlight";
+  /** The eyebrow over a highlight — why this round is the one on show. */
+  label?: string;
   onClick?: () => void;
   onLinkClick?: () => void;
 }
 
-export function RoundPreview({ round, variant, onClick, onLinkClick }: RoundPreviewProps) {
+function holesOf(round: RoundSummary): HoleScore[] {
+  return (round.hole_scores_summary ?? []).map((hole) => ({
+    hole: hole.h,
+    strokes: hole.s,
+    par: hole.p,
+  }));
+}
+
+export function RoundPreview({ round, variant, label, onClick, onLinkClick }: RoundPreviewProps) {
   if (variant === "history") {
     return (
       <div
@@ -37,9 +49,57 @@ export function RoundPreview({ round, variant, onClick, onLinkClick }: RoundPrev
     );
   }
 
+  if (variant === "highlight") {
+    const dateLabel = formatRoundDateShort(round.date);
+    const toParText = toParLabel(round.to_par);
+
+    return (
+      <button
+        type="button"
+        data-slot="round-preview"
+        onClick={onClick}
+        disabled={!onClick}
+        className={cn(
+          "group flex w-full flex-wrap items-center gap-4 text-left",
+          onClick ? "cursor-pointer" : "cursor-default",
+        )}
+      >
+        <div className="flex shrink-0 items-center gap-3">
+          <div className="flex size-12 items-center justify-center rounded-full border border-score-eagle/30 bg-score-eagle/15 text-score-eagle">
+            <Trophy className="size-5" />
+          </div>
+          <div>
+            {label && (
+              <div className="mb-1 text-xs font-bold uppercase tracking-eyebrow text-muted-foreground">
+                {label}
+              </div>
+            )}
+            <div className="font-bold leading-tight text-card-foreground transition-colors group-hover:text-primary">
+              {round.course_name ? formatCourseName(round.course_name) : "Unknown course"}
+            </div>
+            <div className="mt-0.5 text-xs text-muted-foreground">
+              {dateLabel ?? "—"}
+              {toParText ? ` · ${toParText}` : ""}
+            </div>
+          </div>
+        </div>
+
+        <div className="shrink-0 overflow-x-auto">
+          <HoleScoreShapes holes={holesOf(round)} />
+        </div>
+
+        <div className="shrink-0 text-right">
+          <div className="text-4xl font-black tracking-tighter text-card-foreground transition-colors group-hover:text-primary">
+            {round.total_score ?? "—"}
+          </div>
+        </div>
+      </button>
+    );
+  }
+
   const dateParts = roundDateParts(round.date);
   const toParText = toParLabel(round.to_par);
-  const holes = round.hole_scores_summary ?? [];
+  const holes = holesOf(round);
 
   return (
     <motion.div
@@ -105,20 +165,7 @@ export function RoundPreview({ round, variant, onClick, onLinkClick }: RoundPrev
           {round.tee_box && <span>{round.tee_box}</span>}
         </div>
 
-        {holes.length > 0 && (
-          <div className="mt-1 flex h-2.5 gap-bar">
-            {holes.map((h) => {
-              const isPar = h.s == null || h.p == null || h.s === h.p;
-              return (
-                <div
-                  key={h.h}
-                  className={cn("flex-1 rounded-bar", isPar && "opacity-(--brand-opacity-recessed)")}
-                  style={{ background: scoreFill(h.s, h.p) }}
-                />
-              );
-            })}
-          </div>
-        )}
+        <HoleScoreBars holes={holes} className="mt-1" />
       </div>
 
       <div className="flex flex-col items-end gap-0.5 whitespace-nowrap pr-3.5 text-right">

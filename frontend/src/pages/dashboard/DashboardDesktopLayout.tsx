@@ -6,13 +6,13 @@ import {
 } from "recharts";
 import {
   ActivityHeatmap,
-  BestRoundHighlight,
   Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  RoundPreview,
   SVGScoreHandicapTrend,
   chartColors,
   chartLayout,
@@ -85,7 +85,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
     upAndDownPctLabel,
     puttsLabel, puttsGaugeData, puttsColor,
     scoreLineColor, handicapLineColor, gridColor, girColor, warningColor, dangerColor, mutedFill,
-    handicapIndexLabel, firstName, bestRound, bestRoundDetail, sidebarRounds,
+    handicapIndexLabel, firstName, bestRound, sidebarRounds,
     hasScoringGoal, goalTargetLabel, goalNumberLabel, goalAverageLabel, goalBarPct, goalFocusHeadline, goalOnTrack,
     openHandicapSheet,
   } = vm;
@@ -110,11 +110,18 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
 
             <Card className="lg:col-span-3">
               <CardContent>
-                <BestRoundHighlight
-                  round={bestRound}
-                  detail={bestRoundDetail}
-                  onClick={bestRound ? () => navigate(`/rounds/${bestRound.id}`) : undefined}
-                />
+                {bestRound ? (
+                  <RoundPreview
+                    round={bestRound}
+                    variant="highlight"
+                    label="Best Recent Round"
+                    onClick={() => navigate(`/rounds/${bestRound.id}`)}
+                  />
+                ) : (
+                  <div className="p-4 text-center text-sm text-muted-foreground">
+                    Play a round to unlock highlights!
+                  </div>
+                )}
               </CardContent>
             </Card>
 

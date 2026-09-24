@@ -2,12 +2,13 @@ import { Collection } from "@/brand/components/Collection";
 import { RoundPreview } from "@/brand/components/RoundPreview";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 
-const [overPar, evenPar, , unlinked] = populatedRounds;
+const [overPar, evenPar, best, unlinked] = populatedRounds;
 
 /** Compose-style @Preview for RoundPreview. */
 export default function RoundPreviewPreview() {
   return (
     <>
+      <RoundPreview round={best} variant="highlight" label="Best Recent Round" onClick={() => {}} />
       <RoundPreview round={overPar} />
       <RoundPreview round={evenPar} />
       <RoundPreview round={unlinked} onLinkClick={() => {}} />

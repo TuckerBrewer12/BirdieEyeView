@@ -38,7 +38,9 @@ export default defineConfig({
     {
       name: "mobile",
       testMatch: "**/*.screenshot.spec.ts",
-      testIgnore: "**/brand/**",
+      // Isolated previews — the kit's and each page's — are captured once, at
+      // desktop. Only whole-page specs are worth a second viewport.
+      testIgnore: ["**/brand/**", "**/tests/screenshots/**"],
       use: {
         ...devices["iPhone 14"],
         browserName: "chromium",

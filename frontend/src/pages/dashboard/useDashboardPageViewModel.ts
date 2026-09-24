@@ -113,14 +113,6 @@ export interface WhsRoundRow {
   hasDifferential: boolean;
 }
 
-export interface BestRoundCard {
-  id: string;
-  courseName: string;
-  dateLabel: string;
-  toParLabel: string;
-  totalScore: number | null;
-}
-
 export interface RecentHole {
   hole_number: number;
   strokes: number | null;
@@ -197,8 +189,7 @@ export interface DashboardPageViewModel {
   trendView: TrendView;
   setTrendView: (view: TrendView) => void;
   trendTabs: TrendTabItem[];
-  bestRound: BestRoundCard | null;
-  bestRoundDetail: Round | null;
+  bestRound: RoundSummary | null;
   lastRound: RecentRoundRow | null;
   lastRoundHoles: RecentHole[];
   lastRoundChips: ScoreChip[];
@@ -269,13 +260,11 @@ export function useDashboardPageViewModel(
     () => (data?.recent_rounds ?? []).slice(0, 3),
     [data?.recent_rounds],
   );
-  const roundIds = useMemo(() => {
-    const ids = [
-      bestSummary?.id,
-      ...recentSummaries.map((r) => r.id),
-    ].filter((id): id is string => !!id);
-    return [...new Set(ids)];
-  }, [bestSummary?.id, recentSummaries]);
+  // Only the hole strips need a full round; the highlight reads its own summary.
+  const roundIds = useMemo(
+    () => [...new Set(recentSummaries.map((r) => r.id).filter(Boolean))],
+    [recentSummaries],
+  );
 
   const { data: fetchedRounds } = useQuery({
     queryKey: ["dashboard-round-details", roundIds],
@@ -635,19 +624,6 @@ export function useDashboardPageViewModel(
     return items;
   }, [lastRoundHoles, scoreColors]);
 
-  const bestRound = useMemo<BestRoundCard | null>(() => {
-    if (!bestSummary) return null;
-    const toPar = bestSummary.to_par;
-    return {
-      id: bestSummary.id,
-      courseName: bestSummary.course_name ?? "Unknown Course",
-      dateLabel: formatRoundDateShort(bestSummary.date) ?? "",
-      toParLabel: toPar == null ? "" : `To Par: ${toPar > 0 ? `+${toPar}` : toPar}`,
-      totalScore: bestSummary.total_score,
-    };
-  }, [bestSummary]);
-  const bestRoundDetail = bestSummary ? roundsById.get(bestSummary.id) ?? null : null;
-
   const whs = useMemo(() => {
     const rowsSource = dualData.slice().reverse();
     const rows: WhsRoundRow[] = rowsSource.map((d) => {
@@ -786,8 +762,7 @@ export function useDashboardPageViewModel(
     trendView,
     setTrendView,
     trendTabs,
-    bestRound,
-    bestRoundDetail,
+    bestRound: bestSummary,
     lastRound,
     lastRoundHoles,
     lastRoundChips,
