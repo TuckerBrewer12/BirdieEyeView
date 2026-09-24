@@ -1,8 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
-import { getStoredColorBlindMode } from "@/lib/accessibility";
-import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
 import {
   SCORE_KEYS,
   colors,
@@ -58,23 +56,18 @@ const SCORE_LABELS: Record<ScoreKey, string> = {
   quad: "Quad+",
 };
 
-function scoreColorsFromPalette(
-  palette: ChartPalette["score"] | null | undefined,
-): Record<ScoreKey, string> {
-  return {
-    eagle: palette?.eagle ?? colors.score.eagle.base,
-    birdie: palette?.birdie ?? colors.score.birdie.base,
-    par: palette?.par ?? colors.score.par.base,
-    bogey: palette?.bogey ?? colors.score.bogey.base,
-    double: palette?.double_bogey ?? colors.score.double.base,
-    triple: palette?.triple_bogey ?? colors.score.triple.base,
-    quad: palette?.quad_bogey ?? colors.score.quad.base,
-  };
-}
+const SCORE_COLORS: Record<ScoreKey, string> = {
+  eagle: colors.score.eagle.base,
+  birdie: colors.score.birdie.base,
+  par: colors.score.par.base,
+  bogey: colors.score.bogey.base,
+  double: colors.score.double.base,
+  triple: colors.score.triple.base,
+  quad: colors.score.quad.base,
+};
 
 function mixFromRows(
   rows: ScoreTypeRow[],
-  scoreColors: Record<ScoreKey, string>,
   roundTenths: boolean,
 ): ScoreDistItem[] {
   let total = 0;
@@ -93,7 +86,7 @@ function mixFromRows(
       name: key,
       label: SCORE_LABELS[key],
       value: roundTenths ? Math.round(raw * 10) / 10 : raw,
-      color: scoreColors[key],
+      color: SCORE_COLORS[key],
     };
   });
 }
@@ -333,16 +326,13 @@ export function useDashboardPageViewModel(
   const openHandicapSheet = useCallback(() => setHandicapSheetOpen(true), []);
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
 
-  const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
-  const colorBlindPalette = useMemo(() => getColorBlindPalette(colorBlindMode), [colorBlindMode]);
-  const scoreColors = scoreColorsFromPalette(colorBlindPalette?.score);
-  const scoreLineColor = colorBlindPalette?.trend.primary ?? colors.primary;
-  const handicapLineColor = colorBlindPalette?.trend.secondary ?? colors.score.double.text;
-  const girColor = colorBlindPalette?.ui.success ?? colors.score.birdie.base;
-  const warningColor = colorBlindPalette?.ui.warning ?? colors.score.eagle.base;
-  const dangerColor = colorBlindPalette?.ui.danger ?? colors.destructive;
-  const gridColor = colorBlindPalette?.ui.grid ?? colors.border;
-  const mutedFill = colorBlindPalette?.ui.mutedFill ?? colors.muted;
+  const scoreLineColor = colors.primary;
+  const handicapLineColor = colors.score.double.text;
+  const girColor = colors.score.birdie.base;
+  const warningColor = colors.score.eagle.base;
+  const dangerColor = colors.destructive;
+  const gridColor = colors.border;
+  const mutedFill = colors.muted;
 
   const recentMilestones = useMemo<Milestone[]>(() => {
     if (!trends) return [];
@@ -421,8 +411,8 @@ export function useDashboardPageViewModel(
     if (!trends) return [];
     const last5 = (trends.score_type_distribution ?? []).slice(-5);
     if (!last5.length) return [];
-    return mixFromRows(last5, scoreColors, true).filter((d) => d.value > 0);
-  }, [trends, scoreColors]);
+    return mixFromRows(last5, true).filter((d) => d.value > 0);
+  }, [trends]);
 
   const last20ScoringAvg = useMemo(() => {
     const valid = (trends?.score_trend ?? []).filter((r) => r.total_score != null);
@@ -448,8 +438,8 @@ export function useDashboardPageViewModel(
   const l20ScoreMix = useMemo<ScoreDistItem[]>(() => {
     const rows = trends?.score_type_distribution ?? [];
     if (!rows.length) return [];
-    return mixFromRows(rows, scoreColors, false);
-  }, [trends, scoreColors]);
+    return mixFromRows(rows, false);
+  }, [trends]);
 
 
   const hiTrend = useMemo(() => {
@@ -506,11 +496,7 @@ export function useDashboardPageViewModel(
     [puttsClamped],
   );
   const puttsColor =
-    putts < 30
-      ? (colorBlindPalette?.ui.success ?? colors.score.birdie.base)
-      : putts <= 35
-        ? warningColor
-        : dangerColor;
+    putts < 30 ? girColor : putts <= 35 ? warningColor : dangerColor;
 
   const firstName = user?.name?.split(" ")[0] ?? "Golfer";
   const greetingDateLabel = useMemo(() => {
@@ -527,8 +513,8 @@ export function useDashboardPageViewModel(
       : null;
   const hiDeltaImproving = handicapDelta != null && handicapDelta < 0;
   const hiDeltaColor = hiDeltaImproving
-    ? scoreColors.birdie
-    : scoreColors.bogey;
+    ? SCORE_COLORS.birdie
+    : SCORE_COLORS.bogey;
 
   const scoreDelta =
     last20ScoringAvg != null && l5ScoringAvg != null
@@ -540,8 +526,8 @@ export function useDashboardPageViewModel(
       : null;
   const scoreDeltaImproving = scoreDelta != null && scoreDelta > 0;
   const scoreDeltaColor = scoreDeltaImproving
-    ? scoreColors.birdie
-    : scoreColors.bogey;
+    ? SCORE_COLORS.birdie
+    : SCORE_COLORS.bogey;
   const last20ScoringAvgLabel =
     last20ScoringAvg != null ? last20ScoringAvg.toFixed(1) : "—";
   const puttsLabel = putts > 0 ? putts.toFixed(1) : "—";
@@ -554,20 +540,20 @@ export function useDashboardPageViewModel(
       (l20ScoreMix.find((d) => d.name === "eagle")?.value ?? 0) +
       (l20ScoreMix.find((d) => d.name === "birdie")?.value ?? 0);
     const items = [
-      { label: "Birdie+", value: birdiesPlus, color: scoreColors.birdie },
-      { label: "Par", value: l20ScoreMix.find((d) => d.name === "par")?.value ?? 0, color: scoreColors.par },
-      { label: "Bogey", value: l20ScoreMix.find((d) => d.name === "bogey")?.value ?? 0, color: scoreColors.bogey },
-      { label: "Dbl", value: l20ScoreMix.find((d) => d.name === "double")?.value ?? 0, color: scoreColors.double },
+      { label: "Birdie+", value: birdiesPlus, color: SCORE_COLORS.birdie },
+      { label: "Par", value: l20ScoreMix.find((d) => d.name === "par")?.value ?? 0, color: SCORE_COLORS.par },
+      { label: "Bogey", value: l20ScoreMix.find((d) => d.name === "bogey")?.value ?? 0, color: SCORE_COLORS.bogey },
+      { label: "Dbl", value: l20ScoreMix.find((d) => d.name === "double")?.value ?? 0, color: SCORE_COLORS.double },
       { label: "Tpl+", value:
         (l20ScoreMix.find((d) => d.name === "triple")?.value ?? 0) +
-        (l20ScoreMix.find((d) => d.name === "quad")?.value ?? 0), color: scoreColors.triple },
+        (l20ScoreMix.find((d) => d.name === "quad")?.value ?? 0), color: SCORE_COLORS.triple },
     ];
     return items.map((item) => ({
       label: item.label,
       pctLabel: `${item.value.toFixed(0)}%`,
       color: item.color,
     }));
-  }, [l20ScoreMix, scoreColors]);
+  }, [l20ScoreMix]);
 
   const mixHoleCount = useMemo(
     () => (trends?.score_type_distribution ?? []).reduce((s, r) => s + r.holes_counted, 0),
@@ -600,10 +586,10 @@ export function useDashboardPageViewModel(
           strokes: h.strokes ?? null,
           par_played: par,
           colorKey,
-          fill: scoreColors[colorKey],
+          fill: SCORE_COLORS[colorKey],
         };
       });
-  }, [scoreColors]);
+  }, []);
 
   const toRoundRow = useCallback((summary: RoundSummary): RecentRoundRow => {
     const toPar = summary.to_par;
@@ -636,19 +622,19 @@ export function useDashboardPageViewModel(
     const items: ScoreChip[] = [];
     const birdiesPlus = (counts.eagle ?? 0) + (counts.birdie ?? 0);
     if (birdiesPlus > 0) {
-      items.push({ label: "Birdie+", count: birdiesPlus, color: scoreColors.birdie });
+      items.push({ label: "Birdie+", count: birdiesPlus, color: SCORE_COLORS.birdie });
     }
-    if (counts.par) items.push({ label: "Par", count: counts.par, color: scoreColors.par });
-    if (counts.bogey) items.push({ label: "Bogey", count: counts.bogey, color: scoreColors.bogey });
+    if (counts.par) items.push({ label: "Par", count: counts.par, color: SCORE_COLORS.par });
+    if (counts.bogey) items.push({ label: "Bogey", count: counts.bogey, color: SCORE_COLORS.bogey });
     if (counts.double) {
       items.push({
         label: "Double",
         count: counts.double,
-        color: scoreColors.double,
+        color: SCORE_COLORS.double,
       });
     }
     return items;
-  }, [lastRoundHoles, scoreColors]);
+  }, [lastRoundHoles]);
 
   const bestRound = useMemo<BestRoundCard | null>(() => {
     if (!bestSummary) return null;
@@ -777,7 +763,7 @@ export function useDashboardPageViewModel(
     puttsClamped,
     puttsGaugeData,
     puttsColor,
-    scoreColors,
+    scoreColors: SCORE_COLORS,
     scoreLineColor,
     handicapLineColor,
     girColor,
