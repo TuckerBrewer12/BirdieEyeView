@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityDays } from "./activity";
+import { activityDays } from "../activity";
 
 /** Monday 15 Jun 2026 — window is Sun 17 May through Sat 20 Jun. */
 const TODAY = new Date(2026, 5, 15, 12);
