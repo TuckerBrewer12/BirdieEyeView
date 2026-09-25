@@ -31,6 +31,7 @@ export {
   holePar,
   holeResult,
   summaryHoles,
+  summaryToPar,
   playedHoles,
   frontNine,
   backNine,

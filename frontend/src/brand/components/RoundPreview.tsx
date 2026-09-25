@@ -4,7 +4,7 @@ import { cn } from "@/brand/cn";
 import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { motion as motionTokens, toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
-import { strokesToPar, summaryHoles } from "@/domain";
+import { summaryHoles, summaryToPar } from "@/domain";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateHistory, formatRoundDateShort, roundDateParts } from "@/lib/roundDate";
 import type { RoundSummary } from "@/types/golf";
@@ -24,11 +24,6 @@ interface RoundHighlightProps {
 }
 
 type RoundPreviewProps = RoundListProps | RoundHighlightProps;
-
-/** The stored figure, or the one the score and course par imply. */
-function toParOf(round: RoundSummary): number | null {
-  return round.to_par ?? strokesToPar(round.total_score, round.course_par);
-}
 
 export function RoundPreview(props: RoundPreviewProps) {
   if (props.variant === "highlight") {
@@ -52,8 +47,8 @@ export function RoundPreview(props: RoundPreviewProps) {
         </span>
         <div className="flex items-center gap-3">
           <span className="text-sm font-bold text-foreground">{round.total_score ?? "—"}</span>
-          <span className={cn("rounded px-1.5 py-0.5 text-xs font-semibold", toParBadgeClass(toParOf(round)))}>
-            {toParLabel(toParOf(round)) ?? "—"}
+          <span className={cn("rounded px-1.5 py-0.5 text-xs font-semibold", toParBadgeClass(summaryToPar(round)))}>
+            {toParLabel(summaryToPar(round)) ?? "—"}
           </span>
         </div>
       </div>
@@ -61,7 +56,7 @@ export function RoundPreview(props: RoundPreviewProps) {
   }
 
   const dateParts = roundDateParts(round.date);
-  const toPar = toParOf(round);
+  const toPar = summaryToPar(round);
   const toParText = toParLabel(toPar);
   const holes = summaryHoles(round);
 
@@ -163,7 +158,7 @@ function RoundHighlight({
   }
 
   const dateLabel = formatRoundDateShort(round.date);
-  const toPar = toParOf(round);
+  const toPar = summaryToPar(round);
   const toParText = toParLabel(toPar);
 
   return (

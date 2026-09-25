@@ -68,6 +68,11 @@ export function summaryHoles(summary: RoundSummary): HoleResult[] {
   return (summary.hole_scores_summary ?? []).map((hole) => holeResult(hole.h, hole.s, hole.p));
 }
 
+/** The stored to-par, or the one the score and course par imply. */
+export function summaryToPar(summary: RoundSummary): number | null {
+  return summary.to_par ?? strokesToPar(summary.total_score, summary.course_par);
+}
+
 /** Scored holes with resolved par. Missing par stays null — never a silent 4. */
 export function playedHoles(round: Round, course?: Course | null): PlayedHole[] {
   return round.hole_scores

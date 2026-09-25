@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Course, Round } from "@/types/golf";
 import { populatedRounds } from "@/testing/fixtures/rounds";
-import { playedHoles, roundPar, roundToPar, summaryHoles, totalStrokes } from "./round";
+import { playedHoles, roundPar, roundToPar, summaryHoles, summaryToPar, totalStrokes } from "./round";
 
 const linked: Course = {
   id: "c1",
@@ -133,5 +133,19 @@ describe("summaryHoles", () => {
 
   it("is empty when the summary carries no strip", () => {
     expect(summaryHoles({ ...populatedRounds[0], hole_scores_summary: null })).toEqual([]);
+  });
+});
+
+describe("summaryToPar", () => {
+  it("prefers the stored figure", () => {
+    expect(summaryToPar({ ...populatedRounds[0], to_par: 3, total_score: 80, course_par: 72 })).toBe(3);
+  });
+
+  it("falls back to score minus course par", () => {
+    expect(summaryToPar({ ...populatedRounds[0], to_par: null, total_score: 80, course_par: 72 })).toBe(8);
+  });
+
+  it("is null when neither is known", () => {
+    expect(summaryToPar({ ...populatedRounds[0], to_par: null, total_score: 80, course_par: null })).toBeNull();
   });
 });
