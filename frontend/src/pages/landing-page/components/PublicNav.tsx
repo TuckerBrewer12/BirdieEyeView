@@ -1,39 +1,34 @@
-import { useCallback, useState } from "react";
 import { Menu, Moon, Sun, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import { BrandMark, Button } from "@/brand";
-import { applyTheme, getStoredPublicTheme, setStoredPublicTheme, type AppTheme } from "@/lib/theme";
+import {
+  BrandMark,
+  Button,
+  Collapsible,
+  CollapsibleClose,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/brand";
+import { usePublicTheme } from "@/lib/usePublicTheme";
 import { LANDING_SECTIONS, scrollToLandingSection, scrollToTop } from "../sections";
 
 const NAV_LINKS = [
-  { key: "overview", label: "Overview", section: "top" as const },
-  { key: "try-it-out", label: "Try It Out", section: LANDING_SECTIONS.tryItOut },
+  { key: "overview", label: "Overview", scroll: scrollToTop },
+  {
+    key: "try-it-out",
+    label: "Try It Out",
+    scroll: () => scrollToLandingSection(LANDING_SECTIONS.tryItOut),
+  },
 ];
 
 export function PublicNav() {
-  const [navOpen, setNavOpen] = useState(false);
-  const [theme, setTheme] = useState<AppTheme>(() => getStoredPublicTheme());
-
-  const closeAndScroll = useCallback((scroll: () => void) => {
-    scroll();
-    setNavOpen(false);
-  }, []);
-
-  const toggleTheme = useCallback(() => {
-    const next: AppTheme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    setStoredPublicTheme(next);
-    applyTheme(next);
-  }, [theme]);
-
-  const isDark = theme === "dark";
-  const themeToggleLabel = isDark ? "Light Mode" : "Dark Mode";
-
-  const linkSelect = (section: "top" | string) => () =>
-    closeAndScroll(section === "top" ? scrollToTop : () => scrollToLandingSection(section));
+  const theme = usePublicTheme();
+  const themeToggleLabel = theme.isDark ? "Light Mode" : "Dark Mode";
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur-sm">
+    <Collapsible
+      render={<nav />}
+      className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur-sm"
+    >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link to="/" aria-label="BirdieEyeView home">
           <BrandMark />
@@ -41,7 +36,7 @@ export function PublicNav() {
 
         <div className="hidden items-center gap-8 text-sm font-medium md:flex">
           {NAV_LINKS.map((link) => (
-            <Button key={link.key} variant="linkMuted" size="sm" onClick={linkSelect(link.section)}>
+            <Button key={link.key} variant="linkMuted" size="sm" onClick={link.scroll}>
               {link.label}
             </Button>
           ))}
@@ -58,51 +53,44 @@ export function PublicNav() {
             variant="outline"
             size="icon"
             shape="pill"
-            onClick={toggleTheme}
+            onClick={theme.toggle}
             aria-label={`Switch to ${themeToggleLabel}`}
           >
-            {isDark ? <Sun /> : <Moon />}
+            {theme.isDark ? <Sun /> : <Moon />}
           </Button>
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden"
-          onClick={() => setNavOpen((open) => !open)}
+        <CollapsibleTrigger
+          render={<Button variant="ghost" size="icon" className="md:hidden" />}
           aria-label="Toggle menu"
-          aria-expanded={navOpen}
         >
-          {navOpen ? <X /> : <Menu />}
-        </Button>
+          <Menu className="in-data-panel-open:hidden" />
+          <X className="hidden in-data-panel-open:block" />
+        </CollapsibleTrigger>
       </div>
 
-      {navOpen && (
-        <div className="flex flex-col gap-4 border-t border-border bg-card px-6 py-4 md:hidden">
-          {NAV_LINKS.map((link) => (
-            <Button
-              key={link.key}
-              variant="linkMuted"
-              size="sm"
-              className="justify-start"
-              onClick={linkSelect(link.section)}
-            >
-              {link.label}
-            </Button>
-          ))}
-          <div className="flex flex-col gap-2 border-t border-border pt-2">
-            <Button variant="outline" shape="pill" onClick={toggleTheme}>
-              {themeToggleLabel}
-            </Button>
-            <Button variant="outline" shape="pill" render={<Link to="/login" />}>
-              Sign In
-            </Button>
-            <Button shape="pill" render={<Link to="/register" />}>
-              Sign Up
-            </Button>
-          </div>
+      <CollapsibleContent className="flex flex-col gap-4 border-t border-border bg-card px-6 py-4 md:hidden">
+        {NAV_LINKS.map((link) => (
+          <CollapsibleClose
+            key={link.key}
+            render={<Button variant="linkMuted" size="sm" className="justify-start" />}
+            onClick={link.scroll}
+          >
+            {link.label}
+          </CollapsibleClose>
+        ))}
+        <div className="flex flex-col gap-2 border-t border-border pt-2">
+          <Button variant="outline" shape="pill" onClick={theme.toggle}>
+            {themeToggleLabel}
+          </Button>
+          <Button variant="outline" shape="pill" render={<Link to="/login" />}>
+            Sign In
+          </Button>
+          <Button shape="pill" render={<Link to="/register" />}>
+            Sign Up
+          </Button>
         </div>
-      )}
-    </nav>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

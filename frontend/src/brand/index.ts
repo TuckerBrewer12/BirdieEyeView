@@ -42,6 +42,13 @@ export { Dropzone } from "./components/Dropzone";
 export { FileChip } from "./components/FileChip";
 export { Collapse } from "./components/Collapse";
 export type { CollapseProps } from "./components/Collapse";
+export {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+  CollapsibleClose,
+} from "./components/Collapsible";
+export type { CollapsibleProps } from "./components/Collapsible";
 export { Collection } from "./components/Collection";
 export type { CollectionProps, CollectionLayout } from "./components/Collection";
 export {

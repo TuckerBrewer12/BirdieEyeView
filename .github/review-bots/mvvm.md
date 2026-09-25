@@ -22,6 +22,13 @@ rows are the N best…"`), colors, donut/gauge series, or greeting copy
 returned from a view model. Those belong in the view or a small presenter
 the *view* calls. The hook should return numbers, enums, and commands.
 
+**Side effects in a view.** A click handler in JSX that writes storage,
+calls the API, or changes app-wide state (theme, auth, the query cache).
+Move it into the page hook or a shared hook (`usePublicTheme`) and bind the
+command: `onClick={theme.toggle}`. State nothing else reads, like whether a
+menu is open, is fine in the view; a kit disclosure (`Collapsible`) is
+better than a `useState` and an inline toggle.
+
 **A view model for copy.** A hook whose job is marketing text, `/login`
 hrefs, or `"Sign Up Free"` is not a view model. Put the copy in the page.
 
