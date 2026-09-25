@@ -9,7 +9,7 @@ import {
   SheetTitle,
 } from "@/brand";
 import { formatHandicapIndex } from "@/domain/handicap";
-import type { WhsBreakdown } from "./model";
+import type { WhsBreakdown } from "@/domain";
 import {
   adjustmentLabel,
   courseLabelForWhs,

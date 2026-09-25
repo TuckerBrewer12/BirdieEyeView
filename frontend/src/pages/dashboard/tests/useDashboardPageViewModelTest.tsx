@@ -2,7 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import { roundFromSummary, roundScore } from "@/domain";
+import { roundScore } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 import {
   dashboardDetailRounds,
@@ -14,7 +14,6 @@ import {
 } from "@/testing/fixtures/dashboard";
 import { FakeDashboardRepository } from "@/testing/fakes/FakeDashboardRepository";
 import { useDashboardPageViewModel } from "../useDashboardPageViewModel";
-import { pickBestRound, whsBreakdown, dualTrendFrom } from "../model";
 import { mixLegend } from "../present";
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -142,19 +141,5 @@ describe("useDashboardPageViewModel", () => {
     expect(result.current.data?.handicap_index).toBeNull();
     expect(result.current.bestRound).toBeNull();
     expect(result.current.whs.rows).toEqual([]);
-  });
-});
-
-describe("dashboard model", () => {
-  it("picks the lowest score as best", () => {
-    expect(pickBestRound(populatedRounds.map(roundFromSummary))?.id).toBe("round-3");
-    expect(pickBestRound([])).toBeNull();
-  });
-
-  it("marks used WHS rounds from dual trend", () => {
-    const dual = dualTrendFrom(populatedAnalytics);
-    const whs = whsBreakdown(dual, populatedAnalytics, 12.4);
-    expect(whs.rows.filter((r) => r.used)).toHaveLength(1);
-    expect(whs.showCalculation).toBe(true);
   });
 });

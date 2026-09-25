@@ -94,6 +94,13 @@ export function roundGir(round: Round): number | null {
   return recorded.length > 0 ? recorded.filter((hole) => hole.gir).length : null;
 }
 
+/** The round with the lowest score, among rounds that have one. */
+export function bestRound(rounds: Round[]): Round | null {
+  const scored = rounds.filter((r) => roundScore(r) != null);
+  if (!scored.length) return null;
+  return scored.reduce((best, curr) => (roundScore(curr)! < roundScore(best)! ? curr : best));
+}
+
 export function withStrokes(round: Round, edited: StrokeOverrides): Round {
   return {
     ...round,

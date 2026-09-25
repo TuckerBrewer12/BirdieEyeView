@@ -20,7 +20,7 @@ import {
   chartTooltipStyle,
   colors,
 } from "@/brand";
-import { formatHandicapIndex } from "@/domain/handicap";
+import { formatHandicapIndex, type HandicapTrend } from "@/domain/handicap";
 import { MilestoneFeed } from "./components/MilestoneFeed";
 import { ProfileHeroBanner } from "./components/ProfileHeroBanner";
 import { RecentRoundsTable } from "./components/RecentRoundsTable";
@@ -36,6 +36,7 @@ import {
   goalNumberLabel,
   goalTargetLabel,
   pctLabel,
+  presentMilestones,
   puttsColor,
   puttsGaugeData,
   puttsLabel,
@@ -76,7 +77,7 @@ function ShortGameSparkline({
 
 function MiniKpi({ label, value, trend }: {
   label: string; value: string | number | null;
-  trend?: "up" | "down" | "flat" | null;
+  trend?: HandicapTrend | null;
 }) {
   const Icon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
   const trendColor = trend === "down" ? "text-score-birdie" : trend === "up" ? "text-destructive" : "text-muted-foreground";
@@ -96,15 +97,16 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const palette = dashboardPalette;
   const {
     data, user, goalReport, trends,
-    dualData, recentMilestones, last20ScoringAvg, hiTrend,
-    girPct, recentDistribution, scramblingPct,
-    upAndDownPct, putts,
+    dualData, recentMilestones, last20ScoringAvg, handicapTrend,
+    recentDistribution, stats,
     bestRound, sidebarRounds,
-    scoringGoal, goalBarPct, goalOnTrack,
+    scoringGoal, goalProgressPct, goalOnTrack,
     openHandicapSheet,
   } = vm;
 
   if (!data) return null;
+
+  const { girPct, scramblingPct, upAndDownPct, putts } = stats;
 
   const last20ScoringAvgLabel = avgLabel(last20ScoringAvg);
   const girPctLabel = pctLabel(girPct);
@@ -155,7 +157,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
             <Card className="lg:col-span-1">
               <CardContent>
                 <div className="flex flex-col gap-5 h-full justify-between">
-                  <MiniKpi label="Scoring Avg (L20)" value={last20ScoringAvgLabel} trend={hiTrend} />
+                  <MiniKpi label="Scoring Avg (L20)" value={last20ScoringAvgLabel} trend={handicapTrend} />
                   <MiniKpi label="Total Rounds" value={data.total_rounds} />
                 </div>
               </CardContent>
@@ -304,7 +306,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
               </CardHeader>
               <CardContent>
                 <MilestoneFeed
-                  milestones={recentMilestones}
+                  milestones={presentMilestones(recentMilestones)}
                   onRoundClick={(id) => navigate(`/rounds/${id}`)}
                 />
               </CardContent>
@@ -344,7 +346,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
-                          width: `${goalBarPct}%`,
+                          width: `${goalProgressPct ?? 0}%`,
                           background: goalOnTrack ? colors.score.birdie.base : `linear-gradient(90deg, ${colors.primary}, ${chartColors.axis})`,
                         }}
                       />

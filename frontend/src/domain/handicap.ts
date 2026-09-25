@@ -1,4 +1,5 @@
 import type { Tee } from "@/types/golf";
+import type { AnalyticsData } from "@/types/analytics";
 
 /** WHS course handicap: (HI × Slope / 113) + (Course Rating − Par), rounded. */
 export function courseHandicap(
@@ -70,4 +71,85 @@ export function whsWindow(ratedRoundCount: number): { countUsed: number; adjustm
   const [countUsed, adjustment] =
     WHS_ADJUSTMENT_BY_RATED_ROUNDS[Math.min(n - 3, WHS_ADJUSTMENT_BY_RATED_ROUNDS.length - 1)];
   return { countUsed, adjustment };
+}
+
+export type HandicapTrend = "up" | "down" | "flat";
+
+/** Change in handicap index across the last six rated rounds. */
+export function handicapDelta(trends: AnalyticsData | null): number | null {
+  const valid = (trends?.handicap_trend ?? []).filter((r) => r.handicap_index != null);
+  if (valid.length < 2) return null;
+  const recent = valid[valid.length - 1].handicap_index!;
+  const prev = valid[Math.max(0, valid.length - 6)].handicap_index!;
+  return +(recent - prev).toFixed(1);
+}
+
+/** Direction of the handicap index over the whole window. Under 0.3 reads as flat. */
+export function handicapTrend(trends: AnalyticsData | null): HandicapTrend | null {
+  if (!trends) return null;
+  const valid = trends.handicap_trend.filter((r) => r.handicap_index != null);
+  if (valid.length < 3) return null;
+  const diff = valid[0].handicap_index! - valid[valid.length - 1].handicap_index!;
+  if (Math.abs(diff) < 0.3) return "flat";
+  return diff > 0 ? "down" : "up";
+}
+
+export interface WhsRound {
+  roundIndex: number;
+  courseName: string | null;
+  courseRating: number | null;
+  slopeRating: number | null;
+  score: number | null;
+  differential: number | null;
+  used: boolean;
+}
+
+export interface WhsBreakdown {
+  rows: WhsRound[];
+  windowSize: number;
+  countUsed: number;
+  adjustment: number;
+  diffAvg: number | null;
+  hasRatedRounds: boolean;
+  showCalculation: boolean;
+}
+
+/** Newest-first rounds in the WHS window, which ones count, and the resulting average. */
+export function whsBreakdown(
+  trends: AnalyticsData | null,
+  handicapIndex: number | null | undefined,
+): WhsBreakdown {
+  const scores = trends?.score_trend ?? [];
+  const rows: WhsRound[] = scores
+    .map((score, i) => {
+      const hcp = trends?.handicap_trend[i];
+      const diff = trends?.score_differentials.find((s) => s.round_index === score.round_index);
+      return {
+        roundIndex: score.round_index,
+        courseName: score.course_name ?? null,
+        courseRating: diff?.course_rating ?? null,
+        slopeRating: diff?.slope_rating ?? null,
+        score: diff?.score ?? score.total_score ?? null,
+        differential: hcp?.differential ?? null,
+        used: hcp?.used_in_hi === true,
+      };
+    })
+    .reverse();
+  const windowSize = Math.min(rows.filter((r) => r.differential != null).length, 20);
+  const { countUsed, adjustment } = whsWindow(windowSize);
+  const usedDiffs = rows
+    .filter((r) => r.used && r.differential != null)
+    .map((r) => r.differential!);
+  const diffAvg = usedDiffs.length
+    ? usedDiffs.reduce((a, b) => a + b, 0) / usedDiffs.length
+    : null;
+  return {
+    rows,
+    windowSize,
+    countUsed,
+    adjustment,
+    diffAvg,
+    hasRatedRounds: (trends?.score_differentials ?? []).some((r) => r.course_rating != null),
+    showCalculation: handicapIndex != null && windowSize >= 3,
+  };
 }
