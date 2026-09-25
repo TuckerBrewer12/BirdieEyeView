@@ -1,6 +1,7 @@
 import { userRepository } from "@/data/userRepository";
+import { roundFromSummary, type Round as RoundModel } from "@/domain";
 import { api } from "@/lib/api";
-import type { Course, CourseSummary, Round, RoundSummary } from "@/types/golf";
+import type { Course, CourseSummary, Round } from "@/types/golf";
 import type { RoundComparison } from "@/types/analytics";
 
 export type UpdateRoundBody = {
@@ -18,11 +19,12 @@ export type UpdateRoundBody = {
 };
 
 export interface RoundsRepository {
-  getRoundsForUser(userId: string, limit?: number): Promise<RoundSummary[]>;
+  getRoundsForUser(userId: string, limit?: number): Promise<RoundModel[]>;
+  /** The round as the API sends it, for the edit form to write back. */
   getRound(roundId: string): Promise<Round>;
   updateRound(roundId: string, body: UpdateRoundBody): Promise<Round>;
   deleteRound(roundId: string): Promise<void>;
-  linkCourse(roundId: string, courseId: string): Promise<RoundSummary>;
+  linkCourse(roundId: string, courseId: string): Promise<RoundModel>;
   getCourse(courseId: string): Promise<Course>;
   getRoundComparison(userId: string, roundId: string): Promise<RoundComparison | null>;
   getUserHandicap(userId: string): Promise<{ handicap_index: number | null }>;
@@ -32,11 +34,12 @@ export interface RoundsRepository {
 export type CourseSearchRepository = Pick<RoundsRepository, "searchCourses">;
 
 export const roundsRepository: RoundsRepository = {
-  getRoundsForUser: (userId, limit = 100) => api.getRoundsForUser(userId, limit),
+  getRoundsForUser: async (userId, limit = 100) =>
+    (await api.getRoundsForUser(userId, limit)).map(roundFromSummary),
   getRound: (roundId) => api.getRound(roundId),
   updateRound: (roundId, body) => api.updateRound(roundId, body),
   deleteRound: (roundId) => api.deleteRound(roundId),
-  linkCourse: (roundId, courseId) => api.linkCourse(roundId, courseId),
+  linkCourse: async (roundId, courseId) => roundFromSummary(await api.linkCourse(roundId, courseId)),
   getCourse: (courseId) => api.getCourse(courseId),
   getRoundComparison: (userId, roundId) => api.getRoundComparison(userId, roundId),
   getUserHandicap: (userId) => userRepository.getUserHandicap(userId),

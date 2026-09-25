@@ -17,11 +17,11 @@ import {
 import { PageHeader } from "@/components/layout/PageHeader";
 import { formatCourseName } from "@/lib/courseName";
 import { pluralize } from "@/lib/pluralize";
-import type { RoundSummary } from "@/types/golf";
+import type { Round } from "@/domain";
 import { useRoundsPageViewModel } from "./useRoundsPageViewModel";
 
-function linkTitleFor(round: RoundSummary): string {
-  return `Link "${round.course_name ? formatCourseName(round.course_name) : "this round"}" to a saved course`;
+function linkTitleFor(round: Round): string {
+  return `Link "${round.course?.name ? formatCourseName(round.course.name) : "this round"}" to a saved course`;
 }
 
 interface RoundsPageProps { userId: string; }

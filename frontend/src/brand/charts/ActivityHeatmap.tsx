@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import type { RoundSummary } from "@/types/golf";
+import type { Round } from "@/domain";
 import { pluralize } from "@/lib/pluralize";
 import { cn } from "@/brand/cn";
 import { activityDays } from "@/domain/activity";
 
 interface ActivityHeatmapProps {
-  rounds?: RoundSummary[];
+  rounds?: Round[];
   /** Frozen in previews so the calendar does not drift day to day. */
   today?: Date;
 }

@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { ActivityHeatmap } from "./ActivityHeatmap";
-import type { RoundSummary } from "@/types/golf";
+import type { Round } from "@/domain";
 
 describe("ActivityHeatmap", () => {
   it("should format dates correctly and render active squares for rounds", () => {
@@ -23,36 +23,14 @@ describe("ActivityHeatmap", () => {
     const dateC = new Date(today);
     dateC.setDate(dateC.getDate() - 100);
 
-    const rounds: RoundSummary[] = [
-      {
-        id: "1",
-        date: formatDateStr(dateA) + "T14:30:00Z",
-        course_id: null, course_name: null, course_location: null,
-        course_par: null, tee_box: null, total_score: 80, to_par: null,
-        front_nine: null, back_nine: null, total_putts: null, total_gir: null,
-        fairways_hit: null, notes: null,
-      },
-      {
-        id: "2",
-        date: formatDateStr(dateA) + "T08:00:00",
-        course_id: null, course_name: null, course_location: null, course_par: null,
-        tee_box: null, total_score: 82, to_par: null, front_nine: null, back_nine: null,
-        total_putts: null, total_gir: null, fairways_hit: null, notes: null,
-      },
-      {
-        id: "3",
-        date: formatDateStr(dateB),
-        course_id: null, course_name: null, course_location: null, course_par: null,
-        tee_box: null, total_score: 75, to_par: null, front_nine: null, back_nine: null,
-        total_putts: null, total_gir: null, fairways_hit: null, notes: null,
-      },
-      {
-        id: "4",
-        date: formatDateStr(dateC).replace(/-/g, "/"),
-        course_id: null, course_name: null, course_location: null, course_par: null,
-        tee_box: null, total_score: 75, to_par: null, front_nine: null, back_nine: null,
-        total_putts: null, total_gir: null, fairways_hit: null, notes: null,
-      },
+    const round = (id: string, date: string): Round => ({
+      id, date, course: null, teeBox: null, holes: [], totalPutts: null, totalGir: null,
+    });
+    const rounds = [
+      round("1", formatDateStr(dateA) + "T14:30:00Z"),
+      round("2", formatDateStr(dateA) + "T08:00:00"),
+      round("3", formatDateStr(dateB)),
+      round("4", formatDateStr(dateC).replace(/-/g, "/")),
     ];
 
     const { container } = render(<ActivityHeatmap rounds={rounds} today={today} />);

@@ -137,16 +137,16 @@ function MicroBars({ holes }: { holes: PaintedHole[] }) {
   return (
     <div style={{ display: "flex", gap: 3, height: 28, alignItems: "flex-end", width: "100%" }}>
       {holes.map((h) => {
-        const heightPct = scoreBarHeightPct(h.strokes, h.par_played);
+        const heightPct = scoreBarHeightPct(h.strokes, h.par);
         return (
           <div
-            key={h.hole_number}
+            key={h.hole}
             style={{
               flex: 1,
               height: `${heightPct}%`,
               borderRadius: "2px 2px 0 0",
               background: h.fill,
-              opacity: h.colorKey === "par" ? 0.35 : 1,
+              opacity: h.kind === "par" ? 0.35 : 1,
             }}
           />
         );
@@ -460,8 +460,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
     openHandicapSheet,
     trendView,
     setTrendView,
-    recentSummaries,
-    roundsById,
+    recentRounds,
     goalProgressPct,
     scoringGoal,
   } = vm;
@@ -487,14 +486,10 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
     girPct: vm.girPct,
   });
   const tabs = trendTabs(trendView);
-  const lastRound = recentSummaries[0]
-    ? toRoundRow(recentSummaries[0], roundsById.get(recentSummaries[0].id))
-    : null;
+  const lastRound = recentRounds[0] ? toRoundRow(recentRounds[0]) : null;
   const lastRoundHoles = lastRound?.holes ?? [];
   const chips = lastRoundChips(lastRoundHoles);
-  const recentRoundRows = recentSummaries.map((summary) =>
-    toRoundRow(summary, roundsById.get(summary.id)),
-  );
+  const recentRoundRows = recentRounds.map(toRoundRow);
   const goalTarget = goalTargetLabel(scoringGoal);
   const hasScoringGoal = scoringGoal != null;
 
@@ -808,13 +803,13 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
                 <div style={{ width: 78, height: 16, display: "flex", gap: 1.5, alignItems: "flex-end", flexShrink: 0 }}>
                   {r.holes.map((h) => (
                     <div
-                      key={h.hole_number}
+                      key={h.hole}
                       style={{
                         flex: 1,
                         height: "100%",
                         borderRadius: 1.5,
                         background: h.fill,
-                        opacity: h.colorKey === "par" ? 0.35 : 1,
+                        opacity: h.kind === "par" ? 0.35 : 1,
                       }}
                     />
                   ))}

@@ -3,10 +3,19 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateLong } from "@/lib/roundDate";
 import { messageFrom } from "@/lib/userFacingErrors";
-import { scoreKeyFor, type ScoreKey } from "@/brand/theme";
+import type { ScoreKey } from "@/brand/theme";
 import { queryKeys } from "@/data/queryKeys";
-import { playedHoles, roundPar, totalStrokes, type PlayedHole } from "@/domain/round";
-import { backNine as backNineOf, frontNine as frontNineOf, type Nine } from "@/domain/scorecard";
+import {
+  holeKind,
+  roundFromDto,
+  roundGir,
+  roundPar,
+  roundPutts,
+  roundScore,
+  roundToPar,
+  withStrokes,
+  type HoleScore,
+} from "@/domain/round";
 import { getTee, teeColors } from "@/domain/course";
 import { netScore, ratedCourseHandicap } from "@/domain/handicap";
 import { chooseCompatibleTee } from "@/lib/teeColor";
@@ -40,8 +49,10 @@ export interface RoundDetailUiState {
   courseHandicap: number | null;
   dateLabel: string | null;
   teeRating: string | null;
-  frontNine: Nine<PlayedHole>;
-  backNine: Nine<PlayedHole>;
+  /** The scored holes, edits applied. */
+  holes: HoleScore[];
+  putts: number | null;
+  gir: number | null;
   scoreCounts: Partial<Record<ScoreKey, number>>;
   editMode: boolean;
   saving: boolean;
@@ -292,23 +303,26 @@ export function useRoundDetailPageViewModel(
     editMode && courseEdit.status === "linked"
       ? courseEdit.course
       : round?.course ?? null;
-  const totalScore = round ? totalStrokes(round, editMode ? editedScores : undefined) : 0;
-  const coursePar = round ? roundPar(round, activeCourse) : null;
-  const toPar = coursePar !== null ? totalScore - coursePar : null;
+  // The round as played, read against the course being edited in, with edited strokes applied.
+  const played = useMemo(() => {
+    if (!round) return null;
+    const model = roundFromDto(round, activeCourse);
+    return editMode ? withStrokes(model, editedScores) : model;
+  }, [round, activeCourse, editMode, editedScores]);
+  const totalScore = played ? roundScore(played) ?? 0 : 0;
+  const coursePar = played ? roundPar(played) : null;
+  const toPar = played ? roundToPar(played) : null;
   const courseName = formatCourseName(round?.course_name_played ?? round?.course?.name);
 
   const holes = useMemo(
-    () => (round ? playedHoles(round, activeCourse) : []),
-    [round, activeCourse],
+    () => played?.holes.filter((hole) => hole.strokes != null) ?? [],
+    [played],
   );
-  const frontNine = useMemo(() => frontNineOf(holes), [holes]);
-  const backNine = useMemo(() => backNineOf(holes), [holes]);
   const scoreCounts = useMemo(() => {
     const counts: Partial<Record<ScoreKey, number>> = {};
     for (const h of holes) {
-      if (h.par == null) continue;
-      const key = scoreKeyFor(h.strokes, h.par);
-      counts[key] = (counts[key] ?? 0) + 1;
+      const kind = holeKind(h);
+      if (kind) counts[kind] = (counts[kind] ?? 0) + 1;
     }
     return counts;
   }, [holes]);
@@ -344,8 +358,9 @@ export function useRoundDetailPageViewModel(
     courseHandicap,
     dateLabel: formatRoundDateLong(round?.date),
     teeRating,
-    frontNine,
-    backNine,
+    holes,
+    putts: played ? roundPutts(played) : null,
+    gir: played ? roundGir(played) : null,
     scoreCounts,
     editMode,
     saving,

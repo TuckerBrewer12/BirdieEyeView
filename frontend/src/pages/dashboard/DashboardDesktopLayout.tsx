@@ -398,7 +398,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
               <CardDescription>Last 30 days</CardDescription>
             </CardHeader>
             <CardContent>
-              <ActivityHeatmap rounds={data.recent_rounds} />
+              <ActivityHeatmap rounds={vm.rounds} />
             </CardContent>
           </Card>
 

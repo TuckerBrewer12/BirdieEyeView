@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
 import { queryKeys } from "@/data/queryKeys";
-import type { RoundSummary, CourseSummary } from "@/types/golf";
+import { roundScore, roundToPar, type Round } from "@/domain";
+import type { CourseSummary } from "@/types/golf";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 
 export type SortKey = "date" | "total_score" | "to_par" | "course_name";
@@ -22,9 +23,9 @@ export interface SortOption {
 
 export interface RoundsUiState {
   loading: boolean;
-  rounds: RoundSummary[];
-  filteredRounds: RoundSummary[];
-  visibleRounds: RoundSummary[];
+  rounds: Round[];
+  filteredRounds: Round[];
+  visibleRounds: Round[];
   remainingCount: number;
   search: string;
   filterMode: FilterMode;
@@ -108,7 +109,8 @@ export function useRoundsPageViewModel(
   const chips = useMemo<FilterChipItem[]>(() => {
     const counts = new Map<string, number>();
     for (const r of rounds) {
-      if (r.course_name) counts.set(r.course_name, (counts.get(r.course_name) ?? 0) + 1);
+      const name = r.course?.name;
+      if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
     }
     const courses = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name]) => name);
 
@@ -129,7 +131,7 @@ export function useRoundsPageViewModel(
     setLinkError(null);
     try {
       const updated = await repository.linkCourse(roundId, course.id);
-      queryClient.setQueryData<RoundSummary[]>(queryKeys.rounds(userId), (prev) =>
+      queryClient.setQueryData<Round[]>(queryKeys.rounds(userId), (prev) =>
         prev ? prev.map((r) => (r.id === roundId ? updated : r)) : [updated],
       );
       setLinkingRoundId(null);
@@ -191,11 +193,11 @@ export function useRoundsPageViewModel(
     if (filterMode === "l20") {
       result = [...result].sort((a, b) => ((b.date ?? "") > (a.date ?? "") ? 1 : -1)).slice(0, 20);
     } else if (filterMode !== "all" && filterMode !== "best") {
-      result = result.filter((r) => r.course_name === filterMode);
+      result = result.filter((r) => r.course?.name === filterMode);
     }
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter((r) => r.course_name?.toLowerCase().includes(q));
+      result = result.filter((r) => r.course?.name?.toLowerCase().includes(q));
     }
     const key: SortKey = filterMode === "best" ? "total_score" : sortKey;
     const asc = filterMode === "best" ? true : sortAsc;
@@ -203,9 +205,9 @@ export function useRoundsPageViewModel(
       let av: number | string | null, bv: number | string | null;
       switch (key) {
         case "date":        av = a.date ?? "";       bv = b.date ?? "";       break;
-        case "total_score": av = a.total_score;      bv = b.total_score;      break;
-        case "to_par":      av = a.to_par;           bv = b.to_par;           break;
-        case "course_name": av = a.course_name ?? ""; bv = b.course_name ?? ""; break;
+        case "total_score": av = roundScore(a);        bv = roundScore(b);        break;
+        case "to_par":      av = roundToPar(a);        bv = roundToPar(b);        break;
+        case "course_name": av = a.course?.name ?? ""; bv = b.course?.name ?? ""; break;
       }
       if (av === null) return 1; if (bv === null) return -1;
       if (av < bv) return asc ? -1 : 1;

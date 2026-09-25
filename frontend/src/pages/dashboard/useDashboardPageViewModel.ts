@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
-import type { DashboardData, Round, RoundSummary, User } from "@/types/golf";
+import { roundFromDto, roundFromSummary, type Round } from "@/domain";
+import type { DashboardData, User } from "@/types/golf";
 import type { AnalyticsData, GoalReport } from "@/types/analytics";
 import {
   dashboardRepository,
@@ -60,10 +61,11 @@ export interface DashboardPageViewModel {
   closeHandicapSheet: () => void;
   trendView: TrendView;
   setTrendView: (view: TrendView) => void;
-  bestRound: RoundSummary | null;
-  recentSummaries: RoundSummary[];
-  roundsById: Map<string, Round>;
-  sidebarRounds: RoundSummary[];
+  rounds: Round[];
+  bestRound: Round | null;
+  /** The three latest, read from the full round so hole pars fall back to the course. */
+  recentRounds: Round[];
+  sidebarRounds: Round[];
   whs: WhsBreakdown;
   scoringGoal: number | null;
   goalBarPct: number;
@@ -108,16 +110,12 @@ export function useDashboardPageViewModel(
   const data = fetched?.[0] ?? null;
   const trends = fetched?.[1] ?? null;
 
-  const bestRound = useMemo(
-    () => pickBestRound(data?.recent_rounds ?? []),
+  const rounds = useMemo(
+    () => (data?.recent_rounds ?? []).map(roundFromSummary),
     [data?.recent_rounds],
   );
-  const recentSummaries = useMemo(
-    () => (data?.recent_rounds ?? []).slice(0, 3),
-    [data?.recent_rounds],
-  );
-  // Only the hole strips need a full round; the highlight reads its own summary.
-  const roundIds = useMemo(() => recentSummaries.map((r) => r.id), [recentSummaries]);
+  const bestRound = useMemo(() => pickBestRound(rounds), [rounds]);
+  const roundIds = useMemo(() => rounds.slice(0, 3).map((r) => r.id), [rounds]);
 
   const { data: fetchedRounds } = useQuery({
     queryKey: ["dashboard-round-details", roundIds],
@@ -125,13 +123,14 @@ export function useDashboardPageViewModel(
     enabled: roundIds.length > 0,
   });
 
-  const roundsById = useMemo(() => {
-    const map = new Map<string, Round>();
-    for (const round of fetchedRounds ?? []) {
-      if (round.id) map.set(round.id, round);
-    }
-    return map;
-  }, [fetchedRounds]);
+  const recentRounds = useMemo(
+    () =>
+      rounds.slice(0, 3).map((round) => {
+        const detail = fetchedRounds?.find((d) => d.id === round.id);
+        return detail ? roundFromDto(detail) : round;
+      }),
+    [rounds, fetchedRounds],
+  );
 
   const openHandicapSheet = useCallback(() => setHandicapSheetOpen(true), []);
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
@@ -169,10 +168,10 @@ export function useDashboardPageViewModel(
     closeHandicapSheet,
     trendView,
     setTrendView,
+    rounds,
     bestRound,
-    recentSummaries,
-    roundsById,
-    sidebarRounds: (data?.recent_rounds ?? []).slice(0, 10),
+    recentRounds,
+    sidebarRounds: rounds.slice(0, 10),
     whs: whsBreakdown(dualData, trends, data?.handicap_index),
     scoringGoal: user?.scoring_goal ?? null,
     goalBarPct: goalBarPct(report),

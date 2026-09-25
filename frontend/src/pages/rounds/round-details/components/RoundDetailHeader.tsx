@@ -1,7 +1,7 @@
 import { cn } from "@/brand/cn";
 import { PageTitle } from "@/brand";
 import { colors, toParDisplay, type ScoreKey } from "@/brand/theme";
-import type { Nine } from "@/domain";
+import { backNine, frontNine, holeKind, nineTotal, type HoleScore } from "@/domain";
 import { pluralNoun } from "@/lib/pluralize";
 
 const BAR_HEIGHTS: Record<ScoreKey, number> = {
@@ -28,24 +28,26 @@ export interface RoundDetailHeaderProps {
     net?: number | null;
     courseHandicap?: number | null;
   };
-  nines?: { front: Nine; back: Nine };
+  /** The scored holes, in hole order. */
+  holes?: HoleScore[];
   stats?: { putts?: number | null; gir?: number | null };
   counts?: Partial<Record<ScoreKey, number>>;
   className?: string;
 }
 
-function NineBars({ nine, label, className }: {
-  nine: Nine;
+function NineBars({ holes, label, className }: {
+  holes: HoleScore[];
   label: string;
   className?: string;
 }) {
-  if (nine.holes.length === 0) return null;
+  if (holes.length === 0) return null;
+  const total = nineTotal(holes);
   return (
     <div className={cn("min-w-0 flex-1", className)}>
       <div className="flex h-6 items-end gap-hair">
-        {nine.holes.map((h) => {
+        {holes.map((h) => {
           // Unscored holes read as par.
-          const key = h.kind ?? "par";
+          const key = holeKind(h) ?? "par";
           return (
             <div
               key={h.hole}
@@ -59,9 +61,9 @@ function NineBars({ nine, label, className }: {
           );
         })}
       </div>
-      {nine.total != null && (
+      {total != null && (
         <div className="mt-1 text-caption font-bold uppercase tracking-kicker text-muted-foreground">
-          {label} <span className="font-mono">{nine.total}</span>
+          {label} <span className="font-mono">{total}</span>
         </div>
       )}
     </div>
@@ -76,12 +78,12 @@ export function RoundDetailHeader({
   dateLabel,
   tee,
   score,
-  nines,
+  holes = [],
   stats,
   counts = {},
   className,
 }: RoundDetailHeaderProps) {
-  const hasBars = (nines?.front.holes.length ?? 0) > 0 || (nines?.back.holes.length ?? 0) > 0;
+  const hasBars = holes.length > 0;
   const hasStats = stats?.putts != null || stats?.gir != null;
 
   return (
@@ -139,10 +141,10 @@ export function RoundDetailHeader({
           )}
         </div>
 
-        {hasBars && nines && (
+        {hasBars && (
           <div className="flex min-w-0 flex-1 items-start gap-3.5 overflow-hidden">
-            <NineBars nine={nines.front} label="Front" />
-            <NineBars nine={nines.back} label="Back" className="mt-1.5" />
+            <NineBars holes={frontNine(holes)} label="Front" />
+            <NineBars holes={backNine(holes)} label="Back" className="mt-1.5" />
           </div>
         )}
       </div>

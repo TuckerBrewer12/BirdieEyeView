@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
 import type { RoundComparison } from "@/types/analytics";
+import { backNine, frontNine, nineTotal } from "@/domain";
 import { pebbleBeach } from "@/testing/fixtures/courses";
 import {
   halfMoonBayCourse,
@@ -95,6 +96,7 @@ describe("useRoundDetailPageViewModel", () => {
     act(() => result.current.enterEditMode());
     act(() => result.current.handleScoreChange(1, "strokes", null));
     expect(result.current.totalScore).toBe(73);
+    expect(result.current.holes.map((h) => h.hole)).not.toContain(1);
   });
 
   it("saves edited strokes and leaves edit mode", async () => {
@@ -324,13 +326,12 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.packSelectedCharts).toBe(true);
   });
 
-  it("totals each nine from the hole scores", async () => {
+  it("exposes one list of holes that each nine totals from", async () => {
     const { result } = renderVm("round-1", { detailRounds: [halfMoonBayRound] });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.frontNine.holes).toHaveLength(9);
-    expect(result.current.backNine.holes).toHaveLength(9);
-    expect(result.current.frontNine.total).toBe(40);
-    expect(result.current.backNine.total).toBe(38);
+    expect(result.current.holes).toHaveLength(18);
+    expect(nineTotal(frontNine(result.current.holes))).toBe(40);
+    expect(nineTotal(backNine(result.current.holes))).toBe(38);
   });
 
   it("withholds a nine's total until all nine holes are played", async () => {
@@ -342,10 +343,9 @@ describe("useRoundDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     // Bars still draw, but a part-played nine reports no total — the same rule
     // the round-list query uses, so the two screens cannot disagree.
-    expect(result.current.frontNine.holes).toHaveLength(5);
-    expect(result.current.frontNine.total).toBeNull();
-    expect(result.current.backNine.holes).toHaveLength(0);
-    expect(result.current.backNine.total).toBeNull();
+    expect(result.current.holes).toHaveLength(5);
+    expect(nineTotal(frontNine(result.current.holes))).toBeNull();
+    expect(backNine(result.current.holes)).toHaveLength(0);
   });
 
   it("buckets every hole into a score count", async () => {
