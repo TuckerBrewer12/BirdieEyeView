@@ -30,7 +30,8 @@ describe("PublicNav", () => {
     const toggle = screen.getByRole("button", { name: "Toggle menu" });
     fireEvent.click(toggle);
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Try It Out" })[0]);
+    // The menu's copy of the link; the desktop row renders first.
+    fireEvent.click(screen.getAllByRole("button", { name: "Try It Out" }).at(-1)!);
 
     expect(toggle).toHaveAttribute("aria-expanded", "false");
   });
