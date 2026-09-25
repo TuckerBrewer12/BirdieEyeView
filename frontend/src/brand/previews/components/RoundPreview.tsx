@@ -9,6 +9,8 @@ export default function RoundPreviewPreview() {
   return (
     <>
       <RoundPreview round={best} variant="highlight" onClick={() => {}} />
+      <RoundPreview round={evenPar} variant="highlight" onClick={() => {}} />
+      <RoundPreview round={overPar} variant="highlight" onClick={() => {}} />
       <RoundPreview round={null} variant="highlight" />
       <RoundPreview round={overPar} />
       <RoundPreview round={evenPar} />

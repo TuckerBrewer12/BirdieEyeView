@@ -4,6 +4,7 @@ import { cn } from "@/brand/cn";
 import { HoleScoreBars, type HoleScore } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { motion as motionTokens, toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
+import { strokesToPar } from "@/domain";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateHistory, formatRoundDateShort, roundDateParts } from "@/lib/roundDate";
 import type { RoundSummary } from "@/types/golf";
@@ -23,6 +24,11 @@ interface RoundHighlightProps {
 }
 
 type RoundPreviewProps = RoundListProps | RoundHighlightProps;
+
+/** The stored figure, or the one the score and course par imply. */
+function toParOf(round: RoundSummary): number | null {
+  return round.to_par ?? strokesToPar(round.total_score, round.course_par);
+}
 
 function holesOf(round: RoundSummary): HoleScore[] {
   return (round.hole_scores_summary ?? []).map((hole) => ({
@@ -54,8 +60,8 @@ export function RoundPreview(props: RoundPreviewProps) {
         </span>
         <div className="flex items-center gap-3">
           <span className="text-sm font-bold text-foreground">{round.total_score ?? "—"}</span>
-          <span className={cn("rounded px-1.5 py-0.5 text-xs font-semibold", toParBadgeClass(round.to_par))}>
-            {toParLabel(round.to_par) ?? "—"}
+          <span className={cn("rounded px-1.5 py-0.5 text-xs font-semibold", toParBadgeClass(toParOf(round)))}>
+            {toParLabel(toParOf(round)) ?? "—"}
           </span>
         </div>
       </div>
@@ -63,7 +69,8 @@ export function RoundPreview(props: RoundPreviewProps) {
   }
 
   const dateParts = roundDateParts(round.date);
-  const toParText = toParLabel(round.to_par);
+  const toPar = toParOf(round);
+  const toParText = toParLabel(toPar);
   const holes = holesOf(round);
 
   return (
@@ -138,7 +145,7 @@ export function RoundPreview(props: RoundPreviewProps) {
           {round.total_score ?? "—"}
         </span>
         {toParText && (
-          <span className={cn("text-meta font-bold", toParTextClass(round.to_par))}>
+          <span className={cn("text-meta font-bold", toParTextClass(toPar))}>
             {toParText}
           </span>
         )}
@@ -164,7 +171,8 @@ function RoundHighlight({
   }
 
   const dateLabel = formatRoundDateShort(round.date);
-  const toParText = toParLabel(round.to_par);
+  const toPar = toParOf(round);
+  const toParText = toParLabel(toPar);
 
   return (
     <button
@@ -190,7 +198,12 @@ function RoundHighlight({
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
             {dateLabel ?? "—"}
-            {toParText ? ` · ${toParText}` : ""}
+            {toParText && (
+              <>
+                {" · "}
+                <span className={cn("font-semibold", toParTextClass(toPar))}>{toParText}</span>
+              </>
+            )}
           </div>
         </div>
       </div>

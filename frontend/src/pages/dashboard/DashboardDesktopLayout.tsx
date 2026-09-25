@@ -110,18 +110,11 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
 
             <Card className="lg:col-span-3">
               <CardContent>
-                {bestRound ? (
-                  <RoundPreview
-                    round={bestRound}
-                    variant="highlight"
-                    label="Best Recent Round"
-                    onClick={() => navigate(`/rounds/${bestRound.id}`)}
-                  />
-                ) : (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
-                    Play a round to unlock highlights!
-                  </div>
-                )}
+                <RoundPreview
+                  round={bestRound}
+                  variant="highlight"
+                  onClick={bestRound ? () => navigate(`/rounds/${bestRound.id}`) : undefined}
+                />
               </CardContent>
             </Card>
 
