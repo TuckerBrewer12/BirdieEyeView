@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SCORE_KINDS, scoreKind, strokesToPar } from "./score";
+import { SCORE_KINDS, scoreKind, strokesToPar } from "../score";
 
 describe("scoreKind", () => {
   it("returns null when strokes or par is missing", () => {

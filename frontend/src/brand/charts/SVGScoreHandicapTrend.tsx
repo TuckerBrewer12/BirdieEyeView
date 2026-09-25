@@ -8,6 +8,7 @@ import {
   colors,
   fonts,
   motion as motionTokens,
+  toParFill,
   typography,
 } from "@/brand/theme";
 import { formatHandicapIndex } from "@/domain/handicap";
@@ -31,11 +32,7 @@ interface SVGScoreHandicapTrendProps {
 }
 
 function getDotColor(toPar: number | null): string {
-  if (toPar == null || toPar === 0) return colors.score.par.base;
-  if (toPar <= -2) return colors.score.eagle.base;
-  if (toPar === -1) return colors.score.birdie.base;
-  if (toPar === 1) return colors.score.bogey.base;
-  return colors.score.double.base;
+  return toParFill(toPar);
 }
 
 function getBarColor(d: ScoreHandicapTrendPoint): string {

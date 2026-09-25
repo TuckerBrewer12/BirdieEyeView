@@ -5,7 +5,7 @@ import {
   netScore,
   ratedCourseHandicap,
   whsWindow,
-} from "./handicap";
+} from "../handicap";
 
 describe("courseHandicap", () => {
   it("matches the WHS rounded formula", () => {

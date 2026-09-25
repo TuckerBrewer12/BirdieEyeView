@@ -91,7 +91,6 @@ export {
 } from "./components/Sheet";
 
 // Charts
-export { ActivityHeatmap, buildActivityHeatmapDays } from "./charts/ActivityHeatmap";
-export type { HeatmapDay } from "./charts/ActivityHeatmap";
+export { ActivityHeatmap } from "./charts/ActivityHeatmap";
 export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
 export type { ScoreHandicapTrendPoint } from "./charts/SVGScoreHandicapTrend";

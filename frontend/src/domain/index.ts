@@ -35,3 +35,6 @@ export {
   nineTotal,
 } from "./round";
 export type { PlayedHole, StrokeOverrides } from "./round";
+
+export { activityDays } from "./activity";
+export type { ActivityDay } from "./activity";

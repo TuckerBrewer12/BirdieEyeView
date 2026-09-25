@@ -1,6 +1,7 @@
 import { Trophy } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { colors, fonts, scoreKeyFor, typography } from "@/brand/theme";
+import { holePar } from "@/domain/round";
 import type { Round } from "@/types/golf";
 
 interface BestRoundHighlightProps {
@@ -99,7 +100,8 @@ function MiniScorecard({ round }: { round: Round }) {
       {rows.map((nine, rowIdx) => (
         <div key={rowIdx} className="flex gap-chip">
           {nine.map((h, i) => {
-            if (h.strokes == null || h.par_played == null) {
+            const par = h.hole_number != null ? holePar(round, h.hole_number) : null;
+            if (h.strokes == null || par == null) {
               return (
                 <div
                   key={i}
@@ -111,7 +113,7 @@ function MiniScorecard({ round }: { round: Round }) {
             }
             return (
               <div key={i}>
-                <MiniScoreSvg strokes={h.strokes} par={h.par_played} />
+                <MiniScoreSvg strokes={h.strokes} par={par} />
               </div>
             );
           })}
