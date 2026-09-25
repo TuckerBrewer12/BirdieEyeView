@@ -8,70 +8,32 @@ import { queryKeys } from "@/data/queryKeys";
 import {
   backNine as backNineHoles,
   frontNine as frontNineHoles,
-  nineTotal,
   playedHoles,
   roundPar,
   totalStrokes,
-  type PlayedHole,
 } from "@/domain/round";
 import { getTee, teeColors } from "@/domain/course";
 import { netScore, ratedCourseHandicap } from "@/domain/handicap";
 import { chooseCompatibleTee } from "@/lib/teeColor";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
-import type { Course, CourseSummary, Round } from "@/types/golf";
-import type { ComparisonRow, RoundComparison } from "@/types/analytics";
+import type { CourseSummary, Round } from "@/types/golf";
+import type { RoundComparison } from "@/types/analytics";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
+import {
+  CHART_TABS,
+  chartsFrom,
+  courseEditFromRound,
+  nineFrom,
+  teeRatingLabel,
+  type ChartTabItem,
+  type ChartTabKey,
+  type ComparisonChartItem,
+  type CourseEdit,
+  type Nine,
+} from "./roundDetailModel";
 
+export type { ChartTabItem, ChartTabKey, ComparisonChartItem, CourseEdit, Nine };
 export type EditedScores = Record<number, { strokes: number | null; putts: number | null; gir?: boolean | null }>;
-
-export type CourseEdit =
-  | { status: "linked"; course: Course }
-  | { status: "custom"; name: string }
-  | { status: "picking" };
-
-export type ChartTabKey = "score" | "short_game" | "gir";
-
-export interface ChartTabItem {
-  key: ChartTabKey;
-  label: string;
-}
-
-export interface ComparisonChartItem {
-  title: string;
-  primaryLabel: string;
-  group: ChartTabKey;
-  bars: { label: string; value: number | null; sampleSize: number }[];
-}
-
-const CHART_TABS: { key: ChartTabKey; label: string }[] = [
-  { key: "score", label: "Score" },
-  { key: "short_game", label: "Short Game" },
-  { key: "gir", label: "GIR" },
-];
-
-function barsFrom(rows: ComparisonRow[]) {
-  return rows.map((row) => ({
-    label: row.label,
-    value: row.primary_value,
-    sampleSize: row.sample_size,
-  }));
-}
-
-function chartsFrom(comparison: RoundComparison): ComparisonChartItem[] {
-  return [
-    { title: "Score", primaryLabel: "score", group: "score", bars: barsFrom(comparison.score) },
-    { title: "Putts", primaryLabel: "putts", group: "short_game", bars: barsFrom(comparison.putts) },
-    { title: "GIR", primaryLabel: "GIR", group: "gir", bars: barsFrom(comparison.gir) },
-    { title: "3-Putts", primaryLabel: "3-putts", group: "short_game", bars: barsFrom(comparison.three_putts) },
-    { title: "Putts per GIR", primaryLabel: "putts/GIR", group: "short_game", bars: barsFrom(comparison.putts_per_gir) },
-    { title: "Scrambling", primaryLabel: "scramble successes", group: "short_game", bars: barsFrom(comparison.scrambling) },
-  ];
-}
-
-export interface Nine {
-  holes: PlayedHole[];
-  total: number | null;
-}
 
 export interface RoundDetailUiState {
   loading: boolean;
@@ -136,16 +98,6 @@ export interface RoundDetailPageViewModel extends RoundDetailUiState {
   keepUnlinkedName: () => void;
   startChangingCourse: () => void;
   selectChartTab: (key: string) => void;
-}
-
-function courseEditFromRound(round: Round): CourseEdit {
-  if (round.course) return { status: "linked", course: round.course };
-  if (round.course_name_played) return { status: "custom", name: round.course_name_played };
-  return { status: "picking" };
-}
-
-function nineFrom(holes: PlayedHole[]): Nine {
-  return { holes, total: nineTotal(holes) };
 }
 
 export function useRoundDetailPageViewModel(
@@ -372,10 +324,7 @@ export function useRoundDetailPageViewModel(
   const editCustomName = courseEdit.status === "custom" ? courseEdit.name : undefined;
   const activeTeeBox = editMode ? editedTeeBox : round?.tee_box;
   const tee = getTee(activeCourse, activeTeeBox);
-  const teeRating =
-    tee?.course_rating != null && tee?.slope_rating != null
-      ? `${tee.course_rating} / ${tee.slope_rating}`
-      : null;
+  const teeRating = teeRatingLabel(tee);
 
   const courseHandicap = ratedCourseHandicap(handicapIndex, tee, coursePar);
   const netScoreValue = courseHandicap != null && totalScore > 0
