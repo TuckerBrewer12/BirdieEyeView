@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Course, Round } from "@/types/golf";
 import { populatedRounds } from "@/testing/fixtures/rounds";
-import { playedHoles, roundPar, roundToPar, summaryHoles, summaryToPar, totalStrokes } from "./round";
+import { playedHoles, roundPar, roundToPar, summaryHoles, summaryToPar, totalStrokes } from "../round";
 
 const linked: Course = {
   id: "c1",

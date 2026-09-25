@@ -1,18 +1,11 @@
 import { cn } from "@/brand/cn";
-import { toParLabel, toParTextClass } from "@/brand/theme";
+import { toParBadgeClass, toParLabel } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
 import type { RoundSummary } from "@/types/golf";
 
 interface RecentRoundsTableProps {
   rounds: RoundSummary[];
   onRoundClick?: (roundId: string) => void;
-}
-
-function toParChipClass(toPar: number | null): string {
-  if (toPar == null || toPar === 0) return "bg-muted text-muted-foreground";
-  return toPar < 0
-    ? "bg-score-birdie/15 text-score-birdie"
-    : "bg-score-bogey/15 text-score-bogey";
 }
 
 export function RecentRoundsTable({ rounds, onRoundClick }: RecentRoundsTableProps) {
@@ -55,8 +48,7 @@ export function RecentRoundsTable({ rounds, onRoundClick }: RecentRoundsTablePro
                 <span
                   className={cn(
                     "inline-block rounded-full px-1.5 py-0.5 text-label font-semibold",
-                    toParChipClass(r.to_par),
-                    toParTextClass(r.to_par),
+                    toParBadgeClass(r.to_par),
                   )}
                 >
                   {toParLabel(r.to_par) ?? "—"}

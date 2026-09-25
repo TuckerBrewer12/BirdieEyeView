@@ -7,7 +7,7 @@ import {
   longestTee,
   teeColors,
   teeYards,
-} from "./course";
+} from "../course";
 
 const white: Tee = {
   color: "White",
