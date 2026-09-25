@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
-import { chartColors, colors, toParFill } from "@/brand/theme";
+import { colors, toParFill } from "@/brand/theme";
 import { formatHandicapIndex } from "@/domain/handicap";
 import type { DashboardPageViewModel, DualTrendPoint, TrendView } from "./useDashboardPageViewModel";
 import {
@@ -13,6 +13,7 @@ import {
   deltaColor,
   deltaText,
   firstNameOf,
+  goalTargetLabel,
   greetingDateLabel,
   heroKpis,
   lastRoundChips,
@@ -32,6 +33,7 @@ const INK     = "#131613";
 const MUTED   = "#6b7765";
 const LINE    = "#e4e9e1";
 const TICK    = "#1b2b1e";
+const TRACK   = "#e5e7eb";
 const PRIMARY = "#2d7a3a";
 const SANS    = '"Inter", system-ui, -apple-system, sans-serif';
 const MONO    = '"Inter", system-ui, -apple-system, sans-serif';
@@ -162,7 +164,7 @@ function SolidMiniStrip({ color }: { color: string }) {
 function BenchmarkBar({ value, tour }: { value: number | null; tour: number }) {
   const pct = Math.min(100, Math.max(0, value ?? 0));
   return (
-    <div style={{ position: "relative", height: 6, background: chartColors.muted, borderRadius: 99, marginTop: 6, marginBottom: 4 }}>
+    <div style={{ position: "relative", height: 6, background: TRACK, borderRadius: 99, marginTop: 6, marginBottom: 4 }}>
       <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: `${pct}%`, background: PRIMARY, borderRadius: 99 }} />
       <div style={{ position: "absolute", top: -2, left: `${tour}%`, width: 2, height: 10, background: TICK, borderRadius: 99 }} />
     </div>
@@ -469,8 +471,6 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
   const coloredMix = colorizeMix(l20ScoreMix);
   const legend = mixLegend(l20ScoreMix);
   const mixCountLabel = mixHoleCountLabel(mixHoleCount);
-  const scramblingPctLabel = pctLabel(scramblingPct);
-  const upAndDownPctLabel = pctLabel(upAndDownPct);
   const scoreLineColor = palette.scoreLineColor;
   const handicapLineColor = palette.handicapLineColor;
   const dateLabel = greetingDateLabel();
@@ -495,7 +495,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
   const recentRoundRows = recentSummaries.map((summary) =>
     toRoundRow(summary, roundsById.get(summary.id)),
   );
-  const goalTarget = scoringGoal != null ? `Break ${scoringGoal + 1}` : null;
+  const goalTarget = goalTargetLabel(scoringGoal);
   const hasScoringGoal = scoringGoal != null;
 
   if (!data) return null;
@@ -685,7 +685,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
               {goalTarget}
             </span>
           </div>
-          <div style={{ height: 5, background: chartColors.muted, borderRadius: 99, position: "relative", overflow: "visible" }}>
+          <div style={{ height: 5, background: TRACK, borderRadius: 99, position: "relative", overflow: "visible" }}>
             <div style={{ height: "100%", width: `${goalProgressPct}%`, background: PRIMARY, borderRadius: 99 }} />
             <div style={{
               position: "absolute",
@@ -723,19 +723,20 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           {([
-            { label: "Scrambling", value: scramblingPct, display: scramblingPctLabel, tour: 57 },
-            { label: "Up & Down",  value: upAndDownPct,  display: upAndDownPctLabel,  tour: 50 },
-          ] as const).map(({ label, value, display, tour }) => (
+            { label: "Scrambling", value: scramblingPct, tour: 57 },
+            { label: "Up & Down",  value: upAndDownPct,  tour: 50 },
+          ] as const).map(({ label, value, tour }) => (
             <div key={label}>
               <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "1.3px", textTransform: "uppercase", color: MUTED, marginBottom: 4 }}>
                 {label}
               </div>
               <div style={{ fontFamily: MONO, fontSize: 26, fontWeight: 600, letterSpacing: "-0.5px", color: INK, lineHeight: 1 }}>
-                {display}
+                {value != null ? value.toFixed(0) : "—"}
+                {value != null && <span style={{ fontSize: 16, fontWeight: 500, color: MUTED }}>%</span>}
               </div>
               <BenchmarkBar value={value} tour={tour} />
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>You {display}</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>You {pctLabel(value)}</span>
                 <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>Tour {tour}%</span>
               </div>
             </div>
