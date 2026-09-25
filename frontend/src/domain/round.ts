@@ -1,15 +1,21 @@
-import type { Course, Round } from "@/types/golf";
+import type { Course, Round, RoundSummary } from "@/types/golf";
 import { coursePar, getHole } from "./course";
-import { strokesToPar } from "./score";
+import { scoreKind, strokesToPar, type ScoreKind } from "./score";
 
 export type StrokeOverrides = Record<number, { strokes: number | null }>;
 
-export interface PlayedHole {
+/** One hole of a round and how it was scored. An unscored hole keeps its slot with null strokes. */
+export interface HoleResult {
   hole: number;
-  strokes: number;
+  strokes: number | null;
   par: number | null;
   toPar: number | null;
-  putts: number | null;
+  kind: ScoreKind | null;
+}
+
+/** A hole that was actually played, with its stats. */
+export interface PlayedHole extends HoleResult {
+  strokes: number;
   gir: boolean | null;
   fairway: boolean | null;
 }
@@ -53,6 +59,15 @@ export function holePar(
   return round.hole_scores.find((score) => score.hole_number === holeNumber)?.par_played ?? null;
 }
 
+export function holeResult(hole: number, strokes: number | null, par: number | null): HoleResult {
+  return { hole, strokes, par, toPar: strokesToPar(strokes, par), kind: scoreKind(strokes, par) };
+}
+
+/** The per-hole strip a round summary carries, unscored holes included. */
+export function summaryHoles(summary: RoundSummary): HoleResult[] {
+  return (summary.hole_scores_summary ?? []).map((hole) => holeResult(hole.h, hole.s, hole.p));
+}
+
 /** Scored holes with resolved par. Missing par stays null — never a silent 4. */
 export function playedHoles(round: Round, course?: Course | null): PlayedHole[] {
   return round.hole_scores
@@ -60,10 +75,8 @@ export function playedHoles(round: Round, course?: Course | null): PlayedHole[] 
     .map((score) => {
       const par = holePar(round, score.hole_number!, course);
       return {
-        hole: score.hole_number!,
+        ...holeResult(score.hole_number!, score.strokes, par),
         strokes: score.strokes!,
-        par,
-        toPar: strokesToPar(score.strokes, par),
         putts: score.putts,
         gir: score.green_in_regulation,
         fairway: score.fairway_hit,

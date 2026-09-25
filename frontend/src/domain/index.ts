@@ -29,9 +29,11 @@ export {
   roundPar,
   roundToPar,
   holePar,
+  holeResult,
+  summaryHoles,
   playedHoles,
   frontNine,
   backNine,
   nineTotal,
 } from "./round";
-export type { PlayedHole, StrokeOverrides } from "./round";
+export type { HoleResult, PlayedHole, StrokeOverrides } from "./round";

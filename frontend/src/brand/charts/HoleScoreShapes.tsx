@@ -1,8 +1,8 @@
-import { colors, fonts, scoreKeyFor, typography } from "@/brand/theme";
-import type { HoleScore } from "./HoleScoreBars";
+import { colors, fonts, typography } from "@/brand/theme";
+import type { HoleResult, ScoreKind } from "@/domain";
 
 interface HoleScoreShapesProps {
-  holes: HoleScore[];
+  holes: HoleResult[];
 }
 
 const VB_W = 30;
@@ -12,8 +12,7 @@ const cy = VB_H / 2;
 const r = 9.5;
 
 /** One hole drawn the way a scorecard marks it: circles under par, boxes over. */
-function HoleShape({ strokes, par }: { strokes: number; par: number }) {
-  const key = scoreKeyFor(strokes, par);
+function HoleShape({ kind: key, strokes }: { kind: ScoreKind; strokes: number | null }) {
   const fill = colors.score[key].base;
   const onFill = colors.score[key].onBase;
 
@@ -84,7 +83,7 @@ export function HoleScoreShapes({ holes }: HoleScoreShapesProps) {
       {rows.map((nine, rowIdx) => (
         <div key={rowIdx} className="flex gap-chip">
           {nine.map((hole) =>
-            hole.strokes == null || hole.par == null ? (
+            hole.kind == null ? (
               <div
                 key={hole.hole}
                 className="flex h-hole-h w-hole-w items-center justify-center rounded-sm bg-muted"
@@ -92,7 +91,7 @@ export function HoleScoreShapes({ holes }: HoleScoreShapesProps) {
                 <span className="text-caption font-bold text-muted-foreground">·</span>
               </div>
             ) : (
-              <HoleShape key={hole.hole} strokes={hole.strokes} par={hole.par} />
+              <HoleShape key={hole.hole} kind={hole.kind} strokes={hole.strokes} />
             ),
           )}
         </div>

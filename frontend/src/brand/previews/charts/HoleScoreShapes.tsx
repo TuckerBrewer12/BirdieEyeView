@@ -1,25 +1,17 @@
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
-import type { HoleScore } from "@/brand/charts/HoleScoreBars";
+import { holeResult, summaryHoles } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 
-function holesOf(index: number): HoleScore[] {
-  return (populatedRounds[index].hole_scores_summary ?? []).map((hole) => ({
-    hole: hole.h,
-    strokes: hole.s,
-    par: hole.p,
-  }));
-}
-
-const partlyScored = holesOf(0).map((hole, i) =>
-  i > 12 ? { ...hole, strokes: null } : hole,
+const partlyScored = summaryHoles(populatedRounds[0]).map((hole, i) =>
+  i > 12 ? holeResult(hole.hole, null, hole.par) : hole,
 );
 
 export default function HoleScoreShapesPreview() {
   return (
     <>
-      <HoleScoreShapes holes={holesOf(2)} />
+      <HoleScoreShapes holes={summaryHoles(populatedRounds[2])} />
       <HoleScoreShapes holes={partlyScored} />
-      <HoleScoreShapes holes={holesOf(0).slice(0, 9)} />
+      <HoleScoreShapes holes={summaryHoles(populatedRounds[0]).slice(0, 9)} />
     </>
   );
 }

@@ -92,7 +92,6 @@ export {
 // Charts
 export { ActivityHeatmap, buildActivityHeatmapDays } from "./charts/ActivityHeatmap";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
-export type { HoleScore } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
 export type { HeatmapDay } from "./charts/ActivityHeatmap";
 export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";

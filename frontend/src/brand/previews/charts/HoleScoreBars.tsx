@@ -1,20 +1,13 @@
-import { HoleScoreBars, type HoleScore } from "@/brand/charts/HoleScoreBars";
+import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
+import { summaryHoles } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
-
-function holesOf(index: number): HoleScore[] {
-  return (populatedRounds[index].hole_scores_summary ?? []).map((hole) => ({
-    hole: hole.h,
-    strokes: hole.s,
-    par: hole.p,
-  }));
-}
 
 export default function HoleScoreBarsPreview() {
   return (
     <>
-      <HoleScoreBars holes={holesOf(0)} />
-      <HoleScoreBars holes={holesOf(2)} />
-      <HoleScoreBars holes={holesOf(0).slice(0, 9)} />
+      <HoleScoreBars holes={summaryHoles(populatedRounds[0])} />
+      <HoleScoreBars holes={summaryHoles(populatedRounds[2])} />
+      <HoleScoreBars holes={summaryHoles(populatedRounds[0]).slice(0, 9)} />
     </>
   );
 }

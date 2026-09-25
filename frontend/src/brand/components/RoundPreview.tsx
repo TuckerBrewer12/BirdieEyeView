@@ -1,10 +1,10 @@
 import { Link2, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
-import { HoleScoreBars, type HoleScore } from "@/brand/charts/HoleScoreBars";
+import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { motion as motionTokens, toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
-import { strokesToPar } from "@/domain";
+import { strokesToPar, summaryHoles } from "@/domain";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateHistory, formatRoundDateShort, roundDateParts } from "@/lib/roundDate";
 import type { RoundSummary } from "@/types/golf";
@@ -28,14 +28,6 @@ type RoundPreviewProps = RoundListProps | RoundHighlightProps;
 /** The stored figure, or the one the score and course par imply. */
 function toParOf(round: RoundSummary): number | null {
   return round.to_par ?? strokesToPar(round.total_score, round.course_par);
-}
-
-function holesOf(round: RoundSummary): HoleScore[] {
-  return (round.hole_scores_summary ?? []).map((hole) => ({
-    hole: hole.h,
-    strokes: hole.s,
-    par: hole.p,
-  }));
 }
 
 export function RoundPreview(props: RoundPreviewProps) {
@@ -71,7 +63,7 @@ export function RoundPreview(props: RoundPreviewProps) {
   const dateParts = roundDateParts(round.date);
   const toPar = toParOf(round);
   const toParText = toParLabel(toPar);
-  const holes = holesOf(round);
+  const holes = summaryHoles(round);
 
   return (
     <motion.div
@@ -209,7 +201,7 @@ function RoundHighlight({
       </div>
 
       <div className="shrink-0 overflow-x-auto">
-        <HoleScoreShapes holes={holesOf(round)} />
+        <HoleScoreShapes holes={summaryHoles(round)} />
       </div>
 
       <div className="shrink-0 text-right">

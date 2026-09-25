@@ -1,14 +1,9 @@
 import { cn } from "@/brand/cn";
-import { scoreFill } from "@/brand/theme";
-
-export interface HoleScore {
-  hole: number;
-  strokes: number | null;
-  par: number | null;
-}
+import { colors } from "@/brand/theme";
+import type { HoleResult } from "@/domain";
 
 interface HoleScoreBarsProps {
-  holes: HoleScore[];
+  holes: HoleResult[];
   className?: string;
 }
 
@@ -19,13 +14,13 @@ export function HoleScoreBars({ holes, className }: HoleScoreBarsProps) {
   return (
     <div data-slot="hole-score-bars" className={cn("flex h-2.5 gap-bar", className)}>
       {holes.map((hole) => {
-        // Par is the baseline, so it recedes and the misses stand out.
-        const isPar = hole.strokes == null || hole.par == null || hole.strokes === hole.par;
+        // Par is the baseline, so it recedes and the misses stand out. Unscored holes read as par.
+        const kind = hole.kind ?? "par";
         return (
           <div
             key={hole.hole}
-            className={cn("flex-1 rounded-bar", isPar && "opacity-(--brand-opacity-recessed)")}
-            style={{ background: scoreFill(hole.strokes, hole.par) }}
+            className={cn("flex-1 rounded-bar", kind === "par" && "opacity-(--brand-opacity-recessed)")}
+            style={{ background: colors.score[kind].base }}
           />
         );
       })}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Course, Round } from "@/types/golf";
-import { playedHoles, roundPar, roundToPar, totalStrokes } from "./round";
+import { populatedRounds } from "@/testing/fixtures/rounds";
+import { playedHoles, roundPar, roundToPar, summaryHoles, totalStrokes } from "./round";
 
 const linked: Course = {
   id: "c1",
@@ -95,6 +96,7 @@ describe("playedHoles", () => {
         strokes: 5,
         par: null,
         toPar: null,
+        kind: null,
         putts: null,
         gir: null,
         fairway: null,
@@ -106,5 +108,30 @@ describe("playedHoles", () => {
     const holes = playedHoles(round({ course: linked }));
     expect(holes[0].par).toBe(4);
     expect(holes[1].par).toBe(3);
+  });
+
+  it("classifies each hole once, on the model", () => {
+    const holes = playedHoles(round());
+    expect(holes.map((hole) => hole.kind)).toEqual(["bogey", "par"]);
+  });
+});
+
+describe("summaryHoles", () => {
+  it("keeps unscored holes in their slot", () => {
+    const summary = {
+      ...populatedRounds[0],
+      hole_scores_summary: [
+        { h: 1, s: 3, p: 4 },
+        { h: 2, s: null, p: 4 },
+      ],
+    };
+    expect(summaryHoles(summary)).toEqual([
+      { hole: 1, strokes: 3, par: 4, toPar: -1, kind: "birdie" },
+      { hole: 2, strokes: null, par: 4, toPar: null, kind: null },
+    ]);
+  });
+
+  it("is empty when the summary carries no strip", () => {
+    expect(summaryHoles({ ...populatedRounds[0], hole_scores_summary: null })).toEqual([]);
   });
 });
