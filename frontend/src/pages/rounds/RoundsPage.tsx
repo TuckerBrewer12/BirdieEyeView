@@ -15,7 +15,14 @@ import {
   ToggleGroupItem,
 } from "@/brand";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { formatCourseName } from "@/lib/courseName";
+import { pluralize } from "@/lib/pluralize";
+import type { RoundSummary } from "@/types/golf";
 import { useRoundsPageViewModel } from "./useRoundsPageViewModel";
+
+function linkTitleFor(round: RoundSummary): string {
+  return `Link "${round.course_name ? formatCourseName(round.course_name) : "this round"}" to a saved course`;
+}
 
 interface RoundsPageProps { userId: string; }
 
@@ -29,7 +36,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
   return (
     <div>
-      <PageHeader title="Rounds" subtitle={viewModel.headerSubtitle} scrollThreshold={100} />
+      <PageHeader title="Rounds" subtitle={`${pluralize(viewModel.rounds.length, "round")} played`} scrollThreshold={100} />
 
       <div className="flex flex-col gap-2.5 pb-6">
 
@@ -57,7 +64,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
         <div className="flex items-center justify-between px-1 pt-0.5">
           <span className="text-[13px] font-bold text-foreground">
-            {viewModel.resultCountLabel}
+            {pluralize(viewModel.filteredRounds.length, "round")}
           </span>
           <SortControl
             label={viewModel.sortLabel}
@@ -93,7 +100,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
               <Collapse open={viewModel.isLinkOpen(r.id)}>
                 <CourseLinkSearch
-                  title={viewModel.linkTitleFor(r)}
+                  title={linkTitleFor(r)}
                   query={viewModel.linkQuery}
                   results={viewModel.linkResults}
                   searching={viewModel.linkSearching}

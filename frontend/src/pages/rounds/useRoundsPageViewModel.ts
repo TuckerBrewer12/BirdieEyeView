@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
 import { queryKeys } from "@/data/queryKeys";
-import { pluralize } from "@/lib/pluralize";
 import type { RoundSummary, CourseSummary } from "@/types/golf";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 
@@ -27,10 +26,6 @@ export interface RoundsUiState {
   filteredRounds: RoundSummary[];
   visibleRounds: RoundSummary[];
   remainingCount: number;
-  /** "12 rounds played" — the count of everything, for the sticky header. */
-  headerSubtitle: string;
-  /** "4 rounds" — the count after filtering and search, for the list toolbar. */
-  resultCountLabel: string;
   search: string;
   filterMode: FilterMode;
   chips: FilterChipItem[];
@@ -60,7 +55,6 @@ export interface RoundsPageViewModel extends RoundsUiState {
   /** Whether this round's course-link panel is the one showing. */
   isLinkOpen: (roundId: string) => boolean;
   toggleLink: (roundId: string) => void;
-  linkTitleFor: (round: RoundSummary) => string;
 }
 
 /**
@@ -174,12 +168,6 @@ export function useRoundsPageViewModel(
     [linkingRoundId, closeLink, openLink],
   );
 
-  const linkTitleFor = useCallback(
-    (round: RoundSummary) =>
-      `Link "${round.course_name ? formatCourseName(round.course_name) : "this round"}" to a saved course`,
-    [],
-  );
-
   const handleSort = useCallback((key: SortKey) => {
     if (sortKey === key) { setSortAsc((prev) => !prev); }
     else { setSortKey(key); setSortAsc(key === "course_name"); }
@@ -238,8 +226,6 @@ export function useRoundsPageViewModel(
     filteredRounds,
     visibleRounds,
     remainingCount,
-    headerSubtitle: `${pluralize(rounds.length, "round")} played`,
-    resultCountLabel: pluralize(filteredRounds.length, "round"),
     loadMore,
     search,
     setSearch,
@@ -265,6 +251,5 @@ export function useRoundsPageViewModel(
     closeLink,
     isLinkOpen,
     toggleLink,
-    linkTitleFor,
   };
 }
