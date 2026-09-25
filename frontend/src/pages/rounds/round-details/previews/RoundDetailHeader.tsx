@@ -1,15 +1,9 @@
-import {
-  RoundDetailHeader,
-  type HeaderHole,
-} from "../components/RoundDetailHeader";
+import { holeResult, type HoleResult } from "@/domain";
+import { RoundDetailHeader } from "../components/RoundDetailHeader";
 
-/** strokes-to-par per hole, turned into the {hole, strokes, par} the bars take. */
-function nine(from: number, toPars: number[]): HeaderHole[] {
-  return toPars.map((toPar, i) => ({
-    hole: from + i,
-    par: 4,
-    strokes: 4 + toPar,
-  }));
+/** strokes-to-par per hole, as par-4 holes. */
+function nine(from: number, toPars: number[]): HoleResult[] {
+  return toPars.map((toPar, i) => holeResult(from + i, 4 + toPar, 4));
 }
 
 // One of every bucket, so each bar height and chip colour is exercised.

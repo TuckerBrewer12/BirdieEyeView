@@ -4,7 +4,7 @@ import { cn } from "@/brand/cn";
 import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { motion as motionTokens, toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
-import { summaryHoles, summaryToPar } from "@/domain";
+import { summaryScorecard } from "@/domain";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateHistory, formatRoundDateShort, roundDateParts } from "@/lib/roundDate";
 import type { RoundSummary } from "@/types/golf";
@@ -31,6 +31,7 @@ export function RoundPreview(props: RoundPreviewProps) {
   }
 
   const { round, variant, onClick, onLinkClick } = props;
+  const card = summaryScorecard(round);
 
   if (variant === "history") {
     return (
@@ -46,9 +47,9 @@ export function RoundPreview(props: RoundPreviewProps) {
           {formatRoundDateHistory(round.date) ?? "—"}
         </span>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-foreground">{round.total_score ?? "—"}</span>
-          <span className={cn("rounded px-1.5 py-0.5 text-xs font-semibold", toParBadgeClass(summaryToPar(round)))}>
-            {toParLabel(summaryToPar(round)) ?? "—"}
+          <span className="text-sm font-bold text-foreground">{card.totalScore ?? "—"}</span>
+          <span className={cn("rounded px-1.5 py-0.5 text-xs font-semibold", toParBadgeClass(card.toPar))}>
+            {toParLabel(card.toPar) ?? "—"}
           </span>
         </div>
       </div>
@@ -56,9 +57,7 @@ export function RoundPreview(props: RoundPreviewProps) {
   }
 
   const dateParts = roundDateParts(round.date);
-  const toPar = summaryToPar(round);
-  const toParText = toParLabel(toPar);
-  const holes = summaryHoles(round);
+  const toParText = toParLabel(card.toPar);
 
   return (
     <motion.div
@@ -109,10 +108,10 @@ export function RoundPreview(props: RoundPreviewProps) {
         </div>
 
         <div className="flex items-center gap-2 text-meta text-muted-foreground">
-          {round.front_nine != null && round.back_nine != null && (
+          {card.frontNine.total != null && card.backNine.total != null && (
             <span>
               <strong className="font-bold text-foreground">
-                {round.front_nine}·{round.back_nine}
+                {card.frontNine.total}·{card.backNine.total}
               </strong>
             </span>
           )}
@@ -124,15 +123,15 @@ export function RoundPreview(props: RoundPreviewProps) {
           {round.tee_box && <span>{round.tee_box}</span>}
         </div>
 
-        <HoleScoreBars holes={holes} className="mt-1" />
+        <HoleScoreBars holes={card.holes} className="mt-1" />
       </div>
 
       <div className="flex flex-col items-end gap-0.5 whitespace-nowrap pr-3.5 text-right">
         <span className="text-2xl font-bold leading-none tracking-stat text-foreground">
-          {round.total_score ?? "—"}
+          {card.totalScore ?? "—"}
         </span>
         {toParText && (
-          <span className={cn("text-meta font-bold", toParTextClass(toPar))}>
+          <span className={cn("text-meta font-bold", toParTextClass(card.toPar))}>
             {toParText}
           </span>
         )}
@@ -158,8 +157,8 @@ function RoundHighlight({
   }
 
   const dateLabel = formatRoundDateShort(round.date);
-  const toPar = summaryToPar(round);
-  const toParText = toParLabel(toPar);
+  const card = summaryScorecard(round);
+  const toParText = toParLabel(card.toPar);
 
   return (
     <button
@@ -188,7 +187,7 @@ function RoundHighlight({
             {toParText && (
               <>
                 {" · "}
-                <span className={cn("font-semibold", toParTextClass(toPar))}>{toParText}</span>
+                <span className={cn("font-semibold", toParTextClass(card.toPar))}>{toParText}</span>
               </>
             )}
           </div>
@@ -196,12 +195,12 @@ function RoundHighlight({
       </div>
 
       <div className="shrink-0 overflow-x-auto">
-        <HoleScoreShapes holes={summaryHoles(round)} />
+        <HoleScoreShapes scorecard={card} />
       </div>
 
       <div className="shrink-0 text-right">
         <div className="text-4xl font-black tracking-tighter text-card-foreground transition-colors group-hover:text-primary">
-          {round.total_score ?? "—"}
+          {card.totalScore ?? "—"}
         </div>
       </div>
     </button>

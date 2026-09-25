@@ -1,6 +1,7 @@
 import { cn } from "@/brand/cn";
 import { PageTitle } from "@/brand";
-import { colors, scoreFill, scoreKeyFor, toParDisplay, type ScoreKey } from "@/brand/theme";
+import { colors, toParDisplay, type ScoreKey } from "@/brand/theme";
+import type { Nine } from "@/domain";
 import { pluralNoun } from "@/lib/pluralize";
 
 const BAR_HEIGHTS: Record<ScoreKey, number> = {
@@ -16,18 +17,6 @@ const CHIPS: { key: ScoreKey; noun: string; plural?: string; absorbs?: ScoreKey 
   { key: "eagle",  noun: "Eagle" },
 ];
 
-export interface HeaderHole {
-  hole: number;
-  strokes: number;
-  par: number | null;
-}
-
-export interface HeaderNine {
-  holes: HeaderHole[];
-  /** Omitted for a part-played nine, matching the round list. */
-  total: number | null;
-}
-
 export interface RoundDetailHeaderProps {
   courseName: string;
   /** "Mon · Jun 15 · 2026" */
@@ -39,14 +28,14 @@ export interface RoundDetailHeaderProps {
     net?: number | null;
     courseHandicap?: number | null;
   };
-  nines?: { front: HeaderNine; back: HeaderNine };
+  nines?: { front: Nine; back: Nine };
   stats?: { putts?: number | null; gir?: number | null };
   counts?: Partial<Record<ScoreKey, number>>;
   className?: string;
 }
 
-function Nine({ nine, label, className }: {
-  nine: HeaderNine;
+function NineBars({ nine, label, className }: {
+  nine: Nine;
   label: string;
   className?: string;
 }) {
@@ -55,7 +44,8 @@ function Nine({ nine, label, className }: {
     <div className={cn("min-w-0 flex-1", className)}>
       <div className="flex h-6 items-end gap-hair">
         {nine.holes.map((h) => {
-          const key = scoreKeyFor(h.strokes, h.par);
+          // Unscored holes read as par.
+          const key = h.kind ?? "par";
           return (
             <div
               key={h.hole}
@@ -63,7 +53,7 @@ function Nine({ nine, label, className }: {
               className={cn("flex-1 rounded-t-tick", key === "par" && "opacity-(--brand-opacity-recessed)")}
               style={{
                 height: `${BAR_HEIGHTS[key]}%`,
-                background: scoreFill(h.strokes, h.par),
+                background: colors.score[key].base,
               }}
             />
           );
@@ -151,8 +141,8 @@ export function RoundDetailHeader({
 
         {hasBars && nines && (
           <div className="flex min-w-0 flex-1 items-start gap-3.5 overflow-hidden">
-            <Nine nine={nines.front} label="Front" />
-            <Nine nine={nines.back} label="Back" className="mt-1.5" />
+            <NineBars nine={nines.front} label="Front" />
+            <NineBars nine={nines.back} label="Back" className="mt-1.5" />
           </div>
         )}
       </div>

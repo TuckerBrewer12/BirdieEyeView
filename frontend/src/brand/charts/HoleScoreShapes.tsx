@@ -1,8 +1,8 @@
 import { colors, fonts, typography } from "@/brand/theme";
-import type { HoleResult, ScoreKind } from "@/domain";
+import type { Scorecard, ScoreKind } from "@/domain";
 
 interface HoleScoreShapesProps {
-  holes: HoleResult[];
+  scorecard: Scorecard;
 }
 
 const VB_W = 30;
@@ -71,18 +71,16 @@ function HoleShape({ kind: key, strokes }: { kind: ScoreKind; strokes: number | 
   );
 }
 
-/** The scored holes as marked shapes, laid out a nine to a row. */
-export function HoleScoreShapes({ holes }: HoleScoreShapesProps) {
-  if (holes.length === 0) return null;
-
-  const played = holes.slice(0, 18);
-  const rows = [played.slice(0, 9), played.slice(9, 18)].filter((row) => row.length > 0);
+/** The card's holes as marked shapes, one row per nine. */
+export function HoleScoreShapes({ scorecard }: HoleScoreShapesProps) {
+  const nines = [scorecard.frontNine, scorecard.backNine].filter((nine) => nine.holes.length > 0);
+  if (nines.length === 0) return null;
 
   return (
     <div data-slot="hole-score-shapes" className="flex flex-col gap-chip">
-      {rows.map((nine, rowIdx) => (
+      {nines.map((nine, rowIdx) => (
         <div key={rowIdx} className="flex gap-chip">
-          {nine.map((hole) =>
+          {nine.holes.map((hole) =>
             hole.kind == null ? (
               <div
                 key={hole.hole}

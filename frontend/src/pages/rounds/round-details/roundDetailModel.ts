@@ -1,4 +1,3 @@
-import { nineTotal, type PlayedHole } from "@/domain/round";
 import type { Course, Round } from "@/types/golf";
 import type { ComparisonRow, RoundComparison } from "@/types/analytics";
 
@@ -19,11 +18,6 @@ export interface ComparisonChartItem {
   primaryLabel: string;
   group: ChartTabKey;
   bars: { label: string; value: number | null; sampleSize: number }[];
-}
-
-export interface Nine {
-  holes: PlayedHole[];
-  total: number | null;
 }
 
 export const CHART_TABS: ChartTabItem[] = [
@@ -55,10 +49,6 @@ export function courseEditFromRound(round: Round): CourseEdit {
   if (round.course) return { status: "linked", course: round.course };
   if (round.course_name_played) return { status: "custom", name: round.course_name_played };
   return { status: "picking" };
-}
-
-export function nineFrom(holes: PlayedHole[]): Nine {
-  return { holes, total: nineTotal(holes) };
 }
 
 export function teeRatingLabel(

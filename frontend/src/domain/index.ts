@@ -30,14 +30,12 @@ export {
   roundToPar,
   holePar,
   holeResult,
-  summaryHoles,
-  summaryToPar,
   playedHoles,
-  frontNine,
-  backNine,
-  nineTotal,
 } from "./round";
 export type { HoleResult, PlayedHole, StrokeOverrides } from "./round";
 
 export { activityDays } from "./activity";
 export type { ActivityDay } from "./activity";
+
+export { frontNine, backNine, scorecard, summaryScorecard } from "./scorecard";
+export type { Nine, Scorecard } from "./scorecard";

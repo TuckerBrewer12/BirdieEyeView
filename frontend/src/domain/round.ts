@@ -1,4 +1,4 @@
-import type { Course, Round, RoundSummary } from "@/types/golf";
+import type { Course, Round } from "@/types/golf";
 import { coursePar, getHole } from "./course";
 import { scoreKind, strokesToPar, type ScoreKind } from "./score";
 
@@ -16,6 +16,7 @@ export interface HoleResult {
 /** A hole that was actually played, with its stats. */
 export interface PlayedHole extends HoleResult {
   strokes: number;
+  putts: number | null;
   gir: boolean | null;
   fairway: boolean | null;
 }
@@ -63,16 +64,6 @@ export function holeResult(hole: number, strokes: number | null, par: number | n
   return { hole, strokes, par, toPar: strokesToPar(strokes, par), kind: scoreKind(strokes, par) };
 }
 
-/** The per-hole strip a round summary carries, unscored holes included. */
-export function summaryHoles(summary: RoundSummary): HoleResult[] {
-  return (summary.hole_scores_summary ?? []).map((hole) => holeResult(hole.h, hole.s, hole.p));
-}
-
-/** The stored to-par, or the one the score and course par imply. */
-export function summaryToPar(summary: RoundSummary): number | null {
-  return summary.to_par ?? strokesToPar(summary.total_score, summary.course_par);
-}
-
 /** Scored holes with resolved par. Missing par stays null — never a silent 4. */
 export function playedHoles(round: Round, course?: Course | null): PlayedHole[] {
   return round.hole_scores
@@ -88,16 +79,4 @@ export function playedHoles(round: Round, course?: Course | null): PlayedHole[] 
       };
     })
     .sort((a, b) => a.hole - b.hole);
-}
-
-export function frontNine(holes: PlayedHole[]): PlayedHole[] {
-  return holes.filter((hole) => hole.hole <= 9);
-}
-
-export function backNine(holes: PlayedHole[]): PlayedHole[] {
-  return holes.filter((hole) => hole.hole >= 10);
-}
-
-export function nineTotal(holes: PlayedHole[]): number | null {
-  return holes.length === 9 ? holes.reduce((sum, hole) => sum + hole.strokes, 0) : null;
 }
