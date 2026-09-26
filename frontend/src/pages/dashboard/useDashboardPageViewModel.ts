@@ -4,17 +4,19 @@ import { queryKeys } from "@/data/queryKeys";
 import { Round } from "@/domain";
 import type { DashboardData, User } from "@/types/golf";
 import type { MilestoneDto } from "@/types/api";
-import type { AnalyticsData, GoalReport } from "@/types/analytics";
+import type { AnalyticsData } from "@/types/analytics";
 import {
   dashboardRepository,
   type DashboardRepository,
 } from "./dashboardRepository";
 import {
   dualTrendFrom,
+  goalProgress,
   pickBestRound,
   scoreMixItems,
   whsFrom,
   type DualTrendPoint,
+  type GoalProgress,
   type HiTrend,
   type ScoreMixItem,
   type TrendView,
@@ -28,7 +30,6 @@ export interface DashboardPageViewModel {
   data: DashboardData | null;
   trends: AnalyticsData | null;
   user: User | null;
-  goalReport: GoalReport | null;
   loading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -55,9 +56,8 @@ export interface DashboardPageViewModel {
   recentRounds: Round[];
   sidebarRounds: Round[];
   whs: WhsBreakdown;
-  scoringGoal: number | null;
-  goalProgressPct: number | null;
-  goalOnTrack: boolean;
+  /** Null until the player sets a scoring goal. */
+  goal: GoalProgress | null;
 }
 
 const EMPTY_WHS: WhsBreakdown = {
@@ -123,7 +123,6 @@ export function useDashboardPageViewModel(
     data,
     trends,
     user: user ?? null,
-    goalReport: report,
     loading,
     error: error as Error | null,
     refetch,
@@ -150,8 +149,6 @@ export function useDashboardPageViewModel(
     recentRounds: rounds.slice(0, 3),
     sidebarRounds: rounds.slice(0, 10),
     whs: data ? whsFrom(data.whs) : EMPTY_WHS,
-    scoringGoal: user?.scoring_goal ?? null,
-    goalProgressPct: user?.scoring_goal ? (report?.progress_pct ?? null) : null,
-    goalOnTrack: report?.on_track ?? false,
+    goal: goalProgress(user?.scoring_goal, report),
   };
 }
