@@ -454,8 +454,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
     l5ScoringAvg,
     l20ScoreMix,
     mixHoleCount,
-    scramblingPct,
-    upAndDownPct,
+    stats,
     handicapDelta,
     openHandicapSheet,
     trendView,
@@ -465,6 +464,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
     scoringGoal,
   } = vm;
 
+  const { scramblingPct, upAndDownPct } = stats;
   const firstName = firstNameOf(vm.user);
   const last20ScoringAvgLabel = avgLabel(last20ScoringAvg);
   const coloredMix = colorizeMix(l20ScoreMix);
@@ -482,8 +482,8 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
   const kpis = heroKpis({
     bestRound: data?.best_round,
     totalRounds: data?.total_rounds,
-    putts: vm.putts,
-    girPct: vm.girPct,
+    putts: stats.putts,
+    girPct: stats.girPct,
   });
   const tabs = trendTabs(trendView);
   const lastRound = recentRounds[0] ? toRoundRow(recentRounds[0]) : null;

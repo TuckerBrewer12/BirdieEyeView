@@ -22,7 +22,11 @@ export {
   formatHandicapIndex,
   WHS_ADJUSTMENT_BY_RATED_ROUNDS,
   whsWindow,
+  handicapDelta,
+  handicapTrend,
+  whsBreakdown,
 } from "./handicap";
+export type { HandicapTrend, WhsBreakdown, WhsRound } from "./handicap";
 
 export {
   holeToPar,
@@ -36,6 +40,7 @@ export {
   roundToPar,
   roundPutts,
   roundGir,
+  bestRound,
   withStrokes,
   roundFromSummary,
   roundFromDto,
@@ -44,3 +49,11 @@ export type { HoleScore, Round, RoundCourse, StrokeOverrides } from "./round";
 
 export { activityDays } from "./activity";
 export type { ActivityDay } from "./activity";
+
+export { scoreMix, mixHoleCount, scoringAvg, recentStats } from "./stats";
+export type { ScoreMixItem, RecentStats } from "./stats";
+
+export { goalProgressPct } from "./goal";
+
+export { lifetimeMilestones } from "./milestones";
+export type { MilestoneFact, MilestoneKind } from "./milestones";

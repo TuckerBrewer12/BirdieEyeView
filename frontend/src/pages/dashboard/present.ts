@@ -6,19 +6,14 @@ import {
   roundScore,
   roundToPar,
   type HoleScore,
+  type MilestoneFact,
   type Round,
-} from "@/domain";
-import type { User } from "@/types/golf";
-import type { GoalReport } from "@/types/analytics";
-import {
-  type DualTrendPoint,
-  type HiTrend,
   type ScoreMixItem,
-  type TrendView,
   type WhsRound,
-} from "./model";
-
-export type { TrendView };
+} from "@/domain";
+import type { Milestone, User } from "@/types/golf";
+import type { GoalReport } from "@/types/analytics";
+import type { TrendView } from "./useDashboardPageViewModel";
 
 const SCORE_LABELS: Record<ScoreKey, string> = {
   eagle: "Eagle+",
@@ -68,8 +63,8 @@ export function pctLabel(value: number | null | undefined, empty = "—"): strin
   return value != null ? `${value.toFixed(0)}%` : empty;
 }
 
-export function puttsLabel(putts: number): string {
-  return putts > 0 ? putts.toFixed(1) : "—";
+export function puttsLabel(putts: number | null): string {
+  return putts != null && putts > 0 ? putts.toFixed(1) : "—";
 }
 
 export function deltaText(
@@ -132,20 +127,20 @@ export function mixHoleCountLabel(count: number): string | null {
   return count > 0 ? `${count} holes` : null;
 }
 
-export function girDonutData(pct: number): { value: number }[] {
-  return [{ value: pct }, { value: 100 - pct }];
+/** An unknown rate draws an empty ring. */
+export function girDonutData(pct: number | null): { value: number }[] {
+  return [{ value: pct ?? 0 }, { value: 100 - (pct ?? 0) }];
 }
 
-export function puttsClamped(putts: number): number {
-  return Math.max(20, Math.min(40, putts));
-}
-
-export function puttsGaugeData(putts: number): { value: number }[] {
-  const clamped = puttsClamped(putts);
+/** An unknown average draws an empty gauge. */
+export function puttsGaugeData(putts: number | null): { value: number }[] {
+  if (putts == null) return [{ value: 0 }, { value: 20 }];
+  const clamped = Math.max(20, Math.min(40, putts));
   return [{ value: clamped - 20 }, { value: 20 }];
 }
 
-export function puttsColor(putts: number, palette = dashboardPalette): string {
+export function puttsColor(putts: number | null, palette = dashboardPalette): string {
+  if (putts == null) return palette.mutedFill;
   if (putts < 30) return palette.girColor;
   if (putts <= 35) return palette.warningColor;
   return palette.dangerColor;
@@ -154,8 +149,8 @@ export function puttsColor(putts: number, palette = dashboardPalette): string {
 export function heroKpis(opts: {
   bestRound: number | null | undefined;
   totalRounds: number | null | undefined;
-  putts: number;
-  girPct: number;
+  putts: number | null;
+  girPct: number | null;
 }): { label: string; value: string }[] {
   return [
     { label: "BEST", value: opts.bestRound?.toString() ?? "—" },
@@ -284,4 +279,33 @@ export function whsContextNote(countUsed: number): string {
   return `The World Handicap System uses your best ${countUsed || "N"} differentials from the last 20 rounds. Differentials measure how well you played relative to the course difficulty.`;
 }
 
-export type { DualTrendPoint, HiTrend };
+const MILESTONE_TYPES: Record<MilestoneFact["kind"], Milestone["type"]> = {
+  under_par: "under_par",
+  score_break: "score_break",
+  putt_break: "putt_break",
+  par_streak: "par_streak",
+};
+
+function milestoneLabel({ kind, value }: MilestoneFact): string {
+  switch (kind) {
+    case "under_par":
+      return `First round under par (${value})`;
+    case "score_break":
+      return `Best score: ${value} or better`;
+    case "putt_break":
+      return `Fewest putts: ${value}`;
+    case "par_streak":
+      return `Par streak: ${value} in a row`;
+  }
+}
+
+/** Feed rows for the milestone card: label, and the date as "YYYY/MM/DD". */
+export function presentMilestones(facts: MilestoneFact[]): Milestone[] {
+  return facts.map((fact) => ({
+    type: MILESTONE_TYPES[fact.kind],
+    label: milestoneLabel(fact),
+    date: fact.date.replace(/-/g, "/"),
+    course: fact.course,
+    round_id: fact.roundId,
+  }));
+}

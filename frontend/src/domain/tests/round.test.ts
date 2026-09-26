@@ -3,6 +3,7 @@ import type { Course, Round as RoundDto } from "@/types/golf";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 import {
   backNine,
+  bestRound,
   frontNine,
   holeKind,
   nineTotal,
@@ -156,5 +157,12 @@ describe("withStrokes", () => {
     const round = withStrokes(roundFromDto(dto()), { 1: { strokes: 4 } });
     expect(roundScore(round)).toBe(7);
     expect(roundToPar(round)).toBe(0);
+  });
+});
+
+describe("bestRound", () => {
+  it("picks the round with the lowest score from its holes", () => {
+    expect(bestRound(populatedRounds.map(roundFromSummary))?.id).toBe("round-3");
+    expect(bestRound([])).toBeNull();
   });
 });

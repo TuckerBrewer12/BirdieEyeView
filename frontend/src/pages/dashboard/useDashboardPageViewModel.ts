@@ -1,39 +1,57 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
-import { roundFromDto, roundFromSummary, type Round } from "@/domain";
+import {
+  bestRound as pickBestRound,
+  goalProgressPct,
+  handicapDelta,
+  handicapTrend,
+  lifetimeMilestones,
+  mixHoleCount,
+  recentStats,
+  roundFromDto,
+  roundFromSummary,
+  scoreMix,
+  scoringAvg,
+  whsBreakdown,
+  type HandicapTrend,
+  type MilestoneFact,
+  type RecentStats,
+  type Round,
+  type ScoreMixItem,
+  type WhsBreakdown,
+} from "@/domain";
 import type { DashboardData, User } from "@/types/golf";
 import type { AnalyticsData, GoalReport } from "@/types/analytics";
 import {
   dashboardRepository,
   type DashboardRepository,
 } from "./dashboardRepository";
-import {
-  dualTrendFrom,
-  girPct,
-  goalBarPct,
-  goalProgressPct,
-  handicapDelta,
-  hiTrend,
-  last20ScoringAvg,
-  last5ScoringAvg,
-  milestonesFrom,
-  mixFromRows,
-  mixHoleCount,
-  pickBestRound,
-  puttsAvg,
-  scramblingPct,
-  upAndDownPct,
-  whsBreakdown,
-  type DualTrendPoint,
-  type HiTrend,
-  type ScoreMixItem,
-  type TrendView,
-  type WhsBreakdown,
-} from "./model";
 
-export type { DualTrendPoint, HiTrend, TrendView, WhsBreakdown };
-export type { ScoreMixItem };
+export type TrendView = "score" | "hcp";
+
+/** One score-trend row joined with the handicap row at the same index, for the dual chart. */
+export interface DualTrendPoint {
+  round_index: number;
+  total_score: number | null;
+  to_par: number | null;
+  handicap_index: number | null;
+  course_name?: string | null;
+  used_in_hi?: boolean | null;
+  differential?: number | null;
+  hi_threshold?: number | null;
+}
+
+function dualTrendFrom(trends: AnalyticsData | null): DualTrendPoint[] {
+  if (!trends) return [];
+  return trends.score_trend.map((row, i) => ({
+    ...row,
+    handicap_index: trends.handicap_trend[i]?.handicap_index ?? null,
+    used_in_hi: trends.handicap_trend[i]?.used_in_hi ?? null,
+    differential: trends.handicap_trend[i]?.differential ?? null,
+    hi_threshold: trends.handicap_trend[i]?.hi_threshold ?? null,
+  }));
+}
 
 export interface DashboardPageViewModel {
   data: DashboardData | null;
@@ -44,18 +62,16 @@ export interface DashboardPageViewModel {
   error: Error | null;
   refetch: () => void;
   dualData: DualTrendPoint[];
-  recentMilestones: ReturnType<typeof milestonesFrom>;
+  recentMilestones: MilestoneFact[];
   last20ScoringAvg: number | null;
   l5ScoringAvg: number | null;
   handicapDelta: number | null;
+  handicapTrend: HandicapTrend | null;
   l20ScoreMix: ScoreMixItem[];
   mixHoleCount: number;
-  hiTrend: HiTrend | null;
-  girPct: number;
   recentDistribution: ScoreMixItem[];
-  scramblingPct: number | null;
-  upAndDownPct: number | null;
-  putts: number;
+  /** GIR, scrambling, up-and-down, and putts over the last 5 rounds. */
+  stats: RecentStats;
   handicapSheetOpen: boolean;
   openHandicapSheet: () => void;
   closeHandicapSheet: () => void;
@@ -68,7 +84,6 @@ export interface DashboardPageViewModel {
   sidebarRounds: Round[];
   whs: WhsBreakdown;
   scoringGoal: number | null;
-  goalBarPct: number;
   goalProgressPct: number | null;
   goalOnTrack: boolean;
 }
@@ -136,8 +151,8 @@ export function useDashboardPageViewModel(
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
 
   const dualData = useMemo(() => dualTrendFrom(trends), [trends]);
-  const last20 = useMemo(() => last20ScoringAvg(trends), [trends]);
   const report = goalReport ?? null;
+  const distribution = trends?.score_type_distribution ?? [];
 
   return {
     data,
@@ -148,21 +163,15 @@ export function useDashboardPageViewModel(
     error: error as Error | null,
     refetch,
     dualData,
-    recentMilestones: milestonesFrom(trends),
-    last20ScoringAvg: last20,
-    l5ScoringAvg: last5ScoringAvg(trends),
+    recentMilestones: lifetimeMilestones(trends?.notable_achievements),
+    last20ScoringAvg: scoringAvg(trends),
+    l5ScoringAvg: scoringAvg(trends, 5),
     handicapDelta: handicapDelta(trends),
-    l20ScoreMix: mixFromRows(trends?.score_type_distribution ?? []),
-    mixHoleCount: mixHoleCount(trends),
-    hiTrend: hiTrend(trends),
-    girPct: girPct(trends),
-    recentDistribution: mixFromRows((trends?.score_type_distribution ?? []).slice(-5), {
-      roundTenths: true,
-      dropZero: true,
-    }),
-    scramblingPct: scramblingPct(trends),
-    upAndDownPct: upAndDownPct(trends),
-    putts: puttsAvg(trends, data?.average_putts),
+    handicapTrend: handicapTrend(trends),
+    l20ScoreMix: scoreMix(distribution),
+    mixHoleCount: mixHoleCount(distribution),
+    recentDistribution: scoreMix(distribution.slice(-5), { roundTenths: true, dropZero: true }),
+    stats: recentStats(trends, { puttsFallback: data?.average_putts }),
     handicapSheetOpen,
     openHandicapSheet,
     closeHandicapSheet,
@@ -172,10 +181,9 @@ export function useDashboardPageViewModel(
     bestRound,
     recentRounds,
     sidebarRounds: rounds.slice(0, 10),
-    whs: whsBreakdown(dualData, trends, data?.handicap_index),
+    whs: whsBreakdown(trends, data?.handicap_index),
     scoringGoal: user?.scoring_goal ?? null,
-    goalBarPct: goalBarPct(report),
-    goalProgressPct: goalProgressPct(user?.scoring_goal, report, last20, dualData),
+    goalProgressPct: goalProgressPct(user?.scoring_goal, report, trends),
     goalOnTrack: report?.on_track ?? false,
   };
 }
