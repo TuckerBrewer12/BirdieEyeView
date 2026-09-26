@@ -125,3 +125,13 @@ function puttsPer18(
 function clampPct(value: number): number {
   return Math.max(0, Math.min(100, value));
 }
+
+export type PuttsBand = "good" | "fair" | "poor";
+
+/** Under 30 putts a round is good, up to 35 fair, more is where strokes leak. */
+export function puttsBand(putts: number | null): PuttsBand | null {
+  if (putts == null) return null;
+  if (putts < 30) return "good";
+  if (putts <= 35) return "fair";
+  return "poor";
+}

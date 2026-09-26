@@ -1,10 +1,6 @@
 import { useNavigate, Link } from "react-router-dom";
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 import {
-  BarChart, Bar, PieChart, Pie, Cell,
-  CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer,
-} from "recharts";
-import {
   ActivityHeatmap,
   Button,
   Card,
@@ -14,33 +10,19 @@ import {
   CardTitle,
   RoundPreview,
   SVGScoreHandicapTrend,
-  chartColors,
-  chartLayout,
-  chartTickStyle,
-  chartTooltipStyle,
   colors,
 } from "@/brand";
 import { formatHandicapIndex, type HandicapTrend } from "@/domain/handicap";
+import { GirDonut } from "./components/GirDonut";
+import { GoalCard } from "./components/GoalCard";
 import { MilestoneFeed } from "./components/MilestoneFeed";
 import { ProfileHeroBanner } from "./components/ProfileHeroBanner";
+import { PuttsGauge } from "./components/PuttsGauge";
 import { RecentRoundsTable } from "./components/RecentRoundsTable";
 import { ScanActionCard } from "./components/ScanActionCard";
+import { ScoreMixChart } from "./components/ScoreMixChart";
 import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
-import {
-  avgLabel,
-  colorizeMix,
-  dashboardPalette,
-  firstNameOf,
-  girDonutData,
-  goalAverageLabel,
-  goalNumberLabel,
-  goalTargetLabel,
-  pctLabel,
-  presentMilestones,
-  puttsColor,
-  puttsGaugeData,
-  puttsLabel,
-} from "./present";
+import { avgLabel, dashboardPalette, firstNameOf, pctLabel, presentMilestones } from "./present";
 
 function ShortGameSparkline({
   scrambling,
@@ -94,39 +76,15 @@ function MiniKpi({ label, value, trend }: {
 
 export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
-  const palette = dashboardPalette;
   const {
-    data, user, goalReport, trends,
+    data, user, trends,
     dualData, recentMilestones, last20ScoringAvg, handicapTrend,
     recentDistribution, stats,
-    bestRound, sidebarRounds,
-    scoringGoal, goalProgressPct, goalOnTrack,
+    bestRound, sidebarRounds, goal,
     openHandicapSheet,
   } = vm;
 
   if (!data) return null;
-
-  const { girPct, scramblingPct, upAndDownPct, putts } = stats;
-
-  const last20ScoringAvgLabel = avgLabel(last20ScoringAvg);
-  const girPctLabel = pctLabel(girPct);
-  const girDonut = girDonutData(girPct);
-  const coloredDistribution = colorizeMix(recentDistribution);
-  const scramblingPctLabel = pctLabel(scramblingPct);
-  const upAndDownPctLabel = pctLabel(upAndDownPct);
-  const puttsText = puttsLabel(putts);
-  const puttsGauge = puttsGaugeData(putts);
-  const puttsFill = puttsColor(putts, palette);
-  const handicapIndexLabel = formatHandicapIndex(data.handicap_index);
-  const firstName = firstNameOf(user);
-  const hasScoringGoal = scoringGoal != null;
-  const targetLabel = goalTargetLabel(scoringGoal);
-  const numberLabel = goalNumberLabel(scoringGoal);
-  const averageLabel = goalAverageLabel(goalReport);
-  const goalFocusHeadline = goalReport?.savers[0]?.headline ?? null;
-  const {
-    scoreLineColor, handicapLineColor, gridColor, girColor, warningColor, dangerColor, mutedFill,
-  } = palette;
 
   return (
     <div className="pb-12">
@@ -137,8 +95,8 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
           <ProfileHeroBanner
             user={user ?? null}
             handicapIndex={data.handicap_index}
-            handicapLabel={handicapIndexLabel}
-            firstName={firstName}
+            handicapLabel={formatHandicapIndex(data.handicap_index)}
+            firstName={firstNameOf(user)}
             onHandicapClick={openHandicapSheet}
           />
 
@@ -157,7 +115,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
             <Card className="lg:col-span-1">
               <CardContent>
                 <div className="flex flex-col gap-5 h-full justify-between">
-                  <MiniKpi label="Scoring Avg (L20)" value={last20ScoringAvgLabel} trend={handicapTrend} />
+                  <MiniKpi label="Scoring Avg (L20)" value={avgLabel(last20ScoringAvg)} trend={handicapTrend} />
                   <MiniKpi label="Total Rounds" value={data.total_rounds} />
                 </div>
               </CardContent>
@@ -171,9 +129,9 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
               <CardContent>
                 <SVGScoreHandicapTrend
                   data={dualData}
-                  scoreColor={scoreLineColor}
-                  handicapColor={handicapLineColor}
-                  gridColor={gridColor}
+                  scoreColor={dashboardPalette.scoreLineColor}
+                  handicapColor={dashboardPalette.handicapLineColor}
+                  gridColor={dashboardPalette.gridColor}
                 />
               </CardContent>
             </Card>
@@ -184,22 +142,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                 <CardDescription>Last 5 rounds</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="relative h-chart">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={girDonut} dataKey="value"
-                        innerRadius={50} outerRadius={68} stroke="none"
-                        startAngle={90} endAngle={-270}>
-                        <Cell fill={girColor} />
-                        <Cell fill={mutedFill} />
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <div className="text-4xl font-semibold tracking-stat text-card-foreground">{girPctLabel}</div>
-                    <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow">GIR</div>
-                  </div>
-                </div>
+                <GirDonut pct={stats.girPct} />
               </CardContent>
             </Card>
 
@@ -209,31 +152,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                 <CardDescription>Last 5 rounds · % of holes</CardDescription>
               </CardHeader>
               <CardContent>
-                {coloredDistribution.length > 0 ? (
-                  <div className="h-chart">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={coloredDistribution} margin={chartLayout.margin}>
-                      <CartesianGrid stroke={gridColor} vertical={false} />
-                      <XAxis dataKey="label" tick={{ ...chartTickStyle, fill: chartColors.axis, fontWeight: 700 }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ ...chartTickStyle, fill: chartColors.axis, fontWeight: 700 }} tickLine={false} axisLine={false} unit="%" />
-                      <Tooltip contentStyle={chartTooltipStyle}
-                        formatter={(value: number | string | ReadonlyArray<number | string> | undefined) => {
-                          const base = Array.isArray(value) ? value[0] : value;
-                          const n = typeof base === "number" ? base : Number(base);
-                          return [Number.isFinite(n) ? `${n.toFixed(1)}%` : `${String(base ?? "")}%`, ""];
-                        }}
-                      />
-                      <Bar dataKey="value" radius={chartLayout.barRadius} maxBarSize={28}>
-                        {coloredDistribution.map((entry) => (
-                          <Cell key={entry.name} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground text-center py-8">No data yet</div>
-                )}
+                <ScoreMixChart mix={recentDistribution} />
               </CardContent>
             </Card>
 
@@ -246,14 +165,14 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                 <div className="flex items-center justify-around mt-6">
                   <div className="text-center">
                     <div className="text-4xl font-semibold text-card-foreground tracking-stat">
-                      {scramblingPctLabel}
+                      {pctLabel(stats.scramblingPct)}
                     </div>
                     <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow mt-0.5">Scrambling</div>
                   </div>
                   <div className="w-px h-8 bg-muted" />
                   <div className="text-center">
                     <div className="text-4xl font-semibold text-card-foreground tracking-stat">
-                      {upAndDownPctLabel}
+                      {pctLabel(stats.upAndDownPct)}
                     </div>
                     <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow mt-0.5">Up & Down</div>
                   </div>
@@ -273,30 +192,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                 <CardDescription>Last 5 rounds</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="mx-auto w-full max-w-xs">
-                  <div className="relative h-30">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie data={puttsGauge} cx="50%" cy="100%"
-                          startAngle={180} endAngle={0}
-                          innerRadius={52} outerRadius={72}
-                          dataKey="value" stroke="none">
-                          <Cell fill={puttsFill} />
-                          <Cell fill={mutedFill} />
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pointer-events-none">
-                      <div className="text-2xl font-bold text-card-foreground">{puttsText}</div>
-                      <div className="text-caption text-muted-foreground uppercase tracking-kicker">Putts</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-center gap-3 text-caption text-muted-foreground font-semibold uppercase tracking-kicker mt-2">
-                  <span style={{ color: girColor }}>{"<30 great"}</span>
-                  <span style={{ color: warningColor }}>30-35</span>
-                  <span style={{ color: dangerColor }}>35+ work</span>
-                </div>
+                <PuttsGauge putts={stats.putts} />
               </CardContent>
             </Card>
 
@@ -312,71 +208,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
               </CardContent>
             </Card>
 
-            <Card
-              className="lg:col-span-1 cursor-pointer"
-              size="sm"
-              onClick={() => navigate("/the-lab")}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  navigate("/the-lab");
-                }
-              }}
-            >
-              <CardContent>
-              {hasScoringGoal && goalReport ? (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground mb-0.5">Scoring Goal</div>
-                      <div className="text-sm font-bold text-card-foreground">
-                        Target: {targetLabel}
-                      </div>
-                    </div>
-                    <span className="text-label font-semibold text-primary">Goals →</span>
-                  </div>
-                  <div className="mb-3">
-                    <div className="flex justify-between text-meta text-muted-foreground mb-1">
-                      <span>{averageLabel}</span>
-                      <span>Goal {numberLabel}</span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${goalProgressPct ?? 0}%`,
-                          background: goalOnTrack ? colors.score.birdie.base : `linear-gradient(90deg, ${colors.primary}, ${chartColors.axis})`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                  {goalFocusHeadline && (
-                    <p className="text-label text-muted-foreground leading-relaxed">
-                      <span className="font-semibold text-secondary-foreground">Focus: </span>
-                      {goalFocusHeadline}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col items-start justify-center h-full gap-2">
-                  <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">Scoring Goal</div>
-                  <p className="text-sm text-muted-foreground">Set a scoring goal to track your progress.</p>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate("/the-lab");
-                    }}
-                  >
-                    Set a goal →
-                  </Button>
-                </div>
-              )}
-              </CardContent>
-            </Card>
+            <GoalCard className="lg:col-span-1" goal={goal} onOpen={() => navigate("/the-lab")} />
 
             <div className="lg:col-span-3 flex justify-end gap-3 mt-4 lg:hidden">
               <Button nativeButton={false} render={<Link to="/rounds" />}>

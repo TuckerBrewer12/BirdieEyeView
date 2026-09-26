@@ -21,3 +21,31 @@ export function goalProgressPct(
   if (range <= 0) return 100;
   return Math.min(100, Math.max(0, ((start - current) / range) * 100));
 }
+
+/** Where the player stands against their scoring goal. */
+export interface GoalProgress {
+  /** The goal as stored: 79 means breaking 80. */
+  target: number;
+  /** Scoring average the goal report measured, once it has loaded. */
+  average: number | null;
+  progressPct: number | null;
+  onTrack: boolean;
+  /** Headline of the saver worth the most strokes. */
+  focus: string | null;
+}
+
+/** Null until the player has set a goal. */
+export function goalProgress(
+  scoringGoal: number | null | undefined,
+  goalReport: GoalReport | null,
+  trends: AnalyticsData | null,
+): GoalProgress | null {
+  if (scoringGoal == null) return null;
+  return {
+    target: scoringGoal,
+    average: goalReport?.scoring_average ?? null,
+    progressPct: goalProgressPct(scoringGoal, goalReport, trends),
+    onTrack: goalReport?.on_track ?? false,
+    focus: goalReport?.savers[0]?.headline ?? null,
+  };
+}

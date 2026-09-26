@@ -17,7 +17,6 @@ import {
   greetingDateLabel,
   heroKpis,
   lastRoundChips,
-  mixHoleCountLabel,
   mixLegend,
   colorizeMix,
   pctLabel,
@@ -446,7 +445,6 @@ function MobileScoreTrend({
 // ─── Props ────────────────────────────────────────────────────────────────────
 export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
-  const palette = dashboardPalette;
   const {
     data,
     dualData,
@@ -460,40 +458,18 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
     trendView,
     setTrendView,
     recentRounds,
-    goalProgressPct,
-    scoringGoal,
+    goal,
   } = vm;
 
-  const { scramblingPct, upAndDownPct } = stats;
-  const firstName = firstNameOf(vm.user);
-  const last20ScoringAvgLabel = avgLabel(last20ScoringAvg);
+  if (!data) return null;
+
   const coloredMix = colorizeMix(l20ScoreMix);
-  const legend = mixLegend(l20ScoreMix);
-  const mixCountLabel = mixHoleCountLabel(mixHoleCount);
-  const scoreLineColor = palette.scoreLineColor;
-  const handicapLineColor = palette.handicapLineColor;
-  const dateLabel = greetingDateLabel();
-  const handicapIndexLabel = formatHandicapIndex(data?.handicap_index);
   const hiDeltaText = deltaText(handicapDelta);
-  const hiDeltaColor = deltaColor(handicapDelta != null && handicapDelta < 0);
   const scoreDeltaValue = scoreDelta(last20ScoringAvg, l5ScoringAvg);
   const scoreDeltaText = deltaText(scoreDeltaValue, { vsL5: true });
   const scoreDeltaColor = deltaColor(scoreDeltaValue != null && scoreDeltaValue > 0);
-  const kpis = heroKpis({
-    bestRound: data?.best_round,
-    totalRounds: data?.total_rounds,
-    putts: stats.putts,
-    girPct: stats.girPct,
-  });
-  const tabs = trendTabs(trendView);
   const lastRound = recentRounds[0] ? toRoundRow(recentRounds[0]) : null;
-  const lastRoundHoles = lastRound?.holes ?? [];
-  const chips = lastRoundChips(lastRoundHoles);
   const recentRoundRows = recentRounds.map(toRoundRow);
-  const goalTarget = goalTargetLabel(scoringGoal);
-  const hasScoringGoal = scoringGoal != null;
-
-  if (!data) return null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, paddingTop: 8 }}>
@@ -502,10 +478,10 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "0 4px 6px" }}>
         <div>
           <div style={{ fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: "1.3px", textTransform: "uppercase", color: MUTED, marginBottom: 3 }}>
-            {dateLabel}
+            {greetingDateLabel()}
           </div>
           <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 700, letterSpacing: "-0.4px", color: INK, lineHeight: 1 }}>
-            Hi {firstName}
+            Hi {firstNameOf(vm.user)}
           </div>
         </div>
         <button
@@ -517,10 +493,10 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
             Handicap
           </div>
           <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 700, letterSpacing: "-0.5px", color: INK, lineHeight: 1 }}>
-            {handicapIndexLabel}
+            {formatHandicapIndex(data.handicap_index)}
           </div>
           {hiDeltaText && (
-            <div style={{ fontFamily: MONO, fontSize: 10, color: hiDeltaColor, whiteSpace: "nowrap", marginTop: 2 }}>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: deltaColor(handicapDelta != null && handicapDelta < 0), whiteSpace: "nowrap", marginTop: 2 }}>
               {hiDeltaText}
             </div>
           )}
@@ -554,7 +530,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
         {/* 2b. Big number + sparkline */}
         <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 14, alignItems: "center", marginBottom: 16 }}>
           <div style={{ fontFamily: SANS, fontSize: 64, fontWeight: 700, letterSpacing: "-2.4px", lineHeight: 1, color: INK }}>
-            {last20ScoringAvgLabel}
+            {avgLabel(last20ScoringAvg)}
           </div>
           <HeroSparkline data={dualData} />
         </div>
@@ -566,9 +542,9 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
               <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: MUTED }}>
                 Score Mix · L20
               </div>
-              {mixCountLabel && (
+              {mixHoleCount > 0 && (
                 <div style={{ fontFamily: MONO, fontSize: 10, color: MUTED, whiteSpace: "nowrap" }}>
-                  {mixCountLabel}
+                  {mixHoleCount} holes
                 </div>
               )}
             </div>
@@ -578,7 +554,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
               ))}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", marginTop: 8 }}>
-              {legend.map((item) => (
+              {mixLegend(l20ScoreMix).map((item) => (
                 <div key={item.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                   <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: INK }}>
                     {item.pctLabel}
@@ -598,7 +574,12 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
         {/* 2d. Metadata strip */}
         <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: 12, marginTop: 2 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", textAlign: "center" }}>
-            {kpis.map(({ label, value }) => (
+            {heroKpis({
+              bestRound: data.best_round,
+              totalRounds: data.total_rounds,
+              putts: stats.putts,
+              girPct: stats.girPct,
+            }).map(({ label, value }) => (
               <div key={label} style={{ padding: "0 2px" }}>
                 <div style={{ fontFamily: SANS, fontSize: 9, fontWeight: 700, letterSpacing: "1.2px", textTransform: "uppercase", color: MUTED, marginBottom: 3 }}>
                   {label}
@@ -640,9 +621,9 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
             </div>
           </div>
 
-          {lastRoundHoles.length > 0 && (
+          {lastRound.holes.length > 0 && (
             <div style={{ marginTop: 14 }}>
-              <MicroBars holes={lastRoundHoles} />
+              <MicroBars holes={lastRound.holes} />
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
                 {["1", "9", "18"].map((n) => (
                   <div key={n} style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>{n}</div>
@@ -653,7 +634,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
 
           <div style={{ borderTop: `1px dashed ${LINE}`, paddingTop: 12, marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {chips.map((chip) => (
+              {lastRoundChips(lastRound.holes).map((chip) => (
                 <div key={chip.label} style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: SANS, fontSize: 10, color: MUTED }}>
                   <div style={{ width: 8, height: 8, borderRadius: 2, background: chip.color, flexShrink: 0 }} />
                   <span>{chip.count} {chip.label}</span>
@@ -672,19 +653,19 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
       )}
 
       {/* ── 4. Inline Goal Row ────────────────────────────────────────────────── */}
-      {hasScoringGoal && goalProgressPct != null && (
+      {goal?.progressPct != null && (
         <div style={{ padding: "6px 6px 0" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
             <span style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: INK }}>Goal</span>
             <span style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: PRIMARY, marginLeft: 4 }}>
-              {goalTarget}
+              {goalTargetLabel(goal.target)}
             </span>
           </div>
           <div style={{ height: 5, background: TRACK, borderRadius: 99, position: "relative", overflow: "visible" }}>
-            <div style={{ height: "100%", width: `${goalProgressPct}%`, background: PRIMARY, borderRadius: 99 }} />
+            <div style={{ height: "100%", width: `${goal.progressPct}%`, background: PRIMARY, borderRadius: 99 }} />
             <div style={{
               position: "absolute",
-              top: -3, left: `${goalProgressPct}%`,
+              top: -3, left: `${goal.progressPct}%`,
               width: 2, height: 11,
               background: TICK, borderRadius: 99,
               transform: "translateX(-50%)",
@@ -697,10 +678,10 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
       <div style={{ borderRadius: 16, border: `1px solid ${LINE}`, padding: 16, background: "linear-gradient(180deg, rgba(238,247,240,0.4) 0%, white 50%)" }}>
         <MobileScoreTrend
           dualData={dualData}
-          scoreColor={scoreLineColor}
-          handicapColor={handicapLineColor}
+          scoreColor={dashboardPalette.scoreLineColor}
+          handicapColor={dashboardPalette.handicapLineColor}
           view={trendView}
-          trendTabs={tabs}
+          trendTabs={trendTabs(trendView)}
           onViewChange={setTrendView}
         />
       </div>
@@ -718,8 +699,8 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           {([
-            { label: "Scrambling", value: scramblingPct, tour: 57 },
-            { label: "Up & Down",  value: upAndDownPct,  tour: 50 },
+            { label: "Scrambling", value: stats.scramblingPct, tour: 57 },
+            { label: "Up & Down",  value: stats.upAndDownPct,  tour: 50 },
           ] as const).map(({ label, value, tour }) => (
             <div key={label}>
               <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, letterSpacing: "1.3px", textTransform: "uppercase", color: MUTED, marginBottom: 4 }}>

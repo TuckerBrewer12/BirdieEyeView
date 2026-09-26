@@ -12,7 +12,6 @@ import {
   type WhsRound,
 } from "@/domain";
 import type { Milestone, User } from "@/types/golf";
-import type { GoalReport } from "@/types/analytics";
 import type { TrendView } from "./useDashboardPageViewModel";
 
 const SCORE_LABELS: Record<ScoreKey, string> = {
@@ -38,11 +37,7 @@ const SCORE_COLORS: Record<ScoreKey, string> = {
 export const dashboardPalette = {
   scoreLineColor: colors.primary,
   handicapLineColor: colors.score.double.text,
-  girColor: colors.score.birdie.base,
-  warningColor: colors.score.eagle.base,
-  dangerColor: colors.destructive,
   gridColor: colors.border,
-  mutedFill: colors.muted,
 };
 
 export function firstNameOf(user: User | null): string {
@@ -121,29 +116,6 @@ export function mixLegend(mix: ScoreMixItem[]): MixLegendItem[] {
     pctLabel: `${item.value.toFixed(0)}%`,
     color: item.color,
   }));
-}
-
-export function mixHoleCountLabel(count: number): string | null {
-  return count > 0 ? `${count} holes` : null;
-}
-
-/** An unknown rate draws an empty ring. */
-export function girDonutData(pct: number | null): { value: number }[] {
-  return [{ value: pct ?? 0 }, { value: 100 - (pct ?? 0) }];
-}
-
-/** An unknown average draws an empty gauge. */
-export function puttsGaugeData(putts: number | null): { value: number }[] {
-  if (putts == null) return [{ value: 0 }, { value: 20 }];
-  const clamped = Math.max(20, Math.min(40, putts));
-  return [{ value: clamped - 20 }, { value: 20 }];
-}
-
-export function puttsColor(putts: number | null, palette = dashboardPalette): string {
-  if (putts == null) return palette.mutedFill;
-  if (putts < 30) return palette.girColor;
-  if (putts <= 35) return palette.warningColor;
-  return palette.dangerColor;
 }
 
 export function heroKpis(opts: {
@@ -236,18 +208,9 @@ export function lastRoundChips(holes: HoleScore[]): ScoreChip[] {
   return items;
 }
 
-export function goalTargetLabel(scoringGoal: number | null | undefined): string | null {
-  return scoringGoal != null ? `Break ${scoringGoal + 1}` : null;
-}
-
-export function goalNumberLabel(scoringGoal: number | null | undefined): string | null {
-  return scoringGoal != null ? String(scoringGoal + 1) : null;
-}
-
-export function goalAverageLabel(goalReport: GoalReport | null): string | null {
-  return goalReport?.scoring_average != null
-    ? `Avg ${goalReport.scoring_average.toFixed(1)}`
-    : null;
+/** A stored goal of 79 reads "Break 80". */
+export function goalTargetLabel(target: number): string {
+  return `Break ${target + 1}`;
 }
 
 export function courseLabelForWhs(row: WhsRound): string {
