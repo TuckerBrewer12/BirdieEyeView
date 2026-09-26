@@ -6,13 +6,13 @@ import {
 } from "recharts";
 import {
   ActivityHeatmap,
-  BestRoundHighlight,
   Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  RoundPreview,
   SVGScoreHandicapTrend,
   chartColors,
   chartLayout,
@@ -36,7 +36,6 @@ import {
   goalNumberLabel,
   goalTargetLabel,
   pctLabel,
-  presentBestRound,
   puttsColor,
   puttsGaugeData,
   puttsLabel,
@@ -100,7 +99,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
     dualData, recentMilestones, last20ScoringAvg, hiTrend,
     girPct, recentDistribution, scramblingPct,
     upAndDownPct, putts,
-    bestRound, bestRoundDetail, sidebarRounds,
+    bestRound, sidebarRounds,
     scoringGoal, goalBarPct, goalOnTrack,
     openHandicapSheet,
   } = vm;
@@ -118,7 +117,6 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const puttsFill = puttsColor(putts, palette);
   const handicapIndexLabel = formatHandicapIndex(data.handicap_index);
   const firstName = firstNameOf(user);
-  const best = presentBestRound(bestRound);
   const hasScoringGoal = scoringGoal != null;
   const targetLabel = goalTargetLabel(scoringGoal);
   const numberLabel = goalNumberLabel(scoringGoal);
@@ -146,9 +144,9 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
 
             <Card className="lg:col-span-3">
               <CardContent>
-                <BestRoundHighlight
-                  round={best}
-                  detail={bestRoundDetail}
+                <RoundPreview
+                  round={bestRound}
+                  variant="highlight"
                   onClick={bestRound ? () => navigate(`/rounds/${bestRound.id}`) : undefined}
                 />
               </CardContent>

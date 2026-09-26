@@ -1,4 +1,4 @@
-import { colors, toParDisplay, toParFill, toParLabel, toParTone, type ScoreKey } from "@/brand/theme";
+import { colors, toParFill, toParLabel, toParTone, type ScoreKey } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateShort } from "@/lib/roundDate";
 import type { Round, RoundSummary, User } from "@/types/golf";
@@ -225,24 +225,6 @@ export function lastRoundChips(holes: RecentHole[]): ScoreChip[] {
   if (counts.bogey) items.push({ label: "Bogey", count: counts.bogey, color: SCORE_COLORS.bogey });
   if (counts.double) items.push({ label: "Double", count: counts.double, color: SCORE_COLORS.double });
   return items;
-}
-
-export function presentBestRound(summary: RoundSummary | null): {
-  id: string;
-  courseName: string;
-  dateLabel: string;
-  toParLabel: string;
-  totalScore: number | null;
-} | null {
-  if (!summary) return null;
-  const toPar = summary.to_par;
-  return {
-    id: summary.id,
-    courseName: summary.course_name ?? "Unknown Course",
-    dateLabel: formatRoundDateShort(summary.date) ?? "",
-    toParLabel: toPar == null ? "" : `To Par: ${toParDisplay(toPar)}`,
-    totalScore: summary.total_score,
-  };
 }
 
 export function goalTargetLabel(scoringGoal: number | null | undefined): string | null {

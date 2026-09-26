@@ -322,8 +322,3 @@ export function holesFromRound(round: Round | undefined): RecentHole[] {
       };
     });
 }
-
-export function recentRoundIds(best: RoundSummary | null, recent: RoundSummary[]): string[] {
-  const ids = [best?.id, ...recent.map((r) => r.id)].filter((id): id is string => !!id);
-  return [...new Set(ids)];
-}

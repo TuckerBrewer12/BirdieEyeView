@@ -95,6 +95,7 @@ describe("playedHoles", () => {
         strokes: 5,
         par: null,
         toPar: null,
+        kind: null,
         putts: null,
         gir: null,
         fairway: null,
@@ -106,5 +107,10 @@ describe("playedHoles", () => {
     const holes = playedHoles(round({ course: linked }));
     expect(holes[0].par).toBe(4);
     expect(holes[1].par).toBe(3);
+  });
+
+  it("classifies each hole once, on the model", () => {
+    const holes = playedHoles(round());
+    expect(holes.map((hole) => hole.kind)).toEqual(["bogey", "par"]);
   });
 });

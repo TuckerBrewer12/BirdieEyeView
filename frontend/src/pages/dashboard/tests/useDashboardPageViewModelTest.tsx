@@ -75,12 +75,12 @@ describe("useDashboardPageViewModel", () => {
     expect(used[0]?.courseName).toBe("Blue Rock");
   });
 
-  it("picks the lowest scoring round as best and fetches its detail", async () => {
-    const { result, repository } = renderVm();
+  it("picks the lowest scoring round as best, hole strip and all", async () => {
+    const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     await waitFor(() => expect(result.current.bestRound?.id).toBe("round-3"));
     expect(result.current.bestRound?.total_score).toBe(69);
-    expect(repository.fetchedRoundIds).toContain("round-3");
+    expect(result.current.bestRound?.hole_scores_summary).toBeTruthy();
   });
 
   it("fetches the three most recent rounds for hole strips", async () => {

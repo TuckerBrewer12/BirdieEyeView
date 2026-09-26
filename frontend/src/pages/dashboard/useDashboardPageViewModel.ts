@@ -21,7 +21,6 @@ import {
   mixHoleCount,
   pickBestRound,
   puttsAvg,
-  recentRoundIds,
   scramblingPct,
   upAndDownPct,
   whsBreakdown,
@@ -62,7 +61,6 @@ export interface DashboardPageViewModel {
   trendView: TrendView;
   setTrendView: (view: TrendView) => void;
   bestRound: RoundSummary | null;
-  bestRoundDetail: Round | null;
   recentSummaries: RoundSummary[];
   roundsById: Map<string, Round>;
   sidebarRounds: RoundSummary[];
@@ -118,10 +116,8 @@ export function useDashboardPageViewModel(
     () => (data?.recent_rounds ?? []).slice(0, 3),
     [data?.recent_rounds],
   );
-  const roundIds = useMemo(
-    () => recentRoundIds(bestRound, recentSummaries),
-    [bestRound, recentSummaries],
-  );
+  // Only the hole strips need a full round; the highlight reads its own summary.
+  const roundIds = useMemo(() => recentSummaries.map((r) => r.id), [recentSummaries]);
 
   const { data: fetchedRounds } = useQuery({
     queryKey: ["dashboard-round-details", roundIds],
@@ -174,7 +170,6 @@ export function useDashboardPageViewModel(
     trendView,
     setTrendView,
     bestRound,
-    bestRoundDetail: bestRound ? roundsById.get(bestRound.id) ?? null : null,
     recentSummaries,
     roundsById,
     sidebarRounds: (data?.recent_rounds ?? []).slice(0, 10),

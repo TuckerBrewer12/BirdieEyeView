@@ -5,13 +5,8 @@ import { formatRoundDateLong } from "@/lib/roundDate";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { scoreKeyFor, type ScoreKey } from "@/brand/theme";
 import { queryKeys } from "@/data/queryKeys";
-import {
-  backNine as backNineHoles,
-  frontNine as frontNineHoles,
-  playedHoles,
-  roundPar,
-  totalStrokes,
-} from "@/domain/round";
+import { playedHoles, roundPar, totalStrokes, type PlayedHole } from "@/domain/round";
+import { backNine as backNineOf, frontNine as frontNineOf, type Nine } from "@/domain/scorecard";
 import { getTee, teeColors } from "@/domain/course";
 import { netScore, ratedCourseHandicap } from "@/domain/handicap";
 import { chooseCompatibleTee } from "@/lib/teeColor";
@@ -23,16 +18,14 @@ import {
   CHART_TABS,
   chartsFrom,
   courseEditFromRound,
-  nineFrom,
   teeRatingLabel,
   type ChartTabItem,
   type ChartTabKey,
   type ComparisonChartItem,
   type CourseEdit,
-  type Nine,
 } from "./roundDetailModel";
 
-export type { ChartTabItem, ChartTabKey, ComparisonChartItem, CourseEdit, Nine };
+export type { ChartTabItem, ChartTabKey, ComparisonChartItem, CourseEdit };
 export type EditedScores = Record<number, { strokes: number | null; putts: number | null; gir?: boolean | null }>;
 
 export interface RoundDetailUiState {
@@ -47,8 +40,8 @@ export interface RoundDetailUiState {
   courseHandicap: number | null;
   dateLabel: string | null;
   teeRating: string | null;
-  frontNine: Nine;
-  backNine: Nine;
+  frontNine: Nine<PlayedHole>;
+  backNine: Nine<PlayedHole>;
   scoreCounts: Partial<Record<ScoreKey, number>>;
   editMode: boolean;
   saving: boolean;
@@ -308,8 +301,8 @@ export function useRoundDetailPageViewModel(
     () => (round ? playedHoles(round, activeCourse) : []),
     [round, activeCourse],
   );
-  const frontNine = useMemo(() => nineFrom(frontNineHoles(holes)), [holes]);
-  const backNine = useMemo(() => nineFrom(backNineHoles(holes)), [holes]);
+  const frontNine = useMemo(() => frontNineOf(holes), [holes]);
+  const backNine = useMemo(() => backNineOf(holes), [holes]);
   const scoreCounts = useMemo(() => {
     const counts: Partial<Record<ScoreKey, number>> = {};
     for (const h of holes) {

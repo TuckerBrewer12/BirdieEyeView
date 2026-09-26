@@ -1,19 +1,38 @@
-import { Link2 } from "lucide-react";
+import { Link2, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
-import { motion as motionTokens, scoreFill, toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
+import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
+import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
+import { motion as motionTokens, toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
+import { summaryScorecard } from "@/domain";
 import { formatCourseName } from "@/lib/courseName";
-import { formatRoundDateHistory, roundDateParts } from "@/lib/roundDate";
+import { formatRoundDateHistory, formatRoundDateShort, roundDateParts } from "@/lib/roundDate";
 import type { RoundSummary } from "@/types/golf";
 
-interface RoundPreviewProps {
+interface RoundListProps {
   round: RoundSummary;
   variant?: "history";
   onClick?: () => void;
   onLinkClick?: () => void;
 }
 
-export function RoundPreview({ round, variant, onClick, onLinkClick }: RoundPreviewProps) {
+interface RoundHighlightProps {
+  /** Null while the player has no round to celebrate yet. */
+  round: RoundSummary | null;
+  variant: "highlight";
+  onClick?: () => void;
+}
+
+type RoundPreviewProps = RoundListProps | RoundHighlightProps;
+
+export function RoundPreview(props: RoundPreviewProps) {
+  if (props.variant === "highlight") {
+    return <RoundHighlight round={props.round} onClick={props.onClick} />;
+  }
+
+  const { round, variant, onClick, onLinkClick } = props;
+  const card = summaryScorecard(round);
+
   if (variant === "history") {
     return (
       <div
@@ -28,9 +47,9 @@ export function RoundPreview({ round, variant, onClick, onLinkClick }: RoundPrev
           {formatRoundDateHistory(round.date) ?? "—"}
         </span>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-foreground">{round.total_score ?? "—"}</span>
-          <span className={cn("rounded px-1.5 py-0.5 text-xs font-semibold", toParBadgeClass(round.to_par))}>
-            {toParLabel(round.to_par) ?? "—"}
+          <span className="text-sm font-bold text-foreground">{card.totalScore ?? "—"}</span>
+          <span className={cn("rounded px-1.5 py-0.5 text-xs font-semibold", toParBadgeClass(card.toPar))}>
+            {toParLabel(card.toPar) ?? "—"}
           </span>
         </div>
       </div>
@@ -38,8 +57,7 @@ export function RoundPreview({ round, variant, onClick, onLinkClick }: RoundPrev
   }
 
   const dateParts = roundDateParts(round.date);
-  const toParText = toParLabel(round.to_par);
-  const holes = round.hole_scores_summary ?? [];
+  const toParText = toParLabel(card.toPar);
 
   return (
     <motion.div
@@ -90,10 +108,10 @@ export function RoundPreview({ round, variant, onClick, onLinkClick }: RoundPrev
         </div>
 
         <div className="flex items-center gap-2 text-meta text-muted-foreground">
-          {round.front_nine != null && round.back_nine != null && (
+          {card.frontNine.total != null && card.backNine.total != null && (
             <span>
               <strong className="font-bold text-foreground">
-                {round.front_nine}·{round.back_nine}
+                {card.frontNine.total}·{card.backNine.total}
               </strong>
             </span>
           )}
@@ -105,32 +123,86 @@ export function RoundPreview({ round, variant, onClick, onLinkClick }: RoundPrev
           {round.tee_box && <span>{round.tee_box}</span>}
         </div>
 
-        {holes.length > 0 && (
-          <div className="mt-1 flex h-2.5 gap-bar">
-            {holes.map((h) => {
-              const isPar = h.s == null || h.p == null || h.s === h.p;
-              return (
-                <div
-                  key={h.h}
-                  className={cn("flex-1 rounded-bar", isPar && "opacity-(--brand-opacity-recessed)")}
-                  style={{ background: scoreFill(h.s, h.p) }}
-                />
-              );
-            })}
-          </div>
-        )}
+        <HoleScoreBars holes={card.holes} className="mt-1" />
       </div>
 
       <div className="flex flex-col items-end gap-0.5 whitespace-nowrap pr-3.5 text-right">
         <span className="text-2xl font-bold leading-none tracking-stat text-foreground">
-          {round.total_score ?? "—"}
+          {card.totalScore ?? "—"}
         </span>
         {toParText && (
-          <span className={cn("text-meta font-bold", toParTextClass(round.to_par))}>
+          <span className={cn("text-meta font-bold", toParTextClass(card.toPar))}>
             {toParText}
           </span>
         )}
       </div>
     </motion.div>
+  );
+}
+
+/** The round worth showing off: the trophy, the marked card, the number. */
+function RoundHighlight({
+  round,
+  onClick,
+}: {
+  round: RoundSummary | null;
+  onClick?: () => void;
+}) {
+  if (!round) {
+    return (
+      <div data-slot="round-preview" className="p-4 text-center text-sm text-muted-foreground">
+        Play a round to unlock highlights!
+      </div>
+    );
+  }
+
+  const dateLabel = formatRoundDateShort(round.date);
+  const card = summaryScorecard(round);
+  const toParText = toParLabel(card.toPar);
+
+  return (
+    <button
+      type="button"
+      data-slot="round-preview"
+      onClick={onClick}
+      disabled={!onClick}
+      className={cn(
+        "group flex w-full flex-wrap items-center gap-4 text-left",
+        onClick ? "cursor-pointer" : "cursor-default",
+      )}
+    >
+      <div className="flex shrink-0 items-center gap-3">
+        <div className="flex size-12 items-center justify-center rounded-full border border-score-eagle/30 bg-score-eagle/15 text-score-eagle">
+          <Trophy className="size-5" />
+        </div>
+        <div>
+          <div className="mb-1 text-xs font-bold uppercase tracking-eyebrow text-muted-foreground">
+            Best Recent Round
+          </div>
+          <div className="font-bold leading-tight text-card-foreground transition-colors group-hover:text-primary">
+            {round.course_name ? formatCourseName(round.course_name) : "Unknown course"}
+          </div>
+          <div className="mt-0.5 text-xs text-muted-foreground">
+            {dateLabel ?? "—"}
+            {toParText && (
+              <>
+                {" · "}
+                <span className={cn("font-semibold", toParTextClass(card.toPar))}>{toParText}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="shrink-0 overflow-x-auto">
+        <HoleScoreShapes scorecard={card} />
+      </div>
+
+      <div className="shrink-0 text-right">
+        <div className="text-4xl font-black tracking-tighter text-card-foreground transition-colors group-hover:text-primary">
+          {card.totalScore ?? "—"}
+        </div>
+      </div>
+    </button>
   );
 }
