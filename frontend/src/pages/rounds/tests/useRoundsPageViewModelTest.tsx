@@ -2,6 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
+import { roundScore } from "@/domain";
 import { populatedRounds, nRounds } from "@/testing/fixtures/rounds";
 import { pebbleBeach } from "@/testing/fixtures/courses";
 import {
@@ -40,14 +41,14 @@ describe("useRoundsPageViewModel", () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.setSearch("blue"));
-    expect(result.current.filteredRounds.map((r) => r.course_name)).toEqual(["Blue Rock"]);
+    expect(result.current.filteredRounds.map((r) => r.course?.name)).toEqual(["Blue Rock"]);
   });
 
   it("Best mode sorts by score ascending and locks sort", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.setFilterMode("best"));
-    expect(result.current.filteredRounds.map((r) => r.total_score)).toEqual([69, 72, 78, 85]);
+    expect(result.current.filteredRounds.map(roundScore)).toEqual([69, 72, 78, 85]);
     expect(result.current.sortLocked).toBe(true);
     expect(result.current.effectiveSortKey).toBe("total_score");
   });
@@ -57,7 +58,7 @@ describe("useRoundsPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.setFilterMode("l20"));
     expect(result.current.filteredRounds).toHaveLength(20);
-    expect(result.current.filteredRounds[0]?.course_name).toBe("Course 25");
+    expect(result.current.filteredRounds[0]?.course?.name).toBe("Course 25");
   });
 
   it("loadMore reveals the next page", async () => {
@@ -74,7 +75,7 @@ describe("useRoundsPageViewModel", () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.selectSortKey("total_score"));
-    expect(result.current.filteredRounds.map((r) => r.total_score)).toEqual([85, 78, 72, 69]);
+    expect(result.current.filteredRounds.map(roundScore)).toEqual([85, 78, 72, 69]);
   });
 
   it("linking a course replaces the round and closes the panel", async () => {
@@ -87,7 +88,7 @@ describe("useRoundsPageViewModel", () => {
       await result.current.handleSelectCourse("round-4", pebbleBeach);
     });
     expect(result.current.linkingRoundId).toBeNull();
-    expect(result.current.filteredRounds.find((r) => r.id === "round-4")?.course_name).toBe(
+    expect(result.current.filteredRounds.find((r) => r.id === "round-4")?.course?.name).toBe(
       "Pebble Beach",
     );
   });

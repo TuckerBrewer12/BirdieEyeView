@@ -1,4 +1,5 @@
-import type { Course, CourseSummary, Round, RoundSummary } from "../../types/golf";
+import { roundFromSummary, type Round as RoundModel } from "../../domain";
+import type { Course, CourseSummary, Round } from "../../types/golf";
 import type { RoundComparison } from "../../types/analytics";
 import type { RoundsRepository, UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { InMemoryRounds, type InMemoryRoundsSeed } from "./InMemoryRounds";
@@ -17,8 +18,8 @@ export class FakeRoundsRepository implements RoundsRepository {
     return this.store.deletedIds;
   }
 
-  async getRoundsForUser(): Promise<RoundSummary[]> {
-    return this.store.getRoundsForUser();
+  async getRoundsForUser(): Promise<RoundModel[]> {
+    return this.store.getRoundsForUser().map(roundFromSummary);
   }
 
   async getRound(roundId: string): Promise<Round> {
@@ -33,8 +34,8 @@ export class FakeRoundsRepository implements RoundsRepository {
     this.store.deleteRound(roundId);
   }
 
-  async linkCourse(roundId: string, courseId: string): Promise<RoundSummary> {
-    return this.store.linkCourse(roundId, courseId);
+  async linkCourse(roundId: string, courseId: string): Promise<RoundModel> {
+    return roundFromSummary(this.store.linkCourse(roundId, courseId));
   }
 
   async getCourse(courseId: string): Promise<Course> {

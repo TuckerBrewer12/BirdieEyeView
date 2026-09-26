@@ -1,4 +1,5 @@
 import { ActivityHeatmap } from "@/brand/charts/ActivityHeatmap";
+import { roundFromSummary } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 
 /** Pinned so the 5-week window does not move under screenshots. */
@@ -9,7 +10,7 @@ const rounds = [
   { ...populatedRounds[1], date: "2026-09-15T08:00:00" },
   { ...populatedRounds[2], date: "2026-09-10" },
   { ...populatedRounds[3], date: "2026-08-01" },
-];
+].map(roundFromSummary);
 
 export default function ActivityHeatmapPreview() {
   return <ActivityHeatmap rounds={rounds} today={TODAY} />;

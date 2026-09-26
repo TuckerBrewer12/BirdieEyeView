@@ -19,7 +19,6 @@ import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { CourseCharts, CourseScoreTrend } from "./CourseCharts";
 import { NineTable } from "./NineTable";
 import { useCourseDetailPageViewModel } from "./useCourseDetailPageViewModel";
-import type { RoundSummary } from "@/types/golf";
 
 export function CourseDetailPage({ userId }: { userId: string }) {
   const { courseId } = useParams<{ courseId: string }>();
@@ -152,7 +151,9 @@ export function CourseDetailPage({ userId }: { userId: string }) {
                 renderItem={(row) => (
                   <RoundPreview
                     variant="history"
-                    round={row as RoundSummary}
+                    date={row.date}
+                    score={row.total_score}
+                    toPar={row.to_par}
                     onClick={row.id ? () => navigate(`/rounds/${row.id}`) : undefined}
                   />
                 )}

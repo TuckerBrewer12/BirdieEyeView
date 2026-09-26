@@ -1,14 +1,22 @@
-import { holeResult, type HoleResult } from "@/domain";
+import type { HoleScore } from "@/domain";
 import { RoundDetailHeader } from "../components/RoundDetailHeader";
 
 /** strokes-to-par per hole, as par-4 holes. */
-function nine(from: number, toPars: number[]): HoleResult[] {
-  return toPars.map((toPar, i) => holeResult(from + i, 4 + toPar, 4));
+function nine(from: number, toPars: number[]): HoleScore[] {
+  return toPars.map((toPar, i) => ({
+    hole: from + i,
+    par: 4,
+    strokes: 4 + toPar,
+    putts: null,
+    gir: null,
+    fairway: null,
+  }));
 }
 
 // One of every bucket, so each bar height and chip colour is exercised.
 const front = nine(1, [0, 1, -1, 2, 0, 1, 3, 0, -2]);
 const back = nine(10, [1, 0, 4, 1, 0, 2, 0, 1, 0]);
+const levelPar = [...nine(1, [0, -1, 0, 1, 0, 0, 0, 0, 0]), ...nine(10, [0, 0, -1, 0, 0, 1, 0, 0, 0])];
 
 const counts = {
   eagle: 1, birdie: 1, par: 7, bogey: 5, double: 2, triple: 1, quad: 1,
@@ -22,11 +30,8 @@ export default function RoundDetailHeaderPreview() {
         courseName="Half Moon Bay"
         dateLabel="Mon · Jun 15 · 2026"
         tee={{ box: "blue", rating: "72.4 / 130" }}
-        score={{ total: 78, toPar: 6, net: 66, courseHandicap: 12 }}
-        nines={{
-          front: { holes: front, total: 40 },
-          back: { holes: back, total: 38 },
-        }}
+        score={{ total: 85, toPar: 13, net: 73, courseHandicap: 12 }}
+        holes={[...front, ...back]}
         stats={{ putts: 32, gir: 7 }}
         counts={counts}
       />
@@ -37,10 +42,7 @@ export default function RoundDetailHeaderPreview() {
         dateLabel="Sat · Apr 4 · 2026"
         tee={{ box: "white" }}
         score={{ total: 72, toPar: 0 }}
-        nines={{
-          front: { holes: front, total: 36 },
-          back: { holes: back, total: 36 },
-        }}
+        holes={levelPar}
         counts={{ par: 14, birdie: 2, bogey: 2 }}
       />
 
@@ -52,10 +54,7 @@ export default function RoundDetailHeaderPreview() {
         courseName="Twilight Nine"
         dateLabel="Wed · Aug 12 · 2026"
         score={{ total: 41, toPar: 5 }}
-        nines={{
-          front: { holes: front.slice(0, 5), total: null },
-          back: { holes: [], total: null },
-        }}
+        holes={front.slice(0, 5)}
         counts={{ par: 2, bogey: 2, double: 1 }}
       />
     </>

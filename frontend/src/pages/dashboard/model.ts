@@ -1,7 +1,7 @@
-import { SCORE_KEYS, scoreKeyFor, type ScoreKey } from "@/brand/theme";
+import { SCORE_KEYS, type ScoreKey } from "@/brand/theme";
 import { whsWindow } from "@/domain/handicap";
-import { holePar } from "@/domain/round";
-import type { Milestone, Round, RoundSummary } from "@/types/golf";
+import { roundScore, type Round } from "@/domain/round";
+import type { Milestone } from "@/types/golf";
 import type { AnalyticsData, GoalReport, ScoreTypeRow } from "@/types/analytics";
 
 export type TrendView = "score" | "hcp";
@@ -22,12 +22,10 @@ type AnalyticsScoreField = keyof typeof ANALYTICS_TO_BRAND;
 
 const ANALYTICS_SCORE_FIELDS = Object.keys(ANALYTICS_TO_BRAND) as AnalyticsScoreField[];
 
-export function pickBestRound(rounds: RoundSummary[]): RoundSummary | null {
-  const valid = rounds.filter((r) => r.total_score != null);
-  if (!valid.length) return null;
-  return valid.reduce((best, curr) =>
-    curr.total_score! < best.total_score! ? curr : best,
-  );
+export function pickBestRound(rounds: Round[]): Round | null {
+  const scored = rounds.filter((r) => roundScore(r) != null);
+  if (!scored.length) return null;
+  return scored.reduce((best, curr) => (roundScore(curr)! < roundScore(best)! ? curr : best));
 }
 
 export interface DualTrendPoint {
@@ -298,27 +296,4 @@ export function whsBreakdown(
     hasRatedRounds,
     showCalculation: handicapIndex != null && n >= 3,
   };
-}
-
-export interface RecentHole {
-  hole_number: number;
-  strokes: number | null;
-  par_played: number | null;
-  colorKey: ScoreKey;
-}
-
-export function holesFromRound(round: Round | undefined): RecentHole[] {
-  if (!round) return [];
-  return round.hole_scores
-    .slice()
-    .sort((a, b) => (a.hole_number ?? 0) - (b.hole_number ?? 0))
-    .map((h) => {
-      const par = h.hole_number != null ? holePar(round, h.hole_number) : null;
-      return {
-        hole_number: h.hole_number ?? 0,
-        strokes: h.strokes ?? null,
-        par_played: par,
-        colorKey: scoreKeyFor(h.strokes, par),
-      };
-    });
 }

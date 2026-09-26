@@ -81,8 +81,8 @@ export function RoundDetailPage({ userId }: { userId: string }) {
           net: viewModel.netScore,
           courseHandicap: viewModel.courseHandicap,
         }}
-        nines={{ front: viewModel.frontNine, back: viewModel.backNine }}
-        stats={{ putts: round.total_putts, gir: round.total_gir }}
+        holes={viewModel.holes}
+        stats={{ putts: viewModel.putts, gir: viewModel.gir }}
         counts={viewModel.scoreCounts}
       />
 

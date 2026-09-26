@@ -2,6 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
+import { roundFromSummary, roundScore } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 import {
   dashboardDetailRounds,
@@ -79,15 +80,15 @@ describe("useDashboardPageViewModel", () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     await waitFor(() => expect(result.current.bestRound?.id).toBe("round-3"));
-    expect(result.current.bestRound?.total_score).toBe(69);
-    expect(result.current.bestRound?.hole_scores_summary).toBeTruthy();
+    expect(roundScore(result.current.bestRound!)).toBe(69);
+    expect(result.current.bestRound?.holes).toHaveLength(18);
   });
 
   it("fetches the three most recent rounds for hole strips", async () => {
     const { result, repository } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    await waitFor(() => expect(result.current.recentSummaries).toHaveLength(3));
-    expect(result.current.recentSummaries.map((r) => r.id)).toEqual(
+    await waitFor(() => expect(result.current.recentRounds).toHaveLength(3));
+    expect(result.current.recentRounds.map((r) => r.id)).toEqual(
       populatedRounds.slice(0, 3).map((r) => r.id),
     );
     expect(repository.fetchedRoundIds).toEqual(
@@ -146,7 +147,7 @@ describe("useDashboardPageViewModel", () => {
 
 describe("dashboard model", () => {
   it("picks the lowest score as best", () => {
-    expect(pickBestRound(populatedRounds)?.id).toBe("round-3");
+    expect(pickBestRound(populatedRounds.map(roundFromSummary))?.id).toBe("round-3");
     expect(pickBestRound([])).toBeNull();
   });
 
