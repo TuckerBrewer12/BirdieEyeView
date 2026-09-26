@@ -50,10 +50,11 @@ export type { HoleScore, Round, RoundCourse, StrokeOverrides } from "./round";
 export { activityDays } from "./activity";
 export type { ActivityDay } from "./activity";
 
-export { scoreMix, mixHoleCount, scoringAvg, recentStats } from "./stats";
-export type { ScoreMixItem, RecentStats } from "./stats";
+export { scoreMix, mixHoleCount, scoringAvg, recentStats, puttsBand } from "./stats";
+export type { ScoreMixItem, RecentStats, PuttsBand } from "./stats";
 
-export { goalProgressPct } from "./goal";
+export { goalProgress, goalProgressPct } from "./goal";
+export type { GoalProgress } from "./goal";
 
 export { lifetimeMilestones } from "./milestones";
 export type { MilestoneFact, MilestoneKind } from "./milestones";

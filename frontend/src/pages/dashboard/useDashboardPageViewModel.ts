@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import {
   bestRound as pickBestRound,
-  goalProgressPct,
+  goalProgress,
   handicapDelta,
   handicapTrend,
   lifetimeMilestones,
@@ -14,6 +14,7 @@ import {
   scoreMix,
   scoringAvg,
   whsBreakdown,
+  type GoalProgress,
   type HandicapTrend,
   type MilestoneFact,
   type RecentStats,
@@ -22,7 +23,7 @@ import {
   type WhsBreakdown,
 } from "@/domain";
 import type { DashboardData, User } from "@/types/golf";
-import type { AnalyticsData, GoalReport } from "@/types/analytics";
+import type { AnalyticsData } from "@/types/analytics";
 import {
   dashboardRepository,
   type DashboardRepository,
@@ -57,7 +58,6 @@ export interface DashboardPageViewModel {
   data: DashboardData | null;
   trends: AnalyticsData | null;
   user: User | null;
-  goalReport: GoalReport | null;
   loading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -83,9 +83,8 @@ export interface DashboardPageViewModel {
   recentRounds: Round[];
   sidebarRounds: Round[];
   whs: WhsBreakdown;
-  scoringGoal: number | null;
-  goalProgressPct: number | null;
-  goalOnTrack: boolean;
+  /** Null until the player sets a scoring goal. */
+  goal: GoalProgress | null;
 }
 
 export function useDashboardPageViewModel(
@@ -158,7 +157,6 @@ export function useDashboardPageViewModel(
     data,
     trends,
     user: user ?? null,
-    goalReport: report,
     loading,
     error: error as Error | null,
     refetch,
@@ -182,8 +180,6 @@ export function useDashboardPageViewModel(
     recentRounds,
     sidebarRounds: rounds.slice(0, 10),
     whs: whsBreakdown(trends, data?.handicap_index),
-    scoringGoal: user?.scoring_goal ?? null,
-    goalProgressPct: goalProgressPct(user?.scoring_goal, report, trends),
-    goalOnTrack: report?.on_track ?? false,
+    goal: goalProgress(user?.scoring_goal, report, trends),
   };
 }

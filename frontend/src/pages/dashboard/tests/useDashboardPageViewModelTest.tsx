@@ -127,9 +127,8 @@ describe("useDashboardPageViewModel", () => {
   it("exposes the scoring goal from the user and report", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.scoringGoal).toBe(79);
-    expect(result.current.goalOnTrack).toBe(false);
-    expect(result.current.goalReport?.savers[0]?.headline).toBe("Fewer three-putts");
+    await waitFor(() => expect(result.current.goal?.focus).toBe("Fewer three-putts"));
+    expect(result.current.goal).toMatchObject({ target: 79, average: 76.8, onTrack: false });
   });
 
   it("has no best round or WHS rows when there is no index", async () => {

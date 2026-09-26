@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { emptyAnalytics, populatedAnalytics } from "@/testing/fixtures/dashboard";
-import { mixHoleCount, recentStats, scoreMix, scoringAvg } from "../stats";
+import { mixHoleCount, puttsBand, recentStats, scoreMix, scoringAvg } from "../stats";
 
 describe("scoringAvg", () => {
   it("averages every scored round, or only the last `window`", () => {
@@ -58,5 +58,15 @@ describe("scoreMix", () => {
   it("counts holes across rows", () => {
     expect(mixHoleCount(rows)).toBe(90);
     expect(scoreMix([])).toEqual([]);
+  });
+});
+
+describe("puttsBand", () => {
+  it("splits at 30 and 35 putts", () => {
+    expect(puttsBand(29.9)).toBe("good");
+    expect(puttsBand(30)).toBe("fair");
+    expect(puttsBand(35)).toBe("fair");
+    expect(puttsBand(35.1)).toBe("poor");
+    expect(puttsBand(null)).toBeNull();
   });
 });
