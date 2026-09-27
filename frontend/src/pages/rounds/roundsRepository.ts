@@ -1,5 +1,5 @@
 import { userRepository } from "@/data/userRepository";
-import { roundFromSummary, type Round as RoundModel } from "@/domain";
+import { Round as RoundModel } from "@/domain";
 import { api } from "@/lib/api";
 import type { Course, CourseSummary, Round } from "@/types/golf";
 import type { RoundComparison } from "@/types/analytics";
@@ -35,11 +35,11 @@ export type CourseSearchRepository = Pick<RoundsRepository, "searchCourses">;
 
 export const roundsRepository: RoundsRepository = {
   getRoundsForUser: async (userId, limit = 100) =>
-    (await api.getRoundsForUser(userId, limit)).map(roundFromSummary),
+    (await api.getRoundsForUser(userId, limit)).map(RoundModel.fromSummary),
   getRound: (roundId) => api.getRound(roundId),
   updateRound: (roundId, body) => api.updateRound(roundId, body),
   deleteRound: (roundId) => api.deleteRound(roundId),
-  linkCourse: async (roundId, courseId) => roundFromSummary(await api.linkCourse(roundId, courseId)),
+  linkCourse: async (roundId, courseId) => RoundModel.fromSummary(await api.linkCourse(roundId, courseId)),
   getCourse: (courseId) => api.getCourse(courseId),
   getRoundComparison: (userId, roundId) => api.getRoundComparison(userId, roundId),
   getUserHandicap: (userId) => userRepository.getUserHandicap(userId),

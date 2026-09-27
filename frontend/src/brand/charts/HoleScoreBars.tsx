@@ -1,6 +1,6 @@
 import { cn } from "@/brand/cn";
 import { colors } from "@/brand/theme";
-import { holeKind, type HoleScore } from "@/domain";
+import type { HoleScore } from "@/domain";
 
 interface HoleScoreBarsProps {
   holes: HoleScore[];
@@ -15,7 +15,7 @@ export function HoleScoreBars({ holes, className }: HoleScoreBarsProps) {
     <div data-slot="hole-score-bars" className={cn("flex h-2.5 gap-bar", className)}>
       {holes.map((hole) => {
         // Par is the baseline, so it recedes and the misses stand out. Unscored holes read as par.
-        const kind = holeKind(hole) ?? "par";
+        const kind = hole.kind ?? "par";
         return (
           <div
             key={hole.hole}

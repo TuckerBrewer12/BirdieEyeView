@@ -2,7 +2,6 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import { roundScore } from "@/domain";
 import { populatedRounds, nRounds } from "@/testing/fixtures/rounds";
 import { pebbleBeach } from "@/testing/fixtures/courses";
 import {
@@ -48,7 +47,7 @@ describe("useRoundsPageViewModel", () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.setFilterMode("best"));
-    expect(result.current.filteredRounds.map(roundScore)).toEqual([69, 72, 78, 85]);
+    expect(result.current.filteredRounds.map((r) => r.score)).toEqual([69, 72, 78, 85]);
     expect(result.current.sortLocked).toBe(true);
     expect(result.current.effectiveSortKey).toBe("total_score");
   });
@@ -75,7 +74,7 @@ describe("useRoundsPageViewModel", () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.selectSortKey("total_score"));
-    expect(result.current.filteredRounds.map(roundScore)).toEqual([85, 78, 72, 69]);
+    expect(result.current.filteredRounds.map((r) => r.score)).toEqual([85, 78, 72, 69]);
   });
 
   it("linking a course replaces the round and closes the panel", async () => {

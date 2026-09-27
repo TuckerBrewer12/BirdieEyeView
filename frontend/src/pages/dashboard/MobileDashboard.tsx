@@ -488,7 +488,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
   const tabs = trendTabs(trendView);
   const lastRound = recentRounds[0] ? toRoundRow(recentRounds[0]) : null;
   const lastRoundHoles = lastRound?.holes ?? [];
-  const chips = lastRoundChips(lastRoundHoles);
+  const chips = lastRoundChips(recentRounds[0] ?? null);
   const recentRoundRows = recentRounds.map(toRoundRow);
   const goalTarget = goalTargetLabel(scoringGoal);
   const hasScoringGoal = scoringGoal != null;

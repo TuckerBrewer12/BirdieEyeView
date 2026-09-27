@@ -24,23 +24,8 @@ export {
   whsWindow,
 } from "./handicap";
 
-export {
-  holeToPar,
-  holeKind,
-  frontNine,
-  backNine,
-  totalStrokes,
-  nineTotal,
-  roundScore,
-  roundPar,
-  roundToPar,
-  roundPutts,
-  roundGir,
-  withStrokes,
-  roundFromSummary,
-  roundFromDto,
-} from "./round";
-export type { HoleScore, Round, RoundCourse, StrokeOverrides } from "./round";
+export { HoleScore, Nine, Round } from "./round";
+export type { HoleScoreFacts, RoundCourse, RoundFacts, StrokeOverrides } from "./round";
 
 export { activityDays } from "./activity";
 export type { ActivityDay } from "./activity";

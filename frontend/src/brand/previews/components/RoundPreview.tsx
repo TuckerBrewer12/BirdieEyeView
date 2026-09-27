@@ -1,9 +1,9 @@
 import { Collection } from "@/brand/components/Collection";
 import { RoundPreview } from "@/brand/components/RoundPreview";
-import { roundFromSummary, roundScore, roundToPar } from "@/domain";
+import { Round } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 
-const [overPar, evenPar, best, unlinked] = populatedRounds.map(roundFromSummary);
+const [overPar, evenPar, best, unlinked] = populatedRounds.map(Round.fromSummary);
 
 /** Compose-style @Preview for RoundPreview. */
 export default function RoundPreviewPreview() {
@@ -21,14 +21,7 @@ export default function RoundPreviewPreview() {
         className="overflow-hidden rounded-xl border border-border bg-card"
         items={[overPar, evenPar, unlinked]}
         keyFor={(round) => round.id}
-        renderItem={(round) => (
-          <RoundPreview
-            variant="history"
-            date={round.date}
-            score={roundScore(round)}
-            toPar={roundToPar(round)}
-          />
-        )}
+        renderItem={(round) => <RoundPreview variant="history" round={round} />}
       />
     </>
   );

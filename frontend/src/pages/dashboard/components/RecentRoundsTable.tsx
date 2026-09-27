@@ -1,7 +1,7 @@
 import { cn } from "@/brand/cn";
 import { toParBadgeClass, toParLabel } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
-import { roundScore, roundToPar, type Round } from "@/domain";
+import type { Round } from "@/domain";
 
 interface RecentRoundsTableProps {
   rounds: Round[];
@@ -25,7 +25,6 @@ export function RecentRoundsTable({ rounds, onRoundClick }: RecentRoundsTablePro
       <div className="divide-y divide-border">
         {rounds.map((r) => {
           const clickable = Boolean(onRoundClick);
-          const toPar = roundToPar(r);
           return (
             <button
               key={r.id}
@@ -43,16 +42,16 @@ export function RecentRoundsTable({ rounds, onRoundClick }: RecentRoundsTablePro
                 {r.course?.name ? formatCourseName(r.course.name) : "—"}
               </span>
               <span className="py-3.5 text-center text-sm font-bold text-card-foreground">
-                {roundScore(r) ?? "—"}
+                {r.score ?? "—"}
               </span>
               <span className="py-3.5 pr-3 text-center text-sm">
                 <span
                   className={cn(
                     "inline-block rounded-full px-1.5 py-0.5 text-label font-semibold",
-                    toParBadgeClass(toPar),
+                    toParBadgeClass(r.toPar),
                   )}
                 >
-                  {toParLabel(toPar) ?? "—"}
+                  {toParLabel(r.toPar) ?? "—"}
                 </span>
               </span>
             </button>

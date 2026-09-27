@@ -1,8 +1,8 @@
 import { colors, fonts, typography } from "@/brand/theme";
-import { backNine, frontNine, holeKind, type HoleScore } from "@/domain";
+import type { HoleScore, Round } from "@/domain";
 
 interface HoleScoreShapesProps {
-  holes: HoleScore[];
+  round: Round;
 }
 
 const VB_W = 30;
@@ -13,7 +13,7 @@ const r = 9.5;
 
 /** One hole drawn the way a scorecard marks it: circles under par, boxes over. */
 function HoleShape({ hole }: { hole: HoleScore }) {
-  const kind = holeKind(hole);
+  const kind = hole.kind;
   if (kind == null) {
     return (
       <div className="flex h-hole-h w-hole-w items-center justify-center rounded-sm bg-muted">
@@ -79,16 +79,16 @@ function HoleShape({ hole }: { hole: HoleScore }) {
   );
 }
 
-/** The holes as marked shapes, one row per nine. */
-export function HoleScoreShapes({ holes }: HoleScoreShapesProps) {
-  const nines = [frontNine(holes), backNine(holes)].filter((nine) => nine.length > 0);
+/** The round's holes as marked shapes, one row per nine. */
+export function HoleScoreShapes({ round }: HoleScoreShapesProps) {
+  const nines = [round.frontNine, round.backNine].filter((nine) => nine.holes.length > 0);
   if (nines.length === 0) return null;
 
   return (
     <div data-slot="hole-score-shapes" className="flex flex-col gap-chip">
       {nines.map((nine, rowIdx) => (
         <div key={rowIdx} className="flex gap-chip">
-          {nine.map((hole) => (
+          {nine.holes.map((hole) => (
             <HoleShape key={hole.hole} hole={hole} />
           ))}
         </div>

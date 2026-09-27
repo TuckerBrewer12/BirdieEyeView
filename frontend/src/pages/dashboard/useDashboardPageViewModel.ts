@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
-import { roundFromDto, roundFromSummary, type Round } from "@/domain";
+import { Round } from "@/domain";
 import type { DashboardData, User } from "@/types/golf";
 import type { AnalyticsData, GoalReport } from "@/types/analytics";
 import {
@@ -111,7 +111,7 @@ export function useDashboardPageViewModel(
   const trends = fetched?.[1] ?? null;
 
   const rounds = useMemo(
-    () => (data?.recent_rounds ?? []).map(roundFromSummary),
+    () => (data?.recent_rounds ?? []).map(Round.fromSummary),
     [data?.recent_rounds],
   );
   const bestRound = useMemo(() => pickBestRound(rounds), [rounds]);
@@ -127,7 +127,7 @@ export function useDashboardPageViewModel(
     () =>
       rounds.slice(0, 3).map((round) => {
         const detail = fetchedRounds?.find((d) => d.id === round.id);
-        return detail ? roundFromDto(detail) : round;
+        return detail ? Round.fromDto(detail) : round;
       }),
     [rounds, fetchedRounds],
   );

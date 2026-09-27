@@ -14,7 +14,7 @@ export function toCourseSummary(course: Course): CourseSummary {
   };
 }
 
-export function roundFromSummary(summary: RoundSummary, course: Course | null = null): Round {
+export function roundDtoFromSummary(summary: RoundSummary, course: Course | null = null): Round {
   return {
     id: summary.id,
     course,

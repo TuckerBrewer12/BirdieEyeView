@@ -1,6 +1,6 @@
 import { SCORE_KEYS, type ScoreKey } from "@/brand/theme";
 import { whsWindow } from "@/domain/handicap";
-import { roundScore, type Round } from "@/domain/round";
+import type { Round } from "@/domain/round";
 import type { Milestone } from "@/types/golf";
 import type { AnalyticsData, GoalReport, ScoreTypeRow } from "@/types/analytics";
 
@@ -23,9 +23,9 @@ type AnalyticsScoreField = keyof typeof ANALYTICS_TO_BRAND;
 const ANALYTICS_SCORE_FIELDS = Object.keys(ANALYTICS_TO_BRAND) as AnalyticsScoreField[];
 
 export function pickBestRound(rounds: Round[]): Round | null {
-  const scored = rounds.filter((r) => roundScore(r) != null);
+  const scored = rounds.filter((r) => r.score != null);
   if (!scored.length) return null;
-  return scored.reduce((best, curr) => (roundScore(curr)! < roundScore(best)! ? curr : best));
+  return scored.reduce((best, curr) => (curr.score! < best.score! ? curr : best));
 }
 
 export interface DualTrendPoint {

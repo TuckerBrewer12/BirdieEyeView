@@ -1,6 +1,7 @@
 import { test } from "./CourseDetailPage.robot";
 import { halfMoonBayAnalytics } from "../../../../testing/fixtures/courseAnalytics";
 import { halfMoonBayCourse } from "../../../../testing/fixtures/roundDetails";
+import { populatedRounds } from "../../../../testing/fixtures/rounds";
 
 test("populated course", async ({ courseDetail }) => {
   await courseDetail.open(halfMoonBayCourse);
@@ -16,7 +17,10 @@ test("populated course in dark mode", async ({ courseDetail }) => {
 });
 
 test("performance tab", async ({ courseDetail }) => {
-  await courseDetail.open(halfMoonBayCourse, { courseAnalytics: halfMoonBayAnalytics });
+  await courseDetail.open(halfMoonBayCourse, {
+    courseAnalytics: halfMoonBayAnalytics,
+    rounds: populatedRounds,
+  });
   await courseDetail.tapPerformance();
   await courseDetail.seesPerformance();
   await courseDetail.capture("course-detail-performance.png");

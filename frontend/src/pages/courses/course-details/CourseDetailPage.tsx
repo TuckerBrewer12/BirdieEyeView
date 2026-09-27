@@ -146,15 +146,13 @@ export function CourseDetailPage({ userId }: { userId: string }) {
                 layout="divided"
                 className="overflow-hidden rounded-xl border border-border bg-card"
                 items={viewModel.roundHistory}
-                keyFor={(row, index) => row.id ?? `${row.date}-${index}`}
+                keyFor={(round) => round.id}
                 empty="No rounds at this course."
-                renderItem={(row) => (
+                renderItem={(round) => (
                   <RoundPreview
                     variant="history"
-                    date={row.date}
-                    score={row.total_score}
-                    toPar={row.to_par}
-                    onClick={row.id ? () => navigate(`/rounds/${row.id}`) : undefined}
+                    round={round}
+                    onClick={() => navigate(`/rounds/${round.id}`)}
                   />
                 )}
               />

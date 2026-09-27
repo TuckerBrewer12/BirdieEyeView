@@ -1,20 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Course, Round as RoundDto } from "@/types/golf";
 import { populatedRounds } from "@/testing/fixtures/rounds";
-import {
-  backNine,
-  frontNine,
-  holeKind,
-  nineTotal,
-  roundFromDto,
-  roundFromSummary,
-  roundPar,
-  roundPutts,
-  roundScore,
-  roundToPar,
-  withStrokes,
-  type HoleScore,
-} from "../round";
+import { HoleScore, Round } from "../round";
 
 const linked: Course = {
   id: "c1",
@@ -69,53 +56,60 @@ function dto(overrides: Partial<RoundDto> = {}): RoundDto {
 }
 
 function hole(number: number, strokes: number | null, par = 4): HoleScore {
-  return { hole: number, par, strokes, putts: null, gir: null, fairway: null };
+  return new HoleScore({ hole: number, par, strokes });
+}
+
+function roundOf(holes: HoleScore[]): Round {
+  return new Round({ id: "r", date: null, course: null, teeBox: null, holes });
 }
 
 const eighteen = Array.from({ length: 18 }, (_, i) => hole(i + 1, 5));
 
-describe("roundFromDto", () => {
+describe("Round.fromDto", () => {
   it("sums par_played when the round has no course", () => {
-    const round = roundFromDto(dto());
-    expect(roundPar(round)).toBe(7);
-    expect(roundScore(round)).toBe(8);
-    expect(roundToPar(round)).toBe(1);
+    const round = Round.fromDto(dto());
+    expect(round.par).toBe(7);
+    expect(round.score).toBe(8);
+    expect(round.toPar).toBe(1);
   });
 
   it("uses the linked course par when present", () => {
-    expect(roundPar(roundFromDto(dto({ course: linked })))).toBe(72);
+    expect(Round.fromDto(dto({ course: linked })).par).toBe(72);
   });
 
   it("prefers course hole par over par_played", () => {
-    const round = roundFromDto(dto({ course: linked, hole_scores: dto().hole_scores.map((s) => ({ ...s, par_played: 5 })) }));
+    const round = Round.fromDto(dto({ course: linked, hole_scores: dto().hole_scores.map((s) => ({ ...s, par_played: 5 })) }));
     expect(round.holes.map((h) => h.par)).toEqual([4, 3]);
   });
 
   it("reads the round against another course when given one", () => {
-    expect(roundPar(roundFromDto(dto(), linked))).toBe(72);
+    expect(Round.fromDto(dto(), linked).par).toBe(72);
   });
 
   it("does not invent par 4 when par is unknown", () => {
-    const round = roundFromDto(
-      dto({ hole_scores: [{ ...dto().hole_scores[0], par_played: null }] }),
-    );
+    const round = Round.fromDto(dto({ hole_scores: [{ ...dto().hole_scores[0], par_played: null }] }));
     expect(round.holes[0].par).toBeNull();
-    expect(holeKind(round.holes[0])).toBeNull();
+    expect(round.holes[0].kind).toBeNull();
   });
 
   it("classifies each hole from its strokes and par", () => {
-    expect(roundFromDto(dto()).holes.map(holeKind)).toEqual(["bogey", "par"]);
+    expect(Round.fromDto(dto()).holes.map((h) => h.kind)).toEqual(["bogey", "par"]);
+    expect(Round.fromDto(dto()).kindCounts).toEqual({ bogey: 1, par: 1 });
   });
 
   it("sums putts from the holes when no total is stored", () => {
-    expect(roundPutts(roundFromDto(dto()))).toBe(3);
-    expect(roundPutts(roundFromDto(dto({ total_putts: 30 })))).toBe(30);
+    expect(Round.fromDto(dto()).putts).toBe(3);
+    expect(Round.fromDto(dto({ total_putts: 30 })).putts).toBe(30);
+  });
+
+  it("nets the score against a course handicap", () => {
+    expect(Round.fromDto(dto()).netScore(3)).toBe(5);
   });
 });
 
-describe("roundFromSummary", () => {
-  it("keeps unscored holes in their slot", () => {
-    const round = roundFromSummary({
+describe("Round.fromSummary", () => {
+  it("keeps unscored holes in their slot, in hole order", () => {
+    const round = Round.fromSummary({
       ...populatedRounds[0],
       hole_scores_summary: [
         { h: 2, s: null, p: 4 },
@@ -123,38 +117,40 @@ describe("roundFromSummary", () => {
       ],
     });
     expect(round.holes.map((h) => [h.hole, h.strokes])).toEqual([[1, 3], [2, null]]);
-    expect(roundScore(round)).toBe(3);
+    expect(round.score).toBe(3);
   });
 
   it("derives the same figures the server stores", () => {
     for (const summary of populatedRounds) {
-      const round = roundFromSummary(summary);
-      expect(roundScore(round)).toBe(summary.total_score);
-      expect(roundToPar(round)).toBe(summary.to_par);
-      expect(nineTotal(frontNine(round.holes))).toBe(summary.front_nine);
-      expect(nineTotal(backNine(round.holes))).toBe(summary.back_nine);
+      const round = Round.fromSummary(summary);
+      expect(round.score).toBe(summary.total_score);
+      expect(round.toPar).toBe(summary.to_par);
+      expect(round.frontNine.total).toBe(summary.front_nine);
+      expect(round.backNine.total).toBe(summary.back_nine);
     }
   });
 });
 
 describe("nines", () => {
   it("splits by hole number, so a back-nine-only round lands on the back", () => {
-    const back = eighteen.slice(9);
-    expect(frontNine(back)).toHaveLength(0);
-    expect(nineTotal(backNine(back))).toBe(45);
+    const round = roundOf(eighteen.slice(9));
+    expect(round.frontNine.holes).toHaveLength(0);
+    expect(round.backNine.total).toBe(45);
   });
 
   it("leaves a nine's total off until all nine are scored", () => {
-    const holes = eighteen.map((h) => (h.hole === 12 ? hole(12, null) : h));
-    expect(nineTotal(frontNine(holes))).toBe(45);
-    expect(nineTotal(backNine(holes))).toBeNull();
+    const round = roundOf(eighteen.map((h) => (h.hole === 12 ? hole(12, null) : h)));
+    expect(round.frontNine.total).toBe(45);
+    expect(round.backNine.total).toBeNull();
   });
 });
 
 describe("withStrokes", () => {
-  it("applies edits before anything is derived", () => {
-    const round = withStrokes(roundFromDto(dto()), { 1: { strokes: 4 } });
-    expect(roundScore(round)).toBe(7);
-    expect(roundToPar(round)).toBe(0);
+  it("returns a new round that reads the edits", () => {
+    const original = Round.fromDto(dto());
+    const edited = original.withStrokes({ 1: { strokes: 4 } });
+    expect(edited.score).toBe(7);
+    expect(edited.toPar).toBe(0);
+    expect(original.score).toBe(8);
   });
 });

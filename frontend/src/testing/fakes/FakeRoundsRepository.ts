@@ -1,4 +1,4 @@
-import { roundFromSummary, type Round as RoundModel } from "../../domain";
+import { Round as RoundModel } from "../../domain";
 import type { Course, CourseSummary, Round } from "../../types/golf";
 import type { RoundComparison } from "../../types/analytics";
 import type { RoundsRepository, UpdateRoundBody } from "../../pages/rounds/roundsRepository";
@@ -19,7 +19,7 @@ export class FakeRoundsRepository implements RoundsRepository {
   }
 
   async getRoundsForUser(): Promise<RoundModel[]> {
-    return this.store.getRoundsForUser().map(roundFromSummary);
+    return this.store.getRoundsForUser().map(RoundModel.fromSummary);
   }
 
   async getRound(roundId: string): Promise<Round> {
@@ -35,7 +35,7 @@ export class FakeRoundsRepository implements RoundsRepository {
   }
 
   async linkCourse(roundId: string, courseId: string): Promise<RoundModel> {
-    return roundFromSummary(this.store.linkCourse(roundId, courseId));
+    return RoundModel.fromSummary(this.store.linkCourse(roundId, courseId));
   }
 
   async getCourse(courseId: string): Promise<Course> {

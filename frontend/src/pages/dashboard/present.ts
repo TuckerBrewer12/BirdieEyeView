@@ -1,13 +1,7 @@
 import { colors, toParFill, toParLabel, toParTone, type ScoreKey } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateShort } from "@/lib/roundDate";
-import {
-  holeKind,
-  roundScore,
-  roundToPar,
-  type HoleScore,
-  type Round,
-} from "@/domain";
+import type { HoleScore, Round } from "@/domain";
 import type { User } from "@/types/golf";
 import type { GoalReport } from "@/types/analytics";
 import {
@@ -179,14 +173,17 @@ export function trendTabs(trendView: TrendView): TrendTabItem[] {
 }
 
 /** A hole ready to draw: unscored holes read as par. */
-export interface PaintedHole extends HoleScore {
+export interface PaintedHole {
+  hole: number;
+  strokes: number | null;
+  par: number | null;
   kind: ScoreKey;
   fill: string;
 }
 
 function paint(hole: HoleScore): PaintedHole {
-  const kind = holeKind(hole) ?? "par";
-  return { ...hole, kind, fill: SCORE_COLORS[kind] };
+  const kind = hole.kind ?? "par";
+  return { hole: hole.hole, strokes: hole.strokes, par: hole.par, kind, fill: SCORE_COLORS[kind] };
 }
 
 export interface RecentRoundRow {
@@ -203,15 +200,13 @@ export interface RecentRoundRow {
 }
 
 export function toRoundRow(round: Round): RecentRoundRow {
-  const score = roundScore(round);
-  const toPar = roundToPar(round);
   return {
     id: round.id,
-    scoreLabel: score != null ? String(score) : "—",
-    toPar,
-    toParLabel: toParLabel(toPar),
-    toParColor: toParTone(toPar).text,
-    accentColor: toParFill(toPar),
+    scoreLabel: round.score != null ? String(round.score) : "—",
+    toPar: round.toPar,
+    toParLabel: toParLabel(round.toPar),
+    toParColor: toParTone(round.toPar).text,
+    accentColor: toParFill(round.toPar),
     courseLabel: round.course?.name ? formatCourseName(round.course.name) : "Unknown course",
     dateLabel: formatRoundDateShort(round.date) ?? "—",
     teeBox: round.teeBox,
@@ -225,13 +220,9 @@ export interface ScoreChip {
   color: string;
 }
 
-export function lastRoundChips(holes: HoleScore[]): ScoreChip[] {
-  if (!holes.length) return [];
-  const counts: Partial<Record<ScoreKey, number>> = {};
-  for (const h of holes) {
-    const kind = holeKind(h);
-    if (kind) counts[kind] = (counts[kind] ?? 0) + 1;
-  }
+export function lastRoundChips(round: Round | null): ScoreChip[] {
+  if (!round) return [];
+  const counts = round.kindCounts;
   const items: ScoreChip[] = [];
   const birdiesPlus = (counts.eagle ?? 0) + (counts.birdie ?? 0);
   if (birdiesPlus > 0) items.push({ label: "Birdie+", count: birdiesPlus, color: SCORE_COLORS.birdie });

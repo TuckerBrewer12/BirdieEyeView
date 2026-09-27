@@ -1,3 +1,4 @@
+import type { Round } from "../../domain";
 import type { Course, CourseSummary } from "../../types/golf";
 import type { CourseAnalyticsData } from "../../types/analytics";
 import type { CoursesRepository } from "../../pages/courses/coursesRepository";
@@ -10,6 +11,7 @@ export class FakeCoursesRepository implements CoursesRepository {
   fullCourses: Course[] = [];
   analytics: CourseAnalyticsData | null = null;
   handicapIndex: number | null = null;
+  rounds: Round[] = [];
   error: Error | null = null;
   courseError: Error | null = null;
 
@@ -57,5 +59,9 @@ export class FakeCoursesRepository implements CoursesRepository {
 
   async getUserHandicap(): Promise<{ handicap_index: number | null }> {
     return { handicap_index: this.handicapIndex };
+  }
+
+  async getRoundsForUser(): Promise<Round[]> {
+    return this.rounds;
   }
 }

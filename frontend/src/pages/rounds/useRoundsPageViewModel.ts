@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
 import { queryKeys } from "@/data/queryKeys";
-import { roundScore, roundToPar, type Round } from "@/domain";
+import type { Round } from "@/domain";
 import type { CourseSummary } from "@/types/golf";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 
@@ -204,9 +204,9 @@ export function useRoundsPageViewModel(
     result.sort((a, b) => {
       let av: number | string | null, bv: number | string | null;
       switch (key) {
-        case "date":        av = a.date ?? "";       bv = b.date ?? "";       break;
-        case "total_score": av = roundScore(a);        bv = roundScore(b);        break;
-        case "to_par":      av = roundToPar(a);        bv = roundToPar(b);        break;
+        case "date":        av = a.date ?? "";         bv = b.date ?? "";         break;
+        case "total_score": av = a.score;              bv = b.score;              break;
+        case "to_par":      av = a.toPar;              bv = b.toPar;              break;
         case "course_name": av = a.course?.name ?? ""; bv = b.course?.name ?? ""; break;
       }
       if (av === null) return 1; if (bv === null) return -1;

@@ -2,7 +2,9 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
+import { Round } from "@/domain";
 import { halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
+import { populatedRounds } from "@/testing/fixtures/rounds";
 import { halfMoonBayCourse } from "@/testing/fixtures/roundDetails";
 import { FakeCoursesRepository } from "@/testing/fakes/FakeCoursesRepository";
 import { useCourseDetailPageViewModel } from "../useCourseDetailPageViewModel";
@@ -58,17 +60,13 @@ describe("useCourseDetailPageViewModel", () => {
     expect(result.current.frontNine.holes[0]?.personalAvg).toBe("3.9");
   });
 
-  it("exposes round history newest first for the history preview", async () => {
+  it("lists the player's rounds at this course, newest first", async () => {
     const repository = seededRepo();
     repository.analytics = halfMoonBayAnalytics;
+    repository.rounds = [...populatedRounds].reverse().map(Round.fromSummary);
     const { result } = renderVm(repository);
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.roundHistory[0]).toEqual({
-      id: "round-4",
-      date: "2026-08-01T16:00:00.000Z",
-      total_score: 74,
-      to_par: 2,
-    });
+    await waitFor(() => expect(result.current.roundHistory).toHaveLength(2));
+    expect(result.current.roundHistory.map((round) => round.id)).toEqual(["round-1", "round-2"]);
     expect(result.current.scoreTrend[0]).toMatchObject({
       dateLabel: "Mar 9, 2026",
       tickLabel: "03-09",
