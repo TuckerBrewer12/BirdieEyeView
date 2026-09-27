@@ -56,8 +56,8 @@ def added_lines(diff: str) -> dict[str, set[int]]:
 def extract_balanced(text: str, open_ch: str, close_ch: str) -> str:
     """Pull the first balanced JSON array or object out of the model's stdout.
 
-    `opencode run` has no quiet flag, so its default output wraps the reply in
-    session chrome. Scanning for a balanced value survives that, and a code
+    Model stdout may wrap the reply in prose or a code fence. Scanning for a
+    balanced value survives that, and a code
     fence, and any stray prose the model adds.
     """
     start = text.find(open_ch)

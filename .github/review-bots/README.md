@@ -40,12 +40,18 @@ The fix bot gets the finding text and the repo — no extra recipe file. It
 follows neighbouring code. Styling is Tailwind token classes
 (`bg-primary`, `text-muted-foreground`), not `useTheme()`.
 
+Reviews and fixes run through the Cursor CLI as Grok 4.7 (`grok-4.7-high`).
+The workflow secret is `CURSOR_API_KEY`. The model can read the repo. Shell
+and network are denied, and a CLI failure fails the check instead of posting
+nothing.
+
 ## Layout
 
 | File | What it is |
 | --- | --- |
 | `brand-kit.md`, `mvvm.md`, `ui-test-checker.md` | Review prompts |
 | `run-bot.sh` | Shared reviewer: diff → model → GitHub review |
+| `cursor-run.sh` | Cursor CLI invocation shared by the review, coverage, and fix runners |
 | `previous.py` | Match earlier comments, ✅/❌ recheck, skip duplicate fix PRs |
 | `post_review.py` | JSON findings → review payload + fixable list |
 | `fix.md` + `run-fix.sh` | Apply one finding and open a PR |

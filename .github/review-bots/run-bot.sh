@@ -9,8 +9,9 @@
 set -euo pipefail
 
 BOTS="$(cd "$(dirname "$0")" && pwd)"
-MODEL="${BOT_MODEL:-opencode/muse-spark-1.3-contributor-free}"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
+# shellcheck source=cursor-run.sh
+source "$BOTS/cursor-run.sh"
 
 emit_no_fixes() {
   if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
@@ -61,16 +62,12 @@ if not isinstance(items, list):
 prompt_path.write_text(prompt_path.read_text() + previous_mod.prompt_appendix(items))
 PY
 
-# The model may read the repo, but not modify it or reach the network.
-export OPENCODE_CONFIG_CONTENT='{
-  "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" },
-  "tools": { "write": false, "edit": false, "patch": false, "bash": false, "webfetch": false }
-}'
-
-if ! opencode run --model "$MODEL" "$(cat "$WORK/prompt.txt")" > "$WORK/findings.json"; then
-  echo "::warning title=${BOT_NAME}::opencode failed; not reviewing."
+# Read-only. A CLI failure fails the check; exiting 0 here is what made a
+# dead model look like a clean review.
+if ! cursor_run ask "$WORK/prompt.txt" "$WORK/findings.json"; then
+  echo "::error title=${BOT_NAME}::Cursor CLI failed; not reviewing."
   emit_no_fixes
-  exit 0
+  exit 1
 fi
 
 export PR_URL="${PR_URL:-https://github.com/${GITHUB_REPOSITORY}/pull/${PR_NUMBER}}"
@@ -79,7 +76,7 @@ if ! python3 "$BOTS/post_review.py" \
      "$WORK/findings.json" "$WORK/diff.patch" "$HEAD_SHA" "$WORK/review.json" \
      "$WORK/fixable.json" "$WORK/previous.json" "$WORK/replies.json"; then
   emit_no_fixes
-  exit 0
+  exit 1
 fi
 
 # GitHub often 422s "Line could not be resolved" if the PR diff is still

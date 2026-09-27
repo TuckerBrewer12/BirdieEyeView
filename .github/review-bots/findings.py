@@ -3,7 +3,7 @@
 
 CLI:
     findings.py fields              # FINDING_JSON -> shell-quotable KEY=value
-    findings.py prompt              # FINDING_JSON -> opencode prompt
+    findings.py prompt              # FINDING_JSON -> model prompt
     findings.py from-comment        # COMMENT_BODY [PARENT_BODY] -> fix payload JSON
     findings.py parse-meta          # stdin comment body -> JSON metadata or {}
 """

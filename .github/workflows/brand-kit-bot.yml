@@ -34,7 +34,7 @@ jobs:
       has_fixes: ${{ steps.review.outputs.has_fixes }}
       findings: ${{ steps.review.outputs.findings }}
 
-    # Skip drafts, skip-bots, fork PRs (no OPENCODE_API_KEY), and the PRs
+    # Skip drafts, skip-bots, fork PRs (no CURSOR_API_KEY), and the PRs
     # this bot itself opens. workflow_dispatch is always allowed so a failed
     # run can be retried from Actions → Brand Kit Bot → Run workflow.
     if: >-
@@ -79,9 +79,10 @@ jobs:
           PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: git fetch origin "pull/${PR_NUMBER}/head"
 
-      # The installer adds ~/.opencode/bin to $GITHUB_PATH itself.
-      - name: Install opencode
-        run: curl -fsSL https://opencode.ai/install | bash
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
 
       - name: Review
         id: review
@@ -95,7 +96,7 @@ jobs:
           HEAD_SHA: ${{ steps.pr.outputs.head }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         run: bash .github/review-bots/run-bot.sh
 
   fix:
