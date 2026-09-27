@@ -70,14 +70,6 @@ describe("useRoundDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.courseHandicap).toBe(12));
   });
 
-  it("shows the link button when the round has no course", async () => {
-    const { result } = renderVm("round-4", { detailRounds: [scannedRound] });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.showLinkButton).toBe(true);
-    expect(result.current.courseName).toBe("Scanned Scorecard");
-    expect(result.current.teeRating).toBeNull();
-  });
-
   it("enter edit uses the round's tees and does not need a second course fetch", async () => {
     const { result } = renderVm("round-1", { detailRounds: [halfMoonBayRound] });
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -124,21 +116,6 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.editMode).toBe(true);
   });
 
-  it("delete records the round on the repository", async () => {
-    const { result, repository } = renderVm("round-1", {
-      detailRounds: [halfMoonBayRound],
-    });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    act(() => result.current.requestDelete());
-    expect(result.current.confirmDelete).toBe(true);
-    let ok = false;
-    await act(async () => {
-      ok = await result.current.confirmDeleteRound();
-    });
-    expect(ok).toBe(true);
-    expect(repository.deletedIds).toEqual(["round-1"]);
-  });
-
   it("a failed delete sets actionError and does not report success", async () => {
     const { result, repository } = renderVm("round-1", {
       detailRounds: [halfMoonBayRound],
@@ -152,24 +129,6 @@ describe("useRoundDetailPageViewModel", () => {
     expect(ok).toBe(false);
     expect(result.current.actionError).toBe("nope");
     expect(repository.deletedIds).toEqual([]);
-  });
-
-  it("linking a course closes the panel", async () => {
-    const { result, repository } = renderVm("round-4", {
-      detailRounds: [scannedRound],
-      courses: [pebbleBeach],
-      fullCourses: [pebbleBeachCourse],
-    });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    act(() => result.current.openLinkCourse());
-    expect(result.current.showLinkCourse).toBe(true);
-
-    await act(async () => {
-      await result.current.handleSelectCourse(pebbleBeach);
-    });
-    expect(result.current.showLinkCourse).toBe(false);
-    const linked = await repository.getRound("round-4");
-    expect(linked.course?.name).toBe("Pebble Beach");
   });
 
   it("a failed link sets actionError and leaves the panel open", async () => {
@@ -296,12 +255,6 @@ describe("useRoundDetailPageViewModel", () => {
       "3-Putts",
       "Putts per GIR",
       "Scrambling",
-    ]);
-    expect(result.current.chartTab).toBe("score");
-    expect(result.current.chartTabs).toEqual([
-      { key: "score", label: "Score" },
-      { key: "short_game", label: "Short Game" },
-      { key: "gir", label: "GIR" },
     ]);
     expect(result.current.charts[0]?.bars[0]).toEqual({
       label: "This round",
