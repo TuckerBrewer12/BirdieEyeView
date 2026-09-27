@@ -92,6 +92,7 @@ Key files:
 - `routers/users.py` — user management + user tee CRUD (`/api/users/{id}/tees`); `UpdateUserRequest` accepts `scoring_goal`
 - `routers/stats.py` — player analytics endpoints; includes `GET /{user_id}/goal-report`
 - `api/request_models.py` — shared Pydantic request/response models
+- `api/round_responses.py` — `round_summary()` / `round_detail()`: the one place a round's response is built. Every round endpoint (list, detail, update, link-course, dashboard) returns the figures the `Round` model works out (score, par, to-par, nines, putts, GIR, per-hole par/to-par/`kind`, `score_counts`); the frontend displays them and does not recompute them.
 
 **API endpoints:**
 - `POST /api/scan/extract` — run LLM extraction on uploaded image
@@ -290,6 +291,8 @@ Implemented via `:root.dark` in `brand/theme/tokens.css`. Color-blind palette su
 
 Key files:
 - `src/App.tsx` — routing + scan state (lifted here to persist across navigation)
+- `src/types/api.gen.ts` — generated from the backend's OpenAPI schema (`frontend/openapi.json`); never edit by hand. After changing an API model run `python scripts/dump_openapi.py` then `npm run gen:api`; CI fails if either is stale. `src/types/api.ts` names the generated types (`RoundDto`, `RoundSummaryDto`, …).
+- `src/domain/round.ts` — the frontend `Round`: plain data mapped from the API (`Round.fromSummary`, `Round.fromDto`), plus `Round.previewEdits`, the only frontend golf math (live totals while editing, replaced by the saved response).
 - `src/lib/api.ts` — API client (`updateRound`, `cloneCourse`, `getCourses`, `searchCourses`, `getGoalReport`, `updateUser` with `scoring_goal`, etc.)
 - `src/types/scan.ts` — shared scan types/constants (kept out of ScanPage to avoid Fast Refresh warning)
 - `src/types/analytics.ts` — analytics types including `GoalReport` and `GoalSaver`

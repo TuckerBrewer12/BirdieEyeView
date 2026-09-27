@@ -1,16 +1,19 @@
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { Round } from "@/domain";
-import { populatedRounds } from "@/testing/fixtures/rounds";
+import { summaryResponse } from "@/testing/fakes/roundResponses";
+import { populatedRounds, storedRounds } from "@/testing/fixtures/rounds";
 
-const [overPar, , best] = populatedRounds.map(Round.fromSummary);
-const partlyScored = overPar.withStrokes({
-  14: { strokes: null },
-  15: { strokes: null },
-  16: { strokes: null },
-  17: { strokes: null },
-  18: { strokes: null },
-});
-const frontNineOnly = new Round({ ...overPar, holes: overPar.frontNine.holes });
+const best = Round.fromSummary(populatedRounds[2]);
+const overPar = storedRounds[0];
+const partlyScored = Round.fromSummary(
+  summaryResponse({
+    ...overPar,
+    hole_scores: overPar.hole_scores.map((hole) => (hole.hole_number > 13 ? { ...hole, strokes: null } : hole)),
+  }),
+);
+const frontNineOnly = Round.fromSummary(
+  summaryResponse({ ...overPar, hole_scores: overPar.hole_scores.slice(0, 9) }),
+);
 
 export default function HoleScoreShapesPreview() {
   return (

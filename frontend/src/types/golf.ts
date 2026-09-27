@@ -1,3 +1,11 @@
+import type { DashboardDto, HoleScoreDto, RoundDto, RoundSummaryDto } from "./api";
+
+// Round responses come from the generated API types; see ./api.ts.
+export type HoleScore = HoleScoreDto;
+export type Round = RoundDto;
+export type RoundSummary = RoundSummaryDto;
+export type DashboardData = DashboardDto;
+
 export interface Hole {
   number: number | null;
   par: number | null;
@@ -19,63 +27,6 @@ export interface Course {
   par: number | null;
   holes: Hole[];
   tees: Tee[];
-}
-
-export interface HoleScore {
-  hole_number: number | null;
-  strokes: number | null;
-  net_score: number | null;
-  putts: number | null;
-  shots_to_green: number | null;
-  fairway_hit: boolean | null;
-  green_in_regulation: boolean | null;
-  par_played: number | null;
-  handicap_played: number | null;
-}
-
-export interface Round {
-  id: string | null;
-  course: Course | null;
-  tee_box: string | null;
-  date: string | null;
-  hole_scores: HoleScore[];
-  weather_conditions: string | null;
-  notes: string | null;
-  total_putts: number | null;
-  total_gir: number | null;
-  course_name_played: string | null;
-  user_tee: UserTee | null;
-}
-
-export interface RoundSummary {
-  id: string;
-  course_id: string | null;
-  course_name: string | null;
-  course_location: string | null;
-  course_par: number | null;
-  tee_box: string | null;
-  date: string | null;
-  total_score: number | null;
-  to_par: number | null;
-  front_nine: number | null;
-  back_nine: number | null;
-  total_putts: number | null;
-  total_gir: number | null;
-  fairways_hit: number | null;
-  notes: string | null;
-  hole_scores_summary?: Array<{ h: number; s: number | null; p: number | null }> | null;
-}
-
-export interface DashboardData {
-  total_rounds: number;
-  scoring_average: number | null;
-  best_round: number | null;
-  best_round_id: string | null;
-  best_round_course: string | null;
-  handicap_index: number | null;
-  recent_rounds: RoundSummary[];
-  average_putts: number | null;
-  average_gir: number | null;
 }
 
 export interface Milestone {

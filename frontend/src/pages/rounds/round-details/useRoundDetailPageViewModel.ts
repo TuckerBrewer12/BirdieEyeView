@@ -287,8 +287,8 @@ export function useRoundDetailPageViewModel(
       : round?.course ?? null;
   const played = useMemo(() => {
     if (!round) return null;
-    const model = RoundModel.fromDto(round, activeCourse);
-    return editMode ? model.withStrokes(editedScores) : model;
+    const model = RoundModel.fromDto(round);
+    return editMode ? RoundModel.previewEdits(model, editedScores, activeCourse) : model;
   }, [round, activeCourse, editMode, editedScores]);
   const courseName = formatCourseName(round?.course_name_played ?? round?.course?.name);
 

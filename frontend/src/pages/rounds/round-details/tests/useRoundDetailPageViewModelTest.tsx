@@ -62,13 +62,12 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.showMomentum).toBe(true);
   });
 
-  it("computes net score from handicap and the active tee", async () => {
+  it("computes the course handicap from the index and the active tee", async () => {
     const { result } = renderVm("round-1", {
       detailRounds: [halfMoonBayRound],
       handicapIndex: 10.4,
     });
     await waitFor(() => expect(result.current.courseHandicap).toBe(12));
-    expect(result.current.played?.netScore(12)).toBe(66);
   });
 
   it("shows the link button when the round has no course", async () => {
@@ -223,7 +222,6 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.editLinkedName).toBe("Pebble Beach");
     expect(result.current.editedTeeBox).toBe("Blue");
     expect(result.current.courseHandicap).toBe(16);
-    expect(result.current.played?.netScore(16)).toBe(62);
   });
 
   it("saving a newly picked course links it and clears a custom name", async () => {
@@ -349,6 +347,8 @@ describe("useRoundDetailPageViewModel", () => {
   it("buckets every hole into a score count", async () => {
     const { result } = renderVm("round-1", { detailRounds: [halfMoonBayRound] });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.played?.kindCounts).toEqual({ birdie: 1, par: 10, bogey: 7 });
+    expect(result.current.played?.scoreCounts).toEqual({
+      eagle: 0, birdie: 1, par: 10, bogey: 7, double: 0, triple: 0, quad: 0,
+    });
   });
 });

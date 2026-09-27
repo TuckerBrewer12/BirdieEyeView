@@ -65,6 +65,11 @@ jobs:
         if: matrix.check == 'lint'
         run: ruff check --output-format=github .
 
+      # The frontend's API types are generated from this schema; a model change must regenerate both.
+      - name: API schema is current
+        if: matrix.check == 'types'
+        run: python scripts/dump_openapi.py --check
+
       - name: Pyright
         if: matrix.check == 'types'
         uses: jakebailey/pyright-action@v2
@@ -114,6 +119,10 @@ jobs:
       - name: ESLint
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'lint'
         run: npm run lint -- --max-warnings=0
+
+      - name: Generated API types are current
+        if: needs.changes.outputs.frontend == 'true' && matrix.check == 'types'
+        run: npm run check:api
 
       - name: TypeScript
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'types'

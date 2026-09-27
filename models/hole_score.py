@@ -1,7 +1,21 @@
 from pydantic import Field, model_validator
-from typing import Optional
+from typing import Literal, Optional
 
 from .base import BaseGolfModel
+
+
+ScoreKind = Literal["eagle", "birdie", "par", "bogey", "double", "triple", "quad"]
+
+
+def score_kind(to_par: Optional[int]) -> Optional[ScoreKind]:
+    """The seven buckets the app shows a hole in. Eagle takes anything better, quad anything worse."""
+    if to_par is None:
+        return None
+    if to_par <= -2:
+        return "eagle"
+    if to_par >= 4:
+        return "quad"
+    return {-1: "birdie", 0: "par", 1: "bogey", 2: "double", 3: "triple"}[to_par]
 
 
 class HoleScore(BaseGolfModel):

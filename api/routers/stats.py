@@ -8,7 +8,8 @@ from database.db_manager import DatabaseManager
 from api.dependencies import get_current_user, get_db
 from api.input_validation import ensure_uuid_str
 from models import User
-from api.schemas import DashboardResponse, RoundSummaryResponse
+from api.round_responses import round_summary
+from api.schemas import DashboardResponse
 from analytics import stats as analytics
 from analytics import handicap as hcap
 
@@ -27,48 +28,18 @@ async def get_dashboard(
     if not user:
         raise HTTPException(404, "User not found")
 
-    # Single aggregate query for all summary stats (no hole_score fetches)
+    # One query for every round's hole scores; the Round model works out each figure.
     summaries = await db.rounds.get_round_summaries_for_user(str(user_id), limit=500, offset=0)
 
-    scores = [r["total_score"] for r in summaries if r["total_score"] is not None]
-    putts = [r["total_putts"] for r in summaries if r["total_putts"] is not None]
-    girs = [r["total_gir"] for r in summaries if r["total_gir"] is not None]
+    scored = [r for r in summaries if r.calculate_total_score() is not None]
+    scores = [r.calculate_total_score() for r in scored]
+    putts = [p for p in (r.get_total_putts() for r in summaries) if p is not None]
+    girs = [g for g in (r.get_total_gir() for r in summaries) if g is not None]
 
-    best_score = min(scores) if scores else None
-    best_round_id = None
-    best_course = None
-    if best_score is not None:
-        for r in summaries:
-            if r["total_score"] == best_score:
-                best_round_id = str(r["id"])
-                best_course = r["course_name"]
-                break
+    best = min(scored, key=lambda r: r.calculate_total_score()) if scored else None
+    best_summary = round_summary(best) if best else None
 
-    # Build recent_rounds response objects from summaries (first 5)
-    def _summary_to_response(row: dict) -> RoundSummaryResponse:
-        return RoundSummaryResponse(
-            id=str(row["id"]),
-            course_id=str(row["course_id"]) if row["course_id"] else None,
-            course_name=row["course_name"],
-            course_location=row["course_location"],
-            course_par=row["course_par"],
-            tee_box=row["tee_box"],
-            date=row["round_date"],
-            total_score=row["total_score"],
-            to_par=(
-                (row["total_score"] - row["course_par"])
-                if row["total_score"] is not None and row["course_par"] is not None
-                else None
-            ),
-            front_nine=row["front_nine"],
-            back_nine=row["back_nine"],
-            total_putts=row["total_putts"],
-            total_gir=row["total_gir"],
-            fairways_hit=row["fairways_hit"],
-            notes=row["notes"],
-        )
-
-    recent_rounds = [_summary_to_response(r) for r in summaries[:5]]
+    recent_rounds = [round_summary(r) for r in summaries[:5]]
 
     # Handicap index only needs the last 20 rounds (full model required for differentials)
     hi_rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=20, offset=0)
@@ -78,9 +49,9 @@ async def get_dashboard(
     return DashboardResponse(
         total_rounds=len(summaries),
         scoring_average=round(sum(scores) / len(scores), 1) if scores else None,
-        best_round=best_score,
-        best_round_id=best_round_id,
-        best_round_course=best_course,
+        best_round=best_summary.total_score if best_summary else None,
+        best_round_id=best_summary.id if best_summary else None,
+        best_round_course=best_summary.course_name if best_summary else None,
         handicap_index=calculated_hi,
         recent_rounds=recent_rounds,
         average_putts=round(sum(putts) / len(putts), 1) if putts else None,
