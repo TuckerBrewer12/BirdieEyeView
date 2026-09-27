@@ -2,12 +2,13 @@
 # Apply one review finding as a PR targeting the original PR's branch.
 #
 # Required env: FINDING_JSON PR_NUMBER HEAD_REF GITHUB_REPOSITORY GH_TOKEN
-# Optional: HEAD_SHA BOT_MODEL OPENCODE_API_KEY
+# Optional: HEAD_SHA BOT_MODEL CURSOR_API_KEY
 set -euo pipefail
 
 BOTS="$(cd "$(dirname "$0")" && pwd)"
-MODEL="${BOT_MODEL:-opencode/muse-spark-1.3-contributor-free}"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
+# shellcheck source=cursor-run.sh
+source "$BOTS/cursor-run.sh"
 
 eval "$(FINDING_JSON="$FINDING_JSON" python3 "$BOTS/findings.py" fields)"
 
@@ -54,18 +55,12 @@ fi
 
 git checkout -B "$BRANCH"
 
-# The model may edit files, but not run a shell or reach the network.
-export OPENCODE_CONFIG_CONTENT='{
-  "permission": { "edit": "allow", "bash": "deny", "webfetch": "deny" },
-  "tools": { "write": true, "edit": true, "patch": true, "bash": false, "webfetch": false }
-}'
-
 FINDING_JSON="$FINDING_JSON" python3 "$BOTS/findings.py" prompt > "$WORK/prompt.txt"
 
-if ! opencode run --model "$MODEL" "$(cat "$WORK/prompt.txt")"; then
-  echo "::warning title=${BOT_NAME}::opencode failed; not opening a fix PR."
+if ! cursor_run edit "$WORK/prompt.txt"; then
+  echo "::error title=${BOT_NAME}::Cursor CLI failed; not opening a fix PR."
   comment "Tried to open a fix PR but the model failed. Reply \`/fix\` to retry."
-  exit 0
+  exit 1
 fi
 
 if git diff --quiet && git diff --cached --quiet && [[ -z "$(git ls-files --others --exclude-standard)" ]]; then

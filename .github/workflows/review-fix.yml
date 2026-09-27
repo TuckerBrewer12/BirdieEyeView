@@ -84,8 +84,10 @@ jobs:
             | tar -x -C "$RUNNER_TEMP/review-bots-src"
           echo "BOTS_DIR=$RUNNER_TEMP/review-bots-src/.github/review-bots" >> "$GITHUB_ENV"
 
-      - name: Install opencode
-        run: curl -fsSL https://opencode.ai/install | bash
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
 
       - name: Apply fix
         env:
@@ -95,5 +97,5 @@ jobs:
           HEAD_SHA: ${{ inputs.head_sha }}
           BOT_NAME: ${{ inputs.bot_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         run: bash "$BOTS_DIR/run-fix.sh"

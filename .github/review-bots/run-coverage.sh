@@ -3,12 +3,13 @@
 # Vitest changed-line % is computed in Python. Screenshot / espresso counts
 # come from the model. One sticky PR comment consolidates both.
 #
-# Env: BASE_SHA HEAD_SHA PR_NUMBER GH_TOKEN OPENCODE_API_KEY
+# Env: BASE_SHA HEAD_SHA PR_NUMBER GH_TOKEN CURSOR_API_KEY
 #      COVERAGE_JSON (optional, default frontend/coverage/coverage-final.json)
 set -euo pipefail
 
-MODEL="${BOT_MODEL:-opencode/muse-spark-1.3-contributor-free}"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
+# shellcheck source=cursor-run.sh
+source "$(cd "$(dirname "$0")" && pwd)/cursor-run.sh"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 COVERAGE_JSON="${COVERAGE_JSON:-$REPO_ROOT/frontend/coverage/coverage-final.json}"
 
@@ -41,13 +42,8 @@ python3 .github/review-bots/coverage_report.py inventory \
   printf '\n```\n'
 } > "$WORK/prompt.txt"
 
-export OPENCODE_CONFIG_CONTENT='{
-  "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" },
-  "tools": { "write": false, "edit": false, "patch": false, "bash": false, "webfetch": false }
-}'
-
-if ! opencode run --model "$MODEL" "$(cat "$WORK/prompt.txt")" > "$WORK/ai.json"; then
-  echo "::warning title=Frontend coverage::opencode failed; posting unit coverage only."
+if ! cursor_run ask "$WORK/prompt.txt" "$WORK/ai.json"; then
+  echo "::warning title=Frontend coverage::Cursor CLI failed; posting unit coverage only."
   python3 .github/review-bots/coverage_report.py comment \
     --lines "$WORK/lines.json"
   exit 0
