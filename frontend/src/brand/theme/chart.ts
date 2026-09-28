@@ -23,6 +23,8 @@ export const chartTickStyle = {
 /** Recharts only accepts numbers for layout. Matches --brand-radius-md (6px)
  *  and the 4px spacing scale for the plot margins. */
 export const chartLayout = {
+  /** Donut outer radius. Recharts only accepts a number; matches `--brand-size-chart-radius` (68px). */
+  outerRadius: 68,
   barRadius: [6, 6, 0, 0] as [number, number, number, number],
   margin: { top: 4, right: 8, left: -20, bottom: 0 },
   /** Unitless SVG plot. Matches `--brand-size-chart` for height. */
