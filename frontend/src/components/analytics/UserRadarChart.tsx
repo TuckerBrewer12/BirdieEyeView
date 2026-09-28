@@ -6,6 +6,13 @@ import type { AnalyticsKPIs, ScoringByParRow } from "@/types/analytics";
 import type { BenchmarkProfile } from "@/domain/benchmark";
 import { buildRadarData, type RadarEntry } from "@/domain/radar";
 
+function formatRadarLabel(axis: string, raw: number | null): string {
+  if (raw == null) return "—";
+  if (axis === "GIR" || axis === "Scrambling") return raw.toFixed(0) + "%";
+  if (axis === "Putting") return raw.toFixed(2) + "/GIR";
+  return (raw >= 0 ? "+" : "") + raw.toFixed(1);
+}
+
 function RadarTooltipContent({ payload }: { payload?: Array<{ payload: RadarEntry }> }) {
   if (!payload?.length) return null;
   const entry = payload[0]?.payload as RadarEntry | undefined;
@@ -17,12 +24,12 @@ function RadarTooltipContent({ payload }: { payload?: Array<{ payload: RadarEntr
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: "#2d7a3a" }} />
           <span className="text-gray-500">You</span>
-          <span className="font-bold text-gray-900 ml-auto">{entry.userRaw}</span>
+          <span className="font-bold text-gray-900 ml-auto">{formatRadarLabel(entry.axis, entry.userRaw)}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full shrink-0 bg-gray-300" />
           <span className="text-gray-500">Target</span>
-          <span className="font-semibold text-gray-500 ml-auto">{entry.benchRaw}</span>
+          <span className="font-semibold text-gray-500 ml-auto">{formatRadarLabel(entry.axis, entry.benchRaw)}</span>
         </div>
       </div>
     </div>
@@ -74,9 +81,9 @@ export const UserRadarChart = memo(function UserRadarChart({
           </text>
           {entry && (
             <text x={x} y={y + 16} textAnchor={anchor} fontSize={12} fontWeight={700}>
-              <tspan fill={primaryColor}>{entry.userRaw}</tspan>
+              <tspan fill={primaryColor}>{formatRadarLabel(entry.axis, entry.userRaw)}</tspan>
               {profile && (
-                <tspan fill="#6b7280"> vs {entry.benchRaw}</tspan>
+                <tspan fill="#6b7280"> vs {formatRadarLabel(entry.axis, entry.benchRaw)}</tspan>
               )}
             </text>
           )}

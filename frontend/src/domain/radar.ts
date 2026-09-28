@@ -5,14 +5,10 @@ export type RadarEntry = {
   axis: string;
   value: number;
   benchmark: number;
-  userRaw: string;
-  benchRaw: string;
+  userRaw: number | null;
+  benchRaw: number;
   hasData: boolean;
 };
-
-function fmtSign(v: number) {
-  return (v >= 0 ? "+" : "") + v.toFixed(1);
-}
 
 export function buildRadarData(
   kpis: AnalyticsKPIs,
@@ -42,48 +38,48 @@ export function buildRadarData(
       axis: "GIR",
       value: clamp(girPct),
       benchmark: p.gir,
-      userRaw: girPct.toFixed(0) + "%",
-      benchRaw: p.gir + "%",
+      userRaw: kpis.gir_percentage,
+      benchRaw: p.gir,
       hasData: hasGir,
     },
     {
       axis: "Scrambling",
       value: clamp(scrPct),
       benchmark: p.scrambling,
-      userRaw: scrPct.toFixed(0) + "%",
-      benchRaw: p.scrambling + "%",
+      userRaw: kpis.scrambling_percentage,
+      benchRaw: p.scrambling,
       hasData: hasScr,
     },
     {
       axis: "Putting",
       value: clamp(((3.5 - puttsRaw) / 2.0) * 100),
       benchmark: p.putting,
-      userRaw: puttsRaw.toFixed(2) + "/GIR",
-      benchRaw: benchPutts.toFixed(2) + "/GIR",
+      userRaw: kpis.putts_per_gir,
+      benchRaw: benchPutts,
       hasData: hasPutt,
     },
     {
       axis: "Par 3s",
       value: clamp(((2.0 - (parRow(3)?.average_to_par ?? 2.0)) / 2.5) * 100),
       benchmark: p.par3,
-      userRaw: parRow(3) ? fmtSign(parRow(3)!.average_to_par) : "—",
-      benchRaw: fmtSign(benchPar3),
+      userRaw: parRow(3)?.average_to_par ?? null,
+      benchRaw: benchPar3,
       hasData: !!parRow(3),
     },
     {
       axis: "Par 4s",
       value: clamp(((2.0 - (parRow(4)?.average_to_par ?? 2.0)) / 2.5) * 100),
       benchmark: p.par4,
-      userRaw: parRow(4) ? fmtSign(parRow(4)!.average_to_par) : "—",
-      benchRaw: fmtSign(benchPar4),
+      userRaw: parRow(4)?.average_to_par ?? null,
+      benchRaw: benchPar4,
       hasData: !!parRow(4),
     },
     {
       axis: "Par 5s",
       value: clamp(((2.0 - (parRow(5)?.average_to_par ?? 2.0)) / 2.5) * 100),
       benchmark: p.par5,
-      userRaw: parRow(5) ? fmtSign(parRow(5)!.average_to_par) : "—",
-      benchRaw: fmtSign(benchPar5),
+      userRaw: parRow(5)?.average_to_par ?? null,
+      benchRaw: benchPar5,
       hasData: !!parRow(5),
     },
   ];
