@@ -255,9 +255,14 @@ export function presentMilestones(milestones: MilestoneDto[]): Milestone[] {
   }));
 }
 
+/** The round total a stored goal names: 79 names 80. */
+export function goalBreakScore(target: number): number {
+  return target + 1;
+}
+
 /** A stored goal of 79 reads "Break 80". */
 export function goalTargetLabel(target: number): string {
-  return `Break ${target + 1}`;
+  return `Break ${goalBreakScore(target)}`;
 }
 
 export type PuttsBand = "good" | "fair" | "poor";
