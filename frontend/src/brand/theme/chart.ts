@@ -24,6 +24,8 @@ export const chartTickStyle = {
  *  and the 4px spacing scale for the plot margins. */
 export const chartLayout = {
   barRadius: [6, 6, 0, 0] as [number, number, number, number],
+  /** Matches `--brand-size-gauge-radius` (72px). */
+  gaugeRadius: 72,
   margin: { top: 4, right: 8, left: -20, bottom: 0 },
   /** Unitless SVG plot. Matches `--brand-size-chart` for height. */
   plot: {

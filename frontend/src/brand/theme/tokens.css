@@ -141,6 +141,7 @@
   --brand-size-date-rail: 54px;
   --brand-size-preview: 390px;
   --brand-size-chart: 180px;
+  --brand-size-gauge-radius: 72px;
   --brand-size-sheet: 28rem;
   --brand-size-icon-xs: 11px;
   --brand-size-hole-w: 30px;
@@ -273,6 +274,7 @@
   --spacing-date-rail: var(--brand-size-date-rail);
   --spacing-preview: var(--brand-size-preview);
   --spacing-chart: var(--brand-size-chart);
+  --spacing-gauge-radius: var(--brand-size-gauge-radius);
   --spacing-sheet: var(--brand-size-sheet);
   --spacing-icon-xs: var(--brand-size-icon-xs);
   --spacing-hole-w: var(--brand-size-hole-w);

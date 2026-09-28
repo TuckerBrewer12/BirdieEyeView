@@ -24,6 +24,7 @@ export const size = {
   dateRail: "var(--brand-size-date-rail)",
   preview: "var(--brand-size-preview)",
   chart: "var(--brand-size-chart)",
+  gaugeRadius: "var(--brand-size-gauge-radius)",
   sheet: "var(--brand-size-sheet)",
   iconXs: "var(--brand-size-icon-xs)",
   holeW: "var(--brand-size-hole-w)",
