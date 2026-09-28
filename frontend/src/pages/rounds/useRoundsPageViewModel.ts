@@ -1,11 +1,13 @@
 import { useState, useMemo, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
+import { messageFrom } from "@/lib/userFacingErrors";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
 import { queryKeys } from "@/data/queryKeys";
 import type { Round } from "@/domain";
 import type { CourseSummary } from "@/types/golf";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
+import { useLinkCourse } from "./useLinkCourse";
 
 export type SortKey = "date" | "total_score" | "to_par" | "course_name";
 export type FilterMode = "all" | "l20" | "best" | string;
@@ -83,7 +85,6 @@ export function useRoundsPageViewModel(
   userId: string,
   repository: RoundsRepository = roundsRepository,
 ): RoundsPageViewModel {
-  const queryClient = useQueryClient();
   const { data: rounds = [], isLoading: loading } = useQuery({
     queryKey: queryKeys.rounds(userId),
     queryFn: () => repository.getRoundsForUser(userId, 100),
@@ -103,8 +104,15 @@ export function useRoundsPageViewModel(
     reset: resetCourseSearch,
   } = useCourseSearch(userId, repository);
   const [linkingRoundId, setLinkingRoundId] = useState<string | null>(null);
-  const [linking, setLinking] = useState(false);
-  const [linkError, setLinkError] = useState<string | null>(null);
+  const {
+    mutate: linkCourse,
+    isPending: linking,
+    error: linkFailure,
+    reset: resetLink,
+  } = useLinkCourse(userId, repository);
+  const linkError = linkFailure
+    ? messageFrom(linkFailure, "Could not link that round to the selected course.")
+    : null;
 
   const chips = useMemo<FilterChipItem[]>(() => {
     const counts = new Map<string, number>();
@@ -126,34 +134,29 @@ export function useRoundsPageViewModel(
     ];
   }, [rounds]);
 
-  const handleSelectCourse = useCallback(async (roundId: string, course: CourseSummary) => {
-    setLinking(true);
-    setLinkError(null);
-    try {
-      const updated = await repository.linkCourse(roundId, course.id);
-      queryClient.setQueryData<Round[]>(queryKeys.rounds(userId), (prev) =>
-        prev ? prev.map((r) => (r.id === roundId ? updated : r)) : [updated],
-      );
-      setLinkingRoundId(null);
-      resetCourseSearch();
-    } catch (err) {
-      setLinkError(err instanceof Error ? err.message : "Could not link that round to the selected course.");
-    } finally {
-      setLinking(false);
-    }
-  }, [queryClient, userId, repository, resetCourseSearch]);
+  const handleSelectCourse = useCallback((roundId: string, course: CourseSummary) => {
+    linkCourse(
+      { roundId, courseId: course.id },
+      {
+        onSuccess: () => {
+          setLinkingRoundId(null);
+          resetCourseSearch();
+        },
+      },
+    );
+  }, [linkCourse, resetCourseSearch]);
 
   const openLink = useCallback((roundId: string) => {
     setLinkingRoundId(roundId);
     resetCourseSearch();
-    setLinkError(null);
-  }, [resetCourseSearch]);
+    resetLink();
+  }, [resetCourseSearch, resetLink]);
 
   const closeLink = useCallback(() => {
     setLinkingRoundId(null);
     resetCourseSearch();
-    setLinkError(null);
-  }, [resetCourseSearch]);
+    resetLink();
+  }, [resetCourseSearch, resetLink]);
 
   const isLinkOpen = useCallback(
     (roundId: string) => linkingRoundId === roundId,

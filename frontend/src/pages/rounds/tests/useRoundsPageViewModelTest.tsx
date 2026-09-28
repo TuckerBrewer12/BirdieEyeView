@@ -83,10 +83,8 @@ describe("useRoundsPageViewModel", () => {
     act(() => result.current.openLink("round-4"));
     expect(result.current.linkingRoundId).toBe("round-4");
 
-    await act(async () => {
-      await result.current.handleSelectCourse("round-4", pebbleBeach);
-    });
-    expect(result.current.linkingRoundId).toBeNull();
+    act(() => result.current.handleSelectCourse("round-4", pebbleBeach));
+    await waitFor(() => expect(result.current.linkingRoundId).toBeNull());
     expect(result.current.filteredRounds.find((r) => r.id === "round-4")?.course?.name).toBe(
       "Pebble Beach",
     );
@@ -151,10 +149,8 @@ describe("useRoundsPageViewModel", () => {
     const { result } = renderVm({ rounds: populatedRounds, linkError: "nope" });
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.openLink("round-4"));
-    await act(async () => {
-      await result.current.handleSelectCourse("round-4", pebbleBeach);
-    });
-    expect(result.current.linkError).toBe("nope");
+    act(() => result.current.handleSelectCourse("round-4", pebbleBeach));
+    await waitFor(() => expect(result.current.linkError).toBe("nope"));
     expect(result.current.linkingRoundId).toBe("round-4");
   });
 });
