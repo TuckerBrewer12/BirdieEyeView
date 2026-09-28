@@ -159,6 +159,11 @@ export class RoundsRobot {
     return this;
   }
 
+  async seesLinkError(message: string): Promise<this> {
+    await expect(this.page.getByRole("alert").filter({ hasText: message })).toBeVisible();
+    return this;
+  }
+
   async doesNotSeeLinkPanel(): Promise<this> {
     await expect(this.page.getByPlaceholder("Search courses…")).toHaveCount(0);
     return this;

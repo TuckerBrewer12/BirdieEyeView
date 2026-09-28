@@ -1,13 +1,9 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
-import { messageFrom } from "@/lib/userFacingErrors";
-import { useCourseSearch } from "@/hooks/useCourseSearch";
 import { queryKeys } from "@/data/queryKeys";
 import type { Round } from "@/domain";
-import type { CourseSummary } from "@/types/golf";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
-import { useLinkCourse } from "./useLinkCourse";
 
 export type SortKey = "date" | "total_score" | "to_par" | "course_name";
 export type FilterMode = "all" | "l20" | "best" | string;
@@ -38,11 +34,6 @@ export interface RoundsUiState {
   effectiveSortKey: SortKey;
   sortLocked: boolean;
   linkingRoundId: string | null;
-  linkQuery: string;
-  linkResults: CourseSummary[];
-  linkSearching: boolean;
-  linking: boolean;
-  linkError: string | null;
 }
 
 export interface RoundsPageViewModel extends RoundsUiState {
@@ -51,8 +42,6 @@ export interface RoundsPageViewModel extends RoundsUiState {
   setFilterMode: (mode: FilterMode) => void;
   selectSortKey: (key: SortKey) => void;
   toggleSortDirection: () => void;
-  handleLinkQuery: (q: string) => void;
-  handleSelectCourse: (roundId: string, course: CourseSummary) => void;
   openLink: (roundId: string) => void;
   closeLink: () => void;
   /** Whether this round's course-link panel is the one showing. */
@@ -96,23 +85,7 @@ export function useRoundsPageViewModel(
   const [visibleCount, setVisibleCount] = useState(20);
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
 
-  const {
-    query: linkQuery,
-    setQuery: handleLinkQuery,
-    results: linkResults,
-    searching: linkSearching,
-    reset: resetCourseSearch,
-  } = useCourseSearch(userId, repository);
   const [linkingRoundId, setLinkingRoundId] = useState<string | null>(null);
-  const {
-    mutate: linkCourse,
-    isPending: linking,
-    error: linkFailure,
-    reset: resetLink,
-  } = useLinkCourse(userId, repository);
-  const linkError = linkFailure
-    ? messageFrom(linkFailure, "Could not link that round to the selected course.")
-    : null;
 
   const chips = useMemo<FilterChipItem[]>(() => {
     const counts = new Map<string, number>();
@@ -134,29 +107,13 @@ export function useRoundsPageViewModel(
     ];
   }, [rounds]);
 
-  const handleSelectCourse = useCallback((roundId: string, course: CourseSummary) => {
-    linkCourse(
-      { roundId, courseId: course.id },
-      {
-        onSuccess: () => {
-          setLinkingRoundId(null);
-          resetCourseSearch();
-        },
-      },
-    );
-  }, [linkCourse, resetCourseSearch]);
-
   const openLink = useCallback((roundId: string) => {
     setLinkingRoundId(roundId);
-    resetCourseSearch();
-    resetLink();
-  }, [resetCourseSearch, resetLink]);
+  }, []);
 
   const closeLink = useCallback(() => {
     setLinkingRoundId(null);
-    resetCourseSearch();
-    resetLink();
-  }, [resetCourseSearch, resetLink]);
+  }, []);
 
   const isLinkOpen = useCallback(
     (roundId: string) => linkingRoundId === roundId,
@@ -245,13 +202,6 @@ export function useRoundsPageViewModel(
     selectSortKey,
     toggleSortDirection,
     linkingRoundId,
-    linkQuery,
-    linkResults,
-    linkSearching,
-    linking,
-    linkError,
-    handleLinkQuery,
-    handleSelectCourse,
     openLink,
     closeLink,
     isLinkOpen,
