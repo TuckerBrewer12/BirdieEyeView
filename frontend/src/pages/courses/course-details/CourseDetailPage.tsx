@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -17,6 +18,7 @@ import {
 import { cn } from "@/brand/cn";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { CourseCharts, CourseScoreTrend } from "./CourseCharts";
+import { chartThemeFrom } from "./courseChartTheme";
 import { NineTable } from "./NineTable";
 import { useCourseDetailPageViewModel } from "./useCourseDetailPageViewModel";
 
@@ -24,6 +26,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const viewModel = useCourseDetailPageViewModel(userId, courseId);
+  const chartTheme = useMemo(() => chartThemeFrom(), []);
 
   if (viewModel.loading) {
     return <LoadingState>Loading course...</LoadingState>;
@@ -137,7 +140,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
 
             <div>
               <SectionLabel>Score Trend</SectionLabel>
-              <CourseScoreTrend data={viewModel.scoreTrend} theme={viewModel.chartTheme} />
+              <CourseScoreTrend data={viewModel.scoreTrend} theme={chartTheme} />
             </div>
 
             <div>
@@ -166,7 +169,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
                 chartTabs={viewModel.chartTabs}
                 chartTab={viewModel.chartTab}
                 onSelectChartTab={viewModel.selectChartTab}
-                theme={viewModel.chartTheme}
+                theme={chartTheme}
               />
             </div>
           </div>

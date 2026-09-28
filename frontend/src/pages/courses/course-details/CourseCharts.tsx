@@ -20,10 +20,14 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import { chartLayout, chartTickStyle, chartTooltipStyle } from "@/brand/theme";
+import { chartLayout, chartTickStyle, chartTooltipStyle, toParLabel, toParTextClass } from "@/brand/theme";
+import {
+  toParBarFill,
+  toParFill,
+  type CourseChartTheme,
+} from "./courseChartTheme";
 import type {
   CourseChartCard,
-  CourseChartTheme,
   ChartTabKey,
   TabItem,
   TrendPoint,
@@ -146,7 +150,7 @@ function ScoreTrendChart({ data, theme }: { data: TrendPoint[]; theme: CourseCha
             cx={xSc(i)}
             cy={ySc(point.total_score)}
             r={hovered === point ? 6 : 4}
-            fill={point.fill}
+            fill={toParFill(point.toPar, theme)}
             stroke={theme.card}
             strokeWidth={1.5}
           />
@@ -185,9 +189,9 @@ function ScoreTrendChart({ data, theme }: { data: TrendPoint[]; theme: CourseCha
         >
           <div className="mb-1 text-meta text-muted-foreground">{hovered.dateLabel}</div>
           <div className="text-sm font-bold text-foreground">{hovered.total_score}</div>
-          {hovered.toParLabel && (
-            <div className="mt-0.5 text-xs font-semibold" style={{ color: hovered.fill }}>
-              {hovered.toParLabel}
+          {toParLabel(hovered.toPar) && (
+            <div className={`mt-0.5 text-xs font-semibold ${toParTextClass(hovered.toPar)}`}>
+              {toParLabel(hovered.toPar)}
             </div>
           )}
         </div>
@@ -213,7 +217,7 @@ function renderChart(card: CourseChartCard, theme: CourseChartTheme, gradientId:
           <ReferenceLine y={0} stroke={theme.grid} />
           <Bar dataKey="average_to_par" radius={chartLayout.barRadius}>
             {card.rows.map((row) => (
-              <Cell key={row.hole_number} fill={row.fill} />
+              <Cell key={row.hole_number} fill={toParBarFill(row.average_to_par, theme)} />
             ))}
           </Bar>
         </BarChart>
@@ -229,7 +233,7 @@ function renderChart(card: CourseChartCard, theme: CourseChartTheme, gradientId:
             formatter={((value: number) => [`${Number(value ?? 0).toFixed(1)}%`, ""]) as Fmt}
           />
           <Legend wrapperStyle={{ fontSize: chartTickStyle.fontSize }} />
-          {card.series.map((series) => (
+          {theme.scoreTypeSeries.map((series) => (
             <Bar key={series.key} dataKey={series.key} stackId="a" fill={series.fill} name={series.name} />
           ))}
         </BarChart>
