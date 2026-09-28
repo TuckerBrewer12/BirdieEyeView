@@ -19,6 +19,7 @@ import {
   teeYardsForHoles,
 } from "@/domain/course";
 import { ratedCourseHandicap } from "@/domain/handicap";
+import type { Round } from "@/domain";
 import type { Course, Tee } from "@/types/golf";
 import type { CourseAnalyticsData, CourseScoreTrendRow } from "@/types/analytics";
 import { chartColors, colors, toParLabel } from "@/brand/theme";
@@ -76,13 +77,6 @@ export interface ScorecardNine {
 export interface HeroStat {
   value: string;
   label: string;
-}
-
-export interface RoundHistoryRow {
-  id: string | null;
-  date: string | null;
-  total_score: number | null;
-  to_par: number | null;
 }
 
 export interface TrendPoint {
@@ -180,7 +174,8 @@ export interface CourseDetailPageViewModel {
   showPerformanceTab: boolean;
   heroStats: HeroStat[];
   scoreTrend: TrendPoint[];
-  roundHistory: RoundHistoryRow[];
+  /** The player's rounds at this course, newest first. */
+  roundHistory: Round[];
   chartTabs: TabItem<ChartTabKey>[];
   chartTab: ChartTabKey;
   selectChartTab: (key: string) => void;
@@ -450,6 +445,12 @@ export function useCourseDetailPageViewModel(
     enabled: !!courseId,
   });
 
+  const { data: rounds = [] } = useQuery({
+    queryKey: queryKeys.rounds(userId),
+    queryFn: () => repository.getRoundsForUser(userId),
+    enabled: !!courseId,
+  });
+
   const { data: handicapData } = useQuery({
     queryKey: queryKeys.handicap(userId),
     queryFn: async () => {
@@ -543,12 +544,9 @@ export function useCourseDetailPageViewModel(
       { value: scores.length ? String(Math.max(...scores)) : "—", label: "Worst Round" },
     ],
     scoreTrend,
-    roundHistory: [...analytics.score_trend_on_course].reverse().map((row) => ({
-      id: row.round_id,
-      date: row.date,
-      total_score: row.total_score,
-      to_par: row.to_par,
-    })),
+    roundHistory: rounds
+      .filter((round) => round.course?.id === courseId)
+      .sort((a, b) => ((b.date ?? "") > (a.date ?? "") ? 1 : -1)),
     chartTabs: CHART_TABS,
     chartTab,
     selectChartTab: (key) => {

@@ -1,14 +1,11 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
-import { formatRoundDateLong } from "@/lib/roundDate";
 import { messageFrom } from "@/lib/userFacingErrors";
-import { scoreKeyFor, type ScoreKey } from "@/brand/theme";
 import { queryKeys } from "@/data/queryKeys";
-import { playedHoles, roundPar, totalStrokes, type PlayedHole } from "@/domain/round";
-import { backNine as backNineOf, frontNine as frontNineOf, type Nine } from "@/domain/scorecard";
+import { Round as RoundModel } from "@/domain/round";
 import { getTee, teeColors } from "@/domain/course";
-import { netScore, ratedCourseHandicap } from "@/domain/handicap";
+import { ratedCourseHandicap } from "@/domain/handicap";
 import { chooseCompatibleTee } from "@/lib/teeColor";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
 import type { CourseSummary, Round } from "@/types/golf";
@@ -31,18 +28,14 @@ export type EditedScores = Record<number, { strokes: number | null; putts: numbe
 export interface RoundDetailUiState {
   loading: boolean;
   loadError: string | null;
+  /** The round as the API sends it, for the edit form and the not-yet-migrated scorecard views. */
   round: Round | undefined;
+  /** The round as played: read against the course being edited in, with edited strokes applied. */
+  played: RoundModel | null;
   comparison: RoundComparison | null | undefined;
   courseName: string;
-  totalScore: number;
-  toPar: number | null;
-  netScore: number | null;
   courseHandicap: number | null;
-  dateLabel: string | null;
   teeRating: string | null;
-  frontNine: Nine<PlayedHole>;
-  backNine: Nine<PlayedHole>;
-  scoreCounts: Partial<Record<ScoreKey, number>>;
   editMode: boolean;
   saving: boolean;
   confirmDelete: boolean;
@@ -292,26 +285,12 @@ export function useRoundDetailPageViewModel(
     editMode && courseEdit.status === "linked"
       ? courseEdit.course
       : round?.course ?? null;
-  const totalScore = round ? totalStrokes(round, editMode ? editedScores : undefined) : 0;
-  const coursePar = round ? roundPar(round, activeCourse) : null;
-  const toPar = coursePar !== null ? totalScore - coursePar : null;
+  const played = useMemo(() => {
+    if (!round) return null;
+    const model = RoundModel.fromDto(round, activeCourse);
+    return editMode ? model.withStrokes(editedScores) : model;
+  }, [round, activeCourse, editMode, editedScores]);
   const courseName = formatCourseName(round?.course_name_played ?? round?.course?.name);
-
-  const holes = useMemo(
-    () => (round ? playedHoles(round, activeCourse) : []),
-    [round, activeCourse],
-  );
-  const frontNine = useMemo(() => frontNineOf(holes), [holes]);
-  const backNine = useMemo(() => backNineOf(holes), [holes]);
-  const scoreCounts = useMemo(() => {
-    const counts: Partial<Record<ScoreKey, number>> = {};
-    for (const h of holes) {
-      if (h.par == null) continue;
-      const key = scoreKeyFor(h.strokes, h.par);
-      counts[key] = (counts[key] ?? 0) + 1;
-    }
-    return counts;
-  }, [holes]);
 
   const editLinkedName = courseEdit.status === "linked" ? courseEdit.course.name ?? undefined : undefined;
   const editCustomName = courseEdit.status === "custom" ? courseEdit.name : undefined;
@@ -319,10 +298,7 @@ export function useRoundDetailPageViewModel(
   const tee = getTee(activeCourse, activeTeeBox);
   const teeRating = teeRatingLabel(tee);
 
-  const courseHandicap = ratedCourseHandicap(handicapIndex, tee, coursePar);
-  const netScoreValue = courseHandicap != null && totalScore > 0
-    ? netScore(totalScore, courseHandicap)
-    : null;
+  const courseHandicap = ratedCourseHandicap(handicapIndex, tee, played?.par ?? null);
   const charts = comparison ? chartsFrom(comparison) : [];
   const selectedCharts = charts.filter((chart) => chart.group === chartTab);
   const chartTabs = CHART_TABS;
@@ -337,16 +313,10 @@ export function useRoundDetailPageViewModel(
     loadError: isError ? messageFrom(roundError, "Could not load this round.") : null,
     round,
     comparison,
+    played,
     courseName,
-    totalScore,
-    toPar,
-    netScore: netScoreValue,
     courseHandicap,
-    dateLabel: formatRoundDateLong(round?.date),
     teeRating,
-    frontNine,
-    backNine,
-    scoreCounts,
     editMode,
     saving,
     confirmDelete,

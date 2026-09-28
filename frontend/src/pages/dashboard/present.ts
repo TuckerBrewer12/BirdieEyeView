@@ -1,19 +1,18 @@
 import { colors, toParFill, toParLabel, toParTone, type ScoreKey } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateShort } from "@/lib/roundDate";
-import type { Round, RoundSummary, User } from "@/types/golf";
+import type { HoleScore, Round } from "@/domain";
+import type { User } from "@/types/golf";
 import type { GoalReport } from "@/types/analytics";
 import {
-  holesFromRound,
   type DualTrendPoint,
   type HiTrend,
-  type RecentHole,
   type ScoreMixItem,
   type TrendView,
   type WhsRound,
 } from "./model";
 
-export type { RecentHole, TrendView };
+export type { TrendView };
 
 const SCORE_LABELS: Record<ScoreKey, string> = {
   eagle: "Eagle+",
@@ -173,8 +172,18 @@ export function trendTabs(trendView: TrendView): TrendTabItem[] {
   ];
 }
 
-export interface PaintedHole extends RecentHole {
+/** A hole ready to draw: unscored holes read as par. */
+export interface PaintedHole {
+  hole: number;
+  strokes: number | null;
+  par: number | null;
+  kind: ScoreKey;
   fill: string;
+}
+
+function paint(hole: HoleScore): PaintedHole {
+  const kind = hole.kind ?? "par";
+  return { hole: hole.hole, strokes: hole.strokes, par: hole.par, kind, fill: SCORE_COLORS[kind] };
 }
 
 export interface RecentRoundRow {
@@ -190,19 +199,18 @@ export interface RecentRoundRow {
   holes: PaintedHole[];
 }
 
-export function toRoundRow(summary: RoundSummary, detail: Round | undefined): RecentRoundRow {
-  const toPar = summary.to_par;
+export function toRoundRow(round: Round): RecentRoundRow {
   return {
-    id: summary.id,
-    scoreLabel: summary.total_score != null ? String(summary.total_score) : "—",
-    toPar,
-    toParLabel: toParLabel(toPar),
-    toParColor: toParTone(toPar).text,
-    accentColor: toParFill(toPar),
-    courseLabel: summary.course_name ? formatCourseName(summary.course_name) : "Unknown course",
-    dateLabel: formatRoundDateShort(summary.date) ?? "—",
-    teeBox: summary.tee_box,
-    holes: holesFromRound(detail).map((h) => ({ ...h, fill: SCORE_COLORS[h.colorKey] })),
+    id: round.id,
+    scoreLabel: round.score != null ? String(round.score) : "—",
+    toPar: round.toPar,
+    toParLabel: toParLabel(round.toPar),
+    toParColor: toParTone(round.toPar).text,
+    accentColor: toParFill(round.toPar),
+    courseLabel: round.course?.name ? formatCourseName(round.course.name) : "Unknown course",
+    dateLabel: formatRoundDateShort(round.date) ?? "—",
+    teeBox: round.teeBox,
+    holes: round.holes.map(paint),
   };
 }
 
@@ -212,12 +220,9 @@ export interface ScoreChip {
   color: string;
 }
 
-export function lastRoundChips(holes: RecentHole[]): ScoreChip[] {
-  if (!holes.length) return [];
-  const counts: Partial<Record<ScoreKey, number>> = {};
-  for (const h of holes) {
-    counts[h.colorKey] = (counts[h.colorKey] ?? 0) + 1;
-  }
+export function lastRoundChips(round: Round | null): ScoreChip[] {
+  if (!round) return [];
+  const counts = round.kindCounts;
   const items: ScoreChip[] = [];
   const birdiesPlus = (counts.eagle ?? 0) + (counts.birdie ?? 0);
   if (birdiesPlus > 0) items.push({ label: "Birdie+", count: birdiesPlus, color: SCORE_COLORS.birdie });

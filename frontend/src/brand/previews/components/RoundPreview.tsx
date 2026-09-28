@@ -1,8 +1,9 @@
 import { Collection } from "@/brand/components/Collection";
 import { RoundPreview } from "@/brand/components/RoundPreview";
+import { Round } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 
-const [overPar, evenPar, best, unlinked] = populatedRounds;
+const [overPar, evenPar, best, unlinked] = populatedRounds.map(Round.fromSummary);
 
 /** Compose-style @Preview for RoundPreview. */
 export default function RoundPreviewPreview() {

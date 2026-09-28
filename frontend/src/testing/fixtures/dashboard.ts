@@ -8,7 +8,7 @@ import type {
   ScoreTrendRow,
 } from "../../types/analytics";
 import { populatedRounds } from "./rounds";
-import { halfMoonBayRound, roundFromSummary } from "./roundDetails";
+import { halfMoonBayRound, roundDtoFromSummary } from "./roundDetails";
 
 function emptyNotable(): NotableAchievements {
   const none = { lifetime: {}, one_year: {} };
@@ -244,7 +244,7 @@ export const dashboardGoalReport: GoalReport = {
 };
 
 export function detailRoundsFrom(summaries: RoundSummary[]) {
-  return summaries.map((s) => roundFromSummary(s));
+  return summaries.map((s) => roundDtoFromSummary(s));
 }
 
 export const dashboardDetailRounds = [

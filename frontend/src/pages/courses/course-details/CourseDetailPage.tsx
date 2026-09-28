@@ -19,7 +19,6 @@ import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { CourseCharts, CourseScoreTrend } from "./CourseCharts";
 import { NineTable } from "./NineTable";
 import { useCourseDetailPageViewModel } from "./useCourseDetailPageViewModel";
-import type { RoundSummary } from "@/types/golf";
 
 export function CourseDetailPage({ userId }: { userId: string }) {
   const { courseId } = useParams<{ courseId: string }>();
@@ -147,13 +146,13 @@ export function CourseDetailPage({ userId }: { userId: string }) {
                 layout="divided"
                 className="overflow-hidden rounded-xl border border-border bg-card"
                 items={viewModel.roundHistory}
-                keyFor={(row, index) => row.id ?? `${row.date}-${index}`}
+                keyFor={(round) => round.id}
                 empty="No rounds at this course."
-                renderItem={(row) => (
+                renderItem={(round) => (
                   <RoundPreview
                     variant="history"
-                    round={row as RoundSummary}
-                    onClick={row.id ? () => navigate(`/rounds/${row.id}`) : undefined}
+                    round={round}
+                    onClick={() => navigate(`/rounds/${round.id}`)}
                   />
                 )}
               />

@@ -29,7 +29,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   if (viewModel.loading) {
     return <LoadingState>Loading round...</LoadingState>;
   }
-  if (viewModel.loadError || !viewModel.round) {
+  if (viewModel.loadError || !viewModel.round || !viewModel.played) {
     return (
       <Alert variant="destructive">
         <AlertDescription>{viewModel.loadError ?? "Could not load this round."}</AlertDescription>
@@ -38,6 +38,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   }
 
   const round = viewModel.round;
+  const played = viewModel.played;
 
   return (
     <div>
@@ -72,18 +73,9 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       />
 
       <RoundDetailHeader
-        courseName={viewModel.courseName}
-        dateLabel={viewModel.dateLabel}
-        tee={{ box: round.tee_box, rating: viewModel.teeRating }}
-        score={{
-          total: viewModel.totalScore,
-          toPar: viewModel.toPar,
-          net: viewModel.netScore,
-          courseHandicap: viewModel.courseHandicap,
-        }}
-        nines={{ front: viewModel.frontNine, back: viewModel.backNine }}
-        stats={{ putts: round.total_putts, gir: round.total_gir }}
-        counts={viewModel.scoreCounts}
+        round={played}
+        teeRating={viewModel.teeRating}
+        courseHandicap={viewModel.courseHandicap}
       />
 
       {viewModel.showLinkButton && (

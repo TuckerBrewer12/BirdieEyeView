@@ -2,7 +2,7 @@ import type { Course, CourseSummary, Round, RoundSummary } from "../../types/gol
 import type { CourseAnalyticsData, RoundComparison } from "../../types/analytics";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
-import { roundFromSummary, toCourseSummary } from "../fixtures/roundDetails";
+import { roundDtoFromSummary, toCourseSummary } from "../fixtures/roundDetails";
 
 export interface InMemoryRoundsSeed {
   rounds?: RoundSummary[];
@@ -144,7 +144,7 @@ export class InMemoryRounds {
     const detail = this.detailRounds.find((round) => round.id === roundId);
     if (detail) return detail;
     const summary = this.rounds.find((round) => round.id === roundId);
-    if (summary) return roundFromSummary(summary);
+    if (summary) return roundDtoFromSummary(summary);
     throw new Error("Round not found.");
   }
 
@@ -154,7 +154,7 @@ export class InMemoryRounds {
     if (index === -1) {
       const summary = this.rounds.find((round) => round.id === roundId);
       if (!summary) throw new Error("Round not found.");
-      const created = applyUpdate(roundFromSummary(summary), body);
+      const created = applyUpdate(roundDtoFromSummary(summary), body);
       this.detailRounds = [...this.detailRounds, created];
       return created;
     }

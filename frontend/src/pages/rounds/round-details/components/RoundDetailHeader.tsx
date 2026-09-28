@@ -1,8 +1,10 @@
 import { cn } from "@/brand/cn";
 import { PageTitle } from "@/brand";
 import { colors, toParDisplay, type ScoreKey } from "@/brand/theme";
-import type { Nine } from "@/domain";
+import type { Nine, Round } from "@/domain";
+import { formatCourseName } from "@/lib/courseName";
 import { pluralNoun } from "@/lib/pluralize";
+import { formatRoundDateLong } from "@/lib/roundDate";
 
 const BAR_HEIGHTS: Record<ScoreKey, number> = {
   eagle: 28, birdie: 40, par: 52, bogey: 72, double: 92, triple: 100, quad: 100,
@@ -18,19 +20,11 @@ const CHIPS: { key: ScoreKey; noun: string; plural?: string; absorbs?: ScoreKey 
 ];
 
 export interface RoundDetailHeaderProps {
-  courseName: string;
-  /** "Mon · Jun 15 · 2026" */
-  dateLabel?: string | null;
-  tee?: { box?: string | null; rating?: string | null };
-  score: {
-    total: number;
-    toPar: number | null;
-    net?: number | null;
-    courseHandicap?: number | null;
-  };
-  nines?: { front: Nine; back: Nine };
-  stats?: { putts?: number | null; gir?: number | null };
-  counts?: Partial<Record<ScoreKey, number>>;
+  round: Round;
+  /** "72.4 / 130", when the tee is rated. */
+  teeRating?: string | null;
+  /** The player's handicap on this course. Shows the net score when known. */
+  courseHandicap?: number | null;
   className?: string;
 }
 
@@ -71,18 +65,10 @@ function NineBars({ nine, label, className }: {
 /**
  * The identity and shape of one round: what was played, when, how it went.
  */
-export function RoundDetailHeader({
-  courseName,
-  dateLabel,
-  tee,
-  score,
-  nines,
-  stats,
-  counts = {},
-  className,
-}: RoundDetailHeaderProps) {
-  const hasBars = (nines?.front.holes.length ?? 0) > 0 || (nines?.back.holes.length ?? 0) > 0;
-  const hasStats = stats?.putts != null || stats?.gir != null;
+export function RoundDetailHeader({ round, teeRating, courseHandicap, className }: RoundDetailHeaderProps) {
+  const dateLabel = formatRoundDateLong(round.date);
+  const net = courseHandicap != null ? round.netScore(courseHandicap) : null;
+  const counts = round.kindCounts;
 
   return (
     <div data-slot="round-detail-header" className={cn("mb-4", className)}>
@@ -92,14 +78,16 @@ export function RoundDetailHeader({
             {dateLabel}
           </div>
         )}
-        <PageTitle className="pt-0 leading-display tracking-display">{courseName || "—"}</PageTitle>
-        {(tee?.box || tee?.rating) && (
+        <PageTitle className="pt-0 leading-display tracking-display">
+          {formatCourseName(round.course?.name)}
+        </PageTitle>
+        {(round.teeBox || teeRating) && (
           <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-            {tee.box && <span className="capitalize">{tee.box} tees</span>}
-            {tee.rating && (
+            {round.teeBox && <span className="capitalize">{round.teeBox} tees</span>}
+            {teeRating && (
               <>
                 <span className="inline-block size-dot rounded-full bg-current opacity-50" />
-                <span>{tee.rating}</span>
+                <span>{teeRating}</span>
               </>
             )}
           </div>
@@ -110,53 +98,51 @@ export function RoundDetailHeader({
         <div className="flex shrink-0 items-end">
           <div>
             <div className="font-mono text-hero font-bold leading-none tracking-hero text-foreground">
-              {score.total || "—"}
+              {round.score ?? "—"}
             </div>
-            {score.toPar != null && (
+            {round.toPar != null && (
               <div
                 className={cn(
                   "mt-0.5 font-mono text-sm font-bold",
                   // Level par reads as a good thing here, so it shares birdie's green.
-                  score.toPar <= 0 ? "text-score-birdie" : "text-score-bogey",
+                  round.toPar <= 0 ? "text-score-birdie" : "text-score-bogey",
                 )}
               >
-                {toParDisplay(score.toPar, "-")}
+                {toParDisplay(round.toPar, "-")}
               </div>
             )}
           </div>
-          {score.net != null && (
+          {courseHandicap != null && net != null && (
             <>
               <div className="mx-3.5 h-11 w-px shrink-0 bg-border" />
               <div>
                 <div className="mb-chip text-caption font-bold uppercase tracking-net text-muted-foreground">
-                  Net{score.courseHandicap != null
-                    ? ` · hcp ${score.courseHandicap < 0 ? `+${Math.abs(score.courseHandicap)}` : score.courseHandicap}`
-                    : ""}
+                  Net · hcp {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}
                 </div>
-                <div className="font-mono text-lg font-bold leading-none text-primary">{score.net}</div>
+                <div className="font-mono text-lg font-bold leading-none text-primary">{net}</div>
               </div>
             </>
           )}
         </div>
 
-        {hasBars && nines && (
+        {round.holes.length > 0 && (
           <div className="flex min-w-0 flex-1 items-start gap-3.5 overflow-hidden">
-            <NineBars nine={nines.front} label="Front" />
-            <NineBars nine={nines.back} label="Back" className="mt-1.5" />
+            <NineBars nine={round.frontNine} label="Front" />
+            <NineBars nine={round.backNine} label="Back" className="mt-1.5" />
           </div>
         )}
       </div>
 
-      {hasStats && (
+      {(round.putts != null || round.gir != null) && (
         <div className="flex gap-4 pt-2 font-mono text-xs text-muted-foreground">
-          {stats?.putts != null && (
+          {round.putts != null && (
             <span>
-              <span className="font-semibold text-foreground">{stats.putts}</span> putts
+              <span className="font-semibold text-foreground">{round.putts}</span> putts
             </span>
           )}
-          {stats?.gir != null && (
+          {round.gir != null && (
             <span>
-              <span className="font-semibold text-primary">{stats.gir}</span>/18 GIR
+              <span className="font-semibold text-primary">{round.gir}</span>/18 GIR
             </span>
           )}
         </div>

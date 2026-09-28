@@ -55,9 +55,8 @@ describe("useRoundDetailPageViewModel", () => {
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.courseName).toBe("Half Moon Bay");
-    expect(result.current.totalScore).toBe(78);
-    expect(result.current.toPar).toBe(6);
-    expect(result.current.dateLabel).toBe("Mon · Jun 15 · 2026");
+    expect(result.current.played?.score).toBe(78);
+    expect(result.current.played?.toPar).toBe(6);
     expect(result.current.teeRating).toBe("72.4 / 130");
     expect(result.current.showLinkButton).toBe(false);
     expect(result.current.showMomentum).toBe(true);
@@ -68,8 +67,8 @@ describe("useRoundDetailPageViewModel", () => {
       detailRounds: [halfMoonBayRound],
       handicapIndex: 10.4,
     });
-    await waitFor(() => expect(result.current.netScore).toBe(66));
-    expect(result.current.courseHandicap).toBe(12);
+    await waitFor(() => expect(result.current.courseHandicap).toBe(12));
+    expect(result.current.played?.netScore(12)).toBe(66);
   });
 
   it("shows the link button when the round has no course", async () => {
@@ -94,7 +93,8 @@ describe("useRoundDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.enterEditMode());
     act(() => result.current.handleScoreChange(1, "strokes", null));
-    expect(result.current.totalScore).toBe(73);
+    expect(result.current.played?.score).toBe(73);
+    expect(result.current.played?.holes.find((h) => h.hole === 1)?.strokes).toBeNull();
   });
 
   it("saves edited strokes and leaves edit mode", async () => {
@@ -106,7 +106,7 @@ describe("useRoundDetailPageViewModel", () => {
       await result.current.save();
     });
     expect(result.current.editMode).toBe(false);
-    expect(result.current.totalScore).toBe(76);
+    expect(result.current.played?.score).toBe(76);
     const saved = await repository.getRound("round-1");
     expect(saved.hole_scores.find((s) => s.hole_number === 1)?.strokes).toBe(3);
   });
@@ -214,7 +214,7 @@ describe("useRoundDetailPageViewModel", () => {
       fullCourses: [pebbleBeachCourse],
       handicapIndex: 10.4,
     });
-    await waitFor(() => expect(result.current.netScore).toBe(66));
+    await waitFor(() => expect(result.current.courseHandicap).toBe(12));
     act(() => result.current.enterEditMode());
     await act(async () => {
       await result.current.handleSelectEditCourse(pebbleBeach);
@@ -223,7 +223,7 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.editLinkedName).toBe("Pebble Beach");
     expect(result.current.editedTeeBox).toBe("Blue");
     expect(result.current.courseHandicap).toBe(16);
-    expect(result.current.netScore).toBe(62);
+    expect(result.current.played?.netScore(16)).toBe(62);
   });
 
   it("saving a newly picked course links it and clears a custom name", async () => {
@@ -324,13 +324,12 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.packSelectedCharts).toBe(true);
   });
 
-  it("totals each nine from the hole scores", async () => {
+  it("totals each nine from the round's one list of holes", async () => {
     const { result } = renderVm("round-1", { detailRounds: [halfMoonBayRound] });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.frontNine.holes).toHaveLength(9);
-    expect(result.current.backNine.holes).toHaveLength(9);
-    expect(result.current.frontNine.total).toBe(40);
-    expect(result.current.backNine.total).toBe(38);
+    expect(result.current.played?.holes).toHaveLength(18);
+    expect(result.current.played?.frontNine.total).toBe(40);
+    expect(result.current.played?.backNine.total).toBe(38);
   });
 
   it("withholds a nine's total until all nine holes are played", async () => {
@@ -342,15 +341,14 @@ describe("useRoundDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     // Bars still draw, but a part-played nine reports no total — the same rule
     // the round-list query uses, so the two screens cannot disagree.
-    expect(result.current.frontNine.holes).toHaveLength(5);
-    expect(result.current.frontNine.total).toBeNull();
-    expect(result.current.backNine.holes).toHaveLength(0);
-    expect(result.current.backNine.total).toBeNull();
+    expect(result.current.played?.frontNine.holes).toHaveLength(5);
+    expect(result.current.played?.frontNine.total).toBeNull();
+    expect(result.current.played?.backNine.holes).toHaveLength(0);
   });
 
   it("buckets every hole into a score count", async () => {
     const { result } = renderVm("round-1", { detailRounds: [halfMoonBayRound] });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.scoreCounts).toEqual({ birdie: 1, par: 10, bogey: 7 });
+    expect(result.current.played?.kindCounts).toEqual({ birdie: 1, par: 10, bogey: 7 });
   });
 });

@@ -1,9 +1,9 @@
 import { cn } from "@/brand/cn";
 import { colors } from "@/brand/theme";
-import type { HoleResult } from "@/domain";
+import type { HoleScore } from "@/domain";
 
 interface HoleScoreBarsProps {
-  holes: HoleResult[];
+  holes: HoleScore[];
   className?: string;
 }
 

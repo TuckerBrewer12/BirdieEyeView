@@ -30,6 +30,6 @@ test("tapping a history round opens its detail", async ({ courseDetail }) => {
     rounds: populatedRounds,
   });
   await courseDetail.tapPerformance();
-  await courseDetail.tapHistoryRound("Aug 1, 2026");
-  await courseDetail.isAtRound("round-4");
+  await courseDetail.tapHistoryRound("Jun 15, 2026");
+  await courseDetail.isAtRound("round-1");
 });
