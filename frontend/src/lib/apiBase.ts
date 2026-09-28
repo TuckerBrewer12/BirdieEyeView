@@ -1,5 +1,3 @@
-const rawApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() ?? "";
-
 function normalizeApiBaseUrl(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return "";
@@ -16,11 +14,14 @@ function normalizeApiBaseUrl(raw: string): string {
   return trimmed.replace(/\/+$/, "");
 }
 
-const normalizedApiBaseUrl = normalizeApiBaseUrl(rawApiBaseUrl);
+let apiBaseUrl = "";
 
-export const API_BASE_URL = normalizedApiBaseUrl;
+/** The app edge reads Vite env (or a native config) and passes the raw value in. */
+export function configureApiBaseUrl(raw: string | undefined): void {
+  apiBaseUrl = normalizeApiBaseUrl(raw?.trim() ?? "");
+}
 
 export function apiUrl(path: string): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return API_BASE_URL ? `${API_BASE_URL}${normalizedPath}` : normalizedPath;
+  return apiBaseUrl ? `${apiBaseUrl}${normalizedPath}` : normalizedPath;
 }

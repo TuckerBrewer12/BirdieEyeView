@@ -1,10 +1,14 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { type ComparisonTargetValue } from "@/components/suggestions/ComparisonTargetToggle";
-import type { BenchmarkProfile } from "@/components/the-lab/constants";
-import { GOAL_OPTIONS, GOAL_BENCHMARK, HANDICAP_BENCHMARK } from "@/components/the-lab/constants";
-import { buildRadarData } from "@/components/analytics/UserRadarChart";
+import {
+  GOAL_OPTIONS,
+  GOAL_BENCHMARK,
+  HANDICAP_BENCHMARK,
+  type BenchmarkProfile,
+  type ComparisonTargetValue,
+} from "@/domain/benchmark";
+import { buildRadarData } from "@/domain/radar";
 import type { AnalyticsData, ScoreTypeRow } from "@/types/analytics";
 
 function toBenchmarkProfile(data: AnalyticsData | undefined): BenchmarkProfile | null {

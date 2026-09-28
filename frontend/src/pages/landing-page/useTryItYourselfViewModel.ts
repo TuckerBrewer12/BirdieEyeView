@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePublicScan } from "@/hooks/usePublicScan";
-import type { ScorecardHole } from "@/brand";
 import { coursePar, getHole } from "@/domain";
 import type { ExtractedHoleScore, ScanResult } from "@/types/scan";
+
+interface ScannedHole {
+  hole: number;
+  par: number | null;
+  strokes: number | null;
+  putts: number | null;
+  greenInRegulation: boolean | null;
+  shotsToGreen: number | null;
+}
 
 const PHASES = [
   { label: "Reading course details…", detail: "Identifying name, location & tee boxes" },
@@ -32,8 +40,8 @@ export interface TryItYourselfViewModel {
   courseName: string | null;
   courseLocation: string | null;
   teeBox: string | null;
-  frontNine: ScorecardHole[];
-  backNine: ScorecardHole[];
+  frontNine: ScannedHole[];
+  backNine: ScannedHole[];
   roundTotal: { par: number | null; strokes: number | null };
   hasScores: boolean;
 }
@@ -42,7 +50,7 @@ function parFor(result: ScanResult, score: ExtractedHoleScore, index: number): n
   return getHole(result.round.course, score.hole_number ?? index + 1)?.par ?? null;
 }
 
-function toRows(result: ScanResult | null, from: number, to: number): ScorecardHole[] {
+function toRows(result: ScanResult | null, from: number, to: number): ScannedHole[] {
   if (!result) return [];
   return (result.round.hole_scores ?? []).slice(from, to).map((score, i) => ({
     hole: score.hole_number ?? from + i + 1,
