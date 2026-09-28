@@ -190,7 +190,7 @@ function ScoreTrendChart({ data, theme }: { data: TrendPoint[]; theme: CourseCha
           <div className="mb-1 text-meta text-muted-foreground">{hovered.dateLabel}</div>
           <div className="text-sm font-bold text-foreground">{hovered.total_score}</div>
           {toParLabel(hovered.toPar) && (
-            <div className="mt-0.5 text-xs font-semibold" style={{ color: toParFill(hovered.toPar, theme) }}>
+            <div className={`mt-0.5 text-xs font-semibold ${toParTextClass(hovered.toPar)}`}>
               {toParLabel(hovered.toPar)}
             </div>
           )}
