@@ -9,6 +9,8 @@
 #
 # The prompt stays in WORK so a large diff is not an argv, and so run-fix.sh's
 # `git add -A` cannot commit it. Shell, network, MCP, and env files are denied.
+# Sandbox is off: GitHub-hosted Ubuntu cannot start it (AppArmor), and the
+# CLI then refuses to run. The deny list is the allowlist-mode gate instead.
 set -euo pipefail
 
 cursor_run() {
@@ -60,7 +62,7 @@ PY
     --output-format text
     --model "$model"
     --trust
-    --sandbox enabled
+    --sandbox disabled
     --add-dir "$WORK"
   )
   if [[ "$mode" == "edit" ]]; then
