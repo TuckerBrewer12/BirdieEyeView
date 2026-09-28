@@ -683,7 +683,7 @@
         "type": "object"
       },
       "DashboardResponse": {
-        "description": "Aggregated stats for the dashboard page.",
+        "description": "Aggregated stats for the dashboard page. Every figure is worked out here, not on the client.",
         "properties": {
           "average_gir": {
             "anyOf": [
@@ -740,6 +740,9 @@
             ],
             "title": "Best Round Id"
           },
+          "handicap_change": {
+            "$ref": "#/components/schemas/HandicapChange"
+          },
           "handicap_index": {
             "anyOf": [
               {
@@ -751,12 +754,33 @@
             ],
             "title": "Handicap Index"
           },
+          "milestones": {
+            "items": {
+              "$ref": "#/components/schemas/Milestone"
+            },
+            "title": "Milestones",
+            "type": "array"
+          },
+          "recent_form": {
+            "$ref": "#/components/schemas/RecentForm"
+          },
           "recent_rounds": {
             "items": {
               "$ref": "#/components/schemas/RoundSummaryResponse"
             },
             "title": "Recent Rounds",
             "type": "array"
+          },
+          "recent_score_mix": {
+            "$ref": "#/components/schemas/ScoreMix"
+          },
+          "score_mix": {
+            "$ref": "#/components/schemas/ScoreMix"
+          },
+          "score_mix_holes": {
+            "default": 0,
+            "title": "Score Mix Holes",
+            "type": "integer"
           },
           "scoring_average": {
             "anyOf": [
@@ -769,9 +793,34 @@
             ],
             "title": "Scoring Average"
           },
+          "scoring_average_l20": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average L20"
+          },
+          "scoring_average_l5": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average L5"
+          },
           "total_rounds": {
             "title": "Total Rounds",
             "type": "integer"
+          },
+          "whs": {
+            "$ref": "#/components/schemas/WhsBreakdown"
           }
         },
         "required": [
@@ -783,7 +832,16 @@
           "handicap_index",
           "recent_rounds",
           "average_putts",
-          "average_gir"
+          "average_gir",
+          "scoring_average_l20",
+          "scoring_average_l5",
+          "handicap_change",
+          "recent_form",
+          "score_mix",
+          "recent_score_mix",
+          "score_mix_holes",
+          "milestones",
+          "whs"
         ],
         "title": "DashboardResponse",
         "type": "object"
@@ -910,6 +968,43 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HandicapChange": {
+        "properties": {
+          "delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "enum": [
+                  "up",
+                  "down",
+                  "flat"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction"
+          }
+        },
+        "required": [
+          "delta",
+          "direction"
+        ],
+        "title": "HandicapChange",
         "type": "object"
       },
       "Hole": {
@@ -1435,6 +1530,110 @@
           "message"
         ],
         "title": "MessageResponse",
+        "type": "object"
+      },
+      "Milestone": {
+        "description": "A lifetime best. `value` is the score, the putt threshold, or the streak length.",
+        "properties": {
+          "course": {
+            "title": "Course",
+            "type": "string"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "under_par",
+              "score_break",
+              "putt_break",
+              "par_streak"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "round_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Round Id"
+          },
+          "value": {
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "value",
+          "date",
+          "course",
+          "round_id"
+        ],
+        "title": "Milestone",
+        "type": "object"
+      },
+      "RecentForm": {
+        "description": "Rates over the last five rounds, pooled by chances. Null when there is nothing to measure.",
+        "properties": {
+          "gir_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gir Pct"
+          },
+          "putts_per_18": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Putts Per 18"
+          },
+          "scrambling_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scrambling Pct"
+          },
+          "up_and_down_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Up And Down Pct"
+          }
+        },
+        "required": [
+          "gir_pct",
+          "scrambling_pct",
+          "up_and_down_pct",
+          "putts_per_18"
+        ],
+        "title": "RecentForm",
         "type": "object"
       },
       "RegisterRequest": {
@@ -2192,6 +2391,57 @@
         "title": "ScoreCounts",
         "type": "object"
       },
+      "ScoreMix": {
+        "description": "Percent of classified holes in each score bucket.",
+        "properties": {
+          "birdie": {
+            "default": 0.0,
+            "title": "Birdie",
+            "type": "number"
+          },
+          "bogey": {
+            "default": 0.0,
+            "title": "Bogey",
+            "type": "number"
+          },
+          "double": {
+            "default": 0.0,
+            "title": "Double",
+            "type": "number"
+          },
+          "eagle": {
+            "default": 0.0,
+            "title": "Eagle",
+            "type": "number"
+          },
+          "par": {
+            "default": 0.0,
+            "title": "Par",
+            "type": "number"
+          },
+          "quad": {
+            "default": 0.0,
+            "title": "Quad",
+            "type": "number"
+          },
+          "triple": {
+            "default": 0.0,
+            "title": "Triple",
+            "type": "number"
+          }
+        },
+        "required": [
+          "eagle",
+          "birdie",
+          "par",
+          "bogey",
+          "double",
+          "triple",
+          "quad"
+        ],
+        "title": "ScoreMix",
+        "type": "object"
+      },
       "SendFriendRequest": {
         "additionalProperties": false,
         "properties": {
@@ -2660,6 +2910,144 @@
           "token"
         ],
         "title": "VerifyEmailRequest",
+        "type": "object"
+      },
+      "WhsBreakdown": {
+        "description": "The rounds in the handicap window, newest first, and which differentials count.",
+        "properties": {
+          "adjustment": {
+            "default": 0.0,
+            "title": "Adjustment",
+            "type": "number"
+          },
+          "count_used": {
+            "default": 0,
+            "title": "Count Used",
+            "type": "integer"
+          },
+          "diff_avg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diff Avg"
+          },
+          "has_rated_rounds": {
+            "default": false,
+            "title": "Has Rated Rounds",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/WhsRound"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "show_calculation": {
+            "default": false,
+            "title": "Show Calculation",
+            "type": "boolean"
+          },
+          "window_size": {
+            "default": 0,
+            "title": "Window Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rows",
+          "window_size",
+          "count_used",
+          "adjustment",
+          "diff_avg",
+          "has_rated_rounds",
+          "show_calculation"
+        ],
+        "title": "WhsBreakdown",
+        "type": "object"
+      },
+      "WhsRound": {
+        "properties": {
+          "course_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Name"
+          },
+          "course_rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Rating"
+          },
+          "differential": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Differential"
+          },
+          "round_index": {
+            "title": "Round Index",
+            "type": "integer"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "slope_rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slope Rating"
+          },
+          "used": {
+            "default": false,
+            "title": "Used",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "round_index",
+          "course_name",
+          "course_rating",
+          "slope_rating",
+          "score",
+          "differential",
+          "used"
+        ],
+        "title": "WhsRound",
         "type": "object"
       },
       "api__request_models__TeeInput": {

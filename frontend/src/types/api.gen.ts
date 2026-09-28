@@ -841,7 +841,7 @@ export interface components {
         };
         /**
          * DashboardResponse
-         * @description Aggregated stats for the dashboard page.
+         * @description Aggregated stats for the dashboard page. Every figure is worked out here, not on the client.
          */
         DashboardResponse: {
             /** Average Gir */
@@ -854,14 +854,30 @@ export interface components {
             best_round_course: string | null;
             /** Best Round Id */
             best_round_id: string | null;
+            handicap_change: components["schemas"]["HandicapChange"];
             /** Handicap Index */
             handicap_index: number | null;
+            /** Milestones */
+            milestones: components["schemas"]["Milestone"][];
+            recent_form: components["schemas"]["RecentForm"];
             /** Recent Rounds */
             recent_rounds: components["schemas"]["RoundSummaryResponse"][];
+            recent_score_mix: components["schemas"]["ScoreMix"];
+            score_mix: components["schemas"]["ScoreMix"];
+            /**
+             * Score Mix Holes
+             * @default 0
+             */
+            score_mix_holes: number;
             /** Scoring Average */
             scoring_average: number | null;
+            /** Scoring Average L20 */
+            scoring_average_l20: number | null;
+            /** Scoring Average L5 */
+            scoring_average_l5: number | null;
             /** Total Rounds */
             total_rounds: number;
+            whs: components["schemas"]["WhsBreakdown"];
         };
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
@@ -900,6 +916,13 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HandicapChange */
+        HandicapChange: {
+            /** Delta */
+            delta: number | null;
+            /** Direction */
+            direction: ("up" | "down" | "flat") | null;
         };
         /**
          * Hole
@@ -1013,6 +1036,39 @@ export interface components {
         MessageResponse: {
             /** Message */
             message: string;
+        };
+        /**
+         * Milestone
+         * @description A lifetime best. `value` is the score, the putt threshold, or the streak length.
+         */
+        Milestone: {
+            /** Course */
+            course: string;
+            /** Date */
+            date: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "under_par" | "score_break" | "putt_break" | "par_streak";
+            /** Round Id */
+            round_id: string | null;
+            /** Value */
+            value: number;
+        };
+        /**
+         * RecentForm
+         * @description Rates over the last five rounds, pooled by chances. Null when there is nothing to measure.
+         */
+        RecentForm: {
+            /** Gir Pct */
+            gir_pct: number | null;
+            /** Putts Per 18 */
+            putts_per_18: number | null;
+            /** Scrambling Pct */
+            scrambling_pct: number | null;
+            /** Up And Down Pct */
+            up_and_down_pct: number | null;
         };
         /** RegisterRequest */
         RegisterRequest: {
@@ -1209,6 +1265,47 @@ export interface components {
              */
             triple: number;
         };
+        /**
+         * ScoreMix
+         * @description Percent of classified holes in each score bucket.
+         */
+        ScoreMix: {
+            /**
+             * Birdie
+             * @default 0
+             */
+            birdie: number;
+            /**
+             * Bogey
+             * @default 0
+             */
+            bogey: number;
+            /**
+             * Double
+             * @default 0
+             */
+            double: number;
+            /**
+             * Eagle
+             * @default 0
+             */
+            eagle: number;
+            /**
+             * Par
+             * @default 0
+             */
+            par: number;
+            /**
+             * Quad
+             * @default 0
+             */
+            quad: number;
+            /**
+             * Triple
+             * @default 0
+             */
+            triple: number;
+        };
         /** SendFriendRequest */
         SendFriendRequest: {
             /** Addressee Friend Code */
@@ -1321,6 +1418,61 @@ export interface components {
         VerifyEmailRequest: {
             /** Token */
             token: string;
+        };
+        /**
+         * WhsBreakdown
+         * @description The rounds in the handicap window, newest first, and which differentials count.
+         */
+        WhsBreakdown: {
+            /**
+             * Adjustment
+             * @default 0
+             */
+            adjustment: number;
+            /**
+             * Count Used
+             * @default 0
+             */
+            count_used: number;
+            /** Diff Avg */
+            diff_avg: number | null;
+            /**
+             * Has Rated Rounds
+             * @default false
+             */
+            has_rated_rounds: boolean;
+            /** Rows */
+            rows: components["schemas"]["WhsRound"][];
+            /**
+             * Show Calculation
+             * @default false
+             */
+            show_calculation: boolean;
+            /**
+             * Window Size
+             * @default 0
+             */
+            window_size: number;
+        };
+        /** WhsRound */
+        WhsRound: {
+            /** Course Name */
+            course_name: string | null;
+            /** Course Rating */
+            course_rating: number | null;
+            /** Differential */
+            differential: number | null;
+            /** Round Index */
+            round_index: number;
+            /** Score */
+            score: number | null;
+            /** Slope Rating */
+            slope_rating: number | null;
+            /**
+             * Used
+             * @default false
+             */
+            used: boolean;
         };
         /** TeeInput */
         api__request_models__TeeInput: {

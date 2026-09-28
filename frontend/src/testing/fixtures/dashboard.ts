@@ -141,6 +141,30 @@ export const populatedDashboard: DashboardData = {
   recent_rounds: populatedRounds,
   average_putts: 32,
   average_gir: 8,
+  // The figures the server works out from populatedAnalytics' 20-round window.
+  scoring_average_l20: 76.8,
+  scoring_average_l5: 76.8,
+  handicap_change: { delta: -1.6, direction: "down" },
+  recent_form: { gir_pct: (35 / 90) * 100, scrambling_pct: 37.5, up_and_down_pct: 100 / 3, putts_per_18: 32 },
+  score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
+  recent_score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
+  score_mix_holes: 90,
+  milestones: [],
+  whs: {
+    rows: [
+      { round_index: 5, course_name: "Muni", course_rating: 72.4, slope_rating: 130, score: 80, differential: 13, used: false },
+      { round_index: 4, course_name: "Half Moon Bay", course_rating: 72.4, slope_rating: 130, score: 78, differential: 11.5, used: false },
+      { round_index: 3, course_name: "Half Moon Bay", course_rating: 72.4, slope_rating: 130, score: 72, differential: 8, used: false },
+      { round_index: 2, course_name: "Blue Rock", course_rating: 72.4, slope_rating: 130, score: 69, differential: 4.1, used: true },
+      { round_index: 1, course_name: "Scanned Scorecard", course_rating: 72.4, slope_rating: 130, score: 85, differential: 18.2, used: false },
+    ],
+    window_size: 5,
+    count_used: 1,
+    adjustment: 0,
+    diff_avg: 4.1,
+    has_rated_rounds: true,
+    show_calculation: true,
+  },
 };
 
 /** Five-round window: one used differential, no WHS adjustment. */
@@ -230,6 +254,7 @@ export const dashboardGoalReport: GoalReport = {
   scoring_goal: 79,
   gap: 2.2,
   on_track: false,
+  progress_pct: 100,
   savers: [
     {
       type: "three_putt_bleed",
