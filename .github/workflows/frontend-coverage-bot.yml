@@ -50,6 +50,21 @@ jobs:
       - name: Vitest with coverage
         run: npm run test:coverage
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Espresso with coverage
+        run: npm run test:espresso:coverage
+
+      - name: Upload Espresso coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: espresso-coverage
+          path: frontend/coverage/espresso
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Install Cursor CLI
         working-directory: .
         run: |
@@ -64,4 +79,5 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: bash .github/review-bots/run-coverage.sh

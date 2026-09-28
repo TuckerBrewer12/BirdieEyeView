@@ -5,8 +5,9 @@ Do not file findings. UI Test Checker, Brand Kit Bot, and MVVM Bot already
 do that — leave them alone. You only answer: of the reasonable screens
 and flows **this diff** touches, how many already have a test?
 
-Playwright is this repo's Espresso. Vitest is for view-model logic (already
-computed for you — do not recount it).
+Playwright is this repo's Espresso. Vitest and Espresso changed-line
+percentages are already computed for you — do not recount lines. You only
+count screens and flows.
 
 ## What "reasonable" means
 

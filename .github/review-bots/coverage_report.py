@@ -258,6 +258,17 @@ def parse_ai(text: str) -> dict:
     }
 
 
+def format_line_coverage(lines: dict, missing: str) -> str:
+    executable = lines.get("executable") or 0
+    covered = lines.get("covered") or 0
+    percent = lines.get("percent")
+    if not lines.get("coverage_available"):
+        return missing
+    if executable == 0:
+        return "n/a — no executable production lines in this diff."
+    return f"{covered} / {executable} changed lines (**{percent}%**)"
+
+
 def fmt_layer(title: str, layer: dict, noun: str) -> list[str]:
     if not layer["ok"]:
         return [f"**{title}:** AI review unavailable."]
@@ -273,16 +284,17 @@ def fmt_layer(title: str, layer: dict, noun: str) -> list[str]:
     return lines
 
 
-def render_comment(lines: dict, ai: dict) -> str:
-    executable = lines.get("executable") or 0
-    covered = lines.get("covered") or 0
-    percent = lines.get("percent")
-    if not lines.get("coverage_available"):
-        unit = "unavailable (Vitest coverage did not run)."
-    elif executable == 0:
-        unit = "n/a — no executable production lines in this diff."
-    else:
-        unit = f"{covered} / {executable} changed lines (**{percent}%**)"
+def render_comment(lines: dict, ai: dict, espresso: dict | None = None) -> str:
+    unit = format_line_coverage(lines, "unavailable (Vitest coverage did not run).")
+    ui_lines = espresso or {"coverage_available": False}
+    ui = format_line_coverage(ui_lines, "unavailable (Espresso coverage did not run).")
+    run_url = os.environ.get("RUN_URL", "").strip()
+    report_line = ""
+    if ui_lines.get("coverage_available"):
+        if run_url:
+            report_line = f"Espresso HTML report: {run_url} (artifact `espresso-coverage`)."
+        else:
+            report_line = "Espresso HTML report is the `espresso-coverage` artifact on this workflow run."
 
     body = [
         MARKER,
@@ -291,10 +303,12 @@ def render_comment(lines: dict, ai: dict) -> str:
         "Report for this PR's frontend diff. Not a merge gate.",
         "",
         f"**Unit (Vitest):** {unit}",
+        f"**UI (Espresso):** {ui}",
+        *([report_line] if report_line else []),
         "",
         *fmt_layer("Screenshots", ai["screenshots"], "screens"),
         "",
-        *fmt_layer("Espresso", ai["espresso"], "flows"),
+        *fmt_layer("Espresso flows", ai["espresso"], "flows"),
     ]
     return "\n".join(body) + "\n"
 
@@ -363,11 +377,14 @@ def cmd_inventory(args: argparse.Namespace) -> int:
 
 def cmd_comment(args: argparse.Namespace) -> int:
     lines = json.loads(Path(args.lines).read_text())
+    espresso = None
+    if args.espresso and Path(args.espresso).is_file() and Path(args.espresso).stat().st_size:
+        espresso = json.loads(Path(args.espresso).read_text())
     if args.ai and Path(args.ai).is_file() and Path(args.ai).stat().st_size:
         ai = parse_ai(Path(args.ai).read_text())
     else:
         ai = parse_ai("")
-    upsert_comment(render_comment(lines, ai))
+    upsert_comment(render_comment(lines, ai, espresso))
     return 0
 
 
@@ -387,6 +404,7 @@ def main() -> int:
 
     comment = sub.add_parser("comment")
     comment.add_argument("--lines", required=True)
+    comment.add_argument("--espresso")
     comment.add_argument("--ai")
     comment.set_defaults(func=cmd_comment)
 
