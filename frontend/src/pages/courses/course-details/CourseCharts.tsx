@@ -20,7 +20,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import { chartLayout, chartTickStyle, chartTooltipStyle, toParLabel } from "@/brand/theme";
+import { chartLayout, chartTickStyle, chartTooltipStyle, toParLabel, toParTextClass } from "@/brand/theme";
 import {
   toParBarFill,
   toParFill,
