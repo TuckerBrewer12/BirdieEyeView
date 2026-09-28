@@ -1,4 +1,4 @@
-import type { DashboardData, RoundSummary, User } from "../../types/golf";
+import type { DashboardData, User } from "../../types/golf";
 import type {
   AnalyticsData,
   GoalReport,
@@ -8,7 +8,6 @@ import type {
   ScoreTrendRow,
 } from "../../types/analytics";
 import { populatedRounds } from "./rounds";
-import { halfMoonBayRound, roundDtoFromSummary } from "./roundDetails";
 
 function emptyNotable(): NotableAchievements {
   const none = { lifetime: {}, one_year: {} };
@@ -242,12 +241,3 @@ export const dashboardGoalReport: GoalReport = {
     },
   ],
 };
-
-export function detailRoundsFrom(summaries: RoundSummary[]) {
-  return summaries.map((s) => roundDtoFromSummary(s));
-}
-
-export const dashboardDetailRounds = [
-  ...detailRoundsFrom(populatedRounds),
-  halfMoonBayRound,
-];

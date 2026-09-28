@@ -1,13 +1,23 @@
-import type { Course, CourseSummary, Round, RoundSummary } from "../../types/golf";
+import type { Course, CourseSummary } from "../../types/golf";
+import type { CourseDto, RoundDto, RoundSummaryDto } from "../../types/api";
 import type { CourseAnalyticsData, RoundComparison } from "../../types/analytics";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
-import { roundDtoFromSummary, toCourseSummary } from "../fixtures/roundDetails";
+import { toCourseSummary } from "../fixtures/roundDetails";
+import {
+  roundResponse,
+  storedFromRound,
+  storedFromSummary,
+  summaryResponse,
+  type StoredRound,
+} from "./roundResponses";
 
 export interface InMemoryRoundsSeed {
-  rounds?: RoundSummary[];
+  /** The round list, in order. */
+  rounds?: RoundSummaryDto[];
   courses?: CourseSummary[];
-  detailRounds?: Round[];
+  /** Full rounds; one sharing an id with a listed round replaces its facts. */
+  detailRounds?: RoundDto[];
   fullCourses?: Course[];
   courseAnalytics?: CourseAnalyticsData | null;
   comparison?: RoundComparison | null;
@@ -20,7 +30,7 @@ export interface InMemoryRoundsSeed {
   searchDelaysMs?: number[];
 }
 
-function applyUpdate(round: Round, body: UpdateRoundBody): Round {
+function applyUpdate(round: StoredRound, body: UpdateRoundBody): StoredRound {
   const scores = body.hole_scores
     ? round.hole_scores.map((score) => {
         const edited = body.hole_scores?.find((h) => h.hole_number === score.hole_number);
@@ -49,38 +59,13 @@ function applyUpdate(round: Round, body: UpdateRoundBody): Round {
   };
 }
 
-function summaryFromLink(
-  roundId: string,
-  courseId: string,
-  detail: Round,
-  name: string | null,
-  location: string | null,
-  par: number | null,
-): RoundSummary {
-  return {
-    id: roundId,
-    course_id: courseId,
-    course_name: name,
-    course_location: location,
-    course_par: par,
-    tee_box: detail.tee_box,
-    date: detail.date,
-    total_score: null,
-    to_par: null,
-    front_nine: null,
-    back_nine: null,
-    total_putts: detail.total_putts,
-    total_gir: detail.total_gir,
-    fairways_hit: null,
-    notes: detail.notes,
-  };
-}
-
 /** One in-memory golf store. FakeRoundsRepository and FakeBackend both use this. */
 export class InMemoryRounds {
-  rounds: RoundSummary[];
+  /** Round facts by id; every response is built from these, the way the server builds it. */
+  private stored: Map<string, StoredRound>;
+  /** Ids of the rounds the list returns, in order. */
+  private listed: string[];
   courses: CourseSummary[];
-  detailRounds: Round[];
   fullCourses: Course[];
   courseAnalytics: CourseAnalyticsData | null;
   comparison: RoundComparison | null;
@@ -95,12 +80,13 @@ export class InMemoryRounds {
   deletedIds: string[];
 
   constructor(seed: InMemoryRoundsSeed = {}) {
-    this.rounds = (seed.rounds ?? []).map((round) => ({ ...round }));
+    const rounds = seed.rounds ?? [];
+    this.stored = new Map(rounds.map((round) => [round.id, storedFromSummary(round)]));
+    for (const round of seed.detailRounds ?? []) {
+      if (round.id) this.stored.set(round.id, storedFromRound(round));
+    }
+    this.listed = rounds.map((round) => round.id);
     this.courses = [...(seed.courses ?? [])];
-    this.detailRounds = (seed.detailRounds ?? []).map((round) => ({
-      ...round,
-      hole_scores: round.hole_scores.map((score) => ({ ...score })),
-    }));
     this.fullCourses = [...(seed.fullCourses ?? [])];
     this.courseAnalytics = seed.courseAnalytics ?? null;
     this.comparison = seed.comparison ?? null;
@@ -136,69 +122,46 @@ export class InMemoryRounds {
     return this.courses;
   }
 
-  getRoundsForUser(): RoundSummary[] {
-    return this.rounds;
+  getRoundsForUser(): RoundSummaryDto[] {
+    return this.listed.map((id) => summaryResponse(this.stored.get(id)!));
   }
 
-  getRound(roundId: string): Round {
-    const detail = this.detailRounds.find((round) => round.id === roundId);
-    if (detail) return detail;
-    const summary = this.rounds.find((round) => round.id === roundId);
-    if (summary) return roundDtoFromSummary(summary);
-    throw new Error("Round not found.");
+  private find(roundId: string): StoredRound {
+    const round = this.stored.get(roundId);
+    if (!round) throw new Error("Round not found.");
+    return round;
   }
 
-  updateRound(roundId: string, body: UpdateRoundBody): Round {
+  getRound(roundId: string): RoundDto {
+    return roundResponse(this.find(roundId));
+  }
+
+  updateRound(roundId: string, body: UpdateRoundBody): RoundDto {
     if (this.updateError) throw new Error(this.updateError);
-    const index = this.detailRounds.findIndex((round) => round.id === roundId);
-    if (index === -1) {
-      const summary = this.rounds.find((round) => round.id === roundId);
-      if (!summary) throw new Error("Round not found.");
-      const created = applyUpdate(roundDtoFromSummary(summary), body);
-      this.detailRounds = [...this.detailRounds, created];
-      return created;
-    }
-    const updated = applyUpdate(this.detailRounds[index], body);
-    this.detailRounds = this.detailRounds.map((round, i) => (i === index ? updated : round));
-    return updated;
+    const updated = applyUpdate(this.find(roundId), body);
+    this.stored.set(roundId, updated);
+    return roundResponse(updated);
   }
 
   deleteRound(roundId: string): void {
     if (this.deleteError) throw new Error(this.deleteError);
     this.deletedIds = [...this.deletedIds, roundId];
-    this.rounds = this.rounds.filter((round) => round.id !== roundId);
-    this.detailRounds = this.detailRounds.filter((round) => round.id !== roundId);
+    this.stored.delete(roundId);
+    this.listed = this.listed.filter((id) => id !== roundId);
   }
 
-  linkCourse(roundId: string, courseId: string): RoundSummary {
+  linkCourse(roundId: string, courseId: string): RoundSummaryDto {
     if (this.linkError) throw new Error(this.linkError);
-    const course = this.courses.find((c) => c.id === courseId);
-    const full = this.fullCourses.find((c) => c.id === courseId);
-    const name = course?.name ?? full?.name ?? null;
-    const location = course?.location ?? full?.location ?? null;
-    this.rounds = this.rounds.map((round) =>
-      round.id === roundId
-        ? {
-            ...round,
-            course_id: courseId,
-            course_name: name ?? round.course_name,
-            course_location: location ?? round.course_location,
-          }
-        : round,
-    );
-    this.detailRounds = this.detailRounds.map((round) =>
-      round.id === roundId ? { ...round, course: full ?? round.course } : round,
-    );
-    const updated = this.rounds.find((round) => round.id === roundId);
-    if (updated) return updated;
-    const detail = this.detailRounds.find((round) => round.id === roundId);
-    if (!detail) throw new Error("Round not found.");
-    return summaryFromLink(roundId, courseId, detail, name, location, full?.par ?? null);
+    const round = this.find(roundId);
+    const course: CourseDto = this.getCourse(courseId);
+    const linked = { ...round, course, course_name_played: null };
+    this.stored.set(roundId, linked);
+    return summaryResponse(linked);
   }
 
-  getCourse(courseId: string): Course {
+  getCourse(courseId: string): CourseDto {
     const course = this.fullCourses.find((c) => c.id === courseId);
-    if (course) return course;
+    if (course) return { external_course_id: null, user_id: null, ...course };
     const summary = this.courses.find((c) => c.id === courseId);
     if (summary) {
       return {
@@ -208,6 +171,8 @@ export class InMemoryRounds {
         par: summary.par,
         holes: [],
         tees: [],
+        external_course_id: null,
+        user_id: null,
       };
     }
     throw new Error("Course not found.");

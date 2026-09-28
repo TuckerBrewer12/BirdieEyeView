@@ -1,4 +1,4 @@
-import type { DashboardData, Round, User } from "../../types/golf";
+import type { DashboardData, User } from "../../types/golf";
 import type { AnalyticsData, GoalReport } from "../../types/analytics";
 import type { DashboardRepository } from "../../pages/dashboard/dashboardRepository";
 
@@ -9,18 +9,15 @@ export interface FakeDashboardRepositorySeed {
   analyticsError?: Error;
   user?: User | null;
   goalReport?: GoalReport | null;
-  rounds?: Round[];
 }
 
 export class FakeDashboardRepository implements DashboardRepository {
-  readonly fetchedRoundIds: string[] = [];
   private readonly dashboard: DashboardData | undefined;
   private readonly dashboardError: Error | undefined;
   private readonly analytics: AnalyticsData | null | undefined;
   private readonly analyticsError: Error | undefined;
   private readonly user: User | null | undefined;
   private readonly goalReport: GoalReport | null | undefined;
-  private readonly rounds: Map<string, Round>;
 
   constructor(seed: FakeDashboardRepositorySeed = {}) {
     this.dashboard = seed.dashboard;
@@ -29,9 +26,6 @@ export class FakeDashboardRepository implements DashboardRepository {
     this.analyticsError = seed.analyticsError;
     this.user = seed.user;
     this.goalReport = seed.goalReport;
-    this.rounds = new Map(
-      (seed.rounds ?? []).filter((r) => r.id).map((r) => [r.id as string, r]),
-    );
   }
 
   async getDashboard(): Promise<DashboardData> {
@@ -64,12 +58,5 @@ export class FakeDashboardRepository implements DashboardRepository {
   async getGoalReport(): Promise<GoalReport> {
     if (!this.goalReport) throw new Error("No goal report.");
     return this.goalReport;
-  }
-
-  async getRound(roundId: string): Promise<Round> {
-    this.fetchedRoundIds.push(roundId);
-    const round = this.rounds.get(roundId);
-    if (!round) throw new Error(`Round ${roundId} not found.`);
-    return round;
   }
 }

@@ -2,7 +2,6 @@ import { test as base, expect, type Page } from "@playwright/test";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import {
-  dashboardDetailRounds,
   dashboardGoalReport,
   dashboardUser,
   populatedAnalytics,
@@ -33,7 +32,6 @@ export class DashboardRobot {
     await this.page.clock.setFixedTime(new Date(FROZEN_NOW));
     await FakeSession.install(this.page, {
       rounds: populatedRounds,
-      detailRounds: dashboardDetailRounds,
       handicapIndex: 12.4,
       dashboard: populatedDashboard,
       analytics: populatedAnalytics,

@@ -5,7 +5,6 @@ import type { ReactNode } from "react";
 import { Round } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 import {
-  dashboardDetailRounds,
   dashboardGoalReport,
   dashboardUser,
   emptyAnalytics,
@@ -29,7 +28,6 @@ function renderVm(seed: ConstructorParameters<typeof FakeDashboardRepository>[0]
   analytics: populatedAnalytics,
   user: dashboardUser,
   goalReport: dashboardGoalReport,
-  rounds: dashboardDetailRounds,
 }) {
   const repository = new FakeDashboardRepository(seed);
   const hook = renderHook(
@@ -84,16 +82,13 @@ describe("useDashboardPageViewModel", () => {
     expect(result.current.bestRound?.holes).toHaveLength(18);
   });
 
-  it("fetches the three most recent rounds for hole strips", async () => {
-    const { result, repository } = renderVm();
-    await waitFor(() => expect(result.current.loading).toBe(false));
+  it("shows the three most recent rounds with the hole strips the list carries", async () => {
+    const { result } = renderVm();
     await waitFor(() => expect(result.current.recentRounds).toHaveLength(3));
     expect(result.current.recentRounds.map((r) => r.id)).toEqual(
       populatedRounds.slice(0, 3).map((r) => r.id),
     );
-    expect(repository.fetchedRoundIds).toEqual(
-      expect.arrayContaining(populatedRounds.slice(0, 3).map((r) => r.id)),
-    );
+    expect(result.current.recentRounds[0].holes[0].kind).toBe("bogey");
   });
 
   it("defaults the trend tab to score and can switch to HCP", async () => {
@@ -117,8 +112,7 @@ describe("useDashboardPageViewModel", () => {
     const { result } = renderVm({
       dashboard: populatedDashboard,
       analyticsError: new Error("no trends"),
-      rounds: dashboardDetailRounds,
-    });
+        });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.data?.total_rounds).toBe(4);
     expect(result.current.trends).toBeNull();

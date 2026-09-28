@@ -329,7 +329,8 @@ def create_app() -> FastAPI:
     app.include_router(scan.router, prefix="/api/scan", tags=["scan"])
     app.include_router(ai_insights.router, prefix="/api/ai-insights", tags=["ai-insights"])
 
-    @app.api_route("/", methods=["GET", "HEAD"])
+    # Uptime probes, not client API: kept out of the schema the frontend types are generated from.
+    @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
     async def root_status(request: Request):
         if request.method == "HEAD":
             return Response(status_code=200)
@@ -338,8 +339,8 @@ def create_app() -> FastAPI:
             content={"status": "ok", "service": "backend"},
         )
 
-    @app.api_route("/health", methods=["GET", "HEAD"])
-    @app.api_route("/api/health", methods=["GET", "HEAD"])
+    @app.api_route("/health", methods=["GET", "HEAD"], include_in_schema=False)
+    @app.api_route("/api/health", methods=["GET", "HEAD"], include_in_schema=False)
     async def health(request: Request):
         include_db_probe = env_bool("HEALTHCHECK_INCLUDE_DB_PROBE", False)
         strict_db = env_bool("HEALTHCHECK_STRICT_DB", False)

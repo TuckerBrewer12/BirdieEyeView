@@ -63,7 +63,6 @@ export interface DashboardPageViewModel {
   setTrendView: (view: TrendView) => void;
   rounds: Round[];
   bestRound: Round | null;
-  /** The three latest, read from the full round so hole pars fall back to the course. */
   recentRounds: Round[];
   sidebarRounds: Round[];
   whs: WhsBreakdown;
@@ -115,22 +114,6 @@ export function useDashboardPageViewModel(
     [data?.recent_rounds],
   );
   const bestRound = useMemo(() => pickBestRound(rounds), [rounds]);
-  const roundIds = useMemo(() => rounds.slice(0, 3).map((r) => r.id), [rounds]);
-
-  const { data: fetchedRounds } = useQuery({
-    queryKey: ["dashboard-round-details", roundIds],
-    queryFn: () => Promise.all(roundIds.map((id) => repository.getRound(id))),
-    enabled: roundIds.length > 0,
-  });
-
-  const recentRounds = useMemo(
-    () =>
-      rounds.slice(0, 3).map((round) => {
-        const detail = fetchedRounds?.find((d) => d.id === round.id);
-        return detail ? Round.fromDto(detail) : round;
-      }),
-    [rounds, fetchedRounds],
-  );
 
   const openHandicapSheet = useCallback(() => setHandicapSheetOpen(true), []);
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
@@ -170,7 +153,7 @@ export function useDashboardPageViewModel(
     setTrendView,
     rounds,
     bestRound,
-    recentRounds,
+    recentRounds: rounds.slice(0, 3),
     sidebarRounds: rounds.slice(0, 10),
     whs: whsBreakdown(dualData, trends, data?.handicap_index),
     scoringGoal: user?.scoring_goal ?? null,

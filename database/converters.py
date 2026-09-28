@@ -4,6 +4,7 @@ Centralizes all mapping logic between the normalized DB schema
 and the nested Pydantic models.
 """
 
+import json
 from datetime import datetime
 from typing import Dict, List, Optional
 from uuid import UUID
@@ -99,6 +100,40 @@ def round_from_rows(
         notes=round_row["notes"],
         course_name_played=round_row["course_name_played"],
         user_tee=user_tee,
+    )
+
+
+def round_from_summary_row(row) -> Round:
+    """A round-list row -> a Round with its hole scores, and a course that carries par but no tees."""
+    raw = row["hole_scores"]
+    holes = (json.loads(raw) if isinstance(raw, str) else raw) or []
+    course = None
+    if row["course_id"]:
+        course = Course(
+            id=str(row["course_id"]),
+            name=row["course_name"],
+            location=row["course_location"],
+            par=row["course_par"],
+            holes=[Hole(number=h["hole_number"], par=h["course_par"]) for h in holes if h["course_par"] is not None],
+        )
+    return Round(
+        id=str(row["id"]),
+        course=course,
+        tee_box=row["tee_box_played"],
+        date=row["round_date"],
+        hole_scores=[
+            HoleScore(
+                hole_number=h["hole_number"],
+                strokes=h["strokes"],
+                putts=h["putts"],
+                fairway_hit=h["fairway_hit"],
+                green_in_regulation=h["green_in_regulation"],
+                par_played=h["par_played"],
+            )
+            for h in holes
+        ],
+        notes=row["notes"],
+        course_name_played=row["course_name_played"],
     )
 
 

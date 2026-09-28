@@ -1,10 +1,10 @@
 from datetime import datetime
 from pydantic import Field
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from .base import BaseGolfModel
 from .course import Course
-from .hole_score import HoleScore
+from .hole_score import HoleScore, ScoreKind, score_kind
 from .tee import Tee
 from .user_tee import UserTee
 
@@ -58,17 +58,26 @@ class Round(BaseGolfModel):
         strokes = [s.strokes for s in self.hole_scores if s.strokes is not None]
         return sum(strokes) if strokes else None
 
+    def _nine_total(self, first: int, last: int) -> Optional[int]:
+        """A nine's strokes, once all nine of its holes are scored."""
+        strokes = [
+            s.strokes for s in self.hole_scores
+            if s.hole_number is not None and first <= s.hole_number <= last and s.strokes is not None
+        ]
+        return sum(strokes) if len(strokes) == 9 else None
+
     def calculate_front_nine(self) -> Optional[int]:
-        """Calculate total strokes for holes 1-9."""
-        front = [s for s in self.hole_scores if s.hole_number is not None and 1 <= s.hole_number <= 9]
-        strokes = [s.strokes for s in front if s.strokes is not None]
-        return sum(strokes) if strokes else None
+        """Total strokes for holes 1-9, once all nine are scored."""
+        return self._nine_total(1, 9)
 
     def calculate_back_nine(self) -> Optional[int]:
-        """Calculate total strokes for holes 10-18."""
-        back = [s for s in self.hole_scores if s.hole_number is not None and 10 <= s.hole_number <= 18]
-        strokes = [s.strokes for s in back if s.strokes is not None]
-        return sum(strokes) if strokes else None
+        """Total strokes for holes 10-18, once all nine are scored."""
+        return self._nine_total(10, 18)
+
+    def get_fairways_hit(self) -> Optional[int]:
+        """Fairways hit across the holes that recorded it."""
+        fairways = [s.fairway_hit for s in self.hole_scores if s.fairway_hit is not None]
+        return sum(fairways) if fairways else None
 
     def is_complete(self) -> bool:
         """Check if all holes have scores."""
@@ -83,10 +92,11 @@ class Round(BaseGolfModel):
         return next((s for s in self.hole_scores if s.hole_number == hole_number), None)
 
     def get_hole_par(self, hole_number: int) -> Optional[int]:
-        """Get par for a specific hole — from course, or par_played on the hole score."""
+        """Get par for a specific hole — the course's hole, else par_played on the hole score."""
         if self.course:
             hole = self.course.get_hole(hole_number)
-            return hole.par if hole else None
+            if hole and hole.par is not None:
+                return hole.par
         score = self.get_hole_score(hole_number)
         return score.par_played if score else None
 
@@ -104,6 +114,19 @@ class Round(BaseGolfModel):
         if score and par:
             return score.to_par(par)
         return None
+
+    def get_score_kind(self, hole_number: int) -> Optional[ScoreKind]:
+        """Which of the app's seven score buckets a hole landed in."""
+        return score_kind(self.score_to_par(hole_number))
+
+    def get_score_counts(self) -> Dict[ScoreKind, int]:
+        """How many holes landed in each score bucket. Holes that cannot be classified are left out."""
+        counts: Dict[ScoreKind, int] = {}
+        for s in self.hole_scores:
+            kind = self.get_score_kind(s.hole_number) if s.hole_number is not None else None
+            if kind is not None:
+                counts[kind] = counts.get(kind, 0) + 1
+        return counts
 
     def get_score_type(self, hole_number: int) -> Optional[str]:
         """Get score name (eagle, birdie, par, bogey, etc.) for a hole."""

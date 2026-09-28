@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { ActivityHeatmap } from "./ActivityHeatmap";
 import { Round } from "@/domain";
+import { populatedRounds } from "@/testing/fixtures/rounds";
 
 describe("ActivityHeatmap", () => {
   it("should format dates correctly and render active squares for rounds", () => {
@@ -23,8 +24,7 @@ describe("ActivityHeatmap", () => {
     const dateC = new Date(today);
     dateC.setDate(dateC.getDate() - 100);
 
-    const round = (id: string, date: string) =>
-      new Round({ id, date, course: null, teeBox: null, holes: [] });
+    const round = (id: string, date: string) => Round.fromSummary({ ...populatedRounds[0], id, date });
     const rounds = [
       round("1", formatDateStr(dateA) + "T14:30:00Z"),
       round("2", formatDateStr(dateA) + "T08:00:00"),

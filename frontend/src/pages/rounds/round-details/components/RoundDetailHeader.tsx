@@ -1,7 +1,7 @@
 import { cn } from "@/brand/cn";
 import { PageTitle } from "@/brand";
 import { colors, toParDisplay, type ScoreKey } from "@/brand/theme";
-import type { Nine, Round } from "@/domain";
+import { netScore, type Nine, type Round } from "@/domain";
 import { formatCourseName } from "@/lib/courseName";
 import { pluralNoun } from "@/lib/pluralize";
 import { formatRoundDateLong } from "@/lib/roundDate";
@@ -67,8 +67,8 @@ function NineBars({ nine, label, className }: {
  */
 export function RoundDetailHeader({ round, teeRating, courseHandicap, className }: RoundDetailHeaderProps) {
   const dateLabel = formatRoundDateLong(round.date);
-  const net = courseHandicap != null ? round.netScore(courseHandicap) : null;
-  const counts = round.kindCounts;
+  const net = courseHandicap != null && round.score != null ? netScore(round.score, courseHandicap) : null;
+  const counts = round.scoreCounts;
 
   return (
     <div data-slot="round-detail-header" className={cn("mb-4", className)}>

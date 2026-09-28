@@ -222,7 +222,7 @@ export interface ScoreChip {
 
 export function lastRoundChips(round: Round | null): ScoreChip[] {
   if (!round) return [];
-  const counts = round.kindCounts;
+  const counts = round.scoreCounts;
   const items: ScoreChip[] = [];
   const birdiesPlus = (counts.eagle ?? 0) + (counts.birdie ?? 0);
   if (birdiesPlus > 0) items.push({ label: "Birdie+", count: birdiesPlus, color: SCORE_COLORS.birdie });

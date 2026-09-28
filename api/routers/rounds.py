@@ -10,7 +10,8 @@ from database.db_manager import DatabaseManager
 from database.exceptions import NotFoundError
 from api.dependencies import get_current_user, get_db
 from api.input_validation import sanitize_user_text
-from api.schemas import RoundSummaryResponse
+from api.round_responses import round_detail, round_summary
+from api.schemas import RoundResponse, RoundSummaryResponse
 from models import HoleScore, User
 
 logger = logging.getLogger(__name__)
@@ -89,28 +90,6 @@ class LinkCourseRequest(BaseModel):
     course_id: UUID
 
 
-def summarize_round(r) -> RoundSummaryResponse:
-    """Project a full Round model into a lightweight summary."""
-    fairways = [s.fairway_hit for s in r.hole_scores if s.fairway_hit is not None]
-    return RoundSummaryResponse(
-        id=r.id,
-        course_id=str(r.course.id) if r.course and r.course.id else None,
-        course_name=r.course_name_played or (r.course.name if r.course else None),
-        course_location=r.course.location if r.course else None,
-        course_par=r.get_par(),
-        tee_box=r.tee_box,
-        date=r.date,
-        total_score=r.calculate_total_score(),
-        to_par=r.total_to_par(),
-        front_nine=r.calculate_front_nine(),
-        back_nine=r.calculate_back_nine(),
-        total_putts=r.get_total_putts(),
-        total_gir=r.get_total_gir(),
-        fairways_hit=sum(1 for f in fairways if f) if fairways else None,
-        notes=r.notes,
-    )
-
-
 @router.get("/user/{user_id}", response_model=List[RoundSummaryResponse])
 async def get_rounds_for_user(
     user_id: UUID,
@@ -121,32 +100,8 @@ async def get_rounds_for_user(
 ):
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, "Forbidden")
-    rows = await db.rounds.get_round_summaries_for_user(str(user_id), limit=limit, offset=offset)
-    return [
-        RoundSummaryResponse(
-            id=str(row["id"]),
-            course_id=str(row["course_id"]) if row["course_id"] else None,
-            course_name=row["course_name"],
-            course_location=row["course_location"],
-            course_par=row["course_par"],
-            tee_box=row["tee_box"],
-            date=row["round_date"],
-            total_score=row["total_score"],
-            to_par=(
-                (row["total_score"] - row["course_par"])
-                if row["total_score"] is not None and row["course_par"] is not None
-                else None
-            ),
-            front_nine=row["front_nine"],
-            back_nine=row["back_nine"],
-            total_putts=row["total_putts"],
-            total_gir=row["total_gir"],
-            fairways_hit=row["fairways_hit"],
-            notes=row["notes"],
-            hole_scores_summary=row.get("hole_scores_summary"),
-        )
-        for row in rows
-    ]
+    rounds_ = await db.rounds.get_round_summaries_for_user(str(user_id), limit=limit, offset=offset)
+    return [round_summary(r) for r in rounds_]
 
 
 async def _check_round_ownership(round_id: UUID, current_user: User, db: DatabaseManager):
@@ -166,7 +121,7 @@ async def _check_course_access(course_id: UUID, current_user: User, db: Database
     return course
 
 
-@router.get("/{round_id}")
+@router.get("/{round_id}", response_model=RoundResponse)
 async def get_round(
     round_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -176,10 +131,10 @@ async def get_round(
     round_ = await db.rounds.get_round(str(round_id))
     if not round_:
         raise HTTPException(404, "Round not found")
-    return round_
+    return round_detail(round_)
 
 
-@router.put("/{round_id}")
+@router.put("/{round_id}", response_model=RoundResponse)
 async def update_round(
     round_id: UUID,
     req: UpdateRoundRequest,
@@ -234,7 +189,7 @@ async def update_round(
                 **meta_updates,
             )
 
-        return updated
+        return round_detail(updated)
 
     except NotFoundError:
         raise HTTPException(404, "Round not found")
@@ -323,7 +278,7 @@ async def link_course_to_round(
         )
         if not updated:
             raise HTTPException(404, "Round not found")
-        return summarize_round(updated)
+        return round_summary(updated)
     except HTTPException:
         raise
     except Exception:

@@ -8,7 +8,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from models import HoleScore, Round
-from database.converters import round_from_rows, round_to_row, hole_score_to_row, user_tee_from_row, course_from_rows
+from database.converters import round_from_rows, round_from_summary_row, round_to_row, hole_score_to_row, user_tee_from_row, course_from_rows
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from database.repositories.course_repo import CourseRepositoryDB
 
@@ -204,50 +204,42 @@ class RoundRepositoryDB:
 
     async def get_round_summaries_for_user(
         self, user_id: str, *, limit: int = 100, offset: int = 0
-    ) -> list[dict]:
-        """Single aggregate query — avoids N+1 hole_score fetches for list views."""
+    ) -> List[Round]:
+        """Rounds for list views in one query: hole scores and course par, no tees.
+
+        Only facts come back; the Round model works out the score, nines and to-par.
+        """
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
                 """SELECT
-                    r.id, r.course_id, r.tee_box_played AS tee_box,
-                    r.round_date, r.notes, r.course_name_played,
-                    COALESCE(r.course_name_played, c.name) AS course_name,
+                    r.id, r.course_id, r.tee_box_played, r.round_date, r.notes, r.course_name_played,
+                    c.name AS course_name,
                     c.location AS course_location,
                     c.par AS course_par,
-                    SUM(hs.strokes)  AS total_score,
-                    CASE WHEN COUNT(CASE WHEN hs.strokes IS NOT NULL AND hs.putts IS NULL THEN 1 END) = 0
-                              AND COUNT(CASE WHEN hs.putts IS NOT NULL THEN 1 END) > 0
-                         THEN SUM(hs.putts)
-                         ELSE NULL END AS total_putts,
-                    SUM(CASE WHEN hs.green_in_regulation THEN 1 ELSE 0 END) AS total_gir,
-                    SUM(CASE WHEN hs.fairway_hit         THEN 1 ELSE 0 END) AS fairways_hit,
-                    CASE WHEN COUNT(CASE WHEN hs.hole_number <= 9 AND hs.strokes IS NOT NULL THEN 1 END) = 9
-                         THEN SUM(CASE WHEN hs.hole_number <= 9 THEN hs.strokes ELSE 0 END)
-                         ELSE NULL END AS front_nine,
-                    CASE WHEN COUNT(CASE WHEN hs.hole_number >= 10 AND hs.strokes IS NOT NULL THEN 1 END) = 9
-                         THEN SUM(CASE WHEN hs.hole_number >= 10 THEN hs.strokes ELSE 0 END)
-                         ELSE NULL END AS back_nine,
                     json_agg(
-                        json_build_object('h', hs.hole_number, 's', hs.strokes, 'p', hs.par_played)
+                        json_build_object(
+                            'hole_number', hs.hole_number,
+                            'strokes', hs.strokes,
+                            'putts', hs.putts,
+                            'fairway_hit', hs.fairway_hit,
+                            'green_in_regulation', hs.green_in_regulation,
+                            'par_played', hs.par_played,
+                            'course_par', ch.par
+                        )
                         ORDER BY hs.hole_number
-                    ) FILTER (WHERE hs.hole_number IS NOT NULL) AS hole_scores_summary
+                    ) FILTER (WHERE hs.hole_number IS NOT NULL) AS hole_scores
                 FROM users.rounds r
                 LEFT JOIN courses.courses c ON r.course_id = c.id
                 LEFT JOIN users.hole_scores hs ON hs.round_id = r.id
+                LEFT JOIN courses.holes ch
+                    ON ch.course_id = r.course_id AND ch.hole_number = hs.hole_number
                 WHERE r.user_id = $1
                 GROUP BY r.id, c.name, c.location, c.par
                 ORDER BY r.round_date DESC NULLS LAST
                 LIMIT $2 OFFSET $3""",
                 UUID(user_id), limit, offset,
             )
-            result = []
-            for r in rows:
-                d = dict(r)
-                raw = d.get("hole_scores_summary")
-                if raw is not None and isinstance(raw, str):
-                    d["hole_scores_summary"] = json.loads(raw)
-                result.append(d)
-            return result
+            return [round_from_summary_row(r) for r in rows]
 
     async def get_rounds_for_user(
         self, user_id: str, *, limit: int = 20, offset: int = 0,

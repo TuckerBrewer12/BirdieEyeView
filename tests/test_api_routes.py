@@ -6,6 +6,7 @@ import pytest
 from fastapi import HTTPException
 from pydantic import ValidationError
 
+from api.round_responses import round_summary
 from api.routers import ai_insights, courses, rounds, stats, users
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from models import Course, Hole, HoleScore, Round, User, UserTee
@@ -42,24 +43,18 @@ def _make_round(round_id: UUID, course: Course | None = None) -> Round:
     )
 
 
-def _make_round_summary(round_id: UUID) -> dict:
-    return {
-        "id": round_id,
-        "course_id": None,
-        "course_name": "Pebble Beach",
-        "course_location": "Monterey",
-        "course_par": 72,
-        "tee_box": "Blue",
-        "round_date": datetime(2026, 1, 2),
-        "total_score": 80,
-        "front_nine": 40,
-        "back_nine": 40,
-        "total_putts": 30,
-        "total_gir": 9,
-        "fairways_hit": 8,
-        "notes": None,
-        "hole_scores_summary": [{"hole_number": 1, "strokes": 4}],
-    }
+def _make_round_summary(round_id: UUID) -> Round:
+    """A round as the list query returns it: 18 holes of par 4 on a par-72 course, 80 strokes."""
+    return Round(
+        id=str(round_id),
+        course=Course(id=str(uuid4()), name="Pebble Beach", location="Monterey", par=72),
+        tee_box="Blue",
+        date=datetime(2026, 1, 2),
+        hole_scores=[
+            HoleScore(hole_number=n, strokes=5 if n <= 8 else 4, putts=2, par_played=4)
+            for n in range(1, 19)
+        ],
+    )
 
 
 def _make_friendship_row(requester: UUID, addressee: UUID) -> dict:
@@ -181,11 +176,14 @@ def test_round_request_validation_and_summary():
     with pytest.raises(ValidationError):
         rounds.HoleScoreUpdate(hole_number=1, strokes=2, putts=3)
 
-    round_summary = rounds.summarize_round(_make_round(uuid4()))
-    assert round_summary.total_score == 9
-    assert round_summary.to_par == 1
-    assert round_summary.fairways_hit == 1
-    assert round_summary.course_name == "Played Course"
+    summary = round_summary(_make_round(uuid4()))
+    assert summary.total_score == 9
+    assert summary.to_par == 1
+    assert summary.fairways_hit == 1
+    assert summary.course_name == "Played Course"
+    assert summary.front_nine is None
+    assert (summary.score_counts.bogey, summary.score_counts.par, summary.score_counts.birdie) == (1, 1, 0)
+    assert [(h.par, h.to_par, h.kind) for h in summary.hole_scores] == [(4, 1, "bogey"), (4, 0, "par")]
 
 
 @pytest.mark.asyncio
@@ -204,7 +202,12 @@ async def test_round_listing_get_update_and_delete():
 
     listed = await rounds.get_rounds_for_user(user_id, 10, 0, db, user)
     assert listed[0].to_par == 8
-    assert await rounds.get_round(round_id, db, user) == stored_round
+    assert (listed[0].front_nine, listed[0].back_nine) == (44, 36)
+    assert len(listed[0].hole_scores) == 18
+    fetched = await rounds.get_round(round_id, db, user)
+    assert fetched.id == str(round_id)
+    assert fetched.total_score == 9
+    assert [h.kind for h in fetched.hole_scores] == ["bogey", "par"]
 
     update_request = rounds.UpdateRoundRequest(
         hole_scores=[{"hole_number": 1, "strokes": 4, "putts": 2, "par_played": 4}],
@@ -213,7 +216,9 @@ async def test_round_listing_get_update_and_delete():
         tee_box="White",
         course_name_played="New Course",
     )
-    assert await rounds.update_round(round_id, update_request, db, user) == stored_round
+    updated = await rounds.update_round(round_id, update_request, db, user)
+    assert updated.id == str(round_id)
+    assert updated.to_par == 1
     db.rounds.update_hole_scores.assert_awaited_once()
     assert db.rounds.update_round.await_args.kwargs["tee_box_played"] == "White"
 

@@ -47,7 +47,7 @@ export class FakeBackend {
   }
 
   get rounds() {
-    return this.store.rounds;
+    return this.store.getRoundsForUser();
   }
 
   get courses() {
