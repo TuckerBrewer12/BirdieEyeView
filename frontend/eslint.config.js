@@ -69,24 +69,4 @@ export default defineConfig([
       }],
     },
   },
-  {
-    // Known violations of the block above. Delete each entry as its file is fixed.
-    files: [
-      'src/hooks/useLabViewModel.ts',
-      'src/hooks/usePublicScan.ts',
-      'src/hooks/useScan.ts',
-      'src/hooks/useShareRound.ts',
-      'src/lib/apiBase.ts',
-      'src/lib/sessionToken.ts',
-      'src/pages/courses/course-details/useCourseDetailPageViewModel.ts',
-      'src/pages/dashboard/model.ts',
-      'src/pages/landing-page/components/useScannerDemoViewModel.ts',
-      'src/pages/landing-page/useTryItYourselfViewModel.ts',
-    ],
-    rules: {
-      'no-restricted-imports': 'off',
-      'no-restricted-globals': 'off',
-      'no-restricted-syntax': 'off',
-    },
-  },
 ])
