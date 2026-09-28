@@ -6,15 +6,7 @@ export interface BenchmarkProfile {
 /** Handicap index, no comparison, or a friend's rounds. */
 export type ComparisonTargetValue = number | null | "friend";
 
-export const GOAL_OPTIONS = [
-  { label: "Break 100", value: 99 },
-  { label: "Break 95",  value: 94 },
-  { label: "Break 90",  value: 89 },
-  { label: "Break 85",  value: 84 },
-  { label: "Break 80",  value: 79 },
-  { label: "Break 75",  value: 74 },
-  { label: "Break 72",  value: 71 },
-] as const;
+export const GOAL_THRESHOLDS = [99, 94, 89, 84, 79, 74, 71] as const;
 
 // Normalized 0–100 per axis representing a golfer at each scoring threshold.
 // GIR & Scrambling values are real percentages (0–100).

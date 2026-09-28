@@ -33,7 +33,6 @@ interface MobileLabPageProps {
   activeProfile: BenchmarkProfile | null;
   peakInsight: PeakInsight | null;
   peakScoreTypes: PeakScoreTypes | null;
-  goalLabel: string | null;
   benchmarkHeading: string;
 }
 
@@ -55,9 +54,9 @@ export function MobileLabPage({
   activeProfile,
   peakInsight,
   peakScoreTypes,
-  goalLabel,
   benchmarkHeading,
 }: MobileLabPageProps) {
+  const goalLabel = GOAL_OPTIONS.find((o) => o.value === currentGoal)?.label ?? null;
   const recentAttempts = analyticsData?.score_trend?.filter((r) => r.total_score != null) ?? [];
 
   const [activePanel, setActivePanel] = useState(0);

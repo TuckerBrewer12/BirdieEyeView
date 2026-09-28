@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
-  GOAL_OPTIONS,
   GOAL_BENCHMARK,
   HANDICAP_BENCHMARK,
   type BenchmarkProfile,
@@ -66,7 +65,6 @@ export interface LabViewModel {
   activeProfile: BenchmarkProfile | null;
   peakInsight: PeakInsight | null;
   peakScoreTypes: PeakScoreTypes | null;
-  goalLabel: string | null;
   achievedCount: number;
   bestScore: number | null;
   recentTrend: number | null;
@@ -215,8 +213,6 @@ export function useLabViewModel(userId: string): LabViewModel {
       .map((e) => e.axis);
   }, [analytics, activeProfile]);
 
-  const goalLabel = GOAL_OPTIONS.find((o) => o.value === currentGoal)?.label ?? null;
-
   const achievedCount = useMemo(() => {
     if (!analytics?.score_trend || !currentGoal) return 0;
     return analytics.score_trend.filter(
@@ -278,7 +274,6 @@ export function useLabViewModel(userId: string): LabViewModel {
     activeProfile,
     peakInsight,
     peakScoreTypes,
-    goalLabel,
     achievedCount,
     bestScore,
     recentTrend,

@@ -49,9 +49,10 @@ export function LabDesktopLayout(vm: LabViewModel) {
     setSelectedFriendId,
     friendOptions, effectiveSelectedFriendId, selectedFriend,
     friendAnalyticsLoading, comparingFriend, activeProfile,
-    peakInsight, peakScoreTypes, goalLabel, achievedCount,
+    peakInsight, peakScoreTypes, achievedCount,
     bestScore, recentTrend, missingAxes,
   } = vm;
+  const goalLabel = GOAL_OPTIONS.find((o) => o.value === currentGoal)?.label ?? null;
 
   // Desktop-only UI state
   const [compareOpen, setCompareOpen] = useState(false);

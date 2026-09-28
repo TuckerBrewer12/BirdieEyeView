@@ -25,7 +25,6 @@ export function TheLabPage({ userId }: TheLabPageProps) {
           activeProfile={vm.activeProfile}
           peakInsight={vm.peakInsight}
           peakScoreTypes={vm.peakScoreTypes}
-          goalLabel={vm.goalLabel}
           benchmarkHeading={vm.benchmarkHeading}
         />
       }
