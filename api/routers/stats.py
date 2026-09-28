@@ -11,6 +11,7 @@ from models import User
 from api.round_responses import round_summary
 from api.schemas import DashboardResponse
 from analytics import stats as analytics
+from analytics import dashboard
 from analytics import handicap as hcap
 
 router = APIRouter()
@@ -41,10 +42,13 @@ async def get_dashboard(
 
     recent_rounds = [round_summary(r) for r in summaries[:5]]
 
-    # Handicap index only needs the last 20 rounds (full model required for differentials)
-    hi_rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=20, offset=0)
-    rounds_chrono = list(reversed(hi_rounds_desc))
-    calculated_hi = hcap.handicap_index(rounds_chrono)
+    # The last 20 rounds, plus 19 before them so the handicap trend has a full rolling window.
+    hi_rounds = list(reversed(await db.rounds.get_rounds_for_user(str(user_id), limit=39, offset=0)))
+    last_20 = hi_rounds[-20:]
+    calculated_hi = hcap.handicap_index(last_20)
+    handicap_trend = _build_handicap_trend(hi_rounds, last_20)
+    mix = dashboard.score_mix(last_20)
+    recent_mix = dashboard.score_mix(last_20[-dashboard.RECENT_ROUNDS:])
 
     return DashboardResponse(
         total_rounds=len(summaries),
@@ -56,6 +60,19 @@ async def get_dashboard(
         recent_rounds=recent_rounds,
         average_putts=round(sum(putts) / len(putts), 1) if putts else None,
         average_gir=round(sum(girs) / len(girs), 1) if girs else None,
+        scoring_average_l20=dashboard.scoring_average(last_20),
+        scoring_average_l5=dashboard.scoring_average(last_20, dashboard.RECENT_ROUNDS),
+        handicap_change=dashboard.handicap_change(handicap_trend),
+        recent_form=dashboard.recent_form(last_20),
+        score_mix=mix["percentages"],
+        recent_score_mix=recent_mix["percentages"],
+        score_mix_holes=mix["holes"],
+        milestones=dashboard.lifetime_milestones(
+            analytics.notable_achievements(last_20, home_course_id=user.home_course_id)
+        ),
+        whs=dashboard.whs_breakdown(
+            last_20, handicap_trend, hcap.score_differentials_per_round(last_20), calculated_hi
+        ),
     )
 
 

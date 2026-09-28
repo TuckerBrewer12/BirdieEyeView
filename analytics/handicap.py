@@ -31,6 +31,14 @@ _WHS_TABLE: List[tuple[int, float]] = [
 ]
 
 
+def whs_window(rated_rounds: int) -> tuple[int, float]:
+    """How many of the best differentials count, and the adjustment, for this many rated rounds."""
+    n = min(rated_rounds, 20)
+    if n < 3:
+        return 0, 0.0
+    return _WHS_TABLE[min(n - 3, len(_WHS_TABLE) - 1)]
+
+
 def score_differential(score: int, course_rating: float, slope_rating: float) -> float:
     """WHS score differential = (Score - Course Rating) × 113 / Slope Rating."""
     return (score - course_rating) * 113.0 / slope_rating

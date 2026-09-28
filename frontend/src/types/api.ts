@@ -15,3 +15,6 @@ export type ScoreCountsDto = Schemas["ScoreCounts"];
 export type RoundDto = Schemas["RoundResponse"];
 export type RoundSummaryDto = Schemas["RoundSummaryResponse"];
 export type DashboardDto = Schemas["DashboardResponse"];
+export type ScoreMixDto = Schemas["ScoreMix"];
+export type WhsBreakdownDto = Schemas["WhsBreakdown"];
+export type MilestoneDto = Schemas["Milestone"];

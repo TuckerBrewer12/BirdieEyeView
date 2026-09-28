@@ -16,6 +16,13 @@ from analytics.stats import (
 )
 
 
+def _progress_pct(start: int, average: float, goal: int, on_track: bool) -> float:
+    """How far the average has come from the window's first round toward the goal, 0-100."""
+    if on_track or start <= goal:
+        return 100.0
+    return min(100.0, max(0.0, (start - average) / (start - goal) * 100))
+
+
 def goal_report(
     rounds: List[Round],
     scoring_goal: int,
@@ -36,6 +43,7 @@ def goal_report(
             "scoring_goal": scoring_goal,
             "gap": None,
             "on_track": False,
+            "progress_pct": None,
             "savers": [],
         }
 
@@ -43,6 +51,7 @@ def goal_report(
     best_score = min(scores)
     gap = scoring_avg - scoring_goal
     on_track = gap <= 0
+    progress_pct = _progress_pct(scores[0], scoring_avg, scoring_goal, on_track)
 
     savers: List[Dict[str, Any]] = []
 
@@ -234,5 +243,6 @@ def goal_report(
         "scoring_goal": scoring_goal,
         "gap": round(gap, 1),
         "on_track": on_track,
+        "progress_pct": progress_pct,
         "savers": savers,
     }

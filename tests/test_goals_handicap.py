@@ -98,8 +98,16 @@ def test_goal_report_without_scores_returns_empty_report():
         "scoring_goal": 85,
         "gap": None,
         "on_track": False,
+        "progress_pct": None,
         "savers": [],
     }
+
+
+def test_goal_progress_measures_from_the_first_round_toward_the_goal():
+    assert goals._progress_pct(95, 91.0, 85, on_track=False) == 40.0
+    assert goals._progress_pct(95, 99.0, 85, on_track=False) == 0.0
+    assert goals._progress_pct(84, 88.0, 85, on_track=False) == 100.0
+    assert goals._progress_pct(95, 91.0, 85, on_track=True) == 100.0
 
 
 def test_goal_report_ranks_all_actionable_savers(monkeypatch):

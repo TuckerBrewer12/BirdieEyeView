@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from models import Course, UserTee
 from models.hole_score import ScoreKind
@@ -79,8 +79,62 @@ class RoundResponse(RoundFigures):
     hole_scores: List[HoleScoreResponse] = Field(default_factory=list)
 
 
+class ScoreMix(ResponseModel):
+    """Percent of classified holes in each score bucket."""
+    eagle: float = 0.0
+    birdie: float = 0.0
+    par: float = 0.0
+    bogey: float = 0.0
+    double: float = 0.0
+    triple: float = 0.0
+    quad: float = 0.0
+
+
+class RecentForm(ResponseModel):
+    """Rates over the last five rounds, pooled by chances. Null when there is nothing to measure."""
+    gir_pct: Optional[float] = None
+    scrambling_pct: Optional[float] = None
+    up_and_down_pct: Optional[float] = None
+    putts_per_18: Optional[float] = None
+
+
+class HandicapChange(ResponseModel):
+    delta: Optional[float] = None  # change over the last six rated rounds
+    direction: Optional[Literal["up", "down", "flat"]] = None  # over the window; under 0.3 is flat
+
+
+class WhsRound(ResponseModel):
+    round_index: int
+    course_name: Optional[str] = None
+    course_rating: Optional[float] = None
+    slope_rating: Optional[float] = None
+    score: Optional[int] = None
+    differential: Optional[float] = None
+    used: bool = False
+
+
+class WhsBreakdown(ResponseModel):
+    """The rounds in the handicap window, newest first, and which differentials count."""
+    rows: List[WhsRound] = Field(default_factory=list)
+    window_size: int = 0
+    count_used: int = 0
+    adjustment: float = 0.0
+    diff_avg: Optional[float] = None
+    has_rated_rounds: bool = False
+    show_calculation: bool = False
+
+
+class Milestone(ResponseModel):
+    """A lifetime best. `value` is the score, the putt threshold, or the streak length."""
+    kind: Literal["under_par", "score_break", "putt_break", "par_streak"]
+    value: int
+    date: str
+    course: str
+    round_id: Optional[str] = None
+
+
 class DashboardResponse(ResponseModel):
-    """Aggregated stats for the dashboard page."""
+    """Aggregated stats for the dashboard page. Every figure is worked out here, not on the client."""
     total_rounds: int
     scoring_average: Optional[float] = None
     best_round: Optional[int] = None
@@ -90,6 +144,16 @@ class DashboardResponse(ResponseModel):
     recent_rounds: List[RoundSummaryResponse]
     average_putts: Optional[float] = None
     average_gir: Optional[float] = None
+    # Over the last 20 rounds, the window the dashboard's charts show.
+    scoring_average_l20: Optional[float] = None
+    scoring_average_l5: Optional[float] = None
+    handicap_change: HandicapChange = Field(default_factory=HandicapChange)
+    recent_form: RecentForm = Field(default_factory=RecentForm)
+    score_mix: ScoreMix = Field(default_factory=ScoreMix)
+    recent_score_mix: ScoreMix = Field(default_factory=ScoreMix)
+    score_mix_holes: int = 0
+    milestones: List[Milestone] = Field(default_factory=list)
+    whs: WhsBreakdown = Field(default_factory=WhsBreakdown)
 
 
 class CourseSummaryResponse(ResponseModel):

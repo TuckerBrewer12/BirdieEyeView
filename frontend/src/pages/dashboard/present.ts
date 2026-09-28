@@ -2,7 +2,8 @@ import { colors, toParFill, toParLabel, toParTone, type ScoreKey } from "@/brand
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateShort } from "@/lib/roundDate";
 import type { HoleScore, Round } from "@/domain";
-import type { User } from "@/types/golf";
+import type { Milestone, User } from "@/types/golf";
+import type { MilestoneDto } from "@/types/api";
 import type { GoalReport } from "@/types/analytics";
 import {
   type DualTrendPoint,
@@ -62,8 +63,8 @@ export function pctLabel(value: number | null | undefined, empty = "—"): strin
   return value != null ? `${value.toFixed(0)}%` : empty;
 }
 
-export function puttsLabel(putts: number): string {
-  return putts > 0 ? putts.toFixed(1) : "—";
+export function puttsLabel(putts: number | null): string {
+  return putts != null && putts > 0 ? putts.toFixed(1) : "—";
 }
 
 export function deltaText(
@@ -126,20 +127,24 @@ export function mixHoleCountLabel(count: number): string | null {
   return count > 0 ? `${count} holes` : null;
 }
 
-export function girDonutData(pct: number): { value: number }[] {
-  return [{ value: pct }, { value: 100 - pct }];
+/** An unknown rate draws an empty ring. */
+export function girDonutData(pct: number | null): { value: number }[] {
+  return [{ value: pct ?? 0 }, { value: 100 - (pct ?? 0) }];
 }
 
 export function puttsClamped(putts: number): number {
   return Math.max(20, Math.min(40, putts));
 }
 
-export function puttsGaugeData(putts: number): { value: number }[] {
+/** An unknown putts figure draws an empty gauge. */
+export function puttsGaugeData(putts: number | null): { value: number }[] {
+  if (putts == null) return [{ value: 0 }, { value: 20 }];
   const clamped = puttsClamped(putts);
   return [{ value: clamped - 20 }, { value: 20 }];
 }
 
-export function puttsColor(putts: number, palette = dashboardPalette): string {
+export function puttsColor(putts: number | null, palette = dashboardPalette): string {
+  if (putts == null) return palette.mutedFill;
   if (putts < 30) return palette.girColor;
   if (putts <= 35) return palette.warningColor;
   return palette.dangerColor;
@@ -148,8 +153,8 @@ export function puttsColor(putts: number, palette = dashboardPalette): string {
 export function heroKpis(opts: {
   bestRound: number | null | undefined;
   totalRounds: number | null | undefined;
-  putts: number;
-  girPct: number;
+  putts: number | null;
+  girPct: number | null;
 }): { label: string; value: string }[] {
   return [
     { label: "BEST", value: opts.bestRound?.toString() ?? "—" },
@@ -276,3 +281,21 @@ export function whsContextNote(countUsed: number): string {
 }
 
 export type { DualTrendPoint, HiTrend };
+
+const MILESTONE_LABELS: Record<MilestoneDto["kind"], (value: number) => string> = {
+  under_par: (score) => `First round under par (${score})`,
+  score_break: (threshold) => `Best score: ${threshold} or better`,
+  putt_break: (threshold) => `Fewest putts: ${threshold}`,
+  par_streak: (length) => `Par streak: ${length} in a row`,
+};
+
+/** The server's milestones, worded for the feed. */
+export function presentMilestones(milestones: MilestoneDto[]): Milestone[] {
+  return milestones.map((m) => ({
+    type: m.kind,
+    label: MILESTONE_LABELS[m.kind](m.value),
+    date: m.date,
+    course: m.course,
+    round_id: m.round_id,
+  }));
+}

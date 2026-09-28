@@ -398,6 +398,9 @@ async def test_dashboard_and_empty_analytics(monkeypatch):
     assert dashboard.total_rounds == 1
     assert dashboard.scoring_average == 80.0
     assert dashboard.best_round_id == str(round_id)
+    assert dashboard.scoring_average_l20 is None
+    assert dashboard.whs.window_size == 0
+    assert dashboard.milestones == []
 
     db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], []])
     analytics = await stats.get_analytics(user_id, 50, None, None, db, user)
