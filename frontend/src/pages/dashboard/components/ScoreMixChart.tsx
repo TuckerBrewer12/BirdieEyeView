@@ -29,7 +29,7 @@ export function ScoreMixChart({ mix }: ScoreMixChartProps) {
           <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={false} />
           <YAxis tick={TICK} tickLine={false} axisLine={false} unit="%" />
           <Tooltip contentStyle={chartTooltipStyle} formatter={percent} />
-          <Bar dataKey="value" radius={chartLayout.barRadius} maxBarSize={28}>
+          <Bar dataKey="value" radius={chartLayout.barRadius} maxBarSize={chartLayout.plot.barMax}>
             {bars.map((entry) => (
               <Cell key={entry.name} fill={entry.color} />
             ))}
