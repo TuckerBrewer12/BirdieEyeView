@@ -82,6 +82,19 @@ Respect this repository's architecture:
 - LLM extraction: `llm/`, especially `scorecard_extractor.py`, `prompts.py`, `strategies.py`, and `confidence.py`.
 - Business logic: `services/scan_service.py`.
 - API request models: `api/request_models.py`.
-- Tests: Python `unittest` under `tests/`; frontend checks through the `frontend` package scripts when relevant.
+- Tests: Python pytest under `tests/`, including marked PostgreSQL integration tests under `tests/integration/`; frontend checks through the `frontend` package scripts when relevant.
 
 Do not make commits. Leave final review and commit decisions to the user.
+
+## Continuous Skill Improvement
+
+At the end of every invocation, assess whether this skill's instructions caused or failed to prevent a demonstrated, reusable workflow problem.
+
+- Improve this `SKILL.md` on the current working branch only when the current run provides concrete evidence and the correction is narrow, generalizable, and preserves the skill's purpose.
+- Do not add rules for application bugs, one-off tool or environment failures, speculative edge cases, or a preference that applies only to the current task.
+- Do not weaken confirmation gates, expand mutation authority, or materially change workflow scope without explicit user approval. Propose those changes instead.
+- Make the smallest instruction change that would have prevented the observed problem, preserve user-authored guidance, and avoid duplicating rules already enforced elsewhere.
+- Validate the modified skill with the skill-creator `quick_validate.py` script when available.
+- Mention any skill change and the evidence for it in the final response. If no reusable gap appeared, leave the skill unchanged.
+
+Skill maintenance must not interrupt or replace completion of the user's primary task.

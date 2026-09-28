@@ -79,13 +79,14 @@ If clarification is needed, preserve the useful planning work already completed,
 
 Use the smallest meaningful test set first, then broaden when risk warrants it:
 
-- Python model/service/LLM logic: `python -m unittest <module-or-test>`.
+- Python model/service/LLM logic: `.venv/bin/python -m pytest -q <test-path-or-node-id>`.
 - Existing LLM examples:
   - `python -m unittest tests.test_llm.TestScorecardExtraction.test_example_scorecard`
   - `python -m unittest tests.test_llm.TestScorecardExtraction.test_scores_only_extraction`
   - `python -m unittest tests.test_llm.TestScorecardExtraction.test_smart_with_null_repo`
 - Frontend TypeScript/UI changes: inspect `frontend/package.json` and use existing scripts such as typecheck, lint, test, or build.
-- DB repository behavior: prefer unit tests with mocks/fakes unless the change explicitly requires an integration database.
+- DB repository Python branching, conversion, or error translation: focused unit tests with fakes are appropriate.
+- SQL, constraints, ownership filters, transactions, PostgreSQL types/extensions, and persistence round trips: use the disposable PostgreSQL integration suite rather than mocking asyncpg execution.
 
 ## Output Format
 
@@ -122,3 +123,16 @@ Do you want me to implement this plan?
 ```
 
 Stop after asking. Wait for explicit approval before implementation.
+
+## Continuous Skill Improvement
+
+At the end of every invocation, assess whether this skill's instructions caused or failed to prevent a demonstrated, reusable workflow problem.
+
+- Improve this `SKILL.md` on the current working branch only when the current run provides concrete evidence and the correction is narrow, generalizable, and preserves the skill's purpose.
+- Do not add rules for application bugs, one-off tool or environment failures, speculative edge cases, or a preference that applies only to the current task.
+- Do not weaken confirmation gates, expand mutation authority, or materially change workflow scope without explicit user approval. Propose those changes instead.
+- Make the smallest instruction change that would have prevented the observed problem, preserve user-authored guidance, and avoid duplicating rules already enforced elsewhere.
+- Validate the modified skill with the skill-creator `quick_validate.py` script when available.
+- Mention any skill change and the evidence for it in the final response. If no reusable gap appeared, leave the skill unchanged.
+
+Skill maintenance must not interrupt or replace completion of the user's primary task.

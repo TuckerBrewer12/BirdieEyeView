@@ -63,8 +63,8 @@ Frontend:
 
 Tests:
 
-- Prefer focused `unittest` cases for Python logic.
-- Use mocks/fakes for LLM, DB, and external services unless an integration test is explicitly needed.
+- Prefer focused pytest cases for Python logic and stable behavior contracts.
+- Mock provider APIs and other true external boundaries. For database work, use fakes only for Python-side branching, conversion, or error translation; validate SQL, constraints, transactions, ownership filters, PostgreSQL types/extensions, and persistence round trips with the disposable PostgreSQL integration suite.
 - For frontend, inspect `frontend/package.json` and run the available focused script first, then build/typecheck if appropriate.
 
 ## Final Response
@@ -77,3 +77,16 @@ Finish with:
 - residual risks or review notes
 
 Keep it concise and do not ask whether to commit.
+
+## Continuous Skill Improvement
+
+At the end of every invocation, assess whether this skill's instructions caused or failed to prevent a demonstrated, reusable workflow problem.
+
+- Improve this `SKILL.md` on the current working branch only when the current run provides concrete evidence and the correction is narrow, generalizable, and preserves the skill's purpose.
+- Do not add rules for application bugs, one-off tool or environment failures, speculative edge cases, or a preference that applies only to the current task.
+- Do not weaken confirmation gates, expand mutation authority, or materially change workflow scope without explicit user approval. Propose those changes instead.
+- Make the smallest instruction change that would have prevented the observed problem, preserve user-authored guidance, and avoid duplicating rules already enforced elsewhere.
+- Validate the modified skill with the skill-creator `quick_validate.py` script when available.
+- Mention any skill change and the evidence for it in the final response. If no reusable gap appeared, leave the skill unchanged.
+
+Skill maintenance must not interrupt or replace completion of the user's primary task.
