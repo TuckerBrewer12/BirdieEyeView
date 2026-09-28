@@ -1,4 +1,4 @@
-import { SCORE_KEYS, type ScoreKey } from "@/brand/theme";
+import { SCORE_KINDS, type ScoreKind } from "@/domain/score";
 import type { Round } from "@/domain/round";
 import type { AnalyticsData } from "@/types/analytics";
 import type { ScoreMixDto, WhsBreakdownDto } from "@/types/api";
@@ -35,7 +35,7 @@ export function dualTrendFrom(trends: AnalyticsData | null): DualTrendPoint[] {
 }
 
 export interface ScoreMixItem {
-  name: ScoreKey;
+  name: ScoreKind;
   value: number;
 }
 
@@ -44,7 +44,7 @@ export function scoreMixItems(
   mix: ScoreMixDto,
   opts: { roundTenths?: boolean; dropZero?: boolean } = {},
 ): ScoreMixItem[] {
-  const items = SCORE_KEYS.map((key) => ({
+  const items = SCORE_KINDS.map((key) => ({
     name: key,
     value: opts.roundTenths ? Math.round(mix[key] * 10) / 10 : mix[key],
   }));
