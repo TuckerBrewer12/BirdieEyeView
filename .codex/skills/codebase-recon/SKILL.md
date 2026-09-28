@@ -33,7 +33,7 @@ Do not create or modify the implementation artifact.
 6. Identify the likely test surface:
    - existing `tests/test_*.py` targets for backend/model/LLM/service changes
    - frontend package checks or component tests if present
-   - DB-dependent areas that may need mock repositories or isolated unit coverage
+   - DB-dependent areas: distinguish Python-only branching/conversion that can use unit fakes from SQL, constraint, ownership, transaction, and PostgreSQL-specific behavior that needs integration coverage
 7. Note assumptions, unknowns, and possible blockers.
 8. Decide whether any assumption, unknown, or implementation choice materially affects scope, behavior, structure, reliability, or review expectations.
 9. If user direction is needed, finish the recon artifact, ask the clarification question immediately, and stop. Do not run `$implementation-plan` yet.
@@ -87,3 +87,16 @@ Write or update this section in the artifact:
 ```
 
 Keep the recon specific enough to support planning, but avoid speculative implementation detail until the planning phase.
+
+## Continuous Skill Improvement
+
+At the end of every invocation, assess whether this skill's instructions caused or failed to prevent a demonstrated, reusable workflow problem.
+
+- Improve this `SKILL.md` on the current working branch only when the current run provides concrete evidence and the correction is narrow, generalizable, and preserves the skill's purpose.
+- Do not add rules for application bugs, one-off tool or environment failures, speculative edge cases, or a preference that applies only to the current task.
+- Do not weaken confirmation gates, expand mutation authority, or materially change workflow scope without explicit user approval. Propose those changes instead.
+- Make the smallest instruction change that would have prevented the observed problem, preserve user-authored guidance, and avoid duplicating rules already enforced elsewhere.
+- Validate the modified skill with the skill-creator `quick_validate.py` script when available.
+- Mention any skill change and the evidence for it in the final response. If no reusable gap appeared, leave the skill unchanged.
+
+Skill maintenance must not interrupt or replace completion of the user's primary task.
