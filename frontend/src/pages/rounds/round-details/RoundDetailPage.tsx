@@ -9,13 +9,10 @@ import {
   CourseLinkSearch,
   LoadingState,
   SectionLabel,
-  ToggleGroup,
-  ToggleGroupItem,
 } from "@/brand";
 import { LinkCoursePanel } from "../components/LinkCoursePanel";
-import { ComparisonChartCard } from "./components/ComparisonChartCard";
+import { RoundComparisonSection } from "./components/RoundComparisonSection";
 import { RoundDetailHeader } from "./components/RoundDetailHeader";
-import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
 import { RoundFlowTimeline } from "@/components/analytics/RoundFlowTimeline";
 import { RoundActions } from "./RoundActions";
@@ -153,48 +150,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         </div>
       )}
 
-      {viewModel.showComparison && (
-        <div className="mt-8">
-          <SectionLabel>Round Comparison</SectionLabel>
-          <ScrollSection>
-            <div className="md:hidden">
-              <ToggleGroup
-                variant="outline"
-                spacing={2}
-                value={[viewModel.chartTab]}
-                onValueChange={(values) => viewModel.selectChartTab(values[0] ?? "")}
-                className="mb-4 max-w-full overflow-x-auto [scrollbar-width:none]"
-              >
-                {viewModel.chartTabs.map((tab) => (
-                  <ToggleGroupItem key={tab.key} value={tab.key}>
-                    {tab.label}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-              <div className={viewModel.packSelectedCharts ? "grid grid-cols-2 gap-3" : undefined}>
-                {viewModel.selectedCharts.map((chart) => (
-                  <ComparisonChartCard
-                    key={chart.title}
-                    title={chart.title}
-                    bars={chart.bars}
-                    primaryLabel={chart.primaryLabel}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {viewModel.charts.map((chart) => (
-                <ComparisonChartCard
-                  key={chart.title}
-                  title={chart.title}
-                  bars={chart.bars}
-                  primaryLabel={chart.primaryLabel}
-                />
-              ))}
-            </div>
-          </ScrollSection>
-        </div>
-      )}
+      <RoundComparisonSection userId={userId} roundId={played.id} />
     </div>
   );
 }

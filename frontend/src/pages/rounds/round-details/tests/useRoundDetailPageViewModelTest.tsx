@@ -2,7 +2,6 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import type { RoundComparison } from "@/types/analytics";
 import { pebbleBeach } from "@/testing/fixtures/courses";
 import {
   halfMoonBayCourse,
@@ -34,19 +33,6 @@ function renderVm(
   );
   return { ...hook, repository };
 }
-
-function row(label: string, value: number) {
-  return { label, sample_size: 4, round_id: "round-1", primary_value: value, secondary_value: null };
-}
-
-const sampleComparison: RoundComparison = {
-  score: [row("This round", 78)],
-  putts: [row("This round", 32)],
-  gir: [row("This round", 7)],
-  three_putts: [row("This round", 2)],
-  putts_per_gir: [row("This round", 1.8)],
-  scrambling: [row("This round", 3)],
-};
 
 describe("useRoundDetailPageViewModel", () => {
   it("exposes the loaded round's name, score, and to-par", async () => {
@@ -265,46 +251,6 @@ describe("useRoundDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.round).toBeUndefined();
     expect(result.current.loadError).toBe("Round not found.");
-  });
-
-  it("exposes finished comparison charts and Score as the active tab", async () => {
-    const { result } = renderVm("round-1", {
-      detailRounds: [halfMoonBayRound],
-      comparison: sampleComparison,
-    });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.showComparison).toBe(true);
-    expect(result.current.charts.map((c) => c.title)).toEqual([
-      "Score",
-      "Putts",
-      "GIR",
-      "3-Putts",
-      "Putts per GIR",
-      "Scrambling",
-    ]);
-    expect(result.current.chartTab).toBe("score");
-    expect(result.current.chartTabs).toEqual([
-      { key: "score", label: "Score" },
-      { key: "short_game", label: "Short Game" },
-      { key: "gir", label: "GIR" },
-    ]);
-    expect(result.current.charts[0]?.bars[0]).toEqual({
-      label: "This round",
-      value: 78,
-      sampleSize: 4,
-    });
-    expect(result.current.selectedCharts.map((c) => c.title)).toEqual(["Score"]);
-    expect(result.current.packSelectedCharts).toBe(false);
-
-    act(() => result.current.selectChartTab("short_game"));
-    expect(result.current.chartTab).toBe("short_game");
-    expect(result.current.selectedCharts.map((c) => c.title)).toEqual([
-      "Putts",
-      "3-Putts",
-      "Putts per GIR",
-      "Scrambling",
-    ]);
-    expect(result.current.packSelectedCharts).toBe(true);
   });
 
   it("totals each nine from the round's one list of holes", async () => {

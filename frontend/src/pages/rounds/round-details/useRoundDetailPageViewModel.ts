@@ -8,18 +8,10 @@ import { getTee, teeColors } from "@/domain/course";
 import { ratedCourseHandicap } from "@/domain/handicap";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
 import type { CourseSummary, Round } from "@/types/golf";
-import type { RoundComparison } from "@/types/analytics";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
 import { useSaveRound } from "../useSaveRound";
 import { useDeleteRound } from "../useDeleteRound";
-import {
-  CHART_TABS,
-  chartsFrom,
-  teeRatingLabel,
-  type ChartTabItem,
-  type ChartTabKey,
-  type ComparisonChartItem,
-} from "./roundDetailModel";
+import { teeRatingLabel } from "./roundDetailModel";
 import {
   closedEditor,
   roundEditor,
@@ -28,7 +20,7 @@ import {
   type EditedScores,
 } from "./roundEditorModel";
 
-export type { ChartTabItem, ChartTabKey, ComparisonChartItem, CourseEdit, EditedScores };
+export type { CourseEdit, EditedScores };
 
 const NO_EDITS: EditedScores = {};
 const PICKING: CourseEdit = { status: "picking" };
@@ -40,7 +32,6 @@ export interface RoundDetailUiState {
   round: Round | undefined;
   /** The round as played: read against the course being edited in, with edited strokes applied. */
   played: RoundModel | null;
-  comparison: RoundComparison | null | undefined;
   courseName: string;
   courseHandicap: number | null;
   teeRating: string | null;
@@ -62,13 +53,6 @@ export interface RoundDetailUiState {
   editCustomName: string | undefined;
   keepUnlinkedNameLabel: string | null;
   showMomentum: boolean;
-  showComparison: boolean;
-  charts: ComparisonChartItem[];
-  selectedCharts: ComparisonChartItem[];
-  /** Two-up on mobile when the active tab has more than one chart. */
-  packSelectedCharts: boolean;
-  chartTab: ChartTabKey;
-  chartTabs: ChartTabItem[];
 }
 
 export interface RoundDetailPageViewModel extends RoundDetailUiState {
@@ -90,7 +74,6 @@ export interface RoundDetailPageViewModel extends RoundDetailUiState {
   useCustomName: (name: string) => void;
   keepUnlinkedName: () => void;
   startChangingCourse: () => void;
-  selectChartTab: (key: string) => void;
 }
 
 export function useRoundDetailPageViewModel(
@@ -102,7 +85,6 @@ export function useRoundDetailPageViewModel(
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showLinkCourse, setShowLinkCourse] = useState(false);
   const [courseLoadError, setCourseLoadError] = useState<string | null>(null);
-  const [chartTab, setChartTab] = useState<ChartTabKey>("score");
   const courseSearch = useCourseSearch(userId, repository);
   const { reset: resetCourseSearch } = courseSearch;
   const { mutate: saveRound, isPending: saving, error: saveError, reset: resetSave } =
@@ -120,11 +102,6 @@ export function useRoundDetailPageViewModel(
     queryFn: () => repository.getRound(roundId!),
     enabled: !!roundId,
     staleTime: 5 * 60 * 1000,
-  });
-  const { data: comparison } = useQuery({
-    queryKey: queryKeys.roundComparison(userId, roundId),
-    queryFn: () => repository.getRoundComparison(userId, roundId!),
-    enabled: !!roundId,
   });
   const { data: handicapData } = useQuery({
     queryKey: queryKeys.handicap(userId),
@@ -198,8 +175,6 @@ export function useRoundDetailPageViewModel(
   const activeTeeBox = editMode ? editedTeeBox : round?.tee_box;
   const tee = getTee(activeCourse, activeTeeBox);
 
-  const charts = comparison ? chartsFrom(comparison) : [];
-  const selectedCharts = charts.filter((chart) => chart.group === chartTab);
   const playedCourseName = round?.course_name_played ?? null;
   const keepUnlinkedNameLabel =
     editMode && courseEdit.status === "picking" && playedCourseName && !courseSearch.query
@@ -214,7 +189,6 @@ export function useRoundDetailPageViewModel(
     loading: isLoading,
     loadError: isError ? messageFrom(roundError, "Could not load this round.") : null,
     round,
-    comparison,
     played,
     courseName,
     courseHandicap: ratedCourseHandicap(handicapIndex, tee, played?.par ?? null),
@@ -237,12 +211,6 @@ export function useRoundDetailPageViewModel(
     editCustomName,
     keepUnlinkedNameLabel,
     showMomentum: (round?.hole_scores.filter((s) => s.strokes != null).length ?? 0) >= 3,
-    showComparison: comparison != null,
-    charts,
-    selectedCharts,
-    packSelectedCharts: selectedCharts.length > 1,
-    chartTab,
-    chartTabs: CHART_TABS,
     enterEditMode,
     save,
     cancelEdit,
@@ -272,11 +240,6 @@ export function useRoundDetailPageViewModel(
     startChangingCourse: () => {
       dispatch({ type: "changeCourse" });
       resetCourseSearch();
-    },
-    selectChartTab: (key: string) => {
-      if (CHART_TABS.some((tab) => tab.key === key)) {
-        setChartTab(key as ChartTabKey);
-      }
     },
   };
 }
