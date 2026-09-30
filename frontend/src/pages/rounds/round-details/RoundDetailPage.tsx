@@ -12,6 +12,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
+import { LinkCoursePanel } from "../components/LinkCoursePanel";
 import { ComparisonChartCard } from "./components/ComparisonChartCard";
 import { RoundDetailHeader } from "./components/RoundDetailHeader";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
@@ -59,15 +60,11 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         deleting={viewModel.deleting}
         sharing={sharing}
         onEdit={viewModel.enterEditMode}
-        onSave={() => { void viewModel.save(); }}
+        onSave={viewModel.save}
         onCancelEdit={viewModel.cancelEdit}
         onShare={() => shareRound(round, viewModel.courseName)}
         onDelete={viewModel.requestDelete}
-        onConfirmDelete={() => {
-          void viewModel.confirmDeleteRound().then((ok) => {
-            if (ok) navigate("/rounds");
-          });
-        }}
+        onConfirmDelete={() => viewModel.confirmDeleteRound(() => navigate("/rounds"))}
         onCancelDelete={viewModel.cancelDelete}
         onBack={() => navigate(-1)}
       />
@@ -93,15 +90,12 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       )}
       {viewModel.showLinkCourse && (
         <div className="mb-4">
-          <CourseLinkSearch
+          <LinkCoursePanel
+            userId={userId}
+            roundId={played.id}
             title="Link to a saved course"
-            query={viewModel.courseQuery}
-            results={viewModel.courseResults}
-            searching={viewModel.courseSearching}
-            linking={viewModel.linking}
-            onQueryChange={viewModel.handleCourseQuery}
-            onSelectCourse={(c) => { void viewModel.handleSelectCourse(c); }}
             onClose={viewModel.closeLinkCourse}
+            onLinked={viewModel.closeLinkCourse}
           />
         </div>
       )}

@@ -1,29 +1,37 @@
-import { useState, useMemo, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useMemo, useCallback, useReducer } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { queryKeys } from "@/data/queryKeys";
 import { Round as RoundModel } from "@/domain/round";
 import { getTee, teeColors } from "@/domain/course";
 import { ratedCourseHandicap } from "@/domain/handicap";
-import { chooseCompatibleTee } from "@/lib/teeColor";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
 import type { CourseSummary, Round } from "@/types/golf";
 import type { RoundComparison } from "@/types/analytics";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
+import { useSaveRound } from "../useSaveRound";
+import { useDeleteRound } from "../useDeleteRound";
 import {
   CHART_TABS,
   chartsFrom,
-  courseEditFromRound,
   teeRatingLabel,
   type ChartTabItem,
   type ChartTabKey,
   type ComparisonChartItem,
-  type CourseEdit,
 } from "./roundDetailModel";
+import {
+  closedEditor,
+  roundEditor,
+  saveRequestFrom,
+  type CourseEdit,
+  type EditedScores,
+} from "./roundEditorModel";
 
-export type { ChartTabItem, ChartTabKey, ComparisonChartItem, CourseEdit };
-export type EditedScores = Record<number, { strokes: number | null; putts: number | null; gir?: boolean | null }>;
+export type { ChartTabItem, ChartTabKey, ComparisonChartItem, CourseEdit, EditedScores };
+
+const NO_EDITS: EditedScores = {};
+const PICKING: CourseEdit = { status: "picking" };
 
 export interface RoundDetailUiState {
   loading: boolean;
@@ -46,7 +54,6 @@ export interface RoundDetailUiState {
   availableTees: string[];
   showLinkCourse: boolean;
   showLinkButton: boolean;
-  linking: boolean;
   courseQuery: string;
   courseResults: CourseSummary[];
   courseSearching: boolean;
@@ -66,10 +73,11 @@ export interface RoundDetailUiState {
 
 export interface RoundDetailPageViewModel extends RoundDetailUiState {
   enterEditMode: () => void;
-  save: () => Promise<void>;
+  save: () => void;
   cancelEdit: () => void;
   requestDelete: () => void;
-  confirmDeleteRound: () => Promise<boolean>;
+  /** Deletes the round; `onDeleted` runs only if it worked. */
+  confirmDeleteRound: (onDeleted: () => void) => void;
   cancelDelete: () => void;
   handleScoreChange: (holeNumber: number, field: "strokes" | "putts", value: number | null) => void;
   handleGirChange: (holeNumber: number, value: boolean | null) => void;
@@ -77,7 +85,6 @@ export interface RoundDetailPageViewModel extends RoundDetailUiState {
   openLinkCourse: () => void;
   closeLinkCourse: () => void;
   handleCourseQuery: (query: string) => void;
-  handleSelectCourse: (course: CourseSummary) => Promise<void>;
   handleSelectEditCourse: (course: CourseSummary) => Promise<void>;
   closeEditCourseSearch: () => void;
   useCustomName: (name: string) => void;
@@ -91,20 +98,17 @@ export function useRoundDetailPageViewModel(
   roundId: string | undefined,
   repository: RoundsRepository = roundsRepository,
 ): RoundDetailPageViewModel {
-  const queryClient = useQueryClient();
-  const [editMode, setEditMode] = useState(false);
+  const [editor, dispatch] = useReducer(roundEditor, closedEditor);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [editedScores, setEditedScores] = useState<EditedScores>({});
-  const [editedTeeBox, setEditedTeeBox] = useState("");
   const [showLinkCourse, setShowLinkCourse] = useState(false);
-  const [linking, setLinking] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [courseEdit, setCourseEdit] = useState<CourseEdit>({ status: "picking" });
+  const [courseLoadError, setCourseLoadError] = useState<string | null>(null);
   const [chartTab, setChartTab] = useState<ChartTabKey>("score");
   const courseSearch = useCourseSearch(userId, repository);
   const { reset: resetCourseSearch } = courseSearch;
+  const { mutate: saveRound, isPending: saving, error: saveError, reset: resetSave } =
+    useSaveRound(userId, repository);
+  const { mutate: deleteRound, isPending: deleting, error: deleteError, reset: resetDelete } =
+    useDeleteRound(userId, repository);
 
   const {
     data: round,
@@ -128,162 +132,59 @@ export function useRoundDetailPageViewModel(
   });
   const handicapIndex = handicapData?.handicap_index ?? null;
 
+  const editMode = editor.editing;
+  const editedScores = editor.editing ? editor.scores : NO_EDITS;
+  const editedTeeBox = editor.editing ? editor.teeBox : "";
+  const courseEdit = editor.editing ? editor.course : PICKING;
+
+  // One message at a time: starting an action clears whatever the last one left.
+  const clearErrors = useCallback(() => {
+    resetSave();
+    resetDelete();
+    setCourseLoadError(null);
+  }, [resetSave, resetDelete]);
+
   const enterEditMode = useCallback(() => {
     if (!round) return;
-    const initial: EditedScores = {};
-    for (const s of round.hole_scores) {
-      if (s.hole_number != null) {
-        initial[s.hole_number] = { strokes: s.strokes, putts: s.putts };
-      }
-    }
     setShowLinkCourse(false);
     resetCourseSearch();
-    setEditedScores(initial);
-    setEditedTeeBox(round.tee_box ?? "");
-    setCourseEdit(courseEditFromRound(round));
     setConfirmDelete(false);
-    setEditMode(true);
+    dispatch({ type: "start", round });
   }, [round, resetCourseSearch]);
 
   const cancelEdit = useCallback(() => {
-    setEditMode(false);
-    setEditedScores({});
-    setCourseEdit({ status: "picking" });
+    dispatch({ type: "stop" });
     resetCourseSearch();
   }, [resetCourseSearch]);
 
-  const save = useCallback(async () => {
-    if (!round || !roundId) return;
-    setSaving(true);
-    setActionError(null);
-    try {
-      if (
-        courseEdit.status === "linked" &&
-        courseEdit.course.id &&
-        courseEdit.course.id !== round.course?.id
-      ) {
-        await repository.linkCourse(roundId, courseEdit.course.id);
-      }
+  const save = useCallback(() => {
+    if (!round || !roundId || !editor.editing) return;
+    clearErrors();
+    saveRound(
+      { roundId, ...saveRequestFrom(round, editor) },
+      { onSuccess: () => dispatch({ type: "stop" }) },
+    );
+  }, [round, roundId, editor, clearErrors, saveRound]);
 
-      const holeScores = round.hole_scores
-        .filter((s) => s.hole_number != null)
-        .map((s) => {
-          const edited = editedScores[s.hole_number!];
-          const girValue = edited?.gir !== undefined ? edited.gir : s.green_in_regulation;
-          return {
-            hole_number: s.hole_number!,
-            strokes: edited?.strokes ?? s.strokes,
-            putts: edited?.putts ?? s.putts,
-            fairway_hit: s.fairway_hit,
-            green_in_regulation: girValue,
-          };
-        });
-
-      let courseNamePlayed: string | null | undefined;
-      if (courseEdit.status === "custom") {
-        courseNamePlayed = courseEdit.name;
-      } else if (round.course_name_played) {
-        courseNamePlayed = null;
-      }
-
-      const updated = await repository.updateRound(roundId, {
-        hole_scores: holeScores,
-        tee_box: editedTeeBox || null,
-        ...(courseNamePlayed !== undefined ? { course_name_played: courseNamePlayed } : {}),
-      });
-      queryClient.setQueryData(queryKeys.round(roundId), updated);
-      queryClient.invalidateQueries({ queryKey: queryKeys.roundComparison(userId, roundId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.careerAnalytics(userId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard(userId) });
-      setEditMode(false);
-      setCourseEdit({ status: "picking" });
-    } catch (err) {
-      console.error("Save failed:", err);
-      setActionError(messageFrom(err, "Could not save this round."));
-    } finally {
-      setSaving(false);
-    }
-  }, [round, roundId, editedScores, editedTeeBox, courseEdit, queryClient, userId, repository]);
-
-  const confirmDeleteRound = useCallback(async () => {
-    if (!roundId) return false;
-    setDeleting(true);
-    setActionError(null);
-    try {
-      await repository.deleteRound(roundId);
-      queryClient.invalidateQueries({ queryKey: queryKeys.rounds(userId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard(userId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.careerAnalytics(userId) });
-      return true;
-    } catch (err) {
-      console.error("Delete failed:", err);
-      setActionError(messageFrom(err, "Could not delete this round."));
-      setDeleting(false);
-      return false;
-    }
-  }, [roundId, userId, queryClient, repository]);
-
-  const handleScoreChange = useCallback(
-    (holeNumber: number, field: "strokes" | "putts", value: number | null) => {
-      setEditedScores((prev) => ({
-        ...prev,
-        [holeNumber]: { ...prev[holeNumber], [field]: value },
-      }));
-    },
-    [],
-  );
-
-  const handleGirChange = useCallback(
-    (holeNumber: number, value: boolean | null) => {
-      setEditedScores((prev) => ({
-        ...prev,
-        [holeNumber]: { ...prev[holeNumber], gir: value },
-      }));
-    },
-    [],
-  );
-
-  const handleSelectCourse = useCallback(async (course: CourseSummary) => {
+  const confirmDeleteRound = useCallback((onDeleted: () => void) => {
     if (!roundId) return;
-    setLinking(true);
-    setActionError(null);
-    try {
-      await repository.linkCourse(roundId, course.id);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.round(roundId) });
-      setShowLinkCourse(false);
-      resetCourseSearch();
-    } catch (err) {
-      console.error("Link failed:", err);
-      setActionError(messageFrom(err, "Could not link this round to that course."));
-    } finally {
-      setLinking(false);
-    }
-  }, [roundId, queryClient, resetCourseSearch, repository]);
+    clearErrors();
+    deleteRound(roundId, { onSuccess: onDeleted });
+  }, [roundId, clearErrors, deleteRound]);
 
   const handleSelectEditCourse = useCallback(async (course: CourseSummary) => {
-    setActionError(null);
+    clearErrors();
     resetCourseSearch();
     try {
-      const full = await repository.getCourse(course.id);
-      const teeColorsForCourse = teeColors(full);
-      setCourseEdit({ status: "linked", course: full });
-      setEditedTeeBox((prev) => {
-        const current = prev.trim();
-        if (teeColorsForCourse.length === 0) return prev;
-        if (current) {
-          const matched = chooseCompatibleTee(current, teeColorsForCourse);
-          if (matched) return matched;
-        }
-        return teeColorsForCourse.length === 1 ? teeColorsForCourse[0] : "";
-      });
+      dispatch({ type: "linkCourse", course: await repository.getCourse(course.id) });
     } catch (err) {
-      setActionError(messageFrom(err, "Could not load that course."));
+      setCourseLoadError(messageFrom(err, "Could not load that course."));
     }
-  }, [repository, resetCourseSearch]);
+  }, [repository, clearErrors, resetCourseSearch]);
 
   const activeCourse =
-    editMode && courseEdit.status === "linked"
-      ? courseEdit.course
+    editor.editing && editor.course.status === "linked"
+      ? editor.course.course
       : round?.course ?? null;
   const played = useMemo(() => {
     if (!round) return null;
@@ -296,17 +197,18 @@ export function useRoundDetailPageViewModel(
   const editCustomName = courseEdit.status === "custom" ? courseEdit.name : undefined;
   const activeTeeBox = editMode ? editedTeeBox : round?.tee_box;
   const tee = getTee(activeCourse, activeTeeBox);
-  const teeRating = teeRatingLabel(tee);
 
-  const courseHandicap = ratedCourseHandicap(handicapIndex, tee, played?.par ?? null);
   const charts = comparison ? chartsFrom(comparison) : [];
   const selectedCharts = charts.filter((chart) => chart.group === chartTab);
-  const chartTabs = CHART_TABS;
   const playedCourseName = round?.course_name_played ?? null;
   const keepUnlinkedNameLabel =
     editMode && courseEdit.status === "picking" && playedCourseName && !courseSearch.query
       ? `Keep "${playedCourseName}" without linking →`
       : null;
+  const actionError =
+    (saveError && messageFrom(saveError, "Could not save this round.")) ||
+    (deleteError && messageFrom(deleteError, "Could not delete this round.")) ||
+    courseLoadError;
 
   return {
     loading: isLoading,
@@ -315,8 +217,8 @@ export function useRoundDetailPageViewModel(
     comparison,
     played,
     courseName,
-    courseHandicap,
-    teeRating,
+    courseHandicap: ratedCourseHandicap(handicapIndex, tee, played?.par ?? null),
+    teeRating: teeRatingLabel(tee),
     editMode,
     saving,
     confirmDelete,
@@ -327,7 +229,6 @@ export function useRoundDetailPageViewModel(
     availableTees: teeColors(activeCourse),
     showLinkCourse,
     showLinkButton: !!round && !editMode && !round.course && !showLinkCourse,
-    linking,
     courseQuery: courseSearch.query,
     courseResults: courseSearch.results,
     courseSearching: courseSearch.searching,
@@ -341,42 +242,35 @@ export function useRoundDetailPageViewModel(
     selectedCharts,
     packSelectedCharts: selectedCharts.length > 1,
     chartTab,
-    chartTabs,
+    chartTabs: CHART_TABS,
     enterEditMode,
     save,
     cancelEdit,
     requestDelete: () => setConfirmDelete(true),
     confirmDeleteRound,
     cancelDelete: () => setConfirmDelete(false),
-    handleScoreChange,
-    handleGirChange,
-    setEditedTeeBox,
-    openLinkCourse: () => {
-      resetCourseSearch();
-      setShowLinkCourse(true);
-    },
-    closeLinkCourse: () => {
-      setShowLinkCourse(false);
-      resetCourseSearch();
-    },
+    handleScoreChange: (hole, field, value) => dispatch({ type: "setScore", hole, field, value }),
+    handleGirChange: (hole, value) => dispatch({ type: "setGir", hole, value }),
+    setEditedTeeBox: (teeBox) => dispatch({ type: "setTeeBox", teeBox }),
+    openLinkCourse: () => setShowLinkCourse(true),
+    closeLinkCourse: () => setShowLinkCourse(false),
     handleCourseQuery: courseSearch.setQuery,
-    handleSelectCourse,
     handleSelectEditCourse,
     closeEditCourseSearch: () => {
-      if (round) setCourseEdit(courseEditFromRound(round));
+      if (round) dispatch({ type: "restoreCourse", round });
       resetCourseSearch();
     },
-    useCustomName: (name: string) => {
-      setCourseEdit({ status: "custom", name });
+    useCustomName: (name) => {
+      dispatch({ type: "useCustomName", name });
       resetCourseSearch();
     },
     keepUnlinkedName: () => {
       if (!playedCourseName) return;
-      setCourseEdit({ status: "custom", name: playedCourseName });
+      dispatch({ type: "useCustomName", name: playedCourseName });
       resetCourseSearch();
     },
     startChangingCourse: () => {
-      setCourseEdit({ status: "picking" });
+      dispatch({ type: "changeCourse" });
       resetCourseSearch();
     },
     selectChartTab: (key: string) => {

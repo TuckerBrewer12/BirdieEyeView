@@ -101,10 +101,8 @@ describe("useRoundDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.enterEditMode());
     act(() => result.current.handleScoreChange(1, "strokes", 3));
-    await act(async () => {
-      await result.current.save();
-    });
-    expect(result.current.editMode).toBe(false);
+    act(() => result.current.save());
+    await waitFor(() => expect(result.current.editMode).toBe(false));
     expect(result.current.played?.score).toBe(76);
     const saved = await repository.getRound("round-1");
     expect(saved.hole_scores.find((s) => s.hole_number === 1)?.strokes).toBe(3);
@@ -117,10 +115,9 @@ describe("useRoundDetailPageViewModel", () => {
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.enterEditMode());
-    await act(async () => {
-      await result.current.save();
-    });
-    expect(result.current.actionError).toBe("nope");
+    act(() => result.current.save());
+    await waitFor(() => expect(result.current.actionError).toBe("nope"));
+    expect(result.current.saving).toBe(false);
     expect(result.current.editMode).toBe(true);
   });
 
@@ -131,11 +128,9 @@ describe("useRoundDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.requestDelete());
     expect(result.current.confirmDelete).toBe(true);
-    let ok = false;
-    await act(async () => {
-      ok = await result.current.confirmDeleteRound();
-    });
-    expect(ok).toBe(true);
+    let deleted = false;
+    act(() => result.current.confirmDeleteRound(() => { deleted = true; }));
+    await waitFor(() => expect(deleted).toBe(true));
     expect(repository.deletedIds).toEqual(["round-1"]);
   });
 
@@ -145,46 +140,38 @@ describe("useRoundDetailPageViewModel", () => {
       deleteError: "nope",
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    let ok = true;
-    await act(async () => {
-      ok = await result.current.confirmDeleteRound();
-    });
-    expect(ok).toBe(false);
-    expect(result.current.actionError).toBe("nope");
+    let deleted = false;
+    act(() => result.current.confirmDeleteRound(() => { deleted = true; }));
+    await waitFor(() => expect(result.current.actionError).toBe("nope"));
+    expect(deleted).toBe(false);
     expect(repository.deletedIds).toEqual([]);
   });
 
-  it("linking a course closes the panel", async () => {
-    const { result, repository } = renderVm("round-4", {
-      detailRounds: [scannedRound],
-      courses: [pebbleBeach],
-      fullCourses: [pebbleBeachCourse],
-    });
+  it("opening the link panel hides the link button until it closes", async () => {
+    const { result } = renderVm("round-4", { detailRounds: [scannedRound] });
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.openLinkCourse());
     expect(result.current.showLinkCourse).toBe(true);
+    expect(result.current.showLinkButton).toBe(false);
 
-    await act(async () => {
-      await result.current.handleSelectCourse(pebbleBeach);
-    });
+    act(() => result.current.closeLinkCourse());
     expect(result.current.showLinkCourse).toBe(false);
-    const linked = await repository.getRound("round-4");
-    expect(linked.course?.name).toBe("Pebble Beach");
+    expect(result.current.showLinkButton).toBe(true);
   });
 
-  it("a failed link sets actionError and leaves the panel open", async () => {
-    const { result } = renderVm("round-4", {
-      detailRounds: [scannedRound],
-      courses: [pebbleBeach],
-      linkError: "nope",
+  it("a failed save's message clears when the golfer tries to delete", async () => {
+    const { result } = renderVm("round-1", {
+      detailRounds: [halfMoonBayRound],
+      updateError: "save broke",
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    act(() => result.current.openLinkCourse());
-    await act(async () => {
-      await result.current.handleSelectCourse(pebbleBeach);
-    });
-    expect(result.current.actionError).toBe("nope");
-    expect(result.current.showLinkCourse).toBe(true);
+    act(() => result.current.enterEditMode());
+    act(() => result.current.save());
+    await waitFor(() => expect(result.current.actionError).toBe("save broke"));
+
+    act(() => result.current.cancelEdit());
+    act(() => result.current.confirmDeleteRound(() => {}));
+    expect(result.current.actionError).toBeNull();
   });
 
   it("enter edit closes the view-mode link panel", async () => {
@@ -234,9 +221,8 @@ describe("useRoundDetailPageViewModel", () => {
     await act(async () => {
       await result.current.handleSelectEditCourse(pebbleBeach);
     });
-    await act(async () => {
-      await result.current.save();
-    });
+    act(() => result.current.save());
+    await waitFor(() => expect(result.current.editMode).toBe(false));
     const saved = await repository.getRound("round-4");
     expect(saved.course?.id).toBe("course-pebble");
     expect(saved.course_name_played).toBeNull();
@@ -253,9 +239,8 @@ describe("useRoundDetailPageViewModel", () => {
     act(() => result.current.keepUnlinkedName());
     expect(result.current.courseEdit).toEqual({ status: "custom", name: "Scanned Scorecard" });
     expect(result.current.keepUnlinkedNameLabel).toBeNull();
-    await act(async () => {
-      await result.current.save();
-    });
+    act(() => result.current.save());
+    await waitFor(() => expect(result.current.editMode).toBe(false));
     const saved = await repository.getRound("round-4");
     expect(saved.course_name_played).toBe("Scanned Scorecard");
     expect(saved.course).toBeNull();
