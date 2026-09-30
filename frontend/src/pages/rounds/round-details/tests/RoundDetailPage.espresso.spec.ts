@@ -54,6 +54,20 @@ test("linking a course updates the round and hides the link button", async ({ ro
   await roundDetail.doesNotSeeLinkCourse();
 });
 
+test("a failed link says why and keeps the panel open", async ({ roundDetail }) => {
+  await roundDetail.open(scannedRound, {
+    courses: searchableCourses,
+    fullCourses: [pebbleBeachCourse],
+    linkError: "That course is not available.",
+  });
+  await roundDetail.tapLinkCourse();
+  await roundDetail.searchCourses("Pebble");
+  await roundDetail.pickCourse("Pebble Beach");
+  await roundDetail.seesLinkError("That course is not available.");
+  await roundDetail.seesLinkPanel();
+  await roundDetail.seesCourse("Scanned Scorecard");
+});
+
 test("saving an unmatched name keeps the round on that custom name", async ({ roundDetail }) => {
   await roundDetail.open(scannedRound, { courses: searchableCourses });
   await roundDetail.tapEdit();
