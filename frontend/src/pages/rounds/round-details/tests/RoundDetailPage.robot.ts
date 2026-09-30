@@ -119,6 +119,11 @@ export class RoundDetailRobot {
     return this;
   }
 
+  async tapKeepPlayedName(name: string): Promise<this> {
+    await this.page.getByRole("button", { name: `Keep "${name}" without linking →` }).click();
+    return this;
+  }
+
   async tapEditCourseName(): Promise<this> {
     await this.page.getByRole("button", { name: "Edit name" }).click();
     return this;

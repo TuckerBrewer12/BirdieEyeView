@@ -37,6 +37,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
 
   const round = viewModel.round;
   const played = viewModel.played;
+  const editor = viewModel.editor;
 
   return (
     <div>
@@ -51,14 +52,14 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       )}
 
       <RoundActions
-        editMode={viewModel.editMode}
-        saving={viewModel.saving}
+        editMode={editor.editing}
+        saving={editor.saving}
         confirmDelete={viewModel.confirmDelete}
         deleting={viewModel.deleting}
         sharing={sharing}
         onEdit={viewModel.enterEditMode}
-        onSave={viewModel.save}
-        onCancelEdit={viewModel.cancelEdit}
+        onSave={editor.save}
+        onCancelEdit={editor.cancel}
         onShare={() => shareRound(round, viewModel.courseName)}
         onDelete={viewModel.requestDelete}
         onConfirmDelete={() => viewModel.confirmDeleteRound(() => navigate("/rounds"))}
@@ -97,45 +98,45 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         </div>
       )}
 
-      {viewModel.editMode && (
+      {editor.editing && (
         <div className="mb-4">
           <CourseLinkSearch
-            query={viewModel.courseQuery}
-            results={viewModel.courseResults}
-            searching={viewModel.courseSearching}
-            onQueryChange={viewModel.handleCourseQuery}
-            onSelectCourse={(c) => { void viewModel.handleSelectEditCourse(c); }}
-            onClose={viewModel.closeEditCourseSearch}
+            query={editor.courseQuery}
+            results={editor.courseResults}
+            searching={editor.courseSearching}
+            onQueryChange={editor.searchCourses}
+            onSelectCourse={(c) => { void editor.pickCourse(c); }}
+            onClose={editor.closeCourseSearch}
             reviewVariant
-            onUseCustomName={viewModel.useCustomName}
-            linkedName={viewModel.editLinkedName}
-            customName={viewModel.editCustomName}
-            onClear={viewModel.startChangingCourse}
+            onUseCustomName={editor.setCustomName}
+            linkedName={editor.linkedName}
+            customName={editor.customName}
+            onClear={editor.changeCourse}
             clearLabel="Change course"
           />
-          {viewModel.keepUnlinkedNameLabel && (
+          {editor.playedNameToKeep && (
             <Button
               variant="linkMuted"
               size="xs"
               className="mt-1.5 h-auto p-0"
-              onClick={viewModel.keepUnlinkedName}
+              onClick={editor.keepPlayedName}
             >
-              {viewModel.keepUnlinkedNameLabel}
+              Keep "{editor.playedNameToKeep}" without linking →
             </Button>
           )}
         </div>
       )}
 
-      <div className={!viewModel.editMode ? "mt-2" : ""}>
+      <div className={!editor.editing ? "mt-2" : ""}>
         <ScorecardGrid
           round={round}
-          editMode={viewModel.editMode}
-          editedScores={viewModel.editedScores}
-          editedTeeBox={viewModel.editedTeeBox}
-          availableTees={viewModel.availableTees}
-          onScoreChange={viewModel.handleScoreChange}
-          onTeeBoxChange={viewModel.setEditedTeeBox}
-          onGirChange={viewModel.handleGirChange}
+          editMode={editor.editing}
+          editedScores={editor.scores}
+          editedTeeBox={editor.teeBox}
+          availableTees={editor.availableTees}
+          onScoreChange={editor.setScore}
+          onTeeBoxChange={editor.setTeeBox}
+          onGirChange={editor.setGir}
         />
       </div>
 

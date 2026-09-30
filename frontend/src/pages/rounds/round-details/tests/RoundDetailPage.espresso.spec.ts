@@ -80,3 +80,11 @@ test("editing the name on a custom-named round returns to the search field", asy
   await roundDetail.tapEditCourseName();
   await roundDetail.seesCourseSearchField();
 });
+
+test("keeping the played name goes back to the custom-name card", async ({ roundDetail }) => {
+  await roundDetail.open(scannedRound);
+  await roundDetail.tapEdit();
+  await roundDetail.tapEditCourseName();
+  await roundDetail.tapKeepPlayedName("Scanned Scorecard");
+  await roundDetail.seesCustomNameCard("Scanned Scorecard");
+});
