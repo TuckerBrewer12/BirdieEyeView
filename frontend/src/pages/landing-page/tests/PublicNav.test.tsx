@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, it, expect } from "vitest";
-import { THEME_STORAGE_KEY } from "@/context/theme";
+import { describe, it, expect } from "vitest";
 import { ThemeProvider } from "@/context/ThemeProvider";
 import { PublicNav } from "../components/PublicNav";
 
@@ -16,11 +15,6 @@ function renderNav() {
 }
 
 describe("PublicNav", () => {
-  beforeEach(() => {
-    localStorage.clear();
-    document.documentElement.classList.remove("dark");
-  });
-
   it("opens and closes the mobile menu", () => {
     renderNav();
     const toggle = screen.getByRole("button", { name: "Toggle menu" });
@@ -50,16 +44,4 @@ describe("PublicNav", () => {
     expect(screen.getAllByRole("button", { name: "Try It Out" }).length).toBeGreaterThan(0);
   });
 
-  it("toggles the theme without reading it to draw", () => {
-    renderNav();
-    const toggle = screen.getByRole("button", { name: "Toggle dark mode" });
-
-    fireEvent.click(toggle);
-    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
-
-    fireEvent.click(toggle);
-    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
-  });
 });

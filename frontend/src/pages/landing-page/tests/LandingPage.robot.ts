@@ -29,6 +29,26 @@ export class LandingRobot {
     return this;
   }
 
+  /** Reloads the page, as a returning visitor would see it. */
+  async reload(): Promise<this> {
+    await this.page.reload();
+    await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+    return this;
+  }
+
+  async tapThemeToggle(): Promise<this> {
+    await this.page.getByRole("button", { name: "Toggle dark mode" }).click();
+    return this;
+  }
+
+  /** Every token flips on `dark`, so the class on <html> is the theme the page is drawn in. */
+  async seesTheme(theme: "light" | "dark"): Promise<this> {
+    const html = this.page.locator("html");
+    if (theme === "dark") await expect(html).toHaveClass(/(^|\s)dark(\s|$)/);
+    else await expect(html).not.toHaveClass(/(^|\s)dark(\s|$)/);
+    return this;
+  }
+
   async openMenu(): Promise<this> {
     await this.page.getByRole("button", { name: "Toggle menu" }).click();
     return this;
