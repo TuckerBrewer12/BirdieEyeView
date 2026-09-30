@@ -9,6 +9,7 @@ import {
   courseChips,
   effectiveSort,
   filterRounds,
+  modeAfterPickingSort,
   sortAfterPicking,
   type FilterChipItem,
   type FilterMode,
@@ -33,7 +34,6 @@ export interface RoundsUiState {
   sortOptions: readonly SortOption[];
   effectiveSortKey: SortKey;
   sortLocked: boolean;
-  linkingRoundId: string | null;
 }
 
 export interface RoundsPageViewModel extends RoundsUiState {
@@ -42,7 +42,6 @@ export interface RoundsPageViewModel extends RoundsUiState {
   setFilterMode: (mode: FilterMode) => void;
   selectSortKey: (key: SortKey) => void;
   toggleSortDirection: () => void;
-  openLink: (roundId: string) => void;
   closeLink: () => void;
   /** Whether this round's course-link panel is the one showing. */
   isLinkOpen: (roundId: string) => boolean;
@@ -67,13 +66,7 @@ export function useRoundsPageViewModel(
 
   const chips = useMemo(() => courseChips(rounds), [rounds]);
 
-  const openLink = useCallback((roundId: string) => {
-    setLinkingRoundId(roundId);
-  }, []);
-
-  const closeLink = useCallback(() => {
-    setLinkingRoundId(null);
-  }, []);
+  const closeLink = useCallback(() => setLinkingRoundId(null), []);
 
   const isLinkOpen = useCallback(
     (roundId: string) => linkingRoundId === roundId,
@@ -82,18 +75,14 @@ export function useRoundsPageViewModel(
 
   // Only one panel is open at a time, so tapping the link icon on the open row
   // closes it and tapping any other row moves the panel there.
-  const toggleLink = useCallback(
-    (roundId: string) => {
-      if (linkingRoundId === roundId) closeLink();
-      else openLink(roundId);
-    },
-    [linkingRoundId, closeLink, openLink],
-  );
+  const toggleLink = useCallback((roundId: string) => {
+    setLinkingRoundId((open) => (open === roundId ? null : roundId));
+  }, []);
 
   const selectSortKey = useCallback((key: SortKey) => {
-    if (filterMode === "best") setFilterMode("all");
+    setFilterMode(modeAfterPickingSort);
     setSort((current) => sortAfterPicking(current, key));
-  }, [filterMode]);
+  }, []);
 
   const toggleSortDirection = useCallback(() => {
     setSort((current) => ({ ...current, ascending: !current.ascending }));
@@ -123,15 +112,13 @@ export function useRoundsPageViewModel(
     filterMode,
     setFilterMode,
     chips,
-    sortAsc: sort.ascending,
+    sortAsc: effective.ascending,
     sortLabel: SORT_LABELS[effective.key],
     sortOptions: SORT_OPTIONS,
     effectiveSortKey: effective.key,
     sortLocked: effective.locked,
     selectSortKey,
     toggleSortDirection,
-    linkingRoundId,
-    openLink,
     closeLink,
     isLinkOpen,
     toggleLink,

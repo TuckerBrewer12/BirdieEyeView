@@ -50,6 +50,11 @@ export function effectiveSort(mode: FilterMode, chosen: Sort): Sort & { locked: 
     : { ...chosen, locked: false };
 }
 
+/** Picking a sort key leaves Best, since Best would ignore it. */
+export function modeAfterPickingSort(mode: FilterMode): FilterMode {
+  return mode === "best" ? "all" : mode;
+}
+
 /** Picking the current key flips it. A new key starts high-to-low, except course names, which read A–Z. */
 export function sortAfterPicking(current: Sort, picked: SortKey): Sort {
   return current.key === picked

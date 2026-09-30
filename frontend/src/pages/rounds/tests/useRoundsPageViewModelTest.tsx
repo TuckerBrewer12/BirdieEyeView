@@ -49,6 +49,7 @@ describe("useRoundsPageViewModel", () => {
     expect(result.current.filteredRounds.map((r) => r.score)).toEqual([69, 72, 78, 85]);
     expect(result.current.sortLocked).toBe(true);
     expect(result.current.effectiveSortKey).toBe("total_score");
+    expect(result.current.sortAsc).toBe(true);
   });
 
   it("L20 keeps the 20 most recent rounds", async () => {

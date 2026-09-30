@@ -3,6 +3,7 @@ import {
   courseChips,
   effectiveSort,
   filterRounds,
+  modeAfterPickingSort,
   sortAfterPicking,
   type ListedRound,
   type Sort,
@@ -74,6 +75,17 @@ describe("sortAfterPicking", () => {
 
   it("starts course names A–Z", () => {
     expect(sortAfterPicking(byDate, "course_name")).toEqual({ key: "course_name", ascending: true });
+  });
+});
+
+describe("modeAfterPickingSort", () => {
+  it("leaves Best, which would ignore the pick", () => {
+    expect(modeAfterPickingSort("best")).toBe("all");
+  });
+
+  it("keeps every other chip", () => {
+    expect(modeAfterPickingSort("l20")).toBe("l20");
+    expect(modeAfterPickingSort("Blue Rock")).toBe("Blue Rock");
   });
 });
 
