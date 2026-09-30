@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
+import { FakeHandler } from "@/testing/fakes/FakeHandler";
 import {
   Collapsible,
   CollapsibleClose,
@@ -7,12 +8,12 @@ import {
   CollapsibleTrigger,
 } from "./Collapsible";
 
-function renderMenu(onPick = vi.fn()) {
+function renderMenu(pick = new FakeHandler()) {
   render(
     <Collapsible>
       <CollapsibleTrigger>Menu</CollapsibleTrigger>
       <CollapsibleContent>
-        <CollapsibleClose onClick={onPick}>Pick</CollapsibleClose>
+        <CollapsibleClose onClick={pick.handle}>Pick</CollapsibleClose>
       </CollapsibleContent>
     </Collapsible>,
   );
@@ -30,11 +31,11 @@ describe("Collapsible", () => {
   });
 
   it("runs the close part's own click, then folds", () => {
-    const onPick = vi.fn();
-    const trigger = renderMenu(onPick);
+    const pick = new FakeHandler();
+    const trigger = renderMenu(pick);
     fireEvent.click(trigger);
     fireEvent.click(screen.getByRole("button", { name: "Pick" }));
-    expect(onPick).toHaveBeenCalledOnce();
+    expect(pick.calls).toHaveLength(1);
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 });

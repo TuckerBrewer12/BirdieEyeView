@@ -1,25 +1,9 @@
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { FakeColorScheme } from "@/testing/fakes/FakeColorScheme";
 import { THEME_STORAGE_KEY, useTheme } from "./theme";
 import { ThemeProvider } from "./ThemeProvider";
-
-/** A device dark-mode setting the test can flip, like the OS toggling. */
-function fakeDevice(dark: boolean) {
-  const listeners = new Set<(event: MediaQueryListEvent) => void>();
-  const query = {
-    matches: dark,
-    addEventListener: (_: string, listener: (event: MediaQueryListEvent) => void) => listeners.add(listener),
-    removeEventListener: (_: string, listener: (event: MediaQueryListEvent) => void) => listeners.delete(listener),
-  };
-  vi.stubGlobal("matchMedia", () => query);
-  return {
-    setDark(next: boolean) {
-      query.matches = next;
-      listeners.forEach((listener) => listener({ matches: next } as MediaQueryListEvent));
-    },
-  };
-}
 
 function renderTheme() {
   const wrapper = ({ children }: { children: ReactNode }) => <ThemeProvider>{children}</ThemeProvider>;
@@ -29,14 +13,21 @@ function renderTheme() {
 const isDark = () => document.documentElement.classList.contains("dark");
 
 describe("ThemeProvider", () => {
+  let device: FakeColorScheme;
+
+  function onDevice(dark: boolean) {
+    device = new FakeColorScheme({ dark }).install();
+    return device;
+  }
+
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.classList.remove("dark");
   });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => device?.restore());
 
   it("follows the device until the player chooses", () => {
-    const device = fakeDevice(true);
+    onDevice(true);
     const { result } = renderTheme();
     expect(result.current.preference).toBe("system");
     expect(result.current.resolved).toBe("dark");
@@ -48,7 +39,7 @@ describe("ThemeProvider", () => {
   });
 
   it("saves an explicit choice and stops following the device", () => {
-    const device = fakeDevice(false);
+    onDevice(false);
     const { result } = renderTheme();
 
     act(() => result.current.toggle());
@@ -61,7 +52,7 @@ describe("ThemeProvider", () => {
   });
 
   it("keeps a choice saved under the old signed-in or signed-out keys", () => {
-    fakeDevice(false);
+    onDevice(false);
     localStorage.setItem("settings_theme", "dark");
     const { result } = renderTheme();
     expect(result.current.preference).toBe("dark");
