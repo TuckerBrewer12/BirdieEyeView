@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -18,15 +17,14 @@ import {
 import { cn } from "@/brand/cn";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { CourseCharts, CourseScoreTrend } from "./CourseCharts";
-import { chartThemeFrom } from "./courseChartTheme";
 import { NineTable } from "./NineTable";
+import { TeeSwatch } from "./TeeSwatch";
 import { useCourseDetailPageViewModel } from "./useCourseDetailPageViewModel";
 
 export function CourseDetailPage({ userId }: { userId: string }) {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const viewModel = useCourseDetailPageViewModel(userId, courseId);
-  const chartTheme = useMemo(() => chartThemeFrom(), []);
 
   if (viewModel.loading) {
     return <LoadingState>Loading course...</LoadingState>;
@@ -99,7 +97,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
                     chip.selected && "ring-2 ring-primary/30",
                   )}
                 >
-                  <span className={cn("size-3 shrink-0 rounded-full", chip.swatchClass, chip.swatchTextClass)} />
+                  <TeeSwatch color={chip.color} className="size-3 shrink-0 rounded-full" />
                   <span className="font-semibold capitalize text-foreground">{chip.color}</span>
                   {chip.rating && <span>{chip.rating}</span>}
                   {chip.slope && <span>{chip.slope}</span>}
@@ -140,7 +138,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
 
             <div>
               <SectionLabel>Score Trend</SectionLabel>
-              <CourseScoreTrend data={viewModel.scoreTrend} theme={chartTheme} />
+              <CourseScoreTrend data={viewModel.scoreTrend} />
             </div>
 
             <div>
@@ -169,7 +167,6 @@ export function CourseDetailPage({ userId }: { userId: string }) {
                 chartTabs={viewModel.chartTabs}
                 chartTab={viewModel.chartTab}
                 onSelectChartTab={viewModel.selectChartTab}
-                theme={chartTheme}
               />
             </div>
           </div>
