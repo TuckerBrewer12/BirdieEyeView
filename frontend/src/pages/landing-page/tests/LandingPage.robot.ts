@@ -1,6 +1,7 @@
 import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
+import { expectTheme } from "../../../testing/theme";
 
 /** Screen robot for the logged-out landing page at `/`. */
 export class LandingRobot {
@@ -41,11 +42,8 @@ export class LandingRobot {
     return this;
   }
 
-  /** Every token flips on `dark`, so the class on <html> is the theme the page is drawn in. */
   async seesTheme(theme: "light" | "dark"): Promise<this> {
-    const html = this.page.locator("html");
-    if (theme === "dark") await expect(html).toHaveClass(/(^|\s)dark(\s|$)/);
-    else await expect(html).not.toHaveClass(/(^|\s)dark(\s|$)/);
+    await expectTheme(this.page, theme);
     return this;
   }
 

@@ -18,7 +18,7 @@ import { ScanPage } from "./pages/ScanPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { CareerPage } from "./pages/CareerPage";
 import { TheLabPage } from "./pages/TheLabPage";
-import { SettingsPage } from "./pages/SettingsPage";
+import { SettingsPage } from "./pages/settings";
 import { FriendsInboxPage } from "./pages/FriendsInboxPage";
 import { SocialPage } from "./pages/SocialPage";
 import { BrandHarness } from "./brand/BrandHarness";
