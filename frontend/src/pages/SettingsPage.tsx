@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useBeforeUnload, useLocation } from "react-router-dom";
+import { ToggleGroup, ToggleGroupItem } from "@/brand";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { api } from "@/lib/api";
 import { formatHandicapInputValue, parseHandicapInput } from "@/lib/handicap";
 import { useTheme } from "@/context/theme";
 import { getStoredColorBlindMode, setStoredColorBlindMode } from "@/lib/accessibility";
-import type { ThemePreference } from "@/domain/theme";
+import { isThemePreference, type ThemePreference } from "@/domain/theme";
 import type { ColorBlindMode } from "@/lib/accessibility";
 import type { CourseSummary } from "@/types/golf";
 
@@ -341,24 +342,28 @@ export function SettingsPage({ userId }: { userId: string }) {
 
         <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
           <h2 className="text-sm font-semibold text-gray-700">Preferences</h2>
-          <label className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5">
-            <span className="text-sm text-gray-700">Theme</span>
-            <div className="inline-flex items-center rounded-lg border border-gray-300 overflow-hidden">
+          <div className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5">
+            <span id="theme-label" className="text-sm text-gray-700">Theme</span>
+            <ToggleGroup
+              aria-labelledby="theme-label"
+              variant="outline"
+              size="sm"
+              spacing={0}
+              value={[theme]}
+              onValueChange={(values) => {
+                // Pressing the chosen option again would clear it; a theme is always chosen.
+                const next = values[0];
+                if (isThemePreference(next)) setThemePreference(next);
+              }}
+            >
               {THEME_OPTIONS.map(({ value, label, Icon }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setThemePreference(value)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs ${
-                    theme === value ? "bg-[#eef7f0] text-primary font-semibold" : "bg-white text-gray-600"
-                  }`}
-                >
-                  <Icon size={14} />
+                <ToggleGroupItem key={value} value={value}>
+                  <Icon data-icon="inline-start" />
                   {label}
-                </button>
+                </ToggleGroupItem>
               ))}
-            </div>
-          </label>
+            </ToggleGroup>
+          </div>
           <label className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5">
             <span className="text-sm text-gray-700">Get updates</span>
             <input
