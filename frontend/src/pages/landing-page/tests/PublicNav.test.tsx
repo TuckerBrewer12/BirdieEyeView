@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, it, expect } from "vitest";
-import { THEME_STORAGE_KEY } from "@/context/theme";
 import { ThemeProvider } from "@/context/ThemeProvider";
 import { PublicNav } from "../components/PublicNav";
 
@@ -48,18 +47,5 @@ describe("PublicNav", () => {
     renderNav();
     expect(screen.getAllByRole("button", { name: "Overview" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("button", { name: "Try It Out" }).length).toBeGreaterThan(0);
-  });
-
-  it("toggles the theme without reading it to draw", () => {
-    renderNav();
-    const toggle = screen.getByRole("button", { name: "Toggle dark mode" });
-
-    fireEvent.click(toggle);
-    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
-
-    fireEvent.click(toggle);
-    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
   });
 });

@@ -12,6 +12,15 @@ test("the hero call to action goes to register", async ({ landing }) => {
   await landing.goesTo("/register");
 });
 
+test("the nav theme toggle switches the visible theme", async ({ landing }) => {
+  await landing.open();
+  await landing.seesTheme("light");
+  await landing.tapTheme();
+  await landing.seesTheme("dark");
+  await landing.tapTheme();
+  await landing.seesTheme("light");
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 

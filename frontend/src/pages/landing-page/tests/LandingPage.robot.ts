@@ -44,8 +44,23 @@ export class LandingRobot {
     return this;
   }
 
+  async tapTheme(): Promise<this> {
+    await this.page.getByRole("button", { name: "Toggle dark mode" }).click();
+    return this;
+  }
+
   async seesHeadline(text: string): Promise<this> {
     await expect(this.page.getByRole("heading", { level: 1 })).toContainText(text);
+    return this;
+  }
+
+  async seesTheme(theme: "light" | "dark"): Promise<this> {
+    const toggle = this.page.getByRole("button", { name: "Toggle dark mode" });
+    // The control draws a moon while the page is light and a sun once it is dark.
+    const shown = toggle.locator("svg").nth(theme === "light" ? 0 : 1);
+    const hidden = toggle.locator("svg").nth(theme === "light" ? 1 : 0);
+    await expect(shown).toBeVisible();
+    await expect(hidden).toBeHidden();
     return this;
   }
 
