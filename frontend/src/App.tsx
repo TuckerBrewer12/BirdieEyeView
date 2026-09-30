@@ -10,7 +10,6 @@ import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { LandingPage } from "./pages/landing-page";
-import { applyTheme, getStoredPublicTheme, getStoredTheme } from "./lib/theme";
 
 import { DashboardPage } from "./pages/dashboard";
 import { RoundsPage, RoundDetailPage } from "./pages/rounds";
@@ -60,24 +59,6 @@ function RootRoutes() {
 function AppRoutes() {
   const { userId, loading } = useAuth();
   const location = useLocation();
-
-  useEffect(() => {
-    const isPublicRoute =
-      location.pathname === "/" ||
-      location.pathname === "/login" ||
-      location.pathname === "/register" ||
-      location.pathname === "/forgot-password" ||
-      location.pathname === "/reset-password" ||
-      location.pathname === "/verify-email" ||
-      location.pathname === "/verify-pending";
-    if (!userId && isPublicRoute) {
-      applyTheme(getStoredPublicTheme());
-      return;
-    }
-    if (userId) {
-      applyTheme(getStoredTheme());
-    }
-  }, [userId, location.pathname]);
 
   if (loading) {
     return (

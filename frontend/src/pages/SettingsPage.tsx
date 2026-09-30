@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useBeforeUnload, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { api } from "@/lib/api";
 import { formatHandicapInputValue, parseHandicapInput } from "@/lib/handicap";
-import { applyTheme, getStoredTheme, setStoredTheme } from "@/lib/theme";
+import { useTheme } from "@/context/theme";
 import { getStoredColorBlindMode, setStoredColorBlindMode } from "@/lib/accessibility";
-import type { AppTheme } from "@/lib/theme";
+import type { ThemePreference } from "@/domain/theme";
 import type { ColorBlindMode } from "@/lib/accessibility";
 import type { CourseSummary } from "@/types/golf";
 
@@ -19,6 +19,13 @@ const COLORBLIND_MODES: Array<{ key: ColorBlindMode; label: string }> = [
   { key: "tritanopia", label: "Tritanopia" },
 ];
 
+/** Applied and saved as soon as it is picked, like the device's own setting. */
+const THEME_OPTIONS: { value: ThemePreference; label: string; Icon: typeof Sun }[] = [
+  { value: "light", label: "Light", Icon: Sun },
+  { value: "dark", label: "Dark", Icon: Moon },
+  { value: "system", label: "System", Icon: Monitor },
+];
+
 export function SettingsPage({ userId }: { userId: string }) {
   const location = useLocation();
   const [homeCourseQuery, setHomeCourseQuery] = useState<string>("");
@@ -28,7 +35,7 @@ export function SettingsPage({ userId }: { userId: string }) {
   const [handicapInput, setHandicapInput] = useState<string>("");
   const [friendCode, setFriendCode] = useState<string>("");
   const [getUpdates, setGetUpdates] = useState<boolean>(true);
-  const [theme, setTheme] = useState<AppTheme>(() => getStoredTheme());
+  const { preference: theme, setPreference: setThemePreference } = useTheme();
   const [colorBlindMode, setColorBlindMode] = useState<ColorBlindMode>(() => getStoredColorBlindMode());
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string>("");
@@ -42,7 +49,6 @@ export function SettingsPage({ userId }: { userId: string }) {
     homeCourseQuery: string;
     handicapInput: string;
     getUpdates: boolean;
-    theme: AppTheme;
     colorBlindMode: ColorBlindMode;
   } | null>(null);
 
@@ -80,21 +86,18 @@ export function SettingsPage({ userId }: { userId: string }) {
     const updatesPref = savedUpdates !== null ? savedUpdates === "true" : true;
     const initialHomeCourseId = settingsData.user.home_course_id ?? "";
     const initialHandicap = formatHandicapInputValue(settingsData.user.handicap);
-    const initialTheme = getStoredTheme();
     const initialColorBlind = getStoredColorBlindMode();
     setGetUpdates(updatesPref);
     setHomeCourseId(initialHomeCourseId);
     setHandicapInput(initialHandicap);
     setFriendCode(settingsData.user.friend_code ?? "");
     setHomeCourseQuery(settingsData.homeCourseQueryDefault);
-    setTheme(initialTheme);
     setColorBlindMode(initialColorBlind);
     baselineRef.current = {
       homeCourseId: initialHomeCourseId,
       homeCourseQuery: settingsData.homeCourseQueryDefault,
       handicapInput: initialHandicap,
       getUpdates: updatesPref,
-      theme: initialTheme,
       colorBlindMode: initialColorBlind,
     };
   }, [settingsData]);
@@ -107,7 +110,6 @@ export function SettingsPage({ userId }: { userId: string }) {
       baseline.homeCourseQuery !== homeCourseQuery ||
       baseline.handicapInput !== handicapInput ||
       baseline.getUpdates !== getUpdates ||
-      baseline.theme !== theme ||
       baseline.colorBlindMode !== colorBlindMode
     );
   })();
@@ -193,10 +195,6 @@ export function SettingsPage({ userId }: { userId: string }) {
     setShowResults(false);
   };
 
-  const setThemePreference = (nextTheme: AppTheme) => {
-    setTheme(nextTheme);
-    applyTheme(nextTheme); // live preview without persisting until Save
-  };
 
   const setColorBlindPreference = (mode: ColorBlindMode) => {
     setColorBlindMode(mode);
@@ -237,9 +235,7 @@ export function SettingsPage({ userId }: { userId: string }) {
         home_course_id: selectedHomeCourseId || null,
         handicap,
       });
-      setStoredTheme(theme);
       setStoredColorBlindMode(colorBlindMode);
-      applyTheme(theme);
       const refreshedUser = await api.getUser(userId);
 
       setHomeCourseId(refreshedUser.home_course_id ?? "");
@@ -259,7 +255,6 @@ export function SettingsPage({ userId }: { userId: string }) {
           : "",
         handicapInput: formatHandicapInputValue(refreshedUser.handicap),
         getUpdates,
-        theme,
         colorBlindMode,
       };
       setMessage("Settings saved.");
@@ -284,9 +279,7 @@ export function SettingsPage({ userId }: { userId: string }) {
     setHomeCourseQuery(baseline.homeCourseQuery);
     setHandicapInput(baseline.handicapInput);
     setGetUpdates(baseline.getUpdates);
-    setTheme(baseline.theme);
     setColorBlindMode(baseline.colorBlindMode);
-    applyTheme(baseline.theme);
     setSearchResults([]);
     setShowResults(false);
   };
@@ -351,26 +344,19 @@ export function SettingsPage({ userId }: { userId: string }) {
           <label className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5">
             <span className="text-sm text-gray-700">Theme</span>
             <div className="inline-flex items-center rounded-lg border border-gray-300 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setThemePreference("light")}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs ${
-                  theme === "light" ? "bg-[#eef7f0] text-primary font-semibold" : "bg-white text-gray-600"
-                }`}
-              >
-                <Sun size={14} />
-                Light
-              </button>
-              <button
-                type="button"
-                onClick={() => setThemePreference("dark")}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs ${
-                  theme === "dark" ? "bg-[#eef7f0] text-primary font-semibold" : "bg-white text-gray-600"
-                }`}
-              >
-                <Moon size={14} />
-                Dark
-              </button>
+              {THEME_OPTIONS.map(({ value, label, Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setThemePreference(value)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs ${
+                    theme === value ? "bg-[#eef7f0] text-primary font-semibold" : "bg-white text-gray-600"
+                  }`}
+                >
+                  <Icon size={14} />
+                  {label}
+                </button>
+              ))}
             </div>
           </label>
           <label className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5">

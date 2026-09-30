@@ -8,7 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/brand";
-import { usePublicTheme } from "@/lib/usePublicTheme";
+import { useTheme } from "@/context/theme";
 import { LANDING_SECTIONS, scrollToLandingSection, scrollToTop } from "../sections";
 
 const NAV_LINKS = [
@@ -21,8 +21,7 @@ const NAV_LINKS = [
 ];
 
 export function PublicNav() {
-  const theme = usePublicTheme();
-  const themeToggleLabel = theme.isDark ? "Light Mode" : "Dark Mode";
+  const { toggle: toggleTheme } = useTheme();
 
   return (
     <Collapsible
@@ -53,10 +52,11 @@ export function PublicNav() {
             variant="outline"
             size="icon"
             shape="pill"
-            onClick={theme.toggle}
-            aria-label={`Switch to ${themeToggleLabel}`}
+            onClick={toggleTheme}
+            aria-label="Toggle dark mode"
           >
-            {theme.isDark ? <Sun /> : <Moon />}
+            <Moon className="dark:hidden" />
+            <Sun className="hidden dark:block" />
           </Button>
         </div>
 
@@ -80,8 +80,9 @@ export function PublicNav() {
           </CollapsibleClose>
         ))}
         <div className="flex flex-col gap-2 border-t border-border pt-2">
-          <Button variant="outline" shape="pill" onClick={theme.toggle}>
-            {themeToggleLabel}
+          <Button variant="outline" shape="pill" onClick={toggleTheme}>
+            <span className="dark:hidden">Dark Mode</span>
+            <span className="hidden dark:inline">Light Mode</span>
           </Button>
           <Button variant="outline" shape="pill" render={<Link to="/login" />}>
             Sign In
