@@ -39,6 +39,19 @@ test("course link panel open", async ({ roundDetail }) => {
   await roundDetail.capture("round-detail-link-open.png");
 });
 
+test("course link failed", async ({ roundDetail }) => {
+  await roundDetail.open(scannedRound, {
+    courses: searchableCourses,
+    fullCourses: [pebbleBeachCourse],
+    linkError: "That course is not available.",
+  });
+  await roundDetail.tapLinkCourse();
+  await roundDetail.searchCourses("Pebble");
+  await roundDetail.pickCourse("Pebble Beach");
+  await roundDetail.seesLinkError("That course is not available.");
+  await roundDetail.capture("round-detail-link-error.png");
+});
+
 test("delete confirmation", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapDelete();

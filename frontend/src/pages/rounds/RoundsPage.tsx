@@ -1,7 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import {
-  Alert,
-  AlertDescription,
   Button,
   Collapse,
   Collection,
@@ -10,7 +8,6 @@ import {
   RoundPreview,
   SearchField,
   SortControl,
-  CourseLinkSearch,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
@@ -18,6 +15,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { formatCourseName } from "@/lib/courseName";
 import { pluralize } from "@/lib/pluralize";
 import type { Round } from "@/domain";
+import { LinkCoursePanel } from "./components/LinkCoursePanel";
 import { useRoundsPageViewModel } from "./useRoundsPageViewModel";
 
 function linkTitleFor(round: Round): string {
@@ -77,12 +75,6 @@ export function RoundsPage({ userId }: RoundsPageProps) {
           />
         </div>
 
-        {viewModel.linkError && (
-          <Alert variant="destructive">
-            <AlertDescription>{viewModel.linkError}</AlertDescription>
-          </Alert>
-        )}
-
         <Collection
           items={viewModel.visibleRounds}
           keyFor={(r) => r.id}
@@ -99,15 +91,12 @@ export function RoundsPage({ userId }: RoundsPageProps) {
               />
 
               <Collapse open={viewModel.isLinkOpen(r.id)}>
-                <CourseLinkSearch
+                <LinkCoursePanel
+                  userId={userId}
+                  roundId={r.id}
                   title={linkTitleFor(r)}
-                  query={viewModel.linkQuery}
-                  results={viewModel.linkResults}
-                  searching={viewModel.linkSearching}
-                  linking={viewModel.linking}
-                  onQueryChange={viewModel.handleLinkQuery}
-                  onSelectCourse={(c) => viewModel.handleSelectCourse(r.id, c)}
                   onClose={viewModel.closeLink}
+                  onLinked={viewModel.closeLink}
                 />
               </Collapse>
             </>

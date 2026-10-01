@@ -67,6 +67,15 @@ test("linking a course updates the round and closes the panel", async ({ rounds 
   await rounds.doesNotSeeLinkPanel();
 });
 
+test("a failed link says why and keeps the panel open", async ({ rounds }) => {
+  await rounds.open(populatedRounds, { courses: searchableCourses, linkError: "That course is not available." });
+  await rounds.openLinkFor("Scanned Scorecard");
+  await rounds.searchCourses("Pebble");
+  await rounds.pickCourse("Pebble Beach");
+  await rounds.seesLinkError("That course is not available.");
+  await rounds.seesLinkPanel("Scanned Scorecard");
+});
+
 test("load more reveals the remaining rounds", async ({ rounds }) => {
   await rounds.open(nRounds(21));
   await rounds.doesNotSeeCourse("Course 1");
