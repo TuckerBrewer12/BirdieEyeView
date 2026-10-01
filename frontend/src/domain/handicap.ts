@@ -38,36 +38,3 @@ export function formatHandicapIndex(hi: number | null | undefined): string {
   if (hi < 0) return `+${Math.abs(hi).toFixed(1)}`;
   return hi.toFixed(1);
 }
-
-/**
- * WHS “best of / adjustment” table, indexed by (ratedRoundCount − 3),
- * capped at 20 rounds. Values are [differentials used, adjustment].
- */
-export const WHS_ADJUSTMENT_BY_RATED_ROUNDS: ReadonlyArray<readonly [number, number]> = [
-  [1, -2.0],
-  [1, -1.0],
-  [1, 0.0],
-  [2, -1.0],
-  [2, 0.0],
-  [2, 0.0],
-  [3, 0.0],
-  [3, 0.0],
-  [3, 0.0],
-  [4, 0.0],
-  [4, 0.0],
-  [4, 0.0],
-  [5, 0.0],
-  [5, 0.0],
-  [6, 0.0],
-  [6, 0.0],
-  [7, 0.0],
-  [8, 0.0],
-];
-
-export function whsWindow(ratedRoundCount: number): { countUsed: number; adjustment: number } {
-  const n = Math.min(ratedRoundCount, 20);
-  if (n < 3) return { countUsed: 0, adjustment: 0 };
-  const [countUsed, adjustment] =
-    WHS_ADJUSTMENT_BY_RATED_ROUNDS[Math.min(n - 3, WHS_ADJUSTMENT_BY_RATED_ROUNDS.length - 1)];
-  return { countUsed, adjustment };
-}
