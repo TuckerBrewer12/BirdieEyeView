@@ -292,6 +292,131 @@ def test_unknown_course_round_warns_about_invalid_scores():
     assert any("strokes missing" in warning for warning in warnings)
 
 
+def build_score_breakdown_rows(*, scores=None, putts=None, shots=None, pars=None):
+    parsed = ParsedScorecardRows(
+        score_row=scores if scores is not None else [4] * 18,
+        putts_row=putts if putts is not None else [2] * 18,
+        shots_to_green_row=shots if shots is not None else [2] * 18,
+        par_row=pars if pars is not None else [4] * 18,
+    )
+    return scan._build_round_from_parsed_rows(
+        parsed,
+        course_model=None,
+        to_par_scoring=False,
+    )
+
+
+def test_score_breakdown_recovers_one_missing_auxiliary_value_in_each_direction():
+    putts = [2] * 18
+    shots = [2] * 18
+    putts[0] = None
+    shots[1] = None
+
+    payload, warnings = build_score_breakdown_rows(putts=putts, shots=shots)
+
+    assert payload["hole_scores"][0]["putts"] == 2
+    assert payload["hole_scores"][1]["shots_to_green"] == 2
+    assert not any(warning.startswith(("Hole 1 ", "Hole 2 ")) for warning in warnings)
+
+
+def test_score_breakdown_rejects_and_recovers_auxiliary_values_above_strokes():
+    putts = [2] * 18
+    shots = [2] * 18
+    putts[0] = 9
+    shots[0] = 1
+    putts[1] = 1
+    shots[1] = 9
+
+    payload, warnings = build_score_breakdown_rows(putts=putts, shots=shots)
+
+    assert payload["hole_scores"][0]["putts"] == 3
+    assert payload["hole_scores"][1]["shots_to_green"] == 3
+    assert not any(warning.startswith(("Hole 1 ", "Hole 2 ")) for warning in warnings)
+
+
+def test_score_breakdown_allows_recovered_zero_putts_but_not_zero_shots():
+    putts = [2] * 18
+    shots = [2] * 18
+    putts[0] = None
+    shots[0] = 4
+    putts[1] = 4
+    shots[1] = None
+
+    payload, _ = build_score_breakdown_rows(putts=putts, shots=shots)
+
+    assert payload["hole_scores"][0]["putts"] == 0
+    assert payload["hole_scores"][1]["shots_to_green"] is None
+
+
+@pytest.mark.parametrize(("evidence_holes", "expected_putts"), [(8, None), (9, 2)])
+def test_score_breakdown_recovery_requires_nine_consistent_holes(
+    evidence_holes,
+    expected_putts,
+):
+    scores = [None] * 18
+    putts = [None] * 18
+    shots = [None] * 18
+    for index in range(evidence_holes):
+        scores[index] = 4
+        putts[index] = 2
+        shots[index] = 2
+    scores[17] = 4
+    shots[17] = 2
+
+    payload, _ = build_score_breakdown_rows(scores=scores, putts=putts, shots=shots)
+
+    assert payload["hole_scores"][17]["putts"] == expected_putts
+
+
+def test_score_breakdown_conflict_disables_recovery_and_never_rewrites_strokes():
+    putts = [2] * 18
+    shots = [2] * 18
+    shots[0] = 1
+    putts[1] = None
+
+    payload, warnings = build_score_breakdown_rows(putts=putts, shots=shots)
+
+    assert payload["hole_scores"][0] == {
+        "hole_number": 1,
+        "strokes": 4,
+        "putts": 2,
+        "shots_to_green": 1,
+        "fairway_hit": None,
+        "green_in_regulation": True,
+    }
+    assert payload["hole_scores"][1]["putts"] is None
+    assert "Hole 1 score breakdown conflicts with total strokes" in warnings
+
+
+def test_score_breakdown_derives_gir_from_recovered_shots_value():
+    putts = [2] * 18
+    shots = [2] * 18
+    putts[0] = 1
+    shots[0] = 9
+    pars = [5] + [4] * 17
+
+    payload, _ = build_score_breakdown_rows(putts=putts, shots=shots, pars=pars)
+
+    assert payload["hole_scores"][0]["shots_to_green"] == 3
+    assert payload["hole_scores"][0]["green_in_regulation"] is True
+
+
+def test_half_moon_bay_t_score_breakdown_regression():
+    scores = [5, 5, 3, 6, 5, 5, 4, 6, 4, 5, 5, 5, 4, 6, 4, 4, 3, 6]
+    putts = [2, 1, 2, 2, 2, 3, 3, 2, None, 2, 2, 2, 2, 1, 1, 2, 2, 2]
+    shots = [3, 4, 1, 4, 3, 2, 1, 4, 2, 3, 3, 3, 2, 9, 3, 2, 1, 4]
+
+    payload, warnings = build_score_breakdown_rows(
+        scores=scores,
+        putts=putts,
+        shots=shots,
+    )
+
+    assert payload["hole_scores"][8]["putts"] == 2
+    assert payload["hole_scores"][13]["shots_to_green"] == 5
+    assert not any(warning.startswith(("Hole 9 ", "Hole 14 ")) for warning in warnings)
+
+
 @pytest.mark.asyncio
 async def test_ocr_pipeline_merges_extracted_markdown(monkeypatch, tmp_path):
     ocr_service = SimpleNamespace(ocr_file=AsyncMock(return_value={"pages": [{"markdown": "raw markdown"}]}))
