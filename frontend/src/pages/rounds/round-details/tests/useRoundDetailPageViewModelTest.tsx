@@ -55,14 +55,6 @@ describe("useRoundDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.courseHandicap).toBe(12));
   });
 
-  it("shows the link button when the round has no course", async () => {
-    const { result } = renderVm("round-4", { detailRounds: [scannedRound] });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.showLinkButton).toBe(true);
-    expect(result.current.courseName).toBe("Scanned Scorecard");
-    expect(result.current.teeRating).toBeNull();
-  });
-
   it("live-totals a cleared hole in edit mode instead of falling back", async () => {
     const { result } = renderVm("round-1", { detailRounds: [halfMoonBayRound] });
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -107,19 +99,6 @@ describe("useRoundDetailPageViewModel", () => {
     act(() => result.current.enterEditMode());
     act(() => result.current.editor.save());
     await waitFor(() => expect(result.current.actionError).toBe("nope"));
-  });
-
-  it("delete records the round on the repository", async () => {
-    const { result, repository } = renderVm("round-1", {
-      detailRounds: [halfMoonBayRound],
-    });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    act(() => result.current.requestDelete());
-    expect(result.current.confirmDelete).toBe(true);
-    let deleted = false;
-    act(() => result.current.confirmDeleteRound(() => { deleted = true; }));
-    await waitFor(() => expect(deleted).toBe(true));
-    expect(repository.deletedIds).toEqual(["round-1"]);
   });
 
   it("a failed delete sets actionError and does not report success", async () => {

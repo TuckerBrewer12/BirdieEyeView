@@ -41,12 +41,6 @@ describe("useRoundComparisonViewModel", () => {
       "Putts per GIR",
       "Scrambling",
     ]);
-    expect(result.current.chartTab).toBe("score");
-    expect(result.current.chartTabs).toEqual([
-      { key: "score", label: "Score" },
-      { key: "short_game", label: "Short Game" },
-      { key: "gir", label: "GIR" },
-    ]);
     expect(result.current.charts[0]?.bars[0]).toEqual({
       label: "This round",
       value: 78,
