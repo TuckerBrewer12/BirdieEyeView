@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateHistory, formatRoundDateTick } from "@/lib/roundDate";
-import { teeSwatchClass, teeSwatchTextClass } from "@/lib/teeColor";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { queryKeys } from "@/data/queryKeys";
 import {
@@ -42,8 +41,6 @@ export interface TeeChip {
   slope: string | null;
   yards: string | null;
   courseHandicapLabel: string | null;
-  swatchClass: string;
-  swatchTextClass: string;
 }
 
 export interface ScorecardCell {
@@ -60,8 +57,6 @@ export interface ScorecardNine {
   showYards: boolean;
   showPersonalAvg: boolean;
   teeLabel: string | null;
-  teeSwatchClass: string;
-  teeSwatchTextClass: string;
   holes: ScorecardCell[];
   ninePar: string;
   nineYards: string;
@@ -212,8 +207,6 @@ function buildNine(
     showYards: selectedTee != null,
     showPersonalAvg: personalParByHole != null,
     teeLabel: selectedTee?.color ?? null,
-    teeSwatchClass: teeSwatchClass(selectedTee?.color ?? null),
-    teeSwatchTextClass: teeSwatchTextClass(selectedTee?.color ?? null),
     holes: holes.map((n) => ({
       hole: n,
       par: dash(getHole(course, n)?.par),
@@ -237,8 +230,6 @@ function emptyNine(label: string, showTotal: boolean): ScorecardNine {
     showYards: false,
     showPersonalAvg: false,
     teeLabel: null,
-    teeSwatchClass: "bg-muted",
-    teeSwatchTextClass: "text-foreground",
     holes: [],
     ninePar: "—",
     nineYards: "—",
@@ -395,8 +386,6 @@ export function useCourseDetailPageViewModel(
         slope: tee.slope_rating != null ? `/ Slope ${tee.slope_rating}` : null,
         yards: tee.total_yardage != null ? `/ ${tee.total_yardage} yds` : null,
         courseHandicapLabel: ch != null ? `CH ${ch}` : null,
-        swatchClass: teeSwatchClass(tee.color),
-        swatchTextClass: teeSwatchTextClass(tee.color),
       }];
     });
 

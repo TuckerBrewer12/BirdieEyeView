@@ -35,8 +35,6 @@ describe("useCourseDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.teeChips.map((chip) => chip.color)).toEqual(["Blue", "White"]);
     expect(result.current.teeChips.find((chip) => chip.selected)?.color).toBe("Blue");
-    expect(result.current.teeChips.find((chip) => chip.color === "Blue")?.swatchClass).toBe("bg-score-double");
-    expect(result.current.teeChips.find((chip) => chip.color === "White")?.swatchClass).toBe("bg-card ring-1 ring-border");
   });
 
   it("computes course handicap from HI, slope, rating, and par", async () => {

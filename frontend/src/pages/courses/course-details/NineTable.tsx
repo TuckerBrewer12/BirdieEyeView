@@ -1,5 +1,5 @@
-import { cn } from "@/brand/cn";
 import type { ScorecardNine } from "./useCourseDetailPageViewModel";
+import { TeeSwatch } from "./TeeSwatch";
 
 export function NineTable({ nine }: { nine: ScorecardNine }) {
   return (
@@ -18,9 +18,9 @@ export function NineTable({ nine }: { nine: ScorecardNine }) {
         {nine.showYards && (
           <tr className="border-b border-border text-xs text-muted-foreground">
             <td className="px-3 py-1.5 font-medium">
-              <span className={cn("inline-block rounded px-2 py-0.5 text-xs font-semibold", nine.teeSwatchClass, nine.teeSwatchTextClass)}>
+              <TeeSwatch color={nine.teeLabel} className="rounded px-2 py-0.5 text-body-sm font-semibold">
                 {nine.teeLabel ?? "?"}
-              </span>
+              </TeeSwatch>
             </td>
             {nine.holes.map((cell) => (
               <td key={cell.hole} className="px-2 py-1.5 text-center">{cell.yards}</td>
