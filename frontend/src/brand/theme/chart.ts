@@ -20,14 +20,16 @@ export const chartTickStyle = {
   fontSize: typography.label,
 } as const;
 
-/** Recharts only accepts numbers for layout. Matches --brand-radius-md (6px)
- *  and the 4px spacing scale for the plot margins. */
+/** Recharts only accepts numbers for layout, so these mirror tokens.css in pixels:
+ *  `barRadius` is --brand-radius-md, `barMaxWidth` --brand-size-bar-max, `ring` and `gauge`
+ *  --brand-size-ring-* and --brand-size-gauge-*, and `plot.height` --brand-size-chart.
+ *  tokens.test.ts fails if one drifts. The plot margins follow the 4px spacing scale. */
 export const chartLayout = {
   barRadius: [6, 6, 0, 0] as [number, number, number, number],
   margin: { top: 4, right: 8, left: -20, bottom: 0 },
   /** Widest a Recharts bar grows when there are few of them. */
   barMaxWidth: 28,
-  /** A full ring sized to fill the `--brand-size-chart` height. */
+  /** A full ring sized to fill the chart height. */
   ring: { inner: 50, outer: 68 },
   /** A half gauge drawn up from the bottom edge of its box. */
   gauge: { inner: 52, outer: 72 },

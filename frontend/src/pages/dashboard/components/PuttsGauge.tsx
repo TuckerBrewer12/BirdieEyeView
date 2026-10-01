@@ -1,6 +1,6 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { chartLayout, colors } from "@/brand";
-import { puttsBand, type PuttsBand } from "../present";
+import { puttsBand, puttsLabel, type PuttsBand } from "../present";
 
 const BAND_FILL: Record<PuttsBand, string> = {
   good: colors.score.birdie.base,
@@ -42,7 +42,7 @@ export function PuttsGauge({ putts }: PuttsGaugeProps) {
           </ResponsiveContainer>
           <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pointer-events-none">
             <div className="text-2xl font-bold text-card-foreground">
-              {putts != null && putts > 0 ? putts.toFixed(1) : "—"}
+              {puttsLabel(putts)}
             </div>
             <div className="text-caption text-muted-foreground uppercase tracking-kicker">Putts</div>
           </div>
