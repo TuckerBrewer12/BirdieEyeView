@@ -18,6 +18,7 @@ import { cn } from "@/brand/cn";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { CourseCharts, CourseScoreTrend } from "./CourseCharts";
 import { NineTable } from "./NineTable";
+import { TeeSwatch } from "./TeeSwatch";
 import { useCourseDetailPageViewModel } from "./useCourseDetailPageViewModel";
 
 export function CourseDetailPage({ userId }: { userId: string }) {
@@ -96,7 +97,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
                     chip.selected && "ring-2 ring-primary/30",
                   )}
                 >
-                  <span className={cn("size-3 shrink-0 rounded-full", chip.swatchClass, chip.swatchTextClass)} />
+                  <TeeSwatch color={chip.color} className="size-3 shrink-0 rounded-full" />
                   <span className="font-semibold capitalize text-foreground">{chip.color}</span>
                   {chip.rating && <span>{chip.rating}</span>}
                   {chip.slope && <span>{chip.slope}</span>}
@@ -137,7 +138,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
 
             <div>
               <SectionLabel>Score Trend</SectionLabel>
-              <CourseScoreTrend data={viewModel.scoreTrend} theme={viewModel.chartTheme} />
+              <CourseScoreTrend data={viewModel.scoreTrend} />
             </div>
 
             <div>
@@ -166,7 +167,6 @@ export function CourseDetailPage({ userId }: { userId: string }) {
                 chartTabs={viewModel.chartTabs}
                 chartTab={viewModel.chartTab}
                 onSelectChartTab={viewModel.selectChartTab}
-                theme={viewModel.chartTheme}
               />
             </div>
           </div>

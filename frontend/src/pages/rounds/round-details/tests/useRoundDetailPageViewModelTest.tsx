@@ -2,10 +2,8 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import type { RoundComparison } from "@/types/analytics";
 import { pebbleBeach } from "@/testing/fixtures/courses";
 import {
-  halfMoonBayCourse,
   halfMoonBayRound,
   pebbleBeachCourse,
   scannedRound,
@@ -35,19 +33,6 @@ function renderVm(
   return { ...hook, repository };
 }
 
-function row(label: string, value: number) {
-  return { label, sample_size: 4, round_id: "round-1", primary_value: value, secondary_value: null };
-}
-
-const sampleComparison: RoundComparison = {
-  score: [row("This round", 78)],
-  putts: [row("This round", 32)],
-  gir: [row("This round", 7)],
-  three_putts: [row("This round", 2)],
-  putts_per_gir: [row("This round", 1.8)],
-  scrambling: [row("This round", 3)],
-};
-
 describe("useRoundDetailPageViewModel", () => {
   it("exposes the loaded round's name, score, and to-par", async () => {
     const { result } = renderVm("round-1", {
@@ -70,50 +55,50 @@ describe("useRoundDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.courseHandicap).toBe(12));
   });
 
-  it("enter edit uses the round's tees and does not need a second course fetch", async () => {
-    const { result } = renderVm("round-1", { detailRounds: [halfMoonBayRound] });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    act(() => result.current.enterEditMode());
-    expect(result.current.editMode).toBe(true);
-    expect(result.current.courseEdit).toEqual({ status: "linked", course: halfMoonBayCourse });
-    expect(result.current.availableTees).toEqual(["Blue", "White"]);
-  });
-
   it("live-totals a cleared hole in edit mode instead of falling back", async () => {
     const { result } = renderVm("round-1", { detailRounds: [halfMoonBayRound] });
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.enterEditMode());
-    act(() => result.current.handleScoreChange(1, "strokes", null));
+    act(() => result.current.editor.setScore(1, "strokes", null));
     expect(result.current.played?.score).toBe(73);
     expect(result.current.played?.holes.find((h) => h.hole === 1)?.strokes).toBeNull();
   });
 
-  it("saves edited strokes and leaves edit mode", async () => {
+  it("reads the round against a course picked in edit mode", async () => {
+    const { result } = renderVm("round-1", {
+      detailRounds: [halfMoonBayRound],
+      fullCourses: [pebbleBeachCourse],
+      handicapIndex: 10.4,
+    });
+    await waitFor(() => expect(result.current.courseHandicap).toBe(12));
+    act(() => result.current.enterEditMode());
+    await act(async () => {
+      await result.current.editor.pickCourse(pebbleBeach);
+    });
+    expect(result.current.courseHandicap).toBe(16);
+  });
+
+  it("shows the saved round once a save lands", async () => {
     const { result, repository } = renderVm("round-1", { detailRounds: [halfMoonBayRound] });
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.enterEditMode());
-    act(() => result.current.handleScoreChange(1, "strokes", 3));
-    await act(async () => {
-      await result.current.save();
-    });
-    expect(result.current.editMode).toBe(false);
+    act(() => result.current.editor.setScore(1, "strokes", 3));
+    act(() => result.current.editor.save());
+    await waitFor(() => expect(result.current.editor.editing).toBe(false));
     expect(result.current.played?.score).toBe(76);
     const saved = await repository.getRound("round-1");
     expect(saved.hole_scores.find((s) => s.hole_number === 1)?.strokes).toBe(3);
   });
 
-  it("a failed save sets actionError and stays in edit mode", async () => {
+  it("a failed save shows as the page's action error", async () => {
     const { result } = renderVm("round-1", {
       detailRounds: [halfMoonBayRound],
       updateError: "nope",
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.enterEditMode());
-    await act(async () => {
-      await result.current.save();
-    });
-    expect(result.current.actionError).toBe("nope");
-    expect(result.current.editMode).toBe(true);
+    act(() => result.current.editor.save());
+    await waitFor(() => expect(result.current.actionError).toBe("nope"));
   });
 
   it("a failed delete sets actionError and does not report success", async () => {
@@ -122,28 +107,36 @@ describe("useRoundDetailPageViewModel", () => {
       deleteError: "nope",
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    let ok = true;
-    await act(async () => {
-      ok = await result.current.confirmDeleteRound();
-    });
-    expect(ok).toBe(false);
-    expect(result.current.actionError).toBe("nope");
+    let deleted = false;
+    act(() => result.current.confirmDeleteRound(() => { deleted = true; }));
+    await waitFor(() => expect(result.current.actionError).toBe("nope"));
+    expect(deleted).toBe(false);
     expect(repository.deletedIds).toEqual([]);
   });
 
-  it("a failed link sets actionError and leaves the panel open", async () => {
-    const { result } = renderVm("round-4", {
-      detailRounds: [scannedRound],
-      courses: [pebbleBeach],
-      linkError: "nope",
+  it("entering edit mode clears a failed delete's message", async () => {
+    const { result } = renderVm("round-1", {
+      detailRounds: [halfMoonBayRound],
+      deleteError: "nope",
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.confirmDeleteRound(() => {}));
+    await waitFor(() => expect(result.current.actionError).toBe("nope"));
+
+    act(() => result.current.enterEditMode());
+    expect(result.current.actionError).toBeNull();
+  });
+
+  it("opening the link panel hides the link button until it closes", async () => {
+    const { result } = renderVm("round-4", { detailRounds: [scannedRound] });
+    await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.openLinkCourse());
-    await act(async () => {
-      await result.current.handleSelectCourse(pebbleBeach);
-    });
-    expect(result.current.actionError).toBe("nope");
     expect(result.current.showLinkCourse).toBe(true);
+    expect(result.current.showLinkButton).toBe(false);
+
+    act(() => result.current.closeLinkCourse());
+    expect(result.current.showLinkCourse).toBe(false);
+    expect(result.current.showLinkButton).toBe(true);
   });
 
   it("enter edit closes the view-mode link panel", async () => {
@@ -153,85 +146,7 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.showLinkCourse).toBe(true);
     act(() => result.current.enterEditMode());
     expect(result.current.showLinkCourse).toBe(false);
-    expect(result.current.courseEdit).toEqual({ status: "custom", name: "Scanned Scorecard" });
-  });
-
-  it("startChangingCourse moves a linked round to picking", async () => {
-    const { result } = renderVm("round-1", { detailRounds: [halfMoonBayRound] });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    act(() => result.current.enterEditMode());
-    act(() => result.current.startChangingCourse());
-    expect(result.current.courseEdit).toEqual({ status: "picking" });
-    expect(result.current.editLinkedName).toBeUndefined();
-    expect(result.current.availableTees).toEqual(["Blue", "White"]);
-  });
-
-  it("picking a course links that Course and matches a compatible tee", async () => {
-    const { result } = renderVm("round-1", {
-      detailRounds: [halfMoonBayRound],
-      fullCourses: [pebbleBeachCourse],
-      handicapIndex: 10.4,
-    });
-    await waitFor(() => expect(result.current.courseHandicap).toBe(12));
-    act(() => result.current.enterEditMode());
-    await act(async () => {
-      await result.current.handleSelectEditCourse(pebbleBeach);
-    });
-    expect(result.current.courseEdit.status).toBe("linked");
-    expect(result.current.editLinkedName).toBe("Pebble Beach");
-    expect(result.current.editedTeeBox).toBe("Blue");
-    expect(result.current.courseHandicap).toBe(16);
-  });
-
-  it("saving a newly picked course links it and clears a custom name", async () => {
-    const { result, repository } = renderVm("round-4", {
-      detailRounds: [scannedRound],
-      fullCourses: [pebbleBeachCourse],
-    });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    act(() => result.current.enterEditMode());
-    await act(async () => {
-      await result.current.handleSelectEditCourse(pebbleBeach);
-    });
-    await act(async () => {
-      await result.current.save();
-    });
-    const saved = await repository.getRound("round-4");
-    expect(saved.course?.id).toBe("course-pebble");
-    expect(saved.course_name_played).toBeNull();
-  });
-
-  it("keepUnlinkedName is keep-played-name, and save writes that override", async () => {
-    const { result, repository } = renderVm("round-4", { detailRounds: [scannedRound] });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    act(() => result.current.enterEditMode());
-    act(() => result.current.startChangingCourse());
-    expect(result.current.keepUnlinkedNameLabel).toBe(
-      'Keep "Scanned Scorecard" without linking →',
-    );
-    act(() => result.current.keepUnlinkedName());
-    expect(result.current.courseEdit).toEqual({ status: "custom", name: "Scanned Scorecard" });
-    expect(result.current.keepUnlinkedNameLabel).toBeNull();
-    await act(async () => {
-      await result.current.save();
-    });
-    const saved = await repository.getRound("round-4");
-    expect(saved.course_name_played).toBe("Scanned Scorecard");
-    expect(saved.course).toBeNull();
-  });
-
-  it("closeEditCourseSearch restores the round's original course edit", async () => {
-    const { result } = renderVm("round-1", {
-      detailRounds: [halfMoonBayRound],
-      fullCourses: [pebbleBeachCourse],
-    });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    act(() => result.current.enterEditMode());
-    await act(async () => {
-      await result.current.handleSelectEditCourse(pebbleBeach);
-    });
-    act(() => result.current.closeEditCourseSearch());
-    expect(result.current.courseEdit).toEqual({ status: "linked", course: halfMoonBayCourse });
+    expect(result.current.editor.course).toEqual({ status: "custom", name: "Scanned Scorecard" });
   });
 
   it("a missing round is an error, not a spinner", async () => {
@@ -239,40 +154,6 @@ describe("useRoundDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.round).toBeUndefined();
     expect(result.current.loadError).toBe("Round not found.");
-  });
-
-  it("exposes finished comparison charts and Score as the active tab", async () => {
-    const { result } = renderVm("round-1", {
-      detailRounds: [halfMoonBayRound],
-      comparison: sampleComparison,
-    });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.showComparison).toBe(true);
-    expect(result.current.charts.map((c) => c.title)).toEqual([
-      "Score",
-      "Putts",
-      "GIR",
-      "3-Putts",
-      "Putts per GIR",
-      "Scrambling",
-    ]);
-    expect(result.current.charts[0]?.bars[0]).toEqual({
-      label: "This round",
-      value: 78,
-      sampleSize: 4,
-    });
-    expect(result.current.selectedCharts.map((c) => c.title)).toEqual(["Score"]);
-    expect(result.current.packSelectedCharts).toBe(false);
-
-    act(() => result.current.selectChartTab("short_game"));
-    expect(result.current.chartTab).toBe("short_game");
-    expect(result.current.selectedCharts.map((c) => c.title)).toEqual([
-      "Putts",
-      "3-Putts",
-      "Putts per GIR",
-      "Scrambling",
-    ]);
-    expect(result.current.packSelectedCharts).toBe(true);
   });
 
   it("totals each nine from the round's one list of holes", async () => {

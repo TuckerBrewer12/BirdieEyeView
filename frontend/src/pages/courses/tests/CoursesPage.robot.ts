@@ -1,4 +1,5 @@
-import { test as base, expect, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { test as base, expect } from "../../../testing/playwright";
 import type { CourseSummary } from "../../../types/golf";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
@@ -13,8 +14,7 @@ export class CoursesRobot {
 
   async dark(): Promise<this> {
     await this.page.addInitScript(() => {
-      localStorage.setItem("settings_theme", "dark");
-      localStorage.setItem("public_theme", "dark");
+      localStorage.setItem("theme", "dark");
     });
     return this;
   }

@@ -3,8 +3,8 @@
 On every non-draft PR the Brand Kit, MVVM, and UI Test Checker bots leave
 inline comments and open a second PR that implements the finding, targeting
 the original PR's branch. The Frontend coverage bot is separate: it posts one
-sticky comment with Vitest changed-line coverage plus an AI count of
-reasonable screenshot and espresso screens. It does not open fix PRs.
+sticky comment with Vitest and Espresso changed-line coverage plus an AI
+count of reasonable screenshot and espresso screens. It does not open fix PRs.
 
 A later commit does not re-open the same finding. The bot that left the
 comment rechecks it: ✅ if the latest commit fixed it, ❌ if it is still
@@ -56,5 +56,5 @@ nothing.
 | `post_review.py` | JSON findings → review payload + fixable list |
 | `fix.md` + `run-fix.sh` | Apply one finding and open a PR |
 | `links.py` | Discuss-in-Conductor (Grok) URLs |
-| `frontend-coverage.md` + `run-coverage.sh` | Coverage reporter: Vitest % + AI screen counts → sticky comment |
+| `frontend-coverage.md` + `run-coverage.sh` | Coverage reporter: Vitest % + Espresso % + AI screen counts → sticky comment |
 | `coverage_report.py` | Changed-line %, test inventory, comment upsert |

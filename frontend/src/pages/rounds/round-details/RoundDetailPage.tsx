@@ -9,12 +9,10 @@ import {
   CourseLinkSearch,
   LoadingState,
   SectionLabel,
-  ToggleGroup,
-  ToggleGroupItem,
 } from "@/brand";
-import { ComparisonChartCard } from "./components/ComparisonChartCard";
+import { LinkCoursePanel } from "../components/LinkCoursePanel";
+import { RoundComparisonSection } from "./components/RoundComparisonSection";
 import { RoundDetailHeader } from "./components/RoundDetailHeader";
-import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
 import { RoundFlowTimeline } from "@/components/analytics/RoundFlowTimeline";
 import { RoundActions } from "./RoundActions";
@@ -39,6 +37,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
 
   const round = viewModel.round;
   const played = viewModel.played;
+  const editor = viewModel.editor;
 
   return (
     <div>
@@ -53,21 +52,17 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       )}
 
       <RoundActions
-        editMode={viewModel.editMode}
-        saving={viewModel.saving}
+        editMode={editor.editing}
+        saving={editor.saving}
         confirmDelete={viewModel.confirmDelete}
         deleting={viewModel.deleting}
         sharing={sharing}
         onEdit={viewModel.enterEditMode}
-        onSave={() => { void viewModel.save(); }}
-        onCancelEdit={viewModel.cancelEdit}
+        onSave={editor.save}
+        onCancelEdit={editor.cancel}
         onShare={() => shareRound(round, viewModel.courseName)}
         onDelete={viewModel.requestDelete}
-        onConfirmDelete={() => {
-          void viewModel.confirmDeleteRound().then((ok) => {
-            if (ok) navigate("/rounds");
-          });
-        }}
+        onConfirmDelete={() => viewModel.confirmDeleteRound(() => navigate("/rounds"))}
         onCancelDelete={viewModel.cancelDelete}
         onBack={() => navigate(-1)}
       />
@@ -93,58 +88,55 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       )}
       {viewModel.showLinkCourse && (
         <div className="mb-4">
-          <CourseLinkSearch
+          <LinkCoursePanel
+            userId={userId}
+            roundId={played.id}
             title="Link to a saved course"
-            query={viewModel.courseQuery}
-            results={viewModel.courseResults}
-            searching={viewModel.courseSearching}
-            linking={viewModel.linking}
-            onQueryChange={viewModel.handleCourseQuery}
-            onSelectCourse={(c) => { void viewModel.handleSelectCourse(c); }}
             onClose={viewModel.closeLinkCourse}
+            onLinked={viewModel.closeLinkCourse}
           />
         </div>
       )}
 
-      {viewModel.editMode && (
+      {editor.editing && (
         <div className="mb-4">
           <CourseLinkSearch
-            query={viewModel.courseQuery}
-            results={viewModel.courseResults}
-            searching={viewModel.courseSearching}
-            onQueryChange={viewModel.handleCourseQuery}
-            onSelectCourse={(c) => { void viewModel.handleSelectEditCourse(c); }}
-            onClose={viewModel.closeEditCourseSearch}
+            query={editor.courseQuery}
+            results={editor.courseResults}
+            searching={editor.courseSearching}
+            onQueryChange={editor.searchCourses}
+            onSelectCourse={(c) => { void editor.pickCourse(c); }}
+            onClose={editor.closeCourseSearch}
             reviewVariant
-            onUseCustomName={viewModel.useCustomName}
-            linkedName={viewModel.editLinkedName}
-            customName={viewModel.editCustomName}
-            onClear={viewModel.startChangingCourse}
+            onUseCustomName={editor.setCustomName}
+            linkedName={editor.linkedName}
+            customName={editor.customName}
+            onClear={editor.changeCourse}
             clearLabel="Change course"
           />
-          {viewModel.keepUnlinkedNameLabel && (
+          {editor.playedNameToKeep && (
             <Button
               variant="linkMuted"
               size="xs"
               className="mt-1.5 h-auto p-0"
-              onClick={viewModel.keepUnlinkedName}
+              onClick={editor.keepPlayedName}
             >
-              {viewModel.keepUnlinkedNameLabel}
+              Keep "{editor.playedNameToKeep}" without linking →
             </Button>
           )}
         </div>
       )}
 
-      <div className={!viewModel.editMode ? "mt-2" : ""}>
+      <div className={!editor.editing ? "mt-2" : ""}>
         <ScorecardGrid
           round={round}
-          editMode={viewModel.editMode}
-          editedScores={viewModel.editedScores}
-          editedTeeBox={viewModel.editedTeeBox}
-          availableTees={viewModel.availableTees}
-          onScoreChange={viewModel.handleScoreChange}
-          onTeeBoxChange={viewModel.setEditedTeeBox}
-          onGirChange={viewModel.handleGirChange}
+          editMode={editor.editing}
+          editedScores={editor.scores}
+          editedTeeBox={editor.teeBox}
+          availableTees={editor.availableTees}
+          onScoreChange={editor.setScore}
+          onTeeBoxChange={editor.setTeeBox}
+          onGirChange={editor.setGir}
         />
       </div>
 
@@ -159,48 +151,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         </div>
       )}
 
-      {viewModel.showComparison && (
-        <div className="mt-8">
-          <SectionLabel>Round Comparison</SectionLabel>
-          <ScrollSection>
-            <div className="md:hidden">
-              <ToggleGroup
-                variant="outline"
-                spacing={2}
-                value={[viewModel.chartTab]}
-                onValueChange={(values) => viewModel.selectChartTab(values[0] ?? "")}
-                className="mb-4 max-w-full overflow-x-auto [scrollbar-width:none]"
-              >
-                {viewModel.chartTabs.map((tab) => (
-                  <ToggleGroupItem key={tab.key} value={tab.key}>
-                    {tab.label}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-              <div className={viewModel.packSelectedCharts ? "grid grid-cols-2 gap-3" : undefined}>
-                {viewModel.selectedCharts.map((chart) => (
-                  <ComparisonChartCard
-                    key={chart.title}
-                    title={chart.title}
-                    bars={chart.bars}
-                    primaryLabel={chart.primaryLabel}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {viewModel.charts.map((chart) => (
-                <ComparisonChartCard
-                  key={chart.title}
-                  title={chart.title}
-                  bars={chart.bars}
-                  primaryLabel={chart.primaryLabel}
-                />
-              ))}
-            </div>
-          </ScrollSection>
-        </div>
-      )}
+      <RoundComparisonSection userId={userId} roundId={played.id} />
     </div>
   );
 }

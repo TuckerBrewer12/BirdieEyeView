@@ -1,10 +1,4 @@
-import type { Course, Round } from "@/types/golf";
 import type { ComparisonRow, RoundComparison } from "@/types/analytics";
-
-export type CourseEdit =
-  | { status: "linked"; course: Course }
-  | { status: "custom"; name: string }
-  | { status: "picking" };
 
 export type ChartTabKey = "score" | "short_game" | "gir";
 
@@ -43,12 +37,6 @@ export function chartsFrom(comparison: RoundComparison): ComparisonChartItem[] {
     { title: "Putts per GIR", primaryLabel: "putts/GIR", group: "short_game", bars: barsFrom(comparison.putts_per_gir) },
     { title: "Scrambling", primaryLabel: "scramble successes", group: "short_game", bars: barsFrom(comparison.scrambling) },
   ];
-}
-
-export function courseEditFromRound(round: Round): CourseEdit {
-  if (round.course) return { status: "linked", course: round.course };
-  if (round.course_name_played) return { status: "custom", name: round.course_name_played };
-  return { status: "picking" };
 }
 
 export function teeRatingLabel(

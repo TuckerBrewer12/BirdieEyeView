@@ -1,4 +1,4 @@
-import { SCORE_KEYS, type ScoreKey } from "@/brand/theme";
+import { SCORE_KINDS, type ScoreKind } from "@/domain/score";
 import { whsWindow } from "@/domain/handicap";
 import type { Round } from "@/domain/round";
 import type { Milestone } from "@/types/golf";
@@ -7,8 +7,8 @@ import type { AnalyticsData, GoalReport, ScoreTypeRow } from "@/types/analytics"
 export type TrendView = "score" | "hcp";
 export type HiTrend = "up" | "down" | "flat";
 
-/** Analytics payload names → brand `ScoreKey`. */
-const ANALYTICS_TO_BRAND = {
+/** Analytics payload names → domain score kinds. The view paints these. */
+const ANALYTICS_TO_SCORE_KIND = {
   eagle: "eagle",
   birdie: "birdie",
   par: "par",
@@ -16,11 +16,11 @@ const ANALYTICS_TO_BRAND = {
   double_bogey: "double",
   triple_bogey: "triple",
   quad_bogey: "quad",
-} as const satisfies Record<string, ScoreKey>;
+} as const satisfies Record<string, ScoreKind>;
 
-type AnalyticsScoreField = keyof typeof ANALYTICS_TO_BRAND;
+type AnalyticsScoreField = keyof typeof ANALYTICS_TO_SCORE_KIND;
 
-const ANALYTICS_SCORE_FIELDS = Object.keys(ANALYTICS_TO_BRAND) as AnalyticsScoreField[];
+const ANALYTICS_SCORE_FIELDS = Object.keys(ANALYTICS_TO_SCORE_KIND) as AnalyticsScoreField[];
 
 export function pickBestRound(rounds: Round[]): Round | null {
   const scored = rounds.filter((r) => r.score != null);
@@ -51,7 +51,7 @@ export function dualTrendFrom(trends: AnalyticsData | null): DualTrendPoint[] {
 }
 
 export interface ScoreMixItem {
-  name: ScoreKey;
+  name: ScoreKind;
   value: number;
 }
 
@@ -61,16 +61,16 @@ export function mixFromRows(
 ): ScoreMixItem[] {
   if (!rows.length) return [];
   let total = 0;
-  const sums: Record<ScoreKey, number> = {
+  const sums: Record<ScoreKind, number> = {
     eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0,
   };
   for (const row of rows) {
     total += row.holes_counted;
     for (const field of ANALYTICS_SCORE_FIELDS) {
-      sums[ANALYTICS_TO_BRAND[field]] += (row[field] / 100) * row.holes_counted;
+      sums[ANALYTICS_TO_SCORE_KIND[field]] += (row[field] / 100) * row.holes_counted;
     }
   }
-  const items = SCORE_KEYS.map((key) => {
+  const items = SCORE_KINDS.map((key) => {
     const raw = total > 0 ? (sums[key] / total) * 100 : 0;
     return {
       name: key,

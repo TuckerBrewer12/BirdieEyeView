@@ -4,7 +4,6 @@ import { line, area, curveMonotoneX } from "d3-shape";
 import {
   Bar,
   BarChart,
-  Cell,
   Legend,
   ReferenceLine,
   ResponsiveContainer,
@@ -17,14 +16,16 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  ToParFigure,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import { chartLayout, chartTickStyle, chartTooltipStyle } from "@/brand/theme";
+import { chartColors, chartLayout, chartTickStyle, chartTooltipStyle, colors, toParFill } from "@/brand/theme";
+import { ToParBars } from "./ToParBars";
 import type {
   CourseChartCard,
-  CourseChartTheme,
   ChartTabKey,
+  ScoreTypeBar,
   TabItem,
   TrendPoint,
 } from "./useCourseDetailPageViewModel";
@@ -35,20 +36,35 @@ const SVG_WIDTH = 560;
 const SVG_HEIGHT = 180;
 const SVG_PAD = { top: 16, right: 16, bottom: 28, left: 36 };
 
+const SCORE_TYPE_SERIES: {
+  key: keyof Omit<ScoreTypeBar, "hole_number" | "sample_size">;
+  name: string;
+  fill: string;
+}[] = [
+  { key: "eagle", name: "Eagle+", fill: colors.score.eagle.base },
+  { key: "birdie", name: "Birdie", fill: colors.score.birdie.base },
+  { key: "par", name: "Par", fill: colors.score.par.base },
+  { key: "bogey", name: "Bogey", fill: colors.score.bogey.base },
+  { key: "double_bogey", name: "Double", fill: colors.score.double.base },
+  { key: "triple_bogey", name: "Triple", fill: colors.score.triple.base },
+  { key: "quad_bogey", name: "Quad+", fill: colors.score.quad.base },
+];
+
+const AXIS_TICK = { ...chartTickStyle, fill: chartColors.axis };
+
 interface CourseChartsProps {
   charts: CourseChartCard[];
   selectedCharts: CourseChartCard[];
   chartTabs: TabItem<ChartTabKey>[];
   chartTab: ChartTabKey;
   onSelectChartTab: (key: string) => void;
-  theme: CourseChartTheme;
 }
 
-export function CourseScoreTrend({ data, theme }: { data: TrendPoint[]; theme: CourseChartTheme }) {
+export function CourseScoreTrend({ data }: { data: TrendPoint[] }) {
   return (
     <Card>
       <CardContent className="pt-6">
-        <ScoreTrendChart data={data} theme={theme} />
+        <ScoreTrendChart data={data} />
       </CardContent>
     </Card>
   );
@@ -67,7 +83,7 @@ function ChartShell({ title, children }: { title: string; children: ReactNode })
   );
 }
 
-function ScoreTrendChart({ data, theme }: { data: TrendPoint[]; theme: CourseChartTheme }) {
+function ScoreTrendChart({ data }: { data: TrendPoint[] }) {
   const [hovered, setHovered] = useState<TrendPoint | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const areaId = `course-trend-area-${useId().replace(/:/g, "")}`;
@@ -111,8 +127,8 @@ function ScoreTrendChart({ data, theme }: { data: TrendPoint[]; theme: CourseCha
       >
         <defs>
           <linearGradient id={areaId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={theme.trend} stopOpacity={0.12} />
-            <stop offset="95%" stopColor={theme.trend} stopOpacity={0} />
+            <stop offset="5%" stopColor={colors.primary} stopOpacity={0.12} />
+            <stop offset="95%" stopColor={colors.primary} stopOpacity={0} />
           </linearGradient>
         </defs>
         {gridTicks.map((tick) => (
@@ -122,7 +138,7 @@ function ScoreTrendChart({ data, theme }: { data: TrendPoint[]; theme: CourseCha
             x2={SVG_WIDTH - SVG_PAD.right}
             y1={ySc(tick)}
             y2={ySc(tick)}
-            stroke={theme.grid}
+            stroke={chartColors.muted}
             strokeWidth={1}
           />
         ))}
@@ -133,21 +149,21 @@ function ScoreTrendChart({ data, theme }: { data: TrendPoint[]; theme: CourseCha
             y={ySc(tick) + 4}
             textAnchor="end"
             fontSize={chartTickStyle.fontSize}
-            fill={theme.axis}
+            fill={chartColors.axis}
           >
             {tick}
           </text>
         ))}
         <path d={areaD} fill={`url(#${areaId})`} />
-        <path d={pathD} fill="none" stroke={theme.trend} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+        <path d={pathD} fill="none" stroke={colors.primary} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
         {data.map((point, i) => (
           <circle
             key={point.round_index}
             cx={xSc(i)}
             cy={ySc(point.total_score)}
             r={hovered === point ? 6 : 4}
-            fill={point.fill}
-            stroke={theme.card}
+            fill={toParFill(point.toPar)}
+            stroke={colors.card}
             strokeWidth={1.5}
           />
         ))}
@@ -157,7 +173,7 @@ function ScoreTrendChart({ data, theme }: { data: TrendPoint[]; theme: CourseCha
             x2={xSc(data.indexOf(hovered))}
             y1={SVG_PAD.top}
             y2={SVG_HEIGHT - SVG_PAD.bottom}
-            stroke={theme.grid}
+            stroke={chartColors.muted}
             strokeWidth={1}
             strokeDasharray="3 3"
           />
@@ -169,7 +185,7 @@ function ScoreTrendChart({ data, theme }: { data: TrendPoint[]; theme: CourseCha
             y={SVG_HEIGHT - SVG_PAD.bottom + 14}
             textAnchor="middle"
             fontSize={chartTickStyle.fontSize}
-            fill={theme.axis}
+            fill={chartColors.axis}
           >
             {point.tickLabel}
           </text>
@@ -185,51 +201,41 @@ function ScoreTrendChart({ data, theme }: { data: TrendPoint[]; theme: CourseCha
         >
           <div className="mb-1 text-meta text-muted-foreground">{hovered.dateLabel}</div>
           <div className="text-sm font-bold text-foreground">{hovered.total_score}</div>
-          {hovered.toParLabel && (
-            <div className="mt-0.5 text-xs font-semibold" style={{ color: hovered.fill }}>
-              {hovered.toParLabel}
-            </div>
-          )}
+          <ToParFigure toPar={hovered.toPar} />
         </div>
       )}
     </div>
   );
 }
 
-function renderChart(card: CourseChartCard, theme: CourseChartTheme, gradientId: string) {
-  const axisTick = { ...chartTickStyle, fill: theme.axis };
-
+function renderChart(card: CourseChartCard, gradientId: string) {
   switch (card.kind) {
     case "toPar":
     case "difficulty":
       return (
         <BarChart data={card.rows} margin={chartLayout.margin}>
-          <XAxis dataKey={card.kind === "difficulty" ? "label" : "hole_number"} tick={axisTick} tickLine={false} axisLine={false} />
-          <YAxis tick={axisTick} tickLine={false} axisLine={false} />
+          <XAxis dataKey={card.kind === "difficulty" ? "label" : "hole_number"} tick={AXIS_TICK} tickLine={false} axisLine={false} />
+          <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} />
           <Tooltip
             contentStyle={chartTooltipStyle}
             formatter={((value: number) => [Number(value ?? 0).toFixed(2), "Avg to Par"]) as Fmt}
           />
-          <ReferenceLine y={0} stroke={theme.grid} />
-          <Bar dataKey="average_to_par" radius={chartLayout.barRadius}>
-            {card.rows.map((row) => (
-              <Cell key={row.hole_number} fill={row.fill} />
-            ))}
-          </Bar>
+          <ReferenceLine y={0} stroke={chartColors.muted} />
+          <ToParBars rows={card.rows} />
         </BarChart>
       );
     case "scoreType":
       return (
         <BarChart data={card.rows} margin={chartLayout.margin}>
-          <XAxis dataKey="hole_number" tick={axisTick} tickLine={false} axisLine={false} />
-          <YAxis domain={[0, 100]} tick={axisTick} tickLine={false} axisLine={false} />
+          <XAxis dataKey="hole_number" tick={AXIS_TICK} tickLine={false} axisLine={false} />
+          <YAxis domain={[0, 100]} tick={AXIS_TICK} tickLine={false} axisLine={false} />
           <Tooltip
             contentStyle={chartTooltipStyle}
             labelFormatter={(_label, payload) => payload?.[0]?.payload?.sample_size != null ? `${payload[0].payload.sample_size} rounds` : ""}
             formatter={((value: number) => [`${Number(value ?? 0).toFixed(1)}%`, ""]) as Fmt}
           />
           <Legend wrapperStyle={{ fontSize: chartTickStyle.fontSize }} />
-          {card.series.map((series) => (
+          {SCORE_TYPE_SERIES.map((series) => (
             <Bar key={series.key} dataKey={series.key} stackId="a" fill={series.fill} name={series.name} />
           ))}
         </BarChart>
@@ -239,12 +245,12 @@ function renderChart(card: CourseChartCard, theme: CourseChartTheme, gradientId:
         <BarChart data={card.rows} margin={chartLayout.margin}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={theme.girTop} stopOpacity={1} />
-              <stop offset="100%" stopColor={theme.girBottom} stopOpacity={1} />
+              <stop offset="0%" stopColor={chartColors.accent} stopOpacity={1} />
+              <stop offset="100%" stopColor={colors.primary} stopOpacity={1} />
             </linearGradient>
           </defs>
-          <XAxis dataKey="hole_number" tick={axisTick} tickLine={false} axisLine={false} />
-          <YAxis domain={[0, 100]} tick={axisTick} tickLine={false} axisLine={false} />
+          <XAxis dataKey="hole_number" tick={AXIS_TICK} tickLine={false} axisLine={false} />
+          <YAxis domain={[0, 100]} tick={AXIS_TICK} tickLine={false} axisLine={false} />
           <Tooltip
             contentStyle={chartTooltipStyle}
             formatter={((value: number) => [`${Number(value ?? 0).toFixed(1)}%`, "GIR %"]) as Fmt}
@@ -257,12 +263,12 @@ function renderChart(card: CourseChartCard, theme: CourseChartTheme, gradientId:
         <BarChart data={card.rows} margin={chartLayout.margin}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={theme.puttsTop} stopOpacity={1} />
-              <stop offset="100%" stopColor={theme.puttsBottom} stopOpacity={1} />
+              <stop offset="0%" stopColor={colors.muted} stopOpacity={1} />
+              <stop offset="100%" stopColor={colors.mutedForeground} stopOpacity={1} />
             </linearGradient>
           </defs>
-          <XAxis dataKey="hole_number" tick={axisTick} tickLine={false} axisLine={false} />
-          <YAxis tick={axisTick} tickLine={false} axisLine={false} />
+          <XAxis dataKey="hole_number" tick={AXIS_TICK} tickLine={false} axisLine={false} />
+          <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} />
           <Tooltip
             contentStyle={chartTooltipStyle}
             formatter={((value: number) => [Number(value ?? 0).toFixed(2), "Avg putts"]) as Fmt}
@@ -275,12 +281,12 @@ function renderChart(card: CourseChartCard, theme: CourseChartTheme, gradientId:
         <BarChart data={card.rows} margin={chartLayout.margin}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={theme.varianceTop} stopOpacity={1} />
-              <stop offset="100%" stopColor={theme.varianceBottom} stopOpacity={1} />
+              <stop offset="0%" stopColor={colors.score.eagle.base} stopOpacity={1} />
+              <stop offset="100%" stopColor={colors.score.bogey.base} stopOpacity={1} />
             </linearGradient>
           </defs>
-          <XAxis dataKey="label" tick={axisTick} tickLine={false} axisLine={false} />
-          <YAxis tick={axisTick} tickLine={false} axisLine={false} />
+          <XAxis dataKey="label" tick={AXIS_TICK} tickLine={false} axisLine={false} />
+          <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} />
           <Tooltip
             contentStyle={chartTooltipStyle}
             formatter={((value: number) => [Number(value ?? 0).toFixed(2), "Std dev"]) as Fmt}
@@ -291,12 +297,12 @@ function renderChart(card: CourseChartCard, theme: CourseChartTheme, gradientId:
   }
 }
 
-function ChartCard({ card, theme }: { card: CourseChartCard; theme: CourseChartTheme }) {
+function ChartCard({ card }: { card: CourseChartCard }) {
   const gradientId = `course-chart-${card.kind}-${useId().replace(/:/g, "")}`;
   return (
     <ChartShell title={card.title}>
       <ResponsiveContainer width="100%" height="100%">
-        {renderChart(card, theme, gradientId)}
+        {renderChart(card, gradientId)}
       </ResponsiveContainer>
     </ChartShell>
   );
@@ -308,7 +314,6 @@ export function CourseCharts({
   chartTabs,
   chartTab,
   onSelectChartTab,
-  theme,
 }: CourseChartsProps) {
   return (
     <>
@@ -328,14 +333,14 @@ export function CourseCharts({
         </ToggleGroup>
         <div className="space-y-5">
           {selectedCharts.map((card) => (
-            <ChartCard key={card.kind} card={card} theme={theme} />
+            <ChartCard key={card.kind} card={card} />
           ))}
         </div>
       </div>
 
       <div className="hidden gap-5 md:grid md:grid-cols-1 lg:grid-cols-2">
         {charts.map((card) => (
-          <ChartCard key={card.kind} card={card} theme={theme} />
+          <ChartCard key={card.kind} card={card} />
         ))}
       </div>
     </>

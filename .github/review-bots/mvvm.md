@@ -6,9 +6,12 @@ series, marketing copy. Shared UI lives in `frontend/src/brand/`. Golf
 rules live in `frontend/src/domain/`. Styling is Tailwind token classes,
 not `useTheme()`.
 
-Read `frontend/src/pages/rounds/` — that is the reference. The hook
-decides filter/sort/pagination and linking. The page formats counts and
-titles. Do not treat Dashboard's old 80-field bag as the pattern.
+Read `frontend/src/pages/rounds/` — that is the reference. The page hook
+decides filter/sort/pagination and which row's link panel is open.
+`components/LinkCoursePanel` has its own small hook for the search and
+the link, because only the panel uses that state. Server writes go
+through mutation hooks like `useLinkCourse`, not try/finally in a view
+model. The page formats counts and titles. Do not treat Dashboard's old 80-field bag as the pattern.
 
 ## What to look for
 
@@ -21,6 +24,19 @@ move.
 rows are the N best…"`), colors, donut/gauge series, or greeting copy
 returned from a view model. Those belong in the view or a small presenter
 the *view* calls. The hook should return numbers, enums, and commands.
+
+**Side effects in a view.** A click handler in JSX that writes storage,
+calls the API, or changes app-wide state (theme, auth, the query cache).
+Move it into the page hook or the app-wide owner (`useTheme`, `useAuth`) and
+bind the command: `onClick={toggleTheme}`. State nothing else reads, like
+whether a menu is open, is fine in the view; a kit disclosure (`Collapsible`)
+is better than a `useState` and an inline toggle.
+
+**A view that reads the theme to draw.** `theme.isDark ? <Sun /> : <Moon />`,
+or a colour picked by theme in JSX. Light and dark looks come from the tokens
+and `dark:` variants (`<Moon className="dark:hidden" />`). `useTheme()` is for
+changing the theme, or for code that needs a resolved colour string, never
+for choosing what to render.
 
 **A view model for copy.** A hook whose job is marketing text, `/login`
 hrefs, or `"Sign Up Free"` is not a view model. Put the copy in the page.

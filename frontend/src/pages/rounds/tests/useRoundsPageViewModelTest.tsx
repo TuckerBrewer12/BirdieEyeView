@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
 import { populatedRounds, nRounds } from "@/testing/fixtures/rounds";
-import { pebbleBeach } from "@/testing/fixtures/courses";
 import {
   FakeRoundsRepository,
   type FakeRoundsRepositorySeed,
@@ -40,6 +39,7 @@ describe("useRoundsPageViewModel", () => {
     expect(result.current.sortLocked).toBe(true);
     expect(result.current.effectiveSortKey).toBe("total_score");
     expect(result.current.sortLabel).toBe("Score");
+    expect(result.current.sortAsc).toBe(true);
   });
 
   it("L20 keeps the 20 most recent rounds", async () => {
@@ -68,14 +68,5 @@ describe("useRoundsPageViewModel", () => {
 
     expect(result.current.isLinkOpen("round-4")).toBe(false);
     expect(result.current.isLinkOpen("round-1")).toBe(true);
-  });
-
-  it("a failed link sets linkError and leaves the panel open", async () => {
-    const { result } = renderVm({ rounds: populatedRounds, linkError: "nope" });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    act(() => result.current.openLink("round-4"));
-    act(() => result.current.handleSelectCourse("round-4", pebbleBeach));
-    await waitFor(() => expect(result.current.linkError).toBe("nope"));
-    expect(result.current.linkingRoundId).toBe("round-4");
   });
 });

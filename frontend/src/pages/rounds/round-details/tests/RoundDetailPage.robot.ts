@@ -1,4 +1,5 @@
-import { test as base, expect, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { test as base, expect } from "../../../../testing/playwright";
 import type { Round } from "../../../../types/golf";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
@@ -14,8 +15,7 @@ export class RoundDetailRobot {
 
   async dark(): Promise<this> {
     await this.page.addInitScript(() => {
-      localStorage.setItem("settings_theme", "dark");
-      localStorage.setItem("public_theme", "dark");
+      localStorage.setItem("theme", "dark");
     });
     return this;
   }
@@ -79,6 +79,11 @@ export class RoundDetailRobot {
     return this;
   }
 
+  async seesLinkError(message: string): Promise<this> {
+    await expect(this.page.getByRole("alert").filter({ hasText: message })).toBeVisible();
+    return this;
+  }
+
   async searchCourses(query: string): Promise<this> {
     await this.page.getByPlaceholder("Search courses…").fill(query);
     return this;
@@ -115,6 +120,11 @@ export class RoundDetailRobot {
 
   async tapChangeCourse(): Promise<this> {
     await this.page.getByRole("button", { name: "Change course" }).click();
+    return this;
+  }
+
+  async tapKeepPlayedName(name: string): Promise<this> {
+    await this.page.getByRole("button", { name: `Keep "${name}" without linking →` }).click();
     return this;
   }
 
