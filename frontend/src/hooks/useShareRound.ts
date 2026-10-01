@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import type { Round } from "@/types/golf";
 import { formatToPar } from "@/types/golf";
+import { downloadDataUrl } from "@/platform/downloadDataUrl";
 
 export function useShareRound() {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -34,10 +35,10 @@ export function useShareRound() {
             text,
           });
         } else {
-          const a = document.createElement("a");
-          a.href = dataUrl;
-          a.download = `scorecard-${courseName.replace(/\s+/g, "-").toLowerCase()}.png`;
-          a.click();
+          downloadDataUrl(
+            dataUrl,
+            `scorecard-${courseName.replace(/\s+/g, "-").toLowerCase()}.png`,
+          );
         }
       } catch (err) {
         if (err instanceof Error && err.name !== "AbortError") {

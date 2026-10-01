@@ -1,6 +1,12 @@
 export { SCORE_KINDS, scoreKind, strokesToPar } from "./score";
 export type { ScoreKind } from "./score";
 
+export { GOAL_OPTIONS, GOAL_BENCHMARK, HANDICAP_BENCHMARK } from "./benchmark";
+export type { BenchmarkProfile, ComparisonTargetValue } from "./benchmark";
+
+export { buildRadarData } from "./radar";
+export type { RadarEntry } from "./radar";
+
 export {
   FRONT_HOLES,
   BACK_HOLES,
@@ -20,8 +26,6 @@ export {
   ratedCourseHandicap,
   netScore,
   formatHandicapIndex,
-  WHS_ADJUSTMENT_BY_RATED_ROUNDS,
-  whsWindow,
 } from "./handicap";
 
 export { Round } from "./round";

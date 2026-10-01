@@ -4,7 +4,6 @@ import {
   formatHandicapIndex,
   netScore,
   ratedCourseHandicap,
-  whsWindow,
 } from "../handicap";
 
 describe("courseHandicap", () => {
@@ -22,7 +21,7 @@ describe("ratedCourseHandicap", () => {
   });
 });
 
-describe("netScore / formatHandicapIndex / whsWindow", () => {
+describe("netScore / formatHandicapIndex", () => {
   it("subtracts course handicap from gross", () => {
     expect(netScore(78, 12)).toBe(66);
   });
@@ -31,12 +30,5 @@ describe("netScore / formatHandicapIndex / whsWindow", () => {
     expect(formatHandicapIndex(null)).toBe("—");
     expect(formatHandicapIndex(12.4)).toBe("12.4");
     expect(formatHandicapIndex(-1.2)).toBe("+1.2");
-  });
-
-  it("looks up differentials used from rated-round count", () => {
-    expect(whsWindow(2)).toEqual({ countUsed: 0, adjustment: 0 });
-    expect(whsWindow(3)).toEqual({ countUsed: 1, adjustment: -2 });
-    expect(whsWindow(20)).toEqual({ countUsed: 8, adjustment: 0 });
-    expect(whsWindow(40)).toEqual({ countUsed: 8, adjustment: 0 });
   });
 });

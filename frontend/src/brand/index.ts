@@ -42,6 +42,13 @@ export { Dropzone } from "./components/Dropzone";
 export { FileChip } from "./components/FileChip";
 export { Collapse } from "./components/Collapse";
 export type { CollapseProps } from "./components/Collapse";
+export {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+  CollapsibleClose,
+} from "./components/Collapsible";
+export type { CollapsibleProps } from "./components/Collapsible";
 export { Collection } from "./components/Collection";
 export type { CollectionProps, CollectionLayout } from "./components/Collection";
 export {
@@ -65,6 +72,7 @@ export {
   InputGroupInput,
 } from "./components/InputGroup";
 export { PageTitle } from "./components/PageTitle";
+export { ToParFigure } from "./components/ToParFigure";
 export { Reveal } from "./components/Reveal";
 export { ScanProgress } from "./components/ScanProgress";
 export { ScorecardLayoutPicker } from "./components/ScorecardLayoutPicker";

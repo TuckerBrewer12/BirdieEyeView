@@ -12,6 +12,17 @@ test("the hero call to action goes to register", async ({ landing }) => {
   await landing.goesTo("/register");
 });
 
+test("the theme toggle switches the page, and the choice survives a reload", async ({ landing }) => {
+  await landing.open();
+  await landing.seesTheme("light");
+  await landing.tapThemeToggle();
+  await landing.seesTheme("dark");
+  await landing.reload();
+  await landing.seesTheme("dark");
+  await landing.tapThemeToggle();
+  await landing.seesTheme("light");
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 

@@ -1,14 +1,16 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect } from "vitest";
-import { PUBLIC_THEME_PREF_KEY } from "@/lib/theme";
+import { ThemeProvider } from "@/context/ThemeProvider";
 import { PublicNav } from "../components/PublicNav";
 
 function renderNav() {
   return render(
-    <MemoryRouter>
-      <PublicNav />
-    </MemoryRouter>,
+    <ThemeProvider>
+      <MemoryRouter>
+        <PublicNav />
+      </MemoryRouter>
+    </ThemeProvider>,
   );
 }
 
@@ -30,7 +32,8 @@ describe("PublicNav", () => {
     const toggle = screen.getByRole("button", { name: "Toggle menu" });
     fireEvent.click(toggle);
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Try It Out" })[0]);
+    // The menu's copy of the link; the desktop row renders first.
+    fireEvent.click(screen.getAllByRole("button", { name: "Try It Out" }).at(-1)!);
 
     expect(toggle).toHaveAttribute("aria-expanded", "false");
   });
@@ -41,17 +44,4 @@ describe("PublicNav", () => {
     expect(screen.getAllByRole("button", { name: "Try It Out" }).length).toBeGreaterThan(0);
   });
 
-  it("flips the theme, its label, and the stored preference together", () => {
-    renderNav();
-    fireEvent.click(screen.getByRole("button", { name: "Switch to Dark Mode" }));
-
-    expect(screen.getByRole("button", { name: "Switch to Light Mode" })).toBeInTheDocument();
-    expect(localStorage.getItem(PUBLIC_THEME_PREF_KEY)).toBe("dark");
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
-
-    fireEvent.click(screen.getByRole("button", { name: "Switch to Light Mode" }));
-
-    expect(localStorage.getItem(PUBLIC_THEME_PREF_KEY)).toBe("light");
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
-  });
 });

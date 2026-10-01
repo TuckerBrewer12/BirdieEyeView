@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
+import type { ComparisonTargetValue } from "@/domain/benchmark";
 
-export type ComparisonTargetValue = number | null | "friend";
+export type { ComparisonTargetValue };
 
 const TARGETS: { label: string; value: ComparisonTargetValue }[] = [
   { label: "My Level",   value: null },

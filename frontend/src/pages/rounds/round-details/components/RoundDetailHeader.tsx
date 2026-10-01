@@ -1,6 +1,6 @@
 import { cn } from "@/brand/cn";
-import { PageTitle } from "@/brand";
-import { colors, toParDisplay, type ScoreKey } from "@/brand/theme";
+import { PageTitle, ToParFigure } from "@/brand";
+import { colors, type ScoreKey } from "@/brand/theme";
 import { netScore, type Nine, type Round } from "@/domain";
 import { formatCourseName } from "@/lib/courseName";
 import { pluralNoun } from "@/lib/pluralize";
@@ -100,17 +100,7 @@ export function RoundDetailHeader({ round, teeRating, courseHandicap, className 
             <div className="font-mono text-hero font-bold leading-none tracking-hero text-foreground">
               {round.score ?? "—"}
             </div>
-            {round.toPar != null && (
-              <div
-                className={cn(
-                  "mt-0.5 font-mono text-sm font-bold",
-                  // Level par reads as a good thing here, so it shares birdie's green.
-                  round.toPar <= 0 ? "text-score-birdie" : "text-score-bogey",
-                )}
-              >
-                {toParDisplay(round.toPar, "-")}
-              </div>
-            )}
+            <ToParFigure toPar={round.toPar} size="stat" />
           </div>
           {courseHandicap != null && net != null && (
             <>
