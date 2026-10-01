@@ -1,5 +1,5 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { colors } from "@/brand";
+import { chartLayout, colors } from "@/brand";
 import { puttsBand, type PuttsBand } from "../present";
 
 const BAND_FILL: Record<PuttsBand, string> = {
@@ -29,8 +29,8 @@ export function PuttsGauge({ putts }: PuttsGaugeProps) {
                 cy="100%"
                 startAngle={180}
                 endAngle={0}
-                innerRadius={52}
-                outerRadius={72}
+                innerRadius={chartLayout.gauge.inner}
+                outerRadius={chartLayout.gauge.outer}
                 dataKey="value"
                 stroke="none"
                 isAnimationActive={false}

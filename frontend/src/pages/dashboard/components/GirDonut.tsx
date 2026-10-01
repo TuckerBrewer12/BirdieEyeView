@@ -1,5 +1,5 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { colors } from "@/brand";
+import { chartLayout, colors } from "@/brand";
 
 interface GirDonutProps {
   /** Greens in regulation, 0–100. Unknown draws an empty ring and a dash. */
@@ -15,8 +15,8 @@ export function GirDonut({ pct }: GirDonutProps) {
           <Pie
             data={[{ value: hit }, { value: 100 - hit }]}
             dataKey="value"
-            innerRadius={50}
-            outerRadius={68}
+            innerRadius={chartLayout.ring.inner}
+            outerRadius={chartLayout.ring.outer}
             stroke="none"
             isAnimationActive={false}
             startAngle={90}

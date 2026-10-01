@@ -25,6 +25,12 @@ export const chartTickStyle = {
 export const chartLayout = {
   barRadius: [6, 6, 0, 0] as [number, number, number, number],
   margin: { top: 4, right: 8, left: -20, bottom: 0 },
+  /** Widest a Recharts bar grows when there are few of them. */
+  barMaxWidth: 28,
+  /** A full ring sized to fill the `--brand-size-chart` height. */
+  ring: { inner: 50, outer: 68 },
+  /** A half gauge drawn up from the bottom edge of its box. */
+  gauge: { inner: 52, outer: 72 },
   /** Unitless SVG plot. Matches `--brand-size-chart` for height. */
   plot: {
     width: 560,
