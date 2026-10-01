@@ -149,7 +149,11 @@ export const populatedDashboard: DashboardData = {
   score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
   recent_score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
   score_mix_holes: 90,
-  milestones: [],
+  // Round 3 is a 69 on a par 72 with 28 putts: the first round under par, and under 30 putts.
+  milestones: [
+    { kind: "under_par", value: 69, date: "2026-04-18", course: "Blue Rock", round_id: "round-3" },
+    { kind: "putt_break", value: 30, date: "2026-04-18", course: "Blue Rock", round_id: "round-3" },
+  ],
   whs: {
     rows: [
       { round_index: 5, course_name: "Muni", course_rating: 72.4, slope_rating: 130, score: 80, differential: 13, used: false },
