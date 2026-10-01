@@ -14,8 +14,7 @@ export class CourseDetailRobot {
 
   async dark(): Promise<this> {
     await this.page.addInitScript(() => {
-      localStorage.setItem("settings_theme", "dark");
-      localStorage.setItem("public_theme", "dark");
+      localStorage.setItem("theme", "dark");
     });
     return this;
   }

@@ -1,6 +1,7 @@
 import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
+import { expectTheme } from "../../../testing/theme";
 
 /** Screen robot for the logged-out landing page at `/`. */
 export class LandingRobot {
@@ -12,7 +13,7 @@ export class LandingRobot {
 
   async dark(): Promise<this> {
     await this.page.addInitScript(() => {
-      localStorage.setItem("public_theme", "dark");
+      localStorage.setItem("theme", "dark");
     });
     return this;
   }
@@ -26,6 +27,23 @@ export class LandingRobot {
     await this.page.goto("/");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+    return this;
+  }
+
+  /** Reloads the page, as a returning visitor would see it. */
+  async reload(): Promise<this> {
+    await this.page.reload();
+    await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+    return this;
+  }
+
+  async tapThemeToggle(): Promise<this> {
+    await this.page.getByRole("button", { name: "Toggle dark mode" }).click();
+    return this;
+  }
+
+  async seesTheme(theme: "light" | "dark"): Promise<this> {
+    await expectTheme(this.page, theme);
     return this;
   }
 
