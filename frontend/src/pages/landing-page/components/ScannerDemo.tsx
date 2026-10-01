@@ -1,5 +1,6 @@
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { scoreFill, toParDisplay } from "@/brand";
 import {
   DEMO_MOTION,
   useScannerDemoViewModel,
@@ -45,7 +46,7 @@ function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
             <div key={row.hole} className="py-1">
               <span
                 className="inline-block h-5 w-5 rounded-sm leading-5 text-primary-foreground sm:h-6 sm:w-6 sm:leading-6"
-                style={{ background: row.fill }}
+                style={{ background: scoreFill(row.strokes, row.par) }}
               >
                 {row.strokes}
               </span>
@@ -60,7 +61,7 @@ function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
               key={row.hole}
               className={`py-2 font-semibold ${row.overPar ? "text-score-bogey" : "text-muted-foreground"}`}
             >
-              {row.toPar}
+              {toParDisplay(row.toPar)}
             </div>
           ))}
         </div>

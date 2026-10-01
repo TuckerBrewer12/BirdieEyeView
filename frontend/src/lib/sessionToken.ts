@@ -1,24 +1,26 @@
 const ACCESS_TOKEN_KEY = "bev_access_token";
 const LEGACY_ACCESS_TOKEN_KEYS = ["scanscore_access_token"];
 
-function getStorage(): Storage | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
+export interface TokenStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
+
+let storage: TokenStorage | null = null;
+
+/** The app edge passes localStorage on web, or another store on native. */
+export function configureSessionStorage(next: TokenStorage | null): void {
+  storage = next;
 }
 
 export function getSessionToken(): string | null {
-  const storage = getStorage();
   if (!storage) return null;
   const token = storage.getItem(ACCESS_TOKEN_KEY)?.trim() ?? "";
   return token || null;
 }
 
 export function setSessionToken(token: string | null): void {
-  const storage = getStorage();
   if (!storage) return;
   for (const key of LEGACY_ACCESS_TOKEN_KEYS) {
     storage.removeItem(key);

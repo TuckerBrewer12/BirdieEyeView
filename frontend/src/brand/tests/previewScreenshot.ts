@@ -9,7 +9,6 @@ export async function capturePreview(page: Page, name: string, file: string) {
 
 export async function enableDark(page: Page) {
   await page.addInitScript(() => {
-    localStorage.setItem("settings_theme", "dark");
-    localStorage.setItem("public_theme", "dark");
+    localStorage.setItem("theme", "dark");
   });
 }

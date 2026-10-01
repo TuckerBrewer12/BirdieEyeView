@@ -10,7 +10,6 @@ import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { LandingPage } from "./pages/landing-page";
-import { applyTheme, getStoredPublicTheme, getStoredTheme } from "./lib/theme";
 
 import { DashboardPage } from "./pages/dashboard";
 import { RoundsPage, RoundDetailPage } from "./pages/rounds";
@@ -19,7 +18,7 @@ import { ScanPage } from "./pages/ScanPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { CareerPage } from "./pages/CareerPage";
 import { TheLabPage } from "./pages/TheLabPage";
-import { SettingsPage } from "./pages/SettingsPage";
+import { SettingsPage } from "./pages/settings";
 import { FriendsInboxPage } from "./pages/FriendsInboxPage";
 import { SocialPage } from "./pages/SocialPage";
 import { BrandHarness } from "./brand/BrandHarness";
@@ -60,24 +59,6 @@ function RootRoutes() {
 function AppRoutes() {
   const { userId, loading } = useAuth();
   const location = useLocation();
-
-  useEffect(() => {
-    const isPublicRoute =
-      location.pathname === "/" ||
-      location.pathname === "/login" ||
-      location.pathname === "/register" ||
-      location.pathname === "/forgot-password" ||
-      location.pathname === "/reset-password" ||
-      location.pathname === "/verify-email" ||
-      location.pathname === "/verify-pending";
-    if (!userId && isPublicRoute) {
-      applyTheme(getStoredPublicTheme());
-      return;
-    }
-    if (userId) {
-      applyTheme(getStoredTheme());
-    }
-  }, [userId, location.pathname]);
 
   if (loading) {
     return (
