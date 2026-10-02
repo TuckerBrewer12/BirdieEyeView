@@ -145,6 +145,12 @@
   --brand-size-icon-xs: 11px;
   --brand-size-hole-w: 30px;
   --brand-size-hole-h: 22px;
+  /* Chart measures. Recharts only takes numbers, so chart.ts mirrors these and tokens.test.ts keeps them equal. */
+  --brand-size-bar-max: 28px;
+  --brand-size-ring-inner: 50px;
+  --brand-size-ring-outer: 68px;
+  --brand-size-gauge-inner: 52px;
+  --brand-size-gauge-outer: 72px;
   --brand-ring-width: 3px;
   --brand-border-width: 1px;
 

@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { chartLayout } from "./chart";
 
 // vitest runs with the frontend package as cwd; import.meta.url is not a
 // file: URL under the jsdom environment.
@@ -75,5 +76,33 @@ describe("brand tokens", () => {
       });
 
     expect(offenders).toEqual([]);
+  });
+
+  it("matches every chart measure to the token it mirrors", () => {
+    const tokensCss = read(TOKENS_CSS);
+    const px = (name: string) => {
+      const value = tokensCss.match(new RegExp(`${name}:\\s*([\\d.]+)(px|rem)`));
+      if (!value) throw new Error(`${name} is not a px or rem length in tokens.css`);
+      return Number(value[1]) * (value[2] === "rem" ? 16 : 1);
+    };
+
+    // Recharts cannot read a CSS variable, so chart.ts holds these numbers a second time.
+    expect({
+      barRadius: chartLayout.barRadius[0],
+      barMaxWidth: chartLayout.barMaxWidth,
+      ringInner: chartLayout.ring.inner,
+      ringOuter: chartLayout.ring.outer,
+      gaugeInner: chartLayout.gauge.inner,
+      gaugeOuter: chartLayout.gauge.outer,
+      plotHeight: chartLayout.plot.height,
+    }).toEqual({
+      barRadius: px("--brand-radius-md"),
+      barMaxWidth: px("--brand-size-bar-max"),
+      ringInner: px("--brand-size-ring-inner"),
+      ringOuter: px("--brand-size-ring-outer"),
+      gaugeInner: px("--brand-size-gauge-inner"),
+      gaugeOuter: px("--brand-size-gauge-outer"),
+      plotHeight: px("--brand-size-chart"),
+    });
   });
 });
