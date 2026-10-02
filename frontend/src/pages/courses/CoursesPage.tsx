@@ -4,10 +4,10 @@ import {
   AlertDescription,
   Collection,
   CoursePreview,
+  PageHeader,
   PageTitle,
   SearchField,
 } from "@/brand";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { useCoursesPageViewModel } from "./useCoursesPageViewModel";
 
 interface CoursesPageProps { userId: string; }

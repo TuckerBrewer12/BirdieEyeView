@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { PageHeader } from "@/brand";
 import type { ScanState } from "@/types/scan";
 
 const PHASES_FULL = [

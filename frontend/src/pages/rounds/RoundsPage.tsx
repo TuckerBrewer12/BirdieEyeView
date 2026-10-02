@@ -4,6 +4,7 @@ import {
   Collapse,
   Collection,
   LoadingState,
+  PageHeader,
   PageTitle,
   RoundPreview,
   SearchField,
@@ -11,7 +12,6 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { formatCourseName } from "@/lib/courseName";
 import { pluralize } from "@/lib/pluralize";
 import type { Round } from "@/domain";
@@ -61,7 +61,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
         </ToggleGroup>
 
         <div className="flex items-center justify-between px-1 pt-0.5">
-          <span className="text-[13px] font-bold text-foreground">
+          <span className="text-body font-bold text-foreground">
             {pluralize(viewModel.filteredRounds.length, "round")}
           </span>
           <SortControl

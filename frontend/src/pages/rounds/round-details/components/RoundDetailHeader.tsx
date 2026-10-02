@@ -1,14 +1,9 @@
 import { cn } from "@/brand/cn";
-import { PageTitle, ToParFigure } from "@/brand";
-import { colors, type ScoreKey } from "@/brand/theme";
+import { HoleScoreBars, PageTitle, ScoreCountChip, ToParFigure, type ScoreKey } from "@/brand";
 import { netScore, type Nine, type Round } from "@/domain";
 import { formatCourseName } from "@/lib/courseName";
 import { pluralNoun } from "@/lib/pluralize";
 import { formatRoundDateLong } from "@/lib/roundDate";
-
-const BAR_HEIGHTS: Record<ScoreKey, number> = {
-  eagle: 28, birdie: 40, par: 52, bogey: 72, double: 92, triple: 100, quad: 100,
-};
 
 const CHIPS: { key: ScoreKey; noun: string; plural?: string; absorbs?: ScoreKey }[] = [
   { key: "birdie", noun: "Birdie" },
@@ -36,23 +31,7 @@ function NineBars({ nine, label, className }: {
   if (nine.holes.length === 0) return null;
   return (
     <div className={cn("min-w-0 flex-1", className)}>
-      <div className="flex h-6 items-end gap-hair">
-        {nine.holes.map((h) => {
-          // Unscored holes read as par.
-          const key = h.kind ?? "par";
-          return (
-            <div
-              key={h.hole}
-              // Par is the baseline, so it recedes and the misses stand out.
-              className={cn("flex-1 rounded-t-tick", key === "par" && "opacity-(--brand-opacity-recessed)")}
-              style={{
-                height: `${BAR_HEIGHTS[key]}%`,
-                background: colors.score[key].base,
-              }}
-            />
-          );
-        })}
-      </div>
+      <HoleScoreBars holes={nine.holes} variant="profile" />
       {nine.total != null && (
         <div className="mt-1 text-caption font-bold uppercase tracking-kicker text-muted-foreground">
           {label} <span className="font-mono">{nine.total}</span>
@@ -142,18 +121,10 @@ export function RoundDetailHeader({ round, teeRating, courseHandicap, className 
         {CHIPS.map(({ key, noun, plural, absorbs }) => {
           const count = (counts[key] ?? 0) + (absorbs ? counts[absorbs] ?? 0 : 0);
           if (!count) return null;
-          const tone = colors.score[key];
           return (
-            <div
-              key={key}
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-chip"
-              style={{ background: tone.base, color: tone.onBase }}
-            >
-              <span className="font-mono text-label font-semibold">{count}</span>
-              <span className="text-meta font-bold tracking-chip">
-                {pluralNoun(count, noun, plural)}
-              </span>
-            </div>
+            <ScoreCountChip key={key} kind={key} count={count}>
+              {pluralNoun(count, noun, plural)}
+            </ScoreCountChip>
           );
         })}
       </div>

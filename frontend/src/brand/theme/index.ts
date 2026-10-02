@@ -15,5 +15,7 @@ export {
   toParDisplay,
   toParTextClass,
   toParBadgeClass,
+  scoreFillClass,
+  scoreOnFillClass,
 } from "./score";
 export type { ScoreKey, ScoreTone } from "./score";

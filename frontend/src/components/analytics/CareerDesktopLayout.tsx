@@ -8,7 +8,7 @@ import {
   ResponsiveContainer, Tooltip,
 } from "recharts";
 import { UserRadarChart } from "@/components/analytics/UserRadarChart";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { PageHeader } from "@/brand";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { SVGHandicapTrend } from "@/components/analytics/SVGHandicapTrend";
 import { SCORE_LABELS } from "@/lib/colors";
