@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { Course, Tee } from "@/types/golf";
 import {
+  chooseCompatibleTee,
   coursePar,
+  extractTeeColorToken,
   getHole,
   getTee,
   longestTee,
@@ -89,5 +91,16 @@ describe("teeYards / longestTee", () => {
 
   it("lists tee colors", () => {
     expect(teeColors(course())).toEqual(["White", "Blue"]);
+  });
+
+  it("reads the colour word in a tee's name", () => {
+    expect(extractTeeColorToken("Blue tees")).toBe("blue");
+    expect(extractTeeColorToken("championship")).toBeNull();
+  });
+
+  it("matches an exact tee, then the same colour word", () => {
+    expect(chooseCompatibleTee("Blue", ["Blue", "White"])).toBe("Blue");
+    expect(chooseCompatibleTee("blue tees", ["Blue", "White"])).toBe("Blue");
+    expect(chooseCompatibleTee("Gold", ["Blue", "White"])).toBeNull();
   });
 });

@@ -12,13 +12,13 @@ import {
   Reveal,
   RoundPreview,
   SectionLabel,
+  TeeSwatch,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
 import { cn } from "@/brand/cn";
 import { CourseCharts, CourseScoreTrend } from "./CourseCharts";
 import { NineTable } from "./NineTable";
-import { TeeSwatch } from "./TeeSwatch";
 import { useCourseDetailPageViewModel } from "./useCourseDetailPageViewModel";
 
 export function CourseDetailPage({ userId }: { userId: string }) {
