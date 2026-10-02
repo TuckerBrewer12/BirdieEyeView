@@ -62,3 +62,28 @@ export function toParBadgeClass(toPar: number | null): string {
   if (toPar < 0) return "bg-accent text-score-birdie";
   return "bg-destructive/10 text-score-bogey";
 }
+
+/**
+ * `bg-` class for a score's fill. For keys known only at runtime: Tailwind
+ * finds classes by their literal names, so they cannot be built from the key.
+ */
+export const scoreFillClass: Record<ScoreKey, string> = {
+  eagle: "bg-score-eagle-base",
+  birdie: "bg-score-birdie-base",
+  par: "bg-score-par-base",
+  bogey: "bg-score-bogey-base",
+  double: "bg-score-double-base",
+  triple: "bg-score-triple-base",
+  quad: "bg-score-quad-base",
+};
+
+/** Text colour that reads on `scoreFillClass`. */
+export const scoreOnFillClass: Record<ScoreKey, string> = {
+  eagle: "text-score-eagle-on-base",
+  birdie: "text-score-birdie-on-base",
+  par: "text-score-par-on-base",
+  bogey: "text-score-bogey-on-base",
+  double: "text-score-double-on-base",
+  triple: "text-score-triple-on-base",
+  quad: "text-score-quad-on-base",
+};

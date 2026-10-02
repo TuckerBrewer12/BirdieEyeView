@@ -145,6 +145,7 @@
   --brand-size-icon-xs: 11px;
   --brand-size-hole-w: 30px;
   --brand-size-hole-h: 22px;
+  --brand-blur-header: 20px;
   /* Chart measures. Recharts only takes numbers, so chart.ts mirrors these and tokens.test.ts keeps them equal. */
   --brand-size-bar-max: 28px;
   --brand-size-ring-inner: 50px;
@@ -199,28 +200,35 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
 
-  /* text-score-eagle, bg-score-eagle-base, bg-score-eagle-muted. Per-hole
-     fills still go through colors.score[key].base when the key is dynamic. */
+  /* text-score-eagle, bg-score-eagle-base, text-score-eagle-on-base,
+     bg-score-eagle-muted. A dynamic key picks its class from scoreFillClass. */
   --color-score-eagle: var(--score-eagle-text);
   --color-score-eagle-base: var(--score-eagle-base);
+  --color-score-eagle-on-base: var(--score-eagle-on-base);
   --color-score-eagle-muted: var(--score-eagle-muted);
   --color-score-birdie: var(--score-birdie-text);
   --color-score-birdie-base: var(--score-birdie-base);
+  --color-score-birdie-on-base: var(--score-birdie-on-base);
   --color-score-birdie-muted: var(--score-birdie-muted);
   --color-score-par: var(--score-par-text);
   --color-score-par-base: var(--score-par-base);
+  --color-score-par-on-base: var(--score-par-on-base);
   --color-score-par-muted: var(--score-par-muted);
   --color-score-bogey: var(--score-bogey-text);
   --color-score-bogey-base: var(--score-bogey-base);
+  --color-score-bogey-on-base: var(--score-bogey-on-base);
   --color-score-bogey-muted: var(--score-bogey-muted);
   --color-score-double: var(--score-double-text);
   --color-score-double-base: var(--score-double-base);
+  --color-score-double-on-base: var(--score-double-on-base);
   --color-score-double-muted: var(--score-double-muted);
   --color-score-triple: var(--score-triple-text);
   --color-score-triple-base: var(--score-triple-base);
+  --color-score-triple-on-base: var(--score-triple-on-base);
   --color-score-triple-muted: var(--score-triple-muted);
   --color-score-quad: var(--score-quad-text);
   --color-score-quad-base: var(--score-quad-base);
+  --color-score-quad-on-base: var(--score-quad-on-base);
   --color-score-quad-muted: var(--score-quad-muted);
 
   --color-scan-row-name: var(--scan-row-name);
@@ -283,6 +291,8 @@
   --spacing-icon-xs: var(--brand-size-icon-xs);
   --spacing-hole-w: var(--brand-size-hole-w);
   --spacing-hole-h: var(--brand-size-hole-h);
+
+  --blur-header: var(--brand-blur-header);
 
   --ring-width-3: var(--brand-ring-width);
 
