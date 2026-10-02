@@ -12,7 +12,7 @@ interface HoleScoreBarsProps {
 const PROFILE_HEIGHT: Record<ScoreKey, string> = {
   eagle: "h-7/25",
   birdie: "h-2/5",
-  par: "h-13/25",
+  par: "h-profile-height",
   bogey: "h-18/25",
   double: "h-23/25",
   triple: "h-full",
