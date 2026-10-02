@@ -90,8 +90,8 @@ export function useRoundDetailPageViewModel(
   const played = useMemo(() => {
     if (!round) return null;
     const model = RoundModel.fromDto(round);
-    return editor.editing ? RoundModel.previewEdits(model, editor.scores, editor.activeCourse) : model;
-  }, [round, editor.editing, editor.scores, editor.activeCourse]);
+    return editor.editing ? RoundModel.previewEdits(model, editor.scores, editor.activeCourse, editor.activeTeeBox) : model;
+  }, [round, editor.editing, editor.scores, editor.activeCourse, editor.activeTeeBox]);
   const tee = getTee(editor.activeCourse, editor.activeTeeBox);
 
   return {

@@ -92,7 +92,7 @@ Key files:
 - `routers/users.py` — user management + user tee CRUD (`/api/users/{id}/tees`); `UpdateUserRequest` accepts `scoring_goal`
 - `routers/stats.py` — player analytics endpoints; includes `GET /{user_id}/goal-report`
 - `api/request_models.py` — shared Pydantic request/response models
-- `api/round_responses.py` — `round_summary()` / `round_detail()`: the one place a round's response is built. Every round endpoint (list, detail, update, link-course, dashboard) returns the figures the `Round` model works out (score, par, to-par, nines, putts, GIR, per-hole par/to-par/`kind`, `score_counts`); the frontend displays them and does not recompute them.
+- `api/round_responses.py` — `round_summary()` / `round_detail()`: the one place a round's response is built. Every round endpoint (list, detail, update, link-course, dashboard) returns the figures the `Round` model works out (score, par, to-par, nine totals plus each nine's par/to-par/putts/GIR/yards, putts, GIR, yards, per-hole par/handicap/yardage/to-par/`kind`, `score_counts`); the frontend displays them and does not recompute them.
 
 **API endpoints:**
 - `POST /api/scan/extract` — run LLM extraction on uploaded image

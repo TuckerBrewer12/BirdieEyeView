@@ -12,6 +12,7 @@ export interface StoredHole {
   fairway_hit: boolean | null;
   green_in_regulation: boolean | null;
   par_played: number | null;
+  handicap_played: number | null;
 }
 
 export interface StoredRound {
@@ -34,6 +35,29 @@ function sum(values: number[]): number {
 
 function holePar(round: StoredRound, hole: StoredHole): number | null {
   return round.course?.holes.find((h) => h.number === hole.hole_number)?.par ?? hole.par_played;
+}
+
+function holeHandicap(round: StoredRound, hole: StoredHole): number | null {
+  return round.course?.holes.find((h) => h.number === hole.hole_number)?.handicap ?? hole.handicap_played;
+}
+
+/** The course's tee for the round's tee box, else the user's own tee. */
+function teePlayed(round: StoredRound): { total_yardage?: number | null; hole_yardages: Record<string, number> } | null {
+  const color = round.tee_box?.toLowerCase();
+  const tee = color ? round.course?.tees.find((t) => t.color?.toLowerCase() === color) : undefined;
+  return tee ?? round.user_tee ?? null;
+}
+
+function holeYardage(round: StoredRound, holeNumber: number): number | null {
+  return teePlayed(round)?.hole_yardages[holeNumber] ?? null;
+}
+
+function totalYardage(round: StoredRound): number | null {
+  const tee = teePlayed(round);
+  if (!tee) return null;
+  if (tee.total_yardage != null) return tee.total_yardage;
+  const yards = Object.values(tee.hole_yardages);
+  return yards.length > 0 ? sum(yards) : null;
 }
 
 function kindFor(toPar: number | null): ScoreKind | null {
@@ -62,6 +86,33 @@ function nineTotal(holes: StoredHole[], first: number, last: number): number | n
   return strokes.length === 9 ? sum(strokes) : null;
 }
 
+function holeNumbers(first: number, last: number): number[] {
+  return Array.from({ length: last - first + 1 }, (_, i) => first + i);
+}
+
+function allOrNull(values: (number | null)[]): number | null {
+  return values.some((v) => v == null) ? null : sum(values as number[]);
+}
+
+function nineFigures(round: StoredRound, first: number, last: number) {
+  const onNine = round.hole_scores.filter((h) => h.hole_number >= first && h.hole_number <= last);
+  const scored = onNine.filter((h) => h.strokes != null);
+  const par = allOrNull(
+    holeNumbers(first, last).map((n) => {
+      const hole = round.hole_scores.find((h) => h.hole_number === n);
+      return hole ? holePar(round, hole) : round.course?.holes.find((h) => h.number === n)?.par ?? null;
+    }),
+  );
+  const strokes = nineTotal(round.hole_scores, first, last);
+  return {
+    par,
+    to_par: strokes != null && par != null ? strokes - par : null,
+    putts: scored.length > 0 && scored.every((h) => h.putts != null) ? sum(scored.map((h) => h.putts!)) : null,
+    gir: countTrue(onNine.map((h) => h.green_in_regulation)),
+    yards: allOrNull(holeNumbers(first, last).map((n) => holeYardage(round, n))),
+  };
+}
+
 function countTrue(values: (boolean | null)[]): number | null {
   const recorded = values.filter((v): v is boolean => v != null);
   return recorded.length > 0 ? recorded.filter(Boolean).length : null;
@@ -75,8 +126,9 @@ function holeResponses(round: StoredRound): HoleScoreDto[] {
       ...hole,
       net_score: null,
       shots_to_green: null,
-      handicap_played: null,
       par,
+      handicap: holeHandicap(round, hole),
+      yardage: holeYardage(round, hole.hole_number),
       to_par: toPar,
       kind: kindFor(toPar),
     };
@@ -99,6 +151,8 @@ function figures(round: StoredRound, holes: HoleScoreDto[]) {
       scored.length > 0 && scored.every((h) => h.putts != null) ? sum(scored.map((h) => h.putts!)) : null,
     total_gir: countTrue(round.hole_scores.map((h) => h.green_in_regulation)),
     fairways_hit: countTrue(round.hole_scores.map((h) => h.fairway_hit)),
+    nines: { front: nineFigures(round, 1, 9), back: nineFigures(round, 10, 18) },
+    yards: totalYardage(round),
     score_counts: scoreCounts,
   };
 }
@@ -132,6 +186,7 @@ function storedHoles(holes: HoleScoreDto[]): StoredHole[] {
     fairway_hit: h.fairway_hit,
     green_in_regulation: h.green_in_regulation,
     par_played: h.par_played,
+    handicap_played: h.handicap_played,
   }));
 }
 
