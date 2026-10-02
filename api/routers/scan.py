@@ -20,6 +20,7 @@ from api.dependencies import get_current_user, get_optional_current_user, get_db
 from api.error_responses import ROUND_SAVE_FAILED, SCAN_FAILED
 from api.input_validation import ensure_uuid_str, normalize_course_display_name, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
+from api.scan_errors import ScanExtractionError
 from models import User
 from services.gemini_table_merger import merge_split_tables
 from services.mistral_ocr_service import MistralOCRService
@@ -640,7 +641,10 @@ async def extract_scan(
         getattr(current_user, "id", "anonymous"),
     )
     # Validate file type + metadata.
-    suffix = _extract_upload_suffix(file)
+    try:
+        suffix = _extract_upload_suffix(file)
+    except HTTPException as exc:
+        raise ScanExtractionError(exc.status_code, exc.detail, category="invalid_upload", stage="upload")
     if user_context is not None:
         try:
             user_context = sanitize_user_text(
@@ -665,10 +669,14 @@ async def extract_scan(
         except ValueError as exc:
             raise HTTPException(422, str(exc))
 
-    original_tmp_path, upload_digest = _save_upload_to_temp(file, suffix)
+    try:
+        original_tmp_path, upload_digest = _save_upload_to_temp(file, suffix)
+    except HTTPException as exc:
+        raise ScanExtractionError(exc.status_code, exc.detail, category="invalid_upload", stage="upload")
 
     ocr_path = original_tmp_path
     cache_hit = False
+    failure_stage = "upload"
 
     try:
         _validate_upload_payload(original_tmp_path, suffix)
@@ -690,6 +698,7 @@ async def extract_scan(
         to_par_scoring: Optional[bool] = None
 
         # Optional known course preload; extraction is always full Mistral parse.
+        failure_stage = "unknown"
         course_model = None
         t_course_lookup_start = time.perf_counter()
         if course_id:
@@ -705,6 +714,7 @@ async def extract_scan(
             course_model is not None,
             (t_course_lookup_end - t_course_lookup_start) * 1000.0,
         )
+        failure_stage = "ocr"
         t_extract_start = time.perf_counter()
         if ocr_text:
             # Prefetch already ran OCR + Gemini merge — use it directly.
@@ -723,8 +733,10 @@ async def extract_scan(
         else:
             logger.info("Merged OCR markdown chars=%d", len(markdown_text))
 
+        failure_stage = "parse"
         t_parse_start = time.perf_counter()
         parsed_rows = parse_mistral_scorecard_rows(markdown_text, user_context=user_context)
+        failure_stage = "assembly"
         round_data, fields_needing_review = _build_round_from_parsed_rows(
             parsed_rows,
             course_model=course_model,
@@ -736,13 +748,15 @@ async def extract_scan(
         )
         if present_strokes == 0:
             if parsed_rows.player_name:
-                raise HTTPException(
+                raise ScanExtractionError(
                     422,
                     "Name is unclear in the scorecard image. Please upload a cleaner image with clearer handwriting and try again.",
+                    category="unreadable_scores", stage="parse",
                 )
-            raise HTTPException(
+            raise ScanExtractionError(
                 422,
                 "Unable to clearly read the score rows from this image. Please upload a cleaner image with clearer handwriting and better lighting, then try again.",
+                category="unreadable_scores", stage="parse",
             )
 
         confidence_data = _build_confidence_payload(round_data.get("hole_scores", []), fields_needing_review)
@@ -766,15 +780,18 @@ async def extract_scan(
         )
 
     except FileNotFoundError:
-        raise HTTPException(400, "Uploaded file could not be processed")
+        raise ScanExtractionError(400, "Uploaded file could not be processed", category="invalid_upload", stage=failure_stage)
     except EnvironmentError:
         logger.exception("Scan extraction service unavailable")
-        raise HTTPException(500, SCAN_FAILED)
-    except HTTPException:
+        raise ScanExtractionError(500, SCAN_FAILED, category="service_unavailable", stage=failure_stage)
+    except ScanExtractionError:
         raise
+    except HTTPException as exc:
+        category = "invalid_upload" if failure_stage == "upload" and exc.status_code in {400, 413} else "http_error"
+        raise ScanExtractionError(exc.status_code, exc.detail, category=category, stage=failure_stage)
     except Exception:
         logger.exception("Scan extraction error")
-        raise HTTPException(500, "Extraction failed. Please try again.")
+        raise ScanExtractionError(500, "Extraction failed. Please try again.", category="extraction_failed", stage=failure_stage)
     finally:
         logger.info(
             "Scan extract request complete: total_ms=%.1f",
