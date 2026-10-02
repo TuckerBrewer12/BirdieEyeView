@@ -3,10 +3,11 @@
 
 CLI:
     slop_report.py guide
-    slop_report.py prepare --findings F --diff D --report R --prompt P
-    slop_report.py comment --report R [--fix-url URL] [--compare-url URL]
+    slop_report.py prepare --findings F --diff D --report R
+    slop_report.py fix-prompt --report R
+    slop_report.py comment --report R [--pending] [--fix-url URL] [--compare-url URL]
     slop_report.py pr-body
-    slop_report.py field --report R --name verdict|branch
+    slop_report.py field --report R --name verdict|branch|json
 """
 from __future__ import annotations
 
@@ -14,9 +15,7 @@ import argparse
 import json
 import os
 import re
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 _BOTS = Path(__file__).resolve().parent
@@ -25,7 +24,7 @@ if str(_BOTS) not in sys.path:
 
 import findings
 import post_review
-import previous
+import sticky
 
 MARKER = "<!-- slop-control-bot -->"
 PROMPT_PATH = _BOTS / "slop-control.md"
@@ -52,7 +51,7 @@ def guide_text() -> str:
 
 
 def fix_branch(pr_number: str) -> str:
-    return f"{findings.BRANCH_PREFIX}/pr-{pr_number}/slop"
+    return findings.branch_name(pr_number, "slop")
 
 
 def _one_line(text: str) -> str:
@@ -127,6 +126,7 @@ def _pr_link(url: str) -> str:
 def render_comment(
     items: list[dict],
     *,
+    pending: bool = False,
     fix_url: str = "",
     compare_url: str = "",
 ) -> str:
@@ -141,7 +141,9 @@ def render_comment(
         for item in items:
             lines.append(f"- `{_location(item)}` — {item['body']}")
         lines.append("")
-        if fix_url:
+        if pending:
+            lines.append("Opening a fix PR.")
+        elif fix_url:
             lines.append(
                 f"Opened {_pr_link(fix_url)} with every comment fix. "
                 "Merge it into this branch if it looks right."
@@ -200,7 +202,7 @@ def render_pr_body(pr_number: str) -> str:
     )
 
 
-def prepare(findings_path: Path, diff: str, report_path: Path, prompt_path: Path) -> int:
+def prepare(findings_path: Path, diff: str, report_path: Path) -> int:
     pr_number = os.environ.get("PR_NUMBER", "")
     if not pr_number:
         print("::error title=Slop Control::PR_NUMBER is not set.", file=sys.stderr)
@@ -220,55 +222,9 @@ def prepare(findings_path: Path, diff: str, report_path: Path, prompt_path: Path
         "branch": fix_branch(pr_number),
         "findings": items,
     }
-    report_path.write_text(json.dumps(report, indent=2) + "\n")
-    if items:
-        prompt_path.write_text(build_fix_prompt(items))
-    elif prompt_path.exists():
-        prompt_path.unlink()
+    report_path.write_text(json.dumps(report) + "\n")
     print(f"{report['verdict']}: {len(items)} comment(s).")
     return 0
-
-
-def gh_api(args: list[str], *, input_text: str | None = None) -> str:
-    result = subprocess.run(
-        ["gh", "api", *args],
-        input=input_text,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        sys.stderr.write(result.stderr)
-        raise SystemExit(result.returncode)
-    return result.stdout
-
-
-def upsert_comment(body: str) -> None:
-    repo = os.environ["GITHUB_REPOSITORY"]
-    pr = os.environ["PR_NUMBER"]
-    raw = gh_api(["--paginate", f"repos/{repo}/issues/{pr}/comments"])
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False) as handle:
-        handle.write(raw)
-        path = Path(handle.name)
-    try:
-        comments = previous.load_json_list(path)
-    finally:
-        path.unlink(missing_ok=True)
-    existing = next((item for item in comments if MARKER in (item.get("body") or "")), None)
-
-    payload = json.dumps({"body": body})
-    if existing:
-        gh_api(
-            ["-X", "PATCH", f"repos/{repo}/issues/comments/{existing['id']}", "--input", "-"],
-            input_text=payload,
-        )
-        print(f"Updated comment {existing['id']}.")
-    else:
-        gh_api(
-            ["-X", "POST", f"repos/{repo}/issues/{pr}/comments", "--input", "-"],
-            input_text=payload,
-        )
-        print("Posted Slop Control comment.")
 
 
 def _load_report(path: str) -> dict:
@@ -289,10 +245,13 @@ def main() -> int:
     prepare_cmd.add_argument("--findings", required=True)
     prepare_cmd.add_argument("--diff", required=True)
     prepare_cmd.add_argument("--report", required=True)
-    prepare_cmd.add_argument("--prompt", required=True)
+
+    fix_prompt_cmd = sub.add_parser("fix-prompt")
+    fix_prompt_cmd.add_argument("--report", required=True)
 
     comment_cmd = sub.add_parser("comment")
     comment_cmd.add_argument("--report", required=True)
+    comment_cmd.add_argument("--pending", action="store_true")
     comment_cmd.add_argument("--fix-url", default="")
     comment_cmd.add_argument("--compare-url", default="")
 
@@ -316,16 +275,19 @@ def main() -> int:
             Path(args.findings),
             Path(args.diff).read_text(),
             Path(args.report),
-            Path(args.prompt),
         )
-    if args.cmd == "field":
-        value = _load_report(args.report)[args.name]
-        print(value)
-        return 0
     report = _load_report(args.report)
-    upsert_comment(
+    if args.cmd == "fix-prompt":
+        sys.stdout.write(build_fix_prompt(report.get("findings") or []))
+        return 0
+    if args.cmd == "field":
+        print(json.dumps(report) if args.name == "json" else report[args.name])
+        return 0
+    sticky.upsert_comment(
+        MARKER,
         render_comment(
             report.get("findings") or [],
+            pending=args.pending,
             fix_url=args.fix_url,
             compare_url=args.compare_url,
         )

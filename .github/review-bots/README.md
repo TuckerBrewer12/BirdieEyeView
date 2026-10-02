@@ -54,12 +54,14 @@ nothing.
 | --- | --- |
 | `brand-kit.md`, `mvvm.md`, `ui-test-checker.md` | Review prompts |
 | `run-bot.sh` | Shared reviewer: diff → model → GitHub review |
-| `cursor-run.sh` | Cursor CLI invocation shared by the review, coverage, and fix runners |
+| `cursor-run.sh` | Cursor CLI invocation shared by every runner |
+| `pr-lib.sh` | PR diff, review prompt, and fix-branch push / PR open shared by every runner |
+| `sticky.py` | The one sticky PR comment the coverage and slop bots keep up to date |
 | `previous.py` | Match earlier comments, ✅/❌ recheck, skip duplicate fix PRs |
 | `post_review.py` | JSON findings → review payload + fixable list |
 | `fix.md` + `run-fix.sh` | Apply one finding and open a PR |
 | `links.py` | Discuss-in-Conductor (Grok) URLs |
 | `frontend-coverage.md` + `run-coverage.sh` | Coverage reporter: Vitest % + Espresso % + AI screen counts → sticky comment |
-| `coverage_report.py` | Changed-line %, test inventory, comment upsert |
-| `slop-control.md` + `run-slop.sh` | Comment slop: one pass/fail comment and one fix PR |
+| `coverage_report.py` | Changed-line %, test inventory, comment body |
+| `slop-control.md` + `run-slop.sh` | Comment slop: read-only review job posts pass/fail; a second job opens one fix PR |
 | `slop_report.py` | Comment guide, report comment, fix prompt |

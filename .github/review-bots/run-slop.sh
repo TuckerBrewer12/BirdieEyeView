@@ -1,162 +1,108 @@
 #!/usr/bin/env bash
 # One sticky pass/fail comment. On fail, one PR that fixes every flagged comment.
+#
+#   run-slop.sh review   # read-only: model review, comment, report to GITHUB_OUTPUT
+#   run-slop.sh fix      # SLOP_REPORT from review: apply, push, open the fix PR
 set -euo pipefail
 
 BOTS="$(cd "$(dirname "$0")" && pwd)"
-WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 # shellcheck source=cursor-run.sh
 source "$BOTS/cursor-run.sh"
+# shellcheck source=pr-lib.sh
+source "$BOTS/pr-lib.sh"
 
 : "${BOT_NAME:?}"
-: "${BOT_PROMPT:?}"
-: "${BOT_PATHSPEC:?}"
-: "${BASE_SHA:?}"
 : "${HEAD_SHA:?}"
 : "${PR_NUMBER:?}"
-: "${HEAD_REF:?}"
 : "${GITHUB_REPOSITORY:?}"
 
-if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null || ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
-  git fetch --no-tags origin "$HEAD_SHA" "$BASE_SHA"
-fi
+report() {
+  python3 "$BOTS/slop_report.py" "$@"
+}
 
-BASE="$(git merge-base "$BASE_SHA" "$HEAD_SHA")"
-# shellcheck disable=SC2086
-git diff --unified=6 "$BASE" "$HEAD_SHA" -- $BOT_PATHSPEC > "$WORK/diff.patch"
+review() {
+  : "${BOT_PROMPT:?}"
+  : "${BOT_PATHSPEC:?}"
+  : "${BASE_SHA:?}"
 
-if [[ ! -s "$WORK/diff.patch" ]]; then
-  echo "No changes under '${BOT_PATHSPEC}'."
-  exit 0
-fi
+  # shellcheck disable=SC2086
+  pr_diff "$WORK/diff.patch" $BOT_PATHSPEC
+  if [[ -s "$WORK/diff.patch" ]]; then
+    git checkout --detach "$HEAD_SHA"
+    review_prompt "$BOT_PROMPT" "$WORK/diff.patch" > "$WORK/prompt.txt"
+    if ! cursor_run ask "$WORK/prompt.txt" "$WORK/findings.json"; then
+      echo "::error title=${BOT_NAME}::Cursor CLI failed; not reviewing."
+      exit 1
+    fi
+  else
+    echo '[]' > "$WORK/findings.json"
+  fi
 
-git checkout --detach "$HEAD_SHA"
+  report prepare --findings "$WORK/findings.json" --diff "$WORK/diff.patch" --report "$WORK/report.json"
+  verdict="$(report field --report "$WORK/report.json" --name verdict)"
 
-{
-  cat "$BOT_PROMPT"
-  printf '\n---\n\n## The diff to review\n\n```diff\n'
-  cat "$WORK/diff.patch"
-  printf '\n```\n'
-} > "$WORK/prompt.txt"
+  if [[ "$verdict" == "pass" ]]; then
+    stale="$(fix_pr_url "$(report field --report "$WORK/report.json" --name branch)")"
+    if [[ -n "$stale" ]]; then
+      gh pr close "$stale" --repo "$GITHUB_REPOSITORY" \
+        --comment "Slop Control passes on the latest commit, so this fix is no longer needed." || true
+    fi
+    report comment --report "$WORK/report.json"
+  else
+    report comment --report "$WORK/report.json" --pending
+  fi
 
-if ! cursor_run ask "$WORK/prompt.txt" "$WORK/findings.json"; then
-  echo "::error title=${BOT_NAME}::Cursor CLI failed; not reviewing."
-  exit 1
-fi
+  if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    echo "verdict=${verdict}" >> "$GITHUB_OUTPUT"
+    echo "report=$(report field --report "$WORK/report.json" --name json)" >> "$GITHUB_OUTPUT"
+  fi
+}
 
-if ! python3 "$BOTS/slop_report.py" prepare \
-  --findings "$WORK/findings.json" \
-  --diff "$WORK/diff.patch" \
-  --report "$WORK/report.json" \
-  --prompt "$WORK/fix-prompt.txt"; then
-  exit 1
-fi
+fix() {
+  : "${SLOP_REPORT:?}"
+  : "${HEAD_REF:?}"
+  local branch pr_url="" compare_url=""
 
-verdict="$(python3 "$BOTS/slop_report.py" field --report "$WORK/report.json" --name verdict)"
-branch="$(python3 "$BOTS/slop_report.py" field --report "$WORK/report.json" --name branch)"
-owner="${GITHUB_REPOSITORY%%/*}"
+  printf '%s\n' "$SLOP_REPORT" > "$WORK/report.json"
+  report fix-prompt --report "$WORK/report.json" > "$WORK/fix-prompt.txt"
+  branch="$(report field --report "$WORK/report.json" --name branch)"
 
-open_fix_pr() {
-  local compare pr_url existing body
   git checkout -B "$branch" "$HEAD_SHA"
-
   if ! cursor_run edit "$WORK/fix-prompt.txt"; then
     echo "::error title=${BOT_NAME}::Cursor CLI failed while applying comment fixes."
-    return 1
+    report comment --report "$WORK/report.json"
+    exit 1
   fi
 
-  if git diff --quiet && git diff --cached --quiet && [[ -z "$(git ls-files --others --exclude-standard)" ]]; then
+  if ! fix_changed; then
     echo "Fix changed no files."
-    return 0
+    report comment --report "$WORK/report.json"
+    exit 0
   fi
 
-  git config user.name "github-actions[bot]"
-  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-  git add -A
-  if git diff --cached --quiet; then
-    echo "Nothing to commit."
-    return 0
-  fi
-
-  git commit -m "$(cat <<EOF
+  push_fix "$branch" "$(cat <<EOF
 Trim comments flagged by Slop Control
 
 Addresses the Slop Control report on #${PR_NUMBER}.
 EOF
 )"
 
-  # bot-fix/pr-N/slop is bot-owned; --force replaces a failed attempt.
-  git push --force origin "HEAD:refs/heads/${branch}"
-
-  gh label create skip-bots --repo "$GITHUB_REPOSITORY" \
-    --description "Skip review bots" --force >/dev/null 2>&1 || true
-
-  existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "${owner}:${branch}" \
-    --state open --json url --jq '.[0].url // empty' || true)"
-  if [[ -n "$existing" ]]; then
-    printf '%s\n' "$existing" > "$WORK/fix_url"
-    echo "Fix PR already open: $existing"
-    return 0
+  pr_url="$(fix_pr_url "$branch")"
+  if [[ -z "$pr_url" ]] && ! pr_url="$(create_fix_pr "$branch" \
+      "[bot] Trim comments flagged by Slop Control" "$(report pr-body)")"; then
+    echo "::error title=${BOT_NAME}::Could not open a fix PR. Enable Settings → Actions → General → Allow GitHub Actions to create and approve pull requests."
+    compare_url="$(fix_compare_url "$branch")"
   fi
 
-  body="$(python3 "$BOTS/slop_report.py" pr-body)"
-  compare="https://github.com/${GITHUB_REPOSITORY}/compare/${HEAD_REF}...${branch}?expand=1"
-  if pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" \
-    --base "$HEAD_REF" \
-    --head "${owner}:${branch}" \
-    --title "[bot] Trim comments flagged by Slop Control" \
-    --label skip-bots \
-    --body "$body")"; then
-    printf '%s\n' "$pr_url" > "$WORK/fix_url"
-    echo "$pr_url"
-    return 0
+  report comment --report "$WORK/report.json" --fix-url "$pr_url" --compare-url "$compare_url"
+  if [[ -n "$compare_url" ]]; then
+    exit 1
   fi
-  if pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" \
-    --base "$HEAD_REF" \
-    --head "${owner}:${branch}" \
-    --title "[bot] Trim comments flagged by Slop Control" \
-    --body "$body")"; then
-    printf '%s\n' "$pr_url" > "$WORK/fix_url"
-    echo "$pr_url"
-    return 0
-  fi
-
-  echo "::error title=${BOT_NAME}::Could not open a fix PR."
-  printf '%s\n' "$compare" > "$WORK/compare_url"
-  return 1
 }
 
-fix_url=""
-compare_url=""
-fix_status=0
-if [[ "$verdict" == "fail" ]]; then
-  set +e
-  ( trap - EXIT; set -euo pipefail; open_fix_pr )
-  fix_status=$?
-  set -e
-  if [[ -f "$WORK/fix_url" ]]; then
-    fix_url="$(<"$WORK/fix_url")"
-  fi
-  if [[ -f "$WORK/compare_url" ]]; then
-    compare_url="$(<"$WORK/compare_url")"
-  fi
-else
-  number="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "${owner}:${branch}" \
-    --state open --json number --jq '.[0].number // empty' || true)"
-  if [[ -n "$number" ]]; then
-    gh pr close "$number" --repo "$GITHUB_REPOSITORY" \
-      --comment "Slop Control passes on the latest commit, so this fix is no longer needed." || true
-  fi
-fi
-
-python3 "$BOTS/slop_report.py" comment \
-  --report "$WORK/report.json" \
-  --fix-url "$fix_url" \
-  --compare-url "$compare_url"
-
-if [[ -n "$compare_url" ]]; then
-  exit 1
-fi
-if [[ "$verdict" == "fail" && -z "$fix_url" && "$fix_status" -ne 0 ]]; then
-  exit 1
-fi
+case "${1:-}" in
+  review) review ;;
+  fix) fix ;;
+  *) echo "usage: run-slop.sh review|fix" >&2; exit 2 ;;
+esac

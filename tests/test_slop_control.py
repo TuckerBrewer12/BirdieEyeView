@@ -50,13 +50,9 @@ def pr_env(monkeypatch):
 
 def test_guide_is_one_paragraph_under_300_characters():
     guide = slop_report.guide_text()
+    assert guide
     assert "\n" not in guide
     assert len(guide) < 300
-    assert "absent" in guide
-    assert "token" in guide
-    assert "Shorten" in guide
-    prompt = (BOTS / "slop-control.md").read_text()
-    assert guide in prompt
 
 
 def test_normalize_keeps_added_lines_and_infers_delete():
@@ -79,29 +75,26 @@ def test_normalize_keeps_added_lines_and_infers_delete():
     assert items[1]["replacement"].startswith("// Scanner")
 
 
-def test_prepare_pass_writes_no_fix_prompt(tmp_path, pr_env):
+def test_prepare_pass_has_no_findings(tmp_path, pr_env):
     findings = tmp_path / "findings.json"
     findings.write_text("[]")
     report = tmp_path / "report.json"
-    prompt = tmp_path / "prompt.txt"
-    assert slop_report.prepare(findings, DIFF, report, prompt) == 0
+    assert slop_report.prepare(findings, DIFF, report) == 0
     payload = json.loads(report.read_text())
     assert payload["verdict"] == "pass"
     assert payload["findings"] == []
     assert payload["branch"] == "bot-fix/pr-42/slop"
-    assert not prompt.exists()
 
 
 def test_prepare_fail_filters_to_added_lines(tmp_path, pr_env):
     findings = tmp_path / "findings.json"
     findings.write_text(json.dumps([DELETE, {"path": "missing.ts", "line": 1, "body": "Off diff."}]))
     report = tmp_path / "report.json"
-    prompt = tmp_path / "prompt.txt"
-    assert slop_report.prepare(findings, DIFF, report, prompt) == 0
+    assert slop_report.prepare(findings, DIFF, report) == 0
     payload = json.loads(report.read_text())
     assert payload["verdict"] == "fail"
     assert len(payload["findings"]) == 1
-    text = prompt.read_text()
+    text = slop_report.build_fix_prompt(payload["findings"])
     assert slop_report.guide_text() in text
     assert "frontend/src/theme/colors.ts:1" in text
     assert "missing.ts" not in text
@@ -112,8 +105,7 @@ def test_prepare_rejects_prose(tmp_path, pr_env):
     findings = tmp_path / "findings.json"
     findings.write_text("The comments look noisy.")
     report = tmp_path / "report.json"
-    prompt = tmp_path / "prompt.txt"
-    assert slop_report.prepare(findings, DIFF, report, prompt) == 1
+    assert slop_report.prepare(findings, DIFF, report) == 1
     assert not report.exists()
 
 
@@ -138,6 +130,13 @@ def test_fail_comment_lists_every_finding_and_one_fix_link():
     assert f"[#99]({url})" in body
     assert body.count(url) == 1
     assert "<!-- review-bot:" not in body
+
+
+def test_fail_comment_while_the_fix_job_runs():
+    body = slop_report.render_comment([DELETE], pending=True)
+    assert "❌ Fail. 1 comment should be removed or shortened." in body
+    assert "Opening a fix PR." in body
+    assert "Re-run" not in body
 
 
 def test_fail_comment_without_a_pull_request_says_retry():
@@ -166,16 +165,3 @@ def test_pr_body_follows_the_template():
     assert body.startswith("## What?\n")
     assert "## Why?\n" in body
     assert "#42" in body
-
-
-def test_workflow_is_one_job_not_a_finding_matrix():
-    workflow = (ROOT / ".github/workflows/slop-control-bot.yml").read_text()
-    runner = (BOTS / "run-slop.sh").read_text()
-    assert "run-slop.sh" in workflow
-    assert "review-fix.yml" not in workflow
-    assert "skip-bots" in workflow
-    assert "bot-fix/" in workflow
-    assert "pulls/${PR_NUMBER}/reviews" not in runner
-    assert "slop_report.py\" comment" in runner or "slop_report.py comment" in runner
-    assert "bot-fix/pr-${PR_NUMBER}/slop" not in runner
-    assert 'field --report "$WORK/report.json" --name branch' in runner

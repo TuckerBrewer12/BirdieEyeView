@@ -7,8 +7,10 @@
 #   cursor_run ask  PROMPT_FILE STDOUT_FILE   # read-only; final text to STDOUT_FILE
 #   cursor_run edit PROMPT_FILE               # may edit the worktree; no shell
 #
-# The prompt stays in WORK so a large diff is not an argv, and so run-fix.sh
-# and run-slop.sh `git add -A` cannot commit it. Shell, network, MCP, and env files are denied.
+# The prompt stays in WORK so a large diff is not an argv, and so the fix
+# runners' `git add -A` cannot commit it. Shell, network, MCP, and env files
+# are denied, and so are writes under .git: a hook written there would run at
+# the fix runner's `git commit` with a token that can push.
 # Sandbox is off: GitHub-hosted Ubuntu cannot start it (AppArmor), and the
 # CLI then refuses to run. The deny list is the allowlist-mode gate instead.
 set -euo pipefail
@@ -37,7 +39,7 @@ deny = [
 allow = ["Read(**)", f"Read({prompt})"]
 if mode == "edit":
     allow.append("Write(**)")
-    deny.extend(["Write(**/.env*)", "Write(**/*.key)"])
+    deny.extend(["Write(**/.env*)", "Write(**/*.key)", "Write(.git/**)", "Write(**/.git/**)"])
 else:
     deny.append("Write(**)")
 
