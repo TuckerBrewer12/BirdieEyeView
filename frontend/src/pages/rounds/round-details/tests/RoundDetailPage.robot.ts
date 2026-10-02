@@ -51,6 +51,27 @@ export class RoundDetailRobot {
     return this;
   }
 
+  /** Types into a hole's putts box on the edit scorecard. */
+  async editPutts(hole: number, putts: number): Promise<this> {
+    const nine = hole <= 9 ? 0 : 1;
+    const row = this.page.locator("tr").filter({ has: this.page.getByRole("cell", { name: "Putts", exact: true }) });
+    await row.nth(nine).getByRole("textbox").nth((hole - 1) % 9).fill(String(putts));
+    return this;
+  }
+
+  /** Clicks a green the scorecard has as hit, marking it missed. */
+  async markFirstGreenMissed(): Promise<this> {
+    await this.page.getByTitle(/^GIR hit/).first().click();
+    return this;
+  }
+
+  async seesHeaderTotals(putts: number, gir: number): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header).toContainText(`${putts} putts`);
+    await expect(header).toContainText(`${gir}/18 GIR`);
+    return this;
+  }
+
   async tapDelete(): Promise<this> {
     await this.page.getByRole("button", { name: "Delete" }).click();
     await expect(this.page.getByText("Delete this round?")).toBeVisible();
