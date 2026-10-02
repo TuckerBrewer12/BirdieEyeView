@@ -28,6 +28,7 @@ export const size = {
   iconXs: "var(--brand-size-icon-xs)",
   holeW: "var(--brand-size-hole-w)",
   holeH: "var(--brand-size-hole-h)",
+  profileHeight: "var(--brand-size-profile-height)",
 } as const;
 
 export const radius = {

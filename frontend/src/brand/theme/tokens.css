@@ -145,6 +145,8 @@
   --brand-size-icon-xs: 11px;
   --brand-size-hole-w: 30px;
   --brand-size-hole-h: 22px;
+  /* Eagle bar in the profile variant: 7/25 of the row. */
+  --brand-size-profile-height: 28%;
   --brand-blur-header: 20px;
   /* Chart measures. Recharts only takes numbers, so chart.ts mirrors these and tokens.test.ts keeps them equal. */
   --brand-size-bar-max: 28px;
@@ -291,6 +293,7 @@
   --spacing-icon-xs: var(--brand-size-icon-xs);
   --spacing-hole-w: var(--brand-size-hole-w);
   --spacing-hole-h: var(--brand-size-hole-h);
+  --spacing-profile-height: var(--brand-size-profile-height);
 
   --blur-header: var(--brand-blur-header);
 
