@@ -4,10 +4,10 @@ import {
   AlertDescription,
   Collection,
   CoursePreview,
+  PageHeader,
   PageTitle,
   SearchField,
 } from "@/brand";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { useCoursesPageViewModel } from "./useCoursesPageViewModel";
 
 interface CoursesPageProps { userId: string; }
@@ -18,7 +18,7 @@ export function CoursesPage({ userId }: CoursesPageProps) {
 
   return (
     <div>
-      <PageHeader title="Courses" subtitle={viewModel.headerSubtitle} scrollThreshold={100} />
+      <PageHeader title="Courses" subtitle={viewModel.headerSubtitle} revealAt={100} />
 
       <div className="flex flex-col gap-2.5 pb-6">
         <PageTitle>Courses</PageTitle>
