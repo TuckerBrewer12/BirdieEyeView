@@ -36,14 +36,14 @@ class ScanReportStorageConfig:
     addressing_style: str = "virtual"
 
     @classmethod
-    def from_environment(cls):
+    def from_environment(cls, *, encryption_key: bytes | None = None):
         config = cls(
             endpoint=os.environ.get("SCAN_REPORT_S3_ENDPOINT", "").strip(),
             bucket=os.environ.get("SCAN_REPORT_S3_BUCKET", "").strip(),
             region=os.environ.get("SCAN_REPORT_S3_REGION", "").strip(),
             access_key_id=os.environ.get("SCAN_REPORT_S3_ACCESS_KEY_ID", "").strip(),
             secret_access_key=os.environ.get("SCAN_REPORT_S3_SECRET_ACCESS_KEY", "").strip(),
-            encryption_key=decode_key(os.environ.get("SCAN_REPORT_ENCRYPTION_KEY", "")),
+            encryption_key=encryption_key if encryption_key is not None else decode_key(os.environ.get("SCAN_REPORT_ENCRYPTION_KEY", "")),
             addressing_style=os.environ.get("SCAN_REPORT_S3_ADDRESSING_STYLE", "virtual").strip(),
         )
         endpoint = urlsplit(config.endpoint)

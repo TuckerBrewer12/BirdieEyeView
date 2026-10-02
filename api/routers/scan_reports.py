@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 def get_scan_report_store() -> ScanReportStore | None:
-    """Replace via dependency override when a durable adapter is ready."""
+    """Application setup overrides this when private durable storage is configured."""
     return None
 
 
