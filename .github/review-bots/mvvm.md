@@ -6,9 +6,12 @@ series, marketing copy. Shared UI lives in `frontend/src/brand/`. Golf
 rules live in `frontend/src/domain/`. Styling is Tailwind token classes,
 not `useTheme()`.
 
-Read `frontend/src/pages/rounds/` — that is the reference. The hook
-decides filter/sort/pagination and linking. The page formats counts and
-titles. Do not treat Dashboard's old 80-field bag as the pattern.
+Read `frontend/src/pages/rounds/` — that is the reference. The page hook
+decides filter/sort/pagination and which row's link panel is open.
+`components/LinkCoursePanel` has its own small hook for the search and
+the link, because only the panel uses that state. Server writes go
+through mutation hooks like `useLinkCourse`, not try/finally in a view
+model. The page formats counts and titles. Do not treat Dashboard's old 80-field bag as the pattern.
 
 ## What to look for
 
