@@ -399,10 +399,10 @@ export function PublicScanHero() {
 
                 <ScorecardLayoutPicker onContextChange={setUserContext} />
 
-                {error && (
+                {error && !report.available && (
                   <p className="text-xs text-red-500 text-center">{error}</p>
                 )}
-                <ReportFailedScan report={report} />
+                <ReportFailedScan report={report} error={error} />
 
                 <button
                   onClick={onExtract}

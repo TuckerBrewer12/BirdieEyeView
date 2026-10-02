@@ -186,7 +186,8 @@ encryption without requesting those APIs. See
 
 ## Frontend integration
 
-- `ReportFailedScan` is a presentational component using the existing brand Button.
+- `ReportFailedScan` shows the error beside a red brand Button, with the action
+  wrapping below on mobile. The button matches the error's light/dark red.
 - `useFailedScanReport` holds submission state and accepts a repository.
 - `scanReportRepository` owns anonymous multipart transport.
 - `useScan` and `usePublicScan` capture the failed attempt; each UI renders the
@@ -196,8 +197,8 @@ This branch remains based on main. Tucker's unmerged frontend refactor moves
 the public scan UI into `pages/landing-page/sections/TryItYourselfSection.tsx`
 and exposes its state through `useTryItYourselfViewModel`. When combining the
 branches, pass through `report` from `usePublicScan` and render the shared report
-component there. Its brand Button uses the `secondary` variant supported by
-both branches. No new hardcoded colors or theme-reading logic are needed.
+component there. Preserve the brand Button's `danger` variant and theme tokens
+when combining the branches; they reference the existing red error colors.
 
 ## Focused verification
 
