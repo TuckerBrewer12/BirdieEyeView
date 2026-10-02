@@ -12,6 +12,7 @@ from api.dependencies import get_db, get_optional_current_user
 from api.main import create_app
 from api.routers import scan, scan_reports
 from services.scan_report_service import AnonymousScanReport
+from tests.test_scan_report_storage import configure_environment, make_store
 
 
 class FakeReportStore:
@@ -63,6 +64,32 @@ def test_reporting_is_unavailable_without_storage_or_database():
     assert response.json()["code"] == "report_storage_unavailable"
     assert "not saved" in response.json()["detail"]
     assert response.headers["cache-control"] == "no-store"
+
+
+def test_app_configuration_wires_real_encryption_and_sanitation_without_database(monkeypatch):
+    import boto3
+    store = make_store()
+    configure_environment(monkeypatch)
+    monkeypatch.setattr(boto3, "client", lambda *args, **kwargs: store.client)
+    values = metadata()
+    response = send_report(client_for(), values=values, headers={"authorization": "Bearer private-user", "cookie": "access_token=private-user"})
+    assert response.json() == {"status": "saved"}
+    from uuid import UUID
+    restored = store.retrieve(UUID(values["retry_key"]))
+    assert restored.metadata.category == values["category"]
+    assert set(restored.metadata.model_dump()) == {"schema_version", "retry_key", "category", "stage", "http_status", "media_type"}
+    assert len(store.client.objects) == 1
+
+
+def test_configured_storage_sanitation_failure_is_safe_and_never_stored(caplog):
+    store = make_store()
+    response = client_for(store).post(
+        "/api/scan/reports", data={"metadata": json.dumps(metadata())},
+        files={"file": ("card.pdf", b"%PDF-malformed-private-user", "application/pdf")},
+    )
+    assert response.status_code == 503 and response.json()["code"] == "report_not_saved"
+    assert not store.client.objects
+    assert "private-user" not in response.text + caplog.text
 
 
 def test_anonymous_report_has_only_allowlisted_data_and_retries_are_idempotent():

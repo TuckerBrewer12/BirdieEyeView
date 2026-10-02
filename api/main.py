@@ -345,6 +345,13 @@ def create_app() -> FastAPI:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail, "failure": exc.failure})
 
     from api.routers import auth, courses, users, rounds, stats, scan, scan_reports, ai_insights
+    from api.scan_report_logging import protect_report_access_logs
+    from services.scan_report_storage import configured_scan_report_store
+
+    protect_report_access_logs()
+    report_store = configured_scan_report_store()
+    app.dependency_overrides[scan_reports.get_scan_report_store] = lambda: report_store
+
     app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
     app.include_router(courses.router, prefix="/api/courses", tags=["courses"])
     app.include_router(users.router, prefix="/api/users", tags=["users"])

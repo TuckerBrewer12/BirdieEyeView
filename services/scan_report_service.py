@@ -1,6 +1,6 @@
-"""Anonymous scan-report submission. Durable storage is deliberately not configured."""
+"""Anonymous scan-report submission with a replaceable durable-storage boundary."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal, Protocol
 from uuid import UUID
 
@@ -20,7 +20,7 @@ class AnonymousScanReport:
     The retry key belongs only to reporting; it must never join to scan logs.
     """
 
-    image: bytes
+    image: bytes = field(repr=False)
     media_type: str
     retry_key: UUID
     category: FailureCategory
