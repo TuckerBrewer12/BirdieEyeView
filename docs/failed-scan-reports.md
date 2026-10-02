@@ -45,18 +45,20 @@ remaining staged/applying environment changes. The backend, frontend and
 Postgres retain their previous successful deployments; activating the bucket
 did not deploy the feature code.
 
-The real encrypted upload/retrieval smoke check is still pending. The local
-`secrets/scan-reports.env` configuration does not yet exist, and connected OAuth
-tools redact credential values. Save the bucket Credentials values into that
-ignored local file, then run the documented `smoke` command using the existing
-private encryption key. Do not paste credentials into chat.
+The real-provider `smoke` check passed on October 2, 2026 using a generated
+scorecard and private local credentials. It verified encrypted persistence,
+embedded metadata removal, authenticated developer retrieval, concurrent
+create-only retries without overwriting, blocked unsigned public access, and
+deletion of the synthetic report. No real scorecard was uploaded for this check.
+Local S3 settings are in ignored `secrets/scan-reports.env`; the unchanged
+encryption key remains separately in `secrets/scan-report-encryption.key`.
+Both files have `0600` permissions. Do not paste credentials into chat.
 
 The backend still deploys from `main`; these feature-branch changes have not
-been pushed, merged or deployed. Verify encrypted storage before rolling out
-the code and enabling collection. Local/fake tests do not establish real Railway
-persistence. Connected OAuth tools expose variable names rather than credential
-values and cannot run the S3 smoke command directly. Obtain developer credentials
-through the private Railway bucket Credentials page into an ignored local file.
+been pushed, merged or deployed. Storage verification is complete; the remaining
+rollout steps are deploying the feature code and enabling collection. Connected
+OAuth tools expose variable names rather than credential values; the live check
+ran through the developer CLI using the ignored local credentials file.
 
 ## Anonymous submission contract
 
