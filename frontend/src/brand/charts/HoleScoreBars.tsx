@@ -14,7 +14,7 @@ const PROFILE_HEIGHT: Record<ScoreKey, string> = {
   birdie: "h-2/5",
   par: "h-13/25",
   bogey: "h-18/25",
-  double: "h-23/25",
+  double: "h-profile-h",
   triple: "h-full",
   quad: "h-full",
 };
