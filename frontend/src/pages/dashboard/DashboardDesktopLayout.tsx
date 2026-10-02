@@ -36,6 +36,7 @@ import {
   goalNumberLabel,
   goalTargetLabel,
   pctLabel,
+  presentMilestones,
   puttsColor,
   puttsGaugeData,
   puttsLabel,
@@ -100,7 +101,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
     girPct, recentDistribution, scramblingPct,
     upAndDownPct, putts,
     bestRound, sidebarRounds,
-    scoringGoal, goalBarPct, goalOnTrack,
+    scoringGoal, goalProgressPct, goalOnTrack,
     openHandicapSheet,
   } = vm;
 
@@ -304,7 +305,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
               </CardHeader>
               <CardContent>
                 <MilestoneFeed
-                  milestones={recentMilestones}
+                  milestones={presentMilestones(recentMilestones)}
                   onRoundClick={(id) => navigate(`/rounds/${id}`)}
                 />
               </CardContent>
@@ -344,7 +345,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
-                          width: `${goalBarPct}%`,
+                          width: `${goalProgressPct ?? 0}%`,
                           background: goalOnTrack ? colors.score.birdie.base : `linear-gradient(90deg, ${colors.primary}, ${chartColors.axis})`,
                         }}
                       />

@@ -317,6 +317,7 @@ Key files:
 Implemented. Exposes per-player analytics via `api/routers/stats.py`.
 
 - `analytics/stats.py` — all per-player stat functions (GIR, putting, scrambling, yardage buckets, score type distribution, course difficulty profile, etc.)
+- `analytics/dashboard.py` — the dashboard's figures over the last 20 rounds (L20/L5 scoring averages, last-5 GIR/scrambling/up-and-down/putts, handicap change, score mix, WHS breakdown, lifetime milestones). `GET /stats/dashboard/{id}` sends them typed; the frontend only formats and colours them.
 - `analytics/goals.py` — `goal_report(rounds, scoring_goal, home_course_rounds)` — computes gap to goal and ranks highest-ROI improvement areas ("savers"): three-putt bleed, blowup holes, achilles heel yardage zone, home course demon hole, GIR opportunity, scrambling opportunity, par 5 opportunity
 
 ## Imports

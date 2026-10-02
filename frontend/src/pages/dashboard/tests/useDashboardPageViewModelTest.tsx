@@ -13,7 +13,7 @@ import {
 } from "@/testing/fixtures/dashboard";
 import { FakeDashboardRepository } from "@/testing/fakes/FakeDashboardRepository";
 import { useDashboardPageViewModel } from "../useDashboardPageViewModel";
-import { pickBestRound, whsBreakdown, dualTrendFrom } from "../model";
+import { pickBestRound } from "../model";
 import { mixLegend } from "../present";
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -129,7 +129,12 @@ describe("useDashboardPageViewModel", () => {
 
   it("has no best round or WHS rows when there is no index", async () => {
     const { result } = renderVm({
-      dashboard: { ...populatedDashboard, handicap_index: null, recent_rounds: [] },
+      dashboard: {
+        ...populatedDashboard,
+        handicap_index: null,
+        recent_rounds: [],
+        whs: { ...populatedDashboard.whs, rows: [], window_size: 0, count_used: 0, show_calculation: false },
+      },
       analytics: emptyAnalytics(),
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -145,10 +150,4 @@ describe("dashboard model", () => {
     expect(pickBestRound([])).toBeNull();
   });
 
-  it("marks used WHS rounds from dual trend", () => {
-    const dual = dualTrendFrom(populatedAnalytics);
-    const whs = whsBreakdown(dual, populatedAnalytics, 12.4);
-    expect(whs.rows.filter((r) => r.used)).toHaveLength(1);
-    expect(whs.showCalculation).toBe(true);
-  });
 });

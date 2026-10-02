@@ -26,8 +26,6 @@ export {
   ratedCourseHandicap,
   netScore,
   formatHandicapIndex,
-  WHS_ADJUSTMENT_BY_RATED_ROUNDS,
-  whsWindow,
 } from "./handicap";
 
 export { Round } from "./round";

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { Round } from "@/domain";
 import type { DashboardData, User } from "@/types/golf";
+import type { MilestoneDto } from "@/types/api";
 import type { AnalyticsData, GoalReport } from "@/types/analytics";
 import {
   dashboardRepository,
@@ -10,21 +11,9 @@ import {
 } from "./dashboardRepository";
 import {
   dualTrendFrom,
-  girPct,
-  goalBarPct,
-  goalProgressPct,
-  handicapDelta,
-  hiTrend,
-  last20ScoringAvg,
-  last5ScoringAvg,
-  milestonesFrom,
-  mixFromRows,
-  mixHoleCount,
   pickBestRound,
-  puttsAvg,
-  scramblingPct,
-  upAndDownPct,
-  whsBreakdown,
+  scoreMixItems,
+  whsFrom,
   type DualTrendPoint,
   type HiTrend,
   type ScoreMixItem,
@@ -44,18 +33,18 @@ export interface DashboardPageViewModel {
   error: Error | null;
   refetch: () => void;
   dualData: DualTrendPoint[];
-  recentMilestones: ReturnType<typeof milestonesFrom>;
+  recentMilestones: MilestoneDto[];
   last20ScoringAvg: number | null;
   l5ScoringAvg: number | null;
   handicapDelta: number | null;
   l20ScoreMix: ScoreMixItem[];
   mixHoleCount: number;
   hiTrend: HiTrend | null;
-  girPct: number;
+  girPct: number | null;
   recentDistribution: ScoreMixItem[];
   scramblingPct: number | null;
   upAndDownPct: number | null;
-  putts: number;
+  putts: number | null;
   handicapSheetOpen: boolean;
   openHandicapSheet: () => void;
   closeHandicapSheet: () => void;
@@ -67,10 +56,19 @@ export interface DashboardPageViewModel {
   sidebarRounds: Round[];
   whs: WhsBreakdown;
   scoringGoal: number | null;
-  goalBarPct: number;
   goalProgressPct: number | null;
   goalOnTrack: boolean;
 }
+
+const EMPTY_WHS: WhsBreakdown = {
+  rows: [],
+  windowSize: 0,
+  countUsed: 0,
+  adjustment: 0,
+  diffAvg: null,
+  hasRatedRounds: false,
+  showCalculation: false,
+};
 
 export function useDashboardPageViewModel(
   userId: string,
@@ -119,7 +117,6 @@ export function useDashboardPageViewModel(
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
 
   const dualData = useMemo(() => dualTrendFrom(trends), [trends]);
-  const last20 = useMemo(() => last20ScoringAvg(trends), [trends]);
   const report = goalReport ?? null;
 
   return {
@@ -131,21 +128,18 @@ export function useDashboardPageViewModel(
     error: error as Error | null,
     refetch,
     dualData,
-    recentMilestones: milestonesFrom(trends),
-    last20ScoringAvg: last20,
-    l5ScoringAvg: last5ScoringAvg(trends),
-    handicapDelta: handicapDelta(trends),
-    l20ScoreMix: mixFromRows(trends?.score_type_distribution ?? []),
-    mixHoleCount: mixHoleCount(trends),
-    hiTrend: hiTrend(trends),
-    girPct: girPct(trends),
-    recentDistribution: mixFromRows((trends?.score_type_distribution ?? []).slice(-5), {
-      roundTenths: true,
-      dropZero: true,
-    }),
-    scramblingPct: scramblingPct(trends),
-    upAndDownPct: upAndDownPct(trends),
-    putts: puttsAvg(trends, data?.average_putts),
+    recentMilestones: data?.milestones ?? [],
+    last20ScoringAvg: data?.scoring_average_l20 ?? null,
+    l5ScoringAvg: data?.scoring_average_l5 ?? null,
+    handicapDelta: data?.handicap_change.delta ?? null,
+    l20ScoreMix: data && data.score_mix_holes > 0 ? scoreMixItems(data.score_mix) : [],
+    mixHoleCount: data?.score_mix_holes ?? 0,
+    hiTrend: data?.handicap_change.direction ?? null,
+    girPct: data?.recent_form.gir_pct ?? null,
+    recentDistribution: data ? scoreMixItems(data.recent_score_mix, { roundTenths: true, dropZero: true }) : [],
+    scramblingPct: data?.recent_form.scrambling_pct ?? null,
+    upAndDownPct: data?.recent_form.up_and_down_pct ?? null,
+    putts: data?.recent_form.putts_per_18 ?? data?.average_putts ?? null,
     handicapSheetOpen,
     openHandicapSheet,
     closeHandicapSheet,
@@ -155,10 +149,9 @@ export function useDashboardPageViewModel(
     bestRound,
     recentRounds: rounds.slice(0, 3),
     sidebarRounds: rounds.slice(0, 10),
-    whs: whsBreakdown(dualData, trends, data?.handicap_index),
+    whs: data ? whsFrom(data.whs) : EMPTY_WHS,
     scoringGoal: user?.scoring_goal ?? null,
-    goalBarPct: goalBarPct(report),
-    goalProgressPct: goalProgressPct(user?.scoring_goal, report, last20, dualData),
+    goalProgressPct: user?.scoring_goal ? (report?.progress_pct ?? null) : null,
     goalOnTrack: report?.on_track ?? false,
   };
 }

@@ -369,6 +369,8 @@ export interface GoalReport {
   scoring_goal: number;
   gap: number | null;
   on_track: boolean;
+  /** How far the average has come from the window's first round toward the goal, 0–100. */
+  progress_pct: number | null;
   savers: GoalSaver[];
 }
 
