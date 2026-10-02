@@ -9,10 +9,10 @@ BOTS="$(cd "$(dirname "$0")" && pwd)"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 # shellcheck source=cursor-run.sh
 source "$BOTS/cursor-run.sh"
+# shellcheck source=pr-lib.sh
+source "$BOTS/pr-lib.sh"
 
 eval "$(FINDING_JSON="$FINDING_JSON" python3 "$BOTS/findings.py" fields)"
-
-OWNER="${GITHUB_REPOSITORY%%/*}"
 
 comment() {
   local body="$1"
@@ -28,13 +28,10 @@ comment() {
   fi
 }
 
-existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "${OWNER}:${BRANCH}" \
-  --json number,url --jq '.[0] // empty' || true)"
-if [[ -n "$existing" ]]; then
-  url="$(printf '%s\n' "$existing" | python3 -c 'import json,sys; print(json.load(sys.stdin)["url"])')"
-  num="$(printf '%s\n' "$existing" | python3 -c 'import json,sys; print(json.load(sys.stdin)["number"])')"
+url="$(fix_pr_url "$BRANCH")"
+if [[ -n "$url" ]]; then
   echo "Fix PR already open: $url"
-  comment "Already opened [#${num}](${url}) with this change. Merge it into this branch if it looks right."
+  comment "Already opened [#${url##*/}](${url}) with this change. Merge it into this branch if it looks right."
   exit 0
 fi
 
@@ -63,34 +60,18 @@ if ! cursor_run edit "$WORK/prompt.txt"; then
   exit 1
 fi
 
-if git diff --quiet && git diff --cached --quiet && [[ -z "$(git ls-files --others --exclude-standard)" ]]; then
+if ! fix_changed; then
   echo "No files changed."
   comment "Tried to apply this finding but the working tree was unchanged. Reply \`/fix\` to retry, or use the discuss link."
   exit 0
 fi
 
-git config user.name "github-actions[bot]"
-git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-git add -A
-if git diff --cached --quiet; then
-  echo "Nothing to commit."
-  comment "Tried to apply this finding but there was nothing to commit. Reply \`/fix\` to retry."
-  exit 0
-fi
-
-git commit -m "$(cat <<EOF
+push_fix "$BRANCH" "$(cat <<EOF
 Fix ${FINDING_PATH}
 
 Addresses a ${BOT_NAME} finding on #${PR_NUMBER}.
 EOF
 )"
-
-# These branches are bot-owned (`bot-fix/pr-N/...`); replacing a failed attempt
-# is the point of --force, not rewriting anyone else's work.
-git push --force origin "HEAD:refs/heads/${BRANCH}"
-
-gh label create skip-bots --repo "$GITHUB_REPOSITORY" \
-  --description "Skip review bots" --force >/dev/null 2>&1 || true
 
 body="$(cat <<EOF
 ## What?
@@ -103,21 +84,8 @@ The review bot flagged this. Merge to take the change as a commit on #${PR_NUMBE
 EOF
 )"
 
-create_pr() {
-  gh pr create --repo "$GITHUB_REPOSITORY" \
-    --base "$HEAD_REF" \
-    --head "${OWNER}:${BRANCH}" \
-    --title "[bot] ${FINDING_TITLE}" \
-    "$@"
-}
-
-pr_url=""
-if pr_url="$(create_pr --label skip-bots --body "$body")"; then
-  :
-elif pr_url="$(create_pr --body "$body")"; then
-  :
-else
-  compare="https://github.com/${GITHUB_REPOSITORY}/compare/${HEAD_REF}...${BRANCH}?expand=1"
+if ! pr_url="$(create_fix_pr "$BRANCH" "[bot] ${FINDING_TITLE}" "$body")"; then
+  compare="$(fix_compare_url "$BRANCH")"
   echo "::error title=${BOT_NAME}::Could not open a fix PR. Enable Settings → Actions → General → Allow GitHub Actions to create and approve pull requests."
   comment "Pushed this change to \`${BRANCH}\` but could not open a PR. [Open it here](${compare}). Reply \`/fix\` to retry."
   exit 1
