@@ -8,7 +8,7 @@ import { LANDING_SECTIONS, scrollToLandingSection } from "../sections";
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-card pt-20 pb-24 md:pt-32 md:pb-36">
-      <div className="pointer-events-none absolute top-1/2 left-1/2 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px]" />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 aspect-8/5 w-glow -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-glow" />
 
       <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-center gap-16 px-6 lg:flex-row">
         <motion.div

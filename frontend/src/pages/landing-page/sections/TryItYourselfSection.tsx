@@ -118,7 +118,7 @@ export function TryItYourselfSection() {
             </div>
 
             <div className="overflow-x-auto">
-              <div className="min-w-[43.75rem]">
+              <div className="min-w-scorecard">
                 {viewModel.frontNine.length > 0 && (
                   <ScorecardTable holes={viewModel.frontNine} label="OUT" />
                 )}
