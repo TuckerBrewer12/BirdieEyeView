@@ -66,6 +66,37 @@ class Round(BaseGolfModel):
         ]
         return sum(strokes) if len(strokes) == 9 else None
 
+    def _scores_on(self, first: int, last: int) -> List[HoleScore]:
+        return [s for s in self.hole_scores if s.hole_number is not None and first <= s.hole_number <= last]
+
+    def nine_par(self, first: int, last: int) -> Optional[int]:
+        """A nine's par, once every one of its holes has one."""
+        pars = [self.get_hole_par(n) for n in range(first, last + 1)]
+        return None if any(p is None for p in pars) else sum(pars)  # type: ignore[arg-type]
+
+    def nine_to_par(self, first: int, last: int) -> Optional[int]:
+        """A nine's strokes against its par, once both are known."""
+        strokes = self._nine_total(first, last)
+        par = self.nine_par(first, last)
+        return strokes - par if strokes is not None and par is not None else None
+
+    def nine_putts(self, first: int, last: int) -> Optional[int]:
+        """A nine's putts. None if any scored hole is missing putts, as for the round."""
+        scored = [s for s in self._scores_on(first, last) if s.strokes is not None]
+        if not scored or any(s.putts is None for s in scored):
+            return None
+        return sum(s.putts for s in scored)  # type: ignore[misc]
+
+    def nine_gir(self, first: int, last: int) -> Optional[int]:
+        """Greens hit on a nine, across the holes that recorded it."""
+        girs = [s.green_in_regulation for s in self._scores_on(first, last) if s.green_in_regulation is not None]
+        return sum(girs) if girs else None
+
+    def nine_yardage(self, first: int, last: int) -> Optional[int]:
+        """A nine's length from the tee played, once every hole has a yardage."""
+        yards = [self.get_hole_yardage(n) for n in range(first, last + 1)]
+        return None if any(y is None for y in yards) else sum(yards)  # type: ignore[arg-type]
+
     def calculate_front_nine(self) -> Optional[int]:
         """Total strokes for holes 1-9, once all nine are scored."""
         return self._nine_total(1, 9)
@@ -99,6 +130,29 @@ class Round(BaseGolfModel):
                 return hole.par
         score = self.get_hole_score(hole_number)
         return score.par_played if score else None
+
+    def get_hole_handicap(self, hole_number: int) -> Optional[int]:
+        """Stroke index for a hole — the course's hole, else handicap_played on the hole score."""
+        if self.course:
+            hole = self.course.get_hole(hole_number)
+            if hole and hole.handicap is not None:
+                return hole.handicap
+        score = self.get_hole_score(hole_number)
+        return score.handicap_played if score else None
+
+    def get_hole_yardage(self, hole_number: int) -> Optional[int]:
+        """Yardage for a hole from the tee played."""
+        tee = self.get_tee()
+        return tee.hole_yardages.get(hole_number) if tee else None
+
+    def get_total_yardage(self) -> Optional[int]:
+        """The tee played's length: its stated total, else its hole yardages added up."""
+        tee = self.get_tee()
+        if isinstance(tee, Tee):
+            return tee.get_total_yardage()
+        if tee and tee.hole_yardages:
+            return sum(tee.hole_yardages.values())
+        return None
 
     def get_par(self) -> Optional[int]:
         """Get course par — from course, or calculated from par_played on hole scores."""

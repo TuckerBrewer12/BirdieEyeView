@@ -11,6 +11,7 @@ function nine(from: number, toPars: number[], par: number | null = 4): StoredHol
     fairway_hit: null,
     green_in_regulation: null,
     par_played: par,
+    handicap_played: null,
   }));
 }
 

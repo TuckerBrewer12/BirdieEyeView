@@ -975,6 +975,8 @@ export interface components {
             fairway_hit: boolean | null;
             /** Green In Regulation */
             green_in_regulation: boolean | null;
+            /** Handicap */
+            handicap: number | null;
             /** Handicap Played */
             handicap_played: number | null;
             /** Hole Number */
@@ -995,6 +997,8 @@ export interface components {
             strokes: number | null;
             /** To Par */
             to_par: number | null;
+            /** Yardage */
+            yardage: number | null;
         };
         /** HoleScoreUpdate */
         HoleScoreUpdate: {
@@ -1055,6 +1059,27 @@ export interface components {
             round_id: string | null;
             /** Value */
             value: number;
+        };
+        /**
+         * NineFigures
+         * @description What one nine adds up to, for a scorecard's OUT and IN columns. The strokes are front_nine/back_nine.
+         */
+        NineFigures: {
+            /** Gir */
+            gir: number | null;
+            /** Par */
+            par: number | null;
+            /** Putts */
+            putts: number | null;
+            /** To Par */
+            to_par: number | null;
+            /** Yards */
+            yards: number | null;
+        };
+        /** Nines */
+        Nines: {
+            back: components["schemas"]["NineFigures"];
+            front: components["schemas"]["NineFigures"];
         };
         /**
          * RecentForm
@@ -1125,6 +1150,7 @@ export interface components {
             hole_scores: components["schemas"]["HoleScoreResponse"][];
             /** Id */
             id: string | null;
+            nines: components["schemas"]["Nines"];
             /** Notes */
             notes: string | null;
             /** Par */
@@ -1143,6 +1169,8 @@ export interface components {
             user_tee: components["schemas"]["UserTee"] | null;
             /** Weather Conditions */
             weather_conditions: string | null;
+            /** Yards */
+            yards: number | null;
         };
         /**
          * RoundSummaryResponse
@@ -1169,6 +1197,7 @@ export interface components {
             hole_scores: components["schemas"]["HoleScoreResponse"][];
             /** Id */
             id: string;
+            nines: components["schemas"]["Nines"];
             /** Notes */
             notes: string | null;
             /** Par */
@@ -1184,6 +1213,8 @@ export interface components {
             total_putts: number | null;
             /** Total Score */
             total_score: number | null;
+            /** Yards */
+            yards: number | null;
         };
         /**
          * SaveRoundRequest
