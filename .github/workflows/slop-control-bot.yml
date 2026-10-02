@@ -1,0 +1,65 @@
+name: Slop Control
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "frontend/**"
+      - "api/**"
+      - "services/**"
+      - "models/**"
+      - "database/**"
+      - "analytics/**"
+      - "tests/**"
+      - "scripts/**"
+      - "conftest.py"
+      - ".github/review-bots/slop-control.md"
+      - ".github/review-bots/slop_report.py"
+      - ".github/review-bots/run-slop.sh"
+      - ".github/workflows/slop-control-bot.yml"
+
+concurrency:
+  group: slop-control-bot-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+# contents: write is for the one fix PR this job pushes. The other review
+# bots drop back to contents: read and open fixes in a second job.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  slop:
+    name: Slop Control
+    runs-on: ubuntu-latest
+
+    # Fork PRs cannot read CURSOR_API_KEY. bot-fix branches are this bot's
+    # own PRs; reviewing them would loop.
+    if: >-
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-bots') &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !startsWith(github.head_ref, 'bot-fix/')
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+
+      - name: Review
+        env:
+          BOT_NAME: "🧹 Slop Control"
+          BOT_PROMPT: .github/review-bots/slop-control.md
+          BOT_PATHSPEC: "frontend api services models database analytics tests scripts conftest.py"
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: bash .github/review-bots/run-slop.sh

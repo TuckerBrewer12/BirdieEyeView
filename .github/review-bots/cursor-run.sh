@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Run one review or fix prompt through the Cursor CLI.
 #
-# Sourced by run-bot.sh, run-coverage.sh, and run-fix.sh.
+# Sourced by run-bot.sh, run-coverage.sh, run-fix.sh, and run-slop.sh.
 # Expects WORK (a temp dir outside the repo). Optional BOT_MODEL.
 #
 #   cursor_run ask  PROMPT_FILE STDOUT_FILE   # read-only; final text to STDOUT_FILE
 #   cursor_run edit PROMPT_FILE               # may edit the worktree; no shell
 #
-# The prompt stays in WORK so a large diff is not an argv, and so run-fix.sh's
-# `git add -A` cannot commit it. Shell, network, MCP, and env files are denied.
+# The prompt stays in WORK so a large diff is not an argv, and so run-fix.sh
+# and run-slop.sh `git add -A` cannot commit it. Shell, network, MCP, and env files are denied.
 # Sandbox is off: GitHub-hosted Ubuntu cannot start it (AppArmor), and the
 # CLI then refuses to run. The deny list is the allowlist-mode gate instead.
 set -euo pipefail
