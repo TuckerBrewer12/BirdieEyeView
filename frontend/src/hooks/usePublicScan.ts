@@ -8,6 +8,9 @@ import {
   USER_FACING_ERRORS,
 } from "@/lib/userFacingErrors";
 import type { ScanResult } from "@/types/scan";
+import { failedScanAttempt, readScanFailure } from "@/lib/scanReports";
+import { useFailedScanReport } from "@/hooks/useFailedScanReport";
+import type { FailedScanAttempt, ScanFailure } from "@/types/scanReport";
 
 type PublicScanStep = "upload" | "processing" | "review";
 
@@ -68,6 +71,9 @@ export function usePublicScan() {
   const [extracting, setExtracting] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [failedScan, setFailedScan] = useState<FailedScanAttempt | null>(null);
+  const activeExtraction = useRef(0);
+  const report = useFailedScanReport(failedScan);
 
   const prefetchedOcrText = useRef<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -75,6 +81,11 @@ export function usePublicScan() {
 
   // Synchronous — fires OCR in a nested fire-and-forget IIFE, matching useScan pattern
   const handleFile = useCallback((f: File) => {
+    activeExtraction.current += 1;
+    setFailedScan(null);
+    setFile(null);
+    setStep("upload");
+    setExtracting(false);
     const fileId = `${f.name}-${f.size}-${Date.now()}`;
     activePrefetch.current = fileId;
     prefetchedOcrText.current = null;
@@ -119,6 +130,9 @@ export function usePublicScan() {
 
   const handleExtract = useCallback(async () => {
     if (!file) return;
+    const attempt = ++activeExtraction.current;
+    let failure: ScanFailure = { category: "network_error", stage: "unknown", http_status: null };
+    setFailedScan(null);
     setError(null);
     setStep("processing");
     setExtracting(true);
@@ -136,20 +150,28 @@ export function usePublicScan() {
         body: form,
       }, USER_FACING_ERRORS.scan);
       if (!res.ok) {
+        failure = await readScanFailure(res);
         throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.scan));
       }
+      failure = { category: "invalid_response", stage: "unknown", http_status: res.status };
       const data = await parseJsonResponse<ScanResult>(res, USER_FACING_ERRORS.scan);
+      if (!data.round || !Array.isArray(data.round.hole_scores)) throw new Error(USER_FACING_ERRORS.scan);
+      if (activeExtraction.current !== attempt) return;
       setResult(data);
       setStep("review");
     } catch (err) {
+      if (activeExtraction.current !== attempt) return;
       setError(err instanceof Error ? err.message : "Extraction failed. Please try again.");
+      setFailedScan(failedScanAttempt(file, failure));
       setStep("upload");
     } finally {
-      setExtracting(false);
+      if (activeExtraction.current === attempt) setExtracting(false);
     }
   }, [file, userContext]);
 
   const reset = useCallback(() => {
+    activeExtraction.current += 1;
+    setFailedScan(null);
     activePrefetch.current = null;
     prefetchedOcrText.current = null;
     if (previewUrlRef.current?.startsWith("blob:")) {
@@ -174,6 +196,7 @@ export function usePublicScan() {
     extracting,
     result,
     error,
+    report,
     handleFile,
     handleExtract,
     reset,
