@@ -71,6 +71,7 @@ export {
   InputGroupText,
   InputGroupInput,
 } from "./components/InputGroup";
+export { PageHeader } from "./components/PageHeader";
 export { PageTitle } from "./components/PageTitle";
 export { ToParFigure } from "./components/ToParFigure";
 export { Reveal } from "./components/Reveal";

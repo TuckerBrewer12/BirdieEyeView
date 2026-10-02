@@ -9,13 +9,13 @@ import {
   Collection,
   LoadingState,
   PageTitle,
+  Reveal,
   RoundPreview,
   SectionLabel,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
 import { cn } from "@/brand/cn";
-import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { CourseCharts, CourseScoreTrend } from "./CourseCharts";
 import { NineTable } from "./NineTable";
 import { TeeSwatch } from "./TeeSwatch";
@@ -123,54 +123,52 @@ export function CourseDetailPage({ userId }: { userId: string }) {
       )}
 
       {viewModel.activeTab === "performance" && (
-        <ScrollSection>
-          <div className="space-y-8">
-            <div className="flex flex-wrap gap-3">
-              {viewModel.heroStats.map((stat) => (
-                <Card key={stat.label} size="sm" className="min-w-28 flex-1">
-                  <CardContent>
-                    <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-                    <div className="mt-0.5 text-xs text-muted-foreground">{stat.label}</div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <div>
-              <SectionLabel>Score Trend</SectionLabel>
-              <CourseScoreTrend data={viewModel.scoreTrend} />
-            </div>
-
-            <div>
-              <SectionLabel>Round History</SectionLabel>
-              <Collection
-                layout="divided"
-                className="overflow-hidden rounded-xl border border-border bg-card"
-                items={viewModel.roundHistory}
-                keyFor={(round) => round.id}
-                empty="No rounds at this course."
-                renderItem={(round) => (
-                  <RoundPreview
-                    variant="history"
-                    round={round}
-                    onClick={() => navigate(`/rounds/${round.id}`)}
-                  />
-                )}
-              />
-            </div>
-
-            <div>
-              <SectionLabel>Hole-by-Hole Breakdown</SectionLabel>
-              <CourseCharts
-                charts={viewModel.charts}
-                selectedCharts={viewModel.selectedCharts}
-                chartTabs={viewModel.chartTabs}
-                chartTab={viewModel.chartTab}
-                onSelectChartTab={viewModel.selectChartTab}
-              />
-            </div>
+        <Reveal className="space-y-8">
+          <div className="flex flex-wrap gap-3">
+            {viewModel.heroStats.map((stat) => (
+              <Card key={stat.label} size="sm" className="min-w-28 flex-1">
+                <CardContent>
+                  <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">{stat.label}</div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </ScrollSection>
+
+          <div>
+            <SectionLabel>Score Trend</SectionLabel>
+            <CourseScoreTrend data={viewModel.scoreTrend} />
+          </div>
+
+          <div>
+            <SectionLabel>Round History</SectionLabel>
+            <Collection
+              layout="divided"
+              className="overflow-hidden rounded-xl border border-border bg-card"
+              items={viewModel.roundHistory}
+              keyFor={(round) => round.id}
+              empty="No rounds at this course."
+              renderItem={(round) => (
+                <RoundPreview
+                  variant="history"
+                  round={round}
+                  onClick={() => navigate(`/rounds/${round.id}`)}
+                />
+              )}
+            />
+          </div>
+
+          <div>
+            <SectionLabel>Hole-by-Hole Breakdown</SectionLabel>
+            <CourseCharts
+              charts={viewModel.charts}
+              selectedCharts={viewModel.selectedCharts}
+              chartTabs={viewModel.chartTabs}
+              chartTab={viewModel.chartTab}
+              onSelectChartTab={viewModel.selectChartTab}
+            />
+          </div>
+        </Reveal>
       )}
     </div>
   );

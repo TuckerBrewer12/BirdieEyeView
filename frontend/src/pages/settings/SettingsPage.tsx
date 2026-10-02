@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useBeforeUnload, useLocation } from "react-router-dom";
-import { ToggleGroup, ToggleGroupItem } from "@/brand";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { PageHeader, ToggleGroup, ToggleGroupItem } from "@/brand";
 import { api } from "@/lib/api";
 import { formatHandicapInputValue, parseHandicapInput } from "@/lib/handicap";
 import { useTheme } from "@/context/theme";
@@ -307,7 +306,7 @@ export function SettingsPage({ userId }: { userId: string }) {
 
   return (
     <div>
-      <PageHeader title="Settings" subtitle="Manage account preferences" scrollThreshold={100} />
+      <PageHeader title="Settings" subtitle="Manage account preferences" revealAt={100} />
       <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-5">Settings</h1>
       <div className="max-w-3xl space-y-5">
         <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">

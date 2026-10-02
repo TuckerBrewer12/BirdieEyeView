@@ -4,6 +4,7 @@ import {
   Collapse,
   Collection,
   LoadingState,
+  PageHeader,
   PageTitle,
   RoundPreview,
   SearchField,
@@ -11,7 +12,6 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { formatCourseName } from "@/lib/courseName";
 import { pluralize } from "@/lib/pluralize";
 import type { Round } from "@/domain";
@@ -34,7 +34,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
   return (
     <div>
-      <PageHeader title="Rounds" subtitle={`${pluralize(viewModel.rounds.length, "round")} played`} scrollThreshold={100} />
+      <PageHeader title="Rounds" subtitle={`${pluralize(viewModel.rounds.length, "round")} played`} revealAt={100} />
 
       <div className="flex flex-col gap-2.5 pb-6">
 

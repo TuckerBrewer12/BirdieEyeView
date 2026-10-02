@@ -1,8 +1,7 @@
 import { useState, useRef } from "react";
 import { CheckCircle, AlertTriangle, Loader2, X, ChevronDown, Info } from "lucide-react";
 import { motion, AnimatePresence, useMotionValue, animate } from "framer-motion";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { CourseLinkSearch } from "@/brand";
+import { CourseLinkSearch, PageHeader } from "@/brand";
 import { formatToPar, calcCourseHandicap, calcNetScore } from "@/types/golf";
 import { toParTextClass } from "@/lib/colors";
 import type { CourseSummary } from "@/types/golf";
@@ -476,6 +475,7 @@ export function ScanReviewStep({
       <PageHeader
         title={formatCourseName(reviewCourseName ?? rd.course?.name ?? "Review Extraction")}
         subtitle={rd.course?.location ?? "Verify and edit the extracted data"}
+        revealAt={40}
       />
 
       {error && (
