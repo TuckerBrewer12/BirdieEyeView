@@ -59,6 +59,7 @@ export {
   inputGroupAddonVariants,
   inputGroupButtonVariants,
   pageTitleVariants,
+  teeSwatchVariants,
   toggleVariants,
 } from "./components/variants";
 export { Field, FieldLabel, FieldDescription, FieldError } from "./components/Field";
@@ -72,6 +73,7 @@ export {
   InputGroupInput,
 } from "./components/InputGroup";
 export { PageTitle } from "./components/PageTitle";
+export { TeeSwatch } from "./components/TeeSwatch";
 export { ToParFigure } from "./components/ToParFigure";
 export { Reveal } from "./components/Reveal";
 export { ScanProgress } from "./components/ScanProgress";
