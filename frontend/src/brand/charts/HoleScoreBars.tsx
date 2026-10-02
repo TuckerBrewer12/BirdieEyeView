@@ -10,13 +10,13 @@ interface HoleScoreBarsProps {
 }
 
 const PROFILE_HEIGHT: Record<ScoreKey, string> = {
-  eagle: "h-7/25",
-  birdie: "h-2/5",
-  par: "h-13/25",
-  bogey: "h-18/25",
-  double: "h-23/25",
-  triple: "h-full",
-  quad: "h-full",
+  eagle: "h-profile-eagle",
+  birdie: "h-profile-birdie",
+  par: "h-profile-par",
+  bogey: "h-profile-bogey",
+  double: "h-profile-double",
+  triple: "h-profile-worse",
+  quad: "h-profile-worse",
 };
 
 /** A round at a glance: one bar per hole, coloured by how it was scored. */
