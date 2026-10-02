@@ -38,16 +38,21 @@ two S3 credentials and encryption key. The five bucket values use
 `${{failed-scan-reports.<VARIABLE>}}` references; credentials were not exported.
 Collection remains disabled.
 
-Railway reports one pre-existing staged change, patch
-`4d427b24-fddf-4ed3-bf71-5afdea3623b1`: `resource.update` on bucket
-`685b6426-744d-42eb-b682-6acd8cb34b3a` (`failed-scan-reports`). The inspected
-plugin tools expose no active bucket and do not expose the staged bucket region
-or changed configuration fields. Bucket activation and real-storage smoke
-verification are pending. Review current pending work before explicitly
-approving environment deployment; it commits all staged changes.
+Bucket activation was verified through the connected Railway plugin on
+October 2, 2026. `failed-scan-reports`, bucket ID
+`685b6426-744d-42eb-b682-6acd8cb34b3a`, is active in region `sjc`. There are no
+remaining staged/applying environment changes. The backend, frontend and
+Postgres retain their previous successful deployments; activating the bucket
+did not deploy the feature code.
+
+The real encrypted upload/retrieval smoke check is still pending. The local
+`secrets/scan-reports.env` configuration does not yet exist, and connected OAuth
+tools redact credential values. Save the bucket Credentials values into that
+ignored local file, then run the documented `smoke` command using the existing
+private encryption key. Do not paste credentials into chat.
 
 The backend still deploys from `main`; these feature-branch changes have not
-been pushed, merged or deployed. Activate and verify storage before rolling out
+been pushed, merged or deployed. Verify encrypted storage before rolling out
 the code and enabling collection. Local/fake tests do not establish real Railway
 persistence. Connected OAuth tools expose variable names rather than credential
 values and cannot run the S3 smoke command directly. Obtain developer credentials
