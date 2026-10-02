@@ -1,6 +1,7 @@
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { scoreFill, toParDisplay } from "@/brand";
+import { cn } from "@/brand/cn";
+import { scoreFillClass, toParDisplay } from "@/brand";
 import {
   DEMO_MOTION,
   useScannerDemoViewModel,
@@ -45,8 +46,10 @@ function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
           {rows.map((row) => (
             <div key={row.hole} className="py-1">
               <span
-                className="inline-block h-5 w-5 rounded-sm leading-5 text-primary-foreground sm:h-6 sm:w-6 sm:leading-6"
-                style={{ background: scoreFill(row.strokes, row.par) }}
+                className={cn(
+                  "inline-block size-5 rounded-sm leading-5 text-primary-foreground sm:size-6 sm:leading-6",
+                  scoreFillClass(row.score),
+                )}
               >
                 {row.strokes}
               </span>
@@ -240,7 +243,7 @@ export function ScannerDemo() {
   const { phase, label, scorecard } = useScannerDemoViewModel();
 
   return (
-    <div className="perspective-1000 relative flex aspect-[4/3] w-full max-w-lg items-center justify-center overflow-hidden rounded-2xl border border-border bg-card shadow-card sm:aspect-[1.1]">
+    <div className="relative flex aspect-4/3 w-full max-w-lg items-center justify-center overflow-hidden rounded-2xl border border-border bg-card shadow-card sm:aspect-11/10">
       <motion.img
         src="/hero/physical-card.jpg"
         alt="A paper golf scorecard being scanned"

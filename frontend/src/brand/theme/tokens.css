@@ -171,6 +171,11 @@
   --brand-size-icon-xs: 11px;
   --brand-size-hole-w: 30px;
   --brand-size-hole-h: 22px;
+  /* Width a full scorecard needs before it scrolls sideways. */
+  --brand-size-scorecard: 43.75rem;
+  /* The soft halo behind a marketing hero; its height comes from aspect-8/5. */
+  --brand-size-glow: 800px;
+  --brand-blur-glow: 120px;
   /* Chart measures. Recharts only takes numbers, so chart.ts mirrors these and tokens.test.ts keeps them equal. */
   --brand-size-bar-max: 28px;
   --brand-size-ring-inner: 50px;
@@ -332,6 +337,10 @@
   --spacing-icon-xs: var(--brand-size-icon-xs);
   --spacing-hole-w: var(--brand-size-hole-w);
   --spacing-hole-h: var(--brand-size-hole-h);
+  --spacing-scorecard: var(--brand-size-scorecard);
+  --spacing-glow: var(--brand-size-glow);
+
+  --blur-glow: var(--brand-blur-glow);
 
   --ring-width-3: var(--brand-ring-width);
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
-import { strokesToPar } from "@/domain";
+import { scoreKind, strokesToPar, type ScoreKind } from "@/domain";
 
 export type ScannerPhase = "photo" | "mapping" | "scanning" | "result";
 
@@ -27,6 +27,7 @@ export interface DemoScorecardRow {
   greenInRegulation: boolean;
   toPar: number;
   overPar: boolean;
+  score: ScoreKind;
 }
 
 const SAMPLE = {
@@ -44,6 +45,7 @@ const SCORECARD: DemoScorecardRow[] = SAMPLE.par.map((par, i) => ({
   greenInRegulation: SAMPLE.gir[i],
   toPar: strokesToPar(SAMPLE.strokes[i], par) ?? 0,
   overPar: SAMPLE.strokes[i] > par,
+  score: scoreKind(SAMPLE.strokes[i], par) ?? "par",
 }));
 
 /**
