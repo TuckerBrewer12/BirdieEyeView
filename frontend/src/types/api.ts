@@ -12,6 +12,7 @@ export type CourseDto = Schemas["CourseResponse"];
 export type UserTeeDto = Schemas["UserTee"];
 export type HoleScoreDto = Schemas["HoleScoreResponse"];
 export type ScoreCountsDto = Schemas["ScoreCounts"];
+export type NinesDto = Schemas["Nines"];
 export type RoundDto = Schemas["RoundResponse"];
 export type RoundSummaryDto = Schemas["RoundSummaryResponse"];
 export type DashboardDto = Schemas["DashboardResponse"];

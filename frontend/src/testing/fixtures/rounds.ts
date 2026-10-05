@@ -36,6 +36,7 @@ function played(
       fairway_hit: i < totals.fairways,
       green_in_regulation: i < totals.gir,
       par_played: STANDARD_PAR[i] ?? 4,
+      handicap_played: null,
     })),
   };
 }

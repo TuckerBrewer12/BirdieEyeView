@@ -1,12 +1,16 @@
-import type { HoleScoreDto, RoundDto, RoundSummaryDto, ScoreCountsDto } from "@/types/api";
+import type { HoleScoreDto, NinesDto, RoundDto, RoundSummaryDto, ScoreCountsDto } from "@/types/api";
 import type { Course } from "@/types/golf";
-import { getHole } from "./course";
+import { BACK_HOLES, FRONT_HOLES, getHole, getTee } from "./course";
 import { SCORE_KINDS, scoreKind, strokesToPar, type ScoreKind } from "./score";
 
-/** One hole as played. Par, to-par and kind come from the server. */
+/** One hole as played. Par, handicap, yardage, to-par and kind come from the server. */
 export interface HoleScore {
   hole: number;
   par: number | null;
+  /** The hole's stroke index. */
+  handicap: number | null;
+  /** From the tee played. */
+  yardage: number | null;
   strokes: number | null;
   putts: number | null;
   gir: boolean | null;
@@ -19,6 +23,14 @@ export interface Nine {
   holes: HoleScore[];
   /** Null until all nine holes are scored. */
   total: number | null;
+  /** Null until every hole has a par. */
+  par: number | null;
+  toPar: number | null;
+  /** Null if any scored hole is missing putts. */
+  putts: number | null;
+  gir: number | null;
+  /** Null until every hole has a yardage. */
+  yards: number | null;
 }
 
 /** Where a round was played. A round not linked to a course keeps the card's name and no id. */
@@ -45,15 +57,20 @@ export interface Round {
   toPar: number | null;
   putts: number | null;
   gir: number | null;
+  /** The tee played's length. */
+  yards: number | null;
   scoreCounts: ScoreCounts;
 }
 
-export type StrokeOverrides = Record<number, { strokes: number | null }>;
+/** Unsaved changes to holes. A field left undefined keeps the hole's own value. */
+export type HoleEdits = Record<number, { strokes?: number | null; putts?: number | null; gir?: boolean | null }>;
 
 function holeScore(dto: HoleScoreDto): HoleScore {
   return {
     hole: dto.hole_number,
     par: dto.par,
+    handicap: dto.handicap,
+    yardage: dto.yardage,
     strokes: dto.strokes,
     putts: dto.putts,
     gir: dto.green_in_regulation,
@@ -63,10 +80,24 @@ function holeScore(dto: HoleScoreDto): HoleScore {
   };
 }
 
-function nines(holes: HoleScore[], front: number | null, back: number | null): Pick<Round, "frontNine" | "backNine"> {
+function nines(
+  holes: HoleScore[],
+  front: number | null,
+  back: number | null,
+  figures: NinesDto,
+): Pick<Round, "frontNine" | "backNine"> {
+  const nine = (onNine: HoleScore[], total: number | null, sent: NinesDto["front"]): Nine => ({
+    holes: onNine,
+    total,
+    par: sent.par,
+    toPar: sent.to_par,
+    putts: sent.putts,
+    gir: sent.gir,
+    yards: sent.yards,
+  });
   return {
-    frontNine: { holes: holes.filter((hole) => hole.hole <= 9), total: front },
-    backNine: { holes: holes.filter((hole) => hole.hole >= 10), total: back },
+    frontNine: nine(holes.filter((hole) => hole.hole <= 9), front, figures.front),
+    backNine: nine(holes.filter((hole) => hole.hole >= 10), back, figures.back),
   };
 }
 
@@ -78,12 +109,13 @@ function fromSummary(dto: RoundSummaryDto): Round {
     course: { id: dto.course_id, name: dto.course_name, location: dto.course_location, par: dto.course_par },
     teeBox: dto.tee_box,
     holes,
-    ...nines(holes, dto.front_nine, dto.back_nine),
+    ...nines(holes, dto.front_nine, dto.back_nine, dto.nines),
     score: dto.total_score,
     par: dto.par,
     toPar: dto.to_par,
     putts: dto.total_putts,
     gir: dto.total_gir,
+    yards: dto.yards,
     scoreCounts: dto.score_counts,
   };
 }
@@ -102,12 +134,13 @@ function fromDto(dto: RoundDto): Round {
     },
     teeBox: dto.tee_box,
     holes,
-    ...nines(holes, dto.front_nine, dto.back_nine),
+    ...nines(holes, dto.front_nine, dto.back_nine, dto.nines),
     score: dto.total_score,
     par: dto.par,
     toPar: dto.to_par,
     putts: dto.total_putts,
     gir: dto.total_gir,
+    yards: dto.yards,
     scoreCounts: dto.score_counts,
   };
 }
@@ -117,31 +150,78 @@ function nineTotal(holes: HoleScore[]): number | null {
   return holes.reduce((sum, hole) => sum + hole.strokes!, 0);
 }
 
+function puttsOf(holes: HoleScore[]): number | null {
+  const scored = holes.filter((hole) => hole.strokes != null);
+  if (scored.length === 0 || scored.some((hole) => hole.putts == null)) return null;
+  return scored.reduce((sum, hole) => sum + hole.putts!, 0);
+}
+
+function girOf(holes: HoleScore[]): number | null {
+  const recorded = holes.filter((hole) => hole.gir != null);
+  return recorded.length > 0 ? recorded.filter((hole) => hole.gir).length : null;
+}
+
 /**
- * The round as it would read with unsaved edits: new strokes, or a different course's pars.
- * This is the one place the frontend works out golf figures, and only until the edit is saved;
- * it follows the server's rules (models/round.py) and the saved response replaces it.
+ * The round as it would read with unsaved edits: new strokes, putts or greens, or a different
+ * course and tee. This is the one place the frontend works out golf figures, and only until the
+ * edit is saved; it follows the server's rules (models/round.py) and the saved response replaces it.
  */
-function previewEdits(round: Round, edits: StrokeOverrides, course?: Course | null): Round {
+function previewEdits(round: Round, edits: HoleEdits, course?: Course | null, teeBox?: string | null): Round {
+  const tee = getTee(course, teeBox);
+  // A course picked without a matching tee has no yardages yet. The round's own course keeps the
+  // server's, which may come from the golfer's own tee.
+  const yardsCleared = !tee && !!course && course.id !== round.course?.id;
+  const yardageOf = (hole: number, current: number | null) =>
+    tee ? tee.hole_yardages[hole] ?? null : yardsCleared ? null : current;
+
   const holes = round.holes.map((hole) => {
-    const strokes = hole.hole in edits ? edits[hole.hole].strokes : hole.strokes;
-    const par = getHole(course, hole.hole)?.par ?? hole.par;
-    return { ...hole, strokes, par, toPar: strokesToPar(strokes, par), kind: scoreKind(strokes, par) };
+    const edit = edits[hole.hole];
+    const strokes = edit?.strokes !== undefined ? edit.strokes : hole.strokes;
+    const putts = edit?.putts !== undefined ? edit.putts : hole.putts;
+    const gir = edit?.gir !== undefined ? edit.gir : hole.gir;
+    const courseHole = getHole(course, hole.hole);
+    const par = courseHole?.par ?? hole.par;
+    return {
+      ...hole,
+      strokes,
+      putts,
+      gir,
+      par,
+      handicap: courseHole?.handicap ?? hole.handicap,
+      yardage: yardageOf(hole.hole, hole.yardage),
+      toPar: strokesToPar(strokes, par),
+      kind: scoreKind(strokes, par),
+    };
   });
+
+  // A picked course and tee send their own nine pars and yardages.
+  const nine = (numbers: readonly number[], before: Nine, coursePar?: number | null, teeYards?: number | null): Nine => {
+    const onNine = holes.filter((hole) => numbers.includes(hole.hole));
+    const total = nineTotal(onNine);
+    const par = course ? coursePar ?? null : before.par;
+    const yards = tee ? teeYards ?? null : yardsCleared ? null : before.yards;
+    return { holes: onNine, total, par, toPar: strokesToPar(total, par), putts: puttsOf(onNine), gir: girOf(onNine), yards };
+  };
+
+  // A round can store its own putt and green totals, so they stand until a hole's putts or green changes.
+  const puttsEdited = holes.some((hole, i) => hole.putts !== round.holes[i].putts);
+  const girEdited = holes.some((hole, i) => hole.gir !== round.holes[i].gir);
   const scored = holes.filter((hole) => hole.strokes != null);
   const score = scored.length > 0 ? scored.reduce((sum, hole) => sum + hole.strokes!, 0) : null;
   const par = course ? course.par ?? round.par : round.par;
   const scoreCounts = Object.fromEntries(SCORE_KINDS.map((kind) => [kind, 0])) as ScoreCounts;
   for (const hole of holes) if (hole.kind) scoreCounts[hole.kind] += 1;
-  const front = holes.filter((hole) => hole.hole <= 9);
-  const back = holes.filter((hole) => hole.hole >= 10);
   return {
     ...round,
     holes,
-    ...nines(holes, nineTotal(front), nineTotal(back)),
+    frontNine: nine(FRONT_HOLES, round.frontNine, course?.front_nine_par, tee?.front_nine_yardage),
+    backNine: nine(BACK_HOLES, round.backNine, course?.back_nine_par, tee?.back_nine_yardage),
     score,
     par,
     toPar: strokesToPar(score, par),
+    putts: puttsEdited ? puttsOf(holes) : round.putts,
+    gir: girEdited ? girOf(holes) : round.gir,
+    yards: tee ? tee.total_yardage : yardsCleared ? null : round.yards,
     scoreCounts,
   };
 }

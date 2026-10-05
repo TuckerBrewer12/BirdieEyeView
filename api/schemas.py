@@ -61,8 +61,24 @@ class HoleScoreResponse(ResponseModel):
     par_played: Optional[int] = None
     handicap_played: Optional[int] = None
     par: Optional[int] = None  # the course's par for the hole, else par_played
+    handicap: Optional[int] = None  # the course's stroke index for the hole, else handicap_played
+    yardage: Optional[int] = None  # from the tee played
     to_par: Optional[int] = None
     kind: Optional[ScoreKind] = None
+
+
+class NineFigures(ResponseModel):
+    """What one nine adds up to, for a scorecard's OUT and IN columns. The strokes are front_nine/back_nine."""
+    par: Optional[int] = None  # null until every hole has a par
+    to_par: Optional[int] = None  # null until the nine is scored and has a par
+    putts: Optional[int] = None  # null if any scored hole is missing putts
+    gir: Optional[int] = None
+    yards: Optional[int] = None  # null until every hole has a yardage
+
+
+class Nines(ResponseModel):
+    front: NineFigures = Field(default_factory=NineFigures)
+    back: NineFigures = Field(default_factory=NineFigures)
 
 
 class RoundFigures(ResponseModel):
@@ -75,6 +91,8 @@ class RoundFigures(ResponseModel):
     total_putts: Optional[int] = None
     total_gir: Optional[int] = None
     fairways_hit: Optional[int] = None
+    nines: Nines = Field(default_factory=Nines)
+    yards: Optional[int] = None  # the tee played's length
     score_counts: ScoreCounts = Field(default_factory=ScoreCounts)
 
 

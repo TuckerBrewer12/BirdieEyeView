@@ -1,7 +1,15 @@
 """Round responses, built one way from the Round model so every endpoint agrees."""
 
 from api.course_responses import course_detail
-from api.schemas import HoleScoreResponse, RoundFigures, RoundResponse, RoundSummaryResponse, ScoreCounts
+from api.schemas import (
+    HoleScoreResponse,
+    NineFigures,
+    Nines,
+    RoundFigures,
+    RoundResponse,
+    RoundSummaryResponse,
+    ScoreCounts,
+)
 from models import Round
 
 
@@ -10,12 +18,24 @@ def _hole_scores(round_: Round) -> list[HoleScoreResponse]:
         HoleScoreResponse(
             **hs.model_dump(),
             par=round_.get_hole_par(hs.hole_number),
+            handicap=round_.get_hole_handicap(hs.hole_number),
+            yardage=round_.get_hole_yardage(hs.hole_number),
             to_par=round_.score_to_par(hs.hole_number),
             kind=round_.get_score_kind(hs.hole_number),
         )
         for hs in round_.hole_scores
         if hs.hole_number is not None
     ]
+
+
+def _nine(round_: Round, first: int, last: int) -> NineFigures:
+    return NineFigures(
+        par=round_.nine_par(first, last),
+        to_par=round_.nine_to_par(first, last),
+        putts=round_.nine_putts(first, last),
+        gir=round_.nine_gir(first, last),
+        yards=round_.nine_yardage(first, last),
+    )
 
 
 def _figures(round_: Round) -> dict:
@@ -28,6 +48,8 @@ def _figures(round_: Round) -> dict:
         total_putts=round_.get_total_putts(),
         total_gir=round_.get_total_gir(),
         fairways_hit=round_.get_fairways_hit(),
+        nines=Nines(front=_nine(round_, 1, 9), back=_nine(round_, 10, 18)),
+        yards=round_.get_total_yardage(),
         score_counts=ScoreCounts(**round_.get_score_counts()),
     ).model_dump()
 

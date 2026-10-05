@@ -1261,6 +1261,17 @@
             ],
             "title": "Green In Regulation"
           },
+          "handicap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handicap"
+          },
           "handicap_played": {
             "anyOf": [
               {
@@ -1372,6 +1383,17 @@
               }
             ],
             "title": "To Par"
+          },
+          "yardage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yardage"
           }
         },
         "required": [
@@ -1385,6 +1407,8 @@
           "par_played",
           "handicap_played",
           "par",
+          "handicap",
+          "yardage",
           "to_par",
           "kind"
         ],
@@ -1599,6 +1623,91 @@
           "round_id"
         ],
         "title": "Milestone",
+        "type": "object"
+      },
+      "NineFigures": {
+        "description": "What one nine adds up to, for a scorecard's OUT and IN columns. The strokes are front_nine/back_nine.",
+        "properties": {
+          "gir": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gir"
+          },
+          "par": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Par"
+          },
+          "putts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Putts"
+          },
+          "to_par": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Par"
+          },
+          "yards": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yards"
+          }
+        },
+        "required": [
+          "par",
+          "to_par",
+          "putts",
+          "gir",
+          "yards"
+        ],
+        "title": "NineFigures",
+        "type": "object"
+      },
+      "Nines": {
+        "properties": {
+          "back": {
+            "$ref": "#/components/schemas/NineFigures"
+          },
+          "front": {
+            "$ref": "#/components/schemas/NineFigures"
+          }
+        },
+        "required": [
+          "front",
+          "back"
+        ],
+        "title": "Nines",
         "type": "object"
       },
       "RecentForm": {
@@ -1852,6 +1961,9 @@
             ],
             "title": "Id"
           },
+          "nines": {
+            "$ref": "#/components/schemas/Nines"
+          },
           "notes": {
             "anyOf": [
               {
@@ -1952,6 +2064,17 @@
               }
             ],
             "title": "Weather Conditions"
+          },
+          "yards": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yards"
           }
         },
         "required": [
@@ -1963,6 +2086,8 @@
           "total_putts",
           "total_gir",
           "fairways_hit",
+          "nines",
+          "yards",
           "score_counts",
           "id",
           "course",
@@ -2080,6 +2205,9 @@
             "title": "Id",
             "type": "string"
           },
+          "nines": {
+            "$ref": "#/components/schemas/Nines"
+          },
           "notes": {
             "anyOf": [
               {
@@ -2159,6 +2287,17 @@
               }
             ],
             "title": "Total Score"
+          },
+          "yards": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yards"
           }
         },
         "required": [
@@ -2170,6 +2309,8 @@
           "total_putts",
           "total_gir",
           "fairways_hit",
+          "nines",
+          "yards",
           "score_counts",
           "id",
           "course_id",

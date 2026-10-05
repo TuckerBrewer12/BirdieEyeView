@@ -29,7 +29,7 @@ export {
 } from "./handicap";
 
 export { Round } from "./round";
-export type { HoleScore, Nine, RoundCourse, ScoreCounts, StrokeOverrides } from "./round";
+export type { HoleEdits, HoleScore, Nine, RoundCourse, ScoreCounts } from "./round";
 
 export { activityDays } from "./activity";
 export type { ActivityDay } from "./activity";
