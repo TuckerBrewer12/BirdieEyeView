@@ -184,7 +184,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
                 top: tooltipPos.y - 10,
               }}
               initial={{ opacity: 0, scale: motionTokens.tapScale, y: 4 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
+              animate={{ opacity: 1, scale: motionTokens.hoverScale, y: 0 }}
               exit={{ opacity: 0, scale: motionTokens.tapScale, y: 4 }}
               transition={{ duration: motionTokens.duration.collapse }}
             >
