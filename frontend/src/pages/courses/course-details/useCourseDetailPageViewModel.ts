@@ -13,7 +13,7 @@ import {
   longestTee,
 } from "@/domain/course";
 import { ratedCourseHandicap } from "@/domain/handicap";
-import type { Round } from "@/domain";
+import { Round } from "@/domain";
 import type { Course, Tee } from "@/types/golf";
 import type { CourseAnalyticsData, CourseScoreTrendRow } from "@/types/analytics";
 import { coursesRepository, type CoursesRepository } from "../coursesRepository";
@@ -159,6 +159,10 @@ const CHART_TABS: TabItem<ChartTabKey>[] = [
 const EMPTY_ANALYTICS: CourseAnalyticsData = {
   course_id: "",
   rounds_played: 0,
+  scoring_average: null,
+  best_score: null,
+  worst_score: null,
+  rounds: [],
   score_trend_on_course: [],
   average_score_relative_to_par_by_hole: [],
   gir_percentage_by_hole: [],
@@ -323,12 +327,6 @@ export function useCourseDetailPageViewModel(
     enabled: !!courseId,
   });
 
-  const { data: rounds = [] } = useQuery({
-    queryKey: queryKeys.rounds(userId),
-    queryFn: () => repository.getRoundsForUser(userId),
-    enabled: !!courseId,
-  });
-
   const { data: handicapData } = useQuery({
     queryKey: queryKeys.handicap(userId),
     queryFn: async () => {
@@ -360,10 +358,7 @@ export function useCourseDetailPageViewModel(
     () => trendFrom(analytics.score_trend_on_course),
     [analytics.score_trend_on_course],
   );
-  const scores = scoreTrend.map((row) => row.total_score);
-  const scoringAvg = scores.length === 0
-    ? null
-    : scores.reduce((sum, value) => sum + value, 0) / scores.length;
+  const roundHistory = useMemo(() => analytics.rounds.map(Round.fromSummary), [analytics.rounds]);
   const charts = useMemo(() => chartsFrom(analytics), [analytics]);
 
   const teeChips: TeeChip[] = (course?.tees ?? [])
@@ -415,14 +410,12 @@ export function useCourseDetailPageViewModel(
     showPerformanceTab,
     heroStats: [
       { value: String(analytics.rounds_played), label: "Rounds Played" },
-      { value: scoringAvg != null ? scoringAvg.toFixed(1) : "—", label: "Scoring Avg" },
-      { value: scores.length ? String(Math.min(...scores)) : "—", label: "Best Round" },
-      { value: scores.length ? String(Math.max(...scores)) : "—", label: "Worst Round" },
+      { value: analytics.scoring_average != null ? analytics.scoring_average.toFixed(1) : "—", label: "Scoring Avg" },
+      { value: dash(analytics.best_score), label: "Best Round" },
+      { value: dash(analytics.worst_score), label: "Worst Round" },
     ],
     scoreTrend,
-    roundHistory: rounds
-      .filter((round) => round.course?.id === courseId)
-      .sort((a, b) => ((b.date ?? "") > (a.date ?? "") ? 1 : -1)),
+    roundHistory,
     chartTabs: CHART_TABS,
     chartTab,
     selectChartTab: (key) => {
