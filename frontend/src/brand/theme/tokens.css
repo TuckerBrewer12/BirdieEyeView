@@ -167,6 +167,8 @@
   --brand-size-date-rail: 54px;
   --brand-size-preview: 390px;
   --brand-size-chart: 180px;
+  /* Width a hole-by-hole chart needs before it scrolls sideways. */
+  --brand-size-chart-wide: 45rem;
   --brand-size-sheet: 28rem;
   --brand-size-icon-xs: 11px;
   --brand-size-hole-w: 30px;
@@ -347,6 +349,7 @@
   --spacing-date-rail: var(--brand-size-date-rail);
   --spacing-preview: var(--brand-size-preview);
   --spacing-chart: var(--brand-size-chart);
+  --spacing-chart-wide: var(--brand-size-chart-wide);
   --spacing-sheet: var(--brand-size-sheet);
   --spacing-icon-xs: var(--brand-size-icon-xs);
   --spacing-hole-w: var(--brand-size-hole-w);
