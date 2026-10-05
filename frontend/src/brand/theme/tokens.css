@@ -183,6 +183,10 @@
   /* The soft halo behind a marketing hero; its height comes from aspect-8/5. */
   --brand-size-glow: 800px;
   --brand-blur-glow: 120px;
+  /* Scoring hero radial. No shared placement matches this origin; the wash is the recessed opacity. */
+  --brand-glow-origin: at 90% 10%;
+  --brand-glow-stop: 55%;
+  --brand-glow-wash: var(--brand-opacity-recessed);
   /* Chart measures. Recharts only takes numbers, so chart.ts mirrors these and tokens.test.ts keeps them equal. */
   --brand-size-bar-max: 28px;
   --brand-size-ring-inner: 50px;

@@ -51,7 +51,7 @@ export function ScoringHeroCard({
   return (
     <Card
       data-slot="scoring-hero-card"
-      className="rounded-2xl bg-radial-[at_90%_10%] from-primary/8 to-card to-55%"
+      className="rounded-2xl bg-radial-(--brand-glow-origin) from-primary/(--brand-glow-wash) to-card to-(percentage:--brand-glow-stop)"
     >
       <CardContent className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
