@@ -13,3 +13,9 @@ test("handicap sheet opens and closes", async ({ dashboard }) => {
   await dashboard.closeHandicapSheet();
   await dashboard.doesNotSeeHandicapSheet();
 });
+
+test("tapping a milestone opens its round", async ({ dashboard }) => {
+  await dashboard.open();
+  await dashboard.tapMilestone("First round under par");
+  await dashboard.isAtRound("round-3");
+});

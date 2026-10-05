@@ -2,9 +2,9 @@
 
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 
-from models import Course, UserTee
+from models import Hole, UserTee
 from models.hole_score import ScoreKind
 
 
@@ -22,6 +22,31 @@ class ScoreCounts(ResponseModel):
     double: int = 0
     triple: int = 0
     quad: int = 0
+
+
+class TeeResponse(ResponseModel):
+    """A tee with its yardage figures worked out."""
+    color: Optional[str] = None
+    slope_rating: Optional[float] = None
+    course_rating: Optional[float] = None
+    hole_yardages: Dict[int, int] = Field(default_factory=dict)
+    total_yardage: Optional[int] = None       # stored, else the sum of the holes
+    front_nine_yardage: Optional[int] = None  # null until all nine holes have a yardage
+    back_nine_yardage: Optional[int] = None
+
+
+class CourseResponse(ResponseModel):
+    """A full course, with the figures the Course model works out."""
+    id: Optional[str] = None
+    name: Optional[str] = None
+    external_course_id: Optional[str] = None
+    location: Optional[str] = None
+    user_id: Optional[str] = None
+    par: Optional[int] = None             # stored, else the sum of all 18 holes
+    front_nine_par: Optional[int] = None  # null until all nine holes have a par
+    back_nine_par: Optional[int] = None
+    holes: List[Hole] = Field(default_factory=list)
+    tees: List[TeeResponse] = Field(default_factory=list)
 
 
 class HoleScoreResponse(ResponseModel):
@@ -87,7 +112,7 @@ class RoundSummaryResponse(RoundFigures):
 class RoundResponse(RoundFigures):
     """A full round: the stored round, its figures, and its hole scores."""
     id: Optional[str] = None
-    course: Optional[Course] = None
+    course: Optional[CourseResponse] = None
     tee_box: Optional[str] = None
     date: Optional[datetime] = None
     weather_conditions: Optional[str] = None

@@ -1,11 +1,12 @@
-import type { CourseDto, RoundSummaryDto } from "../../types/api";
+import type { RoundSummaryDto } from "../../types/api";
+import type { StoredCourse } from "../fakes/courseResponses";
 import { summaryResponse, type StoredRound } from "../fakes/roundResponses";
 
 const STANDARD_PAR = [4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5];
 
 /** A course as the round list knows it: name and par, no holes or tees. */
-function listedCourse(id: string, name: string, location: string | null): CourseDto {
-  return { id, name, location, par: 72, holes: [], tees: [], external_course_id: null, user_id: null };
+function listedCourse(id: string, name: string, location: string | null): StoredCourse {
+  return { id, name, location, par: 72, holes: [], tees: [] };
 }
 
 /** Round totals, spread over the holes: one-putts first, then greens and fairways hit on the opening holes. */

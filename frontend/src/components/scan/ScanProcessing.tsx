@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { PageHeader } from "@/brand";
 import type { ScanState } from "@/types/scan";
 
 const PHASES_FULL = [
@@ -23,7 +23,7 @@ export function ScanProcessing({ scanMode }: { scanMode: ScanState["scanMode"] }
 
   return (
     <div>
-      <PageHeader title="Scan Scorecard" />
+      <PageHeader title="Scan Scorecard" revealAt={40} />
       <div className="flex flex-col items-center justify-center min-h-[62vh]">
 
         {/* Animated scorecard card */}

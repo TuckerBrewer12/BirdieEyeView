@@ -1,6 +1,6 @@
 import type { HoleScoreDto, NinesDto, RoundDto, RoundSummaryDto, ScoreCountsDto } from "@/types/api";
 import type { Course } from "@/types/golf";
-import { BACK_HOLES, FRONT_HOLES, coursePar, getHole, getTee, teeYards } from "./course";
+import { BACK_HOLES, FRONT_HOLES, getHole, getTee } from "./course";
 import { SCORE_KINDS, scoreKind, strokesToPar, type ScoreKind } from "./score";
 
 /** One hole as played. Par, handicap, yardage, to-par and kind come from the server. */
@@ -150,11 +150,6 @@ function nineTotal(holes: HoleScore[]): number | null {
   return holes.reduce((sum, hole) => sum + hole.strokes!, 0);
 }
 
-function allOrNull(values: (number | null | undefined)[]): number | null {
-  if (values.some((value) => value == null)) return null;
-  return values.reduce<number>((sum, value) => sum + value!, 0);
-}
-
 function puttsOf(holes: HoleScore[]): number | null {
   const scored = holes.filter((hole) => hole.strokes != null);
   if (scored.length === 0 || scored.some((hole) => hole.putts == null)) return null;
@@ -199,15 +194,12 @@ function previewEdits(round: Round, edits: HoleEdits, course?: Course | null, te
     };
   });
 
-  const nine = (numbers: readonly number[], before: Nine): Nine => {
+  // A picked course and tee send their own nine pars and yardages.
+  const nine = (numbers: readonly number[], before: Nine, coursePar?: number | null, teeYards?: number | null): Nine => {
     const onNine = holes.filter((hole) => numbers.includes(hole.hole));
     const total = nineTotal(onNine);
-    const par = course
-      ? allOrNull(numbers.map((n) => getHole(course, n)?.par ?? onNine.find((h) => h.hole === n)?.par))
-      : before.par;
-    const yards = tee
-      ? allOrNull(numbers.map((n) => tee.hole_yardages[n]))
-      : yardsCleared ? null : before.yards;
+    const par = course ? coursePar ?? null : before.par;
+    const yards = tee ? teeYards ?? null : yardsCleared ? null : before.yards;
     return { holes: onNine, total, par, toPar: strokesToPar(total, par), putts: puttsOf(onNine), gir: girOf(onNine), yards };
   };
 
@@ -216,20 +208,20 @@ function previewEdits(round: Round, edits: HoleEdits, course?: Course | null, te
   const girEdited = holes.some((hole, i) => hole.gir !== round.holes[i].gir);
   const scored = holes.filter((hole) => hole.strokes != null);
   const score = scored.length > 0 ? scored.reduce((sum, hole) => sum + hole.strokes!, 0) : null;
-  const par = course ? coursePar(course) ?? round.par : round.par;
+  const par = course ? course.par ?? round.par : round.par;
   const scoreCounts = Object.fromEntries(SCORE_KINDS.map((kind) => [kind, 0])) as ScoreCounts;
   for (const hole of holes) if (hole.kind) scoreCounts[hole.kind] += 1;
   return {
     ...round,
     holes,
-    frontNine: nine(FRONT_HOLES, round.frontNine),
-    backNine: nine(BACK_HOLES, round.backNine),
+    frontNine: nine(FRONT_HOLES, round.frontNine, course?.front_nine_par, tee?.front_nine_yardage),
+    backNine: nine(BACK_HOLES, round.backNine, course?.back_nine_par, tee?.back_nine_yardage),
     score,
     par,
     toPar: strokesToPar(score, par),
     putts: puttsEdited ? puttsOf(holes) : round.putts,
     gir: girEdited ? girOf(holes) : round.gir,
-    yards: tee ? teeYards(tee) : yardsCleared ? null : round.yards,
+    yards: tee ? tee.total_yardage : yardsCleared ? null : round.yards,
     scoreCounts,
   };
 }

@@ -1,7 +1,7 @@
 import { SCORE_KINDS, type ScoreKind } from "@/domain/score";
 import type { Round } from "@/domain/round";
 import type { AnalyticsData, GoalReport } from "@/types/analytics";
-import type { ScoreMixDto, WhsBreakdownDto } from "@/types/api";
+import type { MilestoneDto, ScoreMixDto, WhsBreakdownDto } from "@/types/api";
 
 export type TrendView = "score" | "hcp";
 export type HiTrend = "up" | "down" | "flat";
@@ -113,4 +113,24 @@ export function goalProgress(scoringGoal: number | null | undefined, report: Goa
     onTrack: report?.on_track ?? false,
     focus: report?.savers[0]?.headline ?? null,
   };
+}
+
+/** A lifetime best the server found, kept as the fact: what kind it is and the number it was set at. */
+export interface Milestone {
+  kind: MilestoneDto["kind"];
+  /** The score for a round under par, the threshold broken for score and putt breaks, the length of a par streak. */
+  value: number;
+  date: string;
+  course: string;
+  roundId: string | null;
+}
+
+export function milestonesFrom(dtos: MilestoneDto[]): Milestone[] {
+  return dtos.map((dto) => ({
+    kind: dto.kind,
+    value: dto.value,
+    date: dto.date,
+    course: dto.course,
+    roundId: dto.round_id,
+  }));
 }

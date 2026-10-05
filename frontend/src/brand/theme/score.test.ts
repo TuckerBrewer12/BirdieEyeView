@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toParBadgeClass, toParTextClass } from "./score";
+import { SCORE_KEYS, scoreFillClass, scoreOnFillClass, toParBadgeClass, toParTextClass } from "./score";
 
 describe("toParTextClass", () => {
   it("splits under, even, and over par", () => {
@@ -16,5 +16,21 @@ describe("toParBadgeClass", () => {
     expect(toParBadgeClass(0)).toBe("bg-muted text-muted-foreground");
     expect(toParBadgeClass(3)).toBe("bg-destructive/10 text-score-bogey");
     expect(toParBadgeClass(null)).toBe("bg-muted text-muted-foreground");
+  });
+});
+
+describe("scoreFillClass", () => {
+  it("paints every score with its own base token", () => {
+    for (const key of SCORE_KEYS) {
+      expect(scoreFillClass(key)).toBe(`bg-score-${key}-base`);
+    }
+  });
+});
+
+describe("scoreOnFillClass", () => {
+  it("names the text utility that reads on each score's fill", () => {
+    for (const key of SCORE_KEYS) {
+      expect(scoreOnFillClass(key)).toBe(`text-score-${key}-on-base`);
+    }
   });
 });

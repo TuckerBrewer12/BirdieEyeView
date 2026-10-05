@@ -42,7 +42,7 @@ export function RoundActions({
 }: RoundActionsProps) {
   return (
     <div data-slot="round-actions" className="flex items-center justify-between py-1 pb-3">
-      <Button variant="linkMuted" size="xs" className="h-auto gap-1 p-0 text-[13px]" onClick={onBack}>
+      <Button variant="linkMuted" size="xs" className="h-auto gap-1 p-0 text-body" onClick={onBack}>
         <ChevronLeft className="size-4" />
         Rounds
       </Button>
@@ -50,10 +50,10 @@ export function RoundActions({
       <div className="flex items-center gap-2">
         {editMode ? (
           <>
-            <Button size="sm" className="px-3.5 text-[13px]" disabled={saving} onClick={onSave}>
+            <Button size="sm" className="px-3.5 text-body" disabled={saving} onClick={onSave}>
               {saving ? "Saving…" : "Save"}
             </Button>
-            <Button variant="outline" size="sm" className="px-3.5 text-[13px]" onClick={onCancelEdit}>
+            <Button variant="outline" size="sm" className="px-3.5 text-body" onClick={onCancelEdit}>
               Cancel
             </Button>
           </>
@@ -62,13 +62,13 @@ export function RoundActions({
             variant="destructive"
             className="flex w-auto items-center gap-2 bg-destructive/5 py-1.5"
           >
-            <AlertDescription className="text-[13px] text-destructive">
+            <AlertDescription className="text-body text-destructive">
               Delete this round?
             </AlertDescription>
             <Button
               variant="linkMuted"
               size="xs"
-              className="h-auto p-0 text-[13px] font-bold text-destructive hover:text-destructive"
+              className="h-auto p-0 text-body font-bold text-destructive hover:text-destructive"
               disabled={deleting}
               onClick={onConfirmDelete}
             >
@@ -77,7 +77,7 @@ export function RoundActions({
             <Button
               variant="linkMuted"
               size="xs"
-              className="h-auto p-0 text-[13px]"
+              className="h-auto p-0 text-body"
               onClick={onCancelDelete}
             >
               Cancel

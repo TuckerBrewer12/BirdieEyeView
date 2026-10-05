@@ -16,7 +16,7 @@ export {
   chartLayout,
   chartColors,
   SCORE_KEYS,
-  scoreFill,
+  scoreFillClass,
   scoreKeyFor,
   toParFill,
   toParTone,
@@ -24,6 +24,7 @@ export {
   toParDisplay,
   toParTextClass,
   toParBadgeClass,
+  scoreOnFillClass,
 } from "./theme";
 export type { ScoreKey, ScoreSwatch, ScoreTone } from "./theme";
 export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/Alert";
@@ -59,6 +60,7 @@ export {
   inputGroupAddonVariants,
   inputGroupButtonVariants,
   pageTitleVariants,
+  teeSwatchVariants,
   toggleVariants,
 } from "./components/variants";
 export { Field, FieldLabel, FieldDescription, FieldError } from "./components/Field";
@@ -71,7 +73,9 @@ export {
   InputGroupText,
   InputGroupInput,
 } from "./components/InputGroup";
+export { PageHeader } from "./components/PageHeader";
 export { PageTitle } from "./components/PageTitle";
+export { TeeSwatch } from "./components/TeeSwatch";
 export { ToParFigure } from "./components/ToParFigure";
 export { Reveal } from "./components/Reveal";
 export { ScanProgress } from "./components/ScanProgress";
@@ -83,6 +87,7 @@ export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
 export { RoundPreview } from "./components/RoundPreview";
 export { CoursePreview } from "./components/CoursePreview";
 export { SectionLabel } from "./components/SectionLabel";
+export { ScoreCountChip } from "./components/ScoreCountChip";
 export { SearchField } from "./components/SearchField";
 export { SortControl } from "./components/SortControl";
 export { CourseLinkSearch } from "./components/CourseLinkSearch";

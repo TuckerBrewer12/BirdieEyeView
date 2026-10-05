@@ -1,6 +1,7 @@
 import type { Course, CourseSummary } from "../../types/golf";
 import type { CourseDto, RoundDto } from "../../types/api";
 import type { RoundComparison } from "../../types/analytics";
+import { courseResponse } from "../fakes/courseResponses";
 import { roundResponse } from "../fakes/roundResponses";
 import { storedRounds } from "./rounds";
 
@@ -26,13 +27,11 @@ function holes(pars: number[]) {
   }));
 }
 
-export const halfMoonBayCourse: CourseDto = {
+export const halfMoonBayCourse: CourseDto = courseResponse({
   id: "course-hmb",
   name: "Half Moon Bay",
   location: "Half Moon Bay, CA",
   par: 72,
-  external_course_id: null,
-  user_id: null,
   holes: holes(STANDARD_PAR),
   tees: [
     {
@@ -50,15 +49,13 @@ export const halfMoonBayCourse: CourseDto = {
       course_rating: 70.1,
     },
   ],
-};
+});
 
-export const pebbleBeachCourse: CourseDto = {
+export const pebbleBeachCourse: CourseDto = courseResponse({
   id: "course-pebble",
   name: "Pebble Beach",
   location: "Pebble Beach, CA",
   par: 72,
-  external_course_id: null,
-  user_id: null,
   holes: holes(STANDARD_PAR),
   tees: [
     {
@@ -69,7 +66,7 @@ export const pebbleBeachCourse: CourseDto = {
       course_rating: 75.0,
     },
   ],
-};
+});
 
 const [hmbRound, , , scanned] = storedRounds;
 

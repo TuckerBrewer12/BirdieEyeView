@@ -4,6 +4,7 @@ import type { CourseAnalyticsData, RoundComparison } from "../../types/analytics
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
 import { toCourseSummary } from "../fixtures/roundDetails";
+import { courseResponse } from "./courseResponses";
 import {
   roundResponse,
   storedFromRound,
@@ -161,19 +162,17 @@ export class InMemoryRounds {
 
   getCourse(courseId: string): CourseDto {
     const course = this.fullCourses.find((c) => c.id === courseId);
-    if (course) return { external_course_id: null, user_id: null, ...course };
+    if (course) return course;
     const summary = this.courses.find((c) => c.id === courseId);
     if (summary) {
-      return {
+      return courseResponse({
         id: summary.id,
         name: summary.name,
         location: summary.location,
         par: summary.par,
         holes: [],
         tees: [],
-        external_course_id: null,
-        user_id: null,
-      };
+      });
     }
     throw new Error("Course not found.");
   }

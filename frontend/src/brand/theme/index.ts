@@ -7,7 +7,7 @@ export { motion } from "./motion";
 export { chartTooltipStyle, chartTickStyle, chartLayout, chartColors } from "./chart";
 export {
   SCORE_KEYS,
-  scoreFill,
+  scoreFillClass,
   scoreKeyFor,
   toParFill,
   toParTone,
@@ -15,5 +15,6 @@ export {
   toParDisplay,
   toParTextClass,
   toParBadgeClass,
+  scoreOnFillClass,
 } from "./score";
 export type { ScoreKey, ScoreTone } from "./score";

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { courseResponse } from "@/testing/fakes/courseResponses";
 import { roundResponse } from "@/testing/fakes/roundResponses";
 import { halfMoonBayCourse, halfMoonBayRound, pebbleBeachCourse, scannedRound } from "@/testing/fixtures/roundDetails";
 import { storedRounds } from "@/testing/fixtures/rounds";
@@ -27,13 +28,13 @@ const yardsFrom = (base: number) =>
   Object.fromEntries(Array.from({ length: 18 }, (_, i) => [i + 1, base + i]));
 
 /** Half Moon Bay with hole yardages on both tees, played from the blues. */
-const measuredCourse = {
+const measuredCourse = courseResponse({
   ...halfMoonBayCourse,
   tees: [
     { ...halfMoonBayCourse.tees[0], total_yardage: null, hole_yardages: yardsFrom(300) },
     { ...halfMoonBayCourse.tees[1], total_yardage: null, hole_yardages: yardsFrom(250) },
   ],
-};
+});
 const measuredRound = roundResponse({ ...storedRounds[0], course: measuredCourse, tee_box: "Blue" });
 
 describe("Round.fromDto", () => {

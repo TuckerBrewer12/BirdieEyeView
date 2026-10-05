@@ -13,13 +13,13 @@ export {
   ALL_HOLES,
   getTee,
   getHole,
-  coursePar,
   teeColors,
-  teeYards,
-  teeYardsForHoles,
+  TEE_COLORS,
+  extractTeeColorToken,
+  chooseCompatibleTee,
   longestTee,
 } from "./course";
-export type { YardageSource } from "./course";
+export type { TeeColor } from "./course";
 
 export {
   courseHandicap,

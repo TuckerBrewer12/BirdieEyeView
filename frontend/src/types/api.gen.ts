@@ -746,16 +746,26 @@ export interface components {
             /** File */
             file: string;
         };
+        /** CourseHoleInput */
+        CourseHoleInput: {
+            /** Handicap */
+            handicap?: number | null;
+            /** Hole Number */
+            hole_number: number;
+            /** Par */
+            par?: number | null;
+        };
         /**
-         * Course
-         * @description Represents a golf course with its holes and tee options.
-         *
-         *     user_id IS None  => master/global course (read-only for regular users)
-         *     user_id IS set   => custom course owned by that user
+         * CourseResponse
+         * @description A full course, with the figures the Course model works out.
          */
-        Course: {
+        CourseResponse: {
+            /** Back Nine Par */
+            back_nine_par: number | null;
             /** External Course Id */
             external_course_id: string | null;
+            /** Front Nine Par */
+            front_nine_par: number | null;
             /** Holes */
             holes: components["schemas"]["Hole"][];
             /** Id */
@@ -767,18 +777,9 @@ export interface components {
             /** Par */
             par: number | null;
             /** Tees */
-            tees: components["schemas"]["Tee"][];
+            tees: components["schemas"]["TeeResponse"][];
             /** User Id */
             user_id: string | null;
-        };
-        /** CourseHoleInput */
-        CourseHoleInput: {
-            /** Handicap */
-            handicap?: number | null;
-            /** Hole Number */
-            hole_number: number;
-            /** Par */
-            par?: number | null;
         };
         /**
          * CourseSummaryResponse
@@ -1137,7 +1138,7 @@ export interface components {
         RoundResponse: {
             /** Back Nine */
             back_nine: number | null;
-            course: components["schemas"]["Course"] | null;
+            course: components["schemas"]["CourseResponse"] | null;
             /** Course Name Played */
             course_name_played: string | null;
             /** Date */
@@ -1345,14 +1346,18 @@ export interface components {
             addressee_user_id?: string | null;
         };
         /**
-         * Tee
-         * @description Represents a tee box option with its ratings and hole yardages.
+         * TeeResponse
+         * @description A tee with its yardage figures worked out.
          */
-        Tee: {
+        TeeResponse: {
+            /** Back Nine Yardage */
+            back_nine_yardage: number | null;
             /** Color */
             color: string | null;
             /** Course Rating */
             course_rating: number | null;
+            /** Front Nine Yardage */
+            front_nine_yardage: number | null;
             /** Hole Yardages */
             hole_yardages: {
                 [key: string]: number;
@@ -1963,7 +1968,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["CourseResponse"];
                 };
             };
             /** @description Validation Error */

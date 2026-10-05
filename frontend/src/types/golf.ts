@@ -1,41 +1,21 @@
-import type { DashboardDto, HoleScoreDto, RoundDto, RoundSummaryDto } from "./api";
+import type {
+  CourseDto,
+  DashboardDto,
+  HoleDto,
+  HoleScoreDto,
+  RoundDto,
+  RoundSummaryDto,
+  TeeDto,
+} from "./api";
 
-// Round responses come from the generated API types; see ./api.ts.
+// Round and course responses come from the generated API types; see ./api.ts.
 export type HoleScore = HoleScoreDto;
 export type Round = RoundDto;
 export type RoundSummary = RoundSummaryDto;
 export type DashboardData = DashboardDto;
-
-export interface Hole {
-  number: number | null;
-  par: number | null;
-  handicap: number | null;
-}
-
-export interface Tee {
-  color: string | null;
-  total_yardage: number | null;
-  hole_yardages: Record<number, number>;
-  slope_rating: number | null;
-  course_rating: number | null;
-}
-
-export interface Course {
-  id: string | null;
-  name: string | null;
-  location: string | null;
-  par: number | null;
-  holes: Hole[];
-  tees: Tee[];
-}
-
-export interface Milestone {
-  type: "score_break" | "gir_break" | "putt_break" | "eagle" | "hole_in_one" | "under_par" | "par_streak" | "birdie_streak";
-  label: string;
-  date: string; // "YYYY/M/D"
-  course: string;
-  round_id?: string | null;
-}
+export type Hole = HoleDto;
+export type Tee = TeeDto;
+export type Course = CourseDto;
 
 export interface CourseSummary {
   id: string;

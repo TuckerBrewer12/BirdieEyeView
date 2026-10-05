@@ -8,12 +8,9 @@ import {
   ALL_HOLES,
   BACK_HOLES,
   FRONT_HOLES,
-  coursePar as courseParOf,
   getHole,
   getTee,
   longestTee,
-  teeYards,
-  teeYardsForHoles,
 } from "@/domain/course";
 import { ratedCourseHandicap } from "@/domain/handicap";
 import type { Round } from "@/domain";
@@ -181,19 +178,16 @@ function buildNine(
   course: Course,
   holes: readonly number[],
   label: string,
-  showTotal: boolean,
+  back: boolean,
   selectedTee: Tee | null,
   personalParByHole: Record<number, number> | undefined,
 ): ScorecardNine {
-  const parRow = holes.map((n) => getHole(course, n)?.par ?? null);
-  const ninePar = parRow.every((par) => par != null) ? parRow.reduce((sum, par) => sum + par!, 0) : null;
-  const totalPar = showTotal
-    ? ALL_HOLES.every((n) => getHole(course, n)?.par != null)
-      ? ALL_HOLES.reduce((sum, n) => sum + (getHole(course, n)?.par ?? 0), 0)
-      : null
-    : null;
-  const nineYards = selectedTee ? teeYardsForHoles(selectedTee, holes) : null;
-  const totalYards = selectedTee && showTotal ? teeYardsForHoles(selectedTee, ALL_HOLES) : null;
+  // The back nine's table also carries the course totals.
+  const showTotal = back;
+  const ninePar = back ? course.back_nine_par : course.front_nine_par;
+  const totalPar = showTotal ? course.par : null;
+  const nineYards = back ? selectedTee?.back_nine_yardage ?? null : selectedTee?.front_nine_yardage ?? null;
+  const totalYards = showTotal ? selectedTee?.total_yardage ?? null : null;
   const ninePersonalAvg = personalParByHole
     ? holes.reduce((sum, n) => sum + (personalParByHole[n] ?? 0), 0)
     : null;
@@ -360,7 +354,7 @@ export function useCourseDetailPageViewModel(
     return Object.keys(result).length > 0 ? result : undefined;
   }, [analytics]);
 
-  const par = courseParOf(course);
+  const par = course?.par ?? null;
   const showPerformanceTab = analytics.rounds_played > 0;
   const scoreTrend = useMemo(
     () => trendFrom(analytics.score_trend_on_course),
@@ -374,7 +368,7 @@ export function useCourseDetailPageViewModel(
 
   const teeChips: TeeChip[] = (course?.tees ?? [])
     .slice()
-    .sort((a, b) => (teeYards(b) ?? 0) - (teeYards(a) ?? 0))
+    .sort((a, b) => (b.total_yardage ?? 0) - (a.total_yardage ?? 0))
     .flatMap((tee) => {
       if (!tee.color) return [];
       const selected = tee.color.toLowerCase() === selectedTeeColor?.toLowerCase();
