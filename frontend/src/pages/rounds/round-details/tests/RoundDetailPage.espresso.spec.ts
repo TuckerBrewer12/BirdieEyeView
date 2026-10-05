@@ -19,15 +19,6 @@ test("edit then cancel returns to the view actions", async ({ roundDetail }) => 
   await roundDetail.tapCancelEdit();
 });
 
-test("editing a hole's putts and green updates the header totals", async ({ roundDetail }) => {
-  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
-  await roundDetail.seesHeaderTotals(32, 7);
-  await roundDetail.tapEdit();
-  await roundDetail.editPutts(1, 3);
-  await roundDetail.markFirstGreenMissed();
-  await roundDetail.seesHeaderTotals(34, 6);
-});
-
 test("delete confirm then cancel leaves the round", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapDelete();

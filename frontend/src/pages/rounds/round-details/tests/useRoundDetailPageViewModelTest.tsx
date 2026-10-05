@@ -64,6 +64,16 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.played?.holes.find((h) => h.hole === 1)?.strokes).toBeNull();
   });
 
+  it("live-totals putts and greens from an edited hole", async () => {
+    const { result } = renderVm("round-1", { detailRounds: [halfMoonBayRound] });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.enterEditMode());
+    act(() => result.current.editor.setScore(1, "putts", 3));
+    act(() => result.current.editor.setGir(1, false));
+    expect(result.current.played?.putts).toBe(34);
+    expect(result.current.played?.gir).toBe(6);
+  });
+
   it("reads the round against a course picked in edit mode", async () => {
     const { result } = renderVm("round-1", {
       detailRounds: [halfMoonBayRound],
