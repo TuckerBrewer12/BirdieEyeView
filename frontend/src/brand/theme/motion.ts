@@ -13,4 +13,6 @@ export const motion = {
   draw: { duration: 1.4, ease: "easeInOut" as const },
   /** Points popping in along a drawn line, one after another, once it has nearly finished. */
   pop: { delay: 1.2, stagger: 0.04, duration: 0.25, ease: "backOut" as const },
+  /** Already finished. Reduced motion skips the draw and the pop. */
+  instant: { duration: 0 },
 } as const;

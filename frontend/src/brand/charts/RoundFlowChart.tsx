@@ -103,7 +103,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
             strokeLinejoin="round"
             initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
-            transition={reduceMotion ? { duration: 0 } : motionTokens.draw}
+            transition={reduceMotion ? motionTokens.instant : motionTokens.draw}
           />
 
           {holes.map((hole, i) => (
@@ -120,7 +120,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               animate={{ scale: 1, opacity: 1 }}
               transition={
                 reduceMotion
-                  ? { duration: 0 }
+                  ? motionTokens.instant
                   : {
                       delay: motionTokens.pop.delay + i * motionTokens.pop.stagger,
                       duration: motionTokens.pop.duration,
