@@ -167,7 +167,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               fontFamily={fonts.sans}
               fill="currentColor"
               className={toParTextClass(toPar)}
-              fontWeight={toPar === 0 ? "600" : "500"}
+              fontWeight="500"
             >
               {toParLabel(toPar)}
             </text>
