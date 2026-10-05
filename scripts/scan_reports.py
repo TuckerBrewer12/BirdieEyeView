@@ -90,10 +90,11 @@ def smoke_check(config: ScanReportStorageConfig, store):
             if image.size != (300, 100) or image.getexif() or image.info:
                 raise ValueError("Retrieved scorecard validation failed.")
         endpoint = config.endpoint.rstrip("/")
+        key = store.object_key(item.retry_key)
         if config.addressing_style == "virtual":
-            url = endpoint.replace("https://", f"https://{config.bucket}.", 1) + "/" + report_object_key(item.retry_key)
+            url = endpoint.replace("https://", f"https://{config.bucket}.", 1) + "/" + key
         else:
-            url = f"{endpoint}/{config.bucket}/{report_object_key(item.retry_key)}"
+            url = f"{endpoint}/{config.bucket}/{key}"
         response = httpx.get(url, timeout=15, follow_redirects=False)
         if response.status_code not in {403, 404}:
             raise ValueError("Bucket privacy check failed.")
