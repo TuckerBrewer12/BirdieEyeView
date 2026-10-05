@@ -80,6 +80,19 @@ export class DashboardRobot {
     return this;
   }
 
+  async tapMilestone(title: string): Promise<this> {
+    await this.page
+      .locator("[data-slot=milestone-feed]")
+      .getByRole("button", { name: title })
+      .click();
+    return this;
+  }
+
+  async isAtRound(id: string): Promise<this> {
+    await expect(this.page).toHaveURL(new RegExp(`/rounds/${id}`));
+    return this;
+  }
+
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
     return this;

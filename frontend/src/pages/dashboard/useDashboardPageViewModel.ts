@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { Round } from "@/domain";
 import type { DashboardData, User } from "@/types/golf";
-import type { MilestoneDto } from "@/types/api";
 import type { AnalyticsData } from "@/types/analytics";
 import {
   dashboardRepository,
@@ -12,12 +11,14 @@ import {
 import {
   dualTrendFrom,
   goalProgress,
+  milestonesFrom,
   pickBestRound,
   scoreMixItems,
   whsFrom,
   type DualTrendPoint,
   type GoalProgress,
   type HiTrend,
+  type Milestone,
   type ScoreMixItem,
   type TrendView,
   type WhsBreakdown,
@@ -34,7 +35,7 @@ export interface DashboardPageViewModel {
   error: Error | null;
   refetch: () => void;
   dualData: DualTrendPoint[];
-  recentMilestones: MilestoneDto[];
+  milestones: Milestone[];
   last20ScoringAvg: number | null;
   l5ScoringAvg: number | null;
   handicapDelta: number | null;
@@ -127,7 +128,7 @@ export function useDashboardPageViewModel(
     error: error as Error | null,
     refetch,
     dualData,
-    recentMilestones: data?.milestones ?? [],
+    milestones: data ? milestonesFrom(data.milestones) : [],
     last20ScoringAvg: data?.scoring_average_l20 ?? null,
     l5ScoringAvg: data?.scoring_average_l5 ?? null,
     handicapDelta: data?.handicap_change.delta ?? null,

@@ -22,7 +22,7 @@ import { RecentRoundsTable } from "./components/RecentRoundsTable";
 import { ScanActionCard } from "./components/ScanActionCard";
 import { ScoreMixChart } from "./components/ScoreMixChart";
 import type { DashboardPageViewModel, HiTrend } from "./useDashboardPageViewModel";
-import { avgLabel, dashboardPalette, firstNameOf, pctLabel, presentMilestones } from "./present";
+import { avgLabel, dashboardPalette, firstNameOf, pctLabel } from "./present";
 
 function ShortGameSparkline({
   scrambling,
@@ -78,7 +78,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
   const {
     data, user, trends,
-    dualData, recentMilestones, last20ScoringAvg, hiTrend,
+    dualData, milestones, last20ScoringAvg, hiTrend,
     recentDistribution, girPct, scramblingPct, upAndDownPct, putts,
     bestRound, sidebarRounds, goal,
     openHandicapSheet,
@@ -202,7 +202,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
               </CardHeader>
               <CardContent>
                 <MilestoneFeed
-                  milestones={presentMilestones(recentMilestones)}
+                  milestones={milestones}
                   onRoundClick={(id) => navigate(`/rounds/${id}`)}
                 />
               </CardContent>
