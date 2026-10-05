@@ -95,6 +95,7 @@ describe("brand tokens", () => {
       gaugeInner: chartLayout.gauge.inner,
       gaugeOuter: chartLayout.gauge.outer,
       plotHeight: chartLayout.plot.height,
+      sparklineHeight: chartLayout.sparkline.height,
     }).toEqual({
       barRadius: px("--brand-radius-md"),
       barMaxWidth: px("--brand-size-bar-max"),
@@ -103,6 +104,7 @@ describe("brand tokens", () => {
       gaugeInner: px("--brand-size-gauge-inner"),
       gaugeOuter: px("--brand-size-gauge-outer"),
       plotHeight: px("--brand-size-chart"),
+      sparklineHeight: px("--brand-size-sparkline"),
     });
   });
 });
