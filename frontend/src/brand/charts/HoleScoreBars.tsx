@@ -1,26 +1,46 @@
 import { cn } from "@/brand/cn";
-import { colors } from "@/brand/theme";
+import { scoreFillClass, type ScoreKey } from "@/brand/theme";
 import type { HoleScore } from "@/domain";
 
 interface HoleScoreBarsProps {
   holes: HoleScore[];
+  /** `strip` is one even row; `profile` stands each bar taller the worse the hole went. */
+  variant?: "strip" | "profile";
   className?: string;
 }
 
+const PROFILE_HEIGHT: Record<ScoreKey, string> = {
+  eagle: "h-profile-eagle",
+  birdie: "h-profile-birdie",
+  par: "h-profile-par",
+  bogey: "h-profile-bogey",
+  double: "h-profile-double",
+  triple: "h-profile-worse",
+  quad: "h-profile-worse",
+};
+
 /** A round at a glance: one bar per hole, coloured by how it was scored. */
-export function HoleScoreBars({ holes, className }: HoleScoreBarsProps) {
+export function HoleScoreBars({ holes, variant = "strip", className }: HoleScoreBarsProps) {
   if (holes.length === 0) return null;
+  const profile = variant === "profile";
 
   return (
-    <div data-slot="hole-score-bars" className={cn("flex h-2.5 gap-bar", className)}>
+    <div
+      data-slot="hole-score-bars"
+      className={cn("flex", profile ? "h-6 items-end gap-hair" : "h-2.5 gap-bar", className)}
+    >
       {holes.map((hole) => {
         // Par is the baseline, so it recedes and the misses stand out. Unscored holes read as par.
         const kind = hole.kind ?? "par";
         return (
           <div
             key={hole.hole}
-            className={cn("flex-1 rounded-bar", kind === "par" && "opacity-(--brand-opacity-recessed)")}
-            style={{ background: colors.score[kind].base }}
+            className={cn(
+              "flex-1",
+              scoreFillClass(kind),
+              profile ? cn("rounded-t-tick", PROFILE_HEIGHT[kind]) : "rounded-bar",
+              kind === "par" && "opacity-(--brand-opacity-recessed)",
+            )}
           />
         );
       })}

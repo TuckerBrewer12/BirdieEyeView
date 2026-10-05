@@ -61,7 +61,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
         </ToggleGroup>
 
         <div className="flex items-center justify-between px-1 pt-0.5">
-          <span className="text-[13px] font-bold text-foreground">
+          <span className="text-body font-bold text-foreground">
             {pluralize(viewModel.filteredRounds.length, "round")}
           </span>
           <SortControl
