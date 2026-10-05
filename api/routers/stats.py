@@ -9,7 +9,8 @@ from api.dependencies import get_current_user, get_db
 from api.input_validation import ensure_uuid_str
 from models import User
 from api.round_responses import round_summary
-from api.schemas import DashboardResponse
+from api.course_analytics_responses import course_analytics
+from api.schemas import CourseAnalyticsResponse, DashboardResponse
 from analytics import stats as analytics
 from analytics import dashboard
 from analytics import handicap as hcap
@@ -520,7 +521,7 @@ async def get_milestones(
     return {"milestones": milestones[:limit]}
 
 
-@router.get("/course-analytics/{user_id}/{course_id}")
+@router.get("/course-analytics/{user_id}/{course_id}", response_model=CourseAnalyticsResponse)
 async def get_course_analytics(
     user_id: UUID,
     course_id: UUID,
@@ -534,17 +535,4 @@ async def get_course_analytics(
         raise HTTPException(404, "User not found")
 
     rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=500, offset=0, course_id=str(course_id))
-    course_rounds = list(reversed(rounds_desc))
-
-    return {
-        "course_id": str(course_id),
-        "rounds_played": len(course_rounds),
-        "score_trend_on_course": analytics.score_trend_on_this_course(course_rounds),
-        "average_score_relative_to_par_by_hole": analytics.average_score_relative_to_par_by_hole(course_rounds),
-        "gir_percentage_by_hole": analytics.gir_percentage_by_hole(course_rounds),
-        "average_putts_by_hole": analytics.average_putts_by_hole(course_rounds),
-        "score_type_distribution_by_hole": analytics.score_type_distribution_by_hole(course_rounds),
-        "course_difficulty_profile_by_hole": analytics.course_difficulty_profile_by_hole(course_rounds),
-        "average_score_when_gir_vs_missed": analytics.average_score_when_gir_vs_missed(course_rounds),
-        "score_variance_by_hole": analytics.score_variance_by_hole(course_rounds),
-    }
+    return course_analytics(str(course_id), list(reversed(rounds_desc)))

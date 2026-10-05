@@ -746,6 +746,82 @@ export interface components {
             /** File */
             file: string;
         };
+        /**
+         * CourseAnalyticsResponse
+         * @description The player's figures at one course. Every figure is worked out here, not on the client.
+         */
+        CourseAnalyticsResponse: {
+            /** Average Putts By Hole */
+            average_putts_by_hole: components["schemas"]["CourseHolePuttsRow"][];
+            /** Average Score Relative To Par By Hole */
+            average_score_relative_to_par_by_hole: components["schemas"]["CourseHoleToParRow"][];
+            /** Average Score When Gir Vs Missed */
+            average_score_when_gir_vs_missed: components["schemas"]["CourseGirImpactRow"][];
+            /** Best Score */
+            best_score: number | null;
+            /** Course Difficulty Profile By Hole */
+            course_difficulty_profile_by_hole: components["schemas"]["CourseHoleDifficultyRow"][];
+            /** Course Id */
+            course_id: string;
+            /** Gir Percentage By Hole */
+            gir_percentage_by_hole: components["schemas"]["CourseHoleGirRow"][];
+            /** Rounds */
+            rounds: components["schemas"]["RoundSummaryResponse"][];
+            /** Rounds Played */
+            rounds_played: number;
+            /** Score Trend On Course */
+            score_trend_on_course: components["schemas"]["CourseScoreTrendRow"][];
+            /** Score Type Distribution By Hole */
+            score_type_distribution_by_hole: components["schemas"]["CourseHoleScoreTypeRow"][];
+            /** Score Variance By Hole */
+            score_variance_by_hole: components["schemas"]["CourseHoleVarianceRow"][];
+            /** Scoring Average */
+            scoring_average: number | null;
+            /** Worst Score */
+            worst_score: number | null;
+        };
+        /** CourseGirImpactRow */
+        CourseGirImpactRow: {
+            /** Average Score */
+            average_score: number | null;
+            /** Average To Par */
+            average_to_par: number | null;
+            /**
+             * Bucket
+             * @enum {string}
+             */
+            bucket: "GIR" | "No GIR";
+            /** Holes Counted */
+            holes_counted: number;
+        };
+        /** CourseHoleDifficultyRow */
+        CourseHoleDifficultyRow: {
+            /** Average Score */
+            average_score: number;
+            /** Average To Par */
+            average_to_par: number;
+            /** Difficulty Rank */
+            difficulty_rank: number;
+            /** Hole Number */
+            hole_number: number;
+            /** Par */
+            par: number;
+            /** Sample Size */
+            sample_size: number;
+        };
+        /** CourseHoleGirRow */
+        CourseHoleGirRow: {
+            /** Gir Hits */
+            gir_hits: number;
+            /** Gir Percentage */
+            gir_percentage: number;
+            /** Hole Number */
+            hole_number: number;
+            /** Par */
+            par: number;
+            /** Sample Size */
+            sample_size: number;
+        };
         /** CourseHoleInput */
         CourseHoleInput: {
             /** Handicap */
@@ -754,6 +830,71 @@ export interface components {
             hole_number: number;
             /** Par */
             par?: number | null;
+        };
+        /** CourseHolePuttsRow */
+        CourseHolePuttsRow: {
+            /** Average Putts */
+            average_putts: number;
+            /** Hole Number */
+            hole_number: number;
+            /** Par */
+            par: number;
+            /** Sample Size */
+            sample_size: number;
+        };
+        /**
+         * CourseHoleScoreTypeRow
+         * @description Percent of rounds that landed in each score type on the hole. `par` is the par percentage.
+         */
+        CourseHoleScoreTypeRow: {
+            /** Birdie */
+            birdie: number;
+            /** Bogey */
+            bogey: number;
+            /** Double Bogey */
+            double_bogey: number;
+            /** Eagle */
+            eagle: number;
+            /** Hole Number */
+            hole_number: number;
+            /** Par */
+            par: number;
+            /** Quad Bogey */
+            quad_bogey: number;
+            /** Sample Size */
+            sample_size: number;
+            /** Triple Bogey */
+            triple_bogey: number;
+        };
+        /** CourseHoleToParRow */
+        CourseHoleToParRow: {
+            /** Average Score */
+            average_score: number;
+            /** Average To Par */
+            average_to_par: number;
+            /** Hole Number */
+            hole_number: number;
+            /** Par */
+            par: number;
+            /** Sample Size */
+            sample_size: number;
+        };
+        /** CourseHoleVarianceRow */
+        CourseHoleVarianceRow: {
+            /** Average Score */
+            average_score: number | null;
+            /** Hole Number */
+            hole_number: number;
+            /** Par */
+            par: number;
+            /** Sample Size */
+            sample_size: number;
+            /** Score Std Dev */
+            score_std_dev: number | null;
+            /** Score Variance */
+            score_variance: number | null;
+            /** Variance Rank */
+            variance_rank: number;
         };
         /**
          * CourseResponse
@@ -780,6 +921,22 @@ export interface components {
             tees: components["schemas"]["TeeResponse"][];
             /** User Id */
             user_id: string | null;
+        };
+        /**
+         * CourseScoreTrendRow
+         * @description One round at the course, oldest first.
+         */
+        CourseScoreTrendRow: {
+            /** Date */
+            date: string | null;
+            /** Round Id */
+            round_id: string | null;
+            /** Round Index */
+            round_index: number;
+            /** To Par */
+            to_par: number | null;
+            /** Total Score */
+            total_score: number | null;
         };
         /**
          * CourseSummaryResponse
@@ -2396,7 +2553,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["CourseAnalyticsResponse"];
                 };
             };
             /** @description Validation Error */

@@ -433,8 +433,9 @@ async def test_stats_auxiliary_endpoints(monkeypatch):
     assert await stats.get_milestones(user_id, 12, db, user) == {"milestones": []}
 
     course_analytics = await stats.get_course_analytics(user_id, course_id, db, user)
-    assert course_analytics["rounds_played"] == 0
-    assert course_analytics["course_id"] == str(course_id)
+    assert course_analytics.rounds_played == 0
+    assert course_analytics.course_id == str(course_id)
+    assert course_analytics.scoring_average is None
 
 
 @pytest.mark.asyncio

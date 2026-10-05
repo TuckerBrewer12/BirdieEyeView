@@ -2,9 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import { Round } from "@/domain";
 import { halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
-import { populatedRounds } from "@/testing/fixtures/rounds";
 import { halfMoonBayCourse } from "@/testing/fixtures/roundDetails";
 import { FakeCoursesRepository } from "@/testing/fakes/FakeCoursesRepository";
 import { useCourseDetailPageViewModel } from "../useCourseDetailPageViewModel";
@@ -55,33 +53,32 @@ describe("useCourseDetailPageViewModel", () => {
     const { result } = renderVm(repository);
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.frontNine.showPersonalAvg).toBe(true);
-    expect(result.current.frontNine.holes[0]?.personalAvg).toBe("3.9");
+    expect(result.current.frontNine.holes[0]?.personalAvg).toBe("3.5");
   });
 
   it("lists the player's rounds at this course, newest first", async () => {
     const repository = seededRepo();
     repository.analytics = halfMoonBayAnalytics;
-    repository.rounds = [...populatedRounds].reverse().map(Round.fromSummary);
     const { result } = renderVm(repository);
     await waitFor(() => expect(result.current.roundHistory).toHaveLength(2));
     expect(result.current.roundHistory.map((round) => round.id)).toEqual(["round-1", "round-2"]);
     expect(result.current.scoreTrend[0]).toMatchObject({
-      dateLabel: "Mar 9, 2026",
-      tickLabel: "03-09",
+      dateLabel: "May 2, 2026",
+      tickLabel: "05-02",
     });
   });
 
-  it("exposes hero stats from the score trend", async () => {
+  it("exposes hero stats from the analytics response", async () => {
     const repository = seededRepo();
     repository.analytics = halfMoonBayAnalytics;
     const { result } = renderVm(repository);
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.showPerformanceTab).toBe(true);
     expect(result.current.heroStats).toEqual([
-      { value: "4", label: "Rounds Played" },
-      { value: "77.3", label: "Scoring Avg" },
+      { value: "2", label: "Rounds Played" },
+      { value: "75.0", label: "Scoring Avg" },
       { value: "72", label: "Best Round" },
-      { value: "85", label: "Worst Round" },
+      { value: "78", label: "Worst Round" },
     ]);
   });
 

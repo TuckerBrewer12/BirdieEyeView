@@ -199,6 +199,90 @@ class DashboardResponse(ResponseModel):
     whs: WhsBreakdown = Field(default_factory=WhsBreakdown)
 
 
+class CourseScoreTrendRow(ResponseModel):
+    """One round at the course, oldest first."""
+    round_index: int
+    round_id: Optional[str] = None
+    date: Optional[datetime] = None
+    total_score: Optional[int] = None
+    to_par: Optional[int] = None
+
+
+class CourseHoleToParRow(ResponseModel):
+    hole_number: int
+    par: int
+    average_score: float
+    average_to_par: float
+    sample_size: int
+
+
+class CourseHoleDifficultyRow(CourseHoleToParRow):
+    difficulty_rank: int  # 1 is the hardest hole by average to-par
+
+
+class CourseHoleGirRow(ResponseModel):
+    hole_number: int
+    par: int
+    gir_hits: int
+    sample_size: int
+    gir_percentage: float
+
+
+class CourseHolePuttsRow(ResponseModel):
+    hole_number: int
+    par: int
+    average_putts: float
+    sample_size: int
+
+
+class CourseHoleScoreTypeRow(ResponseModel):
+    """Percent of rounds that landed in each score type on the hole. `par` is the par percentage."""
+    hole_number: int
+    sample_size: int
+    eagle: float
+    birdie: float
+    par: float
+    bogey: float
+    double_bogey: float
+    triple_bogey: float
+    quad_bogey: float
+
+
+class CourseGirImpactRow(ResponseModel):
+    bucket: Literal["GIR", "No GIR"]
+    holes_counted: int
+    average_score: Optional[float] = None
+    average_to_par: Optional[float] = None
+
+
+class CourseHoleVarianceRow(ResponseModel):
+    hole_number: int
+    par: int
+    sample_size: int
+    average_score: Optional[float] = None
+    score_variance: Optional[float] = None
+    score_std_dev: Optional[float] = None
+    variance_rank: int  # 1 is the least consistent hole
+
+
+class CourseAnalyticsResponse(ResponseModel):
+    """The player's figures at one course. Every figure is worked out here, not on the client."""
+    course_id: str
+    rounds_played: int
+    scoring_average: Optional[float] = None
+    best_score: Optional[int] = None
+    worst_score: Optional[int] = None
+    rounds: List[RoundSummaryResponse] = Field(default_factory=list)  # newest first
+    score_trend_on_course: List[CourseScoreTrendRow] = Field(default_factory=list)
+    average_score_relative_to_par_by_hole: List[CourseHoleToParRow] = Field(default_factory=list)
+    gir_percentage_by_hole: List[CourseHoleGirRow] = Field(default_factory=list)
+    average_putts_by_hole: List[CourseHolePuttsRow] = Field(default_factory=list)
+    score_type_distribution_by_hole: List[CourseHoleScoreTypeRow] = Field(default_factory=list)
+    course_difficulty_profile_by_hole: List[CourseHoleDifficultyRow] = Field(default_factory=list)
+    average_score_when_gir_vs_missed: List[CourseGirImpactRow] = Field(default_factory=list)
+    score_variance_by_hole: List[CourseHoleVarianceRow] = Field(default_factory=list)
+
+
 class CourseSummaryResponse(ResponseModel):
     """Course for card/list views."""
     id: str

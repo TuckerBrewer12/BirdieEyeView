@@ -1,6 +1,5 @@
 import { api } from "@/lib/api";
 import { userRepository } from "@/data/userRepository";
-import { Round } from "@/domain";
 import type { Course, CourseSummary } from "@/types/golf";
 import type { CourseAnalyticsData } from "@/types/analytics";
 
@@ -10,7 +9,6 @@ export interface CoursesRepository {
   getCourse(courseId: string): Promise<Course>;
   getCourseAnalytics(userId: string, courseId: string): Promise<CourseAnalyticsData>;
   getUserHandicap(userId: string): Promise<{ handicap_index: number | null }>;
-  getRoundsForUser(userId: string): Promise<Round[]>;
 }
 
 export const coursesRepository: CoursesRepository = {
@@ -19,5 +17,4 @@ export const coursesRepository: CoursesRepository = {
   getCourse: (courseId) => api.getCourse(courseId),
   getCourseAnalytics: (userId, courseId) => api.getCourseAnalytics(userId, courseId),
   getUserHandicap: (userId) => userRepository.getUserHandicap(userId),
-  getRoundsForUser: async (userId) => (await api.getRoundsForUser(userId, 100)).map(Round.fromSummary),
 };
