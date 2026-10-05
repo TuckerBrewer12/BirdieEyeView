@@ -117,7 +117,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               strokeWidth={1.5}
               className="cursor-crosshair"
               initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              animate={{ scale: motionTokens.hoverScale, opacity: 1 }}
               transition={
                 reduceMotion
                   ? { duration: 0 }
