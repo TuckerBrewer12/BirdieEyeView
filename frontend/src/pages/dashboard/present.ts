@@ -96,42 +96,6 @@ export function colorizeMix(mix: ScoreMixItem[]): ColoredMixItem[] {
   }));
 }
 
-export interface MixLegendItem {
-  label: string;
-  pctLabel: string;
-  color: string;
-}
-
-export function mixLegend(mix: ScoreMixItem[]): MixLegendItem[] {
-  const valueOf = (name: ScoreKey) => mix.find((d) => d.name === name)?.value ?? 0;
-  const items = [
-    { label: "Birdie+", value: valueOf("eagle") + valueOf("birdie"), color: SCORE_COLORS.birdie },
-    { label: "Par", value: valueOf("par"), color: SCORE_COLORS.par },
-    { label: "Bogey", value: valueOf("bogey"), color: SCORE_COLORS.bogey },
-    { label: "Dbl", value: valueOf("double"), color: SCORE_COLORS.double },
-    { label: "Tpl+", value: valueOf("triple") + valueOf("quad"), color: SCORE_COLORS.triple },
-  ];
-  return items.map((item) => ({
-    label: item.label,
-    pctLabel: `${item.value.toFixed(0)}%`,
-    color: item.color,
-  }));
-}
-
-export function heroKpis(opts: {
-  bestRound: number | null | undefined;
-  totalRounds: number | null | undefined;
-  putts: number | null;
-  girPct: number | null;
-}): { label: string; value: string }[] {
-  return [
-    { label: "BEST", value: opts.bestRound?.toString() ?? "—" },
-    { label: "ROUNDS", value: opts.totalRounds?.toString() ?? "—" },
-    { label: "PUTTS", value: puttsLabel(opts.putts) },
-    { label: "GIR", value: pctLabel(opts.girPct) },
-  ];
-}
-
 export interface TrendTabItem {
   key: TrendView;
   label: string;

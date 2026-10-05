@@ -113,5 +113,8 @@ export {
 export { ActivityHeatmap } from "./charts/ActivityHeatmap";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
+export { ScoreMixBar } from "./charts/ScoreMixBar";
+export { Sparkline } from "./charts/Sparkline";
+export type { SparklineSeries, SparklineTone } from "./charts/Sparkline";
 export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
 export type { ScoreHandicapTrendPoint } from "./charts/SVGScoreHandicapTrend";

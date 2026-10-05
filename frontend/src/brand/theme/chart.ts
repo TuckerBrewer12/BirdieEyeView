@@ -44,6 +44,14 @@ export const chartLayout = {
     dot: 3.5,
     dotHover: 6,
   },
+  /** Unitless SVG for a figure's trend line. Scales to its container's width, keeping this shape. */
+  sparkline: {
+    width: 300,
+    height: 56,
+    pad: 5,
+    stroke: 2,
+    dot: 3,
+  },
 };
 
 export const chartColors = {
