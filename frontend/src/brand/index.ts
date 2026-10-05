@@ -16,7 +16,7 @@ export {
   chartLayout,
   chartColors,
   SCORE_KEYS,
-  scoreFill,
+  scoreFillClass,
   scoreKeyFor,
   toParFill,
   toParTone,
@@ -24,7 +24,6 @@ export {
   toParDisplay,
   toParTextClass,
   toParBadgeClass,
-  scoreFillClass,
   scoreOnFillClass,
 } from "./theme";
 export type { ScoreKey, ScoreSwatch, ScoreTone } from "./theme";
@@ -61,6 +60,7 @@ export {
   inputGroupAddonVariants,
   inputGroupButtonVariants,
   pageTitleVariants,
+  teeSwatchVariants,
   toggleVariants,
 } from "./components/variants";
 export { Field, FieldLabel, FieldDescription, FieldError } from "./components/Field";
@@ -73,8 +73,9 @@ export {
   InputGroupText,
   InputGroupInput,
 } from "./components/InputGroup";
-export { PageTitle } from "./components/PageTitle";
 export { PageHeader } from "./components/PageHeader";
+export { PageTitle } from "./components/PageTitle";
+export { TeeSwatch } from "./components/TeeSwatch";
 export { ToParFigure } from "./components/ToParFigure";
 export { Reveal } from "./components/Reveal";
 export { ScanProgress } from "./components/ScanProgress";

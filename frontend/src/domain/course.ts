@@ -41,6 +41,32 @@ export function teeColors(course: Course | null | undefined): string[] {
   return course?.tees.map((tee) => tee.color).filter((color): color is string => !!color) ?? [];
 }
 
+/** Colour words a tee's name is read for, in match order. "combo" names a mixed tee. */
+export const TEE_COLORS = [
+  "black", "blue", "white", "gold", "red", "green", "silver",
+  "yellow", "orange", "purple", "brown", "combo",
+] as const;
+
+export type TeeColor = (typeof TEE_COLORS)[number];
+
+/** The colour word in a tee's name: "Back Blue" is blue. Null when it names no colour. */
+export function extractTeeColorToken(value: string | null | undefined): TeeColor | null {
+  const text = (value ?? "").toLowerCase();
+  if (!text) return null;
+  return TEE_COLORS.find((token) => text.includes(token)) ?? null;
+}
+
+/** The tee among `teeColors` that `current` names: the same name, else the same colour word. */
+export function chooseCompatibleTee(current: string, teeColors: string[]): string | null {
+  const trimmed = current.trim();
+  if (!trimmed || teeColors.length === 0) return null;
+  const exact = teeColors.find((c) => c.toLowerCase() === trimmed.toLowerCase());
+  if (exact) return exact;
+  const currentToken = extractTeeColorToken(trimmed);
+  if (!currentToken) return null;
+  return teeColors.find((c) => extractTeeColorToken(c) === currentToken) ?? null;
+}
+
 export function teeYards(tee: YardageSource | null | undefined): number | null {
   if (!tee) return null;
   if (tee.total_yardage != null) return tee.total_yardage;

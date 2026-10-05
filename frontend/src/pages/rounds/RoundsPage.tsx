@@ -34,7 +34,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
   return (
     <div>
-      <PageHeader title="Rounds" subtitle={`${pluralize(viewModel.rounds.length, "round")} played`} scrollThreshold={100} />
+      <PageHeader title="Rounds" subtitle={`${pluralize(viewModel.rounds.length, "round")} played`} revealAt={100} />
 
       <div className="flex flex-col gap-2.5 pb-6">
 

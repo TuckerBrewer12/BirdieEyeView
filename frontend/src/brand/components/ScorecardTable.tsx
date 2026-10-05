@@ -1,6 +1,6 @@
 import { cn } from "@/brand/cn";
 import { strokesToPar } from "@/domain";
-import { scoreFill, toParDisplay, toParTextClass } from "@/brand/theme";
+import { scoreFillClass, scoreKeyFor, toParDisplay, toParTextClass } from "@/brand/theme";
 
 export interface ScorecardHole {
   hole: number;
@@ -75,8 +75,10 @@ function ScorecardTable({ holes, label, roundTotal, className }: ScorecardTableP
           {holes.map((hole) => (
             <td key={hole.hole} className="px-1 py-1 text-center">
               <span
-                className="inline-flex h-7 w-9 items-center justify-center rounded text-sm font-semibold text-primary-foreground"
-                style={hole.strokes == null ? undefined : { background: scoreFill(hole.strokes, hole.par) }}
+                className={cn(
+                  "inline-flex h-7 w-9 items-center justify-center rounded text-sm font-semibold text-primary-foreground",
+                  hole.strokes != null && scoreFillClass(scoreKeyFor(hole.strokes, hole.par)),
+                )}
               >
                 {hole.strokes ?? "-"}
               </span>

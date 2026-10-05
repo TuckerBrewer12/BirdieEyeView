@@ -23,7 +23,7 @@ export function ScanProcessing({ scanMode }: { scanMode: ScanState["scanMode"] }
 
   return (
     <div>
-      <PageHeader title="Scan Scorecard" />
+      <PageHeader title="Scan Scorecard" revealAt={40} />
       <div className="flex flex-col items-center justify-center min-h-[62vh]">
 
         {/* Animated scorecard card */}

@@ -16,12 +16,20 @@ export function scoreKeyFor(
   return scoreKind(strokes, par) ?? "par";
 }
 
-/** The base fill for a hole, for the cases a static class cannot express. */
-export function scoreFill(
-  strokes: number | null,
-  par: number | null,
-): string {
-  return colors.score[scoreKeyFor(strokes, par)].base;
+// Spelled out in full so Tailwind finds every class when it scans the source.
+const SCORE_FILL_CLASS: Record<ScoreKey, string> = {
+  eagle: "bg-score-eagle-base",
+  birdie: "bg-score-birdie-base",
+  par: "bg-score-par-base",
+  bogey: "bg-score-bogey-base",
+  double: "bg-score-double-base",
+  triple: "bg-score-triple-base",
+  quad: "bg-score-quad-base",
+};
+
+/** Tailwind background for a hole's score chip. */
+export function scoreFillClass(key: ScoreKey): string {
+  return SCORE_FILL_CLASS[key];
 }
 
 /**
@@ -63,22 +71,8 @@ export function toParBadgeClass(toPar: number | null): string {
   return "bg-destructive/10 text-score-bogey";
 }
 
-/**
- * `bg-` class for a score's fill. For keys known only at runtime: Tailwind
- * finds classes by their literal names, so they cannot be built from the key.
- */
-export const scoreFillClass: Record<ScoreKey, string> = {
-  eagle: "bg-score-eagle-base",
-  birdie: "bg-score-birdie-base",
-  par: "bg-score-par-base",
-  bogey: "bg-score-bogey-base",
-  double: "bg-score-double-base",
-  triple: "bg-score-triple-base",
-  quad: "bg-score-quad-base",
-};
-
-/** Text colour that reads on `scoreFillClass`. */
-export const scoreOnFillClass: Record<ScoreKey, string> = {
+// Spelled out in full for the same reason as SCORE_FILL_CLASS.
+const SCORE_ON_FILL_CLASS: Record<ScoreKey, string> = {
   eagle: "text-score-eagle-on-base",
   birdie: "text-score-birdie-on-base",
   par: "text-score-par-on-base",
@@ -87,3 +81,8 @@ export const scoreOnFillClass: Record<ScoreKey, string> = {
   triple: "text-score-triple-on-base",
   quad: "text-score-quad-on-base",
 };
+
+/** Tailwind text colour that reads on `scoreFillClass`. */
+export function scoreOnFillClass(key: ScoreKey): string {
+  return SCORE_ON_FILL_CLASS[key];
+}

@@ -1,19 +1,23 @@
+import type { ReactNode } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { cn } from "@/brand/cn";
 
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
-  /** How far the page scrolls before the bar has fully faded in. */
-  scrollThreshold?: number;
-  /** Sit in the parent instead of fixing to the window, always shown. For previews. */
-  contained?: boolean;
+  /**
+   * Scroll depth at which the bar has fully faded in, so it takes over from the
+   * page's own title as that scrolls away. Leave it unset to always show the bar.
+   */
+  revealAt?: number;
+  className?: string;
 }
 
+// md:left-64 clears the app sidebar, which is hidden below md.
 const BAR =
-  "z-40 flex items-center border-b border-border bg-background/90 px-4 py-3 shadow-hairline backdrop-blur-header md:px-8";
+  "fixed top-0 right-0 left-0 z-40 flex items-center border-b border-border bg-background/90 px-4 py-3 shadow-hairline backdrop-blur-xl md:left-64 md:px-8";
 
-function Title({ title, subtitle }: Pick<PageHeaderProps, "title" | "subtitle">) {
+function PageHeaderText({ title, subtitle }: Pick<PageHeaderProps, "title" | "subtitle">) {
   return (
     <div className="flex min-w-0 items-baseline gap-3">
       <h1 className="text-lg font-bold tracking-tight whitespace-nowrap text-foreground">{title}</h1>
@@ -22,39 +26,45 @@ function Title({ title, subtitle }: Pick<PageHeaderProps, "title" | "subtitle">)
   );
 }
 
-function ScrollingHeader({ title, subtitle, scrollThreshold = 40 }: PageHeaderProps) {
+function RevealingPageHeader({
+  revealAt,
+  className,
+  children,
+}: {
+  revealAt: number;
+  className: string;
+  children: ReactNode;
+}) {
   const { scrollY } = useScroll();
-  const start = Math.max(0, scrollThreshold - 30);
-
-  // The whole header fades in, so the surface, hairline and shadow ride that
-  // one opacity rather than each interpolating its own color. Interpolating
-  // them here would mean literal rgba(), which cannot follow the color mode.
-  const opacity = useTransform(scrollY, [start, scrollThreshold], [0, 1]);
+  // The whole bar fades over the last 30 of scroll before revealAt, so the
+  // surface, hairline and shadow ride one opacity and keep following the
+  // colour mode, rather than each interpolating a literal colour.
+  const opacity = useTransform(scrollY, [Math.max(0, revealAt - 30), revealAt], [0, 1]);
 
   return (
-    <motion.header
-      data-slot="page-header"
-      className={cn(BAR, "fixed top-0 right-0 left-0 md:left-64")}
-      style={{ opacity }}
-    >
-      <Title title={title} subtitle={subtitle} />
+    <motion.header data-slot="page-header" className={className} style={{ opacity }}>
+      {children}
     </motion.header>
   );
 }
 
-/**
- * The compact bar that fades in over the top of a page once its own title has
- * scrolled away. Offset on desktop to clear the sidebar.
- */
-function PageHeader({ contained, ...props }: PageHeaderProps) {
-  if (contained) {
+/** The slim bar pinned to the top of a page, naming it once its title has scrolled off. */
+function PageHeader({ title, subtitle, revealAt, className }: PageHeaderProps) {
+  const text = <PageHeaderText title={title} subtitle={subtitle} />;
+
+  if (revealAt == null) {
     return (
-      <header data-slot="page-header" className={BAR}>
-        <Title title={props.title} subtitle={props.subtitle} />
+      <header data-slot="page-header" className={cn(BAR, className)}>
+        {text}
       </header>
     );
   }
-  return <ScrollingHeader {...props} />;
+
+  return (
+    <RevealingPageHeader revealAt={revealAt} className={cn(BAR, className)}>
+      {text}
+    </RevealingPageHeader>
+  );
 }
 
 export { PageHeader };

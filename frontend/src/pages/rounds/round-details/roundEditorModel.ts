@@ -1,5 +1,4 @@
-import { teeColors } from "@/domain/course";
-import { chooseCompatibleTee } from "@/lib/teeColor";
+import { chooseCompatibleTee, teeColors } from "@/domain/course";
 import type { Course, Round } from "@/types/golf";
 import type { UpdateRoundBody } from "../roundsRepository";
 

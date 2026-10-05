@@ -28,6 +28,8 @@ export const size = {
   iconXs: "var(--brand-size-icon-xs)",
   holeW: "var(--brand-size-hole-w)",
   holeH: "var(--brand-size-hole-h)",
+  scorecard: "var(--brand-size-scorecard)",
+  glow: "var(--brand-size-glow)",
 } as const;
 
 export const radius = {

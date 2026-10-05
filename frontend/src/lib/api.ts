@@ -1,4 +1,4 @@
-import type { DashboardData, RoundSummary, Round, CourseSummary, Course, User, Milestone, Friendship } from "@/types/golf";
+import type { DashboardData, RoundSummary, Round, CourseSummary, Course, User, Friendship } from "@/types/golf";
 import type { AnalyticsData, AnalyticsFilters, CourseAnalyticsData, RoundComparison, GoalReport } from "@/types/analytics";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
@@ -145,9 +145,6 @@ export const api = {
 
   getCourseAnalytics: (userId: string, courseId: string) =>
     fetchJSON<CourseAnalyticsData>(`/stats/course-analytics/${userId}/${courseId}`),
-
-  getMilestones: (userId: string, limit = 12) =>
-    fetchJSON<{ milestones: Milestone[] }>(`/stats/milestones/${userId}?limit=${limit}`),
 
   getAISuggestions: (userId: string, limit = 50, targetHandicap?: number | null) => {
     const params = new URLSearchParams({ limit: String(limit) });

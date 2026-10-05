@@ -1,5 +1,5 @@
+import { TeeSwatch } from "@/brand";
 import type { ScorecardNine } from "./useCourseDetailPageViewModel";
-import { TeeSwatch } from "./TeeSwatch";
 
 export function NineTable({ nine }: { nine: ScorecardNine }) {
   return (

@@ -2,11 +2,11 @@ import { colors, toParFill, toParLabel, toParTone, type ScoreKey } from "@/brand
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateShort } from "@/lib/roundDate";
 import type { HoleScore, Round } from "@/domain";
-import type { Milestone, User } from "@/types/golf";
-import type { MilestoneDto } from "@/types/api";
+import type { User } from "@/types/golf";
 import {
   type DualTrendPoint,
   type HiTrend,
+  type Milestone,
   type ScoreMixItem,
   type TrendView,
   type WhsRound,
@@ -237,22 +237,18 @@ export function whsContextNote(countUsed: number): string {
 
 export type { DualTrendPoint, HiTrend };
 
-const MILESTONE_LABELS: Record<MilestoneDto["kind"], (value: number) => string> = {
-  under_par: (score) => `First round under par (${score})`,
-  score_break: (threshold) => `Best score: ${threshold} or better`,
-  putt_break: (threshold) => `Fewest putts: ${threshold}`,
-  par_streak: (length) => `Par streak: ${length} in a row`,
+const MILESTONE_WORDING: Record<Milestone["kind"], { title: string; figure: (value: number) => string }> = {
+  under_par: { title: "First round under par", figure: String },
+  // A break is a round that came in under the threshold, so 80 reads "<80".
+  score_break: { title: "Best score", figure: (threshold) => `<${threshold}` },
+  putt_break: { title: "Fewest putts", figure: (threshold) => `<${threshold}` },
+  par_streak: { title: "Longest par streak", figure: String },
 };
 
-/** The server's milestones, worded for the feed. */
-export function presentMilestones(milestones: MilestoneDto[]): Milestone[] {
-  return milestones.map((m) => ({
-    type: m.kind,
-    label: MILESTONE_LABELS[m.kind](m.value),
-    date: m.date,
-    course: m.course,
-    round_id: m.round_id,
-  }));
+/** What a milestone is, and the number the feed shows beside it. */
+export function milestoneWording(milestone: Milestone): { title: string; figure: string } {
+  const wording = MILESTONE_WORDING[milestone.kind];
+  return { title: wording.title, figure: wording.figure(milestone.value) };
 }
 
 /** The goal is stored as the highest score that meets it, so 79 means the player is out to break 80. */

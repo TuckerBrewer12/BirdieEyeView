@@ -18,6 +18,13 @@ describe("useScannerDemoViewModel", () => {
     expect(result.current.label).toBe("1. Snap a Photo");
   });
 
+  it("labels each hole of the sample card with how it was scored", () => {
+    const { result } = renderHook(() => useScannerDemoViewModel());
+    expect(result.current.scorecard.map((row) => row.score)).toEqual([
+      "bogey", "bogey", "par", "bogey", "bogey", "bogey", "bogey", "bogey", "bogey",
+    ]);
+  });
+
   it("walks the four steps and starts over", () => {
     const { result } = renderHook(() => useScannerDemoViewModel());
 

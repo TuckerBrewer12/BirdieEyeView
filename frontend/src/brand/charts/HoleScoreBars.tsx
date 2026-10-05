@@ -37,7 +37,7 @@ export function HoleScoreBars({ holes, variant = "strip", className }: HoleScore
             key={hole.hole}
             className={cn(
               "flex-1",
-              scoreFillClass[kind],
+              scoreFillClass(kind),
               profile ? cn("rounded-t-tick", PROFILE_HEIGHT[kind]) : "rounded-bar",
               kind === "par" && "opacity-(--brand-opacity-recessed)",
             )}

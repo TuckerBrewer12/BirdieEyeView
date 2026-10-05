@@ -17,8 +17,8 @@ function ScoreCountChip({ kind, count, className, children, ...props }: ScoreCou
       data-slot="score-count-chip"
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2.5 py-chip",
-        scoreFillClass[kind],
-        scoreOnFillClass[kind],
+        scoreFillClass(kind),
+        scoreOnFillClass(kind),
         className,
       )}
       {...props}

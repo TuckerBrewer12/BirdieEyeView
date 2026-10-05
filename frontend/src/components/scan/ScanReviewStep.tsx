@@ -475,6 +475,7 @@ export function ScanReviewStep({
       <PageHeader
         title={formatCourseName(reviewCourseName ?? rd.course?.name ?? "Review Extraction")}
         subtitle={rd.course?.location ?? "Verify and edit the extracted data"}
+        revealAt={40}
       />
 
       {error && (

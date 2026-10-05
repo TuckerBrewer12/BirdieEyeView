@@ -63,7 +63,7 @@ export function ScanUploadStep({
 
   return (
     <div>
-      <PageHeader title="Scan Scorecard" subtitle="Choose how to process your scorecard" />
+      <PageHeader title="Scan Scorecard" subtitle="Choose how to process your scorecard" revealAt={40} />
 
       {error && (
         <div role="alert" className="mb-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300 flex items-center gap-2">
