@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePublicScan } from "@/hooks/usePublicScan";
-import { coursePar, getHole } from "@/domain";
+import { getHole } from "@/domain";
 import type { ExtractedHoleScore, ScanResult } from "@/types/scan";
 
 interface ScannedHole {
@@ -110,7 +110,7 @@ export function useTryItYourselfViewModel(): TryItYourselfViewModel {
     frontNine: toRows(result, 0, 9),
     backNine: toRows(result, 9, 18),
     roundTotal: {
-      par: coursePar(result?.round.course),
+      par: result?.round.course?.par ?? null,
       strokes: scores.reduce((total, score) => total + (score.strokes ?? 0), 0) || null,
     },
     hasScores: scores.length > 0,

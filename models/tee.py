@@ -35,3 +35,19 @@ class Tee(BaseGolfModel):
         if not self.hole_yardages:
             return None
         return sum(self.hole_yardages.values())
+
+    def _nine_yardage(self, first: int) -> Optional[int]:
+        yards = [self.hole_yardages.get(n) for n in range(first, first + 9)]
+        if any(y is None for y in yards):
+            return None
+        return sum(yards)
+
+    @property
+    def front_nine_yardage(self) -> Optional[int]:
+        """Yardage for holes 1-9, once all nine have one."""
+        return self._nine_yardage(1)
+
+    @property
+    def back_nine_yardage(self) -> Optional[int]:
+        """Yardage for holes 10-18, once all nine have one."""
+        return self._nine_yardage(10)
