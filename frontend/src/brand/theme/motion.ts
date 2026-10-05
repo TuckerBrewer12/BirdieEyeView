@@ -12,5 +12,5 @@ export const motion = {
   /** A chart line drawing itself in. */
   draw: { duration: 1.4, ease: "easeInOut" as const },
   /** Points popping in along a drawn line, one after another, once it has nearly finished. */
-  pop: { delay: 1.2, stagger: 0.04, duration: 0.25, ease: "backOut" as const },
+  pop: { delay: 1.2, stagger: 0.04, duration: 0.25, ease: "backOut" as const, scale: 0 },
 } as const;
