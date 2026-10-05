@@ -1,5 +1,6 @@
 """Round responses, built one way from the Round model so every endpoint agrees."""
 
+from api.course_responses import course_detail
 from api.schemas import HoleScoreResponse, RoundFigures, RoundResponse, RoundSummaryResponse, ScoreCounts
 from models import Round
 
@@ -52,7 +53,7 @@ def round_detail(round_: Round) -> RoundResponse:
     return RoundResponse(
         **_figures(round_),
         id=round_.id,
-        course=round_.course,
+        course=course_detail(round_.course) if round_.course else None,
         tee_box=round_.tee_box,
         date=round_.date,
         weather_conditions=round_.weather_conditions,

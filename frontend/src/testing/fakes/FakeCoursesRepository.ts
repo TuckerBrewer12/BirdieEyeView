@@ -3,6 +3,7 @@ import type { Course, CourseSummary } from "../../types/golf";
 import type { CourseAnalyticsData } from "../../types/analytics";
 import type { CoursesRepository } from "../../pages/courses/coursesRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
+import { courseResponse } from "./courseResponses";
 
 export class FakeCoursesRepository implements CoursesRepository {
   readonly getCoursesCalls: string[] = [];
@@ -41,14 +42,14 @@ export class FakeCoursesRepository implements CoursesRepository {
     if (full) return full;
     const summary = this.courses.find((course) => course.id === courseId);
     if (summary) {
-      return {
+      return courseResponse({
         id: summary.id,
         name: summary.name,
         location: summary.location,
         par: summary.par,
         holes: [],
         tees: [],
-      };
+      });
     }
     throw new Error("Course not found.");
   }

@@ -340,9 +340,62 @@
         "title": "Body_prefetch_ocr_api_scan_ocr_post",
         "type": "object"
       },
-      "Course": {
-        "description": "Represents a golf course with its holes and tee options.\n\nuser_id IS None  => master/global course (read-only for regular users)\nuser_id IS set   => custom course owned by that user",
+      "CourseHoleInput": {
+        "additionalProperties": false,
         "properties": {
+          "handicap": {
+            "anyOf": [
+              {
+                "maximum": 18.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handicap"
+          },
+          "hole_number": {
+            "maximum": 18.0,
+            "minimum": 1.0,
+            "title": "Hole Number",
+            "type": "integer"
+          },
+          "par": {
+            "anyOf": [
+              {
+                "maximum": 6.0,
+                "minimum": 3.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Par"
+          }
+        },
+        "required": [
+          "hole_number"
+        ],
+        "title": "CourseHoleInput",
+        "type": "object"
+      },
+      "CourseResponse": {
+        "description": "A full course, with the figures the Course model works out.",
+        "properties": {
+          "back_nine_par": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Back Nine Par"
+          },
           "external_course_id": {
             "anyOf": [
               {
@@ -353,6 +406,17 @@
               }
             ],
             "title": "External Course Id"
+          },
+          "front_nine_par": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Nine Par"
           },
           "holes": {
             "items": {
@@ -397,8 +461,6 @@
           "par": {
             "anyOf": [
               {
-                "maximum": 80.0,
-                "minimum": 27.0,
                 "type": "integer"
               },
               {
@@ -409,7 +471,7 @@
           },
           "tees": {
             "items": {
-              "$ref": "#/components/schemas/Tee"
+              "$ref": "#/components/schemas/TeeResponse"
             },
             "title": "Tees",
             "type": "array"
@@ -431,54 +493,14 @@
           "name",
           "external_course_id",
           "location",
+          "user_id",
           "par",
+          "front_nine_par",
+          "back_nine_par",
           "holes",
-          "tees",
-          "user_id"
+          "tees"
         ],
-        "title": "Course",
-        "type": "object"
-      },
-      "CourseHoleInput": {
-        "additionalProperties": false,
-        "properties": {
-          "handicap": {
-            "anyOf": [
-              {
-                "maximum": 18.0,
-                "minimum": 1.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Handicap"
-          },
-          "hole_number": {
-            "maximum": 18.0,
-            "minimum": 1.0,
-            "title": "Hole Number",
-            "type": "integer"
-          },
-          "par": {
-            "anyOf": [
-              {
-                "maximum": 6.0,
-                "minimum": 3.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Par"
-          }
-        },
-        "required": [
-          "hole_number"
-        ],
-        "title": "CourseHoleInput",
+        "title": "CourseResponse",
         "type": "object"
       },
       "CourseSummaryResponse": {
@@ -1760,7 +1782,7 @@
           "course": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/Course"
+                "$ref": "#/components/schemas/CourseResponse"
               },
               {
                 "type": "null"
@@ -2474,9 +2496,20 @@
         "title": "SendFriendRequest",
         "type": "object"
       },
-      "Tee": {
-        "description": "Represents a tee box option with its ratings and hole yardages.",
+      "TeeResponse": {
+        "description": "A tee with its yardage figures worked out.",
         "properties": {
+          "back_nine_yardage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Back Nine Yardage"
+          },
           "color": {
             "anyOf": [
               {
@@ -2491,8 +2524,6 @@
           "course_rating": {
             "anyOf": [
               {
-                "maximum": 85.0,
-                "minimum": 55.0,
                 "type": "number"
               },
               {
@@ -2500,6 +2531,17 @@
               }
             ],
             "title": "Course Rating"
+          },
+          "front_nine_yardage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Nine Yardage"
           },
           "hole_yardages": {
             "additionalProperties": {
@@ -2511,8 +2553,6 @@
           "slope_rating": {
             "anyOf": [
               {
-                "maximum": 155.0,
-                "minimum": 55.0,
                 "type": "number"
               },
               {
@@ -2524,7 +2564,6 @@
           "total_yardage": {
             "anyOf": [
               {
-                "minimum": 0.0,
                 "type": "integer"
               },
               {
@@ -2536,12 +2575,14 @@
         },
         "required": [
           "color",
-          "total_yardage",
-          "hole_yardages",
           "slope_rating",
-          "course_rating"
+          "course_rating",
+          "hole_yardages",
+          "total_yardage",
+          "front_nine_yardage",
+          "back_nine_yardage"
         ],
-        "title": "Tee",
+        "title": "TeeResponse",
         "type": "object"
       },
       "UpdateCourseRequest": {
@@ -3827,7 +3868,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/CourseResponse"
+                }
               }
             },
             "description": "Successful Response"

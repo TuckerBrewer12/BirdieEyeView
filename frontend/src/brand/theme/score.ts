@@ -70,3 +70,19 @@ export function toParBadgeClass(toPar: number | null): string {
   if (toPar < 0) return "bg-accent text-score-birdie";
   return "bg-destructive/10 text-score-bogey";
 }
+
+// Spelled out in full for the same reason as SCORE_FILL_CLASS.
+const SCORE_ON_FILL_CLASS: Record<ScoreKey, string> = {
+  eagle: "text-score-eagle-on-base",
+  birdie: "text-score-birdie-on-base",
+  par: "text-score-par-on-base",
+  bogey: "text-score-bogey-on-base",
+  double: "text-score-double-on-base",
+  triple: "text-score-triple-on-base",
+  quad: "text-score-quad-on-base",
+};
+
+/** Tailwind text colour that reads on `scoreFillClass`. */
+export function scoreOnFillClass(key: ScoreKey): string {
+  return SCORE_ON_FILL_CLASS[key];
+}

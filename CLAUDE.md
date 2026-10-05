@@ -93,6 +93,7 @@ Key files:
 - `routers/stats.py` — player analytics endpoints; includes `GET /{user_id}/goal-report`
 - `api/request_models.py` — shared Pydantic request/response models
 - `api/round_responses.py` — `round_summary()` / `round_detail()`: the one place a round's response is built. Every round endpoint (list, detail, update, link-course, dashboard) returns the figures the `Round` model works out (score, par, to-par, nines, putts, GIR, per-hole par/to-par/`kind`, `score_counts`); the frontend displays them and does not recompute them.
+- `api/course_responses.py` — `course_detail()`: the one place a full course's response is built (`GET /courses/{id}` and a round's `course`). It carries the figures the `Course`/`Tee` models work out: par, front/back nine par, and per tee its total and nine yardages (null until every hole in the nine has a value).
 
 **API endpoints:**
 - `POST /api/scan/extract` — run LLM extraction on uploaded image
