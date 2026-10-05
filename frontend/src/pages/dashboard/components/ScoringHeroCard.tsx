@@ -49,10 +49,7 @@ export function ScoringHeroCard({
   ];
 
   return (
-    <Card
-      data-slot="scoring-hero-card"
-      className="rounded-2xl bg-radial-[at_90%_10%] from-primary/8 to-card to-55%"
-    >
+    <Card data-slot="scoring-hero-card">
       <CardContent className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <StatLabel>Scoring Avg · L20</StatLabel>
@@ -66,9 +63,9 @@ export function ScoringHeroCard({
           )}
         </div>
 
-        <div className="grid grid-cols-[auto_1fr] items-center gap-3.5">
+        <div className="flex items-center gap-3.5">
           <StatValue size="xl">{avgLabel(average)}</StatValue>
-          <Sparkline series={[{ values: recentScores }]} fill mean />
+          <Sparkline className="min-w-0 flex-1" series={[{ values: recentScores }]} fill mean />
         </div>
 
         {mix && (

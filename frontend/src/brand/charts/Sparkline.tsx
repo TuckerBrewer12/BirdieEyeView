@@ -2,7 +2,7 @@ import { useId } from "react";
 import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
-import { chartLayout, colors } from "@/brand/theme";
+import { borderWidth, chartLayout, colors, space } from "@/brand/theme";
 
 type SparklineTone = "primary" | "contrast";
 
@@ -101,8 +101,8 @@ export function Sparkline({ series, domain, fill = false, mean = false, classNam
             y1={meanY}
             y2={meanY}
             stroke={colors.border}
-            strokeWidth={1}
-            strokeDasharray="3 3"
+            strokeWidth={borderWidth}
+            strokeDasharray={`${space.dot} ${space.dot}`}
           />
         )}
         {fill && <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />}
