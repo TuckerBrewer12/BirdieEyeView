@@ -1,5 +1,4 @@
 import { useNavigate, Link } from "react-router-dom";
-import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 import {
   ActivityHeatmap,
   Button,
@@ -10,6 +9,10 @@ import {
   CardTitle,
   RoundPreview,
   SVGScoreHandicapTrend,
+  Stat,
+  StatDelta,
+  StatLabel,
+  StatValue,
   colors,
 } from "@/brand";
 import { formatHandicapIndex } from "@/domain/handicap";
@@ -21,7 +24,7 @@ import { PuttsGauge } from "./components/PuttsGauge";
 import { RecentRoundsTable } from "./components/RecentRoundsTable";
 import { ScanActionCard } from "./components/ScanActionCard";
 import { ScoreMixChart } from "./components/ScoreMixChart";
-import type { DashboardPageViewModel, HiTrend } from "./useDashboardPageViewModel";
+import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
 import { avgLabel, dashboardPalette, firstNameOf, pctLabel } from "./present";
 
 function ShortGameSparkline({
@@ -53,23 +56,6 @@ function ShortGameSparkline({
         <div className="flex items-center gap-1"><div className="size-2 rounded-full bg-primary" /><span className="text-caption text-muted-foreground">Scr</span></div>
         <div className="flex items-center gap-1"><div className="size-2 rounded-full bg-score-triple" /><span className="text-caption text-muted-foreground">U&D</span></div>
       </div>
-    </div>
-  );
-}
-
-function MiniKpi({ label, value, trend }: {
-  label: string; value: string | number | null;
-  trend?: HiTrend | null;
-}) {
-  const Icon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
-  const trendColor = trend === "down" ? "text-score-birdie" : trend === "up" ? "text-destructive" : "text-muted-foreground";
-  return (
-    <div className="flex items-center justify-between">
-      <div>
-        <div className="text-meta uppercase tracking-eyebrow text-muted-foreground font-bold">{label}</div>
-        <div className="text-4xl font-semibold tracking-stat text-card-foreground leading-tight">{value ?? "—"}</div>
-      </div>
-      {trend && <Icon className={`size-4 ${trendColor}`} />}
     </div>
   );
 }
@@ -115,8 +101,17 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
             <Card className="lg:col-span-1">
               <CardContent>
                 <div className="flex flex-col gap-5 h-full justify-between">
-                  <MiniKpi label="Scoring Avg (L20)" value={avgLabel(last20ScoringAvg)} trend={hiTrend} />
-                  <MiniKpi label="Total Rounds" value={data.total_rounds} />
+                  <div className="flex items-center justify-between">
+                    <Stat>
+                      <StatLabel>Scoring Avg (L20)</StatLabel>
+                      <StatValue size="lg">{avgLabel(last20ScoringAvg)}</StatValue>
+                    </Stat>
+                    <StatDelta direction={hiTrend} />
+                  </div>
+                  <Stat>
+                    <StatLabel>Total Rounds</StatLabel>
+                    <StatValue size="lg">{data.total_rounds}</StatValue>
+                  </Stat>
                 </div>
               </CardContent>
             </Card>
@@ -163,19 +158,15 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-around mt-6">
-                  <div className="text-center">
-                    <div className="text-4xl font-semibold text-card-foreground tracking-stat">
-                      {pctLabel(scramblingPct)}
-                    </div>
-                    <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow mt-0.5">Scrambling</div>
-                  </div>
+                  <Stat align="center">
+                    <StatValue size="lg">{pctLabel(scramblingPct)}</StatValue>
+                    <StatLabel>Scrambling</StatLabel>
+                  </Stat>
                   <div className="w-px h-8 bg-muted" />
-                  <div className="text-center">
-                    <div className="text-4xl font-semibold text-card-foreground tracking-stat">
-                      {pctLabel(upAndDownPct)}
-                    </div>
-                    <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow mt-0.5">Up & Down</div>
-                  </div>
+                  <Stat align="center">
+                    <StatValue size="lg">{pctLabel(upAndDownPct)}</StatValue>
+                    <StatLabel>Up & Down</StatLabel>
+                  </Stat>
                 </div>
                 {trends && (
                   <ShortGameSparkline

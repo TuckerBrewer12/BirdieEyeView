@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, chartColors, colors } from "@/brand";
+import { Button, Card, CardContent, Meter } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { GoalProgress } from "../model";
 import { goalScoreToBreak, goalTargetLabel } from "../present";
@@ -44,17 +44,11 @@ export function GoalCard({ goal, onOpen, className }: GoalCardProps) {
                 <span>{goal.average != null ? `Avg ${goal.average.toFixed(1)}` : null}</span>
                 <span>Goal {goalScoreToBreak(goal.target)}</span>
               </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${goal.progressPct ?? 0}%`,
-                    background: goal.onTrack
-                      ? colors.score.birdie.base
-                      : `linear-gradient(90deg, ${colors.primary}, ${chartColors.axis})`,
-                  }}
-                />
-              </div>
+              <Meter
+                value={goal.progressPct}
+                tone={goal.onTrack ? "success" : "progress"}
+                aria-label={`Progress to ${goalTargetLabel(goal.target).toLowerCase()}`}
+              />
             </div>
             {goal.focus && (
               <p className="text-label text-muted-foreground leading-relaxed">
