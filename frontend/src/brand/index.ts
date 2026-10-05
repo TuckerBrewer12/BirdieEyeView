@@ -59,7 +59,11 @@ export {
   inputGroupVariants,
   inputGroupAddonVariants,
   inputGroupButtonVariants,
+  meterTrackVariants,
+  meterIndicatorVariants,
   pageTitleVariants,
+  statVariants,
+  statValueVariants,
   teeSwatchVariants,
   toggleVariants,
 } from "./components/variants";
@@ -75,6 +79,9 @@ export {
 } from "./components/InputGroup";
 export { PageHeader } from "./components/PageHeader";
 export { PageTitle } from "./components/PageTitle";
+export { Meter } from "./components/Meter";
+export { Stat, StatLabel, StatValue, StatUnit, StatDelta } from "./components/Stat";
+export type { StatDirection } from "./components/Stat";
 export { TeeSwatch } from "./components/TeeSwatch";
 export { ToParFigure } from "./components/ToParFigure";
 export { Reveal } from "./components/Reveal";
