@@ -191,6 +191,7 @@
   --brand-size-gauge-outer: 72px;
   --brand-ring-width: 3px;
   --brand-border-width: 1px;
+  --brand-sparkline-stroke-width: 2px;
 
   --brand-opacity-recessed: 35%;
 }
