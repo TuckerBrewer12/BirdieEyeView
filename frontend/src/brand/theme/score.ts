@@ -54,6 +54,21 @@ export function toParLabel(toPar: number | null): string | null {
   return `${toPar}`;
 }
 
+const SCORE_KIND_LABEL: Record<ScoreKey, string> = {
+  eagle: "Eagle+",
+  birdie: "Birdie",
+  par: "Par",
+  bogey: "Bogey",
+  double: "Double",
+  triple: "Triple",
+  quad: "Quad+",
+};
+
+/** A hole's score type as a word: "Birdie", "Double". The ends are open, so "Eagle+" and "Quad+". */
+export function scoreKindLabel(key: ScoreKey): string {
+  return SCORE_KIND_LABEL[key];
+}
+
 export function toParDisplay(toPar: number | null, empty = "—"): string {
   return toParLabel(toPar) ?? empty;
 }

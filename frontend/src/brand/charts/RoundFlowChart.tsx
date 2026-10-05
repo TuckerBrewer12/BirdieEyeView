@@ -8,7 +8,9 @@ import {
   colors,
   fonts,
   motion as motionTokens,
+  scoreKindLabel,
   toParLabel,
+  toParTextClass,
   typography,
 } from "@/brand/theme";
 import type { HoleScore, Round } from "@/domain";
@@ -21,23 +23,7 @@ interface RoundFlowChartProps {
 /** A hole that can be plotted: scored, with a par the server classified it against. */
 type FlowHole = HoleScore & { strokes: number; toPar: number; kind: ScoreKind };
 
-const KIND_LABEL: Record<ScoreKind, string> = {
-  eagle: "Eagle+",
-  birdie: "Birdie",
-  par: "Par",
-  bogey: "Bogey",
-  double: "Double",
-  triple: "Triple",
-  quad: "Quad+",
-};
-
 const Y_TICKS = [-3, -2, -1, 0, 1, 2, 3];
-
-function tickColor(toPar: number): string {
-  if (toPar < 0) return colors.score.birdie.text;
-  if (toPar > 0) return colors.score.bogey.text;
-  return chartColors.axis;
-}
 
 /**
  * How a round went hole by hole: each hole's score to par, joined into a line,
@@ -179,7 +165,8 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               textAnchor="end"
               fontSize={typography.caption}
               fontFamily={fonts.sans}
-              fill={tickColor(toPar)}
+              fill="currentColor"
+              className={toParTextClass(toPar)}
               fontWeight={toPar === 0 ? "600" : "500"}
             >
               {toParLabel(toPar)}
@@ -210,7 +197,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
                     color: colors.score[hovered.kind].onMuted,
                   }}
                 >
-                  {KIND_LABEL[hovered.kind]}
+                  {scoreKindLabel(hovered.kind)}
                 </span>
               </div>
               <div className="mb-1 font-medium text-card-foreground">

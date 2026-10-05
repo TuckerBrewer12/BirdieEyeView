@@ -12,6 +12,7 @@ export {
   toParFill,
   toParTone,
   toParLabel,
+  scoreKindLabel,
   toParDisplay,
   toParTextClass,
   toParBadgeClass,
