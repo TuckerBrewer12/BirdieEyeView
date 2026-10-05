@@ -10,7 +10,8 @@ from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from api.dependencies import get_db, get_optional_current_user, get_current_user
 from api.error_responses import COURSE_SAVE_FAILED
 from api.input_validation import normalize_course_display_name, sanitize_search_query, sanitize_user_text
-from api.schemas import CourseSummaryResponse
+from api.course_responses import course_detail
+from api.schemas import CourseResponse, CourseSummaryResponse
 from models import Course, Hole, Tee, User
 from services import GolfCourseAPIService
 from services.golfcourse_api_service import _normalize_course_name
@@ -263,7 +264,7 @@ async def search_courses(
     return out[:20]
 
 
-@router.get("/{course_id}")
+@router.get("/{course_id}", response_model=CourseResponse)
 async def get_course(
     course_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -274,7 +275,7 @@ async def get_course(
         raise HTTPException(404, "Course not found")
     if course.user_id and (not current_user or str(current_user.id) != str(course.user_id)):
         raise HTTPException(403, "Forbidden")
-    return course
+    return course_detail(course)
 
 
 @router.post("", status_code=201)

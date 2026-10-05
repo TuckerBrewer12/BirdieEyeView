@@ -237,7 +237,7 @@ def _build_round_from_parsed_rows(
     if known_course:
         course_name = getattr(course_model, "name", None)
         course_location = getattr(course_model, "location", None)
-        course_par = getattr(course_model, "par", None)
+        course_par = course_model.get_par()
         model_holes = getattr(course_model, "holes", []) or []
         if model_holes:
             hole_count = min(18, len(model_holes))

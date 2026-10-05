@@ -84,7 +84,9 @@ async def test_course_listing_lookup_and_authorization():
     listed = await courses.list_courses(20, 0, user_id, db, user)
     assert listed[0].name == "Pebble Beach"
     assert listed[0].total_holes == 1
-    assert await courses.get_course(course_id, db, None) == course
+    fetched = await courses.get_course(course_id, db, None)
+    assert fetched.id == course.id
+    assert fetched.name == "Pebble Beach"
 
     with pytest.raises(HTTPException) as exc:
         await courses.list_courses(20, 0, user_id, db, None)

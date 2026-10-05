@@ -1,4 +1,5 @@
-import type { CourseDto, HoleScoreDto, RoundDto, RoundSummaryDto, ScoreCountsDto, UserTeeDto } from "../../types/api";
+import type { HoleScoreDto, RoundDto, RoundSummaryDto, ScoreCountsDto, UserTeeDto } from "../../types/api";
+import { coursePar, courseResponse, type StoredCourse } from "./courseResponses";
 
 /**
  * The fake backend's copy of api/round_responses.py and models/round.py: a round is stored as
@@ -16,7 +17,7 @@ export interface StoredHole {
 
 export interface StoredRound {
   id: string;
-  course: CourseDto | null;
+  course: StoredCourse | null;
   tee_box: string | null;
   date: string | null;
   hole_scores: StoredHole[];
@@ -41,12 +42,6 @@ function kindFor(toPar: number | null): ScoreKind | null {
   if (toPar <= -2) return "eagle";
   if (toPar >= 4) return "quad";
   return (["birdie", "par", "bogey", "double", "triple"] as const)[toPar + 1];
-}
-
-function coursePar(course: CourseDto): number | null {
-  if (course.par != null) return course.par;
-  if (course.holes.length !== 18 || course.holes.some((h) => h.par == null)) return null;
-  return sum(course.holes.map((h) => h.par!));
 }
 
 function roundPar(round: StoredRound): number | null {
@@ -105,7 +100,12 @@ function figures(round: StoredRound, holes: HoleScoreDto[]) {
 
 export function roundResponse(round: StoredRound): RoundDto {
   const holes = holeResponses(round);
-  return { ...round, ...figures(round, holes), hole_scores: holes };
+  return {
+    ...round,
+    ...figures(round, holes),
+    course: round.course ? courseResponse(round.course) : null,
+    hole_scores: holes,
+  };
 }
 
 export function summaryResponse(round: StoredRound): RoundSummaryDto {
@@ -147,8 +147,6 @@ export function storedFromSummary(summary: RoundSummaryDto): StoredRound {
           par: summary.course_par,
           holes: [],
           tees: [],
-          external_course_id: null,
-          user_id: null,
         }
       : null,
     tee_box: summary.tee_box,

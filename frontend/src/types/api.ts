@@ -7,8 +7,8 @@ import type { components } from "./api.gen";
 type Schemas = components["schemas"];
 
 export type HoleDto = Schemas["Hole"];
-export type TeeDto = Schemas["Tee"];
-export type CourseDto = Schemas["Course"];
+export type TeeDto = Schemas["TeeResponse"];
+export type CourseDto = Schemas["CourseResponse"];
 export type UserTeeDto = Schemas["UserTee"];
 export type HoleScoreDto = Schemas["HoleScoreResponse"];
 export type ScoreCountsDto = Schemas["ScoreCounts"];

@@ -1,6 +1,6 @@
 import type { HoleScoreDto, RoundDto, RoundSummaryDto, ScoreCountsDto } from "@/types/api";
 import type { Course } from "@/types/golf";
-import { coursePar, getHole } from "./course";
+import { getHole } from "./course";
 import { SCORE_KINDS, scoreKind, strokesToPar, type ScoreKind } from "./score";
 
 /** One hole as played. Par, to-par and kind come from the server. */
@@ -130,7 +130,7 @@ function previewEdits(round: Round, edits: StrokeOverrides, course?: Course | nu
   });
   const scored = holes.filter((hole) => hole.strokes != null);
   const score = scored.length > 0 ? scored.reduce((sum, hole) => sum + hole.strokes!, 0) : null;
-  const par = course ? coursePar(course) ?? round.par : round.par;
+  const par = course ? course.par ?? round.par : round.par;
   const scoreCounts = Object.fromEntries(SCORE_KINDS.map((kind) => [kind, 0])) as ScoreCounts;
   for (const hole of holes) if (hole.kind) scoreCounts[hole.kind] += 1;
   const front = holes.filter((hole) => hole.hole <= 9);
