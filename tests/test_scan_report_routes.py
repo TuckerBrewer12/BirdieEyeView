@@ -78,7 +78,8 @@ def test_app_configuration_wires_real_encryption_and_sanitation_without_database
     restored = store.retrieve(UUID(values["retry_key"]))
     assert restored.metadata.category == values["category"]
     assert set(restored.metadata.model_dump()) == {"schema_version", "retry_key", "category", "stage", "http_status", "media_type"}
-    assert len(store.client.objects) == 1
+    assert len(store.client.objects) == 2  # One private reservation and one encrypted report.
+    assert sum(key.endswith(".bev") for key in store.client.objects) == 1
 
 
 def test_configured_storage_sanitation_failure_is_safe_and_never_stored(caplog):

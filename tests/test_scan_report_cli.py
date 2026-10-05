@@ -7,7 +7,8 @@ from PIL import Image
 
 from scripts import scan_reports as cli
 from services.scan_report_crypto import decode_key
-from services.scan_report_storage import ScanReportStorageConfig
+from services.scan_report_storage import ScanReportStorageConfig, report_object_key
+from services.scan_report_sanitizer import sanitize_scorecard
 from tests.scan_report_fixtures import report
 from tests.test_scan_report_storage import configure_environment, make_store
 
@@ -23,10 +24,15 @@ def test_key_generation_is_private_never_printed_and_cannot_overwrite(tmp_path, 
     assert destination.read_text().strip() == secret
 
 
-def test_download_authenticates_then_writes_only_generic_private_files(tmp_path):
+@pytest.mark.parametrize("legacy", [False, True])
+def test_download_authenticates_then_writes_only_generic_private_files(tmp_path, legacy):
     store = make_store()
     item = report()
-    store.save_sync(item)
+    if legacy:
+        image, media = sanitize_scorecard(item.image, item.media_type)
+        store.client.objects[report_object_key(item.retry_key)] = store.cipher.encrypt(item, image, media)
+    else:
+        store.save_sync(item)
     directory = cli.download_report(store, item.retry_key, tmp_path)
     assert directory.name == str(item.retry_key)
     assert {path.name for path in directory.iterdir()} == {"scorecard.png", "metadata.json"}
@@ -72,12 +78,15 @@ def test_cli_list_download_and_explicit_delete_commands(tmp_path, monkeypatch, c
     store = cli_store(monkeypatch)
     first, second = report(), report()
     store.save_sync(first)
-    store.save_sync(second)
+    image, media = sanitize_scorecard(second.image, second.media_type)
+    store.client.objects[report_object_key(second.retry_key)] = store.cipher.encrypt(second, image, media)
     assert cli.main(["list"]) == 0
     assert capsys.readouterr().out.splitlines() == [str(first.retry_key), str(second.retry_key)]
     assert cli.main(["download", str(first.retry_key), "--output", str(tmp_path)]) == 0
     assert cli.main(["delete", str(first.retry_key), "--confirm"]) == 0
     assert list(store.list_report_ids()) == [second.retry_key]
+    assert cli.main(["delete", str(second.retry_key), "--confirm"]) == 0
+    assert not store.client.objects
 
 
 def test_cli_requires_confirmation_and_valid_uuid_for_deletion(monkeypatch):
@@ -116,11 +125,18 @@ def test_smoke_exercises_private_storage_retries_and_cleans_synthetic_data(monke
     class Denied:
         status_code = 403
     urls = []
-    monkeypatch.setattr(cli.httpx, "get", lambda url, **kwargs: urls.append(url) or Denied())
+    def private_get(url, **kwargs):
+        # A 403/404 for a fabricated UUID-only URL would not verify the saved object.
+        key = url.split(".storage.invalid/", 1)[1]
+        assert key in store.client.objects and store.client.objects[key]
+        urls.append(url)
+        return Denied()
+    monkeypatch.setattr(cli.httpx, "get", private_get)
     cli.smoke_check(config, store)
-    assert not store.client.objects and len(store.client.deleted) == 1
-    assert len(store.client.writes) == 3
+    assert not store.client.objects and len(store.client.deleted) == 2
+    assert len(store.client.writes) == 6
     assert urls[0].startswith("https://private-test.storage.invalid/reports/v1/")
+    assert "/2026-10-05_06-07-52Z_" in urls[0]
 
 
 def test_smoke_fails_on_public_access_and_still_cleans_test_report(monkeypatch):

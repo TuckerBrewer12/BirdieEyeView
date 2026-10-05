@@ -13,9 +13,13 @@ are valid. Missing/broken configuration leaves reporting unavailable without
 preventing scanning, round saving, or API startup. No database is used.
 
 Every upload is sanitized before encryption and persistence. One encrypted
-object contains the cleaned file and allowlisted diagnostic JSON. Keys are
-`reports/v1/<report-only-UUID4>.bev`, with no original filename, account, course,
-or scan timestamp. Objects have a generic binary content type and no custom
+object contains the cleaned file and allowlisted diagnostic JSON. New keys are
+`reports/v1/YYYY-MM-DD_HH-MM-SSZ_<report-only-UUID4>.bev`. The visible filename
+timestamp is UTC (`Z`), making report times distinguishable in Railway's file
+list even when its date column only shows a day. Existing
+`reports/v1/<report-only-UUID4>.bev` objects remain unchanged and supported.
+Neither format includes an original filename, account, course, or original scan
+timestamp. Objects have a generic binary content type and no custom
 metadata or public ACL. Each envelope uses a fresh nonce and authenticated
 version header. The encryption key is separate from S3/application credentials.
 
@@ -26,17 +30,28 @@ before the API returns `saved`. Conflicting retries, corruption, unsupported
 conditional writes and provider failures produce safe 503 responses. A retry
 can recover a durable report whose previous acknowledgement was lost.
 
+For new reports, a create-only, empty private object at
+`report-index/v1/<report-only-UUID4>` reserves the timestamp before the encrypted
+upload. Its provider `LastModified` time fixes the filename across concurrent
+workers and later retries; a retry never replaces the reservation. This is the
+time storage was initialized, not necessarily the upload completion time after
+a delayed retry. The index contains no image, diagnostics or account data and
+is outside the report file-list prefix. An index alone is never acknowledged as
+a saved report. Interrupted uploads can leave an empty index for a later retry
+to complete. Explicit deletion removes the encrypted report before its index
+so an interrupted deletion can be retried. Legacy reports need no index.
+
 Collection is disabled by default. While disabled, `POST /api/scan/reports`
 returns 503 with `code: report_storage_unavailable`; the UI says the report was
 not saved. No memory queue or filesystem archive acknowledges discarded reports.
 
-### Railway setup status — October 2, 2026
+### Railway setup and rollout status — October 5, 2026 (UTC)
 
 The connected Railway plugin configured eight dedicated backend variables with
 deployments skipped: enabled state, bucket, endpoint, region, addressing style,
-two S3 credentials and encryption key. The five bucket values use
+two S3 credentials and encryption key on October 2. The five bucket values use
 `${{failed-scan-reports.<VARIABLE>}}` references; credentials were not exported.
-Collection remains disabled.
+Collection was initially disabled until the feature was merged and verified.
 
 Bucket activation was verified through the connected Railway plugin on
 October 2, 2026. `failed-scan-reports`, bucket ID
@@ -54,9 +69,13 @@ Local S3 settings are in ignored `secrets/scan-reports.env`; the unchanged
 encryption key remains separately in `secrets/scan-report-encryption.key`.
 Both files have `0600` permissions. Do not paste credentials into chat.
 
-The backend still deploys from `main`; these feature-branch changes have not
-been pushed, merged or deployed. Storage verification is complete; the remaining
-rollout steps are deploying the feature code and enabling collection. Connected
+The initial reporting feature was merged into `main` in PR #339. Collection was
+enabled on the production backend on October 5 (UTC), and deployment succeeded.
+A synthetic report submitted through the production endpoint returned `saved`,
+authenticated retrieval verified encryption and metadata removal, and only
+that synthetic report was deleted. Existing reports were left untouched.
+Timestamped filenames require merging and deploying the follow-up change;
+existing reports are not backfilled. Connected
 OAuth tools expose variable names rather than credential values; the live check
 ran through the developer CLI using the ignored local credentials file.
 

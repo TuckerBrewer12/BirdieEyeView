@@ -3,6 +3,7 @@
 import logging
 import os
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from urllib.parse import urlsplit
 from uuid import UUID
 
@@ -16,13 +17,39 @@ from services.scan_report_sanitizer import sanitize_scorecard
 from services.scan_report_service import AnonymousScanReport
 
 PREFIX = "reports/v1/"
+INDEX_PREFIX = "report-index/v1/"
+TIMESTAMP_FORMAT = "%Y-%m-%d_%H-%M-%SZ"
 
 
-def report_object_key(report_id: UUID) -> str:
+def report_object_key(report_id: UUID, reported_at: datetime | None = None) -> str:
     value = UUID(str(report_id))
     if value.version != 4:
         raise ValueError("A report UUID4 is required.")
-    return f"{PREFIX}{value}.bev"
+    if reported_at is None:
+        return f"{PREFIX}{value}.bev"
+    if not isinstance(reported_at, datetime) or reported_at.utcoffset() is None:
+        raise ValueError("An aware report timestamp is required.")
+    timestamp = reported_at.astimezone(timezone.utc).strftime(TIMESTAMP_FORMAT)
+    return f"{PREFIX}{timestamp}_{value}.bev"
+
+
+def report_index_key(report_id: UUID) -> str:
+    return INDEX_PREFIX + report_object_key(report_id).removeprefix(PREFIX).removesuffix(".bev")
+
+
+def report_id_from_object_key(key: str) -> UUID:
+    if not key.startswith(PREFIX) or not key.endswith(".bev"):
+        raise ValueError("Invalid report object key.")
+    name = key.removeprefix(PREFIX).removesuffix(".bev")
+    if "_" in name:
+        timestamp, value = name.rsplit("_", 1)
+        reported_at = datetime.strptime(timestamp, TIMESTAMP_FORMAT).replace(tzinfo=timezone.utc)
+    else:
+        value, reported_at = name, None
+    report_id = UUID(value)
+    if report_object_key(report_id, reported_at) != key:
+        raise ValueError("Invalid report object key.")
+    return report_id
 
 
 @dataclass(frozen=True)
@@ -84,8 +111,42 @@ class EncryptedScanReportStore:
     async def save(self, report: AnonymousScanReport) -> bool:
         return await run_in_threadpool(self.save_sync, report)
 
+    def _head(self, key: str):
+        try:
+            return self.client.head_object(Bucket=self.bucket, Key=key)
+        except ClientError as exc:
+            if exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 404:
+                raise
+            return None
+
+    def _timestamped_key(self, report_id: UUID, reservation) -> str:
+        if reservation is None or reservation.get("ContentLength") != 0:
+            raise ValueError("Invalid report timestamp reservation.")
+        timestamp = reservation.get("LastModified")
+        if not isinstance(timestamp, datetime) or timestamp.utcoffset() is None:
+            raise ValueError("Invalid report timestamp reservation.")
+        return report_object_key(report_id, timestamp)
+
+    def object_key(self, report_id: UUID) -> str:
+        """Resolve a report UUID without creating or renaming anything."""
+        legacy = report_object_key(report_id)
+        if self._head(legacy) is not None:
+            return legacy
+        return self._timestamped_key(report_id, self._head(report_index_key(report_id)))
+
+    def _put_if_absent(self, key: str, body: bytes):
+        try:
+            self.client.put_object(Bucket=self.bucket, Key=key, Body=body,
+                                   ContentType="application/octet-stream", IfNoneMatch="*")
+        except ClientError as exc:
+            if exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 412:
+                raise
+
     def _get_envelope(self, report_id: UUID) -> bytes:
-        response = self.client.get_object(Bucket=self.bucket, Key=report_object_key(report_id))
+        return self._read_envelope(self.object_key(report_id))
+
+    def _read_envelope(self, key: str) -> bytes:
+        response = self.client.get_object(Bucket=self.bucket, Key=key)
         body = response["Body"]
         try:
             if response.get("ContentLength", 0) > MAX_ENVELOPE_BYTES:
@@ -105,16 +166,16 @@ class EncryptedScanReportStore:
         envelope = self.cipher.encrypt(report, image, media_type)
         candidate = self.cipher.decrypt(envelope, report.retry_key)
         key = report_object_key(report.retry_key)
-        try:
-            self.client.put_object(Bucket=self.bucket, Key=key, Body=envelope,
-                                   ContentType="application/octet-stream", IfNoneMatch="*")
-        except ClientError as exc:
-            # A 412 alone isn't proof this retry was saved; authenticate the object.
-            if exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 412:
-                raise
-        # Also verify a successful PUT, protecting against corrupted writes and
-        # confirming an acknowledgement lost by the client's previous attempt.
-        stored = self.retrieve(report.retry_key)
+        if self._head(key) is None:
+            # The first create-only reservation fixes the provider timestamp for
+            # every worker/retry, including attempts interrupted before upload.
+            index = report_index_key(report.retry_key)
+            self._put_if_absent(index, b"")
+            key = self._timestamped_key(report.retry_key, self._head(index))
+        self._put_if_absent(key, envelope)
+        # Neither a reservation nor a 412 proves durability. Authenticate even a
+        # successful PUT, also recovering a previously lost acknowledgement.
+        stored = self.cipher.decrypt(self._read_envelope(key), report.retry_key)
         if stored.metadata != candidate.metadata or stored.image != candidate.image:
             raise ValueError("Conflicting report retry.")
         return True
@@ -124,11 +185,19 @@ class EncryptedScanReportStore:
             for item in page.get("Contents", []):
                 key = item["Key"]
                 try:
-                    report_id = UUID(key.removeprefix(PREFIX).removesuffix(".bev"))
-                    if report_object_key(report_id) == key:
-                        yield report_id
+                    yield report_id_from_object_key(key)
                 except ValueError:
                     continue
 
     def delete(self, report_id: UUID):
-        self.client.delete_object(Bucket=self.bucket, Key=report_object_key(report_id))
+        legacy = report_object_key(report_id)
+        if self._head(legacy) is not None:
+            self.client.delete_object(Bucket=self.bucket, Key=legacy)
+            return
+        index = report_index_key(report_id)
+        reservation = self._head(index)
+        if reservation is not None:
+            key = self._timestamped_key(report_id, reservation)
+            # Remove the locator last so a failed deletion can be retried.
+            self.client.delete_object(Bucket=self.bucket, Key=key)
+            self.client.delete_object(Bucket=self.bucket, Key=index)
