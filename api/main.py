@@ -30,6 +30,8 @@ from api.security import (
 from api.auth_utils import get_access_token_cookie_name
 from api.dependencies import client_ip
 from api.error_responses import UNEXPECTED_ERROR
+from api.scan_errors import ScanExtractionError
+from api.scan_report_schemas import REPORT_PATH
 
 APP_ENV = os.environ.get("APP_ENV", "development").strip().lower()
 IS_PROD_LIKE = APP_ENV in {"production", "prod", "staging"}
@@ -148,6 +150,7 @@ def create_app() -> FastAPI:
     api_scan_window_sec = env_int("API_SCAN_LIMIT_WINDOW_SECONDS", 3600)
     api_scan_max_requests = env_int("API_SCAN_LIMIT_MAX_REQUESTS", 60)
     api_scan_max_unauth_requests = env_int("API_SCAN_LIMIT_MAX_UNAUTH_REQUESTS", 6)
+    api_report_max_requests = env_int("API_SCAN_REPORT_LIMIT_MAX_REQUESTS", 10)
     api_scrape_window_sec = env_int("API_SCRAPE_LIMIT_WINDOW_SECONDS", 60)
     api_scrape_max_requests = env_int("API_SCRAPE_LIMIT_MAX_REQUESTS", 60)
     api_bot_window_sec = env_int("API_BOT_LIMIT_WINDOW_SECONDS", 60)
@@ -181,10 +184,14 @@ def create_app() -> FastAPI:
         ip = client_ip(request)
         user_agent = request.headers.get("user-agent", "")[:200]
         path = request.url.path
+        is_report = path.rstrip("/") == REPORT_PATH
+        log_ip = "anonymous" if is_report else ip
+        if is_report:
+            user_agent = "anonymous-report"
 
         if request.method != "OPTIONS" and path.startswith("/api") and path not in api_rate_exempt_paths:
             cookie_name = get_access_token_cookie_name()
-            has_auth = bool(request.headers.get("authorization")) or bool(request.cookies.get(cookie_name))
+            has_auth = not is_report and (bool(request.headers.get("authorization")) or bool(request.cookies.get(cookie_name)))
 
             allowed, retry_after = api_rate_limiter.check(
                 f"api:global:{ip}",
@@ -194,7 +201,7 @@ def create_app() -> FastAPI:
             if not allowed:
                 logging.getLogger(__name__).warning(
                     "API rate-limit hit: category=global ip=%s method=%s path=%s retry_after=%s",
-                    ip,
+                    log_ip,
                     request.method,
                     path,
                     retry_after,
@@ -214,7 +221,7 @@ def create_app() -> FastAPI:
                 if not allowed:
                     logging.getLogger(__name__).warning(
                         "API rate-limit hit: category=unauth ip=%s method=%s path=%s retry_after=%s",
-                        ip,
+                        log_ip,
                         request.method,
                         path,
                         retry_after,
@@ -223,6 +230,17 @@ def create_app() -> FastAPI:
                         status_code=429,
                         content={"detail": "Too many unauthenticated requests."},
                         headers={"Retry-After": str(retry_after)},
+                    )
+
+            if request.method == "POST" and is_report:
+                allowed, retry_after = api_rate_limiter.check(
+                    f"api:report:{ip}", limit=api_report_max_requests, window_seconds=api_scan_window_sec,
+                )
+                if not allowed:
+                    return JSONResponse(
+                        status_code=429,
+                        content={"detail": "Too many reports. Please try again later."},
+                        headers={"Retry-After": str(retry_after), "Cache-Control": "no-store"},
                     )
 
             if request.method == "POST" and path in {"/api/scan/ocr", "/api/scan/extract"}:
@@ -274,7 +292,7 @@ def create_app() -> FastAPI:
                 if not allowed:
                     logging.getLogger(__name__).warning(
                         "API rate-limit hit: category=bot ip=%s path=%s retry_after=%s ua=%s",
-                        ip,
+                        log_ip,
                         path,
                         retry_after,
                         user_agent,
@@ -289,28 +307,30 @@ def create_app() -> FastAPI:
             response = await call_next(request)
         except Exception:
             latency_ms = (time.perf_counter() - t0) * 1000.0
-            logging.getLogger(__name__).exception(
-                "Unhandled API exception: ip=%s method=%s path=%s latency_ms=%.1f ua=%s",
-                ip,
-                request.method,
-                path,
-                latency_ms,
-                user_agent,
-            )
+            if is_report:
+                logging.getLogger(__name__).error("Anonymous scan report request failed")
+            else:
+                logging.getLogger(__name__).exception(
+                    "Unhandled API exception: ip=%s method=%s path=%s latency_ms=%.1f ua=%s",
+                    ip, request.method, path, latency_ms, user_agent,
+                )
             response = JSONResponse(
                 status_code=500,
                 content={"detail": UNEXPECTED_ERROR},
             )
 
         latency_ms = (time.perf_counter() - t0) * 1000.0
-        traffic_monitor.record(
-            ip=ip,
-            status_code=response.status_code,
-            method=request.method,
-            path=path,
-            latency_ms=latency_ms,
-            user_agent=user_agent,
-        )
+        if is_report:
+            response.headers["Cache-Control"] = "no-store"
+        else:
+            traffic_monitor.record(
+                ip=ip,
+                status_code=response.status_code,
+                method=request.method,
+                path=path,
+                latency_ms=latency_ms,
+                user_agent=user_agent,
+            )
 
         # Basic hardening headers for API responses.
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
@@ -320,13 +340,25 @@ def create_app() -> FastAPI:
             response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
         return response
 
-    from api.routers import auth, courses, users, rounds, stats, scan, ai_insights
+    @app.exception_handler(ScanExtractionError)
+    async def scan_failure_response(request: Request, exc: ScanExtractionError):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail, "failure": exc.failure})
+
+    from api.routers import auth, courses, users, rounds, stats, scan, scan_reports, ai_insights
+    from api.scan_report_logging import protect_report_access_logs
+    from services.scan_report_storage import configured_scan_report_store
+
+    protect_report_access_logs()
+    report_store = configured_scan_report_store()
+    app.dependency_overrides[scan_reports.get_scan_report_store] = lambda: report_store
+
     app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
     app.include_router(courses.router, prefix="/api/courses", tags=["courses"])
     app.include_router(users.router, prefix="/api/users", tags=["users"])
     app.include_router(rounds.router, prefix="/api/rounds", tags=["rounds"])
     app.include_router(stats.router, prefix="/api/stats", tags=["stats"])
     app.include_router(scan.router, prefix="/api/scan", tags=["scan"])
+    app.include_router(scan_reports.router, prefix="/api/scan", tags=["scan"])
     app.include_router(ai_insights.router, prefix="/api/ai-insights", tags=["ai-insights"])
 
     @app.api_route("/", methods=["GET", "HEAD"])

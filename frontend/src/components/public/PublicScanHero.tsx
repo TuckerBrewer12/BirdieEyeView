@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Camera, Upload, RotateCcw, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { usePublicScan } from "@/hooks/usePublicScan";
+import { ReportFailedScan } from "@/components/scan/ReportFailedScan";
 import { ScorecardLayoutPicker } from "@/components/scan/ScorecardLayoutPicker";
 import type { ExtractedHoleScore, ScanResult } from "@/types/scan";
 
@@ -316,7 +317,7 @@ function NineTable({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function PublicScanHero() {
-  const { step, file, preview, setUserContext, extracting, result, error, handleFile, handleExtract, reset } = usePublicScan();
+  const { step, file, preview, setUserContext, extracting, result, error, report, handleFile, handleExtract, reset } = usePublicScan();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const onExtract = useCallback(() => handleExtract(), [handleExtract]);
@@ -398,9 +399,10 @@ export function PublicScanHero() {
 
                 <ScorecardLayoutPicker onContextChange={setUserContext} />
 
-                {error && (
+                {error && !report.available && (
                   <p className="text-xs text-red-500 text-center">{error}</p>
                 )}
+                <ReportFailedScan report={report} error={error} />
 
                 <button
                   onClick={onExtract}

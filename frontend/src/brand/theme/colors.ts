@@ -13,6 +13,8 @@ export const colors = {
   },
 
   light: {
+    danger: "var(--color-red-700)",
+    onDanger: "#ffffff",
     page: "#f8faf8",
     fg: "#1a2e1a",
     fgMuted: "#6b7765",
@@ -23,6 +25,8 @@ export const colors = {
     infoBorder: "#bfdbfe",
   },
   dark: {
+    danger: "var(--color-red-300)",
+    onDanger: "#111213",
     page: "#111213",
     fg: "#e6edf3",
     fgMuted: "#9aa4b2",

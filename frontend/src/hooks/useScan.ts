@@ -7,6 +7,9 @@ import { api } from "@/lib/api";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
 import { initializeScores } from "@/lib/scanUtils";
+import { failedScanAttempt, readScanFailure } from "@/lib/scanReports";
+import { useFailedScanReport } from "@/hooks/useFailedScanReport";
+import type { ScanFailure } from "@/types/scanReport";
 import {
   fetchWithUserFacingError,
   getUserFacingError,
@@ -75,9 +78,14 @@ export function useScan(
   const { step, scanMode, selectedCourseId, selectedCourseName, file, result, editedScores, scoreMetadata, editedDate, editedTeeBox, userContext, prefetchedOcrText, reviewCourseId, reviewExternalCourseId, reviewCourseName, manualCourseHoles, manualCourseTees, savedRoundId } = scanState;
 
   const update = useCallback(
-    (patch: Partial<ScanState>) => setScanState((prev) => ({ ...prev, ...patch })),
+    (patch: Partial<ScanState>) => setScanState((prev) => ({
+      ...prev,
+      ...patch,
+      ...(patch.file !== undefined || patch.scanMode !== undefined ? { failedScan: null, scanAttemptId: null } : {}),
+    })),
     [setScanState]
   );
+  const report = useFailedScanReport(scanState.failedScan);
 
   // Transient UI state — fine to reset on navigation
   const [saving, setSaving] = useState(false);
@@ -184,6 +192,7 @@ export function useScan(
   const activePrefetchPromise = useRef<{ fileId: string; promise: Promise<string | null> } | null>(null);
 
   const handleFile = useCallback((f: File) => {
+    update({ failedScan: null, scanAttemptId: null, step: "upload", error: null, prefetchedOcrText: null });
     const fileId = `${f.name}-${f.size}-${Date.now()}`;
     activePrefetch.current = fileId;
     activePrefetchPromise.current = null;
@@ -254,7 +263,12 @@ export function useScan(
 
   const handleExtract = useCallback(async () => {
     if (!file) return;
-    update({ step: "processing", error: null });
+    const scanAttemptId = crypto.randomUUID();
+    update({ step: "processing", error: null, failedScan: null, scanAttemptId });
+    const finishAttempt = (patch: Partial<ScanState>) => setScanState((prev) =>
+      prev.scanAttemptId === scanAttemptId && prev.file === file ? { ...prev, ...patch } : prev,
+    );
+    let failure: ScanFailure = { category: "network_error", stage: "unknown", http_status: null };
 
     let ocrTextToUse = prefetchedOcrText;
     const inflight = activePrefetchPromise.current;
@@ -283,9 +297,11 @@ export function useScan(
         body: formData,
       }, USER_FACING_ERRORS.scan);
       if (!res.ok) {
+        failure = await readScanFailure(res);
         throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.scan));
       }
 
+      failure = { category: "invalid_response", stage: "unknown", http_status: res.status };
       const data = await parseJsonResponse<ScanResult>(res, USER_FACING_ERRORS.scan);
       const { editedScores: initialScores, scoreMetadata: initialMeta } = initializeScores(
         data.round.hole_scores,
@@ -295,7 +311,7 @@ export function useScan(
       const inferredTeeBox =
         data.round.tee_box
         ?? (data.round.course?.tees?.length === 1 ? (data.round.course.tees[0].color ?? null) : null);
-      update({
+      finishAttempt({
         result: data,
         editedScores: initialScores,
         scoreMetadata: initialMeta,
@@ -322,9 +338,13 @@ export function useScan(
         setReviewCourseResults([]);
       }
     } catch (err) {
-      update({ error: err instanceof Error ? err.message : "Extraction failed", step: "upload" });
+      finishAttempt({
+        error: err instanceof Error ? err.message : "Extraction failed",
+        step: "upload",
+        failedScan: failedScanAttempt(file, failure),
+      });
     }
-  }, [file, selectedCourseId, userContext, prefetchedOcrText, update, handleReviewCourseQuery]);
+  }, [file, selectedCourseId, userContext, prefetchedOcrText, update, setScanState, handleReviewCourseQuery]);
 
   useEffect(() => {
     if (!file) {
@@ -530,6 +550,7 @@ export function useScan(
     manualCourseTees,
     savedRoundId,
     error: scanState.error,
+    report,
     preview: scanState.preview,
 
     // update helper
