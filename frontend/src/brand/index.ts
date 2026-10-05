@@ -87,6 +87,7 @@ export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
 export { RoundPreview } from "./components/RoundPreview";
 export { CoursePreview } from "./components/CoursePreview";
 export { SectionLabel } from "./components/SectionLabel";
+export { Stat, StatValue, StatLabel } from "./components/Stat";
 export { ScoreCountChip } from "./components/ScoreCountChip";
 export { SearchField } from "./components/SearchField";
 export { SortControl } from "./components/SortControl";
