@@ -2,7 +2,7 @@ import { useId } from "react";
 import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
-import { borderWidth, chartLayout, colors, space } from "@/brand/theme";
+import { borderWidth, chartLayout, colors, opacityWash, space } from "@/brand/theme";
 
 type SparklineTone = "primary" | "contrast";
 
@@ -89,7 +89,7 @@ export function Sparkline({ series, domain, fill = false, mean = false, classNam
         {fill && (
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={STROKE[series[0].tone ?? "primary"]} stopOpacity={0.22} />
+              <stop offset="0%" stopColor={STROKE[series[0].tone ?? "primary"]} stopOpacity={opacityWash} />
               <stop offset="100%" stopColor={STROKE[series[0].tone ?? "primary"]} stopOpacity={0} />
             </linearGradient>
           </defs>

@@ -196,6 +196,8 @@
   --brand-border-width: 1px;
 
   --brand-opacity-recessed: 35%;
+  /* Soft fill under a sparkline. */
+  --brand-opacity-wash: 22%;
 }
 
 :root.dark {
@@ -368,6 +370,7 @@
   --ring-width-3: var(--brand-ring-width);
 
   --opacity-recessed: var(--brand-opacity-recessed);
+  --opacity-wash: var(--brand-opacity-wash);
 
   --grid-template-columns-round-preview: var(--brand-size-date-rail) 1fr auto;
   --grid-template-columns-handicap-breakdown: 1fr auto auto auto;

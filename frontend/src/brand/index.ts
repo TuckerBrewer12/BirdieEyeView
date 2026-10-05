@@ -10,6 +10,7 @@ export {
   borderWidth,
   ringWidth,
   opacityRecessed,
+  opacityWash,
   motion,
   chartTooltipStyle,
   chartTickStyle,

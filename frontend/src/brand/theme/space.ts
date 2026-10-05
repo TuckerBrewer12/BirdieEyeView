@@ -48,3 +48,4 @@ export const radius = {
 export const borderWidth = "var(--brand-border-width)";
 export const ringWidth = "var(--brand-ring-width)";
 export const opacityRecessed = "var(--brand-opacity-recessed)";
+export const opacityWash = "var(--brand-opacity-wash)";
