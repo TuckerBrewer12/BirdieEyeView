@@ -64,6 +64,27 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.played?.holes.find((h) => h.hole === 1)?.strokes).toBeNull();
   });
 
+  it("live-totals putts and greens edited in edit mode", async () => {
+    const { result } = renderVm("round-1", { detailRounds: [halfMoonBayRound] });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const frontPutts = result.current.played!.frontNine.putts!;
+    expect(result.current.played).toMatchObject({ putts: 32, gir: 7 });
+    act(() => result.current.enterEditMode());
+    act(() => result.current.editor.setScore(1, "putts", 3));
+    act(() => result.current.editor.setGir(1, false));
+    expect(result.current.played).toMatchObject({ putts: 34, gir: 6 });
+    expect(result.current.played?.frontNine.putts).toBe(frontPutts + 2);
+  });
+
+  it("reads yardage from a tee picked in edit mode", async () => {
+    const { result } = renderVm("round-1", { detailRounds: [halfMoonBayRound] });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.played?.yards).toBe(6500);
+    act(() => result.current.enterEditMode());
+    act(() => result.current.editor.setTeeBox("White"));
+    expect(result.current.played?.yards).toBe(6100);
+  });
+
   it("reads the round against a course picked in edit mode", async () => {
     const { result } = renderVm("round-1", {
       detailRounds: [halfMoonBayRound],
