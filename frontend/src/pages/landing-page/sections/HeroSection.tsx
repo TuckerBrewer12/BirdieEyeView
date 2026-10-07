@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { motion as motionTokens } from "@/brand/theme";
 import { ScannerDemo } from "../components/ScannerDemo";
 import { useTryItYourselfViewModel } from "../useTryItYourselfViewModel";
 import { TryItYourselfSection } from "./TryItYourselfSection";
@@ -33,7 +34,7 @@ export function HeroSection() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1, ease: EASE_OUT }}
+            transition={{ duration: motionTokens.duration.collapse, delay: 0.1, ease: EASE_OUT }}
           >
             <TryItYourselfSection viewModel={viewModel} />
           </motion.div>
