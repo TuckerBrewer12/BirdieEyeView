@@ -1,4 +1,4 @@
-import { colors, toParFill, toParLabel, toParTone, type ScoreKey } from "@/brand/theme";
+import { colors, scoreKindLabel, toParFill, toParLabel, toParTone, type ScoreKey } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateShort } from "@/lib/roundDate";
 import type { HoleScore, Round } from "@/domain";
@@ -13,16 +13,6 @@ import {
 } from "./model";
 
 export type { TrendView };
-
-const SCORE_LABELS: Record<ScoreKey, string> = {
-  eagle: "Eagle+",
-  birdie: "Birdie",
-  par: "Par",
-  bogey: "Bogey",
-  double: "Double",
-  triple: "Triple",
-  quad: "Quad+",
-};
 
 const SCORE_COLORS: Record<ScoreKey, string> = {
   eagle: colors.score.eagle.base,
@@ -91,7 +81,7 @@ export interface ColoredMixItem {
 export function colorizeMix(mix: ScoreMixItem[]): ColoredMixItem[] {
   return mix.map((item) => ({
     ...item,
-    label: SCORE_LABELS[item.name],
+    label: scoreKindLabel(item.name),
     color: SCORE_COLORS[item.name],
   }));
 }
