@@ -100,6 +100,7 @@ describe("brand tokens", () => {
       sparklinePad: chartLayout.sparkline.pad,
       sparklineStroke: chartLayout.sparkline.stroke,
       sparklineDot: chartLayout.sparkline.dot,
+      trendHeight: chartLayout.trend.height,
       flowWidth: chartLayout.flow.width,
     }).toEqual({
       barRadius: px("--brand-radius-md"),
@@ -114,6 +115,7 @@ describe("brand tokens", () => {
       sparklinePad: px("--brand-space-tight"),
       sparklineStroke: px("--brand-sparkline-stroke"),
       sparklineDot: px("--brand-space-dot"),
+      trendHeight: px("--brand-size-chart"),
       flowWidth: px("--brand-size-chart-wide"),
     });
   });

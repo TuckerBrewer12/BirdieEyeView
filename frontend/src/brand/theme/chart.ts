@@ -53,6 +53,18 @@ export const chartLayout = {
     stroke: 2,
     dot: 3,
   },
+  /** A golfer's scores over time, one dot per round. Height matches `--brand-size-chart`. */
+  trend: {
+    width: 560,
+    height: 180,
+    pad: { top: 16, right: 16, bottom: 28, left: 36 },
+    /** Room either side of the lowest and highest score, in strokes. */
+    headroom: 3,
+    dot: 4,
+    dotHover: 6,
+    /** Past this many rounds the date ticks would crowd, so they are left off. */
+    maxTicks: 12,
+  },
   /** A round hole by hole. Width matches `--brand-size-chart-wide`, which it scrolls at. */
   flow: {
     width: 720,
