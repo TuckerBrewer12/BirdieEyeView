@@ -17,7 +17,7 @@ export {
   TEE_COLORS,
   extractTeeColorToken,
   chooseCompatibleTee,
-  longestTee,
+  teesByLength,
 } from "./course";
 export type { TeeColor } from "./course";
 

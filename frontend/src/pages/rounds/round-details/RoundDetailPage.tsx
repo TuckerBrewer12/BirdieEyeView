@@ -6,15 +6,17 @@ import {
   Alert,
   AlertDescription,
   Button,
+  Card,
+  CardContent,
   CourseLinkSearch,
   LoadingState,
+  RoundFlowChart,
   SectionLabel,
 } from "@/brand";
 import { LinkCoursePanel } from "../components/LinkCoursePanel";
 import { RoundComparisonSection } from "./components/RoundComparisonSection";
 import { RoundDetailHeader } from "./components/RoundDetailHeader";
 import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
-import { RoundFlowTimeline } from "@/components/analytics/RoundFlowTimeline";
 import { RoundActions } from "./RoundActions";
 import { useRoundDetailPageViewModel } from "./useRoundDetailPageViewModel";
 
@@ -143,11 +145,11 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       {viewModel.showMomentum && (
         <div className="mt-6">
           <SectionLabel>Momentum</SectionLabel>
-          <div className="overflow-x-auto rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <div className="min-w-[720px]">
-              <RoundFlowTimeline round={round} />
-            </div>
-          </div>
+          <Card>
+            <CardContent>
+              <RoundFlowChart round={played} />
+            </CardContent>
+          </Card>
         </div>
       )}
 

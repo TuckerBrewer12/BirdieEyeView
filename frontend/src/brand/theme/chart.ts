@@ -24,7 +24,7 @@ export const chartTickStyle = {
  *  `barRadius` is --brand-radius-md, `barMaxWidth` --brand-size-bar-max, `ring` and `gauge`
  *  --brand-size-ring-* and --brand-size-gauge-*, and `plot.height` --brand-size-chart.
  *  `sparkline` is --brand-size-sparkline-w/-h, --brand-space-tight padding, --brand-sparkline-stroke
- *  and a --brand-space-dot marker. tokens.test.ts fails if one drifts. The plot margins follow the 4px spacing scale. */
+ *  and a --brand-space-dot marker, and `flow.width` --brand-size-chart-wide. tokens.test.ts fails if one drifts. The plot margins follow the 4px spacing scale. */
 export const chartLayout = {
   barRadius: [6, 6, 0, 0] as [number, number, number, number],
   margin: { top: 4, right: 8, left: -20, bottom: 0 },
@@ -52,6 +52,16 @@ export const chartLayout = {
     pad: 5,
     stroke: 2,
     dot: 3,
+  },
+  /** A round hole by hole. Width matches `--brand-size-chart-wide`, which it scrolls at. */
+  flow: {
+    width: 720,
+    height: 220,
+    pad: { top: 28, right: 16, bottom: 36, left: 40 },
+    /** To-par beyond this is drawn at the edge, so one blow-up hole cannot flatten the rest. */
+    extent: 5,
+    dot: 4,
+    dotHover: 6,
   },
 };
 

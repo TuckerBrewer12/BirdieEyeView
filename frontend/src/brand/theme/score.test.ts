@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { SCORE_KEYS, scoreFillClass, scoreOnFillClass, toParBadgeClass, toParTextClass } from "./score";
+import {
+  SCORE_KEYS,
+  scoreFillClass,
+  scoreKindLabel,
+  scoreOnFillClass,
+  toParBadgeClass,
+  toParTextClass,
+} from "./score";
 
 describe("toParTextClass", () => {
   it("splits under, even, and over par", () => {
@@ -32,5 +39,13 @@ describe("scoreOnFillClass", () => {
     for (const key of SCORE_KEYS) {
       expect(scoreOnFillClass(key)).toBe(`text-score-${key}-on-base`);
     }
+  });
+});
+
+describe("scoreKindLabel", () => {
+  it("names each score type, open-ended at both ends", () => {
+    expect(SCORE_KEYS.map(scoreKindLabel)).toEqual([
+      "Eagle+", "Birdie", "Par", "Bogey", "Double", "Triple", "Quad+",
+    ]);
   });
 });
