@@ -93,6 +93,7 @@ export type { ScorecardHole } from "./components/ScorecardTable";
 export { Toggle } from "./components/Toggle";
 export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
 export { RoundPreview } from "./components/RoundPreview";
+export { RoundShareCard } from "./components/RoundShareCard";
 export { CoursePreview } from "./components/CoursePreview";
 export { SectionLabel } from "./components/SectionLabel";
 export { ScoreCountChip } from "./components/ScoreCountChip";

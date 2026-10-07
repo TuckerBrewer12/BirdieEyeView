@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Link2 } from "lucide-react";
-import { ShareCard } from "@/components/share/ShareCard";
 import { useShareRound } from "@/hooks/useShareRound";
+import { roundShareMessage } from "@/lib/roundShareMessage";
 import {
   Alert,
   AlertDescription,
@@ -11,6 +11,7 @@ import {
   CourseLinkSearch,
   LoadingState,
   RoundFlowChart,
+  RoundShareCard,
   SectionLabel,
 } from "@/brand";
 import { LinkCoursePanel } from "../components/LinkCoursePanel";
@@ -43,8 +44,9 @@ export function RoundDetailPage({ userId }: { userId: string }) {
 
   return (
     <div>
-      <div className="pointer-events-none fixed -left-[9999px] top-0">
-        <ShareCard ref={shareCardRef} round={round} courseName={viewModel.courseName} />
+      {/* Rendered just off the right edge, so the share button can capture it as an image. */}
+      <div aria-hidden className="pointer-events-none fixed top-0 left-full">
+        <RoundShareCard ref={shareCardRef} round={played} />
       </div>
 
       {viewModel.actionError && (
@@ -62,7 +64,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         onEdit={viewModel.enterEditMode}
         onSave={editor.save}
         onCancelEdit={editor.cancel}
-        onShare={() => shareRound(round, viewModel.courseName)}
+        onShare={() => shareRound(roundShareMessage(played))}
         onDelete={viewModel.requestDelete}
         onConfirmDelete={() => viewModel.confirmDeleteRound(() => navigate("/rounds"))}
         onCancelDelete={viewModel.cancelDelete}
