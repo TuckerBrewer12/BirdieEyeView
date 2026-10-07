@@ -3,6 +3,7 @@ import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { borderWidth, chartLayout, colors, opacityWash, space } from "@/brand/theme";
+import { indexScale, knownValues, lastKnownIndex, paddedExtent } from "./scales";
 
 type SparklineTone = "primary" | "contrast";
 
@@ -35,31 +36,19 @@ interface SparklineProps {
   className?: string;
 }
 
-/** The data's range with 15% headroom either side, so the line never touches the edge. */
-function paddedExtent(values: number[]): [number, number] {
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const pad = (max - min || 1) * 0.15;
-  return [min - pad, max + pad];
-}
-
-function lastIndex(values: (number | null)[]): number {
-  for (let i = values.length - 1; i >= 0; i--) if (values[i] != null) return i;
-  return -1;
-}
-
 /** Which way a figure has been heading: a small line, no axes, the latest value marked. */
 export function Sparkline({ series, domain, fill = false, mean = false, className }: SparklineProps) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
   const { width: W, height: H, pad, stroke, dot } = chartLayout.sparkline;
 
   const length = Math.max(0, ...series.map((s) => s.values.length));
-  const known = series.flatMap((s) => s.values).filter((v): v is number => v != null);
-  if (length < 2 || known.length < 2) return null;
+  const all = series.flatMap((s) => s.values);
+  if (length < 2 || knownValues(all).length < 2) return null;
 
-  const x = scaleLinear().domain([0, length - 1]).range([pad, W - pad]);
+  // 15% headroom either side keeps the line off the edge.
+  const x = indexScale(length, pad, W - pad);
   const y = scaleLinear()
-    .domain(domain ?? paddedExtent(known))
+    .domain(domain ?? paddedExtent(all, { ratio: 0.15 })!)
     .range([H - pad, pad])
     .clamp(true);
 
@@ -70,7 +59,7 @@ export function Sparkline({ series, domain, fill = false, mean = false, classNam
     .curve(curveMonotoneX);
 
   const first = series[0].values;
-  const firstKnown = first.filter((v): v is number => v != null);
+  const firstKnown = knownValues(first);
   const meanY = firstKnown.length
     ? y(firstKnown.reduce((sum, v) => sum + v, 0) / firstKnown.length)
     : null;
@@ -108,7 +97,7 @@ export function Sparkline({ series, domain, fill = false, mean = false, classNam
         {fill && <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />}
         {series.map((s, i) => {
           const color = STROKE[s.tone ?? "primary"];
-          const end = lastIndex(s.values);
+          const end = lastKnownIndex(s.values);
           return (
             <g key={i}>
               <path
