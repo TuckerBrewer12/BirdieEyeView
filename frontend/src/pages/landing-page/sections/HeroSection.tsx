@@ -1,50 +1,58 @@
-import { ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Button } from "@/brand";
+import { AnimatePresence, motion } from "framer-motion";
 import { ScannerDemo } from "../components/ScannerDemo";
-import { LANDING_SECTIONS, scrollToLandingSection } from "../sections";
+import { useTryItYourselfViewModel } from "../useTryItYourselfViewModel";
+import { TryItYourselfSection } from "./TryItYourselfSection";
+
+const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
 export function HeroSection() {
+  const viewModel = useTryItYourselfViewModel();
+  // The demo shows what a scan does until the visitor starts one of their
+  // own; then it steps aside so their scorecard gets the full width.
+  const showDemo = viewModel.step === "upload";
+
   return (
-    <section className="relative overflow-hidden bg-card pt-20 pb-24 md:pt-32 md:pb-36">
-      <div className="pointer-events-none absolute top-1/2 left-1/2 aspect-8/5 w-glow -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-glow" />
+    <section className="mx-auto max-w-6xl px-6 pt-14 pb-24 md:pt-20">
+      <div className="flex flex-col items-center gap-12 lg:flex-row">
+        <motion.div layout transition={{ duration: 0.4, ease: EASE_OUT }} className="w-full lg:flex-1">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE_OUT }}
+            className="mb-8 text-center lg:text-left"
+          >
+            <h1 className="mb-5 text-4xl text-balance leading-display font-extrabold tracking-hero text-foreground md:text-5xl lg:text-6xl">
+              Scan your scorecard.
+            </h1>
+            <div className="flex flex-col gap-2 text-lg text-balance text-muted-foreground">
+              <p>One photo captures the course, tees, yardages, slope, and every score on the card.</p>
+              <p>Track your handicap, scores, and stats over time, and see where you&rsquo;re losing strokes.</p>
+            </div>
+          </motion.div>
 
-      <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-center gap-16 px-6 lg:flex-row">
-        <motion.div
-          initial={{ opacity: 0, x: -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="flex-1 text-center lg:text-left"
-        >
-          <h1 className="mb-6 text-5xl leading-display font-extrabold tracking-hero text-foreground md:text-6xl lg:text-7xl">
-            Your Golf History —
-            <br />
-            <span className="text-primary">Just Snap a Scorecard.</span>
-          </h1>
-
-          <p className="mx-auto mb-10 max-w-2xl text-xl leading-relaxed text-muted-foreground lg:mx-0">
-            Ditch the manual data entry. Take a photo of your paper scorecard and instantly track your fairways, putts, greens in regulation, and handicap.
-          </p>
-
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
-            <Button size="cta" shape="pill" render={<Link to="/register" />}>
-              Sign Up Free
-            </Button>
-            <Button
-              variant="linkMuted"
-              size="cta"
-              onClick={() => scrollToLandingSection(LANDING_SECTIONS.howItWorks)}
-            >
-              See How It Works
-              <ArrowRight data-icon="inline-end" />
-            </Button>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: EASE_OUT }}
+          >
+            <TryItYourselfSection viewModel={viewModel} />
+          </motion.div>
         </motion.div>
 
-        <div className="flex w-full flex-1 items-center justify-center">
-          <ScannerDemo />
-        </div>
+        <AnimatePresence>
+          {showDemo && (
+            <motion.div
+              key="demo"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6, delay: 0.2, ease: EASE_OUT }}
+              className="flex w-full justify-center lg:flex-1"
+            >
+              <ScannerDemo />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );

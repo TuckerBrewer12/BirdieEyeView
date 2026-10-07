@@ -52,16 +52,6 @@ export class LandingRobot {
     return this;
   }
 
-  async tapNavLink(label: string): Promise<this> {
-    await this.page.getByRole("button", { name: label }).click();
-    return this;
-  }
-
-  async tapSeeHowItWorks(): Promise<this> {
-    await this.page.getByRole("button", { name: "See How It Works" }).click();
-    return this;
-  }
-
   async seesHeadline(text: string): Promise<this> {
     await expect(this.page.getByRole("heading", { level: 1 })).toContainText(text);
     return this;
@@ -75,8 +65,9 @@ export class LandingRobot {
     return this;
   }
 
-  async seesSection(id: string): Promise<this> {
-    await expect(this.page.locator(`#${id}`)).toBeInViewport();
+  /** The upload drop zone sits in the first screen, not below the fold. */
+  async seesScanner(): Promise<this> {
+    await expect(this.page.getByText("Upload a scorecard photo")).toBeInViewport();
     return this;
   }
 
@@ -86,7 +77,7 @@ export class LandingRobot {
   }
 
   async tapSignUp(): Promise<this> {
-    await this.page.getByRole("link", { name: "Sign Up Free" }).click();
+    await this.page.getByRole("link", { name: "Sign Up", exact: true }).click();
     return this;
   }
 
