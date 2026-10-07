@@ -26,7 +26,7 @@ export function HeroSection() {
             </h1>
             <div className="flex flex-col gap-2 text-lg text-balance text-muted-foreground">
               <p>One photo captures the course, tees, yardages, slope, and every score on the card.</p>
-              <p>Track your handicap, scores, and stats over time, and see where you&rsquo;re losing strokes.</p>
+              <p>Track your handicap, scores, stats, and more!</p>
             </div>
           </motion.div>
 
