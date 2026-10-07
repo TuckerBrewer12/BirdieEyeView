@@ -94,6 +94,7 @@ export { Toggle } from "./components/Toggle";
 export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
 export { RoundPreview } from "./components/RoundPreview";
 export { CoursePreview } from "./components/CoursePreview";
+export { ChartTabs } from "./components/ChartTabs";
 export { SectionLabel } from "./components/SectionLabel";
 export { ScoreCountChip } from "./components/ScoreCountChip";
 export { SearchField } from "./components/SearchField";
@@ -114,6 +115,10 @@ export {
 export { ActivityHeatmap } from "./charts/ActivityHeatmap";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
+export { HoleMetricBars } from "./charts/HoleMetricBars";
+export { HoleScoreMixBars } from "./charts/HoleScoreMixBars";
+export { HoleToParBars } from "./charts/HoleToParBars";
 export { RoundFlowChart } from "./charts/RoundFlowChart";
+export { ScoreTrendChart } from "./charts/ScoreTrendChart";
 export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
 export type { ScoreHandicapTrendPoint } from "./charts/SVGScoreHandicapTrend";

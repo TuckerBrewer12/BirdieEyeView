@@ -5,12 +5,12 @@ import {
   Collection,
   Reveal,
   RoundPreview,
+  ScoreTrendChart,
   SectionLabel,
   Stat,
   StatLabel,
   StatValue,
 } from "@/brand";
-import { CourseScoreTrend } from "./CourseCharts";
 import { CourseChartsSection } from "./CourseChartsSection";
 import { useCoursePerformanceViewModel } from "./useCoursePerformanceViewModel";
 
@@ -48,7 +48,11 @@ export function CoursePerformanceSection({ userId, courseId }: CoursePerformance
 
       <div>
         <SectionLabel>Score Trend</SectionLabel>
-        <CourseScoreTrend data={viewModel.trend} />
+        <Card>
+          <CardContent className="pt-6">
+            <ScoreTrendChart rows={viewModel.trend} />
+          </CardContent>
+        </Card>
       </div>
 
       <div>

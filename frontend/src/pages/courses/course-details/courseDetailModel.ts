@@ -1,6 +1,6 @@
 import { BACK_HOLES, FRONT_HOLES, getHole, getTee, teesByLength } from "@/domain/course";
 import type { Course, Tee } from "@/types/golf";
-import type { CourseAnalyticsData, CourseScoreTrendRow } from "@/types/analytics";
+import type { CourseAnalyticsData } from "@/types/analytics";
 
 export type PageTabKey = "course" | "performance";
 export type ChartTabKey = "score" | "gir" | "putts" | "variance";
@@ -67,13 +67,6 @@ export interface ScorecardNine {
   totals: { par: number | null; yards: number | null; personalAverage: number | null } | null;
 }
 
-export interface TrendPoint {
-  roundIndex: number;
-  score: number;
-  toPar: number | null;
-  date: string | null;
-}
-
 export type CourseChart =
   | { kind: "toPar"; group: ChartTabKey; rows: CourseAnalyticsData["average_score_relative_to_par_by_hole"] }
   | { kind: "scoreType"; group: ChartTabKey; rows: CourseAnalyticsData["score_type_distribution_by_hole"] }
@@ -132,14 +125,6 @@ export function nineFrom(
 export function selectedTee(course: Course, picked: string | null | undefined): Tee | null {
   if (picked === undefined) return teesByLength(course)[0] ?? null;
   return getTee(course, picked);
-}
-
-export function trendFrom(rows: CourseScoreTrendRow[]): TrendPoint[] {
-  return rows.flatMap((row) =>
-    row.total_score == null
-      ? []
-      : [{ roundIndex: row.round_index, score: row.total_score, toPar: row.to_par, date: row.date }],
-  );
 }
 
 export function chartsFrom(analytics: CourseAnalyticsData): CourseChart[] {

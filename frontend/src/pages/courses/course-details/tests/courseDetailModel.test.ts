@@ -7,7 +7,6 @@ import {
   nineFrom,
   personalAverages,
   selectedTee,
-  trendFrom,
 } from "../courseDetailModel";
 
 const PARS = [4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5];
@@ -72,19 +71,6 @@ describe("selectedTee", () => {
     expect(selectedTee(halfMoonBayCourse, undefined)?.color).toBe("Blue");
     expect(selectedTee(halfMoonBayCourse, "white")?.color).toBe("White");
     expect(selectedTee(halfMoonBayCourse, null)).toBeNull();
-  });
-});
-
-describe("trendFrom", () => {
-  it("keeps scored rounds, oldest first", () => {
-    const rows = [
-      ...halfMoonBayAnalytics.score_trend_on_course,
-      { round_index: 3, round_id: "r3", date: null, total_score: null, to_par: null },
-    ];
-    expect(trendFrom(rows).map((point) => [point.score, point.toPar])).toEqual([
-      [72, 0],
-      [78, 6],
-    ]);
   });
 });
 
