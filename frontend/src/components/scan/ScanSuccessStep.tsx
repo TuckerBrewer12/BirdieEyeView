@@ -38,7 +38,7 @@ export function ScanSuccessStep({ round, onView }: ScanSuccessStepProps) {
         </h2>
         <p className="text-sm text-gray-500 mb-2">{courseName}</p>
         <div className="flex items-baseline gap-2 mb-8">
-          <span className="text-4xl font-black text-gray-900">{played.score ?? "—"}</span>
+          <span className="text-4xl font-black text-foreground">{played.score ?? "—"}</span>
           {toParStr && (
             <span className={`text-xl font-bold ${toParTextClass(played.toPar)}`}>{toParStr}</span>
           )}

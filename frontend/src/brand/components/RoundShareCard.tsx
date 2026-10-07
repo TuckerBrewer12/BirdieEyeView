@@ -30,7 +30,6 @@ function Stat({ label, value, className }: { label: string; value: string; class
 const RoundShareCard = React.forwardRef<HTMLDivElement, RoundShareCardProps>(
   ({ round, className, ...props }, ref) => {
     const date = formatRoundDateLong(round.date);
-    const par = round.par ?? round.course?.par ?? null;
     const counts = SCORE_KEYS.filter((key) => round.scoreCounts[key] > 0);
 
     return (
@@ -59,10 +58,10 @@ const RoundShareCard = React.forwardRef<HTMLDivElement, RoundShareCardProps>(
             </div>
             <div className="pb-1">
               <ToParFigure toPar={round.toPar} size="stat" />
-              {(par != null || round.yards != null) && (
+              {(round.par != null || round.yards != null) && (
                 <div className="mt-0.5 flex items-center gap-1.5 text-label text-muted-foreground">
-                  {par != null && <span>par {par}</span>}
-                  {par != null && round.yards != null && <span>·</span>}
+                  {round.par != null && <span>par {round.par}</span>}
+                  {round.par != null && round.yards != null && <span>·</span>}
                   {round.yards != null && <span>{round.yards.toLocaleString("en-US")} yds</span>}
                 </div>
               )}
