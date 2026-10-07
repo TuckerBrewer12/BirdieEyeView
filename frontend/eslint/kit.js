@@ -14,9 +14,11 @@
  */
 const BRACKETED = /(-?[a-z][a-z0-9]*(?:-[a-z0-9]+)*)-\[([^\]\s]+)\]/g;
 const LENGTH = /\d(?:px|rem|em|%|vh|vw|svh|dvh|ch)(?![a-z])/;
+/** A colour function's percentages are mix weights, not lengths: that bracket is a colour. */
+const COLOR_FUNCTION = /\b(?:rgba?|hsla?|oklch|color-mix)\(/;
 
 const COLOR_LITERAL =
-  /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch)\(|\b(?:bg|text|border|ring|fill|stroke|from|via|to|divide|shadow|outline|placeholder|accent|decoration)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/g;
+  /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch|color-mix)\(|\b(?:bg|text|border|ring|fill|stroke|from|via|to|divide|shadow|outline|placeholder|accent|decoration)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/g;
 
 function stringParts(node) {
   if (node.type === "Literal" && typeof node.value === "string") return [node.value];
@@ -57,7 +59,7 @@ const noArbitraryValue = {
       if (!isValueString(node)) return;
       for (const text of stringParts(node)) {
         for (const [value, , inside] of text.matchAll(BRACKETED)) {
-          if (LENGTH.test(inside)) context.report({ node, messageId: "arbitrary", data: { value } });
+          if (LENGTH.test(inside) && !COLOR_FUNCTION.test(inside)) context.report({ node, messageId: "arbitrary", data: { value } });
         }
       }
     };

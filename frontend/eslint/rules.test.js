@@ -77,8 +77,9 @@ tester.run("kit/no-arbitrary-value", kit.rules["no-arbitrary-value"], {
     // Variants and token-less layout values are not hardcoded measures.
     'const c = "data-[slot=card]:p-2 has-[>svg]:gap-2 grid-cols-[1fr_auto] group-data-[size=sm]/card:text-sm";',
     'const c = "gap-(--card-spacing)";',
-    // A bracketed colour is no-color-literal's to report.
+    // A bracketed colour is no-color-literal's to report, percentages in a mix included.
     'const c = "bg-[#eef7f0]";',
+    'const c = "bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)]";',
     'import x from "./a-[1px].css";',
   ],
   invalid: [
@@ -95,5 +96,9 @@ tester.run("kit/no-color-literal", kit.rules["no-color-literal"], {
     { code: 'const fill = "#ef4444";', errors: [{ messageId: "color" }] },
     { code: 'const c = "bg-[#eef7f0]";', errors: [{ messageId: "color" }] },
     { code: 'const s = { color: "rgba(0,0,0,0.5)" };', errors: [{ messageId: "color" }] },
+    {
+      code: 'const c = "hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)]";',
+      errors: [{ messageId: "color" }],
+    },
   ],
 });

@@ -74,16 +74,22 @@ export default defineConfig([
   {
     // Golf rules and score paint have one home each: the server and domain/ for figures and
     // rules, brand/theme/score.ts for words and colour. Colours and lengths come from
-    // brand/theme/tokens.css. On for the pages already moved onto the kit; each page joins
-    // this list as it is refactored.
+    // brand/theme/tokens.css. On for the kit and the pages already moved onto it; each page
+    // joins this list as it is refactored.
     files: [
+      'src/brand/**/*.{ts,tsx}',
       'src/pages/dashboard/**/*.{ts,tsx}',
       'src/pages/landing-page/**/*.{ts,tsx}',
       'src/pages/courses/**/*.{ts,tsx}',
       'src/pages/rounds/**/*.{ts,tsx}',
     ],
-    // Tests build fixtures and fake server figures on purpose.
-    ignores: ['**/tests/**', '**/*.test.{ts,tsx}'],
+    ignores: [
+      // The homes these rules point to: score words, paint and token mirrors.
+      'src/brand/theme/**',
+      // Tests build fixtures and fake server figures on purpose.
+      '**/tests/**',
+      '**/*.test.{ts,tsx}',
+    ],
     plugins: { golf, kit },
     rules: {
       'golf/no-score-kind-table': 'error',
