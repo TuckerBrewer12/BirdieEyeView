@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatCourseName } from "@/lib/courseName";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { queryKeys } from "@/data/queryKeys";
+import { useHandicapIndex } from "@/data/useHandicapIndex";
 import { Round as RoundModel } from "@/domain/round";
 import { getTee } from "@/domain/course";
 import { ratedCourseHandicap } from "@/domain/handicap";
@@ -66,11 +67,7 @@ export function useRoundDetailPageViewModel(
     enabled: !!roundId,
     staleTime: 5 * 60 * 1000,
   });
-  const { data: handicapData } = useQuery({
-    queryKey: queryKeys.handicap(userId),
-    queryFn: () => repository.getUserHandicap(userId),
-  });
-  const handicapIndex = handicapData?.handicap_index ?? null;
+  const handicapIndex = useHandicapIndex(userId, repository);
 
   const editor = useRoundEditorViewModel(userId, roundId, round, repository);
   const { start: startEditing } = editor;

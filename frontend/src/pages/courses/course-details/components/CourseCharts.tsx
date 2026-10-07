@@ -21,14 +21,22 @@ import {
   ToggleGroupItem,
 } from "@/brand";
 import { chartColors, chartLayout, chartTickStyle, chartTooltipStyle, colors, toParFill } from "@/brand/theme";
+import { formatRoundDateHistory, formatRoundDateTick } from "@/lib/roundDate";
+import type { ChartTabKey, CourseChart, TabItem, TrendPoint } from "../courseDetailModel";
 import { ToParBars } from "./ToParBars";
-import type {
-  CourseChartCard,
-  ChartTabKey,
-  ScoreTypeBar,
-  TabItem,
-  TrendPoint,
-} from "./useCourseDetailPageViewModel";
+
+type ScoreTypeRow = Extract<CourseChart, { kind: "scoreType" }>["rows"][number];
+
+const CHART_TITLES: Record<CourseChart["kind"], string> = {
+  toPar: "Average Score To Par By Hole",
+  scoreType: "Score Type Distribution By Hole",
+  gir: "GIR Percentage By Hole",
+  putts: "Average Putts By Hole",
+  difficulty: "Course Difficulty Profile (Hardest To Easiest)",
+  variance: "Score Variance By Hole (Std Dev)",
+};
+
+const holeLabel = (hole: number) => `H${hole}`;
 
 type Fmt = (value: unknown, name: unknown, props: unknown) => ReactNode | [ReactNode, string];
 
@@ -37,7 +45,7 @@ const SVG_HEIGHT = 180;
 const SVG_PAD = { top: 16, right: 16, bottom: 28, left: 36 };
 
 const SCORE_TYPE_SERIES: {
-  key: keyof Omit<ScoreTypeBar, "hole_number" | "sample_size">;
+  key: keyof Omit<ScoreTypeRow, "hole_number" | "sample_size">;
   name: string;
   fill: string;
 }[] = [
@@ -53,8 +61,8 @@ const SCORE_TYPE_SERIES: {
 const AXIS_TICK = { ...chartTickStyle, fill: chartColors.axis };
 
 interface CourseChartsProps {
-  charts: CourseChartCard[];
-  selectedCharts: CourseChartCard[];
+  charts: CourseChart[];
+  selectedCharts: CourseChart[];
   chartTabs: TabItem<ChartTabKey>[];
   chartTab: ChartTabKey;
   onSelectChartTab: (key: string) => void;
@@ -94,16 +102,16 @@ function ScoreTrendChart({ data }: { data: TrendPoint[] }) {
     );
   }
 
-  const scores = data.map((point) => point.total_score);
+  const scores = data.map((point) => point.score);
   const xSc = scaleLinear().domain([0, data.length - 1]).range([SVG_PAD.left, SVG_WIDTH - SVG_PAD.right]);
   const ySc = scaleLinear()
     .domain([Math.min(...scores) - 3, Math.max(...scores) + 3])
     .range([SVG_HEIGHT - SVG_PAD.bottom, SVG_PAD.top]);
-  const lineFn = line<TrendPoint>().x((_, i) => xSc(i)).y((d) => ySc(d.total_score)).curve(curveMonotoneX);
+  const lineFn = line<TrendPoint>().x((_, i) => xSc(i)).y((d) => ySc(d.score)).curve(curveMonotoneX);
   const areaFn = area<TrendPoint>()
     .x((_, i) => xSc(i))
     .y0(SVG_HEIGHT - SVG_PAD.bottom)
-    .y1((d) => ySc(d.total_score))
+    .y1((d) => ySc(d.score))
     .curve(curveMonotoneX);
   const pathD = lineFn(data) ?? "";
   const areaD = areaFn(data) ?? "";
@@ -158,9 +166,9 @@ function ScoreTrendChart({ data }: { data: TrendPoint[] }) {
         <path d={pathD} fill="none" stroke={colors.primary} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
         {data.map((point, i) => (
           <circle
-            key={point.round_index}
+            key={point.roundIndex}
             cx={xSc(i)}
-            cy={ySc(point.total_score)}
+            cy={ySc(point.score)}
             r={hovered === point ? 6 : 4}
             fill={toParFill(point.toPar)}
             stroke={colors.card}
@@ -178,16 +186,16 @@ function ScoreTrendChart({ data }: { data: TrendPoint[] }) {
             strokeDasharray="3 3"
           />
         )}
-        {data.length <= 12 && data.map((point, i) => point.tickLabel ? (
+        {data.length <= 12 && data.map((point, i) => formatRoundDateTick(point.date) ? (
           <text
-            key={`x${point.round_index}`}
+            key={`x${point.roundIndex}`}
             x={xSc(i)}
             y={SVG_HEIGHT - SVG_PAD.bottom + 14}
             textAnchor="middle"
             fontSize={chartTickStyle.fontSize}
             fill={chartColors.axis}
           >
-            {point.tickLabel}
+            {formatRoundDateTick(point.date)}
           </text>
         ) : null)}
       </svg>
@@ -199,8 +207,8 @@ function ScoreTrendChart({ data }: { data: TrendPoint[] }) {
             top: tooltipPos.y - 10,
           }}
         >
-          <div className="mb-1 text-meta text-muted-foreground">{hovered.dateLabel}</div>
-          <div className="text-sm font-bold text-foreground">{hovered.total_score}</div>
+          <div className="mb-1 text-meta text-muted-foreground">{formatRoundDateHistory(hovered.date) ?? "—"}</div>
+          <div className="text-sm font-bold text-foreground">{hovered.score}</div>
           <ToParFigure toPar={hovered.toPar} />
         </div>
       )}
@@ -208,13 +216,19 @@ function ScoreTrendChart({ data }: { data: TrendPoint[] }) {
   );
 }
 
-function renderChart(card: CourseChartCard, gradientId: string) {
+function renderChart(card: CourseChart, gradientId: string) {
   switch (card.kind) {
     case "toPar":
     case "difficulty":
       return (
         <BarChart data={card.rows} margin={chartLayout.margin}>
-          <XAxis dataKey={card.kind === "difficulty" ? "label" : "hole_number"} tick={AXIS_TICK} tickLine={false} axisLine={false} />
+          <XAxis
+            dataKey="hole_number"
+            tickFormatter={card.kind === "difficulty" ? holeLabel : undefined}
+            tick={AXIS_TICK}
+            tickLine={false}
+            axisLine={false}
+          />
           <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} />
           <Tooltip
             contentStyle={chartTooltipStyle}
@@ -285,7 +299,7 @@ function renderChart(card: CourseChartCard, gradientId: string) {
               <stop offset="100%" stopColor={colors.score.bogey.base} stopOpacity={1} />
             </linearGradient>
           </defs>
-          <XAxis dataKey="label" tick={AXIS_TICK} tickLine={false} axisLine={false} />
+          <XAxis dataKey="hole_number" tickFormatter={holeLabel} tick={AXIS_TICK} tickLine={false} axisLine={false} />
           <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} />
           <Tooltip
             contentStyle={chartTooltipStyle}
@@ -297,10 +311,10 @@ function renderChart(card: CourseChartCard, gradientId: string) {
   }
 }
 
-function ChartCard({ card }: { card: CourseChartCard }) {
+function ChartCard({ card }: { card: CourseChart }) {
   const gradientId = `course-chart-${card.kind}-${useId().replace(/:/g, "")}`;
   return (
-    <ChartShell title={card.title}>
+    <ChartShell title={CHART_TITLES[card.kind]}>
       <ResponsiveContainer width="100%" height="100%">
         {renderChart(card, gradientId)}
       </ResponsiveContainer>

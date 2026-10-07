@@ -53,10 +53,9 @@ export function chooseCompatibleTee(current: string, teeColors: string[]): strin
   return teeColors.find((c) => extractTeeColorToken(c) === currentToken) ?? null;
 }
 
-/** The tee with the most yardage, by the total the server sends. */
-export function longestTee(course: Course): Tee | null {
-  return course.tees.reduce<Tee | null>((best, tee) => {
-    if (!best) return tee;
-    return (tee.total_yardage ?? -1) > (best.total_yardage ?? -1) ? tee : best;
-  }, null);
+/** Named tees, longest first by the total the server sends. Ties keep the course's order. */
+export function teesByLength(course: Course): Tee[] {
+  return course.tees
+    .filter((tee) => !!tee.color)
+    .sort((a, b) => (b.total_yardage ?? 0) - (a.total_yardage ?? 0));
 }
