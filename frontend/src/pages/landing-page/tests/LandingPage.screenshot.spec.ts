@@ -13,6 +13,15 @@ test("landing page in dark mode", async ({ landing }) => {
   await landing.capture("landing-dark.png");
 });
 
+test("full-width scorecard review", async ({ landing }) => {
+  await landing.open();
+  await landing.chooseScorecard();
+  await landing.tapScan();
+  await landing.doesNotSeeDemo();
+  await landing.seesReview();
+  await landing.capture("landing-review.png");
+});
+
 test("mobile nav menu open", async ({ landing, isMobile }) => {
   // The menu button only exists below the md breakpoint, so there is nothing
   // to open on the desktop project.
