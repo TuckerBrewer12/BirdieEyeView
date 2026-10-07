@@ -1,5 +1,15 @@
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, Collection, Reveal, RoundPreview, SectionLabel } from "@/brand";
+import {
+  Card,
+  CardContent,
+  Collection,
+  Reveal,
+  RoundPreview,
+  SectionLabel,
+  Stat,
+  StatLabel,
+  StatValue,
+} from "@/brand";
 import { CourseScoreTrend } from "./CourseCharts";
 import { CourseChartsSection } from "./CourseChartsSection";
 import { useCoursePerformanceViewModel } from "./useCoursePerformanceViewModel";
@@ -27,8 +37,10 @@ export function CoursePerformanceSection({ userId, courseId }: CoursePerformance
         {heroStats.map((stat) => (
           <Card key={stat.label} size="sm" className="min-w-28 flex-1">
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-              <div className="mt-0.5 text-xs text-muted-foreground">{stat.label}</div>
+              <Stat>
+                <StatValue>{stat.value}</StatValue>
+                <StatLabel>{stat.label}</StatLabel>
+              </Stat>
             </CardContent>
           </Card>
         ))}

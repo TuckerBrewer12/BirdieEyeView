@@ -45,7 +45,7 @@ export function CourseScorecardSection({ userId, course }: CourseScorecardSectio
       )}
 
       <Card className="overflow-x-auto py-0">
-        <CardContent className="min-w-3xl px-0">
+        <CardContent className="min-w-scorecard px-0">
           <NineTable nine={viewModel.frontNine} />
           <div className="border-t-2 border-border" />
           <NineTable nine={viewModel.backNine} />
