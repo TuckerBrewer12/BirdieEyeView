@@ -73,31 +73,23 @@ export default defineConfig([
   },
   {
     // Golf rules and score paint have one home each: the server and domain/ for figures and
-    // rules, brand/theme/score.ts for words and colour. Everywhere else reads them.
-    files: ['src/**/*.{ts,tsx}'],
-    ignores: [
-      'src/domain/**',
-      'src/brand/theme/**',
-      'src/types/**',
-      // Fakes stand in for the server, so they work its figures out on purpose.
-      'src/testing/**',
-      '**/tests/**',
-      '**/*.test.{ts,tsx}',
+    // rules, brand/theme/score.ts for words and colour. Colours and lengths come from
+    // brand/theme/tokens.css. On for the pages already moved onto the kit; each page joins
+    // this list as it is refactored.
+    files: [
+      'src/pages/dashboard/**/*.{ts,tsx}',
+      'src/pages/landing-page/**/*.{ts,tsx}',
+      'src/pages/courses/**/*.{ts,tsx}',
+      'src/pages/rounds/**/*.{ts,tsx}',
     ],
-    plugins: { golf },
+    // Tests build fixtures and fake server figures on purpose.
+    ignores: ['**/tests/**', '**/*.test.{ts,tsx}'],
+    plugins: { golf, kit },
     rules: {
       'golf/no-score-kind-table': 'error',
       'golf/no-to-par-branch': 'error',
       'golf/no-golf-math': 'error',
       'golf/no-shadowed-golf-type': 'error',
-    },
-  },
-  {
-    // Colours and lengths come from brand/theme/tokens.css, whose mirrors live in brand/theme.
-    files: ['src/**/*.{ts,tsx}'],
-    ignores: ['src/brand/theme/**', '**/tests/**', '**/*.test.{ts,tsx}'],
-    plugins: { kit },
-    rules: {
       'kit/no-arbitrary-value': 'error',
       'kit/no-color-literal': 'error',
     },
