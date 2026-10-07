@@ -109,7 +109,7 @@ export function useRoundDetailPageViewModel(
       editor.error ?? (deleteError ? messageFrom(deleteError, "Could not delete this round.") : null),
     showLinkCourse,
     showLinkButton: !!round && !editor.editing && !round.course && !showLinkCourse,
-    showMomentum: (round?.hole_scores.filter((s) => s.strokes != null).length ?? 0) >= 3,
+    showMomentum: (played?.holes.filter((hole) => hole.kind != null).length ?? 0) >= 3,
     enterEditMode,
     requestDelete: () => setConfirmDelete(true),
     confirmDeleteRound,

@@ -44,6 +44,16 @@ export const chartLayout = {
     dot: 3.5,
     dotHover: 6,
   },
+  /** A round hole by hole. Width matches `--brand-size-chart-wide`, which it scrolls at. */
+  flow: {
+    width: 720,
+    height: 220,
+    pad: { top: 28, right: 16, bottom: 36, left: 40 },
+    /** To-par beyond this is drawn at the edge, so one blow-up hole cannot flatten the rest. */
+    extent: 5,
+    dot: 4,
+    dotHover: 6,
+  },
 };
 
 export const chartColors = {

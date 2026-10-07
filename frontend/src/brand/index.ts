@@ -21,6 +21,7 @@ export {
   toParFill,
   toParTone,
   toParLabel,
+  scoreKindLabel,
   toParDisplay,
   toParTextClass,
   toParBadgeClass,
@@ -113,5 +114,6 @@ export {
 export { ActivityHeatmap } from "./charts/ActivityHeatmap";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
+export { RoundFlowChart } from "./charts/RoundFlowChart";
 export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
 export type { ScoreHandicapTrendPoint } from "./charts/SVGScoreHandicapTrend";
