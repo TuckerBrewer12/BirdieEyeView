@@ -3,6 +3,7 @@ import { cn } from "@/brand/cn";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { BrandMark } from "@/brand/components/BrandMark";
 import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
+import { Stat, StatLabel, StatValue } from "@/brand/components/Stat";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { SCORE_KEYS, scoreKindLabel } from "@/brand/theme";
 import type { Round } from "@/domain";
@@ -11,15 +12,6 @@ import { formatRoundDateLong } from "@/lib/roundDate";
 
 interface RoundShareCardProps extends React.ComponentProps<"div"> {
   round: Round;
-}
-
-function Stat({ label, value, className }: { label: string; value: string; className?: string }) {
-  return (
-    <div className="flex flex-1 flex-col items-center py-3">
-      <span className={cn("font-mono text-base font-bold text-foreground", className)}>{value}</span>
-      <span className="text-caption font-bold uppercase tracking-kicker text-muted-foreground">{label}</span>
-    </div>
-  );
 }
 
 /**
@@ -85,9 +77,19 @@ const RoundShareCard = React.forwardRef<HTMLDivElement, RoundShareCardProps>(
 
         {(round.putts != null || round.gir != null) && (
           <div className="flex divide-x divide-border">
-            {round.putts != null && <Stat label="Putts" value={String(round.putts)} />}
+            {round.putts != null && (
+              <Stat align="center" className="flex-1 py-3">
+                <StatValue size="sm">{round.putts}</StatValue>
+                <StatLabel>Putts</StatLabel>
+              </Stat>
+            )}
             {round.gir != null && (
-              <Stat label="GIR" value={`${round.gir}/${round.holes.length}`} className="text-primary" />
+              <Stat align="center" className="flex-1 py-3">
+                <StatValue size="sm" className="text-primary">
+                  {round.gir}/{round.holes.length}
+                </StatValue>
+                <StatLabel>GIR</StatLabel>
+              </Stat>
             )}
           </div>
         )}
