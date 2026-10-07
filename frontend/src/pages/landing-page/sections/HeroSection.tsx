@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { motion as motionTokens } from "@/brand/theme";
 import { ScannerDemo } from "../components/ScannerDemo";
 import { useTryItYourselfViewModel } from "../useTryItYourselfViewModel";
 import { TryItYourselfSection } from "./TryItYourselfSection";
@@ -14,7 +15,7 @@ export function HeroSection() {
   return (
     <section className="mx-auto max-w-6xl px-6 pt-14 pb-24 md:pt-20">
       <div className="flex flex-col items-center gap-12 lg:flex-row">
-        <motion.div layout transition={{ duration: 0.4, ease: EASE_OUT }} className="w-full lg:flex-1">
+        <motion.div layout transition={{ duration: motionTokens.duration.collapse, ease: EASE_OUT }} className="w-full lg:flex-1">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
