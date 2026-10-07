@@ -101,9 +101,10 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
             strokeWidth={2.5}
             strokeLinecap="round"
             strokeLinejoin="round"
+            // Reduced motion starts at the end state, so there is nothing left to animate.
             initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
-            transition={reduceMotion ? { duration: 0 } : motionTokens.draw}
+            transition={motionTokens.draw}
           />
 
           {holes.map((hole, i) => (
@@ -116,17 +117,13 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               stroke={colors.card}
               strokeWidth={1.5}
               className="cursor-crosshair"
-              initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
+              initial={reduceMotion ? false : { scale: motionTokens.pop.from, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={
-                reduceMotion
-                  ? { duration: 0 }
-                  : {
-                      delay: motionTokens.pop.delay + i * motionTokens.pop.stagger,
-                      duration: motionTokens.pop.duration,
-                      ease: motionTokens.pop.ease,
-                    }
-              }
+              transition={{
+                delay: motionTokens.pop.delay + i * motionTokens.pop.stagger,
+                duration: motionTokens.pop.duration,
+                ease: motionTokens.pop.ease,
+              }}
             />
           ))}
 
