@@ -1,4 +1,7 @@
-import { SCORE_KINDS, scoreKind, type ScoreKind } from "@/domain/score";
+import { SCORE_KINDS, scoreKind, toParLabel, type ScoreKind } from "@/domain/score";
+
+// The words are golf, so they live in the domain; the theme re-exports them beside the colours.
+export { scoreKindLabel, toParLabel } from "@/domain/score";
 import { colors, type ScoreSwatch } from "./colors";
 
 /** Display order for legends and mix bars. Same set as `ScoreKind`. */
@@ -45,28 +48,6 @@ export function toParTone(toPar: number | null): ScoreTone {
 
 export function toParFill(toPar: number | null): string {
   return toParTone(toPar).base;
-}
-
-export function toParLabel(toPar: number | null): string | null {
-  if (toPar == null) return null;
-  if (toPar === 0) return "E";
-  if (toPar > 0) return `+${toPar}`;
-  return `${toPar}`;
-}
-
-const SCORE_KIND_LABEL: Record<ScoreKey, string> = {
-  eagle: "Eagle+",
-  birdie: "Birdie",
-  par: "Par",
-  bogey: "Bogey",
-  double: "Double",
-  triple: "Triple",
-  quad: "Quad+",
-};
-
-/** A hole's score type as a word: "Birdie", "Double". The ends are open, so "Eagle+" and "Quad+". */
-export function scoreKindLabel(key: ScoreKey): string {
-  return SCORE_KIND_LABEL[key];
 }
 
 export function toParDisplay(toPar: number | null, empty = "—"): string {

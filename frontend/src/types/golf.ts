@@ -7,6 +7,7 @@ import type {
   RoundSummaryDto,
   TeeDto,
 } from "./api";
+import { toParLabel } from "@/domain/score";
 
 // Round and course responses come from the generated API types; see ./api.ts.
 export type HoleScore = HoleScoreDto;
@@ -83,11 +84,9 @@ export function getScoreColor(strokes: number, par: number): string {
   return "bg-purple-600 text-white";
 }
 
+/** Legacy callers' to-par text, with "-" for no score. The rule is the domain's `toParLabel`. */
 export function formatToPar(toPar: number | null): string {
-  if (toPar === null) return "-";
-  if (toPar === 0) return "E";
-  if (toPar > 0) return `+${toPar}`;
-  return `${toPar}`;
+  return toParLabel(toPar) ?? "-";
 }
 
 /** WHS course handicap: (HI × Slope / 113) + (Course Rating - Par), rounded. */

@@ -10,8 +10,9 @@ import {
   motion as motionTokens,
   toParFill,
   typography,
+  differentialFill,
 } from "@/brand/theme";
-import { formatHandicapIndex } from "@/domain/handicap";
+import { differentialStatus, formatHandicapIndex } from "@/domain/handicap";
 
 export interface ScoreHandicapTrendPoint {
   round_index: number;
@@ -36,12 +37,7 @@ function getDotColor(toPar: number | null): string {
 }
 
 function getBarColor(d: ScoreHandicapTrendPoint): string {
-  if (d.used_in_hi == null) return colors.score.par.base;
-  if (d.used_in_hi) return colors.score.birdie.base;
-  if (d.hi_threshold != null && d.differential != null && d.differential - d.hi_threshold <= 2) {
-    return colors.score.eagle.base;
-  }
-  return colors.destructive;
+  return differentialFill(differentialStatus(d));
 }
 
 export function SVGScoreHandicapTrend({
