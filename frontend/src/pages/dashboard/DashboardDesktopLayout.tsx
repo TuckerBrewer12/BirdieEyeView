@@ -9,11 +9,11 @@ import {
   CardTitle,
   RoundPreview,
   SVGScoreHandicapTrend,
+  Sparkline,
   Stat,
   StatDelta,
   StatLabel,
   StatValue,
-  colors,
 } from "@/brand";
 import { formatHandicapIndex } from "@/domain/handicap";
 import { GirDonut } from "./components/GirDonut";
@@ -27,43 +27,10 @@ import { ScoreMixChart } from "./components/ScoreMixChart";
 import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
 import { avgLabel, dashboardPalette, firstNameOf, pctLabel } from "./present";
 
-function ShortGameSparkline({
-  scrambling,
-  upAndDown,
-}: {
-  scrambling: { round_index: number; scrambling_percentage: number }[];
-  upAndDown: { round_index: number; percentage: number }[];
-}) {
-  const W = 200; const H = 44; const PAD = 4;
-  const udMap = new Map(upAndDown.map((r) => [r.round_index, r.percentage]));
-  const paired = scrambling.filter((r) => udMap.has(r.round_index)).slice(-12);
-  if (paired.length < 2) return null;
-
-  const xs = paired.map((_, i) => PAD + (i / (paired.length - 1)) * (W - PAD * 2));
-  const toY = (v: number) => H - PAD - ((Math.max(0, Math.min(100, v)) / 100) * (H - PAD * 2));
-  const scrPts = paired.map((r, i) => `${xs[i]},${toY(r.scrambling_percentage)}`).join(" ");
-  const udPts = paired.map((r, i) => `${xs[i]},${toY(udMap.get(r.round_index)!)}`).join(" ");
-
-  return (
-    <div className="mt-3 px-1">
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} overflow="visible">
-        <polyline points={scrPts} fill="none" stroke={colors.primary} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" opacity={0.8} />
-        <polyline points={udPts} fill="none" stroke={colors.score.triple.text} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" opacity={0.8} />
-        <circle cx={xs[xs.length - 1]} cy={toY(paired[paired.length - 1].scrambling_percentage)} r={2.5} fill={colors.primary} />
-        <circle cx={xs[xs.length - 1]} cy={toY(udMap.get(paired[paired.length - 1].round_index)!)} r={2.5} fill={colors.score.triple.text} />
-      </svg>
-      <div className="flex items-center gap-3 mt-1.5">
-        <div className="flex items-center gap-1"><div className="size-2 rounded-full bg-primary" /><span className="text-caption text-muted-foreground">Scr</span></div>
-        <div className="flex items-center gap-1"><div className="size-2 rounded-full bg-score-triple" /><span className="text-caption text-muted-foreground">U&D</span></div>
-      </div>
-    </div>
-  );
-}
-
 export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
   const {
-    data, user, trends,
+    data, user, shortGameTrend,
     dualData, milestones, last20ScoringAvg, hiTrend,
     recentDistribution, girPct, scramblingPct, upAndDownPct, putts,
     bestRound, sidebarRounds, goal,
@@ -168,10 +135,14 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                     <StatLabel>Up & Down</StatLabel>
                   </Stat>
                 </div>
-                {trends && (
-                  <ShortGameSparkline
-                    scrambling={trends.scrambling_trend}
-                    upAndDown={trends.up_and_down_trend}
+                {shortGameTrend && (
+                  <Sparkline
+                    className="mt-3 px-1"
+                    domain={[0, 100]}
+                    series={[
+                      { values: shortGameTrend.scrambling, label: "Scr" },
+                      { values: shortGameTrend.upAndDown, tone: "contrast", label: "U&D" },
+                    ]}
                   />
                 )}
               </CardContent>

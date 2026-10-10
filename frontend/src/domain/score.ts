@@ -11,6 +11,9 @@ export const SCORE_KINDS = [
 
 export type ScoreKind = (typeof SCORE_KINDS)[number];
 
+/** Share of holes at each score kind, in percent. */
+export type ScoreMix = Record<ScoreKind, number>;
+
 /**
  * Classify a hole from strokes and par. Unknown inputs return null —
  * presentation layers decide how to paint a missing score.

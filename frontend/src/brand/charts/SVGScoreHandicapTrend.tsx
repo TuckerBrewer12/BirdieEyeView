@@ -13,6 +13,7 @@ import {
   differentialFill,
 } from "@/brand/theme";
 import { differentialStatus, formatHandicapIndex } from "@/domain/handicap";
+import { indexScale, paddedExtent } from "./scales";
 
 export interface ScoreHandicapTrendPoint {
   round_index: number;
@@ -74,20 +75,15 @@ export function SVGScoreHandicapTrend({
     );
   }
 
-  const xScale = scaleLinear()
-    .domain([0, data.length - 1])
-    .range([PAD.left, W - PAD.right]);
+  const xScale = indexScale(data.length, PAD.left, W - PAD.right);
 
-  const scoreMin = Math.min(...validScores.map((d) => d.total_score!));
-  const scoreMax = Math.max(...validScores.map((d) => d.total_score!));
+  // Five strokes of headroom on the score axis, half a point on the handicap axis.
   const yScoreScale = scaleLinear()
-    .domain([scoreMin - 5, scoreMax + 5])
+    .domain(paddedExtent(data.map((d) => d.total_score), 5)!)
     .range([H - PAD.bottom, PAD.top]);
 
-  const hiMin = validHI.length ? Math.min(...validHI.map((d) => d.handicap_index!)) : 0;
-  const hiMax = validHI.length ? Math.max(...validHI.map((d) => d.handicap_index!)) : 10;
   const yHIScale = scaleLinear()
-    .domain([hiMin - 0.5, hiMax + 0.5])
+    .domain(paddedExtent(data.map((d) => d.handicap_index), 0.5) ?? [-0.5, 10.5])
     .range([H - PAD.bottom, PAD.top]);
 
   const scoreLine = line<ScoreHandicapTrendPoint>()

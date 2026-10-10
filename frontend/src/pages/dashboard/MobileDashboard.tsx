@@ -4,26 +4,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
+import { HoleScoreBars } from "@/brand";
+import { ScoringHeroCard } from "./components/ScoringHeroCard";
 import { differentialFill, toParFill, toParLabel } from "@/brand/theme";
 import { differentialStatus, formatHandicapIndex } from "@/domain/handicap";
 import type { DashboardPageViewModel, DualTrendPoint, TrendView } from "./useDashboardPageViewModel";
 import {
-  avgLabel,
   dashboardPalette,
   deltaColor,
   deltaText,
   firstNameOf,
   goalTargetLabel,
   greetingDateLabel,
-  heroKpis,
   lastRoundChips,
-  mixLegend,
-  colorizeMix,
   pctLabel,
   scoreDelta,
   toRoundRow,
   trendTabs,
-  type PaintedHole,
   type TrendTabItem,
 } from "./present";
 
@@ -46,14 +43,6 @@ function getBarColor(d: DualTrendPoint): string {
   return differentialFill(differentialStatus(d));
 }
 
-function scoreBarHeightPct(strokes: number | null | undefined, par: number | null | undefined): number {
-  if (strokes == null || par == null) return 38;
-  const diff = strokes - par;
-  if (diff <= -1) return 22;
-  if (diff === 0) return 38;
-  return Math.min(100, 38 + diff * 14);
-}
-
 // ─── Dot separator ────────────────────────────────────────────────────────────
 function Dot() {
   return (
@@ -66,86 +55,6 @@ function Dot() {
       verticalAlign: "middle",
       margin: "0 4px",
     }} />
-  );
-}
-
-// ─── Hero sparkline ───────────────────────────────────────────────────────────
-function HeroSparkline({ data }: { data: DualTrendPoint[] }) {
-  const valid = data.filter((d) => d.total_score != null);
-  if (valid.length < 3) return null;
-
-  const W = 300;
-  const H = 56;
-  const PAD = { top: 5, right: 5, bottom: 5, left: 5 };
-
-  const scores = valid.map((d) => d.total_score!);
-  const minS = Math.min(...scores);
-  const maxS = Math.max(...scores);
-  const range = maxS - minS || 1;
-
-  const xScale = scaleLinear().domain([0, valid.length - 1]).range([PAD.left, W - PAD.right]);
-  const yScale = scaleLinear().domain([minS - range * 0.15, maxS + range * 0.15]).range([H - PAD.bottom, PAD.top]);
-
-  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
-  const meanY = yScale(mean);
-
-  const lineFn = line<DualTrendPoint>()
-    .x((_, i) => xScale(i))
-    .y((d) => yScale(d.total_score!))
-    .curve(curveMonotoneX);
-
-  const areaFn = area<DualTrendPoint>()
-    .x((_, i) => xScale(i))
-    .y0(H - PAD.bottom)
-    .y1((d) => yScale(d.total_score!))
-    .curve(curveMonotoneX);
-
-  const pathD = lineFn(valid) ?? "";
-  const areaD = areaFn(valid) ?? "";
-  const lastX = xScale(valid.length - 1);
-  const lastY = yScale(valid[valid.length - 1].total_score!);
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} style={{ overflow: "visible", display: "block" }}>
-      <defs>
-        <linearGradient id="heroAreaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={PRIMARY} stopOpacity={0.22} />
-          <stop offset="100%" stopColor={PRIMARY} stopOpacity={0} />
-        </linearGradient>
-      </defs>
-      <line
-        x1={PAD.left} x2={W - PAD.right}
-        y1={meanY} y2={meanY}
-        stroke="#cdd6c8" strokeWidth={1} strokeDasharray="3 3"
-      />
-      <path d={areaD} fill="url(#heroAreaGrad)" stroke="none" />
-      <path d={pathD} fill="none" stroke={PRIMARY} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={lastX} cy={lastY} r={3.5} fill="white" stroke={PRIMARY} strokeWidth={2} />
-    </svg>
-  );
-}
-
-// ─── Per-hole micro bar strip ─────────────────────────────────────────────────
-function MicroBars({ holes }: { holes: PaintedHole[] }) {
-  if (!holes.length) return null;
-  return (
-    <div style={{ display: "flex", gap: 3, height: 28, alignItems: "flex-end", width: "100%" }}>
-      {holes.map((h) => {
-        const heightPct = scoreBarHeightPct(h.strokes, h.par);
-        return (
-          <div
-            key={h.hole}
-            style={{
-              flex: 1,
-              height: `${heightPct}%`,
-              borderRadius: "2px 2px 0 0",
-              background: h.fill,
-              opacity: h.kind === "par" ? 0.35 : 1,
-            }}
-          />
-        );
-      })}
-    </div>
   );
 }
 
@@ -443,6 +352,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
   const {
     data,
     dualData,
+    recentScores,
     last20ScoringAvg,
     l5ScoringAvg,
     l20ScoreMix,
@@ -459,11 +369,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
 
   if (!data) return null;
 
-  const coloredMix = colorizeMix(l20ScoreMix);
   const hiDeltaText = deltaText(handicapDelta);
-  const scoreDeltaValue = scoreDelta(last20ScoringAvg, l5ScoringAvg);
-  const scoreDeltaText = deltaText(scoreDeltaValue, { vsL5: true });
-  const scoreDeltaColor = deltaColor(scoreDeltaValue != null && scoreDeltaValue > 0);
   const lastRound = recentRounds[0] ? toRoundRow(recentRounds[0]) : null;
   const recentRoundRows = recentRounds.map(toRoundRow);
 
@@ -500,94 +406,17 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
       </div>
 
       {/* ── 2. Hero Card ─────────────────────────────────────────────────────── */}
-      <div style={{
-        background: `radial-gradient(ellipse at 90% 10%, rgba(45,122,58,0.07) 0%, transparent 55%), #f9fafb`,
-        border: `1px solid ${LINE}`,
-        borderRadius: 20,
-        padding: "18px 18px 16px",
-      }}>
-        {/* 2a. Label + delta pill */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: "1.6px", textTransform: "uppercase", color: MUTED, whiteSpace: "nowrap" }}>
-            Scoring Avg · L20
-          </div>
-          {scoreDeltaText && (
-            <div style={{
-              fontFamily: MONO, fontSize: 11, fontWeight: 600,
-              color: scoreDeltaColor,
-              background: `color-mix(in srgb, ${scoreDeltaColor} 10%, transparent)`,
-              padding: "3px 8px", borderRadius: 99, whiteSpace: "nowrap",
-            }}>
-              {scoreDeltaText}
-            </div>
-          )}
-        </div>
-
-        {/* 2b. Big number + sparkline */}
-        <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 14, alignItems: "center", marginBottom: 16 }}>
-          <div style={{ fontFamily: SANS, fontSize: 64, fontWeight: 700, letterSpacing: "-2.4px", lineHeight: 1, color: INK }}>
-            {avgLabel(last20ScoringAvg)}
-          </div>
-          <HeroSparkline data={dualData} />
-        </div>
-
-        {/* 2c. Score Mix bar */}
-        {coloredMix.some((d) => d.value > 0) && (
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-              <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: MUTED }}>
-                Score Mix · L20
-              </div>
-              {mixHoleCount > 0 && (
-                <div style={{ fontFamily: MONO, fontSize: 10, color: MUTED, whiteSpace: "nowrap" }}>
-                  {mixHoleCount} holes
-                </div>
-              )}
-            </div>
-            <div style={{ display: "flex", gap: 2, height: 9, borderRadius: 3, overflow: "hidden" }}>
-              {coloredMix.filter((d) => d.value > 0.5).map((d) => (
-                <div key={d.name} style={{ flex: d.value, background: d.color, minWidth: 2 }} />
-              ))}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", marginTop: 8 }}>
-              {mixLegend(l20ScoreMix).map((item) => (
-                <div key={item.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                  <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: 600, color: INK }}>
-                    {item.pctLabel}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: 1, background: item.color, flexShrink: 0 }} />
-                    <div style={{ fontFamily: SANS, fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px", color: MUTED }}>
-                      {item.label}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 2d. Metadata strip */}
-        <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: 12, marginTop: 2 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", textAlign: "center" }}>
-            {heroKpis({
-              bestRound: data.best_round,
-              totalRounds: data.total_rounds,
-              putts: vm.putts,
-              girPct: vm.girPct,
-            }).map(({ label, value }) => (
-              <div key={label} style={{ padding: "0 2px" }}>
-                <div style={{ fontFamily: SANS, fontSize: 9, fontWeight: 700, letterSpacing: "1.2px", textTransform: "uppercase", color: MUTED, marginBottom: 3 }}>
-                  {label}
-                </div>
-                <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 600, color: INK, lineHeight: 1 }}>
-                  {value}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <ScoringHeroCard
+        average={last20ScoringAvg}
+        change={scoreDelta(last20ScoringAvg, l5ScoringAvg)}
+        recentScores={recentScores}
+        mix={l20ScoreMix}
+        mixHoles={mixHoleCount}
+        bestRound={data.best_round ?? null}
+        totalRounds={data.total_rounds}
+        putts={vm.putts}
+        girPct={vm.girPct}
+      />
 
       {/* ── 3. Last Round Ticket ──────────────────────────────────────────────── */}
       {lastRound && (
@@ -619,7 +448,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
 
           {lastRound.holes.length > 0 && (
             <div style={{ marginTop: 14 }}>
-              <MicroBars holes={lastRound.holes} />
+              <HoleScoreBars holes={recentRounds[0].holes} variant="profile" />
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
                 {["1", "9", "18"].map((n) => (
                   <div key={n} style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>{n}</div>

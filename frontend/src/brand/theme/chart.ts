@@ -23,7 +23,8 @@ export const chartTickStyle = {
 /** Recharts only accepts numbers for layout, so these mirror tokens.css in pixels:
  *  `barRadius` is --brand-radius-md, `barMaxWidth` --brand-size-bar-max, `ring` and `gauge`
  *  --brand-size-ring-* and --brand-size-gauge-*, and `plot.height` --brand-size-chart.
- *  tokens.test.ts fails if one drifts. The plot margins follow the 4px spacing scale. */
+ *  `sparkline` is --brand-size-sparkline-w/-h, --brand-space-tight padding, --brand-sparkline-stroke
+ *  and a --brand-space-dot marker, and `flow.width` --brand-size-chart-wide. tokens.test.ts fails if one drifts. The plot margins follow the 4px spacing scale. */
 export const chartLayout = {
   barRadius: [6, 6, 0, 0] as [number, number, number, number],
   margin: { top: 4, right: 8, left: -20, bottom: 0 },
@@ -43,6 +44,14 @@ export const chartLayout = {
     barGap: 2,
     dot: 3.5,
     dotHover: 6,
+  },
+  /** Unitless SVG for a figure's trend line. Scales to its container's width, keeping this shape. */
+  sparkline: {
+    width: 300,
+    height: 56,
+    pad: 5,
+    stroke: 2,
+    dot: 3,
   },
   /** A golfer's scores over time, one dot per round. Height matches `--brand-size-chart`. */
   trend: {

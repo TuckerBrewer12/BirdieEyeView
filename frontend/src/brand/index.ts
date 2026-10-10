@@ -10,6 +10,7 @@ export {
   borderWidth,
   ringWidth,
   opacityRecessed,
+  opacityWash,
   motion,
   chartTooltipStyle,
   chartTickStyle,
@@ -93,6 +94,7 @@ export type { ScorecardHole } from "./components/ScorecardTable";
 export { Toggle } from "./components/Toggle";
 export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
 export { RoundPreview } from "./components/RoundPreview";
+export { RoundShareCard } from "./components/RoundShareCard";
 export { CoursePreview } from "./components/CoursePreview";
 export { ChartTabs } from "./components/ChartTabs";
 export { SectionLabel } from "./components/SectionLabel";
@@ -115,6 +117,9 @@ export {
 export { ActivityHeatmap } from "./charts/ActivityHeatmap";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
+export { ScoreMixBar } from "./charts/ScoreMixBar";
+export { Sparkline } from "./charts/Sparkline";
+export type { SparklineSeries, SparklineTone } from "./charts/Sparkline";
 export { HoleMetricBars } from "./charts/HoleMetricBars";
 export { HoleScoreMixBars } from "./charts/HoleScoreMixBars";
 export { HoleToParBars } from "./charts/HoleToParBars";
