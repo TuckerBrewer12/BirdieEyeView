@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { formatHandicapIndex } from "@/domain/handicap";
 import { api } from "@/lib/api";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette } from "@/lib/chartPalettes";
@@ -55,7 +54,7 @@ export interface CareerViewModel {
   totalHoles: number;
   gaugeData: { value: number }[];
   hiColor: string;
-  hiDisplay: string;
+  handicapIndex: number | null;
   trendPrimary: string;
   successColor: string;
   warningColor: string;
@@ -90,10 +89,10 @@ export function useCareerViewModel(userId: string): CareerViewModel {
     [data?.score_type_distribution],
   );
 
-  const hi = Math.max(0, Math.min(36, data?.kpis.handicap_index ?? 18));
+  const handicapIndex = data?.kpis.handicap_index ?? null;
+  const hi = Math.max(0, Math.min(36, handicapIndex ?? 18));
   const gaugeData = [{ value: hi }, { value: 36 - hi }];
   const hiColor = hi < 10 ? successColor : hi < 20 ? warningColor : dangerColor;
-  const hiDisplay = formatHandicapIndex(data?.kpis.handicap_index);
 
   const w = timeWindow;
 
@@ -163,7 +162,7 @@ export function useCareerViewModel(userId: string): CareerViewModel {
     totalHoles,
     gaugeData,
     hiColor,
-    hiDisplay,
+    handicapIndex,
     trendPrimary,
     successColor,
     warningColor,

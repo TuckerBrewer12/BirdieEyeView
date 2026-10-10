@@ -4,6 +4,7 @@ import { SVGHandicapTrend } from "@/components/analytics/SVGHandicapTrend";
 import { UserRadarChart } from "@/components/analytics/UserRadarChart";
 import type { AnalyticsData } from "@/types/analytics";
 import { SCORE_LABELS } from "@/lib/colors";
+import { formatHandicapIndex } from "@/domain/handicap";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Fmt = (v: any, name: any, props: any) => any;
@@ -69,7 +70,7 @@ interface MobileCareerPageProps {
   totalHoles: number;
   gaugeData: { value: number }[];
   hiColor: string;
-  hiDisplay: string;
+  handicapIndex: number | null;
   trendPrimary: string;
   successColor: string;
   neutralColor: string;
@@ -87,7 +88,7 @@ export function MobileCareerPage({
   scoreBreaksAbove70,
   scoreBreaks70AndBelow,
   totalHoles,
-  hiDisplay,
+  handicapIndex,
   trendPrimary,
   successColor,
   neutralColor,
@@ -124,7 +125,7 @@ export function MobileCareerPage({
       </div>
 
       {/* HCP Trend */}
-      <Card title={`Handicap Index Trend${data.kpis.handicap_index != null ? ` · ${hiDisplay}` : ""}`}>
+      <Card title={`Handicap Index Trend${handicapIndex != null ? ` · ${formatHandicapIndex(handicapIndex)}` : ""}`}>
         <SVGHandicapTrend
           data={data.handicap_trend}
           color={trendPrimary}
