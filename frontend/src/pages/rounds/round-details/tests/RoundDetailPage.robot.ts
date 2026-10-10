@@ -56,6 +56,11 @@ export class RoundDetailRobot {
     return this;
   }
 
+  async tapTee(color: string): Promise<this> {
+    await this.page.getByRole("group", { name: "Tee" }).getByRole("button", { name: color, exact: true }).click();
+    return this;
+  }
+
   async tapSave(): Promise<this> {
     await this.page.getByRole("button", { name: "Save", exact: true }).click();
     await expect(this.page.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
@@ -65,6 +70,12 @@ export class RoundDetailRobot {
   async seesScore(score: number): Promise<this> {
     const header = this.page.locator('[data-slot="round-detail-header"]');
     await expect(header.getByText(String(score), { exact: true })).toBeVisible();
+    return this;
+  }
+
+  async seesTee(color: string): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(`${color} tees`, { exact: true })).toBeVisible();
     return this;
   }
 

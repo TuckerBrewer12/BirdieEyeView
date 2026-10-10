@@ -28,6 +28,15 @@ test("a hole's score typed in edit mode is kept after saving", async ({ roundDet
   await roundDetail.seesScore(80);
 });
 
+test("a tee tapped in edit mode is kept after saving", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.seesTee("Blue");
+  await roundDetail.tapEdit();
+  await roundDetail.tapTee("White");
+  await roundDetail.tapSave();
+  await roundDetail.seesTee("White");
+});
+
 test("delete confirm then cancel leaves the round", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapDelete();
