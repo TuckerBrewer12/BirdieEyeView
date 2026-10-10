@@ -5,6 +5,15 @@ test("the scanner is on screen without scrolling", async ({ landing }) => {
   await landing.seesScanner();
 });
 
+test("the demo stays while a card is chosen and steps aside once it is scanned", async ({ landing }) => {
+  await landing.open();
+  await landing.chooseScorecard();
+  await landing.seesDemo();
+  await landing.tapScan();
+  await landing.seesScannedCard();
+  await landing.seesDemo(false);
+});
+
 test("the nav's sign up goes to register", async ({ landing }) => {
   await landing.open();
   await landing.tapSignUp();
