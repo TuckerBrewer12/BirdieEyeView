@@ -1,5 +1,6 @@
 import { cn } from "@/brand/cn";
 import { HoleShape } from "@/brand/charts/HoleScoreShapes";
+import { Button } from "@/brand/components/Button";
 import { Input } from "@/brand/components/Input";
 import { scoreFillClass, scoreOnFillClass, toParDisplay, toParTextClass } from "@/brand/theme";
 import { isThreePutt, type HoleScore, type Nine, type Round } from "@/domain";
@@ -214,14 +215,15 @@ function NineTable({
           {holes.map((hole) =>
             edits ? (
               <td key={hole.hole} className="px-1 py-1 text-center">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon-sm"
                   aria-label={`Hole ${hole.hole} green: ${GIR_WORD.get(hole.gir)}`}
                   onClick={() => edits.onGirChange(hole.hole, NEXT_GIR.get(hole.gir) ?? null)}
-                  className="mx-auto flex size-7 items-center justify-center rounded-md hover:bg-muted"
                 >
                   <GirMark gir={hole.gir} className="size-3" />
-                </button>
+                </Button>
               </td>
             ) : (
               <td key={hole.hole} className={CELL}>
