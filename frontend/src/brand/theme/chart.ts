@@ -50,7 +50,7 @@ export const chartLayout = {
   plotCompact: {
     width: 320,
     height: 210,
-    pad: { top: 14, right: 14, bottom: 32, left: 44 },
+    pad: { top: 16, right: 16, bottom: 32, left: 44 },
   },
   /** Unitless SVG for a figure's trend line. Scales to its container's width, keeping this shape. */
   sparkline: {
