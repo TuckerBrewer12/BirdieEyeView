@@ -2,15 +2,23 @@ import { test } from "./LandingPage.robot";
 
 test("landing page", async ({ landing }) => {
   await landing.open();
-  await landing.seesHeadline("Just Snap a Scorecard.");
+  await landing.seesHeadline("Scan your scorecard.");
   await landing.capture("landing.png");
 });
 
 test("landing page in dark mode", async ({ landing }) => {
   await landing.dark();
   await landing.open();
-  await landing.seesHeadline("Just Snap a Scorecard.");
+  await landing.seesHeadline("Scan your scorecard.");
   await landing.capture("landing-dark.png");
+});
+
+test("a scanned card gets the full width", async ({ landing }) => {
+  await landing.open();
+  await landing.chooseScorecard();
+  await landing.tapScan();
+  await landing.seesScannedCard();
+  await landing.capture("landing-scanned.png");
 });
 
 test("mobile nav menu open", async ({ landing, isMobile }) => {
