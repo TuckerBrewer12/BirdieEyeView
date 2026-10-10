@@ -227,7 +227,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
               r={active === i ? plot.dotHover : plot.dot}
               fill={showScore ? toParFill(d.toPar) : HANDICAP_COLOR}
               stroke={colors.card}
-              strokeWidth={1.5}
+              strokeWidth={space.bar}
             />
           );
         })}
