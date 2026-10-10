@@ -11,6 +11,7 @@ import {
   colors,
   fonts,
   motion as motionTokens,
+  ringWidth,
   space,
   toParFill,
   typography,
@@ -316,7 +317,7 @@ function AxisLabel({
       fill={color}
       paintOrder="stroke"
       stroke={colors.card}
-      strokeWidth={4}
+      strokeWidth={ringWidth}
       strokeLinejoin="round"
     >
       {children}
