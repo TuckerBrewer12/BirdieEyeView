@@ -1,20 +1,23 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Link2 } from "lucide-react";
-import { ShareCard } from "@/components/share/ShareCard";
 import { useShareRound } from "@/hooks/useShareRound";
+import { roundShareMessage } from "@/lib/roundShareMessage";
 import {
   Alert,
   AlertDescription,
   Button,
+  Card,
+  CardContent,
   CourseLinkSearch,
   LoadingState,
+  RoundFlowChart,
+  RoundShareCard,
   SectionLabel,
 } from "@/brand";
 import { LinkCoursePanel } from "../components/LinkCoursePanel";
 import { RoundComparisonSection } from "./components/RoundComparisonSection";
 import { RoundDetailHeader } from "./components/RoundDetailHeader";
 import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
-import { RoundFlowTimeline } from "@/components/analytics/RoundFlowTimeline";
 import { RoundActions } from "./RoundActions";
 import { useRoundDetailPageViewModel } from "./useRoundDetailPageViewModel";
 
@@ -41,8 +44,9 @@ export function RoundDetailPage({ userId }: { userId: string }) {
 
   return (
     <div>
-      <div className="pointer-events-none fixed -left-[9999px] top-0">
-        <ShareCard ref={shareCardRef} round={round} courseName={viewModel.courseName} />
+      {/* Rendered just off the right edge, so the share button can capture it as an image. */}
+      <div aria-hidden className="pointer-events-none fixed top-0 left-full">
+        <RoundShareCard ref={shareCardRef} round={played} />
       </div>
 
       {viewModel.actionError && (
@@ -60,7 +64,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         onEdit={viewModel.enterEditMode}
         onSave={editor.save}
         onCancelEdit={editor.cancel}
-        onShare={() => shareRound(round, viewModel.courseName)}
+        onShare={() => shareRound(roundShareMessage(played))}
         onDelete={viewModel.requestDelete}
         onConfirmDelete={() => viewModel.confirmDeleteRound(() => navigate("/rounds"))}
         onCancelDelete={viewModel.cancelDelete}
@@ -143,11 +147,11 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       {viewModel.showMomentum && (
         <div className="mt-6">
           <SectionLabel>Momentum</SectionLabel>
-          <div className="overflow-x-auto rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <div className="min-w-[720px]">
-              <RoundFlowTimeline round={round} />
-            </div>
-          </div>
+          <Card>
+            <CardContent>
+              <RoundFlowChart round={played} />
+            </CardContent>
+          </Card>
         </div>
       )}
 

@@ -6,8 +6,8 @@ import {
   extractTeeColorToken,
   getHole,
   getTee,
-  longestTee,
   teeColors,
+  teesByLength,
 } from "../course";
 
 const white: StoredTee = {
@@ -54,9 +54,10 @@ describe("getTee / getHole", () => {
   });
 });
 
-describe("longestTee", () => {
-  it("picks the longest tee", () => {
-    expect(longestTee(course())?.color).toBe("White");
+describe("teesByLength", () => {
+  it("puts the longest tee first", () => {
+    expect(teesByLength(course()).map((tee) => tee.color)).toEqual(["White", "Blue"]);
+    expect(teesByLength(course({ tees: [blue, white] })).map((tee) => tee.color)).toEqual(["White", "Blue"]);
   });
 
   it("lists tee colors", () => {

@@ -1,5 +1,5 @@
 export { SCORE_KINDS, scoreKind, strokesToPar } from "./score";
-export type { ScoreKind } from "./score";
+export type { ScoreKind, ScoreMix } from "./score";
 
 export { GOAL_OPTIONS, GOAL_BENCHMARK, HANDICAP_BENCHMARK } from "./benchmark";
 export type { BenchmarkProfile, ComparisonTargetValue } from "./benchmark";
@@ -17,7 +17,7 @@ export {
   TEE_COLORS,
   extractTeeColorToken,
   chooseCompatibleTee,
-  longestTee,
+  teesByLength,
 } from "./course";
 export type { TeeColor } from "./course";
 

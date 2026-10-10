@@ -4,39 +4,38 @@ import {
   Alert,
   AlertDescription,
   Button,
-  Card,
-  CardContent,
-  Collection,
   LoadingState,
   PageTitle,
-  Reveal,
-  RoundPreview,
-  SectionLabel,
-  TeeSwatch,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import { cn } from "@/brand/cn";
-import { CourseCharts, CourseScoreTrend } from "./CourseCharts";
-import { NineTable } from "./NineTable";
+import { CoursePerformanceSection } from "./components/CoursePerformanceSection";
+import { CourseScorecardSection } from "./components/CourseScorecardSection";
 import { useCourseDetailPageViewModel } from "./useCourseDetailPageViewModel";
 
 export function CourseDetailPage({ userId }: { userId: string }) {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const viewModel = useCourseDetailPageViewModel(userId, courseId);
+  const { course } = viewModel;
 
   if (viewModel.loading) {
     return <LoadingState>Loading course...</LoadingState>;
   }
 
-  if (viewModel.loadError || !viewModel.hasCourse) {
+  if (viewModel.loadError || !course || !courseId) {
     return (
       <Alert variant="destructive">
         <AlertDescription>{viewModel.loadError ?? "Course not found."}</AlertDescription>
       </Alert>
     );
   }
+
+  const headerStats = [
+    { label: "Par", value: course.par ?? "—" },
+    { label: "Holes", value: course.holes.length },
+    { label: "Tees", value: course.tees.length },
+  ];
 
   return (
     <div>
@@ -51,14 +50,14 @@ export function CourseDetailPage({ userId }: { userId: string }) {
       </Button>
 
       <PageTitle>{viewModel.courseName}</PageTitle>
-      {viewModel.location && (
+      {course.location && (
         <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
           <MapPin className="size-3.5" />
-          {viewModel.location}
+          {course.location}
         </div>
       )}
       <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
-        {viewModel.headerStats.map((stat) => (
+        {headerStats.map((stat) => (
           <span key={stat.label}>
             <span>{stat.label}</span>{" "}
             <span className="font-semibold text-foreground">{stat.value}</span>
@@ -80,96 +79,8 @@ export function CourseDetailPage({ userId }: { userId: string }) {
         ))}
       </ToggleGroup>
 
-      {viewModel.activeTab === "course" && (
-        <>
-          {viewModel.teeChips.length > 0 && (
-            <div className="mb-5 flex flex-wrap gap-3">
-              {viewModel.teeChips.map((chip) => (
-                <Button
-                  key={chip.color}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  aria-pressed={chip.selected}
-                  onClick={() => viewModel.selectTee(chip.color)}
-                  className={cn(
-                    "h-auto gap-2 px-3 py-2 text-xs text-muted-foreground",
-                    chip.selected && "ring-2 ring-primary/30",
-                  )}
-                >
-                  <TeeSwatch color={chip.color} className="size-3 shrink-0 rounded-full" />
-                  <span className="font-semibold capitalize text-foreground">{chip.color}</span>
-                  {chip.rating && <span>{chip.rating}</span>}
-                  {chip.slope && <span>{chip.slope}</span>}
-                  {chip.yards && <span>{chip.yards}</span>}
-                  {chip.courseHandicapLabel && (
-                    <span className="rounded bg-primary/10 px-1.5 py-0.5 text-caption font-semibold text-primary">
-                      {chip.courseHandicapLabel}
-                    </span>
-                  )}
-                </Button>
-              ))}
-            </div>
-          )}
-
-          <Card className="overflow-x-auto py-0">
-            <CardContent className="min-w-3xl px-0">
-              <NineTable nine={viewModel.frontNine} />
-              <div className="border-t-2 border-border" />
-              <NineTable nine={viewModel.backNine} />
-            </CardContent>
-          </Card>
-        </>
-      )}
-
-      {viewModel.activeTab === "performance" && (
-        <Reveal className="space-y-8">
-          <div className="flex flex-wrap gap-3">
-            {viewModel.heroStats.map((stat) => (
-              <Card key={stat.label} size="sm" className="min-w-28 flex-1">
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">{stat.label}</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div>
-            <SectionLabel>Score Trend</SectionLabel>
-            <CourseScoreTrend data={viewModel.scoreTrend} />
-          </div>
-
-          <div>
-            <SectionLabel>Round History</SectionLabel>
-            <Collection
-              layout="divided"
-              className="overflow-hidden rounded-xl border border-border bg-card"
-              items={viewModel.roundHistory}
-              keyFor={(round) => round.id}
-              empty="No rounds at this course."
-              renderItem={(round) => (
-                <RoundPreview
-                  variant="history"
-                  round={round}
-                  onClick={() => navigate(`/rounds/${round.id}`)}
-                />
-              )}
-            />
-          </div>
-
-          <div>
-            <SectionLabel>Hole-by-Hole Breakdown</SectionLabel>
-            <CourseCharts
-              charts={viewModel.charts}
-              selectedCharts={viewModel.selectedCharts}
-              chartTabs={viewModel.chartTabs}
-              chartTab={viewModel.chartTab}
-              onSelectChartTab={viewModel.selectChartTab}
-            />
-          </div>
-        </Reveal>
-      )}
+      {viewModel.activeTab === "course" && <CourseScorecardSection userId={userId} course={course} />}
+      {viewModel.activeTab === "performance" && <CoursePerformanceSection userId={userId} courseId={courseId} />}
     </div>
   );
 }

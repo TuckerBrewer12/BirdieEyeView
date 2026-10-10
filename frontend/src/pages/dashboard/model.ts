@@ -34,6 +34,31 @@ export function dualTrendFrom(trends: AnalyticsData | null): DualTrendPoint[] {
   }));
 }
 
+/** The scores of the rounds in the trend, oldest first, skipping rounds without one. */
+export function recentScoresFrom(dual: DualTrendPoint[]): number[] {
+  return dual.flatMap((point) => (point.total_score != null ? [point.total_score] : []));
+}
+
+/** Scrambling and up-and-down rates for the same rounds, oldest first. */
+export interface ShortGameTrend {
+  scrambling: number[];
+  upAndDown: number[];
+}
+
+/** The last twelve rounds with both rates, paired by round. Null until there are two to draw. */
+export function shortGameTrendFrom(trends: AnalyticsData | null): ShortGameTrend | null {
+  if (!trends) return null;
+  const upAndDownByRound = new Map(trends.up_and_down_trend.map((row) => [row.round_index, row.percentage]));
+  const paired = trends.scrambling_trend
+    .filter((row) => upAndDownByRound.has(row.round_index))
+    .slice(-12);
+  if (paired.length < 2) return null;
+  return {
+    scrambling: paired.map((row) => row.scrambling_percentage),
+    upAndDown: paired.map((row) => upAndDownByRound.get(row.round_index)!),
+  };
+}
+
 export interface ScoreMixItem {
   name: ScoreKind;
   value: number;
