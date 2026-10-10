@@ -60,7 +60,10 @@ const noScoreKindTable = {
   create(context) {
     return {
       ObjectExpression(node) {
-        const keys = node.properties.map(propertyKey).filter((key) => key && SCORE_KEYS.has(key));
+        const scoreProps = node.properties.filter((prop) => SCORE_KEYS.has(propertyKey(prop)));
+        // Numbers per score type are data (a round's counts, a mix), not a table to look a type up in.
+        if (scoreProps.every((prop) => isNumber(prop.value))) return;
+        const keys = scoreProps.map(propertyKey);
         if (new Set(keys).size >= 4) {
           context.report({ node, messageId: "table", data: { keys: keys.slice(0, 4).join(", ") + ", …" } });
         }

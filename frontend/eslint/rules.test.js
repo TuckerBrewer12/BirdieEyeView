@@ -21,6 +21,8 @@ tester.run("golf/no-score-kind-table", golf.rules["no-score-kind-table"], {
     "const sizes = { sm: 1, md: 2, lg: 3, xl: 4 };",
     // Three keys is a coincidence, not a score table.
     "const tiles = { birdie: a, par: b, bogey: c };",
+    // Numbers per score type are data, like a round's counts or a score mix.
+    "const mix = { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 };",
   ],
   invalid: [
     {
@@ -29,7 +31,12 @@ tester.run("golf/no-score-kind-table", golf.rules["no-score-kind-table"], {
     },
     {
       // The legacy analytics spelling.
-      code: "const c = { eagle: 1, birdie: 2, bogey: 3, double_bogey: 4, triple_bogey: 5 };",
+      code: 'const c = { eagle: "a", birdie: "b", bogey: "c", double_bogey: "d", triple_bogey: "e" };',
+      errors: [{ messageId: "table" }],
+    },
+    {
+      // A map from score type to an API field is a table too.
+      code: 'const ROW_KEY = { eagle: "eagle", birdie: "birdie", par: "par", bogey: "bogey", double: "double_bogey" };',
       errors: [{ messageId: "table" }],
     },
   ],
