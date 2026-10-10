@@ -54,7 +54,7 @@ export interface CareerViewModel {
   totalHoles: number;
   gaugeData: { value: number }[];
   hiColor: string;
-  hiDisplay: string;
+  handicapIndex: number | null;
   trendPrimary: string;
   successColor: string;
   warningColor: string;
@@ -89,15 +89,10 @@ export function useCareerViewModel(userId: string): CareerViewModel {
     [data?.score_type_distribution],
   );
 
-  const hi = Math.max(0, Math.min(36, data?.kpis.handicap_index ?? 18));
+  const handicapIndex = data?.kpis.handicap_index ?? null;
+  const hi = Math.max(0, Math.min(36, handicapIndex ?? 18));
   const gaugeData = [{ value: hi }, { value: 36 - hi }];
   const hiColor = hi < 10 ? successColor : hi < 20 ? warningColor : dangerColor;
-  const hiDisplay =
-    data?.kpis.handicap_index != null
-      ? data.kpis.handicap_index < 0
-        ? `+${Math.abs(data.kpis.handicap_index)}`
-        : data.kpis.handicap_index.toFixed(1)
-      : "—";
 
   const w = timeWindow;
 
@@ -167,7 +162,7 @@ export function useCareerViewModel(userId: string): CareerViewModel {
     totalHoles,
     gaugeData,
     hiColor,
-    hiDisplay,
+    handicapIndex,
     trendPrimary,
     successColor,
     warningColor,

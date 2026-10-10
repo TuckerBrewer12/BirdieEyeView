@@ -5,8 +5,7 @@ import { BrandMark } from "@/brand/components/BrandMark";
 import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
 import { Stat, StatLabel, StatValue } from "@/brand/components/Stat";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import { SCORE_KEYS, scoreKindLabel } from "@/brand/theme";
-import type { Round } from "@/domain";
+import { playedScoreKinds, scoreKindCountLabel, type Round } from "@/domain";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateLong } from "@/lib/roundDate";
 
@@ -22,7 +21,7 @@ interface RoundShareCardProps extends React.ComponentProps<"div"> {
 const RoundShareCard = React.forwardRef<HTMLDivElement, RoundShareCardProps>(
   ({ round, className, ...props }, ref) => {
     const date = formatRoundDateLong(round.date);
-    const counts = SCORE_KEYS.filter((key) => round.scoreCounts[key] > 0);
+    const played = playedScoreKinds(round.scoreCounts);
 
     return (
       <div
@@ -65,11 +64,11 @@ const RoundShareCard = React.forwardRef<HTMLDivElement, RoundShareCardProps>(
           <HoleScoreShapes round={round} numbered />
         </div>
 
-        {counts.length > 0 && (
+        {played.length > 0 && (
           <div className="flex flex-wrap gap-1.5 px-5 py-3">
-            {counts.map((key) => (
-              <ScoreCountChip key={key} kind={key} count={round.scoreCounts[key]}>
-                {scoreKindLabel(key, round.scoreCounts[key])}
+            {played.map(({ kind, count }) => (
+              <ScoreCountChip key={kind} kind={kind} count={count}>
+                {scoreKindCountLabel(kind, count)}
               </ScoreCountChip>
             ))}
           </div>

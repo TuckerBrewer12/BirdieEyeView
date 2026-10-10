@@ -1,5 +1,4 @@
-import { toParLabel } from "@/brand/theme";
-import type { Round } from "@/domain";
+import { toParLabel, type Round } from "@/domain";
 import type { ShareMessage } from "@/hooks/useShareRound";
 import { formatCourseName } from "./courseName";
 

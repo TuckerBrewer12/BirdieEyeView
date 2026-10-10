@@ -1,18 +1,8 @@
 import { cn } from "@/brand/cn";
-import { HoleScoreBars, PageTitle, ScoreCountChip, ToParFigure, type ScoreKey } from "@/brand";
-import { netScore, type Nine, type Round } from "@/domain";
+import { HoleScoreBars, PageTitle, ScoreCountChip, ToParFigure } from "@/brand";
+import { formatCourseHandicap, netScore, playedScoreKinds, scoreKindCountLabel, type Nine, type Round } from "@/domain";
 import { formatCourseName } from "@/lib/courseName";
-import { pluralNoun } from "@/lib/pluralize";
 import { formatRoundDateLong } from "@/lib/roundDate";
-
-const CHIPS: { key: ScoreKey; noun: string; plural?: string; absorbs?: ScoreKey }[] = [
-  { key: "birdie", noun: "Birdie" },
-  { key: "par",    noun: "Par" },
-  { key: "bogey",  noun: "Bogey" },
-  { key: "double", noun: "Double" },
-  { key: "triple", noun: "Triple+", plural: "Triples+", absorbs: "quad" },
-  { key: "eagle",  noun: "Eagle" },
-];
 
 export interface RoundDetailHeaderProps {
   round: Round;
@@ -47,7 +37,6 @@ function NineBars({ nine, label, className }: {
 export function RoundDetailHeader({ round, teeRating, courseHandicap, className }: RoundDetailHeaderProps) {
   const dateLabel = formatRoundDateLong(round.date);
   const net = courseHandicap != null && round.score != null ? netScore(round.score, courseHandicap) : null;
-  const counts = round.scoreCounts;
 
   return (
     <div data-slot="round-detail-header" className={cn("mb-4", className)}>
@@ -86,7 +75,7 @@ export function RoundDetailHeader({ round, teeRating, courseHandicap, className 
               <div className="mx-3.5 h-11 w-px shrink-0 bg-border" />
               <div>
                 <div className="mb-chip text-caption font-bold uppercase tracking-net text-muted-foreground">
-                  Net · hcp {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}
+                  Net · hcp {formatCourseHandicap(courseHandicap)}
                 </div>
                 <div className="font-mono text-lg font-bold leading-none text-primary">{net}</div>
               </div>
@@ -118,15 +107,11 @@ export function RoundDetailHeader({ round, teeRating, courseHandicap, className 
       )}
 
       <div className="flex flex-wrap gap-1.5 pt-2.5">
-        {CHIPS.map(({ key, noun, plural, absorbs }) => {
-          const count = (counts[key] ?? 0) + (absorbs ? counts[absorbs] ?? 0 : 0);
-          if (!count) return null;
-          return (
-            <ScoreCountChip key={key} kind={key} count={count}>
-              {pluralNoun(count, noun, plural)}
-            </ScoreCountChip>
-          );
-        })}
+        {playedScoreKinds(round.scoreCounts).map(({ kind, count }) => (
+          <ScoreCountChip key={kind} kind={kind} count={count}>
+            {scoreKindCountLabel(kind, count)}
+          </ScoreCountChip>
+        ))}
       </div>
     </div>
   );

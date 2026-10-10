@@ -6,8 +6,8 @@ import { line, area, curveMonotoneX } from "d3-shape";
 import { X } from "lucide-react";
 import { HoleScoreBars } from "@/brand";
 import { ScoringHeroCard } from "./components/ScoringHeroCard";
-import { colors, toParFill } from "@/brand/theme";
-import { formatHandicapIndex } from "@/domain/handicap";
+import { differentialFill, toParFill, toParLabel } from "@/brand/theme";
+import { differentialStatus, formatHandicapIndex } from "@/domain/handicap";
 import type { DashboardPageViewModel, DualTrendPoint, TrendView } from "./useDashboardPageViewModel";
 import {
   dashboardPalette,
@@ -40,12 +40,7 @@ function getDotColor(toPar: number | null): string {
 }
 
 function getBarColor(d: DualTrendPoint): string {
-  if (d.used_in_hi == null) return colors.score.par.base;
-  if (d.used_in_hi) return colors.score.birdie.base;
-  if (d.hi_threshold != null && d.differential != null && d.differential - d.hi_threshold <= 2) {
-    return colors.score.eagle.base;
-  }
-  return colors.destructive;
+  return differentialFill(differentialStatus(d));
 }
 
 // ─── Dot separator ────────────────────────────────────────────────────────────
@@ -213,7 +208,7 @@ function MobileScoreTrend({
                     <div className="font-bold text-gray-900 text-sm tabular-nums">{selValue}</div>
                     {selected.point.to_par != null && (
                       <div className="text-[11px] font-semibold" style={{ color: getDotColor(selected.point.to_par) }}>
-                        {selected.point.to_par > 0 ? `+${selected.point.to_par}` : selected.point.to_par}
+                        {toParLabel(selected.point.to_par)}
                       </div>
                     )}
                   </>
