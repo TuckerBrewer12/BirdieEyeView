@@ -5,6 +5,7 @@ import { ToParFigure } from "@/brand/components/ToParFigure";
 import { chartColors, chartLayout, chartTickStyle, colors, toParFill } from "@/brand/theme";
 import { formatRoundDateHistory, formatRoundDateTick } from "@/lib/roundDate";
 import type { CourseScoreTrendRowDto } from "@/types/api";
+import { indexScale, paddedExtent } from "./scales";
 
 interface ScoreTrendChartProps {
   /** The server's trend rows, oldest first. Unscored rounds are left out. */
@@ -28,10 +29,9 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
     return <div className="py-8 text-center text-sm text-muted-foreground">Not enough data</div>;
   }
 
-  const scores = data.map((row) => row.total_score);
-  const x = scaleLinear().domain([0, data.length - 1]).range([PAD.left, W - PAD.right]);
+  const x = indexScale(data.length, PAD.left, W - PAD.right);
   const y = scaleLinear()
-    .domain([Math.min(...scores) - headroom, Math.max(...scores) + headroom])
+    .domain(paddedExtent(data.map((row) => row.total_score), headroom)!)
     .range([H - PAD.bottom, PAD.top]);
   const linePath = line<ScoredRow>().x((_, i) => x(i)).y((row) => y(row.total_score)).curve(curveMonotoneX)(data) ?? "";
   const areaPath =

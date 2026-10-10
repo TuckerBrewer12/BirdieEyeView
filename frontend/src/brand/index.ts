@@ -10,6 +10,7 @@ export {
   borderWidth,
   ringWidth,
   opacityRecessed,
+  opacityWash,
   motion,
   chartTooltipStyle,
   chartTickStyle,
@@ -115,6 +116,9 @@ export {
 export { ActivityHeatmap } from "./charts/ActivityHeatmap";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
+export { ScoreMixBar } from "./charts/ScoreMixBar";
+export { Sparkline } from "./charts/Sparkline";
+export type { SparklineSeries, SparklineTone } from "./charts/Sparkline";
 export { HoleMetricBars } from "./charts/HoleMetricBars";
 export { HoleScoreMixBars } from "./charts/HoleScoreMixBars";
 export { HoleToParBars } from "./charts/HoleToParBars";

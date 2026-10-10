@@ -95,6 +95,11 @@ describe("brand tokens", () => {
       gaugeInner: chartLayout.gauge.inner,
       gaugeOuter: chartLayout.gauge.outer,
       plotHeight: chartLayout.plot.height,
+      sparklineWidth: chartLayout.sparkline.width,
+      sparklineHeight: chartLayout.sparkline.height,
+      sparklinePad: chartLayout.sparkline.pad,
+      sparklineStroke: chartLayout.sparkline.stroke,
+      sparklineDot: chartLayout.sparkline.dot,
       trendHeight: chartLayout.trend.height,
       flowWidth: chartLayout.flow.width,
     }).toEqual({
@@ -105,6 +110,11 @@ describe("brand tokens", () => {
       gaugeInner: px("--brand-size-gauge-inner"),
       gaugeOuter: px("--brand-size-gauge-outer"),
       plotHeight: px("--brand-size-chart"),
+      sparklineWidth: px("--brand-size-sparkline-w"),
+      sparklineHeight: px("--brand-size-sparkline-h"),
+      sparklinePad: px("--brand-space-tight"),
+      sparklineStroke: px("--brand-sparkline-stroke"),
+      sparklineDot: px("--brand-space-dot"),
       trendHeight: px("--brand-size-chart"),
       flowWidth: px("--brand-size-chart-wide"),
     });

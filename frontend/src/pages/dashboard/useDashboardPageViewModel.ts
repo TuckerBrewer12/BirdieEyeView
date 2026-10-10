@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
-import { Round } from "@/domain";
+import { Round, type ScoreMix } from "@/domain";
 import type { DashboardData, User } from "@/types/golf";
 import type { AnalyticsData } from "@/types/analytics";
 import {
@@ -13,13 +13,16 @@ import {
   goalProgress,
   milestonesFrom,
   pickBestRound,
+  recentScoresFrom,
   scoreMixItems,
+  shortGameTrendFrom,
   whsFrom,
   type DualTrendPoint,
   type GoalProgress,
   type HiTrend,
   type Milestone,
   type ScoreMixItem,
+  type ShortGameTrend,
   type TrendView,
   type WhsBreakdown,
 } from "./model";
@@ -35,11 +38,16 @@ export interface DashboardPageViewModel {
   error: Error | null;
   refetch: () => void;
   dualData: DualTrendPoint[];
+  /** Scores across the trend window, oldest first. */
+  recentScores: number[];
+  /** Null until two rounds have both short-game rates. */
+  shortGameTrend: ShortGameTrend | null;
   milestones: Milestone[];
   last20ScoringAvg: number | null;
   l5ScoringAvg: number | null;
   handicapDelta: number | null;
-  l20ScoreMix: ScoreMixItem[];
+  /** Null until the window has a scored hole. */
+  l20ScoreMix: ScoreMix | null;
   mixHoleCount: number;
   hiTrend: HiTrend | null;
   girPct: number | null;
@@ -118,6 +126,8 @@ export function useDashboardPageViewModel(
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
 
   const dualData = useMemo(() => dualTrendFrom(trends), [trends]);
+  const recentScores = useMemo(() => recentScoresFrom(dualData), [dualData]);
+  const shortGameTrend = useMemo(() => shortGameTrendFrom(trends), [trends]);
   const report = goalReport ?? null;
 
   return {
@@ -128,11 +138,13 @@ export function useDashboardPageViewModel(
     error: error as Error | null,
     refetch,
     dualData,
+    recentScores,
+    shortGameTrend,
     milestones: data ? milestonesFrom(data.milestones) : [],
     last20ScoringAvg: data?.scoring_average_l20 ?? null,
     l5ScoringAvg: data?.scoring_average_l5 ?? null,
     handicapDelta: data?.handicap_change.delta ?? null,
-    l20ScoreMix: data && data.score_mix_holes > 0 ? scoreMixItems(data.score_mix) : [],
+    l20ScoreMix: data && data.score_mix_holes > 0 ? data.score_mix : null,
     mixHoleCount: data?.score_mix_holes ?? 0,
     hiTrend: data?.handicap_change.direction ?? null,
     girPct: data?.recent_form.gir_pct ?? null,
