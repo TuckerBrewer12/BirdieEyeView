@@ -8,6 +8,9 @@ on:
       - ".github/review-bots/frontend-coverage.md"
       - ".github/review-bots/run-coverage.sh"
       - ".github/review-bots/coverage_report.py"
+      - ".github/review-bots/post_review.py"
+      - ".github/review-bots/pr-lib.sh"
+      - ".github/review-bots/sticky.py"
       - ".github/workflows/frontend-coverage-bot.yml"
 
 concurrency:
