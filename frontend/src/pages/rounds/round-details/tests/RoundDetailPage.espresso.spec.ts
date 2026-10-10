@@ -19,6 +19,15 @@ test("edit then cancel returns to the view actions", async ({ roundDetail }) => 
   await roundDetail.tapCancelEdit();
 });
 
+test("a hole's score typed in edit mode is kept after saving", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.seesScore(78);
+  await roundDetail.tapEdit();
+  await roundDetail.typeStrokes(1, 7);
+  await roundDetail.tapSave();
+  await roundDetail.seesScore(80);
+});
+
 test("delete confirm then cancel leaves the round", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapDelete();

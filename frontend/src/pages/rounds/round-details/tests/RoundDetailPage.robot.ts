@@ -51,6 +51,23 @@ export class RoundDetailRobot {
     return this;
   }
 
+  async typeStrokes(hole: number, strokes: number): Promise<this> {
+    await this.page.getByLabel(`Hole ${hole} strokes`).fill(String(strokes));
+    return this;
+  }
+
+  async tapSave(): Promise<this> {
+    await this.page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(this.page.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
+    return this;
+  }
+
+  async seesScore(score: number): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(String(score), { exact: true })).toBeVisible();
+    return this;
+  }
+
   async tapDelete(): Promise<this> {
     await this.page.getByRole("button", { name: "Delete" }).click();
     await expect(this.page.getByText("Delete this round?")).toBeVisible();

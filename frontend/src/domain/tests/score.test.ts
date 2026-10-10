@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SCORE_KINDS, scoreKind, strokesToPar } from "../score";
+import { SCORE_KINDS, isThreePutt, scoreKind, strokesToPar } from "../score";
 
 describe("scoreKind", () => {
   it("returns null when strokes or par is missing", () => {
@@ -37,5 +37,11 @@ describe("strokesToPar", () => {
     expect(strokesToPar(3, 4)).toBe(-1);
     expect(strokesToPar(4, 4)).toBe(0);
     expect(strokesToPar(6, 4)).toBe(2);
+  });
+});
+
+describe("isThreePutt", () => {
+  it("calls three or more putts a three-putt", () => {
+    expect([null, 0, 1, 2, 3, 4].map(isThreePutt)).toEqual([false, false, false, false, true, true]);
   });
 });

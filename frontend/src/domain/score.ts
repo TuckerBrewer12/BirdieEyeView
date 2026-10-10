@@ -40,3 +40,8 @@ export function strokesToPar(
   if (strokes == null || par == null) return null;
   return strokes - par;
 }
+
+/** Three or more putts on a hole, the putting miss a scorecard calls out. */
+export function isThreePutt(putts: number | null | undefined): boolean {
+  return putts != null && putts >= 3;
+}

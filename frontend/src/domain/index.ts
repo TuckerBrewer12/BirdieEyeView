@@ -1,4 +1,4 @@
-export { SCORE_KINDS, scoreKind, strokesToPar } from "./score";
+export { SCORE_KINDS, isThreePutt, scoreKind, strokesToPar } from "./score";
 export type { ScoreKind, ScoreMix } from "./score";
 
 export { GOAL_OPTIONS, GOAL_BENCHMARK, HANDICAP_BENCHMARK } from "./benchmark";
