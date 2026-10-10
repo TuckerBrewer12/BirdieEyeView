@@ -95,6 +95,8 @@ export { Toggle } from "./components/Toggle";
 export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
 export { RoundPreview } from "./components/RoundPreview";
 export { RoundShareCard } from "./components/RoundShareCard";
+export { RoundScorecard } from "./components/RoundScorecard";
+export type { RoundScorecardEdits } from "./components/RoundScorecard";
 export { CoursePreview } from "./components/CoursePreview";
 export { ChartTabs } from "./components/ChartTabs";
 export { SectionLabel } from "./components/SectionLabel";

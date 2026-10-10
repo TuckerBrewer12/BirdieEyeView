@@ -9,15 +9,18 @@ import {
   Card,
   CardContent,
   CourseLinkSearch,
+  Input,
   LoadingState,
   RoundFlowChart,
+  RoundScorecard,
   RoundShareCard,
   SectionLabel,
+  ToggleGroup,
+  ToggleGroupItem,
 } from "@/brand";
 import { LinkCoursePanel } from "../components/LinkCoursePanel";
 import { RoundComparisonSection } from "./components/RoundComparisonSection";
 import { RoundDetailHeader } from "./components/RoundDetailHeader";
-import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
 import { RoundActions } from "./RoundActions";
 import { useRoundDetailPageViewModel } from "./useRoundDetailPageViewModel";
 
@@ -30,7 +33,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   if (viewModel.loading) {
     return <LoadingState>Loading round...</LoadingState>;
   }
-  if (viewModel.loadError || !viewModel.round || !viewModel.played) {
+  if (viewModel.loadError || !viewModel.played) {
     return (
       <Alert variant="destructive">
         <AlertDescription>{viewModel.loadError ?? "Could not load this round."}</AlertDescription>
@@ -38,7 +41,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
     );
   }
 
-  const round = viewModel.round;
   const played = viewModel.played;
   const editor = viewModel.editor;
 
@@ -128,19 +130,49 @@ export function RoundDetailPage({ userId }: { userId: string }) {
               Keep "{editor.playedNameToKeep}" without linking →
             </Button>
           )}
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-xs font-semibold text-muted-foreground">Tee</span>
+            {editor.availableTees.length > 0 ? (
+              <ToggleGroup
+                variant="outline"
+                size="sm"
+                aria-label="Tee"
+                value={editor.teeBox ? [editor.teeBox] : []}
+                onValueChange={(values) => editor.setTeeBox(values[0] ?? "")}
+              >
+                {editor.availableTees.map((color) => (
+                  <ToggleGroupItem key={color} value={color}>
+                    {color}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            ) : (
+              <Input
+                aria-label="Tee"
+                autoComplete="off"
+                placeholder="e.g. White"
+                value={editor.teeBox}
+                onChange={(e) => editor.setTeeBox(e.target.value)}
+                className="w-28"
+              />
+            )}
+          </div>
         </div>
       )}
 
       <div className={!editor.editing ? "mt-2" : ""}>
-        <ScorecardGrid
-          round={round}
-          editMode={editor.editing}
-          editedScores={editor.scores}
-          editedTeeBox={editor.teeBox}
-          availableTees={editor.availableTees}
-          onScoreChange={editor.setScore}
-          onTeeBoxChange={editor.setTeeBox}
-          onGirChange={editor.setGir}
+        <RoundScorecard
+          round={played}
+          teeBox={editor.activeTeeBox}
+          edits={
+            editor.editing
+              ? {
+                  onStrokesChange: (hole, strokes) => editor.setScore(hole, "strokes", strokes),
+                  onPuttsChange: (hole, putts) => editor.setScore(hole, "putts", putts),
+                  onGirChange: editor.setGir,
+                }
+              : undefined
+          }
         />
       </div>
 
