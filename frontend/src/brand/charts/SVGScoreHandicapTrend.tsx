@@ -11,6 +11,8 @@ import {
   colors,
   fonts,
   motion as motionTokens,
+  radius,
+  ringWidth,
   space,
   toParFill,
   typography,
@@ -180,7 +182,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                 height={baseline - top}
                 fill={BAR_FILL[d.hiStatus ?? "none"]}
                 fillOpacity={0.6}
-                rx={2}
+                rx={radius.tick}
               />
             );
           })}
@@ -192,7 +194,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
               d={handicapPath}
               fill="none"
               stroke={HANDICAP_COLOR}
-              strokeWidth={series === "both" ? 1.5 : 2}
+              strokeWidth={series === "both" ? space.bar : chartLayout.sparkline.stroke}
               strokeOpacity={series === "both" ? 0.7 : 1}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -201,7 +203,14 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
         )}
 
         {showScore && (
-          <path d={scorePath} fill="none" stroke={SCORE_COLOR} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d={scorePath}
+            fill="none"
+            stroke={SCORE_COLOR}
+            strokeWidth={chartLayout.sparkline.stroke}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         )}
 
         {active != null && pointY != null && (
@@ -227,7 +236,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
               r={active === i ? plot.dotHover : plot.dot}
               fill={showScore ? toParFill(d.toPar) : HANDICAP_COLOR}
               stroke={colors.card}
-              strokeWidth={1.5}
+              strokeWidth={space.bar}
             />
           );
         })}
@@ -316,7 +325,7 @@ function AxisLabel({
       fill={color}
       paintOrder="stroke"
       stroke={colors.card}
-      strokeWidth={4}
+      strokeWidth={ringWidth}
       strokeLinejoin="round"
     >
       {children}

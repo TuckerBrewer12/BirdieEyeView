@@ -167,6 +167,7 @@
   --brand-size-date-rail: 54px;
   --brand-size-preview: 390px;
   --brand-size-chart: 180px;
+  --brand-size-chart-compact-w: 320px;
   --brand-size-chart-compact: 210px;
   /* Width a hole-by-hole chart needs before it scrolls sideways. */
   --brand-size-chart-wide: 45rem;
