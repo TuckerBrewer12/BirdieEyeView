@@ -54,19 +54,23 @@ export function toParLabel(toPar: number | null): string | null {
   return `${toPar}`;
 }
 
-const SCORE_KIND_LABEL: Record<ScoreKey, string> = {
-  eagle: "Eagle+",
-  birdie: "Birdie",
-  par: "Par",
-  bogey: "Bogey",
-  double: "Double",
-  triple: "Triple",
-  quad: "Quad+",
+const SCORE_KIND_LABEL: Record<ScoreKey, [one: string, many: string]> = {
+  eagle: ["Eagle+", "Eagles+"],
+  birdie: ["Birdie", "Birdies"],
+  par: ["Par", "Pars"],
+  bogey: ["Bogey", "Bogeys"],
+  double: ["Double", "Doubles"],
+  triple: ["Triple", "Triples"],
+  quad: ["Quad+", "Quads+"],
 };
 
-/** A hole's score type as a word: "Birdie", "Double". The ends are open, so "Eagle+" and "Quad+". */
-export function scoreKindLabel(key: ScoreKey): string {
-  return SCORE_KIND_LABEL[key];
+/**
+ * A hole's score type as a word: "Birdie", "Double". Pass a count for the word that goes
+ * with it: "3 Birdies". The ends are open, so "Eagle+" and "Quad+".
+ */
+export function scoreKindLabel(key: ScoreKey, count = 1): string {
+  const [one, many] = SCORE_KIND_LABEL[key];
+  return count === 1 ? one : many;
 }
 
 export function toParDisplay(toPar: number | null, empty = "—"): string {
