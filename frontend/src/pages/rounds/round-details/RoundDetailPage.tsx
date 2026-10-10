@@ -163,7 +163,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       <div className={!editor.editing ? "mt-2" : ""}>
         <RoundScorecard
           round={played}
-          teeBox={editor.editing ? editor.teeBox : played.teeBox}
+          teeBox={editor.activeTeeBox}
           edits={
             editor.editing
               ? {
