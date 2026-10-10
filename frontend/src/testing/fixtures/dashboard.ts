@@ -187,6 +187,8 @@ const handicapTrend: HandicapTrendRow[] = scoreTrend.map((row, i) => ({
   used_in_hi: row.round_id === "round-3",
   differential: [18.2, 4.1, 8.0, 11.5, 13.0][i],
   hi_threshold: 6,
+  // 8.0 sits two strokes off the 6 cutoff, so the server reads it as a near miss.
+  hi_status: (["unused", "used", "near", "unused", "unused"] as const)[i],
 }));
 
 const scoreDifferentials: ScoreDifferentialRow[] = scoreTrend.map((row, i) => ({

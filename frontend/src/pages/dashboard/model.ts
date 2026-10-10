@@ -1,9 +1,11 @@
 import { SCORE_KINDS, type ScoreKind } from "@/domain/score";
 import type { Round } from "@/domain/round";
+import type { RoundTrendPoint } from "@/domain/trend";
 import type { AnalyticsData, GoalReport } from "@/types/analytics";
 import type { MilestoneDto, ScoreMixDto, WhsBreakdownDto } from "@/types/api";
 
-export type TrendView = "score" | "hcp";
+/** Which line the phone's trend card shows. */
+export type TrendView = "score" | "handicap";
 export type HiTrend = "up" | "down" | "flat";
 
 export function pickBestRound(rounds: Round[]): Round | null {
@@ -12,31 +14,9 @@ export function pickBestRound(rounds: Round[]): Round | null {
   return scored.reduce((best, curr) => (curr.score! < best.score! ? curr : best));
 }
 
-export interface DualTrendPoint {
-  round_index: number;
-  total_score: number | null;
-  to_par: number | null;
-  handicap_index: number | null;
-  course_name?: string | null;
-  used_in_hi?: boolean | null;
-  differential?: number | null;
-  hi_threshold?: number | null;
-}
-
-export function dualTrendFrom(trends: AnalyticsData | null): DualTrendPoint[] {
-  if (!trends) return [];
-  return trends.score_trend.map((row, i) => ({
-    ...row,
-    handicap_index: trends.handicap_trend[i]?.handicap_index ?? null,
-    used_in_hi: trends.handicap_trend[i]?.used_in_hi ?? null,
-    differential: trends.handicap_trend[i]?.differential ?? null,
-    hi_threshold: trends.handicap_trend[i]?.hi_threshold ?? null,
-  }));
-}
-
 /** The scores of the rounds in the trend, oldest first, skipping rounds without one. */
-export function recentScoresFrom(dual: DualTrendPoint[]): number[] {
-  return dual.flatMap((point) => (point.total_score != null ? [point.total_score] : []));
+export function recentScoresFrom(trend: RoundTrendPoint[]): number[] {
+  return trend.flatMap((point) => (point.score != null ? [point.score] : []));
 }
 
 /** Scrambling and up-and-down rates for the same rounds, oldest first. */

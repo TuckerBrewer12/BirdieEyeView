@@ -33,3 +33,6 @@ export type { HoleEdits, HoleScore, Nine, RoundCourse, ScoreCounts } from "./rou
 
 export { activityDays } from "./activity";
 export type { ActivityDay } from "./activity";
+
+export { trendPointsFrom } from "./trend";
+export type { HiStatus, RoundTrendPoint } from "./trend";

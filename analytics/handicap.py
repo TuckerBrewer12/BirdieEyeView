@@ -216,15 +216,32 @@ def handicap_trend(
                 "differential": round(this_diff, 1) if this_diff is not None else None,
                 "used_in_hi": None,
                 "hi_threshold": None,
+                "hi_status": None,
             }
         )
 
     return results
 
 
+# A differential this close to the cutoff is one good round away from counting.
+NEAR_MISS_STROKES = 2.0
+
+
+def hi_status(differential: Optional[float], used: bool, threshold: Optional[float]) -> Optional[str]:
+    """How a round's differential sits against the index: "used" (one of the best N),
+    "near" (within NEAR_MISS_STROKES of the cutoff) or "unused". None without a differential."""
+    if differential is None:
+        return None
+    if used:
+        return "used"
+    if threshold is not None and differential - threshold <= NEAR_MISS_STROKES:
+        return "near"
+    return "unused"
+
+
 def annotate_used_in_hi(entries: List[Dict[str, Any]]) -> None:
     """
-    Annotate a list of trend entries (in-place) with used_in_hi and hi_threshold.
+    Annotate a list of trend entries (in-place) with used_in_hi, hi_threshold and hi_status.
     Marks exactly the WHS best-N rounds as used. Ties at the threshold boundary are
     broken by recency (most recent round wins), matching WHS practice.
     Call this AFTER slicing to the display window.
@@ -254,3 +271,4 @@ def annotate_used_in_hi(entries: List[Dict[str, Any]]) -> None:
             entry["used_in_hi"] = None
         else:
             entry["used_in_hi"] = i in used_indices
+        entry["hi_status"] = hi_status(diff, i in used_indices, threshold)

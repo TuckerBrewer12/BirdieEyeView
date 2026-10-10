@@ -4,15 +4,12 @@ import { formatRoundDateShort } from "@/lib/roundDate";
 import type { HoleScore, Round } from "@/domain";
 import type { User } from "@/types/golf";
 import {
-  type DualTrendPoint,
   type HiTrend,
   type Milestone,
   type ScoreMixItem,
-  type TrendView,
   type WhsRound,
 } from "./model";
 
-export type { TrendView };
 
 const SCORE_COLORS: Record<ScoreKey, string> = {
   eagle: colors.score.eagle.base,
@@ -22,12 +19,6 @@ const SCORE_COLORS: Record<ScoreKey, string> = {
   double: colors.score.double.base,
   triple: colors.score.triple.base,
   quad: colors.score.quad.base,
-};
-
-export const dashboardPalette = {
-  scoreLineColor: colors.primary,
-  handicapLineColor: colors.score.double.text,
-  gridColor: colors.border,
 };
 
 export function firstNameOf(user: User | null): string {
@@ -84,19 +75,6 @@ export function colorizeMix(mix: ScoreMixItem[]): ColoredMixItem[] {
     label: scoreKindLabel(item.name),
     color: SCORE_COLORS[item.name],
   }));
-}
-
-export interface TrendTabItem {
-  key: TrendView;
-  label: string;
-  active: boolean;
-}
-
-export function trendTabs(trendView: TrendView): TrendTabItem[] {
-  return [
-    { key: "score", label: "Score", active: trendView === "score" },
-    { key: "hcp", label: "HCP", active: trendView === "hcp" },
-  ];
 }
 
 /** A hole ready to draw: unscored holes read as par. */
@@ -189,7 +167,7 @@ export function whsContextNote(countUsed: number): string {
   return `The World Handicap System uses your best ${countUsed || "N"} differentials from the last 20 rounds. Differentials measure how well you played relative to the course difficulty.`;
 }
 
-export type { DualTrendPoint, HiTrend };
+export type { HiTrend };
 
 const MILESTONE_WORDING: Record<Milestone["kind"], { title: string; figure: (value: number) => string }> = {
   under_par: { title: "First round under par", figure: String },
