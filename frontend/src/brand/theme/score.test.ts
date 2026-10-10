@@ -44,8 +44,15 @@ describe("scoreOnFillClass", () => {
 
 describe("scoreKindLabel", () => {
   it("names each score type, open-ended at both ends", () => {
-    expect(SCORE_KEYS.map(scoreKindLabel)).toEqual([
+    expect(SCORE_KEYS.map((key) => scoreKindLabel(key))).toEqual([
       "Eagle+", "Birdie", "Par", "Bogey", "Double", "Triple", "Quad+",
     ]);
+  });
+
+  it("takes the plural for any count but one", () => {
+    expect(scoreKindLabel("birdie", 3)).toBe("Birdies");
+    expect(scoreKindLabel("eagle", 2)).toBe("Eagles+");
+    expect(scoreKindLabel("par", 0)).toBe("Pars");
+    expect(scoreKindLabel("bogey", 1)).toBe("Bogey");
   });
 });

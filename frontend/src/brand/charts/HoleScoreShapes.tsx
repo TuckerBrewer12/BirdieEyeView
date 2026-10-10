@@ -3,6 +3,8 @@ import type { HoleScore, Round } from "@/domain";
 
 interface HoleScoreShapesProps {
   round: Round;
+  /** Puts each hole's number above its shape. */
+  numbered?: boolean;
 }
 
 const VB_W = 30;
@@ -80,7 +82,7 @@ function HoleShape({ hole }: { hole: HoleScore }) {
 }
 
 /** The round's holes as marked shapes, one row per nine. */
-export function HoleScoreShapes({ round }: HoleScoreShapesProps) {
+export function HoleScoreShapes({ round, numbered = false }: HoleScoreShapesProps) {
   const nines = [round.frontNine, round.backNine].filter((nine) => nine.holes.length > 0);
   if (nines.length === 0) return null;
 
@@ -88,9 +90,16 @@ export function HoleScoreShapes({ round }: HoleScoreShapesProps) {
     <div data-slot="hole-score-shapes" className="flex flex-col gap-chip">
       {nines.map((nine, rowIdx) => (
         <div key={rowIdx} className="flex gap-chip">
-          {nine.holes.map((hole) => (
-            <HoleShape key={hole.hole} hole={hole} />
-          ))}
+          {nine.holes.map((hole) =>
+            numbered ? (
+              <div key={hole.hole} className="flex flex-col items-center gap-hair">
+                <span className="text-caption font-semibold text-muted-foreground">{hole.hole}</span>
+                <HoleShape hole={hole} />
+              </div>
+            ) : (
+              <HoleShape key={hole.hole} hole={hole} />
+            ),
+          )}
         </div>
       ))}
     </div>
