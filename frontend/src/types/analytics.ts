@@ -23,6 +23,8 @@ export interface HandicapTrendRow {
   used_in_hi?: boolean | null;
   differential?: number | null;
   hi_threshold?: number | null;
+  /** The server's read of `differential` against the index. */
+  hi_status?: "used" | "near" | "unused" | null;
 }
 
 export interface ScoreDifferentialRow {

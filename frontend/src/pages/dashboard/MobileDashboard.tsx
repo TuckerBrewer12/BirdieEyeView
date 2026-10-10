@@ -1,16 +1,19 @@
-import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { scaleLinear } from "d3-scale";
-import { line, area, curveMonotoneX } from "d3-shape";
-import { X } from "lucide-react";
-import { HoleScoreBars } from "@/brand";
-import { ScoringHeroCard } from "./components/ScoringHeroCard";
-import { colors, toParFill } from "@/brand/theme";
-import { formatHandicapIndex } from "@/domain/handicap";
-import type { DashboardPageViewModel, DualTrendPoint, TrendView } from "./useDashboardPageViewModel";
 import {
-  dashboardPalette,
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  HoleScoreBars,
+  SVGScoreHandicapTrend,
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/brand";
+import { ScoringHeroCard } from "./components/ScoringHeroCard";
+import { formatHandicapIndex } from "@/domain/handicap";
+import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
+import {
   deltaColor,
   deltaText,
   firstNameOf,
@@ -20,8 +23,6 @@ import {
   pctLabel,
   scoreDelta,
   toRoundRow,
-  trendTabs,
-  type TrendTabItem,
 } from "./present";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -33,20 +34,6 @@ const TRACK   = "#e5e7eb";
 const PRIMARY = "#2d7a3a";
 const SANS    = '"Inter", system-ui, -apple-system, sans-serif';
 const MONO    = '"Inter", system-ui, -apple-system, sans-serif';
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function getDotColor(toPar: number | null): string {
-  return toParFill(toPar);
-}
-
-function getBarColor(d: DualTrendPoint): string {
-  if (d.used_in_hi == null) return colors.score.par.base;
-  if (d.used_in_hi) return colors.score.birdie.base;
-  if (d.hi_threshold != null && d.differential != null && d.differential - d.hi_threshold <= 2) {
-    return colors.score.eagle.base;
-  }
-  return colors.destructive;
-}
 
 // ─── Dot separator ────────────────────────────────────────────────────────────
 function Dot() {
@@ -79,284 +66,12 @@ function BenchmarkBar({ value, tour }: { value: number | null; tour: number }) {
   );
 }
 
-// ─── Interactive score / HCP trend chart — KEEP UNCHANGED ─────────────────────
-function MobileScoreTrend({
-  dualData,
-  scoreColor,
-  handicapColor,
-  view,
-  trendTabs,
-  onViewChange,
-}: {
-  dualData: DualTrendPoint[];
-  scoreColor: string;
-  handicapColor: string;
-  view: TrendView;
-  trendTabs: TrendTabItem[];
-  onViewChange: (view: TrendView) => void;
-}) {
-  const [selected, setSelected] = useState<{ point: DualTrendPoint; idx: number } | null>(null);
-  const [selectedView, setSelectedView] = useState(view);
-  if (view !== selectedView) {
-    setSelectedView(view);
-    setSelected(null);
-  }
-
-  const W = 320;
-  const H = 210;
-  const PAD = { top: 14, right: 14, bottom: 32, left: 44 };
-  const color = view === "score" ? scoreColor : handicapColor;
-
-  const valid = dualData.filter((d) =>
-    view === "score" ? d.total_score != null : d.handicap_index != null,
-  );
-
-  if (valid.length < 2) {
-    return (
-      <div className="flex items-center justify-center text-sm text-gray-400 py-12">
-        Not enough data yet
-      </div>
-    );
-  }
-
-  const xScale = scaleLinear()
-    .domain([0, dualData.length - 1])
-    .range([PAD.left, W - PAD.right]);
-
-  const nums = valid.map((d) => (view === "score" ? d.total_score! : d.handicap_index!));
-  const minV = Math.min(...nums);
-  const maxV = Math.max(...nums);
-  const yScale = scaleLinear()
-    .domain([minV - 5, maxV + 5])
-    .range([H - PAD.bottom, PAD.top]);
-
-  const getValue = (d: DualTrendPoint) =>
-    view === "score" ? d.total_score : d.handicap_index;
-
-  const lineFn = line<DualTrendPoint>()
-    .defined((d) => getValue(d) != null)
-    .x((_, i) => xScale(i))
-    .y((d) => yScale(getValue(d)!))
-    .curve(curveMonotoneX);
-
-  const areaFn = area<DualTrendPoint>()
-    .defined((d) => getValue(d) != null)
-    .x((_, i) => xScale(i))
-    .y0(H - PAD.bottom)
-    .y1((d) => yScale(getValue(d)!))
-    .curve(curveMonotoneX);
-
-  const pathD = lineFn(dualData) ?? "";
-  const areaD = areaFn(dualData) ?? "";
-  const gradId = `mobileAreaGrad_${view}`;
-
-  const yTicks = yScale.ticks(5);
-  const step = Math.max(1, Math.floor((dualData.length - 1) / 4));
-  const xTickIdxs = Array.from(
-    { length: Math.ceil(dualData.length / step) },
-    (_, i) => i * step,
-  ).filter((i) => i < dualData.length);
-  const barW = Math.max(4, Math.min(14, (W - PAD.left - PAD.right) / dualData.length - 2));
-  const baseline = H - PAD.bottom;
-
-  const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
-    e.currentTarget.releasePointerCapture(e.pointerId);
-    const rect = e.currentTarget.getBoundingClientRect();
-    const svgX = (e.clientX - rect.left) * (W / rect.width);
-    const idx = Math.max(0, Math.min(dualData.length - 1, Math.round(xScale.invert(svgX))));
-    const point = dualData[idx];
-    if (point) setSelected({ point, idx });
-  };
-
-  const selValue = selected ? getValue(selected.point) : null;
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-sm font-semibold text-gray-800">Score History</div>
-        <div className="flex bg-gray-100 rounded-lg p-0.5">
-          {trendTabs.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => onViewChange(tab.key)}
-              className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all ${
-                tab.active ? "bg-white text-gray-800 shadow-sm" : "text-gray-400"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {selected && selValue != null && (
-          <motion.div
-            key={selected.idx}
-            className="mb-3 px-3 py-2.5 bg-gray-50 rounded-xl text-xs flex items-start justify-between gap-2"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.12 }}
-          >
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-gray-900">Round {selected.point.round_index}</div>
-              {selected.point.course_name && (
-                <div className="text-gray-400 truncate mt-0.5">{selected.point.course_name}</div>
-              )}
-            </div>
-            <div className="flex items-start gap-3 shrink-0">
-              <div className="text-right">
-                {view === "score" && (
-                  <>
-                    <div className="font-bold text-gray-900 text-sm tabular-nums">{selValue}</div>
-                    {selected.point.to_par != null && (
-                      <div className="text-[11px] font-semibold" style={{ color: getDotColor(selected.point.to_par) }}>
-                        {selected.point.to_par > 0 ? `+${selected.point.to_par}` : selected.point.to_par}
-                      </div>
-                    )}
-                  </>
-                )}
-                {view === "hcp" && (
-                  <div className="font-bold text-sm tabular-nums" style={{ color }}>
-                    {formatHandicapIndex(selValue)}
-                  </div>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="text-gray-300 hover:text-gray-500 mt-0.5"
-                aria-label="Dismiss"
-              >
-                <X size={13} />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="select-none">
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          width="100%"
-          overflow="visible"
-          onPointerDown={handlePointerDown}
-          style={{ touchAction: "pan-y", userSelect: "none" }}
-        >
-          <defs>
-            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.12} />
-              <stop offset="100%" stopColor={color} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-
-          {yTicks.map((v) => (
-            <g key={v}>
-              <line x1={PAD.left} x2={W - PAD.right} y1={yScale(v)} y2={yScale(v)} stroke="#d1d5db" strokeWidth={1} />
-              <text
-                x={PAD.left - 7} y={yScale(v) + 4}
-                textAnchor="end" fontSize={11} fontWeight="bold" fill="#6b7280"
-                paintOrder="stroke" stroke="white" strokeWidth={4} strokeLinejoin="round"
-              >
-                {view === "hcp" ? formatHandicapIndex(v) : v}
-              </text>
-            </g>
-          ))}
-
-          <line x1={PAD.left} x2={W - PAD.right} y1={H - PAD.bottom} y2={H - PAD.bottom} stroke="#d1d5db" strokeWidth={1} />
-
-          {xTickIdxs.map((i) => (
-            <text key={i} x={xScale(i)} y={H - PAD.bottom + 16} textAnchor="middle" fontSize={11} fontWeight="bold" fill="#6b7280">
-              {i + 1}
-            </text>
-          ))}
-
-          {view === "score" && dualData.map((d, i) => {
-            if (d.total_score == null) return null;
-            const barTop = yScale(d.total_score);
-            const barHeight = baseline - barTop;
-            if (barHeight <= 0) return null;
-            return (
-              <rect
-                key={`bar-${i}`}
-                x={xScale(i) - barW / 2}
-                y={barTop}
-                width={barW}
-                height={barHeight}
-                fill={getBarColor(d)}
-                fillOpacity={0.6}
-                rx={2}
-              />
-            );
-          })}
-
-          {selected && (
-            <line
-              x1={xScale(selected.idx)} x2={xScale(selected.idx)}
-              y1={PAD.top} y2={H - PAD.bottom}
-              stroke="#e5e7eb" strokeWidth={1} strokeDasharray="3 3"
-            />
-          )}
-
-          <motion.path
-            key={`area-${view}`}
-            d={areaD}
-            fill={`url(#${gradId})`}
-            stroke="none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.2, ease: "easeInOut" }}
-          />
-
-          <motion.path
-            key={`line-${view}`}
-            d={pathD}
-            fill="none"
-            stroke={color}
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: 1.1, ease: "easeInOut" }}
-          />
-
-          {dualData.map((d, i) => {
-            const val = getValue(d);
-            if (val == null) return null;
-            const cx = xScale(i);
-            const cy = yScale(val);
-            const isSel = selected?.idx === i;
-            return (
-              <g key={i}>
-                <circle cx={cx} cy={cy} r={18} fill="transparent" />
-                <motion.circle
-                  cx={cx} cy={cy}
-                  r={isSel ? 5.5 : 3.5}
-                  fill={view === "score" ? getDotColor(d.to_par) : color}
-                  stroke="white"
-                  strokeWidth={isSel ? 2 : 1.5}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.9 + Math.min(i * 0.04, 0.8), duration: 0.25, ease: "backOut" }}
-                />
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-    </div>
-  );
-}
-
 // ─── Props ────────────────────────────────────────────────────────────────────
 export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
   const {
     data,
-    dualData,
+    trend,
     recentScores,
     last20ScoringAvg,
     l5ScoringAvg,
@@ -504,17 +219,31 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
         </div>
       )}
 
-      {/* ── 5. Score History — KEEP EXISTING ─────────────────────────────────── */}
-      <div style={{ borderRadius: 16, border: `1px solid ${LINE}`, padding: 16, background: "linear-gradient(180deg, rgba(238,247,240,0.4) 0%, white 50%)" }}>
-        <MobileScoreTrend
-          dualData={dualData}
-          scoreColor={dashboardPalette.scoreLineColor}
-          handicapColor={dashboardPalette.handicapLineColor}
-          view={trendView}
-          trendTabs={trendTabs(trendView)}
-          onViewChange={setTrendView}
-        />
-      </div>
+      {/* ── 5. Score History ─────────────────────────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Score History</CardTitle>
+          <CardAction>
+            <ToggleGroup
+              aria-label="Trend line"
+              variant="outline"
+              size="sm"
+              spacing={0}
+              value={[trendView]}
+              onValueChange={(values) => {
+                // Tapping the pressed item would empty the group; the card always shows one line.
+                if (values[0] === "score" || values[0] === "handicap") setTrendView(values[0]);
+              }}
+            >
+              <ToggleGroupItem value="score">Score</ToggleGroupItem>
+              <ToggleGroupItem value="handicap">HCP</ToggleGroupItem>
+            </ToggleGroup>
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          <SVGScoreHandicapTrend data={trend} series={trendView} compact />
+        </CardContent>
+      </Card>
 
       {/* ── 6. Short Game Card ───────────────────────────────────────────────── */}
       <div style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 16, padding: "16px 18px 14px" }}>

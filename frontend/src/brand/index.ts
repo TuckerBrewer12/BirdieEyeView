@@ -126,4 +126,3 @@ export { HoleToParBars } from "./charts/HoleToParBars";
 export { RoundFlowChart } from "./charts/RoundFlowChart";
 export { ScoreTrendChart } from "./charts/ScoreTrendChart";
 export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
-export type { ScoreHandicapTrendPoint } from "./charts/SVGScoreHandicapTrend";
