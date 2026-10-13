@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
+import { motion } from "@/brand/theme";
 import { scoreKind, strokesToPar, type ScoreKind } from "@/domain";
 import type { TourScreen } from "./demoTour";
 
@@ -102,7 +103,7 @@ export const DEMO_MOTION = {
   /** One app screen giving way to the next on the tour. */
   screenChange: 0.5,
   /** A finger pressing the handicap: the ring closing in, then letting go. */
-  tap: 0.7,
+  tap: motion.entrance.duration,
 } as const;
 
 export interface ScannerDemoViewModel {
