@@ -1,0 +1,100 @@
+name: Slop Control
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "frontend/**"
+      - "api/**"
+      - "services/**"
+      - "models/**"
+      - "database/**"
+      - "analytics/**"
+      - "tests/**"
+      - "scripts/**"
+      - "conftest.py"
+      - ".github/review-bots/slop-control.md"
+      - ".github/review-bots/slop_report.py"
+      - ".github/review-bots/run-slop.sh"
+      - ".github/review-bots/pr-lib.sh"
+      - ".github/review-bots/sticky.py"
+      - ".github/workflows/slop-control-bot.yml"
+
+concurrency:
+  group: slop-control-bot-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+# Write is for the fix job only. The review job below drops it back to read.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  slop:
+    name: Slop Control
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      verdict: ${{ steps.review.outputs.verdict }}
+      report: ${{ steps.review.outputs.report }}
+
+    # Skip drafts, skip-bots, fork PRs (no CURSOR_API_KEY), and the PRs
+    # this bot itself opens.
+    if: >-
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-bots') &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !startsWith(github.head_ref, 'bot-fix/')
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+
+      - name: Review
+        id: review
+        env:
+          BOT_NAME: "🧹 Slop Control"
+          BOT_PROMPT: .github/review-bots/slop-control.md
+          BOT_PATHSPEC: "frontend api services models database analytics tests scripts conftest.py"
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: bash .github/review-bots/run-slop.sh review
+
+  fix:
+    name: Open the fix PR
+    needs: slop
+    if: needs.slop.outputs.verdict == 'fail'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+
+      - name: Apply fix
+        env:
+          BOT_NAME: "🧹 Slop Control"
+          SLOP_REPORT: ${{ needs.slop.outputs.report }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: bash .github/review-bots/run-slop.sh fix

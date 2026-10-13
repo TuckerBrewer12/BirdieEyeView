@@ -10,15 +10,17 @@
 #      RUN_URL (optional link to the workflow run that holds the HTML report)
 set -euo pipefail
 
+BOTS="$(cd "$(dirname "$0")" && pwd)"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 # shellcheck source=cursor-run.sh
-source "$(cd "$(dirname "$0")" && pwd)/cursor-run.sh"
+source "$BOTS/cursor-run.sh"
+# shellcheck source=pr-lib.sh
+source "$BOTS/pr-lib.sh"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 COVERAGE_JSON="${COVERAGE_JSON:-$REPO_ROOT/frontend/coverage/coverage-final.json}"
 ESPRESSO_COVERAGE_JSON="${ESPRESSO_COVERAGE_JSON:-$REPO_ROOT/frontend/coverage/espresso/coverage-final.json}"
 
-BASE="$(git merge-base "$BASE_SHA" "$HEAD_SHA")"
-git diff --unified=6 "$BASE" "$HEAD_SHA" -- frontend > "$WORK/diff.patch"
+pr_diff "$WORK/diff.patch" frontend
 
 if [[ ! -s "$WORK/diff.patch" ]]; then
   echo "No changes under frontend/."

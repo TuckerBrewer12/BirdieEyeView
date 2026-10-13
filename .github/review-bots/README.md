@@ -5,6 +5,9 @@ inline comments and open a second PR that implements the finding, targeting
 the original PR's branch. The Frontend coverage bot is separate: it posts one
 sticky comment with Vitest and Espresso changed-line coverage plus an AI
 count of reasonable screenshot and espresso screens. It does not open fix PRs.
+Slop Control also posts one sticky comment, not an inline note per finding.
+Pass means the new comments are necessary. Fail lists them and links one PR
+that deletes or shortens every one.
 
 A later commit does not re-open the same finding. The bot that left the
 comment rechecks it: ✅ if the latest commit fixed it, ❌ if it is still
@@ -51,10 +54,14 @@ nothing.
 | --- | --- |
 | `brand-kit.md`, `mvvm.md`, `ui-test-checker.md` | Review prompts |
 | `run-bot.sh` | Shared reviewer: diff → model → GitHub review |
-| `cursor-run.sh` | Cursor CLI invocation shared by the review, coverage, and fix runners |
+| `cursor-run.sh` | Cursor CLI invocation shared by every runner |
+| `pr-lib.sh` | PR diff, review prompt, and fix-branch push / PR open shared by every runner |
+| `sticky.py` | The one sticky PR comment the coverage and slop bots keep up to date |
 | `previous.py` | Match earlier comments, ✅/❌ recheck, skip duplicate fix PRs |
 | `post_review.py` | JSON findings → review payload + fixable list |
 | `fix.md` + `run-fix.sh` | Apply one finding and open a PR |
 | `links.py` | Discuss-in-Conductor (Grok) URLs |
 | `frontend-coverage.md` + `run-coverage.sh` | Coverage reporter: Vitest % + Espresso % + AI screen counts → sticky comment |
-| `coverage_report.py` | Changed-line %, test inventory, comment upsert |
+| `coverage_report.py` | Changed-line %, test inventory, comment body |
+| `slop-control.md` + `run-slop.sh` | Comment slop: read-only review job posts pass/fail; a second job opens one fix PR |
+| `slop_report.py` | Comment guide, report comment, fix prompt |
