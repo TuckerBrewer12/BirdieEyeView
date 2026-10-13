@@ -9,7 +9,7 @@ import {
   FileChip,
   ScanProgress,
   ScorecardLayoutPicker,
-  ScorecardTable,
+  RoundScorecard,
 } from "@/brand";
 import { useTryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
@@ -95,58 +95,32 @@ export function TryItYourselfSection() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.35 }}
           >
-            <div className="flex items-center justify-between rounded-t-2xl border-b border-border bg-primary px-4 py-3">
-              <div>
-                <div className="text-base font-bold text-primary-foreground">
-                  {viewModel.courseName ?? "Unknown Course"}
-                </div>
-                {viewModel.courseLocation && (
-                  <div className="text-xs text-primary-foreground/60">{viewModel.courseLocation}</div>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                {viewModel.teeBox && (
-                  <span className="text-sm font-medium text-primary-foreground/80">
-                    {viewModel.teeBox} tees
-                  </span>
-                )}
-                <Button variant="ghost" size="xs" onClick={viewModel.reset}>
-                  <RotateCcw data-icon="inline-start" />
-                  Scan another
-                </Button>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <div className="min-w-scorecard">
-                {viewModel.frontNine.length > 0 && (
-                  <ScorecardTable holes={viewModel.frontNine} label="OUT" />
-                )}
-
-                {viewModel.backNine.length > 0 && (
-                  <>
-                    <div className="flex items-center gap-3 border-y border-border bg-muted px-4 py-1.5">
-                      <div className="h-px flex-1 bg-border" />
-                      <span className="text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground">
-                        Back Nine
+            {viewModel.round && (
+              <RoundScorecard
+                round={viewModel.round}
+                teeBox={viewModel.round.teeBox}
+                className="rounded-none border-0 shadow-none"
+                action={
+                  <div className="flex items-center gap-3">
+                    {viewModel.round.teeBox && (
+                      <span className="text-sm font-medium text-primary-foreground/80">
+                        {viewModel.round.teeBox} tees
                       </span>
-                      <div className="h-px flex-1 bg-border" />
-                    </div>
-                    <ScorecardTable
-                      holes={viewModel.backNine}
-                      label="IN"
-                      roundTotal={viewModel.roundTotal}
-                    />
-                  </>
-                )}
+                    )}
+                    <Button variant="ghost" size="xs" onClick={viewModel.reset}>
+                      <RotateCcw data-icon="inline-start" />
+                      Scan another
+                    </Button>
+                  </div>
+                }
+              />
+            )}
 
-                {!viewModel.hasScores && (
-                  <p className="py-8 text-center text-sm text-muted-foreground">
-                    No scores detected — try a clearer photo.
-                  </p>
-                )}
-              </div>
-            </div>
+            {!viewModel.hasScores && (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                No scores detected — try a clearer photo.
+              </p>
+            )}
 
             <div className="border-t border-border px-6 py-5 text-center">
               <p className="mb-3 text-xs text-muted-foreground">

@@ -1,5 +1,6 @@
 import type { HoleScoreDto, NinesDto, RoundDto, RoundSummaryDto, ScoreCountsDto } from "@/types/api";
 import type { Course } from "@/types/golf";
+import type { ExtractedRound } from "@/types/scan";
 import { BACK_HOLES, FRONT_HOLES, getHole, getTee } from "./course";
 import { SCORE_KINDS, scoreKind, strokesToPar, type ScoreKind } from "./score";
 
@@ -14,6 +15,8 @@ export interface HoleScore {
   strokes: number | null;
   putts: number | null;
   gir: boolean | null;
+  /** Strokes to reach the green, when the card recorded them. */
+  shotsToGreen: number | null;
   fairway: boolean | null;
   toPar: number | null;
   kind: ScoreKind | null;
@@ -74,6 +77,7 @@ function holeScore(dto: HoleScoreDto): HoleScore {
     strokes: dto.strokes,
     putts: dto.putts,
     gir: dto.green_in_regulation,
+    shotsToGreen: dto.shots_to_green,
     fairway: dto.fairway_hit,
     toPar: dto.to_par,
     kind: dto.kind,
@@ -150,6 +154,12 @@ function nineTotal(holes: HoleScore[]): number | null {
   return holes.reduce((sum, hole) => sum + hole.strokes!, 0);
 }
 
+/** The sum, once every value is known. */
+function sumIfAll(values: (number | null | undefined)[]): number | null {
+  if (values.length === 0 || values.some((value) => value == null)) return null;
+  return values.reduce<number>((sum, value) => sum + value!, 0);
+}
+
 function puttsOf(holes: HoleScore[]): number | null {
   const scored = holes.filter((hole) => hole.strokes != null);
   if (scored.length === 0 || scored.some((hole) => hole.putts == null)) return null;
@@ -165,6 +175,7 @@ function girOf(holes: HoleScore[]): number | null {
  * The round as it would read with unsaved edits: new strokes, putts or greens, or a different
  * course and tee. This is the one place the frontend works out golf figures, and only until the
  * edit is saved; it follows the server's rules (models/round.py) and the saved response replaces it.
+ * Where neither the server nor the course has sent a total (a scan not yet saved), it adds up the holes.
  */
 function previewEdits(round: Round, edits: HoleEdits, course?: Course | null, teeBox?: string | null): Round {
   const tee = getTee(course, teeBox);
@@ -198,8 +209,10 @@ function previewEdits(round: Round, edits: HoleEdits, course?: Course | null, te
   const nine = (numbers: readonly number[], before: Nine, coursePar?: number | null, teeYards?: number | null): Nine => {
     const onNine = holes.filter((hole) => numbers.includes(hole.hole));
     const total = nineTotal(onNine);
-    const par = course ? coursePar ?? null : before.par;
-    const yards = tee ? teeYards ?? null : yardsCleared ? null : before.yards;
+    const par = (course ? coursePar : before.par) ?? sumIfAll(onNine.length === 9 ? onNine.map((hole) => hole.par) : []);
+    const yards = tee
+      ? teeYards ?? sumIfAll(onNine.length === 9 ? onNine.map((hole) => hole.yardage) : [])
+      : yardsCleared ? null : before.yards;
     return { holes: onNine, total, par, toPar: strokesToPar(total, par), putts: puttsOf(onNine), gir: girOf(onNine), yards };
   };
 
@@ -208,7 +221,7 @@ function previewEdits(round: Round, edits: HoleEdits, course?: Course | null, te
   const girEdited = holes.some((hole, i) => hole.gir !== round.holes[i].gir);
   const scored = holes.filter((hole) => hole.strokes != null);
   const score = scored.length > 0 ? scored.reduce((sum, hole) => sum + hole.strokes!, 0) : null;
-  const par = course ? course.par ?? round.par : round.par;
+  const par = (course ? course.par ?? round.par : round.par) ?? sumIfAll(holes.map((hole) => hole.par));
   const scoreCounts = Object.fromEntries(SCORE_KINDS.map((kind) => [kind, 0])) as ScoreCounts;
   for (const hole of holes) if (hole.kind) scoreCounts[hole.kind] += 1;
   return {
@@ -219,11 +232,62 @@ function previewEdits(round: Round, edits: HoleEdits, course?: Course | null, te
     score,
     par,
     toPar: strokesToPar(score, par),
-    putts: puttsEdited ? puttsOf(holes) : round.putts,
-    gir: girEdited ? girOf(holes) : round.gir,
-    yards: tee ? tee.total_yardage : yardsCleared ? null : round.yards,
+    putts: puttsEdited || round.putts == null ? puttsOf(holes) : round.putts,
+    gir: girEdited || round.gir == null ? girOf(holes) : round.gir,
+    yards: tee ? tee.total_yardage ?? sumIfAll(Object.values(tee.hole_yardages)) : yardsCleared ? null : round.yards,
     scoreCounts,
   };
 }
 
-export const Round = { fromSummary, fromDto, previewEdits };
+const NO_NINE_FIGURES: NinesDto["front"] = { par: null, to_par: null, putts: null, gir: null, yards: null };
+
+/**
+ * A scanned card before it is saved. Nothing has been worked out by the server yet, so it is
+ * read the way previewEdits reads an unsaved edit: against the course and tee the scan found.
+ */
+function fromScan(scan: ExtractedRound): Round {
+  const holes: HoleScore[] = scan.hole_scores.map((score, i) => ({
+    hole: score.hole_number ?? i + 1,
+    par: null,
+    handicap: null,
+    yardage: null,
+    strokes: score.strokes,
+    putts: score.putts,
+    gir: score.green_in_regulation,
+    fairway: score.fairway_hit,
+    shotsToGreen: score.shots_to_green,
+    toPar: null,
+    kind: null,
+  }));
+  const scanned = scan.course;
+  const course: Course | null = scanned && {
+    id: null,
+    name: scanned.name,
+    location: scanned.location,
+    par: scanned.par,
+    external_course_id: null,
+    user_id: null,
+    front_nine_par: null,
+    back_nine_par: null,
+    holes: scanned.holes,
+    tees: scanned.tees.map((tee) => ({ ...tee, total_yardage: null, front_nine_yardage: null, back_nine_yardage: null })),
+  };
+  const unread: Round = {
+    id: "",
+    date: scan.date,
+    course: scanned && { id: null, name: scanned.name, location: scanned.location, par: scanned.par },
+    teeBox: scan.tee_box,
+    holes,
+    ...nines(holes, null, null, { front: NO_NINE_FIGURES, back: NO_NINE_FIGURES }),
+    score: null,
+    par: null,
+    toPar: null,
+    putts: null,
+    gir: null,
+    yards: null,
+    scoreCounts: Object.fromEntries(SCORE_KINDS.map((kind) => [kind, 0])) as ScoreCounts,
+  };
+  return previewEdits(unread, {}, course, scan.tee_box);
+}
+
+export const Round = { fromSummary, fromDto, fromScan, previewEdits };

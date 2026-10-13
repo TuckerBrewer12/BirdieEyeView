@@ -1,29 +1,23 @@
-import { ScorecardTable, type ScorecardHole } from "@/brand/components/ScorecardTable";
+import { ScorecardTable } from "@/brand/components/ScorecardTable";
+import { Round } from "@/domain";
+import { halfMoonBayRound } from "@/testing/fixtures/roundDetails";
+import { scannedCard } from "@/testing/fixtures/scans";
+import { ScrolledToEnd } from "../ScrolledToEnd";
 
-const PAR = [4, 4, 3, 5, 4, 4, 3, 5, 4];
-const STROKES = [5, 4, 3, 7, 4, 5, 2, 6, 4];
-
-const front: ScorecardHole[] = PAR.map((par, i) => ({
-  hole: i + 1,
-  par,
-  strokes: STROKES[i],
-  putts: [2, 1, 2, 3, 2, 2, 1, 2, 2][i],
-  greenInRegulation: [false, true, true, false, true, false, true, false, true][i],
-  shotsToGreen: null,
-}));
-
-/** A card the scan read nothing but scores from — the common case. */
-const scoresOnly: ScorecardHole[] = front.map((hole) => ({
-  ...hole,
-  putts: null,
-  greenInRegulation: null,
-}));
+const linked = Round.fromDto(halfMoonBayRound);
+/** A card the scan read scores and shots-to-green from, but no putts or greens. */
+const scanned = Round.fromScan(scannedCard);
 
 export default function ScorecardTablePreview() {
   return (
     <>
-      <ScorecardTable holes={front} label="OUT" />
-      <ScorecardTable holes={scoresOnly} label="IN" roundTotal={{ par: 72, strokes: 84 }} />
+      <ScorecardTable nine={linked.frontNine} label="OUT" teeBox="Blue" />
+      <ScrolledToEnd>
+        <div className="overflow-x-auto">
+          <ScorecardTable nine={linked.backNine} label="IN" round={linked} teeBox="Blue" className="min-w-scorecard" />
+        </div>
+      </ScrolledToEnd>
+      <ScorecardTable nine={scanned.frontNine} label="OUT" teeBox={scanned.teeBox} />
     </>
   );
 }
