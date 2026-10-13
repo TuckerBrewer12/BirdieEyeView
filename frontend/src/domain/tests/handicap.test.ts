@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   courseHandicap,
+  differentialStatus,
+  formatCourseHandicap,
   formatHandicapIndex,
   netScore,
   ratedCourseHandicap,
@@ -30,5 +32,22 @@ describe("netScore / formatHandicapIndex", () => {
     expect(formatHandicapIndex(null)).toBe("—");
     expect(formatHandicapIndex(12.4)).toBe("12.4");
     expect(formatHandicapIndex(-1.2)).toBe("+1.2");
+  });
+});
+
+describe("formatCourseHandicap", () => {
+  it("writes a plus handicap with a plus, in whole strokes", () => {
+    expect([formatCourseHandicap(12), formatCourseHandicap(0), formatCourseHandicap(-2), formatCourseHandicap(null)])
+      .toEqual(["12", "0", "+2", "—"]);
+  });
+});
+
+describe("differentialStatus", () => {
+  it("counts used rounds, flags ones within two strokes of the cut-off, and leaves unrated rounds out", () => {
+    expect(differentialStatus({ used_in_hi: true, hi_threshold: 12, differential: 10 })).toBe("counting");
+    expect(differentialStatus({ used_in_hi: false, hi_threshold: 12, differential: 14 })).toBe("close");
+    expect(differentialStatus({ used_in_hi: false, hi_threshold: 12, differential: 14.1 })).toBe("out");
+    expect(differentialStatus({ used_in_hi: false, hi_threshold: null, differential: 13 })).toBe("out");
+    expect(differentialStatus({ used_in_hi: null })).toBe("unrated");
   });
 });

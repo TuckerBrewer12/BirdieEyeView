@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { SCORE_KINDS, isThreePutt, scoreKind, strokesToPar } from "../score";
+import {
+  SCORE_KINDS,
+  isThreePutt,
+  playedScoreKinds,
+  scoreKind,
+  scoreKindCountLabel,
+  scoreKindLabel,
+  strokesToPar,
+  toParLabel,
+} from "../score";
 
 describe("scoreKind", () => {
   it("returns null when strokes or par is missing", () => {
@@ -43,5 +52,36 @@ describe("strokesToPar", () => {
 describe("isThreePutt", () => {
   it("calls three or more putts a three-putt", () => {
     expect([null, 0, 1, 2, 3, 4].map(isThreePutt)).toEqual([false, false, false, false, true, true]);
+  });
+});
+
+describe("scoreKindLabel", () => {
+  it("names each score kind, open-ended at both ends", () => {
+    expect(SCORE_KINDS.map((kind) => scoreKindLabel(kind))).toEqual([
+      "Eagle+", "Birdie", "Par", "Bogey", "Double", "Triple", "Quad+",
+    ]);
+  });
+});
+
+describe("toParLabel", () => {
+  it("writes even as E and over par with a plus", () => {
+    expect([toParLabel(-2), toParLabel(0), toParLabel(3), toParLabel(null)]).toEqual(["-2", "E", "+3", null]);
+  });
+});
+
+describe("playedScoreKinds", () => {
+  it("lists the kinds a round had, in display order, with their counts", () => {
+    expect(playedScoreKinds({ quad: 1, birdie: 2, par: 9, bogey: 0, eagle: null })).toEqual([
+      { kind: "birdie", count: 2 },
+      { kind: "par", count: 9 },
+      { kind: "quad", count: 1 },
+    ]);
+  });
+});
+
+describe("scoreKindCountLabel", () => {
+  it("is singular for one hole and plural otherwise", () => {
+    expect([scoreKindCountLabel("birdie", 1), scoreKindCountLabel("birdie", 3), scoreKindCountLabel("quad", 2)])
+      .toEqual(["Birdie", "Birdies", "Quads+"]);
   });
 });

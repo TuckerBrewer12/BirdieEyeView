@@ -1,7 +1,7 @@
 import { colors, scoreKindLabel, toParFill, toParLabel, toParTone, type ScoreKey } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateShort } from "@/lib/roundDate";
-import type { HoleScore, Round } from "@/domain";
+import { playedScoreKinds, scoreKindCountLabel, type HoleScore, type Round } from "@/domain";
 import type { User } from "@/types/golf";
 import {
   type DualTrendPoint,
@@ -149,14 +149,11 @@ export interface ScoreChip {
 
 export function lastRoundChips(round: Round | null): ScoreChip[] {
   if (!round) return [];
-  const counts = round.scoreCounts;
-  const items: ScoreChip[] = [];
-  const birdiesPlus = (counts.eagle ?? 0) + (counts.birdie ?? 0);
-  if (birdiesPlus > 0) items.push({ label: "Birdie+", count: birdiesPlus, color: SCORE_COLORS.birdie });
-  if (counts.par) items.push({ label: "Par", count: counts.par, color: SCORE_COLORS.par });
-  if (counts.bogey) items.push({ label: "Bogey", count: counts.bogey, color: SCORE_COLORS.bogey });
-  if (counts.double) items.push({ label: "Double", count: counts.double, color: SCORE_COLORS.double });
-  return items;
+  return playedScoreKinds(round.scoreCounts).map(({ kind, count }) => ({
+    label: scoreKindCountLabel(kind, count),
+    count,
+    color: SCORE_COLORS[kind],
+  }));
 }
 
 
