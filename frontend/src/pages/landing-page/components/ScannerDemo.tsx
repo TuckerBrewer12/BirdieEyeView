@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { motion as motionTokens } from "@/brand/theme";
 import { cn } from "@/brand/cn";
 import { scoreFillClass, toParDisplay } from "@/brand";
 import { HANDICAP_TAP, TOUR_SCREENS, tourImage, type TourScreen } from "./demoTour";
@@ -263,8 +264,8 @@ function HandicapTap() {
       className="absolute top-(--tap-y) left-(--tap-x) -translate-x-1/2 -translate-y-1/2 sm:top-(--tap-y-wide) sm:left-(--tap-x-wide)"
     >
       <motion.div
-        initial={{ scale: 1.6, opacity: 0 }}
-        animate={{ scale: [1.6, 0.8, 1], opacity: [0, 1, 0.9] }}
+        initial={{ scale: motionTokens.hoverScale, opacity: 0 }}
+        animate={{ scale: [motionTokens.hoverScale, motionTokens.tapScale, 1], opacity: [0, 1, 0.9] }}
         transition={{ duration: DEMO_MOTION.tap, ease: "easeOut" }}
         className="size-12 rounded-full border-2 border-primary bg-primary/20 shadow-card"
       />
