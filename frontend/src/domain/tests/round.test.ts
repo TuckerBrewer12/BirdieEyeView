@@ -3,7 +3,7 @@ import { courseResponse } from "@/testing/fakes/courseResponses";
 import { roundResponse } from "@/testing/fakes/roundResponses";
 import { halfMoonBayCourse, halfMoonBayRound, pebbleBeachCourse, scannedRound } from "@/testing/fixtures/roundDetails";
 import { storedRounds } from "@/testing/fixtures/rounds";
-import { scannedCard } from "@/testing/fixtures/scans";
+import { scannedTeeCard } from "@/testing/fixtures/scan";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 import { Round } from "../round";
 
@@ -111,7 +111,7 @@ describe("Round.previewEdits", () => {
 
 describe("Round.fromScan", () => {
   it("reads a scanned card against the course and tee the scan found", () => {
-    const round = Round.fromScan(scannedCard);
+    const round = Round.fromScan(scannedTeeCard);
     expect(round.holes[0]).toMatchObject({ hole: 1, par: 4, yardage: 402, strokes: 5, toPar: 1, kind: "bogey", shotsToGreen: 3 });
     expect(round.frontNine).toMatchObject({ total: 40, par: 36, toPar: 4, yards: 3412 });
     expect(round.backNine).toMatchObject({ total: 41, par: 36, toPar: 5, yards: 3444 });
@@ -120,7 +120,7 @@ describe("Round.fromScan", () => {
   });
 
   it("leaves par and to-par out when the scan found no course", () => {
-    const round = Round.fromScan({ ...scannedCard, course: null });
+    const round = Round.fromScan({ ...scannedTeeCard, course: null });
     expect(round.holes[0]).toMatchObject({ par: null, toPar: null, kind: null, yardage: null });
     expect(round).toMatchObject({ score: 81, par: null, toPar: null });
   });

@@ -1,12 +1,12 @@
 import { ScorecardTable } from "@/brand/components/ScorecardTable";
 import { Round } from "@/domain";
 import { halfMoonBayRound } from "@/testing/fixtures/roundDetails";
-import { scannedCard } from "@/testing/fixtures/scans";
+import { scannedTeeCard } from "@/testing/fixtures/scan";
 import { ScrolledToEnd } from "../ScrolledToEnd";
 
 const linked = Round.fromDto(halfMoonBayRound);
 /** A card the scan read scores and shots-to-green from, but no putts or greens. */
-const scanned = Round.fromScan(scannedCard);
+const scanned = Round.fromScan(scannedTeeCard);
 
 export default function ScorecardTablePreview() {
   return (
