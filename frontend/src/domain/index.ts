@@ -35,8 +35,6 @@ export {
   netScore,
   formatHandicapIndex,
   formatCourseHandicap,
-  differentialStatus,
-  CLOSE_TO_COUNTING,
 } from "./handicap";
 export type { DifferentialStatus } from "./handicap";
 
@@ -45,3 +43,6 @@ export type { HoleEdits, HoleScore, Nine, RoundCourse, ScoreCounts } from "./rou
 
 export { activityDays } from "./activity";
 export type { ActivityDay } from "./activity";
+
+export { trendPointsFrom } from "./trend";
+export type { RoundTrendPoint } from "./trend";

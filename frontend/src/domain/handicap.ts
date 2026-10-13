@@ -46,28 +46,9 @@ export function formatCourseHandicap(ch: number | null | undefined): string {
   return String(ch);
 }
 
-/** How far over the counting cut-off a differential can be and still read as close. */
-export const CLOSE_TO_COUNTING = 2;
-
 /**
  * Where a round's differential stands in the WHS window: counted toward the index,
- * close to the cut-off, outside it, or not rated at all.
+ * within two strokes of the cut-off, outside it, or not rated at all. The server
+ * decides it (`analytics/handicap.py`) and sends it on each handicap-trend point.
  */
 export type DifferentialStatus = "counting" | "close" | "out" | "unrated";
-
-export function differentialStatus(row: {
-  used_in_hi?: boolean | null;
-  hi_threshold?: number | null;
-  differential?: number | null;
-}): DifferentialStatus {
-  if (row.used_in_hi == null) return "unrated";
-  if (row.used_in_hi) return "counting";
-  if (
-    row.hi_threshold != null &&
-    row.differential != null &&
-    row.differential - row.hi_threshold <= CLOSE_TO_COUNTING
-  ) {
-    return "close";
-  }
-  return "out";
-}

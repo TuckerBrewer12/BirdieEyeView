@@ -93,6 +93,36 @@ export class DashboardRobot {
     return this;
   }
 
+  /** The phone's trend card; the desktop grid has its own copy of the chart. */
+  private trendCard() {
+    return this.page.locator("[data-slot=card]").filter({ hasText: "Score History" }).locator("visible=true");
+  }
+
+  async showTrend(label: "Score" | "HCP"): Promise<this> {
+    await this.trendCard().getByRole("button", { name: label }).tap();
+    return this;
+  }
+
+  async seesTrendShowing(label: "Score" | "HCP"): Promise<this> {
+    await expect(this.trendCard().getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true");
+    return this;
+  }
+
+  /** Taps the chart part-way across: 0 is the first round, 1 the last. */
+  async tapTrendAt(fraction: number): Promise<this> {
+    const chart = this.trendCard().locator("[data-slot=score-handicap-trend] svg");
+    await chart.scrollIntoViewIfNeeded();
+    const box = await chart.boundingBox();
+    if (!box) throw new Error("Trend chart is not on screen");
+    await this.page.touchscreen.tap(box.x + box.width * fraction, box.y + box.height / 2);
+    return this;
+  }
+
+  async seesTrendTooltip(text: string | RegExp): Promise<this> {
+    await expect(this.page.locator("[data-slot=score-handicap-trend]").locator("visible=true").getByText(text)).toBeVisible();
+    return this;
+  }
+
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
     return this;
