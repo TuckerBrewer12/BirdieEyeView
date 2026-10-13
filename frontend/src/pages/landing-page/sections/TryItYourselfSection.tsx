@@ -11,11 +11,9 @@ import {
   ScorecardLayoutPicker,
   ScorecardTable,
 } from "@/brand";
-import { useTryItYourselfViewModel } from "../useTryItYourselfViewModel";
+import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
-export function TryItYourselfSection() {
-  const viewModel = useTryItYourselfViewModel();
-
+export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfViewModel }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
       <AnimatePresence mode="wait">

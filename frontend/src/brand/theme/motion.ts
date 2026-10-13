@@ -13,4 +13,8 @@ export const motion = {
   draw: { duration: 1.4, ease: "easeInOut" as const },
   /** Points popping in along a drawn line, one after another, once it has nearly finished. */
   pop: { from: 0, delay: 1.2, stagger: 0.04, duration: 0.25, ease: "backOut" as const },
+  /** Content arriving on load: a fast start and a long settle. */
+  entrance: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+  /** A block resizing into the space it has been given. */
+  layout: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
 } as const;

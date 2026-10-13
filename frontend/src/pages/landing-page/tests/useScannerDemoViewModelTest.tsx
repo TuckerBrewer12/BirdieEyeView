@@ -15,7 +15,7 @@ describe("useScannerDemoViewModel", () => {
   it("starts on the photo the visitor is meant to recognise", () => {
     const { result } = renderHook(() => useScannerDemoViewModel());
     expect(result.current.phase).toBe("photo");
-    expect(result.current.label).toBe("1. Snap a Photo");
+    expect(result.current.label).toBe("1. Snap a photo");
   });
 
   it("labels each hole of the sample card with how it was scored", () => {

@@ -2,6 +2,7 @@ import { InMemoryRounds, type InMemoryRoundsSeed } from "./InMemoryRounds";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import type { DashboardData, User } from "../../types/golf";
 import type { AnalyticsData, GoalReport } from "../../types/analytics";
+import type { ScanResult } from "../../types/scan";
 
 export const TEST_USER = {
   user_id: "user-1",
@@ -18,6 +19,8 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   goalReport?: GoalReport | null;
   /** No one is signed in — `/api/auth/me` answers 401, as the real API does. */
   signedOut?: boolean;
+  /** What `/api/scan/extract` reads off any uploaded card. Unset, extract fails. */
+  scan?: ScanResult;
 }
 
 export interface FakeReply {
@@ -32,16 +35,18 @@ export class FakeBackend {
   dashboard: DashboardData | undefined;
   analytics: AnalyticsData | null | undefined;
   goalReport: GoalReport | null | undefined;
+  scan: ScanResult | undefined;
   readonly signedOut: boolean;
   readonly store: InMemoryRounds;
 
   constructor(seed: FakeBackendSeed = {}) {
-    const { user, profile, dashboard, analytics, goalReport, signedOut, ...storeSeed } = seed;
+    const { user, profile, dashboard, analytics, goalReport, signedOut, scan, ...storeSeed } = seed;
     this.user = user ?? TEST_USER;
     this.profile = profile;
     this.dashboard = dashboard;
     this.analytics = analytics;
     this.goalReport = goalReport;
+    this.scan = scan;
     this.signedOut = signedOut ?? false;
     this.store = new InMemoryRounds(storeSeed);
   }
@@ -62,6 +67,11 @@ export class FakeBackend {
     if (verb === "GET" && path.includes("/api/auth/me")) {
       if (this.signedOut) return { status: 401, body: { detail: "Not authenticated" } };
       return { status: 200, body: this.user };
+    }
+
+    if (verb === "POST" && path.includes("/api/scan/extract")) {
+      if (!this.scan) return { status: 500, body: { detail: "Could not read this scorecard." } };
+      return { status: 200, body: this.scan };
     }
 
     if (verb === "GET" && path.includes("/api/courses/search")) {
