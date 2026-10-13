@@ -16,8 +16,9 @@ import {
   space,
   toParFill,
   typography,
+  differentialFill,
 } from "@/brand/theme";
-import { formatHandicapIndex, type HiStatus, type RoundTrendPoint } from "@/domain";
+import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
 import { indexScale, knownValues, paddedExtent } from "./scales";
 
 type TrendSeries = "both" | "score" | "handicap";
@@ -32,14 +33,6 @@ interface SVGScoreHandicapTrendProps {
 
 const SCORE_COLOR = colors.primary;
 const HANDICAP_COLOR = colors.score.double.text;
-
-/** A score bar's fill says whether its differential counts toward the index. */
-const BAR_FILL: Record<HiStatus | "none", string> = {
-  used: colors.score.birdie.base,
-  near: colors.score.eagle.base,
-  unused: colors.destructive,
-  none: colors.score.par.base,
-};
 
 /** Selection is kept per series, so switching the line clears it. */
 interface Selection {
@@ -180,7 +173,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                 y={top}
                 width={barW}
                 height={baseline - top}
-                fill={BAR_FILL[d.hiStatus ?? "none"]}
+                fill={differentialFill(d.differentialStatus)}
                 fillOpacity={0.6}
                 rx={radius.tick}
               />

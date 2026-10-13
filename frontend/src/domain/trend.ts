@@ -1,11 +1,5 @@
 import type { AnalyticsData } from "@/types/analytics";
-
-/**
- * How a round's differential sits against the handicap index, as the server
- * measured it: one of the best N it averages, within two strokes of the
- * cutoff, or neither.
- */
-export type HiStatus = "used" | "near" | "unused";
+import type { DifferentialStatus } from "./handicap";
 
 /** One round on the score and handicap trend. */
 export interface RoundTrendPoint {
@@ -15,8 +9,8 @@ export interface RoundTrendPoint {
   /** The index after this round. Null until there are enough rounds to have one. */
   handicapIndex: number | null;
   courseName: string | null;
-  /** Null when the round has no differential. */
-  hiStatus: HiStatus | null;
+  /** Where the round's differential stands in the WHS window, as the server read it. */
+  differentialStatus: DifferentialStatus;
 }
 
 /**
@@ -34,7 +28,7 @@ export function trendPointsFrom(trends: AnalyticsData | null): RoundTrendPoint[]
       toPar: row.to_par,
       handicapIndex: handicap?.handicap_index ?? null,
       courseName: row.course_name ?? null,
-      hiStatus: handicap?.hi_status ?? null,
+      differentialStatus: handicap?.differential_status ?? "unrated",
     };
   });
 }

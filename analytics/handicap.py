@@ -216,32 +216,32 @@ def handicap_trend(
                 "differential": round(this_diff, 1) if this_diff is not None else None,
                 "used_in_hi": None,
                 "hi_threshold": None,
-                "hi_status": None,
+                "differential_status": "unrated",
             }
         )
 
     return results
 
 
-# A differential this close to the cutoff is one good round away from counting.
-NEAR_MISS_STROKES = 2.0
+# How far over the counting cut-off a differential can be and still read as close.
+CLOSE_TO_COUNTING = 2.0
 
 
-def hi_status(differential: Optional[float], used: bool, threshold: Optional[float]) -> Optional[str]:
-    """How a round's differential sits against the index: "used" (one of the best N),
-    "near" (within NEAR_MISS_STROKES of the cutoff) or "unused". None without a differential."""
+def differential_status(differential: Optional[float], used: bool, threshold: Optional[float]) -> str:
+    """Where a round's differential stands in the WHS window: "counting" (one of the best N),
+    "close" (within CLOSE_TO_COUNTING of the cut-off), "out", or "unrated" without a differential."""
     if differential is None:
-        return None
+        return "unrated"
     if used:
-        return "used"
-    if threshold is not None and differential - threshold <= NEAR_MISS_STROKES:
-        return "near"
-    return "unused"
+        return "counting"
+    if threshold is not None and differential - threshold <= CLOSE_TO_COUNTING:
+        return "close"
+    return "out"
 
 
 def annotate_used_in_hi(entries: List[Dict[str, Any]]) -> None:
     """
-    Annotate a list of trend entries (in-place) with used_in_hi, hi_threshold and hi_status.
+    Annotate a list of trend entries (in-place) with used_in_hi, hi_threshold and differential_status.
     Marks exactly the WHS best-N rounds as used. Ties at the threshold boundary are
     broken by recency (most recent round wins), matching WHS practice.
     Call this AFTER slicing to the display window.
@@ -271,4 +271,4 @@ def annotate_used_in_hi(entries: List[Dict[str, Any]]) -> None:
             entry["used_in_hi"] = None
         else:
             entry["used_in_hi"] = i in used_indices
-        entry["hi_status"] = hi_status(diff, i in used_indices, threshold)
+        entry["differential_status"] = differential_status(diff, i in used_indices, threshold)

@@ -19,3 +19,4 @@ export {
   scoreOnFillClass,
 } from "./score";
 export type { ScoreKey, ScoreTone } from "./score";
+export { differentialFill } from "./handicap";

@@ -12,6 +12,7 @@ import { PageHeader } from "@/brand";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { SVGHandicapTrend } from "@/components/analytics/SVGHandicapTrend";
 import { SCORE_LABELS } from "@/lib/colors";
+import { formatHandicapIndex } from "@/domain/handicap";
 import type { CareerViewModel, TimeWindow } from "@/hooks/useCareerViewModel";
 
 const tooltipStyle = {
@@ -87,7 +88,7 @@ export function CareerDesktopLayout(vm: CareerViewModel) {
   const {
     data, timeWindow, setTimeWindow,
     donutData, recordRows, scoreBreaksAbove70, scoreBreaks70AndBelow,
-    totalHoles, gaugeData, hiColor, hiDisplay,
+    totalHoles, gaugeData, hiColor, handicapIndex,
     trendPrimary, successColor, neutralColor, gridColor, mutedFill, scoreColors,
   } = vm;
 
@@ -127,7 +128,7 @@ export function CareerDesktopLayout(vm: CareerViewModel) {
 
           <ChartCard
             title="Handicap Index Trend"
-            subtitle={data.kpis.handicap_index != null ? `Current: ${hiDisplay}` : undefined}
+            subtitle={handicapIndex != null ? `Current: ${formatHandicapIndex(handicapIndex)}` : undefined}
             className="xl:col-span-3"
           >
             <SVGHandicapTrend
@@ -242,7 +243,7 @@ export function CareerDesktopLayout(vm: CareerViewModel) {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute bottom-2 left-0 right-0 flex flex-col items-center pointer-events-none">
-                <div className="text-2xl font-bold text-gray-900">{hiDisplay}</div>
+                <div className="text-2xl font-bold text-gray-900">{formatHandicapIndex(handicapIndex)}</div>
                 <div className="text-[10px] text-gray-400 uppercase tracking-wide">HCP Index</div>
               </div>
             </div>

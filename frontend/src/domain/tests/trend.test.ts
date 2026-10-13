@@ -11,18 +11,18 @@ describe("trendPointsFrom", () => {
       toPar: 13,
       handicapIndex: 14,
       courseName: "Scanned Scorecard",
-      hiStatus: "unused",
+      differentialStatus: "out",
     });
-    expect(second.hiStatus).toBe("used");
+    expect(second.differentialStatus).toBe("counting");
   });
 
   it("pairs by position when the handicap trend's round numbers run ahead", () => {
     const trends = {
       ...emptyAnalytics(),
       score_trend: [{ round_index: 1, round_id: "a", total_score: 80, to_par: 8, course_name: null }],
-      handicap_trend: [{ round_index: 21, round_id: "a", handicap_index: 12.1, hi_status: "near" as const }],
+      handicap_trend: [{ round_index: 21, round_id: "a", handicap_index: 12.1, differential_status: "close" as const }],
     };
-    expect(trendPointsFrom(trends)[0]).toMatchObject({ handicapIndex: 12.1, hiStatus: "near" });
+    expect(trendPointsFrom(trends)[0]).toMatchObject({ handicapIndex: 12.1, differentialStatus: "close" });
   });
 
   it("is empty before analytics load", () => {

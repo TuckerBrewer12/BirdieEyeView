@@ -1,4 +1,12 @@
-export { SCORE_KINDS, scoreKind, strokesToPar } from "./score";
+export {
+  SCORE_KINDS,
+  playedScoreKinds,
+  scoreKind,
+  scoreKindCountLabel,
+  scoreKindLabel,
+  strokesToPar,
+  toParLabel,
+} from "./score";
 export type { ScoreKind, ScoreMix } from "./score";
 
 export { GOAL_OPTIONS, GOAL_BENCHMARK, HANDICAP_BENCHMARK } from "./benchmark";
@@ -26,7 +34,9 @@ export {
   ratedCourseHandicap,
   netScore,
   formatHandicapIndex,
+  formatCourseHandicap,
 } from "./handicap";
+export type { DifferentialStatus } from "./handicap";
 
 export { Round } from "./round";
 export type { HoleEdits, HoleScore, Nine, RoundCourse, ScoreCounts } from "./round";
@@ -35,4 +45,4 @@ export { activityDays } from "./activity";
 export type { ActivityDay } from "./activity";
 
 export { trendPointsFrom } from "./trend";
-export type { HiStatus, RoundTrendPoint } from "./trend";
+export type { RoundTrendPoint } from "./trend";

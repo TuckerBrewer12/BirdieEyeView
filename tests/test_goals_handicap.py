@@ -228,12 +228,12 @@ def test_handicap_trend_and_annotation_prefers_recent_tie(monkeypatch):
     assert trend[1]["used_in_hi"] is False
     assert trend[2]["used_in_hi"] is True
     assert all(entry["hi_threshold"] == 10.0 for entry in trend)
-    # 12.0 is two strokes off the 10.0 cutoff, so it is a near miss; 14.0 is not.
-    assert [entry["hi_status"] for entry in trend] == ["near", "near", "used", "unused"]
+    # 12.0 is two strokes off the 10.0 cut-off, so it reads as close; 14.0 does not.
+    assert [entry["differential_status"] for entry in trend] == ["close", "close", "counting", "out"]
 
     short = [{"differential": None}, {"differential": 8.0}]
     handicap.annotate_used_in_hi(short)
     assert short == [
-        {"differential": None, "hi_threshold": None, "used_in_hi": None, "hi_status": None},
-        {"differential": 8.0, "hi_threshold": None, "used_in_hi": False, "hi_status": "unused"},
+        {"differential": None, "hi_threshold": None, "used_in_hi": None, "differential_status": "unrated"},
+        {"differential": 8.0, "hi_threshold": None, "used_in_hi": False, "differential_status": "out"},
     ]

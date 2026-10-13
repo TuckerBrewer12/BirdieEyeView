@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   courseHandicap,
+  formatCourseHandicap,
   formatHandicapIndex,
   netScore,
   ratedCourseHandicap,
@@ -30,5 +31,12 @@ describe("netScore / formatHandicapIndex", () => {
     expect(formatHandicapIndex(null)).toBe("—");
     expect(formatHandicapIndex(12.4)).toBe("12.4");
     expect(formatHandicapIndex(-1.2)).toBe("+1.2");
+  });
+});
+
+describe("formatCourseHandicap", () => {
+  it("writes a plus handicap with a plus, in whole strokes", () => {
+    expect([formatCourseHandicap(12), formatCourseHandicap(0), formatCourseHandicap(-2), formatCourseHandicap(null)])
+      .toEqual(["12", "0", "+2", "—"]);
   });
 });

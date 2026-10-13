@@ -38,3 +38,17 @@ export function formatHandicapIndex(hi: number | null | undefined): string {
   if (hi < 0) return `+${Math.abs(hi).toFixed(1)}`;
   return hi.toFixed(1);
 }
+
+/** A course handicap as golfers write it: whole strokes, and "+2" for a plus handicap. */
+export function formatCourseHandicap(ch: number | null | undefined): string {
+  if (ch == null) return "—";
+  if (ch < 0) return `+${Math.abs(ch)}`;
+  return String(ch);
+}
+
+/**
+ * Where a round's differential stands in the WHS window: counted toward the index,
+ * within two strokes of the cut-off, outside it, or not rated at all. The server
+ * decides it (`analytics/handicap.py`) and sends it on each handicap-trend point.
+ */
+export type DifferentialStatus = "counting" | "close" | "out" | "unrated";
