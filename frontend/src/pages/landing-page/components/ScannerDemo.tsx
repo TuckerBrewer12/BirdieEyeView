@@ -3,6 +3,7 @@ import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { scoreFillClass, toParDisplay } from "@/brand";
+import { motion as motionTokens } from "@/brand/theme";
 import { HANDICAP_TAP, TOUR_SCREENS, tourImage, type TourScreen } from "./demoTour";
 import {
   DEMO_MOTION,
@@ -288,7 +289,7 @@ function AppScreen({ screen, tapping }: { screen: TourScreen; tapping: boolean }
       <AnimatePresence initial={false}>
         <motion.div
           key={screen}
-          initial={{ opacity: 0, scale: 1.02 }}
+          initial={{ opacity: 0, scale: motionTokens.hoverScale }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: DEMO_MOTION.screenChange, ease: "easeOut" }}
