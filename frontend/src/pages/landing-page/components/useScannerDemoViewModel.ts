@@ -1,8 +1,18 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import { scoreKind, strokesToPar, type ScoreKind } from "@/domain";
+import type { TourScreen } from "./demoTour";
 
-export type ScannerPhase = "photo" | "mapping" | "scanning" | "result";
+export type ScannerPhase =
+  | "photo"
+  | "mapping"
+  | "scanning"
+  | "result"
+  | "dashboard"
+  | "handicapTap"
+  | "handicap"
+  | "analytics"
+  | "lab";
 
 interface ScannerStep {
   phase: ScannerPhase;
@@ -15,8 +25,24 @@ const STEPS: ScannerStep[] = [
   { phase: "photo", label: "1. Snap a photo", holdMs: 1000 },
   { phase: "mapping", label: "2. Say what's on the card", holdMs: 4000 },
   { phase: "scanning", label: "3. Read every hole", holdMs: 1500 },
-  { phase: "result", label: "4. Your round", holdMs: 5000 },
+  { phase: "result", label: "4. Your round", holdMs: 4000 },
+  { phase: "dashboard", label: "5. Your dashboard", holdMs: 2500 },
+  { phase: "handicapTap", label: "5. Your dashboard", holdMs: 1000 },
+  { phase: "handicap", label: "6. Your handicap", holdMs: 3000 },
+  { phase: "analytics", label: "7. Your analytics", holdMs: 3000 },
+  { phase: "lab", label: "8. The Lab", holdMs: 3000 },
 ];
+
+/** The app screen each step of the tour shows, once the scan has landed in the app. */
+const TOUR_SCREEN: Partial<Record<ScannerPhase, TourScreen>> = {
+  dashboard: "dashboard",
+  handicapTap: "dashboard",
+  handicap: "handicap",
+  analytics: "analytics",
+  lab: "lab",
+};
+
+const RESULT_INDEX = STEPS.findIndex((step) => step.phase === "result");
 
 /** One hole of the sample card the demo resolves to, ready to render. */
 export interface DemoScorecardRow {
@@ -73,16 +99,29 @@ export const DEMO_MOTION = {
   /** Mapped rows sliding in from the right. Looser than the kit's spring so
    *  the rows overshoot enough to read as dropped into place. */
   rowSpring: { type: "spring" as const, damping: 15 },
+  /** One app screen giving way to the next on the tour. */
+  screenChange: 0.5,
+  /** A finger pressing the handicap: the ring closing in, then letting go. */
+  tap: 0.7,
 } as const;
 
 export interface ScannerDemoViewModel {
   phase: ScannerPhase;
   label: string;
   scorecard: DemoScorecardRow[];
+  /** The app screen on show, or null while the card is still being scanned. */
+  screen: TourScreen | null;
+  /** The handicap is being tapped, about to open its breakdown. */
+  tapping: boolean;
+  /**
+   * The tour's captures should start loading. Set once the scan reaches its result, so
+   * they arrive during that step instead of with the page.
+   */
+  tourPrimed: boolean;
 }
 
 /**
- * Drives the hero's four-step scan loop.
+ * Drives the hero's loop: the scan, then a tour of the app it lands in.
  *
  * The loop is decoration, so it does not run for a visitor who asked for
  * reduced motion — they get the first step and nothing moves. That also makes
@@ -92,16 +131,25 @@ export interface ScannerDemoViewModel {
 export function useScannerDemoViewModel(): ScannerDemoViewModel {
   const reducedMotion = useReducedMotion();
   const [index, setIndex] = useState(0);
+  const [tourPrimed, setTourPrimed] = useState(false);
 
   useEffect(() => {
     if (reducedMotion) return;
-    const timer = setTimeout(
-      () => setIndex((current) => (current + 1) % STEPS.length),
-      STEPS[index].holdMs,
-    );
+    const timer = setTimeout(() => {
+      const next = (index + 1) % STEPS.length;
+      if (next === RESULT_INDEX) setTourPrimed(true);
+      setIndex(next);
+    }, STEPS[index].holdMs);
     return () => clearTimeout(timer);
   }, [index, reducedMotion]);
 
   const step = STEPS[index];
-  return { phase: step.phase, label: step.label, scorecard: SCORECARD };
+  return {
+    phase: step.phase,
+    label: step.label,
+    scorecard: SCORECARD,
+    screen: TOUR_SCREEN[step.phase] ?? null,
+    tapping: step.phase === "handicapTap",
+    tourPrimed,
+  };
 }

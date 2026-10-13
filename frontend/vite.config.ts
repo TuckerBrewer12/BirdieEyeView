@@ -44,7 +44,7 @@ export default defineConfig({
     globals: false,
     setupFiles: ['./src/test-setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}', 'src/**/*Test.{ts,tsx}'],
-    exclude: ['src/**/*.screenshot.spec.ts', 'src/**/*.espresso.spec.ts'],
+    exclude: ['src/**/*.screenshot.spec.ts', 'src/**/*.espresso.spec.ts', 'src/**/*.capture.spec.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['json', 'text'],
@@ -55,6 +55,7 @@ export default defineConfig({
         'src/**/*Test.{ts,tsx}',
         'src/**/*.screenshot.spec.ts',
         'src/**/*.espresso.spec.ts',
+        'src/**/*.capture.spec.ts',
         'src/**/*.robot.ts',
         'src/**/tests/**',
         'src/testing/**',
