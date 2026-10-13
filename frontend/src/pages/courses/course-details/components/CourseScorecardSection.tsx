@@ -1,5 +1,6 @@
 import { Button, Card, CardContent, TeeSwatch } from "@/brand";
 import { cn } from "@/brand/cn";
+import { formatCourseHandicap } from "@/domain/handicap";
 import type { Course } from "@/types/golf";
 import { NineTable } from "./NineTable";
 import { useCourseScorecardViewModel } from "./useCourseScorecardViewModel";
@@ -36,7 +37,7 @@ export function CourseScorecardSection({ userId, course }: CourseScorecardSectio
               {tee.total_yardage != null && <span>/ {tee.total_yardage} yds</span>}
               {courseHandicap != null && (
                 <span className="rounded bg-primary/10 px-1.5 py-0.5 text-caption font-semibold text-primary">
-                  CH {courseHandicap}
+                  CH {formatCourseHandicap(courseHandicap)}
                 </span>
               )}
             </Button>
