@@ -1,12 +1,20 @@
 import { test } from "./LandingPage.robot";
 
-test("the hero's secondary call to action scrolls to how it works", async ({ landing }) => {
+test("the scanner is on screen without scrolling", async ({ landing }) => {
   await landing.open();
-  await landing.tapSeeHowItWorks();
-  await landing.seesSection("how-it-works");
+  await landing.seesScanner();
 });
 
-test("the hero call to action goes to register", async ({ landing }) => {
+test("the demo stays while a card is chosen and steps aside once it is scanned", async ({ landing }) => {
+  await landing.open();
+  await landing.chooseScorecard();
+  await landing.seesDemo();
+  await landing.tapScan();
+  await landing.seesScannedCard();
+  await landing.seesDemo(false);
+});
+
+test("the nav's sign up goes to register", async ({ landing }) => {
   await landing.open();
   await landing.tapSignUp();
   await landing.goesTo("/register");
@@ -26,12 +34,8 @@ test("the theme toggle switches the page, and the choice survives a reload", asy
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test("a nav link scrolls and closes the menu behind it", async ({ landing }) => {
+  test("the scanner is on screen without scrolling", async ({ landing }) => {
     await landing.open();
-    await landing.openMenu();
-    await landing.seesMenuOpen(true);
-    await landing.tapNavLink("Try It Out");
-    await landing.seesSection("try-it-out");
-    await landing.seesMenuOpen(false);
+    await landing.seesScanner();
   });
 });
