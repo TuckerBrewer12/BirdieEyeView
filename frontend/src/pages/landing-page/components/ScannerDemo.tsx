@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { motion as motionTokens } from "@/brand/theme";
 import { cn } from "@/brand/cn";
 import { scoreFillClass, toParDisplay } from "@/brand";
 import { HANDICAP_TAP, TOUR_SCREENS, tourImage, type TourScreen } from "./demoTour";
@@ -316,7 +317,7 @@ export function ScannerDemo() {
         animate={{
           filter: phase === "mapping" ? "brightness(0.5) blur(3px)" : "brightness(1) blur(0px)",
           opacity: scanned ? 0 : 1,
-          scale: scanned ? 0.95 : 1,
+          scale: scanned ? motionTokens.tapScale : 1,
         }}
         transition={{ duration: DEMO_MOTION.crossfade }}
       />
