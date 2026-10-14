@@ -62,6 +62,7 @@ export interface ThreePuttRow {
   round_id: string | null;
   three_putt_count: number;
   three_putt_percentage: number;
+  holes_with_putt_data: number;
 }
 
 export interface ScramblingRow {
@@ -69,6 +70,7 @@ export interface ScramblingRow {
   round_id: string | null;
   scramble_opportunities: number;
   scramble_successes: number;
+  scramble_failures: number;
   scrambling_percentage: number;
 }
 

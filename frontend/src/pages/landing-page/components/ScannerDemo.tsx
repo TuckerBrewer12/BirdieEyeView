@@ -1,7 +1,9 @@
+import type { CSSProperties } from "react";
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { scoreFillClass, toParDisplay } from "@/brand";
+import { HANDICAP_TAP, TOUR_SCREENS, WIDE_FRAME_MEDIA, tourImage, type TourScreen } from "./demoTour";
 import {
   DEMO_MOTION,
   useScannerDemoViewModel,
@@ -230,8 +232,79 @@ function MappingPanel() {
   );
 }
 
+/** One capture of the app, wide or narrow to match the frame. Decorative, so no alt text. */
+function TourPicture({ screen }: { screen: TourScreen }) {
+  return (
+    <picture>
+      <source media={WIDE_FRAME_MEDIA} srcSet={tourImage(screen, "wide")} />
+      <img src={tourImage(screen, "narrow")} alt="" className="block w-full" />
+    </picture>
+  );
+}
+
+const percent = (share: number) => `${share * 100}%`;
+
+/** The handicap's place in each capture, for the tap to land on. */
+const TAP_POSITION = {
+  "--tap-x": percent(HANDICAP_TAP.narrow.x),
+  "--tap-y": percent(HANDICAP_TAP.narrow.y),
+  "--tap-x-wide": percent(HANDICAP_TAP.wide.x),
+  "--tap-y-wide": percent(HANDICAP_TAP.wide.y),
+} as CSSProperties;
+
+/** A finger pressing the dashboard's handicap. */
+function HandicapTap() {
+  return (
+    <div
+      style={TAP_POSITION}
+      className="absolute top-(--tap-y) left-(--tap-x) -translate-x-1/2 -translate-y-1/2 sm:top-(--tap-y-wide) sm:left-(--tap-x-wide)"
+    >
+      <motion.div
+        initial={{ scale: DEMO_MOTION.tap.reachScale, opacity: 0 }}
+        animate={{
+          scale: [DEMO_MOTION.tap.reachScale, DEMO_MOTION.tap.pressScale, 1],
+          opacity: [0, 1, 0.9],
+        }}
+        transition={{ duration: DEMO_MOTION.tap.duration, ease: "easeOut" }}
+        className="size-12 rounded-full border-2 border-primary bg-primary/20 shadow-card"
+      />
+    </div>
+  );
+}
+
+/**
+ * The app the scan lands in. Each capture is pinned to the frame's top edge in its
+ * own aspect, so the tap's percentages line up with the picture underneath.
+ */
+function AppScreen({ screen, tapping }: { screen: TourScreen; tapping: boolean }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: DEMO_MOTION.crossfade }}
+      className="pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-2xl bg-card"
+    >
+      <AnimatePresence initial={false}>
+        <motion.div
+          key={screen}
+          initial={{ opacity: 0, scale: DEMO_MOTION.screenEnterScale }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: DEMO_MOTION.screenChange, ease: "easeOut" }}
+          className="absolute inset-x-0 top-0 aspect-3/4 sm:aspect-square"
+        >
+          <TourPicture screen={screen} />
+          {tapping && <HandicapTap />}
+        </motion.div>
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 export function ScannerDemo() {
-  const { phase, label, scorecard } = useScannerDemoViewModel();
+  const { phase, label, scorecard, screen, tapping, tourPrimed } = useScannerDemoViewModel();
+  const scanned = phase === "result" || screen !== null;
 
   return (
     <div className="relative flex aspect-3/4 w-full max-w-lg items-center justify-center overflow-hidden rounded-2xl border border-border bg-card shadow-card sm:aspect-11/10 lg:aspect-square">
@@ -242,8 +315,8 @@ export function ScannerDemo() {
         initial={false}
         animate={{
           filter: phase === "mapping" ? "brightness(0.5) blur(3px)" : "brightness(1) blur(0px)",
-          opacity: phase === "result" ? 0 : 1,
-          scale: phase === "result" ? 0.95 : 1,
+          opacity: scanned ? 0 : 1,
+          scale: scanned ? DEMO_MOTION.photoRecedeScale : 1,
         }}
         transition={{ duration: DEMO_MOTION.crossfade }}
       />
@@ -252,6 +325,18 @@ export function ScannerDemo() {
         {phase === "result" && <DigitalScorecard rows={scorecard} />}
       </AnimatePresence>
       <AnimatePresence>{phase === "mapping" && <MappingPanel />}</AnimatePresence>
+      <AnimatePresence>
+        {screen && <AppScreen key="app" screen={screen} tapping={tapping} />}
+      </AnimatePresence>
+
+      {/* Fetched while the round is on show, so the tour never waits on a download. */}
+      {tourPrimed && (
+        <div hidden>
+          {TOUR_SCREENS.map((tourScreen) => (
+            <TourPicture key={tourScreen} screen={tourScreen} />
+          ))}
+        </div>
+      )}
 
       <AnimatePresence>
         {phase === "scanning" && (
@@ -271,7 +356,7 @@ export function ScannerDemo() {
       >
         {phase === "mapping" && <Type className="size-3.5 text-primary" />}
         {phase === "scanning" && <ScanLine className="size-3.5 animate-pulse text-score-birdie" />}
-        {phase === "result" && <div className="size-2 rounded-full bg-score-birdie" />}
+        {scanned && <div className="size-2 rounded-full bg-score-birdie" />}
         {label}
       </motion.div>
     </div>
