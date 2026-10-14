@@ -1,16 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePublicScan } from "@/hooks/usePublicScan";
-import { getHole } from "@/domain";
-import type { ExtractedHoleScore, ScanResult } from "@/types/scan";
-
-interface ScannedHole {
-  hole: number;
-  par: number | null;
-  strokes: number | null;
-  putts: number | null;
-  greenInRegulation: boolean | null;
-  shotsToGreen: number | null;
-}
+import { Round } from "@/domain";
 
 const PHASES = [
   { label: "Reading course details…", detail: "Identifying name, location & tee boxes" },
@@ -37,29 +27,9 @@ export interface TryItYourselfViewModel {
   phaseLabel: string;
   phaseDetail: string;
 
-  courseName: string | null;
-  courseLocation: string | null;
-  teeBox: string | null;
-  frontNine: ScannedHole[];
-  backNine: ScannedHole[];
-  roundTotal: { par: number | null; strokes: number | null };
+  /** The scanned card as a round, its figures read the way an unsaved edit's are. */
+  round: Round | null;
   hasScores: boolean;
-}
-
-function parFor(result: ScanResult, score: ExtractedHoleScore, index: number): number | null {
-  return getHole(result.round.course, score.hole_number ?? index + 1)?.par ?? null;
-}
-
-function toRows(result: ScanResult | null, from: number, to: number): ScannedHole[] {
-  if (!result) return [];
-  return (result.round.hole_scores ?? []).slice(from, to).map((score, i) => ({
-    hole: score.hole_number ?? from + i + 1,
-    par: parFor(result, score, from + i),
-    strokes: score.strokes,
-    putts: score.putts,
-    greenInRegulation: score.green_in_regulation,
-    shotsToGreen: score.shots_to_green,
-  }));
 }
 
 export function useTryItYourselfViewModel(): TryItYourselfViewModel {
@@ -86,7 +56,7 @@ export function useTryItYourselfViewModel(): TryItYourselfViewModel {
   }, [scan]);
 
   const result = scan.result;
-  const scores = result?.round.hole_scores ?? [];
+  const round = useMemo(() => (result ? Round.fromScan(result.round) : null), [result]);
 
   return {
     step: scan.step,
@@ -104,15 +74,7 @@ export function useTryItYourselfViewModel(): TryItYourselfViewModel {
     phaseLabel: PHASES[phase].label,
     phaseDetail: PHASES[phase].detail,
 
-    courseName: result?.round.course?.name ?? null,
-    courseLocation: result?.round.course?.location ?? null,
-    teeBox: result?.round.tee_box ?? null,
-    frontNine: toRows(result, 0, 9),
-    backNine: toRows(result, 9, 18),
-    roundTotal: {
-      par: result?.round.course?.par ?? null,
-      strokes: scores.reduce((total, score) => total + (score.strokes ?? 0), 0) || null,
-    },
-    hasScores: scores.length > 0,
+    round,
+    hasScores: (round?.holes.length ?? 0) > 0,
   };
 }

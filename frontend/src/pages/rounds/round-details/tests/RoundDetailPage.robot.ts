@@ -51,6 +51,45 @@ export class RoundDetailRobot {
     return this;
   }
 
+  async typeStrokes(hole: number, strokes: number): Promise<this> {
+    await this.page.getByLabel(`Hole ${hole} strokes`).fill(String(strokes));
+    return this;
+  }
+
+  async tapSave(): Promise<this> {
+    await this.page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(this.page.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
+    return this;
+  }
+
+  async seesScore(score: number): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(String(score), { exact: true })).toBeVisible();
+    return this;
+  }
+
+  async tapTee(color: string): Promise<this> {
+    await this.page.getByRole("group", { name: "Tee" }).getByRole("button", { name: color, exact: true }).click();
+    return this;
+  }
+
+  /** The text field a round gets when its course has no tees to pick from. */
+  async seesTeeField(): Promise<this> {
+    await expect(this.page.getByRole("textbox", { name: "Tee" })).toBeVisible();
+    return this;
+  }
+
+  async typeTee(tee: string): Promise<this> {
+    await this.page.getByRole("textbox", { name: "Tee" }).fill(tee);
+    return this;
+  }
+
+  async seesTee(tee: string): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(`${tee} tees`, { exact: true })).toBeVisible();
+    return this;
+  }
+
   async tapDelete(): Promise<this> {
     await this.page.getByRole("button", { name: "Delete" }).click();
     await expect(this.page.getByText("Delete this round?")).toBeVisible();

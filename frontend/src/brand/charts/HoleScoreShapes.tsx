@@ -14,7 +14,7 @@ const cy = VB_H / 2;
 const r = 9.5;
 
 /** One hole drawn the way a scorecard marks it: circles under par, boxes over. */
-function HoleShape({ hole }: { hole: HoleScore }) {
+export function HoleShape({ hole }: { hole: HoleScore }) {
   const kind = hole.kind;
   if (kind == null) {
     return (
