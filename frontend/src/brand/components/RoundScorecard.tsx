@@ -43,7 +43,7 @@ function RoundScorecard({ round, teeBox, edits, action, className }: RoundScorec
             {i > 0 && (
               <div className="flex items-center gap-3 border-y border-border bg-muted/60 px-4 py-1.5">
                 <div className="h-px flex-1 bg-border" />
-                <span className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+                <span className="text-xs font-semibold tracking-eyebrow text-muted-foreground uppercase">
                   Back Nine
                 </span>
                 <div className="h-px flex-1 bg-border" />
