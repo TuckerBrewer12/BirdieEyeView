@@ -13,6 +13,13 @@ export const TOUR_LAYOUTS = {
 } as const;
 export type TourLayout = keyof typeof TOUR_LAYOUTS;
 
+/**
+ * When the wide captures apply: where the demo frame stops being a portrait phone frame,
+ * at its `sm:` classes. A `<source media>` can't read a CSS variable, and the kit has no
+ * breakpoint token yet, so this mirrors Tailwind's `sm` (40rem) and must move with it.
+ */
+export const WIDE_FRAME_MEDIA = "(min-width: 40rem)";
+
 export function tourImage(screen: TourScreen, layout: TourLayout): string {
   return `/demo-tour/${screen}-${layout}.png`;
 }

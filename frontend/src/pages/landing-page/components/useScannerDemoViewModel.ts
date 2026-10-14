@@ -101,8 +101,12 @@ export const DEMO_MOTION = {
   rowSpring: { type: "spring" as const, damping: 15 },
   /** One app screen giving way to the next on the tour. */
   screenChange: 0.5,
-  /** A finger pressing the handicap: the ring closing in, then letting go. */
-  tap: 0.7,
+  /** The incoming screen settling from just past full size. */
+  screenEnterScale: 1.02,
+  /** The photo stepping back as the scanned card replaces it. */
+  photoRecedeScale: 0.95,
+  /** A finger pressing the handicap: the ring closing in from wide, pressing, then letting go. */
+  tap: { duration: 0.7, reachScale: 1.6, pressScale: 0.8 },
 } as const;
 
 export interface ScannerDemoViewModel {

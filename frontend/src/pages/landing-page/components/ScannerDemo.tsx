@@ -3,7 +3,7 @@ import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { scoreFillClass, toParDisplay } from "@/brand";
-import { HANDICAP_TAP, TOUR_SCREENS, tourImage, type TourScreen } from "./demoTour";
+import { HANDICAP_TAP, TOUR_SCREENS, WIDE_FRAME_MEDIA, tourImage, type TourScreen } from "./demoTour";
 import {
   DEMO_MOTION,
   useScannerDemoViewModel,
@@ -232,14 +232,11 @@ function MappingPanel() {
   );
 }
 
-/**
- * One capture of the app, the wide one from Tailwind's `sm` (640px) up, where the
- * frame turns square. Decorative, so it has no alt text.
- */
+/** One capture of the app, wide or narrow to match the frame. Decorative, so no alt text. */
 function TourPicture({ screen }: { screen: TourScreen }) {
   return (
     <picture>
-      <source media="(min-width: 640px)" srcSet={tourImage(screen, "wide")} />
+      <source media={WIDE_FRAME_MEDIA} srcSet={tourImage(screen, "wide")} />
       <img src={tourImage(screen, "narrow")} alt="" className="block w-full" />
     </picture>
   );
@@ -263,9 +260,12 @@ function HandicapTap() {
       className="absolute top-(--tap-y) left-(--tap-x) -translate-x-1/2 -translate-y-1/2 sm:top-(--tap-y-wide) sm:left-(--tap-x-wide)"
     >
       <motion.div
-        initial={{ scale: 1.6, opacity: 0 }}
-        animate={{ scale: [1.6, 0.8, 1], opacity: [0, 1, 0.9] }}
-        transition={{ duration: DEMO_MOTION.tap, ease: "easeOut" }}
+        initial={{ scale: DEMO_MOTION.tap.reachScale, opacity: 0 }}
+        animate={{
+          scale: [DEMO_MOTION.tap.reachScale, DEMO_MOTION.tap.pressScale, 1],
+          opacity: [0, 1, 0.9],
+        }}
+        transition={{ duration: DEMO_MOTION.tap.duration, ease: "easeOut" }}
         className="size-12 rounded-full border-2 border-primary bg-primary/20 shadow-card"
       />
     </div>
@@ -288,7 +288,7 @@ function AppScreen({ screen, tapping }: { screen: TourScreen; tapping: boolean }
       <AnimatePresence initial={false}>
         <motion.div
           key={screen}
-          initial={{ opacity: 0, scale: 1.02 }}
+          initial={{ opacity: 0, scale: DEMO_MOTION.screenEnterScale }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: DEMO_MOTION.screenChange, ease: "easeOut" }}
@@ -316,7 +316,7 @@ export function ScannerDemo() {
         animate={{
           filter: phase === "mapping" ? "brightness(0.5) blur(3px)" : "brightness(1) blur(0px)",
           opacity: scanned ? 0 : 1,
-          scale: scanned ? 0.95 : 1,
+          scale: scanned ? DEMO_MOTION.photoRecedeScale : 1,
         }}
         transition={{ duration: DEMO_MOTION.crossfade }}
       />
