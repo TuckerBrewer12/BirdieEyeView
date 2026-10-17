@@ -24,7 +24,7 @@ The current model working tree uses explicit course layout, intended round holes
 
 Use resolved getters and validated correction methods such as `update_fields()`, `Round.update_hole_score()`, and tee yardage updates. Do not assume direct nested container mutations preserve validation or stored-summary freshness. Yardage mappings reject ordinary in-place edits.
 
-These contracts are implemented locally in the separate Models refactor working tree; the added helper files and changes are not included on this documentation-only branch. Persistence, requests, scan assembly, and analytics still require integration. Structural readiness is not provider verification or a completed save gate. See the [Models implementation and integration checklist](<../../1. Fix backend consistency issues - Models.md>).
+These contracts are implemented locally in the separate Models refactor working tree; the added helper files and changes are not included on this documentation-only branch. Persistence, requests, scan assembly, and analytics still require integration. Structural readiness is not provider verification or a completed save gate. Coordinate any model contract change with its API, persistence, service, and analytics consumers.
 
 ## Changing this domain
 

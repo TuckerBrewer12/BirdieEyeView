@@ -20,7 +20,7 @@ Report submission is independent of round saving and PostgreSQL. Developer retri
 
 ## Refactor considerations
 
-Model coverage/readiness helpers are available locally, but verified new-course resolution and atomic course/round saving are not yet integrated across services and persistence. AI suggestions inherit Analytics missing-data/eligibility behavior and have additional benchmark/trend issues. See the [Services review](<../../1. Fix backend consistency issues - Services.md>) and shared review decisions before changing those policies.
+Model coverage/readiness helpers are available locally, but verified new-course resolution and atomic course/round saving are not yet integrated across services and persistence. AI suggestions inherit Analytics missing-data/eligibility behavior and have additional benchmark/trend issues. Coordinate those contracts with the owning domains rather than independently changing calculation rules in each service.
 
 ## Changing this domain
 

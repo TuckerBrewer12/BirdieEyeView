@@ -17,6 +17,6 @@ OCR output is evidence, not verified golf data. Hole identity, raw/to-par score 
 
 ## Planned representation change
 
-The recorded hole-centric parsed representation is a maintainability proposal, not implemented architecture or a demonstrated accuracy improvement. See [backend architecture planning](<../../3. Backend architecture refactor.md>) before replacing parallel arrays. Preserve current contracts first; correctness changes need their own evidence and decisions.
+A hole-centric parsed representation could make related observations easier to follow than parallel arrays. That is a maintainability proposal, not implemented architecture or a demonstrated accuracy improvement. Preserve current contracts first; correctness changes need their own evidence and decisions.
 
 Relevant deterministic tests include `test_mistral_ocr_service.py`, `test_mistral_scorecard_parser.py`, `test_gemini_table_merger.py`, `test_scan_router_helpers.py`, and `test_score_sign_disambiguation.py`. Live evaluation through `scripts.quick_scan_eval` uses provider credits; ordinary documentation/unit checks do not require it.

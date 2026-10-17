@@ -18,16 +18,6 @@ This is the shared starting point for understanding and changing the project. `d
 
 These guides describe the inspected working tree as of **October 17, 2026**. They do not certify what is deployed. The backend model refactor is local work awaiting cross-domain integration. The frontend has both view-model-based pages and older pages with inline orchestration. Each guide identifies relevant differences; a proposed convention is not evidence that every file follows it.
 
-## Existing reviews and plans
+## Maintaining the guides
 
-Detailed findings remain at their current paths so ongoing work can continue referencing them. General explanations live here; issue evidence and unresolved decisions remain in the reviews.
-
-- [Backend consistency index](<../1. Fix backend consistency issues.md>)
-- [Models review](<../1. Fix backend consistency issues - Models.md>)
-- [API review](<../1. Fix backend consistency issues - API.md>)
-- [Analytics review](<../1. Fix backend consistency issues - Analytics.md>)
-- [Services review](<../1. Fix backend consistency issues - Services.md>)
-- [Backend architecture planning](<../3. Backend architecture refactor.md>)
-- [Project handoff](../handoff.md)
-
-When changing behavior, update the relevant guide and record an unresolved decision in the review rather than silently documenting it as settled. See [documentation practices](practices/documentation.md).
+When changing behavior, update the relevant guide and clearly distinguish implemented behavior from a proposed change. Keep local review notes, planning drafts, and handoff files outside documentation commits unless their inclusion is explicitly requested. See [documentation practices](practices/documentation.md).

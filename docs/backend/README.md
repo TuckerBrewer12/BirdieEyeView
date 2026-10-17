@@ -12,4 +12,4 @@ Each guide explains responsibilities, important files, data flow, and where a ch
 | Extraction across API/Services; legacy `llm/` | [OCR and scorecard parsing](extraction.md) |
 | `tests/` | [Backend test organization](tests.md) |
 
-Read [backend coding practices](../practices/backend.md) before restructuring a domain. The [review index](<../../1. Fix backend consistency issues.md>) tracks findings and decisions; a completed file review does not mean its fixes are implemented.
+Read [backend coding practices](../practices/backend.md) before restructuring a domain. These guides explain responsibilities and contracts; they are not a completed correctness audit or an implementation plan.

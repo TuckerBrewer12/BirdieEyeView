@@ -29,4 +29,4 @@ Keep parsing, authorization, HTTP statuses, and public error translation here. M
 
 The report endpoint intentionally follows a separate anonymous path and does not require user/database resolution. Its contract is in [failed-scan reports](../failed-scan-reports.md).
 
-Focused coverage includes `tests/test_*_routes.py`, request/schema tests, dependencies, and security tests. Detailed issues and pending decisions are in the [API review](<../../1. Fix backend consistency issues - API.md>).
+Focused coverage includes `tests/test_*_routes.py`, request/schema tests, dependencies, and security tests. Verify request, authorization, status, and schema contracts with the relevant tests when changing an endpoint.
