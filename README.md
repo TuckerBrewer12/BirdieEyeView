@@ -4,6 +4,10 @@
 
 Photograph a physical scorecard. A Mistral OCR + Gemini LLM pipeline extracts scores, putts, GIR, and tee boxes into a complete digital round — with course and player analytics across all your rounds.
 
+## Documentation
+
+Start with the [documentation index](docs/README.md) for [backend domain guides](docs/backend/README.md), [frontend page guides](docs/frontend/README.md), and [coding practices](docs/practices/README.md). These distinguish current behavior from refactor work still awaiting integration.
+
 ---
 
 ## What It Does
