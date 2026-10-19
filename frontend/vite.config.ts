@@ -43,7 +43,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: false,
     setupFiles: ['./src/test-setup.ts'],
-    include: ['src/**/*.{test,spec}.{ts,tsx}', 'src/**/*Test.{ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'src/**/*Test.{ts,tsx}', 'eslint/**/*.test.js'],
     exclude: ['src/**/*.screenshot.spec.ts', 'src/**/*.espresso.spec.ts'],
     coverage: {
       provider: 'v8',

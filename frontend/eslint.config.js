@@ -4,6 +4,8 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
+import golf from './eslint/golf.js'
+import kit from './eslint/kit.js'
 
 export default defineConfig([
   globalIgnores(['dist', 'playwright-report', 'test-results', 'playwright/.cache']),
@@ -67,6 +69,35 @@ export default defineConfig([
         selector: "MetaProperty[meta.name='import'][property.name='meta']",
         message: 'import.meta is Vite-only. Read config at the app edge and pass it in.',
       }],
+    },
+  },
+  {
+    // Golf rules and score paint have one home each: the server and domain/ for figures and
+    // rules, brand/theme/score.ts for words and colour. Colours and lengths come from
+    // brand/theme/tokens.css. On for the kit and the pages already moved onto it; each page
+    // joins this list as it is refactored.
+    files: [
+      'src/brand/**/*.{ts,tsx}',
+      'src/pages/dashboard/**/*.{ts,tsx}',
+      'src/pages/landing-page/**/*.{ts,tsx}',
+      'src/pages/courses/**/*.{ts,tsx}',
+      'src/pages/rounds/**/*.{ts,tsx}',
+    ],
+    ignores: [
+      // The homes these rules point to: score words, paint and token mirrors.
+      'src/brand/theme/**',
+      // Tests build fixtures and fake server figures on purpose.
+      '**/tests/**',
+      '**/*.test.{ts,tsx}',
+    ],
+    plugins: { golf, kit },
+    rules: {
+      'golf/no-score-kind-table': 'error',
+      'golf/no-to-par-branch': 'error',
+      'golf/no-golf-math': 'error',
+      'golf/no-shadowed-golf-type': 'error',
+      'kit/no-arbitrary-value': 'error',
+      'kit/no-color-literal': 'error',
     },
   },
 ])
