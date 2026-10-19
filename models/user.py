@@ -20,4 +20,5 @@ class User(BaseGolfModel):
     rounds: List["Round"] = Field(default_factory=list)
     created_at: Optional[datetime] = None
     last_handicap_update: Optional[datetime] = None
-    scoring_goal: Optional[int] = None
+    scoring_goal: Optional[int] = Field(None, strict=True, ge=18, le=270)
+    scoring_goal_nine: Optional[int] = Field(None, strict=True, ge=9, le=135)

@@ -192,7 +192,7 @@ def make_scoring_round(
         course = Course(
             name="Rated Course",
             holes=[Hole(number=number, par=4, handicap=number) for number in range(1, 19)],
-            tees=[Tee(color="Blue", course_rating=72.0, slope_rating=113.0)],
+            tees=[Tee(color="Blue", course_rating=72.0, slope_rating=113.0, rating_holes=tuple(range(1, 19)))],
         )
         tee_box = "Blue"
     return Round(
@@ -201,6 +201,7 @@ def make_scoring_round(
         course=course,
         tee_box=tee_box,
         hole_scores=scores,
+        intended_holes=tuple(range(1, holes + 1)),
     )
 
 

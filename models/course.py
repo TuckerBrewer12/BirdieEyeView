@@ -1,8 +1,9 @@
-from pydantic import Field
-from typing import List, Optional
+from pydantic import Field, PrivateAttr, model_serializer, model_validator
+from typing import Any, List, Literal, Optional
 
 from .base import BaseGolfModel
 from .hole import Hole
+from .hole_layout import FRONT_NINE, BACK_NINE, FULL_ROUND
 from .tee import Tee
 
 
@@ -16,52 +17,107 @@ class Course(BaseGolfModel):
     name: Optional[str] = None
     external_course_id: Optional[str] = None
     location: Optional[str] = None
-    par: Optional[int] = Field(None, ge=27, le=80)  # 27 for 9-hole, 80 for 18-hole
+    total_holes: Optional[Literal[9, 18]] = None
+    par: Optional[int] = Field(None, strict=True, ge=27, le=108)
     holes: List[Hole] = Field(default_factory=list)
     tees: List[Tee] = Field(default_factory=list)
     user_id: Optional[str] = None  # None = master course; set = user-owned custom course
+    _par_source: Optional[tuple] = PrivateAttr(default=None)
+
+    @model_validator(mode='after')
+    def check_par_bounds(self):
+        if self.par is not None and self.total_holes is not None:
+            if not 3 * self.total_holes <= self.par <= 6 * self.total_holes:
+                raise ValueError('Course par must match its declared hole coverage')
+        return self
+
+    def _par_fingerprint(self) -> tuple:
+        return self.total_holes, tuple((h.number, h.par, h._revision) for h in self.holes)
+
+    def model_post_init(self, context: Any) -> None:
+        self._par_source = self._par_fingerprint()
+
+    @model_serializer(mode='wrap')
+    def serialize_current_par(self, handler):
+        data = handler(self)
+        if 'par' in data:
+            data['par'] = self.get_par()
+        return data
+
+    def _fields_updated(self, fields: set[str]) -> None:
+        if 'par' in fields:
+            self._par_source = self._par_fingerprint()
+        elif fields & {'holes', 'total_holes'}:
+            self._par_source = None
+
+    def get_expected_holes(self) -> Optional[tuple[int, ...]]:
+        if self.total_holes == 9:
+            return FRONT_NINE
+        if self.total_holes == 18:
+            return FULL_ROUND
+        numbers = [h.number for h in self.holes]
+        if len(numbers) == 18 and set(numbers) == set(FULL_ROUND):
+            return FULL_ROUND
+        return None
 
     def get_tee(self, color: Optional[str]) -> Optional[Tee]:
         """Get a tee by its color."""
         if not color:
             return None
-        for tee in self.tees:
-            if tee.color and tee.color.lower() == color.lower():
-                return tee
-        return None
+        matches = [tee for tee in self.tees if tee.color and tee.color.casefold() == color.casefold()]
+        return matches[0] if len(matches) == 1 else None
 
     def get_hole(self, number: int) -> Optional[Hole]:
         """Get a hole by its number (1-18)."""
-        for hole in self.holes:
-            if hole.number == number:
-                return hole
-        return None
+        matches = [hole for hole in self.holes if hole.number == number]
+        return matches[0] if len(matches) == 1 else None
 
     def get_par(self) -> Optional[int]:
-        """Get par - uses provided value or calculates from holes."""
-        if self.par is not None:
+        """Child observations are authoritative; partial par is not a full total."""
+        if any(h.par is not None for h in self.holes):
+            return self.calculated_par
+        # A supplied whole-course summary does not itself establish a 9/18 layout.
+        if self._par_source == self._par_fingerprint():
             return self.par
-        return self.calculated_par
+        return None
+
+    def _par_for(self, numbers: tuple[int, ...]) -> Optional[int]:
+        holes = [self.get_hole(n) for n in numbers]
+        if any(hole is None or hole.par is None for hole in holes):
+            return None
+        return sum(hole.par for hole in holes)
 
     @property
     def calculated_par(self) -> Optional[int]:
         """Calculate total par from holes."""
-        if len(self.holes) != 18 or any(h.par is None for h in self.holes):
+        expected = self.get_expected_holes()
+        if expected is None or len(self.holes) != len(expected):
             return None
-        return sum(h.par for h in self.holes if h.par is not None)
+        return self._par_for(expected)
 
     @property
     def front_nine_par(self) -> Optional[int]:
         """Calculate par for holes 1-9."""
-        front = [h for h in self.holes if h.number is not None and 1 <= h.number <= 9]
-        if len(front) < 9 or any(h.par is None for h in front):
-            return None
-        return sum(h.par for h in front if h.par is not None)
+        return self._par_for(FRONT_NINE)
 
     @property
     def back_nine_par(self) -> Optional[int]:
         """Calculate par for holes 10-18."""
-        back = [h for h in self.holes if h.number is not None and 10 <= h.number <= 18]
-        if len(back) < 9 or any(h.par is None for h in back):
-            return None
-        return sum(h.par for h in back if h.par is not None)
+        return self._par_for(BACK_NINE)
+
+    def has_required_course_data(self, selected_tee: Optional[str] = None) -> bool:
+        """Structural save prerequisite only; does NOT verify identity/source trust."""
+        expected = self.get_expected_holes()
+        if not self.name or not self.name.strip() or expected is None or self.calculated_par is None:
+            return False
+
+        def complete(tee: Tee) -> bool:
+            return (bool(tee.color and tee.color.strip()) and self.get_tee(tee.color) is tee
+                    and all(n in tee.hole_yardages for n in expected))
+
+        if not any(complete(tee) for tee in self.tees):
+            return False
+        if selected_tee is not None:
+            tee = self.get_tee(selected_tee)
+            return tee is not None and complete(tee)
+        return True
