@@ -10,17 +10,17 @@ _ALLOCATION = TypeAdapter(Annotated[int, Field(strict=True, ge=-(2**31), le=2**3
 
 class HoleScore(BaseGolfModel):
     """Represents a player's score on a single hole (raw scanned data)."""
-    hole_number: Optional[int] = Field(None, ge=1, le=18)
-    strokes: Optional[int] = Field(None, ge=1, le=15)
+    hole_number: Optional[int] = Field(None, strict=True, ge=1, le=18)
+    strokes: Optional[int] = Field(None, strict=True, ge=1, le=15)
     # Net strokes, not to-par: gross minus the handicap allocated to this hole.
     net_score: Optional[int] = Field(None, strict=True, ge=-(2**31), le=2**31 - 1)
     played: Optional[bool] = None  # False = deliberately unplayed; None = unknown
-    putts: Optional[int] = Field(None, ge=0, le=10)
-    shots_to_green: Optional[int] = Field(None, ge=1, le=10)
+    putts: Optional[int] = Field(None, strict=True, ge=0, le=10)
+    shots_to_green: Optional[int] = Field(None, strict=True, ge=1, le=10)
     fairway_hit: Optional[bool] = None
     green_in_regulation: Optional[bool] = None
-    par_played: Optional[int] = Field(None, ge=3, le=6)
-    handicap_played: Optional[int] = Field(None, ge=1, le=18)
+    par_played: Optional[int] = Field(None, strict=True, ge=3, le=6)
+    handicap_played: Optional[int] = Field(None, strict=True, ge=1, le=18)
 
     @model_validator(mode='after')
     def validate_score_consistency(self):

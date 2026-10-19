@@ -1,7 +1,7 @@
 from pydantic import Field, PrivateAttr, model_serializer, model_validator
-from typing import Any, List, Literal, Optional
+from typing import Annotated, Any, List, Literal, Optional
 
-from .base import BaseGolfModel
+from .base import BaseGolfModel, checked_list
 from .hole import Hole
 from .hole_layout import FRONT_NINE, BACK_NINE, FULL_ROUND
 from .tee import Tee
@@ -19,8 +19,8 @@ class Course(BaseGolfModel):
     location: Optional[str] = None
     total_holes: Optional[Literal[9, 18]] = None
     par: Optional[int] = Field(None, strict=True, ge=27, le=108)
-    holes: List[Hole] = Field(default_factory=list)
-    tees: List[Tee] = Field(default_factory=list)
+    holes: Annotated[List[Hole], checked_list(Hole)] = Field(default_factory=list, validate_default=True)
+    tees: Annotated[List[Tee], checked_list(Tee)] = Field(default_factory=list, validate_default=True)
     user_id: Optional[str] = None  # None = master course; set = user-owned custom course
     _par_source: Optional[tuple] = PrivateAttr(default=None)
 

@@ -702,3 +702,88 @@ def test_ambiguous_course_tee_does_not_fall_back_to_user_tee():
     blue = Tee(color="Blue")
     single = Course(name="T", tees=[blue, Tee(color="White")])
     assert Round(course=single, tee_box="blue", user_tee=custom).get_tee() is blue
+
+
+@pytest.mark.parametrize("model, field, value", [
+    (HoleScore, "strokes", True),
+    (HoleScore, "strokes", "5"),
+    (HoleScore, "strokes", 5.0),
+    (HoleScore, "putts", False),
+    (HoleScore, "hole_number", "1"),
+    (HoleScore, "par_played", 4.0),
+    (HoleScore, "handicap_played", True),
+    (HoleScore, "shots_to_green", "3"),
+    (Hole, "par", "4"),
+    (Hole, "number", True),
+    (Hole, "handicap", 1.0),
+    (User, "handicap", "12.4"),
+    (User, "handicap", True),
+    (Tee, "course_rating", True),
+    (Tee, "slope_rating", "113"),
+])
+def test_numeric_fields_reject_coerced_values(model, field, value):
+    with pytest.raises(ValidationError):
+        model(**{field: value})
+
+
+def test_strict_floats_still_accept_integers():
+    assert Tee(course_rating=72, slope_rating=113).slope_rating == 113.0
+    assert User(handicap=12).handicap == 12.0
+
+
+def test_tees_with_yardages_can_be_copied_and_pickled():
+    import copy
+    import pickle
+
+    tee = Tee(color="Blue", hole_yardages={1: 400, 2: 150})
+    copied = copy.copy(tee.hole_yardages)
+    assert copied == {1: 400, 2: 150}
+    with pytest.raises(TypeError):
+        copied[1] = 500
+
+    restored = pickle.loads(pickle.dumps(tee))
+    assert restored.hole_yardages == {1: 400, 2: 150}
+    with pytest.raises(TypeError):
+        restored.hole_yardages[1] = 500
+
+
+@pytest.mark.parametrize("build, attribute, item", [
+    (lambda: Round(), "hole_scores", HoleScore(hole_number=1, strokes=4)),
+    (lambda: Course(), "holes", Hole(number=1, par=4)),
+    (lambda: Course(), "tees", Tee(color="Blue")),
+    (lambda: Tee(), "ratings", TeeRating(hole_numbers=FRONT_NINE, course_rating=35.0)),
+    (lambda: User(), "rounds", Round()),
+])
+def test_review_containers_reject_wrong_element_types(build, attribute, item):
+    model = build()
+    container = getattr(model, attribute)
+    container.append(item)
+    container.insert(0, item)
+    container.extend([item])
+    container[0] = item
+    assert len(container) == 3
+
+    for edit in (
+        lambda: container.append({"hole_number": 1}),
+        lambda: container.insert(0, None),
+        lambda: container.extend([item, "bad"]),
+        lambda: container.__setitem__(0, 7),
+        lambda: container.__setitem__(slice(0, 1), ["bad"]),
+        lambda: container.__iadd__(["bad"]),
+    ):
+        with pytest.raises(TypeError):
+            edit()
+    assert len(container) == 3
+
+
+def test_checked_containers_survive_validation_copies_and_updates():
+    import pickle
+
+    round_ = Round(hole_scores=[HoleScore(hole_number=1, strokes=4)])
+    assert round_.update_field("notes", "windy") is None
+    for container in (round_.hole_scores, round_.model_copy(deep=True).hole_scores,
+                      pickle.loads(pickle.dumps(round_)).hole_scores,
+                      Round.model_validate(round_.model_dump()).hole_scores):
+        with pytest.raises(TypeError):
+            container.append({"hole_number": 2})
+    assert round_.model_dump()["hole_scores"][0]["strokes"] == 4

@@ -1,6 +1,46 @@
 from copy import deepcopy
-from pydantic import BaseModel, ConfigDict, PrivateAttr, ValidationError
+from functools import partial
+from pydantic import AfterValidator, BaseModel, ConfigDict, PrivateAttr, ValidationError
 from typing import Any, Optional
+
+
+class CheckedList(list):
+    """Review container whose in-place edits still reject the wrong element type."""
+
+    def __init__(self, item_type: type, items=()):
+        self.item_type = item_type
+        super().__init__(self._check(item) for item in items)
+
+    def _check(self, item):
+        if not isinstance(item, self.item_type):
+            raise TypeError(f'Expected {self.item_type.__name__}, got {type(item).__name__}')
+        return item
+
+    def append(self, item):
+        super().append(self._check(item))
+
+    def insert(self, index, item):
+        super().insert(index, self._check(item))
+
+    def extend(self, items):
+        super().extend([self._check(item) for item in items])
+
+    def __iadd__(self, items):
+        self.extend(items)
+        return self
+
+    def __setitem__(self, index, value):
+        checked = [self._check(item) for item in value] if isinstance(index, slice) else self._check(value)
+        super().__setitem__(index, checked)
+
+    def __reduce__(self):
+        return type(self), (self.item_type, list(self))
+
+
+def checked_list(item_type: type) -> AfterValidator:
+    """Annotate a list field so later in-place edits stay type-checked."""
+    return AfterValidator(partial(CheckedList, item_type))
+
 
 class BaseGolfModel(BaseModel):
     """Shared configuration and methods."""

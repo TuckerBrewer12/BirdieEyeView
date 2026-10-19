@@ -2,11 +2,11 @@ from typing import Annotated, Any, Dict, Optional
 
 from pydantic import Field, PrivateAttr, field_validator, model_serializer, model_validator
 
-from .base import BaseGolfModel
+from .base import BaseGolfModel, checked_list
 from .hole_layout import FULL_ROUND, HoleCoverage, validate_coverage
 
-CourseRating = Annotated[float, Field(gt=0, allow_inf_nan=False)]
-SlopeRating = Annotated[float, Field(ge=55, le=155, allow_inf_nan=False)]
+CourseRating = Annotated[float, Field(strict=True, gt=0, allow_inf_nan=False)]
+SlopeRating = Annotated[float, Field(strict=True, ge=55, le=155, allow_inf_nan=False)]
 
 
 class ReadOnlyYardages(dict):
@@ -19,6 +19,10 @@ class ReadOnlyYardages(dict):
 
     def __deepcopy__(self, memo):
         return self  # Both keys and values are immutable integers.
+
+    def __reduce__(self):
+        # copy/pickle would otherwise rebuild through the rejected __setitem__.
+        return type(self), (dict(self),)
 
 
 def validate_yardages(value) -> dict[int, int]:
@@ -57,7 +61,7 @@ class TeeData(BaseGolfModel):
     course_rating: Optional[CourseRating] = None
     slope_rating: Optional[SlopeRating] = None
     rating_holes: Optional[HoleCoverage] = None
-    ratings: list[TeeRating] = Field(default_factory=list)
+    ratings: Annotated[list[TeeRating], checked_list(TeeRating)] = Field(default_factory=list, validate_default=True)
     _total_source: Optional[tuple] = PrivateAttr(default=None)
 
     @field_validator('hole_yardages', mode='before')

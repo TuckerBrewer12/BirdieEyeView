@@ -1,8 +1,8 @@
 from datetime import datetime
 from pydantic import Field, PrivateAttr, model_serializer, model_validator
-from typing import Any, List, Optional, Union
+from typing import Annotated, Any, List, Optional, Union
 
-from .base import BaseGolfModel
+from .base import BaseGolfModel, checked_list
 from .course import Course
 from .hole_score import HoleScore
 from .hole_layout import FRONT_NINE, BACK_NINE, FULL_ROUND, HoleCoverage
@@ -16,7 +16,7 @@ class Round(BaseGolfModel):
     course: Optional[Course] = None
     tee_box: Optional[str] = None
     date: Optional[datetime] = None
-    hole_scores: List[HoleScore] = Field(default_factory=list)
+    hole_scores: Annotated[List[HoleScore], checked_list(HoleScore)] = Field(default_factory=list, validate_default=True)
     intended_holes: Optional[HoleCoverage] = None
     weather_conditions: Optional[str] = None
     notes: Optional[str] = None
