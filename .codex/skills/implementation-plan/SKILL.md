@@ -1,6 +1,6 @@
 ---
 name: implementation-plan
-description: Project-specific planning skill for the Golf ScoreCard app. Use after codebase-recon to turn a user's requested feature, bug fix, refactor, or test goal into a concrete written plan with expected files, implementation steps, test strategy, risks, and a mandatory user confirmation checkpoint.
+description: Project-specific backend planning skill for the Golf ScoreCard app. Use after codebase-recon to turn a user's requested feature, bug fix, refactor, or test goal into a concrete written plan with expected files, implementation steps, test strategy, risks, and a mandatory user confirmation checkpoint.
 ---
 
 # Implementation Plan
@@ -29,12 +29,12 @@ Create the parent directory when needed. Preserve existing user-authored notes i
 
 ## Planning Rules
 
-- Prefer the repository's existing patterns over new abstractions.
+- Prefer the repository's existing patterns over new abstractions. `docs/practices/backend.md` records the intended layer responsibilities.
 - Keep the blast radius narrow and name any intentional tradeoffs.
 - Include tests as part of the plan, not as an afterthought.
 - Include database migrations only when schema changes are required.
-- Include frontend visual verification when changing meaningful UI behavior or layout.
-- Ask the user concise clarification questions when implementation preferences affect the user experience, API contract, data model, test depth, rollout risk, or long-term maintainability.
+- Name the `docs/` guides the change will make inaccurate, so `$update-docs` can update them after implementation.
+- Ask the user concise clarification questions when implementation preferences affect the API contract, data model, test depth, rollout risk, or long-term maintainability.
 - Treat file organization, helper abstractions, dependency placement, CI job structure, testing-layer ownership, parameterization, and narrow-versus-broad cleanup as clarification topics when multiple reasonable choices would materially change the result.
 - Do not record an unresolved preference as a decision. A recommended approach is not user confirmation.
 - Do not repeat a question already answered in the request or recon artifact.
@@ -62,7 +62,6 @@ The final approval question is not a substitute for clarification. Do not bury u
 
 Good clarification topics include:
 
-- user-facing behavior or UI flow
 - API shape, request/response fields, or backward compatibility
 - whether to favor a narrow fix or broader cleanup
 - test coverage targets and whether mocks or integration tests are preferred
@@ -75,18 +74,13 @@ Do not repeat a question the user has already answered. When several unresolved 
 
 If clarification is needed, preserve the useful planning work already completed, mark the unresolved item clearly, and do not present the plan as final. Ask immediately and stop. After the user answers, update the implementation artifact with the user-confirmed decision, finish the plan, and then ask for implementation approval.
 
-## Project-Specific Testing Guidance
+## Test Planning
 
-Use the smallest meaningful test set first, then broaden when risk warrants it:
+Take test commands from `docs/practices/testing.md`, which is the maintained source; do not copy commands from memory or older notes. Plan the smallest meaningful test set first, then broaden when the change crosses domains. Choose the layer by what the test must prove:
 
-- Python model/service/LLM logic: `.venv/bin/python -m pytest -q <test-path-or-node-id>`.
-- Existing LLM examples:
-  - `python -m unittest tests.test_llm.TestScorecardExtraction.test_example_scorecard`
-  - `python -m unittest tests.test_llm.TestScorecardExtraction.test_scores_only_extraction`
-  - `python -m unittest tests.test_llm.TestScorecardExtraction.test_smart_with_null_repo`
-- Frontend TypeScript/UI changes: inspect `frontend/package.json` and use existing scripts such as typecheck, lint, test, or build.
-- DB repository Python branching, conversion, or error translation: focused unit tests with fakes are appropriate.
-- SQL, constraints, ownership filters, transactions, PostgreSQL types/extensions, and persistence round trips: use the disposable PostgreSQL integration suite rather than mocking asyncpg execution.
+- Python branching, conversion, or error translation: focused unit tests with fakes.
+- SQL, constraints, ownership filters, transactions, PostgreSQL types/extensions, and persistence round trips: the disposable PostgreSQL integration suite, not mocked asyncpg execution.
+- Live scan evaluation calls paid providers; plan it only when the task needs it.
 
 ## Output Format
 
@@ -106,6 +100,9 @@ Write or update this content in the implementation artifact:
 ### Test Plan
 - `<command or test file>`: <what it proves>
 
+### Docs To Update
+- `<docs path>`: <what will become inaccurate, or "None">
+
 ### Acceptance Criteria
 - <observable condition>
 
@@ -114,6 +111,9 @@ Write or update this content in the implementation artifact:
 
 ### Out Of Scope
 - <thing intentionally not being changed>
+
+### Plan Amendments
+<Empty at approval. `$implementation-loop` appends approved changes here.>
 ```
 
 Then return a concise user-facing summary and ask exactly:
@@ -126,13 +126,19 @@ Stop after asking. Wait for explicit approval before implementation.
 
 ## Continuous Skill Improvement
 
-At the end of every invocation, assess whether this skill's instructions caused or failed to prevent a demonstrated, reusable workflow problem.
+At the end of every invocation, check whether this planning run exposed a reusable gap in this skill. Typical evidence:
 
-- Improve this `SKILL.md` on the current working branch only when the current run provides concrete evidence and the correction is narrow, generalizable, and preserves the skill's purpose.
-- Do not add rules for application bugs, one-off tool or environment failures, speculative edge cases, or a preference that applies only to the current task.
+- A material choice reached the plan as a `Decision` without the user confirming it.
+- Implementation later needed a plan amendment that planning should have anticipated.
+- The test plan named a command, file, or layer that turned out to be wrong.
+
+When the evidence is concrete:
+
+- Make the smallest correction to this `SKILL.md` that would have prevented the problem.
+- Keep the skill change separate from the user's task: make it as its own edit and list it under a separate "Skill changes" heading in the final response, with the evidence, so the user can review and commit it apart from the feature work.
+- Do not add rules for application bugs, one-off tool or environment failures, speculative edge cases, or preferences that apply only to the current task.
 - Do not weaken confirmation gates, expand mutation authority, or materially change workflow scope without explicit user approval. Propose those changes instead.
-- Make the smallest instruction change that would have prevented the observed problem, preserve user-authored guidance, and avoid duplicating rules already enforced elsewhere.
+- Preserve user-authored guidance and avoid duplicating rules already enforced elsewhere.
 - Validate the modified skill with the skill-creator `quick_validate.py` script when available.
-- Mention any skill change and the evidence for it in the final response. If no reusable gap appeared, leave the skill unchanged.
 
-Skill maintenance must not interrupt or replace completion of the user's primary task.
+If no reusable gap appeared, leave the skill unchanged. Skill maintenance must not interrupt or replace completion of the user's primary task.

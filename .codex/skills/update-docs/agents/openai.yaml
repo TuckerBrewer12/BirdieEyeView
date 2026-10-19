@@ -1,0 +1,4 @@
+interface:
+  display_name: "Update Docs"
+  short_description: "Update docs guides after a change"
+  default_prompt: "Use $update-docs to update the docs/ guides affected by this change."

@@ -1,17 +1,17 @@
 ---
 name: codebase-recon
-description: Project-specific reconnaissance skill for the Golf ScoreCard app. Use as the first phase of make-code-change, or when the user wants a written map of likely files, code paths, tests, dependencies, and risks before planning or implementing a repository change.
+description: Project-specific backend reconnaissance skill for the Golf ScoreCard app. Use as the first phase of make-code-change, or when the user wants a written map of likely files, code paths, tests, dependencies, and risks before planning or implementing a backend repository change.
 ---
 
 # Codebase Recon
 
 ## Purpose
 
-Inspect the Golf ScoreCard repository for the requested change and write the findings into the branch-named recon artifact. Do not modify application or test code during recon.
+Inspect the Golf ScoreCard repository for the requested backend change and write the findings into the branch-named recon artifact. Do not modify application or test code during recon.
 
 ## Artifact
 
-Create and own this artifact path defined by `$make-code-change`:
+Create and own this artifact path defined by `$make-code-change`, including its rule for reusing an existing artifact:
 
 ```text
 .codex/change-artifacts/recon/<branch-slug>.md
@@ -24,15 +24,14 @@ Do not create or modify the implementation artifact.
 
 1. Capture the current branch with `git branch --show-current`.
 2. Check the worktree with `git status --short`; note unrelated dirty files and avoid touching them.
-3. Read `AGENTS.md` if present and apply its repo guidance.
+3. Read `AGENTS.md` if present, then the relevant guides in `docs/`: start from `docs/backend/README.md` and read the guide for each backend domain the change touches.
 4. Search with `rg` and `rg --files` before broader commands.
 5. Identify the likely implementation surface:
-   - backend routers, services, repositories, models, migrations, or analytics
-   - frontend pages, components, API client, types, styles, or accessibility helpers
-   - LLM extraction prompts, strategies, confidence scoring, or tests
+   - API routers, request/response schemas, and dependencies
+   - services, including the scan extraction pipeline and provider adapters
+   - domain models, analytics, repositories, converters, schema, or migrations
 6. Identify the likely test surface:
-   - existing `tests/test_*.py` targets for backend/model/LLM/service changes
-   - frontend package checks or component tests if present
+   - existing `tests/test_*.py` targets for the affected domains
    - DB-dependent areas: distinguish Python-only branching/conversion that can use unit fakes from SQL, constraint, ownership, transaction, and PostgreSQL-specific behavior that needs integration coverage
 7. Note assumptions, unknowns, and possible blockers.
 8. Decide whether any assumption, unknown, or implementation choice materially affects scope, behavior, structure, reliability, or review expectations.
@@ -43,17 +42,13 @@ Do not convert an unresolved question into a decision merely because one option 
 
 ## Golf ScoreCard Map
 
-Use these landmarks while investigating:
+Use these landmarks while investigating. The domain guides in `docs/backend/` are the maintained source; prefer them when they disagree with this list.
 
 - `models/`: Pydantic domain models with optional fields for partial scanned data.
-- `llm/`: Gemini scorecard extraction, prompts, strategies, confidence.
-- `services/scan_service.py`: course resolution, clamping, hole score construction, user tee creation.
-- `api/routers/`: FastAPI endpoints for scan, courses, rounds, users, and stats.
+- `services/`: scan workflows and provider adapters. The active extraction pipeline is `mistral_ocr_service.py` (OCR), `gemini_table_merger.py` (optional table merging), and `mistral_scorecard_parser.py` (rows, players, hole columns); `scan_service.py` handles the reviewed-save workflow.
+- `api/routers/`: FastAPI endpoints for auth, scan, scan reports, courses, rounds, users, stats, and AI insights. `scan.py` also assembles parsed extraction results.
 - `database/`: asyncpg repositories, converters, schema, migrations.
-- `analytics/`: stats and goal report logic.
-- `frontend/src/pages/`: app workflows for scan, courses, rounds, dashboard, suggestions.
-- `frontend/src/lib/api.ts`: frontend API client.
-- `frontend/src/types/`: scan and analytics types.
+- `analytics/`: stats, handicap, and goal report logic.
 
 ## Output Format
 
@@ -76,6 +71,9 @@ Write or update this section in the artifact:
 ### Test Surface
 - `<test path or command>`: <coverage purpose>
 
+### Affected Docs
+- `<docs path>`: <what may need updating>
+
 ### Assumptions And Unknowns
 - <item>
 
@@ -90,13 +88,19 @@ Keep the recon specific enough to support planning, but avoid speculative implem
 
 ## Continuous Skill Improvement
 
-At the end of every invocation, assess whether this skill's instructions caused or failed to prevent a demonstrated, reusable workflow problem.
+At the end of every invocation, check whether this recon run exposed a reusable gap in this skill. Typical evidence:
 
-- Improve this `SKILL.md` on the current working branch only when the current run provides concrete evidence and the correction is narrow, generalizable, and preserves the skill's purpose.
-- Do not add rules for application bugs, one-off tool or environment failures, speculative edge cases, or a preference that applies only to the current task.
+- A landmark in the map above was missing, renamed, or no longer accurate.
+- Planning or implementation later needed a file, test, or risk that recon should have found.
+- Recon asked a clarification question the repository already answered, or skipped one that changed the plan.
+
+When the evidence is concrete:
+
+- Make the smallest correction to this `SKILL.md` that would have prevented the problem. Fix a stale landmark as soon as you confirm it.
+- Keep the skill change separate from the user's task: make it as its own edit and list it under a separate "Skill changes" heading in the final response, with the evidence, so the user can review and commit it apart from the feature work.
+- Do not add rules for application bugs, one-off tool or environment failures, speculative edge cases, or preferences that apply only to the current task.
 - Do not weaken confirmation gates, expand mutation authority, or materially change workflow scope without explicit user approval. Propose those changes instead.
-- Make the smallest instruction change that would have prevented the observed problem, preserve user-authored guidance, and avoid duplicating rules already enforced elsewhere.
+- Preserve user-authored guidance and avoid duplicating rules already enforced elsewhere.
 - Validate the modified skill with the skill-creator `quick_validate.py` script when available.
-- Mention any skill change and the evidence for it in the final response. If no reusable gap appeared, leave the skill unchanged.
 
-Skill maintenance must not interrupt or replace completion of the user's primary task.
+If no reusable gap appeared, leave the skill unchanged. Skill maintenance must not interrupt or replace completion of the user's primary task.
