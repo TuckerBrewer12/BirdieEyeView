@@ -29,6 +29,14 @@ class Round(BaseGolfModel):
     _summary_sources: dict[str, Optional[tuple]] = PrivateAttr(default_factory=dict)
 
     @model_validator(mode='after')
+    def check_intended_layout(self):
+        layout = self.course.get_expected_holes() if self.course is not None else None
+        if self.intended_holes is not None and layout is not None:
+            if not set(self.intended_holes) <= set(layout):
+                raise ValueError('Intended holes are outside the linked course layout')
+        return self
+
+    @model_validator(mode='after')
     def check_summary_bounds(self):
         coverage = self.get_intended_holes()
         count = len(coverage) if coverage is not None else 18
@@ -103,11 +111,13 @@ class Round(BaseGolfModel):
         return self.update_field('hole_scores', scores)
 
     def get_tee(self) -> Optional[Union[Tee, UserTee]]:
-        """Get the tee used for this round — course tee first, user_tee as fallback."""
+        """Course tee first; user_tee only when the course has no tee with that name."""
         if self.course and self.tee_box:
-            tee = self.course.get_tee(self.tee_box)
-            if tee is not None:
-                return tee
+            matches = self.course.get_tee_matches(self.tee_box)
+            if len(matches) > 1:
+                return None  # Ambiguous course tee: never substitute a custom tee.
+            if matches:
+                return matches[0]
         if self.user_tee is not None:
             return self.user_tee
         return None

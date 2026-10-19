@@ -60,11 +60,15 @@ class Course(BaseGolfModel):
             return FULL_ROUND
         return None
 
+    def get_tee_matches(self, color: Optional[str]) -> list[Tee]:
+        """All tees whose color matches case-insensitively; more than one is ambiguous."""
+        if not color:
+            return []
+        return [tee for tee in self.tees if tee.color and tee.color.casefold() == color.casefold()]
+
     def get_tee(self, color: Optional[str]) -> Optional[Tee]:
         """Get a tee by its color."""
-        if not color:
-            return None
-        matches = [tee for tee in self.tees if tee.color and tee.color.casefold() == color.casefold()]
+        matches = self.get_tee_matches(color)
         return matches[0] if len(matches) == 1 else None
 
     def get_hole(self, number: int) -> Optional[Hole]:

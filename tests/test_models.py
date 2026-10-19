@@ -671,3 +671,34 @@ def test_ambiguous_rating_records_do_not_choose_a_winner(tee_factory):
         TeeRating(hole_numbers=FRONT_NINE, course_rating=27.1),
     ])
     assert tee.get_rating(FRONT_NINE) is None
+
+
+def _nine_hole_course():
+    return Course(name="Nine", total_holes=9, holes=[Hole(number=n, par=4) for n in FRONT_NINE])
+
+
+def test_intended_holes_must_fit_the_linked_course_layout():
+    scores = [HoleScore(hole_number=n, strokes=5) for n in BACK_NINE]
+    with pytest.raises(ValidationError, match="outside the linked course layout"):
+        Round(course=_nine_hole_course(), intended_holes=BACK_NINE, hole_scores=scores)
+
+    round_ = Round(course=_nine_hole_course(), intended_holes=FRONT_NINE)
+    assert round_.update_field("intended_holes", BACK_NINE) is not None
+    assert round_.intended_holes == FRONT_NINE
+
+    eighteen = Course(name="Full", total_holes=18)
+    assert Round(course=eighteen, intended_holes=BACK_NINE).intended_holes == BACK_NINE
+    assert Round(course=Course(name="Unknown"), intended_holes=BACK_NINE).intended_holes == BACK_NINE
+
+
+def test_ambiguous_course_tee_does_not_fall_back_to_user_tee():
+    custom = UserTee(user_id="u", name="Mine")
+    ambiguous = Course(name="T", tees=[Tee(color="Blue"), Tee(color="blue")])
+    assert Round(course=ambiguous, tee_box="Blue", user_tee=custom).get_tee() is None
+
+    unmatched = Course(name="T", tees=[Tee(color="White")])
+    assert Round(course=unmatched, tee_box="Blue", user_tee=custom).get_tee() is custom
+
+    blue = Tee(color="Blue")
+    single = Course(name="T", tees=[blue, Tee(color="White")])
+    assert Round(course=single, tee_box="blue", user_tee=custom).get_tee() is blue
