@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi.encoders import jsonable_encoder  # noqa: E402
 
-from api.round_responses import round_detail, round_summary  # noqa: E402
+from api.round_responses import round_detail  # noqa: E402
 from api.routers import stats  # noqa: E402
 from models import Course, Hole, HoleScore, Round, Tee, User  # noqa: E402
 
@@ -165,7 +165,6 @@ async def _responses() -> dict:
     rounds = _season()
     db = _database(rounds)
     user_id = UUID(USER.id)
-    newest_first = sorted(rounds, key=lambda r: r.date, reverse=True)
 
     dashboard = await stats.get_dashboard(user_id, db, USER)
     analytics = await stats.get_analytics(user_id, 50, None, None, db, USER)
@@ -188,7 +187,7 @@ async def _responses() -> dict:
         "dashboard": dashboard,
         "analytics": analytics,
         "goalReport": goal_report,
-        "rounds": [round_summary(r) for r in newest_first],
+        # The tour's pages never ask for the round list; Analytics opens just the best round.
         "detailRounds": [round_detail(best)],
     })
 
@@ -202,9 +201,24 @@ import type { FakeBackendSeed } from "../fakes/FakeBackend";
 export const sampleGolfer = """
 
 
+def _format(value, depth: int = 0) -> str:
+    """JSON with each flat object or list on one line, so a hole or a trend point reads as a row."""
+    flat = json.dumps(value, sort_keys=True, separators=(", ", ": "))
+    if not isinstance(value, (dict, list)) or not any(isinstance(v, (dict, list)) for v in (
+        value.values() if isinstance(value, dict) else value
+    )):
+        return flat
+    inner = "  " * (depth + 1)
+    if isinstance(value, dict):
+        items = [f"{inner}{json.dumps(k)}: {_format(value[k], depth + 1)}" for k in sorted(value)]
+        return "{\n" + ",\n".join(items) + "\n" + "  " * depth + "}"
+    items = [f"{inner}{_format(v, depth + 1)}" for v in value]
+    return "[\n" + ",\n".join(items) + "\n" + "  " * depth + "]"
+
+
 def main() -> int:
     seed = asyncio.run(_responses())
-    body = json.dumps(seed, indent=2, sort_keys=True)
+    body = _format(seed)
     OUT.write_text(HEADER + body + " satisfies FakeBackendSeed;\n")
     print(f"wrote {OUT.relative_to(Path.cwd()) if OUT.is_relative_to(Path.cwd()) else OUT}")
     return 0
