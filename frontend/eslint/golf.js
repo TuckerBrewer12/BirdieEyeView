@@ -24,12 +24,35 @@ const GOLF_TYPE_NAMES = new Set([
   "Round", "HoleScore", "Hole", "Nine", "Course", "Tee", "ScoreCounts", "ScoreKind", "RoundCourse", "UserTee",
 ]);
 
+/** Operators that take one value or fall back to another. */
+const FALLBACK_OPS = new Set(["??", "||"]);
+
+/** Comparison operators that sort a value against another. */
+const COMPARE_OPS = new Set(["<", ">", "<=", ">=", "===", "!==", "==", "!="]);
+
+/**
+ * The name a value is read by: `toPar`, `hole.par` → `par`, `SAMPLE.strokes[i]` → `strokes`,
+ * `(round.toPar ?? 0)` → `toPar`, `x as number` → `x`.
+ */
 function nameOf(node) {
   if (!node) return null;
   if (node.type === "Identifier") return node.name;
   if (node.type === "MemberExpression" && !node.computed) return node.property.name;
-  if (node.type === "ChainExpression") return nameOf(node.expression);
-  if (node.type === "TSNonNullExpression") return nameOf(node.expression);
+  if (node.type === "MemberExpression") {
+    // `row["par"]` reads `par`; `strokes[i]` reads one of the `strokes`.
+    if (node.property.type === "Literal" && typeof node.property.value === "string") return node.property.value;
+    return nameOf(node.object);
+  }
+  if (node.type === "LogicalExpression" && FALLBACK_OPS.has(node.operator)) return nameOf(node.left);
+  if (
+    node.type === "ChainExpression" ||
+    node.type === "TSNonNullExpression" ||
+    node.type === "TSAsExpression" ||
+    node.type === "TSSatisfiesExpression" ||
+    node.type === "TSTypeAssertion"
+  ) {
+    return nameOf(node.expression);
+  }
   return null;
 }
 
@@ -87,7 +110,7 @@ const noToParBranch = {
   create(context) {
     return {
       BinaryExpression(node) {
-        if (!["<", ">", "<=", ">=", "===", "!==", "==", "!="].includes(node.operator)) return;
+        if (!COMPARE_OPS.has(node.operator)) return;
         const [named, number] = isNumber(node.right) ? [node.left, node.right] : [node.right, node.left];
         if (!isNumber(number)) return;
         const name = nameOf(named);
@@ -111,16 +134,56 @@ const noGolfMath = {
       math:
         "`{{left}} - {{right}}` works out a score against par in a view. The backend sends to-par for every hole, " +
         "nine and round, and Round.previewEdits is the one frontend place that recomputes it while editing.",
+      compare:
+        "`{{left}} {{op}} {{right}}` classifies a score against par in a view. The server sends each hole's " +
+        "`kind` and `toPar`, and domain/score.ts has scoreKind. Read those instead of comparing strokes to par.",
     },
   },
   create(context) {
     return {
       BinaryExpression(node) {
-        if (node.operator !== "-") return;
         const left = nameOf(node.left);
         const right = nameOf(node.right);
-        if (left && right && STROKES_NAME.test(left) && PAR_NAME.test(right)) {
-          context.report({ node, messageId: "math", data: { left, right } });
+        if (!left || !right) return;
+        if (node.operator === "-") {
+          if (STROKES_NAME.test(left) && PAR_NAME.test(right)) {
+            context.report({ node, messageId: "math", data: { left, right } });
+          }
+          return;
+        }
+        if (!COMPARE_OPS.has(node.operator)) return;
+        const strokesVsPar =
+          (STROKES_NAME.test(left) && PAR_NAME.test(right)) || (PAR_NAME.test(left) && STROKES_NAME.test(right));
+        if (strokesVsPar) {
+          context.report({ node, messageId: "compare", data: { left, op: node.operator, right } });
+        }
+      },
+    };
+  },
+};
+
+const noParFallback = {
+  meta: {
+    type: "problem",
+    docs: { description: "Read the par played the server sends, not one par falling back to another." },
+    schema: [],
+    messages: {
+      fallback:
+        "`{{left}} {{op}} {{right}}` falls back from one par to another. The round's par played and the course's " +
+        "par are different figures, so this shows the wrong one whenever they differ. The server sends the par " +
+        "played on the round and on each hole: read that one.",
+    },
+  },
+  create(context) {
+    // A nested fallback (`a ?? b ?? c`) is reported once, on the pair that names two pars.
+    const side = (node) => (node.type === "LogicalExpression" ? null : nameOf(node));
+    return {
+      LogicalExpression(node) {
+        if (!FALLBACK_OPS.has(node.operator)) return;
+        const left = side(node.left);
+        const right = side(node.right);
+        if (left && right && PAR_NAME.test(left) && PAR_NAME.test(right)) {
+          context.report({ node, messageId: "fallback", data: { left, op: node.operator, right } });
         }
       },
     };
@@ -159,6 +222,7 @@ export default {
     "no-score-kind-table": noScoreKindTable,
     "no-to-par-branch": noToParBranch,
     "no-golf-math": noGolfMath,
+    "no-par-fallback": noParFallback,
     "no-shadowed-golf-type": noShadowedGolfType,
   },
 };
