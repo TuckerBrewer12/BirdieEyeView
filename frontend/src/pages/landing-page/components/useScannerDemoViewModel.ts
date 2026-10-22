@@ -12,10 +12,10 @@ interface ScannerStep {
 }
 
 const STEPS: ScannerStep[] = [
-  { phase: "photo", label: "1. Snap a Photo", holdMs: 1000 },
-  { phase: "mapping", label: "2. Tell it what to read", holdMs: 4000 },
-  { phase: "scanning", label: "3. AI Extraction", holdMs: 1500 },
-  { phase: "result", label: "4. Pure Clean Stats", holdMs: 5000 },
+  { phase: "photo", label: "1. Snap a photo", holdMs: 1000 },
+  { phase: "mapping", label: "2. Say what's on the card", holdMs: 4000 },
+  { phase: "scanning", label: "3. Read every hole", holdMs: 1500 },
+  { phase: "result", label: "4. Your round", holdMs: 5000 },
 ];
 
 /** One hole of the sample card the demo resolves to, ready to render. */

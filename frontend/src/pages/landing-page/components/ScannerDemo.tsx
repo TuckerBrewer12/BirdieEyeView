@@ -110,13 +110,13 @@ function MappingPanel() {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center p-4 sm:p-6"
+      className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 pt-4 pb-16 sm:px-6"
     >
       <div className="flex w-full max-w-md flex-col overflow-hidden rounded-xl bg-card font-sans shadow-card">
-        <div className="border-b border-border p-4 sm:p-5">
-          <h3 className="mb-4 text-sm font-bold text-foreground">What's on your card?</h3>
+        <div className="border-b border-border p-4">
+          <h3 className="mb-3 text-sm font-bold text-foreground">What's on your card?</h3>
 
-          <div className="mb-4">
+          <div className="mb-3">
             <div className="mb-1.5 flex items-center gap-1 text-caption font-bold uppercase tracking-chip text-muted-foreground">
               Your Name On The Card
             </div>
@@ -130,7 +130,7 @@ function MappingPanel() {
             </div>
           </div>
 
-          <div className="mb-4">
+          <div className="mb-3">
             <div className="mb-1.5 flex items-center gap-1 text-caption font-bold uppercase tracking-chip text-muted-foreground">
               Scoring Format
             </div>
@@ -163,7 +163,7 @@ function MappingPanel() {
             </div>
           </div>
 
-          <div className="mb-4">
+          <div>
             <div className="mb-1.5 flex items-center gap-1 text-caption font-bold uppercase tracking-chip text-muted-foreground">
               Also On The Card
             </div>
@@ -190,8 +190,8 @@ function MappingPanel() {
           </div>
         </div>
 
-        <div className="overflow-hidden bg-muted p-4 sm:p-5">
-          <div className="relative mb-4 flex flex-col gap-2">
+        <div className="overflow-hidden bg-muted p-4">
+          <div className="relative flex flex-col gap-2">
             <div className="relative flex gap-2">
               <div className="z-10 flex w-16 items-center justify-center rounded-md bg-scan-row-name text-xs font-bold text-primary-foreground shadow-card">
                 NAME
@@ -200,7 +200,7 @@ function MappingPanel() {
                 initial={{ x: "120%", opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 2.6, ...DEMO_MOTION.rowSpring }}
-                className="flex flex-1 items-center gap-2 rounded-md bg-scan-row-score px-3 py-2 text-xs font-semibold text-primary-foreground"
+                className="flex flex-1 items-center gap-2 rounded-md bg-scan-row-score px-3 py-1.5 text-xs font-semibold text-primary-foreground"
               >
                 <GripVertical className="size-3.5 opacity-50" /> Score
               </motion.div>
@@ -210,7 +210,7 @@ function MappingPanel() {
               initial={{ x: "120%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 2.9, ...DEMO_MOTION.rowSpring }}
-              className="flex w-full items-center gap-2 rounded-md bg-scan-row-shots px-3 py-2 text-xs font-semibold text-primary-foreground"
+              className="flex w-full items-center gap-2 rounded-md bg-scan-row-shots px-3 py-1.5 text-xs font-semibold text-primary-foreground"
             >
               <GripVertical className="size-3.5 opacity-50" /> Shots to Green
             </motion.div>
@@ -219,20 +219,11 @@ function MappingPanel() {
               initial={{ x: "120%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 3.2, ...DEMO_MOTION.rowSpring }}
-              className="flex w-full items-center gap-2 rounded-md bg-scan-row-putts px-3 py-2 text-xs font-semibold text-primary-foreground"
+              className="flex w-full items-center gap-2 rounded-md bg-scan-row-putts px-3 py-1.5 text-xs font-semibold text-primary-foreground"
             >
               <GripVertical className="size-3.5 opacity-50" /> Putts
             </motion.div>
           </div>
-
-          <motion.div
-            initial={{ scale: 1 }}
-            animate={{ scale: [1, 0.95, 1] }}
-            transition={{ delay: 3.8, duration: DEMO_MOTION.emphasis }}
-            className="flex items-center justify-center gap-2 rounded-md bg-scan-row-score py-3 text-center text-sm font-bold text-primary-foreground shadow-card"
-          >
-            <ScanLine className="size-4" /> Extract Scorecard
-          </motion.div>
         </div>
       </div>
     </motion.div>
@@ -243,7 +234,7 @@ export function ScannerDemo() {
   const { phase, label, scorecard } = useScannerDemoViewModel();
 
   return (
-    <div className="relative flex aspect-4/3 w-full max-w-lg items-center justify-center overflow-hidden rounded-2xl border border-border bg-card shadow-card sm:aspect-11/10">
+    <div className="relative flex aspect-3/4 w-full max-w-lg items-center justify-center overflow-hidden rounded-2xl border border-border bg-card shadow-card sm:aspect-11/10 lg:aspect-square">
       <motion.img
         src="/hero/physical-card.jpg"
         alt="A paper golf scorecard being scanned"
@@ -276,7 +267,7 @@ export function ScannerDemo() {
 
       <motion.div
         layout
-        className="absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full bg-foreground/90 px-4 py-2 text-xs font-semibold tracking-chip text-background shadow-card backdrop-blur"
+        className="absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full whitespace-nowrap bg-foreground/90 px-4 py-2 text-xs font-semibold tracking-chip text-background shadow-card backdrop-blur"
       >
         {phase === "mapping" && <Type className="size-3.5 text-primary" />}
         {phase === "scanning" && <ScanLine className="size-3.5 animate-pulse text-score-birdie" />}
