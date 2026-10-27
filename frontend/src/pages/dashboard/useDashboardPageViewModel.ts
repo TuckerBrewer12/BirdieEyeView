@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
-import { Round, type ScoreMix } from "@/domain";
+import { Round, trendPointsFrom, type RoundTrendPoint, type ScoreMix } from "@/domain";
 import type { DashboardData, User } from "@/types/golf";
 import type { AnalyticsData } from "@/types/analytics";
 import {
@@ -9,7 +9,6 @@ import {
   type DashboardRepository,
 } from "./dashboardRepository";
 import {
-  dualTrendFrom,
   goalProgress,
   milestonesFrom,
   pickBestRound,
@@ -17,7 +16,6 @@ import {
   scoreMixItems,
   shortGameTrendFrom,
   whsFrom,
-  type DualTrendPoint,
   type GoalProgress,
   type HiTrend,
   type Milestone,
@@ -27,7 +25,7 @@ import {
   type WhsBreakdown,
 } from "./model";
 
-export type { DualTrendPoint, HiTrend, TrendView, WhsBreakdown };
+export type { HiTrend, TrendView, WhsBreakdown };
 export type { ScoreMixItem };
 
 export interface DashboardPageViewModel {
@@ -37,7 +35,8 @@ export interface DashboardPageViewModel {
   loading: boolean;
   error: Error | null;
   refetch: () => void;
-  dualData: DualTrendPoint[];
+  /** Score and handicap per round across the window, oldest first. */
+  trend: RoundTrendPoint[];
   /** Scores across the trend window, oldest first. */
   recentScores: number[];
   /** Null until two rounds have both short-game rates. */
@@ -125,8 +124,8 @@ export function useDashboardPageViewModel(
   const openHandicapSheet = useCallback(() => setHandicapSheetOpen(true), []);
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
 
-  const dualData = useMemo(() => dualTrendFrom(trends), [trends]);
-  const recentScores = useMemo(() => recentScoresFrom(dualData), [dualData]);
+  const trend = useMemo(() => trendPointsFrom(trends), [trends]);
+  const recentScores = useMemo(() => recentScoresFrom(trend), [trend]);
   const shortGameTrend = useMemo(() => shortGameTrendFrom(trends), [trends]);
   const report = goalReport ?? null;
 
@@ -137,7 +136,7 @@ export function useDashboardPageViewModel(
     loading,
     error: error as Error | null,
     refetch,
-    dualData,
+    trend,
     recentScores,
     shortGameTrend,
     milestones: data ? milestonesFrom(data.milestones) : [],

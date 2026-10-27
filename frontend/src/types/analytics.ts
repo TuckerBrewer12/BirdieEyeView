@@ -23,6 +23,8 @@ export interface HandicapTrendRow {
   used_in_hi?: boolean | null;
   differential?: number | null;
   hi_threshold?: number | null;
+  /** Where the server puts `differential` in the WHS window. */
+  differential_status?: "counting" | "close" | "out" | "unrated";
 }
 
 export interface ScoreDifferentialRow {

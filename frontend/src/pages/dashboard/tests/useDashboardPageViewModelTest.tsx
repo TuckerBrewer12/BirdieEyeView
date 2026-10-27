@@ -91,8 +91,8 @@ describe("useDashboardPageViewModel", () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.trendView).toBe("score");
-    act(() => result.current.setTrendView("hcp"));
-    expect(result.current.trendView).toBe("hcp");
+    act(() => result.current.setTrendView("handicap"));
+    expect(result.current.trendView).toBe("handicap");
   });
 
   it("surfaces an error when the dashboard fetch fails", async () => {
@@ -112,7 +112,7 @@ describe("useDashboardPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.data?.total_rounds).toBe(4);
     expect(result.current.trends).toBeNull();
-    expect(result.current.dualData).toEqual([]);
+    expect(result.current.trend).toEqual([]);
   });
 
   it("exposes the scoring goal from the user and report", async () => {

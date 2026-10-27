@@ -25,13 +25,13 @@ import { RecentRoundsTable } from "./components/RecentRoundsTable";
 import { ScanActionCard } from "./components/ScanActionCard";
 import { ScoreMixChart } from "./components/ScoreMixChart";
 import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
-import { avgLabel, dashboardPalette, firstNameOf, pctLabel } from "./present";
+import { avgLabel, firstNameOf, pctLabel } from "./present";
 
 export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
   const {
     data, user, shortGameTrend,
-    dualData, milestones, last20ScoringAvg, hiTrend,
+    trend, milestones, last20ScoringAvg, hiTrend,
     recentDistribution, girPct, scramblingPct, upAndDownPct, putts,
     bestRound, sidebarRounds, goal,
     openHandicapSheet,
@@ -89,12 +89,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                 <CardDescription>Last 20 rounds</CardDescription>
               </CardHeader>
               <CardContent>
-                <SVGScoreHandicapTrend
-                  data={dualData}
-                  scoreColor={dashboardPalette.scoreLineColor}
-                  handicapColor={dashboardPalette.handicapLineColor}
-                  gridColor={dashboardPalette.gridColor}
-                />
+                <SVGScoreHandicapTrend data={trend} />
               </CardContent>
             </Card>
 

@@ -22,7 +22,8 @@ export const chartTickStyle = {
 
 /** Recharts only accepts numbers for layout, so these mirror tokens.css in pixels:
  *  `barRadius` is --brand-radius-md, `barMaxWidth` --brand-size-bar-max, `ring` and `gauge`
- *  --brand-size-ring-* and --brand-size-gauge-*, and `plot.height` --brand-size-chart.
+ *  --brand-size-ring-* and --brand-size-gauge-*, `plot.height` --brand-size-chart, and
+ *  `plotCompact` --brand-size-chart-compact-w and --brand-size-chart-compact.
  *  `sparkline` is --brand-size-sparkline-w/-h, --brand-space-tight padding, --brand-sparkline-stroke
  *  and a --brand-space-dot marker, and `flow.width` --brand-size-chart-wide. tokens.test.ts fails if one drifts. The plot margins follow the 4px spacing scale. */
 export const chartLayout = {
@@ -44,6 +45,12 @@ export const chartLayout = {
     barGap: 2,
     dot: 3.5,
     dotHover: 6,
+  },
+  /** The same plot on a phone: narrower and taller, one series at a time, so no right-hand axis. */
+  plotCompact: {
+    width: 320,
+    height: 210,
+    pad: { top: 16, right: 16, bottom: 32, left: 44 },
   },
   /** Unitless SVG for a figure's trend line. Scales to its container's width, keeping this shape. */
   sparkline: {
