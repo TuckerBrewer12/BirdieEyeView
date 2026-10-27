@@ -154,6 +154,7 @@ describe("dashboard model", () => {
         round_id: `r${i}`,
         scramble_opportunities: 8,
         scramble_successes: 4,
+        scramble_failures: 4,
         scrambling_percentage: i,
       })),
       // Round 14 has no up-and-down chance, so it drops out of both lines.

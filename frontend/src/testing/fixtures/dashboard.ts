@@ -231,6 +231,7 @@ export const populatedAnalytics = emptyAnalytics({
     round_id: row.round_id,
     scramble_opportunities: 8,
     scramble_successes: 3,
+    scramble_failures: 5,
     scrambling_percentage: 37.5,
   })),
   up_and_down_trend: scoreTrend.map((row) => ({
