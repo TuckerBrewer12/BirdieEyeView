@@ -120,6 +120,11 @@ jobs:
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'lint'
         run: npm run lint -- --max-warnings=0
 
+      # Unused files and dependencies: dead code an agent left behind, or a package nothing imports.
+      - name: Knip
+        if: needs.changes.outputs.frontend == 'true' && matrix.check == 'lint'
+        run: npm run knip
+
       - name: Generated API types are current
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'types'
         run: npm run check:api
@@ -172,3 +177,9 @@ jobs:
 
       - name: Check CI never regenerates screenshot baselines
         run: python scripts/ci/check_no_snapshot_updates.py
+
+      - name: Check every kit component, page and view model has its tests
+        run: python scripts/ci/check_frontend_conventions.py
+
+      - name: Check backend conventions ruff can't express
+        run: python scripts/ci/check_backend_conventions.py

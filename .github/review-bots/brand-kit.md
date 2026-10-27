@@ -38,6 +38,18 @@ If no token matches, say so and name the closest one in `tokens.css`.
 chip, banner, panel, search input, or card that the kit already provides. Name
 the component it should be using.
 
+**A copy of something the theme or domain already has.** A lookup table,
+formatter or branch that redoes what `brand/theme/` or `frontend/src/domain/`
+already provides: score-type words or colours (`scoreKindLabel`,
+`scoreFillClass`, `scoreOnFillClass`, `colors.score[kind]`), to-par colour and
+text (`toParTextClass`, `toParTone`, `toParLabel`, `toParDisplay`), or golf
+rules (`scoreKind`, the server's `kind` and `toPar`). Before letting a new
+helper, constant or `Record<ScoreKey, …>` through, search `brand/theme/` and
+`domain/` for one that already exists, and name it. `npm run lint` catches the
+mechanical cases (the `golf/*` and `kit/*` rules in `frontend/eslint/`). You
+catch the rest: the same list in a different shape, or an existing helper
+rewritten under another name.
+
 **A hand-rolled component that belongs in the kit.** Something new and generic
 enough that another page will want it. Say so, and where it should live.
 
