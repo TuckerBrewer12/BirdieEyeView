@@ -956,8 +956,9 @@ export interface components {
             /**
              * Source
              * @default local
+             * @enum {string}
              */
-            source: string;
+            source: "local" | "external";
             /**
              * Tee Count
              * @default 0

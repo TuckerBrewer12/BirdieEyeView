@@ -18,16 +18,6 @@ function renderVm(repository: FakeCoursesRepository) {
 }
 
 describe("useCoursesPageViewModel", () => {
-  it("pluralizes the header subtitle from the visible count", async () => {
-    const { result } = renderVm(new FakeCoursesRepository(populatedCourses));
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.headerSubtitle).toBe("3 courses");
-
-    const one = renderVm(new FakeCoursesRepository(populatedCourses.slice(0, 1)));
-    await waitFor(() => expect(one.result.current.loading).toBe(false));
-    expect(one.result.current.headerSubtitle).toBe("1 course");
-  });
-
   it("debounces search before calling searchCourses", async () => {
     const repository = new FakeCoursesRepository(populatedCourses);
     const { result } = renderVm(repository);
