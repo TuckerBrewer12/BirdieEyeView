@@ -14,6 +14,8 @@ export const populatedCourses: CourseSummary[] = [
     par: 72,
     total_holes: 18,
     tee_count: 4,
+    external_course_id: null,
+    source: "local",
   },
   {
     id: "course-blue-rock",
@@ -22,6 +24,8 @@ export const populatedCourses: CourseSummary[] = [
     par: 72,
     total_holes: 18,
     tee_count: 3,
+    external_course_id: null,
+    source: "local",
   },
   {
     id: "course-pebble",
@@ -30,5 +34,7 @@ export const populatedCourses: CourseSummary[] = [
     par: 72,
     total_holes: 18,
     tee_count: 5,
+    external_course_id: null,
+    source: "local",
   },
 ];

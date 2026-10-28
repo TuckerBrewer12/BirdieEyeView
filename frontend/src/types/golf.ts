@@ -1,5 +1,6 @@
 import type {
   CourseDto,
+  CourseSummaryDto,
   DashboardDto,
   HoleDto,
   HoleScoreDto,
@@ -18,16 +19,7 @@ export type Hole = HoleDto;
 export type Tee = TeeDto;
 export type Course = CourseDto;
 
-export interface CourseSummary {
-  id: string;
-  name: string | null;
-  external_course_id?: string | null;
-  source?: "local" | "external";
-  location: string | null;
-  par: number | null;
-  total_holes: number;
-  tee_count: number;
-}
+export type CourseSummary = CourseSummaryDto;
 
 export interface UserTee {
   id: string | null;

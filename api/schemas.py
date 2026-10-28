@@ -288,7 +288,7 @@ class CourseSummaryResponse(ResponseModel):
     id: str
     name: Optional[str] = None
     external_course_id: Optional[str] = None
-    source: str = "local"
+    source: Literal["local", "external"] = "local"  # external = found through GolfCourseAPI, not saved yet
     location: Optional[str] = None
     par: Optional[int] = None
     total_holes: int = 0
