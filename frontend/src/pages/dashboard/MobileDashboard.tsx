@@ -14,6 +14,7 @@ import {
 } from "@/brand";
 import { GoalCard } from "./components/GoalCard";
 import { GreetingHeader } from "./components/GreetingHeader";
+import { RoundTicket } from "./components/RoundTicket";
 import { ScoringHeroCard } from "./components/ScoringHeroCard";
 import { ShortGameCard } from "./components/ShortGameCard";
 import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
@@ -52,7 +53,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
       />
 
       {lastRound && (
-        <RoundPreview variant="ticket" round={lastRound} onClick={() => openRound(lastRound.id)} />
+        <RoundTicket round={lastRound} onClick={() => openRound(lastRound.id)} />
       )}
 
       <GoalCard goal={goal} onOpen={openLab} />
