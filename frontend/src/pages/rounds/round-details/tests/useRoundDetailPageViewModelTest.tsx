@@ -39,7 +39,7 @@ describe("useRoundDetailPageViewModel", () => {
       detailRounds: [halfMoonBayRound],
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.courseName).toBe("Half Moon Bay");
+    expect(result.current.played?.course?.name).toBe("Half Moon Bay");
     expect(result.current.played?.score).toBe(78);
     expect(result.current.played?.toPar).toBe(6);
     expect(result.current.teeRating).toBe("72.4 / 130");
@@ -108,7 +108,7 @@ describe("useRoundDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.editor.editing).toBe(false));
     expect(result.current.played?.score).toBe(76);
     const saved = await repository.getRound("round-1");
-    expect(saved.hole_scores.find((s) => s.hole_number === 1)?.strokes).toBe(3);
+    expect(saved.holes.find((hole) => hole.hole === 1)?.strokes).toBe(3);
   });
 
   it("a failed save shows as the page's action error", async () => {
@@ -173,7 +173,7 @@ describe("useRoundDetailPageViewModel", () => {
   it("a missing round is an error, not a spinner", async () => {
     const { result } = renderVm("missing", { detailRounds: [halfMoonBayRound] });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.round).toBeUndefined();
+    expect(result.current.played).toBeNull();
     expect(result.current.loadError).toBe("Round not found.");
   });
 

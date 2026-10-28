@@ -1,7 +1,7 @@
-import { Round as RoundModel } from "../../domain";
-import type { Course, CourseSummary, Round } from "../../types/golf";
+import { Round as RoundModel, type RoundDetail, type RoundEdits } from "../../domain";
+import type { Course, CourseSummary } from "../../types/golf";
 import type { RoundComparison } from "../../types/analytics";
-import type { RoundsRepository, UpdateRoundBody } from "../../pages/rounds/roundsRepository";
+import { updateRequestFrom, type RoundsRepository } from "../../pages/rounds/roundsRepository";
 import { InMemoryRounds, type InMemoryRoundsSeed } from "./InMemoryRounds";
 
 export type FakeRoundsRepositorySeed = InMemoryRoundsSeed;
@@ -22,12 +22,15 @@ export class FakeRoundsRepository implements RoundsRepository {
     return this.store.getRoundsForUser().map(RoundModel.fromSummary);
   }
 
-  async getRound(roundId: string): Promise<Round> {
-    return this.store.getRound(roundId);
+  async getRound(roundId: string): Promise<RoundDetail> {
+    return RoundModel.detailFromDto(this.store.getRound(roundId));
   }
 
-  async updateRound(roundId: string, body: UpdateRoundBody): Promise<Round> {
-    return this.store.updateRound(roundId, body);
+  /** Builds the same requests the real repository sends, and plays them against the store. */
+  async saveRound(round: RoundDetail, edits: RoundEdits): Promise<RoundDetail> {
+    const { linkCourseId, body } = updateRequestFrom(round, edits);
+    if (linkCourseId) this.store.linkCourse(round.id, linkCourseId);
+    return RoundModel.detailFromDto(this.store.updateRound(round.id, body));
   }
 
   async deleteRound(roundId: string): Promise<void> {

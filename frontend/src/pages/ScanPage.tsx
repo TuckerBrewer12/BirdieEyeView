@@ -8,7 +8,8 @@ import { ScanReviewStep } from "@/components/scan/ScanReviewStep";
 import { ScanSuccessStep } from "@/components/scan/ScanSuccessStep";
 import { useScanState } from "@/context/ScanContext";
 import { initialScanState } from "@/types/scan";
-import { api } from "@/lib/api";
+import { queryKeys } from "@/data/queryKeys";
+import { roundsRepository } from "./rounds/roundsRepository";
 
 export function ScanPage({ userId }: { userId: string }) {
   const { scanState, setScanState } = useScanState();
@@ -16,8 +17,9 @@ export function ScanPage({ userId }: { userId: string }) {
   const scan = useScan(userId, scanState, setScanState);
 
   const { data: savedRound } = useQuery({
-    queryKey: ["round", scan.savedRoundId],
-    queryFn: () => api.getRound(scan.savedRoundId!),
+    // Round detail reads the same cache entry, so opening the saved round needs no second fetch.
+    queryKey: queryKeys.round(scan.savedRoundId ?? undefined),
+    queryFn: () => roundsRepository.getRound(scan.savedRoundId!),
     enabled: scan.step === "success" && !!scan.savedRoundId,
   });
 

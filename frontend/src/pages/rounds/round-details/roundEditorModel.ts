@@ -1,23 +1,14 @@
 import { chooseCompatibleTee, teeColors } from "@/domain/course";
-import type { Course, Round } from "@/types/golf";
-import type { UpdateRoundBody } from "../roundsRepository";
-
-export type EditedScores = Record<number, { strokes: number | null; putts: number | null; gir?: boolean | null }>;
-
-export type CourseEdit =
-  | { status: "linked"; course: Course }
-  | { status: "custom"; name: string }
-  | { status: "picking" };
+import type { CourseEdit, HoleEdits, RoundDetail, RoundEdits } from "@/domain";
+import type { Course } from "@/types/golf";
 
 /** Edits exist only while editing, so a closed editor cannot hold stale scores. */
-export type RoundEditor =
-  | { editing: false }
-  | { editing: true; scores: EditedScores; teeBox: string; course: CourseEdit };
+export type RoundEditor = { editing: false } | ({ editing: true } & RoundEdits);
 
 export type OpenRoundEditor = Extract<RoundEditor, { editing: true }>;
 
 export type RoundEditAction =
-  | { type: "start"; round: Round }
+  | { type: "start"; round: RoundDetail }
   | { type: "stop" }
   | { type: "setScore"; hole: number; field: "strokes" | "putts"; value: number | null }
   | { type: "setGir"; hole: number; value: boolean | null }
@@ -25,22 +16,20 @@ export type RoundEditAction =
   | { type: "linkCourse"; course: Course }
   | { type: "useCustomName"; name: string }
   | { type: "changeCourse" }
-  | { type: "restoreCourse"; round: Round };
+  | { type: "restoreCourse"; round: RoundDetail };
 
 export const closedEditor: RoundEditor = { editing: false };
 
-export function courseEditFromRound(round: Round): CourseEdit {
-  if (round.course) return { status: "linked", course: round.course };
-  if (round.course_name_played) return { status: "custom", name: round.course_name_played };
+export function courseEditFromRound(round: RoundDetail): CourseEdit {
+  if (round.linkedCourse) return { status: "linked", course: round.linkedCourse };
+  if (round.playedName) return { status: "custom", name: round.playedName };
   return { status: "picking" };
 }
 
-function scoresFrom(round: Round): EditedScores {
-  const scores: EditedScores = {};
-  for (const s of round.hole_scores) {
-    if (s.hole_number != null) scores[s.hole_number] = { strokes: s.strokes, putts: s.putts };
-  }
-  return scores;
+function holesFrom(round: RoundDetail): HoleEdits {
+  const holes: HoleEdits = {};
+  for (const hole of round.holes) holes[hole.hole] = { strokes: hole.strokes, putts: hole.putts };
+  return holes;
 }
 
 /** Keep the tee if the new course has a matching one, take its only tee, or leave it for the golfer to pick. */
@@ -58,8 +47,8 @@ export function roundEditor(state: RoundEditor, action: RoundEditAction): RoundE
   if (action.type === "start") {
     return {
       editing: true,
-      scores: scoresFrom(action.round),
-      teeBox: action.round.tee_box ?? "",
+      holes: holesFrom(action.round),
+      teeBox: action.round.teeBox ?? "",
       course: courseEditFromRound(action.round),
     };
   }
@@ -70,15 +59,15 @@ export function roundEditor(state: RoundEditor, action: RoundEditAction): RoundE
     case "setScore":
       return {
         ...state,
-        scores: {
-          ...state.scores,
-          [action.hole]: { ...state.scores[action.hole], [action.field]: action.value },
+        holes: {
+          ...state.holes,
+          [action.hole]: { ...state.holes[action.hole], [action.field]: action.value },
         },
       };
     case "setGir":
       return {
         ...state,
-        scores: { ...state.scores, [action.hole]: { ...state.scores[action.hole], gir: action.value } },
+        holes: { ...state.holes, [action.hole]: { ...state.holes[action.hole], gir: action.value } },
       };
     case "setTeeBox":
       return { ...state, teeBox: action.teeBox };
@@ -95,45 +84,4 @@ export function roundEditor(state: RoundEditor, action: RoundEditAction): RoundE
     case "restoreCourse":
       return { ...state, course: courseEditFromRound(action.round) };
   }
-}
-
-export interface SaveRoundRequest {
-  /** Set when the golfer picked a different saved course, which is linked before the update. */
-  linkCourseId: string | null;
-  body: UpdateRoundBody;
-}
-
-export function saveRequestFrom(round: Round, editor: OpenRoundEditor): SaveRoundRequest {
-  const { course } = editor;
-  const linkCourseId =
-    course.status === "linked" && course.course.id && course.course.id !== round.course?.id
-      ? course.course.id
-      : null;
-
-  const holeScores = round.hole_scores
-    .filter((s) => s.hole_number != null)
-    .map((s) => {
-      const edited = editor.scores[s.hole_number!];
-      return {
-        hole_number: s.hole_number!,
-        strokes: edited?.strokes ?? s.strokes,
-        putts: edited?.putts ?? s.putts,
-        fairway_hit: s.fairway_hit,
-        green_in_regulation: edited?.gir !== undefined ? edited.gir : s.green_in_regulation,
-      };
-    });
-
-  // A custom name is written; picking a course clears one the round had.
-  let courseNamePlayed: string | null | undefined;
-  if (course.status === "custom") courseNamePlayed = course.name;
-  else if (round.course_name_played) courseNamePlayed = null;
-
-  return {
-    linkCourseId,
-    body: {
-      hole_scores: holeScores,
-      tee_box: editor.teeBox || null,
-      ...(courseNamePlayed !== undefined ? { course_name_played: courseNamePlayed } : {}),
-    },
-  };
 }
