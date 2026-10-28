@@ -1,19 +1,17 @@
 import { Share2, ArrowRight, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { RoundShareCard, toParLabel, toParTextClass } from "@/brand";
-import { Round as RoundModel } from "@/domain";
+import type { Round } from "@/domain";
 import { useShareRound } from "@/hooks/useShareRound";
 import { formatCourseName } from "@/lib/courseName";
 import { roundShareMessage } from "@/lib/roundShareMessage";
-import type { Round } from "@/types/golf";
 
 interface ScanSuccessStepProps {
   round: Round;
   onView: () => void;
 }
 
-export function ScanSuccessStep({ round, onView }: ScanSuccessStepProps) {
-  const played = RoundModel.fromDto(round);
+export function ScanSuccessStep({ round: played, onView }: ScanSuccessStepProps) {
   const courseName = formatCourseName(played.course?.name);
   const toParStr = toParLabel(played.toPar);
   const { cardRef, share, sharing } = useShareRound();

@@ -1,12 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
-import { roundsRepository, type RoundsRepository, type UpdateRoundBody } from "./roundsRepository";
+import type { RoundDetail, RoundEdits } from "@/domain";
+import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 
 export interface SaveRoundVariables {
-  roundId: string;
-  /** Linked first, when the golfer picked a different saved course. */
-  linkCourseId: string | null;
-  body: UpdateRoundBody;
+  round: RoundDetail;
+  edits: RoundEdits;
 }
 
 /**
@@ -20,15 +19,12 @@ export function useSaveRound(
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ roundId, linkCourseId, body }: SaveRoundVariables) => {
-      if (linkCourseId) await repository.linkCourse(roundId, linkCourseId);
-      return repository.updateRound(roundId, body);
-    },
-    onSuccess: (updated, { roundId }) => {
-      queryClient.setQueryData(queryKeys.round(roundId), updated);
+    mutationFn: ({ round, edits }: SaveRoundVariables) => repository.saveRound(round, edits),
+    onSuccess: (saved, { round }) => {
+      queryClient.setQueryData(queryKeys.round(round.id), saved);
       for (const queryKey of [
         queryKeys.rounds(userId),
-        queryKeys.roundComparison(userId, roundId),
+        queryKeys.roundComparison(userId, round.id),
         queryKeys.careerAnalytics(userId),
         queryKeys.dashboard(userId),
       ]) {

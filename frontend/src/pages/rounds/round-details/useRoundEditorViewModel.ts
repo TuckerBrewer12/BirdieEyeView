@@ -2,18 +2,13 @@ import { useCallback, useReducer, useState } from "react";
 import { teeColors } from "@/domain/course";
 import { useCourseSearch } from "@/hooks/useCourseSearch";
 import { messageFrom } from "@/lib/userFacingErrors";
-import type { Course, CourseSummary, Round } from "@/types/golf";
+import type { CourseEdit, HoleEdits, RoundDetail } from "@/domain";
+import type { Course, CourseSummary } from "@/types/golf";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
 import { useSaveRound } from "../useSaveRound";
-import {
-  closedEditor,
-  roundEditor,
-  saveRequestFrom,
-  type CourseEdit,
-  type EditedScores,
-} from "./roundEditorModel";
+import { closedEditor, roundEditor } from "./roundEditorModel";
 
-const NO_EDITS: EditedScores = {};
+const NO_EDITS: HoleEdits = {};
 const PICKING: CourseEdit = { status: "picking" };
 
 export interface RoundEditorViewModel {
@@ -21,7 +16,7 @@ export interface RoundEditorViewModel {
   saving: boolean;
   /** Why the last save or course pick failed; cleared when editing starts or stops. */
   error: string | null;
-  scores: EditedScores;
+  scores: HoleEdits;
   teeBox: string;
   course: CourseEdit;
   /** The course and tee the round is read against: the ones being edited in, else the round's own. */
@@ -52,8 +47,7 @@ export interface RoundEditorViewModel {
 /** Editing one round: scores, tee and course, then saving them. */
 export function useRoundEditorViewModel(
   userId: string,
-  roundId: string | undefined,
-  round: Round | undefined,
+  round: RoundDetail | undefined,
   repository: RoundsRepository = roundsRepository,
 ): RoundEditorViewModel {
   const [editor, dispatch] = useReducer(roundEditor, closedEditor);
@@ -82,13 +76,14 @@ export function useRoundEditorViewModel(
   }, [clearErrors, resetSearch]);
 
   const save = useCallback(() => {
-    if (!round || !roundId || !editor.editing) return;
+    if (!round || !editor.editing) return;
     clearErrors();
+    const { holes, teeBox, course } = editor;
     saveRound(
-      { roundId, ...saveRequestFrom(round, editor) },
+      { round, edits: { holes, teeBox, course } },
       { onSuccess: () => dispatch({ type: "stop" }) },
     );
-  }, [round, roundId, editor, clearErrors, saveRound]);
+  }, [round, editor, clearErrors, saveRound]);
 
   const pickCourse = useCallback(async (course: CourseSummary) => {
     clearErrors();
@@ -102,18 +97,18 @@ export function useRoundEditorViewModel(
 
   const course = editor.editing ? editor.course : PICKING;
   const activeCourse =
-    editor.editing && editor.course.status === "linked" ? editor.course.course : round?.course ?? null;
-  const playedName = round?.course_name_played ?? null;
+    editor.editing && editor.course.status === "linked" ? editor.course.course : round?.linkedCourse ?? null;
+  const playedName = round?.playedName ?? null;
 
   return {
     editing: editor.editing,
     saving,
     error: saveError ? messageFrom(saveError, "Could not save this round.") : courseLoadError,
-    scores: editor.editing ? editor.scores : NO_EDITS,
+    scores: editor.editing ? editor.holes : NO_EDITS,
     teeBox: editor.editing ? editor.teeBox : "",
     course,
     activeCourse,
-    activeTeeBox: editor.editing ? editor.teeBox : round?.tee_box ?? null,
+    activeTeeBox: editor.editing ? editor.teeBox : round?.teeBox ?? null,
     availableTees: teeColors(activeCourse),
     linkedName: course.status === "linked" ? course.course.name ?? undefined : undefined,
     customName: course.status === "custom" ? course.name : undefined,
