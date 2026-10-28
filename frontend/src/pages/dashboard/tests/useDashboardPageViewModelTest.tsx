@@ -41,6 +41,7 @@ describe("useDashboardPageViewModel", () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.last20ScoringAvg).toBeCloseTo(76.8, 1);
+    expect(result.current.scoringAverageChange).toBe(0);
     expect(result.current.data?.handicap_index).toBe(12.4);
     expect(result.current.user?.name).toBe("Test Golfer");
     expect(result.current.l20ScoreMix).toEqual(populatedDashboard.score_mix);
