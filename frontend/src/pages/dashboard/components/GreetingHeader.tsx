@@ -1,4 +1,4 @@
-import { PageTitle, Stat, StatDelta, StatLabel, StatValue } from "@/brand";
+import { Button, PageTitle, Stat, StatDelta, StatLabel, StatValue } from "@/brand";
 import { formatHandicapIndex } from "@/domain";
 
 interface GreetingHeaderProps {
@@ -29,10 +29,10 @@ export function GreetingHeader({
         </div>
         <PageTitle size="compact">Hi {firstName}</PageTitle>
       </div>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         onClick={onHandicapClick}
-        className="cursor-pointer rounded-lg p-1 text-right hover:bg-muted"
+        className="h-auto cursor-pointer p-1 text-right"
       >
         <Stat align="end">
           <StatLabel>Handicap</StatLabel>
@@ -43,7 +43,7 @@ export function GreetingHeader({
             </StatDelta>
           )}
         </Stat>
-      </button>
+      </Button>
     </div>
   );
 }
