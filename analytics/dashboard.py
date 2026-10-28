@@ -31,6 +31,16 @@ def scoring_average(rounds: List[Round], window: Optional[int] = None) -> Option
     return sum(scores) / len(scores) if scores else None
 
 
+def scoring_average_change(rounds: List[Round], window: int = RECENT_ROUNDS) -> Optional[float]:
+    """How far the last `window` rounds' average sits from the whole window's, to a tenth.
+    Negative means the recent rounds came in lower."""
+    overall = scoring_average(rounds)
+    recent = scoring_average(rounds, window)
+    if overall is None or recent is None:
+        return None
+    return round(recent - overall, 1)
+
+
 def recent_form(rounds: List[Round], window: int = RECENT_ROUNDS) -> Dict[str, Optional[float]]:
     """GIR, scrambling and up-and-down rates, and putts per 18, over the last `window` rounds."""
     recent = rounds[-window:]

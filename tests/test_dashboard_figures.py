@@ -19,6 +19,13 @@ def test_scoring_average_over_all_or_the_last_few():
     assert dashboard.scoring_average([]) is None
 
 
+def test_scoring_average_change_reads_the_last_few_against_the_window():
+    rounds = [_round([5] * 18), _round([5] * 18), _round([4] * 18)]
+    # The last two average 81 against 84 over all three.
+    assert dashboard.scoring_average_change(rounds, 2) == -3.0
+    assert dashboard.scoring_average_change([]) is None
+
+
 def test_recent_form_pools_by_chance_and_is_null_without_data():
     form = dashboard.recent_form([_round([4] * 18, gir=True), _round([5] * 18, gir=False)])
     assert form["gir_pct"] == 50.0

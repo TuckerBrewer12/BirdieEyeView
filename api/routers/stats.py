@@ -63,6 +63,7 @@ async def get_dashboard(
         average_gir=round(sum(girs) / len(girs), 1) if girs else None,
         scoring_average_l20=dashboard.scoring_average(last_20),
         scoring_average_l5=dashboard.scoring_average(last_20, dashboard.RECENT_ROUNDS),
+        scoring_average_change=dashboard.scoring_average_change(last_20),
         handicap_change=dashboard.handicap_change(handicap_trend),
         recent_form=dashboard.recent_form(last_20),
         score_mix=mix["percentages"],

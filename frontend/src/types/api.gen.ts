@@ -1029,6 +1029,8 @@ export interface components {
             score_mix_holes: number;
             /** Scoring Average */
             scoring_average: number | null;
+            /** Scoring Average Change */
+            scoring_average_change: number | null;
             /** Scoring Average L20 */
             scoring_average_l20: number | null;
             /** Scoring Average L5 */
