@@ -13,6 +13,13 @@ test("landing page in dark mode", async ({ landing }) => {
   await landing.capture("landing-dark.png");
 });
 
+test("a chosen card, ready to scan", async ({ landing }) => {
+  await landing.open();
+  await landing.chooseScorecard();
+  await landing.seesChosenCard();
+  await landing.capture("landing-card-chosen.png");
+});
+
 test("a scanned card gets the full width", async ({ landing }) => {
   await landing.open();
   await landing.chooseScorecard();
