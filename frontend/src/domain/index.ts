@@ -1,5 +1,6 @@
 export {
   SCORE_KINDS,
+  isThreePutt,
   playedScoreKinds,
   scoreKind,
   scoreKindCountLabel,

@@ -41,6 +41,11 @@ export function strokesToPar(
   return strokes - par;
 }
 
+/** Three or more putts on a hole, the putting miss a scorecard calls out. */
+export function isThreePutt(putts: number | null | undefined): boolean {
+  return putts != null && putts >= 3;
+}
+
 const SCORE_KIND_LABEL: Record<ScoreKind, { one: string; many: string }> = {
   eagle: { one: "Eagle+", many: "Eagles+" },
   birdie: { one: "Birdie", many: "Birdies" },
