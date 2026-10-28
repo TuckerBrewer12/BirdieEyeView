@@ -11,9 +11,12 @@ import {
   ScorecardLayoutPicker,
   RoundScorecard,
 } from "@/brand";
+import { useFilePreview } from "../components/useFilePreview";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
 export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfViewModel }) {
+  const previewUrl = useFilePreview(viewModel.photo);
+
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
       <AnimatePresence mode="wait">
@@ -30,18 +33,18 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
               Try It Yourself
             </p>
 
-            {!viewModel.file ? (
+            {!viewModel.photo ? (
               <Dropzone
                 title="Upload a scorecard photo"
                 hint="Drag & drop or click to browse"
-                onFile={viewModel.handleFile}
+                onFile={viewModel.pickPhoto}
               />
             ) : (
               <div className="flex flex-col gap-4">
                 <FileChip
-                  name={viewModel.file.name}
-                  sizeBytes={viewModel.file.size}
-                  previewUrl={viewModel.preview}
+                  name={viewModel.photo.name}
+                  sizeBytes={viewModel.photo.size}
+                  previewUrl={previewUrl}
                   onClear={viewModel.reset}
                 />
 
@@ -53,14 +56,14 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
                   </Alert>
                 )}
 
-                <Button size="lg" disabled={viewModel.extracting} onClick={viewModel.extract}>
+                <Button size="lg" onClick={viewModel.extract}>
                   <Upload data-icon="inline-start" />
                   Scan My Scorecard
                 </Button>
               </div>
             )}
 
-            {viewModel.error && !viewModel.file && (
+            {viewModel.error && !viewModel.photo && (
               <Alert variant="destructive" className="mt-3">
                 <AlertDescription>{viewModel.error}</AlertDescription>
               </Alert>

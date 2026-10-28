@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePublicScan } from "@/hooks/usePublicScan";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { preparePhotoForUpload } from "@/data/photoUpload";
+import { queryKeys } from "@/data/queryKeys";
+import { scanRepository, type ScanRepository } from "@/data/scanRepository";
 import { Round } from "@/domain";
+import { useExtractScorecard } from "./useExtractScorecard";
 
 const PHASES = [
   { label: "Reading course details…", detail: "Identifying name, location & tee boxes" },
@@ -13,12 +17,11 @@ const PHASE_HOLD_MS = 3500;
 
 export interface TryItYourselfViewModel {
   step: "upload" | "processing" | "review";
-  file: File | null;
-  preview: string | null;
+  /** The picked photo, readied for upload. */
+  photo: File | null;
   error: string | null;
-  extracting: boolean;
   setUserContext: (context: string) => void;
-  handleFile: (file: File) => void;
+  pickPhoto: (photo: File) => void;
   extract: () => void;
   reset: () => void;
 
@@ -32,15 +35,34 @@ export interface TryItYourselfViewModel {
   hasScores: boolean;
 }
 
-export function useTryItYourselfViewModel(): TryItYourselfViewModel {
-  const scan = usePublicScan();
+export function useTryItYourselfViewModel(
+  repository: ScanRepository = scanRepository,
+): TryItYourselfViewModel {
+  const [photo, setPhoto] = useState<{ id: string; file: File } | null>(null);
+  const [userContext, setUserContext] = useState("");
   const [phase, setPhase] = useState(0);
+  // A later pick wins over an earlier one still being readied.
+  const latestPick = useRef(0);
+  const extraction = useExtractScorecard(repository);
+
+  // The card's text is read as soon as the photo is picked, so the scan itself
+  // has less to do. It is keyed on the photo, so a new pick never sends an old
+  // card's text. Failing is fine: extract reads the card itself.
+  const cardText = useQuery({
+    queryKey: queryKeys.scanText(photo?.id ?? null),
+    queryFn: () => repository.readText(photo!.file),
+    enabled: photo != null,
+    staleTime: Infinity,
+    retry: false,
+  });
+
+  const step = extraction.isPending ? "processing" : extraction.data ? "review" : "upload";
 
   // The scan gives no progress events, so the phases are paced rather than
   // reported. Restarting at zero each time keeps a second scan from opening
   // on "Calculating confidence…".
   useEffect(() => {
-    if (scan.step !== "processing") return;
+    if (step !== "processing") return;
     const timer = setInterval(
       () => setPhase((current) => Math.min(current + 1, PHASES.length - 1)),
       PHASE_HOLD_MS,
@@ -49,25 +71,44 @@ export function useTryItYourselfViewModel(): TryItYourselfViewModel {
       clearInterval(timer);
       setPhase(0);
     };
-  }, [scan.step]);
+  }, [step]);
+
+  const { reset: resetExtraction, mutate } = extraction;
+
+  const pickPhoto = useCallback(
+    (picked: File) => {
+      const pick = ++latestPick.current;
+      resetExtraction();
+      void preparePhotoForUpload(picked).then((file) => {
+        if (pick === latestPick.current) setPhoto({ id: `${pick}`, file });
+      });
+    },
+    [resetExtraction],
+  );
 
   const extract = useCallback(() => {
-    void scan.handleExtract();
-  }, [scan]);
+    if (!photo) return;
+    mutate({ photo: photo.file, userContext, ocrText: cardText.data ?? null });
+  }, [photo, userContext, cardText.data, mutate]);
 
-  const result = scan.result;
+  const reset = useCallback(() => {
+    latestPick.current += 1;
+    setPhoto(null);
+    setUserContext("");
+    resetExtraction();
+  }, [resetExtraction]);
+
+  const result = extraction.data;
   const round = useMemo(() => (result ? Round.fromScan(result.round) : null), [result]);
 
   return {
-    step: scan.step,
-    file: scan.file,
-    preview: scan.preview,
-    error: scan.error,
-    extracting: scan.extracting,
-    setUserContext: scan.setUserContext,
-    handleFile: scan.handleFile,
+    step,
+    photo: photo?.file ?? null,
+    error: extraction.error?.message ?? null,
+    setUserContext,
+    pickPhoto,
     extract,
-    reset: scan.reset,
+    reset,
 
     phase,
     phaseCount: PHASES.length,

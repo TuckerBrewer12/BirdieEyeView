@@ -17,6 +17,8 @@ export const queryKeys = {
       ? (["analytics", userId] as const)
       : (["analytics", userId, filters] as const),
   playedCourses: (userId: string) => ["played-courses", userId] as const,
+  /** The text read off one picked photo, ahead of extract. */
+  scanText: (photoId: string | null) => ["scan-text", photoId] as const,
   friendshipsAccepted: ["friendships", "accepted"] as const,
   friendshipsAll: ["friendships-all"] as const,
   friendCompare: (friendId: string) =>
