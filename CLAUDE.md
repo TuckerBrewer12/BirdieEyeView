@@ -95,6 +95,7 @@ Key files:
 - `api/round_responses.py` — `round_summary()` / `round_detail()`: the one place a round's response is built. Every round endpoint (list, detail, update, link-course, dashboard) returns the figures the `Round` model works out (score, par, to-par, nine totals plus each nine's par/to-par/putts/GIR/yards, putts, GIR, yards, per-hole par/handicap/yardage/to-par/`kind`, `score_counts`); the frontend displays them and does not recompute them.
 - `api/course_responses.py` — `course_detail()`: the one place a full course's response is built (`GET /courses/{id}` and a round's `course`). It carries the figures the `Course`/`Tee` models work out: par, front/back nine par, and per tee its total and nine yardages (null until every hole in the nine has a value).
 - `api/course_analytics_responses.py` — `course_analytics()`: `GET /stats/course-analytics/{user}/{course}` as a typed `CourseAnalyticsResponse`. Carries the player's rounds at the course (newest first), rounds played, scoring average, best and worst score, the score trend and the per-hole rows from `analytics/stats.py`.
+- `api/analytics_responses.py` — `analytics_response()`: `GET /stats/analytics/{user}` as a typed `AnalyticsResponse`, one model per section (KPIs, per-round trends, scoring breakdowns, handicap trend with `differential_status`, notable achievements). The goal report, round comparison and played courses are typed too (`GoalReportResponse`, `RoundComparisonResponse`, `PlayedCourseResponse`).
 
 **API endpoints:**
 - `POST /api/scan/extract` — run LLM extraction on uploaded image
@@ -319,7 +320,7 @@ Key files:
 Implemented. Exposes per-player analytics via `api/routers/stats.py`.
 
 - `analytics/stats.py` — all per-player stat functions (GIR, putting, scrambling, yardage buckets, score type distribution, course difficulty profile, etc.)
-- `analytics/dashboard.py` — the dashboard's figures over the last 20 rounds (L20/L5 scoring averages, last-5 GIR/scrambling/up-and-down/putts, handicap change, score mix, WHS breakdown, lifetime milestones). `GET /stats/dashboard/{id}` sends them typed; the frontend only formats and colours them.
+- `analytics/dashboard.py` — the dashboard's figures over the last 20 rounds (L20/L5 scoring averages, last-5 GIR/scrambling/up-and-down/putts, handicap change, score mix, WHS breakdown, lifetime milestones, and the score/handicap/scrambling/up-and-down trend series). `GET /stats/dashboard/{id}` sends them typed; the frontend only formats and colours them, and the dashboard never fetches the analytics payload.
 - `analytics/goals.py` — `goal_report(rounds, scoring_goal, home_course_rounds)` — computes gap to goal and ranks highest-ROI improvement areas ("savers"): three-putt bleed, blowup holes, achilles heel yardage zone, home course demon hole, GIR opportunity, scrambling opportunity, par 5 opportunity
 
 ## Imports

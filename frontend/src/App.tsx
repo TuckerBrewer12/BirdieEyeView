@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType 
 import { useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ScanPage, ScanSessionProvider } from "./pages/scan";
-import { AppLayout } from "./components/layout/AppLayout";
+import { AppLayout } from "./app/AppLayout";
 import {
   ForgotPasswordPage,
   LoginPage,

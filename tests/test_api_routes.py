@@ -446,11 +446,17 @@ async def test_dashboard_and_empty_analytics(monkeypatch):
     assert dashboard.scoring_average_l20 is None
     assert dashboard.whs.window_size == 0
     assert dashboard.milestones == []
+    assert dashboard.score_trend == []
+    assert dashboard.handicap_trend == []
 
     db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], []])
     analytics = await stats.get_analytics(user_id, 50, None, None, db, user)
-    assert analytics["kpis"]["total_rounds"] == 0
-    assert analytics["notable_achievements"]["round_milestones"]["lifetime"]["first_eagle"] is None
+    assert analytics.kpis.total_rounds == 0
+    assert analytics.kpis.scoring_average is None
+    assert analytics.scoring_by_yardage == []
+    assert analytics.notable_achievements.round_milestones.lifetime.first_eagle is None
+    assert analytics.notable_achievements.career_totals.lifetime.total_birdies == 0
+    assert len(analytics.notable_achievements.round_milestones.lifetime.score_breaks) == 11
 
 
 @pytest.mark.asyncio
@@ -462,15 +468,25 @@ async def test_stats_auxiliary_endpoints(monkeypatch):
     stored_round = _make_round(round_id)
     db = make_mock_database()
     db.users.get_user = AsyncMock(return_value=user)
-    db.rounds.get_played_courses_for_user = AsyncMock(return_value=[{"id": str(course_id)}])
+    db.rounds.get_played_courses_for_user = AsyncMock(
+        return_value=[{"id": str(course_id), "name": "Pebble Beach", "location": None}]
+    )
     db.rounds.get_rounds_for_user = AsyncMock(return_value=[stored_round])
 
-    assert await stats.get_played_courses(user_id, db, user) == [{"id": str(course_id)}]
-    monkeypatch.setattr("analytics.goals.goal_report", lambda rounds, scoring_goal, home: {"gap": 5})
-    assert (await stats.get_goal_report(user_id, 50, db, user))["gap"] == 5
+    played = await stats.get_played_courses(user_id, db, user)
+    assert [c.model_dump() for c in played] == [{"id": str(course_id), "name": "Pebble Beach", "location": None}]
+
+    report = await stats.get_goal_report(user_id, 50, db, user)
+    assert report.scoring_goal == 85
+    assert report.scoring_average == 9.0
+    assert report.on_track is True
 
     round_comparison = await stats.get_round_comparison(user_id, round_id, db, user)
-    assert set(round_comparison) == {"score", "putts", "gir", "three_putts", "putts_per_gir", "scrambling"}
+    assert set(round_comparison.model_dump()) == {
+        "score", "putts", "gir", "three_putts", "putts_per_gir", "scrambling",
+    }
+    assert round_comparison.score[0].label == "Selected Round"
+    assert round_comparison.score[0].primary_value == 9
 
     db.rounds.get_rounds_for_user.return_value = []
     assert await stats.get_milestones(user_id, 12, db, user) == {"milestones": []}

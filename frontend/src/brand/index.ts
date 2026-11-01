@@ -39,10 +39,14 @@ export {
   CardDescription,
   CardContent,
 } from "./components/Card";
+export { AppShell } from "./components/AppShell";
+export type { AppShellProps } from "./components/AppShell";
 export { AuthCard } from "./components/AuthCard";
 export type { AuthCardProps } from "./components/AuthCard";
 export { BrandMark } from "./components/BrandMark";
 export { Button } from "./components/Button";
+export { BottomNav } from "./components/BottomNav";
+export type { BottomNavProps } from "./components/BottomNav";
 export { Dropzone } from "./components/Dropzone";
 export { FileChip } from "./components/FileChip";
 export { Collapse } from "./components/Collapse";
@@ -103,6 +107,9 @@ export { RoundScorecard } from "./components/RoundScorecard";
 export { CoursePreview } from "./components/CoursePreview";
 export { ChartTabs } from "./components/ChartTabs";
 export { SectionLabel } from "./components/SectionLabel";
+export { SideNav } from "./components/SideNav";
+export type { SideNavProps, SideNavUser } from "./components/SideNav";
+export type { NavItem, RenderLink } from "./nav";
 export { ScoreCountChip } from "./components/ScoreCountChip";
 export { SearchField } from "./components/SearchField";
 export { SortControl } from "./components/SortControl";

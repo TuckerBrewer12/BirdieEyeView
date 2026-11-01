@@ -232,6 +232,11 @@ export class FakeBackend {
       return this.auth(authMatch[1] as FakeAuthEndpoint, body);
     }
 
+    if (verb === "POST" && path.endsWith("/api/auth/logout")) {
+      this.signedOut = true;
+      return { status: 200, body: { message: "Logged out." } };
+    }
+
     if (verb === "GET" && path.includes("/api/auth/me")) {
       if (this.signedOut) return { status: 401, body: { detail: "Not authenticated" } };
       return { status: 200, body: this.user };

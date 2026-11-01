@@ -40,6 +40,12 @@
   --chart-muted: #e5e7eb;
   --chart-accent: #4ade80;
 
+  /* The app's side rail: a deep green that runs top to bottom, with white ink
+     on it. It is the brand's own surface, so it stays the same in dark mode. */
+  --sidebar: #1e3d25;
+  --sidebar-end: #152d1b;
+  --sidebar-foreground: #ffffff;
+
   --brand-font-sans: "DM Sans", system-ui, sans-serif;
   --brand-font-mono: "DM Mono", monospace;
 
@@ -164,6 +170,8 @@
   --brand-space-tight: 5px;
   --brand-space-addon: 0.3rem;
   --brand-space-addon-kbd: 0.15rem;
+  /* The phone's home-indicator strip, which a bar pinned to the bottom pads past. */
+  --brand-space-safe-bottom: env(safe-area-inset-bottom, 0px);
   --brand-size-date-rail: 54px;
   --brand-size-preview: 390px;
   --brand-size-chart: 180px;
@@ -194,6 +202,9 @@
   --brand-size-sparkline-h: 56px;
   --brand-sparkline-stroke: 2px;
   --brand-ring-width: 3px;
+  /* Icon line weight in the tab bar: lighter at rest, heavier on the current tab. */
+  --brand-stroke-icon: 1.75;
+  --brand-stroke-icon-active: 2.25;
   --brand-border-width: 1px;
 
   --brand-opacity-recessed: 35%;
@@ -223,6 +234,10 @@
 
   --chart-axis: #6b7280;
   --chart-muted: #2a2d30;
+
+  --sidebar: #1e3d25;
+  --sidebar-end: #152d1b;
+  --sidebar-foreground: #ffffff;
 }
 
 @theme inline {
@@ -245,6 +260,9 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-end: var(--sidebar-end);
+  --color-sidebar-foreground: var(--sidebar-foreground);
 
   /* text-score-eagle, bg-score-eagle-base, text-score-eagle-on-base,
      bg-score-eagle-muted. A dynamic key picks its classes from scoreFillClass / scoreOnFillClass. */
@@ -353,6 +371,7 @@
   --spacing-tight: var(--brand-space-tight);
   --spacing-addon: var(--brand-space-addon);
   --spacing-addon-kbd: var(--brand-space-addon-kbd);
+  --spacing-safe-bottom: var(--brand-space-safe-bottom);
   --spacing-date-rail: var(--brand-size-date-rail);
   --spacing-preview: var(--brand-size-preview);
   --spacing-chart: var(--brand-size-chart);
@@ -371,6 +390,9 @@
   --spacing-scorecard: var(--brand-size-scorecard);
 
   --ring-width-3: var(--brand-ring-width);
+
+  --stroke-width-icon: var(--brand-stroke-icon);
+  --stroke-width-icon-active: var(--brand-stroke-icon-active);
 
   --opacity-recessed: var(--brand-opacity-recessed);
   --opacity-wash: var(--brand-opacity-wash);

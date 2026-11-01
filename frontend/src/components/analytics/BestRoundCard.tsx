@@ -125,7 +125,7 @@ export function BestRoundCard({ scoreTrend, netScoreTrend, achievements, compact
 
   if (!best) return null;
 
-  const event = achievements?.scoring_records_events?.lifetime?.lowest_score;
+  const event = achievements?.scoring_records_events.lifetime.lowest_round;
 
   return (
     <motion.div
