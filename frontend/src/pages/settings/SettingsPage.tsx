@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useBeforeUnload, useLocation } from "react-router-dom";
 import { PageHeader, ToggleGroup, ToggleGroupItem } from "@/brand";
@@ -13,6 +13,7 @@ import { getStoredColorBlindMode, setStoredColorBlindMode } from "@/lib/accessib
 import { isThemePreference, type ThemePreference } from "@/domain/theme";
 import type { ColorBlindMode } from "@/lib/accessibility";
 import type { CourseSummary } from "@/types/golf";
+import { useUpdateUser } from "./useUpdateUser";
 
 const UPDATES_PREF_KEY = "settings_get_updates";
 const COLORBLIND_MODES: Array<{ key: ColorBlindMode; label: string }> = [
@@ -40,7 +41,6 @@ export function SettingsPage({ userId }: { userId: string }) {
   const [getUpdates, setGetUpdates] = useState<boolean>(true);
   const { preference: theme, setPreference: setThemePreference } = useTheme();
   const [colorBlindMode, setColorBlindMode] = useState<ColorBlindMode>(() => getStoredColorBlindMode());
-  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string>("");
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const initializedRef = useRef(false);
@@ -55,7 +55,7 @@ export function SettingsPage({ userId }: { userId: string }) {
     colorBlindMode: ColorBlindMode;
   } | null>(null);
 
-  const queryClient = useQueryClient();
+  const { mutateAsync: updateUser, isPending: saving } = useUpdateUser(userId);
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: queryKeys.user(userId),
     queryFn: () => userRepository.getUser(userId),
@@ -197,7 +197,6 @@ export function SettingsPage({ userId }: { userId: string }) {
   };
 
   const persistSettings = async (): Promise<boolean> => {
-    setSaving(true);
     setMessage("");
     try {
       let selectedHomeCourseId = homeCourseId;
@@ -221,13 +220,11 @@ export function SettingsPage({ userId }: { userId: string }) {
         return false;
       }
 
-      await api.updateUser(userId, {
+      const refreshedUser = await updateUser({
         home_course_id: selectedHomeCourseId || null,
         handicap,
       });
       setStoredColorBlindMode(colorBlindMode);
-      const refreshedUser = await userRepository.getUser(userId);
-      queryClient.setQueryData(queryKeys.user(userId), refreshedUser);
       const savedHomeCourseQuery = refreshedUser.home_course_id ? selectedHomeCourseName : "";
 
       setHomeCourseId(refreshedUser.home_course_id ?? "");
@@ -248,8 +245,6 @@ export function SettingsPage({ userId }: { userId: string }) {
       const text = error instanceof Error ? error.message : "Failed to save settings.";
       setMessage(text);
       return false;
-    } finally {
-      setSaving(false);
     }
   };
 
