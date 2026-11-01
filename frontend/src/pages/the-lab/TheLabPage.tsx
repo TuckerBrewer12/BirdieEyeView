@@ -23,6 +23,11 @@ export function TheLabPage({ userId }: { userId: string }) {
 
   return (
     <>
+      {vm.goalSaveError && (
+        <p role="alert" className="text-label font-medium text-destructive">
+          {vm.goalSaveError.message || "Couldn't save your goal."}
+        </p>
+      )}
       {/* CSS picks the layout, so the page renders the same on the server and the first paint. */}
       <div className="md:hidden">
         <LegacyMobileLab vm={vm} />

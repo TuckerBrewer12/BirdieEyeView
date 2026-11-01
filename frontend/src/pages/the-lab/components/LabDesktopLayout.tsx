@@ -28,11 +28,6 @@ export function LabDesktopLayout({ vm }: { vm: LabPageViewModel }) {
         </div>
         <div className="flex flex-col items-start gap-1 lg:items-end">
           <GoalPicker value={target} onChange={vm.setGoal} disabled={vm.savingGoal} className="flex-wrap" />
-          {vm.goalSaveError && (
-            <p role="alert" className="text-label font-medium text-destructive">
-              {vm.goalSaveError.message || "Couldn't save your goal."}
-            </p>
-          )}
         </div>
       </div>
 
