@@ -16,15 +16,13 @@ export const queryKeys = {
     filters === undefined
       ? (["analytics", userId] as const)
       : (["analytics", userId, filters] as const),
+  /** The slice of a golfer's last 20 rounds of analytics The Lab reads: theirs, or a friend's to compare. */
+  labAnalytics: (userId: string) => ["analytics", userId, "lab"] as const,
   playedCourses: (userId: string) => ["played-courses", userId] as const,
   /** The text read off one picked photo, ahead of extract. */
   scanText: (photoId: string | null) => ["scan-text", photoId] as const,
   /** Every friendship the golfer is part of, mapped to their side of it. */
   friendships: (userId: string) => ["friendships", userId] as const,
-  /** The Lab's raw accepted-friends list, until it reads `friendships` too. */
-  friendshipsAccepted: ["friendships", "accepted"] as const,
-  friendCompare: (friendId: string) =>
-    ["analytics", "friend-compare", friendId, { limit: 20 }] as const,
   settings: (userId: string) => ["settings", userId] as const,
   /** One emailed verification token, spent once. */
   emailVerification: (token: string) => ["email-verification", token] as const,

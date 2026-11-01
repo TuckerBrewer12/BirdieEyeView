@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import { messageFrom } from "@/lib/userFacingErrors";
-import { acceptedFriends, type Friendship } from "./friendsModel";
-import { friendsRepository, type FriendsRepository } from "./friendsRepository";
-import { useFriendships } from "./useFriendships";
+import { acceptedFriends, type Friendship } from "@/data/friendsModel";
+import { friendsRepository, type FriendsRepository } from "@/data/friendsRepository";
+import { useFriendships } from "@/data/useFriendships";
 import { useSendFriendRequest } from "./useSendFriendRequest";
 
 export interface SocialPageViewModel {

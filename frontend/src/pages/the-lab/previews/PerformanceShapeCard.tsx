@@ -1,0 +1,46 @@
+import { buildRadarData, HANDICAP_BENCHMARK } from "@/domain";
+import { averyLabAnalytics, labAnalytics } from "@/testing/fixtures/lab";
+import { PerformanceShapeCard, type PerformanceShapeCardProps } from "../components/PerformanceShapeCard";
+import { peakGameFrom } from "../model";
+
+const avery = { id: "user-avery", name: "Avery Lin" };
+const jordan = { id: "user-jordan", name: "Jordan Castellanos" };
+const peak = peakGameFrom(labAnalytics, 89);
+
+const base: PerformanceShapeCardProps = {
+  mode: "benchmark",
+  onModeChange: () => {},
+  peak,
+  goalLabel: "Break 90",
+  scoringAverage: 91.7,
+  bestScore: 89,
+  recentTrend: 0.5,
+  comparison: 15,
+  onComparisonChange: () => {},
+  friends: [avery, jordan],
+  selectedFriend: avery,
+  onSelectFriend: () => {},
+  friendComparison: null,
+  radar: buildRadarData(labAnalytics.kpis, labAnalytics.scoring_by_par, HANDICAP_BENCHMARK[15]),
+  compared: true,
+  missingAxes: [],
+};
+
+export default function PerformanceShapeCardPreview() {
+  return (
+    <>
+      <PerformanceShapeCard {...base} />
+      {/* A friend with too few rounds to draw: the shape alone, and why. */}
+      <PerformanceShapeCard
+        {...base}
+        comparison="friend"
+        selectedFriend={jordan}
+        friendComparison="no-rounds"
+        radar={buildRadarData(averyLabAnalytics.kpis, averyLabAnalytics.scoring_by_par).slice(0, 4)}
+        compared={false}
+        missingAxes={["Par 4s", "Par 5s"]}
+      />
+      <PerformanceShapeCard {...base} mode="peak" />
+    </>
+  );
+}

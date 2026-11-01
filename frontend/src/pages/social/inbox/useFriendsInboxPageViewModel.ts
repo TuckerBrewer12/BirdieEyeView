@@ -6,9 +6,9 @@ import {
   type Friendship,
   type FriendshipAnswer,
   type FriendshipDirection,
-} from "../friendsModel";
-import { friendsRepository, type FriendsRepository } from "../friendsRepository";
-import { useFriendships } from "../useFriendships";
+} from "@/data/friendsModel";
+import { friendsRepository, type FriendsRepository } from "@/data/friendsRepository";
+import { useFriendships } from "@/data/useFriendships";
 import { useRespondToRequest } from "../useRespondToRequest";
 
 export type InboxTab = FriendshipDirection;

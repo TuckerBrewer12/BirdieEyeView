@@ -41,5 +41,30 @@ export const HANDICAP_BENCHMARK: Record<number, BenchmarkProfile> = {
   25: { gir: 10, scrambling: 18, putting: 66, par3: 41, par4: 6,  par5: 0  },
 };
 
+/** The handicaps a golfer can hold their shape up against, each a key of HANDICAP_BENCHMARK. */
+export const COMPARISON_HANDICAPS = [0, 5, 10, 15, 20, 25] as const;
+
+/** The goal is stored as the highest score that meets it, so 79 means the golfer is out to break 80. */
+export function goalScoreToBreak(target: number): number {
+  return target + 1;
+}
+
+/** A stored goal of 79 reads "Break 80". */
+export function goalTargetLabel(target: number): string {
+  return `Break ${goalScoreToBreak(target)}`;
+}
+
+/**
+ * What a golfer who scores around `average` tends to look like: the goal benchmark whose
+ * threshold sits nearest it. A tie goes to the lower threshold.
+ */
+export function nearestGoalBenchmark(average: number): BenchmarkProfile {
+  const thresholds = GOAL_OPTIONS.map((option) => option.value as number).sort((a, b) => a - b);
+  const nearest = thresholds.reduce((best, next) =>
+    Math.abs(next - average) < Math.abs(best - average) ? next : best,
+  );
+  return GOAL_BENCHMARK[nearest];
+}
+
 /** Tour players' short game, in percent: what the dashboard measures a player's last five rounds against. */
 export const TOUR_SHORT_GAME = { scrambling: 57, upAndDown: 50 } as const;

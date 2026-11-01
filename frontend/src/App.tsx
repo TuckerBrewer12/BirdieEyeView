@@ -18,7 +18,7 @@ import { RoundsPage, RoundDetailPage } from "./pages/rounds";
 import { CoursesPage, CourseDetailPage } from "./pages/courses";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { CareerPage } from "./pages/CareerPage";
-import { TheLabPage } from "./pages/TheLabPage";
+import { TheLabPage } from "./pages/the-lab";
 import { SettingsPage } from "./pages/settings";
 import { SocialPage, FriendsInboxPage } from "./pages/social";
 import { BrandHarness } from "./brand/BrandHarness";

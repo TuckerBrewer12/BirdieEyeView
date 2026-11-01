@@ -22,7 +22,12 @@ interface PeakScoreTypes {
 }
 
 interface MobileLabPageProps {
-  analyticsData: AnalyticsData | undefined;
+  analyticsData:
+    | Pick<
+        AnalyticsData,
+        "kpis" | "scoring_by_par" | "score_trend" | "score_type_distribution" | "three_putts_trend" | "putts_trend"
+      >
+    | undefined;
   currentGoal: number | null;
   setGoal: (g: number) => void;
   settingGoal: boolean;

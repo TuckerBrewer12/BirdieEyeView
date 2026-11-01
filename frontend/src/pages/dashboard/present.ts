@@ -92,15 +92,6 @@ export function milestoneWording(milestone: Milestone): { title: string; figure:
   return { title: wording.title, figure: wording.figure(milestone.value) };
 }
 
-/** The goal is stored as the highest score that meets it, so 79 means the player is out to break 80. */
-export function goalScoreToBreak(target: number): number {
-  return target + 1;
-}
-
-/** A stored goal of 79 reads "Break 80". */
-export function goalTargetLabel(target: number): string {
-  return `Break ${goalScoreToBreak(target)}`;
-}
 
 export type PuttsBand = "good" | "fair" | "poor";
 

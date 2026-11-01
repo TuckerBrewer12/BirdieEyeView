@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
-import { withFriendship, type Friendship } from "./friendsModel";
-import { friendsRepository, type FriendsRepository } from "./friendsRepository";
+import { withFriendship, type Friendship } from "@/data/friendsModel";
+import { friendsRepository, type FriendsRepository } from "@/data/friendsRepository";
 
 /**
  * Sends a friend request by friend code. The request the server returns goes

@@ -4,11 +4,12 @@ import {
   InMemoryFriendships,
   type InMemoryFriendshipsSeed,
 } from "./InMemoryFriendships";
-import type { FriendshipAnswer } from "../../pages/social/friendsModel";
+import type { FriendshipAnswer } from "../../data/friendsModel";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import type { SaveScanRequestDto, UserChangesDto } from "../../types/api";
 import type { DashboardData, User } from "../../types/golf";
 import type { AnalyticsData, GoalReport } from "../../types/analytics";
+import type { LabAnalytics } from "../../pages/the-lab/model";
 import type { ScanResult } from "../../types/scan";
 import { AUTH_MESSAGES } from "./FakeAuth";
 
@@ -39,6 +40,11 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   profile?: User;
   dashboard?: DashboardData;
   analytics?: AnalyticsData | null;
+  /**
+   * Analytics by golfer, for screens that read someone else's (The Lab's friend comparison).
+   * Only the parts The Lab reads; a golfer with none here gets `analytics`.
+   */
+  labAnalytics?: Record<string, LabAnalytics>;
   goalReport?: GoalReport | null;
   /** No one is signed in — `/api/auth/me` answers 401, as the real API does. */
   signedOut?: boolean;
@@ -72,6 +78,7 @@ export class FakeBackend {
   profile: User | undefined;
   dashboard: DashboardData | undefined;
   analytics: AnalyticsData | null | undefined;
+  labAnalytics: Record<string, LabAnalytics>;
   goalReport: GoalReport | null | undefined;
   scan: ScanResult | undefined;
   profileError: string | null;
@@ -98,6 +105,7 @@ export class FakeBackend {
       profile,
       dashboard,
       analytics,
+      labAnalytics,
       goalReport,
       signedOut,
       scan,
@@ -120,6 +128,7 @@ export class FakeBackend {
     this.profile = profile;
     this.dashboard = dashboard;
     this.analytics = analytics;
+    this.labAnalytics = labAnalytics ?? {};
     this.goalReport = goalReport;
     this.scan = scan;
     this.profileError = profileError ?? null;
@@ -391,6 +400,8 @@ export class FakeBackend {
     }
 
     if (verb === "GET" && /\/api\/stats\/analytics\/[^/]+$/.test(path)) {
+      const golfer = this.labAnalytics[path.split("/").pop() ?? ""];
+      if (golfer) return { status: 200, body: golfer };
       if (this.analytics == null) {
         return { status: 404, body: { detail: "Analytics failed to load." } };
       }
