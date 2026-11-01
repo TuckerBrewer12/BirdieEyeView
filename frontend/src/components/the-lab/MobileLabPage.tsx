@@ -7,6 +7,8 @@ import { PuttingDeepDiveCard } from "@/components/the-lab/PuttingDeepDiveCard";
 import { UserRadarChart } from "@/components/analytics/UserRadarChart";
 import { GOAL_OPTIONS } from "@/components/the-lab/constants";
 import type { BenchmarkProfile } from "@/components/the-lab/constants";
+import type { PeakImpact } from "@/pages/the-lab/model";
+import { PEAK_IMPACT_LABEL } from "@/pages/the-lab/present";
 import type { AnalyticsData } from "@/types/analytics";
 
 interface PeakInsight {
@@ -16,10 +18,11 @@ interface PeakInsight {
   gapToGoal: number;
 }
 
-interface PeakScoreTypes {
-  peak: { birdies: number; bogeys: number; doubles: number };
-  all: { birdies: number; bogeys: number; doubles: number };
-}
+const AVERAGE_BAR_COLOR: Record<PeakImpact["kind"], string> = {
+  birdies: "#059669",
+  bogeys: "#ef4444",
+  doubles: "#60a5fa",
+};
 
 interface MobileLabPageProps {
   analyticsData:
@@ -37,7 +40,7 @@ interface MobileLabPageProps {
   setComparisonTarget: (t: ComparisonTargetValue) => void;
   activeProfile: BenchmarkProfile | null;
   peakInsight: PeakInsight | null;
-  peakScoreTypes: PeakScoreTypes | null;
+  peakImpacts: PeakImpact[];
   goalLabel: string | null;
   benchmarkHeading: string;
 }
@@ -59,7 +62,7 @@ export function MobileLabPage({
   setComparisonTarget,
   activeProfile,
   peakInsight,
-  peakScoreTypes,
+  peakImpacts,
   goalLabel,
   benchmarkHeading,
 }: MobileLabPageProps) {
@@ -285,31 +288,24 @@ export function MobileLabPage({
                       ))}
                     </div>
 
-                    {peakScoreTypes && (() => {
-                      const metrics = [
-                        { label: "Birdies",  peak: peakScoreTypes.peak.birdies, avg: peakScoreTypes.all.birdies, higherIsBetter: true,  strokeMult: 1, color: "#059669" },
-                        { label: "Bogeys",   peak: peakScoreTypes.peak.bogeys,  avg: peakScoreTypes.all.bogeys,  higherIsBetter: false, strokeMult: 1, color: "#ef4444" },
-                        { label: "Doubles+", peak: peakScoreTypes.peak.doubles, avg: peakScoreTypes.all.doubles, higherIsBetter: false, strokeMult: 2, color: "#60a5fa" },
-                      ];
-                      return (
+                    {peakImpacts.length > 0 && (
                         <div className="border-t border-gray-50 pt-4">
                           <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">
                             <span className="text-[#facc15] font-extrabold">Peak</span> vs. Average
                           </p>
                           <div className="space-y-3">
-                            {metrics.map(({ label, peak, avg, higherIsBetter, strokeMult, color }) => {
-                              const diff = peak - avg;
-                              const good = higherIsBetter ? diff > 0 : diff < 0;
-                              const strokeImpact = (higherIsBetter ? diff : -diff) * strokeMult;
+                            {peakImpacts.map((impact) => {
+                              const label = PEAK_IMPACT_LABEL[impact.kind];
+                              const { peak, average: avg, strokes } = impact;
                               const maxVal = Math.max(peak, avg, 0.1) * 1.2;
                               const peakPct = (peak / maxVal) * 100;
                               const avgPct = (avg / maxVal) * 100;
                               return (
-                                <div key={label}>
+                                <div key={impact.kind}>
                                   <div className="flex items-center justify-between mb-2">
                                     <span className="text-[11px] font-semibold text-gray-600">{label}</span>
-                                    <span className="text-[11px] font-bold" style={{ color: good ? "#059669" : strokeImpact === 0 ? "#9ca3af" : "#ef4444" }}>
-                                      {strokeImpact > 0 ? "+" : ""}{strokeImpact.toFixed(1)} strokes {strokeImpact >= 0 ? "gained" : "lost"}
+                                    <span className="text-[11px] font-bold" style={{ color: strokes > 0 ? "#059669" : strokes === 0 ? "#9ca3af" : "#ef4444" }}>
+                                      {strokes > 0 ? "+" : ""}{strokes.toFixed(1)} strokes {strokes >= 0 ? "gained" : "lost"}
                                     </span>
                                   </div>
                                   <div className="space-y-1.5 mt-1">
@@ -323,7 +319,7 @@ export function MobileLabPage({
                                     <div className="flex items-center gap-2">
                                       <span className="text-[10px] text-gray-400 w-8 text-right shrink-0">Avg</span>
                                       <div className="flex-1 h-3.5 bg-gray-100 rounded-full overflow-hidden">
-                                        <div className="h-full rounded-full" style={{ width: `${avgPct}%`, backgroundColor: color }} />
+                                        <div className="h-full rounded-full" style={{ width: `${avgPct}%`, backgroundColor: AVERAGE_BAR_COLOR[impact.kind] }} />
                                       </div>
                                       <span className="text-[11px] font-bold text-gray-400 w-8 shrink-0 text-right">{avg.toFixed(1)}</span>
                                     </div>
@@ -333,8 +329,7 @@ export function MobileLabPage({
                             })}
                           </div>
                         </div>
-                      );
-                    })()}
+                    )}
                   </div>
                 )}
               </motion.div>
