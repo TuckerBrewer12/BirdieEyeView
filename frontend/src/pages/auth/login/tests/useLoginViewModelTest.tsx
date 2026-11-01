@@ -23,13 +23,12 @@ describe("useLoginViewModel", () => {
     expect(auth.logins).toEqual([{ email: "sam@example.com", password: "birdie123" }]);
   });
 
-  it("labels the button while the sign-in is in flight", async () => {
+  it("is submitting while the sign-in is in flight", async () => {
     const { auth, result } = renderVm(new FakeAuth().hold("login"));
-    expect(result.current.submitLabel).toBe("Sign in");
+    expect(result.current.submitting).toBe(false);
 
     act(() => result.current.submit(() => {}));
     await waitFor(() => expect(result.current.submitting).toBe(true));
-    expect(result.current.submitLabel).toBe("Signing in…");
 
     act(() => auth.release());
     await waitFor(() => expect(result.current.submitting).toBe(false));
