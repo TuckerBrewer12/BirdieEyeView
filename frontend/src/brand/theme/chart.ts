@@ -92,14 +92,15 @@ export const chartLayout = {
   },
   /**
    * The same shape on a phone: a narrower drawing, so it scales down less and its labels stay
-   * readable at a phone's width.
+   * readable at a phone's width. Mirrors --brand-size-radar-compact-w/-h/-r, and
+   * --brand-space-radar-compact-label for both gaps.
    */
   radarCompact: {
     width: 360,
     height: 300,
     radius: 72,
-    labelGap: 14,
-    valueGap: 15,
+    labelGap: 16,
+    valueGap: 16,
   },
   /** Scores against a goal: a short strip of dots, lower scores higher up, the goal dashed across. */
   goal: {
