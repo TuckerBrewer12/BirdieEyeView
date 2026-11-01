@@ -6,6 +6,7 @@ import {
 } from "./InMemoryFriendships";
 import type { FriendshipAnswer } from "../../pages/social/friendsModel";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
+import type { UserChangesDto } from "../../types/api";
 import type { DashboardData, User } from "../../types/golf";
 import type { AnalyticsData, GoalReport } from "../../types/analytics";
 import type { ScanResult } from "../../types/scan";
@@ -43,6 +44,10 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   signedOut?: boolean;
   /** What `/api/scan/extract` reads off any uploaded card. Unset, extract fails. */
   scan?: ScanResult;
+  /** Why `GET /api/users/{id}` fails; unset, it answers with the profile. */
+  profileError?: string | null;
+  /** Why `PATCH /api/users/{id}` fails; unset, it saves. */
+  updateUserError?: string | null;
   /** `/api/users/me/friends`: the golfer's friendships and who a friend code finds. */
   friends?: Omit<InMemoryFriendshipsSeed, "userId">;
   /** Accounts `/api/auth/login` accepts. Defaults to `TEST_USER` with the password `password`. */
@@ -67,6 +72,8 @@ export class FakeBackend {
   analytics: AnalyticsData | null | undefined;
   goalReport: GoalReport | null | undefined;
   scan: ScanResult | undefined;
+  profileError: string | null;
+  updateUserError: string | null;
   /** Flips to false when a sign-in or a verification link starts a session. */
   signedOut: boolean;
   readonly accounts: Record<string, FakeAccount>;
@@ -90,6 +97,8 @@ export class FakeBackend {
       goalReport,
       signedOut,
       scan,
+      profileError,
+      updateUserError,
       friends,
       accounts,
       verifyTokens,
@@ -103,6 +112,8 @@ export class FakeBackend {
     this.analytics = analytics;
     this.goalReport = goalReport;
     this.scan = scan;
+    this.profileError = profileError ?? null;
+    this.updateUserError = updateUserError ?? null;
     this.signedOut = signedOut ?? false;
     this.accounts = accounts ?? { [this.user.email]: { password: "password", verified: true } };
     this.verifyTokens = new Set(verifyTokens);
@@ -168,6 +179,21 @@ export class FakeBackend {
 
   get courses() {
     return this.store.courses;
+  }
+
+  /** The user row `/api/users/{id}` answers with: the seeded profile, or one built from the session. */
+  currentProfile(): User {
+    return (
+      this.profile ?? {
+        id: this.user.user_id,
+        name: this.user.name,
+        email: this.user.email,
+        home_course_id: null,
+        handicap: this.store.handicapIndex,
+        created_at: null,
+        scoring_goal: null,
+      }
+    );
   }
 
   handle(method: string, url: string, body?: unknown): FakeReply {
@@ -294,19 +320,28 @@ export class FakeBackend {
     }
 
     if (verb === "GET" && /\/api\/users\/[^/]+$/.test(path)) {
-      if (this.profile) return { status: 200, body: this.profile };
-      return {
-        status: 200,
-        body: {
-          id: this.user.user_id,
-          name: this.user.name,
-          email: this.user.email,
-          home_course_id: null,
-          handicap: this.store.handicapIndex,
-          created_at: null,
-          scoring_goal: null,
-        } satisfies User,
+      if (this.profileError) return { status: 404, body: { detail: this.profileError } };
+      return { status: 200, body: this.currentProfile() };
+    }
+
+    if (verb === "PATCH" && /\/api\/users\/[^/]+$/.test(path)) {
+      if (this.updateUserError) return { status: 400, body: { detail: this.updateUserError } };
+      const changes = (body ?? {}) as UserChangesDto;
+      const homeCourseId = changes.home_course_id;
+      if (homeCourseId) {
+        try {
+          this.store.getCourse(homeCourseId);
+        } catch {
+          return { status: 400, body: { detail: "Selected home course was not found" } };
+        }
+      }
+      this.profile = {
+        ...this.currentProfile(),
+        ...(changes.handicap !== undefined ? { handicap: changes.handicap } : {}),
+        ...(homeCourseId !== undefined ? { home_course_id: homeCourseId } : {}),
+        ...(changes.scoring_goal !== undefined ? { scoring_goal: changes.scoring_goal } : {}),
       };
+      return { status: 200, body: this.profile };
     }
 
     if (verb === "GET" && /\/api\/stats\/dashboard\/[^/]+$/.test(path)) {

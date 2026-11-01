@@ -30,3 +30,5 @@ export type CourseHolePuttsRowDto = Schemas["CourseHolePuttsRow"];
 export type CourseHoleVarianceRowDto = Schemas["CourseHoleVarianceRow"];
 export type FriendshipDto = Schemas["FriendshipResponse"];
 export type FriendshipStatusRequestDto = Schemas["FriendshipStatusRequest"];
+/** What `PATCH /users/{id}` takes. A field left out keeps its value; null clears it. */
+export type UserChangesDto = Schemas["UpdateUserRequest"];

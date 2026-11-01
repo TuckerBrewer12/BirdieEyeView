@@ -53,11 +53,11 @@ export function formatCourseHandicap(ch: number | null | undefined): string {
  */
 export type DifferentialStatus = "counting" | "close" | "out" | "unrated";
 
+/** The lowest index WHS allows: a +10. Stored negative, as the server stores it. */
 export const MIN_HANDICAP_INDEX = -10;
 export const MAX_HANDICAP_INDEX = 54;
-const HANDICAP_INPUT_PATTERN = /^\+?(?:\d+\.?\d*|\.\d+)$/;
+const HANDICAP_PATTERN = /^\+?(?:\d+\.?\d*|\.\d+)$/;
 
-/** A typed handicap read as an index: `value` when it reads, `error` saying why when it doesn't. */
 export interface HandicapParseResult {
   value: number | null;
   error: string | null;
@@ -68,7 +68,7 @@ function formatAbsOneDecimal(value: number): string {
   return Number.isInteger(abs) ? String(abs) : abs.toFixed(1);
 }
 
-/** An index as a golfer types it back in: "+3" for a plus handicap, "18.4", or blank. */
+/** An index as the player types it into a field: "+5" for a plus handicap, no trailing ".0". Empty when unset. */
 export function formatHandicapInputValue(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) {
     return "";
@@ -79,16 +79,13 @@ export function formatHandicapInputValue(value: number | null | undefined): stri
   return formatAbsOneDecimal(value);
 }
 
-/**
- * Reads what a golfer typed as a handicap index. Blank is no handicap. A leading "+" is a plus
- * handicap, stored negative. Anything outside +10 to 54 is refused with a message to show.
- */
+/** Reads a typed index ("+3.0", "18.4", or blank to clear) into the stored value, or says what is wrong. */
 export function parseHandicapInput(raw: string): HandicapParseResult {
   const trimmed = raw.trim();
   if (!trimmed) {
     return { value: null, error: null };
   }
-  if (!HANDICAP_INPUT_PATTERN.test(trimmed)) {
+  if (!HANDICAP_PATTERN.test(trimmed)) {
     return {
       value: null,
       error: "Handicap must be a number between +10 and 54 (for example +3.0 or 18.4).",
