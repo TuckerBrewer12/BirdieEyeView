@@ -226,6 +226,9 @@
 }
 
 @theme inline {
+  /* Tailwind's default sm, pinned here so breakpoints.ts can mirror it. */
+  --breakpoint-sm: 40rem;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

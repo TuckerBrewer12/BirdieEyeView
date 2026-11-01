@@ -4,11 +4,35 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { scoreFillClass, toParDisplay } from "@/brand";
 import { HANDICAP_TAP, TOUR_SCREENS, WIDE_FRAME_MEDIA, tourImage, type TourScreen } from "./demoTour";
-import {
-  DEMO_MOTION,
-  useScannerDemoViewModel,
-  type DemoScorecardRow,
-} from "./useScannerDemoViewModel";
+import { motion as motionTokens } from "@/brand/theme";
+import { useScannerDemoViewModel, type DemoScorecardRow } from "./useScannerDemoViewModel";
+
+/**
+ * This demo's cinematic timings, in seconds. Not interaction values: the sweep is a scanner
+ * crossing a card, the crossfade one image replacing another, the tap a finger pressing a
+ * button on a captured screen. A choice registering uses the kit's own `duration.collapse`.
+ */
+const DEMO_MOTION = {
+  /** One image replacing another — the card giving way to the scorecard. */
+  crossfade: 0.8,
+  /** The scan line's full travel, top to bottom. */
+  sweep: 1.5,
+  /** A field or chip drawing the eye as the form fills itself in. */
+  emphasis: 0.3,
+  /** One on/off of the text caret in the name field. */
+  caretBlink: 0.8,
+  /** Mapped rows sliding in from the right. Looser than the kit's spring so the rows
+   *  overshoot enough to read as dropped into place. */
+  rowSpring: { type: "spring" as const, damping: 15 },
+  /** One app screen giving way to the next on the tour. */
+  screenChange: 0.5,
+  /** The incoming screen settling from just past full size. */
+  screenEnterScale: 1.02,
+  /** The photo stepping back as the scanned card replaces it. */
+  photoRecedeScale: 0.95,
+  /** A finger pressing the handicap: the ring closing in from wide, pressing, then letting go. */
+  tap: { duration: 0.7, reachScale: 1.6, pressScale: 0.8 },
+} as const;
 
 /** The clean scorecard the scan resolves to. */
 function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
@@ -150,7 +174,7 @@ function MappingPanel() {
               <motion.div
                 initial={{ opacity: 0.5 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 1.2, duration: DEMO_MOTION.select }}
+                transition={{ delay: 1.2, duration: motionTokens.duration.collapse }}
                 className="flex flex-1 flex-col justify-center rounded-md border-2 border-score-birdie bg-accent p-2"
               >
                 <motion.div

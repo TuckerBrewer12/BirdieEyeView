@@ -1,3 +1,5 @@
+import { fromBreakpoint } from "@/brand/theme";
+
 /**
  * The app screens the hero demo tours after a scan. Each is a capture of the real page,
  * taken by `tests/DemoTour.capture.spec.ts` against the sample golfer and served from
@@ -13,12 +15,8 @@ export const TOUR_LAYOUTS = {
 } as const;
 export type TourLayout = keyof typeof TOUR_LAYOUTS;
 
-/**
- * When the wide captures apply: where the demo frame stops being a portrait phone frame,
- * at its `sm:` classes. A `<source media>` can't read a CSS variable, and the kit has no
- * breakpoint token yet, so this mirrors Tailwind's `sm` (40rem) and must move with it.
- */
-export const WIDE_FRAME_MEDIA = "(min-width: 40rem)";
+/** When the wide captures apply: where the demo frame's `sm:` classes stop it being a portrait phone frame. */
+export const WIDE_FRAME_MEDIA = fromBreakpoint("sm");
 
 export function tourImage(screen: TourScreen, layout: TourLayout): string {
   return `/demo-tour/${screen}-${layout}.png`;
