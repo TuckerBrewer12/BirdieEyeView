@@ -140,6 +140,16 @@ test("saving from the prompt keeps the change and leaves", async ({ settings }) 
   await settings.seesHandicap("6");
 });
 
+test("a failed save from the prompt shows the reason and stays", async ({ settings }) => {
+  await settings.open();
+  settings.failSavesWith("Selected home course was not found");
+  await settings.typeHandicap("6");
+  await settings.leaveTo("Dashboard");
+  await settings.saveAndLeave();
+  await settings.seesLeavePromptError("Selected home course was not found");
+  await settings.staysAt("/settings");
+});
+
 test("closing the prompt stays on the page with the edit", async ({ settings }) => {
   await settings.open();
   await settings.typeHandicap("6");

@@ -266,6 +266,12 @@ export class SettingsRobot {
     return this;
   }
 
+  /** The unsaved-changes prompt shows why the save failed. */
+  async seesLeavePromptError(message: string): Promise<this> {
+    await expect(this.leavePrompt().getByRole("alert").filter({ hasText: message })).toBeVisible();
+    return this;
+  }
+
   async saveAndLeave(): Promise<this> {
     await this.leavePrompt().getByRole("button", { name: "Save and leave" }).click();
     return this;
@@ -285,6 +291,12 @@ export class SettingsRobot {
   /** Left without stopping on the unsaved-changes prompt, or after answering it. */
   async isAt(path: string): Promise<this> {
     await expect(this.leavePrompt()).toHaveCount(0);
+    await expect.poll(() => new URL(this.page.url()).pathname).toBe(path);
+    return this;
+  }
+
+  /** Still on this path; the unsaved-changes prompt may still be open. */
+  async staysAt(path: string): Promise<this> {
     await expect.poll(() => new URL(this.page.url()).pathname).toBe(path);
     return this;
   }
