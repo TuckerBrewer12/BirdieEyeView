@@ -28,6 +28,16 @@ test("compared with a friend", async ({ lab, isMobile }) => {
   await lab.capture("lab-friend-compare.png");
 });
 
+test("phone peak panel", async ({ lab, isMobile }) => {
+  // The bars live on a phone tab. Desktop draws them on the shape card, which espresso already drives.
+  test.skip(!isMobile, "The Peak panel is phone-only.");
+  await lab.open();
+  await lab.seesLab();
+  await lab.tapPeak();
+  await lab.seesPeakBars();
+  await lab.capture("lab-peak.png");
+});
+
 test("load error", async ({ lab }) => {
   await lab.openFailing();
   await lab.seesLoadError("Analytics failed to load.");

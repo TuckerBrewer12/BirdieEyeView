@@ -135,6 +135,26 @@ export class TheLabRobot {
     return this;
   }
 
+  /** The phone's Peak tab. The shape card's Peak Game control is a different button. */
+  private peakTab() {
+    return this.page
+      .getByRole("button", { name: "By Par", exact: true })
+      .locator("visible=true")
+      .locator("..")
+      .getByRole("button", { name: "Peak", exact: true });
+  }
+
+  async tapPeak(): Promise<this> {
+    await this.peakTab().tap();
+    return this;
+  }
+
+  /** The peak-versus-average bars on the phone's Peak panel. */
+  async seesPeakBars(): Promise<this> {
+    await expect(this.page.getByText("Peak vs. Average", { exact: true }).locator("visible=true")).toBeVisible();
+    return this;
+  }
+
   async seesShapeHeading(heading: string | RegExp): Promise<this> {
     await expect(this.shapeCard().getByText(heading).first()).toBeVisible();
     return this;
