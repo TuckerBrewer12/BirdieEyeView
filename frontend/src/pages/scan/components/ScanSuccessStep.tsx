@@ -35,7 +35,7 @@ export function ScanSuccessStep({ round, onView }: ScanSuccessStepProps) {
       <Card data-slot="scan-saved" className="w-full max-w-sm">
         <CardContent className="flex flex-col items-center gap-6 text-center">
           <div className="flex flex-col items-center gap-2">
-            <CheckCircle2 aria-hidden className="size-12 text-primary" strokeWidth={1.5} />
+            <CheckCircle2 aria-hidden className="size-12 stroke-icon text-primary" />
             <PageTitle>Round saved!</PageTitle>
             <p className="text-sm text-muted-foreground">{formatCourseName(round.course?.name)}</p>
           </div>
