@@ -1,8 +1,8 @@
 import { type Locator, type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
-import type { RoundSummary } from "../../../types/golf";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
+import type { StoredRound } from "../../../testing/fakes/roundResponses";
 
 /** Screen robot for /rounds — same idea as an Android Espresso robot. */
 export class RoundsRobot {
@@ -24,7 +24,7 @@ export class RoundsRobot {
   }
 
   async open(
-    rounds: RoundSummary[],
+    rounds: StoredRound[],
     seed: Omit<FakeBackendSeed, "rounds"> = {},
   ): Promise<this> {
     await FakeSession.install(this.page, { rounds, ...seed });

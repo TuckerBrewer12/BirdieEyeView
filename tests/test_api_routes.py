@@ -200,11 +200,14 @@ def test_round_request_validation_and_summary():
     summary = round_summary(_make_round(uuid4()))
     assert summary.total_score == 9
     assert summary.to_par == 1
-    assert summary.fairways_hit == 1
+    assert summary.total_putts == 4
     assert summary.course_name == "Played Course"
     assert summary.front_nine is None
     assert (summary.score_counts.bogey, summary.score_counts.par, summary.score_counts.birdie) == (1, 1, 0)
-    assert [(h.par, h.to_par, h.kind) for h in summary.hole_scores] == [(4, 1, "bogey"), (4, 0, "par")]
+    assert [h.model_dump() for h in summary.hole_scores] == [
+        {"hole_number": 1, "strokes": 5, "kind": "bogey"},
+        {"hole_number": 2, "strokes": 4, "kind": "par"},
+    ]
 
 
 @pytest.mark.asyncio

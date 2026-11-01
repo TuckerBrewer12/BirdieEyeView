@@ -2,9 +2,8 @@ import { describe, expect, it } from "vitest";
 import { courseResponse } from "@/testing/fakes/courseResponses";
 import { roundResponse } from "@/testing/fakes/roundResponses";
 import { halfMoonBayCourse, halfMoonBayRound, pebbleBeachCourse, scannedRound } from "@/testing/fixtures/roundDetails";
-import { storedRounds } from "@/testing/fixtures/rounds";
+import { populatedRounds, storedRounds } from "@/testing/fixtures/rounds";
 import { scannedTeeCard } from "@/testing/fixtures/scan";
-import { populatedRounds } from "@/testing/fixtures/rounds";
 import { Round } from "../round";
 
 describe("Round.fromSummary", () => {
@@ -15,7 +14,7 @@ describe("Round.fromSummary", () => {
     expect(round.frontNine.total).toBe(40);
     expect(round.backNine.total).toBe(38);
     expect(round.putts).toBe(32);
-    expect(round.holes[0]).toMatchObject({ hole: 1, par: 4, strokes: 5, toPar: 1, kind: "bogey" });
+    expect(round.holes[0]).toEqual({ hole: 1, strokes: 5, kind: "bogey" });
   });
 
   it("splits the holes into nines by hole number", () => {
@@ -59,8 +58,8 @@ function sumOf(yards: Record<string, number>): number {
 
 describe("Round.previewEdits", () => {
   it("reproduces the server's figures when nothing is edited", () => {
-    for (const summary of populatedRounds) {
-      const round = Round.fromSummary(summary);
+    for (const stored of storedRounds) {
+      const round = Round.fromDto(roundResponse(stored));
       expect(Round.previewEdits(round, {})).toEqual(round);
     }
   });

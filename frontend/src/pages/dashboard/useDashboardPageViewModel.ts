@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
-import { Round, trendPointsFrom, type RoundTrendPoint, type ScoreMix } from "@/domain";
+import { Round, trendPointsFrom, type RoundSummary, type RoundTrendPoint, type ScoreMix } from "@/domain";
 import type { DashboardData, User } from "@/types/golf";
 import type { AnalyticsData } from "@/types/analytics";
 import {
@@ -60,10 +60,10 @@ export interface DashboardPageViewModel {
   closeHandicapSheet: () => void;
   trendView: TrendView;
   setTrendView: (view: TrendView) => void;
-  rounds: Round[];
-  bestRound: Round | null;
-  recentRounds: Round[];
-  sidebarRounds: Round[];
+  rounds: RoundSummary[];
+  bestRound: RoundSummary | null;
+  recentRounds: RoundSummary[];
+  sidebarRounds: RoundSummary[];
   whs: WhsBreakdown;
   /** Null until the player sets a scoring goal. */
   goal: GoalProgress | null;

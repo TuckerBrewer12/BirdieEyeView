@@ -1,10 +1,10 @@
 import { cn } from "@/brand/cn";
 import { toParBadgeClass, toParLabel } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
-import type { Round } from "@/domain";
+import type { RoundSummary } from "@/domain";
 
 interface RecentRoundsTableProps {
-  rounds: Round[];
+  rounds: RoundSummary[];
   onRoundClick?: (roundId: string) => void;
 }
 

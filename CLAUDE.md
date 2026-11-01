@@ -294,7 +294,7 @@ Implemented via `:root.dark` in `brand/theme/tokens.css`. Color-blind palette su
 Key files:
 - `src/App.tsx` — routing + scan state (lifted here to persist across navigation)
 - `src/types/api.gen.ts` — generated from the backend's OpenAPI schema (`frontend/openapi.json`); never edit by hand. After changing an API model run `python scripts/dump_openapi.py` then `npm run gen:api`; CI fails if either is stale. `src/types/api.ts` names the generated types (`RoundDto`, `RoundSummaryDto`, …).
-- `src/domain/round.ts` — the frontend `Round`: plain data mapped from the API (`Round.fromSummary`, `Round.fromDto`), plus `Round.previewEdits`, the only frontend golf math (live totals while editing, replaced by the saved response).
+- `src/domain/round.ts` — the frontend `Round`: plain data mapped from the API (`Round.fromDto`; lists get the leaner `RoundSummary` from `Round.fromSummary`, which `Round` extends), plus `Round.previewEdits`, the only frontend golf math (live totals while editing, replaced by the saved response).
 - `src/lib/api.ts` — API client (`updateRound`, `cloneCourse`, `getCourses`, `searchCourses`, `getGoalReport`, `updateUser` with `scoring_goal`, etc.)
 - `src/types/scan.ts` — shared scan types/constants (kept out of ScanPage to avoid Fast Refresh warning)
 - `src/types/analytics.ts` — analytics types including `GoalReport` and `GoalSaver`

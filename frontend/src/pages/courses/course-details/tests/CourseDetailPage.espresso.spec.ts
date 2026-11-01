@@ -2,7 +2,7 @@ import { test } from "./CourseDetailPage.robot";
 import { populatedCourses } from "../../../../testing/fixtures/courses";
 import { halfMoonBayAnalytics } from "../../../../testing/fixtures/courseAnalytics";
 import { halfMoonBayCourse } from "../../../../testing/fixtures/roundDetails";
-import { populatedRounds } from "../../../../testing/fixtures/rounds";
+import { storedRounds } from "../../../../testing/fixtures/rounds";
 
 test("opening a course URL and back returns to the list", async ({ courseDetail }) => {
   await courseDetail.open(halfMoonBayCourse, { courses: populatedCourses });
@@ -27,7 +27,7 @@ test("tapping performance shows hero stats", async ({ courseDetail }) => {
 test("tapping a history round opens its detail", async ({ courseDetail }) => {
   await courseDetail.open(halfMoonBayCourse, {
     courseAnalytics: halfMoonBayAnalytics,
-    rounds: populatedRounds,
+    rounds: storedRounds,
   });
   await courseDetail.tapPerformance();
   await courseDetail.tapHistoryRound("Jun 15, 2026");
