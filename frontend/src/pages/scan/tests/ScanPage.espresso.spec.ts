@@ -74,6 +74,17 @@ test("entering scores by hand skips the photo and opens a blank card", async ({ 
   await scan.seesBlankCard();
 });
 
+test("a score typed by hand is the one that gets saved", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseManualEntry();
+  await scan.startEntering();
+  await scan.seesBlankCard();
+  await scan.typeStrokes(1, 5);
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedStrokes(1, 5);
+});
+
 test("going back to scanning from manual entry brings back the drop zone", async ({ scan }) => {
   await scan.open();
   await scan.chooseManualEntry();

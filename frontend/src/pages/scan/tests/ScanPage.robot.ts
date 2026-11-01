@@ -126,6 +126,13 @@ export class ScanRobot {
     return this;
   }
 
+  /** The strokes kept for a hole on the round just saved. */
+  async seesSavedStrokes(hole: number, strokes: number): Promise<this> {
+    const saved = this.backend?.store.savedScans.at(-1);
+    expect(saved?.hole_scores.find((score) => score.hole_number === hole)?.strokes).toBe(strokes);
+    return this;
+  }
+
   /** The scan failed: the reason shows, and the photo is still there to try again. */
   async seesScanFailed(): Promise<this> {
     await expect(this.page.getByRole("alert")).toContainText("We couldn't scan this scorecard.");
@@ -183,6 +190,16 @@ export class ScanRobot {
   async seesBlankCard(): Promise<this> {
     await expect(this.page.getByText("Enter your scores hole by hole below")).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Save Round" })).toBeVisible();
+    return this;
+  }
+
+  /** Types one hole's strokes on the card being checked. */
+  async typeStrokes(hole: number, strokes: number): Promise<this> {
+    const nine = this.page.locator("table").nth(hole <= 9 ? 0 : 1);
+    const scoreRow = nine.locator("tr").filter({
+      has: this.page.getByRole("cell", { name: "Score", exact: true }),
+    });
+    await scoreRow.getByRole("textbox").nth((hole - 1) % 9).fill(String(strokes));
     return this;
   }
 
