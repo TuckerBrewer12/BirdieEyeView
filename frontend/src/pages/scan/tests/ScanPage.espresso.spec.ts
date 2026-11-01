@@ -48,6 +48,18 @@ test("a course linked on the review is the one the round is saved against", asyn
   await scan.seesSavedCourse(pebbleBeachCourse.id!);
 });
 
+test("changing course on a linked card returns to the search field", async ({ scan }) => {
+  await scan.open({ fullCourses: [pebbleBeachCourse] });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.searchCourse("Pebble");
+  await scan.pickCourse("Pebble Beach");
+  await scan.seesLinkedCourse("Pebble Beach");
+  await scan.tapChangeCourse();
+  await scan.seesCourseSearchField();
+});
+
 test("a clean scan has nothing to check", async ({ scan }) => {
   await scan.open();
   await scan.chooseScorecard();
@@ -96,6 +108,16 @@ test("the card's course name can be kept without linking a course", async ({ sca
   await scan.tapSave();
   await scan.seesSaved();
   await scan.seesSavedCourseName(SCANNED_COURSE_NAME);
+});
+
+test("editing the name after keeping a custom name returns to the search field", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.keepCardName(SCANNED_COURSE_NAME);
+  await scan.tapEditName();
+  await scan.seesCourseSearchField();
 });
 
 test("a tee picked from the card's tees is the one saved", async ({ scan }) => {

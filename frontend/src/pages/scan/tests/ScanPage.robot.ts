@@ -160,6 +160,12 @@ export class ScanRobot {
     return this;
   }
 
+  /** The course search, back after a linked card or a kept name is cleared. */
+  async seesCourseSearchField(): Promise<this> {
+    await expect(this.page.getByPlaceholder("Search courses…")).toBeVisible();
+    return this;
+  }
+
   async pickCourse(name: string): Promise<this> {
     await this.page.locator("[data-slot=course-result]").filter({ hasText: name }).click();
     return this;
@@ -278,6 +284,18 @@ export class ScanRobot {
   async keepCardName(name: string): Promise<this> {
     await this.page.getByRole("button", { name: `Save as "${name}" without linking →` }).click();
     await expect(this.page.getByText("Saving without a linked course")).toBeVisible();
+    return this;
+  }
+
+  /** Clears a linked course and goes back to searching. */
+  async tapChangeCourse(): Promise<this> {
+    await this.page.getByRole("button", { name: "Change course" }).click();
+    return this;
+  }
+
+  /** Clears a kept custom name and goes back to searching. */
+  async tapEditName(): Promise<this> {
+    await this.page.getByRole("button", { name: "Edit name" }).click();
     return this;
   }
 
