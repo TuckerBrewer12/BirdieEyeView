@@ -7,7 +7,28 @@ import { HANDICAP_TAP, TOUR_SCREENS, WIDE_FRAME_MEDIA, tourImage, type TourScree
 import { motion as motionTokens } from "@/brand/theme";
 import { useScannerDemoViewModel, type DemoScorecardRow } from "./useScannerDemoViewModel";
 
-const DEMO_MOTION = motionTokens.demo;
+/**
+ * Cinematic timings for this scanner, in seconds. Presses and springs that match
+ * the rest of the app come from `motion` (`duration.collapse`, `spring`).
+ */
+const DEMO_MOTION = {
+  /** One image replacing another — the card giving way to the scorecard. */
+  crossfade: 0.8,
+  /** The scan line's full travel, top to bottom. */
+  sweep: 1.5,
+  /** A field or chip drawing the eye as the form fills itself in. */
+  emphasis: 0.3,
+  /** One on/off of the text caret in the name field. */
+  caretBlink: 0.8,
+  /** One app screen giving way to the next on the tour. */
+  screenChange: 0.5,
+  /** The incoming screen settling from just past full size. */
+  screenEnterScale: 1.02,
+  /** The photo stepping back as the scanned card replaces it. */
+  photoRecedeScale: 0.95,
+  /** A finger pressing the handicap: the ring closing in from wide, pressing, then letting go. */
+  tap: { duration: 0.7, reachScale: 1.6, pressScale: 0.8 },
+} as const;
 
 /** The clean scorecard the scan resolves to. */
 function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
@@ -149,7 +170,7 @@ function MappingPanel() {
               <motion.div
                 initial={{ opacity: 0.5 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 1.2, duration: DEMO_MOTION.select }}
+                transition={{ delay: 1.2, duration: motionTokens.duration.collapse }}
                 className="flex flex-1 flex-col justify-center rounded-md border-2 border-score-birdie bg-accent p-2"
               >
                 <motion.div
@@ -200,7 +221,7 @@ function MappingPanel() {
               <motion.div
                 initial={{ x: "120%", opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 2.6, ...DEMO_MOTION.rowSpring }}
+                transition={{ delay: 2.6, ...motionTokens.spring }}
                 className="flex flex-1 items-center gap-2 rounded-md bg-scan-row-score px-3 py-1.5 text-xs font-semibold text-primary-foreground"
               >
                 <GripVertical className="size-3.5 opacity-50" /> Score
@@ -210,7 +231,7 @@ function MappingPanel() {
             <motion.div
               initial={{ x: "120%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 2.9, ...DEMO_MOTION.rowSpring }}
+              transition={{ delay: 2.9, ...motionTokens.spring }}
               className="flex w-full items-center gap-2 rounded-md bg-scan-row-shots px-3 py-1.5 text-xs font-semibold text-primary-foreground"
             >
               <GripVertical className="size-3.5 opacity-50" /> Shots to Green
@@ -219,7 +240,7 @@ function MappingPanel() {
             <motion.div
               initial={{ x: "120%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 3.2, ...DEMO_MOTION.rowSpring }}
+              transition={{ delay: 3.2, ...motionTokens.spring }}
               className="flex w-full items-center gap-2 rounded-md bg-scan-row-putts px-3 py-1.5 text-xs font-semibold text-primary-foreground"
             >
               <GripVertical className="size-3.5 opacity-50" /> Putts
