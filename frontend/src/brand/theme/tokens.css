@@ -201,6 +201,8 @@
   --brand-size-sparkline-w: 300px;
   --brand-size-sparkline-h: 56px;
   --brand-sparkline-stroke: 2px;
+  /* Compact radar: from the rim to an axis label. */
+  --brand-space-radar-compact-label-gap: 14px;
   --brand-ring-width: 3px;
   /* Icon line weight in the tab bar: lighter at rest, heavier on the current tab. */
   --brand-stroke-icon: 1.75;
