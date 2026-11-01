@@ -27,3 +27,5 @@ export type CourseHoleScoreTypeRowDto = Schemas["CourseHoleScoreTypeRow"];
 export type CourseHoleGirRowDto = Schemas["CourseHoleGirRow"];
 export type CourseHolePuttsRowDto = Schemas["CourseHolePuttsRow"];
 export type CourseHoleVarianceRowDto = Schemas["CourseHoleVarianceRow"];
+/** What `PATCH /users/{id}` takes. A field left out keeps its value; null clears it. */
+export type UserChangesDto = Schemas["UpdateUserRequest"];

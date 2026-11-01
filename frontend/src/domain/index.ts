@@ -36,8 +36,12 @@ export {
   netScore,
   formatHandicapIndex,
   formatCourseHandicap,
+  formatHandicapInputValue,
+  parseHandicapInput,
+  MIN_HANDICAP_INDEX,
+  MAX_HANDICAP_INDEX,
 } from "./handicap";
-export type { DifferentialStatus } from "./handicap";
+export type { DifferentialStatus, HandicapParseResult } from "./handicap";
 
 export { Round } from "./round";
 export type { CourseEdit, HoleEdits, HoleScore, Nine, RoundCourse, RoundDetail, RoundEdits, ScoreCounts } from "./round";

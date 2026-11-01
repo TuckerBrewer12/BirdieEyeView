@@ -1,3 +1,4 @@
+import { configurePreferenceStorage } from "@/data/devicePreferences";
 import { configurePhotoUpload } from "@/data/photoUpload";
 import { configureApiBaseUrl } from "@/lib/apiBase";
 import { configureSessionStorage } from "@/lib/sessionToken";
@@ -15,5 +16,6 @@ function browserLocalStorage() {
 }
 
 configureSessionStorage(browserLocalStorage());
+configurePreferenceStorage(browserLocalStorage());
 
 configurePhotoUpload(compressImageForUpload);
