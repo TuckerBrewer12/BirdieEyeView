@@ -7,8 +7,6 @@ import { populatedRounds } from "@/testing/fixtures/rounds";
 import {
   dashboardGoalReport,
   dashboardUser,
-  emptyAnalytics,
-  populatedAnalytics,
   populatedDashboard,
 } from "@/testing/fixtures/dashboard";
 import { FakeDashboardRepository } from "@/testing/fakes/FakeDashboardRepository";
@@ -24,7 +22,6 @@ function wrapper({ children }: { children: ReactNode }) {
 
 function renderVm(seed: ConstructorParameters<typeof FakeDashboardRepository>[0] = {
   dashboard: populatedDashboard,
-  analytics: populatedAnalytics,
   user: dashboardUser,
   goalReport: dashboardGoalReport,
 }) {
@@ -46,7 +43,7 @@ describe("useDashboardPageViewModel", () => {
     expect(result.current.user?.name).toBe("Test Golfer");
     expect(result.current.l20ScoreMix).toEqual(populatedDashboard.score_mix);
     expect(result.current.recentScores).toEqual(
-      populatedAnalytics.score_trend.flatMap((row) => (row.total_score != null ? [row.total_score] : [])),
+      populatedDashboard.score_trend.flatMap((row) => (row.total_score != null ? [row.total_score] : [])),
     );
   });
 
@@ -105,15 +102,24 @@ describe("useDashboardPageViewModel", () => {
     expect(result.current.error?.message).toBe("Dashboard data failed to load.");
   });
 
-  it("still loads when analytics fails", async () => {
+  it("draws the trends from the dashboard response", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.trend).toHaveLength(populatedDashboard.score_trend.length);
+    expect(result.current.trend[1]).toMatchObject({ score: 69, differentialStatus: "counting" });
+    expect(result.current.shortGameTrend?.scrambling).toEqual([37.5, 37.5, 37.5, 37.5, 37.5]);
+    expect(result.current.shortGameTrend?.upAndDown).toEqual([33.3, 33.3, 33.3, 33.3, 33.3]);
+  });
+
+  it("has no trend while the window is empty", async () => {
     const { result } = renderVm({
-      dashboard: populatedDashboard,
-      analyticsError: new Error("no trends"),
-        });
+      dashboard: { ...populatedDashboard, score_trend: [], handicap_trend: [], scrambling_trend: [], up_and_down_trend: [] },
+    });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.data?.total_rounds).toBe(4);
-    expect(result.current.trends).toBeNull();
     expect(result.current.trend).toEqual([]);
+    expect(result.current.recentScores).toEqual([]);
+    expect(result.current.shortGameTrend).toBeNull();
   });
 
   it("exposes the scoring goal from the user and report", async () => {
@@ -131,7 +137,6 @@ describe("useDashboardPageViewModel", () => {
         recent_rounds: [],
         whs: { ...populatedDashboard.whs, rows: [], window_size: 0, count_used: 0, show_calculation: false },
       },
-      analytics: emptyAnalytics(),
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.data?.handicap_index).toBeNull();
@@ -149,7 +154,6 @@ describe("dashboard model", () => {
   it("pairs scrambling and up-and-down by round and keeps the last twelve", () => {
     const rounds = Array.from({ length: 14 }, (_, i) => i + 1);
     const trend = shortGameTrendFrom({
-      ...emptyAnalytics(),
       scrambling_trend: rounds.map((i) => ({
         round_index: i,
         round_id: `r${i}`,
@@ -158,18 +162,19 @@ describe("dashboard model", () => {
         scramble_failures: 4,
         scrambling_percentage: i,
       })),
-      // Round 14 has no up-and-down chance, so it drops out of both lines.
-      up_and_down_trend: rounds.slice(0, 13).map((i) => ({
+      // Round 14 has no up-and-down chance, so it has no rate and drops out of both lines.
+      up_and_down_trend: rounds.map((i) => ({
         round_index: i,
         round_id: `r${i}`,
-        opportunities: 5,
-        successes: 2,
-        percentage: i * 10,
+        opportunities: i < 14 ? 5 : 0,
+        successes: i < 14 ? 2 : 0,
+        percentage: i < 14 ? i * 10 : null,
       })),
     });
     expect(trend?.scrambling).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
     expect(trend?.upAndDown).toEqual([20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130]);
-    expect(shortGameTrendFrom(emptyAnalytics())).toBeNull();
+    expect(shortGameTrendFrom({ scrambling_trend: [], up_and_down_trend: [] })).toBeNull();
+    expect(shortGameTrendFrom(null)).toBeNull();
   });
 
 });

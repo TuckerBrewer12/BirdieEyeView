@@ -1,5 +1,5 @@
 import type { DashboardData, RoundSummary, Round, CourseSummary, Course, User } from "@/types/golf";
-import type { FriendshipDto, FriendshipStatusRequestDto } from "@/types/api";
+import type { FriendshipDto, FriendshipStatusRequestDto, PlayedCourseDto } from "@/types/api";
 import type { AnalyticsData, AnalyticsFilters, CourseAnalyticsData, RoundComparison, GoalReport } from "@/types/analytics";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
@@ -137,9 +137,7 @@ export const api = {
   },
 
   getPlayedCourses: (userId: string) =>
-    fetchJSON<{ id: string; name: string | null; location: string | null }[]>(
-      `/stats/${userId}/played-courses`
-    ),
+    fetchJSON<PlayedCourseDto[]>(`/stats/${userId}/played-courses`),
 
   getRoundComparison: (userId: string, roundId: string) =>
     fetchJSON<RoundComparison>(`/stats/compare/${userId}/${roundId}`),

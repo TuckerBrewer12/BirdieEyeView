@@ -256,7 +256,7 @@ export function useAnalyticsViewModel(userId: string): AnalyticsViewModel {
       : null;
     const scramblingValid = data.scrambling_trend.filter((r) => r.scrambling_percentage != null);
     const safeScrambling = scramblingValid.length > 0
-      ? Math.round(scramblingValid.reduce((a, r) => a + r.scrambling_percentage, 0) / scramblingValid.length * 10) / 10
+      ? Math.round(scramblingValid.reduce((a, r) => a + (r.scrambling_percentage ?? 0), 0) / scramblingValid.length * 10) / 10
       : null;
     return { ...data.kpis, gir_percentage: safeGirPct, scrambling_percentage: safeScrambling };
   }, [data, girData]);

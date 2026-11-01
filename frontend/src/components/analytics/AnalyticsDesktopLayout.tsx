@@ -108,7 +108,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
             { label: "Scoring Avg", value: kpis.scoring_average,          icon: TrendingDown, subtitle: undefined },
             { label: "Best Round",  value: bestRound?.total_score ?? null, icon: Trophy,
               subtitle: (() => {
-                const ev = notable_achievements?.scoring_records_events?.lifetime?.lowest_score;
+                const ev = notable_achievements.scoring_records_events.lifetime.lowest_round;
                 return ev?.course;
               })() },
             { label: "Avg Putts",   value: avgPutts,                      icon: Target,      subtitle: undefined },

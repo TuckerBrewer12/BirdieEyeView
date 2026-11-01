@@ -1,8 +1,14 @@
 import { SCORE_KINDS, type ScoreKind } from "@/domain/score";
 import type { RoundSummary } from "@/domain/round";
 import type { RoundTrendPoint } from "@/domain/trend";
-import type { AnalyticsData, GoalReport } from "@/types/analytics";
-import type { MilestoneDto, ScoreMixDto, WhsBreakdownDto } from "@/types/api";
+import type { GoalReport } from "@/types/analytics";
+import type {
+  MilestoneDto,
+  ScoreMixDto,
+  ScramblingTrendRowDto,
+  UpAndDownTrendRowDto,
+  WhsBreakdownDto,
+} from "@/types/api";
 
 /** Which line the phone's trend card shows. */
 export type TrendView = "score" | "handicap";
@@ -25,17 +31,31 @@ export interface ShortGameTrend {
   upAndDown: number[];
 }
 
-/** The last twelve rounds with both rates, paired by round. Null until there are two to draw. */
-export function shortGameTrendFrom(trends: AnalyticsData | null): ShortGameTrend | null {
+/** The server's per-round scrambling and up-and-down series. */
+export interface ShortGameSeries {
+  scrambling_trend: ScramblingTrendRowDto[];
+  up_and_down_trend: UpAndDownTrendRowDto[];
+}
+
+/**
+ * The last twelve rounds with both rates, paired by round. A round without a missed green
+ * has no rate, so it drops out of both lines. Null until there are two to draw.
+ */
+export function shortGameTrendFrom(trends: ShortGameSeries | null): ShortGameTrend | null {
   if (!trends) return null;
   const upAndDownByRound = new Map(trends.up_and_down_trend.map((row) => [row.round_index, row.percentage]));
   const paired = trends.scrambling_trend
-    .filter((row) => upAndDownByRound.has(row.round_index))
+    .flatMap((row) => {
+      const upAndDown = upAndDownByRound.get(row.round_index);
+      return row.scrambling_percentage != null && upAndDown != null
+        ? [{ scrambling: row.scrambling_percentage, upAndDown }]
+        : [];
+    })
     .slice(-12);
   if (paired.length < 2) return null;
   return {
-    scrambling: paired.map((row) => row.scrambling_percentage),
-    upAndDown: paired.map((row) => upAndDownByRound.get(row.round_index)!),
+    scrambling: paired.map((row) => row.scrambling),
+    upAndDown: paired.map((row) => row.upAndDown),
   };
 }
 

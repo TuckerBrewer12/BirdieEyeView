@@ -1,8 +1,8 @@
 import { SVGScoreHandicapTrend } from "@/brand/charts/SVGScoreHandicapTrend";
 import { trendPointsFrom } from "@/domain";
-import { populatedAnalytics } from "@/testing/fixtures/dashboard";
+import { populatedDashboard } from "@/testing/fixtures/dashboard";
 
-const data = trendPointsFrom(populatedAnalytics);
+const data = trendPointsFrom(populatedDashboard);
 
 export default function SVGScoreHandicapTrendPreview() {
   return (

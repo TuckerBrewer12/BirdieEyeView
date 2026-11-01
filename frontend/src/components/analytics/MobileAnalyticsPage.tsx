@@ -226,10 +226,13 @@ export function MobileAnalyticsPage({
   const birdiePct = donutData.find((d) => d.name === "birdie")?.value;
 
   // Short game deltas (last 5 vs prev 5)
-  const scrPct = average(scrambling_trend.slice(-5).map((r) => r.scrambling_percentage));
-  const scrDelta = trendDelta(scrambling_trend, (r) => r.scrambling_percentage);
-  const udPct = average(up_and_down_trend.slice(-5).map((r) => r.percentage));
-  const udDelta = trendDelta(up_and_down_trend, (r) => r.percentage);
+  // A round without a missed green has no rate, so it sits out of both.
+  const scrRates = scrambling_trend.flatMap((r) => (r.scrambling_percentage != null ? [r.scrambling_percentage] : []));
+  const udRates = up_and_down_trend.flatMap((r) => (r.percentage != null ? [r.percentage] : []));
+  const scrPct = average(scrRates.slice(-5));
+  const scrDelta = trendDelta(scrRates, (v) => v);
+  const udPct = average(udRates.slice(-5));
+  const udDelta = trendDelta(udRates, (v) => v);
 
   const divergingGirData = useMemo(() =>
     gir_vs_non_gir.map((row) => ({
