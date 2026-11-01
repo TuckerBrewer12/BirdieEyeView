@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
-import type { Round } from "@/domain";
+import type { RoundSummary } from "@/domain";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 import {
   SORT_LABELS,
@@ -22,9 +22,9 @@ export type { FilterChipItem, FilterMode, SortKey, SortOption };
 
 export interface RoundsUiState {
   loading: boolean;
-  rounds: Round[];
-  filteredRounds: Round[];
-  visibleRounds: Round[];
+  rounds: RoundSummary[];
+  filteredRounds: RoundSummary[];
+  visibleRounds: RoundSummary[];
   remainingCount: number;
   search: string;
   filterMode: FilterMode;

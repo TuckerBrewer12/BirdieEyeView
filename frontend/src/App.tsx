@@ -18,8 +18,7 @@ import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { CareerPage } from "./pages/CareerPage";
 import { TheLabPage } from "./pages/TheLabPage";
 import { SettingsPage } from "./pages/settings";
-import { FriendsInboxPage } from "./pages/FriendsInboxPage";
-import { SocialPage } from "./pages/SocialPage";
+import { SocialPage, FriendsInboxPage } from "./pages/social";
 import { BrandHarness } from "./brand/BrandHarness";
 
 function ScrollToTop() {
@@ -102,7 +101,7 @@ function AppRoutes() {
           <Route path="/scan" element={<ScanPage userId={userId} />} />
           <Route path="/analytics" element={<AnalyticsPage userId={userId} />} />
           <Route path="/the-lab" element={<TheLabPage userId={userId} />} />
-          <Route path="/social" element={<SocialPage />} />
+          <Route path="/social" element={<SocialPage userId={userId} />} />
           <Route path="/career" element={<CareerPage userId={userId} />} />
           <Route path="/inbox" element={<FriendsInboxPage userId={userId} />} />
           <Route path="/settings" element={<SettingsPage userId={userId} />} />

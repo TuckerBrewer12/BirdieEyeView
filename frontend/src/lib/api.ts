@@ -1,4 +1,5 @@
-import type { DashboardData, RoundSummary, Round, CourseSummary, Course, User, Friendship } from "@/types/golf";
+import type { DashboardData, RoundSummary, Round, CourseSummary, Course, User } from "@/types/golf";
+import type { FriendshipDto, FriendshipStatusRequestDto } from "@/types/api";
 import type { AnalyticsData, AnalyticsFilters, CourseAnalyticsData, RoundComparison, GoalReport } from "@/types/analytics";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
@@ -154,18 +155,16 @@ export const api = {
     );
   },
 
-  getFriendships: (status?: "pending" | "accepted" | "declined" | "blocked") => {
+  getFriendships: (status?: FriendshipDto["status"]) => {
     const params = new URLSearchParams();
     if (status) params.set("status", status);
     const suffix = params.toString() ? `?${params.toString()}` : "";
-    return fetchJSON<Friendship[]>(`/users/me/friends${suffix}`);
+    return fetchJSON<FriendshipDto[]>(`/users/me/friends${suffix}`);
   },
 
   sendFriendRequest: (addresseeFriendCode: string) =>
-    postJSON<Friendship>(`/users/me/friends`, { addressee_friend_code: addresseeFriendCode }),
+    postJSON<FriendshipDto>(`/users/me/friends`, { addressee_friend_code: addresseeFriendCode }),
 
-  updateFriendshipStatus: (
-    friendshipId: string,
-    status: "accepted" | "declined" | "blocked",
-  ) => patchJSON<Friendship>(`/users/me/friends/${friendshipId}`, { status }),
+  updateFriendshipStatus: (friendshipId: string, status: FriendshipStatusRequestDto["status"]) =>
+    patchJSON<FriendshipDto>(`/users/me/friends/${friendshipId}`, { status }),
 };

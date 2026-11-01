@@ -3,6 +3,7 @@
 from api.course_responses import course_detail
 from api.schemas import (
     HoleScoreResponse,
+    HoleSummaryResponse,
     NineFigures,
     Nines,
     RoundFigures,
@@ -55,18 +56,28 @@ def _figures(round_: Round) -> dict:
 
 
 def round_summary(round_: Round) -> RoundSummaryResponse:
-    """A round for list views."""
+    """A round for list views: only what a list draws, so a long list stays small."""
     return RoundSummaryResponse(
-        **_figures(round_),
         id=str(round_.id),
         course_id=str(round_.course.id) if round_.course and round_.course.id else None,
         course_name=round_.course_name_played or (round_.course.name if round_.course else None),
-        course_location=round_.course.location if round_.course else None,
-        course_par=round_.course.get_par() if round_.course else None,
         tee_box=round_.tee_box,
         date=round_.date,
-        notes=round_.notes,
-        hole_scores=_hole_scores(round_),
+        total_score=round_.calculate_total_score(),
+        to_par=round_.total_to_par(),
+        front_nine=round_.calculate_front_nine(),
+        back_nine=round_.calculate_back_nine(),
+        total_putts=round_.get_total_putts(),
+        score_counts=ScoreCounts(**round_.get_score_counts()),
+        hole_scores=[
+            HoleSummaryResponse(
+                hole_number=hs.hole_number,
+                strokes=hs.strokes,
+                kind=round_.get_score_kind(hs.hole_number),
+            )
+            for hs in round_.hole_scores
+            if hs.hole_number is not None
+        ],
     )
 
 

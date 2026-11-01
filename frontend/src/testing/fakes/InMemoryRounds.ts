@@ -5,17 +5,11 @@ import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
 import { toCourseSummary } from "../fixtures/roundDetails";
 import { courseResponse } from "./courseResponses";
-import {
-  roundResponse,
-  storedFromRound,
-  storedFromSummary,
-  summaryResponse,
-  type StoredRound,
-} from "./roundResponses";
+import { roundResponse, storedFromRound, summaryResponse, type StoredRound } from "./roundResponses";
 
 export interface InMemoryRoundsSeed {
-  /** The round list, in order. */
-  rounds?: RoundSummaryDto[];
+  /** The round list, in order, as the facts the server stores. */
+  rounds?: StoredRound[];
   courses?: CourseSummary[];
   /** Full rounds; one sharing an id with a listed round replaces its facts. */
   detailRounds?: RoundDto[];
@@ -87,7 +81,7 @@ export class InMemoryRounds {
 
   constructor(seed: InMemoryRoundsSeed = {}) {
     const rounds = seed.rounds ?? [];
-    this.stored = new Map(rounds.map((round) => [round.id, storedFromSummary(round)]));
+    this.stored = new Map(rounds.map((round) => [round.id, round]));
     for (const round of seed.detailRounds ?? []) {
       if (round.id) this.stored.set(round.id, storedFromRound(round));
     }

@@ -1,9 +1,10 @@
 import { RoundFlowChart } from "@/brand/charts/RoundFlowChart";
 import { Round } from "@/domain";
-import { populatedRounds } from "@/testing/fixtures/rounds";
+import { roundResponse } from "@/testing/fakes/roundResponses";
+import { storedRounds } from "@/testing/fixtures/rounds";
 import { ScrolledToEnd } from "../ScrolledToEnd";
 
-const [overPar, , best] = populatedRounds.map(Round.fromSummary);
+const [overPar, , best] = storedRounds.map((round) => Round.fromDto(roundResponse(round)));
 
 export default function RoundFlowChartPreview() {
   return (

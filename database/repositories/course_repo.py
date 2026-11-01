@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 from models import Course, Hole, Tee
+from models.course import CourseSummary
 from database.converters import course_from_rows, course_to_row, tee_yardages_to_rows
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 
@@ -23,6 +24,23 @@ def _tee_yardage_similarity(
         return 0.0, 0
     similar = sum(1 for h in overlap if abs(int(incoming[h]) - int(existing[h])) <= tolerance_yards)
     return similar / len(overlap), len(overlap)
+
+
+def _summary_from_row(row) -> CourseSummary:
+    """CourseSummary from a summary query row.
+
+    The queries work par out the way Course.get_par() does: the stored par,
+    else the sum of the hole pars when all 18 holes have one.
+    """
+    return CourseSummary(
+        id=str(row["id"]),
+        name=row["name"],
+        external_course_id=row["external_course_id"],
+        location=row["location"],
+        par=row["par"],
+        hole_count=row["hole_count"],
+        tee_count=row["tee_count"],
+    )
 
 
 class CourseRepositoryDB:
@@ -177,13 +195,15 @@ class CourseRepositoryDB:
                         f"%{name}%",
                     )
 
-            # Tier 3: trigram similarity (0.4 threshold to avoid false positives)
+            # Tier 3: trigram similarity (0.4 threshold to avoid false positives).
+            # `name % $1` (pg_trgm's 0.3 default threshold) lets the trigram index
+            # find candidates; similarity() > 0.4 then keeps the close ones.
             if not row:
                 if user_id:
                     row = await conn.fetchrow(
                         """SELECT *, similarity(name, $1) AS sim
                            FROM courses.courses
-                           WHERE similarity(name, $1) > 0.4
+                           WHERE name % $1 AND similarity(name, $1) > 0.4
                              AND (user_id IS NULL OR user_id = $2)
                            ORDER BY sim DESC LIMIT 1""",
                         name, uid,
@@ -192,7 +212,7 @@ class CourseRepositoryDB:
                     row = await conn.fetchrow(
                         """SELECT *, similarity(name, $1) AS sim
                            FROM courses.courses
-                           WHERE similarity(name, $1) > 0.4 AND user_id IS NULL
+                           WHERE name % $1 AND similarity(name, $1) > 0.4 AND user_id IS NULL
                            ORDER BY sim DESC LIMIT 1""",
                         name,
                     )
@@ -277,7 +297,7 @@ class CourseRepositoryDB:
                 row = await conn.fetchrow(
                     """SELECT *, similarity(name, $1) AS sim
                        FROM courses.courses
-                       WHERE similarity(name, $1) > 0.4 AND user_id = $2
+                       WHERE name % $1 AND similarity(name, $1) > 0.4 AND user_id = $2
                        ORDER BY sim DESC LIMIT 1""",
                     name, uid,
                 )
@@ -326,7 +346,7 @@ class CourseRepositoryDB:
                 row = await conn.fetchrow(
                     """SELECT *, similarity(name, $1) AS sim
                        FROM courses.courses
-                       WHERE similarity(name, $1) > 0.4 AND user_id IS NOT NULL
+                       WHERE name % $1 AND similarity(name, $1) > 0.4 AND user_id IS NOT NULL
                        ORDER BY sim DESC LIMIT 1""",
                     name,
                 )
@@ -492,55 +512,62 @@ class CourseRepositoryDB:
                 )
                 return await self._assemble(conn, row)
 
-    async def list_courses(
+    async def list_course_summaries(
         self,
         *,
         limit: int = 50,
         offset: int = 0,
         user_id: Optional[str] = None,
-    ) -> List[Course]:
-        """List courses with pagination (fully populated).
+    ) -> List[CourseSummary]:
+        """List course summaries by name, in one query.
 
-        Returns master courses plus the user's custom courses when user_id provided.
+        Returns master courses plus the user's custom courses when user_id provided
+        (a NULL $3 matches no user_id, so only master courses come back).
         """
+        uid = UUID(user_id) if user_id else None
         async with self._pool.acquire() as conn:
-            if user_id:
-                rows = await conn.fetch(
-                    """SELECT * FROM courses.courses
+            rows = await conn.fetch(
+                """SELECT c.id, c.name, c.external_course_id, c.location,
+                          COALESCE(c.par, (
+                              SELECT SUM(h.par) FROM courses.holes h WHERE h.course_id = c.id
+                              HAVING COUNT(*) = 18 AND COUNT(h.par) = 18
+                          )) AS par,
+                          (SELECT COUNT(*) FROM courses.holes h WHERE h.course_id = c.id) AS hole_count,
+                          (SELECT COUNT(*) FROM courses.tees t WHERE t.course_id = c.id) AS tee_count
+                   FROM (
+                       SELECT * FROM courses.courses
                        WHERE user_id IS NULL OR user_id = $3
-                       ORDER BY name LIMIT $1 OFFSET $2""",
-                    limit, offset, UUID(user_id),
-                )
-            else:
-                rows = await conn.fetch(
-                    """SELECT * FROM courses.courses WHERE user_id IS NULL
-                       ORDER BY name LIMIT $1 OFFSET $2""",
-                    limit, offset,
-                )
-            return [await self._assemble(conn, r) for r in rows]
+                       ORDER BY name LIMIT $1 OFFSET $2
+                   ) c
+                   ORDER BY c.name""",
+                limit, offset, uid,
+            )
+            return [_summary_from_row(r) for r in rows]
 
-    async def search_courses(
+    async def search_course_summaries(
         self, query: str, *, user_id: Optional[str] = None
-    ) -> List[Course]:
-        """Search courses by name or location substring."""
+    ) -> List[CourseSummary]:
+        """Search course summaries by name or location substring, in one query."""
+        uid = UUID(user_id) if user_id else None
         async with self._pool.acquire() as conn:
-            if user_id:
-                rows = await conn.fetch(
-                    """SELECT * FROM courses.courses
+            rows = await conn.fetch(
+                """SELECT c.id, c.name, c.external_course_id, c.location,
+                          COALESCE(c.par, (
+                              SELECT SUM(h.par) FROM courses.holes h WHERE h.course_id = c.id
+                              HAVING COUNT(*) = 18 AND COUNT(h.par) = 18
+                          )) AS par,
+                          (SELECT COUNT(*) FROM courses.holes h WHERE h.course_id = c.id) AS hole_count,
+                          (SELECT COUNT(*) FROM courses.tees t WHERE t.course_id = c.id) AS tee_count
+                   FROM (
+                       SELECT * FROM courses.courses
                        WHERE (name ILIKE $1 OR location ILIKE $1)
                          AND (user_id IS NULL OR user_id = $2)
-                       ORDER BY name LIMIT 20""",
-                    f"%{query}%", UUID(user_id),
-                )
-            else:
-                rows = await conn.fetch(
-                    """SELECT * FROM courses.courses
-                       WHERE (name ILIKE $1 OR location ILIKE $1)
-                         AND user_id IS NULL
-                       ORDER BY name LIMIT 20""",
-                    f"%{query}%",
-                )
-            return [await self._assemble(conn, r) for r in rows]
+                       ORDER BY name LIMIT 20
+                   ) c
+                   ORDER BY c.name""",
+                f"%{query}%", uid,
+            )
+            return [_summary_from_row(r) for r in rows]
 
     # ================================================================
     # Create

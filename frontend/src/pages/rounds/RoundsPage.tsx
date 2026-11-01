@@ -14,11 +14,11 @@ import {
 } from "@/brand";
 import { formatCourseName } from "@/lib/courseName";
 import { pluralize } from "@/lib/pluralize";
-import type { Round } from "@/domain";
+import type { RoundSummary } from "@/domain";
 import { LinkCoursePanel } from "./components/LinkCoursePanel";
 import { useRoundsPageViewModel } from "./useRoundsPageViewModel";
 
-function linkTitleFor(round: Round): string {
+function linkTitleFor(round: RoundSummary): string {
   return `Link "${round.course?.name ? formatCourseName(round.course.name) : "this round"}" to a saved course`;
 }
 
