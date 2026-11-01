@@ -8,6 +8,8 @@ const pebble: CourseSummary = {
   par: 72,
   total_holes: 18,
   tee_count: 4,
+  external_course_id: null,
+  source: "local",
 };
 
 const spyglass: CourseSummary = {
@@ -17,6 +19,8 @@ const spyglass: CourseSummary = {
   par: 72,
   total_holes: 18,
   tee_count: 3,
+  external_course_id: null,
+  source: "local",
 };
 
 export default function CourseLinkSearchPreview() {

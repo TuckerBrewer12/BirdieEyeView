@@ -14,6 +14,8 @@ export function toCourseSummary(course: Course): CourseSummary {
     par: course.par,
     total_holes: course.holes.length,
     tee_count: course.tees.length,
+    external_course_id: course.external_course_id,
+    source: "local",
   };
 }
 

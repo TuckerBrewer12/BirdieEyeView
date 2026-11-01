@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "@/data/queryKeys";
-import { pluralize } from "@/lib/pluralize";
+import { messageFrom } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/types/golf";
 import { coursesRepository, type CoursesRepository } from "./coursesRepository";
+import { useCourses } from "./useCourses";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -13,7 +12,6 @@ export interface CoursesPageViewModel {
   /** Empty copy — false while loading or when a load error is showing. */
   showEmpty: boolean;
   visibleCourses: CourseSummary[];
-  headerSubtitle: string;
   search: string;
   setSearch: (q: string) => void;
 }
@@ -30,26 +28,18 @@ export function useCoursesPageViewModel(
     return () => clearTimeout(timer);
   }, [search]);
 
-  const { data: courses = [], isLoading: loading, isError, error } = useQuery({
-    queryKey: queryKeys.courses(userId, debouncedSearch),
-    queryFn: () =>
-      debouncedSearch
-        ? repository.searchCourses(debouncedSearch, userId)
-        : repository.getCourses(userId),
-  });
-
-  const visibleCourses = courses;
-
-  const loadError = isError
-    ? (error instanceof Error ? error.message : "Could not load courses.")
-    : null;
+  const { data: visibleCourses = [], isLoading: loading, isError, error } = useCourses(
+    userId,
+    debouncedSearch,
+    repository,
+  );
+  const loadError = isError ? messageFrom(error, "Could not load courses.") : null;
 
   return {
     loading,
     error: loadError,
     showEmpty: !loading && loadError == null && visibleCourses.length === 0,
     visibleCourses,
-    headerSubtitle: pluralize(visibleCourses.length, "course"),
     search,
     setSearch,
   };
