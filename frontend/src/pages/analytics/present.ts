@@ -171,11 +171,9 @@ export function percentLabel(percent: number | null | undefined): string {
   return percent != null ? `${Math.round(percent)}%` : "—";
 }
 
-/** An average to par, to two places with a true minus sign: "+0.80", "−0.10", "E". */
-export function averageToParLabel(toPar: number): string {
-  if (toPar < 0) return `−${Math.abs(toPar).toFixed(2)}`;
-  if (toPar > 0) return `+${toPar.toFixed(2)}`;
-  return "E";
+/** An average to par, as golfers write it, to two places: "+0.85", "E", "-0.1". */
+export function averageToParLabel(value: number): string {
+  return toParLabel(Math.round(value * 100) / 100) ?? "E";
 }
 
 export function holesLabel(holes: number): string {

@@ -55,9 +55,9 @@ describe("the desktop's words", () => {
     ]);
   });
 
-  it("signs averages to par with a true minus, and counts holes", () => {
-    expect(averageToParLabel(0.8)).toBe("+0.80");
-    expect(averageToParLabel(-0.1)).toBe("−0.10");
+  it("signs averages to par the way golfers write them, and counts holes", () => {
+    expect(averageToParLabel(0.8)).toBe("+0.8");
+    expect(averageToParLabel(-0.1)).toBe("-0.1");
     expect(averageToParLabel(0)).toBe("E");
     expect(holesLabel(1)).toBe("1 hole");
     expect(holesLabel(24)).toBe("24 holes");
