@@ -32,6 +32,16 @@ export class SocialRobot {
     return this;
   }
 
+  async openFailed(message: string): Promise<this> {
+    await this.open({ loadError: message });
+    return this.seesError(message);
+  }
+
+  async doesNotSeeEmptyState(): Promise<this> {
+    await expect(this.page.getByText("No friends yet.")).toHaveCount(0);
+    return this;
+  }
+
   async typeCode(code: string): Promise<this> {
     await this.codeInput.fill(code);
     return this;

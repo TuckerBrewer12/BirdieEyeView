@@ -42,3 +42,9 @@ test("empty inbox", async ({ inbox }) => {
   await inbox.seesEmptyState("received");
   await inbox.capture("inbox-empty.png");
 });
+
+test("load error does not show empty copy", async ({ inbox }) => {
+  await inbox.openFailed("Could not load your inbox.");
+  await inbox.doesNotSeeEmptyState();
+  await inbox.capture("inbox-load-error.png");
+});
