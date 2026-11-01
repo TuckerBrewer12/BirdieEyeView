@@ -11,6 +11,19 @@ test("a picked card is read, then comes back to check", async ({ scan }) => {
   await scan.seesReview(SCANNED_COURSE_NAME);
 });
 
+test("name, scoring format and putts on the card are sent with the scan", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.nameOnCard("Sam");
+  await scan.chooseScoring("To par");
+  await scan.puttsOnCard();
+  await scan.tapExtract();
+  await scan.seesScanContext(
+    "my name is Sam. scores written to par. name on score row. row order: score, putts",
+  );
+  await scan.seesReview(SCANNED_COURSE_NAME);
+});
+
 test("a checked card saves as a round, and opens it", async ({ scan }) => {
   await scan.open();
   await scan.chooseScorecard();

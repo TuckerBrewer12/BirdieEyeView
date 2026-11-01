@@ -14,7 +14,9 @@ export class FakeSession {
       try {
         body = request.postDataJSON();
       } catch {
-        body = undefined;
+        // Extract is multipart: the card photo plus `user_context`, which isn't JSON.
+        const extract = request.method() === "POST" && request.url().includes("/api/scan/extract");
+        body = extract ? (request.postDataBuffer()?.toString("latin1") ?? "") : undefined;
       }
       const reply = await backend.respond(request.method(), request.url(), body);
       await route.fulfill({

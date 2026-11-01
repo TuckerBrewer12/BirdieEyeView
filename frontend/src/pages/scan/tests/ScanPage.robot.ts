@@ -69,6 +69,25 @@ export class ScanRobot {
     return this;
   }
 
+  /** The golfer's name, as it is written on the card. */
+  async nameOnCard(name: string): Promise<this> {
+    await this.page.getByPlaceholder("e.g. Tucker").fill(name);
+    return this;
+  }
+
+  /** How the scores are written: total strokes, or against par. */
+  async chooseScoring(format: "Total strokes" | "To par"): Promise<this> {
+    await this.page.getByRole("button", { name: format }).click();
+    return this;
+  }
+
+  /** The card has a putts row. */
+  async puttsOnCard(): Promise<this> {
+    await this.page.getByRole("button", { name: "Putts", exact: true }).click();
+    await expect(this.page.getByText("Drag rows to match your card")).toBeVisible();
+    return this;
+  }
+
   async tapExtract(): Promise<this> {
     await this.page.getByRole("button", { name: "Extract Scorecard" }).click();
     return this;
@@ -129,6 +148,12 @@ export class ScanRobot {
   /** The round just saved was linked to this course. */
   async seesSavedCourse(courseId: string): Promise<this> {
     expect(this.backend?.store.savedScans.at(-1)?.course_id).toBe(courseId);
+    return this;
+  }
+
+  /** The scan went out with what the golfer said is on the card. */
+  async seesScanContext(context: string): Promise<this> {
+    await expect.poll(() => this.backend?.extractContexts.at(-1)).toBe(context);
     return this;
   }
 

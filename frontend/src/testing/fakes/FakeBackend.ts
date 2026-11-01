@@ -84,6 +84,8 @@ export class FakeBackend {
   readonly authErrors: Partial<Record<FakeAuthEndpoint, string>>;
   /** What each auth endpoint was sent, in order. */
   readonly registrations: Record<string, unknown>[] = [];
+  /** `user_context` on each `/api/scan/extract`, in order. Null when the scan sent none. */
+  readonly extractContexts: (string | null)[] = [];
   readonly verificationResends: string[] = [];
   readonly resetRequests: string[] = [];
   readonly passwordResets: { token: string; new_password: string }[] = [];
@@ -242,6 +244,8 @@ export class FakeBackend {
     }
 
     if (verb === "POST" && path.includes("/api/scan/extract")) {
+      const context = typeof body === "string" ? multipartField(body, "user_context") : null;
+      this.extractContexts.push(context);
       if (!this.scan) return { status: 500, body: { detail: "Could not read this scorecard." } };
       return { status: 200, body: this.scan };
     }
@@ -436,4 +440,17 @@ export class FakeBackend {
       throw err;
     }
   }
+}
+
+/** A text field from a multipart body. Null when the part was left off. */
+function multipartField(body: string, name: string): string | null {
+  const at = body.lastIndexOf(`name="${name}"`);
+  if (at < 0) return null;
+  const rest = body.slice(at);
+  const header = rest.match(/\r?\n\r?\n/);
+  if (!header || header.index === undefined) return null;
+  const start = header.index + header[0].length;
+  const end = rest.slice(start).search(/\r?\n/);
+  if (end < 0) return null;
+  return rest.slice(start, start + end);
 }
