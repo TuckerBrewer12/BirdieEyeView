@@ -19,3 +19,12 @@ test("an expired link is refused and says why", async ({ reset }) => {
   await reset.choose("birdie123");
   await reset.seesError(AUTH_MESSAGES.badResetToken);
 });
+
+test("a short or mismatched password is caught before anything is sent", async ({ reset }) => {
+  await reset.open();
+  await reset.choose("short", "other");
+
+  await reset.seesFieldError("Password must be at least 8 characters.");
+  await reset.seesFieldError("Passwords do not match.");
+  expect(reset.backend?.passwordResets).toEqual([]);
+});

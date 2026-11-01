@@ -18,6 +18,14 @@ test("link without a token", async ({ reset }) => {
   await reset.capture("reset-password-missing-token.png");
 });
 
+test("a short or mismatched password", async ({ reset }) => {
+  await reset.open();
+  await reset.choose("short", "other");
+  await reset.seesFieldError("Password must be at least 8 characters.");
+  await reset.seesFieldError("Passwords do not match.");
+  await reset.capture("reset-password-invalid.png");
+});
+
 test("password reset", async ({ reset }) => {
   await reset.open();
   await reset.choose("birdie123");

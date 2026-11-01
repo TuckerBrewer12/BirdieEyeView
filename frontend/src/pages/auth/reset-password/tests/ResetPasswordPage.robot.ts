@@ -1,4 +1,4 @@
-import { test as base } from "../../../../testing/playwright";
+import { test as base, expect } from "../../../../testing/playwright";
 import { AuthScreenRobot, type AuthSeed } from "../../tests/AuthScreen.robot";
 
 export const RESET_TOKEN = "reset-token-from-email";
@@ -16,6 +16,11 @@ export class ResetPasswordRobot extends AuthScreenRobot {
     await this.fill("New password", password);
     await this.fill("Confirm password", confirm);
     await this.tap("Reset password");
+    return this;
+  }
+
+  async seesFieldError(text: string): Promise<this> {
+    await expect(this.page.locator("[data-slot=field-error]").filter({ hasText: text })).toBeVisible();
     return this;
   }
 
