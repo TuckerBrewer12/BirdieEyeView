@@ -117,7 +117,7 @@ export function RegisterPage() {
             onSelectCourse={viewModel.pickHomeCourse}
             onClose={viewModel.clearHomeCourse}
             linkedName={viewModel.homeCourse?.name}
-            linkedLabel="Selected"
+            linkedTitle="Selected"
             onClear={viewModel.clearHomeCourse}
             clearLabel="Change home course"
             autoFocus={false}
