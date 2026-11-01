@@ -14,6 +14,12 @@ test("email verified in dark mode", async ({ verifyEmail }) => {
   await verifyEmail.capture("verify-email-dark.png");
 });
 
+test("link without a token", async ({ verifyEmail }) => {
+  await verifyEmail.open(null);
+  await verifyEmail.seesError("Missing verification token");
+  await verifyEmail.capture("verify-email-missing-token.png");
+});
+
 test("expired link", async ({ verifyEmail }) => {
   await verifyEmail.open("expired-token");
   await verifyEmail.seesError(AUTH_MESSAGES.badVerifyToken);
