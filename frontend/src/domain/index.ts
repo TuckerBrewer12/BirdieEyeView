@@ -10,7 +10,7 @@ export {
 } from "./score";
 export type { ScoreKind, ScoreMix } from "./score";
 
-export { GOAL_OPTIONS, GOAL_BENCHMARK, HANDICAP_BENCHMARK } from "./benchmark";
+export { GOAL_OPTIONS, GOAL_BENCHMARK, HANDICAP_BENCHMARK, TOUR_SHORT_GAME } from "./benchmark";
 export type { BenchmarkProfile, ComparisonTargetValue } from "./benchmark";
 
 export { buildRadarData } from "./radar";

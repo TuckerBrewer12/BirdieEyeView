@@ -23,6 +23,12 @@ test("tapping a milestone opens its round", async ({ dashboard }) => {
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
+  test("tapping the goal card opens The Lab", async ({ dashboard }) => {
+    await dashboard.open();
+    await dashboard.tapGoal();
+    await dashboard.isAtLab();
+  });
+
   test("the trend switches to the handicap, and a tap picks a round", async ({ dashboard }) => {
     await dashboard.open();
     await dashboard.showTrend("HCP");

@@ -1301,6 +1301,17 @@
             ],
             "title": "Scoring Average"
           },
+          "scoring_average_change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average Change"
+          },
           "scoring_average_l20": {
             "anyOf": [
               {
@@ -1343,6 +1354,7 @@
           "average_gir",
           "scoring_average_l20",
           "scoring_average_l5",
+          "scoring_average_change",
           "handicap_change",
           "recent_form",
           "score_mix",

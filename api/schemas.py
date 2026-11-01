@@ -190,6 +190,8 @@ class DashboardResponse(ResponseModel):
     # Over the last 20 rounds, the window the dashboard's charts show.
     scoring_average_l20: Optional[float] = None
     scoring_average_l5: Optional[float] = None
+    # L5 minus L20, to a tenth: negative when the recent rounds came in lower.
+    scoring_average_change: Optional[float] = None
     handicap_change: HandicapChange = Field(default_factory=HandicapChange)
     recent_form: RecentForm = Field(default_factory=RecentForm)
     score_mix: ScoreMix = Field(default_factory=ScoreMix)

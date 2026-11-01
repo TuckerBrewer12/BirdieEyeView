@@ -14,7 +14,7 @@ import { avgLabel, pctLabel, puttsLabel } from "../present";
 interface ScoringHeroCardProps {
   /** Scoring average over the last 20 rounds. */
   average: number | null;
-  /** The L20 average minus the L5 average: positive means the recent rounds came in lower. */
+  /** The server's L5 average minus L20, to a tenth: negative means the recent rounds came in lower. */
   change: number | null;
   /** Scores across the window, oldest first. */
   recentScores: number[];
@@ -39,8 +39,8 @@ export function ScoringHeroCard({
   putts,
   girPct,
 }: ScoringHeroCardProps) {
-  // Under a tenth of a stroke is noise, so the pill stays hidden.
-  const showChange = change != null && Math.abs(change) >= 0.1;
+  // The server rounds to a tenth, so no change at all hides the pill.
+  const showChange = change != null && change !== 0;
   const kpis = [
     { label: "Best", value: bestRound?.toString() ?? "—" },
     { label: "Rounds", value: totalRounds?.toString() ?? "—" },
@@ -55,7 +55,7 @@ export function ScoringHeroCard({
           <StatLabel>Scoring Avg · L20</StatLabel>
           {showChange && (
             <StatDelta
-              direction={change > 0 ? "down" : "up"}
+              direction={change < 0 ? "down" : "up"}
               className="rounded-full px-2 py-0.5 data-[direction=down]:bg-score-birdie-muted data-[direction=up]:bg-score-bogey-muted"
             >
               {Math.abs(change).toFixed(1)} vs L5

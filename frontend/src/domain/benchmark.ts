@@ -40,3 +40,6 @@ export const HANDICAP_BENCHMARK: Record<number, BenchmarkProfile> = {
   20: { gir: 17, scrambling: 20, putting: 66, par3: 49, par4: 29, par5: 23 },
   25: { gir: 10, scrambling: 18, putting: 66, par3: 41, par4: 6,  par5: 0  },
 };
+
+/** Tour players' short game, in percent: what the dashboard measures a player's last five rounds against. */
+export const TOUR_SHORT_GAME = { scrambling: 57, upAndDown: 50 } as const;

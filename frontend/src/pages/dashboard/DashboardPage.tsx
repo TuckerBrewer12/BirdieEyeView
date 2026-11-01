@@ -2,7 +2,6 @@ import { useDashboardPageViewModel } from "./useDashboardPageViewModel";
 import { MobileDashboard } from "./MobileDashboard";
 import { DashboardDesktopLayout } from "./DashboardDesktopLayout";
 import { HandicapBreakdownSheet } from "./HandicapBreakdownSheet";
-import { ResponsivePage } from "@/components/layout/ResponsivePage";
 import {
   Alert,
   AlertAction,
@@ -39,10 +38,13 @@ export function DashboardPage({ userId }: DashboardPageProps) {
 
   return (
     <>
-      <ResponsivePage
-        mobile={<MobileDashboard vm={vm} />}
-        desktop={<DashboardDesktopLayout vm={vm} />}
-      />
+      {/* CSS picks the layout, so the page renders the same on the server and the first paint. */}
+      <div className="md:hidden">
+        <MobileDashboard vm={vm} />
+      </div>
+      <div className="hidden md:block">
+        <DashboardDesktopLayout vm={vm} />
+      </div>
       <HandicapBreakdownSheet
         open={vm.handicapSheetOpen}
         onClose={vm.closeHandicapSheet}

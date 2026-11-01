@@ -144,6 +144,7 @@ export const populatedDashboard: DashboardData = {
   // The figures the server works out from populatedAnalytics' 20-round window.
   scoring_average_l20: 76.8,
   scoring_average_l5: 76.8,
+  scoring_average_change: 0,
   handicap_change: { delta: -1.6, direction: "down" },
   recent_form: { gir_pct: (35 / 90) * 100, scrambling_pct: 37.5, up_and_down_pct: 100 / 3, putts_per_18: 32 },
   score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },

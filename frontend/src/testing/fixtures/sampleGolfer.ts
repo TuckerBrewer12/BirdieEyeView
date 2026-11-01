@@ -1231,6 +1231,7 @@ export const sampleGolfer = {
     "score_mix": {"birdie": 5.555555555555555, "bogey": 39.72222222222222, "double": 10.277777777777777, "eagle": 0.0, "par": 43.611111111111114, "quad": 0.0, "triple": 0.8333333333333334},
     "score_mix_holes": 360,
     "scoring_average": 82.9,
+    "scoring_average_change": -3.3,
     "scoring_average_l20": 82.3,
     "scoring_average_l5": 79.0,
     "total_rounds": 24,

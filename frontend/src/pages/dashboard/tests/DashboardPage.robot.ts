@@ -93,6 +93,17 @@ export class DashboardRobot {
     return this;
   }
 
+  /** The phone's goal card; the desktop grid has its own copy. */
+  async tapGoal(): Promise<this> {
+    await this.page.locator("[data-slot=goal-card]").locator("visible=true").tap();
+    return this;
+  }
+
+  async isAtLab(): Promise<this> {
+    await expect(this.page).toHaveURL(/\/the-lab$/);
+    return this;
+  }
+
   /** The phone's trend card; the desktop grid has its own copy of the chart. */
   private trendCard() {
     return this.page.locator("[data-slot=card]").filter({ hasText: "Score History" }).locator("visible=true");

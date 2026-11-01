@@ -43,7 +43,8 @@ export interface DashboardPageViewModel {
   shortGameTrend: ShortGameTrend | null;
   milestones: Milestone[];
   last20ScoringAvg: number | null;
-  l5ScoringAvg: number | null;
+  /** L5 minus L20 as the server worked it out: negative when the recent rounds came in lower. */
+  scoringAverageChange: number | null;
   handicapDelta: number | null;
   /** Null until the window has a scored hole. */
   l20ScoreMix: ScoreMix | null;
@@ -141,7 +142,7 @@ export function useDashboardPageViewModel(
     shortGameTrend,
     milestones: data ? milestonesFrom(data.milestones) : [],
     last20ScoringAvg: data?.scoring_average_l20 ?? null,
-    l5ScoringAvg: data?.scoring_average_l5 ?? null,
+    scoringAverageChange: data?.scoring_average_change ?? null,
     handicapDelta: data?.handicap_change.delta ?? null,
     l20ScoreMix: data && data.score_mix_holes > 0 ? data.score_mix : null,
     mixHoleCount: data?.score_mix_holes ?? 0,

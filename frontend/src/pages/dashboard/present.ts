@@ -1,7 +1,5 @@
-import { colors, scoreKindLabel, toParFill, toParLabel, toParTone, type ScoreKey } from "@/brand/theme";
+import { colors, scoreKindLabel, type ScoreKey } from "@/brand/theme";
 import { formatCourseName } from "@/lib/courseName";
-import { formatRoundDateShort } from "@/lib/roundDate";
-import { playedScoreKinds, scoreKindCountLabel, type HoleScore, type Round } from "@/domain";
 import type { User } from "@/types/golf";
 import {
   type HiTrend,
@@ -10,16 +8,6 @@ import {
   type WhsRound,
 } from "./model";
 
-
-const SCORE_COLORS: Record<ScoreKey, string> = {
-  eagle: colors.score.eagle.base,
-  birdie: colors.score.birdie.base,
-  par: colors.score.par.base,
-  bogey: colors.score.bogey.base,
-  double: colors.score.double.base,
-  triple: colors.score.triple.base,
-  quad: colors.score.quad.base,
-};
 
 export function firstNameOf(user: User | null): string {
   return user?.name?.split(" ")[0] ?? "Golfer";
@@ -43,25 +31,6 @@ export function puttsLabel(putts: number | null): string {
   return putts != null && putts > 0 ? putts.toFixed(1) : "—";
 }
 
-export function deltaText(
-  delta: number | null,
-  opts: { vsL5?: boolean } = {},
-): string | null {
-  if (delta == null || Math.abs(delta) < 0.1) return null;
-  const improving = opts.vsL5 ? delta > 0 : delta < 0;
-  const arrow = improving ? "↓" : "↑";
-  const suffix = opts.vsL5 ? " vs L5" : "";
-  return `${arrow} ${Math.abs(delta).toFixed(1)}${suffix}`;
-}
-
-export function deltaColor(improving: boolean): string {
-  return improving ? SCORE_COLORS.birdie : SCORE_COLORS.bogey;
-}
-
-export function scoreDelta(last20: number | null, last5: number | null): number | null {
-  return last20 != null && last5 != null ? last20 - last5 : null;
-}
-
 export interface ColoredMixItem {
   name: ScoreKey;
   label: string;
@@ -73,64 +42,7 @@ export function colorizeMix(mix: ScoreMixItem[]): ColoredMixItem[] {
   return mix.map((item) => ({
     ...item,
     label: scoreKindLabel(item.name),
-    color: SCORE_COLORS[item.name],
-  }));
-}
-
-/** A hole ready to draw: unscored holes read as par. */
-export interface PaintedHole {
-  hole: number;
-  strokes: number | null;
-  par: number | null;
-  kind: ScoreKey;
-  fill: string;
-}
-
-function paint(hole: HoleScore): PaintedHole {
-  const kind = hole.kind ?? "par";
-  return { hole: hole.hole, strokes: hole.strokes, par: hole.par, kind, fill: SCORE_COLORS[kind] };
-}
-
-export interface RecentRoundRow {
-  id: string;
-  scoreLabel: string;
-  toPar: number | null;
-  toParLabel: string | null;
-  toParColor: string;
-  accentColor: string;
-  courseLabel: string;
-  dateLabel: string;
-  teeBox: string | null;
-  holes: PaintedHole[];
-}
-
-export function toRoundRow(round: Round): RecentRoundRow {
-  return {
-    id: round.id,
-    scoreLabel: round.score != null ? String(round.score) : "—",
-    toPar: round.toPar,
-    toParLabel: toParLabel(round.toPar),
-    toParColor: toParTone(round.toPar).text,
-    accentColor: toParFill(round.toPar),
-    courseLabel: round.course?.name ? formatCourseName(round.course.name) : "Unknown course",
-    dateLabel: formatRoundDateShort(round.date) ?? "—",
-    teeBox: round.teeBox,
-    holes: round.holes.map(paint),
-  };
-}
-
-export interface ScoreChip {
-  label: string;
-  count: number;
-  color: string;
-}
-
-export function lastRoundChips(round: Round | null): ScoreChip[] {
-  if (!round) return [];
-  return playedScoreKinds(round.scoreCounts).map(({ kind, count }) => ({
-    label: scoreKindCountLabel(kind, count),
-    count,
-    color: SCORE_COLORS[kind],
+    color: colors.score[item.name].base,
   }));
 }
 
