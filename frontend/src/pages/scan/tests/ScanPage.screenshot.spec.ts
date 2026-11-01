@@ -1,5 +1,6 @@
 import { test } from "./ScanPage.robot";
 import { pebbleBeachCourse } from "../../../testing/fixtures/roundDetails";
+import { SCANNED_COURSE_NAME } from "../../../testing/fixtures/scan";
 
 test("upload, nothing picked", async ({ scan }) => {
   await scan.open();
@@ -52,6 +53,32 @@ test("a failed scan", async ({ scan }) => {
   await scan.tapExtract();
   await scan.seesScanFailed();
   await scan.capture("scan-failed.png");
+});
+
+test("the scanned card under review", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.capture("scan-review.png");
+});
+
+test("the blank card hand entry opens", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseManualEntry();
+  await scan.startEntering();
+  await scan.seesBlankCard();
+  await scan.capture("scan-review-blank.png");
+});
+
+test("a saved round", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.capture("scan-saved.png");
 });
 
 test("manual entry setup", async ({ scan }) => {
