@@ -20,7 +20,7 @@ import { BestRoundCard } from "@/components/analytics/BestRoundCard";
 import { NarrativeInsight } from "@/components/analytics/NarrativeInsight";
 import { ParMatrixGrid } from "@/components/analytics/ParMatrixGrid";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
-import { chartColors, colors } from "@/brand";
+import { chartColors, chartLayout, colors } from "@/brand";
 import { scoreKindLabel, type ScoreKind } from "@/domain";
 import type {
   AnalyticsData, AnalyticsFilters, ScoreTrendRow,
@@ -52,7 +52,7 @@ const GIR_BARS: { kind: ScoreKind; fill: string; stackId: "neg" | "pos"; radius?
   { kind: "bogey", fill: dangerColor, stackId: "pos" },
   { kind: "double", fill: colors.score.double.base, stackId: "pos" },
   { kind: "triple", fill: colors.score.triple.base, stackId: "pos" },
-  { kind: "quad", fill: colors.score.quad.base, stackId: "pos", radius: [0, 4, 4, 0] },
+  { kind: "quad", fill: colors.score.quad.base, stackId: "pos", radius: chartLayout.barEndCap },
 ];
 
 type MobileTab = "scoring" | "ball-striking" | "putting" | "profile" | "range";
