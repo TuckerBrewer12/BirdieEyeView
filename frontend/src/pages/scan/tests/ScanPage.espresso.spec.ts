@@ -23,6 +23,29 @@ test("a checked card saves as a round, and opens it", async ({ scan }) => {
   await scan.isAtSavedRound();
 });
 
+test("a failed save stays on the card and says why", async ({ scan }) => {
+  await scan.open({ saveError: "That round could not be saved." });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.tapSave();
+  await scan.seesSaveFailed("That round could not be saved.");
+  await scan.seesSavedRounds(0);
+});
+
+test("a course linked on the review is the one the round is saved against", async ({ scan }) => {
+  await scan.open({ fullCourses: [pebbleBeachCourse] });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.searchCourse("Pebble");
+  await scan.pickCourse("Pebble Beach");
+  await scan.seesLinkedCourse("Pebble Beach");
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedCourse(pebbleBeachCourse.id!);
+});
+
 test("a failed scan keeps the photo and says why", async ({ scan }) => {
   await scan.open({ scan: undefined });
   await scan.chooseScorecard();

@@ -126,6 +126,26 @@ export class ScanRobot {
     return this;
   }
 
+  /** The round just saved was linked to this course. */
+  async seesSavedCourse(courseId: string): Promise<this> {
+    expect(this.backend?.store.savedScans.at(-1)?.course_id).toBe(courseId);
+    return this;
+  }
+
+  /** The review's course, linked to a saved one. */
+  async seesLinkedCourse(name: string): Promise<this> {
+    await expect(this.page.getByText("Linked", { exact: true })).toBeVisible();
+    await expect(this.page.getByText(name, { exact: true }).first()).toBeVisible();
+    return this;
+  }
+
+  /** Saving failed: the reason shows, and the card is still there to save again. */
+  async seesSaveFailed(message: string): Promise<this> {
+    await expect(this.page.getByRole("alert")).toContainText(message);
+    await expect(this.page.getByRole("button", { name: "Save Round" })).toBeEnabled();
+    return this;
+  }
+
   /** The scan failed: the reason shows, and the photo is still there to try again. */
   async seesScanFailed(): Promise<this> {
     await expect(this.page.getByRole("alert")).toContainText("We couldn't scan this scorecard.");
