@@ -174,6 +174,41 @@ export class ScanRobot {
     return this;
   }
 
+  /** Looks up a course on the manual-entry form. */
+  async searchSetupCourse(query: string): Promise<this> {
+    await this.page.getByPlaceholder("Search for a course by name...").fill(query);
+    return this;
+  }
+
+  async pickSetupCourse(name: string): Promise<this> {
+    await this.page.locator("ul").getByRole("button", { name }).click();
+    return this;
+  }
+
+  /** Keeps the typed name when the search finds no course. */
+  async keepTypedCourse(name: string): Promise<this> {
+    await this.page.getByRole("button", { name: `Use "${name}"`, exact: true }).click();
+    return this;
+  }
+
+  /** The course chosen for manual entry, picked or typed. */
+  async seesSetupCourse(name: string): Promise<this> {
+    await expect(this.page.getByText(name, { exact: true })).toBeVisible();
+    await expect(this.page.getByPlaceholder("Search for a course by name...")).toHaveCount(0);
+    return this;
+  }
+
+  /** Chooses a tee. The control is a native select. */
+  async chooseTee(color: string): Promise<this> {
+    await this.page.getByRole("combobox").selectOption(color);
+    return this;
+  }
+
+  async seesTee(color: string): Promise<this> {
+    await expect(this.page.getByRole("combobox")).toHaveValue(color);
+    return this;
+  }
+
   async startEntering(): Promise<this> {
     await this.page.getByRole("button", { name: "Start Entering Scores" }).click();
     return this;

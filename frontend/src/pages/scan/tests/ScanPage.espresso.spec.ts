@@ -81,3 +81,21 @@ test("going back to scanning from manual entry brings back the drop zone", async
   await scan.chooseScanMode();
   await scan.seesUpload();
 });
+
+test("a course and a tee can be chosen before entering scores by hand", async ({ scan }) => {
+  await scan.open({ fullCourses: [pebbleBeachCourse] });
+  await scan.chooseManualEntry();
+  await scan.searchSetupCourse("Pebble");
+  await scan.pickSetupCourse("Pebble Beach");
+  await scan.seesSetupCourse("Pebble Beach");
+  await scan.chooseTee("Blue");
+  await scan.seesTee("Blue");
+});
+
+test("a typed course name is kept when the search finds nothing", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseManualEntry();
+  await scan.searchSetupCourse("Muni Nine");
+  await scan.keepTypedCourse("Muni Nine");
+  await scan.seesSetupCourse("Muni Nine");
+});
