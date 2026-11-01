@@ -32,6 +32,49 @@ export const scannedCard: ScanResult = {
   fields_needing_review: [],
 };
 
+/** The holes `unsureCard` couldn't read a score for, or read one it wasn't sure of. */
+export const UNSURE_HOLES = [4, 11];
+
+const level = (sure: boolean) => (sure ? "high" : "very_low");
+const confidence = (value: number, sure: boolean) => ({
+  final_confidence: value,
+  level: level(sure),
+  validation_flags: [],
+});
+
+/**
+ * The same card, read less cleanly: no score on hole 4, a score on hole 11 the scan wasn't sure of,
+ * and putts it couldn't read on hole 2. Only the two scores are worth checking.
+ */
+export const unsureCard: ScanResult = {
+  ...scannedCard,
+  round: {
+    ...scannedCard.round,
+    hole_scores: scannedCard.round.hole_scores.map((score) =>
+      score.hole_number === 4 ? { ...score, strokes: null } : score.hole_number === 2 ? { ...score, putts: null } : score,
+    ),
+  },
+  confidence: {
+    overall: 0.8,
+    level: "medium",
+    hole_scores: PARS.map((_, i) => {
+      const hole = i + 1;
+      const sureStrokes = !UNSURE_HOLES.includes(hole);
+      const surePutts = hole !== 2;
+      return {
+        hole_number: hole,
+        fields: {
+          strokes: confidence(sureStrokes ? 0.9 : 0.2, sureStrokes),
+          putts: confidence(surePutts ? 0.85 : 0.25, surePutts),
+        },
+        overall: sureStrokes && surePutts ? 0.85 : 0.2,
+        level: level(sureStrokes && surePutts),
+      };
+    }),
+  },
+  fields_needing_review: ["Hole 4 strokes missing"],
+};
+
 const TEE_CARD_PAR = [4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 5, 3, 4, 4, 4, 3, 5, 4];
 const TEE_CARD_STROKES = [5, 4, 3, 7, 4, 5, 2, 6, 4, 5, 6, 3, 4, 5, 4, 4, 5, 5];
 const SHOTS_TO_GREEN = [3, 2, 1, 4, 2, 3, 1, 3, 2, 3, 3, 1, 2, 3, 2, 2, 3, 3];

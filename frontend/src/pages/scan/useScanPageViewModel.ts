@@ -3,7 +3,6 @@ import { preparePhotoForUpload } from "@/data/photoUpload";
 import { scanRepository, type ScanRepository } from "@/data/scanRepository";
 import { useCardText } from "@/data/useCardText";
 import { useExtractScorecard, useIsExtractingScorecard } from "@/data/useExtractScorecard";
-import { useHandicapIndex } from "@/data/useHandicapIndex";
 import type { RoundDetail } from "@/domain";
 import { useCourseSearch, type CourseSearch } from "@/hooks/useCourseSearch";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
@@ -13,26 +12,19 @@ import { useCourse } from "../courses/useCourse";
 import { roundsRepository, type RoundsRepository } from "../rounds/roundsRepository";
 import {
   courseQueryFrom,
-  reviewCourseFrom,
   reviewFromScan,
   reviewFromSetup,
-  saveRequestFrom,
   SCAN_PHASE_COUNT,
   SCAN_PHASE_HOLD_MS,
   todayIso,
-  withGir,
-  withScore,
   type ManualSetup,
-  type ReviewDetails,
   type PickedCourse,
   type ScanMode,
-  type ScanReviewDraft,
   type ScanStep,
-  type ScoreField,
 } from "./scanModel";
 import { newScanSession, useScanSession } from "./scanSession";
-import { useSaveScan } from "./useSaveScan";
 import { useSavedRound } from "./useSavedRound";
+import { useScanReviewViewModel, type ScanReviewViewModel } from "./useScanReviewViewModel";
 
 export interface ScanPageRepositories {
   scan: ScanRepository;
@@ -51,7 +43,7 @@ export interface ScanPageViewModel {
   mode: ScanMode;
   /** Switching starts the card over: a photo or course picked for one mode doesn't carry. */
   setMode: (mode: ScanMode) => void;
-  /** Why the last scan, course pick or save failed. */
+  /** Why the last scan failed. */
   error: string | null;
   startOver: () => void;
 
@@ -87,17 +79,8 @@ export interface ScanPageViewModel {
   startEntry: () => void;
 
   // Review
-  review: ScanReviewDraft | null;
-  /** Search over saved and external courses, to link the round to. */
-  reviewSearch: CourseSearch;
-  pickReviewCourse: (course: CourseSummary) => void;
-  /** The date, tee and course chosen for the round. */
-  updateReview: (patch: Partial<ReviewDetails>) => void;
-  changeScore: (index: number, field: ScoreField, value: string) => void;
-  changeGir: (index: number, value: boolean | null) => void;
-  handicapIndex: number | null;
-  saving: boolean;
-  save: () => void;
+  /** Checking the card, once there is one. */
+  review: ScanReviewViewModel;
 
   // Success
   /** The round as saved, once it has loaded. */
@@ -122,20 +105,13 @@ export function useScanPageViewModel(
   const latestPick = useRef(0);
 
   const courseSearch = useCourseSearch(userId, courses);
-  const externalSearch = useMemo(
-    () => ({ searchCourses: (query: string, user?: string) => courses.searchCourses(query, user, true) }),
-    [courses],
-  );
-  const reviewSearch = useCourseSearch(userId, externalSearch);
+  const review = useScanReviewViewModel(userId, repositories);
 
   const cardText = useCardText(session.photo, scan);
   const { mutateAsync: extractCard } = useExtractScorecard(scan);
   const extracting = useIsExtractingScorecard();
-  const { mutateAsync: saveScan, isPending: saving, error: saveError, reset: resetSave } =
-    useSaveScan(userId, scan);
   const setupCourse = useCourse(session.setup.course?.id ?? undefined, courses);
   const savedRound = useSavedRound(session.savedRoundId, rounds);
-  const handicapIndex = useHandicapIndex(userId, rounds);
 
   const step: ScanStep = session.savedRoundId
     ? "success"
@@ -161,15 +137,15 @@ export function useScanPageViewModel(
   }, [step]);
 
   const { reset: resetCourseSearch } = courseSearch;
-  const { reset: resetReviewSearch, setQuery: setReviewQuery } = reviewSearch;
+  const { reset: resetReview } = review;
+  const { setQuery: setReviewQuery } = review.courseSearch;
 
   const startOver = useCallback(() => {
     latestPick.current += 1;
     setSession(newScanSession());
     resetCourseSearch();
-    resetReviewSearch();
-    resetSave();
-  }, [setSession, resetCourseSearch, resetReviewSearch, resetSave]);
+    resetReview();
+  }, [setSession, resetCourseSearch, resetReview]);
 
   const setMode = useCallback(
     (mode: ScanMode) => {
@@ -273,71 +249,22 @@ export function useScanPageViewModel(
     setSession((current) => ({ ...current, review: reviewFromSetup(current.setup, loadedSetupCourse) }));
   }, [setSession, loadedSetupCourse]);
 
-  const updateReview = useCallback(
-    (patch: Partial<ReviewDetails>) =>
-      setSession((current) => (current.review ? { ...current, review: { ...current.review, ...patch } } : current)),
-    [setSession],
-  );
-
-  const pickReviewCourse = useCallback(
-    (course: CourseSummary) => {
-      const picked = reviewCourseFrom(course);
-      if ("error" in picked) {
-        setSession((current) => ({ ...current, error: picked.error }));
-        return;
-      }
-      setSession((current) =>
-        current.review ? { ...current, error: null, review: { ...current.review, ...picked.link } } : current,
-      );
-      resetReviewSearch();
-    },
-    [setSession, resetReviewSearch],
-  );
-
-  const changeScore = useCallback(
-    (index: number, field: ScoreField, value: string) =>
-      setSession((current) =>
-        current.review ? { ...current, review: withScore(current.review, index, field, value) } : current,
-      ),
-    [setSession],
-  );
-
-  const changeGir = useCallback(
-    (index: number, value: boolean | null) =>
-      setSession((current) =>
-        current.review ? { ...current, review: withGir(current.review, index, value) } : current,
-      ),
-    [setSession],
-  );
-
-  const save = useCallback(() => {
-    const { review } = session;
-    if (!review || saving) return;
-    setSession((current) => ({ ...current, error: null }));
-    saveScan(saveRequestFrom(userId, review))
-      .then((roundId) => setSession({ ...newScanSession(), savedRoundId: roundId }))
-      // The mutation holds the failure, and the review shows it.
-      .catch(() => undefined);
-  }, [session, saving, setSession, saveScan, userId]);
-
   const openSavedRound = useCallback(
     (open: (roundId: string) => void) => {
       const roundId = session.savedRoundId;
       if (!roundId) return;
       setSession(newScanSession());
-      resetSave();
+      resetReview();
       open(roundId);
     },
-    [session.savedRoundId, setSession, resetSave],
+    [session.savedRoundId, setSession, resetReview],
   );
-
-  const failedSave = step === "review" && saveError ? messageFrom(saveError, USER_FACING_ERRORS.saveRound) : null;
 
   return {
     step,
     mode: session.mode,
     setMode,
-    error: failedSave ?? session.error,
+    error: session.error,
     startOver,
 
     photo: session.photo?.file ?? null,
@@ -362,15 +289,7 @@ export function useScanPageViewModel(
     setSetupDate,
     startEntry,
 
-    review: session.review,
-    reviewSearch,
-    pickReviewCourse,
-    updateReview,
-    changeScore,
-    changeGir,
-    handicapIndex,
-    saving,
-    save,
+    review,
 
     savedRound: savedRound.data ?? null,
     openSavedRound,

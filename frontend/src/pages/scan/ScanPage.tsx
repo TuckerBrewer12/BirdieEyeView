@@ -10,14 +10,14 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-// Setup, review and success still draw with the legacy scan components; the next scan PRs
-// move them onto the kit (review onto `Round.fromScan` and `RoundScorecard`).
+// Setup and success still draw with the legacy scan components; the next scan PR moves them
+// onto the kit.
 import { ScanManualSetup } from "@/components/scan/ScanManualSetup";
-import { ScanReviewStep } from "@/components/scan/ScanReviewStep";
 import { ScanSuccessStep } from "@/components/scan/ScanSuccessStep";
 import { formatCourseName } from "@/lib/courseName";
 import { useFilePreview } from "@/platform/useFilePreview";
 import { ScanProcessingStep } from "./components/ScanProcessingStep";
+import { ScanReviewStep } from "./components/ScanReviewStep";
 import { ScanUploadStep } from "./components/ScanUploadStep";
 import { useScanPageViewModel, type ScanPageViewModel } from "./useScanPageViewModel";
 
@@ -40,7 +40,25 @@ export function ScanPage({ userId }: { userId: string }) {
       );
 
     case "review":
-      return <ReviewStep viewModel={viewModel} previewUrl={previewUrl} />;
+      return (
+        <div className="flex flex-col gap-4 pb-6">
+          <PageHeader title={TITLE} revealAt={100} />
+          <div className="flex flex-col gap-1">
+            <PageTitle>{viewModel.mode === "manual" ? "Enter your scores" : "Check your card"}</PageTitle>
+            <p className="text-sm text-muted-foreground">
+              {viewModel.mode === "manual"
+                ? "Type your scores in hole by hole, then save the round."
+                : "Check each score against your card, fix any that are wrong, then save the round."}
+            </p>
+          </div>
+          <ScanReviewStep
+            review={viewModel.review}
+            manual={viewModel.mode === "manual"}
+            photoUrl={previewUrl}
+            onStartOver={viewModel.startOver}
+          />
+        </div>
+      );
 
     case "processing":
       return (
@@ -158,41 +176,6 @@ function SetupStep({ viewModel }: { viewModel: ScanPageViewModel }) {
       }}
       setCourseQuery={courseSearch.setQuery}
       setCourseResults={courseSearch.reset}
-    />
-  );
-}
-
-/** The legacy review step, fed from the view model. */
-function ReviewStep({ viewModel, previewUrl }: { viewModel: ScanPageViewModel; previewUrl: string | null }) {
-  const { review, reviewSearch } = viewModel;
-  if (!review) return null;
-  return (
-    <ScanReviewStep
-      result={review.result}
-      scanMode={viewModel.mode === "manual" ? "manual" : "full"}
-      editedScores={review.editedScores}
-      scoreMetadata={review.scoreMetadata}
-      editedDate={review.editedDate}
-      editedTeeBox={review.editedTeeBox}
-      error={viewModel.error}
-      preview={previewUrl}
-      reviewCourseId={review.reviewCourseId}
-      reviewExternalCourseId={review.reviewExternalCourseId}
-      reviewCourseName={review.reviewCourseName}
-      saving={viewModel.saving}
-      handicapIndex={viewModel.handicapIndex}
-      reviewCourseQuery={reviewSearch.query}
-      reviewCourseResults={reviewSearch.results}
-      reviewSearching={reviewSearch.searching}
-      onReviewCourseQuery={reviewSearch.setQuery}
-      onSelectReviewCourse={viewModel.pickReviewCourse}
-      onUpdate={viewModel.updateReview}
-      onScoreChange={viewModel.changeScore}
-      onGirChange={viewModel.changeGir}
-      onSave={viewModel.save}
-      setReviewCourseQuery={reviewSearch.setQuery}
-      setReviewCourseResults={reviewSearch.reset}
-      setScanState={viewModel.startOver}
     />
   );
 }

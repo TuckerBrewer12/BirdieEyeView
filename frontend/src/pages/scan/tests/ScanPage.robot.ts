@@ -90,6 +90,7 @@ export class ScanRobot {
 
   /** The scanned card, back to check before saving. */
   async seesReview(courseName: string): Promise<this> {
+    await expect(this.page.locator("[data-slot=page-title]").filter({ hasText: "Check your card" })).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Save Round" })).toBeVisible();
     await expect(this.page.getByText(courseName).first()).toBeVisible();
     return this;
@@ -229,13 +230,76 @@ export class ScanRobot {
     return this;
   }
 
+  /** A hole's strokes cell on the card being checked, ringed or not. */
+  private strokesCell(hole: number) {
+    return this.page.getByRole("textbox", { name: new RegExp(`^Hole ${hole} strokes`) });
+  }
+
   /** Types one hole's strokes on the card being checked. */
   async typeStrokes(hole: number, strokes: number): Promise<this> {
-    const nine = this.page.locator("table").nth(hole <= 9 ? 0 : 1);
-    const scoreRow = nine.locator("tr").filter({
-      has: this.page.getByRole("cell", { name: "Score", exact: true }),
-    });
-    await scoreRow.getByRole("textbox").nth((hole - 1) % 9).fill(String(strokes));
+    await this.strokesCell(hole).fill(String(strokes));
+    await expect(this.strokesCell(hole)).toHaveValue(String(strokes));
+    return this;
+  }
+
+  /** Types one hole's putts on the card being checked. */
+  async typePutts(hole: number, putts: number): Promise<this> {
+    await this.page.getByRole("textbox", { name: `Hole ${hole} putts`, exact: true }).fill(String(putts));
+    return this;
+  }
+
+  /** The scores the scan wasn't sure of: counted above the card, and ringed on it. */
+  async seesScoresToCheck(holes: number[]): Promise<this> {
+    const count = holes.length === 1 ? "1 score to check" : `${holes.length} scores to check`;
+    await expect(this.page.locator("[data-slot=scores-to-check]")).toContainText(count);
+    await expect(this.page.locator("td[data-check]")).toHaveCount(holes.length);
+    for (const hole of holes) {
+      await expect(this.page.getByRole("textbox", { name: `Hole ${hole} strokes, to check` })).toBeVisible();
+    }
+    return this;
+  }
+
+  /** Nothing on the card is in doubt. */
+  async seesNothingToCheck(): Promise<this> {
+    await expect(this.page.locator("[data-slot=scores-to-check]")).toHaveCount(0);
+    await expect(this.page.locator("td[data-check]")).toHaveCount(0);
+    return this;
+  }
+
+  /** The round's score so far, as the card being checked adds up. */
+  async seesRoundScore(score: number): Promise<this> {
+    await expect(
+      this.page.locator("[data-slot=stat]").filter({ hasText: /^Score/ }).locator("[data-slot=stat-value]"),
+    ).toHaveText(String(score));
+    return this;
+  }
+
+  /** Saves the round under the name read off the card, without linking a course. */
+  async keepCardName(name: string): Promise<this> {
+    await this.page.getByRole("button", { name: `Save as "${name}" without linking →` }).click();
+    await expect(this.page.getByText("Saving without a linked course")).toBeVisible();
+    return this;
+  }
+
+  /** Picks the tee played from the chips the card's or the linked course's tees offer. */
+  async pickReviewTee(color: string): Promise<this> {
+    const chip = this.page.getByRole("group", { name: "Tee played" }).getByRole("button", { name: color, exact: true });
+    await chip.click();
+    await expect(chip).toHaveAttribute("aria-pressed", "true");
+    return this;
+  }
+
+  /** Types the tee played, when there are no tees to pick from. */
+  async typeReviewTee(tee: string): Promise<this> {
+    const field = this.page.getByRole("textbox", { name: "Tee played" });
+    await field.fill(tee);
+    await expect(field).toHaveValue(tee);
+    return this;
+  }
+
+  /** The tee kept on the round just saved. */
+  async seesSavedTee(tee: string): Promise<this> {
+    expect(this.backend?.store.savedScans.at(-1)?.tee_box).toBe(tee);
     return this;
   }
 
@@ -246,6 +310,21 @@ export class ScanRobot {
     return this;
   }
 
+  /** The putts kept for a hole on the round just saved. */
+  async seesSavedPutts(hole: number, putts: number): Promise<this> {
+    const saved = this.backend?.store.savedScans.at(-1);
+    expect(saved?.hole_scores.find((score) => score.hole_number === hole)?.putts).toBe(putts);
+    return this;
+  }
+
+  /** The round just saved kept this name and no linked course. */
+  async seesSavedCourseName(name: string): Promise<this> {
+    const saved = this.backend?.store.savedScans.at(-1);
+    expect(saved?.course_id ?? null).toBeNull();
+    expect(saved?.course_name).toBe(name);
+    return this;
+  }
+
   async startEntering(): Promise<this> {
     await this.page.getByRole("button", { name: "Start Entering Scores" }).click();
     return this;
@@ -253,8 +332,9 @@ export class ScanRobot {
 
   /** A card with no scores yet, to type them into. */
   async seesBlankCard(): Promise<this> {
-    await expect(this.page.getByText("Enter your scores hole by hole below")).toBeVisible();
+    await expect(this.page.locator("[data-slot=page-title]").filter({ hasText: "Enter your scores" })).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Save Round" })).toBeVisible();
+    await expect(this.strokesCell(1)).toHaveValue("");
     return this;
   }
 

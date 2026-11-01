@@ -1,6 +1,6 @@
 import { test } from "./ScanPage.robot";
 import { pebbleBeachCourse } from "../../../testing/fixtures/roundDetails";
-import { SCANNED_COURSE_NAME } from "../../../testing/fixtures/scan";
+import { SCANNED_COURSE_NAME, UNSURE_HOLES, unsureCard } from "../../../testing/fixtures/scan";
 
 test("upload, nothing picked", async ({ scan }) => {
   await scan.open();
@@ -61,6 +61,36 @@ test("the scanned card under review", async ({ scan }) => {
   await scan.tapExtract();
   await scan.seesReview(SCANNED_COURSE_NAME);
   await scan.capture("scan-review.png");
+});
+
+test("the scanned card under review in dark mode", async ({ scan }) => {
+  await scan.dark();
+  await scan.open({ scan: unsureCard });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.seesScoresToCheck(UNSURE_HOLES);
+  await scan.capture("scan-review-dark.png");
+});
+
+test("a card with scores the scan wasn't sure of", async ({ scan }) => {
+  await scan.open({ scan: unsureCard });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.seesScoresToCheck(UNSURE_HOLES);
+  await scan.capture("scan-review-to-check.png");
+});
+
+test("a card linked to a saved course", async ({ scan }) => {
+  await scan.open({ fullCourses: [pebbleBeachCourse] });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.searchCourse("Pebble");
+  await scan.pickCourse("Pebble Beach");
+  await scan.seesLinkedCourse("Pebble Beach");
+  await scan.capture("scan-review-linked.png");
 });
 
 test("the blank card hand entry opens", async ({ scan }) => {

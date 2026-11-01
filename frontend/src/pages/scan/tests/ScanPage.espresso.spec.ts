@@ -1,6 +1,8 @@
 import { test } from "./ScanPage.robot";
 import { pebbleBeachCourse } from "../../../testing/fixtures/roundDetails";
-import { SCANNED_COURSE_NAME } from "../../../testing/fixtures/scan";
+import { SCANNED_COURSE_NAME, scannedCard, UNSURE_HOLES, unsureCard } from "../../../testing/fixtures/scan";
+
+const CARD_SCORE = scannedCard.round.hole_scores.reduce((total, score) => total + (score.strokes ?? 0), 0);
 
 test("a picked card is read, then comes back to check", async ({ scan }) => {
   await scan.open({ holdScan: true });
@@ -44,6 +46,86 @@ test("a course linked on the review is the one the round is saved against", asyn
   await scan.tapSave();
   await scan.seesSaved();
   await scan.seesSavedCourse(pebbleBeachCourse.id!);
+});
+
+test("a clean scan has nothing to check", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.seesNothingToCheck();
+});
+
+test("scores the scan wasn't sure of are ringed until they're typed over, and saved as typed", async ({ scan }) => {
+  await scan.open({ scan: unsureCard });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.seesScoresToCheck(UNSURE_HOLES);
+  await scan.typeStrokes(4, 6);
+  await scan.seesScoresToCheck([11]);
+  await scan.typeStrokes(11, 5);
+  await scan.seesNothingToCheck();
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedStrokes(4, 6);
+  await scan.seesSavedStrokes(11, 5);
+});
+
+test("typed strokes and putts change the round being checked, and are what gets saved", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.seesRoundScore(CARD_SCORE);
+  await scan.typeStrokes(1, 3);
+  await scan.seesRoundScore(CARD_SCORE - 2);
+  await scan.typePutts(1, 1);
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedStrokes(1, 3);
+  await scan.seesSavedPutts(1, 1);
+});
+
+test("the card's course name can be kept without linking a course", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.keepCardName(SCANNED_COURSE_NAME);
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedCourseName(SCANNED_COURSE_NAME);
+});
+
+test("a tee picked from the card's tees is the one saved", async ({ scan }) => {
+  const blueTee = { color: "Blue", slope_rating: 128, course_rating: 71.2, hole_yardages: {} };
+  const teeCard = {
+    ...scannedCard,
+    round: {
+      ...scannedCard.round,
+      course: { ...scannedCard.round.course!, tees: [blueTee, { ...blueTee, color: "White", slope_rating: 121 }] },
+    },
+  };
+  await scan.open({ scan: teeCard });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.pickReviewTee("White");
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedTee("White");
+});
+
+test("a tee typed in when the card has none is the one saved", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.typeReviewTee("Gold");
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedTee("Gold");
 });
 
 test("a failed scan keeps the photo and says why", async ({ scan }) => {

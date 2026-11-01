@@ -12,6 +12,8 @@ interface RoundScorecardProps {
   showTee?: boolean;
   /** Makes scores, putts and greens editable. The round shown should already carry the edits. */
   edits?: ScorecardEdits;
+  /** Holes whose score is in doubt, like one a scan couldn't read for sure. Their score cell is ringed. */
+  toCheck?: readonly number[];
   /** Sits at the right of the header, like a "Scan another" button. */
   action?: ReactNode;
   className?: string;
@@ -22,7 +24,7 @@ interface RoundScorecardProps {
  * the round's totals. The tables are wider than a phone, so they scroll sideways under a header
  * that stays put, keeping the action in reach.
  */
-function RoundScorecard({ round, teeBox, showTee = false, edits, action, className }: RoundScorecardProps) {
+function RoundScorecard({ round, teeBox, showTee = false, edits, toCheck, action, className }: RoundScorecardProps) {
   const nines = [
     { nine: round.frontNine, label: "OUT" },
     { nine: round.backNine, label: "IN" },
@@ -60,6 +62,7 @@ function RoundScorecard({ round, teeBox, showTee = false, edits, action, classNa
                 round={i === nines.length - 1 ? round : undefined}
                 teeBox={teeBox}
                 edits={edits}
+                toCheck={toCheck}
               />
             </div>
           ))}

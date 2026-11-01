@@ -151,6 +151,22 @@ def test_build_round_from_known_course_covers_score_guards():
     assert any("without known par" in warning for warning in warnings)
 
 
+def test_build_round_works_out_greens_from_strokes_and_putts_without_a_shots_row():
+    parsed = ParsedScorecardRows(
+        par_row=[4, 4, 3, 5],
+        score_row=[4, 6, 3, None],
+        putts_row=[2, 2, None, 2],
+        gir_row=[None, None, None, False],
+    )
+
+    payload, _ = scan._build_round_from_parsed_rows(parsed, course_model=None, to_par_scoring=False)
+
+    greens = [hole["green_in_regulation"] for hole in payload["hole_scores"][:4]]
+    # Two shots to the green on a par 4 is a green hit, four is not; with no putts or no
+    # score there's nothing to work it out from, and a green the card marked stands.
+    assert greens == [True, False, None, False]
+
+
 def test_build_round_from_unknown_course_uses_ocr_metadata():
     parsed = ParsedScorecardRows(
         course_name="  PEBBLE   BEACH  ",
