@@ -190,9 +190,8 @@ class DashboardResponse(ResponseModel):
     """Aggregated stats for the dashboard page. Every figure is worked out here, not on the client."""
     total_rounds: int
     scoring_average: Optional[float] = None
-    best_round: Optional[int] = None
-    best_round_id: Optional[str] = None
-    best_round_course: Optional[str] = None
+    # The lowest-scoring round on record, so the phone and desktop dashboards show the same one.
+    best_round: Optional[RoundSummaryResponse] = None
     handicap_index: Optional[float] = None
     recent_rounds: List[RoundSummaryResponse]
     average_putts: Optional[float] = None

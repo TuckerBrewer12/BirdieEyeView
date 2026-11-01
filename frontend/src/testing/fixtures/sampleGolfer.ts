@@ -994,15 +994,45 @@ export const sampleGolfer = {
   "dashboard": {
     "average_gir": 6.0,
     "average_putts": 32.7,
-    "best_round": 75,
-    "best_round_course": "Presidio Golf Course",
-    "best_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd",
+    "best_round": {
+      "back_nine": 36,
+      "course_id": "1b6e5c5a-2153-519c-a3da-84852bef21a4",
+      "course_name": "Presidio Golf Course",
+      "date": "2026-05-25T09:00:00",
+      "front_nine": 39,
+      "hole_scores": [
+        {"hole_number": 1, "kind": "bogey", "strokes": 5},
+        {"hole_number": 2, "kind": "par", "strokes": 5},
+        {"hole_number": 3, "kind": "par", "strokes": 4},
+        {"hole_number": 4, "kind": "bogey", "strokes": 4},
+        {"hole_number": 5, "kind": "bogey", "strokes": 5},
+        {"hole_number": 6, "kind": "par", "strokes": 4},
+        {"hole_number": 7, "kind": "par", "strokes": 3},
+        {"hole_number": 8, "kind": "par", "strokes": 4},
+        {"hole_number": 9, "kind": "par", "strokes": 5},
+        {"hole_number": 10, "kind": "par", "strokes": 4},
+        {"hole_number": 11, "kind": "par", "strokes": 4},
+        {"hole_number": 12, "kind": "bogey", "strokes": 4},
+        {"hole_number": 13, "kind": "birdie", "strokes": 3},
+        {"hole_number": 14, "kind": "par", "strokes": 5},
+        {"hole_number": 15, "kind": "par", "strokes": 3},
+        {"hole_number": 16, "kind": "par", "strokes": 4},
+        {"hole_number": 17, "kind": "par", "strokes": 4},
+        {"hole_number": 18, "kind": "par", "strokes": 5}
+      ],
+      "id": "8d412153-b640-567c-b361-5eb47ecb4efd",
+      "score_counts": {"birdie": 1, "bogey": 4, "double": 0, "eagle": 0, "par": 13, "quad": 0, "triple": 0},
+      "tee_box": "Blue",
+      "to_par": 3,
+      "total_putts": 32,
+      "total_score": 75
+    },
     "handicap_change": {"delta": -1.3, "direction": "down"},
     "handicap_index": 7.0,
     "milestones": [
       {"course": "Sharp Park Golf Course", "date": "2026/5/28", "kind": "par_streak", "round_id": null, "value": 7},
       {"course": "Presidio Golf Course", "date": "2026/5/13", "kind": "score_break", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "value": 80},
-      {"course": "Presidio Golf Course", "date": "2026/5/13", "kind": "putt_break", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "value": 30}
+      {"course": "Presidio Golf Course", "date": "2026/3/1", "kind": "putt_break", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "value": 30}
     ],
     "recent_form": {"gir_pct": 50.0, "putts_per_18": 33.6, "scrambling_pct": 35.55555555555556, "up_and_down_pct": 37.77777777777778},
     "recent_rounds": [

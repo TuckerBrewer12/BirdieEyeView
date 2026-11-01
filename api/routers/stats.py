@@ -32,6 +32,7 @@ async def get_dashboard(
 
     # One query for every round's hole scores; the Round model works out each figure.
     summaries = await db.rounds.get_round_summaries_for_user(str(user_id), limit=500, offset=0)
+    total_rounds = await db.rounds.count_rounds_for_user(str(user_id))
 
     scored = [r for r in summaries if r.calculate_total_score() is not None]
     scores = [r.calculate_total_score() for r in scored]
@@ -39,24 +40,21 @@ async def get_dashboard(
     girs = [g for g in (r.get_total_gir() for r in summaries) if g is not None]
 
     best = min(scored, key=lambda r: r.calculate_total_score()) if scored else None
-    best_summary = round_summary(best) if best else None
 
     recent_rounds = [round_summary(r) for r in summaries[:5]]
 
     # The last 20 rounds, plus 19 before them so the handicap trend has a full rolling window.
     hi_rounds = list(reversed(await db.rounds.get_rounds_for_user(str(user_id), limit=39, offset=0)))
     last_20 = hi_rounds[-20:]
-    calculated_hi = hcap.handicap_index(last_20)
+    calculated_hi = hcap.player_handicap_index(last_20, user)
     handicap_trend = _build_handicap_trend(hi_rounds, last_20)
     mix = dashboard.score_mix(last_20)
     recent_mix = dashboard.score_mix(last_20[-dashboard.RECENT_ROUNDS:])
 
     return DashboardResponse(
-        total_rounds=len(summaries),
+        total_rounds=total_rounds,
         scoring_average=round(sum(scores) / len(scores), 1) if scores else None,
-        best_round=best_summary.total_score if best_summary else None,
-        best_round_id=best_summary.id if best_summary else None,
-        best_round_course=best_summary.course_name if best_summary else None,
+        best_round=round_summary(best) if best else None,
         handicap_index=calculated_hi,
         recent_rounds=recent_rounds,
         average_putts=round(sum(putts) / len(putts), 1) if putts else None,
@@ -69,8 +67,10 @@ async def get_dashboard(
         score_mix=mix["percentages"],
         recent_score_mix=recent_mix["percentages"],
         score_mix_holes=mix["holes"],
+        # The summaries carry each hole's par, putts and GIR, all the milestones read. Oldest
+        # first, so a par streak can run from one round into the next.
         milestones=dashboard.lifetime_milestones(
-            analytics.notable_achievements(last_20, home_course_id=user.home_course_id)
+            analytics.notable_achievements(list(reversed(summaries)), home_course_id=user.home_course_id)
         ),
         whs=dashboard.whs_breakdown(
             last_20, handicap_trend, hcap.score_differentials_per_round(last_20), calculated_hi

@@ -134,9 +134,7 @@ export const dashboardUser: User = {
 export const populatedDashboard: DashboardData = {
   total_rounds: 4,
   scoring_average: 76,
-  best_round: 69,
-  best_round_id: "round-3",
-  best_round_course: "Blue Rock",
+  best_round: populatedRounds.find((round) => round.id === "round-3")!,
   handicap_index: 12.4,
   recent_rounds: populatedRounds,
   average_putts: 32,

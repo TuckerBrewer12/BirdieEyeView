@@ -1,8 +1,16 @@
 """The dashboard's figures come from the player's rounds, worked out on the server."""
 
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock
+from uuid import uuid4
+
+import pytest
+
 from analytics import dashboard
-from analytics.handicap import whs_window
-from models import HoleScore, Round
+from analytics.handicap import handicap_index, whs_window
+from api.routers import stats, users
+from models import HoleScore, Round, User
+from tests.helpers import make_mock_database
 
 
 def _round(strokes, par=4, putts=2, gir=None):
@@ -76,3 +84,65 @@ def test_milestones_prefer_the_first_round_under_par_and_come_newest_first():
         {"kind": "under_par", "value": 71, "date": "2026-05-02", "course": "Blue Rock", "round_id": None},
     ]
     assert dashboard.lifetime_milestones({}) == []
+
+
+def _dated_round(index, strokes):
+    return Round(
+        id=f"r{index}",
+        date=datetime(2026, 1, 1) + timedelta(days=index),
+        course_name_played="Muni",
+        hole_scores=[
+            HoleScore(hole_number=i + 1, strokes=s, par_played=4, putts=2) for i, s in enumerate(strokes)
+        ],
+    )
+
+
+def _history_db(history, user, total):
+    """A player's rounds, newest first, as each repository query hands them back."""
+    newest_first = sorted(history, key=lambda r: r.date, reverse=True)
+
+    async def rounds_for_user(_user_id, limit=20, offset=0, **_filters):
+        return newest_first[offset:offset + limit]
+
+    db = make_mock_database()
+    db.users.get_user = AsyncMock(return_value=user)
+    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=newest_first)
+    db.rounds.get_rounds_for_user = AsyncMock(side_effect=rounds_for_user)
+    db.rounds.count_rounds_for_user = AsyncMock(return_value=total)
+    return db
+
+
+@pytest.mark.asyncio
+async def test_dashboard_milestones_best_round_and_count_cover_the_whole_history():
+    user_id = uuid4()
+    user = User(id=str(user_id), name="Golfer")
+    # The one round under par is the oldest of 25, outside the last 20.
+    history = [_dated_round(0, [4] * 17 + [3])] + [_dated_round(i, [5] * 18) for i in range(1, 25)]
+    db = _history_db(history, user, total=640)
+
+    figures = await stats.get_dashboard(user_id, db, user)
+
+    assert figures.total_rounds == 640
+    assert figures.best_round is not None
+    assert (figures.best_round.id, figures.best_round.total_score) == ("r0", 71)
+    under_par = [m for m in figures.milestones if m.kind == "under_par"]
+    assert [(m.value, m.date) for m in under_par] == [(71, "2026/1/1")]
+    # All eighteen holes of that round at par or better, the longest run on record.
+    assert [m.value for m in figures.milestones if m.kind == "par_streak"] == [18]
+
+
+@pytest.mark.asyncio
+async def test_dashboard_and_handicap_endpoint_report_the_same_index():
+    user_id = uuid4()
+    # The golfer entered 10.0 on Jan 20; the rounds before it only count where they beat it.
+    user = User(id=str(user_id), name="Golfer", handicap=10.0, last_handicap_update=datetime(2026, 1, 20))
+    early = [_dated_round(i, [5] * 12 + [4] * 6) for i in range(10)]
+    late = [_dated_round(i, [5] * 18) for i in range(20, 30)]
+    db = _history_db(early + late, user, total=20)
+
+    figures = await stats.get_dashboard(user_id, db, user)
+    endpoint = await users.get_user_handicap(user_id, db, user)
+
+    assert figures.handicap_index == endpoint["handicap_index"] == 18.0
+    # Without the seed the early +12s would count and the index would read 12.0.
+    assert handicap_index(early + late) == 12.0
