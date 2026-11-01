@@ -1,5 +1,5 @@
 import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartColors, chartLayout, chartTooltipStyle, toParFill } from "@/brand/theme";
+import { chartColors, chartLayout, chartTooltipStyle, toParFill, toParLabel } from "@/brand/theme";
 import { AXIS_TICK, type TooltipFormatter } from "./holeBarParts";
 
 interface ToParBar {
@@ -17,9 +17,9 @@ interface ToParBarsProps {
   valueLabel?: string;
 }
 
-/** A signed average to par, to two places: "+0.84", "-0.10", "0.00". */
+/** An average to par, to two places, as golfers write it: "+0.84", "-0.12", "E". */
 function signed(value: number): string {
-  return value > 0 ? `+${value.toFixed(2)}` : value.toFixed(2);
+  return toParLabel(Number(value.toFixed(2))) ?? "E";
 }
 
 /**
@@ -36,7 +36,7 @@ export function ToParBars({ bars, valueLabel = "Avg to Par" }: ToParBarsProps) {
             tick={AXIS_TICK}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(value: number) => (value > 0 ? `+${value}` : String(value))}
+            tickFormatter={(value: number) => signed(value)}
           />
           <Tooltip
             cursor={{ fill: chartColors.muted }}
