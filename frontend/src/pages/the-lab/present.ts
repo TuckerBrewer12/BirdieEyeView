@@ -1,3 +1,4 @@
+import { toParTextClass } from "@/brand";
 import {
   COMPARISON_HANDICAPS,
   goalScoreToBreak,
@@ -138,10 +139,16 @@ export function parTypeGapNote(
   return { text: `${mark} · ${detail}`, gap };
 }
 
-/** A count of strokes with its sign: "+1.2 strokes", "-0.4 strokes". */
-export function signedStrokes(value: number): string {
-  const rounded = Math.round(value * 10) / 10;
-  return `${rounded > 0 ? "+" : ""}${rounded.toFixed(1)} strokes`;
+/**
+ * A count of strokes with its sign, and the tone to paint it.
+ * A gain is good, so the tone is to-par of the negation: "+1.2 strokes" reads birdie.
+ */
+export function signedStrokes(strokes: number): { text: string; tone: string } {
+  const rounded = Math.round(strokes * 10) / 10;
+  return {
+    text: `${rounded > 0 ? "+" : ""}${rounded.toFixed(1)} strokes`,
+    tone: toParTextClass(-strokes),
+  };
 }
 
 /** What each kind of saver is about, in a couple of words. The server words the rest. */

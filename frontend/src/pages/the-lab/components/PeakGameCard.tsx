@@ -68,21 +68,13 @@ export function PeakGameCard({ peak, impacts, goalLabel, className }: PeakGameCa
             </span>
             {impacts.map((impact) => {
               const scale = Math.max(impact.peak, impact.average, 0.1) * 1.2;
+              const signed = signedStrokes(impact.strokes);
               return (
                 <div key={impact.kind} className="flex flex-col gap-1.5">
                   <div className="flex items-baseline justify-between text-label">
                     <span className="font-semibold text-card-foreground">{PEAK_IMPACT_LABEL[impact.kind]}</span>
-                    <span
-                      className={cn(
-                        "font-bold",
-                        impact.strokes > 0.05
-                          ? "text-score-birdie"
-                          : impact.strokes < -0.05
-                            ? "text-score-bogey"
-                            : "text-muted-foreground",
-                      )}
-                    >
-                      {signedStrokes(impact.strokes)} {impact.strokes >= 0 ? "gained" : "lost"}
+                    <span className={cn("font-bold", signed.tone)}>
+                      {signed.text} {impact.strokes >= 0 ? "gained" : "lost"}
                     </span>
                   </div>
                   <Meter
