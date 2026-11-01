@@ -1,3 +1,4 @@
+import { toParLabel, type ScoreKind } from "@/domain";
 import type { GIRvsNonGIRRow } from "@/types/analytics";
 import { insightCategory, type AnalyticsTab, type Insight, type InsightCategory } from "./model";
 
@@ -24,9 +25,6 @@ export interface Narrative {
   positiveUp: boolean;
 }
 
-function signed(value: number, digits: number): string {
-  return `${value > 0 ? "+" : ""}${value.toFixed(digits)}`;
-}
 
 export function narrativeFor(insight: Insight): Narrative {
   switch (insight.kind) {
@@ -46,7 +44,7 @@ export function narrativeFor(insight: Insight): Narrative {
     }
     case "best-par":
       return {
-        text: `You score best on par ${insight.par}s — averaging ${signed(insight.averageToPar, 2)} across ${insight.holes} holes.`,
+        text: `You score best on par ${insight.par}s — averaging ${toParLabel(Number(insight.averageToPar.toFixed(2)))} across ${insight.holes} holes.`,
         trend: insight.averageToPar <= 0 ? "down" : "flat",
         positiveUp: false,
       };
@@ -107,15 +105,18 @@ export function leadNarrative(insights: Insight[], category: InsightCategory): N
   return lead ? narrativeFor(lead) : null;
 }
 
-/** GIR vs no-GIR as diverging bars: under-par shares to the left of zero, par and over to the right. */
-export function girVsNonGirBars(rows: GIRvsNonGIRRow[]): Record<string, string | number>[] {
+export type GirVsNonGirBar = { bucket: GIRvsNonGIRRow["bucket"] } & Record<ScoreKind, number>;
+
+/** GIR vs no-GIR as diverging bars keyed by score kind: under par left of zero, par and over to the right. */
+export function girVsNonGirBars(rows: GIRvsNonGIRRow[]): GirVsNonGirBar[] {
   return rows.map((row) => ({
     bucket: row.bucket,
-    Birdie: -(row.birdie ?? 0),
-    Eagle: -(row.eagle ?? 0),
-    Par: row.par ?? 0,
-    Bogey: row.bogey ?? 0,
-    Double: row.double_bogey ?? 0,
-    "Triple+": (row.triple_bogey ?? 0) + (row.quad_bogey ?? 0),
+    eagle: -row.eagle,
+    birdie: -row.birdie,
+    par: row.par,
+    bogey: row.bogey,
+    double: row.double_bogey,
+    triple: row.triple_bogey,
+    quad: row.quad_bogey,
   }));
 }

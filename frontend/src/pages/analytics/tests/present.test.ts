@@ -15,12 +15,18 @@ describe("narrativeFor", () => {
 
   it("signs the best par type's average to par", () => {
     expect(narrativeFor({ kind: "best-par", par: 5, averageToPar: 0.4, holes: 12 }).text).toBe(
-      "You score best on par 5s — averaging +0.40 across 12 holes.",
+      "You score best on par 5s — averaging +0.4 across 12 holes.",
     );
     expect(narrativeFor({ kind: "best-par", par: 3, averageToPar: -0.1, holes: 8 })).toMatchObject({
-      text: "You score best on par 3s — averaging -0.10 across 8 holes.",
+      text: "You score best on par 3s — averaging -0.1 across 8 holes.",
       trend: "down",
     });
+    expect(narrativeFor({ kind: "best-par", par: 4, averageToPar: 0.587500001, holes: 240 }).text).toBe(
+      "You score best on par 4s — averaging +0.59 across 240 holes.",
+    );
+    expect(narrativeFor({ kind: "best-par", par: 4, averageToPar: 0.001, holes: 9 }).text).toBe(
+      "You score best on par 4s — averaging E across 9 holes.",
+    );
   });
 
   it("grades the GIR and putting averages", () => {
@@ -69,7 +75,7 @@ describe("labels", () => {
 });
 
 describe("girVsNonGirBars", () => {
-  it("puts under-par shares left of zero and folds triples and worse together", () => {
+  it("keys the bars by score kind, with under-par shares left of zero", () => {
     expect(
       girVsNonGirBars([
         {
@@ -84,6 +90,6 @@ describe("girVsNonGirBars", () => {
           quad_bogey: 0.5,
         },
       ]),
-    ).toEqual([{ bucket: "GIR", Birdie: -20, Eagle: -2, Par: 60, Bogey: 15, Double: 2, "Triple+": 1.5 }]);
+    ).toEqual([{ bucket: "GIR", eagle: -2, birdie: -20, par: 60, bogey: 15, double: 2, triple: 1, quad: 0.5 }]);
   });
 });

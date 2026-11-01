@@ -4,6 +4,7 @@ type Fmt = (value: unknown, name: unknown, props: unknown) => ReactNode | [React
 type DivergingTooltipPayload = {
   value?: unknown;
   dataKey?: unknown;
+  name?: unknown;
   fill?: string;
 };
 
@@ -14,7 +15,9 @@ import {
 } from "recharts";
 import { SVGTimeSeriesArea } from "@/components/analytics/SVGTimeSeriesArea";
 import { TrendingDown, Gauge, Hash, Trophy, Target } from "lucide-react";
-import { SCORE_COLORS, SCORE_LABELS } from "@/lib/colors";
+import { SCORE_LABELS } from "@/lib/colors";
+import { chartColors, colors } from "@/brand";
+import { scoreKindLabel, type ScoreKind } from "@/domain";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { BestRoundCard } from "@/components/analytics/BestRoundCard";
 import { ParMatrixGrid } from "@/components/analytics/ParMatrixGrid";
@@ -23,16 +26,35 @@ import type {
   AnalyticsData, AnalyticsFilters, GIRTrendRow, PuttsTrendRow, ScoreTrendRow, ScramblingRow, ThreePuttRow,
 } from "@/types/analytics";
 
-// The chart colours the old view model handed in. Analytics PR B moves these charts onto the kit.
-const trendPrimary = "#2d7a3a";
-const trendSecondary = "#f97316";
-const trendTertiary = "#a855f7";
-const successColor = "#059669";
-const dangerColor = "#f87171";
-const neutralColor = "#6b7280";
-const gridColor = "#f1f5f1";
-const mutedFill = "#e5e7eb";
-const scoreColors: Record<string, string> = SCORE_COLORS;
+// The chart colours, from the brand tokens. Analytics PR B moves these charts onto the kit.
+const trendPrimary = colors.primary;
+const trendSecondary = "var(--tee-orange)";
+const trendTertiary = "var(--tee-purple)";
+const successColor = colors.score.birdie.base;
+const dangerColor = colors.score.bogey.base;
+const neutralColor = colors.mutedForeground;
+const gridColor = colors.muted;
+const mutedFill = chartColors.muted;
+const scoreColors: Record<string, string> = {
+  eagle: colors.score.eagle.base,
+  birdie: colors.score.birdie.base,
+  par: colors.score.par.base,
+  bogey: colors.score.bogey.base,
+  double_bogey: colors.score.double.base,
+  triple_bogey: colors.score.triple.base,
+  quad_bogey: colors.score.quad.base,
+};
+
+/** GIR vs no-GIR: under par stacks left of zero, par and over to the right. */
+const GIR_BARS: { kind: ScoreKind; fill: string; stackId: "neg" | "pos"; radius?: [number, number, number, number] }[] = [
+  { kind: "birdie", fill: successColor, stackId: "neg" },
+  { kind: "eagle", fill: colors.score.eagle.base, stackId: "neg", radius: [4, 0, 0, 4] },
+  { kind: "par", fill: mutedFill, stackId: "pos" },
+  { kind: "bogey", fill: dangerColor, stackId: "pos" },
+  { kind: "double", fill: colors.score.double.base, stackId: "pos" },
+  { kind: "triple", fill: colors.score.triple.base, stackId: "pos" },
+  { kind: "quad", fill: colors.score.quad.base, stackId: "pos", radius: [0, 4, 4, 0] },
+];
 
 export interface AnalyticsDesktopLayoutProps {
   data: AnalyticsData;
@@ -489,7 +511,7 @@ export function AnalyticsDesktopLayout({
                           <div className="font-semibold text-[11px] mb-1.5" style={{ color: labelText === "GIR" ? successColor : dangerColor }}>{labelText}</div>
                           {visible.map((p) => (
                             <div key={String(p.dataKey)} className="flex items-center justify-between gap-4">
-                              <span style={{ color: p.fill }}>{String(p.dataKey ?? "")}</span>
+                              <span style={{ color: p.fill }}>{String(p.name ?? "")}</span>
                               <span style={{ color: p.fill }} className="font-bold">{Math.abs(Number(p.value ?? 0)).toFixed(1)}%</span>
                             </div>
                           ))}
@@ -497,26 +519,16 @@ export function AnalyticsDesktopLayout({
                       );
                     }}
                   />
-                  <Bar dataKey="Birdie"   fill={successColor}                           stackId="neg" />
-                  <Bar dataKey="Eagle"    fill={(SCORE_COLORS as Record<string, string>).eagle}         stackId="neg" radius={[4, 0, 0, 4]} />
-                  <Bar dataKey="Par"      fill={mutedFill}                              stackId="pos" />
-                  <Bar dataKey="Bogey"    fill={dangerColor}                            stackId="pos" />
-                  <Bar dataKey="Double"   fill={(SCORE_COLORS as Record<string, string>).double_bogey}  stackId="pos" />
-                  <Bar dataKey="Triple+"  fill={(SCORE_COLORS as Record<string, string>).triple_bogey}  stackId="pos" radius={[0, 4, 4, 0]} />
+                  {GIR_BARS.map(({ kind, fill, stackId, radius }) => (
+                    <Bar key={kind} dataKey={kind} name={scoreKindLabel(kind)} fill={fill} stackId={stackId} radius={radius} />
+                  ))}
                 </BarChart>
               </ResponsiveContainer>
               <div className="flex items-center gap-5 mt-3 justify-center flex-wrap">
-                {[
-                  { label: "Birdie",  color: successColor },
-                  { label: "Eagle",   color: (SCORE_COLORS as Record<string, string>).eagle },
-                  { label: "Par",     color: mutedFill },
-                  { label: "Bogey",   color: dangerColor },
-                  { label: "Double",  color: (SCORE_COLORS as Record<string, string>).double_bogey },
-                  { label: "Triple+", color: (SCORE_COLORS as Record<string, string>).triple_bogey },
-                ].map(({ label, color }) => (
-                  <div key={label} className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-sm" style={{ background: color }} />
-                    <span className="text-[11px] font-semibold text-gray-500">{label}</span>
+                {GIR_BARS.map(({ kind, fill }) => (
+                  <div key={kind} className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-sm" style={{ background: fill }} />
+                    <span className="text-[11px] font-semibold text-gray-500">{scoreKindLabel(kind)}</span>
                   </div>
                 ))}
               </div>
