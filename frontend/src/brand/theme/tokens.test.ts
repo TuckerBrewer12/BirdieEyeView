@@ -99,6 +99,8 @@ describe("brand tokens", () => {
     // Recharts cannot read a CSS variable, so chart.ts holds these numbers a second time.
     expect({
       barRadius: chartLayout.barRadius[0],
+      barEndCap: chartLayout.barEndCap.left[0],
+      barEndCapRight: chartLayout.barEndCap.right[1],
       barMaxWidth: chartLayout.barMaxWidth,
       ringInner: chartLayout.ring.inner,
       ringOuter: chartLayout.ring.outer,
@@ -116,6 +118,8 @@ describe("brand tokens", () => {
       flowWidth: chartLayout.flow.width,
     }).toEqual({
       barRadius: px("--brand-radius-md"),
+      barEndCap: px("--brand-radius-sm"),
+      barEndCapRight: px("--brand-radius-sm"),
       barMaxWidth: px("--brand-size-bar-max"),
       ringInner: px("--brand-size-ring-inner"),
       ringOuter: px("--brand-size-ring-outer"),
