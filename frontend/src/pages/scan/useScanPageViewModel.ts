@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { preparePhotoForUpload } from "@/data/photoUpload";
 import { scanRepository, type ScanRepository } from "@/data/scanRepository";
 import { useCardText } from "@/data/useCardText";
@@ -8,16 +8,13 @@ import { useCourseSearch, type CourseSearch } from "@/hooks/useCourseSearch";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/types/golf";
 import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
-import { useCourse } from "../courses/useCourse";
 import { roundsRepository, type RoundsRepository } from "../rounds/roundsRepository";
 import {
   courseQueryFrom,
   reviewFromScan,
-  reviewFromSetup,
   SCAN_PHASE_COUNT,
   SCAN_PHASE_HOLD_MS,
   todayIso,
-  type ManualSetup,
   type PickedCourse,
   type ScanMode,
   type ScanStep,
@@ -25,6 +22,7 @@ import {
 import { newScanSession, useScanSession } from "./scanSession";
 import { useSavedRound } from "./useSavedRound";
 import { useScanReviewViewModel, type ScanReviewViewModel } from "./useScanReviewViewModel";
+import { useScanSetupViewModel, type ScanSetupViewModel } from "./useScanSetupViewModel";
 
 export interface ScanPageRepositories {
   scan: ScanRepository;
@@ -56,7 +54,7 @@ export interface ScanPageViewModel {
   extract: () => void;
   /** A saved course to read the card against, picked before scanning. */
   presetCourse: PickedCourse | null;
-  /** Search over the golfer's saved courses, for the preset course and for manual entry. */
+  /** Search over the golfer's saved courses, for the preset course. */
   courseSearch: CourseSearch;
   pickPresetCourse: (course: CourseSummary) => void;
   clearPresetCourse: () => void;
@@ -65,18 +63,9 @@ export interface ScanPageViewModel {
   /** Which phase of reading the card is showing, from 0 to `SCAN_PHASE_COUNT - 1`. */
   phase: number;
 
-  // Setup, for typing scores in by hand
-  setup: ManualSetup;
-  /** The chosen course's tee colours, once it has loaded. */
-  setupTees: string[];
-  loadingSetupCourse: boolean;
-  pickSetupCourse: (course: CourseSummary) => void;
-  /** Uses a typed name for a course we don't have. */
-  nameSetupCourse: (name: string) => void;
-  clearSetupCourse: () => void;
-  setSetupTeeBox: (teeBox: string) => void;
-  setSetupDate: (date: string) => void;
-  startEntry: () => void;
+  // Setup
+  /** Choosing the course, tee and date before typing scores in by hand. */
+  setup: ScanSetupViewModel;
 
   // Review
   /** Checking the card, once there is one. */
@@ -105,12 +94,12 @@ export function useScanPageViewModel(
   const latestPick = useRef(0);
 
   const courseSearch = useCourseSearch(userId, courses);
+  const setup = useScanSetupViewModel(userId, courses);
   const review = useScanReviewViewModel(userId, repositories);
 
   const cardText = useCardText(session.photo, scan);
   const { mutateAsync: extractCard } = useExtractScorecard(scan);
   const extracting = useIsExtractingScorecard();
-  const setupCourse = useCourse(session.setup.course?.id ?? undefined, courses);
   const savedRound = useSavedRound(session.savedRoundId, rounds);
 
   const step: ScanStep = session.savedRoundId
@@ -137,6 +126,7 @@ export function useScanPageViewModel(
   }, [step]);
 
   const { reset: resetCourseSearch } = courseSearch;
+  const { reset: resetSetup } = setup;
   const { reset: resetReview } = review;
   const { setQuery: setReviewQuery } = review.courseSearch;
 
@@ -144,16 +134,18 @@ export function useScanPageViewModel(
     latestPick.current += 1;
     setSession(newScanSession());
     resetCourseSearch();
+    resetSetup();
     resetReview();
-  }, [setSession, resetCourseSearch, resetReview]);
+  }, [setSession, resetCourseSearch, resetSetup, resetReview]);
 
   const setMode = useCallback(
     (mode: ScanMode) => {
       latestPick.current += 1;
       setSession((current) => ({ ...newScanSession(), mode, userContext: current.userContext }));
       resetCourseSearch();
+      resetSetup();
     },
-    [setSession, resetCourseSearch],
+    [setSession, resetCourseSearch, resetSetup],
   );
 
   const pickPhoto = useCallback(
@@ -213,42 +205,6 @@ export function useScanPageViewModel(
       });
   }, [session, setSession, extractCard, cardText, setReviewQuery]);
 
-  const setSetup = useCallback(
-    (patch: Partial<ManualSetup>) =>
-      setSession((current) => ({ ...current, setup: { ...current.setup, ...patch } })),
-    [setSession],
-  );
-
-  const pickSetupCourse = useCallback(
-    (course: CourseSummary) => {
-      setSetup({ course: { id: course.id, name: course.name ?? course.id }, teeBox: "" });
-      resetCourseSearch();
-    },
-    [setSetup, resetCourseSearch],
-  );
-
-  const nameSetupCourse = useCallback(
-    (name: string) => {
-      setSetup({ course: { id: null, name }, teeBox: "" });
-      resetCourseSearch();
-    },
-    [setSetup, resetCourseSearch],
-  );
-
-  const clearSetupCourse = useCallback(() => setSetup({ course: null, teeBox: "" }), [setSetup]);
-  const setSetupTeeBox = useCallback((teeBox: string) => setSetup({ teeBox }), [setSetup]);
-  const setSetupDate = useCallback((date: string) => setSetup({ date }), [setSetup]);
-
-  const loadedSetupCourse = session.setup.course?.id ? (setupCourse.data ?? null) : null;
-  const setupTees = useMemo(
-    () => (loadedSetupCourse?.tees ?? []).flatMap((tee) => (tee.color ? [tee.color] : [])),
-    [loadedSetupCourse],
-  );
-
-  const startEntry = useCallback(() => {
-    setSession((current) => ({ ...current, review: reviewFromSetup(current.setup, loadedSetupCourse) }));
-  }, [setSession, loadedSetupCourse]);
-
   const openSavedRound = useCallback(
     (open: (roundId: string) => void) => {
       const roundId = session.savedRoundId;
@@ -279,15 +235,7 @@ export function useScanPageViewModel(
 
     phase,
 
-    setup: session.setup,
-    setupTees,
-    loadingSetupCourse: setupCourse.isLoading,
-    pickSetupCourse,
-    nameSetupCourse,
-    clearSetupCourse,
-    setSetupTeeBox,
-    setSetupDate,
-    startEntry,
+    setup,
 
     review,
 

@@ -10,16 +10,14 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-// Setup and success still draw with the legacy scan components; the next scan PR moves them
-// onto the kit.
-import { ScanManualSetup } from "@/components/scan/ScanManualSetup";
-import { ScanSuccessStep } from "@/components/scan/ScanSuccessStep";
 import { formatCourseName } from "@/lib/courseName";
 import { useFilePreview } from "@/platform/useFilePreview";
 import { ScanProcessingStep } from "./components/ScanProcessingStep";
 import { ScanReviewStep } from "./components/ScanReviewStep";
+import { ScanSetupStep } from "./components/ScanSetupStep";
+import { ScanSuccessStep } from "./components/ScanSuccessStep";
 import { ScanUploadStep } from "./components/ScanUploadStep";
-import { useScanPageViewModel, type ScanPageViewModel } from "./useScanPageViewModel";
+import { useScanPageViewModel } from "./useScanPageViewModel";
 
 const TITLE = "Scan Scorecard";
 
@@ -30,13 +28,18 @@ export function ScanPage({ userId }: { userId: string }) {
 
   switch (viewModel.step) {
     case "success":
-      return viewModel.savedRound ? (
-        <ScanSuccessStep
-          round={viewModel.savedRound}
-          onView={() => viewModel.openSavedRound((roundId) => navigate(`/rounds/${roundId}`))}
-        />
-      ) : (
-        <LoadingState>Loading…</LoadingState>
+      return (
+        <div className="flex flex-col pb-6">
+          <PageHeader title={TITLE} revealAt={100} />
+          {viewModel.savedRound ? (
+            <ScanSuccessStep
+              round={viewModel.savedRound}
+              onView={() => viewModel.openSavedRound((roundId) => navigate(`/rounds/${roundId}`))}
+            />
+          ) : (
+            <LoadingState>Loading…</LoadingState>
+          )}
+        </div>
       );
 
     case "review":
@@ -107,7 +110,7 @@ export function ScanPage({ userId }: { userId: string }) {
           )}
 
           {viewModel.step === "setup" ? (
-            <SetupStep viewModel={viewModel} />
+            <ScanSetupStep setup={viewModel.setup} />
           ) : (
             <>
               <div className="flex flex-col gap-2">
@@ -143,39 +146,4 @@ export function ScanPage({ userId }: { userId: string }) {
         </div>
       );
   }
-}
-
-/** The legacy manual-entry form, fed from the view model. */
-function SetupStep({ viewModel }: { viewModel: ScanPageViewModel }) {
-  const { setup, courseSearch } = viewModel;
-  return (
-    <ScanManualSetup
-      // A typed name has no id, but still shows as the chosen course.
-      selectedCourseId={setup.course ? (setup.course.id ?? setup.course.name) : null}
-      selectedCourseName={setup.course?.name ?? null}
-      manualCourseTees={viewModel.setupTees.map((color) => ({
-        color,
-        slope_rating: null,
-        course_rating: null,
-        hole_yardages: {},
-      }))}
-      courseQuery={courseSearch.query}
-      courseResults={courseSearch.results}
-      searching={courseSearch.searching}
-      loadingCourse={viewModel.loadingSetupCourse}
-      manualDate={setup.date}
-      manualTeeBox={setup.teeBox}
-      onCourseQuery={courseSearch.setQuery}
-      onSelectCourseManual={viewModel.pickSetupCourse}
-      onClearCourse={viewModel.clearSetupCourse}
-      onSetManualDate={viewModel.setSetupDate}
-      onSetManualTeeBox={viewModel.setSetupTeeBox}
-      onStartEntry={viewModel.startEntry}
-      onUpdate={({ selectedCourseName }) => {
-        if (selectedCourseName) viewModel.nameSetupCourse(selectedCourseName);
-      }}
-      setCourseQuery={courseSearch.setQuery}
-      setCourseResults={courseSearch.reset}
-    />
-  );
 }

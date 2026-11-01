@@ -1,8 +1,10 @@
 import { test } from "./ScanPage.robot";
+import { strokesToPar, toParLabel } from "../../../domain/score";
 import { pebbleBeachCourse } from "../../../testing/fixtures/roundDetails";
 import { SCANNED_COURSE_NAME, scannedCard, UNSURE_HOLES, unsureCard } from "../../../testing/fixtures/scan";
 
 const CARD_SCORE = scannedCard.round.hole_scores.reduce((total, score) => total + (score.strokes ?? 0), 0);
+const CARD_PAR = scannedCard.round.course!.par!;
 
 test("a picked card is read, then comes back to check", async ({ scan }) => {
   await scan.open({ holdScan: true });
@@ -198,7 +200,7 @@ test("a score typed by hand is the one that gets saved", async ({ scan }) => {
   await scan.seesSavedStrokes(1, 5);
 });
 
-test("a course and a tee can be chosen before entering scores by hand", async ({ scan }) => {
+test("a course and a tee chosen before entering scores by hand are the ones saved", async ({ scan }) => {
   await scan.open({ fullCourses: [pebbleBeachCourse] });
   await scan.chooseManualEntry();
   await scan.searchSetupCourse("Pebble");
@@ -206,12 +208,54 @@ test("a course and a tee can be chosen before entering scores by hand", async ({
   await scan.seesSetupCourse("Pebble Beach");
   await scan.chooseTee("Blue");
   await scan.seesTee("Blue");
+  await scan.startEntering();
+  await scan.seesBlankCard();
+  await scan.seesLinkedCourse("Pebble Beach");
+  await scan.typeStrokes(1, 4);
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedCourse(pebbleBeachCourse.id!);
+  await scan.seesSavedTee("Blue");
 });
 
-test("a typed course name is kept when the search finds nothing", async ({ scan }) => {
+test("a typed course name and tee are kept when the search finds nothing", async ({ scan }) => {
   await scan.open();
   await scan.chooseManualEntry();
   await scan.searchSetupCourse("Muni Nine");
   await scan.keepTypedCourse("Muni Nine");
   await scan.seesSetupCourse("Muni Nine");
+  await scan.typeTee("Gold");
+  await scan.startEntering();
+  await scan.seesBlankCard();
+  await scan.typeStrokes(1, 5);
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedCourseName("Muni Nine");
+  await scan.seesSavedTee("Gold");
+});
+
+test("a typed course name can be edited, and a picked course changed", async ({ scan }) => {
+  await scan.open({ fullCourses: [pebbleBeachCourse] });
+  await scan.chooseManualEntry();
+  await scan.searchSetupCourse("Muni Nine");
+  await scan.keepTypedCourse("Muni Nine");
+  await scan.changeSetupCourse("Edit name");
+  await scan.seesSetupSearch("Muni Nine");
+  await scan.searchSetupCourse("Pebble");
+  await scan.pickSetupCourse("Pebble Beach");
+  await scan.seesSetupCourse("Pebble Beach");
+  await scan.changeSetupCourse("Change course");
+  await scan.seesSetupSearch("");
+});
+
+test("a saved round shows its score against par, and shares as an image", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedScore(CARD_SCORE, toParLabel(strokesToPar(CARD_SCORE, CARD_PAR))!);
+  await scan.tapShare();
+  await scan.seesSharedImage("scorecard-half-moon-bay-golf-links.png");
 });

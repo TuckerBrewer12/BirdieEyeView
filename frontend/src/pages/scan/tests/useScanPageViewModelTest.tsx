@@ -184,12 +184,12 @@ describe("useScanPageViewModel", () => {
   it("offers the picked course's tees, and starts a blank card on that course", async () => {
     const { result } = renderVm();
     act(() => result.current.setMode("manual"));
-    act(() => result.current.pickSetupCourse(pebbleBeach));
-    await waitFor(() => expect(result.current.setupTees).toEqual(["Blue"]));
-    act(() => result.current.setSetupTeeBox("Blue"));
-    act(() => result.current.setSetupDate("2026-10-01"));
+    act(() => result.current.setup.pickCourse(pebbleBeach));
+    await waitFor(() => expect(result.current.setup.tees).toEqual(["Blue"]));
+    act(() => result.current.setup.setTeeBox("Blue"));
+    act(() => result.current.setup.setDate("2026-10-01"));
 
-    act(() => result.current.startEntry());
+    act(() => result.current.setup.start());
 
     expect(result.current.step).toBe("review");
     const { review } = result.current;
@@ -204,9 +204,9 @@ describe("useScanPageViewModel", () => {
   it("starts eighteen unknown holes under a typed course name", () => {
     const { result } = renderVm();
     act(() => result.current.setMode("manual"));
-    act(() => result.current.nameSetupCourse("Muni Nine"));
+    act(() => result.current.setup.nameCourse("Muni Nine"));
 
-    act(() => result.current.startEntry());
+    act(() => result.current.setup.start());
 
     const { review } = result.current;
     expect(review.linkedName).toBeUndefined();
