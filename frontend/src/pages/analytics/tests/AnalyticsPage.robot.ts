@@ -95,6 +95,14 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** The desktop's course menu. The phone header still picks with a native select. */
+  async openCourseMenu(): Promise<this> {
+    await this.visible(this.page.getByRole("combobox", { name: "Course" })).click();
+    await expect(this.page.getByRole("listbox")).toBeVisible();
+    await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
+    return this;
+  }
+
   /** The phone header still picks with a native select; the desktop opens the kit's menu. */
   async pickCourse(name: string): Promise<this> {
     const phoneSelect = this.page.locator("select").locator("visible=true");

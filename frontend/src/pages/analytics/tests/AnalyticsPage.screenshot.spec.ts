@@ -18,6 +18,13 @@ test("filtered to one course", async ({ analytics }) => {
   await analytics.capture("analytics-course.png");
 });
 
+test("course menu open", async ({ analytics, isMobile }) => {
+  test.skip(isMobile, "The phone picks a course with a native select.");
+  await analytics.open();
+  await analytics.openCourseMenu();
+  await analytics.capture("analytics-course-menu.png");
+});
+
 test("no rounds match the filters", async ({ analytics }) => {
   await analytics.open();
   await analytics.pickCourse(UNSEEDED_COURSE);
