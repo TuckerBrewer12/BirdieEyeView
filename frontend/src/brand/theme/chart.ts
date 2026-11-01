@@ -92,7 +92,7 @@ export const chartLayout = {
   },
   /**
    * The same shape on a phone: a narrower drawing, so it scales down less and its labels stay
-   * readable at a phone's width.
+   * readable at a phone's width. Radius mirrors `--brand-size-gauge-outer`.
    */
   radarCompact: {
     width: 360,
