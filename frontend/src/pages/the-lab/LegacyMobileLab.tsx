@@ -1,8 +1,9 @@
 // The phone layout still renders the legacy Lab components, fed from the new view model.
 // The next Lab PR moves it onto the kit and deletes this file with `components/the-lab`.
 import { MobileLabPage } from "@/components/the-lab/MobileLabPage";
+import { ParTypeCard } from "./components/ParTypeCard";
 import type { LabPageViewModel } from "./useLabPageViewModel";
-import { benchmarkHeading, goalLabel } from "./present";
+import { benchmarkHeading, benchmarkName, goalLabel } from "./present";
 
 export function LegacyMobileLab({ vm }: { vm: LabPageViewModel }) {
   const target = vm.goal?.target ?? null;
@@ -32,6 +33,12 @@ export function LegacyMobileLab({ vm }: { vm: LabPageViewModel }) {
       peakImpacts={vm.peakImpacts}
       goalLabel={goalLabel(target)}
       benchmarkHeading={benchmarkHeading(vm.radarMode, vm.comparison, vm.selectedFriend, vm.peak)}
+      scoringPanel={
+        <ParTypeCard
+          rows={vm.parTypes}
+          benchmarkName={vm.benchmark ? benchmarkName(vm.radarMode, vm.comparison, vm.selectedFriend) : null}
+        />
+      }
     />
   );
 }

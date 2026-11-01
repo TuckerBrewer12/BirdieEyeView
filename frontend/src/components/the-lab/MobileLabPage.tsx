@@ -1,8 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ComparisonTargetToggle, type ComparisonTargetValue } from "@/components/suggestions/ComparisonTargetToggle";
 import { AttemptsTimeline } from "@/components/the-lab/AttemptsTimeline";
-import { ParTypeCard } from "@/components/the-lab/ParTypeCard";
 import { PuttingDeepDiveCard } from "@/components/the-lab/PuttingDeepDiveCard";
 import { UserRadarChart } from "@/components/analytics/UserRadarChart";
 import { GOAL_OPTIONS } from "@/components/the-lab/constants";
@@ -44,6 +43,8 @@ interface MobileLabPageProps {
   peakImpacts: PeakImpact[];
   goalLabel: string | null;
   benchmarkHeading: string;
+  /** The "By Par" panel: the page's kit ParTypeCard, fed from the view model. */
+  scoringPanel: ReactNode;
 }
 
 const panelVariants = {
@@ -66,6 +67,7 @@ export function MobileLabPage({
   peakImpacts,
   goalLabel,
   benchmarkHeading,
+  scoringPanel,
 }: MobileLabPageProps) {
   const recentAttempts = analyticsData?.score_trend?.filter((r) => r.total_score != null) ?? [];
 
@@ -230,20 +232,7 @@ export function MobileLabPage({
                 animate="center"
                 exit="exit"
               >
-                {currentKey === "scoring" && analyticsData && (
-                  <ParTypeCard
-                    scoringByPar={analyticsData.scoring_by_par}
-                    scoreTypeDist={analyticsData.score_type_distribution}
-                    benchmark={activeProfile}
-                    benchmarkLabel={
-                      mode === "peak"
-                        ? "Peak game"
-                        : typeof comparisonTarget === "number"
-                        ? `HCP ${comparisonTarget}`
-                        : goalLabel ?? "Target"
-                    }
-                  />
-                )}
+                {currentKey === "scoring" && scoringPanel}
 
                 {currentKey === "putting" && analyticsData && (
                   <PuttingDeepDiveCard
