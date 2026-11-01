@@ -88,7 +88,7 @@ export class LandingRobot {
   /** Picks a photo. The visitor is still on the upload step, choosing what's on the card. */
   async chooseScorecard(): Promise<this> {
     await this.page.locator('input[type="file"]').setInputFiles(CARD_PHOTO);
-    await expect(this.page.getByRole("button", { name: "Scan My Scorecard" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Scan my scorecard" })).toBeVisible();
     return this;
   }
 
@@ -103,12 +103,20 @@ export class LandingRobot {
   async seesScanFailed(): Promise<this> {
     await expect(this.page.getByRole("alert")).toContainText("We couldn't scan this scorecard.");
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Scan My Scorecard" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Scan my scorecard" })).toBeVisible();
     return this;
   }
 
   async tapScan(): Promise<this> {
-    await this.page.getByRole("button", { name: "Scan My Scorecard" }).click();
+    await this.page.getByRole("button", { name: "Scan my scorecard" }).click();
+    return this;
+  }
+
+  /** Starts over from the scanned card. The button has to be on screen to be tapped. */
+  async tapScanAnother(): Promise<this> {
+    const button = this.page.getByRole("button", { name: "Scan another" });
+    await expect(button).toBeInViewport();
+    await button.click();
     return this;
   }
 
