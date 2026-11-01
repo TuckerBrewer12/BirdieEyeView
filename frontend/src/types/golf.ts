@@ -40,19 +40,6 @@ export interface User {
   scoring_goal?: number | null;
 }
 
-export interface Friendship {
-  id: string;
-  requester_id: string;
-  addressee_id: string;
-  status: "pending" | "accepted" | "declined" | "blocked";
-  created_at: string;
-  updated_at: string;
-  requester_name?: string | null;
-  requester_email?: string | null;
-  addressee_name?: string | null;
-  addressee_email?: string | null;
-}
-
 /** Legacy copies for unmigrated pages. New pages use `@/domain` and `@/brand`. */
 export type ScoreType = "eagle" | "birdie" | "par" | "bogey" | "double-bogey" | "worse";
 

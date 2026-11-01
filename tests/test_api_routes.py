@@ -300,6 +300,27 @@ def test_user_request_validation():
         users.CreateUserTeeRequest(name="Blue", hole_yardages={"bad": 400})
 
 
+def test_friendship_status_is_typed():
+    """The friendship status is a fixed set, so the generated client gets a union, not a string."""
+    response_status = users.FriendshipResponse.model_json_schema()["properties"]["status"]
+    assert response_status["enum"] == ["pending", "accepted", "declined", "blocked"]
+
+    request_status = users.FriendshipStatusRequest.model_json_schema()["properties"]["status"]
+    assert request_status["enum"] == ["accepted", "declined", "blocked"]
+    assert users.FriendshipStatusRequest(status="declined").status == "declined"
+    with pytest.raises(ValidationError):
+        users.FriendshipStatusRequest(status="pending")
+    with pytest.raises(ValidationError):
+        users.FriendshipResponse(
+            id="f-1",
+            requester_id="u-1",
+            addressee_id="u-2",
+            status="maybe",
+            created_at="",
+            updated_at="",
+        )
+
+
 @pytest.mark.asyncio
 async def test_user_get_update_and_handicap(monkeypatch):
     user_id = uuid4()
