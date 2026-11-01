@@ -1,5 +1,5 @@
 import { test } from "./ScanPage.robot";
-import { pebbleBeachCourse } from "../../../testing/fixtures/roundDetails";
+import { halfMoonBayCourse, pebbleBeachCourse } from "../../../testing/fixtures/roundDetails";
 import { SCANNED_COURSE_NAME, scannedCard, UNSURE_HOLES, unsureCard } from "../../../testing/fixtures/scan";
 
 const CARD_SCORE = scannedCard.round.hole_scores.reduce((total, score) => total + (score.strokes ?? 0), 0);
@@ -46,6 +46,30 @@ test("a course linked on the review is the one the round is saved against", asyn
   await scan.tapSave();
   await scan.seesSaved();
   await scan.seesSavedCourse(pebbleBeachCourse.id!);
+});
+
+test("a tee picked from the course's chips is the one that gets saved", async ({ scan }) => {
+  await scan.open({ fullCourses: [halfMoonBayCourse] });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.searchCourse("Half Moon");
+  await scan.pickCourse("Half Moon Bay");
+  await scan.pickTee("White");
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedTee("White");
+});
+
+test("a tee typed when the course has no tees is the one that gets saved", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.typeTee("White");
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedTee("White");
 });
 
 test("a clean scan has nothing to check", async ({ scan }) => {

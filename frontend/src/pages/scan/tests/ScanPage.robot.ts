@@ -165,6 +165,24 @@ export class ScanRobot {
     return this;
   }
 
+  /** Picks a tee from the chips a course with tees offers. */
+  async pickTee(color: string): Promise<this> {
+    const chip = this.page
+      .getByRole("group", { name: "Tee played" })
+      .getByRole("button", { name: color, exact: true });
+    await chip.click();
+    await expect(chip).toHaveAttribute("aria-pressed", "true");
+    return this;
+  }
+
+  /** Types a tee when the course has none to pick from. */
+  async typeTee(tee: string): Promise<this> {
+    const field = this.page.getByRole("textbox", { name: "Tee played" });
+    await field.fill(tee);
+    await expect(field).toHaveValue(tee);
+    return this;
+  }
+
   /** A course picked ahead of the scan. */
   async seesPresetCourse(name: string): Promise<this> {
     await expect(this.page.getByText(name, { exact: true })).toBeVisible();
@@ -292,6 +310,12 @@ export class ScanRobot {
   async seesSavedPutts(hole: number, putts: number): Promise<this> {
     const saved = this.backend?.store.savedScans.at(-1);
     expect(saved?.hole_scores.find((score) => score.hole_number === hole)?.putts).toBe(putts);
+    return this;
+  }
+
+  /** The tee kept on the round just saved. */
+  async seesSavedTee(tee: string): Promise<this> {
+    expect(this.backend?.store.savedScans.at(-1)?.tee_box).toBe(tee);
     return this;
   }
 
