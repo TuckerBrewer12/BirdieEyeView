@@ -10,6 +10,7 @@ from api.round_responses import round_summary
 from api.routers import ai_insights, courses, rounds, stats, users
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from models import Course, Hole, HoleScore, Round, User, UserTee
+from models.course import CourseSummary
 from tests.helpers import make_http_request, make_mock_database
 
 
@@ -25,6 +26,12 @@ def _make_course(course_id: UUID, *, owner: UUID | None = None) -> Course:
         par=72,
         user_id=str(owner) if owner else None,
         holes=[Hole(number=1, par=4, handicap=1)],
+    )
+
+
+def _make_course_summary(course_id: UUID) -> CourseSummary:
+    return CourseSummary(
+        id=str(course_id), name="Pebble Beach", location="Monterey", par=72, hole_count=1, tee_count=2,
     )
 
 
@@ -78,12 +85,23 @@ async def test_course_listing_lookup_and_authorization():
     user = _make_user(user_id)
     course = _make_course(course_id)
     db = make_mock_database()
-    db.courses.list_courses = AsyncMock(return_value=[course])
+    db.courses.list_course_summaries = AsyncMock(return_value=[_make_course_summary(course_id)])
     db.courses.get_course = AsyncMock(return_value=course)
 
     listed = await courses.list_courses(20, 0, user_id, db, user)
-    assert listed[0].name == "Pebble Beach"
-    assert listed[0].total_holes == 1
+    assert listed[0].model_dump() == {
+        "id": str(course_id),
+        "name": "Pebble Beach",
+        "external_course_id": None,
+        "source": "local",
+        "location": "Monterey",
+        "par": 72,
+        "total_holes": 1,
+        "tee_count": 2,
+    }
+    assert db.courses.list_course_summaries.await_args.kwargs == {
+        "limit": 20, "offset": 0, "user_id": str(user_id),
+    }
     fetched = await courses.get_course(course_id, db, None)
     assert fetched.id == course.id
     assert fetched.name == "Pebble Beach"
@@ -101,9 +119,8 @@ async def test_course_listing_lookup_and_authorization():
 @pytest.mark.asyncio
 async def test_course_search_merges_external_results(monkeypatch):
     user_id = uuid4()
-    local_course = _make_course(uuid4())
     db = make_mock_database()
-    db.courses.search_courses = AsyncMock(return_value=[local_course])
+    db.courses.search_course_summaries = AsyncMock(return_value=[_make_course_summary(uuid4())])
     external_service = MagicMock()
     external_service.search_external_courses = AsyncMock(return_value=[
         {"external_course_id": "ext-1", "name": "Pebble Beach", "city": "Monterey"},
@@ -113,6 +130,8 @@ async def test_course_search_merges_external_results(monkeypatch):
     monkeypatch.setattr(courses, "GolfCourseAPIService", lambda: external_service)
 
     search_results = await courses.search_courses("Pebble", user_id, True, db, _make_user(user_id))
+    assert db.courses.search_course_summaries.await_args.kwargs == {"user_id": str(user_id)}
+    assert search_results[0].source == "local"
     assert search_results[0].external_course_id == "ext-1"
     assert search_results[1].name == "Spyglass Hill"
     assert search_results[1].source == "external"

@@ -263,6 +263,60 @@ async def test_course_repo_create_course_persists_external_course_id(mock_pool):
     assert conn.fetchrow.call_args.args[2] == "gc_12345"
 
 
+def _course_summary_row(course_id, **overrides):
+    """Helper: one row of the course summary queries."""
+    row = {
+        "id": course_id, "name": "Pebble Beach", "external_course_id": None,
+        "location": "Monterey", "par": 72, "hole_count": 18, "tee_count": 3,
+    }
+    row.update(overrides)
+    return row
+
+
+@pytest.mark.asyncio
+async def test_course_repo_list_course_summaries_in_one_query(mock_pool):
+    pool, conn = mock_pool
+    repo = CourseRepositoryDB(pool)
+    course_id, user_id = uuid4(), uuid4()
+    conn.fetch.return_value = [_course_summary_row(course_id)]
+
+    summaries = await repo.list_course_summaries(limit=10, offset=20, user_id=str(user_id))
+
+    assert conn.fetch.await_count == 1
+    conn.fetchrow.assert_not_called()
+    query, *params = conn.fetch.await_args.args
+    assert params == [10, 20, user_id]
+    assert "ORDER BY name LIMIT $1 OFFSET $2" in query
+    assert [(s.id, s.name, s.par, s.hole_count, s.tee_count) for s in summaries] == [
+        (str(course_id), "Pebble Beach", 72, 18, 3)
+    ]
+
+    await repo.list_course_summaries()
+    _, *params = conn.fetch.await_args.args
+    assert params == [50, 0, None]  # NULL user_id: master courses only
+
+
+@pytest.mark.asyncio
+async def test_course_repo_search_course_summaries_in_one_query(mock_pool):
+    pool, conn = mock_pool
+    repo = CourseRepositoryDB(pool)
+    user_id = uuid4()
+    conn.fetch.return_value = [_course_summary_row(uuid4(), par=None, hole_count=0, tee_count=0)]
+
+    summaries = await repo.search_course_summaries("Peb", user_id=str(user_id))
+
+    assert conn.fetch.await_count == 1
+    conn.fetchrow.assert_not_called()
+    query, *params = conn.fetch.await_args.args
+    assert params == ["%Peb%", user_id]
+    assert "(name ILIKE $1 OR location ILIKE $1)" in query
+    assert (summaries[0].par, summaries[0].hole_count, summaries[0].tee_count) == (None, 0, 0)
+
+    await repo.search_course_summaries("Peb")
+    _, *params = conn.fetch.await_args.args
+    assert params == ["%Peb%", None]
+
+
 # ================================================================
 # RoundRepositoryDB
 # ================================================================
