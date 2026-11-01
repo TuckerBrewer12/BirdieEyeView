@@ -88,6 +88,17 @@ describe("useScanPageViewModel", () => {
     });
   });
 
+  it("opens the review search on the name read off the card when a course was picked first", async () => {
+    const { result } = renderVm();
+    act(() => result.current.pickPresetCourse(pebbleBeach));
+    await pick(result);
+
+    act(() => result.current.extract());
+
+    await waitFor(() => expect(result.current.step).toBe("review"));
+    expect(result.current.reviewSearch.query).toBe(SCANNED_COURSE_NAME);
+  });
+
   it("shows the scan in progress, then the card to check", async () => {
     const { result, scan } = renderVm({ result: scannedCard, holdExtract: true });
     await pick(result);
