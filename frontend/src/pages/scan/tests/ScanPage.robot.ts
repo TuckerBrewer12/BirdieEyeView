@@ -110,6 +110,13 @@ export class ScanRobot {
     return this;
   }
 
+  /** The save failed: the reason shows, and Save Round is still there to try again. */
+  async seesSaveFailed(message: string): Promise<this> {
+    await expect(this.page.getByRole("alert")).toContainText(message);
+    await expect(this.page.getByRole("button", { name: "Save Round" })).toBeVisible();
+    return this;
+  }
+
   async tapViewRound(): Promise<this> {
     await this.page.getByRole("button", { name: "View Round" }).click();
     return this;

@@ -23,6 +23,15 @@ test("a checked card saves as a round, and opens it", async ({ scan }) => {
   await scan.isAtSavedRound();
 });
 
+test("a failed save stays on the review and says why", async ({ scan }) => {
+  await scan.open({ saveError: "That round could not be saved." });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.tapSave();
+  await scan.seesSaveFailed("That round could not be saved.");
+});
+
 test("a failed scan keeps the photo and says why", async ({ scan }) => {
   await scan.open({ scan: undefined });
   await scan.chooseScorecard();
