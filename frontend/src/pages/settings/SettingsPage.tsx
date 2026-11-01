@@ -4,7 +4,7 @@ import { Monitor, Moon, Sun } from "lucide-react";
 import { useBeforeUnload, useLocation } from "react-router-dom";
 import { PageHeader, ToggleGroup, ToggleGroupItem } from "@/brand";
 import { api } from "@/lib/api";
-import { formatHandicapInputValue, parseHandicapInput } from "@/lib/handicap";
+import { formatHandicapInputValue, parseHandicapInput } from "@/domain/handicap";
 import { useTheme } from "@/context/theme";
 import { getStoredColorBlindMode, setStoredColorBlindMode } from "@/lib/accessibility";
 import { isThemePreference, type ThemePreference } from "@/domain/theme";

@@ -3,6 +3,7 @@ import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import type { DashboardData, User } from "../../types/golf";
 import type { AnalyticsData, GoalReport } from "../../types/analytics";
 import type { ScanResult } from "../../types/scan";
+import { AUTH_MESSAGES } from "./FakeAuth";
 
 export const TEST_USER = {
   user_id: "user-1",
@@ -10,6 +11,21 @@ export const TEST_USER = {
   email: "test@example.com",
   email_verified: true,
 };
+
+/** An account the fake signs in, keyed by email. */
+export interface FakeAccount {
+  password: string;
+  verified: boolean;
+}
+
+/** The auth endpoints a seed can make fail, each with the detail the server would send. */
+export type FakeAuthEndpoint =
+  | "login"
+  | "register"
+  | "resend-verification"
+  | "verify-email"
+  | "forgot-password"
+  | "reset-password";
 
 export interface FakeBackendSeed extends InMemoryRoundsSeed {
   user?: typeof TEST_USER;
@@ -21,6 +37,13 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   signedOut?: boolean;
   /** What `/api/scan/extract` reads off any uploaded card. Unset, extract fails. */
   scan?: ScanResult;
+  /** Accounts `/api/auth/login` accepts. Defaults to `TEST_USER` with the password `password`. */
+  accounts?: Record<string, FakeAccount>;
+  /** Tokens an emailed link may carry: verification and password reset. Each works once. */
+  verifyTokens?: string[];
+  resetTokens?: string[];
+  /** Auth endpoints that answer 429 with this detail, as the rate limiter does. */
+  authErrors?: Partial<Record<FakeAuthEndpoint, string>>;
 }
 
 export interface FakeReply {
@@ -36,11 +59,34 @@ export class FakeBackend {
   analytics: AnalyticsData | null | undefined;
   goalReport: GoalReport | null | undefined;
   scan: ScanResult | undefined;
-  readonly signedOut: boolean;
+  /** Flips to false when a sign-in or a verification link starts a session. */
+  signedOut: boolean;
+  readonly accounts: Record<string, FakeAccount>;
+  readonly verifyTokens: Set<string>;
+  readonly resetTokens: Set<string>;
+  readonly authErrors: Partial<Record<FakeAuthEndpoint, string>>;
+  /** What each auth endpoint was sent, in order. */
+  readonly registrations: Record<string, unknown>[] = [];
+  readonly verificationResends: string[] = [];
+  readonly resetRequests: string[] = [];
+  readonly passwordResets: { token: string; new_password: string }[] = [];
   readonly store: InMemoryRounds;
 
   constructor(seed: FakeBackendSeed = {}) {
-    const { user, profile, dashboard, analytics, goalReport, signedOut, scan, ...storeSeed } = seed;
+    const {
+      user,
+      profile,
+      dashboard,
+      analytics,
+      goalReport,
+      signedOut,
+      scan,
+      accounts,
+      verifyTokens,
+      resetTokens,
+      authErrors,
+      ...storeSeed
+    } = seed;
     this.user = user ?? TEST_USER;
     this.profile = profile;
     this.dashboard = dashboard;
@@ -48,7 +94,61 @@ export class FakeBackend {
     this.goalReport = goalReport;
     this.scan = scan;
     this.signedOut = signedOut ?? false;
+    this.accounts = accounts ?? { [this.user.email]: { password: "password", verified: true } };
+    this.verifyTokens = new Set(verifyTokens);
+    this.resetTokens = new Set(resetTokens);
+    this.authErrors = authErrors ?? {};
     this.store = new InMemoryRounds(storeSeed);
+  }
+
+  /** Mirrors `api/routers/auth.py`: the same details and status codes, without the mail. */
+  private auth(endpoint: FakeAuthEndpoint, body: unknown): FakeReply {
+    const limited = this.authErrors[endpoint];
+    if (limited) return { status: 429, body: { detail: limited } };
+    const fields = (body ?? {}) as Record<string, unknown>;
+    const email = String(fields.email ?? "").trim().toLowerCase();
+    const token = String(fields.token ?? "");
+    const message = (text: string): FakeReply => ({ status: 200, body: { message: text } });
+
+    switch (endpoint) {
+      case "login": {
+        const account = this.accounts[email];
+        if (!account || account.password !== fields.password) {
+          return { status: 401, body: { detail: AUTH_MESSAGES.badCredentials } };
+        }
+        if (!account.verified) return { status: 403, body: { detail: AUTH_MESSAGES.unverified } };
+        this.signedOut = false;
+        return { status: 200, body: { ...this.user, email, access_token: "fake-token" } };
+      }
+      case "register": {
+        if (this.accounts[email]) return { status: 409, body: { detail: AUTH_MESSAGES.emailTaken } };
+        this.registrations.push(fields);
+        this.accounts[email] = { password: String(fields.password ?? ""), verified: false };
+        return {
+          status: 200,
+          body: { message: AUTH_MESSAGES.registered, requires_email_verification: true },
+        };
+      }
+      case "resend-verification":
+        this.verificationResends.push(email);
+        return message(AUTH_MESSAGES.verificationSent);
+      case "verify-email":
+        if (!this.verifyTokens.delete(token)) {
+          return { status: 400, body: { detail: AUTH_MESSAGES.badVerifyToken } };
+        }
+        // The real endpoint sets the session cookie, so the golfer is signed in from here.
+        this.signedOut = false;
+        return message(AUTH_MESSAGES.verified);
+      case "forgot-password":
+        this.resetRequests.push(email);
+        return message(AUTH_MESSAGES.resetSent);
+      case "reset-password":
+        if (!this.resetTokens.delete(token)) {
+          return { status: 400, body: { detail: AUTH_MESSAGES.badResetToken } };
+        }
+        this.passwordResets.push({ token, new_password: String(fields.new_password ?? "") });
+        return message(AUTH_MESSAGES.passwordReset);
+    }
   }
 
   get rounds() {
@@ -63,6 +163,13 @@ export class FakeBackend {
     const verb = method.toUpperCase();
     const parsed = new URL(url, "http://local.test");
     const path = parsed.pathname;
+
+    const authMatch = path.match(
+      /\/api\/auth\/(login|register|resend-verification|verify-email|forgot-password|reset-password)$/,
+    );
+    if (verb === "POST" && authMatch) {
+      return this.auth(authMatch[1] as FakeAuthEndpoint, body);
+    }
 
     if (verb === "GET" && path.includes("/api/auth/me")) {
       if (this.signedOut) return { status: 401, body: { detail: "Not authenticated" } };

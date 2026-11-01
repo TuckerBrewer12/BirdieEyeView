@@ -52,3 +52,56 @@ export function formatCourseHandicap(ch: number | null | undefined): string {
  * decides it (`analytics/handicap.py`) and sends it on each handicap-trend point.
  */
 export type DifferentialStatus = "counting" | "close" | "out" | "unrated";
+
+export const MIN_HANDICAP_INDEX = -10;
+export const MAX_HANDICAP_INDEX = 54;
+const HANDICAP_INPUT_PATTERN = /^\+?(?:\d+\.?\d*|\.\d+)$/;
+
+/** A typed handicap read as an index: `value` when it reads, `error` saying why when it doesn't. */
+export interface HandicapParseResult {
+  value: number | null;
+  error: string | null;
+}
+
+function formatAbsOneDecimal(value: number): string {
+  const abs = Math.abs(Math.round(value * 10) / 10);
+  return Number.isInteger(abs) ? String(abs) : abs.toFixed(1);
+}
+
+/** An index as a golfer types it back in: "+3" for a plus handicap, "18.4", or blank. */
+export function formatHandicapInputValue(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) {
+    return "";
+  }
+  if (value < 0) {
+    return `+${formatAbsOneDecimal(value)}`;
+  }
+  return formatAbsOneDecimal(value);
+}
+
+/**
+ * Reads what a golfer typed as a handicap index. Blank is no handicap. A leading "+" is a plus
+ * handicap, stored negative. Anything outside +10 to 54 is refused with a message to show.
+ */
+export function parseHandicapInput(raw: string): HandicapParseResult {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return { value: null, error: null };
+  }
+  if (!HANDICAP_INPUT_PATTERN.test(trimmed)) {
+    return {
+      value: null,
+      error: "Handicap must be a number between +10 and 54 (for example +3.0 or 18.4).",
+    };
+  }
+  const isPlusHandicap = trimmed.startsWith("+");
+  const rawNumber = Number(isPlusHandicap ? trimmed.slice(1) : trimmed);
+  const parsed = isPlusHandicap ? -rawNumber : rawNumber;
+  if (!Number.isFinite(parsed) || parsed < MIN_HANDICAP_INDEX || parsed > MAX_HANDICAP_INDEX) {
+    return {
+      value: null,
+      error: "Handicap must be between +10 and 54.",
+    };
+  }
+  return { value: Math.round(parsed * 10) / 10, error: null };
+}

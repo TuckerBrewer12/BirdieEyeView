@@ -24,9 +24,13 @@ interface CourseLinkSearchProps {
   onUseCustomName?: (name: string) => void;
   autoFocus?: boolean;
   linkedName?: string;
+  /** The heading over `linkedName`: "Linked" for a round, "Selected" for a pick that isn't a link. */
+  linkedLabel?: string;
   customName?: string;
   onClear?: () => void;
   clearLabel?: string;
+  /** The search input's id, so a FieldLabel outside can name it. */
+  inputId?: string;
 }
 
 export function CourseLinkSearch({
@@ -42,15 +46,17 @@ export function CourseLinkSearch({
   onUseCustomName,
   autoFocus = true,
   linkedName,
+  linkedLabel = "Linked",
   customName,
   onClear,
   clearLabel = "Unlink course",
+  inputId,
 }: CourseLinkSearchProps) {
   if (linkedName && onClear) {
     return (
       <Card size="sm">
         <CardHeader>
-          <CardTitle>Linked</CardTitle>
+          <CardTitle>{linkedLabel}</CardTitle>
           <CardDescription>{linkedName}</CardDescription>
           <CardAction>
             <ClearButton onClick={onClear} label={clearLabel} />
@@ -82,6 +88,7 @@ export function CourseLinkSearch({
   const body = (
     <>
       <SearchField
+        id={inputId}
         value={query}
         onChange={onQueryChange}
         placeholder="Search courses…"
