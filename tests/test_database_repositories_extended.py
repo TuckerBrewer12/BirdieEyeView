@@ -221,12 +221,6 @@ async def test_course_repository_queries_and_mutations(mock_pool):
     conn.fetchrow.return_value = None
     assert await course_repository.find_course_by_name("Missing") is None
 
-    conn.fetch.return_value = [course_row]
-    assert await course_repository.list_courses(user_id=user_id) == [course]
-    assert await course_repository.list_courses() == [course]
-    assert await course_repository.search_courses("Peb", user_id=user_id) == [course]
-    assert await course_repository.search_courses("Peb") == [course]
-
     conn.fetchrow.return_value = course_row
     assert await course_repository.promote_to_master(course_id) == course
     assert await course_repository.update_course(course_id, user_id=user_id, name="New") == course

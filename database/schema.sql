@@ -45,6 +45,11 @@ CREATE INDEX IF NOT EXISTS idx_courses_name ON courses.courses (name);
 CREATE INDEX IF NOT EXISTS idx_courses_external_course_id ON courses.courses (external_course_id);
 CREATE INDEX IF NOT EXISTS idx_courses_user_id ON courses.courses (user_id);
 
+-- Trigram indexes serve the name/location ILIKE '%q%' and name % q filters in
+-- course search and fuzzy name lookup.
+CREATE INDEX IF NOT EXISTS idx_courses_name_trgm ON courses.courses USING GIN (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_courses_location_trgm ON courses.courses USING GIN (location gin_trgm_ops);
+
 -- Partial unique indexes: master courses unique by (name, location),
 -- user courses unique by (name, location, user_id)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_courses_unique_master
