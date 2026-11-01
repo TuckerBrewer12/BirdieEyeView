@@ -19,7 +19,6 @@ import { BestRoundCard } from "@/components/analytics/BestRoundCard";
 import { NarrativeInsight } from "@/components/analytics/NarrativeInsight";
 import { ParMatrixGrid } from "@/components/analytics/ParMatrixGrid";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
-import { average, trendDelta } from "@/lib/stats";
 import type {
   AnalyticsData, AnalyticsFilters, ScoreTrendRow,
   GIRTrendRow, PuttsTrendRow, ThreePuttRow,
@@ -40,6 +39,10 @@ interface MobileAnalyticsPageProps {
   scoreTrendWithAvg: (ScoreTrendRow & { rolling_avg: number | null })[];
   donutData: { name: string; value: number }[];
   girData: GIRTrendRow[];
+  scrPct: number | null;
+  scrDelta: number | null;
+  udPct: number | null;
+  udDelta: number | null;
   threePuttsData: ThreePuttRow[];
   insights: Insight[];
   bestRound: ScoreTrendRow | null;
@@ -202,6 +205,10 @@ export function MobileAnalyticsPage({
   scoreTrendWithAvg,
   donutData,
   girData,
+  scrPct,
+  scrDelta,
+  udPct,
+  udDelta,
   threePuttsData,
   insights,
   bestRound,
@@ -217,22 +224,13 @@ export function MobileAnalyticsPage({
   const [activeTab, setActiveTab] = useState(0);
 
   const { kpis, scoring_by_par, scoring_by_handicap, scoring_by_yardage, gir_vs_non_gir,
-    notable_achievements, scrambling_trend, up_and_down_trend, putts_trend, net_score_trend } = data;
+    notable_achievements, putts_trend, net_score_trend } = data;
 
   const scoringInsights = insights.filter((i) => i.category === "scoring");
   const girInsights = insights.filter((i) => i.category === "gir");
   const puttingInsights = insights.filter((i) => i.category === "putting");
 
   const birdiePct = donutData.find((d) => d.name === "birdie")?.value;
-
-  // Short game deltas (last 5 vs prev 5)
-  // A round without a missed green has no rate, so it sits out of both.
-  const scrRates = scrambling_trend.flatMap((r) => (r.scrambling_percentage != null ? [r.scrambling_percentage] : []));
-  const udRates = up_and_down_trend.flatMap((r) => (r.percentage != null ? [r.percentage] : []));
-  const scrPct = average(scrRates.slice(-5));
-  const scrDelta = trendDelta(scrRates, (v) => v);
-  const udPct = average(udRates.slice(-5));
-  const udDelta = trendDelta(udRates, (v) => v);
 
   const divergingGirData = useMemo(() =>
     gir_vs_non_gir.map((row) => ({
