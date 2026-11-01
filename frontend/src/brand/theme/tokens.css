@@ -168,6 +168,8 @@
   --brand-space-chip: 3px;
   --brand-space-dot: 3px;
   --brand-space-tight: 5px;
+  /* From a compact radar's axis label down to its figures. */
+  --brand-space-radar-compact-value-gap: 15px;
   --brand-space-addon: 0.3rem;
   --brand-space-addon-kbd: 0.15rem;
   /* The phone's home-indicator strip, which a bar pinned to the bottom pads past. */

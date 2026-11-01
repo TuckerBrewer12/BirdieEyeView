@@ -25,7 +25,8 @@ export const chartTickStyle = {
  *  --brand-size-ring-* and --brand-size-gauge-*, `plot.height` --brand-size-chart, and
  *  `plotCompact` --brand-size-chart-compact-w and --brand-size-chart-compact.
  *  `sparkline` is --brand-size-sparkline-w/-h, --brand-space-tight padding, --brand-sparkline-stroke
- *  and a --brand-space-dot marker, and `flow.width` --brand-size-chart-wide. tokens.test.ts fails if one drifts. The plot margins follow the 4px spacing scale. */
+ *  and a --brand-space-dot marker, `radarCompact.valueGap` --brand-space-radar-compact-value-gap,
+ *  and `flow.width` --brand-size-chart-wide. tokens.test.ts fails if one drifts. The plot margins follow the 4px spacing scale. */
 export const chartLayout = {
   barRadius: [6, 6, 0, 0] as [number, number, number, number],
   /** Rounded outer ends of a horizontal stacked bar. Mirrors `--brand-radius-sm`. */
@@ -99,6 +100,7 @@ export const chartLayout = {
     height: 300,
     radius: 72,
     labelGap: 14,
+    /** From the label down to its figures. Mirrors `--brand-space-radar-compact-value-gap`. */
     valueGap: 15,
   },
   /** Scores against a goal: a short strip of dots, lower scores higher up, the goal dashed across. */
