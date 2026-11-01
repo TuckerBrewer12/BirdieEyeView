@@ -3,6 +3,7 @@ import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import type { DashboardData, User } from "../../types/golf";
 import type { AnalyticsData, GoalReport } from "../../types/analytics";
 import type { ScanResult } from "../../types/scan";
+import type { SaveScanRequestDto } from "../../types/api";
 
 export const TEST_USER = {
   user_id: "user-1",
@@ -21,6 +22,8 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   signedOut?: boolean;
   /** What `/api/scan/extract` reads off any uploaded card. Unset, extract fails. */
   scan?: ScanResult;
+  /** `/api/scan/extract` doesn't answer until `finishScan()`, so the scan can be seen running. */
+  holdScan?: boolean;
 }
 
 export interface FakeReply {
@@ -38,9 +41,17 @@ export class FakeBackend {
   scan: ScanResult | undefined;
   readonly signedOut: boolean;
   readonly store: InMemoryRounds;
+  private scanHold: Promise<void> | null = null;
+  private releaseScan: (() => void) | null = null;
 
   constructor(seed: FakeBackendSeed = {}) {
-    const { user, profile, dashboard, analytics, goalReport, signedOut, scan, ...storeSeed } = seed;
+    const { user, profile, dashboard, analytics, goalReport, signedOut, scan, holdScan, ...storeSeed } =
+      seed;
+    if (holdScan) {
+      this.scanHold = new Promise((resolve) => {
+        this.releaseScan = resolve;
+      });
+    }
     this.user = user ?? TEST_USER;
     this.profile = profile;
     this.dashboard = dashboard;
@@ -59,6 +70,20 @@ export class FakeBackend {
     return this.store.courses;
   }
 
+  /** Lets a held scan answer. */
+  finishScan(): void {
+    this.releaseScan?.();
+    this.scanHold = null;
+  }
+
+  /** `handle`, after waiting out a held scan. */
+  async respond(method: string, url: string, body?: unknown): Promise<FakeReply> {
+    if (this.scanHold && method.toUpperCase() === "POST" && url.includes("/api/scan/extract")) {
+      await this.scanHold;
+    }
+    return this.handle(method, url, body);
+  }
+
   handle(method: string, url: string, body?: unknown): FakeReply {
     const verb = method.toUpperCase();
     const parsed = new URL(url, "http://local.test");
@@ -72,6 +97,16 @@ export class FakeBackend {
     if (verb === "POST" && path.includes("/api/scan/extract")) {
       if (!this.scan) return { status: 500, body: { detail: "Could not read this scorecard." } };
       return { status: 200, body: this.scan };
+    }
+
+    if (verb === "POST" && path.includes("/api/scan/save")) {
+      try {
+        const id = this.store.saveScan(body as SaveScanRequestDto);
+        return { status: 200, body: { id } };
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : "Could not save this round.";
+        return { status: 400, body: { detail } };
+      }
     }
 
     if (verb === "GET" && path.includes("/api/courses/search")) {

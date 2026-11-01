@@ -11,7 +11,7 @@ import {
   ScorecardLayoutPicker,
   RoundScorecard,
 } from "@/brand";
-import { useFilePreview } from "../components/useFilePreview";
+import { useFilePreview } from "@/platform/useFilePreview";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
 export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfViewModel }) {

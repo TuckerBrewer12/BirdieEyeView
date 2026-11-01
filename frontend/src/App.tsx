@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { ScanProvider } from "./context/ScanContext";
+import { ScanPage, ScanSessionProvider } from "./pages/scan";
 import { AppLayout } from "./components/layout/AppLayout";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -14,7 +14,6 @@ import { LandingPage } from "./pages/landing-page";
 import { DashboardPage } from "./pages/dashboard";
 import { RoundsPage, RoundDetailPage } from "./pages/rounds";
 import { CoursesPage, CourseDetailPage } from "./pages/courses";
-import { ScanPage } from "./pages/ScanPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { CareerPage } from "./pages/CareerPage";
 import { TheLabPage } from "./pages/TheLabPage";
@@ -49,9 +48,9 @@ function RootRoutes() {
 
   return (
     <AuthProvider>
-      <ScanProvider>
+      <ScanSessionProvider>
         <AppRoutes />
-      </ScanProvider>
+      </ScanSessionProvider>
     </AuthProvider>
   );
 }

@@ -25,3 +25,8 @@ export const queryKeys = {
     ["analytics", "friend-compare", friendId, { limit: 20 }] as const,
   settings: (userId: string) => ["settings", userId] as const,
 };
+
+export const mutationKeys = {
+  /** A scan being read. The scan page looks for one still running when the golfer comes back. */
+  extractScorecard: ["extract-scorecard"] as const,
+};

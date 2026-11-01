@@ -27,3 +27,6 @@ export type CourseHoleScoreTypeRowDto = Schemas["CourseHoleScoreTypeRow"];
 export type CourseHoleGirRowDto = Schemas["CourseHoleGirRow"];
 export type CourseHolePuttsRowDto = Schemas["CourseHolePuttsRow"];
 export type CourseHoleVarianceRowDto = Schemas["CourseHoleVarianceRow"];
+
+/** What `POST /api/scan/save` takes: a reviewed scan, and the course details read off the card. */
+export type SaveScanRequestDto = Schemas["SaveRoundRequest"];
