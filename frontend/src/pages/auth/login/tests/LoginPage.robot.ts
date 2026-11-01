@@ -21,6 +21,11 @@ export class LoginRobot extends AuthScreenRobot {
     return this;
   }
 
+  async typePassword(password: string): Promise<this> {
+    await this.fill("Password", password);
+    return this;
+  }
+
   async revealPassword(): Promise<this> {
     await this.tap("Show password");
     return this;

@@ -14,6 +14,13 @@ test("sign in in dark mode", async ({ login }) => {
   await login.capture("login-dark.png");
 });
 
+test("password revealed", async ({ login }) => {
+  await login.open();
+  await login.typePassword("birdie123");
+  await login.revealPassword();
+  await login.capture("login-password-revealed.png");
+});
+
 test("wrong password", async ({ login }) => {
   await login.open();
   await login.signIn("test@example.com", "nope");
