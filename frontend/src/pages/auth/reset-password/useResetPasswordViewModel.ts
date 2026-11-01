@@ -16,7 +16,9 @@ export interface ResetPasswordViewModel {
 
   /** The server's confirmation once the password has changed. */
   notice: string | null;
-  /** A link with no token, or the server's refusal (an expired link). */
+  /** The link carried no token, so there is nothing to reset with. */
+  tokenMissing: boolean;
+  /** The server's refusal, such as an expired link. */
   error: string | null;
   /** Without a token there is nothing to send, so the form stays shut. */
   canSubmit: boolean;
@@ -62,11 +64,8 @@ export function useResetPasswordViewModel(
     },
     fieldErrors,
     notice: reset.data ?? null,
-    error: !trimmedToken
-      ? "Missing reset token. Open the reset link from your email."
-      : reset.error
-        ? messageFrom(reset.error, "Could not reset password.")
-        : null,
+    tokenMissing: !trimmedToken,
+    error: reset.error ? messageFrom(reset.error, "Could not reset password.") : null,
     canSubmit: !!trimmedToken && !reset.isPending && !reset.isSuccess,
     submitting: reset.isPending,
     submit,
