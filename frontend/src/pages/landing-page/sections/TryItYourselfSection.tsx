@@ -58,7 +58,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
 
                 <Button size="lg" onClick={viewModel.extract}>
                   <Upload data-icon="inline-start" />
-                  Scan My Scorecard
+                  Scan my scorecard
                 </Button>
               </div>
             )}
@@ -100,19 +100,13 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
               <RoundScorecard
                 round={viewModel.round}
                 teeBox={viewModel.round.teeBox}
+                showTee
                 className="rounded-none border-0 shadow-none"
                 action={
-                  <div className="flex items-center gap-3">
-                    {viewModel.round.teeBox && (
-                      <span className="text-sm font-medium text-primary-foreground/80">
-                        {viewModel.round.teeBox} tees
-                      </span>
-                    )}
-                    <Button variant="ghost" size="xs" onClick={viewModel.reset}>
-                      <RotateCcw data-icon="inline-start" />
-                      Scan another
-                    </Button>
-                  </div>
+                  <Button variant="secondary" size="xs" onClick={viewModel.reset}>
+                    <RotateCcw data-icon="inline-start" />
+                    Scan another
+                  </Button>
                 }
               />
             )}
@@ -124,9 +118,6 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
             )}
 
             <div className="border-t border-border px-6 py-5 text-center">
-              <p className="mb-3 text-xs text-muted-foreground">
-                Sign up to save this round and track your progress.
-              </p>
               <Button render={<Link to="/register" />}>
                 Sign up to save this round
                 <ArrowRight data-icon="inline-end" />

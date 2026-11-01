@@ -2,7 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import { populatedRounds, nRounds } from "@/testing/fixtures/rounds";
+import { storedRounds, nRounds } from "@/testing/fixtures/rounds";
 import {
   FakeRoundsRepository,
   type FakeRoundsRepositorySeed,
@@ -16,7 +16,7 @@ function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-function renderVm(seed: FakeRoundsRepositorySeed = { rounds: populatedRounds }) {
+function renderVm(seed: FakeRoundsRepositorySeed = { rounds: storedRounds }) {
   const repository = new FakeRoundsRepository(seed);
   return renderHook(() => useRoundsPageViewModel("user-1", repository), { wrapper });
 }

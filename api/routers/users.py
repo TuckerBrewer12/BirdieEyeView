@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from typing import List, Optional
+from typing import List, Literal, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, NotFoundError
 from api.dependencies import get_current_user, get_db
@@ -111,16 +111,21 @@ class SendFriendRequest(BaseModel):
         return self
 
 
+FriendshipStatus = Literal["pending", "accepted", "declined", "blocked"]
+"""Every state a friendship row can be in (the `users.friendships.status` CHECK)."""
+
+
 class FriendshipStatusRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    status: str = Field(..., pattern="^(accepted|declined|blocked)$")
+    # A request can be answered but not put back to pending.
+    status: Literal["accepted", "declined", "blocked"]
 
 
 class FriendshipResponse(BaseModel):
     id: str
     requester_id: str
     addressee_id: str
-    status: str
+    status: FriendshipStatus
     created_at: str
     updated_at: str
     requester_name: Optional[str] = None

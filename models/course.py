@@ -65,3 +65,14 @@ class Course(BaseGolfModel):
         if len(back) < 9 or any(h.par is None for h in back):
             return None
         return sum(h.par for h in back if h.par is not None)
+
+
+class CourseSummary(BaseGolfModel):
+    """A course as lists show it: its par and how many holes and tees it has, without the holes and tees."""
+    id: str
+    name: Optional[str] = None
+    external_course_id: Optional[str] = None
+    location: Optional[str] = None
+    par: Optional[int] = None
+    hole_count: int = 0
+    tee_count: int = 0

@@ -164,17 +164,20 @@ export function roundResponse(round: StoredRound): RoundDto {
 
 export function summaryResponse(round: StoredRound): RoundSummaryDto {
   const holes = holeResponses(round);
+  const { total_score, to_par, front_nine, back_nine, total_putts, score_counts } = figures(round, holes);
   return {
-    ...figures(round, holes),
     id: round.id,
     course_id: round.course?.id ?? null,
     course_name: round.course_name_played ?? round.course?.name ?? null,
-    course_location: round.course?.location ?? null,
-    course_par: round.course ? coursePar(round.course) : null,
     tee_box: round.tee_box,
     date: round.date,
-    notes: round.notes,
-    hole_scores: holes,
+    total_score,
+    to_par,
+    front_nine,
+    back_nine,
+    total_putts,
+    score_counts,
+    hole_scores: holes.map(({ hole_number, strokes, kind }) => ({ hole_number, strokes, kind })),
   };
 }
 
@@ -188,30 +191,6 @@ function storedHoles(holes: HoleScoreDto[]): StoredHole[] {
     par_played: h.par_played,
     handicap_played: h.handicap_played,
   }));
-}
-
-/** A response seeded into the fake, back to the facts it would have been built from. */
-export function storedFromSummary(summary: RoundSummaryDto): StoredRound {
-  return {
-    id: summary.id,
-    course: summary.course_id
-      ? {
-          id: summary.course_id,
-          name: summary.course_name,
-          location: summary.course_location,
-          par: summary.course_par,
-          holes: [],
-          tees: [],
-        }
-      : null,
-    tee_box: summary.tee_box,
-    date: summary.date,
-    hole_scores: storedHoles(summary.hole_scores),
-    notes: summary.notes,
-    weather_conditions: null,
-    course_name_played: summary.course_id ? null : summary.course_name,
-    user_tee: null,
-  };
 }
 
 export function storedFromRound(round: RoundDto): StoredRound {

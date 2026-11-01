@@ -1447,6 +1447,12 @@
             "title": "Requester Name"
           },
           "status": {
+            "enum": [
+              "pending",
+              "accepted",
+              "declined",
+              "blocked"
+            ],
             "title": "Status",
             "type": "string"
           },
@@ -1470,7 +1476,11 @@
         "additionalProperties": false,
         "properties": {
           "status": {
-            "pattern": "^(accepted|declined|blocked)$",
+            "enum": [
+              "accepted",
+              "declined",
+              "blocked"
+            ],
             "title": "Status",
             "type": "string"
           }
@@ -2029,6 +2039,53 @@
           "hole_number"
         ],
         "title": "HoleScoreUpdate",
+        "type": "object"
+      },
+      "HoleSummaryResponse": {
+        "description": "One hole in a round list: what was taken and how it scored.",
+        "properties": {
+          "hole_number": {
+            "title": "Hole Number",
+            "type": "integer"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "eagle",
+                  "birdie",
+                  "par",
+                  "bogey",
+                  "double",
+                  "triple",
+                  "quad"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "strokes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strokes"
+          }
+        },
+        "required": [
+          "hole_number",
+          "strokes",
+          "kind"
+        ],
+        "title": "HoleSummaryResponse",
         "type": "object"
       },
       "LinkCourseRequest": {
@@ -2605,7 +2662,7 @@
         "type": "object"
       },
       "RoundSummaryResponse": {
-        "description": "A round for list views: where and when, its figures, and its hole scores.",
+        "description": "A round for list views: where and when, the figures a list shows, and a mark per hole.",
         "properties": {
           "back_nine": {
             "anyOf": [
@@ -2629,17 +2686,6 @@
             ],
             "title": "Course Id"
           },
-          "course_location": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Course Location"
-          },
           "course_name": {
             "anyOf": [
               {
@@ -2650,17 +2696,6 @@
               }
             ],
             "title": "Course Name"
-          },
-          "course_par": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Course Par"
           },
           "date": {
             "anyOf": [
@@ -2673,17 +2708,6 @@
               }
             ],
             "title": "Date"
-          },
-          "fairways_hit": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Fairways Hit"
           },
           "front_nine": {
             "anyOf": [
@@ -2698,7 +2722,7 @@
           },
           "hole_scores": {
             "items": {
-              "$ref": "#/components/schemas/HoleScoreResponse"
+              "$ref": "#/components/schemas/HoleSummaryResponse"
             },
             "title": "Hole Scores",
             "type": "array"
@@ -2706,31 +2730,6 @@
           "id": {
             "title": "Id",
             "type": "string"
-          },
-          "nines": {
-            "$ref": "#/components/schemas/Nines"
-          },
-          "notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Notes"
-          },
-          "par": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Par"
           },
           "score_counts": {
             "$ref": "#/components/schemas/ScoreCounts"
@@ -2757,17 +2756,6 @@
             ],
             "title": "To Par"
           },
-          "total_gir": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Total Gir"
-          },
           "total_putts": {
             "anyOf": [
               {
@@ -2789,39 +2777,20 @@
               }
             ],
             "title": "Total Score"
-          },
-          "yards": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Yards"
           }
         },
         "required": [
+          "id",
+          "course_id",
+          "course_name",
+          "tee_box",
+          "date",
           "total_score",
-          "par",
           "to_par",
           "front_nine",
           "back_nine",
           "total_putts",
-          "total_gir",
-          "fairways_hit",
-          "nines",
-          "yards",
           "score_counts",
-          "id",
-          "course_id",
-          "course_name",
-          "course_location",
-          "course_par",
-          "tee_box",
-          "date",
-          "notes",
           "hole_scores"
         ],
         "title": "RoundSummaryResponse",
