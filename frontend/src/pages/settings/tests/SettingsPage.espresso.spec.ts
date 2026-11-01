@@ -107,6 +107,15 @@ test("a copy the browser refuses says so", async ({ settings }) => {
   await settings.seesCopyFailed();
 });
 
+test("trying again replaces a failed load with the settings form", async ({ settings }) => {
+  await settings.openFailed();
+  settings.nextLoadSucceeds();
+  await settings.tryAgain();
+  await settings.seesForm();
+  await settings.seesHandicap("8.4");
+  await settings.seesHomeCourse("Pebble Beach");
+});
+
 test("a failed save says why and keeps the edit", async ({ settings }) => {
   await settings.open();
   settings.failSavesWith("Selected home course was not found");
@@ -138,6 +147,16 @@ test("saving from the prompt keeps the change and leaves", async ({ settings }) 
 
   await settings.returnToSettings();
   await settings.seesHandicap("6");
+});
+
+test("a failed save from the prompt shows the reason and stays", async ({ settings }) => {
+  await settings.open();
+  settings.failSavesWith("Selected home course was not found");
+  await settings.typeHandicap("6");
+  await settings.leaveTo("Dashboard");
+  await settings.saveAndLeave();
+  await settings.seesLeavePromptError("Selected home course was not found");
+  await settings.staysAt("/settings");
 });
 
 test("closing the prompt stays on the page with the edit", async ({ settings }) => {
