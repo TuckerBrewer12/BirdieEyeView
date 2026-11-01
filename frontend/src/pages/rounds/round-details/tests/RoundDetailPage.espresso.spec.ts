@@ -6,7 +6,7 @@ import {
   pebbleBeachCourse,
   scannedRound,
 } from "../../../../testing/fixtures/roundDetails";
-import { populatedRounds } from "../../../../testing/fixtures/rounds";
+import { storedRounds } from "../../../../testing/fixtures/rounds";
 
 test("shows the course name and score", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
@@ -63,7 +63,7 @@ test("delete confirm then cancel leaves the round", async ({ roundDetail }) => {
 
 test("delete confirm then yes returns to the list", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, {
-    rounds: populatedRounds,
+    rounds: storedRounds,
     fullCourses: [halfMoonBayCourse],
   });
   await roundDetail.tapDelete();

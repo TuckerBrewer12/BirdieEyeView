@@ -1,31 +1,39 @@
-import type { HoleScoreDto, NinesDto, RoundDto, RoundSummaryDto, ScoreCountsDto } from "@/types/api";
+import type { HoleScoreDto, HoleSummaryDto, NinesDto, RoundDto, RoundSummaryDto, ScoreCountsDto } from "@/types/api";
 import type { Course } from "@/types/golf";
 import type { ExtractedRound } from "@/types/scan";
 import { BACK_HOLES, FRONT_HOLES, getHole, getTee } from "./course";
 import { SCORE_KINDS, scoreKind, strokesToPar, type ScoreKind } from "./score";
 
-/** One hole as played. Par, handicap, yardage, to-par and kind come from the server. */
-export interface HoleScore {
+/** One hole as a round list marks it: what was taken and how it scored. */
+export interface HoleSummary {
   hole: number;
+  strokes: number | null;
+  kind: ScoreKind | null;
+}
+
+/** One hole as played. Par, handicap, yardage, to-par and kind come from the server. */
+export interface HoleScore extends HoleSummary {
   par: number | null;
   /** The hole's stroke index. */
   handicap: number | null;
   /** From the tee played. */
   yardage: number | null;
-  strokes: number | null;
   putts: number | null;
   gir: boolean | null;
   /** Strokes to reach the green, when the card recorded them. */
   shotsToGreen: number | null;
   fairway: boolean | null;
   toPar: number | null;
-  kind: ScoreKind | null;
 }
 
-export interface Nine {
-  holes: HoleScore[];
+export interface NineSummary {
+  holes: HoleSummary[];
   /** Null until all nine holes are scored. */
   total: number | null;
+}
+
+export interface Nine extends NineSummary {
+  holes: HoleScore[];
   /** Null until every hole has a par. */
   par: number | null;
   toPar: number | null;
@@ -46,23 +54,31 @@ export interface RoundCourse {
 
 export type ScoreCounts = ScoreCountsDto;
 
-/** A round and its figures, as the server worked them out. */
-export interface Round {
+/** A round as lists show it: where and when, the figures a list reads, and each hole's mark. */
+export interface RoundSummary {
   id: string;
   date: string | null;
-  course: RoundCourse | null;
+  course: Pick<RoundCourse, "id" | "name"> | null;
   teeBox: string | null;
+  holes: HoleSummary[];
+  frontNine: NineSummary;
+  backNine: NineSummary;
+  score: number | null;
+  toPar: number | null;
+  putts: number | null;
+  scoreCounts: ScoreCounts;
+}
+
+/** A round and its figures, as the server worked them out. */
+export interface Round extends RoundSummary {
+  course: RoundCourse | null;
   holes: HoleScore[];
   frontNine: Nine;
   backNine: Nine;
-  score: number | null;
   par: number | null;
-  toPar: number | null;
-  putts: number | null;
   gir: number | null;
   /** The tee played's length. */
   yards: number | null;
-  scoreCounts: ScoreCounts;
 }
 
 /** Unsaved changes to holes. A field left undefined keeps the hole's own value. */
@@ -129,21 +145,23 @@ function nines(
   };
 }
 
-function fromSummary(dto: RoundSummaryDto): Round {
-  const holes = dto.hole_scores.map(holeScore);
+function holeSummary(dto: HoleSummaryDto): HoleSummary {
+  return { hole: dto.hole_number, strokes: dto.strokes, kind: dto.kind };
+}
+
+function fromSummary(dto: RoundSummaryDto): RoundSummary {
+  const holes = dto.hole_scores.map(holeSummary);
   return {
     id: dto.id,
     date: dto.date,
-    course: { id: dto.course_id, name: dto.course_name, location: dto.course_location, par: dto.course_par },
+    course: { id: dto.course_id, name: dto.course_name },
     teeBox: dto.tee_box,
     holes,
-    ...nines(holes, dto.front_nine, dto.back_nine, dto.nines),
+    frontNine: { holes: holes.filter((hole) => hole.hole <= 9), total: dto.front_nine },
+    backNine: { holes: holes.filter((hole) => hole.hole >= 10), total: dto.back_nine },
     score: dto.total_score,
-    par: dto.par,
     toPar: dto.to_par,
     putts: dto.total_putts,
-    gir: dto.total_gir,
-    yards: dto.yards,
     scoreCounts: dto.score_counts,
   };
 }

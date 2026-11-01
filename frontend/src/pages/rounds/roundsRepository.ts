@@ -1,5 +1,5 @@
 import { userRepository } from "@/data/userRepository";
-import { Round as RoundModel, type RoundDetail, type RoundEdits } from "@/domain";
+import { Round as RoundModel, type RoundDetail, type RoundEdits, type RoundSummary } from "@/domain";
 import { api } from "@/lib/api";
 import type { Course, CourseSummary } from "@/types/golf";
 import type { RoundComparison } from "@/types/analytics";
@@ -25,12 +25,12 @@ export interface UpdateRequest {
 }
 
 export interface RoundsRepository {
-  getRoundsForUser(userId: string, limit?: number): Promise<RoundModel[]>;
+  getRoundsForUser(userId: string, limit?: number): Promise<RoundSummary[]>;
   getRound(roundId: string): Promise<RoundDetail>;
   /** Saves an edit, linking a newly picked course first, and returns the round as saved. */
   saveRound(round: RoundDetail, edits: RoundEdits): Promise<RoundDetail>;
   deleteRound(roundId: string): Promise<void>;
-  linkCourse(roundId: string, courseId: string): Promise<RoundModel>;
+  linkCourse(roundId: string, courseId: string): Promise<RoundSummary>;
   getCourse(courseId: string): Promise<Course>;
   getRoundComparison(userId: string, roundId: string): Promise<RoundComparison | null>;
   getUserHandicap(userId: string): Promise<{ handicap_index: number | null }>;

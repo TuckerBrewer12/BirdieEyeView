@@ -1,4 +1,10 @@
 import { InMemoryRounds, type InMemoryRoundsSeed } from "./InMemoryRounds";
+import {
+  FakeHttpError,
+  InMemoryFriendships,
+  type InMemoryFriendshipsSeed,
+} from "./InMemoryFriendships";
+import type { FriendshipAnswer } from "../../pages/social/friendsModel";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import type { UserChangesDto } from "../../types/api";
 import type { DashboardData, User } from "../../types/golf";
@@ -26,6 +32,8 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   profileError?: string | null;
   /** Why `PATCH /api/users/{id}` fails; unset, it saves. */
   updateUserError?: string | null;
+  /** `/api/users/me/friends`: the golfer's friendships and who a friend code finds. */
+  friends?: Omit<InMemoryFriendshipsSeed, "userId">;
 }
 
 export interface FakeReply {
@@ -45,11 +53,12 @@ export class FakeBackend {
   updateUserError: string | null;
   readonly signedOut: boolean;
   readonly store: InMemoryRounds;
+  readonly friendships: InMemoryFriendships;
 
   constructor(seed: FakeBackendSeed = {}) {
     const {
       user, profile, dashboard, analytics, goalReport, signedOut, scan, profileError, updateUserError,
-      ...storeSeed
+      friends, ...storeSeed
     } = seed;
     this.user = user ?? TEST_USER;
     this.profile = profile;
@@ -61,6 +70,7 @@ export class FakeBackend {
     this.updateUserError = updateUserError ?? null;
     this.signedOut = signedOut ?? false;
     this.store = new InMemoryRounds(storeSeed);
+    this.friendships = new InMemoryFriendships({ ...friends, userId: this.user.user_id });
   }
 
   get rounds() {
@@ -94,6 +104,10 @@ export class FakeBackend {
     if (verb === "GET" && path.includes("/api/auth/me")) {
       if (this.signedOut) return { status: 401, body: { detail: "Not authenticated" } };
       return { status: 200, body: this.user };
+    }
+
+    if (/\/api\/users\/me\/friends(\/|$)/.test(path)) {
+      return this.handleFriends(verb, path, parsed.searchParams, body);
     }
 
     if (verb === "POST" && path.includes("/api/scan/extract")) {
@@ -249,5 +263,36 @@ export class FakeBackend {
     }
 
     return { status: 200, body: [] };
+  }
+
+  private handleFriends(
+    verb: string,
+    path: string,
+    params: URLSearchParams,
+    body: unknown,
+  ): FakeReply {
+    const field = (name: string) =>
+      typeof body === "object" && body !== null && name in body
+        ? String((body as Record<string, unknown>)[name])
+        : "";
+    try {
+      if (verb === "GET") {
+        const status = params.get("status");
+        const rows = this.friendships.list();
+        return { status: 200, body: status ? rows.filter((r) => r.status === status) : rows };
+      }
+      if (verb === "POST") {
+        return { status: 201, body: this.friendships.send(field("addressee_friend_code")) };
+      }
+      const friendshipId = path.match(/\/api\/users\/me\/friends\/([^/]+)$/)?.[1];
+      if (verb === "PATCH" && friendshipId) {
+        const answer = field("status") as FriendshipAnswer;
+        return { status: 200, body: this.friendships.respond(friendshipId, answer) };
+      }
+      return { status: 405, body: { detail: "Method not allowed" } };
+    } catch (err) {
+      if (err instanceof FakeHttpError) return { status: err.status, body: { detail: err.message } };
+      throw err;
+    }
   }
 }

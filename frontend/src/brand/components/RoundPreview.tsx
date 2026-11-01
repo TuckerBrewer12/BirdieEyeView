@@ -6,12 +6,12 @@ import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { motion as motionTokens, toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
-import { playedScoreKinds, scoreKindCountLabel, type Round } from "@/domain";
+import { playedScoreKinds, scoreKindCountLabel, type RoundSummary } from "@/domain";
 import { formatCourseName } from "@/lib/courseName";
 import { formatRoundDateHistory, formatRoundDateShort, roundDateParts } from "@/lib/roundDate";
 
 interface RoundListProps {
-  round: Round;
+  round: RoundSummary;
   variant?: "history";
   onClick?: () => void;
   onLinkClick?: () => void;
@@ -19,13 +19,13 @@ interface RoundListProps {
 
 interface RoundHighlightProps {
   /** Null while the player has no round to celebrate yet. */
-  round: Round | null;
+  round: RoundSummary | null;
   variant: "highlight";
   onClick?: () => void;
 }
 
 interface RoundTicketProps {
-  round: Round;
+  round: RoundSummary;
   variant: "ticket";
   /** The eyebrow over the course name, worded by the screen: "Last Round". */
   label: string;
@@ -158,7 +158,7 @@ function RoundHighlight({
   round,
   onClick,
 }: {
-  round: Round | null;
+  round: RoundSummary | null;
   onClick?: () => void;
 }) {
   if (!round) {

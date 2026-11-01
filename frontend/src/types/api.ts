@@ -12,6 +12,7 @@ export type CourseDto = Schemas["CourseResponse"];
 export type CourseSummaryDto = Schemas["CourseSummaryResponse"];
 export type UserTeeDto = Schemas["UserTee"];
 export type HoleScoreDto = Schemas["HoleScoreResponse"];
+export type HoleSummaryDto = Schemas["HoleSummaryResponse"];
 export type ScoreCountsDto = Schemas["ScoreCounts"];
 export type NinesDto = Schemas["Nines"];
 export type RoundDto = Schemas["RoundResponse"];
@@ -27,5 +28,7 @@ export type CourseHoleScoreTypeRowDto = Schemas["CourseHoleScoreTypeRow"];
 export type CourseHoleGirRowDto = Schemas["CourseHoleGirRow"];
 export type CourseHolePuttsRowDto = Schemas["CourseHolePuttsRow"];
 export type CourseHoleVarianceRowDto = Schemas["CourseHoleVarianceRow"];
+export type FriendshipDto = Schemas["FriendshipResponse"];
+export type FriendshipStatusRequestDto = Schemas["FriendshipStatusRequest"];
 /** What `PATCH /users/{id}` takes. A field left out keeps its value; null clears it. */
 export type UserChangesDto = Schemas["UpdateUserRequest"];

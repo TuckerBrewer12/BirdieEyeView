@@ -115,16 +115,14 @@ def test_list_row_becomes_a_round_that_reads_course_par_first():
         "id": "r1",
         "course_id": "c1",
         "course_name": "Blue Rock",
-        "course_location": "MA",
         "course_par": 72,
         "tee_box_played": "Blue",
         "round_date": date(2026, 4, 18),
-        "notes": None,
         "course_name_played": None,
         "hole_scores": json.dumps([
-            {"hole_number": 1, "strokes": 4, "putts": 2, "fairway_hit": True,
+            {"hole_number": 1, "strokes": 4, "putts": 2,
              "green_in_regulation": True, "par_played": 5, "course_par": 4},
-            {"hole_number": 2, "strokes": 4, "putts": 1, "fairway_hit": None,
+            {"hole_number": 2, "strokes": 4, "putts": 1,
              "green_in_regulation": False, "par_played": 3, "course_par": None},
         ]),
     }
@@ -134,13 +132,13 @@ def test_list_row_becomes_a_round_that_reads_course_par_first():
     assert round_.get_hole_par(2) == 3
     assert round_.get_par() == 72
     assert round_.get_total_putts() == 3
-    assert round_.get_fairways_hit() == 1
+    assert round_.get_total_gir() == 1
 
 
 def test_list_row_without_a_course_or_holes():
     row = {
-        "id": "r2", "course_id": None, "course_name": None, "course_location": None,
-        "course_par": None, "tee_box_played": None, "round_date": None, "notes": None,
+        "id": "r2", "course_id": None, "course_name": None, "course_par": None,
+        "tee_box_played": None, "round_date": None,
         "course_name_played": "Scanned", "hole_scores": None,
     }
     round_ = round_from_summary_row(row)

@@ -1,8 +1,8 @@
 import { colors, fonts, typography } from "@/brand/theme";
-import type { HoleScore, Round } from "@/domain";
+import type { HoleSummary, RoundSummary } from "@/domain";
 
 interface HoleScoreShapesProps {
-  round: Round;
+  round: RoundSummary;
   /** Puts each hole's number above its shape. */
   numbered?: boolean;
 }
@@ -14,7 +14,7 @@ const cy = VB_H / 2;
 const r = 9.5;
 
 /** One hole drawn the way a scorecard marks it: circles under par, boxes over. */
-export function HoleShape({ hole }: { hole: HoleScore }) {
+export function HoleShape({ hole }: { hole: HoleSummary }) {
   const kind = hole.kind;
   if (kind == null) {
     return (
