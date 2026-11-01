@@ -68,6 +68,30 @@ export interface Round {
 /** Unsaved changes to holes. A field left undefined keeps the hole's own value. */
 export type HoleEdits = Record<number, { strokes?: number | null; putts?: number | null; gir?: boolean | null }>;
 
+/**
+ * A round as the detail page and its editor read it: the round, plus the full course it is linked
+ * to (holes and tees, for editing against) and the name it was played under. `course.name` shows
+ * whichever applies; these keep the two apart.
+ */
+export interface RoundDetail extends Round {
+  linkedCourse: Course | null;
+  /** The name the card was played under, when the round keeps its own name. */
+  playedName: string | null;
+}
+
+/** Which course an edited round is saved against. */
+export type CourseEdit =
+  | { status: "linked"; course: Course }
+  | { status: "custom"; name: string }
+  | { status: "picking" };
+
+/** Everything an edit changes on a round, ready to save. */
+export interface RoundEdits {
+  holes: HoleEdits;
+  teeBox: string;
+  course: CourseEdit;
+}
+
 function holeScore(dto: HoleScoreDto): HoleScore {
   return {
     hole: dto.hole_number,
@@ -147,6 +171,10 @@ function fromDto(dto: RoundDto): Round {
     yards: dto.yards,
     scoreCounts: dto.score_counts,
   };
+}
+
+function detailFromDto(dto: RoundDto): RoundDetail {
+  return { ...fromDto(dto), linkedCourse: dto.course, playedName: dto.course_name_played };
 }
 
 function nineTotal(holes: HoleScore[]): number | null {
@@ -290,4 +318,4 @@ function fromScan(scan: ExtractedRound): Round {
   return previewEdits(unread, {}, course, scan.tee_box);
 }
 
-export const Round = { fromSummary, fromDto, fromScan, previewEdits };
+export const Round = { fromSummary, fromDto, detailFromDto, fromScan, previewEdits };

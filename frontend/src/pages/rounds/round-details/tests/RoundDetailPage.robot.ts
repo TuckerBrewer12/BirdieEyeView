@@ -56,6 +56,11 @@ export class RoundDetailRobot {
     return this;
   }
 
+  async clearStrokes(hole: number): Promise<this> {
+    await this.page.getByLabel(`Hole ${hole} strokes`).fill("");
+    return this;
+  }
+
   async tapSave(): Promise<this> {
     await this.page.getByRole("button", { name: "Save", exact: true }).click();
     await expect(this.page.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
