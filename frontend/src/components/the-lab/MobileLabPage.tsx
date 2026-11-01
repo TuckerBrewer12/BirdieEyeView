@@ -312,7 +312,7 @@ export function MobileLabPage({
                                 <div key={label}>
                                   <div className="flex items-center justify-between mb-2">
                                     <span className="text-[11px] font-semibold text-gray-600">{label}</span>
-                                    <span className={`text-[11px] font-bold ${signed.tone}`}>
+                                    <span className={`text-label font-bold ${signed.tone}`}>
                                       {signed.text} {strokeImpact >= 0 ? "gained" : "lost"}
                                     </span>
                                   </div>
