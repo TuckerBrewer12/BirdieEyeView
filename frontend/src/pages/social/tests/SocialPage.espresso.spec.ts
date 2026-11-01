@@ -23,3 +23,10 @@ test("an unknown friend code shows the server's reason and keeps the code", asyn
   await social.seesError("Friend code not found");
   await social.seesCode("GCNOBODY99");
 });
+
+test("a blank friend code asks for one and leaves the field empty", async ({ social }) => {
+  await social.open(seed);
+  await social.tapSend();
+  await social.seesError("Enter a friend code first.");
+  await social.seesCode("");
+});

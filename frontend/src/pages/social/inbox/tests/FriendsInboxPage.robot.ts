@@ -38,7 +38,11 @@ export class FriendsInboxRobot {
   }
 
   async tapTab(tab: "Received" | "Sent"): Promise<this> {
-    await this.page.getByRole("button", { name: new RegExp(`^${tab} \\(`) }).click();
+    const toggle = this.page.getByRole("button", { name: new RegExp(`^${tab} \\(`) });
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+    // Park the pointer so the capture doesn't catch the tab mid-hover.
+    await this.page.mouse.move(0, 0);
     return this;
   }
 
@@ -59,6 +63,11 @@ export class FriendsInboxRobot {
 
   async seesNotice(message: string): Promise<this> {
     await expect(this.page.getByText(message)).toBeVisible();
+    return this;
+  }
+
+  async seesError(message: string): Promise<this> {
+    await expect(this.page.getByRole("alert").filter({ hasText: message })).toBeVisible();
     return this;
   }
 

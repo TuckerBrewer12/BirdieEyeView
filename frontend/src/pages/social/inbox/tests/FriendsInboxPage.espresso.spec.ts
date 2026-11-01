@@ -22,6 +22,13 @@ test("declining a request closes it without making a friend", async ({ inbox }) 
   await inbox.cannotAnswer("Riley Brooks");
 });
 
+test("a failed accept shows the server's reason and leaves the request answerable", async ({ inbox }) => {
+  await inbox.open({ ...seed, respondError: "That request was withdrawn." });
+  await inbox.accept("Riley Brooks");
+  await inbox.seesError("That request was withdrawn.");
+  await inbox.canAnswer("Riley Brooks");
+});
+
 test("the sent tab lists requests the golfer sent, with no answer buttons", async ({ inbox }) => {
   await inbox.open(seed);
   await inbox.canAnswer("Riley Brooks");
