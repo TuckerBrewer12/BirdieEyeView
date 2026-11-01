@@ -40,7 +40,8 @@ describe("useResetPasswordViewModel", () => {
   it("says so up front when the link had no token", () => {
     const { result } = renderVm("");
 
-    expect(result.current.error).toBe("Missing reset token. Open the reset link from your email.");
+    expect(result.current.tokenMissing).toBe(true);
+    expect(result.current.error).toBeNull();
     expect(result.current.canSubmit).toBe(false);
   });
 

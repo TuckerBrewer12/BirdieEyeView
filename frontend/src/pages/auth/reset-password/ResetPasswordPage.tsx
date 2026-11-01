@@ -30,7 +30,11 @@ export function ResetPasswordPage() {
         }}
       >
         <AuthNotice tone="success">{viewModel.notice}</AuthNotice>
-        <AuthNotice tone="error">{viewModel.error}</AuthNotice>
+        <AuthNotice tone="error">
+          {viewModel.tokenMissing
+            ? "Missing reset token. Open the reset link from your email."
+            : viewModel.error}
+        </AuthNotice>
 
         {viewModel.done ? (
           <Button

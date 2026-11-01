@@ -57,6 +57,22 @@ describe("useLoginViewModel", () => {
     expect(auth.resends).toEqual(["new@example.com"]);
   });
 
+  it("shows why a resend was refused and still offers it", async () => {
+    const auth = new FakeAuth()
+      .fail("login", AUTH_MESSAGES.unverified)
+      .fail("resendVerification", "Too many verification resend attempts.");
+    const { result } = renderVm(auth);
+    act(() => result.current.setEmail("new@example.com"));
+    act(() => result.current.submit(() => {}));
+    await waitFor(() => expect(result.current.canResendVerification).toBe(true));
+
+    act(() => result.current.resendVerification());
+
+    await waitFor(() => expect(result.current.error).toBe("Too many verification resend attempts."));
+    expect(result.current.notice).toBeNull();
+    expect(result.current.canResendVerification).toBe(true);
+  });
+
   it("asks for an email before resending to nobody", async () => {
     const { auth, result } = renderVm(new FakeAuth().fail("login", AUTH_MESSAGES.unverified));
     act(() => result.current.submit(() => {}));
