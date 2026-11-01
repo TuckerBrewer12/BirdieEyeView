@@ -10,7 +10,7 @@ import type { BenchmarkProfile } from "@/components/the-lab/constants";
 import type { AnalyticsData } from "@/types/analytics";
 import { colors } from "@/brand/theme";
 import type { PeakImpact } from "@/pages/the-lab/model";
-import { PEAK_IMPACT_LABEL } from "@/pages/the-lab/present";
+import { PEAK_IMPACT_LABEL, signedStrokes } from "@/pages/the-lab/present";
 
 interface PeakInsight {
   top: { total_score: number | null; round_index: number; course_name?: string | null }[];
@@ -307,12 +307,13 @@ export function MobileLabPage({
                               const maxVal = Math.max(peak, avg, 0.1) * 1.2;
                               const peakPct = (peak / maxVal) * 100;
                               const avgPct = (avg / maxVal) * 100;
+                              const signed = signedStrokes(strokeImpact);
                               return (
                                 <div key={label}>
                                   <div className="flex items-center justify-between mb-2">
                                     <span className="text-[11px] font-semibold text-gray-600">{label}</span>
-                                    <span className="text-[11px] font-bold" style={{ color: strokeImpact > 0 ? colors.score.birdie.text : strokeImpact === 0 ? colors.mutedForeground : colors.score.bogey.text }}>
-                                      {strokeImpact > 0 ? "+" : ""}{strokeImpact.toFixed(1)} strokes {strokeImpact >= 0 ? "gained" : "lost"}
+                                    <span className={`text-[11px] font-bold ${signed.tone}`}>
+                                      {signed.text} {strokeImpact >= 0 ? "gained" : "lost"}
                                     </span>
                                   </div>
                                   <div className="space-y-1.5 mt-1">
