@@ -281,6 +281,28 @@ export class ScanRobot {
     return this;
   }
 
+  /** Picks the tee played from the chips the card's or the linked course's tees offer. */
+  async pickReviewTee(color: string): Promise<this> {
+    const chip = this.page.getByRole("group", { name: "Tee played" }).getByRole("button", { name: color, exact: true });
+    await chip.click();
+    await expect(chip).toHaveAttribute("aria-pressed", "true");
+    return this;
+  }
+
+  /** Types the tee played, when there are no tees to pick from. */
+  async typeReviewTee(tee: string): Promise<this> {
+    const field = this.page.getByRole("textbox", { name: "Tee played" });
+    await field.fill(tee);
+    await expect(field).toHaveValue(tee);
+    return this;
+  }
+
+  /** The tee kept on the round just saved. */
+  async seesSavedTee(tee: string): Promise<this> {
+    expect(this.backend?.store.savedScans.at(-1)?.tee_box).toBe(tee);
+    return this;
+  }
+
   /** The strokes kept for a hole on the round just saved. */
   async seesSavedStrokes(hole: number, strokes: number): Promise<this> {
     const saved = this.backend?.store.savedScans.at(-1);

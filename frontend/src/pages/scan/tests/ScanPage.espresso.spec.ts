@@ -98,6 +98,36 @@ test("the card's course name can be kept without linking a course", async ({ sca
   await scan.seesSavedCourseName(SCANNED_COURSE_NAME);
 });
 
+test("a tee picked from the card's tees is the one saved", async ({ scan }) => {
+  const blueTee = { color: "Blue", slope_rating: 128, course_rating: 71.2, hole_yardages: {} };
+  const teeCard = {
+    ...scannedCard,
+    round: {
+      ...scannedCard.round,
+      course: { ...scannedCard.round.course!, tees: [blueTee, { ...blueTee, color: "White", slope_rating: 121 }] },
+    },
+  };
+  await scan.open({ scan: teeCard });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.pickReviewTee("White");
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedTee("White");
+});
+
+test("a tee typed in when the card has none is the one saved", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.typeReviewTee("Gold");
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedTee("Gold");
+});
+
 test("a failed scan keeps the photo and says why", async ({ scan }) => {
   await scan.open({ scan: undefined });
   await scan.chooseScorecard();
