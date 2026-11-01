@@ -1,3 +1,4 @@
+import { toParLabel } from "@/domain";
 import type { GIRvsNonGIRRow } from "@/types/analytics";
 import { insightCategory, type AnalyticsTab, type Insight, type InsightCategory } from "./model";
 
@@ -24,10 +25,6 @@ export interface Narrative {
   positiveUp: boolean;
 }
 
-function signed(value: number, digits: number): string {
-  return `${value > 0 ? "+" : ""}${value.toFixed(digits)}`;
-}
-
 export function narrativeFor(insight: Insight): Narrative {
   switch (insight.kind) {
     case "scoring-shift": {
@@ -46,7 +43,7 @@ export function narrativeFor(insight: Insight): Narrative {
     }
     case "best-par":
       return {
-        text: `You score best on par ${insight.par}s — averaging ${signed(insight.averageToPar, 2)} across ${insight.holes} holes.`,
+        text: `You score best on par ${insight.par}s — averaging ${toParLabel(insight.averageToPar)} across ${insight.holes} holes.`,
         trend: insight.averageToPar <= 0 ? "down" : "flat",
         positiveUp: false,
       };

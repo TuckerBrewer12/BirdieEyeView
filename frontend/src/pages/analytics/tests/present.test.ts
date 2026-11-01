@@ -15,12 +15,15 @@ describe("narrativeFor", () => {
 
   it("signs the best par type's average to par", () => {
     expect(narrativeFor({ kind: "best-par", par: 5, averageToPar: 0.4, holes: 12 }).text).toBe(
-      "You score best on par 5s — averaging +0.40 across 12 holes.",
+      "You score best on par 5s — averaging +0.4 across 12 holes.",
     );
     expect(narrativeFor({ kind: "best-par", par: 3, averageToPar: -0.1, holes: 8 })).toMatchObject({
-      text: "You score best on par 3s — averaging -0.10 across 8 holes.",
+      text: "You score best on par 3s — averaging -0.1 across 8 holes.",
       trend: "down",
     });
+    expect(narrativeFor({ kind: "best-par", par: 4, averageToPar: 0, holes: 9 }).text).toBe(
+      "You score best on par 4s — averaging E across 9 holes.",
+    );
   });
 
   it("grades the GIR and putting averages", () => {
