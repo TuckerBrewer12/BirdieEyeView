@@ -177,6 +177,7 @@
   --brand-size-chart: 180px;
   --brand-size-chart-compact-w: 320px;
   --brand-size-chart-compact: 210px;
+  --brand-size-radar-compact-w: 360px;
   /* Width a hole-by-hole chart needs before it scrolls sideways. */
   --brand-size-chart-wide: 45rem;
   --brand-size-sheet: 28rem;
