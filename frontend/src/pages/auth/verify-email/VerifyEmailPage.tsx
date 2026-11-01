@@ -25,10 +25,12 @@ export function VerifyEmailPage() {
       }
     >
       {viewModel.status === "verifying" ? (
-        <LoadingState className="h-auto py-3">{viewModel.message}</LoadingState>
+        <LoadingState className="h-auto py-3">Verifying your email…</LoadingState>
       ) : (
         <AuthNotice tone={viewModel.status === "verified" ? "success" : "error"}>
-          {viewModel.message}
+          {viewModel.status === "missing"
+            ? "Missing verification token. Use the link from your email."
+            : viewModel.message}
         </AuthNotice>
       )}
     </AuthCard>

@@ -6,7 +6,8 @@ export type VerifyEmailStatus = "missing" | "verifying" | "verified" | "failed";
 
 export interface VerifyEmailViewModel {
   status: VerifyEmailStatus;
-  message: string;
+  /** What the server said once the token was spent or refused. */
+  message: string | null;
 }
 
 /** Where the emailed link's token stands: absent, being spent, spent, or refused. */
@@ -18,7 +19,7 @@ export function useVerifyEmailViewModel(
   const verification = useVerifyEmail(auth, trimmedToken);
 
   if (!trimmedToken) {
-    return { status: "missing", message: "Missing verification token. Use the link from your email." };
+    return { status: "missing", message: null };
   }
   if (verification.isSuccess) {
     return { status: "verified", message: verification.data };
@@ -26,5 +27,5 @@ export function useVerifyEmailViewModel(
   if (verification.isError) {
     return { status: "failed", message: messageFrom(verification.error, "Could not verify email.") };
   }
-  return { status: "verifying", message: "Verifying your email…" };
+  return { status: "verifying", message: null };
 }
