@@ -1,54 +1,22 @@
-import type { ScoringByParRow, ScoreTypeRow } from "@/types/analytics";
-import type { BenchmarkProfile } from "./constants";
+import { Meter, toParTextClass } from "@/brand";
+import { cn } from "@/brand/cn";
+import type { ParTypeRow } from "@/pages/the-lab/model";
+import { averageToParLabel, parTypeGapNote } from "@/pages/the-lab/present";
+import type { ScoreTypeRow } from "@/types/analytics";
 
 interface Props {
-  scoringByPar: ScoringByParRow[];
+  rows: ParTypeRow[];
+  /** What the marker on each bar is: "Breaks 80", a friend's name. Null with no comparison. */
+  benchmarkName: string | null;
   scoreTypeDist: ScoreTypeRow[];
-  benchmark: BenchmarkProfile | null;
-  benchmarkLabel: string;
 }
 
-// Inverse of: normalized = clamp(((2 - avg_to_par) / 2.5) * 100)
-function normToAvgToPar(n: number) {
-  return 2.0 - (n / 100) * 2.5;
-}
+/** A par type's bar is full at this many strokes over par a hole. */
+const BAR_FULL_AT = 2.4;
 
-function parColor(v: number): string {
-  if (v <= 0.6) return "#059669";
-  if (v <= 1.1) return "#f59e0b";
-  return "#ef4444";
-}
+const toBar = (averageToPar: number) => (Math.max(0, averageToPar) / BAR_FULL_AT) * 100;
 
-function parTextClass(v: number): string {
-  if (v <= 0.6) return "text-emerald-600";
-  if (v <= 1.1) return "text-amber-500";
-  return "text-red-500";
-}
-
-export function ParTypeCard({ scoringByPar, scoreTypeDist, benchmark, benchmarkLabel }: Props) {
-  const MAX = 2.4;
-
-  const rows = [
-    {
-      label: "Par 3s",
-      data: scoringByPar.find((r) => r.par === 3),
-      bmkNorm: benchmark?.par3 ?? null,
-      barColor: "#ef4444",
-    },
-    {
-      label: "Par 4s",
-      data: scoringByPar.find((r) => r.par === 4),
-      bmkNorm: benchmark?.par4 ?? null,
-      barColor: "#f59e0b",
-    },
-    {
-      label: "Par 5s",
-      data: scoringByPar.find((r) => r.par === 5),
-      bmkNorm: benchmark?.par5 ?? null,
-      barColor: "#059669",
-    },
-  ];
-
+export function ParTypeCard({ rows, benchmarkName, scoreTypeDist }: Props) {
   // Double+ rate per round from score type distribution
   const doublePlusRates = [0, 0, 0]; // par3/4/5 — not available per par type
   const overallDoubleRates = scoreTypeDist.map((r) => {
@@ -76,17 +44,18 @@ export function ParTypeCard({ scoringByPar, scoreTypeDist, benchmark, benchmarkL
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-5">
       <div>
         <p className="text-sm font-semibold text-gray-800">Scoring by Par Type</p>
-        <p className="text-xs text-gray-400 mt-0.5">Avg strokes above par per hole · last 20 rounds</p>
+        <p className="text-xs text-gray-400 mt-0.5">
+          Avg strokes above par per hole · last 20 rounds
+          {benchmarkName && ` · tick is ${benchmarkName}`}
+        </p>
       </div>
 
       <div className="space-y-4">
-        {rows.map(({ label, data, bmkNorm }) => {
-          const player = data?.average_to_par ?? null;
-          const bmkVal = bmkNorm != null ? normToAvgToPar(bmkNorm) : null;
-
-          if (player === null || (data?.sample_size ?? 0) < 1) {
+        {rows.map((row) => {
+          const label = `Par ${row.par}s`;
+          if (row.averageToPar == null) {
             return (
-              <div key={label}>
+              <div key={row.par}>
                 <div className="flex justify-between mb-1.5">
                   <span className="text-base font-bold text-gray-900">{label}</span>
                   <span className="text-sm text-gray-400">No data</span>
@@ -94,41 +63,25 @@ export function ParTypeCard({ scoringByPar, scoreTypeDist, benchmark, benchmarkL
               </div>
             );
           }
-
-          const playerPct = Math.min(100, Math.max(0, (player / MAX) * 100));
-          const bmkPct    = bmkVal != null ? Math.min(100, Math.max(0, (bmkVal / MAX) * 100)) : null;
-          const diff       = bmkVal != null ? player - bmkVal : null;
-          const color      = parColor(player);
-          const textCls    = parTextClass(player);
-
+          const comparison =
+            row.benchmarkToPar != null && benchmarkName != null
+              ? parTypeGapNote(row.averageToPar, row.benchmarkToPar, benchmarkName)
+              : null;
           return (
-            <div key={label}>
+            <div key={row.par}>
               <div className="flex justify-between items-baseline mb-1.5">
                 <span className="text-base font-bold text-gray-900">{label}</span>
-                <span className={`text-base font-mono font-bold ${textCls}`}>
-                  {player >= 0 ? "+" : ""}{player.toFixed(2)} avg
+                <span className="text-base font-mono font-bold text-card-foreground">
+                  {averageToParLabel(row.averageToPar)} avg
                 </span>
               </div>
-              <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
-                {/* benchmark bar (behind) */}
-                {bmkPct != null && (
-                  <div
-                    className="absolute inset-y-0 left-0 rounded-full"
-                    style={{ width: `${bmkPct}%`, backgroundColor: "#1e3d25", opacity: 0.22 }}
-                  />
-                )}
-                {/* player bar */}
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
-                  style={{ width: `${playerPct}%`, backgroundColor: color }}
-                />
-              </div>
-              {diff != null && bmkVal != null && (
-                <p className={`text-[11px] mt-1 ${diff <= 0 ? "text-emerald-600" : "text-red-500"}`}>
-                  {benchmarkLabel} {bmkVal >= 0 ? "+" : ""}{bmkVal.toFixed(2)}
-                  {" · "}
-                  {diff > 0 ? "+" : ""}{diff.toFixed(2)} strokes to close gap
-                </p>
+              <Meter
+                value={toBar(row.averageToPar)}
+                marker={row.benchmarkToPar != null ? toBar(row.benchmarkToPar) : null}
+                aria-label={`${label}: ${averageToParLabel(row.averageToPar)} a hole`}
+              />
+              {comparison && (
+                <p className={cn("text-label mt-1", toParTextClass(comparison.gap))}>{comparison.text}</p>
               )}
             </div>
           );

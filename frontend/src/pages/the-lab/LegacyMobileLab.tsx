@@ -2,13 +2,15 @@
 // The next Lab PR moves it onto the kit and deletes this file with `components/the-lab`.
 import { MobileLabPage } from "@/components/the-lab/MobileLabPage";
 import type { LabPageViewModel } from "./useLabPageViewModel";
-import { benchmarkHeading, goalLabel } from "./present";
+import { benchmarkHeading, benchmarkName, goalLabel } from "./present";
 
 export function LegacyMobileLab({ vm }: { vm: LabPageViewModel }) {
   const target = vm.goal?.target ?? null;
   return (
     <MobileLabPage
       analyticsData={vm.analytics ?? undefined}
+      parTypes={vm.parTypes}
+      benchmarkName={vm.benchmark ? benchmarkName(vm.radarMode, vm.comparison, vm.selectedFriend) : null}
       currentGoal={target}
       setGoal={vm.setGoal}
       settingGoal={vm.savingGoal}

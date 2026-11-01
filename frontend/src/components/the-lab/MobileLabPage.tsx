@@ -9,7 +9,7 @@ import { GOAL_OPTIONS } from "@/components/the-lab/constants";
 import type { BenchmarkProfile } from "@/components/the-lab/constants";
 import type { AnalyticsData } from "@/types/analytics";
 import { colors } from "@/brand/theme";
-import type { PeakImpact } from "@/pages/the-lab/model";
+import type { ParTypeRow, PeakImpact } from "@/pages/the-lab/model";
 import { PEAK_IMPACT_LABEL, signedStrokes } from "@/pages/the-lab/present";
 
 interface PeakInsight {
@@ -32,6 +32,9 @@ interface MobileLabPageProps {
         "kpis" | "scoring_by_par" | "score_trend" | "score_type_distribution" | "three_putts_trend" | "putts_trend"
       >
     | undefined;
+  parTypes: ParTypeRow[];
+  /** What the marker on each par-type bar is. Null with no comparison. */
+  benchmarkName: string | null;
   currentGoal: number | null;
   setGoal: (g: number) => void;
   settingGoal: boolean;
@@ -54,6 +57,8 @@ const panelVariants = {
 
 export function MobileLabPage({
   analyticsData,
+  parTypes,
+  benchmarkName,
   currentGoal,
   setGoal,
   settingGoal,
@@ -232,16 +237,9 @@ export function MobileLabPage({
               >
                 {currentKey === "scoring" && analyticsData && (
                   <ParTypeCard
-                    scoringByPar={analyticsData.scoring_by_par}
+                    rows={parTypes}
+                    benchmarkName={benchmarkName}
                     scoreTypeDist={analyticsData.score_type_distribution}
-                    benchmark={activeProfile}
-                    benchmarkLabel={
-                      mode === "peak"
-                        ? "Peak game"
-                        : typeof comparisonTarget === "number"
-                        ? `HCP ${comparisonTarget}`
-                        : goalLabel ?? "Target"
-                    }
                   />
                 )}
 
