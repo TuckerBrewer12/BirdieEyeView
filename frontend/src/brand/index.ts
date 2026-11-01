@@ -39,6 +39,8 @@ export {
   CardDescription,
   CardContent,
 } from "./components/Card";
+export { AuthCard } from "./components/AuthCard";
+export type { AuthCardProps } from "./components/AuthCard";
 export { BrandMark } from "./components/BrandMark";
 export { Button } from "./components/Button";
 export { Dropzone } from "./components/Dropzone";
