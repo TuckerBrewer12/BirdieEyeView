@@ -26,6 +26,8 @@ export const queryKeys = {
   friendCompare: (friendId: string) =>
     ["analytics", "friend-compare", friendId, { limit: 20 }] as const,
   settings: (userId: string) => ["settings", userId] as const,
+  /** One emailed verification token, spent once. */
+  emailVerification: (token: string) => ["email-verification", token] as const,
 };
 
 export const mutationKeys = {

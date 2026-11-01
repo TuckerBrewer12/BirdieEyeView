@@ -29,6 +29,8 @@ interface CourseLinkSearchProps {
   customName?: string;
   onClear?: () => void;
   clearLabel?: string;
+  /** The search input's id, so a FieldLabel outside can name it. */
+  inputId?: string;
 }
 
 export function CourseLinkSearch({
@@ -48,6 +50,7 @@ export function CourseLinkSearch({
   customName,
   onClear,
   clearLabel = "Unlink course",
+  inputId,
 }: CourseLinkSearchProps) {
   if (linkedName && onClear) {
     return (
@@ -85,6 +88,7 @@ export function CourseLinkSearch({
   const body = (
     <>
       <SearchField
+        id={inputId}
         value={query}
         onChange={onQueryChange}
         placeholder="Search courses…"

@@ -3,12 +3,14 @@ import { useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ScanPage, ScanSessionProvider } from "./pages/scan";
 import { AppLayout } from "./components/layout/AppLayout";
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
-import { VerifyPendingPage } from "./pages/VerifyPendingPage";
-import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
-import { ResetPasswordPage } from "./pages/ResetPasswordPage";
-import { VerifyEmailPage } from "./pages/VerifyEmailPage";
+import {
+  ForgotPasswordPage,
+  LoginPage,
+  RegisterPage,
+  ResetPasswordPage,
+  VerifyEmailPage,
+  VerifyPendingPage,
+} from "./pages/auth";
 import { LandingPage } from "./pages/landing-page";
 
 import { DashboardPage } from "./pages/dashboard";
