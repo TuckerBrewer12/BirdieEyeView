@@ -26,3 +26,10 @@ test("home course picked", async ({ register }) => {
   await register.pickHomeCourse("Pebble", pebbleBeach.name!);
   await register.capture("register-home-course.png");
 });
+
+test("home course results", async ({ register }) => {
+  await register.open();
+  await register.fillIn({ handicap: "+2.5" });
+  await register.searchHomeCourse("Pebble");
+  await register.capture("register-home-course-results.png");
+});

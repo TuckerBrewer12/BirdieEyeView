@@ -32,6 +32,13 @@ export class RegisterRobot extends AuthScreenRobot {
     return this;
   }
 
+  /** Types a home course and leaves the results list open. */
+  async searchHomeCourse(query: string): Promise<this> {
+    await this.fill("Home course (optional)", query);
+    await expect(this.page.locator("[data-slot=course-result]").first()).toBeVisible();
+    return this;
+  }
+
   async submit(): Promise<this> {
     await this.tap("Create account");
     return this;
