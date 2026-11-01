@@ -52,3 +52,53 @@ export function formatCourseHandicap(ch: number | null | undefined): string {
  * decides it (`analytics/handicap.py`) and sends it on each handicap-trend point.
  */
 export type DifferentialStatus = "counting" | "close" | "out" | "unrated";
+
+/** The lowest index WHS allows: a +10. Stored negative, as the server stores it. */
+export const MIN_HANDICAP_INDEX = -10;
+export const MAX_HANDICAP_INDEX = 54;
+const HANDICAP_PATTERN = /^\+?(?:\d+\.?\d*|\.\d+)$/;
+
+export interface HandicapParseResult {
+  value: number | null;
+  error: string | null;
+}
+
+function formatAbsOneDecimal(value: number): string {
+  const abs = Math.abs(Math.round(value * 10) / 10);
+  return Number.isInteger(abs) ? String(abs) : abs.toFixed(1);
+}
+
+/** An index as the player types it into a field: "+5" for a plus handicap, no trailing ".0". Empty when unset. */
+export function formatHandicapInputValue(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) {
+    return "";
+  }
+  if (value < 0) {
+    return `+${formatAbsOneDecimal(value)}`;
+  }
+  return formatAbsOneDecimal(value);
+}
+
+/** Reads a typed index ("+3.0", "18.4", or blank to clear) into the stored value, or says what is wrong. */
+export function parseHandicapInput(raw: string): HandicapParseResult {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return { value: null, error: null };
+  }
+  if (!HANDICAP_PATTERN.test(trimmed)) {
+    return {
+      value: null,
+      error: "Handicap must be a number between +10 and 54 (for example +3.0 or 18.4).",
+    };
+  }
+  const isPlusHandicap = trimmed.startsWith("+");
+  const rawNumber = Number(isPlusHandicap ? trimmed.slice(1) : trimmed);
+  const parsed = isPlusHandicap ? -rawNumber : rawNumber;
+  if (!Number.isFinite(parsed) || parsed < MIN_HANDICAP_INDEX || parsed > MAX_HANDICAP_INDEX) {
+    return {
+      value: null,
+      error: "Handicap must be between +10 and 54.",
+    };
+  }
+  return { value: Math.round(parsed * 10) / 10, error: null };
+}

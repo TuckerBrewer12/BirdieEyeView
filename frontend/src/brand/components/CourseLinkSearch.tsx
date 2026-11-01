@@ -24,6 +24,8 @@ interface CourseLinkSearchProps {
   onUseCustomName?: (name: string) => void;
   autoFocus?: boolean;
   linkedName?: string;
+  /** Heads the picked course's card. */
+  linkedTitle?: string;
   customName?: string;
   onClear?: () => void;
   clearLabel?: string;
@@ -42,6 +44,7 @@ export function CourseLinkSearch({
   onUseCustomName,
   autoFocus = true,
   linkedName,
+  linkedTitle = "Linked",
   customName,
   onClear,
   clearLabel = "Unlink course",
@@ -50,7 +53,7 @@ export function CourseLinkSearch({
     return (
       <Card size="sm">
         <CardHeader>
-          <CardTitle>Linked</CardTitle>
+          <CardTitle>{linkedTitle}</CardTitle>
           <CardDescription>{linkedName}</CardDescription>
           <CardAction>
             <ClearButton onClick={onClear} label={clearLabel} />
