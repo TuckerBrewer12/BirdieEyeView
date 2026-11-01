@@ -7,6 +7,7 @@ import { expectTheme } from "../../../testing/theme";
 
 /** The photo the hero demo uses, so an upload has a real card in its preview. */
 const CARD_PHOTO = fileURLToPath(new URL("../../../../public/hero/physical-card.jpg", import.meta.url));
+const CARD_NAME = "physical-card.jpg";
 const DEMO_ALT = "A paper golf scorecard being scanned";
 
 /** Screen robot for the logged-out landing page at `/`. */
@@ -24,12 +25,13 @@ export class LandingRobot {
     return this;
   }
 
-  async open(): Promise<this> {
+  /** `scanFails`: the scan endpoint errors, as it does when the server can't read a card. */
+  async open({ scanFails = false }: { scanFails?: boolean } = {}): Promise<this> {
     // The hero's scan loop is decoration and holds on step one under reduced
     // motion. Emulating it here is what makes the page deterministic enough to
     // have a baseline — `test.use({ reducedMotion })` does not reach the page.
     await this.page.emulateMedia({ reducedMotion: "reduce" });
-    await FakeSession.install(this.page, { signedOut: true, scan: scannedCard });
+    await FakeSession.install(this.page, { signedOut: true, scan: scanFails ? undefined : scannedCard });
     await this.page.goto("/");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -86,6 +88,21 @@ export class LandingRobot {
   /** Picks a photo. The visitor is still on the upload step, choosing what's on the card. */
   async chooseScorecard(): Promise<this> {
     await this.page.locator('input[type="file"]').setInputFiles(CARD_PHOTO);
+    await expect(this.page.getByRole("button", { name: "Scan My Scorecard" })).toBeVisible();
+    return this;
+  }
+
+  /** The picked photo, shown as a thumbnail with its name, ready to scan. */
+  async seesChosenCard(): Promise<this> {
+    await expect(this.page.getByText(CARD_NAME)).toBeVisible();
+    await expect(this.page.locator('img[src^="data:image/"]')).toBeVisible();
+    return this;
+  }
+
+  /** The scan failed: the reason shows, and the photo is still there to try again. */
+  async seesScanFailed(): Promise<this> {
+    await expect(this.page.getByRole("alert")).toContainText("We couldn't scan this scorecard.");
+    await expect(this.page.getByText(CARD_NAME)).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Scan My Scorecard" })).toBeVisible();
     return this;
   }

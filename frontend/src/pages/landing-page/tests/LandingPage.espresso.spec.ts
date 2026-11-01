@@ -14,6 +14,13 @@ test("the demo stays while a card is chosen and steps aside once it is scanned",
   await landing.seesDemo(false);
 });
 
+test("a failed scan keeps the photo and says why", async ({ landing }) => {
+  await landing.open({ scanFails: true });
+  await landing.chooseScorecard();
+  await landing.tapScan();
+  await landing.seesScanFailed();
+});
+
 test("the nav's sign up goes to register", async ({ landing }) => {
   await landing.open();
   await landing.tapSignUp();
