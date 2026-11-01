@@ -46,6 +46,20 @@ test("a course linked on the review is the one the round is saved against", asyn
   await scan.seesSavedCourse(pebbleBeachCourse.id!);
 });
 
+test("a name the search does not know is the one the round is saved under", async ({ scan }) => {
+  await scan.open({ fullCourses: [pebbleBeachCourse] });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.searchCourse("Muni Nine");
+  await scan.seesNoCourseMatch();
+  await scan.saveAsCustomName("Muni Nine");
+  await scan.seesCustomName("Muni Nine");
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedCourseName("Muni Nine");
+});
+
 test("a failed scan keeps the photo and says why", async ({ scan }) => {
   await scan.open({ scan: undefined });
   await scan.chooseScorecard();

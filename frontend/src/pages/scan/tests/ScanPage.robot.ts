@@ -132,10 +132,26 @@ export class ScanRobot {
     return this;
   }
 
+  /** The round just saved is stored under this name, with no course id. */
+  async seesSavedCourseName(name: string): Promise<this> {
+    const saved = this.backend?.store.savedScans.at(-1);
+    expect(saved?.course_name).toBe(name);
+    expect(saved?.course_id ?? null).toBeNull();
+    return this;
+  }
+
   /** The review's course, linked to a saved one. */
   async seesLinkedCourse(name: string): Promise<this> {
     await expect(this.page.getByText("Linked", { exact: true })).toBeVisible();
     await expect(this.page.getByText(name, { exact: true }).first()).toBeVisible();
+    return this;
+  }
+
+  /** The review is keeping this name, with no course linked. */
+  async seesCustomName(name: string): Promise<this> {
+    await expect(this.page.getByText(name, { exact: true }).first()).toBeVisible();
+    await expect(this.page.getByText("Saving without a linked course")).toBeVisible();
+    await expect(this.page.getByPlaceholder("Search courses…")).toHaveCount(0);
     return this;
   }
 
@@ -159,8 +175,20 @@ export class ScanRobot {
     return this;
   }
 
+  /** The course search lists nothing for the name just typed. */
+  async seesNoCourseMatch(): Promise<this> {
+    await expect(this.page.getByText("No match found")).toBeVisible();
+    return this;
+  }
+
   async pickCourse(name: string): Promise<this> {
     await this.page.locator("[data-slot=course-result]").filter({ hasText: name }).click();
+    return this;
+  }
+
+  /** Keeps a typed name the search does not list. */
+  async saveAsCustomName(name: string): Promise<this> {
+    await this.page.getByRole("button", { name: `Save as "${name}"` }).click();
     return this;
   }
 
