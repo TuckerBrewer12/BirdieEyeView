@@ -60,3 +60,14 @@ test("manual entry setup", async ({ scan }) => {
   await scan.seesSetup();
   await scan.capture("scan-manual-setup.png");
 });
+
+test("manual entry with a course picked", async ({ scan }) => {
+  await scan.open({ fullCourses: [pebbleBeachCourse] });
+  await scan.chooseManualEntry();
+  await scan.searchSetupCourse("Pebble");
+  await scan.pickSetupCourse("Pebble Beach");
+  await scan.seesSetupCourse("Pebble Beach");
+  await scan.chooseTee("Blue");
+  await scan.seesTee("Blue");
+  await scan.capture("scan-manual-course-picked.png");
+});

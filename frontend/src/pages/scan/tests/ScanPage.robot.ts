@@ -174,6 +174,58 @@ export class ScanRobot {
     return this;
   }
 
+  /** Looks up a course on the manual-entry form. */
+  async searchSetupCourse(query: string): Promise<this> {
+    await this.page.getByPlaceholder("Search for a course by name...").fill(query);
+    return this;
+  }
+
+  async pickSetupCourse(name: string): Promise<this> {
+    await this.page.locator("ul").getByRole("button", { name }).click();
+    return this;
+  }
+
+  /** Keeps the typed name when the search finds no course. */
+  async keepTypedCourse(name: string): Promise<this> {
+    await this.page.getByRole("button", { name: `Use "${name}"`, exact: true }).click();
+    return this;
+  }
+
+  /** The course chosen for manual entry, picked or typed. */
+  async seesSetupCourse(name: string): Promise<this> {
+    await expect(this.page.getByText(name, { exact: true })).toBeVisible();
+    await expect(this.page.getByPlaceholder("Search for a course by name...")).toHaveCount(0);
+    return this;
+  }
+
+  /** Chooses a tee. The control is a native select. */
+  async chooseTee(color: string): Promise<this> {
+    await this.page.getByRole("combobox").selectOption(color);
+    return this;
+  }
+
+  async seesTee(color: string): Promise<this> {
+    await expect(this.page.getByRole("combobox")).toHaveValue(color);
+    return this;
+  }
+
+  /** Types one hole's strokes on the card being checked. */
+  async typeStrokes(hole: number, strokes: number): Promise<this> {
+    const nine = this.page.locator("table").nth(hole <= 9 ? 0 : 1);
+    const scoreRow = nine.locator("tr").filter({
+      has: this.page.getByRole("cell", { name: "Score", exact: true }),
+    });
+    await scoreRow.getByRole("textbox").nth((hole - 1) % 9).fill(String(strokes));
+    return this;
+  }
+
+  /** The strokes kept for a hole on the round just saved. */
+  async seesSavedStrokes(hole: number, strokes: number): Promise<this> {
+    const saved = this.backend?.store.savedScans.at(-1);
+    expect(saved?.hole_scores.find((score) => score.hole_number === hole)?.strokes).toBe(strokes);
+    return this;
+  }
+
   async startEntering(): Promise<this> {
     await this.page.getByRole("button", { name: "Start Entering Scores" }).click();
     return this;
@@ -199,11 +251,12 @@ export class ScanRobot {
   }
 
   /**
-   * A full-page capture. The card in the scan animation keeps moving under reduced motion,
-   * so a capture of the processing step masks it.
+   * A full-page capture. The scan animation keeps moving under reduced motion, so a capture
+   * of the processing step masks it: the card, and the corner brackets that pulse outside it.
    */
   async capture(name: string, { maskScanAnimation = false } = {}): Promise<this> {
-    const mask = maskScanAnimation ? [this.page.locator("[data-slot=scan-progress] > div").first()] : [];
+    const animation = this.page.locator("[data-slot=scan-progress] > div").first();
+    const mask = maskScanAnimation ? [animation, animation.locator(":scope > div")] : [];
     await expect(this.page).toHaveScreenshot(name, { fullPage: true, mask });
     return this;
   }
