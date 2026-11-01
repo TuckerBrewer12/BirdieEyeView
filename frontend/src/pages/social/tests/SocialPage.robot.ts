@@ -32,6 +32,11 @@ export class SocialRobot {
     return this;
   }
 
+  async openFailed(): Promise<this> {
+    await this.open({ loadError: "Could not load your friends." });
+    return this.seesError("Could not load your friends.");
+  }
+
   async typeCode(code: string): Promise<this> {
     await this.codeInput.fill(code);
     return this;
@@ -80,6 +85,11 @@ export class SocialRobot {
 
   async seesEmptyState(): Promise<this> {
     await expect(this.page.getByText("No friends yet.")).toBeVisible();
+    return this;
+  }
+
+  async doesNotSeeEmptyState(): Promise<this> {
+    await expect(this.page.getByText("No friends yet.")).toHaveCount(0);
     return this;
   }
 

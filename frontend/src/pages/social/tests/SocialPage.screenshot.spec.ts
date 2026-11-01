@@ -22,6 +22,12 @@ test("no friends yet", async ({ social }) => {
   await social.capture("social-empty.png");
 });
 
+test("load error does not show empty copy", async ({ social }) => {
+  await social.openFailed();
+  await social.doesNotSeeEmptyState();
+  await social.capture("social-load-error.png");
+});
+
 test("request sent", async ({ social }) => {
   await social.open(seed);
   await social.typeCode("GCSAM00003");
