@@ -94,6 +94,17 @@ export class TheLabRobot {
     return this;
   }
 
+  /** The next save fails with this message, as the API would answer. */
+  failSavesWith(detail: string): this {
+    if (this.backend) this.backend.updateUserError = detail;
+    return this;
+  }
+
+  async seesGoalSaveError(message: string): Promise<this> {
+    await expect(this.page.getByRole("alert").filter({ hasText: message })).toBeVisible();
+    return this;
+  }
+
   async seesSaver(headline: string): Promise<this> {
     await expect(this.page.locator("[data-slot=saver-card]").getByText(headline)).toBeVisible();
     return this;

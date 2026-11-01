@@ -12,6 +12,16 @@ test("choosing a goal saves it to the profile and stands the page on it", async 
   await lab.seesGoalStanding("Break 85");
 });
 
+test("a goal the server rejects says so and leaves the current goal pressed", async ({ lab }) => {
+  await lab.open();
+  lab.failSavesWith("Couldn't save your goal.");
+
+  await lab.pickGoal("Break 85");
+
+  await lab.seesGoalSaveError("Couldn't save your goal.");
+  await lab.seesGoalPicked("Break 90");
+});
+
 test("the savers read as the server wrote them", async ({ lab }) => {
   await lab.open();
   await lab.seesSaver("You average 2.0 three-putts a round");
