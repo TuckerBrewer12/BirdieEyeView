@@ -1,6 +1,6 @@
 import { Alert, AlertAction, AlertDescription, Button, LoadingState, PageHeader } from "@/brand";
 import { LabDesktopLayout } from "./components/LabDesktopLayout";
-import { LegacyMobileLab } from "./LegacyMobileLab";
+import { LabMobileLayout } from "./components/LabMobileLayout";
 import { useLabPageViewModel } from "./useLabPageViewModel";
 
 export function TheLabPage({ userId }: { userId: string }) {
@@ -23,6 +23,7 @@ export function TheLabPage({ userId }: { userId: string }) {
 
   return (
     <>
+      <PageHeader title="The Lab" subtitle="Your blueprint to lower scores." revealAt={100} />
       {vm.goalSaveError && (
         <p role="alert" className="text-label font-medium text-destructive">
           {vm.goalSaveError.message || "Couldn't save your goal."}
@@ -30,10 +31,9 @@ export function TheLabPage({ userId }: { userId: string }) {
       )}
       {/* CSS picks the layout, so the page renders the same on the server and the first paint. */}
       <div className="md:hidden">
-        <LegacyMobileLab vm={vm} />
+        <LabMobileLayout vm={vm} />
       </div>
       <div className="hidden md:block">
-        <PageHeader title="The Lab" subtitle="Your blueprint to lower scores." revealAt={100} />
         <LabDesktopLayout vm={vm} />
       </div>
     </>

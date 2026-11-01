@@ -19,6 +19,8 @@ interface RadarChartProps {
   axes: RadarAxis[];
   /** Shown when there are fewer than three axes to draw. */
   empty?: string;
+  /** A phone's width: a narrower drawing, so the labels scale down less. */
+  compact?: boolean;
   className?: string;
   "aria-label"?: string;
 }
@@ -31,10 +33,12 @@ interface RadarChartProps {
 export function RadarChart({
   axes,
   empty = "Not enough data",
+  compact = false,
   className,
   "aria-label": ariaLabel,
 }: RadarChartProps) {
-  const { width: W, height: H, radius: R, labelGap, valueGap, rings, dot, stroke } = chartLayout.radar;
+  const layout = compact ? { ...chartLayout.radar, ...chartLayout.radarCompact } : chartLayout.radar;
+  const { width: W, height: H, radius: R, labelGap, valueGap, rings, dot, stroke } = layout;
 
   if (axes.length < 3) {
     return <div className="py-8 text-center text-sm text-muted-foreground">{empty}</div>;

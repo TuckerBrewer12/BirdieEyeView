@@ -19,6 +19,10 @@ export default function RadarChartPreview() {
         axes={compared.slice(0, 4).map(({ label, value, valueLabel }) => ({ label, value, valueLabel }))}
       />
       <RadarChart axes={compared.slice(0, 2)} empty="Play a few more rounds to see your shape." />
+      {/* On a phone: the compact drawing at a phone's width. */}
+      <div className="max-w-xs">
+        <RadarChart axes={compared} compact aria-label="Shape against a break-80 golfer, on a phone" />
+      </div>
     </>
   );
 }

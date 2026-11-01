@@ -2,10 +2,12 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import type { ReactNode } from "react";
+import { queryKeys } from "@/data/queryKeys";
 import { HANDICAP_BENCHMARK, nearestGoalBenchmark } from "@/domain";
 import { FakeLabRepository, type FakeLabSeed } from "@/testing/fakes/FakeLabRepository";
 import { avery, jordan, populatedFriendships } from "@/testing/fixtures/friendships";
-import { labAnalyticsByGolfer, labGoalReport } from "@/testing/fixtures/lab";
+import { averyLabAnalytics, labAnalyticsByGolfer, labGoalReport } from "@/testing/fixtures/lab";
+import { LAB_FILTERS } from "../model";
 import { useLabPageViewModel } from "../useLabPageViewModel";
 
 const POPULATED: FakeLabSeed = {
@@ -157,6 +159,75 @@ describe("useLabPageViewModel", () => {
     act(() => result.current.setRadarMode("peak"));
 
     expect(result.current.radarMode).toBe("benchmark");
+  });
+
+  it("reads the last 20 rounds through the shared analytics query", async () => {
+    const { client, repository } = await loaded();
+
+    expect(repository.analyticsFilters).toEqual([LAB_FILTERS]);
+    // The same entry the Analytics page reads for these filters, so neither fetches it twice.
+    expect(client.getQueryData(queryKeys.analytics("user-1", LAB_FILTERS))).toBe(labAnalyticsByGolfer["user-1"]);
+  });
+
+  it("asks a friend's analytics for the same 20 rounds, cached under the friend", async () => {
+    const { client, repository, result } = await loaded();
+
+    act(() => result.current.setComparison("friend"));
+    await waitFor(() => expect(result.current.friendComparison).toBe("ready"));
+
+    expect(repository.analyticsFilters).toEqual([LAB_FILTERS, LAB_FILTERS]);
+    expect(client.getQueryData(queryKeys.analytics(avery.id, LAB_FILTERS))).toBe(labAnalyticsByGolfer[avery.id]);
+  });
+
+  it("never shows one friend's shape while the next friend's loads", async () => {
+    const { repository, result } = await loaded();
+    act(() => result.current.setComparison("friend"));
+    await waitFor(() => expect(result.current.friendComparison).toBe("ready"));
+
+    repository.analytics[jordan.id] = labAnalyticsByGolfer[avery.id];
+    repository.holdAnalytics();
+    act(() => result.current.selectFriend(jordan.id));
+
+    expect(result.current.friendComparison).toBe("loading");
+    expect(result.current.benchmark).toBeNull();
+    repository.finishAnalytics();
+    await waitFor(() => expect(result.current.friendComparison).toBe("ready"));
+  });
+
+  it("opens the phone on the first panel, and switches between those with something to show", async () => {
+    const { result } = await loaded();
+
+    expect(result.current.panels).toEqual(["by-par", "putting", "peak"]);
+    expect(result.current.panel).toBe("by-par");
+
+    act(() => result.current.setPanel("peak"));
+    expect(result.current.panel).toBe("peak");
+
+    act(() => result.current.setPanel("putting"));
+    expect(result.current.panel).toBe("putting");
+  });
+
+  it("has no Peak panel without a goal, and stays on a panel that has something to show", async () => {
+    const { result } = setup({ ...POPULATED, user: { scoring_goal: null } });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => result.current.setPanel("peak"));
+
+    expect(result.current.panels).toEqual(["by-par", "putting"]);
+    expect(result.current.panel).toBe("by-par");
+  });
+
+  it("offers only the panels with something in them", async () => {
+    const { result } = setup({
+      ...POPULATED,
+      user: { scoring_goal: null },
+      analytics: { "user-1": averyLabAnalytics },
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // These rounds have par types but no putts logged.
+    expect(result.current.panels).toEqual(["by-par"]);
+    expect(result.current.panel).toBe("by-par");
   });
 
   it("reports a failed load and retries it", async () => {

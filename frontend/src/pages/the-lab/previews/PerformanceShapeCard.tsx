@@ -41,6 +41,10 @@ export default function PerformanceShapeCardPreview() {
         missingAxes={["Par 4s", "Par 5s"]}
       />
       <PerformanceShapeCard {...base} mode="peak" />
+      {/* On a phone: one column, the radar's compact drawing under the controls. */}
+      <div className="max-w-sm">
+        <PerformanceShapeCard {...base} compact />
+      </div>
     </>
   );
 }

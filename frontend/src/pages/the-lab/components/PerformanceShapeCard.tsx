@@ -43,6 +43,8 @@ export interface PerformanceShapeCardProps {
   radar: RadarEntry[];
   compared: boolean;
   missingAxes: string[];
+  /** On a phone: the radar's compact drawing. */
+  compact?: boolean;
 }
 
 const MODES: { value: RadarMode; label: string }[] = [
@@ -220,6 +222,7 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
               benchmarkLabel: entry.benchRaw,
             }))}
             empty="Play a few more rounds to build your performance shape."
+            compact={props.compact}
             aria-label={legend ? `Your shape against ${legend}` : "Your performance shape"}
           />
         </div>

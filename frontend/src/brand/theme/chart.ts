@@ -90,6 +90,17 @@ export const chartLayout = {
     dot: 4,
     stroke: 2,
   },
+  /**
+   * The same shape on a phone: a narrower drawing, so it scales down less and its labels stay
+   * readable at a phone's width.
+   */
+  radarCompact: {
+    width: 360,
+    height: 300,
+    radius: 72,
+    labelGap: 14,
+    valueGap: 15,
+  },
   /** Scores against a goal: a short strip of dots, lower scores higher up, the goal dashed across. */
   goal: {
     width: 560,

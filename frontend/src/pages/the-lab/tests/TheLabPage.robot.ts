@@ -5,6 +5,15 @@ import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBa
 import { populatedFriendships } from "../../../testing/fixtures/friendships";
 import { labAnalyticsByGolfer, labGoalReport, labUser } from "../../../testing/fixtures/lab";
 
+type LabPanelLabel = "By Par" | "Putting" | "Peak";
+
+/** The card each of the phone's panels shows. */
+const PANEL_CARD: Record<LabPanelLabel, string> = {
+  "By Par": "par-type-card",
+  Putting: "putting-card",
+  Peak: "peak-game-card",
+};
+
 /** Screen robot for /the-lab — same idea as an Android Espresso robot. */
 export class TheLabRobot {
   private readonly page: Page;
@@ -27,7 +36,7 @@ export class TheLabRobot {
     this.backend = await FakeSession.install(this.page, {
       profile: labUser,
       goalReport: labGoalReport,
-      labAnalytics: labAnalyticsByGolfer,
+      analyticsByGolfer: labAnalyticsByGolfer,
       friends: { friendships: populatedFriendships },
       ...seed,
     });
@@ -42,12 +51,12 @@ export class TheLabRobot {
 
   /** Opens with the golfer's analytics failing to load. */
   async openFailing(): Promise<this> {
-    return this.open({ labAnalytics: {}, analytics: null });
+    return this.open({ analyticsByGolfer: {}, analytics: null });
   }
 
   /** The server comes back: the golfer's analytics load from here on. */
   async analyticsRecover(): Promise<this> {
-    if (this.backend) this.backend.labAnalytics = labAnalyticsByGolfer;
+    if (this.backend) this.backend.analyticsByGolfer = labAnalyticsByGolfer;
     return this;
   }
 
@@ -66,8 +75,16 @@ export class TheLabRobot {
     return this;
   }
 
+  /**
+   * The page renders its phone and desktop layouts and CSS shows one, so every lookup takes
+   * the copy on screen.
+   */
+  private shown(selector: string) {
+    return this.page.locator(selector).filter({ visible: true });
+  }
+
   private goalPicker() {
-    return this.page.locator("[data-slot=goal-picker]");
+    return this.shown("[data-slot=goal-picker]");
   }
 
   async pickGoal(label: string): Promise<this> {
@@ -85,7 +102,7 @@ export class TheLabRobot {
 
   /** The goal standing card leads with the goal: "Break 85". */
   async seesGoalStanding(label: string): Promise<this> {
-    await expect(this.page.locator("[data-slot=goal-standing]").getByText(label, { exact: true })).toBeVisible();
+    await expect(this.shown("[data-slot=goal-standing]").getByText(label, { exact: true })).toBeVisible();
     return this;
   }
 
@@ -106,12 +123,12 @@ export class TheLabRobot {
   }
 
   async seesSaver(headline: string): Promise<this> {
-    await expect(this.page.locator("[data-slot=saver-card]").getByText(headline)).toBeVisible();
+    await expect(this.shown("[data-slot=saver-card]").getByText(headline)).toBeVisible();
     return this;
   }
 
   private shapeCard() {
-    return this.page.locator("[data-slot=performance-shape]");
+    return this.shown("[data-slot=performance-shape]");
   }
 
   async compareWith(label: string): Promise<this> {
@@ -135,23 +152,33 @@ export class TheLabRobot {
     return this;
   }
 
-  /** The phone's Peak tab. The shape card's Peak Game control is a different button. */
-  private peakTab() {
-    return this.page
-      .getByRole("button", { name: "By Par", exact: true })
-      .locator("visible=true")
-      .locator("..")
-      .getByRole("button", { name: "Peak", exact: true });
+  /** The phone's Performance section: the panel tabs and the open panel. */
+  private performance() {
+    return this.shown("[data-slot=lab-performance]");
   }
 
-  async tapPeak(): Promise<this> {
-    await this.peakTab().tap();
+  /** Taps one of the phone's panel tabs. The shape card's Peak Game control is a different button. */
+  async tapPanel(label: LabPanelLabel): Promise<this> {
+    await this.performance()
+      .locator("[data-slot=lab-panels]")
+      .getByRole("button", { name: label, exact: true })
+      .tap();
+    return this;
+  }
+
+  /** The phone shows this panel, and only this one. */
+  async seesPanel(label: LabPanelLabel): Promise<this> {
+    const tab = this.performance().locator("[data-slot=lab-panels]").getByRole("button", { name: label, exact: true });
+    await expect(tab).toHaveAttribute("aria-pressed", "true");
+    for (const [other, slot] of Object.entries(PANEL_CARD)) {
+      await expect(this.performance().locator(`[data-slot=${slot}]`)).toHaveCount(other === label ? 1 : 0);
+    }
     return this;
   }
 
   /** The peak-versus-average bars on the phone's Peak panel. */
   async seesPeakBars(): Promise<this> {
-    await expect(this.page.getByText("Peak vs. Average", { exact: true }).locator("visible=true")).toBeVisible();
+    await expect(this.performance().getByText("Peak vs. average, a round", { exact: true })).toBeVisible();
     return this;
   }
 

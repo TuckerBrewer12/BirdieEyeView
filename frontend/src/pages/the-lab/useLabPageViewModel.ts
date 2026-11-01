@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { useAnalytics } from "@/data/useAnalytics";
 import { useFriendships } from "@/data/useFriendships";
 import { useGoalReport } from "@/data/useGoalReport";
 import { useUpdateUser } from "@/data/useUpdateUser";
@@ -11,10 +12,12 @@ import {
 } from "@/domain/benchmark";
 import { benchmarkProfileFrom, buildRadarData, type RadarEntry } from "@/domain/radar";
 import { labRepository, type LabRepository } from "./labRepository";
-import { useLabAnalytics } from "./useLabAnalytics";
 import {
+  LAB_FILTERS,
   friendOptionsFrom,
   goalStandingFrom,
+  labAnalyticsFrom,
+  labPanelsFrom,
   lowestScore,
   parTypeRowsFrom,
   peakGameFrom,
@@ -27,6 +30,7 @@ import {
   type FriendOption,
   type GoalStanding,
   type LabAnalytics,
+  type LabPanel,
   type ParTypeRow,
   type PeakGame,
   type PeakImpact,
@@ -82,6 +86,12 @@ export interface LabPageViewModel {
   peak: PeakGame | null;
   /** Birdies, bogeys and doubles a round in the best rounds against every round, and what each is worth. */
   peakImpacts: PeakImpact[];
+
+  /** The phone's panels with something to show, in order. */
+  panels: LabPanel[];
+  /** The phone's open panel: the one picked while it has something to show, else the first. */
+  panel: LabPanel | null;
+  setPanel: (panel: LabPanel) => void;
 }
 
 export function useLabPageViewModel(
@@ -91,11 +101,12 @@ export function useLabPageViewModel(
   const [radarMode, setRadarModeState] = useState<RadarMode>("benchmark");
   const [comparison, setComparison] = useState<ComparisonTargetValue>(null);
   const [pickedFriendId, setPickedFriendId] = useState<string | null>(null);
+  const [pickedPanel, setPanel] = useState<LabPanel | null>(null);
 
   const { data: user } = useUser(userId, repository);
   const target = user?.scoring_goal ?? null;
   const { data: report } = useGoalReport(userId, target, repository);
-  const mine = useLabAnalytics(userId, repository);
+  const mine = useAnalytics(userId, LAB_FILTERS, labAnalyticsFrom, repository);
   const { data: friendships } = useFriendships(userId, repository);
   const updateUser = useUpdateUser(userId, repository);
 
@@ -108,7 +119,12 @@ export function useLabPageViewModel(
   // A friend who has since gone falls back to the first one listed.
   const selectedFriend = friends.find((f) => f.id === pickedFriendId) ?? friends[0] ?? null;
   const comparingFriend = mode === "benchmark" && comparison === "friend";
-  const theirs = useLabAnalytics(comparingFriend ? (selectedFriend?.id ?? null) : null, repository);
+  const theirs = useAnalytics(
+    comparingFriend ? (selectedFriend?.id ?? null) : null,
+    LAB_FILTERS,
+    labAnalyticsFrom,
+    repository,
+  );
 
   const benchmark = useMemo<BenchmarkProfile | null>(() => {
     if (mode === "peak") return peak ? nearestGoalBenchmark(peak.average) : null;
@@ -146,6 +162,11 @@ export function useLabPageViewModel(
     [analytics, peak],
   );
 
+  const parTypes = useMemo(() => (analytics ? parTypeRowsFrom(analytics, benchmark) : []), [analytics, benchmark]);
+  const putting = useMemo(() => (analytics ? puttingSummaryFrom(analytics) : null), [analytics]);
+  const panels = labPanelsFrom(parTypes, putting, peak);
+  const panel = pickedPanel != null && panels.includes(pickedPanel) ? pickedPanel : (panels[0] ?? null);
+
   const { mutate } = updateUser;
   const setGoal = useCallback((next: number) => mutate({ scoring_goal: next }), [mutate]);
 
@@ -178,9 +199,13 @@ export function useLabPageViewModel(
 
     attempts: analytics ? scoresOf(analytics).slice(-ATTEMPTS_SHOWN) : [],
     roundsMeetingGoal: analytics && target != null ? roundsMeetingGoal(analytics, target) : 0,
-    parTypes: analytics ? parTypeRowsFrom(analytics, benchmark) : [],
-    putting: analytics ? puttingSummaryFrom(analytics) : null,
+    parTypes,
+    putting,
     peak,
     peakImpacts: peakVsAverage ? peakImpactsFrom(peakVsAverage) : [],
+
+    panels,
+    panel,
+    setPanel,
   };
 }

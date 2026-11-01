@@ -1,16 +1,17 @@
 import { useState } from "react";
+import { useAnalytics } from "@/data/useAnalytics";
 import { useUser } from "@/data/useUser";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { analyticsRepository, type AnalyticsRepository } from "./analyticsRepository";
 import {
   DEFAULT_FILTERS,
+  analyticsFrom,
   isFiltered,
   type Analytics,
   type AnalyticsFilters,
   type AnalyticsTab,
   type PlayedCourse,
 } from "./model";
-import { useAnalytics } from "./useAnalytics";
 import { usePlayedCourses } from "./usePlayedCourses";
 
 export interface AnalyticsPageViewModel {
@@ -45,7 +46,7 @@ export function useAnalyticsPageViewModel(
   const [filters, setFilters] = useState<AnalyticsFilters>(DEFAULT_FILTERS);
   const [tab, setTab] = useState<AnalyticsTab>("scoring");
 
-  const { data, isPending, isPlaceholderData, isError, error, refetch } = useAnalytics(userId, filters, repository);
+  const { data, isPending, isPlaceholderData, isError, error, refetch } = useAnalytics(userId, filters, analyticsFrom, repository);
   const { data: playedCourses = [] } = usePlayedCourses(userId, repository);
   const { data: user } = useUser(userId, repository);
 
