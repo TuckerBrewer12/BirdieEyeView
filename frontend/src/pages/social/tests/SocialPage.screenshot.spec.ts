@@ -37,3 +37,9 @@ test("send error", async ({ social }) => {
   await social.seesError("Friend code not found");
   await social.capture("social-send-error.png");
 });
+
+test("load error does not show empty copy", async ({ social }) => {
+  await social.openFailed("Could not load your friends.");
+  await social.doesNotSeeEmptyState();
+  await social.capture("social-load-error.png");
+});
