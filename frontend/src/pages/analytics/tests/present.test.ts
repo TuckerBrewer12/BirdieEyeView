@@ -69,7 +69,7 @@ describe("labels", () => {
 });
 
 describe("girVsNonGirBars", () => {
-  it("puts under-par shares left of zero and folds triples and worse together", () => {
+  it("puts under-par shares left of zero and keeps each score kind", () => {
     expect(
       girVsNonGirBars([
         {
@@ -84,6 +84,8 @@ describe("girVsNonGirBars", () => {
           quad_bogey: 0.5,
         },
       ]),
-    ).toEqual([{ bucket: "GIR", Birdie: -20, Eagle: -2, Par: 60, Bogey: 15, Double: 2, "Triple+": 1.5 }]);
+    ).toEqual([
+      { bucket: "GIR", eagle: -2, birdie: -20, par: 60, bogey: 15, double: 2, triple: 1, quad: 0.5 },
+    ]);
   });
 });

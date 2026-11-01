@@ -1,3 +1,4 @@
+import { SCORE_KINDS, type ScoreKind } from "@/domain/score";
 import type { GIRvsNonGIRRow } from "@/types/analytics";
 import { insightCategory, type AnalyticsTab, type Insight, type InsightCategory } from "./model";
 
@@ -107,15 +108,22 @@ export function leadNarrative(insights: Insight[], category: InsightCategory): N
   return lead ? narrativeFor(lead) : null;
 }
 
+/** Each score kind's share on a GIR row. Under par is negative so it draws left of zero. */
+const GIR_SHARE: Record<ScoreKind, (row: GIRvsNonGIRRow) => number> = {
+  eagle: (row) => -(row.eagle ?? 0),
+  birdie: (row) => -(row.birdie ?? 0),
+  par: (row) => row.par ?? 0,
+  bogey: (row) => row.bogey ?? 0,
+  double: (row) => row.double_bogey ?? 0,
+  triple: (row) => row.triple_bogey ?? 0,
+  quad: (row) => row.quad_bogey ?? 0,
+};
+
 /** GIR vs no-GIR as diverging bars: under-par shares to the left of zero, par and over to the right. */
 export function girVsNonGirBars(rows: GIRvsNonGIRRow[]): Record<string, string | number>[] {
-  return rows.map((row) => ({
-    bucket: row.bucket,
-    Birdie: -(row.birdie ?? 0),
-    Eagle: -(row.eagle ?? 0),
-    Par: row.par ?? 0,
-    Bogey: row.bogey ?? 0,
-    Double: row.double_bogey ?? 0,
-    "Triple+": (row.triple_bogey ?? 0) + (row.quad_bogey ?? 0),
-  }));
+  return rows.map((row) => {
+    const bar: Record<string, string | number> = { bucket: row.bucket };
+    for (const kind of SCORE_KINDS) bar[kind] = GIR_SHARE[kind](row);
+    return bar;
+  });
 }

@@ -4,6 +4,7 @@ type Fmt = (value: unknown, name: unknown, props: unknown) => ReactNode | [React
 type DivergingTooltipPayload = {
   value?: unknown;
   dataKey?: unknown;
+  name?: unknown;
   fill?: string;
 };
 
@@ -14,6 +15,7 @@ import {
 } from "recharts";
 import { SVGTimeSeriesArea } from "@/components/analytics/SVGTimeSeriesArea";
 import { TrendingDown, Gauge, Hash, Trophy, Target } from "lucide-react";
+import { scoreKindLabel } from "@/domain/score";
 import { SCORE_COLORS, SCORE_LABELS } from "@/lib/colors";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { BestRoundCard } from "@/components/analytics/BestRoundCard";
@@ -489,7 +491,7 @@ export function AnalyticsDesktopLayout({
                           <div className="font-semibold text-[11px] mb-1.5" style={{ color: labelText === "GIR" ? successColor : dangerColor }}>{labelText}</div>
                           {visible.map((p) => (
                             <div key={String(p.dataKey)} className="flex items-center justify-between gap-4">
-                              <span style={{ color: p.fill }}>{String(p.dataKey ?? "")}</span>
+                              <span style={{ color: p.fill }}>{String(p.name ?? p.dataKey ?? "")}</span>
                               <span style={{ color: p.fill }} className="font-bold">{Math.abs(Number(p.value ?? 0)).toFixed(1)}%</span>
                             </div>
                           ))}
@@ -497,22 +499,24 @@ export function AnalyticsDesktopLayout({
                       );
                     }}
                   />
-                  <Bar dataKey="Birdie"   fill={successColor}                           stackId="neg" />
-                  <Bar dataKey="Eagle"    fill={(SCORE_COLORS as Record<string, string>).eagle}         stackId="neg" radius={[4, 0, 0, 4]} />
-                  <Bar dataKey="Par"      fill={mutedFill}                              stackId="pos" />
-                  <Bar dataKey="Bogey"    fill={dangerColor}                            stackId="pos" />
-                  <Bar dataKey="Double"   fill={(SCORE_COLORS as Record<string, string>).double_bogey}  stackId="pos" />
-                  <Bar dataKey="Triple+"  fill={(SCORE_COLORS as Record<string, string>).triple_bogey}  stackId="pos" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="birdie" name={scoreKindLabel("birdie")} fill={successColor}                           stackId="neg" />
+                  <Bar dataKey="eagle"  name={scoreKindLabel("eagle")}  fill={(SCORE_COLORS as Record<string, string>).eagle}         stackId="neg" radius={[4, 0, 0, 4]} />
+                  <Bar dataKey="par"    name={scoreKindLabel("par")}    fill={mutedFill}                              stackId="pos" />
+                  <Bar dataKey="bogey"  name={scoreKindLabel("bogey")}  fill={dangerColor}                            stackId="pos" />
+                  <Bar dataKey="double" name={scoreKindLabel("double")} fill={(SCORE_COLORS as Record<string, string>).double_bogey}  stackId="pos" />
+                  <Bar dataKey="triple" name={scoreKindLabel("triple")} fill={(SCORE_COLORS as Record<string, string>).triple_bogey}  stackId="pos" />
+                  <Bar dataKey="quad"   name={scoreKindLabel("quad")}   fill={(SCORE_COLORS as Record<string, string>).quad_bogey}    stackId="pos" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
               <div className="flex items-center gap-5 mt-3 justify-center flex-wrap">
                 {[
-                  { label: "Birdie",  color: successColor },
-                  { label: "Eagle",   color: (SCORE_COLORS as Record<string, string>).eagle },
-                  { label: "Par",     color: mutedFill },
-                  { label: "Bogey",   color: dangerColor },
-                  { label: "Double",  color: (SCORE_COLORS as Record<string, string>).double_bogey },
-                  { label: "Triple+", color: (SCORE_COLORS as Record<string, string>).triple_bogey },
+                  { label: scoreKindLabel("birdie"), color: successColor },
+                  { label: scoreKindLabel("eagle"),  color: (SCORE_COLORS as Record<string, string>).eagle },
+                  { label: scoreKindLabel("par"),    color: mutedFill },
+                  { label: scoreKindLabel("bogey"),  color: dangerColor },
+                  { label: scoreKindLabel("double"), color: (SCORE_COLORS as Record<string, string>).double_bogey },
+                  { label: scoreKindLabel("triple"), color: (SCORE_COLORS as Record<string, string>).triple_bogey },
+                  { label: scoreKindLabel("quad"),   color: (SCORE_COLORS as Record<string, string>).quad_bogey },
                 ].map(({ label, color }) => (
                   <div key={label} className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-sm" style={{ background: color }} />

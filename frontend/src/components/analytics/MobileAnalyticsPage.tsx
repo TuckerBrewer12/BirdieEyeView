@@ -4,6 +4,7 @@ type Fmt = (value: unknown, name: unknown, props: unknown) => ReactNode | [React
 type DivergingTooltipPayload = {
   value?: unknown;
   dataKey?: unknown;
+  name?: unknown;
   fill?: string;
 };
 
@@ -19,6 +20,7 @@ import { BestRoundCard } from "@/components/analytics/BestRoundCard";
 import { NarrativeInsight } from "@/components/analytics/NarrativeInsight";
 import { ParMatrixGrid } from "@/components/analytics/ParMatrixGrid";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
+import { scoreKindLabel } from "@/domain/score";
 import { SCORE_COLORS } from "@/lib/colors";
 import type {
   AnalyticsData, AnalyticsFilters, ScoreTrendRow,
@@ -386,7 +388,7 @@ export function MobileAnalyticsPage({
                       <div className="font-semibold text-[11px] mb-1" style={{ color: labelText === "GIR" ? successColor : dangerColor }}>{labelText}</div>
                       {visible.map((p) => (
                         <div key={String(p.dataKey)} className="flex items-center justify-between gap-3">
-                          <span style={{ color: p.fill }} className="text-[11px]">{String(p.dataKey ?? "")}</span>
+                          <span style={{ color: p.fill }} className="text-[11px]">{String(p.name ?? p.dataKey ?? "")}</span>
                           <span style={{ color: p.fill }} className="font-bold text-[11px]">{Math.abs(Number(p.value ?? 0)).toFixed(1)}%</span>
                         </div>
                       ))}
@@ -394,22 +396,24 @@ export function MobileAnalyticsPage({
                   );
                 }}
               />
-              <Bar dataKey="Birdie"  fill={successColor}               stackId="neg" />
-              <Bar dataKey="Eagle"   fill={scoreColors.eagle}           stackId="neg" radius={[4, 0, 0, 4]} />
-              <Bar dataKey="Par"     fill={mutedFill}                   stackId="pos" />
-              <Bar dataKey="Bogey"   fill={dangerColor}                 stackId="pos" />
-              <Bar dataKey="Double"  fill={scoreColors.double_bogey}    stackId="pos" />
-              <Bar dataKey="Triple+" fill={scoreColors.triple_bogey}    stackId="pos" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="birdie" name={scoreKindLabel("birdie")} fill={successColor}               stackId="neg" />
+              <Bar dataKey="eagle"  name={scoreKindLabel("eagle")}  fill={scoreColors.eagle}           stackId="neg" radius={[4, 0, 0, 4]} />
+              <Bar dataKey="par"    name={scoreKindLabel("par")}    fill={mutedFill}                   stackId="pos" />
+              <Bar dataKey="bogey"  name={scoreKindLabel("bogey")}  fill={dangerColor}                 stackId="pos" />
+              <Bar dataKey="double" name={scoreKindLabel("double")} fill={scoreColors.double_bogey}    stackId="pos" />
+              <Bar dataKey="triple" name={scoreKindLabel("triple")} fill={scoreColors.triple_bogey}    stackId="pos" />
+              <Bar dataKey="quad"   name={scoreKindLabel("quad")}   fill={scoreColors.quad_bogey}      stackId="pos" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
           <div className="flex items-center gap-3 mt-2.5 justify-center flex-wrap">
             {[
-              { label: "Birdie",  color: successColor             },
-              { label: "Eagle",   color: scoreColors.eagle        },
-              { label: "Par",     color: mutedFill                },
-              { label: "Bogey",   color: dangerColor              },
-              { label: "Double",  color: scoreColors.double_bogey },
-              { label: "Triple+", color: scoreColors.triple_bogey },
+              { label: scoreKindLabel("birdie"), color: successColor             },
+              { label: scoreKindLabel("eagle"),  color: scoreColors.eagle        },
+              { label: scoreKindLabel("par"),    color: mutedFill                },
+              { label: scoreKindLabel("bogey"),  color: dangerColor              },
+              { label: scoreKindLabel("double"), color: scoreColors.double_bogey },
+              { label: scoreKindLabel("triple"), color: scoreColors.triple_bogey },
+              { label: scoreKindLabel("quad"),   color: scoreColors.quad_bogey   },
             ].map(({ label, color }) => (
               <div key={label} className="flex items-center gap-1">
                 <div className="w-2 h-2 rounded-sm" style={{ background: color }} />
