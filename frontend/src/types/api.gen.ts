@@ -1182,6 +1182,18 @@ export interface components {
             /** Strokes */
             strokes?: number | null;
         };
+        /**
+         * HoleSummaryResponse
+         * @description One hole in a round list: what was taken and how it scored.
+         */
+        HoleSummaryResponse: {
+            /** Hole Number */
+            hole_number: number;
+            /** Kind */
+            kind: ("eagle" | "birdie" | "par" | "bogey" | "double" | "triple" | "quad") | null;
+            /** Strokes */
+            strokes: number | null;
+        };
         /** LinkCourseRequest */
         LinkCourseRequest: {
             /**
@@ -1335,47 +1347,32 @@ export interface components {
         };
         /**
          * RoundSummaryResponse
-         * @description A round for list views: where and when, its figures, and its hole scores.
+         * @description A round for list views: where and when, the figures a list shows, and a mark per hole.
          */
         RoundSummaryResponse: {
             /** Back Nine */
             back_nine: number | null;
             /** Course Id */
             course_id: string | null;
-            /** Course Location */
-            course_location: string | null;
             /** Course Name */
             course_name: string | null;
-            /** Course Par */
-            course_par: number | null;
             /** Date */
             date: string | null;
-            /** Fairways Hit */
-            fairways_hit: number | null;
             /** Front Nine */
             front_nine: number | null;
             /** Hole Scores */
-            hole_scores: components["schemas"]["HoleScoreResponse"][];
+            hole_scores: components["schemas"]["HoleSummaryResponse"][];
             /** Id */
             id: string;
-            nines: components["schemas"]["Nines"];
-            /** Notes */
-            notes: string | null;
-            /** Par */
-            par: number | null;
             score_counts: components["schemas"]["ScoreCounts"];
             /** Tee Box */
             tee_box: string | null;
             /** To Par */
             to_par: number | null;
-            /** Total Gir */
-            total_gir: number | null;
             /** Total Putts */
             total_putts: number | null;
             /** Total Score */
             total_score: number | null;
-            /** Yards */
-            yards: number | null;
         };
         /**
          * SaveRoundRequest

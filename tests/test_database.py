@@ -338,6 +338,29 @@ async def test_round_repo_get_round_not_found(mock_pool):
 
 
 @pytest.mark.asyncio
+async def test_round_summaries_pick_the_page_before_gathering_holes(mock_pool):
+    pool, conn = mock_pool
+    repo = RoundRepositoryDB(pool, course_repo=AsyncMock())
+    round_id, course_id, user_id = uuid4(), uuid4(), uuid4()
+    conn.fetch.return_value = [{
+        "id": round_id, "course_id": course_id, "tee_box_played": "Blue", "round_date": None,
+        "course_name_played": None, "course_name": "Blue Rock", "course_par": 72,
+        "hole_scores": [{"hole_number": 1, "strokes": 3, "putts": 1, "green_in_regulation": True,
+                         "par_played": None, "course_par": 4}],
+    }]
+
+    [summary] = await repo.get_round_summaries_for_user(str(user_id), limit=5, offset=10)
+
+    sql, *args = conn.fetch.call_args.args
+    assert args == [user_id, 5, 10]
+    # The page is cut inside the CTE, so json_agg only ever sees the rounds being returned.
+    assert sql.index("LIMIT $2 OFFSET $3") < sql.index("json_agg")
+    assert "GROUP BY" not in sql
+    assert summary.course.name == "Blue Rock"
+    assert summary.get_score_kind(1) == "birdie"
+
+
+@pytest.mark.asyncio
 async def test_round_repo_create_round_no_course(mock_pool):
     """create_round with no course: hole_id=None, par_played from HoleScore preserved."""
     pool, conn = mock_pool

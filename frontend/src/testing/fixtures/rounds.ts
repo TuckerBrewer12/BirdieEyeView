@@ -83,20 +83,18 @@ export const storedRounds: StoredRound[] = [
 export const populatedRounds: RoundSummaryDto[] = storedRounds.map(summaryResponse);
 
 /** `count` rounds at different courses, scoring 70, 71, 72… by giving the first holes a shot back or extra. */
-export function nRounds(count: number): RoundSummaryDto[] {
+export function nRounds(count: number): StoredRound[] {
   return Array.from({ length: count }, (_, i) => {
     const toPar = i - 2;
-    return summaryResponse(
-      played(
-        {
-          id: `round-n-${i + 1}`,
-          course: listedCourse(`course-n-${i + 1}`, `Course ${i + 1}`, "Half Moon Bay, CA"),
-          tee_box: "Blue",
-          date: `2026-01-${String((i % 28) + 1).padStart(2, "0")}T18:00:00.000Z`,
-          notes: null,
-        },
-        STANDARD_PAR.map((par, hole) => (hole < Math.abs(toPar) ? par + Math.sign(toPar) : par)),
-      ),
+    return played(
+      {
+        id: `round-n-${i + 1}`,
+        course: listedCourse(`course-n-${i + 1}`, `Course ${i + 1}`, "Half Moon Bay, CA"),
+        tee_box: "Blue",
+        date: `2026-01-${String((i % 28) + 1).padStart(2, "0")}T18:00:00.000Z`,
+        notes: null,
+      },
+      STANDARD_PAR.map((par, hole) => (hole < Math.abs(toPar) ? par + Math.sign(toPar) : par)),
     );
   });
 }

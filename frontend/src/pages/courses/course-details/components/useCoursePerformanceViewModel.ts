@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Round } from "@/domain";
+import { Round, type RoundSummary } from "@/domain";
 import { coursesRepository, type CoursesRepository } from "../../coursesRepository";
 import { useCourseAnalytics } from "../../useCourseAnalytics";
 import type { CourseScoreTrendRow } from "@/types/analytics";
@@ -13,7 +13,7 @@ export interface CoursePerformanceViewModel {
   /** Every round here, oldest first, as the server sends it. The chart plots the scored ones. */
   trend: CourseScoreTrendRow[];
   /** The golfer's rounds at this course, newest first. */
-  rounds: Round[];
+  rounds: RoundSummary[];
 }
 
 /** How the golfer has scored at one course. The server works out every figure. */

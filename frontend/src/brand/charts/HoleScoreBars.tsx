@@ -1,9 +1,9 @@
 import { cn } from "@/brand/cn";
 import { scoreFillClass, type ScoreKey } from "@/brand/theme";
-import type { HoleScore } from "@/domain";
+import type { HoleSummary } from "@/domain";
 
 interface HoleScoreBarsProps {
-  holes: HoleScore[];
+  holes: HoleSummary[];
   /** `strip` is one even row; `profile` stands each bar taller the worse the hole went. */
   variant?: "strip" | "profile";
   className?: string;

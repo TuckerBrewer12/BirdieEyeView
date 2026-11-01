@@ -112,7 +112,6 @@ def round_from_summary_row(row) -> Round:
         course = Course(
             id=str(row["course_id"]),
             name=row["course_name"],
-            location=row["course_location"],
             par=row["course_par"],
             holes=[Hole(number=h["hole_number"], par=h["course_par"]) for h in holes if h["course_par"] is not None],
         )
@@ -126,13 +125,11 @@ def round_from_summary_row(row) -> Round:
                 hole_number=h["hole_number"],
                 strokes=h["strokes"],
                 putts=h["putts"],
-                fairway_hit=h["fairway_hit"],
                 green_in_regulation=h["green_in_regulation"],
                 par_played=h["par_played"],
             )
             for h in holes
         ],
-        notes=row["notes"],
         course_name_played=row["course_name_played"],
     )
 

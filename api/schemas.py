@@ -96,17 +96,27 @@ class RoundFigures(ResponseModel):
     score_counts: ScoreCounts = Field(default_factory=ScoreCounts)
 
 
-class RoundSummaryResponse(RoundFigures):
-    """A round for list views: where and when, its figures, and its hole scores."""
+class HoleSummaryResponse(ResponseModel):
+    """One hole in a round list: what was taken and how it scored."""
+    hole_number: int
+    strokes: Optional[int] = None
+    kind: Optional[ScoreKind] = None
+
+
+class RoundSummaryResponse(ResponseModel):
+    """A round for list views: where and when, the figures a list shows, and a mark per hole."""
     id: str
     course_id: Optional[str] = None
     course_name: Optional[str] = None
-    course_location: Optional[str] = None
-    course_par: Optional[int] = None
     tee_box: Optional[str] = None
     date: Optional[datetime] = None
-    notes: Optional[str] = None
-    hole_scores: List[HoleScoreResponse] = Field(default_factory=list)
+    total_score: Optional[int] = None
+    to_par: Optional[int] = None
+    front_nine: Optional[int] = None  # null until all nine holes are scored
+    back_nine: Optional[int] = None   # null until all nine holes are scored
+    total_putts: Optional[int] = None
+    score_counts: ScoreCounts = Field(default_factory=ScoreCounts)
+    hole_scores: List[HoleSummaryResponse] = Field(default_factory=list)
 
 
 class RoundResponse(RoundFigures):

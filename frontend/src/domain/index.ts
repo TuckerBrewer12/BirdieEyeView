@@ -40,7 +40,19 @@ export {
 export type { DifferentialStatus } from "./handicap";
 
 export { Round } from "./round";
-export type { CourseEdit, HoleEdits, HoleScore, Nine, RoundCourse, RoundDetail, RoundEdits, ScoreCounts } from "./round";
+export type {
+  CourseEdit,
+  HoleEdits,
+  HoleScore,
+  HoleSummary,
+  Nine,
+  NineSummary,
+  RoundCourse,
+  RoundDetail,
+  RoundEdits,
+  RoundSummary,
+  ScoreCounts,
+} from "./round";
 
 export { activityDays } from "./activity";
 export type { ActivityDay } from "./activity";
