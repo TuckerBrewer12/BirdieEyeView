@@ -1,7 +1,7 @@
-import { initializeScores } from "@/lib/scanUtils";
+import { Round, type HoleEdits } from "@/domain";
 import type { SaveScanRequestDto } from "@/types/api";
 import type { Course, CourseSummary } from "@/types/golf";
-import type { ExtractedHoleScore, ManualTee, ScanResult, ScoreMetadata } from "@/types/scan";
+import type { ExtractedHoleScore, ManualTee, ScanResult } from "@/types/scan";
 
 /** Read a photographed card, or type the scores in by hand. */
 export type ScanMode = "scan" | "manual";
@@ -27,29 +27,26 @@ export interface ManualSetup {
   date: string;
 }
 
-/**
- * The card being checked before it is saved. Its shape is the legacy review step's, which
- * still draws it; the review moves onto `Round.fromScan` and `Round.previewEdits` next.
- */
+/** Which course a checked card is saved against. */
+export type ReviewCourse =
+  /** A saved course, or the course provider's (which has no id here until the round is saved). */
+  | { status: "linked"; id: string | null; externalId: string | null; name: string }
+  /** No link: the round keeps a name the golfer typed or kept. */
+  | { status: "named"; name: string }
+  /** Still choosing. Saved now, the round keeps the name read off the card, if there was one. */
+  | { status: "picking"; name: string | null };
+
+/** The card being checked before it is saved: the scan as read, and what the golfer changed. */
 export interface ScanReviewDraft {
-  result: ScanResult;
-  editedScores: ExtractedHoleScore[];
-  scoreMetadata: ScoreMetadata[];
+  /** The card as read, or the blank one hand entry opens. */
+  scan: ScanResult;
+  /** Strokes, putts and greens the golfer typed over, by hole number. */
+  holes: HoleEdits;
   /** `YYYY-MM-DD`. */
-  editedDate: string;
-  editedTeeBox: string | null;
-  reviewCourseId: string | null;
-  reviewExternalCourseId: string | null;
-  reviewCourseName: string | null;
+  date: string;
+  teeBox: string | null;
+  course: ReviewCourse;
 }
-
-/** The parts of a review the golfer sets outright, rather than hole by hole. */
-export type ReviewDetails = Pick<
-  ScanReviewDraft,
-  "editedDate" | "editedTeeBox" | "reviewCourseId" | "reviewExternalCourseId" | "reviewCourseName"
->;
-
-export type ScoreField = "strokes" | "putts" | "hole_number";
 
 /** Today as `YYYY-MM-DD`, the date a round defaults to. */
 export function todayIso(now: Date = new Date()): string {
@@ -61,25 +58,17 @@ export function courseQueryFrom(name: string | null | undefined): string {
   return (name ?? "").trim().replace(/\s+/g, " ");
 }
 
-/** A finished scan, ready to check. Estimated putts and greens are filled in and flagged. */
+/** A finished scan, ready to check. */
 export function reviewFromScan(result: ScanResult, today: string): ScanReviewDraft {
   const { round } = result;
-  const { editedScores, scoreMetadata } = initializeScores(
-    round.hole_scores,
-    result.fields_needing_review,
-    round.course?.holes ?? [],
-  );
   const onlyTee = round.course?.tees?.length === 1 ? round.course.tees[0].color : null;
   return {
-    result,
-    editedScores,
-    scoreMetadata,
-    editedDate: round.date ? round.date.substring(0, 10) : today,
-    editedTeeBox: round.tee_box ?? onlyTee ?? null,
-    reviewCourseId: null,
-    reviewExternalCourseId: null,
-    // A course name read off the card is often noisy, so it is shown but never linked.
-    reviewCourseName: round.course?.name ?? null,
+    scan: result,
+    holes: {},
+    date: round.date ? round.date.substring(0, 10) : today,
+    teeBox: round.tee_box ?? onlyTee ?? null,
+    // A course name read off the card is often noisy, so it is kept but never linked.
+    course: { status: "picking", name: round.course?.name ?? null },
   };
 }
 
@@ -103,7 +92,7 @@ export function reviewFromSetup(setup: ManualSetup, course: Course | null): Scan
     green_in_regulation: null,
   }));
 
-  const result: ScanResult = {
+  const scan: ScanResult = {
     round: {
       course: setup.course
         ? { name: setup.course.name, location: course?.location ?? null, par: course?.par ?? null, holes, tees }
@@ -116,54 +105,28 @@ export function reviewFromSetup(setup: ManualSetup, course: Course | null): Scan
     confidence: { overall: 1, level: "high", hole_scores: [] },
     fields_needing_review: [],
   };
-  const { editedScores, scoreMetadata } = initializeScores(blankScores, [], holes);
 
+  const picked = setup.course;
   return {
-    result,
-    editedScores,
-    scoreMetadata,
-    editedDate: setup.date,
-    editedTeeBox: setup.teeBox || null,
-    reviewCourseId: setup.course?.id ?? null,
-    reviewExternalCourseId: null,
-    reviewCourseName: setup.course?.name ?? null,
+    scan,
+    holes: {},
+    date: setup.date,
+    teeBox: setup.teeBox || null,
+    course: picked?.id
+      ? { status: "linked", id: picked.id, externalId: null, name: picked.name }
+      : picked
+        ? { status: "named", name: picked.name }
+        : { status: "picking", name: null },
   };
 }
 
-/** One typed score. Typing putts over an estimate makes it the golfer's own. */
-export function withScore(
-  draft: ScanReviewDraft,
-  index: number,
-  field: ScoreField,
-  value: string,
-): ScanReviewDraft {
-  const parsed = value === "" ? null : Number.parseInt(value, 10);
-  const number = parsed == null || Number.isNaN(parsed) ? null : parsed;
-  const editedScores = draft.editedScores.map((score, i) =>
-    i === index ? { ...score, [field]: number } : score,
-  );
-  const scoreMetadata =
-    field === "putts" && draft.scoreMetadata[index]?.putts_estimated
-      ? draft.scoreMetadata.map((meta, i) => (i === index ? { ...meta, putts_estimated: false } : meta))
-      : draft.scoreMetadata;
-  return { ...draft, editedScores, scoreMetadata };
-}
-
-/** One green set by hand, replacing any worked-out guess. */
-export function withGir(draft: ScanReviewDraft, index: number, value: boolean | null): ScanReviewDraft {
-  const editedScores = draft.editedScores.map((score, i) =>
-    i === index ? { ...score, green_in_regulation: value } : score,
-  );
-  const scoreMetadata = draft.scoreMetadata[index]?.gir_calculated
-    ? draft.scoreMetadata.map((meta, i) => (i === index ? { ...meta, gir_calculated: false } : meta))
-    : draft.scoreMetadata;
-  return { ...draft, editedScores, scoreMetadata };
+/** One hole's strokes, putts or green, as the golfer typed or tapped it. */
+export function withHoleEdit(draft: ScanReviewDraft, hole: number, edit: HoleEdits[number]): ScanReviewDraft {
+  return { ...draft, holes: { ...draft.holes, [hole]: { ...draft.holes[hole], ...edit } } };
 }
 
 /** A search result as the course to save the round against, or why it can't be. */
-export function reviewCourseFrom(
-  course: CourseSummary,
-): { link: Pick<ScanReviewDraft, "reviewCourseId" | "reviewExternalCourseId" | "reviewCourseName"> } | { error: string } {
+export function reviewCourseFrom(course: CourseSummary): { course: ReviewCourse } | { error: string } {
   const external = course.source === "external" || course.id.startsWith("external:");
   if (external && !course.external_course_id) {
     return {
@@ -171,28 +134,51 @@ export function reviewCourseFrom(
     };
   }
   return {
-    link: {
-      reviewCourseId: external ? null : course.id,
-      reviewExternalCourseId: course.external_course_id ?? null,
-      reviewCourseName: course.name ?? course.id,
+    course: {
+      status: "linked",
+      id: external ? null : course.id,
+      externalId: course.external_course_id ?? null,
+      name: course.name ?? course.id,
     },
   };
 }
 
-/** What saving a checked card sends: the scores, and the course and tees read off it. */
+/**
+ * The card as it will save: the scan with the golfer's edits, read against the linked course
+ * once it has loaded, else against the course and tees the scan found.
+ */
+export function reviewedRound(draft: ScanReviewDraft, linkedCourse: Course | null): Round {
+  const { scan, holes, teeBox, course } = draft;
+  const asRead = Round.fromScan({ ...scan.round, tee_box: teeBox });
+  const played = Round.previewEdits(asRead, holes, linkedCourse, teeBox);
+  return {
+    ...played,
+    date: draft.date,
+    teeBox,
+    course: {
+      id: linkedCourse?.id ?? null,
+      name: course.name,
+      location: linkedCourse?.location ?? scan.round.course?.location ?? null,
+      par: played.par,
+    },
+  };
+}
+
+/** What saving a checked card sends: the scores as edited, and the course and tees read off it. */
 export function saveRequestFrom(userId: string, draft: ScanReviewDraft): SaveScanRequestDto {
-  const { result, reviewCourseId, reviewExternalCourseId, reviewCourseName, editedTeeBox } = draft;
-  const course = result.round.course;
-  const courseName = reviewCourseName ?? course?.name ?? null;
+  const { scan, course: picked, teeBox, holes } = draft;
+  const course = scan.round.course;
+  const courseName = picked.name ?? course?.name ?? null;
 
-  const link: Partial<SaveScanRequestDto> = reviewCourseId
-    ? { course_id: reviewCourseId, ...(reviewExternalCourseId ? { external_course_id: reviewExternalCourseId } : {}) }
-    : reviewExternalCourseId
-      ? { external_course_id: reviewExternalCourseId, course_name: courseName }
-      : { course_name: courseName };
+  const link: Partial<SaveScanRequestDto> =
+    picked.status === "linked" && picked.id
+      ? { course_id: picked.id, ...(picked.externalId ? { external_course_id: picked.externalId } : {}) }
+      : picked.status === "linked" && picked.externalId
+        ? { external_course_id: picked.externalId, course_name: courseName }
+        : { course_name: courseName };
 
-  const teeBox = editedTeeBox?.toLowerCase();
-  const tee = teeBox ? course?.tees?.find((t) => t.color?.toLowerCase() === teeBox) : undefined;
+  const teeKey = teeBox?.toLowerCase();
+  const tee = teeKey ? course?.tees?.find((t) => t.color?.toLowerCase() === teeKey) : undefined;
   const teeRatings: Partial<SaveScanRequestDto> = tee
     ? {
         tee_slope_rating: tee.slope_rating,
@@ -205,17 +191,21 @@ export function saveRequestFrom(userId: string, draft: ScanReviewDraft): SaveSca
     user_id: userId,
     ...link,
     course_location: course?.location,
-    tee_box: editedTeeBox,
+    tee_box: teeBox,
     ...teeRatings,
-    date: draft.editedDate,
-    hole_scores: draft.editedScores.map((score, i) => ({
-      hole_number: score.hole_number ?? i + 1,
-      strokes: score.strokes,
-      putts: score.putts,
-      shots_to_green: score.shots_to_green,
-      fairway_hit: score.fairway_hit,
-      green_in_regulation: score.green_in_regulation,
-    })),
+    date: draft.date,
+    hole_scores: scan.round.hole_scores.map((score, i) => {
+      const hole = score.hole_number ?? i + 1;
+      const edit = holes[hole];
+      return {
+        hole_number: hole,
+        strokes: edit?.strokes !== undefined ? edit.strokes : score.strokes,
+        putts: edit?.putts !== undefined ? edit.putts : score.putts,
+        shots_to_green: score.shots_to_green,
+        fairway_hit: score.fairway_hit,
+        green_in_regulation: edit?.gir !== undefined ? edit.gir : score.green_in_regulation,
+      };
+    }),
     course_holes: course?.holes
       ?.filter((hole) => hole.number != null)
       .map((hole) => ({ hole_number: hole.number!, par: hole.par, handicap: hole.handicap })),

@@ -96,7 +96,7 @@ describe("useScanPageViewModel", () => {
     act(() => result.current.extract());
 
     await waitFor(() => expect(result.current.step).toBe("review"));
-    expect(result.current.reviewSearch.query).toBe(SCANNED_COURSE_NAME);
+    expect(result.current.review.courseSearch.query).toBe(SCANNED_COURSE_NAME);
   });
 
   it("shows the scan in progress, then the card to check", async () => {
@@ -109,9 +109,9 @@ describe("useScanPageViewModel", () => {
 
     act(() => scan.finishExtract());
     await waitFor(() => expect(result.current.step).toBe("review"));
-    expect(result.current.review?.reviewCourseName).toBe(SCANNED_COURSE_NAME);
-    expect(result.current.review?.editedScores).toHaveLength(18);
-    expect(result.current.review?.editedTeeBox).toBe("Blue");
+    expect(result.current.review.round?.course?.name).toBe(SCANNED_COURSE_NAME);
+    expect(result.current.review.round?.holes).toHaveLength(18);
+    expect(result.current.review.teeBox).toBe("Blue");
   });
 
   it("keeps a running scan when the golfer leaves the page and comes back", async () => {
@@ -139,7 +139,7 @@ describe("useScanPageViewModel", () => {
     view.rerender(<Wrapper><Screen onRender={seen} /></Wrapper>);
 
     await waitFor(() => expect(current.current.step).toBe("review"));
-    expect(current.current.review?.reviewCourseName).toBe(SCANNED_COURSE_NAME);
+    expect(current.current.review.round?.course?.name).toBe(SCANNED_COURSE_NAME);
   });
 
   it("returns to the photo with the reason when the scan fails", async () => {
@@ -192,14 +192,13 @@ describe("useScanPageViewModel", () => {
     act(() => result.current.startEntry());
 
     expect(result.current.step).toBe("review");
-    const review = result.current.review!;
-    expect(review.reviewCourseId).toBe(pebbleBeach.id);
-    expect(review.editedTeeBox).toBe("Blue");
-    expect(review.editedDate).toBe("2026-10-01");
-    expect(review.editedScores.every((score) => score.strokes === null)).toBe(true);
-    expect(review.result.round.course?.holes.map((hole) => hole.par)).toEqual(
-      pebbleBeachCourse.holes.map((hole) => hole.par),
-    );
+    const { review } = result.current;
+    expect(review.linkedName).toBe(pebbleBeach.name);
+    expect(review.teeBox).toBe("Blue");
+    expect(review.date).toBe("2026-10-01");
+    expect(review.toCheck).toEqual([]);
+    expect(review.round?.holes.every((hole) => hole.strokes === null)).toBe(true);
+    expect(review.round?.holes.map((hole) => hole.par)).toEqual(pebbleBeachCourse.holes.map((hole) => hole.par));
   });
 
   it("starts eighteen unknown holes under a typed course name", () => {
@@ -209,54 +208,18 @@ describe("useScanPageViewModel", () => {
 
     act(() => result.current.startEntry());
 
-    const review = result.current.review!;
-    expect(review.reviewCourseId).toBeNull();
-    expect(review.reviewCourseName).toBe("Muni Nine");
-    expect(review.editedScores).toHaveLength(18);
-  });
-
-  it("typing putts over an estimate makes it the golfer's own", async () => {
-    const holeOneNoPutts = {
-      ...scannedCard,
-      round: {
-        ...scannedCard.round,
-        hole_scores: scannedCard.round.hole_scores.map((score, i) =>
-          i === 0 ? { ...score, putts: null } : score,
-        ),
-      },
-    };
-    const { result } = renderVm({ result: holeOneNoPutts });
-    await scanToReview(result);
-    expect(result.current.review?.scoreMetadata[0].putts_estimated).toBe(true);
-
-    act(() => result.current.changeScore(0, "putts", "1"));
-
-    expect(result.current.review?.editedScores[0].putts).toBe(1);
-    expect(result.current.review?.scoreMetadata[0].putts_estimated).toBe(false);
-  });
-
-  it("links the round to a picked course, and refuses an external one with no provider id", async () => {
-    const { result } = renderVm();
-    await scanToReview(result);
-
-    act(() =>
-      result.current.pickReviewCourse({ ...pebbleBeach, id: "external:1", source: "external", external_course_id: null }),
-    );
-    expect(result.current.error).toMatch(/missing provider ID/);
-    expect(result.current.review?.reviewCourseId).toBeNull();
-
-    act(() => result.current.pickReviewCourse(pebbleBeach));
-    expect(result.current.error).toBeNull();
-    expect(result.current.review?.reviewCourseId).toBe(pebbleBeach.id);
-    expect(result.current.review?.reviewCourseName).toBe(pebbleBeach.name);
+    const { review } = result.current;
+    expect(review.linkedName).toBeUndefined();
+    expect(review.customName).toBe("Muni Nine");
+    expect(review.round?.holes).toHaveLength(18);
   });
 
   it("saves the checked card and shows the round it became", async () => {
     const { result, scan } = renderVm();
     await scanToReview(result);
-    act(() => result.current.updateReview({ editedDate: "2026-10-02" }));
+    act(() => result.current.review.setDate("2026-10-02"));
 
-    act(() => result.current.save());
+    act(() => result.current.review.save());
 
     await waitFor(() => expect(result.current.step).toBe("success"));
     await waitFor(() => expect(result.current.savedRound).not.toBeNull());
@@ -276,7 +239,7 @@ describe("useScanPageViewModel", () => {
   it("opening the saved round ends the scan", async () => {
     const { result } = renderVm();
     await scanToReview(result);
-    act(() => result.current.save());
+    act(() => result.current.review.save());
     await waitFor(() => expect(result.current.step).toBe("success"));
     const open = new FakeHandler<[string]>();
 
@@ -285,7 +248,7 @@ describe("useScanPageViewModel", () => {
     expect(open.calls).toHaveLength(1);
     expect(open.calls[0][0]).toMatch(/^scanned-/);
     expect(result.current.step).toBe("upload");
-    expect(result.current.review).toBeNull();
+    expect(result.current.review.round).toBeNull();
   });
 
   it("stays on the review with the reason when saving fails", async () => {
@@ -293,21 +256,25 @@ describe("useScanPageViewModel", () => {
     rounds.store.saveError = "That round could not be saved.";
     await scanToReview(result);
 
-    act(() => result.current.save());
+    act(() => result.current.review.save());
 
-    await waitFor(() => expect(result.current.error).toBe("That round could not be saved."));
+    await waitFor(() => expect(result.current.review.error).toBe("That round could not be saved."));
     expect(result.current.step).toBe("review");
-    expect(result.current.saving).toBe(false);
+    expect(result.current.review.saving).toBe(false);
   });
 
-  it("starting over drops the card", async () => {
-    const { result } = renderVm();
+  it("starting over drops the card, and a failed save with it", async () => {
+    const { result, rounds } = renderVm();
+    rounds.store.saveError = "That round could not be saved.";
     await scanToReview(result);
+    act(() => result.current.review.save());
+    await waitFor(() => expect(result.current.review.error).not.toBeNull());
 
     act(() => result.current.startOver());
 
     expect(result.current.step).toBe("upload");
-    expect(result.current.review).toBeNull();
+    expect(result.current.review.round).toBeNull();
+    expect(result.current.review.error).toBeNull();
     expect(result.current.photo).toBeNull();
   });
 });

@@ -24,9 +24,11 @@ export default function RoundScorecardPreview() {
           </Button>
         }
       />
+      {/* Being edited, with two scores in doubt. */}
       <RoundScorecard
         round={Round.fromDto(scannedRound)}
         edits={{ onStrokesChange: noop, onPuttsChange: noop, onGirChange: noop }}
+        toCheck={[3, 12]}
       />
     </>
   );

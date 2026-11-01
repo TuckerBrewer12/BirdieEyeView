@@ -368,6 +368,9 @@ def _build_round_from_parsed_rows(
             par_i = hole_par_lookup[i]  # guarded above
             if par_i is not None:
                 gir_val = shots_vals[i - 1] <= max(1, par_i - 2)
+        if gir_val is None and strokes is not None and putts is not None and hole_par_lookup.get(i) is not None:
+            # Without that row, strokes less putts is the shots it took to reach the green.
+            gir_val = strokes - putts <= hole_par_lookup[i] - 2  # type: ignore[operator]
 
         shots_val = shots_vals[i - 1]
         if shots_val is not None and not (1 <= shots_val <= 10):

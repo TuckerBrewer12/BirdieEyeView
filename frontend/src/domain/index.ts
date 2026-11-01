@@ -63,3 +63,5 @@ export type { ActivityDay } from "./activity";
 
 export { trendPointsFrom } from "./trend";
 export type { RoundTrendPoint } from "./trend";
+
+export { strokesToCheck } from "./scan";
