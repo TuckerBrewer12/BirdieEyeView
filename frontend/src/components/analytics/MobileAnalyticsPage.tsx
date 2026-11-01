@@ -4,10 +4,11 @@ type Fmt = (value: unknown, name: unknown, props: unknown) => ReactNode | [React
 type DivergingTooltipPayload = {
   value?: unknown;
   dataKey?: unknown;
+  name?: unknown;
   fill?: string;
 };
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart, Bar, PieChart, Pie, Cell,
@@ -19,40 +20,75 @@ import { BestRoundCard } from "@/components/analytics/BestRoundCard";
 import { NarrativeInsight } from "@/components/analytics/NarrativeInsight";
 import { ParMatrixGrid } from "@/components/analytics/ParMatrixGrid";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
-import { average, trendDelta } from "@/lib/stats";
+import { chartColors, chartLayout, colors } from "@/brand";
+import { scoreKindLabel, type ScoreKind } from "@/domain";
 import type {
   AnalyticsData, AnalyticsFilters, ScoreTrendRow,
   GIRTrendRow, PuttsTrendRow, ThreePuttRow,
 } from "@/types/analytics";
-interface Insight {
+
+// The chart colours, from the brand tokens. Analytics PR C moves this layout onto the kit.
+const trendPrimary = colors.primary;
+const successColor = colors.score.birdie.base;
+const dangerColor = colors.score.bogey.base;
+const neutralColor = colors.mutedForeground;
+const gridColor = colors.muted;
+const mutedFill = chartColors.muted;
+const scoreColors: Record<string, string> = {
+  eagle: colors.score.eagle.base,
+  birdie: colors.score.birdie.base,
+  par: colors.score.par.base,
+  bogey: colors.score.bogey.base,
+  double_bogey: colors.score.double.base,
+  triple_bogey: colors.score.triple.base,
+  quad_bogey: colors.score.quad.base,
+};
+
+/** GIR vs no-GIR: under par stacks left of zero, par and over to the right. */
+const GIR_BARS: { kind: ScoreKind; fill: string; stackId: "neg" | "pos"; radius?: [number, number, number, number] }[] = [
+  { kind: "birdie", fill: successColor, stackId: "neg" },
+  { kind: "eagle", fill: colors.score.eagle.base, stackId: "neg", radius: chartLayout.stackEndRadius.left },
+  { kind: "par", fill: mutedFill, stackId: "pos" },
+  { kind: "bogey", fill: dangerColor, stackId: "pos" },
+  { kind: "double", fill: colors.score.double.base, stackId: "pos" },
+  { kind: "triple", fill: colors.score.triple.base, stackId: "pos" },
+  { kind: "quad", fill: colors.score.quad.base, stackId: "pos", radius: chartLayout.stackEndRadius.right },
+];
+
+type MobileTab = "scoring" | "ball-striking" | "putting" | "profile" | "range";
+
+interface Narrative {
   text: string;
-  trend?: "up" | "down" | "flat";
-  positiveUp?: boolean;
-  category: "scoring" | "gir" | "putting";
+  trend: "up" | "down" | "flat";
+  positiveUp: boolean;
 }
 
-interface MobileAnalyticsPageProps {
+interface RecentRate {
+  percent: number | null;
+  change: number | null;
+}
+
+export interface MobileAnalyticsPageProps {
   data: AnalyticsData;
   filters: AnalyticsFilters;
   setFilters: (f: AnalyticsFilters) => void;
   playedCourses: { id: string; name: string | null; location: string | null }[];
   hasHomeCourse: boolean;
-  scoreTrendWithAvg: (ScoreTrendRow & { rolling_avg: number | null })[];
-  donutData: { name: string; value: number }[];
-  girData: GIRTrendRow[];
-  threePuttsData: ThreePuttRow[];
-  insights: Insight[];
-  bestRound: ScoreTrendRow | null;
-  avgPutts: string | null;
-  trendPrimary: string;
-  trendSecondary: string;
-  trendTertiary: string;
-  successColor: string;
-  dangerColor: string;
-  neutralColor: string;
-  gridColor: string;
-  mutedFill: string;
-  scoreColors: Record<string, string>;
+  tabs: { id: MobileTab; label: string }[];
+  tab: MobileTab;
+  onTabChange: (tab: MobileTab) => void;
+  scoreTrend: (ScoreTrendRow & { rolling_avg: number | null })[];
+  scoreMix: { name: string; value: number }[];
+  girTrend: GIRTrendRow[];
+  girRoundsLeftOut: boolean;
+  puttsTrend: PuttsTrendRow[];
+  threePuttTrend: ThreePuttRow[];
+  scrambling: RecentRate;
+  upAndDown: RecentRate;
+  narratives: { scoring: Narrative | null; ballStriking: Narrative | null; putting: Narrative | null };
+  bestScore: number | null;
+  averagePutts: string | null;
+  girVsNonGir: Record<string, string | number>[];
 }
 
 const SCORE_LABELS: Record<string, string> = {
@@ -60,9 +96,6 @@ const SCORE_LABELS: Record<string, string> = {
   bogey: "Bogey", double_bogey: "Double",
   triple_bogey: "Triple", quad_bogey: "Quad+",
 };
-
-
-const TABS = ["Scoring", "Ball Striking", "Putting", "Profile", "Range View"] as const;
 
 const tooltipStyle = {
   fontSize: 12,
@@ -199,52 +232,32 @@ export function MobileAnalyticsPage({
   setFilters,
   playedCourses,
   hasHomeCourse,
-  scoreTrendWithAvg,
-  donutData,
-  girData,
-  threePuttsData,
-  insights,
-  bestRound,
-  avgPutts,
-  trendPrimary,
-  successColor,
-  dangerColor,
-  neutralColor,
-  gridColor,
-  mutedFill,
-  scoreColors,
+  tabs,
+  tab: activeTab,
+  onTabChange,
+  scoreTrend,
+  scoreMix: donutData,
+  girTrend: girData,
+  girRoundsLeftOut,
+  puttsTrend,
+  threePuttTrend: threePuttsData,
+  scrambling,
+  upAndDown,
+  narratives,
+  bestScore,
+  averagePutts: avgPutts,
+  girVsNonGir: divergingGirData,
 }: MobileAnalyticsPageProps) {
-  const [activeTab, setActiveTab] = useState(0);
-
-  const { kpis, scoring_by_par, scoring_by_handicap, scoring_by_yardage, gir_vs_non_gir,
-    notable_achievements, scrambling_trend, up_and_down_trend, putts_trend, net_score_trend } = data;
-
-  const scoringInsights = insights.filter((i) => i.category === "scoring");
-  const girInsights = insights.filter((i) => i.category === "gir");
-  const puttingInsights = insights.filter((i) => i.category === "putting");
+  const { kpis, scoring_by_par, scoring_by_handicap, scoring_by_yardage,
+    notable_achievements, net_score_trend } = data;
 
   const birdiePct = donutData.find((d) => d.name === "birdie")?.value;
 
-  // Short game deltas (last 5 vs prev 5)
-  // A round without a missed green has no rate, so it sits out of both.
-  const scrRates = scrambling_trend.flatMap((r) => (r.scrambling_percentage != null ? [r.scrambling_percentage] : []));
-  const udRates = up_and_down_trend.flatMap((r) => (r.percentage != null ? [r.percentage] : []));
-  const scrPct = average(scrRates.slice(-5));
-  const scrDelta = trendDelta(scrRates, (v) => v);
-  const udPct = average(udRates.slice(-5));
-  const udDelta = trendDelta(udRates, (v) => v);
-
-  const divergingGirData = useMemo(() =>
-    gir_vs_non_gir.map((row) => ({
-      bucket:         row.bucket,
-      "Birdie":       -(row.birdie ?? 0),
-      "Eagle":        -(row.eagle ?? 0),
-      "Par":          row.par ?? 0,
-      "Bogey":        row.bogey ?? 0,
-      "Double":       row.double_bogey ?? 0,
-      "Triple+":      (row.triple_bogey ?? 0) + (row.quad_bogey ?? 0),
-    })),
-  [gir_vs_non_gir]);
+  // Short game: the last 5 rounds with a rate, and the change from the 5 before.
+  const scrPct = scrambling.percent;
+  const scrDelta = scrambling.change;
+  const udPct = upAndDown.percent;
+  const udDelta = upAndDown.change;
 
   // ── Tab content renderers ────────────────────────────────────────────────
 
@@ -262,7 +275,7 @@ export function MobileAnalyticsPage({
             <div key="score" className="space-y-3">
               <ChartCard title="Score Trend" subtitle="5-round rolling average">
                 <SVGTimeSeriesArea
-                  data={scoreTrendWithAvg}
+                  data={scoreTrend}
                   valueKey="total_score"
                   rollingAvgKey="rolling_avg"
                   indexKey="round_index"
@@ -276,11 +289,11 @@ export function MobileAnalyticsPage({
                   tooltipLabel="Score"
                 />
               </ChartCard>
-              {scoringInsights[0] && (
+              {narratives.scoring && (
                 <NarrativeInsight
-                  text={scoringInsights[0].text}
-                  trend={scoringInsights[0].trend}
-                  positiveUp={scoringInsights[0].positiveUp}
+                  text={narratives.scoring.text}
+                  trend={narratives.scoring.trend}
+                  positiveUp={narratives.scoring.positiveUp}
                 />
               )}
             </div>,
@@ -310,7 +323,7 @@ export function MobileAnalyticsPage({
       <div key="gir" className="space-y-3">
         <ChartCard
           title="GIR % per Round"
-          subtitle={girData.length < (data.gir_trend ?? []).length ? "Rounds without GIR data excluded" : undefined}
+          subtitle={girRoundsLeftOut ? "Rounds without GIR data excluded" : undefined}
         >
           <SVGTimeSeriesArea
             data={girData}
@@ -328,11 +341,11 @@ export function MobileAnalyticsPage({
             formatTooltipValue={(v) => `${v.toFixed(1)}%`}
           />
         </ChartCard>
-        {girInsights[0] && (
+        {narratives.ballStriking && (
           <NarrativeInsight
-            text={girInsights[0].text}
-            trend={girInsights[0].trend}
-            positiveUp={girInsights[0].positiveUp}
+            text={narratives.ballStriking.text}
+            trend={narratives.ballStriking.trend}
+            positiveUp={narratives.ballStriking.positiveUp}
           />
         )}
       </div>,
@@ -394,7 +407,7 @@ export function MobileAnalyticsPage({
                       <div className="font-semibold text-[11px] mb-1" style={{ color: labelText === "GIR" ? successColor : dangerColor }}>{labelText}</div>
                       {visible.map((p) => (
                         <div key={String(p.dataKey)} className="flex items-center justify-between gap-3">
-                          <span style={{ color: p.fill }} className="text-[11px]">{String(p.dataKey ?? "")}</span>
+                          <span style={{ color: p.fill }} className="text-label">{String(p.name ?? "")}</span>
                           <span style={{ color: p.fill }} className="font-bold text-[11px]">{Math.abs(Number(p.value ?? 0)).toFixed(1)}%</span>
                         </div>
                       ))}
@@ -402,26 +415,16 @@ export function MobileAnalyticsPage({
                   );
                 }}
               />
-              <Bar dataKey="Birdie"  fill={successColor}               stackId="neg" />
-              <Bar dataKey="Eagle"   fill={scoreColors.eagle}           stackId="neg" radius={[4, 0, 0, 4]} />
-              <Bar dataKey="Par"     fill={mutedFill}                   stackId="pos" />
-              <Bar dataKey="Bogey"   fill={dangerColor}                 stackId="pos" />
-              <Bar dataKey="Double"  fill={scoreColors.double_bogey}    stackId="pos" />
-              <Bar dataKey="Triple+" fill={scoreColors.triple_bogey}    stackId="pos" radius={[0, 4, 4, 0]} />
+              {GIR_BARS.map(({ kind, fill, stackId, radius }) => (
+                <Bar key={kind} dataKey={kind} name={scoreKindLabel(kind)} fill={fill} stackId={stackId} radius={radius} />
+              ))}
             </BarChart>
           </ResponsiveContainer>
           <div className="flex items-center gap-3 mt-2.5 justify-center flex-wrap">
-            {[
-              { label: "Birdie",  color: successColor             },
-              { label: "Eagle",   color: scoreColors.eagle        },
-              { label: "Par",     color: mutedFill                },
-              { label: "Bogey",   color: dangerColor              },
-              { label: "Double",  color: scoreColors.double_bogey },
-              { label: "Triple+", color: scoreColors.triple_bogey },
-            ].map(({ label, color }) => (
-              <div key={label} className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-sm" style={{ background: color }} />
-                <span className="text-[11px] font-semibold text-gray-500">{label}</span>
+            {GIR_BARS.map(({ kind, fill }) => (
+              <div key={kind} className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-sm" style={{ background: fill }} />
+                <span className="text-label font-semibold text-muted-foreground">{scoreKindLabel(kind)}</span>
               </div>
             ))}
           </div>
@@ -438,7 +441,7 @@ export function MobileAnalyticsPage({
     const puttsSlides: React.ReactNode[] = [
       <ChartCard key="putts" title="Total Putts per Round">
         <SVGTimeSeriesArea
-          data={putts_trend.filter((r: PuttsTrendRow) => r.total_putts != null)}
+          data={puttsTrend}
           valueKey="total_putts"
           indexKey="round_index"
           color={neutralColor}
@@ -475,11 +478,11 @@ export function MobileAnalyticsPage({
 
     return (
       <div className="space-y-3">
-        {puttingInsights[0] && (
+        {narratives.putting && (
           <NarrativeInsight
-            text={puttingInsights[0].text}
-            trend={puttingInsights[0].trend}
-            positiveUp={puttingInsights[0].positiveUp}
+            text={narratives.putting.text}
+            trend={narratives.putting.trend}
+            positiveUp={narratives.putting.positiveUp}
           />
         )}
         <ChartCarousel key={activeTab}>{puttsSlides}</ChartCarousel>
@@ -587,7 +590,13 @@ export function MobileAnalyticsPage({
     return <ParMatrixGrid rows={scoring_by_yardage} />;
   }
 
-  const tabContent = [renderScoring, renderBallStriking, renderPutting, renderProfile, renderRangeView];
+  const tabContent: Record<MobileTab, () => ReactNode> = {
+    scoring: renderScoring,
+    "ball-striking": renderBallStriking,
+    putting: renderPutting,
+    profile: renderProfile,
+    range: renderRangeView,
+  };
 
   return (
     <div className="space-y-4">
@@ -597,7 +606,7 @@ export function MobileAnalyticsPage({
         totalRounds={kpis.total_rounds}
         handicapIndex={kpis.handicap_index}
         scoringAvg={kpis.scoring_average}
-        bestScore={bestRound?.total_score ?? null}
+        bestScore={bestScore}
         avgPutts={avgPutts}
         girPct={kpis.gir_percentage}
         filters={filters}
@@ -620,12 +629,13 @@ export function MobileAnalyticsPage({
         overflowX: "auto",
         scrollbarWidth: "none",
       }} className="[&::-webkit-scrollbar]:hidden">
-        {TABS.map((tab, i) => {
-          const isActive = activeTab === i;
+        {tabs.map(({ id, label }) => {
+          const isActive = activeTab === id;
           return (
             <button
-              key={tab}
-              onClick={() => setActiveTab(i)}
+              key={id}
+              aria-pressed={isActive}
+              onClick={() => onTabChange(id)}
               style={{
                 flexShrink: 0,
                 padding: "10px 0 12px",
@@ -642,7 +652,7 @@ export function MobileAnalyticsPage({
                 transition: "color 0.15s, border-color 0.15s",
               }}
             >
-              {tab}
+              {label}
             </button>
           );
         })}
