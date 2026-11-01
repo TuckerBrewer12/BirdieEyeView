@@ -10,7 +10,6 @@ export interface ForgotPasswordViewModel {
   notice: string | null;
   error: string | null;
   submitting: boolean;
-  submitLabel: string;
   submit: () => void;
 }
 
@@ -29,7 +28,6 @@ export function useForgotPasswordViewModel(
     notice: request.data ?? null,
     error: request.error ? messageFrom(request.error, "Could not send reset email.") : null,
     submitting: request.isPending,
-    submitLabel: request.isPending ? "Sending link…" : "Send reset link",
     submit,
   };
 }

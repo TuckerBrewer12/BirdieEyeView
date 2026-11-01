@@ -42,7 +42,7 @@ export function ForgotPasswordPage() {
         </Field>
 
         <Button type="submit" size="cta" disabled={viewModel.submitting}>
-          {viewModel.submitLabel}
+          {viewModel.submitting ? "Sending link…" : "Send reset link"}
         </Button>
       </form>
     </AuthCard>
