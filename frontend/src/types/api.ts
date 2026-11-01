@@ -32,3 +32,6 @@ export type FriendshipDto = Schemas["FriendshipResponse"];
 export type FriendshipStatusRequestDto = Schemas["FriendshipStatusRequest"];
 /** What `PATCH /users/{id}` takes. A field left out keeps its value; null clears it. */
 export type UserChangesDto = Schemas["UpdateUserRequest"];
+
+/** What `POST /api/scan/save` takes: a reviewed scan, and the course details read off the card. */
+export type SaveScanRequestDto = Schemas["SaveRoundRequest"];

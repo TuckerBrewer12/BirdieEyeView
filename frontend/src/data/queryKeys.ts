@@ -29,3 +29,8 @@ export const queryKeys = {
   /** One emailed verification token, spent once. */
   emailVerification: (token: string) => ["email-verification", token] as const,
 };
+
+export const mutationKeys = {
+  /** A scan being read. The scan page looks for one still running when the golfer comes back. */
+  extractScorecard: ["extract-scorecard"] as const,
+};

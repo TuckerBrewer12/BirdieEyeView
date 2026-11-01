@@ -16,7 +16,7 @@ export class FakeSession {
       } catch {
         body = undefined;
       }
-      const reply = backend.handle(request.method(), request.url(), body);
+      const reply = await backend.respond(request.method(), request.url(), body);
       await route.fulfill({
         status: reply.status,
         contentType: "application/json",

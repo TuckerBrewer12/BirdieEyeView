@@ -1,0 +1,198 @@
+import { useNavigate } from "react-router-dom";
+import { PenLine, ScanLine } from "lucide-react";
+import {
+  Alert,
+  AlertDescription,
+  CourseLinkSearch,
+  LoadingState,
+  PageHeader,
+  PageTitle,
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/brand";
+// Setup, review and success still draw with the legacy scan components; the next scan PRs
+// move them onto the kit (review onto `Round.fromScan` and `RoundScorecard`).
+import { ScanManualSetup } from "@/components/scan/ScanManualSetup";
+import { ScanReviewStep } from "@/components/scan/ScanReviewStep";
+import { ScanSuccessStep } from "@/components/scan/ScanSuccessStep";
+import { formatCourseName } from "@/lib/courseName";
+import { useFilePreview } from "@/platform/useFilePreview";
+import { ScanProcessingStep } from "./components/ScanProcessingStep";
+import { ScanUploadStep } from "./components/ScanUploadStep";
+import { useScanPageViewModel, type ScanPageViewModel } from "./useScanPageViewModel";
+
+const TITLE = "Scan Scorecard";
+
+export function ScanPage({ userId }: { userId: string }) {
+  const navigate = useNavigate();
+  const viewModel = useScanPageViewModel(userId);
+  const previewUrl = useFilePreview(viewModel.photo);
+
+  switch (viewModel.step) {
+    case "success":
+      return viewModel.savedRound ? (
+        <ScanSuccessStep
+          round={viewModel.savedRound}
+          onView={() => viewModel.openSavedRound((roundId) => navigate(`/rounds/${roundId}`))}
+        />
+      ) : (
+        <LoadingState>Loading…</LoadingState>
+      );
+
+    case "review":
+      return <ReviewStep viewModel={viewModel} previewUrl={previewUrl} />;
+
+    case "processing":
+      return (
+        <div className="flex flex-col gap-2.5 pb-6">
+          <PageHeader title={TITLE} revealAt={100} />
+          <PageTitle>{TITLE}</PageTitle>
+          <ScanProcessingStep phase={viewModel.phase} />
+        </div>
+      );
+
+    default:
+      return (
+        <div className="flex flex-col gap-4 pb-6">
+          <PageHeader title={TITLE} revealAt={100} />
+          <div className="flex flex-col gap-1">
+            <PageTitle>{TITLE}</PageTitle>
+            <p className="text-sm text-muted-foreground">
+              Read a photo of your card, or type the scores in yourself.
+            </p>
+          </div>
+
+          <ToggleGroup
+            aria-label="How to add the round"
+            variant="outline"
+            spacing={0}
+            value={[viewModel.mode]}
+            onValueChange={(values) => {
+              // Pressing the chosen mode again would clear it; one is always chosen.
+              if (values[0] === "scan" || values[0] === "manual") viewModel.setMode(values[0]);
+            }}
+          >
+            <ToggleGroupItem value="scan">
+              <ScanLine data-icon="inline-start" />
+              Scan a card
+            </ToggleGroupItem>
+            <ToggleGroupItem value="manual">
+              <PenLine data-icon="inline-start" />
+              Enter by hand
+            </ToggleGroupItem>
+          </ToggleGroup>
+
+          {viewModel.error && (
+            <Alert variant="destructive">
+              <AlertDescription>{viewModel.error}</AlertDescription>
+            </Alert>
+          )}
+
+          {viewModel.step === "setup" ? (
+            <SetupStep viewModel={viewModel} />
+          ) : (
+            <>
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-muted-foreground">
+                  Optional: pick the course first and the scan reads the card against it.
+                </p>
+                <CourseLinkSearch
+                  query={viewModel.courseSearch.query}
+                  results={viewModel.courseSearch.results}
+                  searching={viewModel.courseSearch.searching}
+                  onQueryChange={viewModel.courseSearch.setQuery}
+                  onSelectCourse={viewModel.pickPresetCourse}
+                  onClose={viewModel.courseSearch.reset}
+                  autoFocus={false}
+                  linkedName={viewModel.presetCourse ? formatCourseName(viewModel.presetCourse.name) : undefined}
+                  onClear={viewModel.clearPresetCourse}
+                  clearLabel="Clear course"
+                />
+              </div>
+              <ScanUploadStep
+                photo={
+                  viewModel.photo
+                    ? { name: viewModel.photo.name, sizeBytes: viewModel.photo.size, previewUrl }
+                    : null
+                }
+                onPick={viewModel.pickPhoto}
+                onClear={viewModel.clearPhoto}
+                onContextChange={viewModel.setUserContext}
+                onExtract={viewModel.extract}
+              />
+            </>
+          )}
+        </div>
+      );
+  }
+}
+
+/** The legacy manual-entry form, fed from the view model. */
+function SetupStep({ viewModel }: { viewModel: ScanPageViewModel }) {
+  const { setup, courseSearch } = viewModel;
+  return (
+    <ScanManualSetup
+      // A typed name has no id, but still shows as the chosen course.
+      selectedCourseId={setup.course ? (setup.course.id ?? setup.course.name) : null}
+      selectedCourseName={setup.course?.name ?? null}
+      manualCourseTees={viewModel.setupTees.map((color) => ({
+        color,
+        slope_rating: null,
+        course_rating: null,
+        hole_yardages: {},
+      }))}
+      courseQuery={courseSearch.query}
+      courseResults={courseSearch.results}
+      searching={courseSearch.searching}
+      loadingCourse={viewModel.loadingSetupCourse}
+      manualDate={setup.date}
+      manualTeeBox={setup.teeBox}
+      onCourseQuery={courseSearch.setQuery}
+      onSelectCourseManual={viewModel.pickSetupCourse}
+      onClearCourse={viewModel.clearSetupCourse}
+      onSetManualDate={viewModel.setSetupDate}
+      onSetManualTeeBox={viewModel.setSetupTeeBox}
+      onStartEntry={viewModel.startEntry}
+      onUpdate={({ selectedCourseName }) => {
+        if (selectedCourseName) viewModel.nameSetupCourse(selectedCourseName);
+      }}
+      setCourseQuery={courseSearch.setQuery}
+      setCourseResults={courseSearch.reset}
+    />
+  );
+}
+
+/** The legacy review step, fed from the view model. */
+function ReviewStep({ viewModel, previewUrl }: { viewModel: ScanPageViewModel; previewUrl: string | null }) {
+  const { review, reviewSearch } = viewModel;
+  if (!review) return null;
+  return (
+    <ScanReviewStep
+      result={review.result}
+      scanMode={viewModel.mode === "manual" ? "manual" : "full"}
+      editedScores={review.editedScores}
+      scoreMetadata={review.scoreMetadata}
+      editedDate={review.editedDate}
+      editedTeeBox={review.editedTeeBox}
+      error={viewModel.error}
+      preview={previewUrl}
+      reviewCourseId={review.reviewCourseId}
+      reviewExternalCourseId={review.reviewExternalCourseId}
+      reviewCourseName={review.reviewCourseName}
+      saving={viewModel.saving}
+      handicapIndex={viewModel.handicapIndex}
+      reviewCourseQuery={reviewSearch.query}
+      reviewCourseResults={reviewSearch.results}
+      reviewSearching={reviewSearch.searching}
+      onReviewCourseQuery={reviewSearch.setQuery}
+      onSelectReviewCourse={viewModel.pickReviewCourse}
+      onUpdate={viewModel.updateReview}
+      onScoreChange={viewModel.changeScore}
+      onGirChange={viewModel.changeGir}
+      onSave={viewModel.save}
+      setReviewCourseQuery={reviewSearch.setQuery}
+      setReviewCourseResults={reviewSearch.reset}
+      setScanState={viewModel.startOver}
+    />
+  );
+}

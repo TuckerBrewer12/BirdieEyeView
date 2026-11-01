@@ -1,5 +1,5 @@
 import type { Course, CourseSummary } from "../../types/golf";
-import type { CourseDto, RoundDto, RoundSummaryDto } from "../../types/api";
+import type { CourseDto, RoundDto, RoundSummaryDto, SaveScanRequestDto } from "../../types/api";
 import type { CourseAnalyticsData, RoundComparison } from "../../types/analytics";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
@@ -21,6 +21,8 @@ export interface InMemoryRoundsSeed {
   updateError?: string | null;
   deleteError?: string | null;
   searchError?: string | null;
+  /** Saving a scan fails with this. */
+  saveError?: string | null;
   coursesError?: string | null;
   searchDelaysMs?: number[];
 }
@@ -69,6 +71,9 @@ export class InMemoryRounds {
   updateError: string | null;
   deleteError: string | null;
   searchError: string | null;
+  saveError: string | null;
+  /** Every scan saved, as sent. */
+  savedScans: SaveScanRequestDto[] = [];
   coursesError: string | null;
   searchDelaysMs: number[];
   private searchCalls = 0;
@@ -90,6 +95,7 @@ export class InMemoryRounds {
     this.updateError = seed.updateError ?? null;
     this.deleteError = seed.deleteError ?? null;
     this.searchError = seed.searchError ?? null;
+    this.saveError = seed.saveError ?? null;
     this.coursesError = seed.coursesError ?? null;
     this.searchDelaysMs = [...(seed.searchDelaysMs ?? [])];
     this.deletedIds = [];
@@ -129,6 +135,41 @@ export class InMemoryRounds {
 
   getRound(roundId: string): RoundDto {
     return roundResponse(this.find(roundId));
+  }
+
+  /**
+   * Saves a checked scan as a new round at the top of the list, the way `/api/scan/save`
+   * does: linked to the course when one was picked, else under the name read off the card.
+   */
+  saveScan(body: SaveScanRequestDto): string {
+    if (this.saveError) throw new Error(this.saveError);
+    const id = `scanned-${this.stored.size + 1}`;
+    const linked = body.course_id
+      ? this.fullCourses.find((course) => course.id === body.course_id) ?? null
+      : null;
+    const parFor = (hole: number) => body.course_holes?.find((h) => h.hole_number === hole);
+    this.stored.set(id, {
+      id,
+      course: linked,
+      tee_box: body.tee_box ?? null,
+      date: body.date ?? null,
+      hole_scores: body.hole_scores.map((score) => ({
+        hole_number: score.hole_number,
+        strokes: score.strokes ?? null,
+        putts: score.putts ?? null,
+        fairway_hit: score.fairway_hit ?? null,
+        green_in_regulation: score.green_in_regulation ?? null,
+        par_played: parFor(score.hole_number)?.par ?? null,
+        handicap_played: parFor(score.hole_number)?.handicap ?? null,
+      })),
+      notes: body.notes ?? null,
+      weather_conditions: null,
+      course_name_played: linked ? null : (body.course_name ?? null),
+      user_tee: null,
+    });
+    this.listed = [id, ...this.listed];
+    this.savedScans = [...this.savedScans, body];
+    return id;
   }
 
   updateRound(roundId: string, body: UpdateRoundBody): RoundDto {
