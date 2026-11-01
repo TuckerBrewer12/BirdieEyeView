@@ -122,6 +122,22 @@ export function averageToParLabel(value: number): string {
   return toParLabel(Math.round(value * 100) / 100) ?? "E";
 }
 
+/**
+ * The line under a par type, and the gap it is coloured with. Rounded the same
+ * way as {@link averageToParLabel}, so a tie is even rather than ahead.
+ */
+export function parTypeGapNote(
+  averageToPar: number,
+  benchmarkToPar: number,
+  benchmarkName: string,
+): { text: string; gap: number } {
+  const gap = Math.round((averageToPar - benchmarkToPar) * 100) / 100;
+  const mark = `${benchmarkName} ${averageToParLabel(benchmarkToPar)}`;
+  const detail =
+    gap < 0 ? "ahead of it" : gap > 0 ? `${gap.toFixed(2)} a hole to close` : "even with it";
+  return { text: `${mark} · ${detail}`, gap };
+}
+
 /** A count of strokes with its sign: "+1.2 strokes", "-0.4 strokes". */
 export function signedStrokes(value: number): string {
   const rounded = Math.round(value * 10) / 10;
