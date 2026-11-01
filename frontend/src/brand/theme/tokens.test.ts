@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { breakpoints } from "./breakpoints";
 import { chartLayout } from "./chart";
 
 // vitest runs with the frontend package as cwd; import.meta.url is not a
@@ -76,6 +77,15 @@ describe("brand tokens", () => {
       });
 
     expect(offenders).toEqual([]);
+  });
+
+  it("matches every breakpoint to the one tokens.css pins", () => {
+    const tokensCss = read(TOKENS_CSS);
+    for (const [name, width] of Object.entries(breakpoints)) {
+      const pinned = tokensCss.match(new RegExp(`--breakpoint-${name}:\\s*([\\d.]+)rem;`));
+      expect(pinned, `--breakpoint-${name} in tokens.css`).not.toBeNull();
+      expect(Number(pinned![1]), `breakpoints.${name}`).toBe(width);
+    }
   });
 
   it("matches every chart measure to the token it mirrors", () => {

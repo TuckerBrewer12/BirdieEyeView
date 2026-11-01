@@ -4,11 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { scoreFillClass, toParDisplay } from "@/brand";
 import { HANDICAP_TAP, TOUR_SCREENS, WIDE_FRAME_MEDIA, tourImage, type TourScreen } from "./demoTour";
-import {
-  DEMO_MOTION,
-  useScannerDemoViewModel,
-  type DemoScorecardRow,
-} from "./useScannerDemoViewModel";
+import { motion as motionTokens } from "@/brand/theme";
+import { useScannerDemoViewModel, type DemoScorecardRow } from "./useScannerDemoViewModel";
+
+const DEMO_MOTION = motionTokens.demo;
 
 /** The clean scorecard the scan resolves to. */
 function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
