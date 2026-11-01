@@ -21,6 +21,7 @@ import {
   comparisonFromKey,
   comparisonKey,
   goalStandingNote,
+  parTypeGapNote,
   peakGapNote,
   recentTrendNote,
   signedStrokes,
@@ -155,6 +156,17 @@ describe("present", () => {
     const peak = peakGameFrom(labAnalytics, 89)!;
     expect(peakGapNote(peak, "Break 90")).toBe("0.7 strokes from break 90 on your best days.");
     expect(peakGapNote({ ...peak, gapToGoal: -1 }, "Break 90")).toMatch(/already break 90/);
+  });
+
+  it("words a par-type gap, and a tie is even", () => {
+    expect(parTypeGapNote(1.2, 1, "Breaks 90")).toEqual({
+      text: "Breaks 90 +1 · 0.20 a hole to close",
+      gap: 0.2,
+    });
+    expect(parTypeGapNote(0.8, 1, "Breaks 90").text).toBe("Breaks 90 +1 · ahead of it");
+    expect(parTypeGapNote(1, 1, "Breaks 90")).toEqual({ text: "Breaks 90 +1 · even with it", gap: 0 });
+    // A difference that rounds to even is a tie, not ahead.
+    expect(parTypeGapNote(1, 1.004, "Breaks 90").text).toBe("Breaks 90 +1 · even with it");
   });
 
   it("words strokes and trends with their sign", () => {

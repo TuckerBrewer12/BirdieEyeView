@@ -1,7 +1,7 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Meter } from "@/brand";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Meter, toParTextClass } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { ParTypeRow } from "../model";
-import { averageToParLabel } from "../present";
+import { averageToParLabel, parTypeGapNote } from "../present";
 
 /** A par type's bar is full at this many strokes over par a hole. */
 const BAR_FULL_AT = 2.4;
@@ -37,7 +37,10 @@ export function ParTypeCard({ rows, benchmarkName, className }: ParTypeCardProps
               </div>
             );
           }
-          const diff = row.benchmarkToPar != null ? row.averageToPar - row.benchmarkToPar : null;
+          const comparison =
+            row.benchmarkToPar != null && benchmarkName != null
+              ? parTypeGapNote(row.averageToPar, row.benchmarkToPar, benchmarkName)
+              : null;
           return (
             <div key={row.par} className="flex flex-col gap-1.5">
               <div className="flex items-baseline justify-between">
@@ -51,11 +54,8 @@ export function ParTypeCard({ rows, benchmarkName, className }: ParTypeCardProps
                 marker={row.benchmarkToPar != null ? toBar(row.benchmarkToPar) : null}
                 aria-label={`${label}: ${averageToParLabel(row.averageToPar)} a hole`}
               />
-              {diff != null && row.benchmarkToPar != null && (
-                <p className={cn("text-label", diff <= 0 ? "text-score-birdie" : "text-score-bogey")}>
-                  {benchmarkName} {averageToParLabel(row.benchmarkToPar)} ·{" "}
-                  {diff <= 0 ? "ahead of it" : `${diff.toFixed(2)} a hole to close`}
-                </p>
+              {comparison && (
+                <p className={cn("text-label", toParTextClass(comparison.gap))}>{comparison.text}</p>
               )}
             </div>
           );
