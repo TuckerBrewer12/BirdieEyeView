@@ -1,4 +1,5 @@
-import type { AnalyticsDto, PlayedCourseDto } from "../../types/api";
+import type { AnalyticsDto, PlayedCourseDto, RoundDto } from "../../types/api";
+import { Round, type RoundDetail } from "../../domain";
 import type { User } from "../../types/golf";
 import { analyticsFrom, type Analytics, type AnalyticsFilters, type PlayedCourse } from "../../pages/analytics/model";
 import { playedCourseFrom, type AnalyticsRepository } from "../../pages/analytics/analyticsRepository";
@@ -11,6 +12,8 @@ export interface FakeAnalyticsSeed {
   analyticsByCourse?: Record<string, AnalyticsDto>;
   playedCourses?: PlayedCourseDto[];
   user?: User;
+  /** Rounds in full, for the best round's card. A round not here fails to load. */
+  detailRounds?: RoundDto[];
 }
 
 /** Answers from seeded responses, mapped the way the real repository maps the server's. */
@@ -55,6 +58,12 @@ export class FakeAnalyticsRepository implements AnalyticsRepository {
 
   async getPlayedCourses(): Promise<PlayedCourse[]> {
     return (this.seed.playedCourses ?? []).map(playedCourseFrom);
+  }
+
+  async getRound(roundId: string): Promise<RoundDetail> {
+    const round = this.seed.detailRounds?.find((candidate) => candidate.id === roundId);
+    if (!round) throw new Error("Round not found.");
+    return Round.detailFromDto(round);
   }
 
   async getUser(userId: string): Promise<User> {

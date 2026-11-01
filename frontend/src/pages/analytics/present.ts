@@ -1,6 +1,26 @@
-import { toParLabel, type ScoreKind } from "@/domain";
-import type { GIRvsNonGIRRow } from "@/types/analytics";
-import { insightCategory, type AnalyticsTab, type Insight, type InsightCategory } from "./model";
+import type { ToParBar, TrendAreaPoint } from "@/brand";
+import { formatCourseHandicap, formatHandicapIndex, toParLabel, type ScoreKind } from "@/domain";
+import type {
+  AnalyticsFilters,
+  GIRTrendRow,
+  GIRvsNonGIRRow,
+  NetScoreTrendRow,
+  PuttsTrendRow,
+  ScoringByHandicapRow,
+  ScoringByParRow,
+  ThreePuttRow,
+} from "@/types/analytics";
+import {
+  insightCategory,
+  type Analytics,
+  type AnalyticsTab,
+  type GirSplit,
+  type Insight,
+  type InsightCategory,
+  type PlayedCourse,
+  type ScoreTrendPoint,
+  type ShortGamePoint,
+} from "./model";
 
 export const TAB_LABELS: Record<AnalyticsTab, string> = {
   scoring: "Scoring",
@@ -119,4 +139,126 @@ export function girVsNonGirBars(rows: GIRvsNonGIRRow[]): GirVsNonGirBar[] {
     triple: row.triple_bogey,
     quad: row.quad_bogey,
   }));
+}
+
+/** The round counts the filter offers. "All" asks for as many as the server allows. */
+export const LIMIT_OPTIONS: readonly { value: number; label: string }[] = [
+  { value: 10, label: "10" },
+  { value: 20, label: "20" },
+  { value: 50, label: "50" },
+  { value: 500, label: "All" },
+];
+
+export const TIMEFRAME_OPTIONS: readonly { value: AnalyticsFilters["timeframe"]; label: string }[] = [
+  { value: "all", label: "All Time" },
+  { value: "ytd", label: "YTD" },
+  { value: "1y", label: "12 Mo" },
+];
+
+/** The course filter's choices: every course, the home course if the golfer has one, then each course played. */
+export function courseOptions(
+  playedCourses: PlayedCourse[],
+  hasHomeCourse: boolean,
+): { value: string; label: string }[] {
+  return [
+    { value: "all", label: "All Courses" },
+    ...(hasHomeCourse ? [{ value: "home", label: "Home Course" }] : []),
+    ...playedCourses.map((course) => ({ value: course.id, label: course.name ?? "Unnamed Course" })),
+  ];
+}
+
+export function percentLabel(percent: number | null | undefined): string {
+  return percent != null ? `${Math.round(percent)}%` : "—";
+}
+
+/** An average to par, to two places with a true minus sign: "+0.80", "−0.10", "E". */
+export function averageToParLabel(toPar: number): string {
+  if (toPar < 0) return `−${Math.abs(toPar).toFixed(2)}`;
+  if (toPar > 0) return `+${toPar.toFixed(2)}`;
+  return "E";
+}
+
+export function holesLabel(holes: number): string {
+  return `${holes} ${holes === 1 ? "hole" : "holes"}`;
+}
+
+export const GIR_SPLIT_LABEL: Record<GirSplit["bucket"], string> = {
+  GIR: "Green hit",
+  "No GIR": "Green missed",
+};
+
+function roundPoint(
+  row: { round_index: number; course_name?: string | null },
+  values: (number | null)[],
+): TrendAreaPoint {
+  return { tick: row.round_index, title: `Round ${row.round_index}`, subtitle: row.course_name ?? null, values };
+}
+
+/** Each round's score beside its five-round rolling average. */
+export function scoreTrendPoints(rows: ScoreTrendPoint[]): TrendAreaPoint[] {
+  return rows.map((row) => roundPoint(row, [row.total_score, row.rolling_avg]));
+}
+
+export function netScorePoints(rows: NetScoreTrendRow[]): TrendAreaPoint[] {
+  return rows.map((row) => ({
+    ...roundPoint(row, [row.net_score]),
+    notes: [
+      { label: "Gross", value: row.gross_score != null ? String(row.gross_score) : "—" },
+      { label: "To Par", value: toParLabel(row.to_par) ?? "—" },
+      { label: "Course HCP", value: formatCourseHandicap(row.course_handicap) },
+    ],
+  }));
+}
+
+export function girPoints(rows: GIRTrendRow[]): TrendAreaPoint[] {
+  return rows.map((row) => ({
+    ...roundPoint(row, [row.gir_percentage]),
+    notes: [{ label: "Greens", value: `${row.total_gir ?? "—"} of ${row.holes_played}` }],
+  }));
+}
+
+/** Each round's scrambling rate beside its up-and-down rate. */
+export function shortGamePoints(rows: ShortGamePoint[]): TrendAreaPoint[] {
+  return rows.map((row) => roundPoint(row, [row.scrambling_percentage, row.up_and_down_pct]));
+}
+
+export function puttsPoints(rows: PuttsTrendRow[]): TrendAreaPoint[] {
+  return rows.map((row) => roundPoint(row, [row.total_putts]));
+}
+
+export function threePuttPoints(rows: ThreePuttRow[]): TrendAreaPoint[] {
+  return rows.map((row) => roundPoint(row, [row.three_putt_count]));
+}
+
+export function parBars(rows: ScoringByParRow[]): ToParBar[] {
+  return rows.map((row) => ({ label: `Par ${row.par}`, toPar: row.average_to_par, detail: holesLabel(row.sample_size) }));
+}
+
+export function handicapBars(rows: ScoringByHandicapRow[]): ToParBar[] {
+  return rows.map((row) => ({
+    label: String(row.handicap),
+    toPar: row.average_to_par,
+    detail: holesLabel(row.sample_size),
+  }));
+}
+
+/** The headline figures over the filtered rounds, worded for their cards. */
+export function headlineFigures(analytics: Analytics): { label: string; value: string; detail?: string | null }[] {
+  const { kpis } = analytics;
+  return [
+    { label: "Handicap Index", value: formatHandicapIndex(kpis.handicap_index) },
+    { label: "Rounds", value: String(kpis.total_rounds) },
+    { label: "Scoring Avg", value: kpis.scoring_average != null ? String(kpis.scoring_average) : "—" },
+    {
+      label: "Best Round",
+      value: analytics.bestScore != null ? String(analytics.bestScore) : "—",
+      detail: analytics.bestRound?.course,
+    },
+    { label: "Avg Putts", value: averagePuttsLabel(analytics.averagePutts) ?? "—" },
+  ];
+}
+
+/** The dashed line across the score trend at the scoring average: "Avg 82.9". */
+export function averageReference(average: number | null | undefined): { value: number; label: string } | null {
+  return average != null ? { value: average, label: `Avg ${average}` } : null;
 }

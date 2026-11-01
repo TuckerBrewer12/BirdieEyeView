@@ -17,6 +17,7 @@ const golfer: FakeAnalyticsSeed = {
   analyticsByCourse: sampleGolfer.analyticsByCourse,
   playedCourses: sampleGolfer.playedCourses,
   user: sampleGolfer.profile,
+  detailRounds: sampleGolfer.detailRounds,
 };
 
 function setup(seed: FakeAnalyticsSeed = golfer, configure?: (repository: FakeAnalyticsRepository) => void) {
@@ -132,6 +133,31 @@ describe("useAnalyticsPageViewModel", () => {
   it("reads the golfer from the shared user query", async () => {
     const { client } = await loaded();
     await waitFor(() => expect(client.getQueryData(queryKeys.user(USER_ID))).toEqual(sampleGolfer.profile));
+  });
+
+  it("loads the server's lowest round in full for its card, into the shared round cache", async () => {
+    const { client, result } = await loaded();
+    const roundId = result.current.analytics!.bestRound!.roundId!;
+
+    await waitFor(() => expect(result.current.bestRound?.id).toBe(roundId));
+    expect(result.current.bestRound?.score).toBe(75);
+    expect(client.getQueryData(queryKeys.round(roundId))).toBe(result.current.bestRound);
+  });
+
+  it("has no best round to show when the window has none", async () => {
+    const { result } = await loaded();
+
+    act(() => result.current.setFilters({ ...result.current.filters, courseId: PRESIDIO.id }));
+    await waitFor(() => expect(result.current.showEmpty).toBe(true));
+    expect(result.current.bestRound).toBeNull();
+  });
+
+  it("opens the range view on par 4s and keeps the par type picked", async () => {
+    const { result } = await loaded();
+
+    expect(result.current.rangePar).toBe(4);
+    act(() => result.current.setRangePar(3));
+    expect(result.current.rangePar).toBe(3);
   });
 
   it("opens the phone layout on scoring and switches sections", async () => {

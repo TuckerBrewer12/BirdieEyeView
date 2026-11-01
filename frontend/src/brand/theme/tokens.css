@@ -180,6 +180,8 @@
   /* Width a hole-by-hole chart needs before it scrolls sideways. */
   --brand-size-chart-wide: 45rem;
   --brand-size-sheet: 28rem;
+  /* Widest a target of results grows. */
+  --brand-size-target: 15rem;
   --brand-size-icon-xs: 11px;
   --brand-size-hole-w: 30px;
   --brand-size-hole-h: 22px;
@@ -378,6 +380,7 @@
   --spacing-chart-compact: var(--brand-size-chart-compact);
   --spacing-chart-wide: var(--brand-size-chart-wide);
   --spacing-sheet: var(--brand-size-sheet);
+  --spacing-target: var(--brand-size-target);
   --spacing-icon-xs: var(--brand-size-icon-xs);
   --spacing-hole-w: var(--brand-size-hole-w);
   --spacing-hole-h: var(--brand-size-hole-h);

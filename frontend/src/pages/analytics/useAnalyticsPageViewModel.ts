@@ -1,16 +1,20 @@
 import { useState } from "react";
 import { useUser } from "@/data/useUser";
+import type { RoundSummary } from "@/domain";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { analyticsRepository, type AnalyticsRepository } from "./analyticsRepository";
 import {
   DEFAULT_FILTERS,
+  defaultRangePar,
   isFiltered,
   type Analytics,
   type AnalyticsFilters,
   type AnalyticsTab,
   type PlayedCourse,
+  type RangePar,
 } from "./model";
 import { useAnalytics } from "./useAnalytics";
+import { useBestRound } from "./useBestRound";
 import { usePlayedCourses } from "./usePlayedCourses";
 
 export interface AnalyticsPageViewModel {
@@ -33,6 +37,13 @@ export interface AnalyticsPageViewModel {
   /** The golfer has a home course, so the course filter offers it. */
   hasHomeCourse: boolean;
 
+  /** The server's lowest round in the window, once it has loaded; null without one. */
+  bestRound: RoundSummary | null;
+
+  /** The par type the range view shows. Until one is picked, par 4s if there are any. */
+  rangePar: RangePar;
+  setRangePar: (par: RangePar) => void;
+
   /** The phone layout's open section. */
   tab: AnalyticsTab;
   setTab: (tab: AnalyticsTab) => void;
@@ -44,12 +55,14 @@ export function useAnalyticsPageViewModel(
 ): AnalyticsPageViewModel {
   const [filters, setFilters] = useState<AnalyticsFilters>(DEFAULT_FILTERS);
   const [tab, setTab] = useState<AnalyticsTab>("scoring");
+  const [pickedRangePar, setRangePar] = useState<RangePar | null>(null);
 
   const { data, isPending, isPlaceholderData, isError, error, refetch } = useAnalytics(userId, filters, repository);
   const { data: playedCourses = [] } = usePlayedCourses(userId, repository);
   const { data: user } = useUser(userId, repository);
 
   const analytics = data ?? null;
+  const { data: bestRound } = useBestRound(analytics?.bestRound?.roundId ?? null, repository);
   const loadError = isError ? messageFrom(error, "Could not load your analytics.") : null;
 
   return {
@@ -64,6 +77,9 @@ export function useAnalyticsPageViewModel(
     filtered: isFiltered(filters),
     playedCourses,
     hasHomeCourse: !!user?.home_course_id,
+    bestRound: analytics?.bestRound?.roundId ? (bestRound ?? null) : null,
+    rangePar: pickedRangePar ?? defaultRangePar(analytics?.yardageBuckets ?? []),
+    setRangePar,
     tab,
     setTab,
   };

@@ -46,5 +46,13 @@ export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
     gir_vs_non_gir: [],
     handicap_trend: [],
     score_differentials: [],
+    // No round, so no lowest one. The best round's card reads this event.
+    notable_achievements: {
+      ...analytics.notable_achievements,
+      scoring_records_events: {
+        lifetime: { ...analytics.notable_achievements.scoring_records_events.lifetime, lowest_round: null },
+        one_year: { ...analytics.notable_achievements.scoring_records_events.one_year, lowest_round: null },
+      },
+    },
   };
 }
