@@ -107,6 +107,15 @@ test("a copy the browser refuses says so", async ({ settings }) => {
   await settings.seesCopyFailed();
 });
 
+test("trying again replaces a failed load with the settings form", async ({ settings }) => {
+  await settings.openFailed();
+  settings.nextLoadSucceeds();
+  await settings.tryAgain();
+  await settings.seesForm();
+  await settings.seesHandicap("8.4");
+  await settings.seesHomeCourse("Pebble Beach");
+});
+
 test("a failed save says why and keeps the edit", async ({ settings }) => {
   await settings.open();
   settings.failSavesWith("Selected home course was not found");

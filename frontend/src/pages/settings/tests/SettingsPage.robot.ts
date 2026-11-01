@@ -101,6 +101,28 @@ export class SettingsRobot {
     return this;
   }
 
+  /** The next load of settings succeeds, as the API would answer once the failure has cleared. */
+  nextLoadSucceeds(): this {
+    if (!this.backend) return this;
+    this.backend.profileError = null;
+    if (!this.backend.profile) this.backend.profile = settingsProfile();
+    if (this.backend.store.courses.length === 0) this.backend.store.courses = [...populatedCourses];
+    return this;
+  }
+
+  async tryAgain(): Promise<this> {
+    await this.page.getByRole("button", { name: "Try again" }).click();
+    return this;
+  }
+
+  /** The failed-load alert is gone and the settings form is on screen. */
+  async seesForm(): Promise<this> {
+    await expect(this.page.getByRole("alert")).toHaveCount(0);
+    await expect(this.themeControl()).toBeVisible();
+    await expect(this.saveButton()).toBeVisible();
+    return this;
+  }
+
   async reload(): Promise<this> {
     await this.page.reload();
     await expect(this.themeControl()).toBeVisible();
