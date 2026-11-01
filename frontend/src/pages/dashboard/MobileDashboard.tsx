@@ -45,7 +45,7 @@ export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
         recentScores={vm.recentScores}
         mix={vm.l20ScoreMix}
         mixHoles={vm.mixHoleCount}
-        bestRound={data.best_round ?? null}
+        bestRound={vm.bestRound?.score ?? null}
         totalRounds={data.total_rounds}
         putts={vm.putts}
         girPct={vm.girPct}

@@ -147,6 +147,9 @@ def _database(rounds: list[Round]):
         ]
         return picked[offset:offset + limit]
 
+    async def count_rounds_for_user(_user_id):
+        return len(rounds)
+
     async def are_friends(_a, _b):
         return False
 
@@ -155,6 +158,7 @@ def _database(rounds: list[Round]):
         rounds = _Repo(
             get_round_summaries_for_user=get_round_summaries_for_user,
             get_rounds_for_user=get_rounds_for_user,
+            count_rounds_for_user=count_rounds_for_user,
         )
         friendships = _Repo(are_friends=are_friends)
 

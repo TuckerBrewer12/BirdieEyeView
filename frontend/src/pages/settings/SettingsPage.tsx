@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useBeforeUnload, useLocation } from "react-router-dom";
 import { PageHeader, ToggleGroup, ToggleGroupItem } from "@/brand";
 import { api } from "@/lib/api";
+import { queryKeys } from "@/data/queryKeys";
+import { userRepository } from "@/data/userRepository";
+import { useCourse } from "@/pages/courses/useCourse";
 import { formatHandicapInputValue, parseHandicapInput } from "@/lib/handicap";
 import { useTheme } from "@/context/theme";
 import { getStoredColorBlindMode, setStoredColorBlindMode } from "@/lib/accessibility";
@@ -52,55 +55,40 @@ export function SettingsPage({ userId }: { userId: string }) {
     colorBlindMode: ColorBlindMode;
   } | null>(null);
 
-  const { data: settingsData, isLoading: loading } = useQuery({
-    queryKey: ["settings", userId],
-    queryFn: async () => {
-      const [user, globalCoursesResult, userCoursesResult] = await Promise.all([
-        api.getUser(userId),
-        api.getCourses(undefined, 200, 0).catch(() => [] as CourseSummary[]),
-        api.getCourses(userId, 200, 0).catch(() => [] as CourseSummary[]),
-      ]);
-      const merged = [...globalCoursesResult, ...userCoursesResult];
-      const byId = new Map<string, CourseSummary>();
-      for (const course of merged) byId.set(course.id, course);
-      const allCourses = Array.from(byId.values());
-      let homeCourseQueryDefault = "";
-      if (user.home_course_id) {
-        const selected = allCourses.find((c) => c.id === user.home_course_id);
-        if (selected?.name) {
-          homeCourseQueryDefault = selected.name;
-        } else {
-          const courseFromId = await api.getCourse(user.home_course_id).catch(() => null);
-          homeCourseQueryDefault = courseFromId?.name ?? "";
-        }
-      }
-      return { user, allCourses, homeCourseQueryDefault };
-    },
+  const queryClient = useQueryClient();
+  const { data: user, isLoading: userLoading } = useQuery({
+    queryKey: queryKeys.user(userId),
+    queryFn: () => userRepository.getUser(userId),
   });
+  // The page only shows the home course's name, so it loads that one course, not a list.
+  const homeCourse = useCourse(user?.home_course_id ?? undefined);
+  const homeCourseSettled = !user?.home_course_id || homeCourse.isSuccess || homeCourse.isError;
+  const homeCourseName = user?.home_course_id ? (homeCourse.data?.name ?? "") : "";
+  const loading = userLoading || (!!user && !homeCourseSettled);
 
   // Initialize form state once when data first loads
   useEffect(() => {
-    if (!settingsData || initializedRef.current) return;
+    if (!user || !homeCourseSettled || initializedRef.current) return;
     initializedRef.current = true;
     const savedUpdates = localStorage.getItem(UPDATES_PREF_KEY);
     const updatesPref = savedUpdates !== null ? savedUpdates === "true" : true;
-    const initialHomeCourseId = settingsData.user.home_course_id ?? "";
-    const initialHandicap = formatHandicapInputValue(settingsData.user.handicap);
+    const initialHomeCourseId = user.home_course_id ?? "";
+    const initialHandicap = formatHandicapInputValue(user.handicap);
     const initialColorBlind = getStoredColorBlindMode();
     setGetUpdates(updatesPref);
     setHomeCourseId(initialHomeCourseId);
     setHandicapInput(initialHandicap);
-    setFriendCode(settingsData.user.friend_code ?? "");
-    setHomeCourseQuery(settingsData.homeCourseQueryDefault);
+    setFriendCode(user.friend_code ?? "");
+    setHomeCourseQuery(homeCourseName);
     setColorBlindMode(initialColorBlind);
     baselineRef.current = {
       homeCourseId: initialHomeCourseId,
-      homeCourseQuery: settingsData.homeCourseQueryDefault,
+      homeCourseQuery: homeCourseName,
       handicapInput: initialHandicap,
       getUpdates: updatesPref,
       colorBlindMode: initialColorBlind,
     };
-  }, [settingsData]);
+  }, [user, homeCourseSettled, homeCourseName]);
 
   const hasUnsavedChanges = (() => {
     const baseline = baselineRef.current;
@@ -209,16 +197,18 @@ export function SettingsPage({ userId }: { userId: string }) {
   };
 
   const persistSettings = async (): Promise<boolean> => {
-    const courses = settingsData?.allCourses ?? [];
     setSaving(true);
     setMessage("");
     try {
       let selectedHomeCourseId = homeCourseId;
+      let selectedHomeCourseName = homeCourseQuery;
       const normalizedQuery = homeCourseQuery.trim().toLowerCase();
       if (normalizedQuery !== "" && !selectedHomeCourseId) {
-        const exact = courses.find((course) => (course.name ?? "").trim().toLowerCase() === normalizedQuery);
+        // A name typed in full counts as picking the suggestion it matches.
+        const exact = searchResults.find((course) => (course.name ?? "").trim().toLowerCase() === normalizedQuery);
         if (exact) {
           selectedHomeCourseId = exact.id;
+          selectedHomeCourseName = exact.name ?? homeCourseQuery;
         } else {
           setMessage("Select a home course from the suggestions, or clear it.");
           return false;
@@ -236,23 +226,18 @@ export function SettingsPage({ userId }: { userId: string }) {
         handicap,
       });
       setStoredColorBlindMode(colorBlindMode);
-      const refreshedUser = await api.getUser(userId);
+      const refreshedUser = await userRepository.getUser(userId);
+      queryClient.setQueryData(queryKeys.user(userId), refreshedUser);
+      const savedHomeCourseQuery = refreshedUser.home_course_id ? selectedHomeCourseName : "";
 
       setHomeCourseId(refreshedUser.home_course_id ?? "");
       setHandicapInput(formatHandicapInputValue(refreshedUser.handicap));
       setFriendCode(refreshedUser.friend_code ?? "");
-      if (refreshedUser.home_course_id) {
-        const selected = (settingsData?.allCourses ?? []).find((course) => course.id === refreshedUser.home_course_id);
-        setHomeCourseQuery(selected?.name ?? homeCourseQuery);
-      } else {
-        setHomeCourseQuery("");
-      }
+      setHomeCourseQuery(savedHomeCourseQuery);
       localStorage.setItem(UPDATES_PREF_KEY, String(getUpdates));
       baselineRef.current = {
         homeCourseId: refreshedUser.home_course_id ?? "",
-        homeCourseQuery: refreshedUser.home_course_id
-          ? ((settingsData?.allCourses ?? []).find((course) => course.id === refreshedUser.home_course_id)?.name ?? homeCourseQuery)
-          : "",
+        homeCourseQuery: savedHomeCourseQuery,
         handicapInput: formatHandicapInputValue(refreshedUser.handicap),
         getUpdates,
         colorBlindMode,
@@ -455,7 +440,7 @@ export function SettingsPage({ userId }: { userId: string }) {
             </button>
             {homeCourseId ? (
               <span className="text-xs text-gray-600">
-                Selected: {(settingsData?.allCourses ?? []).find((course) => course.id === homeCourseId)?.name ?? homeCourseQuery}
+                Selected: {homeCourseQuery}
               </span>
             ) : (
               <span className="text-xs text-gray-500">No home course selected.</span>

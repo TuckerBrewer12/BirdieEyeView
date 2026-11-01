@@ -23,5 +23,4 @@ export const queryKeys = {
   friendshipsAll: ["friendships-all"] as const,
   friendCompare: (friendId: string) =>
     ["analytics", "friend-compare", friendId, { limit: 20 }] as const,
-  settings: (userId: string) => ["settings", userId] as const,
 };

@@ -234,6 +234,38 @@ async def test_round_listing_get_update_and_delete():
 
 
 @pytest.mark.asyncio
+async def test_update_round_reports_a_missing_round_as_404_not_500():
+    user_id = uuid4()
+    round_id = uuid4()
+    user = _make_user(user_id)
+    db = make_mock_database()
+    db.rounds.get_round_owner_id = AsyncMock(return_value=str(user_id))
+    # The round goes between the ownership check and the write.
+    db.rounds.update_hole_scores = AsyncMock(return_value=None)
+    db.rounds.get_round = AsyncMock(return_value=None)
+
+    with_scores = rounds.UpdateRoundRequest(hole_scores=[{"hole_number": 1, "strokes": 4}])
+    with pytest.raises(HTTPException) as exc:
+        await rounds.update_round(round_id, with_scores, db, user)
+    assert (exc.value.status_code, exc.value.detail) == (404, "Round not found")
+
+    with pytest.raises(HTTPException) as exc:
+        await rounds.update_round(round_id, rounds.UpdateRoundRequest(notes="Windy"), db, user)
+    assert exc.value.status_code == 404
+
+    db.rounds.get_round = AsyncMock(return_value=_make_round(round_id))
+    db.rounds.update_round = AsyncMock(side_effect=NotFoundError())
+    with pytest.raises(HTTPException) as exc:
+        await rounds.update_round(round_id, rounds.UpdateRoundRequest(notes="Windy"), db, user)
+    assert exc.value.status_code == 404
+
+    db.rounds.update_round = AsyncMock(side_effect=RuntimeError("connection lost"))
+    with pytest.raises(HTTPException) as exc:
+        await rounds.update_round(round_id, rounds.UpdateRoundRequest(notes="Windy"), db, user)
+    assert exc.value.status_code == 500
+
+
+@pytest.mark.asyncio
 async def test_link_round_to_owned_course_backfills_scan_data():
     user_id = uuid4()
     round_id = uuid4()
@@ -394,15 +426,18 @@ async def test_dashboard_and_empty_analytics(monkeypatch):
     db.users.get_user = AsyncMock(return_value=user)
     db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[_make_round_summary(round_id)])
     db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])
-    monkeypatch.setattr(stats.hcap, "handicap_index", lambda rounds: 10.0)
+    db.rounds.count_rounds_for_user = AsyncMock(return_value=1)
+    monkeypatch.setattr(stats.hcap, "handicap_index", lambda *args, **kwargs: 10.0)
 
     dashboard = await stats.get_dashboard(user_id, db, user)
     assert dashboard.total_rounds == 1
     assert dashboard.scoring_average == 80.0
-    assert dashboard.best_round_id == str(round_id)
+    assert dashboard.best_round is not None
+    assert dashboard.best_round.id == str(round_id)
     assert dashboard.scoring_average_l20 is None
     assert dashboard.whs.window_size == 0
-    assert dashboard.milestones == []
+    # Milestones come from every round, not just the (empty) handicap window.
+    assert {m.kind for m in dashboard.milestones} == {"score_break", "putt_break", "par_streak"}
 
     db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], []])
     analytics = await stats.get_analytics(user_id, 50, None, None, db, user)

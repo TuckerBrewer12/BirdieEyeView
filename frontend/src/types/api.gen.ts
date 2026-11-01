@@ -1007,12 +1007,7 @@ export interface components {
             average_gir: number | null;
             /** Average Putts */
             average_putts: number | null;
-            /** Best Round */
-            best_round: number | null;
-            /** Best Round Course */
-            best_round_course: string | null;
-            /** Best Round Id */
-            best_round_id: string | null;
+            best_round: components["schemas"]["RoundSummaryResponse"] | null;
             handicap_change: components["schemas"]["HandicapChange"];
             /** Handicap Index */
             handicap_index: number | null;

@@ -179,6 +179,14 @@ class RoundRepositoryDB:
             )
             return str(row["user_id"]) if row else None
 
+    async def count_rounds_for_user(self, user_id: str) -> int:
+        """How many rounds the user has saved, however many the list views load."""
+        async with self._pool.acquire() as conn:
+            count = await conn.fetchval(
+                "SELECT COUNT(*) FROM users.rounds WHERE user_id = $1", UUID(user_id)
+            )
+        return int(count or 0)
+
     async def get_played_courses_for_user(self, user_id: str) -> list:
         """Return distinct courses a user has rounds linked to."""
         async with self._pool.acquire() as conn:

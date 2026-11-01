@@ -1,5 +1,4 @@
 import { SCORE_KINDS, type ScoreKind } from "@/domain/score";
-import type { Round } from "@/domain/round";
 import type { RoundTrendPoint } from "@/domain/trend";
 import type { AnalyticsData, GoalReport } from "@/types/analytics";
 import type { MilestoneDto, ScoreMixDto, WhsBreakdownDto } from "@/types/api";
@@ -7,12 +6,6 @@ import type { MilestoneDto, ScoreMixDto, WhsBreakdownDto } from "@/types/api";
 /** Which line the phone's trend card shows. */
 export type TrendView = "score" | "handicap";
 export type HiTrend = "up" | "down" | "flat";
-
-export function pickBestRound(rounds: Round[]): Round | null {
-  const scored = rounds.filter((r) => r.score != null);
-  if (!scored.length) return null;
-  return scored.reduce((best, curr) => (curr.score! < best.score! ? curr : best));
-}
 
 /** The scores of the rounds in the trend, oldest first, skipping rounds without one. */
 export function recentScoresFrom(trend: RoundTrendPoint[]): number[] {

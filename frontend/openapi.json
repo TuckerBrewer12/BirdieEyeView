@@ -1222,35 +1222,12 @@
           "best_round": {
             "anyOf": [
               {
-                "type": "integer"
+                "$ref": "#/components/schemas/RoundSummaryResponse"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Best Round"
-          },
-          "best_round_course": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Best Round Course"
-          },
-          "best_round_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Best Round Id"
+            ]
           },
           "handicap_change": {
             "$ref": "#/components/schemas/HandicapChange"
@@ -1350,8 +1327,6 @@
           "total_rounds",
           "scoring_average",
           "best_round",
-          "best_round_id",
-          "best_round_course",
           "handicap_index",
           "recent_rounds",
           "average_putts",

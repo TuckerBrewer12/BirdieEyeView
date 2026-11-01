@@ -994,15 +994,56 @@ export const sampleGolfer = {
   "dashboard": {
     "average_gir": 6.0,
     "average_putts": 32.7,
-    "best_round": 75,
-    "best_round_course": "Presidio Golf Course",
-    "best_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd",
+    "best_round": {
+      "back_nine": 36,
+      "course_id": "1b6e5c5a-2153-519c-a3da-84852bef21a4",
+      "course_location": "San Francisco, CA",
+      "course_name": "Presidio Golf Course",
+      "course_par": 72,
+      "date": "2026-05-25T09:00:00",
+      "fairways_hit": 7,
+      "front_nine": 39,
+      "hole_scores": [
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 7, "handicap_played": null, "hole_number": 1, "kind": "bogey", "net_score": null, "par": 4, "par_played": 4, "putts": 3, "shots_to_green": null, "strokes": 5, "to_par": 1, "yardage": 378},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 11, "handicap_played": null, "hole_number": 2, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 2, "shots_to_green": null, "strokes": 5, "to_par": 0, "yardage": 512},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 1, "handicap_played": null, "hole_number": 3, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 431},
+        {"fairway_hit": null, "green_in_regulation": false, "handicap": 15, "handicap_played": null, "hole_number": 4, "kind": "bogey", "net_score": null, "par": 3, "par_played": 3, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 1, "yardage": 165},
+        {"fairway_hit": false, "green_in_regulation": false, "handicap": 5, "handicap_played": null, "hole_number": 5, "kind": "bogey", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 5, "to_par": 1, "yardage": 402},
+        {"fairway_hit": true, "green_in_regulation": false, "handicap": 9, "handicap_played": null, "hole_number": 6, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 1, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 356},
+        {"fairway_hit": null, "green_in_regulation": true, "handicap": 17, "handicap_played": null, "hole_number": 7, "kind": "par", "net_score": null, "par": 3, "par_played": 3, "putts": 2, "shots_to_green": null, "strokes": 3, "to_par": 0, "yardage": 148},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 3, "handicap_played": null, "hole_number": 8, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 418},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 13, "handicap_played": null, "hole_number": 9, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 2, "shots_to_green": null, "strokes": 5, "to_par": 0, "yardage": 520},
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 8, "handicap_played": null, "hole_number": 10, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 389},
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 2, "handicap_played": null, "hole_number": 11, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 441},
+        {"fairway_hit": null, "green_in_regulation": false, "handicap": 16, "handicap_played": null, "hole_number": 12, "kind": "bogey", "net_score": null, "par": 3, "par_played": 3, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 1, "yardage": 172},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 6, "handicap_played": null, "hole_number": 13, "kind": "birdie", "net_score": null, "par": 4, "par_played": 4, "putts": 1, "shots_to_green": null, "strokes": 3, "to_par": -1, "yardage": 365},
+        {"fairway_hit": true, "green_in_regulation": false, "handicap": 12, "handicap_played": null, "hole_number": 14, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 1, "shots_to_green": null, "strokes": 5, "to_par": 0, "yardage": 498},
+        {"fairway_hit": null, "green_in_regulation": false, "handicap": 18, "handicap_played": null, "hole_number": 15, "kind": "par", "net_score": null, "par": 3, "par_played": 3, "putts": 1, "shots_to_green": null, "strokes": 3, "to_par": 0, "yardage": 155},
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 4, "handicap_played": null, "hole_number": 16, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 410},
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 10, "handicap_played": null, "hole_number": 17, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 395},
+        {"fairway_hit": false, "green_in_regulation": false, "handicap": 14, "handicap_played": null, "hole_number": 18, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 1, "shots_to_green": null, "strokes": 5, "to_par": 0, "yardage": 531}
+      ],
+      "id": "8d412153-b640-567c-b361-5eb47ecb4efd",
+      "nines": {
+        "back": {"gir": 5, "par": 36, "putts": 14, "to_par": 0, "yards": 3356},
+        "front": {"gir": 6, "par": 36, "putts": 18, "to_par": 3, "yards": 3330}
+      },
+      "notes": null,
+      "par": 72,
+      "score_counts": {"birdie": 1, "bogey": 4, "double": 0, "eagle": 0, "par": 13, "quad": 0, "triple": 0},
+      "tee_box": "Blue",
+      "to_par": 3,
+      "total_gir": 11,
+      "total_putts": 32,
+      "total_score": 75,
+      "yards": 6686
+    },
     "handicap_change": {"delta": -1.3, "direction": "down"},
     "handicap_index": 7.0,
     "milestones": [
       {"course": "Sharp Park Golf Course", "date": "2026/5/28", "kind": "par_streak", "round_id": null, "value": 7},
       {"course": "Presidio Golf Course", "date": "2026/5/13", "kind": "score_break", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "value": 80},
-      {"course": "Presidio Golf Course", "date": "2026/5/13", "kind": "putt_break", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "value": 30}
+      {"course": "Presidio Golf Course", "date": "2026/3/1", "kind": "putt_break", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "value": 30}
     ],
     "recent_form": {"gir_pct": 50.0, "putts_per_18": 33.6, "scrambling_pct": 35.55555555555556, "up_and_down_pct": 37.77777777777778},
     "recent_rounds": [

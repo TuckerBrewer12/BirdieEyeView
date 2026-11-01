@@ -6,6 +6,10 @@ from datetime import date, datetime
 from typing import Any, Dict, Iterable, List, Optional
 
 from models.round import Round
+from models.user import User
+
+# A Handicap Index is worked out from the player's most recent 20 scores.
+WHS_WINDOW = 20
 
 # WHS reduction table: number of differentials available → (count_to_use, adjustment)
 # Requires at least 3 rounds with valid course rating + slope to produce a handicap.
@@ -181,6 +185,18 @@ def handicap_index(
     # WHS caps index at 54.0
     hi = min(hi, 54.0)
     return round(hi, 1)
+
+
+def player_handicap_index(rounds: Iterable[Round], user: Optional[User]) -> Optional[float]:
+    """The player's Handicap Index: their last 20 rounds (oldest first), seeded by the index they entered.
+
+    Every screen that shows the player's own index reads it from here, so they agree.
+    """
+    return handicap_index(
+        list(rounds)[-WHS_WINDOW:],
+        seed_handicap=user.handicap if user else None,
+        seed_set_at=user.last_handicap_update if user else None,
+    )
 
 
 def handicap_trend(

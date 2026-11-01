@@ -4,7 +4,7 @@ import pytest
 
 import analytics.goals as goals
 import analytics.handicap as handicap
-from models import Course, Hole, HoleScore, Round, Tee
+from models import Course, Hole, HoleScore, Round, Tee, User
 
 
 def _make_round(
@@ -214,6 +214,32 @@ def test_seed_handicap_filters_early_rounds_and_honors_seed_date(monkeypatch):
     ) == [10.0, 22.0]
     assert handicap.handicap_index(rounds[:1], seed_handicap=15.0) == 15.0
     assert handicap.handicap_index(rounds[1:2], seed_handicap=15.0) == 10.0
+
+
+def test_player_handicap_index_reads_the_last_20_rounds_with_the_players_seed(monkeypatch):
+    # Five early rounds the golfer has since outgrown, then twenty that make up the index.
+    rounds = [Round(id=f"early-{index}") for index in range(5)] + [Round(id=str(index)) for index in range(20)]
+    differentials = {f"early-{index}": 2.0 for index in range(5)}
+    differentials.update({str(index): float(index + 10) for index in range(20)})
+    monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: differentials[item.id])
+
+    # The best 8 of the last 20 (10..17), not the five 2.0s from before the window.
+    assert handicap.player_handicap_index(rounds, None) == 13.5
+    assert handicap.player_handicap_index(rounds, None) == handicap.handicap_index(rounds[-20:])
+
+    # Rounds before the golfer entered an index only count when they beat it.
+    seeded = User(name="Golfer", handicap=12.0, last_handicap_update=datetime(2025, 6, 1))
+    dated = [
+        Round(id=f"before-{index}", date=datetime(2025, 5, 1 + index)) for index in range(17)
+    ] + [Round(id=f"after-{index}", date=datetime(2025, 7, 1 + index)) for index in range(3)]
+    differentials.update({f"before-{index}": float(index + 5) for index in range(17)})
+    differentials.update({f"after-{index}": 30.0 for index in range(3)})
+    # Seven before-rounds beat 12.0 (5..11): ten differentials, so the best three count.
+    assert handicap.player_handicap_index(dated, seeded) == 6.0
+    assert handicap.player_handicap_index(dated, seeded) == handicap.handicap_index(
+        dated, seed_handicap=12.0, seed_set_at=datetime(2025, 6, 1)
+    )
+    assert handicap.player_handicap_index([], seeded) == 12.0
 
 
 def test_handicap_trend_and_annotation_prefers_recent_tie(monkeypatch):

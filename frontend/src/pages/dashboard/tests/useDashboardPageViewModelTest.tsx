@@ -2,7 +2,6 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import { Round } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 import {
   dashboardGoalReport,
@@ -13,7 +12,7 @@ import {
 } from "@/testing/fixtures/dashboard";
 import { FakeDashboardRepository } from "@/testing/fakes/FakeDashboardRepository";
 import { useDashboardPageViewModel } from "../useDashboardPageViewModel";
-import { pickBestRound, shortGameTrendFrom } from "../model";
+import { shortGameTrendFrom } from "../model";
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -71,9 +70,15 @@ describe("useDashboardPageViewModel", () => {
     expect(used[0]?.courseName).toBe("Blue Rock");
   });
 
-  it("picks the lowest scoring round as best, hole strip and all", async () => {
-    const { result } = renderVm();
+  it("shows the server's best round on record, hole strip and all", async () => {
+    // The best round is older than the recent ones the dashboard lists.
+    const { result } = renderVm({
+      dashboard: { ...populatedDashboard, recent_rounds: populatedRounds.filter((r) => r.id !== "round-3") },
+      analytics: populatedAnalytics,
+      user: dashboardUser,
+    });
     await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.rounds.map((r) => r.id)).not.toContain("round-3");
     await waitFor(() => expect(result.current.bestRound?.id).toBe("round-3"));
     expect(result.current.bestRound?.score).toBe(69);
     expect(result.current.bestRound?.holes).toHaveLength(18);
@@ -128,6 +133,7 @@ describe("useDashboardPageViewModel", () => {
       dashboard: {
         ...populatedDashboard,
         handicap_index: null,
+        best_round: null,
         recent_rounds: [],
         whs: { ...populatedDashboard.whs, rows: [], window_size: 0, count_used: 0, show_calculation: false },
       },
@@ -141,11 +147,6 @@ describe("useDashboardPageViewModel", () => {
 });
 
 describe("dashboard model", () => {
-  it("picks the lowest score as best", () => {
-    expect(pickBestRound(populatedRounds.map(Round.fromSummary))?.id).toBe("round-3");
-    expect(pickBestRound([])).toBeNull();
-  });
-
   it("pairs scrambling and up-and-down by round and keeps the last twelve", () => {
     const rounds = Array.from({ length: 14 }, (_, i) => i + 1);
     const trend = shortGameTrendFrom({

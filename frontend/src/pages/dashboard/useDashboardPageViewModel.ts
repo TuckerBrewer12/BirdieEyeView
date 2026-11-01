@@ -11,7 +11,6 @@ import {
 import {
   goalProgress,
   milestonesFrom,
-  pickBestRound,
   recentScoresFrom,
   scoreMixItems,
   shortGameTrendFrom,
@@ -61,6 +60,7 @@ export interface DashboardPageViewModel {
   trendView: TrendView;
   setTrendView: (view: TrendView) => void;
   rounds: Round[];
+  /** The lowest-scoring round on record; both layouts show this one. */
   bestRound: Round | null;
   recentRounds: Round[];
   sidebarRounds: Round[];
@@ -120,7 +120,12 @@ export function useDashboardPageViewModel(
     () => (data?.recent_rounds ?? []).map(Round.fromSummary),
     [data?.recent_rounds],
   );
-  const bestRound = useMemo(() => pickBestRound(rounds), [rounds]);
+  // The server's lowest round on record, which need not be one of the recent few.
+  const bestRoundDto = data?.best_round ?? null;
+  const bestRound = useMemo(
+    () => (bestRoundDto ? Round.fromSummary(bestRoundDto) : null),
+    [bestRoundDto],
+  );
 
   const openHandicapSheet = useCallback(() => setHandicapSheetOpen(true), []);
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
