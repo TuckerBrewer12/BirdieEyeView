@@ -29,7 +29,7 @@ export function LegacyMobileLab({ vm }: { vm: LabPageViewModel }) {
           gapToGoal: vm.peak.gapToGoal,
         }
       }
-      peakScoreTypes={vm.peakVsAverage && { peak: vm.peakVsAverage.peak, all: vm.peakVsAverage.average }}
+      peakImpacts={vm.peakImpacts}
       goalLabel={goalLabel(target)}
       benchmarkHeading={benchmarkHeading(vm.radarMode, vm.comparison, vm.selectedFriend, vm.peak)}
     />

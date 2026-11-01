@@ -30,7 +30,6 @@ import {
   type ParTypeRow,
   type PeakGame,
   type PeakImpact,
-  type PeakVsAverage,
   type PuttingSummary,
   type RadarMode,
 } from "./model";
@@ -81,8 +80,7 @@ export interface LabPageViewModel {
   parTypes: ParTypeRow[];
   putting: PuttingSummary | null;
   peak: PeakGame | null;
-  /** Birdies, bogeys and doubles a round in the best rounds against every round. */
-  peakVsAverage: PeakVsAverage | null;
+  /** Birdies, bogeys and doubles a round in the best rounds against every round, and what each is worth. */
   peakImpacts: PeakImpact[];
 }
 
@@ -183,7 +181,6 @@ export function useLabPageViewModel(
     parTypes: analytics ? parTypeRowsFrom(analytics, benchmark) : [],
     putting: analytics ? puttingSummaryFrom(analytics) : null,
     peak,
-    peakVsAverage,
     peakImpacts: peakVsAverage ? peakImpactsFrom(peakVsAverage) : [],
   };
 }
