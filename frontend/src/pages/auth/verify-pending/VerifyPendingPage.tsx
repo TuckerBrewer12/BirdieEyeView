@@ -64,7 +64,7 @@ export function VerifyPendingPage() {
 
         <Button type="submit" size="cta" disabled={viewModel.resending}>
           <RefreshCw data-icon="inline-start" className={cn(viewModel.resending && "animate-spin")} />
-          {viewModel.resendLabel}
+          {viewModel.resending ? "Sending…" : "Send another confirmation email"}
         </Button>
       </form>
     </AuthCard>

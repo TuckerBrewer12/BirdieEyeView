@@ -19,7 +19,6 @@ export interface VerifyPendingViewModel {
   notice: string | null;
   error: string | null;
   resending: boolean;
-  resendLabel: string;
   resend: () => void;
 }
 
@@ -86,7 +85,6 @@ export function useVerifyPendingViewModel(
         ? messageFrom(resendLink.error, "Could not resend verification email.")
         : null,
     resending: resendLink.isPending,
-    resendLabel: resendLink.isPending ? "Sending…" : "Send another confirmation email",
     resend,
   };
 }
