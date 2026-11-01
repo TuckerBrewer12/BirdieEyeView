@@ -147,7 +147,7 @@ export class RoundsRobot {
     ).toBeVisible();
     await search.evaluate((el) => {
       el.scrollIntoView({ block: "end", inline: "nearest" });
-      const nav = document.querySelector("nav.fixed.bottom-0");
+      const nav = document.querySelector("[data-slot=app-shell-bottom]");
       const extra =
         nav instanceof HTMLElement && getComputedStyle(nav).display !== "none"
           ? nav.getBoundingClientRect().height

@@ -12,10 +12,6 @@
   --color-bogey: #dc2626;      /* red-600 */
   --color-double: #1d4ed8;     /* blue-700 */
   --color-triple: #6b21a8;     /* purple-800 */
-
-  --color-sidebar: #1a3a1f;
-  --color-sidebar-foreground: #e8f5e9;
-  --color-sidebar-hover: #2d5a35;
 }
 
 /* iOS WebView: remove tap highlight and 300ms click delay */
