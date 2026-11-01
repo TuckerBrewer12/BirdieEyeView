@@ -58,6 +58,10 @@ export function AnalyticsPage({ userId }: { userId: string }) {
           scoreTrendWithAvg={vm.scoreTrendWithAvg}
           donutData={vm.donutData}
           girData={vm.girData}
+          scrPct={vm.scrPct}
+          scrDelta={vm.scrDelta}
+          udPct={vm.udPct}
+          udDelta={vm.udDelta}
           threePuttsData={vm.threePuttsData}
           insights={vm.insights}
           bestRound={vm.bestRound}

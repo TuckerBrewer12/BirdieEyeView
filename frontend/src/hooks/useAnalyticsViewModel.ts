@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette } from "@/lib/chartPalettes";
 import { SCORE_COLORS, SCORE_KEYS } from "@/lib/colors";
-import { withRollingAverage } from "@/lib/stats";
+import { average, trendDelta, withRollingAverage } from "@/lib/stats";
 import type {
   AnalyticsData, AnalyticsFilters, ScoreTrendRow, ScoreTypeRow, GIRTrendRow, PuttsTrendRow, ThreePuttRow,
 } from "@/types/analytics";
@@ -156,6 +156,10 @@ export interface AnalyticsViewModel {
   scoreTrendWithAvg: (ScoreTrendRow & { rolling_avg: number | null })[];
   donutData: { name: string; value: number }[];
   girData: GIRTrendRow[];
+  scrPct: number | null;
+  scrDelta: number | null;
+  udPct: number | null;
+  udDelta: number | null;
   threePuttsData: ThreePuttRow[];
   insights: Insight[];
   bestRound: ScoreTrendRow | null;
@@ -220,6 +224,19 @@ export function useAnalyticsViewModel(userId: string): AnalyticsViewModel {
     () => (data?.gir_trend ?? []).filter((r) => r.gir_percentage != null && r.total_gir != null),
     [data?.gir_trend],
   );
+
+  // Short game deltas (last 5 vs prev 5).
+  // A round without a missed green has no rate, so it sits out of both.
+  const { scrPct, scrDelta, udPct, udDelta } = useMemo(() => {
+    const scrRates = (data?.scrambling_trend ?? []).flatMap((r) => (r.scrambling_percentage != null ? [r.scrambling_percentage] : []));
+    const udRates = (data?.up_and_down_trend ?? []).flatMap((r) => (r.percentage != null ? [r.percentage] : []));
+    return {
+      scrPct: average(scrRates.slice(-5)),
+      scrDelta: trendDelta(scrRates, (v) => v),
+      udPct: average(udRates.slice(-5)),
+      udDelta: trendDelta(udRates, (v) => v),
+    };
+  }, [data?.scrambling_trend, data?.up_and_down_trend]);
 
   const threePuttsData = useMemo(() => {
     const roundsWithPutts = new Set(
@@ -286,6 +303,10 @@ export function useAnalyticsViewModel(userId: string): AnalyticsViewModel {
     scoreTrendWithAvg,
     donutData,
     girData,
+    scrPct,
+    scrDelta,
+    udPct,
+    udDelta,
     threePuttsData,
     insights,
     bestRound,
