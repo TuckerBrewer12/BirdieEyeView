@@ -1,4 +1,6 @@
 import { test as base, expect } from "../../../../testing/playwright";
+import { TEST_USER } from "../../../../testing/fakes/FakeBackend";
+import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import { AuthScreenRobot, type AuthSeed } from "../../tests/AuthScreen.robot";
 
 /** Screen robot for `/verify-pending`, where Register sends a new account. */
@@ -6,6 +8,15 @@ export class VerifyPendingRobot extends AuthScreenRobot {
   async open(email: string | null = "sam@example.com", seed: AuthSeed = {}): Promise<this> {
     const path = email == null ? "/verify-pending" : `/verify-pending?email=${encodeURIComponent(email)}`;
     await this.visit(path, "Verify your email", seed);
+    return this;
+  }
+
+  /** Arrives already signed in and verified, so the screen should send the golfer home. */
+  async openVerified(): Promise<this> {
+    this.backend = await FakeSession.install(this.page, {
+      user: { ...TEST_USER, email_verified: true },
+    });
+    await this.page.goto("/verify-pending");
     return this;
   }
 

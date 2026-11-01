@@ -17,3 +17,8 @@ test("a refused resend says why", async ({ verifyPending }) => {
   await verifyPending.resend();
   await verifyPending.seesError(RATE_LIMITED);
 });
+
+test("a signed-in verified session goes home", async ({ verifyPending }) => {
+  await verifyPending.openVerified();
+  await verifyPending.isAt("/");
+});
