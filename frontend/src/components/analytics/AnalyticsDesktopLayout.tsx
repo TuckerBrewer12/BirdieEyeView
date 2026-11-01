@@ -16,7 +16,7 @@ import {
 import { SVGTimeSeriesArea } from "@/components/analytics/SVGTimeSeriesArea";
 import { TrendingDown, Gauge, Hash, Trophy, Target } from "lucide-react";
 import { SCORE_LABELS } from "@/lib/colors";
-import { chartColors, colors } from "@/brand";
+import { chartColors, chartLayout, colors } from "@/brand";
 import { scoreKindLabel, type ScoreKind } from "@/domain";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { BestRoundCard } from "@/components/analytics/BestRoundCard";
@@ -48,12 +48,12 @@ const scoreColors: Record<string, string> = {
 /** GIR vs no-GIR: under par stacks left of zero, par and over to the right. */
 const GIR_BARS: { kind: ScoreKind; fill: string; stackId: "neg" | "pos"; radius?: [number, number, number, number] }[] = [
   { kind: "birdie", fill: successColor, stackId: "neg" },
-  { kind: "eagle", fill: colors.score.eagle.base, stackId: "neg", radius: [4, 0, 0, 4] },
+  { kind: "eagle", fill: colors.score.eagle.base, stackId: "neg", radius: chartLayout.barEndLeft },
   { kind: "par", fill: mutedFill, stackId: "pos" },
   { kind: "bogey", fill: dangerColor, stackId: "pos" },
   { kind: "double", fill: colors.score.double.base, stackId: "pos" },
   { kind: "triple", fill: colors.score.triple.base, stackId: "pos" },
-  { kind: "quad", fill: colors.score.quad.base, stackId: "pos", radius: [0, 4, 4, 0] },
+  { kind: "quad", fill: colors.score.quad.base, stackId: "pos", radius: chartLayout.barEndRight },
 ];
 
 export interface AnalyticsDesktopLayoutProps {
