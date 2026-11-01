@@ -20,7 +20,7 @@ import { BestRoundCard } from "@/components/analytics/BestRoundCard";
 import { NarrativeInsight } from "@/components/analytics/NarrativeInsight";
 import { ParMatrixGrid } from "@/components/analytics/ParMatrixGrid";
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
-import { chartColors, colors } from "@/brand";
+import { chartColors, chartLayout, colors } from "@/brand";
 import { scoreKindLabel, type ScoreKind } from "@/domain";
 import type {
   AnalyticsData, AnalyticsFilters, ScoreTrendRow,
@@ -47,12 +47,12 @@ const scoreColors: Record<string, string> = {
 /** GIR vs no-GIR: under par stacks left of zero, par and over to the right. */
 const GIR_BARS: { kind: ScoreKind; fill: string; stackId: "neg" | "pos"; radius?: [number, number, number, number] }[] = [
   { kind: "birdie", fill: successColor, stackId: "neg" },
-  { kind: "eagle", fill: colors.score.eagle.base, stackId: "neg", radius: [4, 0, 0, 4] },
+  { kind: "eagle", fill: colors.score.eagle.base, stackId: "neg", radius: chartLayout.stackEndRadius.left },
   { kind: "par", fill: mutedFill, stackId: "pos" },
   { kind: "bogey", fill: dangerColor, stackId: "pos" },
   { kind: "double", fill: colors.score.double.base, stackId: "pos" },
   { kind: "triple", fill: colors.score.triple.base, stackId: "pos" },
-  { kind: "quad", fill: colors.score.quad.base, stackId: "pos", radius: [0, 4, 4, 0] },
+  { kind: "quad", fill: colors.score.quad.base, stackId: "pos", radius: chartLayout.stackEndRadius.right },
 ];
 
 type MobileTab = "scoring" | "ball-striking" | "putting" | "profile" | "range";
@@ -407,7 +407,7 @@ export function MobileAnalyticsPage({
                       <div className="font-semibold text-[11px] mb-1" style={{ color: labelText === "GIR" ? successColor : dangerColor }}>{labelText}</div>
                       {visible.map((p) => (
                         <div key={String(p.dataKey)} className="flex items-center justify-between gap-3">
-                          <span style={{ color: p.fill }} className="text-[11px]">{String(p.name ?? "")}</span>
+                          <span style={{ color: p.fill }} className="text-label">{String(p.name ?? "")}</span>
                           <span style={{ color: p.fill }} className="font-bold text-[11px]">{Math.abs(Number(p.value ?? 0)).toFixed(1)}%</span>
                         </div>
                       ))}
@@ -424,7 +424,7 @@ export function MobileAnalyticsPage({
             {GIR_BARS.map(({ kind, fill }) => (
               <div key={kind} className="flex items-center gap-1">
                 <div className="w-2 h-2 rounded-sm" style={{ background: fill }} />
-                <span className="text-[11px] font-semibold text-gray-500">{scoreKindLabel(kind)}</span>
+                <span className="text-label font-semibold text-muted-foreground">{scoreKindLabel(kind)}</span>
               </div>
             ))}
           </div>
