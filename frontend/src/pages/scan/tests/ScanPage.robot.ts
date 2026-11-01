@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import { type Page } from "@playwright/test";
+import { type Download, type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
@@ -13,6 +13,7 @@ const CARD_NAME = "physical-card.jpg";
 export class ScanRobot {
   private readonly page: Page;
   private backend: FakeBackend | null = null;
+  private shared: Download | null = null;
 
   constructor(page: Page) {
     this.page = page;
@@ -111,6 +112,32 @@ export class ScanRobot {
     return this;
   }
 
+  /** The saved round's score, and how it stood against par. */
+  async seesSavedScore(score: number, toPar: string): Promise<this> {
+    const saved = this.page.locator("[data-slot=scan-saved]");
+    await expect(saved.locator("[data-slot=stat-value]")).toHaveText(String(score));
+    await expect(saved.locator("[data-slot=to-par-figure]")).toHaveText(toPar);
+    return this;
+  }
+
+  /**
+   * Shares the saved round. The test browser has no share sheet, so the image comes down as a
+   * file instead.
+   */
+  async tapShare(): Promise<this> {
+    const download = this.page.waitForEvent("download");
+    await this.page.getByRole("button", { name: "Share Round" }).click();
+    this.shared = await download;
+    return this;
+  }
+
+  /** The round went out as an image named for its course. */
+  async seesSharedImage(fileName: string): Promise<this> {
+    expect(this.shared?.suggestedFilename()).toBe(fileName);
+    await expect(this.page.getByRole("button", { name: "Share Round" })).toBeEnabled();
+    return this;
+  }
+
   async tapViewRound(): Promise<this> {
     await this.page.getByRole("button", { name: "View Round" }).click();
     return this;
@@ -197,37 +224,65 @@ export class ScanRobot {
 
   /** Looks up a course on the manual-entry form. */
   async searchSetupCourse(query: string): Promise<this> {
-    await this.page.getByPlaceholder("Search for a course by name...").fill(query);
+    await this.setupSearch().fill(query);
     return this;
   }
 
   async pickSetupCourse(name: string): Promise<this> {
-    await this.page.locator("ul").getByRole("button", { name }).click();
+    await this.page.locator("[data-slot=course-result]").filter({ hasText: name }).click();
     return this;
   }
 
-  /** Keeps the typed name when the search finds no course. */
+  /** Keeps the typed name for a course the search doesn't have. */
   async keepTypedCourse(name: string): Promise<this> {
-    await this.page.getByRole("button", { name: `Use "${name}"`, exact: true }).click();
+    await this.page.getByRole("button", { name: `Save as "${name}"`, exact: true }).click();
     return this;
   }
 
   /** The course chosen for manual entry, picked or typed. */
   async seesSetupCourse(name: string): Promise<this> {
     await expect(this.page.getByText(name, { exact: true })).toBeVisible();
-    await expect(this.page.getByPlaceholder("Search for a course by name...")).toHaveCount(0);
+    await expect(this.setupSearch()).toHaveCount(0);
     return this;
   }
 
-  /** Chooses a tee. The control is a native select. */
+  /** Opens the search again from the chosen course. */
+  async changeSetupCourse(label: "Change course" | "Edit name"): Promise<this> {
+    await this.page.getByRole("button", { name: label }).click();
+    return this;
+  }
+
+  /** The manual-entry search, open on this query. */
+  async seesSetupSearch(query: string): Promise<this> {
+    await expect(this.setupSearch()).toHaveValue(query);
+    return this;
+  }
+
+  private setupSearch() {
+    return this.page.getByRole("searchbox", { name: "Course (optional)" });
+  }
+
+  /** Picks a tee from the chosen course's tees. */
   async chooseTee(color: string): Promise<this> {
-    await this.page.getByRole("combobox").selectOption(color);
+    await this.teeChip(color).click();
     return this;
   }
 
   async seesTee(color: string): Promise<this> {
-    await expect(this.page.getByRole("combobox")).toHaveValue(color);
+    await expect(this.teeChip(color)).toHaveAttribute("aria-pressed", "true");
     return this;
+  }
+
+  /** Types the tee, when the course has no tees to pick from. */
+  async typeTee(tee: string): Promise<this> {
+    const field = this.page.getByRole("textbox", { name: "Tee played" });
+    await field.fill(tee);
+    await expect(field).toHaveValue(tee);
+    return this;
+  }
+
+  private teeChip(color: string) {
+    return this.page.getByRole("group", { name: "Tee played" }).getByRole("button", { name: color, exact: true });
   }
 
   /** A hole's strokes cell on the card being checked, ringed or not. */
@@ -283,18 +338,14 @@ export class ScanRobot {
 
   /** Picks the tee played from the chips the card's or the linked course's tees offer. */
   async pickReviewTee(color: string): Promise<this> {
-    const chip = this.page.getByRole("group", { name: "Tee played" }).getByRole("button", { name: color, exact: true });
-    await chip.click();
-    await expect(chip).toHaveAttribute("aria-pressed", "true");
+    await this.chooseTee(color);
+    await this.seesTee(color);
     return this;
   }
 
   /** Types the tee played, when there are no tees to pick from. */
   async typeReviewTee(tee: string): Promise<this> {
-    const field = this.page.getByRole("textbox", { name: "Tee played" });
-    await field.fill(tee);
-    await expect(field).toHaveValue(tee);
-    return this;
+    return this.typeTee(tee);
   }
 
   /** The tee kept on the round just saved. */

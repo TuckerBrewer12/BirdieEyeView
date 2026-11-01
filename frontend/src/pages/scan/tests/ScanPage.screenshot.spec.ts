@@ -111,11 +111,32 @@ test("a saved round", async ({ scan }) => {
   await scan.capture("scan-saved.png");
 });
 
+test("a saved round in dark mode", async ({ scan }) => {
+  await scan.dark();
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.capture("scan-saved-dark.png");
+});
+
 test("manual entry setup", async ({ scan }) => {
   await scan.open();
   await scan.chooseManualEntry();
   await scan.seesSetup();
   await scan.capture("scan-manual-setup.png");
+});
+
+test("manual entry under a typed course name", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseManualEntry();
+  await scan.searchSetupCourse("Muni Nine");
+  await scan.keepTypedCourse("Muni Nine");
+  await scan.seesSetupCourse("Muni Nine");
+  await scan.typeTee("Gold");
+  await scan.capture("scan-manual-course-named.png");
 });
 
 test("manual entry with a course picked", async ({ scan }) => {

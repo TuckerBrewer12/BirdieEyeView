@@ -991,6 +991,412 @@ export const sampleGolfer = {
       {"opportunities": 9, "percentage": 33.3, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "successes": 3}
     ]
   },
+  "analyticsByCourse": {
+    "3e9094df-7893-5663-8230-0334b2d440ec": {
+      "gir_trend": [
+        {"gir_percentage": 22.22222222222222, "holes_played": 18, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "total_gir": 4},
+        {"gir_percentage": 33.33333333333333, "holes_played": 18, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "total_gir": 6},
+        {"gir_percentage": 16.666666666666664, "holes_played": 18, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "total_gir": 3},
+        {"gir_percentage": 44.44444444444444, "holes_played": 18, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "total_gir": 8}
+      ],
+      "gir_vs_non_gir": [
+        {"birdie": 9.523809523809524, "bogey": 28.57142857142857, "bucket": "GIR", "double_bogey": 0.0, "eagle": 0.0, "holes_counted": 21, "par": 61.904761904761905, "quad_bogey": 0.0, "triple_bogey": 0.0},
+        {"birdie": 0.0, "bogey": 56.86274509803921, "bucket": "No GIR", "double_bogey": 15.686274509803921, "eagle": 0.0, "holes_counted": 51, "par": 25.49019607843137, "quad_bogey": 0.0, "triple_bogey": 1.9607843137254901}
+      ],
+      "handicap_trend": [
+        {"differential": 16.4, "differential_status": "out", "handicap_index": null, "hi_threshold": 8.5, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "used_in_hi": false},
+        {"differential": 12.9, "differential_status": "out", "handicap_index": null, "hi_threshold": 8.5, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "used_in_hi": false},
+        {"differential": 10.2, "differential_status": "close", "handicap_index": 8.2, "hi_threshold": 8.5, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "used_in_hi": false},
+        {"differential": 8.5, "differential_status": "counting", "handicap_index": 7.5, "hi_threshold": 8.5, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "used_in_hi": true}
+      ],
+      "kpis": {"gir_percentage": 29.2, "handicap_index": 7.5, "putts_per_gir": 2.19, "scoring_average": 85.0, "scrambling_percentage": 24.8, "total_rounds": 4, "up_and_down_percentage": 40.5},
+      "net_score_trend": [
+        {"course_handicap": 8, "course_name": "Half Moon Bay Golf Links", "gross_score": 90, "net_score": 82, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "to_par": 18},
+        {"course_handicap": 8, "course_name": "Half Moon Bay Golf Links", "gross_score": 86, "net_score": 78, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "to_par": 14},
+        {"course_handicap": 8, "course_name": "Half Moon Bay Golf Links", "gross_score": 83, "net_score": 75, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "to_par": 11},
+        {"course_handicap": 8, "course_name": "Half Moon Bay Golf Links", "gross_score": 81, "net_score": 73, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "to_par": 9}
+      ],
+      "notable_achievements": {
+        "best_performance_streaks": {
+          "lifetime": {"longest_2_putt_or_less_streak": 21, "longest_birdie_streak": 1, "longest_par_streak": 4, "most_gir_in_a_row": 3},
+          "one_year": {"longest_2_putt_or_less_streak": 21, "longest_birdie_streak": 1, "longest_par_streak": 4, "most_gir_in_a_row": 3}
+        },
+        "best_performance_streaks_events": {
+          "lifetime": {
+            "longest_2_putt_or_less_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "longest_birdie_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "longest_par_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_gir_in_a_row": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+          },
+          "one_year": {
+            "longest_2_putt_or_less_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "longest_birdie_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "longest_par_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_gir_in_a_row": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+          }
+        },
+        "career_totals": {
+          "lifetime": {"total_3_putts": 11, "total_birdies": 2, "total_bogeys": 35, "total_double_bogeys": 8, "total_eagles": 0, "total_gir": 21, "total_hole_in_ones": 0, "total_holes_played": 72, "total_pars": 26, "total_quad_bogeys_plus": 0, "total_rounds_played": 4, "total_triple_bogeys": 1},
+          "one_year": {"birdies": 2, "double_bogeys": 8, "eagles": 0, "gir": 21, "hole_in_ones": 0, "quad_bogeys_plus": 0, "rounds_played": 4, "three_putts": 11, "triple_bogeys": 1}
+        },
+        "gir_milestones": {
+          "lifetime": {
+            "gir_breaks": [
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 3
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"},
+                "threshold": 6
+              },
+              {"achievement": null, "threshold": 9},
+              {"achievement": null, "threshold": 12},
+              {"achievement": null, "threshold": 15},
+              {"achievement": null, "threshold": 18}
+            ],
+            "highest_gir_percentage_in_round": 44.44444444444444,
+            "most_gir_in_round": 8
+          },
+          "one_year": {
+            "best_gir_in_round": 8,
+            "best_gir_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "gir_milestones_achieved_from_lifetime_set": 2,
+            "highest_gir_percentage": 44.44444444444444
+          }
+        },
+        "gir_milestones_events": {
+          "lifetime": {
+            "highest_gir_percentage_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "most_gir_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
+          },
+          "one_year": {
+            "best_gir_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "highest_gir_percentage": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
+          }
+        },
+        "home_course_records": {
+          "lifetime": {"home_course_name": null, "lowest_score_on_home_course": null, "most_rounds_played_at_home_course": 0},
+          "one_year": {"home_course_name": null, "lowest_score_on_home_course": null}
+        },
+        "home_course_records_events": {
+          "lifetime": {"lowest_score_on_home_course": null},
+          "one_year": {"lowest_score_on_home_course": null}
+        },
+        "putting_milestones": {
+          "lifetime": {
+            "fewest_putts_in_round": 30,
+            "most_1_putts_in_round": 8,
+            "most_3_putts_in_round": 5,
+            "putt_breaks": [
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 45
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 42
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 39
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 36
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+                "threshold": 33
+              },
+              {"achievement": null, "threshold": 30},
+              {"achievement": null, "threshold": 27},
+              {"achievement": null, "threshold": 24},
+              {"achievement": null, "threshold": 21}
+            ]
+          },
+          "one_year": {"fewest_putts_in_round": 30, "most_1_putts_in_round": 8, "most_3_putts_in_round": 5, "putting_milestones_achieved_from_lifetime_set": 5}
+        },
+        "putting_milestones_events": {
+          "lifetime": {
+            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_1_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_3_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+          },
+          "one_year": {
+            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_1_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_3_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+          }
+        },
+        "round_milestones": {
+          "lifetime": {
+            "first_eagle": null,
+            "first_hole_in_one": null,
+            "first_round_under_par": null,
+            "score_breaks": [
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 120
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 110
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 100
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 95
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"},
+                "threshold": 90
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+                "threshold": 85
+              },
+              {"achievement": null, "threshold": 80},
+              {"achievement": null, "threshold": 75},
+              {"achievement": null, "threshold": 70},
+              {"achievement": null, "threshold": 65},
+              {"achievement": null, "threshold": 60}
+            ]
+          },
+          "one_year": {
+            "new_personal_records_achieved": ["break_120", "break_110", "break_100", "break_95", "break_90", "break_85"],
+            "new_personal_records_achieved_count": 6
+          }
+        },
+        "scoring_records": {
+          "lifetime": {"fewest_putts_in_round": 30, "highest_round": 90, "lowest_9_holes": 40, "lowest_round": 81, "most_birdies_in_round": 1, "most_eagles_in_round": 0, "most_gir_in_round": 8},
+          "one_year": {"fewest_putts_in_round": 30, "lowest_round": 81, "most_birdies_in_round": 1, "most_gir_in_round": 8}
+        },
+        "scoring_records_events": {
+          "lifetime": {
+            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "highest_round": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "lowest_9_holes": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "lowest_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "most_birdies_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "most_eagles_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "most_gir_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
+          },
+          "one_year": {
+            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "lowest_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "most_birdies_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "most_gir_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
+          }
+        },
+        "window_days": 365
+      },
+      "putts_trend": [
+        {"holes_played": 18, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "total_putts": 34},
+        {"holes_played": 18, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "total_putts": 35},
+        {"holes_played": 18, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "total_putts": 30},
+        {"holes_played": 18, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "total_putts": 33}
+      ],
+      "score_differentials": [
+        {"course_rating": 71.4, "differential": 16.4, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "score": 90, "slope_rating": 128.0},
+        {"course_rating": 71.4, "differential": 12.9, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "score": 86, "slope_rating": 128.0},
+        {"course_rating": 71.4, "differential": 10.2, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "score": 83, "slope_rating": 128.0},
+        {"course_rating": 71.4, "differential": 8.5, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "score": 81, "slope_rating": 128.0}
+      ],
+      "score_trend": [
+        {"course_name": "Half Moon Bay Golf Links", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "to_par": 18, "total_score": 90},
+        {"course_name": "Half Moon Bay Golf Links", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "to_par": 14, "total_score": 86},
+        {"course_name": "Half Moon Bay Golf Links", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "to_par": 11, "total_score": 83},
+        {"course_name": "Half Moon Bay Golf Links", "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "to_par": 9, "total_score": 81}
+      ],
+      "score_type_distribution": [
+        {"birdie": 5.555555555555555, "bogey": 33.33333333333333, "double_bogey": 27.77777777777778, "eagle": 0.0, "holes_counted": 18, "par": 27.77777777777778, "quad_bogey": 0.0, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "triple_bogey": 5.555555555555555},
+        {"birdie": 0.0, "bogey": 55.55555555555556, "double_bogey": 11.11111111111111, "eagle": 0.0, "holes_counted": 18, "par": 33.33333333333333, "quad_bogey": 0.0, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "triple_bogey": 0.0},
+        {"birdie": 0.0, "bogey": 61.111111111111114, "double_bogey": 0.0, "eagle": 0.0, "holes_counted": 18, "par": 38.88888888888889, "quad_bogey": 0.0, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "triple_bogey": 0.0},
+        {"birdie": 5.555555555555555, "bogey": 44.44444444444444, "double_bogey": 5.555555555555555, "eagle": 0.0, "holes_counted": 18, "par": 44.44444444444444, "quad_bogey": 0.0, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "triple_bogey": 0.0}
+      ],
+      "scoring_by_handicap": [
+        {"average_to_par": 1.0, "handicap": 1, "sample_size": 4},
+        {"average_to_par": 0.25, "handicap": 2, "sample_size": 4},
+        {"average_to_par": 0.25, "handicap": 3, "sample_size": 4},
+        {"average_to_par": 1.5, "handicap": 4, "sample_size": 4},
+        {"average_to_par": 0.25, "handicap": 5, "sample_size": 4},
+        {"average_to_par": 0.5, "handicap": 6, "sample_size": 4},
+        {"average_to_par": 1.5, "handicap": 7, "sample_size": 4},
+        {"average_to_par": 0.5, "handicap": 8, "sample_size": 4},
+        {"average_to_par": 1.0, "handicap": 9, "sample_size": 4},
+        {"average_to_par": 0.25, "handicap": 10, "sample_size": 4},
+        {"average_to_par": 1.0, "handicap": 11, "sample_size": 4},
+        {"average_to_par": 0.75, "handicap": 12, "sample_size": 4},
+        {"average_to_par": 1.0, "handicap": 13, "sample_size": 4},
+        {"average_to_par": 0.75, "handicap": 14, "sample_size": 4},
+        {"average_to_par": 0.0, "handicap": 15, "sample_size": 4},
+        {"average_to_par": 1.25, "handicap": 16, "sample_size": 4},
+        {"average_to_par": 0.25, "handicap": 17, "sample_size": 4},
+        {"average_to_par": 1.0, "handicap": 18, "sample_size": 4}
+      ],
+      "scoring_by_par": [
+        {"average_strokes": 3.625, "average_to_par": 0.625, "par": 3, "sample_size": 16},
+        {"average_strokes": 4.8, "average_to_par": 0.7999999999999998, "par": 4, "sample_size": 40},
+        {"average_strokes": 5.625, "average_to_par": 0.625, "par": 5, "sample_size": 16}
+      ],
+      "scoring_by_yardage": [
+        {
+          "average_to_par": 1.25,
+          "bucket_label": "< 150",
+          "bucket_order": 0,
+          "gir_percentage": 0.0,
+          "par": 3,
+          "raw_scores": [
+            {"to_par": 2, "yardage": 149},
+            {"to_par": 1, "yardage": 149},
+            {"to_par": 1, "yardage": 149},
+            {"to_par": 1, "yardage": 149}
+          ],
+          "sample_size": 4
+        },
+        {
+          "average_to_par": 0.4166666666666667,
+          "bucket_label": "150\u2013199",
+          "bucket_order": 1,
+          "gir_percentage": 41.66666666666667,
+          "par": 3,
+          "raw_scores": [
+            {"to_par": -1, "yardage": 158},
+            {"to_par": 0, "yardage": 172},
+            {"to_par": 1, "yardage": 181},
+            {"to_par": 1, "yardage": 158},
+            {"to_par": 0, "yardage": 172},
+            {"to_par": 2, "yardage": 181},
+            {"to_par": 0, "yardage": 158},
+            {"to_par": 1, "yardage": 172},
+            {"to_par": 0, "yardage": 181},
+            {"to_par": 0, "yardage": 158},
+            {"to_par": 0, "yardage": 172},
+            {"to_par": 1, "yardage": 181}
+          ],
+          "sample_size": 12
+        },
+        {
+          "average_to_par": 0.625,
+          "bucket_label": "350\u2013399",
+          "bucket_order": 1,
+          "gir_percentage": 25.0,
+          "par": 4,
+          "raw_scores": [
+            {"to_par": 0, "yardage": 385},
+            {"to_par": 2, "yardage": 362},
+            {"to_par": 2, "yardage": 380},
+            {"to_par": 1, "yardage": 372},
+            {"to_par": 1, "yardage": 395},
+            {"to_par": 2, "yardage": 365},
+            {"to_par": 0, "yardage": 385},
+            {"to_par": 1, "yardage": 362},
+            {"to_par": 1, "yardage": 380},
+            {"to_par": 1, "yardage": 372},
+            {"to_par": 1, "yardage": 395},
+            {"to_par": 0, "yardage": 365},
+            {"to_par": 1, "yardage": 385},
+            {"to_par": 0, "yardage": 362},
+            {"to_par": 0, "yardage": 380},
+            {"to_par": 0, "yardage": 372},
+            {"to_par": 0, "yardage": 395},
+            {"to_par": 1, "yardage": 365},
+            {"to_par": 0, "yardage": 385},
+            {"to_par": 1, "yardage": 362},
+            {"to_par": 1, "yardage": 380},
+            {"to_par": 0, "yardage": 372},
+            {"to_par": -1, "yardage": 395},
+            {"to_par": 0, "yardage": 365}
+          ],
+          "sample_size": 24
+        },
+        {
+          "average_to_par": 1.0625,
+          "bucket_label": "400\u2013449",
+          "bucket_order": 2,
+          "gir_percentage": 25.0,
+          "par": 4,
+          "raw_scores": [
+            {"to_par": 1, "yardage": 401},
+            {"to_par": 1, "yardage": 428},
+            {"to_par": 3, "yardage": 418},
+            {"to_par": 1, "yardage": 412},
+            {"to_par": 2, "yardage": 401},
+            {"to_par": 1, "yardage": 428},
+            {"to_par": 1, "yardage": 418},
+            {"to_par": 0, "yardage": 412},
+            {"to_par": 1, "yardage": 401},
+            {"to_par": 1, "yardage": 428},
+            {"to_par": 1, "yardage": 418},
+            {"to_par": 1, "yardage": 412},
+            {"to_par": 0, "yardage": 401},
+            {"to_par": 1, "yardage": 428},
+            {"to_par": 1, "yardage": 418},
+            {"to_par": 1, "yardage": 412}
+          ],
+          "sample_size": 16
+        },
+        {
+          "average_to_par": 1.5,
+          "bucket_label": "< 500",
+          "bucket_order": 0,
+          "gir_percentage": 25.0,
+          "par": 5,
+          "raw_scores": [
+            {"to_par": 2, "yardage": 498},
+            {"to_par": 1, "yardage": 498},
+            {"to_par": 1, "yardage": 498},
+            {"to_par": 2, "yardage": 498}
+          ],
+          "sample_size": 4
+        },
+        {
+          "average_to_par": 0.3333333333333333,
+          "bucket_label": "500\u2013549",
+          "bucket_order": 1,
+          "gir_percentage": 41.66666666666667,
+          "par": 5,
+          "raw_scores": [
+            {"to_par": 0, "yardage": 515},
+            {"to_par": 0, "yardage": 530},
+            {"to_par": 0, "yardage": 505},
+            {"to_par": 0, "yardage": 515},
+            {"to_par": 1, "yardage": 530},
+            {"to_par": 0, "yardage": 505},
+            {"to_par": 1, "yardage": 515},
+            {"to_par": 0, "yardage": 530},
+            {"to_par": 1, "yardage": 505},
+            {"to_par": 0, "yardage": 515},
+            {"to_par": 0, "yardage": 530},
+            {"to_par": 1, "yardage": 505}
+          ],
+          "sample_size": 12
+        }
+      ],
+      "scrambling_trend": [
+        {"round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "scramble_failures": 12, "scramble_opportunities": 14, "scramble_successes": 2, "scrambling_percentage": 14.285714285714285},
+        {"round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "scramble_failures": 9, "scramble_opportunities": 12, "scramble_successes": 3, "scrambling_percentage": 25.0},
+        {"round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "scramble_failures": 9, "scramble_opportunities": 15, "scramble_successes": 6, "scrambling_percentage": 40.0},
+        {"round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "scramble_failures": 8, "scramble_opportunities": 10, "scramble_successes": 2, "scrambling_percentage": 20.0}
+      ],
+      "three_putts_trend": [
+        {"holes_with_putt_data": 18, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "three_putt_count": 3, "three_putt_percentage": 16.666666666666664},
+        {"holes_with_putt_data": 18, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "three_putt_count": 5, "three_putt_percentage": 27.77777777777778},
+        {"holes_with_putt_data": 18, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "three_putt_count": 2, "three_putt_percentage": 11.11111111111111},
+        {"holes_with_putt_data": 18, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "three_putt_count": 1, "three_putt_percentage": 5.555555555555555}
+      ],
+      "up_and_down_trend": [
+        {"opportunities": 14, "percentage": 28.6, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "successes": 4},
+        {"opportunities": 12, "percentage": 50.0, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "successes": 6},
+        {"opportunities": 15, "percentage": 53.3, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "successes": 8},
+        {"opportunities": 10, "percentage": 30.0, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "successes": 3}
+      ]
+    }
+  },
   "dashboard": {
     "average_gir": 6.0,
     "average_putts": 32.7,
@@ -1452,6 +1858,11 @@ export const sampleGolfer = {
     "scoring_goal": 79
   },
   "handicapIndex": 7.0,
+  "playedCourses": [
+    {"id": "3e9094df-7893-5663-8230-0334b2d440ec", "location": "Half Moon Bay, CA", "name": "Half Moon Bay Golf Links"},
+    {"id": "1b6e5c5a-2153-519c-a3da-84852bef21a4", "location": "San Francisco, CA", "name": "Presidio Golf Course"},
+    {"id": "fac0bc48-11c1-5a79-aa30-de0149ea5302", "location": "Pacifica, CA", "name": "Sharp Park Golf Course"}
+  ],
   "profile": {"created_at": "2026-02-20T00:00:00", "email": "sam@example.com", "handicap": 7.0, "home_course_id": "1b6e5c5a-2153-519c-a3da-84852bef21a4", "id": "1e912903-4df9-5191-b19a-6a15dc4852b5", "name": "Sam Rivera", "scoring_goal": 79},
   "user": {"email": "sam@example.com", "email_verified": true, "name": "Sam Rivera", "user_id": "1e912903-4df9-5191-b19a-6a15dc4852b5"}
 } satisfies FakeBackendSeed;

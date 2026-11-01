@@ -1,5 +1,5 @@
 import { toParLabel, type Round } from "@/domain";
-import type { ShareMessage } from "@/hooks/useShareRound";
+import type { ShareMessage } from "@/platform/useShareRound";
 import { formatCourseName } from "./courseName";
 
 /** What a shared round says alongside its image: "Check out my 78 (+6) at Half Moon Bay!" */

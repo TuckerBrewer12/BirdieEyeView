@@ -44,35 +44,9 @@ export interface ScanResult {
   fields_needing_review: string[];
 }
 
-type Step = "upload" | "processing" | "review" | "success";
-
 export interface ManualTee {
   color: string | null;
   slope_rating: number | null;
   course_rating: number | null;
   hole_yardages: Record<string, number>;
-}
-
-export interface ScanState {
-  step: Step;
-  scanMode: "full" | "manual";
-  selectedCourseId: string | null;
-  selectedCourseName: string | null;
-  file: File | null;
-  preview: string | null;
-  result: ScanResult | null;
-  editedScores: ExtractedHoleScore[];
-  editedDate: string;
-  editedTeeBox: string | null;
-  error: string | null;
-  userContext: string;
-  prefetchedOcrText: string | null;
-  // Review step: user-selected course override
-  reviewCourseId: string | null;
-  reviewExternalCourseId: string | null;
-  reviewCourseName: string | null;
-  // Manual entry: fetched course data
-  manualCourseHoles: { number: number | null; par: number | null; handicap: number | null }[];
-  manualCourseTees: ManualTee[];
-  savedRoundId: string | null;
 }

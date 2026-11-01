@@ -4,6 +4,7 @@ type Fmt = (value: unknown, name: unknown, props: unknown) => ReactNode | [React
 type DivergingTooltipPayload = {
   value?: unknown;
   dataKey?: unknown;
+  name?: unknown;
   fill?: string;
 };
 
@@ -14,12 +15,64 @@ import {
 } from "recharts";
 import { SVGTimeSeriesArea } from "@/components/analytics/SVGTimeSeriesArea";
 import { TrendingDown, Gauge, Hash, Trophy, Target } from "lucide-react";
-import { SCORE_COLORS, SCORE_LABELS } from "@/lib/colors";
+import { SCORE_LABELS } from "@/lib/colors";
+import { chartColors, chartLayout, colors } from "@/brand";
+import { scoreKindLabel, type ScoreKind } from "@/domain";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { BestRoundCard } from "@/components/analytics/BestRoundCard";
 import { ParMatrixGrid } from "@/components/analytics/ParMatrixGrid";
 import { AnalyticsCommandCenter } from "@/components/analytics/AnalyticsCommandCenter";
-import type { AnalyticsViewModel } from "@/hooks/useAnalyticsViewModel";
+import type {
+  AnalyticsData, AnalyticsFilters, GIRTrendRow, PuttsTrendRow, ScoreTrendRow, ScramblingRow, ThreePuttRow,
+} from "@/types/analytics";
+
+// The chart colours, from the brand tokens. Analytics PR B moves these charts onto the kit.
+const trendPrimary = colors.primary;
+const trendSecondary = "var(--tee-orange)";
+const trendTertiary = "var(--tee-purple)";
+const successColor = colors.score.birdie.base;
+const dangerColor = colors.score.bogey.base;
+const neutralColor = colors.mutedForeground;
+const gridColor = colors.muted;
+const mutedFill = chartColors.muted;
+const scoreColors: Record<string, string> = {
+  eagle: colors.score.eagle.base,
+  birdie: colors.score.birdie.base,
+  par: colors.score.par.base,
+  bogey: colors.score.bogey.base,
+  double_bogey: colors.score.double.base,
+  triple_bogey: colors.score.triple.base,
+  quad_bogey: colors.score.quad.base,
+};
+
+/** GIR vs no-GIR: under par stacks left of zero, par and over to the right. */
+const GIR_BARS: { kind: ScoreKind; fill: string; stackId: "neg" | "pos"; radius?: [number, number, number, number] }[] = [
+  { kind: "birdie", fill: successColor, stackId: "neg" },
+  { kind: "eagle", fill: colors.score.eagle.base, stackId: "neg", radius: chartLayout.stackEndRadius.left },
+  { kind: "par", fill: mutedFill, stackId: "pos" },
+  { kind: "bogey", fill: dangerColor, stackId: "pos" },
+  { kind: "double", fill: colors.score.double.base, stackId: "pos" },
+  { kind: "triple", fill: colors.score.triple.base, stackId: "pos" },
+  { kind: "quad", fill: colors.score.quad.base, stackId: "pos", radius: chartLayout.stackEndRadius.right },
+];
+
+export interface AnalyticsDesktopLayoutProps {
+  data: AnalyticsData;
+  filters: AnalyticsFilters;
+  setFilters: (filters: AnalyticsFilters) => void;
+  playedCourses: { id: string; name: string | null; location: string | null }[];
+  hasHomeCourse: boolean;
+  scoreTrend: (ScoreTrendRow & { rolling_avg: number | null })[];
+  scoreMix: { name: string; value: number }[];
+  girTrend: GIRTrendRow[];
+  girRoundsLeftOut: boolean;
+  puttsTrend: PuttsTrendRow[];
+  threePuttTrend: ThreePuttRow[];
+  shortGameTrend: (ScramblingRow & { up_and_down_pct: number | null })[];
+  bestScore: number | null;
+  averagePutts: string | null;
+  girVsNonGir: Record<string, string | number>[];
+}
 
 const tooltipStyle = {
   fontSize: 12,
@@ -60,22 +113,16 @@ function formatHI(hi: number | null | undefined): string | null {
   return String(hi);
 }
 
-export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
+export function AnalyticsDesktopLayout({
+  data, filters, setFilters, playedCourses, hasHomeCourse,
+  scoreTrend, scoreMix: donutData, girTrend: girData, girRoundsLeftOut, puttsTrend, threePuttTrend: threePuttsData,
+  shortGameTrend, bestScore, averagePutts: avgPutts, girVsNonGir: divergingGirData,
+}: AnalyticsDesktopLayoutProps) {
   // Desktop-only: interactive donut slice hover
   const [activeSlice, setActiveSlice] = useState<string | null>(null);
 
   const {
-    data, filters, setFilters, playedCourses, hasHomeCourse, safeKpis,
-    scoreTrendWithAvg, donutData, girData, threePuttsData,
-    bestRound, avgPutts, divergingGirData,
-    trendPrimary, trendSecondary, trendTertiary,
-    successColor, dangerColor, neutralColor, gridColor, mutedFill, scoreColors,
-  } = vm;
-
-  if (!data) return null;
-
-  const {
-    kpis, net_score_trend, putts_trend,
+    kpis, net_score_trend,
     scoring_by_par, scoring_by_yardage, scoring_by_handicap, gir_vs_non_gir,
     notable_achievements, scrambling_trend, up_and_down_trend,
   } = data;
@@ -91,7 +138,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
         onChange={setFilters}
         playedCourses={playedCourses}
         hasHomeCourse={hasHomeCourse}
-        kpis={safeKpis}
+        kpis={kpis}
       />
 
       {/* KPI Bento Bar */}
@@ -106,7 +153,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
           [
             { label: "Rounds",      value: kpis.total_rounds,             icon: Hash,        subtitle: undefined },
             { label: "Scoring Avg", value: kpis.scoring_average,          icon: TrendingDown, subtitle: undefined },
-            { label: "Best Round",  value: bestRound?.total_score ?? null, icon: Trophy,
+            { label: "Best Round",  value: bestScore, icon: Trophy,
               subtitle: (() => {
                 const ev = notable_achievements.scoring_records_events.lifetime.lowest_round;
                 return ev?.course;
@@ -146,7 +193,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
             <ChartCard title="Score Trend" subtitle="5-round rolling average">
               <SVGTimeSeriesArea
                 dualTone
-                data={scoreTrendWithAvg}
+                data={scoreTrend}
                 valueKey="total_score"
                 rollingAvgKey="rolling_avg"
                 indexKey="round_index"
@@ -165,7 +212,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
 
             <ChartCard
               title="GIR % per Round"
-              subtitle={girData.length < (data?.gir_trend ?? []).length ? "Rounds without GIR data excluded" : undefined}
+              subtitle={girRoundsLeftOut ? "Rounds without GIR data excluded" : undefined}
             >
               <SVGTimeSeriesArea
                 data={girData}
@@ -187,10 +234,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
             {(scrambling_trend.length > 0 || up_and_down_trend.length > 0) && (
               <ChartCard title="Short Game" subtitle="Scrambling % vs Up & Down %">
                 <SVGTimeSeriesArea
-                  data={scrambling_trend.map((r, i) => ({
-                    ...r,
-                    up_and_down_pct: up_and_down_trend[i]?.percentage ?? null,
-                  }))}
+                  data={shortGameTrend}
                   valueKey="scrambling_percentage"
                   secondaryValueKey="up_and_down_pct"
                   secondaryColor={trendTertiary}
@@ -214,7 +258,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
 
             <ChartCard title="Total Putts per Round">
               <SVGTimeSeriesArea
-                data={putts_trend.filter((r) => r.total_putts != null)}
+                data={puttsTrend}
                 valueKey="total_putts"
                 indexKey="round_index"
                 color={neutralColor}
@@ -467,7 +511,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
                           <div className="font-semibold text-[11px] mb-1.5" style={{ color: labelText === "GIR" ? successColor : dangerColor }}>{labelText}</div>
                           {visible.map((p) => (
                             <div key={String(p.dataKey)} className="flex items-center justify-between gap-4">
-                              <span style={{ color: p.fill }}>{String(p.dataKey ?? "")}</span>
+                              <span style={{ color: p.fill }}>{String(p.name ?? "")}</span>
                               <span style={{ color: p.fill }} className="font-bold">{Math.abs(Number(p.value ?? 0)).toFixed(1)}%</span>
                             </div>
                           ))}
@@ -475,26 +519,16 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
                       );
                     }}
                   />
-                  <Bar dataKey="Birdie"   fill={successColor}                           stackId="neg" />
-                  <Bar dataKey="Eagle"    fill={(SCORE_COLORS as Record<string, string>).eagle}         stackId="neg" radius={[4, 0, 0, 4]} />
-                  <Bar dataKey="Par"      fill={mutedFill}                              stackId="pos" />
-                  <Bar dataKey="Bogey"    fill={dangerColor}                            stackId="pos" />
-                  <Bar dataKey="Double"   fill={(SCORE_COLORS as Record<string, string>).double_bogey}  stackId="pos" />
-                  <Bar dataKey="Triple+"  fill={(SCORE_COLORS as Record<string, string>).triple_bogey}  stackId="pos" radius={[0, 4, 4, 0]} />
+                  {GIR_BARS.map(({ kind, fill, stackId, radius }) => (
+                    <Bar key={kind} dataKey={kind} name={scoreKindLabel(kind)} fill={fill} stackId={stackId} radius={radius} />
+                  ))}
                 </BarChart>
               </ResponsiveContainer>
               <div className="flex items-center gap-5 mt-3 justify-center flex-wrap">
-                {[
-                  { label: "Birdie",  color: successColor },
-                  { label: "Eagle",   color: (SCORE_COLORS as Record<string, string>).eagle },
-                  { label: "Par",     color: mutedFill },
-                  { label: "Bogey",   color: dangerColor },
-                  { label: "Double",  color: (SCORE_COLORS as Record<string, string>).double_bogey },
-                  { label: "Triple+", color: (SCORE_COLORS as Record<string, string>).triple_bogey },
-                ].map(({ label, color }) => (
-                  <div key={label} className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-sm" style={{ background: color }} />
-                    <span className="text-[11px] font-semibold text-gray-500">{label}</span>
+                {GIR_BARS.map(({ kind, fill }) => (
+                  <div key={kind} className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-sm" style={{ background: fill }} />
+                    <span className="text-label font-semibold text-muted-foreground">{scoreKindLabel(kind)}</span>
                   </div>
                 ))}
               </div>
