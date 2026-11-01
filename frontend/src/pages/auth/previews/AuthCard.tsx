@@ -1,8 +1,8 @@
 import { Alert, AlertDescription } from "@/brand/components/Alert";
-import { AuthCard } from "@/brand/components/AuthCard";
 import { Button } from "@/brand/components/Button";
 import { Field, FieldLabel } from "@/brand/components/Field";
 import { Input } from "@/brand/components/Input";
+import { AuthCard } from "../components/AuthCard";
 
 /** The harness stage is a phone's width, so this is the card as a phone shows it. */
 export default function AuthCardPreview() {

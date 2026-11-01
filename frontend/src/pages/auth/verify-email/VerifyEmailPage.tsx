@@ -1,6 +1,7 @@
 import { useSearchParams } from "react-router-dom";
-import { AuthCard, LoadingState } from "@/brand";
+import { LoadingState } from "@/brand";
 import { useAuth } from "@/context/AuthContext";
+import { AuthCard } from "../components/AuthCard";
 import { AuthLink } from "../components/AuthLink";
 import { AuthNotice } from "../components/AuthNotice";
 import { useVerifyEmailViewModel } from "./useVerifyEmailViewModel";

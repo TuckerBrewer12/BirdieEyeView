@@ -1,8 +1,14 @@
 import * as React from "react";
+import {
+  BrandMark,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  PageTitle,
+} from "@/brand";
 import { cn } from "@/brand/cn";
-import { BrandMark } from "./BrandMark";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "./Card";
-import { PageTitle } from "./PageTitle";
 
 interface AuthCardProps extends Omit<React.ComponentProps<"div">, "title"> {
   /** The page's heading. It renders as the h1, so it names the screen. */

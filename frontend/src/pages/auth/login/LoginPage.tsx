@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { AuthCard, Button, Field, FieldLabel, Input } from "@/brand";
+import { Button, Field, FieldLabel, Input } from "@/brand";
 import { useAuth } from "@/context/AuthContext";
+import { AuthCard } from "../components/AuthCard";
 import { AuthLink } from "../components/AuthLink";
 import { AuthNotice } from "../components/AuthNotice";
 import { PasswordField } from "../components/PasswordField";
