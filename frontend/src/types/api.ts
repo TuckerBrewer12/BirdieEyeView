@@ -27,3 +27,5 @@ export type CourseHoleScoreTypeRowDto = Schemas["CourseHoleScoreTypeRow"];
 export type CourseHoleGirRowDto = Schemas["CourseHoleGirRow"];
 export type CourseHolePuttsRowDto = Schemas["CourseHolePuttsRow"];
 export type CourseHoleVarianceRowDto = Schemas["CourseHoleVarianceRow"];
+export type FriendshipDto = Schemas["FriendshipResponse"];
+export type FriendshipStatusRequestDto = Schemas["FriendshipStatusRequest"];

@@ -1447,6 +1447,12 @@
             "title": "Requester Name"
           },
           "status": {
+            "enum": [
+              "pending",
+              "accepted",
+              "declined",
+              "blocked"
+            ],
             "title": "Status",
             "type": "string"
           },
@@ -1470,7 +1476,11 @@
         "additionalProperties": false,
         "properties": {
           "status": {
-            "pattern": "^(accepted|declined|blocked)$",
+            "enum": [
+              "accepted",
+              "declined",
+              "blocked"
+            ],
             "title": "Status",
             "type": "string"
           }

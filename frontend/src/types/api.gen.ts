@@ -1063,15 +1063,21 @@ export interface components {
             requester_id: string;
             /** Requester Name */
             requester_name?: string | null;
-            /** Status */
-            status: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "declined" | "blocked";
             /** Updated At */
             updated_at: string;
         };
         /** FriendshipStatusRequest */
         FriendshipStatusRequest: {
-            /** Status */
-            status: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "accepted" | "declined" | "blocked";
         };
         /** HTTPValidationError */
         HTTPValidationError: {
