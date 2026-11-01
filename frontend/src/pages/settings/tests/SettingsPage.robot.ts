@@ -47,6 +47,10 @@ export class SettingsRobot {
       .getByRole("button", { name: label, exact: true });
   }
 
+  private updatesCheckbox() {
+    return this.page.getByRole("checkbox", { name: "Get updates" });
+  }
+
   private handicapField() {
     return this.page.getByLabel("Manual handicap index");
   }
@@ -127,6 +131,16 @@ export class SettingsRobot {
 
   async seesColorBlindMode(label: ColorBlindLabel): Promise<this> {
     await expect(this.colorBlindOption(label)).toHaveAttribute("aria-pressed", "true");
+    return this;
+  }
+
+  async turnOffUpdates(): Promise<this> {
+    await this.updatesCheckbox().uncheck();
+    return this;
+  }
+
+  async seesUpdatesOff(): Promise<this> {
+    await expect(this.updatesCheckbox()).not.toBeChecked();
     return this;
   }
 

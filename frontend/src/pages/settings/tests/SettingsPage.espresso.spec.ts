@@ -83,6 +83,16 @@ test("colour-blind mode is kept with Save", async ({ settings }) => {
   await settings.seesColorBlindMode("Tritanopia");
 });
 
+test("Get updates is kept with Save", async ({ settings }) => {
+  await settings.open();
+  await settings.turnOffUpdates();
+  await settings.save();
+  await settings.seesSaved();
+
+  await settings.reload();
+  await settings.seesUpdatesOff();
+});
+
 test("a failed save says why and keeps the edit", async ({ settings }) => {
   await settings.open();
   settings.failSavesWith("Selected home course was not found");
