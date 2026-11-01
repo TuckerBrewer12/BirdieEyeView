@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { Round, trendPointsFrom, type RoundSummary, type RoundTrendPoint, type ScoreMix } from "@/domain";
 import type { DashboardData, User } from "@/types/golf";
-import type { AnalyticsData } from "@/types/analytics";
 import {
   dashboardRepository,
   type DashboardRepository,
@@ -30,7 +29,6 @@ export type { ScoreMixItem };
 
 export interface DashboardPageViewModel {
   data: DashboardData | null;
-  trends: AnalyticsData | null;
   user: User | null;
   loading: boolean;
   error: Error | null;
@@ -88,17 +86,7 @@ export function useDashboardPageViewModel(
 
   const { data: fetched, isLoading: loading, error, refetch } = useQuery({
     queryKey: queryKeys.dashboard(userId),
-    queryFn: async () => {
-      const [dashboardResult, analyticsResult] = await Promise.allSettled([
-        repository.getDashboard(userId),
-        repository.getAnalytics(userId),
-      ]);
-      if (dashboardResult.status !== "fulfilled") throw dashboardResult.reason;
-      return [
-        dashboardResult.value,
-        analyticsResult.status === "fulfilled" ? analyticsResult.value : null,
-      ] as const;
-    },
+    queryFn: () => repository.getDashboard(userId),
   });
 
   const { data: user } = useQuery({
@@ -113,8 +101,7 @@ export function useDashboardPageViewModel(
     retry: false,
   });
 
-  const data = fetched?.[0] ?? null;
-  const trends = fetched?.[1] ?? null;
+  const data = fetched ?? null;
 
   const rounds = useMemo(
     () => (data?.recent_rounds ?? []).map(Round.fromSummary),
@@ -125,14 +112,13 @@ export function useDashboardPageViewModel(
   const openHandicapSheet = useCallback(() => setHandicapSheetOpen(true), []);
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
 
-  const trend = useMemo(() => trendPointsFrom(trends), [trends]);
+  const trend = useMemo(() => trendPointsFrom(data), [data]);
   const recentScores = useMemo(() => recentScoresFrom(trend), [trend]);
-  const shortGameTrend = useMemo(() => shortGameTrendFrom(trends), [trends]);
+  const shortGameTrend = useMemo(() => shortGameTrendFrom(data), [data]);
   const report = goalReport ?? null;
 
   return {
     data,
-    trends,
     user: user ?? null,
     loading,
     error: error as Error | null,

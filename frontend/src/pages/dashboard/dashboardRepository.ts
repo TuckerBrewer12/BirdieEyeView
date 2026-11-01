@@ -1,18 +1,16 @@
 import { api } from "@/lib/api";
 import type { DashboardData, User } from "@/types/golf";
-import type { AnalyticsData, GoalReport } from "@/types/analytics";
+import type { GoalReport } from "@/types/analytics";
 
 export interface DashboardRepository {
+  /** The dashboard's figures, trend series included. */
   getDashboard(userId: string): Promise<DashboardData>;
-  getAnalytics(userId: string): Promise<AnalyticsData>;
   getUser(userId: string): Promise<User>;
   getGoalReport(userId: string, limit?: number): Promise<GoalReport>;
 }
 
 export const dashboardRepository: DashboardRepository = {
   getDashboard: (userId) => api.getDashboard(userId),
-  getAnalytics: (userId) =>
-    api.getAnalytics(userId, { limit: 20, timeframe: "all", courseId: "all" }),
   getUser: (userId) => api.getUser(userId),
   getGoalReport: (userId, limit = 20) => api.getGoalReport(userId, limit),
 };

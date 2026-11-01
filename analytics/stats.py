@@ -210,6 +210,7 @@ def _first_round_under_par_event(round_set: List[Round]) -> Optional[Dict[str, A
                 "score": total,
                 "date": event["date"],
                 "course": event["course"],
+                "round_id": event["round_id"],
             }
     return None
 
@@ -237,6 +238,7 @@ def _streak_with_event(rows: List[Dict[str, Any]], predicate) -> tuple[int, Opti
                     best_event = {
                         "date": _format_date_short(row["date"]),
                         "course": row["course"],
+                        "round_id": str(row["round_id"]) if row["round_id"] else None,
                     }
         else:
             current = 0

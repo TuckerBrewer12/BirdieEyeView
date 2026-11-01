@@ -5,7 +5,6 @@ import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import {
   dashboardGoalReport,
   dashboardUser,
-  populatedAnalytics,
   populatedDashboard,
 } from "../../../testing/fixtures/dashboard";
 import { storedRounds } from "../../../testing/fixtures/rounds";
@@ -34,7 +33,6 @@ export class DashboardRobot {
       rounds: storedRounds,
       handicapIndex: 12.4,
       dashboard: populatedDashboard,
-      analytics: populatedAnalytics,
       profile: dashboardUser,
       goalReport: dashboardGoalReport,
       ...seed,

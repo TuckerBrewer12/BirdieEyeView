@@ -223,6 +223,15 @@ def handicap_trend(
     return results
 
 
+def windowed_handicap_trend(hi_rounds: List[Round], display_count: int) -> List[Dict[str, Any]]:
+    """The rolling index over `hi_rounds`, cut to the last `display_count` rounds, with the WHS
+    best-N marked among only those, so the counting rounds match the index the window gives."""
+    full = handicap_trend(hi_rounds)
+    sliced = full[-display_count:] if display_count else []
+    annotate_used_in_hi(sliced)
+    return sliced
+
+
 # How far over the counting cut-off a differential can be and still read as close.
 CLOSE_TO_COUNTING = 2.0
 
