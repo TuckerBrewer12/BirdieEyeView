@@ -62,6 +62,11 @@ export class FriendsInboxRobot {
     return this;
   }
 
+  async seesError(message: string): Promise<this> {
+    await expect(this.page.getByRole("alert").filter({ hasText: message })).toBeVisible();
+    return this;
+  }
+
   async seesStatus(name: string, status: string): Promise<this> {
     await expect(this.row(name)).toContainText(status);
     return this;

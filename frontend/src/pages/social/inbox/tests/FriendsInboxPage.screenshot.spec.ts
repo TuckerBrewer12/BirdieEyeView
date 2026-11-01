@@ -30,6 +30,13 @@ test("request accepted", async ({ inbox }) => {
   await inbox.capture("inbox-accepted.png");
 });
 
+test("accept failed", async ({ inbox }) => {
+  await inbox.open({ ...seed, respondError: "That request was withdrawn." });
+  await inbox.accept("Riley Brooks");
+  await inbox.seesError("That request was withdrawn.");
+  await inbox.capture("inbox-accept-error.png");
+});
+
 test("empty inbox", async ({ inbox }) => {
   await inbox.open();
   await inbox.seesEmptyState("received");
