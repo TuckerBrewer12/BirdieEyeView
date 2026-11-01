@@ -1,4 +1,5 @@
 import { test } from "./ScanPage.robot";
+import { strokesToPar, toParLabel } from "../../../domain/score";
 import { pebbleBeachCourse } from "../../../testing/fixtures/roundDetails";
 import { SCANNED_COURSE_NAME, scannedCard, UNSURE_HOLES, unsureCard } from "../../../testing/fixtures/scan";
 
@@ -254,7 +255,7 @@ test("a saved round shows its score against par, and shares as an image", async 
   await scan.seesReview(SCANNED_COURSE_NAME);
   await scan.tapSave();
   await scan.seesSaved();
-  await scan.seesSavedScore(CARD_SCORE, `+${CARD_SCORE - CARD_PAR}`);
+  await scan.seesSavedScore(CARD_SCORE, toParLabel(strokesToPar(CARD_SCORE, CARD_PAR))!);
   await scan.tapShare();
   await scan.seesSharedImage("scorecard-half-moon-bay-golf-links.png");
 });
