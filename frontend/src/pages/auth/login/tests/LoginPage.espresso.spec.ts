@@ -29,6 +29,15 @@ test("an unverified account can ask for the link again", async ({ login }) => {
   expect(login.backend?.verificationResends).toEqual(["new@example.com"]);
 });
 
+test("a refused resend says why and stays on the sign-in form", async ({ login }) => {
+  const limited = "Too many verification resend attempts. Please try again later.";
+  await login.open({ accounts: UNVERIFIED, authErrors: { "resend-verification": limited } });
+  await login.signIn("new@example.com", "birdie123");
+  await login.tapResend();
+  await login.seesError(limited);
+  await login.isAt("/login");
+});
+
 test("arriving from another screen carries its email and message", async ({ login }) => {
   await login.arriveWith({ email: "new@example.com", flash: AUTH_MESSAGES.passwordReset });
   await login.seesEmail("new@example.com");

@@ -39,6 +39,12 @@ export class RegisterRobot extends AuthScreenRobot {
     return this;
   }
 
+  async changeHomeCourse(): Promise<this> {
+    await this.tap("Change home course");
+    await expect(this.page.getByLabel("Home course (optional)", { exact: true })).toBeVisible();
+    return this;
+  }
+
   async submit(): Promise<this> {
     await this.tap("Create account");
     return this;

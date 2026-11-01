@@ -24,6 +24,19 @@ test("a new account is created with its handicap and home course, then waits for
   ]);
 });
 
+test("a home course changed back to none is not sent", async ({ register }) => {
+  await register.open();
+  await register.fillIn({});
+  await register.pickHomeCourse("Pebble", pebbleBeach.name!);
+  await register.changeHomeCourse();
+  await register.submit();
+
+  await register.isWaitingForVerification("sam@example.com");
+  expect(register.backend?.registrations).toEqual([
+    expect.objectContaining({ email: "sam@example.com", home_course_id: null }),
+  ]);
+});
+
 test("an email already in use stays here and says so", async ({ register }) => {
   await register.open();
   await register.fillIn({ email: "test@example.com" });
