@@ -147,6 +147,13 @@ def _database(rounds: list[Round]):
         ]
         return picked[offset:offset + limit]
 
+    async def get_played_courses_for_user(_user_id):
+        courses = {r.course.id: r.course for r in rounds}.values()
+        return [
+            {"id": c.id, "name": c.name, "location": c.location}
+            for c in sorted(courses, key=lambda c: c.name)
+        ]
+
     async def are_friends(_a, _b):
         return False
 
@@ -155,6 +162,7 @@ def _database(rounds: list[Round]):
         rounds = _Repo(
             get_round_summaries_for_user=get_round_summaries_for_user,
             get_rounds_for_user=get_rounds_for_user,
+            get_played_courses_for_user=get_played_courses_for_user,
         )
         friendships = _Repo(are_friends=are_friends)
 
@@ -169,6 +177,9 @@ async def _responses() -> dict:
     dashboard = await stats.get_dashboard(user_id, db, USER)
     analytics = await stats.get_analytics(user_id, 50, None, None, db, USER)
     goal_report = await stats.get_goal_report(user_id, 20, db, USER)
+    played_courses = await stats.get_played_courses(user_id, db, USER)
+    # Analytics' course filter, for the course played least, so the figures plainly change.
+    links_analytics = await stats.get_analytics(user_id, 50, HALF_MOON_BAY.id, None, db, USER)
 
     best = min(rounds, key=lambda r: r.calculate_total_score())
     profile = {
@@ -186,6 +197,8 @@ async def _responses() -> dict:
         "handicapIndex": dashboard.handicap_index,
         "dashboard": dashboard,
         "analytics": analytics,
+        "analyticsByCourse": {HALF_MOON_BAY.id: links_analytics},
+        "playedCourses": played_courses,
         "goalReport": goal_report,
         # The tour's pages never ask for the round list; Analytics opens just the best round.
         "detailRounds": [round_detail(best)],

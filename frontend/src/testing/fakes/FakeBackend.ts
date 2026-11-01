@@ -6,11 +6,12 @@ import {
 } from "./InMemoryFriendships";
 import type { FriendshipAnswer } from "../../pages/social/friendsModel";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
-import type { SaveScanRequestDto, UserChangesDto } from "../../types/api";
+import type { PlayedCourseDto, SaveScanRequestDto, UserChangesDto } from "../../types/api";
 import type { DashboardData, User } from "../../types/golf";
-import type { AnalyticsData, GoalReport } from "../../types/analytics";
+import type { AnalyticsData, AnalyticsFilters, GoalReport } from "../../types/analytics";
 import type { ScanResult } from "../../types/scan";
 import { AUTH_MESSAGES } from "./FakeAuth";
+import { analyticsForCourse } from "./analyticsResponses";
 
 export const TEST_USER = {
   user_id: "user-1",
@@ -39,6 +40,10 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   profile?: User;
   dashboard?: DashboardData;
   analytics?: AnalyticsData | null;
+  /** `/api/stats/analytics/{id}?course_id=` per course. A course not here answers with no rounds. */
+  analyticsByCourse?: Record<string, AnalyticsData>;
+  /** `/api/stats/{id}/played-courses`: the courses the golfer has rounds at. */
+  playedCourses?: PlayedCourseDto[];
   goalReport?: GoalReport | null;
   /** No one is signed in — `/api/auth/me` answers 401, as the real API does. */
   signedOut?: boolean;
@@ -72,6 +77,10 @@ export class FakeBackend {
   profile: User | undefined;
   dashboard: DashboardData | undefined;
   analytics: AnalyticsData | null | undefined;
+  readonly analyticsByCourse: Record<string, AnalyticsData>;
+  readonly playedCourses: PlayedCourseDto[];
+  /** What each analytics request asked for, in order. */
+  readonly analyticsRequests: AnalyticsFilters[] = [];
   goalReport: GoalReport | null | undefined;
   scan: ScanResult | undefined;
   profileError: string | null;
@@ -98,6 +107,8 @@ export class FakeBackend {
       profile,
       dashboard,
       analytics,
+      analyticsByCourse,
+      playedCourses,
       goalReport,
       signedOut,
       scan,
@@ -120,6 +131,8 @@ export class FakeBackend {
     this.profile = profile;
     this.dashboard = dashboard;
     this.analytics = analytics;
+    this.analyticsByCourse = analyticsByCourse ?? {};
+    this.playedCourses = playedCourses ?? [];
     this.goalReport = goalReport;
     this.scan = scan;
     this.profileError = profileError ?? null;
@@ -391,10 +404,11 @@ export class FakeBackend {
     }
 
     if (verb === "GET" && /\/api\/stats\/analytics\/[^/]+$/.test(path)) {
-      if (this.analytics == null) {
-        return { status: 404, body: { detail: "Analytics failed to load." } };
-      }
-      return { status: 200, body: this.analytics };
+      return this.getAnalytics(parsed.searchParams);
+    }
+
+    if (verb === "GET" && /\/api\/stats\/[^/]+\/played-courses$/.test(path)) {
+      return { status: 200, body: this.playedCourses };
     }
 
     if (verb === "GET" && /\/api\/stats\/[^/]+\/goal-report$/.test(path)) {
@@ -409,6 +423,29 @@ export class FakeBackend {
     }
 
     return { status: 200, body: [] };
+  }
+
+  /** Mirrors `GET /stats/analytics/{id}`: the seeded figures, or a course's own when one is asked for. */
+  private getAnalytics(params: URLSearchParams): FakeReply {
+    const timeframe = params.get("timeframe");
+    const courseId = params.get("course_id") ?? "all";
+    this.analyticsRequests.push({
+      limit: Number(params.get("limit") ?? 50),
+      timeframe: timeframe === "ytd" || timeframe === "1y" ? timeframe : "all",
+      courseId,
+    });
+    if (this.analytics == null) {
+      return { status: 404, body: { detail: "Analytics failed to load." } };
+    }
+    const body = analyticsForCourse(
+      {
+        analytics: this.analytics,
+        byCourse: this.analyticsByCourse,
+        homeCourseId: this.currentProfile().home_course_id,
+      },
+      courseId,
+    );
+    return { status: 200, body };
   }
 
   private handleFriends(

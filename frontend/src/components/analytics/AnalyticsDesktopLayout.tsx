@@ -19,7 +19,38 @@ import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { BestRoundCard } from "@/components/analytics/BestRoundCard";
 import { ParMatrixGrid } from "@/components/analytics/ParMatrixGrid";
 import { AnalyticsCommandCenter } from "@/components/analytics/AnalyticsCommandCenter";
-import type { AnalyticsViewModel } from "@/hooks/useAnalyticsViewModel";
+import type {
+  AnalyticsData, AnalyticsFilters, GIRTrendRow, PuttsTrendRow, ScoreTrendRow, ScramblingRow, ThreePuttRow,
+} from "@/types/analytics";
+
+// The chart colours the old view model handed in. Analytics PR B moves these charts onto the kit.
+const trendPrimary = "#2d7a3a";
+const trendSecondary = "#f97316";
+const trendTertiary = "#a855f7";
+const successColor = "#059669";
+const dangerColor = "#f87171";
+const neutralColor = "#6b7280";
+const gridColor = "#f1f5f1";
+const mutedFill = "#e5e7eb";
+const scoreColors: Record<string, string> = SCORE_COLORS;
+
+export interface AnalyticsDesktopLayoutProps {
+  data: AnalyticsData;
+  filters: AnalyticsFilters;
+  setFilters: (filters: AnalyticsFilters) => void;
+  playedCourses: { id: string; name: string | null; location: string | null }[];
+  hasHomeCourse: boolean;
+  scoreTrend: (ScoreTrendRow & { rolling_avg: number | null })[];
+  scoreMix: { name: string; value: number }[];
+  girTrend: GIRTrendRow[];
+  girRoundsLeftOut: boolean;
+  puttsTrend: PuttsTrendRow[];
+  threePuttTrend: ThreePuttRow[];
+  shortGameTrend: (ScramblingRow & { up_and_down_pct: number | null })[];
+  bestScore: number | null;
+  averagePutts: string | null;
+  girVsNonGir: Record<string, string | number>[];
+}
 
 const tooltipStyle = {
   fontSize: 12,
@@ -60,22 +91,16 @@ function formatHI(hi: number | null | undefined): string | null {
   return String(hi);
 }
 
-export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
+export function AnalyticsDesktopLayout({
+  data, filters, setFilters, playedCourses, hasHomeCourse,
+  scoreTrend, scoreMix: donutData, girTrend: girData, girRoundsLeftOut, puttsTrend, threePuttTrend: threePuttsData,
+  shortGameTrend, bestScore, averagePutts: avgPutts, girVsNonGir: divergingGirData,
+}: AnalyticsDesktopLayoutProps) {
   // Desktop-only: interactive donut slice hover
   const [activeSlice, setActiveSlice] = useState<string | null>(null);
 
   const {
-    data, filters, setFilters, playedCourses, hasHomeCourse, safeKpis,
-    scoreTrendWithAvg, donutData, girData, threePuttsData,
-    bestRound, avgPutts, divergingGirData,
-    trendPrimary, trendSecondary, trendTertiary,
-    successColor, dangerColor, neutralColor, gridColor, mutedFill, scoreColors,
-  } = vm;
-
-  if (!data) return null;
-
-  const {
-    kpis, net_score_trend, putts_trend,
+    kpis, net_score_trend,
     scoring_by_par, scoring_by_yardage, scoring_by_handicap, gir_vs_non_gir,
     notable_achievements, scrambling_trend, up_and_down_trend,
   } = data;
@@ -91,7 +116,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
         onChange={setFilters}
         playedCourses={playedCourses}
         hasHomeCourse={hasHomeCourse}
-        kpis={safeKpis}
+        kpis={kpis}
       />
 
       {/* KPI Bento Bar */}
@@ -106,7 +131,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
           [
             { label: "Rounds",      value: kpis.total_rounds,             icon: Hash,        subtitle: undefined },
             { label: "Scoring Avg", value: kpis.scoring_average,          icon: TrendingDown, subtitle: undefined },
-            { label: "Best Round",  value: bestRound?.total_score ?? null, icon: Trophy,
+            { label: "Best Round",  value: bestScore, icon: Trophy,
               subtitle: (() => {
                 const ev = notable_achievements.scoring_records_events.lifetime.lowest_round;
                 return ev?.course;
@@ -146,7 +171,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
             <ChartCard title="Score Trend" subtitle="5-round rolling average">
               <SVGTimeSeriesArea
                 dualTone
-                data={scoreTrendWithAvg}
+                data={scoreTrend}
                 valueKey="total_score"
                 rollingAvgKey="rolling_avg"
                 indexKey="round_index"
@@ -165,7 +190,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
 
             <ChartCard
               title="GIR % per Round"
-              subtitle={girData.length < (data?.gir_trend ?? []).length ? "Rounds without GIR data excluded" : undefined}
+              subtitle={girRoundsLeftOut ? "Rounds without GIR data excluded" : undefined}
             >
               <SVGTimeSeriesArea
                 data={girData}
@@ -187,10 +212,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
             {(scrambling_trend.length > 0 || up_and_down_trend.length > 0) && (
               <ChartCard title="Short Game" subtitle="Scrambling % vs Up & Down %">
                 <SVGTimeSeriesArea
-                  data={scrambling_trend.map((r, i) => ({
-                    ...r,
-                    up_and_down_pct: up_and_down_trend[i]?.percentage ?? null,
-                  }))}
+                  data={shortGameTrend}
                   valueKey="scrambling_percentage"
                   secondaryValueKey="up_and_down_pct"
                   secondaryColor={trendTertiary}
@@ -214,7 +236,7 @@ export function AnalyticsDesktopLayout(vm: AnalyticsViewModel) {
 
             <ChartCard title="Total Putts per Round">
               <SVGTimeSeriesArea
-                data={putts_trend.filter((r) => r.total_putts != null)}
+                data={puttsTrend}
                 valueKey="total_putts"
                 indexKey="round_index"
                 color={neutralColor}
