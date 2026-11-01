@@ -4,11 +4,12 @@ import {
   InMemoryFriendships,
   type InMemoryFriendshipsSeed,
 } from "./InMemoryFriendships";
-import type { FriendshipAnswer } from "../../pages/social/friendsModel";
+import type { FriendshipAnswer } from "../../data/friendsModel";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import type { PlayedCourseDto, SaveScanRequestDto, UserChangesDto } from "../../types/api";
 import type { DashboardData, User } from "../../types/golf";
 import type { AnalyticsData, AnalyticsFilters, GoalReport } from "../../types/analytics";
+import type { LabAnalytics } from "../../pages/the-lab/model";
 import type { ScanResult } from "../../types/scan";
 import { AUTH_MESSAGES } from "./FakeAuth";
 import { analyticsForCourse } from "./analyticsResponses";
@@ -40,6 +41,11 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   profile?: User;
   dashboard?: DashboardData;
   analytics?: AnalyticsData | null;
+  /**
+   * Analytics by golfer, for screens that read someone else's (The Lab's friend comparison).
+   * Only the parts The Lab reads; a golfer with none here gets `analytics`.
+   */
+  labAnalytics?: Record<string, LabAnalytics>;
   /** `/api/stats/analytics/{id}?course_id=` per course. A course not here answers with no rounds. */
   analyticsByCourse?: Record<string, AnalyticsData>;
   /** `/api/stats/{id}/played-courses`: the courses the golfer has rounds at. */
@@ -77,6 +83,7 @@ export class FakeBackend {
   profile: User | undefined;
   dashboard: DashboardData | undefined;
   analytics: AnalyticsData | null | undefined;
+  labAnalytics: Record<string, LabAnalytics>;
   readonly analyticsByCourse: Record<string, AnalyticsData>;
   readonly playedCourses: PlayedCourseDto[];
   /** What each analytics request asked for, in order. */
@@ -107,6 +114,7 @@ export class FakeBackend {
       profile,
       dashboard,
       analytics,
+      labAnalytics,
       analyticsByCourse,
       playedCourses,
       goalReport,
@@ -131,6 +139,7 @@ export class FakeBackend {
     this.profile = profile;
     this.dashboard = dashboard;
     this.analytics = analytics;
+    this.labAnalytics = labAnalytics ?? {};
     this.analyticsByCourse = analyticsByCourse ?? {};
     this.playedCourses = playedCourses ?? [];
     this.goalReport = goalReport;
@@ -404,6 +413,8 @@ export class FakeBackend {
     }
 
     if (verb === "GET" && /\/api\/stats\/analytics\/[^/]+$/.test(path)) {
+      const golfer = this.labAnalytics[path.split("/").pop() ?? ""];
+      if (golfer) return { status: 200, body: golfer };
       return this.getAnalytics(parsed.searchParams);
     }
 

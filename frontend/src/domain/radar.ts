@@ -14,13 +14,50 @@ function fmtSign(v: number) {
   return (v >= 0 ? "+" : "") + v.toFixed(1);
 }
 
+const clamp = (v: number) => Math.max(0, Math.min(100, v));
+
+// Each axis is scored 0–100, further out being better. GIR and scrambling are their own
+// percentages. Putts per GIR maps 3.5 → 0 and 1.5 → 100; a par type's average to par
+// maps +2 → 0 and −0.5 → 100.
+const puttingScore = (puttsPerGir: number) => clamp(((3.5 - puttsPerGir) / 2.0) * 100);
+const parScore = (averageToPar: number) => clamp(((2.0 - averageToPar) / 2.5) * 100);
+
+/** The average to par a profile's 0–100 par-type score stands for: the inverse of the radar's scale. */
+export function profileAverageToPar(score: number): number {
+  return 2.0 - (score * 2.5) / 100;
+}
+
+/** The putts per GIR a profile's 0–100 putting score stands for. */
+export function profilePuttsPerGir(score: number): number {
+  return 3.5 - (score * 2.0) / 100;
+}
+
+/**
+ * A golfer's own figures on the benchmark scale, so a friend can be drawn the way a
+ * handicap benchmark is. Null until they have a round.
+ */
+export function benchmarkProfileFrom(
+  kpis: AnalyticsKPIs,
+  scoringByPar: ScoringByParRow[],
+): BenchmarkProfile | null {
+  if (kpis.total_rounds < 1) return null;
+  const parAverage = (par: number) =>
+    scoringByPar.find((row) => row.par === par && row.sample_size > 0)?.average_to_par ?? 2;
+  return {
+    gir: clamp(kpis.gir_percentage ?? 0),
+    scrambling: clamp(kpis.scrambling_percentage ?? 0),
+    putting: puttingScore(kpis.putts_per_gir ?? 3.5),
+    par3: parScore(parAverage(3)),
+    par4: parScore(parAverage(4)),
+    par5: parScore(parAverage(5)),
+  };
+}
+
 export function buildRadarData(
   kpis: AnalyticsKPIs,
   scoringByPar: ScoringByParRow[],
   profile?: BenchmarkProfile,
 ): RadarEntry[] {
-  const clamp = (v: number) => Math.max(0, Math.min(100, v));
-
   const hasGir  = kpis.gir_percentage != null;
   const hasScr  = kpis.scrambling_percentage != null;
   const hasPutt = kpis.putts_per_gir != null;
@@ -32,10 +69,10 @@ export function buildRadarData(
   const p = profile ?? { gir: 0, scrambling: 0, putting: 0, par3: 0, par4: 0, par5: 0 };
   const parRow = (par: number) => scoringByPar.find((r) => r.par === par && r.sample_size > 0);
 
-  const benchPutts = 3.5 - (p.putting * 2.0) / 100;
-  const benchPar3  = 2.0 - (p.par3  * 2.5) / 100;
-  const benchPar4  = 2.0 - (p.par4  * 2.5) / 100;
-  const benchPar5  = 2.0 - (p.par5  * 2.5) / 100;
+  const benchPutts = profilePuttsPerGir(p.putting);
+  const benchPar3  = profileAverageToPar(p.par3);
+  const benchPar4  = profileAverageToPar(p.par4);
+  const benchPar5  = profileAverageToPar(p.par5);
 
   return [
     {
@@ -56,7 +93,7 @@ export function buildRadarData(
     },
     {
       axis: "Putting",
-      value: clamp(((3.5 - puttsRaw) / 2.0) * 100),
+      value: puttingScore(puttsRaw),
       benchmark: p.putting,
       userRaw: puttsRaw.toFixed(2) + "/GIR",
       benchRaw: benchPutts.toFixed(2) + "/GIR",
@@ -64,7 +101,7 @@ export function buildRadarData(
     },
     {
       axis: "Par 3s",
-      value: clamp(((2.0 - (parRow(3)?.average_to_par ?? 2.0)) / 2.5) * 100),
+      value: parScore(parRow(3)?.average_to_par ?? 2.0),
       benchmark: p.par3,
       userRaw: parRow(3) ? fmtSign(parRow(3)!.average_to_par) : "—",
       benchRaw: fmtSign(benchPar3),
@@ -72,7 +109,7 @@ export function buildRadarData(
     },
     {
       axis: "Par 4s",
-      value: clamp(((2.0 - (parRow(4)?.average_to_par ?? 2.0)) / 2.5) * 100),
+      value: parScore(parRow(4)?.average_to_par ?? 2.0),
       benchmark: p.par4,
       userRaw: parRow(4) ? fmtSign(parRow(4)!.average_to_par) : "—",
       benchRaw: fmtSign(benchPar4),
@@ -80,7 +117,7 @@ export function buildRadarData(
     },
     {
       axis: "Par 5s",
-      value: clamp(((2.0 - (parRow(5)?.average_to_par ?? 2.0)) / 2.5) * 100),
+      value: parScore(parRow(5)?.average_to_par ?? 2.0),
       benchmark: p.par5,
       userRaw: parRow(5) ? fmtSign(parRow(5)!.average_to_par) : "—",
       benchRaw: fmtSign(benchPar5),

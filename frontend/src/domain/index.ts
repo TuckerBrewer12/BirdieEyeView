@@ -10,10 +10,24 @@ export {
 } from "./score";
 export type { ScoreKind, ScoreMix } from "./score";
 
-export { GOAL_OPTIONS, GOAL_BENCHMARK, HANDICAP_BENCHMARK, TOUR_SHORT_GAME } from "./benchmark";
+export {
+  GOAL_OPTIONS,
+  GOAL_BENCHMARK,
+  HANDICAP_BENCHMARK,
+  COMPARISON_HANDICAPS,
+  TOUR_SHORT_GAME,
+  goalScoreToBreak,
+  goalTargetLabel,
+  nearestGoalBenchmark,
+} from "./benchmark";
 export type { BenchmarkProfile, ComparisonTargetValue } from "./benchmark";
 
-export { buildRadarData } from "./radar";
+export {
+  buildRadarData,
+  benchmarkProfileFrom,
+  profileAverageToPar,
+  profilePuttsPerGir,
+} from "./radar";
 export type { RadarEntry } from "./radar";
 
 export {

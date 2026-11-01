@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
+import { useGoalReport } from "@/data/useGoalReport";
+import { useUser } from "@/data/useUser";
 import { Round, trendPointsFrom, type RoundSummary, type RoundTrendPoint, type ScoreMix } from "@/domain";
 import type { DashboardData, User } from "@/types/golf";
 import {
@@ -89,17 +91,8 @@ export function useDashboardPageViewModel(
     queryFn: () => repository.getDashboard(userId),
   });
 
-  const { data: user } = useQuery({
-    queryKey: queryKeys.user(userId),
-    queryFn: () => repository.getUser(userId),
-  });
-
-  const { data: goalReport } = useQuery({
-    queryKey: queryKeys.goalReport(userId),
-    queryFn: () => repository.getGoalReport(userId, 20),
-    enabled: !!user?.scoring_goal,
-    retry: false,
-  });
+  const { data: user } = useUser(userId, repository);
+  const { data: goalReport } = useGoalReport(userId, user?.scoring_goal, repository);
 
   const data = fetched ?? null;
 

@@ -13,7 +13,7 @@ import {
   ToggleGroupItem,
 } from "@/brand";
 import { cn } from "@/brand/cn";
-import type { Friendship, FriendshipStatus } from "../friendsModel";
+import type { Friendship, FriendshipStatus } from "@/data/friendsModel";
 import {
   ANSWERED_NOTICES,
   STATUS_LABELS,

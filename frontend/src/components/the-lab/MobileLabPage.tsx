@@ -1,13 +1,15 @@
-import { useState, useRef } from "react";
+import { useState, useRef, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ComparisonTargetToggle, type ComparisonTargetValue } from "@/components/suggestions/ComparisonTargetToggle";
 import { AttemptsTimeline } from "@/components/the-lab/AttemptsTimeline";
-import { ParTypeCard } from "@/components/the-lab/ParTypeCard";
 import { PuttingDeepDiveCard } from "@/components/the-lab/PuttingDeepDiveCard";
 import { UserRadarChart } from "@/components/analytics/UserRadarChart";
 import { GOAL_OPTIONS } from "@/components/the-lab/constants";
 import type { BenchmarkProfile } from "@/components/the-lab/constants";
 import type { AnalyticsData } from "@/types/analytics";
+import { colors } from "@/brand/theme";
+import type { PeakImpact } from "@/pages/the-lab/model";
+import { PEAK_IMPACT_LABEL, signedStrokes } from "@/pages/the-lab/present";
 
 interface PeakInsight {
   top: { total_score: number | null; round_index: number; course_name?: string | null }[];
@@ -16,13 +18,19 @@ interface PeakInsight {
   gapToGoal: number;
 }
 
-interface PeakScoreTypes {
-  peak: { birdies: number; bogeys: number; doubles: number };
-  all: { birdies: number; bogeys: number; doubles: number };
-}
+const AVERAGE_BAR_COLOR: Record<PeakImpact["kind"], string> = {
+  birdies: colors.score.birdie.base,
+  bogeys: colors.score.bogey.base,
+  doubles: colors.score.double.base,
+};
 
 interface MobileLabPageProps {
-  analyticsData: AnalyticsData | undefined;
+  analyticsData:
+    | Pick<
+        AnalyticsData,
+        "kpis" | "scoring_by_par" | "score_trend" | "score_type_distribution" | "three_putts_trend" | "putts_trend"
+      >
+    | undefined;
   currentGoal: number | null;
   setGoal: (g: number) => void;
   settingGoal: boolean;
@@ -32,9 +40,11 @@ interface MobileLabPageProps {
   setComparisonTarget: (t: ComparisonTargetValue) => void;
   activeProfile: BenchmarkProfile | null;
   peakInsight: PeakInsight | null;
-  peakScoreTypes: PeakScoreTypes | null;
+  peakImpacts: PeakImpact[];
   goalLabel: string | null;
   benchmarkHeading: string;
+  /** The "By Par" panel: the page's kit ParTypeCard, fed from the view model. */
+  scoringPanel: ReactNode;
 }
 
 const panelVariants = {
@@ -54,9 +64,10 @@ export function MobileLabPage({
   setComparisonTarget,
   activeProfile,
   peakInsight,
-  peakScoreTypes,
+  peakImpacts,
   goalLabel,
   benchmarkHeading,
+  scoringPanel,
 }: MobileLabPageProps) {
   const recentAttempts = analyticsData?.score_trend?.filter((r) => r.total_score != null) ?? [];
 
@@ -221,20 +232,7 @@ export function MobileLabPage({
                 animate="center"
                 exit="exit"
               >
-                {currentKey === "scoring" && analyticsData && (
-                  <ParTypeCard
-                    scoringByPar={analyticsData.scoring_by_par}
-                    scoreTypeDist={analyticsData.score_type_distribution}
-                    benchmark={activeProfile}
-                    benchmarkLabel={
-                      mode === "peak"
-                        ? "Peak game"
-                        : typeof comparisonTarget === "number"
-                        ? `HCP ${comparisonTarget}`
-                        : goalLabel ?? "Target"
-                    }
-                  />
-                )}
+                {currentKey === "scoring" && scoringPanel}
 
                 {currentKey === "putting" && analyticsData && (
                   <PuttingDeepDiveCard
@@ -280,31 +278,31 @@ export function MobileLabPage({
                       ))}
                     </div>
 
-                    {peakScoreTypes && (() => {
-                      const metrics = [
-                        { label: "Birdies",  peak: peakScoreTypes.peak.birdies, avg: peakScoreTypes.all.birdies, higherIsBetter: true,  strokeMult: 1, color: "#059669" },
-                        { label: "Bogeys",   peak: peakScoreTypes.peak.bogeys,  avg: peakScoreTypes.all.bogeys,  higherIsBetter: false, strokeMult: 1, color: "#ef4444" },
-                        { label: "Doubles+", peak: peakScoreTypes.peak.doubles, avg: peakScoreTypes.all.doubles, higherIsBetter: false, strokeMult: 2, color: "#60a5fa" },
-                      ];
+                    {peakImpacts.length > 0 && (() => {
+                      const metrics = peakImpacts.map((impact) => ({
+                        label: PEAK_IMPACT_LABEL[impact.kind],
+                        peak: impact.peak,
+                        avg: impact.average,
+                        strokeImpact: impact.strokes,
+                        color: AVERAGE_BAR_COLOR[impact.kind],
+                      }));
                       return (
                         <div className="border-t border-gray-50 pt-4">
                           <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">
                             <span className="text-[#facc15] font-extrabold">Peak</span> vs. Average
                           </p>
                           <div className="space-y-3">
-                            {metrics.map(({ label, peak, avg, higherIsBetter, strokeMult, color }) => {
-                              const diff = peak - avg;
-                              const good = higherIsBetter ? diff > 0 : diff < 0;
-                              const strokeImpact = (higherIsBetter ? diff : -diff) * strokeMult;
+                            {metrics.map(({ label, peak, avg, strokeImpact, color }) => {
                               const maxVal = Math.max(peak, avg, 0.1) * 1.2;
                               const peakPct = (peak / maxVal) * 100;
                               const avgPct = (avg / maxVal) * 100;
+                              const signed = signedStrokes(strokeImpact);
                               return (
                                 <div key={label}>
                                   <div className="flex items-center justify-between mb-2">
                                     <span className="text-[11px] font-semibold text-gray-600">{label}</span>
-                                    <span className="text-[11px] font-bold" style={{ color: good ? "#059669" : strokeImpact === 0 ? "#9ca3af" : "#ef4444" }}>
-                                      {strokeImpact > 0 ? "+" : ""}{strokeImpact.toFixed(1)} strokes {strokeImpact >= 0 ? "gained" : "lost"}
+                                    <span className={`text-label font-bold ${signed.tone}`}>
+                                      {signed.text} {strokeImpact >= 0 ? "gained" : "lost"}
                                     </span>
                                   </div>
                                   <div className="space-y-1.5 mt-1">

@@ -2,8 +2,8 @@ import {
   friendshipFromDto,
   type Friendship,
   type FriendshipAnswer,
-} from "../../pages/social/friendsModel";
-import type { FriendsRepository } from "../../pages/social/friendsRepository";
+} from "../../data/friendsModel";
+import type { FriendsRepository } from "../../data/friendsRepository";
 import { InMemoryFriendships, type InMemoryFriendshipsSeed } from "./InMemoryFriendships";
 
 /** Maps the in-memory server's rows the way the real repository maps the API's. */

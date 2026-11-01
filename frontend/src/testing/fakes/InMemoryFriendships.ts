@@ -1,5 +1,5 @@
 import type { FriendshipDto } from "../../types/api";
-import type { FriendshipAnswer } from "../../pages/social/friendsModel";
+import type { FriendshipAnswer } from "../../data/friendsModel";
 
 /** Someone a friend request can be sent to. */
 export interface FakeGolfer {

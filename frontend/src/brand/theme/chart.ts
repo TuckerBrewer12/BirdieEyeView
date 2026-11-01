@@ -77,6 +77,29 @@ export const chartLayout = {
     /** Past this many rounds the date ticks would crowd, so they are left off. */
     maxTicks: 12,
   },
+  /** A shape across a handful of measures, each axis 0–100 from the centre out. Labels sit past the rim. */
+  radar: {
+    width: 560,
+    height: 340,
+    radius: 118,
+    /** From the rim to an axis label, and from the label down to its figures. */
+    labelGap: 18,
+    valueGap: 16,
+    /** Rings drawn at these shares of the rim, in percent. */
+    rings: [25, 50, 75, 100],
+    dot: 4,
+    stroke: 2,
+  },
+  /** Scores against a goal: a short strip of dots, lower scores higher up, the goal dashed across. */
+  goal: {
+    width: 560,
+    height: 96,
+    pad: { x: 8, y: 14 },
+    /** Room at the right end of the goal line for its label. */
+    labelRoom: 32,
+    dot: 4,
+    dotReached: 5.5,
+  },
   /** A round hole by hole. Width matches `--brand-size-chart-wide`, which it scrolls at. */
   flow: {
     width: 720,

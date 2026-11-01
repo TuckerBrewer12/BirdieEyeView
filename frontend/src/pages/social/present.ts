@@ -1,4 +1,4 @@
-import type { FriendshipAnswer, FriendshipStatus, Person } from "./friendsModel";
+import type { FriendshipAnswer, FriendshipStatus, Person } from "@/data/friendsModel";
 
 /** Wording for the social pages. */
 

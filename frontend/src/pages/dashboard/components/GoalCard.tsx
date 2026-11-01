@@ -1,7 +1,7 @@
 import { Button, Card, CardContent, Meter } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { GoalProgress } from "../model";
-import { goalScoreToBreak, goalTargetLabel } from "../present";
+import { goalScoreToBreak, goalTargetLabel } from "@/domain";
 
 interface GoalCardProps {
   /** Null until a goal is set, which shows the prompt to set one. */
