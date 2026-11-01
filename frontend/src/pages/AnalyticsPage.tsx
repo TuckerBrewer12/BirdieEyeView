@@ -2,7 +2,6 @@ import { useAnalyticsViewModel } from "@/hooks/useAnalyticsViewModel";
 import { MobileAnalyticsPage } from "@/components/analytics/MobileAnalyticsPage";
 import { AnalyticsDesktopLayout } from "@/components/analytics/AnalyticsDesktopLayout";
 import { AnalyticsCommandCenter } from "@/components/analytics/AnalyticsCommandCenter";
-import { ResponsivePage } from "@/components/layout/ResponsivePage";
 
 export function AnalyticsPage({ userId }: { userId: string }) {
   const vm = useAnalyticsViewModel(userId);
@@ -21,13 +20,13 @@ export function AnalyticsPage({ userId }: { userId: string }) {
       : "Play some rounds to see your analytics.";
 
     return (
-      <ResponsivePage
-        mobile={
+      <>
+        <div className="md:hidden">
           <div className="flex flex-col items-center justify-center h-48 text-center">
             <p className="text-gray-400 text-sm">{emptyMsg}</p>
           </div>
-        }
-        desktop={
+        </div>
+        <div className="hidden md:block">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-3">Analytics</h1>
             <AnalyticsCommandCenter
@@ -41,14 +40,14 @@ export function AnalyticsPage({ userId }: { userId: string }) {
               <p className="text-gray-400 text-sm">{emptyMsg}</p>
             </div>
           </div>
-        }
-      />
+        </div>
+      </>
     );
   }
 
   return (
-    <ResponsivePage
-      mobile={
+    <>
+      <div className="md:hidden">
         <MobileAnalyticsPage
           data={vm.data!}
           filters={vm.filters}
@@ -72,8 +71,10 @@ export function AnalyticsPage({ userId }: { userId: string }) {
           mutedFill={vm.mutedFill}
           scoreColors={vm.scoreColors}
         />
-      }
-      desktop={<AnalyticsDesktopLayout {...vm} />}
-    />
+      </div>
+      <div className="hidden md:block">
+        <AnalyticsDesktopLayout {...vm} />
+      </div>
+    </>
   );
 }

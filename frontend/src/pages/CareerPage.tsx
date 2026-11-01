@@ -1,7 +1,6 @@
 import { useCareerViewModel } from "@/hooks/useCareerViewModel";
 import { MobileCareerPage } from "@/components/analytics/MobileCareerPage";
 import { CareerDesktopLayout } from "@/components/analytics/CareerDesktopLayout";
-import { ResponsivePage } from "@/components/layout/ResponsivePage";
 
 export function CareerPage({ userId }: { userId: string }) {
   const vm = useCareerViewModel(userId);
@@ -19,9 +18,13 @@ export function CareerPage({ userId }: { userId: string }) {
   }
 
   return (
-    <ResponsivePage
-      mobile={<MobileCareerPage {...vm} data={vm.data} />}
-      desktop={<CareerDesktopLayout {...vm} />}
-    />
+    <>
+      <div className="md:hidden">
+        <MobileCareerPage {...vm} data={vm.data} />
+      </div>
+      <div className="hidden md:block">
+        <CareerDesktopLayout {...vm} />
+      </div>
+    </>
   );
 }

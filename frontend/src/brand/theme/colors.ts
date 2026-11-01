@@ -52,6 +52,12 @@ export const colors = {
   destructive: "var(--destructive)",
   shadow: "var(--shadow)",
 
+  sidebar: {
+    base: "var(--sidebar)",
+    end: "var(--sidebar-end)",
+    foreground: "var(--sidebar-foreground)",
+  },
+
   score: {
     eagle:  { base: "var(--score-eagle-base)",  muted: "var(--score-eagle-muted)",  onBase: "var(--score-eagle-on-base)",  onMuted: "var(--score-eagle-on-muted)",  text: "var(--score-eagle-text)" },
     birdie: { base: "var(--score-birdie-base)", muted: "var(--score-birdie-muted)", onBase: "var(--score-birdie-on-base)", onMuted: "var(--score-birdie-on-muted)", text: "var(--score-birdie-text)" },
