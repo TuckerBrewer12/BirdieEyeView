@@ -30,6 +30,11 @@ export class FriendsInboxRobot {
     return this.isOpen();
   }
 
+  async openFailed(): Promise<this> {
+    await this.open({ loadError: "Could not load your inbox." });
+    return this.seesError("Could not load your inbox.");
+  }
+
   async isOpen(): Promise<this> {
     await expect(this.page).toHaveURL(/\/inbox$/);
     await expect(this.page.getByRole("heading", { name: "Inbox", level: 1 }).last()).toBeVisible();
@@ -89,6 +94,11 @@ export class FriendsInboxRobot {
 
   async seesEmptyState(tab: "received" | "sent"): Promise<this> {
     await expect(this.page.getByText(`No ${tab} requests yet.`)).toBeVisible();
+    return this;
+  }
+
+  async doesNotSeeEmptyState(tab: "received" | "sent"): Promise<this> {
+    await expect(this.page.getByText(`No ${tab} requests yet.`)).toHaveCount(0);
     return this;
   }
 
