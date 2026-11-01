@@ -23,14 +23,12 @@ export interface LoginViewModel {
   error: string | null;
 
   submitting: boolean;
-  submitLabel: string;
   /** Signs in; `onSignedIn` runs only if it worked. */
   submit: (onSignedIn: () => void) => void;
 
   /** Only an unverified account's refusal offers a fresh link. */
   canResendVerification: boolean;
   resending: boolean;
-  resendLabel: string;
   resendVerification: () => void;
 }
 
@@ -84,11 +82,9 @@ export function useLoginViewModel(
       ? "Enter your email first to resend verification."
       : (resendError ?? loginError),
     submitting: login.isPending,
-    submitLabel: login.isPending ? "Signing in…" : "Sign in",
     submit,
     canResendVerification: isUnverifiedSignIn(loginError),
     resending: resend.isPending,
-    resendLabel: resend.isPending ? "Sending…" : "Resend verification email",
     resendVerification,
   };
 }

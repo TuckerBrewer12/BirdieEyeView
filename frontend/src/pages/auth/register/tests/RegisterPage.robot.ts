@@ -25,8 +25,15 @@ export class RegisterRobot extends AuthScreenRobot {
     return this;
   }
 
-  async pickHomeCourse(query: string, name: string): Promise<this> {
+  /** Types into the home course search and waits for `name` among the results. */
+  async searchHomeCourse(query: string, name: string): Promise<this> {
     await this.fill("Home course (optional)", query);
+    await expect(this.page.getByRole("button", { name: new RegExp(name) })).toBeVisible();
+    return this;
+  }
+
+  async pickHomeCourse(query: string, name: string): Promise<this> {
+    await this.searchHomeCourse(query, name);
     await this.page.getByRole("button", { name: new RegExp(name) }).click();
     await expect(this.page.getByText(name, { exact: true })).toBeVisible();
     return this;
@@ -34,11 +41,6 @@ export class RegisterRobot extends AuthScreenRobot {
 
   async submit(): Promise<this> {
     await this.tap("Create account");
-    return this;
-  }
-
-  async seesFieldError(text: string): Promise<this> {
-    await expect(this.page.locator("[data-slot=field-error]").filter({ hasText: text })).toBeVisible();
     return this;
   }
 

@@ -48,7 +48,6 @@ export interface RegisterViewModel {
   /** The server's refusal, such as an email already in use. */
   error: string | null;
   submitting: boolean;
-  submitLabel: string;
   /** Checks the fields, then creates the account; `onRegistered` gets the email and the server's message. */
   submit: (onRegistered: (email: string, message: string) => void) => void;
 }
@@ -137,7 +136,6 @@ export function useRegisterViewModel(
     fieldErrors,
     error: register.error ? messageFrom(register.error, "Registration failed") : null,
     submitting: register.isPending,
-    submitLabel: register.isPending ? "Creating account…" : "Create account",
     submit,
   };
 }

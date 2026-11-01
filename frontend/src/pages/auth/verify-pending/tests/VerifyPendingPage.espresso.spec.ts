@@ -12,6 +12,14 @@ test("another link goes to the email carried over from Register", async ({ verif
   expect(verifyPending.backend?.verificationResends).toEqual(["sam@example.com"]);
 });
 
+test("verifying from the emailed link elsewhere sends the waiting screen home", async ({
+  verifyPending,
+}) => {
+  await verifyPending.open("sam@example.com");
+  verifyPending.verifyElsewhere();
+  await verifyPending.isSentHome();
+});
+
 test("a refused resend says why", async ({ verifyPending }) => {
   await verifyPending.open("sam@example.com", { authErrors: { "resend-verification": RATE_LIMITED } });
   await verifyPending.resend();

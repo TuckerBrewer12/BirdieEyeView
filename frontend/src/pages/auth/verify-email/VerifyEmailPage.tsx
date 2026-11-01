@@ -24,12 +24,17 @@ export function VerifyEmailPage() {
         </>
       }
     >
-      {viewModel.status === "verifying" ? (
-        <LoadingState className="h-auto py-3">{viewModel.message}</LoadingState>
-      ) : (
-        <AuthNotice tone={viewModel.status === "verified" ? "success" : "error"}>
-          {viewModel.message}
-        </AuthNotice>
+      {viewModel.status === "verifying" && (
+        <LoadingState className="h-auto py-3">Verifying your email…</LoadingState>
+      )}
+      {viewModel.status === "missing" && (
+        <AuthNotice tone="error">Missing verification token. Use the link from your email.</AuthNotice>
+      )}
+      {viewModel.status === "verified" && (
+        <AuthNotice tone="success">{viewModel.serverMessage}</AuthNotice>
+      )}
+      {viewModel.status === "failed" && (
+        <AuthNotice tone="error">{viewModel.serverMessage}</AuthNotice>
       )}
     </AuthCard>
   );

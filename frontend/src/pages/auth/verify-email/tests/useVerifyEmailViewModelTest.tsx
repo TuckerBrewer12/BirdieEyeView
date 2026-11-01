@@ -23,7 +23,7 @@ describe("useVerifyEmailViewModel", () => {
     expect(result.current.status).toBe("verifying");
 
     await waitFor(() => expect(result.current.status).toBe("verified"));
-    expect(result.current.message).toBe(AUTH_MESSAGES.verified);
+    expect(result.current.serverMessage).toBe(AUTH_MESSAGES.verified);
     expect(auth.verifiedTokens).toEqual(["verify-token"]);
   });
 
@@ -31,7 +31,7 @@ describe("useVerifyEmailViewModel", () => {
     const { result } = renderVm("old-token", new FakeAuth().fail("verifyEmail", AUTH_MESSAGES.badVerifyToken));
 
     await waitFor(() => expect(result.current.status).toBe("failed"));
-    expect(result.current.message).toBe(AUTH_MESSAGES.badVerifyToken);
+    expect(result.current.serverMessage).toBe(AUTH_MESSAGES.badVerifyToken);
   });
 
   it("sends nothing when the link had no token", () => {

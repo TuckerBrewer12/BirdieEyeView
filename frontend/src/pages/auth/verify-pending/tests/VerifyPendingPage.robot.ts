@@ -14,6 +14,20 @@ export class VerifyPendingRobot extends AuthScreenRobot {
     return this;
   }
 
+  /** The golfer opens the link in another tab or on a phone: the server now has a verified session. */
+  verifyElsewhere(): this {
+    if (!this.backend) throw new Error("Open the screen first.");
+    this.backend.signedOut = false;
+    return this;
+  }
+
+  /** Home, once the screen's session check sees the account verified. It checks every few seconds. */
+  async isSentHome(): Promise<this> {
+    await this.isAt("/", 10_000);
+    await expect(this.page.getByRole("heading", { name: "Verify your email" })).toHaveCount(0);
+    return this;
+  }
+
   async resend(): Promise<this> {
     await this.tap("Send another confirmation email");
     return this;

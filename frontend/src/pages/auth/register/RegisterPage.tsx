@@ -128,7 +128,7 @@ export function RegisterPage() {
         </Field>
 
         <Button type="submit" size="cta" disabled={viewModel.submitting}>
-          {viewModel.submitLabel}
+          {viewModel.submitting ? "Creating account…" : "Create account"}
         </Button>
       </form>
     </AuthCard>

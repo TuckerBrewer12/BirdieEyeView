@@ -20,6 +20,12 @@ test("fields that can't be sent", async ({ register }) => {
   await register.capture("register-invalid.png");
 });
 
+test("home course results open", async ({ register }) => {
+  await register.open();
+  await register.searchHomeCourse("Pebble", pebbleBeach.name!);
+  await register.capture("register-course-results.png");
+});
+
 test("home course picked", async ({ register }) => {
   await register.open();
   await register.fillIn({ handicap: "+2.5" });

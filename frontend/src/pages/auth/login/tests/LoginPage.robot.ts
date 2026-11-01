@@ -14,9 +14,14 @@ export class LoginRobot extends AuthScreenRobot {
     return this;
   }
 
+  async typePassword(password: string): Promise<this> {
+    await this.fill("Password", password);
+    return this;
+  }
+
   async signIn(email: string, password: string): Promise<this> {
     await this.fill("Email", email);
-    await this.fill("Password", password);
+    await this.typePassword(password);
     await this.tap("Sign in");
     return this;
   }

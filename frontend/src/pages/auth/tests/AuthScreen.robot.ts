@@ -75,8 +75,14 @@ export class AuthScreenRobot {
     return this;
   }
 
-  async isAt(path: string): Promise<this> {
-    await expect.poll(() => new URL(this.page.url()).pathname).toBe(path);
+  /** A message under one field, from checks the form runs before sending anything. */
+  async seesFieldError(text: string): Promise<this> {
+    await expect(this.page.locator("[data-slot=field-error]").filter({ hasText: text })).toBeVisible();
+    return this;
+  }
+
+  async isAt(path: string, timeout?: number): Promise<this> {
+    await expect.poll(() => new URL(this.page.url()).pathname, { timeout }).toBe(path);
     return this;
   }
 

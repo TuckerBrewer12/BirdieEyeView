@@ -59,7 +59,7 @@ export function LoginPage() {
         </PasswordField>
 
         <Button type="submit" size="cta" disabled={viewModel.submitting}>
-          {viewModel.submitLabel}
+          {viewModel.submitting ? "Signing in…" : "Sign in"}
         </Button>
 
         {viewModel.canResendVerification && (
@@ -69,7 +69,7 @@ export function LoginPage() {
             disabled={viewModel.resending}
             onClick={viewModel.resendVerification}
           >
-            {viewModel.resendLabel}
+            {viewModel.resending ? "Sending…" : "Resend verification email"}
           </Button>
         )}
       </form>

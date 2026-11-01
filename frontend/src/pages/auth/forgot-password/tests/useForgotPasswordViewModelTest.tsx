@@ -15,7 +15,7 @@ describe("useForgotPasswordViewModel", () => {
     act(() => result.current.setEmail(" sam@example.com "));
 
     act(() => result.current.submit());
-    await waitFor(() => expect(result.current.submitLabel).toBe("Sending link…"));
+    await waitFor(() => expect(result.current.submitting).toBe(true));
     act(() => auth.release());
 
     await waitFor(() => expect(result.current.notice).toBe(AUTH_MESSAGES.resetSent));
