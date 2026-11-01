@@ -61,7 +61,7 @@ export function ResetPasswordPage() {
               revealName="confirm password"
             />
             <Button type="submit" size="cta" disabled={!viewModel.canSubmit}>
-              {viewModel.submitLabel}
+              {viewModel.submitting ? "Resetting…" : "Reset password"}
             </Button>
           </>
         )}

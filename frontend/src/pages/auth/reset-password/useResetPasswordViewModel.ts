@@ -21,7 +21,6 @@ export interface ResetPasswordViewModel {
   /** Without a token there is nothing to send, so the form stays shut. */
   canSubmit: boolean;
   submitting: boolean;
-  submitLabel: string;
   submit: () => void;
   /** The password changed; the way on is signing in with it. */
   done: boolean;
@@ -70,7 +69,6 @@ export function useResetPasswordViewModel(
         : null,
     canSubmit: !!trimmedToken && !reset.isPending && !reset.isSuccess,
     submitting: reset.isPending,
-    submitLabel: reset.isPending ? "Resetting…" : "Reset password",
     submit,
     done: reset.isSuccess,
   };
