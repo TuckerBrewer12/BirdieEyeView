@@ -8,6 +8,8 @@ interface RoundScorecardProps {
   round: Round;
   /** The tee played, which names the yardage row. */
   teeBox?: string | null;
+  /** Names the tee on the course line too, for a screen that doesn't show it anywhere else. */
+  showTee?: boolean;
   /** Makes scores, putts and greens editable. The round shown should already carry the edits. */
   edits?: ScorecardEdits;
   /** Sits at the right of the header, like a "Scan another" button. */
@@ -20,12 +22,12 @@ interface RoundScorecardProps {
  * the round's totals. The tables are wider than a phone, so they scroll sideways under a header
  * that stays put, keeping the action in reach.
  */
-function RoundScorecard({ round, teeBox, edits, action, className }: RoundScorecardProps) {
+function RoundScorecard({ round, teeBox, showTee = false, edits, action, className }: RoundScorecardProps) {
   const nines = [
     { nine: round.frontNine, label: "OUT" },
     { nine: round.backNine, label: "IN" },
   ].filter(({ nine }) => nine.holes.length > 0);
-  const subtitle = [round.course?.location, teeBox && `${teeBox} tees`].filter(Boolean).join(" · ");
+  const subtitle = [round.course?.location, showTee && teeBox && `${teeBox} tees`].filter(Boolean).join(" · ");
 
   return (
     <div
