@@ -74,41 +74,6 @@ const SCORECARD: DemoScorecardRow[] = SAMPLE.par.map((par, i) => ({
   score: scoreKind(SAMPLE.strokes[i], par) ?? "par",
 }));
 
-/**
- * The demo's cinematic timings, in seconds.
- *
- * Deliberately not the kit's motion tokens. Those describe interaction —
- * `duration.collapse` is the 0.2s a panel takes to open, `hoverScale` the
- * 1.5% a card lifts under a cursor. Nothing here is an interaction: the sweep
- * is a scanner crossing a card, the crossfade is one image replacing another.
- * Collapsing them onto the interaction tokens would erase the effect rather
- * than standardise it. They live together here so the demo's rework can tune
- * them as a set.
- */
-export const DEMO_MOTION = {
-  /** One image replacing another — the card giving way to the scorecard. */
-  crossfade: 0.8,
-  /** The scan line's full travel, top to bottom. */
-  sweep: 1.5,
-  /** A field or chip drawing the eye as the form fills itself in. */
-  emphasis: 0.3,
-  /** A choice registering, matching the kit's collapse. */
-  select: 0.2,
-  /** One on/off of the text caret in the name field. */
-  caretBlink: 0.8,
-  /** Mapped rows sliding in from the right. Looser than the kit's spring so
-   *  the rows overshoot enough to read as dropped into place. */
-  rowSpring: { type: "spring" as const, damping: 15 },
-  /** One app screen giving way to the next on the tour. */
-  screenChange: 0.5,
-  /** The incoming screen settling from just past full size. */
-  screenEnterScale: 1.02,
-  /** The photo stepping back as the scanned card replaces it. */
-  photoRecedeScale: 0.95,
-  /** A finger pressing the handicap: the ring closing in from wide, pressing, then letting go. */
-  tap: { duration: 0.7, reachScale: 1.6, pressScale: 0.8 },
-} as const;
-
 export interface ScannerDemoViewModel {
   phase: ScannerPhase;
   label: string;
