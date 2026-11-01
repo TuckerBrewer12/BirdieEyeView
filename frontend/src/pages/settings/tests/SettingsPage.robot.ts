@@ -47,6 +47,14 @@ export class SettingsRobot {
       .getByRole("button", { name: label, exact: true });
   }
 
+  private updatesCheckbox() {
+    return this.page.getByRole("checkbox", { name: "Get updates" });
+  }
+
+  private copyButton() {
+    return this.page.getByRole("button", { name: /^Cop(y|ied)$/ });
+  }
+
   private handicapField() {
     return this.page.getByLabel("Manual handicap index");
   }
@@ -127,6 +135,49 @@ export class SettingsRobot {
 
   async seesColorBlindMode(label: ColorBlindLabel): Promise<this> {
     await expect(this.colorBlindOption(label)).toHaveAttribute("aria-pressed", "true");
+    return this;
+  }
+
+  async turnOffUpdates(): Promise<this> {
+    await this.updatesCheckbox().uncheck();
+    return this;
+  }
+
+  async seesUpdatesOff(): Promise<this> {
+    await expect(this.updatesCheckbox()).not.toBeChecked();
+    return this;
+  }
+
+  /** Lets the page write to and read from the clipboard, as a player who allowed it would. */
+  async allowClipboard(): Promise<this> {
+    await this.page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    return this;
+  }
+
+  /** The browser turns clipboard writes down, as it does without permission or focus. */
+  async blockClipboard(): Promise<this> {
+    await this.page.addInitScript(() => {
+      Object.defineProperty(navigator, "clipboard", {
+        value: { writeText: () => Promise.reject(new Error("Write permission denied.")) },
+      });
+    });
+    return this;
+  }
+
+  async copyFriendCode(): Promise<this> {
+    await this.copyButton().click();
+    return this;
+  }
+
+  async seesCopied(code: string): Promise<this> {
+    await expect(this.page.getByRole("button", { name: "Copied", exact: true })).toBeVisible();
+    await expect.poll(() => this.page.evaluate(() => navigator.clipboard.readText())).toBe(code);
+    return this;
+  }
+
+  async seesCopyFailed(): Promise<this> {
+    await expect(this.page.getByRole("alert").filter({ hasText: "Could not copy your friend code." })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Copy", exact: true })).toBeVisible();
     return this;
   }
 

@@ -83,6 +83,30 @@ test("colour-blind mode is kept with Save", async ({ settings }) => {
   await settings.seesColorBlindMode("Tritanopia");
 });
 
+test("Get updates is kept with Save", async ({ settings }) => {
+  await settings.open();
+  await settings.turnOffUpdates();
+  await settings.save();
+  await settings.seesSaved();
+
+  await settings.reload();
+  await settings.seesUpdatesOff();
+});
+
+test("Copy puts the friend code on the clipboard", async ({ settings }) => {
+  await settings.allowClipboard();
+  await settings.open();
+  await settings.copyFriendCode();
+  await settings.seesCopied("BIRD-1234");
+});
+
+test("a copy the browser refuses says so", async ({ settings }) => {
+  await settings.blockClipboard();
+  await settings.open();
+  await settings.copyFriendCode();
+  await settings.seesCopyFailed();
+});
+
 test("a failed save says why and keeps the edit", async ({ settings }) => {
   await settings.open();
   settings.failSavesWith("Selected home course was not found");
