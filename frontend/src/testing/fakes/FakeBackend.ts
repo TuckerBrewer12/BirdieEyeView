@@ -171,6 +171,24 @@ export class FakeBackend {
       return { status: 200, body: this.store.getCourseAnalytics(courseId) };
     }
 
+    if (verb === "PATCH" && /\/api\/users\/[^/]+$/.test(path)) {
+      const patch = typeof body === "object" && body !== null ? (body as Partial<User>) : {};
+      const profile: User = this.profile ?? {
+        id: this.user.user_id,
+        name: this.user.name,
+        email: this.user.email,
+        home_course_id: null,
+        handicap: this.store.handicapIndex,
+        created_at: null,
+        scoring_goal: null,
+      };
+      if ("home_course_id" in patch) profile.home_course_id = patch.home_course_id ?? null;
+      if ("handicap" in patch) profile.handicap = patch.handicap ?? null;
+      if ("scoring_goal" in patch) profile.scoring_goal = patch.scoring_goal ?? null;
+      this.profile = profile;
+      return { status: 200, body: profile };
+    }
+
     if (verb === "GET" && /\/api\/users\/[^/]+$/.test(path)) {
       if (this.profile) return { status: 200, body: this.profile };
       return {

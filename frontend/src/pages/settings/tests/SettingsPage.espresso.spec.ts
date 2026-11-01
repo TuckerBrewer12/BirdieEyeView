@@ -1,3 +1,4 @@
+import { searchableCourses } from "../../../testing/fixtures/courses";
 import { test } from "./SettingsPage.robot";
 
 test("a theme pick applies at once, needs no Save, and is kept", async ({ settings }) => {
@@ -25,4 +26,13 @@ test("System hands the theme back to the device", async ({ settings }) => {
   await settings.seesTheme("light");
   await settings.reload();
   await settings.seesThemePicked("System");
+});
+
+test("typing a course's full name saves it as the home course and keeps it", async ({ settings }) => {
+  await settings.open({ courses: searchableCourses });
+  await settings.typeHomeCourse("Pebble Beach");
+  await settings.save();
+  await settings.seesHomeCourse("Pebble Beach");
+  await settings.reload();
+  await settings.seesHomeCourse("Pebble Beach");
 });

@@ -1,5 +1,6 @@
 import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
+import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import { expectTheme } from "../../../testing/theme";
 
@@ -29,8 +30,8 @@ export class SettingsRobot {
     return this;
   }
 
-  async open(): Promise<this> {
-    await FakeSession.install(this.page, {});
+  async open(seed: FakeBackendSeed = {}): Promise<this> {
+    await FakeSession.install(this.page, seed);
     await this.page.goto("/settings");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.themeControl()).toBeVisible();
@@ -67,6 +68,29 @@ export class SettingsRobot {
   async isAt(path: string): Promise<this> {
     await expect(this.page.getByRole("heading", { name: "Unsaved changes detected" })).toHaveCount(0);
     await expect.poll(() => new URL(this.page.url()).pathname).toBe(path);
+    return this;
+  }
+
+  private homeCourseField() {
+    return this.page.getByPlaceholder("Type course name...");
+  }
+
+  /** Types a course name and waits until it is offered. Leaves the suggestion unpicked. */
+  async typeHomeCourse(name: string): Promise<this> {
+    await this.homeCourseField().fill(name);
+    await expect(this.page.getByRole("button", { name })).toBeVisible();
+    return this;
+  }
+
+  async save(): Promise<this> {
+    await this.page.getByRole("button", { name: "Save Settings" }).click();
+    await expect(this.page.getByText("Settings saved.")).toBeVisible();
+    return this;
+  }
+
+  async seesHomeCourse(name: string): Promise<this> {
+    await expect(this.page.getByText(`Selected: ${name}`)).toBeVisible();
+    await expect(this.homeCourseField()).toHaveValue(name);
     return this;
   }
 
