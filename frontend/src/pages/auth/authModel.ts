@@ -1,5 +1,5 @@
 /** The shortest password the server accepts. */
-export const MIN_PASSWORD_LENGTH = 8;
+const MIN_PASSWORD_LENGTH = 8;
 
 export interface NewPasswordErrors {
   password: string | null;

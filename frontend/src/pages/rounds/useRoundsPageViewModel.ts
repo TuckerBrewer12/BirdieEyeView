@@ -11,14 +11,14 @@ import {
   filterRounds,
   modeAfterPickingSort,
   sortAfterPicking,
-  type FilterChipItem,
+  type CourseFilterOption,
   type FilterMode,
   type Sort,
   type SortKey,
   type SortOption,
 } from "./roundsModel";
 
-export type { FilterChipItem, FilterMode, SortKey, SortOption };
+export type { CourseFilterOption, FilterMode, SortKey, SortOption };
 
 export interface RoundsUiState {
   loading: boolean;
@@ -28,7 +28,7 @@ export interface RoundsUiState {
   remainingCount: number;
   search: string;
   filterMode: FilterMode;
-  chips: FilterChipItem[];
+  chips: CourseFilterOption[];
   sortAsc: boolean;
   sortLabel: string;
   sortOptions: readonly SortOption[];

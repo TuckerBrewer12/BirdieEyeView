@@ -2,7 +2,6 @@ import type { Course, Tee } from "@/types/golf";
 
 export const FRONT_HOLES = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 export const BACK_HOLES = [10, 11, 12, 13, 14, 15, 16, 17, 18] as const;
-export const ALL_HOLES = [...FRONT_HOLES, ...BACK_HOLES] as const;
 
 type HasTees<T extends { color: string | null }> = { tees: T[] };
 type HasHoles<T extends { number: number | null }> = { holes: T[] };
@@ -28,7 +27,7 @@ export function teeColors(course: Course | null | undefined): string[] {
 }
 
 /** Colour words a tee's name is read for, in match order. "combo" names a mixed tee. */
-export const TEE_COLORS = [
+const TEE_COLORS = [
   "black", "blue", "white", "gold", "red", "green", "silver",
   "yellow", "orange", "purple", "brown", "combo",
 ] as const;

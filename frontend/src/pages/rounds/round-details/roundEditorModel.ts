@@ -20,7 +20,7 @@ export type RoundEditAction =
 
 export const closedEditor: RoundEditor = { editing: false };
 
-export function courseEditFromRound(round: RoundDetail): CourseEdit {
+function courseEditFromRound(round: RoundDetail): CourseEdit {
   if (round.linkedCourse) return { status: "linked", course: round.linkedCourse };
   if (round.playedName) return { status: "custom", name: round.playedName };
   return { status: "picking" };

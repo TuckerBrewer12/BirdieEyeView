@@ -22,7 +22,7 @@ import {
   type ShortGamePoint,
 } from "./model";
 
-export const TAB_LABELS: Record<AnalyticsTab, string> = {
+const TAB_LABELS: Record<AnalyticsTab, string> = {
   scoring: "Scoring",
   "ball-striking": "Ball Striking",
   putting: "Putting",

@@ -4,7 +4,6 @@ export {
   playedScoreKinds,
   scoreKind,
   scoreKindCountLabel,
-  scoreKindLabel,
   strokesToPar,
   toParLabel,
 } from "./score";
@@ -20,7 +19,7 @@ export {
   goalTargetLabel,
   nearestGoalBenchmark,
 } from "./benchmark";
-export type { BenchmarkProfile, ComparisonTargetValue } from "./benchmark";
+export type { ComparisonTargetValue } from "./benchmark";
 
 export {
   buildRadarData,
@@ -30,32 +29,14 @@ export {
 } from "./radar";
 export type { RadarEntry } from "./radar";
 
-export {
-  FRONT_HOLES,
-  BACK_HOLES,
-  ALL_HOLES,
-  getTee,
-  getHole,
-  teeColors,
-  TEE_COLORS,
-  extractTeeColorToken,
-  chooseCompatibleTee,
-  teesByLength,
-} from "./course";
-export type { TeeColor } from "./course";
+export { getTee, teeColors } from "./course";
 
 export {
-  courseHandicap,
   ratedCourseHandicap,
   netScore,
   formatHandicapIndex,
   formatCourseHandicap,
-  formatHandicapInputValue,
-  parseHandicapInput,
-  MIN_HANDICAP_INDEX,
-  MAX_HANDICAP_INDEX,
 } from "./handicap";
-export type { DifferentialStatus, HandicapParseResult } from "./handicap";
 
 export { Round } from "./round";
 export type {
@@ -64,16 +45,10 @@ export type {
   HoleScore,
   HoleSummary,
   Nine,
-  NineSummary,
-  RoundCourse,
   RoundDetail,
   RoundEdits,
   RoundSummary,
-  ScoreCounts,
 } from "./round";
-
-export { activityDays } from "./activity";
-export type { ActivityDay } from "./activity";
 
 export { trendPointsFrom } from "./trend";
 export type { RoundTrendPoint } from "./trend";

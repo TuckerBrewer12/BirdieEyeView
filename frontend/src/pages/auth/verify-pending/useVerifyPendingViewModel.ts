@@ -4,7 +4,7 @@ import type { AuthActions, SessionCheck } from "../authActions";
 import { useResendVerification } from "../useResendVerification";
 
 /** How often the page asks whether the link has been opened, in another tab or on a phone. */
-export const VERIFY_POLL_MS = 3000;
+const VERIFY_POLL_MS = 3000;
 
 /** What Register hands over on the way here. */
 export interface VerifyPendingArrival {

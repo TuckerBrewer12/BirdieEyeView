@@ -16,19 +16,19 @@ export const jordan: FakeGolfer = {
   email: "jordan@example.com",
   friendCode: "GCJORDAN02",
 };
-export const sam: FakeGolfer = {
+const sam: FakeGolfer = {
   id: "user-sam",
   name: "Sam Okafor",
   email: null,
   friendCode: "GCSAM00003",
 };
-export const riley: FakeGolfer = {
+const riley: FakeGolfer = {
   id: "user-riley",
   name: "Riley Brooks",
   email: "riley@example.com",
   friendCode: "GCRILEY004",
 };
-export const casey: FakeGolfer = {
+const casey: FakeGolfer = {
   id: "user-casey",
   name: "Casey Marsh",
   email: "casey@example.com",

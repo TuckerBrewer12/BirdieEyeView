@@ -12,14 +12,14 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import { GoalCard } from "./components/GoalCard";
-import { GreetingHeader } from "./components/GreetingHeader";
-import { ScoringHeroCard } from "./components/ScoringHeroCard";
-import { ShortGameCard } from "./components/ShortGameCard";
-import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
-import { firstNameOf, greetingDateLabel } from "./present";
+import { GoalCard } from "./GoalCard";
+import { GreetingHeader } from "./GreetingHeader";
+import { ScoringHeroCard } from "./ScoringHeroCard";
+import { ShortGameCard } from "./ShortGameCard";
+import type { DashboardPageViewModel } from "../useDashboardPageViewModel";
+import { firstNameOf, greetingDateLabel } from "../present";
 
-export function MobileDashboard({ vm }: { vm: DashboardPageViewModel }) {
+export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
   const { data, recentRounds, trendView, setTrendView, goal } = vm;
 

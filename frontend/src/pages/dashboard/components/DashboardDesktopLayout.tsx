@@ -16,16 +16,16 @@ import {
   StatValue,
 } from "@/brand";
 import { formatHandicapIndex } from "@/domain/handicap";
-import { GirDonut } from "./components/GirDonut";
-import { GoalCard } from "./components/GoalCard";
-import { MilestoneFeed } from "./components/MilestoneFeed";
-import { ProfileHeroBanner } from "./components/ProfileHeroBanner";
-import { PuttsGauge } from "./components/PuttsGauge";
-import { RecentRoundsTable } from "./components/RecentRoundsTable";
-import { ScanActionCard } from "./components/ScanActionCard";
-import { ScoreMixChart } from "./components/ScoreMixChart";
-import type { DashboardPageViewModel } from "./useDashboardPageViewModel";
-import { avgLabel, firstNameOf, pctLabel } from "./present";
+import { GirDonut } from "./GirDonut";
+import { GoalCard } from "./GoalCard";
+import { MilestoneFeed } from "./MilestoneFeed";
+import { ProfileHeroBanner } from "./ProfileHeroBanner";
+import { PuttsGauge } from "./PuttsGauge";
+import { RecentRoundsTable } from "./RecentRoundsTable";
+import { ScanActionCard } from "./ScanActionCard";
+import { ScoreMixChart } from "./ScoreMixChart";
+import type { DashboardPageViewModel } from "../useDashboardPageViewModel";
+import { avgLabel, firstNameOf, pctLabel } from "../present";
 
 export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
