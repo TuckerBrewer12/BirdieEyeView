@@ -633,14 +633,14 @@ class CourseRepositoryDB:
             return [await self._assemble(conn, r) for r in rows]
 
     async def search_courses(self, query: str, *, user_id: Optional[str] = None) -> List[Course]:
-        """Search courses by name or location substring."""
+        """Search courses by name or location substring: the user's own courses first, then masters."""
         async with self._pool.acquire() as conn:
             if user_id:
                 rows = await conn.fetch(
                     """SELECT * FROM courses.courses
                        WHERE (name ILIKE $1 OR location ILIKE $1)
                          AND (user_id IS NULL OR user_id = $2)
-                       ORDER BY name LIMIT 20""",
+                       ORDER BY (user_id IS NULL), name LIMIT 20""",
                     f"%{query}%",
                     UUID(user_id),
                 )
