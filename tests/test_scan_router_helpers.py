@@ -13,6 +13,7 @@ from api.routers import scan
 from database.exceptions import IntegrityError
 from models import Course, Hole, Round, Tee, User
 from services.mistral_scorecard_parser import ParsedScorecardRows, ParsedTeeRow
+from services.scan_service import ScanSaveRejected
 
 
 def make_upload(name: str, content_type: str, data: bytes = b"data") -> UploadFile:
@@ -487,6 +488,22 @@ async def test_save_round_hides_internal_error(monkeypatch, error, status_code, 
 
     assert (raised.value.status_code, raised.value.detail) == (status_code, detail)
     assert str(error) not in raised.value.detail
+
+
+@pytest.mark.asyncio
+async def test_save_round_reports_rejected_scan_as_422(monkeypatch):
+    request = make_save_round_request()
+    rejection = ScanSaveRejected(["Course data is incomplete.", "Missing par for holes 7, 12."])
+    service = SimpleNamespace(save_reviewed_scan=AsyncMock(side_effect=rejection))
+    monkeypatch.setattr(scan, "ScanService", lambda db: service)
+
+    with pytest.raises(HTTPException) as raised:
+        await scan.save_round(request, SimpleNamespace(), User(id=str(uuid4())))
+
+    assert (raised.value.status_code, raised.value.detail) == (
+        422,
+        "Course data is incomplete. Missing par for holes 7, 12.",
+    )
 
 
 @pytest.mark.asyncio

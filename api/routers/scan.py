@@ -26,7 +26,7 @@ from models import User
 from services.gemini_table_merger import merge_split_tables
 from services.mistral_ocr_service import MistralOCRService
 from services.mistral_scorecard_parser import ParsedScorecardRows, parse_mistral_scorecard_rows
-from services.scan_service import ScanService
+from services.scan_service import ScanSaveRejected, ScanService
 
 router = APIRouter()
 
@@ -884,6 +884,9 @@ async def save_round(
         service = ScanService(db)
         saved = await service.save_reviewed_scan(req)
         return {"id": saved.id, "total_score": saved.calculate_total_score()}
+    except ScanSaveRejected as exc:
+        # Nothing was written; tell the user what to fix in review.
+        raise HTTPException(422, " ".join(exc.reasons))
     except (ValueError, IntegrityError):
         logger.exception("Save round validation failed")
         raise HTTPException(400, ROUND_SAVE_FAILED)
