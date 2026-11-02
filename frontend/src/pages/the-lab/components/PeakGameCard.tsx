@@ -11,9 +11,9 @@ import {
   StatValue,
 } from "@/brand";
 import { cn } from "@/brand/cn";
-import { formatCourseName } from "@/lib/courseName";
+import { formatCourseName, formatOneDecimal, pluralize } from "@/domain";
 import type { PeakGame, PeakImpact } from "../model";
-import { PEAK_IMPACT_LABEL, oneDecimal, peakGapNote, signedStrokes } from "../present";
+import { PEAK_IMPACT_LABEL, peakGapNote, signedStrokes } from "../present";
 
 interface PeakGameCardProps {
   peak: PeakGame;
@@ -36,16 +36,16 @@ export function PeakGameCard({ peak, impacts, goalLabel, className }: PeakGameCa
         <div className="flex flex-col gap-4">
           <div className="flex items-end gap-6">
             <Stat>
-              <StatLabel>Best {peak.rounds.length} rounds</StatLabel>
+              <StatLabel>Best {pluralize(peak.rounds.length, "round")}</StatLabel>
               <StatValue size="lg">
-                {oneDecimal(peak.average)}
+                {formatOneDecimal(peak.average)}
                 <StatUnit>avg</StatUnit>
               </StatValue>
             </Stat>
             {peak.overallAverage != null && (
               <Stat>
                 <StatLabel>Overall</StatLabel>
-                <StatValue className="text-muted-foreground">{oneDecimal(peak.overallAverage)}</StatValue>
+                <StatValue className="text-muted-foreground">{formatOneDecimal(peak.overallAverage)}</StatValue>
               </Stat>
             )}
           </div>

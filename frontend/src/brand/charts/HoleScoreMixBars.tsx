@@ -1,5 +1,6 @@
 import { Bar, BarChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { chartLayout, chartTickStyle, chartTooltipStyle, colors, scoreKindLabel } from "@/brand/theme";
+import { formatPercent, pluralize } from "@/domain/format";
 import { SCORE_KINDS, type ScoreKind } from "@/domain/score";
 import type { CourseHoleScoreTypeRowDto } from "@/types/api";
 import { AXIS_TICK, type TooltipFormatter } from "./holeBarParts";
@@ -26,9 +27,9 @@ export function HoleScoreMixBars({ rows }: { rows: CourseHoleScoreTypeRowDto[] }
           <Tooltip
             contentStyle={chartTooltipStyle}
             labelFormatter={(_label, payload) =>
-              payload?.[0]?.payload?.sample_size != null ? `${payload[0].payload.sample_size} rounds` : ""
+              payload?.[0]?.payload?.sample_size != null ? pluralize(payload[0].payload.sample_size, "round") : ""
             }
-            formatter={((value: number) => [`${Number(value ?? 0).toFixed(1)}%`, ""]) as TooltipFormatter}
+            formatter={((value: number) => [formatPercent(Number(value ?? 0), 1), ""]) as TooltipFormatter}
           />
           <Legend wrapperStyle={{ fontSize: chartTickStyle.fontSize }} />
           {SCORE_KINDS.map((kind) => (

@@ -1,7 +1,6 @@
 import type { RadarAxis } from "@/brand";
-import type { RadarEntry } from "@/domain";
+import { formatDay, pluralNoun, type RadarEntry } from "@/domain";
 import {
-  eventDay,
   type CareerEvent,
   type CareerWindow,
   type Milestone,
@@ -75,18 +74,10 @@ export function milestoneKey(milestone: Milestone): string {
   return "threshold" in milestone ? `${milestone.kind}-${milestone.threshold}` : milestone.kind;
 }
 
-const EVENT_DATE = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
 /** Where and when a record was set: "May 25, 2026 · Presidio Golf Course". */
 export function eventDetail(event: CareerEvent | null): string | null {
   if (!event) return null;
-  const day = eventDay(event.date);
-  return [day ? EVENT_DATE.format(day) : event.date, event.course].filter(Boolean).join(" · ");
+  return [formatDay(event.date) ?? event.date, event.course].filter(Boolean).join(" · ");
 }
 
 export function recordValue(value: number | null): string {
@@ -95,19 +86,10 @@ export function recordValue(value: number | null): string {
 
 /** The note over the last year's score milestones. */
 export function newRecordsNote(count: number, windowDays: number): string {
-  const records = count === 1 ? "new personal record" : "new personal records";
-  return `${count} ${records} in the last ${windowDays} days.`;
+  return `${count} new personal ${pluralNoun(count, "record")} in the last ${windowDays} days.`;
 }
 
 export const NO_NEW_RECORDS = "No new records yet. Keep playing!";
-
-export function holesLabel(holes: number): string {
-  return `${holes.toLocaleString("en-US")} ${holes === 1 ? "hole" : "holes"}`;
-}
-
-export function roundsLabel(rounds: number): string {
-  return `${rounds.toLocaleString("en-US")} ${rounds === 1 ? "round" : "rounds"}`;
-}
 
 export const PAGE_SUBTITLE = "Player achievement records";
 

@@ -1,6 +1,5 @@
 import { Button, Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, Meter, Stat, StatLabel, StatUnit, StatValue } from "@/brand";
-import { TOUR_SHORT_GAME } from "@/domain";
-import { pctLabel } from "../present";
+import { TOUR_SHORT_GAME, formatPercent } from "@/domain";
 
 interface ShortGameCardProps {
   /** Over the last five rounds; null when there was nothing to measure. */
@@ -37,10 +36,10 @@ export function ShortGameCard({ scramblingPct, upAndDownPct, onOpenLab }: ShortG
                 {value != null && <StatUnit>%</StatUnit>}
               </StatValue>
             </Stat>
-            <Meter value={value} marker={tour} size="sm" aria-label={`${label} against the tour's ${tour}%`} />
+            <Meter value={value} marker={tour} size="sm" aria-label={`${label} against the tour's ${formatPercent(tour)}`} />
             <div className="flex justify-between text-caption text-muted-foreground">
-              <span>You {pctLabel(value)}</span>
-              <span>Tour {tour}%</span>
+              <span>You {formatPercent(value)}</span>
+              <span>Tour {formatPercent(tour)}</span>
             </div>
           </div>
         ))}

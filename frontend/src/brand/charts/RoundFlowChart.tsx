@@ -14,6 +14,7 @@ import {
   typography,
 } from "@/brand/theme";
 import type { HoleScore, Round } from "@/domain";
+import { pluralize } from "@/domain/format";
 import type { ScoreKind } from "@/domain/score";
 
 interface RoundFlowChartProps {
@@ -204,7 +205,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
                 </span>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
-                <span>{hovered.putts != null ? `${hovered.putts} putts` : "Putts N/A"}</span>
+                <span>{hovered.putts != null ? pluralize(hovered.putts, "putt") : "Putts N/A"}</span>
                 {hovered.gir != null && (
                   <span className={hovered.gir ? "text-score-birdie" : undefined}>
                     {hovered.gir ? "GIR ✓" : "No GIR"}

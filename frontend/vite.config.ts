@@ -6,6 +6,11 @@ import path from 'path'
 
 const collectCoverage = process.env.VITE_COVERAGE === 'true'
 
+// Unit tests run in a US timezone, where UTC midnight is the evening before, so a
+// date-only string read as UTC shows up as the wrong day instead of passing on a
+// UTC machine. Set before Vitest starts its workers, which inherit it.
+if (process.env.VITEST) process.env.TZ = 'America/Los_Angeles'
+
 export default defineConfig({
   plugins: [
     react(),

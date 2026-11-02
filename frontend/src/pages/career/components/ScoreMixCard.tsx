@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, ScoreMixBar } from "@/brand";
 import type { ScoreMix } from "@/domain";
-import { holesLabel } from "../present";
+import { pluralize } from "@/domain/format";
 
 interface ScoreMixCardProps {
   mix: ScoreMix;
@@ -14,7 +14,7 @@ export function ScoreMixCard({ mix, holesPlayed, className }: ScoreMixCardProps)
     <Card data-slot="score-mix-card" className={className}>
       <CardHeader>
         <CardTitle>Career Score Mix</CardTitle>
-        <CardDescription>{holesLabel(holesPlayed)}</CardDescription>
+        <CardDescription>{pluralize(holesPlayed, "hole")}</CardDescription>
       </CardHeader>
       <CardContent>
         {holesPlayed > 0 ? (

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   SCORE_KINDS,
+  formatAverageToPar,
   isThreePutt,
   playedScoreKinds,
   scoreKind,
@@ -66,6 +67,25 @@ describe("scoreKindLabel", () => {
 describe("toParLabel", () => {
   it("writes even as E and over par with a plus", () => {
     expect([toParLabel(-2), toParLabel(0), toParLabel(3), toParLabel(null)]).toEqual(["-2", "E", "+3", null]);
+  });
+});
+
+describe("formatAverageToPar", () => {
+  it("writes an average to par to two places", () => {
+    expect(formatAverageToPar(0.8)).toBe("+0.8");
+    expect(formatAverageToPar(0.846)).toBe("+0.85");
+    expect(formatAverageToPar(-0.1)).toBe("-0.1");
+  });
+
+  it("is E for even, and for anything that rounds to it", () => {
+    expect(formatAverageToPar(0)).toBe("E");
+    expect(formatAverageToPar(0.004)).toBe("E");
+    expect(formatAverageToPar(-0.004)).toBe("E");
+  });
+
+  it("rounds a half the same way under par as over", () => {
+    expect(formatAverageToPar(0.125)).toBe("+0.13");
+    expect(formatAverageToPar(-0.125)).toBe("-0.13");
   });
 });
 

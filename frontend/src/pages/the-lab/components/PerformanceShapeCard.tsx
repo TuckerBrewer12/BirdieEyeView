@@ -8,8 +8,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import type { ComparisonTargetValue, RadarEntry } from "@/domain";
-import { formatCourseName } from "@/lib/courseName";
+import { formatCourseName, formatOneDecimal, pluralize, type ComparisonTargetValue, type RadarEntry } from "@/domain";
 import type { FriendComparison } from "../useLabPageViewModel";
 import type { FriendOption, PeakGame, RadarMode } from "../model";
 import {
@@ -19,7 +18,6 @@ import {
   comparisonFromKey,
   comparisonKey,
   friendName,
-  oneDecimal,
   peakGapNote,
   recentTrendNote,
 } from "../present";
@@ -102,7 +100,7 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
             <div className="flex flex-col gap-3">
               <Stat>
                 <StatLabel>Your Average</StatLabel>
-                <StatValue size="lg">{oneDecimal(props.scoringAverage)}</StatValue>
+                <StatValue size="lg">{formatOneDecimal(props.scoringAverage)}</StatValue>
                 <span className="text-caption text-muted-foreground">
                   avg · L20 rounds
                   {props.bestScore != null && ` · ${props.bestScore} best`}
@@ -119,9 +117,9 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
               <div className="flex flex-col gap-3">
                 <Stat>
                   <StatLabel>Peak Game</StatLabel>
-                  <StatValue size="lg">{oneDecimal(peak.average)}</StatValue>
+                  <StatValue size="lg">{formatOneDecimal(peak.average)}</StatValue>
                   <span className="text-caption text-muted-foreground">
-                    avg · best {peak.rounds.length} rounds · overall {oneDecimal(peak.overallAverage)}
+                    avg · best {pluralize(peak.rounds.length, "round")} · overall {formatOneDecimal(peak.overallAverage)}
                   </span>
                 </Stat>
                 {props.goalLabel && (

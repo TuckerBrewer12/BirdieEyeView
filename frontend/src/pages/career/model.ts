@@ -1,4 +1,4 @@
-import { buildRadarData, trendPointsFrom, type RadarEntry, type RoundTrendPoint, type ScoreMix } from "@/domain";
+import { buildRadarData, parseDay, trendPointsFrom, type RadarEntry, type RoundTrendPoint, type ScoreMix } from "@/domain";
 import type { AnalyticsFilters } from "@/types/analytics";
 import type { AnalyticsDto, MilestoneEventDto, NotableAchievementsDto } from "@/types/api";
 import { scoreMixByKindFrom, scoreMixFrom } from "../analytics/model";
@@ -100,18 +100,11 @@ function eventFrom(event: MilestoneEventDto | null | undefined): CareerEvent | n
   return event ? { date: event.date, course: event.course, roundId: event.round_id ?? null } : null;
 }
 
-/** The server's event date (2026/5/28) as a UTC day, or null when it can't be read. */
-export function eventDay(date: string): Date | null {
-  const match = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/.exec(date);
-  if (!match) return null;
-  return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
-}
-
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Whether an event falls in the last `days` days before `today`. */
 export function withinDays(event: CareerEvent | null, days: number, today: Date): boolean {
-  const day = event ? eventDay(event.date) : null;
+  const day = event ? parseDay(event.date) : null;
   return day != null && day.getTime() >= today.getTime() - days * DAY_MS;
 }
 

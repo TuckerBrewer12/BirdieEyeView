@@ -15,7 +15,7 @@ import {
   StatLabel,
   StatValue,
 } from "@/brand";
-import { formatHandicapIndex } from "@/domain/handicap";
+import { formatHandicapIndex, formatOneDecimal, formatPercent } from "@/domain";
 import { GirDonut } from "./GirDonut";
 import { GoalCard } from "./GoalCard";
 import { MilestoneFeed } from "./MilestoneFeed";
@@ -25,7 +25,7 @@ import { RecentRoundsTable } from "./RecentRoundsTable";
 import { ScanActionCard } from "./ScanActionCard";
 import { ScoreMixChart } from "./ScoreMixChart";
 import type { DashboardPageViewModel } from "../useDashboardPageViewModel";
-import { avgLabel, firstNameOf, pctLabel } from "../present";
+import { firstNameOf } from "../present";
 
 export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
@@ -71,7 +71,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                   <div className="flex items-center justify-between">
                     <Stat>
                       <StatLabel>Scoring Avg (L20)</StatLabel>
-                      <StatValue size="lg">{avgLabel(last20ScoringAvg)}</StatValue>
+                      <StatValue size="lg">{formatOneDecimal(last20ScoringAvg)}</StatValue>
                     </Stat>
                     <StatDelta direction={hiTrend} />
                   </div>
@@ -121,12 +121,12 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
               <CardContent>
                 <div className="flex items-center justify-around mt-6">
                   <Stat align="center">
-                    <StatValue size="lg">{pctLabel(scramblingPct)}</StatValue>
+                    <StatValue size="lg">{formatPercent(scramblingPct)}</StatValue>
                     <StatLabel>Scrambling</StatLabel>
                   </Stat>
                   <div className="w-px h-8 bg-muted" />
                   <Stat align="center">
-                    <StatValue size="lg">{pctLabel(upAndDownPct)}</StatValue>
+                    <StatValue size="lg">{formatPercent(upAndDownPct)}</StatValue>
                     <StatLabel>Up & Down</StatLabel>
                   </Stat>
                 </div>

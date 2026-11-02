@@ -1,3 +1,4 @@
+import { formatDay } from "@/domain";
 import type { FriendshipAnswer, FriendshipStatus, Person } from "@/data/friendsModel";
 
 /** Wording for the social pages. */
@@ -15,15 +16,10 @@ export function personDetail(person: Person): string {
   return person.email ?? "No email";
 }
 
+/** "Updated Jun 15, 2026", or null when the date is missing or unreadable. */
 export function updatedLabel(updatedAt: string | null): string | null {
-  if (!updatedAt) return null;
-  const date = new Date(updatedAt);
-  if (Number.isNaN(date.getTime())) return null;
-  return `Updated ${date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })}`;
+  const day = formatDay(updatedAt);
+  return day ? `Updated ${day}` : null;
 }
 
 export const STATUS_LABELS: Record<FriendshipStatus, string> = {

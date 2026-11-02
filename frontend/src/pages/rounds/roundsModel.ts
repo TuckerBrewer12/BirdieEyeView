@@ -1,4 +1,4 @@
-import { formatCourseName } from "@/lib/courseName";
+import { formatCourseName } from "@/domain/course";
 
 export type SortKey = "date" | "total_score" | "to_par" | "course_name";
 export type FilterMode = "all" | "l20" | "best" | string;

@@ -88,5 +88,5 @@ Example:
 
 [
   {"path": "frontend/src/pages/dashboard/useDashboardPageViewModel.ts", "line": 120, "body": "The hook is returning a pre-painted handicap label. Return the index and let the view call formatHandicapIndex."},
-  {"path": "frontend/src/pages/dashboard/MobileDashboard.tsx", "line": 88, "body": "Course handicap is computed in the view. Use ratedCourseHandicap from @/domain so mobile and desktop cannot fork the WHS formula."}
+  {"path": "frontend/src/pages/dashboard/components/DashboardMobileLayout.tsx", "line": 88, "body": "Course handicap is computed in the view. Use ratedCourseHandicap from @/domain so mobile and desktop cannot fork the WHS formula."}
 ]

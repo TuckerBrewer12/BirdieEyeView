@@ -1,6 +1,6 @@
 import { Camera, Images, ScanLine } from "lucide-react";
 import { Button, Card, CardContent, Dropzone, FileChip, ScorecardLayoutPicker } from "@/brand";
-import { isNative, pickImageNative } from "@/lib/nativeCamera";
+import { isNative, pickImageNative } from "@/platform/nativeCamera";
 
 export interface ScanUploadPhoto {
   name: string;

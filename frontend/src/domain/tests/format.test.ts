@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pluralize, pluralNoun } from "./pluralize";
+import { formatOneDecimal, formatPercent, pluralize, pluralNoun } from "../format";
 
 describe("pluralNoun", () => {
   it("gives the bare noun, for callers that render the count themselves", () => {
@@ -29,5 +29,36 @@ describe("pluralize", () => {
   it("takes an explicit plural for nouns that need one", () => {
     expect(pluralize(1, "birdie")).toBe("1 birdie");
     expect(pluralize(3, "bogey", "bogeys")).toBe("3 bogeys");
+  });
+
+  it("groups thousands", () => {
+    expect(pluralize(1432, "hole")).toBe("1,432 holes");
+  });
+});
+
+describe("formatPercent", () => {
+  it("rounds to a whole percent by default", () => {
+    expect(formatPercent(31.4)).toBe("31%");
+    expect(formatPercent(31.5)).toBe("32%");
+    expect(formatPercent(0)).toBe("0%");
+  });
+
+  it("keeps the digits asked for", () => {
+    expect(formatPercent(31.44, 1)).toBe("31.4%");
+    expect(formatPercent(50, 1)).toBe("50.0%");
+  });
+
+  it("is a dash when there is nothing to show", () => {
+    expect(formatPercent(null)).toBe("—");
+    expect(formatPercent(undefined)).toBe("—");
+    expect(formatPercent(Number.NaN)).toBe("—");
+  });
+});
+
+describe("formatOneDecimal", () => {
+  it("writes one decimal, or a dash", () => {
+    expect(formatOneDecimal(82.44)).toBe("82.4");
+    expect(formatOneDecimal(33)).toBe("33.0");
+    expect(formatOneDecimal(null)).toBe("—");
   });
 });

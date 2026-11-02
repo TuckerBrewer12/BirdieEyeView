@@ -1,5 +1,5 @@
 import { colors, scoreKindLabel, type ScoreKey } from "@/brand/theme";
-import { formatCourseName } from "@/lib/courseName";
+import { formatCourseName, formatSignedOneDecimal, formatWeekdayDay, pluralNoun } from "@/domain";
 import type { User } from "@/types/golf";
 import {
   type HiTrend,
@@ -13,18 +13,9 @@ export function firstNameOf(user: User | null): string {
   return user?.name?.split(" ")[0] ?? "Golfer";
 }
 
+/** Today above the greeting: "Mon · Jun 15". */
 export function greetingDateLabel(now = new Date()): string {
-  const day = now.toLocaleDateString("en-US", { weekday: "short" });
-  const date = now.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  return `${day} · ${date}`;
-}
-
-export function avgLabel(value: number | null): string {
-  return value != null ? value.toFixed(1) : "—";
-}
-
-export function pctLabel(value: number | null | undefined, empty = "—"): string {
-  return value != null ? `${value.toFixed(0)}%` : empty;
+  return formatWeekdayDay(now, { year: false }) ?? "";
 }
 
 export function puttsLabel(putts: number | null): string {
@@ -58,8 +49,7 @@ export function ratingLabelForWhs(row: WhsRound): string | null {
 }
 
 export function differentialLabel(value: number | null): string {
-  if (value == null) return "—";
-  return value >= 0 ? `+${value.toFixed(1)}` : value.toFixed(1);
+  return value != null ? formatSignedOneDecimal(value) : "—";
 }
 
 export function adjustmentLabel(adjustment: number): string | null {
@@ -69,11 +59,11 @@ export function adjustmentLabel(adjustment: number): string | null {
 
 export function usedLegend(countUsed: number, usedCount: number): string | null {
   if (usedCount <= 0) return null;
-  return `Green rows are the ${countUsed} best differential${countUsed !== 1 ? "s" : ""} used in your index`;
+  return `Green rows are the ${countUsed} best ${pluralNoun(countUsed, "differential")} used in your index`;
 }
 
 export function whsContextNote(countUsed: number): string {
-  return `The World Handicap System uses your best ${countUsed || "N"} differentials from the last 20 rounds. Differentials measure how well you played relative to the course difficulty.`;
+  return `The World Handicap System uses your best ${countUsed || "N"} ${pluralNoun(countUsed || 2, "differential")} from the last 20 rounds. Differentials measure how well you played relative to the course difficulty.`;
 }
 
 export type { HiTrend };

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { RoundSummary } from "@/domain";
-import { pluralize } from "@/lib/pluralize";
+import { pluralize } from "@/domain/format";
 import { cn } from "@/brand/cn";
 import { activityDays } from "@/domain/activity";
 

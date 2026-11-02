@@ -1,13 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { toPng } from "html-to-image";
+import type { ShareMessage } from "@/domain/share";
 import { downloadDataUrl } from "@/platform/downloadDataUrl";
-
-/** What goes out with the image: the share sheet's title and text, or the download's name. */
-export interface ShareMessage {
-  title: string;
-  text: string;
-  fileName: string;
-}
 
 /**
  * Shares the element behind `cardRef` as a PNG: through the share sheet where the browser

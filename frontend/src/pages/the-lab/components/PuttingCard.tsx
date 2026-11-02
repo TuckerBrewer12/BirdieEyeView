@@ -9,8 +9,8 @@ import {
   StatLabel,
   StatValue,
 } from "@/brand";
+import { formatOneDecimal, formatPercent } from "@/domain";
 import type { PuttingSummary } from "../model";
-import { oneDecimal } from "../present";
 
 /** Three-putts and putts a round over the last 20 rounds, and the putts trend. */
 export function PuttingCard({ putting, className }: { putting: PuttingSummary; className?: string }) {
@@ -29,17 +29,17 @@ export function PuttingCard({ putting, className }: { putting: PuttingSummary; c
           <>
             <div className="grid grid-cols-3 gap-3">
               <Stat align="center" className="rounded-xl bg-muted p-3">
-                <StatValue>{oneDecimal(putting.threePuttsPerRound)}</StatValue>
+                <StatValue>{formatOneDecimal(putting.threePuttsPerRound)}</StatValue>
                 <StatLabel>3-Putts / Round</StatLabel>
               </Stat>
               <Stat align="center" className="rounded-xl bg-muted p-3">
                 <StatValue>
-                  {putting.threePuttRate != null ? `${Math.round(putting.threePuttRate)}%` : "—"}
+                  {formatPercent(putting.threePuttRate)}
                 </StatValue>
                 <StatLabel>3-Putt Rate</StatLabel>
               </Stat>
               <Stat align="center" className="rounded-xl bg-muted p-3">
-                <StatValue>{oneDecimal(putting.puttsPerRound)}</StatValue>
+                <StatValue>{formatOneDecimal(putting.puttsPerRound)}</StatValue>
                 <StatLabel>Avg Putts</StatLabel>
               </Stat>
             </div>

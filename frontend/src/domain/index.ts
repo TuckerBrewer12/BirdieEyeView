@@ -1,5 +1,7 @@
 export {
   SCORE_KINDS,
+  formatAverageToPar,
+  roundAverageToPar,
   isThreePutt,
   playedScoreKinds,
   scoreKind,
@@ -29,7 +31,15 @@ export {
 } from "./radar";
 export type { RadarEntry } from "./radar";
 
-export { getTee, teeColors } from "./course";
+export { formatCourseName, getTee, teeColors } from "./course";
+
+export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekdayDay, isoDay, parseDay } from "./date";
+export type { DayParts } from "./date";
+
+export { formatOneDecimal, formatPercent, formatSignedOneDecimal, pluralNoun, pluralize } from "./format";
+
+export { roundShareMessage } from "./share";
+export type { ShareMessage } from "./share";
 
 export {
   ratedCourseHandicap,

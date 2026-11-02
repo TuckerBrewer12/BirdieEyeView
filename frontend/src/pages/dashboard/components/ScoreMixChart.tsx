@@ -1,5 +1,6 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { chartColors, chartLayout, chartTickStyle, chartTooltipStyle, colors } from "@/brand";
+import { formatPercent } from "@/domain";
 import type { ScoreMixItem } from "../model";
 import { colorizeMix } from "../present";
 
@@ -7,8 +8,7 @@ const TICK = { ...chartTickStyle, fill: chartColors.axis, fontWeight: 700 };
 
 function percent(value: number | string | ReadonlyArray<number | string> | undefined) {
   const base = Array.isArray(value) ? value[0] : value;
-  const n = typeof base === "number" ? base : Number(base);
-  return [Number.isFinite(n) ? `${n.toFixed(1)}%` : `${String(base ?? "")}%`, ""];
+  return [formatPercent(typeof base === "number" ? base : Number(base), 1), ""];
 }
 
 interface ScoreMixChartProps {

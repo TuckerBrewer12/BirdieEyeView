@@ -10,7 +10,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import { formatCourseName } from "@/lib/courseName";
+import { formatCourseName } from "@/domain/course";
 import { useFilePreview } from "@/platform/useFilePreview";
 import { ScanProcessingStep } from "./components/ScanProcessingStep";
 import { ScanReviewStep } from "./components/ScanReviewStep";

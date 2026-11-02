@@ -1,5 +1,6 @@
 import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartColors, chartLayout, chartTooltipStyle, toParFill, toParLabel } from "@/brand/theme";
+import { chartColors, chartLayout, chartTooltipStyle, toParFill } from "@/brand/theme";
+import { formatAverageToPar } from "@/domain/score";
 import { AXIS_TICK, type TooltipFormatter } from "./holeBarParts";
 
 interface ToParBar {
@@ -17,11 +18,6 @@ interface ToParBarsProps {
   valueLabel?: string;
 }
 
-/** An average to par, to two places, as golfers write it: "+0.84", "-0.12", "E". */
-function signed(value: number): string {
-  return toParLabel(Number(value.toFixed(2))) ?? "E";
-}
-
 /**
  * Average score to par for a handful of groups (par types, hole difficulty): a bar up for
  * over par, down for under, painted by the score.
@@ -36,13 +32,15 @@ export function ToParBars({ bars, valueLabel = "Avg to Par" }: ToParBarsProps) {
             tick={AXIS_TICK}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(value: number) => signed(value)}
+            tickFormatter={(value: number) => formatAverageToPar(value)}
           />
           <Tooltip
             cursor={{ fill: chartColors.muted }}
             contentStyle={chartTooltipStyle}
             formatter={((value: number, _name: unknown, item: { payload?: ToParBar }) => [
-              item.payload?.detail ? `${signed(Number(value))} (${item.payload.detail})` : signed(Number(value)),
+              item.payload?.detail
+                ? `${formatAverageToPar(Number(value))} (${item.payload.detail})`
+                : formatAverageToPar(Number(value)),
               valueLabel,
             ]) as TooltipFormatter}
           />

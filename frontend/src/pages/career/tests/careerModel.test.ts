@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 import { CAREER_LATER, CAREER_TODAY } from "@/testing/fixtures/career";
 import type { AnalyticsDto } from "@/types/api";
-import { careerFrom, eventDay, withinDays, type Milestone } from "../model";
+import { careerFrom, withinDays, type Milestone } from "../model";
 
 const dto = sampleGolfer.analytics;
 const achievements = dto.notable_achievements;
@@ -113,16 +113,6 @@ describe("careerFrom", () => {
     expect(reached(later, "putting")).toEqual([]);
     expect(reached(later, "gir")).toEqual(["gir-break:9"]);
     expect(later.windows.lifetime.gir.filter((m) => m.achieved)).toHaveLength(3);
-  });
-});
-
-describe("eventDay", () => {
-  it("reads the server's year/month/day as a UTC day", () => {
-    expect(eventDay("2026/5/8")?.toISOString()).toBe("2026-05-08T00:00:00.000Z");
-  });
-
-  it("is null for a date it can't read", () => {
-    expect(eventDay("May 8")).toBeNull();
   });
 });
 

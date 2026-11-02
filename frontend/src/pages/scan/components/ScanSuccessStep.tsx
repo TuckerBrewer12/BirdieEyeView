@@ -11,8 +11,8 @@ import {
   ToParFigure,
 } from "@/brand";
 import type { Round } from "@/domain";
-import { formatCourseName } from "@/lib/courseName";
-import { roundShareMessage } from "@/lib/roundShareMessage";
+import { formatCourseName } from "@/domain/course";
+import { roundShareMessage } from "@/domain/share";
 import { useShareRound } from "@/platform/useShareRound";
 
 interface ScanSuccessStepProps {

@@ -1,5 +1,13 @@
 import type { ToParBar, TrendAreaPoint } from "@/brand";
-import { formatCourseHandicap, formatHandicapIndex, toParLabel } from "@/domain";
+import {
+  formatAverageToPar,
+  formatCourseHandicap,
+  formatHandicapIndex,
+  formatOneDecimal,
+  formatPercent,
+  pluralize,
+  toParLabel,
+} from "@/domain";
 import type {
   AnalyticsFilters,
   GIRTrendRow,
@@ -42,10 +50,6 @@ export function emptyMessage(filtered: boolean): string {
   return filtered ? "No rounds found for the selected filters." : "Play some rounds to see your analytics.";
 }
 
-export function averagePuttsLabel(putts: number | null): string | null {
-  return putts != null ? putts.toFixed(1) : null;
-}
-
 /** An insight as a sentence, with the arrow beside it and whether up is good. */
 export interface Narrative {
   text: string;
@@ -67,7 +71,7 @@ export function narrativeFor(insight: Insight): Narrative {
       const strokes = Math.abs(insight.strokes).toFixed(1);
       return insight.strokes > 0
         ? {
-            text: `Your scoring average has improved by ${strokes} strokes over the last ${insight.rounds} rounds.`,
+            text: `Your scoring average has improved by ${strokes} strokes over the last ${pluralize(insight.rounds, "round")}.`,
             trend: "down",
             positiveUp: false,
           }
@@ -79,12 +83,11 @@ export function narrativeFor(insight: Insight): Narrative {
     }
     case "best-par":
       return {
-        text: `You score best on par ${insight.par}s — averaging ${toParLabel(Number(insight.averageToPar.toFixed(2)))} across ${insight.holes} holes.`,
+        text: `You score best on par ${insight.par}s — averaging ${formatAverageToPar(insight.averageToPar)} across ${pluralize(insight.holes, "hole")}.`,
         trend: insight.averageToPar <= 0 ? "down" : "flat",
         positiveUp: false,
       };
     case "gir-average": {
-      const percent = insight.percent.toFixed(1);
       const verdict =
         insight.percent >= 55
           ? "excellent ball striking."
@@ -92,7 +95,7 @@ export function narrativeFor(insight: Insight): Narrative {
             ? "improving this is one of the fastest routes to lower scores."
             : "irons are the area to target for the biggest scoring gains.";
       return {
-        text: `Your average GIR% is ${percent}% — ${verdict}`,
+        text: `Your average GIR% is ${formatPercent(insight.percent, 1)} — ${verdict}`,
         trend: insight.percent >= 50 ? "up" : "flat",
         positiveUp: true,
       };
@@ -179,19 +182,6 @@ export function courseOptions(
   ];
 }
 
-export function percentLabel(percent: number | null | undefined): string {
-  return percent != null ? `${Math.round(percent)}%` : "—";
-}
-
-/** An average to par, as golfers write it, to two places: "+0.85", "E", "-0.1". */
-export function averageToParLabel(value: number): string {
-  return toParLabel(Math.round(value * 100) / 100) ?? "E";
-}
-
-export function holesLabel(holes: number): string {
-  return `${holes} ${holes === 1 ? "hole" : "holes"}`;
-}
-
 export const GIR_SPLIT_LABEL: Record<GirSplit["bucket"], string> = {
   GIR: "Green hit",
   "No GIR": "Green missed",
@@ -241,14 +231,14 @@ export function threePuttPoints(rows: ThreePuttRow[]): TrendAreaPoint[] {
 }
 
 export function parBars(rows: ScoringByParRow[]): ToParBar[] {
-  return rows.map((row) => ({ label: `Par ${row.par}`, toPar: row.average_to_par, detail: holesLabel(row.sample_size) }));
+  return rows.map((row) => ({ label: `Par ${row.par}`, toPar: row.average_to_par, detail: pluralize(row.sample_size, "hole") }));
 }
 
 export function handicapBars(rows: ScoringByHandicapRow[]): ToParBar[] {
   return rows.map((row) => ({
     label: String(row.handicap),
     toPar: row.average_to_par,
-    detail: holesLabel(row.sample_size),
+    detail: pluralize(row.sample_size, "hole"),
   }));
 }
 
@@ -264,7 +254,7 @@ export function headlineFigures(analytics: Analytics): { label: string; value: s
       value: analytics.bestScore != null ? String(analytics.bestScore) : "—",
       detail: analytics.bestRound?.course,
     },
-    { label: "Avg Putts", value: averagePuttsLabel(analytics.averagePutts) ?? "—" },
+    { label: "Avg Putts", value: formatOneDecimal(analytics.averagePutts) },
   ];
 }
 

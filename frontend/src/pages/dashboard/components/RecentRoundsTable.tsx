@@ -1,6 +1,6 @@
 import { cn } from "@/brand/cn";
 import { toParBadgeClass, toParLabel } from "@/brand/theme";
-import { formatCourseName } from "@/lib/courseName";
+import { formatCourseName } from "@/domain/course";
 import type { RoundSummary } from "@/domain";
 
 interface RecentRoundsTableProps {

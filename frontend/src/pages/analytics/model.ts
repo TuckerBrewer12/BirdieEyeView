@@ -1,5 +1,5 @@
 import { SCORE_KINDS, scoreKind, type ScoreKind, type ScoreMix } from "@/domain";
-import { average, withRollingAverage } from "@/lib/stats";
+import { average, withRollingAverage } from "@/domain/stats";
 import type {
   AnalyticsData,
   AnalyticsFilters,

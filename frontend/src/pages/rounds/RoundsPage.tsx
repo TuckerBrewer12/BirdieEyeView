@@ -12,8 +12,8 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import { formatCourseName } from "@/lib/courseName";
-import { pluralize } from "@/lib/pluralize";
+import { formatCourseName } from "@/domain/course";
+import { pluralize } from "@/domain/format";
 import type { RoundSummary } from "@/domain";
 import { LinkCoursePanel } from "./components/LinkCoursePanel";
 import { useRoundsPageViewModel } from "./useRoundsPageViewModel";

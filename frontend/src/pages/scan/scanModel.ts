@@ -1,4 +1,4 @@
-import { Round, type HoleEdits } from "@/domain";
+import { Round, isoDay, type HoleEdits } from "@/domain";
 import type { SaveScanRequestDto } from "@/types/api";
 import type { Course, CourseSummary } from "@/types/golf";
 import type { ExtractedHoleScore, ManualTee, ScanResult } from "@/types/scan";
@@ -48,9 +48,9 @@ export interface ScanReviewDraft {
   course: ReviewCourse;
 }
 
-/** Today as `YYYY-MM-DD`, the date a round defaults to. */
+/** Today as `YYYY-MM-DD`, the date a round defaults to: the golfer's day, not UTC's. */
 export function todayIso(now: Date = new Date()): string {
-  return now.toISOString().substring(0, 10);
+  return isoDay(now);
 }
 
 /** A course name as a search query: trimmed, single-spaced. */

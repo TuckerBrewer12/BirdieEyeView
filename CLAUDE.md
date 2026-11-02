@@ -140,9 +140,10 @@ Every page is MVVM on the brand kit. Under `frontend/src/`:
 
 - `pages/<kebab-name>/` — one folder per page: `<Name>Page.tsx` (the view), `use<Name>PageViewModel.ts` (screen state only), `<name>Repository.ts` (endpoint + DTO→domain mapping), `use<Thing>.ts` query/mutation hooks (server state, cache effects), `model.ts`/`present.ts` (shaping and wording), `components/` (page-only views), `previews/`, and `tests/` (screenshot specs, espresso flows through a `*.robot.ts`, view-model tests with `Fake*` doubles). `pages/rounds/` and `pages/courses/` are the models to copy.
 - `data/` — queries, mutations and repositories more than one page shares (`useUser`, `useUpdateUser`, `useGoalReport`, `useAnalytics`, `useCourseSearch`, …) and `queryKeys`.
-- `domain/` — golf types, words and formatting, and DTO→domain mapping. The server owns golf figures; the client never recomputes them.
+- `domain/` — golf types, words and formatting, and DTO→domain mapping. The one set of formatters lives here: `date.ts` (a date-only string is a calendar day, never UTC midnight), `format.ts` (`pluralize`, `formatPercent`, `formatOneDecimal`), `score.ts` (`toParLabel`, `formatAverageToPar`), `course.ts` (`formatCourseName`). The server owns golf figures; the client never recomputes them.
 - `brand/` — the kit: `components/`, `charts/`, `theme/` (tokens), with a preview and screenshot spec for each.
-- `platform/` — web adapters (image compression, file preview, sharing) the app passes in.
+- `platform/` — web and native adapters (image compression, file preview, sharing, the Capacitor camera) the app passes in.
+- `lib/` — transport only: the API client (`api.ts`), its base URL, the session token and user-facing error wording.
 - `context/` — `AuthContext` and the theme provider.
 - `testing/` — `Fake*` doubles, fixtures and Playwright helpers.
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { pebbleBeach } from "@/testing/fixtures/courses";
 import { SCANNED_COURSE_NAME, scannedCard } from "@/testing/fixtures/scan";
 import { holeList } from "../present";
-import { reviewCourseFrom, reviewFromScan, reviewFromSetup, saveRequestFrom, withHoleEdit } from "../scanModel";
+import { reviewCourseFrom, reviewFromScan, reviewFromSetup, saveRequestFrom, todayIso, withHoleEdit } from "../scanModel";
 
 const draft = reviewFromScan(scannedCard, "2026-10-15");
 
@@ -35,6 +35,13 @@ describe("saveRequestFrom", () => {
     const blank = reviewFromSetup({ course: { id: null, name: "Muni Nine" }, teeBox: "", date: "2026-10-01" }, null);
     expect(blank.course).toEqual({ status: "named", name: "Muni Nine" });
     expect(saveRequestFrom("user-1", blank).course_name).toBe("Muni Nine");
+  });
+});
+
+describe("todayIso", () => {
+  it("is the golfer's day, not UTC's, in the evening", () => {
+    // 20:00 on the 14th in Los Angeles (the unit tests' timezone) is already the 15th in UTC.
+    expect(todayIso(new Date(2026, 5, 14, 20))).toBe("2026-06-14");
   });
 });
 

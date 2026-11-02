@@ -102,9 +102,9 @@ Example:
 
 [
   {"path": "frontend/src/pages/rounds/RoundsPage.tsx", "line": 88, "body": "`#059669` is `text-score-birdie` — use the Tailwind token instead of hardcoding.", "suggestion": "      <span className=\"text-score-birdie\">Birdie</span>"},
-  {"path": "frontend/src/brand/components/Chip.tsx", "line": 12, "body": "`text-[11px]` is `text-label`. Use the type token instead of an arbitrary size.", "suggestion": "      <span className=\"text-label\">{label}</span>"},
-  {"path": "frontend/src/brand/components/RoundCard.tsx", "line": 24, "body": "`grid-cols-[54px_1fr_auto]` is `grid-cols-round-preview`. Do not hardcode the date-rail width."},
-  {"path": "frontend/src/pages/CoursesPage/CoursesPage.tsx", "line": 42, "body": "This is a hand-rolled filter chip. `ToggleGroup` in `@/brand` already does this — use it instead."},
+  {"path": "frontend/src/brand/components/ScoreCountChip.tsx", "line": 12, "body": "`text-[11px]` is `text-label`. Use the type token instead of an arbitrary size.", "suggestion": "      <span className=\"text-label\">{label}</span>"},
+  {"path": "frontend/src/brand/components/RoundPreview.tsx", "line": 24, "body": "`grid-cols-[54px_1fr_auto]` is `grid-cols-round-preview`. Do not hardcode the date-rail width."},
+  {"path": "frontend/src/pages/courses/CoursesPage.tsx", "line": 42, "body": "This is a hand-rolled filter chip. `ToggleGroup` in `@/brand` already does this — use it instead."},
   {"path": "frontend/src/brand/components/Badge.tsx", "line": 1, "body": "New kit component with no screenshot coverage. Add `previews/components/Badge.tsx` and `tests/screenshots/components/Badge.screenshot.spec.ts`."},
   {"path": "frontend/src/brand/tests/BrandKit.robot.ts", "line": 12, "body": "This canned `page.route` fulfill is a mock. Brand screenshots are isolated and must not intercept `/api`."}
 ]

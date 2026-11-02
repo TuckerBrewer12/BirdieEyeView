@@ -2,13 +2,11 @@ import { describe, expect, it } from "vitest";
 import { sampleCareer } from "@/testing/fixtures/career";
 import {
   eventDetail,
-  holesLabel,
   milestoneKey,
   milestoneLabel,
   newRecordsNote,
   profileAxes,
   recordValue,
-  roundsLabel,
   totalsTitle,
   windowLabel,
 } from "../present";
@@ -51,13 +49,9 @@ describe("career present", () => {
     expect(recordValue(null)).toBe("—");
   });
 
-  it("counts the year's new records, holes and rounds", () => {
+  it("counts the year's new records", () => {
     expect(newRecordsNote(7, 365)).toBe("7 new personal records in the last 365 days.");
     expect(newRecordsNote(1, 365)).toBe("1 new personal record in the last 365 days.");
-    expect(holesLabel(1432)).toBe("1,432 holes");
-    expect(holesLabel(1)).toBe("1 hole");
-    expect(roundsLabel(24)).toBe("24 rounds");
-    expect(roundsLabel(1)).toBe("1 round");
   });
 
   it("labels each radar spoke with the golfer's own figure", () => {

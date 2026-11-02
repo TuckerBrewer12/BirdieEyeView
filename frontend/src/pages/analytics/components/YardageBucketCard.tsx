@@ -9,8 +9,8 @@ import {
   StatValue,
   toParTextClass,
 } from "@/brand";
+import { formatAverageToPar, formatPercent, pluralize } from "@/domain";
 import type { YardageBucket } from "../model";
-import { averageToParLabel, holesLabel, percentLabel } from "../present";
 
 interface YardageBucketCardProps {
   bucket: YardageBucket;
@@ -28,7 +28,7 @@ export function YardageBucketCard({ bucket, className }: YardageBucketCardProps)
               {bucket.label}
               <StatUnit>yds</StatUnit>
             </StatValue>
-            <span className="text-xs text-muted-foreground">{holesLabel(bucket.holes)}</span>
+            <span className="text-xs text-muted-foreground">{pluralize(bucket.holes, "hole")}</span>
           </Stat>
           <div className="flex shrink-0 gap-4">
             <Stat align="end">
@@ -38,7 +38,7 @@ export function YardageBucketCard({ bucket, className }: YardageBucketCardProps)
             <Stat align="end">
               <StatLabel>To Par</StatLabel>
               <StatValue size="sm" className={toParTextClass(bucket.averageToPar)}>
-                {averageToParLabel(bucket.averageToPar)}
+                {formatAverageToPar(bucket.averageToPar)}
               </StatValue>
             </Stat>
           </div>
@@ -52,7 +52,7 @@ export function YardageBucketCard({ bucket, className }: YardageBucketCardProps)
         <div className="flex flex-col gap-3 border-t border-border pt-3">
           <div className="flex items-baseline justify-center gap-2 text-sm font-bold">
             <span className="uppercase tracking-eyebrow text-score-birdie">GIR</span>
-            <span className="text-card-foreground">{percentLabel(bucket.girPercent)}</span>
+            <span className="text-card-foreground">{formatPercent(bucket.girPercent)}</span>
           </div>
           {bucket.results.length > 0 && <ScoreMixBar mix={bucket.mix} />}
         </div>

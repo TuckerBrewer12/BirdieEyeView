@@ -1,5 +1,6 @@
 import { Crosshair, Flame, Home, Ruler, Shuffle, Target, TrendingUp, type LucideIcon } from "lucide-react";
 import { Card, CardContent, Meter, Stat, StatUnit, StatValue } from "@/brand";
+import { formatPercent } from "@/domain";
 import type { Saver } from "../model";
 import { SAVER_LABEL } from "../present";
 
@@ -45,7 +46,7 @@ export function SaverCard({ saver }: { saver: Saver }) {
         <div className="mt-auto flex flex-col gap-1.5">
           <div className="flex justify-between text-caption text-muted-foreground">
             <span>Share of your gap</span>
-            <span className="font-bold text-secondary-foreground">{share.toFixed(0)}%</span>
+            <span className="font-bold text-secondary-foreground">{formatPercent(share)}</span>
           </div>
           <Meter value={share} size="sm" aria-label={`${SAVER_LABEL[saver.kind]}: share of your gap`} />
         </div>

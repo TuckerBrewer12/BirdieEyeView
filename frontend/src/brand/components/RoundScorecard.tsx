@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/brand/cn";
 import { ScorecardTable, type ScorecardEdits } from "@/brand/components/ScorecardTable";
 import type { Round } from "@/domain";
-import { formatCourseName } from "@/lib/courseName";
+import { formatCourseName } from "@/domain/course";
 
 interface RoundScorecardProps {
   round: Round;

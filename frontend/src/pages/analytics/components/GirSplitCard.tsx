@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, ScoreMixBar } from "@/brand";
 import { cn } from "@/brand/cn";
+import { pluralize } from "@/domain";
 import type { GirSplit } from "../model";
-import { GIR_SPLIT_LABEL, holesLabel } from "../present";
+import { GIR_SPLIT_LABEL } from "../present";
 
 interface GirSplitCardProps {
   split: GirSplit[];
@@ -25,7 +26,7 @@ export function GirSplitCard({ split, className }: GirSplitCardProps) {
               >
                 {GIR_SPLIT_LABEL[bucket.bucket]}
               </span>
-              <span className="text-xs text-muted-foreground">{holesLabel(bucket.holes)}</span>
+              <span className="text-xs text-muted-foreground">{pluralize(bucket.holes, "hole")}</span>
             </div>
             <ScoreMixBar mix={bucket.mix} />
           </div>

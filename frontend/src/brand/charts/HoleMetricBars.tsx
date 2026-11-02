@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { chartColors, chartLayout, chartTooltipStyle, colors } from "@/brand/theme";
+import { formatPercent } from "@/domain/format";
 import type { CourseHoleGirRowDto, CourseHolePuttsRowDto, CourseHoleVarianceRowDto } from "@/types/api";
 import { AXIS_TICK, holeLabel, type TooltipFormatter } from "./holeBarParts";
 
@@ -14,7 +15,7 @@ const METRICS = {
   gir: {
     dataKey: "gir_percentage",
     label: "GIR %",
-    format: (value: number) => `${value.toFixed(1)}%`,
+    format: (value: number) => formatPercent(value, 1),
     domain: [0, 100] as [number, number],
     gradient: [chartColors.accent, colors.primary],
     tick: undefined,
