@@ -47,10 +47,12 @@ async def get_dashboard(
     putts = [p for p in (r.get_total_putts() for r in summaries) if p is not None]
     girs = [g for g in (r.get_total_gir() for r in summaries) if g is not None]
 
-    best = min(scored, key=lambda r: r.calculate_total_score()) if scored else None
+    best = dashboard.lowest_round(summaries)
     best_summary = round_summary(best) if best else None
 
-    recent_rounds = [round_summary(r) for r in summaries[:5]]
+    recent = summaries[:5]
+    recent_rounds = [round_summary(r) for r in recent]
+    best_recent = dashboard.lowest_round(recent)
 
     # The last 20 rounds, plus 19 before them so the handicap trend has a full rolling window.
     hi_rounds = list(reversed(await db.rounds.get_rounds_for_user(str(user_id), limit=39, offset=0)))
@@ -68,6 +70,7 @@ async def get_dashboard(
         best_round_course=best_summary.course_name if best_summary else None,
         handicap_index=calculated_hi,
         recent_rounds=recent_rounds,
+        best_recent_round_id=best_recent.id if best_recent else None,
         average_putts=round(sum(putts) / len(putts), 1) if putts else None,
         average_gir=round(sum(girs) / len(girs), 1) if girs else None,
         scoring_average_l20=dashboard.scoring_average(last_20),

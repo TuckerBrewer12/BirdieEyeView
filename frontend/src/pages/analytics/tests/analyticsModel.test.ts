@@ -3,7 +3,7 @@ import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 import { withoutRounds } from "@/testing/fakes/analyticsResponses";
 import type { GirTrendRowDto } from "@/types/api";
 import { playedCourseFrom } from "../analyticsRepository";
-import { analyticsFrom, defaultRangePar, girSplitFrom, isFiltered, shortGameTrendFrom, yardageBucketsFrom } from "../model";
+import { analyticsFrom, defaultRangePar, girSplitFrom, isFiltered, yardageBucketsFrom } from "../model";
 
 const girRow = (round_index: number, gir_percentage: number | null): GirTrendRowDto => ({
   round_index,
@@ -20,22 +20,6 @@ describe("isFiltered", () => {
     expect(isFiltered({ limit: 10, timeframe: "all", courseId: "all" })).toBe(false);
     expect(isFiltered({ limit: 50, timeframe: "ytd", courseId: "all" })).toBe(true);
     expect(isFiltered({ limit: 50, timeframe: "all", courseId: "home" })).toBe(true);
-  });
-});
-
-describe("shortGameTrendFrom", () => {
-  it("puts each round's up-and-down rate beside its scrambling rate", () => {
-    const trend = shortGameTrendFrom(
-      [
-        { round_index: 1, round_id: "a", scramble_opportunities: 4, scramble_successes: 1, scramble_failures: 3, scrambling_percentage: 25 },
-        { round_index: 2, round_id: "b", scramble_opportunities: 0, scramble_successes: 0, scramble_failures: 0, scrambling_percentage: null },
-      ],
-      [{ round_index: 1, round_id: "a", opportunities: 2, successes: 1, percentage: 50 }],
-    );
-    expect(trend.map((row) => [row.scrambling_percentage, row.up_and_down_pct])).toEqual([
-      [25, 50],
-      [null, null],
-    ]);
   });
 });
 

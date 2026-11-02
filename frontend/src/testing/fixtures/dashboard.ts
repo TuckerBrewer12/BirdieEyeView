@@ -65,6 +65,8 @@ export const populatedDashboard: DashboardDto = {
   best_round_course: "Blue Rock",
   handicap_index: 12.4,
   recent_rounds: populatedRounds,
+  // The 69, the lowest of the rounds listed.
+  best_recent_round_id: "round-3",
   average_putts: 32,
   average_gir: 8,
   // The figures the server works out from the trend window below.
@@ -109,6 +111,9 @@ export const dashboardGoalReport: GoalReportDto = {
   gap: 2.2,
   on_track: false,
   progress_pct: 100,
+  // The 69, 72 and 78 meet it; their average of 73 is six strokes inside it.
+  rounds_meeting_goal: 3,
+  peak_gap: -6,
   savers: [
     {
       type: "three_putt_bleed",

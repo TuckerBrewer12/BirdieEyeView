@@ -10,7 +10,9 @@ export const queryKeys = {
     ["course-analytics", userId, courseId] as const,
   handicap: (userId: string) => ["handicap", userId] as const,
   user: (userId: string) => ["user", userId] as const,
-  goalReport: (userId: string) => ["goal-report", userId] as const,
+  /** The goal report, per goal: a report for one goal never stands in for another's. Leave the goal out for all of them. */
+  goalReport: (userId: string, goal?: number) =>
+    goal === undefined ? (["goal-report", userId] as const) : (["goal-report", userId, goal] as const),
   /** A golfer's analytics, per set of filters. The Analytics page and The Lab read the same entries. */
   analytics: (userId: string, filters?: unknown) =>
     filters === undefined

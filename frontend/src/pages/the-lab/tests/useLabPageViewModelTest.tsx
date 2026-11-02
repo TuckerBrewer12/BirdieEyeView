@@ -61,7 +61,7 @@ describe("useLabPageViewModel", () => {
 
     expect(result.current.goal).toBeNull();
     expect(result.current.peak).toBeNull();
-    expect(result.current.roundsMeetingGoal).toBe(0);
+    expect(result.current.roundsMeetingGoal).toBeNull();
     // The best score falls back to the window's lowest.
     expect(result.current.bestScore).toBe(89);
     expect(repository.analyticsRequests).toEqual(["user-1"]);
@@ -75,8 +75,26 @@ describe("useLabPageViewModel", () => {
     await waitFor(() => expect(result.current.goal?.target).toBe(84));
 
     expect(repository.updates).toEqual([{ scoring_goal: 84 }]);
-    // The report is for the old goal, so it is asked for again.
-    await waitFor(() => expect(repository.goalReportRequests).toBe(2));
+    // The report is for the old goal, so the new goal's is asked for, and its figures wait for it.
+    await waitFor(() => expect(result.current.goal?.average).not.toBeNull());
+    expect(repository.goalReportRequests).toBeGreaterThanOrEqual(2);
+  });
+
+  it("never shows the last goal's figures against a new goal", async () => {
+    const { repository, result } = await loaded();
+    expect(result.current.roundsMeetingGoal).toBe(1);
+    repository.holdGoalReport();
+
+    act(() => result.current.setGoal(84));
+    await waitFor(() => expect(result.current.goal?.target).toBe(84));
+
+    // The new goal's report is still on its way: no figures, rather than the last goal's.
+    expect(result.current.roundsMeetingGoal).toBeNull();
+    expect(result.current.goal?.gap).toBeNull();
+    expect(result.current.peak?.gapToGoal).toBeNull();
+
+    repository.finishGoalReport();
+    await waitFor(() => expect(result.current.roundsMeetingGoal).toBe(1));
   });
 
   it("keeps the old goal and reports the error when the save fails", async () => {
@@ -89,15 +107,28 @@ describe("useLabPageViewModel", () => {
     expect(result.current.goal?.target).toBe(89);
   });
 
-  it("shapes the attempts, best rounds and trend from the last 20 rounds", async () => {
+  it("takes the attempts, best rounds, trend and putting from the server's figures", async () => {
     const { result } = await loaded();
 
     expect(result.current.attempts).toHaveLength(12);
     expect(result.current.roundsMeetingGoal).toBe(1);
     expect(result.current.recentTrend).toBe(0.5);
-    expect(result.current.peak?.rounds.map((r) => r.score)).toEqual([89, 90, 90]);
-    expect(result.current.peak?.gapToGoal).toBeCloseTo(0.67, 2);
-    expect(result.current.peakImpacts.map((i) => i.kind)).toEqual(["birdies", "bogeys", "doubles"]);
+    expect(result.current.peak).toEqual({
+      rounds: [
+        { roundId: "lab-6", courseName: "Half Moon Bay", score: 89 },
+        { roundId: "lab-5", courseName: "Pebble Creek", score: 90 },
+        { roundId: "lab-11", courseName: "Muni", score: 90 },
+      ],
+      average: 89.7,
+      overallAverage: 91.7,
+      gapToGoal: 0.7,
+    });
+    expect(result.current.peakImpacts.map((i) => [i.kind, i.strokes])).toEqual([
+      ["birdies", 0.58],
+      ["bogeys", 1.17],
+      ["doubles", 0.83],
+    ]);
+    expect(result.current.putting).toMatchObject({ threePuttsPerRound: 2, threePuttRate: 11.1, puttsPerRound: 34.5 });
   });
 
   it("draws the shape alone, then against a handicap benchmark", async () => {

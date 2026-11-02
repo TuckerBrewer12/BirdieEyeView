@@ -1,10 +1,16 @@
 import { colors, scoreKindLabel, type ScoreKey } from "@/brand/theme";
-import { formatCourseName, formatSignedOneDecimal, formatWeekdayDay, pluralNoun } from "@/domain";
+import {
+  SCORE_KINDS,
+  formatCourseName,
+  formatSignedOneDecimal,
+  formatWeekdayDay,
+  pluralNoun,
+  type ScoreMix,
+} from "@/domain";
 import type { UserDto } from "@/types/api";
 import {
   type HiTrend,
   type Milestone,
-  type ScoreMixItem,
   type WhsRound,
 } from "./model";
 
@@ -29,12 +35,14 @@ export interface ColoredMixItem {
   color: string;
 }
 
-export function colorizeMix(mix: ScoreMixItem[]): ColoredMixItem[] {
-  return mix.map((item) => ({
-    ...item,
-    label: scoreKindLabel(item.name),
-    color: colors.score[item.name].base,
-  }));
+/** The mix's bars, in bucket order, to a tenth of a percent: a kind with no holes has no bar. */
+export function colorizeMix(mix: ScoreMix): ColoredMixItem[] {
+  return SCORE_KINDS.flatMap((kind) => {
+    const value = Math.round(mix[kind] * 10) / 10;
+    return value > 0
+      ? [{ name: kind, label: scoreKindLabel(kind), value, color: colors.score[kind].base }]
+      : [];
+  });
 }
 
 

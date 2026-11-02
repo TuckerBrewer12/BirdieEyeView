@@ -32,7 +32,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const {
     data, user, shortGameTrend,
     trend, milestones, last20ScoringAvg, hiTrend,
-    recentDistribution, girPct, scramblingPct, upAndDownPct, putts,
+    recentScoreMix, girPct, scramblingPct, upAndDownPct, putts,
     bestRound, sidebarRounds, goal,
     openHandicapSheet,
   } = vm;
@@ -109,7 +109,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                 <CardDescription>Last 5 rounds · % of holes</CardDescription>
               </CardHeader>
               <CardContent>
-                <ScoreMixChart mix={recentDistribution} />
+                <ScoreMixChart mix={recentScoreMix} />
               </CardContent>
             </Card>
 

@@ -1,23 +1,14 @@
-import { SCORE_KINDS, type ScoreKind } from "@/domain/score";
 import type { RoundSummary } from "@/domain/round";
-import type { RoundTrendPoint } from "@/domain/trend";
-import type {
-  GoalReportDto,
-  MilestoneDto,
-  ScoreMixDto,
-  ScramblingTrendRowDto,
-  UpAndDownTrendRowDto,
-  WhsBreakdownDto,
-} from "@/types/api";
+import type { RoundTrendPoint, ShortGamePoint } from "@/domain/trend";
+import type { GoalReportDto, MilestoneDto, WhsBreakdownDto } from "@/types/api";
 
 /** Which line the phone's trend card shows. */
 export type TrendView = "score" | "handicap";
 export type HiTrend = "up" | "down" | "flat";
 
-export function pickBestRound(rounds: RoundSummary[]): RoundSummary | null {
-  const scored = rounds.filter((r) => r.score != null);
-  if (!scored.length) return null;
-  return scored.reduce((best, curr) => (curr.score! < best.score! ? curr : best));
+/** The listed round the server picked as the best of them. Null when it picked none. */
+export function bestRecentRoundFrom(rounds: RoundSummary[], bestId: string | null | undefined): RoundSummary | null {
+  return rounds.find((round) => round.id === bestId) ?? null;
 }
 
 /** The scores of the rounds in the trend, oldest first, skipping rounds without one. */
@@ -31,49 +22,26 @@ export interface ShortGameTrend {
   upAndDown: number[];
 }
 
-/** The server's per-round scrambling and up-and-down series. */
-export interface ShortGameSeries {
-  scrambling_trend: ScramblingTrendRowDto[];
-  up_and_down_trend: UpAndDownTrendRowDto[];
-}
+/** The short-game card draws at most this many rounds. */
+const SHORT_GAME_ROUNDS = 12;
 
 /**
- * The last twelve rounds with both rates, paired by round. A round without a missed green
- * has no rate, so it drops out of both lines. Null until there are two to draw.
+ * The last twelve rounds with both rates, for the card's two lines. A round without a missed
+ * green has no rate, so it drops out of both lines. Null until there are two to draw.
  */
-export function shortGameTrendFrom(trends: ShortGameSeries | null): ShortGameTrend | null {
-  if (!trends) return null;
-  const upAndDownByRound = new Map(trends.up_and_down_trend.map((row) => [row.round_index, row.percentage]));
-  const paired = trends.scrambling_trend
-    .flatMap((row) => {
-      const upAndDown = upAndDownByRound.get(row.round_index);
-      return row.scrambling_percentage != null && upAndDown != null
-        ? [{ scrambling: row.scrambling_percentage, upAndDown }]
-        : [];
-    })
-    .slice(-12);
+export function recentShortGame(points: ShortGamePoint[]): ShortGameTrend | null {
+  const paired = points
+    .flatMap((point) =>
+      point.scrambling != null && point.upAndDown != null
+        ? [{ scrambling: point.scrambling, upAndDown: point.upAndDown }]
+        : [],
+    )
+    .slice(-SHORT_GAME_ROUNDS);
   if (paired.length < 2) return null;
   return {
     scrambling: paired.map((row) => row.scrambling),
     upAndDown: paired.map((row) => row.upAndDown),
   };
-}
-
-export interface ScoreMixItem {
-  name: ScoreKind;
-  value: number;
-}
-
-/** The server's score mix as chart rows, in bucket order. */
-export function scoreMixItems(
-  mix: ScoreMixDto,
-  opts: { roundTenths?: boolean; dropZero?: boolean } = {},
-): ScoreMixItem[] {
-  const items = SCORE_KINDS.map((key) => ({
-    name: key,
-    value: opts.roundTenths ? Math.round(mix[key] * 10) / 10 : mix[key],
-  }));
-  return opts.dropZero ? items.filter((d) => d.value > 0) : items;
 }
 
 export interface WhsRound {

@@ -54,6 +54,13 @@ def test_analytics_response_works_out_the_figures_the_page_shows():
         {"kind": "putts_average", "category": "putting", "trend": "down", "rating": "fair", "putts": 31.5},
     ]
     assert response.notable_achievements.scoring_records.lifetime.lowest_round == 72
+    assert (response.kpis.three_putts_per_round, response.kpis.three_putt_rate) == (0.0, 0.0)
+    assert response.kpis.scoring_average_change is None  # under five rounds
+    peak = response.peak_game
+    assert [(r.round_id, r.score) for r in peak.rounds] == [("r1", 72), ("r2", 81)]
+    assert peak.average == 76.5
+    # Both rounds are the peak, so it matches the average on every kind of hole.
+    assert [(i.kind, i.strokes) for i in peak.impacts] == [("birdies", 0.0), ("bogeys", 0.0), ("doubles", 0.0)]
 
 
 def test_analytics_response_marks_milestones_against_the_last_year_ending_today():
@@ -105,7 +112,6 @@ async def test_analytics_sections_drop_nothing_the_stats_functions_return(season
     assert sent["three_putts_trend"] == analytics.three_putts_per_round(rounds)
     assert sent["scrambling_trend"] == analytics.scrambling_per_round(rounds)
     assert sent["up_and_down_trend"] == analytics.up_and_down_trend(rounds)
-    assert sent["score_type_distribution"] == analytics.score_type_distribution_per_round(rounds)
     assert sent["scoring_by_par"] == analytics.scoring_by_par(rounds)
     assert sent["scoring_by_yardage"] == analytics.scoring_by_yardage_buckets(rounds)
     assert sent["scoring_by_handicap"] == analytics.scoring_vs_hole_handicap(rounds)
@@ -142,6 +148,9 @@ async def test_dashboard_carries_the_trends_analytics_draws_for_the_last_20(seas
     assert dashboard.scrambling_trend == trends.scrambling_trend
     assert dashboard.up_and_down_trend == trends.up_and_down_trend
     assert all(row.differential_status != "unrated" for row in dashboard.handicap_trend)
+    # The best of the five rounds the dashboard lists, which need not be the best ever.
+    best_recent = min(dashboard.recent_rounds, key=lambda r: r.total_score)
+    assert dashboard.best_recent_round_id == best_recent.id
 
 
 @pytest.mark.asyncio

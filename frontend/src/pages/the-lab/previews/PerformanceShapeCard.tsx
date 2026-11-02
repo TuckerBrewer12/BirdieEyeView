@@ -1,11 +1,11 @@
 import { buildRadarData, HANDICAP_BENCHMARK } from "@/domain";
-import { averyLabAnalytics, labAnalytics } from "@/testing/fixtures/lab";
+import { averyLabAnalytics, labAnalytics, labGoalReport } from "@/testing/fixtures/lab";
 import { PerformanceShapeCard, type PerformanceShapeCardProps } from "../components/PerformanceShapeCard";
 import { peakGameFrom } from "../model";
 
 const avery = { id: "user-avery", name: "Avery Lin" };
 const jordan = { id: "user-jordan", name: "Jordan Castellanos" };
-const peak = peakGameFrom(labAnalytics, 89);
+const peak = peakGameFrom(labAnalytics, 89, labGoalReport);
 
 const base: PerformanceShapeCardProps = {
   mode: "benchmark",

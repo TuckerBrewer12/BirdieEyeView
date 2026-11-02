@@ -1,7 +1,6 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { chartColors, chartLayout, chartTickStyle, chartTooltipStyle, colors } from "@/brand";
-import { formatPercent } from "@/domain";
-import type { ScoreMixItem } from "../model";
+import { formatPercent, type ScoreMix } from "@/domain";
 import { colorizeMix } from "../present";
 
 const TICK = { ...chartTickStyle, fill: chartColors.axis, fontWeight: 700 };
@@ -12,15 +11,15 @@ function percent(value: number | string | ReadonlyArray<number | string> | undef
 }
 
 interface ScoreMixChartProps {
-  /** Percent of holes at each score kind. Empty shows "No data yet". */
-  mix: ScoreMixItem[];
+  /** Percent of holes at each score kind. Null, or no holes, shows "No data yet". */
+  mix: ScoreMix | null;
 }
 
 export function ScoreMixChart({ mix }: ScoreMixChartProps) {
-  if (mix.length === 0) {
+  const bars = mix ? colorizeMix(mix) : [];
+  if (bars.length === 0) {
     return <div className="text-sm text-muted-foreground text-center py-8">No data yet</div>;
   }
-  const bars = colorizeMix(mix);
   return (
     <div data-slot="score-mix-chart" className="h-chart">
       <ResponsiveContainer width="100%" height="100%">

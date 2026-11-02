@@ -197,7 +197,7 @@ export function girPoints(rows: GirTrendRowDto[]): TrendAreaPoint[] {
 
 /** Each round's scrambling rate beside its up-and-down rate. */
 export function shortGamePoints(rows: ShortGamePoint[]): TrendAreaPoint[] {
-  return rows.map((row) => roundPoint(row, [row.scrambling_percentage, row.up_and_down_pct]));
+  return rows.map((row) => roundPoint({ round_index: row.roundIndex }, [row.scrambling, row.upAndDown]));
 }
 
 export function puttsPoints(rows: PuttsTrendRowDto[]): TrendAreaPoint[] {

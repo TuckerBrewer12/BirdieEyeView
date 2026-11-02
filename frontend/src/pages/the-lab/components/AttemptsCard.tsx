@@ -19,8 +19,8 @@ interface AttemptsCardProps {
   scores: number[];
   /** The goal as stored: 79 to break 80. */
   target: number;
-  /** How many rounds in the window met it. */
-  timesMet: number;
+  /** How many rounds in the window met it, as the goal report counted them. Null while it loads. */
+  timesMet: number | null;
   className?: string;
 }
 
@@ -37,10 +37,12 @@ export function AttemptsCard({ scores, target, timesMet, className }: AttemptsCa
         <CardAction>
           <Stat align="end">
             <StatLabel>Times Achieved</StatLabel>
-            <StatValue size="lg" className={cn(timesMet > 0 && "text-score-birdie")}>
-              {timesMet}
+            <StatValue size="lg" className={cn(timesMet != null && timesMet > 0 && "text-score-birdie")}>
+              {timesMet ?? "—"}
             </StatValue>
-            <span className="text-caption text-muted-foreground">{timesMetLabel(timesMet)}</span>
+            {timesMet != null && (
+              <span className="text-caption text-muted-foreground">{timesMetLabel(timesMet)}</span>
+            )}
           </Stat>
         </CardAction>
       </CardHeader>

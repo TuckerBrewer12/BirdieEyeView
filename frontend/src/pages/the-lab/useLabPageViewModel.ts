@@ -18,14 +18,9 @@ import {
   goalStandingFrom,
   labAnalyticsFrom,
   labPanelsFrom,
-  lowestScore,
   parTypeRowsFrom,
   peakGameFrom,
-  peakImpactsFrom,
-  peakVsAverageFrom,
   puttingSummaryFrom,
-  recentTrendFrom,
-  roundsMeetingGoal,
   scoresOf,
   type FriendOption,
   type GoalStanding,
@@ -80,7 +75,8 @@ export interface LabPageViewModel {
 
   /** Scores of the latest rounds, oldest first. */
   attempts: number[];
-  roundsMeetingGoal: number;
+  /** Null without a goal, and until the goal's report loads. */
+  roundsMeetingGoal: number | null;
   parTypes: ParTypeRow[];
   putting: PuttingSummary | null;
   peak: PeakGame | null;
@@ -111,7 +107,10 @@ export function useLabPageViewModel(
   const updateUser = useUpdateUser(userId, repository);
 
   const analytics = mine.data ?? null;
-  const peak = useMemo(() => (analytics ? peakGameFrom(analytics, target) : null), [analytics, target]);
+  const peak = useMemo(
+    () => (analytics ? peakGameFrom(analytics, target, report) : null),
+    [analytics, target, report],
+  );
   // Peak needs a goal and two rounds; without them the shape is the golfer's average.
   const mode: RadarMode = radarMode === "peak" && !peak ? "benchmark" : radarMode;
 
@@ -157,16 +156,12 @@ export function useLabPageViewModel(
     [peak],
   );
 
-  const peakVsAverage = useMemo(
-    () => (analytics ? peakVsAverageFrom(analytics, peak) : null),
-    [analytics, peak],
-  );
-
   const parTypes = useMemo(() => (analytics ? parTypeRowsFrom(analytics, benchmark) : []), [analytics, benchmark]);
   const putting = useMemo(() => (analytics ? puttingSummaryFrom(analytics) : null), [analytics]);
   const panels = labPanelsFrom(parTypes, putting, peak);
   const panel = pickedPanel != null && panels.includes(pickedPanel) ? pickedPanel : (panels[0] ?? null);
 
+  const goal = goalStandingFrom(target, report);
   const { mutate } = updateUser;
   const setGoal = useCallback((next: number) => mutate({ scoring_goal: next }), [mutate]);
 
@@ -176,14 +171,14 @@ export function useLabPageViewModel(
     retry: () => void mine.refetch(),
     analytics,
 
-    goal: goalStandingFrom(target, report),
+    goal,
     setGoal,
     savingGoal: updateUser.isPending,
     goalSaveError: updateUser.error,
 
     scoringAverage: analytics?.kpis.scoring_average ?? null,
-    bestScore: report?.best_score ?? (analytics ? lowestScore(analytics) : null),
-    recentTrend: analytics ? recentTrendFrom(analytics) : null,
+    bestScore: report?.best_score ?? analytics?.lowestScore ?? null,
+    recentTrend: analytics?.kpis.scoring_average_change ?? null,
 
     radarMode: mode,
     setRadarMode,
@@ -198,11 +193,11 @@ export function useLabPageViewModel(
     missingAxes: radarAll.filter((entry) => !entry.hasData).map((entry) => entry.axis),
 
     attempts: analytics ? scoresOf(analytics).slice(-ATTEMPTS_SHOWN) : [],
-    roundsMeetingGoal: analytics && target != null ? roundsMeetingGoal(analytics, target) : 0,
+    roundsMeetingGoal: goal?.roundsMeetingGoal ?? null,
     parTypes,
     putting,
     peak,
-    peakImpacts: peakVsAverage ? peakImpactsFrom(peakVsAverage) : [],
+    peakImpacts: peak ? (analytics?.peak_game?.impacts ?? []) : [],
 
     panels,
     panel,

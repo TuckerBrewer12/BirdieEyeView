@@ -7,9 +7,18 @@ import {
   scoreKind,
   scoreKindCountLabel,
   scoreKindLabel,
+  scoreMixFrom,
   strokesToPar,
   toParLabel,
 } from "../score";
+
+describe("scoreMixFrom", () => {
+  it("reads a server row's double, triple and quad bogey shares as the mix's kinds", () => {
+    expect(
+      scoreMixFrom({ eagle: 1, birdie: 2, par: 3, bogey: 4, double_bogey: 5, triple_bogey: 6, quad_bogey: 7 }),
+    ).toEqual({ eagle: 1, birdie: 2, par: 3, bogey: 4, double: 5, triple: 6, quad: 7 });
+  });
+});
 
 describe("scoreKind", () => {
   it("returns null when strokes or par is missing", () => {

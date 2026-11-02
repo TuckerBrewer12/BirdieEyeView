@@ -297,6 +297,17 @@
             ],
             "title": "Scoring Average"
           },
+          "scoring_average_change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average Change"
+          },
           "scrambling_percentage": {
             "anyOf": [
               {
@@ -307,6 +318,28 @@
               }
             ],
             "title": "Scrambling Percentage"
+          },
+          "three_putt_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Three Putt Rate"
+          },
+          "three_putts_per_round": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Three Putts Per Round"
           },
           "total_rounds": {
             "default": 0,
@@ -333,7 +366,10 @@
           "up_and_down_percentage",
           "handicap_index",
           "total_rounds",
-          "average_putts"
+          "average_putts",
+          "three_putts_per_round",
+          "three_putt_rate",
+          "scoring_average_change"
         ],
         "title": "AnalyticsKpis",
         "type": "object"
@@ -412,6 +448,16 @@
           "notable_achievements": {
             "$ref": "#/components/schemas/NotableAchievements"
           },
+          "peak_game": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PeakGame"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "putts_trend": {
             "items": {
               "$ref": "#/components/schemas/PuttsTrendRow"
@@ -434,13 +480,6 @@
               "$ref": "#/components/schemas/AnalyticsScoreTrendRow"
             },
             "title": "Score Trend",
-            "type": "array"
-          },
-          "score_type_distribution": {
-            "items": {
-              "$ref": "#/components/schemas/ScoreTypeRow"
-            },
-            "title": "Score Type Distribution",
             "type": "array"
           },
           "scoring_by_handicap": {
@@ -495,7 +534,6 @@
           "three_putts_trend",
           "scrambling_trend",
           "up_and_down_trend",
-          "score_type_distribution",
           "scoring_by_par",
           "scoring_by_yardage",
           "scoring_by_handicap",
@@ -504,7 +542,8 @@
           "score_differentials",
           "notable_achievements",
           "score_mix",
-          "insights"
+          "insights",
+          "peak_game"
         ],
         "title": "AnalyticsResponse",
         "type": "object"
@@ -1679,6 +1718,17 @@
             ],
             "title": "Average Putts"
           },
+          "best_recent_round_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Recent Round Id"
+          },
           "best_round": {
             "anyOf": [
               {
@@ -1842,6 +1892,7 @@
           "best_round_course",
           "handicap_index",
           "recent_rounds",
+          "best_recent_round_id",
           "average_putts",
           "average_gir",
           "scoring_average_l20",
@@ -2272,6 +2323,17 @@
             "title": "On Track",
             "type": "boolean"
           },
+          "peak_gap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Gap"
+          },
           "progress_pct": {
             "anyOf": [
               {
@@ -2282,6 +2344,11 @@
               }
             ],
             "title": "Progress Pct"
+          },
+          "rounds_meeting_goal": {
+            "default": 0,
+            "title": "Rounds Meeting Goal",
+            "type": "integer"
           },
           "savers": {
             "items": {
@@ -2313,6 +2380,8 @@
           "gap",
           "on_track",
           "progress_pct",
+          "rounds_meeting_goal",
+          "peak_gap",
           "savers"
         ],
         "title": "GoalReportResponse",
@@ -4421,6 +4490,108 @@
         "title": "OneYearScoringRecords",
         "type": "object"
       },
+      "PeakGame": {
+        "description": "The player's best three rounds, lowest first (the older on a tie), and what they did differently.",
+        "properties": {
+          "average": {
+            "title": "Average",
+            "type": "number"
+          },
+          "impacts": {
+            "items": {
+              "$ref": "#/components/schemas/PeakImpact"
+            },
+            "title": "Impacts",
+            "type": "array"
+          },
+          "rounds": {
+            "items": {
+              "$ref": "#/components/schemas/PeakRound"
+            },
+            "title": "Rounds",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rounds",
+          "average",
+          "impacts"
+        ],
+        "title": "PeakGame",
+        "type": "object"
+      },
+      "PeakImpact": {
+        "description": "One kind of hole, a round, in the peak rounds against every round, each to a hundredth.\n`doubles` counts double bogeys and worse.",
+        "properties": {
+          "average": {
+            "title": "Average",
+            "type": "number"
+          },
+          "kind": {
+            "enum": [
+              "birdies",
+              "bogeys",
+              "doubles"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "peak": {
+            "title": "Peak",
+            "type": "number"
+          },
+          "strokes": {
+            "title": "Strokes",
+            "type": "number"
+          }
+        },
+        "required": [
+          "kind",
+          "peak",
+          "average",
+          "strokes"
+        ],
+        "title": "PeakImpact",
+        "type": "object"
+      },
+      "PeakRound": {
+        "description": "One of the player's best rounds.",
+        "properties": {
+          "course_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Name"
+          },
+          "round_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Round Id"
+          },
+          "score": {
+            "title": "Score",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "round_id",
+          "course_name",
+          "score"
+        ],
+        "title": "PeakRound",
+        "type": "object"
+      },
       "PerformanceStreakEvents": {
         "description": "The round each streak reached its length in.",
         "properties": {
@@ -6129,72 +6300,6 @@
           "course_name"
         ],
         "title": "ScoreTrendRow",
-        "type": "object"
-      },
-      "ScoreTypeRow": {
-        "description": "Percent of a round's holes in each score type. `par` is the par percentage.",
-        "properties": {
-          "birdie": {
-            "title": "Birdie",
-            "type": "number"
-          },
-          "bogey": {
-            "title": "Bogey",
-            "type": "number"
-          },
-          "double_bogey": {
-            "title": "Double Bogey",
-            "type": "number"
-          },
-          "eagle": {
-            "title": "Eagle",
-            "type": "number"
-          },
-          "holes_counted": {
-            "title": "Holes Counted",
-            "type": "integer"
-          },
-          "par": {
-            "title": "Par",
-            "type": "number"
-          },
-          "quad_bogey": {
-            "title": "Quad Bogey",
-            "type": "number"
-          },
-          "round_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Round Id"
-          },
-          "round_index": {
-            "title": "Round Index",
-            "type": "integer"
-          },
-          "triple_bogey": {
-            "title": "Triple Bogey",
-            "type": "number"
-          }
-        },
-        "required": [
-          "round_index",
-          "round_id",
-          "holes_counted",
-          "eagle",
-          "birdie",
-          "par",
-          "bogey",
-          "double_bogey",
-          "triple_bogey",
-          "quad_bogey"
-        ],
-        "title": "ScoreTypeRow",
         "type": "object"
       },
       "ScoringByHandicapRow": {

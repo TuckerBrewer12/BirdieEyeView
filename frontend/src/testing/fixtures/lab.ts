@@ -1,4 +1,4 @@
-import type { AnalyticsDto, GoalReportDto, ScoreTypeRowDto, UserDto } from "../../types/api";
+import type { AnalyticsDto, GoalReportDto, UserDto } from "../../types/api";
 import { withoutRounds } from "../fakes/analyticsResponses";
 import { avery } from "./friendships";
 import { sampleGolfer } from "./sampleGolfer";
@@ -19,43 +19,17 @@ const COURSES = ["Pebble Creek", "Half Moon Bay", "Muni", "Blue Rock"];
 const SCORES = [97, 93, 91, 95, 90, 89, 94, 92, 91, 96, 90, 92];
 const THREE_PUTTS = [3, 2, 2, 3, 1, 1, 2, 2, 1, 3, 2, 2];
 const PUTTS = [36, 35, 34, 37, 33, 32, 35, 34, 33, 36, 34, 35];
-/** Holes a round of each kind: eagle, birdie, par, bogey, double, triple, quad. */
-const MIXES: number[][] = [
-  [0, 0, 4, 9, 4, 1, 0],
-  [0, 1, 4, 10, 3, 0, 0],
-  [0, 1, 5, 9, 3, 0, 0],
-  [0, 0, 4, 10, 3, 1, 0],
-  [0, 1, 6, 8, 3, 0, 0],
-  [0, 2, 5, 8, 3, 0, 0],
-  [0, 0, 5, 9, 3, 1, 0],
-  [0, 1, 4, 10, 3, 0, 0],
-  [0, 1, 5, 10, 2, 0, 0],
-  [0, 0, 4, 9, 4, 1, 0],
-  [0, 1, 6, 8, 3, 0, 0],
-  [0, 1, 4, 10, 3, 0, 0],
-];
 
 const pct = (holes: number) => Math.round((holes / 18) * 1000) / 10;
-
-function scoreTypes(i: number): ScoreTypeRowDto {
-  const [eagle, birdie, par, bogey, double, triple, quad] = MIXES[i].map(pct);
-  return {
-    round_index: i + 1,
-    round_id: `lab-${i + 1}`,
-    holes_counted: 18,
-    eagle,
-    birdie,
-    par,
-    bogey,
-    double_bogey: double,
-    triple_bogey: triple,
-    quad_bogey: quad,
-  };
-}
 
 /** The server's response with every series empty; each golfer below fills in what The Lab reads. */
 const NO_ROUNDS = withoutRounds(sampleGolfer.analytics);
 
+/**
+ * The figures the server works out from those rounds. Holes of each kind a round (birdies,
+ * bogeys, doubles or worse): 1, 8 and 3 in the best three (lab-6, lab-5, lab-11), against
+ * 9, 110 and 41 holes over all twelve.
+ */
 export const labAnalytics: AnalyticsDto = {
   ...NO_ROUNDS,
   kpis: {
@@ -66,7 +40,31 @@ export const labAnalytics: AnalyticsDto = {
     up_and_down_percentage: 30,
     putts_per_gir: 2.05,
     total_rounds: SCORES.length,
-    average_putts: null,
+    average_putts: 34.5,
+    three_putts_per_round: 2,
+    three_putt_rate: 11.1,
+    // The last five average 92.2 against 91.67 over all twelve.
+    scoring_average_change: 0.5,
+  },
+  peak_game: {
+    rounds: [
+      { round_id: "lab-6", course_name: "Half Moon Bay", score: 89 },
+      { round_id: "lab-5", course_name: "Pebble Creek", score: 90 },
+      { round_id: "lab-11", course_name: "Muni", score: 90 },
+    ],
+    average: 89.7,
+    impacts: [
+      { kind: "birdies", peak: 1.33, average: 0.75, strokes: 0.58 },
+      { kind: "bogeys", peak: 8, average: 9.17, strokes: 1.17 },
+      { kind: "doubles", peak: 3, average: 3.42, strokes: 0.83 },
+    ],
+  },
+  notable_achievements: {
+    ...NO_ROUNDS.notable_achievements,
+    scoring_records: {
+      ...NO_ROUNDS.notable_achievements.scoring_records,
+      lifetime: { ...NO_ROUNDS.notable_achievements.scoring_records.lifetime, lowest_round: 89 },
+    },
   },
   scoring_by_par: [
     { par: 3, average_to_par: 0.92, average_strokes: 3.92, sample_size: 48 },
@@ -81,7 +79,6 @@ export const labAnalytics: AnalyticsDto = {
     to_par: score - 72,
     rolling_average: null,
   })),
-  score_type_distribution: SCORES.map((_, i) => scoreTypes(i)),
   three_putts_trend: THREE_PUTTS.map((count, i) => ({
     round_index: i + 1,
     round_id: `lab-${i + 1}`,
@@ -109,6 +106,9 @@ export const averyLabAnalytics: AnalyticsDto = {
     putts_per_gir: 1.92,
     total_rounds: 8,
     average_putts: null,
+    three_putts_per_round: null,
+    three_putt_rate: null,
+    scoring_average_change: null,
   },
   scoring_by_par: [
     { par: 3, average_to_par: 0.35, average_strokes: 3.35, sample_size: 32 },
@@ -130,6 +130,9 @@ export const labGoalReport: GoalReportDto = {
   gap: 2.7,
   on_track: false,
   progress_pct: 64,
+  rounds_meeting_goal: 1,
+  // The best three average 89.67, two thirds of a stroke over the goal.
+  peak_gap: 0.7,
   savers: [
     {
       type: "three_putt_bleed",

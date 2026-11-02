@@ -2,7 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import { Round } from "@/domain";
+import { Round, shortGamePointsFrom } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 import {
   dashboardGoalReport,
@@ -11,7 +11,7 @@ import {
 } from "@/testing/fixtures/dashboard";
 import { FakeDashboardRepository } from "@/testing/fakes/FakeDashboardRepository";
 import { useDashboardPageViewModel } from "../useDashboardPageViewModel";
-import { pickBestRound, shortGameTrendFrom } from "../model";
+import { bestRecentRoundFrom, recentShortGame } from "../model";
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -42,6 +42,7 @@ describe("useDashboardPageViewModel", () => {
     expect(result.current.data?.handicap_index).toBe(12.4);
     expect(result.current.user?.name).toBe("Test Golfer");
     expect(result.current.l20ScoreMix).toEqual(populatedDashboard.score_mix);
+    expect(result.current.recentScoreMix).toEqual(populatedDashboard.recent_score_mix);
     expect(result.current.recentScores).toEqual(
       populatedDashboard.score_trend.flatMap((row) => (row.total_score != null ? [row.total_score] : [])),
     );
@@ -68,7 +69,7 @@ describe("useDashboardPageViewModel", () => {
     expect(used[0]?.courseName).toBe("Blue Rock");
   });
 
-  it("picks the lowest scoring round as best, hole strip and all", async () => {
+  it("shows the listed round the server picked as best, hole strip and all", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     await waitFor(() => expect(result.current.bestRound?.id).toBe("round-3"));
@@ -146,35 +147,37 @@ describe("useDashboardPageViewModel", () => {
 });
 
 describe("dashboard model", () => {
-  it("picks the lowest score as best", () => {
-    expect(pickBestRound(populatedRounds.map(Round.fromSummary))?.id).toBe("round-3");
-    expect(pickBestRound([])).toBeNull();
+  it("finds the round the server picked as best among those listed", () => {
+    const rounds = populatedRounds.map(Round.fromSummary);
+    expect(bestRecentRoundFrom(rounds, "round-3")?.id).toBe("round-3");
+    expect(bestRecentRoundFrom(rounds, null)).toBeNull();
+    expect(bestRecentRoundFrom([], "round-3")).toBeNull();
   });
 
-  it("pairs scrambling and up-and-down by round and keeps the last twelve", () => {
+  it("keeps the last twelve rounds with both short-game rates", () => {
     const rounds = Array.from({ length: 14 }, (_, i) => i + 1);
-    const trend = shortGameTrendFrom({
-      scrambling_trend: rounds.map((i) => ({
-        round_index: i,
-        round_id: `r${i}`,
-        scramble_opportunities: 8,
-        scramble_successes: 4,
-        scramble_failures: 4,
-        scrambling_percentage: i,
-      })),
-      // Round 14 has no up-and-down chance, so it has no rate and drops out of both lines.
-      up_and_down_trend: rounds.map((i) => ({
-        round_index: i,
-        round_id: `r${i}`,
-        opportunities: i < 14 ? 5 : 0,
-        successes: i < 14 ? 2 : 0,
-        percentage: i < 14 ? i * 10 : null,
-      })),
-    });
+    const trend = recentShortGame(
+      shortGamePointsFrom(
+        rounds.map((i) => ({
+          round_index: i,
+          round_id: `r${i}`,
+          scramble_opportunities: 8,
+          scramble_successes: 4,
+          scramble_failures: 4,
+          scrambling_percentage: i,
+        })),
+        // Round 14 has no up-and-down chance, so it has no rate and drops out of both lines.
+        rounds.map((i) => ({
+          round_index: i,
+          round_id: `r${i}`,
+          opportunities: i < 14 ? 5 : 0,
+          successes: i < 14 ? 2 : 0,
+          percentage: i < 14 ? i * 10 : null,
+        })),
+      ),
+    );
     expect(trend?.scrambling).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
     expect(trend?.upAndDown).toEqual([20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130]);
-    expect(shortGameTrendFrom({ scrambling_trend: [], up_and_down_trend: [] })).toBeNull();
-    expect(shortGameTrendFrom(null)).toBeNull();
+    expect(recentShortGame([])).toBeNull();
   });
-
 });

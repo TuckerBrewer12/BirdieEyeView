@@ -847,6 +847,21 @@ def three_putts_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     return results
 
 
+def three_putt_averages(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
+    """Three-putts a round, and the average of each round's three-putt rate, to a tenth.
+
+    Only rounds with putts recorded count: a round without them has no three-putts to miss.
+    Both are null when no round has putts.
+    """
+    recorded = [row for row in three_putts_per_round(rounds) if row["holes_with_putt_data"] > 0]
+    if not recorded:
+        return {"per_round": None, "rate": None}
+    return {
+        "per_round": round_half_up(sum(r["three_putt_count"] for r in recorded) / len(recorded)),
+        "rate": round_half_up(sum(r["three_putt_percentage"] for r in recorded) / len(recorded)),
+    }
+
+
 def three_putts_comparison(rounds: Iterable[Round], round_index: Optional[int] = None) -> List[Dict[str, Any]]:
     """Selected round 3-putts vs trailing averages."""
     return metric_comparison_snapshot(

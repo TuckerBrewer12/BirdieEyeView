@@ -96,8 +96,9 @@ export function goalStandingNote(goal: GoalStanding): string | null {
   return `${goal.gap.toFixed(1)} strokes a round to go.`;
 }
 
-/** How the best rounds stand against the goal: "Your best rounds already break 80." */
-export function peakGapNote(peak: PeakGame, goalLabel: string): string {
+/** How the best rounds stand against the goal: "Your best rounds already break 80." Null until the gap loads. */
+export function peakGapNote(peak: PeakGame, goalLabel: string): string | null {
+  if (peak.gapToGoal == null) return null;
   if (peak.gapToGoal <= 0) return `Your best rounds already ${goalLabel.toLowerCase()}. Make it your new normal.`;
   return `${peak.gapToGoal.toFixed(1)} strokes from ${goalLabel.toLowerCase()} on your best days.`;
 }
