@@ -113,6 +113,8 @@ export class FakeBackend {
   readonly friendships: InMemoryFriendships;
   private scanHold: Promise<void> | null = null;
   private releaseScan: (() => void) | null = null;
+  private goalReportHold: Promise<void> | null = null;
+  private releaseGoalReports: (() => void) | null = null;
 
   constructor(seed: FakeBackendSeed = {}) {
     const {
@@ -225,10 +227,25 @@ export class FakeBackend {
     this.scanHold = null;
   }
 
-  /** `handle`, after waiting out a held scan. */
+  /** Goal reports don't answer until `finishGoalReports()`, so a report on its way can be seen. */
+  holdGoalReports(): void {
+    this.goalReportHold = new Promise((resolve) => {
+      this.releaseGoalReports = resolve;
+    });
+  }
+
+  finishGoalReports(): void {
+    this.releaseGoalReports?.();
+    this.goalReportHold = null;
+  }
+
+  /** `handle`, after waiting out a held scan or goal report. */
   async respond(method: string, url: string, body?: unknown): Promise<FakeReply> {
     if (this.scanHold && method.toUpperCase() === "POST" && url.includes("/api/scan/extract")) {
       await this.scanHold;
+    }
+    if (this.goalReportHold && method.toUpperCase() === "GET" && url.includes("/goal-report")) {
+      await this.goalReportHold;
     }
     return this.handle(method, url, body);
   }
