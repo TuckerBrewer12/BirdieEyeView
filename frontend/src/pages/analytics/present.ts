@@ -1,9 +1,8 @@
 import type { ToParBar, TrendAreaPoint } from "@/brand";
-import { formatCourseHandicap, formatHandicapIndex, toParLabel, type ScoreKind } from "@/domain";
+import { formatCourseHandicap, formatHandicapIndex, toParLabel } from "@/domain";
 import type {
   AnalyticsFilters,
   GIRTrendRow,
-  GIRvsNonGIRRow,
   NetScoreTrendRow,
   PuttsTrendRow,
   ScoringByHandicapRow,
@@ -12,6 +11,7 @@ import type {
 } from "@/types/analytics";
 import {
   insightCategory,
+  ANALYTICS_TABS,
   type Analytics,
   type AnalyticsTab,
   type GirSplit,
@@ -30,6 +30,14 @@ export const TAB_LABELS: Record<AnalyticsTab, string> = {
   range: "Range View",
 };
 
+/** The phone's section tabs, in order. */
+export const ANALYTICS_TAB_OPTIONS: readonly { value: AnalyticsTab; label: string }[] = ANALYTICS_TABS.map((tab) => ({
+  value: tab,
+  label: TAB_LABELS[tab],
+}));
+
+export const RANGE_VIEW_EMPTY = "Play more rounds to unlock Range View data.";
+
 export function emptyMessage(filtered: boolean): string {
   return filtered ? "No rounds found for the selected filters." : "Play some rounds to see your analytics.";
 }
@@ -45,6 +53,13 @@ export interface Narrative {
   positiveUp: boolean;
 }
 
+/** How an insight's arrow reads: moving the good way, the bad way, or holding. */
+export type NarrativeTone = "good" | "bad" | "neutral";
+
+export function narrativeTone({ trend, positiveUp }: Narrative): NarrativeTone {
+  if (trend === "flat") return "neutral";
+  return (trend === "up") === positiveUp ? "good" : "bad";
+}
 
 export function narrativeFor(insight: Insight): Narrative {
   switch (insight.kind) {
@@ -125,20 +140,17 @@ export function leadNarrative(insights: Insight[], category: InsightCategory): N
   return lead ? narrativeFor(lead) : null;
 }
 
-export type GirVsNonGirBar = { bucket: GIRvsNonGIRRow["bucket"] } & Record<ScoreKind, number>;
+/** Which insights head each phone section; profile and range view have none. */
+const TAB_INSIGHTS: Partial<Record<AnalyticsTab, InsightCategory>> = {
+  scoring: "scoring",
+  "ball-striking": "gir",
+  putting: "putting",
+};
 
-/** GIR vs no-GIR as diverging bars keyed by score kind: under par left of zero, par and over to the right. */
-export function girVsNonGirBars(rows: GIRvsNonGIRRow[]): GirVsNonGirBar[] {
-  return rows.map((row) => ({
-    bucket: row.bucket,
-    eagle: -row.eagle,
-    birdie: -row.birdie,
-    par: row.par,
-    bogey: row.bogey,
-    double: row.double_bogey,
-    triple: row.triple_bogey,
-    quad: row.quad_bogey,
-  }));
+/** The sentence that heads a phone section, or null if it has none. */
+export function tabNarrative(insights: Insight[], tab: AnalyticsTab): Narrative | null {
+  const category = TAB_INSIGHTS[tab];
+  return category ? leadNarrative(insights, category) : null;
 }
 
 /** The round counts the filter offers. "All" asks for as many as the server allows. */

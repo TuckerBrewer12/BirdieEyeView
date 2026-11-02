@@ -11,7 +11,6 @@ import {
   insightCategory,
   insightsFrom,
   isFiltered,
-  recentRateFrom,
   scoreMixByKindFrom,
   scoreMixFrom,
   shortGameTrendFrom,
@@ -86,18 +85,6 @@ describe("bestScoreFrom", () => {
   it("is the lowest score, skipping rounds without one", () => {
     expect(bestScoreFrom([scoreRow(1, 84), scoreRow(2, null), scoreRow(3, 79)])).toBe(79);
     expect(bestScoreFrom([scoreRow(1, null)])).toBeNull();
-  });
-});
-
-describe("recentRateFrom", () => {
-  it("averages the last five rates and compares them to the five before", () => {
-    const rates = [10, 20, 30, 40, 50, null, 60, 70, 80, 90, 100];
-    expect(recentRateFrom(rates)).toEqual({ percent: 80, change: 50 });
-  });
-
-  it("has no change until there are six rates", () => {
-    expect(recentRateFrom([40, null, 60])).toEqual({ percent: 50, change: null });
-    expect(recentRateFrom([])).toEqual({ percent: null, change: null });
   });
 });
 
@@ -205,12 +192,11 @@ describe("analyticsFrom", () => {
       bestScore: null,
       averagePutts: null,
       insights: [],
-      scrambling: { percent: null, change: null },
     });
   });
 });
 
-describe("the desktop's shapes", () => {
+describe("the kit's shapes", () => {
   const analytics = analyticsFrom(sampleGolfer.analytics);
 
   it("takes the best round from the server's lowest round", () => {

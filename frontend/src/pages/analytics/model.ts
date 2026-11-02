@@ -1,5 +1,5 @@
 import { SCORE_KINDS, scoreKind, type ScoreKind, type ScoreMix } from "@/domain";
-import { average, trendDelta, withRollingAverage } from "@/lib/stats";
+import { average, withRollingAverage } from "@/lib/stats";
 import type {
   AnalyticsData,
   AnalyticsFilters,
@@ -102,13 +102,6 @@ export interface YardageBucket {
 export type ScoreTrendPoint = ScoreTrendRow & { rolling_avg: number | null };
 export type ShortGamePoint = ScramblingRow & { up_and_down_pct: number | null };
 
-/** A rate over the last five rounds that have one, and how far it moved from the five before. */
-export interface RecentRate {
-  percent: number | null;
-  /** Last five minus the five before; null until there are six rounds with a rate. */
-  change: number | null;
-}
-
 export type InsightCategory = "scoring" | "gir" | "putting";
 
 /** A fact worth a sentence. `present.ts` words it. */
@@ -138,7 +131,7 @@ export function insightCategory(insight: Insight): InsightCategory {
 
 /** The analytics page's figures: the server's sections, and the series the charts draw from them. */
 export interface Analytics {
-  /** The server's sections as sent. The legacy layouts still read some of them directly. */
+  /** The server's sections as sent, for the charts that draw a section as it is. */
   sections: AnalyticsData;
   kpis: AnalyticsKPIs;
   roundCount: number;
@@ -156,8 +149,6 @@ export interface Analytics {
   threePuttTrend: ThreePuttRow[];
   /** Each round's scrambling rate beside its up-and-down rate. */
   shortGameTrend: ShortGamePoint[];
-  scrambling: RecentRate;
-  upAndDown: RecentRate;
   bestScore: number | null;
   /** The server's lowest round in the window. */
   bestRound: BestRoundEvent | null;
@@ -169,8 +160,6 @@ export interface Analytics {
   averagePutts: number | null;
   insights: Insight[];
 }
-
-const RECENT_ROUNDS = 5;
 
 function mean(values: number[]): number {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
@@ -253,15 +242,6 @@ export function shortGameTrendFrom(scrambling: ScramblingRow[], upAndDown: UpAnd
   return scrambling.map((row, i) => ({ ...row, up_and_down_pct: upAndDown[i]?.percentage ?? null }));
 }
 
-/** A round without a missed green has no rate, so it sits out of both windows. */
-export function recentRateFrom(rates: (number | null)[]): RecentRate {
-  const recorded = rates.filter(present);
-  return {
-    percent: average(recorded.slice(-RECENT_ROUNDS)),
-    change: trendDelta(recorded, (rate) => rate, RECENT_ROUNDS),
-  };
-}
-
 /** Splits a series in half by round and compares the halves' averages: later minus earlier. */
 function halvesChange(values: number[]): number | null {
   const mid = Math.floor(values.length / 2);
@@ -336,8 +316,6 @@ export function analyticsFrom(data: AnalyticsData): Analytics {
     puttsTrend,
     threePuttTrend: data.three_putts_trend.filter((row) => roundsWithPutts.has(row.round_id)),
     shortGameTrend: shortGameTrendFrom(data.scrambling_trend, data.up_and_down_trend),
-    scrambling: recentRateFrom(data.scrambling_trend.map((row) => row.scrambling_percentage)),
-    upAndDown: recentRateFrom(data.up_and_down_trend.map((row) => row.percentage)),
     bestScore: bestScoreFrom(data.score_trend),
     bestRound: lowest ? { roundId: lowest.round_id, course: lowest.course, date: lowest.date } : null,
     scoreMixByKind: scoreMixByKindFrom(scoreMix),
