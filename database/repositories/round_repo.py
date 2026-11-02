@@ -11,6 +11,7 @@ from pydantic import ValidationError
 
 from models import HoleScore, Round
 from database.converters import round_from_rows, round_to_row, hole_score_to_row, user_tee_from_row, course_from_rows
+from database.connection import write_transaction
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from database.repositories.course_repo import CourseRepositoryDB
 
@@ -227,18 +228,23 @@ class RoundRepositoryDB:
             )
         return [{"id": str(r["id"]), "name": r["name"], "location": r["location"]} for r in rows]
 
-    async def get_round(self, round_id: str, *, user_id=None) -> Optional[Round]:
+    async def get_round(self, round_id: str, *, user_id=None, connection=None) -> Optional[Round]:
         """Get a round with hole_scores and course data."""
+        if connection is not None:
+            return await self._get_round_on(connection, round_id, user_id)
         async with self._pool.acquire() as conn:
-            values = [UUID(round_id)]
-            where = "id = $1"
-            if user_id:
-                values.append(UUID(user_id))
-                where += " AND user_id = $2"
-            row = await conn.fetchrow(f"SELECT * FROM users.rounds WHERE {where}", *values)
-            if not row:
-                return None
-            return await self._assemble_round(conn, row)
+            return await self._get_round_on(conn, round_id, user_id)
+
+    async def _get_round_on(self, conn, round_id: str, user_id) -> Optional[Round]:
+        values = [UUID(round_id)]
+        where = "id = $1"
+        if user_id:
+            values.append(UUID(user_id))
+            where += " AND user_id = $2"
+        row = await conn.fetchrow(f"SELECT * FROM users.rounds WHERE {where}", *values)
+        if not row:
+            return None
+        return await self._assemble_round(conn, row)
 
     async def get_round_summaries_for_user(self, user_id: str, *, limit=100, offset=0) -> list[dict]:
         """Aggregate the same scored/observed sets as Round without loading nested models."""
@@ -379,8 +385,11 @@ class RoundRepositoryDB:
         course_id: Optional[str] = None,
         tee_id: Optional[str] = None,
         user_tee_id: Optional[str] = None,
+        connection=None,
     ) -> Round:
         """Create a round with all hole_scores in a transaction.
+
+        With ``connection``, joins the caller's transaction so the round commits or rolls back with it.
 
         Resolves course_id from round_.course.id if not provided.
         Resolves tee_id from round_.tee_box + course if not provided.
@@ -389,110 +398,109 @@ class RoundRepositoryDB:
             # Validate numbered/nonempty shape before any writes (course trust is Services-owned).
             round_to_row(round_, UUID(user_id))
             new_round_id: UUID
-            async with self._pool.acquire() as conn:
-                async with conn.transaction():
-                    # Resolve IDs
-                    resolved_course_id = (
-                        UUID(course_id)
-                        if course_id
-                        else UUID(round_.course.id)
-                        if round_.course and round_.course.id
-                        else None
-                    )
-                    resolved_tee_id = UUID(tee_id) if tee_id else None
-                    resolved_user_tee_id = (
-                        UUID(user_tee_id)
-                        if user_tee_id
-                        else (UUID(round_.user_tee.id) if round_.user_tee and round_.user_tee.id else None)
-                    )
-                    if round_.course and round_.course.id and UUID(round_.course.id) != resolved_course_id:
-                        raise IntegrityError("Round course and explicit course ID disagree")
-                    if round_.user_tee and round_.user_tee.id and UUID(round_.user_tee.id) != resolved_user_tee_id:
-                        raise IntegrityError("Round custom tee and explicit custom tee ID disagree")
-                    linked_course = await self._validate_references(
-                        conn,
-                        UUID(user_id),
-                        resolved_course_id,
-                        resolved_tee_id,
-                        resolved_user_tee_id,
-                    )
-                    if linked_course and linked_course.get("total_holes") == 9:
-                        numbers = [score.hole_number for score in round_.hole_scores]
-                        if any(number > 9 for number in numbers) or any(
-                            number > 9 for number in (round_.intended_holes or ())
-                        ):
-                            raise IntegrityError("Round holes are outside the linked course layout")
-                    if resolved_course_id is not None:
-                        stored_course = await self._course_repo.get_course(str(resolved_course_id), connection=conn)
-                        if stored_course is None:
-                            raise IntegrityError("Linked course is missing")
-                        # Accepted snapshots stay authoritative; fallback metadata comes from DB, not caller copies.
-                        round_ = Round(**{**round_.model_dump(), "course": stored_course})
+            async with write_transaction(self._pool, connection) as conn:
+                # Resolve IDs
+                resolved_course_id = (
+                    UUID(course_id)
+                    if course_id
+                    else UUID(round_.course.id)
+                    if round_.course and round_.course.id
+                    else None
+                )
+                resolved_tee_id = UUID(tee_id) if tee_id else None
+                resolved_user_tee_id = (
+                    UUID(user_tee_id)
+                    if user_tee_id
+                    else (UUID(round_.user_tee.id) if round_.user_tee and round_.user_tee.id else None)
+                )
+                if round_.course and round_.course.id and UUID(round_.course.id) != resolved_course_id:
+                    raise IntegrityError("Round course and explicit course ID disagree")
+                if round_.user_tee and round_.user_tee.id and UUID(round_.user_tee.id) != resolved_user_tee_id:
+                    raise IntegrityError("Round custom tee and explicit custom tee ID disagree")
+                linked_course = await self._validate_references(
+                    conn,
+                    UUID(user_id),
+                    resolved_course_id,
+                    resolved_tee_id,
+                    resolved_user_tee_id,
+                )
+                if linked_course and linked_course.get("total_holes") == 9:
+                    numbers = [score.hole_number for score in round_.hole_scores]
+                    if any(number > 9 for number in numbers) or any(
+                        number > 9 for number in (round_.intended_holes or ())
+                    ):
+                        raise IntegrityError("Round holes are outside the linked course layout")
+                if resolved_course_id is not None:
+                    stored_course = await self._course_repo.get_course(str(resolved_course_id), connection=conn)
+                    if stored_course is None:
+                        raise IntegrityError("Linked course is missing")
+                    # Accepted snapshots stay authoritative; fallback metadata comes from DB, not caller copies.
+                    round_ = Round(**{**round_.model_dump(), "course": stored_course})
 
-                    if not resolved_tee_id and resolved_course_id and round_.tee_box:
-                        resolved_tee_id = await self._resolve_tee_id(conn, resolved_course_id, round_.tee_box)
+                if not resolved_tee_id and resolved_course_id and round_.tee_box:
+                    resolved_tee_id = await self._resolve_tee_id(conn, resolved_course_id, round_.tee_box)
 
-                    # Insert round
-                    row_data = round_to_row(round_, UUID(user_id), resolved_course_id, resolved_tee_id)
-                    round_row = await conn.fetchrow(
-                        """INSERT INTO users.rounds
-                           (user_id, course_id, tee_id, user_tee_id, round_date, total_score,
-                            is_complete, holes_played, weather_conditions, notes,
-                            course_name_played, tee_box_played, intended_holes,
-                            supplied_total_putts, supplied_total_gir)
-                           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-                           RETURNING *""",
-                        row_data["user_id"],
-                        row_data["course_id"],
-                        row_data["tee_id"],
-                        resolved_user_tee_id,
-                        row_data["round_date"],
-                        row_data["total_score"],
-                        row_data["is_complete"],
-                        row_data["holes_played"],
-                        row_data["weather_conditions"],
-                        row_data["notes"],
-                        row_data["course_name_played"],
-                        row_data["tee_box_played"],
-                        row_data["intended_holes"],
-                        row_data["supplied_total_putts"],
-                        row_data["supplied_total_gir"],
-                    )
-                    new_round_id = round_row["id"]
+                # Insert round
+                row_data = round_to_row(round_, UUID(user_id), resolved_course_id, resolved_tee_id)
+                round_row = await conn.fetchrow(
+                    """INSERT INTO users.rounds
+                       (user_id, course_id, tee_id, user_tee_id, round_date, total_score,
+                        is_complete, holes_played, weather_conditions, notes,
+                        course_name_played, tee_box_played, intended_holes,
+                        supplied_total_putts, supplied_total_gir)
+                       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                       RETURNING *""",
+                    row_data["user_id"],
+                    row_data["course_id"],
+                    row_data["tee_id"],
+                    resolved_user_tee_id,
+                    row_data["round_date"],
+                    row_data["total_score"],
+                    row_data["is_complete"],
+                    row_data["holes_played"],
+                    row_data["weather_conditions"],
+                    row_data["notes"],
+                    row_data["course_name_played"],
+                    row_data["tee_box_played"],
+                    row_data["intended_holes"],
+                    row_data["supplied_total_putts"],
+                    row_data["supplied_total_gir"],
+                )
+                new_round_id = round_row["id"]
 
-                    # Map hole_number -> hole_id for FK resolution
-                    hole_id_map = {}
-                    if resolved_course_id:
-                        hole_id_map = await self._load_hole_id_map(conn, resolved_course_id)
+                # Map hole_number -> hole_id for FK resolution
+                hole_id_map = {}
+                if resolved_course_id:
+                    hole_id_map = await self._load_hole_id_map(conn, resolved_course_id)
 
-                    # Build par_by_hole from course holes for populating par_played
-                    par_by_hole = {}
-                    if round_.course and round_.course.holes:
-                        for h in round_.course.holes:
-                            if h.number is not None and h.par is not None:
-                                par_by_hole[h.number] = h.par
+                # Build par_by_hole from course holes for populating par_played
+                par_by_hole = {}
+                if round_.course and round_.course.holes:
+                    for h in round_.course.holes:
+                        if h.number is not None and h.par is not None:
+                            par_by_hole[h.number] = h.par
 
-                    # Batch insert hole scores
-                    if round_.hole_scores:
-                        score_tuples = []
-                        for hs in round_.hole_scores:
-                            hole_id = hole_id_map.get(hs.hole_number)
-                            # Populate par_played from course if available, else keep existing
-                            if hs.hole_number in par_by_hole and hs.par_played is None:
-                                hs = HoleScore(**{**hs.model_dump(), "par_played": par_by_hole[hs.hole_number]})
-                            score_tuples.append(hole_score_to_row(hs, new_round_id, hole_id))
-                        if score_tuples:
-                            await conn.executemany(
-                                """INSERT INTO users.hole_scores
-                                   (round_id, hole_id, hole_number, strokes,
-                                    net_score, putts, shots_to_green,
-                                    fairway_hit, green_in_regulation,
-                                    par_played, handicap_played, played)
-                                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)""",
-                                score_tuples,
-                            )
-            # Return committed state. Single-round assembly reuses its own acquired connection.
-            return await self.get_round(str(new_round_id))
+                # Batch insert hole scores
+                if round_.hole_scores:
+                    score_tuples = []
+                    for hs in round_.hole_scores:
+                        hole_id = hole_id_map.get(hs.hole_number)
+                        # Populate par_played from course if available, else keep existing
+                        if hs.hole_number in par_by_hole and hs.par_played is None:
+                            hs = HoleScore(**{**hs.model_dump(), "par_played": par_by_hole[hs.hole_number]})
+                        score_tuples.append(hole_score_to_row(hs, new_round_id, hole_id))
+                    if score_tuples:
+                        await conn.executemany(
+                            """INSERT INTO users.hole_scores
+                               (round_id, hole_id, hole_number, strokes,
+                                net_score, putts, shots_to_green,
+                                fairway_hit, green_in_regulation,
+                                par_played, handicap_played, played)
+                               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)""",
+                            score_tuples,
+                        )
+            # Return the stored state; inside a caller's transaction it is only visible on that connection.
+            return await self.get_round(str(new_round_id), connection=connection)
         except asyncpg.UniqueViolationError as e:
             raise DuplicateError(str(e)) from e
         except asyncpg.IntegrityConstraintViolationError as e:

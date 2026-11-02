@@ -1,6 +1,22 @@
 import asyncio
 import asyncpg
-from typing import Optional
+from contextlib import asynccontextmanager
+from typing import AsyncIterator, Optional
+
+
+@asynccontextmanager
+async def write_transaction(pool: asyncpg.Pool, connection=None) -> AsyncIterator:
+    """Join the caller's transaction (as a savepoint) or open a new one on a pooled connection.
+
+    Repository write methods accept an optional ``connection`` so a service can make several
+    writes one atomic unit; without it each method keeps its own transaction as before.
+    """
+    if connection is not None:
+        async with connection.transaction():
+            yield connection
+        return
+    async with pool.acquire() as conn, conn.transaction():
+        yield conn
 
 
 class DatabasePool:
