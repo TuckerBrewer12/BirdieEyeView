@@ -7,6 +7,8 @@ from database.repositories.round_repo import RoundRepositoryDB
 from database.repositories.user_tee_repo import UserTeeRepositoryDB
 from database.repositories.user_repo import UserRepositoryDB
 from database.converters import (
+    course_from_rows,
+    course_to_row,
     hole_score_from_row,
     hole_score_to_row,
     round_from_rows,
@@ -121,6 +123,52 @@ def test_round_converter_hole_scores_sorted():
     r = round_from_rows(row, score_rows, None)
 
     assert [hs.hole_number for hs in r.hole_scores] == [1, 2, 3]
+
+
+def _course_row(*, total_holes, par):
+    """Helper: minimal courses.courses row dict."""
+    return {
+        "id": uuid4(), "name": "Nine Hole Course", "external_course_id": None,
+        "location": None, "par": par, "total_holes": total_holes, "user_id": None,
+    }
+
+
+def _hole_rows(numbers, par=4):
+    return [{"hole_number": n, "par": par, "handicap": n} for n in numbers]
+
+
+def test_course_converter_loads_nine_hole_layout():
+    """A stored nine-hole layout keeps its par and lets a full nine score as complete."""
+    course = course_from_rows(_course_row(total_holes=9, par=36), _hole_rows(range(1, 10)), [], {})
+
+    assert course.total_holes == 9
+    assert course.get_par() == 36
+
+    scores = [HoleScore(hole_number=n, strokes=5) for n in range(1, 10)]
+    round_ = Round(course=course, hole_scores=scores)
+    assert round_.is_complete() is True
+    assert round_.get_par() == 36
+    assert round_.total_to_par() == 9
+
+
+def test_course_converter_null_total_holes_keeps_legacy_inference():
+    """NULL total_holes does not make nine hole rows a nine-hole layout."""
+    nine = course_from_rows(_course_row(total_holes=None, par=36), _hole_rows(range(1, 10)), [], {})
+    eighteen = course_from_rows(_course_row(total_holes=None, par=72), _hole_rows(range(1, 19)), [], {})
+
+    assert nine.total_holes is None
+    assert nine.get_par() is None
+    assert eighteen.get_par() == 72
+
+
+def test_course_to_row_prefers_declared_total_holes():
+    """An explicit layout is persisted even when hole rows are incomplete."""
+    declared = Course(name="Nine", total_holes=9, holes=[Hole(number=1, par=4)])
+    legacy = Course(name="Legacy", holes=[Hole(number=n, par=4) for n in range(1, 19)])
+
+    assert course_to_row(declared)["total_holes"] == 9
+    assert course_to_row(legacy)["total_holes"] == 18
+    assert course_to_row(Course(name="Empty"))["total_holes"] is None
 
 
 def test_user_tee_converter_roundtrip():
@@ -238,7 +286,7 @@ async def test_course_repo_create_course_persists_external_course_id(mock_pool):
             "external_course_id": "gc_12345",
             "location": "Concord, CA",
             "par": None,
-            "total_holes": 0,
+            "total_holes": None,
             "metadata": "{}",
             "user_id": None,
         },

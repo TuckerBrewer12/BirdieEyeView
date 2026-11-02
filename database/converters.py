@@ -55,6 +55,7 @@ def course_from_rows(
         name=course_row["name"],
         external_course_id=course_row["external_course_id"],
         location=course_row["location"],
+        total_holes=course_row.get("total_holes"),
         par=course_row["par"],
         holes=holes,
         tees=tees,
@@ -131,7 +132,9 @@ def course_to_row(course: Course, user_id: Optional[UUID] = None) -> dict:
         "external_course_id": course.external_course_id,
         "location": course.location,
         "par": course.get_par(),
-        "total_holes": len(course.holes) if course.holes else None,
+        "total_holes": course.total_holes if course.total_holes is not None else (
+            len(course.holes) if course.holes else None
+        ),
         "user_id": user_id,
     }
 
