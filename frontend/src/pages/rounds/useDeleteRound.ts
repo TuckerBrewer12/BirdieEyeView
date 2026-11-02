@@ -14,7 +14,7 @@ export function useDeleteRound(
       for (const queryKey of [
         queryKeys.rounds(userId),
         queryKeys.dashboard(userId),
-        queryKeys.careerAnalytics(userId),
+        queryKeys.analytics(userId),
       ]) {
         void queryClient.invalidateQueries({ queryKey });
       }

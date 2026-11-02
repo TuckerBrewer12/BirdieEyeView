@@ -35,7 +35,6 @@ describe("useUpdateUser", () => {
       queryKeys.dashboard("user-1"),
       queryKeys.goalReport("user-1"),
       queryKeys.analytics("user-1", { limit: 20 }),
-      queryKeys.careerAnalytics("user-1"),
     ];
     for (const key of keys) client.setQueryData(key, {});
 

@@ -17,7 +17,7 @@ import { DashboardPage } from "./pages/dashboard";
 import { RoundsPage, RoundDetailPage } from "./pages/rounds";
 import { CoursesPage, CourseDetailPage } from "./pages/courses";
 import { AnalyticsPage } from "./pages/analytics";
-import { CareerPage } from "./pages/CareerPage";
+import { CareerPage } from "./pages/career";
 import { TheLabPage } from "./pages/the-lab";
 import { SettingsPage } from "./pages/settings";
 import { SocialPage, FriendsInboxPage } from "./pages/social";
