@@ -12,6 +12,7 @@ from uuid import UUID
 from pydantic import ValidationError
 
 from models import Course, Hole, Tee, TeeRating, HoleScore, Round, User, UserTee
+from models.hole_layout import FRONT_NINE
 from database.exceptions import IntegrityError
 
 
@@ -149,12 +150,16 @@ def user_from_row(user_row, rounds: Optional[List[Round]] = None) -> User:
 
 def course_to_row(course: Course, user_id: Optional[UUID] = None) -> dict:
     """Course -> dict for courses.courses INSERT."""
+    expected = course.get_expected_holes()
+    if expected is None and sorted(h.number for h in course.holes if h.number is not None) == list(FRONT_NINE):
+        # Pre-refactor behavior for scanned nine-hole courses until Services declares the layout.
+        expected = FRONT_NINE
     return {
         "name": course.name,
         "external_course_id": course.external_course_id,
         "location": course.location,
         "par": course.get_par(),
-        "total_holes": len(course.get_expected_holes()) if course.get_expected_holes() is not None else None,
+        "total_holes": len(expected) if expected is not None else None,
         "user_id": user_id,
     }
 

@@ -172,6 +172,17 @@ def test_course_to_row_prefers_declared_total_holes():
     assert course_to_row(legacy)["total_holes"] == 18
     assert course_to_row(Course(name="Empty"))["total_holes"] is None
 
+
+@pytest.mark.parametrize(
+    "numbers, expected",
+    [(range(1, 10), 9), (range(1, 6), None), (range(10, 19), None), ([*range(1, 9), 10], None)],
+)
+def test_course_to_row_keeps_exact_front_nine_layout(numbers, expected):
+    """An exact 1-9 scan keeps its nine-hole layout; partial or back-nine lists stay unknown."""
+    course = Course(name="Scanned", holes=[Hole(number=n, par=4) for n in numbers])
+    assert course_to_row(course)["total_holes"] == expected
+
+
 def test_user_tee_converter_roundtrip():
     """user_tee_from_row correctly maps all fields including JSONB hole_yardages."""
     tid = uuid4()

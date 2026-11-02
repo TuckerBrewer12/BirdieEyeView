@@ -315,14 +315,14 @@ ALTER TABLE users.rounds
 CREATE INDEX IF NOT EXISTS idx_rounds_user_tee_id ON users.rounds (user_tee_id);
 
 -- Published range-specific ratings retain explicit hole identity.
-CREATE TABLE courses.tee_ratings (
+CREATE TABLE IF NOT EXISTS courses.tee_ratings (
     tee_id UUID NOT NULL REFERENCES courses.tees(id) ON DELETE CASCADE,
     hole_numbers INTEGER[] NOT NULL CHECK (courses.valid_hole_coverage(hole_numbers)),
     course_rating DOUBLE PRECISION CHECK (course_rating > 0 AND course_rating < 'Infinity'::DOUBLE PRECISION),
     slope_rating DOUBLE PRECISION CHECK (slope_rating BETWEEN 55 AND 155),
     PRIMARY KEY (tee_id, hole_numbers)
 );
-CREATE TABLE users.user_tee_ratings (
+CREATE TABLE IF NOT EXISTS users.user_tee_ratings (
     tee_id UUID NOT NULL REFERENCES users.user_tees(id) ON DELETE CASCADE,
     hole_numbers INTEGER[] NOT NULL CHECK (courses.valid_hole_coverage(hole_numbers)),
     course_rating DOUBLE PRECISION CHECK (course_rating > 0 AND course_rating < 'Infinity'::DOUBLE PRECISION),
@@ -330,14 +330,14 @@ CREATE TABLE users.user_tee_ratings (
     PRIMARY KEY (tee_id, hole_numbers)
 );
 
-CREATE UNIQUE INDEX idx_user_tees_unique_scope_name
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_tees_unique_scope_name
     ON users.user_tees (user_id, course_id, LOWER(name)) NULLS NOT DISTINCT;
-CREATE UNIQUE INDEX idx_courses_external_master
+CREATE UNIQUE INDEX IF NOT EXISTS idx_courses_external_master
     ON courses.courses (external_course_id) WHERE user_id IS NULL AND external_course_id IS NOT NULL;
-CREATE UNIQUE INDEX idx_courses_external_owner
+CREATE UNIQUE INDEX IF NOT EXISTS idx_courses_external_owner
     ON courses.courses (user_id, external_course_id) WHERE user_id IS NOT NULL AND external_course_id IS NOT NULL;
-CREATE UNIQUE INDEX idx_users_email_normalized ON users.users (LOWER(BTRIM(email)));
-CREATE INDEX idx_rounds_stable_history
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_normalized ON users.users (LOWER(BTRIM(email)));
+CREATE INDEX IF NOT EXISTS idx_rounds_stable_history
     ON users.rounds (user_id, round_date DESC NULLS LAST, created_at DESC NULLS LAST, id DESC);
 
 -- =============
