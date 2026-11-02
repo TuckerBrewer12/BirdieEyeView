@@ -1,4 +1,4 @@
-import type { CourseAnalyticsData } from "../../types/analytics";
+import type { CourseAnalyticsDto } from "../../types/api";
 import { courseAnalyticsResponse, type CourseHoleStats } from "../fakes/courseAnalyticsResponses";
 import { storedRounds } from "./rounds";
 
@@ -7,7 +7,7 @@ const PARS = [4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5];
 /** Two rounds at a hole, so every rate below is out of two. */
 const SAMPLE = 2;
 
-export function emptyCourseAnalytics(courseId: string): CourseAnalyticsData {
+export function emptyCourseAnalytics(courseId: string): CourseAnalyticsDto {
   return courseAnalyticsResponse(courseId, []);
 }
 
@@ -71,7 +71,7 @@ const halfMoonBayHoleStats: CourseHoleStats = {
 };
 
 /** The player's two stored rounds at Half Moon Bay, as GET /stats/course-analytics sends them. */
-export const halfMoonBayAnalytics: CourseAnalyticsData = courseAnalyticsResponse(
+export const halfMoonBayAnalytics: CourseAnalyticsDto = courseAnalyticsResponse(
   "course-hmb",
   storedRounds,
   halfMoonBayHoleStats,

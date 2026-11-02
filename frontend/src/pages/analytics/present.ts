@@ -8,15 +8,15 @@ import {
   pluralize,
   toParLabel,
 } from "@/domain";
+import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type {
-  AnalyticsFilters,
-  GIRTrendRow,
-  NetScoreTrendRow,
-  PuttsTrendRow,
-  ScoringByHandicapRow,
-  ScoringByParRow,
-  ThreePuttRow,
-} from "@/types/analytics";
+  GirTrendRowDto,
+  NetScoreTrendRowDto,
+  PuttsTrendRowDto,
+  ScoringByHandicapRowDto,
+  ScoringByParRowDto,
+  ThreePuttsTrendRowDto,
+} from "@/types/api";
 import {
   insightCategory,
   ANALYTICS_TABS,
@@ -199,7 +199,7 @@ export function scoreTrendPoints(rows: ScoreTrendPoint[]): TrendAreaPoint[] {
   return rows.map((row) => roundPoint(row, [row.total_score, row.rolling_avg]));
 }
 
-export function netScorePoints(rows: NetScoreTrendRow[]): TrendAreaPoint[] {
+export function netScorePoints(rows: NetScoreTrendRowDto[]): TrendAreaPoint[] {
   return rows.map((row) => ({
     ...roundPoint(row, [row.net_score]),
     notes: [
@@ -210,7 +210,7 @@ export function netScorePoints(rows: NetScoreTrendRow[]): TrendAreaPoint[] {
   }));
 }
 
-export function girPoints(rows: GIRTrendRow[]): TrendAreaPoint[] {
+export function girPoints(rows: GirTrendRowDto[]): TrendAreaPoint[] {
   return rows.map((row) => ({
     ...roundPoint(row, [row.gir_percentage]),
     notes: [{ label: "Greens", value: `${row.total_gir ?? "—"} of ${row.holes_played}` }],
@@ -222,19 +222,19 @@ export function shortGamePoints(rows: ShortGamePoint[]): TrendAreaPoint[] {
   return rows.map((row) => roundPoint(row, [row.scrambling_percentage, row.up_and_down_pct]));
 }
 
-export function puttsPoints(rows: PuttsTrendRow[]): TrendAreaPoint[] {
+export function puttsPoints(rows: PuttsTrendRowDto[]): TrendAreaPoint[] {
   return rows.map((row) => roundPoint(row, [row.total_putts]));
 }
 
-export function threePuttPoints(rows: ThreePuttRow[]): TrendAreaPoint[] {
+export function threePuttPoints(rows: ThreePuttsTrendRowDto[]): TrendAreaPoint[] {
   return rows.map((row) => roundPoint(row, [row.three_putt_count]));
 }
 
-export function parBars(rows: ScoringByParRow[]): ToParBar[] {
+export function parBars(rows: ScoringByParRowDto[]): ToParBar[] {
   return rows.map((row) => ({ label: `Par ${row.par}`, toPar: row.average_to_par, detail: pluralize(row.sample_size, "hole") }));
 }
 
-export function handicapBars(rows: ScoringByHandicapRow[]): ToParBar[] {
+export function handicapBars(rows: ScoringByHandicapRowDto[]): ToParBar[] {
   return rows.map((row) => ({
     label: String(row.handicap),
     toPar: row.average_to_par,

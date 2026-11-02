@@ -1,6 +1,5 @@
-import type { AnalyticsDto, PlayedCourseDto, RoundDto } from "../../types/api";
+import type { AnalyticsDto, PlayedCourseDto, RoundDto, UserDto } from "../../types/api";
 import { Round, type RoundDetail } from "../../domain";
-import type { User } from "../../types/golf";
 import type { AnalyticsFilters, PlayedCourse } from "../../pages/analytics/model";
 import { playedCourseFrom, type AnalyticsRepository } from "../../pages/analytics/analyticsRepository";
 import { analyticsForCourse } from "./analyticsResponses";
@@ -11,7 +10,7 @@ export interface FakeAnalyticsSeed {
   /** A course's own response, keyed by course id. A course not here answers with no rounds. */
   analyticsByCourse?: Record<string, AnalyticsDto>;
   playedCourses?: PlayedCourseDto[];
-  user?: User;
+  user?: UserDto;
   /** Rounds in full, for the best round's card. A round not here fails to load. */
   detailRounds?: RoundDto[];
 }
@@ -65,12 +64,13 @@ export class FakeAnalyticsRepository implements AnalyticsRepository {
     return Round.detailFromDto(round);
   }
 
-  async getUser(userId: string): Promise<User> {
+  async getUser(userId: string): Promise<UserDto> {
     return (
       this.seed.user ?? {
         id: userId,
         name: "Test Golfer",
         email: "test@example.com",
+        friend_code: null,
         home_course_id: null,
         handicap: null,
         created_at: null,

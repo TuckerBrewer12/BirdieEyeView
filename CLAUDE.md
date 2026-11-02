@@ -86,10 +86,10 @@ Key files:
 
 ### `api/` — FastAPI routers
 
-- `routers/scan.py` — `POST /api/scan/extract` and `POST /api/scan/save`. Save flow: looks up existing course; if not found, saves round without a course (no auto-creation). Populates `par_played` from `course_holes` param.
+- `routers/scan.py` — `POST /api/scan/extract` (typed `ScanResponse`: the card as read, per-hole confidence, fields to review) and `POST /api/scan/save`. Save flow: looks up existing course; if not found, saves round without a course (no auto-creation). Populates `par_played` from `course_holes` param.
 - `routers/courses.py` — GET/POST/PUT + clone endpoint. `user_id IS NULL` = master/global course; `user_id IS NOT NULL` = user-owned custom course.
 - `routers/rounds.py` — GET/PUT/DELETE for rounds and hole scores
-- `routers/users.py` — user management + user tee CRUD (`/api/users/{id}/tees`); `UpdateUserRequest` accepts `scoring_goal`
+- `routers/users.py` — user management + user tee CRUD (`/api/users/{id}/tees`); `UpdateUserRequest` accepts `scoring_goal`; a user is sent as `UserResponse` (the profile, no rounds)
 - `routers/stats.py` — player analytics endpoints; includes `GET /{user_id}/goal-report`
 - `api/request_models.py` — shared Pydantic request/response models
 - `api/round_responses.py` — `round_summary()` / `round_detail()`: the one place a round's response is built. Every round endpoint (list, detail, update, link-course, dashboard) returns the figures the `Round` model works out (score, par, to-par, nine totals plus each nine's par/to-par/putts/GIR/yards, putts, GIR, yards, per-hole par/handicap/yardage/to-par/`kind`, `score_counts`); the frontend displays them and does not recompute them.
@@ -309,8 +309,8 @@ Key files:
 - `src/types/api.gen.ts` — generated from the backend's OpenAPI schema (`frontend/openapi.json`); never edit by hand. After changing an API model run `python scripts/dump_openapi.py` then `npm run gen:api`; CI fails if either is stale. `src/types/api.ts` names the generated types (`RoundDto`, `RoundSummaryDto`, …).
 - `src/domain/round.ts` — the frontend `Round`: plain data mapped from the API (`Round.fromDto`; lists get the leaner `RoundSummary` from `Round.fromSummary`, which `Round` extends), plus `Round.previewEdits`, the only frontend golf math (live totals while editing, replaced by the saved response).
 - `src/lib/api.ts` — API client (`updateRound`, `cloneCourse`, `getCourses`, `searchCourses`, `getGoalReport`, `updateUser` with `scoring_goal`, etc.)
-- `src/types/scan.ts` — shared scan types/constants (kept out of ScanPage to avoid Fast Refresh warning)
-- `src/types/analytics.ts` — analytics types including `GoalReport` and `GoalSaver`
+- `src/types/` holds only `api.gen.ts` and `api.ts`: every response the frontend reads is typed by a backend `response_model` and used by its `*Dto` name. Request shapes the frontend builds live in `domain/` (`AnalyticsFilters` in `domain/analyticsFilters.ts`).
+- `src/domain/course.ts` / `src/domain/courseAnalytics.ts` — `CourseSummary` (list and search results) and `CourseAnalytics` (a golfer's figures at one course, with the per-hole rows the kit's hole charts take), mapped from the DTOs in the repositories. Kit components take these domain types, never DTOs.
 - `src/pages/scan/` — upload → processing → setup → review → success; passes the course's holes as `course_holes` on save
 - `src/pages/the-lab/` — goal picker (7 thresholds: 100/95/90/85/80/75/72), goal savers (`components/SaverCard.tsx`) and peer comparison
 - `src/brand/components/RoundScorecard.tsx` — the scorecard (read-only and editable) with the To Par row

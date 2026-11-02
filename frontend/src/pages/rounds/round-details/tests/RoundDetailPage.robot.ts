@@ -1,6 +1,6 @@
 import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../../testing/playwright";
-import type { Round } from "../../../../types/golf";
+import type { RoundDto } from "../../../../types/api";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 import { formatCourseName } from "../../../../domain/course";
@@ -21,7 +21,7 @@ export class RoundDetailRobot {
   }
 
   async open(
-    round: Round,
+    round: RoundDto,
     seed: Omit<FakeBackendSeed, "detailRounds"> = {},
   ): Promise<this> {
     await this.page.emulateMedia({ reducedMotion: "reduce" });

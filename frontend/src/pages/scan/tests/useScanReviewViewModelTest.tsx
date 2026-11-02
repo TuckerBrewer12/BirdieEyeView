@@ -5,17 +5,17 @@ import { useState, type ReactNode } from "react";
 import { FakeCoursesRepository } from "@/testing/fakes/FakeCoursesRepository";
 import { FakeRoundsRepository } from "@/testing/fakes/FakeRoundsRepository";
 import { FakeScanRepository } from "@/testing/fakes/FakeScanRepository";
-import { pebbleBeach } from "@/testing/fixtures/courses";
+import { pebbleBeach, pebbleBeachSummary } from "@/testing/fixtures/courses";
 import { pebbleBeachCourse } from "@/testing/fixtures/roundDetails";
 import { SCANNED_COURSE_NAME, scannedCard, scannedTeeCard, UNSURE_HOLES, unsureCard } from "@/testing/fixtures/scan";
-import type { ScanResult } from "@/types/scan";
+import type { ScanDto } from "@/types/api";
 import { reviewFromScan } from "../scanModel";
 import { newScanSession, ScanSessionContext, type ScanSession } from "../scanSession";
 import { useScanReviewViewModel, type ScanReviewRepositories } from "../useScanReviewViewModel";
 
 const TODAY = "2026-10-15";
 
-function renderReview(card: ScanResult = scannedCard, { handicapIndex = null as number | null } = {}) {
+function renderReview(card: ScanDto = scannedCard, { handicapIndex = null as number | null } = {}) {
   const rounds = new FakeRoundsRepository({ handicapIndex });
   const scan = new FakeScanRepository({ store: rounds.store });
   const courses = new FakeCoursesRepository([pebbleBeach]);
@@ -79,10 +79,10 @@ describe("useScanReviewViewModel", () => {
   it("links a picked course, reads the card against it, and offers its tees", async () => {
     const { result } = renderReview();
 
-    act(() => result.current.pickCourse(pebbleBeach));
+    act(() => result.current.pickCourse(pebbleBeachSummary));
 
-    expect(result.current.linkedName).toBe(pebbleBeach.name);
-    expect(result.current.round?.course?.name).toBe(pebbleBeach.name);
+    expect(result.current.linkedName).toBe(pebbleBeachSummary.name);
+    expect(result.current.round?.course?.name).toBe(pebbleBeachSummary.name);
     await waitFor(() => expect(result.current.tees).toEqual(["Blue"]));
     expect(result.current.round?.holes.map((hole) => hole.par)).toEqual(
       pebbleBeachCourse.holes.map((hole) => hole.par),
@@ -93,7 +93,7 @@ describe("useScanReviewViewModel", () => {
     const { result } = renderReview();
 
     act(() =>
-      result.current.pickCourse({ ...pebbleBeach, id: "external:1", source: "external", external_course_id: null }),
+      result.current.pickCourse({ ...pebbleBeachSummary, id: "external:1", source: "external", externalId: null }),
     );
 
     expect(result.current.error).toMatch(/missing provider ID/);
@@ -112,16 +112,16 @@ describe("useScanReviewViewModel", () => {
 
   it("changing a linked course reopens the search on its name", () => {
     const { result } = renderReview();
-    act(() => result.current.pickCourse(pebbleBeach));
+    act(() => result.current.pickCourse(pebbleBeachSummary));
 
     act(() => result.current.changeCourse());
 
     expect(result.current.linkedName).toBeUndefined();
-    expect(result.current.courseSearch.query).toBe(pebbleBeach.name);
+    expect(result.current.courseSearch.query).toBe(pebbleBeachSummary.name);
   });
 
   it("works out the golfer's course handicap on a rated tee", () => {
-    const teeCard: ScanResult = { ...scannedCard, round: scannedTeeCard };
+    const teeCard: ScanDto = { ...scannedCard, round: scannedTeeCard };
     const { result } = renderReview(teeCard, { handicapIndex: 10 });
     // (10 × 133 / 113) + (73.4 − 72) = 13.17, rounded.
     return waitFor(() => expect(result.current.courseHandicap).toBe(13));
@@ -132,13 +132,13 @@ describe("useScanReviewViewModel", () => {
     act(() => result.current.setStrokes(4, 6));
     act(() => result.current.setTeeBox("White"));
     act(() => result.current.setDate("2026-10-02"));
-    act(() => result.current.pickCourse(pebbleBeach));
+    act(() => result.current.pickCourse(pebbleBeachSummary));
 
     act(() => result.current.save());
 
     await waitFor(() => expect(session().savedRoundId).toMatch(/^scanned-/));
     const [sent] = scan.saveRequests;
-    expect(sent.course_id).toBe(pebbleBeach.id);
+    expect(sent.course_id).toBe(pebbleBeachSummary.id);
     expect(sent.tee_box).toBe("White");
     expect(sent.date).toBe("2026-10-02");
     expect(sent.hole_scores.find((score) => score.hole_number === 4)?.strokes).toBe(6);

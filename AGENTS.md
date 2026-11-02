@@ -86,10 +86,10 @@ Key files:
 
 ### `api/` — FastAPI routers
 
-- `routers/scan.py` — `POST /api/scan/extract` and `POST /api/scan/save`. Save flow: looks up existing course; if not found, saves round without a course (no auto-creation). Populates `par_played` from `course_holes` param.
+- `routers/scan.py` — `POST /api/scan/extract` (typed `ScanResponse`: the card as read, per-hole confidence, fields to review) and `POST /api/scan/save`. Save flow: looks up existing course; if not found, saves round without a course (no auto-creation). Populates `par_played` from `course_holes` param.
 - `routers/courses.py` — GET/POST/PUT + clone endpoint. `user_id IS NULL` = master/global course; `user_id IS NOT NULL` = user-owned custom course.
 - `routers/rounds.py` — GET/PUT/DELETE for rounds and hole scores
-- `routers/users.py` — user management + user tee CRUD (`/api/users/{id}/tees`); `UpdateUserRequest` accepts `scoring_goal`
+- `routers/users.py` — user management + user tee CRUD (`/api/users/{id}/tees`); `UpdateUserRequest` accepts `scoring_goal`; a user is sent as `UserResponse` (the profile, no rounds)
 - `routers/stats.py` — player analytics endpoints; includes `GET /{user_id}/goal-report`
 - `api/request_models.py` — shared Pydantic request/response models
 
@@ -280,8 +280,8 @@ Implemented via `:root.dark` in `brand/theme/tokens.css`. Views take their dark 
 Key files:
 - `src/App.tsx` — routing; wraps the app in `ScanSessionProvider` so a scan in progress outlives navigation
 - `src/lib/api.ts` — API client (`updateRound`, `cloneCourse`, `getCourses`, `searchCourses`, `getGoalReport`, `updateUser` with `scoring_goal`, etc.)
-- `src/types/scan.ts` — shared scan types/constants (kept out of ScanPage to avoid Fast Refresh warning)
-- `src/types/analytics.ts` — analytics types including `GoalReport` and `GoalSaver`
+- `src/types/` holds only `api.gen.ts` and `api.ts`: every response the frontend reads is typed by a backend `response_model` and used by its `*Dto` name. Request shapes the frontend builds live in `domain/` (`AnalyticsFilters` in `domain/analyticsFilters.ts`).
+- `src/domain/course.ts` / `src/domain/courseAnalytics.ts` — `CourseSummary` (list and search results) and `CourseAnalytics` (a golfer's figures at one course, with the per-hole rows the kit's hole charts take), mapped from the DTOs in the repositories. Kit components take these domain types, never DTOs.
 - `src/pages/scan/` — upload → processing → setup → review → success; passes the course's holes as `course_holes` on save
 - `src/pages/the-lab/` — goal picker (7 thresholds: 100/95/90/85/80/75/72), goal savers (`components/SaverCard.tsx`) and peer comparison
 - `src/brand/components/RoundScorecard.tsx` — the scorecard (read-only and editable) with the To Par row

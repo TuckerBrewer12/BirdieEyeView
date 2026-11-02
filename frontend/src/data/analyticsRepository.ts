@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import type { AnalyticsFilters } from "@/types/analytics";
+import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type { AnalyticsDto } from "@/types/api";
 
 export interface AnalyticsRepository {

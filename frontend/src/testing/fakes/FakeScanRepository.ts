@@ -1,11 +1,10 @@
 import type { ExtractRequest, ScanRepository } from "../../data/scanRepository";
-import type { SaveScanRequestDto } from "../../types/api";
-import type { ScanResult } from "../../types/scan";
+import type { SaveScanRequestDto, ScanDto } from "../../types/api";
 import { InMemoryRounds } from "./InMemoryRounds";
 
 export interface FakeScanRepositorySeed {
   /** What extract reads off any card. Unset, extract fails. */
-  result?: ScanResult;
+  result?: ScanDto;
   /** What reading the card ahead of time returns. */
   text?: string | null;
   /** Extract fails with this, as the server's user-facing message. */
@@ -42,7 +41,7 @@ export class FakeScanRepository implements ScanRepository {
     return this.seed.text ?? null;
   }
 
-  async extract(request: ExtractRequest): Promise<ScanResult> {
+  async extract(request: ExtractRequest): Promise<ScanDto> {
     this.extractRequests.push(request);
     if (this.seed.holdExtract) {
       await new Promise<void>((resolve) => {

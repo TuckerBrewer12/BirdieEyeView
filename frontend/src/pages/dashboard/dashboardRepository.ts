@@ -1,11 +1,11 @@
 import { goalReportRepository, type GoalReportRepository } from "@/data/goalReportRepository";
 import { userRepository, type UserRepository } from "@/data/userRepository";
 import { api } from "@/lib/api";
-import type { DashboardData } from "@/types/golf";
+import type { DashboardDto } from "@/types/api";
 
 export interface DashboardRepository extends GoalReportRepository, Pick<UserRepository, "getUser"> {
   /** The dashboard's figures, trend series included. */
-  getDashboard(userId: string): Promise<DashboardData>;
+  getDashboard(userId: string): Promise<DashboardDto>;
 }
 
 export const dashboardRepository: DashboardRepository = {

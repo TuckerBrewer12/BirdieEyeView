@@ -30,11 +30,9 @@ function chartFor(chart: CourseChart) {
     case "scoreType":
       return <HoleScoreMixBars rows={chart.rows} />;
     case "gir":
-      return <HoleMetricBars metric="gir" rows={chart.rows} />;
     case "putts":
-      return <HoleMetricBars metric="putts" rows={chart.rows} />;
     case "variance":
-      return <HoleMetricBars metric="variance" rows={chart.rows} />;
+      return <HoleMetricBars metric={chart.kind} rows={chart.rows} />;
   }
 }
 

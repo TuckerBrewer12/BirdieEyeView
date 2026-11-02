@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { AnalyticsFilters } from "@/types/analytics";
+import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type { AnalyticsDto } from "@/types/api";
 import { analyticsRepository, type AnalyticsRepository } from "./analyticsRepository";
 import { queryKeys } from "./queryKeys";

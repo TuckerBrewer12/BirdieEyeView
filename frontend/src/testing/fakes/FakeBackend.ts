@@ -6,10 +6,17 @@ import {
 } from "./InMemoryFriendships";
 import type { FriendshipAnswer } from "../../data/friendsModel";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
-import type { PlayedCourseDto, SaveScanRequestDto, UserChangesDto } from "../../types/api";
-import type { DashboardData, User } from "../../types/golf";
-import type { AnalyticsData, AnalyticsFilters, GoalReport } from "../../types/analytics";
-import type { ScanResult } from "../../types/scan";
+import type {
+  AnalyticsDto,
+  DashboardDto,
+  GoalReportDto,
+  PlayedCourseDto,
+  SaveScanRequestDto,
+  ScanDto,
+  UserChangesDto,
+  UserDto,
+} from "../../types/api";
+import type { AnalyticsFilters } from "../../domain/analyticsFilters";
 import { AUTH_MESSAGES } from "./FakeAuth";
 import { analyticsForCourse } from "./analyticsResponses";
 
@@ -37,23 +44,23 @@ export type FakeAuthEndpoint =
 
 export interface FakeBackendSeed extends InMemoryRoundsSeed {
   user?: typeof TEST_USER;
-  profile?: User;
-  dashboard?: DashboardData;
-  analytics?: AnalyticsData | null;
+  profile?: UserDto;
+  dashboard?: DashboardDto;
+  analytics?: AnalyticsDto | null;
   /**
    * Analytics by golfer, for screens that read someone else's (The Lab's friend comparison).
    * A golfer with none here gets `analytics`.
    */
-  analyticsByGolfer?: Record<string, AnalyticsData>;
+  analyticsByGolfer?: Record<string, AnalyticsDto>;
   /** `/api/stats/analytics/{id}?course_id=` per course. A course not here answers with no rounds. */
-  analyticsByCourse?: Record<string, AnalyticsData>;
+  analyticsByCourse?: Record<string, AnalyticsDto>;
   /** `/api/stats/{id}/played-courses`: the courses the golfer has rounds at. */
   playedCourses?: PlayedCourseDto[];
-  goalReport?: GoalReport | null;
+  goalReport?: GoalReportDto | null;
   /** No one is signed in — `/api/auth/me` answers 401, as the real API does. */
   signedOut?: boolean;
   /** What `/api/scan/extract` reads off any uploaded card. Unset, extract fails. */
-  scan?: ScanResult;
+  scan?: ScanDto;
   /** `/api/scan/extract` doesn't answer until `finishScan()`, so the scan can be seen running. */
   holdScan?: boolean;
   /** Why `GET /api/users/{id}` fails; unset, it answers with the profile. */
@@ -79,16 +86,16 @@ export interface FakeReply {
 /** Points HTTP at InMemoryRounds. Same store FakeRoundsRepository uses. */
 export class FakeBackend {
   user: typeof TEST_USER;
-  profile: User | undefined;
-  dashboard: DashboardData | undefined;
-  analytics: AnalyticsData | null | undefined;
-  analyticsByGolfer: Record<string, AnalyticsData>;
-  readonly analyticsByCourse: Record<string, AnalyticsData>;
+  profile: UserDto | undefined;
+  dashboard: DashboardDto | undefined;
+  analytics: AnalyticsDto | null | undefined;
+  analyticsByGolfer: Record<string, AnalyticsDto>;
+  readonly analyticsByCourse: Record<string, AnalyticsDto>;
   readonly playedCourses: PlayedCourseDto[];
   /** What each analytics request asked for, in order. */
   readonly analyticsRequests: AnalyticsFilters[] = [];
-  goalReport: GoalReport | null | undefined;
-  scan: ScanResult | undefined;
+  goalReport: GoalReportDto | null | undefined;
+  scan: ScanDto | undefined;
   profileError: string | null;
   updateUserError: string | null;
   /** Flips to false when a sign-in or a verification link starts a session. */
@@ -227,12 +234,13 @@ export class FakeBackend {
   }
 
   /** The user row `/api/users/{id}` answers with: the seeded profile, or one built from the session. */
-  currentProfile(): User {
+  currentProfile(): UserDto {
     return (
       this.profile ?? {
         id: this.user.user_id,
         name: this.user.name,
         email: this.user.email,
+        friend_code: null,
         home_course_id: null,
         handicap: this.store.handicapIndex,
         created_at: null,

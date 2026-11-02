@@ -1,6 +1,6 @@
 import { BACK_HOLES, FRONT_HOLES, getHole, getTee, teesByLength } from "@/domain/course";
-import type { Course, Tee } from "@/types/golf";
-import type { CourseAnalyticsData } from "@/types/analytics";
+import type { CourseAnalytics, HoleFigure, HoleScoreMix, HoleToPar } from "@/domain/courseAnalytics";
+import type { CourseDto, TeeDto } from "@/types/api";
 
 export type PageTabKey = "course" | "performance";
 export type ChartTabKey = "score" | "gir" | "putts" | "variance";
@@ -22,26 +22,9 @@ export const CHART_TABS: TabItem<ChartTabKey>[] = [
   { key: "variance", label: "Variance" },
 ];
 
-export const EMPTY_ANALYTICS: CourseAnalyticsData = {
-  course_id: "",
-  rounds_played: 0,
-  scoring_average: null,
-  best_score: null,
-  worst_score: null,
-  rounds: [],
-  score_trend_on_course: [],
-  average_score_relative_to_par_by_hole: [],
-  gir_percentage_by_hole: [],
-  average_putts_by_hole: [],
-  score_type_distribution_by_hole: [],
-  course_difficulty_profile_by_hole: [],
-  average_score_when_gir_vs_missed: [],
-  score_variance_by_hole: [],
-};
-
 /** A tee button: the tee and what the golfer would play off it. */
 export interface TeeChip {
-  tee: Tee;
+  tee: TeeDto;
   selected: boolean;
   courseHandicap: number | null;
 }
@@ -59,7 +42,7 @@ export interface ScorecardHole {
 export interface ScorecardNine {
   side: "front" | "back";
   /** The tee whose yardages fill the yards row; null hides the row. */
-  tee: Tee | null;
+  tee: TeeDto | null;
   holes: ScorecardHole[];
   par: number | null;
   yards: number | null;
@@ -68,19 +51,16 @@ export interface ScorecardNine {
 }
 
 export type CourseChart =
-  | { kind: "toPar"; group: ChartTabKey; rows: CourseAnalyticsData["average_score_relative_to_par_by_hole"] }
-  | { kind: "scoreType"; group: ChartTabKey; rows: CourseAnalyticsData["score_type_distribution_by_hole"] }
-  | { kind: "gir"; group: ChartTabKey; rows: CourseAnalyticsData["gir_percentage_by_hole"] }
-  | { kind: "putts"; group: ChartTabKey; rows: CourseAnalyticsData["average_putts_by_hole"] }
-  | { kind: "difficulty"; group: ChartTabKey; rows: CourseAnalyticsData["course_difficulty_profile_by_hole"] }
-  | { kind: "variance"; group: ChartTabKey; rows: CourseAnalyticsData["score_variance_by_hole"] };
+  | { kind: "toPar" | "difficulty"; group: ChartTabKey; rows: HoleToPar[] }
+  | { kind: "scoreType"; group: ChartTabKey; rows: HoleScoreMix[] }
+  | { kind: "gir" | "putts" | "variance"; group: ChartTabKey; rows: HoleFigure[] };
 
 /** The golfer's average strokes per hole, or null until they have played the course. */
-export function personalAverages(analytics: CourseAnalyticsData): Record<number, number> | null {
-  if (analytics.rounds_played === 0) return null;
-  const rows = analytics.average_score_relative_to_par_by_hole;
+export function personalAverages(analytics: CourseAnalytics): Record<number, number> | null {
+  if (analytics.roundsPlayed === 0) return null;
+  const rows = analytics.holeToPar;
   if (rows.length === 0) return null;
-  return Object.fromEntries(rows.map((row) => [row.hole_number, row.average_score]));
+  return Object.fromEntries(rows.map((row) => [row.hole, row.averageScore]));
 }
 
 function sumOf(holes: readonly number[], averages: Record<number, number>): number {
@@ -88,9 +68,9 @@ function sumOf(holes: readonly number[], averages: Record<number, number>): numb
 }
 
 export function nineFrom(
-  course: Course,
+  course: CourseDto,
   side: "front" | "back",
-  tee: Tee | null,
+  tee: TeeDto | null,
   averages: Record<number, number> | null,
 ): ScorecardNine {
   const holes = side === "front" ? FRONT_HOLES : BACK_HOLES;
@@ -122,18 +102,18 @@ export function nineFrom(
  * The tee the scorecard shows: the golfer's pick, or the longest until they pick one.
  * `picked` is undefined before any pick and null once they tap the selected tee off.
  */
-export function selectedTee(course: Course, picked: string | null | undefined): Tee | null {
+export function selectedTee(course: CourseDto, picked: string | null | undefined): TeeDto | null {
   if (picked === undefined) return teesByLength(course)[0] ?? null;
   return getTee(course, picked);
 }
 
-export function chartsFrom(analytics: CourseAnalyticsData): CourseChart[] {
+export function chartsFrom(analytics: CourseAnalytics): CourseChart[] {
   return [
-    { kind: "toPar", group: "score", rows: analytics.average_score_relative_to_par_by_hole },
-    { kind: "scoreType", group: "score", rows: analytics.score_type_distribution_by_hole },
-    { kind: "gir", group: "gir", rows: analytics.gir_percentage_by_hole },
-    { kind: "putts", group: "putts", rows: analytics.average_putts_by_hole },
-    { kind: "difficulty", group: "variance", rows: analytics.course_difficulty_profile_by_hole },
-    { kind: "variance", group: "variance", rows: analytics.score_variance_by_hole },
+    { kind: "toPar", group: "score", rows: analytics.holeToPar },
+    { kind: "scoreType", group: "score", rows: analytics.scoreMix },
+    { kind: "gir", group: "gir", rows: analytics.gir },
+    { kind: "putts", group: "putts", rows: analytics.putts },
+    { kind: "difficulty", group: "variance", rows: analytics.difficulty },
+    { kind: "variance", group: "variance", rows: analytics.variance },
   ];
 }

@@ -1,4 +1,4 @@
-import type { CourseSummary } from "@/types/golf";
+import type { CourseSummary } from "@/domain/course";
 import { HomeCourseSection } from "../components/HomeCourseSection";
 
 const course = (id: string, name: string, location: string): CourseSummary => ({
@@ -6,10 +6,10 @@ const course = (id: string, name: string, location: string): CourseSummary => ({
   name,
   location,
   par: 72,
-  total_holes: 18,
-  tee_count: 4,
-  external_course_id: null,
+  holeCount: 18,
+  teeCount: 4,
   source: "local",
+  externalId: null,
 });
 
 const results = [

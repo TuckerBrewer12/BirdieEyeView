@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { messageFrom } from "@/lib/userFacingErrors";
-import type { CourseSummary } from "@/types/golf";
+import type { CourseSummary } from "@/domain/course";
 import { coursesRepository, type CoursesRepository } from "./coursesRepository";
 import { useCourses } from "./useCourses";
 

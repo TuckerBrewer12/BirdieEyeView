@@ -1,6 +1,6 @@
 import { colors, scoreKindLabel, type ScoreKey } from "@/brand/theme";
 import { formatCourseName, formatSignedOneDecimal, formatWeekdayDay, pluralNoun } from "@/domain";
-import type { User } from "@/types/golf";
+import type { UserDto } from "@/types/api";
 import {
   type HiTrend,
   type Milestone,
@@ -9,7 +9,7 @@ import {
 } from "./model";
 
 
-export function firstNameOf(user: User | null): string {
+export function firstNameOf(user: UserDto | null): string {
   return user?.name?.split(" ")[0] ?? "Golfer";
 }
 

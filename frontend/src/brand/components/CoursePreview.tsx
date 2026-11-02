@@ -3,8 +3,7 @@ import { MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { motion as motionTokens } from "@/brand/theme";
-import { formatCourseName } from "@/domain/course";
-import type { CourseSummary } from "@/types/golf";
+import { formatCourseName, type CourseSummary } from "@/domain/course";
 
 interface CoursePreviewProps {
   course: CourseSummary;
@@ -65,8 +64,8 @@ export function CoursePreview({ course, onClick, focused = false }: CoursePrevie
 
       <div className="mt-1 flex gap-4">
         <Stat label="Par" value={course.par} />
-        <Stat label="Holes" value={course.total_holes} />
-        <Stat label="Tees" value={course.tee_count} />
+        <Stat label="Holes" value={course.holeCount} />
+        <Stat label="Tees" value={course.teeCount} />
       </div>
     </motion.div>
   );

@@ -4,7 +4,7 @@ import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { withoutRounds } from "../../../testing/fakes/analyticsResponses";
 import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
-import type { AnalyticsFilters } from "../../../types/analytics";
+import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
 
 // A few days after the sample golfer's last round, the way the demo tour sees them.
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";

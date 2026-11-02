@@ -10,7 +10,9 @@ export type HoleDto = Schemas["Hole"];
 export type TeeDto = Schemas["TeeResponse"];
 export type CourseDto = Schemas["CourseResponse"];
 export type CourseSummaryDto = Schemas["CourseSummaryResponse"];
+export type UserDto = Schemas["UserResponse"];
 export type UserTeeDto = Schemas["UserTee"];
+export type HandicapIndexDto = Schemas["HandicapIndexResponse"];
 export type HoleScoreDto = Schemas["HoleScoreResponse"];
 export type HoleSummaryDto = Schemas["HoleSummaryResponse"];
 export type ScoreCountsDto = Schemas["ScoreCounts"];
@@ -24,6 +26,7 @@ export type MilestoneDto = Schemas["Milestone"];
 export type CourseAnalyticsDto = Schemas["CourseAnalyticsResponse"];
 export type CourseScoreTrendRowDto = Schemas["CourseScoreTrendRow"];
 export type CourseHoleToParRowDto = Schemas["CourseHoleToParRow"];
+export type CourseHoleDifficultyRowDto = Schemas["CourseHoleDifficultyRow"];
 export type CourseHoleScoreTypeRowDto = Schemas["CourseHoleScoreTypeRow"];
 export type CourseHoleGirRowDto = Schemas["CourseHoleGirRow"];
 export type CourseHolePuttsRowDto = Schemas["CourseHolePuttsRow"];
@@ -55,6 +58,19 @@ export type FriendshipDto = Schemas["FriendshipResponse"];
 export type FriendshipStatusRequestDto = Schemas["FriendshipStatusRequest"];
 /** What `PATCH /users/{id}` takes. A field left out keeps its value; null clears it. */
 export type UserChangesDto = Schemas["UpdateUserRequest"];
+
+export type AuthUserDto = Schemas["AuthUserResponse"];
+export type RegisterDto = Schemas["RegisterResponse"];
+export type MessageDto = Schemas["MessageResponse"];
+
+/** What `POST /api/scan/extract` sends back: the card as read, and how sure the scan is of it. */
+export type ScanDto = Schemas["ScanResponse"];
+export type ScannedRoundDto = Schemas["ScannedRound"];
+export type ScannedTeeDto = Schemas["ScannedTee"];
+export type ScannedHoleScoreDto = Schemas["ScannedHoleScore"];
+export type FieldConfidenceDto = Schemas["FieldConfidence"];
+export type OcrTextDto = Schemas["OcrTextResponse"];
+export type SaveScanDto = Schemas["SaveScanResponse"];
 
 /** What `POST /api/scan/save` takes: a reviewed scan, and the course details read off the card. */
 export type SaveScanRequestDto = Schemas["SaveRoundRequest"];

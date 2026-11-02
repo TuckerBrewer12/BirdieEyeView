@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./Card";
-import type { CourseSummary } from "@/types/golf";
+import type { CourseSummary } from "@/domain/course";
 
 interface CourseLinkSearchProps {
   query: string;

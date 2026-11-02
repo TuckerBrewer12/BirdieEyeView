@@ -3,7 +3,7 @@ import { useUpdateUser } from "@/data/useUpdateUser";
 import { formatHandicapInputValue, parseHandicapInput } from "@/domain/handicap";
 import { useCourseSearch } from "@/data/useCourseSearch";
 import { messageFrom } from "@/lib/userFacingErrors";
-import type { CourseSummary } from "@/types/golf";
+import type { CourseSummary } from "@/domain/course";
 import { formChanged, type HomeCourse, type SettingsForm } from "./model";
 import { settingsRepository, type SettingsRepository } from "./settingsRepository";
 import { useSettings } from "./useSettings";

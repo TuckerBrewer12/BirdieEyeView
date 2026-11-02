@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CourseLinkSearch } from "@/brand";
-import type { CourseSummary } from "@/types/golf";
+import type { CourseSummary } from "@/domain/course";
 import type { HomeCourse } from "../model";
 
 interface HomeCourseSectionProps {

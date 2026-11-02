@@ -1,15 +1,15 @@
-import type { User } from "@/types/golf";
+import type { UserDto } from "@/types/api";
 import { Button, Card, CardContent, PageTitle, Stat, StatLabel, StatUnit, StatValue } from "@/brand";
 
 interface ProfileHeroBannerProps {
-  user: User | null;
+  user: UserDto | null;
   handicapIndex: number | null;
   handicapLabel: string;
   firstName: string;
   onHandicapClick?: () => void;
 }
 
-function initialsFor(user: User | null): string {
+function initialsFor(user: UserDto | null): string {
   if (!user?.name) return "G";
   return user.name
     .split(" ")

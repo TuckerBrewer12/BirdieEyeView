@@ -1,6 +1,6 @@
 import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../../testing/playwright";
-import type { Course } from "../../../../types/golf";
+import type { CourseDto } from "../../../../types/api";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 
@@ -20,7 +20,7 @@ export class CourseDetailRobot {
   }
 
   async open(
-    course: Course,
+    course: CourseDto,
     seed: Omit<FakeBackendSeed, "fullCourses"> = {},
   ): Promise<this> {
     await this.page.emulateMedia({ reducedMotion: "reduce" });

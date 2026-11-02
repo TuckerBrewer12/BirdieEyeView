@@ -1,8 +1,9 @@
 import { readPreference, writePreference } from "@/data/devicePreferences";
 import { userRepository, type UserRepository } from "@/data/userRepository";
+import { courseSummaryFrom } from "@/domain/course";
 import { api } from "@/lib/api";
 import type { CourseSearchRepository } from "@/pages/rounds/roundsRepository";
-import type { User } from "@/types/golf";
+import type { UserDto } from "@/types/api";
 import type { DevicePreferences, Settings } from "./model";
 
 const UPDATES_PREF_KEY = "settings_get_updates";
@@ -14,7 +15,7 @@ export interface SettingsRepository extends Pick<UserRepository, "updateUser">, 
 }
 
 /** The user as Settings shows it, with the home course's name read separately. */
-export function settingsFrom(user: User, homeCourseName: string | null): Settings {
+export function settingsFrom(user: UserDto, homeCourseName: string | null): Settings {
   return {
     friendCode: user.friend_code || null,
     handicap: user.handicap,
@@ -36,7 +37,7 @@ export const settingsRepository: SettingsRepository = {
     return settingsFrom(user, homeCourse?.name ?? null);
   },
   updateUser: (userId, changes) => userRepository.updateUser(userId, changes),
-  searchCourses: (query, userId) => api.searchCourses(query, userId),
+  searchCourses: async (query, userId) => (await api.searchCourses(query, userId)).map(courseSummaryFrom),
   readDevicePreferences: () => devicePreferencesFrom(readPreference(UPDATES_PREF_KEY)),
   saveDevicePreferences: ({ getUpdates }) => {
     writePreference(UPDATES_PREF_KEY, String(getUpdates));

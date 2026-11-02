@@ -6,6 +6,7 @@ import pytest
 from fastapi import HTTPException
 from pydantic import ValidationError
 
+from api.main import app
 from api.round_responses import round_summary
 from api.routers import ai_insights, courses, rounds, stats, users
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
@@ -321,6 +322,41 @@ def test_friendship_status_is_typed():
         )
 
 
+def test_user_response_is_the_profile_only():
+    """A user is sent as their profile: no rounds, no account bookkeeping, and a typed schema."""
+    user = _make_user(
+        uuid4(),
+        friend_code="BIRD-1234",
+        handicap=7.5,
+        scoring_goal=79,
+        email_verified=True,
+        created_at=datetime(2026, 2, 20),
+        last_handicap_update=datetime(2026, 3, 1),
+        rounds=[_make_round(uuid4())],
+    )
+    assert users.user_response(user).model_dump() == {
+        "id": user.id,
+        "friend_code": "BIRD-1234",
+        "name": "Golfer",
+        "email": "golfer@example.com",
+        "home_course_id": None,
+        "handicap": 7.5,
+        "created_at": datetime(2026, 2, 20),
+        "scoring_goal": 79,
+    }
+
+    schemas = app.openapi()["components"]["schemas"]
+    assert set(schemas["UserResponse"]["required"]) == set(users.UserResponse.model_fields)
+    assert schemas["HandicapIndexResponse"]["required"] == ["handicap_index"]
+    for path, method in [
+        ("/api/users/{user_id}", "get"),
+        ("/api/users/{user_id}", "patch"),
+        ("/api/users/by-email/{email}", "get"),
+    ]:
+        response = app.openapi()["paths"][path][method]["responses"]["200"]
+        assert response["content"]["application/json"]["schema"] == {"$ref": "#/components/schemas/UserResponse"}
+
+
 @pytest.mark.asyncio
 async def test_user_get_update_and_handicap(monkeypatch):
     user_id = uuid4()
@@ -334,16 +370,17 @@ async def test_user_get_update_and_handicap(monkeypatch):
     db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
     monkeypatch.setattr(users.hcap, "handicap_index", lambda *args, **kwargs: 12.0)
 
-    assert await users.get_user_by_email("GOLFER@example.com", db, user) == user
-    assert await users.get_user(user_id, db, user) == user
+    profile = users.user_response(user)
+    assert await users.get_user_by_email("GOLFER@example.com", db, user) == profile
+    assert await users.get_user(user_id, db, user) == profile
     request = users.UpdateUserRequest(home_course_id=course_id, handicap="+2", scoring_goal=85)
-    assert await users.update_user(user_id, request, db, user) == user
+    assert await users.update_user(user_id, request, db, user) == profile
     assert db.users.update_user.await_args.kwargs == {
         "home_course_id": str(course_id),
         "handicap_index": -2.0,
         "scoring_goal": 85,
     }
-    assert await users.get_user_handicap(user_id, db, user) == {"handicap_index": 12.0}
+    assert (await users.get_user_handicap(user_id, db, user)).handicap_index == 12.0
 
     with pytest.raises(HTTPException) as exc:
         await users.get_user(uuid4(), db, user)

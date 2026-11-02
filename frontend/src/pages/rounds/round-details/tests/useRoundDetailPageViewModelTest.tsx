@@ -2,7 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import { pebbleBeach } from "@/testing/fixtures/courses";
+import { pebbleBeachSummary } from "@/testing/fixtures/courses";
 import {
   halfMoonBayRound,
   pebbleBeachCourse,
@@ -94,7 +94,7 @@ describe("useRoundDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.courseHandicap).toBe(12));
     act(() => result.current.enterEditMode());
     await act(async () => {
-      await result.current.editor.pickCourse(pebbleBeach);
+      await result.current.editor.pickCourse(pebbleBeachSummary);
     });
     expect(result.current.courseHandicap).toBe(16);
   });

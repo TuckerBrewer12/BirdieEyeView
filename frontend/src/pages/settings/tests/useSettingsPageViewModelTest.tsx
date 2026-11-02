@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import type { ReactNode } from "react";
 import { queryKeys } from "@/data/queryKeys";
-import { pebbleBeach, populatedCourses } from "@/testing/fixtures/courses";
+import { pebbleBeach, pebbleBeachSummary, populatedCourses } from "@/testing/fixtures/courses";
 import { FakeSettingsRepository, type FakeSettingsSeed } from "@/testing/fakes/FakeSettingsRepository";
 import { useSettingsPageViewModel } from "../useSettingsPageViewModel";
 
@@ -11,7 +11,7 @@ function setup(seed: FakeSettingsSeed = {}, configure?: (repository: FakeSetting
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  const otherCourses = populatedCourses.filter((course) => course.name !== pebbleBeach.name);
+  const otherCourses = populatedCourses.filter((course) => course.name !== pebbleBeachSummary.name);
   const repository = new FakeSettingsRepository({ courses: [pebbleBeach, ...otherCourses], ...seed });
   configure?.(repository);
   const wrapper = ({ children }: { children: ReactNode }) => (
@@ -30,13 +30,13 @@ async function loaded(seed?: FakeSettingsSeed, configure?: (repository: FakeSett
 describe("useSettingsPageViewModel", () => {
   it("fills the form from the saved settings and device choices", async () => {
     const { result } = await loaded({
-      user: { handicap: -2.5, home_course_id: pebbleBeach.id, friend_code: "ABCD-9999" },
+      user: { handicap: -2.5, home_course_id: pebbleBeachSummary.id, friend_code: "ABCD-9999" },
       device: { getUpdates: false },
     });
 
     expect(result.current.friendCode).toBe("ABCD-9999");
     expect(result.current.handicapInput).toBe("+2.5");
-    expect(result.current.homeCourse).toEqual({ id: pebbleBeach.id, name: pebbleBeach.name });
+    expect(result.current.homeCourse).toEqual({ id: pebbleBeachSummary.id, name: pebbleBeachSummary.name });
     expect(result.current.getUpdates).toBe(false);
     expect(result.current.dirty).toBe(false);
     expect(result.current.canSave).toBe(false);
@@ -68,11 +68,11 @@ describe("useSettingsPageViewModel", () => {
     const { repository, result } = await loaded();
 
     act(() => result.current.setCourseQuery("pebble"));
-    await waitFor(() => expect(result.current.courseResults.map((c) => c.name)).toEqual([pebbleBeach.name]));
+    await waitFor(() => expect(result.current.courseResults.map((c) => c.name)).toEqual([pebbleBeachSummary.name]));
     expect(repository.searchQueries).toEqual(["pebble"]);
 
     act(() => result.current.pickHomeCourse(result.current.courseResults[0]));
-    expect(result.current.homeCourse).toEqual({ id: pebbleBeach.id, name: pebbleBeach.name });
+    expect(result.current.homeCourse).toEqual({ id: pebbleBeachSummary.id, name: pebbleBeachSummary.name });
     expect(result.current.courseQuery).toBe("");
     expect(result.current.dirty).toBe(true);
   });
@@ -82,21 +82,21 @@ describe("useSettingsPageViewModel", () => {
 
     act(() => {
       result.current.setHandicapInput("+1.2");
-      result.current.pickHomeCourse(pebbleBeach);
+      result.current.pickHomeCourse(pebbleBeachSummary);
       result.current.setGetUpdates(false);
     });
     act(() => result.current.save());
 
     await waitFor(() => expect(result.current.saved).toBe(true));
-    expect(repository.updates).toEqual([{ handicap: -1.2, home_course_id: pebbleBeach.id }]);
+    expect(repository.updates).toEqual([{ handicap: -1.2, home_course_id: pebbleBeachSummary.id }]);
     expect(repository.device).toEqual({ getUpdates: false });
     expect(result.current.dirty).toBe(false);
     expect(result.current.handicapInput).toBe("+1.2");
-    expect(result.current.homeCourse?.id).toBe(pebbleBeach.id);
+    expect(result.current.homeCourse?.id).toBe(pebbleBeachSummary.id);
   });
 
   it("clears the handicap and home course when they are emptied", async () => {
-    const { repository, result } = await loaded({ user: { handicap: 8, home_course_id: pebbleBeach.id } });
+    const { repository, result } = await loaded({ user: { handicap: 8, home_course_id: pebbleBeachSummary.id } });
 
     act(() => {
       result.current.setHandicapInput("");

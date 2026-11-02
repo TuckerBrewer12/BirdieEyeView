@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { teeColors } from "@/domain";
 import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
-import type { CourseSummary } from "@/types/golf";
+import type { CourseSummary } from "@/domain/course";
 import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
 import { useCourse } from "../courses/useCourse";
 import { reviewFromSetup, todayIso, type ManualSetup } from "./scanModel";

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { devicePreferencesFrom, settingsFrom } from "../settingsRepository";
 import { formChanged, type SettingsForm } from "../model";
-import type { User } from "@/types/golf";
+import type { UserDto } from "@/types/api";
 
-const user: User = {
+const user: UserDto = {
   id: "user-1",
   friend_code: "BIRD-1234",
   name: "Test Golfer",

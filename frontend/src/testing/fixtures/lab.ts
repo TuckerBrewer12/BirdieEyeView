@@ -1,14 +1,14 @@
-import type { AnalyticsDto, GoalReportDto, ScoreTypeRowDto } from "../../types/api";
-import type { User } from "../../types/golf";
+import type { AnalyticsDto, GoalReportDto, ScoreTypeRowDto, UserDto } from "../../types/api";
 import { withoutRounds } from "../fakes/analyticsResponses";
 import { avery } from "./friendships";
 import { sampleGolfer } from "./sampleGolfer";
 
 /** A 17.8 out to break 90: met it once in twelve rounds, three-putts the worst leak. */
-export const labUser: User = {
+export const labUser: UserDto = {
   id: "user-1",
   name: "Test Golfer",
   email: "test@example.com",
+  friend_code: null,
   home_course_id: null,
   handicap: 17.8,
   created_at: null,

@@ -31,7 +31,11 @@ export {
 } from "./radar";
 export type { RadarEntry } from "./radar";
 
-export { formatCourseName, getTee, teeColors } from "./course";
+export { courseSummaryFrom, formatCourseName, getTee, teeColors } from "./course";
+export type { CourseSummary } from "./course";
+
+export { EMPTY_COURSE_ANALYTICS, courseAnalyticsFrom } from "./courseAnalytics";
+export type { CourseAnalytics, HoleFigure, HoleScoreMix, HoleToPar, ScorePoint } from "./courseAnalytics";
 
 export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekdayDay, isoDay, parseDay } from "./date";
 export type { DayParts } from "./date";
@@ -59,6 +63,8 @@ export type {
   RoundEdits,
   RoundSummary,
 } from "./round";
+
+export type { AnalyticsFilters } from "./analyticsFilters";
 
 export { trendPointsFrom } from "./trend";
 export type { RoundTrendPoint } from "./trend";

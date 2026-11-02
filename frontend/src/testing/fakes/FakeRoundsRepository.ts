@@ -1,6 +1,12 @@
-import { Round as RoundModel, type RoundDetail, type RoundEdits, type RoundSummary } from "../../domain";
-import type { Course, CourseSummary } from "../../types/golf";
-import type { RoundComparison } from "../../types/analytics";
+import {
+  Round as RoundModel,
+  courseSummaryFrom,
+  type CourseSummary,
+  type RoundDetail,
+  type RoundEdits,
+  type RoundSummary,
+} from "../../domain";
+import type { CourseDto, HandicapIndexDto, RoundComparisonDto } from "../../types/api";
 import { updateRequestFrom, type RoundsRepository } from "../../pages/rounds/roundsRepository";
 import { InMemoryRounds, type InMemoryRoundsSeed } from "./InMemoryRounds";
 
@@ -41,15 +47,15 @@ export class FakeRoundsRepository implements RoundsRepository {
     return RoundModel.fromSummary(this.store.linkCourse(roundId, courseId));
   }
 
-  async getCourse(courseId: string): Promise<Course> {
+  async getCourse(courseId: string): Promise<CourseDto> {
     return this.store.getCourse(courseId);
   }
 
-  async getRoundComparison(): Promise<RoundComparison | null> {
+  async getRoundComparison(): Promise<RoundComparisonDto | null> {
     return this.store.getRoundComparison();
   }
 
-  async getUserHandicap(): Promise<{ handicap_index: number | null }> {
+  async getUserHandicap(): Promise<HandicapIndexDto> {
     return this.store.getUserHandicap();
   }
 
@@ -57,6 +63,6 @@ export class FakeRoundsRepository implements RoundsRepository {
     this.searchedQueries.push(query);
     const delay = this.store.nextSearchDelayMs();
     if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
-    return this.store.searchCourses(query);
+    return this.store.searchCourses(query).map(courseSummaryFrom);
   }
 }

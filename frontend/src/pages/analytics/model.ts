@@ -1,20 +1,20 @@
 import { SCORE_KINDS, scoreKind, type ScoreKind, type ScoreMix } from "@/domain";
 import { average, withRollingAverage } from "@/domain/stats";
+import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type {
-  AnalyticsData,
-  AnalyticsFilters,
-  AnalyticsKPIs,
-  GIRTrendRow,
-  PuttsTrendRow,
-  ScoreTrendRow,
-  ScoreTypeRow,
-  ScoringByParRow,
-  ScoringByYardageRow,
-  GIRvsNonGIRRow,
-  ScramblingRow,
-  ThreePuttRow,
-  UpAndDownRow,
-} from "@/types/analytics";
+  AnalyticsDto,
+  AnalyticsKpisDto,
+  GirTrendRowDto,
+  GirVsNonGirRowDto,
+  PuttsTrendRowDto,
+  ScoreTrendRowDto,
+  ScoreTypeRowDto,
+  ScoringByParRowDto,
+  ScoringByYardageRowDto,
+  ScramblingTrendRowDto,
+  ThreePuttsTrendRowDto,
+  UpAndDownTrendRowDto,
+} from "@/types/api";
 
 export type { AnalyticsFilters };
 
@@ -45,7 +45,7 @@ const SCORE_TYPE_KEYS = [
   "double_bogey",
   "triple_bogey",
   "quad_bogey",
-] as const satisfies readonly (keyof ScoreTypeRow)[];
+] as const satisfies readonly (keyof ScoreTypeRowDto)[];
 export type ScoreTypeKey = (typeof SCORE_TYPE_KEYS)[number];
 
 /** One score type's share of every counted hole, as a percentage to one decimal. */
@@ -74,7 +74,7 @@ export interface BestRoundEvent {
 
 /** How holes went when the green was hit, and when it was missed, as the server split them. */
 export interface GirSplit {
-  bucket: GIRvsNonGIRRow["bucket"];
+  bucket: GirVsNonGirRowDto["bucket"];
   holes: number;
   mix: ScoreMix;
 }
@@ -99,8 +99,8 @@ export interface YardageBucket {
   mix: ScoreMix;
 }
 
-export type ScoreTrendPoint = ScoreTrendRow & { rolling_avg: number | null };
-export type ShortGamePoint = ScramblingRow & { up_and_down_pct: number | null };
+export type ScoreTrendPoint = ScoreTrendRowDto & { rolling_avg: number | null };
+export type ShortGamePoint = ScramblingTrendRowDto & { up_and_down_pct: number | null };
 
 export type InsightCategory = "scoring" | "gir" | "putting";
 
@@ -132,21 +132,21 @@ export function insightCategory(insight: Insight): InsightCategory {
 /** The analytics page's figures: the server's sections, and the series the charts draw from them. */
 export interface Analytics {
   /** The server's sections as sent, for the charts that draw a section as it is. */
-  sections: AnalyticsData;
-  kpis: AnalyticsKPIs;
+  sections: AnalyticsDto;
+  kpis: AnalyticsKpisDto;
   roundCount: number;
   /** Each round's score with a five-round rolling average, oldest first. */
   scoreTrend: ScoreTrendPoint[];
   /** Score types across every counted hole; types never made are left out. */
   scoreMix: ScoreTypeShare[];
   /** Rounds with greens recorded. */
-  girTrend: GIRTrendRow[];
+  girTrend: GirTrendRowDto[];
   /** Some rounds have no greens recorded, so they sit out of `girTrend`. */
   girRoundsLeftOut: boolean;
   /** Rounds with putts recorded. */
-  puttsTrend: PuttsTrendRow[];
+  puttsTrend: PuttsTrendRowDto[];
   /** Three-putt counts, only for rounds with putts recorded. */
-  threePuttTrend: ThreePuttRow[];
+  threePuttTrend: ThreePuttsTrendRowDto[];
   /** Each round's scrambling rate beside its up-and-down rate. */
   shortGameTrend: ShortGamePoint[];
   bestScore: number | null;
@@ -170,7 +170,7 @@ function present<T>(value: T | null | undefined): value is T {
 }
 
 /** Each score type's share of every counted hole, weighted by how many holes each round counted. */
-export function scoreMixFrom(distribution: ScoreTypeRow[]): ScoreTypeShare[] {
+export function scoreMixFrom(distribution: ScoreTypeRowDto[]): ScoreTypeShare[] {
   const counted = distribution.filter((row) => row.holes_counted > 0);
   const totalHoles = counted.reduce((sum, row) => sum + row.holes_counted, 0);
   if (totalHoles === 0) return [];
@@ -193,7 +193,7 @@ export function scoreMixByKindFrom(shares: ScoreTypeShare[]): ScoreMix {
 }
 
 /** The server's GIR and no-GIR rows, keyed by score kind. */
-export function girSplitFrom(rows: GIRvsNonGIRRow[]): GirSplit[] {
+export function girSplitFrom(rows: GirVsNonGirRowDto[]): GirSplit[] {
   return rows.map((row) => {
     const mix = emptyMix();
     for (const kind of SCORE_KINDS) mix[kind] = row[ROW_KEY[kind]];
@@ -202,7 +202,7 @@ export function girSplitFrom(rows: GIRvsNonGIRRow[]): GirSplit[] {
 }
 
 /** The server's yardage bands, each par's in band order, with each band's holes sorted into score kinds. */
-export function yardageBucketsFrom(rows: ScoringByYardageRow[]): YardageBucket[] {
+export function yardageBucketsFrom(rows: ScoringByYardageRowDto[]): YardageBucket[] {
   return [...rows]
     .sort((a, b) => a.par - b.par || a.bucket_order - b.bucket_order)
     .map((row) => {
@@ -228,17 +228,17 @@ export function defaultRangePar(buckets: YardageBucket[]): RangePar {
 }
 
 /** The lowest score in the window, or null without a scored round. */
-export function bestScoreFrom(scoreTrend: ScoreTrendRow[]): number | null {
+export function bestScoreFrom(scoreTrend: ScoreTrendRowDto[]): number | null {
   const scores = scoreTrend.map((row) => row.total_score).filter(present);
   return scores.length ? Math.min(...scores) : null;
 }
 
-function averagePuttsFrom(puttsTrend: PuttsTrendRow[]): number | null {
+function averagePuttsFrom(puttsTrend: PuttsTrendRowDto[]): number | null {
   return average(puttsTrend.map((row) => row.total_putts).filter(present));
 }
 
 /** Pairs each round's scrambling rate with the up-and-down rate the server sent for the same round. */
-export function shortGameTrendFrom(scrambling: ScramblingRow[], upAndDown: UpAndDownRow[]): ShortGamePoint[] {
+export function shortGameTrendFrom(scrambling: ScramblingTrendRowDto[], upAndDown: UpAndDownTrendRowDto[]): ShortGamePoint[] {
   return scrambling.map((row, i) => ({ ...row, up_and_down_pct: upAndDown[i]?.percentage ?? null }));
 }
 
@@ -252,10 +252,10 @@ function halvesChange(values: number[]): number | null {
 }
 
 export function insightsFrom(
-  scoreTrend: ScoreTrendRow[],
-  girTrend: GIRTrendRow[],
-  scoringByPar: ScoringByParRow[],
-  puttsTrend: PuttsTrendRow[],
+  scoreTrend: ScoreTrendRowDto[],
+  girTrend: GirTrendRowDto[],
+  scoringByPar: ScoringByParRowDto[],
+  puttsTrend: PuttsTrendRowDto[],
 ): Insight[] {
   const insights: Insight[] = [];
 
@@ -298,7 +298,7 @@ export function insightsFrom(
 }
 
 /** The page's figures from the server's response. */
-export function analyticsFrom(data: AnalyticsData): Analytics {
+export function analyticsFrom(data: AnalyticsDto): Analytics {
   const girTrend = data.gir_trend.filter((row) => row.gir_percentage != null && row.total_gir != null);
   const puttsTrend = data.putts_trend.filter((row) => row.total_putts != null);
   const roundsWithPutts = new Set(puttsTrend.map((row) => row.round_id));

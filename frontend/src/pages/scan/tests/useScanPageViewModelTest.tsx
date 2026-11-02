@@ -6,7 +6,7 @@ import { FakeCoursesRepository } from "@/testing/fakes/FakeCoursesRepository";
 import { FakeHandler } from "@/testing/fakes/FakeHandler";
 import { FakeRoundsRepository } from "@/testing/fakes/FakeRoundsRepository";
 import { FakeScanRepository, type FakeScanRepositorySeed } from "@/testing/fakes/FakeScanRepository";
-import { pebbleBeach } from "@/testing/fixtures/courses";
+import { pebbleBeach, pebbleBeachSummary } from "@/testing/fixtures/courses";
 import { pebbleBeachCourse } from "@/testing/fixtures/roundDetails";
 import { SCANNED_COURSE_NAME, scannedCard } from "@/testing/fixtures/scan";
 import { ScanSessionProvider } from "../ScanSessionProvider";
@@ -72,7 +72,7 @@ describe("useScanPageViewModel", () => {
 
   it("sends the photo, what's on the card, its text and the picked course with the scan", async () => {
     const { result, scan } = renderVm({ result: scannedCard, text: "HOLE 1 2 3" });
-    act(() => result.current.pickPresetCourse(pebbleBeach));
+    act(() => result.current.pickPresetCourse(pebbleBeachSummary));
     const file = await pick(result);
     await waitFor(() => expect(scan.readPhotos).toEqual([file]));
     act(() => result.current.setUserContext("my name is Sam"));
@@ -84,13 +84,13 @@ describe("useScanPageViewModel", () => {
       photo: file,
       userContext: "my name is Sam",
       ocrText: "HOLE 1 2 3",
-      courseId: pebbleBeach.id,
+      courseId: pebbleBeachSummary.id,
     });
   });
 
   it("opens the review search on the name read off the card when a course was picked first", async () => {
     const { result } = renderVm();
-    act(() => result.current.pickPresetCourse(pebbleBeach));
+    act(() => result.current.pickPresetCourse(pebbleBeachSummary));
     await pick(result);
 
     act(() => result.current.extract());
@@ -184,7 +184,7 @@ describe("useScanPageViewModel", () => {
   it("offers the picked course's tees, and starts a blank card on that course", async () => {
     const { result } = renderVm();
     act(() => result.current.setMode("manual"));
-    act(() => result.current.setup.pickCourse(pebbleBeach));
+    act(() => result.current.setup.pickCourse(pebbleBeachSummary));
     await waitFor(() => expect(result.current.setup.tees).toEqual(["Blue"]));
     act(() => result.current.setup.setTeeBox("Blue"));
     act(() => result.current.setup.setDate("2026-10-01"));
@@ -193,7 +193,7 @@ describe("useScanPageViewModel", () => {
 
     expect(result.current.step).toBe("review");
     const { review } = result.current;
-    expect(review.linkedName).toBe(pebbleBeach.name);
+    expect(review.linkedName).toBe(pebbleBeachSummary.name);
     expect(review.teeBox).toBe("Blue");
     expect(review.date).toBe("2026-10-01");
     expect(review.toCheck).toEqual([]);

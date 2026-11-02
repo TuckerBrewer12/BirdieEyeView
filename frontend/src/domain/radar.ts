@@ -1,4 +1,4 @@
-import type { AnalyticsKPIs, ScoringByParRow } from "@/types/analytics";
+import type { AnalyticsKpisDto, ScoringByParRowDto } from "@/types/api";
 import type { BenchmarkProfile } from "./benchmark";
 import { formatPercent, formatSignedOneDecimal } from "./format";
 
@@ -34,8 +34,8 @@ export function profilePuttsPerGir(score: number): number {
  * handicap benchmark is. Null until they have a round.
  */
 export function benchmarkProfileFrom(
-  kpis: AnalyticsKPIs,
-  scoringByPar: ScoringByParRow[],
+  kpis: AnalyticsKpisDto,
+  scoringByPar: ScoringByParRowDto[],
 ): BenchmarkProfile | null {
   if (kpis.total_rounds < 1) return null;
   const parAverage = (par: number) =>
@@ -51,8 +51,8 @@ export function benchmarkProfileFrom(
 }
 
 export function buildRadarData(
-  kpis: AnalyticsKPIs,
-  scoringByPar: ScoringByParRow[],
+  kpis: AnalyticsKpisDto,
+  scoringByPar: ScoringByParRowDto[],
   profile?: BenchmarkProfile,
 ): RadarEntry[] {
   const hasGir  = kpis.gir_percentage != null;

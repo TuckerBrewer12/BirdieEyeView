@@ -1,4 +1,4 @@
-import type { Tee } from "@/types/golf";
+import type { TeeDto } from "@/types/api";
 
 /** WHS course handicap: (HI × Slope / 113) + (Course Rating − Par), rounded. */
 export function courseHandicap(
@@ -10,7 +10,7 @@ export function courseHandicap(
   return Math.round((hi * slope) / 113 + (courseRating - par));
 }
 
-type RatedTee = Pick<Tee, "slope_rating" | "course_rating">;
+type RatedTee = Pick<TeeDto, "slope_rating" | "course_rating">;
 
 /** Course handicap when HI, tee ratings, and par are all present. */
 export function ratedCourseHandicap(

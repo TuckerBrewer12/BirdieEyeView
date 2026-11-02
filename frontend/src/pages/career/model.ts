@@ -1,5 +1,5 @@
 import { buildRadarData, parseDay, trendPointsFrom, type RadarEntry, type RoundTrendPoint, type ScoreMix } from "@/domain";
-import type { AnalyticsFilters } from "@/types/analytics";
+import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type { AnalyticsDto, MilestoneEventDto, NotableAchievementsDto } from "@/types/api";
 import { scoreMixByKindFrom, scoreMixFrom } from "../analytics/model";
 

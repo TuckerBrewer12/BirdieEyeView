@@ -1,10 +1,11 @@
-import type { DashboardData, User } from "../../types/golf";
-import type { GoalReport } from "../../types/analytics";
 import type {
+  DashboardDto,
+  GoalReportDto,
   HandicapTrendRowDto,
   ScoreTrendRowDto,
   ScramblingTrendRowDto,
   UpAndDownTrendRowDto,
+  UserDto,
 } from "../../types/api";
 import { populatedRounds } from "./rounds";
 
@@ -45,17 +46,18 @@ const upAndDownTrend: UpAndDownTrendRowDto[] = scoreTrend.map((row) => ({
   percentage: 33.3,
 }));
 
-export const dashboardUser: User = {
+export const dashboardUser: UserDto = {
   id: "user-1",
   name: "Test Golfer",
   email: "test@example.com",
+  friend_code: null,
   home_course_id: null,
   handicap: 12.4,
   created_at: null,
   scoring_goal: 79,
 };
 
-export const populatedDashboard: DashboardData = {
+export const populatedDashboard: DashboardDto = {
   total_rounds: 4,
   scoring_average: 76,
   best_round: 69,
@@ -100,7 +102,7 @@ export const populatedDashboard: DashboardData = {
   up_and_down_trend: upAndDownTrend,
 };
 
-export const dashboardGoalReport: GoalReport = {
+export const dashboardGoalReport: GoalReportDto = {
   scoring_average: 76.8,
   best_score: 69,
   scoring_goal: 79,

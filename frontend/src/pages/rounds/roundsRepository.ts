@@ -1,8 +1,14 @@
 import { userRepository } from "@/data/userRepository";
-import { Round as RoundModel, type RoundDetail, type RoundEdits, type RoundSummary } from "@/domain";
+import {
+  Round as RoundModel,
+  courseSummaryFrom,
+  type CourseSummary,
+  type RoundDetail,
+  type RoundEdits,
+  type RoundSummary,
+} from "@/domain";
 import { api } from "@/lib/api";
-import type { Course, CourseSummary } from "@/types/golf";
-import type { RoundComparison } from "@/types/analytics";
+import type { CourseDto, HandicapIndexDto, RoundComparisonDto } from "@/types/api";
 
 export type UpdateRoundBody = {
   hole_scores?: {
@@ -31,9 +37,9 @@ export interface RoundsRepository {
   saveRound(round: RoundDetail, edits: RoundEdits): Promise<RoundDetail>;
   deleteRound(roundId: string): Promise<void>;
   linkCourse(roundId: string, courseId: string): Promise<RoundSummary>;
-  getCourse(courseId: string): Promise<Course>;
-  getRoundComparison(userId: string, roundId: string): Promise<RoundComparison | null>;
-  getUserHandicap(userId: string): Promise<{ handicap_index: number | null }>;
+  getCourse(courseId: string): Promise<CourseDto>;
+  getRoundComparison(userId: string, roundId: string): Promise<RoundComparisonDto | null>;
+  getUserHandicap(userId: string): Promise<HandicapIndexDto>;
   searchCourses(query: string, userId?: string): Promise<CourseSummary[]>;
 }
 
@@ -87,5 +93,5 @@ export const roundsRepository: RoundsRepository = {
   getCourse: (courseId) => api.getCourse(courseId),
   getRoundComparison: (userId, roundId) => api.getRoundComparison(userId, roundId),
   getUserHandicap: (userId) => userRepository.getUserHandicap(userId),
-  searchCourses: (query, userId) => api.searchCourses(query, userId),
+  searchCourses: async (query, userId) => (await api.searchCourses(query, userId)).map(courseSummaryFrom),
 };
