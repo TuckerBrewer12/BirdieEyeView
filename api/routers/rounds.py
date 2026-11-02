@@ -132,11 +132,7 @@ async def get_rounds_for_user(
             tee_box=row["tee_box"],
             date=row["round_date"],
             total_score=row["total_score"],
-            to_par=(
-                (row["total_score"] - row["course_par"])
-                if row["total_score"] is not None and row["course_par"] is not None
-                else None
-            ),
+            to_par=row["to_par"],
             front_nine=row["front_nine"],
             back_nine=row["back_nine"],
             total_putts=row["total_putts"],

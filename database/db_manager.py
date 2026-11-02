@@ -12,7 +12,7 @@ from database.repositories.friendship_repo import FriendshipRepositoryDB
 
 
 class DatabaseManager:
-    """Facade over the three domain repositories.
+    """Facade over the five domain repositories.
 
     Usage:
         pool = await asyncpg.create_pool(dsn=...)

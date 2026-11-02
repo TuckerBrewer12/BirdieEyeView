@@ -6,6 +6,7 @@ from database.repositories.course_repo import CourseRepositoryDB
 from database.repositories.round_repo import RoundRepositoryDB
 from database.repositories.user_tee_repo import UserTeeRepositoryDB
 from database.repositories.user_repo import UserRepositoryDB
+from database.exceptions import IntegrityError
 from database.converters import (
     course_from_rows,
     course_to_row,
@@ -79,12 +80,13 @@ def test_hole_score_converter_null_par_played():
 
 
 def test_hole_score_to_row_includes_par_played():
-    """hole_score_to_row produces an 11-element tuple with par_played at index 9."""
+    """Snapshot positions remain stable; the new played state is appended."""
     hs = HoleScore(hole_number=1, strokes=5, par_played=4, handicap_played=7)
     rid = uuid4()
     row = hole_score_to_row(hs, rid, None)
 
-    assert len(row) == 11
+    assert len(row) == 12
+    assert row[11] is None
     assert row[0] == rid           # round_id
     assert row[1] is None          # hole_id (nullable)
     assert row[2] == 1             # hole_number
@@ -170,7 +172,6 @@ def test_course_to_row_prefers_declared_total_holes():
     assert course_to_row(legacy)["total_holes"] == 18
     assert course_to_row(Course(name="Empty"))["total_holes"] is None
 
-
 def test_user_tee_converter_roundtrip():
     """user_tee_from_row correctly maps all fields including JSONB hole_yardages."""
     tid = uuid4()
@@ -207,6 +208,16 @@ def test_user_converter_maps_friend_code():
     user = user_from_row(row)
     assert user.id == str(uid)
     assert user.friend_code == "GCABC12345"
+
+
+@pytest.mark.parametrize('yardages', ['{"1":400,"01":500}', '{"1":true}', '{"1":400.5}', '[]', [], False, 'not json'])
+def test_user_tee_converter_rejects_invalid_stored_yardages(yardages):
+    row = {
+        'id': uuid4(), 'user_id': uuid4(), 'course_id': None, 'name': 'Blue',
+        'slope_rating': None, 'course_rating': None, 'hole_yardages': yardages, 'created_at': None,
+    }
+    with pytest.raises(IntegrityError, match='Invalid stored user tee data'):
+        user_tee_from_row(row)
 
 
 # ================================================================
@@ -256,6 +267,7 @@ async def test_course_repo_create_course(mock_pool):
         {"id": course_id, "name": "New Course", "location": "Loc",
          "external_course_id": None,
          "par": 72, "total_holes": 18, "metadata": "{}", "user_id": None},
+        {'id': course_id},  # lock the parent before tee upsert
         {"id": tee_id},
     ]
     conn.fetch.side_effect = [
@@ -427,16 +439,14 @@ async def test_round_repo_create_round_populates_par_from_course(mock_pool):
     course_id = uuid4()
 
     row = _round_row(round_id, course_id=course_id)
-    conn.fetchrow.side_effect = [row, row]
+    conn.fetchrow.side_effect = [{'id': course_id, 'user_id': None, 'total_holes': 18}, row, row]
     conn.fetch.side_effect = [
         [{"id": hole_id, "hole_number": 1}],  # _load_hole_id_map
         [],                                     # hole_scores in _assemble_round
     ]
 
     course = Course(id=str(course_id), name="Test", holes=[Hole(number=1, par=4)])
-    # get_round (called after insert) assembles a Round via course_repo.get_course;
-    # return None so it doesn't try to validate an AsyncMock as a Course.
-    course_repo_mock.get_course = AsyncMock(return_value=None)
+    course_repo_mock.get_course = AsyncMock(return_value=course)
 
     r = Round(
         course=course,

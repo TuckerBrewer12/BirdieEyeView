@@ -8,13 +8,15 @@ from tests.helpers import make_mock_database, make_round, make_round_summary, ma
 
 
 @pytest.mark.asyncio
-async def test_dashboard_summarizes_round_history(monkeypatch):
+@pytest.mark.parametrize('to_par', [8, None])
+async def test_dashboard_summarizes_round_history(monkeypatch, to_par):
     user_id = uuid4()
     round_id = uuid4()
     user = make_user(user_id)
     db = make_mock_database()
     db.users.get_user = AsyncMock(return_value=user)
-    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[make_round_summary(round_id)])
+    summary = {**make_round_summary(round_id), 'to_par': to_par}
+    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[summary])
     db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])
     monkeypatch.setattr(stats.hcap, "handicap_index", lambda rounds: 10.0)
 
@@ -22,6 +24,7 @@ async def test_dashboard_summarizes_round_history(monkeypatch):
 
     assert (dashboard.total_rounds, dashboard.scoring_average) == (1, 80.0)
     assert dashboard.best_round_id == str(round_id)
+    assert dashboard.recent_rounds[0].to_par == to_par
 
 
 @pytest.mark.asyncio

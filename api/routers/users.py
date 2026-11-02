@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing import List, Optional
 from database.db_manager import DatabaseManager
-from database.exceptions import DuplicateError, NotFoundError
+from database.exceptions import ConflictError, DuplicateError, NotFoundError
 from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
 from models import User, UserTee
@@ -294,7 +294,10 @@ async def delete_user_tee(
     """Delete a user tee configuration."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, "Forbidden")
-    deleted = await db.user_tees.delete_user_tee(str(tee_id), user_id=str(user_id))
+    try:
+        deleted = await db.user_tees.delete_user_tee(str(tee_id), user_id=str(user_id))
+    except ConflictError as error:
+        raise HTTPException(409, 'This tee is used by past rounds and cannot be deleted') from error
     if not deleted:
         raise HTTPException(404, "User tee not found")
 

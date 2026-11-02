@@ -44,15 +44,17 @@ def owned_round_setup():
 
 
 @pytest.mark.asyncio
-async def test_list_rounds_returns_summaries():
+@pytest.mark.parametrize('to_par', [8, None, -2])
+async def test_list_rounds_returns_summaries(to_par):
     user_id = uuid4()
     round_id = uuid4()
     db = make_mock_database()
-    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[make_round_summary(round_id)])
+    summary = {**make_round_summary(round_id), 'to_par': to_par}
+    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[summary])
 
     listed = await rounds.get_rounds_for_user(user_id, 10, 0, db, make_user(user_id))
 
-    assert (listed[0].id, listed[0].to_par) == (str(round_id), 8)
+    assert (listed[0].id, listed[0].to_par) == (str(round_id), to_par)
 
 
 @pytest.mark.asyncio

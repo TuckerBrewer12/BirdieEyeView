@@ -7,13 +7,14 @@ from uuid import UUID, uuid4
 import asyncpg
 import pytest
 
-from database.exceptions import DuplicateError, NotFoundError
+from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from database.repositories.course_repo import CourseRepositoryDB, _tee_yardage_similarity
 from database.repositories.friendship_repo import FriendshipRepositoryDB
 from database.repositories.round_repo import RoundRepositoryDB
 from database.repositories.user_repo import UserRepositoryDB
 from database.repositories.user_tee_repo import UserTeeRepositoryDB
-from models import Course, Hole, HoleScore, Tee, User, UserTee
+from models import Course, Hole, HoleScore, Round, Tee, User, UserTee
+from tests.helpers import make_round
 
 
 def _make_user_row(**overrides):
@@ -431,7 +432,7 @@ async def test_friendship_repository_finds_accepted_friendship(mock_pool):
 async def test_user_tee_repository_lists_tees(mock_pool, course_id):
     pool, conn = mock_pool
     user_tee_row = _make_user_tee_row()
-    conn.fetch.return_value = [user_tee_row]
+    conn.fetch.side_effect = [[user_tee_row], []]  # tees, then published ratings
     course_uuid = str(uuid4()) if course_id else None
 
     listed = await UserTeeRepositoryDB(pool).get_user_tees(
@@ -467,7 +468,8 @@ async def test_user_tee_repository_update_serializes_yardages(mock_pool):
         hole_yardages={1: 390},
     )
 
-    assert json.loads(conn.fetchrow.await_args.args[3]) == {"1": 390}
+    update = next(call.args for call in conn.execute.await_args_list if 'UPDATE users.user_tees' in call.args[0])
+    assert json.loads(update[5]) == {"1": 390}
 
 
 @pytest.mark.asyncio
@@ -645,22 +647,20 @@ async def test_course_repository_returns_none_when_update_misses(mock_pool):
 @pytest.mark.asyncio
 async def test_course_repository_upserts_hole(mock_pool):
     pool, conn = mock_pool
+    course_id = str(uuid4())
 
     await CourseRepositoryDB(pool).upsert_hole(
-        str(uuid4()),
+        course_id,
         Hole(number=1, par=4),
     )
 
-    conn.execute.assert_awaited_once()
+    assert conn.execute.await_args.args[1:] == (UUID(course_id), 1, 4, None)
 
 
-@pytest.mark.parametrize("existing_tee", [True, False])
 @pytest.mark.asyncio
-async def test_course_repository_upserts_tee(mock_pool, existing_tee):
+async def test_course_repository_upserts_tee_and_its_yardages(mock_pool):
     pool, conn = mock_pool
-    conn.fetchrow.side_effect = (
-        [{"id": uuid4()}] if existing_tee else [None, {"id": uuid4()}]
-    )
+    conn.fetchrow.side_effect = [{'id': uuid4()}, {'id': uuid4()}]  # parent lock, atomic upsert
 
     await CourseRepositoryDB(pool).upsert_tee(
         str(uuid4()),
@@ -668,6 +668,7 @@ async def test_course_repository_upserts_tee(mock_pool, existing_tee):
     )
 
     conn.executemany.assert_awaited_once()
+    assert 'ON CONFLICT' in conn.fetchrow.await_args.args[0]
 
 
 @pytest.mark.parametrize(("delete_result", "expected"), [("DELETE 1", True), ("DELETE 0", False)])
@@ -768,18 +769,21 @@ async def test_round_repository_loads_hole_id_map(mock_pool):
 async def test_round_repository_updates_round(mock_pool):
     pool, conn = mock_pool
     round_id = str(uuid4())
+    owner_id = str(uuid4())
     repository = RoundRepositoryDB(pool, AsyncMock())
-    repository._assemble_round = AsyncMock(return_value=SimpleNamespace(id=round_id))
-    conn.fetchrow.side_effect = [{"course_id": uuid4()}, {"id": uuid4()}, {"id": uuid4()}]
+    repository._assemble_round = AsyncMock(return_value=make_round(UUID(round_id)))
+    conn.fetchrow.return_value = {'id': UUID(round_id), 'user_id': UUID(owner_id), 'course_id': None,
+                                 'tee_id': None, 'user_tee_id': None}
 
     updated = await repository.update_round(
         round_id,
-        user_id=str(uuid4()),
+        user_id=owner_id,
         tee_box_played="Blue",
         notes="ok",
     )
 
     assert updated.id == round_id
+    assert updated.notes == 'ok'
 
 
 @pytest.mark.asyncio
@@ -810,14 +814,18 @@ async def test_round_repository_upsert_score_rejects_missing_round(mock_pool):
 @pytest.mark.asyncio
 async def test_round_repository_upserts_score_without_course(mock_pool):
     pool, conn = mock_pool
-    conn.fetchrow.return_value = {"course_id": None}
+    round_id = uuid4()
+    conn.fetchrow.return_value = {'id': round_id, 'user_id': uuid4(), 'course_id': None}
+    repository = RoundRepositoryDB(pool, AsyncMock())
+    repository._assemble_round = AsyncMock(return_value=make_round(round_id))
 
-    await RoundRepositoryDB(pool, AsyncMock()).upsert_hole_score(
-        str(uuid4()),
+    await repository.upsert_hole_score(
+        str(round_id),
         HoleScore(hole_number=1, strokes=4, par_played=4),
     )
 
     conn.fetchrow.assert_awaited()
+    assert any('total_score' in call.args[0] for call in conn.execute.await_args_list)
 
 
 @pytest.mark.parametrize(("delete_result", "expected"), [("DELETE 1", True), ("DELETE 0", False)])
