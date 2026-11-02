@@ -5,8 +5,6 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "frontend/src/pages/**"
-      - "frontend/src/components/**"
-      - "frontend/src/hooks/**"
       - "frontend/src/testing/**"
       - "frontend/playwright.config.ts"
       - "frontend/vite.config.ts"
@@ -54,7 +52,7 @@ jobs:
         env:
           BOT_NAME: "🧪 UI Test Checker"
           BOT_PROMPT: .github/review-bots/ui-test-checker.md
-          BOT_PATHSPEC: "frontend/src/pages frontend/src/components frontend/src/hooks frontend/src/testing frontend/playwright.config.ts frontend/vite.config.ts"
+          BOT_PATHSPEC: "frontend/src/pages frontend/src/testing frontend/playwright.config.ts frontend/vite.config.ts"
           BOT_CLEAN: "UI test coverage looks right for this PR."
           BOT_LEAD: "in UI test coverage"
           BASE_SHA: ${{ github.event.pull_request.base.sha }}

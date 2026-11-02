@@ -5,8 +5,8 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "frontend/src/pages/**"
-      - "frontend/src/components/**"
-      - "frontend/src/hooks/**"
+      - "frontend/src/domain/**"
+      - "frontend/src/data/**"
       - "frontend/src/brand/**"
 
 concurrency:
@@ -52,7 +52,7 @@ jobs:
         env:
           BOT_NAME: "🧩 MVVM Bot"
           BOT_PROMPT: .github/review-bots/mvvm.md
-          BOT_PATHSPEC: "frontend/src/pages frontend/src/components frontend/src/hooks frontend/src/brand"
+          BOT_PATHSPEC: "frontend/src/pages frontend/src/domain frontend/src/data frontend/src/brand"
           BOT_CLEAN: "No view-model or brand kit issues in this PR."
           BOT_LEAD: "— logic or UI that belongs elsewhere"
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
