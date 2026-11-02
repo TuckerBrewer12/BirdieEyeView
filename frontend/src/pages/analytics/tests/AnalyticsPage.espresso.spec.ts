@@ -42,6 +42,18 @@ test("a failed load can be retried", async ({ analytics }) => {
   await analytics.seesRounds(24);
 });
 
+test("the best round's card opens that round", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.openBestRound();
+});
+
+test("the range view opens on par 4s and switches par type", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.seesYardageBand("350–399");
+  await analytics.pickRangePar(3);
+  await analytics.seesYardageBand("150–199");
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 

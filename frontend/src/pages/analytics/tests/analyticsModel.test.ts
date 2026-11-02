@@ -6,12 +6,16 @@ import { playedCourseFrom } from "../analyticsRepository";
 import {
   analyticsFrom,
   bestScoreFrom,
+  defaultRangePar,
+  girSplitFrom,
   insightCategory,
   insightsFrom,
   isFiltered,
   recentRateFrom,
+  scoreMixByKindFrom,
   scoreMixFrom,
   shortGameTrendFrom,
+  yardageBucketsFrom,
 } from "../model";
 
 const scoreRow = (round_index: number, total_score: number | null): ScoreTrendRow => ({
@@ -203,6 +207,80 @@ describe("analyticsFrom", () => {
       insights: [],
       scrambling: { percent: null, change: null },
     });
+  });
+});
+
+describe("the desktop's shapes", () => {
+  const analytics = analyticsFrom(sampleGolfer.analytics);
+
+  it("takes the best round from the server's lowest round", () => {
+    expect(analytics.bestRound).toEqual({
+      roundId: "8d412153-b640-567c-b361-5eb47ecb4efd",
+      course: "Presidio Golf Course",
+      date: "2026/5/25",
+    });
+    expect(analyticsFrom(withoutRounds(sampleGolfer.analytics)).bestRound).toBeNull();
+  });
+
+  it("keys the score mix by score kind", () => {
+    expect(scoreMixByKindFrom([{ name: "double_bogey", value: 11.8 }, { name: "birdie", value: 5.3 }])).toEqual({
+      eagle: 0,
+      birdie: 5.3,
+      par: 0,
+      bogey: 0,
+      double: 11.8,
+      triple: 0,
+      quad: 0,
+    });
+    expect(analytics.scoreMixByKind.par).toBe(analytics.scoreMix.find((share) => share.name === "par")?.value);
+  });
+
+  it("keys the server's GIR split by score kind", () => {
+    const [gir] = girSplitFrom(sampleGolfer.analytics.gir_vs_non_gir);
+    const row = sampleGolfer.analytics.gir_vs_non_gir[0];
+    expect(gir).toEqual({
+      bucket: row.bucket,
+      holes: row.holes_counted,
+      mix: {
+        eagle: row.eagle,
+        birdie: row.birdie,
+        par: row.par,
+        bogey: row.bogey,
+        double: row.double_bogey,
+        triple: row.triple_bogey,
+        quad: row.quad_bogey,
+      },
+    });
+  });
+
+  it("orders yardage bands by par then band, and sorts each band's holes into score kinds", () => {
+    const buckets = yardageBucketsFrom([
+      {
+        par: 4,
+        bucket_label: "400–449",
+        bucket_order: 2,
+        average_to_par: 0.5,
+        gir_percentage: 25,
+        sample_size: 4,
+        raw_scores: [
+          { to_par: -1, yardage: 410 },
+          { to_par: 0, yardage: 420 },
+          { to_par: 1, yardage: 430 },
+          { to_par: 2, yardage: 440 },
+        ],
+      },
+      { par: 3, bucket_label: "150–199", bucket_order: 1, average_to_par: 0, gir_percentage: null, sample_size: 0, raw_scores: [] },
+      { par: 4, bucket_label: "< 350", bucket_order: 0, average_to_par: 0, gir_percentage: null, sample_size: 0, raw_scores: [] },
+    ]);
+    expect(buckets.map((bucket) => bucket.label)).toEqual(["150–199", "< 350", "400–449"]);
+    expect(buckets[2]).toMatchObject({ averageScore: 4.5, averageToPar: 0.5, girPercent: 25, holes: 4 });
+    expect(buckets[2].mix).toMatchObject({ birdie: 25, par: 25, bogey: 25, double: 25, eagle: 0 });
+  });
+
+  it("opens the range view on par 4s, else the first par with a band", () => {
+    expect(defaultRangePar(analytics.yardageBuckets)).toBe(4);
+    expect(defaultRangePar(analytics.yardageBuckets.filter((bucket) => bucket.par !== 4))).toBe(3);
+    expect(defaultRangePar([])).toBe(4);
   });
 });
 

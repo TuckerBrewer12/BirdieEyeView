@@ -1,5 +1,103 @@
 import { describe, expect, it } from "vitest";
-import { averagePuttsLabel, emptyMessage, girVsNonGirBars, leadNarrative, narrativeFor } from "../present";
+import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
+import { withoutRounds } from "@/testing/fakes/analyticsResponses";
+import { analyticsFrom } from "../model";
+import {
+  averagePuttsLabel,
+  averageReference,
+  averageToParLabel,
+  courseOptions,
+  emptyMessage,
+  girVsNonGirBars,
+  handicapBars,
+  headlineFigures,
+  holesLabel,
+  leadNarrative,
+  narrativeFor,
+  netScorePoints,
+  parBars,
+  percentLabel,
+  scoreTrendPoints,
+  shortGamePoints,
+} from "../present";
+
+describe("the desktop's words", () => {
+  const analytics = analyticsFrom(sampleGolfer.analytics);
+
+  it("offers every course, the home course when there is one, then each course played", () => {
+    const courses = [
+      { id: "c1", name: "Presidio Golf Course", location: null },
+      { id: "c2", name: null, location: null },
+    ];
+    expect(courseOptions(courses, true)).toEqual([
+      { value: "all", label: "All Courses" },
+      { value: "home", label: "Home Course" },
+      { value: "c1", label: "Presidio Golf Course" },
+      { value: "c2", label: "Unnamed Course" },
+    ]);
+    expect(courseOptions([], false)).toEqual([{ value: "all", label: "All Courses" }]);
+  });
+
+  it("words the headline figures, with the best round's course under it", () => {
+    expect(headlineFigures(analytics)).toEqual([
+      { label: "Handicap Index", value: "7.0" },
+      { label: "Rounds", value: "24" },
+      { label: "Scoring Avg", value: "82.9" },
+      { label: "Best Round", value: "75", detail: "Presidio Golf Course" },
+      { label: "Avg Putts", value: "32.7" },
+    ]);
+    expect(headlineFigures(analyticsFrom(withoutRounds(sampleGolfer.analytics))).map((kpi) => kpi.value)).toEqual([
+      "7.0",
+      "0",
+      "—",
+      "—",
+      "—",
+    ]);
+  });
+
+  it("signs averages to par the way golfers write them, and counts holes", () => {
+    expect(averageToParLabel(0.8)).toBe("+0.8");
+    expect(averageToParLabel(-0.1)).toBe("-0.1");
+    expect(averageToParLabel(0)).toBe("E");
+    expect(holesLabel(1)).toBe("1 hole");
+    expect(holesLabel(24)).toBe("24 holes");
+    expect(percentLabel(31.4)).toBe("31%");
+    expect(percentLabel(null)).toBe("—");
+  });
+
+  it("names each round on the trends, with the score's rolling average beside it", () => {
+    const [first] = scoreTrendPoints(analytics.scoreTrend);
+    expect(first).toEqual({
+      tick: 1,
+      title: "Round 1",
+      subtitle: analytics.scoreTrend[0].course_name,
+      values: [analytics.scoreTrend[0].total_score, analytics.scoreTrend[0].rolling_avg],
+    });
+    expect(shortGamePoints(analytics.shortGameTrend)[0].values).toHaveLength(2);
+    expect(averageReference(82.9)).toEqual({ value: 82.9, label: "Avg 82.9" });
+    expect(averageReference(null)).toBeNull();
+  });
+
+  it("puts gross, to par and course handicap under each net score", () => {
+    const [point] = netScorePoints([
+      { round_index: 3, round_id: "r3", course_name: "Presidio", gross_score: 80, net_score: 73, to_par: 8, course_handicap: -2 },
+    ]);
+    expect(point.notes).toEqual([
+      { label: "Gross", value: "80" },
+      { label: "To Par", value: "+8" },
+      { label: "Course HCP", value: "+2" },
+    ]);
+  });
+
+  it("labels the to-par bars by par type and by hole handicap", () => {
+    expect(parBars([{ par: 3, average_to_par: 0.6, average_strokes: 3.6, sample_size: 20 }])).toEqual([
+      { label: "Par 3", toPar: 0.6, detail: "20 holes" },
+    ]);
+    expect(handicapBars([{ handicap: 7, average_to_par: -0.1, sample_size: 1 }])).toEqual([
+      { label: "7", toPar: -0.1, detail: "1 hole" },
+    ]);
+  });
+});
 
 describe("narrativeFor", () => {
   it("words a scoring shift by its direction", () => {

@@ -28,15 +28,11 @@ export class AnalyticsRobot {
     return locator.locator("visible=true").first();
   }
 
-  private courseSelect(): Locator {
-    return this.visible(this.page.locator("select"));
-  }
-
-  /** The round count: the desktop's Rounds tile, or the phone header's "N rds". */
+  /** The round count: the desktop's Rounds figure, or the phone header's "N rds". */
   private roundCount(count: number): Locator {
     const desktop = this.page
       .getByText("Rounds", { exact: true })
-      .locator("xpath=following-sibling::span[1]")
+      .locator("xpath=following-sibling::*[1]")
       .filter({ hasText: new RegExp(`^${count}$`) });
     const phone = this.page.getByText(new RegExp(`^${count} rds`));
     return this.visible(desktop.or(phone));
@@ -99,8 +95,42 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** The desktop's course menu. The phone header still picks with a native select. */
+  async openCourseMenu(): Promise<this> {
+    await this.visible(this.page.getByRole("combobox", { name: "Course" })).click();
+    await expect(this.page.getByRole("listbox")).toBeVisible();
+    await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
+    return this;
+  }
+
+  /** The phone header still picks with a native select; the desktop opens the kit's menu. */
   async pickCourse(name: string): Promise<this> {
-    await this.courseSelect().selectOption({ label: name });
+    const phoneSelect = this.page.locator("select").locator("visible=true");
+    if (await phoneSelect.count()) {
+      await phoneSelect.first().selectOption({ label: name });
+      return this;
+    }
+    await this.visible(this.page.getByRole("combobox", { name: "Course" })).click();
+    await this.page.getByRole("option", { name, exact: true }).click();
+    return this;
+  }
+
+  /** The best round's card opens that round. */
+  async openBestRound(): Promise<this> {
+    await this.visible(this.page.getByRole("button", { name: /Best Recent Round/ })).click();
+    await expect(this.page).toHaveURL(new RegExp(`/rounds/${BEST_ROUND_ID}$`));
+    return this;
+  }
+
+  /** A par type in the range view: 3, 4 or 5. */
+  async pickRangePar(par: 3 | 4 | 5): Promise<this> {
+    await this.visible(this.page.getByRole("button", { name: `Par ${par}`, exact: true })).click();
+    return this;
+  }
+
+  /** A yardage band's card in the range view, by its band: "350–399". */
+  async seesYardageBand(label: string): Promise<this> {
+    await expect(this.visible(this.page.locator("[data-slot=yardage-bucket-card]").getByText(label))).toBeVisible();
     return this;
   }
 
@@ -163,3 +193,6 @@ export const test = base.extend<{ analytics: AnalyticsRobot }>({
 export const LINKS = "Half Moon Bay Golf Links";
 /** The seed has no figures for this course, so the fake answers as if no round there matched. */
 export const UNSEEDED_COURSE = "Sharp Park Golf Course";
+
+/** The round the server marks lowest in the sample golfer's season. */
+export const BEST_ROUND_ID = sampleGolfer.analytics.notable_achievements.scoring_records_events.lifetime.lowest_round!.round_id;

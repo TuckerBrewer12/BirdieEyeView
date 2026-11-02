@@ -1,9 +1,8 @@
-import { Alert, AlertAction, AlertDescription, Button, LoadingState, PageTitle, colors } from "@/brand";
-// The legacy layouts stay until Analytics PR B (charts) and PR C (phone layout) replace them.
-import { AnalyticsCommandCenter } from "@/components/analytics/AnalyticsCommandCenter";
-import { AnalyticsDesktopLayout } from "@/components/analytics/AnalyticsDesktopLayout";
+import { Alert, AlertAction, AlertDescription, Button, LoadingState, colors } from "@/brand";
+// The phone layout stays legacy until Analytics PR C moves it onto these components.
 import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
 import { MobileAnalyticsPage } from "@/components/analytics/MobileAnalyticsPage";
+import { AnalyticsDesktopHeader, AnalyticsDesktopLayout } from "./components/AnalyticsDesktopLayout";
 import { ANALYTICS_TABS, type Analytics } from "./model";
 import {
   TAB_LABELS,
@@ -84,9 +83,8 @@ function EmptyAnalytics({ vm, analytics }: LayoutProps) {
         <div className="flex h-48 items-center justify-center text-center">{message}</div>
       </div>
       <div className="hidden md:block">
-        <PageTitle size="lg" className="mb-3">Analytics</PageTitle>
-        <AnalyticsCommandCenter {...filters} onChange={vm.setFilters} kpis={null} />
-        <div className="mt-4 flex h-48 items-center justify-center text-center">{message}</div>
+        <AnalyticsDesktopHeader vm={vm} />
+        <div className="flex h-48 items-center justify-center text-center">{message}</div>
       </div>
     </>
   );
@@ -129,7 +127,8 @@ function AnalyticsLayouts({ vm, analytics }: LayoutProps) {
         />
       </div>
       <div className="hidden md:block">
-        <AnalyticsDesktopLayout {...shared} shortGameTrend={analytics.shortGameTrend} />
+        <AnalyticsDesktopHeader vm={vm} />
+        <AnalyticsDesktopLayout vm={vm} analytics={analytics} />
       </div>
     </>
   );

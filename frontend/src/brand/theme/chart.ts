@@ -25,7 +25,7 @@ export const chartTickStyle = {
  *  --brand-size-ring-* and --brand-size-gauge-*, `plot.height` --brand-size-chart, and
  *  `plotCompact` --brand-size-chart-compact-w and --brand-size-chart-compact.
  *  `sparkline` is --brand-size-sparkline-w/-h, --brand-space-tight padding, --brand-sparkline-stroke
- *  and a --brand-space-dot marker, and `flow.width` --brand-size-chart-wide. tokens.test.ts fails if one drifts. The plot margins follow the 4px spacing scale. */
+ *  and a --brand-space-dot marker, `flow.width` --brand-size-chart-wide, and `trendArea.height` --brand-size-chart. tokens.test.ts fails if one drifts. The plot margins follow the 4px spacing scale. */
 export const chartLayout = {
   barRadius: [6, 6, 0, 0] as [number, number, number, number],
   /** Rounded outer ends of a horizontal stacked bar. Mirrors `--brand-radius-sm`. */
@@ -111,6 +111,35 @@ export const chartLayout = {
     labelRoom: 32,
     dot: 4,
     dotReached: 5.5,
+  },
+  /** One figure per round over a soft fill, with a second line beside it if wanted. Height matches `--brand-size-chart`. */
+  trendArea: {
+    width: 560,
+    height: 180,
+    pad: { top: 12, right: 16, bottom: 24, left: 40 },
+    /** Share of the span left either side of the values, so the line never touches the edge. */
+    headroom: 0.15,
+    stroke: 2,
+    /** The second line is thinner, so the first reads as the figure. */
+    strokeSecondary: 1.5,
+    dot: 3,
+    dotHover: 5,
+    /** Past this many rounds the dots would crowd the line, so only the hovered one is drawn. */
+    maxDots: 30,
+    /** About this many round numbers along the bottom. */
+    xTicks: 6,
+    yTicks: 4,
+  },
+  /** Holes as dots on a target, the better the score the nearer the middle. Unitless; it fills `max-w-target`. */
+  target: {
+    size: 200,
+    /** Each score kind's ring, as a share of the radius from the middle out. Quads share the triple ring. */
+    rings: { eagle: 0.18, birdie: 0.35, par: 0.55, bogey: 0.7, double: 0.83, triple: 1 },
+    stroke: 1.5,
+    dot: 3.5,
+    dotHover: 5,
+    /** How near the pointer has to be to a dot, in the chart's units, to pick it. */
+    hitRadius: 10,
   },
   /** A round hole by hole. Width matches `--brand-size-chart-wide`, which it scrolls at. */
   flow: {

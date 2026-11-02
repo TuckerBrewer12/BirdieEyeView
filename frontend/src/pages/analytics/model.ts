@@ -1,3 +1,4 @@
+import { SCORE_KINDS, scoreKind, type ScoreKind, type ScoreMix } from "@/domain";
 import { average, trendDelta, withRollingAverage } from "@/lib/stats";
 import type {
   AnalyticsData,
@@ -8,6 +9,8 @@ import type {
   ScoreTrendRow,
   ScoreTypeRow,
   ScoringByParRow,
+  ScoringByYardageRow,
+  GIRvsNonGIRRow,
   ScramblingRow,
   ThreePuttRow,
   UpAndDownRow,
@@ -49,6 +52,51 @@ export type ScoreTypeKey = (typeof SCORE_TYPE_KEYS)[number];
 export interface ScoreTypeShare {
   name: ScoreTypeKey;
   value: number;
+}
+
+/** Where each score kind's share sits on the server's score-type rows. */
+const ROW_KEY: Record<ScoreKind, ScoreTypeKey> = {
+  eagle: "eagle",
+  birdie: "birdie",
+  par: "par",
+  bogey: "bogey",
+  double: "double_bogey",
+  triple: "triple_bogey",
+  quad: "quad_bogey",
+};
+
+/** The round the server found lowest in the window, and where and when it was played. */
+export interface BestRoundEvent {
+  roundId: string | null;
+  course: string;
+  date: string;
+}
+
+/** How holes went when the green was hit, and when it was missed, as the server split them. */
+export interface GirSplit {
+  bucket: GIRvsNonGIRRow["bucket"];
+  holes: number;
+  mix: ScoreMix;
+}
+
+/** The par types the range view can show, in the order its picker lists them. */
+export const RANGE_PARS = [3, 4, 5] as const;
+export type RangePar = (typeof RANGE_PARS)[number];
+
+/** One yardage band of one par type: how the golfer scores from there. */
+export interface YardageBucket {
+  par: number;
+  /** The server's band: "350–399". */
+  label: string;
+  holes: number;
+  /** The par plus the average to par: what the golfer averages there. */
+  averageScore: number;
+  averageToPar: number;
+  girPercent: number | null;
+  /** Each hole played in the band, its score to par and yardage. */
+  results: { toPar: number; yardage: number }[];
+  /** Each score kind's share of the band's holes. */
+  mix: ScoreMix;
 }
 
 export type ScoreTrendPoint = ScoreTrendRow & { rolling_avg: number | null };
@@ -111,6 +159,13 @@ export interface Analytics {
   scrambling: RecentRate;
   upAndDown: RecentRate;
   bestScore: number | null;
+  /** The server's lowest round in the window. */
+  bestRound: BestRoundEvent | null;
+  /** `scoreMix` keyed by score kind, for the kit's mix bar. */
+  scoreMixByKind: ScoreMix;
+  girSplit: GirSplit[];
+  /** Yardage bands, each par's in the server's order. */
+  yardageBuckets: YardageBucket[];
   averagePutts: number | null;
   insights: Insight[];
 }
@@ -134,6 +189,53 @@ export function scoreMixFrom(distribution: ScoreTypeRow[]): ScoreTypeShare[] {
     const holes = counted.reduce((sum, row) => sum + (row[name] / 100) * row.holes_counted, 0);
     return { name, value: Math.round((holes / totalHoles) * 1000) / 10 };
   }).filter((share) => share.value > 0);
+}
+
+/** Every score kind, at zero share. */
+function emptyMix(): ScoreMix {
+  return Object.fromEntries(SCORE_KINDS.map((kind) => [kind, 0])) as ScoreMix;
+}
+
+/** The score-type shares keyed by score kind; kinds never made are zero. */
+export function scoreMixByKindFrom(shares: ScoreTypeShare[]): ScoreMix {
+  const mix = emptyMix();
+  for (const kind of SCORE_KINDS) mix[kind] = shares.find((share) => share.name === ROW_KEY[kind])?.value ?? 0;
+  return mix;
+}
+
+/** The server's GIR and no-GIR rows, keyed by score kind. */
+export function girSplitFrom(rows: GIRvsNonGIRRow[]): GirSplit[] {
+  return rows.map((row) => {
+    const mix = emptyMix();
+    for (const kind of SCORE_KINDS) mix[kind] = row[ROW_KEY[kind]];
+    return { bucket: row.bucket, holes: row.holes_counted, mix };
+  });
+}
+
+/** The server's yardage bands, each par's in band order, with each band's holes sorted into score kinds. */
+export function yardageBucketsFrom(rows: ScoringByYardageRow[]): YardageBucket[] {
+  return [...rows]
+    .sort((a, b) => a.par - b.par || a.bucket_order - b.bucket_order)
+    .map((row) => {
+      const results = row.raw_scores.map((score) => ({ toPar: score.to_par, yardage: score.yardage }));
+      const mix = emptyMix();
+      for (const result of results) mix[scoreKind(result.toPar, 0)!] += 100 / results.length;
+      return {
+        par: row.par,
+        label: row.bucket_label,
+        holes: row.sample_size,
+        averageScore: row.par + row.average_to_par,
+        averageToPar: row.average_to_par,
+        girPercent: row.gir_percentage,
+        results,
+        mix,
+      };
+    });
+}
+
+/** The par the range view opens on: par 4s if there are any, else the first par with a band. */
+export function defaultRangePar(buckets: YardageBucket[]): RangePar {
+  return ([4, 3, 5] as const).find((par) => buckets.some((bucket) => bucket.par === par)) ?? 4;
 }
 
 /** The lowest score in the window, or null without a scored round. */
@@ -220,13 +322,15 @@ export function analyticsFrom(data: AnalyticsData): Analytics {
   const girTrend = data.gir_trend.filter((row) => row.gir_percentage != null && row.total_gir != null);
   const puttsTrend = data.putts_trend.filter((row) => row.total_putts != null);
   const roundsWithPutts = new Set(puttsTrend.map((row) => row.round_id));
+  const scoreMix = scoreMixFrom(data.score_type_distribution);
+  const lowest = data.notable_achievements.scoring_records_events.lifetime.lowest_round;
 
   return {
     sections: data,
     kpis: data.kpis,
     roundCount: data.kpis.total_rounds,
     scoreTrend: withRollingAverage(data.score_trend, (row) => row.total_score),
-    scoreMix: scoreMixFrom(data.score_type_distribution),
+    scoreMix,
     girTrend,
     girRoundsLeftOut: girTrend.length < data.gir_trend.length,
     puttsTrend,
@@ -235,6 +339,10 @@ export function analyticsFrom(data: AnalyticsData): Analytics {
     scrambling: recentRateFrom(data.scrambling_trend.map((row) => row.scrambling_percentage)),
     upAndDown: recentRateFrom(data.up_and_down_trend.map((row) => row.percentage)),
     bestScore: bestScoreFrom(data.score_trend),
+    bestRound: lowest ? { roundId: lowest.round_id, course: lowest.course, date: lowest.date } : null,
+    scoreMixByKind: scoreMixByKindFrom(scoreMix),
+    girSplit: girSplitFrom(data.gir_vs_non_gir),
+    yardageBuckets: yardageBucketsFrom(data.scoring_by_yardage),
     averagePutts: averagePuttsFrom(puttsTrend),
     insights: insightsFrom(data.score_trend, data.gir_trend, data.scoring_by_par, data.putts_trend),
   };
