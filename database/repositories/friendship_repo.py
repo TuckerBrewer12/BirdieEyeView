@@ -16,76 +16,59 @@ class FriendshipRepositoryDB:
         self._pool = pool
 
     async def send_request(self, requester_id: str, addressee_id: str) -> dict:
-        """Create or reopen a friendship request."""
-        req = UUID(requester_id)
-        adr = UUID(addressee_id)
-        if req == adr:
+        """Create/reopen a pair under a stable pair lock, including the initially absent row."""
+        requester, addressee = UUID(requester_id), UUID(addressee_id)
+        if requester == addressee:
             raise ValueError("Cannot friend yourself")
-
-        async with self._pool.acquire() as conn:
-            # Check if pair already exists (any direction)
+        pair_key = ":".join(sorted((str(requester), str(addressee))))
+        async with self._pool.acquire() as conn, conn.transaction():
+            await conn.execute("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", pair_key)
             row = await conn.fetchrow(
                 """SELECT * FROM users.friendships
-                   WHERE (requester_id = $1 AND addressee_id = $2)
-                      OR (requester_id = $2 AND addressee_id = $1)
-                   LIMIT 1""",
-                req,
-                adr,
+                   WHERE LEAST(requester_id,addressee_id)=LEAST($1::uuid,$2::uuid)
+                     AND GREATEST(requester_id,addressee_id)=GREATEST($1::uuid,$2::uuid)
+                   FOR UPDATE""",
+                requester,
+                addressee,
             )
             if row:
-                status = row["status"]
-                if status == "accepted":
+                if row["status"] == "accepted":
                     raise DuplicateError("Users are already friends")
-                if status == "blocked":
+                if row["status"] == "blocked":
                     raise DuplicateError("Friend request blocked for this pair")
-
                 updated = await conn.fetchrow(
-                    """UPDATE users.friendships
-                       SET requester_id = $1, addressee_id = $2, status = 'pending'
-                       WHERE id = $3
-                       RETURNING *""",
-                    req,
-                    adr,
+                    """UPDATE users.friendships SET requester_id=$1, addressee_id=$2, status='pending'
+                       WHERE id=$3 RETURNING *""",
+                    requester,
+                    addressee,
                     row["id"],
                 )
                 return dict(updated)
-
             created = await conn.fetchrow(
-                """INSERT INTO users.friendships (requester_id, addressee_id, status)
-                   VALUES ($1, $2, 'pending')
-                   RETURNING *""",
-                req,
-                adr,
+                """INSERT INTO users.friendships (requester_id,addressee_id,status)
+                   VALUES ($1,$2,'pending') RETURNING *""",
+                requester,
+                addressee,
             )
             return dict(created)
 
     async def update_status(self, friendship_id: str, actor_user_id: str, status: str) -> Optional[dict]:
-        """Update friendship status, enforcing actor permissions."""
-        if status not in self.VALID_STATUSES:
-            raise ValueError(f"Invalid status: {status}")
-        fid = UUID(friendship_id)
+        """Validate actor and current transition while holding the relationship row lock."""
+        if status not in self.VALID_STATUSES or status == "pending":
+            raise ValueError(f"Invalid status for a direct friendship update: {status}")
         actor = UUID(actor_user_id)
-        async with self._pool.acquire() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM users.friendships WHERE id = $1",
-                fid,
-            )
+        async with self._pool.acquire() as conn, conn.transaction():
+            row = await conn.fetchrow("SELECT * FROM users.friendships WHERE id=$1 FOR UPDATE", UUID(friendship_id))
             if not row:
                 return None
-
-            # Permission rules:
-            # - accepted/declined: only addressee can respond to pending request
-            # - blocked: either party can block
             if status in {"accepted", "declined"}:
                 if row["status"] != "pending" or row["addressee_id"] != actor:
                     return None
-            elif status == "blocked":
-                if actor not in (row["requester_id"], row["addressee_id"]):
-                    return None
-
+            elif actor not in (row["requester_id"], row["addressee_id"]):
+                return None
             updated = await conn.fetchrow(
-                "UPDATE users.friendships SET status = $2 WHERE id = $1 RETURNING *",
-                fid,
+                "UPDATE users.friendships SET status=$2 WHERE id=$1 RETURNING *",
+                row["id"],
                 status,
             )
             return dict(updated) if updated else None

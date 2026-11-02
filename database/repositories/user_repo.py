@@ -10,7 +10,7 @@ import asyncpg
 
 from models import User
 from database.converters import user_from_row, user_to_row
-from database.exceptions import DuplicateError, NotFoundError
+from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 
 
 class UserRepositoryDB:
@@ -43,7 +43,7 @@ class UserRepositoryDB:
         """Get user by email."""
         normalized = self._normalize_email(email)
         async with self._pool.acquire() as conn:
-            row = await conn.fetchrow("SELECT * FROM users.users WHERE LOWER(email) = $1", normalized)
+            row = await conn.fetchrow("SELECT * FROM users.users WHERE LOWER(BTRIM(email)) = $1", normalized)
             return user_from_row(row) if row else None
 
     async def get_user_by_friend_code(self, friend_code: str) -> Optional[User]:
@@ -61,7 +61,9 @@ class UserRepositoryDB:
         """Return only the password_hash for the given email (for auth use only)."""
         normalized = self._normalize_email(email)
         async with self._pool.acquire() as conn:
-            row = await conn.fetchrow("SELECT password_hash FROM users.users WHERE LOWER(email) = $1", normalized)
+            row = await conn.fetchrow(
+                "SELECT password_hash FROM users.users WHERE LOWER(BTRIM(email)) = $1", normalized
+            )
             return row["password_hash"] if row else None
 
     async def get_auth_user_by_email(self, email: str) -> Optional[dict]:
@@ -72,26 +74,11 @@ class UserRepositoryDB:
                 row = await conn.fetchrow(
                     """SELECT id, name, email, password_hash, email_verified
                        FROM users.users
-                       WHERE LOWER(email) = $1""",
+                       WHERE LOWER(BTRIM(email)) = $1""",
                     normalized,
                 )
-            except asyncpg.UndefinedColumnError:
-                # Backward-compat for local DBs that have not applied auth hardening migration yet.
-                row = await conn.fetchrow(
-                    """SELECT id, name, email, password_hash
-                       FROM users.users
-                       WHERE LOWER(email) = $1""",
-                    normalized,
-                )
-                if row:
-                    return {
-                        "id": str(row["id"]),
-                        "name": row["name"],
-                        "email": row["email"],
-                        "password_hash": row["password_hash"],
-                        # Legacy schema had no verification flag; treat as verified.
-                        "email_verified": True,
-                    }
+            except asyncpg.UndefinedColumnError as error:
+                raise IntegrityError("Authentication schema is unavailable; apply required migrations") from error
             if not row:
                 return None
             return {
@@ -113,11 +100,11 @@ class UserRepositoryDB:
                     row = await conn.fetchrow(
                         """INSERT INTO users.users
                            (friend_code, name, email, handicap_index, home_course_id, password_hash,
-                            email_verified, email_verified_at, last_handicap_update)
+                            email_verified, email_verified_at, last_handicap_update, scoring_goal, scoring_goal_nine)
                            VALUES ($1, $2, $3, $4, $5, $6,
                                    COALESCE($7::boolean, FALSE),
                                    CASE WHEN COALESCE($7::boolean, FALSE) THEN NOW() ELSE NULL END,
-                                   CASE WHEN $4::numeric IS NULL THEN NULL ELSE NOW() END)
+                                   CASE WHEN $4::numeric IS NULL THEN NULL ELSE NOW() END, $8, $9)
                            RETURNING *""",
                         friend_code,
                         data["name"],
@@ -126,6 +113,8 @@ class UserRepositoryDB:
                         data["home_course_id"],
                         password_hash,
                         user.email_verified,
+                        data["scoring_goal"],
+                        data["scoring_goal_nine"],
                     )
                     return user_from_row(row)
                 except asyncpg.UniqueViolationError as e:
@@ -134,6 +123,7 @@ class UserRepositoryDB:
                         "users_email_key",
                         "users_users_email_key",
                         "idx_users_email",
+                        "idx_users_email_normalized",
                     }:
                         raise DuplicateError(f"Email already in use: {e}") from e
                     if e.constraint_name in {
@@ -143,7 +133,9 @@ class UserRepositoryDB:
                     }:
                         data["friend_code"] = None
                         continue
-                    raise
+                    raise DuplicateError("Conflicting user identity") from e
+                except asyncpg.IntegrityConstraintViolationError as error:
+                    raise IntegrityError("Invalid user data or course reference") from error
             raise DuplicateError("Could not allocate a unique friend code")
 
     # ================================================================
@@ -152,12 +144,20 @@ class UserRepositoryDB:
 
     async def update_user(self, user_id: str, **fields) -> Optional[User]:
         """Update user fields (name, email, handicap_index, home_course_id, preferences)."""
-        allowed = {"name", "email", "handicap_index", "home_course_id", "preferences", "scoring_goal"}
+        allowed = {
+            "name",
+            "email",
+            "handicap_index",
+            "home_course_id",
+            "preferences",
+            "scoring_goal",
+            "scoring_goal_nine",
+        }
         updates = {k: v for k, v in fields.items() if k in allowed}
         if not updates:
             return await self.get_user(user_id)
-        if "handicap_index" in updates:
-            updates["last_handicap_update"] = "NOW()"
+        if "email" in updates:
+            updates["email"] = self._normalize_email(updates["email"])
 
         # Convert home_course_id string to UUID if present
         if "home_course_id" in updates and updates["home_course_id"] is not None:
@@ -168,11 +168,10 @@ class UserRepositoryDB:
         set_parts = []
         values = [UUID(user_id)]
         for k, v in updates.items():
-            if isinstance(v, str) and v == "NOW()" and k == "last_handicap_update":
-                set_parts.append(f"{k} = NOW()")
-            else:
-                values.append(v)
-                set_parts.append(f"{k} = ${len(values)}")
+            values.append(v)
+            set_parts.append(f"{k} = ${len(values)}")
+        if "handicap_index" in updates:
+            set_parts.append("last_handicap_update = NOW()")
         set_clause = ", ".join(set_parts)
 
         try:
@@ -184,6 +183,8 @@ class UserRepositoryDB:
                 return user_from_row(row) if row else None
         except asyncpg.UniqueViolationError as e:
             raise DuplicateError(f"Email already in use: {e}") from e
+        except asyncpg.IntegrityConstraintViolationError as error:
+            raise IntegrityError("Invalid user data or course reference") from error
 
     async def update_handicap(self, user_id: str, handicap: float) -> None:
         """Update handicap and set last_handicap_update to NOW()."""
@@ -233,9 +234,11 @@ class UserRepositoryDB:
             expires_at = expires_at.astimezone(timezone.utc).replace(tzinfo=None)
         async with self._pool.acquire() as conn:
             async with conn.transaction():
+                # Serialize issuance on the existing parent row, even when no token exists yet.
+                await conn.fetchrow("SELECT id FROM users.users WHERE id = $1 FOR UPDATE", UUID(user_id))
                 await conn.execute(
                     """UPDATE users.auth_tokens
-                       SET used_at = NOW()
+                       SET used_at = (clock_timestamp() AT TIME ZONE 'UTC')
                        WHERE user_id = $1
                          AND token_type = $2
                          AND used_at IS NULL""",
@@ -243,8 +246,8 @@ class UserRepositoryDB:
                     token_type,
                 )
                 await conn.execute(
-                    """INSERT INTO users.auth_tokens (user_id, token_type, token_hash, expires_at)
-                       VALUES ($1, $2, $3, $4)""",
+                    """INSERT INTO users.auth_tokens (user_id, token_type, token_hash, expires_at, created_at)
+                       VALUES ($1, $2, $3, $4, clock_timestamp() AT TIME ZONE 'UTC')""",
                     UUID(user_id),
                     token_type,
                     token_hash,
@@ -255,21 +258,16 @@ class UserRepositoryDB:
         """Consume token if valid (not expired, not previously used) and return user_id."""
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow(
-                """WITH token_row AS (
-                       SELECT id, user_id
-                       FROM users.auth_tokens
-                       WHERE token_type = $1
-                         AND token_hash = $2
-                         AND used_at IS NULL
-                         AND expires_at > NOW()
-                       ORDER BY created_at DESC
-                       LIMIT 1
+                """UPDATE users.auth_tokens t
+                   SET used_at = (clock_timestamp() AT TIME ZONE 'UTC')
+                   WHERE t.id = (
+                       SELECT id FROM users.auth_tokens
+                       WHERE token_type = $1 AND token_hash = $2
+                         AND used_at IS NULL AND expires_at > (clock_timestamp() AT TIME ZONE 'UTC')
+                       ORDER BY created_at DESC, id DESC LIMIT 1
                    )
-                   UPDATE users.auth_tokens t
-                   SET used_at = NOW()
-                   FROM token_row
-                   WHERE t.id = token_row.id
-                   RETURNING token_row.user_id AS user_id""",
+                     AND t.used_at IS NULL AND t.expires_at > (clock_timestamp() AT TIME ZONE 'UTC')
+                   RETURNING t.user_id""",
                 token_type,
                 token_hash,
             )

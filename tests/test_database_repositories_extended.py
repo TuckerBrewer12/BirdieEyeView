@@ -123,6 +123,15 @@ async def test_user_repository_reads_authentication_fields(mock_pool):
 
 
 @pytest.mark.asyncio
+async def test_authentication_never_bypasses_missing_verification_schema(mock_pool):
+    pool, conn = mock_pool
+    conn.fetchrow.side_effect = asyncpg.UndefinedColumnError('email_verified is missing')
+    with pytest.raises(IntegrityError, match='Authentication schema is unavailable'):
+        await UserRepositoryDB(pool).get_auth_user_by_email('ada@example.com')
+    conn.fetchrow.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_user_repository_update_converts_uuid_and_json_fields(mock_pool):
     pool, conn = mock_pool
     user_repository = UserRepositoryDB(pool)
