@@ -77,3 +77,50 @@ test("a failed load offers a retry that loads the page", async ({ lab }) => {
   await lab.seesLab();
   await lab.seesGoalStanding("Break 90");
 });
+
+test.describe("on a phone", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test("the performance tabs show one panel at a time", async ({ lab }) => {
+    await lab.open();
+    await lab.seesPanel("By Par");
+
+    await lab.tapPanel("Putting");
+    await lab.seesPanel("Putting");
+
+    await lab.tapPanel("Peak");
+    await lab.seesPanel("Peak");
+    await lab.seesPeakBars();
+
+    await lab.tapPanel("By Par");
+    await lab.seesPanel("By Par");
+  });
+
+  test("tapping the open tab again keeps its panel open", async ({ lab }) => {
+    await lab.open();
+    await lab.tapPanel("Putting");
+
+    await lab.tapPanel("Putting");
+
+    await lab.seesPanel("Putting");
+  });
+
+  test("picking a goal saves it from the phone layout", async ({ lab }) => {
+    await lab.open();
+
+    await lab.pickGoal("Break 85");
+
+    await lab.savedGoal(84);
+    await lab.seesGoalPicked("Break 85");
+    await lab.seesGoalStanding("Break 85");
+  });
+
+  test("comparing with a friend works from the phone layout", async ({ lab }) => {
+    await lab.open();
+
+    await lab.compareWith("A friend");
+
+    await lab.seesShapeHeading("You vs. Avery Lin");
+    await lab.seesComparisonDrawn(true);
+  });
+});

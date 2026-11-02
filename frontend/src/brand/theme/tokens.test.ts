@@ -115,6 +115,11 @@ describe("brand tokens", () => {
       trendHeight: chartLayout.trend.height,
       flowWidth: chartLayout.flow.width,
       trendAreaHeight: chartLayout.trendArea.height,
+      radarCompactWidth: chartLayout.radarCompact.width,
+      radarCompactHeight: chartLayout.radarCompact.height,
+      radarCompactRadius: chartLayout.radarCompact.radius,
+      radarCompactLabelGap: chartLayout.radarCompact.labelGap,
+      radarCompactValueGap: chartLayout.radarCompact.valueGap,
     }).toEqual({
       barRadius: px("--brand-radius-md"),
       barMaxWidth: px("--brand-size-bar-max"),
@@ -133,6 +138,11 @@ describe("brand tokens", () => {
       trendHeight: px("--brand-size-chart"),
       flowWidth: px("--brand-size-chart-wide"),
       trendAreaHeight: px("--brand-size-chart"),
+      radarCompactWidth: px("--brand-size-radar-compact-w"),
+      radarCompactHeight: px("--brand-size-radar-compact-h"),
+      radarCompactRadius: px("--brand-size-radar-compact-r"),
+      radarCompactLabelGap: px("--brand-space-radar-compact-label"),
+      radarCompactValueGap: px("--brand-space-radar-compact-label"),
     });
   });
 });

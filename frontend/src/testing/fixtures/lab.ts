@@ -1,7 +1,8 @@
-import type { LabAnalytics } from "../../pages/the-lab/model";
-import type { GoalReportDto, ScoreTypeRowDto } from "../../types/api";
+import type { AnalyticsDto, GoalReportDto, ScoreTypeRowDto } from "../../types/api";
 import type { User } from "../../types/golf";
+import { withoutRounds } from "../fakes/analyticsResponses";
 import { avery } from "./friendships";
+import { sampleGolfer } from "./sampleGolfer";
 
 /** A 17.8 out to break 90: met it once in twelve rounds, three-putts the worst leak. */
 export const labUser: User = {
@@ -52,7 +53,11 @@ function scoreTypes(i: number): ScoreTypeRowDto {
   };
 }
 
-export const labAnalytics: LabAnalytics = {
+/** The server's response with every series empty; each golfer below fills in what The Lab reads. */
+const NO_ROUNDS = withoutRounds(sampleGolfer.analytics);
+
+export const labAnalytics: AnalyticsDto = {
+  ...NO_ROUNDS,
   kpis: {
     scoring_average: 91.7,
     handicap_index: 17.8,
@@ -91,7 +96,8 @@ export const labAnalytics: LabAnalytics = {
 };
 
 /** Avery plays to about 81: more greens, better par 3s. Jordan has no rounds. */
-export const averyLabAnalytics: LabAnalytics = {
+export const averyLabAnalytics: AnalyticsDto = {
+  ...NO_ROUNDS,
   kpis: {
     scoring_average: 81.2,
     handicap_index: 8.4,
@@ -106,14 +112,10 @@ export const averyLabAnalytics: LabAnalytics = {
     { par: 4, average_to_par: 0.55, average_strokes: 4.55, sample_size: 80 },
     { par: 5, average_to_par: 0.3, average_strokes: 5.3, sample_size: 32 },
   ],
-  score_trend: [],
-  score_type_distribution: [],
-  three_putts_trend: [],
-  putts_trend: [],
 };
 
 /** Analytics by golfer, as FakeBackend serves them. */
-export const labAnalyticsByGolfer: Record<string, LabAnalytics> = {
+export const labAnalyticsByGolfer: Record<string, AnalyticsDto> = {
   "user-1": labAnalytics,
   [avery.id]: averyLabAnalytics,
 };

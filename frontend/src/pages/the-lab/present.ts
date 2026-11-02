@@ -6,7 +6,7 @@ import {
   toParLabel,
   type ComparisonTargetValue,
 } from "@/domain";
-import type { FriendOption, GoalStanding, PeakGame, PeakImpact, RadarMode, Saver } from "./model";
+import type { FriendOption, GoalStanding, LabPanel, PeakGame, PeakImpact, RadarMode, Saver } from "./model";
 
 /** A friend's name, or a stand-in when the server has none. */
 export function friendName(friend: FriendOption | null): string {
@@ -99,6 +99,13 @@ export function peakGapNote(peak: PeakGame, goalLabel: string): string {
   if (peak.gapToGoal <= 0) return `Your best rounds already ${goalLabel.toLowerCase()}. Make it your new normal.`;
   return `${peak.gapToGoal.toFixed(1)} strokes from ${goalLabel.toLowerCase()} on your best days.`;
 }
+
+/** The phone's panel tabs. */
+export const LAB_PANEL_LABEL: Record<LabPanel, string> = {
+  "by-par": "By Par",
+  putting: "Putting",
+  peak: "Peak",
+};
 
 export const PEAK_IMPACT_LABEL: Record<PeakImpact["kind"], string> = {
   birdies: "Birdies",

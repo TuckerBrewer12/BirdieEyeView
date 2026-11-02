@@ -202,6 +202,11 @@
   --brand-size-gauge-outer: 72px;
   --brand-size-sparkline-w: 300px;
   --brand-size-sparkline-h: 56px;
+  /* The radar drawn at a phone's width: its drawing, its rim, and the gaps from rim to label to figures. */
+  --brand-size-radar-compact-w: 360px;
+  --brand-size-radar-compact-h: 300px;
+  --brand-size-radar-compact-r: 72px;
+  --brand-space-radar-compact-label: 16px;
   --brand-sparkline-stroke: 2px;
   --brand-ring-width: 3px;
   /* Icon line weight in the tab bar: lighter at rest, heavier on the current tab. */

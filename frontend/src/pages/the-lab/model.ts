@@ -1,11 +1,16 @@
 import type { Friendship } from "@/data/friendsModel";
 import type { BenchmarkProfile } from "@/domain/benchmark";
 import { profileAverageToPar } from "@/domain/radar";
+import type { AnalyticsFilters } from "@/types/analytics";
 import type { AnalyticsDto, GoalReportDto, GoalSaverDto } from "@/types/api";
 
+/** The Lab weighs a golfer's last 20 rounds at every course, all time: theirs, or a friend's. */
+export const LAB_FILTERS: AnalyticsFilters = { limit: 20, timeframe: "all", courseId: "all" };
+
 /**
- * The part of a golfer's last 20 rounds of analytics The Lab reads. The rows keep the
- * server's shape: the radar's scale in `domain/radar` reads them as they come.
+ * The part of a golfer's last 20 rounds of analytics The Lab reads, picked from the shared
+ * analytics query. The rows keep the server's shape: the radar's scale in `domain/radar`
+ * reads them as they come.
  */
 export type LabAnalytics = Pick<
   AnalyticsDto,
@@ -25,6 +30,24 @@ export function labAnalyticsFrom(dto: AnalyticsDto): LabAnalytics {
 
 /** What the golfer is comparing their shape with: their average alone, their best rounds, a handicap, or a friend. */
 export type RadarMode = "benchmark" | "peak";
+
+/** The phone's performance panels, one open at a time. Desktop shows them all. */
+export const LAB_PANELS = ["by-par", "putting", "peak"] as const;
+export type LabPanel = (typeof LAB_PANELS)[number];
+
+/** The panels with something to show: par types played, putts logged, a peak game. */
+export function labPanelsFrom(
+  parTypes: readonly ParTypeRow[],
+  putting: PuttingSummary | null,
+  peak: PeakGame | null,
+): LabPanel[] {
+  const shown: Record<LabPanel, boolean> = {
+    "by-par": parTypes.some((row) => row.averageToPar != null),
+    putting: putting != null && (putting.threePuttsPerRound != null || putting.puttsPerRound != null),
+    peak: peak != null,
+  };
+  return LAB_PANELS.filter((panel) => shown[panel]);
+}
 
 /** One place to find strokes, in the server's words. */
 export interface Saver {

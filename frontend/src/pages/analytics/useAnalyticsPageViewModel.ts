@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useAnalytics } from "@/data/useAnalytics";
 import { useUser } from "@/data/useUser";
 import type { RoundSummary } from "@/domain";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { analyticsRepository, type AnalyticsRepository } from "./analyticsRepository";
 import {
   DEFAULT_FILTERS,
+  analyticsFrom,
   defaultRangePar,
   isFiltered,
   type Analytics,
@@ -13,7 +15,6 @@ import {
   type PlayedCourse,
   type RangePar,
 } from "./model";
-import { useAnalytics } from "./useAnalytics";
 import { useBestRound } from "./useBestRound";
 import { usePlayedCourses } from "./usePlayedCourses";
 
@@ -57,7 +58,7 @@ export function useAnalyticsPageViewModel(
   const [tab, setTab] = useState<AnalyticsTab>("scoring");
   const [pickedRangePar, setRangePar] = useState<RangePar | null>(null);
 
-  const { data, isPending, isPlaceholderData, isError, error, refetch } = useAnalytics(userId, filters, repository);
+  const { data, isPending, isPlaceholderData, isError, error, refetch } = useAnalytics(userId, filters, analyticsFrom, repository);
   const { data: playedCourses = [] } = usePlayedCourses(userId, repository);
   const { data: user } = useUser(userId, repository);
 
