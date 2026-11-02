@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
 import { useUpdateUser } from "@/data/useUpdateUser";
 import { formatHandicapInputValue, parseHandicapInput } from "@/domain/handicap";
-import { useCourseSearch } from "@/hooks/useCourseSearch";
+import { useCourseSearch } from "@/data/useCourseSearch";
 import { messageFrom } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/types/golf";
-import { formChanged, type ColorBlindMode, type HomeCourse, type SettingsForm } from "./model";
+import { formChanged, type HomeCourse, type SettingsForm } from "./model";
 import { settingsRepository, type SettingsRepository } from "./settingsRepository";
 import { useSettings } from "./useSettings";
 
@@ -27,8 +27,6 @@ export interface SettingsPageViewModel {
   clearHomeCourse: () => void;
   getUpdates: boolean;
   setGetUpdates: (on: boolean) => void;
-  colorBlindMode: ColorBlindMode;
-  setColorBlindMode: (mode: ColorBlindMode) => void;
   /** The form differs from what is saved. */
   dirty: boolean;
   canSave: boolean;
@@ -85,7 +83,7 @@ export function useSettingsPageViewModel(
   const save = (onSaved?: () => void) => {
     const handicap = parseHandicapInput(form.handicapInput);
     if (handicap.error) return;
-    const preferences = { getUpdates: form.getUpdates, colorBlindMode: form.colorBlindMode };
+    const preferences = { getUpdates: form.getUpdates };
     mutate(
       { handicap: handicap.value, home_course_id: form.homeCourse?.id ?? null },
       {
@@ -122,8 +120,6 @@ export function useSettingsPageViewModel(
     clearHomeCourse: () => edit({ homeCourse: null }),
     getUpdates: form.getUpdates,
     setGetUpdates: (getUpdates) => edit({ getUpdates }),
-    colorBlindMode: form.colorBlindMode,
-    setColorBlindMode: (colorBlindMode) => edit({ colorBlindMode }),
     dirty,
     canSave: dirty && handicapError == null && !updateUser.isPending,
     saving: updateUser.isPending,

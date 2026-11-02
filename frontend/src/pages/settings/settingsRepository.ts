@@ -1,13 +1,11 @@
 import { readPreference, writePreference } from "@/data/devicePreferences";
 import { userRepository, type UserRepository } from "@/data/userRepository";
 import { api } from "@/lib/api";
-import { COLORBLIND_PREF_KEY, type ColorBlindMode } from "@/lib/accessibility";
 import type { CourseSearchRepository } from "@/pages/rounds/roundsRepository";
 import type { User } from "@/types/golf";
 import type { DevicePreferences, Settings } from "./model";
 
 const UPDATES_PREF_KEY = "settings_get_updates";
-const COLOR_BLIND_MODES: readonly ColorBlindMode[] = ["none", "protanopia", "deuteranopia", "tritanopia"];
 
 export interface SettingsRepository extends Pick<UserRepository, "updateUser">, CourseSearchRepository {
   getSettings(userId: string): Promise<Settings>;
@@ -25,14 +23,8 @@ export function settingsFrom(user: User, homeCourseName: string | null): Setting
 }
 
 /** Reads stored device choices, falling back to the defaults for anything unset or unknown. */
-export function devicePreferencesFrom(
-  getUpdates: string | null,
-  colorBlindMode: string | null,
-): DevicePreferences {
-  return {
-    getUpdates: getUpdates !== "false",
-    colorBlindMode: COLOR_BLIND_MODES.find((mode) => mode === colorBlindMode) ?? "none",
-  };
+export function devicePreferencesFrom(getUpdates: string | null): DevicePreferences {
+  return { getUpdates: getUpdates !== "false" };
 }
 
 export const settingsRepository: SettingsRepository = {
@@ -45,10 +37,8 @@ export const settingsRepository: SettingsRepository = {
   },
   updateUser: (userId, changes) => userRepository.updateUser(userId, changes),
   searchCourses: (query, userId) => api.searchCourses(query, userId),
-  readDevicePreferences: () =>
-    devicePreferencesFrom(readPreference(UPDATES_PREF_KEY), readPreference(COLORBLIND_PREF_KEY)),
-  saveDevicePreferences: ({ getUpdates, colorBlindMode }) => {
+  readDevicePreferences: () => devicePreferencesFrom(readPreference(UPDATES_PREF_KEY)),
+  saveDevicePreferences: ({ getUpdates }) => {
     writePreference(UPDATES_PREF_KEY, String(getUpdates));
-    writePreference(COLORBLIND_PREF_KEY, colorBlindMode);
   },
 };

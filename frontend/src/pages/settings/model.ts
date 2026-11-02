@@ -1,7 +1,3 @@
-import type { ColorBlindMode } from "@/lib/accessibility";
-
-export type { ColorBlindMode };
-
 /** The course the player calls home. The name is null when that course could not be read. */
 export interface HomeCourse {
   id: string;
@@ -20,7 +16,6 @@ export interface Settings {
 /** Choices kept on this device, not on the account. */
 export interface DevicePreferences {
   getUpdates: boolean;
-  colorBlindMode: ColorBlindMode;
 }
 
 /** The Settings form as the player has it now. */
@@ -36,6 +31,5 @@ export function formChanged(form: SettingsForm, saved: SettingsForm): boolean {
     form.handicapInput !== saved.handicapInput
     || (form.homeCourse?.id ?? null) !== (saved.homeCourse?.id ?? null)
     || form.getUpdates !== saved.getUpdates
-    || form.colorBlindMode !== saved.colorBlindMode
   );
 }

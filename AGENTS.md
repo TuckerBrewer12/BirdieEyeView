@@ -273,22 +273,18 @@ Common SVG patterns:
 
 ### Dark Mode
 
-Implemented via `:root.dark` in `index.css`. Card bg: `#18191A`, borders: `#2a2d30`, text: `#f1f5f9` → `#9aa4b2`. Color-blind palette support via `getStoredColorBlindMode()` / `getColorBlindPalette()` in `src/lib/accessibility.ts` — always use `colorBlindPalette` overrides when rendering score colors in charts.
+Implemented via `:root.dark` in `brand/theme/tokens.css`. Views take their dark look from the tokens and `dark:` variants.
 
 ---
 
 Key files:
-- `src/App.tsx` — routing + scan state (lifted here to persist across navigation)
+- `src/App.tsx` — routing; wraps the app in `ScanSessionProvider` so a scan in progress outlives navigation
 - `src/lib/api.ts` — API client (`updateRound`, `cloneCourse`, `getCourses`, `searchCourses`, `getGoalReport`, `updateUser` with `scoring_goal`, etc.)
 - `src/types/scan.ts` — shared scan types/constants (kept out of ScanPage to avoid Fast Refresh warning)
 - `src/types/analytics.ts` — analytics types including `GoalReport` and `GoalSaver`
-- `src/pages/ScanPage.tsx` — upload → process → review scan flow; passes `result.round.course?.holes` as `course_holes` on save
-- `src/pages/rounds/round-details/RoundDetailPage.tsx` — round detail view with editing
-- `src/pages/CoursesPage.tsx` — course browser with clone/edit
-- `src/pages/SuggestionsPage.tsx` — Peer Comparison page; hosts Goal Selector (7 thresholds: 100/95/90/85/80/75/72), GoalReportSection (saver bento grid), and peer comparison stats. Goals section is below the comparison UI.
-- `src/pages/DashboardPage.tsx` — dashboard bento grid; includes goal widget (`lg:col-span-2`) showing progress bar + top saver insight
-- `src/components/round-detail/ScorecardGrid.tsx` — horizontal scorecard with To Par row; uses `effectivePar = hole?.par ?? score?.par_played`
-- `src/components/goals/GoalSaverCard.tsx` — bento card for a single goal saver (icon, stroke savings, gap%, headline, detail)
+- `src/pages/scan/` — upload → processing → setup → review → success; passes the course's holes as `course_holes` on save
+- `src/pages/the-lab/` — goal picker (7 thresholds: 100/95/90/85/80/75/72), goal savers (`components/SaverCard.tsx`) and peer comparison
+- `src/brand/components/RoundScorecard.tsx` — the scorecard (read-only and editable) with the To Par row
 
 **Confidence display:** only `strokes` fields count as actionable review items (not putts/fairway/gir). Null putts shows N/A when putts weren't recorded on the card.
 

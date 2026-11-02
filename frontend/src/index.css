@@ -2,18 +2,6 @@
 @import "./brand/theme/tokens.css";
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
-  --color-primary-light: #e8f5e9;
-
-  /* Score colors — refined, premium palette */
-  --color-eagle: #b45309;      /* amber-700 / gold */
-  --color-birdie: #059669;     /* rich emerald */
-  --color-par: #6b7280;        /* neutral gray — no bg, just reference */
-  --color-bogey: #dc2626;      /* red-600 */
-  --color-double: #1d4ed8;     /* blue-700 */
-  --color-triple: #6b21a8;     /* purple-800 */
-}
-
 /* iOS WebView: remove tap highlight and 300ms click delay */
 * {
   -webkit-tap-highlight-color: transparent;
@@ -40,78 +28,6 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-:root.dark .bg-white {
-  background-color: #18191A !important;
-}
-
-:root.dark .bg-white\/80 {
-  background-color: rgba(24, 25, 26, 0.92) !important;
-}
-
-:root.dark .bg-gray-50 {
-  background-color: #18191A !important;
-}
-
-:root.dark .bg-gray-50\/60 {
-  background-color: rgba(24, 25, 26, 0.85) !important;
-}
-
-:root.dark .bg-gray-50\/80 {
-  background-color: rgba(24, 25, 26, 0.92) !important;
-}
-
-:root.dark .bg-gray-100 {
-  background-color: #222426 !important;
-}
-
-:root.dark .bg-gray-200 {
-  background-color: #2a2d30 !important;
-}
-
-:root.dark .bg-emerald-50\/40 {
-  background-color: rgba(45, 122, 58, 0.16) !important;
-}
-
-:root.dark .bg-blue-50\/60 {
-  background-color: rgba(59, 130, 246, 0.16) !important;
-}
-
-:root.dark .bg-\[\#eef7f0\] {
-  background-color: rgba(45, 122, 58, 0.2) !important;
-}
-
-:root.dark .divide-gray-50 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #2a2d30 !important;
-}
-
-:root.dark .text-gray-900 {
-  color: #f1f5f9 !important;
-}
-
-:root.dark .text-gray-800 {
-  color: #e6edf3 !important;
-}
-
-:root.dark .text-gray-700,
-:root.dark .text-gray-600 {
-  color: #d7dde5 !important;
-}
-
-:root.dark .text-gray-300 {
-  color: #b8c1cc !important;
-}
-
-:root.dark .text-gray-500,
-:root.dark .text-gray-400 {
-  color: #9aa4b2 !important;
-}
-
-:root.dark .border-gray-100,
-:root.dark .border-gray-200,
-:root.dark .border-gray-300 {
-  border-color: #2a2d30 !important;
-}
-
 /* Legacy fields only. Kit fields carry a data-slot and take their dark fill from
    the tokens; this rule is unlayered, so it would beat their utilities. */
 :root.dark input:not([data-slot]),
@@ -128,12 +44,4 @@ body {
 
 #root {
   min-height: 100vh;
-}
-
-.sidebar-gradient {
-  background: linear-gradient(180deg, #1e3d25 0%, #152d1b 100%);
-}
-
-.header-gradient {
-  background: linear-gradient(180deg, #3a6b44 0%, #2d5a35 100%);
 }

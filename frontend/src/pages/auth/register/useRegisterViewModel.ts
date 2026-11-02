@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { parseHandicapInput } from "@/domain/handicap";
-import { useCourseSearch } from "@/hooks/useCourseSearch";
+import { useCourseSearch } from "@/data/useCourseSearch";
 import { messageFrom } from "@/lib/userFacingErrors";
 import type { CourseSearchRepository } from "@/pages/rounds/roundsRepository";
 import { coursesRepository } from "@/pages/courses/coursesRepository";

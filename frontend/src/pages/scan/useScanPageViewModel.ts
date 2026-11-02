@@ -4,7 +4,7 @@ import { scanRepository, type ScanRepository } from "@/data/scanRepository";
 import { useCardText } from "@/data/useCardText";
 import { useExtractScorecard, useIsExtractingScorecard } from "@/data/useExtractScorecard";
 import type { RoundDetail } from "@/domain";
-import { useCourseSearch, type CourseSearch } from "@/hooks/useCourseSearch";
+import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/types/golf";
 import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";

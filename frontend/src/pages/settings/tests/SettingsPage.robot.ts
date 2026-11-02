@@ -7,7 +7,6 @@ import { expectTheme } from "../../../testing/theme";
 import type { User } from "../../../types/golf";
 
 type ThemeLabel = "Light" | "Dark" | "System";
-type ColorBlindLabel = "No filter" | "Protanopia" | "Deuteranopia" | "Tritanopia";
 
 /** A golfer with a friend code, a handicap and a home course. */
 export function settingsProfile(overrides: Partial<User> = {}): User {
@@ -39,12 +38,6 @@ export class SettingsRobot {
 
   private themeOption(label: ThemeLabel) {
     return this.themeControl().getByRole("button", { name: label, exact: true });
-  }
-
-  private colorBlindOption(label: ColorBlindLabel) {
-    return this.page
-      .getByRole("group", { name: "Color blind mode" })
-      .getByRole("button", { name: label, exact: true });
   }
 
   private updatesCheckbox() {
@@ -148,16 +141,6 @@ export class SettingsRobot {
 
   async seesTheme(theme: "light" | "dark"): Promise<this> {
     await expectTheme(this.page, theme);
-    return this;
-  }
-
-  async pickColorBlindMode(label: ColorBlindLabel): Promise<this> {
-    await this.colorBlindOption(label).click();
-    return this;
-  }
-
-  async seesColorBlindMode(label: ColorBlindLabel): Promise<this> {
-    await expect(this.colorBlindOption(label)).toHaveAttribute("aria-pressed", "true");
     return this;
   }
 

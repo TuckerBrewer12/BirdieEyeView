@@ -32,13 +32,13 @@ describe("settingsFrom", () => {
 });
 
 describe("devicePreferencesFrom", () => {
-  it("defaults to getting updates with no colour filter", () => {
-    expect(devicePreferencesFrom(null, null)).toEqual({ getUpdates: true, colorBlindMode: "none" });
+  it("defaults to getting updates", () => {
+    expect(devicePreferencesFrom(null)).toEqual({ getUpdates: true });
   });
 
-  it("reads stored choices and ignores an unknown mode", () => {
-    expect(devicePreferencesFrom("false", "tritanopia")).toEqual({ getUpdates: false, colorBlindMode: "tritanopia" });
-    expect(devicePreferencesFrom("true", "sepia").colorBlindMode).toBe("none");
+  it("reads the stored choice", () => {
+    expect(devicePreferencesFrom("false")).toEqual({ getUpdates: false });
+    expect(devicePreferencesFrom("true")).toEqual({ getUpdates: true });
   });
 });
 
@@ -47,7 +47,6 @@ describe("formChanged", () => {
     handicapInput: "12",
     homeCourse: { id: "course-1", name: "Pebble Beach" },
     getUpdates: true,
-    colorBlindMode: "none",
   };
 
   it("compares the home course by id, not name", () => {
@@ -58,6 +57,5 @@ describe("formChanged", () => {
   it("notices each field", () => {
     expect(formChanged({ ...saved, handicapInput: "11" }, saved)).toBe(true);
     expect(formChanged({ ...saved, getUpdates: false }, saved)).toBe(true);
-    expect(formChanged({ ...saved, colorBlindMode: "protanopia" }, saved)).toBe(true);
   });
 });

@@ -8,7 +8,6 @@ import type {
   RoundSummaryDto,
   TeeDto,
 } from "./api";
-import { toParLabel } from "@/domain/score";
 
 // Round and course responses come from the generated API types; see ./api.ts.
 export type HoleScore = HoleScoreDto;
@@ -38,32 +37,4 @@ export interface User {
   handicap: number | null;
   created_at: string | null;
   scoring_goal?: number | null;
-}
-
-/** Legacy copies for unmigrated pages. New pages use `@/domain` and `@/brand`. */
-export type ScoreType = "eagle" | "birdie" | "par" | "bogey" | "double-bogey" | "worse";
-
-export function getScoreType(strokes: number, par: number): ScoreType {
-  const diff = strokes - par;
-  if (diff <= -2) return "eagle";
-  if (diff === -1) return "birdie";
-  if (diff === 0) return "par";
-  if (diff === 1) return "bogey";
-  if (diff === 2) return "double-bogey";
-  return "worse";
-}
-
-export function getScoreColor(strokes: number, par: number): string {
-  const diff = strokes - par;
-  if (diff <= -2) return "bg-eagle text-white ring-2 ring-yellow-300";
-  if (diff === -1) return "bg-birdie text-white";
-  if (diff === 0) return "bg-gray-100 text-gray-700";
-  if (diff === 1) return "bg-red-400 text-white";
-  if (diff === 2) return "bg-blue-500 text-white";
-  return "bg-purple-600 text-white";
-}
-
-/** Legacy callers' to-par text, with "-" for no score. The rule is the domain's `toParLabel`. */
-export function formatToPar(toPar: number | null): string {
-  return toParLabel(toPar) ?? "-";
 }

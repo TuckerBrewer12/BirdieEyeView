@@ -31,14 +31,13 @@ describe("useSettingsPageViewModel", () => {
   it("fills the form from the saved settings and device choices", async () => {
     const { result } = await loaded({
       user: { handicap: -2.5, home_course_id: pebbleBeach.id, friend_code: "ABCD-9999" },
-      device: { getUpdates: false, colorBlindMode: "tritanopia" },
+      device: { getUpdates: false },
     });
 
     expect(result.current.friendCode).toBe("ABCD-9999");
     expect(result.current.handicapInput).toBe("+2.5");
     expect(result.current.homeCourse).toEqual({ id: pebbleBeach.id, name: pebbleBeach.name });
     expect(result.current.getUpdates).toBe(false);
-    expect(result.current.colorBlindMode).toBe("tritanopia");
     expect(result.current.dirty).toBe(false);
     expect(result.current.canSave).toBe(false);
   });
@@ -85,13 +84,12 @@ describe("useSettingsPageViewModel", () => {
       result.current.setHandicapInput("+1.2");
       result.current.pickHomeCourse(pebbleBeach);
       result.current.setGetUpdates(false);
-      result.current.setColorBlindMode("deuteranopia");
     });
     act(() => result.current.save());
 
     await waitFor(() => expect(result.current.saved).toBe(true));
     expect(repository.updates).toEqual([{ handicap: -1.2, home_course_id: pebbleBeach.id }]);
-    expect(repository.device).toEqual({ getUpdates: false, colorBlindMode: "deuteranopia" });
+    expect(repository.device).toEqual({ getUpdates: false });
     expect(result.current.dirty).toBe(false);
     expect(result.current.handicapInput).toBe("+1.2");
     expect(result.current.homeCourse?.id).toBe(pebbleBeach.id);
@@ -129,14 +127,14 @@ describe("useSettingsPageViewModel", () => {
 
     act(() => {
       result.current.setHandicapInput("5");
-      result.current.setColorBlindMode("protanopia");
+      result.current.setGetUpdates(false);
     });
     act(() => result.current.save());
 
     await waitFor(() => expect(result.current.saveError).toBe("Selected home course was not found"));
     expect(result.current.dirty).toBe(true);
     expect(result.current.handicapInput).toBe("5");
-    expect(repository.device.colorBlindMode).toBe("none");
+    expect(repository.device.getUpdates).toBe(true);
   });
 
   it("discard puts the form back and clears a failed save", async () => {
@@ -170,7 +168,7 @@ describe("useSettingsPageViewModel", () => {
     });
 
     expect(result.current.loadError).toBe("User not found");
-    act(() => result.current.setColorBlindMode("protanopia"));
+    act(() => result.current.setGetUpdates(false));
     expect(result.current.dirty).toBe(false);
   });
 });

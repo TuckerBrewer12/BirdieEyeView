@@ -9,19 +9,11 @@ import {
   ToggleGroupItem,
 } from "@/brand";
 import { isThemePreference, type ThemePreference } from "@/domain/theme";
-import type { ColorBlindMode } from "../model";
 
 const THEME_OPTIONS: { value: ThemePreference; label: string; Icon: typeof Sun }[] = [
   { value: "light", label: "Light", Icon: Sun },
   { value: "dark", label: "Dark", Icon: Moon },
   { value: "system", label: "System", Icon: Monitor },
-];
-
-const COLOR_BLIND_OPTIONS: { value: ColorBlindMode; label: string }[] = [
-  { value: "none", label: "No filter" },
-  { value: "protanopia", label: "Protanopia" },
-  { value: "deuteranopia", label: "Deuteranopia" },
-  { value: "tritanopia", label: "Tritanopia" },
 ];
 
 interface PreferencesSectionProps {
@@ -30,18 +22,14 @@ interface PreferencesSectionProps {
   onThemeChange: (theme: ThemePreference) => void;
   getUpdates: boolean;
   onGetUpdatesChange: (on: boolean) => void;
-  colorBlindMode: ColorBlindMode;
-  onColorBlindModeChange: (mode: ColorBlindMode) => void;
 }
 
-/** Theme, updates and colour-blind mode. The last two are kept with Save. */
+/** Theme and updates. Updates is kept with Save. */
 export function PreferencesSection({
   theme,
   onThemeChange,
   getUpdates,
   onGetUpdatesChange,
-  colorBlindMode,
-  onColorBlindModeChange,
 }: PreferencesSectionProps) {
   return (
     <Card>
@@ -65,26 +53,6 @@ export function PreferencesSection({
             {THEME_OPTIONS.map(({ value, label, Icon }) => (
               <ToggleGroupItem key={value} value={value}>
                 <Icon data-icon="inline-start" />
-                {label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </Row>
-
-        <Row labelId="settings-color-blind-label" label="Color blind mode">
-          <ToggleGroup
-            aria-labelledby="settings-color-blind-label"
-            variant="outline"
-            size="sm"
-            spacing={0}
-            value={[colorBlindMode]}
-            onValueChange={(values) => {
-              const next = COLOR_BLIND_OPTIONS.find((option) => option.value === values[0]);
-              if (next) onColorBlindModeChange(next.value);
-            }}
-          >
-            {COLOR_BLIND_OPTIONS.map(({ value, label }) => (
-              <ToggleGroupItem key={value} value={value}>
                 {label}
               </ToggleGroupItem>
             ))}

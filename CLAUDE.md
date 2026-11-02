@@ -136,6 +136,18 @@ Two DB schemas: `courses` (courses, holes, tees, tee_yardages) and `users` (user
 
 ### `frontend/` — React + TypeScript + Vite
 
+Every page is MVVM on the brand kit. Under `frontend/src/`:
+
+- `pages/<kebab-name>/` — one folder per page: `<Name>Page.tsx` (the view), `use<Name>PageViewModel.ts` (screen state only), `<name>Repository.ts` (endpoint + DTO→domain mapping), `use<Thing>.ts` query/mutation hooks (server state, cache effects), `model.ts`/`present.ts` (shaping and wording), `components/` (page-only views), `previews/`, and `tests/` (screenshot specs, espresso flows through a `*.robot.ts`, view-model tests with `Fake*` doubles). `pages/rounds/` and `pages/courses/` are the models to copy.
+- `data/` — queries, mutations and repositories more than one page shares (`useUser`, `useUpdateUser`, `useGoalReport`, `useAnalytics`, `useCourseSearch`, …) and `queryKeys`.
+- `domain/` — golf types, words and formatting, and DTO→domain mapping. The server owns golf figures; the client never recomputes them.
+- `brand/` — the kit: `components/`, `charts/`, `theme/` (tokens), with a preview and screenshot spec for each.
+- `platform/` — web adapters (image compression, file preview, sharing) the app passes in.
+- `context/` — `AuthContext` and the theme provider.
+- `testing/` — `Fake*` doubles, fixtures and Playwright helpers.
+
+Shared code (`domain/`, `data/`, repositories, `*Model.ts`, view models) imports nothing from `@/brand`, `react-router` or the DOM; eslint enforces it.
+
 ---
 
 ## UI Design System
@@ -284,28 +296,23 @@ Common SVG patterns:
 - Reach for `colors.*` only when the color is dynamic and a static class can't express it — `scoreFill()` for a per-hole fill is the motivating case. Prefer the utility everywhere else.
 - Because `colors.*` returns `var()` references, they don't work where the string is parsed as a color (canvas, some chart libraries). Resolve those against the document: `getComputedStyle(document.documentElement).getPropertyValue("--card")`.
 - Score colors are `--score-<key>-fill` / `-on-fill` / `-text`, plus `text-score-<key>` utilities. Use `toParTextClass()` for to-par text.
-- Not yet unified: `src/lib/colors.ts` (`SCORE_COLORS`, `UI_COLORS`) and the `@theme` block in `index.css` still hold their own palettes for the analytics/chart layer. Folding those into the brand tokens is the next step.
 
 ### Dark Mode
 
-Implemented via `:root.dark` in `brand/theme/tokens.css`. Color-blind palette support via `getStoredColorBlindMode()` / `getColorBlindPalette()` in `src/lib/accessibility.ts` — always use `colorBlindPalette` overrides when rendering score colors in charts.
+Implemented via `:root.dark` in `brand/theme/tokens.css`. Views take their dark look from the tokens and `dark:` variants; `useTheme()` is only for reading and setting the preference.
 
 ---
 
 Key files:
-- `src/App.tsx` — routing + scan state (lifted here to persist across navigation)
+- `src/App.tsx` — routing; wraps the app in `ScanSessionProvider` so a scan in progress outlives navigation
 - `src/types/api.gen.ts` — generated from the backend's OpenAPI schema (`frontend/openapi.json`); never edit by hand. After changing an API model run `python scripts/dump_openapi.py` then `npm run gen:api`; CI fails if either is stale. `src/types/api.ts` names the generated types (`RoundDto`, `RoundSummaryDto`, …).
 - `src/domain/round.ts` — the frontend `Round`: plain data mapped from the API (`Round.fromDto`; lists get the leaner `RoundSummary` from `Round.fromSummary`, which `Round` extends), plus `Round.previewEdits`, the only frontend golf math (live totals while editing, replaced by the saved response).
 - `src/lib/api.ts` — API client (`updateRound`, `cloneCourse`, `getCourses`, `searchCourses`, `getGoalReport`, `updateUser` with `scoring_goal`, etc.)
 - `src/types/scan.ts` — shared scan types/constants (kept out of ScanPage to avoid Fast Refresh warning)
 - `src/types/analytics.ts` — analytics types including `GoalReport` and `GoalSaver`
-- `src/pages/ScanPage.tsx` — upload → process → review scan flow; passes `result.round.course?.holes` as `course_holes` on save
-- `src/pages/rounds/round-details/RoundDetailPage.tsx` — round detail view with editing
-- `src/pages/CoursesPage.tsx` — course browser with clone/edit
-- `src/pages/SuggestionsPage.tsx` — Peer Comparison page; hosts Goal Selector (7 thresholds: 100/95/90/85/80/75/72), GoalReportSection (saver bento grid), and peer comparison stats. Goals section is below the comparison UI.
-- `src/pages/DashboardPage.tsx` — dashboard bento grid; includes goal widget (`lg:col-span-2`) showing progress bar + top saver insight
-- `src/components/round-detail/ScorecardGrid.tsx` — horizontal scorecard with To Par row; uses `effectivePar = hole?.par ?? score?.par_played`
-- `src/components/goals/GoalSaverCard.tsx` — bento card for a single goal saver (icon, stroke savings, gap%, headline, detail)
+- `src/pages/scan/` — upload → processing → setup → review → success; passes the course's holes as `course_holes` on save
+- `src/pages/the-lab/` — goal picker (7 thresholds: 100/95/90/85/80/75/72), goal savers (`components/SaverCard.tsx`) and peer comparison
+- `src/brand/components/RoundScorecard.tsx` — the scorecard (read-only and editable) with the To Par row
 
 **Confidence display:** only `strokes` fields count as actionable review items (not putts/fairway/gir). Null putts shows N/A when putts weren't recorded on the card.
 
