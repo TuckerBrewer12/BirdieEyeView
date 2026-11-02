@@ -1,7 +1,7 @@
 import type { Friendship } from "@/data/friendsModel";
 import type { BenchmarkProfile } from "@/domain/benchmark";
 import { profileAverageToPar } from "@/domain/radar";
-import type { AnalyticsFilters } from "@/types/analytics";
+import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type { AnalyticsDto, GoalReportDto, GoalSaverDto } from "@/types/api";
 
 /** The Lab weighs a golfer's last 20 rounds at every course, all time: theirs, or a friend's. */

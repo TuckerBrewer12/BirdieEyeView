@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AUTH_MESSAGES, FakeAuth } from "@/testing/fakes/FakeAuth";
 import { FakeCoursesRepository } from "@/testing/fakes/FakeCoursesRepository";
 import { FakeHandler } from "@/testing/fakes/FakeHandler";
-import { pebbleBeach } from "@/testing/fixtures/courses";
+import { pebbleBeach, pebbleBeachSummary } from "@/testing/fixtures/courses";
 import { queryWrapper } from "../../tests/queryWrapper";
 import { useRegisterViewModel } from "../useRegisterViewModel";
 
@@ -31,7 +31,7 @@ describe("useRegisterViewModel", () => {
     act(() => result.current.setCourseQuery("Pebble"));
     await waitFor(() => expect(result.current.courseResults).toHaveLength(1));
     act(() => result.current.pickHomeCourse(result.current.courseResults[0]));
-    expect(result.current.homeCourse).toEqual({ id: pebbleBeach.id, name: pebbleBeach.name });
+    expect(result.current.homeCourse).toEqual({ id: pebbleBeachSummary.id, name: pebbleBeachSummary.name });
 
     act(() => result.current.submit(registered.handle));
 
@@ -42,7 +42,7 @@ describe("useRegisterViewModel", () => {
         email: "sam@example.com",
         password: "birdie123",
         handicap: -2.5,
-        homeCourseId: pebbleBeach.id,
+        homeCourseId: pebbleBeachSummary.id,
       },
     ]);
   });

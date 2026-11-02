@@ -2,7 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import { pebbleBeach } from "@/testing/fixtures/courses";
+import { pebbleBeachSummary } from "@/testing/fixtures/courses";
 import {
   halfMoonBayCourse,
   halfMoonBayRound,
@@ -75,7 +75,7 @@ describe("useRoundEditorViewModel", () => {
     const { result } = renderEditor(halfMoonBayRound, { fullCourses: [pebbleBeachCourse] });
     act(() => result.current.start());
     await act(async () => {
-      await result.current.pickCourse(pebbleBeach);
+      await result.current.pickCourse(pebbleBeachSummary);
     });
     expect(result.current.course.status).toBe("linked");
     expect(result.current.linkedName).toBe("Pebble Beach");
@@ -87,7 +87,7 @@ describe("useRoundEditorViewModel", () => {
     const { result } = renderEditor(halfMoonBayRound);
     act(() => result.current.start());
     await act(async () => {
-      await result.current.pickCourse(pebbleBeach);
+      await result.current.pickCourse(pebbleBeachSummary);
     });
     expect(result.current.error).not.toBeNull();
     expect(result.current.course).toEqual({ status: "linked", course: halfMoonBayCourse });
@@ -97,7 +97,7 @@ describe("useRoundEditorViewModel", () => {
     const { result } = renderEditor(halfMoonBayRound, { fullCourses: [pebbleBeachCourse] });
     act(() => result.current.start());
     await act(async () => {
-      await result.current.pickCourse(pebbleBeach);
+      await result.current.pickCourse(pebbleBeachSummary);
     });
     act(() => result.current.closeCourseSearch());
     expect(result.current.course).toEqual({ status: "linked", course: halfMoonBayCourse });
@@ -107,7 +107,7 @@ describe("useRoundEditorViewModel", () => {
     const { result, repository } = renderEditor(scannedRound, { fullCourses: [pebbleBeachCourse] });
     act(() => result.current.start());
     await act(async () => {
-      await result.current.pickCourse(pebbleBeach);
+      await result.current.pickCourse(pebbleBeachSummary);
     });
     act(() => result.current.save());
     await waitFor(() => expect(result.current.editing).toBe(false));

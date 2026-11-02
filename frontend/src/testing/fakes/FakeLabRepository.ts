@@ -1,13 +1,12 @@
 import { friendshipFromDto, type Friendship } from "../../data/friendsModel";
 import type { LabRepository } from "../../pages/the-lab/labRepository";
-import type { AnalyticsFilters } from "../../types/analytics";
-import type { AnalyticsDto, GoalReportDto, UserChangesDto } from "../../types/api";
-import type { User } from "../../types/golf";
+import type { AnalyticsFilters } from "../../domain/analyticsFilters";
+import type { AnalyticsDto, GoalReportDto, UserChangesDto, UserDto } from "../../types/api";
 import { labUser } from "../fixtures/lab";
 import { InMemoryFriendships, type InMemoryFriendshipsSeed } from "./InMemoryFriendships";
 
 export interface FakeLabSeed {
-  user?: Partial<User>;
+  user?: Partial<UserDto>;
   /** Analytics by golfer. A golfer with none fails to load, as the server's 404 does. */
   analytics?: Record<string, AnalyticsDto>;
   goalReport?: GoalReportDto | null;
@@ -16,7 +15,7 @@ export interface FakeLabSeed {
 
 /** The Lab's reads and its one write, in memory. */
 export class FakeLabRepository implements LabRepository {
-  user: User;
+  user: UserDto;
   readonly analytics: Record<string, AnalyticsDto>;
   goalReport: GoalReportDto | null;
   readonly friendships: InMemoryFriendships;
@@ -37,11 +36,11 @@ export class FakeLabRepository implements LabRepository {
     this.friendships = new InMemoryFriendships(friends);
   }
 
-  async getUser(): Promise<User> {
+  async getUser(): Promise<UserDto> {
     return this.user;
   }
 
-  async updateUser(_userId: string, changes: UserChangesDto): Promise<User> {
+  async updateUser(_userId: string, changes: UserChangesDto): Promise<UserDto> {
     this.updates.push(changes);
     if (this.saveError) throw this.saveError;
     if (changes.scoring_goal !== undefined) this.user = { ...this.user, scoring_goal: changes.scoring_goal };

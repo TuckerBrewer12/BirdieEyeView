@@ -1,15 +1,15 @@
 import { CourseLinkSearch } from "@/brand/components/CourseLinkSearch";
-import type { CourseSummary } from "@/types/golf";
+import type { CourseSummary } from "@/domain/course";
 
 const pebble: CourseSummary = {
   id: "pebble",
   name: "Pebble Beach Golf Links",
   location: "Pebble Beach, CA",
   par: 72,
-  total_holes: 18,
-  tee_count: 4,
-  external_course_id: null,
+  holeCount: 18,
+  teeCount: 4,
   source: "local",
+  externalId: null,
 };
 
 const spyglass: CourseSummary = {
@@ -17,10 +17,10 @@ const spyglass: CourseSummary = {
   name: "Spyglass Hill",
   location: "Pebble Beach, CA",
   par: 72,
-  total_holes: 18,
-  tee_count: 3,
-  external_course_id: null,
+  holeCount: 18,
+  teeCount: 3,
   source: "local",
+  externalId: null,
 };
 
 export default function CourseLinkSearchPreview() {

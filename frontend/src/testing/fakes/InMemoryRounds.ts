@@ -1,6 +1,13 @@
-import type { Course, CourseSummary } from "../../types/golf";
-import type { CourseDto, RoundDto, RoundSummaryDto, SaveScanRequestDto } from "../../types/api";
-import type { CourseAnalyticsData, RoundComparison } from "../../types/analytics";
+import type {
+  CourseAnalyticsDto,
+  CourseDto,
+  CourseSummaryDto,
+  HandicapIndexDto,
+  RoundComparisonDto,
+  RoundDto,
+  RoundSummaryDto,
+  SaveScanRequestDto,
+} from "../../types/api";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
 import { toCourseSummary } from "../fixtures/roundDetails";
@@ -10,12 +17,12 @@ import { roundResponse, storedFromRound, summaryResponse, type StoredRound } fro
 export interface InMemoryRoundsSeed {
   /** The round list, in order, as the facts the server stores. */
   rounds?: StoredRound[];
-  courses?: CourseSummary[];
+  courses?: CourseSummaryDto[];
   /** Full rounds; one sharing an id with a listed round replaces its facts. */
   detailRounds?: RoundDto[];
-  fullCourses?: Course[];
-  courseAnalytics?: CourseAnalyticsData | null;
-  comparison?: RoundComparison | null;
+  fullCourses?: CourseDto[];
+  courseAnalytics?: CourseAnalyticsDto | null;
+  comparison?: RoundComparisonDto | null;
   handicapIndex?: number | null;
   linkError?: string | null;
   updateError?: string | null;
@@ -62,10 +69,10 @@ export class InMemoryRounds {
   private stored: Map<string, StoredRound>;
   /** Ids of the rounds the list returns, in order. */
   private listed: string[];
-  courses: CourseSummary[];
-  fullCourses: Course[];
-  courseAnalytics: CourseAnalyticsData | null;
-  comparison: RoundComparison | null;
+  courses: CourseSummaryDto[];
+  fullCourses: CourseDto[];
+  courseAnalytics: CourseAnalyticsDto | null;
+  comparison: RoundComparisonDto | null;
   handicapIndex: number | null;
   linkError: string | null;
   updateError: string | null;
@@ -105,10 +112,10 @@ export class InMemoryRounds {
     return this.searchDelaysMs[this.searchCalls++] ?? 0;
   }
 
-  searchCourses(query: string): CourseSummary[] {
+  searchCourses(query: string): CourseSummaryDto[] {
     if (this.searchError) throw new Error(this.searchError);
     const q = query.toLowerCase();
-    const byId = new Map<string, CourseSummary>();
+    const byId = new Map<string, CourseSummaryDto>();
     for (const course of this.fullCourses) {
       if (course.id) byId.set(course.id, toCourseSummary(course));
     }
@@ -118,7 +125,7 @@ export class InMemoryRounds {
     return [...byId.values()].filter((course) => (course.name ?? "").toLowerCase().includes(q));
   }
 
-  getCourses(): CourseSummary[] {
+  getCourses(): CourseSummaryDto[] {
     if (this.coursesError) throw new Error(this.coursesError);
     return this.courses;
   }
@@ -212,15 +219,15 @@ export class InMemoryRounds {
     throw new Error("Course not found.");
   }
 
-  getCourseAnalytics(courseId: string): CourseAnalyticsData {
+  getCourseAnalytics(courseId: string): CourseAnalyticsDto {
     return this.courseAnalytics ?? emptyCourseAnalytics(courseId);
   }
 
-  getRoundComparison(): RoundComparison | null {
+  getRoundComparison(): RoundComparisonDto | null {
     return this.comparison;
   }
 
-  getUserHandicap(): { handicap_index: number | null } {
+  getUserHandicap(): HandicapIndexDto {
     return { handicap_index: this.handicapIndex };
   }
 }

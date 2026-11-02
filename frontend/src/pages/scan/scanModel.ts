@@ -1,7 +1,12 @@
 import { Round, isoDay, type HoleEdits } from "@/domain";
-import type { SaveScanRequestDto } from "@/types/api";
-import type { Course, CourseSummary } from "@/types/golf";
-import type { ExtractedHoleScore, ManualTee, ScanResult } from "@/types/scan";
+import type { CourseSummary } from "@/domain/course";
+import type {
+  CourseDto,
+  SaveScanRequestDto,
+  ScanDto,
+  ScannedHoleScoreDto,
+  ScannedTeeDto,
+} from "@/types/api";
 
 /** Read a photographed card, or type the scores in by hand. */
 export type ScanMode = "scan" | "manual";
@@ -39,7 +44,7 @@ export type ReviewCourse =
 /** The card being checked before it is saved: the scan as read, and what the golfer changed. */
 export interface ScanReviewDraft {
   /** The card as read, or the blank one hand entry opens. */
-  scan: ScanResult;
+  scan: ScanDto;
   /** Strokes, putts and greens the golfer typed over, by hole number. */
   holes: HoleEdits;
   /** `YYYY-MM-DD`. */
@@ -59,7 +64,7 @@ export function courseQueryFrom(name: string | null | undefined): string {
 }
 
 /** A finished scan, ready to check. */
-export function reviewFromScan(result: ScanResult, today: string): ScanReviewDraft {
+export function reviewFromScan(result: ScanDto, today: string): ScanReviewDraft {
   const { round } = result;
   const onlyTee = round.course?.tees?.length === 1 ? round.course.tees[0].color : null;
   return {
@@ -73,17 +78,17 @@ export function reviewFromScan(result: ScanResult, today: string): ScanReviewDra
 }
 
 /** A blank card for typing scores in: the chosen course's holes, or eighteen unknown ones. */
-export function reviewFromSetup(setup: ManualSetup, course: Course | null): ScanReviewDraft {
+export function reviewFromSetup(setup: ManualSetup, course: CourseDto | null): ScanReviewDraft {
   const holes = course?.holes.length
-    ? course.holes.map((hole) => ({ number: hole.number, par: hole.par, handicap: hole.handicap }))
+    ? course.holes.map((hole, i) => ({ number: hole.number ?? i + 1, par: hole.par, handicap: hole.handicap }))
     : Array.from({ length: 18 }, (_, i) => ({ number: i + 1, par: null, handicap: null }));
-  const tees: ManualTee[] = (course?.tees ?? []).map((tee) => ({
+  const tees: ScannedTeeDto[] = (course?.tees ?? []).map((tee) => ({
     color: tee.color,
     slope_rating: tee.slope_rating,
     course_rating: tee.course_rating,
     hole_yardages: { ...tee.hole_yardages },
   }));
-  const blankScores: ExtractedHoleScore[] = holes.map((hole) => ({
+  const blankScores: ScannedHoleScoreDto[] = holes.map((hole) => ({
     hole_number: hole.number,
     strokes: null,
     putts: null,
@@ -92,7 +97,7 @@ export function reviewFromSetup(setup: ManualSetup, course: Course | null): Scan
     green_in_regulation: null,
   }));
 
-  const scan: ScanResult = {
+  const scan: ScanDto = {
     round: {
       course: setup.course
         ? { name: setup.course.name, location: course?.location ?? null, par: course?.par ?? null, holes, tees }
@@ -128,7 +133,7 @@ export function withHoleEdit(draft: ScanReviewDraft, hole: number, edit: HoleEdi
 /** A search result as the course to save the round against, or why it can't be. */
 export function reviewCourseFrom(course: CourseSummary): { course: ReviewCourse } | { error: string } {
   const external = course.source === "external" || course.id.startsWith("external:");
-  if (external && !course.external_course_id) {
+  if (external && !course.externalId) {
     return {
       error: "External course result is missing provider ID. Please choose another match or enter a custom name.",
     };
@@ -137,7 +142,7 @@ export function reviewCourseFrom(course: CourseSummary): { course: ReviewCourse 
     course: {
       status: "linked",
       id: external ? null : course.id,
-      externalId: course.external_course_id ?? null,
+      externalId: course.externalId,
       name: course.name ?? course.id,
     },
   };
@@ -147,7 +152,7 @@ export function reviewCourseFrom(course: CourseSummary): { course: ReviewCourse 
  * The card as it will save: the scan with the golfer's edits, read against the linked course
  * once it has loaded, else against the course and tees the scan found.
  */
-export function reviewedRound(draft: ScanReviewDraft, linkedCourse: Course | null): Round {
+export function reviewedRound(draft: ScanReviewDraft, linkedCourse: CourseDto | null): Round {
   const { scan, holes, teeBox, course } = draft;
   const asRead = Round.fromScan({ ...scan.round, tee_box: teeBox });
   const played = Round.previewEdits(asRead, holes, linkedCourse, teeBox);
@@ -194,8 +199,8 @@ export function saveRequestFrom(userId: string, draft: ScanReviewDraft): SaveSca
     tee_box: teeBox,
     ...teeRatings,
     date: draft.date,
-    hole_scores: scan.round.hole_scores.map((score, i) => {
-      const hole = score.hole_number ?? i + 1;
+    hole_scores: scan.round.hole_scores.map((score) => {
+      const hole = score.hole_number;
       const edit = holes[hole];
       return {
         hole_number: hole,
@@ -206,9 +211,7 @@ export function saveRequestFrom(userId: string, draft: ScanReviewDraft): SaveSca
         green_in_regulation: edit?.gir !== undefined ? edit.gir : score.green_in_regulation,
       };
     }),
-    course_holes: course?.holes
-      ?.filter((hole) => hole.number != null)
-      .map((hole) => ({ hole_number: hole.number!, par: hole.par, handicap: hole.handicap })),
+    course_holes: course?.holes.map((hole) => ({ hole_number: hole.number, par: hole.par, handicap: hole.handicap })),
     all_tees: course?.tees
       ?.filter((t) => t.color)
       .map((t) => ({

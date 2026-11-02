@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from fastapi.encoders import jsonable_encoder  # noqa: E402
 
 from api.round_responses import round_detail  # noqa: E402
-from api.routers import stats  # noqa: E402
+from api.routers import stats, users  # noqa: E402
 from models import Course, Hole, HoleScore, Round, Tee, User  # noqa: E402
 
 OUT = Path(__file__).resolve().parent.parent / "frontend" / "src" / "testing" / "fixtures" / "sampleGolfer.ts"
@@ -182,15 +182,7 @@ async def _responses() -> dict:
     links_analytics = await stats.get_analytics(user_id, 50, HALF_MOON_BAY.id, None, db, USER)
 
     best = min(rounds, key=lambda r: r.calculate_total_score())
-    profile = {
-        "id": USER.id,
-        "name": USER.name,
-        "email": USER.email,
-        "home_course_id": USER.home_course_id,
-        "handicap": dashboard.handicap_index,
-        "created_at": USER.created_at,
-        "scoring_goal": USER.scoring_goal,
-    }
+    profile = users.user_response(USER.model_copy(update={"handicap": dashboard.handicap_index}))
     return jsonable_encoder({
         "user": {"user_id": USER.id, "name": USER.name, "email": USER.email, "email_verified": True},
         "profile": profile,

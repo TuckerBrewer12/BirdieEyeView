@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 import { withoutRounds } from "@/testing/fakes/analyticsResponses";
-import type { GIRTrendRow, PuttsTrendRow, ScoreTrendRow, ScoreTypeRow } from "@/types/analytics";
+import type { GirTrendRowDto, PuttsTrendRowDto, ScoreTrendRowDto, ScoreTypeRowDto } from "@/types/api";
 import { playedCourseFrom } from "../analyticsRepository";
 import {
   analyticsFrom,
@@ -17,7 +17,7 @@ import {
   yardageBucketsFrom,
 } from "../model";
 
-const scoreRow = (round_index: number, total_score: number | null): ScoreTrendRow => ({
+const scoreRow = (round_index: number, total_score: number | null): ScoreTrendRowDto => ({
   round_index,
   round_id: `round-${round_index}`,
   total_score,
@@ -25,7 +25,7 @@ const scoreRow = (round_index: number, total_score: number | null): ScoreTrendRo
   course_name: null,
 });
 
-const girRow = (round_index: number, gir_percentage: number | null): GIRTrendRow => ({
+const girRow = (round_index: number, gir_percentage: number | null): GirTrendRowDto => ({
   round_index,
   round_id: `round-${round_index}`,
   total_gir: gir_percentage == null ? null : Math.round((gir_percentage / 100) * 18),
@@ -33,14 +33,14 @@ const girRow = (round_index: number, gir_percentage: number | null): GIRTrendRow
   gir_percentage,
 });
 
-const puttsRow = (round_index: number, total_putts: number | null): PuttsTrendRow => ({
+const puttsRow = (round_index: number, total_putts: number | null): PuttsTrendRowDto => ({
   round_index,
   round_id: `round-${round_index}`,
   total_putts,
   holes_played: 18,
 });
 
-const mixRow = (holes_counted: number, shares: Partial<ScoreTypeRow>): ScoreTypeRow => ({
+const mixRow = (holes_counted: number, shares: Partial<ScoreTypeRowDto>): ScoreTypeRowDto => ({
   round_index: 1,
   round_id: "round-1",
   holes_counted,

@@ -4,7 +4,7 @@ import { queryKeys } from "@/data/queryKeys";
 import { useGoalReport } from "@/data/useGoalReport";
 import { useUser } from "@/data/useUser";
 import { Round, trendPointsFrom, type RoundSummary, type RoundTrendPoint, type ScoreMix } from "@/domain";
-import type { DashboardData, User } from "@/types/golf";
+import type { DashboardDto, UserDto } from "@/types/api";
 import {
   dashboardRepository,
   type DashboardRepository,
@@ -30,8 +30,8 @@ export type { HiTrend, TrendView, WhsBreakdown };
 export type { ScoreMixItem };
 
 export interface DashboardPageViewModel {
-  data: DashboardData | null;
-  user: User | null;
+  data: DashboardDto | null;
+  user: UserDto | null;
   loading: boolean;
   error: Error | null;
   refetch: () => void;

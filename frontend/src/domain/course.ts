@@ -1,4 +1,31 @@
-import type { Course, Tee } from "@/types/golf";
+import type { CourseDto, CourseSummaryDto, TeeDto } from "@/types/api";
+
+/** A course as a list or a search shows it. */
+export interface CourseSummary {
+  id: string;
+  name: string | null;
+  location: string | null;
+  par: number | null;
+  holeCount: number;
+  teeCount: number;
+  /** Where it was found: saved here, or the course provider's and not saved yet. */
+  source: "local" | "external";
+  /** The course provider's id, for a course found there. Saving a round links it by this. */
+  externalId: string | null;
+}
+
+export function courseSummaryFrom(dto: CourseSummaryDto): CourseSummary {
+  return {
+    id: dto.id,
+    name: dto.name,
+    location: dto.location,
+    par: dto.par,
+    holeCount: dto.total_holes,
+    teeCount: dto.tee_count,
+    source: dto.source,
+    externalId: dto.external_course_id,
+  };
+}
 
 export const FRONT_HOLES = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 export const BACK_HOLES = [10, 11, 12, 13, 14, 15, 16, 17, 18] as const;
@@ -32,7 +59,7 @@ export function getHole<T extends { number: number | null }>(
   return course.holes.find((hole) => hole.number === number) ?? null;
 }
 
-export function teeColors(course: Course | null | undefined): string[] {
+export function teeColors(course: CourseDto | null | undefined): string[] {
   return course?.tees.map((tee) => tee.color).filter((color): color is string => !!color) ?? [];
 }
 
@@ -63,7 +90,7 @@ export function chooseCompatibleTee(current: string, teeColors: string[]): strin
 }
 
 /** Named tees, longest first by the total the server sends. Ties keep the course's order. */
-export function teesByLength(course: Course): Tee[] {
+export function teesByLength(course: CourseDto): TeeDto[] {
   return course.tees
     .filter((tee) => !!tee.color)
     .sort((a, b) => (b.total_yardage ?? 0) - (a.total_yardage ?? 0));

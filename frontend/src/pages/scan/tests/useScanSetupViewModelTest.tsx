@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { useState, type ReactNode } from "react";
 import { FakeCoursesRepository } from "@/testing/fakes/FakeCoursesRepository";
-import { pebbleBeach } from "@/testing/fixtures/courses";
+import { pebbleBeach, pebbleBeachSummary } from "@/testing/fixtures/courses";
 import { pebbleBeachCourse } from "@/testing/fixtures/roundDetails";
 import { newScanSession, ScanSessionContext, type ScanSession } from "../scanSession";
 import { useScanSetupViewModel } from "../useScanSetupViewModel";
@@ -45,16 +45,16 @@ describe("useScanSetupViewModel", () => {
 
     act(() => result.current.courseSearch.setQuery("Pebble"));
 
-    await waitFor(() => expect(result.current.courseSearch.results).toEqual([pebbleBeach]));
+    await waitFor(() => expect(result.current.courseSearch.results).toEqual([pebbleBeachSummary]));
     expect(courses.searchQueries).toEqual(["Pebble"]);
   });
 
   it("offers a picked course's tees once it has loaded", async () => {
     const { result } = renderSetup();
 
-    act(() => result.current.pickCourse(pebbleBeach));
+    act(() => result.current.pickCourse(pebbleBeachSummary));
 
-    expect(result.current.linkedName).toBe(pebbleBeach.name);
+    expect(result.current.linkedName).toBe(pebbleBeachSummary.name);
     expect(result.current.loadingTees).toBe(true);
     await waitFor(() => expect(result.current.tees).toEqual(["Blue"]));
     expect(result.current.loadingTees).toBe(false);
@@ -87,7 +87,7 @@ describe("useScanSetupViewModel", () => {
 
   it("changing a picked course drops its tee and opens an empty search", async () => {
     const { result } = renderSetup();
-    act(() => result.current.pickCourse(pebbleBeach));
+    act(() => result.current.pickCourse(pebbleBeachSummary));
     await waitFor(() => expect(result.current.tees).toEqual(["Blue"]));
     act(() => result.current.setTeeBox("Blue"));
 
@@ -117,13 +117,13 @@ describe("useScanSetupViewModel", () => {
 
   it("starts a card on the picked course's holes, linked to it", async () => {
     const { result, session } = renderSetup();
-    act(() => result.current.pickCourse(pebbleBeach));
+    act(() => result.current.pickCourse(pebbleBeachSummary));
     await waitFor(() => expect(result.current.tees).toEqual(["Blue"]));
 
     act(() => result.current.start());
 
     const review = session().review;
-    expect(review?.course).toMatchObject({ status: "linked", id: pebbleBeach.id });
+    expect(review?.course).toMatchObject({ status: "linked", id: pebbleBeachSummary.id });
     expect(review?.scan.round.course?.holes.map((hole) => hole.par)).toEqual(
       pebbleBeachCourse.holes.map((hole) => hole.par),
     );

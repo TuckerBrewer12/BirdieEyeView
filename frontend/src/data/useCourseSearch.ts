@@ -3,7 +3,7 @@ import {
   roundsRepository,
   type CourseSearchRepository,
 } from "@/pages/rounds/roundsRepository";
-import type { CourseSummary } from "@/types/golf";
+import type { CourseSummary } from "@/domain/course";
 
 const MIN_QUERY_LENGTH = 2;
 const DEBOUNCE_MS = 300;

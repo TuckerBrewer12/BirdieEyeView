@@ -1125,6 +1125,21 @@ export interface components {
             up_and_down_trend: components["schemas"]["UpAndDownTrendRow"][];
             whs: components["schemas"]["WhsBreakdown"];
         };
+        /**
+         * FieldConfidence
+         * @description How sure the scan is of one reading.
+         */
+        FieldConfidence: {
+            /** Final Confidence */
+            final_confidence: number;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "high" | "medium" | "low" | "very_low";
+            /** Validation Flags */
+            validation_flags: string[];
+        };
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
             /** Email */
@@ -1273,6 +1288,14 @@ export interface components {
             direction: ("up" | "down" | "flat") | null;
         };
         /**
+         * HandicapIndexResponse
+         * @description A golfer's current WHS Handicap Index; null until they have enough rounds or a seed handicap.
+         */
+        HandicapIndexResponse: {
+            /** Handicap Index */
+            handicap_index: number | null;
+        };
+        /**
          * HandicapTrendRow
          * @description The handicap index after one round, oldest first, and where its differential stands.
          */
@@ -1307,6 +1330,31 @@ export interface components {
             number: number | null;
             /** Par */
             par: number | null;
+        };
+        /**
+         * HoleConfidence
+         * @description How sure the scan is of one hole.
+         */
+        HoleConfidence: {
+            fields: components["schemas"]["HoleFieldConfidence"];
+            /** Hole Number */
+            hole_number: number;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "high" | "medium" | "low" | "very_low";
+            /** Overall */
+            overall: number;
+        };
+        /**
+         * HoleFieldConfidence
+         * @description How sure the scan is of each reading on a hole.
+         */
+        HoleFieldConfidence: {
+            green_in_regulation: components["schemas"]["FieldConfidence"] | null;
+            putts: components["schemas"]["FieldConfidence"] | null;
+            strokes: components["schemas"]["FieldConfidence"] | null;
         };
         /** HoleInput */
         HoleInput: {
@@ -1668,6 +1716,14 @@ export interface components {
              * @default 365
              */
             window_days: number;
+        };
+        /**
+         * OcrTextResponse
+         * @description `POST /scan/ocr`: the card's text, read ahead so extract can skip that step.
+         */
+        OcrTextResponse: {
+            /** Ocr Text */
+            ocr_text: string;
         };
         /** OneYearCareerTotals */
         OneYearCareerTotals: {
@@ -2042,6 +2098,118 @@ export interface components {
             user_id: string;
         };
         /**
+         * SaveScanResponse
+         * @description `POST /scan/save`: the new round's id and total.
+         */
+        SaveScanResponse: {
+            /** Id */
+            id: string;
+            /** Total Score */
+            total_score: number | null;
+        };
+        /**
+         * ScanConfidence
+         * @description How sure the scan is of the card as a whole, and of each hole.
+         */
+        ScanConfidence: {
+            /** Hole Scores */
+            hole_scores: components["schemas"]["HoleConfidence"][];
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "high" | "medium" | "low" | "very_low";
+            /** Overall */
+            overall: number;
+        };
+        /**
+         * ScanResponse
+         * @description `POST /scan/extract`: the card as read, how sure the scan is, and what to check before saving.
+         */
+        ScanResponse: {
+            confidence: components["schemas"]["ScanConfidence"];
+            /** Fields Needing Review */
+            fields_needing_review: string[];
+            round: components["schemas"]["ScannedRound"];
+        };
+        /**
+         * ScannedCourse
+         * @description The course a scan read the card against.
+         */
+        ScannedCourse: {
+            /** Holes */
+            holes: components["schemas"]["ScannedHole"][];
+            /** Location */
+            location: string | null;
+            /** Name */
+            name: string | null;
+            /** Par */
+            par: number | null;
+            /** Tees */
+            tees: components["schemas"]["ScannedTee"][];
+        };
+        /**
+         * ScannedHole
+         * @description A hole as read off the card, or taken from the course the golfer picked.
+         */
+        ScannedHole: {
+            /** Handicap */
+            handicap: number | null;
+            /** Number */
+            number: number;
+            /** Par */
+            par: number | null;
+        };
+        /**
+         * ScannedHoleScore
+         * @description One hole's score as read off the card. Anything the scan couldn't read is null.
+         */
+        ScannedHoleScore: {
+            /** Fairway Hit */
+            fairway_hit: boolean | null;
+            /** Green In Regulation */
+            green_in_regulation: boolean | null;
+            /** Hole Number */
+            hole_number: number;
+            /** Putts */
+            putts: number | null;
+            /** Shots To Green */
+            shots_to_green: number | null;
+            /** Strokes */
+            strokes: number | null;
+        };
+        /**
+         * ScannedRound
+         * @description A round as read off a card, before the golfer checks and saves it.
+         */
+        ScannedRound: {
+            course: components["schemas"]["ScannedCourse"] | null;
+            /** Date */
+            date: string | null;
+            /** Hole Scores */
+            hole_scores: components["schemas"]["ScannedHoleScore"][];
+            /** Notes */
+            notes: string | null;
+            /** Tee Box */
+            tee_box: string | null;
+        };
+        /**
+         * ScannedTee
+         * @description A tee row read off the card, or one of the picked course's tees. Yardages are keyed by hole number.
+         */
+        ScannedTee: {
+            /** Color */
+            color: string | null;
+            /** Course Rating */
+            course_rating: number | null;
+            /** Hole Yardages */
+            hole_yardages: {
+                [key: string]: number;
+            };
+            /** Slope Rating */
+            slope_rating: number | null;
+        };
+        /**
          * ScoreCounts
          * @description How many holes landed in each score bucket.
          */
@@ -2371,6 +2539,28 @@ export interface components {
             name?: string | null;
             /** Slope Rating */
             slope_rating?: number | null;
+        };
+        /**
+         * UserResponse
+         * @description A golfer's profile, as `GET`/`PATCH /users/{id}` send it. Their rounds are fetched separately.
+         */
+        UserResponse: {
+            /** Created At */
+            created_at: string | null;
+            /** Email */
+            email: string | null;
+            /** Friend Code */
+            friend_code: string | null;
+            /** Handicap */
+            handicap: number | null;
+            /** Home Course Id */
+            home_course_id: string | null;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string | null;
+            /** Scoring Goal */
+            scoring_goal: number | null;
         };
         /**
          * UserTee
@@ -3210,7 +3400,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ScanResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3243,7 +3433,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["OcrTextResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3276,7 +3466,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SaveScanResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3534,7 +3724,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["UserResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3664,7 +3854,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["UserResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3699,7 +3889,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["UserResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3730,7 +3920,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["HandicapIndexResponse"];
                 };
             };
             /** @description Validation Error */

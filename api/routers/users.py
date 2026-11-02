@@ -9,6 +9,7 @@ from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, NotFoundError
 from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
+from api.schemas import HandicapIndexResponse, UserResponse
 from models import User, UserTee
 from analytics import handicap as hcap
 
@@ -134,6 +135,11 @@ class FriendshipResponse(BaseModel):
     addressee_email: Optional[str] = None
 
 
+def user_response(user: User) -> UserResponse:
+    """A golfer's profile, without their rounds or account bookkeeping."""
+    return UserResponse.model_validate(user, from_attributes=True)
+
+
 def _friendship_row_to_response(row: dict) -> FriendshipResponse:
     return FriendshipResponse(
         id=str(row["id"]),
@@ -149,7 +155,7 @@ def _friendship_row_to_response(row: dict) -> FriendshipResponse:
     )
 
 
-@router.get("/by-email/{email}")
+@router.get("/by-email/{email}", response_model=UserResponse)
 async def get_user_by_email(
     email: str,
     db: DatabaseManager = Depends(get_db),
@@ -164,10 +170,10 @@ async def get_user_by_email(
     user = await db.users.get_user_by_email(normalized_email)
     if not user:
         raise HTTPException(404, "User not found")
-    return user
+    return user_response(user)
 
 
-@router.get("/{user_id}")
+@router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -178,10 +184,10 @@ async def get_user(
     user = await db.users.get_user(str(user_id))
     if not user:
         raise HTTPException(404, "User not found")
-    return user
+    return user_response(user)
 
 
-@router.patch("/{user_id}")
+@router.patch("/{user_id}", response_model=UserResponse)
 async def update_user(
     user_id: UUID,
     req: UpdateUserRequest,
@@ -205,10 +211,10 @@ async def update_user(
     user = await db.users.update_user(str(user_id), **updates)
     if not user:
         raise HTTPException(404, "User not found")
-    return user
+    return user_response(user)
 
 
-@router.get("/{user_id}/handicap")
+@router.get("/{user_id}/handicap", response_model=HandicapIndexResponse)
 async def get_user_handicap(
     user_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -227,7 +233,7 @@ async def get_user_handicap(
         seed_handicap=user.handicap,
         seed_set_at=user.last_handicap_update,
     )
-    return {"handicap_index": hi}
+    return HandicapIndexResponse(handicap_index=hi)
 
 
 # ================================================================

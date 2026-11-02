@@ -1,11 +1,9 @@
-import type { Course, CourseSummary } from "../../types/golf";
-import type { CourseDto, RoundDto } from "../../types/api";
-import type { RoundComparison } from "../../types/analytics";
+import type { CourseDto, CourseSummaryDto, RoundComparisonDto, RoundDto } from "../../types/api";
 import { courseResponse } from "../fakes/courseResponses";
 import { roundResponse } from "../fakes/roundResponses";
 import { storedRounds } from "./rounds";
 
-export function toCourseSummary(course: Course): CourseSummary {
+export function toCourseSummary(course: CourseDto): CourseSummaryDto {
   if (!course.id) throw new Error("Course needs an id to be a summary.");
   return {
     id: course.id,
@@ -79,7 +77,7 @@ export const halfMoonBayRound: RoundDto = roundResponse({ ...hmbRound, course: h
 export const scannedRound: RoundDto = roundResponse(scanned);
 
 /** Comparison cohorts for a round: this round first, then the baselines. */
-export const roundComparison: RoundComparison = {
+export const roundComparison: RoundComparisonDto = {
   score: [
     { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 78, secondary_value: null },
     { label: "Last 5", sample_size: 5, round_id: null, primary_value: 81.4, secondary_value: null },

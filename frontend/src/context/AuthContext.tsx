@@ -7,6 +7,7 @@ import {
   parseJsonResponse,
   USER_FACING_ERRORS,
 } from "@/lib/userFacingErrors";
+import type { AuthUserDto, MessageDto, RegisterDto } from "@/types/api";
 
 interface AuthState {
   userId: string | null;
@@ -30,23 +31,6 @@ interface AuthContextValue extends AuthState {
   refreshSession: () => Promise<AuthState | null>;
   logout: () => Promise<void>;
   loading: boolean;
-}
-
-interface AuthUserPayload {
-  user_id: string;
-  name: string;
-  email: string;
-  email_verified: boolean;
-  access_token?: string | null;
-}
-
-interface RegisterPayload {
-  message: string;
-  requires_email_verification: boolean;
-}
-
-interface MessagePayload {
-  message: string;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -97,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!res.ok) {
         throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.account));
       }
-      const data = await parseJsonResponse<AuthUserPayload>(res, USER_FACING_ERRORS.account);
+      const data = await parseJsonResponse<AuthUserDto>(res, USER_FACING_ERRORS.account);
       const nextState: AuthState = {
         userId: data.user_id,
         name: data.name,
@@ -143,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshSession]);
 
   const login = async (email: string, password: string) => {
-    const data = await callAuth<AuthUserPayload>("/login", { email, password });
+    const data = await callAuth<AuthUserDto>("/login", { email, password });
     setSessionToken(data.access_token ?? null);
     setState({
       userId: data.user_id,
@@ -159,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     options?: { handicap?: number | null; home_course_id?: string | null },
   ) => {
-    const data = await callAuth<RegisterPayload>("/register", {
+    const data = await callAuth<RegisterDto>("/register", {
       name,
       email,
       password,
@@ -170,23 +154,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resendVerification = async (email: string) => {
-    const data = await callAuth<MessagePayload>("/resend-verification", { email });
+    const data = await callAuth<MessageDto>("/resend-verification", { email });
     return data.message;
   };
 
   const verifyEmail = async (token: string) => {
-    const data = await callAuth<MessagePayload>("/verify-email", { token });
+    const data = await callAuth<MessageDto>("/verify-email", { token });
     await refreshSession();
     return data.message;
   };
 
   const forgotPassword = async (email: string) => {
-    const data = await callAuth<MessagePayload>("/forgot-password", { email });
+    const data = await callAuth<MessageDto>("/forgot-password", { email });
     return data.message;
   };
 
   const resetPassword = async (token: string, newPassword: string) => {
-    const data = await callAuth<MessagePayload>("/reset-password", { token, new_password: newPassword });
+    const data = await callAuth<MessageDto>("/reset-password", { token, new_password: newPassword });
     return data.message;
   };
 

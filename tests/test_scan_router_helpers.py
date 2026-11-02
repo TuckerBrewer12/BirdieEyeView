@@ -8,6 +8,7 @@ from fastapi import HTTPException, UploadFile
 from PIL import Image
 from starlette.datastructures import Headers
 
+from api.main import app
 from api.request_models import SaveRoundRequest
 from api.routers import scan
 from models import Course, Hole, Round, Tee, User
@@ -224,7 +225,7 @@ async def test_save_round_maps_success_and_errors(monkeypatch):
     monkeypatch.setattr(scan, "ScanService", lambda db: scan_service)
 
     save_response = await scan.save_round(request, SimpleNamespace(), user)
-    assert save_response == {"id": saved.id, "total_score": None}
+    assert save_response.model_dump() == {"id": saved.id, "total_score": None}
     assert request.user_id == user.id
 
     validation_error = "course_id references users.private_courses"
@@ -275,3 +276,61 @@ async def test_extract_scan_hides_provider_configuration_errors(monkeypatch):
     assert exc.value.status_code == 500
     assert exc.value.detail == "We couldn't scan this scorecard. Please try again."
     assert provider_error not in exc.value.detail
+
+
+@pytest.mark.asyncio
+async def test_extract_scan_returns_the_typed_scan(monkeypatch):
+    """Extract sends a ScanResponse, so the generated client types the card, its confidence and its levels."""
+    image_bytes = BytesIO()
+    Image.new("RGB", (20, 10), "white").save(image_bytes, format="PNG")
+    upload = _make_upload("card.png", "image/png", image_bytes.getvalue())
+    monkeypatch.setattr(scan, "_normalize_upload_for_ocr", lambda path, digest: (path, False))
+    monkeypatch.setattr(
+        scan,
+        "parse_mistral_scorecard_rows",
+        lambda markdown, user_context=None: ParsedScorecardRows(
+            course_name="Pebble Beach",
+            par_row=[4, 3],
+            tee_rows=[ParsedTeeRow(label="Gold", yardages=[400, 180])],
+            score_row=[5, 3],
+            putts_row=[2, None],
+        ),
+    )
+
+    response = await scan.extract_scan(
+        upload,
+        user_context=None,
+        course_id=None,
+        ocr_text="| card |",
+        db=SimpleNamespace(),
+        current_user=None,
+    )
+
+    assert isinstance(response, scan.ScanResponse)
+    assert response.round.course is not None
+    assert response.round.course.name == "Pebble Beach"
+    assert response.round.course.holes[0].model_dump() == {"number": 1, "par": 4, "handicap": None}
+    assert response.round.course.tees[0].hole_yardages == {"1": 400, "2": 180}
+    assert response.round.hole_scores[0].model_dump() == {
+        "hole_number": 1,
+        "strokes": 5,
+        "putts": 2,
+        "shots_to_green": None,
+        "fairway_hit": None,
+        "green_in_regulation": False,
+    }
+    first_hole = response.confidence.hole_scores[0]
+    assert first_hole.fields.strokes is not None
+    assert first_hole.fields.strokes.level == "high"
+    assert response.confidence.hole_scores[1].fields.putts is not None
+    assert response.confidence.hole_scores[1].fields.putts.level == "very_low"
+
+    schemas = app.openapi()["components"]["schemas"]
+    assert schemas["FieldConfidence"]["properties"]["level"]["enum"] == ["high", "medium", "low", "very_low"]
+    for path, model in [
+        ("/api/scan/extract", "ScanResponse"),
+        ("/api/scan/ocr", "OcrTextResponse"),
+        ("/api/scan/save", "SaveScanResponse"),
+    ]:
+        response_schema = app.openapi()["paths"][path]["post"]["responses"]["200"]["content"]["application/json"]
+        assert response_schema["schema"] == {"$ref": f"#/components/schemas/{model}"}

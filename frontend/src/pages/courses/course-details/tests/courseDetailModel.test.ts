@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { courseAnalyticsFrom } from "@/domain/courseAnalytics";
 import { courseResponse } from "@/testing/fakes/courseResponses";
 import { emptyCourseAnalytics, halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
 import { halfMoonBayCourse } from "@/testing/fixtures/roundDetails";
@@ -50,7 +51,7 @@ describe("nineFrom", () => {
   });
 
   it("adds the golfer's averages per hole, per nine, and for the course", () => {
-    const averages = personalAverages(halfMoonBayAnalytics);
+    const averages = personalAverages(courseAnalyticsFrom(halfMoonBayAnalytics));
     const front = nineFrom(halfMoonBayCourse, "front", null, averages);
     const back = nineFrom(halfMoonBayCourse, "back", null, averages);
 
@@ -62,7 +63,7 @@ describe("nineFrom", () => {
 
 describe("personalAverages", () => {
   it("is null until the golfer has played the course", () => {
-    expect(personalAverages(emptyCourseAnalytics("course-hmb"))).toBeNull();
+    expect(personalAverages(courseAnalyticsFrom(emptyCourseAnalytics("course-hmb")))).toBeNull();
   });
 });
 
@@ -76,7 +77,7 @@ describe("selectedTee", () => {
 
 describe("chartsFrom", () => {
   it("groups the hole-by-hole charts under the mobile tabs", () => {
-    expect(chartsFrom(halfMoonBayAnalytics).map((chart) => [chart.kind, chart.group])).toEqual([
+    expect(chartsFrom(courseAnalyticsFrom(halfMoonBayAnalytics)).map((chart) => [chart.kind, chart.group])).toEqual([
       ["toPar", "score"],
       ["scoreType", "score"],
       ["gir", "gir"],

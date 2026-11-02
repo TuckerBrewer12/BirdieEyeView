@@ -1,18 +1,18 @@
 import type { DevicePreferences, Settings } from "../../pages/settings/model";
 import type { SettingsRepository } from "../../pages/settings/settingsRepository";
-import type { UserChangesDto } from "../../types/api";
-import type { CourseSummary, User } from "../../types/golf";
+import { courseSummaryFrom, type CourseSummary } from "../../domain/course";
+import type { CourseSummaryDto, UserChangesDto, UserDto } from "../../types/api";
 
 export interface FakeSettingsSeed {
-  user?: Partial<User>;
-  courses?: CourseSummary[];
+  user?: Partial<UserDto>;
+  courses?: CourseSummaryDto[];
   device?: Partial<DevicePreferences>;
 }
 
 /** One player's settings in memory: their user row, the courses to search, and device choices. */
 export class FakeSettingsRepository implements SettingsRepository {
-  user: User;
-  courses: CourseSummary[];
+  user: UserDto;
+  courses: CourseSummaryDto[];
   device: DevicePreferences;
   readonly updates: UserChangesDto[] = [];
   readonly searchQueries: string[] = [];
@@ -47,7 +47,7 @@ export class FakeSettingsRepository implements SettingsRepository {
     };
   }
 
-  async updateUser(_userId: string, changes: UserChangesDto): Promise<User> {
+  async updateUser(_userId: string, changes: UserChangesDto): Promise<UserDto> {
     this.updates.push(changes);
     if (this.saveError) throw this.saveError;
     this.user = {
@@ -62,7 +62,7 @@ export class FakeSettingsRepository implements SettingsRepository {
   async searchCourses(query: string): Promise<CourseSummary[]> {
     this.searchQueries.push(query);
     const needle = query.toLowerCase();
-    return this.courses.filter((course) => course.name?.toLowerCase().includes(needle));
+    return this.courses.filter((course) => course.name?.toLowerCase().includes(needle)).map(courseSummaryFrom);
   }
 
   readDevicePreferences(): DevicePreferences {

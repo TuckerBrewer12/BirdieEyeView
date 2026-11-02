@@ -1,4 +1,4 @@
-import { pebbleBeach } from "@/testing/fixtures/courses";
+import { pebbleBeachSummary } from "@/testing/fixtures/courses";
 import { ScanSetupStep } from "../components/ScanSetupStep";
 import type { ScanSetupViewModel } from "../useScanSetupViewModel";
 
@@ -31,10 +31,10 @@ export default function ScanSetupStepPreview() {
     <div className="flex max-w-lg flex-col gap-4">
       <ScanSetupStep setup={blank} />
       <ScanSetupStep
-        setup={{ ...blank, courseSearch: { ...blank.courseSearch, query: "Pebble", results: [pebbleBeach] } }}
+        setup={{ ...blank, courseSearch: { ...blank.courseSearch, query: "Pebble", results: [pebbleBeachSummary] } }}
       />
       <ScanSetupStep
-        setup={{ ...blank, linkedName: pebbleBeach.name ?? undefined, tees: ["Blue", "White", "Red"], teeBox: "White" }}
+        setup={{ ...blank, linkedName: pebbleBeachSummary.name ?? undefined, tees: ["Blue", "White", "Red"], teeBox: "White" }}
       />
       <ScanSetupStep setup={{ ...blank, customName: "Muni Nine", teeBox: "Gold" }} />
     </div>

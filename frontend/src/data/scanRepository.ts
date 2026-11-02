@@ -6,8 +6,7 @@ import {
   parseJsonResponse,
   USER_FACING_ERRORS,
 } from "@/lib/userFacingErrors";
-import type { SaveScanRequestDto } from "@/types/api";
-import type { ScanResult } from "@/types/scan";
+import type { OcrTextDto, SaveScanDto, SaveScanRequestDto, ScanDto } from "@/types/api";
 
 export interface ExtractRequest {
   photo: File;
@@ -22,7 +21,7 @@ export interface ExtractRequest {
 export interface ScanRepository {
   /** Reads the card's text, so extract can skip that step. Null when nothing came back. */
   readText(photo: File): Promise<string | null>;
-  extract(request: ExtractRequest): Promise<ScanResult>;
+  extract(request: ExtractRequest): Promise<ScanDto>;
   /** Saves a reviewed scan as a round, and returns the new round's id. */
   save(request: SaveScanRequestDto): Promise<string>;
 }
@@ -37,8 +36,8 @@ export const scanRepository: ScanRepository = {
   async readText(photo) {
     const res = await fetch(apiUrl("/api/scan/ocr"), upload({ file: photo }));
     if (!res.ok) return null;
-    const body = (await res.json()) as { ocr_text?: string | null };
-    return body.ocr_text ?? null;
+    const body = (await res.json()) as OcrTextDto;
+    return body.ocr_text || null;
   },
 
   async extract({ photo, userContext, ocrText, courseId }) {
@@ -52,7 +51,7 @@ export const scanRepository: ScanRepository = {
       USER_FACING_ERRORS.scan,
     );
     if (!res.ok) throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.scan));
-    return parseJsonResponse<ScanResult>(res, USER_FACING_ERRORS.scan);
+    return parseJsonResponse<ScanDto>(res, USER_FACING_ERRORS.scan);
   },
 
   async save(request) {
@@ -67,7 +66,7 @@ export const scanRepository: ScanRepository = {
       USER_FACING_ERRORS.saveRound,
     );
     if (!res.ok) throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.saveRound));
-    const saved = await parseJsonResponse<{ id: string }>(res, USER_FACING_ERRORS.saveRound);
+    const saved = await parseJsonResponse<SaveScanDto>(res, USER_FACING_ERRORS.saveRound);
     return saved.id;
   },
 };

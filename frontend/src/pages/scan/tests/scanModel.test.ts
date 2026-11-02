@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pebbleBeach } from "@/testing/fixtures/courses";
+import { pebbleBeachSummary } from "@/testing/fixtures/courses";
 import { SCANNED_COURSE_NAME, scannedCard } from "@/testing/fixtures/scan";
 import { holeList } from "../present";
 import { reviewCourseFrom, reviewFromScan, reviewFromSetup, saveRequestFrom, todayIso, withHoleEdit } from "../scanModel";
@@ -23,12 +23,12 @@ describe("saveRequestFrom", () => {
   });
 
   it("links a provider's course by its provider id, under its name", () => {
-    const picked = reviewCourseFrom({ ...pebbleBeach, id: "external:9", source: "external", external_course_id: "ext-9" });
+    const picked = reviewCourseFrom({ ...pebbleBeachSummary, id: "external:9", source: "external", externalId: "ext-9" });
     if ("error" in picked) throw new Error(picked.error);
     const sent = saveRequestFrom("user-1", { ...draft, course: picked.course });
     expect(sent.course_id).toBeUndefined();
     expect(sent.external_course_id).toBe("ext-9");
-    expect(sent.course_name).toBe(pebbleBeach.name);
+    expect(sent.course_name).toBe(pebbleBeachSummary.name);
   });
 
   it("starts a blank card on a typed course name as named, not linked", () => {

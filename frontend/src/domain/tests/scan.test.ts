@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { scannedCard, UNSURE_HOLES, unsureCard } from "@/testing/fixtures/scan";
+import type { ScanDto } from "@/types/api";
 import { strokesToCheck } from "../scan";
 
 describe("strokesToCheck", () => {
@@ -18,12 +19,21 @@ describe("strokesToCheck", () => {
   });
 
   it("counts a score read with medium confidence", () => {
-    const medium = {
+    const medium: ScanDto = {
       ...scannedCard,
       confidence: {
         ...scannedCard.confidence,
         hole_scores: [
-          { hole_number: 7, overall: 0.7, level: "medium", fields: { strokes: { final_confidence: 0.7, level: "medium", validation_flags: [] } } },
+          {
+            hole_number: 7,
+            overall: 0.7,
+            level: "medium",
+            fields: {
+              strokes: { final_confidence: 0.7, level: "medium", validation_flags: [] },
+              putts: null,
+              green_in_regulation: null,
+            },
+          },
         ],
       },
     };

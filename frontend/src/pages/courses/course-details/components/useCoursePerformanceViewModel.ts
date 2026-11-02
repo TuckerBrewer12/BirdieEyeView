@@ -1,17 +1,14 @@
-import { useMemo } from "react";
-import { Round, type RoundSummary } from "@/domain";
+import { EMPTY_COURSE_ANALYTICS, type RoundSummary, type ScorePoint } from "@/domain";
 import { coursesRepository, type CoursesRepository } from "../../coursesRepository";
 import { useCourseAnalytics } from "../../useCourseAnalytics";
-import type { CourseScoreTrendRow } from "@/types/analytics";
-import { EMPTY_ANALYTICS } from "../courseDetailModel";
 
 export interface CoursePerformanceViewModel {
   roundsPlayed: number;
   scoringAverage: number | null;
   bestScore: number | null;
   worstScore: number | null;
-  /** Every round here, oldest first, as the server sends it. The chart plots the scored ones. */
-  trend: CourseScoreTrendRow[];
+  /** Every round here, oldest first. The chart plots the scored ones. */
+  trend: ScorePoint[];
   /** The golfer's rounds at this course, newest first. */
   rounds: RoundSummary[];
 }
@@ -22,15 +19,14 @@ export function useCoursePerformanceViewModel(
   courseId: string,
   repository: CoursesRepository = coursesRepository,
 ): CoursePerformanceViewModel {
-  const { data: analytics = EMPTY_ANALYTICS } = useCourseAnalytics(userId, courseId, repository);
-  const rounds = useMemo(() => analytics.rounds.map(Round.fromSummary), [analytics.rounds]);
+  const { data: analytics = EMPTY_COURSE_ANALYTICS } = useCourseAnalytics(userId, courseId, repository);
 
   return {
-    roundsPlayed: analytics.rounds_played,
-    scoringAverage: analytics.scoring_average,
-    bestScore: analytics.best_score,
-    worstScore: analytics.worst_score,
-    trend: analytics.score_trend_on_course,
-    rounds,
+    roundsPlayed: analytics.roundsPlayed,
+    scoringAverage: analytics.scoringAverage,
+    bestScore: analytics.bestScore,
+    worstScore: analytics.worstScore,
+    trend: analytics.scoreTrend,
+    rounds: analytics.rounds,
   };
 }

@@ -1,4 +1,4 @@
-import type { ExtractedRound, ScanResult } from "../../types/scan";
+import type { FieldConfidenceDto, ScanDto, ScannedRoundDto } from "../../types/api";
 
 export const SCANNED_COURSE_NAME = "Half Moon Bay Golf Links";
 
@@ -7,7 +7,7 @@ const STROKES = [5, 4, 3, 6, 5, 4, 4, 5, 3, 4, 6, 5, 3, 5, 4, 5, 4, 4];
 const PUTTS = [2, 1, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 2, 3, 2];
 
 /** What extract sends back for a clean, fully read 18-hole card. */
-export const scannedCard: ScanResult = {
+export const scannedCard: ScanDto = {
   round: {
     course: {
       name: SCANNED_COURSE_NAME,
@@ -35,8 +35,8 @@ export const scannedCard: ScanResult = {
 /** The holes `unsureCard` couldn't read a score for, or read one it wasn't sure of. */
 export const UNSURE_HOLES = [4, 11];
 
-const level = (sure: boolean) => (sure ? "high" : "very_low");
-const confidence = (value: number, sure: boolean) => ({
+const level = (sure: boolean): FieldConfidenceDto["level"] => (sure ? "high" : "very_low");
+const confidence = (value: number, sure: boolean): FieldConfidenceDto => ({
   final_confidence: value,
   level: level(sure),
   validation_flags: [],
@@ -46,7 +46,7 @@ const confidence = (value: number, sure: boolean) => ({
  * The same card, read less cleanly: no score on hole 4, a score on hole 11 the scan wasn't sure of,
  * and putts it couldn't read on hole 2. Only the two scores are worth checking.
  */
-export const unsureCard: ScanResult = {
+export const unsureCard: ScanDto = {
   ...scannedCard,
   round: {
     ...scannedCard.round,
@@ -66,6 +66,7 @@ export const unsureCard: ScanResult = {
         fields: {
           strokes: confidence(sureStrokes ? 0.9 : 0.2, sureStrokes),
           putts: confidence(surePutts ? 0.85 : 0.25, surePutts),
+          green_in_regulation: null,
         },
         overall: sureStrokes && surePutts ? 0.85 : 0.2,
         level: level(sureStrokes && surePutts),
@@ -81,7 +82,7 @@ const SHOTS_TO_GREEN = [3, 2, 1, 4, 2, 3, 1, 3, 2, 3, 3, 1, 2, 3, 2, 2, 3, 3];
 const BLUE_YARDS = [402, 388, 176, 521, 410, 395, 162, 540, 418, 405, 512, 188, 377, 430, 392, 171, 548, 421];
 
 /** A card read with its tee's yardages and shots-to-green, but no putts or greens. */
-export const scannedTeeCard: ExtractedRound = {
+export const scannedTeeCard: ScannedRoundDto = {
   course: {
     name: "Torrey Pines",
     location: "La Jolla, CA",

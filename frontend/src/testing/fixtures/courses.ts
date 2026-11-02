@@ -1,10 +1,14 @@
-import type { CourseSummary } from "../../types/golf";
+import { courseSummaryFrom } from "../../domain/course";
+import type { CourseSummaryDto } from "../../types/api";
 import { pebbleBeachCourse, toCourseSummary } from "./roundDetails";
 
+/** Pebble Beach as the server lists it. */
 export const pebbleBeach = toCourseSummary(pebbleBeachCourse);
+/** Pebble Beach as a repository hands it to a page: a search result to pick. */
+export const pebbleBeachSummary = courseSummaryFrom(pebbleBeach);
 export const searchableCourses = [pebbleBeach];
 
-export const populatedCourses: CourseSummary[] = [
+export const populatedCourses: CourseSummaryDto[] = [
   {
     id: "course-hmb",
     name: "Half Moon Bay",

@@ -827,3 +827,122 @@ class AISuggestionsResponse(ResponseModel):
     comparisons: List[AIComparisonItem]
     rounds_analyzed: int
     generated_at: str
+
+
+# ================================================================
+# Users
+# ================================================================
+
+class UserResponse(ResponseModel):
+    """A golfer's profile, as `GET`/`PATCH /users/{id}` send it. Their rounds are fetched separately."""
+    id: str
+    friend_code: Optional[str] = None
+    name: Optional[str] = None
+    email: Optional[str] = None
+    home_course_id: Optional[str] = None
+    handicap: Optional[float] = None
+    created_at: Optional[datetime] = None
+    scoring_goal: Optional[int] = None
+
+
+class HandicapIndexResponse(ResponseModel):
+    """A golfer's current WHS Handicap Index; null until they have enough rounds or a seed handicap."""
+    handicap_index: Optional[float] = None
+
+
+# ================================================================
+# Scan
+# ================================================================
+
+ConfidenceLevel = Literal["high", "medium", "low", "very_low"]
+"""How sure the scan is of a reading, from its 0-1 confidence."""
+
+
+class ScannedHole(ResponseModel):
+    """A hole as read off the card, or taken from the course the golfer picked."""
+    number: int
+    par: Optional[int] = None
+    handicap: Optional[int] = None
+
+
+class ScannedTee(ResponseModel):
+    """A tee row read off the card, or one of the picked course's tees. Yardages are keyed by hole number."""
+    color: Optional[str] = None
+    slope_rating: Optional[float] = None
+    course_rating: Optional[float] = None
+    hole_yardages: Dict[str, int] = Field(default_factory=dict)
+
+
+class ScannedCourse(ResponseModel):
+    """The course a scan read the card against."""
+    name: Optional[str] = None
+    location: Optional[str] = None
+    par: Optional[int] = None
+    holes: List[ScannedHole] = Field(default_factory=list)
+    tees: List[ScannedTee] = Field(default_factory=list)
+
+
+class ScannedHoleScore(ResponseModel):
+    """One hole's score as read off the card. Anything the scan couldn't read is null."""
+    hole_number: int
+    strokes: Optional[int] = None
+    putts: Optional[int] = None
+    shots_to_green: Optional[int] = None
+    fairway_hit: Optional[bool] = None
+    green_in_regulation: Optional[bool] = None
+
+
+class ScannedRound(ResponseModel):
+    """A round as read off a card, before the golfer checks and saves it."""
+    course: Optional[ScannedCourse] = None
+    tee_box: Optional[str] = None
+    date: Optional[str] = None
+    hole_scores: List[ScannedHoleScore] = Field(default_factory=list)
+    notes: Optional[str] = None
+
+
+class FieldConfidence(ResponseModel):
+    """How sure the scan is of one reading."""
+    final_confidence: float
+    level: ConfidenceLevel
+    validation_flags: List[str] = Field(default_factory=list)
+
+
+class HoleFieldConfidence(ResponseModel):
+    """How sure the scan is of each reading on a hole."""
+    strokes: Optional[FieldConfidence] = None
+    putts: Optional[FieldConfidence] = None
+    green_in_regulation: Optional[FieldConfidence] = None
+
+
+class HoleConfidence(ResponseModel):
+    """How sure the scan is of one hole."""
+    hole_number: int
+    fields: HoleFieldConfidence
+    overall: float
+    level: ConfidenceLevel
+
+
+class ScanConfidence(ResponseModel):
+    """How sure the scan is of the card as a whole, and of each hole."""
+    overall: float
+    level: ConfidenceLevel
+    hole_scores: List[HoleConfidence] = Field(default_factory=list)
+
+
+class ScanResponse(ResponseModel):
+    """`POST /scan/extract`: the card as read, how sure the scan is, and what to check before saving."""
+    round: ScannedRound
+    confidence: ScanConfidence
+    fields_needing_review: List[str] = Field(default_factory=list)
+
+
+class OcrTextResponse(ResponseModel):
+    """`POST /scan/ocr`: the card's text, read ahead so extract can skip that step."""
+    ocr_text: str
+
+
+class SaveScanResponse(ResponseModel):
+    """`POST /scan/save`: the new round's id and total."""
+    id: str
+    total_score: Optional[int] = None

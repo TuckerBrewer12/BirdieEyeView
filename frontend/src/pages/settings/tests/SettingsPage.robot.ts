@@ -4,12 +4,12 @@ import { FakeSession } from "../../../testing/fakes/FakeSession";
 import { TEST_USER, type FakeBackend, type FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { populatedCourses } from "../../../testing/fixtures/courses";
 import { expectTheme } from "../../../testing/theme";
-import type { User } from "../../../types/golf";
+import type { UserDto } from "../../../types/api";
 
 type ThemeLabel = "Light" | "Dark" | "System";
 
 /** A golfer with a friend code, a handicap and a home course. */
-export function settingsProfile(overrides: Partial<User> = {}): User {
+export function settingsProfile(overrides: Partial<UserDto> = {}): UserDto {
   return {
     id: TEST_USER.user_id,
     friend_code: "BIRD-1234",

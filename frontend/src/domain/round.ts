@@ -1,6 +1,13 @@
-import type { HoleScoreDto, HoleSummaryDto, NinesDto, RoundDto, RoundSummaryDto, ScoreCountsDto } from "@/types/api";
-import type { Course } from "@/types/golf";
-import type { ExtractedRound } from "@/types/scan";
+import type {
+  CourseDto,
+  HoleScoreDto,
+  HoleSummaryDto,
+  NinesDto,
+  RoundDto,
+  RoundSummaryDto,
+  ScannedRoundDto,
+  ScoreCountsDto,
+} from "@/types/api";
 import { BACK_HOLES, FRONT_HOLES, getHole, getTee } from "./course";
 import { SCORE_KINDS, scoreKind, strokesToPar, type ScoreKind } from "./score";
 
@@ -90,14 +97,14 @@ export type HoleEdits = Record<number, { strokes?: number | null; putts?: number
  * whichever applies; these keep the two apart.
  */
 export interface RoundDetail extends Round {
-  linkedCourse: Course | null;
+  linkedCourse: CourseDto | null;
   /** The name the card was played under, when the round keeps its own name. */
   playedName: string | null;
 }
 
 /** Which course an edited round is saved against. */
 export type CourseEdit =
-  | { status: "linked"; course: Course }
+  | { status: "linked"; course: CourseDto }
   | { status: "custom"; name: string }
   | { status: "picking" };
 
@@ -223,7 +230,7 @@ function girOf(holes: HoleScore[]): number | null {
  * edit is saved; it follows the server's rules (models/round.py) and the saved response replaces it.
  * Where neither the server nor the course has sent a total (a scan not yet saved), it adds up the holes.
  */
-function previewEdits(round: Round, edits: HoleEdits, course?: Course | null, teeBox?: string | null): Round {
+function previewEdits(round: Round, edits: HoleEdits, course?: CourseDto | null, teeBox?: string | null): Round {
   const tee = getTee(course, teeBox);
   // A course picked without a matching tee has no yardages yet. The round's own course keeps the
   // server's, which may come from the golfer's own tee.
@@ -291,9 +298,9 @@ const NO_NINE_FIGURES: NinesDto["front"] = { par: null, to_par: null, putts: nul
  * A scanned card before it is saved. Nothing has been worked out by the server yet, so it is
  * read the way previewEdits reads an unsaved edit: against the course and tee the scan found.
  */
-function fromScan(scan: ExtractedRound): Round {
-  const holes: HoleScore[] = scan.hole_scores.map((score, i) => ({
-    hole: score.hole_number ?? i + 1,
+function fromScan(scan: ScannedRoundDto): Round {
+  const holes: HoleScore[] = scan.hole_scores.map((score) => ({
+    hole: score.hole_number,
     par: null,
     handicap: null,
     yardage: null,
@@ -306,7 +313,7 @@ function fromScan(scan: ExtractedRound): Round {
     kind: null,
   }));
   const scanned = scan.course;
-  const course: Course | null = scanned && {
+  const course: CourseDto | null = scanned && {
     id: null,
     name: scanned.name,
     location: scanned.location,

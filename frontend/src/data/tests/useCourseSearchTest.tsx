@@ -1,6 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { pebbleBeach, searchableCourses } from "@/testing/fixtures/courses";
+import { pebbleBeachSummary, searchableCourses } from "@/testing/fixtures/courses";
 import {
   FakeRoundsRepository,
   type FakeRoundsRepositorySeed,
@@ -94,7 +94,7 @@ describe("useCourseSearch", () => {
     act(() => result.current.setQuery("pebble"));
     await advancePastDebounce();
 
-    expect(result.current.results).toEqual([pebbleBeach]);
+    expect(result.current.results).toEqual([pebbleBeachSummary]);
     expect(result.current.searching).toBe(false);
   });
 
@@ -118,7 +118,7 @@ describe("useCourseSearch", () => {
     await advancePastDebounce();
 
     expect(repository.searchedQueries).toEqual(["pebble"]);
-    expect(result.current.results).toEqual([pebbleBeach]);
+    expect(result.current.results).toEqual([pebbleBeachSummary]);
   });
 
   it("a failed search leaves results empty and stops searching", async () => {

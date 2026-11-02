@@ -1863,6 +1863,6 @@ export const sampleGolfer = {
     {"id": "1b6e5c5a-2153-519c-a3da-84852bef21a4", "location": "San Francisco, CA", "name": "Presidio Golf Course"},
     {"id": "fac0bc48-11c1-5a79-aa30-de0149ea5302", "location": "Pacifica, CA", "name": "Sharp Park Golf Course"}
   ],
-  "profile": {"created_at": "2026-02-20T00:00:00", "email": "sam@example.com", "handicap": 7.0, "home_course_id": "1b6e5c5a-2153-519c-a3da-84852bef21a4", "id": "1e912903-4df9-5191-b19a-6a15dc4852b5", "name": "Sam Rivera", "scoring_goal": 79},
+  "profile": {"created_at": "2026-02-20T00:00:00", "email": "sam@example.com", "friend_code": null, "handicap": 7.0, "home_course_id": "1b6e5c5a-2153-519c-a3da-84852bef21a4", "id": "1e912903-4df9-5191-b19a-6a15dc4852b5", "name": "Sam Rivera", "scoring_goal": 79},
   "user": {"email": "sam@example.com", "email_verified": true, "name": "Sam Rivera", "user_id": "1e912903-4df9-5191-b19a-6a15dc4852b5"}
 } satisfies FakeBackendSeed;

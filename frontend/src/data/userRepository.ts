@@ -1,12 +1,11 @@
 import { api } from "@/lib/api";
-import type { UserChangesDto } from "@/types/api";
-import type { User } from "@/types/golf";
+import type { HandicapIndexDto, UserChangesDto, UserDto } from "@/types/api";
 
 export interface UserRepository {
-  getUser(userId: string): Promise<User>;
-  getUserHandicap(userId: string): Promise<{ handicap_index: number | null }>;
+  getUser(userId: string): Promise<UserDto>;
+  getUserHandicap(userId: string): Promise<HandicapIndexDto>;
   /** Saves the changes and returns the user as saved. */
-  updateUser(userId: string, changes: UserChangesDto): Promise<User>;
+  updateUser(userId: string, changes: UserChangesDto): Promise<UserDto>;
 }
 
 export const userRepository: UserRepository = {

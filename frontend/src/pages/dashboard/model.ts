@@ -1,8 +1,8 @@
 import { SCORE_KINDS, type ScoreKind } from "@/domain/score";
 import type { RoundSummary } from "@/domain/round";
 import type { RoundTrendPoint } from "@/domain/trend";
-import type { GoalReport } from "@/types/analytics";
 import type {
+  GoalReportDto,
   MilestoneDto,
   ScoreMixDto,
   ScramblingTrendRowDto,
@@ -129,7 +129,7 @@ export interface GoalProgress {
 }
 
 /** Null until the player has set a goal. */
-export function goalProgress(scoringGoal: number | null | undefined, report: GoalReport | null): GoalProgress | null {
+export function goalProgress(scoringGoal: number | null | undefined, report: GoalReportDto | null): GoalProgress | null {
   if (scoringGoal == null) return null;
   return {
     target: scoringGoal,

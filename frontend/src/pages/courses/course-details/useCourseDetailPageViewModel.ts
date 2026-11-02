@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { formatCourseName } from "@/domain/course";
 import { messageFrom } from "@/lib/userFacingErrors";
-import type { Course } from "@/types/golf";
+import type { CourseDto } from "@/types/api";
 import { coursesRepository, type CoursesRepository } from "../coursesRepository";
 import { useCourse } from "../useCourse";
 import { useCourseAnalytics } from "../useCourseAnalytics";
@@ -10,7 +10,7 @@ import { PAGE_TABS, type PageTabKey, type TabItem } from "./courseDetailModel";
 export interface CourseDetailPageViewModel {
   loading: boolean;
   loadError: string | null;
-  course: Course | null;
+  course: CourseDto | null;
   courseName: string;
   /** Course only, until the golfer has played here. */
   pageTabs: TabItem<PageTabKey>[];
@@ -27,7 +27,7 @@ export function useCourseDetailPageViewModel(
   const [activeTab, setActiveTab] = useState<PageTabKey>("course");
   const { data: course, isLoading: courseLoading, isError, error } = useCourse(courseId, repository);
   const { data: analytics, isLoading: analyticsLoading } = useCourseAnalytics(userId, courseId, repository);
-  const hasPlayed = (analytics?.rounds_played ?? 0) > 0;
+  const hasPlayed = (analytics?.roundsPlayed ?? 0) > 0;
 
   return {
     loading: !!courseId && (courseLoading || analyticsLoading),

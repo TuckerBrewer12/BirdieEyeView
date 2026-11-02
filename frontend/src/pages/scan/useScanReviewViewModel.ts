@@ -4,7 +4,7 @@ import { useHandicapIndex } from "@/data/useHandicapIndex";
 import { getTee, ratedCourseHandicap, strokesToCheck, teeColors, type Round } from "@/domain";
 import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
-import type { CourseSummary } from "@/types/golf";
+import type { CourseSummary } from "@/domain/course";
 import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
 import { useCourse } from "../courses/useCourse";
 import { roundsRepository, type RoundsRepository } from "../rounds/roundsRepository";

@@ -6,7 +6,7 @@ import { useExtractScorecard, useIsExtractingScorecard } from "@/data/useExtract
 import type { RoundDetail } from "@/domain";
 import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
-import type { CourseSummary } from "@/types/golf";
+import type { CourseSummary } from "@/domain/course";
 import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
 import { roundsRepository, type RoundsRepository } from "../rounds/roundsRepository";
 import {
