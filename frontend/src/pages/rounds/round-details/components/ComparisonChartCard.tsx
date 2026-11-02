@@ -2,7 +2,7 @@ import { useId, type ReactNode } from "react";
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/brand";
 import { chartColors, chartLayout, chartTickStyle, chartTooltipStyle, colors } from "@/brand/theme";
-import { pluralize } from "@/lib/pluralize";
+import { pluralize } from "@/domain/format";
 
 export interface ComparisonBar {
   label: string;

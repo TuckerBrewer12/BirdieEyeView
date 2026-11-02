@@ -28,7 +28,6 @@ export default defineConfig([
       'src/types/**/*.ts',
       'src/lib/api.ts',
       'src/lib/apiBase.ts',
-      'src/lib/auth.ts',
       'src/lib/sessionToken.ts',
       'src/pages/**/model.ts',
       'src/pages/**/*Model.ts',

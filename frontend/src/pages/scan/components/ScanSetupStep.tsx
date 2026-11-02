@@ -9,7 +9,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import { formatCourseName } from "@/lib/courseName";
+import { formatCourseName } from "@/domain/course";
 import type { ScanSetupViewModel } from "../useScanSetupViewModel";
 
 /**

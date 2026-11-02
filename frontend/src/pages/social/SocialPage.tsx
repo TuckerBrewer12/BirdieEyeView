@@ -18,7 +18,7 @@ import {
   PageTitle,
   PersonRow,
 } from "@/brand";
-import { pluralize } from "@/lib/pluralize";
+import { pluralize } from "@/domain/format";
 import { personDetail, personInitials, personName } from "./present";
 import { useSocialPageViewModel } from "./useSocialPageViewModel";
 

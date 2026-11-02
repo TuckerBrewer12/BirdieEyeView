@@ -22,8 +22,8 @@ import {
   toParTextClass,
 } from "@/brand";
 import { formatCourseHandicap, netScore } from "@/domain";
-import { formatCourseName } from "@/lib/courseName";
-import { pluralize } from "@/lib/pluralize";
+import { formatCourseName } from "@/domain/course";
+import { pluralNoun, pluralize } from "@/domain/format";
 import { holeList } from "../present";
 import type { ScanReviewViewModel } from "../useScanReviewViewModel";
 
@@ -59,7 +59,7 @@ export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanRe
           <AlertTitle>{pluralize(toCheck.length, "score")} to check</AlertTitle>
           <AlertDescription>
             The scan wasn't sure what it read on {holeList(toCheck)}, ringed below. Check{" "}
-            {toCheck.length === 1 ? "it" : "them"} against your card.
+            {pluralNoun(toCheck.length, "it", "them")} against your card.
           </AlertDescription>
         </Alert>
       )}

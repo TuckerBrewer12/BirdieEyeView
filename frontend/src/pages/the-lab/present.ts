@@ -1,9 +1,11 @@
 import { toParTextClass } from "@/brand";
 import {
   COMPARISON_HANDICAPS,
+  formatAverageToPar,
   goalScoreToBreak,
   goalTargetLabel,
-  toParLabel,
+  pluralize,
+  roundAverageToPar,
   type ComparisonTargetValue,
 } from "@/domain";
 import type { FriendOption, GoalStanding, LabPanel, PeakGame, PeakImpact, RadarMode, Saver } from "./model";
@@ -120,27 +122,17 @@ export function recentTrendNote(trend: number): string {
   return `Trending ${Math.abs(trend).toFixed(1)} strokes ${way} your 20-round average.`;
 }
 
-/** One decimal, or a dash when there is nothing to show. */
-export function oneDecimal(value: number | null | undefined): string {
-  return value != null ? value.toFixed(1) : "—";
-}
-
-/** An average to par, as golfers write it, to two places: "+0.85", "E", "-0.1". */
-export function averageToParLabel(value: number): string {
-  return toParLabel(Math.round(value * 100) / 100) ?? "E";
-}
-
 /**
  * The line under a par type, and the gap it is coloured with. Rounded the same
- * way as {@link averageToParLabel}, so a tie is even rather than ahead.
+ * way as {@link formatAverageToPar}, so a tie is even rather than ahead.
  */
 export function parTypeGapNote(
   averageToPar: number,
   benchmarkToPar: number,
   benchmarkName: string,
 ): { text: string; gap: number } {
-  const gap = Math.round((averageToPar - benchmarkToPar) * 100) / 100;
-  const mark = `${benchmarkName} ${averageToParLabel(benchmarkToPar)}`;
+  const gap = roundAverageToPar(averageToPar - benchmarkToPar);
+  const mark = `${benchmarkName} ${formatAverageToPar(benchmarkToPar)}`;
   const detail =
     gap < 0 ? "ahead of it" : gap > 0 ? `${gap.toFixed(2)} a hole to close` : "even with it";
   return { text: `${mark} · ${detail}`, gap };
@@ -173,5 +165,5 @@ export const SAVER_LABEL: Record<Saver["kind"], string> = {
 export function timesMetLabel(count: number): string {
   if (count === 0) return "keep going";
   if (count === 1) return "once!";
-  return `${count} rounds`;
+  return pluralize(count, "round");
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatCourseName } from "@/lib/courseName";
+import { formatCourseName } from "@/domain/course";
 import { messageFrom } from "@/lib/userFacingErrors";
 import type { Course } from "@/types/golf";
 import { coursesRepository, type CoursesRepository } from "../coursesRepository";

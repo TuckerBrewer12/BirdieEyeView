@@ -3,7 +3,7 @@ import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { chartColors, chartLayout, chartTickStyle, colors, toParFill } from "@/brand/theme";
-import { formatRoundDateHistory, formatRoundDateTick } from "@/lib/roundDate";
+import { formatDay, formatDayTick } from "@/domain/date";
 import type { CourseScoreTrendRowDto } from "@/types/api";
 import { indexScale, paddedExtent } from "./scales";
 
@@ -120,7 +120,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
         )}
         {data.length <= maxTicks &&
           data.map((row, i) => {
-            const tick = formatRoundDateTick(row.date);
+            const tick = formatDayTick(row.date);
             return tick ? (
               <text
                 key={`tick-${row.round_index}`}
@@ -143,7 +143,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             top: tooltipPos.y - 10,
           }}
         >
-          <div className="mb-1 text-meta text-muted-foreground">{formatRoundDateHistory(hovered.date) ?? "—"}</div>
+          <div className="mb-1 text-meta text-muted-foreground">{formatDay(hovered.date) ?? "—"}</div>
           <div className="text-sm font-bold text-foreground">{hovered.total_score}</div>
           <ToParFigure toPar={hovered.to_par} />
         </div>

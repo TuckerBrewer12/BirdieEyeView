@@ -9,9 +9,9 @@ import {
   StatLabel,
   StatValue,
 } from "@/brand";
-import { goalScoreToBreak, goalTargetLabel } from "@/domain";
+import { formatOneDecimal, goalScoreToBreak, goalTargetLabel } from "@/domain";
 import type { GoalStanding } from "../model";
-import { goalStandingNote, oneDecimal } from "../present";
+import { goalStandingNote } from "../present";
 
 interface GoalStandingCardProps {
   /** Null until a goal is set. */
@@ -50,7 +50,7 @@ export function GoalStandingCard({ goal, className }: GoalStandingCardProps) {
             <div className="grid grid-cols-3 gap-3">
               <Stat>
                 <StatLabel>Average</StatLabel>
-                <StatValue size="lg">{oneDecimal(goal.average)}</StatValue>
+                <StatValue size="lg">{formatOneDecimal(goal.average)}</StatValue>
               </Stat>
               <Stat>
                 <StatLabel>Best</StatLabel>
@@ -59,7 +59,7 @@ export function GoalStandingCard({ goal, className }: GoalStandingCardProps) {
               <Stat>
                 <StatLabel>Gap</StatLabel>
                 <StatValue size="lg" className={goal.onTrack ? "text-score-birdie" : undefined}>
-                  {goal.gap != null ? oneDecimal(Math.max(0, goal.gap)) : "—"}
+                  {goal.gap != null ? formatOneDecimal(Math.max(0, goal.gap)) : "—"}
                 </StatValue>
               </Stat>
             </div>

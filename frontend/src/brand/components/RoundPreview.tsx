@@ -7,8 +7,8 @@ import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { motion as motionTokens, toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
 import { playedScoreKinds, scoreKindCountLabel, type RoundSummary } from "@/domain";
-import { formatCourseName } from "@/lib/courseName";
-import { formatRoundDateHistory, formatRoundDateShort, roundDateParts } from "@/lib/roundDate";
+import { formatCourseName } from "@/domain/course";
+import { formatDay, formatDayShort, dayParts } from "@/domain/date";
 
 interface RoundListProps {
   round: RoundSummary;
@@ -57,7 +57,7 @@ export function RoundPreview(props: RoundPreviewProps) {
         onClick={onClick}
       >
         <span className="text-sm text-muted-foreground">
-          {formatRoundDateHistory(round.date) ?? "—"}
+          {formatDay(round.date) ?? "—"}
         </span>
         <div className="flex items-center gap-3">
           <span className="text-sm font-bold text-foreground">{round.score ?? "—"}</span>
@@ -69,7 +69,7 @@ export function RoundPreview(props: RoundPreviewProps) {
     );
   }
 
-  const dateParts = roundDateParts(round.date);
+  const dateParts = dayParts(round.date);
   const courseName = round.course?.name ? formatCourseName(round.course.name) : null;
 
   return (
@@ -192,7 +192,7 @@ function RoundHighlight({
             {round.course?.name ? formatCourseName(round.course.name) : "Unknown course"}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
-            {formatRoundDateShort(round.date) ?? "—"}
+            {formatDayShort(round.date) ?? "—"}
             {round.toPar != null && (
               <>
                 {" · "}
@@ -244,7 +244,7 @@ function RoundTicket({ round, label, actionLabel, onClick }: Omit<RoundTicketPro
             {courseName}
           </div>
           <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>{formatRoundDateShort(round.date) ?? "—"}</span>
+            <span>{formatDayShort(round.date) ?? "—"}</span>
             {round.teeBox && (
               <>
                 <span aria-hidden className="size-1 rounded-full bg-current opacity-50" />

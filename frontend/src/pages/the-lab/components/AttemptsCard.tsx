@@ -11,7 +11,7 @@ import {
   StatValue,
 } from "@/brand";
 import { cn } from "@/brand/cn";
-import { goalTargetLabel } from "@/domain";
+import { goalTargetLabel, pluralize } from "@/domain";
 import { timesMetLabel } from "../present";
 
 interface AttemptsCardProps {
@@ -48,7 +48,7 @@ export function AttemptsCard({ scores, target, timesMet, className }: AttemptsCa
         <ScoreGoalChart
           scores={scores}
           goal={target}
-          aria-label={`Your last ${scores.length} scores against ${goalTargetLabel(target).toLowerCase()}`}
+          aria-label={`Your last ${pluralize(scores.length, "score")} against ${goalTargetLabel(target).toLowerCase()}`}
         />
       </CardContent>
     </Card>

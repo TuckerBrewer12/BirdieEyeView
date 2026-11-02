@@ -6,6 +6,16 @@ export const BACK_HOLES = [10, 11, 12, 13, 14, 15, 16, 17, 18] as const;
 type HasTees<T extends { color: string | null }> = { tees: T[] };
 type HasHoles<T extends { number: number | null }> = { holes: T[] };
 
+/** A course name in title case, or "Unknown": "half moon BAY" reads "Half Moon Bay". */
+export function formatCourseName(name: string | null | undefined): string {
+  if (!name) return "Unknown";
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 export function getTee<T extends { color: string | null }>(
   course: HasTees<T> | null | undefined,
   color: string | null | undefined,

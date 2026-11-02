@@ -8,7 +8,7 @@ import {
   PageTitle,
   SearchField,
 } from "@/brand";
-import { pluralize } from "@/lib/pluralize";
+import { pluralize } from "@/domain/format";
 import { useCoursesPageViewModel } from "./useCoursesPageViewModel";
 
 interface CoursesPageProps { userId: string; }

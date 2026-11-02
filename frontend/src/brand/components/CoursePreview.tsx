@@ -3,7 +3,7 @@ import { MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { motion as motionTokens } from "@/brand/theme";
-import { formatCourseName } from "@/lib/courseName";
+import { formatCourseName } from "@/domain/course";
 import type { CourseSummary } from "@/types/golf";
 
 interface CoursePreviewProps {

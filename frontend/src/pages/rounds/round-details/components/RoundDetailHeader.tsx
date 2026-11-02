@@ -1,8 +1,8 @@
 import { cn } from "@/brand/cn";
 import { HoleScoreBars, PageTitle, ScoreCountChip, ToParFigure } from "@/brand";
 import { formatCourseHandicap, netScore, playedScoreKinds, scoreKindCountLabel, type Nine, type Round } from "@/domain";
-import { formatCourseName } from "@/lib/courseName";
-import { formatRoundDateLong } from "@/lib/roundDate";
+import { formatCourseName } from "@/domain/course";
+import { formatWeekdayDay } from "@/domain/date";
 
 export interface RoundDetailHeaderProps {
   round: Round;
@@ -35,7 +35,7 @@ function NineBars({ nine, label, className }: {
  * The identity and shape of one round: what was played, when, how it went.
  */
 export function RoundDetailHeader({ round, teeRating, courseHandicap, className }: RoundDetailHeaderProps) {
-  const dateLabel = formatRoundDateLong(round.date);
+  const dateLabel = formatWeekdayDay(round.date);
   const net = courseHandicap != null && round.score != null ? netScore(round.score, courseHandicap) : null;
 
   return (

@@ -1,3 +1,5 @@
+import { pluralNoun } from "./format";
+
 /** The seven score buckets the app uses. ≤ −2 is eagle (eagle+). ≥ +4 is quad. */
 export const SCORE_KINDS = [
   "eagle",
@@ -63,7 +65,7 @@ export function scoreKindLabel(kind: ScoreKind): string {
 
 /** The word for `count` holes of one kind: "1 Birdie", "3 Birdies". */
 export function scoreKindCountLabel(kind: ScoreKind, count: number): string {
-  return count === 1 ? SCORE_KIND_LABEL[kind].one : SCORE_KIND_LABEL[kind].many;
+  return pluralNoun(count, SCORE_KIND_LABEL[kind].one, SCORE_KIND_LABEL[kind].many);
 }
 
 /** A score against par as golfers write it: "E", "+3", "-2". Null when there is no score. */
@@ -72,6 +74,19 @@ export function toParLabel(toPar: number | null | undefined): string | null {
   if (toPar === 0) return "E";
   if (toPar > 0) return `+${toPar}`;
   return `${toPar}`;
+}
+
+/**
+ * An average to par to two places. Halves round away from even on both sides, so
+ * -0.125 is -0.13 just as +0.125 is +0.13.
+ */
+export function roundAverageToPar(value: number): number {
+  return (Math.sign(value) * Math.round(Math.abs(value) * 100)) / 100;
+}
+
+/** An average to par, as golfers write it, to two places: "+0.85", "E", "-0.1". */
+export function formatAverageToPar(value: number): string {
+  return toParLabel(roundAverageToPar(value)) ?? "E";
 }
 
 /**

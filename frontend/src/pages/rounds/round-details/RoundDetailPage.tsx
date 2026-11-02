@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Link2 } from "lucide-react";
 import { useShareRound } from "@/platform/useShareRound";
-import { roundShareMessage } from "@/lib/roundShareMessage";
+import { roundShareMessage } from "@/domain/share";
 import {
   Alert,
   AlertDescription,

@@ -3,7 +3,7 @@ import { test as base, expect } from "../../../../testing/playwright";
 import type { Round } from "../../../../types/golf";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
-import { formatCourseName } from "../../../../lib/courseName";
+import { formatCourseName } from "../../../../domain/course";
 
 /** Screen robot for /rounds/:id — same idea as an Android Espresso robot. */
 export class RoundDetailRobot {

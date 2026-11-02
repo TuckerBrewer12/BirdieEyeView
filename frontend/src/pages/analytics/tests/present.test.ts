@@ -3,20 +3,16 @@ import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 import { withoutRounds } from "@/testing/fakes/analyticsResponses";
 import { analyticsFrom } from "../model";
 import {
-  averagePuttsLabel,
   averageReference,
-  averageToParLabel,
   courseOptions,
   emptyMessage,
   handicapBars,
   headlineFigures,
-  holesLabel,
   leadNarrative,
   narrativeFor,
   narrativeTone,
   netScorePoints,
   parBars,
-  percentLabel,
   scoreTrendPoints,
   shortGamePoints,
   tabNarrative,
@@ -54,16 +50,6 @@ describe("the layouts' words", () => {
       "—",
       "—",
     ]);
-  });
-
-  it("signs averages to par the way golfers write them, and counts holes", () => {
-    expect(averageToParLabel(0.8)).toBe("+0.8");
-    expect(averageToParLabel(-0.1)).toBe("-0.1");
-    expect(averageToParLabel(0)).toBe("E");
-    expect(holesLabel(1)).toBe("1 hole");
-    expect(holesLabel(24)).toBe("24 holes");
-    expect(percentLabel(31.4)).toBe("31%");
-    expect(percentLabel(null)).toBe("—");
   });
 
   it("names each round on the trends, with the score's rolling average beside it", () => {
@@ -194,10 +180,5 @@ describe("labels", () => {
   it("says why the page is empty", () => {
     expect(emptyMessage(true)).toBe("No rounds found for the selected filters.");
     expect(emptyMessage(false)).toBe("Play some rounds to see your analytics.");
-  });
-
-  it("shows average putts to one decimal", () => {
-    expect(averagePuttsLabel(33)).toBe("33.0");
-    expect(averagePuttsLabel(null)).toBeNull();
   });
 });

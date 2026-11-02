@@ -1,5 +1,6 @@
 import type { AnalyticsKPIs, ScoringByParRow } from "@/types/analytics";
 import type { BenchmarkProfile } from "./benchmark";
+import { formatPercent, formatSignedOneDecimal } from "./format";
 
 export type RadarEntry = {
   axis: string;
@@ -9,10 +10,6 @@ export type RadarEntry = {
   benchRaw: string;
   hasData: boolean;
 };
-
-function fmtSign(v: number) {
-  return (v >= 0 ? "+" : "") + v.toFixed(1);
-}
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
 
@@ -79,16 +76,16 @@ export function buildRadarData(
       axis: "GIR",
       value: clamp(girPct),
       benchmark: p.gir,
-      userRaw: girPct.toFixed(0) + "%",
-      benchRaw: p.gir + "%",
+      userRaw: formatPercent(girPct),
+      benchRaw: formatPercent(p.gir),
       hasData: hasGir,
     },
     {
       axis: "Scrambling",
       value: clamp(scrPct),
       benchmark: p.scrambling,
-      userRaw: scrPct.toFixed(0) + "%",
-      benchRaw: p.scrambling + "%",
+      userRaw: formatPercent(scrPct),
+      benchRaw: formatPercent(p.scrambling),
       hasData: hasScr,
     },
     {
@@ -103,24 +100,24 @@ export function buildRadarData(
       axis: "Par 3s",
       value: parScore(parRow(3)?.average_to_par ?? 2.0),
       benchmark: p.par3,
-      userRaw: parRow(3) ? fmtSign(parRow(3)!.average_to_par) : "—",
-      benchRaw: fmtSign(benchPar3),
+      userRaw: parRow(3) ? formatSignedOneDecimal(parRow(3)!.average_to_par) : "—",
+      benchRaw: formatSignedOneDecimal(benchPar3),
       hasData: !!parRow(3),
     },
     {
       axis: "Par 4s",
       value: parScore(parRow(4)?.average_to_par ?? 2.0),
       benchmark: p.par4,
-      userRaw: parRow(4) ? fmtSign(parRow(4)!.average_to_par) : "—",
-      benchRaw: fmtSign(benchPar4),
+      userRaw: parRow(4) ? formatSignedOneDecimal(parRow(4)!.average_to_par) : "—",
+      benchRaw: formatSignedOneDecimal(benchPar4),
       hasData: !!parRow(4),
     },
     {
       axis: "Par 5s",
       value: parScore(parRow(5)?.average_to_par ?? 2.0),
       benchmark: p.par5,
-      userRaw: parRow(5) ? fmtSign(parRow(5)!.average_to_par) : "—",
-      benchRaw: fmtSign(benchPar5),
+      userRaw: parRow(5) ? formatSignedOneDecimal(parRow(5)!.average_to_par) : "—",
+      benchRaw: formatSignedOneDecimal(benchPar5),
       hasData: !!parRow(5),
     },
   ];

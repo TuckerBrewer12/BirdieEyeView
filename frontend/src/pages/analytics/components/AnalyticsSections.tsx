@@ -9,7 +9,7 @@ import {
   ScoreMixBar,
   ToParBars,
 } from "@/brand";
-import type { RoundSummary } from "@/domain";
+import { formatPercent, type RoundSummary } from "@/domain";
 import type { Analytics } from "../model";
 import {
   averageReference,
@@ -17,7 +17,6 @@ import {
   handicapBars,
   netScorePoints,
   parBars,
-  percentLabel,
   puttsPoints,
   scoreTrendPoints,
   shortGamePoints,
@@ -91,7 +90,7 @@ export function BallStrikingCards({ analytics }: SectionProps) {
         cardClassName={hasShortGame ? undefined : "lg:col-span-2"}
         points={girPoints(analytics.girTrend)}
         series={[{ label: "GIR", tone: "birdie" }]}
-        format={percentLabel}
+        format={formatPercent}
       />
       {hasShortGame && (
         <TrendCard
@@ -102,7 +101,7 @@ export function BallStrikingCards({ analytics }: SectionProps) {
             { label: "Scrambling", tone: "eagle" },
             { label: "Up & Down", tone: "contrast" },
           ]}
-          format={percentLabel}
+          format={formatPercent}
         />
       )}
       {analytics.girSplit.length > 0 && <GirSplitCard split={analytics.girSplit} className="lg:col-span-2" />}

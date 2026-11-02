@@ -11,7 +11,7 @@ import {
   StatValue,
 } from "@/brand";
 import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
-import { roundsLabel } from "../present";
+import { pluralize } from "@/domain/format";
 
 interface HandicapTrendCardProps {
   /** The index after each round, oldest first. */
@@ -36,7 +36,7 @@ export function HandicapTrendCard({
     <Card data-slot="handicap-trend-card" className={className}>
       <CardHeader>
         <CardTitle>Handicap Index Trend</CardTitle>
-        <CardDescription>{roundsLabel(roundCount)}</CardDescription>
+        <CardDescription>{pluralize(roundCount, "round")}</CardDescription>
         <CardAction>
           <Stat align="end">
             <StatLabel>HCP Index</StatLabel>
