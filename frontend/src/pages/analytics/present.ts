@@ -18,7 +18,6 @@ import type {
   ThreePuttsTrendRowDto,
 } from "@/types/api";
 import {
-  insightCategory,
   ANALYTICS_TABS,
   type Analytics,
   type AnalyticsTab,
@@ -29,6 +28,8 @@ import {
   type ScoreTrendPoint,
   type ShortGamePoint,
 } from "./model";
+
+type InsightRating = Extract<Insight, { rating: unknown }>["rating"];
 
 const TAB_LABELS: Record<AnalyticsTab, string> = {
   scoring: "Scoring",
@@ -53,7 +54,7 @@ export function emptyMessage(filtered: boolean): string {
 /** An insight as a sentence, with the arrow beside it and whether up is good. */
 export interface Narrative {
   text: string;
-  trend: "up" | "down" | "flat";
+  trend: Insight["trend"];
   positiveUp: boolean;
 }
 
@@ -65,81 +66,58 @@ export function narrativeTone({ trend, positiveUp }: Narrative): NarrativeTone {
   return (trend === "up") === positiveUp ? "good" : "bad";
 }
 
-export function narrativeFor(insight: Insight): Narrative {
+/** More greens is better; fewer strokes and fewer putts are. */
+const UP_IS_GOOD: Record<InsightCategory, boolean> = { scoring: false, gir: true, putting: false };
+
+const GIR_VERDICT: Record<InsightRating, string> = {
+  strong: "excellent ball striking.",
+  fair: "improving this is one of the fastest routes to lower scores.",
+  weak: "irons are the area to target for the biggest scoring gains.",
+};
+
+const PUTTS_VERDICT: Record<InsightRating, string> = {
+  strong: "outstanding on the green.",
+  fair: "solid putting.",
+  weak: "reducing three-putts is the fastest path to lower scores.",
+};
+
+function sentence(insight: Insight): string {
   switch (insight.kind) {
-    case "scoring-shift": {
+    case "scoring_shift": {
       const strokes = Math.abs(insight.strokes).toFixed(1);
       return insight.strokes > 0
-        ? {
-            text: `Your scoring average has improved by ${strokes} strokes over the last ${pluralize(insight.rounds, "round")}.`,
-            trend: "down",
-            positiveUp: false,
-          }
-        : {
-            text: `Your scoring average has climbed by ${strokes} strokes recently — worth monitoring.`,
-            trend: "up",
-            positiveUp: false,
-          };
+        ? `Your scoring average has improved by ${strokes} strokes over the last ${pluralize(insight.rounds, "round")}.`
+        : `Your scoring average has climbed by ${strokes} strokes recently — worth monitoring.`;
     }
-    case "best-par":
-      return {
-        text: `You score best on par ${insight.par}s — averaging ${formatAverageToPar(insight.averageToPar)} across ${pluralize(insight.holes, "hole")}.`,
-        trend: insight.averageToPar <= 0 ? "down" : "flat",
-        positiveUp: false,
-      };
-    case "gir-average": {
-      const verdict =
-        insight.percent >= 55
-          ? "excellent ball striking."
-          : insight.percent >= 33
-            ? "improving this is one of the fastest routes to lower scores."
-            : "irons are the area to target for the biggest scoring gains.";
-      return {
-        text: `Your average GIR% is ${formatPercent(insight.percent, 1)} — ${verdict}`,
-        trend: insight.percent >= 50 ? "up" : "flat",
-        positiveUp: true,
-      };
-    }
-    case "gir-shift": {
+    case "best_par":
+      return `You score best on par ${insight.par}s — averaging ${formatAverageToPar(insight.average_to_par)} across ${pluralize(insight.holes, "hole")}.`;
+    case "gir_average":
+      return `Your average GIR% is ${formatPercent(insight.percent, 1)} — ${GIR_VERDICT[insight.rating]}`;
+    case "gir_shift": {
       const points = Math.abs(insight.points).toFixed(0);
       return insight.points > 0
-        ? {
-            text: `GIR% trending up ${points} points over recent rounds — ball striking improving.`,
-            trend: "up",
-            positiveUp: true,
-          }
-        : {
-            text: `GIR% has dipped ${points} points recently — iron consistency worth a look.`,
-            trend: "down",
-            positiveUp: true,
-          };
+        ? `GIR% trending up ${points} points over recent rounds — ball striking improving.`
+        : `GIR% has dipped ${points} points recently — iron consistency worth a look.`;
     }
-    case "putts-average": {
-      const putts = insight.putts.toFixed(1);
-      const verdict =
-        insight.putts <= 30
-          ? "outstanding on the green."
-          : insight.putts <= 34
-            ? "solid putting."
-            : "reducing three-putts is the fastest path to lower scores.";
-      return {
-        text: `Averaging ${putts} putts per round — ${verdict}`,
-        trend: insight.putts <= 32 ? "down" : insight.putts <= 36 ? "flat" : "up",
-        positiveUp: false,
-      };
-    }
-    case "putts-shift": {
+    case "putts_average":
+      return `Averaging ${insight.putts.toFixed(1)} putts per round — ${PUTTS_VERDICT[insight.rating]}`;
+    case "putts_shift": {
       const putts = Math.abs(insight.putts).toFixed(1);
       return insight.putts > 0
-        ? { text: `Putts per round improving — down ${putts} strokes on average.`, trend: "down", positiveUp: false }
-        : { text: `Putts per round up ${putts} strokes recently.`, trend: "up", positiveUp: false };
+        ? `Putts per round improving — down ${putts} strokes on average.`
+        : `Putts per round up ${putts} strokes recently.`;
     }
   }
 }
 
+/** An insight in words, with the server's arrow. */
+export function narrativeFor(insight: Insight): Narrative {
+  return { text: sentence(insight), trend: insight.trend, positiveUp: UP_IS_GOOD[insight.category] };
+}
+
 /** The first insight in a category, worded; the phone shows one per section. */
 export function leadNarrative(insights: Insight[], category: InsightCategory): Narrative | null {
-  const lead = insights.find((insight) => insightCategory(insight) === category);
+  const lead = insights.find((insight) => insight.category === category);
   return lead ? narrativeFor(lead) : null;
 }
 
@@ -196,7 +174,7 @@ function roundPoint(
 
 /** Each round's score beside its five-round rolling average. */
 export function scoreTrendPoints(rows: ScoreTrendPoint[]): TrendAreaPoint[] {
-  return rows.map((row) => roundPoint(row, [row.total_score, row.rolling_avg]));
+  return rows.map((row) => roundPoint(row, [row.total_score, row.rolling_average]));
 }
 
 export function netScorePoints(rows: NetScoreTrendRowDto[]): TrendAreaPoint[] {
@@ -254,7 +232,7 @@ export function headlineFigures(analytics: Analytics): { label: string; value: s
       value: analytics.bestScore != null ? String(analytics.bestScore) : "—",
       detail: analytics.bestRound?.course,
     },
-    { label: "Avg Putts", value: formatOneDecimal(analytics.averagePutts) },
+    { label: "Avg Putts", value: formatOneDecimal(kpis.average_putts) },
   ];
 }
 

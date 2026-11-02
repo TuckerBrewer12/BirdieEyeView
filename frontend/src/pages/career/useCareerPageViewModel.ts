@@ -1,7 +1,6 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { analyticsRepository, type AnalyticsRepository } from "@/data/analyticsRepository";
 import { useAnalytics } from "@/data/useAnalytics";
-import type { AnalyticsDto } from "@/types/api";
 import { messageFrom } from "@/lib/userFacingErrors";
 import {
   CAREER_FILTERS,
@@ -35,20 +34,16 @@ export interface CareerPageViewModel {
 
 /**
  * The career page's screen state. The figures come from the shared analytics query over every
- * round. `today` sets where the last year starts; tests pin it.
+ * round; the server says where the last year starts.
  */
 export function useCareerPageViewModel(
   userId: string,
   repository: AnalyticsRepository = analyticsRepository,
-  today: () => Date = () => new Date(),
 ): CareerPageViewModel {
   const [timeWindow, setTimeWindow] = useState<CareerWindow>("lifetime");
   const [milestoneGroup, setMilestoneGroup] = useState<MilestoneGroup>("scoring");
-  // Read once, so the window doesn't move under the golfer while the page is open.
-  const [now] = useState(today);
 
-  const select = useCallback((dto: AnalyticsDto) => careerFrom(dto, now), [now]);
-  const { data, isPending, isError, error, refetch } = useAnalytics(userId, CAREER_FILTERS, select, repository);
+  const { data, isPending, isError, error, refetch } = useAnalytics(userId, CAREER_FILTERS, careerFrom, repository);
 
   const career = data ?? null;
   const loadError = isError ? messageFrom(error, "Could not load your career.") : null;

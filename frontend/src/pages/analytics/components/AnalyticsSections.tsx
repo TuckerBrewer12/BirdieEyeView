@@ -71,7 +71,7 @@ export function ScoringCards({ analytics }: SectionProps) {
           <CardDescription>Share of holes across these rounds</CardDescription>
         </CardHeader>
         <CardContent>
-          <ScoreMixBar mix={analytics.scoreMixByKind} />
+          <ScoreMixBar mix={analytics.scoreMix} />
         </CardContent>
       </Card>
     </>

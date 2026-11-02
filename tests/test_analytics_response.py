@@ -1,6 +1,7 @@
 """The analytics and dashboard responses carry what the stats functions work out, typed."""
 
 import importlib.util
+from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 
@@ -9,13 +10,63 @@ from fastapi.encoders import jsonable_encoder
 
 from analytics import handicap as hcap
 from analytics import stats as analytics
+from api.analytics_responses import analytics_response
 from api.routers import stats
-from api.schemas import AnalyticsResponse, DashboardResponse, GoalReportResponse
+from api.schemas import AnalyticsResponse, DashboardResponse, GoalReportResponse, ScoreMix
+from models import Course, Hole, HoleScore, Round
 
 _SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "sample_golfer.py"
 _spec = importlib.util.spec_from_file_location("sample_golfer", _SCRIPT)
 sample_golfer = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(sample_golfer)
+
+
+def _two_rounds():
+    """Two rounds on a par-72 course (par 3s, then 4s, then 5s): a 72 with 36 putts and 10 greens,
+    then an 81 with 27 putts and 9 greens."""
+    course = Course(
+        id="course-1",
+        name="Demo Course",
+        par=72,
+        holes=[Hole(number=i, par=3 if i <= 4 else 4 if i <= 14 else 5, handicap=i) for i in range(1, 19)],
+    )
+    first = Round(id="r1", course=course, date=datetime(2026, 2, 1), hole_scores=[
+        HoleScore(hole_number=i, strokes=4, putts=2, green_in_regulation=i <= 10) for i in range(1, 19)
+    ])
+    second = Round(id="r2", course=course, date=datetime(2026, 2, 2), hole_scores=[
+        HoleScore(hole_number=i, strokes=5 if i % 2 else 4, putts=2 if i % 2 else 1, green_in_regulation=i % 2 == 0)
+        for i in range(1, 19)
+    ])
+    return [first, second]
+
+
+def test_analytics_response_works_out_the_figures_the_page_shows():
+    rounds = _two_rounds()
+    response = analytics_response(rounds, rounds, today=datetime(2026, 2, 15))
+
+    assert response.kpis.average_putts == 31.5
+    assert [row.rolling_average for row in response.score_trend] == [72.0, 76.5]
+    # 36 holes: 6 birdies, 17 pars, 11 bogeys, 2 doubles.
+    assert response.score_mix == ScoreMix(birdie=16.67, par=47.22, bogey=30.56, double=5.56)
+    assert [insight.model_dump() for insight in response.insights] == [
+        {"kind": "best_par", "category": "scoring", "trend": "down", "par": 5, "average_to_par": -0.75, "holes": 8},
+        {"kind": "gir_average", "category": "gir", "trend": "up", "rating": "fair", "percent": pytest.approx(52.78, abs=0.01)},
+        {"kind": "putts_average", "category": "putting", "trend": "down", "rating": "fair", "putts": 31.5},
+    ]
+    assert response.notable_achievements.scoring_records.lifetime.lowest_round == 72
+
+
+def test_analytics_response_marks_milestones_against_the_last_year_ending_today():
+    rounds = _two_rounds()
+    breaks = lambda response: response.notable_achievements.round_milestones  # noqa: E731
+
+    now = breaks(analytics_response(rounds, rounds, today=datetime(2026, 2, 15)))
+    assert now.one_year.new_personal_records_achieved_count == 8  # breaking 120 down to 75, all in round 1
+    assert all(row.achievement.in_window for row in now.lifetime.score_breaks if row.achievement)
+
+    later = breaks(analytics_response(rounds, rounds, today=datetime(2027, 3, 1)))
+    assert later.one_year.new_personal_records_achieved_count == 0
+    assert not any(row.achievement.in_window for row in later.lifetime.score_breaks if row.achievement)
 
 
 @pytest.fixture
@@ -47,7 +98,7 @@ async def test_analytics_response_validates_for_a_season(season):
 async def test_analytics_sections_drop_nothing_the_stats_functions_return(season):
     rounds, _, user = season
     sent = (await _analytics(season)).model_dump()
-    assert sent["score_trend"] == analytics.score_trend(rounds)
+    assert sent["score_trend"] == analytics.score_trend_with_rolling_average(rounds)
     assert sent["net_score_trend"] == analytics.net_score_trend(rounds, sent["kpis"]["handicap_index"])
     assert sent["gir_trend"] == analytics.gir_per_round(rounds)
     assert sent["putts_trend"] == analytics.putts_per_round(rounds)
@@ -83,7 +134,10 @@ async def test_dashboard_carries_the_trends_analytics_draws_for_the_last_20(seas
 
     assert isinstance(dashboard, DashboardResponse)
     assert len(dashboard.score_trend) == 20
-    assert dashboard.score_trend == trends.score_trend
+    # Analytics adds a rolling average to each round; the dashboard doesn't draw one.
+    assert [row.model_dump() for row in dashboard.score_trend] == [
+        row.model_dump(exclude={"rolling_average"}) for row in trends.score_trend
+    ]
     assert dashboard.handicap_trend == trends.handicap_trend
     assert dashboard.scrambling_trend == trends.scrambling_trend
     assert dashboard.up_and_down_trend == trends.up_and_down_trend

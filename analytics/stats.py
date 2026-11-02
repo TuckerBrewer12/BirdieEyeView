@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import math
 from datetime import datetime, timedelta
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, get_args
 
+from models.hole_score import ScoreKind, score_kind
 from models.round import Round
 
 SCORE_TYPE_ORDER = [
@@ -15,6 +16,7 @@ SCORE_TYPE_ORDER = [
     "triple_bogey",
     "quad_bogey",
 ]
+SCORE_KINDS: List[ScoreKind] = list(get_args(ScoreKind))
 
 
 def _valid_hole_scores(round_obj: Round):
@@ -90,6 +92,33 @@ def _average_non_null(values: List[Optional[float]]) -> Optional[float]:
     return sum(filtered) / len(filtered)
 
 
+def round_half_up(value: float, digits: int = 1) -> float:
+    """Rounds a half up, as the app has always shown its figures. Python's round() takes a half to
+    the even digit, so 82.25 would read 82.2 here and 82.3 everywhere else."""
+    scale = 10 ** digits
+    return math.floor(value * scale + 0.5) / scale
+
+
+def rolling_average(values: List[Optional[float]], window: int = 5) -> List[Optional[float]]:
+    """Each value's average with the `window - 1` before it, to a tenth. Nulls are skipped; a
+    window with no values has no average."""
+    averages: List[Optional[float]] = []
+    for i in range(len(values)):
+        recent = [v for v in values[max(0, i - window + 1):i + 1] if v is not None]
+        averages.append(round_half_up(sum(recent) / len(recent)) if recent else None)
+    return averages
+
+
+def score_mix_from_to_par(to_pars: List[int]) -> Dict[str, float]:
+    """Each score kind's share of the holes, as a percentage to a hundredth. Every kind is present.
+
+    A hundredth, not a tenth: the page shows whole percents, and 7.46 rounded to a tenth first would read 8%."""
+    counts = {kind: 0 for kind in SCORE_KINDS}
+    for kind in filter(None, map(score_kind, to_pars)):
+        counts[kind] += 1
+    return {kind: round_half_up(count / len(to_pars) * 100, 2) if to_pars else 0.0 for kind, count in counts.items()}
+
+
 def _score_type_from_to_par(to_par: int) -> str:
     if to_par <= -2:
         return "eagle"
@@ -124,6 +153,14 @@ def _milestone_event(round_obj: Round) -> Optional[Dict[str, str]]:
         "course": _course_label(round_obj) or "Unknown Course",
         "round_id": str(round_obj.id) if round_obj.id else None,
     }
+
+
+def _mark_in_window(event: Optional[Dict[str, Any]], cutoff: datetime) -> bool:
+    """Marks a milestone's first round as inside the window or not, and returns which."""
+    if not event:
+        return False
+    event["in_window"] = datetime.strptime(event["date"], "%Y/%m/%d") >= cutoff
+    return event["in_window"]
 
 
 def _count_score_type(rows: List[Dict[str, Any]], score_type: str) -> int:
@@ -547,13 +584,7 @@ def notable_achievements(
             }
         )
 
-    putting_milestones_in_window = 0
-    for row in putting_breaks:
-        achieved = row["achievement"]
-        if achieved and achieved.get("date"):
-            dt = datetime.strptime(achieved["date"], "%Y/%m/%d")
-            if dt >= cutoff:
-                putting_milestones_in_window += 1
+    putting_milestones_in_window = sum(_mark_in_window(row["achievement"], cutoff) for row in putting_breaks)
 
     putting_milestones["lifetime"]["putt_breaks"] = putting_breaks
     putting_milestones["one_year"]["putting_milestones_achieved_from_lifetime_set"] = putting_milestones_in_window
@@ -604,13 +635,7 @@ def notable_achievements(
     highest_gir_pct_one_year = max((item[2] for item in one_year_gir_candidates), default=None)
     best_gir_count_one_year = max((item[1] for item in one_year_gir_candidates), default=None)
 
-    gir_milestones_in_window = 0
-    for row in gir_breaks:
-        achieved = row["achievement"]
-        if achieved and achieved.get("date"):
-            dt = datetime.strptime(achieved["date"], "%Y/%m/%d")
-            if dt >= cutoff:
-                gir_milestones_in_window += 1
+    gir_milestones_in_window = sum(_mark_in_window(row["achievement"], cutoff) for row in gir_breaks)
 
     gir_milestones = {
         "lifetime": {
@@ -653,23 +678,11 @@ def notable_achievements(
         "first_eagle": _first_event_in_rounds(rounds_list, lambda row: row["score_type"] == "eagle"),
         "first_hole_in_one": _first_event_in_rounds(rounds_list, lambda row: row["is_hio"]),
     }
-    new_records: List[str] = []
-    for row in score_breaks:
-        achieved = row["achievement"]
-        if achieved and achieved.get("date"):
-            dt = datetime.strptime(achieved["date"], "%Y/%m/%d")
-            if dt >= cutoff:
-                new_records.append(f"break_{row['threshold']}")
-    if first_round_under_par and first_round_under_par.get("date"):
-        dt = datetime.strptime(first_round_under_par["date"], "%Y/%m/%d")
-        if dt >= cutoff:
-            new_records.append("first_round_under_par")
-    for key in ("first_eagle", "first_hole_in_one"):
-        achieved = round_milestones_lifetime[key]
-        if achieved and achieved.get("date"):
-            dt = datetime.strptime(achieved["date"], "%Y/%m/%d")
-            if dt >= cutoff:
-                new_records.append(key)
+    # A score milestone first reached in the window is a new personal record.
+    new_records = sum(_mark_in_window(row["achievement"], cutoff) for row in score_breaks) + sum(
+        _mark_in_window(round_milestones_lifetime[key], cutoff)
+        for key in ("first_round_under_par", "first_eagle", "first_hole_in_one")
+    )
 
     return {
         "scoring_records": scoring_records,
@@ -686,8 +699,7 @@ def notable_achievements(
         "round_milestones": {
             "lifetime": round_milestones_lifetime,
             "one_year": {
-                "new_personal_records_achieved_count": len(new_records),
-                "new_personal_records_achieved": new_records,
+                "new_personal_records_achieved_count": new_records,
             },
         },
         "window_days": days,
@@ -946,6 +958,14 @@ def score_trend(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
             }
         )
     return results
+
+
+def score_trend_with_rolling_average(rounds: Iterable[Round], window: int = 5) -> List[Dict[str, Any]]:
+    """`score_trend`, with each round's average over it and the `window - 1` rounds before it."""
+    rows = score_trend(rounds)
+    for row, average in zip(rows, rolling_average([row["total_score"] for row in rows], window)):
+        row["rolling_average"] = average
+    return rows
 
 
 def net_score_trend(
@@ -1608,13 +1628,16 @@ def scoring_by_yardage_buckets(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
         entry = by_bucket[key]
         to_par_vals = entry["to_par"]
         gir_vals = entry["gir"]
+        average_to_par = sum(to_par_vals) / len(to_par_vals)
         results.append({
             "par": entry["par"],
             "bucket_label": entry["label"],
             "bucket_order": entry["order"],
-            "average_to_par": sum(to_par_vals) / len(to_par_vals),
+            "average_to_par": average_to_par,
+            "average_strokes": entry["par"] + average_to_par,
             "gir_percentage": (sum(gir_vals) / len(gir_vals) * 100.0) if gir_vals else None,
             "sample_size": len(to_par_vals),
+            "score_mix": score_mix_from_to_par(to_par_vals),
             "raw_scores": [{"to_par": tp, "yardage": y} for tp, y in zip(to_par_vals, entry["yardages"])],
         })
     return results

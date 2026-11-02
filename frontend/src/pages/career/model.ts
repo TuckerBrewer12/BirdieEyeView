@@ -1,7 +1,6 @@
-import { buildRadarData, parseDay, trendPointsFrom, type RadarEntry, type RoundTrendPoint, type ScoreMix } from "@/domain";
+import { buildRadarData, trendPointsFrom, type RadarEntry, type RoundTrendPoint, type ScoreMix } from "@/domain";
 import type { AnalyticsFilters } from "@/domain/analyticsFilters";
-import type { AnalyticsDto, MilestoneEventDto, NotableAchievementsDto } from "@/types/api";
-import { scoreMixByKindFrom, scoreMixFrom } from "../analytics/model";
+import type { AnalyticsDto, MilestoneAchievementDto, MilestoneEventDto, NotableAchievementsDto } from "@/types/api";
 
 /**
  * Career reads every round the server will send, at every course, all time. It is the same
@@ -9,7 +8,7 @@ import { scoreMixByKindFrom, scoreMixFrom } from "../analytics/model";
  */
 export const CAREER_FILTERS: AnalyticsFilters = { limit: 500, timeframe: "all", courseId: "all" };
 
-/** Every round, or only the last `windowDays` of them, as the server splits its records. */
+/** Every round, or only the last `windowDays` of them, as the server splits its records and milestones. */
 export const CAREER_WINDOWS = ["lifetime", "one_year"] as const;
 export type CareerWindow = (typeof CAREER_WINDOWS)[number];
 
@@ -69,7 +68,7 @@ export interface CareerWindowFigures {
   totals: CareerTotal[];
   /**
    * Score milestones. Over a lifetime, every one, reached or not. Over the last year, only the
-   * personal records the server says were set in it.
+   * new personal records: the ones the server says were first reached in it.
    */
   scoring: Milestone[];
   /** How many new personal records the server counted in the window; null over a lifetime. */
@@ -100,12 +99,9 @@ function eventFrom(event: MilestoneEventDto | null | undefined): CareerEvent | n
   return event ? { date: event.date, course: event.course, roundId: event.round_id ?? null } : null;
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** Whether an event falls in the last `days` days before `today`. */
-export function withinDays(event: CareerEvent | null, days: number, today: Date): boolean {
-  const day = event ? parseDay(event.date) : null;
-  return day != null && day.getTime() >= today.getTime() - days * DAY_MS;
+/** Over a lifetime, a milestone counts once reached; over the last year, only if the server says it was first reached in it. */
+function reached(achievement: MilestoneAchievementDto | null | undefined, timeWindow: CareerWindow): boolean {
+  return timeWindow === "lifetime" ? achievement != null : achievement?.in_window === true;
 }
 
 function recordsFrom(a: Achievements, timeWindow: CareerWindow): CareerRecord[] {
@@ -168,99 +164,70 @@ function totalsFrom(a: Achievements, timeWindow: CareerWindow): CareerTotal[] {
 /** Breaking 70 and under reads after a round under par, so the list climbs in order. */
 const UNDER_PAR_AFTER = 70;
 
-function lifetimeScoring(a: Achievements): Milestone[] {
+type ThresholdRow = Achievements["round_milestones"]["lifetime"]["score_breaks"][number];
+
+/**
+ * Score milestones. Over a lifetime, every one, reached or not. Over the last year, only the
+ * new personal records: the ones the server says were first reached in it.
+ */
+function scoringMilestones(a: Achievements, timeWindow: CareerWindow): Milestone[] {
   const m = a.round_milestones.lifetime;
-  const breaks = (rows: typeof m.score_breaks): Milestone[] =>
+  const breaks = (rows: ThresholdRow[]): Milestone[] =>
     rows.map((row) => ({
       kind: "score-break",
       threshold: row.threshold,
-      achieved: row.achievement != null,
+      achieved: reached(row.achievement, timeWindow),
       roundId: row.achievement?.round_id ?? null,
     }));
-  const first = (kind: "under-par" | "first-eagle" | "hole-in-one", event: MilestoneEventDto | null | undefined): Milestone => ({
-    kind,
-    achieved: event != null,
-    roundId: event?.round_id ?? null,
-  });
-  return [
+  const first = (
+    kind: "under-par" | "first-eagle" | "hole-in-one",
+    achievement: MilestoneAchievementDto | null | undefined,
+  ): Milestone => ({ kind, achieved: reached(achievement, timeWindow), roundId: achievement?.round_id ?? null });
+  const all = [
     ...breaks(m.score_breaks.filter((row) => row.threshold > UNDER_PAR_AFTER)),
     first("under-par", m.first_round_under_par),
     ...breaks(m.score_breaks.filter((row) => row.threshold <= UNDER_PAR_AFTER)),
     first("first-eagle", m.first_eagle),
     first("hole-in-one", m.first_hole_in_one),
   ];
+  return timeWindow === "lifetime" ? all : all.filter((milestone) => milestone.achieved);
 }
 
-/** The server's personal records for the last year ("break_90", "first_eagle"), in its order. */
-function newRecordsFrom(a: Achievements, lifetime: Milestone[]): Milestone[] {
-  const find = (key: string): Milestone | undefined => {
-    const breakMatch = /^break_(\d+)$/.exec(key);
-    if (breakMatch) {
-      const threshold = Number(breakMatch[1]);
-      return lifetime.find((m) => m.kind === "score-break" && m.threshold === threshold);
-    }
-    const kind = ({ first_round_under_par: "under-par", first_eagle: "first-eagle", first_hole_in_one: "hole-in-one" } as const)[
-      key as "first_round_under_par" | "first_eagle" | "first_hole_in_one"
-    ];
-    return kind ? lifetime.find((m) => m.kind === kind) : undefined;
-  };
-  return a.round_milestones.one_year.new_personal_records_achieved
-    .map(find)
-    .filter((m): m is Milestone => m != null)
-    .map((m) => ({ ...m, achieved: true }));
+/** Putt and GIR milestones, each reached or not over the window. */
+function thresholdMilestones(rows: ThresholdRow[], kind: "putt-break" | "gir-break", timeWindow: CareerWindow): Milestone[] {
+  return rows.map((row) => ({
+    kind,
+    threshold: row.threshold,
+    achieved: reached(row.achievement, timeWindow),
+    roundId: row.achievement?.round_id ?? null,
+  }));
 }
 
-type ThresholdRow = Achievements["putting_milestones"]["lifetime"]["putt_breaks"][number];
-
-/**
- * Putt and GIR milestones. Over the last year, one counts when it was first reached in that
- * time: the server only sends how many were, so the client reads each one's date.
- */
-function thresholdMilestones(
-  rows: ThresholdRow[],
-  kind: "putt-break" | "gir-break",
-  timeWindow: CareerWindow,
-  windowDays: number,
-  today: Date,
-): Milestone[] {
-  return rows.map((row) => {
-    const event = eventFrom(row.achievement);
-    return {
-      kind,
-      threshold: row.threshold,
-      achieved: timeWindow === "lifetime" ? event != null : withinDays(event, windowDays, today),
-      roundId: event?.roundId ?? null,
-    };
-  });
-}
-
-function windowFrom(a: Achievements, timeWindow: CareerWindow, today: Date): CareerWindowFigures {
-  const lifetime = lifetimeScoring(a);
+function windowFrom(a: Achievements, timeWindow: CareerWindow): CareerWindowFigures {
   return {
     records: recordsFrom(a, timeWindow),
     totals: totalsFrom(a, timeWindow),
-    scoring: timeWindow === "lifetime" ? lifetime : newRecordsFrom(a, lifetime),
+    scoring: scoringMilestones(a, timeWindow),
     newRecords: timeWindow === "lifetime" ? null : a.round_milestones.one_year.new_personal_records_achieved_count,
-    putting: thresholdMilestones(a.putting_milestones.lifetime.putt_breaks, "putt-break", timeWindow, a.window_days, today),
-    gir: thresholdMilestones(a.gir_milestones.lifetime.gir_breaks, "gir-break", timeWindow, a.window_days, today),
+    putting: thresholdMilestones(a.putting_milestones.lifetime.putt_breaks, "putt-break", timeWindow),
+    gir: thresholdMilestones(a.gir_milestones.lifetime.gir_breaks, "gir-break", timeWindow),
   };
 }
 
 /** The career page's figures from the server's analytics over every round. */
-export function careerFrom(dto: AnalyticsDto, today: Date): Career {
+export function careerFrom(dto: AnalyticsDto): Career {
   const a = dto.notable_achievements;
   return {
     roundCount: dto.kpis.total_rounds,
     holesPlayed: a.career_totals.lifetime.total_holes_played,
     handicapIndex: dto.kpis.handicap_index ?? null,
     handicapTrend: trendPointsFrom(dto),
-    // Weighted over every round's holes on the client, as Analytics does. A follow-up for the server.
-    scoreMix: scoreMixByKindFrom(scoreMixFrom(dto.score_type_distribution)),
+    scoreMix: dto.score_mix,
     profile: buildRadarData(dto.kpis, dto.scoring_by_par).filter((entry) => entry.hasData),
     windowDays: a.window_days,
     windows: {
-      lifetime: windowFrom(a, "lifetime", today),
-      one_year: windowFrom(a, "one_year", today),
+      lifetime: windowFrom(a, "lifetime"),
+      one_year: windowFrom(a, "one_year"),
     },
   };
 }

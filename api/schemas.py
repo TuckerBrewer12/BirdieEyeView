@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Any, Dict, List, Literal, Optional
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 from models import Hole, UserTee
 from models.hole_score import ScoreKind
@@ -266,6 +266,12 @@ class AnalyticsKpis(ResponseModel):
     up_and_down_percentage: Optional[float] = None
     handicap_index: Optional[float] = None
     total_rounds: int = 0
+    average_putts: Optional[float] = None  # per round, over the rounds with putts recorded; to a tenth
+
+
+class AnalyticsScoreTrendRow(ScoreTrendRow):
+    """A round's score, with its average over it and the four rounds before it."""
+    rolling_average: Optional[float] = None  # to a tenth; rounds without a score are skipped
 
 
 class NetScoreTrendRow(ResponseModel):
@@ -335,8 +341,10 @@ class ScoringByYardageRow(ResponseModel):
     bucket_label: str
     bucket_order: int
     average_to_par: float
+    average_strokes: float
     gir_percentage: Optional[float] = None
     sample_size: int
+    score_mix: ScoreMix = Field(default_factory=ScoreMix)  # each score kind's share of the band's holes, to a hundredth
     raw_scores: List[YardageScore] = Field(default_factory=list)
 
 
@@ -375,14 +383,19 @@ class MilestoneEvent(ResponseModel):
     round_id: Optional[str] = None
 
 
-class UnderParEvent(MilestoneEvent):
+class MilestoneAchievement(MilestoneEvent):
+    """The round a milestone was first reached in."""
+    in_window: bool = False  # reached within the last `window_days`
+
+
+class UnderParEvent(MilestoneAchievement):
     score: int
 
 
 class ThresholdMilestone(ResponseModel):
     """The first round to get past `threshold`, or null until one does."""
     threshold: int
-    achievement: Optional[MilestoneEvent] = None
+    achievement: Optional[MilestoneAchievement] = None
 
 
 class LifetimeScoringRecords(ResponseModel):
@@ -578,13 +591,12 @@ class GirMilestoneEvents(ResponseModel):
 class LifetimeRoundMilestones(ResponseModel):
     score_breaks: List[ThresholdMilestone] = Field(default_factory=list)  # first round under each score
     first_round_under_par: Optional[UnderParEvent] = None
-    first_eagle: Optional[MilestoneEvent] = None
-    first_hole_in_one: Optional[MilestoneEvent] = None
+    first_eagle: Optional[MilestoneAchievement] = None
+    first_hole_in_one: Optional[MilestoneAchievement] = None
 
 
 class OneYearRoundMilestones(ResponseModel):
-    new_personal_records_achieved_count: int = 0
-    new_personal_records_achieved: List[str] = Field(default_factory=list)  # e.g. "break_90"
+    new_personal_records_achieved_count: int = 0  # score milestones first reached in the window
 
 
 class RoundMilestones(ResponseModel):
@@ -611,10 +623,80 @@ class NotableAchievements(ResponseModel):
     window_days: int = 365
 
 
+InsightTrend = Literal["up", "down", "flat"]  # which way the insight's arrow points
+InsightRating = Literal["strong", "fair", "weak"]  # how good an average is
+
+
+class ScoringShiftInsight(ResponseModel):
+    """The scoring average moved between the earlier and later half of the rounds."""
+    kind: Literal["scoring_shift"]
+    category: Literal["scoring"]
+    trend: InsightTrend
+    strokes: float  # earlier half's average less the later half's: positive when scores came down
+    rounds: int
+
+
+class BestParInsight(ResponseModel):
+    """The par type the player scores best on."""
+    kind: Literal["best_par"]
+    category: Literal["scoring"]
+    trend: InsightTrend
+    par: int
+    average_to_par: float
+    holes: int
+
+
+class GirAverageInsight(ResponseModel):
+    """Each round's GIR%, averaged."""
+    kind: Literal["gir_average"]
+    category: Literal["gir"]
+    trend: InsightTrend
+    rating: InsightRating
+    percent: float
+
+
+class GirShiftInsight(ResponseModel):
+    """GIR% moved between the earlier and later half of the rounds."""
+    kind: Literal["gir_shift"]
+    category: Literal["gir"]
+    trend: InsightTrend
+    points: float  # later half's GIR% less the earlier half's: positive when more greens were hit
+
+
+class PuttsAverageInsight(ResponseModel):
+    """Putts per round, over the rounds with putts recorded."""
+    kind: Literal["putts_average"]
+    category: Literal["putting"]
+    trend: InsightTrend
+    rating: InsightRating
+    putts: float
+
+
+class PuttsShiftInsight(ResponseModel):
+    """Putts per round moved between the earlier and later half of the rounds."""
+    kind: Literal["putts_shift"]
+    category: Literal["putting"]
+    trend: InsightTrend
+    putts: float  # earlier half's putts per round less the later half's: positive when putts came down
+
+
+AnalyticsInsight = Annotated[
+    Union[
+        ScoringShiftInsight,
+        BestParInsight,
+        GirAverageInsight,
+        GirShiftInsight,
+        PuttsAverageInsight,
+        PuttsShiftInsight,
+    ],
+    Field(discriminator="kind"),
+]
+
+
 class AnalyticsResponse(ResponseModel):
     """The analytics page's figures over the rounds asked for. Every per-round series is oldest first."""
     kpis: AnalyticsKpis = Field(default_factory=AnalyticsKpis)
-    score_trend: List[ScoreTrendRow] = Field(default_factory=list)
+    score_trend: List[AnalyticsScoreTrendRow] = Field(default_factory=list)
     net_score_trend: List[NetScoreTrendRow] = Field(default_factory=list)
     gir_trend: List[GirTrendRow] = Field(default_factory=list)
     putts_trend: List[PuttsTrendRow] = Field(default_factory=list)
@@ -629,6 +711,8 @@ class AnalyticsResponse(ResponseModel):
     handicap_trend: List[HandicapTrendRow] = Field(default_factory=list)
     score_differentials: List[ScoreDifferentialRow] = Field(default_factory=list)
     notable_achievements: NotableAchievements = Field(default_factory=NotableAchievements)
+    score_mix: ScoreMix = Field(default_factory=ScoreMix)  # each score kind's share of every counted hole, to a hundredth
+    insights: List[AnalyticsInsight] = Field(default_factory=list)  # scoring, then greens, then putting
 
 
 class PlayedCourseResponse(ResponseModel):

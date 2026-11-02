@@ -37,6 +37,9 @@ export type ScramblingTrendRowDto = Schemas["ScramblingTrendRow"];
 export type UpAndDownTrendRowDto = Schemas["UpAndDownTrendRow"];
 export type AnalyticsDto = Schemas["AnalyticsResponse"];
 export type AnalyticsKpisDto = Schemas["AnalyticsKpis"];
+export type AnalyticsScoreTrendRowDto = Schemas["AnalyticsScoreTrendRow"];
+/** One of the analytics page's insights, told apart by `kind`. The page words it. */
+export type AnalyticsInsightDto = AnalyticsDto["insights"][number];
 export type NetScoreTrendRowDto = Schemas["NetScoreTrendRow"];
 export type GirTrendRowDto = Schemas["GirTrendRow"];
 export type PuttsTrendRowDto = Schemas["PuttsTrendRow"];
@@ -49,6 +52,7 @@ export type GirVsNonGirRowDto = Schemas["GirVsNonGirRow"];
 export type ScoreDifferentialRowDto = Schemas["ScoreDifferentialRow"];
 export type NotableAchievementsDto = Schemas["NotableAchievements"];
 export type MilestoneEventDto = Schemas["MilestoneEvent"];
+export type MilestoneAchievementDto = Schemas["MilestoneAchievement"];
 export type PlayedCourseDto = Schemas["PlayedCourseResponse"];
 export type ComparisonRowDto = Schemas["ComparisonRow"];
 export type RoundComparisonDto = Schemas["RoundComparisonResponse"];
