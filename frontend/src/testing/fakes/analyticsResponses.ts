@@ -1,4 +1,5 @@
 import type { AnalyticsDto } from "../../types/api";
+import { achievementsAYearOn, sampleGolfer } from "../fixtures/sampleGolfer";
 
 /**
  * The fake backend's copy of `GET /stats/analytics/{id}`'s course filter. The figures themselves
@@ -31,6 +32,7 @@ export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
       up_and_down_percentage: null,
       handicap_index: analytics.kpis.handicap_index,
       total_rounds: 0,
+      average_putts: null,
     },
     score_trend: [],
     net_score_trend: [],
@@ -46,9 +48,15 @@ export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
     gir_vs_non_gir: [],
     handicap_trend: [],
     score_differentials: [],
-    // No round, so no lowest one. The best round's card reads this event.
+    score_mix: { eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0 },
+    insights: [],
+    // No round, so no lowest one. The best round's card reads these.
     notable_achievements: {
       ...analytics.notable_achievements,
+      scoring_records: {
+        lifetime: { ...analytics.notable_achievements.scoring_records.lifetime, lowest_round: null },
+        one_year: { ...analytics.notable_achievements.scoring_records.one_year, lowest_round: null },
+      },
       scoring_records_events: {
         lifetime: { ...analytics.notable_achievements.scoring_records_events.lifetime, lowest_round: null },
         one_year: { ...analytics.notable_achievements.scoring_records_events.one_year, lowest_round: null },
@@ -56,3 +64,12 @@ export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
     },
   };
 }
+
+/**
+ * The sample golfer's analytics as the server sends them on 2027-04-01: the same rounds, with
+ * the last year starting after their March ones.
+ */
+export const sampleAnalyticsAYearOn: AnalyticsDto = {
+  ...sampleGolfer.analytics,
+  notable_achievements: achievementsAYearOn,
+};

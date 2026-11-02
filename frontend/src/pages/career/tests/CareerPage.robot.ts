@@ -2,14 +2,12 @@ import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
-import { withoutRounds } from "../../../testing/fakes/analyticsResponses";
+import { sampleAnalyticsAYearOn, withoutRounds } from "../../../testing/fakes/analyticsResponses";
 import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
 import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
 
 // A few days after the sample golfer's last round, the way the analytics and dashboard robots see them.
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
-// Ten months on: the sample golfer's March rounds now fall outside the last year.
-const LATER = "2027-04-01T18:00:00.000Z";
 
 type WindowLabel = "Lifetime" | "Last 365 Days";
 type MilestoneTab = "Career" | "Putting" | "GIR";
@@ -38,9 +36,9 @@ export class CareerRobot {
     return this;
   }
 
-  private async install(seed: FakeBackendSeed, now = FROZEN_NOW): Promise<void> {
+  private async install(seed: FakeBackendSeed): Promise<void> {
     await this.page.emulateMedia({ reducedMotion: "reduce" });
-    await this.page.clock.setFixedTime(new Date(now));
+    await this.page.clock.setFixedTime(new Date(FROZEN_NOW));
     this.backend = await FakeSession.install(this.page, { ...sampleGolfer, ...seed });
     await this.page.goto("/career");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
@@ -53,9 +51,9 @@ export class CareerRobot {
     return this;
   }
 
-  /** The same golfer, ten months after their last round. */
+  /** The same golfer ten months after their last round, when the server's last year starts after their March rounds. */
   async openLater(): Promise<this> {
-    await this.install({}, LATER);
+    await this.install({ analytics: sampleAnalyticsAYearOn });
     await this.seesCareer();
     return this;
   }

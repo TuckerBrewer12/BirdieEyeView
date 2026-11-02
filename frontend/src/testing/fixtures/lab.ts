@@ -66,6 +66,7 @@ export const labAnalytics: AnalyticsDto = {
     up_and_down_percentage: 30,
     putts_per_gir: 2.05,
     total_rounds: SCORES.length,
+    average_putts: null,
   },
   scoring_by_par: [
     { par: 3, average_to_par: 0.92, average_strokes: 3.92, sample_size: 48 },
@@ -78,6 +79,7 @@ export const labAnalytics: AnalyticsDto = {
     course_name: COURSES[i % COURSES.length],
     total_score: score,
     to_par: score - 72,
+    rolling_average: null,
   })),
   score_type_distribution: SCORES.map((_, i) => scoreTypes(i)),
   three_putts_trend: THREE_PUTTS.map((count, i) => ({
@@ -106,6 +108,7 @@ export const averyLabAnalytics: AnalyticsDto = {
     up_and_down_percentage: 41,
     putts_per_gir: 1.92,
     total_rounds: 8,
+    average_putts: null,
   },
   scoring_by_par: [
     { par: 3, average_to_par: 0.35, average_strokes: 3.35, sample_size: 32 },

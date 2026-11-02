@@ -5,9 +5,13 @@ import { narrativeFor } from "../present";
 export default function InsightNotePreview() {
   return (
     <div className="flex max-w-md flex-col gap-3">
-      <InsightNote narrative={narrativeFor({ kind: "scoring-shift", strokes: 2.1, rounds: 24 })} />
-      <InsightNote narrative={narrativeFor({ kind: "putts-shift", putts: -1.2 })} />
-      <InsightNote narrative={narrativeFor({ kind: "gir-average", percent: 38.5 })} />
+      <InsightNote
+        narrative={narrativeFor({ kind: "scoring_shift", category: "scoring", trend: "down", strokes: 2.1, rounds: 24 })}
+      />
+      <InsightNote narrative={narrativeFor({ kind: "putts_shift", category: "putting", trend: "up", putts: -1.2 })} />
+      <InsightNote
+        narrative={narrativeFor({ kind: "gir_average", category: "gir", trend: "flat", rating: "fair", percent: 38.5 })}
+      />
     </div>
   );
 }

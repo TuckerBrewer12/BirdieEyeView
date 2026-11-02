@@ -4,30 +4,25 @@ import { describe, expect, it } from "vitest";
 import type { ReactNode } from "react";
 import { queryKeys } from "@/data/queryKeys";
 import { FakeAnalyticsRepository } from "@/testing/fakes/FakeAnalyticsRepository";
-import { withoutRounds } from "@/testing/fakes/analyticsResponses";
-import { CAREER_LATER, CAREER_TODAY } from "@/testing/fixtures/career";
+import { sampleAnalyticsAYearOn, withoutRounds } from "@/testing/fakes/analyticsResponses";
 import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 import type { AnalyticsDto } from "@/types/api";
 import { CAREER_FILTERS } from "../model";
 import { useCareerPageViewModel } from "../useCareerPageViewModel";
 
-function setup(
-  analytics: AnalyticsDto = sampleGolfer.analytics,
-  today: Date = CAREER_TODAY,
-  loadError: Error | null = null,
-) {
+function setup(analytics: AnalyticsDto = sampleGolfer.analytics, loadError: Error | null = null) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const repository = new FakeAnalyticsRepository({ analytics });
   repository.loadError = loadError;
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
-  const { result } = renderHook(() => useCareerPageViewModel("user-1", repository, () => today), { wrapper });
+  const { result } = renderHook(() => useCareerPageViewModel("user-1", repository), { wrapper });
   return { client, repository, result };
 }
 
-async function loaded(analytics?: AnalyticsDto, today?: Date) {
-  const view = setup(analytics, today);
+async function loaded(analytics?: AnalyticsDto) {
+  const view = setup(analytics);
   await waitFor(() => expect(view.result.current.loading).toBe(false));
   return view;
 }
@@ -49,9 +44,7 @@ describe("useCareerPageViewModel", () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     );
-    const { result } = renderHook(() => useCareerPageViewModel("user-1", repository, () => CAREER_TODAY), {
-      wrapper,
-    });
+    const { result } = renderHook(() => useCareerPageViewModel("user-1", repository), { wrapper });
 
     expect(result.current.loading).toBe(false);
     expect(result.current.career?.roundCount).toBe(24);
@@ -72,9 +65,9 @@ describe("useCareerPageViewModel", () => {
     expect(result.current.figures?.totals.find((total) => total.kind === "pars")).toBeUndefined();
   });
 
-  it("counts a putting milestone in the last year only when it was first reached in it", async () => {
+  it("counts a putting milestone in the last year only when the server says it was first reached in it", async () => {
     const now = await loaded();
-    const later = await loaded(sampleGolfer.analytics, CAREER_LATER);
+    const later = await loaded(sampleAnalyticsAYearOn);
     const breakThirty = (view: typeof now) =>
       view.result.current.career?.windows.one_year.putting.find(
         (milestone) => milestone.kind === "putt-break" && milestone.threshold === 30,
@@ -94,7 +87,7 @@ describe("useCareerPageViewModel", () => {
   });
 
   it("reports a failed load, and a retry brings the career in", async () => {
-    const view = setup(sampleGolfer.analytics, CAREER_TODAY, new Error("Analytics failed to load."));
+    const view = setup(sampleGolfer.analytics, new Error("Analytics failed to load."));
     await waitFor(() => expect(view.result.current.loadError).toBe("Analytics failed to load."));
     expect(view.result.current.career).toBeNull();
     expect(view.result.current.showEmpty).toBe(false);

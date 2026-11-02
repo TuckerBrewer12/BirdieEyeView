@@ -36,6 +36,7 @@ const withScores = (scores: (number | null)[], average: number | null = 90): Lab
     course_name: null,
     total_score,
     to_par: null,
+    rolling_average: null,
   })),
 });
 

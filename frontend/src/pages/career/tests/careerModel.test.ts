@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { sampleAnalyticsAYearOn } from "@/testing/fakes/analyticsResponses";
 import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
-import { CAREER_LATER, CAREER_TODAY } from "@/testing/fixtures/career";
 import type { AnalyticsDto } from "@/types/api";
-import { careerFrom, withinDays, type Milestone } from "../model";
+import { careerFrom, type Milestone } from "../model";
 
 const dto = sampleGolfer.analytics;
 const achievements = dto.notable_achievements;
@@ -14,7 +14,7 @@ function withAchievements(changes: Partial<AnalyticsDto["notable_achievements"]>
 const labelOf = (m: Milestone) => ("threshold" in m ? `${m.kind}:${m.threshold}` : m.kind);
 
 describe("careerFrom", () => {
-  const career = careerFrom(dto, CAREER_TODAY);
+  const career = careerFrom(dto);
 
   it("takes the headline figures from the server", () => {
     expect(career).toMatchObject({ roundCount: 24, holesPlayed: 432, handicapIndex: 7, windowDays: 365 });
@@ -30,9 +30,8 @@ describe("careerFrom", () => {
     expect(career.profile.every((entry) => entry.hasData)).toBe(true);
   });
 
-  it("weights the score mix across every hole", () => {
-    const shares = Object.values(career.scoreMix).reduce((sum, share) => sum + share, 0);
-    expect(shares).toBeCloseTo(100, 0);
+  it("takes the score mix across every hole from the server", () => {
+    expect(career.scoreMix).toEqual(dto.score_mix);
     expect(career.scoreMix.eagle).toBe(0);
   });
 
@@ -76,57 +75,52 @@ describe("careerFrom", () => {
     expect(career.windows.lifetime.scoring.find((m) => labelOf(m) === "score-break:75")?.achieved).toBe(false);
   });
 
-  it("lists the last year's score milestones as the server's new personal records", () => {
+  it("lists the last year's score milestones the server says were first reached in it", () => {
     const year = career.windows.one_year;
     expect(year.newRecords).toBe(7);
     expect(year.scoring.map(labelOf)).toEqual([120, 110, 100, 95, 90, 85, 80].map((n) => `score-break:${n}`));
     expect(year.scoring.every((m) => m.achieved)).toBe(true);
   });
 
-  it("reads the server's first-eagle and under-par records, and skips a key it doesn't know", () => {
-    const eagle = { course: "Presidio Golf Course", date: "2026/5/1", round_id: "eagle-round" };
+  it("counts the first eagle and a round under par in the last year when the server says they fell in it", () => {
+    const lifetime = achievements.round_milestones.lifetime;
+    const event = { course: "Presidio Golf Course", date: "2026/5/1", round_id: "eagle-round" };
     const career = careerFrom(
       withAchievements({
         round_milestones: {
-          lifetime: { ...achievements.round_milestones.lifetime, first_eagle: eagle },
-          one_year: {
-            new_personal_records_achieved: ["first_eagle", "first_round_under_par", "most_cats"],
-            new_personal_records_achieved_count: 3,
+          ...achievements.round_milestones,
+          lifetime: {
+            ...lifetime,
+            score_breaks: lifetime.score_breaks.map((row) => ({ ...row, achievement: null })),
+            first_eagle: { ...event, in_window: true },
+            first_round_under_par: { ...event, round_id: "under-par-round", score: 71, in_window: true },
+            first_hole_in_one: { ...event, round_id: "ace-round", in_window: false },
           },
         },
       }),
-      CAREER_TODAY,
     );
     expect(career.windows.one_year.scoring).toEqual([
+      { kind: "under-par", achieved: true, roundId: "under-par-round" },
       { kind: "first-eagle", achieved: true, roundId: "eagle-round" },
-      { kind: "under-par", achieved: true, roundId: null },
     ]);
+    expect(career.windows.lifetime.scoring.find((m) => m.kind === "hole-in-one")).toEqual({
+      kind: "hole-in-one",
+      achieved: true,
+      roundId: "ace-round",
+    });
   });
 
-  it("counts a putt or GIR break in the last year only when it was first reached in it", () => {
-    const later = careerFrom(dto, CAREER_LATER);
+  it("counts a putt or GIR break in the last year only when the server says it was first reached in it", () => {
+    const later = careerFrom(sampleAnalyticsAYearOn);
     const reached = (c: typeof later, group: "putting" | "gir") =>
       c.windows.one_year[group].filter((m) => m.achieved).map(labelOf);
 
     expect(reached(career, "putting")).toHaveLength(6);
-    // By April 2027 the March 2026 rounds have left the window; the May 2026 one hasn't.
+    // By April 2027 the March 2026 rounds have left the server's last year; the May 2026 one hasn't.
     expect(reached(later, "putting")).toEqual([]);
     expect(reached(later, "gir")).toEqual(["gir-break:9"]);
     expect(later.windows.lifetime.gir.filter((m) => m.achieved)).toHaveLength(3);
-  });
-});
-
-describe("withinDays", () => {
-  const today = new Date("2026-06-02T18:00:00.000Z");
-  const on = (date: string) => ({ date, course: "Presidio Golf Course", roundId: null });
-
-  it("counts an event inside the window and not one before it", () => {
-    expect(withinDays(on("2026/6/1"), 365, today)).toBe(true);
-    expect(withinDays(on("2025/6/1"), 365, today)).toBe(false);
-  });
-
-  it("does not count a missing or unreadable event", () => {
-    expect(withinDays(null, 365, today)).toBe(false);
-    expect(withinDays(on("soon"), 365, today)).toBe(false);
+    expect(later.windows.one_year.scoring.map(labelOf)).toEqual(["score-break:80"]);
+    expect(later.windows.one_year.newRecords).toBe(1);
   });
 });

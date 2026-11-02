@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 import { withoutRounds } from "@/testing/fakes/analyticsResponses";
-import { analyticsFrom } from "../model";
+import { analyticsFrom, type Insight } from "../model";
 import {
   averageReference,
   courseOptions,
@@ -17,6 +17,44 @@ import {
   shortGamePoints,
   tabNarrative,
 } from "../present";
+
+// The server's insights, as it sends them.
+const scoringShift = (strokes: number, rounds: number): Insight => ({
+  kind: "scoring_shift",
+  category: "scoring",
+  trend: strokes > 0 ? "down" : "up",
+  strokes,
+  rounds,
+});
+const bestPar = (par: number, average_to_par: number, holes: number): Insight => ({
+  kind: "best_par",
+  category: "scoring",
+  trend: average_to_par <= 0 ? "down" : "flat",
+  par,
+  average_to_par,
+  holes,
+});
+const girAverage = (percent: number, rating: "strong" | "fair" | "weak", trend: Insight["trend"] = "flat"): Insight => ({
+  kind: "gir_average",
+  category: "gir",
+  trend,
+  rating,
+  percent,
+});
+const girShift = (points: number): Insight => ({ kind: "gir_shift", category: "gir", trend: points > 0 ? "up" : "down", points });
+const puttsAverage = (putts: number, rating: "strong" | "fair" | "weak", trend: Insight["trend"] = "flat"): Insight => ({
+  kind: "putts_average",
+  category: "putting",
+  trend,
+  rating,
+  putts,
+});
+const puttsShift = (putts: number): Insight => ({
+  kind: "putts_shift",
+  category: "putting",
+  trend: putts > 0 ? "down" : "up",
+  putts,
+});
 
 describe("the layouts' words", () => {
   const analytics = analyticsFrom(sampleGolfer.analytics);
@@ -58,7 +96,7 @@ describe("the layouts' words", () => {
       tick: 1,
       title: "Round 1",
       subtitle: analytics.scoreTrend[0].course_name,
-      values: [analytics.scoreTrend[0].total_score, analytics.scoreTrend[0].rolling_avg],
+      values: [analytics.scoreTrend[0].total_score, analytics.scoreTrend[0].rolling_average],
     });
     expect(shortGamePoints(analytics.shortGameTrend)[0].values).toHaveLength(2);
     expect(averageReference(82.9)).toEqual({ value: 82.9, label: "Avg 82.9" });
@@ -88,81 +126,76 @@ describe("the layouts' words", () => {
 
 describe("narrativeFor", () => {
   it("words a scoring shift by its direction", () => {
-    expect(narrativeFor({ kind: "scoring-shift", strokes: 2.04, rounds: 24 })).toEqual({
+    expect(narrativeFor(scoringShift(2.04, 24))).toEqual({
       text: "Your scoring average has improved by 2.0 strokes over the last 24 rounds.",
       trend: "down",
       positiveUp: false,
     });
-    expect(narrativeFor({ kind: "scoring-shift", strokes: -1.26, rounds: 8 }).text).toBe(
+    expect(narrativeFor(scoringShift(-1.26, 8)).text).toBe(
       "Your scoring average has climbed by 1.3 strokes recently — worth monitoring.",
     );
   });
 
   it("signs the best par type's average to par", () => {
-    expect(narrativeFor({ kind: "best-par", par: 5, averageToPar: 0.4, holes: 12 }).text).toBe(
-      "You score best on par 5s — averaging +0.4 across 12 holes.",
-    );
-    expect(narrativeFor({ kind: "best-par", par: 3, averageToPar: -0.1, holes: 8 })).toMatchObject({
+    expect(narrativeFor(bestPar(5, 0.4, 12)).text).toBe("You score best on par 5s — averaging +0.4 across 12 holes.");
+    expect(narrativeFor(bestPar(3, -0.1, 8))).toMatchObject({
       text: "You score best on par 3s — averaging -0.1 across 8 holes.",
       trend: "down",
     });
-    expect(narrativeFor({ kind: "best-par", par: 4, averageToPar: 0.587500001, holes: 240 }).text).toBe(
+    expect(narrativeFor(bestPar(4, 0.587500001, 240)).text).toBe(
       "You score best on par 4s — averaging +0.59 across 240 holes.",
     );
-    expect(narrativeFor({ kind: "best-par", par: 4, averageToPar: 0.001, holes: 9 }).text).toBe(
-      "You score best on par 4s — averaging E across 9 holes.",
-    );
+    expect(narrativeFor(bestPar(4, 0.001, 9)).text).toBe("You score best on par 4s — averaging E across 9 holes.");
   });
 
-  it("grades the GIR and putting averages", () => {
-    expect(narrativeFor({ kind: "gir-average", percent: 60 }).text).toMatch(/excellent ball striking/);
-    expect(narrativeFor({ kind: "gir-average", percent: 40 }).text).toMatch(/fastest routes/);
-    expect(narrativeFor({ kind: "gir-average", percent: 20 }).text).toMatch(/irons are the area/);
-    expect(narrativeFor({ kind: "putts-average", putts: 29 }).text).toMatch(/outstanding/);
-    expect(narrativeFor({ kind: "putts-average", putts: 33 })).toMatchObject({ trend: "flat" });
-    expect(narrativeFor({ kind: "putts-average", putts: 37 })).toMatchObject({ trend: "up" });
+  it("words the server's grade of the GIR and putting averages, with its arrow", () => {
+    expect(narrativeFor(girAverage(60, "strong", "up"))).toMatchObject({ trend: "up", positiveUp: true });
+    expect(narrativeFor(girAverage(60, "strong", "up")).text).toMatch(/excellent ball striking/);
+    expect(narrativeFor(girAverage(40, "fair")).text).toBe(
+      "Your average GIR% is 40.0% — improving this is one of the fastest routes to lower scores.",
+    );
+    expect(narrativeFor(girAverage(20, "weak")).text).toMatch(/irons are the area/);
+    expect(narrativeFor(puttsAverage(29, "strong", "down")).text).toBe("Averaging 29.0 putts per round — outstanding on the green.");
+    expect(narrativeFor(puttsAverage(33, "fair"))).toMatchObject({ text: expect.stringMatching(/solid putting/), trend: "flat" });
+    expect(narrativeFor(puttsAverage(37, "weak", "up"))).toMatchObject({
+      text: expect.stringMatching(/reducing three-putts/),
+      trend: "up",
+      positiveUp: false,
+    });
   });
 
   it("words GIR and putting shifts", () => {
-    expect(narrativeFor({ kind: "gir-shift", points: 6.4 }).text).toBe(
-      "GIR% trending up 6 points over recent rounds — ball striking improving.",
-    );
-    expect(narrativeFor({ kind: "gir-shift", points: -3 })).toMatchObject({ trend: "down", positiveUp: true });
-    expect(narrativeFor({ kind: "putts-shift", putts: 1.5 }).text).toBe(
-      "Putts per round improving — down 1.5 strokes on average.",
-    );
-    expect(narrativeFor({ kind: "putts-shift", putts: -0.8 }).text).toBe("Putts per round up 0.8 strokes recently.");
+    expect(narrativeFor(girShift(6.4)).text).toBe("GIR% trending up 6 points over recent rounds — ball striking improving.");
+    expect(narrativeFor(girShift(-3))).toMatchObject({
+      text: "GIR% has dipped 3 points recently — iron consistency worth a look.",
+      trend: "down",
+      positiveUp: true,
+    });
+    expect(narrativeFor(puttsShift(1.5)).text).toBe("Putts per round improving — down 1.5 strokes on average.");
+    expect(narrativeFor(puttsShift(-0.8)).text).toBe("Putts per round up 0.8 strokes recently.");
   });
 });
 
 describe("leadNarrative", () => {
   it("is the first insight in the category, or null", () => {
-    const insights = [
-      { kind: "gir-average", percent: 40 },
-      { kind: "putts-average", putts: 33 },
-      { kind: "putts-shift", putts: 1 },
-    ] as const;
-    expect(leadNarrative([...insights], "putting")?.text).toMatch(/^Averaging 33.0 putts/);
-    expect(leadNarrative([...insights], "scoring")).toBeNull();
+    const insights = [girAverage(40, "fair"), puttsAverage(33, "fair"), puttsShift(1)];
+    expect(leadNarrative(insights, "putting")?.text).toMatch(/^Averaging 33.0 putts/);
+    expect(leadNarrative(insights, "scoring")).toBeNull();
   });
 });
 
 describe("tabNarrative", () => {
-  const insights = [
-    { kind: "best-par", par: 4, averageToPar: 0.5, holes: 40 },
-    { kind: "gir-average", percent: 40 },
-    { kind: "putts-average", putts: 33 },
-  ] as const;
+  const insights = [bestPar(4, 0.5, 40), girAverage(40, "fair"), puttsAverage(33, "fair")];
 
   it("heads scoring, ball striking and putting with their category's lead insight", () => {
-    expect(tabNarrative([...insights], "scoring")?.text).toMatch(/^You score best on par 4s/);
-    expect(tabNarrative([...insights], "ball-striking")?.text).toMatch(/^Your average GIR% is 40.0%/);
-    expect(tabNarrative([...insights], "putting")?.text).toMatch(/^Averaging 33.0 putts/);
+    expect(tabNarrative(insights, "scoring")?.text).toMatch(/^You score best on par 4s/);
+    expect(tabNarrative(insights, "ball-striking")?.text).toMatch(/^Your average GIR% is 40.0%/);
+    expect(tabNarrative(insights, "putting")?.text).toMatch(/^Averaging 33.0 putts/);
   });
 
   it("leaves profile and range view without one", () => {
-    expect(tabNarrative([...insights], "profile")).toBeNull();
-    expect(tabNarrative([...insights], "range")).toBeNull();
+    expect(tabNarrative(insights, "profile")).toBeNull();
+    expect(tabNarrative(insights, "range")).toBeNull();
   });
 });
 
