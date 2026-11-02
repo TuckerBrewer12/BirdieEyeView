@@ -22,17 +22,3 @@ export function average(values: number[]): number | null {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
-/** Compares the last n rows to the preceding n rows for a numeric metric.
- *  Returns (last avg - prev avg); positive means the metric went up. */
-export function trendDelta<T>(
-  rows: T[],
-  getValue: (row: T) => number,
-  n = 5,
-): number | null {
-  if (rows.length < n + 1) return null;
-  const last = rows.slice(-n);
-  const prev = rows.slice(-n * 2, -n);
-  if (!prev.length) return null;
-  const avg = (arr: T[]) => arr.reduce((s, r) => s + getValue(r), 0) / arr.length;
-  return avg(last) - avg(prev);
-}

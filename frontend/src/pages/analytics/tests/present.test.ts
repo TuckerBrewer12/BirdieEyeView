@@ -8,20 +8,21 @@ import {
   averageToParLabel,
   courseOptions,
   emptyMessage,
-  girVsNonGirBars,
   handicapBars,
   headlineFigures,
   holesLabel,
   leadNarrative,
   narrativeFor,
+  narrativeTone,
   netScorePoints,
   parBars,
   percentLabel,
   scoreTrendPoints,
   shortGamePoints,
+  tabNarrative,
 } from "../present";
 
-describe("the desktop's words", () => {
+describe("the layouts' words", () => {
   const analytics = analyticsFrom(sampleGolfer.analytics);
 
   it("offers every course, the home course when there is one, then each course played", () => {
@@ -160,6 +161,35 @@ describe("leadNarrative", () => {
   });
 });
 
+describe("tabNarrative", () => {
+  const insights = [
+    { kind: "best-par", par: 4, averageToPar: 0.5, holes: 40 },
+    { kind: "gir-average", percent: 40 },
+    { kind: "putts-average", putts: 33 },
+  ] as const;
+
+  it("heads scoring, ball striking and putting with their category's lead insight", () => {
+    expect(tabNarrative([...insights], "scoring")?.text).toMatch(/^You score best on par 4s/);
+    expect(tabNarrative([...insights], "ball-striking")?.text).toMatch(/^Your average GIR% is 40.0%/);
+    expect(tabNarrative([...insights], "putting")?.text).toMatch(/^Averaging 33.0 putts/);
+  });
+
+  it("leaves profile and range view without one", () => {
+    expect(tabNarrative([...insights], "profile")).toBeNull();
+    expect(tabNarrative([...insights], "range")).toBeNull();
+  });
+});
+
+describe("narrativeTone", () => {
+  it("is good when the arrow moves the way that helps, bad when it doesn't, neutral when flat", () => {
+    expect(narrativeTone({ text: "", trend: "down", positiveUp: false })).toBe("good");
+    expect(narrativeTone({ text: "", trend: "up", positiveUp: true })).toBe("good");
+    expect(narrativeTone({ text: "", trend: "up", positiveUp: false })).toBe("bad");
+    expect(narrativeTone({ text: "", trend: "down", positiveUp: true })).toBe("bad");
+    expect(narrativeTone({ text: "", trend: "flat", positiveUp: true })).toBe("neutral");
+  });
+});
+
 describe("labels", () => {
   it("says why the page is empty", () => {
     expect(emptyMessage(true)).toBe("No rounds found for the selected filters.");
@@ -169,25 +199,5 @@ describe("labels", () => {
   it("shows average putts to one decimal", () => {
     expect(averagePuttsLabel(33)).toBe("33.0");
     expect(averagePuttsLabel(null)).toBeNull();
-  });
-});
-
-describe("girVsNonGirBars", () => {
-  it("keys the bars by score kind, with under-par shares left of zero", () => {
-    expect(
-      girVsNonGirBars([
-        {
-          bucket: "GIR",
-          holes_counted: 10,
-          eagle: 2,
-          birdie: 20,
-          par: 60,
-          bogey: 15,
-          double_bogey: 2,
-          triple_bogey: 1,
-          quad_bogey: 0.5,
-        },
-      ]),
-    ).toEqual([{ bucket: "GIR", eagle: -2, birdie: -20, par: 60, bogey: 15, double: 2, triple: 1, quad: 0.5 }]);
   });
 });

@@ -28,14 +28,14 @@ export class AnalyticsRobot {
     return locator.locator("visible=true").first();
   }
 
-  /** The round count: the desktop's Rounds figure, or the phone header's "N rds". */
+  /** The round count: the Rounds figure among the headline figures, on either layout. */
   private roundCount(count: number): Locator {
-    const desktop = this.page
-      .getByText("Rounds", { exact: true })
-      .locator("xpath=following-sibling::*[1]")
-      .filter({ hasText: new RegExp(`^${count}$`) });
-    const phone = this.page.getByText(new RegExp(`^${count} rds`));
-    return this.visible(desktop.or(phone));
+    return this.visible(
+      this.page
+        .getByText("Rounds", { exact: true })
+        .locator("xpath=following-sibling::*[1]")
+        .filter({ hasText: new RegExp(`^${count}$`) }),
+    );
   }
 
   async dark(): Promise<this> {
@@ -95,7 +95,7 @@ export class AnalyticsRobot {
     return this;
   }
 
-  /** The desktop's course menu. The phone header still picks with a native select. */
+  /** The course filter's menu, open. */
   async openCourseMenu(): Promise<this> {
     await this.visible(this.page.getByRole("combobox", { name: "Course" })).click();
     await expect(this.page.getByRole("listbox")).toBeVisible();
@@ -103,13 +103,8 @@ export class AnalyticsRobot {
     return this;
   }
 
-  /** The phone header still picks with a native select; the desktop opens the kit's menu. */
+  /** Picks a course from the course filter's menu, on either layout. */
   async pickCourse(name: string): Promise<this> {
-    const phoneSelect = this.page.locator("select").locator("visible=true");
-    if (await phoneSelect.count()) {
-      await phoneSelect.first().selectOption({ label: name });
-      return this;
-    }
     await this.visible(this.page.getByRole("combobox", { name: "Course" })).click();
     await this.page.getByRole("option", { name, exact: true }).click();
     return this;
@@ -135,7 +130,7 @@ export class AnalyticsRobot {
   }
 
   async clearCourse(): Promise<this> {
-    await this.page.getByRole("button", { name: "Clear course filter" }).click();
+    await this.visible(this.page.getByRole("button", { name: "Clear course filter" })).click();
     return this;
   }
 
@@ -161,17 +156,28 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** The phone's section tabs. */
+  private sectionTab(label: TabLabel): Locator {
+    return this.visible(this.page.getByRole("group", { name: "Section" })).getByRole("button", {
+      name: label,
+      exact: true,
+    });
+  }
+
   async openTab(label: TabLabel): Promise<this> {
-    await this.visible(this.page.getByRole("button", { name: label, exact: true })).click();
+    await this.sectionTab(label).click();
     return this;
   }
 
   async seesTabOpen(label: TabLabel, showing: string): Promise<this> {
-    await expect(this.visible(this.page.getByRole("button", { name: label, exact: true }))).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    await expect(this.sectionTab(label)).toHaveAttribute("aria-pressed", "true");
     await expect(this.visible(this.page.getByText(showing, { exact: true }))).toBeVisible();
+    return this;
+  }
+
+  /** The open section leads with this sentence about the golfer's game. */
+  async seesInsight(text: RegExp): Promise<this> {
+    await expect(this.visible(this.page.locator("[data-slot=insight-note]"))).toHaveText(text);
     return this;
   }
 
