@@ -72,7 +72,7 @@ Follow the layer responsibilities in `docs/practices/backend.md`. In particular:
 - Keep domain validation in `models/` and request/response shape in `api/request_models.py` and `api/schemas.py`.
 - Keep business logic in `services/` when it would otherwise crowd routers.
 - Keep async database behavior in repositories and row/model conversion in `database/converters.py`.
-- Clamp unreliable scan values before constructing strict Pydantic models, following `services/scan_service.py`.
+- Normalize scan-derived values with `services/scan_normalization.py` before constructing strict Pydantic models; reject values that would need guessing instead of clamping or rewriting them.
 
 Take test and lint commands from `docs/practices/testing.md`; do not copy them from memory or older notes. Mock provider APIs and other true external boundaries. For database work, use fakes only for Python-side branching, conversion, or error translation; validate SQL, constraints, transactions, ownership filters, PostgreSQL types/extensions, and persistence round trips with the disposable PostgreSQL integration suite.
 
