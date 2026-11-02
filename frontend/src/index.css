@@ -28,15 +28,6 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Legacy fields only. Kit fields carry a data-slot and take their dark fill from
-   the tokens; this rule is unlayered, so it would beat their utilities. */
-:root.dark input:not([data-slot]),
-:root.dark textarea:not([data-slot]),
-:root.dark select:not([data-slot]) {
-  background-color: #18191A;
-  color: #e6edf3;
-}
-
 :root.dark .shadow-sm,
 :root.dark .shadow-lg {
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28) !important;

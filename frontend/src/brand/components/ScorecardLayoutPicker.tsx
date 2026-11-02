@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GripVertical } from "lucide-react";
 import { cn } from "@/brand/cn";
+import { Input } from "./Input";
 
 type DataRow = "score" | "putts" | "shots";
 
@@ -147,12 +148,11 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
         <p className="text-meta font-semibold text-muted-foreground uppercase tracking-eyebrow mb-1.5">
           Your name on the card
         </p>
-        <input
+        <Input
           type="text"
           value={playerName}
           onChange={(e) => setPlayerName(e.target.value)}
           placeholder="e.g. Tucker"
-          className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
 

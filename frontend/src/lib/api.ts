@@ -145,14 +145,6 @@ export const api = {
   getCourseAnalytics: (userId: string, courseId: string) =>
     fetchJSON<CourseAnalyticsData>(`/stats/course-analytics/${userId}/${courseId}`),
 
-  getAISuggestions: (userId: string, limit = 50, targetHandicap?: number | null) => {
-    const params = new URLSearchParams({ limit: String(limit) });
-    if (targetHandicap != null) params.set("target_handicap", String(targetHandicap));
-    return fetchJSON<import("@/types/suggestions").AISuggestionsResponse>(
-      `/ai-insights/${userId}?${params}`
-    );
-  },
-
   getFriendships: (status?: FriendshipDto["status"]) => {
     const params = new URLSearchParams();
     if (status) params.set("status", status);

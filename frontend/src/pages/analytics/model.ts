@@ -37,7 +37,7 @@ export interface PlayedCourse {
   location: string | null;
 }
 
-export const SCORE_TYPE_KEYS = [
+const SCORE_TYPE_KEYS = [
   "eagle",
   "birdie",
   "par",
@@ -233,7 +233,7 @@ export function bestScoreFrom(scoreTrend: ScoreTrendRow[]): number | null {
   return scores.length ? Math.min(...scores) : null;
 }
 
-export function averagePuttsFrom(puttsTrend: PuttsTrendRow[]): number | null {
+function averagePuttsFrom(puttsTrend: PuttsTrendRow[]): number | null {
   return average(puttsTrend.map((row) => row.total_putts).filter(present));
 }
 

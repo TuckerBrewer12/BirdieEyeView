@@ -54,8 +54,8 @@ export function formatCourseHandicap(ch: number | null | undefined): string {
 export type DifferentialStatus = "counting" | "close" | "out" | "unrated";
 
 /** The lowest index WHS allows: a +10. Stored negative, as the server stores it. */
-export const MIN_HANDICAP_INDEX = -10;
-export const MAX_HANDICAP_INDEX = 54;
+const MIN_HANDICAP_INDEX = -10;
+const MAX_HANDICAP_INDEX = 54;
 const HANDICAP_PATTERN = /^\+?(?:\d+\.?\d*|\.\d+)$/;
 
 export interface HandicapParseResult {

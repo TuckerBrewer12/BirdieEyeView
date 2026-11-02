@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from "react";
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { cn } from "@/brand/cn";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/brand";
 import { chartColors, chartLayout, chartTickStyle, chartTooltipStyle, colors } from "@/brand/theme";
 import { pluralize } from "@/lib/pluralize";
 
@@ -47,19 +47,15 @@ function ComparisonChartCard({
   const selectedFill = `selectedBarGrad${useId().replace(/:/g, "")}`;
 
   return (
-    <div
-      data-slot="comparison-chart-card"
-      className={cn(
-        "rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card",
-        className,
-      )}
-    >
-      <div className="mb-1 text-sm font-bold text-card-foreground">{title}</div>
-      <div className="mb-3 text-xs text-muted-foreground">
-        <span className="font-bold text-primary">{formatNumber(bars[0]?.value ?? null)}</span>
-        {" "}{primaryLabel} this round
-      </div>
-      <div className="h-chart">
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>
+          <span className="font-bold text-primary">{formatNumber(bars[0]?.value ?? null)}</span>
+          {" "}{primaryLabel} this round
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="h-chart">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={chartLayout.margin}>
             <defs>
@@ -85,8 +81,8 @@ function ComparisonChartCard({
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 

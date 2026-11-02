@@ -8,7 +8,7 @@ export interface Sort {
   ascending: boolean;
 }
 
-export interface FilterChipItem {
+export interface CourseFilterOption {
   key: string;
   label: string;
   mode: FilterMode;
@@ -63,7 +63,7 @@ export function sortAfterPicking(current: Sort, picked: SortKey): Sort {
 }
 
 /** All, L20 and Best, then the six most-played courses. */
-export function courseChips(rounds: readonly ListedRound[]): FilterChipItem[] {
+export function courseChips(rounds: readonly ListedRound[]): CourseFilterOption[] {
   const counts = new Map<string, number>();
   for (const r of rounds) {
     const name = r.course?.name;
