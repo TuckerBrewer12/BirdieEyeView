@@ -67,6 +67,13 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** Rounds on the books, but none recorded a yardage, so Range View has nothing to chart. */
+  async openWithoutYardage(): Promise<this> {
+    await this.install({ analytics: { ...sampleGolfer.analytics, scoring_by_yardage: [] } });
+    await this.seesRounds(24);
+    return this;
+  }
+
   /** Analytics fails to load. */
   async openFailed(): Promise<this> {
     await this.install({ analytics: null });

@@ -63,3 +63,11 @@ for (const { tab, showing, file } of PHONE_TABS) {
     });
   }
 }
+
+test("phone range view with no yardage data", async ({ analytics, isMobile }) => {
+  test.skip(!isMobile, "The sections are tabs on the phone only.");
+  await analytics.openWithoutYardage();
+  await analytics.openTab("Range View");
+  await analytics.seesTabOpen("Range View", "Play more rounds to unlock Range View data.");
+  await analytics.capture("analytics-range-empty.png");
+});
