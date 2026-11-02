@@ -12,12 +12,11 @@ export const queryKeys = {
   handicap: (userId: string) => ["handicap", userId] as const,
   user: (userId: string) => ["user", userId] as const,
   goalReport: (userId: string) => ["goal-report", userId] as const,
+  /** A golfer's analytics, per set of filters. The Analytics page and The Lab read the same entries. */
   analytics: (userId: string, filters?: unknown) =>
     filters === undefined
       ? (["analytics", userId] as const)
       : (["analytics", userId, filters] as const),
-  /** The slice of a golfer's last 20 rounds of analytics The Lab reads: theirs, or a friend's to compare. */
-  labAnalytics: (userId: string) => ["analytics", userId, "lab"] as const,
   playedCourses: (userId: string) => ["played-courses", userId] as const,
   /** The text read off one picked photo, ahead of extract. */
   scanText: (photoId: string | null) => ["scan-text", photoId] as const,

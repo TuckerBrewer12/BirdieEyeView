@@ -1,6 +1,6 @@
 import type { AnalyticsDto, PlayedCourseDto } from "../../types/api";
 import type { User } from "../../types/golf";
-import { analyticsFrom, type Analytics, type AnalyticsFilters, type PlayedCourse } from "../../pages/analytics/model";
+import type { AnalyticsFilters, PlayedCourse } from "../../pages/analytics/model";
 import { playedCourseFrom, type AnalyticsRepository } from "../../pages/analytics/analyticsRepository";
 import { analyticsForCourse } from "./analyticsResponses";
 
@@ -13,7 +13,7 @@ export interface FakeAnalyticsSeed {
   user?: User;
 }
 
-/** Answers from seeded responses, mapped the way the real repository maps the server's. */
+/** Answers from seeded responses, as the server sends them. */
 export class FakeAnalyticsRepository implements AnalyticsRepository {
   /** What each analytics load asked for, in order. */
   readonly requests: AnalyticsFilters[] = [];
@@ -38,11 +38,11 @@ export class FakeAnalyticsRepository implements AnalyticsRepository {
     this.held = null;
   }
 
-  async getAnalytics(_userId: string, filters: AnalyticsFilters): Promise<Analytics> {
+  async getAnalytics(_userId: string, filters: AnalyticsFilters): Promise<AnalyticsDto> {
     this.requests.push(filters);
     if (this.held) await this.held;
     if (this.loadError) throw this.loadError;
-    const response = analyticsForCourse(
+    return analyticsForCourse(
       {
         analytics: this.seed.analytics,
         byCourse: this.seed.analyticsByCourse,
@@ -50,7 +50,6 @@ export class FakeAnalyticsRepository implements AnalyticsRepository {
       },
       filters.courseId,
     );
-    return analyticsFrom(response);
   }
 
   async getPlayedCourses(): Promise<PlayedCourse[]> {

@@ -1,11 +1,14 @@
+import {
+  analyticsRepository as sharedAnalyticsRepository,
+  type AnalyticsRepository as SharedAnalyticsRepository,
+} from "@/data/analyticsRepository";
 import { userRepository, type UserRepository } from "@/data/userRepository";
 import { api } from "@/lib/api";
 import type { PlayedCourseDto } from "@/types/api";
-import { analyticsFrom, type Analytics, type AnalyticsFilters, type PlayedCourse } from "./model";
+import type { PlayedCourse } from "./model";
 
-export interface AnalyticsRepository extends Pick<UserRepository, "getUser"> {
-  /** The figures over the rounds the filters pick, and the series the charts draw from them. */
-  getAnalytics(userId: string, filters: AnalyticsFilters): Promise<Analytics>;
+/** The shared analytics read (`data/useAnalytics`), plus what only this page asks for. */
+export interface AnalyticsRepository extends SharedAnalyticsRepository, Pick<UserRepository, "getUser"> {
   /** The courses the golfer has a round at, for the course filter. */
   getPlayedCourses(userId: string): Promise<PlayedCourse[]>;
 }
@@ -15,7 +18,7 @@ export function playedCourseFrom(dto: PlayedCourseDto): PlayedCourse {
 }
 
 export const analyticsRepository: AnalyticsRepository = {
-  getAnalytics: async (userId, filters) => analyticsFrom(await api.getAnalytics(userId, filters)),
+  getAnalytics: (userId, filters) => sharedAnalyticsRepository.getAnalytics(userId, filters),
   getPlayedCourses: async (userId) => (await api.getPlayedCourses(userId)).map(playedCourseFrom),
   getUser: (userId) => userRepository.getUser(userId),
 };

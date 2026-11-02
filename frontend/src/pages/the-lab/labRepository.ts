@@ -1,25 +1,17 @@
+import { analyticsRepository, type AnalyticsRepository } from "@/data/analyticsRepository";
 import { friendsRepository, type FriendsRepository } from "@/data/friendsRepository";
 import { goalReportRepository, type GoalReportRepository } from "@/data/goalReportRepository";
 import { userRepository, type UserRepository } from "@/data/userRepository";
-import { api } from "@/lib/api";
-import { labAnalyticsFrom, type LabAnalytics } from "./model";
 
-/** The Lab compares a golfer's last 20 rounds, so every analytics read covers that window. */
-export const LAB_WINDOW = 20;
-
+/** The Lab reads only shared data: analytics, the goal report, the golfer and their friends. */
 export interface LabRepository
-  extends GoalReportRepository,
+  extends AnalyticsRepository,
+    GoalReportRepository,
     Pick<UserRepository, "getUser" | "updateUser">,
-    Pick<FriendsRepository, "getFriendships"> {
-  /** A golfer's last 20 rounds of analytics, the golfer's own or a friend's. */
-  getAnalytics(userId: string): Promise<LabAnalytics>;
-}
+    Pick<FriendsRepository, "getFriendships"> {}
 
 export const labRepository: LabRepository = {
-  getAnalytics: async (userId) =>
-    labAnalyticsFrom(
-      await api.getAnalytics(userId, { limit: LAB_WINDOW, timeframe: "all", courseId: "all" }),
-    ),
+  getAnalytics: (userId, filters) => analyticsRepository.getAnalytics(userId, filters),
   getUser: (userId) => userRepository.getUser(userId),
   updateUser: (userId, changes) => userRepository.updateUser(userId, changes),
   getGoalReport: (userId, limit) => goalReportRepository.getGoalReport(userId, limit),
