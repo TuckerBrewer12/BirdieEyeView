@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { setStoredColorBlindMode } from "@/lib/accessibility";
 import { apiUrl } from "@/lib/apiBase";
 import { setSessionToken, withAuthHeaders } from "@/lib/sessionToken";
 import {
@@ -167,8 +166,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       handicap: options?.handicap ?? null,
       home_course_id: options?.home_course_id ?? null,
     });
-    // New accounts start with no color filter. The theme stays whatever this device already chose.
-    setStoredColorBlindMode("none");
     return data.message;
   };
 

@@ -32,7 +32,7 @@ export class FakeSettingsRepository implements SettingsRepository {
       ...user,
     };
     this.courses = [...courses];
-    this.device = { getUpdates: true, colorBlindMode: "none", ...device };
+    this.device = { getUpdates: true, ...device };
   }
 
   async getSettings(): Promise<Settings> {

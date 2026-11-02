@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { teeColors } from "@/domain";
-import { useCourseSearch, type CourseSearch } from "@/hooks/useCourseSearch";
+import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
 import type { CourseSummary } from "@/types/golf";
 import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
 import { useCourse } from "../courses/useCourse";

@@ -26,7 +26,6 @@ export default defineConfig([
       'src/domain/**/*.ts',
       'src/data/**/*.ts',
       'src/types/**/*.ts',
-      'src/hooks/*.ts',
       'src/lib/api.ts',
       'src/lib/apiBase.ts',
       'src/lib/auth.ts',

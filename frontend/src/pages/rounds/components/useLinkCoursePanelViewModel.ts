@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useCourseSearch } from "@/hooks/useCourseSearch";
+import { useCourseSearch } from "@/data/useCourseSearch";
 import { messageFrom } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/types/golf";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";

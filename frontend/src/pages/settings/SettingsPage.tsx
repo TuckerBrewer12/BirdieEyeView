@@ -61,8 +61,6 @@ export function SettingsPage({ userId }: { userId: string }) {
               onThemeChange={setTheme}
               getUpdates={viewModel.getUpdates}
               onGetUpdatesChange={viewModel.setGetUpdates}
-              colorBlindMode={viewModel.colorBlindMode}
-              onColorBlindModeChange={viewModel.setColorBlindMode}
             />
 
             <div className="flex flex-wrap items-center gap-3">
