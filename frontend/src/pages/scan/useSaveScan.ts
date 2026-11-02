@@ -16,7 +16,6 @@ export function useSaveScan(userId: string, repository: ScanRepository = scanRep
         queryKeys.rounds(userId),
         queryKeys.dashboard(userId),
         queryKeys.handicap(userId),
-        queryKeys.careerAnalytics(userId),
         queryKeys.analytics(userId),
         queryKeys.goalReport(userId),
         queryKeys.playedCourses(userId),

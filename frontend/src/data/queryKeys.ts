@@ -4,7 +4,6 @@ export const queryKeys = {
   roundComparison: (userId: string, roundId: string | undefined) =>
     ["round-comparison", userId, roundId] as const,
   dashboard: (userId: string) => ["dashboard", userId] as const,
-  careerAnalytics: (userId: string) => ["career-analytics", userId] as const,
   courses: (userId: string, search = "") => ["courses", userId, search] as const,
   course: (courseId: string | undefined) => ["course", courseId] as const,
   courseAnalytics: (userId: string, courseId: string | undefined) =>

@@ -25,7 +25,6 @@ export function useUpdateUser(
         queryKeys.dashboard(userId),
         queryKeys.goalReport(userId),
         queryKeys.analytics(userId),
-        queryKeys.careerAnalytics(userId),
       ]) {
         void queryClient.invalidateQueries({ queryKey });
       }
