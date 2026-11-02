@@ -16,9 +16,7 @@ class UserTeeRepositoryDB:
     def __init__(self, pool: asyncpg.Pool):
         self._pool = pool
 
-    async def get_user_tees(
-        self, user_id: str, *, course_id: Optional[str] = None
-    ) -> List[UserTee]:
+    async def get_user_tees(self, user_id: str, *, course_id: Optional[str] = None) -> List[UserTee]:
         """List a user's custom tees, optionally filtered by course."""
         async with self._pool.acquire() as conn:
             if course_id:
@@ -26,7 +24,8 @@ class UserTeeRepositoryDB:
                     """SELECT * FROM users.user_tees
                        WHERE user_id = $1 AND course_id = $2
                        ORDER BY name""",
-                    UUID(user_id), UUID(course_id),
+                    UUID(user_id),
+                    UUID(course_id),
                 )
             else:
                 rows = await conn.fetch(
@@ -62,9 +61,12 @@ class UserTeeRepositoryDB:
                        (user_id, course_id, name, slope_rating, course_rating, hole_yardages)
                        VALUES ($1, $2, $3, $4, $5, $6)
                        RETURNING *""",
-                    row_data["user_id"], row_data["course_id"],
-                    row_data["name"], row_data["slope_rating"],
-                    row_data["course_rating"], json.dumps(row_data["hole_yardages"]),
+                    row_data["user_id"],
+                    row_data["course_id"],
+                    row_data["name"],
+                    row_data["slope_rating"],
+                    row_data["course_rating"],
+                    json.dumps(row_data["hole_yardages"]),
                 )
                 return user_tee_from_row(row)
         except asyncpg.UniqueViolationError as e:
@@ -79,11 +81,9 @@ class UserTeeRepositoryDB:
 
         # Serialize hole_yardages to JSON string for asyncpg
         if "hole_yardages" in updates and updates["hole_yardages"] is not None:
-            updates["hole_yardages"] = json.dumps(
-                {str(k): v for k, v in updates["hole_yardages"].items()}
-            )
+            updates["hole_yardages"] = json.dumps({str(k): v for k, v in updates["hole_yardages"].items()})
 
-        set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates))
+        set_clause = ", ".join(f"{k} = ${i + 2}" for i, k in enumerate(updates))
         values = [UUID(tee_id)] + list(updates.values())
         where_clause = "id = $1"
         if user_id:

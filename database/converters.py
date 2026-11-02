@@ -15,6 +15,7 @@ from models import Course, Hole, Tee, HoleScore, Round, User, UserTee
 # Row -> Model (reads)
 # ================================================================
 
+
 def hole_from_row(row) -> Hole:
     """courses.holes row -> Hole model."""
     return Hole(
@@ -46,10 +47,7 @@ def course_from_rows(
         [hole_from_row(r) for r in hole_rows],
         key=lambda h: h.number or 0,
     )
-    tees = [
-        tee_from_row(tr, yardage_rows_by_tee.get(tr["id"], []))
-        for tr in tee_rows
-    ]
+    tees = [tee_from_row(tr, yardage_rows_by_tee.get(tr["id"], [])) for tr in tee_rows]
     return Course(
         id=str(course_row["id"]),
         name=course_row["name"],
@@ -125,6 +123,7 @@ def user_from_row(user_row, rounds: Optional[List[Round]] = None) -> User:
 # Model -> Row dict (writes)
 # ================================================================
 
+
 def course_to_row(course: Course, user_id: Optional[UUID] = None) -> dict:
     """Course -> dict for courses.courses INSERT."""
     return {
@@ -132,9 +131,9 @@ def course_to_row(course: Course, user_id: Optional[UUID] = None) -> dict:
         "external_course_id": course.external_course_id,
         "location": course.location,
         "par": course.get_par(),
-        "total_holes": course.total_holes if course.total_holes is not None else (
-            len(course.holes) if course.holes else None
-        ),
+        "total_holes": course.total_holes
+        if course.total_holes is not None
+        else (len(course.holes) if course.holes else None),
         "user_id": user_id,
     }
 
@@ -151,19 +150,23 @@ def tee_to_row(tee: Tee, course_id: UUID) -> tuple:
 
 def tee_yardages_to_rows(tee: Tee, tee_id: UUID) -> list:
     """Tee.hole_yardages -> list of tuples for courses.tee_yardages INSERT."""
-    return [
-        (tee_id, hole_num, yardage)
-        for hole_num, yardage in sorted(tee.hole_yardages.items())
-    ]
+    return [(tee_id, hole_num, yardage) for hole_num, yardage in sorted(tee.hole_yardages.items())]
 
 
 def hole_score_to_row(hs: HoleScore, round_id: UUID, hole_id: Optional[UUID]) -> tuple:
     """HoleScore -> tuple for users.hole_scores INSERT (hole_id may be None)."""
     return (
-        round_id, hole_id, hs.hole_number,
-        hs.strokes, hs.net_score, hs.putts, hs.shots_to_green,
-        hs.fairway_hit, hs.green_in_regulation,
-        hs.par_played, hs.handicap_played,
+        round_id,
+        hole_id,
+        hs.hole_number,
+        hs.strokes,
+        hs.net_score,
+        hs.putts,
+        hs.shots_to_green,
+        hs.fairway_hit,
+        hs.green_in_regulation,
+        hs.par_played,
+        hs.handicap_played,
     )
 
 
@@ -203,6 +206,7 @@ def user_to_row(user: User) -> dict:
 def user_tee_from_row(row) -> UserTee:
     """users.user_tees row -> UserTee model."""
     import json as _json
+
     hole_yardages = row["hole_yardages"] or {}
     if isinstance(hole_yardages, str):
         hole_yardages = _json.loads(hole_yardages)

@@ -29,7 +29,8 @@ class FriendshipRepositoryDB:
                    WHERE (requester_id = $1 AND addressee_id = $2)
                       OR (requester_id = $2 AND addressee_id = $1)
                    LIMIT 1""",
-                req, adr,
+                req,
+                adr,
             )
             if row:
                 status = row["status"]
@@ -43,7 +44,9 @@ class FriendshipRepositoryDB:
                        SET requester_id = $1, addressee_id = $2, status = 'pending'
                        WHERE id = $3
                        RETURNING *""",
-                    req, adr, row["id"],
+                    req,
+                    adr,
+                    row["id"],
                 )
                 return dict(updated)
 
@@ -51,13 +54,12 @@ class FriendshipRepositoryDB:
                 """INSERT INTO users.friendships (requester_id, addressee_id, status)
                    VALUES ($1, $2, 'pending')
                    RETURNING *""",
-                req, adr,
+                req,
+                adr,
             )
             return dict(created)
 
-    async def update_status(
-        self, friendship_id: str, actor_user_id: str, status: str
-    ) -> Optional[dict]:
+    async def update_status(self, friendship_id: str, actor_user_id: str, status: str) -> Optional[dict]:
         """Update friendship status, enforcing actor permissions."""
         if status not in self.VALID_STATUSES:
             raise ValueError(f"Invalid status: {status}")
@@ -83,7 +85,8 @@ class FriendshipRepositoryDB:
 
             updated = await conn.fetchrow(
                 "UPDATE users.friendships SET status = $2 WHERE id = $1 RETURNING *",
-                fid, status,
+                fid,
+                status,
             )
             return dict(updated) if updated else None
 
@@ -104,7 +107,8 @@ class FriendshipRepositoryDB:
                        WHERE (f.requester_id = $1 OR f.addressee_id = $1)
                          AND f.status = $2
                        ORDER BY f.updated_at DESC""",
-                    uid, status,
+                    uid,
+                    status,
                 )
             else:
                 rows = await conn.fetch(

@@ -27,9 +27,7 @@ class UserRepositoryDB:
         return email.strip().lower()
 
     def _generate_friend_code(self) -> str:
-        return "GC" + "".join(
-            secrets.choice(self.FRIEND_CODE_ALPHABET) for _ in range(self.FRIEND_CODE_LEN)
-        )
+        return "GC" + "".join(secrets.choice(self.FRIEND_CODE_ALPHABET) for _ in range(self.FRIEND_CODE_LEN))
 
     # ================================================================
     # Read
@@ -38,27 +36,21 @@ class UserRepositoryDB:
     async def get_user(self, user_id: str) -> Optional[User]:
         """Get user by ID (without rounds)."""
         async with self._pool.acquire() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM users.users WHERE id = $1", UUID(user_id)
-            )
+            row = await conn.fetchrow("SELECT * FROM users.users WHERE id = $1", UUID(user_id))
             return user_from_row(row) if row else None
 
     async def get_user_by_email(self, email: str) -> Optional[User]:
         """Get user by email."""
         normalized = self._normalize_email(email)
         async with self._pool.acquire() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM users.users WHERE LOWER(email) = $1", normalized
-            )
+            row = await conn.fetchrow("SELECT * FROM users.users WHERE LOWER(email) = $1", normalized)
             return user_from_row(row) if row else None
 
     async def get_user_by_friend_code(self, friend_code: str) -> Optional[User]:
         """Get user by friend code."""
         normalized = friend_code.strip().upper()
         async with self._pool.acquire() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM users.users WHERE friend_code = $1", normalized
-            )
+            row = await conn.fetchrow("SELECT * FROM users.users WHERE friend_code = $1", normalized)
             return user_from_row(row) if row else None
 
     # ================================================================
@@ -69,9 +61,7 @@ class UserRepositoryDB:
         """Return only the password_hash for the given email (for auth use only)."""
         normalized = self._normalize_email(email)
         async with self._pool.acquire() as conn:
-            row = await conn.fetchrow(
-                "SELECT password_hash FROM users.users WHERE LOWER(email) = $1", normalized
-            )
+            row = await conn.fetchrow("SELECT password_hash FROM users.users WHERE LOWER(email) = $1", normalized)
             return row["password_hash"] if row else None
 
     async def get_auth_user_by_email(self, email: str) -> Optional[dict]:
@@ -202,7 +192,8 @@ class UserRepositoryDB:
                 """UPDATE users.users
                    SET handicap_index = $2, last_handicap_update = NOW()
                    WHERE id = $1""",
-                UUID(user_id), handicap,
+                UUID(user_id),
+                handicap,
             )
             if result == "UPDATE 0":
                 raise NotFoundError(f"User {user_id} not found")
@@ -317,7 +308,5 @@ class UserRepositoryDB:
     async def delete_user(self, user_id: str) -> bool:
         """Delete user and all their rounds (CASCADE). Returns True if deleted."""
         async with self._pool.acquire() as conn:
-            result = await conn.execute(
-                "DELETE FROM users.users WHERE id = $1", UUID(user_id)
-            )
+            result = await conn.execute("DELETE FROM users.users WHERE id = $1", UUID(user_id))
             return result == "DELETE 1"

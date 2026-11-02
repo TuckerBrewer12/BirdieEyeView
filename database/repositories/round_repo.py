@@ -28,19 +28,16 @@ class RoundRepositoryDB:
         """Look up tee color from tee_id."""
         if not tee_id:
             return None
-        row = await conn.fetchrow(
-            "SELECT color FROM courses.tees WHERE id = $1", tee_id
-        )
+        row = await conn.fetchrow("SELECT color FROM courses.tees WHERE id = $1", tee_id)
         return row["color"] if row else None
 
-    async def _resolve_tee_id(
-        self, conn, course_id: UUID, tee_color: str
-    ) -> Optional[UUID]:
+    async def _resolve_tee_id(self, conn, course_id: UUID, tee_color: str) -> Optional[UUID]:
         """Look up tee_id from course + color."""
         row = await conn.fetchrow(
             """SELECT id FROM courses.tees
                WHERE course_id = $1 AND LOWER(color) = LOWER($2)""",
-            course_id, tee_color,
+            course_id,
+            tee_color,
         )
         return row["id"] if row else None
 
@@ -88,9 +85,9 @@ class RoundRepositoryDB:
         if not round_rows:
             return []
 
-        round_ids  = [r["id"] for r in round_rows]
+        round_ids = [r["id"] for r in round_rows]
         course_ids = list({r["course_id"] for r in round_rows if r["course_id"]})
-        ut_ids     = list({r["user_tee_id"] for r in round_rows if r["user_tee_id"]})
+        ut_ids = list({r["user_tee_id"] for r in round_rows if r["user_tee_id"]})
         tee_id_lookup = list({r["tee_id"] for r in round_rows if not r["tee_box_played"] and r["tee_id"]})
 
         # Query 1: all hole scores
@@ -111,9 +108,11 @@ class RoundRepositoryDB:
             )
             t_rows = await conn.fetch("SELECT * FROM courses.tees WHERE course_id = ANY($1::uuid[])", course_ids)
             tee_ids = [t["id"] for t in t_rows]
-            y_rows = await conn.fetch(
-                "SELECT * FROM courses.tee_yardages WHERE tee_id = ANY($1::uuid[])", tee_ids
-            ) if tee_ids else []
+            y_rows = (
+                await conn.fetch("SELECT * FROM courses.tee_yardages WHERE tee_id = ANY($1::uuid[])", tee_ids)
+                if tee_ids
+                else []
+            )
 
             holes_by_course: dict = defaultdict(list)
             for h in h_rows:
@@ -145,9 +144,7 @@ class RoundRepositoryDB:
         # Query 7 (conditional): batch-resolve missing tee colors
         tee_colors_by_id: dict = {}
         if tee_id_lookup:
-            tc_rows = await conn.fetch(
-                "SELECT id, color FROM courses.tees WHERE id = ANY($1::uuid[])", tee_id_lookup
-            )
+            tc_rows = await conn.fetch("SELECT id, color FROM courses.tees WHERE id = ANY($1::uuid[])", tee_id_lookup)
             tee_colors_by_id = {str(r["id"]): r["color"] for r in tc_rows}
 
         # Assemble in memory
@@ -155,9 +152,7 @@ class RoundRepositoryDB:
         for row in round_rows:
             rid = str(row["id"])
             cid = str(row["course_id"]) if row["course_id"] else None
-            tee_color = row["tee_box_played"] or (
-                tee_colors_by_id.get(str(row["tee_id"])) if row["tee_id"] else None
-            )
+            tee_color = row["tee_box_played"] or (tee_colors_by_id.get(str(row["tee_id"])) if row["tee_id"] else None)
             user_tee = user_tees_by_id.get(str(row["user_tee_id"])) if row["user_tee_id"] else None
             rounds.append(round_from_rows(row, scores_by_round[rid], courses_by_id.get(cid), tee_color, user_tee))
 
@@ -174,9 +169,7 @@ class RoundRepositoryDB:
         except (TypeError, ValueError):
             return None
         async with self._pool.acquire() as conn:
-            row = await conn.fetchrow(
-                "SELECT user_id FROM users.rounds WHERE id = $1", rid
-            )
+            row = await conn.fetchrow("SELECT user_id FROM users.rounds WHERE id = $1", rid)
             return str(row["user_id"]) if row else None
 
     async def get_played_courses_for_user(self, user_id: str) -> list:
@@ -195,16 +188,12 @@ class RoundRepositoryDB:
     async def get_round(self, round_id: str) -> Optional[Round]:
         """Get a round with hole_scores and course data."""
         async with self._pool.acquire() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM users.rounds WHERE id = $1", UUID(round_id)
-            )
+            row = await conn.fetchrow("SELECT * FROM users.rounds WHERE id = $1", UUID(round_id))
             if not row:
                 return None
             return await self._assemble_round(conn, row)
 
-    async def get_round_summaries_for_user(
-        self, user_id: str, *, limit: int = 100, offset: int = 0
-    ) -> list[dict]:
+    async def get_round_summaries_for_user(self, user_id: str, *, limit: int = 100, offset: int = 0) -> list[dict]:
         """Single aggregate query — avoids N+1 hole_score fetches for list views."""
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
@@ -238,7 +227,9 @@ class RoundRepositoryDB:
                 GROUP BY r.id, c.name, c.location, c.par
                 ORDER BY r.round_date DESC NULLS LAST
                 LIMIT $2 OFFSET $3""",
-                UUID(user_id), limit, offset,
+                UUID(user_id),
+                limit,
+                offset,
             )
             result = []
             for r in rows:
@@ -250,7 +241,11 @@ class RoundRepositoryDB:
             return result
 
     async def get_rounds_for_user(
-        self, user_id: str, *, limit: int = 20, offset: int = 0,
+        self,
+        user_id: str,
+        *,
+        limit: int = 20,
+        offset: int = 0,
         course_id: Optional[str] = None,
         date_from: Optional[date] = None,
     ) -> List[Round]:
@@ -302,21 +297,19 @@ class RoundRepositoryDB:
                 async with conn.transaction():
                     # Resolve IDs
                     resolved_course_id = (
-                        UUID(course_id) if course_id
-                        else UUID(round_.course.id) if round_.course and round_.course.id
+                        UUID(course_id)
+                        if course_id
+                        else UUID(round_.course.id)
+                        if round_.course and round_.course.id
                         else None
                     )
                     resolved_tee_id = UUID(tee_id) if tee_id else None
 
                     if not resolved_tee_id and resolved_course_id and round_.tee_box:
-                        resolved_tee_id = await self._resolve_tee_id(
-                            conn, resolved_course_id, round_.tee_box
-                        )
+                        resolved_tee_id = await self._resolve_tee_id(conn, resolved_course_id, round_.tee_box)
 
                     # Insert round
-                    row_data = round_to_row(
-                        round_, UUID(user_id), resolved_course_id, resolved_tee_id
-                    )
+                    row_data = round_to_row(round_, UUID(user_id), resolved_course_id, resolved_tee_id)
                     resolved_user_tee_id = UUID(user_tee_id) if user_tee_id else None
                     round_row = await conn.fetchrow(
                         """INSERT INTO users.rounds
@@ -325,21 +318,25 @@ class RoundRepositoryDB:
                             course_name_played, tee_box_played)
                            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                            RETURNING *""",
-                        row_data["user_id"], row_data["course_id"], row_data["tee_id"],
+                        row_data["user_id"],
+                        row_data["course_id"],
+                        row_data["tee_id"],
                         resolved_user_tee_id,
-                        row_data["round_date"], row_data["total_score"],
-                        row_data["is_complete"], row_data["holes_played"],
-                        row_data["weather_conditions"], row_data["notes"],
-                        row_data["course_name_played"], row_data["tee_box_played"],
+                        row_data["round_date"],
+                        row_data["total_score"],
+                        row_data["is_complete"],
+                        row_data["holes_played"],
+                        row_data["weather_conditions"],
+                        row_data["notes"],
+                        row_data["course_name_played"],
+                        row_data["tee_box_played"],
                     )
                     new_round_id = round_row["id"]
 
                     # Map hole_number -> hole_id for FK resolution
                     hole_id_map = {}
                     if resolved_course_id:
-                        hole_id_map = await self._load_hole_id_map(
-                            conn, resolved_course_id
-                        )
+                        hole_id_map = await self._load_hole_id_map(conn, resolved_course_id)
 
                     # Build par_by_hole from course holes for populating par_played
                     par_by_hole = {}
@@ -356,12 +353,9 @@ class RoundRepositoryDB:
                             # Populate par_played from course if available, else keep existing
                             if hs.hole_number in par_by_hole and hs.par_played is None:
                                 from models import HoleScore as _HS
-                                hs = _HS(
-                                    **{**hs.model_dump(), "par_played": par_by_hole[hs.hole_number]}
-                                )
-                            score_tuples.append(hole_score_to_row(
-                                hs, new_round_id, hole_id
-                            ))
+
+                                hs = _HS(**{**hs.model_dump(), "par_played": par_by_hole[hs.hole_number]})
+                            score_tuples.append(hole_score_to_row(hs, new_round_id, hole_id))
                         if score_tuples:
                             await conn.executemany(
                                 """INSERT INTO users.hole_scores
@@ -388,9 +382,17 @@ class RoundRepositoryDB:
     async def update_round(self, round_id: str, *, user_id: Optional[str] = None, **fields) -> Optional[Round]:
         """Update round-level fields."""
         allowed = {
-            "round_date", "total_score", "adjusted_gross_score",
-            "score_differential", "is_complete", "holes_played",
-            "weather_conditions", "notes", "course_name_played", "tee_box_played", "tee_id",
+            "round_date",
+            "total_score",
+            "adjusted_gross_score",
+            "score_differential",
+            "is_complete",
+            "holes_played",
+            "weather_conditions",
+            "notes",
+            "course_name_played",
+            "tee_box_played",
+            "tee_id",
         }
         updates = {k: v for k, v in fields.items() if k in allowed}
         if not updates:
@@ -418,7 +420,7 @@ class RoundRepositoryDB:
                 else:
                     updates["tee_id"] = None
 
-            set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates))
+            set_clause = ", ".join(f"{k} = ${i + 2}" for i, k in enumerate(updates))
             values = [UUID(round_id)] + list(updates.values())
 
             where_clause = "id = $1"
@@ -435,9 +437,7 @@ class RoundRepositoryDB:
                 return None
             return await self._assemble_round(conn, row)
 
-    async def upsert_hole_score(
-        self, round_id: str, hole_score: HoleScore
-    ) -> None:
+    async def upsert_hole_score(self, round_id: str, hole_score: HoleScore) -> None:
         """Insert or update a single hole score."""
         async with self._pool.acquire() as conn:
             # Resolve hole_id from round's course
@@ -453,7 +453,8 @@ class RoundRepositoryDB:
                 hole_row = await conn.fetchrow(
                     """SELECT id FROM courses.holes
                        WHERE course_id = $1 AND hole_number = $2""",
-                    round_row["course_id"], hole_score.hole_number,
+                    round_row["course_id"],
+                    hole_score.hole_number,
                 )
                 hole_id = hole_row["id"] if hole_row else None
 
@@ -472,11 +473,17 @@ class RoundRepositoryDB:
                                  green_in_regulation = EXCLUDED.green_in_regulation,
                                  par_played = COALESCE(EXCLUDED.par_played, users.hole_scores.par_played),
                                  handicap_played = COALESCE(EXCLUDED.handicap_played, users.hole_scores.handicap_played)""",
-                UUID(round_id), hole_id, hole_score.hole_number,
-                hole_score.strokes, hole_score.net_score,
-                hole_score.putts, hole_score.shots_to_green,
-                hole_score.fairway_hit, hole_score.green_in_regulation,
-                hole_score.par_played, hole_score.handicap_played,
+                UUID(round_id),
+                hole_id,
+                hole_score.hole_number,
+                hole_score.strokes,
+                hole_score.net_score,
+                hole_score.putts,
+                hole_score.shots_to_green,
+                hole_score.fairway_hit,
+                hole_score.green_in_regulation,
+                hole_score.par_played,
+                hole_score.handicap_played,
             )
 
     async def update_hole_scores(
@@ -495,9 +502,7 @@ class RoundRepositoryDB:
                     UUID(user_id),
                 )
             else:
-                round_row = await conn.fetchrow(
-                    "SELECT * FROM users.rounds WHERE id = $1", UUID(round_id)
-                )
+                round_row = await conn.fetchrow("SELECT * FROM users.rounds WHERE id = $1", UUID(round_id))
             if not round_row:
                 raise NotFoundError(f"Round {round_id} not found")
 
@@ -525,11 +530,17 @@ class RoundRepositoryDB:
                                green_in_regulation = EXCLUDED.green_in_regulation,
                                par_played = COALESCE(EXCLUDED.par_played, users.hole_scores.par_played),
                                handicap_played = COALESCE(EXCLUDED.handicap_played, users.hole_scores.handicap_played)""",
-                        UUID(round_id), hole_id, hs.hole_number,
-                        hs.strokes, hs.net_score,
-                        hs.putts, hs.shots_to_green,
-                        hs.fairway_hit, hs.green_in_regulation,
-                        hs.par_played, hs.handicap_played,
+                        UUID(round_id),
+                        hole_id,
+                        hs.hole_number,
+                        hs.strokes,
+                        hs.net_score,
+                        hs.putts,
+                        hs.shots_to_green,
+                        hs.fairway_hit,
+                        hs.green_in_regulation,
+                        hs.par_played,
+                        hs.handicap_played,
                     )
 
                 # Recalculate totals
@@ -595,9 +606,7 @@ class RoundRepositoryDB:
                     UUID(user_id),
                 )
             else:
-                round_row = await conn.fetchrow(
-                    "SELECT tee_box_played FROM users.rounds WHERE id = $1", UUID(round_id)
-                )
+                round_row = await conn.fetchrow("SELECT tee_box_played FROM users.rounds WHERE id = $1", UUID(round_id))
             if not round_row:
                 return None
             tee_color = round_row["tee_box_played"] if round_row else None
@@ -632,8 +641,11 @@ class RoundRepositoryDB:
                                par_played = COALESCE(par_played, $4),
                                handicap_played = COALESCE(handicap_played, $5)
                            WHERE round_id = $1 AND hole_number = $2""",
-                        UUID(round_id), hole_num, hole_id,
-                        par_by_hole.get(hole_num), hcp_by_hole.get(hole_num),
+                        UUID(round_id),
+                        hole_num,
+                        hole_id,
+                        par_by_hole.get(hole_num),
+                        hcp_by_hole.get(hole_num),
                     )
 
         return await self.get_round(round_id)
@@ -652,9 +664,7 @@ class RoundRepositoryDB:
                     UUID(user_id),
                 )
             else:
-                result = await conn.execute(
-                    "DELETE FROM users.rounds WHERE id = $1", UUID(round_id)
-                )
+                result = await conn.execute("DELETE FROM users.rounds WHERE id = $1", UUID(round_id))
             return result == "DELETE 1"
 
     # ================================================================
@@ -676,7 +686,9 @@ class RoundRepositoryDB:
                    (round_id, image_path, llm_model, llm_raw_json)
                    VALUES ($1, $2, $3, $4) RETURNING id""",
                 UUID(round_id) if round_id else None,
-                image_path, llm_model, json.dumps(llm_raw_json),
+                image_path,
+                llm_model,
+                json.dumps(llm_raw_json),
             )
             return str(row["id"])
 

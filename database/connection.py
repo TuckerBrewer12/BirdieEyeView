@@ -49,9 +49,7 @@ class DatabasePool:
     def pool(self) -> asyncpg.Pool:
         """Get the pool, raising if not initialized."""
         if self._pool is None:
-            raise RuntimeError(
-                "Database pool not initialized. Call await db.initialize() first."
-            )
+            raise RuntimeError("Database pool not initialized. Call await db.initialize() first.")
         return self._pool
 
     @property

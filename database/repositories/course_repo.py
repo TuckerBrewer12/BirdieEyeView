@@ -66,9 +66,7 @@ class CourseRepositoryDB:
 
     async def _assemble(self, conn, course_row) -> Course:
         """Build a full Course model from a course row + children."""
-        hole_rows, tee_rows, yardage_map = await self._load_children(
-            conn, course_row["id"]
-        )
+        hole_rows, tee_rows, yardage_map = await self._load_children(conn, course_row["id"])
         return course_from_rows(course_row, hole_rows, tee_rows, yardage_map)
 
     # ================================================================
@@ -122,21 +120,25 @@ class CourseRepositoryDB:
                     """SELECT * FROM courses.courses c
                        WHERE LOWER(c.name) = LOWER($1) AND LOWER(c.location) = LOWER($2)
                          AND (c.user_id IS NULL OR c.user_id = $3)""",
-                    name, location, uid,
+                    name,
+                    location,
+                    uid,
                 )
             elif location:
                 row = await conn.fetchrow(
                     """SELECT * FROM courses.courses c
                        WHERE LOWER(c.name) = LOWER($1) AND LOWER(c.location) = LOWER($2)
                          AND c.user_id IS NULL""",
-                    name, location,
+                    name,
+                    location,
                 )
             elif user_id:
                 row = await conn.fetchrow(
                     """SELECT * FROM courses.courses c
                        WHERE LOWER(c.name) = LOWER($1)
                          AND (c.user_id IS NULL OR c.user_id = $2)""",
-                    name, uid,
+                    name,
+                    uid,
                 )
             else:
                 row = await conn.fetchrow(
@@ -153,14 +155,17 @@ class CourseRepositoryDB:
                            WHERE c.name ILIKE $1 AND c.location ILIKE $2
                              AND (c.user_id IS NULL OR c.user_id = $3)
                            LIMIT 1""",
-                        f"%{name}%", f"%{location}%", uid,
+                        f"%{name}%",
+                        f"%{location}%",
+                        uid,
                     )
                 elif location:
                     row = await conn.fetchrow(
                         """SELECT * FROM courses.courses c
                            WHERE c.name ILIKE $1 AND c.location ILIKE $2
                              AND c.user_id IS NULL LIMIT 1""",
-                        f"%{name}%", f"%{location}%",
+                        f"%{name}%",
+                        f"%{location}%",
                     )
                 elif user_id:
                     row = await conn.fetchrow(
@@ -168,7 +173,8 @@ class CourseRepositoryDB:
                            WHERE c.name ILIKE $1
                              AND (c.user_id IS NULL OR c.user_id = $2)
                            LIMIT 1""",
-                        f"%{name}%", uid,
+                        f"%{name}%",
+                        uid,
                     )
                 else:
                     row = await conn.fetchrow(
@@ -186,7 +192,8 @@ class CourseRepositoryDB:
                            WHERE similarity(name, $1) > 0.4
                              AND (user_id IS NULL OR user_id = $2)
                            ORDER BY sim DESC LIMIT 1""",
-                        name, uid,
+                        name,
+                        uid,
                     )
                 else:
                     row = await conn.fetchrow(
@@ -220,7 +227,8 @@ class CourseRepositoryDB:
                          AND (user_id IS NULL OR user_id = $2)
                        ORDER BY user_id NULLS FIRST
                        LIMIT 1""",
-                    external_course_id, UUID(user_id),
+                    external_course_id,
+                    UUID(user_id),
                 )
             else:
                 row = await conn.fetchrow(
@@ -249,13 +257,16 @@ class CourseRepositoryDB:
                     """SELECT * FROM courses.courses
                        WHERE LOWER(name) = LOWER($1) AND LOWER(location) = LOWER($2)
                          AND user_id = $3""",
-                    name, location, uid,
+                    name,
+                    location,
+                    uid,
                 )
             else:
                 row = await conn.fetchrow(
                     """SELECT * FROM courses.courses
                        WHERE LOWER(name) = LOWER($1) AND user_id = $2""",
-                    name, uid,
+                    name,
+                    uid,
                 )
             # Tier 2: ILIKE
             if not row:
@@ -264,13 +275,16 @@ class CourseRepositoryDB:
                         """SELECT * FROM courses.courses
                            WHERE name ILIKE $1 AND location ILIKE $2
                              AND user_id = $3 LIMIT 1""",
-                        f"%{name}%", f"%{location}%", uid,
+                        f"%{name}%",
+                        f"%{location}%",
+                        uid,
                     )
                 else:
                     row = await conn.fetchrow(
                         """SELECT * FROM courses.courses
                            WHERE name ILIKE $1 AND user_id = $2 LIMIT 1""",
-                        f"%{name}%", uid,
+                        f"%{name}%",
+                        uid,
                     )
             # Tier 3: trigram
             if not row:
@@ -279,7 +293,8 @@ class CourseRepositoryDB:
                        FROM courses.courses
                        WHERE similarity(name, $1) > 0.4 AND user_id = $2
                        ORDER BY sim DESC LIMIT 1""",
-                    name, uid,
+                    name,
+                    uid,
                 )
             if not row:
                 return None
@@ -298,7 +313,8 @@ class CourseRepositoryDB:
                     """SELECT * FROM courses.courses
                        WHERE LOWER(name) = LOWER($1) AND LOWER(location) = LOWER($2)
                          AND user_id IS NOT NULL LIMIT 1""",
-                    name, location,
+                    name,
+                    location,
                 )
             else:
                 row = await conn.fetchrow(
@@ -313,7 +329,8 @@ class CourseRepositoryDB:
                         """SELECT * FROM courses.courses
                            WHERE name ILIKE $1 AND location ILIKE $2
                              AND user_id IS NOT NULL LIMIT 1""",
-                        f"%{name}%", f"%{location}%",
+                        f"%{name}%",
+                        f"%{location}%",
                     )
                 else:
                     row = await conn.fetchrow(
@@ -365,7 +382,9 @@ class CourseRepositoryDB:
                             """SELECT hole_number FROM courses.holes
                                WHERE course_id = $1 AND handicap = $2 AND hole_number <> $3
                                LIMIT 1""",
-                            cid, handicap, hole_num,
+                            cid,
+                            handicap,
+                            hole_num,
                         )
                         if conflicting_hole_num is not None:
                             handicap = None
@@ -377,7 +396,10 @@ class CourseRepositoryDB:
                                          THEN EXCLUDED.par ELSE courses.holes.par END,
                                handicap = CASE WHEN courses.holes.handicap IS NULL
                                               THEN EXCLUDED.handicap ELSE courses.holes.handicap END""",
-                        cid, hole_num, par, handicap,
+                        cid,
+                        hole_num,
+                        par,
+                        handicap,
                     )
 
                 # Fill tee rating gaps and insert missing yardages.
@@ -393,14 +415,14 @@ class CourseRepositoryDB:
                     existing_tee = await conn.fetchrow(
                         "SELECT id, slope_rating, course_rating FROM courses.tees "
                         "WHERE course_id = $1 AND LOWER(color) = LOWER($2)",
-                        cid, tee_color,
+                        cid,
+                        tee_color,
                     )
                     # If color doesn't match but yardages are mostly the same, map to
                     # the existing course tee so we keep one canonical tee name/source.
                     if not existing_tee and normalized_yardages:
                         candidate_rows = await conn.fetch(
-                            "SELECT id, color, slope_rating, course_rating "
-                            "FROM courses.tees WHERE course_id = $1",
+                            "SELECT id, color, slope_rating, course_rating FROM courses.tees WHERE course_id = $1",
                             cid,
                         )
                         if candidate_rows:
@@ -439,34 +461,38 @@ class CourseRepositoryDB:
                         if course_rating is not None and existing_tee["course_rating"] is None:
                             updates["course_rating"] = course_rating
                         if updates:
-                            set_clause = ", ".join(
-                                f"{k} = ${i + 2}" for i, k in enumerate(updates)
-                            )
+                            set_clause = ", ".join(f"{k} = ${i + 2}" for i, k in enumerate(updates))
                             await conn.execute(
                                 f"UPDATE courses.tees SET {set_clause} WHERE id = $1",
-                                tee_id, *updates.values(),
+                                tee_id,
+                                *updates.values(),
                             )
                     else:
                         # New tee — insert it
                         tee_row = await conn.fetchrow(
                             """INSERT INTO courses.tees (course_id, color, slope_rating, course_rating)
                                VALUES ($1, $2, $3, $4) RETURNING id""",
-                            cid, tee_color, slope_rating, course_rating,
+                            cid,
+                            tee_color,
+                            slope_rating,
+                            course_rating,
                         )
                         tee_id = tee_row["id"]
 
                     if normalized_yardages:
                         for hole_num, yds in normalized_yardages.items():
                             exists = await conn.fetchval(
-                                "SELECT 1 FROM courses.tee_yardages "
-                                "WHERE tee_id = $1 AND hole_number = $2",
-                                tee_id, hole_num,
+                                "SELECT 1 FROM courses.tee_yardages WHERE tee_id = $1 AND hole_number = $2",
+                                tee_id,
+                                hole_num,
                             )
                             if not exists:
                                 await conn.execute(
                                     """INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage)
                                        VALUES ($1, $2, $3)""",
-                                    tee_id, hole_num, yds,
+                                    tee_id,
+                                    hole_num,
+                                    yds,
                                 )
 
     async def promote_to_master(self, course_id: str) -> Course:
@@ -487,9 +513,7 @@ class CourseRepositoryDB:
                 return await self._assemble(conn, row)
             except asyncpg.UniqueViolationError:
                 # Race condition: another master with this name now exists
-                row = await conn.fetchrow(
-                    "SELECT * FROM courses.courses WHERE id = $1", cid
-                )
+                row = await conn.fetchrow("SELECT * FROM courses.courses WHERE id = $1", cid)
                 return await self._assemble(conn, row)
 
     async def list_courses(
@@ -509,19 +533,20 @@ class CourseRepositoryDB:
                     """SELECT * FROM courses.courses
                        WHERE user_id IS NULL OR user_id = $3
                        ORDER BY name LIMIT $1 OFFSET $2""",
-                    limit, offset, UUID(user_id),
+                    limit,
+                    offset,
+                    UUID(user_id),
                 )
             else:
                 rows = await conn.fetch(
                     """SELECT * FROM courses.courses WHERE user_id IS NULL
                        ORDER BY name LIMIT $1 OFFSET $2""",
-                    limit, offset,
+                    limit,
+                    offset,
                 )
             return [await self._assemble(conn, r) for r in rows]
 
-    async def search_courses(
-        self, query: str, *, user_id: Optional[str] = None
-    ) -> List[Course]:
+    async def search_courses(self, query: str, *, user_id: Optional[str] = None) -> List[Course]:
         """Search courses by name or location substring."""
         async with self._pool.acquire() as conn:
             if user_id:
@@ -530,7 +555,8 @@ class CourseRepositoryDB:
                        WHERE (name ILIKE $1 OR location ILIKE $1)
                          AND (user_id IS NULL OR user_id = $2)
                        ORDER BY name LIMIT 20""",
-                    f"%{query}%", UUID(user_id),
+                    f"%{query}%",
+                    UUID(user_id),
                 )
             else:
                 rows = await conn.fetch(
@@ -546,9 +572,7 @@ class CourseRepositoryDB:
     # Create
     # ================================================================
 
-    async def create_course(
-        self, course: Course, *, user_id: Optional[str] = None
-    ) -> Course:
+    async def create_course(self, course: Course, *, user_id: Optional[str] = None) -> Course:
         """Insert a full Course with holes, tees, and yardages in one transaction.
 
         user_id=None creates a master/global course.
@@ -562,8 +586,12 @@ class CourseRepositoryDB:
                     course_row = await conn.fetchrow(
                         """INSERT INTO courses.courses (name, external_course_id, location, par, total_holes, user_id)
                            VALUES ($1, $2, $3, $4, $5, $6) RETURNING *""",
-                        row_data["name"], row_data["external_course_id"], row_data["location"],
-                        row_data["par"], row_data["total_holes"], row_data["user_id"],
+                        row_data["name"],
+                        row_data["external_course_id"],
+                        row_data["location"],
+                        row_data["par"],
+                        row_data["total_holes"],
+                        row_data["user_id"],
                     )
                     course_id = course_row["id"]
 
@@ -582,7 +610,10 @@ class CourseRepositoryDB:
                             """INSERT INTO courses.tees
                                (course_id, color, slope_rating, course_rating)
                                VALUES ($1, $2, $3, $4) RETURNING id""",
-                            course_id, tee.color, tee.slope_rating, tee.course_rating,
+                            course_id,
+                            tee.color,
+                            tee.slope_rating,
+                            tee.course_rating,
                         )
                         tee_id = tee_row["id"]
 
@@ -610,15 +641,11 @@ class CourseRepositoryDB:
         UUID(user_id)  # validate the caller-supplied id up front
         async with self._pool.acquire() as conn:
             # Load the source course
-            source_row = await conn.fetchrow(
-                "SELECT * FROM courses.courses WHERE id = $1", UUID(course_id)
-            )
+            source_row = await conn.fetchrow("SELECT * FROM courses.courses WHERE id = $1", UUID(course_id))
             if not source_row:
                 raise NotFoundError(f"Course {course_id} not found")
 
-            hole_rows, tee_rows, yardage_map = await self._load_children(
-                conn, source_row["id"]
-            )
+            hole_rows, tee_rows, yardage_map = await self._load_children(conn, source_row["id"])
 
         # Build a Course model and create it for the user
         # (uses a fresh connection to avoid nested acquire)
@@ -629,9 +656,7 @@ class CourseRepositoryDB:
             return await self.create_course(source, user_id=user_id)
         except DuplicateError:
             # User already has a custom course with this name — return it
-            existing = await self.find_course_by_name(
-                source.name, source.location, user_id=user_id
-            )
+            existing = await self.find_course_by_name(source.name, source.location, user_id=user_id)
             if existing and existing.user_id == user_id:
                 return existing
             raise
@@ -640,9 +665,7 @@ class CourseRepositoryDB:
     # Update
     # ================================================================
 
-    async def update_course(
-        self, course_id: str, *, user_id: Optional[str] = None, **fields
-    ) -> Optional[Course]:
+    async def update_course(self, course_id: str, *, user_id: Optional[str] = None, **fields) -> Optional[Course]:
         """Update top-level course fields.
 
         When user_id is provided, enforces that the course is owned by that user
@@ -663,7 +686,7 @@ class CourseRepositoryDB:
                 if not row or str(row["user_id"]) != user_id:
                     return None  # Not found or not owned by this user
 
-            set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates))
+            set_clause = ", ".join(f"{k} = ${i + 2}" for i, k in enumerate(updates))
             values = [UUID(course_id)] + list(updates.values())
 
             row = await conn.fetchrow(
@@ -682,7 +705,10 @@ class CourseRepositoryDB:
                    VALUES ($1, $2, $3, $4)
                    ON CONFLICT (course_id, hole_number)
                    DO UPDATE SET par = EXCLUDED.par, handicap = EXCLUDED.handicap""",
-                UUID(course_id), hole.number, hole.par, hole.handicap,
+                UUID(course_id),
+                hole.number,
+                hole.par,
+                hole.handicap,
             )
 
     async def upsert_tee(self, course_id: str, tee: Tee) -> None:
@@ -693,7 +719,8 @@ class CourseRepositoryDB:
                 existing_tee = await conn.fetchrow(
                     """SELECT id FROM courses.tees
                        WHERE course_id = $1 AND LOWER(color) = LOWER($2)""",
-                    cid, tee.color,
+                    cid,
+                    tee.color,
                 )
                 if existing_tee:
                     tee_id = existing_tee["id"]
@@ -701,21 +728,24 @@ class CourseRepositoryDB:
                         """UPDATE courses.tees
                            SET slope_rating = $2, course_rating = $3
                            WHERE id = $1""",
-                        tee_id, tee.slope_rating, tee.course_rating,
+                        tee_id,
+                        tee.slope_rating,
+                        tee.course_rating,
                     )
                 else:
                     tee_row = await conn.fetchrow(
                         """INSERT INTO courses.tees
                            (course_id, color, slope_rating, course_rating)
                            VALUES ($1, $2, $3, $4) RETURNING id""",
-                        cid, tee.color, tee.slope_rating, tee.course_rating,
+                        cid,
+                        tee.color,
+                        tee.slope_rating,
+                        tee.course_rating,
                     )
                     tee_id = tee_row["id"]
 
                 # Replace all yardages for this tee
-                await conn.execute(
-                    "DELETE FROM courses.tee_yardages WHERE tee_id = $1", tee_id
-                )
+                await conn.execute("DELETE FROM courses.tee_yardages WHERE tee_id = $1", tee_id)
                 yardage_tuples = tee_yardages_to_rows(tee, tee_id)
                 if yardage_tuples:
                     await conn.executemany(
@@ -729,9 +759,7 @@ class CourseRepositoryDB:
     # Delete
     # ================================================================
 
-    async def delete_course(
-        self, course_id: str, *, user_id: Optional[str] = None
-    ) -> bool:
+    async def delete_course(self, course_id: str, *, user_id: Optional[str] = None) -> bool:
         """Delete a course and all children (CASCADE). Returns True if deleted.
 
         When user_id is provided, only deletes if the course is owned by that user.
@@ -740,10 +768,9 @@ class CourseRepositoryDB:
             if user_id:
                 result = await conn.execute(
                     "DELETE FROM courses.courses WHERE id = $1 AND user_id = $2",
-                    UUID(course_id), UUID(user_id),
+                    UUID(course_id),
+                    UUID(user_id),
                 )
             else:
-                result = await conn.execute(
-                    "DELETE FROM courses.courses WHERE id = $1", UUID(course_id)
-                )
+                result = await conn.execute("DELETE FROM courses.courses WHERE id = $1", UUID(course_id))
             return result == "DELETE 1"
