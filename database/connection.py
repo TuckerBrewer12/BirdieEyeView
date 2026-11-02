@@ -1,3 +1,4 @@
+import asyncio
 import asyncpg
 from typing import Optional
 
@@ -7,6 +8,7 @@ class DatabasePool:
 
     def __init__(self):
         self._pool: Optional[asyncpg.Pool] = None
+        self._lifecycle_lock = asyncio.Lock()
 
     async def initialize(
         self,
@@ -22,28 +24,30 @@ class DatabasePool:
         connect_timeout: Optional[float] = None,
     ) -> None:
         """Create the connection pool. Call once at app startup."""
-        if self._pool is not None:
-            return
-        pool_kwargs = {}
-        if connect_timeout is not None:
-            pool_kwargs["timeout"] = max(float(connect_timeout), 1.0)
-        self._pool = await asyncpg.create_pool(
-            dsn=dsn,
-            host=None if dsn else host,
-            port=None if dsn else port,
-            database=None if dsn else database,
-            user=None if dsn else user,
-            password=None if dsn else password,
-            min_size=min_size,
-            max_size=max_size,
-            **pool_kwargs,
-        )
+        async with self._lifecycle_lock:
+            if self._pool is not None:
+                return
+            pool_kwargs = {}
+            if connect_timeout is not None:
+                pool_kwargs["timeout"] = max(float(connect_timeout), 1.0)
+            self._pool = await asyncpg.create_pool(
+                dsn=dsn,
+                host=None if dsn else host,
+                port=None if dsn else port,
+                database=None if dsn else database,
+                user=None if dsn else user,
+                password=None if dsn else password,
+                min_size=min_size,
+                max_size=max_size,
+                **pool_kwargs,
+            )
 
     async def close(self) -> None:
         """Close all connections. Call at app shutdown."""
-        if self._pool:
-            await self._pool.close()
-            self._pool = None
+        async with self._lifecycle_lock:
+            if self._pool is not None:
+                await self._pool.close()
+                self._pool = None
 
     @property
     def pool(self) -> asyncpg.Pool:
