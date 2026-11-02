@@ -144,6 +144,7 @@ def make_round_summary(round_id: UUID) -> dict:
         "tee_box": "Blue",
         "round_date": datetime(2026, 1, 2),
         "total_score": 80,
+        "to_par": 8,
         "front_nine": 40,
         "back_nine": 40,
         "total_putts": 30,

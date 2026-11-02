@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from api.routers import users
-from database.exceptions import DuplicateError, NotFoundError
+from database.exceptions import ConflictError, DuplicateError, NotFoundError
 from models import UserTee
 from tests.helpers import make_course, make_friendship_row, make_mock_database, make_user
 
@@ -161,6 +161,16 @@ async def test_delete_user_tee_delegates_to_repository(tee_database):
     await users.delete_user_tee(user_id, tee_id, db, user)
 
     db.user_tees.delete_user_tee.assert_awaited_once_with(str(tee_id), user_id=str(user_id))
+
+
+@pytest.mark.asyncio
+async def test_delete_referenced_user_tee_returns_clear_conflict(tee_database):
+    user_id, tee_id, user, _, db = tee_database
+    db.user_tees.delete_user_tee.side_effect = ConflictError('Used by past rounds')
+    with pytest.raises(HTTPException) as raised:
+        await users.delete_user_tee(user_id, tee_id, db, user)
+    assert raised.value.status_code == 409
+    assert 'past rounds' in raised.value.detail
 
 
 @pytest.mark.asyncio

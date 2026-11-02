@@ -10,6 +10,7 @@ from starlette.datastructures import Headers
 
 from api.request_models import SaveRoundRequest
 from api.routers import scan
+from database.exceptions import IntegrityError
 from models import Course, Hole, Round, Tee, User
 from services.mistral_scorecard_parser import ParsedScorecardRows, ParsedTeeRow
 
@@ -465,6 +466,11 @@ async def test_save_round_assigns_authenticated_user(monkeypatch):
     [
         (
             ValueError("course_id references users.private_courses"),
+            400,
+            "We couldn't save this round. Please try again.",
+        ),
+        (
+            IntegrityError("A saved round requires unique numbered holes and at least one score"),
             400,
             "We couldn't save this round. Please try again.",
         ),

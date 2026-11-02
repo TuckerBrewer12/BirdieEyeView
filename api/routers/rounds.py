@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing import List, Optional
 from database.db_manager import DatabaseManager
-from database.exceptions import NotFoundError
+from database.exceptions import IntegrityError, NotFoundError
 from api.dependencies import get_current_user, get_db
 from api.input_validation import sanitize_user_text
 from api.schemas import RoundSummaryResponse
@@ -132,11 +132,7 @@ async def get_rounds_for_user(
             tee_box=row["tee_box"],
             date=row["round_date"],
             total_score=row["total_score"],
-            to_par=(
-                (row["total_score"] - row["course_par"])
-                if row["total_score"] is not None and row["course_par"] is not None
-                else None
-            ),
+            to_par=row["to_par"],
             front_nine=row["front_nine"],
             back_nine=row["back_nine"],
             total_putts=row["total_putts"],
@@ -238,6 +234,9 @@ async def update_round(
 
     except NotFoundError:
         raise HTTPException(404, "Round not found")
+    except IntegrityError:
+        logger.warning("Update round rejected", exc_info=True)
+        raise HTTPException(422, "These changes can't be saved. Check the hole numbers and scores.")
     except Exception:
         logger.exception("Update round error")
         raise HTTPException(500, "Update failed. Please try again.")
@@ -326,6 +325,9 @@ async def link_course_to_round(
         return summarize_round(updated)
     except HTTPException:
         raise
+    except IntegrityError:
+        logger.warning("Link course rejected", exc_info=True)
+        raise HTTPException(422, "This round's holes don't match the selected course.")
     except Exception:
         logger.exception("Link course error")
         raise HTTPException(500, "Link failed. Please try again.")

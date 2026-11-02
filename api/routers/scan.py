@@ -16,6 +16,7 @@ from PIL import Image, ImageOps
 logger = logging.getLogger(__name__)
 
 from database.db_manager import DatabaseManager
+from database.exceptions import IntegrityError
 from api.dependencies import get_current_user, get_optional_current_user, get_db
 from api.error_responses import ROUND_SAVE_FAILED, SCAN_FAILED
 from api.input_validation import ensure_uuid_str, normalize_course_display_name, sanitize_ocr_text, sanitize_user_text
@@ -883,7 +884,7 @@ async def save_round(
         service = ScanService(db)
         saved = await service.save_reviewed_scan(req)
         return {"id": saved.id, "total_score": saved.calculate_total_score()}
-    except ValueError:
+    except (ValueError, IntegrityError):
         logger.exception("Save round validation failed")
         raise HTTPException(400, ROUND_SAVE_FAILED)
     except Exception:

@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from api.routers import rounds
+from database.exceptions import IntegrityError
 from models import UserTee
 from tests.helpers import make_course, make_mock_database, make_round, make_round_summary, make_user
 
@@ -44,15 +45,17 @@ def owned_round_setup():
 
 
 @pytest.mark.asyncio
-async def test_list_rounds_returns_summaries():
+@pytest.mark.parametrize('to_par', [8, None, -2])
+async def test_list_rounds_returns_summaries(to_par):
     user_id = uuid4()
     round_id = uuid4()
     db = make_mock_database()
-    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[make_round_summary(round_id)])
+    summary = {**make_round_summary(round_id), 'to_par': to_par}
+    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[summary])
 
     listed = await rounds.get_rounds_for_user(user_id, 10, 0, db, make_user(user_id))
 
-    assert (listed[0].id, listed[0].to_par) == (str(round_id), 8)
+    assert (listed[0].id, listed[0].to_par) == (str(round_id), to_par)
 
 
 @pytest.mark.asyncio
@@ -96,6 +99,18 @@ async def test_update_round_updates_scores_and_metadata(owned_round_setup):
 
 
 @pytest.mark.asyncio
+async def test_update_round_rejects_invalid_scores_without_server_error(owned_round_setup):
+    user_id, round_id, _, db = owned_round_setup
+    db.rounds.update_hole_scores = AsyncMock(side_effect=IntegrityError("Hole is outside the linked course layout"))
+    request = rounds.UpdateRoundRequest(hole_scores=[{"hole_number": 12, "strokes": 4}])
+
+    with pytest.raises(HTTPException) as raised:
+        await rounds.update_round(round_id, request, db, make_user(user_id))
+
+    assert raised.value.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_delete_round_delegates_with_owner(owned_round_setup):
     user_id, round_id, _, db = owned_round_setup
     db.rounds.delete_round = AsyncMock(return_value=True)
@@ -136,3 +151,21 @@ async def test_link_course_backfills_scan_data():
     assert linked_round.id == str(round_id)
     assert db.courses.fill_course_gaps.await_count == 2
     db.rounds.link_course_to_round.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_link_course_rejects_mismatched_layout_without_server_error():
+    user_id = uuid4()
+    round_id = uuid4()
+    course_id = uuid4()
+    db = make_mock_database()
+    db.rounds.get_round_owner_id = AsyncMock(return_value=str(user_id))
+    db.rounds.get_round = AsyncMock(return_value=make_round(round_id))
+    db.courses.get_course = AsyncMock(return_value=make_course(course_id, owner=user_id))
+    db.courses.fill_course_gaps = AsyncMock()
+    db.rounds.link_course_to_round = AsyncMock(side_effect=IntegrityError("Hole is outside the course layout"))
+
+    with pytest.raises(HTTPException) as raised:
+        await rounds.link_course_to_round(round_id, rounds.LinkCourseRequest(course_id=course_id), db, make_user(user_id))
+
+    assert raised.value.status_code == 422
