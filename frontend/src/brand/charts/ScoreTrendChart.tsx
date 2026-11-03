@@ -72,7 +72,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             y1={y(tick)}
             y2={y(tick)}
             stroke={tokens.color.chart.muted}
-            strokeWidth={1}
+            strokeWidth={tokens.lineWidth.border}
           />
         ))}
         {gridTicks.map((tick) => (
@@ -114,7 +114,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             y1={PAD.top}
             y2={H - PAD.bottom}
             stroke={tokens.color.chart.muted}
-            strokeWidth={1}
+            strokeWidth={tokens.lineWidth.border}
             strokeDasharray="3 3"
           />
         )}

@@ -69,12 +69,12 @@ export function RadarChart({
             points={outline(axes.map(() => ring))}
             fill="none"
             stroke={tokens.color.chart.muted}
-            strokeWidth={1}
+            strokeWidth={tokens.lineWidth.border}
           />
         ))}
         {axes.map((axis, i) => {
           const [x, y] = point(i, 100);
-          return <line key={axis.label} x1={cx} y1={cy} x2={x} y2={y} stroke={tokens.color.chart.muted} strokeWidth={1} />;
+          return <line key={axis.label} x1={cx} y1={cy} x2={x} y2={y} stroke={tokens.color.chart.muted} strokeWidth={tokens.lineWidth.border} />;
         })}
 
         {compared && (

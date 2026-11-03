@@ -82,7 +82,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               y1={PAD.top}
               y2={H - PAD.bottom}
               stroke={tokens.color.border}
-              strokeWidth={1}
+              strokeWidth={tokens.lineWidth.border}
             />
           )}
 
@@ -126,7 +126,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               y1={PAD.top}
               y2={H - PAD.bottom}
               stroke={tokens.color.chart.muted}
-              strokeWidth={1}
+              strokeWidth={tokens.lineWidth.border}
               strokeDasharray="3 3"
             />
           )}
