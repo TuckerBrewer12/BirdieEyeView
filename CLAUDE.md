@@ -154,153 +154,48 @@ Shared code (`domain/`, `data/`, repositories, `*Model.ts`, view models) imports
 ## UI Design System
 
 ### Philosophy
-Clean, minimal, data-first. Premium/professional feel — refined spacing, subtle motion, semantic color. Not flashy; every visual element earns its place.
+Clean, minimal, data-first. Premium/professional feel — refined spacing, subtle motion, semantic colour. Not flashy; every visual element earns its place. Build from the kit in `src/brand/` before writing markup; a generic piece another page will want belongs in the kit.
 
-### Color Palette
+### Colour
+Every colour is a token in `src/brand/theme/tokens.css`, used through its Tailwind utility. No hex, `rgb()`, `oklch()`, `color-mix()` or raw palette class (`text-gray-500`, `bg-white`) anywhere else.
 
-**Primary:** `#2d7a3a` (forest green) — used for primary buttons, accents, section tints.
+- **Surfaces and ink:** `bg-background` (page), `bg-card` + `text-card-foreground`, `text-foreground`, `text-muted-foreground` (secondary text, captions), `bg-muted`, `bg-secondary`, `bg-accent`, `border-border`, `border-input`, `ring-ring`.
+- **Brand:** `bg-primary` / `text-primary` / `text-primary-foreground` — forest green for primary actions, accents and section labels. `text-destructive` for errors and deletes.
+- **Score kinds** (`eagle`, `birdie`, `par`, `bogey`, `double`, `triple`, `quad`) encode data: `text-score-<kind>` for ink, `bg-score-<kind>-base` + `text-score-<kind>-on-base` for a fill, `bg-score-<kind>-muted` for a wash. When the kind or to-par is only known at runtime use `scoreFillClass()`, `scoreOnFillClass()`, `toParTextClass()` or `toParBadgeClass()` from `@/brand/theme`.
+- **Other families:** `from-sidebar to-sidebar-end` + `text-sidebar-foreground` (the side rail), `bg-tee-<colour>` / `text-tee-<colour>-on` (through `TeeSwatch`), `bg-scan-row-<row>` (scorecard layout rows), and `chartColors` for chart chrome.
 
-**Score type colors** (semantic across all charts + components):
-- Eagle+: `#f59e0b` (amber)
-- Birdie: `#059669` (emerald)
-- Par: `#9ca3af` (gray)
-- Bogey: `#ef4444` (red)
-- Double: `#60a5fa` (blue)
-- Triple: `#a78bfa` (purple)
-- Quad+: `#6d28d9` (deep purple)
+### Type and measures
+- DM Sans (`font-sans`) and DM Mono (`font-mono`); the body font is set once in `index.css`.
+- Type roles, not pixel sizes: `text-caption`, `text-meta`, `text-label`, `text-body-sm`, `text-body`, `text-title`, `text-hero`, with `tracking-*` (`tracking-section`, `tracking-eyebrow`, `tracking-stat`, …). Tailwind's scale (`text-sm`, `p-4`, `gap-2`) is fine; arbitrary values (`text-[11px]`, `w-[54px]`) are not.
+- Measures off the 4px scale are named: `rounded-card`, `rounded-tooltip`, `gap-tight`, `h-chart`, `w-preview`, `size-icon-xs`, `grid-cols-round-preview`, …
+- Shadows follow `--shadow`: `shadow-card` for a lifted surface or a hover, `shadow-hairline` under a pinned bar. Tailwind's `shadow-sm` / `-md` / `-lg` are wired to the same token, so they lift in dark mode too.
 
-**UI semantic colors:**
-- Success/GIR: `#059669`
-- Danger: `#ef4444` / `#f87171`
-- Neutral/grid: `#e5e7eb`
-- Muted fill: `#e5e7eb`
+### Kit components
+- **Page:** `PageTitle`, `PageHeader` (the bar pinned once the title scrolls off), `SectionLabel` (the eyebrow above a section), `AppShell`.
+- **Surfaces:** `Card` (`CardHeader`, `CardTitle`, `CardContent`, …), `Sheet`, `Alert`, `Collapse` / `Collapsible`.
+- **Figures:** `Stat` (a figure and its label, `sm`–`xl`), `ToParFigure`, `ScoreCountChip`, `Meter`, `TeeSwatch`.
+- **Lists and controls:** `Collection` (a list with its loading and empty states), `Button` (`default`, `outline`, `secondary`, `ghost`, `destructive`, `link`, `linkMuted`; `shape="pill"`), `ToggleGroup`, `SortControl`, `SearchField`, `Input`, `Field`.
+- **Golf:** `RoundPreview`, `CoursePreview`, `RoundScorecard`, `ScorecardTable`, and the charts in `brand/charts/`.
 
-**Backgrounds:**
-- Page: `#f8faf8` (off-white)
-- Card: `white` with `border-gray-100`
-- Scoring section: `bg-gradient-to-b from-[#eef7f0]/70 to-[#f8faf8]`
-- Putting section: `bg-gradient-to-b from-[#f0f5ff]/50 to-[#f8faf8]`
-- Short game section: `bg-gradient-to-b from-[#fdf4ff]/50 to-[#f8faf8]`
-- Sidebar: `linear-gradient(180deg, #1e3d25 0%, #152d1b 100%)`
+### Motion
+All animation is `framer-motion`, with its numbers from `motion` in `@/brand/theme`: `hoverScale` / `tapScale` on `spring` for hover and press, `entrance` for content arriving, `layout` for a block resizing, `draw` and `pop` for a chart line and its points, `duration.collapse`. `Reveal` fades a section up as it scrolls in and holds still for reduced motion. Fast enough to feel snappy, slow enough to register; no raw `stiffness` or `duration` in a component.
 
-**Par badge colors** (used in distance zone lists, pills):
-- Par 3: bg `#ede9fe` / text `#6d28d9`
-- Par 4: bg `#e0f2fe` / text `#0369a1`
-- Par 5: bg `#dcfce7` / text `#15803d`
-
-### Typography
-
-Font: `"Inter", system-ui, -apple-system, sans-serif` with `-webkit-font-smoothing: antialiased`.
-
-| Role | Classes |
-|---|---|
-| Page title | `text-3xl font-extrabold tracking-tight text-gray-900` |
-| Section label | `text-[11px] font-bold text-primary/50 uppercase tracking-[0.18em]` |
-| Card title | `text-sm font-semibold text-gray-800` |
-| Subsection label | `text-xs font-medium text-gray-500 uppercase tracking-wide` |
-| Body | `text-sm text-gray-600` |
-| Caption / axis | `text-[10px] text-gray-400` |
-| Hero stat | `text-2xl font-bold` (cards) / `text-6xl font-black` (best round) |
-
-### Cards & Containers
-
-**Standard chart card:**
-```tsx
-<div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-```
-
-**Glassmorphic card / HUD:**
-```tsx
-<div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-sm">
-```
-
-**Tooltip:**
-```tsx
-<div className="bg-white/95 backdrop-blur-sm rounded-xl border border-gray-100 shadow-lg px-3 py-2.5 text-xs">
-```
-
-Rules: `rounded-2xl` for cards, `rounded-xl` for tooltips/small elements. Border always `border-gray-100`. Shadow always `shadow-sm` (heavier only on hover). Divide lists with `divide-y divide-gray-50`.
-
-### Layout
-
-- Analytics sections bleed to full width with `-mx-8 px-8 py-10` + colored `bg-gradient-to-b` backgrounds.
-- Chart grids: `grid grid-cols-1 lg:grid-cols-2 gap-5`.
-- Insight rows: `grid grid-cols-1 md:grid-cols-2 gap-3`.
-- Stat row: `grid grid-cols-2 lg:grid-cols-5 gap-4`.
-- Page-level padding: `p-5` cards, `p-6` chart cards, `px-4 py-3` list rows.
-
-### Motion & Animation
-
-All animation via `framer-motion`. Principles: fast enough to feel snappy, slow enough to register. Spring physics on hover; eased transitions for entrances.
-
-**Scroll entrance (ScrollSection):**
-```tsx
-initial={{ opacity: 0, y: 36 }}
-animate={{ opacity: 1, y: 0 }}
-transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-```
-
-**Hover spring (cards, stat pills):**
-```tsx
-whileHover={{ scale: 1.025, boxShadow: "0 10px 32px rgba(0,0,0,0.10)" }}
-transition={{ type: "spring", stiffness: 360, damping: 28 }}
-```
-
-**Tooltip fade:**
-```tsx
-initial={{ opacity: 0, scale: 0.92, y: 4 }}
-animate={{ opacity: 1, scale: 1, y: 0 }}
-transition={{ duration: 0.15 }}
-```
-
-**SVG path draw (tracers, timeline):**
-```tsx
-initial={{ pathLength: 0, opacity: 0 }}
-animate={{ pathLength: 1, opacity: 1 }}
-transition={{ duration: 1.0–1.4, ease: "easeInOut" }}
-```
-
-**Staggered dot entrance:**
-```tsx
-transition={{ delay: Math.min(i * 0.004, 1.0), duration: 0.5, ease: "easeOut" }}
-```
-
-### SVG / Data Viz
-
-Golf-native visualizations preferred over generic chart types where possible (see Range View). SVG components use `viewBox` with `overflow: visible`. D3 scales (`d3-scale`, `d3-shape`) for math; framer-motion for animation. Recharts used for trend/bar/area charts.
-
-Common SVG patterns:
-- Dashed reference lines: `strokeDasharray="4 5"`, `stroke="#e5e7eb"`
-- Glow filter on positive outliers: `feGaussianBlur stdDeviation="2"` + feMerge
-- Ground/fill gradients: `from #f1f5f9 to transparent`
-- Chart tooltip: nearest-point detection on `onMouseMove`, dismissed on `onMouseLeave`
-
-### Buttons
-
-```tsx
-// Primary (selected/active)
-"bg-primary text-white shadow-sm"
-
-// Default
-"bg-white border border-gray-200 text-gray-600 hover:border-gray-300"
-
-// Both
-"px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-```
+### Charts
+Golf-native visualizations over generic chart types where possible. SVG charts use a `viewBox` and D3 scales (`d3-scale`, `d3-shape`) for the maths; Recharts draws trend, bar and area charts. Recharts takes style objects and numbers, so pass `chartTooltipStyle`, `chartTickStyle`, `chartLayout` and `chartColors` (`tokens.test.ts` keeps `chartLayout` equal to the tokens). Tooltips find the nearest point on `onMouseMove` and close on `onMouseLeave`.
 
 ### Brand tokens (`src/brand/`)
 
-**`src/brand/theme/tokens.css` is the source of truth for every color.** Nothing else holds a hex value. `colors.ts` mirrors the same names as `var()` references so TypeScript can reach them — it holds no values of its own.
+**`src/brand/theme/tokens.css` is the source of truth for every color.** Nothing else holds a colour value. `colors.ts` mirrors the same names as `var()` references so TypeScript can reach them — it holds no values of its own.
 
-- Add a color by declaring it in `tokens.css` (both `:root` and `:root.dark`), adding a `--color-*` line to `@theme inline` if it needs a Tailwind utility, and adding the matching `var()` reference to `colors.ts`.
-- Brand components style with **token utilities only** (`bg-card`, `border-border`, `text-primary`). No hex, no `rgba()`, no raw palette classes like `text-gray-400`. `tokens.test.ts` scans `src/brand/**` and fails the build on any violation, naming the file and the offending value. It also fails if `colors.ts` points at a token `tokens.css` doesn't define.
-- Reach for `colors.*` only when the color is dynamic and a static class can't express it — `scoreFill()` for a per-hole fill is the motivating case. Prefer the utility everywhere else.
+- Add a color by declaring it in `:root`, and again in `:root.dark` only if dark mode needs a different value. A token that is the same colour as another aliases it (`--scan-row-score: var(--primary)`) rather than repeating the value. Add a `--color-*` line to `@theme inline` if it needs a Tailwind utility, and a `var()` reference to `colors.ts` if TypeScript needs it.
+- Brand components style with **token utilities only** (`bg-card`, `border-border`, `text-primary`). `tokens.test.ts` scans `src/brand/**` and fails the build on a hex, `rgb()`, `hsl()`, `oklch()`, `color-mix()` or raw palette class, naming the file and the offending value. It also fails if `colors.ts` points at a token `tokens.css` doesn't define, or if `capacitor.config.ts` (native, so it can't read CSS) drifts from `--primary` / `--background`.
+- Reach for `colors.*` only when the color is dynamic and a static class can't express it — a per-hole score fill (`toParFill()`, `colors.score.<kind>.base`) is the motivating case. Prefer the utility everywhere else.
 - Because `colors.*` returns `var()` references, they don't work where the string is parsed as a color (canvas, some chart libraries). Resolve those against the document: `getComputedStyle(document.documentElement).getPropertyValue("--card")`.
-- Score colors are `--score-<key>-fill` / `-on-fill` / `-text`, plus `text-score-<key>` utilities. Use `toParTextClass()` for to-par text.
+- Score colors are `--score-<kind>-base` / `-muted` / `-on-base` / `-on-muted` / `-text`, plus the `text-score-<kind>` utilities. Use `toParTextClass()` for to-par text.
 
 ### Dark Mode
 
-Implemented via `:root.dark` in `brand/theme/tokens.css`. Views take their dark look from the tokens and `dark:` variants; `useTheme()` is only for reading and setting the preference.
+Implemented via `:root.dark` in `brand/theme/tokens.css`, which redeclares only the values that change; aliases follow them. Score, tee and scan-row colours, `--primary` and the sidebar are the same in both modes. Views take their dark look from the tokens and `dark:` variants; `useTheme()` is only for reading and setting the preference.
 
 ---
 

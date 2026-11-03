@@ -18,25 +18,32 @@
   --background: #f8faf8;
   --foreground: #1a2e1a;
   --card: #ffffff;
-  --card-foreground: #1a2e1a;
+  /* Ink on a card, an accent wash or the secondary fill is the page's ink.
+     These alias --foreground, so each mode sets it once. */
+  --card-foreground: var(--foreground);
   --muted: #f4f6f0;
   --muted-foreground: #6b7765;
   --border: #e4e9e1;
-  --input: #e4e9e1;
+  /* A field's outline is the ordinary border. */
+  --input: var(--border);
   --ring: #2d7a3a;
   --primary: #2d7a3a;
   --primary-foreground: #ffffff;
   --secondary: #f4f6f0;
-  --secondary-foreground: #1a2e1a;
+  --secondary-foreground: var(--foreground);
+  /* The secondary fill under the pointer: a touch of ink mixed in. Both
+     inputs follow the mode, so this needs no dark copy. */
+  --secondary-hover: color-mix(in oklch, var(--secondary), var(--foreground) 5%);
   --accent: #e8f5e9;
-  --accent-foreground: #1a2e1a;
+  --accent-foreground: var(--foreground);
   --destructive: #dc2626;
   /* Ambient shadow for lifted surfaces; alpha so it reads on any backdrop. */
   --shadow: rgb(15 23 42 / 0.10);
 
   /* Chart chrome. Data colours are the --score-* tokens; these are the
-     surrounding furniture, which does follow the colour mode. */
-  --chart-axis: #9ca3af;
+     surrounding furniture, which does follow the colour mode. On a light page
+     the axis is the par grey; dark mode dims it below. */
+  --chart-axis: var(--score-par-base);
   --chart-muted: #e5e7eb;
   --chart-accent: #4ade80;
 
@@ -51,50 +58,51 @@
 
   /* Score colors encode data, so they do not flip with the color mode.
      `base` is the saturated fill; `muted` is the wash behind a score on a
-     light surface. Reach for colors.score.eagle.base / .muted in TypeScript. */
+     light surface. `text`, the ink on the page, is the fill colour itself.
+     Reach for colors.score.eagle.base / .muted in TypeScript. */
   --score-eagle-base: #f59e0b;
   --score-eagle-muted: #fef3c7;
   --score-eagle-on-base: #ffffff;
   --score-eagle-on-muted: #92400e;
-  --score-eagle-text: #f59e0b;
+  --score-eagle-text: var(--score-eagle-base);
   --score-birdie-base: #059669;
   --score-birdie-muted: #d1fae5;
   --score-birdie-on-base: #ffffff;
   --score-birdie-on-muted: #065f46;
-  --score-birdie-text: #059669;
+  --score-birdie-text: var(--score-birdie-base);
   --score-par-base: #9ca3af;
   --score-par-muted: #f3f4f6;
   --score-par-on-base: #ffffff;
   --score-par-on-muted: #374151;
-  --score-par-text: #9ca3af;
+  --score-par-text: var(--score-par-base);
   --score-bogey-base: #f87171;
   --score-bogey-muted: #fee2e2;
   --score-bogey-on-base: #ffffff;
   --score-bogey-on-muted: #991b1b;
-  --score-bogey-text: #f87171;
+  --score-bogey-text: var(--score-bogey-base);
   --score-double-base: #60a5fa;
   --score-double-muted: #dbeafe;
   --score-double-on-base: #ffffff;
   --score-double-on-muted: #1e40af;
-  --score-double-text: #60a5fa;
+  --score-double-text: var(--score-double-base);
   --score-triple-base: #a78bfa;
   --score-triple-muted: #ede9fe;
   --score-triple-on-base: #ffffff;
   --score-triple-on-muted: #5b21b6;
-  --score-triple-text: #a78bfa;
+  --score-triple-text: var(--score-triple-base);
   --score-quad-base: #6d28d9;
   --score-quad-muted: #ddd6fe;
   --score-quad-on-base: #ffffff;
   --score-quad-on-muted: #4c1d95;
-  --score-quad-text: #6d28d9;
+  --score-quad-text: var(--score-quad-base);
 
   /* Scorecard rows. The layout picker's chips and the landing hero's demo of
      it share one set, so the demo shows the colours the picker will use. Fixed
      like the score colours: they label rows, not surfaces. */
   --scan-row-name: #475569;
-  --scan-row-score: #2d7a3a;
+  --scan-row-score: var(--primary);
   --scan-row-putts: #0369a1;
-  --scan-row-shots: #6d28d9;
+  --scan-row-shots: var(--score-quad-base);
   --demo-card-header: #2d4c3b;
 
   /* Tee boxes. A tee's colour names a real marker on the course, so like the
@@ -223,18 +231,12 @@
   --background: #111213;
   --foreground: #e6edf3;
   --card: #18191a;
-  --card-foreground: #e6edf3;
   --muted: #222426;
   --muted-foreground: #9aa4b2;
   --border: #2a2d30;
-  --input: #2a2d30;
   --ring: #34d399;
-  --primary: #2d7a3a;
-  --primary-foreground: #ffffff;
   --secondary: #222426;
-  --secondary-foreground: #e6edf3;
   --accent: #1a3a1f;
-  --accent-foreground: #e6edf3;
   --destructive: #f87171;
   /* Black reads as nothing on a dark page, so lift with a stronger halo. */
   --shadow: rgb(0 0 0 / 0.55);
@@ -242,9 +244,8 @@
   --chart-axis: #6b7280;
   --chart-muted: #2a2d30;
 
-  --sidebar: #1e3d25;
-  --sidebar-end: #152d1b;
-  --sidebar-foreground: #ffffff;
+  /* --primary and the sidebar keep their light values: the brand green and
+     its rail are the same in both modes. */
 }
 
 @theme inline {
@@ -264,6 +265,7 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-hover: var(--secondary-hover);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
@@ -331,9 +333,14 @@
   --color-tee-brown: var(--tee-brown);
   --color-tee-brown-on: var(--tee-brown-on);
 
-  /* Shadows track --shadow, so they invert in dark mode. */
+  /* Shadows track --shadow, so they deepen in dark mode. shadow-card and
+     shadow-hairline are the kit's; sm/md/lg keep Tailwind's geometry but take
+     --shadow too, so a pasted shadcn component lifts in both modes. */
   --shadow-card: 0 6px 20px var(--shadow);
   --shadow-hairline: 0 1px 0 var(--shadow);
+  --shadow-sm: 0 1px 3px 0 var(--shadow), 0 1px 2px -1px var(--shadow);
+  --shadow-md: 0 4px 6px -1px var(--shadow), 0 2px 4px -2px var(--shadow);
+  --shadow-lg: 0 10px 15px -3px var(--shadow), 0 4px 6px -4px var(--shadow);
 
   --font-sans: var(--brand-font-sans);
   --font-mono: var(--brand-font-mono);

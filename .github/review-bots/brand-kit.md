@@ -13,7 +13,7 @@ color/size styles.
 ## What to look for
 
 **Hardcoded colors.** Any color value added or changed by this diff that does
-not come from a brand token — hex, `rgb()`, `hsl()`, or a Tailwind palette
+not come from a brand token — hex, `rgb()`, `hsl()`, `oklch()`, `color-mix()`, or a Tailwind palette
 class like `text-gray-500` / `bg-emerald-600`. The tokens live in
 `frontend/src/brand/theme/tokens.css`. Use the matching Tailwind utility
 (`bg-primary`, `text-muted-foreground`, `border-border`, `text-score-birdie`,
