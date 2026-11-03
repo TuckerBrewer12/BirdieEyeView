@@ -92,8 +92,6 @@ interface ChartTabsProps<T> {
   selectedCharts: T[];
   keyFor: (chart: T) => string;
   renderChart: (chart: T) => ReactNode;
-  /** What the tabs switch between, for screen readers. */
-  label?: string;
   /** Below md: stack the tab's charts, or set small ones two to a row when the tab has several. */
   mobileLayout?: "stack" | "pairs";
 }
@@ -110,7 +108,6 @@ function ChartTabs<T>({
   selectedCharts,
   keyFor,
   renderChart,
-  label = "Chart sections",
   mobileLayout = "stack",
 }: ChartTabsProps<T>) {
   return (
@@ -120,7 +117,7 @@ function ChartTabs<T>({
           tabs={tabs}
           value={value}
           onValueChange={onValueChange}
-          aria-label={label}
+          aria-label="Chart sections"
           className="mb-4"
         />
         <div
