@@ -212,16 +212,17 @@ function CopyRowView({ label, description, value, actionLabel, onAction, classNa
 
 function DestructiveRowView({ label, onClick, className }: DestructiveRow) {
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       onClick={onClick}
       className={cn(
-        "min-h-13 w-full px-4 text-left text-row font-semibold text-destructive outline-none transition-colors hover:bg-destructive/5 focus-visible:bg-destructive/10",
+        "h-auto min-h-13 w-full justify-start rounded-none px-4 text-left text-row font-semibold text-destructive hover:bg-destructive/5 hover:text-destructive focus-visible:bg-destructive/10 dark:hover:bg-destructive/5",
         className,
       )}
     >
       {label}
-    </button>
+    </Button>
   );
 }
 
