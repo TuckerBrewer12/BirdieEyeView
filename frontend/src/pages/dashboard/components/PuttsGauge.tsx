@@ -50,7 +50,7 @@ export function PuttsGauge({ putts, rating }: PuttsGaugeProps) {
           </div>
         </div>
       </div>
-      <div className="flex justify-center gap-3 text-caption text-muted-foreground font-semibold uppercase tracking-kicker mt-2">
+      <div className="flex justify-center gap-3 text-kicker text-muted-foreground font-semibold uppercase mt-2">
         <span className="text-score-birdie-base">{"≤30 great"}</span>
         <span className="text-score-eagle-base">30-34</span>
         <span className="text-destructive">34+ work</span>

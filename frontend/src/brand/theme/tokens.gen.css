@@ -95,9 +95,11 @@
   --brand-text-label: 11px;
   --brand-text-body-sm: 12px;
   --brand-text-body: 13px;
-  --brand-text-button-sm: 0.8rem;
   --brand-text-title: 26px;
   --brand-text-hero: 44px;
+  --brand-text-eyebrow: 10px;
+  --brand-text-kicker: 9px;
+  --brand-text-section: 11px;
   --brand-leading-display: 1.1;
   --brand-tracking-name: -0.3px;
   --brand-tracking-title: -0.5px;
@@ -106,7 +108,6 @@
   --brand-tracking-hero: -1.8px;
   --brand-tracking-chip: 0.5px;
   --brand-tracking-kicker: 1px;
-  --brand-tracking-net: 1.2px;
   --brand-tracking-eyebrow: 1.4px;
   --brand-tracking-section: 0.18em;
   --brand-radius-sm: 0.25rem;
@@ -126,8 +127,6 @@
   --brand-space-tight: 5px;
   --brand-space-nudge: 5px;
   --brand-space-nudge-sm: 3px;
-  --brand-space-addon: 0.3rem;
-  --brand-space-addon-kbd: 0.15rem;
   --brand-space-safe-bottom: env(safe-area-inset-bottom, 0px);
   --brand-size-date-rail: 54px;
   --brand-size-preview: 390px;
@@ -268,9 +267,11 @@
   --text-label: var(--brand-text-label);
   --text-body-sm: var(--brand-text-body-sm);
   --text-body: var(--brand-text-body);
-  --text-button-sm: var(--brand-text-button-sm);
   --text-title: var(--brand-text-title);
   --text-hero: var(--brand-text-hero);
+  --text-eyebrow: var(--brand-text-eyebrow);
+  --text-kicker: var(--brand-text-kicker);
+  --text-section: var(--brand-text-section);
   --leading-display: var(--brand-leading-display);
   --tracking-name: var(--brand-tracking-name);
   --tracking-title: var(--brand-tracking-title);
@@ -279,7 +280,6 @@
   --tracking-hero: var(--brand-tracking-hero);
   --tracking-chip: var(--brand-tracking-chip);
   --tracking-kicker: var(--brand-tracking-kicker);
-  --tracking-net: var(--brand-tracking-net);
   --tracking-eyebrow: var(--brand-tracking-eyebrow);
   --tracking-section: var(--brand-tracking-section);
   --radius-sm: var(--brand-radius-sm);
@@ -299,8 +299,6 @@
   --spacing-tight: var(--brand-space-tight);
   --spacing-nudge: var(--brand-space-nudge);
   --spacing-nudge-sm: var(--brand-space-nudge-sm);
-  --spacing-addon: var(--brand-space-addon);
-  --spacing-addon-kbd: var(--brand-space-addon-kbd);
   --spacing-safe-bottom: var(--brand-space-safe-bottom);
   --spacing-date-rail: var(--brand-size-date-rail);
   --spacing-preview: var(--brand-size-preview);
@@ -323,6 +321,18 @@
   --stroke-width-icon-active: var(--brand-stroke-icon-active);
   --opacity-recessed: var(--brand-opacity-recessed);
   --opacity-wash: var(--brand-opacity-wash);
+  --text-title--font-weight: 700;
+  --text-title--letter-spacing: -0.5px;
+  --text-hero--font-weight: 700;
+  --text-hero--letter-spacing: -1.8px;
+  --text-hero--line-height: 1;
+  --text-eyebrow--font-weight: 700;
+  --text-eyebrow--letter-spacing: 1.4px;
+  --text-kicker--font-weight: 700;
+  --text-kicker--letter-spacing: 1px;
+  --text-section--font-weight: 700;
+  --text-section--letter-spacing: 0.18em;
+  --blur-xs: 4px;
   --ring-width-3: var(--brand-ring-width);
   --grid-template-columns-round-preview: var(--brand-size-date-rail) 1fr auto;
   --grid-template-columns-handicap-breakdown: 1fr auto auto auto;

@@ -71,7 +71,7 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
         textAnchor="middle"
         dominantBaseline="central"
         fill={onFill}
-        fontSize={tokens.text.caption}
+        fontSize={tokens.type.caption.size}
         fontWeight="700"
         fontFamily={tokens.font.sans}
       >

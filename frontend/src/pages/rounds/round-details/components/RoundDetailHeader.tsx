@@ -23,7 +23,7 @@ function NineBars({ nine, label, className }: {
     <div className={cn("min-w-0 flex-1", className)}>
       <HoleScoreBars holes={nine.holes} variant="profile" />
       {nine.total != null && (
-        <div className="mt-1 text-caption font-bold uppercase tracking-kicker text-muted-foreground">
+        <div className="mt-1 text-kicker uppercase text-muted-foreground">
           {label} <span className="font-mono">{nine.total}</span>
         </div>
       )}
@@ -42,7 +42,7 @@ export function RoundDetailHeader({ round, teeRating, courseHandicap, className 
     <div data-slot="round-detail-header" className={cn("mb-4", className)}>
       <div className="pb-3.5">
         {dateLabel && (
-          <div className="mb-1 text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
+          <div className="mb-1 text-eyebrow uppercase text-muted-foreground">
             {dateLabel}
           </div>
         )}
@@ -65,7 +65,7 @@ export function RoundDetailHeader({ round, teeRating, courseHandicap, className 
       <div className="flex items-end gap-3.5 border-y border-border py-3.5">
         <div className="flex shrink-0 items-end">
           <div>
-            <div className="font-mono text-hero font-bold leading-none tracking-hero text-foreground">
+            <div className="font-mono text-hero text-foreground">
               {round.score ?? "—"}
             </div>
             <ToParFigure toPar={round.toPar} size="stat" />
@@ -74,7 +74,7 @@ export function RoundDetailHeader({ round, teeRating, courseHandicap, className 
             <>
               <div className="mx-3.5 h-11 w-px shrink-0 bg-border" />
               <div>
-                <div className="mb-chip text-caption font-bold uppercase tracking-net text-muted-foreground">
+                <div className="mb-chip text-caption font-bold uppercase tracking-eyebrow text-muted-foreground">
                   Net · hcp {formatCourseHandicap(courseHandicap)}
                 </div>
                 <div className="font-mono text-lg font-bold leading-none text-primary">{net}</div>

@@ -87,7 +87,7 @@ export function RoundPreview(props: RoundPreviewProps) {
       <div className="flex flex-col items-center justify-center gap-0.5 self-stretch rounded-l-lg bg-muted py-2.5 text-center">
         {dateParts ? (
           <>
-            <span className="text-caption font-bold uppercase tracking-kicker text-muted-foreground">
+            <span className="text-kicker uppercase text-muted-foreground">
               {dateParts.month}
             </span>
             <span className="text-lg font-bold leading-none text-foreground">
@@ -237,7 +237,7 @@ function RoundTicket({ round, label, actionLabel, onClick }: Omit<RoundTicketPro
     >
       <div className="flex w-full items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="mb-1 text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
+          <div className="mb-1 text-eyebrow uppercase text-muted-foreground">
             {label}
           </div>
           <div className="truncate text-lg font-bold leading-tight tracking-name text-card-foreground">

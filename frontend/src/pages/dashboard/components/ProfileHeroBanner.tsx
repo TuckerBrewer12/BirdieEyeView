@@ -39,7 +39,7 @@ export function ProfileHeroBanner({
               </span>
             </div>
             <div>
-              <div className="mb-1 text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
+              <div className="mb-1 text-eyebrow uppercase text-muted-foreground">
                 Welcome back
               </div>
               <PageTitle size="lg">Hello, {firstName}</PageTitle>

@@ -45,7 +45,7 @@ export function PuttingCard({ putting, className }: { putting: PuttingSummary; c
             </div>
             {putting.puttsTrend.filter((putts) => putts != null).length >= 3 && (
               <div className="flex flex-col gap-2 border-t border-border pt-3">
-                <span className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
+                <span className="text-eyebrow uppercase text-muted-foreground">
                   Putts per round
                 </span>
                 <Sparkline series={[{ values: putting.puttsTrend }]} fill reference={putting.puttsPerRound} />

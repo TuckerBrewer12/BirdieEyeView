@@ -301,7 +301,7 @@ function AxisLabel({
       x={x}
       y={y}
       textAnchor={anchor}
-      fontSize={tokens.text.label}
+      fontSize={tokens.type.label.size}
       fontWeight="600"
       fontFamily={tokens.font.sans}
       fill={tokens.color.chart.axis}

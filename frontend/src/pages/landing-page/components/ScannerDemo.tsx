@@ -338,7 +338,7 @@ export function ScannerDemo() {
         className="absolute inset-0 h-full w-full origin-left object-cover"
         initial={false}
         animate={{
-          filter: phase === "mapping" ? "brightness(0.5) blur(3px)" : "brightness(1) blur(0px)",
+          filter: phase === "mapping" ? `brightness(0.5) blur(${tokens.blur.xs}px)` : "brightness(1) blur(0px)",
           opacity: scanned ? 0 : 1,
           scale: scanned ? DEMO_MOTION.photoRecedeScale : 1,
         }}

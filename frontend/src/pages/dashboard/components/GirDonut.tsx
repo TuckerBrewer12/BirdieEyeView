@@ -32,7 +32,7 @@ export function GirDonut({ pct }: GirDonutProps) {
         <div className="text-4xl font-semibold tracking-stat text-card-foreground">
           {formatPercent(pct)}
         </div>
-        <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow">GIR</div>
+        <div className="text-eyebrow text-muted-foreground uppercase">GIR</div>
       </div>
     </div>
   );

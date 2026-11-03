@@ -229,7 +229,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                 x={x(i)}
                 y={yScore(d.score) - 8}
                 textAnchor="middle"
-                fontSize={tokens.text.caption}
+                fontSize={tokens.type.caption.size}
                 fontFamily={tokens.font.sans}
                 fill={tokens.color.chart.axis}
                 fontWeight="600"
@@ -299,7 +299,7 @@ function AxisLabel({
       x={x}
       y={y}
       textAnchor={anchor}
-      fontSize={tokens.text.label}
+      fontSize={tokens.type.label.size}
       fontWeight="600"
       fontFamily={tokens.font.sans}
       fill={color}

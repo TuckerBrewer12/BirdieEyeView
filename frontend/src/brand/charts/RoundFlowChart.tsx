@@ -137,7 +137,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               x={x(hole.hole)}
               y={H - PAD.bottom + 14}
               textAnchor="middle"
-              fontSize={tokens.text.meta}
+              fontSize={tokens.type.meta.size}
               fontFamily={tokens.font.sans}
               fill={hovered?.hole === hole.hole ? tokens.color.foreground : tokens.color.chart.axis}
               fontWeight={hovered?.hole === hole.hole ? "600" : "400"}
@@ -152,7 +152,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               x={PAD.left - 8}
               y={y(toPar) + 4}
               textAnchor="end"
-              fontSize={tokens.text.caption}
+              fontSize={tokens.type.caption.size}
               fontFamily={tokens.font.sans}
               fill="currentColor"
               className={toParTextClass(toPar)}

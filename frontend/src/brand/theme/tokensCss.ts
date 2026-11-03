@@ -1,4 +1,5 @@
 import {
+  blur,
   breakpoints,
   cssName,
   font,
@@ -14,10 +15,11 @@ import {
   size,
   space,
   stroke,
-  text,
   tracking,
+  type,
   type ColorTree,
   type ColorValue,
+  type TypeRole,
 } from "./tokens";
 
 /**
@@ -69,9 +71,12 @@ interface Section {
   format: (value: Measure) => string;
 }
 
+/** Each type role's size; the rest of the role is added in `@theme inline` below. */
+const typeSizes: Group = Object.fromEntries(Object.entries(type).map(([role, { size }]) => [role, size]));
+
 const SECTIONS: Section[] = [
   { group: font, prefix: "font", theme: "font", format: unitless },
-  { group: text, prefix: "text", theme: "text", format: pixels },
+  { group: typeSizes, prefix: "text", theme: "text", format: pixels },
   { group: leading, prefix: "leading", theme: "leading", format: unitless },
   { group: tracking, prefix: "tracking", theme: "tracking", format: pixels },
   { group: radius, prefix: "radius", theme: "radius", format: pixels },
@@ -124,6 +129,13 @@ export function renderTokensCss(): string {
     ...SECTIONS.flatMap(({ group, prefix, theme }) =>
       Object.keys(group).map((key) => `--${theme}-${key}: var(--brand-${prefix}-${key});`),
     ),
+    // A role's weight, tracking and line height ride on its text-* utility.
+    ...Object.entries(type).flatMap(([role, spec]: [string, TypeRole]) => [
+      ...(spec.weight != null ? [`--text-${role}--font-weight: ${spec.weight};`] : []),
+      ...(spec.tracking != null ? [`--text-${role}--letter-spacing: ${pixels(spec.tracking)};`] : []),
+      ...(spec.leading != null ? [`--text-${role}--line-height: ${spec.leading};`] : []),
+    ]),
+    ...Object.entries(blur).map(([key, value]) => `--blur-${key}: ${pixels(value)};`),
     `--ring-width-3: var(--brand-ring-width);`,
     ...Object.entries(gridColumns).map(([key, value]) => `--grid-template-columns-${key}: ${value};`),
   ];

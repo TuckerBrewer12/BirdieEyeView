@@ -18,7 +18,7 @@
  * numbers (`tokens.chart`, `tokens.motion`, `tokens.space`) are real values.
  * Plain data, no React or DOM, so a native app can read it too.
  *
- * A bare number is pixels, except in `leading`, `stroke` and `breakpoints`,
+ * A bare number is pixels, except in `leading`, `stroke`, `opacity` and `breakpoints`,
  * which say otherwise. A string is written to the CSS as it is.
  */
 
@@ -256,23 +256,15 @@ export const font = {
   mono: '"DM Mono", monospace',
 };
 
-/** Type roles, not pixel sizes: components use `text-caption`, never a raw size. */
-export const text = {
-  caption: 9,
-  meta: 10,
-  label: 11,
-  "body-sm": 12,
-  body: 13,
-  "button-sm": "0.8rem",
-  title: 26,
-  hero: 44,
-};
-
 /** Line heights, unitless. */
 export const leading = {
   display: 1.1,
 };
 
+/**
+ * Letter spacing, in pixels unless a string. The type roles below take theirs
+ * from here; the rest are used beside a size of Tailwind's own (`text-2xl tracking-stat`).
+ */
 export const tracking = {
   name: -0.3,
   title: -0.5,
@@ -281,14 +273,52 @@ export const tracking = {
   hero: -1.8,
   chip: 0.5,
   kicker: 1,
-  net: 1.2,
   eyebrow: 1.4,
   section: "0.18em",
 };
 
+/** A type role: a size in pixels, and the weight, tracking and line height that always go with it. */
+export interface TypeRole {
+  size: number;
+  weight?: number;
+  tracking?: number | string;
+  /** Unitless. */
+  leading?: number;
+}
+
+/**
+ * Type roles, not pixel sizes: `text-eyebrow` sets the size, weight and
+ * tracking of an eyebrow at once. A class beside it (`font-semibold`,
+ * `tracking-chip`) still wins, for the odd place that differs. Uppercase is a
+ * transform, not part of the type, so it stays a class (`text-eyebrow uppercase`).
+ */
+export const type = {
+  /** Smallest print: chart axes, chips, the strokes on a hole. */
+  caption: { size: 9 },
+  /** Dates, counts, tab labels. */
+  meta: { size: 10 },
+  /** Field labels, chart ticks, secondary figures. */
+  label: { size: 11 },
+  /** Small body copy, tooltips, small buttons. */
+  "body-sm": { size: 12 },
+  body: { size: 13 },
+  /** A page's title. */
+  title: { size: 26, weight: 700, tracking: tracking.title },
+  /** The one big figure on a card: a round's score. */
+  hero: { size: 44, weight: 700, tracking: tracking.hero, leading: 1 },
+  /** The tracked capitals above a figure or a group of rows. */
+  eyebrow: { size: 10, weight: 700, tracking: tracking.eyebrow },
+  /** The smaller tracked capitals on a chip or a header strip. */
+  kicker: { size: 9, weight: 700, tracking: tracking.kicker },
+  /** The label above a page section (`SectionLabel`). */
+  section: { size: 11, weight: 700, tracking: tracking.section },
+} satisfies Record<string, TypeRole>;
+
 /** Space that is not on Tailwind's 4px scale. */
 export const space = {
+  /** Between the bars of a hole-by-hole strip or profile. */
   bar: 1.5,
+  /** Between a hole's number and the shape under it. */
   hair: 2.5,
   chip: 3,
   dot: 3,
@@ -296,8 +326,6 @@ export const space = {
   /** What a control's corner gives up inside its group, so the corners nest. */
   nudge: 5,
   "nudge-sm": 3,
-  addon: "0.3rem",
-  "addon-kbd": "0.15rem",
   /** The phone's home-indicator strip, which a bar pinned to the bottom pads past. */
   "safe-bottom": "env(safe-area-inset-bottom, 0px)",
 };
@@ -355,6 +383,11 @@ export const lineWidth = {
 export const stroke = {
   icon: 1.75,
   "icon-active": 2.25,
+};
+
+/** Blur radii, in pixels. `xs` is Tailwind's own step, named here so code can read it. */
+export const blur = {
+  xs: 4,
 };
 
 export const opacity = {
