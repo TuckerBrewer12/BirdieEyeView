@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { RoundSummary } from "@/domain";
-import { pluralize } from "@/domain/format";
+import { pluralNoun, pluralize } from "@/domain/format";
+import { formatMonth } from "@/domain/date";
+import { Button } from "@/brand/components/Button";
 import { cn } from "@/brand/cn";
 import { activityMonth } from "@/domain/activity";
 
@@ -14,9 +16,6 @@ interface ActivityHeatmapProps {
 }
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"] as const;
-
-const navButton =
-  "flex size-7 items-center justify-center rounded-md text-foreground-secondary transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
 
 /** A month of play: a green dot on each day with a round. Step through months with the arrows. */
 export function ActivityHeatmap({ rounds = [], today, onOpenRound }: ActivityHeatmapProps) {
@@ -32,26 +31,22 @@ export function ActivityHeatmap({ rounds = [], today, onOpenRound }: ActivityHea
       return { year: next.getFullYear(), month: next.getMonth() };
     });
 
-  const title = new Date(shown.year, shown.month, 1).toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
-
   return (
     <div data-slot="activity-heatmap" className="flex w-full flex-col gap-2.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1">
-          <button type="button" aria-label="Previous month" className={navButton} onClick={() => step(-1)}>
-            <ChevronLeft className="size-3" strokeWidth={3} />
-          </button>
-          <div className="min-w-26 text-center text-sm font-semibold text-foreground">{title}</div>
-          <button type="button" aria-label="Next month" className={navButton} onClick={() => step(1)}>
-            <ChevronRight className="size-3" strokeWidth={3} />
-          </button>
+          <Button variant="ghost" size="icon-sm" aria-label="Previous month" onClick={() => step(-1)}>
+            <ChevronLeft className="size-3 stroke-icon-active" />
+          </Button>
+          <div className="min-w-26 text-center text-sm font-semibold text-foreground">
+            {formatMonth(new Date(shown.year, shown.month, 1))}
+          </div>
+          <Button variant="ghost" size="icon-sm" aria-label="Next month" onClick={() => step(1)}>
+            <ChevronRight className="size-3 stroke-icon-active" />
+          </Button>
         </div>
         <div className="text-body-sm text-foreground-secondary">
-          <b className="text-sm font-bold text-foreground">{month.rounds.toLocaleString("en-US")}</b>{" "}
-          {month.rounds === 1 ? "round" : "rounds"}
+          <b className="text-sm font-bold text-foreground">{month.rounds}</b> {pluralNoun(month.rounds, "round")}
         </div>
       </div>
 

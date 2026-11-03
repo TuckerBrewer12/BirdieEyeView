@@ -1,4 +1,5 @@
 import { ActivityHeatmap } from "@/brand/charts/ActivityHeatmap";
+import { Card, CardContent } from "@/brand/components/Card";
 import { Round } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 
@@ -15,8 +16,10 @@ const rounds = PLAYED.map((day, i) => ({
 
 export default function ActivityHeatmapPreview() {
   return (
-    <div className="rounded-xl border border-border bg-card px-4.5 py-4">
-      <ActivityHeatmap rounds={rounds} today={TODAY} onOpenRound={() => {}} />
-    </div>
+    <Card>
+      <CardContent>
+        <ActivityHeatmap rounds={rounds} today={TODAY} onOpenRound={() => {}} />
+      </CardContent>
+    </Card>
   );
 }

@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { ActivityHeatmap } from "./ActivityHeatmap";
 import { Round } from "@/domain";
+import { FakeHandler } from "@/testing/fakes/FakeHandler";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 
 const TODAY = new Date(2026, 9, 28, 12);
@@ -41,11 +42,11 @@ describe("ActivityHeatmap", () => {
   });
 
   it("opens the first round of a played day when given a handler", () => {
-    const onOpenRound = vi.fn();
-    render(<ActivityHeatmap rounds={rounds} today={TODAY} onOpenRound={onOpenRound} />);
+    const onOpenRound = new FakeHandler<[string]>();
+    render(<ActivityHeatmap rounds={rounds} today={TODAY} onOpenRound={onOpenRound.handle} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Open round on 2026-10-14" }));
-    expect(onOpenRound).toHaveBeenCalledWith("1");
+    expect(onOpenRound.calls).toEqual([["1"]]);
     expect(screen.getByText("Played · tap a day to open the round")).toBeTruthy();
   });
 });
