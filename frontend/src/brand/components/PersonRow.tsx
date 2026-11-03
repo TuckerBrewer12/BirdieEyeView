@@ -1,16 +1,25 @@
 import type { ReactNode } from "react";
+import { type VariantProps } from "class-variance-authority";
 import { cn } from "@/brand/cn";
+import { ListRow, type RowTarget } from "./ListRow";
+import { personAvatarVariants } from "./variants";
 
-interface PersonRowProps {
+type AvatarTone = NonNullable<VariantProps<typeof personAvatarVariants>["tone"]>;
+
+const tones: readonly AvatarTone[] = ["primary", "info", "triple", "eagle", "danger"];
+
+interface PersonRowProps extends RowTarget {
   name: string;
   /** Two letters for the avatar. Defaults to the first letters of the first two words of `name`. */
   initials?: string;
-  /** The line under the name — an email, a handle. */
+  /** The line under the name: an email, a handicap. */
   detail?: ReactNode;
-  /** A quieter third line, such as when the row last changed. */
+  /** A quieter third line, such as when the row last changed. Makes the row taller than 64. */
   meta?: ReactNode;
-  /** Buttons or a status at the end of the row. */
+  /** A link-styled word, buttons or a status at the end of the row. */
   actions?: ReactNode;
+  /** The avatar's colour. Defaults to one picked from `name`, so a person keeps theirs. */
+  tone?: AvatarTone;
   className?: string;
 }
 
@@ -24,31 +33,50 @@ function initialsOf(name: string): string {
   return letters.toUpperCase() || "?";
 }
 
+function toneOf(name: string): AvatarTone {
+  let hash = 0;
+  for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) % tones.length;
+  return tones[hash];
+}
+
 /**
- * One person in a list: an initials avatar, their name and a line or two
- * about them, with whatever can be done about them at the end. Built to sit
- * in a `Collection layout="divided"`, which draws the rules between rows.
+ * One person in a list: a coloured initials avatar, their name and a line
+ * about them, with one value or action at the end. With `href` or `onClick`
+ * the whole row is the target; a row that ends in buttons is not one, since
+ * the buttons are the targets.
  */
-function PersonRow({ name, initials, detail, meta, actions, className }: PersonRowProps) {
+function PersonRow({
+  name,
+  initials,
+  detail,
+  meta,
+  actions,
+  tone,
+  className,
+  ...target
+}: PersonRowProps) {
   return (
-    <div data-slot="person-row" className={cn("flex items-center gap-3 px-4 py-3", className)}>
+    <ListRow slot="person-row" className={className} {...target}>
       <span
         aria-hidden
-        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground"
+        className={cn(
+          "flex size-9 shrink-0 items-center justify-center rounded-full text-body font-bold",
+          personAvatarVariants({ tone: tone ?? toneOf(name) }),
+        )}
       >
         {initials ?? initialsOf(name)}
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-foreground">{name}</p>
-        {detail != null && <p className="truncate text-xs text-muted-foreground">{detail}</p>}
+        <p className="truncate text-row text-foreground">{name}</p>
+        {detail != null && <p className="truncate text-body text-muted-foreground">{detail}</p>}
         {meta != null && <p className="mt-0.5 truncate text-meta text-muted-foreground">{meta}</p>}
       </div>
 
       {actions != null && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
-    </div>
+    </ListRow>
   );
 }
 
 export { PersonRow };
-export type { PersonRowProps };
+export type { PersonRowProps, AvatarTone };

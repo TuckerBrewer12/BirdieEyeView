@@ -3,6 +3,7 @@ export { buttonVariants } from "./buttonVariants";
 export { inputVariants } from "./inputVariants";
 export { inputGroupVariants, inputGroupAddonVariants, inputGroupButtonVariants } from "./inputGroupVariants";
 export { pageTitleVariants } from "./pageTitleVariants";
+export { personAvatarVariants } from "./personAvatarVariants";
 export { teeSwatchVariants } from "./teeSwatchVariants";
 export { toggleVariants } from "./toggleVariants";
 export { meterTrackVariants, meterIndicatorVariants } from "./meterVariants";

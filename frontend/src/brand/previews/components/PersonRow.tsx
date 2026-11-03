@@ -1,51 +1,56 @@
 import { Button } from "@/brand/components/Button";
 import { Collection } from "@/brand/components/Collection";
-import { PersonRow } from "@/brand/components/PersonRow";
+import { PersonRow, type AvatarTone } from "@/brand/components/PersonRow";
+import { personAvatarVariants } from "@/brand/components/variants";
+import { cn } from "@/brand/cn";
 
-const people = [
-  { id: "a", name: "Avery Lin", email: "avery@example.com" },
-  { id: "b", name: "Jordan Castellanos-Whitfield", email: "jordan.castellanos-whitfield@example.com" },
-  { id: "c", name: "Sam", email: null },
-];
+const friends = [
+  { id: "a", name: "Avery Lin", handicap: "Handicap 9.8", tone: "info" },
+  { id: "b", name: "Jordan Castellanos", handicap: "Handicap 14.1", tone: "triple" },
+] as const;
+
+const tones: readonly AvatarTone[] = ["primary", "info", "triple", "eagle", "danger"];
+
+const card = "overflow-hidden rounded-card border border-border bg-card";
 
 /** Compose-style @Preview for PersonRow. */
 export default function PersonRowPreview() {
   return (
     <>
-      <Collection
-        layout="divided"
-        className="overflow-hidden rounded-card border border-border bg-card"
-        items={people}
-        keyFor={(p) => p.id}
-        renderItem={(p) => <PersonRow name={p.name} detail={p.email ?? "No email"} />}
-      />
+      <p className="text-label font-semibold text-muted-foreground">Person row · friend and request</p>
+      <div className={card}>
+        <Collection
+          layout="rows"
+          items={friends}
+          keyFor={(f) => f.id}
+          renderItem={(f) => (
+            <PersonRow
+              href="#"
+              name={f.name}
+              detail={f.handicap}
+              tone={f.tone}
+              actions={<span className="text-body font-semibold text-primary">Compare</span>}
+            />
+          )}
+        />
+        <PersonRow
+          name="Sam Kim"
+          detail="Wants to be friends"
+          tone="eagle"
+          actions={
+            <>
+              <Button variant="ghost">Decline</Button>
+              <Button>Accept</Button>
+            </>
+          }
+        />
+      </div>
 
-      <Collection
-        layout="divided"
-        className="overflow-hidden rounded-card border border-border bg-card"
-        items={people.slice(0, 2)}
-        keyFor={(p) => p.id}
-        renderItem={(p, i) => (
-          <PersonRow
-            name={p.name}
-            detail={p.email}
-            meta="Updated Oct 3, 2026"
-            actions={
-              i === 0 ? (
-                <>
-                  <Button size="sm">Accept</Button>
-                  <Button size="sm" variant="outline">Decline</Button>
-                </>
-              ) : (
-                <span className="text-xs font-medium text-muted-foreground">Pending</span>
-              )
-            }
-          />
-        )}
-      />
-
-      <div className="overflow-hidden rounded-card border border-border bg-card">
-        <PersonRow name="Unknown user" initials="?" />
+      <p className="mt-2.5 text-label font-semibold text-muted-foreground">Avatar colors</p>
+      <div className="flex gap-2">
+        {tones.map((tone) => (
+          <span key={tone} className={cn("size-7 rounded-full", personAvatarVariants({ tone }))} />
+        ))}
       </div>
     </>
   );

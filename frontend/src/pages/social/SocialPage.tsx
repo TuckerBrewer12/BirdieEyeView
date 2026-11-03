@@ -106,7 +106,7 @@ export function SocialPage({ userId }: SocialPageProps) {
           )}
 
           <Collection
-            layout="divided"
+            layout="rows"
             className="border-t border-border"
             items={viewModel.friends}
             keyFor={(friend) => friend.id}
