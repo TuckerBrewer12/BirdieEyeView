@@ -31,14 +31,30 @@ def scoring_average(rounds: List[Round], window: Optional[int] = None) -> Option
     return sum(scores) / len(scores) if scores else None
 
 
-def scoring_average_change(rounds: List[Round], window: int = RECENT_ROUNDS) -> Optional[float]:
+def lowest_round(rounds: List[Round]) -> Optional[Round]:
+    """The lowest-scoring round; on a tie, the first of them."""
+    best: Optional[Round] = None
+    best_score: Optional[int] = None
+    for r in rounds:
+        score = r.calculate_total_score()
+        if score is not None and (best_score is None or score < best_score):
+            best, best_score = r, score
+    return best
+
+
+def scoring_average_change(
+    rounds: List[Round], window: int = RECENT_ROUNDS, full_window: bool = False
+) -> Optional[float]:
     """How far the last `window` rounds' average sits from the whole window's, to a tenth.
-    Negative means the recent rounds came in lower."""
+    Negative means the recent rounds came in lower. With `full_window`, null until `window`
+    rounds have a score."""
     overall = scoring_average(rounds)
     recent = scoring_average(rounds, window)
     if overall is None or recent is None:
         return None
-    return round(recent - overall, 1)
+    if full_window and sum(1 for r in rounds if r.calculate_total_score() is not None) < window:
+        return None
+    return analytics.round_half_up(recent - overall, 1)
 
 
 def recent_form(rounds: List[Round], window: int = RECENT_ROUNDS) -> Dict[str, Optional[float]]:

@@ -237,6 +237,7 @@ class DashboardResponse(ResponseModel):
     best_round_course: Optional[str] = None
     handicap_index: Optional[float] = None
     recent_rounds: List[RoundSummaryResponse]
+    best_recent_round_id: Optional[str] = None  # the lowest-scoring of recent_rounds; the newest on a tie
     average_putts: Optional[float] = None
     average_gir: Optional[float] = None
     # Over the last 20 rounds, the window the dashboard's charts show.
@@ -267,6 +268,12 @@ class AnalyticsKpis(ResponseModel):
     handicap_index: Optional[float] = None
     total_rounds: int = 0
     average_putts: Optional[float] = None  # per round, over the rounds with putts recorded; to a tenth
+    # Over the rounds with putts recorded, to a tenth: three-putts a round, and each round's rate averaged.
+    three_putts_per_round: Optional[float] = None
+    three_putt_rate: Optional[float] = None
+    # The last five scored rounds' average less every round's, to a tenth: negative when the
+    # recent rounds came in lower. Null under five scored rounds.
+    scoring_average_change: Optional[float] = None
 
 
 class AnalyticsScoreTrendRow(ScoreTrendRow):
@@ -307,20 +314,6 @@ class ThreePuttsTrendRow(ResponseModel):
     three_putt_count: int
     holes_with_putt_data: int
     three_putt_percentage: float
-
-
-class ScoreTypeRow(ResponseModel):
-    """Percent of a round's holes in each score type. `par` is the par percentage."""
-    round_index: int
-    round_id: Optional[str] = None
-    holes_counted: int
-    eagle: float
-    birdie: float
-    par: float
-    bogey: float
-    double_bogey: float
-    triple_bogey: float
-    quad_bogey: float
 
 
 class ScoringByParRow(ResponseModel):
@@ -693,6 +686,29 @@ AnalyticsInsight = Annotated[
 ]
 
 
+class PeakRound(ResponseModel):
+    """One of the player's best rounds."""
+    round_id: Optional[str] = None
+    course_name: Optional[str] = None
+    score: int
+
+
+class PeakImpact(ResponseModel):
+    """One kind of hole, a round, in the peak rounds against every round, each to a hundredth.
+    `doubles` counts double bogeys and worse."""
+    kind: Literal["birdies", "bogeys", "doubles"]
+    peak: float
+    average: float
+    strokes: float  # what the difference is worth a round: positive when the peak rounds gain strokes
+
+
+class PeakGame(ResponseModel):
+    """The player's best three rounds, lowest first (the older on a tie), and what they did differently."""
+    rounds: List[PeakRound] = Field(default_factory=list)
+    average: float  # to a tenth
+    impacts: List[PeakImpact] = Field(default_factory=list)  # birdies, bogeys, doubles; empty without pars
+
+
 class AnalyticsResponse(ResponseModel):
     """The analytics page's figures over the rounds asked for. Every per-round series is oldest first."""
     kpis: AnalyticsKpis = Field(default_factory=AnalyticsKpis)
@@ -703,7 +719,6 @@ class AnalyticsResponse(ResponseModel):
     three_putts_trend: List[ThreePuttsTrendRow] = Field(default_factory=list)
     scrambling_trend: List[ScramblingTrendRow] = Field(default_factory=list)
     up_and_down_trend: List[UpAndDownTrendRow] = Field(default_factory=list)
-    score_type_distribution: List[ScoreTypeRow] = Field(default_factory=list)
     scoring_by_par: List[ScoringByParRow] = Field(default_factory=list)
     scoring_by_yardage: List[ScoringByYardageRow] = Field(default_factory=list)
     scoring_by_handicap: List[ScoringByHandicapRow] = Field(default_factory=list)
@@ -713,6 +728,7 @@ class AnalyticsResponse(ResponseModel):
     notable_achievements: NotableAchievements = Field(default_factory=NotableAchievements)
     score_mix: ScoreMix = Field(default_factory=ScoreMix)  # each score kind's share of every counted hole, to a hundredth
     insights: List[AnalyticsInsight] = Field(default_factory=list)  # scoring, then greens, then putting
+    peak_game: Optional[PeakGame] = None  # null under two scored rounds
 
 
 class PlayedCourseResponse(ResponseModel):
@@ -770,6 +786,8 @@ class GoalReportResponse(ResponseModel):
     gap: Optional[float] = None  # average less goal; at or below 0 is on track
     on_track: bool = False
     progress_pct: Optional[float] = None  # from the window's first round toward the goal, 0-100
+    rounds_meeting_goal: int = 0  # rounds in the window scored at or under the goal
+    peak_gap: Optional[float] = None  # the peak game's average less the goal, to a tenth; null without a peak
     savers: List[GoalSaver] = Field(default_factory=list)
 
 

@@ -1,4 +1,4 @@
-import { SCORE_KINDS, type ScoreKind, type ScoreMix } from "@/domain";
+import { scoreMixFrom, shortGamePointsFrom, type ScoreMix, type ShortGamePoint } from "@/domain";
 import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type {
   AnalyticsDto,
@@ -9,9 +9,7 @@ import type {
   GirVsNonGirRowDto,
   PuttsTrendRowDto,
   ScoringByYardageRowDto,
-  ScramblingTrendRowDto,
   ThreePuttsTrendRowDto,
-  UpAndDownTrendRowDto,
 } from "@/types/api";
 
 export type { AnalyticsFilters };
@@ -34,17 +32,6 @@ export interface PlayedCourse {
   name: string | null;
   location: string | null;
 }
-
-/** Where each score kind's share sits on the server's GIR split rows. */
-const ROW_KEY: Record<ScoreKind, keyof GirVsNonGirRowDto> = {
-  eagle: "eagle",
-  birdie: "birdie",
-  par: "par",
-  bogey: "bogey",
-  double: "double_bogey",
-  triple: "triple_bogey",
-  quad: "quad_bogey",
-};
 
 /** The round the server found lowest in the window, and where and when it was played. */
 export interface BestRoundEvent {
@@ -82,7 +69,7 @@ export interface YardageBucket {
 
 /** A round's score, and the server's five-round rolling average under it. */
 export type ScoreTrendPoint = AnalyticsScoreTrendRowDto;
-export type ShortGamePoint = ScramblingTrendRowDto & { up_and_down_pct: number | null };
+export type { ShortGamePoint };
 
 /** A fact the server found worth a sentence, with which way it points. `present.ts` words it. */
 export type Insight = AnalyticsInsightDto;
@@ -124,7 +111,7 @@ export function girSplitFrom(rows: GirVsNonGirRowDto[]): GirSplit[] {
   return rows.map((row) => ({
     bucket: row.bucket,
     holes: row.holes_counted,
-    mix: Object.fromEntries(SCORE_KINDS.map((kind) => [kind, row[ROW_KEY[kind]]])) as ScoreMix,
+    mix: scoreMixFrom(row),
   }));
 }
 
@@ -147,11 +134,6 @@ export function defaultRangePar(buckets: YardageBucket[]): RangePar {
   return ([4, 3, 5] as const).find((par) => buckets.some((bucket) => bucket.par === par)) ?? 4;
 }
 
-/** Pairs each round's scrambling rate with the up-and-down rate the server sent for the same round. */
-export function shortGameTrendFrom(scrambling: ScramblingTrendRowDto[], upAndDown: UpAndDownTrendRowDto[]): ShortGamePoint[] {
-  return scrambling.map((row, i) => ({ ...row, up_and_down_pct: upAndDown[i]?.percentage ?? null }));
-}
-
 /** The page's figures from the server's response. */
 export function analyticsFrom(data: AnalyticsDto): Analytics {
   const girTrend = data.gir_trend.filter((row) => row.gir_percentage != null && row.total_gir != null);
@@ -168,7 +150,7 @@ export function analyticsFrom(data: AnalyticsDto): Analytics {
     girRoundsLeftOut: girTrend.length < data.gir_trend.length,
     puttsTrend,
     threePuttTrend: data.three_putts_trend.filter((row) => roundsWithPutts.has(row.round_id)),
-    shortGameTrend: shortGameTrendFrom(data.scrambling_trend, data.up_and_down_trend),
+    shortGameTrend: shortGamePointsFrom(data.scrambling_trend, data.up_and_down_trend),
     bestScore: data.notable_achievements.scoring_records.lifetime.lowest_round ?? null,
     bestRound: lowest ? { roundId: lowest.round_id, course: lowest.course, date: lowest.date } : null,
     scoreMix: data.score_mix,

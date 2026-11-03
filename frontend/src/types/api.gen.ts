@@ -726,8 +726,14 @@ export interface components {
             putts_per_gir: number | null;
             /** Scoring Average */
             scoring_average: number | null;
+            /** Scoring Average Change */
+            scoring_average_change: number | null;
             /** Scrambling Percentage */
             scrambling_percentage: number | null;
+            /** Three Putt Rate */
+            three_putt_rate: number | null;
+            /** Three Putts Per Round */
+            three_putts_per_round: number | null;
             /**
              * Total Rounds
              * @default 0
@@ -753,6 +759,7 @@ export interface components {
             /** Net Score Trend */
             net_score_trend: components["schemas"]["NetScoreTrendRow"][];
             notable_achievements: components["schemas"]["NotableAchievements"];
+            peak_game: components["schemas"]["PeakGame"] | null;
             /** Putts Trend */
             putts_trend: components["schemas"]["PuttsTrendRow"][];
             /** Score Differentials */
@@ -760,8 +767,6 @@ export interface components {
             score_mix: components["schemas"]["ScoreMix"];
             /** Score Trend */
             score_trend: components["schemas"]["AnalyticsScoreTrendRow"][];
-            /** Score Type Distribution */
-            score_type_distribution: components["schemas"]["ScoreTypeRow"][];
             /** Scoring By Handicap */
             scoring_by_handicap: components["schemas"]["ScoringByHandicapRow"][];
             /** Scoring By Par */
@@ -1134,6 +1139,8 @@ export interface components {
             average_gir: number | null;
             /** Average Putts */
             average_putts: number | null;
+            /** Best Recent Round Id */
+            best_recent_round_id: string | null;
             /** Best Round */
             best_round: number | null;
             /** Best Round Course */
@@ -1344,8 +1351,15 @@ export interface components {
              * @default false
              */
             on_track: boolean;
+            /** Peak Gap */
+            peak_gap: number | null;
             /** Progress Pct */
             progress_pct: number | null;
+            /**
+             * Rounds Meeting Goal
+             * @default 0
+             */
+            rounds_meeting_goal: number;
             /** Savers */
             savers: components["schemas"]["GoalSaver"][];
             /** Scoring Average */
@@ -1957,6 +1971,48 @@ export interface components {
             most_gir_in_round: number | null;
         };
         /**
+         * PeakGame
+         * @description The player's best three rounds, lowest first (the older on a tie), and what they did differently.
+         */
+        PeakGame: {
+            /** Average */
+            average: number;
+            /** Impacts */
+            impacts: components["schemas"]["PeakImpact"][];
+            /** Rounds */
+            rounds: components["schemas"]["PeakRound"][];
+        };
+        /**
+         * PeakImpact
+         * @description One kind of hole, a round, in the peak rounds against every round, each to a hundredth.
+         *     `doubles` counts double bogeys and worse.
+         */
+        PeakImpact: {
+            /** Average */
+            average: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "birdies" | "bogeys" | "doubles";
+            /** Peak */
+            peak: number;
+            /** Strokes */
+            strokes: number;
+        };
+        /**
+         * PeakRound
+         * @description One of the player's best rounds.
+         */
+        PeakRound: {
+            /** Course Name */
+            course_name: string | null;
+            /** Round Id */
+            round_id: string | null;
+            /** Score */
+            score: number;
+        };
+        /**
          * PerformanceStreakEvents
          * @description The round each streak reached its length in.
          */
@@ -2488,32 +2544,6 @@ export interface components {
             to_par: number | null;
             /** Total Score */
             total_score: number | null;
-        };
-        /**
-         * ScoreTypeRow
-         * @description Percent of a round's holes in each score type. `par` is the par percentage.
-         */
-        ScoreTypeRow: {
-            /** Birdie */
-            birdie: number;
-            /** Bogey */
-            bogey: number;
-            /** Double Bogey */
-            double_bogey: number;
-            /** Eagle */
-            eagle: number;
-            /** Holes Counted */
-            holes_counted: number;
-            /** Par */
-            par: number;
-            /** Quad Bogey */
-            quad_bogey: number;
-            /** Round Id */
-            round_id: string | null;
-            /** Round Index */
-            round_index: number;
-            /** Triple Bogey */
-            triple_bogey: number;
         };
         /** ScoringByHandicapRow */
         ScoringByHandicapRow: {

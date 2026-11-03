@@ -3,31 +3,35 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { useGoalReport } from "@/data/useGoalReport";
 import { useUser } from "@/data/useUser";
-import { Round, trendPointsFrom, type RoundSummary, type RoundTrendPoint, type ScoreMix } from "@/domain";
+import {
+  Round,
+  shortGamePointsFrom,
+  trendPointsFrom,
+  type RoundSummary,
+  type RoundTrendPoint,
+  type ScoreMix,
+} from "@/domain";
 import type { DashboardDto, UserDto } from "@/types/api";
 import {
   dashboardRepository,
   type DashboardRepository,
 } from "./dashboardRepository";
 import {
+  bestRecentRoundFrom,
   goalProgress,
   milestonesFrom,
-  pickBestRound,
   recentScoresFrom,
-  scoreMixItems,
-  shortGameTrendFrom,
+  recentShortGame,
   whsFrom,
   type GoalProgress,
   type HiTrend,
   type Milestone,
-  type ScoreMixItem,
   type ShortGameTrend,
   type TrendView,
   type WhsBreakdown,
 } from "./model";
 
 export type { HiTrend, TrendView, WhsBreakdown };
-export type { ScoreMixItem };
 
 export interface DashboardPageViewModel {
   data: DashboardDto | null;
@@ -51,7 +55,8 @@ export interface DashboardPageViewModel {
   mixHoleCount: number;
   hiTrend: HiTrend | null;
   girPct: number | null;
-  recentDistribution: ScoreMixItem[];
+  /** The last five rounds' score mix. Null until they have a scored hole. */
+  recentScoreMix: ScoreMix | null;
   scramblingPct: number | null;
   upAndDownPct: number | null;
   putts: number | null;
@@ -61,6 +66,7 @@ export interface DashboardPageViewModel {
   trendView: TrendView;
   setTrendView: (view: TrendView) => void;
   rounds: RoundSummary[];
+  /** The best of the listed rounds, as the server picked it. */
   bestRound: RoundSummary | null;
   recentRounds: RoundSummary[];
   sidebarRounds: RoundSummary[];
@@ -100,14 +106,20 @@ export function useDashboardPageViewModel(
     () => (data?.recent_rounds ?? []).map(Round.fromSummary),
     [data?.recent_rounds],
   );
-  const bestRound = useMemo(() => pickBestRound(rounds), [rounds]);
+  const bestRound = useMemo(
+    () => bestRecentRoundFrom(rounds, data?.best_recent_round_id),
+    [rounds, data?.best_recent_round_id],
+  );
 
   const openHandicapSheet = useCallback(() => setHandicapSheetOpen(true), []);
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
 
   const trend = useMemo(() => trendPointsFrom(data), [data]);
   const recentScores = useMemo(() => recentScoresFrom(trend), [trend]);
-  const shortGameTrend = useMemo(() => shortGameTrendFrom(data), [data]);
+  const shortGameTrend = useMemo(
+    () => (data ? recentShortGame(shortGamePointsFrom(data.scrambling_trend, data.up_and_down_trend)) : null),
+    [data],
+  );
   const report = goalReport ?? null;
 
   return {
@@ -127,7 +139,7 @@ export function useDashboardPageViewModel(
     mixHoleCount: data?.score_mix_holes ?? 0,
     hiTrend: data?.handicap_change.direction ?? null,
     girPct: data?.recent_form.gir_pct ?? null,
-    recentDistribution: data ? scoreMixItems(data.recent_score_mix, { roundTenths: true, dropZero: true }) : [],
+    recentScoreMix: data?.recent_score_mix ?? null,
     scramblingPct: data?.recent_form.scrambling_pct ?? null,
     upAndDownPct: data?.recent_form.up_and_down_pct ?? null,
     putts: data?.recent_form.putts_per_18 ?? data?.average_putts ?? null,

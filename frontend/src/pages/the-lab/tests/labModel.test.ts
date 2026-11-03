@@ -6,14 +6,10 @@ import { labAnalytics, labGoalReport } from "@/testing/fixtures/lab";
 import {
   friendOptionsFrom,
   goalStandingFrom,
+  labAnalyticsFrom,
   parTypeRowsFrom,
   peakGameFrom,
-  peakImpactsFrom,
-  peakVsAverageFrom,
   puttingSummaryFrom,
-  recentTrendFrom,
-  roundsMeetingGoal,
-  type LabAnalytics,
 } from "../model";
 import {
   benchmarkHeading,
@@ -26,19 +22,6 @@ import {
   recentTrendNote,
   signedStrokes,
 } from "../present";
-
-const withScores = (scores: (number | null)[], average: number | null = 90): LabAnalytics => ({
-  ...labAnalytics,
-  kpis: { ...labAnalytics.kpis, scoring_average: average },
-  score_trend: scores.map((total_score, i) => ({
-    round_index: i + 1,
-    round_id: `r-${i + 1}`,
-    course_name: null,
-    total_score,
-    to_par: null,
-    rolling_average: null,
-  })),
-});
 
 describe("goalStandingFrom", () => {
   it("is null with no goal", () => {
@@ -53,6 +36,7 @@ describe("goalStandingFrom", () => {
       progressPct: null,
       onTrack: false,
       bestScore: null,
+      roundsMeetingGoal: null,
       savers: [],
     });
   });
@@ -77,50 +61,28 @@ describe("friendOptionsFrom", () => {
   });
 });
 
-describe("the window's own figures", () => {
-  it("counts the rounds at or under the goal, skipping unscored ones", () => {
-    expect(roundsMeetingGoal(withScores([90, 89, null, 85]), 89)).toBe(2);
+describe("the server's figures", () => {
+  it("maps the server's peak game, with the goal report's gap, once a goal is set", () => {
+    expect(peakGameFrom(labAnalytics, null, labGoalReport)).toBeNull();
+    expect(peakGameFrom({ ...labAnalytics, peak_game: null }, 89, labGoalReport)).toBeNull();
+
+    const peak = peakGameFrom(labAnalytics, 89, labGoalReport)!;
+    expect(peak.rounds[0]).toEqual({ roundId: "lab-6", courseName: "Half Moon Bay", score: 89 });
+    expect(peak.average).toBe(89.7);
+    expect(peak.overallAverage).toBe(91.7);
+    expect(peak.gapToGoal).toBe(0.7);
+    // Before the goal's report loads, the peak stands without a gap.
+    expect(peakGameFrom(labAnalytics, 89, null)?.gapToGoal).toBeNull();
   });
 
-  it("puts the last five rounds against the average, once there are five", () => {
-    expect(recentTrendFrom(withScores([90, 90, 90, 90]))).toBeNull();
-    expect(recentTrendFrom(withScores([100, 88, 88, 88, 88, 88], 90))).toBe(-2);
-  });
-
-  it("takes the best three rounds as the peak game, once a goal is set", () => {
-    const analytics = withScores([95, 88, 91, 86, 99]);
-    expect(peakGameFrom(analytics, null)).toBeNull();
-    expect(peakGameFrom(withScores([88]), 89)).toBeNull();
-
-    const peak = peakGameFrom(analytics, 84)!;
-    expect(peak.rounds.map((r) => r.score)).toEqual([86, 88, 91]);
-    expect(peak.average).toBeCloseTo(88.33, 2);
-    expect(peak.gapToGoal).toBeCloseTo(4.33, 2);
-  });
-
-  it("works out birdies, bogeys and doubles a round in the peak against all", () => {
-    const peak = peakGameFrom(labAnalytics, 89)!;
-    const comparison = peakVsAverageFrom(labAnalytics, peak)!;
-    // lab-6 had two birdies, lab-5 and lab-11 one each.
-    expect(comparison.peak.birdies).toBeCloseTo(4 / 3, 1);
-    expect(comparison.average.birdies).toBeCloseTo(9 / 12, 1);
-
-    const [birdies, bogeys, doubles] = peakImpactsFrom(comparison);
-    expect(birdies.strokes).toBeGreaterThan(0);
-    expect(bogeys.strokes).toBeCloseTo(-(comparison.peak.bogeys - comparison.average.bogeys), 5);
-    expect(doubles.strokes).toBeCloseTo(-2 * (comparison.peak.doubles - comparison.average.doubles), 5);
-  });
-
-  it("has no peak comparison without score types", () => {
-    const analytics = { ...labAnalytics, score_type_distribution: [] };
-    expect(peakVsAverageFrom(analytics, peakGameFrom(analytics, 89))).toBeNull();
-  });
-
-  it("averages the putting figures", () => {
+  it("takes the putting figures from the server, and the trend from its rows", () => {
     const putting = puttingSummaryFrom(labAnalytics);
-    expect(putting.threePuttsPerRound).toBe(2);
-    expect(putting.puttsPerRound).toBeCloseTo(34.5, 1);
+    expect(putting).toMatchObject({ threePuttsPerRound: 2, threePuttRate: 11.1, puttsPerRound: 34.5 });
     expect(putting.puttsTrend).toHaveLength(12);
+  });
+
+  it("falls back to the window's lowest score from the server's records", () => {
+    expect(labAnalyticsFrom(labAnalytics).lowestScore).toBe(89);
   });
 
   it("reads each par type against the comparison's average to par", () => {
@@ -154,9 +116,10 @@ describe("present", () => {
     const goal = goalStandingFrom(89, labGoalReport)!;
     expect(goalStandingNote(goal)).toBe("2.7 strokes a round to go.");
     expect(goalStandingNote({ ...goal, onTrack: true })).toBe("Your average already breaks 90. Keep it there.");
-    const peak = peakGameFrom(labAnalytics, 89)!;
+    const peak = peakGameFrom(labAnalytics, 89, labGoalReport)!;
     expect(peakGapNote(peak, "Break 90")).toBe("0.7 strokes from break 90 on your best days.");
     expect(peakGapNote({ ...peak, gapToGoal: -1 }, "Break 90")).toMatch(/already break 90/);
+    expect(peakGapNote({ ...peak, gapToGoal: null }, "Break 90")).toBeNull();
   });
 
   it("words a par-type gap, and a tie is even", () => {

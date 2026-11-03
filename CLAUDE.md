@@ -320,7 +320,8 @@ Key files:
 **Goal Engine design:**
 - `scoring_goal` is stored as the threshold value (e.g. `89` means "break 90")
 - "Achieved" = any single round with score ≤ `scoring_goal` (not average-based)
-- `goal_report` returns `gap` (avg - goal), `on_track` bool, and ranked `savers[]`
+- `goal_report` returns `gap` (avg - goal), `on_track` bool, `rounds_meeting_goal`, `peak_gap` (peak game average - goal), and ranked `savers[]`
+- The frontend caches one goal report per goal (`queryKeys.goalReport(user, goal)`), so a newly picked goal shows no figures until its own report loads rather than the last goal's
 - Each saver has: `type`, `strokes_saved`, `percentage_of_gap`, `headline`, `detail`, `data`
 
 ### `analytics/` — Player stats and visualizations
@@ -328,8 +329,11 @@ Key files:
 Implemented. Exposes per-player analytics via `api/routers/stats.py`.
 
 - `analytics/stats.py` — all per-player stat functions (GIR, putting, scrambling, yardage buckets, score type distribution, course difficulty profile, etc.)
-- `analytics/dashboard.py` — the dashboard's figures over the last 20 rounds (L20/L5 scoring averages, last-5 GIR/scrambling/up-and-down/putts, handicap change, score mix, WHS breakdown, lifetime milestones, and the score/handicap/scrambling/up-and-down trend series). `GET /stats/dashboard/{id}` sends them typed; the frontend only formats and colours them, and the dashboard never fetches the analytics payload.
-- `analytics/goals.py` — `goal_report(rounds, scoring_goal, home_course_rounds)` — computes gap to goal and ranks highest-ROI improvement areas ("savers"): three-putt bleed, blowup holes, achilles heel yardage zone, home course demon hole, GIR opportunity, scrambling opportunity, par 5 opportunity
+- `analytics/dashboard.py` — the dashboard's figures over the last 20 rounds (L20/L5 scoring averages and their change, last-5 GIR/scrambling/up-and-down/putts, handicap change, score mix, WHS breakdown, lifetime milestones, the best of the listed recent rounds, and the score/handicap/scrambling/up-and-down trend series). `GET /stats/dashboard/{id}` sends them typed; the frontend only formats and colours them, and the dashboard never fetches the analytics payload.
+- `analytics/insights.py` — the analytics page's insights: scoring, GIR and putts shifts between the earlier and later half of the rounds, the best par type, and GIR/putts averages with a `rating`. Each carries its `kind`, `category` and `trend`; the page words them.
+- `analytics/peak.py` — The Lab's peak game: the best three rounds (two at least), their average, and birdies/bogeys/doubles a round against every round with the strokes each difference is worth (`AnalyticsResponse.peak_game`); `peak_gap` against a goal for the goal report.
+- `analytics/goals.py` — `goal_report(rounds, scoring_goal, home_course_rounds)` — computes gap to goal, rounds meeting it, the peak game's gap to it, and ranks highest-ROI improvement areas ("savers"): three-putt bleed, blowup holes, achilles heel yardage zone, home course demon hole, GIR opportunity, scrambling opportunity, par 5 opportunity
+- The Lab reads `AnalyticsResponse` at limit 20 (`kpis.three_putts_per_round`, `three_putt_rate`, `average_putts`, `scoring_average_change`, `peak_game`) and the goal report. The profile radar's 0–100 scale and the handicap benchmark profiles stay in `frontend/src/domain/radar.ts` and `benchmark.ts`: chart normalisation and reference data, not figures worked out from the golfer's rounds.
 
 ## Imports
 

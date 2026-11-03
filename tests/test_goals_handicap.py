@@ -99,6 +99,8 @@ def test_goal_report_without_scores_returns_empty_report():
         "gap": None,
         "on_track": False,
         "progress_pct": None,
+        "rounds_meeting_goal": 0,
+        "peak_gap": None,
         "savers": [],
     }
 

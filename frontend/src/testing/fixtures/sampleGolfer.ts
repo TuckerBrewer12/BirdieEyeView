@@ -69,7 +69,7 @@ export const sampleGolfer = {
       {"category": "gir", "kind": "gir_shift", "points": 11.57407407407408, "trend": "up"},
       {"category": "putting", "kind": "putts_average", "putts": 32.666666666666664, "rating": "fair", "trend": "flat"}
     ],
-    "kpis": {"average_putts": 32.7, "gir_percentage": 33.1, "handicap_index": 7.0, "putts_per_gir": 2.02, "scoring_average": 82.9, "scrambling_percentage": 31.6, "total_rounds": 24, "up_and_down_percentage": 39.5},
+    "kpis": {"average_putts": 32.7, "gir_percentage": 33.1, "handicap_index": 7.0, "putts_per_gir": 2.02, "scoring_average": 82.9, "scoring_average_change": -3.9, "scrambling_percentage": 31.6, "three_putt_rate": 13.2, "three_putts_per_round": 2.4, "total_rounds": 24, "up_and_down_percentage": 39.5},
     "net_score_trend": [
       {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 81, "net_score": 74, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "to_par": 9},
       {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 88, "net_score": 81, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "to_par": 16},
@@ -284,6 +284,19 @@ export const sampleGolfer = {
       },
       "window_days": 365
     },
+    "peak_game": {
+      "average": 76.7,
+      "impacts": [
+        {"average": 0.96, "kind": "birdies", "peak": 1.33, "strokes": 0.37},
+        {"average": 7.13, "kind": "bogeys", "peak": 6.0, "strokes": 1.13},
+        {"average": 2.29, "kind": "doubles", "peak": 0.0, "strokes": 4.58}
+      ],
+      "rounds": [
+        {"course_name": "Presidio Golf Course", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "score": 75},
+        {"course_name": "Presidio Golf Course", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "score": 76},
+        {"course_name": "Presidio Golf Course", "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "score": 79}
+      ]
+    },
     "putts_trend": [
       {"holes_played": 18, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "total_putts": 29},
       {"holes_played": 18, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "total_putts": 31},
@@ -362,32 +375,6 @@ export const sampleGolfer = {
       {"course_name": "Presidio Golf Course", "rolling_average": 78.6, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "round_index": 22, "to_par": 3, "total_score": 75},
       {"course_name": "Sharp Park Golf Course", "rolling_average": 78.4, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "to_par": 9, "total_score": 81},
       {"course_name": "Presidio Golf Course", "rolling_average": 79.0, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "to_par": 7, "total_score": 79}
-    ],
-    "score_type_distribution": [
-      {"birdie": 5.555555555555555, "bogey": 22.22222222222222, "double_bogey": 16.666666666666664, "eagle": 0.0, "holes_counted": 18, "par": 55.55555555555556, "quad_bogey": 0.0, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "triple_bogey": 0.0},
-      {"birdie": 0.0, "bogey": 55.55555555555556, "double_bogey": 16.666666666666664, "eagle": 0.0, "holes_counted": 18, "par": 27.77777777777778, "quad_bogey": 0.0, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "triple_bogey": 0.0},
-      {"birdie": 0.0, "bogey": 44.44444444444444, "double_bogey": 22.22222222222222, "eagle": 0.0, "holes_counted": 18, "par": 27.77777777777778, "quad_bogey": 0.0, "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638", "round_index": 3, "triple_bogey": 5.555555555555555},
-      {"birdie": 11.11111111111111, "bogey": 33.33333333333333, "double_bogey": 22.22222222222222, "eagle": 0.0, "holes_counted": 18, "par": 33.33333333333333, "quad_bogey": 0.0, "round_id": "2579c7a3-a3b3-5d82-b538-61d2128a6e1f", "round_index": 4, "triple_bogey": 0.0},
-      {"birdie": 5.555555555555555, "bogey": 33.33333333333333, "double_bogey": 27.77777777777778, "eagle": 0.0, "holes_counted": 18, "par": 27.77777777777778, "quad_bogey": 0.0, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "triple_bogey": 5.555555555555555},
-      {"birdie": 5.555555555555555, "bogey": 38.88888888888889, "double_bogey": 16.666666666666664, "eagle": 0.0, "holes_counted": 18, "par": 38.88888888888889, "quad_bogey": 0.0, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "round_index": 6, "triple_bogey": 0.0},
-      {"birdie": 0.0, "bogey": 44.44444444444444, "double_bogey": 16.666666666666664, "eagle": 0.0, "holes_counted": 18, "par": 33.33333333333333, "quad_bogey": 0.0, "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d", "round_index": 7, "triple_bogey": 5.555555555555555},
-      {"birdie": 11.11111111111111, "bogey": 50.0, "double_bogey": 11.11111111111111, "eagle": 0.0, "holes_counted": 18, "par": 27.77777777777778, "quad_bogey": 0.0, "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c", "round_index": 8, "triple_bogey": 0.0},
-      {"birdie": 0.0, "bogey": 16.666666666666664, "double_bogey": 16.666666666666664, "eagle": 0.0, "holes_counted": 18, "par": 66.66666666666666, "quad_bogey": 0.0, "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab", "round_index": 9, "triple_bogey": 0.0},
-      {"birdie": 0.0, "bogey": 55.55555555555556, "double_bogey": 11.11111111111111, "eagle": 0.0, "holes_counted": 18, "par": 33.33333333333333, "quad_bogey": 0.0, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 10, "triple_bogey": 0.0},
-      {"birdie": 5.555555555555555, "bogey": 33.33333333333333, "double_bogey": 16.666666666666664, "eagle": 0.0, "holes_counted": 18, "par": 44.44444444444444, "quad_bogey": 0.0, "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b", "round_index": 11, "triple_bogey": 0.0},
-      {"birdie": 11.11111111111111, "bogey": 38.88888888888889, "double_bogey": 11.11111111111111, "eagle": 0.0, "holes_counted": 18, "par": 38.88888888888889, "quad_bogey": 0.0, "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab", "round_index": 12, "triple_bogey": 0.0},
-      {"birdie": 0.0, "bogey": 38.88888888888889, "double_bogey": 22.22222222222222, "eagle": 0.0, "holes_counted": 18, "par": 38.88888888888889, "quad_bogey": 0.0, "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a", "round_index": 13, "triple_bogey": 0.0},
-      {"birdie": 5.555555555555555, "bogey": 27.77777777777778, "double_bogey": 11.11111111111111, "eagle": 0.0, "holes_counted": 18, "par": 55.55555555555556, "quad_bogey": 0.0, "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc", "round_index": 14, "triple_bogey": 0.0},
-      {"birdie": 0.0, "bogey": 61.111111111111114, "double_bogey": 0.0, "eagle": 0.0, "holes_counted": 18, "par": 38.88888888888889, "quad_bogey": 0.0, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 15, "triple_bogey": 0.0},
-      {"birdie": 0.0, "bogey": 72.22222222222221, "double_bogey": 0.0, "eagle": 0.0, "holes_counted": 18, "par": 27.77777777777778, "quad_bogey": 0.0, "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc", "round_index": 16, "triple_bogey": 0.0},
-      {"birdie": 11.11111111111111, "bogey": 44.44444444444444, "double_bogey": 0.0, "eagle": 0.0, "holes_counted": 18, "par": 38.88888888888889, "quad_bogey": 0.0, "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff", "round_index": 17, "triple_bogey": 5.555555555555555},
-      {"birdie": 11.11111111111111, "bogey": 22.22222222222222, "double_bogey": 22.22222222222222, "eagle": 0.0, "holes_counted": 18, "par": 44.44444444444444, "quad_bogey": 0.0, "round_id": "5ba4527d-c48a-549c-a054-9306305065af", "round_index": 18, "triple_bogey": 0.0},
-      {"birdie": 16.666666666666664, "bogey": 38.88888888888889, "double_bogey": 0.0, "eagle": 0.0, "holes_counted": 18, "par": 44.44444444444444, "quad_bogey": 0.0, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "round_index": 19, "triple_bogey": 0.0},
-      {"birdie": 5.555555555555555, "bogey": 44.44444444444444, "double_bogey": 5.555555555555555, "eagle": 0.0, "holes_counted": 18, "par": 44.44444444444444, "quad_bogey": 0.0, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 20, "triple_bogey": 0.0},
-      {"birdie": 0.0, "bogey": 38.88888888888889, "double_bogey": 0.0, "eagle": 0.0, "holes_counted": 18, "par": 61.111111111111114, "quad_bogey": 0.0, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "round_index": 21, "triple_bogey": 0.0},
-      {"birdie": 5.555555555555555, "bogey": 22.22222222222222, "double_bogey": 0.0, "eagle": 0.0, "holes_counted": 18, "par": 72.22222222222221, "quad_bogey": 0.0, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "round_index": 22, "triple_bogey": 0.0},
-      {"birdie": 11.11111111111111, "bogey": 38.88888888888889, "double_bogey": 11.11111111111111, "eagle": 0.0, "holes_counted": 18, "par": 38.88888888888889, "quad_bogey": 0.0, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "triple_bogey": 0.0},
-      {"birdie": 5.555555555555555, "bogey": 33.33333333333333, "double_bogey": 5.555555555555555, "eagle": 0.0, "holes_counted": 18, "par": 55.55555555555556, "quad_bogey": 0.0, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "triple_bogey": 0.0}
     ],
     "scoring_by_handicap": [
       {"average_to_par": 0.5833333333333334, "handicap": 1, "sample_size": 24},
@@ -1036,7 +1023,7 @@ export const sampleGolfer = {
         {"category": "putting", "kind": "putts_average", "putts": 33.0, "rating": "fair", "trend": "flat"},
         {"category": "putting", "kind": "putts_shift", "putts": 3.0, "trend": "down"}
       ],
-      "kpis": {"average_putts": 33.0, "gir_percentage": 29.2, "handicap_index": 7.5, "putts_per_gir": 2.19, "scoring_average": 85.0, "scrambling_percentage": 24.8, "total_rounds": 4, "up_and_down_percentage": 40.5},
+      "kpis": {"average_putts": 33.0, "gir_percentage": 29.2, "handicap_index": 7.5, "putts_per_gir": 2.19, "scoring_average": 85.0, "scoring_average_change": null, "scrambling_percentage": 24.8, "three_putt_rate": 15.3, "three_putts_per_round": 2.8, "total_rounds": 4, "up_and_down_percentage": 40.5},
       "net_score_trend": [
         {"course_handicap": 8, "course_name": "Half Moon Bay Golf Links", "gross_score": 90, "net_score": 82, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "to_par": 18},
         {"course_handicap": 8, "course_name": "Half Moon Bay Golf Links", "gross_score": 86, "net_score": 78, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "to_par": 14},
@@ -1218,6 +1205,19 @@ export const sampleGolfer = {
         },
         "window_days": 365
       },
+      "peak_game": {
+        "average": 83.3,
+        "impacts": [
+          {"average": 0.5, "kind": "birdies", "peak": 0.33, "strokes": -0.17},
+          {"average": 8.75, "kind": "bogeys", "peak": 9.67, "strokes": -0.92},
+          {"average": 2.25, "kind": "doubles", "peak": 1.0, "strokes": 2.5}
+        ],
+        "rounds": [
+          {"course_name": "Half Moon Bay Golf Links", "round_id": "fab7f282-178f-506b-9713-9764f5104099", "score": 81},
+          {"course_name": "Half Moon Bay Golf Links", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "score": 83},
+          {"course_name": "Half Moon Bay Golf Links", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "score": 86}
+        ]
+      },
       "putts_trend": [
         {"holes_played": 18, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "total_putts": 34},
         {"holes_played": 18, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "total_putts": 35},
@@ -1236,12 +1236,6 @@ export const sampleGolfer = {
         {"course_name": "Half Moon Bay Golf Links", "rolling_average": 88.0, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "to_par": 14, "total_score": 86},
         {"course_name": "Half Moon Bay Golf Links", "rolling_average": 86.3, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "to_par": 11, "total_score": 83},
         {"course_name": "Half Moon Bay Golf Links", "rolling_average": 85.0, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "to_par": 9, "total_score": 81}
-      ],
-      "score_type_distribution": [
-        {"birdie": 5.555555555555555, "bogey": 33.33333333333333, "double_bogey": 27.77777777777778, "eagle": 0.0, "holes_counted": 18, "par": 27.77777777777778, "quad_bogey": 0.0, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "triple_bogey": 5.555555555555555},
-        {"birdie": 0.0, "bogey": 55.55555555555556, "double_bogey": 11.11111111111111, "eagle": 0.0, "holes_counted": 18, "par": 33.33333333333333, "quad_bogey": 0.0, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "triple_bogey": 0.0},
-        {"birdie": 0.0, "bogey": 61.111111111111114, "double_bogey": 0.0, "eagle": 0.0, "holes_counted": 18, "par": 38.88888888888889, "quad_bogey": 0.0, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "triple_bogey": 0.0},
-        {"birdie": 5.555555555555555, "bogey": 44.44444444444444, "double_bogey": 5.555555555555555, "eagle": 0.0, "holes_counted": 18, "par": 44.44444444444444, "quad_bogey": 0.0, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "triple_bogey": 0.0}
       ],
       "scoring_by_handicap": [
         {"average_to_par": 1.0, "handicap": 1, "sample_size": 4},
@@ -1437,6 +1431,7 @@ export const sampleGolfer = {
   "dashboard": {
     "average_gir": 6.0,
     "average_putts": 32.7,
+    "best_recent_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd",
     "best_round": 75,
     "best_round_course": "Presidio Golf Course",
     "best_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd",
@@ -1832,7 +1827,9 @@ export const sampleGolfer = {
     "best_score": 75,
     "gap": 3.3,
     "on_track": false,
+    "peak_gap": -2.3,
     "progress_pct": 70.00000000000003,
+    "rounds_meeting_goal": 4,
     "savers": [
       {
         "data": {"avg_three_putts": 2.5},

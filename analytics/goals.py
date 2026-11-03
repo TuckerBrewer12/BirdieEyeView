@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from models.round import Round
+from analytics.peak import peak_gap
 from analytics.stats import (
     three_putts_per_round,
     score_type_distribution_per_round,
@@ -44,6 +45,8 @@ def goal_report(
             "gap": None,
             "on_track": False,
             "progress_pct": None,
+            "rounds_meeting_goal": 0,
+            "peak_gap": None,
             "savers": [],
         }
 
@@ -244,5 +247,7 @@ def goal_report(
         "gap": round(gap, 1),
         "on_track": on_track,
         "progress_pct": progress_pct,
+        "rounds_meeting_goal": sum(1 for s in scores if s <= scoring_goal),
+        "peak_gap": peak_gap(rounds, scoring_goal),
         "savers": savers,
     }

@@ -111,6 +111,23 @@ export class TheLabRobot {
     return this;
   }
 
+  /** Goal reports wait until `goalReportsArrive()`, as a slow server's would. */
+  holdGoalReports(): this {
+    this.backend?.holdGoalReports();
+    return this;
+  }
+
+  goalReportsArrive(): this {
+    this.backend?.finishGoalReports();
+    return this;
+  }
+
+  /** The attempts card's count of rounds that met the goal: "1", or "—" while its report loads. */
+  async seesTimesAchieved(count: string): Promise<this> {
+    await expect(this.shown("[data-slot=attempts-card] [data-slot=stat-value]")).toHaveText(count);
+    return this;
+  }
+
   /** The next save fails with this message, as the API would answer. */
   failSavesWith(detail: string): this {
     if (this.backend) this.backend.updateUserError = detail;

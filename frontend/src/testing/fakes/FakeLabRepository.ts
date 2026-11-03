@@ -28,6 +28,8 @@ export class FakeLabRepository implements LabRepository {
   saveError: Error | null = null;
   private held: Promise<void> | null = null;
   private release: (() => void) | null = null;
+  private heldReport: Promise<void> | null = null;
+  private releaseReport: (() => void) | null = null;
 
   constructor({ user = {}, analytics = {}, goalReport = null, friends = {} }: FakeLabSeed = {}) {
     this.user = { ...labUser, ...user };
@@ -47,10 +49,25 @@ export class FakeLabRepository implements LabRepository {
     return this.user;
   }
 
+  /** The seeded report, for whatever goal the golfer has saved, as the server reads it. */
   async getGoalReport(): Promise<GoalReportDto> {
     this.goalReportRequests += 1;
+    const goal = this.user.scoring_goal;
+    if (this.heldReport) await this.heldReport;
     if (!this.goalReport) throw new Error("No goal report.");
-    return this.goalReport;
+    return { ...this.goalReport, scoring_goal: goal ?? this.goalReport.scoring_goal };
+  }
+
+  /** Goal report reads wait until `finishGoalReport()`, so a report in flight can be seen. */
+  holdGoalReport(): void {
+    this.heldReport = new Promise((resolve) => {
+      this.releaseReport = resolve;
+    });
+  }
+
+  finishGoalReport(): void {
+    this.releaseReport?.();
+    this.heldReport = null;
   }
 
   /** Analytics reads wait until `finishAnalytics()`, so a load in flight can be seen. */

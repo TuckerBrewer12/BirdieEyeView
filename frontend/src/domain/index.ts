@@ -6,10 +6,11 @@ export {
   playedScoreKinds,
   scoreKind,
   scoreKindCountLabel,
+  scoreMixFrom,
   strokesToPar,
   toParLabel,
 } from "./score";
-export type { ScoreKind, ScoreMix } from "./score";
+export type { ScoreKind, ScoreMix, ScoreTypeShares } from "./score";
 
 export {
   GOAL_OPTIONS,
@@ -66,7 +67,7 @@ export type {
 
 export type { AnalyticsFilters } from "./analyticsFilters";
 
-export { trendPointsFrom } from "./trend";
-export type { RoundTrendPoint } from "./trend";
+export { shortGamePointsFrom, trendPointsFrom } from "./trend";
+export type { RoundTrendPoint, ShortGamePoint } from "./trend";
 
 export { strokesToCheck } from "./scan";

@@ -5,7 +5,9 @@ import { queryKeys } from "./queryKeys";
 /**
  * The server's report on the golfer's scoring goal over their last 20 rounds. The dashboard's
  * goal card and The Lab share this one query. It waits until a goal is set, since the server
- * has nothing to report without one; `useUpdateUser` refetches it when the goal changes.
+ * has nothing to report without one. Each goal has its own entry, so a newly picked goal
+ * shows no figures until its own report loads, never the last goal's; `useUpdateUser`
+ * refetches them when the goal changes.
  */
 export function useGoalReport(
   userId: string,
@@ -13,7 +15,7 @@ export function useGoalReport(
   repository: GoalReportRepository = goalReportRepository,
 ) {
   return useQuery({
-    queryKey: queryKeys.goalReport(userId),
+    queryKey: queryKeys.goalReport(userId, scoringGoal ?? undefined),
     queryFn: () => repository.getGoalReport(userId, 20),
     enabled: scoringGoal != null,
     retry: false,

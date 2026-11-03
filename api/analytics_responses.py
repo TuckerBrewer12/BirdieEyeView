@@ -7,6 +7,7 @@ from analytics import dashboard
 from analytics import handicap as hcap
 from analytics import stats as analytics
 from analytics.insights import insights
+from analytics.peak import peak_game
 from api.schemas import AnalyticsKpis, AnalyticsResponse
 from models import Round
 
@@ -37,6 +38,7 @@ def analytics_response(
     up_and_down_rows = analytics.up_and_down_trend(rounds)
     current_hi = hcap.handicap_index(hi_rounds)
     average_putts = _average([r["total_putts"] for r in putts_rows if r["total_putts"] is not None])
+    three_putts = analytics.three_putt_averages(rounds)
 
     return AnalyticsResponse(
         kpis=AnalyticsKpis(
@@ -52,6 +54,9 @@ def analytics_response(
             handicap_index=current_hi,
             total_rounds=len(rounds),
             average_putts=analytics.round_half_up(average_putts) if average_putts is not None else None,
+            three_putts_per_round=three_putts["per_round"],
+            three_putt_rate=three_putts["rate"],
+            scoring_average_change=dashboard.scoring_average_change(rounds, full_window=True),
         ),
         score_trend=score_rows,
         net_score_trend=analytics.net_score_trend(rounds, current_hi),
@@ -60,7 +65,6 @@ def analytics_response(
         three_putts_trend=analytics.three_putts_per_round(rounds),
         scrambling_trend=scrambling_rows,
         up_and_down_trend=up_and_down_rows,
-        score_type_distribution=analytics.score_type_distribution_per_round(rounds),
         scoring_by_par=scoring_by_par,
         scoring_by_yardage=analytics.scoring_by_yardage_buckets(rounds),
         scoring_by_handicap=analytics.scoring_vs_hole_handicap(rounds),
@@ -74,4 +78,5 @@ def analytics_response(
             kind: analytics.round_half_up(share, 2) for kind, share in dashboard.score_mix(rounds)["percentages"].items()
         },
         insights=insights(score_rows, gir_rows, scoring_by_par, putts_rows),
+        peak_game=peak_game(rounds),
     )

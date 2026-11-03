@@ -12,6 +12,22 @@ test("choosing a goal saves it to the profile and stands the page on it", async 
   await lab.seesGoalStanding("Break 85");
 });
 
+test("a newly picked goal shows no figures until its own report loads", async ({ lab }) => {
+  await lab.open();
+  await lab.seesTimesAchieved("1");
+  lab.holdGoalReports();
+
+  await lab.pickGoal("Break 85");
+
+  await lab.savedGoal(84);
+  await lab.seesGoalStanding("Break 85");
+  // The last goal's count would be wrong against the new one, so none shows yet.
+  await lab.seesTimesAchieved("—");
+
+  lab.goalReportsArrive();
+  await lab.seesTimesAchieved("1");
+});
+
 test("a goal the server rejects says so and leaves the current goal pressed", async ({ lab }) => {
   await lab.open();
   lab.failSavesWith("Couldn't save your goal.");
