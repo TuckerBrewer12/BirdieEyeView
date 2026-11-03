@@ -1,7 +1,8 @@
 import { ArrowDown, ArrowUp, Check, ChevronDown } from "lucide-react";
 import { Select } from "@base-ui/react/select";
 import { cn } from "@/brand/cn";
-import { tokens } from "@/brand/theme";
+import { Button } from "./Button";
+import { buttonVariants } from "./variants";
 
 interface SortOption<T extends string> {
   value: T;
@@ -49,11 +50,11 @@ function SortControl<T extends string>({
       >
         <Select.Trigger
           aria-label={ariaLabel}
-          className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-body font-semibold text-foreground outline-none select-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+          className={buttonVariants({ variant: "ghost", className: "text-body font-semibold" })}
         >
           {caption && <span className="font-medium text-muted-foreground">{caption}</span>}
           {label}
-          <ChevronDown aria-hidden strokeWidth={tokens.stroke.icon} className="size-3" />
+          <ChevronDown aria-hidden className="size-3" />
         </Select.Trigger>
         <Select.Portal>
           <Select.Positioner
@@ -86,19 +87,19 @@ function SortControl<T extends string>({
         </Select.Portal>
       </Select.Root>
       {onToggleDirection && (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon"
           aria-label={ascending ? "Sort descending" : "Sort ascending"}
           disabled={directionDisabled}
           onClick={onToggleDirection}
-          className="inline-flex size-8 items-center justify-center rounded-lg text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
         >
           {directionDisabled || ascending ? (
             <ArrowUp className="size-3.5" />
           ) : (
             <ArrowDown className="size-3.5" />
           )}
-        </button>
+        </Button>
       )}
     </div>
   );

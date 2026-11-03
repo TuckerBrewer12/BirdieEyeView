@@ -27,10 +27,10 @@ export default function FilterChipPreview() {
         <p className="text-label font-semibold text-muted-foreground">Chip · off, selected, no count</p>
         <div className="flex flex-wrap items-center gap-1.5">
           <FilterChip count={2}>Half Moon Bay</FilterChip>
-          <FilterChip count={1} selected>
+          <FilterChip count={1} defaultPressed>
             Blue Rock
           </FilterChip>
-          <FilterChip selected>Unlinked</FilterChip>
+          <FilterChip defaultPressed>Unlinked</FilterChip>
         </div>
       </div>
       <div className="flex flex-col gap-1.5">
@@ -50,8 +50,8 @@ export default function FilterChipPreview() {
                 <FilterChip
                   key={c.name}
                   count={c.count}
-                  selected={course === c.name}
-                  onSelectedChange={(on) => setCourse(on ? c.name : null)}
+                  pressed={course === c.name}
+                  onPressedChange={(on) => setCourse(on ? c.name : null)}
                 >
                   {c.name}
                 </FilterChip>
