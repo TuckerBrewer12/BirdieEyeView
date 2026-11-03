@@ -3,10 +3,12 @@ import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
+import { NineBars } from "@/brand/charts/NineBars";
+import { Button } from "@/brand/components/Button";
 import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import { scoreFillClass, toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
-import { playedScoreKinds, scoreKindCountLabel, type HoleSummary, type RoundSummary } from "@/domain";
+import { toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
+import { playedScoreKinds, scoreKindCountLabel, type RoundSummary } from "@/domain";
 import { formatCourseName } from "@/domain/course";
 import { formatDay, formatDayShort, dayParts } from "@/domain/date";
 
@@ -112,22 +114,22 @@ export function RoundPreview(props: RoundPreviewProps) {
           <span className="truncate text-base font-semibold text-foreground">
             {courseName ?? "Unknown course"}
           </span>
-          {unlinked &&
-            (onLinkClick ? (
-              <button
-                type="button"
-                aria-label={`Link ${courseName ?? "this round"} to a saved course`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onLinkClick();
-                }}
-                className={cn(UNLINKED_PILL, "cursor-pointer bg-transparent hover:border-border-strong hover:text-foreground")}
-              >
-                Unlinked
-              </button>
-            ) : (
-              <span className={UNLINKED_PILL}>Unlinked</span>
-            ))}
+          {unlinked && (
+            <Button
+              variant="outline"
+              size="xs"
+              shape="pill"
+              aria-label={onLinkClick ? `Link ${courseName ?? "this round"} to a saved course` : undefined}
+              disabled={!onLinkClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                onLinkClick?.();
+              }}
+              className="text-muted-foreground disabled:opacity-100"
+            >
+              Unlinked
+            </Button>
+          )}
         </div>
 
         {meta.length > 0 && <div className="text-body-sm text-foreground-secondary">{meta.join(" · ")}</div>}
@@ -143,43 +145,12 @@ export function RoundPreview(props: RoundPreviewProps) {
       <div className="flex w-16 shrink-0 flex-col items-end justify-center gap-1 whitespace-nowrap text-right">
         <span className="text-figure text-foreground">{round.score ?? "—"}</span>
         {round.toPar != null && (
-          <span
-            className={cn(
-              "rounded-full bg-muted px-2 py-0.5 text-body-sm font-semibold",
-              toParInkClass(round.toPar),
-            )}
-          >
+          <span className={cn("rounded-full px-2 py-0.5 text-body-sm font-semibold", toParBadgeClass(round.toPar))}>
             {toParLabel(round.toPar)}
           </span>
         )}
       </div>
     </motion.div>
-  );
-}
-
-const UNLINKED_PILL =
-  "shrink-0 rounded-full border border-border px-1.5 py-px text-label font-semibold text-muted-foreground";
-
-/** The chip's ink: under par green, over par red, even a step back from the page's ink. */
-function toParInkClass(toPar: number): string {
-  if (toPar < 0) return "text-status-success";
-  return toPar === 0 ? "text-foreground-secondary" : "text-status-danger";
-}
-
-/** One nine as a row of nine bars, so a round reads as front and back. Par recedes; the misses stand out. */
-function NineBars({ holes }: { holes: HoleSummary[] }) {
-  return (
-    <div className="grid flex-1 grid-cols-9 gap-chip">
-      {holes.map((hole) => {
-        const kind = hole.kind ?? "par";
-        return (
-          <div
-            key={hole.hole}
-            className={cn("h-2 rounded-tick", kind === "par" ? "bg-border" : scoreFillClass(kind))}
-          />
-        );
-      })}
-    </div>
   );
 }
 
