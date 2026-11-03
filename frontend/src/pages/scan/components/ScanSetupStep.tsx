@@ -75,7 +75,6 @@ function TeeField({ setup }: { setup: ScanSetupViewModel }) {
       <FieldLabel htmlFor={pick ? undefined : "setup-tee"}>Tee played</FieldLabel>
       {pick ? (
         <ToggleGroup
-          variant="outline"
           size="sm"
           aria-label="Tee played"
           value={setup.teeBox ? [setup.teeBox] : []}

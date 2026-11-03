@@ -74,22 +74,19 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
 
           <ToggleGroup
             aria-label="Shape to show"
-            variant="outline"
             size="sm"
-            spacing={0}
+            fill
             value={[mode]}
             onValueChange={(values) => {
               const next = MODES.find((m) => m.value === values[0]);
               if (next) props.onModeChange(next.value);
             }}
-            className="w-full"
           >
             {MODES.map((m) => (
               <ToggleGroupItem
                 key={m.value}
                 value={m.value}
                 disabled={m.value === "peak" && !peak}
-                className="flex-1"
               >
                 {m.label}
               </ToggleGroupItem>
@@ -152,7 +149,6 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
               <ToggleGroup
                 data-slot="comparison-picker"
                 aria-labelledby={compareLabelId}
-                variant="outline"
                 size="sm"
                 value={[comparisonKey(comparison)]}
                 onValueChange={(values) => {
@@ -172,7 +168,6 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
                 <ToggleGroup
                   data-slot="friend-picker"
                   aria-label="Friend to compare with"
-                  variant="outline"
                   size="sm"
                   value={selectedFriend ? [selectedFriend.id] : []}
                   onValueChange={(values) => {

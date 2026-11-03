@@ -41,7 +41,6 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
               value={target}
               onChange={vm.setGoal}
               disabled={vm.savingGoal}
-              spacing={1.5}
               className="flex-wrap"
             />
           </CardContent>
@@ -91,7 +90,6 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
             <ToggleGroup
               data-slot="lab-panels"
               aria-label="Performance panel"
-              variant="outline"
               size="sm"
               value={[vm.panel]}
               onValueChange={(values) => {

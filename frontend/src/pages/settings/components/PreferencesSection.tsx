@@ -40,9 +40,7 @@ export function PreferencesSection({
         <Row labelId="settings-theme-label" label="Theme">
           <ToggleGroup
             aria-labelledby="settings-theme-label"
-            variant="outline"
             size="sm"
-            spacing={0}
             value={[theme]}
             onValueChange={(values) => {
               // Pressing the chosen option again would clear it; a theme is always chosen.

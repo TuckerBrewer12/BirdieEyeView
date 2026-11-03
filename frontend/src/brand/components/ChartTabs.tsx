@@ -34,8 +34,6 @@ function ChartTabs<T>({
     <div data-slot="chart-tabs">
       <div className="md:hidden">
         <ToggleGroup
-          variant="outline"
-          spacing={2}
           value={[value]}
           onValueChange={(values) => onValueChange(values[0] ?? "")}
           className="mb-4 max-w-full overflow-x-auto [scrollbar-width:none]"

@@ -90,8 +90,6 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
         </div>
 
         <ToggleGroup
-          variant="outline"
-          spacing={2}
           value={[viewModel.tab]}
           onValueChange={(values) => {
             const next = values[0] as InboxTab | undefined;

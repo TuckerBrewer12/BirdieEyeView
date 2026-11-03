@@ -47,8 +47,6 @@ export function RoundsPage({ userId }: RoundsPageProps) {
         />
 
         <ToggleGroup
-          variant="outline"
-          spacing={2}
           value={[viewModel.filterMode]}
           onValueChange={(values) => viewModel.setFilterMode(values[0] ?? "all")}
           className="max-w-full overflow-x-auto [scrollbar-width:none]"

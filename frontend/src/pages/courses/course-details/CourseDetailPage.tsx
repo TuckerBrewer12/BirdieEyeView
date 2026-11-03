@@ -66,8 +66,6 @@ export function CourseDetailPage({ userId }: { userId: string }) {
       </div>
 
       <ToggleGroup
-        variant="outline"
-        spacing={2}
         value={[viewModel.activeTab]}
         onValueChange={(values) => viewModel.selectPageTab(values[0] ?? "")}
         className="my-6"

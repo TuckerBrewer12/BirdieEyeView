@@ -56,6 +56,8 @@ export {
   pageTitleVariants,
   statVariants,
   statValueVariants,
+  segmentedItemVariants,
+  segmentedTrackVariants,
   teeSwatchVariants,
   toggleVariants,
 } from "./components/variants";

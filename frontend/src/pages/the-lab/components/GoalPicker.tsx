@@ -7,20 +7,16 @@ interface GoalPickerProps {
   onChange: (target: number) => void;
   /** While a pick is saving. */
   disabled?: boolean;
-  /** 0 joins the goals into one control; a gap sets them apart, so a row that wraps on a phone still reads. */
-  spacing?: number;
   className?: string;
 }
 
 /** The scoring goals a golfer can set, one pressed. */
-export function GoalPicker({ value, onChange, disabled, spacing = 0, className }: GoalPickerProps) {
+export function GoalPicker({ value, onChange, disabled, className }: GoalPickerProps) {
   return (
     <ToggleGroup
       data-slot="goal-picker"
       aria-label="Scoring goal"
-      variant="outline"
       size="sm"
-      spacing={spacing}
       disabled={disabled}
       value={value != null ? [String(value)] : []}
       onValueChange={(values) => {
