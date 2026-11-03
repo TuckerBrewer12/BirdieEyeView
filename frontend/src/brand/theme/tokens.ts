@@ -61,7 +61,7 @@ export const palette = {
     900: "#17291d",
     950: "#08130c",
   },
-  forest: { 700: "#2d7a3a", 750: "#2d4c3b", 800: "#1e3d25", 900: "#152d1b" },
+  forest: { 700: "#2d7a3a", 750: "#2d4c3b", 800: "#1e3d25" },
   denim: { 500: "#3d6fb6", 700: "#2457a6" },
   gray: { 100: "#f3f4f6", 200: "#e5e7eb", 600: "#4b5563", 700: "#374151" },
   slate: { 600: "#475569", 900: "#0f172a" },
@@ -203,8 +203,9 @@ const light = {
   // The app's side rail: the brand's own surface, the same in both modes.
   sidebar: {
     DEFAULT: forest[800],
-    end: forest[900],
     foreground: white,
+    /** The brand mark on its white tile: the brand green, which stays put in dark. */
+    mark: fairway[700],
   },
 
   // Score colours encode data, so they do not flip with the mode. `base` is
@@ -385,6 +386,8 @@ export const type = {
   eyebrow: { size: 10, weight: 700, tracking: tracking.eyebrow },
   /** The smaller tracked capitals on a chip or a header strip. */
   kicker: { size: 9, weight: 700, tracking: tracking.kicker },
+  /** The app name beside its mark, at the head of the side rail. */
+  brand: { size: 15, weight: 700, tracking: tracking.name },
   /** The label above a page section (`SectionLabel`). */
   section: { size: 11, weight: 700, tracking: tracking.section },
 } satisfies Record<string, TypeRole>;
