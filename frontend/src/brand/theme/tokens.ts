@@ -381,6 +381,8 @@ export const type = {
   title: { size: 26, weight: 700, tracking: tracking.title },
   /** The one big figure on a card: a round's score. */
   hero: { size: 44, weight: 700, tracking: tracking.hero, leading: 1 },
+  /** The handicap index leading its card. */
+  index: { size: 40, weight: 700, tracking: -1.2, leading: 1 },
   /** The tracked capitals above a figure or a group of rows. */
   eyebrow: { size: 10, weight: 700, tracking: tracking.eyebrow },
   /** The smaller tracked capitals on a chip or a header strip. */
@@ -578,6 +580,26 @@ export const chart = {
     lastLift: 8,
     /** Where the last score sits, straight above its dot. */
     scoreLift: 10,
+  },
+  /** The handicap-led card: the index's line, then each round's differential against the counting cut-off. */
+  counting: {
+    width: 544,
+    height: 200,
+    /** The grid's right edge; the tick labels sit past it. */
+    plot: 500,
+    labelGap: 10,
+    inset: 8,
+    /** Room past the highest and lowest differential, in strokes. */
+    headroom: 1,
+    /** Room under the grid for the round numbers, and their baseline. */
+    bottomRoom: 26,
+    ticks: 196,
+    dot: 3.75,
+    dotCounts: 4.5,
+    stem: 1.5,
+    dash: "4 4",
+    /** The index's line in the card's header. */
+    spark: { width: 140, height: 40, pad: 4, stroke: 2, dot: 3 },
   },
   /** A figure's trend line. */
   sparkline: {

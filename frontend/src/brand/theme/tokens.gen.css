@@ -117,6 +117,7 @@
   --brand-text-body: 13px;
   --brand-text-title: 26px;
   --brand-text-hero: 44px;
+  --brand-text-index: 40px;
   --brand-text-eyebrow: 10px;
   --brand-text-kicker: 9px;
   --brand-text-section: 11px;
@@ -319,6 +320,7 @@
   --text-body: var(--brand-text-body);
   --text-title: var(--brand-text-title);
   --text-hero: var(--brand-text-hero);
+  --text-index: var(--brand-text-index);
   --text-eyebrow: var(--brand-text-eyebrow);
   --text-kicker: var(--brand-text-kicker);
   --text-section: var(--brand-text-section);
@@ -376,6 +378,9 @@
   --text-hero--font-weight: 700;
   --text-hero--letter-spacing: -1.8px;
   --text-hero--line-height: 1;
+  --text-index--font-weight: 700;
+  --text-index--letter-spacing: -1.2px;
+  --text-index--line-height: 1;
   --text-eyebrow--font-weight: 700;
   --text-eyebrow--letter-spacing: 1.4px;
   --text-kicker--font-weight: 700;

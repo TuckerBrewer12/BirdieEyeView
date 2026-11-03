@@ -20,5 +20,7 @@ export const trend: RoundTrendPoint[] = scores.map((score, i) => ({
   toPar: score - 72,
   handicapIndex: indexes[i],
   courseName: "Half Moon Bay",
+  // The board's rating and slope: (score − 65.8) × 113 / 125.
+  differential: Math.round((score - 65.8) * 0.904 * 10) / 10,
   differentialStatus: counting.has(i) ? "counting" : "out",
 }));
