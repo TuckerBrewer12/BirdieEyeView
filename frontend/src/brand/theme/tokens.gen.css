@@ -173,7 +173,7 @@
   --brand-ring-width: 3px;
 }
 
-:root.dark {
+:root.dark, .dark {
   --background: #0e1210;
   --foreground: #e9eeea;
   --foreground-secondary: #b3bdb6;
@@ -389,5 +389,5 @@
   --grid-template-columns-round-preview: var(--brand-size-date-rail) 1fr auto;
   --grid-template-columns-handicap-breakdown: 1fr auto auto auto;
   --grid-template-columns-recent-rounds: 1fr auto auto;
-  --grid-template-columns-state-grid: 4.5rem repeat(2, minmax(0, 1fr));
+  --grid-template-columns-state-grid: 4.125rem repeat(3, minmax(0, 1fr));
 }

@@ -1,13 +1,13 @@
 import { test } from "@playwright/test";
-import { capturePreview, enableDark } from "../../previewScreenshot";
+import { BrandKitRobot } from "../../BrandKit.robot";
+
+// The board shows both themes side by side, so one capture at the board's size covers them.
+test.use({ viewport: { width: 760, height: 460 } });
 
 test.describe("Button", () => {
-  test("light", async ({ page }) => {
-    await capturePreview(page, "Button", "button.png");
-  });
-
-  test("dark", async ({ page }) => {
-    await enableDark(page);
-    await capturePreview(page, "Button", "button-dark.png");
+  test("light and dark panels", async ({ page }) => {
+    const kit = new BrandKitRobot(page);
+    await kit.openFrame("Button");
+    await kit.captureFrame("button.png");
   });
 });

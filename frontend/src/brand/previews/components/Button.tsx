@@ -1,5 +1,6 @@
 import { Ellipsis } from "lucide-react";
 import { Button } from "@/brand/components/Button";
+import { cn } from "@/brand/cn";
 
 const rows = [
   { name: "Primary", label: "Save", variant: "default" },
@@ -10,19 +11,31 @@ const rows = [
 
 const grid = "grid grid-cols-state-grid items-center gap-2";
 
-export default function ButtonPreview() {
+/** One theme's panel of the board: every variant in each state, then the sizes. */
+function Panel({ theme }: { theme: "Light" | "Dark" }) {
   return (
-    <div className="flex flex-col gap-2.5 rounded-card border border-border bg-card p-4.5 text-foreground">
-      <div className={`${grid} text-label font-semibold text-muted-foreground`}>
-        <div />
+    <div
+      className={cn(
+        "flex flex-col gap-2.5 rounded-xl border border-border bg-card p-4.5 text-foreground",
+        theme === "Dark" && "dark",
+      )}
+    >
+      <div className={cn(grid, "text-label font-semibold text-muted-foreground")}>
+        <div>{theme}</div>
         <div>Default</div>
+        <div>Hover</div>
         <div>Disabled</div>
       </div>
       {rows.map((row) => (
         <div key={row.name} className={grid}>
           <div className="text-body-sm text-foreground-secondary">{row.name}</div>
-          <Button variant={row.variant}>{row.label}</Button>
-          <Button variant={row.variant} disabled>
+          <Button variant={row.variant} className="px-1.5">
+            {row.label}
+          </Button>
+          <Button variant={row.variant} className="px-1.5" data-hover="">
+            {row.label}
+          </Button>
+          <Button variant={row.variant} className="px-1.5" disabled>
             {row.label}
           </Button>
         </div>
@@ -37,6 +50,16 @@ export default function ButtonPreview() {
           <Ellipsis />
         </Button>
       </div>
+    </div>
+  );
+}
+
+/** The canvas board: the light and dark panels side by side, at the board's size. */
+export default function ButtonPreview() {
+  return (
+    <div data-testid="brand-frame" className="fixed inset-0 grid grid-cols-2 gap-4 bg-background p-6">
+      <Panel theme="Light" />
+      <Panel theme="Dark" />
     </div>
   );
 }
