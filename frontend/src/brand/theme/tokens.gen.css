@@ -138,6 +138,7 @@
   --brand-radius-tick: 2px;
   --brand-radius-card: 10px;
   --brand-radius-tooltip: 12px;
+  --brand-radius-sheet: 20px;
   --brand-radius-addon: calc(var(--radius) - var(--brand-space-nudge));
   --brand-radius-control: calc(var(--radius) - var(--brand-space-nudge-sm));
   --brand-space-bar: 1.5px;
@@ -340,6 +341,7 @@
   --radius-tick: var(--brand-radius-tick);
   --radius-card: var(--brand-radius-card);
   --radius-tooltip: var(--brand-radius-tooltip);
+  --radius-sheet: var(--brand-radius-sheet);
   --radius-addon: var(--brand-radius-addon);
   --radius-control: var(--brand-radius-control);
   --spacing-bar: var(--brand-space-bar);
