@@ -18,7 +18,7 @@
   --accent: #e8f5e9;
   --accent-foreground: var(--foreground);
   --destructive: #dc2626;
-  --shadow: rgb(15 23 42 / 0.10);
+  --shadow: rgb(15 23 42 / 0.1);
   --chart-axis: var(--score-par-base);
   --chart-muted: #e5e7eb;
   --chart-accent: #4ade80;

@@ -1,5 +1,5 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { color, tokens } from "@/brand";
+import { tokens } from "@/brand";
 import { formatPercent } from "@/domain";
 
 interface GirDonutProps {
@@ -23,8 +23,8 @@ export function GirDonut({ pct }: GirDonutProps) {
             startAngle={90}
             endAngle={-270}
           >
-            <Cell fill={color("score-birdie-base")} />
-            <Cell fill={color("muted")} />
+            <Cell fill={tokens.color.score.birdie.base} />
+            <Cell fill={tokens.color.muted} />
           </Pie>
         </PieChart>
       </ResponsiveContainer>

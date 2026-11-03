@@ -1,5 +1,5 @@
 import { SCORE_KINDS, toParLabel, type ScoreKind } from "@/domain/score";
-import { color } from "./color";
+import { color } from "./tokens";
 
 // The words are golf, so they live in the domain; the theme re-exports them beside the colours.
 export { scoreKindLabel, toParLabel } from "@/domain/score";
@@ -56,36 +56,6 @@ export function scoreWashClass(key: ScoreKey): string {
   return SCORE_WASH_CLASS[key];
 }
 
-const SCORE_SVG_FILL_CLASS: Record<ScoreKey, string> = {
-  eagle: "fill-score-eagle-base",
-  birdie: "fill-score-birdie-base",
-  par: "fill-score-par-base",
-  bogey: "fill-score-bogey-base",
-  double: "fill-score-double-base",
-  triple: "fill-score-triple-base",
-  quad: "fill-score-quad-base",
-};
-
-/** SVG fill for a shape drawn in a score's colour. */
-export function scoreSvgFillClass(key: ScoreKey): string {
-  return SCORE_SVG_FILL_CLASS[key];
-}
-
-const SCORE_COLOR_CLASS: Record<ScoreKey, string> = {
-  eagle: "text-score-eagle-base",
-  birdie: "text-score-birdie-base",
-  par: "text-score-par-base",
-  bogey: "text-score-bogey-base",
-  double: "text-score-double-base",
-  triple: "text-score-triple-base",
-  quad: "text-score-quad-base",
-};
-
-/** Sets `currentColor` to a score's fill, for SVG that paints both fills and strokes with it. */
-export function scoreColorClass(key: ScoreKey): string {
-  return SCORE_COLOR_CLASS[key];
-}
-
 /**
  * The score colour for a round's to-par, not a hole's. Even and missing recede
  * as par; a round does not earn eagle/quad the way a hole does.
@@ -97,14 +67,9 @@ function toParKind(toPar: number | null): "eagle" | "birdie" | "par" | "bogey" {
   return "bogey";
 }
 
-/** A to-par's fill as a colour string, for a Recharts `Cell`. */
+/** A round's to-par as a fill colour, for SVG paint and chart-library props. */
 export function toParFill(toPar: number | null): string {
-  return color(`score-${toParKind(toPar)}-base`);
-}
-
-/** A to-par's fill as an SVG class, for our own charts. */
-export function toParSvgFillClass(toPar: number | null): string {
-  return SCORE_SVG_FILL_CLASS[toParKind(toPar)];
+  return color.score[toParKind(toPar)].base;
 }
 
 export function toParDisplay(toPar: number | null, empty = "—"): string {

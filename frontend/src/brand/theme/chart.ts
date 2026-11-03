@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
-import { color } from "./color";
-import { lineWidth, radius, text } from "./tokens";
+import { color, lineWidth, radius, text } from "./tokens";
 
 /**
  * Recharts `contentStyle`. Chart libraries take a style object rather than
@@ -9,13 +8,13 @@ import { lineWidth, radius, text } from "./tokens";
 export const chartTooltipStyle: CSSProperties = {
   fontSize: text["body-sm"],
   borderRadius: radius.tooltip,
-  border: `${lineWidth.border}px solid ${color("border")}`,
+  border: `${lineWidth.border}px solid ${color.border}`,
   boxShadow: "var(--shadow-card)",
-  background: color("card"),
+  background: color.card,
 };
 
 /** Recharts axis ticks: label-sized, in the axis colour. */
 export const chartTickStyle = {
   fontSize: text.label,
-  fill: color("chart-axis"),
+  fill: color.chart.axis,
 } as const;

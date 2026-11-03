@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartTickStyle, chartTooltipStyle, color, tokens } from "@/brand/theme";
+import { chartTooltipStyle, chartTickStyle, tokens } from "@/brand/theme";
 import { formatPercent } from "@/domain/format";
 import type { HoleFigure } from "@/domain/courseAnalytics";
 import { holeLabel, type TooltipFormatter } from "./holeBarParts";
@@ -16,21 +16,21 @@ const METRICS = {
     label: "GIR %",
     format: (value: number) => formatPercent(value, 1),
     domain: [0, 100] as [number, number],
-    gradient: [color("chart-accent"), color("primary")],
+    gradient: [tokens.color.chart.accent, tokens.color.primary],
     tick: undefined,
   },
   putts: {
     label: "Avg putts",
     format: (value: number) => value.toFixed(2),
     domain: undefined,
-    gradient: [color("muted"), color("muted-foreground")],
+    gradient: [tokens.color.muted, tokens.color.mutedForeground],
     tick: undefined,
   },
   variance: {
     label: "Std dev",
     format: (value: number) => value.toFixed(2),
     domain: undefined,
-    gradient: [color("score-eagle-base"), color("score-bogey-base")],
+    gradient: [tokens.color.score.eagle.base, tokens.color.score.bogey.base],
     tick: holeLabel,
   },
 } as const;

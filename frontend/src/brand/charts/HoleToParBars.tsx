@@ -1,5 +1,5 @@
 import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartTickStyle, chartTooltipStyle, color, toParFill, tokens } from "@/brand/theme";
+import { chartTooltipStyle, toParFill, chartTickStyle, tokens } from "@/brand/theme";
 import type { HoleToPar } from "@/domain/courseAnalytics";
 import { formatAverageToPar } from "@/domain/score";
 import { holeLabel, type TooltipFormatter } from "./holeBarParts";
@@ -28,7 +28,7 @@ export function HoleToParBars({ rows, ranked = false }: HoleToParBarsProps) {
             contentStyle={chartTooltipStyle}
             formatter={((value: number) => [formatAverageToPar(Number(value ?? 0)), "Avg to Par"]) as TooltipFormatter}
           />
-          <ReferenceLine y={0} stroke={color("chart-muted")} />
+          <ReferenceLine y={0} stroke={tokens.color.chart.muted} />
           <Bar dataKey="averageToPar" radius={tokens.chart.barRadius} isAnimationActive={false}>
             {rows.map((row) => (
               <Cell key={row.hole} fill={toParFill(row.averageToPar)} />

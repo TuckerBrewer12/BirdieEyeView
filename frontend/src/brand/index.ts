@@ -1,6 +1,5 @@
 export {
   tokens,
-  color,
   chartTooltipStyle,
   chartTickStyle,
   SCORE_KEYS,
@@ -13,7 +12,7 @@ export {
   toParBadgeClass,
   scoreOnFillClass,
 } from "./theme";
-export type { ColorName, ScoreKey } from "./theme";
+export type { ScoreKey } from "./theme";
 export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/Alert";
 export {
   Card,

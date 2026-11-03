@@ -1,6 +1,6 @@
 import { useState, type PointerEvent } from "react";
 import { cn } from "@/brand/cn";
-import { scoreColorClass, scoreKindLabel, scoreSvgFillClass, toParLabel, tokens } from "@/brand/theme";
+import { scoreKindLabel, toParLabel, tokens } from "@/brand/theme";
 import { scoreKind, type ScoreKind } from "@/domain/score";
 
 interface ScoreTargetShot {
@@ -21,7 +21,7 @@ type Ring = Exclude<ScoreKind, "quad">;
 /** Drawn from the outside in, so each ring sits on the one around it. */
 const RINGS: Ring[] = ["triple", "double", "bogey", "par", "birdie", "eagle"];
 
-/** Where a kind's ring starts and ends, as shares of the radius. Quads land in the triple ring. */
+/** Where a kind's ring starts and ends, as shares of the tokens.radius. Quads land in the triple ring. */
 function ringBand(kind: ScoreKind): [number, number] {
   const { rings } = tokens.chart.target;
   const ring: Ring = kind === "quad" ? "triple" : kind;
@@ -91,10 +91,9 @@ export function ScoreTargetChart({ shots, className, "aria-label": ariaLabel }: 
               key={ring}
               d={ringPath(c, inner * c, outer * c)}
               fillRule="evenodd"
-              className={scoreColorClass(ring)}
-              fill="currentColor"
+              fill={tokens.color.score[ring].base}
               fillOpacity={tokens.opacity.wash}
-              stroke="currentColor"
+              stroke={tokens.color.score[ring].base}
               strokeWidth={stroke}
             />
           );
@@ -105,8 +104,9 @@ export function ScoreTargetChart({ shots, className, "aria-label": ariaLabel }: 
             cx={d.cx}
             cy={d.cy}
             r={active === i ? dotHover : dot}
-            className={cn("stroke-card", scoreSvgFillClass(d.kind))}
-            strokeWidth={tokens.space.bar}
+            fill={tokens.color.score[d.kind].base}
+            stroke={tokens.color.card}
+            strokeWidth={tokens.lineWidth.outline}
           />
         ))}
       </svg>

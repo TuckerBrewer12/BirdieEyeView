@@ -1,5 +1,5 @@
 import { cn } from "@/brand/cn";
-import { tokens } from "@/brand/theme";
+import { chartTickStyle, tokens } from "@/brand/theme";
 
 interface RadarAxis {
   /** What the axis measures: "GIR", "Par 3s". */
@@ -38,7 +38,6 @@ export function RadarChart({
   "aria-label": ariaLabel,
 }: RadarChartProps) {
   const layout = compact ? { ...tokens.chart.radar, ...tokens.chart.radarCompact } : tokens.chart.radar;
-  const dash = `${tokens.space.dot} ${tokens.space.dot}`;
   const { width: W, height: H, radius: R, labelGap, valueGap, rings, dot, stroke } = layout;
 
   if (axes.length < 3) {
@@ -69,41 +68,43 @@ export function RadarChart({
             key={ring}
             points={outline(axes.map(() => ring))}
             fill="none"
-            className="stroke-chart-muted"
+            stroke={tokens.color.chart.muted}
             strokeWidth={1}
           />
         ))}
         {axes.map((axis, i) => {
           const [x, y] = point(i, 100);
-          return <line key={axis.label} x1={cx} y1={cy} x2={x} y2={y} className="stroke-chart-muted" strokeWidth={1} />;
+          return <line key={axis.label} x1={cx} y1={cy} x2={x} y2={y} stroke={tokens.color.chart.muted} strokeWidth={1} />;
         })}
 
         {compared && (
           <g data-slot="radar-benchmark">
             <polygon
               points={outline(axes.map((axis) => axis.benchmark!))}
-              className="fill-chart-axis stroke-chart-axis"
+              fill={tokens.color.chart.axis}
               fillOpacity={tokens.opacity.wash}
+              stroke={tokens.color.chart.axis}
               strokeWidth={stroke * 0.75}
-              strokeDasharray={dash}
+              strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
             />
             {axes.map((axis, i) => {
               const [x, y] = point(i, axis.benchmark!);
-              return <circle key={axis.label} cx={x} cy={y} r={dot * 0.75} className="fill-chart-axis" />;
+              return <circle key={axis.label} cx={x} cy={y} r={dot * 0.75} fill={tokens.color.chart.axis} />;
             })}
           </g>
         )}
 
         <polygon
           points={outline(axes.map((axis) => axis.value))}
-          className="fill-primary stroke-primary"
+          fill={tokens.color.primary}
           fillOpacity={tokens.opacity.wash}
+          stroke={tokens.color.primary}
           strokeWidth={stroke}
           strokeLinejoin="round"
         />
         {axes.map((axis, i) => {
           const [x, y] = point(i, axis.value);
-          return <circle key={axis.label} cx={x} cy={y} r={dot} className="fill-primary" />;
+          return <circle key={axis.label} cx={x} cy={y} r={dot} fill={tokens.color.primary} />;
         })}
 
         {axes.map((axis, i) => {
@@ -121,16 +122,17 @@ export function RadarChart({
                 x={x}
                 y={top}
                 textAnchor={anchor}
+                fontSize={chartTickStyle.fontSize}
                 fontWeight="600"
-                className="fill-muted-foreground text-label"
+                fill={tokens.color.mutedForeground}
               >
                 {axis.label}
               </text>
               {axis.valueLabel && (
-                <text x={x} y={top + valueGap} textAnchor={anchor} fontWeight="700" className="text-label">
-                  <tspan className="fill-primary">{axis.valueLabel}</tspan>
+                <text x={x} y={top + valueGap} textAnchor={anchor} fontSize={chartTickStyle.fontSize} fontWeight="700">
+                  <tspan fill={tokens.color.primary}>{axis.valueLabel}</tspan>
                   {compared && axis.benchmarkLabel && (
-                    <tspan className="fill-muted-foreground"> vs {axis.benchmarkLabel}</tspan>
+                    <tspan fill={tokens.color.mutedForeground}> vs {axis.benchmarkLabel}</tspan>
                   )}
                 </text>
               )}

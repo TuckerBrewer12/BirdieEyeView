@@ -1,162 +1,255 @@
 /**
  * Every design value in the app, and the only place one is written down.
  *
- * `npm run gen:tokens` turns this file into `tokens.gen.css`: the colours as
- * custom properties on `:root` and `:root.dark`, the measures as `--brand-*`
- * properties, and the `@theme inline` block that gives each one its Tailwind
- * utility (`bg-card`, `text-caption`, `rounded-tooltip`, `h-chart`, …).
- * Markup uses those utilities. TypeScript reads the numbers here directly
- * (chart geometry, motion), and reaches a colour for a string prop through
- * `color()`. Plain data, no React or DOM, so a native app can read it too.
+ * Colours come in two layers. `palette` holds the raw colours, named by hue and
+ * step; nothing else in the app writes a colour value. `modes.light` and
+ * `modes.dark` then say what each colour is *for*: every key maps onto a
+ * palette colour, another key (`alias`), or a mix of two keys. Dark mode is
+ * the same keys mapped a second time.
+ *
+ * `npm run gen:tokens` turns this file into `tokens.gen.css`: the semantic
+ * colours as custom properties on `:root` and `:root.dark`, the measures as
+ * `--brand-*` properties, and the `@theme inline` block that gives each one its
+ * Tailwind utility (`bg-card`, `text-caption`, `rounded-tooltip`, `h-chart`, …).
+ *
+ * In TypeScript, read everything as `tokens.*`. `tokens.color` is the semantic
+ * colours as `var()` references (`tokens.color.score.birdie.base` is
+ * `"var(--score-birdie-base)"`), so dark mode still switches in CSS; the
+ * numbers (`tokens.chart`, `tokens.motion`, `tokens.space`) are real values.
+ * Plain data, no React or DOM, so a native app can read it too.
  *
  * A bare number is pixels, except in `leading`, `stroke` and `breakpoints`,
  * which say otherwise. A string is written to the CSS as it is.
  */
 
-/** A colour: a CSS colour, another token's value, or a mix of two tokens. */
-export type ColorValue = string | { alias: string } | { mix: [string, string, number] };
+/**
+ * The raw colours. Hues take Tailwind's step numbers where the colour is
+ * Tailwind's; `sage`, `forest` and `charcoal` are the brand's own neutrals,
+ * greens and dark-mode greys.
+ */
+export const palette = {
+  white: "#ffffff",
+  black: "#000000",
+  sage: { 50: "#f8faf8", 100: "#f4f6f0", 200: "#e4e9e1", 500: "#6b7765", 950: "#1f2421" },
+  forest: {
+    50: "#e8f5e9",
+    700: "#2d7a3a",
+    750: "#2d4c3b",
+    800: "#1e3d25",
+    850: "#1a3a1f",
+    900: "#152d1b",
+    950: "#1a2e1a",
+  },
+  charcoal: { 50: "#e6edf3", 300: "#9aa4b2", 700: "#2a2d30", 800: "#222426", 900: "#18191a", 950: "#111213" },
+  gray: { 100: "#f3f4f6", 200: "#e5e7eb", 400: "#9ca3af", 500: "#6b7280", 700: "#374151" },
+  slate: { 600: "#475569", 900: "#0f172a" },
+  red: { 100: "#fee2e2", 400: "#f87171", 600: "#dc2626", 800: "#991b1b" },
+  orange: { 500: "#f97316" },
+  amber: { 100: "#fef3c7", 500: "#f59e0b", 800: "#92400e" },
+  yellow: { 400: "#facc15" },
+  gold: { 600: "#c9a227" },
+  brown: { 600: "#8b5a2b" },
+  green: { 400: "#4ade80" },
+  emerald: { 100: "#d1fae5", 400: "#34d399", 600: "#059669", 800: "#065f46" },
+  sky: { 700: "#0369a1" },
+  blue: { 100: "#dbeafe", 400: "#60a5fa", 600: "#2563eb", 800: "#1e40af" },
+  violet: {
+    100: "#ede9fe",
+    200: "#ddd6fe",
+    400: "#a78bfa",
+    600: "#7c3aed",
+    700: "#6d28d9",
+    800: "#5b21b6",
+    900: "#4c1d95",
+  },
+  silver: { 300: "#c0c6cc" },
+} as const;
 
-/** This token is the same colour as `name`, and follows it in both modes. */
-const alias = (name: string) => ({ alias: name });
+const { white, black, sage, forest, charcoal, gray, slate, red, orange, amber, yellow, gold, brown, green, emerald, sky, blue, violet, silver } =
+  palette;
 
-/** `percent` of `over` mixed into `base`, in oklch. Both follow the mode. */
-const mix = (base: string, over: string, percent: number) => ({ mix: [base, over, percent] as [string, string, number] });
+/** Another semantic colour, by its CSS name: this key follows it in both modes. */
+export interface Alias {
+  alias: string;
+}
+/** `percent` of `over` mixed into `base` (CSS names), in oklch. */
+export interface Mix {
+  mix: [base: string, over: string, percent: number];
+}
+/** A palette colour at an opacity. */
+export interface Alpha {
+  alpha: [color: string, opacity: number];
+}
+/** What a semantic colour maps onto: a palette colour, another key, a mix, or a palette colour at an opacity. */
+export type ColorValue = string | Alias | Mix | Alpha;
+
+/**
+ * Semantic colours, nested. A key's CSS name is its path in kebab case, so
+ * `score.birdie.onBase` is `--score-birdie-on-base`; a `DEFAULT` key is the
+ * group's own name (`sidebar.DEFAULT` is `--sidebar`).
+ */
+export interface ColorTree {
+  [key: string]: ColorValue | ColorTree;
+}
+
+const alias = (name: string): Alias => ({ alias: name });
+const mix = (base: string, over: string, percent: number): Mix => ({ mix: [base, over, percent] });
+const alpha = (color: string, opacity: number): Alpha => ({ alpha: [color, opacity] });
+
+/** A score kind's colours. `text`, the ink on the page, is the fill colour itself. */
+const score = (kind: string, base: string, muted: string, onMuted: string) => ({
+  base,
+  muted,
+  onBase: white,
+  onMuted,
+  text: alias(`score-${kind}-base`),
+});
 
 const light = {
-  background: "#f8faf8",
-  foreground: "#1a2e1a",
-  card: "#ffffff",
+  background: sage[50],
+  foreground: forest[950],
+  card: white,
   // Ink on a card, an accent wash or the secondary fill is the page's ink.
-  "card-foreground": alias("foreground"),
-  muted: "#f4f6f0",
-  "muted-foreground": "#6b7765",
-  border: "#e4e9e1",
+  cardForeground: alias("foreground"),
+  muted: sage[100],
+  mutedForeground: sage[500],
+  border: sage[200],
   // A field's outline is the ordinary border.
   input: alias("border"),
-  ring: "#2d7a3a",
-  primary: "#2d7a3a",
-  "primary-foreground": "#ffffff",
-  secondary: "#f4f6f0",
-  "secondary-foreground": alias("foreground"),
+  ring: forest[700],
+  primary: forest[700],
+  primaryForeground: white,
+  secondary: sage[100],
+  secondaryForeground: alias("foreground"),
   // The secondary fill under the pointer: a touch of ink mixed in.
-  "secondary-hover": mix("secondary", "foreground", 5),
-  accent: "#e8f5e9",
-  "accent-foreground": alias("foreground"),
-  destructive: "#dc2626",
+  secondaryHover: mix("secondary", "foreground", 5),
+  accent: forest[50],
+  accentForeground: alias("foreground"),
+  destructive: red[600],
   // Ambient shadow for lifted surfaces; alpha so it reads on any backdrop.
-  shadow: "rgb(15 23 42 / 0.10)",
+  shadow: alpha(slate[900], 0.1),
 
-  // Chart chrome. Data colours are the score tokens; these are the furniture
+  // Chart chrome. Data colours are the score colours; these are the furniture
   // around them. On a light page the axis is the par grey.
-  "chart-axis": alias("score-par-base"),
-  "chart-muted": "#e5e7eb",
-  "chart-accent": "#4ade80",
+  chart: {
+    axis: alias("score-par-base"),
+    muted: gray[200],
+    accent: green[400],
+  },
 
   // The app's side rail: the brand's own surface, the same in both modes.
-  sidebar: "#1e3d25",
-  "sidebar-end": "#152d1b",
-  "sidebar-foreground": "#ffffff",
+  sidebar: {
+    DEFAULT: forest[800],
+    end: forest[900],
+    foreground: white,
+  },
 
   // Score colours encode data, so they do not flip with the mode. `base` is
-  // the saturated fill, `muted` the wash behind a score, `on-*` the ink on
-  // each, and `text` (the `text-score-<kind>` utility) the ink on the page.
-  "score-eagle-base": "#f59e0b",
-  "score-eagle-muted": "#fef3c7",
-  "score-eagle-on-base": "#ffffff",
-  "score-eagle-on-muted": "#92400e",
-  "score-eagle-text": alias("score-eagle-base"),
-  "score-birdie-base": "#059669",
-  "score-birdie-muted": "#d1fae5",
-  "score-birdie-on-base": "#ffffff",
-  "score-birdie-on-muted": "#065f46",
-  "score-birdie-text": alias("score-birdie-base"),
-  "score-par-base": "#9ca3af",
-  "score-par-muted": "#f3f4f6",
-  "score-par-on-base": "#ffffff",
-  "score-par-on-muted": "#374151",
-  "score-par-text": alias("score-par-base"),
-  "score-bogey-base": "#f87171",
-  "score-bogey-muted": "#fee2e2",
-  "score-bogey-on-base": "#ffffff",
-  "score-bogey-on-muted": "#991b1b",
-  "score-bogey-text": alias("score-bogey-base"),
-  "score-double-base": "#60a5fa",
-  "score-double-muted": "#dbeafe",
-  "score-double-on-base": "#ffffff",
-  "score-double-on-muted": "#1e40af",
-  "score-double-text": alias("score-double-base"),
-  "score-triple-base": "#a78bfa",
-  "score-triple-muted": "#ede9fe",
-  "score-triple-on-base": "#ffffff",
-  "score-triple-on-muted": "#5b21b6",
-  "score-triple-text": alias("score-triple-base"),
-  "score-quad-base": "#6d28d9",
-  "score-quad-muted": "#ddd6fe",
-  "score-quad-on-base": "#ffffff",
-  "score-quad-on-muted": "#4c1d95",
-  "score-quad-text": alias("score-quad-base"),
+  // the saturated fill, `muted` the wash behind a score, `on*` the ink on each.
+  score: {
+    eagle: score("eagle", amber[500], amber[100], amber[800]),
+    birdie: score("birdie", emerald[600], emerald[100], emerald[800]),
+    par: score("par", gray[400], gray[100], gray[700]),
+    bogey: score("bogey", red[400], red[100], red[800]),
+    double: score("double", blue[400], blue[100], blue[800]),
+    triple: score("triple", violet[400], violet[100], violet[800]),
+    quad: score("quad", violet[700], violet[200], violet[900]),
+  },
 
   // Scorecard rows. The layout picker's chips and the landing hero's demo of
   // it share one set. Fixed like the score colours: they label rows.
-  "scan-row-name": "#475569",
-  "scan-row-score": alias("primary"),
-  "scan-row-putts": "#0369a1",
-  "scan-row-shots": alias("score-quad-base"),
-  "demo-card-header": "#2d4c3b",
+  scanRow: {
+    name: slate[600],
+    score: alias("primary"),
+    putts: sky[700],
+    shots: alias("score-quad-base"),
+  },
+  demoCardHeader: forest[750],
 
   // Tee boxes. A tee's colour names a real marker on the course, so these do
   // not flip with the mode. `on` is the ink that reads on the swatch.
-  "tee-black": "#1f2421",
-  "tee-black-on": "#ffffff",
-  "tee-white": "#ffffff",
-  "tee-white-on": "#1a2e1a",
-  "tee-blue": "#2563eb",
-  "tee-blue-on": "#ffffff",
-  "tee-gold": "#c9a227",
-  "tee-gold-on": "#1a2e1a",
-  "tee-yellow": "#facc15",
-  "tee-yellow-on": "#1a2e1a",
-  "tee-red": "#dc2626",
-  "tee-red-on": "#ffffff",
-  "tee-green": "#2d7a3a",
-  "tee-green-on": "#ffffff",
-  "tee-silver": "#c0c6cc",
-  "tee-silver-on": "#1a2e1a",
-  "tee-orange": "#f97316",
-  "tee-orange-on": "#ffffff",
-  "tee-purple": "#7c3aed",
-  "tee-purple-on": "#ffffff",
-  "tee-brown": "#8b5a2b",
-  "tee-brown-on": "#ffffff",
-} satisfies Record<string, ColorValue>;
+  tee: {
+    black: { DEFAULT: sage[950], on: white },
+    white: { DEFAULT: white, on: forest[950] },
+    blue: { DEFAULT: blue[600], on: white },
+    gold: { DEFAULT: gold[600], on: forest[950] },
+    yellow: { DEFAULT: yellow[400], on: forest[950] },
+    red: { DEFAULT: red[600], on: white },
+    green: { DEFAULT: forest[700], on: white },
+    silver: { DEFAULT: silver[300], on: forest[950] },
+    orange: { DEFAULT: orange[500], on: white },
+    purple: { DEFAULT: violet[600], on: white },
+    brown: { DEFAULT: brown[600], on: white },
+  },
+} satisfies ColorTree;
 
-/** A colour token's name, which is also its CSS custom property: `card` is `--card`. */
-export type ColorName = keyof typeof light;
+type DeepPartial<T> = { [K in keyof T]?: T[K] extends ColorValue ? ColorValue : DeepPartial<T[K]> };
+
+function override<T extends ColorTree>(base: T, changes: DeepPartial<T>): T {
+  const out: ColorTree = { ...base };
+  for (const [key, value] of Object.entries(changes) as [string, ColorValue | ColorTree][]) {
+    const current = base[key];
+    out[key] = isColorValue(value) || isColorValue(current) ? value : override(current, value as DeepPartial<ColorTree>);
+  }
+  return out as T;
+}
+
+/** A leaf of a colour tree, as opposed to a group of them. */
+export function isColorValue(value: ColorValue | ColorTree): value is ColorValue {
+  return typeof value === "string" || "alias" in value || "mix" in value || "alpha" in value;
+}
 
 /**
- * The palette in each mode. Dark has every light key; it changes the surfaces
- * and ink, and keeps the brand green, the sidebar and the data colours.
+ * The semantic colours in each mode. Dark changes the surfaces and ink, and
+ * keeps the brand green, the sidebar and the data colours.
  */
-export const colors: Record<"light" | "dark", Record<ColorName, ColorValue>> = {
+export const modes = {
   light,
-  dark: {
-    ...light,
-    background: "#111213",
-    foreground: "#e6edf3",
-    card: "#18191a",
-    muted: "#222426",
-    "muted-foreground": "#9aa4b2",
-    border: "#2a2d30",
-    ring: "#34d399",
-    secondary: "#222426",
-    accent: "#1a3a1f",
-    destructive: "#f87171",
+  dark: override(light, {
+    background: charcoal[950],
+    foreground: charcoal[50],
+    card: charcoal[900],
+    muted: charcoal[800],
+    mutedForeground: charcoal[300],
+    border: charcoal[700],
+    ring: emerald[400],
+    secondary: charcoal[800],
+    accent: forest[850],
+    destructive: red[400],
     // Black reads as nothing on a dark page, so lift with a stronger halo.
-    shadow: "rgb(0 0 0 / 0.55)",
-    "chart-axis": "#6b7280",
-    "chart-muted": "#2a2d30",
-  },
+    shadow: alpha(black, 0.55),
+    chart: { axis: gray[500], muted: charcoal[700] },
+  }),
 };
+
+/** `score.birdie.onBase` → `score-birdie-on-base`; a `DEFAULT` key drops out. */
+export function cssName(path: string[]): string {
+  return path
+    .filter((key) => key !== "DEFAULT")
+    .map((key) => key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`))
+    .join("-");
+}
+
+/** The colour tree's shape with a `var()` string at every leaf. */
+export type ColorRefs<T> = { readonly [K in keyof T]: T[K] extends ColorValue ? string : ColorRefs<T[K]> };
+
+function refs<T extends ColorTree>(tree: T, path: string[] = []): ColorRefs<T> {
+  return Object.fromEntries(
+    Object.entries(tree).map(([key, value]) => [
+      key,
+      isColorValue(value) ? `var(--${cssName([...path, key])})` : refs(value, [...path, key]),
+    ]),
+  ) as ColorRefs<T>;
+}
+
+/**
+ * Every semantic colour as a `var()` reference, for SVG paint and chart-library
+ * props: `stroke={tokens.color.border}`, `fill={tokens.color.score[kind].base}`.
+ * HTML elements use the Tailwind utility (`bg-card`) instead. These are
+ * references, not colours, so they follow the mode; something that parses the
+ * string as a colour (canvas) has to resolve it with `getComputedStyle` first.
+ */
+export const color = refs(light);
 
 export const font = {
   sans: '"DM Sans", system-ui, sans-serif',
@@ -254,6 +347,8 @@ export const size = {
 export const lineWidth = {
   border: 1,
   ring: 3,
+  /** The card-coloured rim round a chart dot, so dots stand apart where they touch. */
+  outline: 1.5,
 };
 
 /** Icon line weight in the tab bar, unitless: lighter at rest, heavier on the current tab. */

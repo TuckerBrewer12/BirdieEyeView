@@ -1,5 +1,4 @@
-import { cn } from "@/brand/cn";
-import { scoreColorClass, scoreOnFillClass } from "@/brand/theme";
+import { tokens } from "@/brand/theme";
 import type { HoleSummary, RoundSummary } from "@/domain";
 
 interface HoleScoreShapesProps {
@@ -24,26 +23,27 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
       </div>
     );
   }
-  // Drawn in currentColor: the shape takes the score's colour from the svg, and the
-  // marks on it the ink that reads there from their group.
+  const fill = tokens.color.score[kind].base;
+  const onFill = tokens.color.score[kind].onBase;
+
   return (
-    <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className={cn("h-hole-h w-hole-w", scoreColorClass(kind))}>
+    <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="h-hole-h w-hole-w">
       {kind === "eagle" && (
         <>
-          <circle cx={cx} cy={cy} r={5} fill="currentColor" />
-          <circle cx={cx} cy={cy} r={r} fill="none" stroke="currentColor" strokeWidth={1.5} />
+          <circle cx={cx} cy={cy} r={5} fill={fill} />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke={fill} strokeWidth={1.5} />
         </>
       )}
-      {kind === "birdie" && <circle cx={cx} cy={cy} r={r} fill="currentColor" />}
+      {kind === "birdie" && <circle cx={cx} cy={cy} r={r} fill={fill} />}
       {kind === "par" && (
-        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={3} fill="currentColor" />
+        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={3} fill={fill} />
       )}
       {kind === "bogey" && (
-        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={2} fill="currentColor" />
+        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={2} fill={fill} />
       )}
       {kind === "double" && (
         <>
-          <rect x={2.5} y={2.5} width={VB_W - 5} height={VB_H - 5} rx={1.5} fill="currentColor" />
+          <rect x={2.5} y={2.5} width={VB_W - 5} height={VB_H - 5} rx={1.5} fill={fill} />
           <rect
             x={0.5}
             y={0.5}
@@ -51,35 +51,32 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
             height={VB_H - 1}
             rx={2.5}
             fill="none"
-            stroke="currentColor"
+            stroke={fill}
             strokeWidth={1.25}
           />
         </>
       )}
       {(kind === "triple" || kind === "quad") && (
-        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={2} fill="currentColor" />
+        <>
+          <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={2} fill={fill} />
+          <line x1={0} y1={7} x2={7} y2={0} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
+          <line x1={0} y1={18} x2={18} y2={0} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
+          <line x1={0} y1={VB_H} x2={VB_W} y2={0} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
+          <line x1={14} y1={VB_H} x2={VB_W} y2={8} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
+        </>
       )}
-      <g className={scoreOnFillClass(kind)}>
-        {(kind === "triple" || kind === "quad") && (
-          <>
-            <line x1={0} y1={7} x2={7} y2={0} stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
-            <line x1={0} y1={18} x2={18} y2={0} stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
-            <line x1={0} y1={VB_H} x2={VB_W} y2={0} stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
-            <line x1={14} y1={VB_H} x2={VB_W} y2={8} stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
-          </>
-        )}
-        <text
-          x={cx}
-          y={cy}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fill="currentColor"
-          fontWeight="700"
-          className="font-sans text-caption"
-        >
-          {hole.strokes}
-        </text>
-      </g>
+      <text
+        x={cx}
+        y={cy}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fill={onFill}
+        fontSize={tokens.text.caption}
+        fontWeight="700"
+        fontFamily={tokens.font.sans}
+      >
+        {hole.strokes}
+      </text>
     </svg>
   );
 }

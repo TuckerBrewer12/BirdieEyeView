@@ -1,5 +1,5 @@
 import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartTickStyle, chartTooltipStyle, color, toParFill, tokens } from "@/brand/theme";
+import { chartTooltipStyle, toParFill, chartTickStyle, tokens } from "@/brand/theme";
 import { formatAverageToPar } from "@/domain/score";
 import { type TooltipFormatter } from "./holeBarParts";
 
@@ -35,7 +35,7 @@ export function ToParBars({ bars, valueLabel = "Avg to Par" }: ToParBarsProps) {
             tickFormatter={(value: number) => formatAverageToPar(value)}
           />
           <Tooltip
-            cursor={{ fill: color("chart-muted") }}
+            cursor={{ fill: tokens.color.chart.muted }}
             contentStyle={chartTooltipStyle}
             formatter={((value: number, _name: unknown, item: { payload?: ToParBar }) => [
               item.payload?.detail
@@ -44,7 +44,7 @@ export function ToParBars({ bars, valueLabel = "Avg to Par" }: ToParBarsProps) {
               valueLabel,
             ]) as TooltipFormatter}
           />
-          <ReferenceLine y={0} stroke={color("chart-muted")} />
+          <ReferenceLine y={0} stroke={tokens.color.chart.muted} />
           <Bar dataKey="toPar" radius={tokens.chart.barRadius} isAnimationActive={false}>
             {bars.map((bar) => (
               <Cell key={bar.label} fill={toParFill(bar.toPar)} />

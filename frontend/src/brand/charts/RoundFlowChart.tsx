@@ -3,14 +3,7 @@ import { AnimatePresence, motion, useReducedMotion, useReducedMotionConfig } fro
 import { scaleLinear } from "d3-scale";
 import { curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
-import {
-  scoreKindLabel,
-  scoreSvgFillClass,
-  scoreWashClass,
-  toParLabel,
-  toParTextClass,
-  tokens,
-} from "@/brand/theme";
+import { scoreKindLabel, scoreWashClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
 import type { HoleScore, Round } from "@/domain";
 import { pluralize } from "@/domain/format";
 import type { ScoreKind } from "@/domain/score";
@@ -77,7 +70,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
             x2={W - PAD.right}
             y1={y(0)}
             y2={y(0)}
-            className="stroke-chart-muted"
+            stroke={tokens.color.chart.muted}
             strokeWidth={1.5}
             strokeDasharray="5 4"
           />
@@ -88,7 +81,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               x2={x(9.5)}
               y1={PAD.top}
               y2={H - PAD.bottom}
-              className="stroke-border"
+              stroke={tokens.color.border}
               strokeWidth={1}
             />
           )}
@@ -96,7 +89,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
           <motion.path
             d={path}
             fill="none"
-            className="stroke-chart-axis"
+            stroke={tokens.color.chart.axis}
             strokeWidth={2.5}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -112,8 +105,10 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               cx={x(hole.hole)}
               cy={yOf(hole.toPar)}
               r={hovered?.hole === hole.hole ? dotHover : dot}
+              fill={tokens.color.score[hole.kind].base}
+              stroke={tokens.color.card}
               strokeWidth={1.5}
-              className={cn("cursor-crosshair stroke-card", scoreSvgFillClass(hole.kind))}
+              className="cursor-crosshair"
               initial={reduceMotion ? false : { scale: tokens.motion.pop.from, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{
@@ -130,7 +125,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               x2={x(hovered.hole)}
               y1={PAD.top}
               y2={H - PAD.bottom}
-              className="stroke-chart-muted"
+              stroke={tokens.color.chart.muted}
               strokeWidth={1}
               strokeDasharray="3 3"
             />
@@ -142,7 +137,9 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               x={x(hole.hole)}
               y={H - PAD.bottom + 14}
               textAnchor="middle"
-              className={cn("font-sans text-meta", hovered?.hole === hole.hole ? "fill-foreground" : "fill-chart-axis")}
+              fontSize={tokens.text.meta}
+              fontFamily={tokens.font.sans}
+              fill={hovered?.hole === hole.hole ? tokens.color.foreground : tokens.color.chart.axis}
               fontWeight={hovered?.hole === hole.hole ? "600" : "400"}
             >
               {hole.hole}
@@ -155,8 +152,10 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               x={PAD.left - 8}
               y={y(toPar) + 4}
               textAnchor="end"
+              fontSize={tokens.text.caption}
+              fontFamily={tokens.font.sans}
               fill="currentColor"
-              className={cn("font-sans text-caption", toParTextClass(toPar))}
+              className={toParTextClass(toPar)}
               fontWeight="500"
             >
               {toParLabel(toPar)}

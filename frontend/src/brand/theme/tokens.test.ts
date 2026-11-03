@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { colors } from "./tokens";
+import { isColorValue, modes, palette, type ColorTree, type ColorValue } from "./tokens";
 
 // vitest runs with the frontend package as cwd; import.meta.url is not a
 // file: URL under the jsdom environment.
@@ -53,9 +53,29 @@ function offenders(files: string[], pattern: RegExp, allowed: Set<string>) {
 
 describe("brand tokens", () => {
   it("are the only place in the app holding a colour", () => {
-    // A colour belongs in tokens.ts, reached through its utility or color().
+    // A colour belongs in tokens.ts, reached through its utility or tokens.color.
     const allowed = new Set([TOKENS_TS, TOKENS_GENERATOR, TOKENS_CSS, API_TYPES]);
     expect(offenders(sources(srcDir, { skipTests: false }), COLOR_LITERAL, allowed)).toEqual([]);
+  });
+
+  it("hold raw colours only in the palette", () => {
+    // tokens.ts writes its colours once, in `palette`; the modes map onto it.
+    const source = withoutComments(read(TOKENS_TS));
+    const block = source.match(/export const palette = \{[\s\S]*?\n\} as const;/)?.[0];
+    expect(block, "the palette block in tokens.ts").toBeDefined();
+    expect(source.replace(block!, "").match(COLOR_LITERAL) ?? []).toEqual([]);
+  });
+
+  it("map every semantic colour onto the palette or another colour", () => {
+    const primitives = new Set<string>(
+      Object.values(palette).flatMap((hue) => (typeof hue === "string" ? [hue] : Object.values(hue))),
+    );
+    const leaves = (tree: ColorTree): ColorValue[] =>
+      Object.values(tree).flatMap((value) => (isColorValue(value) ? [value] : leaves(value)));
+    const raw = [...leaves(modes.light), ...leaves(modes.dark)].filter((value) =>
+      typeof value === "string" ? !primitives.has(value) : "alpha" in value && !primitives.has(value.alpha[0]),
+    );
+    expect(raw).toEqual([]);
   });
 
   it("are the only place in the brand layer holding a px/rem/em length", () => {
@@ -86,9 +106,9 @@ describe("brand tokens", () => {
       statusBar: colourIn("StatusBar"),
       android: colourIn("android"),
     }).toEqual({
-      splash: colors.light.primary,
-      statusBar: colors.light.background,
-      android: colors.light.background,
+      splash: modes.light.primary,
+      statusBar: modes.light.background,
+      android: modes.light.background,
     });
   });
 });

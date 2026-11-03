@@ -1,7 +1,7 @@
 import { scaleLinear } from "d3-scale";
 import { cn } from "@/brand/cn";
 import type { GoalAttempt } from "@/domain/benchmark";
-import { tokens } from "@/brand/theme";
+import { chartTickStyle, tokens } from "@/brand/theme";
 import { indexScale, paddedExtent } from "./scales";
 
 interface ScoreGoalChartProps {
@@ -45,22 +45,23 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
           x2={W - pad.x - labelRoom}
           y1={goalY}
           y2={goalY}
-          className="stroke-primary"
+          stroke={tokens.color.primary}
           strokeWidth={1.5}
           strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
         />
         <text
           x={W - pad.x - labelRoom + 4}
           y={goalY + 4}
+          fontSize={chartTickStyle.fontSize}
           fontWeight="600"
-          className="fill-primary text-label"
+          fill={tokens.color.primary}
         >
           Goal
         </text>
         <polyline
           points={scores.map((score, i) => `${x(i)},${y(score)}`).join(" ")}
           fill="none"
-          className="stroke-chart-muted"
+          stroke={tokens.color.chart.muted}
           strokeWidth={1.5}
           strokeLinejoin="round"
           strokeLinecap="round"
@@ -72,7 +73,8 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
             cx={x(i)}
             cy={y(score)}
             r={metGoal ? dotReached : dot}
-            className={metGoal ? "fill-score-birdie-base stroke-none" : "fill-card stroke-chart-axis"}
+            fill={metGoal ? tokens.color.score.birdie.base : tokens.color.card}
+            stroke={metGoal ? "none" : tokens.color.chart.axis}
             strokeWidth={1.5}
           />
         ))}

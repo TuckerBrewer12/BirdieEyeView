@@ -1,5 +1,5 @@
 import { Bar, BarChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartTickStyle, chartTooltipStyle, color, scoreKindLabel, tokens } from "@/brand/theme";
+import { chartTickStyle, chartTooltipStyle, scoreKindLabel, tokens } from "@/brand/theme";
 import { formatPercent, pluralize } from "@/domain/format";
 import { SCORE_KINDS } from "@/domain/score";
 import type { HoleScoreMix } from "@/domain/courseAnalytics";
@@ -26,7 +26,7 @@ export function HoleScoreMixBars({ rows }: { rows: HoleScoreMix[] }) {
               key={kind}
               dataKey={kind}
               stackId="mix"
-              fill={color(`score-${kind}-base`)}
+              fill={tokens.color.score[kind].base}
               name={scoreKindLabel(kind)}
             />
           ))}

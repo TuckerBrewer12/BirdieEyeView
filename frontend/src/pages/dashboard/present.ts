@@ -1,4 +1,4 @@
-import { color, scoreKindLabel, type ScoreKey } from "@/brand/theme";
+import { scoreKindLabel, type ScoreKey, tokens } from "@/brand/theme";
 import {
   SCORE_KINDS,
   formatCourseName,
@@ -40,7 +40,7 @@ export function colorizeMix(mix: ScoreMix): ColoredMixItem[] {
   return SCORE_KINDS.flatMap((kind) => {
     const value = Math.round(mix[kind] * 10) / 10;
     return value > 0
-      ? [{ name: kind, label: scoreKindLabel(kind), value, color: color(`score-${kind}-base`) }]
+      ? [{ name: kind, label: scoreKindLabel(kind), value, color: tokens.color.score[kind].base }]
       : [];
   });
 }

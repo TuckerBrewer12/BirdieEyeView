@@ -4,7 +4,7 @@ import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import { color, differentialFillClass, toParSvgFillClass, tokens } from "@/brand/theme";
+import { toParFill, differentialFill, tokens } from "@/brand/theme";
 import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
 import { indexScale, knownValues, paddedExtent } from "./scales";
 
@@ -18,8 +18,8 @@ interface SVGScoreHandicapTrendProps {
   compact?: boolean;
 }
 
-const { chart, motion: motionTokens, space, lineWidth } = tokens;
-const dash = `${space.dot} ${space.dot}`;
+const SCORE_COLOR = tokens.color.primary;
+const HANDICAP_COLOR = tokens.color.score.double.text;
 
 /** Selection is kept per series, so switching the line clears it. */
 interface Selection {
@@ -32,7 +32,7 @@ interface Selection {
  * alone. Hovering with a mouse or tapping on a phone picks a round.
  */
 export function SVGScoreHandicapTrend({ data, series = "both", compact = false }: SVGScoreHandicapTrendProps) {
-  const plot = compact ? { ...chart.plot, ...chart.plotCompact } : chart.plot;
+  const plot = compact ? { ...tokens.chart.plot, ...tokens.chart.plotCompact } : tokens.chart.plot;
   const { width: W, height: H, pad: PAD } = plot;
   const hiGrad = `hiGrad${useId().replace(/:/g, "")}`;
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -118,32 +118,32 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
       >
         <defs>
           <linearGradient id={hiGrad} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="10%" stopColor={color("score-double-text")} stopOpacity={0.1} />
-            <stop offset="100%" stopColor={color("score-double-text")} stopOpacity={0} />
+            <stop offset="10%" stopColor={HANDICAP_COLOR} stopOpacity={0.1} />
+            <stop offset="100%" stopColor={HANDICAP_COLOR} stopOpacity={0} />
           </linearGradient>
         </defs>
 
         {yLeft.ticks(5).map((v) => (
           <g key={`left-${v}`}>
-            <line x1={PAD.left} x2={W - PAD.right} y1={yLeft(v)} y2={yLeft(v)} className="stroke-border" strokeWidth={lineWidth.border} />
-            <AxisLabel x={PAD.left - 12} y={yLeft(v) + 4} anchor="end" className="fill-chart-axis">
+            <line x1={PAD.left} x2={W - PAD.right} y1={yLeft(v)} y2={yLeft(v)} stroke={tokens.color.border} strokeWidth={tokens.lineWidth.border} />
+            <AxisLabel x={PAD.left - 12} y={yLeft(v) + 4} anchor="end" color={tokens.color.chart.axis}>
               {showScore ? v : formatHandicapIndex(v)}
             </AxisLabel>
           </g>
         ))}
 
-        <line x1={PAD.left} x2={W - PAD.right} y1={baseline} y2={baseline} className="stroke-chart-muted" strokeWidth={lineWidth.border} />
+        <line x1={PAD.left} x2={W - PAD.right} y1={baseline} y2={baseline} stroke={tokens.color.chart.muted} strokeWidth={tokens.lineWidth.border} />
 
         {series === "both" &&
           hasHandicap &&
           yHandicap.ticks(4).map((v) => (
-            <AxisLabel key={`right-${v}`} x={W - PAD.right + 12} y={yHandicap(v) + 4} anchor="start" className="fill-score-double">
+            <AxisLabel key={`right-${v}`} x={W - PAD.right + 12} y={yHandicap(v) + 4} anchor="start" color={HANDICAP_COLOR}>
               {formatHandicapIndex(v)}
             </AxisLabel>
           ))}
 
         {xTicks.map((i) => (
-          <AxisLabel key={`x-${i}`} x={x(i)} y={baseline + 16} anchor="middle" className="fill-chart-axis">
+          <AxisLabel key={`x-${i}`} x={x(i)} y={baseline + 16} anchor="middle" color={tokens.color.chart.axis}>
             {i + 1}
           </AxisLabel>
         ))}
@@ -160,7 +160,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                 y={top}
                 width={barW}
                 height={baseline - top}
-                className={differentialFillClass(d.differentialStatus)}
+                fill={differentialFill(d.differentialStatus)}
                 fillOpacity={0.6}
                 rx={tokens.radius.tick}
               />
@@ -173,8 +173,8 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             <path
               d={handicapPath}
               fill="none"
-              className="stroke-score-double"
-              strokeWidth={series === "both" ? space.bar : chart.sparkline.stroke}
+              stroke={HANDICAP_COLOR}
+              strokeWidth={series === "both" ? tokens.lineWidth.outline : tokens.chart.sparkline.stroke}
               strokeOpacity={series === "both" ? 0.7 : 1}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -186,8 +186,8 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
           <path
             d={scorePath}
             fill="none"
-            className="stroke-primary"
-            strokeWidth={chart.sparkline.stroke}
+            stroke={SCORE_COLOR}
+            strokeWidth={tokens.chart.sparkline.stroke}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -199,9 +199,9 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             x2={x(active)}
             y1={PAD.top}
             y2={baseline}
-            className="stroke-chart-muted"
-            strokeWidth={lineWidth.border}
-            strokeDasharray={dash}
+            stroke={tokens.color.chart.muted}
+            strokeWidth={tokens.lineWidth.border}
+            strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
           />
         )}
 
@@ -214,8 +214,9 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
               cx={x(i)}
               cy={showScore ? yScore(value) : yHandicap(value)}
               r={active === i ? plot.dotHover : plot.dot}
-              className={cn("stroke-card", showScore ? toParSvgFillClass(d.toPar) : "fill-score-double")}
-              strokeWidth={space.bar}
+              fill={showScore ? toParFill(d.toPar) : HANDICAP_COLOR}
+              stroke={tokens.color.card}
+              strokeWidth={tokens.lineWidth.outline}
             />
           );
         })}
@@ -228,7 +229,9 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                 x={x(i)}
                 y={yScore(d.score) - 8}
                 textAnchor="middle"
-                className="fill-chart-axis font-sans text-caption"
+                fontSize={tokens.text.caption}
+                fontFamily={tokens.font.sans}
+                fill={tokens.color.chart.axis}
                 fontWeight="600"
               >
                 {d.score}
@@ -247,10 +250,10 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
               x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
             )}
             style={{ left: `${(x(active) / W) * 100}%`, top: `${(pointY / H) * 100}%` }}
-            initial={{ opacity: 0, scale: motionTokens.tapScale }}
+            initial={{ opacity: 0, scale: tokens.motion.tapScale }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: motionTokens.tapScale }}
-            transition={{ duration: motionTokens.duration.collapse }}
+            exit={{ opacity: 0, scale: tokens.motion.tapScale }}
+            transition={{ duration: tokens.motion.duration.collapse }}
           >
             <div className="mb-1 text-sm font-bold text-card-foreground">Round {point.roundIndex}</div>
             {point.courseName && (
@@ -282,14 +285,13 @@ function AxisLabel({
   x,
   y,
   anchor,
-  className,
+  color,
   children,
 }: {
   x: number;
   y: number;
   anchor: "start" | "middle" | "end";
-  /** The label's fill. */
-  className: string;
+  color: string;
   children: ReactNode;
 }) {
   return (
@@ -297,10 +299,13 @@ function AxisLabel({
       x={x}
       y={y}
       textAnchor={anchor}
+      fontSize={tokens.text.label}
       fontWeight="600"
-      className={cn("stroke-card font-sans text-label", className)}
+      fontFamily={tokens.font.sans}
+      fill={color}
       paintOrder="stroke"
-      strokeWidth={lineWidth.ring}
+      stroke={tokens.color.card}
+      strokeWidth={tokens.lineWidth.ring}
       strokeLinejoin="round"
     >
       {children}

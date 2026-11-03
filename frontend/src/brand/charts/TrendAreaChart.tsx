@@ -3,50 +3,28 @@ import { AnimatePresence, motion } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
-import { color, tokens, type ColorName } from "@/brand/theme";
+import { tokens } from "@/brand/theme";
 import { indexScale, knownValues, paddedExtent } from "./scales";
 
 type TrendAreaTone = "primary" | "birdie" | "bogey" | "eagle" | "neutral" | "contrast";
 
-const { motion: motionTokens, space, lineWidth } = tokens;
-const dash = `${space.dot} ${space.dot}`;
+const STROKE: Record<TrendAreaTone, string> = {
+  primary: tokens.color.primary,
+  birdie: tokens.color.score.birdie.base,
+  bogey: tokens.color.score.bogey.base,
+  eagle: tokens.color.score.eagle.base,
+  neutral: tokens.color.mutedForeground,
+  contrast: tokens.color.score.triple.text,
+};
 
-/**
- * Each tone's colour, for the gradient under the line, and its classes: the line, its dots and
- * the legend swatch. Spelled out in full so Tailwind finds every class when it scans the source.
- */
-const TONE: Record<TrendAreaTone, { color: ColorName; stroke: string; fill: string; swatch: string }> = {
-  primary: { color: "primary", stroke: "stroke-primary", fill: "fill-primary", swatch: "bg-primary" },
-  birdie: {
-    color: "score-birdie-base",
-    stroke: "stroke-score-birdie-base",
-    fill: "fill-score-birdie-base",
-    swatch: "bg-score-birdie-base",
-  },
-  bogey: {
-    color: "score-bogey-base",
-    stroke: "stroke-score-bogey-base",
-    fill: "fill-score-bogey-base",
-    swatch: "bg-score-bogey-base",
-  },
-  eagle: {
-    color: "score-eagle-base",
-    stroke: "stroke-score-eagle-base",
-    fill: "fill-score-eagle-base",
-    swatch: "bg-score-eagle-base",
-  },
-  neutral: {
-    color: "muted-foreground",
-    stroke: "stroke-muted-foreground",
-    fill: "fill-muted-foreground",
-    swatch: "bg-muted-foreground",
-  },
-  contrast: {
-    color: "score-triple-text",
-    stroke: "stroke-score-triple",
-    fill: "fill-score-triple",
-    swatch: "bg-score-triple",
-  },
+// Spelled out in full so Tailwind finds every class when it scans the source.
+const SWATCH: Record<TrendAreaTone, string> = {
+  primary: "bg-primary",
+  birdie: "bg-score-birdie-base",
+  bogey: "bg-score-bogey-base",
+  eagle: "bg-score-eagle-base",
+  neutral: "bg-muted-foreground",
+  contrast: "bg-score-triple",
 };
 
 interface TrendAreaSeries {
@@ -130,7 +108,7 @@ export function TrendAreaChart({
     .y1((v) => y(v!))
     .curve(curveMonotoneX);
 
-  const lead = color(TONE[series[0].tone ?? "primary"].color);
+  const lead = STROKE[series[0].tone ?? "primary"];
   const showDots = points.length <= layout.maxDots;
   const xTicks = tickIndexes(points.length, layout.xTicks);
 
@@ -173,7 +151,7 @@ export function TrendAreaChart({
 
         {y.ticks(layout.yTicks).map((tick) => (
           <g key={`y-${tick}`}>
-            <line x1={PAD.left} x2={W - PAD.right} y1={y(tick)} y2={y(tick)} className="stroke-chart-muted" strokeWidth={lineWidth.border} />
+            <line x1={PAD.left} x2={W - PAD.right} y1={y(tick)} y2={y(tick)} stroke={tokens.color.chart.muted} strokeWidth={tokens.lineWidth.border} />
             <AxisLabel x={PAD.left - 8} y={y(tick) + 4} anchor="end">
               {format(tick)}
             </AxisLabel>
@@ -193,9 +171,9 @@ export function TrendAreaChart({
               x2={W - PAD.right}
               y1={y(reference.value)}
               y2={y(reference.value)}
-              className="stroke-chart-axis"
-              strokeWidth={lineWidth.border}
-              strokeDasharray={dash}
+              stroke={tokens.color.chart.axis}
+              strokeWidth={tokens.lineWidth.border}
+              strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
             />
             <AxisLabel x={W - PAD.right} y={y(reference.value) - 6} anchor="end">
               {reference.label}
@@ -210,7 +188,7 @@ export function TrendAreaChart({
             key={s.label}
             d={trace(valuesOf(i)) ?? ""}
             fill="none"
-            className={TONE[s.tone ?? "primary"].stroke}
+            stroke={STROKE[s.tone ?? "primary"]}
             strokeWidth={i === 0 ? layout.stroke : layout.strokeSecondary}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -223,9 +201,9 @@ export function TrendAreaChart({
             x2={x(active)}
             y1={PAD.top}
             y2={baseline}
-            className="stroke-chart-muted"
-            strokeWidth={lineWidth.border}
-            strokeDasharray={dash}
+            stroke={tokens.color.chart.muted}
+            strokeWidth={tokens.lineWidth.border}
+            strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
           />
         )}
 
@@ -239,8 +217,9 @@ export function TrendAreaChart({
                 cx={x(index)}
                 cy={y(value)}
                 r={active === index ? layout.dotHover : layout.dot}
-                className={cn("stroke-card", TONE[s.tone ?? "primary"].fill)}
-                strokeWidth={space.bar}
+                fill={STROKE[s.tone ?? "primary"]}
+                stroke={tokens.color.card}
+                strokeWidth={tokens.lineWidth.outline}
               />
             );
           }),
@@ -251,7 +230,7 @@ export function TrendAreaChart({
         <div className="flex items-center justify-center gap-4">
           {series.map((s) => (
             <span key={s.label} className="flex items-center gap-1.5 text-caption text-muted-foreground">
-              <span className={cn("size-2 rounded-full", TONE[s.tone ?? "primary"].swatch)} />
+              <span className={cn("size-2 rounded-full", SWATCH[s.tone ?? "primary"])} />
               {s.label}
             </span>
           ))}
@@ -269,10 +248,10 @@ export function TrendAreaChart({
               x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
             )}
             style={{ left: `${(x(active) / W) * 100}%`, top: `${(pointY / H) * 100}%` }}
-            initial={{ opacity: 0, scale: motionTokens.tapScale }}
+            initial={{ opacity: 0, scale: tokens.motion.tapScale }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: motionTokens.tapScale }}
-            transition={{ duration: motionTokens.duration.collapse }}
+            exit={{ opacity: 0, scale: tokens.motion.tapScale }}
+            transition={{ duration: tokens.motion.duration.collapse }}
           >
             <div className="text-sm font-bold text-card-foreground">{point.title}</div>
             {point.subtitle && (
@@ -322,10 +301,13 @@ function AxisLabel({
       x={x}
       y={y}
       textAnchor={anchor}
+      fontSize={tokens.text.label}
       fontWeight="600"
-      className="fill-chart-axis stroke-card font-sans text-label"
+      fontFamily={tokens.font.sans}
+      fill={tokens.color.chart.axis}
       paintOrder="stroke"
-      strokeWidth={lineWidth.ring}
+      stroke={tokens.color.card}
+      strokeWidth={tokens.lineWidth.ring}
       strokeLinejoin="round"
     >
       {children}

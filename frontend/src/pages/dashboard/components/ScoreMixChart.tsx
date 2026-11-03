@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartTickStyle, chartTooltipStyle, color, tokens } from "@/brand";
+import { chartTickStyle, chartTooltipStyle, tokens } from "@/brand";
 import { formatPercent, type ScoreMix } from "@/domain";
 import { colorizeMix } from "../present";
 
@@ -24,7 +24,7 @@ export function ScoreMixChart({ mix }: ScoreMixChartProps) {
     <div data-slot="score-mix-chart" className="h-chart">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={bars} margin={tokens.chart.margin}>
-          <CartesianGrid stroke={color("border")} vertical={false} />
+          <CartesianGrid stroke={tokens.color.border} vertical={false} />
           <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={false} />
           <YAxis tick={TICK} tickLine={false} axisLine={false} unit="%" />
           <Tooltip contentStyle={chartTooltipStyle} formatter={percent} />
