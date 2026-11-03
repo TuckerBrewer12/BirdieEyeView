@@ -403,6 +403,10 @@ export const space = {
   "nudge-sm": 3,
   /** The phone's home-indicator strip, which a bar pinned to the bottom pads past. */
   "safe-bottom": "env(safe-area-inset-bottom, 0px)",
+  /** Under the tab bar: the home-indicator strip, never less than the bar's own 22px. */
+  "tab-bottom": "max(env(safe-area-inset-bottom, 0px), 22px)",
+  /** Between a tab's icon and its label. */
+  tab: 3,
 };
 
 /** Shadcn's base radius, `--radius`; the named steps below sit around it. */

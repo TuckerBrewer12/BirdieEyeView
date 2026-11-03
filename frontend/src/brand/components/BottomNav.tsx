@@ -6,8 +6,10 @@ import { Button } from "./Button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./Collapsible";
 
 interface BottomNavProps {
-  /** The tabs along the bar. Four fit a phone. */
+  /** The tabs along the bar. Four, so with "More" five fit a phone. */
   tabs: NavItem[];
+  /** The `href` of the tab raised in a filled circle, the one action the app is for. Put it mid-bar. */
+  featuredHref?: string;
   /** Everything else, in a menu the last tab opens. */
   moreItems?: NavItem[];
   moreLabel?: string;
@@ -21,15 +23,22 @@ interface BottomNavProps {
 }
 
 const tabClass =
-  "flex flex-1 flex-col items-center justify-center gap-0.5 text-meta font-semibold text-muted-foreground transition-colors data-active:text-primary data-panel-open:text-primary [&_svg]:size-5 [&_svg]:stroke-icon data-active:[&_svg]:stroke-icon-active data-panel-open:[&_svg]:stroke-icon-active";
+  "group flex min-w-0 flex-1 flex-col items-center justify-center gap-tab text-meta font-medium text-muted-foreground transition-colors data-active:font-bold data-active:text-foreground data-panel-open:font-bold data-panel-open:text-foreground [&_svg]:size-5 [&_svg]:stroke-icon";
+
+/** The icon's round holder: bare on a tab, a lifted filled disc on the featured one. */
+const iconClass = "flex size-7 items-center justify-center rounded-full transition-colors";
+const plainIconClass = "group-data-active:text-primary group-data-panel-open:text-primary";
+const featuredIconClass = "-mt-3.5 size-11 bg-primary text-primary-foreground";
 
 /**
  * The phone's tab bar: a few tabs and a "More" tab that opens a menu of the
- * rest above the bar. Taking any link folds the menu, as does tapping the
+ * rest above the bar. One tab can be featured: its icon sits in a filled disc
+ * raised above the bar. Taking any link folds the menu, as does tapping the
  * dimmed page or pressing Escape. `AppShell` pins it to the bottom edge.
  */
 function BottomNav({
   tabs,
+  featuredHref,
   moreItems = [],
   moreLabel = "More",
   onSignOut,
@@ -61,11 +70,13 @@ function BottomNav({
       className={cn("relative", className)}
     >
       {/* Raised so the bar stays clear of the dimmed page while the menu is open. */}
-      <div className="relative z-10 border-t border-border bg-card pb-safe-bottom">
+      <div className="relative z-10 border-t border-border bg-card px-2 pt-1.5 pb-tab-bottom">
         <div className="flex h-14 items-stretch">
           {tabs.map((item) => (
             <NavLink key={item.href} item={item} renderLink={renderLink} onClick={close} className={tabClass}>
-              <item.icon aria-hidden />
+              <span className={cn(iconClass, item.href === featuredHref ? featuredIconClass : plainIconClass)}>
+                <item.icon aria-hidden />
+              </span>
               <span>{item.label}</span>
             </NavLink>
           ))}
@@ -74,7 +85,9 @@ function BottomNav({
               data-active={moreActive ? "" : undefined}
               className={tabClass}
             >
-              <Menu aria-hidden />
+              <span className={cn(iconClass, plainIconClass)}>
+                <Menu aria-hidden />
+              </span>
               <span>{moreLabel}</span>
             </CollapsibleTrigger>
           )}

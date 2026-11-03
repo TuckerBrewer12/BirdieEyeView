@@ -36,6 +36,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       bottomNav={
         <BottomNav
           tabs={nav.tabs}
+          featuredHref="/scan"
           moreItems={nav.more}
           onSignOut={onSignOut}
           signingOut={signOut.isPending}
