@@ -108,6 +108,8 @@ export {
   SheetTitle,
   SheetDescription,
 } from "./components/Sheet";
+export { ConfirmDialog } from "./components/ConfirmDialog";
+export type { ConfirmDialogProps, ConfirmDialogPlacement } from "./components/ConfirmDialog";
 
 // Charts
 export { ActivityHeatmap } from "./charts/ActivityHeatmap";
