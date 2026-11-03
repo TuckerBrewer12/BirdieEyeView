@@ -163,11 +163,11 @@ Every colour is a token in `src/brand/theme/tokens.ts`, used through its Tailwin
 - **Surfaces and ink:** `bg-background` (page), `bg-card` + `text-card-foreground`, `text-foreground`, `text-muted-foreground` (secondary text, captions), `bg-muted`, `bg-secondary`, `bg-accent`, `border-border`, `border-input`, `ring-ring`.
 - **Brand:** `bg-primary` / `text-primary` / `text-primary-foreground` — forest green for primary actions, accents and section labels. `text-destructive` for errors and deletes.
 - **Score kinds** (`eagle`, `birdie`, `par`, `bogey`, `double`, `triple`, `quad`) encode data: `text-score-<kind>` for ink, `bg-score-<kind>-base` + `text-score-<kind>-on-base` for a fill, `bg-score-<kind>-muted` for a wash. When the kind or to-par is only known at runtime use `scoreFillClass()`, `scoreOnFillClass()`, `toParTextClass()` or `toParBadgeClass()` from `@/brand/theme`.
-- **Other families:** `from-sidebar to-sidebar-end` + `text-sidebar-foreground` (the side rail), `bg-tee-<colour>` / `text-tee-<colour>-on` (through `TeeSwatch`), `bg-scan-row-<row>` (scorecard layout rows), and `stroke-chart-muted` / `fill-chart-axis` / `chart-accent` for chart chrome.
+- **Other families:** `from-sidebar to-sidebar-end` + `text-sidebar-foreground` (the side rail), `bg-tee-<colour>` / `text-tee-<colour>-on` (through `TeeSwatch`), `bg-scan-row-<row>` (scorecard layout rows), and `tokens.color.chart.*` for chart chrome.
 
 ### Type and measures
 - DM Sans (`font-sans`) and DM Mono (`font-mono`); the body font is set once in `index.css`.
-- Type roles, not pixel sizes: `text-caption`, `text-meta`, `text-label`, `text-body-sm`, `text-body`, `text-title`, `text-hero`, with `tracking-*` (`tracking-section`, `tracking-eyebrow`, `tracking-stat`, …). Tailwind's scale (`text-sm`, `p-4`, `gap-2`) is fine; arbitrary values (`text-[11px]`, `w-[54px]`) are not.
+- Type roles, not pixel sizes: `text-caption`, `text-meta`, `text-label`, `text-body-sm`, `text-body`, `text-title`, `text-hero`, `text-eyebrow`, `text-kicker`, `text-section` (see Brand tokens). `tracking-*` (`tracking-stat`, `tracking-chip`, …) sits beside Tailwind's sizes. Tailwind's scale (`text-sm`, `p-4`, `gap-2`) is fine; arbitrary values (`text-[11px]`, `w-[54px]`) are not.
 - Measures off the 4px scale are named: `rounded-card`, `rounded-tooltip`, `gap-tight`, `h-chart`, `w-preview`, `size-icon-xs`, `grid-cols-round-preview`, …
 - Shadows follow `--shadow`: `shadow-card` for a lifted surface or a hover, `shadow-hairline` under a pinned bar. Tailwind's `shadow-sm` / `-md` / `-lg` are wired to the same token, so they lift in dark mode too.
 
@@ -182,21 +182,22 @@ Every colour is a token in `src/brand/theme/tokens.ts`, used through its Tailwin
 All animation is `framer-motion`, with its numbers from `tokens.motion` in `@/brand/theme`: `hoverScale` / `tapScale` on `spring` for hover and press, `entrance` for content arriving, `layout` for a block resizing, `draw` and `pop` for a chart line and its points, `duration.collapse`. `Reveal` fades a section up as it scrolls in and holds still for reduced motion. Fast enough to feel snappy, slow enough to register; no raw `stiffness` or `duration` in a component.
 
 ### Charts
-Golf-native visualizations over generic chart types where possible. SVG charts use a `viewBox` and D3 scales (`d3-scale`, `d3-shape`) for the maths; Recharts draws trend, bar and area charts. Our own SVG paints with classes (`stroke-border`, `fill-card`, `scoreSvgFillClass()`); Recharts takes style objects and strings, so pass `chartTooltipStyle`, `chartTickStyle` and `color("chart-muted")`. Geometry is `tokens.chart`. Tooltips find the nearest point on `onMouseMove` and close on `onMouseLeave`.
+Golf-native visualizations over generic chart types where possible. SVG charts use a `viewBox` and D3 scales (`d3-scale`, `d3-shape`) for the maths; Recharts draws trend, bar and area charts. SVG paint and Recharts props take `tokens.color.*` (`stroke={tokens.color.chart.muted}`), plus `chartTooltipStyle` and `chartTickStyle`. Geometry is `tokens.chart`. Tooltips find the nearest point on `onMouseMove` and close on `onMouseLeave`.
 
 ### Brand tokens (`src/brand/`)
 
-**`src/brand/theme/tokens.ts` holds every design value**: colours (`light` and `dark`, same keys), type, space, sizes, radii, shadows, breakpoints, motion and chart geometry. `tokens.gen.css` is generated from it; never edit it by hand.
+**`src/brand/theme/tokens.ts` holds every design value.** `tokens.gen.css` is generated from it; never edit it by hand.
 
-- Change or add a value in `tokens.ts`, then run `npm run gen:tokens`. CI runs `npm run check:tokens` and fails if the CSS is stale. Keep the CSS names: a colour key `card` is `--card` and `bg-card`; a measure is `--brand-<group>-<key>` and its utility (`text-caption`, `h-chart`, `rounded-tooltip`). A colour that matches another is an `alias()`, not a repeated value.
-- Markup uses the Tailwind utilities, our SVG included (`stroke-border`, `fill-score-birdie-base`). For a colour picked at runtime, use a lookup of full class strings (`scoreFillClass()`, `scoreSvgFillClass()`, `toParTextClass()`), never a class built from a template.
-- `color("chart-muted")` gives `var(--chart-muted)` for a prop that only takes a string: Recharts, a gradient `<stop>`. It is a `var()` reference, so anything that parses it as a colour (canvas) must resolve it with `getComputedStyle` first.
-- Numbers come straight from `tokens` (`tokens.chart.sparkline`, `tokens.motion.spring`, `tokens.space.dot`).
-- `tokens.test.ts` fails on a hex, `rgb()`, `hsl()`, `oklch()`, `color-mix()` or raw palette class anywhere in `src` outside the token files, on a px/rem/em literal in `src/brand`, and if `capacitor.config.ts` drifts from `primary` / `background`.
+- **Colours, in two layers.** `palette` holds the raw colours by hue and step (`forest[700]`, `gray[400]`, `white`); nothing else writes a colour value. `modes.light` and `modes.dark` map each semantic colour (`card`, `mutedForeground`, `score.birdie.base`) onto a palette colour, another key (`alias("foreground")`), a `mix()` or an `alpha()`. Dark is the light mapping with overrides.
+- **Generated CSS.** Run `npm run gen:tokens` after changing `tokens.ts`; CI's `check:tokens` fails if the CSS is stale. A colour's CSS name is its path in kebab case (`score.birdie.onBase` is `--score-birdie-on-base` and `text-score-birdie-on-base`); a measure is `--brand-<group>-<key>` with its utility (`h-chart`, `rounded-tooltip`).
+- **TypeScript reads `tokens.*`.** `tokens.color` is the semantic colours as `var()` references (`tokens.color.score[kind].base` is `"var(--score-<kind>-base)"`), so dark mode still switches in CSS. Numbers are real values: `tokens.chart`, `tokens.motion`, `tokens.space`, `tokens.type.label.size`.
+- **Where each goes.** SVG paint and chart-library props take `tokens.color.*` (`stroke={tokens.color.border}`, `<Cell fill={toParFill(toPar)} />`). HTML elements use Tailwind classes (`bg-card`, `text-score-birdie`), with a lookup of full class strings when the colour is picked at runtime (`scoreFillClass()`, `toParTextClass()`), never a class built from a template. A `var()` string isn't a colour to canvas; resolve it with `getComputedStyle` there.
+- **Type roles.** `tokens.type` names each text style and bundles its size with the weight, tracking and line height that go with it: `text-caption`, `text-meta`, `text-label`, `text-body-sm`, `text-body`, `text-title`, `text-hero`, `text-eyebrow`, `text-kicker`, `text-section`. A class beside a role (`font-semibold`) still wins; uppercase stays a class.
+- `tokens.test.ts` fails on a raw colour anywhere outside `palette` (the token files aside), on a semantic colour that doesn't map onto the palette, on a px/rem/em literal in `src/brand`, and if `capacitor.config.ts` drifts from `primary` / `background`.
 
 ### Dark Mode
 
-Implemented via `colors.dark` in `brand/theme/tokens.ts`, generated as a `:root.dark` block that redeclares only the values that change; aliases follow them. Score, tee and scan-row colours, `--primary` and the sidebar are the same in both modes. Views take their dark look from the tokens and `dark:` variants; `useTheme()` is only for reading and setting the preference.
+Implemented via `modes.dark` in `brand/theme/tokens.ts`, generated as a `:root.dark` block that redeclares only the values that change; aliases follow them. Score, tee and scan-row colours, `--primary` and the sidebar are the same in both modes. Views take their dark look from the tokens and `dark:` variants; `useTheme()` is only for reading and setting the preference.
 
 ---
 
