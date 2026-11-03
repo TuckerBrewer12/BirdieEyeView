@@ -1,6 +1,7 @@
 import * as React from "react";
 import { type VariantProps } from "class-variance-authority";
 import { cn } from "@/brand/cn";
+import { Meter } from "./Meter";
 import { statValueVariants, statVariants } from "./variants";
 
 /**
@@ -187,5 +188,67 @@ function StatCard({
   );
 }
 
-export { Stat, StatLabel, StatValue, StatUnit, StatPeriod, StatNote, StatDelta, StatCard };
+/** A row of figures in one panel, split by rules: the stat strip. Takes `StatStripItem`s. */
+function StatStrip({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="stat-strip"
+      className={cn(
+        "grid auto-cols-fr grid-flow-col divide-x divide-border overflow-hidden rounded-tile border border-border bg-card text-card-foreground",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+interface StatStripItemProps extends Omit<React.ComponentProps<"div">, "children"> {
+  label: React.ReactNode;
+  value: React.ReactNode;
+  /** The amount it moved, beside the triangle. */
+  delta?: React.ReactNode;
+  direction?: StatDirection | null;
+  /** Whether the move is for the better. Defaults from the direction. */
+  tone?: StatTone;
+  /** Where the figure sits in its range, 0–100, drawn as a bar. */
+  meter?: number | null;
+  /** The line under the bar: the range, a per-round figure. */
+  detail?: React.ReactNode;
+}
+
+/** One figure in a `StatStrip`: label, value and its move, a bar for where it sits, and a detail line. */
+function StatStripItem({
+  label,
+  value,
+  delta,
+  direction = null,
+  tone,
+  meter,
+  detail,
+  className,
+  ...props
+}: StatStripItemProps) {
+  const resolved = direction == null ? "neutral" : (tone ?? DIRECTION_TONES[direction]);
+  return (
+    <div data-slot="stat-strip-item" className={cn("flex flex-col gap-1.5 px-5 py-4.5", className)} {...props}>
+      <StatLabel className="text-body-sm">{label}</StatLabel>
+      <div className="flex items-baseline gap-2">
+        <StatValue className="text-figure leading-tight">{value}</StatValue>
+        <StatDelta
+          direction={direction}
+          tone={tone}
+          className={cn("font-semibold", resolved === "good" && "text-primary")}
+        >
+          {delta}
+        </StatDelta>
+      </div>
+      {meter !== undefined && (
+        <Meter value={meter} size="xs" tone={resolved === "bad" ? "danger" : "primary"} className="mt-1.5" />
+      )}
+      {detail != null && <div className="text-label text-muted-foreground">{detail}</div>}
+    </div>
+  );
+}
+
+export { Stat, StatLabel, StatValue, StatUnit, StatPeriod, StatNote, StatDelta, StatCard, StatStrip, StatStripItem };
 export type { StatDirection, StatTone };
