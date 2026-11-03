@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
+import { Card } from "./Card";
 
 interface ScanProgressProps {
   /** What is happening, as the card's title. */
@@ -35,20 +36,20 @@ const STEP_MARK: Record<StepState, string> = {
  */
 function ScanProgress({ label, steps, phase, className }: ScanProgressProps) {
   return (
-    <div
+    <Card
       data-slot="scan-progress"
       role="status"
       aria-live="polite"
-      className={cn("flex flex-col gap-3.5 rounded-xl border border-border bg-card p-5", className)}
+      className={cn("gap-3.5 p-5", className)}
     >
       <div className="flex items-center gap-3">
         <svg aria-hidden viewBox="0 0 36 36" className="size-9 shrink-0 animate-spin motion-reduce:animate-none">
-          <circle cx="18" cy="18" r="14" fill="none" stroke={tokens.color.muted} strokeWidth="4" />
+          <circle cx="18" cy="18" r="14" fill="none" stroke={tokens.color.muted} strokeWidth={tokens.lineWidth.ring} />
           <path
             d="M18 4 A14 14 0 0 1 32 18"
             fill="none"
             stroke={tokens.color.primary}
-            strokeWidth="4"
+            strokeWidth={tokens.lineWidth.ring}
             strokeLinecap="round"
           />
         </svg>
@@ -72,14 +73,14 @@ function ScanProgress({ label, steps, phase, className }: ScanProgressProps) {
                   STEP_MARK[state],
                 )}
               >
-                {state === "done" && <Check className="size-3 stroke-3" />}
+                {state === "done" && <Check className="size-3 stroke-icon-active" />}
               </span>
               {step}
             </li>
           );
         })}
       </ol>
-    </div>
+    </Card>
   );
 }
 
