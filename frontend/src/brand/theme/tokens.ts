@@ -637,14 +637,22 @@ export const chart = {
     /** How near the pointer has to be to a dot, in the chart's units, to pick it. */
     hitRadius: 10,
   },
-  /** A round hole by hole, as wide as `w-chart-wide`, which it scrolls at. */
+  /** The running score through a round, a step per hole, as wide as `w-chart-wide`, which it scrolls at. */
   flow: {
     width: px(size["chart-wide"]),
-    height: 220,
-    pad: { top: 28, right: 16, bottom: 36, left: 40 },
-    /** To-par beyond this is drawn at the edge, so one blow-up hole cannot flatten the rest. */
-    extent: 5,
+    height: 270,
+    /** `top` leaves room above the plot for the worst-stretch bracket; `bottom` for the hole strip under it. */
+    pad: { top: 32, right: 24, bottom: 74, left: 36 },
+    stroke: 2,
+    /** The dot where the line ends. */
     dot: 4,
-    dotHover: 6,
+    /** Each hole's score, in a square (a circle when under par) under the plot. */
+    chip: { size: 22, gap: 20, radius: 4 },
+    /** The front/back divider: how far it rises above the plot, and how far it stops short of the chart's bottom edge. */
+    divider: { top: 26, bottom: 8 },
+    /** The bracket over the worst stretch: its height above the plot, its end ticks, its inset from the stretch's edges. */
+    bracket: { rise: 7, tick: 5, inset: 3, stroke: 1.5 },
+    /** Holes in the stretch the bracket marks, and the fewest strokes over par worth marking. */
+    stretch: { holes: 4, minOver: 2 },
   },
 };
