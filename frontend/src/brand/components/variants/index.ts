@@ -7,4 +7,3 @@ export { teeSwatchVariants } from "./teeSwatchVariants";
 export { toggleVariants } from "./toggleVariants";
 export { meterTrackVariants, meterIndicatorVariants } from "./meterVariants";
 export { statVariants, statValueVariants } from "./statVariants";
-export { segmentedTrackVariants, segmentedItemVariants } from "./segmentedVariants";

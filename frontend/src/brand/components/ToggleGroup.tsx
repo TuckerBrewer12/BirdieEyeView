@@ -2,7 +2,7 @@ import * as React from "react";
 import { Toggle as TogglePrimitive } from "@base-ui/react/toggle";
 import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group";
 import { cn } from "@/brand/cn";
-import { segmentedItemVariants, segmentedTrackVariants } from "./variants";
+import { toggleVariants } from "./variants";
 
 type SegmentedSize = "default" | "sm";
 
@@ -27,7 +27,12 @@ function ToggleGroup({ className, size = "default", fill = false, children, ...p
     <ToggleGroupPrimitive
       data-slot="toggle-group"
       data-size={size}
-      className={cn(segmentedTrackVariants({ size, fill }), className)}
+      className={cn(
+        "flex items-center gap-0.5 bg-muted",
+        size === "sm" ? "rounded-lg p-0.5" : "rounded-card p-chip",
+        fill ? "w-full" : "w-fit",
+        className,
+      )}
       {...props}
     >
       <ToggleGroupContext.Provider value={{ size, fill }}>{children}</ToggleGroupContext.Provider>
@@ -42,7 +47,11 @@ function ToggleGroupItem({ className, children, ...props }: TogglePrimitive.Prop
     <TogglePrimitive
       data-slot="toggle-group-item"
       data-size={size}
-      className={cn(segmentedItemVariants({ size, fill }), className)}
+      className={cn(
+        toggleVariants({ variant: "segmented", size }),
+        fill ? "min-w-0 flex-1 basis-0" : "shrink-0",
+        className,
+      )}
       {...props}
     >
       {children}

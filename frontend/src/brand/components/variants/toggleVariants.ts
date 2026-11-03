@@ -8,6 +8,9 @@ const toggleVariants = cva(
         default: "bg-transparent",
         outline:
           "border border-input bg-transparent hover:bg-muted aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:border-primary data-[pressed]:bg-primary data-[pressed]:text-primary-foreground data-[pressed]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary",
+        /* One option of a segmented control: bare until chosen, then a raised card-coloured segment. */
+        segmented:
+          "font-semibold text-foreground-secondary hover:bg-transparent aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-sm data-[pressed]:bg-card data-[pressed]:text-foreground data-[pressed]:shadow-sm",
       },
       size: {
         default:
@@ -16,6 +19,7 @@ const toggleVariants = cva(
         lg: "h-9 min-w-9 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
       },
     },
+    compoundVariants: [{ variant: "segmented", size: "default", class: "px-3.5 text-body" }],
     defaultVariants: {
       variant: "default",
       size: "default",
