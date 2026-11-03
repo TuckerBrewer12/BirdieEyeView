@@ -1,13 +1,16 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
+import { FakeHandler } from "@/testing/fakes/FakeHandler";
 import { SettingsGroup, SettingsRow } from "./SettingsRow";
 
 describe("SettingsRow", () => {
   it("toggles a switch from its label", () => {
-    const onCheckedChange = vi.fn();
-    render(<SettingsRow type="switch" label="Email updates" onCheckedChange={onCheckedChange} />);
+    const onCheckedChange = new FakeHandler<[boolean]>();
+    render(
+      <SettingsRow type="switch" label="Email updates" onCheckedChange={onCheckedChange.handle} />,
+    );
     fireEvent.click(screen.getByText("Email updates"));
-    expect(onCheckedChange).toHaveBeenCalledWith(true);
+    expect(onCheckedChange.calls).toEqual([[true]]);
   });
 
   it("marks the chosen option and changes it", () => {
