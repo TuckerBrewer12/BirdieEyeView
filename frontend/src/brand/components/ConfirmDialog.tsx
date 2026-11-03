@@ -24,8 +24,8 @@ const popup: Record<ConfirmDialogPlacement, string> = {
   center:
     "max-w-sm gap-2 rounded-2xl p-6 shadow-lg data-ending-style:scale-95 data-starting-style:scale-95",
   bottom:
-    "gap-1.5 rounded-t-sheet px-4.5 pt-5.5 pb-6 data-ending-style:translate-y-full data-starting-style:translate-y-full",
-  auto: "gap-1.5 rounded-t-sheet px-4.5 pt-5.5 pb-6 data-ending-style:translate-y-full data-starting-style:translate-y-full sm:max-w-sm sm:gap-2 sm:rounded-2xl sm:p-6 sm:shadow-lg sm:data-ending-style:translate-y-0 sm:data-starting-style:translate-y-0 sm:data-ending-style:scale-95 sm:data-starting-style:scale-95",
+    "gap-1.5 rounded-t-sheet px-5 pt-6 pb-6 data-ending-style:translate-y-full data-starting-style:translate-y-full",
+  auto: "gap-1.5 rounded-t-sheet px-5 pt-6 pb-6 data-ending-style:translate-y-full data-starting-style:translate-y-full sm:max-w-sm sm:gap-2 sm:rounded-2xl sm:p-6 sm:shadow-lg sm:data-ending-style:translate-y-0 sm:data-starting-style:translate-y-0 sm:data-ending-style:scale-95 sm:data-starting-style:scale-95",
 };
 
 const footer: Record<ConfirmDialogPlacement, string> = {
