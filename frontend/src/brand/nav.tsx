@@ -10,6 +10,8 @@ interface NavItem {
   label: string;
   icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   active?: boolean;
+  /** A count to show beside the label, such as unread requests. Zero or unset shows nothing. */
+  badge?: number;
 }
 
 /**

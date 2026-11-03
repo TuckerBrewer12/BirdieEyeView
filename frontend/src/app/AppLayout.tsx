@@ -37,6 +37,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <BottomNav
           tabs={nav.tabs}
           moreItems={nav.more}
+          user={{
+            name: auth.name ?? "Golfer",
+            initials: initialsOf(auth.name),
+            detail: auth.email ?? undefined,
+          }}
           onSignOut={onSignOut}
           signingOut={signOut.isPending}
           renderLink={routerLink}
