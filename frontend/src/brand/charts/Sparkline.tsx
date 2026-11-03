@@ -5,18 +5,16 @@ import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
 import { indexScale, knownValues, paddedExtent } from "./scales";
 
-type SparklineTone = "primary" | "contrast" | "birdie";
+type SparklineTone = "primary" | "contrast";
 
 const STROKE: Record<SparklineTone, string> = {
   primary: tokens.color.primary,
   contrast: tokens.color.score.triple.text,
-  birdie: tokens.color.score.birdie.base,
 };
 
 const SWATCH: Record<SparklineTone, string> = {
   primary: "bg-primary",
   contrast: "bg-score-triple",
-  birdie: "bg-score-birdie-base",
 };
 
 interface SparklineSeries {
@@ -35,13 +33,11 @@ interface SparklineProps {
   fill?: boolean;
   /** A dashed line at this value: the average the server worked out for the line. None without it. */
   reference?: number | null;
-  /** Stretch the drawing to whatever height the caller gives it (`h-6 w-24`), rather than keep its own proportions. */
-  stretch?: boolean;
   className?: string;
 }
 
 /** Which way a figure has been heading: a small line with no axes, nothing marked on it. */
-export function Sparkline({ series, domain, fill = false, reference = null, stretch = false, className }: SparklineProps) {
+export function Sparkline({ series, domain, fill = false, reference = null, className }: SparklineProps) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
   const { width: W, height: H, pad, stroke } = tokens.chart.sparkline;
 
@@ -75,12 +71,7 @@ export function Sparkline({ series, domain, fill = false, reference = null, stre
 
   return (
     <div data-slot="sparkline" className={cn("flex flex-col gap-1.5", className)}>
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        preserveAspectRatio={stretch ? "none" : undefined}
-        className={cn("block w-full overflow-visible", stretch ? "min-h-0 flex-1" : "h-auto")}
-        aria-hidden
-      >
+      <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full overflow-visible" aria-hidden>
         {fill && (
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -112,7 +103,7 @@ export function Sparkline({ series, domain, fill = false, reference = null, stre
                 strokeWidth={stroke}
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                // The line stays this thick however far the drawing is scaled.
+                // The line keeps its weight however small the sparkline is drawn.
                 vectorEffect="non-scaling-stroke"
               />
             </g>

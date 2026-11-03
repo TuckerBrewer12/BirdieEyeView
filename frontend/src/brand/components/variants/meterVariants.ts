@@ -18,6 +18,8 @@ const meterIndicatorVariants = cva("h-full rounded-full transition-all", {
       primary: "bg-primary",
       /** Reached: the bar reads as a birdie. */
       success: "bg-score-birdie-base",
+      /** Short of the mark: the bar reads as a bogey. */
+      miss: "bg-score-bogey-base",
       /** Still on the way: fades from the brand green toward the chart axis. */
       progress: "bg-linear-to-r from-primary to-(--chart-axis)",
     },

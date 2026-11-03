@@ -1,4 +1,5 @@
 import { cn } from "@/brand/cn";
+import { Meter } from "@/brand/components/Meter";
 
 interface ComparisonBar {
   /** Beside the bar: "Par 3". */
@@ -19,9 +20,9 @@ interface ComparisonBarsProps {
   className?: string;
 }
 
-/** A few figures each against its own target: a bar to the value, a tick at the target, the figure written beside it. */
+/** A few figures each against its own target: a meter to the value, its tick at the target, the figure beside it. */
 export function ComparisonBars({ bars, max = 1, better = "lower", format, className }: ComparisonBarsProps) {
-  const share = (value: number) => `${Math.min(100, Math.max(0, (value / max) * 100))}%`;
+  const percent = (value: number) => (value / max) * 100;
 
   return (
     <div data-slot="comparison-bars" className={cn("flex flex-col gap-3", className)}>
@@ -30,24 +31,14 @@ export function ComparisonBars({ bars, max = 1, better = "lower", format, classN
         return (
           <div key={bar.label} className="flex items-center gap-2.5">
             <span className="w-11 shrink-0 text-body font-semibold text-foreground-secondary">{bar.label}</span>
-            <div
-              role="img"
+            <Meter
+              value={percent(bar.value)}
+              marker={percent(bar.target)}
+              tone={good ? "success" : "miss"}
               aria-label={`${bar.label}: ${format(bar.value)}, target ${format(bar.target)}`}
-              className="relative h-2.5 min-w-0 flex-1 rounded-full bg-muted"
-            >
-              <div
-                className={cn(
-                  "absolute inset-y-0 left-0 rounded-full",
-                  good ? "bg-score-birdie-base" : "bg-score-bogey-base",
-                )}
-                style={{ width: share(bar.value) }}
-              />
-              <div
-                className="absolute -inset-y-1 w-0.5 -translate-x-1/2 bg-foreground"
-                style={{ left: share(bar.target) }}
-              />
-            </div>
-            <b className={cn("w-11 shrink-0 text-right text-sm", good ? "text-status-success" : "text-status-danger")}>
+              className="min-w-0 flex-1"
+            />
+            <b className={cn("w-11 shrink-0 text-right text-sm", good ? "text-score-birdie" : "text-score-bogey")}>
               {format(bar.value)}
             </b>
           </div>

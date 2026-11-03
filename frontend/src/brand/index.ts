@@ -114,8 +114,6 @@ export { ActivityHeatmap } from "./charts/ActivityHeatmap";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
 export { ScoreMixBar } from "./charts/ScoreMixBar";
-export { HoleStrip } from "./charts/HoleStrip";
-export type { HoleStripProps } from "./charts/HoleStrip";
 export { ComparisonBars } from "./charts/ComparisonBars";
 export type { ComparisonBar, ComparisonBarsProps } from "./charts/ComparisonBars";
 export { ProgressRing } from "./charts/ProgressRing";

@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { indexScale, knownValues, lastKnownIndex, paddedExtent } from "./scales";
+import { indexScale, knownValues, paddedExtent } from "./scales";
 
 describe("chart scales", () => {
   it("skips missing values", () => {
     expect(knownValues([3, null, 5, undefined])).toEqual([3, 5]);
-    expect(lastKnownIndex([3, 5, null])).toBe(1);
-    expect(lastKnownIndex([null])).toBe(-1);
   });
 
   it("pads a range by a fixed amount or a share of its span", () => {

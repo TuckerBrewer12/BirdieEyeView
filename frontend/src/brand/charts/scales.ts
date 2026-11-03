@@ -7,12 +7,6 @@ export function knownValues(values: readonly Maybe[]): number[] {
   return values.filter((v): v is number => v != null);
 }
 
-/** Where the last value that is there sits, or -1 when none is. */
-export function lastKnownIndex(values: readonly Maybe[]): number {
-  for (let i = values.length - 1; i >= 0; i--) if (values[i] != null) return i;
-  return -1;
-}
-
 /**
  * The span the values cover, widened so a line never touches the plot's edge.
  * `pad` is a fixed amount in the values' own unit (5 strokes, half a handicap point)

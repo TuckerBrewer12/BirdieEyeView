@@ -1,30 +1,25 @@
 import { cn } from "@/brand/cn";
-import { SCORE_KEYS, scoreFillClass, scoreKindLabel, type ScoreKey } from "@/brand/theme";
+import { SCORE_KEYS, scoreFillClass, scoreKindLabel } from "@/brand/theme";
 import { formatPercent } from "@/domain/format";
 import { scoreKindCountLabel, type ScoreMix } from "@/domain/score";
 
 interface ScoreMixBarProps {
+  /** Each kind's share of the holes, or with `counted`, the server's count of holes of each kind. */
   mix: ScoreMix;
-  /** How many holes the shares cover. With it the legend counts holes ("10 pars"); without, it gives each share. */
-  holes?: number;
+  /** The mix is hole counts (a round's `scoreCounts`): the legend reads "10 pars" rather than "52% par". */
+  counted?: boolean;
   className?: string;
 }
 
-/** Par is the long grey run of the bar, so on a white card it takes the stronger border grey to stay seen. */
-function fillClass(kind: ScoreKey): string {
-  return kind === "par" ? "bg-border-strong" : scoreFillClass(kind);
-}
-
-/** How a player's holes split across score kinds: one stacked bar, then the count of each kind beside it. */
-export function ScoreMixBar({ mix, holes, className }: ScoreMixBarProps) {
+/** How a player's holes split across score kinds: one stacked bar, then each kind's figure beside it. */
+export function ScoreMixBar({ mix, counted = false, className }: ScoreMixBarProps) {
   // Slivers under half a percent would only draw as a seam, so the bar and legend both skip them.
   const shown = SCORE_KEYS.filter((kind) => mix[kind] > 0.5);
-
-  const entries = shown.map((kind) => {
-    if (holes == null) return { kind, figure: formatPercent(mix[kind]), word: scoreKindLabel(kind).toLowerCase() };
-    const count = Math.round((mix[kind] * holes) / 100);
-    return { kind, figure: String(count), word: scoreKindCountLabel(kind, count).toLowerCase() };
-  });
+  const entries = shown.map((kind) =>
+    counted
+      ? { kind, figure: String(mix[kind]), word: scoreKindCountLabel(kind, mix[kind]).toLowerCase() }
+      : { kind, figure: formatPercent(mix[kind]), word: scoreKindLabel(kind).toLowerCase() },
+  );
 
   return (
     <div data-slot="score-mix-bar" className={cn("flex flex-col gap-2.5", className)}>
@@ -34,7 +29,7 @@ export function ScoreMixBar({ mix, holes, className }: ScoreMixBarProps) {
         className="flex h-2 gap-0.5 overflow-hidden rounded-sm"
       >
         {shown.map((kind) => (
-          <div key={kind} className={cn("min-w-0.5 basis-0", fillClass(kind))} style={{ flexGrow: mix[kind] }} />
+          <div key={kind} className={cn("min-w-0.5 basis-0", scoreFillClass(kind))} style={{ flexGrow: mix[kind] }} />
         ))}
       </div>
       <div aria-hidden className="flex flex-wrap gap-x-3.5 gap-y-1 text-body text-foreground-secondary">

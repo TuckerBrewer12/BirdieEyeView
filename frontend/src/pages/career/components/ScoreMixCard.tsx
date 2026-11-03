@@ -18,7 +18,7 @@ export function ScoreMixCard({ mix, holesPlayed, className }: ScoreMixCardProps)
       </CardHeader>
       <CardContent>
         {holesPlayed > 0 ? (
-          <ScoreMixBar mix={mix} holes={holesPlayed} />
+          <ScoreMixBar mix={mix} />
         ) : (
           <p className="py-4 text-center text-sm text-muted-foreground">No holes scored yet</p>
         )}

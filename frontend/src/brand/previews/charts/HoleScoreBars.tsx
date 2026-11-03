@@ -8,6 +8,7 @@ export default function HoleScoreBarsPreview() {
   return (
     <>
       <HoleScoreBars holes={overPar.holes} />
+      <HoleScoreBars holes={overPar.holes} nines={{ out: overPar.frontNine.total, in: overPar.backNine.total }} />
       <HoleScoreBars holes={best.holes} />
       <HoleScoreBars holes={overPar.frontNine.holes} />
       <HoleScoreBars holes={overPar.frontNine.holes} variant="profile" />
