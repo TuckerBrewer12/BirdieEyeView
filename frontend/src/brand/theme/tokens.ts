@@ -469,6 +469,8 @@ export const opacity = {
   recessed: "35%",
   /** Soft fill under a line or inside a shape. */
   wash: "22%",
+  /** The barest fill inside an outline, so the shape reads without hiding the grid. */
+  tint: "6%",
 };
 
 /** Shadows follow `--shadow`, so they deepen in dark mode. sm/md/lg keep Tailwind's geometry. */
@@ -579,16 +581,19 @@ export const chart = {
   },
   /** A shape across a handful of measures, each axis 0–100 from the centre out. Labels sit past the rim. */
   radar: {
-    width: 560,
-    height: 340,
-    radius: 118,
+    width: 392,
+    height: 324,
+    radius: 96,
     /** From the rim to an axis label, and from the label down to its figures. */
-    labelGap: 18,
+    labelGap: 16,
     valueGap: 16,
     /** Rings drawn at these shares of the rim, in percent. */
     rings: [25, 50, 75, 100],
-    dot: 4,
-    stroke: 2,
+    dot: 5,
+    stroke: 2.5,
+    /** The comparison's outline is thinner and dashed, so the golfer's own shape reads first. */
+    benchmarkStroke: 1.5,
+    dash: 4,
   },
   /** The same shape on a phone: a narrower drawing, so its labels stay readable at a phone's width. */
   radarCompact: {

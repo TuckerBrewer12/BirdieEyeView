@@ -169,6 +169,7 @@
   --brand-stroke-icon-active: 2.25;
   --brand-opacity-recessed: 35%;
   --brand-opacity-wash: 22%;
+  --brand-opacity-tint: 6%;
   --brand-ring-width: 3px;
 }
 
@@ -371,6 +372,7 @@
   --stroke-width-icon-active: var(--brand-stroke-icon-active);
   --opacity-recessed: var(--brand-opacity-recessed);
   --opacity-wash: var(--brand-opacity-wash);
+  --opacity-tint: var(--brand-opacity-tint);
   --text-title--font-weight: 700;
   --text-title--letter-spacing: -0.5px;
   --text-hero--font-weight: 700;
