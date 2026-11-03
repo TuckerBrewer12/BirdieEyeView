@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import { pluralize } from "@/domain/format";
+import { formatOneDecimal, pluralize } from "@/domain/format";
 import { ListRow, type RowTarget } from "./ListRow";
 
 interface CourseRowProps extends RowTarget {
@@ -28,7 +28,7 @@ function CourseRow({ name, location, rounds, average, className, ...target }: Co
       </div>
 
       <div className="shrink-0 text-right">
-        <p className="text-row font-bold text-foreground">{average == null ? "—" : average.toFixed(1)}</p>
+        <p className="text-row font-bold text-foreground">{formatOneDecimal(average)}</p>
         <p className="text-body-sm text-muted-foreground">avg</p>
       </div>
 
