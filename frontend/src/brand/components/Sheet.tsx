@@ -111,10 +111,17 @@ function SheetContent({
           {showCloseButton && side === "bottom" && (
             <SheetPrimitive.Close
               data-slot="sheet-close"
-              aria-label="Close"
-              className="absolute top-6 right-4 flex size-9 items-center justify-center rounded-full bg-muted text-secondary-foreground outline-none hover:bg-border focus-visible:ring-3 focus-visible:ring-ring/50"
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-lg"
+                  shape="pill"
+                  className="absolute top-6 right-4"
+                />
+              }
             >
-              <X aria-hidden className="size-3" />
+              <X />
+              <span className="sr-only">Close</span>
             </SheetPrimitive.Close>
           )}
         </SheetSideContext.Provider>
