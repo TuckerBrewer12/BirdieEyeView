@@ -45,7 +45,8 @@ export interface LabPageViewModel {
   goalSaveError: Error | null;
 
   scoringAverage: number | null;
-  bestScore: number | null;
+  /** The lowest full round in the window, as the goal report or analytics records it. */
+  lowestScore: number | null;
   /** Last five rounds against the window's average; negative is lower. */
   recentTrend: number | null;
 
@@ -167,7 +168,7 @@ export function useLabPageViewModel(
     goalSaveError: updateUser.error,
 
     scoringAverage: analytics?.kpis.scoring_average ?? null,
-    bestScore: report?.best_score ?? analytics?.lowestScore ?? null,
+    lowestScore: report?.lowest_score ?? analytics?.lowestScore ?? null,
     recentTrend: analytics?.kpis.scoring_average_change ?? null,
 
     radarMode: mode,

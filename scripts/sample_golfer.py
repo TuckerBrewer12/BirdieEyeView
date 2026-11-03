@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi.encoders import jsonable_encoder  # noqa: E402
 
+from analytics.stats import best_round  # noqa: E402
 from api.analytics_responses import analytics_response  # noqa: E402
 from api.player_handicap import player_handicap_index  # noqa: E402
 from api.round_responses import round_detail  # noqa: E402
@@ -191,7 +192,7 @@ async def _responses() -> tuple[dict, dict]:
     # Analytics' course filter, for the course played least, so the figures plainly change.
     links_analytics = await stats.get_analytics(user_id, 50, HALF_MOON_BAY.id, None, db, USER)
 
-    best = min(rounds, key=lambda r: r.calculate_total_score())
+    best = best_round(sorted(rounds, key=lambda r: r.date, reverse=True))
     profile = users.user_response(USER.model_copy(update={"handicap": dashboard.handicap_index}))
     seed = jsonable_encoder({
         "user": {"user_id": USER.id, "name": USER.name, "email": USER.email, "email_verified": True},
