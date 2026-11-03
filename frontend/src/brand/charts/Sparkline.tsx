@@ -35,11 +35,13 @@ interface SparklineProps {
   fill?: boolean;
   /** A dashed line at this value: the average the server worked out for the line. None without it. */
   reference?: number | null;
+  /** Stretch the drawing to whatever height the caller gives it (`h-6 w-24`), rather than keep its own proportions. */
+  stretch?: boolean;
   className?: string;
 }
 
 /** Which way a figure has been heading: a small line with no axes, nothing marked on it. */
-export function Sparkline({ series, domain, fill = false, reference = null, className }: SparklineProps) {
+export function Sparkline({ series, domain, fill = false, reference = null, stretch = false, className }: SparklineProps) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
   const { width: W, height: H, pad, stroke } = tokens.chart.sparkline;
 
@@ -73,7 +75,12 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
 
   return (
     <div data-slot="sparkline" className={cn("flex flex-col gap-1.5", className)}>
-      <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full overflow-visible" aria-hidden>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio={stretch ? "none" : undefined}
+        className={cn("block w-full overflow-visible", stretch ? "min-h-0 flex-1" : "h-auto")}
+        aria-hidden
+      >
         {fill && (
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">

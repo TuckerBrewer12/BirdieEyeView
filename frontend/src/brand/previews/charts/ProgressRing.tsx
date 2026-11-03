@@ -14,7 +14,7 @@ export default function ProgressRingPreview() {
             <div className="text-body text-foreground-secondary">On track</div>
           </div>
           <div className="flex items-center gap-2.5">
-            <Sparkline className="w-24 shrink-0" series={[{ values: [19, 16, 17, 12, 13, 9, 6], tone: "birdie" }]} />
+            <Sparkline stretch className="h-6 w-24 shrink-0" series={[{ values: [19, 16, 17, 12, 13, 9, 6], tone: "birdie" }]} />
             <span className="text-label font-semibold text-muted-foreground">Sparkline · trend only, no axes</span>
           </div>
         </div>
