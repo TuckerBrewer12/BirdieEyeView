@@ -44,7 +44,6 @@
   --chart-accent: #4ade80;
   --sidebar: #1e3d25;
   --sidebar-foreground: #ffffff;
-  --sidebar-mark: #1f6e3c;
   --score-eagle-base: #a16207;
   --score-eagle-muted: #fef3c7;
   --score-eagle-on-base: #ffffff;
@@ -115,11 +114,11 @@
   --brand-text-label: 11px;
   --brand-text-body-sm: 12px;
   --brand-text-body: 13px;
+  --brand-text-body-lg: 15px;
   --brand-text-title: 26px;
   --brand-text-hero: 44px;
   --brand-text-eyebrow: 10px;
   --brand-text-kicker: 9px;
-  --brand-text-brand: 15px;
   --brand-text-section: 11px;
   --brand-leading-display: 1.1;
   --brand-tracking-name: -0.3px;
@@ -243,7 +242,6 @@
   --color-chart-accent: var(--chart-accent);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-mark: var(--sidebar-mark);
   --color-score-eagle-base: var(--score-eagle-base);
   --color-score-eagle-muted: var(--score-eagle-muted);
   --color-score-eagle-on-base: var(--score-eagle-on-base);
@@ -318,11 +316,11 @@
   --text-label: var(--brand-text-label);
   --text-body-sm: var(--brand-text-body-sm);
   --text-body: var(--brand-text-body);
+  --text-body-lg: var(--brand-text-body-lg);
   --text-title: var(--brand-text-title);
   --text-hero: var(--brand-text-hero);
   --text-eyebrow: var(--brand-text-eyebrow);
   --text-kicker: var(--brand-text-kicker);
-  --text-brand: var(--brand-text-brand);
   --text-section: var(--brand-text-section);
   --leading-display: var(--brand-leading-display);
   --tracking-name: var(--brand-tracking-name);
@@ -382,8 +380,6 @@
   --text-eyebrow--letter-spacing: 1.4px;
   --text-kicker--font-weight: 700;
   --text-kicker--letter-spacing: 1px;
-  --text-brand--font-weight: 700;
-  --text-brand--letter-spacing: -0.3px;
   --text-section--font-weight: 700;
   --text-section--letter-spacing: 0.18em;
   --blur-xs: 4px;

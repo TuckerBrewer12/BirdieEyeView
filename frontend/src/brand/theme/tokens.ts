@@ -204,8 +204,6 @@ const light = {
   sidebar: {
     DEFAULT: forest[800],
     foreground: white,
-    /** The brand mark on its white tile: the brand green, which stays put in dark. */
-    mark: fairway[700],
   },
 
   // Score colours encode data, so they do not flip with the mode. `base` is
@@ -378,6 +376,8 @@ export const type = {
   /** Small body copy, tooltips, small buttons. */
   "body-sm": { size: 12 },
   body: { size: 13 },
+  /** Large body copy: a list row's name, the app's name on the side rail. */
+  "body-lg": { size: 15 },
   /** A page's title. */
   title: { size: 26, weight: 700, tracking: tracking.title },
   /** The one big figure on a card: a round's score. */
@@ -386,8 +386,6 @@ export const type = {
   eyebrow: { size: 10, weight: 700, tracking: tracking.eyebrow },
   /** The smaller tracked capitals on a chip or a header strip. */
   kicker: { size: 9, weight: 700, tracking: tracking.kicker },
-  /** The app name beside its mark, at the head of the side rail. */
-  brand: { size: 15, weight: 700, tracking: tracking.name },
   /** The label above a page section (`SectionLabel`). */
   section: { size: 11, weight: 700, tracking: tracking.section },
 } satisfies Record<string, TypeRole>;

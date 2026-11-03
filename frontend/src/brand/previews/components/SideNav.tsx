@@ -14,11 +14,12 @@ const items = [
 /** Compose-style @Preview for SideNav. AppShell sets the rail's size in the app. */
 export default function SideNavPreview() {
   return (
-    <div className="h-180 w-60">
+    <div className="h-160 w-60">
       <SideNav
         items={items}
         secondaryItems={[{ href: "/settings", label: "Settings", icon: Settings }]}
         user={{ name: "Test Golfer", initials: "TG" }}
+        onSignOut={() => {}}
       />
     </div>
   );

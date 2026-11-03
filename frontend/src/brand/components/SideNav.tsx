@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { FlagTriangleRight, LogOut } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { NavLink, type NavItem, type RenderLink } from "@/brand/nav";
 import { Button } from "./Button";
@@ -25,11 +25,15 @@ interface SideNavProps {
   className?: string;
 }
 
-const linkClass =
-  "flex h-10 items-center gap-3 rounded-card px-3 text-sm font-medium text-sidebar-foreground/72 transition-colors duration-150 hover:bg-sidebar-foreground/8 hover:text-sidebar-foreground data-active:bg-sidebar-foreground/12 data-active:font-semibold data-active:text-sidebar-foreground [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:stroke-1.5";
+const linkStates =
+  "text-sidebar-foreground/72 transition-colors duration-150 hover:bg-sidebar-foreground/8 hover:text-sidebar-foreground data-active:bg-sidebar-foreground/12 data-active:text-sidebar-foreground [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:stroke-icon";
 
-const iconLinkClass =
-  "flex size-9 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/72 transition-colors duration-150 hover:bg-sidebar-foreground/8 hover:text-sidebar-foreground data-active:bg-sidebar-foreground/12 data-active:text-sidebar-foreground [&_svg]:size-4.5 [&_svg]:stroke-1.5";
+const linkClass = cn(
+  "flex h-10 items-center gap-3 rounded-card px-3 text-sm font-medium data-active:font-semibold",
+  linkStates,
+);
+
+const iconLinkClass = cn("flex size-9 shrink-0 items-center justify-center rounded-lg", linkStates);
 
 /**
  * The app's left rail: the brand at the top, the places to go, and the
@@ -57,18 +61,10 @@ function SideNav({
       )}
     >
       <div className="flex items-center gap-2.5 px-2 pb-4.5">
-        <span className="flex size-7.5 shrink-0 items-center justify-center rounded-lg bg-sidebar-foreground text-sidebar-mark">
-          <svg aria-hidden viewBox="0 0 16 16" className="size-4 fill-none">
-            <path
-              d="M4 14.5V2 L12.5 4.8 L4 7.6"
-              stroke="currentColor"
-              strokeWidth={1.8}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+        <span className="flex size-7.5 shrink-0 items-center justify-center rounded-lg bg-sidebar-foreground text-sidebar">
+          <FlagTriangleRight aria-hidden className="size-4" />
         </span>
-        <span className="min-w-0 flex-1 truncate text-brand">BirdieEyeView</span>
+        <span className="min-w-0 flex-1 truncate text-body-lg font-bold tracking-name">BirdieEyeView</span>
       </div>
 
       <div className="flex flex-1 flex-col gap-1">
@@ -82,7 +78,7 @@ function SideNav({
 
       <div className="mx-1 my-2 h-px bg-sidebar-foreground/10" />
 
-      <div data-slot="side-nav-user" className="group flex items-center gap-2.5 pt-1.5 pr-1 pl-2">
+      <div className="group flex items-center gap-2.5 pt-1.5 pr-1 pl-2">
         <span
           aria-hidden
           className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-foreground/14 text-xs font-bold"
