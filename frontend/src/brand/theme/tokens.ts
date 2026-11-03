@@ -379,6 +379,10 @@ export const type = {
   body: { size: 13 },
   /** A page's title. */
   title: { size: 26, weight: 700, tracking: tracking.title },
+  /** The day of the month on a round row's date rail. */
+  date: { size: 22, weight: 700, leading: 1.1 },
+  /** A round row's score: the figure beside the course, a step under the hero. */
+  figure: { size: 28, weight: 700, tracking: -0.6, leading: 1 },
   /** The one big figure on a card: a round's score. */
   hero: { size: 44, weight: 700, tracking: tracking.hero, leading: 1 },
   /** The tracked capitals above a figure or a group of rows. */
@@ -416,6 +420,8 @@ export const radius = {
   bar: 1.5,
   tick: 2,
   card: 10,
+  /** A round's row in a list. */
+  row: 14,
   tooltip: 12,
   addon: "calc(var(--radius) - var(--brand-space-nudge))",
   control: "calc(var(--radius) - var(--brand-space-nudge-sm))",
@@ -423,7 +429,6 @@ export const radius = {
 
 /** Widths and heights that are not on the 4px scale. */
 export const size = {
-  "date-rail": 54,
   preview: 390,
   chart: 180,
   "chart-compact": 210,
@@ -480,9 +485,8 @@ export const shadow = {
   lg: "0 10px 15px -3px var(--shadow), 0 4px 6px -4px var(--shadow)",
 };
 
-/** Named grid column templates: `grid-cols-round-preview`. */
+/** Named grid column templates: `grid-cols-handicap-breakdown`. */
 export const gridColumns = {
-  "round-preview": "var(--brand-size-date-rail) 1fr auto",
   "handicap-breakdown": "1fr auto auto auto",
   "recent-rounds": "1fr auto auto",
 };

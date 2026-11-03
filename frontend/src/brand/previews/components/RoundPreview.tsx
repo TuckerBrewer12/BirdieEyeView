@@ -9,22 +9,41 @@ const [overPar, evenPar, best, unlinked] = populatedRounds.map(Round.fromSummary
 export default function RoundPreviewPreview() {
   return (
     <>
-      <RoundPreview round={best} variant="highlight" onClick={() => {}} />
-      <RoundPreview round={evenPar} variant="highlight" onClick={() => {}} />
-      <RoundPreview round={overPar} variant="highlight" onClick={() => {}} />
-      <RoundPreview round={null} variant="highlight" />
-      <RoundPreview round={overPar} variant="ticket" label="Last Round" actionLabel="Open card" onClick={() => {}} />
-      <RoundPreview round={best} variant="ticket" label="Best This Year" />
-      <RoundPreview round={overPar} />
-      <RoundPreview round={evenPar} />
-      <RoundPreview round={unlinked} onLinkClick={() => {}} />
-      <Collection
-        layout="divided"
-        className="overflow-hidden rounded-xl border border-border bg-card"
-        items={[overPar, evenPar, unlinked]}
-        keyFor={(round) => round.id}
-        renderItem={(round) => <RoundPreview variant="history" round={round} />}
-      />
+      <div className="flex flex-col gap-2.5">
+        <RoundPreview round={overPar} onClick={() => {}} />
+        <RoundPreview round={evenPar} onClick={() => {}} />
+        <RoundPreview round={unlinked} onClick={() => {}} />
+      </div>
+
+      <div className="flex flex-col gap-2.5">
+        <div className="text-label text-muted-foreground">Unlinked, tap to link</div>
+        <RoundPreview round={unlinked} onLinkClick={() => {}} />
+      </div>
+
+      <div className="flex flex-col gap-2.5">
+        <div className="text-label text-muted-foreground">Highlight</div>
+        <RoundPreview round={best} variant="highlight" onClick={() => {}} />
+        <RoundPreview round={evenPar} variant="highlight" onClick={() => {}} />
+        <RoundPreview round={overPar} variant="highlight" onClick={() => {}} />
+        <RoundPreview round={null} variant="highlight" />
+      </div>
+
+      <div className="flex flex-col gap-2.5">
+        <div className="text-label text-muted-foreground">Ticket</div>
+        <RoundPreview round={overPar} variant="ticket" label="Last Round" actionLabel="Open card" onClick={() => {}} />
+        <RoundPreview round={best} variant="ticket" label="Best This Year" />
+      </div>
+
+      <div className="flex flex-col gap-2.5">
+        <div className="text-label text-muted-foreground">History</div>
+        <Collection
+          layout="divided"
+          className="overflow-hidden rounded-xl border border-border bg-card"
+          items={[overPar, evenPar, unlinked]}
+          keyFor={(round) => round.id}
+          renderItem={(round) => <RoundPreview variant="history" round={round} />}
+        />
+      </div>
     </>
   );
 }
