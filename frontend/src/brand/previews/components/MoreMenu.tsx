@@ -6,7 +6,7 @@ const user = { name: "Test Golfer", initials: "TG", detail: "Handicap 12.4" };
 const items = [
   { href: "/courses", label: "Courses", icon: MapPin },
   { href: "/career", label: "Career", icon: Trophy },
-  { href: "/friends", label: "Friends", icon: Users, badge: 2 },
+  { href: "/friends", label: "Friends", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

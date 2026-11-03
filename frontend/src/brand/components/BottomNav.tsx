@@ -3,7 +3,8 @@ import { Menu } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { NavLink, type NavItem, type RenderLink } from "@/brand/nav";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./Collapsible";
-import { MoreMenu, type MoreMenuUser } from "./MoreMenu";
+import { MoreMenu } from "./MoreMenu";
+import type { SideNavUser } from "./SideNav";
 
 interface BottomNavProps {
   /** The tabs along the bar. Four fit a phone. */
@@ -12,7 +13,7 @@ interface BottomNavProps {
   moreItems?: NavItem[];
   moreLabel?: string;
   /** The golfer, shown at the top of the menu. */
-  user?: MoreMenuUser;
+  user?: SideNavUser;
   /** Adds a sign-out row to the menu. */
   onSignOut?: () => void;
   signingOut?: boolean;
@@ -102,7 +103,6 @@ function BottomNav({
               signingOut={signingOut}
               renderLink={renderLink}
               onNavigate={close}
-              label={moreLabel}
             />
           </div>
         </CollapsibleContent>

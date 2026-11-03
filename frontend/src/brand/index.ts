@@ -32,7 +32,7 @@ export { Button } from "./components/Button";
 export { BottomNav } from "./components/BottomNav";
 export type { BottomNavProps } from "./components/BottomNav";
 export { MoreMenu } from "./components/MoreMenu";
-export type { MoreMenuProps, MoreMenuUser } from "./components/MoreMenu";
+export type { MoreMenuProps } from "./components/MoreMenu";
 export { Dropzone } from "./components/Dropzone";
 export { FileChip } from "./components/FileChip";
 export { Collapse } from "./components/Collapse";
