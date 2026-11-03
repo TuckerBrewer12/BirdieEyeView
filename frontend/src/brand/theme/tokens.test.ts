@@ -33,9 +33,9 @@ const TOKENS_CSS = join(themeDir, "tokens.css");
 const COLOR_ALLOWED = new Set([join(themeDir, "colors.ts"), TOKENS_CSS]);
 const UNIT_ALLOWED = new Set([TOKENS_CSS]);
 
-/** Hex literals, rgb()/hsl()/oklch(), and raw Tailwind palette utilities. */
+/** Hex literals, rgb()/hsl()/oklch()/color-mix(), and raw Tailwind palette utilities. */
 const COLOR_LITERAL =
-  /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch)\(|\b(?:bg|text|border|ring|fill|stroke|from|via|to|divide|shadow|outline|placeholder|accent|decoration)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/g;
+  /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch|color-mix)\(|\b(?:bg|text|border|ring|fill|stroke|from|via|to|divide|shadow|outline|placeholder|accent|decoration)-(?:white|black)\b|\b(?:bg|text|border|ring|fill|stroke|from|via|to|divide|shadow|outline|placeholder|accent|decoration)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/g;
 
 /** Raw lengths. Tailwind scale classes (p-4, text-sm) do not match. */
 const UNIT_LITERAL = /[-+]?\d+(?:\.\d+)?(?:px|rem|em)\b/g;
@@ -77,6 +77,31 @@ describe("brand tokens", () => {
       });
 
     expect(offenders).toEqual([]);
+  });
+
+  it("matches the native shell's colours to the tokens they copy", () => {
+    // Capacitor's config is read by the native build, which cannot see CSS,
+    // so it holds the splash and status bar colours a second time.
+    const lightBlock = read(TOKENS_CSS).match(/^:root \{([\s\S]*?)^\}/m)?.[1] ?? "";
+    const token = (name: string) =>
+      lightBlock.match(new RegExp(`^\\s*${name}:\\s*(#[0-9a-fA-F]{3,8});`, "m"))?.[1].toLowerCase();
+    const capacitor = read(join(process.cwd(), "capacitor.config.ts"));
+    const colourIn = (block: string) =>
+      capacitor
+        .match(new RegExp(`${block}:\\s*\\{[^}]*?backgroundColor:\\s*'(#[0-9a-fA-F]{3,8})'`))?.[1]
+        .toLowerCase();
+
+    expect({
+      splash: colourIn("SplashScreen"),
+      statusBar: colourIn("StatusBar"),
+      android: colourIn("android"),
+    }).toEqual({
+      splash: token("--primary"),
+      statusBar: token("--background"),
+      android: token("--background"),
+    });
+    expect(token("--primary")).toBeDefined();
+    expect(token("--background")).toBeDefined();
   });
 
   it("matches every breakpoint to the one tokens.css pins", () => {
