@@ -456,9 +456,9 @@ export const lineWidth = {
   outline: 1.5,
 };
 
-/** Border widths that are not Tailwind's own steps: `border-callout`, the edge of a solid or outline `Alert`. */
+/** Border widths that are not Tailwind's own steps: `border-callout`, the edge of an `Alert`. */
 export const borderWidth = {
-  callout: 1.5,
+  callout: lineWidth.outline,
 };
 
 /** Icon line weight in the tab bar, unitless: lighter at rest, heavier on the current tab. */

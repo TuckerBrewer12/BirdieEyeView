@@ -2,6 +2,7 @@ import * as React from "react";
 import { type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { cn } from "@/brand/cn";
+import { Button } from "./Button";
 import { alertVariants } from "./variants";
 
 /**
@@ -77,20 +78,21 @@ function AlertAction({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 /** The close button for an alert that can be put away; the caller decides what dismissing does. */
-function AlertDismiss({ className, ...props }: React.ComponentProps<"button">) {
+function AlertDismiss({ className, ...props }: React.ComponentProps<typeof Button>) {
   return (
-    <button
-      type="button"
+    <Button
       data-slot="alert-dismiss"
+      variant="ghost"
+      size="icon-sm"
       aria-label="Dismiss"
       className={cn(
-        "absolute top-2 right-2 inline-flex size-7 items-center justify-center rounded-md text-current outline-none hover:bg-current/10 focus-visible:ring-3 focus-visible:ring-ring/50",
+        "absolute top-2 right-2 text-current hover:bg-current/10 hover:text-current dark:hover:bg-current/10",
         className,
       )}
       {...props}
     >
-      <X className="size-3.5" strokeWidth={2.5} />
-    </button>
+      <X className="size-3.5 stroke-icon-active" />
+    </Button>
   );
 }
 
