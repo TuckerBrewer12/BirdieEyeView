@@ -24,49 +24,84 @@
 
 /**
  * The raw colours. Hues take Tailwind's step numbers where the colour is
- * Tailwind's; `sage`, `forest` and `charcoal` are the brand's own neutrals,
- * greens and dark-mode greys.
+ * Tailwind's. The brand's own: `sage` the neutrals of the light page,
+ * `charcoal` those of the dark one, `fairway` the brand greens, `forest` the
+ * side rail's deeper greens, `denim` the blue that sits beside them.
  */
 export const palette = {
   white: "#ffffff",
   black: "#000000",
-  sage: { 50: "#f8faf8", 100: "#f4f6f0", 200: "#e4e9e1", 500: "#6b7765", 950: "#1f2421" },
-  forest: {
-    50: "#e8f5e9",
-    700: "#2d7a3a",
-    750: "#2d4c3b",
-    800: "#1e3d25",
-    850: "#1a3a1f",
-    900: "#152d1b",
-    950: "#1a2e1a",
+  sage: {
+    50: "#f5f6f3",
+    100: "#eef0ec",
+    150: "#eceee9",
+    200: "#e2e5df",
+    300: "#c9cec5",
+    400: "#9aa39d",
+    500: "#69756d",
+    600: "#4b5750",
+    900: "#15201a",
   },
-  charcoal: { 50: "#e6edf3", 300: "#9aa4b2", 700: "#2a2d30", 800: "#222426", 900: "#18191a", 950: "#111213" },
-  gray: { 100: "#f3f4f6", 200: "#e5e7eb", 400: "#9ca3af", 500: "#6b7280", 700: "#374151" },
+  charcoal: {
+    50: "#e9eeea",
+    200: "#b3bdb6",
+    400: "#8e9992",
+    700: "#3b443e",
+    800: "#2a312c",
+    850: "#1e2420",
+    900: "#161b18",
+    950: "#0e1210",
+  },
+  fairway: {
+    50: "#eaf3ec",
+    300: "#74c98e",
+    400: "#5dbb7b",
+    700: "#1f6e3c",
+    800: "#175a30",
+    900: "#17291d",
+    950: "#08130c",
+  },
+  forest: { 700: "#2d7a3a", 750: "#2d4c3b", 800: "#1e3d25", 900: "#152d1b" },
+  denim: { 500: "#3d6fb6", 700: "#2457a6" },
+  gray: { 100: "#f3f4f6", 200: "#e5e7eb", 600: "#4b5563", 700: "#374151" },
   slate: { 600: "#475569", 900: "#0f172a" },
-  red: { 100: "#fee2e2", 400: "#f87171", 600: "#dc2626", 800: "#991b1b" },
+  red: { 100: "#fee2e2", 400: "#f87171", 600: "#dc2626", 700: "#b91c1c", 800: "#991b1b" },
   orange: { 500: "#f97316" },
-  amber: { 100: "#fef3c7", 500: "#f59e0b", 800: "#92400e" },
-  yellow: { 400: "#facc15" },
+  amber: { 100: "#fef3c7", 400: "#fbbf24", 800: "#92400e" },
+  yellow: { 400: "#facc15", 700: "#a16207" },
   gold: { 600: "#c9a227" },
   brown: { 600: "#8b5a2b" },
   green: { 400: "#4ade80" },
-  emerald: { 100: "#d1fae5", 400: "#34d399", 600: "#059669", 800: "#065f46" },
+  emerald: { 100: "#d1fae5", 400: "#34d399", 700: "#047857", 800: "#065f46" },
   sky: { 700: "#0369a1" },
   blue: { 100: "#dbeafe", 400: "#60a5fa", 600: "#2563eb", 800: "#1e40af" },
-  violet: {
-    100: "#ede9fe",
-    200: "#ddd6fe",
-    400: "#a78bfa",
-    600: "#7c3aed",
-    700: "#6d28d9",
-    800: "#5b21b6",
-    900: "#4c1d95",
-  },
+  violet: { 100: "#ede9fe", 200: "#ddd6fe", 600: "#7c3aed", 800: "#5b21b6", 900: "#4c1d95" },
   silver: { 300: "#c0c6cc" },
 } as const;
 
-const { white, black, sage, forest, charcoal, gray, slate, red, orange, amber, yellow, gold, brown, green, emerald, sky, blue, violet, silver } =
-  palette;
+const {
+  white,
+  black,
+  sage,
+  charcoal,
+  fairway,
+  forest,
+  denim,
+  gray,
+  slate,
+  red,
+  orange,
+  amber,
+  yellow,
+  gold,
+  brown,
+  green,
+  emerald,
+  sky,
+  blue,
+  violet,
+  silver,
+} = palette;
 
 /** Another semantic colour, by its CSS name: this key follows it in both modes. */
 export interface Alias {
@@ -96,43 +131,71 @@ const alias = (name: string): Alias => ({ alias: name });
 const mix = (base: string, over: string, percent: number): Mix => ({ mix: [base, over, percent] });
 const alpha = (color: string, opacity: number): Alpha => ({ alpha: [color, opacity] });
 
-/** A score kind's colours. `text`, the ink on the page, is the fill colour itself. */
-const score = (kind: string, base: string, muted: string, onMuted: string) => ({
+/**
+ * A score kind's colours. `text`, the ink on the page, is the fill colour
+ * itself, unless the fill is too pale to read as ink (par).
+ */
+const score = (
+  kind: string,
+  base: string,
+  muted: string,
+  onMuted: string,
+  { onBase = white, text = alias(`score-${kind}-base`) }: { onBase?: string; text?: ColorValue } = {},
+) => ({ base, muted, onBase, onMuted, text });
+
+/** A status's colours: `base` the solid fill, `onBase` the ink on it, `text` its ink (and outline) on a card. */
+const status = (kind: string, base: string, text: ColorValue = alias(`status-${kind}-base`)) => ({
   base,
-  muted,
   onBase: white,
-  onMuted,
-  text: alias(`score-${kind}-base`),
+  text,
 });
 
 const light = {
   background: sage[50],
-  foreground: forest[950],
+  foreground: sage[900],
+  // Labels and body copy one step back from the page's ink.
+  foregroundSecondary: sage[600],
   card: white,
   // Ink on a card, an accent wash or the secondary fill is the page's ink.
   cardForeground: alias("foreground"),
   muted: sage[100],
   mutedForeground: sage[500],
   border: sage[200],
-  // A field's outline is the ordinary border.
-  input: alias("border"),
-  ring: forest[700],
-  primary: forest[700],
+  // The outline of something you act on: a field, a secondary button.
+  borderStrong: sage[300],
+  input: alias("border-strong"),
+  ring: alias("primary"),
+  primary: fairway[700],
+  primaryHover: fairway[800],
   primaryForeground: white,
-  secondary: sage[100],
+  secondary: alias("muted"),
   secondaryForeground: alias("foreground"),
   // The secondary fill under the pointer: a touch of ink mixed in.
   secondaryHover: mix("secondary", "foreground", 5),
-  accent: forest[50],
+  accent: fairway[50],
   accentForeground: alias("foreground"),
-  destructive: red[600],
+  destructive: red[700],
+  destructiveHover: red[800],
   // Ambient shadow for lifted surfaces; alpha so it reads on any backdrop.
   shadow: alpha(slate[900], 0.1),
 
+  // Alerts and badges. Solid: `bg-status-info-base text-status-info-on-base`;
+  // outline: `border-status-info text-status-info` on a card.
+  status: {
+    info: status("info", denim[700]),
+    success: status("success", emerald[700]),
+    warning: status("warning", yellow[700]),
+    danger: status("danger", red[700]),
+  },
+
   // Chart chrome. Data colours are the score colours; these are the furniture
-  // around them. On a light page the axis is the par grey.
+  // around them, plus two series for charts that compare lines.
   chart: {
-    axis: alias("score-par-base"),
+    series1: alias("primary"),
+    series2: denim[500],
+    grid: sage[150],
+    reference: sage[400],
+    axis: alias("chart-reference"),
     muted: gray[200],
     accent: green[400],
   },
@@ -146,14 +209,15 @@ const light = {
 
   // Score colours encode data, so they do not flip with the mode. `base` is
   // the saturated fill, `muted` the wash behind a score, `on*` the ink on each.
+  // White on every fill but par passes 4.5:1, and the scale darkens past bogey.
   score: {
-    eagle: score("eagle", amber[500], amber[100], amber[800]),
-    birdie: score("birdie", emerald[600], emerald[100], emerald[800]),
-    par: score("par", gray[400], gray[100], gray[700]),
-    bogey: score("bogey", red[400], red[100], red[800]),
-    double: score("double", blue[400], blue[100], blue[800]),
-    triple: score("triple", violet[400], violet[100], violet[800]),
-    quad: score("quad", violet[700], violet[200], violet[900]),
+    eagle: score("eagle", yellow[700], amber[100], amber[800]),
+    birdie: score("birdie", emerald[700], emerald[100], emerald[800]),
+    par: score("par", gray[200], gray[100], gray[700], { onBase: gray[600], text: gray[600] }),
+    bogey: score("bogey", red[600], red[100], red[800]),
+    double: score("double", blue[600], blue[100], blue[800]),
+    triple: score("triple", violet[600], violet[100], violet[800]),
+    quad: score("quad", violet[900], violet[200], violet[900]),
   },
 
   // Scorecard rows. The layout picker's chips and the landing hero's demo of
@@ -169,14 +233,14 @@ const light = {
   // Tee boxes. A tee's colour names a real marker on the course, so these do
   // not flip with the mode. `on` is the ink that reads on the swatch.
   tee: {
-    black: { DEFAULT: sage[950], on: white },
-    white: { DEFAULT: white, on: forest[950] },
+    black: { DEFAULT: sage[900], on: white },
+    white: { DEFAULT: white, on: sage[900] },
     blue: { DEFAULT: blue[600], on: white },
-    gold: { DEFAULT: gold[600], on: forest[950] },
-    yellow: { DEFAULT: yellow[400], on: forest[950] },
+    gold: { DEFAULT: gold[600], on: sage[900] },
+    yellow: { DEFAULT: yellow[400], on: sage[900] },
     red: { DEFAULT: red[600], on: white },
     green: { DEFAULT: forest[700], on: white },
-    silver: { DEFAULT: silver[300], on: forest[950] },
+    silver: { DEFAULT: silver[300], on: sage[900] },
     orange: { DEFAULT: orange[500], on: white },
     purple: { DEFAULT: violet[600], on: white },
     brown: { DEFAULT: brown[600], on: white },
@@ -200,25 +264,36 @@ export function isColorValue(value: ColorValue | ColorTree): value is ColorValue
 }
 
 /**
- * The semantic colours in each mode. Dark changes the surfaces and ink, and
- * keeps the brand green, the sidebar and the data colours.
+ * The semantic colours in each mode. Dark changes the surfaces, the ink and
+ * the brand green, and keeps the sidebar and the data colours.
  */
 export const modes = {
   light,
   dark: override(light, {
     background: charcoal[950],
     foreground: charcoal[50],
+    foregroundSecondary: charcoal[200],
     card: charcoal[900],
-    muted: charcoal[800],
-    mutedForeground: charcoal[300],
-    border: charcoal[700],
-    ring: emerald[400],
-    secondary: charcoal[800],
-    accent: forest[850],
-    destructive: red[400],
+    muted: charcoal[850],
+    mutedForeground: charcoal[400],
+    border: charcoal[800],
+    borderStrong: charcoal[700],
+    primary: fairway[400],
+    primaryHover: fairway[300],
+    primaryForeground: fairway[950],
+    accent: fairway[900],
+    destructive: red[600],
+    destructiveHover: red[700],
     // Black reads as nothing on a dark page, so lift with a stronger halo.
     shadow: alpha(black, 0.55),
-    chart: { axis: gray[500], muted: charcoal[700] },
+    // The fills stay; the ink on a dark card is a lighter step of each.
+    status: {
+      info: { text: blue[400] },
+      success: { text: emerald[400] },
+      warning: { text: amber[400] },
+      danger: { text: red[400] },
+    },
+    chart: { series2: blue[400], grid: charcoal[850], reference: charcoal[400], muted: charcoal[700] },
   }),
 };
 

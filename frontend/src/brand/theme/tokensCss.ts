@@ -86,11 +86,11 @@ const SECTIONS: Section[] = [
   { group: opacity, prefix: "opacity", theme: "opacity", format: unitless },
 ];
 
-/** The Tailwind colour a token gives: `score-birdie-text` is `text-score-birdie`. */
+/** The Tailwind colour a token gives: `score-birdie-text` is `text-score-birdie`, `status-info-text` is `text-status-info`. */
 function colorUtility(name: string): string | null {
   // --shadow feeds the shadow-* values below; as a colour it would claim `text-shadow`.
   if (name === "shadow") return null;
-  return name.replace(/^(score-\w+)-text$/, "$1");
+  return name.replace(/^((?:score|status)-\w+)-text$/, "$1");
 }
 
 const block = (selector: string, lines: string[]) => `${selector} {\n${lines.map((l) => `  ${l}`).join("\n")}\n}`;
