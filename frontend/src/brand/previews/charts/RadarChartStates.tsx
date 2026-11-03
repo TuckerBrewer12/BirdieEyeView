@@ -1,5 +1,5 @@
 import { RadarChart } from "@/brand/charts/RadarChart";
-import { compared } from "./RadarChart";
+import { compared } from "./radarSample";
 
 const label = "text-label text-muted-foreground";
 
