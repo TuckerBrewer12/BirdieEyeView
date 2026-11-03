@@ -116,7 +116,7 @@ async def test_analytics_sections_drop_nothing_the_stats_functions_return(season
     assert sent["scoring_by_yardage"] == analytics.scoring_by_yardage_buckets(rounds)
     assert sent["scoring_by_handicap"] == analytics.scoring_vs_hole_handicap(rounds)
     assert sent["gir_vs_non_gir"] == analytics.gir_vs_non_gir_score_distribution(rounds)
-    assert sent["handicap_trend"] == hcap.windowed_handicap_trend(rounds, len(rounds))
+    assert sent["handicap_trend"] == hcap.player_handicap_trend(user, rounds)
     assert sent["score_differentials"] == hcap.score_differentials_per_round(rounds)
     assert sent["notable_achievements"] == analytics.notable_achievements(
         rounds, home_course_id=user.home_course_id

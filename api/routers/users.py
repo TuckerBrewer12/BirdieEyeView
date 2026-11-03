@@ -9,8 +9,7 @@ from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, NotFoundError
 from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
-from api.player_handicap import player_handicap_index
-from api.schemas import HandicapIndexResponse, UserResponse
+from api.schemas import UserResponse
 from models import User, UserTee
 
 router = APIRouter()
@@ -212,21 +211,6 @@ async def update_user(
     if not user:
         raise HTTPException(404, "User not found")
     return user_response(user)
-
-
-@router.get("/{user_id}/handicap", response_model=HandicapIndexResponse)
-async def get_user_handicap(
-    user_id: UUID,
-    db: DatabaseManager = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Return the user's current WHS Handicap Index."""
-    if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
-    user = await db.users.get_user(str(user_id))
-    if not user:
-        raise HTTPException(404, "User not found")
-    return HandicapIndexResponse(handicap_index=await player_handicap_index(db, user))
 
 
 # ================================================================

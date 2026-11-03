@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/brand/cn";
-import { scoreFillClass, toParDisplay } from "@/brand";
+import { scoreFillClass, toParDisplay, toParTextClass } from "@/brand";
 import { HANDICAP_TAP, TOUR_SCREENS, WIDE_FRAME_MEDIA, tourImage, type TourScreen } from "./demoTour";
 import { tokens } from "@/brand/theme";
 import { useScannerDemoViewModel, type DemoScorecardRow } from "./useScannerDemoViewModel";
@@ -88,7 +88,8 @@ function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
           {rows.map((row) => (
             <div
               key={row.hole}
-              className={`py-2 font-semibold ${row.overPar ? "text-score-bogey" : "text-muted-foreground"}`}
+              className={cn("py-2 font-semibold", toParTextClass(row.toPar))}
+
             >
               {toParDisplay(row.toPar)}
             </div>

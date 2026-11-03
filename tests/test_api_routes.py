@@ -349,7 +349,8 @@ def test_user_response_is_the_profile_only():
 
     schemas = app.openapi()["components"]["schemas"]
     assert set(schemas["UserResponse"]["required"]) == set(users.UserResponse.model_fields)
-    assert schemas["HandicapIndexResponse"]["required"] == ["handicap_index"]
+    # The golfer's index comes on the dashboard and analytics, not from an endpoint of its own.
+    assert "/api/users/{user_id}/handicap" not in app.openapi()["paths"]
     for path, method in [
         ("/api/users/{user_id}", "get"),
         ("/api/users/{user_id}", "patch"),
@@ -360,7 +361,7 @@ def test_user_response_is_the_profile_only():
 
 
 @pytest.mark.asyncio
-async def test_user_get_update_and_handicap(monkeypatch):
+async def test_user_get_and_update():
     user_id = uuid4()
     course_id = uuid4()
     user = _make_user(user_id, handicap=12.0)
@@ -369,8 +370,6 @@ async def test_user_get_update_and_handicap(monkeypatch):
     db.users.get_user = AsyncMock(return_value=user)
     db.users.update_user = AsyncMock(return_value=user)
     db.courses.get_course = AsyncMock(return_value=_make_course(course_id))
-    db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
-    monkeypatch.setattr(hcap, "handicap_index", lambda *args, **kwargs: 12.0)
 
     profile = users.user_response(user)
     assert await users.get_user_by_email("GOLFER@example.com", db, user) == profile
@@ -382,7 +381,6 @@ async def test_user_get_update_and_handicap(monkeypatch):
         "handicap_index": -2.0,
         "scoring_goal": 85,
     }
-    assert (await users.get_user_handicap(user_id, db, user)).handicap_index == 12.0
 
     with pytest.raises(HTTPException) as exc:
         await users.get_user(uuid4(), db, user)

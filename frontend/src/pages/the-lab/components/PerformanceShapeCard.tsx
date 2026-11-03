@@ -29,7 +29,7 @@ export interface PerformanceShapeCardProps {
   peak: PeakGame | null;
   goalLabel: string | null;
   scoringAverage: number | null;
-  bestScore: number | null;
+  lowestScore: number | null;
   recentTrend: number | null;
   comparison: ComparisonTargetValue;
   onComparisonChange: (target: ComparisonTargetValue) => void;
@@ -103,7 +103,7 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
                 <StatValue size="lg">{formatOneDecimal(props.scoringAverage)}</StatValue>
                 <span className="text-caption text-muted-foreground">
                   avg · L20 rounds
-                  {props.bestScore != null && ` · ${props.bestScore} best`}
+                  {props.lowestScore != null && ` · ${props.lowestScore} lowest`}
                 </span>
               </Stat>
               {props.recentTrend != null && (

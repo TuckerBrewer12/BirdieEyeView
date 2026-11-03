@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
-import { scoreKind, strokesToPar, type ScoreKind } from "@/domain";
+import type { ScoreKind } from "@/domain";
 import type { TourScreen } from "./demoTour";
 
 export type ScannerPhase =
@@ -52,27 +52,24 @@ export interface DemoScorecardRow {
   putts: number;
   greenInRegulation: boolean;
   toPar: number;
-  overPar: boolean;
   score: ScoreKind;
 }
 
-const SAMPLE = {
-  par: [4, 4, 3, 5, 4, 4, 3, 5, 3],
-  strokes: [5, 5, 3, 6, 5, 5, 4, 6, 4],
-  putts: [2, 1, 2, 2, 2, 3, 3, 2, 2],
-  gir: [false, false, true, false, false, true, true, false, false],
-};
-
-const SCORECARD: DemoScorecardRow[] = SAMPLE.par.map((par, i) => ({
-  hole: i + 1,
-  par,
-  strokes: SAMPLE.strokes[i],
-  putts: SAMPLE.putts[i],
-  greenInRegulation: SAMPLE.gir[i],
-  toPar: strokesToPar(SAMPLE.strokes[i], par) ?? 0,
-  overPar: SAMPLE.strokes[i] > par,
-  score: scoreKind(SAMPLE.strokes[i], par) ?? "par",
-}));
+/**
+ * The sample card, written out as the server would read it. It is a demo with no server
+ * behind it, so each hole's to par and score kind are fixed here rather than worked out.
+ */
+const SCORECARD: DemoScorecardRow[] = [
+  { hole: 1, par: 4, strokes: 5, putts: 2, greenInRegulation: false, toPar: 1, score: "bogey" },
+  { hole: 2, par: 4, strokes: 5, putts: 1, greenInRegulation: false, toPar: 1, score: "bogey" },
+  { hole: 3, par: 3, strokes: 3, putts: 2, greenInRegulation: true, toPar: 0, score: "par" },
+  { hole: 4, par: 5, strokes: 6, putts: 2, greenInRegulation: false, toPar: 1, score: "bogey" },
+  { hole: 5, par: 4, strokes: 5, putts: 2, greenInRegulation: false, toPar: 1, score: "bogey" },
+  { hole: 6, par: 4, strokes: 5, putts: 3, greenInRegulation: true, toPar: 1, score: "bogey" },
+  { hole: 7, par: 3, strokes: 4, putts: 3, greenInRegulation: true, toPar: 1, score: "bogey" },
+  { hole: 8, par: 5, strokes: 6, putts: 2, greenInRegulation: false, toPar: 1, score: "bogey" },
+  { hole: 9, par: 3, strokes: 4, putts: 2, greenInRegulation: false, toPar: 1, score: "bogey" },
+];
 
 export interface ScannerDemoViewModel {
   phase: ScannerPhase;
