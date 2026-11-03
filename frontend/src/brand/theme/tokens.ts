@@ -383,6 +383,10 @@ export const type = {
   date: { size: 22, weight: 700, leading: 1.1 },
   /** A round row's score: the figure beside the course, a step under the hero. */
   figure: { size: 28, weight: 700, tracking: -0.6, leading: 1 },
+  /** A round's score on the scorecard-strip row. */
+  "figure-sm": { size: 26, weight: 700, tracking: -0.5, leading: 1 },
+  /** A row's name: a course, a person. */
+  row: { size: 15, weight: 600 },
   /** The one big figure on a card: a round's score. */
   hero: { size: 44, weight: 700, tracking: tracking.hero, leading: 1 },
   /** The tracked capitals above a figure or a group of rows. */

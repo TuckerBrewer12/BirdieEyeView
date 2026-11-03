@@ -118,6 +118,8 @@
   --brand-text-title: 26px;
   --brand-text-date: 22px;
   --brand-text-figure: 28px;
+  --brand-text-figure-sm: 26px;
+  --brand-text-row: 15px;
   --brand-text-hero: 44px;
   --brand-text-eyebrow: 10px;
   --brand-text-kicker: 9px;
@@ -322,6 +324,8 @@
   --text-title: var(--brand-text-title);
   --text-date: var(--brand-text-date);
   --text-figure: var(--brand-text-figure);
+  --text-figure-sm: var(--brand-text-figure-sm);
+  --text-row: var(--brand-text-row);
   --text-hero: var(--brand-text-hero);
   --text-eyebrow: var(--brand-text-eyebrow);
   --text-kicker: var(--brand-text-kicker);
@@ -382,6 +386,10 @@
   --text-figure--font-weight: 700;
   --text-figure--letter-spacing: -0.6px;
   --text-figure--line-height: 1;
+  --text-figure-sm--font-weight: 700;
+  --text-figure-sm--letter-spacing: -0.5px;
+  --text-figure-sm--line-height: 1;
+  --text-row--font-weight: 600;
   --text-hero--font-weight: 700;
   --text-hero--letter-spacing: -1.8px;
   --text-hero--line-height: 1;
