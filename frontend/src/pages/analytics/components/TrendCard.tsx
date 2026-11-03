@@ -7,7 +7,6 @@ type TrendCardProps = ComponentProps<typeof TrendAreaChart> & {
   cardClassName?: string;
 };
 
-/** A figure over the filtered rounds, in a card named for it. */
 export function TrendCard({ title, description, cardClassName, ...chart }: TrendCardProps) {
   return (
     <Card data-slot="trend-card" className={cardClassName}>

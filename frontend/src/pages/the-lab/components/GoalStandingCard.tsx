@@ -14,12 +14,10 @@ import type { GoalStanding } from "../model";
 import { goalStandingNote } from "../present";
 
 interface GoalStandingCardProps {
-  /** Null until a goal is set. */
   goal: GoalStanding | null;
   className?: string;
 }
 
-/** How close the golfer's average is to their goal, from the server's goal report. */
 export function GoalStandingCard({ goal, className }: GoalStandingCardProps) {
   if (!goal) {
     return (

@@ -6,9 +6,7 @@ import { formatWeekdayDay } from "@/domain/date";
 
 export interface RoundDetailHeaderProps {
   round: Round;
-  /** "72.4 / 130", when the tee is rated. */
   teeRating?: string | null;
-  /** The player's handicap on this course. Shows the net score when known. */
   courseHandicap?: number | null;
   className?: string;
 }
@@ -31,9 +29,6 @@ function NineBars({ nine, label, className }: {
   );
 }
 
-/**
- * The identity and shape of one round: what was played, when, how it went.
- */
 export function RoundDetailHeader({ round, teeRating, courseHandicap, className }: RoundDetailHeaderProps) {
   const dateLabel = formatWeekdayDay(round.date);
   const net = courseHandicap != null && round.score != null ? netScore(round.score, courseHandicap) : null;

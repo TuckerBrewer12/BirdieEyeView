@@ -11,13 +11,8 @@ import { PerformanceShapeCard } from "./PerformanceShapeCard";
 import { PuttingCard } from "./PuttingCard";
 import { SaverCard } from "./SaverCard";
 
-/** The attempts chart needs a few rounds to say anything. */
 const MIN_ATTEMPTS = 3;
 
-/**
- * The Lab below md: the desktop's cards in one column, with par types, putting and the peak
- * game behind tabs so the phone shows one at a time.
- */
 export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
   const target = vm.goal?.target ?? null;
   const label = goalLabel(target);
@@ -95,7 +90,6 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
               size="sm"
               value={[vm.panel]}
               onValueChange={(values) => {
-                // Tapping the open tab would empty the group; one panel is always open.
                 const next = vm.panels.find((panel) => panel === values[0]);
                 if (next) vm.setPanel(next);
               }}

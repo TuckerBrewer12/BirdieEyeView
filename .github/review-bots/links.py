@@ -1,16 +1,8 @@
 #!/usr/bin/env python3
-"""Deep links that hand a review finding to a Conductor chat with context attached.
-
-The point is that "discuss this further" should cost one click, not a round of
-copy-pasting the file, the line, and what the bot said. Opens in Conductor with
-Grok (Cursor agent, model grok-4.6).
-"""
 from __future__ import annotations
 
 from urllib.parse import quote
 
-# Chat URLs are query strings; browsers and proxies start truncating well before
-# the theoretical limit, so the seeded prompt stays short and links out for the rest.
 MAX_PROMPT = 1600
 
 CONDUCTOR_AGENT = "cursor"
@@ -46,7 +38,6 @@ def discussion_prompt(
 
 
 def conductor_url(prompt: str) -> str:
-    """Open a new Conductor workspace with Grok selected and the prompt filled in."""
     q = quote(prompt, safe="")
     return f"conductor://prompt={q}&agent={CONDUCTOR_AGENT}&model={CONDUCTOR_MODEL}"
 

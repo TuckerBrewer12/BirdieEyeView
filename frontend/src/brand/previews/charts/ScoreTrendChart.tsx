@@ -2,7 +2,6 @@ import { ScoreTrendChart } from "@/brand/charts/ScoreTrendChart";
 import { courseAnalyticsFrom, type ScorePoint } from "@/domain/courseAnalytics";
 import { halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
 
-/** Six rounds on a par 72: over, level and under par dots, and one unscored round left out. */
 const season: ScorePoint[] = [
   [85, "2026-03-09"],
   [80, "2026-04-02"],

@@ -6,7 +6,6 @@ import { activityDays } from "@/domain/activity";
 
 interface ActivityHeatmapProps {
   rounds?: RoundSummary[];
-  /** Frozen in previews so the calendar does not drift day to day. */
   today?: Date;
 }
 

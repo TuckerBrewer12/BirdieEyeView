@@ -8,62 +8,45 @@ import type {
   ScannedTeeDto,
 } from "@/types/api";
 
-/** Read a photographed card, or type the scores in by hand. */
 export type ScanMode = "scan" | "manual";
 
 export type ScanStep = "upload" | "processing" | "setup" | "review" | "success";
 
-/** How many phases the processing screen walks through while a scan is read. */
 export const SCAN_PHASE_COUNT = 4;
-/** The scan reports no progress, so each phase is held this long rather than reported. */
 export const SCAN_PHASE_HOLD_MS = 3500;
 
-/** A course the golfer chose. No id means a name they typed for a course we don't have. */
 export interface PickedCourse {
   id: string | null;
   name: string;
 }
 
-/** What the golfer chose before typing scores in by hand. */
 export interface ManualSetup {
   course: PickedCourse | null;
   teeBox: string;
-  /** `YYYY-MM-DD`. */
   date: string;
 }
 
-/** Which course a checked card is saved against. */
 export type ReviewCourse =
-  /** A saved course, or the course provider's (which has no id here until the round is saved). */
   | { status: "linked"; id: string | null; externalId: string | null; name: string }
-  /** No link: the round keeps a name the golfer typed or kept. */
   | { status: "named"; name: string }
-  /** Still choosing. Saved now, the round keeps the name read off the card, if there was one. */
   | { status: "picking"; name: string | null };
 
-/** The card being checked before it is saved: the scan as read, and what the golfer changed. */
 export interface ScanReviewDraft {
-  /** The card as read, or the blank one hand entry opens. */
   scan: ScanDto;
-  /** Strokes, putts and greens the golfer typed over, by hole number. */
   holes: HoleEdits;
-  /** `YYYY-MM-DD`. */
   date: string;
   teeBox: string | null;
   course: ReviewCourse;
 }
 
-/** Today as `YYYY-MM-DD`, the date a round defaults to: the golfer's day, not UTC's. */
 export function todayIso(now: Date = new Date()): string {
   return isoDay(now);
 }
 
-/** A course name as a search query: trimmed, single-spaced. */
 export function courseQueryFrom(name: string | null | undefined): string {
   return (name ?? "").trim().replace(/\s+/g, " ");
 }
 
-/** A finished scan, ready to check. */
 export function reviewFromScan(result: ScanDto, today: string): ScanReviewDraft {
   const { round } = result;
   const onlyTee = round.course?.tees?.length === 1 ? round.course.tees[0].color : null;
@@ -72,12 +55,10 @@ export function reviewFromScan(result: ScanDto, today: string): ScanReviewDraft 
     holes: {},
     date: round.date ? round.date.substring(0, 10) : today,
     teeBox: round.tee_box ?? onlyTee ?? null,
-    // A course name read off the card is often noisy, so it is kept but never linked.
     course: { status: "picking", name: round.course?.name ?? null },
   };
 }
 
-/** A blank card for typing scores in: the chosen course's holes, or eighteen unknown ones. */
 export function reviewFromSetup(setup: ManualSetup, course: CourseDto | null): ScanReviewDraft {
   const holes = course?.holes.length
     ? course.holes.map((hole, i) => ({ number: hole.number ?? i + 1, par: hole.par, handicap: hole.handicap }))
@@ -125,12 +106,10 @@ export function reviewFromSetup(setup: ManualSetup, course: CourseDto | null): S
   };
 }
 
-/** One hole's strokes, putts or green, as the golfer typed or tapped it. */
 export function withHoleEdit(draft: ScanReviewDraft, hole: number, edit: HoleEdits[number]): ScanReviewDraft {
   return { ...draft, holes: { ...draft.holes, [hole]: { ...draft.holes[hole], ...edit } } };
 }
 
-/** A search result as the course to save the round against, or why it can't be. */
 export function reviewCourseFrom(course: CourseSummary): { course: ReviewCourse } | { error: string } {
   const external = course.source === "external" || course.id.startsWith("external:");
   if (external && !course.externalId) {
@@ -148,10 +127,6 @@ export function reviewCourseFrom(course: CourseSummary): { course: ReviewCourse 
   };
 }
 
-/**
- * The card as it will save: the scan with the golfer's edits, read against the linked course
- * once it has loaded, else against the course and tees the scan found.
- */
 export function reviewedRound(draft: ScanReviewDraft, linkedCourse: CourseDto | null): Round {
   const { scan, holes, teeBox, course } = draft;
   const asRead = Round.fromScan({ ...scan.round, tee_box: teeBox });
@@ -169,7 +144,6 @@ export function reviewedRound(draft: ScanReviewDraft, linkedCourse: CourseDto | 
   };
 }
 
-/** What saving a checked card sends: the scores as edited, and the course and tees read off it. */
 export function saveRequestFrom(userId: string, draft: ScanReviewDraft): SaveScanRequestDto {
   const { scan, course: picked, teeBox, holes } = draft;
   const course = scan.round.course;

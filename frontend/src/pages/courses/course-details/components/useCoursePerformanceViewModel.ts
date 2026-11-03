@@ -7,13 +7,10 @@ export interface CoursePerformanceViewModel {
   scoringAverage: number | null;
   bestScore: number | null;
   worstScore: number | null;
-  /** Every round here, oldest first. The chart plots the scored ones. */
   trend: ScorePoint[];
-  /** The golfer's rounds at this course, newest first. */
   rounds: RoundSummary[];
 }
 
-/** How the golfer has scored at one course. The server works out every figure. */
 export function useCoursePerformanceViewModel(
   userId: string,
   courseId: string,

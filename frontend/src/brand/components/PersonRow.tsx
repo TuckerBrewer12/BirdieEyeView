@@ -3,13 +3,9 @@ import { cn } from "@/brand/cn";
 
 interface PersonRowProps {
   name: string;
-  /** Two letters for the avatar. Defaults to the first letters of the first two words of `name`. */
   initials?: string;
-  /** The line under the name — an email, a handle. */
   detail?: ReactNode;
-  /** A quieter third line, such as when the row last changed. */
   meta?: ReactNode;
-  /** Buttons or a status at the end of the row. */
   actions?: ReactNode;
   className?: string;
 }
@@ -24,11 +20,6 @@ function initialsOf(name: string): string {
   return letters.toUpperCase() || "?";
 }
 
-/**
- * One person in a list: an initials avatar, their name and a line or two
- * about them, with whatever can be done about them at the end. Built to sit
- * in a `Collection layout="divided"`, which draws the rules between rows.
- */
 function PersonRow({ name, initials, detail, meta, actions, className }: PersonRowProps) {
   return (
     <div data-slot="person-row" className={cn("flex items-center gap-3 px-4 py-3", className)}>

@@ -2,7 +2,6 @@ import { ScanUploadStep } from "../components/ScanUploadStep";
 
 const noop = () => {};
 
-/** Before a photo is picked, on the web and in the phone app, and with one picked. */
 export default function ScanUploadStepPreview() {
   return (
     <>

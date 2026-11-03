@@ -1,10 +1,8 @@
 import { SCORE_KINDS, toParLabel, type ScoreKind } from "@/domain/score";
 
-// The words are golf, so they live in the domain; the theme re-exports them beside the colours.
 export { scoreKindLabel, toParLabel } from "@/domain/score";
 import { colors, type ScoreSwatch } from "./colors";
 
-/** Display order for legends and mix bars. Same set as `ScoreKind`. */
 export const SCORE_KEYS = SCORE_KINDS;
 
 export type ScoreKey = ScoreKind;
@@ -22,15 +20,10 @@ const SCORE_FILL_CLASS: Record<ScoreKey, string> = {
   quad: "bg-score-quad-base",
 };
 
-/** Tailwind background for a hole's score chip. */
 export function scoreFillClass(key: ScoreKey): string {
   return SCORE_FILL_CLASS[key];
 }
 
-/**
- * Swatch for a round's to-par, not a hole. Even and missing recede as par;
- * a round does not earn eagle/quad the way a hole does.
- */
 export function toParTone(toPar: number | null): ScoreTone {
   if (toPar == null || toPar === 0) return colors.score.par;
   if (toPar <= -2) return colors.score.eagle;
@@ -46,13 +39,11 @@ export function toParDisplay(toPar: number | null, empty = "—"): string {
   return toParLabel(toPar) ?? empty;
 }
 
-/** Tailwind text color for a to-par figure: under par reads birdie, over reads bogey. */
 export function toParTextClass(toPar: number | null): string {
   if (toPar == null || toPar === 0) return "text-muted-foreground";
   return toPar < 0 ? "text-score-birdie" : "text-score-bogey";
 }
 
-/** Badge fill + text for a to-par figure on a history row. */
 export function toParBadgeClass(toPar: number | null): string {
   if (toPar == null || toPar === 0) return "bg-muted text-muted-foreground";
   if (toPar < 0) return "bg-accent text-score-birdie";
@@ -70,7 +61,6 @@ const SCORE_ON_FILL_CLASS: Record<ScoreKey, string> = {
   quad: "text-score-quad-on-base",
 };
 
-/** Tailwind text colour that reads on `scoreFillClass`. */
 export function scoreOnFillClass(key: ScoreKey): string {
   return SCORE_ON_FILL_CLASS[key];
 }

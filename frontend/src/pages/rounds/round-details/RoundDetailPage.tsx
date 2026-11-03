@@ -46,7 +46,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
 
   return (
     <div>
-      {/* Rendered just off the right edge, so the share button can capture it as an image. */}
       <div aria-hidden className="pointer-events-none fixed top-0 left-full">
         <RoundShareCard ref={shareCardRef} round={played} />
       </div>

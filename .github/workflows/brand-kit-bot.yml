@@ -17,7 +17,6 @@ concurrency:
   group: brand-kit-bot-${{ github.event.pull_request.number || inputs.pr_number }}
   cancel-in-progress: true
 
-# Write is for the fix job only. The review job below drops it back to read.
 permissions:
   contents: write
   pull-requests: write
@@ -33,9 +32,6 @@ jobs:
       has_fixes: ${{ steps.review.outputs.has_fixes }}
       findings: ${{ steps.review.outputs.findings }}
 
-    # Skip drafts, skip-bots, fork PRs (no CURSOR_API_KEY), and the PRs
-    # this bot itself opens. workflow_dispatch is always allowed so a failed
-    # run can be retried from Actions → Brand Kit Bot → Run workflow.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (

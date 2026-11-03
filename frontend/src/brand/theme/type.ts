@@ -1,13 +1,3 @@
-/**
- * Type roles, as references to the tokens that hold their values.
- *
- * The values themselves live once, in `tokens.css`. These are `var()` strings
- * so they resolve in CSS with no React involvement. In ordinary markup prefer
- * the Tailwind utility — `text-caption` over `style={{ fontSize: typography.caption }}`.
- * Reach for this when a library takes a style object.
- *
- * `tokens.test.ts` fails if a name here has no definition in tokens.css.
- */
 export const typography = {
   caption: "var(--brand-text-caption)",
   meta: "var(--brand-text-meta)",

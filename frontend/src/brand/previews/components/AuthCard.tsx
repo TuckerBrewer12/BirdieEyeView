@@ -4,7 +4,6 @@ import { Button } from "@/brand/components/Button";
 import { Field, FieldLabel } from "@/brand/components/Field";
 import { Input } from "@/brand/components/Input";
 
-/** The harness stage is a phone's width, so this is the card as a phone shows it. */
 export default function AuthCardPreview() {
   return (
     <AuthCard

@@ -14,15 +14,12 @@ import { useRoundEditorViewModel, type RoundEditorViewModel } from "./useRoundEd
 export interface RoundDetailUiState {
   loading: boolean;
   loadError: string | null;
-  /** The round as played: read against the course and tee being edited in, with the edits applied. */
   played: Round | null;
   courseHandicap: number | null;
   teeRating: string | null;
-  /** Edit mode. Start it with `enterEditMode`, which also closes the page's other panels. */
   editor: RoundEditorViewModel;
   confirmDelete: boolean;
   deleting: boolean;
-  /** A failed save, course pick or delete. Edits and deletes never overlap, so there is one at a time. */
   actionError: string | null;
   showLinkCourse: boolean;
   showLinkButton: boolean;
@@ -32,7 +29,6 @@ export interface RoundDetailUiState {
 export interface RoundDetailPageViewModel extends RoundDetailUiState {
   enterEditMode: () => void;
   requestDelete: () => void;
-  /** Deletes the round; `onDeleted` runs only if it worked. */
   confirmDeleteRound: (onDeleted: () => void) => void;
   cancelDelete: () => void;
   openLinkCourse: () => void;

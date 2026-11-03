@@ -5,7 +5,6 @@
  */
 export const breakpoints = { sm: 40 } as const;
 
-/** A media query that matches from the breakpoint up, as Tailwind's prefix of the same name does. */
 export function fromBreakpoint(name: keyof typeof breakpoints): string {
   return `(min-width: ${breakpoints[name]}rem)`;
 }

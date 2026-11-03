@@ -7,10 +7,6 @@ interface ScoreCountChipProps extends React.ComponentProps<"div"> {
   count: number;
 }
 
-/**
- * How many holes of one kind a round had: "3 Birdies", in that score's colour.
- * The caller words the label, so it can pluralise or group ("Triples+").
- */
 function ScoreCountChip({ kind, count, className, children, ...props }: ScoreCountChipProps) {
   return (
     <div

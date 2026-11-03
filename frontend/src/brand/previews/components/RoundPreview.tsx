@@ -5,7 +5,6 @@ import { populatedRounds } from "@/testing/fixtures/rounds";
 
 const [overPar, evenPar, best, unlinked] = populatedRounds.map(Round.fromSummary);
 
-/** Compose-style @Preview for RoundPreview. */
 export default function RoundPreviewPreview() {
   return (
     <>

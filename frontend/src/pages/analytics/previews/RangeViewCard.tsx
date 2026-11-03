@@ -10,7 +10,6 @@ export default function RangeViewCardPreview() {
   return (
     <>
       <RangeViewCard buckets={buckets} par={par} onParChange={setPar} />
-      {/* Only par 4s played: the other par types can't be picked. */}
       <RangeViewCard buckets={buckets.filter((bucket) => bucket.par === 4)} par={3} onParChange={() => {}} />
     </>
   );

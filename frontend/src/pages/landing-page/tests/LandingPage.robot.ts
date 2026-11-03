@@ -5,12 +5,10 @@ import { FakeSession } from "../../../testing/fakes/FakeSession";
 import { SCANNED_COURSE_NAME, scannedCard } from "../../../testing/fixtures/scan";
 import { expectTheme } from "../../../testing/theme";
 
-/** The photo the hero demo uses, so an upload has a real card in its preview. */
 const CARD_PHOTO = fileURLToPath(new URL("../../../../public/hero/physical-card.jpg", import.meta.url));
 const CARD_NAME = "physical-card.jpg";
 const DEMO_ALT = "A paper golf scorecard being scanned";
 
-/** Screen robot for the logged-out landing page at `/`. */
 export class LandingRobot {
   private readonly page: Page;
 
@@ -25,11 +23,7 @@ export class LandingRobot {
     return this;
   }
 
-  /** `scanFails`: the scan endpoint errors, as it does when the server can't read a card. */
   async open({ scanFails = false }: { scanFails?: boolean } = {}): Promise<this> {
-    // The hero's scan loop is decoration and holds on step one under reduced
-    // motion. Emulating it here is what makes the page deterministic enough to
-    // have a baseline — `test.use({ reducedMotion })` does not reach the page.
     await this.page.emulateMedia({ reducedMotion: "reduce" });
     await FakeSession.install(this.page, { signedOut: true, scan: scanFails ? undefined : scannedCard });
     await this.page.goto("/");
@@ -38,7 +32,6 @@ export class LandingRobot {
     return this;
   }
 
-  /** Reloads the page, as a returning visitor would see it. */
   async reload(): Promise<this> {
     await this.page.reload();
     await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -73,33 +66,28 @@ export class LandingRobot {
     return this;
   }
 
-  /** The upload drop zone sits in the first screen, not below the fold. */
   async seesScanner(): Promise<this> {
     await expect(this.page.getByText("Upload a scorecard photo")).toBeInViewport();
     return this;
   }
 
-  /** The sample scan looping beside the uploader. */
   async seesDemo(shown = true): Promise<this> {
     await expect(this.page.getByRole("img", { name: DEMO_ALT })).toHaveCount(shown ? 1 : 0);
     return this;
   }
 
-  /** Picks a photo. The visitor is still on the upload step, choosing what's on the card. */
   async chooseScorecard(): Promise<this> {
     await this.page.locator('input[type="file"]').setInputFiles(CARD_PHOTO);
     await expect(this.page.getByRole("button", { name: "Scan my scorecard" })).toBeVisible();
     return this;
   }
 
-  /** The picked photo, shown as a thumbnail with its name, ready to scan. */
   async seesChosenCard(): Promise<this> {
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
     await expect(this.page.locator('img[src^="data:image/"]')).toBeVisible();
     return this;
   }
 
-  /** The scan failed: the reason shows, and the photo is still there to try again. */
   async seesScanFailed(): Promise<this> {
     await expect(this.page.getByRole("alert")).toContainText("We couldn't scan this scorecard.");
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
@@ -112,7 +100,6 @@ export class LandingRobot {
     return this;
   }
 
-  /** Starts over from the scanned card. The button has to be on screen to be tapped. */
   async tapScanAnother(): Promise<this> {
     const button = this.page.getByRole("button", { name: "Scan another" });
     await expect(button).toBeInViewport();
@@ -120,7 +107,6 @@ export class LandingRobot {
     return this;
   }
 
-  /** The visitor's own card, read back as a scorecard. */
   async seesScannedCard(): Promise<this> {
     await expect(this.page.getByText(SCANNED_COURSE_NAME, { exact: true })).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Scan another" })).toBeVisible();
@@ -139,7 +125,6 @@ export class LandingRobot {
 
   async capture(name: string): Promise<this> {
     // Tapping into the card scrolls the page; a full-page capture taken from
-    // there pins the sticky nav over the headline.
     await this.page.evaluate(() => window.scrollTo(0, 0));
     await expect(this.page).toHaveScreenshot(name, { fullPage: true });
     return this;

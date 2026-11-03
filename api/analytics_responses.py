@@ -1,5 +1,3 @@
-"""The analytics page's response, built in one place from the player's rounds."""
-
 from datetime import datetime
 from typing import List, Optional
 
@@ -27,9 +25,6 @@ def analytics_response(
     home_course_id: Optional[str] = None,
     today: Optional[datetime] = None,
 ) -> AnalyticsResponse:
-    """Every analytics section over `rounds` (oldest first). `hi_rounds` ends with the same rounds
-    and reaches back up to 19 more, so the handicap trend has a full rolling window from the start.
-    The records' last year ends `today`, now unless given."""
     scores = [s for s in (r.calculate_total_score() for r in rounds) if s is not None]
     score_rows = analytics.score_trend_with_rolling_average(rounds)
     gir_rows = analytics.gir_per_round(rounds)

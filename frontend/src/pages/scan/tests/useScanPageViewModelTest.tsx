@@ -126,7 +126,6 @@ describe("useScanPageViewModel", () => {
       onRender(useScanPageViewModel("user-1", doubles.repositories));
       return null;
     }
-    // The provider stays mounted throughout, as it does above the app's routes.
     const view = render(<Wrapper><Screen onRender={seen} /></Wrapper>);
     const current = latest as Current;
     await pick(current);

@@ -8,7 +8,6 @@ export default function GoalStandingCardPreview() {
     <>
       <GoalStandingCard goal={goal} />
       <GoalStandingCard goal={{ ...goal, target: 94, average: 91.7, gap: -2.3, progressPct: 100, onTrack: true }} />
-      {/* A goal with no report yet: too few rounds. */}
       <GoalStandingCard goal={goalStandingFrom(79, null)} />
       <GoalStandingCard goal={null} />
     </>

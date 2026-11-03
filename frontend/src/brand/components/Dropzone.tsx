@@ -5,19 +5,11 @@ import { cn } from "@/brand/cn";
 interface DropzoneProps {
   title: string;
   hint: string;
-  /** Mime pattern for the file input, e.g. `image/*,application/pdf`. */
   accept?: string;
   onFile: (file: File) => void;
   className?: string;
 }
 
-/**
- * The drag-and-drop target for picking one file.
- *
- * Owns only the hidden input and the pointer plumbing — which file was picked
- * and what happens to it belong to the caller. Clicking anywhere in the box
- * opens the picker, so the whole area is the control rather than just the text.
- */
 function Dropzone({ title, hint, accept = "image/*,application/pdf", onFile, className }: DropzoneProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
 

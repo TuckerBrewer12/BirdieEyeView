@@ -1,7 +1,3 @@
-/**
- * Stands in for the device's light or dark setting (`prefers-color-scheme`), which jsdom does not
- * have. Install it before rendering, flip it to act like the OS changing, and restore it after.
- */
 export class FakeColorScheme {
   private dark: boolean;
   private readonly listeners = new Set<(event: MediaQueryListEvent) => void>();

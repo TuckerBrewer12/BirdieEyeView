@@ -7,7 +7,6 @@ export default function AuthNoticePreview() {
         If this account exists, a password reset link has been sent.
       </AuthNotice>
       <AuthNotice tone="error">Invalid email or password</AuthNotice>
-      {/* Renders nothing without a message. */}
       <AuthNotice tone="error">{null}</AuthNotice>
     </>
   );

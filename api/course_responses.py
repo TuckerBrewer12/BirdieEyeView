@@ -1,5 +1,3 @@
-"""Course responses, built one way from the Course model so every endpoint agrees."""
-
 from api.schemas import CourseResponse, TeeResponse
 from models import Course, Tee
 
@@ -17,7 +15,6 @@ def _tee(tee: Tee) -> TeeResponse:
 
 
 def course_detail(course: Course) -> CourseResponse:
-    """A full course, as course details and the round editor read it."""
     return CourseResponse(
         id=course.id,
         name=course.name,

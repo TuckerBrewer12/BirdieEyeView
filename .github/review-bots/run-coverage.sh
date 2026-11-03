@@ -1,13 +1,4 @@
 #!/usr/bin/env bash
-# Frontend coverage reporter.
-# Vitest and Espresso changed-line % are computed in Python. Screenshot /
-# espresso flow counts come from the model. One sticky PR comment consolidates
-# all three.
-#
-# Env: BASE_SHA HEAD_SHA PR_NUMBER GH_TOKEN CURSOR_API_KEY
-#      COVERAGE_JSON (optional, default frontend/coverage/coverage-final.json)
-#      ESPRESSO_COVERAGE_JSON (optional, default frontend/coverage/espresso/coverage-final.json)
-#      RUN_URL (optional link to the workflow run that holds the HTML report)
 set -euo pipefail
 
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT

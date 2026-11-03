@@ -5,15 +5,10 @@ import { cn } from "@/brand/cn";
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
-  /**
-   * Scroll depth at which the bar has fully faded in, so it takes over from the
-   * page's own title as that scrolls away. Leave it unset to always show the bar.
-   */
   revealAt?: number;
   className?: string;
 }
 
-// md:left-64 clears the app sidebar, which is hidden below md.
 const BAR =
   "fixed top-0 right-0 left-0 z-40 flex items-center border-b border-border bg-background/90 px-4 py-3 shadow-hairline backdrop-blur-xl md:left-64 md:px-8";
 
@@ -36,9 +31,6 @@ function RevealingPageHeader({
   children: ReactNode;
 }) {
   const { scrollY } = useScroll();
-  // The whole bar fades over the last 30 of scroll before revealAt, so the
-  // surface, hairline and shadow ride one opacity and keep following the
-  // colour mode, rather than each interpolating a literal colour.
   const opacity = useTransform(scrollY, [Math.max(0, revealAt - 30), revealAt], [0, 1]);
 
   return (
@@ -48,7 +40,6 @@ function RevealingPageHeader({
   );
 }
 
-/** The slim bar pinned to the top of a page, naming it once its title has scrolled off. */
 function PageHeader({ title, subtitle, revealAt, className }: PageHeaderProps) {
   const text = <PageHeaderText title={title} subtitle={subtitle} />;
 

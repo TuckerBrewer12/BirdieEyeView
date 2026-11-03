@@ -1,7 +1,6 @@
 import type { Page } from "@playwright/test";
 import { FakeBackend, type FakeBackendSeed } from "./FakeBackend";
 
-/** Points Playwright's `/api/**` routes at a FakeBackend. */
 export class FakeSession {
   static async install(
     page: Page,

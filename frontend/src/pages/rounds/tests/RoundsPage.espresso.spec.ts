@@ -90,7 +90,6 @@ test("a one-character course query does not search", async ({ rounds }) => {
   await rounds.seesNoCourseResults();
   await rounds.doesNotSeeNoCoursesFound();
 
-  // Two characters reach the backend, so only the length held the first one back.
   await rounds.searchCourses("Pe");
   await rounds.seesCourseResult("Pebble Beach");
 });

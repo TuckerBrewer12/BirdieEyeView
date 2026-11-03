@@ -28,17 +28,14 @@ import {
   type RadarMode,
 } from "./model";
 
-/** How a friend comparison stands: no friends to pick, their rounds loading, too few rounds, or drawn. */
 export type FriendComparison = "no-friends" | "loading" | "no-rounds" | "ready";
 
 export interface LabPageViewModel {
-  /** True until the golfer's analytics first load. */
   loading: boolean;
   error: Error | null;
   retry: () => void;
   analytics: LabAnalytics | null;
 
-  /** Null until the golfer sets a goal. */
   goal: GoalStanding | null;
   setGoal: (target: number) => void;
   savingGoal: boolean;
@@ -46,7 +43,6 @@ export interface LabPageViewModel {
 
   scoringAverage: number | null;
   bestScore: number | null;
-  /** Last five rounds against the window's average; negative is lower. */
   recentTrend: number | null;
 
   radarMode: RadarMode;
@@ -56,28 +52,19 @@ export interface LabPageViewModel {
   friends: FriendOption[];
   selectedFriend: FriendOption | null;
   selectFriend: (friendId: string) => void;
-  /** Null unless comparing with a friend. */
   friendComparison: FriendComparison | null;
-  /** The server's shape drawn behind the golfer's, or null with nothing to compare. */
   benchmark: BenchmarkShape | null;
-  /** The axes the golfer has figures for. */
   radar: RadarEntry[];
-  /** The axes they don't, yet. */
   missingAxes: string[];
 
-  /** The window's scored rounds, oldest first, each marked met or not by the goal report. */
   attempts: GoalAttempt[];
-  /** Null without a goal, and until the goal's report loads. */
   roundsMeetingGoal: number | null;
   parTypes: ParTypeRow[];
   putting: PuttingSummary | null;
   peak: PeakGame | null;
-  /** Birdies, bogeys and doubles a round in the best rounds against every round, and what each is worth. */
   peakImpacts: PeakImpact[];
 
-  /** The phone's panels with something to show, in order. */
   panels: LabPanel[];
-  /** The phone's open panel: the one picked while it has something to show, else the first. */
   panel: LabPanel | null;
   setPanel: (panel: LabPanel) => void;
 }
@@ -103,14 +90,11 @@ export function useLabPageViewModel(
     () => (analytics ? peakGameFrom(analytics, target, report) : null),
     [analytics, target, report],
   );
-  // Peak needs a goal and two rounds; without them the shape is the golfer's average.
   const mode: RadarMode = radarMode === "peak" && !peak ? "benchmark" : radarMode;
 
   const friends = useMemo(() => friendOptionsFrom(friendships ?? []), [friendships]);
-  // A friend who has since gone falls back to the first one listed.
   const selectedFriend = friends.find((f) => f.id === pickedFriendId) ?? friends[0] ?? null;
   const comparingFriend = mode === "benchmark" && comparison === "friend";
-  // Who the server holds the golfer up against; nothing when it's their shape alone.
   const against = useMemo<BenchmarkTarget | null>(() => {
     if (mode === "peak") return { against: "peak" };
     if (comparison === "friend") return selectedFriend ? { against: "friend", friendId: selectedFriend.id } : null;

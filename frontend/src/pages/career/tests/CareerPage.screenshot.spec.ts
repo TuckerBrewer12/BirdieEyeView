@@ -30,7 +30,6 @@ test("load failed", async ({ career }) => {
   await career.capture("career-load-failed.png");
 });
 
-// A phone shows one milestone list at a time; desktop shows them all.
 for (const tab of ["Putting", "GIR"] as const) {
   for (const dark of [false, true]) {
     test(`phone ${tab} milestones${dark ? " in dark mode" : ""}`, async ({ career, isMobile }) => {

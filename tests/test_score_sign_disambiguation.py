@@ -40,7 +40,6 @@ def test_to_par_plus_one_is_flipped_to_birdie_using_internal_rows() -> None:
         to_par_scoring=None,
     )
 
-    # Hole 1: raw to-par "1" + internal rows (shots=1, putts=2, par=4) => -1 (birdie)
     assert round_payload["hole_scores"][0]["strokes"] == 3
     assert any("score sign corrected" in f for f in fields)
 
@@ -67,12 +66,9 @@ def test_half_moon_bay_score_only_keeps_hidden_rows_and_front9_strokes() -> None
         to_par_scoring=None,
     )
 
-    # UI-visible putts are intentionally suppressed in score-only mode.
     assert parsed.putts_row == []
-    # But internal evidence rows should still be available for sign disambiguation.
     assert sum(v is not None for v in parsed.raw_putts_row) >= 9
     assert sum(v is not None for v in parsed.raw_shots_to_green_row) >= 9
 
-    # Real Half Moon Bay sample, player G, front 9 expected strokes.
     front9 = [h["strokes"] for h in round_payload["hole_scores"][:9]]
     assert front9 == [5, 3, 3, 5, 4, 3, 3, 5, 4]

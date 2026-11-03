@@ -21,7 +21,6 @@ export default defineConfig([
     },
   },
   {
-    // Code a React Native app will share: return plain data, never web UI or browser APIs.
     files: [
       'src/domain/**/*.ts',
       'src/data/**/*.ts',

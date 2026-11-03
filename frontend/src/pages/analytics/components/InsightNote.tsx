@@ -19,7 +19,6 @@ interface InsightNoteProps {
   className?: string;
 }
 
-/** One sentence about a part of the game, with an arrow coloured by whether the move is good. */
 export function InsightNote({ narrative, className }: InsightNoteProps) {
   const Icon = ICON[narrative.trend];
   return (

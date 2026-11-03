@@ -1,6 +1,5 @@
 import { ScoreTargetChart } from "@/brand/charts/ScoreTargetChart";
 
-// A spread of par 4 results: mostly pars and bogeys, a few birdies, the odd blow-up.
 const results = [0, 1, 0, 1, 2, 0, -1, 1, 0, 1, 1, 0, 3, 0, 1, -1, 0, 2, 1, 0, 1, 0, 4, 1, 0, -2, 1, 0, 2, 1];
 
 export default function ScoreTargetChartPreview() {

@@ -8,7 +8,6 @@ import { formatCourseName, type CourseSummary } from "@/domain/course";
 interface CoursePreviewProps {
   course: CourseSummary;
   onClick?: () => void;
-  /** Pin the keyboard focus ring — used by the kit preview. */
   focused?: boolean;
 }
 

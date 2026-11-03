@@ -1,35 +1,10 @@
 import type { ScoreKind } from "@/domain/score";
 
-/**
- * Every brand color, as a reference to the token that holds its value.
- *
- * The values themselves live once, in `tokens.css`. These are `var()` strings,
- * so they resolve in CSS and follow the color mode with no React involvement:
- *
- *     <div style={{ background: colors.card }} />
- *
- * In ordinary markup prefer the Tailwind utility — `bg-card` over
- * `style={{ background: colors.card }}`. Reach for this when the color is
- * dynamic and a static class cannot express it, as with a per-hole score fill.
- *
- * Because these are references and not literals, they do not work anywhere
- * that parses the string as a color — canvas, or a chart library that inspects
- * it. For those, resolve against the document:
- *
- *     getComputedStyle(document.documentElement).getPropertyValue("--card")
- *
- * `tokens.test.ts` fails if a name here has no definition in tokens.css.
- */
 export type ScoreSwatch = {
-  /** Saturated fill — bars, chips, filled score cells. */
   base: string;
-  /** Light wash — table cells, history pills. */
   muted: string;
-  /** Ink that sits on `base`. */
   onBase: string;
-  /** Ink that sits on `muted`. */
   onMuted: string;
-  /** Ink on the page background (`text-score-birdie`). */
   text: string;
 };
 

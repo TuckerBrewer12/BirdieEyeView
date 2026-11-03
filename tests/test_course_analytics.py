@@ -1,5 +1,3 @@
-"""A player's analytics at one course come back typed, with the hero figures worked out."""
-
 from datetime import datetime
 
 from api.course_analytics_responses import course_analytics
@@ -10,7 +8,6 @@ COURSE = Course(id="c1", name="Half Moon Bay", holes=[Hole(number=i + 1, par=p) 
 
 
 def _round(round_id, day, over):
-    """A round `over` strokes over par: one extra shot on each of the first `over` holes."""
     return Round(
         id=round_id,
         course=COURSE,
@@ -23,7 +20,7 @@ def _round(round_id, day, over):
 
 
 def test_hero_figures_and_history_come_from_the_rounds():
-    rounds = [_round("r1", 1, 6), _round("r2", 8, 0), _round("r3", 15, 3)]  # oldest first
+    rounds = [_round("r1", 1, 6), _round("r2", 8, 0), _round("r3", 15, 3)]
     response = course_analytics("c1", rounds)
 
     assert response.rounds_played == 3
@@ -56,7 +53,6 @@ def test_no_rounds_leaves_the_figures_empty():
 
 
 def test_scorecard_nines_sum_the_per_hole_averages():
-    # r1 is a stroke over on holes 1-2, r2 is level: holes 1 and 2 average half a stroke over.
     response = course_analytics("c1", [_round("r1", 1, 2), _round("r2", 8, 0)])
     front, back = sum(PARS[:9]), sum(PARS[9:])
     assert response.hole_averages_front_nine == front + 1.0

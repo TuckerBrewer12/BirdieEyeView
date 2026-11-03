@@ -29,8 +29,6 @@ test("a scanned card gets the full width", async ({ landing }) => {
 });
 
 test("mobile nav menu open", async ({ landing, isMobile }) => {
-  // The menu button only exists below the md breakpoint, so there is nothing
-  // to open on the desktop project.
   test.skip(!isMobile, "No menu button at desktop width.");
   await landing.open();
   await landing.openMenu();

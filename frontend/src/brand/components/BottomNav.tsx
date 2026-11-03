@@ -6,16 +6,12 @@ import { Button } from "./Button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./Collapsible";
 
 interface BottomNavProps {
-  /** The tabs along the bar. Four fit a phone. */
   tabs: NavItem[];
-  /** Everything else, in a menu the last tab opens. */
   moreItems?: NavItem[];
   moreLabel?: string;
-  /** Adds a sign-out row to the menu. */
   onSignOut?: () => void;
   signingOut?: boolean;
   renderLink?: RenderLink;
-  /** The nav landmark's name. */
   label?: string;
   className?: string;
 }
@@ -23,11 +19,6 @@ interface BottomNavProps {
 const tabClass =
   "flex flex-1 flex-col items-center justify-center gap-0.5 text-meta font-semibold text-muted-foreground transition-colors data-active:text-primary data-panel-open:text-primary [&_svg]:size-5 [&_svg]:stroke-icon data-active:[&_svg]:stroke-icon-active data-panel-open:[&_svg]:stroke-icon-active";
 
-/**
- * The phone's tab bar: a few tabs and a "More" tab that opens a menu of the
- * rest above the bar. Taking any link folds the menu, as does tapping the
- * dimmed page or pressing Escape. `AppShell` pins it to the bottom edge.
- */
 function BottomNav({
   tabs,
   moreItems = [],
@@ -60,7 +51,6 @@ function BottomNav({
       data-slot="bottom-nav"
       className={cn("relative", className)}
     >
-      {/* Raised so the bar stays clear of the dimmed page while the menu is open. */}
       <div className="relative z-10 border-t border-border bg-card pb-safe-bottom">
         <div className="flex h-14 items-stretch">
           {tabs.map((item) => (

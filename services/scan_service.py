@@ -1,5 +1,3 @@
-"""Scan save service — orchestrates course resolution, par lookup, and round creation."""
-
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
@@ -22,7 +20,6 @@ class ScanService:
         self._course_api = course_api or GolfCourseAPIService()
 
     async def save_reviewed_scan(self, req: SaveRoundRequest) -> Round:
-        """Top-level orchestrator: resolve course, build scores, create round."""
         course, course_id = await self._resolve_course(req)
         par_by_hole, handicap_by_hole = self._build_par_lookup(req, course)
         hole_scores = self._build_hole_scores(req, par_by_hole, handicap_by_hole)
@@ -48,7 +45,6 @@ class ScanService:
     async def _resolve_course(
         self, req: SaveRoundRequest
     ) -> Tuple[Optional[Course], Optional[str]]:
-        """5-tier course resolution. Returns (course, course_id_str)."""
         ext_id, location = await self._maybe_lookup_external_id_from_name(req)
         if ext_id:
             req.external_course_id = ext_id
@@ -57,11 +53,10 @@ class ScanService:
         tees = self._build_tees(req)
         scan_holes = req.course_holes or []
 
-        # Tier 0: explicit course_id (user selected from DB — skip fuzzy match)
         if req.course_id:
             try:
                 course = await self._db.courses.get_course(req.course_id)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise ValueError("Selected course_id is invalid.") from exc
             if course:
                 if course.user_id and str(course.user_id) != str(req.user_id):
@@ -72,8 +67,6 @@ class ScanService:
                 return course, str(course.id)
             raise ValueError(f"Selected course not found: {req.course_id}")
 
-        # Tier 0.5: confirmed external match from UI
-        # Create local row keyed by external_course_id if missing.
         if req.external_course_id:
             course = await self._db.courses.find_course_by_external_id(
                 req.external_course_id,
@@ -85,8 +78,6 @@ class ScanService:
                 await self._fill_gaps(course, scan_holes, tees, req.user_id)
                 return course, str(course.id)
 
-            # If provider ID is new but a local course already exists by name,
-            # backfill that row instead of creating a duplicate.
             if req.course_name:
                 existing_by_name = await self._db.courses.find_course_by_name(
                     req.course_name, req.course_location, req.user_id
@@ -100,7 +91,6 @@ class ScanService:
         if not req.course_name:
             return None, None
 
-        # Tier 1: master exists
         course = await self._db.courses.find_course_by_name(req.course_name, req.course_location)
         if course:
             course = await self._maybe_backfill_external_id(course, req)
@@ -108,7 +98,6 @@ class ScanService:
             await self._fill_gaps(course, scan_holes, tees, req.user_id)
             return course, str(course.id)
 
-        # Tier 2: current user's own course
         course = await self._db.courses.find_user_course_by_name(
             req.course_name, req.course_location, req.user_id
         )
@@ -118,7 +107,6 @@ class ScanService:
             await self._fill_gaps(course, scan_holes, tees, req.user_id)
             return course, str(course.id)
 
-        # Tier 3: nobody has it → create user-owned course from scan data
         holes = [
             Hole(
                 number=h.hole_number,
@@ -174,7 +162,7 @@ class ScanService:
                 continue
             try:
                 hole_num = int(k)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 continue
             out[hole_num] = int(v)
         return out
@@ -229,12 +217,10 @@ class ScanService:
         if not course or not (course.tees or []):
             return tee_box
 
-        # Exact match already uses canonical course naming.
         exact = course.get_tee(tee_box)
         if exact and exact.color:
             return exact.color
 
-        # Try matching the selected scanned tee to an existing course tee by yardage.
         chosen_scan_tee = None
         if tee_box:
             for tee in scan_tees:
@@ -246,7 +232,6 @@ class ScanService:
             if matched:
                 return matched
 
-        # Fallback: color token extraction (e.g. "WHITE M: 69.1/123" -> "White").
         if tee_box:
             token = self._extract_tee_color_token(tee_box)
             if token:
@@ -254,7 +239,6 @@ class ScanService:
                     if course_tee.color and self._extract_tee_color_token(course_tee.color) == token:
                         return course_tee.color
 
-        # If user didn't pick a tee, choose the only course tee when unambiguous.
         if not tee_box:
             available = [t.color for t in course.tees if t.color]
             if len(available) == 1:
@@ -269,15 +253,11 @@ class ScanService:
     async def _maybe_lookup_external_id_from_name(
         self, req: SaveRoundRequest
     ) -> Tuple[Optional[str], Optional[str]]:
-        """Best-effort provider lookup when UI did not send external_course_id.
-
-        Returns (external_course_id, location) to apply on the request; both None if not found.
-        """
         if req.external_course_id or not req.course_name:
             return None, None
         try:
             rows = await self._course_api.search_external_courses(req.course_name, limit=8)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.info("External lookup skipped for '%s': %s", req.course_name, exc)
             return None, None
         if not rows:
@@ -285,7 +265,6 @@ class ScanService:
 
         target = _normalize_course_name(req.course_name)
 
-        # Prefer exact-ish normalized name match; avoid weak fallback binds.
         chosen = None
         best_overlap = 0.0
         target_tokens = set(target.split())
@@ -327,7 +306,6 @@ class ScanService:
         course: Course,
         req: SaveRoundRequest,
     ) -> Course:
-        """Fill external_course_id on an existing local course when available."""
         if (
             req.external_course_id
             and course.id
@@ -344,7 +322,6 @@ class ScanService:
         return course
 
     def _build_tees(self, req: SaveRoundRequest) -> List[TeeInput]:
-        """Normalised tee list: all_tees preferred, single played tee as fallback."""
         if req.all_tees:
             return [t for t in req.all_tees if t.color]
         if req.tee_box:
@@ -363,7 +340,6 @@ class ScanService:
         tees: List[TeeInput],
         user_id: str,
     ) -> None:
-        """Fill null fields on an existing course from scan data (fill-only, never overwrites)."""
         if not course.id or not course.user_id or str(course.user_id) != str(user_id):
             return
         for t in tees:
@@ -375,10 +351,6 @@ class ScanService:
     def _build_par_lookup(
         self, req: SaveRoundRequest, course: Optional[Course]
     ) -> Tuple[dict, dict]:
-        """Build hole→par and hole→handicap dicts.
-
-        Course holes are authoritative; scan holes fill any remaining gaps.
-        """
         par_by_hole: dict = {}
         handicap_by_hole: dict = {}
         if course and course.holes:
@@ -402,7 +374,6 @@ class ScanService:
         par_by_hole: dict,
         handicap_by_hole: dict,
     ) -> List[HoleScore]:
-        """Build HoleScore list with par_played/handicap_played populated from lookup."""
         hole_scores = []
         for hs in req.hole_scores:
             hs_dict = hs.model_dump()
@@ -412,14 +383,11 @@ class ScanService:
                     hs_dict["par_played"] = par_by_hole.get(hole_num)
                 if hs_dict.get("handicap_played") is None:
                     hs_dict["handicap_played"] = handicap_by_hole.get(hole_num)
-            # Guard against putts > strokes (can occur when score row is to-par
-            # and the to-par→absolute conversion didn't happen at extract time).
             strokes = hs_dict.get("strokes")
             putts = hs_dict.get("putts")
             if strokes is not None and putts is not None and putts > strokes:
                 par_played = hs_dict.get("par_played")
                 if par_played is not None:
-                    # Try interpreting strokes as a to-par value and convert.
                     absolute = par_played + strokes
                     if 1 <= absolute <= 15 and putts <= absolute:
                         hs_dict["strokes"] = absolute
@@ -433,7 +401,6 @@ class ScanService:
     async def _maybe_create_user_tee(
         self, req: SaveRoundRequest, course_id: Optional[str]
     ) -> Optional[str]:
-        """Create a user_tee when tee data was scanned but no master course exists."""
         if req.tee_box and req.tee_yardages and not course_id:
             slope = req.tee_slope_rating if req.tee_slope_rating is not None and 55 <= req.tee_slope_rating <= 155 else None
             rating = req.tee_course_rating if req.tee_course_rating is not None and 55.0 <= req.tee_course_rating <= 85.0 else None

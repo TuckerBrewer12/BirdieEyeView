@@ -1,10 +1,6 @@
 import type { ComponentType, MouseEventHandler, ReactElement, ReactNode } from "react";
 import { useRender } from "@base-ui/react/use-render";
 
-/**
- * One destination in the app's navigation. The caller decides which one is
- * `active` — the kit never reads the route.
- */
 interface NavItem {
   href: string;
   label: string;
@@ -12,19 +8,10 @@ interface NavItem {
   active?: boolean;
 }
 
-/**
- * Turns an href into the element a nav link renders as — `<Link to={href} />`
- * for the app's router. Unset, links are plain anchors.
- */
 type RenderLink = (href: string) => ReactElement;
 
 const plainAnchor: RenderLink = (href) => <a href={href} />;
 
-/**
- * A nav link in whatever element the caller's router needs. It stays a link
- * (not a button) so assistive tech reads it as navigation, and carries
- * `aria-current="page"` plus `data-active` when it is the current page.
- */
 function NavLink({
   item,
   renderLink = plainAnchor,

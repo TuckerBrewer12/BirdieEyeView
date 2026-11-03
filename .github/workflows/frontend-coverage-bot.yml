@@ -26,8 +26,6 @@ jobs:
       run:
         working-directory: frontend
 
-    # Skip drafts, skip on the `skip-bots` label, and skip fork PRs, which
-    # cannot read CURSOR_API_KEY.
     if: >-
       github.event.pull_request.draft == false &&
       !contains(github.event.pull_request.labels.*.name, 'skip-bots') &&

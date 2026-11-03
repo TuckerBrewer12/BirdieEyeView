@@ -43,7 +43,6 @@ export interface RoundsPageViewModel extends RoundsUiState {
   selectSortKey: (key: SortKey) => void;
   toggleSortDirection: () => void;
   closeLink: () => void;
-  /** Whether this round's course-link panel is the one showing. */
   isLinkOpen: (roundId: string) => boolean;
   toggleLink: (roundId: string) => void;
 }
@@ -73,8 +72,6 @@ export function useRoundsPageViewModel(
     [linkingRoundId],
   );
 
-  // Only one panel is open at a time, so tapping the link icon on the open row
-  // closes it and tapping any other row moves the panel there.
   const toggleLink = useCallback((roundId: string) => {
     setLinkingRoundId((open) => (open === roundId ? null : roundId));
   }, []);

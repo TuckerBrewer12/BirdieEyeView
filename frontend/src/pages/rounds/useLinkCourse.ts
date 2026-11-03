@@ -8,11 +8,6 @@ export interface LinkCourseVariables {
   courseId: string;
 }
 
-/**
- * Links a round to a saved course. The cache updates live here, so every
- * caller gets them: the rounds list swaps in the updated round, and any cached
- * detail for that round refetches.
- */
 export function useLinkCourse(
   userId: string,
   repository: RoundsRepository = roundsRepository,

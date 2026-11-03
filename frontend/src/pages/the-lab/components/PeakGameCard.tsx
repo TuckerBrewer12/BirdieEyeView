@@ -17,14 +17,11 @@ import { PEAK_IMPACT_LABEL, peakGapNote, signedStrokes } from "../present";
 
 interface PeakGameCardProps {
   peak: PeakGame;
-  /** Birdies, bogeys and doubles a round in the best rounds against every round. Empty with no score types. */
   impacts: PeakImpact[];
-  /** The goal as the golfer picked it: "Break 80". */
   goalLabel: string | null;
   className?: string;
 }
 
-/** The golfer's best three rounds: their average, how close it is to the goal, and what they did differently. */
 export function PeakGameCard({ peak, impacts, goalLabel, className }: PeakGameCardProps) {
   return (
     <Card data-slot="peak-game-card" className={className}>

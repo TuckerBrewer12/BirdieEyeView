@@ -70,13 +70,10 @@ export const pebbleBeachCourse: CourseDto = courseResponse({
 
 const [hmbRound, , , scanned] = storedRounds;
 
-/** Round 1 with its full course, as GET /rounds/{id} returns it. */
 export const halfMoonBayRound: RoundDto = roundResponse({ ...hmbRound, course: halfMoonBayCourse });
 
-/** Round 4: a scanned card with no linked course. */
 export const scannedRound: RoundDto = roundResponse(scanned);
 
-/** Comparison cohorts for a round: this round first, then the baselines. */
 export const roundComparison: RoundComparisonDto = {
   score: [
     { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 78, secondary_value: null },

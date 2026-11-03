@@ -1,10 +1,6 @@
 import type { HoleScoreDto, RoundDto, RoundSummaryDto, ScoreCountsDto, UserTeeDto } from "../../types/api";
 import { coursePar, courseResponse, type StoredCourse } from "./courseResponses";
 
-/**
- * The fake backend's copy of api/round_responses.py and models/round.py: a round is stored as
- * facts, and every response carries the figures the real server works out from them.
- */
 
 export interface StoredHole {
   hole_number: number;
@@ -42,7 +38,6 @@ function holeHandicap(round: StoredRound, hole: StoredHole): number | null {
   return round.course?.holes.find((h) => h.number === hole.hole_number)?.handicap ?? hole.handicap_played;
 }
 
-/** The course's tee for the round's tee box, else the user's own tee. */
 function teePlayed(round: StoredRound): { total_yardage?: number | null; hole_yardages: Record<string, number> } | null {
   const color = round.tee_box?.toLowerCase();
   const tee = color ? round.course?.tees.find((t) => t.color?.toLowerCase() === color) : undefined;

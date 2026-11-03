@@ -4,7 +4,6 @@ import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { FriendsInboxRobot } from "../inbox/tests/FriendsInboxPage.robot";
 
-/** Screen robot for /social — same idea as an Android Espresso robot. */
 export class SocialRobot {
   private readonly page: Page;
 

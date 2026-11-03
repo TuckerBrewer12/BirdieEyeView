@@ -13,15 +13,10 @@ export interface ScorecardEdits {
 
 interface ScorecardTableProps {
   nine: Nine;
-  /** The nine's own total column — "OUT" or "IN". */
   label: string;
-  /** The round, when this nine closes it: adds the TOT column. */
   round?: Round;
-  /** The tee played, which names the yardage row. */
   teeBox?: string | null;
-  /** Makes scores, putts and greens editable. The nine shown should already carry the edits. */
   edits?: ScorecardEdits;
-  /** Holes whose score is in doubt, like one a scan couldn't read for sure. Their score cell is ringed. */
   toCheck?: readonly number[];
   className?: string;
 }
@@ -35,7 +30,6 @@ function show(value: number | null): string {
   return value == null ? "-" : String(value);
 }
 
-/** "" clears a cell; anything that isn't a number leaves it as it was. */
 function parseCount(text: string): number | null | undefined {
   if (text === "") return null;
   const value = Number.parseInt(text, 10);
@@ -84,13 +78,11 @@ function CountInput({
         const parsed = parseCount(e.target.value);
         if (parsed !== undefined) onChange(parsed);
       }}
-      // Block, so it centres under the hole number like the rest of the column.
       className={cn("mx-auto block h-7 w-8 px-0 text-center text-sm font-semibold", className)}
     />
   );
 }
 
-/** Rings a score cell whose score is in doubt. */
 const CHECK_RING = "ring-2 ring-destructive ring-offset-1 ring-offset-card";
 
 function ScoreCell({ hole, edits, check }: { hole: HoleScore; edits?: ScorecardEdits; check: boolean }) {
@@ -111,7 +103,6 @@ function ScoreCell({ hole, edits, check }: { hole: HoleScore; edits?: ScorecardE
   }
   return (
     <td className="px-1 py-1" data-check={check || undefined}>
-      {/* The fill sits behind a clear input: an input's own dark background would cover it. */}
       <div className={cn("mx-auto w-8 rounded-lg", hole.kind && scoreFillClass(hole.kind))}>
         <CountInput
           label={check ? `Hole ${hole.hole} strokes, to check` : `Hole ${hole.hole} strokes`}
@@ -129,15 +120,6 @@ function ScoreCell({ hole, edits, check }: { hole: HoleScore; edits?: ScorecardE
   );
 }
 
-/**
- * One nine of a scorecard: par, the score marked the way a card marks it, and to par, with the
- * nine's totals (and the round's, on the closing nine). Every figure is the server's, or
- * Round.previewEdits' while editing or before a scan is saved.
- *
- * Yards, handicap, putts, greens and shots-to-green appear only when a hole has them (putts and
- * greens always do while editing), because a scanned card often has none, and a row of dashes
- * reads as a failed scan rather than a card that never held the data.
- */
 function ScorecardTable({ nine, label, round, teeBox, edits, toCheck, className }: ScorecardTableProps) {
   const holes = nine.holes;
   const showYards = holes.some((hole) => hole.yardage != null);

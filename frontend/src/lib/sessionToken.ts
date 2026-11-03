@@ -9,7 +9,6 @@ export interface TokenStorage {
 
 let storage: TokenStorage | null = null;
 
-/** The app edge passes localStorage on web, or another store on native. */
 export function configureSessionStorage(next: TokenStorage | null): void {
   storage = next;
 }

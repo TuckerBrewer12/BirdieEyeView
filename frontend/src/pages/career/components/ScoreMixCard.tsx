@@ -8,7 +8,6 @@ interface ScoreMixCardProps {
   className?: string;
 }
 
-/** How every hole the golfer has played split across score kinds. */
 export function ScoreMixCard({ mix, holesPlayed, className }: ScoreMixCardProps) {
   return (
     <Card data-slot="score-mix-card" className={className}>

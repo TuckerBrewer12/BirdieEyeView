@@ -25,11 +25,6 @@ const more = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-/**
- * Compose-style @Preview for AppShell. The shell pins its navs to the screen,
- * so the preview fills the window instead of the stage; capture it at a wide
- * and a phone viewport to see each nav.
- */
 export default function AppShellPreview() {
   return (
     <div data-testid="brand-frame" className="fixed inset-0 overflow-auto bg-background">

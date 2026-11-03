@@ -1,12 +1,4 @@
 #!/usr/bin/env python3
-"""CI must never regenerate screenshot baselines.
-
-A workflow that runs Playwright with `--update-snapshots` (or the
-`test:screenshots:update` script) rewrites the committed PNGs instead of
-comparing against them. The visual-regression gate would then pass no matter
-what the UI looks like. Baselines are refreshed locally, on purpose, and
-reviewed as part of the diff.
-"""
 from __future__ import annotations
 
 import sys

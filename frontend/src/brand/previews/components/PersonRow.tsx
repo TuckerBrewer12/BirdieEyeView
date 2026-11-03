@@ -8,7 +8,6 @@ const people = [
   { id: "c", name: "Sam", email: null },
 ];
 
-/** Compose-style @Preview for PersonRow. */
 export default function PersonRowPreview() {
   return (
     <>

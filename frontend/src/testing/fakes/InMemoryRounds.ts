@@ -15,10 +15,8 @@ import { courseResponse } from "./courseResponses";
 import { roundResponse, storedFromRound, summaryResponse, type StoredRound } from "./roundResponses";
 
 export interface InMemoryRoundsSeed {
-  /** The round list, in order, as the facts the server stores. */
   rounds?: StoredRound[];
   courses?: CourseSummaryDto[];
-  /** Full rounds; one sharing an id with a listed round replaces its facts. */
   detailRounds?: RoundDto[];
   fullCourses?: CourseDto[];
   courseAnalytics?: CourseAnalyticsDto | null;
@@ -28,7 +26,6 @@ export interface InMemoryRoundsSeed {
   updateError?: string | null;
   deleteError?: string | null;
   searchError?: string | null;
-  /** Saving a scan fails with this. */
   saveError?: string | null;
   coursesError?: string | null;
   searchDelaysMs?: number[];
@@ -63,11 +60,8 @@ function applyUpdate(round: StoredRound, body: UpdateRoundBody): StoredRound {
   };
 }
 
-/** One in-memory golf store. FakeRoundsRepository and FakeBackend both use this. */
 export class InMemoryRounds {
-  /** Round facts by id; every response is built from these, the way the server builds it. */
   private stored: Map<string, StoredRound>;
-  /** Ids of the rounds the list returns, in order. */
   private listed: string[];
   courses: CourseSummaryDto[];
   fullCourses: CourseDto[];
@@ -79,7 +73,6 @@ export class InMemoryRounds {
   deleteError: string | null;
   searchError: string | null;
   saveError: string | null;
-  /** Every scan saved, as sent. */
   savedScans: SaveScanRequestDto[] = [];
   coursesError: string | null;
   searchDelaysMs: number[];
@@ -144,10 +137,6 @@ export class InMemoryRounds {
     return roundResponse(this.find(roundId));
   }
 
-  /**
-   * Saves a checked scan as a new round at the top of the list, the way `/api/scan/save`
-   * does: linked to the course when one was picked, else under the name read off the card.
-   */
   saveScan(body: SaveScanRequestDto): string {
     if (this.saveError) throw new Error(this.saveError);
     const id = `scanned-${this.stored.size + 1}`;

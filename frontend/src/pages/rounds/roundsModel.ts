@@ -19,7 +19,6 @@ export interface SortOption {
   label: string;
 }
 
-/** The fields the rounds list reads, and nothing else. */
 export interface ListedRound {
   date: string | null;
   score: number | null;
@@ -27,11 +26,6 @@ export interface ListedRound {
   course: { name: string | null } | null;
 }
 
-/**
- * The one place a sort key's label is written. Typing it as Record<SortKey, …>
- * makes a new key a compile error until it is labelled here, and SORT_OPTIONS is
- * derived from it so the menu cannot drift from the label on the trigger.
- */
 export const SORT_LABELS: Record<SortKey, string> = {
   date: "Date",
   total_score: "Score",
@@ -43,26 +37,22 @@ export const SORT_OPTIONS: readonly SortOption[] = (
   Object.keys(SORT_LABELS) as SortKey[]
 ).map((value) => ({ value, label: SORT_LABELS[value] }));
 
-/** Best always lists the lowest score first, whatever sort the golfer chose. */
 export function effectiveSort(mode: FilterMode, chosen: Sort): Sort & { locked: boolean } {
   return mode === "best"
     ? { key: "total_score", ascending: true, locked: true }
     : { ...chosen, locked: false };
 }
 
-/** Picking a sort key leaves Best, since Best would ignore it. */
 export function modeAfterPickingSort(mode: FilterMode): FilterMode {
   return mode === "best" ? "all" : mode;
 }
 
-/** Picking the current key flips it. A new key starts high-to-low, except course names, which read A–Z. */
 export function sortAfterPicking(current: Sort, picked: SortKey): Sort {
   return current.key === picked
     ? { key: picked, ascending: !current.ascending }
     : { key: picked, ascending: picked === "course_name" };
 }
 
-/** All, L20 and Best, then the six most-played courses. */
 export function courseChips(rounds: readonly ListedRound[]): CourseFilterOption[] {
   const counts = new Map<string, number>();
   for (const r of rounds) {
@@ -88,7 +78,6 @@ function sortValue(round: ListedRound, key: SortKey): number | string | null {
   }
 }
 
-/** The rounds a chip, a search and a sort leave on screen, in order. Rounds with no value sort last. */
 export function filterRounds<R extends ListedRound>(
   rounds: readonly R[],
   mode: FilterMode,

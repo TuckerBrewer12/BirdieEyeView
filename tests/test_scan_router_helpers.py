@@ -163,8 +163,6 @@ def test_build_round_works_out_greens_from_strokes_and_putts_without_a_shots_row
     payload, _ = scan._build_round_from_parsed_rows(parsed, course_model=None, to_par_scoring=False)
 
     greens = [hole["green_in_regulation"] for hole in payload["hole_scores"][:4]]
-    # Two shots to the green on a par 4 is a green hit, four is not; with no putts or no
-    # score there's nothing to work it out from, and a green the card marked stands.
     assert greens == [True, False, None, False]
 
 
@@ -280,7 +278,6 @@ async def test_extract_scan_hides_provider_configuration_errors(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_extract_scan_returns_the_typed_scan(monkeypatch):
-    """Extract sends a ScanResponse, so the generated client types the card, its confidence and its levels."""
     image_bytes = BytesIO()
     Image.new("RGB", (20, 10), "white").save(image_bytes, format="PNG")
     upload = _make_upload("card.png", "image/png", image_bytes.getvalue())

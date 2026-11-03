@@ -73,7 +73,6 @@ describe("useCareerPageViewModel", () => {
         (milestone) => milestone.kind === "putt-break" && milestone.threshold === 30,
       )?.achieved;
 
-    // Reached on 2026/3/1: inside the last year in June 2026, outside it by April 2027.
     expect(breakThirty(now)).toBe(true);
     expect(breakThirty(later)).toBe(false);
     expect(later.result.current.career?.windows.lifetime.putting.find((m) => m.kind === "putt-break" && m.threshold === 30)?.achieved).toBe(true);

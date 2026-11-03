@@ -2,34 +2,21 @@ import { cn } from "@/brand/cn";
 import { chartColors, chartLayout, chartTickStyle, colors, opacityWash, space } from "@/brand/theme";
 
 interface RadarAxis {
-  /** What the axis measures: "GIR", "Par 3s". */
   label: string;
-  /** 0–100, further out being better. */
   value: number;
-  /** The comparison on the same 0–100 scale. Leave it off every axis to draw the shape alone. */
   benchmark?: number | null;
-  /** The figure under the label, in the shape's colour: "52%". */
   valueLabel?: string;
-  /** The comparison's figure, after "vs". */
   benchmarkLabel?: string;
 }
 
 interface RadarChartProps {
-  /** Three or more axes, drawn clockwise from the top. */
   axes: RadarAxis[];
-  /** Shown when there are fewer than three axes to draw. */
   empty?: string;
-  /** A phone's width: a narrower drawing, so the labels scale down less. */
   compact?: boolean;
   className?: string;
   "aria-label"?: string;
 }
 
-/**
- * A shape across a handful of measures: one spoke each, the value plotted out from the
- * centre, joined into a filled outline. A comparison, when every axis has one, is drawn
- * dashed behind it. Each spoke is labelled with its figures, so there is no tooltip.
- */
 export function RadarChart({
   axes,
   empty = "Not enough data",
@@ -112,8 +99,6 @@ export function RadarChart({
           const y = cy + (R + labelGap) * Math.sin(angle(i));
           const dx = x - cx;
           const anchor = Math.abs(dx) < 1 ? "middle" : dx > 0 ? "start" : "end";
-          // Two lines of text: above the centre they end at the label point, below it they
-          // start there, and level with it they straddle it.
           const dy = y - cy;
           const top = dy < -1 ? y - valueGap : dy > 1 ? y + valueGap / 2 : y - valueGap / 2 + valueGap / 4;
           return (

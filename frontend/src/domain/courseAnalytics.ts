@@ -8,60 +8,45 @@ import type {
 import { Round, type RoundSummary } from "./round";
 import { scoreMixFrom, type ScoreKind } from "./score";
 
-/** One round's score on a trend, oldest first. */
 export interface ScorePoint {
-  /** The round's place in the golfer's history, unique on the trend. */
   roundIndex: number;
-  /** When the round was played, if the card had a date. */
   date: string | null;
   score: number | null;
   toPar: number | null;
 }
 
-/** A golfer's average score on one hole, and how far over or under par that is. */
 export interface HoleToPar {
   hole: number;
   averageScore: number;
   averageToPar: number;
 }
 
-/** How a hole tends to go: the share of rounds (0-100) ending in each kind of score. */
 export type HoleScoreMix = { hole: number; rounds: number } & Record<ScoreKind, number>;
 
-/** One figure on one hole: a GIR rate, average putts, or how far the score swings. */
 export interface HoleFigure {
   hole: number;
-  /** Null when the server couldn't work it out (too few rounds for a spread). */
   value: number | null;
 }
 
-/** The golfer's average strokes summed over the front nine, the back nine and the course. */
 export interface NineAverages {
   front: number | null;
   back: number | null;
   total: number | null;
 }
 
-/** A golfer's figures at one course. The server works out every one. */
 export interface CourseAnalytics {
   roundsPlayed: number;
   scoringAverage: number | null;
   bestScore: number | null;
   worstScore: number | null;
-  /** The golfer's rounds here, newest first. */
   rounds: RoundSummary[];
-  /** Every round here, oldest first. Unscored rounds have a null score. */
   scoreTrend: ScorePoint[];
-  /** In course order. */
   holeToPar: HoleToPar[];
-  /** The per-hole averages summed over each nine and every hole, as the server added them. Null for a nine not played. */
   nineAverages: NineAverages;
-  /** Hardest hole first. */
   difficulty: HoleToPar[];
   scoreMix: HoleScoreMix[];
   gir: HoleFigure[];
   putts: HoleFigure[];
-  /** Least consistent hole first. */
   variance: HoleFigure[];
 }
 

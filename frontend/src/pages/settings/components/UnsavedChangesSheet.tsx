@@ -13,17 +13,13 @@ import {
 interface UnsavedChangesSheetProps {
   open: boolean;
   saving: boolean;
-  /** Why the last save failed, or null. */
   error: string | null;
   onSave: () => void;
   onDiscard: () => void;
-  /** Closing the sheet keeps the player on the page. */
   onStay: () => void;
-  /** Hosts the sheet in its parent instead of over the page, for the preview. */
   contained?: boolean;
 }
 
-/** Asks what to do with unsaved settings when the player heads off the page. */
 export function UnsavedChangesSheet({
   open,
   saving,

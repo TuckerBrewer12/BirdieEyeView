@@ -6,20 +6,13 @@ interface ChartTabsProps<T> {
   tabs: { key: string; label: string }[];
   value: string;
   onValueChange: (key: string) => void;
-  /** Every chart, laid out as a grid from md up. */
   charts: T[];
-  /** The active tab's charts, shown one tab at a time below md. */
   selectedCharts: T[];
   keyFor: (chart: T) => string;
   renderChart: (chart: T) => ReactNode;
-  /** Below md: stack the tab's charts, or set small ones two to a row when the tab has several. */
   mobileLayout?: "stack" | "pairs";
 }
 
-/**
- * A set of charts that is too many for a phone. Below md it shows a row of tabs and
- * the active tab's charts; from md up it shows every chart in a two-column grid.
- */
 function ChartTabs<T>({
   tabs,
   value,

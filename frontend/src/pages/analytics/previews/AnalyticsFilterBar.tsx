@@ -11,7 +11,6 @@ export default function AnalyticsFilterBarPreview() {
   return (
     <>
       <AnalyticsFilterBar filters={filters} onChange={setFilters} playedCourses={courses} hasHomeCourse />
-      {/* Narrowed to one course this year: the clear button shows. */}
       <AnalyticsFilterBar
         filters={{ limit: 20, timeframe: "ytd", courseId: courses[0].id }}
         onChange={() => {}}

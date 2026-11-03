@@ -1,5 +1,3 @@
--- Migration 005: add users.friendships for friend requests + accepted connections
-
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS users.friendships (
@@ -12,7 +10,6 @@ CREATE TABLE IF NOT EXISTS users.friendships (
     CHECK (requester_id <> addressee_id)
 );
 
--- One friendship row max per user-pair regardless of direction.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_friendships_unique_pair
     ON users.friendships (
         LEAST(requester_id, addressee_id),

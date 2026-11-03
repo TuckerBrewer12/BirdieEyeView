@@ -31,18 +31,12 @@ const more = [
 const at = (items: typeof tabs, href: string) =>
   items.map((item) => ({ ...item, active: item.href === href }));
 
-/**
- * Compose-style @Preview for BottomNav. AppShell pins the bar to the screen's
- * foot in the app; here each sits in the stage, the first with room above it
- * for the More menu.
- */
 export default function BottomNavPreview() {
   return (
     <>
       <div className="flex h-preview flex-col justify-end">
         <BottomNav tabs={at(tabs, "/")} moreItems={more} onSignOut={() => {}} />
       </div>
-      {/* On a page behind More, the More tab is the lit one. */}
       <BottomNav tabs={tabs} moreItems={at(more, "/courses")} onSignOut={() => {}} />
     </>
   );

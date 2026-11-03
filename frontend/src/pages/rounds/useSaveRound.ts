@@ -8,11 +8,6 @@ export interface SaveRoundVariables {
   edits: RoundEdits;
 }
 
-/**
- * Saves an edited round. The detail cache takes the saved round, and every
- * screen that shows its figures (the list, comparison, career, dashboard)
- * refetches.
- */
 export function useSaveRound(
   userId: string,
   repository: RoundsRepository = roundsRepository,

@@ -51,7 +51,6 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_db(request: Request) -> DatabaseManager:
-    """FastAPI dependency that provides the DatabaseManager."""
     db_manager = getattr(request.app.state, "db_manager", None)
     if db_manager is None:
         raise HTTPException(503, SERVICE_UNAVAILABLE)
@@ -63,7 +62,6 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: DatabaseManager = Depends(get_db),
 ):
-    """Decode the Bearer JWT and return the authenticated User."""
     token = credentials.credentials if credentials else request.cookies.get(get_access_token_cookie_name())
     if not token:
         raise HTTPException(401, "Not authenticated")
@@ -82,7 +80,6 @@ async def get_optional_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: DatabaseManager = Depends(get_db),
 ):
-    """Best-effort auth dependency that returns None when unauthenticated/invalid."""
     token = credentials.credentials if credentials else request.cookies.get(get_access_token_cookie_name())
     if not token:
         return None

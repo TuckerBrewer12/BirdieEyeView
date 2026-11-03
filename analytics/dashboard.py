@@ -1,9 +1,3 @@
-"""The dashboard's figures, worked out from the player's recent rounds.
-
-Every function takes the rounds (oldest first) or the trend rows analytics already builds from
-them, so the dashboard and the analytics page read the same numbers.
-"""
-
 from typing import Any, Dict, List, Literal, Optional
 
 from analytics import handicap as hcap
@@ -19,13 +13,11 @@ HandicapDirection = Literal["up", "down", "flat"]
 
 
 def _pooled_pct(rows: List[Dict[str, Any]], successes: str, chances: str) -> Optional[float]:
-    """A rate pooled over every chance in the rows, not averaged per round."""
     total = sum(r[chances] or 0 for r in rows)
     return sum(r[successes] or 0 for r in rows) / total * 100 if total > 0 else None
 
 
 def scoring_average(rounds: List[Round], window: Optional[int] = None) -> Optional[float]:
-    """Average score over the last `window` scored rounds, or all of them."""
     scores = [s for s in (r.calculate_total_score() for r in rounds) if s is not None]
     if window is not None:
         scores = scores[-window:]
@@ -33,7 +25,6 @@ def scoring_average(rounds: List[Round], window: Optional[int] = None) -> Option
 
 
 def lowest_round(rounds: List[Round]) -> Optional[Round]:
-    """The lowest-scoring round; on a tie, the first of them."""
     best: Optional[Round] = None
     best_score: Optional[int] = None
     for r in rounds:
@@ -46,9 +37,6 @@ def lowest_round(rounds: List[Round]) -> Optional[Round]:
 def scoring_average_change(
     rounds: List[Round], window: int = RECENT_ROUNDS, full_window: bool = False
 ) -> Optional[float]:
-    """How far the last `window` rounds' average sits from the whole window's, to a tenth.
-    Negative means the recent rounds came in lower. With `full_window`, null until `window`
-    rounds have a score."""
     overall = scoring_average(rounds)
     recent = scoring_average(rounds, window)
     if overall is None or recent is None:
@@ -59,7 +47,6 @@ def scoring_average_change(
 
 
 def recent_form(rounds: List[Round], window: int = RECENT_ROUNDS) -> Dict[str, Optional[float]]:
-    """GIR, scrambling and up-and-down rates, and putts per 18, over the last `window` rounds."""
     recent = rounds[-window:]
     gir_rows = [r for r in analytics.gir_per_round(recent) if r["total_gir"] is not None and r["holes_played"]]
     putt_rows = [r for r in analytics.putts_per_round(recent) if r["total_putts"] is not None and r["holes_played"]]
@@ -73,18 +60,12 @@ def recent_form(rounds: List[Round], window: int = RECENT_ROUNDS) -> Dict[str, O
 
 
 def putts_shown(recent_putts_per_18: Optional[float], average_putts: Optional[float]) -> Dict[str, Any]:
-    """The putts figure the dashboard shows, and how good it is.
-
-    The last five rounds' putts per 18 when they have putts, else the average over every round.
-    Rated by `insights.putts_rating`, so the dashboard and the analytics page agree.
-    """
     putts = recent_putts_per_18 if recent_putts_per_18 is not None else average_putts
     rating: Optional[Rating] = putts_rating(putts) if putts is not None else None
     return {"per_round": putts, "rating": rating}
 
 
 def score_mix(rounds: List[Round]) -> Dict[str, Any]:
-    """Percent of classified holes in each score bucket, and how many holes that is."""
     counts = {kind: 0 for kind in SCORE_KINDS}
     for round_ in rounds:
         for kind, count in round_.get_score_counts().items():
@@ -97,7 +78,6 @@ def score_mix(rounds: List[Round]) -> Dict[str, Any]:
 
 
 def handicap_change(handicap_trend: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """How the index moved: the change over the last six rated rounds, and the direction over the window."""
     indexes = [r["handicap_index"] for r in handicap_trend if r["handicap_index"] is not None]
     delta = round(indexes[-1] - indexes[max(0, len(indexes) - 6)], 1) if len(indexes) >= 2 else None
     direction: Optional[HandicapDirection] = None
@@ -113,7 +93,6 @@ def whs_breakdown(
     differentials: List[Dict[str, Any]],
     handicap_index: Optional[float],
 ) -> Dict[str, Any]:
-    """The rounds in the WHS window, newest first, which ones count, and their average differential."""
     by_index = {d["round_index"]: d for d in differentials}
     score_rows = analytics.score_trend(rounds)
     rows = []
@@ -154,10 +133,6 @@ def _lowest_threshold(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
 
 
 def lifetime_milestones(achievements: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """The best score, fewest putts and longest par streak, newest first.
-
-    The first round under par stands in for the best score break once there is one.
-    """
     rounds = achievements.get("round_milestones", {}).get("lifetime", {})
     putting = achievements.get("putting_milestones", {}).get("lifetime", {})
     streak = achievements.get("best_performance_streaks_events", {}).get("lifetime", {}).get("longest_par_streak")

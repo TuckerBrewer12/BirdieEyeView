@@ -32,7 +32,6 @@ export class FakeRoundsRepository implements RoundsRepository {
     return RoundModel.detailFromDto(this.store.getRound(roundId));
   }
 
-  /** Builds the same requests the real repository sends, and plays them against the store. */
   async saveRound(round: RoundDetail, edits: RoundEdits): Promise<RoundDetail> {
     const { linkCourseId, body } = updateRequestFrom(round, edits);
     if (linkCourseId) this.store.linkCourse(round.id, linkCourseId);

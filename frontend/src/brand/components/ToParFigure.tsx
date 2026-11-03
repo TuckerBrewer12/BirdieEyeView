@@ -1,13 +1,6 @@
 import { cn } from "@/brand/cn";
 import { toParDisplay, toParLabel, toParTextClass } from "@/brand/theme";
 
-/**
- * A to-par figure. The type and the score color live here; callers pass the
- * number.
- *
- * `figure` is the small caption under a score (`text-body-sm`, even par
- * recedes). `stat` is the round header, where level par reads as birdie.
- */
 function ToParFigure({
   toPar,
   size = "figure",

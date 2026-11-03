@@ -5,7 +5,6 @@ import { SCORE_KINDS } from "@/domain/score";
 import type { HoleScoreMix } from "@/domain/courseAnalytics";
 import { AXIS_TICK, type TooltipFormatter } from "./holeBarParts";
 
-/** How each hole tends to go: one stacked bar per hole, split by score kind, to 100%. */
 export function HoleScoreMixBars({ rows }: { rows: HoleScoreMix[] }) {
   return (
     <div data-slot="hole-score-mix-bars" className="h-chart">

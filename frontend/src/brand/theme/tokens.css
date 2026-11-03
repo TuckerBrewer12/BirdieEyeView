@@ -18,37 +18,26 @@
   --background: #f8faf8;
   --foreground: #1a2e1a;
   --card: #ffffff;
-  /* Ink on a card, an accent wash or the secondary fill is the page's ink.
-     These alias --foreground, so each mode sets it once. */
   --card-foreground: var(--foreground);
   --muted: #f4f6f0;
   --muted-foreground: #6b7765;
   --border: #e4e9e1;
-  /* A field's outline is the ordinary border. */
   --input: var(--border);
   --ring: #2d7a3a;
   --primary: #2d7a3a;
   --primary-foreground: #ffffff;
   --secondary: #f4f6f0;
   --secondary-foreground: var(--foreground);
-  /* The secondary fill under the pointer: a touch of ink mixed in. Both
-     inputs follow the mode, so this needs no dark copy. */
   --secondary-hover: color-mix(in oklch, var(--secondary), var(--foreground) 5%);
   --accent: #e8f5e9;
   --accent-foreground: var(--foreground);
   --destructive: #dc2626;
-  /* Ambient shadow for lifted surfaces; alpha so it reads on any backdrop. */
   --shadow: rgb(15 23 42 / 0.10);
 
-  /* Chart chrome. Data colours are the --score-* tokens; these are the
-     surrounding furniture, which does follow the colour mode. On a light page
-     the axis is the par grey; dark mode dims it below. */
   --chart-axis: var(--score-par-base);
   --chart-muted: #e5e7eb;
   --chart-accent: #4ade80;
 
-  /* The app's side rail: a deep green that runs top to bottom, with white ink
-     on it. It is the brand's own surface, so it stays the same in dark mode. */
   --sidebar: #1e3d25;
   --sidebar-end: #152d1b;
   --sidebar-foreground: #ffffff;
@@ -56,10 +45,6 @@
   --brand-font-sans: "DM Sans", system-ui, sans-serif;
   --brand-font-mono: "DM Mono", monospace;
 
-  /* Score colors encode data, so they do not flip with the color mode.
-     `base` is the saturated fill; `muted` is the wash behind a score on a
-     light surface. `text`, the ink on the page, is the fill colour itself.
-     Reach for colors.score.eagle.base / .muted in TypeScript. */
   --score-eagle-base: #f59e0b;
   --score-eagle-muted: #fef3c7;
   --score-eagle-on-base: #ffffff;
@@ -96,18 +81,12 @@
   --score-quad-on-muted: #4c1d95;
   --score-quad-text: var(--score-quad-base);
 
-  /* Scorecard rows. The layout picker's chips and the landing hero's demo of
-     it share one set, so the demo shows the colours the picker will use. Fixed
-     like the score colours: they label rows, not surfaces. */
   --scan-row-name: #475569;
   --scan-row-score: var(--primary);
   --scan-row-putts: #0369a1;
   --scan-row-shots: var(--score-quad-base);
   --demo-card-header: #2d4c3b;
 
-  /* Tee boxes. A tee's colour names a real marker on the course, so like the
-     score colours these do not flip with the colour mode. `on` is the ink
-     that reads on the swatch. */
   --tee-black: #1f2421;
   --tee-black-on: #ffffff;
   --tee-white: #ffffff;
@@ -131,7 +110,6 @@
   --tee-brown: #8b5a2b;
   --tee-brown-on: #ffffff;
 
-  /* Type. Roles, not pixel sizes — components use text-caption, not text-[9px]. */
   --brand-text-caption: 9px;
   --brand-text-meta: 10px;
   --brand-text-label: 11px;
@@ -154,8 +132,6 @@
   --brand-tracking-eyebrow: 1.4px;
   --brand-tracking-section: 0.18em;
 
-  /* Radius. --radius is the shadcn base; named steps and the two calc()
-     derivatives (addon, control) live here so components never subtract px. */
   --radius: 0.5rem;
   --brand-radius-sm: 0.25rem;
   --brand-radius-md: 0.375rem;
@@ -170,7 +146,6 @@
   --brand-radius-addon: calc(var(--radius) - var(--brand-space-nudge));
   --brand-radius-control: calc(var(--radius) - var(--brand-space-nudge-sm));
 
-  /* Space and sizes that are not on the 4px scale. */
   --brand-space-bar: 1.5px;
   --brand-space-hair: 2.5px;
   --brand-space-chip: 3px;
@@ -178,31 +153,25 @@
   --brand-space-tight: 5px;
   --brand-space-addon: 0.3rem;
   --brand-space-addon-kbd: 0.15rem;
-  /* The phone's home-indicator strip, which a bar pinned to the bottom pads past. */
   --brand-space-safe-bottom: env(safe-area-inset-bottom, 0px);
   --brand-size-date-rail: 54px;
   --brand-size-preview: 390px;
   --brand-size-chart: 180px;
   --brand-size-chart-compact-w: 320px;
   --brand-size-chart-compact: 210px;
-  /* Width a hole-by-hole chart needs before it scrolls sideways. */
   --brand-size-chart-wide: 45rem;
   --brand-size-sheet: 28rem;
-  /* Widest a target of results grows. */
   --brand-size-target: 15rem;
   --brand-size-icon-xs: 11px;
   --brand-size-hole-w: 30px;
   --brand-size-hole-h: 22px;
-  /* A profile bar's height in its row, by score: the worse the hole, the taller. */
   --brand-size-profile-eagle: 28%;
   --brand-size-profile-birdie: 40%;
   --brand-size-profile-par: 52%;
   --brand-size-profile-bogey: 72%;
   --brand-size-profile-double: 92%;
   --brand-size-profile-worse: 100%;
-  /* Width a full scorecard needs before it scrolls sideways. */
   --brand-size-scorecard: 43.75rem;
-  /* Chart measures. Recharts only takes numbers, so chart.ts mirrors these and tokens.test.ts keeps them equal. */
   --brand-size-bar-max: 28px;
   --brand-size-ring-inner: 50px;
   --brand-size-ring-outer: 68px;
@@ -210,20 +179,17 @@
   --brand-size-gauge-outer: 72px;
   --brand-size-sparkline-w: 300px;
   --brand-size-sparkline-h: 56px;
-  /* The radar drawn at a phone's width: its drawing, its rim, and the gaps from rim to label to figures. */
   --brand-size-radar-compact-w: 360px;
   --brand-size-radar-compact-h: 300px;
   --brand-size-radar-compact-r: 72px;
   --brand-space-radar-compact-label: 16px;
   --brand-sparkline-stroke: 2px;
   --brand-ring-width: 3px;
-  /* Icon line weight in the tab bar: lighter at rest, heavier on the current tab. */
   --brand-stroke-icon: 1.75;
   --brand-stroke-icon-active: 2.25;
   --brand-border-width: 1px;
 
   --brand-opacity-recessed: 35%;
-  /* Soft fill under a sparkline. */
   --brand-opacity-wash: 22%;
 }
 
@@ -238,18 +204,13 @@
   --secondary: #222426;
   --accent: #1a3a1f;
   --destructive: #f87171;
-  /* Black reads as nothing on a dark page, so lift with a stronger halo. */
   --shadow: rgb(0 0 0 / 0.55);
 
   --chart-axis: #6b7280;
   --chart-muted: #2a2d30;
-
-  /* --primary and the sidebar keep their light values: the brand green and
-     its rail are the same in both modes. */
 }
 
 @theme inline {
-  /* Tailwind's default sm, pinned here so breakpoints.ts can mirror it. */
   --breakpoint-sm: 40rem;
 
   --color-background: var(--background);
@@ -273,8 +234,6 @@
   --color-sidebar-end: var(--sidebar-end);
   --color-sidebar-foreground: var(--sidebar-foreground);
 
-  /* text-score-eagle, bg-score-eagle-base, text-score-eagle-on-base,
-     bg-score-eagle-muted. A dynamic key picks its classes from scoreFillClass / scoreOnFillClass. */
   --color-score-eagle: var(--score-eagle-text);
   --color-score-eagle-base: var(--score-eagle-base);
   --color-score-eagle-on-base: var(--score-eagle-on-base);
@@ -333,9 +292,6 @@
   --color-tee-brown: var(--tee-brown);
   --color-tee-brown-on: var(--tee-brown-on);
 
-  /* Shadows track --shadow, so they deepen in dark mode. shadow-card and
-     shadow-hairline are the kit's; sm/md/lg keep Tailwind's geometry but take
-     --shadow too, so a pasted shadcn component lifts in both modes. */
   --shadow-card: 0 6px 20px var(--shadow);
   --shadow-hairline: 0 1px 0 var(--shadow);
   --shadow-sm: 0 1px 3px 0 var(--shadow), 0 1px 2px -1px var(--shadow);

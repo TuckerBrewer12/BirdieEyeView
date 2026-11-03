@@ -152,7 +152,6 @@ export const api = {
     return fetchJSON<AnalyticsDto>(`/stats/analytics/${userId}?${p}`);
   },
 
-  /** The golfer's last `limit` rounds held up against a handicap's shape, their peak's, or a friend's. */
   getBenchmarkComparison: (userId: string, target: BenchmarkTarget, limit = 20) => {
     const p = new URLSearchParams({ against: target.against, limit: String(limit) });
     if (target.against === "handicap") p.set("handicap", String(target.handicap));

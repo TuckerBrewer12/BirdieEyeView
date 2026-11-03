@@ -18,25 +18,19 @@ const SWATCH: Record<SparklineTone, string> = {
 };
 
 interface SparklineSeries {
-  /** One value per round, oldest first. Null leaves a gap. */
   values: (number | null)[];
   tone?: SparklineTone;
-  /** Shown in a legend under the line once any series has one. */
   label?: string;
 }
 
 interface SparklineProps {
   series: SparklineSeries[];
-  /** The value range to draw against. Defaults to the data's own range, padded. */
   domain?: [number, number];
-  /** Shade under the first series. */
   fill?: boolean;
-  /** A dashed line at this value: the average the server worked out for the line. None without it. */
   reference?: number | null;
   className?: string;
 }
 
-/** Which way a figure has been heading: a small line, no axes, the latest value marked. */
 export function Sparkline({ series, domain, fill = false, reference = null, className }: SparklineProps) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
   const { width: W, height: H, pad, stroke, dot } = chartLayout.sparkline;
@@ -45,7 +39,6 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
   const all = series.flatMap((s) => s.values);
   if (length < 2 || knownValues(all).length < 2) return null;
 
-  // 15% headroom either side keeps the line off the edge.
   const x = indexScale(length, pad, W - pad);
   const y = scaleLinear()
     .domain(domain ?? paddedExtent(all, { ratio: 0.15 })!)

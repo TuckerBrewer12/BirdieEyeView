@@ -3,10 +3,8 @@ import { messageFrom } from "@/lib/userFacingErrors";
 import type { AuthActions, SessionCheck } from "../authActions";
 import { useResendVerification } from "../useResendVerification";
 
-/** How often the page asks whether the link has been opened, in another tab or on a phone. */
 const VERIFY_POLL_MS = 3000;
 
-/** What Register hands over on the way here. */
 export interface VerifyPendingArrival {
   email?: string | null;
   flash?: string | null;
@@ -15,17 +13,12 @@ export interface VerifyPendingArrival {
 export interface VerifyPendingViewModel {
   email: string;
   setEmail: (email: string) => void;
-  /** Register's "check your email", or the server's word that another link went out. */
   notice: string | null;
   error: string | null;
   resending: boolean;
   resend: () => void;
 }
 
-/**
- * Waits for the golfer to open the link. The session is checked on arrival and every few seconds
- * after; once it is signed in and verified, `onVerified` runs and the page has nothing left to do.
- */
 export function useVerifyPendingViewModel(
   auth: Pick<AuthActions, "resendVerification" | "refreshSession">,
   session: SessionCheck,

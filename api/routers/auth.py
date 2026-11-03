@@ -1,5 +1,3 @@
-"""Authentication endpoints: register/login/logout/me + verification/reset flows."""
-
 import hashlib
 import logging
 import os
@@ -151,7 +149,7 @@ async def _issue_verification_token(db: DatabaseManager, user: User, request: Re
     verify_url = _build_verification_url(request, raw_token)
     try:
         send_verification_email(user.email or "", verify_url)
-    except Exception:  # noqa: BLE001
+    except Exception:
         logger.exception(
             "Auth verification email send failed: user_id=%s email_fp=%s",
             user.id,
@@ -422,7 +420,7 @@ async def forgot_password(
             reset_url = _build_password_reset_url(request, raw_token)
             try:
                 send_password_reset_email(user.email or "", reset_url)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 logger.exception(
                     "Auth forgot-password email send failed: user_id=%s email_fp=%s ip=%s",
                     user.id,
@@ -449,7 +447,6 @@ async def forgot_password(
             request_ip,
         )
 
-    # Always generic to avoid account enumeration.
     return MessageResponse(message="If this account exists, a password reset link has been sent.")
 
 

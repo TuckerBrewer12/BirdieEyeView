@@ -1,7 +1,6 @@
 import { test as base, expect } from "../../../../testing/playwright";
 import { AuthScreenRobot, type AuthSeed } from "../../tests/AuthScreen.robot";
 
-/** Screen robot for `/verify-pending`, where Register sends a new account. */
 export class VerifyPendingRobot extends AuthScreenRobot {
   async open(email: string | null = "sam@example.com", seed: AuthSeed = {}): Promise<this> {
     const path = email == null ? "/verify-pending" : `/verify-pending?email=${encodeURIComponent(email)}`;
@@ -14,14 +13,12 @@ export class VerifyPendingRobot extends AuthScreenRobot {
     return this;
   }
 
-  /** The golfer opens the link in another tab or on a phone: the server now has a verified session. */
   verifyElsewhere(): this {
     if (!this.backend) throw new Error("Open the screen first.");
     this.backend.signedOut = false;
     return this;
   }
 
-  /** Home, once the screen's session check sees the account verified. It checks every few seconds. */
   async isSentHome(): Promise<this> {
     await this.isAt("/", 10_000);
     await expect(this.page.getByRole("heading", { name: "Verify your email" })).toHaveCount(0);

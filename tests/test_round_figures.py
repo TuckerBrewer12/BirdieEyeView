@@ -1,5 +1,3 @@
-"""The Round model is the one place a round's figures are worked out."""
-
 import json
 from datetime import date
 
@@ -85,7 +83,6 @@ def test_a_nine_leaves_out_figures_it_cannot_finish():
     holes = _holes([4] * 8 + [None])
     holes[0].putts = 2
     round_ = Round(hole_scores=holes)
-    # Hole 9 is unplayed, so the nine has a par but no score; hole 2 is scored without putts.
     assert round_.nine_par(1, 9) == 36
     assert round_.nine_to_par(1, 9) is None
     assert round_.nine_putts(1, 9) is None

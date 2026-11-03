@@ -14,10 +14,6 @@ const SAVER_ICON: Record<Saver["kind"], LucideIcon> = {
   par5_opportunity: TrendingUp,
 };
 
-/**
- * One place to find strokes: what it is worth a round, the server's headline and detail,
- * and how much of the gap to the goal it would close.
- */
 export function SaverCard({ saver }: { saver: Saver }) {
   const Icon = SAVER_ICON[saver.kind];
   const share = Math.min(100, saver.shareOfGap);

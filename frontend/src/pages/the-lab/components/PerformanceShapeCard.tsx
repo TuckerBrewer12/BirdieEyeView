@@ -25,7 +25,6 @@ import {
 export interface PerformanceShapeCardProps {
   mode: RadarMode;
   onModeChange: (mode: RadarMode) => void;
-  /** Peak needs a goal and two scored rounds. */
   peak: PeakGame | null;
   goalLabel: string | null;
   scoringAverage: number | null;
@@ -37,11 +36,9 @@ export interface PerformanceShapeCardProps {
   selectedFriend: FriendOption | null;
   onSelectFriend: (friendId: string) => void;
   friendComparison: FriendComparison | null;
-  /** The axes the golfer has figures for, against the comparison when there is one. */
   radar: RadarEntry[];
   compared: boolean;
   missingAxes: string[];
-  /** On a phone: the radar's compact drawing. */
   compact?: boolean;
 }
 
@@ -57,7 +54,6 @@ function friendNote(state: FriendComparison, friend: FriendOption | null): strin
   return null;
 }
 
-/** The golfer's shape on the radar, beside the controls that pick what it is held up against. */
 export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
   const { mode, peak, comparison, selectedFriend, friendComparison, radar, compared, missingAxes } = props;
   const legend = compared ? benchmarkName(mode, comparison, selectedFriend) : null;

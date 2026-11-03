@@ -11,7 +11,6 @@ import { storedRounds } from "../../../testing/fixtures/rounds";
 
 const FROZEN_NOW = "2026-06-15T18:00:00.000Z";
 
-/** Screen robot for / — same idea as an Android Espresso robot. */
 export class DashboardRobot {
   private readonly page: Page;
 
@@ -91,7 +90,6 @@ export class DashboardRobot {
     return this;
   }
 
-  /** The phone's goal card; the desktop grid has its own copy. */
   async tapGoal(): Promise<this> {
     await this.page.locator("[data-slot=goal-card]").locator("visible=true").tap();
     return this;
@@ -102,7 +100,6 @@ export class DashboardRobot {
     return this;
   }
 
-  /** The phone's trend card; the desktop grid has its own copy of the chart. */
   private trendCard() {
     return this.page.locator("[data-slot=card]").filter({ hasText: "Score History" }).locator("visible=true");
   }
@@ -117,7 +114,6 @@ export class DashboardRobot {
     return this;
   }
 
-  /** Taps the chart part-way across: 0 is the first round, 1 the last. */
   async tapTrendAt(fraction: number): Promise<this> {
     const chart = this.trendCard().locator("[data-slot=score-handicap-trend] svg");
     await chart.scrollIntoViewIfNeeded();

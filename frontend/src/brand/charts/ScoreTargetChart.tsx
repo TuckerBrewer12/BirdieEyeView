@@ -4,9 +4,7 @@ import { chartLayout, colors, opacityWash, scoreKindLabel, space, toParLabel } f
 import { scoreKind, type ScoreKind } from "@/domain/score";
 
 interface ScoreTargetShot {
-  /** The hole's score to par. */
   toPar: number;
-  /** What the tooltip says about the hole: "372 yds". */
   label?: string;
 }
 
@@ -18,10 +16,8 @@ interface ScoreTargetChartProps {
 
 type Ring = Exclude<ScoreKind, "quad">;
 
-/** Drawn from the outside in, so each ring sits on the one around it. */
 const RINGS: Ring[] = ["triple", "double", "bogey", "par", "birdie", "eagle"];
 
-/** Where a kind's ring starts and ends, as shares of the radius. Quads land in the triple ring. */
 function ringBand(kind: ScoreKind): [number, number] {
   const { rings } = chartLayout.target;
   const ring: Ring = kind === "quad" ? "triple" : kind;
@@ -30,18 +26,12 @@ function ringBand(kind: ScoreKind): [number, number] {
   return [inner, rings[ring]];
 }
 
-/** A ring as a path with its middle cut out. The bullseye is a full disc. */
 function ringPath(c: number, inner: number, outer: number): string {
   const disc = (r: number, sweep: 0 | 1) =>
     `M ${c + r} ${c} A ${r} ${r} 0 1 ${sweep} ${c - r} ${c} A ${r} ${r} 0 1 ${sweep} ${c + r} ${c} Z`;
   return inner === 0 ? disc(outer, 0) : `${disc(outer, 0)} ${disc(inner, 1)}`;
 }
 
-/**
- * Holes played as dots on a target: the better the score, the nearer the bullseye. Each score
- * kind is a ring in its own colour, and every hole lands somewhere in its ring. The spot in the
- * ring is fixed by the hole's place in the list, so the picture is the same every time.
- */
 export function ScoreTargetChart({ shots, className, "aria-label": ariaLabel }: ScoreTargetChartProps) {
   const { size, stroke, dot, dotHover, hitRadius } = chartLayout.target;
   const c = size / 2;
@@ -50,7 +40,6 @@ export function ScoreTargetChart({ shots, className, "aria-label": ariaLabel }: 
   const dots = shots.map((shot, i) => {
     const kind = scoreKind(shot.toPar, 0)!;
     const [inner, outer] = ringBand(kind);
-    // Spread the dots with two cheap hashes of the index: one for how far out, one for the angle.
     const r = (inner + (((i * 1234567891) % 1000) / 1000) * (outer - inner)) * c;
     const theta = (((i * 2654435761) % 1000) / 1000) * Math.PI * 2;
     return { ...shot, kind, cx: c + r * Math.cos(theta), cy: c + r * Math.sin(theta) };

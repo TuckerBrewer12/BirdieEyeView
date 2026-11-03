@@ -12,13 +12,11 @@ export interface CourseDetailPageViewModel {
   loadError: string | null;
   course: CourseDto | null;
   courseName: string;
-  /** Course only, until the golfer has played here. */
   pageTabs: TabItem<PageTabKey>[];
   activeTab: PageTabKey;
   selectPageTab: (key: string) => void;
 }
 
-/** The course page: which tab is showing. The scorecard and performance sections own the rest. */
 export function useCourseDetailPageViewModel(
   userId: string,
   courseId: string | undefined,

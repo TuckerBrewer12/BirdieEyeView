@@ -1,9 +1,3 @@
-"""Conversion between asyncpg database rows and Pydantic domain models.
-
-Centralizes all mapping logic between the normalized DB schema
-and the nested Pydantic models.
-"""
-
 import json
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -12,12 +6,7 @@ from uuid import UUID
 from models import Course, Hole, Tee, HoleScore, Round, User, UserTee
 
 
-# ================================================================
-# Row -> Model (reads)
-# ================================================================
-
 def hole_from_row(row) -> Hole:
-    """courses.holes row -> Hole model."""
     return Hole(
         number=row["hole_number"],
         par=row["par"],
@@ -26,7 +15,6 @@ def hole_from_row(row) -> Hole:
 
 
 def tee_from_row(tee_row, yardage_rows: list) -> Tee:
-    """courses.tees row + courses.tee_yardages rows -> Tee model."""
     hole_yardages = {r["hole_number"]: r["yardage"] for r in yardage_rows}
     return Tee(
         color=tee_row["color"],
@@ -42,7 +30,6 @@ def course_from_rows(
     tee_rows: list,
     yardage_rows_by_tee: Dict[UUID, list],
 ) -> Course:
-    """Assemble a full Course from DB rows across 4 tables."""
     holes = sorted(
         [hole_from_row(r) for r in hole_rows],
         key=lambda h: h.number or 0,
@@ -64,7 +51,6 @@ def course_from_rows(
 
 
 def hole_score_from_row(row) -> HoleScore:
-    """users.hole_scores row -> HoleScore model."""
     return HoleScore(
         hole_number=row["hole_number"],
         strokes=row["strokes"],
@@ -85,7 +71,6 @@ def round_from_rows(
     tee_color: Optional[str] = None,
     user_tee: Optional["UserTee"] = None,
 ) -> Round:
-    """Assemble a Round from DB rows + pre-loaded Course."""
     hole_scores = sorted(
         [hole_score_from_row(r) for r in hole_score_rows],
         key=lambda hs: hs.hole_number or 0,
@@ -104,7 +89,6 @@ def round_from_rows(
 
 
 def round_from_summary_row(row) -> Round:
-    """A round-list row -> a Round with its hole scores, and a course that carries par but no tees."""
     raw = row["hole_scores"]
     holes = (json.loads(raw) if isinstance(raw, str) else raw) or []
     course = None
@@ -135,7 +119,6 @@ def round_from_summary_row(row) -> Round:
 
 
 def user_from_row(user_row, rounds: Optional[List[Round]] = None) -> User:
-    """users.users row -> User model."""
     return User(
         id=str(user_row["id"]),
         friend_code=user_row.get("friend_code"),
@@ -152,12 +135,7 @@ def user_from_row(user_row, rounds: Optional[List[Round]] = None) -> User:
     )
 
 
-# ================================================================
-# Model -> Row dict (writes)
-# ================================================================
-
 def course_to_row(course: Course, user_id: Optional[UUID] = None) -> dict:
-    """Course -> dict for courses.courses INSERT."""
     return {
         "name": course.name,
         "external_course_id": course.external_course_id,
@@ -169,17 +147,14 @@ def course_to_row(course: Course, user_id: Optional[UUID] = None) -> dict:
 
 
 def hole_to_row(hole: Hole, course_id: UUID) -> tuple:
-    """Hole -> tuple for courses.holes INSERT (for executemany)."""
     return (course_id, hole.number, hole.par, hole.handicap)
 
 
 def tee_to_row(tee: Tee, course_id: UUID) -> tuple:
-    """Tee -> tuple for courses.tees INSERT."""
     return (course_id, tee.color, tee.slope_rating, tee.course_rating)
 
 
 def tee_yardages_to_rows(tee: Tee, tee_id: UUID) -> list:
-    """Tee.hole_yardages -> list of tuples for courses.tee_yardages INSERT."""
     return [
         (tee_id, hole_num, yardage)
         for hole_num, yardage in sorted(tee.hole_yardages.items())
@@ -187,7 +162,6 @@ def tee_yardages_to_rows(tee: Tee, tee_id: UUID) -> list:
 
 
 def hole_score_to_row(hs: HoleScore, round_id: UUID, hole_id: Optional[UUID]) -> tuple:
-    """HoleScore -> tuple for users.hole_scores INSERT (hole_id may be None)."""
     return (
         round_id, hole_id, hs.hole_number,
         hs.strokes, hs.net_score, hs.putts, hs.shots_to_green,
@@ -202,7 +176,6 @@ def round_to_row(
     course_id: Optional[UUID] = None,
     tee_id: Optional[UUID] = None,
 ) -> dict:
-    """Round -> dict for users.rounds INSERT."""
     return {
         "user_id": user_id,
         "course_id": course_id,
@@ -219,7 +192,6 @@ def round_to_row(
 
 
 def user_to_row(user: User) -> dict:
-    """User -> dict for users.users INSERT."""
     return {
         "friend_code": user.friend_code,
         "name": user.name,
@@ -230,12 +202,10 @@ def user_to_row(user: User) -> dict:
 
 
 def user_tee_from_row(row) -> UserTee:
-    """users.user_tees row -> UserTee model."""
     import json as _json
     hole_yardages = row["hole_yardages"] or {}
     if isinstance(hole_yardages, str):
         hole_yardages = _json.loads(hole_yardages)
-    # Keys come back as strings from JSONB; convert to int
     return UserTee(
         id=str(row["id"]),
         user_id=str(row["user_id"]),
@@ -249,7 +219,6 @@ def user_tee_from_row(row) -> UserTee:
 
 
 def user_tee_to_row(ut: UserTee) -> dict:
-    """UserTee -> dict for users.user_tees INSERT."""
     return {
         "user_id": UUID(ut.user_id),
         "course_id": UUID(ut.course_id) if ut.course_id else None,

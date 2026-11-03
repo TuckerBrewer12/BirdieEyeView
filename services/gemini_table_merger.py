@@ -1,12 +1,5 @@
-"""Gemini Flash post-processor: detects and merges split scorecard tables.
-
-Mistral OCR sometimes returns the front 9 and back 9 as separate tables
+"""Mistral OCR sometimes returns the front 9 and back 9 as separate tables
 (caused by the physical fold crease or two-column layout on the card).
-This service sends the raw markdown to Gemini Flash and asks it to merge
-the halves into one clean 18-hole table before the row parser runs.
-
-Falls back to the original markdown if GOOGLE_API_KEY is unset or if the
-Gemini call fails, so the pipeline degrades gracefully.
 """
 
 from __future__ import annotations
@@ -49,14 +42,13 @@ DATA TO MERGE:
 
 
 async def merge_split_tables(markdown: str) -> str:
-    """Send *markdown* to Gemini Flash; return merged table (or original on failure)."""
     api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         logger.debug("GOOGLE_API_KEY not set; skipping Gemini merge step")
         return markdown
 
     try:
-        from google import genai  # imported lazily so missing package doesn't break startup
+        from google import genai
 
         client = genai.Client(api_key=api_key)
         prompt = _MERGE_PROMPT.format(markdown=markdown)

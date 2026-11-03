@@ -1,11 +1,9 @@
--- Migration 009: auth hardening (verification/reset tokens + user verification state)
 BEGIN;
 
 ALTER TABLE users.users
     ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMP;
 
--- Backfill existing accounts to avoid locking out already-created users.
 UPDATE users.users
 SET email_verified = TRUE,
     email_verified_at = COALESCE(email_verified_at, created_at)

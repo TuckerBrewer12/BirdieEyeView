@@ -4,7 +4,6 @@ import { populatedCourses } from "@/testing/fixtures/courses";
 
 const [halfMoonBay, blueRock, pebbleBeach] = populatedCourses.map(courseSummaryFrom);
 
-/** Compose-style @Preview for CoursePreview. */
 export default function CoursePreviewPreview() {
   return (
     <>

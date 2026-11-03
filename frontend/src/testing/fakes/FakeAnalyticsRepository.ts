@@ -5,19 +5,14 @@ import { playedCourseFrom, type AnalyticsRepository } from "../../pages/analytic
 import { analyticsForCourse } from "./analyticsResponses";
 
 export interface FakeAnalyticsSeed {
-  /** Every course's rounds. */
   analytics: AnalyticsDto;
-  /** A course's own response, keyed by course id. A course not here answers with no rounds. */
   analyticsByCourse?: Record<string, AnalyticsDto>;
   playedCourses?: PlayedCourseDto[];
   user?: UserDto;
-  /** Rounds in full, for the best round's card. A round not here fails to load. */
   detailRounds?: RoundDto[];
 }
 
-/** Answers from seeded responses, as the server sends them. */
 export class FakeAnalyticsRepository implements AnalyticsRepository {
-  /** What each analytics load asked for, in order. */
   readonly requests: AnalyticsFilters[] = [];
   loadError: Error | null = null;
   private readonly seed: FakeAnalyticsSeed;
@@ -28,7 +23,6 @@ export class FakeAnalyticsRepository implements AnalyticsRepository {
     this.seed = seed;
   }
 
-  /** Analytics loads wait until `finish()`, so a load in flight can be seen. */
   hold(): void {
     this.held = new Promise((resolve) => {
       this.release = resolve;

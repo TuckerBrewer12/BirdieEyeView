@@ -1,5 +1,3 @@
-"""The analytics and dashboard responses carry what the stats functions work out, typed."""
-
 import importlib.util
 from datetime import datetime
 from pathlib import Path
@@ -22,8 +20,6 @@ _spec.loader.exec_module(sample_golfer)
 
 
 def _two_rounds():
-    """Two rounds on a par-72 course (par 3s, then 4s, then 5s): a 72 with 36 putts and 10 greens,
-    then an 81 with 27 putts and 9 greens."""
     course = Course(
         id="course-1",
         name="Demo Course",
@@ -46,7 +42,6 @@ def test_analytics_response_works_out_the_figures_the_page_shows():
 
     assert response.kpis.average_putts == 31.5
     assert [row.rolling_average for row in response.score_trend] == [72.0, 76.5]
-    # 36 holes: 6 birdies, 17 pars, 11 bogeys, 2 doubles.
     assert response.score_mix == ScoreMix(birdie=16.67, par=47.22, bogey=30.56, double=5.56)
     assert [insight.model_dump() for insight in response.insights] == [
         {"kind": "best_par", "category": "scoring", "trend": "down", "par": 5, "average_to_par": -0.75, "holes": 8},
@@ -55,11 +50,10 @@ def test_analytics_response_works_out_the_figures_the_page_shows():
     ]
     assert response.notable_achievements.scoring_records.lifetime.lowest_round == 72
     assert (response.kpis.three_putts_per_round, response.kpis.three_putt_rate) == (0.0, 0.0)
-    assert response.kpis.scoring_average_change is None  # under five rounds
+    assert response.kpis.scoring_average_change is None
     peak = response.peak_game
     assert [(r.round_id, r.score) for r in peak.rounds] == [("r1", 72), ("r2", 81)]
     assert peak.average == 76.5
-    # Both rounds are the peak, so it matches the average on every kind of hole.
     assert [(i.kind, i.strokes) for i in peak.impacts] == [("birdies", 0.0), ("bogeys", 0.0), ("doubles", 0.0)]
 
 
@@ -68,7 +62,7 @@ def test_analytics_response_marks_milestones_against_the_last_year_ending_today(
     breaks = lambda response: response.notable_achievements.round_milestones  # noqa: E731
 
     now = breaks(analytics_response(rounds, rounds, today=datetime(2026, 2, 15)))
-    assert now.one_year.new_personal_records_achieved_count == 8  # breaking 120 down to 75, all in round 1
+    assert now.one_year.new_personal_records_achieved_count == 8
     assert all(row.achievement.in_window for row in now.lifetime.score_breaks if row.achievement)
 
     later = breaks(analytics_response(rounds, rounds, today=datetime(2027, 3, 1)))
@@ -78,7 +72,6 @@ def test_analytics_response_marks_milestones_against_the_last_year_ending_today(
 
 @pytest.fixture
 def season():
-    """The demo tour's golfer: 24 rounds over three rated courses, oldest first."""
     rounds = sample_golfer._season()
     return rounds, sample_golfer._database(rounds), sample_golfer.USER
 
@@ -91,7 +84,6 @@ async def _analytics(season, limit=50) -> AnalyticsResponse:
 @pytest.mark.asyncio
 async def test_analytics_response_validates_for_a_season(season):
     response = await _analytics(season)
-    # What goes over the wire reads back into the model unchanged.
     wire = jsonable_encoder(response)
     assert AnalyticsResponse.model_validate(wire) == response
     assert response.kpis.total_rounds == 24
@@ -140,7 +132,6 @@ async def test_dashboard_carries_the_trends_analytics_draws_for_the_last_20(seas
 
     assert isinstance(dashboard, DashboardResponse)
     assert len(dashboard.score_trend) == 20
-    # Analytics adds a rolling average to each round; the dashboard doesn't draw one.
     assert [row.model_dump() for row in dashboard.score_trend] == [
         row.model_dump(exclude={"rolling_average"}) for row in trends.score_trend
     ]
@@ -148,7 +139,6 @@ async def test_dashboard_carries_the_trends_analytics_draws_for_the_last_20(seas
     assert dashboard.scrambling_trend == trends.scrambling_trend
     assert dashboard.up_and_down_trend == trends.up_and_down_trend
     assert all(row.differential_status != "unrated" for row in dashboard.handicap_trend)
-    # The best of the five rounds the dashboard lists, which need not be the best ever.
     best_recent = min(dashboard.recent_rounds, key=lambda r: r.total_score)
     assert dashboard.best_recent_round_id == best_recent.id
 

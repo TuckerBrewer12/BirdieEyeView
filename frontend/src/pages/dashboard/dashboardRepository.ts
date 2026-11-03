@@ -4,7 +4,6 @@ import { api } from "@/lib/api";
 import type { DashboardDto } from "@/types/api";
 
 export interface DashboardRepository extends GoalReportRepository, Pick<UserRepository, "getUser"> {
-  /** The dashboard's figures, trend series included. */
   getDashboard(userId: string): Promise<DashboardDto>;
 }
 

@@ -40,29 +40,21 @@ export interface DashboardPageViewModel {
   loading: boolean;
   error: Error | null;
   refetch: () => void;
-  /** Score and handicap per round across the window, oldest first. */
   trend: RoundTrendPoint[];
-  /** Scores across the trend window, oldest first. */
   recentScores: number[];
-  /** Null until two rounds have both short-game rates. */
   shortGameTrend: ShortGameTrend | null;
   milestones: Milestone[];
   last20ScoringAvg: number | null;
-  /** L5 minus L20 as the server worked it out: negative when the recent rounds came in lower. */
   scoringAverageChange: number | null;
   handicapDelta: number | null;
-  /** Null until the window has a scored hole. */
   l20ScoreMix: ScoreMix | null;
   mixHoleCount: number;
   hiTrend: HiTrend | null;
   girPct: number | null;
-  /** The last five rounds' score mix. Null until they have a scored hole. */
   recentScoreMix: ScoreMix | null;
   scramblingPct: number | null;
   upAndDownPct: number | null;
-  /** Putts per round: the last five rounds', else every round's, as the server picked them. */
   putts: number | null;
-  /** The server's rating of those putts. Null without putts. */
   puttsRating: PuttsRating | null;
   handicapSheetOpen: boolean;
   openHandicapSheet: () => void;
@@ -70,12 +62,10 @@ export interface DashboardPageViewModel {
   trendView: TrendView;
   setTrendView: (view: TrendView) => void;
   rounds: RoundSummary[];
-  /** The best of the listed rounds, as the server picked it. */
   bestRound: RoundSummary | null;
   recentRounds: RoundSummary[];
   sidebarRounds: RoundSummary[];
   whs: WhsBreakdown;
-  /** Null until the player sets a scoring goal. */
   goal: GoalProgress | null;
 }
 

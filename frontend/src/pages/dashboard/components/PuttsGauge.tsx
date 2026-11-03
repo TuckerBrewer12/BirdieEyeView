@@ -10,13 +10,10 @@ const RATING_FILL: Record<PuttsRating, string> = {
 };
 
 interface PuttsGaugeProps {
-  /** Putts per 18 holes. Unknown draws an empty gauge and a dash. */
   putts: number | null;
-  /** The server's rating of them, which colours the gauge. */
   rating: PuttsRating | null;
 }
 
-/** A half gauge from 20 to 40 putts, filled in the colour of the server's rating. */
 export function PuttsGauge({ putts, rating }: PuttsGaugeProps) {
   const filled = putts != null ? Math.max(20, Math.min(40, putts)) - 20 : 0;
   return (

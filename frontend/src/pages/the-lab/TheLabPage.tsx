@@ -29,7 +29,6 @@ export function TheLabPage({ userId }: { userId: string }) {
           {vm.goalSaveError.message || "Couldn't save your goal."}
         </p>
       )}
-      {/* CSS picks the layout, so the page renders the same on the server and the first paint. */}
       <div className="md:hidden">
         <LabMobileLayout vm={vm} />
       </div>

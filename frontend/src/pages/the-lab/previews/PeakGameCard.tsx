@@ -8,7 +8,6 @@ export default function PeakGameCardPreview() {
   return (
     <>
       <PeakGameCard peak={peak} impacts={impacts} goalLabel="Break 90" />
-      {/* The best rounds already meet a looser goal; no score types to compare. */}
       <PeakGameCard peak={{ ...peak, gapToGoal: -4.3, meetsGoal: true }} impacts={[]} goalLabel="Break 95" />
     </>
   );

@@ -16,12 +16,10 @@ import { roundShareMessage } from "@/domain/share";
 import { useShareRound } from "@/platform/useShareRound";
 
 interface ScanSuccessStepProps {
-  /** The round as saved. */
   round: Round;
   onView: () => void;
 }
 
-/** The card is saved: its score against par, with the round to share or open. */
 export function ScanSuccessStep({ round, onView }: ScanSuccessStepProps) {
   const { cardRef, share, sharing } = useShareRound();
 

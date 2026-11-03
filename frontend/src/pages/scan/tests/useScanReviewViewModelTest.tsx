@@ -123,7 +123,6 @@ describe("useScanReviewViewModel", () => {
   it("works out the golfer's course handicap on a rated tee", () => {
     const teeCard: ScanDto = { ...scannedCard, round: scannedTeeCard };
     const { result } = renderReview(teeCard, { handicapIndex: 10 });
-    // (10 × 133 / 113) + (73.4 − 72) = 13.17, rounded.
     return waitFor(() => expect(result.current.courseHandicap).toBe(13));
   });
 

@@ -8,7 +8,6 @@ export default function SaverCardPreview() {
     <>
       <SaverCard saver={first} />
       <SaverCard saver={second} />
-      {/* A saver the server rates past the whole gap still fills the bar once. */}
       <SaverCard
         saver={{
           kind: "par5_opportunity",

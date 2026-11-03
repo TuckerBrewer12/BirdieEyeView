@@ -22,10 +22,6 @@ const blank: ScanSetupViewModel = {
   reset: noop,
 };
 
-/**
- * Nothing chosen; a search with a match and the typed name to keep; a saved course with its
- * tees, one picked; and a typed name with the tee typed in.
- */
 export default function ScanSetupStepPreview() {
   return (
     <div className="flex max-w-lg flex-col gap-4">

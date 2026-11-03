@@ -5,10 +5,8 @@ import { isUnverifiedSignIn } from "../authModel";
 import { useLogin } from "../useLogin";
 import { useResendVerification } from "../useResendVerification";
 
-/** What the screen that sent the golfer here handed over. */
 export interface LoginArrival {
   email?: string | null;
-  /** Register, reset password and verify pending leave a line to show, such as "Password reset". */
   flash?: string | null;
 }
 
@@ -18,15 +16,12 @@ export interface LoginViewModel {
   password: string;
   setPassword: (password: string) => void;
 
-  /** What went through: the arriving screen's line, or a resent link. */
   notice: string | null;
   error: string | null;
 
   submitting: boolean;
-  /** Signs in; `onSignedIn` runs only if it worked. */
   submit: (onSignedIn: () => void) => void;
 
-  /** Only an unverified account's refusal offers a fresh link. */
   canResendVerification: boolean;
   resending: boolean;
   resendVerification: () => void;

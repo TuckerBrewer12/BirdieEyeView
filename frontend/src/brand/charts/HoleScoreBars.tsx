@@ -4,7 +4,6 @@ import type { HoleSummary } from "@/domain";
 
 interface HoleScoreBarsProps {
   holes: HoleSummary[];
-  /** `strip` is one even row; `profile` stands each bar taller the worse the hole went. */
   variant?: "strip" | "profile";
   className?: string;
 }
@@ -19,7 +18,6 @@ const PROFILE_HEIGHT: Record<ScoreKey, string> = {
   quad: "h-profile-worse",
 };
 
-/** A round at a glance: one bar per hole, coloured by how it was scored. */
 export function HoleScoreBars({ holes, variant = "strip", className }: HoleScoreBarsProps) {
   if (holes.length === 0) return null;
   const profile = variant === "profile";
@@ -30,7 +28,6 @@ export function HoleScoreBars({ holes, variant = "strip", className }: HoleScore
       className={cn("flex", profile ? "h-6 items-end gap-hair" : "h-2.5 gap-bar", className)}
     >
       {holes.map((hole) => {
-        // Par is the baseline, so it recedes and the misses stand out. Unscored holes read as par.
         const kind = hole.kind ?? "par";
         return (
           <div

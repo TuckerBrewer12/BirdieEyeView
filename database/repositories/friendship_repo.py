@@ -1,5 +1,3 @@
-"""CRUD operations for users.friendships."""
-
 import asyncpg
 from typing import List, Optional
 from uuid import UUID
@@ -8,22 +6,18 @@ from database.exceptions import DuplicateError
 
 
 class FriendshipRepositoryDB:
-    """Async CRUD for friendship requests and relationships."""
-
     VALID_STATUSES = {"pending", "accepted", "declined", "blocked"}
 
     def __init__(self, pool: asyncpg.Pool):
         self._pool = pool
 
     async def send_request(self, requester_id: str, addressee_id: str) -> dict:
-        """Create or reopen a friendship request."""
         req = UUID(requester_id)
         adr = UUID(addressee_id)
         if req == adr:
             raise ValueError("Cannot friend yourself")
 
         async with self._pool.acquire() as conn:
-            # Check if pair already exists (any direction)
             row = await conn.fetchrow(
                 """SELECT * FROM users.friendships
                    WHERE (requester_id = $1 AND addressee_id = $2)
@@ -58,7 +52,6 @@ class FriendshipRepositoryDB:
     async def update_status(
         self, friendship_id: str, actor_user_id: str, status: str
     ) -> Optional[dict]:
-        """Update friendship status, enforcing actor permissions."""
         if status not in self.VALID_STATUSES:
             raise ValueError(f"Invalid status: {status}")
         fid = UUID(friendship_id)
@@ -71,9 +64,6 @@ class FriendshipRepositoryDB:
             if not row:
                 return None
 
-            # Permission rules:
-            # - accepted/declined: only addressee can respond to pending request
-            # - blocked: either party can block
             if status in {"accepted", "declined"}:
                 if row["status"] != "pending" or row["addressee_id"] != actor:
                     return None
@@ -88,7 +78,6 @@ class FriendshipRepositoryDB:
             return dict(updated) if updated else None
 
     async def list_for_user(self, user_id: str, status: Optional[str] = None) -> List[dict]:
-        """List friendships where user is requester or addressee."""
         uid = UUID(user_id)
         async with self._pool.acquire() as conn:
             if status:
@@ -123,7 +112,6 @@ class FriendshipRepositoryDB:
             return [dict(r) for r in rows]
 
     async def are_friends(self, user_a_id: str, user_b_id: str) -> bool:
-        """Return True when users have an accepted friendship in either direction."""
         a = UUID(user_a_id)
         b = UUID(user_b_id)
         if a == b:

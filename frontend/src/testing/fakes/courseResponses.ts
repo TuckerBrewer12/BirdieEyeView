@@ -1,9 +1,5 @@
 import type { CourseDto, HoleDto, TeeDto } from "../../types/api";
 
-/**
- * The fake backend's copy of api/course_responses.py and models/course.py: a course is stored
- * as facts, and every response carries the figures the real server works out from them.
- */
 
 export interface StoredTee {
   color: string | null;
@@ -28,7 +24,6 @@ function sum(values: number[]): number {
   return values.reduce((total, value) => total + value, 0);
 }
 
-/** Stored par, else the sum of all 18 holes once every one has a par. */
 export function coursePar(course: StoredCourse): number | null {
   if (course.par != null) return course.par;
   if (course.holes.length !== 18 || course.holes.some((h) => h.par == null)) return null;

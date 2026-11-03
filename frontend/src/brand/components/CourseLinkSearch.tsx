@@ -24,12 +24,10 @@ interface CourseLinkSearchProps {
   onUseCustomName?: (name: string) => void;
   autoFocus?: boolean;
   linkedName?: string;
-  /** Heads the picked course's card. */
   linkedTitle?: string;
   customName?: string;
   onClear?: () => void;
   clearLabel?: string;
-  /** The search input's id, so a FieldLabel outside can name it. */
   inputId?: string;
 }
 

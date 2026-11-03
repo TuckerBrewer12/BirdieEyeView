@@ -1,5 +1,3 @@
-"""Central input validation/sanitization helpers for API entry points."""
-
 from __future__ import annotations
 
 import re
@@ -14,10 +12,9 @@ _SEARCH_ATTACK_RE = re.compile(
 
 
 def ensure_uuid_str(value: str, field_name: str) -> str:
-    """Return canonical UUID string or raise ValueError."""
     try:
         return str(UUID(str(value)))
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise ValueError(f"{field_name} must be a valid UUID.") from exc
 
 
@@ -36,7 +33,6 @@ def sanitize_user_text(
     allow_newlines: bool = False,
     allow_empty: bool = False,
 ) -> str:
-    """Sanitize user-supplied plain text and reject unsafe payloads."""
     text = unicodedata.normalize("NFKC", value or "")
     if not allow_newlines:
         text = text.replace("\r", " ").replace("\n", " ")
@@ -50,7 +46,6 @@ def sanitize_user_text(
         raise ValueError(f"{field_name} must be at most {max_length} characters.")
     if _CONTROL_CHARS_RE.search(text):
         raise ValueError(f"{field_name} contains invalid control characters.")
-    # Reject HTML/script vectors to reduce stored-XSS risk.
     if "<" in text or ">" in text:
         raise ValueError(f"{field_name} cannot contain HTML markup.")
     return text
@@ -70,7 +65,6 @@ def sanitize_search_query(value: str, *, max_length: int = 120) -> str:
 
 
 def sanitize_ocr_text(value: str, *, max_length: int = 300_000) -> str:
-    """Sanitize large OCR text blobs while preserving markdown structure."""
     text = unicodedata.normalize("NFKC", value or "")
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     if len(text) > max_length:
@@ -81,14 +75,6 @@ def sanitize_ocr_text(value: str, *, max_length: int = 300_000) -> str:
 
 
 def normalize_handicap_value(value: object) -> object:
-    """
-    Normalize handicap inputs so '+X' is treated as a plus handicap (stored as -X).
-
-    Examples:
-    - '+3.2' -> -3.2
-    - '12.5' -> '12.5' (left for float parsing)
-    - -2.1   -> -2.1
-    """
     if value is None:
         return None
     if isinstance(value, str):
@@ -109,7 +95,6 @@ def normalize_handicap_value(value: object) -> object:
 
 
 def normalize_course_display_name(value: str) -> str:
-    """Normalize course names to consistent title case for display/storage."""
     text = (value or "").strip()
     if not text:
         return text

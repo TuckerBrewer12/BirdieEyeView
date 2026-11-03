@@ -12,14 +12,12 @@ import {
 
 export interface CourseChartsViewModel {
   charts: CourseChart[];
-  /** The active tab's charts, for the one-tab-at-a-time mobile layout. */
   selectedCharts: CourseChart[];
   chartTab: ChartTabKey;
   chartTabs: TabItem<ChartTabKey>[];
   selectChartTab: (key: string) => void;
 }
 
-/** The hole-by-hole charts at one course, one tab of them at a time on mobile. */
 export function useCourseChartsViewModel(
   userId: string,
   courseId: string,

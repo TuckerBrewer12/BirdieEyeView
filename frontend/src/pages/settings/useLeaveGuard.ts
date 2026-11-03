@@ -2,21 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { useBeforeUnload, useLocation, useNavigate } from "react-router-dom";
 
 export interface LeaveGuard {
-  /** A link off the page was stopped and is waiting on the player. */
   blocked: boolean;
-  /** Stays on the page. */
   stay: () => void;
-  /** Goes where the player was heading. */
   leave: () => void;
 }
 
-/**
- * While `active`, stops the player leaving the page: an in-app link waits on `leave` or `stay`,
- * and closing or reloading the tab asks the browser to confirm. The app uses `BrowserRouter`,
- * which has no blocker of its own, so this listens for the link click itself. Browser Back is not
- * caught: the router handles the pop before any listener here could, so stopping it needs the
- * data router's `useBlocker`.
- */
 export function useLeaveGuard(active: boolean): LeaveGuard {
   const location = useLocation();
   const navigate = useNavigate();

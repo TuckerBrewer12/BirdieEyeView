@@ -3,10 +3,6 @@ import { toPng } from "html-to-image";
 import type { ShareMessage } from "@/domain/share";
 import { downloadDataUrl } from "@/platform/downloadDataUrl";
 
-/**
- * Shares the element behind `cardRef` as a PNG: through the share sheet where the browser
- * has one, else as a download.
- */
 export function useShareRound() {
   const cardRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);

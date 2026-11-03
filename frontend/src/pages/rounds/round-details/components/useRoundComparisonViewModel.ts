@@ -11,17 +11,14 @@ import {
 } from "../roundDetailModel";
 
 export interface RoundComparisonViewModel {
-  /** False until the comparison loads, and when there is none. */
   show: boolean;
   charts: ComparisonChartItem[];
-  /** The active tab's charts, for the one-tab-at-a-time mobile layout. */
   selectedCharts: ComparisonChartItem[];
   chartTab: ChartTabKey;
   chartTabs: ChartTabItem[];
   selectChartTab: (key: string) => void;
 }
 
-/** How this round compares with the golfer's others, one tab of charts at a time on mobile. */
 export function useRoundComparisonViewModel(
   userId: string,
   roundId: string,

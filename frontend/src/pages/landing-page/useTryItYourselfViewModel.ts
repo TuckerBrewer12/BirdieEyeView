@@ -16,7 +16,6 @@ const PHASE_HOLD_MS = 3500;
 
 export interface TryItYourselfViewModel {
   step: "upload" | "processing" | "review";
-  /** The picked photo, readied for upload. */
   photo: File | null;
   error: string | null;
   setUserContext: (context: string) => void;
@@ -29,7 +28,6 @@ export interface TryItYourselfViewModel {
   phaseLabel: string;
   phaseDetail: string;
 
-  /** The scanned card as a round, its figures read the way an unsaved edit's are. */
   round: Round | null;
   hasScores: boolean;
 }
@@ -40,7 +38,6 @@ export function useTryItYourselfViewModel(
   const [photo, setPhoto] = useState<PickedPhoto | null>(null);
   const [userContext, setUserContext] = useState("");
   const [phase, setPhase] = useState(0);
-  // A later pick wins over an earlier one still being readied.
   const latestPick = useRef(0);
   const extraction = useExtractScorecard(repository);
 
@@ -48,9 +45,6 @@ export function useTryItYourselfViewModel(
 
   const step = extraction.isPending ? "processing" : extraction.data ? "review" : "upload";
 
-  // The scan gives no progress events, so the phases are paced rather than
-  // reported. Restarting at zero each time keeps a second scan from opening
-  // on "Calculating confidence…".
   useEffect(() => {
     if (step !== "processing") return;
     const timer = setInterval(

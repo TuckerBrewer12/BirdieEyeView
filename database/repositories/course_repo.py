@@ -1,5 +1,3 @@
-"""CRUD operations for the courses schema (courses, holes, tees, tee_yardages)."""
-
 import asyncpg
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID
@@ -16,7 +14,6 @@ def _tee_yardage_similarity(
     *,
     tolerance_yards: int = 25,
 ) -> Tuple[float, int]:
-    """Return (match_ratio, overlap_holes) for two tee yardage maps."""
     if not incoming or not existing:
         return 0.0, 0
     overlap = sorted(set(incoming.keys()) & set(existing.keys()))
@@ -27,11 +24,6 @@ def _tee_yardage_similarity(
 
 
 def _summary_from_row(row) -> CourseSummary:
-    """CourseSummary from a summary query row.
-
-    The queries work par out the way Course.get_par() does: the stored par,
-    else the sum of the hole pars when all 18 holes have one.
-    """
     return CourseSummary(
         id=str(row["id"]),
         name=row["name"],
@@ -44,20 +36,10 @@ def _summary_from_row(row) -> CourseSummary:
 
 
 class CourseRepositoryDB:
-    """Async CRUD for courses and their child tables."""
-
     def __init__(self, pool: asyncpg.Pool):
         self._pool = pool
 
-    # ================================================================
-    # Private helpers
-    # ================================================================
-
     async def _load_children(self, conn, course_id: UUID) -> tuple:
-        """Load holes, tees, and yardages for a course.
-
-        Returns (hole_rows, tee_rows, yardage_map).
-        """
         hole_rows = await conn.fetch(
             "SELECT * FROM courses.holes WHERE course_id = $1 ORDER BY hole_number",
             course_id,
@@ -66,7 +48,6 @@ class CourseRepositoryDB:
             "SELECT * FROM courses.tees WHERE course_id = $1",
             course_id,
         )
-        # Batch-load all yardages for all tees at once (avoid N+1)
         tee_ids = [r["id"] for r in tee_rows]
         if tee_ids:
             yardage_rows = await conn.fetch(
@@ -83,18 +64,12 @@ class CourseRepositoryDB:
         return hole_rows, tee_rows, yardage_map
 
     async def _assemble(self, conn, course_row) -> Course:
-        """Build a full Course model from a course row + children."""
         hole_rows, tee_rows, yardage_map = await self._load_children(
             conn, course_row["id"]
         )
         return course_from_rows(course_row, hole_rows, tee_rows, yardage_map)
 
-    # ================================================================
-    # Read
-    # ================================================================
-
     async def get_course(self, course_id: str) -> Optional[Course]:
-        """Get a fully-populated Course by ID."""
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow(
                 "SELECT * FROM courses.courses WHERE id = $1",
@@ -110,18 +85,7 @@ class CourseRepositoryDB:
         location: Optional[str] = None,
         user_id: Optional[str] = None,
     ) -> Optional[Course]:
-        """Fuzzy/case-insensitive course lookup.
-
-        Searches both master courses (user_id IS NULL) and the user's own
-        custom courses when user_id is provided.
-
-        Search tiers:
-        1. Exact case-insensitive match
-        2. ILIKE partial match
-        3. Trigram similarity (requires pg_trgm extension)
-        """
         async with self._pool.acquire() as conn:
-            # Build the user filter clause
             if user_id:
                 uid = UUID(user_id)
                 user_filter = "(c.user_id IS NULL OR c.user_id = $3)"
@@ -134,7 +98,6 @@ class CourseRepositoryDB:
                 user_part = f" AND {user_filter}"
                 return f"SELECT * FROM courses.courses c WHERE {where_name}{loc_part}{user_part}"
 
-            # Tier 1: exact (case-insensitive)
             if location and user_id:
                 row = await conn.fetchrow(
                     """SELECT * FROM courses.courses c
@@ -163,7 +126,6 @@ class CourseRepositoryDB:
                     name,
                 )
 
-            # Tier 2: ILIKE partial
             if not row:
                 if location and user_id:
                     row = await conn.fetchrow(
@@ -195,7 +157,6 @@ class CourseRepositoryDB:
                         f"%{name}%",
                     )
 
-            # Tier 3: trigram similarity (0.4 threshold to avoid false positives).
             # `name % $1` (pg_trgm's 0.3 default threshold) lets the trigram index
             # find candidates; similarity() > 0.4 then keeps the close ones.
             if not row:
@@ -227,11 +188,6 @@ class CourseRepositoryDB:
         *,
         user_id: Optional[str] = None,
     ) -> Optional[Course]:
-        """Find a course by provider ID.
-
-        With user_id: searches master plus this user's custom courses.
-        Without user_id: searches master courses only.
-        """
         async with self._pool.acquire() as conn:
             if user_id:
                 row = await conn.fetchrow(
@@ -260,10 +216,8 @@ class CourseRepositoryDB:
         location: Optional[str] = None,
         user_id: str = None,
     ) -> Optional[Course]:
-        """Find a course owned by this specific user (excludes masters)."""
         uid = UUID(user_id)
         async with self._pool.acquire() as conn:
-            # Tier 1: exact
             if location:
                 row = await conn.fetchrow(
                     """SELECT * FROM courses.courses
@@ -277,7 +231,6 @@ class CourseRepositoryDB:
                        WHERE LOWER(name) = LOWER($1) AND user_id = $2""",
                     name, uid,
                 )
-            # Tier 2: ILIKE
             if not row:
                 if location:
                     row = await conn.fetchrow(
@@ -292,7 +245,6 @@ class CourseRepositoryDB:
                            WHERE name ILIKE $1 AND user_id = $2 LIMIT 1""",
                         f"%{name}%", uid,
                     )
-            # Tier 3: trigram
             if not row:
                 row = await conn.fetchrow(
                     """SELECT *, similarity(name, $1) AS sim
@@ -310,9 +262,7 @@ class CourseRepositoryDB:
         name: str,
         location: Optional[str] = None,
     ) -> Optional[Course]:
-        """Find a course owned by any user (excludes masters). Used for cross-user discovery."""
         async with self._pool.acquire() as conn:
-            # Tier 1: exact
             if location:
                 row = await conn.fetchrow(
                     """SELECT * FROM courses.courses
@@ -326,7 +276,6 @@ class CourseRepositoryDB:
                        WHERE LOWER(name) = LOWER($1) AND user_id IS NOT NULL LIMIT 1""",
                     name,
                 )
-            # Tier 2: ILIKE
             if not row:
                 if location:
                     row = await conn.fetchrow(
@@ -341,7 +290,6 @@ class CourseRepositoryDB:
                            WHERE name ILIKE $1 AND user_id IS NOT NULL LIMIT 1""",
                         f"%{name}%",
                     )
-            # Tier 3: trigram
             if not row:
                 row = await conn.fetchrow(
                     """SELECT *, similarity(name, $1) AS sim
@@ -363,16 +311,9 @@ class CourseRepositoryDB:
         course_rating: Optional[float] = None,
         yardages: Optional[dict] = None,
     ) -> None:
-        """Fill null fields on an existing course from new scan data.
-
-        Never overwrites existing values — only patches holes where data is missing.
-        holes: list of dicts with hole_number, par, handicap keys.
-        yardages: {hole_number_str: yardage} dict from scan.
-        """
         cid = UUID(course_id)
         async with self._pool.acquire() as conn:
             async with conn.transaction():
-                # Fill hole par/handicap where NULL (or insert if hole row missing)
                 for hole in holes:
                     h = hole if isinstance(hole, dict) else hole.__dict__
                     hole_num = h.get("hole_number")
@@ -400,9 +341,6 @@ class CourseRepositoryDB:
                         cid, hole_num, par, handicap,
                     )
 
-                # Fill tee rating gaps and insert missing yardages.
-                # Use explicit SELECT + INSERT/UPDATE to handle case-insensitive color
-                # matching and avoid ON CONFLICT dependency on live-DB constraint state.
                 if tee_color:
                     normalized_yardages: Dict[int, int] = {}
                     for hole_num_str, yardage in (yardages or {}).items():
@@ -415,8 +353,6 @@ class CourseRepositoryDB:
                         "WHERE course_id = $1 AND LOWER(color) = LOWER($2)",
                         cid, tee_color,
                     )
-                    # If color doesn't match but yardages are mostly the same, map to
-                    # the existing course tee so we keep one canonical tee name/source.
                     if not existing_tee and normalized_yardages:
                         candidate_rows = await conn.fetch(
                             "SELECT id, color, slope_rating, course_rating "
@@ -452,7 +388,6 @@ class CourseRepositoryDB:
 
                     if existing_tee:
                         tee_id = existing_tee["id"]
-                        # Fill NULL slots only — never overwrite existing data
                         updates = {}
                         if slope_rating is not None and existing_tee["slope_rating"] is None:
                             updates["slope_rating"] = slope_rating
@@ -467,7 +402,6 @@ class CourseRepositoryDB:
                                 tee_id, *updates.values(),
                             )
                     else:
-                        # New tee — insert it
                         tee_row = await conn.fetchrow(
                             """INSERT INTO courses.tees (course_id, color, slope_rating, course_rating)
                                VALUES ($1, $2, $3, $4) RETURNING id""",
@@ -490,11 +424,6 @@ class CourseRepositoryDB:
                                 )
 
     async def promote_to_master(self, course_id: str) -> Course:
-        """Promote a user-owned course to master by setting user_id = NULL.
-
-        If a master with the same name already exists (race condition), returns the
-        course as-is rather than raising.
-        """
         cid = UUID(course_id)
         async with self._pool.acquire() as conn:
             try:
@@ -506,7 +435,6 @@ class CourseRepositoryDB:
                     raise NotFoundError(f"Course {course_id} not found")
                 return await self._assemble(conn, row)
             except asyncpg.UniqueViolationError:
-                # Race condition: another master with this name now exists
                 row = await conn.fetchrow(
                     "SELECT * FROM courses.courses WHERE id = $1", cid
                 )
@@ -519,11 +447,6 @@ class CourseRepositoryDB:
         offset: int = 0,
         user_id: Optional[str] = None,
     ) -> List[CourseSummary]:
-        """List course summaries by name, in one query.
-
-        Returns master courses plus the user's custom courses when user_id provided
-        (a NULL $3 matches no user_id, so only master courses come back).
-        """
         uid = UUID(user_id) if user_id else None
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
@@ -547,7 +470,6 @@ class CourseRepositoryDB:
     async def search_course_summaries(
         self, query: str, *, user_id: Optional[str] = None
     ) -> List[CourseSummary]:
-        """Search course summaries by name or location substring, in one query."""
         uid = UUID(user_id) if user_id else None
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
@@ -569,18 +491,9 @@ class CourseRepositoryDB:
             )
             return [_summary_from_row(r) for r in rows]
 
-    # ================================================================
-    # Create
-    # ================================================================
-
     async def create_course(
         self, course: Course, *, user_id: Optional[str] = None
     ) -> Course:
-        """Insert a full Course with holes, tees, and yardages in one transaction.
-
-        user_id=None creates a master/global course.
-        user_id=<uuid> creates a custom course owned by that user.
-        """
         try:
             uid = UUID(user_id) if user_id else None
             async with self._pool.acquire() as conn:
@@ -594,7 +507,6 @@ class CourseRepositoryDB:
                     )
                     course_id = course_row["id"]
 
-                    # Batch insert holes
                     if course.holes:
                         await conn.executemany(
                             """INSERT INTO courses.holes
@@ -603,7 +515,6 @@ class CourseRepositoryDB:
                             [(course_id, h.number, h.par, h.handicap) for h in course.holes],
                         )
 
-                    # Insert tees + yardages
                     for tee in course.tees:
                         tee_row = await conn.fetchrow(
                             """INSERT INTO courses.tees
@@ -629,14 +540,8 @@ class CourseRepositoryDB:
             raise IntegrityError(str(e)) from e
 
     async def clone_course(self, course_id: str, user_id: str) -> Course:
-        """Clone a master course as a custom course for a user.
-
-        Copies the course, all its holes, all its tees, and all tee yardages.
-        Returns the newly created custom Course.
-        """
-        UUID(user_id)  # validate the caller-supplied id up front
+        UUID(user_id)
         async with self._pool.acquire() as conn:
-            # Load the source course
             source_row = await conn.fetchrow(
                 "SELECT * FROM courses.courses WHERE id = $1", UUID(course_id)
             )
@@ -647,15 +552,11 @@ class CourseRepositoryDB:
                 conn, source_row["id"]
             )
 
-        # Build a Course model and create it for the user
-        # (uses a fresh connection to avoid nested acquire)
         source = course_from_rows(source_row, hole_rows, tee_rows, yardage_map)
-        # Clear id so create_course generates a new one
         source.id = None
         try:
             return await self.create_course(source, user_id=user_id)
         except DuplicateError:
-            # User already has a custom course with this name — return it
             existing = await self.find_course_by_name(
                 source.name, source.location, user_id=user_id
             )
@@ -663,32 +564,22 @@ class CourseRepositoryDB:
                 return existing
             raise
 
-    # ================================================================
-    # Update
-    # ================================================================
-
     async def update_course(
         self, course_id: str, *, user_id: Optional[str] = None, **fields
     ) -> Optional[Course]:
-        """Update top-level course fields.
-
-        When user_id is provided, enforces that the course is owned by that user
-        (returns None if it's a master course or belongs to another user).
-        """
         allowed = {"name", "external_course_id", "location", "par", "total_holes", "metadata"}
         updates = {k: v for k, v in fields.items() if k in allowed}
         if not updates:
             return await self.get_course(course_id)
 
         async with self._pool.acquire() as conn:
-            # Ownership check for user-scoped updates
             if user_id:
                 row = await conn.fetchrow(
                     "SELECT user_id FROM courses.courses WHERE id = $1",
                     UUID(course_id),
                 )
                 if not row or str(row["user_id"]) != user_id:
-                    return None  # Not found or not owned by this user
+                    return None
 
             set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates))
             values = [UUID(course_id)] + list(updates.values())
@@ -702,7 +593,6 @@ class CourseRepositoryDB:
             return await self._assemble(conn, row)
 
     async def upsert_hole(self, course_id: str, hole: Hole) -> None:
-        """Insert or update a single hole on a course."""
         async with self._pool.acquire() as conn:
             await conn.execute(
                 """INSERT INTO courses.holes (course_id, hole_number, par, handicap)
@@ -713,7 +603,6 @@ class CourseRepositoryDB:
             )
 
     async def upsert_tee(self, course_id: str, tee: Tee) -> None:
-        """Insert or update a tee and its yardages."""
         async with self._pool.acquire() as conn:
             async with conn.transaction():
                 cid = UUID(course_id)
@@ -739,7 +628,6 @@ class CourseRepositoryDB:
                     )
                     tee_id = tee_row["id"]
 
-                # Replace all yardages for this tee
                 await conn.execute(
                     "DELETE FROM courses.tee_yardages WHERE tee_id = $1", tee_id
                 )
@@ -752,17 +640,9 @@ class CourseRepositoryDB:
                         yardage_tuples,
                     )
 
-    # ================================================================
-    # Delete
-    # ================================================================
-
     async def delete_course(
         self, course_id: str, *, user_id: Optional[str] = None
     ) -> bool:
-        """Delete a course and all children (CASCADE). Returns True if deleted.
-
-        When user_id is provided, only deletes if the course is owned by that user.
-        """
         async with self._pool.acquire() as conn:
             if user_id:
                 result = await conn.execute(

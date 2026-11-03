@@ -1,5 +1,3 @@
-"""Round responses, built one way from the Round model so every endpoint agrees."""
-
 from api.course_responses import course_detail
 from api.schemas import (
     HoleScoreResponse,
@@ -56,7 +54,6 @@ def _figures(round_: Round) -> dict:
 
 
 def round_summary(round_: Round) -> RoundSummaryResponse:
-    """A round for list views: only what a list draws, so a long list stays small."""
     return RoundSummaryResponse(
         id=str(round_.id),
         course_id=str(round_.course.id) if round_.course and round_.course.id else None,
@@ -82,7 +79,6 @@ def round_summary(round_: Round) -> RoundSummaryResponse:
 
 
 def round_detail(round_: Round) -> RoundResponse:
-    """A full round, as the detail page and the edit form read it."""
     return RoundResponse(
         **_figures(round_),
         id=round_.id,

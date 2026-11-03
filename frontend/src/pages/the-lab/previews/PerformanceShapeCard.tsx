@@ -30,7 +30,6 @@ export default function PerformanceShapeCardPreview() {
   return (
     <>
       <PerformanceShapeCard {...base} />
-      {/* A friend with too few rounds to draw: the shape alone, and why. */}
       <PerformanceShapeCard
         {...base}
         comparison="friend"
@@ -41,7 +40,6 @@ export default function PerformanceShapeCardPreview() {
         missingAxes={["Par 4s", "Par 5s"]}
       />
       <PerformanceShapeCard {...base} mode="peak" />
-      {/* On a phone: one column, the radar's compact drawing under the controls. */}
       <div className="max-w-sm">
         <PerformanceShapeCard {...base} compact />
       </div>

@@ -5,7 +5,6 @@ from .base import BaseGolfModel
 
 
 class Tee(BaseGolfModel):
-    """Represents a tee box option with its ratings and hole yardages."""
     color: Optional[str] = None
     total_yardage: Optional[int] = Field(None, ge=0)
     hole_yardages: Dict[int, int] = Field(default_factory=dict)
@@ -25,11 +24,9 @@ class Tee(BaseGolfModel):
         return v
 
     def get_hole_yardage(self, hole_number: int) -> Optional[int]:
-        """Get yardage for a specific hole."""
         return self.hole_yardages.get(hole_number)
 
     def get_total_yardage(self) -> Optional[int]:
-        """Get total yardage - uses provided value or calculates from holes."""
         if self.total_yardage is not None:
             return self.total_yardage
         if not self.hole_yardages:
@@ -44,10 +41,8 @@ class Tee(BaseGolfModel):
 
     @property
     def front_nine_yardage(self) -> Optional[int]:
-        """Yardage for holes 1-9, once all nine have one."""
         return self._nine_yardage(1)
 
     @property
     def back_nine_yardage(self) -> Optional[int]:
-        """Yardage for holes 10-18, once all nine have one."""
         return self._nine_yardage(10)

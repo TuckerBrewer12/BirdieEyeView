@@ -1,5 +1,3 @@
-"""Goal Engine — computes strokes-to-find and ranks highest-ROI improvement areas."""
-
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -18,14 +16,12 @@ from analytics.stats import (
 
 
 def _progress_pct(start: int, average: float, goal: int, on_track: bool) -> float:
-    """How far the average has come from the window's first round toward the goal, 0-100."""
     if on_track or start <= goal:
         return 100.0
     return min(100.0, max(0.0, (start - average) / (start - goal) * 100))
 
 
 def goal_attempts(rounds: List[Round], scoring_goal: int) -> List[Dict[str, Any]]:
-    """Each scored round, oldest first, and whether it met the goal: at or under it."""
     attempts = []
     for r in rounds:
         score = r.calculate_total_score()
@@ -39,11 +35,6 @@ def goal_report(
     scoring_goal: int,
     home_course_rounds: Optional[List[Round]] = None,
 ) -> Dict[str, Any]:
-    """
-    Compute a goal report for a player targeting a specific score threshold.
-
-    Returns gap analysis and ranked list of highest-ROI improvement areas (savers).
-    """
     scores = [r.calculate_total_score() for r in rounds]
     scores = [s for s in scores if s is not None]
 
@@ -70,7 +61,6 @@ def goal_report(
 
     savers: List[Dict[str, Any]] = []
 
-    # A. Three-Putt Bleed
     three_putt_rows = three_putts_per_round(rounds)
     rounds_with_putt_data = [r for r in three_putt_rows if r["holes_with_putt_data"] > 0]
     if rounds_with_putt_data:
@@ -91,7 +81,6 @@ def goal_report(
                 "data": {"avg_three_putts": round(avg_three_putts, 2)},
             })
 
-    # B. Blowup Holes
     dist_rows = score_type_distribution_per_round(rounds)
     dist_rows_with_data = [r for r in dist_rows if r["holes_counted"] > 0]
     if dist_rows_with_data:
@@ -103,7 +92,6 @@ def goal_report(
             for r in dist_rows_with_data
         ) / len(dist_rows_with_data)
 
-        # Realistic target: convert up to 2 doubles → bogeys, and up to 1 triple → bogey
         realistic_doubles = min(2.0, avg_doubles)
         realistic_triples = min(1.0, avg_triples_plus)
         realistic_save = realistic_doubles * 1.0 + realistic_triples * 2.0
@@ -126,7 +114,6 @@ def goal_report(
                 },
             })
 
-    # C. Achilles Heel (Yardage)
     yardage_buckets = scoring_by_yardage_buckets(rounds)
     eligible_buckets = [b for b in yardage_buckets if b["sample_size"] >= 10]
     if eligible_buckets:
@@ -151,7 +138,6 @@ def goal_report(
                 },
             })
 
-    # D. Home Course Demon
     if home_course_rounds and len(home_course_rounds) >= 5:
         profile = course_difficulty_profile_by_hole(home_course_rounds)
         if profile:
@@ -175,13 +161,10 @@ def goal_report(
                     },
                 })
 
-    # E. GIR Opportunity
     gir_data = overall_gir_percentage(rounds)
     gir_pct = gir_data.get("gir_percentage")
     if gir_pct is not None and gir_pct < 45:
-        # Each GIR miss that becomes a GIR saves roughly 0.5–0.7 strokes vs scrambling
-        # Estimate: improving GIR by 10 percentage points ≈ 1 extra GIR per round ≈ 0.6 strokes saved
-        improvement_headroom = 45 - gir_pct  # pp below benchmark
+        improvement_headroom = 45 - gir_pct
         realistic_gir_gain = min(improvement_headroom / 10, 3.0) * 0.6
         if realistic_gir_gain >= 0.15:
             pct = (realistic_gir_gain / gap * 100) if gap > 0 else 0.0
@@ -198,17 +181,14 @@ def goal_report(
                 "data": {"gir_percentage": round(gir_pct, 1)},
             })
 
-    # F. Scrambling Opportunity
     scrambling_rows = scrambling_per_round(rounds)
     scrambling_vals = [r["scrambling_percentage"] for r in scrambling_rows if r["scrambling_percentage"] is not None]
     if scrambling_vals:
         avg_scrambling = sum(scrambling_vals) / len(scrambling_vals)
         if avg_scrambling < 50:
-            # Avg amateur scrambling ~35–40%, tour avg ~60%. Each extra save = 1 stroke.
-            # Estimate GIR misses per round ≈ 18 * (1 - gir_pct/100)
             gir_pct_for_scramble = gir_data.get("gir_percentage") or 33.0
             misses_per_round = 18 * (1 - gir_pct_for_scramble / 100)
-            scramble_gap = 50 - avg_scrambling  # pp below benchmark
+            scramble_gap = 50 - avg_scrambling
             realistic_saves = min(scramble_gap / 100, 0.15) * misses_per_round
             if realistic_saves >= 0.15:
                 pct = (realistic_saves / gap * 100) if gap > 0 else 0.0
@@ -224,13 +204,10 @@ def goal_report(
                     "data": {"scrambling_percentage": round(avg_scrambling, 1)},
                 })
 
-    # G. Par 5 Opportunity
     par_rows = scoring_by_par(rounds)
     par5_row = next((r for r in par_rows if r["par"] == 5), None)
     if par5_row and par5_row["sample_size"] >= 6 and par5_row["average_to_par"] > 0.4:
-        # Par 5s should average close to par for mid-handicappers; each hole played = 1/18 of round
         par5_per_round = par5_row["sample_size"] / max(len(rounds), 1)
-        # Realistic improvement: cut 0.5 strokes off each par 5
         realistic_save = min(par5_row["average_to_par"] - 0.3, 0.8) * par5_per_round
         if realistic_save >= 0.15:
             pct = (realistic_save / gap * 100) if gap > 0 else 0.0

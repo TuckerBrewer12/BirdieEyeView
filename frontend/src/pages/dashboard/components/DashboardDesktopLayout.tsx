@@ -43,7 +43,6 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
     <div className="pb-12">
       <div className="flex gap-6 max-w-7xl mx-auto items-start">
 
-        {/* Left Main Content */}
         <div className="flex-1 min-w-0 flex flex-col">
           <ProfileHeroBanner
             user={user ?? null}
@@ -179,7 +178,6 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
           </div>
         </div>
 
-        {/* Right Sidebar */}
         <div className="w-72 shrink-0 hidden xl:flex flex-col gap-6 sticky top-20 self-start">
           <ScanActionCard onClick={() => navigate("/scan")} />
 
@@ -222,4 +220,3 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
     </div>
   );
 }
-

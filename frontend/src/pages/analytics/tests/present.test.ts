@@ -18,7 +18,6 @@ import {
   tabNarrative,
 } from "../present";
 
-// The server's insights, as it sends them.
 const scoringShift = (strokes: number, rounds: number): Insight => ({
   kind: "scoring_shift",
   category: "scoring",

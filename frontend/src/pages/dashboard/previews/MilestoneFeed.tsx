@@ -12,7 +12,6 @@ const brokeEighty: Milestone[] = [
   { kind: "score_break", value: 80, date: "2026-06-15", course: "Half Moon Bay Old Course", roundId: "round-1" },
 ];
 
-/** Drawn at the width of the dashboard's one-column card, where long titles have to wrap. */
 function MilestoneCard({ items }: { items: Milestone[] }) {
   return (
     <Card className="w-52">

@@ -232,7 +232,6 @@ def test_handicap_trend_and_annotation_prefers_recent_tie(monkeypatch):
     assert trend[1]["used_in_hi"] is False
     assert trend[2]["used_in_hi"] is True
     assert all(entry["hi_threshold"] == 10.0 for entry in trend)
-    # 12.0 is two strokes off the 10.0 cut-off, so it reads as close; 14.0 does not.
     assert [entry["differential_status"] for entry in trend] == ["close", "close", "counting", "out"]
 
     short = [{"differential": None}, {"differential": 8.0}]

@@ -4,7 +4,6 @@ import { cn } from "@/brand/cn";
 interface ScanProgressProps {
   label: string;
   detail: string;
-  /** Which phase is running, and how many there are, for the step rail. */
   phase: number;
   phaseCount: number;
   className?: string;
@@ -13,13 +12,6 @@ interface ScanProgressProps {
 const CORNERS = ["tl", "tr", "bl", "br"] as const;
 const ROWS = ["bg-muted-foreground/40", "bg-primary/25", "bg-muted-foreground/40", "bg-muted-foreground/25"];
 
-/**
- * The card-being-read animation shown while a scan is in flight.
- *
- * Pure: which phase is running is the caller's business, so the same animation
- * serves the landing page's demo and the signed-in scan flow without either
- * owning a timer the other cannot see.
- */
 function ScanProgress({ label, detail, phase, phaseCount, className }: ScanProgressProps) {
   return (
     <div

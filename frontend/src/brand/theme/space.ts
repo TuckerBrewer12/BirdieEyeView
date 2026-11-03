@@ -1,13 +1,3 @@
-/**
- * Space, size, radius, and related measures, as references to the tokens.
- *
- * The values themselves live once, in `tokens.css`. These are `var()` strings
- * so they resolve in CSS with no React involvement. In ordinary markup prefer
- * the Tailwind utility — `rounded-card` over `style={{ borderRadius: radius.card }}`.
- * Reach for this when a library takes a style object.
- *
- * `tokens.test.ts` fails if a name here has no definition in tokens.css.
- */
 export const space = {
   bar: "var(--brand-space-bar)",
   hair: "var(--brand-space-hair)",

@@ -5,22 +5,17 @@ import { Button } from "./Button";
 
 interface SideNavUser {
   name: string;
-  /** Two letters for the avatar. */
   initials: string;
-  /** The line under the name, such as an email. */
   detail?: string;
 }
 
 interface SideNavProps {
   items: NavItem[];
-  /** Pinned at the foot of the rail, above the golfer — Settings. */
   secondaryItems?: NavItem[];
   user: SideNavUser;
-  /** Shows a sign-out button on the golfer's row. */
   onSignOut?: () => void;
   signingOut?: boolean;
   renderLink?: RenderLink;
-  /** The nav landmark's name. */
   label?: string;
   className?: string;
 }
@@ -28,11 +23,6 @@ interface SideNavProps {
 const linkClass =
   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/50 transition-all duration-150 hover:bg-sidebar-foreground/8 hover:text-sidebar-foreground data-active:bg-sidebar-foreground/15 data-active:font-semibold data-active:text-sidebar-foreground [&_svg]:size-4.5 [&_svg]:shrink-0";
 
-/**
- * The app's left rail: the brand at the top, the places to go, and the
- * signed-in golfer at the foot. It fills its container; `AppShell` pins it
- * to the left edge and sets the width.
- */
 function SideNav({
   items,
   secondaryItems = [],

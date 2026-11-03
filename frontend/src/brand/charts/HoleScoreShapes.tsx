@@ -3,7 +3,6 @@ import type { HoleSummary, RoundSummary } from "@/domain";
 
 interface HoleScoreShapesProps {
   round: RoundSummary;
-  /** Puts each hole's number above its shape. */
   numbered?: boolean;
 }
 
@@ -13,7 +12,6 @@ const cx = VB_W / 2;
 const cy = VB_H / 2;
 const r = 9.5;
 
-/** One hole drawn the way a scorecard marks it: circles under par, boxes over. */
 export function HoleShape({ hole }: { hole: HoleSummary }) {
   const kind = hole.kind;
   if (kind == null) {
@@ -81,7 +79,6 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
   );
 }
 
-/** The round's holes as marked shapes, one row per nine. */
 export function HoleScoreShapes({ round, numbered = false }: HoleScoreShapesProps) {
   const nines = [round.frontNine, round.backNine].filter((nine) => nine.holes.length > 0);
   if (nines.length === 0) return null;

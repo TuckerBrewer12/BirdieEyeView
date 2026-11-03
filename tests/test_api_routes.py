@@ -52,7 +52,6 @@ def _make_round(round_id: UUID, course: Course | None = None) -> Round:
 
 
 def _make_round_summary(round_id: UUID) -> Round:
-    """A round as the list query returns it: 18 holes of par 4 on a par-72 course, 80 strokes."""
     return Round(
         id=str(round_id),
         course=Course(id=str(uuid4()), name="Pebble Beach", location="Monterey", par=72),
@@ -302,7 +301,6 @@ def test_user_request_validation():
 
 
 def test_friendship_status_is_typed():
-    """The friendship status is a fixed set, so the generated client gets a union, not a string."""
     response_status = users.FriendshipResponse.model_json_schema()["properties"]["status"]
     assert response_status["enum"] == ["pending", "accepted", "declined", "blocked"]
 
@@ -323,7 +321,6 @@ def test_friendship_status_is_typed():
 
 
 def test_user_response_is_the_profile_only():
-    """A user is sent as their profile: no rounds, no account bookkeeping, and a typed schema."""
     user = _make_user(
         uuid4(),
         friend_code="BIRD-1234",
@@ -545,11 +542,10 @@ async def test_benchmark_comparison_endpoint():
     handicap = await stats.get_benchmark_comparison(user_id, "handicap", 15, None, 20, db, user)
     assert (handicap.against, handicap.handicap) == ("handicap", 15)
     assert handicap.benchmark.par4_to_par == 1.025
-    # Eight bogeys and ten pars on par 4s: +0.44 a hole against the 15's +1.025.
     assert (handicap.par_types[1].gap, handicap.par_types[1].verdict) == (-0.58, "ahead")
 
     peak = await stats.get_benchmark_comparison(user_id, "peak", None, None, 20, db, user)
-    assert peak.goal == 79  # two rounds of 80 play like the golfers who break 80
+    assert peak.goal == 79
 
     friend = await stats.get_benchmark_comparison(user_id, "friend", None, friend_id, 20, db, user)
     assert friend.benchmark.par4_to_par == pytest.approx(8 / 18)

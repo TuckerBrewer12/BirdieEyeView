@@ -6,14 +6,12 @@ import { RECORD_LABEL, eventDetail, recordValue } from "../present";
 
 interface RecordsCardProps {
   records: CareerRecord[];
-  /** Opens the round a record was set in. */
   onOpenRound: (roundId: string) => void;
   className?: string;
 }
 
 const ROW = "flex w-full items-center gap-3 py-2.5 text-left";
 
-/** The golfer's best rounds and streaks over the window, each opening the round it was set in. */
 export function RecordsCard({ records, onOpenRound, className }: RecordsCardProps) {
   return (
     <Card data-slot="records-card" className={className}>
