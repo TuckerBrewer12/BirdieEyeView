@@ -46,7 +46,7 @@ export function RoundDetailHeader({ round, teeRating, courseHandicap, className 
             {dateLabel}
           </div>
         )}
-        <PageTitle className="pt-0 leading-display tracking-display">
+        <PageTitle className="pt-0 leading-display">
           {formatCourseName(round.course?.name)}
         </PageTitle>
         {(round.teeBox || teeRating) && (
