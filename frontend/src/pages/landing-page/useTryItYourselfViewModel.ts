@@ -5,7 +5,8 @@ import { useCardText, type PickedPhoto } from "@/data/useCardText";
 import { Round } from "@/domain";
 import { useExtractScorecard } from "@/data/useExtractScorecard";
 
-const PHASE_STEPS = ["Course and tees", "Scores and putts", "Yardages and par", "Checking totals"] as const;
+/** How many phases the card walks through while a scan is read. */
+const PHASE_COUNT = 4;
 
 const PHASE_HOLD_MS = 3500;
 
@@ -20,8 +21,6 @@ export interface TryItYourselfViewModel {
   reset: () => void;
 
   phase: number;
-  /** The steps of reading the card, of which `phase` is the one running. */
-  phaseSteps: readonly string[];
 
   /** The scanned card as a round, its figures read the way an unsaved edit's are. */
   round: Round | null;
@@ -44,11 +43,11 @@ export function useTryItYourselfViewModel(
 
   // The scan gives no progress events, so the phases are paced rather than
   // reported. Restarting at zero each time keeps a second scan from opening
-  // on "Calculating confidence…".
+  // on the last phase.
   useEffect(() => {
     if (step !== "processing") return;
     const timer = setInterval(
-      () => setPhase((current) => Math.min(current + 1, PHASE_STEPS.length - 1)),
+      () => setPhase((current) => Math.min(current + 1, PHASE_COUNT - 1)),
       PHASE_HOLD_MS,
     );
     return () => {
@@ -95,7 +94,6 @@ export function useTryItYourselfViewModel(
     reset,
 
     phase,
-    phaseSteps: PHASE_STEPS,
 
     round,
     hasScores: (round?.holes.length ?? 0) > 0,

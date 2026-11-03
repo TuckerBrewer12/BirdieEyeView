@@ -14,6 +14,8 @@ import {
 import { useFilePreview } from "@/platform/useFilePreview";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
+const STEPS = ["Course and tees", "Scores and putts", "Yardages and par", "Checking totals"];
+
 export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfViewModel }) {
   const previewUrl = useFilePreview(viewModel.photo);
 
@@ -81,7 +83,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
           >
             <ScanProgress
               label="Reading your card"
-              steps={viewModel.phaseSteps}
+              steps={STEPS}
               phase={viewModel.phase}
               className="mx-auto max-w-sm"
             />
