@@ -385,6 +385,8 @@ export const type = {
   eyebrow: { size: 10, weight: 700, tracking: tracking.eyebrow },
   /** A KPI tile's figure. */
   stat: { size: 32, weight: 700, tracking: tracking.stat, leading: leading.display },
+  /** A figure in a row of them: the stat strip, a round's score. */
+  figure: { size: 28, weight: 700, tracking: -0.6, leading: 1 },
   /** The smaller tracked capitals on a chip or a header strip. */
   kicker: { size: 9, weight: 700, tracking: tracking.kicker },
   /** The label above a page section (`SectionLabel`). */

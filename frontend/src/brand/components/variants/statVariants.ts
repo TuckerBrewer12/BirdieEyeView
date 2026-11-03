@@ -19,6 +19,8 @@ const statValueVariants = cva("flex items-baseline gap-0.5 leading-none tabular-
       /** A row of small figures, like the four under a hero number. */
       sm: "text-base font-semibold tracking-stat",
       md: "text-2xl font-semibold tracking-stat",
+      /** A figure in a row of them, like the stat strip's. */
+      figure: "text-figure",
       /** A KPI tile's figure. */
       lg: "text-stat",
       /** The one number a screen leads with. */

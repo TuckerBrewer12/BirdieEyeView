@@ -233,7 +233,7 @@ function StatStripItem({
     <div data-slot="stat-strip-item" className={cn("flex flex-col gap-1.5 px-5 py-4.5", className)} {...props}>
       <StatLabel className="text-body-sm">{label}</StatLabel>
       <div className="flex items-baseline gap-2">
-        <StatValue className="text-figure leading-tight">{value}</StatValue>
+        <StatValue size="figure">{value}</StatValue>
         <StatDelta
           direction={direction}
           tone={tone}
