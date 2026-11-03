@@ -15,7 +15,13 @@ export function NineBars({ holes, className }: NineBarsProps) {
       {holes.map((hole) => {
         // Unscored holes read as par.
         const kind = hole.kind ?? "par";
-        return <div key={hole.hole} className={cn("h-2 rounded-tick", scoreFillClass(kind))} />;
+        // Par is the pale score fill; on a dark card it would glare, so it sinks to the border there, as the board draws it.
+        return (
+          <div
+            key={hole.hole}
+            className={cn("h-2 rounded-tick", scoreFillClass(kind), kind === "par" && "dark:bg-border")}
+          />
+        );
       })}
     </div>
   );

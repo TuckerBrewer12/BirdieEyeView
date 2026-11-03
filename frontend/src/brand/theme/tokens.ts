@@ -443,6 +443,8 @@ export const size = {
   target: "15rem",
   "icon-xs": 11,
   "hole-w": 30,
+  /** A nine's total at the end of a scorecard strip. */
+  "nine-total": 26,
   "hole-h": 22,
   // A profile bar's height in its row, by score: the worse the hole, the taller.
   "profile-eagle": "28%",

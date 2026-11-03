@@ -1,14 +1,12 @@
-import { Round, type RoundSummary, type ScoreKind } from "@/domain";
+import { Round, scoreKind, type RoundSummary } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 
 const [overPar, evenPar, best, unlinked] = populatedRounds.map(Round.fromSummary);
 
-const kindFor = (toPar: number): ScoreKind =>
-  toPar <= -2 ? "eagle" : toPar === -1 ? "birdie" : toPar === 0 ? "par" : toPar === 1 ? "bogey" : toPar === 2 ? "double" : toPar === 3 ? "triple" : "quad";
 
 /** A fixture round re-scored hole by hole to the canvas board's card. */
 function asOnBoard(round: RoundSummary, par: number[], toPar: number[]): RoundSummary {
-  const holes = par.map((p, i) => ({ ...round.holes[i], hole: i + 1, strokes: p + toPar[i], kind: kindFor(toPar[i]) }));
+  const holes = par.map((p, i) => ({ ...round.holes[i], hole: i + 1, strokes: p + toPar[i], kind: scoreKind(p + toPar[i], p) }));
   const total = (from: number, to: number) => holes.slice(from, to).reduce((sum, h) => sum + (h.strokes ?? 0), 0);
   return {
     ...round,

@@ -188,7 +188,7 @@ function StripNine({ holes, total }: { holes: HoleSummary[]; total: number | nul
       {holes.map((hole) => (
         <StripHole key={hole.hole} hole={hole} />
       ))}
-      <span className="flex h-5 w-6.5 items-center justify-center rounded-sm bg-muted text-label font-bold text-foreground-secondary">
+      <span className="flex h-5 w-nine-total items-center justify-center rounded-sm bg-muted text-label font-bold text-foreground-secondary">
         {total ?? "–"}
       </span>
     </div>
@@ -227,7 +227,7 @@ function RoundStrip({ round, onClick }: { round: RoundSummary; onClick?: () => v
         <div className="flex items-baseline gap-1.5">
           <span className="text-figure-sm">{round.score ?? "—"}</span>
           {round.toPar != null && (
-            <span className={cn("min-w-6.5 text-right text-body font-semibold", toParTextClass(round.toPar))}>
+            <span className={cn("min-w-nine-total text-right text-body font-semibold", toParTextClass(round.toPar))}>
               {toParLabel(round.toPar)}
             </span>
           )}

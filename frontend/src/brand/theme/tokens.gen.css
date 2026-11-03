@@ -161,6 +161,7 @@
   --brand-size-target: 15rem;
   --brand-size-icon-xs: 11px;
   --brand-size-hole-w: 30px;
+  --brand-size-nine-total: 26px;
   --brand-size-hole-h: 22px;
   --brand-size-profile-eagle: 28%;
   --brand-size-profile-birdie: 40%;
@@ -367,6 +368,7 @@
   --spacing-target: var(--brand-size-target);
   --spacing-icon-xs: var(--brand-size-icon-xs);
   --spacing-hole-w: var(--brand-size-hole-w);
+  --spacing-nine-total: var(--brand-size-nine-total);
   --spacing-hole-h: var(--brand-size-hole-h);
   --spacing-profile-eagle: var(--brand-size-profile-eagle);
   --spacing-profile-birdie: var(--brand-size-profile-birdie);

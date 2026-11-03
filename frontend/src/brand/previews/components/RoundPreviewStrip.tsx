@@ -14,7 +14,7 @@ export default function RoundPreviewStripPreview() {
       <RoundPreview variant="strip" round={boardRounds.unlinked} onClick={() => {}} />
       <div className="flex gap-3.5 px-1 py-0.5 text-label text-muted-foreground">
         {legend.map((kind) => (
-          <span key={kind} className="flex items-center gap-1.25">
+          <span key={kind} className="flex items-center gap-tight">
             <span
               className={cn(
                 "size-2.5",
