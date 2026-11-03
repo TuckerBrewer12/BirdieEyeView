@@ -25,7 +25,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
 
   if (viewModel.loadError || !course || !courseId) {
     return (
-      <Alert variant="destructive">
+      <Alert tone="danger">
         <AlertDescription>{viewModel.loadError ?? "Course not found."}</AlertDescription>
       </Alert>
     );

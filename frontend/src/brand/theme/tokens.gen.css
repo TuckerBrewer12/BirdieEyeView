@@ -137,6 +137,7 @@
   --brand-radius-bar: 1.5px;
   --brand-radius-tick: 2px;
   --brand-radius-card: 10px;
+  --brand-radius-panel: 14px;
   --brand-radius-tooltip: 12px;
   --brand-radius-addon: calc(var(--radius) - var(--brand-space-nudge));
   --brand-radius-control: calc(var(--radius) - var(--brand-space-nudge-sm));
@@ -165,6 +166,7 @@
   --brand-size-profile-double: 92%;
   --brand-size-profile-worse: 100%;
   --brand-size-scorecard: 43.75rem;
+  --brand-border-width-callout: 1.5px;
   --brand-stroke-icon: 1.75;
   --brand-stroke-icon-active: 2.25;
   --brand-opacity-recessed: 35%;
@@ -339,6 +341,7 @@
   --radius-bar: var(--brand-radius-bar);
   --radius-tick: var(--brand-radius-tick);
   --radius-card: var(--brand-radius-card);
+  --radius-panel: var(--brand-radius-panel);
   --radius-tooltip: var(--brand-radius-tooltip);
   --radius-addon: var(--brand-radius-addon);
   --radius-control: var(--brand-radius-control);
@@ -367,6 +370,7 @@
   --spacing-profile-double: var(--brand-size-profile-double);
   --spacing-profile-worse: var(--brand-size-profile-worse);
   --spacing-scorecard: var(--brand-size-scorecard);
+  --border-width-callout: var(--brand-border-width-callout);
   --stroke-width-icon: var(--brand-stroke-icon);
   --stroke-width-icon-active: var(--brand-stroke-icon-active);
   --opacity-recessed: var(--brand-opacity-recessed);

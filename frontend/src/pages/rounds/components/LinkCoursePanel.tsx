@@ -15,7 +15,7 @@ export function LinkCoursePanel({ userId, roundId, title, onClose, onLinked }: L
   return (
     <div className="flex flex-col gap-2.5">
       {viewModel.error && (
-        <Alert variant="destructive">
+        <Alert tone="danger">
           <AlertDescription>{viewModel.error}</AlertDescription>
         </Alert>
       )}

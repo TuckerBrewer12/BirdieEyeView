@@ -109,7 +109,7 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
         )}
 
         {(viewModel.loadError ?? viewModel.respondError) && (
-          <Alert variant="destructive">
+          <Alert tone="danger">
             <AlertDescription>{viewModel.loadError ?? viewModel.respondError}</AlertDescription>
           </Alert>
         )}

@@ -15,7 +15,7 @@ export function AuthNotice({ tone, children }: AuthNoticeProps) {
   const success = tone === "success";
 
   return (
-    <Alert variant={success ? "success" : "destructive"} role={success ? "status" : "alert"}>
+    <Alert tone={success ? "success" : "danger"} role={success ? "status" : "alert"}>
       {success ? <CircleCheck /> : <CircleAlert />}
       <AlertDescription>{children}</AlertDescription>
     </Alert>

@@ -416,6 +416,8 @@ export const radius = {
   bar: 1.5,
   tick: 2,
   card: 10,
+  /** A panel: `Card`'s corner. */
+  panel: 14,
   tooltip: 12,
   addon: "calc(var(--radius) - var(--brand-space-nudge))",
   control: "calc(var(--radius) - var(--brand-space-nudge-sm))",
@@ -452,6 +454,11 @@ export const lineWidth = {
   ring: 3,
   /** The card-coloured rim round a chart dot, so dots stand apart where they touch. */
   outline: 1.5,
+};
+
+/** Border widths that are not Tailwind's own steps: `border-callout`, the edge of a solid or outline `Alert`. */
+export const borderWidth = {
+  callout: 1.5,
 };
 
 /** Icon line weight in the tab bar, unitless: lighter at rest, heavier on the current tab. */

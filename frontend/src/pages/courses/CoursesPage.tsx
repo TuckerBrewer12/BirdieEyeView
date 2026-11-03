@@ -32,7 +32,7 @@ export function CoursesPage({ userId }: CoursesPageProps) {
         />
 
         {viewModel.error && (
-          <Alert variant="destructive">
+          <Alert tone="danger">
             <AlertDescription>{viewModel.error}</AlertDescription>
           </Alert>
         )}

@@ -10,7 +10,7 @@ export function TheLabPage({ userId }: { userId: string }) {
 
   if (!vm.analytics) {
     return (
-      <Alert variant="destructive">
+      <Alert tone="danger">
         <AlertDescription>{vm.error?.message ?? "The Lab failed to load."}</AlertDescription>
         <AlertAction>
           <Button variant="outline" size="xs" onClick={vm.retry}>

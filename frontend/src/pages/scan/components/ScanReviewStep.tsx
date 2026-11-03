@@ -48,14 +48,14 @@ export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanRe
   return (
     <div data-slot="scan-review" className="flex flex-col gap-4">
       {review.error && (
-        <Alert variant="destructive">
+        <Alert tone="danger">
           <AlertDescription>{review.error}</AlertDescription>
         </Alert>
       )}
 
       {toCheck.length > 0 && (
-        <Alert data-slot="scores-to-check">
-          <CircleAlert className="text-destructive" />
+        <Alert tone="warning" data-slot="scores-to-check">
+          <CircleAlert />
           <AlertTitle>{pluralize(toCheck.length, "score")} to check</AlertTitle>
           <AlertDescription>
             The scan wasn't sure what it read on {holeList(toCheck)}, ringed below. Check{" "}

@@ -14,6 +14,12 @@ export default function CardPreview() {
   return (
     <>
       <Card>
+        <CardContent className="text-foreground-secondary">
+          Default card. Border only, no shadow.
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader>
           <CardTitle>Pebble Beach Golf Links</CardTitle>
           <CardDescription>Pebble Beach, CA</CardDescription>

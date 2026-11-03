@@ -13,7 +13,7 @@ export {
   scoreOnFillClass,
 } from "./theme";
 export type { ScoreKey } from "./theme";
-export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/Alert";
+export { Alert, AlertTitle, AlertDescription, AlertLink, AlertAction, AlertDismiss } from "./components/Alert";
 export {
   Card,
   CardHeader,

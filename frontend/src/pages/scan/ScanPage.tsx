@@ -104,7 +104,7 @@ export function ScanPage({ userId }: { userId: string }) {
           </ToggleGroup>
 
           {viewModel.error && (
-            <Alert variant="destructive">
+            <Alert tone="danger">
               <AlertDescription>{viewModel.error}</AlertDescription>
             </Alert>
           )}
