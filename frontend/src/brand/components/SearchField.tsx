@@ -1,3 +1,4 @@
+import type * as React from "react";
 import { useEffect, useRef } from "react";
 import { Search, Loader2, X } from "lucide-react";
 import { cn } from "@/brand/cn";
@@ -8,26 +9,22 @@ import {
   InputGroupInput,
 } from "./InputGroup";
 
-interface SearchFieldProps {
-  /** The input's id, so a FieldLabel can name it. */
-  id?: string;
+/** Other input props (an `id` for a FieldLabel, combobox ARIA, `onKeyDown`) go to the input. */
+interface SearchFieldProps
+  extends Omit<React.ComponentProps<typeof InputGroupInput>, "value" | "onChange" | "type"> {
   value: string;
   onChange: (value: string) => void;
-  placeholder?: string;
-  autoFocus?: boolean;
   loading?: boolean;
   /** Shows a `/` hint while the field is empty, and makes the `/` key focus it. */
   shortcut?: boolean;
 }
 
 export function SearchField({
-  id,
   value,
   onChange,
-  placeholder,
-  autoFocus,
   loading,
   shortcut = false,
+  ...inputProps
 }: SearchFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -47,13 +44,11 @@ export function SearchField({
     <InputGroup className="h-10 rounded-card bg-card">
       <InputGroupInput
         ref={inputRef}
-        id={id}
         type="search"
-        placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        autoFocus={autoFocus}
         className="[&::-webkit-search-cancel-button]:hidden"
+        {...inputProps}
       />
       <InputGroupAddon className={cn("pl-3", value && "text-foreground")}>
         <Search />
