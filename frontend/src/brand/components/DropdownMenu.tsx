@@ -20,7 +20,7 @@ function DropdownMenuTrigger({ className, children, ...props }: MenuPrimitive.Tr
     <MenuPrimitive.Trigger
       data-slot="dropdown-menu-trigger"
       className={cn(
-        "group inline-flex h-9.5 items-center gap-1.5 rounded-card border border-input bg-card px-3 text-body font-semibold text-foreground outline-none select-none hover:border-foreground focus-visible:ring-3 focus-visible:ring-ring/50 data-popup-open:border-foreground",
+        "group inline-flex h-9 items-center gap-1.5 rounded-card border border-input bg-card px-3 text-body font-semibold text-foreground outline-none select-none hover:border-foreground focus-visible:ring-3 focus-visible:ring-ring/50 data-popup-open:border-foreground",
         className,
       )}
       {...props}
