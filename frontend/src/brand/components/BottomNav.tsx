@@ -23,7 +23,7 @@ interface BottomNavProps {
 }
 
 const tabClass =
-  "group flex min-w-0 flex-1 flex-col items-center justify-center gap-tab text-meta font-medium text-muted-foreground transition-colors data-active:font-bold data-active:text-foreground data-panel-open:font-bold data-panel-open:text-foreground [&_svg]:size-5 [&_svg]:stroke-icon";
+  "group flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-meta font-medium text-muted-foreground transition-colors data-active:font-bold data-active:text-foreground data-panel-open:font-bold data-panel-open:text-foreground [&_svg]:size-5 [&_svg]:stroke-icon";
 
 /** The icon's round holder: bare on a tab, a lifted filled disc on the featured one. */
 const iconClass = "flex size-7 items-center justify-center rounded-full transition-colors";
@@ -70,7 +70,7 @@ function BottomNav({
       className={cn("relative", className)}
     >
       {/* Raised so the bar stays clear of the dimmed page while the menu is open. */}
-      <div className="relative z-10 border-t border-border bg-card px-2 pt-1.5 pb-tab-bottom">
+      <div className="relative z-10 border-t border-border bg-card px-2 pt-1.5 pb-safe-bottom">
         <div className="flex h-14 items-stretch">
           {tabs.map((item) => (
             <NavLink key={item.href} item={item} renderLink={renderLink} onClick={close} className={tabClass}>

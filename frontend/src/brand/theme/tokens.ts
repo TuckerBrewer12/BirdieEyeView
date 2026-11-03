@@ -401,12 +401,8 @@ export const space = {
   /** What a control's corner gives up inside its group, so the corners nest. */
   nudge: 5,
   "nudge-sm": 3,
-  /** The phone's home-indicator strip, which a bar pinned to the bottom pads past. */
-  "safe-bottom": "env(safe-area-inset-bottom, 0px)",
-  /** Under the tab bar: the home-indicator strip, never less than the bar's own 22px. */
-  "tab-bottom": "max(env(safe-area-inset-bottom, 0px), 22px)",
-  /** Between a tab's icon and its label. */
-  tab: 3,
+  /** What a bar pinned to the bottom pads past: the phone's home-indicator strip, never less than 22px. */
+  "safe-bottom": "max(env(safe-area-inset-bottom, 0px), 22px)",
 };
 
 /** Shadcn's base radius, `--radius`; the named steps below sit around it. */
@@ -458,10 +454,9 @@ export const lineWidth = {
   outline: 1.5,
 };
 
-/** Icon line weight in the tab bar, unitless: lighter at rest, heavier on the current tab. */
+/** Icon line weight in the tab bar, unitless. */
 export const stroke = {
   icon: 1.75,
-  "icon-active": 2.25,
 };
 
 /** Blur radii, in pixels. `xs` is Tailwind's own step, named here so code can read it. */

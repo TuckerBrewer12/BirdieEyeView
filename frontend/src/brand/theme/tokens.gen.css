@@ -147,9 +147,7 @@
   --brand-space-tight: 5px;
   --brand-space-nudge: 5px;
   --brand-space-nudge-sm: 3px;
-  --brand-space-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --brand-space-tab-bottom: max(env(safe-area-inset-bottom, 0px), 22px);
-  --brand-space-tab: 3px;
+  --brand-space-safe-bottom: max(env(safe-area-inset-bottom, 0px), 22px);
   --brand-size-date-rail: 54px;
   --brand-size-preview: 390px;
   --brand-size-chart: 180px;
@@ -168,7 +166,6 @@
   --brand-size-profile-worse: 100%;
   --brand-size-scorecard: 43.75rem;
   --brand-stroke-icon: 1.75;
-  --brand-stroke-icon-active: 2.25;
   --brand-opacity-recessed: 35%;
   --brand-opacity-wash: 22%;
   --brand-ring-width: 3px;
@@ -352,8 +349,6 @@
   --spacing-nudge: var(--brand-space-nudge);
   --spacing-nudge-sm: var(--brand-space-nudge-sm);
   --spacing-safe-bottom: var(--brand-space-safe-bottom);
-  --spacing-tab-bottom: var(--brand-space-tab-bottom);
-  --spacing-tab: var(--brand-space-tab);
   --spacing-date-rail: var(--brand-size-date-rail);
   --spacing-preview: var(--brand-size-preview);
   --spacing-chart: var(--brand-size-chart);
@@ -372,7 +367,6 @@
   --spacing-profile-worse: var(--brand-size-profile-worse);
   --spacing-scorecard: var(--brand-size-scorecard);
   --stroke-width-icon: var(--brand-stroke-icon);
-  --stroke-width-icon-active: var(--brand-stroke-icon-active);
   --opacity-recessed: var(--brand-opacity-recessed);
   --opacity-wash: var(--brand-opacity-wash);
   --text-title--font-weight: 700;
