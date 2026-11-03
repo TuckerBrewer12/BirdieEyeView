@@ -1,13 +1,21 @@
 import { test } from "@playwright/test";
-import { capturePreview, enableDark } from "../../previewScreenshot";
+import { BrandKitRobot } from "../../BrandKit.robot";
+import { enableDark } from "../../previewScreenshot";
+
+// The board's width and height: the three states side by side.
+test.use({ viewport: { width: 1000, height: 360 } });
 
 test.describe("ScanProgress", () => {
   test("light", async ({ page }) => {
-    await capturePreview(page, "ScanProgress", "scan-progress.png");
+    const kit = new BrandKitRobot(page);
+    await kit.openFrame("ScanProgress");
+    await kit.captureFrame("scan-progress.png");
   });
 
   test("dark", async ({ page }) => {
     await enableDark(page);
-    await capturePreview(page, "ScanProgress", "scan-progress-dark.png");
+    const kit = new BrandKitRobot(page);
+    await kit.openFrame("ScanProgress");
+    await kit.captureFrame("scan-progress-dark.png");
   });
 });
