@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from analytics import handicap as hcap
 from analytics import stats as analytics
+from analytics.insights import Rating, putts_rating
 from models import Round
 from models.hole_score import ScoreKind
 
@@ -69,6 +70,17 @@ def recent_form(rounds: List[Round], window: int = RECENT_ROUNDS) -> Dict[str, O
         "up_and_down_pct": _pooled_pct(analytics.up_and_down_trend(recent), "successes", "opportunities"),
         "putts_per_18": sum(r["total_putts"] for r in putt_rows) / putt_holes * 18 if putt_holes else None,
     }
+
+
+def putts_shown(recent_putts_per_18: Optional[float], average_putts: Optional[float]) -> Dict[str, Any]:
+    """The putts figure the dashboard shows, and how good it is.
+
+    The last five rounds' putts per 18 when they have putts, else the average over every round.
+    Rated by `insights.putts_rating`, so the dashboard and the analytics page agree.
+    """
+    putts = recent_putts_per_18 if recent_putts_per_18 is not None else average_putts
+    rating: Optional[Rating] = putts_rating(putts) if putts is not None else None
+    return {"per_round": putts, "rating": rating}
 
 
 def score_mix(rounds: List[Round]) -> Dict[str, Any]:

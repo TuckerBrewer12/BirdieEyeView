@@ -1428,6 +1428,20 @@ def average_score_relative_to_par_by_hole(rounds: Iterable[Round]) -> List[Dict[
     return results
 
 
+def hole_average_nines(by_hole: List[Dict[str, Any]]) -> Dict[str, Optional[float]]:
+    """
+    The player's per-hole average scores summed over the front nine, the back nine and every
+    hole: the Out, In and Total of their row on the course scorecard. Takes the rows
+    `average_score_relative_to_par_by_hole` builds; a nine with no hole played is null.
+    """
+
+    def total(holes: range) -> Optional[float]:
+        averages = [row["average_score"] for row in by_hole if row["hole_number"] in holes]
+        return sum(averages) if averages else None
+
+    return {"front_nine": total(range(1, 10)), "back_nine": total(range(10, 19)), "total": total(range(1, 19))}
+
+
 def course_difficulty_profile_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     Return hole difficulty sorted from hardest to easiest for a single course.

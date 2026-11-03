@@ -1,6 +1,8 @@
 import type { AnalyticsFilters } from "@/domain/analyticsFilters";
+import type { BenchmarkTarget } from "@/domain/benchmark";
 import type {
   AnalyticsDto,
+  BenchmarkComparisonDto,
   CourseAnalyticsDto,
   CourseDto,
   CourseSummaryDto,
@@ -148,6 +150,14 @@ export const api = {
     if (f.timeframe !== "all") p.set("timeframe", f.timeframe);
     if (f.courseId !== "all") p.set("course_id", f.courseId);
     return fetchJSON<AnalyticsDto>(`/stats/analytics/${userId}?${p}`);
+  },
+
+  /** The golfer's last `limit` rounds held up against a handicap's shape, their peak's, or a friend's. */
+  getBenchmarkComparison: (userId: string, target: BenchmarkTarget, limit = 20) => {
+    const p = new URLSearchParams({ against: target.against, limit: String(limit) });
+    if (target.against === "handicap") p.set("handicap", String(target.handicap));
+    if (target.against === "friend") p.set("friend_id", target.friendId);
+    return fetchJSON<BenchmarkComparisonDto>(`/stats/${userId}/benchmark?${p}`);
   },
 
   getPlayedCourses: (userId: string) =>

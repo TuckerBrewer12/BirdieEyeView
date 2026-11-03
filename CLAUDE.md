@@ -90,11 +90,11 @@ Key files:
 - `routers/courses.py` — GET/POST/PUT + clone endpoint. `user_id IS NULL` = master/global course; `user_id IS NOT NULL` = user-owned custom course.
 - `routers/rounds.py` — GET/PUT/DELETE for rounds and hole scores
 - `routers/users.py` — user management + user tee CRUD (`/api/users/{id}/tees`); `UpdateUserRequest` accepts `scoring_goal`; a user is sent as `UserResponse` (the profile, no rounds)
-- `routers/stats.py` — player analytics endpoints; includes `GET /{user_id}/goal-report`
+- `routers/stats.py` — player analytics endpoints; includes `GET /{user_id}/goal-report` and `GET /{user_id}/benchmark`
 - `api/request_models.py` — shared Pydantic request/response models
 - `api/round_responses.py` — `round_summary()` / `round_detail()`: the one place a round's response is built. Every round endpoint (list, detail, update, link-course, dashboard) returns the figures the `Round` model works out (score, par, to-par, nine totals plus each nine's par/to-par/putts/GIR/yards, putts, GIR, yards, per-hole par/handicap/yardage/to-par/`kind`, `score_counts`); the frontend displays them and does not recompute them.
 - `api/course_responses.py` — `course_detail()`: the one place a full course's response is built (`GET /courses/{id}` and a round's `course`). It carries the figures the `Course`/`Tee` models work out: par, front/back nine par, and per tee its total and nine yardages (null until every hole in the nine has a value).
-- `api/course_analytics_responses.py` — `course_analytics()`: `GET /stats/course-analytics/{user}/{course}` as a typed `CourseAnalyticsResponse`. Carries the player's rounds at the course (newest first), rounds played, scoring average, best and worst score, the score trend and the per-hole rows from `analytics/stats.py`.
+- `api/course_analytics_responses.py` — `course_analytics()`: `GET /stats/course-analytics/{user}/{course}` as a typed `CourseAnalyticsResponse`. Carries the player's rounds at the course (newest first), rounds played, scoring average, best and worst score, the score trend, the per-hole rows from `analytics/stats.py`, and those holes' averages summed by nine (`hole_averages_front_nine`/`_back_nine`/`_total`, the scorecard's Out/In/Total).
 - `api/analytics_responses.py` — `analytics_response()`: `GET /stats/analytics/{user}` as a typed `AnalyticsResponse`, one model per section (KPIs, per-round trends, scoring breakdowns, handicap trend with `differential_status`, notable achievements). The goal report, round comparison and played courses are typed too (`GoalReportResponse`, `RoundComparisonResponse`, `PlayedCourseResponse`).
 
 **API endpoints:**
@@ -106,7 +106,8 @@ Key files:
 - `GET/PUT/DELETE /api/rounds/{id}` — round CRUD; PUT recalculates `total_score`
 - `GET/POST /api/users/{id}/tees` — list/create user tees
 - `PUT/DELETE /api/users/{id}/tees/{tee_id}` — update/delete user tees
-- `GET /api/stats/{user_id}/goal-report?limit=` — goal gap analysis + ranked savers
+- `GET /api/stats/{user_id}/goal-report?limit=` — goal gap analysis + ranked savers, and each scored round marked met or not (`attempts`)
+- `GET /api/stats/{user_id}/benchmark?against=handicap|peak|friend&handicap=&friend_id=` — The Lab's comparison: the benchmark's shape and each par type's gap and verdict against it
 
 ### `database/` — Async PostgreSQL layer (asyncpg)
 
@@ -329,11 +330,12 @@ Key files:
 Implemented. Exposes per-player analytics via `api/routers/stats.py`.
 
 - `analytics/stats.py` — all per-player stat functions (GIR, putting, scrambling, yardage buckets, score type distribution, course difficulty profile, etc.)
-- `analytics/dashboard.py` — the dashboard's figures over the last 20 rounds (L20/L5 scoring averages and their change, last-5 GIR/scrambling/up-and-down/putts, handicap change, score mix, WHS breakdown, lifetime milestones, the best of the listed recent rounds, and the score/handicap/scrambling/up-and-down trend series). `GET /stats/dashboard/{id}` sends them typed; the frontend only formats and colours them, and the dashboard never fetches the analytics payload.
-- `analytics/insights.py` — the analytics page's insights: scoring, GIR and putts shifts between the earlier and later half of the rounds, the best par type, and GIR/putts averages with a `rating`. Each carries its `kind`, `category` and `trend`; the page words them.
-- `analytics/peak.py` — The Lab's peak game: the best three rounds (two at least), their average, and birdies/bogeys/doubles a round against every round with the strokes each difference is worth (`AnalyticsResponse.peak_game`); `peak_gap` against a goal for the goal report.
-- `analytics/goals.py` — `goal_report(rounds, scoring_goal, home_course_rounds)` — computes gap to goal, rounds meeting it, the peak game's gap to it, and ranks highest-ROI improvement areas ("savers"): three-putt bleed, blowup holes, achilles heel yardage zone, home course demon hole, GIR opportunity, scrambling opportunity, par 5 opportunity
-- The Lab reads `AnalyticsResponse` at limit 20 (`kpis.three_putts_per_round`, `three_putt_rate`, `average_putts`, `scoring_average_change`, `peak_game`) and the goal report. The profile radar's 0–100 scale and the handicap benchmark profiles stay in `frontend/src/domain/radar.ts` and `benchmark.ts`: chart normalisation and reference data, not figures worked out from the golfer's rounds.
+- `analytics/dashboard.py` — the dashboard's figures over the last 20 rounds (L20/L5 scoring averages and their change, last-5 GIR/scrambling/up-and-down/putts, handicap change, score mix, WHS breakdown, lifetime milestones, the best of the listed recent rounds, the putts shown with their rating (`putts_per_round`, `putts_rating`, rated by `insights.putts_rating`), and the score/handicap/scrambling/up-and-down trend series). `GET /stats/dashboard/{id}` sends them typed; the frontend only formats and colours them, and the dashboard never fetches the analytics payload.
+- `analytics/insights.py` — the analytics page's insights: scoring, GIR and putts shifts between the earlier and later half of the rounds, the best par type, and GIR/putts averages with a `rating`. Each carries its `kind`, `category` and `trend`; the page words them. `putts_rating` (30 or fewer strong, up to 34 fair) is the one putts rating; the dashboard uses it too.
+- `analytics/peak.py` — The Lab's peak game: the best three rounds (two at least), their average, and birdies/bogeys/doubles a round against every round with the strokes each difference is worth (`AnalyticsResponse.peak_game`); `peak_gap` and `peak_meets_goal` against a goal for the goal report.
+- `analytics/goals.py` — `goal_report(rounds, scoring_goal, home_course_rounds)` — computes gap to goal, rounds meeting it, each scored round marked met or not, the peak game's gap to it, and ranks highest-ROI improvement areas ("savers"): three-putt bleed, blowup holes, achilles heel yardage zone, home course demon hole, GIR opportunity, scrambling opportunity, par 5 opportunity
+- `analytics/benchmarks.py` — The Lab's benchmarks: one table of amateur shapes by goal (and the handicap each stands for) in golf units (GIR%, scrambling%, putts per GIR, par 3/4/5 average to par); the goal nearest a peak average; a friend's shape from their rounds; and each par type's gap and ahead/even/behind verdict against a benchmark. `GET /stats/{id}/benchmark` sends it as `BenchmarkComparisonResponse`.
+- The Lab reads `AnalyticsResponse` at limit 20 (`kpis.three_putts_per_round`, `three_putt_rate`, `average_putts`, `scoring_average_change`, `peak_game`), the goal report and the benchmark comparison. Only the radar's 0–100 drawing scale stays in `frontend/src/domain/radar.ts`.
 
 ## Imports
 

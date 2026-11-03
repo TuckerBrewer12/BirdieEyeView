@@ -1,5 +1,5 @@
-import { buildRadarData, HANDICAP_BENCHMARK } from "@/domain";
-import { averyLabAnalytics, labAnalytics, labGoalReport } from "@/testing/fixtures/lab";
+import { benchmarkShapeFrom, buildRadarData } from "@/domain";
+import { averyLabAnalytics, breaks90Shape, labAnalytics, labGoalReport } from "@/testing/fixtures/lab";
 import { PerformanceShapeCard, type PerformanceShapeCardProps } from "../components/PerformanceShapeCard";
 import { peakGameFrom } from "../model";
 
@@ -21,7 +21,7 @@ const base: PerformanceShapeCardProps = {
   selectedFriend: avery,
   onSelectFriend: () => {},
   friendComparison: null,
-  radar: buildRadarData(labAnalytics.kpis, labAnalytics.scoring_by_par, HANDICAP_BENCHMARK[15]),
+  radar: buildRadarData(labAnalytics.kpis, labAnalytics.scoring_by_par, benchmarkShapeFrom(breaks90Shape)),
   compared: true,
   missingAxes: [],
 };

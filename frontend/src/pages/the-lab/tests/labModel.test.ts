@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { friendshipFromDto } from "@/data/friendsModel";
-import { HANDICAP_BENCHMARK } from "@/domain";
+import { benchmarkComparisonFrom } from "@/domain";
 import { populatedFriendships } from "@/testing/fixtures/friendships";
-import { labAnalytics, labGoalReport } from "@/testing/fixtures/lab";
+import { labAnalytics, labBenchmarks, labGoalReport } from "@/testing/fixtures/lab";
 import {
   friendOptionsFrom,
   goalStandingFrom,
@@ -37,6 +37,7 @@ describe("goalStandingFrom", () => {
       onTrack: false,
       bestScore: null,
       roundsMeetingGoal: null,
+      attempts: [],
       savers: [],
     });
   });
@@ -85,12 +86,10 @@ describe("the server's figures", () => {
     expect(labAnalyticsFrom(labAnalytics).lowestScore).toBe(89);
   });
 
-  it("reads each par type against the comparison's average to par", () => {
-    const rows = parTypeRowsFrom(labAnalytics, HANDICAP_BENCHMARK[0]);
+  it("reads each par type alone when there is nothing to compare with", () => {
+    const rows = parTypeRowsFrom(labAnalytics);
     expect(rows.map((r) => r.averageToPar)).toEqual([0.92, 1.12, 0.85]);
-    // Scratch's par 3 score of 81 stands for about +0.0 a hole.
-    expect(rows[0].benchmarkToPar).toBeCloseTo(-0.025, 3);
-    expect(parTypeRowsFrom(labAnalytics, null).every((r) => r.benchmarkToPar == null)).toBe(true);
+    expect(rows.every((r) => r.benchmarkToPar == null && r.gap == null && r.verdict == null)).toBe(true);
   });
 });
 
@@ -118,19 +117,17 @@ describe("present", () => {
     expect(goalStandingNote({ ...goal, onTrack: true })).toBe("Your average already breaks 90. Keep it there.");
     const peak = peakGameFrom(labAnalytics, 89, labGoalReport)!;
     expect(peakGapNote(peak, "Break 90")).toBe("0.7 strokes from break 90 on your best days.");
-    expect(peakGapNote({ ...peak, gapToGoal: -1 }, "Break 90")).toMatch(/already break 90/);
-    expect(peakGapNote({ ...peak, gapToGoal: null }, "Break 90")).toBeNull();
+    expect(peakGapNote({ ...peak, gapToGoal: -1, meetsGoal: true }, "Break 90")).toMatch(/already break 90/);
+    expect(peakGapNote({ ...peak, gapToGoal: null, meetsGoal: null }, "Break 90")).toBeNull();
   });
 
-  it("words a par-type gap, and a tie is even", () => {
-    expect(parTypeGapNote(1.2, 1, "Breaks 90")).toEqual({
-      text: "Breaks 90 +1 · 0.20 a hole to close",
-      gap: 0.2,
-    });
-    expect(parTypeGapNote(0.8, 1, "Breaks 90").text).toBe("Breaks 90 +1 · ahead of it");
-    expect(parTypeGapNote(1, 1, "Breaks 90")).toEqual({ text: "Breaks 90 +1 · even with it", gap: 0 });
-    // A difference that rounds to even is a tie, not ahead.
-    expect(parTypeGapNote(1, 1.004, "Breaks 90").text).toBe("Breaks 90 +1 · even with it");
+  it("words a par-type gap in the server's verdict", () => {
+    const [par3, , par5] = benchmarkComparisonFrom(labBenchmarks["handicap:15"]).parTypes;
+    expect(parTypeGapNote(par3, "Breaks 90")).toEqual({ text: "Breaks 90 +0.6 · 0.32 a hole to close", gap: 0.32 });
+    expect(parTypeGapNote(par5, "Breaks 90")?.text).toBe("Breaks 90 +1.1 · ahead of it");
+    const even = { par: 4 as const, averageToPar: 1, benchmarkToPar: 1.004, gap: 0, verdict: "even" as const };
+    expect(parTypeGapNote(even, "Breaks 90")).toEqual({ text: "Breaks 90 +1 · even with it", gap: 0 });
+    expect(parTypeGapNote(parTypeRowsFrom(labAnalytics)[0], "Breaks 90")).toBeNull();
   });
 
   it("words strokes and trends with their sign", () => {

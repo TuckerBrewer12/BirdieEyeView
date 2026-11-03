@@ -6,6 +6,7 @@ from typing import List, Optional
 from analytics import dashboard
 from analytics import handicap as hcap
 from analytics import stats as analytics
+from analytics.benchmarks import player_shape
 from analytics.insights import insights
 from analytics.peak import peak_game
 from api.schemas import AnalyticsKpis, AnalyticsResponse
@@ -39,15 +40,14 @@ def analytics_response(
     current_hi = hcap.handicap_index(hi_rounds)
     average_putts = _average([r["total_putts"] for r in putts_rows if r["total_putts"] is not None])
     three_putts = analytics.three_putt_averages(rounds)
+    shape = player_shape(rounds) or {}
 
     return AnalyticsResponse(
         kpis=AnalyticsKpis(
             scoring_average=_rounded(_average(scores), 1),
-            gir_percentage=_rounded(analytics.overall_gir_percentage(rounds)["gir_percentage"], 1),
-            putts_per_gir=_rounded(analytics.overall_putts_per_gir(rounds)["putts_per_gir"], 2),
-            scrambling_percentage=_rounded(_average([
-                r["scrambling_percentage"] for r in scrambling_rows if r["scrambling_percentage"] is not None
-            ]), 1),
+            gir_percentage=shape.get("gir_percentage"),
+            putts_per_gir=shape.get("putts_per_gir"),
+            scrambling_percentage=shape.get("scrambling_percentage"),
             up_and_down_percentage=_rounded(_average([
                 r["percentage"] for r in up_and_down_rows if r["opportunities"] > 0
             ]), 1),

@@ -4,14 +4,10 @@ import { useFriendships } from "@/data/useFriendships";
 import { useGoalReport } from "@/data/useGoalReport";
 import { useUpdateUser } from "@/data/useUpdateUser";
 import { useUser } from "@/data/useUser";
-import {
-  HANDICAP_BENCHMARK,
-  nearestGoalBenchmark,
-  type BenchmarkProfile,
-  type ComparisonTargetValue,
-} from "@/domain/benchmark";
-import { benchmarkProfileFrom, buildRadarData, type RadarEntry } from "@/domain/radar";
+import type { BenchmarkShape, BenchmarkTarget, ComparisonTargetValue, GoalAttempt } from "@/domain/benchmark";
+import { buildRadarData, type RadarEntry } from "@/domain/radar";
 import { labRepository, type LabRepository } from "./labRepository";
+import { useBenchmarkComparison } from "./useBenchmarkComparison";
 import {
   LAB_FILTERS,
   friendOptionsFrom,
@@ -21,7 +17,6 @@ import {
   parTypeRowsFrom,
   peakGameFrom,
   puttingSummaryFrom,
-  scoresOf,
   type FriendOption,
   type GoalStanding,
   type LabAnalytics,
@@ -35,9 +30,6 @@ import {
 
 /** How a friend comparison stands: no friends to pick, their rounds loading, too few rounds, or drawn. */
 export type FriendComparison = "no-friends" | "loading" | "no-rounds" | "ready";
-
-/** The attempts chart shows at most this many of the latest rounds. */
-const ATTEMPTS_SHOWN = 24;
 
 export interface LabPageViewModel {
   /** True until the golfer's analytics first load. */
@@ -66,15 +58,15 @@ export interface LabPageViewModel {
   selectFriend: (friendId: string) => void;
   /** Null unless comparing with a friend. */
   friendComparison: FriendComparison | null;
-  /** The profile drawn behind the golfer's shape, or null with nothing to compare. */
-  benchmark: BenchmarkProfile | null;
+  /** The server's shape drawn behind the golfer's, or null with nothing to compare. */
+  benchmark: BenchmarkShape | null;
   /** The axes the golfer has figures for. */
   radar: RadarEntry[];
   /** The axes they don't, yet. */
   missingAxes: string[];
 
-  /** Scores of the latest rounds, oldest first. */
-  attempts: number[];
+  /** The window's scored rounds, oldest first, each marked met or not by the goal report. */
+  attempts: GoalAttempt[];
   /** Null without a goal, and until the goal's report loads. */
   roundsMeetingGoal: number | null;
   parTypes: ParTypeRow[];
@@ -118,23 +110,18 @@ export function useLabPageViewModel(
   // A friend who has since gone falls back to the first one listed.
   const selectedFriend = friends.find((f) => f.id === pickedFriendId) ?? friends[0] ?? null;
   const comparingFriend = mode === "benchmark" && comparison === "friend";
-  const theirs = useAnalytics(
-    comparingFriend ? (selectedFriend?.id ?? null) : null,
-    LAB_FILTERS,
-    labAnalyticsFrom,
-    repository,
-  );
-
-  const benchmark = useMemo<BenchmarkProfile | null>(() => {
-    if (mode === "peak") return peak ? nearestGoalBenchmark(peak.average) : null;
-    if (comparison === "friend") {
-      return theirs.data ? benchmarkProfileFrom(theirs.data.kpis, theirs.data.scoring_by_par) : null;
-    }
-    return comparison != null ? (HANDICAP_BENCHMARK[comparison] ?? null) : null;
-  }, [mode, peak, comparison, theirs.data]);
+  // Who the server holds the golfer up against; nothing when it's their shape alone.
+  const against = useMemo<BenchmarkTarget | null>(() => {
+    if (mode === "peak") return { against: "peak" };
+    if (comparison === "friend") return selectedFriend ? { against: "friend", friendId: selectedFriend.id } : null;
+    return comparison != null ? { against: "handicap", handicap: comparison } : null;
+  }, [mode, comparison, selectedFriend]);
+  const compared = useBenchmarkComparison(userId, against, repository);
+  const comparisonData = against ? (compared.data ?? null) : null;
+  const benchmark = comparisonData?.benchmark ?? null;
 
   const radarAll = useMemo(
-    () => (analytics ? buildRadarData(analytics.kpis, analytics.scoring_by_par, benchmark ?? undefined) : []),
+    () => (analytics ? buildRadarData(analytics.kpis, analytics.scoring_by_par, benchmark) : []),
     [analytics, benchmark],
   );
 
@@ -142,7 +129,7 @@ export function useLabPageViewModel(
     ? null
     : !selectedFriend
       ? "no-friends"
-      : theirs.isLoading
+      : compared.isLoading
         ? "loading"
         : benchmark
           ? "ready"
@@ -156,7 +143,10 @@ export function useLabPageViewModel(
     [peak],
   );
 
-  const parTypes = useMemo(() => (analytics ? parTypeRowsFrom(analytics, benchmark) : []), [analytics, benchmark]);
+  const parTypes = useMemo(
+    () => comparisonData?.parTypes ?? (analytics ? parTypeRowsFrom(analytics) : []),
+    [comparisonData, analytics],
+  );
   const putting = useMemo(() => (analytics ? puttingSummaryFrom(analytics) : null), [analytics]);
   const panels = labPanelsFrom(parTypes, putting, peak);
   const panel = pickedPanel != null && panels.includes(pickedPanel) ? pickedPanel : (panels[0] ?? null);
@@ -192,7 +182,7 @@ export function useLabPageViewModel(
     radar: radarAll.filter((entry) => entry.hasData),
     missingAxes: radarAll.filter((entry) => !entry.hasData).map((entry) => entry.axis),
 
-    attempts: analytics ? scoresOf(analytics).slice(-ATTEMPTS_SHOWN) : [],
+    attempts: goal?.attempts ?? [],
     roundsMeetingGoal: goal?.roundsMeetingGoal ?? null,
     parTypes,
     putting,

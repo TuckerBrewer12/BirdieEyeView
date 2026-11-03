@@ -18,6 +18,11 @@ export const queryKeys = {
     filters === undefined
       ? (["analytics", userId] as const)
       : (["analytics", userId, filters] as const),
+  /**
+   * The golfer's rounds against one benchmark. It sits under their analytics, so whatever
+   * refreshes their analytics refreshes it too.
+   */
+  benchmarkComparison: (userId: string, target: unknown) => ["analytics", userId, "benchmark", target] as const,
   playedCourses: (userId: string) => ["played-courses", userId] as const,
   /** The text read off one picked photo, ahead of extract. */
   scanText: (photoId: string | null) => ["scan-text", photoId] as const,

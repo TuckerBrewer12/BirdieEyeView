@@ -90,13 +90,3 @@ export function milestoneWording(milestone: Milestone): { title: string; figure:
   return { title: wording.title, figure: wording.figure(milestone.value) };
 }
 
-
-export type PuttsBand = "good" | "fair" | "poor";
-
-/** Which colour band a putts-per-round figure sits in: under 30, up to 35, or more. */
-export function puttsBand(putts: number | null): PuttsBand | null {
-  if (putts == null) return null;
-  if (putts < 30) return "good";
-  if (putts <= 35) return "fair";
-  return "poor";
-}

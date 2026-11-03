@@ -9,7 +9,6 @@ export { chartTooltipStyle, chartTickStyle, chartLayout, chartColors } from "./c
 export {
   SCORE_KEYS,
   scoreFillClass,
-  scoreKeyFor,
   toParFill,
   toParTone,
   toParLabel,

@@ -1,12 +1,13 @@
 import { scaleLinear } from "d3-scale";
 import { cn } from "@/brand/cn";
+import type { GoalAttempt } from "@/domain/benchmark";
 import { chartColors, chartLayout, chartTickStyle, colors, space } from "@/brand/theme";
 import { indexScale, paddedExtent } from "./scales";
 
 interface ScoreGoalChartProps {
-  /** Scores, oldest first. */
-  scores: number[];
-  /** The highest score that meets the goal: 79 to break 80. */
+  /** Rounds, oldest first, each marked met or not as the server judged it. */
+  attempts: GoalAttempt[];
+  /** The highest score that meets the goal, 79 to break 80: where the goal line is drawn. */
   goal: number;
   className?: string;
   "aria-label"?: string;
@@ -14,15 +15,16 @@ interface ScoreGoalChartProps {
 
 /**
  * Rounds against a scoring goal: one dot per round, lower scores higher up, joined by a
- * faint line, with the goal dashed across. A round at or under the goal is filled.
+ * faint line, with the goal dashed across. A round that met the goal is filled.
  */
-export function ScoreGoalChart({ scores, goal, className, "aria-label": ariaLabel }: ScoreGoalChartProps) {
+export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLabel }: ScoreGoalChartProps) {
   const { width: W, height: H, pad, labelRoom, dot, dotReached } = chartLayout.goal;
 
-  if (scores.length < 2) {
+  if (attempts.length < 2) {
     return <div className="py-6 text-center text-sm text-muted-foreground">Not enough rounds yet</div>;
   }
 
+  const scores = attempts.map((attempt) => attempt.score);
   const x = indexScale(scores.length, pad.x, W - pad.x);
   // A stroke of room past the lowest and highest, so no dot sits on the edge.
   const y = scaleLinear()
@@ -64,21 +66,18 @@ export function ScoreGoalChart({ scores, goal, className, "aria-label": ariaLabe
           strokeLinejoin="round"
           strokeLinecap="round"
         />
-        {scores.map((score, i) => {
-          const reached = score <= goal;
-          return (
-            <circle
-              key={i}
-              data-reached={reached || undefined}
-              cx={x(i)}
-              cy={y(score)}
-              r={reached ? dotReached : dot}
-              fill={reached ? colors.score.birdie.base : colors.card}
-              stroke={reached ? "none" : chartColors.axis}
-              strokeWidth={1.5}
-            />
-          );
-        })}
+        {attempts.map(({ score, metGoal }, i) => (
+          <circle
+            key={i}
+            data-reached={metGoal || undefined}
+            cx={x(i)}
+            cy={y(score)}
+            r={metGoal ? dotReached : dot}
+            fill={metGoal ? colors.score.birdie.base : colors.card}
+            stroke={metGoal ? "none" : chartColors.axis}
+            strokeWidth={1.5}
+          />
+        ))}
       </svg>
     </div>
   );

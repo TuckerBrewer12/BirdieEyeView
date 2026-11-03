@@ -43,6 +43,8 @@ describe("useDashboardPageViewModel", () => {
     expect(result.current.user?.name).toBe("Test Golfer");
     expect(result.current.l20ScoreMix).toEqual(populatedDashboard.score_mix);
     expect(result.current.recentScoreMix).toEqual(populatedDashboard.recent_score_mix);
+    // The putts and their rating come as the server picked and rated them.
+    expect([result.current.putts, result.current.puttsRating]).toEqual([32, "fair"]);
     expect(result.current.recentScores).toEqual(
       populatedDashboard.score_trend.flatMap((row) => (row.total_score != null ? [row.total_score] : [])),
     );

@@ -535,6 +535,41 @@ async def test_stats_auxiliary_endpoints(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_benchmark_comparison_endpoint():
+    user_id, friend_id = uuid4(), uuid4()
+    user = _make_user(user_id)
+    db = make_mock_database()
+    db.rounds.get_rounds_for_user = AsyncMock(return_value=[_make_round_summary(uuid4()), _make_round_summary(uuid4())])
+    db.friendships.are_friends = AsyncMock(return_value=True)
+
+    handicap = await stats.get_benchmark_comparison(user_id, "handicap", 15, None, 20, db, user)
+    assert (handicap.against, handicap.handicap) == ("handicap", 15)
+    assert handicap.benchmark.par4_to_par == 1.025
+    # Eight bogeys and ten pars on par 4s: +0.44 a hole against the 15's +1.025.
+    assert (handicap.par_types[1].gap, handicap.par_types[1].verdict) == (-0.58, "ahead")
+
+    peak = await stats.get_benchmark_comparison(user_id, "peak", None, None, 20, db, user)
+    assert peak.goal == 79  # two rounds of 80 play like the golfers who break 80
+
+    friend = await stats.get_benchmark_comparison(user_id, "friend", None, friend_id, 20, db, user)
+    assert friend.benchmark.par4_to_par == pytest.approx(8 / 18)
+    db.friendships.are_friends.assert_awaited_with(str(user_id), str(friend_id))
+
+    for against, handicap_arg, friend_arg in [("handicap", 7, None), ("handicap", None, None), ("friend", None, None)]:
+        with pytest.raises(HTTPException) as missing:
+            await stats.get_benchmark_comparison(user_id, against, handicap_arg, friend_arg, 20, db, user)
+        assert missing.value.status_code == 422
+
+    db.friendships.are_friends = AsyncMock(return_value=False)
+    with pytest.raises(HTTPException) as stranger:
+        await stats.get_benchmark_comparison(user_id, "friend", None, friend_id, 20, db, user)
+    assert stranger.value.status_code == 403
+    with pytest.raises(HTTPException) as someone_else:
+        await stats.get_benchmark_comparison(friend_id, "handicap", 15, None, 20, db, user)
+    assert someone_else.value.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_ai_insights_success_and_rate_limits(monkeypatch):
     user_id = uuid4()
     user = _make_user(user_id)

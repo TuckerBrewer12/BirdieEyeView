@@ -27,6 +27,8 @@ def test_peak_game_takes_the_best_three_rounds_lowest_first():
     assert game["average"] == 88.3
     assert peak.peak_gap(rounds, 84) == 4.3
     assert peak.peak_gap(rounds, 89) == -0.7
+    assert peak.peak_meets_goal(rounds, 84) is False
+    assert peak.peak_meets_goal(rounds, 89) is True
 
 
 def test_peak_game_keeps_the_older_round_on_a_tie_and_needs_two_scored_rounds():
@@ -35,6 +37,7 @@ def test_peak_game_keeps_the_older_round_on_a_tie_and_needs_two_scored_rounds():
 
     assert peak.peak_game([_scored(88, "only"), Round(id="blank")]) is None
     assert peak.peak_gap([_scored(88, "only")], 89) is None
+    assert peak.peak_meets_goal([_scored(88, "only")], 89) is None
 
 
 def test_peak_impacts_count_birdies_bogeys_and_doubles_a_round():
@@ -75,6 +78,17 @@ def test_scoring_average_change_waits_for_a_full_window_when_asked():
     # The last five average 88 against 89.33 over all six.
     six = [_scored(s, str(i)) for i, s in enumerate([96, 88, 88, 88, 88, 88])]
     assert dashboard.scoring_average_change(six, full_window=True) == -1.3
+
+
+def test_goal_attempts_mark_each_scored_round_at_or_under_the_goal():
+    rounds = [_scored(92, "a"), Round(id="blank"), _scored(89, "b"), _scored(90, "c")]
+    assert goals.goal_attempts(rounds, 89) == [
+        {"round_id": "a", "score": 92, "met_goal": False},
+        {"round_id": "b", "score": 89, "met_goal": True},
+        {"round_id": "c", "score": 90, "met_goal": False},
+    ]
+    assert goals.goal_report(rounds, 89)["attempts"] == goals.goal_attempts(rounds, 89)
+    assert goals.goal_report([Round()], 89)["attempts"] == []
 
 
 def test_lowest_round_takes_the_first_on_a_tie():

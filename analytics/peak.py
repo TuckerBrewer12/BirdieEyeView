@@ -104,3 +104,9 @@ def peak_gap(rounds: List[Round], scoring_goal: int) -> Optional[float]:
     """The peak average less the goal, to a tenth: at or under 0 when the best rounds already meet it."""
     average = peak_average(rounds)
     return round_half_up(average - scoring_goal, 1) if average is not None else None
+
+
+def peak_meets_goal(rounds: List[Round], scoring_goal: int) -> Optional[bool]:
+    """Whether the peak rounds' average is at or under the goal. Null without a peak."""
+    average = peak_average(rounds)
+    return average <= scoring_goal if average is not None else None

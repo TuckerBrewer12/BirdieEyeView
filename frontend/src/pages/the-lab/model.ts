@@ -1,6 +1,5 @@
 import type { Friendship } from "@/data/friendsModel";
-import type { BenchmarkProfile } from "@/domain/benchmark";
-import { profileAverageToPar } from "@/domain/radar";
+import { goalAttemptsFrom, type GoalAttempt, type ParTypeComparison } from "@/domain/benchmark";
 import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type { AnalyticsDto, GoalReportDto, GoalSaverDto, PeakImpactDto } from "@/types/api";
 
@@ -8,7 +7,7 @@ import type { AnalyticsDto, GoalReportDto, GoalSaverDto, PeakImpactDto } from "@
 export const LAB_FILTERS: AnalyticsFilters = { limit: 20, timeframe: "all", courseId: "all" };
 
 /** The analytics sections The Lab's figures read, as the server sent them. */
-export type LabSections = Pick<AnalyticsDto, "kpis" | "scoring_by_par" | "score_trend" | "putts_trend" | "peak_game">;
+export type LabSections = Pick<AnalyticsDto, "kpis" | "scoring_by_par" | "putts_trend" | "peak_game">;
 
 /**
  * The part of a golfer's last 20 rounds of analytics The Lab reads, picked from the shared
@@ -24,7 +23,6 @@ export function labAnalyticsFrom(dto: AnalyticsDto): LabAnalytics {
   return {
     kpis: dto.kpis,
     scoring_by_par: dto.scoring_by_par,
-    score_trend: dto.score_trend,
     putts_trend: dto.putts_trend,
     peak_game: dto.peak_game,
     lowestScore: dto.notable_achievements.scoring_records.lifetime.lowest_round ?? null,
@@ -74,6 +72,8 @@ export interface GoalStanding {
   bestScore: number | null;
   /** Rounds in the window at or under the goal. Null before the report loads. */
   roundsMeetingGoal: number | null;
+  /** Each scored round in the window, oldest first, marked met or not. Empty before the report loads. */
+  attempts: GoalAttempt[];
   /** Biggest saving first, as the server ranked them. */
   savers: Saver[];
 }
@@ -92,6 +92,7 @@ export function goalStandingFrom(
     onTrack: report?.on_track ?? false,
     bestScore: report?.best_score ?? null,
     roundsMeetingGoal: report?.rounds_meeting_goal ?? null,
+    attempts: goalAttemptsFrom(report?.attempts ?? []),
     savers: (report?.savers ?? []).map((saver) => ({
       kind: saver.type,
       strokesSaved: saver.strokes_saved,
@@ -118,13 +119,6 @@ export function friendOptionsFrom(friendships: readonly Friendship[]): FriendOpt
   return [...byId.values()].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
 }
 
-/** Scores of the scored rounds, oldest first. */
-export function scoresOf(analytics: LabSections): number[] {
-  return analytics.score_trend
-    .map((row) => row.total_score)
-    .filter((score): score is number => score != null);
-}
-
 export interface PeakRound {
   roundId: string | null;
   courseName: string | null;
@@ -136,8 +130,10 @@ export interface PeakGame {
   rounds: PeakRound[];
   average: number;
   overallAverage: number | null;
-  /** The goal report's peak average less the goal: zero or less when the best rounds already meet it. Null until it loads. */
+  /** The goal report's peak average less the goal. Null until it loads. */
   gapToGoal: number | null;
+  /** Whether the best rounds' average already meets the goal, as the goal report judged it. Null until it loads. */
+  meetsGoal: boolean | null;
 }
 
 /** Null until a goal is set and the server has a peak game, which takes two scored rounds. */
@@ -153,6 +149,7 @@ export function peakGameFrom(
     average: peak.average,
     overallAverage: analytics.kpis.scoring_average,
     gapToGoal: report?.peak_gap ?? null,
+    meetsGoal: report?.peak_meets_goal ?? null,
   };
 }
 
@@ -162,14 +159,8 @@ export function peakGameFrom(
  */
 export type PeakImpact = PeakImpactDto;
 
-/** One par type's scoring against the comparison. */
-export interface ParTypeRow {
-  par: 3 | 4 | 5;
-  /** The server's average to par on these holes. Null with no holes played. */
-  averageToPar: number | null;
-  /** The comparison's average to par, or null with nothing to compare. */
-  benchmarkToPar: number | null;
-}
+/** One par type's scoring, against the comparison when there is one, as the server judged it. */
+export type ParTypeRow = ParTypeComparison;
 
 /** The server's putting figures over the window. Null where no round has the figure. */
 export interface PuttingSummary {
@@ -189,14 +180,10 @@ export function puttingSummaryFrom(analytics: LabSections): PuttingSummary {
   };
 }
 
-/** Each par type's average to par, against the comparison profile's. */
-export function parTypeRowsFrom(analytics: LabSections, benchmark: BenchmarkProfile | null): ParTypeRow[] {
+/** Each par type's average to par with nothing to compare it with: the golfer's figures alone. */
+export function parTypeRowsFrom(analytics: LabSections): ParTypeRow[] {
   return ([3, 4, 5] as const).map((par) => {
     const row = analytics.scoring_by_par.find((r) => r.par === par && r.sample_size > 0);
-    return {
-      par,
-      averageToPar: row?.average_to_par ?? null,
-      benchmarkToPar: benchmark ? profileAverageToPar(benchmark[`par${par}`]) : null,
-    };
+    return { par, averageToPar: row?.average_to_par ?? null, benchmarkToPar: null, gap: null, verdict: null };
   });
 }

@@ -26,6 +26,7 @@ import {
   type GoalProgress,
   type HiTrend,
   type Milestone,
+  type PuttsRating,
   type ShortGameTrend,
   type TrendView,
   type WhsBreakdown,
@@ -59,7 +60,10 @@ export interface DashboardPageViewModel {
   recentScoreMix: ScoreMix | null;
   scramblingPct: number | null;
   upAndDownPct: number | null;
+  /** Putts per round: the last five rounds', else every round's, as the server picked them. */
   putts: number | null;
+  /** The server's rating of those putts. Null without putts. */
+  puttsRating: PuttsRating | null;
   handicapSheetOpen: boolean;
   openHandicapSheet: () => void;
   closeHandicapSheet: () => void;
@@ -142,7 +146,8 @@ export function useDashboardPageViewModel(
     recentScoreMix: data?.recent_score_mix ?? null,
     scramblingPct: data?.recent_form.scrambling_pct ?? null,
     upAndDownPct: data?.recent_form.up_and_down_pct ?? null,
-    putts: data?.recent_form.putts_per_18 ?? data?.average_putts ?? null,
+    putts: data?.putts_per_round ?? null,
+    puttsRating: data?.putts_rating ?? null,
     handicapSheetOpen,
     openHandicapSheet,
     closeHandicapSheet,

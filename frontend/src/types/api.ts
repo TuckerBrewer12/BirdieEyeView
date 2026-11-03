@@ -59,6 +59,10 @@ export type PeakGameDto = Schemas["PeakGame"];
 export type PeakImpactDto = Schemas["PeakImpact"];
 export type GoalReportDto = Schemas["GoalReportResponse"];
 export type GoalSaverDto = Schemas["GoalSaver"];
+export type GoalAttemptDto = Schemas["GoalAttempt"];
+export type BenchmarkComparisonDto = Schemas["BenchmarkComparisonResponse"];
+export type BenchmarkShapeDto = Schemas["BenchmarkShape"];
+export type ParTypeComparisonDto = Schemas["ParTypeComparison"];
 export type FriendshipDto = Schemas["FriendshipResponse"];
 export type FriendshipStatusRequestDto = Schemas["FriendshipStatusRequest"];
 /** What `PATCH /users/{id}` takes. A field left out keeps its value; null clears it. */

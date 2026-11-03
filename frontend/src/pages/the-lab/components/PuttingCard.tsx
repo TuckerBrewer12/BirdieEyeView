@@ -48,7 +48,7 @@ export function PuttingCard({ putting, className }: { putting: PuttingSummary; c
                 <span className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
                   Putts per round
                 </span>
-                <Sparkline series={[{ values: putting.puttsTrend }]} fill mean />
+                <Sparkline series={[{ values: putting.puttsTrend }]} fill reference={putting.puttsPerRound} />
               </div>
             )}
           </>

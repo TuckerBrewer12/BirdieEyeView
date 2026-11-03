@@ -1,6 +1,9 @@
 import type { RoundSummary } from "@/domain/round";
 import type { RoundTrendPoint, ShortGamePoint } from "@/domain/trend";
-import type { GoalReportDto, MilestoneDto, WhsBreakdownDto } from "@/types/api";
+import type { DashboardDto, GoalReportDto, MilestoneDto, WhsBreakdownDto } from "@/types/api";
+
+/** How good the putts per round are, as the server rated them. */
+export type PuttsRating = NonNullable<DashboardDto["putts_rating"]>;
 
 /** Which line the phone's trend card shows. */
 export type TrendView = "score" | "handicap";

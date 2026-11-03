@@ -101,6 +101,8 @@ def test_goal_report_without_scores_returns_empty_report():
         "progress_pct": None,
         "rounds_meeting_goal": 0,
         "peak_gap": None,
+        "peak_meets_goal": None,
+        "attempts": [],
         "savers": [],
     }
 

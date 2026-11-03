@@ -1,15 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  GOAL_BENCHMARK,
-  benchmarkProfileFrom,
+  benchmarkComparisonFrom,
+  benchmarkShapeFrom,
   buildRadarData,
+  goalAttemptsFrom,
   goalScoreToBreak,
   goalTargetLabel,
-  nearestGoalBenchmark,
-  profileAverageToPar,
-  profilePuttsPerGir,
 } from "@/domain";
-import { averyLabAnalytics } from "@/testing/fixtures/lab";
+import { averyLabAnalytics, labBenchmarks, labGoalReport } from "@/testing/fixtures/lab";
 
 describe("goals", () => {
   it("reads a stored goal as the score to break", () => {
@@ -17,30 +15,42 @@ describe("goals", () => {
     expect(goalTargetLabel(71)).toBe("Break 72");
   });
 
-  it("finds the goal benchmark nearest an average, the lower on a tie", () => {
-    expect(nearestGoalBenchmark(88.4)).toBe(GOAL_BENCHMARK[89]);
-    expect(nearestGoalBenchmark(76.5)).toBe(GOAL_BENCHMARK[74]);
-    expect(nearestGoalBenchmark(120)).toBe(GOAL_BENCHMARK[99]);
-    expect(nearestGoalBenchmark(60)).toBe(GOAL_BENCHMARK[71]);
+  it("keeps each attempt as the server marked it", () => {
+    const attempts = goalAttemptsFrom(labGoalReport.attempts);
+    expect(attempts).toHaveLength(12);
+    expect(attempts[5]).toEqual({ roundId: "lab-6", score: 89, metGoal: true });
+    expect(attempts.filter((attempt) => attempt.metGoal)).toHaveLength(1);
+  });
+});
+
+describe("benchmark comparison", () => {
+  it("maps the server's shape and par-type verdicts", () => {
+    const comparison = benchmarkComparisonFrom(labBenchmarks["handicap:15"]);
+    expect(comparison.benchmark).toMatchObject({ girPct: 24, puttsPerGir: 2.1, par4ToPar: 1.025 });
+    expect(comparison.parTypes.map((row) => [row.par, row.gap, row.verdict])).toEqual([
+      [3, 0.32, "behind"],
+      [4, 0.1, "behind"],
+      [5, -0.25, "ahead"],
+    ]);
+  });
+
+  it("has no shape when the server has none to draw", () => {
+    expect(benchmarkComparisonFrom(labBenchmarks["friend:user-jordan"]).benchmark).toBeNull();
   });
 });
 
 describe("radar scale", () => {
-  it("puts a golfer's own figures on the benchmark scale", () => {
-    const profile = benchmarkProfileFrom(averyLabAnalytics.kpis, averyLabAnalytics.scoring_by_par)!;
-    expect(profile.gir).toBe(44);
-    expect(profilePuttsPerGir(profile.putting)).toBeCloseTo(1.92, 5);
-    expect(profileAverageToPar(profile.par3)).toBeCloseTo(0.35, 5);
-  });
-
-  it("has no profile for a golfer with no rounds", () => {
-    const kpis = { ...averyLabAnalytics.kpis, total_rounds: 0 };
-    expect(benchmarkProfileFrom(kpis, [])).toBeNull();
-  });
-
-  it("draws a friend's profile at their own figures", () => {
-    const profile = benchmarkProfileFrom(averyLabAnalytics.kpis, averyLabAnalytics.scoring_by_par)!;
-    const entries = buildRadarData(averyLabAnalytics.kpis, averyLabAnalytics.scoring_by_par, profile);
+  it("draws a friend's shape at their own figures", () => {
+    const shape = benchmarkShapeFrom(labBenchmarks["friend:user-avery"].benchmark!);
+    const entries = buildRadarData(averyLabAnalytics.kpis, averyLabAnalytics.scoring_by_par, shape);
     for (const entry of entries) expect(entry.benchmark).toBeCloseTo(entry.value, 5);
+    expect(entries.map((entry) => entry.benchRaw)).toEqual(["44%", "38%", "1.92/GIR", "+0.3", "+0.6", "+0.3"]);
+  });
+
+  it("puts a figure the comparison has none of at the centre", () => {
+    const shape = { ...benchmarkShapeFrom(labBenchmarks["handicap:15"].benchmark!), par5ToPar: null };
+    const par5 = buildRadarData(averyLabAnalytics.kpis, averyLabAnalytics.scoring_by_par, shape)[5];
+    expect(par5.benchmark).toBe(0);
+    expect(par5.benchRaw).toBe("—");
   });
 });

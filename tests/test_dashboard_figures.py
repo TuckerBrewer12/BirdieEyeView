@@ -36,6 +36,16 @@ def test_recent_form_pools_by_chance_and_is_null_without_data():
     assert empty["putts_per_18"] is None
 
 
+def test_putts_shown_prefers_the_last_five_and_rates_like_the_insights():
+    # 30 or fewer is strong, up to 34 fair, over 34 weak: the analytics page's thresholds.
+    assert dashboard.putts_shown(30.0, 33.0) == {"per_round": 30.0, "rating": "strong"}
+    assert dashboard.putts_shown(34.0, None) == {"per_round": 34.0, "rating": "fair"}
+    assert dashboard.putts_shown(34.4, None) == {"per_round": 34.4, "rating": "weak"}
+    # Without putts in the last five, every round's average stands in.
+    assert dashboard.putts_shown(None, 29.5) == {"per_round": 29.5, "rating": "strong"}
+    assert dashboard.putts_shown(None, None) == {"per_round": None, "rating": None}
+
+
 def test_score_mix_counts_classified_holes():
     mix = dashboard.score_mix([_round([3, 4, 4, 5])])
     assert mix["holes"] == 4

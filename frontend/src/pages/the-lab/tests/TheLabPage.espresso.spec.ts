@@ -21,8 +21,8 @@ test("a newly picked goal shows no figures until its own report loads", async ({
 
   await lab.savedGoal(84);
   await lab.seesGoalStanding("Break 85");
-  // The last goal's count would be wrong against the new one, so none shows yet.
-  await lab.seesTimesAchieved("—");
+  // The last goal's marks and count would be wrong against the new one, so the attempts wait for its report.
+  await lab.seesNoAttempts();
 
   lab.goalReportsArrive();
   await lab.seesTimesAchieved("1");

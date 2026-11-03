@@ -1,21 +1,23 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { chartLayout, colors } from "@/brand";
-import { puttsBand, puttsLabel, type PuttsBand } from "../present";
+import type { PuttsRating } from "../model";
+import { puttsLabel } from "../present";
 
-const BAND_FILL: Record<PuttsBand, string> = {
-  good: colors.score.birdie.base,
+const RATING_FILL: Record<PuttsRating, string> = {
+  strong: colors.score.birdie.base,
   fair: colors.score.eagle.base,
-  poor: colors.destructive,
+  weak: colors.destructive,
 };
 
 interface PuttsGaugeProps {
   /** Putts per 18 holes. Unknown draws an empty gauge and a dash. */
   putts: number | null;
+  /** The server's rating of them, which colours the gauge. */
+  rating: PuttsRating | null;
 }
 
-/** A half gauge from 20 to 40 putts, filled in the colour of its band. */
-export function PuttsGauge({ putts }: PuttsGaugeProps) {
-  const band = puttsBand(putts);
+/** A half gauge from 20 to 40 putts, filled in the colour of the server's rating. */
+export function PuttsGauge({ putts, rating }: PuttsGaugeProps) {
   const filled = putts != null ? Math.max(20, Math.min(40, putts)) - 20 : 0;
   return (
     <div data-slot="putts-gauge">
@@ -35,7 +37,7 @@ export function PuttsGauge({ putts }: PuttsGaugeProps) {
                 stroke="none"
                 isAnimationActive={false}
               >
-                <Cell fill={band ? BAND_FILL[band] : colors.muted} />
+                <Cell fill={rating ? RATING_FILL[rating] : colors.muted} />
                 <Cell fill={colors.muted} />
               </Pie>
             </PieChart>
@@ -49,9 +51,9 @@ export function PuttsGauge({ putts }: PuttsGaugeProps) {
         </div>
       </div>
       <div className="flex justify-center gap-3 text-caption text-muted-foreground font-semibold uppercase tracking-kicker mt-2">
-        <span className="text-score-birdie-base">{"<30 great"}</span>
-        <span className="text-score-eagle-base">30-35</span>
-        <span className="text-destructive">35+ work</span>
+        <span className="text-score-birdie-base">{"≤30 great"}</span>
+        <span className="text-score-eagle-base">30-34</span>
+        <span className="text-destructive">34+ work</span>
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ from api.course_analytics_responses import course_analytics
 from api.analytics_responses import analytics_response
 from api.schemas import (
     AnalyticsResponse,
+    BenchmarkComparisonResponse,
     CourseAnalyticsResponse,
     DashboardResponse,
     GoalReportResponse,
@@ -20,6 +21,7 @@ from api.schemas import (
     RoundComparisonResponse,
 )
 from analytics import stats as analytics
+from analytics import benchmarks
 from analytics import dashboard
 from analytics import handicap as hcap
 from analytics.goals import goal_report
@@ -61,6 +63,9 @@ async def get_dashboard(
     handicap_trend = hcap.windowed_handicap_trend(hi_rounds, len(last_20))
     mix = dashboard.score_mix(last_20)
     recent_mix = dashboard.score_mix(last_20[-dashboard.RECENT_ROUNDS:])
+    form = dashboard.recent_form(last_20)
+    average_putts = round(sum(putts) / len(putts), 1) if putts else None
+    putts_shown = dashboard.putts_shown(form["putts_per_18"], average_putts)
 
     return DashboardResponse(
         total_rounds=len(summaries),
@@ -71,13 +76,15 @@ async def get_dashboard(
         handicap_index=calculated_hi,
         recent_rounds=recent_rounds,
         best_recent_round_id=best_recent.id if best_recent else None,
-        average_putts=round(sum(putts) / len(putts), 1) if putts else None,
+        average_putts=average_putts,
         average_gir=round(sum(girs) / len(girs), 1) if girs else None,
+        putts_per_round=putts_shown["per_round"],
+        putts_rating=putts_shown["rating"],
         scoring_average_l20=dashboard.scoring_average(last_20),
         scoring_average_l5=dashboard.scoring_average(last_20, dashboard.RECENT_ROUNDS),
         scoring_average_change=dashboard.scoring_average_change(last_20),
         handicap_change=dashboard.handicap_change(handicap_trend),
-        recent_form=dashboard.recent_form(last_20),
+        recent_form=form,
         score_mix=mix["percentages"],
         recent_score_mix=recent_mix["percentages"],
         score_mix_holes=mix["holes"],
@@ -188,6 +195,38 @@ async def get_goal_report(
             home_course_rounds = list(reversed(home_rounds_desc))
 
     return GoalReportResponse.model_validate(goal_report(rounds, user.scoring_goal, home_course_rounds))
+
+
+@router.get("/{user_id}/benchmark", response_model=BenchmarkComparisonResponse)
+async def get_benchmark_comparison(
+    user_id: UUID,
+    against: Literal["handicap", "peak", "friend"],
+    handicap: Optional[int] = Query(default=None),
+    friend_id: Optional[UUID] = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=500),
+    db: DatabaseManager = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """The player's last `limit` rounds against a handicap's shape, the golfers their peak
+    rounds play like, or a friend's last `limit` rounds."""
+    viewer_id = str(current_user.id)
+    if viewer_id != str(user_id):
+        raise HTTPException(403, "Forbidden")
+    rounds = list(reversed(await db.rounds.get_rounds_for_user(viewer_id, limit=limit)))
+
+    if against == "handicap":
+        if handicap is None or benchmarks.handicap_benchmark(handicap) is None:
+            raise HTTPException(422, "No benchmark for that handicap")
+        return BenchmarkComparisonResponse.model_validate(benchmarks.handicap_comparison(rounds, handicap))
+    if against == "peak":
+        return BenchmarkComparisonResponse.model_validate(benchmarks.peak_comparison(rounds))
+
+    if friend_id is None:
+        raise HTTPException(422, "friend_id is required")
+    if not await db.friendships.are_friends(viewer_id, str(friend_id)):
+        raise HTTPException(403, "Forbidden")
+    friend_rounds = list(reversed(await db.rounds.get_rounds_for_user(str(friend_id), limit=limit)))
+    return BenchmarkComparisonResponse.model_validate(benchmarks.friend_comparison(rounds, friend_rounds))
 
 
 @router.get("/compare/{user_id}/{round_id}", response_model=RoundComparisonResponse)
