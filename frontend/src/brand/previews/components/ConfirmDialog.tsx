@@ -1,7 +1,8 @@
 import { ConfirmDialog } from "@/brand/components/ConfirmDialog";
 
 /**
- * The board's two layouts side by side, so the preview fills the window
+ * The board's two layouts side by side: the same dialog in a wide box
+ * centres, in a phone-wide one rises from the bottom. It fills the window
  * instead of the 390px stage; capture it at 900 x 420.
  */
 export default function ConfirmDialogPreview() {
@@ -18,7 +19,6 @@ export default function ConfirmDialogPreview() {
           <ConfirmDialog
             defaultOpen
             contained
-            placement="center"
             initialFocus={false}
             title="Delete this round?"
             detail="Half Moon Bay · Jun 15 · 78. This can’t be undone."
@@ -36,7 +36,6 @@ export default function ConfirmDialogPreview() {
           <ConfirmDialog
             defaultOpen
             contained
-            placement="bottom"
             initialFocus={false}
             title="Delete this round?"
             detail="Half Moon Bay · Jun 15 · 78"

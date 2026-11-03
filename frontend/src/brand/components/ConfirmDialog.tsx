@@ -3,53 +3,13 @@ import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog
 import { cn } from "@/brand/cn";
 import { Button } from "./Button";
 
-/**
- * Where the dialog sits. `auto` opens from the bottom on a phone and centres
- * from `sm` up; the other two pin one layout, which is how the brand preview
- * shows both at once.
- */
-type ConfirmDialogPlacement = "auto" | "center" | "bottom";
-
 /*
- * Every layout is one string, so a pinned layout reads as plain classes and
- * `auto` is the bottom layout with `sm:` resets rather than a third design.
+ * The layout follows the room the dialog has, not the device: under `@md`
+ * (448px) it rises from the bottom with stacked buttons, from there up it is
+ * centred with the buttons in a row. A container query, so a contained
+ * dialog lays out by its box, and the preview shows both side by side.
  */
-const viewport: Record<ConfirmDialogPlacement, string> = {
-  center: "items-center justify-center p-4",
-  bottom: "items-end",
-  auto: "items-end sm:items-center sm:justify-center sm:p-4",
-};
-
-const popup: Record<ConfirmDialogPlacement, string> = {
-  center:
-    "max-w-sm gap-2 rounded-2xl p-6 shadow-lg data-ending-style:scale-95 data-starting-style:scale-95",
-  bottom:
-    "gap-1.5 rounded-t-sheet px-4.5 pt-5.5 pb-6 data-ending-style:translate-y-full data-starting-style:translate-y-full",
-  auto: "gap-1.5 rounded-t-sheet px-4.5 pt-5.5 pb-6 data-ending-style:translate-y-full data-starting-style:translate-y-full sm:max-w-sm sm:gap-2 sm:rounded-2xl sm:p-6 sm:shadow-lg sm:data-ending-style:translate-y-0 sm:data-starting-style:translate-y-0 sm:data-ending-style:scale-95 sm:data-starting-style:scale-95",
-};
-
-const footer: Record<ConfirmDialogPlacement, string> = {
-  center: "flex-row justify-end gap-2",
-  bottom: "flex-col-reverse gap-1.5",
-  auto: "flex-col-reverse gap-1.5 sm:flex-row sm:justify-end sm:gap-2",
-};
-
-const action: Record<ConfirmDialogPlacement, string> = {
-  center: "h-10 rounded-card px-4 text-sm font-semibold",
-  bottom: "h-12 rounded-xl text-base font-semibold",
-  auto: "h-12 rounded-xl text-base font-semibold sm:h-10 sm:rounded-card sm:px-4 sm:text-sm",
-};
-
-/** Cancel is a bordered button beside the confirm, and plain text under it. */
-const cancel: Record<ConfirmDialogPlacement, string> = {
-  center: "border-input bg-card",
-  bottom: "",
-  auto: "sm:border-input sm:bg-card",
-};
-
-/** Red is for actions that destroy data; every other confirm stays primary. */
-const destructiveAction =
-  "bg-status-danger-base text-status-danger-on-base hover:bg-destructive-hover";
+const actionClass = "h-12 rounded-xl text-base font-semibold @md:h-10 @md:rounded-card @md:px-4 @md:text-sm";
 
 type ConfirmDialogProps = Pick<
   AlertDialogPrimitive.Root.Props,
@@ -66,7 +26,6 @@ type ConfirmDialogProps = Pick<
     /** Set only when confirming destroys data; it turns the confirm red. */
     destructive?: boolean;
     onConfirm?: () => void;
-    placement?: ConfirmDialogPlacement;
     /** The element that opens the dialog, when the page doesn't control `open`. */
     trigger?: React.ReactElement;
     /** Hosts the dialog inside its nearest positioned parent instead of over the page. */
@@ -83,13 +42,13 @@ function ConfirmDialog({
   cancelLabel = "Cancel",
   destructive = false,
   onConfirm,
-  placement = "auto",
   trigger,
   contained = false,
   className,
   ...props
 }: ConfirmDialogProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const position = contained ? "absolute inset-0" : "fixed inset-0";
 
   const dialog = (
     <AlertDialogPrimitive.Portal
@@ -100,22 +59,18 @@ function ConfirmDialog({
         data-slot="confirm-dialog-overlay"
         className={cn(
           "z-50 bg-foreground/40 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0",
-          contained ? "absolute inset-0" : "fixed inset-0",
+          position,
         )}
       />
       <AlertDialogPrimitive.Viewport
         data-slot="confirm-dialog-viewport"
-        className={cn(
-          "z-50 flex",
-          contained ? "absolute inset-0" : "fixed inset-0",
-          viewport[placement],
-        )}
+        className={cn("@container z-50 flex items-end", position)}
       >
         <AlertDialogPrimitive.Popup
           data-slot="confirm-dialog"
           className={cn(
-            "flex w-full flex-col bg-card text-card-foreground outline-none transition-[opacity,translate,scale] duration-200 ease-out data-ending-style:opacity-0 data-starting-style:opacity-0",
-            popup[placement],
+            "flex w-full flex-col gap-1.5 rounded-t-sheet bg-card px-5 py-6 text-card-foreground outline-none transition-[opacity,translate,scale] duration-200 ease-out data-ending-style:translate-y-full data-ending-style:opacity-0 data-starting-style:translate-y-full data-starting-style:opacity-0",
+            "@md:m-auto @md:max-w-sm @md:gap-2 @md:rounded-2xl @md:p-6 @md:shadow-lg @md:data-ending-style:translate-y-0 @md:data-ending-style:scale-95 @md:data-starting-style:translate-y-0 @md:data-starting-style:scale-95",
             className,
           )}
           {...props}
@@ -128,14 +83,10 @@ function ConfirmDialog({
               {detail}
             </AlertDialogPrimitive.Description>
           )}
-          <div className={cn("mt-3 flex", footer[placement])}>
+          <div className="mt-3 flex flex-col-reverse gap-1.5 @md:flex-row @md:justify-end @md:gap-2">
+            {/* Plain text under the confirm on a phone, a bordered button beside it on a wide screen. */}
             <AlertDialogPrimitive.Close
-              render={
-                <Button
-                  variant="ghost"
-                  className={cn(action[placement], cancel[placement])}
-                />
-              }
+              render={<Button variant="ghost" className={cn(actionClass, "@md:border-input @md:bg-card")} />}
             >
               {cancelLabel}
             </AlertDialogPrimitive.Close>
@@ -144,8 +95,8 @@ function ConfirmDialog({
               render={
                 <Button
                   className={cn(
-                    action[placement],
-                    destructive && destructiveAction,
+                    actionClass,
+                    destructive && "bg-status-danger-base text-status-danger-on-base hover:bg-destructive-hover",
                   )}
                 />
               }
@@ -159,11 +110,7 @@ function ConfirmDialog({
   );
 
   return (
-    <AlertDialogPrimitive.Root
-      open={open}
-      defaultOpen={defaultOpen}
-      onOpenChange={onOpenChange}
-    >
+    <AlertDialogPrimitive.Root open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
       {trigger && <AlertDialogPrimitive.Trigger render={trigger} />}
       {contained ? (
         <div ref={containerRef} className="absolute inset-0 overflow-hidden">
@@ -177,4 +124,4 @@ function ConfirmDialog({
 }
 
 export { ConfirmDialog };
-export type { ConfirmDialogProps, ConfirmDialogPlacement };
+export type { ConfirmDialogProps };

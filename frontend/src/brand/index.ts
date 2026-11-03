@@ -125,7 +125,7 @@ export {
   DropdownMenuRadioItem,
 } from "./components/DropdownMenu";
 export { ConfirmDialog } from "./components/ConfirmDialog";
-export type { ConfirmDialogProps, ConfirmDialogPlacement } from "./components/ConfirmDialog";
+export type { ConfirmDialogProps } from "./components/ConfirmDialog";
 
 // Charts
 export { ActivityHeatmap } from "./charts/ActivityHeatmap";
