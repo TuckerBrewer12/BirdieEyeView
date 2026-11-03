@@ -1,42 +1,41 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/brand/components/Card";
-import { ChartTabs } from "@/brand/components/ChartTabs";
+import { useState, type ReactNode } from "react";
+import { TabBar } from "@/brand/components/ChartTabs";
 
-const TABS = [
-  { key: "score", label: "Score" },
-  { key: "putts", label: "Putts" },
-];
-
-const CHARTS = [
-  { title: "Score", tab: "score" },
-  { title: "Putts", tab: "putts" },
-  { title: "3-Putts", tab: "putts" },
-];
+const TABS = ["Profile", "Scoring", "Ball striking", "Putting", "Approach"].map((label) => ({
+  key: label,
+  label,
+}));
 
 function Tabs() {
-  const [tab, setTab] = useState("putts");
+  const [tab, setTab] = useState("Scoring");
+  return <TabBar tabs={TABS} value={tab} onValueChange={setTab} aria-label="Analytics sections" />;
+}
+
+function Group({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <ChartTabs
-      tabs={TABS}
-      value={tab}
-      onValueChange={(key) => key && setTab(key)}
-      charts={CHARTS}
-      selectedCharts={CHARTS.filter((chart) => chart.tab === tab)}
-      keyFor={(chart) => chart.title}
-      renderChart={(chart) => (
-        <Card size="sm">
-          <CardHeader>
-            <CardTitle>{chart.title}</CardTitle>
-          </CardHeader>
-          <CardContent className="h-16 text-xs text-muted-foreground">Chart</CardContent>
-        </Card>
-      )}
-    />
+    <div className="flex flex-col gap-2">
+      <div className="text-label font-semibold text-muted-foreground">{label}</div>
+      {children}
+    </div>
   );
 }
 
-// The harness is desktop-width, so this is the md+ grid of every chart. The tabs and
-// the two mobile layouts show below md, in the course and round pages' mobile screenshots.
+/**
+ * The tab bar fills a window as wide as its board, so every tab fits; the phone's row sits in
+ * a narrow box, where it scrolls. Below md, ChartTabs shows this bar above the active tab's
+ * charts; from md up it shows every chart in a grid, in the course and round pages' screenshots.
+ */
 export default function ChartTabsPreview() {
-  return <Tabs />;
+  return (
+    <div data-testid="brand-frame" className="fixed inset-0 flex flex-col gap-5.5 bg-background p-6">
+      <Group label="Desktop · all tabs fit">
+        <Tabs />
+      </Group>
+      <Group label="Mobile · scrolls, selected kept in view">
+        <div className="w-75">
+          <Tabs />
+        </div>
+      </Group>
+    </div>
+  );
 }

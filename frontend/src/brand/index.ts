@@ -89,7 +89,7 @@ export { RoundPreview } from "./components/RoundPreview";
 export { RoundShareCard } from "./components/RoundShareCard";
 export { RoundScorecard } from "./components/RoundScorecard";
 export { CoursePreview } from "./components/CoursePreview";
-export { ChartTabs } from "./components/ChartTabs";
+export { ChartTabs, TabBar } from "./components/ChartTabs";
 export { SectionLabel } from "./components/SectionLabel";
 export { SideNav } from "./components/SideNav";
 export type { SideNavProps, SideNavUser } from "./components/SideNav";
