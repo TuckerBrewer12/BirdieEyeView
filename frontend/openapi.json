@@ -3272,6 +3272,11 @@
             ],
             "title": "Strokes"
           },
+          "three_putt": {
+            "default": false,
+            "title": "Three Putt",
+            "type": "boolean"
+          },
           "to_par": {
             "anyOf": [
               {
@@ -3309,7 +3314,8 @@
           "handicap",
           "yardage",
           "to_par",
-          "kind"
+          "kind",
+          "three_putt"
         ],
         "title": "HoleScoreResponse",
         "type": "object"
@@ -3804,10 +3810,16 @@
             },
             "title": "Score Breaks",
             "type": "array"
+          },
+          "under_par_position": {
+            "default": 0,
+            "title": "Under Par Position",
+            "type": "integer"
           }
         },
         "required": [
           "score_breaks",
+          "under_par_position",
           "first_round_under_par",
           "first_eagle",
           "first_hole_in_one"
@@ -5505,6 +5517,17 @@
               }
             ]
           },
+          "course_handicap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Handicap"
+          },
           "course_name_played": {
             "anyOf": [
               {
@@ -5557,6 +5580,11 @@
             "title": "Hole Scores",
             "type": "array"
           },
+          "holes_played": {
+            "default": 0,
+            "title": "Holes Played",
+            "type": "integer"
+          },
           "id": {
             "anyOf": [
               {
@@ -5567,6 +5595,17 @@
               }
             ],
             "title": "Id"
+          },
+          "net_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Score"
           },
           "nines": {
             "$ref": "#/components/schemas/Nines"
@@ -5696,6 +5735,7 @@
           "nines",
           "yards",
           "score_counts",
+          "holes_played",
           "id",
           "course",
           "tee_box",
@@ -5704,7 +5744,9 @@
           "notes",
           "course_name_played",
           "user_tee",
-          "hole_scores"
+          "hole_scores",
+          "course_handicap",
+          "net_score"
         ],
         "title": "RoundResponse",
         "type": "object"
@@ -5722,6 +5764,17 @@
               }
             ],
             "title": "Back Nine"
+          },
+          "best_rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Rank"
           },
           "course_id": {
             "anyOf": [
@@ -5839,7 +5892,8 @@
           "back_nine",
           "total_putts",
           "score_counts",
-          "hole_scores"
+          "hole_scores",
+          "best_rank"
         ],
         "title": "RoundSummaryResponse",
         "type": "object"
@@ -6357,6 +6411,17 @@
             ],
             "title": "Color"
           },
+          "course_handicap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Handicap"
+          },
           "course_rating": {
             "anyOf": [
               {
@@ -6391,7 +6456,8 @@
           "color",
           "slope_rating",
           "course_rating",
-          "hole_yardages"
+          "hole_yardages",
+          "course_handicap"
         ],
         "title": "ScannedTee",
         "type": "object"
@@ -6929,6 +6995,17 @@
             ],
             "title": "Color"
           },
+          "course_handicap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Handicap"
+          },
           "course_rating": {
             "anyOf": [
               {
@@ -6988,7 +7065,8 @@
           "hole_yardages",
           "total_yardage",
           "front_nine_yardage",
-          "back_nine_yardage"
+          "back_nine_yardage",
+          "course_handicap"
         ],
         "title": "TeeResponse",
         "type": "object"

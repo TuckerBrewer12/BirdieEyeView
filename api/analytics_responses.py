@@ -26,10 +26,12 @@ def analytics_response(
     hi_rounds: List[Round],
     home_course_id: Optional[str] = None,
     today: Optional[datetime] = None,
+    player_index: Optional[float] = None,
 ) -> AnalyticsResponse:
     """Every analytics section over `rounds` (oldest first). `hi_rounds` ends with the same rounds
     and reaches back up to 19 more, so the handicap trend has a full rolling window from the start.
-    The records' last year ends `today`, now unless given."""
+    The records' last year ends `today`, now unless given. Net scores are off `player_index`, the
+    golfer's own index (`api/player_handicap.py`), so they match each round's page."""
     scores = [s for s in (r.calculate_total_score() for r in rounds) if s is not None]
     score_rows = analytics.score_trend_with_rolling_average(rounds)
     gir_rows = analytics.gir_per_round(rounds)
@@ -59,7 +61,7 @@ def analytics_response(
             scoring_average_change=dashboard.scoring_average_change(rounds, full_window=True),
         ),
         score_trend=score_rows,
-        net_score_trend=analytics.net_score_trend(rounds, current_hi),
+        net_score_trend=analytics.net_score_trend(rounds, player_index),
         gir_trend=gir_rows,
         putts_trend=putts_rows,
         three_putts_trend=analytics.three_putts_per_round(rounds),

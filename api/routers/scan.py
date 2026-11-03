@@ -15,7 +15,9 @@ from PIL import Image, ImageOps
 logger = logging.getLogger(__name__)
 
 from database.db_manager import DatabaseManager
+from analytics.handicap import tee_course_handicap
 from api.dependencies import get_current_user, get_optional_current_user, get_db
+from api.player_handicap import player_handicap_index
 from api.error_responses import ROUND_SAVE_FAILED, SCAN_FAILED
 from api.input_validation import ensure_uuid_str, normalize_course_display_name, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
@@ -396,6 +398,27 @@ def _build_round_from_parsed_rows(
     return round_payload, fields_needing_review
 
 
+def _rated_tees(round_payload: Dict) -> List[Dict]:
+    """The card's tees that have both ratings, when the card has a par to rate them against."""
+    course = round_payload.get("course") or {}
+    if course.get("par") is None:
+        return []
+    return [
+        tee for tee in course.get("tees", [])
+        if tee.get("slope_rating") is not None and tee.get("course_rating") is not None
+    ]
+
+
+def _add_course_handicaps(round_payload: Dict, handicap_index: Optional[float]) -> None:
+    """Gives each rated tee on the card the golfer's course handicap off it, so the review can
+    show a net score for whichever tee they pick."""
+    par = (round_payload.get("course") or {}).get("par")
+    for tee in _rated_tees(round_payload):
+        tee["course_handicap"] = tee_course_handicap(
+            handicap_index, tee["slope_rating"], tee["course_rating"], par
+        )
+
+
 def _save_upload_to_temp(file: UploadFile, suffix: str) -> tuple[Path, str]:
     """Stream upload to a temp file enforcing max size. Returns (path, sha256_hex)."""
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
@@ -703,6 +726,8 @@ async def extract_scan(
                 "Unable to clearly read the score rows from this image. Please upload a cleaner image with clearer handwriting and better lighting, then try again.",
             )
 
+        if _rated_tees(round_data):
+            _add_course_handicaps(round_data, await player_handicap_index(db, current_user))
         confidence_data = _build_confidence_payload(round_data.get("hole_scores", []), fields_needing_review)
         t_parse_end = time.perf_counter()
         logger.info(

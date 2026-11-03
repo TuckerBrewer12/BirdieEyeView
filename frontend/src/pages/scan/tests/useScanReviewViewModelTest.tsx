@@ -6,7 +6,7 @@ import { FakeCoursesRepository } from "@/testing/fakes/FakeCoursesRepository";
 import { FakeRoundsRepository } from "@/testing/fakes/FakeRoundsRepository";
 import { FakeScanRepository } from "@/testing/fakes/FakeScanRepository";
 import { pebbleBeach, pebbleBeachSummary } from "@/testing/fixtures/courses";
-import { pebbleBeachCourse } from "@/testing/fixtures/roundDetails";
+import { pebbleBeachCourse, ratedPebbleBeachCourse } from "@/testing/fixtures/roundDetails";
 import { SCANNED_COURSE_NAME, scannedCard, scannedTeeCard, UNSURE_HOLES, unsureCard } from "@/testing/fixtures/scan";
 import type { ScanDto } from "@/types/api";
 import { reviewFromScan } from "../scanModel";
@@ -15,12 +15,12 @@ import { useScanReviewViewModel, type ScanReviewRepositories } from "../useScanR
 
 const TODAY = "2026-10-15";
 
-function renderReview(card: ScanDto = scannedCard, { handicapIndex = null as number | null } = {}) {
-  const rounds = new FakeRoundsRepository({ handicapIndex });
+function renderReview(card: ScanDto = scannedCard, linkable = pebbleBeachCourse) {
+  const rounds = new FakeRoundsRepository();
   const scan = new FakeScanRepository({ store: rounds.store });
   const courses = new FakeCoursesRepository([pebbleBeach]);
-  courses.fullCourses = [pebbleBeachCourse];
-  const repositories: ScanReviewRepositories = { scan, courses, rounds };
+  courses.fullCourses = [linkable];
+  const repositories: ScanReviewRepositories = { scan, courses };
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const sessions: ScanSession[] = [];
 
@@ -120,11 +120,18 @@ describe("useScanReviewViewModel", () => {
     expect(result.current.courseSearch.query).toBe(pebbleBeachSummary.name);
   });
 
-  it("works out the golfer's course handicap on a rated tee", () => {
+  it("nets the card off the course handicap the server sent for the tee", () => {
     const teeCard: ScanDto = { ...scannedCard, round: scannedTeeCard };
-    const { result } = renderReview(teeCard, { handicapIndex: 10 });
-    // (10 × 133 / 113) + (73.4 − 72) = 13.17, rounded.
-    return waitFor(() => expect(result.current.courseHandicap).toBe(13));
+    const { result } = renderReview(teeCard);
+    const gross = scannedTeeCard.hole_scores.reduce((total, score) => total + (score.strokes ?? 0), 0);
+    expect(result.current.round).toMatchObject({ courseHandicap: 13, netScore: gross - 13 });
+  });
+
+  it("takes the linked course's course handicap for the tee picked", async () => {
+    const { result } = renderReview(scannedCard, ratedPebbleBeachCourse);
+    act(() => result.current.pickCourse(pebbleBeachSummary));
+    act(() => result.current.setTeeBox("Blue"));
+    await waitFor(() => expect(result.current.round?.courseHandicap).toBe(16));
   });
 
   it("saves the card as edited, against the linked course, and ends the scan on the saved round", async () => {

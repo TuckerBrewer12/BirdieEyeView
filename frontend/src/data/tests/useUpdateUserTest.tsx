@@ -31,7 +31,8 @@ describe("useUpdateUser", () => {
     const { client, result } = setup();
     const keys = [
       queryKeys.settings("user-1"),
-      queryKeys.handicap("user-1"),
+      queryKeys.round("round-1"),
+      queryKeys.course("course-1"),
       queryKeys.dashboard("user-1"),
       queryKeys.goalReport("user-1"),
       queryKeys.analytics("user-1", { limit: 20 }),

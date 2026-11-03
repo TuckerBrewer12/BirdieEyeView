@@ -37,6 +37,7 @@ class TeeResponse(ResponseModel):
     total_yardage: Optional[int] = None       # stored, else the sum of the holes
     front_nine_yardage: Optional[int] = None  # null until all nine holes have a yardage
     back_nine_yardage: Optional[int] = None
+    course_handicap: Optional[int] = None  # the signed-in golfer's strokes off this tee; null without an index or ratings
 
 
 class CourseResponse(ResponseModel):
@@ -69,6 +70,7 @@ class HoleScoreResponse(ResponseModel):
     yardage: Optional[int] = None  # from the tee played
     to_par: Optional[int] = None
     kind: Optional[ScoreKind] = None
+    three_putt: bool = False  # three or more putts; false when putts weren't kept
 
 
 class NineFigures(ResponseModel):
@@ -98,6 +100,7 @@ class RoundFigures(ResponseModel):
     nines: Nines = Field(default_factory=Nines)
     yards: Optional[int] = None  # the tee played's length
     score_counts: ScoreCounts = Field(default_factory=ScoreCounts)
+    holes_played: int = 0  # holes with a score: what GIR is out of
 
 
 class HoleSummaryResponse(ResponseModel):
@@ -121,6 +124,9 @@ class RoundSummaryResponse(ResponseModel):
     total_putts: Optional[int] = None
     score_counts: ScoreCounts = Field(default_factory=ScoreCounts)
     hole_scores: List[HoleSummaryResponse] = Field(default_factory=list)
+    # Place among the rounds listed with it, best first: full rounds by to par, then nines and
+    # rounds cut short. Null for a round with no to par, and outside the round list.
+    best_rank: Optional[int] = None
 
 
 class RoundResponse(RoundFigures):
@@ -134,6 +140,9 @@ class RoundResponse(RoundFigures):
     course_name_played: Optional[str] = None
     user_tee: Optional[UserTee] = None
     hole_scores: List[HoleScoreResponse] = Field(default_factory=list)
+    # Off the signed-in golfer's index and the tee played. Null without ratings, and for a nine.
+    course_handicap: Optional[int] = None
+    net_score: Optional[int] = None
 
 
 class ScoreMix(ResponseModel):
@@ -591,6 +600,8 @@ class GirMilestoneEvents(ResponseModel):
 
 class LifetimeRoundMilestones(ResponseModel):
     score_breaks: List[ThresholdMilestone] = Field(default_factory=list)  # first round under each score
+    # How many score breaks come before a round under par: those above the par the golfer usually plays.
+    under_par_position: int = 0
     first_round_under_par: Optional[UnderParEvent] = None
     first_eagle: Optional[MilestoneAchievement] = None
     first_hole_in_one: Optional[MilestoneAchievement] = None
@@ -1024,6 +1035,7 @@ class ScannedTee(ResponseModel):
     slope_rating: Optional[float] = None
     course_rating: Optional[float] = None
     hole_yardages: Dict[str, int] = Field(default_factory=dict)
+    course_handicap: Optional[int] = None  # the signed-in golfer's strokes off this tee; null without an index or ratings
 
 
 class ScannedCourse(ResponseModel):

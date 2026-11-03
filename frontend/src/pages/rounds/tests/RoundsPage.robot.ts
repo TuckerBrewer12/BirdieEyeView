@@ -168,6 +168,12 @@ export class RoundsRobot {
     return this;
   }
 
+  /** The round listed first, by its course name. */
+  async seesFirstRound(courseName: string): Promise<this> {
+    await expect(this.page.locator('[data-slot="round-preview"]').first()).toContainText(courseName);
+    return this;
+  }
+
   async seesRoundCount(n: number): Promise<this> {
     const label = n === 1 ? "1 round" : `${n} rounds`;
     await expect(this.page.getByText(label, { exact: true }).first()).toBeVisible();

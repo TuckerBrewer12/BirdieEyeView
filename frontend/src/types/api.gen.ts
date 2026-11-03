@@ -1613,6 +1613,11 @@ export interface components {
             shots_to_green: number | null;
             /** Strokes */
             strokes: number | null;
+            /**
+             * Three Putt
+             * @default false
+             */
+            three_putt: boolean;
             /** To Par */
             to_par: number | null;
             /** Yardage */
@@ -1772,6 +1777,11 @@ export interface components {
             first_round_under_par: components["schemas"]["UnderParEvent"] | null;
             /** Score Breaks */
             score_breaks: components["schemas"]["ThresholdMilestone"][];
+            /**
+             * Under Par Position
+             * @default 0
+             */
+            under_par_position: number;
         };
         /** LifetimeScoringRecordEvents */
         LifetimeScoringRecordEvents: {
@@ -2320,6 +2330,8 @@ export interface components {
             /** Back Nine */
             back_nine: number | null;
             course: components["schemas"]["CourseResponse"] | null;
+            /** Course Handicap */
+            course_handicap: number | null;
             /** Course Name Played */
             course_name_played: string | null;
             /** Date */
@@ -2330,8 +2342,15 @@ export interface components {
             front_nine: number | null;
             /** Hole Scores */
             hole_scores: components["schemas"]["HoleScoreResponse"][];
+            /**
+             * Holes Played
+             * @default 0
+             */
+            holes_played: number;
             /** Id */
             id: string | null;
+            /** Net Score */
+            net_score: number | null;
             nines: components["schemas"]["Nines"];
             /** Notes */
             notes: string | null;
@@ -2361,6 +2380,8 @@ export interface components {
         RoundSummaryResponse: {
             /** Back Nine */
             back_nine: number | null;
+            /** Best Rank */
+            best_rank: number | null;
             /** Course Id */
             course_id: string | null;
             /** Course Name */
@@ -2525,6 +2546,8 @@ export interface components {
         ScannedTee: {
             /** Color */
             color: string | null;
+            /** Course Handicap */
+            course_handicap: number | null;
             /** Course Rating */
             course_rating: number | null;
             /** Hole Yardages */
@@ -2756,6 +2779,8 @@ export interface components {
             back_nine_yardage: number | null;
             /** Color */
             color: string | null;
+            /** Course Handicap */
+            course_handicap: number | null;
             /** Course Rating */
             course_rating: number | null;
             /** Front Nine Yardage */

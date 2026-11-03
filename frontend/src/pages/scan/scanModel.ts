@@ -87,6 +87,7 @@ export function reviewFromSetup(setup: ManualSetup, course: CourseDto | null): S
     slope_rating: tee.slope_rating,
     course_rating: tee.course_rating,
     hole_yardages: { ...tee.hole_yardages },
+    course_handicap: tee.course_handicap,
   }));
   const blankScores: ScannedHoleScoreDto[] = holes.map((hole) => ({
     hole_number: hole.number,

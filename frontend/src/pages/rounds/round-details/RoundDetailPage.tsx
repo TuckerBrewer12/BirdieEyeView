@@ -76,7 +76,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       <RoundDetailHeader
         round={played}
         teeRating={viewModel.teeRating}
-        courseHandicap={viewModel.courseHandicap}
       />
 
       {viewModel.showLinkButton && (

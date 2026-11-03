@@ -161,9 +161,6 @@ function totalsFrom(a: Achievements, timeWindow: CareerWindow): CareerTotal[] {
   ];
 }
 
-/** Breaking 70 and under reads after a round under par, so the list climbs in order. */
-const UNDER_PAR_AFTER = 70;
-
 type ThresholdRow = Achievements["round_milestones"]["lifetime"]["score_breaks"][number];
 
 /**
@@ -183,10 +180,11 @@ function scoringMilestones(a: Achievements, timeWindow: CareerWindow): Milestone
     kind: "under-par" | "first-eagle" | "hole-in-one",
     achievement: MilestoneAchievementDto | null | undefined,
   ): Milestone => ({ kind, achieved: reached(achievement, timeWindow), roundId: achievement?.round_id ?? null });
+  // The server places a round under par among the breaks by the par the golfer plays, so the list climbs in order.
   const all = [
-    ...breaks(m.score_breaks.filter((row) => row.threshold > UNDER_PAR_AFTER)),
+    ...breaks(m.score_breaks.slice(0, m.under_par_position)),
     first("under-par", m.first_round_under_par),
-    ...breaks(m.score_breaks.filter((row) => row.threshold <= UNDER_PAR_AFTER)),
+    ...breaks(m.score_breaks.slice(m.under_par_position)),
     first("first-eagle", m.first_eagle),
     first("hole-in-one", m.first_hole_in_one),
   ];

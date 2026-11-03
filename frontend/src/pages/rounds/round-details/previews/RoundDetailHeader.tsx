@@ -59,11 +59,19 @@ const scanned = round("Scanned Scorecard", null, null, [
 
 const partPlayed = round("Twilight Nine", "2026-08-12T18:00:00.000Z", null, nine(1, [0, 1, -1, 2, 0]));
 
+// A nine played on its own, with greens kept: GIR reads out of the nine holes played.
+const ninePlayed = round(
+  "Sharp Park",
+  "2026-09-03T18:00:00.000Z",
+  "white",
+  nine(1, [0, 1, 0, 0, -1, 1, 0, 0, 0]).map((hole, i) => ({ ...hole, putts: 2, green_in_regulation: i < 4 })),
+);
+
 export default function RoundDetailHeaderPreview() {
   return (
     <>
       {/* Everything present: date, rated tee, net, both nines, stats, chips. */}
-      <RoundDetailHeader round={everyBucket} teeRating="72.4 / 130" courseHandicap={12} />
+      <RoundDetailHeader round={{ ...everyBucket, courseHandicap: 12, netScore: 73 }} teeRating="72.4 / 130" />
 
       {/* Level par, to check it reads green rather than red. */}
       <RoundDetailHeader round={levelPar} />
@@ -73,6 +81,9 @@ export default function RoundDetailHeaderPreview() {
 
       {/* A part-played front nine — bars draw, but the total is withheld. */}
       <RoundDetailHeader round={partPlayed} />
+
+      {/* A nine on its own: greens out of nine, and no net off an 18-hole rating. */}
+      <RoundDetailHeader round={ninePlayed} />
     </>
   );
 }

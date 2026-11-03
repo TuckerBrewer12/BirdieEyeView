@@ -27,7 +27,7 @@ import { useScanSetupViewModel, type ScanSetupViewModel } from "./useScanSetupVi
 export interface ScanPageRepositories {
   scan: ScanRepository;
   courses: CoursesRepository;
-  rounds: Pick<RoundsRepository, "getRound" | "getUserHandicap">;
+  rounds: Pick<RoundsRepository, "getRound">;
 }
 
 const defaultRepositories: ScanPageRepositories = {

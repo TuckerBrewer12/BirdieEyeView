@@ -7,7 +7,8 @@ import { userRepository, type UserRepository } from "./userRepository";
  * Saves changes to the golfer's profile: handicap, home course, scoring goal.
  *
  * The cached user takes the saved one, so the dashboard and The Lab show it at once. Figures
- * that start from the profile (the handicap index, dashboard, goal report, analytics) refetch.
+ * that start from the profile (the dashboard, goal report, analytics, and the course handicaps
+ * and net scores on rounds and courses) refetch.
  * The mutation stays pending until Settings has refetched, so a caller that clears its form on
  * success never shows the old values in between.
  */
@@ -21,7 +22,8 @@ export function useUpdateUser(
     onSuccess: async (user) => {
       queryClient.setQueryData(queryKeys.user(userId), user);
       for (const queryKey of [
-        queryKeys.handicap(userId),
+        queryKeys.allRounds(),
+        queryKeys.allCourses(),
         queryKeys.dashboard(userId),
         queryKeys.goalReport(userId),
         queryKeys.analytics(userId),

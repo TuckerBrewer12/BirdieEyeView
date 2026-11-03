@@ -3,7 +3,7 @@ import { HoleShape } from "@/brand/charts/HoleScoreShapes";
 import { Button } from "@/brand/components/Button";
 import { Input } from "@/brand/components/Input";
 import { scoreFillClass, scoreOnFillClass, toParDisplay, toParTextClass } from "@/brand/theme";
-import { isThreePutt, type HoleScore, type Nine, type Round } from "@/domain";
+import type { HoleScore, Nine, Round } from "@/domain";
 
 export interface ScorecardEdits {
   onStrokesChange: (hole: number, strokes: number | null) => void;
@@ -230,7 +230,7 @@ function ScorecardTable({ nine, label, round, teeBox, edits, toCheck, className 
               ) : (
                 <td
                   key={hole.hole}
-                  className={cn(CELL, isThreePutt(hole.putts) && "font-bold text-destructive")}
+                  className={cn(CELL, hole.threePutt && "font-bold text-destructive")}
                 >
                   {hole.putts ?? "·"}
                 </td>

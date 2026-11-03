@@ -31,6 +31,8 @@ export interface HoleScore extends HoleSummary {
   shotsToGreen: number | null;
   fairway: boolean | null;
   toPar: number | null;
+  /** Three or more putts, as the server marks it. */
+  threePutt: boolean;
 }
 
 export interface NineSummary {
@@ -74,6 +76,8 @@ export interface RoundSummary {
   toPar: number | null;
   putts: number | null;
   scoreCounts: ScoreCounts;
+  /** Where the server places it in the Best order: full rounds by to par, then the rest. Null when unplaced. */
+  bestRank: number | null;
 }
 
 /** A round and its figures, as the server worked them out. */
@@ -86,6 +90,11 @@ export interface Round extends RoundSummary {
   gir: number | null;
   /** The tee played's length. */
   yards: number | null;
+  /** Holes with a score: what GIR is out of. */
+  holesPlayed: number;
+  /** The golfer's strokes off the tee played, from their own index. Null without ratings, and for a nine. */
+  courseHandicap: number | null;
+  netScore: number | null;
 }
 
 /** Unsaved changes to holes. A field left undefined keeps the hole's own value. */
@@ -128,6 +137,7 @@ function holeScore(dto: HoleScoreDto): HoleScore {
     fairway: dto.fairway_hit,
     toPar: dto.to_par,
     kind: dto.kind,
+    threePutt: dto.three_putt,
   };
 }
 
@@ -170,6 +180,7 @@ function fromSummary(dto: RoundSummaryDto): RoundSummary {
     toPar: dto.to_par,
     putts: dto.total_putts,
     scoreCounts: dto.score_counts,
+    bestRank: dto.best_rank,
   };
 }
 
@@ -195,6 +206,10 @@ function fromDto(dto: RoundDto): Round {
     gir: dto.total_gir,
     yards: dto.yards,
     scoreCounts: dto.score_counts,
+    holesPlayed: dto.holes_played,
+    courseHandicap: dto.course_handicap,
+    netScore: dto.net_score,
+    bestRank: null,
   };
 }
 
@@ -255,6 +270,7 @@ function previewEdits(round: Round, edits: HoleEdits, course?: CourseDto | null,
       yardage: yardageOf(hole.hole, hole.yardage),
       toPar: strokesToPar(strokes, par),
       kind: scoreKind(strokes, par),
+      threePutt: putts != null && putts >= 3,
     };
   });
 
@@ -275,6 +291,11 @@ function previewEdits(round: Round, edits: HoleEdits, course?: CourseDto | null,
   const scored = holes.filter((hole) => hole.strokes != null);
   const score = scored.length > 0 ? scored.reduce((sum, hole) => sum + hole.strokes!, 0) : null;
   const par = (course ? course.par ?? round.par : round.par) ?? sumIfAll(holes.map((hole) => hole.par));
+  // To par reads against the holes played, so a nine or a round cut short reads against its own holes.
+  const fullRound = scored.length >= 18;
+  const toPar = strokesToPar(score, sumIfAll(scored.map((hole) => hole.par)) ?? (fullRound ? par : null));
+  // Tee ratings are for 18 holes. A picked tee sends the golfer's course handicap off it.
+  const courseHandicap = !fullRound ? null : tee ? tee.course_handicap : yardsCleared ? null : round.courseHandicap;
   const scoreCounts = Object.fromEntries(SCORE_KINDS.map((kind) => [kind, 0])) as ScoreCounts;
   for (const hole of holes) if (hole.kind) scoreCounts[hole.kind] += 1;
   return {
@@ -284,11 +305,14 @@ function previewEdits(round: Round, edits: HoleEdits, course?: CourseDto | null,
     backNine: nine(BACK_HOLES, round.backNine, course?.back_nine_par, tee?.back_nine_yardage),
     score,
     par,
-    toPar: strokesToPar(score, par),
+    toPar,
     putts: puttsEdited || round.putts == null ? puttsOf(holes) : round.putts,
     gir: girEdited || round.gir == null ? girOf(holes) : round.gir,
     yards: tee ? tee.total_yardage ?? sumIfAll(Object.values(tee.hole_yardages)) : yardsCleared ? null : round.yards,
     scoreCounts,
+    holesPlayed: scored.length,
+    courseHandicap,
+    netScore: courseHandicap != null && score != null ? score - courseHandicap : null,
   };
 }
 
@@ -311,6 +335,7 @@ function fromScan(scan: ScannedRoundDto): Round {
     shotsToGreen: score.shots_to_green,
     toPar: null,
     kind: null,
+    threePutt: false,
   }));
   const scanned = scan.course;
   const course: CourseDto | null = scanned && {
@@ -339,6 +364,10 @@ function fromScan(scan: ScannedRoundDto): Round {
     gir: null,
     yards: null,
     scoreCounts: Object.fromEntries(SCORE_KINDS.map((kind) => [kind, 0])) as ScoreCounts,
+    bestRank: null,
+    holesPlayed: 0,
+    courseHandicap: null,
+    netScore: null,
   };
   return previewEdits(unread, {}, course, scan.tee_box);
 }

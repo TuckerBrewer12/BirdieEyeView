@@ -1,6 +1,12 @@
 import { test } from "./ScanPage.robot";
 import { pebbleBeachCourse } from "../../../testing/fixtures/roundDetails";
-import { SCANNED_COURSE_NAME, UNSURE_HOLES, unsureCard } from "../../../testing/fixtures/scan";
+import {
+  SCANNED_COURSE_NAME,
+  scannedCard,
+  scannedTeeCard,
+  UNSURE_HOLES,
+  unsureCard,
+} from "../../../testing/fixtures/scan";
 
 test("upload, nothing picked", async ({ scan }) => {
   await scan.open();
@@ -91,6 +97,14 @@ test("a card linked to a saved course", async ({ scan }) => {
   await scan.pickCourse("Pebble Beach");
   await scan.seesLinkedCourse("Pebble Beach");
   await scan.capture("scan-review-linked.png");
+});
+
+test("a card whose tee carries a course handicap", async ({ scan }) => {
+  await scan.open({ scan: { ...scannedCard, round: scannedTeeCard } });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview("Torrey Pines");
+  await scan.capture("scan-review-rated.png");
 });
 
 test("the blank card hand entry opens", async ({ scan }) => {

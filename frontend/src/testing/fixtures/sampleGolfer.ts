@@ -257,7 +257,8 @@ export const sampleGolfer = {
             {"achievement": null, "threshold": 70},
             {"achievement": null, "threshold": 65},
             {"achievement": null, "threshold": 60}
-          ]
+          ],
+          "under_par_position": 8
         },
         "one_year": {"new_personal_records_achieved_count": 7}
       },
@@ -1025,10 +1026,10 @@ export const sampleGolfer = {
       ],
       "kpis": {"average_putts": 33.0, "gir_percentage": 29.2, "handicap_index": 7.5, "putts_per_gir": 2.19, "scoring_average": 85.0, "scoring_average_change": null, "scrambling_percentage": 24.8, "three_putt_rate": 15.3, "three_putts_per_round": 2.8, "total_rounds": 4, "up_and_down_percentage": 40.5},
       "net_score_trend": [
-        {"course_handicap": 8, "course_name": "Half Moon Bay Golf Links", "gross_score": 90, "net_score": 82, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "to_par": 18},
-        {"course_handicap": 8, "course_name": "Half Moon Bay Golf Links", "gross_score": 86, "net_score": 78, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "to_par": 14},
-        {"course_handicap": 8, "course_name": "Half Moon Bay Golf Links", "gross_score": 83, "net_score": 75, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "to_par": 11},
-        {"course_handicap": 8, "course_name": "Half Moon Bay Golf Links", "gross_score": 81, "net_score": 73, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "to_par": 9}
+        {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 90, "net_score": 83, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "to_par": 18},
+        {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 86, "net_score": 79, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "to_par": 14},
+        {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 83, "net_score": 76, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "to_par": 11},
+        {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 81, "net_score": 74, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "to_par": 9}
       ],
       "notable_achievements": {
         "best_performance_streaks": {
@@ -1178,7 +1179,8 @@ export const sampleGolfer = {
               {"achievement": null, "threshold": 70},
               {"achievement": null, "threshold": 65},
               {"achievement": null, "threshold": 60}
-            ]
+            ],
+            "under_par_position": 8
           },
           "one_year": {"new_personal_records_achieved_count": 6}
         },
@@ -1470,6 +1472,7 @@ export const sampleGolfer = {
     "recent_rounds": [
       {
         "back_nine": 38,
+        "best_rank": null,
         "course_id": "1b6e5c5a-2153-519c-a3da-84852bef21a4",
         "course_name": "Presidio Golf Course",
         "date": "2026-05-31T09:00:00",
@@ -1503,6 +1506,7 @@ export const sampleGolfer = {
       },
       {
         "back_nine": 42,
+        "best_rank": null,
         "course_id": "fac0bc48-11c1-5a79-aa30-de0149ea5302",
         "course_name": "Sharp Park Golf Course",
         "date": "2026-05-28T09:00:00",
@@ -1536,6 +1540,7 @@ export const sampleGolfer = {
       },
       {
         "back_nine": 36,
+        "best_rank": null,
         "course_id": "1b6e5c5a-2153-519c-a3da-84852bef21a4",
         "course_name": "Presidio Golf Course",
         "date": "2026-05-25T09:00:00",
@@ -1569,6 +1574,7 @@ export const sampleGolfer = {
       },
       {
         "back_nine": 39,
+        "best_rank": null,
         "course_id": "1b6e5c5a-2153-519c-a3da-84852bef21a4",
         "course_name": "Presidio Golf Course",
         "date": "2026-05-21T09:00:00",
@@ -1602,6 +1608,7 @@ export const sampleGolfer = {
       },
       {
         "back_nine": 40,
+        "best_rank": null,
         "course_id": "3e9094df-7893-5663-8230-0334b2d440ec",
         "course_name": "Half Moon Bay Golf Links",
         "date": "2026-05-17T09:00:00",
@@ -1774,6 +1781,7 @@ export const sampleGolfer = {
           {
             "back_nine_yardage": 3356,
             "color": "Blue",
+            "course_handicap": 7,
             "course_rating": 70.8,
             "front_nine_yardage": 3330,
             "hole_yardages": {"1": 378, "10": 389, "11": 441, "12": 172, "13": 365, "14": 498, "15": 155, "16": 410, "17": 395, "18": 531, "2": 512, "3": 431, "4": 165, "5": 402, "6": 356, "7": 148, "8": 418, "9": 520},
@@ -1783,31 +1791,34 @@ export const sampleGolfer = {
         ],
         "user_id": null
       },
+      "course_handicap": 7,
       "course_name_played": null,
       "date": "2026-05-25T09:00:00",
       "fairways_hit": 7,
       "front_nine": 39,
       "hole_scores": [
-        {"fairway_hit": true, "green_in_regulation": true, "handicap": 7, "handicap_played": null, "hole_number": 1, "kind": "bogey", "net_score": null, "par": 4, "par_played": 4, "putts": 3, "shots_to_green": null, "strokes": 5, "to_par": 1, "yardage": 378},
-        {"fairway_hit": false, "green_in_regulation": true, "handicap": 11, "handicap_played": null, "hole_number": 2, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 2, "shots_to_green": null, "strokes": 5, "to_par": 0, "yardage": 512},
-        {"fairway_hit": false, "green_in_regulation": true, "handicap": 1, "handicap_played": null, "hole_number": 3, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 431},
-        {"fairway_hit": null, "green_in_regulation": false, "handicap": 15, "handicap_played": null, "hole_number": 4, "kind": "bogey", "net_score": null, "par": 3, "par_played": 3, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 1, "yardage": 165},
-        {"fairway_hit": false, "green_in_regulation": false, "handicap": 5, "handicap_played": null, "hole_number": 5, "kind": "bogey", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 5, "to_par": 1, "yardage": 402},
-        {"fairway_hit": true, "green_in_regulation": false, "handicap": 9, "handicap_played": null, "hole_number": 6, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 1, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 356},
-        {"fairway_hit": null, "green_in_regulation": true, "handicap": 17, "handicap_played": null, "hole_number": 7, "kind": "par", "net_score": null, "par": 3, "par_played": 3, "putts": 2, "shots_to_green": null, "strokes": 3, "to_par": 0, "yardage": 148},
-        {"fairway_hit": false, "green_in_regulation": true, "handicap": 3, "handicap_played": null, "hole_number": 8, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 418},
-        {"fairway_hit": false, "green_in_regulation": true, "handicap": 13, "handicap_played": null, "hole_number": 9, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 2, "shots_to_green": null, "strokes": 5, "to_par": 0, "yardage": 520},
-        {"fairway_hit": true, "green_in_regulation": true, "handicap": 8, "handicap_played": null, "hole_number": 10, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 389},
-        {"fairway_hit": true, "green_in_regulation": true, "handicap": 2, "handicap_played": null, "hole_number": 11, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 441},
-        {"fairway_hit": null, "green_in_regulation": false, "handicap": 16, "handicap_played": null, "hole_number": 12, "kind": "bogey", "net_score": null, "par": 3, "par_played": 3, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 1, "yardage": 172},
-        {"fairway_hit": false, "green_in_regulation": true, "handicap": 6, "handicap_played": null, "hole_number": 13, "kind": "birdie", "net_score": null, "par": 4, "par_played": 4, "putts": 1, "shots_to_green": null, "strokes": 3, "to_par": -1, "yardage": 365},
-        {"fairway_hit": true, "green_in_regulation": false, "handicap": 12, "handicap_played": null, "hole_number": 14, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 1, "shots_to_green": null, "strokes": 5, "to_par": 0, "yardage": 498},
-        {"fairway_hit": null, "green_in_regulation": false, "handicap": 18, "handicap_played": null, "hole_number": 15, "kind": "par", "net_score": null, "par": 3, "par_played": 3, "putts": 1, "shots_to_green": null, "strokes": 3, "to_par": 0, "yardage": 155},
-        {"fairway_hit": true, "green_in_regulation": true, "handicap": 4, "handicap_played": null, "hole_number": 16, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 410},
-        {"fairway_hit": true, "green_in_regulation": true, "handicap": 10, "handicap_played": null, "hole_number": 17, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "to_par": 0, "yardage": 395},
-        {"fairway_hit": false, "green_in_regulation": false, "handicap": 14, "handicap_played": null, "hole_number": 18, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 1, "shots_to_green": null, "strokes": 5, "to_par": 0, "yardage": 531}
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 7, "handicap_played": null, "hole_number": 1, "kind": "bogey", "net_score": null, "par": 4, "par_played": 4, "putts": 3, "shots_to_green": null, "strokes": 5, "three_putt": true, "to_par": 1, "yardage": 378},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 11, "handicap_played": null, "hole_number": 2, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 2, "shots_to_green": null, "strokes": 5, "three_putt": false, "to_par": 0, "yardage": 512},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 1, "handicap_played": null, "hole_number": 3, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 431},
+        {"fairway_hit": null, "green_in_regulation": false, "handicap": 15, "handicap_played": null, "hole_number": 4, "kind": "bogey", "net_score": null, "par": 3, "par_played": 3, "putts": 2, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 1, "yardage": 165},
+        {"fairway_hit": false, "green_in_regulation": false, "handicap": 5, "handicap_played": null, "hole_number": 5, "kind": "bogey", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 5, "three_putt": false, "to_par": 1, "yardage": 402},
+        {"fairway_hit": true, "green_in_regulation": false, "handicap": 9, "handicap_played": null, "hole_number": 6, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 1, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 356},
+        {"fairway_hit": null, "green_in_regulation": true, "handicap": 17, "handicap_played": null, "hole_number": 7, "kind": "par", "net_score": null, "par": 3, "par_played": 3, "putts": 2, "shots_to_green": null, "strokes": 3, "three_putt": false, "to_par": 0, "yardage": 148},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 3, "handicap_played": null, "hole_number": 8, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 418},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 13, "handicap_played": null, "hole_number": 9, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 2, "shots_to_green": null, "strokes": 5, "three_putt": false, "to_par": 0, "yardage": 520},
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 8, "handicap_played": null, "hole_number": 10, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 389},
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 2, "handicap_played": null, "hole_number": 11, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 441},
+        {"fairway_hit": null, "green_in_regulation": false, "handicap": 16, "handicap_played": null, "hole_number": 12, "kind": "bogey", "net_score": null, "par": 3, "par_played": 3, "putts": 2, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 1, "yardage": 172},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 6, "handicap_played": null, "hole_number": 13, "kind": "birdie", "net_score": null, "par": 4, "par_played": 4, "putts": 1, "shots_to_green": null, "strokes": 3, "three_putt": false, "to_par": -1, "yardage": 365},
+        {"fairway_hit": true, "green_in_regulation": false, "handicap": 12, "handicap_played": null, "hole_number": 14, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 1, "shots_to_green": null, "strokes": 5, "three_putt": false, "to_par": 0, "yardage": 498},
+        {"fairway_hit": null, "green_in_regulation": false, "handicap": 18, "handicap_played": null, "hole_number": 15, "kind": "par", "net_score": null, "par": 3, "par_played": 3, "putts": 1, "shots_to_green": null, "strokes": 3, "three_putt": false, "to_par": 0, "yardage": 155},
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 4, "handicap_played": null, "hole_number": 16, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 410},
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 10, "handicap_played": null, "hole_number": 17, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 395},
+        {"fairway_hit": false, "green_in_regulation": false, "handicap": 14, "handicap_played": null, "hole_number": 18, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 1, "shots_to_green": null, "strokes": 5, "three_putt": false, "to_par": 0, "yardage": 531}
       ],
+      "holes_played": 18,
       "id": "8d412153-b640-567c-b361-5eb47ecb4efd",
+      "net_score": 68,
       "nines": {
         "back": {"gir": 5, "par": 36, "putts": 14, "to_par": 0, "yards": 3356},
         "front": {"gir": 6, "par": 36, "putts": 18, "to_par": 3, "yards": 3330}
@@ -2092,7 +2103,8 @@ export const achievementsAYearOn = {
         {"achievement": null, "threshold": 70},
         {"achievement": null, "threshold": 65},
         {"achievement": null, "threshold": 60}
-      ]
+      ],
+      "under_par_position": 8
     },
     "one_year": {"new_personal_records_achieved_count": 1}
   },

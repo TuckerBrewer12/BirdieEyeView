@@ -11,7 +11,6 @@ const draft = reviewFromScan(unsureCard, "2026-10-15");
 const review: ScanReviewViewModel = {
   round: reviewedRound(draft, null),
   toCheck: strokesToCheck(draft.scan),
-  courseHandicap: null,
   setStrokes: noop,
   setPutts: noop,
   setGir: noop,

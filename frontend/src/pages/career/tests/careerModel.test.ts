@@ -59,7 +59,7 @@ describe("careerFrom", () => {
     expect(kinds("one_year")).not.toContain("pars");
   });
 
-  it("reads a round under par after breaking 75 and before breaking 70", () => {
+  it("reads a round under par where the server places it: after breaking 75 and before 70 on par 72", () => {
     const labels = career.windows.lifetime.scoring.map(labelOf);
     expect(labels.slice(labels.indexOf("score-break:75"), labels.indexOf("score-break:70") + 1)).toEqual([
       "score-break:75",
@@ -67,6 +67,20 @@ describe("careerFrom", () => {
       "score-break:70",
     ]);
     expect(labels.slice(-2)).toEqual(["first-eagle", "hole-in-one"]);
+  });
+
+  it("moves a round under par after breaking 70 for a golfer who plays par 70", () => {
+    const lifetime = achievements.round_milestones.lifetime;
+    const labels = careerFrom(
+      withAchievements({
+        round_milestones: { ...achievements.round_milestones, lifetime: { ...lifetime, under_par_position: 9 } },
+      }),
+    ).windows.lifetime.scoring.map(labelOf);
+    expect(labels.slice(labels.indexOf("score-break:70"), labels.indexOf("score-break:65") + 1)).toEqual([
+      "score-break:70",
+      "under-par",
+      "score-break:65",
+    ]);
   });
 
   it("marks a score break reached, with the round it fell in", () => {

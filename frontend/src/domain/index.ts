@@ -2,7 +2,6 @@ export {
   SCORE_KINDS,
   formatAverageToPar,
   roundAverageToPar,
-  isThreePutt,
   playedScoreKinds,
   scoreKind,
   scoreKindCountLabel,
@@ -56,12 +55,7 @@ export { formatOneDecimal, formatPercent, formatSignedOneDecimal, pluralNoun, pl
 export { roundShareMessage } from "./share";
 export type { ShareMessage } from "./share";
 
-export {
-  ratedCourseHandicap,
-  netScore,
-  formatHandicapIndex,
-  formatCourseHandicap,
-} from "./handicap";
+export { formatHandicapIndex, formatCourseHandicap } from "./handicap";
 
 export { Round } from "./round";
 export type {
