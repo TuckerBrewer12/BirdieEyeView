@@ -4,7 +4,7 @@ import { cn } from "@/brand/cn";
 import { Button } from "./Button";
 import { Card } from "./Card";
 import { SearchField } from "./SearchField";
-import type { CourseSummary } from "@/domain/course";
+import { formatCourseName, type CourseSummary } from "@/domain/course";
 
 interface CourseLinkSearchProps {
   query: string;
@@ -293,7 +293,7 @@ function ResultRow({
   onHover: () => void;
   onSelect: (course: CourseSummary) => void;
 }) {
-  const name = course.name ?? "Unnamed course";
+  const name = formatCourseName(course.name);
   const nameHit = !!query && name.toLowerCase().includes(query.toLowerCase());
   const detail = [course.location, course.par != null ? `Par ${course.par}` : null]
     .filter(Boolean)
