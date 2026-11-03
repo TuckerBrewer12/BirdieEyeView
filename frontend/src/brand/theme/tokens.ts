@@ -487,6 +487,8 @@ export const gridColumns = {
   "round-preview": "var(--brand-size-date-rail) 1fr auto",
   "handicap-breakdown": "1fr auto auto auto",
   "recent-rounds": "1fr auto auto",
+  /** A label column, then two equal state columns. */
+  "state-grid": "4.5rem repeat(2, minmax(0, 1fr))",
 };
 
 /**

@@ -8,7 +8,7 @@ const rows = [
   { name: "Danger", label: "Delete", variant: "destructive" },
 ] as const;
 
-const grid = "grid grid-cols-[4.5rem_repeat(2,minmax(0,1fr))] items-center gap-2";
+const grid = "grid grid-cols-state-grid items-center gap-2";
 
 export default function ButtonPreview() {
   return (
