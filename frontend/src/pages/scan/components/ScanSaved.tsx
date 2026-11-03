@@ -1,7 +1,7 @@
 import { Check } from "lucide-react";
+import { Button } from "@/brand";
 import { cn } from "@/brand/cn";
 import { toParLabel, toParTextClass } from "@/brand/theme";
-import { Button } from "./Button";
 
 interface ScanSavedProps {
   /** Where the round was played, already formatted for display. */
@@ -16,7 +16,7 @@ interface ScanSavedProps {
 }
 
 /** The round is saved: its score against par, with the round to open or share. */
-function ScanSaved({ course, score, toPar, onView, onShare, sharing = false, className }: ScanSavedProps) {
+export function ScanSaved({ course, score, toPar, onView, onShare, sharing = false, className }: ScanSavedProps) {
   const toParText = toParLabel(toPar);
   return (
     <div
@@ -66,5 +66,3 @@ function ScanSaved({ course, score, toPar, onView, onShare, sharing = false, cla
     </div>
   );
 }
-
-export { ScanSaved };

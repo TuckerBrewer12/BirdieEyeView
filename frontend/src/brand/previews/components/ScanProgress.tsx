@@ -1,6 +1,6 @@
 import { ScanNeedsReview } from "@/brand/components/ScanNeedsReview";
 import { ScanProgress } from "@/brand/components/ScanProgress";
-import { ScanSaved } from "@/brand/components/ScanSaved";
+import { ScanSaved } from "@/pages/scan/components/ScanSaved";
 
 const STEPS = ["Course and tees", "Scores and putts", "Checking totals"];
 

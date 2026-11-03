@@ -1,4 +1,4 @@
-import { ScanSaved } from "@/brand/components/ScanSaved";
+import { ScanSaved } from "../components/ScanSaved";
 
 const noop = () => {};
 
