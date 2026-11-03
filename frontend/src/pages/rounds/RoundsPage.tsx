@@ -44,6 +44,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
           placeholder="Search by course…"
           value={viewModel.search}
           onChange={viewModel.setSearch}
+          shortcut
         />
 
         <ToggleGroup
@@ -65,6 +66,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
             {pluralize(viewModel.filteredRounds.length, "round")}
           </span>
           <SortControl
+            caption="Sort"
             label={viewModel.sortLabel}
             value={viewModel.effectiveSortKey}
             options={viewModel.sortOptions}

@@ -2,12 +2,17 @@ import { useState } from "react";
 import { SearchField } from "@/brand/components/SearchField";
 
 export default function SearchFieldPreview() {
-  const [query, setQuery] = useState("Half Moon Bay");
+  const [query, setQuery] = useState("Half Moon");
   return (
     <>
-      <SearchField placeholder="Search by course…" value="" onChange={() => {}} />
-      <SearchField placeholder="Search by course…" value={query} onChange={setQuery} />
-      <SearchField placeholder="Search courses…" value="peb" onChange={() => {}} loading />
+      <div className="flex flex-col gap-1.5">
+        <p className="text-label font-semibold text-muted-foreground">Search · empty</p>
+        <SearchField placeholder="Search courses" value="" onChange={() => {}} shortcut />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <p className="text-label font-semibold text-muted-foreground">Search · focused, with value</p>
+        <SearchField placeholder="Search courses" value={query} onChange={setQuery} autoFocus shortcut />
+      </div>
     </>
   );
 }
