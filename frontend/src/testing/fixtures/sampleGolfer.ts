@@ -1464,6 +1464,8 @@ export const sampleGolfer = {
       {"course": "Presidio Golf Course", "date": "2026/5/13", "kind": "score_break", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "value": 80},
       {"course": "Presidio Golf Course", "date": "2026/5/13", "kind": "putt_break", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "value": 30}
     ],
+    "putts_per_round": 33.6,
+    "putts_rating": "fair",
     "recent_form": {"gir_pct": 50.0, "putts_per_18": 33.6, "scrambling_pct": 35.55555555555556, "up_and_down_pct": 37.77777777777778},
     "recent_rounds": [
       {
@@ -1824,10 +1826,33 @@ export const sampleGolfer = {
     }
   ],
   "goalReport": {
+    "attempts": [
+      {"met_goal": false, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "score": 90},
+      {"met_goal": false, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "score": 84},
+      {"met_goal": false, "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d", "score": 89},
+      {"met_goal": false, "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c", "score": 83},
+      {"met_goal": false, "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab", "score": 81},
+      {"met_goal": false, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "score": 86},
+      {"met_goal": false, "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b", "score": 83},
+      {"met_goal": false, "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab", "score": 81},
+      {"met_goal": false, "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a", "score": 87},
+      {"met_goal": false, "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc", "score": 80},
+      {"met_goal": false, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "score": 83},
+      {"met_goal": false, "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc", "score": 85},
+      {"met_goal": false, "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff", "score": 81},
+      {"met_goal": false, "round_id": "5ba4527d-c48a-549c-a054-9306305065af", "score": 82},
+      {"met_goal": true, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "score": 76},
+      {"met_goal": false, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "score": 81},
+      {"met_goal": true, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "score": 79},
+      {"met_goal": true, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "score": 75},
+      {"met_goal": false, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "score": 81},
+      {"met_goal": true, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "score": 79}
+    ],
     "best_score": 75,
     "gap": 3.3,
     "on_track": false,
     "peak_gap": -2.3,
+    "peak_meets_goal": true,
     "progress_pct": 70.00000000000003,
     "rounds_meeting_goal": 4,
     "savers": [

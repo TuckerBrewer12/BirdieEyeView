@@ -31,13 +31,13 @@ interface SparklineProps {
   domain?: [number, number];
   /** Shade under the first series. */
   fill?: boolean;
-  /** A dashed line at the first series' mean. */
-  mean?: boolean;
+  /** A dashed line at this value: the average the server worked out for the line. None without it. */
+  reference?: number | null;
   className?: string;
 }
 
 /** Which way a figure has been heading: a small line, no axes, the latest value marked. */
-export function Sparkline({ series, domain, fill = false, mean = false, className }: SparklineProps) {
+export function Sparkline({ series, domain, fill = false, reference = null, className }: SparklineProps) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
   const { width: W, height: H, pad, stroke, dot } = chartLayout.sparkline;
 
@@ -59,10 +59,7 @@ export function Sparkline({ series, domain, fill = false, mean = false, classNam
     .curve(curveMonotoneX);
 
   const first = series[0].values;
-  const firstKnown = knownValues(first);
-  const meanY = firstKnown.length
-    ? y(firstKnown.reduce((sum, v) => sum + v, 0) / firstKnown.length)
-    : null;
+  const referenceY = reference != null ? y(reference) : null;
   const shade = area<number | null>()
     .defined((v) => v != null)
     .x((_, i) => x(i))
@@ -83,12 +80,12 @@ export function Sparkline({ series, domain, fill = false, mean = false, classNam
             </linearGradient>
           </defs>
         )}
-        {mean && meanY != null && (
+        {referenceY != null && (
           <line
             x1={pad}
             x2={W - pad}
-            y1={meanY}
-            y2={meanY}
+            y1={referenceY}
+            y2={referenceY}
             stroke={colors.border}
             strokeWidth={borderWidth}
             strokeDasharray={`${space.dot} ${space.dot}`}

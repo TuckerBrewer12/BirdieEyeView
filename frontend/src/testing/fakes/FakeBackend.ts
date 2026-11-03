@@ -8,6 +8,7 @@ import type { FriendshipAnswer } from "../../data/friendsModel";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import type {
   AnalyticsDto,
+  BenchmarkComparisonDto,
   DashboardDto,
   GoalReportDto,
   PlayedCourseDto,
@@ -57,6 +58,8 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   /** `/api/stats/{id}/played-courses`: the courses the golfer has rounds at. */
   playedCourses?: PlayedCourseDto[];
   goalReport?: GoalReportDto | null;
+  /** `/api/stats/{id}/benchmark` by comparison: "handicap:5", "peak", "friend:{id}". One not here answers 422. */
+  benchmarks?: Record<string, BenchmarkComparisonDto>;
   /** No one is signed in — `/api/auth/me` answers 401, as the real API does. */
   signedOut?: boolean;
   /** What `/api/scan/extract` reads off any uploaded card. Unset, extract fails. */
@@ -95,6 +98,7 @@ export class FakeBackend {
   /** What each analytics request asked for, in order. */
   readonly analyticsRequests: AnalyticsFilters[] = [];
   goalReport: GoalReportDto | null | undefined;
+  readonly benchmarks: Record<string, BenchmarkComparisonDto>;
   scan: ScanDto | undefined;
   profileError: string | null;
   updateUserError: string | null;
@@ -126,6 +130,7 @@ export class FakeBackend {
       analyticsByCourse,
       playedCourses,
       goalReport,
+      benchmarks,
       signedOut,
       scan,
       holdScan,
@@ -151,6 +156,7 @@ export class FakeBackend {
     this.analyticsByCourse = analyticsByCourse ?? {};
     this.playedCourses = playedCourses ?? [];
     this.goalReport = goalReport;
+    this.benchmarks = benchmarks ?? {};
     this.scan = scan;
     this.profileError = profileError ?? null;
     this.updateUserError = updateUserError ?? null;
@@ -451,6 +457,20 @@ export class FakeBackend {
         return { status: 404, body: { detail: "No goal report." } };
       }
       return { status: 200, body: this.goalReport };
+    }
+
+    if (verb === "GET" && /\/api\/stats\/[^/]+\/benchmark$/.test(path)) {
+      const params = parsed.searchParams;
+      const against = params.get("against");
+      const key =
+        against === "handicap"
+          ? `handicap:${params.get("handicap")}`
+          : against === "friend"
+            ? `friend:${params.get("friend_id")}`
+            : (against ?? "");
+      const found = this.benchmarks[key];
+      if (!found) return { status: 422, body: { detail: "No benchmark to compare with." } };
+      return { status: 200, body: found };
     }
 
     if (verb === "GET" && /\/api\/stats\/compare\//.test(path)) {

@@ -26,6 +26,10 @@ const halfMoonBayHoleStats: CourseHoleStats = {
     average_to_par: toParOn(hole_number),
     sample_size: SAMPLE,
   })),
+  // Each nine is a par 36 with three holes half a stroke over and six half a stroke under.
+  hole_averages_front_nine: 34.5,
+  hole_averages_back_nine: 34.5,
+  hole_averages_total: 69,
   gir_percentage_by_hole: hole((hole_number, par) => {
     const gir_hits = hole_number % 2 === 0 ? 2 : 1;
     return { hole_number, par, gir_hits, sample_size: SAMPLE, gir_percentage: (gir_hits / SAMPLE) * 100 };

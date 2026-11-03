@@ -1,5 +1,5 @@
 import { BACK_HOLES, FRONT_HOLES, getHole, getTee, teesByLength } from "@/domain/course";
-import type { CourseAnalytics, HoleFigure, HoleScoreMix, HoleToPar } from "@/domain/courseAnalytics";
+import type { CourseAnalytics, HoleFigure, HoleScoreMix, HoleToPar, NineAverages } from "@/domain/courseAnalytics";
 import type { CourseDto, TeeDto } from "@/types/api";
 
 export type PageTabKey = "course" | "performance";
@@ -55,23 +55,24 @@ export type CourseChart =
   | { kind: "scoreType"; group: ChartTabKey; rows: HoleScoreMix[] }
   | { kind: "gir" | "putts" | "variance"; group: ChartTabKey; rows: HoleFigure[] };
 
-/** The golfer's average strokes per hole, or null until they have played the course. */
-export function personalAverages(analytics: CourseAnalytics): Record<number, number> | null {
+/** The golfer's average strokes per hole, and summed by nine as the server added them. */
+export interface PersonalAverages extends NineAverages {
+  byHole: Record<number, number>;
+}
+
+/** The golfer's averages, or null until they have played the course. */
+export function personalAverages(analytics: CourseAnalytics): PersonalAverages | null {
   if (analytics.roundsPlayed === 0) return null;
   const rows = analytics.holeToPar;
   if (rows.length === 0) return null;
-  return Object.fromEntries(rows.map((row) => [row.hole, row.averageScore]));
-}
-
-function sumOf(holes: readonly number[], averages: Record<number, number>): number {
-  return holes.reduce((sum, n) => sum + (averages[n] ?? 0), 0);
+  return { byHole: Object.fromEntries(rows.map((row) => [row.hole, row.averageScore])), ...analytics.nineAverages };
 }
 
 export function nineFrom(
   course: CourseDto,
   side: "front" | "back",
   tee: TeeDto | null,
-  averages: Record<number, number> | null,
+  averages: PersonalAverages | null,
 ): ScorecardNine {
   const holes = side === "front" ? FRONT_HOLES : BACK_HOLES;
   const back = side === "back";
@@ -83,16 +84,16 @@ export function nineFrom(
       par: getHole(course, n)?.par ?? null,
       handicap: getHole(course, n)?.handicap ?? null,
       yards: tee?.hole_yardages[n] || null,
-      personalAverage: averages?.[n] ?? null,
+      personalAverage: averages?.byHole[n] ?? null,
     })),
     par: back ? course.back_nine_par : course.front_nine_par,
     yards: (back ? tee?.back_nine_yardage : tee?.front_nine_yardage) ?? null,
-    personalAverage: averages ? sumOf(holes, averages) : null,
+    personalAverage: (back ? averages?.back : averages?.front) ?? null,
     totals: back
       ? {
           par: course.par,
           yards: tee?.total_yardage ?? null,
-          personalAverage: averages ? sumOf([...FRONT_HOLES, ...BACK_HOLES], averages) : null,
+          personalAverage: averages?.total ?? null,
         }
       : null,
   };

@@ -14,29 +14,39 @@ export type { ScoreKind, ScoreMix, ScoreTypeShares } from "./score";
 
 export {
   GOAL_OPTIONS,
-  GOAL_BENCHMARK,
-  HANDICAP_BENCHMARK,
   COMPARISON_HANDICAPS,
   TOUR_SHORT_GAME,
+  benchmarkComparisonFrom,
+  benchmarkShapeFrom,
+  goalAttemptsFrom,
   goalScoreToBreak,
   goalTargetLabel,
-  nearestGoalBenchmark,
 } from "./benchmark";
-export type { ComparisonTargetValue } from "./benchmark";
+export type {
+  BenchmarkComparison,
+  BenchmarkShape,
+  BenchmarkTarget,
+  ComparisonTargetValue,
+  GoalAttempt,
+  ParTypeComparison,
+  ParTypeVerdict,
+} from "./benchmark";
 
-export {
-  buildRadarData,
-  benchmarkProfileFrom,
-  profileAverageToPar,
-  profilePuttsPerGir,
-} from "./radar";
+export { buildRadarData } from "./radar";
 export type { RadarEntry } from "./radar";
 
 export { courseSummaryFrom, formatCourseName, getTee, teeColors } from "./course";
 export type { CourseSummary } from "./course";
 
 export { EMPTY_COURSE_ANALYTICS, courseAnalyticsFrom } from "./courseAnalytics";
-export type { CourseAnalytics, HoleFigure, HoleScoreMix, HoleToPar, ScorePoint } from "./courseAnalytics";
+export type {
+  CourseAnalytics,
+  HoleFigure,
+  HoleScoreMix,
+  HoleToPar,
+  NineAverages,
+  ScorePoint,
+} from "./courseAnalytics";
 
 export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekdayDay, isoDay, parseDay } from "./date";
 export type { DayParts } from "./date";

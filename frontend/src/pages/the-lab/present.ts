@@ -5,10 +5,18 @@ import {
   goalScoreToBreak,
   goalTargetLabel,
   pluralize,
-  roundAverageToPar,
   type ComparisonTargetValue,
 } from "@/domain";
-import type { FriendOption, GoalStanding, LabPanel, PeakGame, PeakImpact, RadarMode, Saver } from "./model";
+import type {
+  FriendOption,
+  GoalStanding,
+  LabPanel,
+  ParTypeRow,
+  PeakGame,
+  PeakImpact,
+  RadarMode,
+  Saver,
+} from "./model";
 
 /** A friend's name, or a stand-in when the server has none. */
 export function friendName(friend: FriendOption | null): string {
@@ -98,8 +106,8 @@ export function goalStandingNote(goal: GoalStanding): string | null {
 
 /** How the best rounds stand against the goal: "Your best rounds already break 80." Null until the gap loads. */
 export function peakGapNote(peak: PeakGame, goalLabel: string): string | null {
-  if (peak.gapToGoal == null) return null;
-  if (peak.gapToGoal <= 0) return `Your best rounds already ${goalLabel.toLowerCase()}. Make it your new normal.`;
+  if (peak.gapToGoal == null || peak.meetsGoal == null) return null;
+  if (peak.meetsGoal) return `Your best rounds already ${goalLabel.toLowerCase()}. Make it your new normal.`;
   return `${peak.gapToGoal.toFixed(1)} strokes from ${goalLabel.toLowerCase()} on your best days.`;
 }
 
@@ -124,19 +132,18 @@ export function recentTrendNote(trend: number): string {
 }
 
 /**
- * The line under a par type, and the gap it is coloured with. Rounded the same
- * way as {@link formatAverageToPar}, so a tie is even rather than ahead.
+ * The line under a par type, and the gap it is coloured with, in the words of the server's
+ * verdict. Null without a comparison.
  */
-export function parTypeGapNote(
-  averageToPar: number,
-  benchmarkToPar: number,
-  benchmarkName: string,
-): { text: string; gap: number } {
-  const gap = roundAverageToPar(averageToPar - benchmarkToPar);
-  const mark = `${benchmarkName} ${formatAverageToPar(benchmarkToPar)}`;
-  const detail =
-    gap < 0 ? "ahead of it" : gap > 0 ? `${gap.toFixed(2)} a hole to close` : "even with it";
-  return { text: `${mark} · ${detail}`, gap };
+export function parTypeGapNote(row: ParTypeRow, benchmarkName: string): { text: string; gap: number } | null {
+  if (row.benchmarkToPar == null || row.gap == null || row.verdict == null) return null;
+  const mark = `${benchmarkName} ${formatAverageToPar(row.benchmarkToPar)}`;
+  const detail = {
+    ahead: "ahead of it",
+    behind: `${row.gap.toFixed(2)} a hole to close`,
+    even: "even with it",
+  }[row.verdict];
+  return { text: `${mark} · ${detail}`, gap: row.gap };
 }
 
 /**

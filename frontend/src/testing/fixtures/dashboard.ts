@@ -69,6 +69,9 @@ export const populatedDashboard: DashboardDto = {
   best_recent_round_id: "round-3",
   average_putts: 32,
   average_gir: 8,
+  // The last five rounds' 32 a round: between 30 and 34 rates fair.
+  putts_per_round: 32,
+  putts_rating: "fair",
   // The figures the server works out from the trend window below.
   scoring_average_l20: 76.8,
   scoring_average_l5: 76.8,
@@ -114,6 +117,14 @@ export const dashboardGoalReport: GoalReportDto = {
   // The 69, 72 and 78 meet it; their average of 73 is six strokes inside it.
   rounds_meeting_goal: 3,
   peak_gap: -6,
+  peak_meets_goal: true,
+  attempts: [
+    { round_id: "round-4", score: 85, met_goal: false },
+    { round_id: "round-3", score: 69, met_goal: true },
+    { round_id: "round-2", score: 72, met_goal: true },
+    { round_id: "round-1", score: 78, met_goal: true },
+    { round_id: "round-5", score: 80, met_goal: false },
+  ],
   savers: [
     {
       type: "three_putt_bleed",

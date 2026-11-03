@@ -65,7 +65,7 @@ export function ScoringHeroCard({
 
         <div className="flex items-center gap-3.5">
           <StatValue size="xl">{formatOneDecimal(average)}</StatValue>
-          <Sparkline className="min-w-0 flex-1" series={[{ values: recentScores }]} fill mean />
+          <Sparkline className="min-w-0 flex-1" series={[{ values: recentScores }]} fill reference={average} />
         </div>
 
         {mix && (

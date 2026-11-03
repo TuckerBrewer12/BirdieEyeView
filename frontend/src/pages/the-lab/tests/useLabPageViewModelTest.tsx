@@ -3,10 +3,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import type { ReactNode } from "react";
 import { queryKeys } from "@/data/queryKeys";
-import { HANDICAP_BENCHMARK, nearestGoalBenchmark } from "@/domain";
+import { benchmarkShapeFrom } from "@/domain";
 import { FakeLabRepository, type FakeLabSeed } from "@/testing/fakes/FakeLabRepository";
 import { avery, jordan, populatedFriendships } from "@/testing/fixtures/friendships";
-import { averyLabAnalytics, labAnalyticsByGolfer, labGoalReport } from "@/testing/fixtures/lab";
+import {
+  averyLabAnalytics,
+  breaks90Shape,
+  labAnalyticsByGolfer,
+  labBenchmarks,
+  labGoalReport,
+} from "@/testing/fixtures/lab";
 import { LAB_FILTERS } from "../model";
 import { useLabPageViewModel } from "../useLabPageViewModel";
 
@@ -14,6 +20,7 @@ const POPULATED: FakeLabSeed = {
   analytics: labAnalyticsByGolfer,
   goalReport: labGoalReport,
   friends: { friendships: populatedFriendships },
+  benchmarks: labBenchmarks,
 };
 
 function setup(seed: FakeLabSeed = POPULATED) {
@@ -111,6 +118,8 @@ describe("useLabPageViewModel", () => {
     const { result } = await loaded();
 
     expect(result.current.attempts).toHaveLength(12);
+    // The report marks which met the goal: only the 89.
+    expect(result.current.attempts.filter((a) => a.metGoal).map((a) => a.score)).toEqual([89]);
     expect(result.current.roundsMeetingGoal).toBe(1);
     expect(result.current.recentTrend).toBe(0.5);
     expect(result.current.peak).toEqual({
@@ -122,6 +131,7 @@ describe("useLabPageViewModel", () => {
       average: 89.7,
       overallAverage: 91.7,
       gapToGoal: 0.7,
+      meetsGoal: false,
     });
     expect(result.current.peakImpacts.map((i) => [i.kind, i.strokes])).toEqual([
       ["birdies", 0.58],
@@ -132,7 +142,7 @@ describe("useLabPageViewModel", () => {
   });
 
   it("draws the shape alone, then against a handicap benchmark", async () => {
-    const { result } = await loaded();
+    const { repository, result } = await loaded();
 
     expect(result.current.benchmark).toBeNull();
     expect(result.current.radar.map((e) => e.axis)).toEqual([
@@ -144,10 +154,18 @@ describe("useLabPageViewModel", () => {
       "Par 5s",
     ]);
     expect(result.current.parTypes.every((row) => row.benchmarkToPar == null)).toBe(true);
+    expect(repository.benchmarkRequests).toEqual([]);
 
     act(() => result.current.setComparison(5));
-    expect(result.current.benchmark).toEqual(HANDICAP_BENCHMARK[5]);
-    expect(result.current.parTypes[0].benchmarkToPar).not.toBeNull();
+    await waitFor(() => expect(result.current.benchmark).not.toBeNull());
+    expect(result.current.benchmark).toEqual(benchmarkShapeFrom(labBenchmarks["handicap:5"].benchmark!));
+    // The par types come with the server's gap and verdict against the 5.
+    expect(result.current.parTypes.map((row) => [row.benchmarkToPar, row.gap, row.verdict])).toEqual([
+      [0.2, 0.72, "behind"],
+      [0.5, 0.62, "behind"],
+      [0.55, 0.3, "behind"],
+    ]);
+    expect(repository.benchmarkRequests).toEqual(["handicap:5"]);
   });
 
   it("compares with the first friend, and loads the one picked", async () => {
@@ -157,12 +175,14 @@ describe("useLabPageViewModel", () => {
     expect(result.current.friends.map((f) => f.name)).toEqual([avery.name, jordan.name]);
     expect(result.current.selectedFriend?.id).toBe(avery.id);
     await waitFor(() => expect(result.current.friendComparison).toBe("ready"));
-    expect(result.current.benchmark?.gir).toBe(44);
+    expect(result.current.benchmark?.girPct).toBe(44);
 
     act(() => result.current.selectFriend(jordan.id));
     await waitFor(() => expect(result.current.friendComparison).toBe("no-rounds"));
     expect(result.current.benchmark).toBeNull();
-    expect(repository.analyticsRequests).toEqual(["user-1", avery.id, jordan.id]);
+    // The server compares with each friend; their analytics are never fetched.
+    expect(repository.benchmarkRequests).toEqual([`friend:${avery.id}`, `friend:${jordan.id}`]);
+    expect(repository.analyticsRequests).toEqual(["user-1"]);
   });
 
   it("says so when there are no friends to compare with", async () => {
@@ -180,7 +200,8 @@ describe("useLabPageViewModel", () => {
     act(() => result.current.setRadarMode("peak"));
 
     expect(result.current.radarMode).toBe("peak");
-    expect(result.current.benchmark).toEqual(nearestGoalBenchmark(result.current.peak!.average));
+    // The server picked the golfers who break 90, nearest the peak's 89.7.
+    await waitFor(() => expect(result.current.benchmark).toEqual(benchmarkShapeFrom(breaks90Shape)));
   });
 
   it("stays on the average when there is no peak game to show", async () => {
@@ -200,14 +221,20 @@ describe("useLabPageViewModel", () => {
     expect(client.getQueryData(queryKeys.analytics("user-1", LAB_FILTERS))).toBe(labAnalyticsByGolfer["user-1"]);
   });
 
-  it("asks a friend's analytics for the same 20 rounds, cached under the friend", async () => {
+  it("caches each comparison under the golfer's analytics, so a new round refreshes it", async () => {
     const { client, repository, result } = await loaded();
 
     act(() => result.current.setComparison("friend"));
     await waitFor(() => expect(result.current.friendComparison).toBe("ready"));
+    act(() => result.current.setComparison(5));
+    await waitFor(() => expect(result.current.benchmark?.scramblingPct).toBe(41));
+    act(() => result.current.setComparison("friend"));
 
-    expect(repository.analyticsFilters).toEqual([LAB_FILTERS, LAB_FILTERS]);
-    expect(client.getQueryData(queryKeys.analytics(avery.id, LAB_FILTERS))).toBe(labAnalyticsByGolfer[avery.id]);
+    // Back to the friend: the cached comparison shows at once while it refreshes.
+    expect(result.current.friendComparison).toBe("ready");
+    expect(repository.benchmarkRequests.slice(0, 2)).toEqual([`friend:${avery.id}`, "handicap:5"]);
+    const cached = client.getQueryCache().findAll({ queryKey: queryKeys.analytics("user-1") });
+    expect(cached.map((query) => query.queryKey[2])).toEqual(expect.arrayContaining([LAB_FILTERS, "benchmark"]));
   });
 
   it("never shows one friend's shape while the next friend's loads", async () => {
@@ -215,13 +242,13 @@ describe("useLabPageViewModel", () => {
     act(() => result.current.setComparison("friend"));
     await waitFor(() => expect(result.current.friendComparison).toBe("ready"));
 
-    repository.analytics[jordan.id] = labAnalyticsByGolfer[avery.id];
-    repository.holdAnalytics();
+    repository.benchmarks[`friend:${jordan.id}`] = labBenchmarks[`friend:${avery.id}`];
+    repository.holdBenchmark();
     act(() => result.current.selectFriend(jordan.id));
 
     expect(result.current.friendComparison).toBe("loading");
     expect(result.current.benchmark).toBeNull();
-    repository.finishAnalytics();
+    repository.finishBenchmark();
     await waitFor(() => expect(result.current.friendComparison).toBe("ready"));
   });
 

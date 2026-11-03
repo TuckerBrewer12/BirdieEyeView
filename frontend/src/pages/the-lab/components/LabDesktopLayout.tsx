@@ -37,7 +37,7 @@ export function LabDesktopLayout({ vm }: { vm: LabPageViewModel }) {
           <GoalStandingCard goal={vm.goal} />
           {target != null && vm.attempts.length >= MIN_ATTEMPTS && (
             <AttemptsCard
-              scores={vm.attempts}
+              attempts={vm.attempts}
               target={target}
               timesMet={vm.roundsMeetingGoal}
               className="lg:col-span-2"

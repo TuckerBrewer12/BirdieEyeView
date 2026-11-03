@@ -38,10 +38,7 @@ export function ParTypeCard({ rows, benchmarkName, className }: ParTypeCardProps
               </div>
             );
           }
-          const comparison =
-            row.benchmarkToPar != null && benchmarkName != null
-              ? parTypeGapNote(row.averageToPar, row.benchmarkToPar, benchmarkName)
-              : null;
+          const comparison = benchmarkName != null ? parTypeGapNote(row, benchmarkName) : null;
           return (
             <div key={row.par} className="flex flex-col gap-1.5">
               <div className="flex items-baseline justify-between">

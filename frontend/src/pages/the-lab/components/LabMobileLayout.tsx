@@ -48,7 +48,7 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
         </Card>
         <GoalStandingCard goal={vm.goal} />
         {target != null && vm.attempts.length >= MIN_ATTEMPTS && (
-          <AttemptsCard scores={vm.attempts} target={target} timesMet={vm.roundsMeetingGoal} />
+          <AttemptsCard attempts={vm.attempts} target={target} timesMet={vm.roundsMeetingGoal} />
         )}
       </section>
 

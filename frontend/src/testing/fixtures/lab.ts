@@ -1,6 +1,14 @@
-import type { AnalyticsDto, GoalReportDto, UserDto } from "../../types/api";
+import type {
+  AnalyticsDto,
+  BenchmarkComparisonDto,
+  BenchmarkShapeDto,
+  GoalAttemptDto,
+  GoalReportDto,
+  ParTypeComparisonDto,
+  UserDto,
+} from "../../types/api";
 import { withoutRounds } from "../fakes/analyticsResponses";
-import { avery } from "./friendships";
+import { avery, jordan } from "./friendships";
 import { sampleGolfer } from "./sampleGolfer";
 
 /** A 17.8 out to break 90: met it once in twelve rounds, three-putts the worst leak. */
@@ -19,6 +27,16 @@ const COURSES = ["Pebble Creek", "Half Moon Bay", "Muni", "Blue Rock"];
 const SCORES = [97, 93, 91, 95, 90, 89, 94, 92, 91, 96, 90, 92];
 const THREE_PUTTS = [3, 2, 2, 3, 1, 1, 2, 2, 1, 3, 2, 2];
 const PUTTS = [36, 35, 34, 37, 33, 32, 35, 34, 33, 36, 34, 35];
+
+/** Which of those rounds the server marks as meeting each goal: only the 89 breaks 90; nine of them break 95. */
+const MET_BREAKING_90 = SCORES.map((_, i) => i === 5);
+export const MET_BREAKING_95 = [false, true, true, false, true, true, true, true, true, false, true, true];
+export const MET_NONE = SCORES.map(() => false);
+
+/** The twelve rounds as the goal report sends them, each marked met or not. */
+export function labAttempts(met: boolean[]): GoalAttemptDto[] {
+  return SCORES.map((score, i) => ({ round_id: `lab-${i + 1}`, score, met_goal: met[i] }));
+}
 
 const pct = (holes: number) => Math.round((holes / 18) * 1000) / 10;
 
@@ -133,6 +151,8 @@ export const labGoalReport: GoalReportDto = {
   rounds_meeting_goal: 1,
   // The best three average 89.67, two thirds of a stroke over the goal.
   peak_gap: 0.7,
+  peak_meets_goal: false,
+  attempts: labAttempts(MET_BREAKING_90),
   savers: [
     {
       type: "three_putt_bleed",
@@ -159,4 +179,90 @@ export const labGoalReport: GoalReportDto = {
       data: {},
     },
   ],
+};
+
+/** The server's shapes: a 15 handicap breaks 90, a 5 breaks 80, and Avery's own figures. */
+export const breaks90Shape: BenchmarkShapeDto = {
+  gir_percentage: 24,
+  scrambling_percentage: 21,
+  putts_per_gir: 2.1,
+  par3_to_par: 0.6,
+  par4_to_par: 1.025,
+  par5_to_par: 1.1,
+};
+
+const breaks80Shape: BenchmarkShapeDto = {
+  gir_percentage: 44,
+  scrambling_percentage: 41,
+  putts_per_gir: 1.94,
+  par3_to_par: 0.2,
+  par4_to_par: 0.5,
+  par5_to_par: 0.55,
+};
+
+const averyShape: BenchmarkShapeDto = {
+  gir_percentage: 44,
+  scrambling_percentage: 38,
+  putts_per_gir: 1.92,
+  par3_to_par: 0.35,
+  par4_to_par: 0.55,
+  par5_to_par: 0.3,
+};
+
+/** The golfer's par 3s, 4s and 5s (+0.92, +1.12, +0.85) against a shape's, as the server judged them. */
+function parTypes(
+  shape: BenchmarkShapeDto | null,
+  judged: [number, ParTypeComparisonDto["verdict"]][],
+): ParTypeComparisonDto[] {
+  const mine = [0.92, 1.12, 0.85];
+  return ([3, 4, 5] as const).map((par, i) => ({
+    par,
+    average_to_par: mine[i],
+    benchmark_to_par: shape ? shape[`par${par}_to_par`] : null,
+    gap: shape ? judged[i][0] : null,
+    verdict: shape ? judged[i][1] : null,
+  }));
+}
+
+const BREAKS_90_JUDGED: [number, ParTypeComparisonDto["verdict"]][] = [[0.32, "behind"], [0.1, "behind"], [-0.25, "ahead"]];
+
+/** `GET /stats/{id}/benchmark` for each comparison The Lab's tests make, keyed as FakeBackend looks them up. */
+export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
+  "handicap:15": {
+    against: "handicap",
+    handicap: 15,
+    goal: null,
+    benchmark: breaks90Shape,
+    par_types: parTypes(breaks90Shape, BREAKS_90_JUDGED),
+  },
+  "handicap:5": {
+    against: "handicap",
+    handicap: 5,
+    goal: null,
+    benchmark: breaks80Shape,
+    par_types: parTypes(breaks80Shape, [[0.72, "behind"], [0.62, "behind"], [0.3, "behind"]]),
+  },
+  // The best three average 89.7, nearest the golfers who break 90.
+  peak: {
+    against: "peak",
+    handicap: null,
+    goal: 89,
+    benchmark: breaks90Shape,
+    par_types: parTypes(breaks90Shape, BREAKS_90_JUDGED),
+  },
+  [`friend:${avery.id}`]: {
+    against: "friend",
+    handicap: null,
+    goal: null,
+    benchmark: averyShape,
+    par_types: parTypes(averyShape, [[0.57, "behind"], [0.57, "behind"], [0.55, "behind"]]),
+  },
+  // Jordan has no rounds: nothing to draw or compare with.
+  [`friend:${jordan.id}`]: {
+    against: "friend",
+    handicap: null,
+    goal: null,
+    benchmark: null,
+    par_types: parTypes(null, []),
+  },
 };

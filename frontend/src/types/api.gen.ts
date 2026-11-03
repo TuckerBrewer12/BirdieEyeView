@@ -450,6 +450,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stats/{user_id}/benchmark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Benchmark Comparison
+         * @description The player's last `limit` rounds against a handicap's shape, the golfers their peak
+         *     rounds play like, or a friend's last `limit` rounds.
+         */
+        get: operations["get_benchmark_comparison_api_stats__user_id__benchmark_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stats/{user_id}/goal-report": {
         parameters: {
             query?: never;
@@ -815,6 +836,42 @@ export interface components {
             user_id: string;
         };
         /**
+         * BenchmarkComparisonResponse
+         * @description The player's last rounds held up against a benchmark, and which benchmark it was.
+         */
+        BenchmarkComparisonResponse: {
+            /**
+             * Against
+             * @enum {string}
+             */
+            against: "handicap" | "peak" | "friend";
+            benchmark: components["schemas"]["BenchmarkShape"] | null;
+            /** Goal */
+            goal: number | null;
+            /** Handicap */
+            handicap: number | null;
+            /** Par Types */
+            par_types: components["schemas"]["ParTypeComparison"][];
+        };
+        /**
+         * BenchmarkShape
+         * @description A golfer's shape in golf terms: the Lab radar's axes. Null where they have no figure.
+         */
+        BenchmarkShape: {
+            /** Gir Percentage */
+            gir_percentage: number | null;
+            /** Par3 To Par */
+            par3_to_par: number | null;
+            /** Par4 To Par */
+            par4_to_par: number | null;
+            /** Par5 To Par */
+            par5_to_par: number | null;
+            /** Putts Per Gir */
+            putts_per_gir: number | null;
+            /** Scrambling Percentage */
+            scrambling_percentage: number | null;
+        };
+        /**
          * BestParInsight
          * @description The par type the player scores best on.
          */
@@ -897,6 +954,12 @@ export interface components {
             course_id: string;
             /** Gir Percentage By Hole */
             gir_percentage_by_hole: components["schemas"]["CourseHoleGirRow"][];
+            /** Hole Averages Back Nine */
+            hole_averages_back_nine: number | null;
+            /** Hole Averages Front Nine */
+            hole_averages_front_nine: number | null;
+            /** Hole Averages Total */
+            hole_averages_total: number | null;
             /** Rounds */
             rounds: components["schemas"]["RoundSummaryResponse"][];
             /** Rounds Played */
@@ -1154,6 +1217,10 @@ export interface components {
             handicap_trend: components["schemas"]["HandicapTrendRow"][];
             /** Milestones */
             milestones: components["schemas"]["Milestone"][];
+            /** Putts Per Round */
+            putts_per_round: number | null;
+            /** Putts Rating */
+            putts_rating: ("strong" | "fair" | "weak") | null;
             recent_form: components["schemas"]["RecentForm"];
             /** Recent Rounds */
             recent_rounds: components["schemas"]["RoundSummaryResponse"][];
@@ -1338,10 +1405,24 @@ export interface components {
             triple_bogey: number;
         };
         /**
+         * GoalAttempt
+         * @description One scored round in the window, and whether it met the goal (at or under it).
+         */
+        GoalAttempt: {
+            /** Met Goal */
+            met_goal: boolean;
+            /** Round Id */
+            round_id: string | null;
+            /** Score */
+            score: number;
+        };
+        /**
          * GoalReportResponse
          * @description How far the player's average is from their goal, with the savers worth the most strokes first.
          */
         GoalReportResponse: {
+            /** Attempts */
+            attempts: components["schemas"]["GoalAttempt"][];
             /** Best Score */
             best_score: number | null;
             /** Gap */
@@ -1353,6 +1434,8 @@ export interface components {
             on_track: boolean;
             /** Peak Gap */
             peak_gap: number | null;
+            /** Peak Meets Goal */
+            peak_meets_goal: boolean | null;
             /** Progress Pct */
             progress_pct: number | null;
             /**
@@ -1969,6 +2052,25 @@ export interface components {
             most_birdies_in_round: number | null;
             /** Most Gir In Round */
             most_gir_in_round: number | null;
+        };
+        /**
+         * ParTypeComparison
+         * @description One par type's average to par, the player's against the benchmark's.
+         */
+        ParTypeComparison: {
+            /** Average To Par */
+            average_to_par: number | null;
+            /** Benchmark To Par */
+            benchmark_to_par: number | null;
+            /** Gap */
+            gap: number | null;
+            /**
+             * Par
+             * @enum {integer}
+             */
+            par: 3 | 4 | 5;
+            /** Verdict */
+            verdict: ("ahead" | "even" | "behind") | null;
         };
         /**
          * PeakGame
@@ -3860,6 +3962,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_benchmark_comparison_api_stats__user_id__benchmark_get: {
+        parameters: {
+            query: {
+                against: "handicap" | "peak" | "friend";
+                handicap?: number | null;
+                friend_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BenchmarkComparisonResponse"];
                 };
             };
             /** @description Validation Error */

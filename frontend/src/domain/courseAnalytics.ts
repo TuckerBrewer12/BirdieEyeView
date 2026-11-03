@@ -35,6 +35,13 @@ export interface HoleFigure {
   value: number | null;
 }
 
+/** The golfer's average strokes summed over the front nine, the back nine and the course. */
+export interface NineAverages {
+  front: number | null;
+  back: number | null;
+  total: number | null;
+}
+
 /** A golfer's figures at one course. The server works out every one. */
 export interface CourseAnalytics {
   roundsPlayed: number;
@@ -47,6 +54,8 @@ export interface CourseAnalytics {
   scoreTrend: ScorePoint[];
   /** In course order. */
   holeToPar: HoleToPar[];
+  /** The per-hole averages summed over each nine and every hole, as the server added them. Null for a nine not played. */
+  nineAverages: NineAverages;
   /** Hardest hole first. */
   difficulty: HoleToPar[];
   scoreMix: HoleScoreMix[];
@@ -64,6 +73,7 @@ export const EMPTY_COURSE_ANALYTICS: CourseAnalytics = {
   rounds: [],
   scoreTrend: [],
   holeToPar: [],
+  nineAverages: { front: null, back: null, total: null },
   difficulty: [],
   scoreMix: [],
   gir: [],
@@ -92,6 +102,11 @@ export function courseAnalyticsFrom(dto: CourseAnalyticsDto): CourseAnalytics {
     rounds: dto.rounds.map(Round.fromSummary),
     scoreTrend: dto.score_trend_on_course.map(scorePoint),
     holeToPar: dto.average_score_relative_to_par_by_hole.map(holeToPar),
+    nineAverages: {
+      front: dto.hole_averages_front_nine,
+      back: dto.hole_averages_back_nine,
+      total: dto.hole_averages_total,
+    },
     difficulty: dto.course_difficulty_profile_by_hole.map(holeToPar),
     scoreMix: dto.score_type_distribution_by_hole.map(scoreMix),
     gir: dto.gir_percentage_by_hole.map((row) => ({ hole: row.hole_number, value: row.gir_percentage })),

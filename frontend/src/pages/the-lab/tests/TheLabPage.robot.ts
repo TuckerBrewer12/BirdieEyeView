@@ -3,7 +3,7 @@ import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { populatedFriendships } from "../../../testing/fixtures/friendships";
-import { labAnalyticsByGolfer, labGoalReport, labUser } from "../../../testing/fixtures/lab";
+import { labAnalyticsByGolfer, labBenchmarks, labGoalReport, labUser } from "../../../testing/fixtures/lab";
 
 type LabPanelLabel = "By Par" | "Putting" | "Peak";
 
@@ -37,6 +37,7 @@ export class TheLabRobot {
       profile: labUser,
       goalReport: labGoalReport,
       analyticsByGolfer: labAnalyticsByGolfer,
+      benchmarks: labBenchmarks,
       friends: { friendships: populatedFriendships },
       ...seed,
     });
@@ -122,9 +123,15 @@ export class TheLabRobot {
     return this;
   }
 
-  /** The attempts card's count of rounds that met the goal: "1", or "—" while its report loads. */
+  /** The attempts card's count of rounds that met the goal: "1". */
   async seesTimesAchieved(count: string): Promise<this> {
     await expect(this.shown("[data-slot=attempts-card] [data-slot=stat-value]")).toHaveText(count);
+    return this;
+  }
+
+  /** No attempts card: the goal's report, which marks each round, hasn't come yet. */
+  async seesNoAttempts(): Promise<this> {
+    await expect(this.shown("[data-slot=attempts-card]")).toHaveCount(0);
     return this;
   }
 

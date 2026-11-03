@@ -18,7 +18,6 @@ export {
   chartColors,
   SCORE_KEYS,
   scoreFillClass,
-  scoreKeyFor,
   toParFill,
   toParTone,
   toParLabel,

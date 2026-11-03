@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from models.round import Round
-from analytics.peak import peak_gap
+from analytics.peak import peak_gap, peak_meets_goal
 from analytics.stats import (
     three_putts_per_round,
     score_type_distribution_per_round,
@@ -22,6 +22,16 @@ def _progress_pct(start: int, average: float, goal: int, on_track: bool) -> floa
     if on_track or start <= goal:
         return 100.0
     return min(100.0, max(0.0, (start - average) / (start - goal) * 100))
+
+
+def goal_attempts(rounds: List[Round], scoring_goal: int) -> List[Dict[str, Any]]:
+    """Each scored round, oldest first, and whether it met the goal: at or under it."""
+    attempts = []
+    for r in rounds:
+        score = r.calculate_total_score()
+        if score is not None:
+            attempts.append({"round_id": r.id, "score": score, "met_goal": score <= scoring_goal})
+    return attempts
 
 
 def goal_report(
@@ -47,6 +57,8 @@ def goal_report(
             "progress_pct": None,
             "rounds_meeting_goal": 0,
             "peak_gap": None,
+            "peak_meets_goal": None,
+            "attempts": [],
             "savers": [],
         }
 
@@ -249,5 +261,7 @@ def goal_report(
         "progress_pct": progress_pct,
         "rounds_meeting_goal": sum(1 for s in scores if s <= scoring_goal),
         "peak_gap": peak_gap(rounds, scoring_goal),
+        "peak_meets_goal": peak_meets_goal(rounds, scoring_goal),
+        "attempts": goal_attempts(rounds, scoring_goal),
         "savers": savers,
     }

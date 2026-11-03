@@ -661,6 +661,149 @@
         "title": "AuthUserResponse",
         "type": "object"
       },
+      "BenchmarkComparisonResponse": {
+        "description": "The player's last rounds held up against a benchmark, and which benchmark it was.",
+        "properties": {
+          "against": {
+            "enum": [
+              "handicap",
+              "peak",
+              "friend"
+            ],
+            "title": "Against",
+            "type": "string"
+          },
+          "benchmark": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BenchmarkShape"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "goal": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Goal"
+          },
+          "handicap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handicap"
+          },
+          "par_types": {
+            "items": {
+              "$ref": "#/components/schemas/ParTypeComparison"
+            },
+            "title": "Par Types",
+            "type": "array"
+          }
+        },
+        "required": [
+          "against",
+          "handicap",
+          "goal",
+          "benchmark",
+          "par_types"
+        ],
+        "title": "BenchmarkComparisonResponse",
+        "type": "object"
+      },
+      "BenchmarkShape": {
+        "description": "A golfer's shape in golf terms: the Lab radar's axes. Null where they have no figure.",
+        "properties": {
+          "gir_percentage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gir Percentage"
+          },
+          "par3_to_par": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Par3 To Par"
+          },
+          "par4_to_par": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Par4 To Par"
+          },
+          "par5_to_par": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Par5 To Par"
+          },
+          "putts_per_gir": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Putts Per Gir"
+          },
+          "scrambling_percentage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scrambling Percentage"
+          }
+        },
+        "required": [
+          "gir_percentage",
+          "scrambling_percentage",
+          "putts_per_gir",
+          "par3_to_par",
+          "par4_to_par",
+          "par5_to_par"
+        ],
+        "title": "BenchmarkShape",
+        "type": "object"
+      },
       "BestParInsight": {
         "description": "The par type the player scores best on.",
         "properties": {
@@ -892,6 +1035,39 @@
             "title": "Gir Percentage By Hole",
             "type": "array"
           },
+          "hole_averages_back_nine": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hole Averages Back Nine"
+          },
+          "hole_averages_front_nine": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hole Averages Front Nine"
+          },
+          "hole_averages_total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hole Averages Total"
+          },
           "rounds": {
             "items": {
               "$ref": "#/components/schemas/RoundSummaryResponse"
@@ -956,6 +1132,9 @@
           "rounds",
           "score_trend_on_course",
           "average_score_relative_to_par_by_hole",
+          "hole_averages_front_nine",
+          "hole_averages_back_nine",
+          "hole_averages_total",
           "gir_percentage_by_hole",
           "average_putts_by_hole",
           "score_type_distribution_by_hole",
@@ -1790,6 +1969,33 @@
             "title": "Milestones",
             "type": "array"
           },
+          "putts_per_round": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Putts Per Round"
+          },
+          "putts_rating": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strong",
+                  "fair",
+                  "weak"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Putts Rating"
+          },
           "recent_form": {
             "$ref": "#/components/schemas/RecentForm"
           },
@@ -1895,6 +2101,8 @@
           "best_recent_round_id",
           "average_putts",
           "average_gir",
+          "putts_per_round",
+          "putts_rating",
           "scoring_average_l20",
           "scoring_average_l5",
           "scoring_average_change",
@@ -2293,9 +2501,47 @@
         "title": "GirVsNonGirRow",
         "type": "object"
       },
+      "GoalAttempt": {
+        "description": "One scored round in the window, and whether it met the goal (at or under it).",
+        "properties": {
+          "met_goal": {
+            "title": "Met Goal",
+            "type": "boolean"
+          },
+          "round_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Round Id"
+          },
+          "score": {
+            "title": "Score",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "round_id",
+          "score",
+          "met_goal"
+        ],
+        "title": "GoalAttempt",
+        "type": "object"
+      },
       "GoalReportResponse": {
         "description": "How far the player's average is from their goal, with the savers worth the most strokes first.",
         "properties": {
+          "attempts": {
+            "items": {
+              "$ref": "#/components/schemas/GoalAttempt"
+            },
+            "title": "Attempts",
+            "type": "array"
+          },
           "best_score": {
             "anyOf": [
               {
@@ -2333,6 +2579,17 @@
               }
             ],
             "title": "Peak Gap"
+          },
+          "peak_meets_goal": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Meets Goal"
           },
           "progress_pct": {
             "anyOf": [
@@ -2382,6 +2639,8 @@
           "progress_pct",
           "rounds_meeting_goal",
           "peak_gap",
+          "peak_meets_goal",
+          "attempts",
           "savers"
         ],
         "title": "GoalReportResponse",
@@ -4488,6 +4747,78 @@
           "fewest_putts_in_round"
         ],
         "title": "OneYearScoringRecords",
+        "type": "object"
+      },
+      "ParTypeComparison": {
+        "description": "One par type's average to par, the player's against the benchmark's.",
+        "properties": {
+          "average_to_par": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average To Par"
+          },
+          "benchmark_to_par": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Benchmark To Par"
+          },
+          "gap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gap"
+          },
+          "par": {
+            "enum": [
+              3,
+              4,
+              5
+            ],
+            "title": "Par",
+            "type": "integer"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ahead",
+                  "even",
+                  "behind"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          }
+        },
+        "required": [
+          "par",
+          "average_to_par",
+          "benchmark_to_par",
+          "gap",
+          "verdict"
+        ],
+        "title": "ParTypeComparison",
         "type": "object"
       },
       "PeakGame": {
@@ -9114,6 +9445,114 @@
           }
         ],
         "summary": "Get Milestones",
+        "tags": [
+          "stats"
+        ]
+      }
+    },
+    "/api/stats/{user_id}/benchmark": {
+      "get": {
+        "description": "The player's last `limit` rounds against a handicap's shape, the golfers their peak\nrounds play like, or a friend's last `limit` rounds.",
+        "operationId": "get_benchmark_comparison_api_stats__user_id__benchmark_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "against",
+            "required": true,
+            "schema": {
+              "enum": [
+                "handicap",
+                "peak",
+                "friend"
+              ],
+              "title": "Against",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "handicap",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Handicap"
+            }
+          },
+          {
+            "in": "query",
+            "name": "friend_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Friend Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkComparisonResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Benchmark Comparison",
         "tags": [
           "stats"
         ]

@@ -14,6 +14,9 @@ export type CourseHoleStats = Omit<
 
 const NO_HOLE_STATS: CourseHoleStats = {
   average_score_relative_to_par_by_hole: [],
+  hole_averages_front_nine: null,
+  hole_averages_back_nine: null,
+  hole_averages_total: null,
   gir_percentage_by_hole: [],
   average_putts_by_hole: [],
   score_type_distribution_by_hole: [],

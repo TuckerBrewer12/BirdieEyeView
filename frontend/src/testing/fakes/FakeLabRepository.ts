@@ -1,7 +1,18 @@
 import { friendshipFromDto, type Friendship } from "../../data/friendsModel";
 import type { LabRepository } from "../../pages/the-lab/labRepository";
 import type { AnalyticsFilters } from "../../domain/analyticsFilters";
-import type { AnalyticsDto, GoalReportDto, UserChangesDto, UserDto } from "../../types/api";
+import {
+  benchmarkComparisonFrom,
+  type BenchmarkComparison,
+  type BenchmarkTarget,
+} from "../../domain/benchmark";
+import type {
+  AnalyticsDto,
+  BenchmarkComparisonDto,
+  GoalReportDto,
+  UserChangesDto,
+  UserDto,
+} from "../../types/api";
 import { labUser } from "../fixtures/lab";
 import { InMemoryFriendships, type InMemoryFriendshipsSeed } from "./InMemoryFriendships";
 
@@ -11,6 +22,15 @@ export interface FakeLabSeed {
   analytics?: Record<string, AnalyticsDto>;
   goalReport?: GoalReportDto | null;
   friends?: InMemoryFriendshipsSeed;
+  /** The server's comparisons, keyed by {@link benchmarkKey}. One not here fails, as a 403 or 422 does. */
+  benchmarks?: Record<string, BenchmarkComparisonDto>;
+}
+
+/** How a comparison is keyed in the seed: "handicap:5", "peak", "friend:user-avery". */
+export function benchmarkKey(target: BenchmarkTarget): string {
+  if (target.against === "handicap") return `handicap:${target.handicap}`;
+  if (target.against === "friend") return `friend:${target.friendId}`;
+  return "peak";
 }
 
 /** The Lab's reads and its one write, in memory. */
@@ -19,6 +39,9 @@ export class FakeLabRepository implements LabRepository {
   readonly analytics: Record<string, AnalyticsDto>;
   goalReport: GoalReportDto | null;
   readonly friendships: InMemoryFriendships;
+  readonly benchmarks: Record<string, BenchmarkComparisonDto>;
+  /** The comparisons asked for, keyed as the seed is, in order. */
+  readonly benchmarkRequests: string[] = [];
   /** Golfers whose analytics were asked for, in order. */
   readonly analyticsRequests: string[] = [];
   /** The filters each analytics read asked for, in the same order. */
@@ -30,8 +53,11 @@ export class FakeLabRepository implements LabRepository {
   private release: (() => void) | null = null;
   private heldReport: Promise<void> | null = null;
   private releaseReport: (() => void) | null = null;
+  private heldBenchmark: Promise<void> | null = null;
+  private releaseBenchmark: (() => void) | null = null;
 
-  constructor({ user = {}, analytics = {}, goalReport = null, friends = {} }: FakeLabSeed = {}) {
+  constructor({ user = {}, analytics = {}, goalReport = null, friends = {}, benchmarks = {} }: FakeLabSeed = {}) {
+    this.benchmarks = benchmarks;
     this.user = { ...labUser, ...user };
     this.analytics = analytics;
     this.goalReport = goalReport;
@@ -89,6 +115,27 @@ export class FakeLabRepository implements LabRepository {
     const found = this.analytics[userId];
     if (!found) throw new Error("Analytics failed to load.");
     return found;
+  }
+
+  /** Comparison reads wait until `finishBenchmark()`, so one in flight can be seen. */
+  holdBenchmark(): void {
+    this.heldBenchmark = new Promise((resolve) => {
+      this.releaseBenchmark = resolve;
+    });
+  }
+
+  finishBenchmark(): void {
+    this.releaseBenchmark?.();
+    this.heldBenchmark = null;
+  }
+
+  async getBenchmarkComparison(_userId: string, target: BenchmarkTarget): Promise<BenchmarkComparison> {
+    const key = benchmarkKey(target);
+    this.benchmarkRequests.push(key);
+    if (this.heldBenchmark) await this.heldBenchmark;
+    const found = this.benchmarks[key];
+    if (!found) throw new Error("No benchmark to compare with.");
+    return benchmarkComparisonFrom(found);
   }
 
   async getFriendships(userId: string): Promise<Friendship[]> {

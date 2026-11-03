@@ -11,12 +11,12 @@ import {
   StatValue,
 } from "@/brand";
 import { cn } from "@/brand/cn";
-import { goalTargetLabel, pluralize } from "@/domain";
+import { goalTargetLabel, pluralize, type GoalAttempt } from "@/domain";
 import { timesMetLabel } from "../present";
 
 interface AttemptsCardProps {
-  /** Scores of the latest rounds, oldest first. */
-  scores: number[];
+  /** The latest rounds, oldest first, each marked met or not by the goal report. */
+  attempts: GoalAttempt[];
   /** The goal as stored: 79 to break 80. */
   target: number;
   /** How many rounds in the window met it, as the goal report counted them. Null while it loads. */
@@ -25,7 +25,7 @@ interface AttemptsCardProps {
 }
 
 /** The latest rounds against the goal, and how often it has been met. */
-export function AttemptsCard({ scores, target, timesMet, className }: AttemptsCardProps) {
+export function AttemptsCard({ attempts, target, timesMet, className }: AttemptsCardProps) {
   return (
     <Card data-slot="attempts-card" className={className}>
       <CardHeader>
@@ -48,9 +48,9 @@ export function AttemptsCard({ scores, target, timesMet, className }: AttemptsCa
       </CardHeader>
       <CardContent>
         <ScoreGoalChart
-          scores={scores}
+          attempts={attempts}
           goal={target}
-          aria-label={`Your last ${pluralize(scores.length, "score")} against ${goalTargetLabel(target).toLowerCase()}`}
+          aria-label={`Your last ${pluralize(attempts.length, "score")} against ${goalTargetLabel(target).toLowerCase()}`}
         />
       </CardContent>
     </Card>

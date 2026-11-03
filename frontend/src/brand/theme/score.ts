@@ -1,4 +1,4 @@
-import { SCORE_KINDS, scoreKind, toParLabel, type ScoreKind } from "@/domain/score";
+import { SCORE_KINDS, toParLabel, type ScoreKind } from "@/domain/score";
 
 // The words are golf, so they live in the domain; the theme re-exports them beside the colours.
 export { scoreKindLabel, toParLabel } from "@/domain/score";
@@ -10,14 +10,6 @@ export const SCORE_KEYS = SCORE_KINDS;
 export type ScoreKey = ScoreKind;
 
 export type ScoreTone = ScoreSwatch;
-
-/** Brand mapping of a hole onto score tokens. Unknowns read as par. */
-export function scoreKeyFor(
-  strokes: number | null,
-  par: number | null,
-): ScoreKey {
-  return scoreKind(strokes, par) ?? "par";
-}
 
 // Spelled out in full so Tailwind finds every class when it scans the source.
 const SCORE_FILL_CLASS: Record<ScoreKey, string> = {
