@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 import { scaleLinear } from "d3-scale";
 import { line } from "d3-shape";
-import { ArrowDown, ArrowUp } from "lucide-react";
-import { cn } from "@/brand/cn";
-import { tokens } from "@/brand/theme";
+import { StatDelta } from "@/brand/components/Stat";
+import { differentialFill, tokens } from "@/brand/theme";
 import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
 import { indexScale, knownValues } from "./scales";
 
@@ -36,15 +35,9 @@ export function HandicapIndexPanel({ data, counting = 8 }: HandicapIndexPanelPro
           <div className="flex items-baseline gap-2.5">
             <div className="text-index">{formatHandicapIndex(last)}</div>
             {moved != null && moved !== 0 && (
-              <div
-                className={cn(
-                  "flex items-center gap-1 rounded-full bg-muted px-2 py-0.75 text-body-sm font-semibold",
-                  moved < 0 ? "text-status-success" : "text-status-danger",
-                )}
-              >
-                {moved < 0 ? <ArrowDown aria-hidden className="size-2.5 stroke-3" /> : <ArrowUp aria-hidden className="size-2.5 stroke-3" />}
+              <StatDelta direction={moved < 0 ? "down" : "up"} className="rounded-full bg-muted px-2 py-chip text-body-sm">
                 {Math.abs(moved).toFixed(1)} over {data.length} rounds
-              </div>
+              </StatDelta>
             )}
           </div>
         </div>
@@ -130,6 +123,8 @@ function DifferentialChart({ data }: { data: RoundTrendPoint[] }) {
       {data.map((d, i) => {
         if (d.differential == null) return null;
         const counts = d.differentialStatus === "counting";
+        // Counting rounds are filled; a round close to the cut-off is ringed in its status colour.
+        const ring = d.differentialStatus === "close" ? differentialFill("close") : tokens.color.chart.reference;
         const cy = y(d.differential);
         return (
           <g key={d.roundIndex}>
@@ -139,7 +134,7 @@ function DifferentialChart({ data }: { data: RoundTrendPoint[] }) {
                 x2={x(i)}
                 y1={cutY}
                 y2={cy}
-                stroke={counts ? tokens.color.primary : tokens.color.borderStrong}
+                stroke={counts ? differentialFill("counting") : tokens.color.borderStrong}
                 strokeWidth={C.stem}
               />
             )}
@@ -147,8 +142,8 @@ function DifferentialChart({ data }: { data: RoundTrendPoint[] }) {
               cx={x(i)}
               cy={cy}
               r={counts ? C.dotCounts : C.dot}
-              fill={counts ? tokens.color.primary : tokens.color.card}
-              stroke={counts ? tokens.color.card : tokens.color.chart.reference}
+              fill={counts ? differentialFill("counting") : tokens.color.card}
+              stroke={counts ? tokens.color.card : ring}
               strokeWidth={C.stem}
             />
           </g>

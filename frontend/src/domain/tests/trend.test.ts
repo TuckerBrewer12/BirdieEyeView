@@ -11,6 +11,7 @@ describe("trendPointsFrom", () => {
       toPar: 13,
       handicapIndex: 14,
       courseName: "Scanned Scorecard",
+      differential: 18.2,
       differentialStatus: "out",
     });
     expect(second.differentialStatus).toBe("counting");
