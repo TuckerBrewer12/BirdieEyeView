@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from database.db_manager import DatabaseManager
 from api.dependencies import get_current_user, get_db
 from api.input_validation import ensure_uuid_str
+from api.player_handicap import player_handicap_index
 from models import User
 from api.round_responses import round_summary
 from api.course_analytics_responses import course_analytics
@@ -154,7 +155,12 @@ async def get_analytics(
     )
     hi_rounds = list(reversed(hi_rounds_desc))
 
-    return analytics_response(rounds, hi_rounds, home_course_id=user.home_course_id)
+    return analytics_response(
+        rounds,
+        hi_rounds,
+        home_course_id=user.home_course_id,
+        player_index=await player_handicap_index(db, user),
+    )
 
 
 @router.get("/{user_id}/played-courses", response_model=List[PlayedCourseResponse])

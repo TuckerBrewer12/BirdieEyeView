@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from fastapi.encoders import jsonable_encoder  # noqa: E402
 
 from api.analytics_responses import analytics_response  # noqa: E402
+from api.player_handicap import player_handicap_index  # noqa: E402
 from api.round_responses import round_detail  # noqa: E402
 from api.routers import stats, users  # noqa: E402
 from models import Course, Hole, HoleScore, Round, Tee, User  # noqa: E402
@@ -202,7 +203,7 @@ async def _responses() -> tuple[dict, dict]:
         "playedCourses": played_courses,
         "goalReport": goal_report,
         # The tour's pages never ask for the round list; Analytics opens just the best round.
-        "detailRounds": [round_detail(best)],
+        "detailRounds": [round_detail(best, await player_handicap_index(db, USER))],
     })
     return seed, jsonable_encoder(_achievements_a_year_on(rounds))
 

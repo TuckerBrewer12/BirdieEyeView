@@ -4,14 +4,15 @@ import {
   halfMoonBayCourse,
   halfMoonBayRound,
   pebbleBeachCourse,
+  ratedHalfMoonBayCourse,
+  ratedHalfMoonBayRound,
   roundComparison,
   scannedRound,
 } from "../../../../testing/fixtures/roundDetails";
 
 test("populated round", async ({ roundDetail }) => {
-  await roundDetail.open(halfMoonBayRound, {
-    fullCourses: [halfMoonBayCourse],
-    handicapIndex: 10.4,
+  await roundDetail.open(ratedHalfMoonBayRound, {
+    fullCourses: [ratedHalfMoonBayCourse],
   });
   await roundDetail.seesCourse("Half Moon Bay");
   await roundDetail.capture("round-detail-populated.png");
@@ -19,9 +20,8 @@ test("populated round", async ({ roundDetail }) => {
 
 test("populated round in dark mode", async ({ roundDetail }) => {
   await roundDetail.dark();
-  await roundDetail.open(halfMoonBayRound, {
-    fullCourses: [halfMoonBayCourse],
-    handicapIndex: 10.4,
+  await roundDetail.open(ratedHalfMoonBayRound, {
+    fullCourses: [ratedHalfMoonBayCourse],
   });
   await roundDetail.seesCourse("Half Moon Bay");
   await roundDetail.capture("round-detail-populated-dark.png");

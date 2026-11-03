@@ -6,6 +6,7 @@ import pytest
 from fastapi import HTTPException
 from pydantic import ValidationError
 
+from analytics import handicap as hcap
 from api.main import app
 from api.round_responses import round_summary
 from api.routers import ai_insights, courses, rounds, stats, users
@@ -224,6 +225,7 @@ async def test_round_listing_get_update_and_delete():
     db.rounds.update_hole_scores = AsyncMock(return_value=stored_round)
     db.rounds.update_round = AsyncMock(return_value=stored_round)
     db.rounds.delete_round = AsyncMock(return_value=True)
+    db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
 
     listed = await rounds.get_rounds_for_user(user_id, 10, 0, db, user)
     assert listed[0].to_par == 8
@@ -368,7 +370,7 @@ async def test_user_get_update_and_handicap(monkeypatch):
     db.users.update_user = AsyncMock(return_value=user)
     db.courses.get_course = AsyncMock(return_value=_make_course(course_id))
     db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
-    monkeypatch.setattr(users.hcap, "handicap_index", lambda *args, **kwargs: 12.0)
+    monkeypatch.setattr(hcap, "handicap_index", lambda *args, **kwargs: 12.0)
 
     profile = users.user_response(user)
     assert await users.get_user_by_email("GOLFER@example.com", db, user) == profile
@@ -474,7 +476,7 @@ async def test_dashboard_and_empty_analytics(monkeypatch):
     db.users.get_user = AsyncMock(return_value=user)
     db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[_make_round_summary(round_id)])
     db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])
-    monkeypatch.setattr(stats.hcap, "handicap_index", lambda rounds: 10.0)
+    monkeypatch.setattr(stats.hcap, "handicap_index", lambda rounds, **_: 10.0)
 
     dashboard = await stats.get_dashboard(user_id, db, user)
     assert dashboard.total_rounds == 1
@@ -486,7 +488,8 @@ async def test_dashboard_and_empty_analytics(monkeypatch):
     assert dashboard.score_trend == []
     assert dashboard.handicap_trend == []
 
-    db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], []])
+    # The page's rounds, the handicap window's, and the golfer's last 20 for their own index.
+    db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])
     analytics = await stats.get_analytics(user_id, 50, None, None, db, user)
     assert analytics.kpis.total_rounds == 0
     assert analytics.kpis.scoring_average is None

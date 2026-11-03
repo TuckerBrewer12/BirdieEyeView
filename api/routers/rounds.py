@@ -10,7 +10,8 @@ from database.db_manager import DatabaseManager
 from database.exceptions import NotFoundError
 from api.dependencies import get_current_user, get_db
 from api.input_validation import sanitize_user_text
-from api.round_responses import round_detail, round_summary
+from api.player_handicap import player_handicap_index
+from api.round_responses import round_detail, round_list, round_summary
 from api.schemas import RoundResponse, RoundSummaryResponse
 from models import HoleScore, User
 
@@ -101,7 +102,7 @@ async def get_rounds_for_user(
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, "Forbidden")
     rounds_ = await db.rounds.get_round_summaries_for_user(str(user_id), limit=limit, offset=offset)
-    return [round_summary(r) for r in rounds_]
+    return round_list(rounds_)
 
 
 async def _check_round_ownership(round_id: UUID, current_user: User, db: DatabaseManager):
@@ -131,7 +132,7 @@ async def get_round(
     round_ = await db.rounds.get_round(str(round_id))
     if not round_:
         raise HTTPException(404, "Round not found")
-    return round_detail(round_)
+    return round_detail(round_, await player_handicap_index(db, current_user))
 
 
 @router.put("/{round_id}", response_model=RoundResponse)
@@ -189,7 +190,7 @@ async def update_round(
                 **meta_updates,
             )
 
-        return round_detail(updated)
+        return round_detail(updated, await player_handicap_index(db, current_user))
 
     except NotFoundError:
         raise HTTPException(404, "Round not found")

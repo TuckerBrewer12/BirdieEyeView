@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import math
 from datetime import date, datetime
 from typing import Any, Dict, Iterable, List, Optional
 
 from models.round import Round
+from models.user import User
 
 # WHS reduction table: number of differentials available → (count_to_use, adjustment)
 # Requires at least 3 rounds with valid course rating + slope to produce a handicap.
@@ -44,6 +46,42 @@ def score_differential(score: int, course_rating: float, slope_rating: float) ->
     return (score - course_rating) * 113.0 / slope_rating
 
 
+def course_handicap(handicap_index: float, slope_rating: float, course_rating: float, par: int) -> int:
+    """WHS course handicap = Index × Slope / 113 + (Course Rating − Par), to the nearest stroke.
+    A half goes up, so a 12.5 plays off 13 and a plus 0.5 off scratch."""
+    return math.floor(handicap_index * slope_rating / 113 + (course_rating - par) + 0.5)
+
+
+def tee_course_handicap(
+    handicap_index: Optional[float],
+    slope_rating: Optional[float],
+    course_rating: Optional[float],
+    par: Optional[int],
+) -> Optional[int]:
+    """The strokes a golfer gets off a tee, once the index, the tee's ratings and the par are known."""
+    if handicap_index is None or slope_rating is None or course_rating is None or par is None:
+        return None
+    return course_handicap(handicap_index, slope_rating, course_rating, par)
+
+
+def round_course_handicap(round_obj: Round, handicap_index: Optional[float]) -> Optional[int]:
+    """The golfer's course handicap for a round, off the tee played. Ratings are for 18 holes,
+    so a nine or a round cut short has none, the way it has no differential."""
+    tee = round_obj.get_tee()
+    if tee is None or round_obj.holes_played() < 18:
+        return None
+    return tee_course_handicap(handicap_index, tee.slope_rating, tee.course_rating, round_obj.get_par())
+
+
+def round_net_score(round_obj: Round, handicap_index: Optional[float]) -> Optional[int]:
+    """Gross less the round's course handicap."""
+    gross = round_obj.calculate_total_score()
+    strokes = round_course_handicap(round_obj, handicap_index)
+    if gross is None or strokes is None:
+        return None
+    return gross - strokes
+
+
 def _get_differential_for_round(round_obj: Round) -> Optional[float]:
     """Return the score differential for a round, or None if data is unavailable.
 
@@ -55,7 +93,7 @@ def _get_differential_for_round(round_obj: Round) -> Optional[float]:
     if total is None:
         return None
 
-    holes_played = sum(1 for s in round_obj.hole_scores if s.strokes is not None)
+    holes_played = round_obj.holes_played()
 
     tee = round_obj.get_tee()
     if tee is not None and tee.course_rating is not None and tee.slope_rating is not None:
@@ -181,6 +219,16 @@ def handicap_index(
     # WHS caps index at 54.0
     hi = min(hi, 54.0)
     return round(hi, 1)
+
+
+def player_handicap_index(user: User, rounds: Iterable[Round]) -> Optional[float]:
+    """The golfer's current index over their recent rounds (oldest first), held at the handicap
+    they gave until their rounds say otherwise. Course handicaps and net scores use it."""
+    return handicap_index(
+        rounds,
+        seed_handicap=user.handicap,
+        seed_set_at=user.last_handicap_update,
+    )
 
 
 def handicap_trend(

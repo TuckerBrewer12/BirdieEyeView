@@ -21,7 +21,7 @@ import {
   toParDisplay,
   toParTextClass,
 } from "@/brand";
-import { formatCourseHandicap, netScore } from "@/domain";
+import { formatCourseHandicap, type Round } from "@/domain";
 import { formatCourseName } from "@/domain/course";
 import { pluralNoun, pluralize } from "@/domain/format";
 import { holeList } from "../present";
@@ -78,7 +78,7 @@ export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanRe
 
         <Card size="sm">
           <CardContent className="flex flex-col gap-4">
-            <RoundFigures score={round.score} toPar={round.toPar} courseHandicap={review.courseHandicap} />
+            <RoundFigures round={round} />
             <CourseField review={review} />
             <TeeField review={review} />
             <Field>
@@ -119,17 +119,9 @@ export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanRe
   );
 }
 
-/** The round's score so far, against par, and net once the tee is rated. */
-function RoundFigures({
-  score,
-  toPar,
-  courseHandicap,
-}: {
-  score: number | null;
-  toPar: number | null;
-  courseHandicap: number | null;
-}) {
-  const net = courseHandicap != null && score != null ? netScore(score, courseHandicap) : null;
+/** The round's score so far, against par, and net once the tee is rated and every hole is scored. */
+function RoundFigures({ round }: { round: Pick<Round, "score" | "toPar" | "courseHandicap" | "netScore"> }) {
+  const { score, toPar, courseHandicap, netScore } = round;
   return (
     <div className="grid grid-cols-3 gap-3 border-b border-border pb-4">
       <Stat>
@@ -142,7 +134,7 @@ function RoundFigures({
       </Stat>
       <Stat>
         <StatLabel>{courseHandicap != null ? `Net · hcp ${formatCourseHandicap(courseHandicap)}` : "Net"}</StatLabel>
-        <StatValue>{net ?? "—"}</StatValue>
+        <StatValue>{netScore ?? "—"}</StatValue>
       </Stat>
     </div>
   );

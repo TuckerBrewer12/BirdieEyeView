@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import math
+from collections import Counter
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional, get_args
 
+from analytics.handicap import round_course_handicap, round_net_score
 from models.hole_score import ScoreKind, score_kind
 from models.round import Round
 
@@ -231,6 +233,18 @@ def _round_total_par(round_obj: Round) -> Optional[int]:
     if not pars:
         return None
     return sum(pars)
+
+
+def usual_par(rounds: Iterable[Round]) -> int:
+    """The par the golfer most often plays a full round against; 72 until they have one."""
+    pars = [p for p in (r.played_par() for r in rounds if r.holes_played() >= 18) if p is not None]
+    return Counter(pars).most_common(1)[0][0] if pars else 72
+
+
+def under_par_position(thresholds: List[int], par: int) -> int:
+    """How many score breaks a round under `par` comes after: breaking a score above par is the
+    easier mark, and breaking par itself is the same mark, so it reads first."""
+    return sum(1 for threshold in thresholds if threshold >= par)
 
 
 def _first_round_under_par_event(round_set: List[Round]) -> Optional[Dict[str, Any]]:
@@ -674,6 +688,7 @@ def notable_achievements(
     first_round_under_par = _first_round_under_par_event(rounds_list)
     round_milestones_lifetime = {
         "score_breaks": score_breaks,
+        "under_par_position": under_par_position(break_thresholds, usual_par(rounds_list)),
         "first_round_under_par": first_round_under_par,
         "first_eagle": _first_event_in_rounds(rounds_list, lambda row: row["score_type"] == "eagle"),
         "first_hole_in_one": _first_event_in_rounds(rounds_list, lambda row: row["is_hio"]),
@@ -975,6 +990,18 @@ def score_trend(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     return results
 
 
+def best_round_ranks(rounds: List[Round]) -> Dict[int, int]:
+    """Each round's place among `rounds`, best first, keyed by its position in the list. Rounds
+    compare on to par, so a par 70 and a par 72 read alike, and every full round comes before the
+    nines and rounds cut short, which only compete with each other. A round with no to par has
+    no place. Ties keep the list's order."""
+    ranked = sorted(
+        (i for i, r in enumerate(rounds) if r.total_to_par() is not None),
+        key=lambda i: (rounds[i].holes_played() < 18, rounds[i].total_to_par()),
+    )
+    return {i: place for place, i in enumerate(ranked, start=1)}
+
+
 def score_trend_with_rolling_average(rounds: Iterable[Round], window: int = 5) -> List[Dict[str, Any]]:
     """`score_trend`, with each round's average over it and the `window - 1` rounds before it."""
     rows = score_trend(rounds)
@@ -990,45 +1017,24 @@ def net_score_trend(
     """Return net score trend data by round.
 
     Net score = gross score - course handicap, where course handicap uses the
-    player's current HI applied to each round's tee data. Rounds without tee
-    rating data still appear but with net_score = None.
+    player's current HI applied to each round's tee data, as the round's own
+    page shows it (`handicap.round_net_score`). Rounds without tee rating data,
+    and nines, still appear but with net_score = None.
     """
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
-        gross = round_obj.calculate_total_score()
-        course_par = round_obj.get_par()
-        tee = round_obj.get_tee()
-
-        course_handicap: Optional[int] = None
-        net_score: Optional[int] = None
-
-        if (
-            gross is not None
-            and current_handicap_index is not None
-            and tee is not None
-            and tee.slope_rating is not None
-            and tee.course_rating is not None
-            and course_par is not None
-        ):
-            course_handicap = round(
-                (current_handicap_index * tee.slope_rating) / 113
-                + (tee.course_rating - course_par)
-            )
-            net_score = gross - course_handicap
-
         course_name = (
             round_obj.course.name if round_obj.course else round_obj.course_name_played
         )
-        to_par = (gross - course_par) if gross is not None and course_par is not None else None
         results.append(
             {
                 "round_index": index,
                 "round_id": round_obj.id,
-                "gross_score": gross,
-                "course_handicap": course_handicap,
-                "net_score": net_score,
+                "gross_score": round_obj.calculate_total_score(),
+                "course_handicap": round_course_handicap(round_obj, current_handicap_index),
+                "net_score": round_net_score(round_obj, current_handicap_index),
                 "course_name": course_name,
-                "to_par": to_par,
+                "to_par": round_obj.total_to_par(),
             }
         )
     return results

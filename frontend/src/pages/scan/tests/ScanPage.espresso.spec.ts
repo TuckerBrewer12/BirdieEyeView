@@ -101,7 +101,7 @@ test("the card's course name can be kept without linking a course", async ({ sca
 });
 
 test("a tee picked from the card's tees is the one saved", async ({ scan }) => {
-  const blueTee = { color: "Blue", slope_rating: 128, course_rating: 71.2, hole_yardages: {} };
+  const blueTee = { color: "Blue", slope_rating: 128, course_rating: 71.2, hole_yardages: {}, course_handicap: null };
   const teeCard = {
     ...scannedCard,
     round: {

@@ -1,6 +1,6 @@
 import { courseAnalyticsFrom, type CourseAnalytics } from "../../domain/courseAnalytics";
 import { courseSummaryFrom, type CourseSummary } from "../../domain/course";
-import type { CourseAnalyticsDto, CourseDto, CourseSummaryDto, HandicapIndexDto } from "../../types/api";
+import type { CourseAnalyticsDto, CourseDto, CourseSummaryDto } from "../../types/api";
 import type { CoursesRepository } from "../../pages/courses/coursesRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
 import { courseResponse } from "./courseResponses";
@@ -11,7 +11,6 @@ export class FakeCoursesRepository implements CoursesRepository {
   courses: CourseSummaryDto[];
   fullCourses: CourseDto[] = [];
   analytics: CourseAnalyticsDto | null = null;
-  handicapIndex: number | null = null;
   error: Error | null = null;
   courseError: Error | null = null;
 
@@ -57,9 +56,5 @@ export class FakeCoursesRepository implements CoursesRepository {
 
   async getCourseAnalytics(_userId: string, courseId: string): Promise<CourseAnalytics> {
     return courseAnalyticsFrom(this.analytics ?? emptyCourseAnalytics(courseId));
-  }
-
-  async getUserHandicap(): Promise<HandicapIndexDto> {
-    return { handicap_index: this.handicapIndex };
   }
 }

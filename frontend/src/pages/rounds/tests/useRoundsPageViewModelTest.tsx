@@ -31,14 +31,14 @@ describe("useRoundsPageViewModel", () => {
     expect(courseChips[0]).toBe("Half Moon Bay");
   });
 
-  it("Best mode sorts by score ascending and locks sort", async () => {
+  it("Best mode follows the server's to-par order and locks sort", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     act(() => result.current.setFilterMode("best"));
     expect(result.current.filteredRounds.map((r) => r.score)).toEqual([69, 72, 78, 85]);
     expect(result.current.sortLocked).toBe(true);
-    expect(result.current.effectiveSortKey).toBe("total_score");
-    expect(result.current.sortLabel).toBe("Score");
+    expect(result.current.effectiveSortKey).toBe("to_par");
+    expect(result.current.sortLabel).toBe("To Par");
     expect(result.current.sortAsc).toBe(true);
   });
 

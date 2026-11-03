@@ -43,7 +43,9 @@ function holeHandicap(round: StoredRound, hole: StoredHole): number | null {
 }
 
 /** The course's tee for the round's tee box, else the user's own tee. */
-function teePlayed(round: StoredRound): { total_yardage?: number | null; hole_yardages: Record<string, number> } | null {
+function teePlayed(
+  round: StoredRound,
+): { total_yardage?: number | null; hole_yardages: Record<string, number>; course_handicap?: number | null } | null {
   const color = round.tee_box?.toLowerCase();
   const tee = color ? round.course?.tees.find((t) => t.color?.toLowerCase() === color) : undefined;
   return tee ?? round.user_tee ?? null;
@@ -72,6 +74,24 @@ function roundPar(round: StoredRound): number | null {
   if (round.course) return coursePar(round.course);
   const pars = round.hole_scores.map((h) => h.par_played).filter((p): p is number => p != null);
   return pars.length > 0 ? sum(pars) : null;
+}
+
+function holesPlayed(round: StoredRound): number {
+  return round.hole_scores.filter((h) => h.strokes != null).length;
+}
+
+/** Strokes against the par of the holes played; a full round whose holes have no par reads against the course's. */
+function toPar(round: StoredRound, total: number | null): number | null {
+  if (total == null) return null;
+  const pars = round.hole_scores.filter((h) => h.strokes != null).map((h) => holePar(round, h));
+  const played = pars.length > 0 && pars.every((p) => p != null) ? sum(pars as number[]) : null;
+  const par = played ?? (holesPlayed(round) >= 18 ? roundPar(round) : null);
+  return par != null ? total - par : null;
+}
+
+/** The tee's course handicap, for a full round: tee ratings are for 18 holes. */
+function courseHandicap(round: StoredRound): number | null {
+  return holesPlayed(round) >= 18 ? (teePlayed(round)?.course_handicap ?? null) : null;
 }
 
 function nineTotal(holes: StoredHole[], first: number, last: number): number | null {
@@ -126,6 +146,7 @@ function holeResponses(round: StoredRound): HoleScoreDto[] {
       yardage: holeYardage(round, hole.hole_number),
       to_par: toPar,
       kind: kindFor(toPar),
+      three_putt: hole.putts != null && hole.putts >= 3,
     };
   });
 }
@@ -133,13 +154,12 @@ function holeResponses(round: StoredRound): HoleScoreDto[] {
 function figures(round: StoredRound, holes: HoleScoreDto[]) {
   const scored = round.hole_scores.filter((h) => h.strokes != null);
   const total = scored.length > 0 ? sum(scored.map((h) => h.strokes!)) : null;
-  const par = roundPar(round);
   const scoreCounts: ScoreCountsDto = { eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0 };
   for (const hole of holes) if (hole.kind) scoreCounts[hole.kind] += 1;
   return {
     total_score: total,
-    par,
-    to_par: total != null && par != null ? total - par : null,
+    par: roundPar(round),
+    to_par: toPar(round, total),
     front_nine: nineTotal(round.hole_scores, 1, 9),
     back_nine: nineTotal(round.hole_scores, 10, 18),
     total_putts:
@@ -149,20 +169,43 @@ function figures(round: StoredRound, holes: HoleScoreDto[]) {
     nines: { front: nineFigures(round, 1, 9), back: nineFigures(round, 10, 18) },
     yards: totalYardage(round),
     score_counts: scoreCounts,
+    holes_played: holesPlayed(round),
   };
 }
 
 export function roundResponse(round: StoredRound): RoundDto {
   const holes = holeResponses(round);
+  const figured = figures(round, holes);
+  const handicap = courseHandicap(round);
   return {
     ...round,
-    ...figures(round, holes),
+    ...figured,
     course: round.course ? courseResponse(round.course) : null,
     hole_scores: holes,
+    course_handicap: handicap,
+    net_score: handicap != null && figured.total_score != null ? figured.total_score - handicap : null,
   };
 }
 
-export function summaryResponse(round: StoredRound): RoundSummaryDto {
+/**
+ * Each round's place in the list's Best order, as `analytics.stats.best_round_ranks` gives it:
+ * full rounds by to par, then nines and rounds cut short. Ties keep the list's order.
+ */
+export function bestRanks(rounds: StoredRound[]): (number | null)[] {
+  const keyed = rounds.map((round, i) => {
+    const scored = round.hole_scores.filter((h) => h.strokes != null);
+    const total = scored.length > 0 ? sum(scored.map((h) => h.strokes!)) : null;
+    return { i, short: holesPlayed(round) < 18, toPar: toPar(round, total) };
+  });
+  const ranked = keyed
+    .filter((k) => k.toPar != null)
+    .sort((a, b) => Number(a.short) - Number(b.short) || a.toPar! - b.toPar! || a.i - b.i);
+  const ranks: (number | null)[] = rounds.map(() => null);
+  ranked.forEach((k, place) => (ranks[k.i] = place + 1));
+  return ranks;
+}
+
+export function summaryResponse(round: StoredRound, bestRank: number | null = null): RoundSummaryDto {
   const holes = holeResponses(round);
   const { total_score, to_par, front_nine, back_nine, total_putts, score_counts } = figures(round, holes);
   return {
@@ -178,6 +221,7 @@ export function summaryResponse(round: StoredRound): RoundSummaryDto {
     total_putts,
     score_counts,
     hole_scores: holes.map(({ hole_number, strokes, kind }) => ({ hole_number, strokes, kind })),
+    best_rank: bestRank,
   };
 }
 

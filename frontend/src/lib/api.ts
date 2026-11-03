@@ -10,7 +10,6 @@ import type {
   FriendshipDto,
   FriendshipStatusRequestDto,
   GoalReportDto,
-  HandicapIndexDto,
   PlayedCourseDto,
   RoundComparisonDto,
   RoundDto,
@@ -138,9 +137,6 @@ export const api = {
 
   cloneCourse: (courseId: string, userId: string) =>
     postJSON<CourseSummaryDto>(`/courses/${courseId}/clone?user_id=${encodeURIComponent(userId)}`, {}),
-
-  getUserHandicap: (userId: string) =>
-    fetchJSON<HandicapIndexDto>(`/users/${userId}/handicap`),
 
   getAnalytics: (userId: string, filters: AnalyticsFilters | number = 50) => {
     const f: AnalyticsFilters = typeof filters === "number"

@@ -401,10 +401,6 @@ export class FakeBackend {
       }
     }
 
-    if (verb === "GET" && /\/api\/users\/[^/]+\/handicap$/.test(path)) {
-      return { status: 200, body: this.store.getUserHandicap() };
-    }
-
     if (verb === "GET" && /\/api\/stats\/course-analytics\//.test(path)) {
       const courseId = path.split("/").pop() ?? "";
       return { status: 200, body: this.store.getCourseAnalytics(courseId) };

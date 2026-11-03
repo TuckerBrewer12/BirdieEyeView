@@ -76,6 +76,20 @@ export const halfMoonBayRound: RoundDto = roundResponse({ ...hmbRound, course: h
 /** Round 4: a scanned card with no linked course. */
 export const scannedRound: RoundDto = roundResponse(scanned);
 
+/** A course as the server sends it to a golfer with an index: each tee carries their course handicap off it. */
+function withCourseHandicaps(course: CourseDto, handicaps: number[]): CourseDto {
+  return { ...course, tees: course.tees.map((tee, i) => ({ ...tee, course_handicap: handicaps[i] ?? null })) };
+}
+
+/** Half Moon Bay for a golfer whose index is 10.4: Blue 10.4 × 130 / 113 + 0.4 = 12, White 9. */
+export const ratedHalfMoonBayCourse: CourseDto = withCourseHandicaps(halfMoonBayCourse, [12, 9]);
+
+/** Pebble Beach for the same golfer: 10.4 × 145 / 113 + 3 = 16. */
+export const ratedPebbleBeachCourse: CourseDto = withCourseHandicaps(pebbleBeachCourse, [16]);
+
+/** Round 1 for the same golfer: off the Blue tee's 12, net 66. */
+export const ratedHalfMoonBayRound: RoundDto = roundResponse({ ...hmbRound, course: ratedHalfMoonBayCourse });
+
 /** Comparison cohorts for a round: this round first, then the baselines. */
 export const roundComparison: RoundComparisonDto = {
   score: [

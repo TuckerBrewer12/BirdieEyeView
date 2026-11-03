@@ -73,6 +73,20 @@ export class RoundDetailRobot {
     return this;
   }
 
+  /** The net score and course handicap in the header, as the server sent them. */
+  async seesNet(net: number, courseHandicap: number): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(`Net · hcp ${courseHandicap}`)).toBeVisible();
+    await expect(header.getByText(String(net), { exact: true })).toBeVisible();
+    return this;
+  }
+
+  async seesNoNet(): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(/^Net · hcp/)).toHaveCount(0);
+    return this;
+  }
+
   async tapTee(color: string): Promise<this> {
     await this.page.getByRole("group", { name: "Tee" }).getByRole("button", { name: color, exact: true }).click();
     return this;

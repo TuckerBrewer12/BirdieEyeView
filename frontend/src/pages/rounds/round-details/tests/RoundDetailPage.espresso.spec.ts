@@ -4,6 +4,8 @@ import {
   halfMoonBayCourse,
   halfMoonBayRound,
   pebbleBeachCourse,
+  ratedHalfMoonBayCourse,
+  ratedHalfMoonBayRound,
   scannedRound,
 } from "../../../../testing/fixtures/roundDetails";
 import { storedRounds } from "../../../../testing/fixtures/rounds";
@@ -11,6 +13,20 @@ import { storedRounds } from "../../../../testing/fixtures/rounds";
 test("shows the course name and score", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.seesCourse("Half Moon Bay");
+});
+
+test("shows the net score the server works out off the golfer's index", async ({ roundDetail }) => {
+  await roundDetail.open(ratedHalfMoonBayRound, { fullCourses: [ratedHalfMoonBayCourse] });
+  await roundDetail.seesScore(78);
+  await roundDetail.seesNet(66, 12);
+});
+
+test("a hole cleared in edit mode takes the net score away until it is saved", async ({ roundDetail }) => {
+  await roundDetail.open(ratedHalfMoonBayRound, { fullCourses: [ratedHalfMoonBayCourse] });
+  await roundDetail.seesNet(66, 12);
+  await roundDetail.tapEdit();
+  await roundDetail.clearStrokes(1);
+  await roundDetail.seesNoNet();
 });
 
 test("edit then cancel returns to the view actions", async ({ roundDetail }) => {

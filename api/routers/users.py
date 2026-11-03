@@ -9,9 +9,9 @@ from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, NotFoundError
 from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
+from api.player_handicap import player_handicap_index
 from api.schemas import HandicapIndexResponse, UserResponse
 from models import User, UserTee
-from analytics import handicap as hcap
 
 router = APIRouter()
 
@@ -226,14 +226,7 @@ async def get_user_handicap(
     user = await db.users.get_user(str(user_id))
     if not user:
         raise HTTPException(404, "User not found")
-    rounds = await db.rounds.get_rounds_for_user(str(user_id))
-    rounds_chrono = list(reversed(rounds))
-    hi = hcap.handicap_index(
-        rounds_chrono,
-        seed_handicap=user.handicap,
-        seed_set_at=user.last_handicap_update,
-    )
-    return HandicapIndexResponse(handicap_index=hi)
+    return HandicapIndexResponse(handicap_index=await player_handicap_index(db, user))
 
 
 # ================================================================

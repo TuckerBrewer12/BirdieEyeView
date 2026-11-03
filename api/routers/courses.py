@@ -8,6 +8,7 @@ from typing import List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from api.dependencies import get_db, get_optional_current_user, get_current_user
+from api.player_handicap import player_handicap_index
 from api.error_responses import COURSE_SAVE_FAILED
 from api.input_validation import normalize_course_display_name, sanitize_search_query, sanitize_user_text
 from api.course_responses import course_detail
@@ -291,7 +292,7 @@ async def get_course(
         raise HTTPException(404, "Course not found")
     if course.user_id and (not current_user or str(current_user.id) != str(course.user_id)):
         raise HTTPException(403, "Forbidden")
-    return course_detail(course)
+    return course_detail(course, await player_handicap_index(db, current_user))
 
 
 @router.post("", status_code=201)
