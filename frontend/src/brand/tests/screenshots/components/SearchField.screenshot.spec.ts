@@ -1,13 +1,21 @@
 import { test } from "@playwright/test";
-import { capturePreview, enableDark } from "../../previewScreenshot";
+import { BrandKitRobot } from "../../BrandKit.robot";
+import { enableDark } from "../../previewScreenshot";
+
+// The board's width, so the two fields sit side by side.
+test.use({ viewport: { width: 760, height: 120 } });
 
 test.describe("SearchField", () => {
   test("light", async ({ page }) => {
-    await capturePreview(page, "SearchField", "search-field.png");
+    const kit = new BrandKitRobot(page);
+    await kit.openFrame("SearchField");
+    await kit.captureFrame("search-field.png");
   });
 
   test("dark", async ({ page }) => {
     await enableDark(page);
-    await capturePreview(page, "SearchField", "search-field-dark.png");
+    const kit = new BrandKitRobot(page);
+    await kit.openFrame("SearchField");
+    await kit.captureFrame("search-field-dark.png");
   });
 });

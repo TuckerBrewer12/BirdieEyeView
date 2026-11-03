@@ -14,6 +14,7 @@ const sortOptions = [
   { value: "oldest", label: "Oldest first" },
 ] as const;
 
+/** Laid out as the board is, the bar on one row: capture it in a 760px-wide window. */
 export default function FilterChipPreview() {
   const [course, setCourse] = useState<string | null>(null);
   const [sort, setSort] = useState<(typeof sortOptions)[number]["value"]>("newest");
@@ -21,7 +22,7 @@ export default function FilterChipPreview() {
   const shown = courses.find((c) => c.name === course)?.count ?? 4;
 
   return (
-    <>
+    <div data-testid="brand-frame" className="fixed inset-0 flex flex-col gap-5 overflow-auto bg-background p-6">
       <div className="flex flex-col gap-1.5">
         <p className="text-label font-semibold text-muted-foreground">Chip · off, selected, no count</p>
         <div className="flex flex-wrap items-center gap-1.5">
@@ -44,7 +45,7 @@ export default function FilterChipPreview() {
               <ToggleGroupItem value="best">Best</ToggleGroupItem>
             </ToggleGroup>
             <div className="h-6 w-px bg-border" />
-            <div className="order-last flex basis-full flex-wrap gap-1.5">
+            <div className="flex flex-1 flex-wrap gap-1.5">
               {courses.map((c) => (
                 <FilterChip
                   key={c.name}
@@ -57,7 +58,6 @@ export default function FilterChipPreview() {
               ))}
             </div>
             <SortControl
-              className="ml-auto"
               caption="Sort"
               label={sortLabel}
               value={sort}
@@ -74,6 +74,6 @@ export default function FilterChipPreview() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
