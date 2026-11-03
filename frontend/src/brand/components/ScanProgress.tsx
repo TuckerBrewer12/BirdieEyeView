@@ -1,94 +1,84 @@
-import { motion } from "framer-motion";
+import { Check } from "lucide-react";
 import { cn } from "@/brand/cn";
+import { tokens } from "@/brand/theme";
 
 interface ScanProgressProps {
+  /** What is happening, as the card's title. */
   label: string;
-  detail: string;
-  /** Which phase is running, and how many there are, for the step rail. */
+  /** The steps of reading a card, in order. */
+  steps: readonly string[];
+  /** Index of the step running: earlier ones are done, later ones still to come. */
   phase: number;
-  phaseCount: number;
   className?: string;
 }
 
-const CORNERS = ["tl", "tr", "bl", "br"] as const;
-const ROWS = ["bg-muted-foreground/40", "bg-primary/25", "bg-muted-foreground/40", "bg-muted-foreground/25"];
+type StepState = "done" | "now" | "next";
+
+const STEP_TEXT: Record<StepState, string> = {
+  done: "font-medium text-foreground-secondary",
+  now: "font-semibold text-foreground",
+  next: "font-medium text-muted-foreground",
+};
+
+const STEP_MARK: Record<StepState, string> = {
+  done: "border-primary bg-primary text-primary-foreground",
+  now: "border-primary bg-card",
+  next: "border-border-strong bg-card",
+};
 
 /**
- * The card-being-read animation shown while a scan is in flight.
+ * A scan in flight: the card being read, and which step of reading it is running.
  *
- * Pure: which phase is running is the caller's business, so the same animation
+ * Pure: which step is running is the caller's business, so the same card
  * serves the landing page's demo and the signed-in scan flow without either
  * owning a timer the other cannot see.
  */
-function ScanProgress({ label, detail, phase, phaseCount, className }: ScanProgressProps) {
+function ScanProgress({ label, steps, phase, className }: ScanProgressProps) {
   return (
     <div
       data-slot="scan-progress"
       role="status"
       aria-live="polite"
-      className={cn("flex flex-col items-center justify-center py-10", className)}
+      className={cn("flex flex-col gap-3.5 rounded-xl border border-border bg-card p-5", className)}
     >
-      <div className="relative mb-10">
-        <motion.div
-          className="relative h-36 w-56 overflow-hidden rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-card to-accent"
-          animate={{ opacity: [0.92, 1, 0.92] }}
-          transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <div className="pointer-events-none absolute inset-0 flex select-none flex-col gap-2 p-3 pt-4">
-            {ROWS.map((tone, row) => (
-              <div key={row} className="flex items-center gap-1">
-                <div className={cn("h-1.5 w-8 rounded-full", tone)} />
-                {Array.from({ length: 9 }).map((_, cell) => (
-                  <div key={cell} className={cn("h-1.5 w-3.5 shrink-0 rounded-full", tone)} />
-                ))}
-              </div>
-            ))}
-          </div>
-
-          <motion.div
-            className="pointer-events-none absolute right-0 left-0 h-px bg-primary shadow-card"
-            animate={{ top: ["8%", "92%"] }}
-            transition={{ duration: 1.6, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+      <div className="flex items-center gap-3">
+        <svg aria-hidden viewBox="0 0 36 36" className="size-9 shrink-0 animate-spin motion-reduce:animate-none">
+          <circle cx="18" cy="18" r="14" fill="none" stroke={tokens.color.muted} strokeWidth="4" />
+          <path
+            d="M18 4 A14 14 0 0 1 32 18"
+            fill="none"
+            stroke={tokens.color.primary}
+            strokeWidth="4"
+            strokeLinecap="round"
           />
-          <motion.div
-            className="pointer-events-none absolute right-0 left-0 h-10 bg-gradient-to-b from-primary/10 to-transparent"
-            animate={{ top: ["-10%", "70%"] }}
-            transition={{ duration: 1.6, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
-          />
-        </motion.div>
-
-        {CORNERS.map((corner, i) => (
-          <motion.div
-            key={corner}
-            className={cn(
-              "absolute size-4 border-primary",
-              corner.startsWith("t") ? "-top-2 border-t-2" : "-bottom-2 border-b-2",
-              corner.endsWith("l") ? "-left-2 border-l-2" : "-right-2 border-r-2",
-            )}
-            animate={{ opacity: [0.35, 1, 0.35] }}
-            transition={{ duration: 1.8, repeat: Infinity, delay: i * 0.45, ease: "easeInOut" }}
-          />
-        ))}
+        </svg>
+        <p className="text-lg font-bold text-foreground">{label}</p>
       </div>
 
-      <div className="px-4 text-center">
-        <p className="mb-1 text-base font-semibold text-foreground">{label}</p>
-        <p className="text-sm text-muted-foreground">{detail}</p>
-      </div>
-
-      <div className="mt-6 flex items-center gap-2">
-        {Array.from({ length: phaseCount }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="h-1.5 rounded-full bg-primary"
-            animate={{
-              width: i < phase ? 18 : i === phase ? 32 : 6,
-              opacity: i <= phase ? 1 : 0.18,
-            }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          />
-        ))}
-      </div>
+      <ol className="flex flex-col gap-3.5">
+        {steps.map((step, i) => {
+          const state: StepState = i < phase ? "done" : i === phase ? "now" : "next";
+          return (
+            <li
+              key={step}
+              data-state={state}
+              aria-current={state === "now" ? "step" : undefined}
+              className={cn("flex items-center gap-2.5 text-sm", STEP_TEXT[state])}
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "flex size-4.5 shrink-0 items-center justify-center rounded-full border-2",
+                  STEP_MARK[state],
+                )}
+              >
+                {state === "done" && <Check className="size-3 stroke-3" />}
+              </span>
+              {step}
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }

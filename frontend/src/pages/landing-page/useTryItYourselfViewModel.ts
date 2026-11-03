@@ -5,12 +5,7 @@ import { useCardText, type PickedPhoto } from "@/data/useCardText";
 import { Round } from "@/domain";
 import { useExtractScorecard } from "@/data/useExtractScorecard";
 
-const PHASES = [
-  { label: "Reading course details…", detail: "Identifying name, location & tee boxes" },
-  { label: "Extracting hole scores…", detail: "Parsing your scorecard row by row" },
-  { label: "Verifying yardages & par…", detail: "Cross-checking hole data" },
-  { label: "Calculating confidence…", detail: "Flagging fields that may need review" },
-] as const;
+const PHASE_STEPS = ["Course and tees", "Scores and putts", "Yardages and par", "Checking totals"] as const;
 
 const PHASE_HOLD_MS = 3500;
 
@@ -25,9 +20,8 @@ export interface TryItYourselfViewModel {
   reset: () => void;
 
   phase: number;
-  phaseCount: number;
-  phaseLabel: string;
-  phaseDetail: string;
+  /** The steps of reading the card, of which `phase` is the one running. */
+  phaseSteps: readonly string[];
 
   /** The scanned card as a round, its figures read the way an unsaved edit's are. */
   round: Round | null;
@@ -54,7 +48,7 @@ export function useTryItYourselfViewModel(
   useEffect(() => {
     if (step !== "processing") return;
     const timer = setInterval(
-      () => setPhase((current) => Math.min(current + 1, PHASES.length - 1)),
+      () => setPhase((current) => Math.min(current + 1, PHASE_STEPS.length - 1)),
       PHASE_HOLD_MS,
     );
     return () => {
@@ -101,9 +95,7 @@ export function useTryItYourselfViewModel(
     reset,
 
     phase,
-    phaseCount: PHASES.length,
-    phaseLabel: PHASES[phase].label,
-    phaseDetail: PHASES[phase].detail,
+    phaseSteps: PHASE_STEPS,
 
     round,
     hasScores: (round?.holes.length ?? 0) > 0,
