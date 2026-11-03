@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Dialog as ActionSheetPrimitive } from "@base-ui/react/dialog";
 import { cn } from "@/brand/cn";
+import { SheetPortal } from "./Sheet";
 
 /**
  * A mobile list of actions where the player does one. It rises from the
@@ -8,8 +9,6 @@ import { cn } from "@/brand/cn";
  * apart from them. Choosing an action closes the sheet.
  *
  * `Sheet side="bottom"` is the sibling for picking one option from a list.
- * `contained` hosts the sheet inside its parent (the brand preview) rather
- * than portaling over the page.
  */
 
 function ActionSheet(props: ActionSheetPrimitive.Root.Props) {
@@ -29,27 +28,16 @@ function ActionSheetContent({
 }: Omit<ActionSheetPrimitive.Popup.Props, "title"> & {
   /** What the actions are for. Shown above them and read as the sheet's name. */
   title: string;
+  /** Hosts the sheet inside its nearest positioned parent instead of over the page. */
   contained?: boolean;
 }) {
-  const containerRef = React.useRef<HTMLDivElement>(null);
-
-  const sheet = (
-    <ActionSheetPrimitive.Portal
-      data-slot="action-sheet-portal"
-      container={contained ? containerRef : undefined}
-    >
-      <ActionSheetPrimitive.Backdrop
-        data-slot="action-sheet-overlay"
-        className={cn(
-          "z-50 bg-foreground/40 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0",
-          contained ? "absolute inset-0" : "fixed inset-0",
-        )}
-      />
+  return (
+    <SheetPortal contained={contained}>
       <ActionSheetPrimitive.Popup
         data-slot="action-sheet-content"
         className={cn(
-          "z-50 flex flex-col gap-2 px-2.5 pb-3.5 text-card-foreground outline-none transition-transform duration-200 ease-out data-ending-style:translate-y-full data-starting-style:translate-y-full",
-          contained ? "absolute inset-x-0 bottom-0" : "fixed inset-x-0 bottom-0",
+          "inset-x-0 bottom-0 z-50 flex flex-col gap-2 px-2.5 pb-3.5 text-card-foreground outline-none transition-transform duration-200 ease-out data-ending-style:translate-y-full data-starting-style:translate-y-full",
+          contained ? "absolute" : "fixed",
           className,
         )}
         {...props}
@@ -70,15 +58,7 @@ function ActionSheetContent({
           Cancel
         </ActionSheetPrimitive.Close>
       </ActionSheetPrimitive.Popup>
-    </ActionSheetPrimitive.Portal>
-  );
-
-  if (!contained) return sheet;
-
-  return (
-    <div ref={containerRef} className="absolute inset-0 overflow-hidden">
-      {sheet}
-    </div>
+    </SheetPortal>
   );
 }
 
@@ -94,7 +74,7 @@ function ActionSheetAction({
       role="menuitem"
       data-slot="action-sheet-action"
       className={cn(
-        "flex h-14 w-full items-center justify-center gap-2.5 border-t border-chart-grid text-lg font-medium text-primary outline-none first-of-type:border-t-0 hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-4.5",
+        "flex h-14 w-full items-center justify-center gap-2.5 border-t border-chart-grid text-lg font-medium text-primary outline-none first-of-type:border-t-0 hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-5",
         className,
       )}
       {...props}

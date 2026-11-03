@@ -15,7 +15,7 @@ export default function SheetPreview() {
       <div className="text-label font-semibold text-muted-foreground">
         Bottom sheet · mobile · pick one
       </div>
-      <div className="relative h-117.5 overflow-hidden rounded-2xl bg-border-strong">
+      <div className="relative h-sheet overflow-hidden rounded-2xl bg-border-strong">
         <Sheet defaultOpen modal={false}>
           <SheetContent side="bottom" contained initialFocus={false} aria-label="Sort by">
             <SheetHeader>

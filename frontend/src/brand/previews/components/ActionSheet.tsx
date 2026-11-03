@@ -11,7 +11,7 @@ export default function ActionSheetPreview() {
       <div className="text-label font-semibold text-muted-foreground">
         Action sheet · mobile · do one
       </div>
-      <div className="relative h-117.5 overflow-hidden rounded-2xl bg-border-strong">
+      <div className="relative h-sheet overflow-hidden rounded-2xl bg-border-strong">
         <ActionSheet defaultOpen modal={false}>
           <ActionSheetContent title="Add scorecard" contained initialFocus={false}>
             <ActionSheetAction icon={<Camera aria-hidden />}>Take photo</ActionSheetAction>
