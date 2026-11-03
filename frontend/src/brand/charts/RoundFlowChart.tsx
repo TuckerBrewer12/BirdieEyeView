@@ -1,7 +1,11 @@
 import { useState, type MouseEvent } from "react";
 import { AnimatePresence, motion, useReducedMotion, useReducedMotionConfig } from "framer-motion";
+import { scaleLinear } from "d3-scale";
+import { curveStepAfter, line } from "d3-shape";
 import { cn } from "@/brand/cn";
-import { scoreKindLabel, scoreWashClass, toParLabel, tokens } from "@/brand/theme";
+import { ToParFigure } from "@/brand/components/ToParFigure";
+import { paddedExtent } from "@/brand/charts/scales";
+import { scoreKindLabel, scoreWashClass, toParFill, toParLabel, tokens } from "@/brand/theme";
 import type { HoleScore, Round } from "@/domain";
 import { pluralize } from "@/domain/format";
 import type { ScoreKind } from "@/domain/score";
@@ -16,45 +20,24 @@ type FlowHole = HoleScore & { strokes: number; toPar: number; kind: ScoreKind };
 /** A plotted hole with the round's score to par after it. */
 type FlowStep = FlowHole & { total: number };
 
-interface Stretch {
-  from: number;
-  to: number;
-  over: number;
-}
+const DASH = `${tokens.space.dot} ${tokens.space.dot}`;
 
-/** Over par reads as danger, under par as birdie, level as plain ink. */
-function toParText(toPar: number): string {
-  return toPar > 0 ? "text-status-danger" : toPar < 0 ? "text-score-birdie" : "text-foreground";
-}
+// TODO(backend): the running total and the worst stretch are round figures the API should send.
 
-function toParFill(toPar: number): string {
-  return toPar > 0
-    ? tokens.color.status.danger.text
-    : toPar < 0
-      ? tokens.color.score.birdie.text
-      : tokens.color.foreground;
-}
-
-/** The holes' to-par added up as they were played. */
+/** Each hole with the round's to-par after it. */
 function withRunningTotal(holes: FlowHole[]): FlowStep[] {
   let total = 0;
-  return holes.map((hole) => {
-    total += hole.toPar;
-    return { ...hole, total };
-  });
+  return holes.map((hole) => ({ ...hole, total: (total += hole.toPar) }));
 }
 
-/** The first run of consecutive holes, `holes` long, that lost the most strokes. Null if none lost enough. */
-function worstStretch(steps: FlowStep[]): Stretch | null {
-  const { holes, minOver } = tokens.chart.flow.stretch;
-  let worst: Stretch | null = null;
-  for (let i = 0; i + holes <= steps.length; i++) {
-    const run = steps.slice(i, i + holes);
-    if (run[holes - 1].hole - run[0].hole !== holes - 1) continue;
-    const over = run.reduce((sum, step) => sum + step.toPar, 0);
-    if (over >= minOver && (worst === null || over > worst.over)) {
-      worst = { from: run[0].hole, to: run[holes - 1].hole, over };
-    }
+/** The four straight holes that lost the most, when they lost two or more. */
+function worstStretch(steps: FlowStep[]) {
+  let worst: { from: number; to: number; over: number } | null = null;
+  for (let i = 3; i < steps.length; i++) {
+    const from = steps[i - 3].hole;
+    const to = steps[i].hole;
+    const over = steps[i].total - (steps[i - 4]?.total ?? 0);
+    if (to - from === 3 && over >= 2 && over > (worst?.over ?? 0)) worst = { from, to, over };
   }
   return worst;
 }
@@ -66,7 +49,8 @@ function worstStretch(steps: FlowStep[]): Stretch | null {
  * Wider than a phone, so the plot scrolls sideways rather than shrinking its labels.
  */
 export function RoundFlowChart({ round }: RoundFlowChartProps) {
-  const { width: W, height: H, pad: PAD, stroke, dot, chip, divider, bracket } = tokens.chart.flow;
+  const { width: W, height: H, pad: PAD, stroke, dot, labelGap, chip, bracket } = tokens.chart.flow;
+  const chipSize = tokens.size["hole-h"];
   // The OS setting, or a MotionConfig asking for stillness (the kit's screenshot harness).
   const prefersReduced = useReducedMotion();
   const configReduced = useReducedMotionConfig();
@@ -82,50 +66,39 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
   const steps = withRunningTotal(played);
   const first = steps[0].hole;
   const last = steps[steps.length - 1].hole;
-  const columns = last - first + 1;
-
-  const left = PAD.left;
-  const right = W - PAD.right;
-  const top = PAD.top;
-  const bottom = H - PAD.bottom;
-  const columnWidth = (right - left) / columns;
-  const columnStart = (hole: number) => left + (hole - first) * columnWidth;
-  const columnMid = (hole: number) => columnStart(hole) + columnWidth / 2;
-
-  // Even numbers up the side, with a stroke of room below level so the par line is not the floor.
-  const totals = steps.map((step) => step.total);
-  const evenCeil = (n: number) => 2 * Math.ceil(n / 2);
-  const evenFloor = (n: number) => 2 * Math.floor(n / 2);
-  const hi = Math.max(4, evenCeil(Math.max(...totals)));
-  const lo = Math.min(-1, evenFloor(Math.min(...totals)));
-  const tickStep = 2 * Math.ceil((hi - lo) / 12);
-  const ticks: number[] = [];
-  for (let tick = Math.ceil(lo / tickStep) * tickStep; tick <= hi; tick += tickStep) ticks.push(tick);
-  const y = (toPar: number) => top + ((hi - toPar) / (hi - lo)) * (bottom - top);
-
-  let path = `M${left} ${y(0)}`;
-  for (const step of steps) {
-    path += ` H${columnStart(step.hole)} V${y(step.total)} H${columnStart(step.hole + 1)}`;
-  }
-
   const final = steps[steps.length - 1];
-  const endX = columnStart(last + 1);
+
+  const bottom = H - PAD.bottom;
+  // Each hole owns a column from x(hole) to x(hole + 1).
+  const x = scaleLinear().domain([first, last + 1]).range([PAD.left, W - PAD.right]);
+  const mid = (hole: number) => x(hole + 0.5);
+  // The line starts at level, so level is always on the scale, with a stroke of room either side.
+  const y = scaleLinear()
+    .domain(paddedExtent([0, ...steps.map((step) => step.total)], 1)!)
+    .range([bottom, PAD.top]);
+  const ticks = y.ticks(4).filter(Number.isInteger);
+
+  const path =
+    line().curve(curveStepAfter)([
+      [x(first), y(0)],
+      ...steps.map((step): [number, number] => [x(step.hole), y(step.total)]),
+      [x(last + 1), y(final.total)],
+    ]) ?? "";
+
   const worst = worstStretch(steps);
-  const bracketY = top - bracket.rise;
+  const bracketY = PAD.top - bracket.rise;
   const chipTop = bottom + chip.gap;
-  const numberY = chipTop + chip.size + chip.gap;
-  const dividerX = columnStart(10);
 
   const figures = [
     { label: "Out", toPar: round.frontNine.toPar },
     { label: "In", toPar: round.backNine.toPar },
     { label: "Total", toPar: round.toPar },
-  ].filter((figure): figure is { label: string; toPar: number } => figure.toPar != null);
+  ];
 
   const handleMouseMove = (e: MouseEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const column = Math.floor(((e.clientX - rect.left) * (W / rect.width) - left) / columnWidth) + first;
-    setHovered(steps.find((step) => step.hole === Math.max(first, Math.min(last, column))) ?? null);
+    const hole = Math.floor(x.invert((e.clientX - rect.left) * (W / rect.width)));
+    setHovered(steps.find((step) => step.hole === Math.max(first, Math.min(last, hole))) ?? null);
     setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
@@ -143,7 +116,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
         <div className="flex gap-5 text-body-sm text-foreground-secondary">
           {figures.map((figure) => (
             <div key={figure.label}>
-              {figure.label} <b className={toParText(figure.toPar)}>{toParLabel(figure.toPar)}</b>
+              {figure.label} <ToParFigure toPar={figure.toPar} />
             </div>
           ))}
         </div>
@@ -162,20 +135,20 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
             {worst && (
               <g>
                 <path
-                  d={`M${columnStart(worst.from) + bracket.inset} ${bracketY + bracket.tick} V${bracketY} H${columnStart(worst.to + 1) - bracket.inset} V${bracketY + bracket.tick}`}
+                  d={`M${x(worst.from) + tokens.space.dot} ${bracketY + bracket.tick} V${bracketY} H${x(worst.to + 1) - tokens.space.dot} V${bracketY + bracket.tick}`}
                   fill="none"
-                  stroke={tokens.color.status.danger.text}
-                  strokeWidth={bracket.stroke}
+                  stroke={toParFill(worst.over)}
+                  strokeWidth={tokens.lineWidth.outline}
                   strokeLinejoin="round"
                 />
                 <text
-                  x={(columnStart(worst.from) + columnStart(worst.to + 1)) / 2}
+                  x={x((worst.from + worst.to + 1) / 2)}
                   y={bracketY - bracket.tick}
                   textAnchor="middle"
                   fontSize={tokens.type.label.size}
                   fontFamily={tokens.font.sans}
                   fontWeight="600"
-                  fill={tokens.color.status.danger.text}
+                  fill={toParFill(worst.over)}
                 >
                   {toParLabel(worst.over)} over holes {worst.from}–{worst.to}
                 </text>
@@ -185,18 +158,19 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
             {ticks.map((tick) => (
               <g key={tick}>
                 <line
-                  x1={left}
-                  x2={right}
+                  x1={PAD.left}
+                  x2={W - PAD.right}
                   y1={y(tick)}
                   y2={y(tick)}
                   stroke={tick === 0 ? tokens.color.chart.reference : tokens.color.chart.grid}
                   strokeWidth={tokens.lineWidth.border}
-                  strokeDasharray={tick === 0 ? "3 4" : undefined}
+                  strokeDasharray={tick === 0 ? DASH : undefined}
                 />
                 <text
-                  x={left - 10}
-                  y={y(tick) + 4}
+                  x={PAD.left - labelGap}
+                  y={y(tick)}
                   textAnchor="end"
+                  dominantBaseline="central"
                   fontSize={tokens.type.label.size}
                   fontFamily={tokens.font.sans}
                   fill={tokens.color.mutedForeground}
@@ -208,10 +182,10 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
 
             {first <= 9 && last > 9 && (
               <line
-                x1={dividerX}
-                x2={dividerX}
-                y1={top - divider.top}
-                y2={H - divider.bottom}
+                x1={x(10)}
+                x2={x(10)}
+                y1={0}
+                y2={H}
                 stroke={tokens.color.border}
                 strokeWidth={tokens.lineWidth.border}
               />
@@ -228,10 +202,10 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               animate={{ pathLength: 1, opacity: 1 }}
               transition={tokens.motion.draw}
             />
-            <circle cx={endX} cy={y(final.total)} r={dot} fill={tokens.color.foreground} />
+            <circle cx={x(last + 1)} cy={y(final.total)} r={dot} fill={tokens.color.foreground} />
             <text
-              x={endX}
-              y={y(final.total) - 10}
+              x={x(last + 1)}
+              y={y(final.total) - labelGap}
               textAnchor="end"
               fontSize={tokens.type["body-sm"].size}
               fontFamily={tokens.font.sans}
@@ -244,16 +218,16 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
             {hovered && (
               <>
                 <line
-                  x1={columnMid(hovered.hole)}
-                  x2={columnMid(hovered.hole)}
-                  y1={top}
+                  x1={mid(hovered.hole)}
+                  x2={mid(hovered.hole)}
+                  y1={PAD.top}
                   y2={bottom}
                   stroke={tokens.color.chart.reference}
                   strokeWidth={tokens.lineWidth.border}
-                  strokeDasharray="3 3"
+                  strokeDasharray={DASH}
                 />
                 <circle
-                  cx={columnMid(hovered.hole)}
+                  cx={mid(hovered.hole)}
                   cy={y(hovered.total)}
                   r={dot}
                   fill={tokens.color.foreground}
@@ -263,44 +237,41 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               </>
             )}
 
-            {steps.map((step) => {
-              const level = step.kind === "par";
-              return (
-                <g key={step.hole}>
-                  <rect
-                    x={columnMid(step.hole) - chip.size / 2}
-                    y={chipTop}
-                    width={chip.size}
-                    height={chip.size}
-                    rx={step.toPar < 0 ? chip.size / 2 : chip.radius}
-                    fill={level ? tokens.color.muted : tokens.color.score[step.kind].base}
-                  />
-                  <text
-                    x={columnMid(step.hole)}
-                    y={chipTop + chip.size / 2}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fontSize={tokens.type.label.size}
-                    fontFamily={tokens.font.sans}
-                    fontWeight="700"
-                    fill={level ? tokens.color.foregroundSecondary : tokens.color.score[step.kind].onBase}
-                  >
-                    {step.strokes}
-                  </text>
-                  <text
-                    x={columnMid(step.hole)}
-                    y={numberY}
-                    textAnchor="middle"
-                    fontSize={tokens.type.meta.size}
-                    fontFamily={tokens.font.sans}
-                    fill={hovered?.hole === step.hole ? tokens.color.foreground : tokens.color.mutedForeground}
-                    fontWeight={hovered?.hole === step.hole ? "600" : "400"}
-                  >
-                    {step.hole}
-                  </text>
-                </g>
-              );
-            })}
+            {steps.map((step) => (
+              <g key={step.hole}>
+                <rect
+                  x={mid(step.hole) - chipSize / 2}
+                  y={chipTop}
+                  width={chipSize}
+                  height={chipSize}
+                  rx={step.toPar < 0 ? chipSize / 2 : chip.radius}
+                  fill={tokens.color.score[step.kind].base}
+                />
+                <text
+                  x={mid(step.hole)}
+                  y={chipTop + chipSize / 2}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={tokens.type.label.size}
+                  fontFamily={tokens.font.sans}
+                  fontWeight="700"
+                  fill={tokens.color.score[step.kind].onBase}
+                >
+                  {step.strokes}
+                </text>
+                <text
+                  x={mid(step.hole)}
+                  y={chipTop + chipSize + chip.gap}
+                  textAnchor="middle"
+                  fontSize={tokens.type.meta.size}
+                  fontFamily={tokens.font.sans}
+                  fill={hovered?.hole === step.hole ? tokens.color.foreground : tokens.color.mutedForeground}
+                  fontWeight={hovered?.hole === step.hole ? "600" : "400"}
+                >
+                  {step.hole}
+                </text>
+              </g>
+            ))}
           </svg>
 
           <AnimatePresence>
@@ -339,7 +310,9 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
                     </span>
                   )}
                 </div>
-                <div className="mt-1 text-muted-foreground">Round {toParLabel(hovered.total)}</div>
+                <div className="mt-1 text-muted-foreground">
+                  Round <ToParFigure toPar={hovered.total} />
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

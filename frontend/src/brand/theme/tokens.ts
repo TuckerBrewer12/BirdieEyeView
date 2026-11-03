@@ -646,13 +646,11 @@ export const chart = {
     stroke: 2,
     /** The dot where the line ends. */
     dot: 4,
-    /** Each hole's score, in a square (a circle when under par) under the plot. */
-    chip: { size: 22, gap: 20, radius: 4 },
-    /** The front/back divider: how far it rises above the plot, and how far it stops short of the chart's bottom edge. */
-    divider: { top: 26, bottom: 8 },
-    /** The bracket over the worst stretch: its height above the plot, its end ticks, its inset from the stretch's edges. */
-    bracket: { rise: 7, tick: 5, inset: 3, stroke: 1.5 },
-    /** Holes in the stretch the bracket marks, and the fewest strokes over par worth marking. */
-    stretch: { holes: 4, minOver: 2 },
+    /** From an axis label, or the end dot's label, to what it labels. */
+    labelGap: 10,
+    /** The strip of hole scores under the plot: its gap from the plot and from the hole numbers, and a square's corner. */
+    chip: { gap: 20, radius: 4 },
+    /** The bracket over the worst stretch: its height above the plot, and its end ticks. */
+    bracket: { rise: 7, tick: 5 },
   },
 };
