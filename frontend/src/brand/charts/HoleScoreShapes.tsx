@@ -1,4 +1,4 @@
-import { colors, fonts, typography } from "@/brand/theme";
+import { tokens } from "@/brand/theme";
 import type { HoleSummary, RoundSummary } from "@/domain";
 
 interface HoleScoreShapesProps {
@@ -23,8 +23,8 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
       </div>
     );
   }
-  const fill = colors.score[kind].base;
-  const onFill = colors.score[kind].onBase;
+  const fill = tokens.color.score[kind].base;
+  const onFill = tokens.color.score[kind].onBase;
 
   return (
     <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="h-hole-h w-hole-w">
@@ -71,9 +71,9 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
         textAnchor="middle"
         dominantBaseline="central"
         fill={onFill}
-        fontSize={typography.caption}
+        fontSize={tokens.type.caption.size}
         fontWeight="700"
-        fontFamily={fonts.sans}
+        fontFamily={tokens.font.sans}
       >
         {hole.strokes}
       </text>

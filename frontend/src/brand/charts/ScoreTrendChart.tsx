@@ -2,7 +2,7 @@ import { useId, useState, type MouseEvent } from "react";
 import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import { chartColors, chartLayout, chartTickStyle, colors, toParFill } from "@/brand/theme";
+import { chartTickStyle, toParFill, tokens } from "@/brand/theme";
 import { formatDay, formatDayTick } from "@/domain/date";
 import type { ScorePoint } from "@/domain/courseAnalytics";
 import { indexScale, paddedExtent } from "./scales";
@@ -19,7 +19,7 @@ type ScoredRow = ScorePoint & { score: number };
  * joined into a line over a soft fill. Hovering a dot shows its date and score.
  */
 export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
-  const { width: W, height: H, pad: PAD, headroom, dot, dotHover, maxTicks } = chartLayout.trend;
+  const { width: W, height: H, pad: PAD, headroom, dot, dotHover, maxTicks } = tokens.chart.trend;
   const [hovered, setHovered] = useState<ScoredRow | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const areaId = `score-trend-area-${useId().replace(/:/g, "")}`;
@@ -60,8 +60,8 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
       >
         <defs>
           <linearGradient id={areaId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={colors.primary} stopOpacity={0.12} />
-            <stop offset="95%" stopColor={colors.primary} stopOpacity={0} />
+            <stop offset="5%" stopColor={tokens.color.primary} stopOpacity={0.12} />
+            <stop offset="95%" stopColor={tokens.color.primary} stopOpacity={0} />
           </linearGradient>
         </defs>
         {gridTicks.map((tick) => (
@@ -71,8 +71,8 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             x2={W - PAD.right}
             y1={y(tick)}
             y2={y(tick)}
-            stroke={chartColors.muted}
-            strokeWidth={1}
+            stroke={tokens.color.chart.muted}
+            strokeWidth={tokens.lineWidth.border}
           />
         ))}
         {gridTicks.map((tick) => (
@@ -82,7 +82,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             y={y(tick) + 4}
             textAnchor="end"
             fontSize={chartTickStyle.fontSize}
-            fill={chartColors.axis}
+            fill={tokens.color.chart.axis}
           >
             {tick}
           </text>
@@ -91,7 +91,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
         <path
           d={linePath}
           fill="none"
-          stroke={colors.primary}
+          stroke={tokens.color.primary}
           strokeWidth={2.5}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -103,7 +103,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             cy={y(row.score)}
             r={hovered === row ? dotHover : dot}
             fill={toParFill(row.toPar)}
-            stroke={colors.card}
+            stroke={tokens.color.card}
             strokeWidth={1.5}
           />
         ))}
@@ -113,8 +113,8 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             x2={x(hoveredIndex)}
             y1={PAD.top}
             y2={H - PAD.bottom}
-            stroke={chartColors.muted}
-            strokeWidth={1}
+            stroke={tokens.color.chart.muted}
+            strokeWidth={tokens.lineWidth.border}
             strokeDasharray="3 3"
           />
         )}
@@ -128,7 +128,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
                 y={H - PAD.bottom + 14}
                 textAnchor="middle"
                 fontSize={chartTickStyle.fontSize}
-                fill={chartColors.axis}
+                fill={tokens.color.chart.axis}
               >
                 {tick}
               </text>

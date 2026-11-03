@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { scoreFillClass, toParDisplay } from "@/brand";
 import { HANDICAP_TAP, TOUR_SCREENS, WIDE_FRAME_MEDIA, tourImage, type TourScreen } from "./demoTour";
-import { motion as motionTokens } from "@/brand/theme";
+import { tokens } from "@/brand/theme";
 import { useScannerDemoViewModel, type DemoScorecardRow } from "./useScannerDemoViewModel";
 
 /**
@@ -174,7 +174,7 @@ function MappingPanel() {
               <motion.div
                 initial={{ opacity: 0.5 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 1.2, duration: motionTokens.duration.collapse }}
+                transition={{ delay: 1.2, duration: tokens.motion.duration.collapse }}
                 className="flex flex-1 flex-col justify-center rounded-md border-2 border-score-birdie bg-accent p-2"
               >
                 <motion.div
@@ -338,7 +338,7 @@ export function ScannerDemo() {
         className="absolute inset-0 h-full w-full origin-left object-cover"
         initial={false}
         animate={{
-          filter: phase === "mapping" ? "brightness(0.5) blur(3px)" : "brightness(1) blur(0px)",
+          filter: phase === "mapping" ? `brightness(0.5) blur(${tokens.blur.xs}px)` : "brightness(1) blur(0px)",
           opacity: scanned ? 0 : 1,
           scale: scanned ? DEMO_MOTION.photoRecedeScale : 1,
         }}

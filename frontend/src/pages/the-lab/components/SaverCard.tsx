@@ -30,7 +30,7 @@ export function SaverCard({ saver }: { saver: Saver }) {
             <span className="flex size-7 items-center justify-center rounded-lg bg-accent text-primary">
               <Icon aria-hidden className="size-icon-xs" />
             </span>
-            <span className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
+            <span className="text-eyebrow uppercase text-muted-foreground">
               {SAVER_LABEL[saver.kind]}
             </span>
           </div>

@@ -145,7 +145,7 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
             <div className="flex flex-col gap-2">
               <span
                 id={compareLabelId}
-                className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground"
+                className="text-eyebrow uppercase text-muted-foreground"
               >
                 Compare vs.
               </span>

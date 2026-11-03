@@ -145,7 +145,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
     <div className="space-y-3">
       {/* Player name */}
       <div>
-        <p className="text-meta font-semibold text-muted-foreground uppercase tracking-eyebrow mb-1.5">
+        <p className="text-eyebrow font-semibold text-muted-foreground uppercase mb-1.5">
           Your name on the card
         </p>
         <Input
@@ -158,7 +158,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
 
       {/* Scoring format selector */}
       <div>
-        <p className="text-meta font-semibold text-muted-foreground uppercase tracking-eyebrow mb-1.5">
+        <p className="text-eyebrow font-semibold text-muted-foreground uppercase mb-1.5">
           Scoring format
         </p>
         <div className="grid grid-cols-2 gap-2">
@@ -187,7 +187,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
 
       {/* What else is on the card */}
       <div>
-        <p className="text-meta font-semibold text-muted-foreground uppercase tracking-eyebrow mb-1.5">
+        <p className="text-eyebrow font-semibold text-muted-foreground uppercase mb-1.5">
           Also on the card
         </p>
         <div className="flex flex-wrap gap-2">
@@ -234,7 +234,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
             className="overflow-hidden"
           >
             <div className="pt-1">
-              <p className="text-meta font-semibold text-muted-foreground uppercase tracking-eyebrow mb-2">
+              <p className="text-eyebrow font-semibold text-muted-foreground uppercase mb-2">
                 Drag rows to match your card · drag Name to its row
               </p>
 

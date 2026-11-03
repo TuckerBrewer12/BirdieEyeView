@@ -14,6 +14,8 @@
     "typecheck": "tsc -b",
     "gen:api": "openapi-typescript openapi.json -o src/types/api.gen.ts",
     "check:api": "openapi-typescript openapi.json -o src/types/api.gen.ts --check",
+    "gen:tokens": "node scripts/gen-tokens.mjs",
+    "check:tokens": "node scripts/gen-tokens.mjs --check",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:screenshots": "playwright test --project=desktop --project=mobile",

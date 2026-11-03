@@ -59,7 +59,7 @@ export function HandicapBreakdownSheet({
 
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-4">
           <div>
-            <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground mb-3">
+            <div className="text-eyebrow uppercase text-muted-foreground mb-3">
               WHS Formula
             </div>
             <div className="bg-muted rounded-card p-4">
@@ -79,7 +79,7 @@ export function HandicapBreakdownSheet({
 
           {showCalculation && (
             <div>
-              <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground mb-3">
+              <div className="text-eyebrow uppercase text-muted-foreground mb-3">
                 Current Calculation
               </div>
               <div className="bg-accent rounded-card p-4 space-y-3">
@@ -120,7 +120,7 @@ export function HandicapBreakdownSheet({
           )}
 
           <div>
-            <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground mb-3">
+            <div className="text-eyebrow uppercase text-muted-foreground mb-3">
               Recent Rounds · Last {rows.length}
             </div>
 

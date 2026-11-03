@@ -63,7 +63,7 @@ export function PeakGameCard({ peak, impacts, goalLabel, className }: PeakGameCa
 
         {impacts.length > 0 && (
           <div className="flex flex-col gap-3">
-            <span className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
+            <span className="text-eyebrow uppercase text-muted-foreground">
               Peak vs. average, a round
             </span>
             {impacts.map((impact) => {
