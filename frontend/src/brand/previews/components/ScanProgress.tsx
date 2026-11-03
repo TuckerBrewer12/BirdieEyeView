@@ -1,4 +1,4 @@
-import { ScanNeedsReview } from "@/brand/components/ScanNeedsReview";
+import { ScanNeedsReview } from "@/pages/scan/components/ScanNeedsReview";
 import { ScanProgress } from "@/brand/components/ScanProgress";
 import { ScanSaved } from "@/brand/components/ScanSaved";
 

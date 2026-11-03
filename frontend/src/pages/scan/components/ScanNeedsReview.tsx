@@ -1,5 +1,5 @@
+import { Button } from "@/brand";
 import { cn } from "@/brand/cn";
-import { Button } from "./Button";
 
 interface ScanNeedsReviewProps {
   /** The holes the scan was unsure about, by number. */

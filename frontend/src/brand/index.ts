@@ -80,7 +80,6 @@ export { TeeSwatch } from "./components/TeeSwatch";
 export { ToParFigure } from "./components/ToParFigure";
 export { Reveal } from "./components/Reveal";
 export { ScanProgress } from "./components/ScanProgress";
-export { ScanNeedsReview } from "./components/ScanNeedsReview";
 export { ScanSaved } from "./components/ScanSaved";
 export { ScorecardLayoutPicker } from "./components/ScorecardLayoutPicker";
 export { ScorecardTable } from "./components/ScorecardTable";
