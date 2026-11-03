@@ -24,7 +24,7 @@ export default function SettingsRowPreview() {
           />
           <SettingsRow type="switch" label="Friend requests" />
           <SettingsRow type="choose" label="Theme" options={themes} defaultValue="system" />
-          <SettingsRow type="copy" label="Friend code" value="BIRD-1234" actionLabel="Copy friend code" />
+          <SettingsRow type="copy" label="Friend code" value="BIRD-1234" actionLabel="Copy friend code" onAction={() => {}} />
         </SettingsGroup>
         <SettingsGroup>
           <SettingsRow type="destructive" label="Sign out" />
