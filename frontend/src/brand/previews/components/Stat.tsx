@@ -48,9 +48,17 @@ const METRICS: Metric[] = [
   },
 ];
 
+/**
+ * The board's 640 x 330 canvas: the tiles sit two by two and share their row
+ * heights. That is wider than the stage, so the preview fills the window and
+ * the spec captures it at that size.
+ */
 export default function StatPreview() {
   return (
-    <div className="flex flex-col gap-3">
+    <div
+      data-testid="brand-frame"
+      className="fixed inset-0 grid grid-cols-2 grid-rows-2 gap-3 overflow-auto bg-background p-6"
+    >
       {METRICS.map((m) => (
         <StatCard
           key={m.label}
