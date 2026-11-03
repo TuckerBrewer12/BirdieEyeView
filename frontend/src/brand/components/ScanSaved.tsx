@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 import { cn } from "@/brand/cn";
-import { toParLabel, toParTextClass } from "@/brand/theme";
+import { ToParFigure } from "@/brand/components/ToParFigure";
 import { Button } from "./Button";
 
 interface ScanSavedProps {
@@ -17,7 +17,6 @@ interface ScanSavedProps {
 
 /** The round is saved: its score against par, with the round to open or share. */
 function ScanSaved({ course, score, toPar, onView, onShare, sharing = false, className }: ScanSavedProps) {
-  const toParText = toParLabel(toPar);
   return (
     <div
       data-slot="scan-saved"
@@ -37,17 +36,7 @@ function ScanSaved({ course, score, toPar, onView, onShare, sharing = false, cla
         </div>
         <div className="ml-auto flex items-baseline gap-1.5">
           <span className="text-3xl font-bold tracking-stat text-foreground">{score ?? "—"}</span>
-          {toParText && (
-            <span
-              data-slot="to-par-figure"
-              className={cn(
-                "rounded-full bg-muted px-2 py-0.5 text-body-sm font-bold",
-                toParTextClass(toPar),
-              )}
-            >
-              {toParText}
-            </span>
-          )}
+          <ToParFigure toPar={toPar} />
         </div>
       </div>
       <div className="mt-auto flex gap-2">
