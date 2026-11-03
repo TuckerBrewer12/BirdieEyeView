@@ -1,9 +1,9 @@
 import { useId, useState, type KeyboardEvent, type ReactNode } from "react";
-import { Loader2, Search } from "lucide-react";
+import { CircleCheck, FlagTriangleRight, Loader2, Pencil } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { Button } from "./Button";
 import { Card } from "./Card";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "./InputGroup";
+import { SearchField } from "./SearchField";
 import type { CourseSummary } from "@/domain/course";
 
 interface CourseLinkSearchProps {
@@ -20,12 +20,8 @@ interface CourseLinkSearchProps {
   linking?: boolean;
   reviewVariant?: boolean;
   onUseCustomName?: (name: string) => void;
-  /** Offers "Add a new course" when nothing saved matches. */
-  onAddCourse?: () => void;
   autoFocus?: boolean;
   linkedName?: string;
-  /** Where the picked course is, shown under its name. */
-  linkedLocation?: string;
   /** Heads the picked course's line: "Linked" or "Selected". */
   linkedTitle?: string;
   customName?: string;
@@ -48,10 +44,8 @@ export function CourseLinkSearch({
   linking = false,
   reviewVariant = false,
   onUseCustomName,
-  onAddCourse,
   autoFocus = true,
   linkedName,
-  linkedLocation,
   linkedTitle = "Linked",
   customName,
   onClear,
@@ -64,9 +58,9 @@ export function CourseLinkSearch({
   if (linkedName && onClear) {
     return (
       <StatusRow
-        icon={<LinkedMark />}
+        icon={<CircleCheck className="size-4 shrink-0 fill-primary stroke-primary-foreground" />}
         name={linkedName}
-        detail={[linkedTitle, linkedLocation].filter(Boolean).join(" · ")}
+        detail={linkedTitle}
         actionLabel={clearLabel}
         onAction={onClear}
       />
@@ -76,7 +70,7 @@ export function CourseLinkSearch({
   if (customName && onClear) {
     return (
       <StatusRow
-        icon={<PencilMark />}
+        icon={<Pencil className="size-4 shrink-0 text-foreground-secondary" />}
         name={customName}
         detail="Custom name · not linked to a course"
         actionLabel="Link course"
@@ -120,34 +114,22 @@ export function CourseLinkSearch({
               )}
             </div>
           )}
-          <InputGroup className="h-10 rounded-card bg-card has-[[data-slot=input-group-control]:focus-visible]:ring-ring/20">
-            <InputGroupInput
-              id={inputId}
-              type="text"
-              role="combobox"
-              aria-label="Search courses"
-              aria-expanded={results.length > 0}
-              aria-controls={listId}
-              aria-activedescendant={results[active] ? `${listId}-${active}` : undefined}
-              placeholder="Search courses…"
-              value={query}
-              onChange={(e) => {
-                setActiveIndex(0);
-                onQueryChange(e.target.value);
-              }}
-              onKeyDown={onKeyDown}
-              autoFocus={autoFocus}
-              className="pl-0 text-foreground"
-            />
-            <InputGroupAddon className="pl-3 text-foreground">
-              <Search />
-            </InputGroupAddon>
-            {searching && (
-              <InputGroupAddon align="inline-end">
-                <Loader2 className="animate-spin text-muted-foreground" />
-              </InputGroupAddon>
-            )}
-          </InputGroup>
+          <SearchField
+            id={inputId}
+            role="combobox"
+            aria-expanded={results.length > 0}
+            aria-controls={listId}
+            aria-activedescendant={results[active] ? `${listId}-${active}` : undefined}
+            placeholder="Search courses…"
+            value={query}
+            onChange={(q) => {
+              setActiveIndex(0);
+              onQueryChange(q);
+            }}
+            onKeyDown={onKeyDown}
+            autoFocus={autoFocus}
+            loading={searching}
+          />
         </div>
 
         {results.length > 0 && (
@@ -193,21 +175,9 @@ export function CourseLinkSearch({
             No saved courses match{" "}
             <b className="font-semibold text-foreground">“{trimmed}”</b>.
           </div>
-          {(offerName || onAddCourse) && (
-            <div className="flex gap-2">
-              {offerName && (
-                <SaveAsButton name={trimmed} onUseCustomName={onUseCustomName} outlined />
-              )}
-              {onAddCourse && (
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="px-3 text-body font-semibold text-primary hover:text-primary"
-                  onClick={onAddCourse}
-                >
-                  Add a new course
-                </Button>
-              )}
+          {offerName && (
+            <div>
+              <SaveAsButton name={trimmed} onUseCustomName={onUseCustomName} outlined />
             </div>
           )}
         </Card>
@@ -270,53 +240,6 @@ function StatusRow({
         {actionLabel}
       </Button>
     </Card>
-  );
-}
-
-function LinkedMark() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true" className="size-4 shrink-0 text-primary">
-      <circle cx="8" cy="8" r="7" fill="currentColor" />
-      <path
-        d="M4.8 8.2 L7 10.3 L11.2 5.9"
-        fill="none"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="stroke-primary-foreground"
-      />
-    </svg>
-  );
-}
-
-function PencilMark() {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      aria-hidden="true"
-      fill="none"
-      strokeWidth="1.4"
-      strokeLinejoin="round"
-      className="size-4 shrink-0 stroke-foreground-secondary"
-    >
-      <path d="M3 13 L3.6 10.4 L10.6 3.4 a1.4 1.4 0 0 1 2 2 L5.6 12.4 Z" />
-    </svg>
-  );
-}
-
-function FlagMark() {
-  return (
-    <svg
-      viewBox="0 0 14 14"
-      aria-hidden="true"
-      fill="none"
-      strokeWidth="1.5"
-      strokeLinejoin="round"
-      strokeLinecap="round"
-      className="size-3.5 stroke-current"
-    >
-      <path d="M4 13V1.5 L11 4 L4 6.5" />
-    </svg>
   );
 }
 
@@ -388,11 +311,11 @@ function ResultRow({
             : "border-border bg-background text-muted-foreground",
         )}
       >
-        <FlagMark />
+        <FlagTriangleRight className="size-3.5" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium text-foreground">
-          <Highlight text={name} query={nameHit ? query : ""} />
+          <Highlight text={name} query={query} />
         </span>
         <span className="block text-body-sm text-muted-foreground">
           <Highlight

@@ -61,7 +61,6 @@ export default function CourseLinkSearchPreview() {
           results={[]}
           reviewVariant
           onUseCustomName={() => {}}
-          onAddCourse={() => {}}
         />
       </Group>
       <Group label="Linked / custom name">
@@ -70,7 +69,6 @@ export default function CourseLinkSearchPreview() {
           query=""
           results={[]}
           linkedName="Pebble Beach Golf Links"
-          linkedLocation="Pebble Beach, CA"
           onClear={() => {}}
         />
         <CourseLinkSearch
