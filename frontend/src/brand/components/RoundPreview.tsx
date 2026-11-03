@@ -145,7 +145,12 @@ export function RoundPreview(props: RoundPreviewProps) {
       <div className="flex w-16 shrink-0 flex-col items-end justify-center gap-1 whitespace-nowrap text-right">
         <span className="text-figure text-foreground">{round.score ?? "—"}</span>
         {round.toPar != null && (
-          <span className={cn("rounded-full px-2 py-0.5 text-body-sm font-semibold", toParBadgeClass(round.toPar))}>
+          <span
+            className={cn(
+              "rounded-full bg-muted px-2 py-0.5 text-body-sm font-semibold",
+              toParTextClass(round.toPar),
+            )}
+          >
             {toParLabel(round.toPar)}
           </span>
         )}

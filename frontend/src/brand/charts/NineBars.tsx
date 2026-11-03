@@ -15,12 +15,7 @@ export function NineBars({ holes, className }: NineBarsProps) {
       {holes.map((hole) => {
         // Unscored holes read as par.
         const kind = hole.kind ?? "par";
-        return (
-          <div
-            key={hole.hole}
-            className={cn("h-2 rounded-tick", scoreFillClass(kind), kind === "par" && "opacity-recessed")}
-          />
-        );
+        return <div key={hole.hole} className={cn("h-2 rounded-tick", scoreFillClass(kind))} />;
       })}
     </div>
   );
