@@ -1,7 +1,8 @@
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/brand/components/Button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/brand/components/Card";
-import { RadarChart, RadarSummary } from "@/brand/charts/RadarChart";
+import { RadarChart } from "@/brand/charts/RadarChart";
+import { RadarSummary } from "@/brand/components/RadarSummary";
 import { compared } from "./radarSample";
 
 /**
@@ -12,7 +13,7 @@ import { compared } from "./radarSample";
 export default function RadarChartPreview() {
   return (
     <div data-testid="brand-frame" className="fixed inset-0 overflow-auto bg-background p-6">
-      <Card className="@container gap-1.5 py-4.5">
+      <Card className="@container gap-1.5 py-5">
         <CardHeader>
           <CardTitle className="text-base font-semibold">Player profile</CardTitle>
           <CardDescription className="text-body-sm">Last 20 rounds vs a benchmark golfer</CardDescription>

@@ -591,9 +591,8 @@ export const chart = {
     rings: [25, 50, 75, 100],
     dot: 5,
     stroke: 2.5,
-    /** The comparison's outline is thinner and dashed, so the golfer's own shape reads first. */
-    benchmarkStroke: 1.5,
-    dash: 4,
+    /** The comparison's outline is thinner, so the golfer's own shape reads first. */
+    strokeSecondary: 1.5,
   },
   /** The same shape on a phone: a narrower drawing, so its labels stay readable at a phone's width. */
   radarCompact: {
