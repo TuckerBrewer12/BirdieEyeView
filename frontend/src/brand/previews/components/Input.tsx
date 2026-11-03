@@ -7,7 +7,8 @@ export default function InputPreview() {
       <Input defaultValue="Pebble Beach Golf Links" />
       <Input placeholder="Disabled" disabled />
       <Input placeholder="Invalid" aria-invalid />
-      <Input size="cta" placeholder="you@example.com" />
+      <Input size="inline" placeholder="Inline" />
+      <Input size="inline" defaultValue="8.4" className="w-22 text-right" />
     </>
   );
 }

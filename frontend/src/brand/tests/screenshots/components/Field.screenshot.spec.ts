@@ -1,13 +1,21 @@
 import { test } from "@playwright/test";
-import { capturePreview, enableDark } from "../../previewScreenshot";
+import { BrandKitRobot } from "../../BrandKit.robot";
+import { enableDark } from "../../previewScreenshot";
+
+// The board is two columns wide, so the story fills a window of the board's size.
+test.use({ viewport: { width: 760, height: 470 } });
 
 test.describe("Field", () => {
   test("light", async ({ page }) => {
-    await capturePreview(page, "Field", "field.png");
+    const kit = new BrandKitRobot(page);
+    await kit.openFrame("Field");
+    await kit.captureFrame("field.png");
   });
 
   test("dark", async ({ page }) => {
     await enableDark(page);
-    await capturePreview(page, "Field", "field-dark.png");
+    const kit = new BrandKitRobot(page);
+    await kit.openFrame("Field");
+    await kit.captureFrame("field-dark.png");
   });
 });

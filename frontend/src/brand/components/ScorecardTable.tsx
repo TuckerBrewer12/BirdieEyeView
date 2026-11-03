@@ -76,6 +76,7 @@ function CountInput({
 }) {
   return (
     <Input
+      size="inline"
       aria-label={label}
       inputMode="numeric"
       autoComplete="off"

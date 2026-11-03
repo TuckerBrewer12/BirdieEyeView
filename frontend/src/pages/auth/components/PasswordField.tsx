@@ -45,7 +45,7 @@ export function PasswordField({
   return (
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <InputGroup size="cta">
+      <InputGroup>
         <InputGroupInput
           id={id}
           type={revealed ? "text" : "password"}
@@ -59,7 +59,7 @@ export function PasswordField({
         />
         <InputGroupAddon align="inline-end">
           <InputGroupButton
-            size="icon-xs"
+            size="icon-lg"
             aria-label={`${revealed ? "Hide" : "Show"} ${revealName}`}
             aria-pressed={revealed}
             onClick={() => setRevealed((shown) => !shown)}

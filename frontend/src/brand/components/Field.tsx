@@ -28,7 +28,7 @@ function FieldLabel({ className, ...props }: React.ComponentProps<"label">) {
     <label
       data-slot="field-label"
       className={cn(
-        "text-xs font-semibold text-muted-foreground select-none group-has-disabled/field:opacity-50",
+        "text-body font-semibold text-foreground-secondary select-none group-has-disabled/field:opacity-50",
         className,
       )}
       {...props}
@@ -40,7 +40,7 @@ function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
   return (
     <p
       data-slot="field-description"
-      className={cn("text-xs font-normal text-muted-foreground", className)}
+      className={cn("text-body font-normal text-muted-foreground", className)}
       {...props}
     />
   );
@@ -57,9 +57,19 @@ function FieldError({ className, children, ...props }: React.ComponentProps<"p">
     <p
       data-slot="field-error"
       role="alert"
-      className={cn("text-xs font-medium text-destructive", className)}
+      className={cn("flex items-center gap-1.5 text-body font-medium text-destructive", className)}
       {...props}
     >
+      <svg viewBox="0 0 14 14" aria-hidden="true" className="size-3.5 shrink-0">
+        <circle cx="7" cy="7" r="6" className="fill-current" />
+        <path
+          d="M7 3.8v3.6M7 9.8v.1"
+          fill="none"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          className="stroke-card"
+        />
+      </svg>
       {children}
     </p>
   );

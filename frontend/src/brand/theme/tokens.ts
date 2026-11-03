@@ -377,6 +377,8 @@ export const type = {
   /** Small body copy, tooltips, small buttons. */
   "body-sm": { size: 12 },
   body: { size: 13 },
+  /** What is typed into a field, and a settings row's label beside one. */
+  field: { size: 15 },
   /** A page's title. */
   title: { size: 26, weight: 700, tracking: tracking.title },
   /** The one big figure on a card: a round's score. */

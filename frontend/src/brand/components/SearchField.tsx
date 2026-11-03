@@ -24,7 +24,7 @@ export function SearchField({
   loading,
 }: SearchFieldProps) {
   return (
-    <InputGroup>
+    <InputGroup size="inline">
       <InputGroupInput
         id={id}
         type="search"

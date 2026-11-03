@@ -63,6 +63,7 @@ export function SocialPage({ userId }: SocialPageProps) {
                 <FieldLabel htmlFor={CODE_INPUT}>Friend code</FieldLabel>
                 <div className="flex items-center gap-2">
                   <Input
+                    size="inline"
                     id={CODE_INPUT}
                     value={viewModel.friendCode}
                     onChange={(event) => viewModel.setFriendCode(event.target.value)}
@@ -71,7 +72,7 @@ export function SocialPage({ userId }: SocialPageProps) {
                     aria-invalid={codeError ? true : undefined}
                     aria-describedby={codeError ? `${CODE_INPUT}-error` : `${CODE_INPUT}-description`}
                   />
-                  <Button type="submit" disabled={viewModel.sending}>
+                  <Button type="submit" size="lg" disabled={viewModel.sending}>
                     {viewModel.sending ? "Sending…" : "Send"}
                   </Button>
                 </div>

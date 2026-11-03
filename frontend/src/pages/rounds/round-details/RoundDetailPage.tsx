@@ -147,6 +147,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
               </ToggleGroup>
             ) : (
               <Input
+                size="inline"
                 aria-label="Tee"
                 autoComplete="off"
                 placeholder="e.g. White"
