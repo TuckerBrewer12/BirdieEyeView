@@ -13,10 +13,6 @@ function Caption({ children }: { children: ReactNode }) {
   return <div className="text-label font-semibold text-muted-foreground">{children}</div>;
 }
 
-/**
- * The board is two columns wide, so the story fills the window like the app
- * shell's does; capture it at the board's size.
- */
 export default function FieldPreview() {
   const [revealed, setRevealed] = useState(false);
 
