@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/brand/cn";
 import { Button } from "@/brand/components/Button";
 import { Input } from "@/brand/components/Input";
-import { scoreFillClass, scoreOnFillClass, toParDisplay } from "@/brand/theme";
+import { scoreFillClass, scoreOnFillClass, toParDisplay, toParTextClass } from "@/brand/theme";
 import type { HoleScore, Nine, Round } from "@/domain";
 
 export interface ScorecardEdits {
@@ -39,12 +39,6 @@ function parseCount(text: string): number | null | undefined {
   return Number.isNaN(value) ? undefined : value;
 }
 
-/** Under par reads green, over reads red, level reads as ink. */
-function toParClass(toPar: number | null): string {
-  if (toPar == null || toPar === 0) return "text-foreground-secondary";
-  return toPar < 0 ? "text-status-success" : "text-status-danger";
-}
-
 const NEXT_GIR = new Map<boolean | null, boolean | null>([
   [null, true],
   [true, false],
@@ -63,7 +57,7 @@ function HitMark({ hit, className }: { hit: boolean | null; className?: string }
   return (
     <span
       className={cn(
-        "inline-block size-2.75 rounded-full align-middle",
+        "inline-block size-icon-xs rounded-full align-middle",
         hit ? "bg-primary" : "border-2 border-input",
         className,
       )}
@@ -285,9 +279,9 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
           label="To par"
           className="h-7.5 text-label font-semibold"
           labelClassName="h-7.5 text-muted-foreground"
-          cell={(hole) => <span className={toParClass(hole.toPar)}>{toParDisplay(hole.toPar, "-")}</span>}
-          nineCell={(nine) => <span className={toParClass(nine.toPar)}>{toParDisplay(nine.toPar, "-")}</span>}
-          totCell={<span className={toParClass(round.toPar)}>{toParDisplay(round.toPar, "-")}</span>}
+          cell={(hole) => <span className={toParTextClass(hole.toPar)}>{toParDisplay(hole.toPar, "-")}</span>}
+          nineCell={(nine) => <span className={toParTextClass(nine.toPar)}>{toParDisplay(nine.toPar, "-")}</span>}
+          totCell={<span className={toParTextClass(round.toPar)}>{toParDisplay(round.toPar, "-")}</span>}
         />
 
         {showPutts && (
