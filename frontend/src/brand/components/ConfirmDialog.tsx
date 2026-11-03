@@ -15,9 +15,9 @@ type ConfirmDialogPlacement = "auto" | "center" | "bottom";
  * `auto` is the bottom layout with `sm:` resets rather than a third design.
  */
 const viewport: Record<ConfirmDialogPlacement, string> = {
-  center: "items-center justify-center p-2",
+  center: "items-center justify-center p-4",
   bottom: "items-end",
-  auto: "items-end sm:items-center sm:justify-center sm:p-2",
+  auto: "items-end sm:items-center sm:justify-center sm:p-4",
 };
 
 const popup: Record<ConfirmDialogPlacement, string> = {
