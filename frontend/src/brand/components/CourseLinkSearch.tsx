@@ -1,5 +1,5 @@
 import { useId, useState, type KeyboardEvent, type ReactNode } from "react";
-import { CircleCheck, FlagTriangleRight, Loader2, Pencil } from "lucide-react";
+import { CircleCheck, FlagTriangleRight, Loader2, Pencil, X } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { Button } from "./Button";
 import { Card } from "./Card";
@@ -107,11 +107,23 @@ export function CourseLinkSearch({
       >
         <div className="flex flex-col gap-2.5 px-3.5 pt-3.5 pb-2.5">
           {title && (
-            <div>
-              <div className="text-sm font-semibold">{title}</div>
-              {description && (
-                <div className="mt-0.5 text-body-sm text-muted-foreground">{description}</div>
-              )}
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <div className="text-sm font-semibold">{title}</div>
+                {description && (
+                  <div className="mt-0.5 text-body-sm text-muted-foreground">{description}</div>
+                )}
+              </div>
+              {/* Esc closes it from a keyboard; a phone has no Esc. */}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Close"
+                onClick={onClose}
+                className="-mt-1 -mr-1 text-muted-foreground"
+              >
+                <X />
+              </Button>
             </div>
           )}
           <SearchField
