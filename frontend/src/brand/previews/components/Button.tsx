@@ -1,55 +1,42 @@
-import { Plus } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import { Button } from "@/brand/components/Button";
+
+const rows = [
+  { name: "Primary", label: "Save", variant: "default" },
+  { name: "Secondary", label: "Cancel", variant: "outline" },
+  { name: "Text", label: "Edit", variant: "link" },
+  { name: "Danger", label: "Delete", variant: "destructive" },
+] as const;
+
+const grid = "grid grid-cols-[4.5rem_repeat(2,minmax(0,1fr))] items-center gap-2";
 
 export default function ButtonPreview() {
   return (
-    <>
-      <div className="flex flex-wrap gap-2">
-        <Button>Default</Button>
-        <Button variant="outline">Outline</Button>
-        <Button variant="secondary">Secondary</Button>
-        <Button variant="ghost">Ghost</Button>
-        <Button variant="destructive">Destructive</Button>
-        <Button variant="link">Link</Button>
+    <div className="flex flex-col gap-2.5 rounded-card border border-border bg-card p-4.5 text-foreground">
+      <div className={`${grid} text-label font-semibold text-muted-foreground`}>
+        <div />
+        <div>Default</div>
+        <div>Disabled</div>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button size="xs">Extra Small</Button>
-        <Button size="sm">Small</Button>
-        <Button>Default</Button>
-        <Button size="lg">Large</Button>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button size="icon-xs" aria-label="Add">
-          <Plus />
-        </Button>
-        <Button size="icon-sm" aria-label="Add">
-          <Plus />
-        </Button>
-        <Button size="icon" aria-label="Add">
-          <Plus />
-        </Button>
-        <Button size="icon-lg" aria-label="Add">
-          <Plus />
+      {rows.map((row) => (
+        <div key={row.name} className={grid}>
+          <div className="text-body-sm text-foreground-secondary">{row.name}</div>
+          <Button variant={row.variant}>{row.label}</Button>
+          <Button variant={row.variant} disabled>
+            {row.label}
+          </Button>
+        </div>
+      ))}
+      <div className="my-1 h-px bg-border" />
+      <div className="text-label font-semibold text-muted-foreground">Sizes · 48 / 40 / 32</div>
+      <div className="flex items-center gap-2">
+        <Button size="lg">Save round</Button>
+        <Button>Save</Button>
+        <Button size="sm">Link</Button>
+        <Button variant="outline" size="icon" aria-label="More options">
+          <Ellipsis />
         </Button>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button>
-          <Plus data-icon="inline-start" />
-          New Branch
-        </Button>
-        <Button disabled>Disabled</Button>
-      </div>
-      <Button variant="outline" className="w-full">
-        Load more
-      </Button>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button size="cta" shape="pill">
-          Start tracking
-        </Button>
-        <Button variant="outline" size="cta" shape="pill">
-          Sign in
-        </Button>
-      </div>
-    </>
+    </div>
   );
 }
