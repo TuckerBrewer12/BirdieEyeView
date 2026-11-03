@@ -120,7 +120,7 @@ export function CourseLinkSearch({
               )}
             </div>
           )}
-          <InputGroup className="h-10 rounded-card bg-card">
+          <InputGroup className="h-10 rounded-card bg-card has-[[data-slot=input-group-control]:focus-visible]:ring-ring/20">
             <InputGroupInput
               id={inputId}
               type="text"
