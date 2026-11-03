@@ -1,9 +1,9 @@
 import { useId, useState, type KeyboardEvent, type ReactNode } from "react";
-import { Loader2, Search } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { Button } from "./Button";
 import { Card } from "./Card";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "./InputGroup";
+import { SearchField } from "./SearchField";
 import type { CourseSummary } from "@/domain/course";
 
 interface CourseLinkSearchProps {
@@ -120,34 +120,23 @@ export function CourseLinkSearch({
               )}
             </div>
           )}
-          <InputGroup className="h-10 rounded-card bg-card has-[[data-slot=input-group-control]:focus-visible]:ring-ring/20">
-            <InputGroupInput
-              id={inputId}
-              type="text"
-              role="combobox"
-              aria-label="Search courses"
-              aria-expanded={results.length > 0}
-              aria-controls={listId}
-              aria-activedescendant={results[active] ? `${listId}-${active}` : undefined}
-              placeholder="Search courses…"
-              value={query}
-              onChange={(e) => {
-                setActiveIndex(0);
-                onQueryChange(e.target.value);
-              }}
-              onKeyDown={onKeyDown}
-              autoFocus={autoFocus}
-              className="pl-0 text-foreground"
-            />
-            <InputGroupAddon className="pl-3 text-foreground">
-              <Search />
-            </InputGroupAddon>
-            {searching && (
-              <InputGroupAddon align="inline-end">
-                <Loader2 className="animate-spin text-muted-foreground" />
-              </InputGroupAddon>
-            )}
-          </InputGroup>
+          <SearchField
+            id={inputId}
+            role="combobox"
+            aria-label="Search courses"
+            aria-expanded={results.length > 0}
+            aria-controls={listId}
+            aria-activedescendant={results[active] ? `${listId}-${active}` : undefined}
+            placeholder="Search courses…"
+            value={query}
+            onChange={(value) => {
+              setActiveIndex(0);
+              onQueryChange(value);
+            }}
+            onKeyDown={onKeyDown}
+            autoFocus={autoFocus}
+            loading={searching}
+          />
         </div>
 
         {results.length > 0 && (
