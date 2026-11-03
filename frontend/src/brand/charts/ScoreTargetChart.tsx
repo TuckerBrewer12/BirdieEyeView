@@ -1,6 +1,6 @@
 import { useState, type PointerEvent } from "react";
 import { cn } from "@/brand/cn";
-import { chartLayout, colors, opacityWash, scoreKindLabel, space, toParLabel } from "@/brand/theme";
+import { scoreColorClass, scoreKindLabel, scoreSvgFillClass, toParLabel, tokens } from "@/brand/theme";
 import { scoreKind, type ScoreKind } from "@/domain/score";
 
 interface ScoreTargetShot {
@@ -23,7 +23,7 @@ const RINGS: Ring[] = ["triple", "double", "bogey", "par", "birdie", "eagle"];
 
 /** Where a kind's ring starts and ends, as shares of the radius. Quads land in the triple ring. */
 function ringBand(kind: ScoreKind): [number, number] {
-  const { rings } = chartLayout.target;
+  const { rings } = tokens.chart.target;
   const ring: Ring = kind === "quad" ? "triple" : kind;
   const index = RINGS.indexOf(ring);
   const inner = index === RINGS.length - 1 ? 0 : rings[RINGS[index + 1]];
@@ -43,7 +43,7 @@ function ringPath(c: number, inner: number, outer: number): string {
  * ring is fixed by the hole's place in the list, so the picture is the same every time.
  */
 export function ScoreTargetChart({ shots, className, "aria-label": ariaLabel }: ScoreTargetChartProps) {
-  const { size, stroke, dot, dotHover, hitRadius } = chartLayout.target;
+  const { size, stroke, dot, dotHover, hitRadius } = tokens.chart.target;
   const c = size / 2;
   const [active, setActive] = useState<number | null>(null);
 
@@ -91,9 +91,10 @@ export function ScoreTargetChart({ shots, className, "aria-label": ariaLabel }: 
               key={ring}
               d={ringPath(c, inner * c, outer * c)}
               fillRule="evenodd"
-              fill={colors.score[ring].base}
-              fillOpacity={opacityWash}
-              stroke={colors.score[ring].base}
+              className={scoreColorClass(ring)}
+              fill="currentColor"
+              fillOpacity={tokens.opacity.wash}
+              stroke="currentColor"
               strokeWidth={stroke}
             />
           );
@@ -104,9 +105,8 @@ export function ScoreTargetChart({ shots, className, "aria-label": ariaLabel }: 
             cx={d.cx}
             cy={d.cy}
             r={active === i ? dotHover : dot}
-            fill={colors.score[d.kind].base}
-            stroke={colors.card}
-            strokeWidth={space.bar}
+            className={cn("stroke-card", scoreSvgFillClass(d.kind))}
+            strokeWidth={tokens.space.bar}
           />
         ))}
       </svg>

@@ -1,7 +1,7 @@
 import { scaleLinear } from "d3-scale";
 import { cn } from "@/brand/cn";
 import type { GoalAttempt } from "@/domain/benchmark";
-import { chartColors, chartLayout, chartTickStyle, colors, space } from "@/brand/theme";
+import { tokens } from "@/brand/theme";
 import { indexScale, paddedExtent } from "./scales";
 
 interface ScoreGoalChartProps {
@@ -18,7 +18,7 @@ interface ScoreGoalChartProps {
  * faint line, with the goal dashed across. A round that met the goal is filled.
  */
 export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLabel }: ScoreGoalChartProps) {
-  const { width: W, height: H, pad, labelRoom, dot, dotReached } = chartLayout.goal;
+  const { width: W, height: H, pad, labelRoom, dot, dotReached } = tokens.chart.goal;
 
   if (attempts.length < 2) {
     return <div className="py-6 text-center text-sm text-muted-foreground">Not enough rounds yet</div>;
@@ -45,23 +45,22 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
           x2={W - pad.x - labelRoom}
           y1={goalY}
           y2={goalY}
-          stroke={colors.primary}
+          className="stroke-primary"
           strokeWidth={1.5}
-          strokeDasharray={`${space.dot} ${space.dot}`}
+          strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
         />
         <text
           x={W - pad.x - labelRoom + 4}
           y={goalY + 4}
-          fontSize={chartTickStyle.fontSize}
           fontWeight="600"
-          fill={colors.primary}
+          className="fill-primary text-label"
         >
           Goal
         </text>
         <polyline
           points={scores.map((score, i) => `${x(i)},${y(score)}`).join(" ")}
           fill="none"
-          stroke={chartColors.muted}
+          className="stroke-chart-muted"
           strokeWidth={1.5}
           strokeLinejoin="round"
           strokeLinecap="round"
@@ -73,8 +72,7 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
             cx={x(i)}
             cy={y(score)}
             r={metGoal ? dotReached : dot}
-            fill={metGoal ? colors.score.birdie.base : colors.card}
-            stroke={metGoal ? "none" : chartColors.axis}
+            className={metGoal ? "fill-score-birdie-base stroke-none" : "fill-card stroke-chart-axis"}
             strokeWidth={1.5}
           />
         ))}

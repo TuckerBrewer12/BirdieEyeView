@@ -2,19 +2,15 @@ import { useId } from "react";
 import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
-import { borderWidth, chartLayout, colors, opacityWash, space } from "@/brand/theme";
+import { color, tokens, type ColorName } from "@/brand/theme";
 import { indexScale, knownValues, lastKnownIndex, paddedExtent } from "./scales";
 
 type SparklineTone = "primary" | "contrast";
 
-const STROKE: Record<SparklineTone, string> = {
-  primary: colors.primary,
-  contrast: colors.score.triple.text,
-};
-
-const SWATCH: Record<SparklineTone, string> = {
-  primary: "bg-primary",
-  contrast: "bg-score-triple",
+/** Each tone's colour, for the gradient under the line, and its classes for the line and legend. */
+const TONE: Record<SparklineTone, { color: ColorName; stroke: string; swatch: string }> = {
+  primary: { color: "primary", stroke: "stroke-primary", swatch: "bg-primary" },
+  contrast: { color: "score-triple-text", stroke: "stroke-score-triple", swatch: "bg-score-triple" },
 };
 
 interface SparklineSeries {
@@ -39,7 +35,7 @@ interface SparklineProps {
 /** Which way a figure has been heading: a small line, no axes, the latest value marked. */
 export function Sparkline({ series, domain, fill = false, reference = null, className }: SparklineProps) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
-  const { width: W, height: H, pad, stroke, dot } = chartLayout.sparkline;
+  const { width: W, height: H, pad, stroke, dot } = tokens.chart.sparkline;
 
   const length = Math.max(0, ...series.map((s) => s.values.length));
   const all = series.flatMap((s) => s.values);
@@ -75,8 +71,8 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
         {fill && (
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={STROKE[series[0].tone ?? "primary"]} stopOpacity={opacityWash} />
-              <stop offset="100%" stopColor={STROKE[series[0].tone ?? "primary"]} stopOpacity={0} />
+              <stop offset="0%" stopColor={color(TONE[series[0].tone ?? "primary"].color)} stopOpacity={tokens.opacity.wash} />
+              <stop offset="100%" stopColor={color(TONE[series[0].tone ?? "primary"].color)} stopOpacity={0} />
             </linearGradient>
           </defs>
         )}
@@ -86,21 +82,21 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
             x2={W - pad}
             y1={referenceY}
             y2={referenceY}
-            stroke={colors.border}
-            strokeWidth={borderWidth}
-            strokeDasharray={`${space.dot} ${space.dot}`}
+            className="stroke-border"
+            strokeWidth={tokens.lineWidth.border}
+            strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
           />
         )}
         {fill && <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />}
         {series.map((s, i) => {
-          const color = STROKE[s.tone ?? "primary"];
+          const toneStroke = TONE[s.tone ?? "primary"].stroke;
           const end = lastKnownIndex(s.values);
           return (
             <g key={i}>
               <path
                 d={trace(s.values) ?? ""}
                 fill="none"
-                stroke={color}
+                className={toneStroke}
                 strokeWidth={stroke}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -110,8 +106,7 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
                   cx={x(end)}
                   cy={y(s.values[end]!)}
                   r={dot}
-                  fill={colors.card}
-                  stroke={color}
+                  className={cn("fill-card", toneStroke)}
                   strokeWidth={stroke}
                 />
               )}
@@ -123,7 +118,7 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
         <div className="flex items-center gap-3">
           {labelled.map((s) => (
             <span key={s.label} className="flex items-center gap-1 text-caption text-muted-foreground">
-              <span className={cn("size-2 rounded-full", SWATCH[s.tone ?? "primary"])} />
+              <span className={cn("size-2 rounded-full", TONE[s.tone ?? "primary"].swatch)} />
               {s.label}
             </span>
           ))}

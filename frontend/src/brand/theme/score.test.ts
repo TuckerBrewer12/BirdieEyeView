@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   SCORE_KEYS,
+  scoreColorClass,
   scoreFillClass,
   scoreOnFillClass,
+  scoreSvgFillClass,
+  scoreWashClass,
   toParBadgeClass,
+  toParFill,
+  toParSvgFillClass,
   toParTextClass,
 } from "./score";
 
@@ -38,5 +43,27 @@ describe("scoreOnFillClass", () => {
     for (const key of SCORE_KEYS) {
       expect(scoreOnFillClass(key)).toBe(`text-score-${key}-on-base`);
     }
+  });
+});
+
+describe("score lookups for SVG and washes", () => {
+  it("name each score's own utilities", () => {
+    for (const key of SCORE_KEYS) {
+      expect(scoreSvgFillClass(key)).toBe(`fill-score-${key}-base`);
+      expect(scoreColorClass(key)).toBe(`text-score-${key}-base`);
+      expect(scoreWashClass(key)).toBe(`bg-score-${key}-muted text-score-${key}-on-muted`);
+    }
+  });
+});
+
+describe("toParFill / toParSvgFillClass", () => {
+  it("paint a round's to-par as par, eagle, birdie or bogey", () => {
+    expect(toParFill(null)).toBe("var(--score-par-base)");
+    expect(toParFill(0)).toBe("var(--score-par-base)");
+    expect(toParFill(-2)).toBe("var(--score-eagle-base)");
+    expect(toParFill(-1)).toBe("var(--score-birdie-base)");
+    expect(toParFill(5)).toBe("var(--score-bogey-base)");
+    expect(toParSvgFillClass(-1)).toBe("fill-score-birdie-base");
+    expect(toParSvgFillClass(3)).toBe("fill-score-bogey-base");
   });
 });

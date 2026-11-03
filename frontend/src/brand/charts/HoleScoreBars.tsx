@@ -39,7 +39,7 @@ export function HoleScoreBars({ holes, variant = "strip", className }: HoleScore
               "flex-1",
               scoreFillClass(kind),
               profile ? cn("rounded-t-tick", PROFILE_HEIGHT[kind]) : "rounded-bar",
-              kind === "par" && "opacity-(--brand-opacity-recessed)",
+              kind === "par" && "opacity-recessed",
             )}
           />
         );

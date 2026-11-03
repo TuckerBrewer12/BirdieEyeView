@@ -4,20 +4,7 @@ import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import {
-  borderWidth,
-  chartColors,
-  chartLayout,
-  colors,
-  fonts,
-  motion as motionTokens,
-  radius,
-  ringWidth,
-  space,
-  toParFill,
-  typography,
-  differentialFill,
-} from "@/brand/theme";
+import { color, differentialFillClass, toParSvgFillClass, tokens } from "@/brand/theme";
 import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
 import { indexScale, knownValues, paddedExtent } from "./scales";
 
@@ -31,8 +18,8 @@ interface SVGScoreHandicapTrendProps {
   compact?: boolean;
 }
 
-const SCORE_COLOR = colors.primary;
-const HANDICAP_COLOR = colors.score.double.text;
+const { chart, motion: motionTokens, space, lineWidth } = tokens;
+const dash = `${space.dot} ${space.dot}`;
 
 /** Selection is kept per series, so switching the line clears it. */
 interface Selection {
@@ -45,7 +32,7 @@ interface Selection {
  * alone. Hovering with a mouse or tapping on a phone picks a round.
  */
 export function SVGScoreHandicapTrend({ data, series = "both", compact = false }: SVGScoreHandicapTrendProps) {
-  const plot = compact ? { ...chartLayout.plot, ...chartLayout.plotCompact } : chartLayout.plot;
+  const plot = compact ? { ...chart.plot, ...chart.plotCompact } : chart.plot;
   const { width: W, height: H, pad: PAD } = plot;
   const hiGrad = `hiGrad${useId().replace(/:/g, "")}`;
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -131,32 +118,32 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
       >
         <defs>
           <linearGradient id={hiGrad} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="10%" stopColor={HANDICAP_COLOR} stopOpacity={0.1} />
-            <stop offset="100%" stopColor={HANDICAP_COLOR} stopOpacity={0} />
+            <stop offset="10%" stopColor={color("score-double-text")} stopOpacity={0.1} />
+            <stop offset="100%" stopColor={color("score-double-text")} stopOpacity={0} />
           </linearGradient>
         </defs>
 
         {yLeft.ticks(5).map((v) => (
           <g key={`left-${v}`}>
-            <line x1={PAD.left} x2={W - PAD.right} y1={yLeft(v)} y2={yLeft(v)} stroke={colors.border} strokeWidth={borderWidth} />
-            <AxisLabel x={PAD.left - 12} y={yLeft(v) + 4} anchor="end" color={chartColors.axis}>
+            <line x1={PAD.left} x2={W - PAD.right} y1={yLeft(v)} y2={yLeft(v)} className="stroke-border" strokeWidth={lineWidth.border} />
+            <AxisLabel x={PAD.left - 12} y={yLeft(v) + 4} anchor="end" className="fill-chart-axis">
               {showScore ? v : formatHandicapIndex(v)}
             </AxisLabel>
           </g>
         ))}
 
-        <line x1={PAD.left} x2={W - PAD.right} y1={baseline} y2={baseline} stroke={chartColors.muted} strokeWidth={borderWidth} />
+        <line x1={PAD.left} x2={W - PAD.right} y1={baseline} y2={baseline} className="stroke-chart-muted" strokeWidth={lineWidth.border} />
 
         {series === "both" &&
           hasHandicap &&
           yHandicap.ticks(4).map((v) => (
-            <AxisLabel key={`right-${v}`} x={W - PAD.right + 12} y={yHandicap(v) + 4} anchor="start" color={HANDICAP_COLOR}>
+            <AxisLabel key={`right-${v}`} x={W - PAD.right + 12} y={yHandicap(v) + 4} anchor="start" className="fill-score-double">
               {formatHandicapIndex(v)}
             </AxisLabel>
           ))}
 
         {xTicks.map((i) => (
-          <AxisLabel key={`x-${i}`} x={x(i)} y={baseline + 16} anchor="middle" color={chartColors.axis}>
+          <AxisLabel key={`x-${i}`} x={x(i)} y={baseline + 16} anchor="middle" className="fill-chart-axis">
             {i + 1}
           </AxisLabel>
         ))}
@@ -173,9 +160,9 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                 y={top}
                 width={barW}
                 height={baseline - top}
-                fill={differentialFill(d.differentialStatus)}
+                className={differentialFillClass(d.differentialStatus)}
                 fillOpacity={0.6}
-                rx={radius.tick}
+                rx={tokens.radius.tick}
               />
             );
           })}
@@ -186,8 +173,8 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             <path
               d={handicapPath}
               fill="none"
-              stroke={HANDICAP_COLOR}
-              strokeWidth={series === "both" ? space.bar : chartLayout.sparkline.stroke}
+              className="stroke-score-double"
+              strokeWidth={series === "both" ? space.bar : chart.sparkline.stroke}
               strokeOpacity={series === "both" ? 0.7 : 1}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -199,8 +186,8 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
           <path
             d={scorePath}
             fill="none"
-            stroke={SCORE_COLOR}
-            strokeWidth={chartLayout.sparkline.stroke}
+            className="stroke-primary"
+            strokeWidth={chart.sparkline.stroke}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -212,9 +199,9 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             x2={x(active)}
             y1={PAD.top}
             y2={baseline}
-            stroke={chartColors.muted}
-            strokeWidth={borderWidth}
-            strokeDasharray={`${space.dot} ${space.dot}`}
+            className="stroke-chart-muted"
+            strokeWidth={lineWidth.border}
+            strokeDasharray={dash}
           />
         )}
 
@@ -227,8 +214,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
               cx={x(i)}
               cy={showScore ? yScore(value) : yHandicap(value)}
               r={active === i ? plot.dotHover : plot.dot}
-              fill={showScore ? toParFill(d.toPar) : HANDICAP_COLOR}
-              stroke={colors.card}
+              className={cn("stroke-card", showScore ? toParSvgFillClass(d.toPar) : "fill-score-double")}
               strokeWidth={space.bar}
             />
           );
@@ -242,9 +228,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                 x={x(i)}
                 y={yScore(d.score) - 8}
                 textAnchor="middle"
-                fontSize={typography.caption}
-                fontFamily={fonts.sans}
-                fill={chartColors.axis}
+                className="fill-chart-axis font-sans text-caption"
                 fontWeight="600"
               >
                 {d.score}
@@ -298,13 +282,14 @@ function AxisLabel({
   x,
   y,
   anchor,
-  color,
+  className,
   children,
 }: {
   x: number;
   y: number;
   anchor: "start" | "middle" | "end";
-  color: string;
+  /** The label's fill. */
+  className: string;
   children: ReactNode;
 }) {
   return (
@@ -312,13 +297,10 @@ function AxisLabel({
       x={x}
       y={y}
       textAnchor={anchor}
-      fontSize={typography.label}
       fontWeight="600"
-      fontFamily={fonts.sans}
-      fill={color}
+      className={cn("stroke-card font-sans text-label", className)}
       paintOrder="stroke"
-      stroke={colors.card}
-      strokeWidth={ringWidth}
+      strokeWidth={lineWidth.ring}
       strokeLinejoin="round"
     >
       {children}

@@ -1,160 +1,21 @@
 import type { CSSProperties } from "react";
-import { colors } from "./colors";
-import { borderWidth, radius } from "./space";
-import { typography } from "./type";
+import { color } from "./color";
+import { lineWidth, radius, text } from "./tokens";
 
 /**
- * Recharts `contentStyle`. Chart libraries take a style object, so they cannot
- * use Tailwind classes — this is the same path as `colors.card` in a fill.
- * Surfaces, border, type, and shadow are the existing kit tokens.
+ * Recharts `contentStyle`. Chart libraries take a style object rather than
+ * classes, so the tooltip's card, border, type and shadow come from the tokens here.
  */
 export const chartTooltipStyle: CSSProperties = {
-  fontSize: typography.bodySm,
+  fontSize: text["body-sm"],
   borderRadius: radius.tooltip,
-  border: `${borderWidth} solid ${colors.border}`,
+  border: `${lineWidth.border}px solid ${color("border")}`,
   boxShadow: "var(--shadow-card)",
-  background: colors.card,
+  background: color("card"),
 };
 
+/** Recharts axis ticks: label-sized, in the axis colour. */
 export const chartTickStyle = {
-  fontSize: typography.label,
-} as const;
-
-/** Recharts only accepts numbers for layout, so these mirror tokens.css in pixels:
- *  `barRadius` is --brand-radius-md, `barMaxWidth` --brand-size-bar-max, `ring` and `gauge`
- *  --brand-size-ring-* and --brand-size-gauge-*, `plot.height` --brand-size-chart, and
- *  `plotCompact` --brand-size-chart-compact-w and --brand-size-chart-compact.
- *  `sparkline` is --brand-size-sparkline-w/-h, --brand-space-tight padding, --brand-sparkline-stroke
- *  and a --brand-space-dot marker, `flow.width` --brand-size-chart-wide, and `trendArea.height` --brand-size-chart. tokens.test.ts fails if one drifts. The plot margins follow the 4px spacing scale. */
-export const chartLayout = {
-  barRadius: [6, 6, 0, 0] as [number, number, number, number],
-  /** Rounded outer ends of a horizontal stacked bar. Mirrors `--brand-radius-sm`. */
-  stackEndRadius: {
-    left: [4, 0, 0, 4] as [number, number, number, number],
-    right: [0, 4, 4, 0] as [number, number, number, number],
-  },
-  margin: { top: 4, right: 8, left: -20, bottom: 0 },
-  /** Widest a Recharts bar grows when there are few of them. */
-  barMaxWidth: 28,
-  /** A full ring sized to fill the chart height. */
-  ring: { inner: 50, outer: 68 },
-  /** A half gauge drawn up from the bottom edge of its box. */
-  gauge: { inner: 52, outer: 72 },
-  /** Unitless SVG plot. Matches `--brand-size-chart` for height. */
-  plot: {
-    width: 560,
-    height: 180,
-    pad: { top: 12, right: 64, bottom: 20, left: 52 },
-    barMin: 4,
-    barMax: 14,
-    barGap: 2,
-    dot: 3.5,
-    dotHover: 6,
-  },
-  /** The same plot on a phone: narrower and taller, one series at a time, so no right-hand axis. */
-  plotCompact: {
-    width: 320,
-    height: 210,
-    pad: { top: 16, right: 16, bottom: 32, left: 44 },
-  },
-  /** Unitless SVG for a figure's trend line. Scales to its container's width, keeping this shape. */
-  sparkline: {
-    width: 300,
-    height: 56,
-    pad: 5,
-    stroke: 2,
-    dot: 3,
-  },
-  /** A golfer's scores over time, one dot per round. Height matches `--brand-size-chart`. */
-  trend: {
-    width: 560,
-    height: 180,
-    pad: { top: 16, right: 16, bottom: 28, left: 36 },
-    /** Room either side of the lowest and highest score, in strokes. */
-    headroom: 3,
-    dot: 4,
-    dotHover: 6,
-    /** Past this many rounds the date ticks would crowd, so they are left off. */
-    maxTicks: 12,
-  },
-  /** A shape across a handful of measures, each axis 0–100 from the centre out. Labels sit past the rim. */
-  radar: {
-    width: 560,
-    height: 340,
-    radius: 118,
-    /** From the rim to an axis label, and from the label down to its figures. */
-    labelGap: 18,
-    valueGap: 16,
-    /** Rings drawn at these shares of the rim, in percent. */
-    rings: [25, 50, 75, 100],
-    dot: 4,
-    stroke: 2,
-  },
-  /**
-   * The same shape on a phone: a narrower drawing, so it scales down less and its labels stay
-   * readable at a phone's width. Mirrors --brand-size-radar-compact-w/-h/-r, and
-   * --brand-space-radar-compact-label for both gaps.
-   */
-  radarCompact: {
-    width: 360,
-    height: 300,
-    radius: 72,
-    labelGap: 16,
-    valueGap: 16,
-  },
-  /** Scores against a goal: a short strip of dots, lower scores higher up, the goal dashed across. */
-  goal: {
-    width: 560,
-    height: 96,
-    pad: { x: 8, y: 14 },
-    /** Room at the right end of the goal line for its label. */
-    labelRoom: 32,
-    dot: 4,
-    dotReached: 5.5,
-  },
-  /** One figure per round over a soft fill, with a second line beside it if wanted. Height matches `--brand-size-chart`. */
-  trendArea: {
-    width: 560,
-    height: 180,
-    pad: { top: 12, right: 16, bottom: 24, left: 40 },
-    /** Share of the span left either side of the values, so the line never touches the edge. */
-    headroom: 0.15,
-    stroke: 2,
-    /** The second line is thinner, so the first reads as the figure. */
-    strokeSecondary: 1.5,
-    dot: 3,
-    dotHover: 5,
-    /** Past this many rounds the dots would crowd the line, so only the hovered one is drawn. */
-    maxDots: 30,
-    /** About this many round numbers along the bottom. */
-    xTicks: 6,
-    yTicks: 4,
-  },
-  /** Holes as dots on a target, the better the score the nearer the middle. Unitless; it fills `max-w-target`. */
-  target: {
-    size: 200,
-    /** Each score kind's ring, as a share of the radius from the middle out. Quads share the triple ring. */
-    rings: { eagle: 0.18, birdie: 0.35, par: 0.55, bogey: 0.7, double: 0.83, triple: 1 },
-    stroke: 1.5,
-    dot: 3.5,
-    dotHover: 5,
-    /** How near the pointer has to be to a dot, in the chart's units, to pick it. */
-    hitRadius: 10,
-  },
-  /** A round hole by hole. Width matches `--brand-size-chart-wide`, which it scrolls at. */
-  flow: {
-    width: 720,
-    height: 220,
-    pad: { top: 28, right: 16, bottom: 36, left: 40 },
-    /** To-par beyond this is drawn at the edge, so one blow-up hole cannot flatten the rest. */
-    extent: 5,
-    dot: 4,
-    dotHover: 6,
-  },
-};
-
-export const chartColors = {
-  axis: "var(--chart-axis)",
-  muted: "var(--chart-muted)",
-  accent: "var(--chart-accent)",
+  fontSize: text.label,
+  fill: color("chart-axis"),
 } as const;

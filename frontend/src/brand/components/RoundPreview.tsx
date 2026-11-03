@@ -5,7 +5,7 @@ import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import { motion as motionTokens, toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
+import { toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
 import { playedScoreKinds, scoreKindCountLabel, type RoundSummary } from "@/domain";
 import { formatCourseName } from "@/domain/course";
 import { formatDay, formatDayShort, dayParts } from "@/domain/date";
@@ -79,9 +79,9 @@ export function RoundPreview(props: RoundPreviewProps) {
         "grid grid-cols-round-preview items-center gap-2.5 overflow-hidden rounded-card border border-border bg-card transition-shadow",
         onClick ? "cursor-pointer hover:shadow-card" : "cursor-default",
       )}
-      whileHover={onClick ? { scale: motionTokens.hoverScale } : undefined}
-      whileTap={onClick ? { scale: motionTokens.tapScale } : undefined}
-      transition={motionTokens.spring}
+      whileHover={onClick ? { scale: tokens.motion.hoverScale } : undefined}
+      whileTap={onClick ? { scale: tokens.motion.tapScale } : undefined}
+      transition={tokens.motion.spring}
       onClick={onClick}
     >
       <div className="flex flex-col items-center justify-center gap-0.5 self-stretch rounded-l-lg bg-muted py-2.5 text-center">

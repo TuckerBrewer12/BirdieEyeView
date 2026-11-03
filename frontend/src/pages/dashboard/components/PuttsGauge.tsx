@@ -1,12 +1,12 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { chartLayout, colors } from "@/brand";
+import { color, tokens } from "@/brand";
 import type { PuttsRating } from "../model";
 import { puttsLabel } from "../present";
 
 const RATING_FILL: Record<PuttsRating, string> = {
-  strong: colors.score.birdie.base,
-  fair: colors.score.eagle.base,
-  weak: colors.destructive,
+  strong: color("score-birdie-base"),
+  fair: color("score-eagle-base"),
+  weak: color("destructive"),
 };
 
 interface PuttsGaugeProps {
@@ -31,14 +31,14 @@ export function PuttsGauge({ putts, rating }: PuttsGaugeProps) {
                 cy="100%"
                 startAngle={180}
                 endAngle={0}
-                innerRadius={chartLayout.gauge.inner}
-                outerRadius={chartLayout.gauge.outer}
+                innerRadius={tokens.chart.gauge.inner}
+                outerRadius={tokens.chart.gauge.outer}
                 dataKey="value"
                 stroke="none"
                 isAnimationActive={false}
               >
-                <Cell fill={rating ? RATING_FILL[rating] : colors.muted} />
-                <Cell fill={colors.muted} />
+                <Cell fill={rating ? RATING_FILL[rating] : color("muted")} />
+                <Cell fill={color("muted")} />
               </Pie>
             </PieChart>
           </ResponsiveContainer>

@@ -1,14 +1,14 @@
 import type { DifferentialStatus } from "@/domain/handicap";
-import { colors } from "./colors";
 
-const DIFFERENTIAL_FILL: Record<DifferentialStatus, string> = {
-  counting: colors.score.birdie.base,
-  close: colors.score.eagle.base,
-  out: colors.destructive,
-  unrated: colors.score.par.base,
+// Spelled out in full so Tailwind finds every class when it scans the source.
+const DIFFERENTIAL_FILL_CLASS: Record<DifferentialStatus, string> = {
+  counting: "fill-score-birdie-base",
+  close: "fill-score-eagle-base",
+  out: "fill-destructive",
+  unrated: "fill-score-par-base",
 };
 
-/** The bar colour for a round's differential, from where it stands in the WHS window. */
-export function differentialFill(status: DifferentialStatus): string {
-  return DIFFERENTIAL_FILL[status];
+/** The SVG fill for a round's differential bar, from where it stands in the WHS window. */
+export function differentialFillClass(status: DifferentialStatus): string {
+  return DIFFERENTIAL_FILL_CLASS[status];
 }
