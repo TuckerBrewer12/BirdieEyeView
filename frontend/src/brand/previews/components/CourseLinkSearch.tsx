@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { CourseLinkSearch } from "@/brand/components/CourseLinkSearch";
 import type { CourseSummary } from "@/domain/course";
 
@@ -23,62 +24,63 @@ const spyglass: CourseSummary = {
   externalId: null,
 };
 
+const idle = {
+  searching: false,
+  onQueryChange: () => {},
+  onSelectCourse: () => {},
+  onClose: () => {},
+  autoFocus: false,
+};
+
+function Group({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-2.5">
+      <p className="text-label font-semibold text-muted-foreground">{label}</p>
+      {children}
+    </section>
+  );
+}
+
 export default function CourseLinkSearchPreview() {
   return (
     <>
-      <CourseLinkSearch
-        title="Link this round to a saved course"
-        query="peb"
-        results={[pebble, spyglass]}
-        searching={false}
-        onQueryChange={() => {}}
-        onSelectCourse={() => {}}
-        onClose={() => {}}
-        autoFocus={false}
-      />
-      <CourseLinkSearch
-        title="Link to a saved course"
-        query="xyz"
-        results={[]}
-        searching={false}
-        onQueryChange={() => {}}
-        onSelectCourse={() => {}}
-        onClose={() => {}}
-        autoFocus={false}
-      />
-      <CourseLinkSearch
-        query="Half Moon"
-        results={[]}
-        searching={false}
-        reviewVariant
-        onUseCustomName={() => {}}
-        onQueryChange={() => {}}
-        onSelectCourse={() => {}}
-        onClose={() => {}}
-        autoFocus={false}
-      />
-      <CourseLinkSearch
-        query=""
-        results={[]}
-        searching={false}
-        onQueryChange={() => {}}
-        onSelectCourse={() => {}}
-        onClose={() => {}}
-        autoFocus={false}
-        linkedName="Pebble Beach Golf Links"
-        onClear={() => {}}
-      />
-      <CourseLinkSearch
-        query=""
-        results={[]}
-        searching={false}
-        onQueryChange={() => {}}
-        onSelectCourse={() => {}}
-        onClose={() => {}}
-        autoFocus={false}
-        customName="Muni Tuesday"
-        onClear={() => {}}
-      />
+      <Group label="CourseLinkSearch · searching">
+        <CourseLinkSearch
+          {...idle}
+          autoFocus
+          title="Link to a course"
+          description="Adds par, yardage and handicap data to this round."
+          query="peb"
+          results={[pebble, spyglass]}
+        />
+      </Group>
+      <Group label="No match">
+        <CourseLinkSearch
+          {...idle}
+          query="Half Moon"
+          results={[]}
+          reviewVariant
+          onUseCustomName={() => {}}
+          onAddCourse={() => {}}
+        />
+      </Group>
+      <Group label="Linked / custom name">
+        <CourseLinkSearch
+          {...idle}
+          query=""
+          results={[]}
+          linkedName="Pebble Beach Golf Links"
+          linkedLocation="Pebble Beach, CA"
+          onClear={() => {}}
+        />
+        <CourseLinkSearch
+          {...idle}
+          query=""
+          results={[]}
+          customName="Muni Tuesday"
+          onClear={() => {}}
+        />
+      </Group>
     </>
   );
 }
