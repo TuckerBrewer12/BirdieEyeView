@@ -1,6 +1,5 @@
 import * as React from "react";
 import { type VariantProps } from "class-variance-authority";
-import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { statValueVariants, statVariants } from "./variants";
 
@@ -9,6 +8,7 @@ import { statValueVariants, statVariants } from "./variants";
  *
  * The parts compose like `Card`, so a caller can put the label above the
  * value or under it. The caller formats the value; this owns the type.
+ * `StatCard` is the same parts set as a KPI tile.
  */
 function Stat({
   className,
@@ -24,7 +24,7 @@ function StatLabel({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="stat-label"
-      className={cn("text-eyebrow uppercase text-muted-foreground", className)}
+      className={cn("text-body font-medium text-foreground-secondary", className)}
       {...props}
     />
   );
@@ -45,51 +45,147 @@ function StatUnit({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="stat-unit"
-      className={cn("text-sm font-semibold tracking-normal text-muted-foreground", className)}
+      className={cn("text-base font-semibold tracking-normal text-foreground-secondary", className)}
+      {...props}
+    />
+  );
+}
+
+/** The span a figure covers, set small and quiet: the `L20` at a tile's corner. */
+function StatPeriod({ className, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="stat-period"
+      className={cn("text-label text-muted-foreground", className)}
+      {...props}
+    />
+  );
+}
+
+/** What a change is measured against: the "vs previous 20" after a delta. */
+function StatNote({ className, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="stat-note"
+      className={cn("text-body-sm text-muted-foreground", className)}
       {...props}
     />
   );
 }
 
 type StatDirection = "up" | "down" | "flat";
+type StatTone = "good" | "bad" | "neutral";
 
-const DIRECTION_ICONS = { up: TrendingUp, down: TrendingDown, flat: Minus } as const;
+const DIRECTION_GLYPHS = { up: "▲", down: "▼", flat: "–" } as const;
 
-const DIRECTION_TONES: Record<StatDirection, string> = {
-  down: "text-score-birdie",
-  up: "text-score-bogey",
-  flat: "text-muted-foreground",
+/** Scores, handicaps and putts improve as they fall, so by default down is good and up is bad. */
+const DIRECTION_TONES: Record<StatDirection, StatTone> = {
+  down: "good",
+  up: "bad",
+  flat: "neutral",
+};
+
+const TONE_CLASSES: Record<StatTone, string> = {
+  good: "text-status-success",
+  bad: "text-status-danger",
+  neutral: "text-muted-foreground",
 };
 
 /**
- * Which way a figure moved. Scores, handicaps and putts improve as they fall,
- * so down reads as a birdie and up as a bogey. With no children it is the
- * arrow alone; children are the amount, set beside it.
+ * Which way a figure moved: a triangle, and the amount beside it as children.
+ * The colour says whether that is for the better. Scores, handicaps and putts
+ * improve as they fall, so down reads green and up red; a rate that improves
+ * as it rises (greens hit) passes `tone="good"` for its up.
  */
 function StatDelta({
   direction,
+  tone,
   className,
   children,
   ...props
-}: React.ComponentProps<"span"> & { direction: StatDirection | null }) {
+}: React.ComponentProps<"span"> & { direction: StatDirection | null; tone?: StatTone }) {
   if (direction == null) return null;
-  const Icon = DIRECTION_ICONS[direction];
+  const resolved = tone ?? DIRECTION_TONES[direction];
   return (
     <span
       data-slot="stat-delta"
       data-direction={direction}
+      data-tone={resolved}
       className={cn(
-        "inline-flex items-center gap-1 text-label font-semibold whitespace-nowrap",
-        DIRECTION_TONES[direction],
+        "inline-flex items-center gap-1 text-body-sm font-bold whitespace-nowrap",
+        TONE_CLASSES[resolved],
         className,
       )}
       {...props}
     >
-      <Icon aria-hidden className={children == null ? "size-4" : "size-icon-xs"} />
+      <span aria-hidden>{DIRECTION_GLYPHS[direction]}</span>
       {children}
     </span>
   );
 }
 
-export { Stat, StatLabel, StatValue, StatUnit, StatDelta };
-export type { StatDirection };
+interface StatCardProps extends Omit<React.ComponentProps<"div">, "children"> {
+  label: React.ReactNode;
+  /** The span the figure covers, top right: `L20`. */
+  period?: React.ReactNode;
+  value: React.ReactNode;
+  unit?: React.ReactNode;
+  /** A `StatTrend`, to the right of the figure. */
+  trend?: React.ReactNode;
+  /** The amount it moved, beside the triangle. */
+  delta?: React.ReactNode;
+  direction?: StatDirection | null;
+  /** Whether the move is for the better. Defaults from the direction. */
+  tone?: StatTone;
+  /** What the delta is against: "vs previous 20". */
+  note?: React.ReactNode;
+}
+
+/** A KPI tile: the figure, its trend line, and how it moved against the last stretch. */
+function StatCard({
+  label,
+  period,
+  value,
+  unit,
+  trend,
+  delta,
+  direction = null,
+  tone,
+  note,
+  className,
+  ...props
+}: StatCardProps) {
+  return (
+    <div
+      data-slot="stat-card"
+      className={cn(
+        "flex flex-col gap-1.5 rounded-tile border border-border bg-card px-4.5 py-4 text-card-foreground",
+        className,
+      )}
+      {...props}
+    >
+      <div className="flex items-center justify-between">
+        <StatLabel>{label}</StatLabel>
+        {period != null && <StatPeriod>{period}</StatPeriod>}
+      </div>
+      <div className="flex items-end justify-between gap-3">
+        <StatValue size="lg">
+          {value}
+          {unit != null && <StatUnit>{unit}</StatUnit>}
+        </StatValue>
+        {trend != null && <div className="mb-1 flex">{trend}</div>}
+      </div>
+      {(direction != null || note != null) && (
+        <div className="flex items-center gap-1.5">
+          <StatDelta direction={direction} tone={tone}>
+            {delta}
+          </StatDelta>
+          {note != null && <StatNote>{note}</StatNote>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export { Stat, StatLabel, StatValue, StatUnit, StatPeriod, StatNote, StatDelta, StatCard };
+export type { StatDirection, StatTone };
