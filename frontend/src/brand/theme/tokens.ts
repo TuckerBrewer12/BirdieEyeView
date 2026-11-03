@@ -443,7 +443,7 @@ export const size = {
   "profile-double": "92%",
   "profile-worse": "100%",
   /** Width a full scorecard needs before it scrolls sideways. */
-  scorecard: "43.75rem",
+  scorecard: "54rem",
 };
 
 /** Line widths, in pixels. */
