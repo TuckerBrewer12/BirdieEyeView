@@ -168,10 +168,7 @@ export interface paths {
         /** List Courses */
         get: operations["list_courses_api_courses_get"];
         put?: never;
-        /**
-         * Create Course
-         * @description Create a custom course for a user.
-         */
+        /** Create Course */
         post: operations["create_course_api_courses_post"];
         delete?: never;
         options?: never;
@@ -226,10 +223,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Clone Course
-         * @description Clone a master course as a user-owned custom course.
-         */
+        /** Clone Course */
         post: operations["clone_course_api_courses__course_id__clone_post"];
         delete?: never;
         options?: never;
@@ -263,10 +257,7 @@ export interface paths {
         };
         /** Get Round */
         get: operations["get_round_api_rounds__round_id__get"];
-        /**
-         * Update Round
-         * @description Edit an existing round's scores and/or metadata.
-         */
+        /** Update Round */
         put: operations["update_round_api_rounds__round_id__put"];
         post?: never;
         /** Delete Round */
@@ -308,10 +299,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Extract Scan
-         * @description Upload a scorecard image, run OCR extraction, return results for review.
-         */
+        /** Extract Scan */
         post: operations["extract_scan_api_scan_extract_post"];
         delete?: never;
         options?: never;
@@ -328,13 +316,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Prefetch Ocr
-         * @description Run OCR on an uploaded image and return the raw markdown text.
-         *
-         *     Called immediately on file selection so the slow OCR step is already
-         *     complete by the time the user clicks Extract.
-         */
+        /** Prefetch Ocr */
         post: operations["prefetch_ocr_api_scan_ocr_post"];
         delete?: never;
         options?: never;
@@ -351,10 +333,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Save Round
-         * @description Save a reviewed/edited round to the database.
-         */
+        /** Save Round */
         post: operations["save_round_api_scan_save_post"];
         delete?: never;
         options?: never;
@@ -437,10 +416,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get Milestones
-         * @description Return a flat, sorted list of lifetime milestone events for the user.
-         */
+        /** Get Milestones */
         get: operations["get_milestones_api_stats_milestones__user_id__get"];
         put?: never;
         post?: never;
@@ -495,10 +471,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get Played Courses
-         * @description Return distinct courses the user has rounds linked to.
-         */
+        /** Get Played Courses */
         get: operations["get_played_courses_api_stats__user_id__played_courses_get"];
         put?: never;
         post?: never;
@@ -532,16 +505,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * List Friendships
-         * @description List friendships for the current user.
-         */
+        /** List Friendships */
         get: operations["list_friendships_api_users_me_friends_get"];
         put?: never;
-        /**
-         * Send Friend Request
-         * @description Send (or re-open) a friend request to another user.
-         */
+        /** Send Friend Request */
         post: operations["send_friend_request_api_users_me_friends_post"];
         delete?: never;
         options?: never;
@@ -562,10 +529,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /**
-         * Update Friendship Status
-         * @description Accept/decline/block a friendship request.
-         */
+        /** Update Friendship Status */
         patch: operations["update_friendship_status_api_users_me_friends__friendship_id__patch"];
         trace?: never;
     };
@@ -594,10 +558,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get User Handicap
-         * @description Return the user's current WHS Handicap Index.
-         */
+        /** Get User Handicap */
         get: operations["get_user_handicap_api_users__user_id__handicap_get"];
         put?: never;
         post?: never;
@@ -614,16 +575,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get User Tees
-         * @description List a user's custom tee configurations.
-         */
+        /** Get User Tees */
         get: operations["get_user_tees_api_users__user_id__tees_get"];
         put?: never;
-        /**
-         * Create User Tee
-         * @description Create a user tee configuration.
-         */
+        /** Create User Tee */
         post: operations["create_user_tee_api_users__user_id__tees_post"];
         delete?: never;
         options?: never;
@@ -639,16 +594,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /**
-         * Update User Tee
-         * @description Update a user tee configuration.
-         */
+        /** Update User Tee */
         put: operations["update_user_tee_api_users__user_id__tees__tee_id__put"];
         post?: never;
-        /**
-         * Delete User Tee
-         * @description Delete a user tee configuration.
-         */
+        /** Delete User Tee */
         delete: operations["delete_user_tee_api_users__user_id__tees__tee_id__delete"];
         options?: never;
         head?: never;
@@ -835,10 +784,7 @@ export interface components {
             /** User Id */
             user_id: string;
         };
-        /**
-         * BenchmarkComparisonResponse
-         * @description The player's last rounds held up against a benchmark, and which benchmark it was.
-         */
+        /** BenchmarkComparisonResponse */
         BenchmarkComparisonResponse: {
             /**
              * Against
@@ -871,10 +817,7 @@ export interface components {
             /** Scrambling Percentage */
             scrambling_percentage: number | null;
         };
-        /**
-         * BestParInsight
-         * @description The par type the player scores best on.
-         */
+        /** BestParInsight */
         BestParInsight: {
             /** Average To Par */
             average_to_par: number;
@@ -935,10 +878,7 @@ export interface components {
             /** Secondary Value */
             secondary_value: number | null;
         };
-        /**
-         * CourseAnalyticsResponse
-         * @description The player's figures at one course. Every figure is worked out here, not on the client.
-         */
+        /** CourseAnalyticsResponse */
         CourseAnalyticsResponse: {
             /** Average Putts By Hole */
             average_putts_by_hole: components["schemas"]["CourseHolePuttsRow"][];
@@ -1091,10 +1031,7 @@ export interface components {
             /** Variance Rank */
             variance_rank: number;
         };
-        /**
-         * CourseResponse
-         * @description A full course, with the figures the Course model works out.
-         */
+        /** CourseResponse */
         CourseResponse: {
             /** Back Nine Par */
             back_nine_par: number | null;
@@ -1133,10 +1070,7 @@ export interface components {
             /** Total Score */
             total_score: number | null;
         };
-        /**
-         * CourseSummaryResponse
-         * @description Course for card/list views.
-         */
+        /** CourseSummaryResponse */
         CourseSummaryResponse: {
             /** External Course Id */
             external_course_id: string | null;
@@ -1193,10 +1127,7 @@ export interface components {
             /** Slope Rating */
             slope_rating?: number | null;
         };
-        /**
-         * DashboardResponse
-         * @description Aggregated stats for the dashboard page. Every figure is worked out here, not on the client.
-         */
+        /** DashboardResponse */
         DashboardResponse: {
             /** Average Gir */
             average_gir: number | null;
@@ -1249,10 +1180,7 @@ export interface components {
             up_and_down_trend: components["schemas"]["UpAndDownTrendRow"][];
             whs: components["schemas"]["WhsBreakdown"];
         };
-        /**
-         * FieldConfidence
-         * @description How sure the scan is of one reading.
-         */
+        /** FieldConfidence */
         FieldConfidence: {
             /** Final Confidence */
             final_confidence: number;
@@ -1341,10 +1269,7 @@ export interface components {
             lifetime: components["schemas"]["LifetimeGirMilestones"];
             one_year: components["schemas"]["OneYearGirMilestones"];
         };
-        /**
-         * GirShiftInsight
-         * @description GIR% moved between the earlier and later half of the rounds.
-         */
+        /** GirShiftInsight */
         GirShiftInsight: {
             /**
              * Category
@@ -1450,10 +1375,7 @@ export interface components {
             /** Scoring Goal */
             scoring_goal: number;
         };
-        /**
-         * GoalSaver
-         * @description One place to find strokes, with the server's wording for it.
-         */
+        /** GoalSaver */
         GoalSaver: {
             /** Data */
             data: {
@@ -1517,10 +1439,7 @@ export interface components {
             /** Used In Hi */
             used_in_hi: boolean | null;
         };
-        /**
-         * Hole
-         * @description Represents a single hole on a golf course.
-         */
+        /** Hole */
         Hole: {
             /** Handicap */
             handicap: number | null;
@@ -1529,10 +1448,7 @@ export interface components {
             /** Par */
             par: number | null;
         };
-        /**
-         * HoleConfidence
-         * @description How sure the scan is of one hole.
-         */
+        /** HoleConfidence */
         HoleConfidence: {
             fields: components["schemas"]["HoleFieldConfidence"];
             /** Hole Number */
@@ -1545,10 +1461,7 @@ export interface components {
             /** Overall */
             overall: number;
         };
-        /**
-         * HoleFieldConfidence
-         * @description How sure the scan is of each reading on a hole.
-         */
+        /** HoleFieldConfidence */
         HoleFieldConfidence: {
             green_in_regulation: components["schemas"]["FieldConfidence"] | null;
             putts: components["schemas"]["FieldConfidence"] | null;
@@ -1584,10 +1497,7 @@ export interface components {
             /** Strokes */
             strokes?: number | null;
         };
-        /**
-         * HoleScoreResponse
-         * @description One hole as played, with its par resolved and how it scored.
-         */
+        /** HoleScoreResponse */
         HoleScoreResponse: {
             /** Fairway Hit */
             fairway_hit: boolean | null;
@@ -1639,10 +1549,7 @@ export interface components {
             /** Strokes */
             strokes?: number | null;
         };
-        /**
-         * HoleSummaryResponse
-         * @description One hole in a round list: what was taken and how it scored.
-         */
+        /** HoleSummaryResponse */
         HoleSummaryResponse: {
             /** Hole Number */
             hole_number: number;
@@ -1839,10 +1746,7 @@ export interface components {
             /** Value */
             value: number;
         };
-        /**
-         * MilestoneAchievement
-         * @description The round a milestone was first reached in.
-         */
+        /** MilestoneAchievement */
         MilestoneAchievement: {
             /** Course */
             course: string;
@@ -1932,10 +1836,7 @@ export interface components {
              */
             window_days: number;
         };
-        /**
-         * OcrTextResponse
-         * @description `POST /scan/ocr`: the card's text, read ahead so extract can skip that step.
-         */
+        /** OcrTextResponse */
         OcrTextResponse: {
             /** Ocr Text */
             ocr_text: string;
@@ -2053,10 +1954,7 @@ export interface components {
             /** Most Gir In Round */
             most_gir_in_round: number | null;
         };
-        /**
-         * ParTypeComparison
-         * @description One par type's average to par, the player's against the benchmark's.
-         */
+        /** ParTypeComparison */
         ParTypeComparison: {
             /** Average To Par */
             average_to_par: number | null;
@@ -2102,10 +2000,7 @@ export interface components {
             /** Strokes */
             strokes: number;
         };
-        /**
-         * PeakRound
-         * @description One of the player's best rounds.
-         */
+        /** PeakRound */
         PeakRound: {
             /** Course Name */
             course_name: string | null;
@@ -2114,10 +2009,7 @@ export interface components {
             /** Score */
             score: number;
         };
-        /**
-         * PerformanceStreakEvents
-         * @description The round each streak reached its length in.
-         */
+        /** PerformanceStreakEvents */
         PerformanceStreakEvents: {
             longest_2_putt_or_less_streak: components["schemas"]["MilestoneEvent"] | null;
             longest_birdie_streak: components["schemas"]["MilestoneEvent"] | null;
@@ -2150,10 +2042,7 @@ export interface components {
              */
             most_gir_in_a_row: number;
         };
-        /**
-         * PlayedCourseResponse
-         * @description A course the player has a round linked to.
-         */
+        /** PlayedCourseResponse */
         PlayedCourseResponse: {
             /** Id */
             id: string;
@@ -2206,10 +2095,7 @@ export interface components {
              */
             trend: "up" | "down" | "flat";
         };
-        /**
-         * PuttsShiftInsight
-         * @description Putts per round moved between the earlier and later half of the rounds.
-         */
+        /** PuttsShiftInsight */
         PuttsShiftInsight: {
             /**
              * Category
@@ -2289,10 +2175,7 @@ export interface components {
             /** Token */
             token: string;
         };
-        /**
-         * RoundComparisonResponse
-         * @description A round against the player's trailing averages, one list per metric.
-         */
+        /** RoundComparisonResponse */
         RoundComparisonResponse: {
             /** Gir */
             gir: components["schemas"]["ComparisonRow"][];
@@ -2312,10 +2195,7 @@ export interface components {
             lifetime: components["schemas"]["LifetimeRoundMilestones"];
             one_year: components["schemas"]["OneYearRoundMilestones"];
         };
-        /**
-         * RoundResponse
-         * @description A full round: the stored round, its figures, and its hole scores.
-         */
+        /** RoundResponse */
         RoundResponse: {
             /** Back Nine */
             back_nine: number | null;
@@ -2354,10 +2234,7 @@ export interface components {
             /** Yards */
             yards: number | null;
         };
-        /**
-         * RoundSummaryResponse
-         * @description A round for list views: where and when, the figures a list shows, and a mark per hole.
-         */
+        /** RoundSummaryResponse */
         RoundSummaryResponse: {
             /** Back Nine */
             back_nine: number | null;
@@ -2383,10 +2260,7 @@ export interface components {
             /** Total Score */
             total_score: number | null;
         };
-        /**
-         * SaveRoundRequest
-         * @description Request to save a reviewed/edited round.
-         */
+        /** SaveRoundRequest */
         SaveRoundRequest: {
             /** All Tees */
             all_tees?: components["schemas"]["api__request_models__TeeInput"][] | null;
@@ -2422,20 +2296,14 @@ export interface components {
              */
             user_id: string;
         };
-        /**
-         * SaveScanResponse
-         * @description `POST /scan/save`: the new round's id and total.
-         */
+        /** SaveScanResponse */
         SaveScanResponse: {
             /** Id */
             id: string;
             /** Total Score */
             total_score: number | null;
         };
-        /**
-         * ScanConfidence
-         * @description How sure the scan is of the card as a whole, and of each hole.
-         */
+        /** ScanConfidence */
         ScanConfidence: {
             /** Hole Scores */
             hole_scores: components["schemas"]["HoleConfidence"][];
@@ -2447,20 +2315,14 @@ export interface components {
             /** Overall */
             overall: number;
         };
-        /**
-         * ScanResponse
-         * @description `POST /scan/extract`: the card as read, how sure the scan is, and what to check before saving.
-         */
+        /** ScanResponse */
         ScanResponse: {
             confidence: components["schemas"]["ScanConfidence"];
             /** Fields Needing Review */
             fields_needing_review: string[];
             round: components["schemas"]["ScannedRound"];
         };
-        /**
-         * ScannedCourse
-         * @description The course a scan read the card against.
-         */
+        /** ScannedCourse */
         ScannedCourse: {
             /** Holes */
             holes: components["schemas"]["ScannedHole"][];
@@ -2473,10 +2335,7 @@ export interface components {
             /** Tees */
             tees: components["schemas"]["ScannedTee"][];
         };
-        /**
-         * ScannedHole
-         * @description A hole as read off the card, or taken from the course the golfer picked.
-         */
+        /** ScannedHole */
         ScannedHole: {
             /** Handicap */
             handicap: number | null;
@@ -2503,10 +2362,7 @@ export interface components {
             /** Strokes */
             strokes: number | null;
         };
-        /**
-         * ScannedRound
-         * @description A round as read off a card, before the golfer checks and saves it.
-         */
+        /** ScannedRound */
         ScannedRound: {
             course: components["schemas"]["ScannedCourse"] | null;
             /** Date */
@@ -2534,10 +2390,7 @@ export interface components {
             /** Slope Rating */
             slope_rating: number | null;
         };
-        /**
-         * ScoreCounts
-         * @description How many holes landed in each score bucket.
-         */
+        /** ScoreCounts */
         ScoreCounts: {
             /**
              * Birdie
@@ -2697,10 +2550,7 @@ export interface components {
             lifetime: components["schemas"]["LifetimeScoringRecords"];
             one_year: components["schemas"]["OneYearScoringRecords"];
         };
-        /**
-         * ScoringShiftInsight
-         * @description The scoring average moved between the earlier and later half of the rounds.
-         */
+        /** ScoringShiftInsight */
         ScoringShiftInsight: {
             /**
              * Category
@@ -2747,10 +2597,7 @@ export interface components {
             /** Addressee User Id */
             addressee_user_id?: string | null;
         };
-        /**
-         * TeeResponse
-         * @description A tee with its yardage figures worked out.
-         */
+        /** TeeResponse */
         TeeResponse: {
             /** Back Nine Yardage */
             back_nine_yardage: number | null;
@@ -2894,10 +2741,7 @@ export interface components {
             /** Scoring Goal */
             scoring_goal: number | null;
         };
-        /**
-         * UserTee
-         * @description A user-owned tee configuration, optionally linked to a master course.
-         */
+        /** UserTee */
         UserTee: {
             /** Course Id */
             course_id: string | null;
@@ -3001,10 +2845,7 @@ export interface components {
             lifetime: components["schemas"]["PerformanceStreaks"];
             one_year: components["schemas"]["PerformanceStreaks"];
         };
-        /**
-         * YardageScore
-         * @description One hole played in a yardage bucket.
-         */
+        /** YardageScore */
         YardageScore: {
             /** To Par */
             to_par: number;

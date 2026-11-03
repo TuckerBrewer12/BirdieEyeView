@@ -1,10 +1,11 @@
 from api.request_models import TeeInput
 from models import Course, Tee
 from services.scan_service import ScanService
+from tests.helpers import make_mock_database
 
 
 def _svc() -> ScanService:
-    return ScanService(db=None)  # type: ignore[arg-type]
+    return ScanService(db=make_mock_database())
 
 
 def test_canonicalize_played_tee_box_prefers_existing_course_tee_label_on_yardage_match() -> None:

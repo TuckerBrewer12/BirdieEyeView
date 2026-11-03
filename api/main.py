@@ -1,5 +1,3 @@
-"""FastAPI application for the Golf Scorecard API."""
-
 import asyncio
 import logging
 import os
@@ -15,7 +13,6 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s [%(name)s] %(message)s",
 )
-# Show all llm pipeline logs at DEBUG level
 logging.getLogger("llm").setLevel(logging.DEBUG)
 
 from api.security import (
@@ -38,12 +35,8 @@ if env_bool("LOAD_DOTENV", not IS_PROD_LIKE):
 
 from fastapi.middleware.cors import CORSMiddleware
 
-from models import Round, User  # noqa: F401 — Round must be imported for User.model_rebuild()
 from database.connection import db
 from database.db_manager import DatabaseManager
-
-# Resolve forward reference (User -> Round)
-User.model_rebuild()
 
 
 def _env_float(name: str, default: float) -> float:
@@ -58,11 +51,6 @@ def _env_float(name: str, default: float) -> float:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize DB pool on startup, close on shutdown.
-
-    Startup remains non-blocking for DB network delays so Railway can mark the
-    service healthy, while DB-dependent routes return 503 until the DB connects.
-    """
     validate_deployment_security()
     dsn = os.environ.get("DATABASE_URL")
 
@@ -77,7 +65,7 @@ async def lifespan(app: FastAPI):
             app.state.db_manager = DatabaseManager(db.pool)
             app.state.db_connect_error = None
             return True
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             app.state.db_manager = None
             app.state.db_connect_error = str(exc)
             logging.getLogger(__name__).log(
@@ -312,7 +300,6 @@ def create_app() -> FastAPI:
             user_agent=user_agent,
         )
 
-        # Basic hardening headers for API responses.
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -329,7 +316,6 @@ def create_app() -> FastAPI:
     app.include_router(scan.router, prefix="/api/scan", tags=["scan"])
     app.include_router(ai_insights.router, prefix="/api/ai-insights", tags=["ai-insights"])
 
-    # Uptime probes, not client API: kept out of the schema the frontend types are generated from.
     @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
     async def root_status(request: Request):
         if request.method == "HEAD":
