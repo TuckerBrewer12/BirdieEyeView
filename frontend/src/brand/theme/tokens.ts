@@ -389,6 +389,8 @@ export const type = {
   kicker: { size: 9, weight: 700, tracking: tracking.kicker },
   /** The label above a page section (`SectionLabel`). */
   section: { size: 11, weight: 700, tracking: tracking.section },
+  /** A row of settings: its label, its value, the text of a destructive row. */
+  row: { size: 15, weight: 500 },
 } satisfies Record<string, TypeRole>;
 
 /** Space that is not on Tailwind's 4px scale. */
@@ -419,6 +421,8 @@ export const radius = {
   tick: 2,
   card: 10,
   tooltip: 12,
+  /** A group of settings rows. */
+  panel: 14,
   addon: "calc(var(--radius) - var(--brand-space-nudge))",
   control: "calc(var(--radius) - var(--brand-space-nudge-sm))",
 };
