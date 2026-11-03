@@ -3,18 +3,20 @@ import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
-import { indexScale, knownValues, lastKnownIndex, paddedExtent } from "./scales";
+import { indexScale, knownValues, paddedExtent } from "./scales";
 
-type SparklineTone = "primary" | "contrast";
+type SparklineTone = "primary" | "contrast" | "birdie";
 
 const STROKE: Record<SparklineTone, string> = {
   primary: tokens.color.primary,
   contrast: tokens.color.score.triple.text,
+  birdie: tokens.color.score.birdie.base,
 };
 
 const SWATCH: Record<SparklineTone, string> = {
   primary: "bg-primary",
   contrast: "bg-score-triple",
+  birdie: "bg-score-birdie-base",
 };
 
 interface SparklineSeries {
@@ -36,10 +38,10 @@ interface SparklineProps {
   className?: string;
 }
 
-/** Which way a figure has been heading: a small line, no axes, the latest value marked. */
+/** Which way a figure has been heading: a small line with no axes, nothing marked on it. */
 export function Sparkline({ series, domain, fill = false, reference = null, className }: SparklineProps) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
-  const { width: W, height: H, pad, stroke, dot } = tokens.chart.sparkline;
+  const { width: W, height: H, pad, stroke } = tokens.chart.sparkline;
 
   const length = Math.max(0, ...series.map((s) => s.values.length));
   const all = series.flatMap((s) => s.values);
@@ -94,7 +96,6 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
         {fill && <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />}
         {series.map((s, i) => {
           const color = STROKE[s.tone ?? "primary"];
-          const end = lastKnownIndex(s.values);
           return (
             <g key={i}>
               <path
@@ -104,17 +105,9 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
                 strokeWidth={stroke}
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                // The line stays this thick however far the drawing is scaled.
+                vectorEffect="non-scaling-stroke"
               />
-              {end >= 0 && (
-                <circle
-                  cx={x(end)}
-                  cy={y(s.values[end]!)}
-                  r={dot}
-                  fill={tokens.color.card}
-                  stroke={color}
-                  strokeWidth={stroke}
-                />
-              )}
             </g>
           );
         })}

@@ -1,8 +1,13 @@
 import { Sparkline } from "@/brand/charts/Sparkline";
+import { Card } from "@/brand/components/Card";
 
 export default function SparklinePreview() {
   return (
     <div className="flex flex-col gap-6">
+      <Card className="flex-row items-center gap-2.5 px-4">
+        <Sparkline className="w-24 shrink-0" series={[{ values: [19, 16, 17, 12, 13, 9, 6], tone: "birdie" }]} />
+        <span className="text-label font-semibold text-muted-foreground">Sparkline · trend only, no axes</span>
+      </Card>
       {/* The dashed line is the rounds' average as the server sent it: 76.8. */}
       <Sparkline series={[{ values: [85, 69, 72, 78, 80] }]} fill reference={76.8} />
       <Sparkline
