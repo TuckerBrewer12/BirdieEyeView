@@ -80,10 +80,10 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
             transition={{ duration: 0.25 }}
           >
             <ScanProgress
-              label={viewModel.phaseLabel}
-              detail={viewModel.phaseDetail}
+              label="Reading your card"
+              steps={viewModel.phaseSteps}
               phase={viewModel.phase}
-              phaseCount={viewModel.phaseCount}
+              className="mx-auto max-w-sm"
             />
           </motion.div>
         )}
