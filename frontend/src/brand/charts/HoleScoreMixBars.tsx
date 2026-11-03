@@ -1,18 +1,18 @@
 import { Bar, BarChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartLayout, chartTickStyle, chartTooltipStyle, colors, scoreKindLabel } from "@/brand/theme";
+import { chartTickStyle, chartTooltipStyle, scoreKindLabel, tokens } from "@/brand/theme";
 import { formatPercent, pluralize } from "@/domain/format";
 import { SCORE_KINDS } from "@/domain/score";
 import type { HoleScoreMix } from "@/domain/courseAnalytics";
-import { AXIS_TICK, type TooltipFormatter } from "./holeBarParts";
+import { type TooltipFormatter } from "./holeBarParts";
 
 /** How each hole tends to go: one stacked bar per hole, split by score kind, to 100%. */
 export function HoleScoreMixBars({ rows }: { rows: HoleScoreMix[] }) {
   return (
     <div data-slot="hole-score-mix-bars" className="h-chart">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} margin={chartLayout.margin}>
-          <XAxis dataKey="hole" tick={AXIS_TICK} tickLine={false} axisLine={false} />
-          <YAxis domain={[0, 100]} tick={AXIS_TICK} tickLine={false} axisLine={false} />
+        <BarChart data={rows} margin={tokens.chart.margin}>
+          <XAxis dataKey="hole" tick={chartTickStyle} tickLine={false} axisLine={false} />
+          <YAxis domain={[0, 100]} tick={chartTickStyle} tickLine={false} axisLine={false} />
           <Tooltip
             contentStyle={chartTooltipStyle}
             labelFormatter={(_label, payload) =>
@@ -26,7 +26,7 @@ export function HoleScoreMixBars({ rows }: { rows: HoleScoreMix[] }) {
               key={kind}
               dataKey={kind}
               stackId="mix"
-              fill={colors.score[kind].base}
+              fill={tokens.color.score[kind].base}
               name={scoreKindLabel(kind)}
             />
           ))}

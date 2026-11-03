@@ -5,7 +5,7 @@ import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import { motion as motionTokens, toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
+import { toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
 import { playedScoreKinds, scoreKindCountLabel, type RoundSummary } from "@/domain";
 import { formatCourseName } from "@/domain/course";
 import { formatDay, formatDayShort, dayParts } from "@/domain/date";
@@ -79,15 +79,15 @@ export function RoundPreview(props: RoundPreviewProps) {
         "grid grid-cols-round-preview items-center gap-2.5 overflow-hidden rounded-card border border-border bg-card transition-shadow",
         onClick ? "cursor-pointer hover:shadow-card" : "cursor-default",
       )}
-      whileHover={onClick ? { scale: motionTokens.hoverScale } : undefined}
-      whileTap={onClick ? { scale: motionTokens.tapScale } : undefined}
-      transition={motionTokens.spring}
+      whileHover={onClick ? { scale: tokens.motion.hoverScale } : undefined}
+      whileTap={onClick ? { scale: tokens.motion.tapScale } : undefined}
+      transition={tokens.motion.spring}
       onClick={onClick}
     >
       <div className="flex flex-col items-center justify-center gap-0.5 self-stretch rounded-l-lg bg-muted py-2.5 text-center">
         {dateParts ? (
           <>
-            <span className="text-caption font-bold uppercase tracking-kicker text-muted-foreground">
+            <span className="text-kicker uppercase text-muted-foreground">
               {dateParts.month}
             </span>
             <span className="text-lg font-bold leading-none text-foreground">
@@ -237,7 +237,7 @@ function RoundTicket({ round, label, actionLabel, onClick }: Omit<RoundTicketPro
     >
       <div className="flex w-full items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="mb-1 text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
+          <div className="mb-1 text-eyebrow uppercase text-muted-foreground">
             {label}
           </div>
           <div className="truncate text-lg font-bold leading-tight tracking-name text-card-foreground">

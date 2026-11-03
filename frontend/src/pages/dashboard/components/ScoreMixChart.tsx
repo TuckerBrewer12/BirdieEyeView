@@ -1,9 +1,9 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartColors, chartLayout, chartTickStyle, chartTooltipStyle, colors } from "@/brand";
+import { chartTickStyle, chartTooltipStyle, tokens } from "@/brand";
 import { formatPercent, type ScoreMix } from "@/domain";
 import { colorizeMix } from "../present";
 
-const TICK = { ...chartTickStyle, fill: chartColors.axis, fontWeight: 700 };
+const TICK = { ...chartTickStyle, fontWeight: 700 };
 
 function percent(value: number | string | ReadonlyArray<number | string> | undefined) {
   const base = Array.isArray(value) ? value[0] : value;
@@ -23,12 +23,12 @@ export function ScoreMixChart({ mix }: ScoreMixChartProps) {
   return (
     <div data-slot="score-mix-chart" className="h-chart">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={bars} margin={chartLayout.margin}>
-          <CartesianGrid stroke={colors.border} vertical={false} />
+        <BarChart data={bars} margin={tokens.chart.margin}>
+          <CartesianGrid stroke={tokens.color.border} vertical={false} />
           <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={false} />
           <YAxis tick={TICK} tickLine={false} axisLine={false} unit="%" />
           <Tooltip contentStyle={chartTooltipStyle} formatter={percent} />
-          <Bar dataKey="value" radius={chartLayout.barRadius} maxBarSize={chartLayout.barMaxWidth}>
+          <Bar dataKey="value" radius={tokens.chart.barRadius} maxBarSize={tokens.chart.barMaxWidth}>
             {bars.map((entry) => (
               <Cell key={entry.name} fill={entry.color} />
             ))}

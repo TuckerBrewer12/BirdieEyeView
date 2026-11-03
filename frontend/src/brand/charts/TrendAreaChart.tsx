@@ -3,29 +3,18 @@ import { AnimatePresence, motion } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
-import {
-  borderWidth,
-  chartColors,
-  chartLayout,
-  colors,
-  fonts,
-  motion as motionTokens,
-  opacityWash,
-  ringWidth,
-  space,
-  typography,
-} from "@/brand/theme";
+import { tokens } from "@/brand/theme";
 import { indexScale, knownValues, paddedExtent } from "./scales";
 
 type TrendAreaTone = "primary" | "birdie" | "bogey" | "eagle" | "neutral" | "contrast";
 
 const STROKE: Record<TrendAreaTone, string> = {
-  primary: colors.primary,
-  birdie: colors.score.birdie.base,
-  bogey: colors.score.bogey.base,
-  eagle: colors.score.eagle.base,
-  neutral: colors.mutedForeground,
-  contrast: colors.score.triple.text,
+  primary: tokens.color.primary,
+  birdie: tokens.color.score.birdie.base,
+  bogey: tokens.color.score.bogey.base,
+  eagle: tokens.color.score.eagle.base,
+  neutral: tokens.color.mutedForeground,
+  contrast: tokens.color.score.triple.text,
 };
 
 // Spelled out in full so Tailwind finds every class when it scans the source.
@@ -86,7 +75,7 @@ export function TrendAreaChart({
   className,
   "aria-label": ariaLabel,
 }: TrendAreaChartProps) {
-  const layout = chartLayout.trendArea;
+  const layout = tokens.chart.trendArea;
   const { width: W, height: H, pad: PAD } = layout;
   const gradientId = `trend-area-${useId().replace(/:/g, "")}`;
   const [active, setActive] = useState<number | null>(null);
@@ -155,14 +144,14 @@ export function TrendAreaChart({
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={lead} stopOpacity={opacityWash} />
+            <stop offset="0%" stopColor={lead} stopOpacity={tokens.opacity.wash} />
             <stop offset="100%" stopColor={lead} stopOpacity={0} />
           </linearGradient>
         </defs>
 
         {y.ticks(layout.yTicks).map((tick) => (
           <g key={`y-${tick}`}>
-            <line x1={PAD.left} x2={W - PAD.right} y1={y(tick)} y2={y(tick)} stroke={chartColors.muted} strokeWidth={borderWidth} />
+            <line x1={PAD.left} x2={W - PAD.right} y1={y(tick)} y2={y(tick)} stroke={tokens.color.chart.muted} strokeWidth={tokens.lineWidth.border} />
             <AxisLabel x={PAD.left - 8} y={y(tick) + 4} anchor="end">
               {format(tick)}
             </AxisLabel>
@@ -182,9 +171,9 @@ export function TrendAreaChart({
               x2={W - PAD.right}
               y1={y(reference.value)}
               y2={y(reference.value)}
-              stroke={chartColors.axis}
-              strokeWidth={borderWidth}
-              strokeDasharray={`${space.dot} ${space.dot}`}
+              stroke={tokens.color.chart.axis}
+              strokeWidth={tokens.lineWidth.border}
+              strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
             />
             <AxisLabel x={W - PAD.right} y={y(reference.value) - 6} anchor="end">
               {reference.label}
@@ -212,9 +201,9 @@ export function TrendAreaChart({
             x2={x(active)}
             y1={PAD.top}
             y2={baseline}
-            stroke={chartColors.muted}
-            strokeWidth={borderWidth}
-            strokeDasharray={`${space.dot} ${space.dot}`}
+            stroke={tokens.color.chart.muted}
+            strokeWidth={tokens.lineWidth.border}
+            strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
           />
         )}
 
@@ -229,8 +218,8 @@ export function TrendAreaChart({
                 cy={y(value)}
                 r={active === index ? layout.dotHover : layout.dot}
                 fill={STROKE[s.tone ?? "primary"]}
-                stroke={colors.card}
-                strokeWidth={space.bar}
+                stroke={tokens.color.card}
+                strokeWidth={tokens.lineWidth.outline}
               />
             );
           }),
@@ -259,10 +248,10 @@ export function TrendAreaChart({
               x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
             )}
             style={{ left: `${(x(active) / W) * 100}%`, top: `${(pointY / H) * 100}%` }}
-            initial={{ opacity: 0, scale: motionTokens.tapScale }}
+            initial={{ opacity: 0, scale: tokens.motion.tapScale }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: motionTokens.tapScale }}
-            transition={{ duration: motionTokens.duration.collapse }}
+            exit={{ opacity: 0, scale: tokens.motion.tapScale }}
+            transition={{ duration: tokens.motion.duration.collapse }}
           >
             <div className="text-sm font-bold text-card-foreground">{point.title}</div>
             {point.subtitle && (
@@ -312,13 +301,13 @@ function AxisLabel({
       x={x}
       y={y}
       textAnchor={anchor}
-      fontSize={typography.label}
+      fontSize={tokens.type.label.size}
       fontWeight="600"
-      fontFamily={fonts.sans}
-      fill={chartColors.axis}
+      fontFamily={tokens.font.sans}
+      fill={tokens.color.chart.axis}
       paintOrder="stroke"
-      stroke={colors.card}
-      strokeWidth={ringWidth}
+      stroke={tokens.color.card}
+      strokeWidth={tokens.lineWidth.ring}
       strokeLinejoin="round"
     >
       {children}

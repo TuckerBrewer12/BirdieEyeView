@@ -3,7 +3,9 @@ import {
   SCORE_KEYS,
   scoreFillClass,
   scoreOnFillClass,
+  scoreWashClass,
   toParBadgeClass,
+  toParFill,
   toParTextClass,
 } from "./score";
 
@@ -38,5 +40,23 @@ describe("scoreOnFillClass", () => {
     for (const key of SCORE_KEYS) {
       expect(scoreOnFillClass(key)).toBe(`text-score-${key}-on-base`);
     }
+  });
+});
+
+describe("scoreWashClass", () => {
+  it("names each score's wash and the ink on it", () => {
+    for (const key of SCORE_KEYS) {
+      expect(scoreWashClass(key)).toBe(`bg-score-${key}-muted text-score-${key}-on-muted`);
+    }
+  });
+});
+
+describe("toParFill", () => {
+  it("paints a round's to-par as par, eagle, birdie or bogey", () => {
+    expect(toParFill(null)).toBe("var(--score-par-base)");
+    expect(toParFill(0)).toBe("var(--score-par-base)");
+    expect(toParFill(-2)).toBe("var(--score-eagle-base)");
+    expect(toParFill(-1)).toBe("var(--score-birdie-base)");
+    expect(toParFill(5)).toBe("var(--score-bogey-base)");
   });
 });

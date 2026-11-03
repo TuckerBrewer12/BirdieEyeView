@@ -1,12 +1,12 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { chartLayout, colors } from "@/brand";
+import { tokens } from "@/brand";
 import type { PuttsRating } from "../model";
 import { puttsLabel } from "../present";
 
 const RATING_FILL: Record<PuttsRating, string> = {
-  strong: colors.score.birdie.base,
-  fair: colors.score.eagle.base,
-  weak: colors.destructive,
+  strong: tokens.color.score.birdie.base,
+  fair: tokens.color.score.eagle.base,
+  weak: tokens.color.destructive,
 };
 
 interface PuttsGaugeProps {
@@ -31,14 +31,14 @@ export function PuttsGauge({ putts, rating }: PuttsGaugeProps) {
                 cy="100%"
                 startAngle={180}
                 endAngle={0}
-                innerRadius={chartLayout.gauge.inner}
-                outerRadius={chartLayout.gauge.outer}
+                innerRadius={tokens.chart.gauge.inner}
+                outerRadius={tokens.chart.gauge.outer}
                 dataKey="value"
                 stroke="none"
                 isAnimationActive={false}
               >
-                <Cell fill={rating ? RATING_FILL[rating] : colors.muted} />
-                <Cell fill={colors.muted} />
+                <Cell fill={rating ? RATING_FILL[rating] : tokens.color.muted} />
+                <Cell fill={tokens.color.muted} />
               </Pie>
             </PieChart>
           </ResponsiveContainer>
@@ -50,7 +50,7 @@ export function PuttsGauge({ putts, rating }: PuttsGaugeProps) {
           </div>
         </div>
       </div>
-      <div className="flex justify-center gap-3 text-caption text-muted-foreground font-semibold uppercase tracking-kicker mt-2">
+      <div className="flex justify-center gap-3 text-kicker text-muted-foreground font-semibold uppercase mt-2">
         <span className="text-score-birdie-base">{"≤30 great"}</span>
         <span className="text-score-eagle-base">30-34</span>
         <span className="text-destructive">34+ work</span>

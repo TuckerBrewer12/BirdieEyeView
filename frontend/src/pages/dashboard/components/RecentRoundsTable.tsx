@@ -12,13 +12,13 @@ export function RecentRoundsTable({ rounds, onRoundClick }: RecentRoundsTablePro
   return (
     <div data-slot="recent-rounds-table">
       <div className="grid grid-cols-recent-rounds gap-x-3 bg-muted/60 text-left">
-        <div className="py-3 pl-3 text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
+        <div className="py-3 pl-3 text-eyebrow uppercase text-muted-foreground">
           Course
         </div>
-        <div className="py-3 text-center text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
+        <div className="py-3 text-center text-eyebrow uppercase text-muted-foreground">
           Total
         </div>
-        <div className="py-3 pr-3 text-center text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
+        <div className="py-3 pr-3 text-center text-eyebrow uppercase text-muted-foreground">
           To Par
         </div>
       </div>

@@ -27,7 +27,7 @@ export function HoleScoreBars({ holes, variant = "strip", className }: HoleScore
   return (
     <div
       data-slot="hole-score-bars"
-      className={cn("flex", profile ? "h-6 items-end gap-hair" : "h-2.5 gap-bar", className)}
+      className={cn("flex", profile ? "h-6 items-end gap-bar" : "h-2.5 gap-bar", className)}
     >
       {holes.map((hole) => {
         // Par is the baseline, so it recedes and the misses stand out. Unscored holes read as par.
@@ -39,7 +39,7 @@ export function HoleScoreBars({ holes, variant = "strip", className }: HoleScore
               "flex-1",
               scoreFillClass(kind),
               profile ? cn("rounded-t-tick", PROFILE_HEIGHT[kind]) : "rounded-bar",
-              kind === "par" && "opacity-(--brand-opacity-recessed)",
+              kind === "par" && "opacity-recessed",
             )}
           />
         );
