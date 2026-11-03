@@ -23,12 +23,12 @@ function CourseRow({ name, location, rounds, average, className, ...target }: Co
   return (
     <ListRow slot="course-row" className={className} {...target}>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-row text-foreground">{name}</p>
+        <p className="truncate text-body-lg font-semibold text-foreground">{name}</p>
         <p className="truncate text-body text-muted-foreground">{meta}</p>
       </div>
 
       <div className="shrink-0 text-right">
-        <p className="text-row font-bold text-foreground">{formatOneDecimal(average)}</p>
+        <p className="text-body-lg font-bold text-foreground">{formatOneDecimal(average)}</p>
         <p className="text-body-sm text-muted-foreground">avg</p>
       </div>
 

@@ -115,7 +115,7 @@
   --brand-text-label: 11px;
   --brand-text-body-sm: 12px;
   --brand-text-body: 13px;
-  --brand-text-row: 15px;
+  --brand-text-body-lg: 15px;
   --brand-text-title: 26px;
   --brand-text-hero: 44px;
   --brand-text-eyebrow: 10px;
@@ -318,7 +318,7 @@
   --text-label: var(--brand-text-label);
   --text-body-sm: var(--brand-text-body-sm);
   --text-body: var(--brand-text-body);
-  --text-row: var(--brand-text-row);
+  --text-body-lg: var(--brand-text-body-lg);
   --text-title: var(--brand-text-title);
   --text-hero: var(--brand-text-hero);
   --text-eyebrow: var(--brand-text-eyebrow);
@@ -373,7 +373,6 @@
   --stroke-width-icon-active: var(--brand-stroke-icon-active);
   --opacity-recessed: var(--brand-opacity-recessed);
   --opacity-wash: var(--brand-opacity-wash);
-  --text-row--font-weight: 600;
   --text-title--font-weight: 700;
   --text-title--letter-spacing: -0.5px;
   --text-hero--font-weight: 700;

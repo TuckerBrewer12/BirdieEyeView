@@ -377,8 +377,8 @@ export const type = {
   /** Small body copy, tooltips, small buttons. */
   "body-sm": { size: 12 },
   body: { size: 13 },
-  /** The name or figure on a list row (`PersonRow`, `CourseRow`). */
-  row: { size: 15, weight: 600 },
+  /** Large body copy: the name or figure on a list row. */
+  "body-lg": { size: 15 },
   /** A page's title. */
   title: { size: 26, weight: 700, tracking: tracking.title },
   /** The one big figure on a card: a round's score. */

@@ -71,7 +71,7 @@ export {
 } from "./components/InputGroup";
 export { PageHeader } from "./components/PageHeader";
 export { PersonRow } from "./components/PersonRow";
-export type { PersonRowProps, AvatarTone } from "./components/PersonRow";
+export type { PersonRowProps } from "./components/PersonRow";
 export { CourseRow } from "./components/CourseRow";
 export type { CourseRowProps } from "./components/CourseRow";
 export { PageTitle } from "./components/PageTitle";

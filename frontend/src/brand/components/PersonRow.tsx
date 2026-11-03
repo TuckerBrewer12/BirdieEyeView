@@ -1,12 +1,7 @@
 import type { ReactNode } from "react";
-import { type VariantProps } from "class-variance-authority";
 import { cn } from "@/brand/cn";
 import { ListRow, type RowTarget } from "./ListRow";
-import { personAvatarVariants } from "./variants";
-
-type AvatarTone = NonNullable<VariantProps<typeof personAvatarVariants>["tone"]>;
-
-const tones: readonly AvatarTone[] = ["primary", "info", "triple", "eagle", "danger"];
+import { personAvatarFills } from "./variants";
 
 interface PersonRowProps extends RowTarget {
   name: string;
@@ -18,8 +13,6 @@ interface PersonRowProps extends RowTarget {
   meta?: ReactNode;
   /** A link-styled word, buttons or a status at the end of the row. */
   actions?: ReactNode;
-  /** The avatar's colour. Defaults to one picked from `name`, so a person keeps theirs. */
-  tone?: AvatarTone;
   className?: string;
 }
 
@@ -33,10 +26,11 @@ function initialsOf(name: string): string {
   return letters.toUpperCase() || "?";
 }
 
-function toneOf(name: string): AvatarTone {
+/** One of the avatar fills, picked from the name so a person keeps theirs. */
+function fillOf(name: string): string {
   let hash = 0;
-  for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) % tones.length;
-  return tones[hash];
+  for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) % personAvatarFills.length;
+  return personAvatarFills[hash];
 }
 
 /**
@@ -45,30 +39,21 @@ function toneOf(name: string): AvatarTone {
  * the whole row is the target; a row that ends in buttons is not one, since
  * the buttons are the targets.
  */
-function PersonRow({
-  name,
-  initials,
-  detail,
-  meta,
-  actions,
-  tone,
-  className,
-  ...target
-}: PersonRowProps) {
+function PersonRow({ name, initials, detail, meta, actions, className, ...target }: PersonRowProps) {
   return (
     <ListRow slot="person-row" className={className} {...target}>
       <span
         aria-hidden
         className={cn(
           "flex size-9 shrink-0 items-center justify-center rounded-full text-body font-bold",
-          personAvatarVariants({ tone: tone ?? toneOf(name) }),
+          fillOf(name),
         )}
       >
         {initials ?? initialsOf(name)}
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-row text-foreground">{name}</p>
+        <p className="truncate text-body-lg font-semibold text-foreground">{name}</p>
         {detail != null && <p className="truncate text-body text-muted-foreground">{detail}</p>}
         {meta != null && <p className="mt-0.5 truncate text-meta text-muted-foreground">{meta}</p>}
       </div>
@@ -79,4 +64,4 @@ function PersonRow({
 }
 
 export { PersonRow };
-export type { PersonRowProps, AvatarTone };
+export type { PersonRowProps };
