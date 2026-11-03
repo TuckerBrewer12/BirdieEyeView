@@ -220,7 +220,7 @@ function SheetOption({
       {...props}
     >
       <span className="flex-1 text-left">{children}</span>
-      <span className="inline-flex w-4.5 justify-end">
+      <span className="inline-flex w-4 justify-end">
         {selected && <Check aria-hidden className="size-4 text-primary" strokeWidth={2.5} />}
       </span>
     </button>
