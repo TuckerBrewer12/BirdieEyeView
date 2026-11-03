@@ -3,7 +3,17 @@ import { RoundPreview } from "@/brand/components/RoundPreview";
 import { Round } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 
-const [overPar, evenPar, best, unlinked] = populatedRounds.map(Round.fromSummary);
+const [overPar, evenPar, best, fixtureUnlinked] = populatedRounds.map(Round.fromSummary);
+
+/** The board's Mar 9 card: a double on the first hole, then bogeys and pars, as the redesign shows it. */
+const UNLINKED_KINDS = [
+  "double", "bogey", "bogey", "bogey", "bogey", "par", "bogey", "par", "par",
+  "bogey", "bogey", "bogey", "bogey", "par", "bogey", "par", "bogey", "par",
+] as const;
+const unlinked = {
+  ...fixtureUnlinked,
+  holes: fixtureUnlinked.holes.map((hole, i) => ({ ...hole, kind: UNLINKED_KINDS[i] ?? hole.kind })),
+};
 
 /** Compose-style @Preview for RoundPreview. */
 export default function RoundPreviewPreview() {
