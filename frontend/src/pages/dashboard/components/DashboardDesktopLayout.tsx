@@ -3,11 +3,13 @@ import {
   ActivityHeatmap,
   Button,
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
   RoundPreview,
+  ScoreHandicapLegend,
   SVGScoreHandicapTrend,
   Sparkline,
   Stat,
@@ -87,6 +89,9 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
               <CardHeader>
                 <CardTitle>Score & Handicap Trend</CardTitle>
                 <CardDescription>Last 20 rounds</CardDescription>
+                <CardAction>
+                  <ScoreHandicapLegend />
+                </CardAction>
               </CardHeader>
               <CardContent>
                 <SVGScoreHandicapTrend data={trend} />

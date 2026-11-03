@@ -1,25 +1,24 @@
-import { useId, useState, type PointerEvent, type ReactNode } from "react";
+import { useState, type PointerEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { scaleLinear } from "d3-scale";
-import { area, curveMonotoneX, line } from "d3-shape";
+import { curveStepAfter, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import { toParFill, differentialFill, tokens } from "@/brand/theme";
+import { tokens } from "@/brand/theme";
 import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
-import { indexScale, knownValues, paddedExtent } from "./scales";
+import { indexScale, knownValues, lastKnownIndex, niceExtent, rollingMean } from "./scales";
 
 type TrendSeries = "both" | "score" | "handicap";
 
 interface SVGScoreHandicapTrendProps {
   data: RoundTrendPoint[];
-  /** Which line to draw. `both` puts the handicap on a second axis at the right. */
+  /** Which panel to draw. `both` stacks the handicap index under the scores, on the same rounds. */
   series?: TrendSeries;
-  /** The phone shape: narrower and taller. Meant for one series at a time. */
+  /** The phone shape: narrower. Meant for one series at a time. */
   compact?: boolean;
 }
 
-const SCORE_COLOR = tokens.color.primary;
-const HANDICAP_COLOR = tokens.color.score.double.text;
+const L = tokens.chart.stack;
 
 /** Selection is kept per series, so switching the line clears it. */
 interface Selection {
@@ -27,65 +26,86 @@ interface Selection {
   index: number;
 }
 
+/** Where a panel's grid sits, top to bottom. */
+interface Panel {
+  top: number;
+  bottom: number;
+}
+
 /**
- * Scores as bars under a line, the handicap index as a second line, or either
- * alone. Hovering with a mouse or tapping on a phone picks a round.
+ * Scores as dots with their five-round average behind them, and the handicap
+ * index as a step line, stacked as two small multiples on the same rounds, or
+ * either alone. Hovering with a mouse or tapping on a phone picks a round.
  */
 export function SVGScoreHandicapTrend({ data, series = "both", compact = false }: SVGScoreHandicapTrendProps) {
-  const plot = compact ? { ...tokens.chart.plot, ...tokens.chart.plotCompact } : tokens.chart.plot;
-  const { width: W, height: H, pad: PAD } = plot;
-  const hiGrad = `hiGrad${useId().replace(/:/g, "")}`;
   const [selection, setSelection] = useState<Selection | null>(null);
 
-  const showScore = series !== "handicap";
-  const showHandicap = series !== "score";
   const scores = data.map((d) => d.score);
   const handicaps = data.map((d) => d.handicapIndex);
+  const hasHandicap = knownValues(handicaps).length > 0;
 
   if (data.length < 2) {
     return <EmptyTrend compact={compact}>Not enough data</EmptyTrend>;
   }
-  if (showScore && knownValues(scores).length === 0) {
+  if (series !== "handicap" && knownValues(scores).length === 0) {
     return <EmptyTrend compact={compact}>No score data</EmptyTrend>;
   }
-  if (series === "handicap" && knownValues(handicaps).length === 0) {
+  if (series === "handicap" && !hasHandicap) {
     return <EmptyTrend compact={compact}>No handicap yet</EmptyTrend>;
   }
 
-  const x = indexScale(data.length, PAD.left, W - PAD.right);
-  // Five strokes of headroom on the score axis, half a point on the handicap axis.
-  const yScore = scaleLinear().domain(paddedExtent(scores, 5) ?? [60, 100]).range([H - PAD.bottom, PAD.top]);
-  const yHandicap = scaleLinear()
-    .domain(paddedExtent(handicaps, 0.5) ?? [-0.5, 10.5])
-    .range([H - PAD.bottom, PAD.top]);
-  // The left axis belongs to whichever line leads.
-  const yLeft = showScore ? yScore : yHandicap;
-  const hasHandicap = knownValues(handicaps).length > 0;
+  // With no index yet there is nothing to stack the scores over.
+  const shown: TrendSeries = series === "both" && !hasHandicap ? "score" : series;
+  const stacked = shown === "both";
+  const showScore = shown !== "handicap";
+  const showHandicap = shown !== "score";
 
-  const scorePath =
+  const W = compact ? L.widthCompact : L.width;
+  const H = stacked ? L.both.height : compact ? L.single.compactHeight : L.single.height;
+  const gridRight = W - L.axis;
+  const labelX = gridRight + L.labelGap;
+  const alone: Panel = { top: L.single.top, bottom: H - L.single.bottomRoom };
+  const scorePanel = stacked ? L.both.score : alone;
+  const handicapPanel = stacked ? L.both.handicap : alone;
+  const ticksY = stacked ? L.both.ticks : H - L.single.ticksRoom;
+  const lastPanel = showHandicap ? handicapPanel : scorePanel;
+  const firstPanel = showScore ? scorePanel : handicapPanel;
+
+  // The par of the latest round that has one, drawn across the scores.
+  const parRow = [...data].reverse().find((d) => d.score != null && d.toPar != null);
+  const par = parRow ? parRow.score! - parRow.toPar! : null;
+
+  const x = indexScale(data.length, L.inset, gridRight - L.inset);
+  const yScore = scaleLinear()
+    .domain(niceExtent([...scores, par], 5, 2) ?? [70, 90])
+    .range([scorePanel.bottom, scorePanel.top]);
+  const yHandicap = scaleLinear()
+    .domain(niceExtent(handicaps, 3, 0.5) ?? [9, 13])
+    .range([handicapPanel.bottom, handicapPanel.top]);
+
+  const average = rollingMean(scores, L.average);
+  const averagePath =
     line<number | null>()
       .defined((v) => v != null)
       .x((_, i) => x(i))
-      .y((v) => yScore(v!))
-      .curve(curveMonotoneX)(scores) ?? "";
+      .y((v) => yScore(v!))(average) ?? "";
   const handicapPath =
     line<number | null>()
       .defined((v) => v != null)
       .x((_, i) => x(i))
       .y((v) => yHandicap(v!))
-      .curve(curveMonotoneX)(handicaps) ?? "";
-  const handicapArea =
-    area<number | null>()
-      .defined((v) => v != null)
-      .x((_, i) => x(i))
-      .y0(H - PAD.bottom)
-      .y1((v) => yHandicap(v!))
-      .curve(curveMonotoneX)(handicaps) ?? "";
+      .curve(curveStepAfter)(handicaps) ?? "";
 
-  const barW = Math.max(plot.barMin, Math.min(plot.barMax, (W - PAD.left - PAD.right) / data.length - plot.barGap));
-  const baseline = H - PAD.bottom;
-  const showLabels = showScore && !compact && data.length <= 15;
-  const xTicks = compact ? xTickIndexes(data.length) : [];
+  const scoreTicks = yScore.ticks(5).filter((v) => v !== yScore.domain()[0]);
+  const handicapTicks = yHandicap.ticks(stacked ? 2 : 4).filter((v) => v !== yHandicap.domain()[0]);
+  const parY = par != null ? yScore(par) : null;
+  // The "Par" label has the room, so a tick figure that would run into it steps aside.
+  const clearOfPar = (y: number) => parY == null || Math.abs(y - parY) > tokens.type.label.size;
+
+  // The server says which rounds' differentials count toward the index.
+  const counts = data.map((d) => d.differentialStatus === "counting");
+  const lastScore = lastKnownIndex(scores);
+  const lastHandicap = lastKnownIndex(handicaps);
 
   const indexAt = (e: PointerEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -93,18 +113,28 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
     return Math.max(0, Math.min(data.length - 1, index));
   };
 
-  const active = selection?.series === series ? selection.index : null;
+  const active = selection?.series === shown ? selection.index : null;
   const point = active != null ? data[active] : null;
   const pointValue = point ? (showScore ? point.score : point.handicapIndex) : null;
   const pointY = pointValue != null ? (showScore ? yScore(pointValue) : yHandicap(pointValue)) : null;
+
+  const handicapDots = new Set([lastHandicap, active].filter((i): i is number => i != null && i >= 0));
 
   return (
     <div data-slot="score-handicap-trend" className="relative select-none">
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="w-full touch-pan-y overflow-visible"
+        role="img"
+        aria-label={
+          stacked
+            ? "Score per round with 5-round average above, handicap index below"
+            : showScore
+              ? "Score per round with 5-round average"
+              : "Handicap index per round"
+        }
+        className="block w-full touch-pan-y overflow-visible"
         onPointerMove={(e) => {
-          if (e.pointerType === "mouse") setSelection({ series, index: indexAt(e) });
+          if (e.pointerType === "mouse") setSelection({ series: shown, index: indexAt(e) });
         }}
         onPointerLeave={(e) => {
           if (e.pointerType === "mouse") setSelection(null);
@@ -113,137 +143,149 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
           if (e.pointerType === "mouse") return;
           // A tap picks a round and a second tap on it puts it down.
           const index = indexAt(e);
-          setSelection(active === index ? null : { series, index });
+          setSelection(active === index ? null : { series: shown, index });
         }}
       >
-        <defs>
-          <linearGradient id={hiGrad} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="10%" stopColor={HANDICAP_COLOR} stopOpacity={0.1} />
-            <stop offset="100%" stopColor={HANDICAP_COLOR} stopOpacity={0} />
-          </linearGradient>
-        </defs>
-
-        {yLeft.ticks(5).map((v) => (
-          <g key={`left-${v}`}>
-            <line x1={PAD.left} x2={W - PAD.right} y1={yLeft(v)} y2={yLeft(v)} stroke={tokens.color.border} strokeWidth={tokens.lineWidth.border} />
-            <AxisLabel x={PAD.left - 12} y={yLeft(v) + 4} anchor="end" color={tokens.color.chart.axis}>
-              {showScore ? v : formatHandicapIndex(v)}
-            </AxisLabel>
-          </g>
-        ))}
-
-        <line x1={PAD.left} x2={W - PAD.right} y1={baseline} y2={baseline} stroke={tokens.color.chart.muted} strokeWidth={tokens.lineWidth.border} />
-
-        {series === "both" &&
-          hasHandicap &&
-          yHandicap.ticks(4).map((v) => (
-            <AxisLabel key={`right-${v}`} x={W - PAD.right + 12} y={yHandicap(v) + 4} anchor="start" color={HANDICAP_COLOR}>
-              {formatHandicapIndex(v)}
-            </AxisLabel>
-          ))}
-
-        {xTicks.map((i) => (
-          <AxisLabel key={`x-${i}`} x={x(i)} y={baseline + 16} anchor="middle" color={tokens.color.chart.axis}>
-            {i + 1}
-          </AxisLabel>
-        ))}
-
-        {showScore &&
-          data.map((d, i) => {
-            if (d.score == null) return null;
-            const top = yScore(d.score);
-            if (baseline - top <= 0) return null;
-            return (
-              <rect
-                key={`bar-${i}`}
-                x={x(i) - barW / 2}
-                y={top}
-                width={barW}
-                height={baseline - top}
-                fill={differentialFill(d.differentialStatus)}
-                fillOpacity={0.6}
-                rx={tokens.radius.tick}
-              />
-            );
-          })}
-
-        {showHandicap && hasHandicap && (
-          <>
-            <path d={handicapArea} fill={`url(#${hiGrad})`} stroke="none" />
+        {showScore && (
+          <g>
+            {stacked && <PanelTitle y={L.both.score.title}>Score</PanelTitle>}
+            {scoreTicks.map((v) => (
+              <g key={`score-${v}`}>
+                <line x1={0} x2={gridRight} y1={yScore(v)} y2={yScore(v)} stroke={tokens.color.chart.grid} strokeWidth={tokens.lineWidth.border} />
+                {clearOfPar(yScore(v)) && (
+                  <AxisLabel x={labelX} y={yScore(v) + 4}>
+                    {v}
+                  </AxisLabel>
+                )}
+              </g>
+            ))}
+            {parY != null && (
+              <>
+                <line
+                  x1={0}
+                  x2={gridRight}
+                  y1={parY}
+                  y2={parY}
+                  stroke={tokens.color.chart.reference}
+                  strokeWidth={tokens.lineWidth.border}
+                  strokeDasharray={L.dash}
+                />
+                <AxisLabel x={labelX} y={parY + 4}>
+                  Par
+                </AxisLabel>
+              </>
+            )}
             <path
-              d={handicapPath}
+              d={averagePath}
               fill="none"
-              stroke={HANDICAP_COLOR}
-              strokeWidth={series === "both" ? tokens.lineWidth.outline : tokens.chart.sparkline.stroke}
-              strokeOpacity={series === "both" ? 0.7 : 1}
+              stroke={tokens.color.chart.series1}
+              strokeOpacity={tokens.opacity.recessed}
+              strokeWidth={L.stroke}
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-          </>
+          </g>
         )}
 
-        {showScore && (
-          <path
-            d={scorePath}
-            fill="none"
-            stroke={SCORE_COLOR}
-            strokeWidth={tokens.chart.sparkline.stroke}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+        {showHandicap && (
+          <g>
+            {stacked && <PanelTitle y={L.both.handicap.title}>Handicap index</PanelTitle>}
+            {handicapTicks.map((v) => (
+              <g key={`handicap-${v}`}>
+                <line x1={0} x2={gridRight} y1={yHandicap(v)} y2={yHandicap(v)} stroke={tokens.color.chart.grid} strokeWidth={tokens.lineWidth.border} />
+                <AxisLabel x={labelX} y={yHandicap(v) + 4}>
+                  {formatHandicapIndex(v)}
+                </AxisLabel>
+              </g>
+            ))}
+            <path
+              d={handicapPath}
+              fill="none"
+              stroke={tokens.color.chart.series2}
+              strokeWidth={L.strokeHandicap}
+              strokeLinejoin="round"
+            />
+          </g>
         )}
 
-        {active != null && pointY != null && (
+        {xTickIndexes(data.length).map((i) => (
+          <text
+            key={`x-${i}`}
+            x={x(i)}
+            y={ticksY}
+            textAnchor="middle"
+            fontSize={tokens.type.label.size}
+            fontFamily={tokens.font.sans}
+            fill={tokens.color.mutedForeground}
+          >
+            {data[i].roundIndex}
+          </text>
+        ))}
+
+        {active != null && (
           <line
             x1={x(active)}
             x2={x(active)}
-            y1={PAD.top}
-            y2={baseline}
+            y1={firstPanel.top}
+            y2={lastPanel.bottom}
             stroke={tokens.color.chart.muted}
             strokeWidth={tokens.lineWidth.border}
             strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
           />
         )}
 
-        {data.map((d, i) => {
-          const value = showScore ? d.score : d.handicapIndex;
-          if (value == null) return null;
-          return (
+        {showScore &&
+          data.map((d, i) => {
+            if (d.score == null) return null;
+            const counting = counts[i];
+            return (
+              <circle
+                key={`dot-${i}`}
+                cx={x(i)}
+                cy={yScore(d.score)}
+                r={active === i ? L.dotHover : counting ? L.dotCounts : L.dot}
+                fill={counting ? tokens.color.chart.series1 : tokens.color.card}
+                stroke={counting ? tokens.color.card : tokens.color.chart.reference}
+                strokeWidth={tokens.lineWidth.outline}
+              />
+            );
+          })}
+
+        {showScore && lastScore >= 0 && (
+          <FigureLabel x={x(lastScore)} y={yScore(scores[lastScore]!) - L.scoreLift} anchor="middle" color={tokens.color.foreground}>
+            {scores[lastScore]}
+          </FigureLabel>
+        )}
+
+        {showHandicap &&
+          [...handicapDots].map((i) => (
             <circle
-              key={`dot-${i}`}
+              key={`handicap-dot-${i}`}
               cx={x(i)}
-              cy={showScore ? yScore(value) : yHandicap(value)}
-              r={active === i ? plot.dotHover : plot.dot}
-              fill={showScore ? toParFill(d.toPar) : HANDICAP_COLOR}
+              cy={yHandicap(handicaps[i]!)}
+              r={active === i ? L.dotHover : L.dotLast}
+              fill={tokens.color.chart.series2}
               stroke={tokens.color.card}
               strokeWidth={tokens.lineWidth.outline}
             />
-          );
-        })}
+          ))}
 
-        {showLabels &&
-          data.map((d, i) =>
-            d.score == null ? null : (
-              <text
-                key={`value-${i}`}
-                x={x(i)}
-                y={yScore(d.score) - 8}
-                textAnchor="middle"
-                fontSize={tokens.type.caption.size}
-                fontFamily={tokens.font.sans}
-                fill={tokens.color.chart.axis}
-                fontWeight="600"
-              >
-                {d.score}
-              </text>
-            ),
-          )}
+        {showHandicap && lastHandicap >= 0 && (
+          <FigureLabel
+            x={x(lastHandicap) - L.lastLift}
+            y={yHandicap(handicaps[lastHandicap]!) - L.lastLift}
+            anchor="end"
+            color={tokens.color.chart.series2}
+          >
+            {formatHandicapIndex(handicaps[lastHandicap])}
+          </FigureLabel>
+        )}
       </svg>
 
       <AnimatePresence>
         {point && active != null && pointY != null && (
           <motion.div
-            key={`${series}-${active}`}
+            key={`${shown}-${active}`}
             className={cn(
               "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/95 px-3 py-2.5 text-body-sm shadow-card",
               // Past two thirds of the way across, the card opens to the left of the point.
@@ -271,7 +313,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             {showHandicap && point.handicapIndex != null && (
               <div className="mt-0.5 flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">HI</span>
-                <span className="font-semibold text-score-double">{formatHandicapIndex(point.handicapIndex)}</span>
+                <span className="font-semibold text-chart-series2">{formatHandicapIndex(point.handicapIndex)}</span>
               </div>
             )}
           </motion.div>
@@ -281,7 +323,75 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
   );
 }
 
-function AxisLabel({
+/**
+ * What the dots and the faint line mean. It sits in a card's header beside the
+ * title, so it takes its own place rather than the chart's.
+ */
+export function ScoreHandicapLegend({ className }: { className?: string }) {
+  return (
+    <div data-slot="score-handicap-legend" className={cn("flex gap-3.5 text-body-sm text-foreground-secondary", className)}>
+      <span className="flex items-center gap-1.5">
+        <svg viewBox="0 0 10 10" aria-hidden="true" className="size-2.5">
+          <circle cx={5} cy={5} r={4} fill={tokens.color.chart.series1} />
+        </svg>
+        Counts toward HI
+      </span>
+      <span className="flex items-center gap-1.5">
+        <svg viewBox="0 0 10 10" aria-hidden="true" className="size-2.5">
+          <circle
+            cx={5}
+            cy={5}
+            r={3.5}
+            fill={tokens.color.card}
+            stroke={tokens.color.chart.reference}
+            strokeWidth={tokens.lineWidth.outline}
+          />
+        </svg>
+        Doesn’t count
+      </span>
+      <span className="flex items-center gap-1.5">
+        <svg viewBox="0 0 16 10" aria-hidden="true" className="h-2.5 w-4">
+          <line
+            x1={0}
+            x2={16}
+            y1={5}
+            y2={5}
+            stroke={tokens.color.chart.series1}
+            strokeOpacity={tokens.opacity.recessed}
+            strokeWidth={2}
+          />
+        </svg>
+        {tokens.chart.stack.average}-rd avg
+      </span>
+    </div>
+  );
+}
+
+function PanelTitle({ y, children }: { y: number; children: ReactNode }) {
+  return (
+    <text
+      x={0}
+      y={y}
+      fontSize={tokens.type.label.size}
+      fontWeight="600"
+      fontFamily={tokens.font.sans}
+      fill={tokens.color.foregroundSecondary}
+    >
+      {children}
+    </text>
+  );
+}
+
+function AxisLabel({ x, y, children }: { x: number; y: number; children: ReactNode }) {
+  return (
+    <text x={x} y={y} fontSize={tokens.type.label.size} fontFamily={tokens.font.sans} fill={tokens.color.mutedForeground}>
+      {children}
+    </text>
+  );
+}
+
+/** A figure written on the chart: the latest score or index. */
+function FigureLabel({
   x,
   y,
   anchor,
@@ -290,7 +400,7 @@ function AxisLabel({
 }: {
   x: number;
   y: number;
-  anchor: "start" | "middle" | "end";
+  anchor: "middle" | "end";
   color: string;
   children: ReactNode;
 }) {
@@ -299,14 +409,10 @@ function AxisLabel({
       x={x}
       y={y}
       textAnchor={anchor}
-      fontSize={tokens.type.label.size}
-      fontWeight="600"
+      fontSize={tokens.type["body-sm"].size}
+      fontWeight="700"
       fontFamily={tokens.font.sans}
       fill={color}
-      paintOrder="stroke"
-      stroke={tokens.color.card}
-      strokeWidth={tokens.lineWidth.ring}
-      strokeLinejoin="round"
     >
       {children}
     </text>
@@ -326,8 +432,9 @@ function EmptyTrend({ compact, children }: { compact: boolean; children: ReactNo
   );
 }
 
-/** About five round numbers along the bottom, evenly spaced from the first. */
+/** The first round, every fifth after it, and the last: 1, 5, 10, 15, 20. A fifth that would crowd the last gives way. */
 function xTickIndexes(count: number): number[] {
-  const step = Math.max(1, Math.floor((count - 1) / 4));
-  return Array.from({ length: Math.ceil(count / step) }, (_, i) => i * step).filter((i) => i < count);
+  const last = count - 1;
+  const fifths = Array.from({ length: Math.floor(last / 5) }, (_, i) => (i + 1) * 5 - 1).filter((i) => last - i > 2);
+  return [0, ...fifths.filter((i) => i > 2), last];
 }

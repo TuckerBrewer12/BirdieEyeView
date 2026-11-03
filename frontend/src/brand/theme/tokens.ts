@@ -541,21 +541,43 @@ export const chart = {
   ring: { inner: 50, outer: 68 },
   /** A half gauge drawn up from the bottom edge of its box. */
   gauge: { inner: 52, outer: 72 },
-  plot: {
-    width: 560,
-    height: size.chart,
-    pad: { top: 12, right: 64, bottom: 20, left: 52 },
-    barMin: 4,
-    barMax: 14,
-    barGap: 2,
-    dot: 3.5,
+  /**
+   * Score over handicap index, stacked as two small multiples that share the round axis.
+   * Unitless, scaled to the container. The grid ends `axis` short of the right edge,
+   * where the tick labels sit.
+   */
+  stack: {
+    width: 544,
+    /** A phone's narrower drawing. */
+    widthCompact: 320,
+    /** Room right of the grid for tick labels, and the gap between the grid and them. */
+    axis: 44,
+    labelGap: 10,
+    /** Slack at either end of the round axis, so a dot never sits on the plot's edge. */
+    inset: 6,
+    /** Both panels: the drawing's height, each panel's title baseline, its grid's top and bottom, the round numbers' baseline. */
+    both: {
+      height: 320,
+      score: { title: 8, top: 22, bottom: 172 },
+      handicap: { title: 214, top: 226, bottom: 292 },
+      ticks: 314,
+    },
+    /** One panel alone: the card above it names the line, so there is no title. The rooms are what the grid and the round numbers leave at the foot. */
+    single: { height: 200, compactHeight: 220, top: 12, bottomRoom: 28, ticksRoom: 6 },
+    dot: 3.75,
+    dotCounts: 4.5,
+    dotLast: 4,
     dotHover: 6,
-  },
-  /** The same plot on a phone: narrower and taller, one series at a time, so no right-hand axis. */
-  plotCompact: {
-    width: 320,
-    height: size["chart-compact"],
-    pad: { top: 16, right: 16, bottom: 32, left: 44 },
+    /** The five-round average under the dots, and the handicap line. */
+    stroke: 2.5,
+    strokeHandicap: 2,
+    dash: "3 4",
+    /** How many rounds the average spans. */
+    average: 5,
+    /** Where the handicap's last figure sits, up and to the left of its dot. */
+    lastLift: 8,
+    /** Where the last score sits, straight above its dot. */
+    scoreLift: 10,
   },
   /** A figure's trend line. */
   sparkline: {
