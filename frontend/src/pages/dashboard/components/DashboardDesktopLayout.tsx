@@ -186,10 +186,10 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
           <Card size="sm">
             <CardHeader>
               <CardTitle>Activity</CardTitle>
-              <CardDescription>Last 30 days</CardDescription>
+              <CardDescription>Rounds by day</CardDescription>
             </CardHeader>
             <CardContent>
-              <ActivityHeatmap rounds={vm.rounds} />
+              <ActivityHeatmap rounds={vm.rounds} onOpenRound={(id) => navigate(`/rounds/${id}`)} />
             </CardContent>
           </Card>
 

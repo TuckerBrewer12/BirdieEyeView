@@ -2,16 +2,21 @@ import { ActivityHeatmap } from "@/brand/charts/ActivityHeatmap";
 import { Round } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 
-/** Pinned so the 5-week window does not move under screenshots. */
-const TODAY = new Date("2026-09-16T12:00:00.000Z");
+/** Pinned so the month does not move under screenshots. */
+const TODAY = new Date(2026, 9, 28, 12);
 
-const rounds = [
-  { ...populatedRounds[0], date: "2026-09-15" },
-  { ...populatedRounds[1], date: "2026-09-15T08:00:00" },
-  { ...populatedRounds[2], date: "2026-09-10" },
-  { ...populatedRounds[3], date: "2026-08-01" },
-].map(Round.fromSummary);
+const PLAYED = [3, 4, 10, 17, 24, 25, 31];
+
+const rounds = PLAYED.map((day, i) => ({
+  ...populatedRounds[i % populatedRounds.length],
+  id: `october-${day}`,
+  date: `2026-10-${String(day).padStart(2, "0")}`,
+})).map(Round.fromSummary);
 
 export default function ActivityHeatmapPreview() {
-  return <ActivityHeatmap rounds={rounds} today={TODAY} />;
+  return (
+    <div className="rounded-xl border border-border bg-card px-4.5 py-4">
+      <ActivityHeatmap rounds={rounds} today={TODAY} onOpenRound={() => {}} />
+    </div>
+  );
 }
