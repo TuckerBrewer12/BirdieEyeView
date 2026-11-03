@@ -32,7 +32,7 @@ export function ScoreMixBar({ mix, counted = false, className }: ScoreMixBarProp
           <div key={kind} className={cn("min-w-0.5 basis-0", scoreFillClass(kind))} style={{ flexGrow: mix[kind] }} />
         ))}
       </div>
-      <div aria-hidden className="flex flex-wrap gap-x-3.5 gap-y-1 text-body text-foreground-secondary">
+      <div aria-hidden className="flex flex-wrap gap-x-3 gap-y-1 text-body text-foreground-secondary">
         {entries.map((entry) => (
           <span key={entry.kind}>
             <b className="font-bold text-foreground">{entry.figure}</b> {entry.word}
