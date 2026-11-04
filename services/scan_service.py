@@ -103,8 +103,9 @@ class ScanService:
             if existing:
                 return await self._plan_existing(existing, req, scanned)
             self._require_complete(scanned, req.tee_box)
-            if await self._verify_with_provider(req.external_course_id, scanned):
-                master = scanned.model_copy(update={"external_course_id": req.external_course_id})
+            verified = await self._verify_with_provider(req.external_course_id, scanned)
+            if verified is not None:
+                master = verified.model_copy(update={"external_course_id": req.external_course_id})
                 return _CoursePlan(course=master, create=True, create_owner_id=None)
             # Not verified: the course still exists for this user, without the provider link.
             return await self._plan_user_course(req, scanned)
@@ -138,46 +139,69 @@ class ScanService:
             and self._scan_covers_course(course, scanned)
             and self._scan_differs_from(course, scanned)
             and scanned.has_required_course_data()
-            and await self._verify_with_provider(course.external_course_id, scanned)
         ):
-            return _CoursePlan(course=course, verified_update=self._keep_unscanned_ratings(course, scanned))
+            verified = await self._verify_with_provider(course.external_course_id, scanned)
+            if verified is not None:
+                update = self._keep_unscanned_ratings(course, verified)
+                # A difference that was only an unconfirmed rating leaves nothing to write.
+                if self._scan_differs_from(course, update):
+                    return _CoursePlan(course=course, verified_update=update)
         return _CoursePlan(course=course)
 
-    async def _verify_with_provider(self, external_course_id: str, scanned: Course) -> bool:
+    async def _verify_with_provider(self, external_course_id: str, scanned: Course) -> Optional[Course]:
+        """Return the scan to store when the provider verifies it, else None.
+
+        Pars and yardages must match exactly. Ratings are hard to read from a card, so they never
+        block verification: a scanned rating is kept only when the matching provider tee agrees,
+        otherwise it is dropped.
+        """
         try:
             provider_tees = await self._course_api.get_course_details(external_course_id)
         except (CourseProviderUnavailable, CourseProviderNotFound) as exc:
             logger.info("Course verification skipped for external_course_id=%s: %s",
                         external_course_id, type(exc).__name__)
-            return False
-        verified = self._scan_matches_provider(scanned, provider_tees)
-        logger.info("Course verification for external_course_id=%s: verified=%s", external_course_id, verified)
-        return verified
+            return None
+        matches = self._provider_matches(scanned, provider_tees)
+        logger.info("Course verification for external_course_id=%s: verified=%s",
+                    external_course_id, matches is not None)
+        if matches is None:
+            return None
+        tees = [
+            tee if any(self._ratings_match(tee, p) for p in matched) else self._without_ratings(tee)
+            for tee, matched in zip(scanned.tees, matches)
+        ]
+        return scanned.model_copy(update={"tees": tees})
+
+    @staticmethod
+    def _provider_matches(scanned: Course, provider_tees: List[ProviderTee]) -> Optional[List[List[ProviderTee]]]:
+        """For each scanned tee, the provider tees with the same yardage on every expected hole
+        (names ignored) and the scanned pars. None when any scanned tee has no such provider tee."""
+        expected = scanned.get_expected_holes()
+        if expected is None or not scanned.tees:
+            return None
+        pars = {hole.number: hole.par for hole in scanned.holes}
+        if any(pars.get(n) is None for n in expected):
+            return None
+        matches = []
+        for tee in scanned.tees:
+            if any(n not in tee.hole_yardages for n in expected):
+                return None
+            matched = [
+                p for p in provider_tees
+                if all(p.yardages.get(n) == tee.hole_yardages[n] and p.pars.get(n) == pars[n] for n in expected)
+            ]
+            if not matched:
+                return None
+            matches.append(matched)
+        return matches
 
     @staticmethod
     def _scan_matches_provider(scanned: Course, provider_tees: List[ProviderTee]) -> bool:
-        """Exact match: each scanned tee equals some provider tee's yardage on every expected hole
-        (names ignored), the scanned pars equal that provider tee's pars, and any scanned course or
-        slope rating equals that provider tee's rating. A scanned rating the provider doesn't have
-        can't be verified, so it fails the match."""
-        expected = scanned.get_expected_holes()
-        if expected is None or not scanned.tees:
-            return False
-        pars = {hole.number: hole.par for hole in scanned.holes}
-        if any(pars.get(n) is None for n in expected):
-            return False
-        for tee in scanned.tees:
-            if any(n not in tee.hole_yardages for n in expected):
-                return False
-            same_yardages = [
-                p for p in provider_tees if all(p.yardages.get(n) == tee.hole_yardages[n] for n in expected)
-            ]
-            if not any(
-                all(p.pars.get(n) == pars[n] for n in expected) and ScanService._ratings_match(tee, p)
-                for p in same_yardages
-            ):
-                return False
-        return True
+        return ScanService._provider_matches(scanned, provider_tees) is not None
+
+    @staticmethod
+    def _without_ratings(tee: Tee) -> Tee:
+        return tee.model_copy(update={"course_rating": None, "slope_rating": None, "rating_holes": None, "ratings": []})
 
     @staticmethod
     def _keep_unscanned_ratings(course: Course, scanned: Course) -> Course:
@@ -197,6 +221,7 @@ class ScanService:
 
     @staticmethod
     def _ratings_match(tee: Tee, provider: ProviderTee) -> bool:
+        """Every rating on the scanned tee equals the provider tee's; a tee without ratings matches."""
         if tee.course_rating is not None and (
             provider.course_rating is None or round(tee.course_rating, 1) != round(provider.course_rating, 1)
         ):

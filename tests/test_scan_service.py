@@ -216,15 +216,50 @@ async def test_rating_only_correction_updates_master_when_provider_agrees():
     assert (blue.course_rating, blue.slope_rating) == (71.2, 125)
 
 
+UNCONFIRMED_RATINGS = pytest.mark.parametrize(
+    "provider_rating", [(72.0, 125), (71.2, 130), (None, None)], ids=["course", "slope", "missing"]
+)
+
+
 @pytest.mark.asyncio
-@pytest.mark.parametrize("provider_rating", [(72.0, 125), (71.2, 130), (None, None)], ids=["course", "slope", "missing"])
-async def test_scanned_rating_must_match_provider(provider_rating):
+@UNCONFIRMED_RATINGS
+async def test_unconfirmed_rating_never_blocks_verification_and_is_not_stored(provider_rating):
     service, db, _ = make_service(details=provider_tees(blue_rating=provider_rating))
-    db.courses.get_course.return_value = make_course(external_id="ext-1", blue=[y - 10 for y in BLUE])
+    master = make_course(external_id="ext-1", blue=[y - 10 for y in BLUE])
+    master.tees[0] = master.tees[0].model_copy(update={"course_rating": 70.0, "slope_rating": 120})
+    db.courses.get_course.return_value = master
+
+    await service.save_reviewed_scan(make_save_request(course_id=str(uuid4())))
+
+    blue = db.courses.apply_verified_scan.await_args.args[2][0]
+    assert dict(blue.hole_yardages) == dict(enumerate(BLUE, start=1))  # verified yardages still applied
+    assert (blue.course_rating, blue.slope_rating) == (70.0, 120)  # scanned 71.2/125 dropped, master's kept
+
+
+@pytest.mark.asyncio
+@UNCONFIRMED_RATINGS
+async def test_unconfirmed_rating_only_difference_writes_nothing(provider_rating):
+    service, db, _ = make_service(details=provider_tees(blue_rating=provider_rating))
+    master = make_course(external_id="ext-1")
+    master.tees[0] = master.tees[0].model_copy(update={"course_rating": 70.0})
+    db.courses.get_course.return_value = master
 
     await service.save_reviewed_scan(make_save_request(course_id=str(uuid4())))
 
     db.courses.apply_verified_scan.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@UNCONFIRMED_RATINGS
+async def test_new_master_drops_unconfirmed_ratings(provider_rating):
+    service, db, _ = make_service(details=provider_tees(blue_rating=provider_rating))
+
+    await service.save_reviewed_scan(make_save_request(external_course_id="ext-1"))
+
+    created = db.courses.create_course.await_args
+    blue = created.args[0].get_tee("Blue")
+    assert created.kwargs["user_id"] is None  # still verified as a master
+    assert (blue.course_rating, blue.slope_rating) == (None, None)
 
 
 @pytest.mark.asyncio
