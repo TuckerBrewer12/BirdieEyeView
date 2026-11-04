@@ -153,7 +153,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
               <g key={`score-${v}`}>
                 <line x1={0} x2={gridRight} y1={yScore(v)} y2={yScore(v)} stroke={tokens.color.chart.grid} strokeWidth={tokens.lineWidth.border} />
                 {clearOfPar(yScore(v)) && (
-                  <AxisLabel x={labelX} y={yScore(v) + 4}>
+                  <AxisLabel x={labelX} y={yScore(v) + L.labelDrop}>
                     {v}
                   </AxisLabel>
                 )}
@@ -170,7 +170,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                   strokeWidth={tokens.lineWidth.border}
                   strokeDasharray={L.dash}
                 />
-                <AxisLabel x={labelX} y={parY + 4}>
+                <AxisLabel x={labelX} y={parY + L.labelDrop}>
                   Par
                 </AxisLabel>
               </>
@@ -193,7 +193,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             {handicapTicks.map((v) => (
               <g key={`handicap-${v}`}>
                 <line x1={0} x2={gridRight} y1={yHandicap(v)} y2={yHandicap(v)} stroke={tokens.color.chart.grid} strokeWidth={tokens.lineWidth.border} />
-                <AxisLabel x={labelX} y={yHandicap(v) + 4}>
+                <AxisLabel x={labelX} y={yHandicap(v) + L.labelDrop}>
                   {formatHandicapIndex(v)}
                 </AxisLabel>
               </g>
