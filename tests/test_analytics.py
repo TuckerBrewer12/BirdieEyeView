@@ -245,17 +245,16 @@ def test_score_variance_by_hole():
 
 def test_three_putts_per_round():
     rounds = _build_rounds()
-    rows = three_putts_per_round(rounds)
+    three_and_four = rounds[0].model_copy(deep=True)
+    for score in three_and_four.hole_scores:
+        score.putts = {1: 3, 2: 4}.get(score.hole_number, 2)
+    rows = three_putts_per_round([rounds[0], three_and_four])
 
-    # In round 1, all holes are 2-putts.
-    assert rows[0]["three_putt_count"] == 0
-    assert rows[0]["holes_with_putt_data"] == 18
-    assert rows[0]["three_putt_percentage"] == 0.0
-
-    # In round 2, odd holes are 2-putts and even holes are 1-putts.
-    assert rows[1]["three_putt_count"] == 0
-    assert rows[1]["holes_with_putt_data"] == 18
-    assert rows[1]["three_putt_percentage"] == 0.0
+    # Round 1: all 2-putts.
+    assert (rows[0]["three_putt_count"], rows[0]["holes_with_putt_data"], rows[0]["three_putt_percentage"]) == (0, 18, 0.0)
+    # Same round with a 3-putt and a 4-putt: both count as 3 or more.
+    assert rows[1]["three_putt_count"] == 2
+    assert rows[1]["three_putt_percentage"] == pytest.approx(2 / 18 * 100)
 
 
 def test_scrambling_per_round():

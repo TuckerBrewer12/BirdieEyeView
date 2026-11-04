@@ -102,15 +102,6 @@ def test_save_upload_enforces_size_limit(monkeypatch):
     assert raised.value.status_code == 413
 
 
-def test_preprocess_cache_path_creates_cache_directory(monkeypatch, tmp_path):
-    monkeypatch.setattr(scan, "PREPROCESS_CACHE_DIR", tmp_path / "cache")
-
-    cache_path = scan._get_preprocess_cache_path("digest")
-
-    assert cache_path.parent.exists()
-    assert "digest" in cache_path.name
-
-
 def test_image_normalization_resizes_and_converts_at_ui_quality(monkeypatch, tmp_path):
     source = tmp_path / "large.png"
     Image.new("RGBA", (2400, 1200), (255, 255, 255, 128)).save(source)

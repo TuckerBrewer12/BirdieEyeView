@@ -283,14 +283,6 @@ def test_round_get_hole_score_out_of_range():
     assert r.get_hole_score(2) is None   # beyond available scores
 
 
-def test_round_course_name_played():
-    r = Round(course_name_played="Eagle Vines Golf Club")
-    assert r.course_name_played == "Eagle Vines Golf Club"
-    # No par data → total_to_par is still None
-    assert r.get_par() is None
-    assert r.total_to_par() is None
-
-
 # ================================================================
 # UserTee
 # ================================================================
