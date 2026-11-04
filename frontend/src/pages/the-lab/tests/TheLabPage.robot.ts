@@ -168,6 +168,14 @@ export class TheLabRobot {
     return this;
   }
 
+  /** The friend picker's menu, open. Comparing with a friend shows the picker. */
+  async openFriendPicker(): Promise<this> {
+    await this.shapeCard().locator("[data-slot=friend-picker]").getByRole("combobox").click();
+    await expect(this.page.getByRole("listbox")).toBeVisible();
+    await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
+    return this;
+  }
+
   async showShape(label: "Your Average" | "Peak Game"): Promise<this> {
     await this.shapeCard().getByRole("button", { name: label, exact: true }).click();
     return this;

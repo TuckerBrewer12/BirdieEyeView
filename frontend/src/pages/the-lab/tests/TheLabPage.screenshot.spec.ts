@@ -26,6 +26,13 @@ test("compared with a friend", async ({ lab }) => {
   await lab.capture("lab-friend-compare.png");
 });
 
+test("friend picker open", async ({ lab }) => {
+  await lab.open();
+  await lab.compareWith("A friend");
+  await lab.openFriendPicker();
+  await lab.capture("lab-friend-picker.png");
+});
+
 // A phone shows par types, putting and the peak game one tab at a time; desktop shows every card.
 const PANELS = [
   { tab: "By Par", file: "by-par" },
