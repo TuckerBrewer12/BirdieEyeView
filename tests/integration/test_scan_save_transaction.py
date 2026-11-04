@@ -34,7 +34,10 @@ def make_service(database_manager, *, blue=BLUE):
     provider = SimpleNamespace(
         search_external_courses=AsyncMock(),
         get_course_details=AsyncMock(return_value=[
-            ProviderTee("male", "Championship", dict(enumerate(PARS, start=1)), dict(enumerate(blue, start=1)))
+            ProviderTee(
+                "male", "Championship", dict(enumerate(PARS, start=1)), dict(enumerate(blue, start=1)),
+                course_rating=71.2, slope_rating=125,
+            )
         ]),
     )
     return ScanService(database_manager, provider), provider
@@ -74,7 +77,7 @@ async def test_verified_pick_creates_one_master_and_later_saves_link_to_it(datab
 
     master = saved_first.course
     assert (master.user_id, master.external_course_id, master.location) == (None, "ext-tx", None)
-    assert master.get_tee("Blue").course_rating == 71.2
+    assert (master.get_tee("Blue").course_rating, master.get_tee("Blue").slope_rating) == (71.2, 125)
     assert saved_second.course.id == master.id
     assert await count(database_manager, "SELECT COUNT(*) FROM courses.courses") == 1
     provider.get_course_details.assert_awaited_once()
