@@ -5,6 +5,7 @@ from typing import Literal, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from database.db_manager import DatabaseManager
+from api.messages import FORBIDDEN, NO_ROUNDS_FOUND, NO_SCORING_GOAL, ROUND_NOT_IN_HISTORY, USER_NOT_FOUND
 from api.dependencies import get_current_user, get_db
 from api.input_validation import ensure_uuid_str
 from models import User
@@ -23,10 +24,10 @@ async def get_dashboard(
     current_user: User = Depends(get_current_user),
 ):
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     user = await db.users.get_user(str(user_id))
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, USER_NOT_FOUND)
 
     # Single aggregate query over the full history (no hole_score fetches). Round totals come
     # from complete rounds by format; nine-hole rounds are reported alongside, never doubled.
@@ -128,10 +129,10 @@ async def get_analytics(
     target_user_id = str(user_id)
     can_view = viewer_id == target_user_id or await db.friendships.are_friends(viewer_id, target_user_id)
     if not can_view:
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     user = await db.users.get_user(target_user_id)
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, USER_NOT_FOUND)
 
     # Resolve course_id filter. "home" with no home course matches nothing, never all courses.
     resolved_course_id: Optional[str] = None
@@ -235,7 +236,7 @@ async def get_played_courses(
 ):
     """Return distinct courses the user has rounds linked to."""
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     return await db.rounds.get_played_courses_for_user(str(user_id))
 
 
@@ -247,12 +248,12 @@ async def get_goal_report(
     current_user: User = Depends(get_current_user),
 ):
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     user = await db.users.get_user(str(user_id))
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, USER_NOT_FOUND)
     if user.scoring_goal is None and user.scoring_goal_nine is None:
-        raise HTTPException(400, "No scoring goal set")
+        raise HTTPException(400, NO_SCORING_GOAL)
 
     rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=limit)
     rounds = list(reversed(rounds_desc))
@@ -277,17 +278,17 @@ async def get_round_comparison(
     current_user: User = Depends(get_current_user),
 ):
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     # Full history, so an older round is still found and compared with what came before it.
     rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=None, offset=0)
     rounds = list(reversed(rounds_desc))  # chronological order
 
     if not rounds:
-        raise HTTPException(404, "No rounds found")
+        raise HTTPException(404, NO_ROUNDS_FOUND)
 
     round_index = next((i for i, r in enumerate(rounds) if str(r.id) == str(round_id)), None)
     if round_index is None:
-        raise HTTPException(404, "Round not found in user history")
+        raise HTTPException(404, ROUND_NOT_IN_HISTORY)
 
     return {
         "score": analytics.score_comparison(rounds, round_index=round_index),
@@ -308,10 +309,10 @@ async def get_milestones(
 ):
     """Return a flat, sorted list of lifetime milestone events for the user."""
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     user = await db.users.get_user(str(user_id))
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, USER_NOT_FOUND)
 
     all_rounds = await db.rounds.get_rounds_for_user(str(user_id), limit=None, offset=0)
     rounds_chrono = list(reversed(all_rounds))
@@ -407,10 +408,10 @@ async def get_course_analytics(
     current_user: User = Depends(get_current_user),
 ):
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     user = await db.users.get_user(str(user_id))
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, USER_NOT_FOUND)
 
     rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=None, offset=0, course_id=str(course_id))
     course_rounds = list(reversed(rounds_desc))

@@ -7,6 +7,11 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from typing import List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
+from api.messages import (
+    COURSE_ALREADY_CLONED, COURSE_CHANGES_INVALID, COURSE_DATA_INVALID, COURSE_NAME_TAKEN, COURSE_NOT_FOUND,
+    COURSE_NOT_FOUND_OR_NOT_OWNED, EXTERNAL_LOOKUP_REQUIRES_AUTH, FORBIDDEN, MASTER_COURSE_READ_ONLY,
+    SOURCE_COURSE_NOT_FOUND,
+)
 from api.dependencies import get_db, get_optional_current_user, get_current_user
 from api.error_responses import COURSE_SAVE_FAILED
 from api.input_validation import normalize_course_display_name, sanitize_search_query, sanitize_user_text
@@ -155,7 +160,7 @@ async def list_courses(
 ):
     if user_id:
         if not current_user or str(current_user.id) != str(user_id):
-            raise HTTPException(403, "Forbidden")
+            raise HTTPException(403, FORBIDDEN)
     courses = await db.courses.list_courses(limit=limit, offset=offset, user_id=str(user_id) if user_id else None)
     return [_summarize_course(c) for c in courses]
 
@@ -178,9 +183,9 @@ async def search_courses(
 
     if user_id:
         if not current_user or str(current_user.id) != str(user_id):
-            raise HTTPException(403, "Forbidden")
+            raise HTTPException(403, FORBIDDEN)
     if include_external and not current_user:
-        raise HTTPException(401, "Authentication required for external course lookup")
+        raise HTTPException(401, EXTERNAL_LOOKUP_REQUIRES_AUTH)
     effective_user_id = str(user_id) if user_id else (str(current_user.id) if current_user else None)
     courses = await db.courses.search_courses(q, user_id=effective_user_id)
     out = [_summarize_course(c) for c in courses]
@@ -207,9 +212,9 @@ async def get_course(
 ):
     course = await db.courses.get_course(str(course_id))
     if not course:
-        raise HTTPException(404, "Course not found")
+        raise HTTPException(404, COURSE_NOT_FOUND)
     if course.user_id and (not current_user or str(current_user.id) != str(course.user_id)):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     return course
 
 
@@ -223,7 +228,7 @@ async def create_course(
     """Create a custom course for a user."""
     effective_user_id = str(user_id) if user_id else str(current_user.id)
     if user_id and str(user_id) != str(current_user.id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     layout = tuple(sorted(h.number for h in req.holes))
     try:
         holes = [Hole(number=h.number, par=h.par, handicap=h.handicap) for h in req.holes]
@@ -238,7 +243,7 @@ async def create_course(
             for t in req.tees
         ]
     except ValidationError as error:
-        raise HTTPException(422, "Course data is invalid.") from error
+        raise HTTPException(422, COURSE_DATA_INVALID) from error
 
     try:
         course = Course(
@@ -249,12 +254,12 @@ async def create_course(
             tees=tees,
         )
     except ValidationError as error:
-        raise HTTPException(422, "Course data is invalid.") from error
+        raise HTTPException(422, COURSE_DATA_INVALID) from error
     try:
         created = await db.courses.create_course(course, user_id=effective_user_id)
         return _summarize_course(created)
     except DuplicateError:
-        raise HTTPException(409, "A course with that name already exists for this user")
+        raise HTTPException(409, COURSE_NAME_TAKEN)
     except IntegrityError:
         logger.exception("Course creation integrity failure")
         raise HTTPException(500, COURSE_SAVE_FAILED)
@@ -270,19 +275,19 @@ async def update_course(
     """Update a custom course. Only the owner can edit; master courses are protected."""
     existing = await db.courses.get_course(str(course_id))
     if not existing:
-        raise HTTPException(404, "Course not found")
+        raise HTTPException(404, COURSE_NOT_FOUND)
     if existing.user_id != str(current_user.id):
-        raise HTTPException(403, "Cannot edit a master course. Clone it first.")
+        raise HTTPException(403, MASTER_COURSE_READ_ONLY)
 
     updates = req.model_dump(exclude_unset=True)
     try:
         updated = await db.courses.update_course(str(course_id), user_id=str(current_user.id), **updates)
     except DuplicateError as error:
-        raise HTTPException(409, "A course with that name already exists for this user") from error
+        raise HTTPException(409, COURSE_NAME_TAKEN) from error
     except IntegrityError as error:
-        raise HTTPException(422, "These course changes are invalid.") from error
+        raise HTTPException(422, COURSE_CHANGES_INVALID) from error
     if not updated:
-        raise HTTPException(404, "Course not found or not owned by user")
+        raise HTTPException(404, COURSE_NOT_FOUND_OR_NOT_OWNED)
     return _summarize_course(updated)
 
 
@@ -296,12 +301,12 @@ async def clone_course(
     try:
         source = await db.courses.get_course(str(course_id))
         if not source:
-            raise HTTPException(404, "Source course not found")
+            raise HTTPException(404, SOURCE_COURSE_NOT_FOUND)
         if source.user_id and str(source.user_id) != str(current_user.id):
-            raise HTTPException(403, "Forbidden")
+            raise HTTPException(403, FORBIDDEN)
         cloned = await db.courses.clone_course(str(course_id), str(current_user.id))
         return _summarize_course(cloned)
     except NotFoundError:
-        raise HTTPException(404, "Source course not found")
+        raise HTTPException(404, SOURCE_COURSE_NOT_FOUND)
     except DuplicateError:
-        raise HTTPException(409, "You already have a custom copy of this course")
+        raise HTTPException(409, COURSE_ALREADY_CLONED)

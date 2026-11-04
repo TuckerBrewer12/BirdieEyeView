@@ -7,6 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from database.db_manager import DatabaseManager
+from api.messages import FORBIDDEN, TOO_MANY_AI_REQUESTS, TOO_MANY_AI_REQUESTS_FOR_ACCOUNT, USER_NOT_FOUND
 from api.dependencies import client_ip, get_current_user, get_db
 from models import User
 from api.schemas import AISuggestionsResponse
@@ -30,7 +31,7 @@ async def get_ai_suggestions(
 ):
     user_id_str = str(user_id)
     if str(current_user.id) != user_id_str:
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     ip = client_ip(request)
     allowed, retry_after = ai_rate_limiter.check(
         key=f"ai:ip:{ip}",
@@ -41,7 +42,7 @@ async def get_ai_suggestions(
         logger.warning("AI endpoint rate-limited: ip=%s user_id=%s retry_after=%s", ip, user_id_str, retry_after)
         raise HTTPException(
             status_code=429,
-            detail="Too many AI insight requests. Please try again later.",
+            detail=TOO_MANY_AI_REQUESTS,
             headers={"Retry-After": str(retry_after)},
         )
     allowed_user, retry_after_user = ai_rate_limiter.check(
@@ -53,13 +54,13 @@ async def get_ai_suggestions(
         logger.warning("AI endpoint user-rate-limited: user_id=%s retry_after=%s", user_id_str, retry_after_user)
         raise HTTPException(
             status_code=429,
-            detail="Too many AI insight requests for this account. Please try again later.",
+            detail=TOO_MANY_AI_REQUESTS_FOR_ACCOUNT,
             headers={"Retry-After": str(retry_after_user)},
         )
 
     user = await db.users.get_user(user_id_str)
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, USER_NOT_FOUND)
 
     service = AIService(db)
     return await service.generate_suggestions(user_id_str, limit=limit, target_handicap=target_handicap)

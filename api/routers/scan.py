@@ -17,8 +17,14 @@ logger = logging.getLogger(__name__)
 
 from database.db_manager import DatabaseManager
 from database.exceptions import IntegrityError
+from api.messages import (
+    COURSE_ID_NOT_FOUND, FILENAME_REQUIRED, FILE_TOO_LARGE, FORBIDDEN, HEIC_UNAVAILABLE, IMAGE_DIMENSIONS_TOO_LARGE,
+    IMAGE_PIXELS_TOO_MANY, INVALID_IMAGE_DIMENSIONS, INVALID_PDF, UNCLEAR_PLAYER_NAME, UNREADABLE_IMAGE,
+    UNREADABLE_SCORE_ROWS, UNSUPPORTED_CONTENT_TYPE, UNSUPPORTED_FILE_TYPE, UNSUPPORTED_IMAGE_FORMAT,
+    UPLOAD_NOT_PROCESSED,
+)
 from api.dependencies import get_current_user, get_optional_current_user, get_db
-from api.error_responses import ROUND_SAVE_FAILED, SCAN_FAILED
+from api.error_responses import EXTRACTION_FAILED, OCR_FAILED, ROUND_SAVE_FAILED, SCAN_FAILED, SCAN_SAVE_FAILED
 from api.input_validation import ensure_uuid_str, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
 from api.scan_errors import ScanExtractionError
@@ -104,18 +110,20 @@ class ScanResponse(BaseModel):
 def _extract_upload_suffix(file: UploadFile) -> str:
     filename = (file.filename or "").strip()
     if not filename:
-        raise HTTPException(400, "Filename is required.")
+        raise HTTPException(400, FILENAME_REQUIRED)
     suffix = Path(filename).suffix.lower()
     if suffix not in ALLOWED_UPLOAD_SUFFIXES:
         if suffix == ".heic" and not HEIC_DECODE_AVAILABLE:
             raise HTTPException(
                 400,
-                "HEIC uploads are temporarily unavailable on this server. Please convert to JPG/PNG and retry.",
+                HEIC_UNAVAILABLE,
             )
-        raise HTTPException(400, f"Unsupported file type: {suffix}. Allowed: {', '.join(sorted(ALLOWED_UPLOAD_SUFFIXES))}")
+        raise HTTPException(
+            400, UNSUPPORTED_FILE_TYPE.format(suffix=suffix, allowed=", ".join(sorted(ALLOWED_UPLOAD_SUFFIXES)))
+        )
     content_type = (file.content_type or "").lower().strip()
     if content_type and content_type not in ALLOWED_UPLOAD_MIME_TYPES:
-        raise HTTPException(400, f"Unsupported upload content type: {content_type}")
+        raise HTTPException(400, UNSUPPORTED_CONTENT_TYPE.format(content_type=content_type))
     return suffix
 
 
@@ -124,7 +132,7 @@ def _validate_upload_payload(path: Path, suffix: str) -> None:
         with open(path, "rb") as fh:
             header = fh.read(5)
         if header != b"%PDF-":
-            raise HTTPException(400, "Invalid PDF upload.")
+            raise HTTPException(400, INVALID_PDF)
         return
 
     try:
@@ -133,23 +141,23 @@ def _validate_upload_payload(path: Path, suffix: str) -> None:
         with Image.open(path) as img:
             fmt = (img.format or "").upper()
             if fmt not in ALLOWED_IMAGE_FORMATS:
-                raise HTTPException(400, f"Unsupported image format: {fmt or 'unknown'}")
+                raise HTTPException(400, UNSUPPORTED_IMAGE_FORMAT.format(format=fmt or "unknown"))
             width, height = img.size
             if width <= 0 or height <= 0:
-                raise HTTPException(400, "Invalid image dimensions.")
+                raise HTTPException(400, INVALID_IMAGE_DIMENSIONS)
             if width > MAX_IMAGE_SIDE or height > MAX_IMAGE_SIDE:
-                raise HTTPException(400, "Image dimensions exceed allowed size.")
+                raise HTTPException(400, IMAGE_DIMENSIONS_TOO_LARGE)
             if width * height > MAX_IMAGE_PIXELS:
-                raise HTTPException(400, "Image pixel count exceeds allowed size.")
+                raise HTTPException(400, IMAGE_PIXELS_TOO_MANY)
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
         if suffix == ".heic" and not HEIC_DECODE_AVAILABLE:
             raise HTTPException(
                 400,
-                "HEIC uploads are temporarily unavailable on this server. Please convert to JPG/PNG and retry.",
+                HEIC_UNAVAILABLE,
             ) from exc
-        raise HTTPException(400, "Invalid or unreadable image upload.") from exc
+        raise HTTPException(400, UNREADABLE_IMAGE) from exc
 
 
 def _confidence_level(score: float) -> str:
@@ -476,7 +484,7 @@ def _save_upload_to_temp(file: UploadFile, suffix: str) -> tuple[Path, str]:
             total_bytes += len(chunk)
             if total_bytes > MAX_UPLOAD_BYTES:
                 Path(tmp.name).unlink(missing_ok=True)
-                raise HTTPException(413, "File too large. Maximum size is 20 MB.")
+                raise HTTPException(413, FILE_TOO_LARGE)
             tmp.write(chunk)
             hasher.update(chunk)
         return Path(tmp.name), hasher.hexdigest()
@@ -676,7 +684,7 @@ async def prefetch_ocr(
         raise
     except Exception:
         logger.exception("Prefetch OCR failed")
-        raise HTTPException(500, "OCR failed. Please try again.")
+        raise HTTPException(500, OCR_FAILED)
     finally:
         if ocr_path != original_tmp_path and (not PREPROCESS_CACHE_ENABLED or not cache_hit):
             with contextlib.suppress(OSError):
@@ -766,9 +774,9 @@ async def extract_scan(
         if course_id:
             course_model = await db.courses.get_course(course_id)
             if course_model is None:
-                raise HTTPException(404, f"Course {course_id} not found")
+                raise HTTPException(404, COURSE_ID_NOT_FOUND.format(course_id=course_id))
             if course_model.user_id and (current_user is None or str(course_model.user_id) != str(current_user.id)):
-                raise HTTPException(403, "Forbidden")
+                raise HTTPException(403, FORBIDDEN)
         t_course_lookup_end = time.perf_counter()
         logger.info(
             "Scan stage complete: stage=course_lookup has_course_id=%s found=%s lookup_ms=%.1f",
@@ -812,12 +820,12 @@ async def extract_scan(
             if parsed_rows.player_name:
                 raise ScanExtractionError(
                     422,
-                    "Name is unclear in the scorecard image. Please upload a cleaner image with clearer handwriting and try again.",
+                    UNCLEAR_PLAYER_NAME,
                     category="unreadable_scores", stage="parse",
                 )
             raise ScanExtractionError(
                 422,
-                "Unable to clearly read the score rows from this image. Please upload a cleaner image with clearer handwriting and better lighting, then try again.",
+                UNREADABLE_SCORE_ROWS,
                 category="unreadable_scores", stage="parse",
             )
 
@@ -842,7 +850,7 @@ async def extract_scan(
         )
 
     except FileNotFoundError:
-        raise ScanExtractionError(400, "Uploaded file could not be processed", category="invalid_upload", stage=failure_stage)
+        raise ScanExtractionError(400, UPLOAD_NOT_PROCESSED, category="invalid_upload", stage=failure_stage)
     except EnvironmentError:
         logger.exception("Scan extraction service unavailable")
         raise ScanExtractionError(500, SCAN_FAILED, category="service_unavailable", stage=failure_stage)
@@ -853,7 +861,7 @@ async def extract_scan(
         raise ScanExtractionError(exc.status_code, exc.detail, category=category, stage=failure_stage)
     except Exception:
         logger.exception("Scan extraction error")
-        raise ScanExtractionError(500, "Extraction failed. Please try again.", category="extraction_failed", stage=failure_stage)
+        raise ScanExtractionError(500, EXTRACTION_FAILED, category="extraction_failed", stage=failure_stage)
     finally:
         logger.info(
             "Scan extract request complete: total_ms=%.1f",
@@ -892,4 +900,4 @@ async def save_round(
         raise HTTPException(400, ROUND_SAVE_FAILED)
     except Exception:
         logger.exception("Save round error")
-        raise HTTPException(500, "Save failed. Please try again.")
+        raise HTTPException(500, SCAN_SAVE_FAILED)

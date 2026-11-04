@@ -25,7 +25,7 @@ A frontend query calls an API helper; the router resolves authentication/databas
 
 ## Changing this domain
 
-Keep parsing, authorization, HTTP statuses, and public error translation here. Match resource ownership on every read/write path; a frontend `userId` is not proof of authorization. Do not translate intended validation/404 errors into generic 500s. Preserve omitted-versus-null semantics for updates and coordinate request/model/schema constraints.
+Keep parsing, authorization, HTTP statuses, and public error translation here. Reply text comes from two catalogs: [messages.py](../../api/messages.py) for client errors, rate limits and success replies, and [error_responses.py](../../api/error_responses.py) for the generic text of every 5xx reply, which never carries exception details. [test_api_messages.py](../../tests/test_api_messages.py) enforces both rules. Match resource ownership on every read/write path; a frontend `userId` is not proof of authorization. Do not translate intended validation/404 errors into generic 500s. Preserve omitted-versus-null semantics for updates and coordinate request/model/schema constraints.
 
 Request numeric limits follow the domain models rather than defining their own: ratings, yardages and goals match [tee.py](../../models/tee.py) and [user.py](../../models/user.py). Every per-hole yardage map goes through `normalize_hole_yardages` in [request_models.py](../../api/request_models.py), which drops unknown entries and rejects a hole listed twice. Course rows the database keeps unique (hole numbers, handicap ranks, tee names in any case) are rejected at the request. Round edits reuse `HoleScoreInput`. Course creation takes no holes, holes 1–9, or holes 1–18.
 

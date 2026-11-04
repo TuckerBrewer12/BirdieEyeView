@@ -8,6 +8,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from typing import List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import IntegrityError, NotFoundError
+from api.messages import (
+    COURSE_NOT_FOUND, FORBIDDEN, ROUND_CHANGES_INVALID, ROUND_HOLES_DONT_MATCH_COURSE, ROUND_NOT_FOUND,
+)
+from api.error_responses import ROUND_LINK_FAILED, ROUND_UPDATE_FAILED
 from api.dependencies import get_current_user, get_db
 from api.input_validation import sanitize_user_text
 from api.request_models import HoleScoreInput
@@ -105,7 +109,7 @@ async def get_rounds_for_user(
     current_user: User = Depends(get_current_user),
 ):
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     rows = await db.rounds.get_round_summaries_for_user(str(user_id), limit=limit, offset=offset)
     return [
         RoundSummaryResponse(
@@ -133,17 +137,17 @@ async def get_rounds_for_user(
 async def _check_round_ownership(round_id: UUID, current_user: User, db: DatabaseManager):
     owner_id = await db.rounds.get_round_owner_id(str(round_id))
     if owner_id is None:
-        raise HTTPException(404, "Round not found")
+        raise HTTPException(404, ROUND_NOT_FOUND)
     if owner_id != str(current_user.id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
 
 
 async def _check_course_access(course_id: UUID, current_user: User, db: DatabaseManager):
     course = await db.courses.get_course(str(course_id))
     if not course:
-        raise HTTPException(404, "Course not found")
+        raise HTTPException(404, COURSE_NOT_FOUND)
     if course.user_id and str(course.user_id) != str(current_user.id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     return course
 
 
@@ -156,7 +160,7 @@ async def get_round(
     await _check_round_ownership(round_id, current_user, db)
     round_ = await db.rounds.get_round(str(round_id))
     if not round_:
-        raise HTTPException(404, "Round not found")
+        raise HTTPException(404, ROUND_NOT_FOUND)
     return round_
 
 
@@ -195,7 +199,7 @@ async def update_round(
             updated = await db.rounds.get_round(str(round_id))
 
         if not updated:
-            raise HTTPException(404, "Round not found")
+            raise HTTPException(404, ROUND_NOT_FOUND)
 
         # Update metadata fields
         meta_updates = {}
@@ -220,13 +224,13 @@ async def update_round(
     except HTTPException:
         raise
     except NotFoundError:
-        raise HTTPException(404, "Round not found")
+        raise HTTPException(404, ROUND_NOT_FOUND)
     except IntegrityError:
         logger.warning("Update round rejected", exc_info=True)
-        raise HTTPException(422, "These changes can't be saved. Check the hole numbers and scores.")
+        raise HTTPException(422, ROUND_CHANGES_INVALID)
     except Exception:
         logger.exception("Update round error")
-        raise HTTPException(500, "Update failed. Please try again.")
+        raise HTTPException(500, ROUND_UPDATE_FAILED)
 
 
 @router.post("/{round_id}/link-course", response_model=RoundSummaryResponse)
@@ -248,7 +252,7 @@ async def link_course_to_round(
         # Fill course gaps from the round's par_played values
         round_ = await db.rounds.get_round(str(round_id))
         if not round_:
-            raise HTTPException(404, "Round not found")
+            raise HTTPException(404, ROUND_NOT_FOUND)
         destination_course = await db.courses.get_course(str(req.course_id))
         fill_destination_course = bool(
             destination_course
@@ -308,16 +312,16 @@ async def link_course_to_round(
             user_id=str(current_user.id),
         )
         if not updated:
-            raise HTTPException(404, "Round not found")
+            raise HTTPException(404, ROUND_NOT_FOUND)
         return summarize_round(updated)
     except HTTPException:
         raise
     except IntegrityError:
         logger.warning("Link course rejected", exc_info=True)
-        raise HTTPException(422, "This round's holes don't match the selected course.")
+        raise HTTPException(422, ROUND_HOLES_DONT_MATCH_COURSE)
     except Exception:
         logger.exception("Link course error")
-        raise HTTPException(500, "Link failed. Please try again.")
+        raise HTTPException(500, ROUND_LINK_FAILED)
 
 
 @router.delete("/{round_id}", status_code=204)
