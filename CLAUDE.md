@@ -168,7 +168,7 @@ Every colour is a token in `src/brand/theme/tokens.ts`, used through its Tailwin
 
 ### Type and measures
 - DM Sans (`font-sans`) and DM Mono (`font-mono`); the body font is set once in `index.css`.
-- Type roles, not pixel sizes: `text-caption`, `text-meta`, `text-label`, `text-body-sm`, `text-body`, `text-title`, `text-hero`, `text-eyebrow`, `text-kicker`, `text-section` (see Brand tokens). `tracking-*` (`tracking-stat`, `tracking-chip`, …) sits beside Tailwind's sizes. Tailwind's scale (`text-sm`, `p-4`, `gap-2`) is fine; arbitrary values (`text-[11px]`, `w-[54px]`) are not.
+- Type roles, not pixel sizes: `text-caption`, `text-meta`, `text-label`, `text-body-sm`, `text-body`, `text-body-lg`, `text-title`, `text-hero`, `text-eyebrow`, `text-kicker`, `text-section` (see Brand tokens). `tracking-*` (`tracking-stat`, `tracking-chip`, …) sits beside Tailwind's sizes. Tailwind's scale (`text-sm`, `p-4`, `gap-2`) is fine; arbitrary values (`text-[11px]`, `w-[54px]`) are not.
 - Measures off the 4px scale are named: `rounded-card`, `rounded-tooltip`, `gap-tight`, `h-chart`, `w-preview`, `size-icon-xs`, `grid-cols-round-preview`, …
 - Shadows follow `--shadow`: `shadow-card` for a lifted surface or a hover, `shadow-hairline` under a pinned bar. Tailwind's `shadow-sm` / `-md` / `-lg` are wired to the same token, so they lift in dark mode too.
 
@@ -193,7 +193,7 @@ Golf-native visualizations over generic chart types where possible. SVG charts u
 - **Generated CSS.** Run `npm run gen:tokens` after changing `tokens.ts`; CI's `check:tokens` fails if the CSS is stale. A colour's CSS name is its path in kebab case (`score.birdie.onBase` is `--score-birdie-on-base` and `text-score-birdie-on-base`); a measure is `--brand-<group>-<key>` with its utility (`h-chart`, `rounded-tooltip`).
 - **TypeScript reads `tokens.*`.** `tokens.color` is the semantic colours as `var()` references (`tokens.color.score[kind].base` is `"var(--score-<kind>-base)"`), so dark mode still switches in CSS. Numbers are real values: `tokens.chart`, `tokens.motion`, `tokens.space`, `tokens.type.label.size`.
 - **Where each goes.** SVG paint and chart-library props take `tokens.color.*` (`stroke={tokens.color.border}`, `<Cell fill={toParFill(toPar)} />`). HTML elements use Tailwind classes (`bg-card`, `text-score-birdie`), with a lookup of full class strings when the colour is picked at runtime (`scoreFillClass()`, `toParTextClass()`), never a class built from a template. A `var()` string isn't a colour to canvas; resolve it with `getComputedStyle` there.
-- **Type roles.** `tokens.type` names each text style and bundles its size with the weight, tracking and line height that go with it: `text-caption`, `text-meta`, `text-label`, `text-body-sm`, `text-body`, `text-title`, `text-hero`, `text-eyebrow`, `text-kicker`, `text-section`. A class beside a role (`font-semibold`) still wins; uppercase stays a class.
+- **Type roles.** `tokens.type` names each text style and bundles its size with the weight, tracking and line height that go with it: `text-caption`, `text-meta`, `text-label`, `text-body-sm`, `text-body`, `text-body-lg`, `text-title`, `text-hero`, `text-eyebrow`, `text-kicker`, `text-section`. A class beside a role (`font-semibold`) still wins; uppercase stays a class.
 - `tokens.test.ts` fails on a raw colour anywhere outside `palette` (the token files aside), on a semantic colour that doesn't map onto the palette, on a px/rem/em literal in `src/brand`, and if `capacitor.config.ts` drifts from `primary` / `background`.
 
 ### Dark Mode

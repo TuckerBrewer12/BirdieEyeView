@@ -1,50 +1,60 @@
 import { Button } from "@/brand/components/Button";
 import { Collection } from "@/brand/components/Collection";
 import { PersonRow } from "@/brand/components/PersonRow";
-import { personAvatarFills } from "@/brand/components/variants";
-import { cn } from "@/brand/cn";
+
+const card = "overflow-hidden rounded-card border border-border bg-card";
 
 const friends = [
-  { id: "a", name: "Avery Lin", handicap: "Handicap 9.8" },
-  { id: "b", name: "Jordan Castellanos", handicap: "Handicap 14.1" },
+  { id: "a", name: "Avery Lin", detail: "avery@example.com" },
+  { id: "b", name: "Jordan Castellanos-Whitfield", detail: "jordan.castellanos-whitfield@example.com" },
+  { id: "c", name: "Sam", detail: "No email" },
 ];
 
-/** Compose-style @Preview for PersonRow. */
+const requests = [
+  { id: "a", name: "Sam Kim", detail: "sam@example.com", pending: false },
+  { id: "b", name: "Avery Lin", detail: "avery@example.com", pending: true },
+];
+
+/** Compose-style @Preview for PersonRow: the friends list, the inbox and an unknown person. */
 export default function PersonRowPreview() {
   return (
     <>
-      <p className="text-label font-semibold text-muted-foreground">Person row · friend and request</p>
-      <div className="overflow-hidden rounded-card border border-border bg-card">
-        <Collection
-          layout="rows"
-          items={friends}
-          keyFor={(f) => f.id}
-          renderItem={(f) => (
-            <PersonRow
-              href="#"
-              name={f.name}
-              detail={f.handicap}
-              actions={<span className="text-body font-semibold text-primary">Compare</span>}
-            />
-          )}
-        />
-        <PersonRow
-          name="Sam Kim"
-          detail="Wants to be friends"
-          actions={
-            <>
-              <Button variant="ghost">Decline</Button>
-              <Button>Accept</Button>
-            </>
-          }
-        />
-      </div>
+      <p className="text-label font-semibold text-muted-foreground">Friends</p>
+      <Collection
+        layout="divided"
+        className={card}
+        items={friends}
+        keyFor={(p) => p.id}
+        renderItem={(p) => <PersonRow name={p.name} detail={p.detail} />}
+      />
 
-      <p className="mt-2.5 text-label font-semibold text-muted-foreground">Avatar colors</p>
-      <div className="flex gap-2">
-        {personAvatarFills.map((fill) => (
-          <span key={fill} className={cn("size-7 rounded-full", fill)} />
-        ))}
+      <p className="mt-2.5 text-label font-semibold text-muted-foreground">Inbox · received and sent</p>
+      <Collection
+        layout="divided"
+        className={card}
+        items={requests}
+        keyFor={(p) => p.id}
+        renderItem={(p) => (
+          <PersonRow
+            name={p.name}
+            detail={p.detail}
+            meta="Updated Oct 3, 2026"
+            actions={
+              p.pending ? (
+                <span className="text-xs font-medium text-muted-foreground">Pending</span>
+              ) : (
+                <>
+                  <Button variant="ghost">Decline</Button>
+                  <Button>Accept</Button>
+                </>
+              )
+            }
+          />
+        )}
+      />
+
+      <div className={card}>
+        <PersonRow name="Unknown user" initials="?" />
       </div>
     </>
   );

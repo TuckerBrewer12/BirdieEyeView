@@ -114,7 +114,7 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
 
         <Card className="py-0">
           <Collection
-            layout="rows"
+            layout="divided"
             items={viewModel.requests}
             keyFor={(request) => request.id}
             loading={viewModel.loading}

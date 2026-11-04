@@ -1,14 +1,12 @@
 import { Fragment, type Key, type ReactNode } from "react";
 import { cn } from "@/brand/cn";
 
-type CollectionLayout = "stack" | "grid" | "divided" | "rows";
+type CollectionLayout = "stack" | "grid" | "divided";
 
 const layouts: Record<CollectionLayout, string> = {
   stack: "flex flex-col gap-2.5",
   grid: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
   divided: "flex flex-col divide-y divide-border",
-  // For list rows, which draw their own chart-grid rule above themselves.
-  rows: "flex flex-col",
 };
 
 interface CollectionProps<T> {

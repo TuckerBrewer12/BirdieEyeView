@@ -1,9 +1,7 @@
 import type { ReactNode } from "react";
-import { cn } from "@/brand/cn";
-import { ListRow, type RowTarget } from "./ListRow";
-import { personAvatarFills } from "./variants";
+import { ListRow } from "./ListRow";
 
-interface PersonRowProps extends RowTarget {
+interface PersonRowProps {
   name: string;
   /** Two letters for the avatar. Defaults to the first letters of the first two words of `name`. */
   initials?: string;
@@ -11,7 +9,7 @@ interface PersonRowProps extends RowTarget {
   detail?: ReactNode;
   /** A quieter third line, such as when the row last changed. Makes the row taller than 64. */
   meta?: ReactNode;
-  /** A link-styled word, buttons or a status at the end of the row. */
+  /** Buttons or a status at the end of the row. */
   actions?: ReactNode;
   className?: string;
 }
@@ -26,28 +24,17 @@ function initialsOf(name: string): string {
   return letters.toUpperCase() || "?";
 }
 
-/** One of the avatar fills, picked from the name so a person keeps theirs. */
-function fillOf(name: string): string {
-  let hash = 0;
-  for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) % personAvatarFills.length;
-  return personAvatarFills[hash];
-}
-
 /**
- * One person in a list: a coloured initials avatar, their name and a line
- * about them, with one value or action at the end. With `href` or `onClick`
- * the whole row is the target; a row that ends in buttons is not one, since
- * the buttons are the targets.
+ * One person in a list: a brand-green initials avatar, their name and a line
+ * or two about them, with whatever can be done about them at the end. Built to
+ * sit in a `Collection layout="divided"`, which draws the rules between rows.
  */
-function PersonRow({ name, initials, detail, meta, actions, className, ...target }: PersonRowProps) {
+function PersonRow({ name, initials, detail, meta, actions, className }: PersonRowProps) {
   return (
-    <ListRow slot="person-row" className={className} {...target}>
+    <ListRow slot="person-row" className={className}>
       <span
         aria-hidden
-        className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-full text-body font-bold",
-          fillOf(name),
-        )}
+        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-body font-bold text-primary-foreground"
       >
         {initials ?? initialsOf(name)}
       </span>
