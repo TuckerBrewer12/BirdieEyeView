@@ -288,7 +288,7 @@ export function SVGScoreHandicapTrend({
               stroke={tokens.color.card}
               strokeWidth={tokens.lineWidth.outline}
             />
-            <FigureLabel x={x(bestIndex)} y={yScore(best!) - L.scoreLift} anchor="middle" color={tokens.color.score.birdie.base}>
+            <FigureLabel x={x(bestIndex)} y={yScore(best!) - L.scoreLift} anchor={edgeAnchor(x(bestIndex), gridRight)} color={tokens.color.score.birdie.base}>
               Best {best}
             </FigureLabel>
           </g>
@@ -452,7 +452,7 @@ function FigureLabel({
 }: {
   x: number;
   y: number;
-  anchor: "middle" | "end";
+  anchor: "start" | "middle" | "end";
   color: string;
   children: ReactNode;
 }) {
@@ -489,4 +489,11 @@ function xTickIndexes(count: number): number[] {
   const last = count - 1;
   const fifths = Array.from({ length: Math.floor(last / 5) }, (_, i) => (i + 1) * 5 - 1).filter((i) => last - i > 2);
   return [0, ...fifths.filter((i) => i > 2), last];
+}
+
+/** A label over a dot near either end of the grid reads inward, so the card's edge doesn't cut it. */
+function edgeAnchor(x: number, right: number): "start" | "middle" | "end" {
+  if (x < L.labelEdge) return "start";
+  if (x > right - L.labelEdge) return "end";
+  return "middle";
 }

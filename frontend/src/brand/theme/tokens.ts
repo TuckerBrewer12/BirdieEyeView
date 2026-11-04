@@ -576,6 +576,8 @@ export const chart = {
     legendLine: 16,
     /** Where the handicap's last figure sits, up and to the left of its dot. */
     lastLift: 8,
+    /** Closer than this to either end of the grid, a label over a dot reads inward. */
+    labelEdge: 40,
     /** Where the last score sits, straight above its dot. */
     scoreLift: 10,
   },
