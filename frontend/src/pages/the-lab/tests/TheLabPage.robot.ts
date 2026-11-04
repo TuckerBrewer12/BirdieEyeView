@@ -94,6 +94,14 @@ export class TheLabRobot {
     await this.page.getByRole("option", { name: label, exact: true }).click();
   }
 
+  /** The scoring goal's menu, open. */
+  async openGoalMenu(): Promise<this> {
+    await this.goalPicker().getByRole("combobox").click();
+    await expect(this.page.getByRole("listbox")).toBeVisible();
+    await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
+    return this;
+  }
+
   async pickGoal(label: string): Promise<this> {
     await this.pickFrom(this.goalPicker(), label);
     return this;

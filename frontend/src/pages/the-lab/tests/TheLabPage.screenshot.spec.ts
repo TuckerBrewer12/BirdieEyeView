@@ -13,6 +13,13 @@ test("populated lab in dark mode", async ({ lab }) => {
   await lab.capture("lab-populated-dark.png");
 });
 
+test("goal menu open", async ({ lab }) => {
+  await lab.open();
+  await lab.seesLab();
+  await lab.openGoalMenu();
+  await lab.capture("lab-goal-menu.png");
+});
+
 test("no goal set", async ({ lab }) => {
   await lab.openWithoutGoal();
   await lab.seesLab();
