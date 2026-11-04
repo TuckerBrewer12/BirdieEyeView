@@ -66,7 +66,9 @@ class ScanService:
         plan = await self._plan_course(req, scanned)
 
         tee_box = self._canonicalize_played_tee_box(plan.course, req.tee_box, scan_tees)
-        par_by_hole, handicap_by_hole = self._build_par_lookup(req, plan.course)
+        # A verified update rewrites the course's pars and handicaps, so the round's snapshot
+        # must come from the scan being written, not the course as it was before.
+        par_by_hole, handicap_by_hole = self._build_par_lookup(req, plan.verified_update or plan.course)
         hole_scores = self._build_hole_scores(req, par_by_hole, handicap_by_hole)
         played_on = self._parse_date(req.date)
         self._make_round(req, plan.course, tee_box, hole_scores, played_on)  # validate before writing
@@ -127,8 +129,11 @@ class ScanService:
             return _CoursePlan(course=course, fill_gaps=str(course.user_id) == str(req.user_id))
         # Master course: update it only from a complete scan that the provider verifies.
         # Without a provider ID, or when verification fails, the round saves against it unchanged.
+        # The scan must cover the master's whole layout: tees are rewritten in full, so a
+        # front-nine scan of an 18-hole master would drop its back-nine yardages and ratings.
         if (
             course.external_course_id
+            and course.total_holes in (None, scanned.total_holes)
             and self._scan_differs_from(course, scanned)
             and scanned.has_required_course_data()
             and await self._verify_with_provider(course.external_course_id, scanned)

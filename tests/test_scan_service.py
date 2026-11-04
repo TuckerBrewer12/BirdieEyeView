@@ -189,6 +189,44 @@ async def test_stale_master_is_updated_from_verified_scan():
 
 
 @pytest.mark.asyncio
+async def test_verified_par_change_reaches_the_saved_round():
+    service, db, _ = make_service()
+    master = make_course(external_id="ext-1")
+    master.holes[0] = Hole(number=1, par=5, handicap=HANDICAPS[0])  # stale; the scan and provider say 4
+    db.courses.get_course.return_value = master
+
+    saved = await service.save_reviewed_scan(make_save_request(course_id=str(uuid4())))
+
+    db.courses.apply_verified_scan.assert_awaited_once()
+    assert saved.hole_scores[0].par_played == 4
+
+
+@pytest.mark.asyncio
+async def test_front_nine_scan_never_rewrites_an_eighteen_hole_master():
+    service, db, provider = make_service()
+    back_handicaps = [2, 18, 6, 10, 4, 16, 8, 14, 12]
+    master = Course(
+        id=str(uuid4()),
+        name="Pebble Beach",
+        external_course_id="ext-1",
+        total_holes=18,
+        user_id=None,
+        holes=[
+            Hole(number=n, par=par, handicap=hcp)
+            for n, (par, hcp) in enumerate(zip(PARS + PARS, HANDICAPS + back_handicaps), start=1)
+        ],
+        tees=[Tee(color="Blue", hole_yardages=dict(enumerate([y - 10 for y in BLUE + BLUE], start=1)))],
+    )
+    db.courses.get_course.return_value = master
+
+    saved = await service.save_reviewed_scan(make_save_request(course_id=str(uuid4())))
+
+    provider.get_course_details.assert_not_awaited()
+    db.courses.apply_verified_scan.assert_not_awaited()
+    assert saved.course == master
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "details_error",
     [CourseProviderUnavailable("down"), CourseProviderNotFound("ext-1"), None],

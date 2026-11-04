@@ -17,7 +17,7 @@
 
 The scan router hands reviewed data to ScanService. The service never guesses the course; it uses the user's choice:
 
-- **Existing course (`course_id`):** saved against as-is. A user-owned course has missing holes/tees filled from the scan. A master course is overwritten from the scan only when the scan differs, the master has a provider ID, and the provider verifies the scan; otherwise it is unchanged.
+- **Existing course (`course_id`):** saved against as-is. A user-owned course has missing holes/tees filled from the scan. A master course is overwritten from the scan only when the scan covers the master's whole layout (a front-nine scan never rewrites an 18-hole master), the scan differs, the master has a provider ID, and the provider verifies the scan; otherwise it is unchanged. When it is overwritten, the round's `par_played`/`handicap_played` come from the verified scan.
 - **Provider pick (`external_course_id`):** links to an existing course with that ID. Otherwise a new course must pass the completeness check (`Course.has_required_course_data()`); if the provider verifies it, the scanned data becomes one master course, else a user-owned course without the provider ID.
 - **Typed name only:** reuses the user's own course with that exact name, or creates a user-owned course that passes the completeness check. No provider call.
 - **No course:** rejected.
