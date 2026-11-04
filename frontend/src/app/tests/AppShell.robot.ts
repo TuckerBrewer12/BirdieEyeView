@@ -105,6 +105,28 @@ export class AppShellRobot {
     return this;
   }
 
+  /** The server forgets the session; the app notices when the golfer comes back to the tab. */
+  async sessionRunsOut(): Promise<this> {
+    if (this.backend) this.backend.signedOut = true;
+    await this.page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    return this;
+  }
+
+  async seesSignIn(): Promise<this> {
+    await expect(this.page).toHaveURL(/\/login$/);
+    await expect(this.page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
+    await expect(this.nav()).toHaveCount(0);
+    return this;
+  }
+
+  async signInAgain(): Promise<this> {
+    await this.page.getByLabel("Email", { exact: true }).fill("test@example.com");
+    await this.page.getByLabel("Password", { exact: true }).fill("password");
+    await this.page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(this.nav()).toBeVisible();
+    return this;
+  }
+
   async seesSignedOut(): Promise<this> {
     // Signed out, the app falls back to the landing page at /.
     await expect(this.page).toHaveURL(/\/$/);

@@ -31,6 +31,12 @@ interface AuthContextValue extends AuthState {
   refreshSession: () => Promise<AuthState | null>;
   logout: () => Promise<void>;
   loading: boolean;
+  /**
+   * The golfer ended the session themselves with Sign out, rather than arriving without one or
+   * having it run out. Signing out goes to the landing page; the other two go to sign in and
+   * come back.
+   */
+  signedOutByUser: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -58,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(EMPTY_AUTH_STATE);
   const latestStateRef = useRef<AuthState>(EMPTY_AUTH_STATE);
   const [loading, setLoading] = useState(true);
+  const [signedOutByUser, setSignedOutByUser] = useState(false);
 
   useEffect(() => {
     latestStateRef.current = state;
@@ -129,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     const data = await callAuth<AuthUserDto>("/login", { email, password });
     setSessionToken(data.access_token ?? null);
+    setSignedOutByUser(false);
     setState({
       userId: data.user_id,
       name: data.name,
@@ -179,6 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await callAuth<{ message: string }>("/logout", {});
     } finally {
       setSessionToken(null);
+      setSignedOutByUser(true);
       setState(EMPTY_AUTH_STATE);
     }
   };
@@ -196,6 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshSession,
         logout,
         loading,
+        signedOutByUser,
       }}
     >
       {children}

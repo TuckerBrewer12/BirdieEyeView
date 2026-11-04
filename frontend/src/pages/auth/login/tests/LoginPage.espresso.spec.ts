@@ -43,3 +43,18 @@ test("arriving from another screen carries its email and message", async ({ logi
   await login.seesEmail("new@example.com");
   await login.seesNotice(AUTH_MESSAGES.passwordReset);
 });
+
+test("a link into the app while signed out signs in first, then opens that page", async ({ login }) => {
+  await login.arriveFrom("/courses?from=link#top");
+  await login.isAt("/login");
+  await login.signIn("test@example.com", "password");
+  await login.isSignedInAt("/courses?from=link#top");
+});
+
+test("a wrong password keeps the page to come back to", async ({ login }) => {
+  await login.arriveFrom("/settings");
+  await login.signIn("test@example.com", "nope");
+  await login.seesError(AUTH_MESSAGES.badCredentials);
+  await login.signIn("test@example.com", "password");
+  await login.isSignedInAt("/settings");
+});

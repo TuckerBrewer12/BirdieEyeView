@@ -205,6 +205,7 @@ Implemented via `modes.dark` in `brand/theme/tokens.ts`, generated as a `:root.d
 
 Key files:
 - `src/App.tsx` — routing; wraps the app in `ScanSessionProvider` so a scan in progress outlives navigation
+- `src/pages/auth/signInReturnModel.ts` — signed out, a link to one of the app's pages (`SIGNED_IN_SECTIONS`) goes to `/login` carrying `{ from }`, and signing in opens that page; a deliberate Sign out (`useAuth().signedOutByUser`) still goes to the landing page. A new signed-in section goes in `SIGNED_IN_SECTIONS` too (`navigation.test.ts` checks the shell's links).
 - `src/types/api.gen.ts` — generated from the backend's OpenAPI schema (`frontend/openapi.json`); never edit by hand. After changing an API model run `python scripts/dump_openapi.py` then `npm run gen:api`; CI fails if either is stale. `src/types/api.ts` names the generated types (`RoundDto`, `RoundSummaryDto`, …).
 - `src/domain/round.ts` — the frontend `Round`: plain data mapped from the API (`Round.fromDto`; lists get the leaner `RoundSummary` from `Round.fromSummary`, which `Round` extends), plus `Round.previewEdits` / `Round.fromScan`, the only frontend golf math (live totals while editing or reviewing a scan, following the server's rules, replaced by the saved response).
 - `src/lib/api.ts` — API client (`updateRound`, `cloneCourse`, `getCourses`, `searchCourses`, `getGoalReport`, `updateUser` with `scoring_goal`, etc.)

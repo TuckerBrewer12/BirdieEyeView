@@ -17,6 +17,25 @@ test("signing out from the side rail returns to the landing page", async ({ shel
   await shell.seesSignedOut();
 });
 
+test("a session that runs out asks to sign in, then returns to the same page", async ({ shell }) => {
+  await shell.open("/courses");
+  await shell.sessionRunsOut();
+  await shell.seesSignIn();
+  await shell.signInAgain();
+  await shell.isAt("/courses");
+  await shell.seesCurrent("Courses");
+});
+
+test("signing out, then going back, stays on the landing page", async ({ shell, page }) => {
+  await shell.open("/rounds");
+  await shell.tapNav("Courses");
+  await shell.isAt("/courses");
+  await shell.signOut();
+  await shell.seesSignedOut();
+  await page.goBack();
+  await shell.seesSignedOut();
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 

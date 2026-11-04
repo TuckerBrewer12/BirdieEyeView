@@ -4,11 +4,13 @@ import { useAuth } from "@/context/AuthContext";
 import { AuthLink } from "../components/AuthLink";
 import { AuthNotice } from "../components/AuthNotice";
 import { PasswordField } from "../components/PasswordField";
+import { returnPathFrom } from "../signInReturnModel";
 import { useLoginViewModel, type LoginArrival } from "./useLoginViewModel";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const arrival = (useLocation().state ?? {}) as LoginArrival;
+  const routeState: unknown = useLocation().state;
+  const arrival = (routeState ?? {}) as LoginArrival;
   const viewModel = useLoginViewModel(useAuth(), arrival);
 
   return (
@@ -25,7 +27,7 @@ export function LoginPage() {
         className="flex flex-col gap-5"
         onSubmit={(event) => {
           event.preventDefault();
-          viewModel.submit(() => navigate("/"));
+          viewModel.submit(() => navigate(returnPathFrom(routeState) ?? "/", { replace: true }));
         }}
       >
         <AuthNotice tone="success">{viewModel.notice}</AuthNotice>

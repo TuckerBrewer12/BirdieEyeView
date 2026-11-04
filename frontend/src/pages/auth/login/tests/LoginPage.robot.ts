@@ -14,6 +14,12 @@ export class LoginRobot extends AuthScreenRobot {
     return this;
   }
 
+  /** Follows a link to one of the app's pages while signed out; the app sends it here first. */
+  async arriveFrom(path: string, seed: AuthSeed = {}): Promise<this> {
+    await this.visit(path, "Sign in", seed);
+    return this;
+  }
+
   async typePassword(password: string): Promise<this> {
     await this.fill("Password", password);
     return this;
@@ -48,6 +54,18 @@ export class LoginRobot extends AuthScreenRobot {
 
   async doesNotSeeResend(): Promise<this> {
     await expect(this.page.getByRole("button", { name: "Resend verification email" })).toHaveCount(0);
+    return this;
+  }
+
+  /** Signed in and on `path`, query and hash included: the page the link was for. */
+  async isSignedInAt(path: string): Promise<this> {
+    await expect
+      .poll(() => {
+        const url = new URL(this.page.url());
+        return `${url.pathname}${url.search}${url.hash}`;
+      })
+      .toBe(path);
+    await expect(this.page.getByRole("heading", { name: "Sign in" })).toHaveCount(0);
     return this;
   }
 

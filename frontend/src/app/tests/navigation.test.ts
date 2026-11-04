@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { needsSignIn } from "@/pages/auth/signInReturnModel";
 import { initialsOf, isCurrent, navigationFor } from "../navigation";
 
 const activeLabels = (items: { label: string; active?: boolean }[]) =>
@@ -40,6 +41,16 @@ describe("navigationFor", () => {
     const nav = navigationFor("/");
     expect(activeLabels(nav.side)).toEqual(["Dashboard"]);
     expect(activeLabels(nav.tabs)).toEqual(["Home"]);
+  });
+});
+
+describe("signed-out links into the app", () => {
+  it("send every section the shell links to, but home, through sign in", () => {
+    const nav = navigationFor("/");
+    const hrefs = [...nav.side, ...nav.sideFooter, ...nav.tabs, ...nav.more]
+      .map((item) => item.href)
+      .filter((href) => href !== "/");
+    expect(hrefs.filter((href) => !needsSignIn(href))).toEqual([]);
   });
 });
 

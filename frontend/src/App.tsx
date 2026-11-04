@@ -11,6 +11,7 @@ import {
   VerifyEmailPage,
   VerifyPendingPage,
 } from "./pages/auth";
+import { needsSignIn, returnPathFrom, signInReturnFor } from "./pages/auth/signInReturnModel";
 import { LandingPage } from "./pages/landing-page";
 
 import { DashboardPage } from "./pages/dashboard";
@@ -56,8 +57,20 @@ function RootRoutes() {
   );
 }
 
+/**
+ * Signed out on a page nobody routes there: one of the app's pages goes to sign in and comes
+ * back after, unless the golfer just signed out themselves; anything else goes to the landing page.
+ */
+function SignedOutRedirect({ signedOutByUser }: { signedOutByUser: boolean }) {
+  const location = useLocation();
+  if (!signedOutByUser && needsSignIn(location.pathname)) {
+    return <Navigate to="/login" replace state={signInReturnFor(location)} />;
+  }
+  return <Navigate to="/" replace />;
+}
+
 function AppRoutes() {
-  const { userId, loading } = useAuth();
+  const { userId, loading, signedOutByUser } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -78,7 +91,7 @@ function AppRoutes() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/verify-pending" element={<VerifyPendingPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<SignedOutRedirect signedOutByUser={signedOutByUser} />} />
       </Routes>
     );
   }
@@ -107,7 +120,9 @@ function AppRoutes() {
           <Route path="/career" element={<CareerPage userId={userId} />} />
           <Route path="/inbox" element={<FriendsInboxPage userId={userId} />} />
           <Route path="/settings" element={<SettingsPage userId={userId} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Just signed in from /login: back to the page that sent them there, else home.
+              A new section here also goes in SIGNED_IN_SECTIONS (pages/auth/signInReturnModel.ts). */}
+          <Route path="*" element={<Navigate to={returnPathFrom(location.state) ?? "/"} replace />} />
         </Routes>
     </AppLayout>
   );
