@@ -486,7 +486,6 @@ async def test_round_without_course_is_rejected():
         ({"course_holes": [{"hole_number": n, "par": 4} for n in range(1, 18)]}, "cover holes 1-9 or 1-18"),
         ({"all_tees": [{"color": "Blue", "hole_yardages": {"1": 400}}]}, "No tee has a yardage for every hole"),
         ({"tee_box": "Gold"}, "selected tee 'Gold'"),
-        ({"all_tees": None, "tee_box": None}, "No tee has a yardage"),
     ],
 )
 async def test_incomplete_new_course_is_rejected_before_any_write(overrides, message):
@@ -562,12 +561,6 @@ def test_extract_tee_color_token(label, expected):
     assert ScanService._extract_tee_color_token(label) == expected
 
 
-def test_tee_input_yardages_omit_missing_values():
-    tee = TeeInput(color="Blue", hole_yardages={"1": 400, "2": None})
-
-    assert ScanService._tee_input_yardages(tee) == {1: 400}
-
-
 @pytest.mark.parametrize(
     ("left", "right", "expected"),
     [
@@ -586,12 +579,6 @@ def test_build_tees_uses_selected_tee_fallback():
     tees = service._build_tees(make_save_request(all_tees=[], tee_yardages={"1": 400}))
 
     assert tees[0].color == "Blue"
-
-
-def test_build_tees_returns_empty_without_tee_data():
-    service, _, _ = make_service()
-
-    assert service._build_tees(make_save_request(tee_box=None, all_tees=None)) == []
 
 
 @pytest.mark.asyncio

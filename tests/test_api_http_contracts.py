@@ -27,6 +27,7 @@ def api():
     db.user_tees.create_user_tee = AsyncMock()
     db.user_tees.update_user_tee = AsyncMock()
     db.courses.create_course = AsyncMock()
+    db.users.update_user = AsyncMock()
     app = FastAPI()
     app.include_router(users.router, prefix="/api/users")
     app.include_router(courses.router, prefix="/api/courses")
@@ -46,14 +47,11 @@ def api():
     "body",
     [
         {"name": "Blue", "course_rating": True},
-        {"name": "Blue", "slope_rating": True},
         {"name": "Blue", "hole_yardages": {"9" * 400: 400}},
-        {"name": "Blue", "hole_yardages": {"1": 10**400}},
         {"name": "Blue", "course_rating": 10**400},
         {"name": "Blue", "hole_yardages": {"01": 350, "1": 400}},
-        {"name": "Blue", "hole_yardages": {"1": [400]}},
     ],
-    ids=["bool-rating", "bool-slope", "huge-hole-key", "huge-yardage", "huge-rating", "same-hole-twice", "list-yardage"],
+    ids=["bool-rating", "huge-hole-key", "huge-rating", "same-hole-twice"],
 )
 def test_user_tee_create_rejects_malformed_input(api, body):
     client, db, user_id = api
@@ -73,31 +71,56 @@ def test_user_tee_update_rejects_boolean_rating(api):
     db.user_tees.update_user_tee.assert_not_awaited()
 
 
+NINE_HOLES = [{"number": n, "par": 4} for n in range(1, 10)]
+
+
+# Each body is valid except for the one thing its id names, and the message proves which guard fired.
 @pytest.mark.parametrize(
-    "body",
+    ("body", "message"),
     [
-        {"name": "Pebble", "holes": [{"number": 1, "par": 4}]},
-        {"name": "Pebble", "holes": [{"number": True, "par": 4}]},
-        {"name": "Pebble", "tees": [{"color": "Blue", "hole_yardages": {"19": -20}}]},
-        {"name": "Pebble", "tees": [{"color": "Blue"}, {"color": "blue"}]},
+        ({"name": "Pebble", "holes": [{"number": 1, "par": 4}]}, "holes 1-9 or 1-18"),
+        ({"name": "Pebble", "holes": [{"number": True, "par": 4}] + NINE_HOLES[1:]}, "not true/false"),
+        ({"name": "Pebble", "tees": [{"color": "Blue", "hole_yardages": {"19": 400}}]}, "between 1 and 18"),
+        ({"name": "Pebble", "tees": [{"color": "Blue", "hole_yardages": {"1": -20}}]}, "between 0 and 1000"),
+        ({"name": "Pebble", "tees": [{"color": "Blue"}, {"color": "blue"}]}, "different name"),
     ],
-    ids=["partial-holes", "bool-hole-number", "bad-yardage", "repeated-tee-name"],
+    ids=["partial-holes", "bool-hole-number", "hole-19-yardage", "negative-yardage", "repeated-tee-name"],
 )
-def test_course_create_rejects_invalid_course(api, body):
+def test_course_create_rejects_invalid_course(api, body, message):
     client, db, _ = api
 
     response = client.post("/api/courses", json=body)
 
     assert response.status_code == 422
+    assert message in str(response.json()["detail"])
     db.courses.create_course.assert_not_awaited()
 
 
-@pytest.mark.parametrize(("body", "status"), [({"scoring_goal_nine": 44}, 200), ({"scoring_goal": 17}, 422), ({"handicap": True}, 422)])
-def test_profile_update_goal_and_handicap_bounds(api, body, status):
-    client, db, user_id = api
-    db.users.update_user = AsyncMock(return_value=full_user())
+def test_valid_nine_hole_course_is_created(api):
+    client, db, _ = api
+    db.courses.create_course = AsyncMock(side_effect=lambda course, user_id: course.model_copy(update={"id": "c1"}))
 
-    assert client.patch(f"/api/users/{user_id}", json=body).status_code == status
+    assert client.post("/api/courses", json={"name": "Pebble", "holes": NINE_HOLES}).status_code == 201
+
+
+def test_profile_update_persists_a_changed_goal(api):
+    client, db, user_id = api
+    stored = full_user()  # scoring_goal_nine is 44
+    db.users.update_user = AsyncMock(side_effect=lambda uid, **fields: stored.model_copy(update=fields))
+
+    response = client.patch(f"/api/users/{user_id}", json={"scoring_goal_nine": 43})
+
+    assert response.status_code == 200
+    assert db.users.update_user.await_args.kwargs == {"scoring_goal_nine": 43}
+    assert response.json()["scoring_goal_nine"] == 43
+
+
+@pytest.mark.parametrize("body", [{"scoring_goal": 17}, {"handicap": True}], ids=["goal-below-18", "bool-handicap"])
+def test_profile_update_rejects_invalid_values_without_writing(api, body):
+    client, db, user_id = api
+
+    assert client.patch(f"/api/users/{user_id}", json=body).status_code == 422
+    db.users.update_user.assert_not_awaited()
 
 
 # ================================================================

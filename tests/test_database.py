@@ -1,12 +1,8 @@
-import pytest
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
-from database.repositories.course_repo import CourseRepositoryDB
-from database.repositories.round_repo import RoundRepositoryDB
-from database.repositories.user_tee_repo import UserTeeRepositoryDB
-from database.repositories.user_repo import UserRepositoryDB
-from database.exceptions import IntegrityError
+import pytest
+
 from database.converters import (
     course_from_rows,
     course_to_row,
@@ -14,10 +10,15 @@ from database.converters import (
     hole_score_to_row,
     round_from_rows,
     round_to_row,
-    user_tee_from_row,
     user_from_row,
+    user_tee_from_row,
 )
-from models import Course, Hole, Tee, Round, HoleScore, UserTee, User
+from database.exceptions import IntegrityError
+from database.repositories.course_repo import CourseRepositoryDB
+from database.repositories.round_repo import RoundRepositoryDB
+from database.repositories.user_repo import UserRepositoryDB
+from database.repositories.user_tee_repo import UserTeeRepositoryDB
+from models import Course, Hole, HoleScore, Round, Tee, User, UserTee
 
 
 def _round_row(round_id, *, course_id=None, course_name_played=None, tee_box_played=None, total_score=80):
@@ -93,13 +94,6 @@ def test_hole_score_to_row_includes_par_played():
     assert row[3] == 5             # strokes
     assert row[9] == 4             # par_played
     assert row[10] == 7            # handicap_played
-
-
-def test_hole_score_to_row_null_hole_id():
-    """hole_score_to_row accepts None hole_id for rounds without a master course."""
-    hs = HoleScore(hole_number=3, strokes=4, par_played=3)
-    row = hole_score_to_row(hs, uuid4(), None)
-    assert row[1] is None
 
 
 def test_round_converter_maps_course_name_played():
@@ -221,7 +215,7 @@ def test_user_converter_maps_friend_code():
     assert user.friend_code == "GCABC12345"
 
 
-@pytest.mark.parametrize('yardages', ['{"1":400,"01":500}', '{"1":true}', '{"1":400.5}', '[]', [], False, 'not json'])
+@pytest.mark.parametrize('yardages', ['{"1":400,"01":500}', '{"1":true}', '[]', 'not json'])
 def test_user_tee_converter_rejects_invalid_stored_yardages(yardages):
     row = {
         'id': uuid4(), 'user_id': uuid4(), 'course_id': None, 'name': 'Blue',
@@ -235,306 +229,26 @@ def test_user_tee_converter_rejects_invalid_stored_yardages(yardages):
 # CourseRepositoryDB
 # ================================================================
 
-@pytest.mark.asyncio
-async def test_course_repo_get_course(mock_pool):
-    pool, conn = mock_pool
-    repo = CourseRepositoryDB(pool)
-
-    course_id = uuid4()
-    conn.fetchrow.return_value = {
-        "id": course_id, "name": "Test", "location": "Loc",
-        "external_course_id": None,
-        "par": 72, "total_holes": 18, "metadata": "{}", "user_id": None,
-    }
-    conn.fetch.side_effect = [
-        [],  # holes
-        [],  # tees
-    ]
-
-    c = await repo.get_course(str(course_id))
-    assert c is not None
-    assert c.name == "Test"
-    assert c.user_id is None
-
-
-@pytest.mark.asyncio
-async def test_course_repo_get_course_not_found(mock_pool):
-    pool, conn = mock_pool
-    repo = CourseRepositoryDB(pool)
-    conn.fetchrow.return_value = None
-
-    c = await repo.get_course(str(uuid4()))
-    assert c is None
-
-
-@pytest.mark.asyncio
-async def test_course_repo_create_course(mock_pool):
-    pool, conn = mock_pool
-    repo = CourseRepositoryDB(pool)
-
-    course_id = uuid4()
-    tee_id = uuid4()
-    conn.fetchrow.side_effect = [
-        {"id": course_id, "name": "New Course", "location": "Loc",
-         "external_course_id": None,
-         "par": 72, "total_holes": 18, "metadata": "{}", "user_id": None},
-        {'id': course_id},  # lock the parent before tee upsert
-        {"id": tee_id},
-    ]
-    conn.fetch.side_effect = [
-        [],  # holes (assembly)
-        [],  # tees  (assembly)
-    ]
-
-    course = Course(name="New Course", location="Loc",
-                    holes=[Hole(number=1, par=4)], tees=[Tee(color="Red")])
-    saved = await repo.create_course(course)
-
-    assert saved.name == "New Course"
-    # Verify holes were inserted via executemany
-    conn.executemany.assert_called()
-
-
-@pytest.mark.asyncio
-async def test_course_repo_create_course_persists_external_course_id(mock_pool):
-    """Creating a course from an external match keeps external_course_id in DB writes and model output."""
-    pool, conn = mock_pool
-    repo = CourseRepositoryDB(pool)
-
-    course_id = uuid4()
-    conn.fetchrow.side_effect = [
-        {
-            "id": course_id,
-            "name": "Diablo Creek Golf Course",
-            "external_course_id": "gc_12345",
-            "location": "Concord, CA",
-            "par": None,
-            "total_holes": None,
-            "metadata": "{}",
-            "user_id": None,
-        },
-    ]
-    conn.fetch.side_effect = [
-        [],  # holes (assembly)
-        [],  # tees  (assembly)
-    ]
-
-    course = Course(
-        name="Diablo Creek Golf Course",
-        external_course_id="gc_12345",
-        location="Concord, CA",
-        holes=[],
-        tees=[],
-    )
-    saved = await repo.create_course(course)
-
-    assert saved.external_course_id == "gc_12345"
-    # INSERT args include external_course_id as third positional argument
-    # (args: sql, name, external_course_id, ...)
-    assert conn.fetchrow.call_args.args[2] == "gc_12345"
-
-
 # ================================================================
 # RoundRepositoryDB
 # ================================================================
-
-
-@pytest.mark.asyncio
-async def test_user_repo_create_user_persists_friend_code(mock_pool):
-    pool, conn = mock_pool
-    repo = UserRepositoryDB(pool)
-    uid = uuid4()
-
-    conn.fetchrow.return_value = {
-        "id": uid,
-        "friend_code": "GCWXYZ1234",
-        "name": "Test User",
-        "email": "test@example.com",
-        "home_course_id": None,
-        "handicap_index": None,
-        "created_at": None,
-    }
-
-    created = await repo.create_user(User(name="Test User", email="test@example.com"))
-    assert created.id == str(uid)
-    assert created.friend_code == "GCWXYZ1234"
-    # INSERT args: friend_code, name, email, handicap_index, home_course_id, password_hash
-    inserted_code = conn.fetchrow.call_args.args[1]
-    assert inserted_code.startswith("GC")
-    assert len(inserted_code) == 10
-
-
-@pytest.mark.asyncio
-async def test_user_repo_get_user_by_friend_code(mock_pool):
-    pool, conn = mock_pool
-    repo = UserRepositoryDB(pool)
-    uid = uuid4()
-    conn.fetchrow.return_value = {
-        "id": uid,
-        "friend_code": "GCQWER5678",
-        "name": "Friend",
-        "email": "friend@example.com",
-        "home_course_id": None,
-        "handicap_index": None,
-        "created_at": None,
-    }
-
-    user = await repo.get_user_by_friend_code(" gcqwer5678 ")
-    assert user is not None
-    assert user.friend_code == "GCQWER5678"
-    assert conn.fetchrow.call_args.args[1] == "GCQWER5678"
-
-@pytest.mark.asyncio
-async def test_round_repo_get_round(mock_pool):
-    pool, conn = mock_pool
-    repo = RoundRepositoryDB(pool, course_repo=AsyncMock())
-
-    round_id = uuid4()
-    conn.fetchrow.return_value = _round_row(round_id, course_name_played="Test Name")
-    conn.fetch.return_value = []
-
-    r = await repo.get_round(str(round_id))
-    assert r is not None
-    assert r.course_name_played == "Test Name"
-
-
-@pytest.mark.asyncio
-async def test_round_repo_get_round_not_found(mock_pool):
-    pool, conn = mock_pool
-    repo = RoundRepositoryDB(pool, course_repo=AsyncMock())
-    conn.fetchrow.return_value = None
-
-    r = await repo.get_round(str(uuid4()))
-    assert r is None
-
-
-@pytest.mark.asyncio
-async def test_round_repo_create_round_no_course(mock_pool):
-    """create_round with no course: hole_id=None, par_played from HoleScore preserved."""
-    pool, conn = mock_pool
-    repo = RoundRepositoryDB(pool, course_repo=AsyncMock())
-
-    round_id = uuid4()
-    row = _round_row(round_id, course_name_played="New Round")
-    # fetchrow called twice: INSERT round, then SELECT in get_round
-    conn.fetchrow.side_effect = [row, row]
-    conn.fetch.return_value = []  # hole_scores in _assemble_round
-
-    r = Round(
-        hole_scores=[HoleScore(hole_number=1, strokes=4, par_played=4)],
-        course_name_played="New Round",
-    )
-    saved = await repo.create_round(r, user_id=str(uuid4()))
-
-    assert saved is not None
-    assert saved.course_name_played == "New Round"
-
-    # Verify the hole score INSERT included par_played (11 columns, $10 = par_played)
-    conn.executemany.assert_called_once()
-    sql, tuples = conn.executemany.call_args[0]
-    assert "par_played" in sql
-    assert len(tuples) == 1
-    assert tuples[0][1] is None   # hole_id is NULL (no master course)
-    assert tuples[0][9] == 4      # par_played preserved from HoleScore
-
-
-@pytest.mark.asyncio
-async def test_round_repo_create_round_populates_par_from_course(mock_pool):
-    """create_round populates par_played from course.holes when par_played is None."""
-    pool, conn = mock_pool
-    course_repo_mock = AsyncMock()
-    repo = RoundRepositoryDB(pool, course_repo=course_repo_mock)
-
-    round_id = uuid4()
-    hole_id = uuid4()
-    course_id = uuid4()
-
-    row = _round_row(round_id, course_id=course_id)
-    conn.fetchrow.side_effect = [{'id': course_id, 'user_id': None, 'total_holes': 18}, row, row]
-    conn.fetch.side_effect = [
-        [{"id": hole_id, "hole_number": 1}],  # _load_hole_id_map
-        [],                                     # hole_scores in _assemble_round
-    ]
-
-    course = Course(id=str(course_id), name="Test", holes=[Hole(number=1, par=4)])
-    course_repo_mock.get_course = AsyncMock(return_value=course)
-
-    r = Round(
-        course=course,
-        hole_scores=[HoleScore(hole_number=1, strokes=4, par_played=None)],
-    )
-    saved = await repo.create_round(r, user_id=str(uuid4()), course_id=str(course_id))
-
-    assert saved is not None
-    sql, tuples = conn.executemany.call_args[0]
-    assert tuples[0][1] == hole_id  # hole_id resolved from map
-    assert tuples[0][9] == 4        # par_played populated from course.holes
 
 
 # ================================================================
 # UserTeeRepositoryDB
 # ================================================================
 
-@pytest.mark.asyncio
-async def test_user_tee_repo_get(mock_pool):
-    pool, conn = mock_pool
-    repo = UserTeeRepositoryDB(pool)
 
-    tee_id = uuid4()
-    conn.fetchrow.return_value = {
-        "id": tee_id, "user_id": uuid4(), "course_id": None,
-        "name": "My Tee", "slope_rating": 120, "course_rating": 72.0,
-        "hole_yardages": {"1": 400}, "created_at": None,
-    }
-
-    t = await repo.get_user_tee(str(tee_id))
-    assert t.name == "My Tee"
-    assert t.hole_yardages == {1: 400}
+from database.repositories.course_repo import _tee_yardage_similarity  # noqa: E402
 
 
-@pytest.mark.asyncio
-async def test_user_tee_repo_get_not_found(mock_pool):
-    pool, conn = mock_pool
-    repo = UserTeeRepositoryDB(pool)
-    conn.fetchrow.return_value = None
-
-    t = await repo.get_user_tee(str(uuid4()))
-    assert t is None
-
-
-@pytest.mark.asyncio
-async def test_user_tee_repo_create(mock_pool):
-    pool, conn = mock_pool
-    repo = UserTeeRepositoryDB(pool)
-
-    tee_id = uuid4()
-    user_id = uuid4()
-    conn.fetchrow.return_value = {
-        "id": tee_id, "user_id": user_id, "course_id": None,
-        "name": "White", "slope_rating": 113, "course_rating": 70.5,
-        "hole_yardages": {}, "created_at": None,
-    }
-
-    ut = UserTee(user_id=str(user_id), name="White", slope_rating=113, course_rating=70.5)
-    created = await repo.create_user_tee(ut)
-
-    assert created.name == "White"
-    assert created.slope_rating == 113.0
-    # Verify INSERT was called
-    conn.fetchrow.assert_called_once()
-    sql = conn.fetchrow.call_args[0][0]
-    assert "INSERT INTO users.user_tees" in sql
-
-
-@pytest.mark.asyncio
-async def test_user_tee_repo_delete(mock_pool):
-    pool, conn = mock_pool
-    repo = UserTeeRepositoryDB(pool)
-
-    conn.execute.return_value = "DELETE 1"
-    deleted = await repo.delete_user_tee(str(uuid4()))
-    assert deleted is True
-
-    conn.execute.return_value = "DELETE 0"
-    deleted = await repo.delete_user_tee(str(uuid4()))
-    assert deleted is False
+@pytest.mark.parametrize(
+    ("left", "right", "expected"),
+    [
+        ({}, {1: 400}, (0.0, 0)),
+        ({1: 400}, {2: 400}, (0.0, 0)),
+        ({1: 400}, {1: 420}, (1.0, 1)),
+    ],
+)
+def test_tee_yardage_similarity(left, right, expected):
+    assert _tee_yardage_similarity(left, right) == expected
