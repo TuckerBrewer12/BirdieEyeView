@@ -1,78 +1,97 @@
-import { StatTrend } from "@/brand/charts/StatTrend";
-import { StatCard, type StatDirection, type StatTone } from "@/brand/components/Stat";
+import { Stat, StatCard, StatDelta, StatLabel, StatUnit, StatValue } from "@/brand/components/Stat";
+import { labAnalytics } from "@/testing/fixtures/lab";
+import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 
-interface Metric {
-  label: string;
-  value: string;
-  unit?: string;
-  delta: string;
-  direction: StatDirection;
-  tone: StatTone;
-  values: number[];
-}
+const golfer = sampleGolfer.analytics;
+const dashboard = sampleGolfer.dashboard;
+const scores = (rows: { total_score: number | null }[]) => rows.map((row) => row.total_score);
 
-const METRICS: Metric[] = [
-  {
-    label: "Scoring average",
-    value: "79.4",
-    delta: "1.8",
-    direction: "down",
-    tone: "good",
-    values: [82, 81.5, 81.9, 80.8, 80.9, 80.2, 80.6, 79.9, 79.6, 79.4],
-  },
-  {
-    label: "Greens in regulation",
-    value: "44.2",
-    unit: "%",
-    delta: "3.1",
-    direction: "up",
-    tone: "good",
-    values: [39, 40.5, 40, 41.6, 42, 41.2, 43, 43.4, 44.6, 44.2],
-  },
-  {
-    label: "Putts per round",
-    value: "31.6",
-    delta: "0.4",
-    direction: "up",
-    tone: "bad",
-    values: [31.1, 31.3, 31.0, 31.4, 31.2, 31.5, 31.4, 31.7, 31.5, 31.6],
-  },
-  {
-    label: "3-putt rate",
-    value: "8.3",
-    unit: "%",
-    delta: "1.2",
-    direction: "down",
-    tone: "good",
-    values: [9.8, 9.5, 9.6, 9.1, 9.3, 8.9, 8.7, 8.8, 8.4, 8.3],
-  },
-];
-
-/**
- * The board's 640 x 330 canvas: the tiles sit two by two and share their row
- * heights. That is wider than the stage, so the preview fills the window and
- * the spec captures it at that size.
- */
 export default function StatPreview() {
   return (
-    <div
-      data-testid="brand-frame"
-      className="fixed inset-0 grid grid-cols-2 grid-rows-2 gap-3 overflow-auto bg-background p-6"
-    >
-      {METRICS.map((m) => (
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-2 gap-3">
         <StatCard
-          key={m.label}
-          label={m.label}
-          period="L20"
-          value={m.value}
-          unit={m.unit}
-          trend={<StatTrend values={m.values} tone={m.tone === "bad" ? "bad" : "good"} />}
-          direction={m.direction}
-          tone={m.tone}
-          delta={m.delta}
-          note="vs previous 20"
+          label="Scoring Avg"
+          value={String(golfer.kpis.scoring_average)}
+          trend={scores(golfer.score_trend)}
+          delta={Math.abs(golfer.kpis.scoring_average_change!).toFixed(1)}
+          direction="down"
+          tone={golfer.kpis.scoring_average_verdict!}
+          note="last 5 vs all"
         />
-      ))}
+        <StatCard
+          label="Scoring Avg"
+          value={String(labAnalytics.kpis.scoring_average)}
+          trend={scores(labAnalytics.score_trend)}
+          delta={Math.abs(labAnalytics.kpis.scoring_average_change!).toFixed(1)}
+          direction="up"
+          tone={labAnalytics.kpis.scoring_average_verdict!}
+          note="last 5 vs all"
+        />
+        <StatCard label="Best Round" value={String(dashboard.best_round)} note={dashboard.best_round_course} />
+        <StatCard label="Rounds" value={String(golfer.kpis.total_rounds)} />
+      </div>
+
+      <div className="flex items-end justify-between">
+        <Stat>
+          <StatLabel>Scoring avg · L20</StatLabel>
+          <StatValue size="xl">{dashboard.scoring_average_l20}</StatValue>
+        </Stat>
+        <StatDelta direction="down" tone={dashboard.scoring_average_verdict!} pill>
+          {Math.abs(dashboard.scoring_average_change!).toFixed(1)} vs L5
+        </StatDelta>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Stat>
+          <StatLabel>Handicap</StatLabel>
+          <StatValue size="lg">
+            {golfer.kpis.handicap_index}
+            <StatUnit>HCP</StatUnit>
+          </StatValue>
+        </Stat>
+        <StatDelta direction="up" tone="bad" />
+      </div>
+
+      <div className="flex justify-around">
+        <Stat align="center">
+          <StatValue size="lg">38%</StatValue>
+          <StatLabel>Scrambling</StatLabel>
+        </Stat>
+        <Stat align="center">
+          <StatValue size="lg">—</StatValue>
+          <StatLabel>Up &amp; Down</StatLabel>
+        </Stat>
+      </div>
+
+      <div className="grid grid-cols-4">
+        {[
+          ["Best", "69"],
+          ["Rounds", "4"],
+          ["Putts", "32.0"],
+          ["GIR", "39%"],
+        ].map(([label, value]) => (
+          <Stat key={label} align="center">
+            <StatLabel>{label}</StatLabel>
+            <StatValue size="sm">{value}</StatValue>
+          </Stat>
+        ))}
+      </div>
+
+      <div className="flex items-end gap-6">
+        <Stat>
+          <StatLabel>Up &amp; Down</StatLabel>
+          <StatValue>
+            33<StatUnit>%</StatUnit>
+          </StatValue>
+        </Stat>
+        <StatDelta direction="flat" tone="neutral">
+          0.0
+        </StatDelta>
+        <StatDelta direction={null} tone="neutral">
+          hidden
+        </StatDelta>
+      </div>
     </div>
   );
 }

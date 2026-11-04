@@ -164,9 +164,15 @@ class RecentForm(ResponseModel):
     putts_per_18: Optional[float] = None
 
 
+# Whether a figure's move is for the better: a score or a handicap falling is good.
+ChangeVerdict = Literal["good", "bad", "neutral"]
+
+
 class HandicapChange(ResponseModel):
     delta: Optional[float] = None  # change over the last six rated rounds
     direction: Optional[Literal["up", "down", "flat"]] = None  # over the window; under 0.3 is flat
+    delta_verdict: Optional[ChangeVerdict] = None
+    direction_verdict: Optional[ChangeVerdict] = None
 
 
 class WhsRound(ResponseModel):
@@ -262,6 +268,7 @@ class DashboardResponse(ResponseModel):
     scoring_average_l5: Optional[float] = None
     # L5 minus L20, to a tenth: negative when the recent rounds came in lower.
     scoring_average_change: Optional[float] = None
+    scoring_average_verdict: Optional[ChangeVerdict] = None
     handicap_change: HandicapChange = Field(default_factory=HandicapChange)
     recent_form: RecentForm = Field(default_factory=RecentForm)
     score_mix: ScoreMix = Field(default_factory=ScoreMix)
@@ -291,6 +298,7 @@ class AnalyticsKpis(ResponseModel):
     # The last five scored rounds' average less every round's, to a tenth: negative when the
     # recent rounds came in lower. Null under five scored rounds.
     scoring_average_change: Optional[float] = None
+    scoring_average_verdict: Optional[ChangeVerdict] = None
 
 
 class AnalyticsScoreTrendRow(ScoreTrendRow):

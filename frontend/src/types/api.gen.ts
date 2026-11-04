@@ -749,6 +749,8 @@ export interface components {
             scoring_average: number | null;
             /** Scoring Average Change */
             scoring_average_change: number | null;
+            /** Scoring Average Verdict */
+            scoring_average_verdict: ("good" | "bad" | "neutral") | null;
             /** Scrambling Percentage */
             scrambling_percentage: number | null;
             /** Three Putt Rate */
@@ -1241,6 +1243,8 @@ export interface components {
             scoring_average_l20: number | null;
             /** Scoring Average L5 */
             scoring_average_l5: number | null;
+            /** Scoring Average Verdict */
+            scoring_average_verdict: ("good" | "bad" | "neutral") | null;
             /** Scrambling Trend */
             scrambling_trend: components["schemas"]["ScramblingTrendRow"][];
             /** Total Rounds */
@@ -1482,8 +1486,12 @@ export interface components {
         HandicapChange: {
             /** Delta */
             delta: number | null;
+            /** Delta Verdict */
+            delta_verdict: ("good" | "bad" | "neutral") | null;
             /** Direction */
             direction: ("up" | "down" | "flat") | null;
+            /** Direction Verdict */
+            direction_verdict: ("good" | "bad" | "neutral") | null;
         };
         /**
          * HandicapIndexResponse

@@ -383,10 +383,8 @@ export const type = {
   hero: { size: 44, weight: 700, tracking: tracking.hero, leading: 1 },
   /** The tracked capitals above a figure or a group of rows. */
   eyebrow: { size: 10, weight: 700, tracking: tracking.eyebrow },
-  /** A KPI tile's figure. */
+  /** A card's headline figure: a KPI tile's. */
   stat: { size: 32, weight: 700, tracking: tracking.stat, leading: leading.display },
-  /** A figure in a row of them: the stat strip, a round's score. */
-  figure: { size: 28, weight: 700, tracking: -0.6, leading: 1 },
   /** The smaller tracked capitals on a chip or a header strip. */
   kicker: { size: 9, weight: 700, tracking: tracking.kicker },
   /** The label above a page section (`SectionLabel`). */
@@ -421,8 +419,6 @@ export const radius = {
   tick: 2,
   card: 10,
   tooltip: 12,
-  /** A KPI tile. */
-  tile: 14,
   addon: "calc(var(--radius) - var(--brand-space-nudge))",
   control: "calc(var(--radius) - var(--brand-space-nudge-sm))",
 };
@@ -570,14 +566,8 @@ export const chart = {
     pad: space.tight,
     stroke: 2,
     dot: space.dot,
-  },
-  /** The small trend line on a KPI tile. */
-  statTrend: {
-    width: 96,
-    height: 32,
-    pad: 3,
-    stroke: 1.75,
-    dot: 2.5,
+    /** The compact line beside a KPI tile's figure, drawn at its own size so the stroke stays 2px. */
+    compact: { width: 96, height: 32 },
   },
   /** A golfer's scores over time, one dot per round. */
   trend: {

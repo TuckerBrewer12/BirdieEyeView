@@ -56,6 +56,7 @@ def test_analytics_response_works_out_the_figures_the_page_shows():
     assert response.notable_achievements.scoring_records.lifetime.lowest_round == 72
     assert (response.kpis.three_putts_per_round, response.kpis.three_putt_rate) == (0.0, 0.0)
     assert response.kpis.scoring_average_change is None  # under five rounds
+    assert response.kpis.scoring_average_verdict is None
     peak = response.peak_game
     assert [(r.round_id, r.score) for r in peak.rounds] == [("r1", 72), ("r2", 81)]
     assert peak.average == 76.5

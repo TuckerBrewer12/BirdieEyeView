@@ -79,12 +79,9 @@ export {
   StatLabel,
   StatValue,
   StatUnit,
-  StatPeriod,
   StatNote,
   StatDelta,
   StatCard,
-  StatStrip,
-  StatStripItem,
 } from "./components/Stat";
 export type { StatDirection, StatTone } from "./components/Stat";
 export { TeeSwatch } from "./components/TeeSwatch";
@@ -125,8 +122,6 @@ export { ActivityHeatmap } from "./charts/ActivityHeatmap";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
 export { ScoreMixBar } from "./charts/ScoreMixBar";
-export { StatTrend } from "./charts/StatTrend";
-export type { StatTrendTone } from "./charts/StatTrend";
 export { Sparkline } from "./charts/Sparkline";
 export type { SparklineSeries, SparklineTone } from "./charts/Sparkline";
 export { HoleMetricBars } from "./charts/HoleMetricBars";

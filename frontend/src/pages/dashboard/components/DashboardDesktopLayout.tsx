@@ -31,7 +31,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
   const {
     data, user, shortGameTrend,
-    trend, milestones, last20ScoringAvg, hiTrend,
+    trend, milestones, last20ScoringAvg, hiTrend, hiTrendVerdict,
     recentScoreMix, girPct, scramblingPct, upAndDownPct, putts, puttsRating,
     bestRound, sidebarRounds, goal,
     openHandicapSheet,
@@ -73,7 +73,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                       <StatLabel>Scoring Avg (L20)</StatLabel>
                       <StatValue size="lg">{formatOneDecimal(last20ScoringAvg)}</StatValue>
                     </Stat>
-                    <StatDelta direction={hiTrend} />
+                    <StatDelta direction={hiTrend} tone={hiTrendVerdict ?? "neutral"} />
                   </div>
                   <Stat>
                     <StatLabel>Total Rounds</StatLabel>

@@ -43,6 +43,7 @@ def analytics_response(
     average_putts = _average([r["total_putts"] for r in putts_rows if r["total_putts"] is not None])
     three_putts = analytics.three_putt_averages(rounds)
     shape = player_shape(rounds) or {}
+    scoring_change = dashboard.scoring_average_change(rounds, full_window=True)
 
     return AnalyticsResponse(
         kpis=AnalyticsKpis(
@@ -58,7 +59,8 @@ def analytics_response(
             average_putts=analytics.round_half_up(average_putts) if average_putts is not None else None,
             three_putts_per_round=three_putts["per_round"],
             three_putt_rate=three_putts["rate"],
-            scoring_average_change=dashboard.scoring_average_change(rounds, full_window=True),
+            scoring_average_change=scoring_change,
+            scoring_average_verdict=dashboard.change_verdict(scoring_change),
         ),
         score_trend=score_rows,
         net_score_trend=analytics.net_score_trend(rounds, player_index),
