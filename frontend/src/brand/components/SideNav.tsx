@@ -26,7 +26,7 @@ interface SideNavProps {
 }
 
 const linkStates =
-  "text-sidebar-foreground/72 transition-colors duration-150 hover:bg-sidebar-foreground/8 hover:text-sidebar-foreground data-active:bg-sidebar-foreground/12 data-active:text-sidebar-foreground [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:stroke-icon";
+  "text-sidebar-foreground/72 transition-colors duration-150 hover:bg-sidebar-foreground/8 hover:text-sidebar-foreground data-active:bg-sidebar-foreground/12 data-active:text-sidebar-foreground [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:stroke-icon";
 
 const linkClass = cn(
   "flex h-10 items-center gap-3 rounded-card px-3 text-sm font-medium data-active:font-semibold",
