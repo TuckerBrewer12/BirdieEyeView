@@ -10,7 +10,7 @@ from database.exceptions import ConflictError, DuplicateError, IntegrityError, N
 from api.course_access import load_linkable_course
 from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
-from api.request_models import COURSE_RATING, SLOPE_RATING, normalize_hole_yardages
+from api.request_models import COURSE_RATING, SLOPE_RATING, decimal_field, normalize_hole_yardages
 from api.schemas import UserResponse, UserTeeResponse
 from models import User, UserTee
 from analytics import handicap as hcap
@@ -26,6 +26,8 @@ class CreateUserTeeRequest(BaseModel):
     slope_rating: Optional[float] = SLOPE_RATING
     course_rating: Optional[float] = COURSE_RATING
     hole_yardages: Optional[dict] = None
+
+    _normalize_ratings = field_validator("slope_rating", "course_rating", mode="before")(decimal_field)
 
     @field_validator("name")
     @classmethod
@@ -45,6 +47,8 @@ class UpdateUserTeeRequest(BaseModel):
     slope_rating: Optional[float] = SLOPE_RATING
     course_rating: Optional[float] = COURSE_RATING
     hole_yardages: Optional[dict] = None
+
+    _normalize_ratings = field_validator("slope_rating", "course_rating", mode="before")(decimal_field)
 
     @field_validator("name")
     @classmethod

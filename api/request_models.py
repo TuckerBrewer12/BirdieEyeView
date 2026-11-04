@@ -9,12 +9,12 @@ from api.input_validation import ensure_uuid_str, normalize_course_display_name,
 from services.scan_normalization import normalize_decimal, normalize_whole_number
 
 
-def _whole_number_before(value, info):
+def whole_number_field(value, info):
     # Lax int parsing would read True as one stroke; reject non-numeric representations first.
     return normalize_whole_number(value, info.field_name)
 
 
-def _decimal_before(value, info):
+def decimal_field(value, info):
     return normalize_decimal(value, info.field_name)
 
 
@@ -89,7 +89,7 @@ class HoleScoreInput(BaseModel):
     _normalize_numbers = field_validator(
         "hole_number", "strokes", "putts", "net_score", "shots_to_green", "par_played", "handicap_played",
         mode="before",
-    )(_whole_number_before)
+    )(whole_number_field)
 
     @model_validator(mode="after")
     def _validate_parts_vs_strokes(self):
@@ -109,7 +109,7 @@ class TeeInput(BaseModel):
     course_rating: Optional[float] = COURSE_RATING
     hole_yardages: Dict[str, int] = Field(default_factory=dict)
 
-    _normalize_ratings = field_validator("slope_rating", "course_rating", mode="before")(_decimal_before)
+    _normalize_ratings = field_validator("slope_rating", "course_rating", mode="before")(decimal_field)
     _normalize_yardages = field_validator("hole_yardages", mode="before")(_string_keyed_yardages)
 
     @field_validator("color")
@@ -125,7 +125,7 @@ class CourseHoleInput(BaseModel):
     par: Optional[int] = Field(default=None, ge=3, le=6)
     handicap: Optional[int] = Field(default=None, ge=1, le=18)
 
-    _normalize_numbers = field_validator("hole_number", "par", "handicap", mode="before")(_whole_number_before)
+    _normalize_numbers = field_validator("hole_number", "par", "handicap", mode="before")(whole_number_field)
 
 
 class SaveRoundRequest(BaseModel):
@@ -147,7 +147,7 @@ class SaveRoundRequest(BaseModel):
     date: Optional[str] = None
     notes: Optional[str] = None
 
-    _normalize_ratings = field_validator("tee_slope_rating", "tee_course_rating", mode="before")(_decimal_before)
+    _normalize_ratings = field_validator("tee_slope_rating", "tee_course_rating", mode="before")(decimal_field)
     _normalize_yardages = field_validator("tee_yardages", mode="before")(_string_keyed_yardages)
 
     @field_validator("course_id")

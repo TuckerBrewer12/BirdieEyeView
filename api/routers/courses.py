@@ -10,7 +10,7 @@ from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from api.dependencies import get_db, get_optional_current_user, get_current_user
 from api.error_responses import COURSE_SAVE_FAILED
 from api.input_validation import normalize_course_display_name, sanitize_search_query, sanitize_user_text
-from api.request_models import TeeInput, reject_duplicate_course_entries
+from api.request_models import TeeInput, reject_duplicate_course_entries, whole_number_field
 from api.schemas import CourseResponse, CourseSummaryResponse
 from models import Course, Hole, Tee, User
 from models.hole_layout import FRONT_NINE, FULL_ROUND
@@ -26,6 +26,8 @@ class HoleInput(BaseModel):
     number: int = Field(..., ge=1, le=18)
     par: Optional[int] = Field(default=None, ge=3, le=6)
     handicap: Optional[int] = Field(default=None, ge=1, le=18)
+
+    _normalize_numbers = field_validator("number", "par", "handicap", mode="before")(whole_number_field)
 
 
 class CreateCourseRequest(BaseModel):
@@ -77,6 +79,8 @@ class UpdateCourseRequest(BaseModel):
     location: Optional[str] = None
     # Same bounds as models.course.Course and the database: 3-6 per hole for 9 or 18 holes.
     par: Optional[int] = Field(default=None, ge=27, le=108)
+
+    _normalize_par = field_validator("par", mode="before")(whole_number_field)
 
     @model_validator(mode="after")
     def _reject_null_name(self):
