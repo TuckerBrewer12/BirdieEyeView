@@ -60,8 +60,8 @@ function SideNav({
         className,
       )}
     >
-      <div className="flex items-center gap-2.5 px-2 pb-4.5">
-        <span className="flex size-7.5 shrink-0 items-center justify-center rounded-lg bg-sidebar-foreground text-sidebar">
+      <div className="flex items-center gap-2.5 px-2 pb-5">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-foreground text-sidebar">
           <FlagTriangleRight aria-hidden className="size-4" />
         </span>
         <span className="min-w-0 flex-1 truncate text-body-lg font-bold tracking-name">BirdieEyeView</span>
