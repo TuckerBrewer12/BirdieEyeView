@@ -553,6 +553,8 @@ export const chart = {
     /** Room right of the grid for tick labels, and the gap between the grid and them. */
     axis: 44,
     labelGap: 10,
+    /** How far a tick's figure sits below its line, so the text rests on its baseline. */
+    tickBaseline: 4,
     /** Slack at either end of the round axis, so a dot never sits on the plot's edge. */
     inset: 6,
     /** Both panels: the drawing's height, each panel's title baseline, its grid's top and bottom, the round numbers' baseline. */

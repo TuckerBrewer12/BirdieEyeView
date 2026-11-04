@@ -207,7 +207,7 @@ export function SVGScoreHandicapTrend({
             {handicapTicks.map((v) => (
               <g key={`handicap-${v}`}>
                 <line x1={0} x2={gridRight} y1={yHandicap(v)} y2={yHandicap(v)} stroke={tokens.color.chart.grid} strokeWidth={tokens.lineWidth.border} />
-                <AxisLabel x={labelX} y={yHandicap(v) + 4}>
+                <AxisLabel x={labelX} y={yHandicap(v) + L.tickBaseline}>
                   {formatHandicapIndex(v)}
                 </AxisLabel>
               </g>
