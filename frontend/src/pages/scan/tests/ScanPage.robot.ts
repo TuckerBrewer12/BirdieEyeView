@@ -32,6 +32,17 @@ export class ScanRobot {
   }
 
   /**
+   * The phone app's picker, instead of the file drop zone. Call before `open`.
+   * `isNative` reads `birdie-phone-app` when the page boots.
+   */
+  async phoneApp(): Promise<this> {
+    await this.page.addInitScript(() => {
+      localStorage.setItem("birdie-phone-app", "1");
+    });
+    return this;
+  }
+
+  /**
    * Opens the scan page signed in. By default any card scans as `scannedCard`; pass
    * `scan: undefined` for a scan the server can't read, or `holdScan` to watch one run.
    */
@@ -49,6 +60,26 @@ export class ScanRobot {
   /** The upload step, before a photo is picked. */
   async seesUpload(): Promise<this> {
     await expect(this.page.getByText("Drop your scorecard here")).toBeVisible();
+    return this;
+  }
+
+  /** Opens the phone app's sheet for a photo of the card. */
+  async openAddScorecard(): Promise<this> {
+    await this.page.getByRole("button", { name: "Add Scorecard" }).click();
+    return this;
+  }
+
+  /**
+   * The sheet has risen over the page: take a photo, or choose one from the library.
+   * Its entrance is a transform, so this waits until that panel is actually on screen.
+   */
+  async seesAddScorecardSheet(): Promise<this> {
+    const sheet = this.page.getByRole("dialog", { name: "Add scorecard" });
+    await expect(sheet.getByRole("button", { name: "Take photo" })).toBeVisible();
+    await expect(sheet.getByRole("button", { name: "Choose from library" })).toBeVisible();
+    await expect(sheet.getByRole("button", { name: "Cancel" })).toBeVisible();
+    await expect(this.page.locator("[data-slot=sheet-overlay]")).toBeVisible();
+    await expect(sheet.getByRole("button", { name: "Take photo" })).toBeInViewport();
     return this;
   }
 
@@ -404,11 +435,15 @@ export class ScanRobot {
   /**
    * A full-page capture. The scan animation keeps moving under reduced motion, so a capture
    * of the processing step masks it: the card, and the corner brackets that pulse outside it.
+   * An open sheet sits over the viewport, so that capture passes `fullPage: false`.
    */
-  async capture(name: string, { maskScanAnimation = false } = {}): Promise<this> {
+  async capture(
+    name: string,
+    { maskScanAnimation = false, fullPage = true }: { maskScanAnimation?: boolean; fullPage?: boolean } = {},
+  ): Promise<this> {
     const animation = this.page.locator("[data-slot=scan-progress] > div").first();
     const mask = maskScanAnimation ? [animation, animation.locator(":scope > div")] : [];
-    await expect(this.page).toHaveScreenshot(name, { fullPage: true, mask });
+    await expect(this.page).toHaveScreenshot(name, { fullPage, mask });
     return this;
   }
 }

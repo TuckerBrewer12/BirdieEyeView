@@ -37,7 +37,7 @@ export function ScanUploadStep({
   onClear,
   onContextChange,
   onExtract,
-  native = isNative,
+  native = isNative(),
 }: ScanUploadStepProps) {
   if (!photo) {
     return native ? (

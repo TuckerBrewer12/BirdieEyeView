@@ -21,6 +21,14 @@ test("upload in dark mode", async ({ scan }) => {
   await scan.capture("scan-upload-dark.png");
 });
 
+test("the phone app's add scorecard sheet", async ({ scan }) => {
+  await scan.phoneApp();
+  await scan.open();
+  await scan.openAddScorecard();
+  await scan.seesAddScorecardSheet();
+  await scan.capture("scan-add-scorecard.png", { fullPage: false });
+});
+
 test("a chosen card, ready to scan", async ({ scan }) => {
   await scan.open();
   await scan.chooseScorecard();
