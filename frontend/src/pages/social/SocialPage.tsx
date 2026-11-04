@@ -72,7 +72,7 @@ export function SocialPage({ userId }: SocialPageProps) {
                     aria-invalid={codeError ? true : undefined}
                     aria-describedby={codeError ? `${CODE_INPUT}-error` : `${CODE_INPUT}-description`}
                   />
-                  <Button type="submit" size="lg" disabled={viewModel.sending}>
+                  <Button type="submit" disabled={viewModel.sending}>
                     {viewModel.sending ? "Sending…" : "Send"}
                   </Button>
                 </div>

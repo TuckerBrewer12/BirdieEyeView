@@ -21,7 +21,7 @@ export default function FieldPreview() {
       data-testid="brand-frame"
       className="fixed inset-0 grid grid-cols-2 gap-4 overflow-auto bg-background p-6"
     >
-      <div className="flex flex-col gap-4.5 rounded-xl border border-border bg-card p-5">
+      <div className="flex flex-col gap-5 rounded-xl border border-border bg-card p-5">
         <div className="flex flex-col gap-1.5">
           <Field>
             <FieldLabel htmlFor="preview-email">Email</FieldLabel>
