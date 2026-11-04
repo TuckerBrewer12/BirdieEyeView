@@ -4,7 +4,7 @@ import { scaleLinear } from "d3-scale";
 import { curveStepAfter, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import { tokens } from "@/brand/theme";
+import { differentialFill, tokens } from "@/brand/theme";
 import { formatHandicapIndex, formatOneDecimal, type RoundTrendPoint } from "@/domain";
 import { indexScale, knownValues, lastKnownIndex, niceExtent } from "./scales";
 
@@ -115,8 +115,6 @@ export function SVGScoreHandicapTrend({
   // The "Par" label has the room, so a tick figure that would run into it steps aside.
   const clearOfPar = (y: number) => parY == null || Math.abs(y - parY) > tokens.type.label.size;
 
-  // The server says which rounds' differentials count toward the index.
-  const counts = data.map((d) => d.differentialStatus === "counting");
   const lastScore = lastKnownIndex(scores);
   const bestIndex = best == null ? -1 : scores.indexOf(best);
   const lastHandicap = lastKnownIndex(handicaps);
@@ -264,14 +262,14 @@ export function SVGScoreHandicapTrend({
                 />
               );
             }
-            const counting = counts[i];
+            const counting = d.differentialStatus === "counting";
             return (
               <circle
                 key={`dot-${i}`}
                 cx={x(i)}
                 cy={yScore(d.score)}
                 r={active === i ? L.dotHover : counting ? L.dotCounts : L.dot}
-                fill={counting ? tokens.color.chart.series1 : tokens.color.card}
+                fill={differentialFill(d.differentialStatus)}
                 stroke={counting ? tokens.color.card : tokens.color.chart.reference}
                 strokeWidth={tokens.lineWidth.outline}
               />
@@ -384,7 +382,7 @@ export function ScoreHandicapLegend({ className }: { className?: string }) {
     <div data-slot="score-handicap-legend" className={cn("flex gap-4 text-body-sm text-foreground-secondary", className)}>
       <span className="flex items-center gap-2">
         <svg viewBox={`0 0 ${box} ${box}`} width={box} height={box} aria-hidden="true">
-          <circle cx={mid} cy={mid} r={L.dotCounts} fill={tokens.color.chart.series1} />
+          <circle cx={mid} cy={mid} r={L.dotCounts} fill={differentialFill("counting")} />
         </svg>
         Counts toward HI
       </span>
@@ -394,7 +392,20 @@ export function ScoreHandicapLegend({ className }: { className?: string }) {
             cx={mid}
             cy={mid}
             r={L.dot}
-            fill={tokens.color.card}
+            fill={differentialFill("close")}
+            stroke={tokens.color.chart.reference}
+            strokeWidth={tokens.lineWidth.outline}
+          />
+        </svg>
+        Close to counting
+      </span>
+      <span className="flex items-center gap-2">
+        <svg viewBox={`0 0 ${box} ${box}`} width={box} height={box} aria-hidden="true">
+          <circle
+            cx={mid}
+            cy={mid}
+            r={L.dot}
+            fill={differentialFill("out")}
             stroke={tokens.color.chart.reference}
             strokeWidth={tokens.lineWidth.outline}
           />
