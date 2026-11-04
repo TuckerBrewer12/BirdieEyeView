@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ScanPage, ScanSessionProvider } from "./pages/scan";
 import { AppLayout } from "./app/AppLayout";
@@ -21,7 +21,13 @@ import { CareerPage } from "./pages/career";
 import { TheLabPage } from "./pages/the-lab";
 import { SettingsPage } from "./pages/settings";
 import { SocialPage, FriendsInboxPage } from "./pages/social";
-import { BrandHarness } from "./brand/BrandHarness";
+
+// The preview harness eagerly imports every preview and test fixture. It only
+// exists in dev (the screenshot tests run against the dev server), so a
+// production build drops the import, and everything behind it, entirely.
+const BrandHarness = import.meta.env.DEV
+  ? lazy(() => import("./brand/BrandHarness").then((m) => ({ default: m.BrandHarness })))
+  : () => null;
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -35,7 +41,14 @@ function ScrollToTop() {
 function BrandRoutes() {
   return (
     <Routes>
-      <Route path="/__brand__/:story" element={<BrandHarness />} />
+      <Route
+        path="/__brand__/:story"
+        element={
+          <Suspense fallback={null}>
+            <BrandHarness />
+          </Suspense>
+        }
+      />
     </Routes>
   );
 }
