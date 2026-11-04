@@ -1,4 +1,4 @@
-import { ToggleGroup, ToggleGroupItem } from "@/brand";
+import { SortControl } from "@/brand";
 import { GOAL_OPTIONS } from "@/domain";
 
 interface GoalPickerProps {
@@ -10,27 +10,28 @@ interface GoalPickerProps {
   className?: string;
 }
 
-/** The scoring goals a golfer can set, one pressed. */
+const OPTIONS = GOAL_OPTIONS.map((option) => ({ value: String(option.value), label: option.label }));
+
+/**
+ * The scoring goals a golfer can set, as a menu: seven goals are too many for a
+ * segmented control. The trigger reads the goal that is set.
+ */
 export function GoalPicker({ value, onChange, disabled, className }: GoalPickerProps) {
+  const current = GOAL_OPTIONS.find((option) => option.value === value);
+
   return (
-    <ToggleGroup
-      data-slot="goal-picker"
-      aria-label="Scoring goal"
-      size="sm"
-      disabled={disabled}
-      value={value != null ? [String(value)] : []}
-      onValueChange={(values) => {
-        // Pressing the chosen goal again would clear it; the goal only ever changes to another.
-        const next = GOAL_OPTIONS.find((option) => String(option.value) === values[0]);
-        if (next) onChange(next.value);
-      }}
-      className={className}
-    >
-      {GOAL_OPTIONS.map((option) => (
-        <ToggleGroupItem key={option.value} value={String(option.value)}>
-          {option.label}
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
+    <div data-slot="goal-picker" className={className}>
+      <SortControl
+        aria-label="Scoring goal"
+        label={current?.label ?? "Pick a goal"}
+        value={current ? String(current.value) : ""}
+        options={OPTIONS}
+        disabled={disabled}
+        onChange={(next) => {
+          const goal = GOAL_OPTIONS.find((option) => String(option.value) === next);
+          if (goal) onChange(goal.value);
+        }}
+      />
+    </div>
   );
 }

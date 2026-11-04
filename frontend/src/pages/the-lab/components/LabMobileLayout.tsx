@@ -41,7 +41,6 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
               value={target}
               onChange={vm.setGoal}
               disabled={vm.savingGoal}
-              className="flex-wrap"
             />
           </CardContent>
         </Card>

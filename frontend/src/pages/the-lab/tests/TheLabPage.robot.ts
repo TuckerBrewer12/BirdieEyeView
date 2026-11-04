@@ -1,4 +1,4 @@
-import { type Page } from "@playwright/test";
+import { type Locator, type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
@@ -88,16 +88,19 @@ export class TheLabRobot {
     return this.shown("[data-slot=goal-picker]");
   }
 
+  /** Opens a menu (the goal, the comparison, the friend) and picks one of its options. */
+  private async pickFrom(menu: Locator, label: string): Promise<void> {
+    await menu.getByRole("combobox").click();
+    await this.page.getByRole("option", { name: label, exact: true }).click();
+  }
+
   async pickGoal(label: string): Promise<this> {
-    await this.goalPicker().getByRole("button", { name: label, exact: true }).click();
+    await this.pickFrom(this.goalPicker(), label);
     return this;
   }
 
   async seesGoalPicked(label: string): Promise<this> {
-    await expect(this.goalPicker().getByRole("button", { name: label, exact: true })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    await expect(this.goalPicker().getByRole("combobox")).toHaveText(label);
     return this;
   }
 
@@ -156,18 +159,12 @@ export class TheLabRobot {
   }
 
   async compareWith(label: string): Promise<this> {
-    await this.shapeCard()
-      .locator("[data-slot=comparison-picker]")
-      .getByRole("button", { name: label, exact: true })
-      .click();
+    await this.pickFrom(this.shapeCard().locator("[data-slot=comparison-picker]"), label);
     return this;
   }
 
   async pickFriend(name: string): Promise<this> {
-    await this.shapeCard()
-      .locator("[data-slot=friend-picker]")
-      .getByRole("button", { name, exact: true })
-      .click();
+    await this.pickFrom(this.shapeCard().locator("[data-slot=friend-picker]"), name);
     return this;
   }
 

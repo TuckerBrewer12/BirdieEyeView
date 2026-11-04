@@ -16,6 +16,8 @@ interface SortControlProps<T extends string> {
   ascending?: boolean;
   onToggleDirection?: () => void;
   directionDisabled?: boolean;
+  /** While a pick is saving: the menu does not open. */
+  disabled?: boolean;
   /** What the menu picks, for screen readers. */
   "aria-label"?: string;
   className?: string;
@@ -29,6 +31,7 @@ function SortControl<T extends string>({
   ascending = true,
   onToggleDirection,
   directionDisabled = false,
+  disabled = false,
   "aria-label": ariaLabel = "Sort by",
   className,
 }: SortControlProps<T>) {
@@ -41,11 +44,12 @@ function SortControl<T extends string>({
         }}
         items={options}
         modal={false}
+        disabled={disabled}
       >
         <Select.Trigger
           aria-label={ariaLabel}
           className={cn(
-            "rounded-sm px-0.5 text-label font-semibold text-primary outline-none select-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/50",
+            "rounded-sm px-0.5 text-label font-semibold text-primary outline-none select-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50",
             !onToggleDirection && "inline-flex items-center gap-0.5",
           )}
         >
