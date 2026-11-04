@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import threading
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -217,8 +218,22 @@ def _round_gir_percentage(round_obj: Round) -> Optional[float]:
     return (gir / holes) * 100 if holes and gir is not None else None
 
 
+_ROW_CACHE = threading.local()
+
+
+def _round_rows(round_obj: Round) -> List[Dict[str, Any]]:
+    """Hole rows for one round, built once per ``notable_achievements`` call (per thread)."""
+    cache = getattr(_ROW_CACHE, "rows", None)
+    if cache is None:
+        return _hole_rows([round_obj])
+    rows = cache.get(id(round_obj))
+    if rows is None:
+        rows = cache[id(round_obj)] = _hole_rows([round_obj])
+    return rows
+
+
 def _round_count(round_obj: Round, predicate) -> int:
-    return _count(_hole_rows([round_obj]), predicate)
+    return _count(_round_rows(round_obj), predicate)
 
 
 def _scoring_records(complete: List[Round], eighteen: List[Round], nine: List[Round], *, lifetime: bool):
@@ -338,6 +353,14 @@ def notable_achievements(
     now = el.comparable_datetime(reference_date or datetime.now())
     cutoff = now - timedelta(days=days)
     rounds_list = el.chronological(rounds)
+    _ROW_CACHE.rows = {}
+    try:
+        return _notable_achievements(rounds_list, now, cutoff, days, home_course_id)
+    finally:
+        _ROW_CACHE.rows = None
+
+
+def _notable_achievements(rounds_list, now, cutoff, days, home_course_id) -> Dict[str, Any]:
 
     def in_window(round_obj: Optional[Round]) -> bool:
         return (
@@ -1258,6 +1281,27 @@ def scoring_by_par(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     return results
 
 
+# Yardage buckets per par: (low, high, order, label), inclusive bounds.
+YARDAGE_BUCKETS = {
+    3: [
+        (0,   149,  0, "< 150"),
+        (150, 199,  1, "150–199"),
+        (200, 9999, 2, "200+"),
+    ],
+    4: [
+        (0,   349,  0, "< 350"),
+        (350, 399,  1, "350–399"),
+        (400, 449,  2, "400–449"),
+        (450, 9999, 3, "450+"),
+    ],
+    5: [
+        (0,   499,  0, "< 500"),
+        (500, 549,  1, "500–549"),
+        (550, 9999, 2, "550+"),
+    ],
+}
+
+
 def scoring_by_yardage_buckets(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     Aggregate avg score-to-par and GIR% by yardage bucket within each par.
@@ -1270,25 +1314,6 @@ def scoring_by_yardage_buckets(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     Requires a resolvable tee (course tee or the round's custom tee) with hole_yardages.
     Returns rows sorted by par then bucket_order.
     """
-    BUCKETS = {
-        3: [
-            (0,   149,  0, "< 150"),
-            (150, 199,  1, "150–199"),
-            (200, 9999, 2, "200+"),
-        ],
-        4: [
-            (0,   349,  0, "< 350"),
-            (350, 399,  1, "350–399"),
-            (400, 449,  2, "400–449"),
-            (450, 9999, 3, "450+"),
-        ],
-        5: [
-            (0,   499,  0, "< 500"),
-            (500, 549,  1, "500–549"),
-            (550, 9999, 2, "550+"),
-        ],
-    }
-
     # key: (par, bucket_order) → {"to_par": [...], "gir": [...], "label": str}
     by_bucket: Dict[tuple, Dict[str, Any]] = {}
 
@@ -1305,7 +1330,7 @@ def scoring_by_yardage_buckets(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
             if yardage is None:
                 continue
 
-            for (lo, hi, order, label) in BUCKETS[par]:
+            for (lo, hi, order, label) in YARDAGE_BUCKETS[par]:
                 if lo <= yardage <= hi:
                     key = (par, order)
                     if key not in by_bucket:
