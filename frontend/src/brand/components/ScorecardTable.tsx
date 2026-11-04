@@ -337,8 +337,8 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
           <Line
             {...line}
             label="Fairway"
-            className={cn("h-8.5", figures)}
-            labelClassName="text-foreground-secondary"
+            className={cn("h-8", figures)}
+            labelClassName="h-8 text-foreground-secondary"
             cell={(hole) => <HitMark hit={hole.fairway} />}
           />
         )}
