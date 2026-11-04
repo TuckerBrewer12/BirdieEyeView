@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 
 from api.auth_notifications import send_password_reset_email, send_verification_email
+from api.course_access import load_linkable_course
 from api.auth_schemas import (
     AuthUserResponse,
     ForgotPasswordRequest,
@@ -187,9 +188,8 @@ async def register(req: RegisterRequest, request: Request, db: DatabaseManager =
         raise HTTPException(409, "An account with this email already exists")
 
     if req.home_course_id:
-        course = await db.courses.get_course(req.home_course_id)
-        if not course:
-            raise HTTPException(400, "Selected home course was not found")
+        # A new account owns no courses yet, so only a master course can be its home course.
+        await load_linkable_course(db, req.home_course_id, None, missing_detail="Selected home course was not found")
 
     password_hash = hash_password(req.password)
     try:

@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from typing import List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import ConflictError, DuplicateError, IntegrityError, NotFoundError
+from api.course_access import load_linkable_course
 from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
 from api.request_models import COURSE_RATING, SLOPE_RATING, normalize_hole_yardages
@@ -175,11 +176,9 @@ async def update_user(
     updates = req.model_dump(exclude_unset=True)
     if "home_course_id" in updates and updates["home_course_id"] is not None:
         home_course_id = str(updates["home_course_id"])
-        course = await db.courses.get_course(home_course_id)
-        if not course:
-            raise HTTPException(400, "Selected home course was not found")
-        if course.user_id and str(course.user_id) != str(current_user.id):
-            raise HTTPException(403, "Forbidden")
+        await load_linkable_course(
+            db, home_course_id, str(current_user.id), missing_detail="Selected home course was not found"
+        )
         updates["home_course_id"] = home_course_id
     if "handicap" in updates:
         updates["handicap_index"] = updates.pop("handicap")
@@ -238,6 +237,8 @@ async def create_user_tee(
     """Create a user tee configuration."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, "Forbidden")
+    if req.course_id:
+        await load_linkable_course(db, req.course_id, str(current_user.id), missing_detail="Linked course was not found")
     tee = UserTee(
         user_id=str(user_id),
         course_id=str(req.course_id) if req.course_id else None,

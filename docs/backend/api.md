@@ -29,6 +29,8 @@ Keep parsing, authorization, HTTP statuses, and public error translation here. M
 
 Request numeric limits follow the domain models rather than defining their own: ratings, yardages and goals match [tee.py](../../models/tee.py) and [user.py](../../models/user.py). Every per-hole yardage map goes through `normalize_hole_yardages` in [request_models.py](../../api/request_models.py), which drops unknown entries and rejects a hole listed twice. Course rows the database keeps unique (hole numbers, handicap ranks, tee names in any case) are rejected at the request. Round edits reuse `HoleScoreInput`. Course creation takes no holes, holes 1–9, or holes 1–18.
 
+A course a user links to their own data (profile or registration home course, user tee) must be a master course or one they own; [course_access.py](../../api/course_access.py) holds that rule, and a registering user can only pick a master course. Expected repository errors map to 4xx: duplicates to 409, invalid values to 422, missing records to 404, and a missing referenced course to 400.
+
 Course search (`GET /api/courses/search`) returns the user's own courses first, then master courses. With `include_external=true` it calls the golf course API only when the database has no match, and it does not attach provider IDs to local results. `POST /api/scan/save` returns 422 with a user-facing message when the save is rejected (no course, incomplete new course, invalid values); see [services](services.md) for the save rules.
 
 The report endpoint intentionally follows a separate anonymous path and does not require user/database resolution. Its contract is in [failed-scan reports](../failed-scan-reports.md).

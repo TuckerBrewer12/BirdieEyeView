@@ -420,3 +420,20 @@ async def test_me_returns_authenticated_user(auth_user):
     response = await auth.me(auth_user)
 
     assert (response.user_id, response.email_verified) == (auth_user.id, False)
+
+
+@pytest.mark.asyncio
+async def test_register_rejects_another_users_private_home_course(auth_user):
+    from tests.helpers import make_course
+
+    db = make_auth_database(auth_user)
+    db.courses.get_course.return_value = make_course(uuid4(), owner=uuid4())
+    request = RegisterRequest(
+        name="Ada", email="ada@example.com", password="password123", home_course_id=str(uuid4())
+    )
+
+    with pytest.raises(HTTPException) as raised:
+        await auth.register(request, make_http_request(), db)
+
+    assert raised.value.status_code == 403
+    db.users.create_user.assert_not_awaited()

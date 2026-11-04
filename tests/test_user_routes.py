@@ -279,6 +279,36 @@ def test_user_tee_request_rejects_malformed_yardages(yardages):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("owner", "status"), [("other", 403), (None, 201)], ids=["other-users-private-course", "master-course"]
+)
+async def test_create_user_tee_only_links_accessible_courses(tee_database, owner, status):
+    user_id, _, user, user_tee, db = tee_database
+    course_id = uuid4()
+    db.courses.get_course = AsyncMock(return_value=make_course(course_id, owner=uuid4() if owner else None))
+    request = users.CreateUserTeeRequest(name="Blue", course_id=course_id)
+
+    if status == 403:
+        with pytest.raises(HTTPException) as raised:
+            await users.create_user_tee(user_id, request, db, user)
+        assert raised.value.status_code == 403
+        db.user_tees.create_user_tee.assert_not_awaited()
+    else:
+        assert await users.create_user_tee(user_id, request, db, user) == user_tee
+
+
+@pytest.mark.asyncio
+async def test_create_user_tee_rejects_missing_course(tee_database):
+    user_id, _, user, _, db = tee_database
+    db.courses.get_course = AsyncMock(return_value=None)
+
+    with pytest.raises(HTTPException) as raised:
+        await users.create_user_tee(user_id, users.CreateUserTeeRequest(name="Blue", course_id=uuid4()), db, user)
+
+    assert raised.value.status_code == 400
+
+
+@pytest.mark.asyncio
 async def test_empty_update_of_missing_user_tee_is_not_found(tee_database):
     user_id, tee_id, user, _, db = tee_database
     db.user_tees.update_user_tee.return_value = None  # the repository's no-op lookup
