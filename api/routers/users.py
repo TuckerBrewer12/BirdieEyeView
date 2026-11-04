@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing import List, Optional
 from database.db_manager import DatabaseManager
-from database.exceptions import ConflictError, DuplicateError, NotFoundError
+from database.exceptions import ConflictError, DuplicateError, IntegrityError, NotFoundError
 from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
 from api.request_models import COURSE_RATING, SLOPE_RATING, normalize_hole_yardages
@@ -250,6 +250,8 @@ async def create_user_tee(
         return await db.user_tees.create_user_tee(tee)
     except DuplicateError:
         raise HTTPException(409, f"User tee '{req.name}' already exists for this course")
+    except IntegrityError as error:
+        raise HTTPException(422, str(error)) from error
 
 
 @router.put("/{user_id}/tees/{tee_id}", response_model=UserTee)
@@ -265,9 +267,17 @@ async def update_user_tee(
         raise HTTPException(403, "Forbidden")
     updates = req.model_dump(exclude_none=True)
     try:
-        return await db.user_tees.update_user_tee(str(tee_id), user_id=str(user_id), **updates)
+        tee = await db.user_tees.update_user_tee(str(tee_id), user_id=str(user_id), **updates)
     except NotFoundError:
         raise HTTPException(404, "User tee not found")
+    except DuplicateError as error:
+        raise HTTPException(409, "A user tee with that name already exists for this course") from error
+    except IntegrityError as error:
+        raise HTTPException(422, str(error)) from error
+    # An empty update is a lookup, which returns None instead of raising for a missing tee.
+    if tee is None:
+        raise HTTPException(404, "User tee not found")
+    return tee
 
 
 @router.delete("/{user_id}/tees/{tee_id}", status_code=204)
@@ -307,6 +317,8 @@ async def send_friend_request(
         if not target_user or not target_user.id:
             raise HTTPException(404, "Friend code not found")
         addressee_user_id = str(target_user.id)
+    elif not await db.users.get_user(str(addressee_user_id)):
+        raise HTTPException(404, "User not found")
 
     try:
         row = await db.friendships.send_request(str(current_user.id), str(addressee_user_id))

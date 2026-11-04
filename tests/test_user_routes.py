@@ -276,3 +276,37 @@ def test_user_tee_request_omits_unknown_yardages():
 def test_user_tee_request_rejects_malformed_yardages(yardages):
     with pytest.raises(ValidationError):
         users.CreateUserTeeRequest(name="Blue", hole_yardages=yardages)
+
+
+@pytest.mark.asyncio
+async def test_empty_update_of_missing_user_tee_is_not_found(tee_database):
+    user_id, tee_id, user, _, db = tee_database
+    db.user_tees.update_user_tee.return_value = None  # the repository's no-op lookup
+
+    with pytest.raises(HTTPException) as raised:
+        await users.update_user_tee(user_id, tee_id, users.UpdateUserTeeRequest(), db, user)
+
+    assert raised.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_update_user_tee_maps_duplicate_to_conflict(tee_database):
+    user_id, tee_id, user, _, db = tee_database
+    db.user_tees.update_user_tee.side_effect = DuplicateError()
+
+    with pytest.raises(HTTPException) as raised:
+        await users.update_user_tee(user_id, tee_id, users.UpdateUserTeeRequest(name="White"), db, user)
+
+    assert raised.value.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_friend_request_to_unknown_user_is_not_found(friendship_database):
+    _, _, user, _, db = friendship_database
+    db.users.get_user = AsyncMock(return_value=None)
+
+    with pytest.raises(HTTPException) as raised:
+        await users.send_friend_request(users.SendFriendRequest(addressee_user_id=uuid4()), db, user)
+
+    assert raised.value.status_code == 404
+    db.friendships.send_request.assert_not_awaited()

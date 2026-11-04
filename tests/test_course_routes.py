@@ -238,3 +238,23 @@ def test_update_course_request_accepts_nine_hole_par_and_nullable_location():
     request = courses.UpdateCourseRequest(par=36, location=None)
 
     assert request.model_dump(exclude_unset=True) == {"par": 36, "location": None}
+
+
+def test_update_course_request_rejects_null_name():
+    with pytest.raises(ValueError, match="name cannot be null"):
+        courses.UpdateCourseRequest(name=None)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("error", "status"), [(DuplicateError(), 409), (IntegrityError("bad"), 422)])
+async def test_update_course_maps_repository_errors(error, status):
+    user_id = uuid4()
+    course_id = uuid4()
+    db = make_mock_database()
+    db.courses.get_course = AsyncMock(return_value=make_course(course_id, owner=user_id))
+    db.courses.update_course = AsyncMock(side_effect=error)
+
+    with pytest.raises(HTTPException) as raised:
+        await courses.update_course(course_id, courses.UpdateCourseRequest(name="Pebble"), db, make_user(user_id))
+
+    assert raised.value.status_code == status

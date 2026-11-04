@@ -3,7 +3,7 @@
 import logging
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 from typing import List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
@@ -77,6 +77,13 @@ class UpdateCourseRequest(BaseModel):
     location: Optional[str] = None
     # Same bounds as models.course.Course and the database: 3-6 per hole for 9 or 18 holes.
     par: Optional[int] = Field(default=None, ge=27, le=108)
+
+    @model_validator(mode="after")
+    def _reject_null_name(self):
+        # name is required on a course; location and the provider ID may be cleared with null.
+        if "name" in self.model_fields_set and self.name is None:
+            raise ValueError("name cannot be null.")
+        return self
 
     @field_validator("name")
     @classmethod
@@ -213,24 +220,30 @@ async def create_course(
     effective_user_id = str(user_id) if user_id else str(current_user.id)
     if user_id and str(user_id) != str(current_user.id):
         raise HTTPException(403, "Forbidden")
-    holes = [Hole(number=h.number, par=h.par, handicap=h.handicap) for h in req.holes]
-    tees = [
-        Tee(
-            color=t.color,
-            slope_rating=t.slope_rating,
-            course_rating=t.course_rating,
-            hole_yardages={int(hole): yards for hole, yards in t.hole_yardages.items()},
-        )
-        for t in req.tees
-    ]
+    try:
+        holes = [Hole(number=h.number, par=h.par, handicap=h.handicap) for h in req.holes]
+        tees = [
+            Tee(
+                color=t.color,
+                slope_rating=t.slope_rating,
+                course_rating=t.course_rating,
+                hole_yardages={int(hole): yards for hole, yards in t.hole_yardages.items()},
+            )
+            for t in req.tees
+        ]
+    except ValidationError as error:
+        raise HTTPException(422, "Course data is invalid.") from error
 
-    course = Course(
-        name=req.name,
-        external_course_id=req.external_course_id,
-        location=req.location,
-        holes=holes,
-        tees=tees,
-    )
+    try:
+        course = Course(
+            name=req.name,
+            external_course_id=req.external_course_id,
+            location=req.location,
+            holes=holes,
+            tees=tees,
+        )
+    except ValidationError as error:
+        raise HTTPException(422, "Course data is invalid.") from error
     try:
         created = await db.courses.create_course(course, user_id=effective_user_id)
         return _summarize_course(created)
@@ -256,7 +269,12 @@ async def update_course(
         raise HTTPException(403, "Cannot edit a master course. Clone it first.")
 
     updates = req.model_dump(exclude_unset=True)
-    updated = await db.courses.update_course(str(course_id), user_id=str(current_user.id), **updates)
+    try:
+        updated = await db.courses.update_course(str(course_id), user_id=str(current_user.id), **updates)
+    except DuplicateError as error:
+        raise HTTPException(409, "A course with that name already exists for this user") from error
+    except IntegrityError as error:
+        raise HTTPException(422, "These course changes are invalid.") from error
     if not updated:
         raise HTTPException(404, "Course not found or not owned by user")
     return _summarize_course(updated)

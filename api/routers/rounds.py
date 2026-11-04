@@ -217,6 +217,8 @@ async def update_round(
 
         return updated
 
+    except HTTPException:
+        raise
     except NotFoundError:
         raise HTTPException(404, "Round not found")
     except IntegrityError:
