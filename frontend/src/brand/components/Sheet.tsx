@@ -176,11 +176,10 @@ function SheetDescription({
   );
 }
 
-/** The rows of a bottom sheet, one of which is chosen. */
+/** The rows of a bottom sheet, one of which is chosen. Tab moves between them. */
 function SheetOptions({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      role="radiogroup"
       data-slot="sheet-options"
       className={cn("flex flex-col", className)}
       {...props}
@@ -188,21 +187,23 @@ function SheetOptions({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-/** One row of `SheetOptions`: the chosen one is heavier and carries a check. */
+/**
+ * One row of `SheetOptions`: a button that picks it. The chosen row is
+ * pressed, heavier and checked.
+ */
 function SheetOption({
   selected = false,
   className,
   children,
   ...props
-}: Omit<React.ComponentProps<"button">, "role"> & { selected?: boolean }) {
+}: React.ComponentProps<"button"> & { selected?: boolean }) {
   return (
     <button
       type="button"
-      role="radio"
-      aria-checked={selected}
+      aria-pressed={selected}
       data-slot="sheet-option"
       className={cn(
-        "flex h-13 w-full items-center rounded-card px-2 text-left text-base text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 aria-checked:font-semibold",
+        "flex h-13 w-full items-center rounded-card px-2 text-left text-base text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 aria-pressed:font-semibold",
         className,
       )}
       {...props}

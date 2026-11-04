@@ -1,4 +1,4 @@
-import { Camera, Image } from "lucide-react";
+import { Camera, Images } from "lucide-react";
 import {
   ActionSheet,
   ActionSheetAction,
@@ -15,7 +15,7 @@ export default function ActionSheetPreview() {
         <ActionSheet defaultOpen modal={false}>
           <ActionSheetContent title="Add scorecard" contained initialFocus={false}>
             <ActionSheetAction icon={<Camera aria-hidden />}>Take photo</ActionSheetAction>
-            <ActionSheetAction icon={<Image aria-hidden />}>Choose from library</ActionSheetAction>
+            <ActionSheetAction icon={<Images aria-hidden />}>Choose from library</ActionSheetAction>
           </ActionSheetContent>
         </ActionSheet>
       </div>

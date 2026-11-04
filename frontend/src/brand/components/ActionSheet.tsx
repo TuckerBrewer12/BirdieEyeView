@@ -6,7 +6,8 @@ import { SheetPortal } from "./Sheet";
 /**
  * A mobile list of actions where the player does one. It rises from the
  * bottom as two floating cards: the actions under a title, and a Cancel
- * apart from them. Choosing an action closes the sheet.
+ * apart from them. It is a dialog of plain buttons (Tab moves between them,
+ * Escape cancels), and choosing an action closes it.
  *
  * `Sheet side="bottom"` is the sibling for picking one option from a list.
  */
@@ -26,7 +27,7 @@ function ActionSheetContent({
   contained = false,
   ...props
 }: Omit<ActionSheetPrimitive.Popup.Props, "title"> & {
-  /** What the actions are for. Shown above them and read as the sheet's name. */
+  /** What the actions are for. Shown above them and read as the dialog's name. */
   title: string;
   /** Hosts the sheet inside its nearest positioned parent instead of over the page. */
   contained?: boolean;
@@ -42,10 +43,10 @@ function ActionSheetContent({
         )}
         {...props}
       >
-        <div role="menu" aria-label={title} className="overflow-hidden rounded-2xl bg-card">
+        <div className="overflow-hidden rounded-2xl bg-card">
           <ActionSheetPrimitive.Title
             data-slot="action-sheet-title"
-            className="border-b border-chart-grid px-4 py-3 text-center text-body font-normal text-muted-foreground"
+            className="border-b border-border px-4 py-3 text-center text-body font-normal text-muted-foreground"
           >
             {title}
           </ActionSheetPrimitive.Title>
@@ -68,13 +69,12 @@ function ActionSheetAction({
   children,
   icon,
   ...props
-}: Omit<ActionSheetPrimitive.Close.Props, "role"> & { icon?: React.ReactNode }) {
+}: ActionSheetPrimitive.Close.Props & { icon?: React.ReactNode }) {
   return (
     <ActionSheetPrimitive.Close
-      role="menuitem"
       data-slot="action-sheet-action"
       className={cn(
-        "flex h-14 w-full items-center justify-center gap-2.5 border-t border-chart-grid text-lg font-medium text-primary outline-none first-of-type:border-t-0 hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-5",
+        "flex h-14 w-full items-center justify-center gap-2.5 border-t border-border text-lg font-medium text-primary outline-none first-of-type:border-t-0 hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-5",
         className,
       )}
       {...props}

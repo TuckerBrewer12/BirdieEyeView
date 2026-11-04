@@ -41,5 +41,5 @@ test("course link failed", async ({ rounds }) => {
 test("sort menu open", async ({ rounds }) => {
   await rounds.open(storedRounds);
   await rounds.openSortMenu();
-  await rounds.capture("rounds-sort-open.png");
+  await rounds.capture("rounds-sort-open.png", { fullPage: false });
 });

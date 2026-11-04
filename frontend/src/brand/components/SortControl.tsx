@@ -1,6 +1,23 @@
-import { ArrowDown, ArrowUp, Check, ChevronDown } from "lucide-react";
-import { Select } from "@base-ui/react/select";
+import { useState } from "react";
+import { ArrowDown, ArrowUp, ChevronDown } from "lucide-react";
 import { cn } from "@/brand/cn";
+import { Button } from "./Button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "./DropdownMenu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetOption,
+  SheetOptions,
+  SheetTitle,
+  SheetTrigger,
+} from "./Sheet";
 
 interface SortOption<T extends string> {
   value: T;
@@ -12,15 +29,22 @@ interface SortControlProps<T extends string> {
   value: T;
   options: readonly SortOption<T>[];
   onChange: (value: T) => void;
-  /** Leave off `onToggleDirection` and the control only picks: no arrow, a chevron on the label. */
+  /**
+   * Leave off `onToggleDirection` and the control only picks, like a filter:
+   * no arrow, and a bordered button instead of a quiet one.
+   */
   ascending?: boolean;
   onToggleDirection?: () => void;
   directionDisabled?: boolean;
-  /** What the menu picks, for screen readers. */
+  /** What the menu picks: the trigger's name for screen readers and the phone sheet's title. */
   "aria-label"?: string;
   className?: string;
 }
 
+/**
+ * Picks one of a few options. From `md` up the options drop down under the
+ * button; on a phone they rise in a bottom sheet with 52px rows.
+ */
 function SortControl<T extends string>({
   label,
   value,
@@ -32,70 +56,73 @@ function SortControl<T extends string>({
   "aria-label": ariaLabel = "Sort by",
   className,
 }: SortControlProps<T>) {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const variant = onToggleDirection ? "ghost" : "outline";
+
   return (
     <div data-slot="sort-control" className={cn("inline-flex items-center gap-0.5", className)}>
-      <Select.Root
-        value={value}
-        onValueChange={(next) => {
-          if (next != null) onChange(next);
-        }}
-        items={options}
-        modal={false}
-      >
-        <Select.Trigger
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger
           aria-label={ariaLabel}
-          className={cn(
-            "rounded-sm px-0.5 text-label font-semibold text-primary outline-none select-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/50",
-            !onToggleDirection && "inline-flex items-center gap-0.5",
-          )}
+          variant={variant}
+          size="sm"
+          className="hidden md:inline-flex"
         >
           {label}
-          {!onToggleDirection && <ChevronDown aria-hidden className="size-3.5" />}
-        </Select.Trigger>
-        <Select.Portal>
-          <Select.Positioner
-            side="bottom"
-            align="end"
-            alignItemWithTrigger={false}
-            sideOffset={4}
-            className="z-50"
+        </DropdownMenuTrigger>
+        <DropdownMenuContent data-slot="sort-menu" align="end" sideOffset={4}>
+          <DropdownMenuRadioGroup
+            value={value}
+            onValueChange={(next: T) => onChange(next)}
           >
-            <Select.Popup
-              data-slot="sort-menu"
-              className="min-w-28 origin-(--transform-origin) overflow-hidden rounded-lg bg-card p-1 text-card-foreground shadow-md ring-1 ring-foreground/10 outline-none duration-100 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
-            >
-              <Select.List className="!block w-full">
-                {options.map((option) => (
-                  <Select.Item
-                    key={option.value}
-                    value={option.value}
-                    className="relative flex w-full cursor-default items-center rounded-md py-1.5 pr-8 pl-2 text-sm outline-none select-none data-highlighted:bg-muted data-highlighted:text-foreground data-selected:bg-primary data-selected:text-primary-foreground data-selected:data-highlighted:bg-primary data-selected:data-highlighted:text-primary-foreground"
-                  >
-                    <Select.ItemText>{option.label}</Select.ItemText>
-                    <Select.ItemIndicator className="absolute right-2 inline-flex">
-                      <Check className="size-3.5" />
-                    </Select.ItemIndicator>
-                  </Select.Item>
-                ))}
-              </Select.List>
-            </Select.Popup>
-          </Select.Positioner>
-        </Select.Portal>
-      </Select.Root>
+            {options.map((option) => (
+              <DropdownMenuRadioItem key={option.value} value={option.value}>
+                {option.label}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetTrigger
+          aria-label={ariaLabel}
+          render={<Button variant={variant} size="sm" className="md:hidden" />}
+        >
+          {label}
+          <ChevronDown aria-hidden data-icon="inline-end" className="size-3" />
+        </SheetTrigger>
+        <SheetContent side="bottom" data-slot="sort-sheet">
+          <SheetHeader>
+            <SheetTitle>{ariaLabel}</SheetTitle>
+          </SheetHeader>
+          <SheetOptions>
+            {options.map((option) => (
+              <SheetOption
+                key={option.value}
+                selected={option.value === value}
+                onClick={() => {
+                  onChange(option.value);
+                  setSheetOpen(false);
+                }}
+              >
+                {option.label}
+              </SheetOption>
+            ))}
+          </SheetOptions>
+        </SheetContent>
+      </Sheet>
+
       {onToggleDirection && (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon-sm"
           aria-label={ascending ? "Sort descending" : "Sort ascending"}
           disabled={directionDisabled}
           onClick={onToggleDirection}
-          className="inline-flex size-5 items-center justify-center rounded-sm text-primary outline-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-40"
         >
-          {directionDisabled || ascending ? (
-            <ArrowUp className="size-3.5" />
-          ) : (
-            <ArrowDown className="size-3.5" />
-          )}
-        </button>
+          {directionDisabled || ascending ? <ArrowUp /> : <ArrowDown />}
+        </Button>
       )}
     </div>
   );

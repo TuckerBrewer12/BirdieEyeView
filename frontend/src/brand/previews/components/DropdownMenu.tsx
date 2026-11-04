@@ -6,32 +6,38 @@ import {
   DropdownMenuTrigger,
 } from "@/brand/components/DropdownMenu";
 
-const courses = [
-  { name: "All courses", rounds: 24 },
-  { name: "Presidio Golf Course", rounds: 11 },
-  { name: "Half Moon Bay", rounds: 8 },
-  { name: "Blue Rock", rounds: 5 },
-];
+const courses = ["All Courses", "Home Course", "Presidio Golf Course", "Half Moon Bay"];
 
+/**
+ * Open under the outline trigger the analytics course filter uses; the sort
+ * on Rounds uses the ghost trigger beside it.
+ */
 export default function DropdownMenuPreview() {
   return (
     <div className="flex flex-col gap-2">
       <div className="text-label font-semibold text-muted-foreground">
         Dropdown menu · desktop
       </div>
-      <div className="h-75 rounded-xl border border-border bg-card p-4">
+      <div className="flex h-75 items-start gap-4 rounded-xl border border-border bg-card p-4">
         <DropdownMenu defaultOpen modal={false}>
-          <DropdownMenuTrigger>All courses</DropdownMenuTrigger>
+          <DropdownMenuTrigger size="sm">All Courses</DropdownMenuTrigger>
           <DropdownMenuContent aria-label="Course">
-            <DropdownMenuRadioGroup value="All courses">
+            <DropdownMenuRadioGroup value="All Courses">
               {courses.map((course) => (
-                <DropdownMenuRadioItem key={course.name} value={course.name} detail={course.rounds}>
-                  {course.name}
+                <DropdownMenuRadioItem key={course} value={course}>
+                  {course}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
+        <div className="ml-auto">
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger variant="ghost" size="sm">
+              Date
+            </DropdownMenuTrigger>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );

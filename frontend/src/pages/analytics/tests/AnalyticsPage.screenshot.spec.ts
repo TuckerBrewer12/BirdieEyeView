@@ -21,7 +21,7 @@ test("filtered to one course", async ({ analytics }) => {
 test("course menu open", async ({ analytics }) => {
   await analytics.open();
   await analytics.openCourseMenu();
-  await analytics.capture("analytics-course-menu.png");
+  await analytics.capture("analytics-course-menu.png", { fullPage: false });
 });
 
 test("no rounds match the filters", async ({ analytics }) => {

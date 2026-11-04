@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentProps } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { cn } from "@/brand/cn";
@@ -6,24 +6,31 @@ import { Button } from "./Button";
 
 /**
  * The desktop menu for picking one: a button with a card of rows opening
- * under it. Rows are 40 tall, against 52 in a mobile `Sheet`; the chosen row
- * is shaded and checked.
+ * under it, on Base UI's Menu (arrow keys move, Enter picks, Escape closes).
+ * Rows are 40 tall, against 52 in a mobile `Sheet`; the chosen row is shaded
+ * and checked.
  */
 
 function DropdownMenu(props: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root {...props} />;
 }
 
-/** The button that opens the menu. Its border darkens, and the chevron flips, while it is open. */
-function DropdownMenuTrigger({ className, children, ...props }: MenuPrimitive.Trigger.Props) {
+/**
+ * The button that opens the menu, a kit `Button` (outline unless `variant`
+ * says otherwise) whose chevron flips while it is open.
+ */
+function DropdownMenuTrigger({
+  className,
+  children,
+  variant = "outline",
+  size = "default",
+  ...props
+}: MenuPrimitive.Trigger.Props & Pick<ComponentProps<typeof Button>, "variant" | "size">) {
   return (
     <MenuPrimitive.Trigger
       data-slot="dropdown-menu-trigger"
-      render={<Button variant="outline" size="lg" />}
-      className={cn(
-        "group bg-card font-semibold hover:border-foreground hover:bg-card aria-expanded:bg-card data-popup-open:border-foreground",
-        className,
-      )}
+      render={<Button variant={variant} size={size} />}
+      className={cn("group", className)}
       {...props}
     >
       {children}
@@ -60,13 +67,8 @@ function DropdownMenuRadioGroup(props: MenuPrimitive.RadioGroup.Props) {
   return <MenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props} />;
 }
 
-/** A row of `DropdownMenuRadioGroup`. `detail` is the quiet figure at the right, such as a count. */
-function DropdownMenuRadioItem({
-  className,
-  children,
-  detail,
-  ...props
-}: MenuPrimitive.RadioItem.Props & { detail?: ReactNode }) {
+/** A row of `DropdownMenuRadioGroup`: shaded and checked when it is the chosen one. */
+function DropdownMenuRadioItem({ className, children, ...props }: MenuPrimitive.RadioItem.Props) {
   return (
     <MenuPrimitive.RadioItem
       data-slot="dropdown-menu-radio-item"
@@ -77,14 +79,9 @@ function DropdownMenuRadioItem({
       {...props}
     >
       <span className="flex-1 text-left">{children}</span>
-      {detail != null && (
-        <span className="text-body-sm font-normal text-muted-foreground">{detail}</span>
-      )}
-      <span className="inline-flex w-3.5 justify-end">
-        <MenuPrimitive.RadioItemIndicator>
-          <Check aria-hidden className="size-3.5 stroke-icon-active text-primary" />
-        </MenuPrimitive.RadioItemIndicator>
-      </span>
+      <MenuPrimitive.RadioItemIndicator>
+        <Check aria-hidden className="size-3.5 stroke-icon-active text-primary" />
+      </MenuPrimitive.RadioItemIndicator>
     </MenuPrimitive.RadioItem>
   );
 }
