@@ -1,7 +1,8 @@
 """Unified database interface composing all repositories."""
 
 import asyncpg
-from typing import Optional
+from contextlib import asynccontextmanager
+from typing import AsyncIterator, Optional
 
 from models import Course, Round, User
 from database.repositories.course_repo import CourseRepositoryDB
@@ -33,6 +34,15 @@ class DatabaseManager:
         self.rounds = RoundRepositoryDB(pool, self.courses)
         self.user_tees = UserTeeRepositoryDB(pool)
         self.friendships = FriendshipRepositoryDB(pool)
+
+    @asynccontextmanager
+    async def transaction(self) -> AsyncIterator:
+        """One connection and transaction for a multi-repository write.
+
+        Pass the yielded connection as ``connection=`` to repository write methods.
+        """
+        async with self._pool.acquire() as conn, conn.transaction():
+            yield conn
 
     # ================================================================
     # Course delegates

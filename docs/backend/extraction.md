@@ -13,6 +13,8 @@ The active scanner is implemented across Services and the scan router. The legac
 
 ## Observation versus accepted value
 
+The course name is never read from the scan: a card may not show it, so the user picks or enters it during review.
+
 OCR output is evidence, not verified golf data. Hole identity, raw/to-par score interpretation, unknown cells, and optional field suppression affect what can safely be assembled. Missing cells must not shift later holes. Provider calls, parsing, normalization, domain validation, and persistence are separate responsibilities even where current code mixes them.
 
 ## Planned representation change

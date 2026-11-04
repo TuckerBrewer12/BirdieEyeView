@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 from models import Course, Hole, Tee
+from database.connection import write_transaction
 from database.converters import course_from_rows, course_to_row, tee_yardages_to_rows, tee_to_row, tee_ratings_to_rows
 from database.exceptions import ConflictError, DuplicateError, IntegrityError, NotFoundError
 
@@ -250,34 +251,61 @@ class CourseRepositoryDB:
         external_course_id: str,
         *,
         user_id: Optional[str] = None,
+        connection=None,
     ) -> Optional[Course]:
         """Find a course by provider ID.
 
         With user_id: searches master plus this user's custom courses.
         Without user_id: searches master courses only.
         """
+        if connection is not None:
+            return await self._find_course_by_external_id_on(connection, external_course_id, user_id)
         async with self._pool.acquire() as conn:
-            if user_id:
-                row = await conn.fetchrow(
-                    """SELECT * FROM courses.courses
-                       WHERE external_course_id = $1
-                         AND (user_id IS NULL OR user_id = $2)
-                       ORDER BY user_id NULLS FIRST
-                       LIMIT 1""",
-                    external_course_id,
-                    UUID(user_id),
-                )
-            else:
-                row = await conn.fetchrow(
-                    """SELECT * FROM courses.courses
-                       WHERE external_course_id = $1
-                         AND user_id IS NULL
-                       LIMIT 1""",
-                    external_course_id,
-                )
-            if not row:
-                return None
-            return await self._assemble(conn, row)
+            return await self._find_course_by_external_id_on(conn, external_course_id, user_id)
+
+    async def _find_course_by_external_id_on(
+        self, conn, external_course_id: str, user_id: Optional[str]
+    ) -> Optional[Course]:
+        if user_id:
+            row = await conn.fetchrow(
+                """SELECT * FROM courses.courses
+                   WHERE external_course_id = $1
+                     AND (user_id IS NULL OR user_id = $2)
+                   ORDER BY user_id NULLS FIRST
+                   LIMIT 1""",
+                external_course_id,
+                UUID(user_id),
+            )
+        else:
+            row = await conn.fetchrow(
+                """SELECT * FROM courses.courses
+                   WHERE external_course_id = $1
+                     AND user_id IS NULL
+                   LIMIT 1""",
+                external_course_id,
+            )
+        if not row:
+            return None
+        return await self._assemble(conn, row)
+
+    async def find_owned_course_by_exact_name(
+        self, name: str, user_id: str, *, connection=None
+    ) -> Optional[Course]:
+        """The user's own course with exactly this name (case-insensitive); no fuzzy tiers."""
+        async def lookup(conn) -> Optional[Course]:
+            row = await conn.fetchrow(
+                """SELECT * FROM courses.courses
+                   WHERE LOWER(name) = LOWER($1) AND user_id = $2
+                   ORDER BY created_at, id LIMIT 1""",
+                name,
+                UUID(user_id),
+            )
+            return await self._assemble(conn, row) if row else None
+
+        if connection is not None:
+            return await lookup(connection)
+        async with self._pool.acquire() as conn:
+            return await lookup(conn)
 
     async def find_user_course_by_name(
         self,
@@ -400,6 +428,8 @@ class CourseRepositoryDB:
         slope_rating: Optional[float] = None,
         course_rating: Optional[float] = None,
         yardages: Optional[dict] = None,
+        *,
+        connection=None,
     ) -> None:
         """Fill null fields on an existing course from new scan data.
 
@@ -425,132 +455,131 @@ class CourseRepositoryDB:
             course_rating=course_rating,
             hole_yardages={key: value for key, value in (yardages or {}).items() if value is not None},
         ).hole_yardages
-        async with self._pool.acquire() as conn:
-            async with conn.transaction():
-                parent = await conn.fetchrow(
-                    "SELECT id,total_holes FROM courses.courses WHERE id=$1 FOR NO KEY UPDATE", cid
-                )
-                if not parent:
-                    raise NotFoundError("Course not found")
-                if parent["total_holes"] == 9 and any(hole.number and hole.number > 9 for hole in normalized_holes):
-                    raise IntegrityError("Hole is outside the declared course layout")
-                # Fill hole par/handicap where NULL (or insert if hole row missing)
-                for hole in normalized_holes:
-                    hole_num, par, handicap = hole.number, hole.par, hole.handicap
-                    if hole_num is None:
-                        continue
-                    if handicap is not None:
-                        conflicting_hole_num = await conn.fetchval(
-                            """SELECT hole_number FROM courses.holes
-                               WHERE course_id = $1 AND handicap = $2 AND hole_number <> $3
-                               LIMIT 1""",
-                            cid,
-                            handicap,
-                            hole_num,
-                        )
-                        if conflicting_hole_num is not None:
-                            handicap = None
-                    await conn.execute(
-                        """INSERT INTO courses.holes (course_id, hole_number, par, handicap)
-                           VALUES ($1, $2, $3, $4)
-                           ON CONFLICT (course_id, hole_number) DO UPDATE SET
-                               par = CASE WHEN courses.holes.par IS NULL
-                                         THEN EXCLUDED.par ELSE courses.holes.par END,
-                               handicap = CASE WHEN courses.holes.handicap IS NULL
-                                              THEN EXCLUDED.handicap ELSE courses.holes.handicap END""",
+        async with write_transaction(self._pool, connection) as conn:
+            parent = await conn.fetchrow(
+                "SELECT id,total_holes FROM courses.courses WHERE id=$1 FOR NO KEY UPDATE", cid
+            )
+            if not parent:
+                raise NotFoundError("Course not found")
+            if parent["total_holes"] == 9 and any(hole.number and hole.number > 9 for hole in normalized_holes):
+                raise IntegrityError("Hole is outside the declared course layout")
+            # Fill hole par/handicap where NULL (or insert if hole row missing)
+            for hole in normalized_holes:
+                hole_num, par, handicap = hole.number, hole.par, hole.handicap
+                if hole_num is None:
+                    continue
+                if handicap is not None:
+                    conflicting_hole_num = await conn.fetchval(
+                        """SELECT hole_number FROM courses.holes
+                           WHERE course_id = $1 AND handicap = $2 AND hole_number <> $3
+                           LIMIT 1""",
                         cid,
-                        hole_num,
-                        par,
                         handicap,
+                        hole_num,
                     )
-                if any(hole.number is not None and hole.par is not None for hole in normalized_holes):
-                    # Once observations exist, a stored whole-course par must not reappear after later edits.
-                    await conn.execute("UPDATE courses.courses SET par=NULL WHERE id=$1", cid)
+                    if conflicting_hole_num is not None:
+                        handicap = None
+                await conn.execute(
+                    """INSERT INTO courses.holes (course_id, hole_number, par, handicap)
+                       VALUES ($1, $2, $3, $4)
+                       ON CONFLICT (course_id, hole_number) DO UPDATE SET
+                           par = CASE WHEN courses.holes.par IS NULL
+                                     THEN EXCLUDED.par ELSE courses.holes.par END,
+                           handicap = CASE WHEN courses.holes.handicap IS NULL
+                                          THEN EXCLUDED.handicap ELSE courses.holes.handicap END""",
+                    cid,
+                    hole_num,
+                    par,
+                    handicap,
+                )
+            if any(hole.number is not None and hole.par is not None for hole in normalized_holes):
+                # Once observations exist, a stored whole-course par must not reappear after later edits.
+                await conn.execute("UPDATE courses.courses SET par=NULL WHERE id=$1", cid)
 
-                # Fill tee rating gaps and insert missing yardages.
-                # Parent locking serializes gap fills; conflict clauses retain observed values.
-                if tee_color:
-                    existing_tee = await conn.fetchrow(
-                        "SELECT id, slope_rating, course_rating FROM courses.tees "
-                        "WHERE course_id = $1 AND LOWER(color) = LOWER($2)",
+            # Fill tee rating gaps and insert missing yardages.
+            # Parent locking serializes gap fills; conflict clauses retain observed values.
+            if tee_color:
+                existing_tee = await conn.fetchrow(
+                    "SELECT id, slope_rating, course_rating FROM courses.tees "
+                    "WHERE course_id = $1 AND LOWER(color) = LOWER($2)",
+                    cid,
+                    tee_color,
+                )
+                # If color doesn't match but yardages are mostly the same, map to
+                # the existing course tee so we keep one canonical tee name/source.
+                if not existing_tee and normalized_yardages:
+                    candidate_rows = await conn.fetch(
+                        "SELECT id, color, slope_rating, course_rating FROM courses.tees WHERE course_id = $1",
+                        cid,
+                    )
+                    if candidate_rows:
+                        candidate_ids = [r["id"] for r in candidate_rows]
+                        y_rows = await conn.fetch(
+                            "SELECT tee_id, hole_number, yardage FROM courses.tee_yardages "
+                            "WHERE tee_id = ANY($1::uuid[])",
+                            candidate_ids,
+                        )
+                        yards_by_tee: Dict[UUID, Dict[int, int]] = {}
+                        for row in y_rows:
+                            tee_id = row["tee_id"]
+                            yards_by_tee.setdefault(tee_id, {})[int(row["hole_number"])] = int(row["yardage"])
+
+                        best_match = None
+                        best_ratio = 0.0
+                        best_overlap = 0
+                        for candidate in candidate_rows:
+                            ratio, overlap = _tee_yardage_similarity(
+                                normalized_yardages,
+                                yards_by_tee.get(candidate["id"], {}),
+                            )
+                            if ratio > best_ratio or (ratio == best_ratio and overlap > best_overlap):
+                                best_match = candidate
+                                best_ratio = ratio
+                                best_overlap = overlap
+                        if best_match and best_overlap >= 6 and best_ratio >= 0.7:
+                            existing_tee = best_match
+
+                if existing_tee:
+                    tee_id = existing_tee["id"]
+                    # Fill NULL slots only — never overwrite existing data
+                    updates = {}
+                    if slope_rating is not None and existing_tee["slope_rating"] is None:
+                        updates["slope_rating"] = slope_rating
+                    if course_rating is not None and existing_tee["course_rating"] is None:
+                        updates["course_rating"] = course_rating
+                    if updates:
+                        set_clause = ", ".join(f"{k} = ${i + 2}" for i, k in enumerate(updates))
+                        await conn.execute(
+                            f"UPDATE courses.tees SET {set_clause} WHERE id = $1",
+                            tee_id,
+                            *updates.values(),
+                        )
+                else:
+                    # New tee — insert it
+                    tee_row = await conn.fetchrow(
+                        """INSERT INTO courses.tees (course_id, color, slope_rating, course_rating)
+                           VALUES ($1, $2, $3, $4)
+                           ON CONFLICT (course_id, LOWER(color)) DO UPDATE SET
+                               slope_rating=COALESCE(courses.tees.slope_rating,EXCLUDED.slope_rating),
+                               course_rating=COALESCE(courses.tees.course_rating,EXCLUDED.course_rating)
+                           RETURNING id""",
                         cid,
                         tee_color,
+                        slope_rating,
+                        course_rating,
                     )
-                    # If color doesn't match but yardages are mostly the same, map to
-                    # the existing course tee so we keep one canonical tee name/source.
-                    if not existing_tee and normalized_yardages:
-                        candidate_rows = await conn.fetch(
-                            "SELECT id, color, slope_rating, course_rating FROM courses.tees WHERE course_id = $1",
-                            cid,
+                    tee_id = tee_row["id"]
+
+                if normalized_yardages:
+                    await conn.execute("UPDATE courses.tees SET total_yardage=NULL WHERE id=$1", tee_id)
+                    for hole_num, yds in normalized_yardages.items():
+                        await conn.execute(
+                            """INSERT INTO courses.tee_yardages (tee_id,hole_number,yardage)
+                               VALUES ($1,$2,$3) ON CONFLICT (tee_id,hole_number) DO NOTHING""",
+                            tee_id,
+                            hole_num,
+                            yds,
                         )
-                        if candidate_rows:
-                            candidate_ids = [r["id"] for r in candidate_rows]
-                            y_rows = await conn.fetch(
-                                "SELECT tee_id, hole_number, yardage FROM courses.tee_yardages "
-                                "WHERE tee_id = ANY($1::uuid[])",
-                                candidate_ids,
-                            )
-                            yards_by_tee: Dict[UUID, Dict[int, int]] = {}
-                            for row in y_rows:
-                                tee_id = row["tee_id"]
-                                yards_by_tee.setdefault(tee_id, {})[int(row["hole_number"])] = int(row["yardage"])
-
-                            best_match = None
-                            best_ratio = 0.0
-                            best_overlap = 0
-                            for candidate in candidate_rows:
-                                ratio, overlap = _tee_yardage_similarity(
-                                    normalized_yardages,
-                                    yards_by_tee.get(candidate["id"], {}),
-                                )
-                                if ratio > best_ratio or (ratio == best_ratio and overlap > best_overlap):
-                                    best_match = candidate
-                                    best_ratio = ratio
-                                    best_overlap = overlap
-                            if best_match and best_overlap >= 6 and best_ratio >= 0.7:
-                                existing_tee = best_match
-
-                    if existing_tee:
-                        tee_id = existing_tee["id"]
-                        # Fill NULL slots only — never overwrite existing data
-                        updates = {}
-                        if slope_rating is not None and existing_tee["slope_rating"] is None:
-                            updates["slope_rating"] = slope_rating
-                        if course_rating is not None and existing_tee["course_rating"] is None:
-                            updates["course_rating"] = course_rating
-                        if updates:
-                            set_clause = ", ".join(f"{k} = ${i + 2}" for i, k in enumerate(updates))
-                            await conn.execute(
-                                f"UPDATE courses.tees SET {set_clause} WHERE id = $1",
-                                tee_id,
-                                *updates.values(),
-                            )
-                    else:
-                        # New tee — insert it
-                        tee_row = await conn.fetchrow(
-                            """INSERT INTO courses.tees (course_id, color, slope_rating, course_rating)
-                               VALUES ($1, $2, $3, $4)
-                               ON CONFLICT (course_id, LOWER(color)) DO UPDATE SET
-                                   slope_rating=COALESCE(courses.tees.slope_rating,EXCLUDED.slope_rating),
-                                   course_rating=COALESCE(courses.tees.course_rating,EXCLUDED.course_rating)
-                               RETURNING id""",
-                            cid,
-                            tee_color,
-                            slope_rating,
-                            course_rating,
-                        )
-                        tee_id = tee_row["id"]
-
-                    if normalized_yardages:
-                        await conn.execute("UPDATE courses.tees SET total_yardage=NULL WHERE id=$1", tee_id)
-                        for hole_num, yds in normalized_yardages.items():
-                            await conn.execute(
-                                """INSERT INTO courses.tee_yardages (tee_id,hole_number,yardage)
-                                   VALUES ($1,$2,$3) ON CONFLICT (tee_id,hole_number) DO NOTHING""",
-                                tee_id,
-                                hole_num,
-                                yds,
-                            )
 
     async def promote_to_master(self, course_id: str) -> Course:
         """Promote a user-owned course to master by setting user_id = NULL.
@@ -604,14 +633,14 @@ class CourseRepositoryDB:
             return [await self._assemble(conn, r) for r in rows]
 
     async def search_courses(self, query: str, *, user_id: Optional[str] = None) -> List[Course]:
-        """Search courses by name or location substring."""
+        """Search courses by name or location substring: the user's own courses first, then masters."""
         async with self._pool.acquire() as conn:
             if user_id:
                 rows = await conn.fetch(
                     """SELECT * FROM courses.courses
                        WHERE (name ILIKE $1 OR location ILIKE $1)
                          AND (user_id IS NULL OR user_id = $2)
-                       ORDER BY name LIMIT 20""",
+                       ORDER BY (user_id IS NULL), name LIMIT 20""",
                     f"%{query}%",
                     UUID(user_id),
                 )
@@ -629,7 +658,7 @@ class CourseRepositoryDB:
     # Create
     # ================================================================
 
-    async def create_course(self, course: Course, *, user_id: Optional[str] = None) -> Course:
+    async def create_course(self, course: Course, *, user_id: Optional[str] = None, connection=None) -> Course:
         """Insert a full Course with holes, tees, and yardages in one transaction.
 
         user_id=None creates a master/global course.
@@ -642,35 +671,34 @@ class CourseRepositoryDB:
             if course.total_holes == 9 and any(hole.number and hole.number > 9 for hole in course.holes):
                 raise IntegrityError("Hole is outside the declared course layout")
             uid = UUID(user_id) if user_id else None
-            async with self._pool.acquire() as conn:
-                async with conn.transaction():
-                    row_data = course_to_row(course, user_id=uid)
-                    course_row = await conn.fetchrow(
-                        """INSERT INTO courses.courses (name, external_course_id, location, par, total_holes, user_id)
-                           VALUES ($1, $2, $3, $4, $5, $6) RETURNING *""",
-                        row_data["name"],
-                        row_data["external_course_id"],
-                        row_data["location"],
-                        row_data["par"],
-                        row_data["total_holes"],
-                        row_data["user_id"],
+            async with write_transaction(self._pool, connection) as conn:
+                row_data = course_to_row(course, user_id=uid)
+                course_row = await conn.fetchrow(
+                    """INSERT INTO courses.courses (name, external_course_id, location, par, total_holes, user_id)
+                       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *""",
+                    row_data["name"],
+                    row_data["external_course_id"],
+                    row_data["location"],
+                    row_data["par"],
+                    row_data["total_holes"],
+                    row_data["user_id"],
+                )
+                course_id = course_row["id"]
+
+                # Batch insert holes
+                if course.holes:
+                    await conn.executemany(
+                        """INSERT INTO courses.holes
+                           (course_id, hole_number, par, handicap)
+                           VALUES ($1, $2, $3, $4)""",
+                        [(course_id, h.number, h.par, h.handicap) for h in course.holes],
                     )
-                    course_id = course_row["id"]
 
-                    # Batch insert holes
-                    if course.holes:
-                        await conn.executemany(
-                            """INSERT INTO courses.holes
-                               (course_id, hole_number, par, handicap)
-                               VALUES ($1, $2, $3, $4)""",
-                            [(course_id, h.number, h.par, h.handicap) for h in course.holes],
-                        )
+                # Insert tees + yardages
+                for tee in course.tees:
+                    await self._write_tee(conn, course_id, tee)
 
-                    # Insert tees + yardages
-                    for tee in course.tees:
-                        await self._write_tee(conn, course_id, tee)
-
-                    return await self._assemble(conn, course_row)
+                return await self._assemble(conn, course_row)
         except asyncpg.UniqueViolationError as e:
             raise DuplicateError(f"Course already exists: {e}") from e
         except asyncpg.IntegrityConstraintViolationError as e:
@@ -758,6 +786,62 @@ class CourseRepositoryDB:
             raise DuplicateError("Conflicting course identity") from error
         except asyncpg.IntegrityConstraintViolationError as error:
             raise IntegrityError("Invalid course metadata or reference") from error
+
+    async def apply_verified_scan(
+        self,
+        course_id: str,
+        holes: List[Hole],
+        tees: List[Tee],
+        *,
+        total_holes: Optional[int] = None,
+        connection=None,
+    ) -> None:
+        """Overwrite a course's hole par/handicap and the given tees with provider-verified scan values.
+
+        Only called after the scan matched the provider exactly; the values written are the scanned
+        ones, never provider data. Tees not in the scan are left as they are.
+        """
+        cid = UUID(course_id)
+        numbers = [hole.number for hole in holes if hole.number is not None]
+        try:
+            async with write_transaction(self._pool, connection) as conn:
+                parent = await conn.fetchrow(
+                    "SELECT total_holes FROM courses.courses WHERE id=$1 FOR NO KEY UPDATE", cid
+                )
+                if parent is None:
+                    raise NotFoundError("Course not found")
+                layout = parent["total_holes"] or total_holes
+                if layout == 9 and any(number > 9 for number in numbers):
+                    raise IntegrityError("Hole is outside the declared course layout")
+                if parent["total_holes"] is None and total_holes is not None:
+                    await conn.execute("UPDATE courses.courses SET total_holes=$2 WHERE id=$1", cid, total_holes)
+                # Clear handicaps first so reordered stroke indexes don't collide on UNIQUE(course_id, handicap).
+                await conn.execute(
+                    "UPDATE courses.holes SET handicap=NULL WHERE course_id=$1 AND hole_number = ANY($2::int[])",
+                    cid,
+                    numbers,
+                )
+                for hole in holes:
+                    if hole.number is None:
+                        continue
+                    await conn.execute(
+                        """INSERT INTO courses.holes (course_id, hole_number, par, handicap)
+                           VALUES ($1, $2, $3, $4)
+                           ON CONFLICT (course_id, hole_number)
+                           DO UPDATE SET par = EXCLUDED.par, handicap = EXCLUDED.handicap""",
+                        cid,
+                        hole.number,
+                        hole.par,
+                        hole.handicap,
+                    )
+                # Hole observations are authoritative; a stored whole-course par must not linger.
+                await conn.execute("UPDATE courses.courses SET par=NULL WHERE id=$1", cid)
+                for tee in tees:
+                    await self._write_tee(conn, cid, tee)
+        except asyncpg.UniqueViolationError as error:
+            raise DuplicateError("Conflicting course hole or tee identity") from error
+        except asyncpg.IntegrityConstraintViolationError as error:
+            raise IntegrityError("Invalid verified course data") from error
 
     async def upsert_hole(self, course_id: str, hole: Hole) -> None:
         """Insert or update a single hole on a course."""

@@ -6,6 +6,22 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from api.input_validation import ensure_uuid_str, normalize_course_display_name, sanitize_user_text
+from services.scan_normalization import normalize_decimal, normalize_whole_number
+
+
+def _whole_number_before(value, info):
+    # Lax int parsing would read True as one stroke; reject non-numeric representations first.
+    return normalize_whole_number(value, info.field_name)
+
+
+def _decimal_before(value, info):
+    return normalize_decimal(value, info.field_name)
+
+
+def _yardages_before(value, info):
+    if not isinstance(value, dict):
+        return value
+    return {key: normalize_whole_number(yards, f"{info.field_name}[{key}]") for key, yards in value.items()}
 
 
 class HoleScoreInput(BaseModel):
@@ -21,6 +37,11 @@ class HoleScoreInput(BaseModel):
     par_played: Optional[int] = Field(default=None, ge=3, le=6)
     handicap_played: Optional[int] = Field(default=None, ge=1, le=18)
 
+    _normalize_numbers = field_validator(
+        "hole_number", "strokes", "putts", "net_score", "shots_to_green", "par_played", "handicap_played",
+        mode="before",
+    )(_whole_number_before)
+
     @model_validator(mode="after")
     def _validate_putts_vs_strokes(self):
         if self.putts is not None and self.strokes is not None and self.putts > self.strokes:
@@ -35,6 +56,9 @@ class TeeInput(BaseModel):
     slope_rating: Optional[float] = Field(default=None, ge=55, le=155)
     course_rating: Optional[float] = Field(default=None, ge=55, le=85)
     hole_yardages: Dict[str, Optional[int]] = Field(default_factory=dict)
+
+    _normalize_ratings = field_validator("slope_rating", "course_rating", mode="before")(_decimal_before)
+    _normalize_yardages = field_validator("hole_yardages", mode="before")(_yardages_before)
 
     @field_validator("color")
     @classmethod
@@ -65,6 +89,8 @@ class CourseHoleInput(BaseModel):
     par: Optional[int] = Field(default=None, ge=3, le=6)
     handicap: Optional[int] = Field(default=None, ge=1, le=18)
 
+    _normalize_numbers = field_validator("hole_number", "par", "handicap", mode="before")(_whole_number_before)
+
 
 class SaveRoundRequest(BaseModel):
     """Request to save a reviewed/edited round."""
@@ -84,6 +110,9 @@ class SaveRoundRequest(BaseModel):
     course_holes: Optional[List[CourseHoleInput]] = None
     date: Optional[str] = None
     notes: Optional[str] = None
+
+    _normalize_ratings = field_validator("tee_slope_rating", "tee_course_rating", mode="before")(_decimal_before)
+    _normalize_yardages = field_validator("tee_yardages", mode="before")(_yardages_before)
 
     @field_validator("course_id")
     @classmethod

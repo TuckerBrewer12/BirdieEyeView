@@ -13,7 +13,6 @@ from api.input_validation import normalize_course_display_name, sanitize_search_
 from api.schemas import CourseSummaryResponse
 from models import Course, Hole, Tee, User
 from services import GolfCourseAPIService
-from services.golfcourse_api_service import _normalize_course_name
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -174,93 +173,19 @@ async def search_courses(
     effective_user_id = str(user_id) if user_id else (str(current_user.id) if current_user else None)
     courses = await db.courses.search_courses(q, user_id=effective_user_id)
     out = [_summarize_course(c) for c in courses]
-    if not include_external:
+    # Local results come first (the user's own courses, then masters). The provider is only
+    # searched when the database has nothing, to avoid spending provider calls on known courses.
+    if not include_external or out:
         return out
 
-    # Enrich with external fallback without breaking existing local-first behavior.
     try:
         ext_items = await GolfCourseAPIService().search_external_courses(q, limit=20)
     except Exception as exc:  # noqa: BLE001
         logger.warning("GolfCourseAPI fallback failed for query='%s': %s", q, exc)
         return out
 
-    seen_local_keys = {
-        ((c.name or "").strip().lower(), (c.location or "").strip().lower())
-        for c in out
-    }
-    local_index_by_key = {
-        ((c.name or "").strip().lower(), (c.location or "").strip().lower()): i
-        for i, c in enumerate(out)
-    }
-    local_indices_by_name = {}
-    local_indices_by_norm_name = {}
-    for i, c in enumerate(out):
-        name_key = (c.name or "").strip().lower()
-        local_indices_by_name.setdefault(name_key, []).append(i)
-        norm_name_key = _normalize_course_name(c.name)
-        local_indices_by_norm_name.setdefault(norm_name_key, []).append(i)
-    seen_local_external_ids = {
-        (c.external_course_id or "").strip()
-        for c in out
-        if c.external_course_id
-    }
-
-    for item in ext_items:
-        ext_summary = _summarize_external_course(item)
-        # External selections must carry a stable provider ID.
-        if not ext_summary.external_course_id:
-            continue
-        ext_key = (
-            (ext_summary.name or "").strip().lower(),
-            (ext_summary.location or "").strip().lower(),
-        )
-        ext_name_key = (ext_summary.name or "").strip().lower()
-        ext_norm_name = _normalize_course_name(ext_summary.name)
-        if ext_summary.external_course_id and ext_summary.external_course_id in seen_local_external_ids:
-            continue
-        if ext_key in seen_local_keys:
-            # Enrich existing local hit with provider ID when missing.
-            idx = local_index_by_key.get(ext_key)
-            if idx is not None and not out[idx].external_course_id:
-                out[idx].external_course_id = ext_summary.external_course_id
-                seen_local_external_ids.add(ext_summary.external_course_id)
-            continue
-        # Fallback: when locations differ/missing, match by name-only to backfill local rows.
-        if ext_name_key in local_indices_by_name:
-            for idx in local_indices_by_name[ext_name_key]:
-                if not out[idx].external_course_id:
-                    out[idx].external_course_id = ext_summary.external_course_id
-                    seen_local_external_ids.add(ext_summary.external_course_id)
-                    break
-            continue
-        # Fallback: normalized name similarity for slight naming differences.
-        if ext_norm_name:
-            matched = False
-            if ext_norm_name in local_indices_by_norm_name:
-                for idx in local_indices_by_norm_name[ext_norm_name]:
-                    if not out[idx].external_course_id:
-                        out[idx].external_course_id = ext_summary.external_course_id
-                        seen_local_external_ids.add(ext_summary.external_course_id)
-                        matched = True
-                        break
-            if not matched:
-                for local_norm, indices in local_indices_by_norm_name.items():
-                    if not local_norm:
-                        continue
-                    if local_norm in ext_norm_name or ext_norm_name in local_norm:
-                        for idx in indices:
-                            if not out[idx].external_course_id:
-                                out[idx].external_course_id = ext_summary.external_course_id
-                                seen_local_external_ids.add(ext_summary.external_course_id)
-                                matched = True
-                                break
-                    if matched:
-                        break
-            if matched:
-                continue
-        out.append(ext_summary)
-
-    return out[:20]
+    # External selections must carry a stable provider ID; nothing is attached to local rows.
+    return [summary for summary in map(_summarize_external_course, ext_items) if summary.external_course_id][:20]
 
 
 @router.get("/{course_id}")

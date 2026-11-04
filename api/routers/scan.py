@@ -19,14 +19,14 @@ from database.db_manager import DatabaseManager
 from database.exceptions import IntegrityError
 from api.dependencies import get_current_user, get_optional_current_user, get_db
 from api.error_responses import ROUND_SAVE_FAILED, SCAN_FAILED
-from api.input_validation import ensure_uuid_str, normalize_course_display_name, sanitize_ocr_text, sanitize_user_text
+from api.input_validation import ensure_uuid_str, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
 from api.scan_errors import ScanExtractionError
 from models import User
 from services.gemini_table_merger import merge_split_tables
 from services.mistral_ocr_service import MistralOCRService
 from services.mistral_scorecard_parser import ParsedScorecardRows, parse_mistral_scorecard_rows
-from services.scan_service import ScanService
+from services.scan_service import ScanSaveRejected, ScanService
 
 router = APIRouter()
 
@@ -281,8 +281,8 @@ def _build_round_from_parsed_rows(
                 }
             )
     else:
-        # Unknown-course path uses parsed OCR rows.
-        course_name = normalize_course_display_name(parsed.course_name) if parsed.course_name else None
+        # Unknown-course path uses parsed OCR rows. The course name is never read from the
+        # scan: the user picks or enters it during review.
         parsed_pars = list(_safe_list_attr("par_row")[:hole_count])
         while len(parsed_pars) < hole_count:
             parsed_pars.append(None)
@@ -884,6 +884,9 @@ async def save_round(
         service = ScanService(db)
         saved = await service.save_reviewed_scan(req)
         return {"id": saved.id, "total_score": saved.calculate_total_score()}
+    except ScanSaveRejected as exc:
+        # Nothing was written; tell the user what to fix in review.
+        raise HTTPException(422, " ".join(exc.reasons))
     except (ValueError, IntegrityError):
         logger.exception("Save round validation failed")
         raise HTTPException(400, ROUND_SAVE_FAILED)

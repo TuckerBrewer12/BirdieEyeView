@@ -27,6 +27,8 @@ A frontend query calls an API helper; the router resolves authentication/databas
 
 Keep parsing, authorization, HTTP statuses, and public error translation here. Match resource ownership on every read/write path; a frontend `userId` is not proof of authorization. Do not translate intended validation/404 errors into generic 500s. Preserve omitted-versus-null semantics for updates and coordinate request/model/schema constraints.
 
+Course search (`GET /api/courses/search`) returns the user's own courses first, then master courses. With `include_external=true` it calls the golf course API only when the database has no match, and it does not attach provider IDs to local results. `POST /api/scan/save` returns 422 with a user-facing message when the save is rejected (no course, incomplete new course, invalid values); see [services](services.md) for the save rules.
+
 The report endpoint intentionally follows a separate anonymous path and does not require user/database resolution. Its contract is in [failed-scan reports](../failed-scan-reports.md).
 
 Focused coverage includes `tests/test_*_routes.py`, request/schema tests, dependencies, and security tests. Verify request, authorization, status, and schema contracts with the relevant tests when changing an endpoint.
