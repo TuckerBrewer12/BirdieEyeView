@@ -30,7 +30,8 @@ Do not create or modify the implementation artifact.
    - API routers, request/response schemas, and dependencies
    - services, including the scan extraction pipeline and provider adapters
    - domain models, analytics, repositories, converters, schema, or migrations
-6. Identify the likely test surface:
+6. Identify the likely test surface, following the Testing Priority in `.codex/skills/make-code-change/SKILL.md`:
+   - existing E2E scenarios in `tests/integration/test_api_e2e.py` the change touches or can extend
    - existing `tests/test_*.py` targets for the affected domains
    - DB-dependent areas: distinguish Python-only branching/conversion that can use unit fakes from SQL, constraint, ownership, transaction, and PostgreSQL-specific behavior that needs integration coverage
 7. Note assumptions, unknowns, and possible blockers.

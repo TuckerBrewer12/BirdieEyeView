@@ -76,11 +76,9 @@ If clarification is needed, preserve the useful planning work already completed,
 
 ## Test Planning
 
-Take test commands from `docs/practices/testing.md`, which is the maintained source; do not copy commands from memory or older notes. Plan the smallest meaningful test set first, then broaden when the change crosses domains. Choose the layer by what the test must prove:
+Take test commands from `docs/practices/testing.md`, which is the maintained source; do not copy commands from memory or older notes. Choose layers by the Testing Priority in `.codex/skills/make-code-change/SKILL.md`: E2E first, PostgreSQL integration for what the API cannot observe, and unit tests only when absolutely necessary. Plan the smallest meaningful test set.
 
-- Python branching, conversion, or error translation: focused unit tests with fakes.
-- SQL, constraints, ownership filters, transactions, PostgreSQL types/extensions, and persistence round trips: the disposable PostgreSQL integration suite, not mocked asyncpg execution.
-- Live scan evaluation calls paid providers; plan it only when the task needs it.
+In the Test Plan, name each new test and its layer. For every new unit test, state which necessity reason from the Testing Priority applies; a unit test without one does not belong in the plan. Live scan evaluation calls paid providers; plan it only when the task needs it.
 
 ## Output Format
 
