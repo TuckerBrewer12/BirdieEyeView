@@ -30,7 +30,7 @@ Report submission is independent of round saving and PostgreSQL. Developer retri
 
 ## Refactor considerations
 
-Verified course resolution and the atomic course/round save are implemented on the `services-refactor` branch (not yet merged or deployed). Parser/OCR/merger review findings and the frontend's handling of the new save rejections remain open. AI suggestions inherit Analytics missing-data/eligibility behavior and have additional benchmark/trend issues. Coordinate those contracts with the owning domains rather than independently changing calculation rules in each service.
+Verified course resolution and the atomic course/round save are implemented on the `services-refactor` branch (not yet merged or deployed). Parser/OCR/merger review findings and the frontend's handling of the new save rejections remain open. AI suggestions now take their metrics from `analytics.stats` (shared eligibility, par and missing-data rules) and the handicap from `user_handicap_index`; benchmark values, priority weights and trend thresholds are unchanged policy assumptions documented in the module. Coordinate calculation changes with Analytics rather than changing rules in the service.
 
 ## Changing this domain
 
