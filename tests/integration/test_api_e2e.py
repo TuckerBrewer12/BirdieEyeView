@@ -1,22 +1,31 @@
 """End-to-end API tests: the real FastAPI app (middleware, auth, routing, serialization) on a real
-PostgreSQL database. Only outgoing email is replaced, so tests can read the emailed tokens.
+PostgreSQL database. Only outgoing email and the paid OCR/LLM providers are replaced, so tests can
+read the emailed tokens and scan a committed scorecard without network calls.
 
 These replace the handler-level route tests that called endpoint functions with mocked
 repositories: they prove auth and ownership through the same HTTP path the app uses.
 """
 
 import asyncio
+import json
+import uuid
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import asyncpg
 import pytest
 from fastapi.testclient import TestClient
+from jose import jwt
+from PIL import Image
 
 import api.main as api_main
-from api.routers import auth
+from api import auth_utils
+from api.routers import auth, scan
 from database import DatabaseManager
 from models import Course, Hole, Tee
 from tests.integration.conftest import SCHEMA_PATH, _get_test_database_url
+from tests.test_mistral_scorecard_parser import EAGLE_VINES_WITH_INITIALS
 
 pytestmark = pytest.mark.integration
 
@@ -111,12 +120,12 @@ def custom_course(api: Api, owner: dict, name: str = "Home Links") -> str:
     return response.json()["id"]
 
 
-def save_round(api: Api, owner: dict, course_id: str, over: int = 10) -> str:
+def save_round(api: Api, owner: dict, course_id: str, over: int = 10, date: str = "2026-10-01") -> str:
     scores = [{"hole_number": n, "strokes": p + (1 if n <= over else 0), "putts": 2} for n, p in PARS.items()]
     response = api.client.post(
         "/api/scan/save",
         headers=owner["headers"],
-        json={"course_id": course_id, "tee_box": "Blue", "date": "2026-10-01", "hole_scores": scores},
+        json={"course_id": course_id, "tee_box": "Blue", "date": date, "hole_scores": scores},
     )
     assert response.status_code == 200, response.text
     return response.json()["id"]
@@ -272,3 +281,286 @@ def test_saved_round_is_listed_edited_and_deleted(api):
 
     assert api.client.delete(f"/api/rounds/{round_id}", headers=alice["headers"]).status_code == 204
     assert api.client.get(f"/api/rounds/user/{alice['id']}", headers=alice["headers"]).json() == []
+
+
+# ================================================================
+# Scan pipeline: upload → OCR → extract → review → save
+# ================================================================
+
+SCORECARD_DIR = Path(__file__).resolve().parents[1] / "test_scorecards"
+EAGLE_VINES = next(
+    case for case in json.loads((SCORECARD_DIR / "quick_eval_cases.json").read_text())["cases"]
+    if case["id"] == "eagle_vines_tucker"
+)
+EAGLE_VINES_STROKES = {int(hole): strokes for hole, strokes in EAGLE_VINES["expected"]["strokes"].items()}
+
+
+@pytest.fixture
+def scan_providers(monkeypatch):
+    """Replace the only paid calls in the scan path: Mistral OCR and the Gemini table merge.
+
+    OCR answers with the committed markdown for ``eaglevins_90.jpg``. Upload validation, image
+    normalization, markdown extraction, parsing, assembly and saving all run for real.
+    """
+    calls = {"ocr": [], "merge": []}
+
+    async def fake_ocr(self, file_path, **kwargs):
+        with Image.open(file_path) as image:  # the file the real provider would have received
+            calls["ocr"].append(image.format)
+        return {"pages": [{"markdown": EAGLE_VINES_WITH_INITIALS}]}
+
+    async def fake_merge(markdown):
+        calls["merge"].append(markdown)
+        return markdown
+
+    monkeypatch.setattr(scan.MistralOCRService, "ocr_file", fake_ocr)
+    monkeypatch.setattr(scan, "merge_split_tables", fake_merge)
+    return calls
+
+
+def upload(name: str = "eaglevins_90.jpg") -> dict:
+    return {"file": (name, (SCORECARD_DIR / name).read_bytes(), "image/jpeg")}
+
+
+def test_scan_pipeline_turns_an_uploaded_scorecard_into_a_saved_round(api, scan_providers):
+    alice = api.user("alice@example.com")
+
+    ocr = api.client.post("/api/scan/ocr", headers=alice["headers"], files=upload())
+    assert ocr.status_code == 200, ocr.text
+    assert scan_providers["ocr"] == ["JPEG"] and len(scan_providers["merge"]) == 1
+    extract = api.client.post(
+        "/api/scan/extract",
+        headers=alice["headers"],
+        files=upload(),
+        data={"ocr_text": ocr.json()["ocr_text"], "user_context": EAGLE_VINES["user_context"]},
+    )
+    assert extract.status_code == 200, extract.text
+    assert len(scan_providers["ocr"]) == 1  # the prefetched text was reused, not re-OCR'd
+    extracted = extract.json()["round"]
+    assert {h["hole_number"]: h["strokes"] for h in extracted["hole_scores"]} == EAGLE_VINES_STROKES
+
+    # Review: nothing is written until the round has a course.
+    unreviewed = {"tee_box": "White", "date": "2026-10-02", "hole_scores": extracted["hole_scores"]}
+    no_course = api.client.post("/api/scan/save", headers=alice["headers"], json=unreviewed)
+    assert no_course.status_code == 422, no_course.text
+    assert api.client.get(f"/api/rounds/user/{alice['id']}", headers=alice["headers"]).json() == []
+
+    # The reviewer names the course and fills the tee's yardages; the scan supplies the pars.
+    reviewed = unreviewed | {
+        "course_name": "Eagle Vines",
+        "course_holes": [{"hole_number": h["number"], "par": h["par"]} for h in extracted["course"]["holes"]],
+        "tee_yardages": {str(n): 380 for n in range(1, 19)},
+    }
+    saved = api.client.post("/api/scan/save", headers=alice["headers"], json=reviewed)
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["total_score"] == sum(EAGLE_VINES_STROKES.values()) == 90
+
+    detail = api.client.get(f"/api/rounds/{saved.json()['id']}", headers=alice["headers"]).json()
+    assert {h["hole_number"]: h["strokes"] for h in detail["hole_scores"]} == EAGLE_VINES_STROKES
+    assert sum(h["par_played"] for h in detail["hole_scores"]) == 72
+    course_id = detail["course"]["id"]
+    assert detail["course"]["name"] == "Eagle Vines"
+    bob = api.user("bob@example.com")
+    assert api.client.get(f"/api/courses/{course_id}", headers=bob["headers"]).status_code == 403  # Alice's own
+
+    # A second scan under the same name reuses Alice's course instead of creating another.
+    again = api.client.post("/api/scan/save", headers=alice["headers"], json=reviewed | {"date": "2026-10-09"})
+    assert again.status_code == 200, again.text
+    second = api.client.get(f"/api/rounds/{again.json()['id']}", headers=alice["headers"]).json()
+    assert second["course"]["id"] == course_id
+
+
+def test_scan_extract_and_save_refuse_another_users_course(api, scan_providers):
+    alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
+    private = custom_course(api, alice)
+
+    extract = api.client.post(
+        "/api/scan/extract",
+        headers=bob["headers"],
+        files=upload(),
+        data={"ocr_text": EAGLE_VINES_WITH_INITIALS, "course_id": private},
+    )
+    assert extract.status_code == 403, extract.text
+    scores = [{"hole_number": n, "strokes": p} for n, p in PARS.items()]
+    save = api.client.post("/api/scan/save", headers=bob["headers"],
+                           json={"course_id": private, "tee_box": "Blue", "hole_scores": scores})
+    assert save.status_code == 400, save.text
+    assert api.client.get(f"/api/rounds/user/{bob['id']}", headers=bob["headers"]).json() == []
+    # The same requests from the owner go through (control), and OCR never ran for either user.
+    assert api.client.post("/api/scan/save", headers=alice["headers"],
+                           json={"course_id": private, "tee_box": "Blue", "hole_scores": scores}).status_code == 200
+    assert scan_providers["ocr"] == []
+
+
+# ================================================================
+# Expired and forged access tokens
+# ================================================================
+
+
+def mint_token(user_id: str, *, expires_in: timedelta, secret: str | None = None) -> str:
+    """An access token with the app's own claims; only the expiry and the key vary."""
+    now = datetime.now(timezone.utc)
+    claims = {
+        "sub": user_id,
+        "iat": now - timedelta(hours=2),
+        "exp": now + expires_in,
+        "iss": auth_utils.get_jwt_issuer(),
+        "aud": auth_utils.get_jwt_audience(),
+        "jti": str(uuid.uuid4()),
+    }
+    return jwt.encode(claims, secret or auth_utils.get_secret_key(), algorithm=auth_utils.ALGORITHM)
+
+
+def test_expired_and_forged_tokens_are_rejected(api):
+    alice = api.user("alice@example.com")
+    bearer = lambda token: {"Authorization": f"Bearer {token}"}  # noqa: E731
+
+    valid = mint_token(alice["id"], expires_in=timedelta(hours=1))
+    assert api.client.get("/api/auth/me", headers=bearer(valid)).status_code == 200  # the mint is right
+
+    expired = mint_token(alice["id"], expires_in=timedelta(hours=-1))
+    assert api.client.get("/api/auth/me", headers=bearer(expired)).status_code == 401
+    assert api.client.get(f"/api/rounds/user/{alice['id']}", headers=bearer(expired)).status_code == 401
+    api.client.cookies.set(auth_utils.get_access_token_cookie_name(), expired)
+    assert api.client.get("/api/auth/me").status_code == 401
+    api.client.cookies.clear()
+
+    forged = mint_token(alice["id"], expires_in=timedelta(hours=1), secret="some-other-secret-key-0123456789abcdef")
+    assert api.client.get("/api/auth/me", headers=bearer(forged)).status_code == 401
+
+
+# ================================================================
+# Ownership on round comparison, goal report and course analytics
+# ================================================================
+
+
+def test_compare_goal_report_and_course_analytics_are_owner_only(api):
+    alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
+    course = custom_course(api, alice)
+    round_id = save_round(api, alice, course)
+    for user in (alice, bob):
+        goal = api.client.patch(f"/api/users/{user['id']}", headers=user["headers"], json={"scoring_goal": 85})
+        assert goal.status_code == 200, goal.text
+    alices = {
+        "compare": f"/api/stats/compare/{alice['id']}/{round_id}",
+        "goal": f"/api/stats/{alice['id']}/goal-report",
+        "course": f"/api/stats/course-analytics/{alice['id']}/{course}",
+    }
+
+    for path in alices.values():
+        assert api.client.get(path, headers=alice["headers"]).status_code == 200, path
+        assert api.client.get(path, headers=bob["headers"]).status_code == 403, path
+
+    # Bob's own URLs with Alice's ids only ever search Bob's history.
+    assert api.client.get(f"/api/stats/compare/{bob['id']}/{round_id}", headers=bob["headers"]).status_code == 404
+    seen = api.client.get(f"/api/stats/course-analytics/{bob['id']}/{course}", headers=bob["headers"])
+    assert seen.status_code == 200
+    assert (seen.json()["rounds_played"], seen.json()["score_trend_on_course"]) == (0, [])
+    assert api.client.get(f"/api/stats/{bob['id']}/goal-report", headers=bob["headers"]).json()["gap"] is None
+
+
+# ================================================================
+# Linking rounds to courses and cloning master courses
+# ================================================================
+
+
+def test_round_relinks_to_master_and_cloned_courses_with_ownership(api):
+    alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
+    master = asyncio.run(_create_master_course(api.url))
+    round_id = save_round(api, alice, custom_course(api, alice))
+    link = lambda user, course: api.client.post(  # noqa: E731
+        f"/api/rounds/{round_id}/link-course", headers=user["headers"], json={"course_id": course})
+
+    assert link(bob, master).status_code == 403
+    assert link(alice, custom_course(api, bob, name="Bob's Links")).status_code == 403
+    assert link(alice, str(uuid.uuid4())).status_code == 404
+
+    relinked = link(alice, master)
+    assert relinked.status_code == 200, relinked.text
+    assert relinked.json()["course_id"] == master
+    detail = api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).json()
+    assert detail["course"]["name"] == "Master Links"
+    assert sum(h["strokes"] for h in detail["hole_scores"]) == 82  # scores survive the relink
+
+    clone = api.client.post(f"/api/courses/{master}/clone", headers=alice["headers"])
+    assert clone.status_code == 201, clone.text
+    clone_id = clone.json()["id"]
+    assert (clone.json()["total_holes"], clone.json()["tee_count"], clone.json()["par"]) == (18, 1, 72)
+    assert api.client.get(f"/api/courses/{clone_id}", headers=alice["headers"]).status_code == 200
+    assert api.client.get(f"/api/courses/{clone_id}", headers=bob["headers"]).status_code == 403
+    again = api.client.post(f"/api/courses/{master}/clone", headers=alice["headers"])
+    assert (again.status_code, again.json()["id"]) == (201, clone_id)  # cloning again returns the same copy
+    assert api.client.post(f"/api/courses/{clone_id}/clone", headers=bob["headers"]).status_code == 403
+
+    assert link(alice, clone_id).status_code == 200
+    rounds_on = lambda course: api.client.get(  # noqa: E731
+        f"/api/stats/course-analytics/{alice['id']}/{course}", headers=alice["headers"]).json()["rounds_played"]
+    assert (rounds_on(clone_id), rounds_on(master)) == (1, 0)
+
+
+# ================================================================
+# User tee update and delete
+# ================================================================
+
+
+def test_user_tee_update_and_delete(api):
+    alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
+    tees = f"/api/users/{alice['id']}/tees"
+    yardages = lambda y: {str(n): y for n in range(1, 19)}  # noqa: E731
+    gold = api.client.post(tees, headers=alice["headers"], json={"name": "Gold", "hole_yardages": yardages(300)})
+    assert gold.status_code == 201, gold.text
+    tee = f"{tees}/{gold.json()['id']}"
+    assert api.client.post(tees, headers=alice["headers"], json={"name": "Silver"}).status_code == 201
+
+    renamed = api.client.put(tee, headers=alice["headers"], json={"name": "Black", "hole_yardages": yardages(350)})
+    assert renamed.status_code == 200, renamed.text
+    listed = {t["name"]: t for t in api.client.get(tees, headers=alice["headers"]).json()}
+    assert set(listed) == {"Black", "Silver"}
+    assert {int(k): v for k, v in listed["Black"]["hole_yardages"].items()} == {n: 350 for n in range(1, 19)}
+
+    assert api.client.put(tee, headers=alice["headers"], json={"name": "Silver"}).status_code == 409
+    bobs_url = f"/api/users/{bob['id']}/tees/{gold.json()['id']}"
+    assert api.client.put(bobs_url, headers=bob["headers"], json={"name": "Stolen"}).status_code == 404
+    assert {t["name"] for t in api.client.get(tees, headers=alice["headers"]).json()} == {"Black", "Silver"}
+
+    assert api.client.delete(tee, headers=alice["headers"]).status_code == 204
+    assert [t["name"] for t in api.client.get(tees, headers=alice["headers"]).json()] == ["Silver"]
+    assert api.client.delete(tee, headers=alice["headers"]).status_code == 404
+
+
+# ================================================================
+# Stats endpoints on seeded rounds
+# ================================================================
+
+
+def test_stats_endpoints_answer_from_seeded_rounds(api):
+    alice = api.user("alice@example.com")
+    course = custom_course(api, alice)
+    rounds = [save_round(api, alice, course, over=over, date=day)  # 82, 78, 86 on a par 72
+              for over, day in ((10, "2026-09-01"), (6, "2026-09-08"), (14, "2026-09-15"))]
+    assert api.client.patch(f"/api/users/{alice['id']}", headers=alice["headers"],
+                            json={"scoring_goal": 80}).status_code == 200
+    get = lambda path: api.client.get(path, headers=alice["headers"])  # noqa: E731
+    paths = {
+        "dashboard": f"/api/stats/dashboard/{alice['id']}",
+        "analytics": f"/api/stats/analytics/{alice['id']}",
+        "played": f"/api/stats/{alice['id']}/played-courses",
+        "milestones": f"/api/stats/milestones/{alice['id']}",
+        "goal": f"/api/stats/{alice['id']}/goal-report",
+        "compare": f"/api/stats/compare/{alice['id']}/{rounds[1]}",
+        "course": f"/api/stats/course-analytics/{alice['id']}/{course}",
+        "handicap": f"/api/users/{alice['id']}/handicap",
+    }
+    responses = {name: get(path) for name, path in paths.items()}
+    assert {name: r.status_code for name, r in responses.items()} == {name: 200 for name in paths}
+    body = {name: r.json() for name, r in responses.items()}
+
+    assert (body["dashboard"]["scoring_average"], body["dashboard"]["best_round"]) == (82.0, 78)
+    assert body["analytics"]["kpis"]["total_rounds"] == 3
+    assert [c["id"] for c in body["played"]] == [course]
+    assert (body["goal"]["scoring_average"], body["goal"]["best_score"], body["goal"]["gap"],
+            body["goal"]["on_track"]) == (82.0, 78, 2.0, False)
+    selected = next(row for row in body["compare"]["score"] if row["label"] == "Selected Round")
+    assert (selected["round_id"], selected["primary_value"], selected["secondary_value"]) == (rounds[1], 78, 6)
+    assert body["course"]["rounds_played"] == 3
+    assert isinstance(body["milestones"]["milestones"], list)
