@@ -15,6 +15,7 @@ interface ScoreMixBarProps {
 export function ScoreMixBar({ mix, counted = false, className }: ScoreMixBarProps) {
   // Slivers under half a percent would only draw as a seam, so the bar and legend both skip them.
   const shown = SCORE_KEYS.filter((kind) => mix[kind] > 0.5);
+  if (shown.length === 0) return null;
   const entries = shown.map((kind) =>
     counted
       ? { kind, figure: String(mix[kind]), word: scoreKindCountLabel(kind, mix[kind]).toLowerCase() }

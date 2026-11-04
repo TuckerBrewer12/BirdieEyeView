@@ -539,8 +539,6 @@ export const chart = {
   barMaxWidth: 28,
   /** A full ring sized to fill the chart height. */
   ring: { inner: 50, outer: 68 },
-  /** A goal's progress ring, in the units of its own square drawing: it scales to whatever it is sized to. */
-  progressRing: { size: 96, radius: 40, stroke: 10 },
   /** A half gauge drawn up from the bottom edge of its box. */
   gauge: { inner: 52, outer: 72 },
   plot: {
@@ -565,6 +563,7 @@ export const chart = {
     height: 56,
     pad: space.tight,
     stroke: 2,
+    dot: space.dot,
   },
   /** A golfer's scores over time, one dot per round. */
   trend: {
