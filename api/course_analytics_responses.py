@@ -12,6 +12,8 @@ def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResp
     """The player's figures at one course, from their rounds there (oldest first)."""
     scores = [s for s in (r.calculate_total_score() for r in rounds) if s is not None]
     by_hole = analytics.average_score_relative_to_par_by_hole(rounds)
+    trend = analytics.score_trend_on_this_course(rounds)
+    trend_scores = [row["total_score"] for row in trend]
     nines = analytics.hole_average_nines(by_hole)
     return CourseAnalyticsResponse(
         course_id=course_id,
@@ -20,7 +22,9 @@ def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResp
         best_score=min(scores) if scores else None,
         worst_score=max(scores) if scores else None,
         rounds=[round_summary(r) for r in reversed(rounds)],
-        score_trend_on_course=analytics.score_trend_on_this_course(rounds),
+        score_trend_on_course=trend,
+        recent_average=analytics.recent_average(trend_scores),
+        recent_average_change=analytics.recent_average_change(trend_scores),
         average_score_relative_to_par_by_hole=by_hole,
         hole_averages_front_nine=nines["front_nine"],
         hole_averages_back_nine=nines["back_nine"],

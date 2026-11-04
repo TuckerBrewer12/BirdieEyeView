@@ -5,7 +5,7 @@ import { curveStepAfter, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { tokens } from "@/brand/theme";
-import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
+import { formatHandicapIndex, formatOneDecimal, type RoundTrendPoint } from "@/domain";
 import { indexScale, knownValues, lastKnownIndex, niceExtent } from "./scales";
 
 type TrendSeries = "both" | "score" | "handicap";
@@ -16,6 +16,13 @@ interface SVGScoreHandicapTrendProps {
   series?: TrendSeries;
   /** The phone shape: narrower. Meant for one series at a time. */
   compact?: boolean;
+  /**
+   * Rounds that say nothing about the handicap, like one course's: every dot alike, and the
+   * average drawn as the lead line rather than behind dots that mark which rounds count.
+   */
+  plain?: boolean;
+  /** The best score, as the server found it. Its first round is marked in place of the latest. */
+  best?: number | null;
 }
 
 const L = tokens.chart.stack;
@@ -37,7 +44,13 @@ interface Panel {
  * index as a step line, stacked as two small multiples on the same rounds, or
  * either alone. Hovering with a mouse or tapping on a phone picks a round.
  */
-export function SVGScoreHandicapTrend({ data, series = "both", compact = false }: SVGScoreHandicapTrendProps) {
+export function SVGScoreHandicapTrend({
+  data,
+  series = "both",
+  compact = false,
+  plain = false,
+  best = null,
+}: SVGScoreHandicapTrendProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
 
   const scores = data.map((d) => d.score);
@@ -105,6 +118,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
   // The server says which rounds' differentials count toward the index.
   const counts = data.map((d) => d.differentialStatus === "counting");
   const lastScore = lastKnownIndex(scores);
+  const bestIndex = best == null ? -1 : scores.indexOf(best);
   const lastHandicap = lastKnownIndex(handicaps);
 
   const indexAt = (e: PointerEvent<SVGSVGElement>) => {
@@ -171,7 +185,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                   strokeDasharray={L.dash}
                 />
                 <AxisLabel x={labelX} y={parY + L.labelDrop}>
-                  Par
+                  Par {par}
                 </AxisLabel>
               </>
             )}
@@ -179,7 +193,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
               d={averagePath}
               fill="none"
               stroke={tokens.color.chart.series1}
-              strokeOpacity={tokens.opacity.recessed}
+              strokeOpacity={plain ? 1 : tokens.opacity.recessed}
               strokeWidth={L.stroke}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -237,6 +251,19 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
         {showScore &&
           data.map((d, i) => {
             if (d.score == null) return null;
+            if (plain) {
+              return (
+                <circle
+                  key={`dot-${i}`}
+                  cx={x(i)}
+                  cy={yScore(d.score)}
+                  r={active === i ? L.dotHover : L.dot}
+                  fill={active === i ? tokens.color.foreground : tokens.color.borderStrong}
+                  stroke={tokens.color.card}
+                  strokeWidth={active === i ? tokens.lineWidth.outline : 0}
+                />
+              );
+            }
             const counting = counts[i];
             return (
               <circle
@@ -251,7 +278,23 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             );
           })}
 
-        {showScore && lastScore >= 0 && (
+        {showScore && bestIndex >= 0 && (
+          <g data-slot="score-trend-best">
+            <circle
+              cx={x(bestIndex)}
+              cy={yScore(best!)}
+              r={L.dotHover}
+              fill={tokens.color.score.birdie.base}
+              stroke={tokens.color.card}
+              strokeWidth={tokens.lineWidth.outline}
+            />
+            <FigureLabel x={x(bestIndex)} y={yScore(best!) - L.scoreLift} anchor="middle" color={tokens.color.score.birdie.base}>
+              Best {best}
+            </FigureLabel>
+          </g>
+        )}
+
+        {showScore && best == null && lastScore >= 0 && (
           <FigureLabel x={x(lastScore)} y={yScore(scores[lastScore]!) - L.scoreLift} anchor="middle" color={tokens.color.foreground}>
             {scores[lastScore]}
           </FigureLabel>
@@ -308,6 +351,12 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                   {point.score}
                   <ToParFigure toPar={point.toPar} />
                 </span>
+              </div>
+            )}
+            {showScore && point.rollingAverage != null && (
+              <div className="mt-0.5 flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">5-rd avg</span>
+                <span className="font-semibold text-card-foreground">{formatOneDecimal(point.rollingAverage)}</span>
               </div>
             )}
             {showHandicap && point.handicapIndex != null && (

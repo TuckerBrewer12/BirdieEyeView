@@ -994,6 +994,28 @@
             ],
             "title": "Hole Averages Total"
           },
+          "recent_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recent Average"
+          },
+          "recent_average_change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recent Average Change"
+          },
           "rounds": {
             "items": {
               "$ref": "#/components/schemas/RoundSummaryResponse"
@@ -1057,6 +1079,8 @@
           "worst_score",
           "rounds",
           "score_trend_on_course",
+          "recent_average",
+          "recent_average_change",
           "average_score_relative_to_par_by_hole",
           "hole_averages_front_nine",
           "hole_averages_back_nine",
@@ -1531,7 +1555,7 @@
         "type": "object"
       },
       "CourseScoreTrendRow": {
-        "description": "One round at the course, oldest first.",
+        "description": "One round at the course, oldest first, with its average over it and the four rounds before it.",
         "properties": {
           "date": {
             "anyOf": [
@@ -1544,6 +1568,28 @@
               }
             ],
             "title": "Date"
+          },
+          "par": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Par"
+          },
+          "rolling_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolling Average"
           },
           "round_id": {
             "anyOf": [
@@ -1588,7 +1634,9 @@
           "round_id",
           "date",
           "total_score",
-          "to_par"
+          "to_par",
+          "par",
+          "rolling_average"
         ],
         "title": "CourseScoreTrendRow",
         "type": "object"

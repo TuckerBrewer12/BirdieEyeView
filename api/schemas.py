@@ -846,12 +846,14 @@ class BenchmarkComparisonResponse(ResponseModel):
 
 
 class CourseScoreTrendRow(ResponseModel):
-    """One round at the course, oldest first."""
+    """One round at the course, oldest first, with its average over it and the four rounds before it."""
     round_index: int
     round_id: Optional[str] = None
     date: Optional[datetime] = None
     total_score: Optional[int] = None
     to_par: Optional[int] = None
+    par: Optional[int] = None  # the par to_par reads against: the holes played
+    rolling_average: Optional[float] = None  # to a tenth; rounds without a score are skipped
 
 
 class CourseHoleToParRow(ResponseModel):
@@ -920,6 +922,10 @@ class CourseAnalyticsResponse(ResponseModel):
     worst_score: Optional[int] = None
     rounds: List[RoundSummaryResponse] = Field(default_factory=list)  # newest first
     score_trend_on_course: List[CourseScoreTrendRow] = Field(default_factory=list)
+    # The last five scored rounds' average, and it less the first five's (null under ten scored
+    # rounds), to a tenth: the score trend's headline.
+    recent_average: Optional[float] = None
+    recent_average_change: Optional[float] = None
     average_score_relative_to_par_by_hole: List[CourseHoleToParRow] = Field(default_factory=list)
     # Those holes' average scores summed over each nine and every hole: the scorecard's Out, In
     # and Total. Null for a nine with no hole played.
