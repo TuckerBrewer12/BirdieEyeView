@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { HoleShape } from "@/brand/charts/HoleScoreShapes";
 import { cn } from "@/brand/cn";
 import { Button } from "@/brand/components/Button";
 import { Input } from "@/brand/components/Input";
@@ -22,11 +23,13 @@ interface ScorecardTableProps {
   className?: string;
 }
 
+/** Every row's height, the score's too: its hole marks and inputs fit inside it. */
+const ROW = "h-8";
 /** The label column, and the type every label shares. */
-const LABEL = "h-8.5 w-18 px-2 text-left text-body-sm font-semibold whitespace-nowrap";
+const LABEL = "w-18 px-2 text-left text-body-sm font-semibold whitespace-nowrap";
 /** Out, In and Tot sit on the page's own tone, apart from the holes. */
 const TOTAL = "bg-background p-0 text-center font-bold";
-const SMALL = "h-7 text-label font-medium text-muted-foreground";
+const SMALL = cn(ROW, "text-label font-medium text-muted-foreground");
 
 function show(value: number | null): string {
   return value == null ? "-" : String(value);
@@ -95,25 +98,15 @@ function CountInput({
 /** Rings a score cell whose score is in doubt. */
 const CHECK_RING = "ring-2 ring-destructive ring-offset-1 ring-offset-card";
 
-/** A score as the card marks it: round when under par, square when over, bare on par. */
-function ScoreMark({ hole, check }: { hole: HoleScore; check: boolean }) {
-  const kind = hole.kind;
-  return (
-    <span
-      className={cn(
-        "inline-flex size-7 items-center justify-center text-body font-bold",
-        kind && kind !== "par" && cn(scoreFillClass(kind), scoreOnFillClass(kind)),
-        kind === "eagle" || kind === "birdie" ? "rounded-full" : "rounded-md",
-        check && CHECK_RING,
-      )}
-    >
-      {show(hole.strokes)}
-    </span>
-  );
-}
-
 function ScoreCell({ hole, edits, check }: { hole: HoleScore; edits?: ScorecardEdits; check: boolean }) {
-  if (!edits) return <ScoreMark hole={hole} check={check} />;
+  if (!edits) {
+    // The one hole mark the kit draws, so a score reads the same here as on the round flow.
+    return (
+      <span className={cn("inline-flex align-middle", check && cn("rounded-md", CHECK_RING))}>
+        <HoleShape hole={hole} />
+      </span>
+    );
+  }
   return (
     // The fill sits behind a clear input: an input's own dark background would cover it.
     <div className={cn("mx-auto w-8 rounded-lg", hole.kind && scoreFillClass(hole.kind))}>
@@ -209,8 +202,8 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
 
   return (
     <table data-slot="scorecard-table" className={cn("w-full table-fixed border-collapse", className)}>
-      <tbody className="[&>tr]:border-b [&>tr]:border-chart-grid">
-        <tr className="h-8.5 bg-background text-body-sm font-bold text-foreground-secondary">
+      <tbody className="divide-y divide-border border-b border-border">
+        <tr className={cn(ROW, "bg-background text-body-sm font-bold text-foreground-secondary")}>
           <th scope="row" className={LABEL}>
             Hole
           </th>
@@ -234,7 +227,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
             {...line}
             label={teeBox || "Yards"}
             className={SMALL}
-            labelClassName="h-7 capitalize text-muted-foreground"
+            labelClassName="capitalize text-muted-foreground"
             cell={(hole) => show(hole.yardage)}
             nineCell={(nine) => show(nine.yards)}
             totCell={show(round.yards)}
@@ -247,7 +240,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
             {...line}
             label="Hcp"
             className={SMALL}
-            labelClassName="h-7 text-muted-foreground"
+            labelClassName="text-muted-foreground"
             cell={(hole) => show(hole.handicap)}
           />
         )}
@@ -255,7 +248,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
         <Line
           {...line}
           label="Par"
-          className={cn("h-8.5", figures)}
+          className={cn(ROW, figures)}
           labelClassName="text-foreground-secondary"
           cell={(hole) => show(hole.par)}
           nineCell={(nine) => show(nine.par)}
@@ -265,8 +258,8 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
         <Line
           {...line}
           label="Score"
-          className={cn("h-11 text-body font-bold text-foreground", edits && "bg-muted/40")}
-          labelClassName="h-11 text-foreground"
+          className={cn(ROW, "text-body font-bold text-foreground", edits && "bg-muted/40")}
+          labelClassName="text-foreground"
           cell={(hole) => <ScoreCell hole={hole} edits={edits} check={!!toCheck?.includes(hole.hole)} />}
           isCheck={(hole) => !!toCheck?.includes(hole.hole)}
           nineCell={(nine) => show(nine.total)}
@@ -277,8 +270,8 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
         <Line
           {...line}
           label="To par"
-          className="h-7.5 text-label font-semibold"
-          labelClassName="h-7.5 text-muted-foreground"
+          className={cn(ROW, "text-label font-semibold")}
+          labelClassName="text-muted-foreground"
           cell={(hole) => <span className={toParTextClass(hole.toPar)}>{toParDisplay(hole.toPar, "-")}</span>}
           nineCell={(nine) => <span className={toParTextClass(nine.toPar)}>{toParDisplay(nine.toPar, "-")}</span>}
           totCell={<span className={toParTextClass(round.toPar)}>{toParDisplay(round.toPar, "-")}</span>}
@@ -288,7 +281,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
           <Line
             {...line}
             label="Putts"
-            className={cn("h-8.5", figures, edits && "bg-muted/40")}
+            className={cn(ROW, figures, edits && "bg-muted/40")}
             labelClassName="text-foreground-secondary"
             cell={(hole) =>
               edits ? (
@@ -311,7 +304,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
           <Line
             {...line}
             label="GIR"
-            className={cn("h-8.5", figures)}
+            className={cn(ROW, figures)}
             labelClassName="text-foreground-secondary"
             cell={(hole) =>
               edits ? (
@@ -337,7 +330,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
           <Line
             {...line}
             label="Fairway"
-            className={cn("h-8.5", figures)}
+            className={cn(ROW, figures)}
             labelClassName="text-foreground-secondary"
             cell={(hole) => <HitMark hit={hole.fairway} />}
           />
@@ -348,7 +341,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
             {...line}
             label="S2G"
             className={SMALL}
-            labelClassName="h-7 text-muted-foreground"
+            labelClassName="text-muted-foreground"
             cell={(hole) => show(hole.shotsToGreen)}
           />
         )}
