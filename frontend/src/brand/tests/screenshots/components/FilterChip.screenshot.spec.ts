@@ -2,8 +2,8 @@ import { test } from "@playwright/test";
 import { BrandKitRobot } from "../../BrandKit.robot";
 import { enableDark } from "../../previewScreenshot";
 
-// The board's width, so the filter bar sits on one row.
-test.use({ viewport: { width: 760, height: 280 } });
+// The board's width.
+test.use({ viewport: { width: 760, height: 200 } });
 
 test.describe("FilterChip", () => {
   test("light", async ({ page }) => {

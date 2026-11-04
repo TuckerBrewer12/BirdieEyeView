@@ -3,6 +3,8 @@ import {
   Button,
   Collapse,
   Collection,
+  FilterChip,
+  FilterChipGroup,
   LoadingState,
   PageHeader,
   PageTitle,
@@ -47,19 +49,37 @@ export function RoundsPage({ userId }: RoundsPageProps) {
           shortcut
         />
 
-        <ToggleGroup
-          variant="outline"
-          spacing={2}
-          value={[viewModel.filterMode]}
-          onValueChange={(values) => viewModel.setFilterMode(values[0] ?? "all")}
-          className="max-w-full overflow-x-auto [scrollbar-width:none]"
-        >
-          {viewModel.chips.map((chip) => (
-            <ToggleGroupItem key={chip.key} value={chip.mode}>
-              {chip.label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+        <div className="flex max-w-full items-center gap-3 overflow-x-auto [scrollbar-width:none]">
+          <ToggleGroup
+            aria-label="Rounds"
+            variant="outline"
+            spacing={0}
+            value={[viewModel.filterMode]}
+            onValueChange={(values) => viewModel.setFilterMode(values[0] ?? "all")}
+          >
+            {viewModel.scopes.map((scope) => (
+              <ToggleGroupItem key={scope.key} value={scope.mode}>
+                {scope.label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+          {viewModel.courseChips.length > 0 && (
+            <>
+              <div className="h-6 w-px shrink-0 bg-border" />
+              <FilterChipGroup
+                aria-label="Course"
+                value={[viewModel.filterMode]}
+                onValueChange={(values) => viewModel.setFilterMode(values[0] ?? "all")}
+              >
+                {viewModel.courseChips.map((chip) => (
+                  <FilterChip key={chip.key} value={chip.mode} count={chip.count} className="shrink-0">
+                    {chip.label}
+                  </FilterChip>
+                ))}
+              </FilterChipGroup>
+            </>
+          )}
+        </div>
 
         <div className="flex items-center justify-between px-1 pt-0.5">
           <span className="text-body font-bold text-foreground">

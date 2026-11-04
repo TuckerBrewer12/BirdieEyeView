@@ -41,7 +41,7 @@ export function SearchField({
   }, [shortcut]);
 
   return (
-    <InputGroup className="h-10 rounded-card bg-card">
+    <InputGroup size="inline" className="bg-card">
       <InputGroupInput
         ref={inputRef}
         type="search"
@@ -50,7 +50,7 @@ export function SearchField({
         className="[&::-webkit-search-cancel-button]:hidden"
         {...inputProps}
       />
-      <InputGroupAddon className={cn("pl-3", value && "text-foreground")}>
+      <InputGroupAddon className={cn(value && "text-foreground")}>
         <Search />
       </InputGroupAddon>
       {loading && (
@@ -68,14 +68,13 @@ export function SearchField({
               onChange("");
               inputRef.current?.focus();
             }}
-            className="size-7 text-foreground-secondary"
           >
             <X className="size-3.5" />
           </InputGroupButton>
         </InputGroupAddon>
       ) : (
         shortcut && (
-          <InputGroupAddon align="inline-end" className="pr-3">
+          <InputGroupAddon align="inline-end">
             <kbd className="border border-border px-1.5 text-label font-semibold">/</kbd>
           </InputGroupAddon>
         )

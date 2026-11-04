@@ -6,6 +6,8 @@ const inputVariants = cva(
     variants: {
       size: {
         default: "h-8 rounded-lg px-2.5 py-1 text-base md:text-sm",
+        /* A field that stands alone on a page, as search does, at a button's height. */
+        inline: "h-10 rounded-card px-3 text-base md:text-sm",
         /* Marketing-sized. Auth fields sit on a wide split layout and the
            in-app chrome size reads as a toolbar control there. */
         cta: "h-12 rounded-xl px-4 text-sm",

@@ -40,13 +40,18 @@ export class RoundsRobot {
     return this;
   }
 
+  /** A scope (All, L20, Best) or a course chip, whose name ends in its number of rounds. */
+  private chip(label: string) {
+    return this.page.getByRole("button", { name: new RegExp(`^${label}( ?\\d+)?$`) });
+  }
+
   async tapChip(label: string): Promise<this> {
-    await this.page.getByRole("button", { name: label, exact: true }).click();
+    await this.chip(label).click();
     return this;
   }
 
   async seesChipPressed(label: string): Promise<this> {
-    await expect(this.page.getByRole("button", { name: label, exact: true })).toHaveAttribute(
+    await expect(this.chip(label)).toHaveAttribute(
       "aria-pressed",
       "true",
     );
