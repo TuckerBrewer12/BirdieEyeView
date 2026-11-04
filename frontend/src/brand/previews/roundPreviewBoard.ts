@@ -11,8 +11,8 @@ function asOnBoard(round: RoundSummary, par: number[], toPar: number[]): RoundSu
   return {
     ...round,
     holes,
-    frontNine: { ...round.frontNine, total: total(0, 9) },
-    backNine: { ...round.backNine, total: total(9, 18) },
+    frontNine: { ...round.frontNine, holes: holes.filter((hole) => hole.hole <= 9), total: total(0, 9) },
+    backNine: { ...round.backNine, holes: holes.filter((hole) => hole.hole >= 10), total: total(9, 18) },
   };
 }
 
