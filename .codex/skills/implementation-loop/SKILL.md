@@ -1,6 +1,6 @@
 ---
 name: implementation-loop
-description: Project-specific backend implementation and test iteration skill for the Golf ScoreCard app. Use only after the user approves an implementation plan, to edit code, add unit tests, run focused validation, iterate on failures, and finish without committing.
+description: Project-specific backend implementation, test iteration, and completion review skill for the Golf ScoreCard app. Use only after the user approves an implementation plan, to edit code, validate behavior, review for missed gaps, and finish without committing.
 ---
 
 # Implementation Loop
@@ -35,6 +35,8 @@ Repeat until the change meets the user's request and the acceptance criteria:
 7. Broaden validation when the changed surface is shared or cross-layer.
 8. Keep the user updated with concise implementation progress and test results.
 
+Once the planned edits and validation are complete, run the Completion Review Loop below before declaring the implementation finished. Passing tests alone does not complete the change.
+
 Do not commit. Do not revert unrelated dirty work.
 
 ## When The Plan Is Wrong
@@ -55,6 +57,18 @@ When that happens:
 
 Small mechanical deviations inside the planned surface, such as an extra import, a private helper in a planned file, or a renamed test, do not need approval. List them in the final response.
 
+## Completion Review Loop
+
+Review the implementation as a reviewer looking for omissions, rather than assuming that completing the plan proves correctness:
+
+1. Compare the full task diff, including added files, with the user's original request, every approved acceptance criterion, and any approved plan amendments. Check for missing behavior and unintended changes.
+2. Read the affected surrounding code and trace changed behavior through relevant callers and layer boundaries. Look for regressions, inconsistent contracts, and relevant boundary or failure cases that the existing tests could miss.
+3. Investigate suspected gaps with code evidence and focused checks at the appropriate testing layer. Add or update regression tests when they protect meaningful behavior; do not add tests merely to mirror the implementation or raise coverage.
+4. Fix confirmed findings within the approved scope, rerun the affected checks, and repeat this review against the revised implementation. Broaden validation when the finding shows a wider impact; do not rerun unrelated checks without a reason.
+5. Finish only when the review finds no remaining actionable gaps within the approved scope and the Completion Standard is met. If a finding needs a plan amendment, follow When The Plan Is Wrong before editing that area. If a finding cannot be resolved or verified, report it explicitly and do not describe that area as complete or verified.
+
+This review checks the delivered change. The separate Continuous Skill Improvement step checks the workflow itself and does not replace this review.
+
 ## Completion Standard
 
 The loop is complete when:
@@ -63,6 +77,7 @@ The loop is complete when:
 - The code is clean, local to the planned surface, and consistent with existing patterns.
 - Relevant unit tests have been added or updated.
 - Focused tests/checks pass, or any inability to run them is clearly explained.
+- The Completion Review Loop has been performed after the last implementation fix, with no remaining actionable gaps within the approved scope; unresolved findings and verification limits are explicitly reported.
 - The final response records what changed and what validation was run.
 
 ## Project-Specific Guidance
@@ -82,6 +97,7 @@ Finish with:
 
 - changed files
 - tests/checks run and their result
+- completion review outcome, including gaps fixed and anything unresolved or unverified
 - plan amendments and small deviations, if any
 - `docs/` guides the change made inaccurate
 - recon and implementation artifact paths
