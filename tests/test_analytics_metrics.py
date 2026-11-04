@@ -299,3 +299,37 @@ def test_course_trend_handles_mixed_timezone_awareness():
     rows = stats.score_trend_on_this_course([aware, naive])
 
     assert [row["round_id"] for row in rows] == ["naive", "aware"]
+
+
+def test_a_combo_tee_never_borrows_a_prefix_match():
+    c = course(18).model_copy(update={"tees": [Tee(color="Blue", hole_yardages={n: 400 for n in FULL_ROUND})]})
+    combo = par_round(course_obj=c, tee_box="Blue/White")
+    label_variant = par_round(course_obj=c, tee_box="Blue tees")
+
+    assert stats.scoring_by_yardage_buckets([combo]) == []
+    assert stats.scoring_by_yardage_buckets([label_variant]) != []
+
+
+def test_round_records_need_the_observations_they_count():
+    no_putts = par_round(round_id="no-putts")  # complete, every putt unknown
+    no_pars = round_({n: {"strokes": 3} for n in FULL_ROUND}, round_id="no-pars", intended=FULL_ROUND,
+                     date=datetime(2025, 1, 1))  # earlier, so it would win a 0-birdie tie if it counted
+
+    summary = stats.notable_achievements([no_putts, no_pars], reference_date=datetime(2026, 6, 1))
+
+    putting = summary["putting_milestones"]["lifetime"]
+    assert (putting["most_1_putts_in_round"], putting["most_3_putts_in_round"]) == (None, None)
+    assert summary["putting_milestones_events"]["lifetime"]["most_1_putts_in_round"] is None
+    records = summary["scoring_records"]["lifetime"]
+    assert (records["most_birdies_in_round"], records["most_eagles_in_round"]) == (0, 0)  # only no-putts has pars
+    assert summary["scoring_records_events"]["lifetime"]["most_birdies_in_round"]["round_id"] == "no-putts"
+
+
+def test_per_hole_gir_and_putts_do_not_need_par():
+    r = round_({1: {"strokes": 4, "green_in_regulation": True, "putts": 2}})  # no course, no par played
+
+    gir = stats.gir_percentage_by_hole([r])
+    putts = stats.average_putts_by_hole([r])
+
+    assert [(row["hole_number"], row["gir_percentage"], row["par"]) for row in gir] == [(1, 100.0, None)]
+    assert [(row["hole_number"], row["average_putts"]) for row in putts] == [(1, 2.0)]

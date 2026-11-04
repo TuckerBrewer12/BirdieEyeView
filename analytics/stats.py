@@ -45,18 +45,7 @@ def _resolve_tee_for_yardage(round_obj: Round) -> Optional[Any]:
             if len(exact) == 1:
                 return exact[0]
 
-            fuzzy = [
-                candidate
-                for candidate in round_obj.course.tees
-                if candidate.color
-                and candidate.hole_yardages
-                and (
-                    requested.startswith(_normalize_tee_label(candidate.color))
-                    or _normalize_tee_label(candidate.color).startswith(requested)
-                )
-            ]
-            if len(fuzzy) == 1:
-                return fuzzy[0]
+            # No prefix guessing: "Blue/White" is not "Blue". An unmatched selection stays unknown.
 
     if round_obj.user_tee and round_obj.user_tee.hole_yardages:
         return round_obj.user_tee
@@ -236,13 +225,23 @@ def _round_count(round_obj: Round, predicate) -> int:
     return _count(_round_rows(round_obj), predicate)
 
 
+def _with_pars(rounds: List[Round]) -> List[Round]:
+    """Rounds whose scored holes all have a known par (needed to count birdies/eagles)."""
+    return [r for r in rounds if r.total_to_par() is not None]
+
+
+def _with_putts(rounds: List[Round]) -> List[Round]:
+    """Rounds with putts known on every scored hole (needed for putting records)."""
+    return [r for r in rounds if r.get_total_putts() is not None]
+
+
 def _scoring_records(complete: List[Round], eighteen: List[Round], nine: List[Round], *, lifetime: bool):
     total = Round.calculate_total_score
     birdies = lambda r: _round_count(r, _to_par_is(-1))  # noqa: E731
     eagles = lambda r: _round_count(r, _to_par_is(-2))  # noqa: E731
     lowest, lowest_round = _best_round(eighteen, total, lower=True)
     lowest_nine, lowest_nine_round = _best_round(nine, total, lower=True)
-    most_birdies, birdie_round = _best_round(complete, birdies, lower=False)
+    most_birdies, birdie_round = _best_round(_with_pars(complete), birdies, lower=False)
     most_gir, gir_round = _best_round(complete, Round.get_total_gir, lower=False)
     fewest_putts, putts_round = _best_round(eighteen, Round.get_total_putts, lower=True)
     values = {
@@ -262,7 +261,7 @@ def _scoring_records(complete: List[Round], eighteen: List[Round], nine: List[Ro
     if lifetime:
         highest, highest_round = _best_round(eighteen, total, lower=False)
         lowest_9, lowest_9_round = _lowest_nine_holes(complete + [r for r in eighteen if r not in complete])
-        most_eagles, eagle_round = _best_round(complete, eagles, lower=False)
+        most_eagles, eagle_round = _best_round(_with_pars(complete), eagles, lower=False)
         values.update(highest_round=highest, lowest_9_holes=lowest_9, most_eagles_in_round=most_eagles)
         events.update(
             highest_round=_milestone_event(highest_round),
@@ -394,8 +393,9 @@ def _notable_achievements(rounds_list, now, cutoff, days, home_course_id) -> Dic
 
     def putting(window, *, lifetime: bool):
         fewest, fewest_round = _best_round(window["eighteen"], Round.get_total_putts, lower=True)
-        most_one, one_round = _best_round(window["complete"], one_putts, lower=False)
-        most_three, three_round = _best_round(window["complete"], three_putts, lower=False)
+        putting_rounds = _with_putts(window["complete"])
+        most_one, one_round = _best_round(putting_rounds, one_putts, lower=False)
+        most_three, three_round = _best_round(putting_rounds, three_putts, lower=False)
         values = {"fewest_putts_in_round": fewest, "most_1_putts_in_round": most_one, "most_3_putts_in_round": most_three}
         events = {
             "fewest_putts_in_round": _milestone_event(fewest_round),
@@ -1052,6 +1052,13 @@ def _observed_holes(rounds: Iterable[Round]):
                 yield round_obj, score, par
 
 
+def _scored_holes_any_par(rounds: Iterable[Round]):
+    """Every scored hole with its par if known: (round, score, par or None)."""
+    for round_obj in rounds:
+        for score in el.scored_holes(round_obj):
+            yield round_obj, score, el.hole_par(round_obj, score.hole_number)
+
+
 def score_variance_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     Aggregate scoring consistency by hole using score standard deviation.
@@ -1178,10 +1185,10 @@ def course_difficulty_profile_by_hole(rounds: Iterable[Round]) -> List[Dict[str,
 
 
 def gir_percentage_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """Aggregate GIR percentage by hole number over holes whose GIR was observed."""
+    """Aggregate GIR percentage by hole number over holes whose GIR was observed (par not required)."""
     by_hole: Dict[int, Dict[str, Any]] = {}
 
-    for _, hole_score, par in _observed_holes(rounds):
+    for _, hole_score, par in _scored_holes_any_par(rounds):
         if hole_score.green_in_regulation is None:
             continue
         entry = by_hole.setdefault(
@@ -1213,10 +1220,11 @@ def average_putts_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """Aggregate average putts by hole number over holes with known putts.
 
     A hole with unknown putts is skipped on its own; other holes in that round still count.
+    Par is reported when known but not required.
     """
     by_hole: Dict[int, Dict[str, Any]] = {}
 
-    for _, hole_score, par in _observed_holes(rounds):
+    for _, hole_score, par in _scored_holes_any_par(rounds):
         if hole_score.putts is None:
             continue
         entry = by_hole.setdefault(
