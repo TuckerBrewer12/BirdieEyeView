@@ -11,8 +11,11 @@ const S = C.spark;
 
 interface HandicapIndexPanelProps {
   data: RoundTrendPoint[];
-  /** How many of the rounds the index is worked from, for the caption: 8 of 20. */
-  counting?: number;
+}
+
+/** Differentials the server marked as counting toward the index. */
+function countingDifferentials(data: RoundTrendPoint[]): number[] {
+  return data.filter((d) => d.differentialStatus === "counting" && d.differential != null).map((d) => d.differential!);
 }
 
 /**
@@ -20,8 +23,9 @@ interface HandicapIndexPanelProps {
  * rounds, then which rounds count. Each round's differential stands on a stem
  * from the cut-off; the ones the index is worked from are filled.
  */
-export function HandicapIndexPanel({ data, counting = 8 }: HandicapIndexPanelProps) {
+export function HandicapIndexPanel({ data }: HandicapIndexPanelProps) {
   const indexes = data.map((d) => d.handicapIndex);
+  const countingDiffs = countingDifferentials(data);
   const known = knownValues(indexes);
   const first = known.at(0) ?? null;
   const last = known.at(-1) ?? null;
@@ -56,11 +60,11 @@ export function HandicapIndexPanel({ data, counting = 8 }: HandicapIndexPanelPro
       <div className="flex items-baseline justify-between">
         <div className="text-body font-semibold">Which rounds count</div>
         <div className="text-body-sm text-muted-foreground">
-          Score differential · best {counting} of {data.length}
+          Score differential · best {countingDiffs.length} of {data.length}
         </div>
       </div>
 
-      <DifferentialChart data={data} />
+      <DifferentialChart data={data} countingDiffs={countingDiffs} />
     </div>
   );
 }
@@ -87,9 +91,8 @@ function IndexLine({ indexes }: { indexes: (number | null)[] }) {
 }
 
 /** Each round's differential on a stem from the cut-off; the counting ones filled. */
-function DifferentialChart({ data }: { data: RoundTrendPoint[] }) {
+function DifferentialChart({ data, countingDiffs }: { data: RoundTrendPoint[]; countingDiffs: number[] }) {
   const diffs = data.map((d) => d.differential);
-  const countingDiffs = data.filter((d) => d.differentialStatus === "counting" && d.differential != null).map((d) => d.differential!);
   const cutoff = countingDiffs.length > 0 ? Math.max(...countingDiffs) : null;
   const known = knownValues(diffs);
   if (known.length === 0) {
