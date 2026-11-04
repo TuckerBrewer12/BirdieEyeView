@@ -148,7 +148,7 @@ export class RoundDetailRobot {
   }
 
   async pickCourse(name: string): Promise<this> {
-    await this.page.getByRole("button", { name: new RegExp(name) }).click();
+    await this.page.getByRole("option", { name: new RegExp(name) }).click();
     return this;
   }
 
@@ -158,13 +158,13 @@ export class RoundDetailRobot {
   }
 
   async saveAsCustomName(name: string): Promise<this> {
-    await this.page.getByRole("button", { name: `Save as "${name}"` }).click();
+    await this.page.getByRole("button", { name: `Save as “${name}”` }).click();
     return this;
   }
 
   async seesCustomNameCard(name: string): Promise<this> {
     await expect(this.page.getByText(name).first()).toBeVisible();
-    await expect(this.page.getByText("Saving without a linked course")).toBeVisible();
+    await expect(this.page.getByText("Custom name · not linked to a course")).toBeVisible();
     await expect(this.page.getByPlaceholder("Search courses…")).toHaveCount(0);
     return this;
   }
@@ -187,7 +187,11 @@ export class RoundDetailRobot {
   }
 
   async tapEditCourseName(): Promise<this> {
-    await this.page.getByRole("button", { name: "Edit name" }).click();
+    await this.page
+      .locator("[data-slot=card]")
+      .filter({ hasText: "Custom name · not linked to a course" })
+      .getByRole("button", { name: "Link course" })
+      .click();
     return this;
   }
 

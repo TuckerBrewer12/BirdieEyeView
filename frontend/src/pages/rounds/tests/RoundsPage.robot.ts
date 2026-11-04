@@ -94,7 +94,7 @@ export class RoundsRobot {
   }
 
   async pickCourse(name: string): Promise<this> {
-    await this.page.getByRole("button", { name: new RegExp(name) }).click();
+    await this.page.getByRole("option", { name: new RegExp(name) }).click();
     return this;
   }
 
@@ -116,12 +116,12 @@ export class RoundsRobot {
   }
 
   async seesNoCoursesFound(): Promise<this> {
-    await expect(this.page.getByText("No courses found")).toBeVisible();
+    await expect(this.page.getByText("No saved courses match")).toBeVisible();
     return this;
   }
 
   async doesNotSeeNoCoursesFound(): Promise<this> {
-    await expect(this.page.getByText("No courses found")).toHaveCount(0);
+    await expect(this.page.getByText("No saved courses match")).toHaveCount(0);
     return this;
   }
 
