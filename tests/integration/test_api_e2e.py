@@ -7,6 +7,9 @@ repositories: they prove auth and ownership through the same HTTP path the app u
 """
 
 import asyncio
+import copy
+import dataclasses
+import io
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -21,7 +24,7 @@ from PIL import Image
 
 import api.main as api_main
 from api import auth_utils
-from api.routers import auth, scan
+from api.routers import auth, scan, scan_reports
 from database import DatabaseManager
 from models import Course, Hole, Tee
 from tests.integration.conftest import SCHEMA_PATH, _get_test_database_url
@@ -98,6 +101,12 @@ def api(monkeypatch):
     for limit in ("REGISTER_RATE_LIMIT_MAX_ATTEMPTS", "REGISTER_RATE_LIMIT_PER_EMAIL_ATTEMPTS",
                   "LOGIN_REQUEST_RATE_LIMIT_MAX_ATTEMPTS", "FORGOT_PASSWORD_RATE_LIMIT_MAX_ATTEMPTS"):
         monkeypatch.setenv(limit, "1000")
+    # Auth limiters live at module level; give each test empty buckets so no test inherits
+    # another's attempts (the middleware limiter is already fresh per create_app()).
+    for limiter in (auth.login_rate_limiter, auth.register_rate_limiter, auth.auth_request_rate_limiter):
+        empty = copy.copy(limiter._buckets)
+        empty.clear()
+        monkeypatch.setattr(limiter, "_buckets", empty)
     with TestClient(api_main.create_app(), base_url="http://localhost") as client:
         harness = Api(client, url)
         monkeypatch.setattr(auth, "send_verification_email", lambda to, link: harness.emails.append(("verify", to, link)))
@@ -564,3 +573,231 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
     assert (selected["round_id"], selected["primary_value"], selected["secondary_value"]) == (rounds[1], 78, 6)
     assert body["course"]["rounds_played"] == 3
     assert isinstance(body["milestones"]["milestones"], list)
+
+
+# ================================================================
+# Lookups that must reveal only the caller's own data
+# ================================================================
+
+
+def test_user_lookup_by_email_reveals_only_your_own_account(api):
+    alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
+    lookup = lambda email: api.client.get(f"/api/users/by-email/{email}", headers=bob["headers"])  # noqa: E731
+
+    own = lookup("bob@example.com")
+    assert (own.status_code, own.json()["id"]) == (200, bob["id"])
+    assert lookup("BOB@Example.COM").status_code == 200
+    # Another user's account and a missing account answer the same, so emails can't be probed.
+    assert lookup("alice@example.com").status_code == 403
+    assert lookup("ghost@example.com").status_code == 403
+    assert lookup("not-an-email").status_code == 422
+    assert alice["id"] not in lookup("alice@example.com").text
+
+
+def test_course_list_and_search_show_masters_and_only_your_own_courses(api):
+    alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
+    asyncio.run(_create_master_course(api.url))
+    custom_course(api, alice, name="Alice Links")
+    custom_course(api, bob, name="Bob Links")
+    names = lambda response: [c["name"] for c in response.json()]  # noqa: E731
+    get = lambda path, user=None: api.client.get(path, headers=user["headers"] if user else {})  # noqa: E731
+
+    assert names(get("/api/courses", bob)) == ["Master Links"]
+    assert names(get(f"/api/courses?user_id={bob['id']}", bob)) == ["Bob Links", "Master Links"]
+    assert get(f"/api/courses?user_id={alice['id']}", bob).status_code == 403
+    assert get(f"/api/courses?user_id={bob['id']}").status_code == 403
+
+    assert names(get("/api/courses/search?q=links", bob)) == ["Bob Links", "Master Links"]  # own first
+    assert names(get("/api/courses/search?q=links")) == ["Master Links"]
+    assert get(f"/api/courses/search?q=links&user_id={alice['id']}", bob).status_code == 403
+    assert get("/api/courses/search?q=nowhere&include_external=true").status_code == 401
+
+
+def test_friends_list_shows_only_your_own_friendships(api):
+    alice, bob, carol = (api.user(f"{n}@example.com") for n in ("alice", "bob", "carol"))
+    code = api.client.get(f"/api/users/{bob['id']}", headers=bob["headers"]).json()["friend_code"]
+    friendship = api.client.post("/api/users/me/friends", headers=alice["headers"],
+                                 json={"addressee_friend_code": code}).json()["id"]
+    friends = lambda user, query="": api.client.get(f"/api/users/me/friends{query}", headers=user["headers"])  # noqa: E731
+    rows = lambda user, query="": [(f["id"], f["requester_id"], f["addressee_id"], f["status"])  # noqa: E731
+                                   for f in friends(user, query).json()]
+
+    pending = [(friendship, alice["id"], bob["id"], "pending")]
+    assert rows(alice) == rows(bob) == pending
+    assert rows(carol) == []
+    assert rows(bob, "?status=accepted") == []
+    assert api.client.patch(f"/api/users/me/friends/{friendship}", headers=bob["headers"],
+                            json={"status": "accepted"}).status_code == 200
+    assert rows(bob, "?status=accepted") == [(friendship, alice["id"], bob["id"], "accepted")]
+    assert rows(carol, "?status=accepted") == []
+    assert friends(bob, "?status=bogus").status_code == 422
+
+
+# ================================================================
+# Email verification: resend and the emailed link
+# ================================================================
+
+
+async def _sql(url: str, query: str, *args) -> None:
+    conn = await asyncpg.connect(url)
+    try:
+        await conn.execute(query, *args)
+    finally:
+        await conn.close()
+
+
+def backdate_tokens(api: Api, email: str, column: str) -> None:
+    """Set ``created_at`` or ``expires_at`` of a user's tokens to two minutes ago (stored as naive UTC)."""
+    asyncio.run(_sql(api.url, f"""UPDATE users.auth_tokens
+                                    SET {column} = (now() AT TIME ZONE 'UTC') - interval '2 minutes'
+                                    WHERE user_id = (SELECT id FROM users.users WHERE email = $1)""", email))
+
+
+def test_resend_verification_and_the_emailed_link(api):
+    sent = lambda: [kind for kind, _, _ in api.emails].count("verify")  # noqa: E731
+    resend = lambda email: api.client.post("/api/auth/resend-verification", json={"email": email})  # noqa: E731
+    api.register("cy@example.com")
+    first = api.token_from("verify", "cy@example.com")
+
+    assert (resend("cy@example.com").status_code, sent()) == (200, 1)  # inside the 60-second cooldown
+    backdate_tokens(api, "cy@example.com", "created_at")
+    assert (resend("cy@example.com").status_code, sent()) == (200, 2)
+    second = api.token_from("verify", "cy@example.com")
+    assert second != first
+    assert api.client.post("/api/auth/verify-email", json={"token": first}).status_code == 400  # replaced
+
+    opened = api.client.get("/api/auth/verify-email", params={"token": second})
+    assert opened.status_code == 200, opened.text
+    me = api.client.get("/api/auth/me")  # the link signs the user in by cookie
+    assert (me.status_code, me.json()["email"]) == (200, "cy@example.com")
+    api.client.cookies.clear()
+
+    backdate_tokens(api, "cy@example.com", "created_at")
+    assert (resend("cy@example.com").status_code, sent()) == (200, 2)  # already verified
+    assert (resend("ghost@example.com").status_code, sent()) == (200, 2)  # unknown looks the same
+
+    api.register("dee@example.com")
+    backdate_tokens(api, "dee@example.com", "expires_at")
+    expired = api.client.get("/api/auth/verify-email", params={"token": api.token_from("verify", "dee@example.com")})
+    assert expired.status_code == 400
+    assert api.login("dee@example.com").status_code == 403  # still unverified
+
+
+# ================================================================
+# Failed-scan reports
+# ================================================================
+
+
+def png_bytes() -> bytes:
+    buffer = io.BytesIO()
+    Image.new("RGB", (40, 20), "white").save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+class MemoryReportStore:
+    def __init__(self):
+        self.reports = []
+
+    async def save(self, report) -> bool:
+        self.reports.append(report)
+        return True
+
+
+def report_metadata(**overrides) -> str:
+    return json.dumps({"schema_version": 1, "retry_key": str(uuid.uuid4()), "category": "unreadable_scores",
+                       "stage": "parse", "http_status": 422} | overrides)
+
+
+def test_failed_scan_reports_are_anonymous_and_validated(api):
+    alice = api.user("alice@example.com")
+    image = png_bytes()
+    post = lambda name, data, metadata=None, extra=None: api.client.post(  # noqa: E731
+        "/api/scan/reports", headers=alice["headers"], files={"file": (name, data, "image/png")},
+        data={"metadata": metadata or report_metadata()} | (extra or {}))
+
+    api.client.app.dependency_overrides[scan_reports.get_scan_report_store] = lambda: None
+    unavailable = post("card.png", image)
+    assert (unavailable.status_code, unavailable.json()["code"]) == (503, "report_storage_unavailable")
+
+    store = MemoryReportStore()
+    api.client.app.dependency_overrides[scan_reports.get_scan_report_store] = lambda: store
+    assert post("card.png", image, extra={"user_id": alice["id"]}).status_code == 422
+    assert post("card.png", image, metadata=report_metadata(note="free text")).status_code == 422
+    assert post("card.gif", image).status_code == 400
+    assert post("card.png", b"not an image at all").status_code == 400
+    assert store.reports == []
+
+    key = str(uuid.uuid4())
+    saved = post("card.png", image, metadata=report_metadata(retry_key=key))
+    assert (saved.status_code, saved.json()) == (200, {"status": "saved"})
+    [report] = store.reports
+    # Signed in or not, the stored report carries no user, filename or other identity.
+    assert {f.name for f in dataclasses.fields(report)} == {
+        "image", "media_type", "retry_key", "category", "stage", "http_status", "schema_version"}
+    assert (report.image, report.media_type, str(report.retry_key), report.category) == (
+        image, "image/png", key, "unreadable_scores")
+
+
+# ================================================================
+# Scan uploads rejected before OCR
+# ================================================================
+
+
+def test_scan_uploads_are_rejected_before_ocr(api, scan_providers):
+    alice = api.user("alice@example.com")
+    extract = lambda name, data, content_type="image/jpeg": api.client.post(  # noqa: E731
+        "/api/scan/extract", headers=alice["headers"], files={"file": (name, data, content_type)})
+    card = (SCORECARD_DIR / "eaglevins_90.jpg").read_bytes()
+
+    gif = extract("card.gif", card)
+    assert (gif.status_code, gif.json()["failure"]["category"]) == (400, "invalid_upload")
+    assert extract("card.jpg", card, content_type="text/html").status_code == 400
+    fake = extract("card.jpg", b"<html>not a scorecard</html>")
+    assert (fake.status_code, fake.json()["failure"]) == (400, {"category": "invalid_upload", "stage": "upload"})
+    too_big = extract("card.jpg", b"\0" * (scan.MAX_UPLOAD_BYTES + 1))
+    assert (too_big.status_code, too_big.json()["failure"]["category"]) == (413, "invalid_upload")
+    ocr = api.client.post("/api/scan/ocr", headers=alice["headers"],
+                          files={"file": ("card.jpg", b"<html>not a scorecard</html>", "image/jpeg")})
+    assert ocr.status_code == 400
+    assert scan_providers["ocr"] == []
+    assert extract("card.jpg", card).status_code != 400  # the real card passes validation (control)
+
+
+# ================================================================
+# Rate limits
+# ================================================================
+
+
+def test_login_locks_after_five_failed_attempts(api):
+    api.user("alice@example.com")
+
+    assert [api.login("alice@example.com", password="wrong password!").status_code for _ in range(5)] == [401] * 5
+    locked = api.login("alice@example.com")  # the right password no longer helps
+    assert locked.status_code == 429
+    assert int(locked.headers["Retry-After"]) > 0
+
+
+def test_signup_is_rate_limited_per_email(api, monkeypatch):
+    monkeypatch.setenv("REGISTER_RATE_LIMIT_PER_EMAIL_ATTEMPTS", "2")
+    attempt = lambda email: api.client.post(  # noqa: E731
+        "/api/auth/register", json={"name": "Eve", "email": email, "password": PASSWORD}).status_code
+
+    assert [attempt("eve@example.com") for _ in range(3)] == [201, 409, 429]
+    assert attempt("other@example.com") == 201  # the limit is per email
+
+
+def test_anonymous_scans_and_reports_are_rate_limited(api, scan_providers):
+    alice = api.user("alice@example.com")
+    api.client.app.dependency_overrides[scan_reports.get_scan_report_store] = lambda: None
+    ocr = lambda headers=None: api.client.post(  # noqa: E731
+        "/api/scan/ocr", headers=headers or {}, files=upload()).status_code
+
+    assert [ocr() for _ in range(6)] == [200] * 6
+    assert ocr() == 429
+    assert ocr(alice["headers"]) == 200  # signed-in scans have their own allowance
+
+    report = lambda: api.client.post(  # noqa: E731
+        "/api/scan/reports", files={"file": ("card.png", png_bytes(), "image/png")},
+        data={"metadata": report_metadata()}).status_code
+    assert [report() for _ in range(10)] == [503] * 10
+    assert report() == 429
