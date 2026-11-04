@@ -17,7 +17,7 @@
 | `stats.py` | Dashboard, analytics, comparison, handicap-related responses, and goal reports. |
 | `ai_insights.py` | Rule-based insight service endpoint. |
 
-These files are in [api/routers](../../api/routers). Every request body is defined in [request_models.py](../../api/request_models.py) and every response model in [schemas.py](../../api/schemas.py) (plus purpose-specific auth/report schema modules); routers import them and define none of their own. Class and field names are part of the OpenAPI contract the frontend generates its types from, so keep them stable. `auth_utils.py`, `security.py`, rate limiters, and notification helpers support the request boundary.
+These files are in [api/routers](../../api/routers). Every request body is defined in [request_models.py](../../api/request_models.py) and every response model in [schemas.py](../../api/schemas.py) (plus purpose-specific auth/report schema modules); routers import them and define none of their own. Class and field names are part of the OpenAPI contract the frontend generates its types from, so keep them stable. The status routes (`/`, `/health`, `/api/health`) serve GET and HEAD for health checks but are kept out of the schema, so every operation ID is unique and the schema is the same in every process. `auth_utils.py`, `security.py`, rate limiters, and notification helpers support the request boundary.
 
 ## Typical request
 

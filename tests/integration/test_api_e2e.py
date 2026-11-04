@@ -825,3 +825,18 @@ def test_hole_scores_cannot_set_net_score(api):
                           json={"hole_scores": [{"hole_number": 1, "strokes": 3, "net_score": 2}]})
     assert edit.status_code == 422, edit.text
     assert api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).json() == before
+
+
+def test_api_schema_has_unique_operation_ids_and_status_routes_still_answer(api):
+    schema = api.client.get("/openapi.json")
+    assert schema.status_code == 200
+    ids = [op["operationId"] for item in schema.json()["paths"].values() for op in item.values()]
+    # A route serving GET and HEAD gets one ID for both, chosen differently per process; the
+    # frontend compares its committed schema copy byte for byte, so IDs must be unique and stable.
+    assert len(ids) == len(set(ids))
+    assert {"/", "/health", "/api/health"}.isdisjoint(schema.json()["paths"])
+
+    for path in ("/", "/health", "/api/health"):  # Railway health checks use these
+        assert api.client.get(path).status_code == 200, path
+        head = api.client.head(path)
+        assert (head.status_code, head.content) == (200, b""), path
