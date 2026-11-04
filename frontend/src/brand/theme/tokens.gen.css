@@ -148,6 +148,7 @@
   --brand-space-nudge: 5px;
   --brand-space-nudge-sm: 3px;
   --brand-space-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --brand-size-rail: 240px;
   --brand-size-date-rail: 54px;
   --brand-size-preview: 390px;
   --brand-size-chart: 180px;
@@ -350,6 +351,7 @@
   --spacing-nudge: var(--brand-space-nudge);
   --spacing-nudge-sm: var(--brand-space-nudge-sm);
   --spacing-safe-bottom: var(--brand-space-safe-bottom);
+  --spacing-rail: var(--brand-size-rail);
   --spacing-date-rail: var(--brand-size-date-rail);
   --spacing-preview: var(--brand-size-preview);
   --spacing-chart: var(--brand-size-chart);

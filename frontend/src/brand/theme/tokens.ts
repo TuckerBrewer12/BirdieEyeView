@@ -424,6 +424,8 @@ export const radius = {
 
 /** Widths and heights that are not on the 4px scale. */
 export const size = {
+  /** The side rail's width: `AppShell` sets it and clears the page past it. */
+  rail: 240,
   "date-rail": 54,
   preview: 390,
   chart: 180,
