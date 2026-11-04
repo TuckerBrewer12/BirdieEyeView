@@ -9,27 +9,11 @@ from database.db_manager import DatabaseManager
 from database.exceptions import ConflictError, DuplicateError, NotFoundError
 from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
+from api.request_models import COURSE_RATING, SLOPE_RATING, normalize_hole_yardages
 from models import User, UserTee
 from analytics import handicap as hcap
 
 router = APIRouter()
-
-
-def _validate_hole_yardages_dict(value: Optional[dict]) -> Optional[dict]:
-    if value is None:
-        return None
-    out = {}
-    for raw_k, raw_v in value.items():
-        try:
-            hole_num = int(raw_k)
-        except Exception as exc:  # noqa: BLE001
-            raise ValueError("hole_yardages keys must be numeric hole numbers.") from exc
-        if not (1 <= hole_num <= 18):
-            raise ValueError("hole_yardages hole number must be between 1 and 18.")
-        if raw_v is not None and not (50 <= int(raw_v) <= 700):
-            raise ValueError("hole_yardages value must be between 50 and 700.")
-        out[hole_num] = int(raw_v) if raw_v is not None else None
-    return out
 
 
 class CreateUserTeeRequest(BaseModel):
@@ -37,8 +21,8 @@ class CreateUserTeeRequest(BaseModel):
 
     course_id: Optional[UUID] = None
     name: str = Field(..., min_length=1, max_length=60)
-    slope_rating: Optional[float] = Field(default=None, ge=55, le=155)
-    course_rating: Optional[float] = Field(default=None, ge=55, le=85)
+    slope_rating: Optional[float] = SLOPE_RATING
+    course_rating: Optional[float] = COURSE_RATING
     hole_yardages: Optional[dict] = None
 
     @field_validator("name")
@@ -46,18 +30,18 @@ class CreateUserTeeRequest(BaseModel):
     def _validate_name(cls, v: str) -> str:
         return sanitize_user_text(v, field_name="name", max_length=60)
 
-    @field_validator("hole_yardages")
+    @field_validator("hole_yardages", mode="before")
     @classmethod
-    def _validate_hole_yardages(cls, value: Optional[dict]) -> Optional[dict]:
-        return _validate_hole_yardages_dict(value)
+    def _validate_hole_yardages(cls, value: object) -> Optional[dict]:
+        return normalize_hole_yardages(value)
 
 
 class UpdateUserTeeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     name: Optional[str] = None
-    slope_rating: Optional[float] = Field(default=None, ge=55, le=155)
-    course_rating: Optional[float] = Field(default=None, ge=55, le=85)
+    slope_rating: Optional[float] = SLOPE_RATING
+    course_rating: Optional[float] = COURSE_RATING
     hole_yardages: Optional[dict] = None
 
     @field_validator("name")
@@ -67,10 +51,10 @@ class UpdateUserTeeRequest(BaseModel):
             return None
         return sanitize_user_text(v, field_name="name", max_length=60)
 
-    @field_validator("hole_yardages")
+    @field_validator("hole_yardages", mode="before")
     @classmethod
-    def _validate_hole_yardages(cls, value: Optional[dict]) -> Optional[dict]:
-        return _validate_hole_yardages_dict(value)
+    def _validate_hole_yardages(cls, value: object) -> Optional[dict]:
+        return normalize_hole_yardages(value)
 
 
 class UpdateUserRequest(BaseModel):
@@ -78,7 +62,9 @@ class UpdateUserRequest(BaseModel):
 
     home_course_id: Optional[UUID] = None
     handicap: Optional[float] = Field(default=None, ge=-10, le=54)
-    scoring_goal: Optional[int] = Field(default=None, ge=50, le=150)
+    # Same bounds as models.user.User: 18-hole goal 18-270, nine-hole goal 9-135.
+    scoring_goal: Optional[int] = Field(default=None, strict=True, ge=18, le=270)
+    scoring_goal_nine: Optional[int] = Field(default=None, strict=True, ge=9, le=135)
 
     @field_validator("handicap", mode="before")
     @classmethod

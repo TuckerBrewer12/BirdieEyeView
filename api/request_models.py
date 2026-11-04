@@ -1,7 +1,7 @@
 """Typed Pydantic request/input models shared across API routers."""
 
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -18,10 +18,59 @@ def _decimal_before(value, info):
     return normalize_decimal(value, info.field_name)
 
 
-def _yardages_before(value, info):
+MAX_HOLE_YARDAGE = 1_000
+# Matches models.tee.CourseRating: any positive finite rating, so nine-hole ratings such as 35.0 pass.
+COURSE_RATING = Field(default=None, gt=0, allow_inf_nan=False)
+SLOPE_RATING = Field(default=None, ge=55, le=155, allow_inf_nan=False)
+
+
+def normalize_hole_yardages(value, field: str = "hole_yardages") -> Optional[Dict[int, int]]:
+    """Shared request rule for every per-hole yardage map.
+
+    Keys are hole numbers 1-18 (``1``, ``"1"`` and ``"01"`` are the same hole, and a map naming a
+    hole twice is rejected rather than silently keeping one value). Values are whole yards 0-1,000.
+    Unknown (``null``) entries are omitted, the domain's representation of an unknown yardage.
+    """
+    if value is None:
+        return None
     if not isinstance(value, dict):
-        return value
-    return {key: normalize_whole_number(yards, f"{info.field_name}[{key}]") for key, yards in value.items()}
+        raise ValueError(f"{field} must map hole numbers to yards.")
+    out: Dict[int, int] = {}
+    seen = set()
+    for raw_hole, raw_yards in value.items():
+        hole = normalize_whole_number(raw_hole, f"{field} hole number")
+        if hole is None or not 1 <= hole <= 18:
+            raise ValueError(f"{field} hole number must be between 1 and 18.")
+        if hole in seen:
+            raise ValueError(f"{field} lists hole {hole} more than once.")
+        seen.add(hole)
+        yards = normalize_whole_number(raw_yards, f"{field}[{hole}]")
+        if yards is None:
+            continue
+        if not 0 <= yards <= MAX_HOLE_YARDAGE:
+            raise ValueError(f"{field} value must be between 0 and {MAX_HOLE_YARDAGE}.")
+        out[hole] = yards
+    return out
+
+
+def _string_keyed_yardages(value, info):
+    yardages = normalize_hole_yardages(value, info.field_name)
+    return None if yardages is None else {str(hole): yards for hole, yards in yardages.items()}
+
+
+def reject_duplicate_course_entries(
+    hole_numbers: Iterable[int], handicaps: Iterable[Optional[int]], tee_colors: Iterable[str]
+) -> None:
+    """Course rows the database keeps unique: hole numbers, handicap ranks and tee names (any case)."""
+    numbers = list(hole_numbers)
+    if len(set(numbers)) != len(numbers):
+        raise ValueError("Course holes cannot repeat a hole number.")
+    ranks = [rank for rank in handicaps if rank is not None]
+    if len(set(ranks)) != len(ranks):
+        raise ValueError("Course holes cannot repeat a handicap rank.")
+    colors = [color.casefold() for color in tee_colors]
+    if len(set(colors)) != len(colors):
+        raise ValueError("Each tee needs a different name.")
 
 
 class HoleScoreInput(BaseModel):
@@ -43,9 +92,12 @@ class HoleScoreInput(BaseModel):
     )(_whole_number_before)
 
     @model_validator(mode="after")
-    def _validate_putts_vs_strokes(self):
-        if self.putts is not None and self.strokes is not None and self.putts > self.strokes:
-            raise ValueError("putts cannot exceed strokes.")
+    def _validate_parts_vs_strokes(self):
+        if self.strokes is not None:
+            if self.putts is not None and self.putts > self.strokes:
+                raise ValueError("putts cannot exceed strokes.")
+            if self.shots_to_green is not None and self.shots_to_green > self.strokes:
+                raise ValueError("shots_to_green cannot exceed strokes.")
         return self
 
 
@@ -53,33 +105,17 @@ class TeeInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     color: str = Field(..., min_length=1, max_length=40)
-    slope_rating: Optional[float] = Field(default=None, ge=55, le=155)
-    course_rating: Optional[float] = Field(default=None, ge=55, le=85)
-    hole_yardages: Dict[str, Optional[int]] = Field(default_factory=dict)
+    slope_rating: Optional[float] = SLOPE_RATING
+    course_rating: Optional[float] = COURSE_RATING
+    hole_yardages: Dict[str, int] = Field(default_factory=dict)
 
     _normalize_ratings = field_validator("slope_rating", "course_rating", mode="before")(_decimal_before)
-    _normalize_yardages = field_validator("hole_yardages", mode="before")(_yardages_before)
+    _normalize_yardages = field_validator("hole_yardages", mode="before")(_string_keyed_yardages)
 
     @field_validator("color")
     @classmethod
     def _validate_color(cls, v: str) -> str:
         return sanitize_user_text(v, field_name="tee color", max_length=40)
-
-    @field_validator("hole_yardages")
-    @classmethod
-    def _validate_hole_yardages(cls, value: Dict[str, Optional[int]]) -> Dict[str, Optional[int]]:
-        out: Dict[str, Optional[int]] = {}
-        for raw_k, raw_v in (value or {}).items():
-            try:
-                hole_num = int(raw_k)
-            except Exception as exc:  # noqa: BLE001
-                raise ValueError("hole_yardages keys must be hole numbers (1-18).") from exc
-            if not (1 <= hole_num <= 18):
-                raise ValueError("hole_yardages hole number must be between 1 and 18.")
-            if raw_v is not None and not (50 <= int(raw_v) <= 700):
-                raise ValueError("hole_yardages value must be between 50 and 700.")
-            out[str(hole_num)] = int(raw_v) if raw_v is not None else None
-        return out
 
 
 class CourseHoleInput(BaseModel):
@@ -102,9 +138,9 @@ class SaveRoundRequest(BaseModel):
     course_name: Optional[str] = None
     course_location: Optional[str] = None
     tee_box: Optional[str] = None
-    tee_slope_rating: Optional[float] = Field(default=None, ge=55, le=155)
-    tee_course_rating: Optional[float] = Field(default=None, ge=55, le=85)
-    tee_yardages: Optional[Dict[str, Optional[int]]] = None
+    tee_slope_rating: Optional[float] = SLOPE_RATING
+    tee_course_rating: Optional[float] = COURSE_RATING
+    tee_yardages: Optional[Dict[str, int]] = None
     all_tees: Optional[List[TeeInput]] = None
     hole_scores: List[HoleScoreInput] = Field(..., min_length=1, max_length=18)
     course_holes: Optional[List[CourseHoleInput]] = None
@@ -112,7 +148,7 @@ class SaveRoundRequest(BaseModel):
     notes: Optional[str] = None
 
     _normalize_ratings = field_validator("tee_slope_rating", "tee_course_rating", mode="before")(_decimal_before)
-    _normalize_yardages = field_validator("tee_yardages", mode="before")(_yardages_before)
+    _normalize_yardages = field_validator("tee_yardages", mode="before")(_string_keyed_yardages)
 
     @field_validator("course_id")
     @classmethod
@@ -175,8 +211,8 @@ class SaveRoundRequest(BaseModel):
         hole_nums = [h.hole_number for h in self.hole_scores]
         if len(set(hole_nums)) != len(hole_nums):
             raise ValueError("hole_scores cannot contain duplicate hole_number values.")
-        if self.course_holes:
-            course_hole_nums = [h.hole_number for h in self.course_holes]
-            if len(set(course_hole_nums)) != len(course_hole_nums):
-                raise ValueError("course_holes cannot contain duplicate hole_number values.")
+        holes = self.course_holes or []
+        reject_duplicate_course_entries(
+            (h.hole_number for h in holes), (h.handicap for h in holes), (t.color for t in self.all_tees or [])
+        )
         return self

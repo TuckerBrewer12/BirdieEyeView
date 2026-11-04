@@ -250,3 +250,29 @@ async def test_list_friendships_returns_serialized_records(friendship_database):
 
     assert [(response.id, response.status) for response in responses] == [(str(record["id"]), "pending")]
     db.friendships.list_for_user.assert_awaited_once_with(str(user_id), status=None)
+
+
+# ================================================================
+# API domain: goals, course access and error translation
+# ================================================================
+
+
+@pytest.mark.parametrize(("field", "value"), [("scoring_goal", 18), ("scoring_goal", 270), ("scoring_goal_nine", 9), ("scoring_goal_nine", 135)])
+def test_update_user_request_accepts_domain_goal_bounds(field, value):
+    assert getattr(users.UpdateUserRequest(**{field: value}), field) == value
+
+
+@pytest.mark.parametrize(("field", "value"), [("scoring_goal", 17), ("scoring_goal", 271), ("scoring_goal_nine", 8), ("scoring_goal_nine", 136)])
+def test_update_user_request_rejects_goals_outside_domain_bounds(field, value):
+    with pytest.raises(ValidationError):
+        users.UpdateUserRequest(**{field: value})
+
+
+def test_user_tee_request_omits_unknown_yardages():
+    assert users.CreateUserTeeRequest(name="Blue", hole_yardages={"1": 400, "2": None}).hole_yardages == {1: 400}
+
+
+@pytest.mark.parametrize("yardages", [{"1": [400]}, {"1": 350.9}, {"01": 350, "1": 400}])
+def test_user_tee_request_rejects_malformed_yardages(yardages):
+    with pytest.raises(ValidationError):
+        users.CreateUserTeeRequest(name="Blue", hole_yardages=yardages)
