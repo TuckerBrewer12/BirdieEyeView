@@ -511,7 +511,7 @@ async def test_invalid_hole_score_is_rejected_not_rewritten():
     service, db, _ = make_service()
     request = make_save_request()
     request.hole_scores[0] = HoleScoreInput.model_construct(
-        hole_number=1, strokes=2, putts=3, net_score=None, shots_to_green=None,
+        hole_number=1, strokes=2, putts=3, shots_to_green=None,
         fairway_hit=None, green_in_regulation=None, par_played=None, handicap_played=None,
     )
 

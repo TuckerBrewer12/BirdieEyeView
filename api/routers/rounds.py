@@ -126,7 +126,6 @@ async def update_round(
                     putts=hs.putts,
                     fairway_hit=hs.fairway_hit,
                     green_in_regulation=hs.green_in_regulation,
-                    net_score=hs.net_score,
                     shots_to_green=hs.shots_to_green,
                     par_played=hs.par_played,
                     handicap_played=hs.handicap_played,

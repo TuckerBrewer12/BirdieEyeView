@@ -115,7 +115,6 @@ class HoleScoreInput(BaseModel):
     hole_number: int = Field(..., ge=1, le=18)
     strokes: Optional[int] = Field(default=None, ge=1, le=15)
     putts: Optional[int] = Field(default=None, ge=0, le=10)
-    net_score: Optional[int] = None
     shots_to_green: Optional[int] = Field(default=None, ge=1, le=10)
     fairway_hit: Optional[bool] = None
     green_in_regulation: Optional[bool] = None
@@ -123,7 +122,7 @@ class HoleScoreInput(BaseModel):
     handicap_played: Optional[int] = Field(default=None, ge=1, le=18)
 
     _normalize_numbers = field_validator(
-        "hole_number", "strokes", "putts", "net_score", "shots_to_green", "par_played", "handicap_played",
+        "hole_number", "strokes", "putts", "shots_to_green", "par_played", "handicap_played",
         mode="before",
     )(whole_number_field)
 
