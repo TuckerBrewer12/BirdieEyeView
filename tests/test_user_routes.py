@@ -250,3 +250,93 @@ async def test_list_friendships_returns_serialized_records(friendship_database):
 
     assert [(response.id, response.status) for response in responses] == [(str(record["id"]), "pending")]
     db.friendships.list_for_user.assert_awaited_once_with(str(user_id), status=None)
+
+
+# ================================================================
+# API domain: goals, course access and error translation
+# ================================================================
+
+
+@pytest.mark.parametrize(("field", "value"), [("scoring_goal", 18), ("scoring_goal", 270), ("scoring_goal_nine", 9), ("scoring_goal_nine", 135)])
+def test_update_user_request_accepts_domain_goal_bounds(field, value):
+    assert getattr(users.UpdateUserRequest(**{field: value}), field) == value
+
+
+@pytest.mark.parametrize(("field", "value"), [("scoring_goal", 17), ("scoring_goal", 271), ("scoring_goal_nine", 8), ("scoring_goal_nine", 136)])
+def test_update_user_request_rejects_goals_outside_domain_bounds(field, value):
+    with pytest.raises(ValidationError):
+        users.UpdateUserRequest(**{field: value})
+
+
+def test_user_tee_request_omits_unknown_yardages():
+    assert users.CreateUserTeeRequest(name="Blue", hole_yardages={"1": 400, "2": None}).hole_yardages == {1: 400}
+
+
+@pytest.mark.parametrize("yardages", [{"1": [400]}, {"1": 350.9}, {"01": 350, "1": 400}])
+def test_user_tee_request_rejects_malformed_yardages(yardages):
+    with pytest.raises(ValidationError):
+        users.CreateUserTeeRequest(name="Blue", hole_yardages=yardages)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("owner", "status"), [("other", 403), (None, 201)], ids=["other-users-private-course", "master-course"]
+)
+async def test_create_user_tee_only_links_accessible_courses(tee_database, owner, status):
+    user_id, _, user, user_tee, db = tee_database
+    course_id = uuid4()
+    db.courses.get_course = AsyncMock(return_value=make_course(course_id, owner=uuid4() if owner else None))
+    request = users.CreateUserTeeRequest(name="Blue", course_id=course_id)
+
+    if status == 403:
+        with pytest.raises(HTTPException) as raised:
+            await users.create_user_tee(user_id, request, db, user)
+        assert raised.value.status_code == 403
+        db.user_tees.create_user_tee.assert_not_awaited()
+    else:
+        assert await users.create_user_tee(user_id, request, db, user) == user_tee
+
+
+@pytest.mark.asyncio
+async def test_create_user_tee_rejects_missing_course(tee_database):
+    user_id, _, user, _, db = tee_database
+    db.courses.get_course = AsyncMock(return_value=None)
+
+    with pytest.raises(HTTPException) as raised:
+        await users.create_user_tee(user_id, users.CreateUserTeeRequest(name="Blue", course_id=uuid4()), db, user)
+
+    assert raised.value.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_empty_update_of_missing_user_tee_is_not_found(tee_database):
+    user_id, tee_id, user, _, db = tee_database
+    db.user_tees.update_user_tee.return_value = None  # the repository's no-op lookup
+
+    with pytest.raises(HTTPException) as raised:
+        await users.update_user_tee(user_id, tee_id, users.UpdateUserTeeRequest(), db, user)
+
+    assert raised.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_update_user_tee_maps_duplicate_to_conflict(tee_database):
+    user_id, tee_id, user, _, db = tee_database
+    db.user_tees.update_user_tee.side_effect = DuplicateError()
+
+    with pytest.raises(HTTPException) as raised:
+        await users.update_user_tee(user_id, tee_id, users.UpdateUserTeeRequest(name="White"), db, user)
+
+    assert raised.value.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_friend_request_to_unknown_user_is_not_found(friendship_database):
+    _, _, user, _, db = friendship_database
+    db.users.get_user = AsyncMock(return_value=None)
+
+    with pytest.raises(HTTPException) as raised:
+        await users.send_friend_request(users.SendFriendRequest(addressee_user_id=uuid4()), db, user)
+
+    assert raised.value.status_code == 404
+    db.friendships.send_request.assert_not_awaited()

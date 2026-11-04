@@ -6,30 +6,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing import List, Optional
 from database.db_manager import DatabaseManager
-from database.exceptions import ConflictError, DuplicateError, NotFoundError
+from database.exceptions import ConflictError, DuplicateError, IntegrityError, NotFoundError
+from api.course_access import load_linkable_course
 from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
+from api.request_models import COURSE_RATING, SLOPE_RATING, decimal_field, normalize_hole_yardages
+from api.schemas import UserResponse, UserTeeResponse
 from models import User, UserTee
 from analytics import handicap as hcap
 
 router = APIRouter()
-
-
-def _validate_hole_yardages_dict(value: Optional[dict]) -> Optional[dict]:
-    if value is None:
-        return None
-    out = {}
-    for raw_k, raw_v in value.items():
-        try:
-            hole_num = int(raw_k)
-        except Exception as exc:  # noqa: BLE001
-            raise ValueError("hole_yardages keys must be numeric hole numbers.") from exc
-        if not (1 <= hole_num <= 18):
-            raise ValueError("hole_yardages hole number must be between 1 and 18.")
-        if raw_v is not None and not (50 <= int(raw_v) <= 700):
-            raise ValueError("hole_yardages value must be between 50 and 700.")
-        out[hole_num] = int(raw_v) if raw_v is not None else None
-    return out
 
 
 class CreateUserTeeRequest(BaseModel):
@@ -37,28 +23,32 @@ class CreateUserTeeRequest(BaseModel):
 
     course_id: Optional[UUID] = None
     name: str = Field(..., min_length=1, max_length=60)
-    slope_rating: Optional[float] = Field(default=None, ge=55, le=155)
-    course_rating: Optional[float] = Field(default=None, ge=55, le=85)
+    slope_rating: Optional[float] = SLOPE_RATING
+    course_rating: Optional[float] = COURSE_RATING
     hole_yardages: Optional[dict] = None
+
+    _normalize_ratings = field_validator("slope_rating", "course_rating", mode="before")(decimal_field)
 
     @field_validator("name")
     @classmethod
     def _validate_name(cls, v: str) -> str:
         return sanitize_user_text(v, field_name="name", max_length=60)
 
-    @field_validator("hole_yardages")
+    @field_validator("hole_yardages", mode="before")
     @classmethod
-    def _validate_hole_yardages(cls, value: Optional[dict]) -> Optional[dict]:
-        return _validate_hole_yardages_dict(value)
+    def _validate_hole_yardages(cls, value: object) -> Optional[dict]:
+        return normalize_hole_yardages(value)
 
 
 class UpdateUserTeeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     name: Optional[str] = None
-    slope_rating: Optional[float] = Field(default=None, ge=55, le=155)
-    course_rating: Optional[float] = Field(default=None, ge=55, le=85)
+    slope_rating: Optional[float] = SLOPE_RATING
+    course_rating: Optional[float] = COURSE_RATING
     hole_yardages: Optional[dict] = None
+
+    _normalize_ratings = field_validator("slope_rating", "course_rating", mode="before")(decimal_field)
 
     @field_validator("name")
     @classmethod
@@ -67,10 +57,10 @@ class UpdateUserTeeRequest(BaseModel):
             return None
         return sanitize_user_text(v, field_name="name", max_length=60)
 
-    @field_validator("hole_yardages")
+    @field_validator("hole_yardages", mode="before")
     @classmethod
-    def _validate_hole_yardages(cls, value: Optional[dict]) -> Optional[dict]:
-        return _validate_hole_yardages_dict(value)
+    def _validate_hole_yardages(cls, value: object) -> Optional[dict]:
+        return normalize_hole_yardages(value)
 
 
 class UpdateUserRequest(BaseModel):
@@ -78,7 +68,9 @@ class UpdateUserRequest(BaseModel):
 
     home_course_id: Optional[UUID] = None
     handicap: Optional[float] = Field(default=None, ge=-10, le=54)
-    scoring_goal: Optional[int] = Field(default=None, ge=50, le=150)
+    # Same bounds as models.user.User: 18-hole goal 18-270, nine-hole goal 9-135.
+    scoring_goal: Optional[int] = Field(default=None, strict=True, ge=18, le=270)
+    scoring_goal_nine: Optional[int] = Field(default=None, strict=True, ge=9, le=135)
 
     @field_validator("handicap", mode="before")
     @classmethod
@@ -144,7 +136,7 @@ def _friendship_row_to_response(row: dict) -> FriendshipResponse:
     )
 
 
-@router.get("/by-email/{email}")
+@router.get("/by-email/{email}", response_model=UserResponse)
 async def get_user_by_email(
     email: str,
     db: DatabaseManager = Depends(get_db),
@@ -162,7 +154,7 @@ async def get_user_by_email(
     return user
 
 
-@router.get("/{user_id}")
+@router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -176,7 +168,7 @@ async def get_user(
     return user
 
 
-@router.patch("/{user_id}")
+@router.patch("/{user_id}", response_model=UserResponse)
 async def update_user(
     user_id: UUID,
     req: UpdateUserRequest,
@@ -189,11 +181,9 @@ async def update_user(
     updates = req.model_dump(exclude_unset=True)
     if "home_course_id" in updates and updates["home_course_id"] is not None:
         home_course_id = str(updates["home_course_id"])
-        course = await db.courses.get_course(home_course_id)
-        if not course:
-            raise HTTPException(400, "Selected home course was not found")
-        if course.user_id and str(course.user_id) != str(current_user.id):
-            raise HTTPException(403, "Forbidden")
+        await load_linkable_course(
+            db, home_course_id, str(current_user.id), missing_detail="Selected home course was not found"
+        )
         updates["home_course_id"] = home_course_id
     if "handicap" in updates:
         updates["handicap_index"] = updates.pop("handicap")
@@ -229,7 +219,7 @@ async def get_user_handicap(
 # User tees
 # ================================================================
 
-@router.get("/{user_id}/tees", response_model=List[UserTee])
+@router.get("/{user_id}/tees", response_model=List[UserTeeResponse])
 async def get_user_tees(
     user_id: UUID,
     course_id: Optional[UUID] = Query(None),
@@ -242,7 +232,7 @@ async def get_user_tees(
     return await db.user_tees.get_user_tees(str(user_id), course_id=str(course_id) if course_id else None)
 
 
-@router.post("/{user_id}/tees", response_model=UserTee, status_code=201)
+@router.post("/{user_id}/tees", response_model=UserTeeResponse, status_code=201)
 async def create_user_tee(
     user_id: UUID,
     req: CreateUserTeeRequest,
@@ -252,6 +242,8 @@ async def create_user_tee(
     """Create a user tee configuration."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, "Forbidden")
+    if req.course_id:
+        await load_linkable_course(db, req.course_id, str(current_user.id), missing_detail="Linked course was not found")
     tee = UserTee(
         user_id=str(user_id),
         course_id=str(req.course_id) if req.course_id else None,
@@ -264,9 +256,11 @@ async def create_user_tee(
         return await db.user_tees.create_user_tee(tee)
     except DuplicateError:
         raise HTTPException(409, f"User tee '{req.name}' already exists for this course")
+    except IntegrityError as error:
+        raise HTTPException(422, str(error)) from error
 
 
-@router.put("/{user_id}/tees/{tee_id}", response_model=UserTee)
+@router.put("/{user_id}/tees/{tee_id}", response_model=UserTeeResponse)
 async def update_user_tee(
     user_id: UUID,
     tee_id: UUID,
@@ -279,9 +273,17 @@ async def update_user_tee(
         raise HTTPException(403, "Forbidden")
     updates = req.model_dump(exclude_none=True)
     try:
-        return await db.user_tees.update_user_tee(str(tee_id), user_id=str(user_id), **updates)
+        tee = await db.user_tees.update_user_tee(str(tee_id), user_id=str(user_id), **updates)
     except NotFoundError:
         raise HTTPException(404, "User tee not found")
+    except DuplicateError as error:
+        raise HTTPException(409, "A user tee with that name already exists for this course") from error
+    except IntegrityError as error:
+        raise HTTPException(422, str(error)) from error
+    # An empty update is a lookup, which returns None instead of raising for a missing tee.
+    if tee is None:
+        raise HTTPException(404, "User tee not found")
+    return tee
 
 
 @router.delete("/{user_id}/tees/{tee_id}", status_code=204)
@@ -321,6 +323,8 @@ async def send_friend_request(
         if not target_user or not target_user.id:
             raise HTTPException(404, "Friend code not found")
         addressee_user_id = str(target_user.id)
+    elif not await db.users.get_user(str(addressee_user_id)):
+        raise HTTPException(404, "User not found")
 
     try:
         row = await db.friendships.send_request(str(current_user.id), str(addressee_user_id))

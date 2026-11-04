@@ -9,7 +9,7 @@ from api.auth_schemas import (
     RegisterRequest,
     ResendVerificationRequest,
 )
-from api.request_models import HoleScoreInput, SaveRoundRequest, TeeInput
+from api.request_models import HoleScoreInput, SaveRoundRequest, TeeInput, normalize_hole_yardages
 
 
 def test_register_request_normalizes_profile_fields():
@@ -62,13 +62,14 @@ def test_save_round_request_normalizes_text_fields():
     )
 
 
-def test_save_round_request_preserves_partial_tee_yardages():
+def test_save_round_request_omits_unknown_tee_yardages():
     request = SaveRoundRequest(
         hole_scores=[HoleScoreInput(hole_number=1)],
         all_tees=[TeeInput(color="Blue", hole_yardages={"1": 410, "2": None})],
     )
 
-    assert request.all_tees[0].hole_yardages == {"1": 410, "2": None}
+    # Unknown yardages are omitted, the domain's representation of an unknown hole.
+    assert request.all_tees[0].hole_yardages == {"1": 410}
 
 
 @pytest.mark.parametrize(
@@ -92,10 +93,65 @@ def test_save_round_request_preserves_partial_tee_yardages():
         },
         {
             "hole_scores": [{"hole_number": 1}],
-            "all_tees": [{"color": "Blue", "hole_yardages": {"1": 49}}],
+            "all_tees": [{"color": "Blue", "hole_yardages": {"1": 1001}}],
         },
     ],
 )
 def test_save_round_request_rejects_invalid_payload(payload):
     with pytest.raises(ValidationError):
         SaveRoundRequest.model_validate(payload)
+
+
+# ================================================================
+# Shared contracts (API domain)
+# ================================================================
+
+
+@pytest.mark.parametrize(
+    ("yardages", "expected"),
+    [
+        ({"1": 0, "2": 1000}, {1: 0, 2: 1000}),
+        ({1: "350", "18": 410.0}, {1: 350, 18: 410}),
+        ({"3": None}, {}),
+    ],
+)
+def test_hole_yardages_accept_zero_to_one_thousand(yardages, expected):
+    assert normalize_hole_yardages(yardages) == expected
+
+
+@pytest.mark.parametrize(
+    "yardages",
+    [{"1": 1001}, {"1": -1}, {"19": 400}, {"01": 350, "1": 400}, {"1": 350.9}, {"1": [400]}, {"1": True}, ["400"]],
+    ids=["too-long", "negative", "hole-19", "same-hole-twice", "fraction", "list", "bool", "not-a-map"],
+)
+def test_hole_yardages_reject_values_that_need_guessing(yardages):
+    with pytest.raises(ValueError):
+        normalize_hole_yardages(yardages)
+
+
+def test_tee_input_accepts_nine_hole_rating():
+    assert TeeInput(color="Blue", course_rating=35.0).course_rating == 35.0
+
+
+@pytest.mark.parametrize(("field", "value"), [("course_rating", 0), ("course_rating", "nan"), ("slope_rating", 54)])
+def test_tee_input_rejects_invalid_ratings(field, value):
+    with pytest.raises(ValidationError):
+        TeeInput(color="Blue", **{field: value})
+
+
+def test_hole_score_rejects_shots_to_green_above_strokes():
+    with pytest.raises(ValidationError, match="shots_to_green cannot exceed strokes"):
+        HoleScoreInput(hole_number=1, strokes=3, shots_to_green=4)
+
+
+def test_save_round_request_rejects_repeated_handicap_rank():
+    with pytest.raises(ValidationError, match="handicap rank"):
+        SaveRoundRequest(
+            hole_scores=[HoleScoreInput(hole_number=1)],
+            course_holes=[{"hole_number": 1, "handicap": 5}, {"hole_number": 2, "handicap": 5}],
+        )
+
+
+def test_register_request_rejects_boolean_handicap():
+    with pytest.raises(ValidationError):
+        RegisterRequest(name="Tucker", email="tucker@example.com", password="correct horse", handicap=True)

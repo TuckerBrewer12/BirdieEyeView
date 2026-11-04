@@ -117,7 +117,7 @@ def make_create_request():
     return courses.CreateCourseRequest(
         name=" pebble BEACH ",
         location="Monterey",
-        holes=[{"number": 1, "par": 4, "handicap": 1}],
+        holes=[{"number": n, "par": 4, "handicap": n} for n in range(1, 10)],
         tees=[{"color": "Blue", "hole_yardages": {1: 400}}],
     )
 
@@ -206,3 +206,55 @@ async def test_clone_course_maps_missing_course_to_not_found():
         await courses.clone_course(uuid4(), db, make_user(user_id))
 
     assert raised.value.status_code == 404
+
+
+# ================================================================
+# API domain: course structure, bounds and error translation
+# ================================================================
+
+NINE_HOLES = [{"number": n, "par": 4, "handicap": n} for n in range(1, 10)]
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"holes": [{"number": 1, "par": 4}]},
+        {"holes": NINE_HOLES[:8] + [{"number": 9, "par": 4, "handicap": 1}]},
+        {"holes": NINE_HOLES, "tees": [{"color": "Blue"}, {"color": "blue"}]},
+        {"tees": [{"color": "Blue", "hole_yardages": {"19": -20}}]},
+    ],
+    ids=["partial-holes", "repeated-handicap", "repeated-tee-name", "bad-yardage"],
+)
+def test_create_course_request_rejects_invalid_structure(payload):
+    with pytest.raises(ValueError):
+        courses.CreateCourseRequest(name="Pebble", **payload)
+
+
+def test_create_course_request_accepts_nine_or_eighteen_holes():
+    assert len(courses.CreateCourseRequest(name="Pebble", holes=NINE_HOLES).holes) == 9
+
+
+def test_update_course_request_accepts_nine_hole_par_and_nullable_location():
+    request = courses.UpdateCourseRequest(par=36, location=None)
+
+    assert request.model_dump(exclude_unset=True) == {"par": 36, "location": None}
+
+
+def test_update_course_request_rejects_null_name():
+    with pytest.raises(ValueError, match="name cannot be null"):
+        courses.UpdateCourseRequest(name=None)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("error", "status"), [(DuplicateError(), 409), (IntegrityError("bad"), 422)])
+async def test_update_course_maps_repository_errors(error, status):
+    user_id = uuid4()
+    course_id = uuid4()
+    db = make_mock_database()
+    db.courses.get_course = AsyncMock(return_value=make_course(course_id, owner=user_id))
+    db.courses.update_course = AsyncMock(side_effect=error)
+
+    with pytest.raises(HTTPException) as raised:
+        await courses.update_course(course_id, courses.UpdateCourseRequest(name="Pebble"), db, make_user(user_id))
+
+    assert raised.value.status_code == status

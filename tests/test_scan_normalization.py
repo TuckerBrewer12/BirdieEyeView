@@ -69,3 +69,13 @@ def test_save_request_accepts_numeric_text():
 
     assert (request.hole_scores[0].strokes, request.hole_scores[0].putts) == (5, 2)
     assert (request.course_holes[0].par, request.all_tees[0].hole_yardages) == (4, {"1": 385})
+
+
+@pytest.mark.parametrize(
+    ("normalize", "value"),
+    [(normalize_whole_number, "9" * 400), (normalize_whole_number, "1" * 7), (normalize_decimal, 10**400)],
+    ids=["400-digit-text", "seven-digit-text", "huge-int-rating"],
+)
+def test_oversized_numbers_are_rejected_as_values_not_overflow(normalize, value):
+    with pytest.raises(ScanValueError):
+        normalize(value, "field")

@@ -169,3 +169,16 @@ async def test_link_course_rejects_mismatched_layout_without_server_error():
         await rounds.link_course_to_round(round_id, rounds.LinkCourseRequest(course_id=course_id), db, make_user(user_id))
 
     assert raised.value.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_update_round_keeps_not_found_status(owned_round_setup):
+    user_id, round_id, _, db = owned_round_setup
+    db.rounds.update_hole_scores = AsyncMock(return_value=None)
+
+    with pytest.raises(HTTPException) as raised:
+        await rounds.update_round(
+            round_id, rounds.UpdateRoundRequest(hole_scores=[{"hole_number": 1, "strokes": 4}]), db, make_user(user_id)
+        )
+
+    assert raised.value.status_code == 404

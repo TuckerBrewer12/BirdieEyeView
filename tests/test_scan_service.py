@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
+from pydantic import ValidationError
 
 from api.request_models import HoleScoreInput, SaveRoundRequest, TeeInput
 from database.exceptions import DuplicateError
@@ -499,12 +500,11 @@ async def test_incomplete_new_course_is_rejected_before_any_write(overrides, mes
 
 @pytest.mark.asyncio
 async def test_duplicate_tee_names_are_rejected():
-    service, db, _ = make_service()
     tees = [{"color": "Blue", "hole_yardages": yardage_map(BLUE)}, {"color": "BLUE", "hole_yardages": {}}]
 
-    with pytest.raises(ScanSaveRejected, match="different name"):
-        await service.save_reviewed_scan(make_save_request(all_tees=tees))
-    assert_nothing_written(db)
+    # The request rejects them before the service runs.
+    with pytest.raises(ValidationError, match="different name"):
+        make_save_request(all_tees=tees)
 
 
 @pytest.mark.asyncio

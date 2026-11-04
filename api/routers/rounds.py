@@ -10,7 +10,8 @@ from database.db_manager import DatabaseManager
 from database.exceptions import IntegrityError, NotFoundError
 from api.dependencies import get_current_user, get_db
 from api.input_validation import sanitize_user_text
-from api.schemas import RoundSummaryResponse
+from api.request_models import HoleScoreInput
+from api.schemas import RoundResponse, RoundSummaryResponse
 from models import HoleScore, User
 
 logger = logging.getLogger(__name__)
@@ -18,24 +19,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-class HoleScoreUpdate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    hole_number: int = Field(..., ge=1, le=18)
-    strokes: Optional[int] = Field(default=None, ge=1, le=15)
-    putts: Optional[int] = Field(default=None, ge=0, le=10)
-    fairway_hit: Optional[bool] = None
-    green_in_regulation: Optional[bool] = None
-    net_score: Optional[int] = None
-    shots_to_green: Optional[int] = Field(default=None, ge=1, le=10)
-    par_played: Optional[int] = Field(default=None, ge=3, le=6)
-    handicap_played: Optional[int] = Field(default=None, ge=1, le=18)
-
-    @model_validator(mode="after")
-    def _validate_putts_vs_strokes(self):
-        if self.putts is not None and self.strokes is not None and self.putts > self.strokes:
-            raise ValueError("putts cannot exceed strokes.")
-        return self
+# Editing a hole accepts exactly what saving one does.
+HoleScoreUpdate = HoleScoreInput
 
 
 class UpdateRoundRequest(BaseModel):
@@ -162,7 +147,7 @@ async def _check_course_access(course_id: UUID, current_user: User, db: Database
     return course
 
 
-@router.get("/{round_id}")
+@router.get("/{round_id}", response_model=RoundResponse)
 async def get_round(
     round_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -175,7 +160,7 @@ async def get_round(
     return round_
 
 
-@router.put("/{round_id}")
+@router.put("/{round_id}", response_model=RoundResponse)
 async def update_round(
     round_id: UUID,
     req: UpdateRoundRequest,
@@ -232,6 +217,8 @@ async def update_round(
 
         return updated
 
+    except HTTPException:
+        raise
     except NotFoundError:
         raise HTTPException(404, "Round not found")
     except IntegrityError:

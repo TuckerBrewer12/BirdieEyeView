@@ -3,15 +3,17 @@
 import logging
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 from typing import List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from api.dependencies import get_db, get_optional_current_user, get_current_user
 from api.error_responses import COURSE_SAVE_FAILED
 from api.input_validation import normalize_course_display_name, sanitize_search_query, sanitize_user_text
-from api.schemas import CourseSummaryResponse
+from api.request_models import TeeInput, reject_duplicate_course_entries, whole_number_field
+from api.schemas import CourseResponse, CourseSummaryResponse
 from models import Course, Hole, Tee, User
+from models.hole_layout import FRONT_NINE, FULL_ROUND
 from services import GolfCourseAPIService
 
 router = APIRouter()
@@ -25,19 +27,7 @@ class HoleInput(BaseModel):
     par: Optional[int] = Field(default=None, ge=3, le=6)
     handicap: Optional[int] = Field(default=None, ge=1, le=18)
 
-
-class TeeInput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    color: str = Field(..., min_length=1, max_length=40)
-    slope_rating: Optional[float] = Field(default=None, ge=55, le=155)
-    course_rating: Optional[float] = Field(default=None, ge=55, le=85)
-    hole_yardages: dict = Field(default_factory=dict)
-
-    @field_validator("color")
-    @classmethod
-    def _validate_color(cls, v: str) -> str:
-        return sanitize_user_text(v, field_name="tee color", max_length=40)
+    _normalize_numbers = field_validator("number", "par", "handicap", mode="before")(whole_number_field)
 
 
 class CreateCourseRequest(BaseModel):
@@ -69,6 +59,17 @@ class CreateCourseRequest(BaseModel):
             return None
         return sanitize_user_text(v, field_name="location", max_length=140)
 
+    @model_validator(mode="after")
+    def _validate_course_structure(self):
+        reject_duplicate_course_entries(
+            (h.number for h in self.holes), (h.handicap for h in self.holes), (t.color for t in self.tees)
+        )
+        numbers = tuple(sorted(h.number for h in self.holes))
+        # The database stores a 9- or 18-hole layout; a partial hole list has neither.
+        if numbers and numbers not in (FRONT_NINE, FULL_ROUND):
+            raise ValueError("Course holes must be holes 1-9 or 1-18.")
+        return self
+
 
 class UpdateCourseRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
@@ -76,7 +77,17 @@ class UpdateCourseRequest(BaseModel):
     name: Optional[str] = None
     external_course_id: Optional[str] = None
     location: Optional[str] = None
-    par: Optional[int] = Field(default=None, ge=54, le=90)
+    # Same bounds as models.course.Course and the database: 3-6 per hole for 9 or 18 holes.
+    par: Optional[int] = Field(default=None, ge=27, le=108)
+
+    _normalize_par = field_validator("par", mode="before")(whole_number_field)
+
+    @model_validator(mode="after")
+    def _reject_null_name(self):
+        # name is required on a course; location and the provider ID may be cleared with null.
+        if "name" in self.model_fields_set and self.name is None:
+            raise ValueError("name cannot be null.")
+        return self
 
     @field_validator("name")
     @classmethod
@@ -188,7 +199,7 @@ async def search_courses(
     return [summary for summary in map(_summarize_external_course, ext_items) if summary.external_course_id][:20]
 
 
-@router.get("/{course_id}")
+@router.get("/{course_id}", response_model=CourseResponse)
 async def get_course(
     course_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -210,27 +221,33 @@ async def create_course(
     current_user: User = Depends(get_current_user),
 ):
     """Create a custom course for a user."""
-    holes = [Hole(number=h.number, par=h.par, handicap=h.handicap) for h in req.holes]
-    tees = [
-        Tee(
-            color=t.color,
-            slope_rating=t.slope_rating,
-            course_rating=t.course_rating,
-            hole_yardages=t.hole_yardages,
-        )
-        for t in req.tees
-    ]
     effective_user_id = str(user_id) if user_id else str(current_user.id)
     if user_id and str(user_id) != str(current_user.id):
         raise HTTPException(403, "Forbidden")
+    try:
+        holes = [Hole(number=h.number, par=h.par, handicap=h.handicap) for h in req.holes]
+        tees = [
+            Tee(
+                color=t.color,
+                slope_rating=t.slope_rating,
+                course_rating=t.course_rating,
+                hole_yardages={int(hole): yards for hole, yards in t.hole_yardages.items()},
+            )
+            for t in req.tees
+        ]
+    except ValidationError as error:
+        raise HTTPException(422, "Course data is invalid.") from error
 
-    course = Course(
-        name=req.name,
-        external_course_id=req.external_course_id,
-        location=req.location,
-        holes=holes,
-        tees=tees,
-    )
+    try:
+        course = Course(
+            name=req.name,
+            external_course_id=req.external_course_id,
+            location=req.location,
+            holes=holes,
+            tees=tees,
+        )
+    except ValidationError as error:
+        raise HTTPException(422, "Course data is invalid.") from error
     try:
         created = await db.courses.create_course(course, user_id=effective_user_id)
         return _summarize_course(created)
@@ -256,7 +273,12 @@ async def update_course(
         raise HTTPException(403, "Cannot edit a master course. Clone it first.")
 
     updates = req.model_dump(exclude_unset=True)
-    updated = await db.courses.update_course(str(course_id), user_id=str(current_user.id), **updates)
+    try:
+        updated = await db.courses.update_course(str(course_id), user_id=str(current_user.id), **updates)
+    except DuplicateError as error:
+        raise HTTPException(409, "A course with that name already exists for this user") from error
+    except IntegrityError as error:
+        raise HTTPException(422, "These course changes are invalid.") from error
     if not updated:
         raise HTTPException(404, "Course not found or not owned by user")
     return _summarize_course(updated)
