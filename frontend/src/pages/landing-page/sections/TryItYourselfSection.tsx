@@ -12,9 +12,8 @@ import {
   RoundScorecard,
 } from "@/brand";
 import { useFilePreview } from "@/platform/useFilePreview";
+import { SCAN_STEPS } from "@/domain/scan";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
-
-const STEPS = ["Course and tees", "Scores and putts", "Yardages and par", "Checking totals"];
 
 export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfViewModel }) {
   const previewUrl = useFilePreview(viewModel.photo);
@@ -83,7 +82,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
           >
             <ScanProgress
               label="Reading your card"
-              steps={STEPS}
+              steps={SCAN_STEPS}
               phase={viewModel.phase}
               className="mx-auto max-w-sm"
             />

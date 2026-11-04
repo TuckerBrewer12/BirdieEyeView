@@ -15,6 +15,9 @@ interface ScanProgressProps {
 
 type StepState = "done" | "now" | "next";
 
+const { box, radius } = tokens.spinner;
+const centre = box / 2;
+
 const STEP_TEXT: Record<StepState, string> = {
   done: "font-medium text-foreground-secondary",
   now: "font-semibold text-foreground",
@@ -43,10 +46,14 @@ function ScanProgress({ label, steps, phase, className }: ScanProgressProps) {
       className={cn("gap-3.5 p-5", className)}
     >
       <div className="flex items-center gap-3">
-        <svg aria-hidden viewBox="0 0 36 36" className="size-9 shrink-0 animate-spin motion-reduce:animate-none">
-          <circle cx="18" cy="18" r="14" fill="none" stroke={tokens.color.muted} strokeWidth={tokens.lineWidth.ring} />
+        <svg
+          aria-hidden
+          viewBox={`0 0 ${box} ${box}`}
+          className="size-9 shrink-0 animate-spin motion-reduce:animate-none"
+        >
+          <circle cx={centre} cy={centre} r={radius} fill="none" stroke={tokens.color.muted} strokeWidth={tokens.lineWidth.ring} />
           <path
-            d="M18 4 A14 14 0 0 1 32 18"
+            d={`M${centre} ${centre - radius} A${radius} ${radius} 0 0 1 ${centre + radius} ${centre}`}
             fill="none"
             stroke={tokens.color.primary}
             strokeWidth={tokens.lineWidth.ring}
@@ -69,7 +76,7 @@ function ScanProgress({ label, steps, phase, className }: ScanProgressProps) {
               <span
                 aria-hidden
                 className={cn(
-                  "flex size-4.5 shrink-0 items-center justify-center rounded-full border-2",
+                  "flex size-5 shrink-0 items-center justify-center rounded-full border-2",
                   STEP_MARK[state],
                 )}
               >

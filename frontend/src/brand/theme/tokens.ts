@@ -456,6 +456,12 @@ export const lineWidth = {
   outline: 1.5,
 };
 
+/** The spinner on a scan in flight, in its SVG's own units: a ring, a quarter of it lit. */
+export const spinner = {
+  box: 36,
+  radius: 14,
+};
+
 /** Border widths that are not Tailwind's own steps: `border-callout`, the edge of an `Alert`. */
 export const borderWidth = {
   callout: lineWidth.outline,

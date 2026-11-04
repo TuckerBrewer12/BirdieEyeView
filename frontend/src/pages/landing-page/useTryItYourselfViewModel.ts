@@ -3,12 +3,8 @@ import { preparePhotoForUpload } from "@/data/photoUpload";
 import { scanRepository, type ScanRepository } from "@/data/scanRepository";
 import { useCardText, type PickedPhoto } from "@/data/useCardText";
 import { Round } from "@/domain";
+import { SCAN_STEPS, SCAN_STEP_HOLD_MS } from "@/domain/scan";
 import { useExtractScorecard } from "@/data/useExtractScorecard";
-
-/** How many steps the card walks through while a scan is read; the section names them. */
-const PHASE_COUNT = 4;
-
-const PHASE_HOLD_MS = 3500;
 
 export interface TryItYourselfViewModel {
   step: "upload" | "processing" | "review";
@@ -47,8 +43,8 @@ export function useTryItYourselfViewModel(
   useEffect(() => {
     if (step !== "processing") return;
     const timer = setInterval(
-      () => setPhase((current) => Math.min(current + 1, PHASE_COUNT - 1)),
-      PHASE_HOLD_MS,
+      () => setPhase((current) => Math.min(current + 1, SCAN_STEPS.length - 1)),
+      SCAN_STEP_HOLD_MS,
     );
     return () => {
       clearInterval(timer);
