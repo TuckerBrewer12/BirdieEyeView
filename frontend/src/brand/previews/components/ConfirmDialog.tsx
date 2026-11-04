@@ -1,5 +1,7 @@
 import { ConfirmDialog } from "@/brand/components/ConfirmDialog";
 
+const noop = () => {};
+
 /**
  * The board's two layouts side by side: the same dialog in a wide box
  * centres, in a phone-wide one rises from the bottom. It fills the window
@@ -17,13 +19,13 @@ export default function ConfirmDialogPreview() {
         </div>
         <div className="relative flex-1 overflow-hidden rounded-xl bg-border">
           <ConfirmDialog
-            defaultOpen
+            open
+            onConfirm={noop}
             contained
             initialFocus={false}
             title="Delete this round?"
             detail="Half Moon Bay · Jun 15 · 78. This can’t be undone."
             confirmLabel="Delete round"
-            destructive
           />
         </div>
       </div>
@@ -34,13 +36,13 @@ export default function ConfirmDialogPreview() {
         </div>
         <div className="relative flex-1 overflow-hidden rounded-2xl bg-border">
           <ConfirmDialog
-            defaultOpen
+            open
+            onConfirm={noop}
             contained
             initialFocus={false}
             title="Delete this round?"
             detail="Half Moon Bay · Jun 15 · 78"
             confirmLabel="Delete round"
-            destructive
           />
         </div>
       </div>

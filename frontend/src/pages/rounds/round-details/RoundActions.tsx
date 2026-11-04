@@ -1,5 +1,5 @@
 import { ChevronLeft, Share2, Pencil, Trash2 } from "lucide-react";
-import { Alert, AlertDescription, Button } from "@/brand";
+import { Button, ConfirmDialog } from "@/brand";
 
 export interface RoundActionsProps {
   editMode: boolean;
@@ -23,7 +23,7 @@ export interface RoundActionsProps {
  *
  * This lives with the page rather than in the kit because it is all intent and
  * no data — eight callbacks and five flags, none of which describe a round.
- * The kit supplies the Button and Alert; the page owns the choreography.
+ * The kit supplies the Button and ConfirmDialog; the page owns the choreography.
  */
 export function RoundActions({
   editMode,
@@ -57,32 +57,6 @@ export function RoundActions({
               Cancel
             </Button>
           </>
-        ) : confirmDelete ? (
-          <Alert
-            variant="destructive"
-            className="flex w-auto items-center gap-2 bg-destructive/5 py-1.5"
-          >
-            <AlertDescription className="text-body text-destructive">
-              Delete this round?
-            </AlertDescription>
-            <Button
-              variant="linkMuted"
-              size="xs"
-              className="h-auto p-0 text-body font-bold text-destructive hover:text-destructive"
-              disabled={deleting}
-              onClick={onConfirmDelete}
-            >
-              {deleting ? "Deleting…" : "Yes"}
-            </Button>
-            <Button
-              variant="linkMuted"
-              size="xs"
-              className="h-auto p-0 text-body"
-              onClick={onCancelDelete}
-            >
-              Cancel
-            </Button>
-          </Alert>
         ) : (
           <>
             <Button variant="outline" size="icon" className="rounded-full" title="Share" aria-label="Share" disabled={sharing} onClick={onShare}>
@@ -97,6 +71,18 @@ export function RoundActions({
           </>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={(open) => {
+          if (!open) onCancelDelete();
+        }}
+        title="Delete this round?"
+        detail="This can’t be undone."
+        confirmLabel={deleting ? "Deleting…" : "Delete round"}
+        pending={deleting}
+        onConfirm={onConfirmDelete}
+      />
     </div>
   );
 }

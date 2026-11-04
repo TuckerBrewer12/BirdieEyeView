@@ -55,7 +55,7 @@ test("course link failed", async ({ roundDetail }) => {
 test("delete confirmation", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapDelete();
-  await roundDetail.capture("round-detail-delete-confirm.png");
+  await roundDetail.capture("round-detail-delete-confirm.png", { fullPage: false });
 });
 
 test("comparison charts", async ({ roundDetail }) => {
