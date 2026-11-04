@@ -11,6 +11,7 @@ from api.course_access import load_linkable_course
 from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
 from api.request_models import COURSE_RATING, SLOPE_RATING, normalize_hole_yardages
+from api.schemas import UserResponse, UserTeeResponse
 from models import User, UserTee
 from analytics import handicap as hcap
 
@@ -131,7 +132,7 @@ def _friendship_row_to_response(row: dict) -> FriendshipResponse:
     )
 
 
-@router.get("/by-email/{email}")
+@router.get("/by-email/{email}", response_model=UserResponse)
 async def get_user_by_email(
     email: str,
     db: DatabaseManager = Depends(get_db),
@@ -149,7 +150,7 @@ async def get_user_by_email(
     return user
 
 
-@router.get("/{user_id}")
+@router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -163,7 +164,7 @@ async def get_user(
     return user
 
 
-@router.patch("/{user_id}")
+@router.patch("/{user_id}", response_model=UserResponse)
 async def update_user(
     user_id: UUID,
     req: UpdateUserRequest,
@@ -214,7 +215,7 @@ async def get_user_handicap(
 # User tees
 # ================================================================
 
-@router.get("/{user_id}/tees", response_model=List[UserTee])
+@router.get("/{user_id}/tees", response_model=List[UserTeeResponse])
 async def get_user_tees(
     user_id: UUID,
     course_id: Optional[UUID] = Query(None),
@@ -227,7 +228,7 @@ async def get_user_tees(
     return await db.user_tees.get_user_tees(str(user_id), course_id=str(course_id) if course_id else None)
 
 
-@router.post("/{user_id}/tees", response_model=UserTee, status_code=201)
+@router.post("/{user_id}/tees", response_model=UserTeeResponse, status_code=201)
 async def create_user_tee(
     user_id: UUID,
     req: CreateUserTeeRequest,
@@ -255,7 +256,7 @@ async def create_user_tee(
         raise HTTPException(422, str(error)) from error
 
 
-@router.put("/{user_id}/tees/{tee_id}", response_model=UserTee)
+@router.put("/{user_id}/tees/{tee_id}", response_model=UserTeeResponse)
 async def update_user_tee(
     user_id: UUID,
     tee_id: UUID,

@@ -11,7 +11,7 @@ from api.dependencies import get_db, get_optional_current_user, get_current_user
 from api.error_responses import COURSE_SAVE_FAILED
 from api.input_validation import normalize_course_display_name, sanitize_search_query, sanitize_user_text
 from api.request_models import TeeInput, reject_duplicate_course_entries
-from api.schemas import CourseSummaryResponse
+from api.schemas import CourseResponse, CourseSummaryResponse
 from models import Course, Hole, Tee, User
 from models.hole_layout import FRONT_NINE, FULL_ROUND
 from services import GolfCourseAPIService
@@ -195,7 +195,7 @@ async def search_courses(
     return [summary for summary in map(_summarize_external_course, ext_items) if summary.external_course_id][:20]
 
 
-@router.get("/{course_id}")
+@router.get("/{course_id}", response_model=CourseResponse)
 async def get_course(
     course_id: UUID,
     db: DatabaseManager = Depends(get_db),

@@ -11,7 +11,7 @@ from database.exceptions import IntegrityError, NotFoundError
 from api.dependencies import get_current_user, get_db
 from api.input_validation import sanitize_user_text
 from api.request_models import HoleScoreInput
-from api.schemas import RoundSummaryResponse
+from api.schemas import RoundResponse, RoundSummaryResponse
 from models import HoleScore, User
 
 logger = logging.getLogger(__name__)
@@ -147,7 +147,7 @@ async def _check_course_access(course_id: UUID, current_user: User, db: Database
     return course
 
 
-@router.get("/{round_id}")
+@router.get("/{round_id}", response_model=RoundResponse)
 async def get_round(
     round_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -160,7 +160,7 @@ async def get_round(
     return round_
 
 
-@router.put("/{round_id}")
+@router.put("/{round_id}", response_model=RoundResponse)
 async def update_round(
     round_id: UUID,
     req: UpdateRoundRequest,
