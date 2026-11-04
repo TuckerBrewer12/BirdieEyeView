@@ -158,8 +158,17 @@ export class TheLabRobot {
     return this.shown("[data-slot=performance-shape]");
   }
 
+  /** The Compare vs. menu, open. */
+  async openCompareMenu(): Promise<this> {
+    await this.shapeCard().locator("[data-slot=comparison-picker]").getByRole("combobox").click();
+    await expect(this.page.getByRole("listbox")).toBeVisible();
+    await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
+    return this;
+  }
+
   async compareWith(label: string): Promise<this> {
-    await this.pickFrom(this.shapeCard().locator("[data-slot=comparison-picker]"), label);
+    await this.openCompareMenu();
+    await this.page.getByRole("option", { name: label, exact: true }).click();
     return this;
   }
 
