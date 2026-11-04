@@ -228,22 +228,16 @@ def test_user_tee_request_rejects_malformed_yardages(yardages):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    ("owner", "status"), [("other", 403), (None, 201)], ids=["other-users-private-course", "master-course"]
-)
-async def test_create_user_tee_only_links_accessible_courses(tee_database, owner, status):
+@pytest.mark.parametrize("owner", ["master", "self"], ids=["master-course", "own-private-course"])
+async def test_create_user_tee_links_accessible_courses(tee_database, owner):
+    # Another user's private course is rejected over HTTP in test_api_http_contracts.py.
     user_id, _, user, user_tee, db = tee_database
     course_id = uuid4()
-    db.courses.get_course = AsyncMock(return_value=make_course(course_id, owner=uuid4() if owner else None))
+    db.courses.get_course = AsyncMock(return_value=make_course(course_id, owner=user_id if owner == "self" else None))
     request = users.CreateUserTeeRequest(name="Blue", course_id=course_id)
 
-    if status == 403:
-        with pytest.raises(HTTPException) as raised:
-            await users.create_user_tee(user_id, request, db, user)
-        assert raised.value.status_code == 403
-        db.user_tees.create_user_tee.assert_not_awaited()
-    else:
-        assert await users.create_user_tee(user_id, request, db, user) == user_tee
+    assert await users.create_user_tee(user_id, request, db, user) == user_tee
+    assert db.user_tees.create_user_tee.await_args.args[0].course_id == str(course_id)
 
 
 @pytest.mark.asyncio

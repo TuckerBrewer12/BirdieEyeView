@@ -1,6 +1,7 @@
 """WHS-based estimate: eligibility, precision, selection context and one index for every caller."""
 
 from datetime import datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -9,8 +10,8 @@ import pytest
 
 import analytics.handicap as handicap
 from api.routers import stats, users
-from models.hole_layout import FRONT_NINE
-from tests.analytics_builders import course, par_round
+from models.hole_layout import FRONT_NINE, FULL_ROUND
+from tests.analytics_builders import course, par_round, round_
 from tests.helpers import make_mock_database, make_round_summary, make_user
 
 START = datetime(2026, 1, 1)
@@ -113,3 +114,62 @@ def test_user_handicap_index_uses_the_seed_and_reset():
     user = SimpleNamespace(handicap=18.2, last_handicap_update=None)
 
     assert handicap.user_handicap_index([], user) == 18.2
+
+
+# ================================================================
+# Eligibility and the WHS table, with hand-written expectations
+# ================================================================
+
+# Rounds available -> (lowest differentials used, adjustment), written out here rather than read
+# from production so a wrong table entry fails.
+EXPECTED_TABLE = {
+    3: (1, -2.0), 4: (1, -1.0), 5: (1, 0.0), 6: (2, -1.0), 7: (2, 0.0), 8: (2, 0.0),
+    9: (3, 0.0), 10: (3, 0.0), 11: (3, 0.0), 12: (4, 0.0), 13: (4, 0.0), 14: (4, 0.0),
+    15: (5, 0.0), 16: (5, 0.0), 17: (6, 0.0), 18: (6, 0.0), 19: (7, 0.0), 20: (8, 0.0),
+}
+
+
+def distinct_overs(count):
+    """Distinct differentials in a scrambled order, so the lowest aren't simply the first."""
+    return [(i * 7) % 23 + 1 for i in range(count)]
+
+
+def expected_index(differentials):
+    used, adjustment = EXPECTED_TABLE[len(differentials)]
+    value = sum(sorted(differentials)[:used]) / used + adjustment
+    return float(Decimal(str(value)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
+
+
+def test_partial_eighteen_hole_round_is_not_a_differential_and_does_not_change_the_index():
+    rated = course(18, rating=72.0, slope=113)
+    partial = round_({n: {"strokes": 3} for n in range(1, 10)}, course_obj=rated, tee_box="Blue",
+                     intended=FULL_ROUND, round_id="partial", date=START + timedelta(days=100))
+    history = rated_rounds([10, 12, 14, 16, 18])
+
+    assert handicap.score_differentials_per_round([partial])[0]["differential"] is None
+    assert handicap.handicap_index(history + [partial]) == handicap.handicap_index(history) == 10.0
+    trend = handicap.handicap_trend(history + [partial])
+    assert trend[-1]["used_in_hi"] is None
+
+
+@pytest.mark.parametrize("count", range(3, 21))
+def test_index_follows_the_whs_table_for_every_history_size(count):
+    overs = distinct_overs(count)
+
+    assert handicap.handicap_index(rated_rounds(overs)) == expected_index(overs)
+
+
+@pytest.mark.parametrize("count", [0, 1, 2])
+def test_fewer_than_three_rounds_have_no_index(count):
+    assert handicap.handicap_index(rated_rounds(distinct_overs(count))) is None
+
+
+def test_only_the_latest_twenty_differentials_count():
+    oldest_is_best = [0] + distinct_overs(20)  # the 0 is round 1 of 21, outside the window
+
+    assert handicap.handicap_index(rated_rounds(oldest_is_best)) == expected_index(distinct_overs(20))
+
+
+def test_six_rounds_average_the_two_lowest_minus_one():
+    # The audit's worked example: (3 + 8) / 2 - 1 = 4.5.
+    assert handicap.handicap_index(rated_rounds([12, 3, 14, 8, 13, 15])) == 4.5

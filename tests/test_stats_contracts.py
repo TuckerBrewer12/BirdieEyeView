@@ -1,6 +1,6 @@
 """Stats endpoints: complete rounds by format, one response shape, scopes and errors."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -126,15 +126,23 @@ async def test_goal_report_distinguishes_missing_user_from_missing_goal():
 
 
 @pytest.mark.asyncio
-async def test_round_comparison_searches_the_full_history():
+async def test_round_comparison_finds_an_old_round_and_compares_it_with_earlier_rounds_only():
     user_id = uuid4()
     db = make_mock_database()
-    target = par_round(round_id=str(uuid4()))
-    db.rounds.get_rounds_for_user = AsyncMock(return_value=[target])
+    # 250 rounds, more than the old 200-round cap; the target is the second-oldest.
+    history = [par_round(over=10 + (i % 5), round_id=str(uuid4()), date=datetime(2020, 1, 1) + timedelta(days=i))
+               for i in range(250)]
+    target = history[1]
+    db.rounds.get_rounds_for_user = AsyncMock(return_value=list(reversed(history)))  # repository: newest first
+
     result = await stats.get_round_comparison(user_id, target.id, db, make_user(user_id))
 
-    assert "score" in result
     assert db.rounds.get_rounds_for_user.await_args.kwargs["limit"] is None
+    assert set(result) == {"score", "putts", "gir", "three_putts", "putts_per_gir", "scrambling"}
+    selected, last_five = result["score"][0], result["score"][1]
+    assert (selected["round_id"], selected["primary_value"]) == (target.id, 83)
+    # Only the two rounds up to the target (82 then 83) are in its trailing window.
+    assert (last_five["sample_size"], last_five["primary_value"]) == (2, 82.5)
 
 
 @pytest.mark.asyncio

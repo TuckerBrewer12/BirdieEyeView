@@ -191,23 +191,18 @@ async def test_clone_course_maps_missing_course_to_not_found():
 NINE_HOLES = [{"number": n, "par": 4, "handicap": n} for n in range(1, 10)]
 
 
-@pytest.mark.parametrize(
-    "payload",
-    [
-        {"holes": [{"number": 1, "par": 4}]},
-        {"holes": NINE_HOLES[:8] + [{"number": 9, "par": 4, "handicap": 1}]},
-        {"holes": NINE_HOLES, "tees": [{"color": "Blue"}, {"color": "blue"}]},
-        {"tees": [{"color": "Blue", "hole_yardages": {"19": -20}}]},
-    ],
-    ids=["partial-holes", "repeated-handicap", "repeated-tee-name", "bad-yardage"],
-)
-def test_create_course_request_rejects_invalid_structure(payload):
-    with pytest.raises(ValueError):
-        courses.CreateCourseRequest(name="Pebble", **payload)
+# Partial layouts, bad yardages and repeated tee names are covered through HTTP in
+# test_api_http_contracts.py; the repeated handicap rank is only checked here.
+def test_create_course_request_rejects_a_repeated_handicap_rank():
+    with pytest.raises(ValueError, match="handicap rank"):
+        courses.CreateCourseRequest(name="Pebble", holes=NINE_HOLES[:8] + [{"number": 9, "par": 4, "handicap": 1}])
 
 
-def test_create_course_request_accepts_nine_or_eighteen_holes():
-    assert len(courses.CreateCourseRequest(name="Pebble", holes=NINE_HOLES).holes) == 9
+@pytest.mark.parametrize("count", [9, 18])
+def test_create_course_request_accepts_nine_or_eighteen_holes(count):
+    holes = [{"number": n, "par": 4, "handicap": n} for n in range(1, count + 1)]
+
+    assert len(courses.CreateCourseRequest(name="Pebble", holes=holes).holes) == count
 
 
 def test_update_course_request_accepts_nine_hole_par_and_nullable_location():
@@ -222,7 +217,7 @@ def test_update_course_request_rejects_null_name():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("error", "status"), [(DuplicateError(), 409), (IntegrityError("bad"), 422)])
+@pytest.mark.parametrize(("error", "status"), [(IntegrityError("bad"), 422)])  # 409 is covered over HTTP
 async def test_update_course_maps_repository_errors(error, status):
     user_id = uuid4()
     course_id = uuid4()

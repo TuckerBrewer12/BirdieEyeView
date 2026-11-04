@@ -24,8 +24,9 @@ def test_rated_round_produces_differential_row():
 @pytest.mark.parametrize(
     "round_",
     [make_scoring_round(45, rated=True, holes=9), Round(id="empty")],
+    ids=["complete-nine-hole-round", "no-scores"],
 )
-def test_incomplete_round_has_no_score_differential(round_):
+def test_nine_hole_and_empty_rounds_have_no_score_differential(round_):
     row = handicap.score_differentials_per_round([round_])[0]
 
     assert row["differential"] is None
