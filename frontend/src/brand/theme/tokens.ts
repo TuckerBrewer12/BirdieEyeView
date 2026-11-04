@@ -487,8 +487,8 @@ export const gridColumns = {
   "round-preview": "var(--brand-size-date-rail) 1fr auto",
   "handicap-breakdown": "1fr auto auto auto",
   "recent-rounds": "1fr auto auto",
-  /** A label column, then three equal state columns (default, hover, disabled). */
-  "state-grid": "4.125rem repeat(3, minmax(0, 1fr))",
+  /** A label column, then two equal state columns (default, disabled). */
+  "state-grid": "6rem repeat(2, minmax(0, 1fr))",
 };
 
 /**
