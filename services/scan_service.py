@@ -17,7 +17,7 @@ from api.request_models import SaveRoundRequest, TeeInput
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError
 from models import Course, Hole, HoleScore, Round, Tee
-from models.hole_layout import FRONT_NINE, FULL_ROUND
+from models.hole_layout import FRONT_NINE, FULL_ROUND, rated_coverage
 from services.golfcourse_api_service import (
     CourseProviderNotFound,
     CourseProviderUnavailable,
@@ -310,6 +310,7 @@ class ScanService:
                         color=t.color,
                         slope_rating=t.slope_rating,
                         course_rating=t.course_rating,
+                        rating_holes=rated_coverage(numbers, t.course_rating, t.slope_rating),
                         hole_yardages=self._tee_input_yardages(t),
                     )
                     for t in scan_tees

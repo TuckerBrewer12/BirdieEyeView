@@ -247,7 +247,12 @@ class RoundRepositoryDB:
         return await self._assemble_round(conn, row)
 
     async def get_round_summaries_for_user(self, user_id: str, *, limit=100, offset=0) -> list[dict]:
-        """Aggregate the same scored/observed sets as Round without loading nested models."""
+        """Aggregate the same scored/observed sets as Round without loading nested models.
+
+        ``limit=None`` returns the full history. Each row also carries the stored ``is_complete``
+        and ``hole_count`` (9 or 18 from the round's intended holes) so callers can total complete
+        rounds by format.
+        """
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
                 """
@@ -281,7 +286,9 @@ class RoundRepositoryDB:
                        CASE WHEN observations.outside_coverage=0 THEN observations.fairways END AS fairways_hit,
                        CASE WHEN observations.outside_coverage=0 THEN observations.front_nine END AS front_nine,
                        CASE WHEN observations.outside_coverage=0 THEN observations.back_nine END AS back_nine,
-                       observations.hole_scores_summary
+                       observations.hole_scores_summary,
+                       COALESCE(r.is_complete, FALSE) AS is_complete,
+                       cardinality(coverage.expected) AS hole_count
                 FROM selected r
                 LEFT JOIN LATERAL (
                     SELECT COALESCE(r.course_total_holes,
@@ -344,12 +351,12 @@ class RoundRepositoryDB:
         self,
         user_id: str,
         *,
-        limit: int = 20,
+        limit: Optional[int] = 20,
         offset: int = 0,
         course_id: Optional[str] = None,
         date_from: Optional[date] = None,
     ) -> List[Round]:
-        """Get a user's rounds ordered by date DESC."""
+        """Get a user's rounds ordered by date DESC; ``limit=None`` returns the full history."""
         conditions = ["user_id = $1"]
         params: list = [UUID(user_id)]
         n = 2

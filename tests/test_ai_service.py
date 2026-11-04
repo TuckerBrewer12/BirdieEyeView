@@ -6,6 +6,7 @@ import pytest
 import services.ai_service as ai_module
 from models import User
 from services.ai_service import AIService
+from tests.analytics_builders import PARS_18, course, round_
 from tests.helpers import make_analytics_round
 
 
@@ -119,7 +120,7 @@ async def test_suggestions_include_ordered_comparisons(monkeypatch):
         "Par 3 Avg to Par",
         "Par 4 Avg to Par",
         "Par 5 Avg to Par",
-        "Up & Down %",
+        "Scrambling %",
         "Putts per Round",
         "Putts per GIR",
         "3-Putts per Round",
@@ -183,3 +184,45 @@ def test_insight_omits_non_actionable_metrics(method_name, metrics):
     benchmark, _ = ai_module._get_benchmark(10)
 
     assert getattr(service, method_name)(metrics, benchmark) is None
+
+
+# ================================================================
+# Confirmed bugs (real rounds)
+# ================================================================
+
+
+@pytest.mark.parametrize("handicap", [-1.0, -10.0])
+def test_plus_handicaps_use_the_lowest_band(handicap):
+    benchmark, label = ai_module._get_benchmark(handicap)
+
+    assert (benchmark, label) == (ai_module._BENCHMARKS[(0, 5)], "Plus HCP")
+
+
+def test_rounds_without_putts_are_not_an_improving_trend():
+    def played(i, putts):
+        scores = {n: {"strokes": PARS_18[n] + 1} | ({"putts": putts} if putts else {}) for n in range(1, 19)}
+        return round_(scores, course_obj=course(18), round_id=str(i))
+
+    rounds = [played(i, 3 if i < 6 else None) for i in range(3)] + [played(i, None) for i in range(3, 6)]
+
+    metrics = AIService(SimpleNamespace())._compute_raw(rounds)
+
+    assert metrics["avg_three_putts"] == 18.0
+    assert metrics["three_putt_trend"] == [18, 18, 18]
+    assert ai_module._trend_direction(metrics["three_putt_trend"]) == "stable"
+
+
+def test_scrambling_is_labeled_scrambling():
+    insight = AIService(SimpleNamespace())._insight_scrambling(
+        {"avg_scrambling": 10.0, "scrambling_rounds_with_data": 5}, ai_module._BENCHMARKS[(10, 15)]
+    )
+
+    assert (insight.category, insight.metric_label) == ("Scrambling", "Scrambling %")
+
+
+def test_putting_savings_use_the_greens_actually_hit():
+    raw = {"putts_per_gir": 2.0, "putts_per_gir_trend": [], "gir_holes_per_round": 1.0}
+
+    insight = AIService(SimpleNamespace())._insight_putting_quality(raw, ai_module._BENCHMARKS[(10, 15)])
+
+    assert "saves ~0.1 strokes/round" in insight.what_if  # 0.12 gap x 1 green, not x 8

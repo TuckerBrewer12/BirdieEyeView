@@ -13,6 +13,7 @@ from api.input_validation import normalize_email, normalize_handicap_value, sani
 from api.request_models import COURSE_RATING, SLOPE_RATING, decimal_field, normalize_hole_yardages
 from api.schemas import UserResponse, UserTeeResponse
 from models import User, UserTee
+from models.hole_layout import rated_coverage
 from analytics import handicap as hcap
 
 router = APIRouter()
@@ -199,20 +200,14 @@ async def get_user_handicap(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Return the user's current WHS Handicap Index."""
+    """Return the user's current WHS-based Handicap Index estimate."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, "Forbidden")
     user = await db.users.get_user(str(user_id))
     if not user:
         raise HTTPException(404, "User not found")
-    rounds = await db.rounds.get_rounds_for_user(str(user_id))
-    rounds_chrono = list(reversed(rounds))
-    hi = hcap.handicap_index(
-        rounds_chrono,
-        seed_handicap=user.handicap,
-        seed_set_at=user.last_handicap_update,
-    )
-    return {"handicap_index": hi}
+    history = await db.rounds.get_rounds_for_user(str(user_id), limit=None)
+    return {"handicap_index": hcap.user_handicap_index(history, user)}
 
 
 # ================================================================
@@ -242,14 +237,19 @@ async def create_user_tee(
     """Create a user tee configuration."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, "Forbidden")
+    linked = None
     if req.course_id:
-        await load_linkable_course(db, req.course_id, str(current_user.id), missing_detail="Linked course was not found")
+        linked = await load_linkable_course(
+            db, req.course_id, str(current_user.id), missing_detail="Linked course was not found"
+        )
+    layout = linked.get_expected_holes() if linked is not None else None
     tee = UserTee(
         user_id=str(user_id),
         course_id=str(req.course_id) if req.course_id else None,
         name=req.name,
         slope_rating=req.slope_rating,
         course_rating=req.course_rating,
+        rating_holes=rated_coverage(layout, req.course_rating, req.slope_rating),
         hole_yardages=(req.hole_yardages or {}),
     )
     try:

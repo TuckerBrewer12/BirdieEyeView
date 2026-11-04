@@ -18,7 +18,7 @@ async def test_dashboard_summarizes_round_history(monkeypatch, to_par):
     summary = {**make_round_summary(round_id), 'to_par': to_par}
     db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[summary])
     db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])
-    monkeypatch.setattr(stats.hcap, "handicap_index", lambda rounds: 10.0)
+    monkeypatch.setattr(stats.hcap, "user_handicap_index", lambda rounds, user: 10.0)
 
     dashboard = await stats.get_dashboard(user_id, db, user)
 
@@ -33,7 +33,7 @@ async def test_analytics_returns_empty_state():
     user = make_user(user_id)
     db = make_mock_database()
     db.users.get_user = AsyncMock(return_value=user)
-    db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], []])
+    db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])
 
     analytics = await stats.get_analytics(user_id, 50, None, None, db, user)
 
@@ -69,7 +69,7 @@ async def test_goal_report_uses_goal_engine(monkeypatch, stats_database):
     user_id, _, _, user, db = stats_database
     monkeypatch.setattr(
         "analytics.goals.goal_report",
-        lambda rounds, scoring_goal, home_rounds: {"gap": 5},
+        lambda rounds, scoring_goal, home_rounds, **kwargs: {"gap": 5},
     )
 
     report = await stats.get_goal_report(user_id, 50, db, user)

@@ -592,3 +592,14 @@ def test_build_tees_returns_empty_without_tee_data():
     service, _, _ = make_service()
 
     assert service._build_tees(make_save_request(tee_box=None, all_tees=None)) == []
+
+
+@pytest.mark.asyncio
+async def test_saved_ratings_record_the_holes_they_cover():
+    service, db, _ = make_service()
+
+    await service.save_reviewed_scan(make_save_request(external_course_id="ext-1"))
+
+    course = db.courses.create_course.await_args.args[0]
+    assert course.get_tee("Blue").rating_holes == tuple(range(1, 10))  # nine-hole card
+    assert course.get_tee("White").rating_holes is None  # no rating, nothing to cover

@@ -13,7 +13,7 @@ from api.input_validation import normalize_course_display_name, sanitize_search_
 from api.request_models import TeeInput, reject_duplicate_course_entries, whole_number_field
 from api.schemas import CourseResponse, CourseSummaryResponse
 from models import Course, Hole, Tee, User
-from models.hole_layout import FRONT_NINE, FULL_ROUND
+from models.hole_layout import FRONT_NINE, FULL_ROUND, rated_coverage
 from services import GolfCourseAPIService
 
 router = APIRouter()
@@ -224,6 +224,7 @@ async def create_course(
     effective_user_id = str(user_id) if user_id else str(current_user.id)
     if user_id and str(user_id) != str(current_user.id):
         raise HTTPException(403, "Forbidden")
+    layout = tuple(sorted(h.number for h in req.holes))
     try:
         holes = [Hole(number=h.number, par=h.par, handicap=h.handicap) for h in req.holes]
         tees = [
@@ -231,6 +232,7 @@ async def create_course(
                 color=t.color,
                 slope_rating=t.slope_rating,
                 course_rating=t.course_rating,
+                rating_holes=rated_coverage(layout, t.course_rating, t.slope_rating),
                 hole_yardages={int(hole): yards for hole, yards in t.hole_yardages.items()},
             )
             for t in req.tees

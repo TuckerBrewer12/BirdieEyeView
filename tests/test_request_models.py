@@ -64,7 +64,7 @@ def test_save_round_request_normalizes_text_fields():
 
 def test_save_round_request_omits_unknown_tee_yardages():
     request = SaveRoundRequest(
-        hole_scores=[HoleScoreInput(hole_number=1)],
+        hole_scores=[HoleScoreInput(hole_number=1, strokes=4)],
         all_tees=[TeeInput(color="Blue", hole_yardages={"1": 410, "2": None})],
     )
 
@@ -76,23 +76,23 @@ def test_save_round_request_omits_unknown_tee_yardages():
     "payload",
     [
         {"hole_scores": [{"hole_number": 1, "strokes": 2, "putts": 3}]},
-        {"hole_scores": [{"hole_number": 1}, {"hole_number": 1}]},
+        {"hole_scores": [{"hole_number": 1, "strokes": 4}, {"hole_number": 1, "strokes": 4}]},
         {
-            "hole_scores": [{"hole_number": 1}],
+            "hole_scores": [{"hole_number": 1, "strokes": 4}],
             "course_holes": [{"hole_number": 1}, {"hole_number": 1}],
         },
-        {"hole_scores": [{"hole_number": 1}], "date": "not-a-date"},
-        {"hole_scores": [{"hole_number": 1}], "course_id": "bad"},
+        {"hole_scores": [{"hole_number": 1, "strokes": 4}], "date": "not-a-date"},
+        {"hole_scores": [{"hole_number": 1, "strokes": 4}], "course_id": "bad"},
         {
-            "hole_scores": [{"hole_number": 1}],
+            "hole_scores": [{"hole_number": 1, "strokes": 4}],
             "all_tees": [{"color": "Blue", "hole_yardages": {"x": 100}}],
         },
         {
-            "hole_scores": [{"hole_number": 1}],
+            "hole_scores": [{"hole_number": 1, "strokes": 4}],
             "all_tees": [{"color": "Blue", "hole_yardages": {"19": 100}}],
         },
         {
-            "hole_scores": [{"hole_number": 1}],
+            "hole_scores": [{"hole_number": 1, "strokes": 4}],
             "all_tees": [{"color": "Blue", "hole_yardages": {"1": 1001}}],
         },
     ],
@@ -147,7 +147,7 @@ def test_hole_score_rejects_shots_to_green_above_strokes():
 def test_save_round_request_rejects_repeated_handicap_rank():
     with pytest.raises(ValidationError, match="handicap rank"):
         SaveRoundRequest(
-            hole_scores=[HoleScoreInput(hole_number=1)],
+            hole_scores=[HoleScoreInput(hole_number=1, strokes=4)],
             course_holes=[{"hole_number": 1, "handicap": 5}, {"hole_number": 2, "handicap": 5}],
         )
 
@@ -155,3 +155,8 @@ def test_save_round_request_rejects_repeated_handicap_rank():
 def test_register_request_rejects_boolean_handicap():
     with pytest.raises(ValidationError):
         RegisterRequest(name="Tucker", email="tucker@example.com", password="correct horse", handicap=True)
+
+
+def test_save_round_request_needs_at_least_one_score():
+    with pytest.raises(ValidationError, match="at least one hole"):
+        SaveRoundRequest(hole_scores=[HoleScoreInput(hole_number=1), HoleScoreInput(hole_number=2)])

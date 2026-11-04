@@ -31,12 +31,13 @@ def test_incomplete_round_has_no_score_differential(round_):
     assert row["differential"] is None
 
 
-@pytest.mark.parametrize(
-    ("round_", "expected"),
-    [(make_scoring_round(90), 18.0), (make_scoring_round(45, holes=9), 9.0)],
-)
-def test_unrated_round_uses_par_fallback(round_, expected):
-    assert handicap._get_differential_for_round(round_) == expected
+def test_unrated_round_uses_par_fallback():
+    assert handicap._get_differential_for_round(make_scoring_round(90)) == 18.0
+
+
+def test_nine_hole_rounds_are_not_used_yet():
+    # The WHS nine-hole method needs an expected score; until then nine-hole rounds don't count.
+    assert handicap._get_differential_for_round(make_scoring_round(45, holes=9)) is None
 
 
 def test_partial_round_rejects_full_round_par():
@@ -96,16 +97,17 @@ def dated_rounds(monkeypatch):
     return rounds
 
 
+def eligible_values(rounds, **seed):
+    options = {"seed_handicap": None, "transition_rounds": 10, "seed_set_at": None} | seed
+    return [d.value for d in handicap._eligible(handicap._differentials(rounds), **options)]
+
+
 def test_seed_handicap_filters_transition_rounds(dated_rounds):
-    assert handicap._eligible_differentials(dated_rounds, seed_handicap=15.0, transition_rounds=2) == [10.0, 22.0]
+    assert eligible_values(dated_rounds, seed_handicap=15.0, transition_rounds=2) == [10.0, 22.0]
 
 
 def test_seed_handicap_honors_seed_date(dated_rounds):
-    assert handicap._eligible_differentials(
-        dated_rounds,
-        seed_handicap=15.0,
-        seed_set_at=datetime(2025, 1, 15),
-    ) == [10.0, 22.0]
+    assert eligible_values(dated_rounds, seed_handicap=15.0, seed_set_at=datetime(2025, 1, 15)) == [10.0, 22.0]
 
 
 @pytest.mark.parametrize(("round_slice", "expected"), [(slice(None, 1), 15.0), (slice(1, 2), 10.0)])
@@ -127,26 +129,21 @@ def test_handicap_trend_calculates_rolling_index(monkeypatch):
     assert [entry["handicap_index"] for entry in trend] == [None, None, 8.0, 9.0]
 
 
-def test_handicap_annotation_prefers_recent_tie():
-    trend = [
-        {"differential": 12.0, "handicap_index": None},
-        {"differential": 10.0, "handicap_index": None},
-        {"differential": 10.0, "handicap_index": 8.0},
-        {"differential": 14.0, "handicap_index": 9.0},
-    ]
+def test_trend_marks_the_rounds_the_current_index_uses_preferring_recent_ties(monkeypatch):
+    rounds = [Round(id=str(index)) for index in range(4)]
+    differentials = {"0": 12.0, "1": 10.0, "2": 10.0, "3": 14.0}
+    monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: differentials[item.id])
 
-    handicap.annotate_used_in_hi(trend)
+    trend = handicap.handicap_trend(rounds)
 
-    assert (trend[1]["used_in_hi"], trend[2]["used_in_hi"]) == (False, True)
+    assert [entry["used_in_hi"] for entry in trend] == [False, False, True, False]
     assert all(entry["hi_threshold"] == 10.0 for entry in trend)
 
 
-def test_handicap_annotation_handles_short_history():
-    trend = [{"differential": None}, {"differential": 8.0}]
+def test_trend_with_short_history_marks_nothing(monkeypatch):
+    rounds = [Round(id="a"), Round(id="b")]
+    monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: {"a": None, "b": 8.0}[item.id])
 
-    handicap.annotate_used_in_hi(trend)
+    trend = handicap.handicap_trend(rounds)
 
-    assert trend == [
-        {"differential": None, "hi_threshold": None, "used_in_hi": None},
-        {"differential": 8.0, "hi_threshold": None, "used_in_hi": False},
-    ]
+    assert [(e["used_in_hi"], e["hi_threshold"]) for e in trend] == [(None, None), (False, None)]
