@@ -120,7 +120,7 @@ export function CourseLinkSearch({
                 size="icon-sm"
                 aria-label="Close"
                 onClick={onClose}
-                className="-mt-1 -mr-1 text-muted-foreground"
+                className="-mt-1 -mr-1"
               >
                 <X />
               </Button>
@@ -149,7 +149,7 @@ export function CourseLinkSearch({
             id={listId}
             role="listbox"
             aria-label="Matching courses"
-            className="border-t border-chart-grid p-1.5"
+            className="border-t border-border p-1.5"
           >
             {results.map((course, index) => (
               <ResultRow
@@ -167,14 +167,14 @@ export function CourseLinkSearch({
         )}
 
         {results.length > 0 && settled && offerName && (
-          <div className="flex items-center justify-between gap-2 border-t border-chart-grid py-1.5 pr-1.5 pl-3.5 text-body-sm text-muted-foreground">
+          <div className="flex items-center justify-between gap-2 border-t border-border py-1.5 pr-1.5 pl-3.5 text-body-sm text-muted-foreground">
             <span>Not the right course?</span>
             <SaveAsButton name={trimmed} onUseCustomName={onUseCustomName} />
           </div>
         )}
 
         {results.length > 0 && (
-          <div className="flex justify-between border-t border-chart-grid px-3.5 py-2 text-label text-muted-foreground">
+          <div className="flex justify-between border-t border-border px-3.5 py-2 text-label text-muted-foreground">
             <span>↑ ↓ to move · Enter to link</span>
             <span>Esc to close</span>
           </div>
@@ -208,17 +208,7 @@ function SaveAsButton({
   outlined?: boolean;
 }) {
   return (
-    <Button
-      variant={outlined ? "outline" : "ghost"}
-      size={outlined ? "lg" : "default"}
-      className={cn(
-        "text-body font-semibold",
-        outlined
-          ? "border-input bg-card px-3 text-foreground"
-          : "shrink-0 text-primary hover:text-primary",
-      )}
-      onClick={() => onUseCustomName?.(name)}
-    >
+    <Button variant={outlined ? "outline" : "link"} onClick={() => onUseCustomName?.(name)}>
       Save as “{name}”
     </Button>
   );
@@ -244,11 +234,7 @@ function StatusRow({
         <div className="text-body font-semibold text-foreground">{name}</div>
         <div className="text-body-sm text-muted-foreground">{detail}</div>
       </div>
-      <Button
-        variant="ghost"
-        className="shrink-0 px-2.5 text-body font-semibold text-primary hover:text-primary"
-        onClick={onAction}
-      >
+      <Button variant="link" className="shrink-0" onClick={onAction}>
         {actionLabel}
       </Button>
     </Card>
