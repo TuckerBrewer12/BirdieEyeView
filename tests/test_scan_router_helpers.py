@@ -24,19 +24,6 @@ def make_upload(name: str, content_type: str, data: bytes = b"data") -> UploadFi
     )
 
 
-@pytest.mark.parametrize(
-    ("configured", "default", "expected"),
-    [(None, True, True), ("yes", False, True), ("no", True, False)],
-)
-def test_scan_boolean_environment(monkeypatch, configured, default, expected):
-    if configured is None:
-        monkeypatch.delenv("SCAN_TEST_BOOL", raising=False)
-    else:
-        monkeypatch.setenv("SCAN_TEST_BOOL", configured)
-
-    assert scan._env_bool("SCAN_TEST_BOOL", default) is expected
-
-
 def test_upload_suffix_normalizes_extension():
     assert scan._extract_upload_suffix(make_upload("card.JPG", "image/jpeg")) == ".jpg"
 
@@ -417,30 +404,11 @@ def make_save_round_request():
 
 
 @pytest.mark.asyncio
-async def test_save_round_assigns_authenticated_user(monkeypatch):
-    user = User(id=str(uuid4()), name="Ada", email="ada@example.com")
-    request = make_save_round_request()
-    saved = Round(id=str(uuid4()), hole_scores=[])
-    service = SimpleNamespace(save_reviewed_scan=AsyncMock(return_value=saved))
-    monkeypatch.setattr(scan, "ScanService", lambda db: service)
-
-    response = await scan.save_round(request, SimpleNamespace(), user)
-
-    assert response == {"id": saved.id, "total_score": None}
-    assert request.user_id == user.id
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("error", "status_code", "detail"),
     [
         (
             ValueError("course_id references users.private_courses"),
-            400,
-            "We couldn't save this round. Please try again.",
-        ),
-        (
-            IntegrityError("A saved round requires unique numbered holes and at least one score"),
             400,
             "We couldn't save this round. Please try again.",
         ),

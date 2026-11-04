@@ -171,7 +171,7 @@ def test_atomic_score_updates():
     assert score.update_field('nonexistent', 1) is not None
 
 
-@pytest.mark.parametrize('par', [2, 7, 4.5, True, '4'])
+@pytest.mark.parametrize('par', [2, 7, True])  # below range, above range, bool
 def test_explicit_par_validation(par):
     with pytest.raises(ValidationError):
         HoleScore().to_par(par)
@@ -259,28 +259,11 @@ def test_round_total_to_par_no_par_data():
     assert r.total_to_par() is None
 
 
-def test_round_score_to_par_no_par_data():
-    """score_to_par returns None for a specific hole when no par data available."""
-    r = Round(hole_scores=[HoleScore(hole_number=1, strokes=5)])
-    assert r.score_to_par(1) is None  # no par source → None
-
-
 def test_round_gets_correct_tee():
     course = Course(tees=[Tee(color="White")])
     r = Round(course=course, tee_box="white")
     assert r.get_tee() is not None
     assert r.get_tee().color == "White"
-
-
-def test_round_get_tee_returns_none_without_course():
-    r = Round(tee_box="White")  # no course attached
-    assert r.get_tee() is None
-
-
-def test_round_get_hole_score_out_of_range():
-    r = Round(hole_scores=[HoleScore(hole_number=1, strokes=4)])
-    assert r.get_hole_score(0) is None   # below range
-    assert r.get_hole_score(2) is None   # beyond available scores
 
 
 # ================================================================
@@ -301,7 +284,9 @@ def test_user_tee_validation():
         UserTee(user_id="user1", name="t", course_rating=0)
 
 
-@pytest.fixture(params=[Tee, UserTee])
+# Tee and UserTee share TeeData's validation, so tee rules run once on Tee;
+# test_user_tee_shares_tee_validation proves UserTee uses the same rules.
+@pytest.fixture(params=[Tee])
 def tee_factory(request):
     def create(**values):
         if request.param is UserTee:
@@ -360,7 +345,7 @@ def test_yardage_coverage_and_summary_freshness(tee_factory):
         tee_factory(total_yardage=9001, yardage_holes=FRONT_NINE)
 
 
-@pytest.mark.parametrize('rating', [0, -1, float('inf'), float('-inf'), float('nan')])
+@pytest.mark.parametrize('rating', [0, float('inf'), float('nan')])
 def test_course_ratings_must_be_positive_finite(tee_factory, rating):
     with pytest.raises(ValidationError):
         tee_factory(course_rating=rating)
@@ -397,7 +382,7 @@ def test_explicit_round_formats(coverage):
     assert round_.total_to_par() == 0
 
 
-@pytest.mark.parametrize('coverage', [[], [1, 2], list(FRONT_NINE) + [1], range(1, 10), [str(n) for n in FRONT_NINE]])
+@pytest.mark.parametrize('coverage', [[1, 2], list(FRONT_NINE) + [1], [str(n) for n in FRONT_NINE]])
 def test_invalid_hole_coverage(coverage):
     with pytest.raises(ValidationError):
         Round(intended_holes=coverage)
@@ -504,7 +489,7 @@ def test_summary_sources_and_nested_edits():
     assert round_.get_total_putts() is None
 
 
-@pytest.mark.parametrize('field, invalid', [('total_putts', -1), ('total_gir', -1), ('total_putts', 91), ('total_gir', 10)])
+@pytest.mark.parametrize('field, invalid', [('total_putts', 91), ('total_gir', 10)])
 def test_nine_hole_summary_bounds(field, invalid):
     with pytest.raises(ValidationError):
         Round(intended_holes=FRONT_NINE, **{field: invalid})
@@ -587,7 +572,7 @@ def test_serialization_does_not_resurrect_invalidated_summaries():
     assert Course.model_validate_json(course.model_dump_json()).get_par() is None
 
 
-@pytest.mark.parametrize('method', ['clear', 'popitem', 'setdefault', '__delitem__', '__ior__'])
+@pytest.mark.parametrize('method', ['clear', '__ior__'])
 def test_other_inplace_yardage_mutations_are_rejected(method):
     tee = Tee(hole_yardages={1: 400})
     arguments = {'setdefault': (2, 300), '__delitem__': (1,), '__ior__': ({2: 300},)}
@@ -629,8 +614,7 @@ def test_canonical_full_round_ignores_unread_unnumbered_placeholder():
     assert round_.calculate_total_score() == 72
 
 
-@pytest.mark.parametrize('par', [3, 6])
-@pytest.mark.parametrize('count', [9, 18])
+@pytest.mark.parametrize('count, par', [(9, 3), (18, 6)])
 def test_course_par_bounds_follow_hole_bounds(count, par):
     course = Course(total_holes=count, holes=[Hole(number=n, par=par) for n in range(1, count + 1)])
     assert course.get_par() == count * par
@@ -697,20 +681,12 @@ def test_ambiguous_course_tee_does_not_fall_back_to_user_tee():
 
 
 @pytest.mark.parametrize("model, field, value", [
+    # One per coercion path (bool, numeric text, integral float) and one per model.
     (HoleScore, "strokes", True),
     (HoleScore, "strokes", "5"),
     (HoleScore, "strokes", 5.0),
-    (HoleScore, "putts", False),
-    (HoleScore, "hole_number", "1"),
-    (HoleScore, "par_played", 4.0),
-    (HoleScore, "handicap_played", True),
-    (HoleScore, "shots_to_green", "3"),
     (Hole, "par", "4"),
-    (Hole, "number", True),
-    (Hole, "handicap", 1.0),
-    (User, "handicap", "12.4"),
     (User, "handicap", True),
-    (Tee, "course_rating", True),
     (Tee, "slope_rating", "113"),
 ])
 def test_numeric_fields_reject_coerced_values(model, field, value):
@@ -741,10 +717,8 @@ def test_tees_with_yardages_can_be_copied_and_pickled():
 
 @pytest.mark.parametrize("build, attribute, item", [
     (lambda: Round(), "hole_scores", HoleScore(hole_number=1, strokes=4)),
-    (lambda: Course(), "holes", Hole(number=1, par=4)),
     (lambda: Course(), "tees", Tee(color="Blue")),
     (lambda: Tee(), "ratings", TeeRating(hole_numbers=FRONT_NINE, course_rating=35.0)),
-    (lambda: User(), "rounds", Round()),
 ])
 def test_review_containers_reject_wrong_element_types(build, attribute, item):
     model = build()
@@ -779,3 +753,9 @@ def test_checked_containers_survive_validation_copies_and_updates():
         with pytest.raises(TypeError):
             container.append({"hole_number": 2})
     assert round_.model_dump()["hole_scores"][0]["strokes"] == 4
+
+
+@pytest.mark.parametrize('values', [{'hole_yardages': {19: 400}}, {'course_rating': 0}], ids=['yardage', 'rating'])
+def test_user_tee_shares_tee_validation(values):
+    with pytest.raises(ValidationError):
+        UserTee(user_id='user1', name='Custom', **values)

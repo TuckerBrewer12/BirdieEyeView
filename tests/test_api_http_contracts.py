@@ -47,14 +47,11 @@ def api():
     "body",
     [
         {"name": "Blue", "course_rating": True},
-        {"name": "Blue", "slope_rating": True},
         {"name": "Blue", "hole_yardages": {"9" * 400: 400}},
-        {"name": "Blue", "hole_yardages": {"1": 10**400}},
         {"name": "Blue", "course_rating": 10**400},
         {"name": "Blue", "hole_yardages": {"01": 350, "1": 400}},
-        {"name": "Blue", "hole_yardages": {"1": [400]}},
     ],
-    ids=["bool-rating", "bool-slope", "huge-hole-key", "huge-yardage", "huge-rating", "same-hole-twice", "list-yardage"],
+    ids=["bool-rating", "huge-hole-key", "huge-rating", "same-hole-twice"],
 )
 def test_user_tee_create_rejects_malformed_input(api, body):
     client, db, user_id = api

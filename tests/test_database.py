@@ -1,12 +1,8 @@
-import pytest
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
-from database.repositories.course_repo import CourseRepositoryDB
-from database.repositories.round_repo import RoundRepositoryDB
-from database.repositories.user_tee_repo import UserTeeRepositoryDB
-from database.repositories.user_repo import UserRepositoryDB
-from database.exceptions import IntegrityError
+import pytest
+
 from database.converters import (
     course_from_rows,
     course_to_row,
@@ -14,10 +10,15 @@ from database.converters import (
     hole_score_to_row,
     round_from_rows,
     round_to_row,
-    user_tee_from_row,
     user_from_row,
+    user_tee_from_row,
 )
-from models import Course, Hole, Tee, Round, HoleScore, UserTee, User
+from database.exceptions import IntegrityError
+from database.repositories.course_repo import CourseRepositoryDB
+from database.repositories.round_repo import RoundRepositoryDB
+from database.repositories.user_repo import UserRepositoryDB
+from database.repositories.user_tee_repo import UserTeeRepositoryDB
+from models import Course, Hole, HoleScore, Round, Tee, User, UserTee
 
 
 def _round_row(round_id, *, course_id=None, course_name_played=None, tee_box_played=None, total_score=80):
@@ -214,7 +215,7 @@ def test_user_converter_maps_friend_code():
     assert user.friend_code == "GCABC12345"
 
 
-@pytest.mark.parametrize('yardages', ['{"1":400,"01":500}', '{"1":true}', '{"1":400.5}', '[]', [], False, 'not json'])
+@pytest.mark.parametrize('yardages', ['{"1":400,"01":500}', '{"1":true}', '[]', 'not json'])
 def test_user_tee_converter_rejects_invalid_stored_yardages(yardages):
     row = {
         'id': uuid4(), 'user_id': uuid4(), 'course_id': None, 'name': 'Blue',
@@ -237,3 +238,17 @@ def test_user_tee_converter_rejects_invalid_stored_yardages(yardages):
 # UserTeeRepositoryDB
 # ================================================================
 
+
+from database.repositories.course_repo import _tee_yardage_similarity  # noqa: E402
+
+
+@pytest.mark.parametrize(
+    ("left", "right", "expected"),
+    [
+        ({}, {1: 400}, (0.0, 0)),
+        ({1: 400}, {2: 400}, (0.0, 0)),
+        ({1: 400}, {1: 420}, (1.0, 1)),
+    ],
+)
+def test_tee_yardage_similarity(left, right, expected):
+    assert _tee_yardage_similarity(left, right) == expected

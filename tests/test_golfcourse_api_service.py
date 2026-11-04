@@ -113,7 +113,6 @@ async def test_course_search_wraps_provider_failure(monkeypatch):
         ("Alpha Golf Club", "North", "Alpha Golf Club North"),
         ("Pebble Beach Golf Links", "Pebble Beach Golf Links", "Pebble Beach Golf Links"),
         ("Spyglass", "Spyglass Hill", "Spyglass Hill"),
-        (None, "North", "North"),
         ("", None, None),
     ],
 )

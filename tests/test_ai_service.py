@@ -12,8 +12,8 @@ from tests.helpers import make_analytics_round
 
 @pytest.mark.parametrize(
     ("handicap", "label"),
-    [(None, "Unrated"), (0, "0–5 HCP"), (4.9, "0–5 HCP"), (5, "5–10 HCP"), (7, "5–10 HCP"),
-     (27.9, "20–28 HCP"), (28, "28–54 HCP"), (54, "28–54 HCP"), (60, "28–54 HCP")],
+    # Band edges: just below and at each tested boundary, plus unrated and above the scale.
+    [(None, "Unrated"), (4.9, "0–5 HCP"), (5, "5–10 HCP"), (27.9, "20–28 HCP"), (28, "28–54 HCP"), (60, "28–54 HCP")],
 )
 def test_benchmark_uses_handicap_range(handicap, label):
     assert ai_module._get_benchmark(handicap)[1] == label

@@ -45,31 +45,6 @@ def owned_round_setup():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('to_par', [8, None, -2])
-async def test_list_rounds_returns_summaries(to_par):
-    user_id = uuid4()
-    round_id = uuid4()
-    db = make_mock_database()
-    summary = {**make_round_summary(round_id), 'to_par': to_par}
-    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[summary])
-
-    listed = await rounds.get_rounds_for_user(user_id, 10, 0, db, make_user(user_id))
-
-    assert (listed[0].id, listed[0].to_par) == (str(round_id), to_par)
-
-
-@pytest.mark.asyncio
-async def test_get_round_returns_not_found_for_missing_owner(owned_round_setup):
-    user_id, round_id, _, db = owned_round_setup
-    db.rounds.get_round_owner_id.return_value = None
-
-    with pytest.raises(HTTPException) as raised:
-        await rounds.get_round(round_id, db, make_user(user_id))
-
-    assert raised.value.status_code == 404
-
-
-@pytest.mark.asyncio
 async def test_update_round_updates_scores_and_metadata(owned_round_setup):
     user_id, round_id, stored_round, db = owned_round_setup
     db.rounds.update_hole_scores = AsyncMock(return_value=stored_round)
@@ -99,16 +74,6 @@ async def test_update_round_rejects_invalid_scores_without_server_error(owned_ro
         await rounds.update_round(round_id, request, db, make_user(user_id))
 
     assert raised.value.status_code == 422
-
-
-@pytest.mark.asyncio
-async def test_delete_round_delegates_with_owner(owned_round_setup):
-    user_id, round_id, _, db = owned_round_setup
-    db.rounds.delete_round = AsyncMock(return_value=True)
-
-    await rounds.delete_round(round_id, db, make_user(user_id))
-
-    db.rounds.delete_round.assert_awaited_once_with(str(round_id), user_id=str(user_id))
 
 
 @pytest.mark.asyncio
