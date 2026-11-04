@@ -9,7 +9,17 @@ from api.auth_schemas import (
     RegisterRequest,
     ResendVerificationRequest,
 )
-from api.request_models import HoleScoreInput, SaveRoundRequest, TeeInput, normalize_hole_yardages
+from api.request_models import (
+    CreateCourseRequest,
+    CreateUserTeeRequest,
+    HoleScoreInput,
+    SaveRoundRequest,
+    TeeInput,
+    UpdateCourseRequest,
+    UpdateRoundRequest,
+    UpdateUserTeeRequest,
+    normalize_hole_yardages,
+)
 
 
 def test_register_request_normalizes_profile_fields():
@@ -158,3 +168,35 @@ def test_register_request_rejects_boolean_handicap():
 def test_save_round_request_needs_at_least_one_score():
     with pytest.raises(ValidationError, match="at least one hole"):
         SaveRoundRequest(hole_scores=[HoleScoreInput(hole_number=1), HoleScoreInput(hole_number=2)])
+
+
+SCORES = {"hole_scores": [{"hole_number": 1, "strokes": 4}]}
+
+
+@pytest.mark.parametrize(
+    ("model", "base", "field", "name"),
+    [
+        (SaveRoundRequest, SCORES, "external_course_id", "external_course_id"),
+        (SaveRoundRequest, SCORES, "course_name", "course_name"),
+        (SaveRoundRequest, SCORES, "course_location", "course_location"),
+        (SaveRoundRequest, SCORES, "tee_box", "tee_box"),
+        (SaveRoundRequest, SCORES, "notes", "notes"),
+        (CreateCourseRequest, {"name": "Links"}, "name", "name"),
+        (CreateCourseRequest, {"name": "Links"}, "external_course_id", "external_course_id"),
+        (CreateCourseRequest, {"name": "Links"}, "location", "location"),
+        (UpdateCourseRequest, {}, "name", "name"),
+        (UpdateCourseRequest, {}, "external_course_id", "external_course_id"),
+        (UpdateCourseRequest, {}, "location", "location"),
+        (UpdateRoundRequest, {}, "notes", "notes"),
+        (UpdateRoundRequest, {}, "weather_conditions", "weather_conditions"),
+        (UpdateRoundRequest, {}, "tee_box", "tee_box"),
+        (UpdateRoundRequest, {}, "course_name_played", "course_name_played"),
+        (CreateUserTeeRequest, {"name": "Blue"}, "name", "name"),
+        (UpdateUserTeeRequest, {}, "name", "name"),
+        (TeeInput, {"color": "Blue"}, "color", "tee color"),
+    ],
+)
+def test_free_text_fields_reject_markup_under_their_own_name(model, base, field, name):
+    with pytest.raises(ValidationError, match=f"{name} cannot contain HTML markup"):
+        model(**(base | {field: "<b>x</b>"}))
+

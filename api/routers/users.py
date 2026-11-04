@@ -3,7 +3,6 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing import List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import ConflictError, DuplicateError, IntegrityError, NotFoundError
@@ -13,117 +12,20 @@ from api.messages import (
 )
 from api.course_access import load_linkable_course
 from api.dependencies import get_current_user, get_db
-from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
-from api.request_models import COURSE_RATING, SLOPE_RATING, decimal_field, normalize_hole_yardages
-from api.schemas import UserResponse, UserTeeResponse
+from api.input_validation import normalize_email
+from api.request_models import (
+    CreateUserTeeRequest,
+    FriendshipStatusRequest,
+    SendFriendRequest,
+    UpdateUserRequest,
+    UpdateUserTeeRequest,
+)
+from api.schemas import FriendshipResponse, UserResponse, UserTeeResponse
 from models import User, UserTee
 from models.hole_layout import rated_coverage
 from analytics import handicap as hcap
 
 router = APIRouter()
-
-
-class CreateUserTeeRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-
-    course_id: Optional[UUID] = None
-    name: str = Field(..., min_length=1, max_length=60)
-    slope_rating: Optional[float] = SLOPE_RATING
-    course_rating: Optional[float] = COURSE_RATING
-    hole_yardages: Optional[dict] = None
-
-    _normalize_ratings = field_validator("slope_rating", "course_rating", mode="before")(decimal_field)
-
-    @field_validator("name")
-    @classmethod
-    def _validate_name(cls, v: str) -> str:
-        return sanitize_user_text(v, field_name="name", max_length=60)
-
-    @field_validator("hole_yardages", mode="before")
-    @classmethod
-    def _validate_hole_yardages(cls, value: object) -> Optional[dict]:
-        return normalize_hole_yardages(value)
-
-
-class UpdateUserTeeRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-
-    name: Optional[str] = None
-    slope_rating: Optional[float] = SLOPE_RATING
-    course_rating: Optional[float] = COURSE_RATING
-    hole_yardages: Optional[dict] = None
-
-    _normalize_ratings = field_validator("slope_rating", "course_rating", mode="before")(decimal_field)
-
-    @field_validator("name")
-    @classmethod
-    def _validate_name(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="name", max_length=60)
-
-    @field_validator("hole_yardages", mode="before")
-    @classmethod
-    def _validate_hole_yardages(cls, value: object) -> Optional[dict]:
-        return normalize_hole_yardages(value)
-
-
-class UpdateUserRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-
-    home_course_id: Optional[UUID] = None
-    handicap: Optional[float] = Field(default=None, ge=-10, le=54)
-    # Same bounds as models.user.User: 18-hole goal 18-270, nine-hole goal 9-135.
-    scoring_goal: Optional[int] = Field(default=None, strict=True, ge=18, le=270)
-    scoring_goal_nine: Optional[int] = Field(default=None, strict=True, ge=9, le=135)
-
-    @field_validator("handicap", mode="before")
-    @classmethod
-    def _normalize_handicap(cls, v: object) -> object:
-        return normalize_handicap_value(v)
-
-
-class SendFriendRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-
-    addressee_user_id: Optional[UUID] = None
-    addressee_friend_code: Optional[str] = Field(default=None, min_length=4, max_length=24)
-
-    @field_validator("addressee_friend_code")
-    @classmethod
-    def _validate_friend_code(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        code = sanitize_user_text(v, field_name="addressee_friend_code", max_length=24).upper()
-        if not code.replace("-", "").isalnum():
-            raise ValueError("addressee_friend_code must be alphanumeric.")
-        return code
-
-    @model_validator(mode="after")
-    def _validate_target_selector(self):
-        if self.addressee_user_id and self.addressee_friend_code:
-            raise ValueError("Provide either addressee_user_id or addressee_friend_code, not both.")
-        if not self.addressee_user_id and not self.addressee_friend_code:
-            raise ValueError("Provide addressee_friend_code or addressee_user_id.")
-        return self
-
-
-class FriendshipStatusRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    status: str = Field(..., pattern="^(accepted|declined|blocked)$")
-
-
-class FriendshipResponse(BaseModel):
-    id: str
-    requester_id: str
-    addressee_id: str
-    status: str
-    created_at: str
-    updated_at: str
-    requester_name: Optional[str] = None
-    requester_email: Optional[str] = None
-    addressee_name: Optional[str] = None
-    addressee_email: Optional[str] = None
 
 
 def _friendship_row_to_response(row: dict) -> FriendshipResponse:

@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from pydantic import BaseModel
 from PIL import Image, ImageOps
 
 logger = logging.getLogger(__name__)
@@ -27,6 +26,7 @@ from api.dependencies import get_current_user, get_optional_current_user, get_db
 from api.error_responses import EXTRACTION_FAILED, OCR_FAILED, ROUND_SAVE_FAILED, SCAN_FAILED, SCAN_SAVE_FAILED
 from api.input_validation import ensure_uuid_str, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
+from api.schemas import ScanResponse
 from api.scan_errors import ScanExtractionError
 from models import User
 from services.gemini_table_merger import merge_split_tables
@@ -98,13 +98,6 @@ def _env_bool(name: str, default: bool = False) -> bool:
 
 # Disabled by default to avoid leaking OCR/user content into aggregated logs.
 LOG_SENSITIVE_OCR_DEBUG = _env_bool("LOG_SENSITIVE_OCR_DEBUG", False)
-
-
-class ScanResponse(BaseModel):
-    """Response from scorecard extraction."""
-    round: dict
-    confidence: dict
-    fields_needing_review: list
 
 
 def _extract_upload_suffix(file: UploadFile) -> str:

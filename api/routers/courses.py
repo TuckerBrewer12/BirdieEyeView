@@ -3,7 +3,7 @@
 import logging
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
+from pydantic import ValidationError
 from typing import List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
@@ -14,107 +14,15 @@ from api.messages import (
 )
 from api.dependencies import get_db, get_optional_current_user, get_current_user
 from api.error_responses import COURSE_SAVE_FAILED
-from api.input_validation import normalize_course_display_name, sanitize_search_query, sanitize_user_text
-from api.request_models import TeeInput, reject_duplicate_course_entries, whole_number_field
+from api.input_validation import sanitize_search_query
+from api.request_models import CreateCourseRequest, UpdateCourseRequest
 from api.schemas import CourseResponse, CourseSummaryResponse
 from models import Course, Hole, Tee, User
-from models.hole_layout import FRONT_NINE, FULL_ROUND, rated_coverage
+from models.hole_layout import rated_coverage
 from services import GolfCourseAPIService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-
-class HoleInput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    number: int = Field(..., ge=1, le=18)
-    par: Optional[int] = Field(default=None, ge=3, le=6)
-    handicap: Optional[int] = Field(default=None, ge=1, le=18)
-
-    _normalize_numbers = field_validator("number", "par", "handicap", mode="before")(whole_number_field)
-
-
-class CreateCourseRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-
-    name: str = Field(..., min_length=1, max_length=140)
-    external_course_id: Optional[str] = Field(default=None, max_length=100)
-    location: Optional[str] = None
-    holes: List[HoleInput] = Field(default_factory=list, max_length=18)
-    tees: List[TeeInput] = Field(default_factory=list, max_length=12)
-
-    @field_validator("name")
-    @classmethod
-    def _validate_name(cls, v: str) -> str:
-        sanitized = sanitize_user_text(v, field_name="name", max_length=140)
-        return normalize_course_display_name(sanitized)
-
-    @field_validator("external_course_id")
-    @classmethod
-    def _validate_external_course_id(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="external_course_id", max_length=100)
-
-    @field_validator("location")
-    @classmethod
-    def _validate_location(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="location", max_length=140)
-
-    @model_validator(mode="after")
-    def _validate_course_structure(self):
-        reject_duplicate_course_entries(
-            (h.number for h in self.holes), (h.handicap for h in self.holes), (t.color for t in self.tees)
-        )
-        numbers = tuple(sorted(h.number for h in self.holes))
-        # The database stores a 9- or 18-hole layout; a partial hole list has neither.
-        if numbers and numbers not in (FRONT_NINE, FULL_ROUND):
-            raise ValueError("Course holes must be holes 1-9 or 1-18.")
-        return self
-
-
-class UpdateCourseRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-
-    name: Optional[str] = None
-    external_course_id: Optional[str] = None
-    location: Optional[str] = None
-    # Same bounds as models.course.Course and the database: 3-6 per hole for 9 or 18 holes.
-    par: Optional[int] = Field(default=None, ge=27, le=108)
-
-    _normalize_par = field_validator("par", mode="before")(whole_number_field)
-
-    @model_validator(mode="after")
-    def _reject_null_name(self):
-        # name is required on a course; location and the provider ID may be cleared with null.
-        if "name" in self.model_fields_set and self.name is None:
-            raise ValueError("name cannot be null.")
-        return self
-
-    @field_validator("name")
-    @classmethod
-    def _validate_name(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        sanitized = sanitize_user_text(v, field_name="name", max_length=140)
-        return normalize_course_display_name(sanitized)
-
-    @field_validator("external_course_id")
-    @classmethod
-    def _validate_external_course_id(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="external_course_id", max_length=100)
-
-    @field_validator("location")
-    @classmethod
-    def _validate_location(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="location", max_length=140)
 
 
 def _summarize_course(c) -> CourseSummaryResponse:
@@ -147,7 +55,6 @@ def _summarize_external_course(item: dict) -> CourseSummaryResponse:
         total_holes=0,
         tee_count=0,
     )
-
 
 
 @router.get("", response_model=List[CourseSummaryResponse])

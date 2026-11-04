@@ -215,3 +215,28 @@ class UserResponse(DomainResponse):
     last_handicap_update: Optional[datetime] = None
     scoring_goal: Optional[int] = None
     scoring_goal_nine: Optional[int] = None
+
+
+# ================================================================
+# Scan and friendship responses
+# ================================================================
+
+
+class ScanResponse(BaseModel):
+    """Response from scorecard extraction."""
+    round: dict
+    confidence: dict
+    fields_needing_review: list
+
+
+class FriendshipResponse(BaseModel):
+    id: str
+    requester_id: str
+    addressee_id: str
+    status: str
+    created_at: str
+    updated_at: str
+    requester_name: Optional[str] = None
+    requester_email: Optional[str] = None
+    addressee_name: Optional[str] = None
+    addressee_email: Optional[str] = None
