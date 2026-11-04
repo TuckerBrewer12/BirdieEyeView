@@ -103,7 +103,7 @@ export function RoundDetailHeader({ round, teeRating, className }: RoundDetailHe
         </div>
       )}
 
-      <ScoreMixBar mix={round.scoreCounts} counted className="pt-2.5" />
+      <ScoreMixBar mix={round.scoreCounts} counted className="pt-3" />
     </div>
   );
 }
