@@ -1,4 +1,4 @@
-import { ActivityHeatmap } from "@/brand/charts/ActivityHeatmap";
+import { ActivityCalendar } from "@/brand/charts/ActivityCalendar";
 import { Card, CardContent } from "@/brand/components/Card";
 import { Round } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
@@ -14,11 +14,11 @@ const rounds = PLAYED.map((day, i) => ({
   date: `2026-10-${String(day).padStart(2, "0")}`,
 })).map(Round.fromSummary);
 
-export default function ActivityHeatmapPreview() {
+export default function ActivityCalendarPreview() {
   return (
     <Card>
       <CardContent>
-        <ActivityHeatmap rounds={rounds} today={TODAY} onOpenRound={() => {}} />
+        <ActivityCalendar rounds={rounds} today={TODAY} onOpenRound={() => {}} />
       </CardContent>
     </Card>
   );

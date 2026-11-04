@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
-import { ActivityHeatmap } from "./ActivityHeatmap";
+import { ActivityCalendar } from "./ActivityCalendar";
 import { Round } from "@/domain";
 import { FakeHandler } from "@/testing/fakes/FakeHandler";
 import { populatedRounds } from "@/testing/fixtures/rounds";
@@ -15,9 +15,9 @@ const rounds = [
   round("4", "2026/09/20"),
 ];
 
-describe("ActivityHeatmap", () => {
+describe("ActivityCalendar", () => {
   it("shows the month of today, with its round count and a filled day per played day", () => {
-    const { container } = render(<ActivityHeatmap rounds={rounds} today={TODAY} />);
+    const { container } = render(<ActivityCalendar rounds={rounds} today={TODAY} onOpenRound={() => {}} />);
 
     expect(screen.getByText("October 2026")).toBeTruthy();
     expect(screen.getByText("rounds")).toBeTruthy();
@@ -30,7 +30,7 @@ describe("ActivityHeatmap", () => {
   });
 
   it("steps to the neighbouring months", () => {
-    const { container } = render(<ActivityHeatmap rounds={rounds} today={TODAY} />);
+    const { container } = render(<ActivityCalendar rounds={rounds} today={TODAY} onOpenRound={() => {}} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Previous month" }));
     expect(screen.getByText("September 2026")).toBeTruthy();
@@ -41,9 +41,9 @@ describe("ActivityHeatmap", () => {
     expect(screen.getByText("November 2026")).toBeTruthy();
   });
 
-  it("opens the first round of a played day when given a handler", () => {
+  it("opens the first round of a played day", () => {
     const onOpenRound = new FakeHandler<[string]>();
-    render(<ActivityHeatmap rounds={rounds} today={TODAY} onOpenRound={onOpenRound.handle} />);
+    render(<ActivityCalendar rounds={rounds} today={TODAY} onOpenRound={onOpenRound.handle} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Open round on 2026-10-14" }));
     expect(onOpenRound.calls).toEqual([["1"]]);

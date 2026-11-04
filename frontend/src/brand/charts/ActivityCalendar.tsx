@@ -4,21 +4,20 @@ import type { RoundSummary } from "@/domain";
 import { pluralNoun, pluralize } from "@/domain/format";
 import { formatMonth } from "@/domain/date";
 import { Button } from "@/brand/components/Button";
-import { cn } from "@/brand/cn";
 import { activityMonth } from "@/domain/activity";
 
-interface ActivityHeatmapProps {
+interface ActivityCalendarProps {
   rounds?: RoundSummary[];
   /** Picks the month it opens on. Frozen in previews so the calendar does not drift. */
   today?: Date;
-  /** Makes a played day a button that opens its round (the first, when it has two). */
-  onOpenRound?: (roundId: string) => void;
+  /** Opens a played day's round (the first, when it has two). */
+  onOpenRound: (roundId: string) => void;
 }
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"] as const;
 
 /** A month of play: a green dot on each day with a round. Step through months with the arrows. */
-export function ActivityHeatmap({ rounds = [], today, onOpenRound }: ActivityHeatmapProps) {
+export function ActivityCalendar({ rounds = [], today, onOpenRound }: ActivityCalendarProps) {
   const [shown, setShown] = useState(() => {
     const now = today ?? new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
@@ -32,13 +31,13 @@ export function ActivityHeatmap({ rounds = [], today, onOpenRound }: ActivityHea
     });
 
   return (
-    <div data-slot="activity-heatmap" className="flex w-full flex-col gap-2.5">
+    <div data-slot="activity-calendar" className="flex w-full flex-col gap-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon-sm" aria-label="Previous month" onClick={() => step(-1)}>
             <ChevronLeft className="size-3 stroke-icon-active" />
           </Button>
-          <div className="min-w-26 text-center text-sm font-semibold text-foreground">
+          <div className="min-w-28 text-center text-sm font-semibold text-foreground">
             {formatMonth(new Date(shown.year, shown.month, 1))}
           </div>
           <Button variant="ghost" size="icon-sm" aria-label="Next month" onClick={() => step(1)}>
@@ -64,24 +63,21 @@ export function ActivityHeatmap({ rounds = [], today, onOpenRound }: ActivityHea
         {month.days.map((day) => {
           const played = day.roundIds.length > 0;
           const hint = played ? `${pluralize(day.roundIds.length, "round")} on ${day.date}` : undefined;
-          const circle = cn(
-            "inline-flex size-7.5 items-center justify-center rounded-full text-body-sm",
-            played ? "bg-primary font-bold text-primary-foreground" : "font-medium text-foreground-secondary",
-          );
           return (
             <div key={day.date} className="flex h-8 items-center justify-center">
-              {played && onOpenRound ? (
-                <button
-                  type="button"
+              {played ? (
+                <Button
+                  size="icon-sm"
+                  shape="pill"
                   title={hint}
                   aria-label={`Open round on ${day.date}`}
                   onClick={() => onOpenRound(day.roundIds[0])}
-                  className={cn(circle, "cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none")}
+                  className="text-body-sm font-bold"
                 >
                   {day.dayNum}
-                </button>
+                </Button>
               ) : (
-                <span title={hint} className={circle}>
+                <span className="inline-flex size-7 items-center justify-center text-body-sm font-medium text-foreground-secondary">
                   {day.dayNum}
                 </span>
               )}
@@ -90,9 +86,9 @@ export function ActivityHeatmap({ rounds = [], today, onOpenRound }: ActivityHea
         })}
       </div>
 
-      <div className="flex items-center gap-1.5 pt-0.5 text-label text-muted-foreground">
+      <div className="flex items-center gap-2 pt-0.5 text-label text-muted-foreground">
         <span className="size-2 rounded-full bg-primary" />
-        {onOpenRound ? "Played · tap a day to open the round" : "Played"}
+        Played · tap a day to open the round
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useNavigate, Link } from "react-router-dom";
 import {
-  ActivityHeatmap,
+  ActivityCalendar,
   Button,
   Card,
   CardContent,
@@ -189,7 +189,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
               <CardDescription>Rounds by day</CardDescription>
             </CardHeader>
             <CardContent>
-              <ActivityHeatmap rounds={vm.rounds} onOpenRound={(id) => navigate(`/rounds/${id}`)} />
+              <ActivityCalendar rounds={vm.rounds} onOpenRound={(id) => navigate(`/rounds/${id}`)} />
             </CardContent>
           </Card>
 
