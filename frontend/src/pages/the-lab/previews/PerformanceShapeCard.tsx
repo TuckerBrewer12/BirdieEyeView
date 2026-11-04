@@ -1,11 +1,12 @@
-import { benchmarkShapeFrom, buildRadarData } from "@/domain";
-import { averyLabAnalytics, breaks90Shape, labAnalytics, labGoalReport } from "@/testing/fixtures/lab";
+import { benchmarkComparisonFrom, buildRadarData } from "@/domain";
+import { averyLabAnalytics, labAnalytics, labBenchmarks, labGoalReport } from "@/testing/fixtures/lab";
 import { PerformanceShapeCard, type PerformanceShapeCardProps } from "../components/PerformanceShapeCard";
 import { peakGameFrom } from "../model";
 
 const avery = { id: "user-avery", name: "Avery Lin" };
 const jordan = { id: "user-jordan", name: "Jordan Castellanos" };
 const peak = peakGameFrom(labAnalytics, 89, labGoalReport);
+const breaks90 = benchmarkComparisonFrom(labBenchmarks["handicap:15"]);
 
 const base: PerformanceShapeCardProps = {
   mode: "benchmark",
@@ -21,7 +22,7 @@ const base: PerformanceShapeCardProps = {
   selectedFriend: avery,
   onSelectFriend: () => {},
   friendComparison: null,
-  radar: buildRadarData(labAnalytics.kpis, labAnalytics.scoring_by_par, benchmarkShapeFrom(breaks90Shape)),
+  radar: buildRadarData(labAnalytics.kpis, labAnalytics.scoring_by_par, breaks90.benchmark, breaks90.verdicts),
   compared: true,
   missingAxes: [],
 };
