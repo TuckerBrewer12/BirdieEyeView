@@ -184,7 +184,7 @@ export function SVGScoreHandicapTrend({
                   strokeWidth={tokens.lineWidth.border}
                   strokeDasharray={L.dash}
                 />
-                <AxisLabel x={labelX} y={parY + 4}>
+                <AxisLabel x={labelX} y={parY + L.parBaseline}>
                   Par {par}
                 </AxisLabel>
               </>

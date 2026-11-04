@@ -580,6 +580,8 @@ export const chart = {
     labelEdge: 40,
     /** Where the last score sits, straight above its dot. */
     scoreLift: 10,
+    /** Where the "Par" label's baseline sits, just below the par line. */
+    parBaseline: 4,
   },
   /** A figure's trend line. */
   sparkline: {
