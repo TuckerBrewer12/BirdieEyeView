@@ -165,6 +165,16 @@ test("removing the picked photo goes back to the drop zone", async ({ scan }) =>
   await scan.seesUpload();
 });
 
+test("taking a photo and choosing one from the library each keeps the photo that source returns", async ({ scan }) => {
+  await scan.phone();
+  await scan.open();
+  await scan.takePhoto();
+  await scan.seesPhotoFrom("camera");
+  await scan.removePhotoFrom("camera");
+  await scan.chooseFromLibrary();
+  await scan.seesPhotoFrom("photos");
+});
+
 test("a course can be picked ahead of the scan, and cleared", async ({ scan }) => {
   await scan.open({ fullCourses: [pebbleBeachCourse] });
   await scan.searchCourse("Pebble");

@@ -9,6 +9,16 @@ import { scannedCard } from "../../../testing/fixtures/scan";
 const CARD_PHOTO = fileURLToPath(new URL("../../../../public/hero/physical-card.jpg", import.meta.url));
 const CARD_NAME = "physical-card.jpg";
 
+/**
+ * What the phone's camera and library hand back. The names are the ones the
+ * camera builds from the format, and the bytes are not a real image, so the
+ * upload leaves the file as returned and the preview stays this data URL.
+ */
+const PHONE_PHOTOS = {
+  camera: { name: "scorecard.jpg", previewUrl: "data:image/jpeg;base64,QQ==" },
+  photos: { name: "scorecard.png", previewUrl: "data:image/png;base64,Qg==" },
+} as const;
+
 /** Screen robot for `/scan` — same idea as an Android Espresso robot. */
 export class ScanRobot {
   private readonly page: Page;
@@ -28,6 +38,45 @@ export class ScanRobot {
     await this.page.addInitScript(() => {
       localStorage.setItem("theme", "dark");
     });
+    return this;
+  }
+
+  /**
+   * The phone app, where a scorecard comes from the camera or the library.
+   * Call before `open`. Each source answers with its own photo.
+   */
+  async phone(): Promise<this> {
+    await this.page.addInitScript((photos: { camera: string; library: string }) => {
+      const win = window as Window & {
+        Capacitor?: { fromNative?: (result: unknown) => void };
+        androidBridge?: { postMessage: (message: string) => void };
+      };
+      // Capacitor treats a window bridge as the Android app, and delivers the
+      // camera result through `fromNative` with the same callback id.
+      win.androidBridge = {
+        postMessage(message: string) {
+          const call = (typeof message === "string" ? JSON.parse(message) : message) as {
+            callbackId?: unknown;
+            pluginId?: string;
+            methodName?: string;
+            options?: { source?: string };
+          };
+          if (call.pluginId !== "Camera" || call.methodName !== "getPhoto") return;
+          const fromCamera = call.options?.source === "CAMERA";
+          win.Capacitor?.fromNative?.({
+            callbackId: call.callbackId,
+            pluginId: call.pluginId,
+            methodName: call.methodName,
+            success: true,
+            data: {
+              dataUrl: fromCamera ? photos.camera : photos.library,
+              format: fromCamera ? "jpeg" : "png",
+              saved: false,
+            },
+          });
+        },
+      };
+    }, { camera: PHONE_PHOTOS.camera.previewUrl, library: PHONE_PHOTOS.photos.previewUrl });
     return this;
   }
 
@@ -62,6 +111,39 @@ export class ScanRobot {
   async seesChosenCard(): Promise<this> {
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
     await expect(this.page.locator('[data-slot=file-chip] img[src^="data:image/"]')).toBeVisible();
+    return this;
+  }
+
+  private async openAddScorecard(): Promise<void> {
+    await this.page.getByRole("button", { name: "Add Scorecard", exact: true }).click();
+  }
+
+  /** Takes a photo of the card with the phone's camera. */
+  async takePhoto(): Promise<this> {
+    await this.openAddScorecard();
+    await this.page.getByRole("button", { name: "Take photo", exact: true }).click();
+    return this;
+  }
+
+  /** Picks a card from the phone's photo library. */
+  async chooseFromLibrary(): Promise<this> {
+    await this.openAddScorecard();
+    await this.page.getByRole("button", { name: "Choose from library", exact: true }).click();
+    return this;
+  }
+
+  /** The photo that source returned, named and previewed on the card. */
+  async seesPhotoFrom(source: keyof typeof PHONE_PHOTOS): Promise<this> {
+    const photo = PHONE_PHOTOS[source];
+    const chip = this.page.locator("[data-slot=file-chip]");
+    await expect(chip.getByText(photo.name, { exact: true })).toBeVisible();
+    await expect(chip.locator("img")).toHaveAttribute("src", photo.previewUrl);
+    return this;
+  }
+
+  /** Clears the photo that source returned, back to the camera and library. */
+  async removePhotoFrom(source: keyof typeof PHONE_PHOTOS): Promise<this> {
+    await this.page.getByRole("button", { name: `Remove ${PHONE_PHOTOS[source].name}` }).click();
     return this;
   }
 
