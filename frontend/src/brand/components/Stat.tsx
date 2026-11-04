@@ -58,7 +58,7 @@ function StatNote({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="stat-note"
-      className={cn("min-w-0 truncate text-body-sm text-muted-foreground", className)}
+      className={cn("text-body-sm text-muted-foreground", className)}
       {...props}
     />
   );
@@ -133,14 +133,14 @@ function StatCard({
     <Card data-slot="stat-card" size="sm" className={className} {...props}>
       <CardContent className="flex flex-col gap-2">
         <StatLabel>{label}</StatLabel>
-        <div className="flex items-end justify-between gap-3">
+        <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
           <StatValue size="lg">{value}</StatValue>
           {trend && (
-            <Sparkline compact className="mb-1 w-24 min-w-0 shrink" series={[{ values: trend, tone: TREND_TONE[tone] }]} />
+            <Sparkline compact className="mb-1 w-24 shrink-0" series={[{ values: trend, tone: TREND_TONE[tone] }]} />
           )}
         </div>
         {(direction != null || note != null) && (
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-2">
             <StatDelta direction={direction} tone={tone}>
               {delta}
             </StatDelta>
