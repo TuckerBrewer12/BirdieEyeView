@@ -801,3 +801,27 @@ def test_anonymous_scans_and_reports_are_rate_limited(api, scan_providers):
         data={"metadata": report_metadata()}).status_code
     assert [report() for _ in range(10)] == [503] * 10
     assert report() == 429
+
+
+# ================================================================
+# Request contract
+# ================================================================
+
+
+def test_hole_scores_cannot_set_net_score(api):
+    alice = api.user("alice@example.com")
+    course = custom_course(api, alice)
+    scores = [{"hole_number": n, "strokes": p} for n, p in PARS.items()]
+    with_net = [scores[0] | {"net_score": 3}] + scores[1:]
+
+    save = api.client.post("/api/scan/save", headers=alice["headers"],
+                           json={"course_id": course, "tee_box": "Blue", "hole_scores": with_net})
+    assert save.status_code == 422, save.text
+    assert api.client.get(f"/api/rounds/user/{alice['id']}", headers=alice["headers"]).json() == []
+
+    round_id = save_round(api, alice, course)
+    before = api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).json()
+    edit = api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"],
+                          json={"hole_scores": [{"hole_number": 1, "strokes": 3, "net_score": 2}]})
+    assert edit.status_code == 422, edit.text
+    assert api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).json() == before

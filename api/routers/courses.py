@@ -3,113 +3,26 @@
 import logging
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
+from pydantic import ValidationError
 from typing import List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
+from api.messages import (
+    COURSE_ALREADY_CLONED, COURSE_CHANGES_INVALID, COURSE_DATA_INVALID, COURSE_NAME_TAKEN, COURSE_NOT_FOUND,
+    COURSE_NOT_FOUND_OR_NOT_OWNED, EXTERNAL_LOOKUP_REQUIRES_AUTH, FORBIDDEN, MASTER_COURSE_READ_ONLY,
+    SOURCE_COURSE_NOT_FOUND,
+)
 from api.dependencies import get_db, get_optional_current_user, get_current_user
 from api.error_responses import COURSE_SAVE_FAILED
-from api.input_validation import normalize_course_display_name, sanitize_search_query, sanitize_user_text
-from api.request_models import TeeInput, reject_duplicate_course_entries, whole_number_field
+from api.input_validation import sanitize_search_query
+from api.request_models import CreateCourseRequest, UpdateCourseRequest
 from api.schemas import CourseResponse, CourseSummaryResponse
 from models import Course, Hole, Tee, User
-from models.hole_layout import FRONT_NINE, FULL_ROUND, rated_coverage
+from models.hole_layout import rated_coverage
 from services import GolfCourseAPIService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-
-class HoleInput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    number: int = Field(..., ge=1, le=18)
-    par: Optional[int] = Field(default=None, ge=3, le=6)
-    handicap: Optional[int] = Field(default=None, ge=1, le=18)
-
-    _normalize_numbers = field_validator("number", "par", "handicap", mode="before")(whole_number_field)
-
-
-class CreateCourseRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-
-    name: str = Field(..., min_length=1, max_length=140)
-    external_course_id: Optional[str] = Field(default=None, max_length=100)
-    location: Optional[str] = None
-    holes: List[HoleInput] = Field(default_factory=list, max_length=18)
-    tees: List[TeeInput] = Field(default_factory=list, max_length=12)
-
-    @field_validator("name")
-    @classmethod
-    def _validate_name(cls, v: str) -> str:
-        sanitized = sanitize_user_text(v, field_name="name", max_length=140)
-        return normalize_course_display_name(sanitized)
-
-    @field_validator("external_course_id")
-    @classmethod
-    def _validate_external_course_id(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="external_course_id", max_length=100)
-
-    @field_validator("location")
-    @classmethod
-    def _validate_location(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="location", max_length=140)
-
-    @model_validator(mode="after")
-    def _validate_course_structure(self):
-        reject_duplicate_course_entries(
-            (h.number for h in self.holes), (h.handicap for h in self.holes), (t.color for t in self.tees)
-        )
-        numbers = tuple(sorted(h.number for h in self.holes))
-        # The database stores a 9- or 18-hole layout; a partial hole list has neither.
-        if numbers and numbers not in (FRONT_NINE, FULL_ROUND):
-            raise ValueError("Course holes must be holes 1-9 or 1-18.")
-        return self
-
-
-class UpdateCourseRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-
-    name: Optional[str] = None
-    external_course_id: Optional[str] = None
-    location: Optional[str] = None
-    # Same bounds as models.course.Course and the database: 3-6 per hole for 9 or 18 holes.
-    par: Optional[int] = Field(default=None, ge=27, le=108)
-
-    _normalize_par = field_validator("par", mode="before")(whole_number_field)
-
-    @model_validator(mode="after")
-    def _reject_null_name(self):
-        # name is required on a course; location and the provider ID may be cleared with null.
-        if "name" in self.model_fields_set and self.name is None:
-            raise ValueError("name cannot be null.")
-        return self
-
-    @field_validator("name")
-    @classmethod
-    def _validate_name(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        sanitized = sanitize_user_text(v, field_name="name", max_length=140)
-        return normalize_course_display_name(sanitized)
-
-    @field_validator("external_course_id")
-    @classmethod
-    def _validate_external_course_id(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="external_course_id", max_length=100)
-
-    @field_validator("location")
-    @classmethod
-    def _validate_location(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="location", max_length=140)
 
 
 def _summarize_course(c) -> CourseSummaryResponse:
@@ -144,7 +57,6 @@ def _summarize_external_course(item: dict) -> CourseSummaryResponse:
     )
 
 
-
 @router.get("", response_model=List[CourseSummaryResponse])
 async def list_courses(
     limit: int = Query(50, ge=1, le=100),
@@ -155,7 +67,7 @@ async def list_courses(
 ):
     if user_id:
         if not current_user or str(current_user.id) != str(user_id):
-            raise HTTPException(403, "Forbidden")
+            raise HTTPException(403, FORBIDDEN)
     courses = await db.courses.list_courses(limit=limit, offset=offset, user_id=str(user_id) if user_id else None)
     return [_summarize_course(c) for c in courses]
 
@@ -178,9 +90,9 @@ async def search_courses(
 
     if user_id:
         if not current_user or str(current_user.id) != str(user_id):
-            raise HTTPException(403, "Forbidden")
+            raise HTTPException(403, FORBIDDEN)
     if include_external and not current_user:
-        raise HTTPException(401, "Authentication required for external course lookup")
+        raise HTTPException(401, EXTERNAL_LOOKUP_REQUIRES_AUTH)
     effective_user_id = str(user_id) if user_id else (str(current_user.id) if current_user else None)
     courses = await db.courses.search_courses(q, user_id=effective_user_id)
     out = [_summarize_course(c) for c in courses]
@@ -207,9 +119,9 @@ async def get_course(
 ):
     course = await db.courses.get_course(str(course_id))
     if not course:
-        raise HTTPException(404, "Course not found")
+        raise HTTPException(404, COURSE_NOT_FOUND)
     if course.user_id and (not current_user or str(current_user.id) != str(course.user_id)):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     return course
 
 
@@ -223,7 +135,7 @@ async def create_course(
     """Create a custom course for a user."""
     effective_user_id = str(user_id) if user_id else str(current_user.id)
     if user_id and str(user_id) != str(current_user.id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     layout = tuple(sorted(h.number for h in req.holes))
     try:
         holes = [Hole(number=h.number, par=h.par, handicap=h.handicap) for h in req.holes]
@@ -238,7 +150,7 @@ async def create_course(
             for t in req.tees
         ]
     except ValidationError as error:
-        raise HTTPException(422, "Course data is invalid.") from error
+        raise HTTPException(422, COURSE_DATA_INVALID) from error
 
     try:
         course = Course(
@@ -249,12 +161,12 @@ async def create_course(
             tees=tees,
         )
     except ValidationError as error:
-        raise HTTPException(422, "Course data is invalid.") from error
+        raise HTTPException(422, COURSE_DATA_INVALID) from error
     try:
         created = await db.courses.create_course(course, user_id=effective_user_id)
         return _summarize_course(created)
     except DuplicateError:
-        raise HTTPException(409, "A course with that name already exists for this user")
+        raise HTTPException(409, COURSE_NAME_TAKEN)
     except IntegrityError:
         logger.exception("Course creation integrity failure")
         raise HTTPException(500, COURSE_SAVE_FAILED)
@@ -270,19 +182,19 @@ async def update_course(
     """Update a custom course. Only the owner can edit; master courses are protected."""
     existing = await db.courses.get_course(str(course_id))
     if not existing:
-        raise HTTPException(404, "Course not found")
+        raise HTTPException(404, COURSE_NOT_FOUND)
     if existing.user_id != str(current_user.id):
-        raise HTTPException(403, "Cannot edit a master course. Clone it first.")
+        raise HTTPException(403, MASTER_COURSE_READ_ONLY)
 
     updates = req.model_dump(exclude_unset=True)
     try:
         updated = await db.courses.update_course(str(course_id), user_id=str(current_user.id), **updates)
     except DuplicateError as error:
-        raise HTTPException(409, "A course with that name already exists for this user") from error
+        raise HTTPException(409, COURSE_NAME_TAKEN) from error
     except IntegrityError as error:
-        raise HTTPException(422, "These course changes are invalid.") from error
+        raise HTTPException(422, COURSE_CHANGES_INVALID) from error
     if not updated:
-        raise HTTPException(404, "Course not found or not owned by user")
+        raise HTTPException(404, COURSE_NOT_FOUND_OR_NOT_OWNED)
     return _summarize_course(updated)
 
 
@@ -296,12 +208,12 @@ async def clone_course(
     try:
         source = await db.courses.get_course(str(course_id))
         if not source:
-            raise HTTPException(404, "Source course not found")
+            raise HTTPException(404, SOURCE_COURSE_NOT_FOUND)
         if source.user_id and str(source.user_id) != str(current_user.id):
-            raise HTTPException(403, "Forbidden")
+            raise HTTPException(403, FORBIDDEN)
         cloned = await db.courses.clone_course(str(course_id), str(current_user.id))
         return _summarize_course(cloned)
     except NotFoundError:
-        raise HTTPException(404, "Source course not found")
+        raise HTTPException(404, SOURCE_COURSE_NOT_FOUND)
     except DuplicateError:
-        raise HTTPException(409, "You already have a custom copy of this course")
+        raise HTTPException(409, COURSE_ALREADY_CLONED)

@@ -4,6 +4,7 @@ from typing import Optional
 
 from fastapi import HTTPException
 
+from api.messages import FORBIDDEN
 from database.db_manager import DatabaseManager
 from models import Course
 
@@ -25,5 +26,5 @@ async def load_linkable_course(
     if course is None:
         raise HTTPException(400, missing_detail)
     if course.user_id is not None and (owner_id is None or str(course.user_id) != str(owner_id)):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     return course

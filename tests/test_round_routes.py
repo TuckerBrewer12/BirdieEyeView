@@ -5,6 +5,7 @@ import pytest
 from fastapi import HTTPException
 from pydantic import ValidationError
 
+from api.request_models import HoleScoreUpdate
 from api.routers import rounds
 from database.exceptions import IntegrityError
 from models import UserTee
@@ -18,7 +19,7 @@ def test_update_round_request_rejects_duplicate_holes():
 
 def test_hole_score_update_rejects_putts_above_strokes():
     with pytest.raises(ValidationError):
-        rounds.HoleScoreUpdate(hole_number=1, strokes=2, putts=3)
+        HoleScoreUpdate(hole_number=1, strokes=2, putts=3)
 
 
 def test_summarize_round_calculates_scoring_totals():

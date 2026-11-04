@@ -29,7 +29,7 @@ Repeat until the change meets the user's request and the acceptance criteria:
 1. Select the next smallest coherent edit from the plan.
 2. Read the target files and nearby tests before editing.
 3. Edit with the repository's existing style and architecture.
-4. Add or update unit tests covering the new or changed behavior.
+4. Add the tests the plan names, E2E first per the Testing Priority in `.codex/skills/make-code-change/SKILL.md`. Add a unit test only with the plan's stated necessity reason, and update existing unit tests the change breaks.
 5. Run the most focused relevant test/check.
 6. If it fails, diagnose from the failure, make the smallest reasonable fix, and rerun.
 7. Broaden validation when the changed surface is shared or cross-layer.
@@ -63,7 +63,7 @@ Review the implementation as a reviewer looking for omissions, rather than assum
 
 1. Compare the full task diff, including added files, with the user's original request, every approved acceptance criterion, and any approved plan amendments. Check for missing behavior and unintended changes.
 2. Read the affected surrounding code and trace changed behavior through relevant callers and layer boundaries. Look for regressions, inconsistent contracts, and relevant boundary or failure cases that the existing tests could miss.
-3. Investigate suspected gaps with code evidence and focused checks at the appropriate testing layer. Add or update regression tests when they protect meaningful behavior; do not add tests merely to mirror the implementation or raise coverage.
+3. Investigate suspected gaps with code evidence and focused checks at the appropriate testing layer. Add or update regression tests when they protect meaningful behavior, at the E2E layer unless the Testing Priority's unit-test reasons apply; do not add tests merely to mirror the implementation or raise coverage. Re-check that every unit test added in this change still meets a necessity reason, and remove any that an E2E test now covers.
 4. Fix confirmed findings within the approved scope, rerun the affected checks, and repeat this review against the revised implementation. Broaden validation when the finding shows a wider impact; do not rerun unrelated checks without a reason.
 5. Finish only when the review finds no remaining actionable gaps within the approved scope and the Completion Standard is met. If a finding needs a plan amendment, follow When The Plan Is Wrong before editing that area. If a finding cannot be resolved or verified, report it explicitly and do not describe that area as complete or verified.
 
@@ -75,7 +75,7 @@ The loop is complete when:
 
 - The implementation satisfies the user's original request and the approved acceptance criteria, including any approved amendments.
 - The code is clean, local to the planned surface, and consistent with existing patterns.
-- Relevant unit tests have been added or updated.
+- The planned E2E and integration tests are in place, and every new unit test has a stated necessity reason.
 - Focused tests/checks pass, or any inability to run them is clearly explained.
 - The Completion Review Loop has been performed after the last implementation fix, with no remaining actionable gaps within the approved scope; unresolved findings and verification limits are explicitly reported.
 - The final response records what changed and what validation was run.
@@ -96,7 +96,7 @@ Take test and lint commands from `docs/practices/testing.md`; do not copy them f
 Finish with:
 
 - changed files
-- tests/checks run and their result
+- tests added by layer (E2E, integration, unit with its necessity reason) and the checks run with their results
 - completion review outcome, including gaps fixed and anything unresolved or unverified
 - plan amendments and small deviations, if any
 - `docs/` guides the change made inaccurate

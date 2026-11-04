@@ -44,6 +44,6 @@ Report what was actually run and any limits. Passing existing tests is not proof
 
 ## Existing CI checks
 
-[tests.yml](../../.github/workflows/tests.yml) runs backend unit coverage, Ruff, advisory Pyright, high-severity Bandit checks, disposable PostgreSQL integration tests, frontend tests/lint/types/build, and repository invariants. Backend total and changed-line coverage gates are currently 75%; Pyright is explicitly non-blocking while existing errors are addressed. Check the workflow for exact commands instead of treating this guide as a second configuration file.
+[tests.yml](../../.github/workflows/tests.yml) runs backend unit coverage, Ruff, advisory Pyright, high-severity Bandit checks, disposable PostgreSQL integration tests, frontend tests/lint/types/build, and repository invariants. Backend total and changed-line coverage gates are currently 25%. They measure the unit suite only, and new behavior is tested end to end first, so these gates are a floor rather than a target; Pyright is explicitly non-blocking while existing errors are addressed. Check the workflow for exact commands instead of treating this guide as a second configuration file.
 
 Separate workflows run screenshot checks and the MVVM/brand-kit review bots. Those bots review added lines; their human-readable rules are linked in [frontend practices](frontend.md). A bot comment complements behavioral validation rather than proving correctness.

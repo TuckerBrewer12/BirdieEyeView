@@ -1,6 +1,6 @@
 ---
 name: make-code-change
-description: "Project-specific backend orchestration workflow for the Golf ScoreCard app. Use when the user asks to implement a complete backend feature, bug fix, refactor, or test change in this repository through a structured flow: codebase recon, written implementation plan, mandatory user confirmation, implementation loop, unit test validation, and docs update."
+description: "Project-specific backend orchestration workflow for the Golf ScoreCard app. Use when the user asks to implement a complete backend feature, bug fix, refactor, or test change in this repository through a structured flow: codebase recon, written implementation plan, mandatory user confirmation, implementation loop, E2E-first test validation, and docs update."
 ---
 
 # Make Code Change (Claude Code wrapper)

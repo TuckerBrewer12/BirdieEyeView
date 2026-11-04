@@ -1,11 +1,22 @@
-"""Typed Pydantic request/input models shared across API routers."""
+"""Typed Pydantic request/input models shared across API routers.
+
+Every request body the API accepts is defined here. Class and field names are part of the public
+OpenAPI contract (the frontend generates its types from it), so keep them stable.
+"""
 
 from datetime import datetime
-from typing import Dict, Iterable, List, Optional
+from typing import Annotated, Dict, Iterable, List, Optional
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from api.input_validation import ensure_uuid_str, normalize_course_display_name, sanitize_user_text
+from api.input_validation import (
+    ensure_uuid_str,
+    normalize_course_display_name,
+    normalize_handicap_value,
+    sanitize_user_text,
+)
+from models.hole_layout import FRONT_NINE, FULL_ROUND
 from services.scan_normalization import normalize_decimal, normalize_whole_number
 
 
@@ -18,10 +29,30 @@ def decimal_field(value, info):
     return normalize_decimal(value, info.field_name)
 
 
+def sanitized_text(field_name: str, max_length: int, *, allow_newlines: bool = False) -> AfterValidator:
+    """Shared rule for free-text request fields: ``sanitize_user_text`` under the field's own name.
+
+    Used inside ``Annotated``; ``None`` on an optional field never reaches it.
+    """
+
+    def check(value: str) -> str:
+        return sanitize_user_text(value, field_name=field_name, max_length=max_length, allow_newlines=allow_newlines)
+
+    return AfterValidator(check)
+
+
 MAX_HOLE_YARDAGE = 1_000
 # Matches models.tee.CourseRating: any positive finite rating, so nine-hole ratings such as 35.0 pass.
 COURSE_RATING = Field(default=None, gt=0, allow_inf_nan=False)
 SLOPE_RATING = Field(default=None, ge=55, le=155, allow_inf_nan=False)
+
+# Free-text fields shared by more than one request.
+TeeBox = Annotated[str, sanitized_text("tee_box", 40)]
+Notes = Annotated[str, sanitized_text("notes", 2_000, allow_newlines=True)]
+ExternalCourseId = Annotated[str, sanitized_text("external_course_id", 100)]
+CourseName = Annotated[str, sanitized_text("name", 140), AfterValidator(normalize_course_display_name)]
+CourseLocation = Annotated[str, sanitized_text("location", 140)]
+UserTeeName = Annotated[str, sanitized_text("name", 60)]
 
 
 def normalize_hole_yardages(value, field: str = "hole_yardages") -> Optional[Dict[int, int]]:
@@ -73,13 +104,17 @@ def reject_duplicate_course_entries(
         raise ValueError("Each tee needs a different name.")
 
 
+# ================================================================
+# Holes, tees and scores
+# ================================================================
+
+
 class HoleScoreInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     hole_number: int = Field(..., ge=1, le=18)
     strokes: Optional[int] = Field(default=None, ge=1, le=15)
     putts: Optional[int] = Field(default=None, ge=0, le=10)
-    net_score: Optional[int] = None
     shots_to_green: Optional[int] = Field(default=None, ge=1, le=10)
     fairway_hit: Optional[bool] = None
     green_in_regulation: Optional[bool] = None
@@ -87,7 +122,7 @@ class HoleScoreInput(BaseModel):
     handicap_played: Optional[int] = Field(default=None, ge=1, le=18)
 
     _normalize_numbers = field_validator(
-        "hole_number", "strokes", "putts", "net_score", "shots_to_green", "par_played", "handicap_played",
+        "hole_number", "strokes", "putts", "shots_to_green", "par_played", "handicap_played",
         mode="before",
     )(whole_number_field)
 
@@ -101,21 +136,20 @@ class HoleScoreInput(BaseModel):
         return self
 
 
+# Editing a hole accepts exactly what saving one does.
+HoleScoreUpdate = HoleScoreInput
+
+
 class TeeInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    color: str = Field(..., min_length=1, max_length=40)
+    color: Annotated[str, sanitized_text("tee color", 40)] = Field(..., min_length=1, max_length=40)
     slope_rating: Optional[float] = SLOPE_RATING
     course_rating: Optional[float] = COURSE_RATING
     hole_yardages: Dict[str, int] = Field(default_factory=dict)
 
     _normalize_ratings = field_validator("slope_rating", "course_rating", mode="before")(decimal_field)
     _normalize_yardages = field_validator("hole_yardages", mode="before")(_string_keyed_yardages)
-
-    @field_validator("color")
-    @classmethod
-    def _validate_color(cls, v: str) -> str:
-        return sanitize_user_text(v, field_name="tee color", max_length=40)
 
 
 class CourseHoleInput(BaseModel):
@@ -128,16 +162,23 @@ class CourseHoleInput(BaseModel):
     _normalize_numbers = field_validator("hole_number", "par", "handicap", mode="before")(whole_number_field)
 
 
+# ================================================================
+# Scan save
+# ================================================================
+
+
 class SaveRoundRequest(BaseModel):
     """Request to save a reviewed/edited round."""
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     user_id: str = ""  # populated from JWT by the endpoint; ignored if sent by client
     course_id: Optional[str] = None   # explicit DB course id — skips fuzzy match when provided
-    external_course_id: Optional[str] = Field(default=None, max_length=100)
-    course_name: Optional[str] = None
-    course_location: Optional[str] = None
-    tee_box: Optional[str] = None
+    external_course_id: Optional[ExternalCourseId] = Field(default=None, max_length=100)
+    course_name: Optional[
+        Annotated[str, sanitized_text("course_name", 140), AfterValidator(normalize_course_display_name)]
+    ] = None
+    course_location: Optional[Annotated[str, sanitized_text("course_location", 140)]] = None
+    tee_box: Optional[TeeBox] = None
     tee_slope_rating: Optional[float] = SLOPE_RATING
     tee_course_rating: Optional[float] = COURSE_RATING
     tee_yardages: Optional[Dict[str, int]] = None
@@ -145,7 +186,7 @@ class SaveRoundRequest(BaseModel):
     hole_scores: List[HoleScoreInput] = Field(..., min_length=1, max_length=18)
     course_holes: Optional[List[CourseHoleInput]] = None
     date: Optional[str] = None
-    notes: Optional[str] = None
+    notes: Optional[Notes] = None
 
     _normalize_ratings = field_validator("tee_slope_rating", "tee_course_rating", mode="before")(decimal_field)
     _normalize_yardages = field_validator("tee_yardages", mode="before")(_string_keyed_yardages)
@@ -157,37 +198,6 @@ class SaveRoundRequest(BaseModel):
             return None
         return ensure_uuid_str(v, "course_id")
 
-    @field_validator("external_course_id")
-    @classmethod
-    def _validate_external_course_id(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(
-            v, field_name="external_course_id", max_length=100, allow_newlines=False
-        )
-
-    @field_validator("course_name")
-    @classmethod
-    def _validate_course_name(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        sanitized = sanitize_user_text(v, field_name="course_name", max_length=140)
-        return normalize_course_display_name(sanitized)
-
-    @field_validator("course_location")
-    @classmethod
-    def _validate_course_location(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="course_location", max_length=140)
-
-    @field_validator("tee_box")
-    @classmethod
-    def _validate_tee_box(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="tee_box", max_length=40)
-
     @field_validator("date")
     @classmethod
     def _validate_date(cls, v: Optional[str]) -> Optional[str]:
@@ -198,13 +208,6 @@ class SaveRoundRequest(BaseModel):
         except ValueError as exc:
             raise ValueError("date must be a valid ISO-8601 datetime/date string.") from exc
         return v
-
-    @field_validator("notes")
-    @classmethod
-    def _validate_notes(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="notes", max_length=2_000, allow_newlines=True)
 
     @model_validator(mode="after")
     def _validate_hole_rows(self):
@@ -219,3 +222,169 @@ class SaveRoundRequest(BaseModel):
             (h.hole_number for h in holes), (h.handicap for h in holes), (t.color for t in self.all_tees or [])
         )
         return self
+
+
+# ================================================================
+# Courses
+# ================================================================
+
+
+class HoleInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    number: int = Field(..., ge=1, le=18)
+    par: Optional[int] = Field(default=None, ge=3, le=6)
+    handicap: Optional[int] = Field(default=None, ge=1, le=18)
+
+    _normalize_numbers = field_validator("number", "par", "handicap", mode="before")(whole_number_field)
+
+
+class CreateCourseRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    name: CourseName = Field(..., min_length=1, max_length=140)
+    external_course_id: Optional[ExternalCourseId] = Field(default=None, max_length=100)
+    location: Optional[CourseLocation] = None
+    holes: List[HoleInput] = Field(default_factory=list, max_length=18)
+    tees: List[TeeInput] = Field(default_factory=list, max_length=12)
+
+    @model_validator(mode="after")
+    def _validate_course_structure(self):
+        reject_duplicate_course_entries(
+            (h.number for h in self.holes), (h.handicap for h in self.holes), (t.color for t in self.tees)
+        )
+        numbers = tuple(sorted(h.number for h in self.holes))
+        # The database stores a 9- or 18-hole layout; a partial hole list has neither.
+        if numbers and numbers not in (FRONT_NINE, FULL_ROUND):
+            raise ValueError("Course holes must be holes 1-9 or 1-18.")
+        return self
+
+
+class UpdateCourseRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    name: Optional[CourseName] = None
+    external_course_id: Optional[ExternalCourseId] = None
+    location: Optional[CourseLocation] = None
+    # Same bounds as models.course.Course and the database: 3-6 per hole for 9 or 18 holes.
+    par: Optional[int] = Field(default=None, ge=27, le=108)
+
+    _normalize_par = field_validator("par", mode="before")(whole_number_field)
+
+    @model_validator(mode="after")
+    def _reject_null_name(self):
+        # name is required on a course; location and the provider ID may be cleared with null.
+        if "name" in self.model_fields_set and self.name is None:
+            raise ValueError("name cannot be null.")
+        return self
+
+
+# ================================================================
+# Rounds
+# ================================================================
+
+
+class UpdateRoundRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    hole_scores: Optional[List[HoleScoreUpdate]] = Field(default=None, max_length=18)
+    notes: Optional[Notes] = None
+    weather_conditions: Optional[Annotated[str, sanitized_text("weather_conditions", 200)]] = None
+    tee_box: Optional[TeeBox] = None
+    course_name_played: Optional[Annotated[str, sanitized_text("course_name_played", 255)]] = None
+
+    @model_validator(mode="after")
+    def _validate_unique_holes(self):
+        if self.hole_scores:
+            holes = [h.hole_number for h in self.hole_scores]
+            if len(set(holes)) != len(holes):
+                raise ValueError("hole_scores cannot contain duplicate hole_number values.")
+        return self
+
+
+class LinkCourseRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    course_id: UUID
+
+
+# ================================================================
+# Users, user tees and friends
+# ================================================================
+
+
+class CreateUserTeeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    course_id: Optional[UUID] = None
+    name: UserTeeName = Field(..., min_length=1, max_length=60)
+    slope_rating: Optional[float] = SLOPE_RATING
+    course_rating: Optional[float] = COURSE_RATING
+    hole_yardages: Optional[dict] = None
+
+    _normalize_ratings = field_validator("slope_rating", "course_rating", mode="before")(decimal_field)
+
+    @field_validator("hole_yardages", mode="before")
+    @classmethod
+    def _validate_hole_yardages(cls, value: object) -> Optional[dict]:
+        return normalize_hole_yardages(value)
+
+
+class UpdateUserTeeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    name: Optional[UserTeeName] = None
+    slope_rating: Optional[float] = SLOPE_RATING
+    course_rating: Optional[float] = COURSE_RATING
+    hole_yardages: Optional[dict] = None
+
+    _normalize_ratings = field_validator("slope_rating", "course_rating", mode="before")(decimal_field)
+
+    @field_validator("hole_yardages", mode="before")
+    @classmethod
+    def _validate_hole_yardages(cls, value: object) -> Optional[dict]:
+        return normalize_hole_yardages(value)
+
+
+class UpdateUserRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    home_course_id: Optional[UUID] = None
+    handicap: Optional[float] = Field(default=None, ge=-10, le=54)
+    # Same bounds as models.user.User: 18-hole goal 18-270, nine-hole goal 9-135.
+    scoring_goal: Optional[int] = Field(default=None, strict=True, ge=18, le=270)
+    scoring_goal_nine: Optional[int] = Field(default=None, strict=True, ge=9, le=135)
+
+    @field_validator("handicap", mode="before")
+    @classmethod
+    def _normalize_handicap(cls, v: object) -> object:
+        return normalize_handicap_value(v)
+
+
+class SendFriendRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    addressee_user_id: Optional[UUID] = None
+    addressee_friend_code: Optional[str] = Field(default=None, min_length=4, max_length=24)
+
+    @field_validator("addressee_friend_code")
+    @classmethod
+    def _validate_friend_code(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        code = sanitize_user_text(v, field_name="addressee_friend_code", max_length=24).upper()
+        if not code.replace("-", "").isalnum():
+            raise ValueError("addressee_friend_code must be alphanumeric.")
+        return code
+
+    @model_validator(mode="after")
+    def _validate_target_selector(self):
+        if self.addressee_user_id and self.addressee_friend_code:
+            raise ValueError("Provide either addressee_user_id or addressee_friend_code, not both.")
+        if not self.addressee_user_id and not self.addressee_friend_code:
+            raise ValueError("Provide addressee_friend_code or addressee_user_id.")
+        return self
+
+
+class FriendshipStatusRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    status: str = Field(..., pattern="^(accepted|declined|blocked)$")

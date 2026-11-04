@@ -18,6 +18,10 @@ logging.basicConfig(
 # Show all llm pipeline logs at DEBUG level
 logging.getLogger("llm").setLevel(logging.DEBUG)
 
+from api.messages import (
+    AUTOMATED_TRAFFIC_LIMIT, ENDPOINT_RATE_EXCEEDED, SCAN_LIMIT_REACHED, TOO_MANY_REPORTS, TOO_MANY_REQUESTS,
+    TOO_MANY_UNAUTHENTICATED_REQUESTS,
+)
 from api.security import (
     SecurityTrafficMonitor,
     SlidingWindowRateLimiter,
@@ -208,7 +212,7 @@ def create_app() -> FastAPI:
                 )
                 return JSONResponse(
                     status_code=429,
-                    content={"detail": "Too many requests. Please slow down."},
+                    content={"detail": TOO_MANY_REQUESTS},
                     headers={"Retry-After": str(retry_after)},
                 )
 
@@ -228,7 +232,7 @@ def create_app() -> FastAPI:
                     )
                     return JSONResponse(
                         status_code=429,
-                        content={"detail": "Too many unauthenticated requests."},
+                        content={"detail": TOO_MANY_UNAUTHENTICATED_REQUESTS},
                         headers={"Retry-After": str(retry_after)},
                     )
 
@@ -239,7 +243,7 @@ def create_app() -> FastAPI:
                 if not allowed:
                     return JSONResponse(
                         status_code=429,
-                        content={"detail": "Too many reports. Please try again later."},
+                        content={"detail": TOO_MANY_REPORTS},
                         headers={"Retry-After": str(retry_after), "Cache-Control": "no-store"},
                     )
 
@@ -259,7 +263,7 @@ def create_app() -> FastAPI:
                     )
                     return JSONResponse(
                         status_code=429,
-                        content={"detail": "Scorecard scan limit reached. Please try again later."},
+                        content={"detail": SCAN_LIMIT_REACHED},
                         headers={"Retry-After": str(retry_after)},
                     )
 
@@ -279,7 +283,7 @@ def create_app() -> FastAPI:
                     )
                     return JSONResponse(
                         status_code=429,
-                        content={"detail": "Request rate exceeded for this endpoint."},
+                        content={"detail": ENDPOINT_RATE_EXCEEDED},
                         headers={"Retry-After": str(retry_after)},
                     )
 
@@ -299,7 +303,7 @@ def create_app() -> FastAPI:
                     )
                     return JSONResponse(
                         status_code=429,
-                        content={"detail": "Automated traffic limit reached."},
+                        content={"detail": AUTOMATED_TRAFFIC_LIMIT},
                         headers={"Retry-After": str(retry_after)},
                     )
 
