@@ -251,7 +251,7 @@ async def get_goal_report(
     user = await db.users.get_user(str(user_id))
     if not user:
         raise HTTPException(404, "User not found")
-    if user.scoring_goal is None:
+    if user.scoring_goal is None and user.scoring_goal_nine is None:
         raise HTTPException(400, "No scoring goal set")
 
     rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=limit)
@@ -266,7 +266,7 @@ async def get_goal_report(
             home_course_rounds = list(reversed(home_rounds_desc))
 
     from analytics.goals import goal_report
-    return goal_report(rounds, user.scoring_goal, home_course_rounds)
+    return goal_report(rounds, user.scoring_goal, home_course_rounds, scoring_goal_nine=user.scoring_goal_nine)
 
 
 @router.get("/compare/{user_id}/{round_id}")

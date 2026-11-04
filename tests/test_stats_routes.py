@@ -69,7 +69,7 @@ async def test_goal_report_uses_goal_engine(monkeypatch, stats_database):
     user_id, _, _, user, db = stats_database
     monkeypatch.setattr(
         "analytics.goals.goal_report",
-        lambda rounds, scoring_goal, home_rounds: {"gap": 5},
+        lambda rounds, scoring_goal, home_rounds, **kwargs: {"gap": 5},
     )
 
     report = await stats.get_goal_report(user_id, 50, db, user)

@@ -151,3 +151,18 @@ async def test_milestones_sort_by_round_date():
 
     dates = [m["date"] for m in result["milestones"]]
     assert dates[0] == "2026/1/9" and dates[-1] == "2025/12/31"
+
+
+@pytest.mark.asyncio
+async def test_goal_report_works_with_only_a_nine_hole_goal():
+    user_id = uuid4()
+    user = make_user(user_id, scoring_goal_nine=44)
+    db = make_mock_database()
+    db.users.get_user = AsyncMock(return_value=user)
+    db.rounds.get_rounds_for_user = AsyncMock(
+        return_value=[par_round(holes=FRONT_NINE, course_obj=course(9), over=6, round_id="nine")]
+    )
+
+    report = await stats.get_goal_report(user_id, 50, db, user)
+
+    assert report["nine_hole"]["on_track"] is True and report["gap"] is None
