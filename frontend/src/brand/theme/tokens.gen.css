@@ -121,7 +121,6 @@
   --brand-text-eyebrow: 10px;
   --brand-text-kicker: 9px;
   --brand-text-section: 11px;
-  --brand-text-row: 15px;
   --brand-leading-display: 1.1;
   --brand-tracking-name: -0.3px;
   --brand-tracking-title: -0.5px;
@@ -140,7 +139,6 @@
   --brand-radius-tick: 2px;
   --brand-radius-card: 10px;
   --brand-radius-tooltip: 12px;
-  --brand-radius-panel: 14px;
   --brand-radius-addon: calc(var(--radius) - var(--brand-space-nudge));
   --brand-radius-control: calc(var(--radius) - var(--brand-space-nudge-sm));
   --brand-space-bar: 1.5px;
@@ -326,7 +324,6 @@
   --text-eyebrow: var(--brand-text-eyebrow);
   --text-kicker: var(--brand-text-kicker);
   --text-section: var(--brand-text-section);
-  --text-row: var(--brand-text-row);
   --leading-display: var(--brand-leading-display);
   --tracking-name: var(--brand-tracking-name);
   --tracking-title: var(--brand-tracking-title);
@@ -345,7 +342,6 @@
   --radius-tick: var(--brand-radius-tick);
   --radius-card: var(--brand-radius-card);
   --radius-tooltip: var(--brand-radius-tooltip);
-  --radius-panel: var(--brand-radius-panel);
   --radius-addon: var(--brand-radius-addon);
   --radius-control: var(--brand-radius-control);
   --spacing-bar: var(--brand-space-bar);
@@ -388,7 +384,6 @@
   --text-kicker--letter-spacing: 1px;
   --text-section--font-weight: 700;
   --text-section--letter-spacing: 0.18em;
-  --text-row--font-weight: 500;
   --blur-xs: 4px;
   --ring-width-3: var(--brand-ring-width);
   --grid-template-columns-round-preview: var(--brand-size-date-rail) 1fr auto;

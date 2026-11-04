@@ -40,8 +40,8 @@ export class SettingsRobot {
     return this.themeControl().getByRole("button", { name: label, exact: true });
   }
 
-  private updatesCheckbox() {
-    return this.page.getByRole("checkbox", { name: "Get updates" });
+  private updatesSwitch() {
+    return this.page.getByRole("switch", { name: "Get updates" });
   }
 
   private copyButton() {
@@ -145,12 +145,12 @@ export class SettingsRobot {
   }
 
   async turnOffUpdates(): Promise<this> {
-    await this.updatesCheckbox().uncheck();
+    await this.updatesSwitch().uncheck();
     return this;
   }
 
   async seesUpdatesOff(): Promise<this> {
-    await expect(this.updatesCheckbox()).not.toBeChecked();
+    await expect(this.updatesSwitch()).not.toBeChecked();
     return this;
   }
 
