@@ -264,7 +264,6 @@ def test_known_course_round_preserves_and_adds_warnings():
 
 def make_unknown_course_rows():
     parsed = ParsedScorecardRows(
-        course_name="  PEBBLE   BEACH  ",
         par_row=[4] * 9 + [7],
         handicap_row=list(range(1, 11)),
         tee_rows=[ParsedTeeRow(label="Gold", yardages=[400, None, 180])],
@@ -278,10 +277,8 @@ def make_unknown_course_rows():
 def test_unknown_course_round_builds_ocr_course_metadata():
     payload, _ = make_unknown_course_rows()
 
-    assert (payload["course"]["name"], payload["course"]["par"]) == (
-        "Pebble Beach",
-        36,
-    )
+    # The course name is never read from the scan; the user picks or enters it in review.
+    assert (payload["course"]["name"], payload["course"]["par"]) == (None, 36)
     assert payload["course"]["holes"][9]["par"] is None
     assert payload["course"]["tees"][0]["hole_yardages"] == {"1": 400, "3": 180}
 
