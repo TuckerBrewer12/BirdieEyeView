@@ -18,3 +18,11 @@ def validate_coverage(value) -> tuple[int, ...]:
 
 
 HoleCoverage = Annotated[tuple[int, ...], BeforeValidator(validate_coverage)]
+
+
+def rated_coverage(layout, course_rating, slope_rating):
+    """Holes a newly saved rating covers: the course's whole layout (1-9 or 1-18) when it has a
+    rating and the layout is known, else None. Saves record this so readers never have to guess."""
+    if course_rating is None and slope_rating is None:
+        return None
+    return layout if layout in (FRONT_NINE, FULL_ROUND) else None

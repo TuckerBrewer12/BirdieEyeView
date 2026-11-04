@@ -18,7 +18,7 @@ async def test_dashboard_summarizes_round_history(monkeypatch, to_par):
     summary = {**make_round_summary(round_id), 'to_par': to_par}
     db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[summary])
     db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])
-    monkeypatch.setattr(stats.hcap, "handicap_index", lambda rounds: 10.0)
+    monkeypatch.setattr(stats.hcap, "user_handicap_index", lambda rounds, user: 10.0)
 
     dashboard = await stats.get_dashboard(user_id, db, user)
 

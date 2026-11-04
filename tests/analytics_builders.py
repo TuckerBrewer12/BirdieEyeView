@@ -43,9 +43,13 @@ def round_(scores: Dict[int, dict], *, course_obj: Optional[Course] = None, roun
 
 def par_round(holes: Iterable[int] = FULL_ROUND, *, over: int = 0, course_obj: Optional[Course] = None,
               **round_kwargs) -> Round:
-    """A round scoring par (plus ``over`` on hole 1) on every listed hole, with linked course pars."""
+    """A round scoring par on every listed hole plus ``over`` strokes spread one per hole."""
     holes = list(holes)
     course_obj = course_obj if course_obj is not None else course(18 if len(holes) == 18 else 9)
     pars = {h.number: h.par for h in course_obj.holes}
-    scores = {n: {"strokes": pars[n] + (over if n == holes[0] else 0)} for n in holes}
+    step = 1 if over >= 0 else -1
+    extra = {n: 0 for n in holes}
+    for i in range(abs(over)):
+        extra[holes[i % len(holes)]] += step
+    scores = {n: {"strokes": pars[n] + extra[n]} for n in holes}
     return round_(scores, course_obj=course_obj, **round_kwargs)

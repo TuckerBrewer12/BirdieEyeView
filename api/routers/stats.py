@@ -56,10 +56,9 @@ async def get_dashboard(
 
     recent_rounds = [_summary_to_response(r) for r in summaries[:5]]
 
-    # Handicap index only needs the last 20 rounds (full model required for differentials)
-    hi_rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=20, offset=0)
-    rounds_chrono = list(reversed(hi_rounds_desc))
-    calculated_hi = hcap.handicap_index(rounds_chrono)
+    # Same handicap as every other screen: full history plus the user's seed and reset date.
+    history = await db.rounds.get_rounds_for_user(str(user_id), limit=None, offset=0)
+    calculated_hi = hcap.user_handicap_index(history, user)
 
     return DashboardResponse(
         total_rounds=len(summaries),
@@ -102,13 +101,18 @@ def _format_totals(summaries: list, holes: int) -> dict:
     }
 
 
-def _build_handicap_trend(hi_rounds, display_rounds):
-    """Compute rolling HI trend from hi_rounds, slice to display window, then annotate
-    used_in_hi based only on the displayed rounds so green count matches WHS best-N."""
-    full = hcap.handicap_trend(hi_rounds)
-    sliced = full[-len(display_rounds):] if display_rounds else []
-    hcap.annotate_used_in_hi(sliced)
-    return sliced
+def _build_handicap_trend(history, display_rounds, user):
+    """Index trend over the full calculation history, shown only for the displayed rounds.
+
+    ``used_in_hi`` marks the rounds the current index actually uses (from the whole history),
+    so filters and the display window never change which rounds count.
+    """
+    full = hcap.handicap_trend(history, seed_handicap=user.handicap, seed_set_at=user.last_handicap_update)
+    shown = {str(r.id) for r in display_rounds}
+    entries = [entry for entry in full if str(entry["round_id"]) in shown]
+    for index, entry in enumerate(entries, start=1):
+        entry["round_index"] = index
+    return entries
 
 
 @router.get("/analytics/{user_id}")
@@ -151,7 +155,6 @@ async def get_analytics(
         date_from = today - timedelta(days=365)
 
     rounds: list = []
-    hi_rounds: list = []
     lifetime_rounds: list = []
     if not no_matching_course:
         # DB returns newest-first; reverse for chronological trend ordering
@@ -161,14 +164,6 @@ async def get_analytics(
             date_from=date_from,
         )
         rounds = list(reversed(rounds_desc))
-
-        # Fetch up to 19 extra rounds so handicap_trend uses a true rolling 20-round window
-        hi_rounds_desc = await db.rounds.get_rounds_for_user(
-            target_user_id, limit=limit + 19, offset=0,
-            course_id=resolved_course_id,
-            date_from=date_from,
-        )
-        hi_rounds = list(reversed(hi_rounds_desc))
 
         # Lifetime achievements use the full history for the selected course (no limit or timeframe).
         lifetime_rounds = list(reversed(await db.rounds.get_rounds_for_user(
@@ -186,7 +181,11 @@ async def get_analytics(
     ud_rows = analytics.up_and_down_trend(rounds)
     avg_up_and_down = analytics.overall_up_and_down(rounds)["percentage"]
 
-    current_hi = hcap.handicap_index(hi_rounds)
+    # The handicap is the user's current index: full unfiltered history, never the chart filters.
+    handicap_history = lifetime_rounds if resolved_course_id is None and not no_matching_course else list(
+        reversed(await db.rounds.get_rounds_for_user(target_user_id, limit=None, offset=0))
+    )
+    current_hi = hcap.user_handicap_index(handicap_history, user)
 
     return {
         "kpis": {
@@ -219,7 +218,7 @@ async def get_analytics(
         "scoring_by_yardage": analytics.scoring_by_yardage_buckets(rounds),
         "scoring_by_handicap": analytics.scoring_vs_hole_handicap(rounds),
         "gir_vs_non_gir": analytics.gir_vs_non_gir_score_distribution(rounds),
-        "handicap_trend": _build_handicap_trend(hi_rounds, rounds),
+        "handicap_trend": _build_handicap_trend(handicap_history, rounds, user),
         "score_differentials": hcap.score_differentials_per_round(rounds),
         "notable_achievements": analytics.notable_achievements(
             lifetime_rounds,

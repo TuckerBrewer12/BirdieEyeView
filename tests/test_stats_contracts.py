@@ -87,12 +87,13 @@ async def test_analytics_kpis_use_complete_rounds_by_format_and_every_opportunit
 async def test_home_filter_without_a_home_course_matches_nothing():
     user_id = uuid4()
     user = make_user(user_id)
-    db = analytics_db(user)
+    db = analytics_db(user, [par_round(round_id="elsewhere")])
 
     result = await stats.get_analytics(user_id, 50, "home", None, db, user)
 
     assert result["kpis"]["total_rounds"] == 0
-    db.rounds.get_rounds_for_user.assert_not_awaited()
+    # Only the unfiltered handicap history is read; no course-filtered round query runs.
+    assert [call.kwargs.get("course_id") for call in db.rounds.get_rounds_for_user.await_args_list] == [None]
 
 
 @pytest.mark.asyncio
@@ -100,12 +101,12 @@ async def test_achievements_use_the_full_history():
     user_id = uuid4()
     user = make_user(user_id)
     old_best = par_round(over=-1, round_id="old", date=datetime(2020, 1, 1))
-    db = analytics_db(user, [], [], [old_best])
+    db = analytics_db(user, [], [old_best])
 
     result = await stats.get_analytics(user_id, 5, None, "ytd", db, user)
 
     assert result["notable_achievements"]["scoring_records"]["lifetime"]["lowest_round"] == 71
-    lifetime_call = db.rounds.get_rounds_for_user.await_args_list[2]
+    lifetime_call = db.rounds.get_rounds_for_user.await_args_list[1]
     assert lifetime_call.kwargs["limit"] is None and "date_from" not in lifetime_call.kwargs
 
 

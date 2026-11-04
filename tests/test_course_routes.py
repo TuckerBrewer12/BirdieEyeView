@@ -258,3 +258,17 @@ async def test_update_course_maps_repository_errors(error, status):
         await courses.update_course(course_id, courses.UpdateCourseRequest(name="Pebble"), db, make_user(user_id))
 
     assert raised.value.status_code == status
+
+
+@pytest.mark.asyncio
+async def test_created_course_ratings_record_the_layout():
+    user_id = uuid4()
+    db = make_mock_database()
+    db.courses.create_course = AsyncMock(side_effect=lambda course, user_id=None: course.model_copy(update={"id": "c1"}))
+    request = courses.CreateCourseRequest(
+        name="Pebble", holes=NINE_HOLES, tees=[{"color": "Blue", "course_rating": 35.2, "slope_rating": 120}]
+    )
+
+    await courses.create_course(request, None, db, make_user(user_id))
+
+    assert db.courses.create_course.await_args.args[0].tees[0].rating_holes == tuple(range(1, 10))

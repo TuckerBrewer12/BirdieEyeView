@@ -340,3 +340,18 @@ async def test_friend_request_to_unknown_user_is_not_found(friendship_database):
 
     assert raised.value.status_code == 404
     db.friendships.send_request.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_user_tee_rating_records_the_linked_course_layout(tee_database):
+    from models import Course, Hole
+
+    user_id, _, user, _, db = tee_database
+    db.courses.get_course = AsyncMock(return_value=Course(
+        id=str(uuid4()), name="Master", total_holes=18, holes=[Hole(number=n, par=4) for n in range(1, 19)]
+    ))
+    request = users.CreateUserTeeRequest(name="Blue", course_id=uuid4(), course_rating=71.4, slope_rating=128)
+
+    await users.create_user_tee(user_id, request, db, user)
+
+    assert db.user_tees.create_user_tee.await_args.args[0].rating_holes == tuple(range(1, 19))

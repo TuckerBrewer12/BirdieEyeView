@@ -107,11 +107,9 @@ class AIService:
         )
         rounds = list(reversed(rounds_desc))  # chronological order
 
-        hi = hcap.handicap_index(
-            rounds,
-            seed_handicap=(user.handicap if user else None),
-            seed_set_at=(user.last_handicap_update if user else None),
-        )
+        # Same index as every other screen: full history plus the user's seed and reset date.
+        history = await self._db.rounds.get_rounds_for_user(user_id, limit=None, offset=0)
+        hi = hcap.user_handicap_index(history, user)
         if target_handicap is not None:
             benchmark, _ = _get_benchmark(target_handicap)
             hi_label = _TARGET_LABELS.get(target_handicap, _get_benchmark(target_handicap)[1])
