@@ -1,6 +1,7 @@
 import type {
   BenchmarkComparisonDto,
   BenchmarkShapeDto,
+  BenchmarkVerdictsDto,
   GoalAttemptDto,
   ParTypeComparisonDto,
 } from "@/types/api";
@@ -73,10 +74,17 @@ export interface ParTypeComparison {
   verdict: ParTypeVerdict | null;
 }
 
-/** The server's comparison: the benchmark's shape (null when there is none to draw) and each par type against it. */
+/** Ahead of the benchmark, level with it, or behind it, as the server judged. */
+export type BenchmarkVerdict = NonNullable<BenchmarkVerdictsDto["gir_percentage"]>;
+
+/** The server's verdict on each radar axis. Null where either side has no figure. */
+export type BenchmarkVerdicts = Record<keyof BenchmarkShape, BenchmarkVerdict | null>;
+
+/** The server's comparison: the benchmark's shape (null when there is none to draw), each par type against it, and each radar axis's verdict. */
 export interface BenchmarkComparison {
   benchmark: BenchmarkShape | null;
   parTypes: ParTypeComparison[];
+  verdicts: BenchmarkVerdicts;
 }
 
 export function benchmarkShapeFrom(dto: BenchmarkShapeDto): BenchmarkShape {
@@ -93,6 +101,14 @@ export function benchmarkShapeFrom(dto: BenchmarkShapeDto): BenchmarkShape {
 export function benchmarkComparisonFrom(dto: BenchmarkComparisonDto): BenchmarkComparison {
   return {
     benchmark: dto.benchmark ? benchmarkShapeFrom(dto.benchmark) : null,
+    verdicts: {
+      girPct: dto.verdicts.gir_percentage,
+      scramblingPct: dto.verdicts.scrambling_percentage,
+      puttsPerGir: dto.verdicts.putts_per_gir,
+      par3ToPar: dto.verdicts.par3_to_par,
+      par4ToPar: dto.verdicts.par4_to_par,
+      par5ToPar: dto.verdicts.par5_to_par,
+    },
     parTypes: dto.par_types.map((row) => ({
       par: row.par,
       averageToPar: row.average_to_par,

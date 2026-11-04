@@ -120,7 +120,6 @@ export { HoleMetricBars } from "./charts/HoleMetricBars";
 export { HoleScoreMixBars } from "./charts/HoleScoreMixBars";
 export { HoleToParBars } from "./charts/HoleToParBars";
 export { RadarChart } from "./charts/RadarChart";
-export { RadarSummary } from "./components/RadarSummary";
 export type { RadarAxis } from "./charts/RadarChart";
 export { ScoreGoalChart } from "./charts/ScoreGoalChart";
 export { RoundFlowChart } from "./charts/RoundFlowChart";

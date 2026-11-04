@@ -111,6 +111,29 @@ def par_type_comparison(
     return rows
 
 
+# The figures a player wants higher; on the rest (putts per GIR, each par type to par) lower is better.
+HIGHER_IS_BETTER = ("gir_percentage", "scrambling_percentage")
+
+
+def shape_verdicts(
+    mine: Optional[Dict[str, Any]], benchmark: Optional[Dict[str, Any]], par_types: List[Dict[str, Any]]
+) -> Dict[str, Optional[Verdict]]:
+    """Each radar axis judged against the benchmark: ahead, even or behind, at the precision the
+    shape is given in. The par types take their row's verdict, so the radar and the par rows agree.
+    Null where either side has no figure."""
+    verdicts: Dict[str, Optional[Verdict]] = {f"par{row['par']}_to_par": row["verdict"] for row in par_types}
+    for field in ("gir_percentage", "scrambling_percentage", "putts_per_gir"):
+        a = mine.get(field) if mine else None
+        b = benchmark.get(field) if benchmark else None
+        if a is None or b is None:
+            verdicts[field] = None
+        elif a == b:
+            verdicts[field] = "even"
+        else:
+            verdicts[field] = "ahead" if (a > b) == (field in HIGHER_IS_BETTER) else "behind"
+    return {field: verdicts.get(field) for field in SHAPE_FIELDS}
+
+
 def comparison(
     rounds: List[Round],
     against: Against,
@@ -118,13 +141,15 @@ def comparison(
     handicap: Optional[int] = None,
     goal: Optional[int] = None,
 ) -> Dict[str, Any]:
-    """The player's par types against `benchmark`, and which benchmark it was."""
+    """The player's par types and radar axes against `benchmark`, and which benchmark it was."""
+    par_types = par_type_comparison(analytics.scoring_by_par(rounds), benchmark)
     return {
         "against": against,
         "handicap": handicap,
         "goal": goal,
         "benchmark": benchmark,
-        "par_types": par_type_comparison(analytics.scoring_by_par(rounds), benchmark),
+        "par_types": par_types,
+        "verdicts": shape_verdicts(player_shape(rounds), benchmark, par_types),
     }
 
 

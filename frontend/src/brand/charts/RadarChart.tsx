@@ -8,7 +8,9 @@ interface RadarAxis {
   value: number;
   /** The comparison on the same 0–100 scale. Leave it off every axis to draw the shape alone. */
   benchmark?: number | null;
-  /** The figure under the label: "52%". Green when ahead of the comparison, red when behind, the shape's colour with none. */
+  /** The server's verdict against the comparison: ahead reads green and behind red; even, or none, the shape's colour. */
+  verdict?: "ahead" | "even" | "behind" | null;
+  /** The figure under the label: "52%", in the verdict's colour. */
   valueLabel?: string;
   /** The comparison's figure, after "vs". */
   benchmarkLabel?: string;
@@ -56,13 +58,13 @@ export function RadarChart({
   const outline = (values: number[]) => values.map((v, i) => point(i, v).join(",")).join(" ");
 
   const compared = axes.every((axis) => axis.benchmark != null);
-  // Ahead of the comparison reads as a birdie and behind it as a bogey; with none, the shape's own colour.
+  // Ahead of the comparison reads as a birdie and behind it as a bogey; even, or no verdict, the shape's own colour.
   const toneOf = (axis: RadarAxis) =>
-    !compared
-      ? tokens.color.primary
-      : axis.value >= axis.benchmark!
-        ? tokens.color.score.birdie.text
-        : tokens.color.score.bogey.text;
+    axis.verdict === "ahead"
+      ? tokens.color.score.birdie.text
+      : axis.verdict === "behind"
+        ? tokens.color.score.bogey.text
+        : tokens.color.primary;
 
   return (
     <div data-slot="radar-chart" className={cn("w-full", className)}>

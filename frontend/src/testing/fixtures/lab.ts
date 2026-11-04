@@ -2,6 +2,7 @@ import type {
   AnalyticsDto,
   BenchmarkComparisonDto,
   BenchmarkShapeDto,
+  BenchmarkVerdictsDto,
   GoalAttemptDto,
   GoalReportDto,
   ParTypeComparisonDto,
@@ -224,6 +225,24 @@ function parTypes(
   }));
 }
 
+type Verdict = ParTypeComparisonDto["verdict"];
+
+/**
+ * The radar's axes as the server judged them: GIR, scrambling and putts per GIR (the golfer's
+ * 28%, 22% and 2.05 against the shape's), then each par type's verdict from its row.
+ */
+function verdicts(rates: [Verdict, Verdict, Verdict], parRows: ParTypeComparisonDto[]): BenchmarkVerdictsDto {
+  const [par3, par4, par5] = parRows.map((row) => row.verdict);
+  return {
+    gir_percentage: rates[0],
+    scrambling_percentage: rates[1],
+    putts_per_gir: rates[2],
+    par3_to_par: par3,
+    par4_to_par: par4,
+    par5_to_par: par5,
+  };
+}
+
 const BREAKS_90_JUDGED: [number, ParTypeComparisonDto["verdict"]][] = [[0.32, "behind"], [0.1, "behind"], [-0.25, "ahead"]];
 
 /** `GET /stats/{id}/benchmark` for each comparison The Lab's tests make, keyed as FakeBackend looks them up. */
@@ -234,6 +253,7 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
     goal: null,
     benchmark: breaks90Shape,
     par_types: parTypes(breaks90Shape, BREAKS_90_JUDGED),
+    verdicts: verdicts(["ahead", "ahead", "ahead"], parTypes(breaks90Shape, BREAKS_90_JUDGED)),
   },
   "handicap:5": {
     against: "handicap",
@@ -241,6 +261,10 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
     goal: null,
     benchmark: breaks80Shape,
     par_types: parTypes(breaks80Shape, [[0.72, "behind"], [0.62, "behind"], [0.3, "behind"]]),
+    verdicts: verdicts(
+      ["behind", "behind", "behind"],
+      parTypes(breaks80Shape, [[0.72, "behind"], [0.62, "behind"], [0.3, "behind"]]),
+    ),
   },
   // The best three average 89.7, nearest the golfers who break 90.
   peak: {
@@ -249,6 +273,7 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
     goal: 89,
     benchmark: breaks90Shape,
     par_types: parTypes(breaks90Shape, BREAKS_90_JUDGED),
+    verdicts: verdicts(["ahead", "ahead", "ahead"], parTypes(breaks90Shape, BREAKS_90_JUDGED)),
   },
   [`friend:${avery.id}`]: {
     against: "friend",
@@ -256,6 +281,10 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
     goal: null,
     benchmark: averyShape,
     par_types: parTypes(averyShape, [[0.57, "behind"], [0.57, "behind"], [0.55, "behind"]]),
+    verdicts: verdicts(
+      ["behind", "behind", "behind"],
+      parTypes(averyShape, [[0.57, "behind"], [0.57, "behind"], [0.55, "behind"]]),
+    ),
   },
   // Jordan has no rounds: nothing to draw or compare with.
   [`friend:${jordan.id}`]: {
@@ -264,5 +293,6 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
     goal: null,
     benchmark: null,
     par_types: parTypes(null, []),
+    verdicts: verdicts([null, null, null], parTypes(null, [])),
   },
 };
