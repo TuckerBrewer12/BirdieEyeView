@@ -318,6 +318,20 @@ async def test_round_references_reject_foreign_owner_and_wrong_course(database_m
         await database_manager.rounds.create_round(Round(hole_scores=scores(FRONT_NINE)), user.id, user_tee_id=tee.id)
 
 
+async def test_round_rejects_a_tee_from_another_course(database_manager):
+    user = await create_user(database_manager, email="golfer@example.test")
+    course_a = await create_course(database_manager, name="Course A", external_course_id="course-a")
+    course_b = await create_course(database_manager, name="Course B", external_course_id="course-b")
+    async with database_manager._pool.acquire() as conn:
+        tee_b = await conn.fetchval("SELECT id FROM courses.tees WHERE course_id = $1 LIMIT 1", UUID(str(course_b.id)))
+
+    with pytest.raises(IntegrityError, match="does not belong to the round course"):
+        await database_manager.rounds.create_round(
+            Round(course=course_a, hole_scores=scores(FULL_ROUND)), user.id, tee_id=str(tee_b)
+        )
+    assert await database_manager.rounds.get_rounds_for_user(user.id, limit=None) == []
+
+
 async def test_friendship_block_cannot_be_overwritten_by_stale_accept(database_manager):
     first = await create_user(database_manager, email="first@example.test")
     second = await create_user(database_manager, email="second@example.test")

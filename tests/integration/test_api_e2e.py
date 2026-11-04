@@ -165,6 +165,9 @@ def test_password_reset_replaces_the_password_and_its_token_works_once(api):
     api.user("dee@example.com")
 
     assert api.client.post("/api/auth/forgot-password", json={"email": "dee@example.com"}).status_code == 200
+    # A second request inside the 60-second cooldown answers the same but sends no new email.
+    assert api.client.post("/api/auth/forgot-password", json={"email": "dee@example.com"}).status_code == 200
+    assert [kind for kind, _, _ in api.emails].count("reset") == 1
     token = api.token_from("reset", "dee@example.com")
     new_password = "a brand new passphrase"
     reset = {"token": token, "new_password": new_password}

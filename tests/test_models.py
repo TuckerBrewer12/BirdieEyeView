@@ -685,6 +685,7 @@ def test_ambiguous_course_tee_does_not_fall_back_to_user_tee():
     (HoleScore, "strokes", True),
     (HoleScore, "strokes", "5"),
     (HoleScore, "strokes", 5.0),
+    (HoleScore, "putts", False),  # putts is declared separately; False must not become 0 putts
     (Hole, "par", "4"),
     (User, "handicap", True),
     (Tee, "slope_rating", "113"),

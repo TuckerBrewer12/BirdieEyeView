@@ -405,6 +405,7 @@ def test_configuration_never_connects_to_storage_and_explicitly_configures_sdk(m
 
 
 @pytest.mark.parametrize("name,value", [
+    ("SCAN_REPORT_S3_ENDPOINT", "http://storage.invalid"),  # HTTPS only
     ("SCAN_REPORT_S3_ENDPOINT", "https://private-user:secret@storage.invalid"),
     ("SCAN_REPORT_S3_ENDPOINT", "https://storage.invalid/?secret=private-user"),
     ("SCAN_REPORT_S3_SECRET_ACCESS_KEY", ""), ("SCAN_REPORT_ENCRYPTION_KEY", "private-key"),
