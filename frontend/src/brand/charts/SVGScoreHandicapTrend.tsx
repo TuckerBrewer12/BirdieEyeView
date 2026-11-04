@@ -167,7 +167,7 @@ export function SVGScoreHandicapTrend({
               <g key={`score-${v}`}>
                 <line x1={0} x2={gridRight} y1={yScore(v)} y2={yScore(v)} stroke={tokens.color.chart.grid} strokeWidth={tokens.lineWidth.border} />
                 {clearOfPar(yScore(v)) && (
-                  <AxisLabel x={labelX} y={yScore(v) + 4}>
+                  <AxisLabel x={labelX} y={yScore(v) + L.tickBaseline}>
                     {v}
                   </AxisLabel>
                 )}
