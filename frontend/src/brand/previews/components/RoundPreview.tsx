@@ -1,13 +1,30 @@
+import { Collection } from "@/brand/components/Collection";
 import { RoundPreview } from "@/brand/components/RoundPreview";
-import { boardRounds } from "@/brand/previews/roundPreviewBoard";
+import { Round } from "@/domain";
+import { populatedRounds } from "@/testing/fixtures/rounds";
 
-/** Board A, "refined row": the dated rows at the board's size. */
+const [overPar, evenPar, best, unlinked] = populatedRounds.map(Round.fromSummary);
+
+/** Compose-style @Preview for RoundPreview. */
 export default function RoundPreviewPreview() {
   return (
-    <div data-testid="brand-frame" className="fixed inset-0 flex flex-col gap-2.5 bg-background p-6">
-      <RoundPreview round={boardRounds.overPar} onClick={() => {}} />
-      <RoundPreview round={boardRounds.evenPar} onClick={() => {}} />
-      <RoundPreview round={boardRounds.unlinked} onClick={() => {}} />
-    </div>
+    <>
+      <RoundPreview round={best} variant="highlight" onClick={() => {}} />
+      <RoundPreview round={evenPar} variant="highlight" onClick={() => {}} />
+      <RoundPreview round={overPar} variant="highlight" onClick={() => {}} />
+      <RoundPreview round={null} variant="highlight" />
+      <RoundPreview round={overPar} variant="ticket" label="Last Round" actionLabel="Open card" onClick={() => {}} />
+      <RoundPreview round={best} variant="ticket" label="Best This Year" />
+      <RoundPreview round={overPar} />
+      <RoundPreview round={evenPar} />
+      <RoundPreview round={unlinked} onLinkClick={() => {}} />
+      <Collection
+        layout="divided"
+        className="overflow-hidden rounded-xl border border-border bg-card"
+        items={[overPar, evenPar, unlinked]}
+        keyFor={(round) => round.id}
+        renderItem={(round) => <RoundPreview variant="history" round={round} />}
+      />
+    </>
   );
 }

@@ -112,7 +112,6 @@ export {
 // Charts
 export { ActivityHeatmap } from "./charts/ActivityHeatmap";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
-export { NineBars } from "./charts/NineBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
 export { ScoreMixBar } from "./charts/ScoreMixBar";
 export { Sparkline } from "./charts/Sparkline";

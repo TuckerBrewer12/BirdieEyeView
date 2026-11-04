@@ -3,9 +3,13 @@ import { scoreFillClass, type ScoreKey } from "@/brand/theme";
 import type { HoleSummary } from "@/domain";
 
 interface HoleScoreBarsProps {
+  /** One nine's holes: a round's `frontNine.holes` or `backNine.holes`. */
   holes: HoleSummary[];
-  /** `strip` is one even row; `profile` stands each bar taller the worse the hole went. */
-  variant?: "strip" | "profile";
+  /**
+   * `nine` is the nine as nine even cells, so a short nine keeps its cells' width and a front
+   * and a back nine line up side by side; `profile` stands each bar taller the worse the hole went.
+   */
+  variant?: "nine" | "profile";
   className?: string;
 }
 
@@ -19,15 +23,15 @@ const PROFILE_HEIGHT: Record<ScoreKey, string> = {
   quad: "h-profile-worse",
 };
 
-/** A round at a glance: one bar per hole, coloured by how it was scored. */
-export function HoleScoreBars({ holes, variant = "strip", className }: HoleScoreBarsProps) {
+/** A nine at a glance: one bar per hole, coloured by how it was scored. */
+export function HoleScoreBars({ holes, variant = "nine", className }: HoleScoreBarsProps) {
   if (holes.length === 0) return null;
   const profile = variant === "profile";
 
   return (
     <div
       data-slot="hole-score-bars"
-      className={cn("flex", profile ? "h-6 items-end gap-bar" : "h-2.5 gap-bar", className)}
+      className={cn(profile ? "flex h-6 items-end gap-bar" : "grid h-2 grid-cols-9 gap-chip", className)}
     >
       {holes.map((hole) => {
         // Par is the baseline, so it recedes and the misses stand out. Unscored holes read as par.
@@ -36,9 +40,8 @@ export function HoleScoreBars({ holes, variant = "strip", className }: HoleScore
           <div
             key={hole.hole}
             className={cn(
-              "flex-1",
               scoreFillClass(kind),
-              profile ? cn("rounded-t-tick", PROFILE_HEIGHT[kind]) : "rounded-bar",
+              profile ? cn("flex-1 rounded-t-tick", PROFILE_HEIGHT[kind]) : "rounded-tick",
               kind === "par" && "opacity-recessed",
             )}
           />

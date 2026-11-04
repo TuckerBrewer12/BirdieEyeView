@@ -3,19 +3,18 @@ import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
-import { NineBars } from "@/brand/charts/NineBars";
 import { Button } from "@/brand/components/Button";
 import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import { scoreFillClass, scoreOnFillClass, toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
-import { playedScoreKinds, scoreKindCountLabel, type HoleSummary, type RoundSummary } from "@/domain";
+import { toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
+import { playedScoreKinds, scoreKindCountLabel, type RoundSummary } from "@/domain";
 import { formatCourseName } from "@/domain/course";
 import { formatDay, formatDayShort, dayParts } from "@/domain/date";
 
 interface RoundListProps {
   round: RoundSummary;
-  /** Default is the dated row; `strip` is the scorecard strip; `history` a plain line. */
-  variant?: "history" | "strip";
+  /** Default is the dated row; `history` a plain line. */
+  variant?: "history";
   onClick?: () => void;
   onLinkClick?: () => void;
 }
@@ -48,10 +47,6 @@ export function RoundPreview(props: RoundPreviewProps) {
   }
 
   const { round, variant, onClick, onLinkClick } = props;
-
-  if (variant === "strip") {
-    return <RoundStrip round={round} onClick={onClick} />;
-  }
 
   if (variant === "history") {
     return (
@@ -93,7 +88,7 @@ export function RoundPreview(props: RoundPreviewProps) {
     <motion.div
       data-slot="round-preview"
       className={cn(
-        "flex items-stretch gap-4 rounded-row border border-border bg-card px-4 py-3.5 transition-shadow",
+        "flex items-stretch gap-4 rounded-xl border border-border bg-card px-4 py-3 transition-shadow",
         onClick ? "cursor-pointer hover:shadow-card" : "cursor-default",
       )}
       whileHover={onClick ? { scale: tokens.motion.hoverScale } : undefined}
@@ -107,7 +102,7 @@ export function RoundPreview(props: RoundPreviewProps) {
             <span className="text-label font-semibold uppercase tracking-chip text-muted-foreground">
               {dateParts.month}
             </span>
-            <span className="text-date text-foreground">{dateParts.day}</span>
+            <span className="text-xl font-bold leading-none text-foreground">{dateParts.day}</span>
           </>
         ) : (
           <span className="text-label text-muted-foreground">—</span>
@@ -119,18 +114,16 @@ export function RoundPreview(props: RoundPreviewProps) {
           <span className="truncate text-base font-semibold text-foreground">
             {courseName ?? "Unknown course"}
           </span>
-          {unlinked && (
+          {unlinked && onLinkClick && (
             <Button
               variant="outline"
               size="xs"
               shape="pill"
-              aria-label={onLinkClick ? `Link ${courseName ?? "this round"} to a saved course` : undefined}
-              disabled={!onLinkClick}
+              aria-label={`Link ${courseName ?? "this round"} to a saved course`}
               onClick={(e) => {
                 e.stopPropagation();
-                onLinkClick?.();
+                onLinkClick();
               }}
-              className="text-muted-foreground disabled:opacity-100"
             >
               Unlinked
             </Button>
@@ -140,15 +133,15 @@ export function RoundPreview(props: RoundPreviewProps) {
         {meta.length > 0 && <div className="text-body-sm text-foreground-secondary">{meta.join(" · ")}</div>}
 
         {round.holes.length > 0 && (
-          <div className="flex gap-2.5">
-            <NineBars holes={round.holes.slice(0, 9)} />
-            <NineBars holes={round.holes.slice(9)} />
+          <div className="flex gap-3">
+            <HoleScoreBars holes={round.frontNine.holes} className="flex-1" />
+            <HoleScoreBars holes={round.backNine.holes} className="flex-1" />
           </div>
         )}
       </div>
 
       <div className="flex w-16 shrink-0 flex-col items-end justify-center gap-1 whitespace-nowrap text-right">
-        <span className="text-figure text-foreground">{round.score ?? "—"}</span>
+        <span className="text-title text-foreground">{round.score ?? "—"}</span>
         {round.toPar != null && (
           <span
             className={cn(
@@ -161,85 +154,6 @@ export function RoundPreview(props: RoundPreviewProps) {
         )}
       </div>
     </motion.div>
-  );
-}
-
-/** One hole on the strip: a circle under par, a square over, the bare number at par. */
-function StripHole({ hole }: { hole: HoleSummary }) {
-  const kind = hole.kind;
-  const underPar = kind === "eagle" || kind === "birdie";
-  return (
-    <span
-      className={cn(
-        "flex size-5 items-center justify-center text-label font-semibold",
-        !kind || kind === "par"
-          ? "text-foreground-secondary"
-          : cn(scoreFillClass(kind), scoreOnFillClass(kind), underPar ? "rounded-full" : "rounded-sm"),
-      )}
-    >
-      {hole.strokes ?? "–"}
-    </span>
-  );
-}
-
-function StripNine({ holes, total }: { holes: HoleSummary[]; total: number | null }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {holes.map((hole) => (
-        <StripHole key={hole.hole} hole={hole} />
-      ))}
-      <span className="flex h-5 w-nine-total items-center justify-center rounded-sm bg-muted text-label font-bold text-foreground-secondary">
-        {total ?? "–"}
-      </span>
-    </div>
-  );
-}
-
-/** The round as a scorecard strip: course and date, the number, every hole as played with the nines' totals. */
-function RoundStrip({ round, onClick }: { round: RoundSummary; onClick?: () => void }) {
-  const courseName = round.course?.name ? formatCourseName(round.course.name) : "Unknown course";
-  const meta = [
-    round.course?.id ? (round.teeBox ? `${round.teeBox} tees` : null) : "Not linked to a course",
-    round.putts != null ? `${round.putts} putts` : null,
-  ].filter(Boolean);
-
-  return (
-    <button
-      type="button"
-      data-slot="round-preview"
-      onClick={onClick}
-      disabled={!onClick}
-      className={cn(
-        "flex w-full flex-col gap-2.5 rounded-row border border-border bg-card px-4 py-3.5 text-left text-foreground",
-        onClick ? "cursor-pointer transition-shadow hover:shadow-card" : "cursor-default",
-      )}
-    >
-      <div className="flex w-full items-baseline gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
-            <span className="truncate text-row">{courseName}</span>
-            <span className="shrink-0 text-body-sm text-muted-foreground">{formatDayShort(round.date) ?? "—"}</span>
-          </div>
-          {meta.length > 0 && (
-            <div className="mt-0.5 text-body-sm text-foreground-secondary">{meta.join(" · ")}</div>
-          )}
-        </div>
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-figure-sm">{round.score ?? "—"}</span>
-          {round.toPar != null && (
-            <span className={cn("min-w-nine-total text-right text-body font-semibold", toParTextClass(round.toPar))}>
-              {toParLabel(round.toPar)}
-            </span>
-          )}
-        </div>
-      </div>
-      {round.holes.length > 0 && (
-        <div className="flex items-center gap-1.5">
-          <StripNine holes={round.holes.slice(0, 9)} total={round.frontNine.total} />
-          <StripNine holes={round.holes.slice(9)} total={round.backNine.total} />
-        </div>
-      )}
-    </button>
   );
 }
 

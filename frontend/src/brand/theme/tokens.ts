@@ -379,14 +379,6 @@ export const type = {
   body: { size: 13 },
   /** A page's title. */
   title: { size: 26, weight: 700, tracking: tracking.title },
-  /** The day of the month on a round row's date rail. */
-  date: { size: 22, weight: 700, leading: 1.1 },
-  /** A round row's score: the figure beside the course, a step under the hero. */
-  figure: { size: 28, weight: 700, tracking: -0.6, leading: 1 },
-  /** A round's score on the scorecard-strip row. */
-  "figure-sm": { size: 26, weight: 700, tracking: -0.5, leading: 1 },
-  /** A row's name: a course, a person. */
-  row: { size: 15, weight: 600 },
   /** The one big figure on a card: a round's score. */
   hero: { size: 44, weight: 700, tracking: tracking.hero, leading: 1 },
   /** The tracked capitals above a figure or a group of rows. */
@@ -424,8 +416,6 @@ export const radius = {
   bar: 1.5,
   tick: 2,
   card: 10,
-  /** A round's row in a list. */
-  row: 14,
   tooltip: 12,
   addon: "calc(var(--radius) - var(--brand-space-nudge))",
   control: "calc(var(--radius) - var(--brand-space-nudge-sm))",
@@ -443,8 +433,6 @@ export const size = {
   target: "15rem",
   "icon-xs": 11,
   "hole-w": 30,
-  /** A nine's total at the end of a scorecard strip. */
-  "nine-total": 26,
   "hole-h": 22,
   // A profile bar's height in its row, by score: the worse the hole, the taller.
   "profile-eagle": "28%",
