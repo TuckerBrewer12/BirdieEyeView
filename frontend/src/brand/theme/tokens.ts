@@ -454,9 +454,10 @@ export const lineWidth = {
   outline: 1.5,
 };
 
-/** Icon line weight in the tab bar, unitless. */
+/** Icon line weight, unitless: lighter at rest, heavier on a current item. */
 export const stroke = {
   icon: 1.75,
+  "icon-active": 2.25,
 };
 
 /** Blur radii, in pixels. `xs` is Tailwind's own step, named here so code can read it. */
