@@ -189,6 +189,18 @@ async def test_stale_master_is_updated_from_verified_scan():
 
 
 @pytest.mark.asyncio
+async def test_picked_master_without_course_name_is_still_verified():
+    service, db, provider = make_service()
+    master = make_course(external_id="ext-1", blue=[y - 10 for y in BLUE])
+    db.courses.get_course.return_value = master
+
+    await service.save_reviewed_scan(make_save_request(course_id=str(uuid4()), course_name=None))
+
+    provider.get_course_details.assert_awaited_once_with("ext-1")
+    db.courses.apply_verified_scan.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_verified_par_change_reaches_the_saved_round():
     service, db, _ = make_service()
     master = make_course(external_id="ext-1")
@@ -202,14 +214,15 @@ async def test_verified_par_change_reaches_the_saved_round():
 
 
 @pytest.mark.asyncio
-async def test_front_nine_scan_never_rewrites_an_eighteen_hole_master():
+@pytest.mark.parametrize("declared_holes", [18, None], ids=["declared", "legacy-undeclared"])
+async def test_front_nine_scan_never_rewrites_an_eighteen_hole_master(declared_holes):
     service, db, provider = make_service()
     back_handicaps = [2, 18, 6, 10, 4, 16, 8, 14, 12]
     master = Course(
         id=str(uuid4()),
         name="Pebble Beach",
         external_course_id="ext-1",
-        total_holes=18,
+        total_holes=declared_holes,
         user_id=None,
         holes=[
             Hole(number=n, par=par, handicap=hcp)

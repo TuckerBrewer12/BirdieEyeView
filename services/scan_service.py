@@ -129,11 +129,13 @@ class ScanService:
             return _CoursePlan(course=course, fill_gaps=str(course.user_id) == str(req.user_id))
         # Master course: update it only from a complete scan that the provider verifies.
         # Without a provider ID, or when verification fails, the round saves against it unchanged.
-        # The scan must cover the master's whole layout: tees are rewritten in full, so a
-        # front-nine scan of an 18-hole master would drop its back-nine yardages and ratings.
+        # A picked course_id usually arrives without course_name; the course's own name stands in
+        # so the completeness check can pass. The name itself is never rewritten.
+        if not scanned.name:
+            scanned = scanned.model_copy(update={"name": course.name})
         if (
             course.external_course_id
-            and course.total_holes in (None, scanned.total_holes)
+            and self._scan_covers_course(course, scanned)
             and self._scan_differs_from(course, scanned)
             and scanned.has_required_course_data()
             and await self._verify_with_provider(course.external_course_id, scanned)
@@ -171,6 +173,21 @@ class ScanService:
             if not any(all(p.pars.get(n) == pars[n] for n in expected) for p in same_yardages):
                 return False
         return True
+
+    @staticmethod
+    def _scan_covers_course(course: Course, scanned: Course) -> bool:
+        """True when the scan covers every hole the master has data for.
+
+        Tees are rewritten in full, so a front-nine scan of an 18-hole master would drop its
+        back-nine yardages and ratings. Legacy masters without total_holes are judged by the
+        holes and yardages they actually store.
+        """
+        expected = scanned.get_expected_holes()
+        if expected is None or course.total_holes not in (None, scanned.total_holes):
+            return False
+        stored = {hole.number for hole in course.holes if hole.number is not None}
+        stored.update(int(number) for tee in course.tees for number in tee.hole_yardages)
+        return stored <= set(expected)
 
     @staticmethod
     def _scan_differs_from(course: Course, scanned: Course) -> bool:
