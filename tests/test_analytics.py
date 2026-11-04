@@ -230,15 +230,17 @@ def test_score_variance_by_hole():
     rows = score_variance_by_hole(rounds)
 
     assert len(rows) == 18
-    assert rows[0]["score_std_dev"] >= rows[1]["score_std_dev"]
-    assert rows[0]["variance_rank"] == 1
-    assert rows[1]["variance_rank"] == 2
-
     by_hole = {row["hole_number"]: row for row in rows}
     # Hole 2 scores are 4 and 4 in synthetic data: zero variance.
     assert by_hole[2]["score_variance"] == pytest.approx(0.0)
     assert by_hole[2]["score_std_dev"] == pytest.approx(0.0)
     assert by_hole[2]["sample_size"] == 2
+    # Two observations per hole is below the 3-observation minimum: nothing is ranked.
+    assert all(row["variance_rank"] is None for row in rows)
+
+    ranked = score_variance_by_hole(rounds + [rounds[1].model_copy(update={"id": "r3"})])
+    assert ranked[0]["score_std_dev"] >= ranked[1]["score_std_dev"]
+    assert (ranked[0]["variance_rank"], ranked[1]["variance_rank"]) == (1, 2)
 
 
 def test_three_putts_per_round():
@@ -260,11 +262,11 @@ def test_scrambling_per_round():
     rounds = _build_rounds()
     rows = scrambling_per_round(rounds)
 
-    # Round 1: holes 11-18 are missed GIRs; par4 on 11-14 are 4 (success),
-    # par5 on 15-18 are 4 (not par, no success).
+    # Round 1: holes 11-18 are missed GIRs; par4 on 11-14 are 4 (par) and par5 on 15-18
+    # are 4 (birdie). Scrambling counts par or better, so all eight succeed.
     assert rows[0]["scramble_opportunities"] == 8
-    assert rows[0]["scramble_successes"] == 4
-    assert rows[0]["scrambling_percentage"] == 50.0
+    assert rows[0]["scramble_successes"] == 8
+    assert rows[0]["scrambling_percentage"] == 100.0
 
     # Round 2: missed GIR on odd holes only (9 opps), all odd scores are 5.
     # Success only on odd par5 holes (15,17): 2 successes.

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Dict, Iterable, List, Optional
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from models.round import Round
 
@@ -29,6 +30,49 @@ _WHS_TABLE: List[tuple[int, float]] = [
     (7, 0.0),    # 19
     (8, 0.0),    # 20+
 ]
+
+
+def round_half_up(value: float, places: int = 0) -> float:
+    """Round to ``places`` decimals with .5 going up (WHS), not Python's round-half-to-even."""
+    step = Decimal(1).scaleb(-places)
+    return float(Decimal(str(value)).quantize(step, rounding=ROUND_HALF_UP))
+
+
+def round_rating(round_obj: Round) -> Optional[Tuple[float, float]]:
+    """(Course Rating, Slope Rating) covering exactly the holes the round was meant to play.
+
+    A rating saved without hole coverage covers the linked course's whole layout (18 holes on an
+    18-hole course, 9 on a nine-hole course); it is never stretched to a different set of holes,
+    so a front or back nine of an 18-hole course has no rating unless one was recorded for it.
+    """
+    tee = round_obj.get_tee()
+    coverage = round_obj.get_intended_holes()
+    if tee is None or coverage is None:
+        return None
+    rating = tee.get_rating(coverage)
+    if rating is not None:
+        values = (rating.course_rating, rating.slope_rating)
+    elif tee.rating_holes is None and not tee.ratings:
+        layout = round_obj.course.get_expected_holes() if round_obj.course is not None else None
+        values = (tee.course_rating, tee.slope_rating) if layout == coverage else (None, None)
+    else:
+        values = (None, None)
+    return values if None not in values else None
+
+
+def course_handicap(handicap_index_value: Optional[float], round_obj: Round) -> Optional[int]:
+    """WHS Course Handicap for the round's holes, rounded .5 up; None without index, rating or par.
+
+    A nine-hole round uses half the Handicap Index with its nine-hole rating and par.
+    """
+    rating = round_rating(round_obj)
+    par = round_obj.get_par()
+    coverage = round_obj.get_intended_holes()
+    if handicap_index_value is None or rating is None or par is None or coverage is None:
+        return None
+    course_rating, slope = rating
+    index = handicap_index_value / 2 if len(coverage) == 9 else handicap_index_value
+    return int(round_half_up(index * slope / 113 + (course_rating - par)))
 
 
 def score_differential(score: int, course_rating: float, slope_rating: float) -> float:

@@ -4,6 +4,7 @@ import math
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional
 
+from analytics import eligibility as el
 from models.round import Round
 
 SCORE_TYPE_ORDER = [
@@ -63,7 +64,9 @@ def _resolve_tee_for_yardage(round_obj: Round) -> Optional[Any]:
     if round_obj.user_tee and round_obj.user_tee.hole_yardages:
         return round_obj.user_tee
 
-    if round_obj.course:
+    # Without a tee selection, a course with exactly one tee is unambiguous. A selected tee that
+    # isn't on the course never borrows another tee's yardages: the yardage is unknown.
+    if round_obj.course and not round_obj.tee_box:
         populated = [candidate for candidate in round_obj.course.tees if candidate.hole_yardages]
         if len(populated) == 1:
             return populated[0]
@@ -694,8 +697,7 @@ def notable_achievements(
 
 def round_summary(round_obj: Round) -> Dict[str, Optional[float]]:
     """Compute summary metrics for a single round."""
-    hole_scores = _valid_hole_scores(round_obj)
-    holes_played = len(hole_scores)
+    holes_played = len(el.scored_holes(round_obj))
     total_putts = round_obj.get_total_putts()
     total_gir = round_obj.get_total_gir()
     total_strokes = round_obj.calculate_total_score()
@@ -739,6 +741,7 @@ def metric_comparison_snapshot(
         {
             "label": selected_label,
             "sample_size": 1,
+            "observations": 1 if target_row.get(primary_key) is not None else 0,
             "round_id": target_row.get("round_id"),
             "primary_value": target_row.get(primary_key),
             "secondary_value": target_row.get(secondary_key) if secondary_key else None,
@@ -757,6 +760,7 @@ def metric_comparison_snapshot(
             {
                 "label": f"Last {window} Avg",
                 "sample_size": len(window_rows),
+                "observations": sum(1 for row in window_rows if row.get(primary_key) is not None),
                 "round_id": None,
                 "primary_value": primary_avg,
                 "secondary_value": secondary_avg,
@@ -775,7 +779,7 @@ def putts_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
                 "round_index": index,
                 "round_id": round_obj.id,
                 "total_putts": round_obj.get_total_putts(),
-                "holes_played": len(_valid_hole_scores(round_obj)),
+                "holes_played": len(el.scored_holes(round_obj)),
             }
         )
     return results
@@ -806,20 +810,16 @@ def three_putts_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     Return 3-putt count and percentage for each round.
 
-    3-putt percentage is based on holes with a non-null putts value.
+    Counts holes with 3 or more putts among scored holes with known putts. With no putt
+    observations the count and percentage are unknown (None), not zero.
     """
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
-        scores_with_putts = [
-            score for score in _valid_hole_scores(round_obj) if score.putts is not None
-        ]
-        three_putt_count = sum(1 for score in scores_with_putts if score.putts >= 3)
+        scores_with_putts = [score for score in el.scored_holes(round_obj) if score.putts is not None]
         holes_with_putt_data = len(scores_with_putts)
-        three_putt_percentage = (
-            (three_putt_count / holes_with_putt_data) * 100.0
-            if holes_with_putt_data
-            else 0.0
-        )
+        rate = el.Rate(sum(1 for score in scores_with_putts if score.putts >= 3), holes_with_putt_data)
+        three_putt_count = rate.successes if holes_with_putt_data else None
+        three_putt_percentage = rate.percentage
 
         results.append(
             {
@@ -844,43 +844,44 @@ def three_putts_comparison(rounds: Iterable[Round], round_index: Optional[int] =
     )
 
 
+def _missed_green_holes(round_obj: Round):
+    """Scored holes with GIR known to be missed and a known par: (score, par) pairs."""
+    for score in el.scored_holes(round_obj):
+        if score.green_in_regulation is False:
+            par = el.hole_par(round_obj, score.hole_number)
+            if par is not None:
+                yield score, par
+
+
+def _scramble_rate(round_obj: Round) -> el.Rate:
+    """Scrambling: after missing the green, par or better."""
+    holes = list(_missed_green_holes(round_obj))
+    return el.Rate(sum(1 for score, par in holes if score.strokes <= par), len(holes))
+
+
+def _up_and_down_rate(round_obj: Round) -> el.Rate:
+    """Up-and-down: after missing the green, at most one putt and par or better."""
+    holes = [(score, par) for score, par in _missed_green_holes(round_obj) if score.putts is not None]
+    return el.Rate(sum(1 for score, par in holes if score.putts <= 1 and score.strokes <= par), len(holes))
+
+
 def scrambling_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
-    Scrambling by round using the user's rule:
-    - Opportunity: hole where GIR is False
-    - Success: opportunity hole where strokes <= par (par or better)
+    Scrambling by round:
+    - Opportunity: scored hole with GIR missed and a known par (played par or course par)
+    - Success: opportunity hole scored at par or better
     """
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
-        opportunities = 0
-        successes = 0
-
-        if round_obj.course:
-            for score in _valid_hole_scores(round_obj):
-                if (
-                    score.hole_number is None
-                    or score.green_in_regulation is None
-                    or score.strokes is None
-                ):
-                    continue
-                hole = round_obj.course.get_hole(score.hole_number)
-                if not hole or hole.par is None:
-                    continue
-
-                if score.green_in_regulation is False:
-                    opportunities += 1
-                    if score.strokes == hole.par:
-                        successes += 1
-
-        percentage = (successes / opportunities * 100.0) if opportunities else None
+        rate = _scramble_rate(round_obj)
         results.append(
             {
                 "round_index": index,
                 "round_id": round_obj.id,
-                "scramble_opportunities": opportunities,
-                "scramble_successes": successes,
-                "scramble_failures": opportunities - successes,
-                "scrambling_percentage": percentage,
+                "scramble_opportunities": rate.opportunities,
+                "scramble_successes": rate.successes,
+                "scramble_failures": rate.opportunities - rate.successes,
+                "scrambling_percentage": rate.percentage,
             }
         )
     return results
@@ -888,30 +889,38 @@ def scrambling_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
 def up_and_down_trend(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
-    Up & Down: hole where GIR is missed and player finishes with <= 1 putt.
-    Unlike scrambling, requires no course/par — works on any round.
-    Success: green_in_regulation is False AND putts <= 1 (includes holed out from off green).
+    Up & Down by round:
+    - Opportunity: scored hole with GIR missed, known putts and a known par
+    - Success: at most one putt and par or better (holed out from off the green counts)
     """
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
-        opportunities = 0
-        successes = 0
-        for score in _valid_hole_scores(round_obj):
-            if score.green_in_regulation is None or score.putts is None:
-                continue
-            if score.green_in_regulation is False:
-                opportunities += 1
-                if score.putts <= 1:
-                    successes += 1
-        percentage = (successes / opportunities * 100.0) if opportunities else None
+        rate = _up_and_down_rate(round_obj)
+        percentage = rate.percentage
         results.append({
             "round_index": index,
             "round_id": round_obj.id,
-            "opportunities": opportunities,
-            "successes": successes,
+            "opportunities": rate.opportunities,
+            "successes": rate.successes,
             "percentage": round(percentage, 1) if percentage is not None else None,
         })
     return results
+
+
+def _overall_rate(rates: Iterable[el.Rate]) -> Dict[str, Optional[float]]:
+    rates = list(rates)
+    total = el.Rate(sum(r.successes for r in rates), sum(r.opportunities for r in rates))
+    return {"successes": total.successes, "opportunities": total.opportunities, "percentage": total.percentage}
+
+
+def overall_scrambling(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
+    """Scrambling over all opportunities (total successes / total opportunities)."""
+    return _overall_rate(_scramble_rate(r) for r in rounds)
+
+
+def overall_up_and_down(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
+    """Up-and-down over all opportunities (total successes / total opportunities)."""
+    return _overall_rate(_up_and_down_rate(r) for r in rounds)
 
 
 def scrambling_comparison(rounds: Iterable[Round], round_index: Optional[int] = None) -> List[Dict[str, Any]]:
@@ -926,11 +935,14 @@ def scrambling_comparison(rounds: Iterable[Round], round_index: Optional[int] = 
 
 
 def score_trend(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """Return total score trend data by round."""
+    """Return total score trend data by round.
+
+    Every round keeps its row (so round_index lines up with the other trends), but only a
+    complete round has a total; ``holes`` is its format (9 or 18), never doubled.
+    """
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
-        total_score = round_obj.calculate_total_score()
-        total_to_par = round_obj.total_to_par()
+        complete = round_obj.is_complete()
         course_name = (
             round_obj.course.name if round_obj.course else round_obj.course_name_played
         )
@@ -938,9 +950,10 @@ def score_trend(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
             {
                 "round_index": index,
                 "round_id": round_obj.id,
-                "total_score": total_score,
-                "to_par": total_to_par,
+                "total_score": round_obj.calculate_total_score() if complete else None,
+                "to_par": round_obj.total_to_par() if complete else None,
                 "course_name": course_name,
+                "holes": el.round_format(round_obj),
             }
         )
     return results
@@ -952,46 +965,27 @@ def net_score_trend(
 ) -> List[Dict[str, Any]]:
     """Return net score trend data by round.
 
-    Net score = gross score - course handicap, where course handicap uses the
-    player's current HI applied to each round's tee data. Rounds without tee
-    rating data still appear but with net_score = None.
+    Net score = gross - Course Handicap, only for a complete round (``Round.calculate_net_score``)
+    with a rating covering the holes played. ``to_par`` matches ``score_trend``.
     """
+    from analytics.handicap import course_handicap
+
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
-        gross = round_obj.calculate_total_score()
-        course_par = round_obj.get_par()
-        tee = round_obj.get_tee()
-
-        course_handicap: Optional[int] = None
-        net_score: Optional[int] = None
-
-        if (
-            gross is not None
-            and current_handicap_index is not None
-            and tee is not None
-            and tee.slope_rating is not None
-            and tee.course_rating is not None
-            and course_par is not None
-        ):
-            course_handicap = round(
-                (current_handicap_index * tee.slope_rating) / 113
-                + (tee.course_rating - course_par)
-            )
-            net_score = gross - course_handicap
-
+        complete = round_obj.is_complete()
+        handicap = course_handicap(current_handicap_index, round_obj) if complete else None
         course_name = (
             round_obj.course.name if round_obj.course else round_obj.course_name_played
         )
-        to_par = (gross - course_par) if gross is not None and course_par is not None else None
         results.append(
             {
                 "round_index": index,
                 "round_id": round_obj.id,
-                "gross_score": gross,
-                "course_handicap": course_handicap,
-                "net_score": net_score,
+                "gross_score": round_obj.calculate_total_score() if complete else None,
+                "course_handicap": handicap,
+                "net_score": round_obj.calculate_net_score(handicap),
                 "course_name": course_name,
-                "to_par": to_par,
+                "to_par": round_obj.total_to_par() if complete else None,
             }
         )
     return results
@@ -1020,8 +1014,9 @@ def score_trend_on_this_course(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
                 "round_index": index,
                 "round_id": round_obj.id,
                 "date": round_obj.date,
-                "total_score": round_obj.calculate_total_score(),
-                "to_par": round_obj.total_to_par(),
+                "total_score": round_obj.calculate_total_score() if round_obj.is_complete() else None,
+                "to_par": round_obj.total_to_par() if round_obj.is_complete() else None,
+                "holes": el.round_format(round_obj),
             }
         )
     return results
@@ -1031,7 +1026,7 @@ def gir_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """Return GIR totals and percentage by round."""
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
-        holes_played = len(_valid_hole_scores(round_obj))
+        holes_played = len(el.scored_holes(round_obj))
         total_gir = round_obj.get_total_gir()
         gir_percentage: Optional[float] = None
         if holes_played and total_gir is not None:
@@ -1070,13 +1065,11 @@ def putts_per_gir(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
-        gir_scores = [
-            score for score in _valid_hole_scores(round_obj)
-            if score.green_in_regulation is True
-        ]
+        gir_scores = [score for score in el.scored_holes(round_obj) if score.green_in_regulation is True]
         gir_count = len(gir_scores)
-        putts_on_gir = sum(score.putts for score in gir_scores if score.putts is not None)
-        gir_with_putt_data = sum(1 for score in gir_scores if score.putts is not None)
+        known = [score.putts for score in gir_scores if score.putts is not None]
+        gir_with_putt_data = len(known)
+        putts_on_gir = sum(known) if known else None
         metric = (putts_on_gir / gir_with_putt_data) if gir_with_putt_data else None
 
         results.append(
@@ -1104,22 +1097,20 @@ def putts_per_gir_comparison(rounds: Iterable[Round], round_index: Optional[int]
 
 
 def overall_putts_per_gir(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
-    """Aggregate putts-on-GIR and putts-per-GIR across all rounds."""
+    """Aggregate putts per GIR over GIR holes with known putts (same denominator as per round)."""
     total_putts_on_gir = 0
     total_gir = 0
     rounds_with_data = 0
 
     for round_obj in rounds:
-        gir_scores = [
-            score for score in _valid_hole_scores(round_obj)
-            if score.green_in_regulation is True
+        known = [
+            score.putts for score in el.scored_holes(round_obj)
+            if score.green_in_regulation is True and score.putts is not None
         ]
-        gir_count = len(gir_scores)
-        if gir_count:
+        if known:
             rounds_with_data += 1
-
-        total_gir += gir_count
-        total_putts_on_gir += sum(score.putts for score in gir_scores if score.putts is not None)
+        total_gir += len(known)
+        total_putts_on_gir += sum(known)
 
     return {
         "rounds_with_data": float(rounds_with_data),
@@ -1130,27 +1121,26 @@ def overall_putts_per_gir(rounds: Iterable[Round]) -> Dict[str, Optional[float]]
 
 
 def overall_gir_percentage(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
-    """Aggregate GIR percentage across all rounds."""
+    """Aggregate GIR percentage over scored holes whose GIR was observed.
+
+    Nine- and eighteen-hole rounds combine; holes with unknown GIR are neither hits nor misses.
+    """
     total_holes = 0
     total_gir = 0
     rounds_with_data = 0
 
     for round_obj in rounds:
-        hole_scores = _valid_hole_scores(round_obj)
-        holes_played = len(hole_scores)
-        gir = round_obj.get_total_gir()
-        if holes_played:
-            total_holes += holes_played
-            if gir is not None:
-                total_gir += gir
-                rounds_with_data += 1
+        observed = [s.green_in_regulation for s in el.scored_holes(round_obj) if s.green_in_regulation is not None]
+        if observed:
+            rounds_with_data += 1
+        total_holes += len(observed)
+        total_gir += sum(1 for hit in observed if hit)
 
-    misses = total_holes - total_gir
     return {
         "rounds_with_data": float(rounds_with_data),
         "holes_played": float(total_holes),
         "total_gir": float(total_gir),
-        "total_missed_gir": float(misses),
+        "total_missed_gir": float(total_holes - total_gir),
         "gir_percentage": (total_gir / total_holes) * 100 if total_holes else None,
     }
 
@@ -1170,15 +1160,11 @@ def gir_vs_non_gir_score_distribution(rounds: Iterable[Round]) -> List[Dict[str,
     totals = {"GIR": 0, "No GIR": 0}
 
     for round_obj in rounds:
-        for hole_score in _valid_hole_scores(round_obj):
-            if (
-                hole_score.hole_number is None
-                or hole_score.strokes is None
-                or hole_score.green_in_regulation is None
-            ):
+        for hole_score in el.scored_holes(round_obj):
+            if hole_score.green_in_regulation is None:
                 continue
 
-            par = round_obj.get_hole_par(hole_score.hole_number)
+            par = el.hole_par(round_obj, hole_score.hole_number)
             if par is None:
                 continue
 
@@ -1194,7 +1180,7 @@ def gir_vs_non_gir_score_distribution(rounds: Iterable[Round]) -> List[Dict[str,
             "holes_counted": totals[bucket],
         }
         for name in SCORE_TYPE_ORDER:
-            row[name] = (buckets[bucket][name] / totals[bucket] * 100.0) if totals[bucket] else 0.0
+            row[name] = (buckets[bucket][name] / totals[bucket] * 100.0) if totals[bucket] else None
         results.append(row)
 
     return results
@@ -1214,25 +1200,18 @@ def average_score_when_gir_vs_missed(rounds: Iterable[Round]) -> List[Dict[str, 
     }
 
     for round_obj in rounds:
-        if not round_obj.course:
-            continue
-
-        for hole_score in _valid_hole_scores(round_obj):
-            if (
-                hole_score.hole_number is None
-                or hole_score.strokes is None
-                or hole_score.green_in_regulation is None
-            ):
+        for hole_score in el.scored_holes(round_obj):
+            if hole_score.green_in_regulation is None:
                 continue
 
-            hole = round_obj.course.get_hole(hole_score.hole_number)
-            if not hole or hole.par is None:
+            par = el.hole_par(round_obj, hole_score.hole_number)
+            if par is None:
                 continue
 
             bucket = "GIR" if hole_score.green_in_regulation else "No GIR"
             entry = buckets[bucket]
             entry["strokes_sum"] += hole_score.strokes
-            entry["to_par_sum"] += hole_score.strokes - hole.par
+            entry["to_par_sum"] += hole_score.strokes - par
             entry["holes_counted"] += 1
 
     results: List[Dict[str, Any]] = []
@@ -1252,62 +1231,68 @@ def average_score_when_gir_vs_missed(rounds: Iterable[Round]) -> List[Dict[str, 
     return results
 
 
+MIN_CONSISTENCY_OBSERVATIONS = 3
+
+
+def _observed_holes(rounds: Iterable[Round]):
+    """Every scored hole with a known par: (round, score, par). Nine- and 18-hole rounds combine."""
+    for round_obj in rounds:
+        for score in el.scored_holes(round_obj):
+            par = el.hole_par(round_obj, score.hole_number)
+            if par is not None:
+                yield round_obj, score, par
+
+
 def score_variance_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     Aggregate scoring consistency by hole using score standard deviation.
 
-    Higher standard deviation indicates less consistent scoring on that hole.
+    Higher standard deviation indicates less consistent scoring on that hole. Only holes with
+    at least ``MIN_CONSISTENCY_OBSERVATIONS`` scores are ranked; others get ``variance_rank``
+    None (one observation has no measurable spread).
     """
     by_hole: Dict[int, Dict[str, Any]] = {}
 
-    for round_obj in rounds:
-        if not round_obj.course:
-            continue
-
-        for hole_score in _valid_hole_scores(round_obj):
-            if hole_score.hole_number is None or hole_score.strokes is None:
-                continue
-
-            hole = round_obj.course.get_hole(hole_score.hole_number)
-            if not hole or hole.par is None:
-                continue
-
-            entry = by_hole.setdefault(
-                hole_score.hole_number,
-                {"hole_number": hole_score.hole_number, "par": hole.par, "strokes": []},
-            )
-            entry["strokes"].append(hole_score.strokes)
+    for _, hole_score, par in _observed_holes(rounds):
+        entry = by_hole.setdefault(
+            hole_score.hole_number,
+            {"hole_number": hole_score.hole_number, "par": par, "strokes": []},
+        )
+        entry["strokes"].append(hole_score.strokes)
 
     rows: List[Dict[str, Any]] = []
     for hole_number in sorted(by_hole):
         entry = by_hole[hole_number]
         strokes: List[int] = entry["strokes"]
         sample_size = len(strokes)
-        mean_score = sum(strokes) / sample_size if sample_size else 0.0
-        variance = (
-            sum((score - mean_score) ** 2 for score in strokes) / sample_size if sample_size else 0.0
-        )
+        mean_score = sum(strokes) / sample_size
+        variance = sum((score - mean_score) ** 2 for score in strokes) / sample_size
         rows.append(
             {
                 "hole_number": hole_number,
                 "par": entry["par"],
                 "sample_size": sample_size,
-                "average_score": mean_score if sample_size else None,
-                "score_variance": variance if sample_size else None,
-                "score_std_dev": math.sqrt(variance) if sample_size else None,
+                "average_score": mean_score,
+                "score_variance": variance,
+                "score_std_dev": math.sqrt(variance),
             }
         )
 
-    rows.sort(key=lambda row: (-(row["score_std_dev"] or 0.0), row["hole_number"]))
-    for rank, row in enumerate(rows, start=1):
+    ranked = [row for row in rows if row["sample_size"] >= MIN_CONSISTENCY_OBSERVATIONS]
+    ranked.sort(key=lambda row: (-row["score_std_dev"], row["hole_number"]))
+    for rank, row in enumerate(ranked, start=1):
         row["variance_rank"] = rank
-
-    return rows
+    unranked = [row for row in rows if row["sample_size"] < MIN_CONSISTENCY_OBSERVATIONS]
+    for row in unranked:
+        row["variance_rank"] = None
+    return ranked + unranked
 
 
 def scoring_vs_hole_handicap(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     Aggregate average score-to-par by hole handicap.
+
+    Handicap rank is the one played, else the linked course hole's rank.
 
     Output rows:
     - handicap: 1-18
@@ -1316,22 +1301,11 @@ def scoring_vs_hole_handicap(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     by_handicap: Dict[int, List[int]] = {}
 
-    for round_obj in rounds:
-        for hole_score in _valid_hole_scores(round_obj):
-            if hole_score.hole_number is None or hole_score.strokes is None:
-                continue
-
-            par = round_obj.get_hole_par(hole_score.hole_number)
-            handicap = (
-                round_obj.course.get_hole(hole_score.hole_number).handicap
-                if round_obj.course
-                else hole_score.handicap_played
-            )
-            if par is None or handicap is None:
-                continue
-
-            to_par = hole_score.strokes - par
-            by_handicap.setdefault(handicap, []).append(to_par)
+    for round_obj, hole_score, par in _observed_holes(rounds):
+        handicap = el.hole_handicap(round_obj, hole_score.hole_number)
+        if handicap is None:
+            continue
+        by_handicap.setdefault(handicap, []).append(hole_score.strokes - par)
 
     results: List[Dict[str, Any]] = []
     for handicap in sorted(by_handicap):
@@ -1355,23 +1329,13 @@ def average_score_relative_to_par_by_hole(rounds: Iterable[Round]) -> List[Dict[
     """
     by_hole: Dict[int, Dict[str, Any]] = {}
 
-    for round_obj in rounds:
-        if not round_obj.course:
-            continue
-
-        for hole_score in _valid_hole_scores(round_obj):
-            if hole_score.hole_number is None or hole_score.strokes is None:
-                continue
-            hole = round_obj.course.get_hole(hole_score.hole_number)
-            if not hole or hole.par is None:
-                continue
-
-            entry = by_hole.setdefault(
-                hole_score.hole_number,
-                {"hole_number": hole_score.hole_number, "par": hole.par, "strokes": [], "to_par": []},
-            )
-            entry["strokes"].append(hole_score.strokes)
-            entry["to_par"].append(hole_score.strokes - hole.par)
+    for _, hole_score, par in _observed_holes(rounds):
+        entry = by_hole.setdefault(
+            hole_score.hole_number,
+            {"hole_number": hole_score.hole_number, "par": par, "strokes": [], "to_par": []},
+        )
+        entry["strokes"].append(hole_score.strokes)
+        entry["to_par"].append(hole_score.strokes - par)
 
     results: List[Dict[str, Any]] = []
     for hole_number in sorted(by_hole):
@@ -1405,47 +1369,31 @@ def course_difficulty_profile_by_hole(rounds: Iterable[Round]) -> List[Dict[str,
 
 
 def gir_percentage_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """Aggregate GIR percentage by hole number for rounds on the same course."""
+    """Aggregate GIR percentage by hole number over holes whose GIR was observed."""
     by_hole: Dict[int, Dict[str, Any]] = {}
 
-    for round_obj in rounds:
-        if not round_obj.course:
+    for _, hole_score, par in _observed_holes(rounds):
+        if hole_score.green_in_regulation is None:
             continue
-
-        for hole_score in _valid_hole_scores(round_obj):
-            if hole_score.hole_number is None or hole_score.green_in_regulation is None:
-                continue
-
-            hole = round_obj.course.get_hole(hole_score.hole_number)
-            if not hole or hole.par is None:
-                continue
-
-            entry = by_hole.setdefault(
-                hole_score.hole_number,
-                {
-                    "hole_number": hole_score.hole_number,
-                    "par": hole.par,
-                    "gir_hits": 0,
-                    "sample_size": 0,
-                },
-            )
-
-            entry["sample_size"] += 1
-            if hole_score.green_in_regulation:
-                entry["gir_hits"] += 1
+        entry = by_hole.setdefault(
+            hole_score.hole_number,
+            {"hole_number": hole_score.hole_number, "par": par, "gir_hits": 0, "sample_size": 0},
+        )
+        entry["sample_size"] += 1
+        if hole_score.green_in_regulation:
+            entry["gir_hits"] += 1
 
     results: List[Dict[str, Any]] = []
     for hole_number in sorted(by_hole):
         entry = by_hole[hole_number]
-        sample_size = entry["sample_size"]
-        gir_hits = entry["gir_hits"]
+        rate = el.Rate(entry["gir_hits"], entry["sample_size"])
         results.append(
             {
                 "hole_number": hole_number,
                 "par": entry["par"],
-                "gir_hits": gir_hits,
-                "sample_size": sample_size,
-                "gir_percentage": (gir_hits / sample_size) * 100.0 if sample_size else 0.0,
+                "gir_hits": rate.successes,
+                "sample_size": rate.opportunities,
+                "gir_percentage": rate.percentage,
             }
         )
 
@@ -1453,35 +1401,20 @@ def gir_percentage_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
 
 def average_putts_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """Aggregate average putts by hole number for rounds on the same course."""
+    """Aggregate average putts by hole number over holes with known putts.
+
+    A hole with unknown putts is skipped on its own; other holes in that round still count.
+    """
     by_hole: Dict[int, Dict[str, Any]] = {}
 
-    for round_obj in rounds:
-        if not round_obj.course:
+    for _, hole_score, par in _observed_holes(rounds):
+        if hole_score.putts is None:
             continue
-
-        valid_scores = list(_valid_hole_scores(round_obj))
-        # Skip rounds where any scored hole is missing putts (incomplete putt data)
-        if any(hs.putts is None for hs in valid_scores):
-            continue
-
-        for hole_score in valid_scores:
-            if hole_score.hole_number is None or hole_score.putts is None:
-                continue
-
-            hole = round_obj.course.get_hole(hole_score.hole_number)
-            if not hole or hole.par is None:
-                continue
-
-            entry = by_hole.setdefault(
-                hole_score.hole_number,
-                {
-                    "hole_number": hole_score.hole_number,
-                    "par": hole.par,
-                    "putts": [],
-                },
-            )
-            entry["putts"].append(hole_score.putts)
+        entry = by_hole.setdefault(
+            hole_score.hole_number,
+            {"hole_number": hole_score.hole_number, "par": par, "putts": []},
+        )
+        entry["putts"].append(hole_score.putts)
 
     results: List[Dict[str, Any]] = []
     for hole_number in sorted(by_hole):
@@ -1511,15 +1444,8 @@ def scoring_by_par(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     by_par: Dict[int, List[int]] = {}
 
-    for round_obj in rounds:
-        for hole_score in _valid_hole_scores(round_obj):
-            if hole_score.hole_number is None or hole_score.strokes is None:
-                continue
-
-            par = round_obj.get_hole_par(hole_score.hole_number)
-            if par is None or par not in (3, 4, 5):
-                continue
-
+    for _, hole_score, par in _observed_holes(rounds):
+        if par in (3, 4, 5):
             by_par.setdefault(par, []).append(hole_score.strokes)
 
     results: List[Dict[str, Any]] = []
@@ -1546,7 +1472,7 @@ def scoring_by_yardage_buckets(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
       Par 4: <350, 350-399, 400-449, 450+
       Par 5: <500, 500-549, 550+
 
-    Requires round to have a course + tee with hole_yardages populated.
+    Requires a resolvable tee (course tee or the round's custom tee) with hole_yardages.
     Returns rows sorted by par then bucket_order.
     """
     BUCKETS = {
@@ -1572,30 +1498,24 @@ def scoring_by_yardage_buckets(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     by_bucket: Dict[tuple, Dict[str, Any]] = {}
 
     for round_obj in rounds:
-        if not round_obj.course:
-            continue
         tee = _resolve_tee_for_yardage(round_obj)
         if not tee:
             continue
 
-        for hole_score in _valid_hole_scores(round_obj):
-            if hole_score.hole_number is None or hole_score.strokes is None:
-                continue
-
-            hole = round_obj.course.get_hole(hole_score.hole_number)
-            if not hole or hole.par not in (3, 4, 5):
+        for _, hole_score, par in _observed_holes([round_obj]):
+            if par not in (3, 4, 5):
                 continue
 
             yardage = tee.hole_yardages.get(hole_score.hole_number)
             if yardage is None:
                 continue
 
-            for (lo, hi, order, label) in BUCKETS[hole.par]:
+            for (lo, hi, order, label) in BUCKETS[par]:
                 if lo <= yardage <= hi:
-                    key = (hole.par, order)
+                    key = (par, order)
                     if key not in by_bucket:
-                        by_bucket[key] = {"par": hole.par, "order": order, "label": label, "to_par": [], "yardages": [], "gir": []}
-                    by_bucket[key]["to_par"].append(hole_score.strokes - hole.par)
+                        by_bucket[key] = {"par": par, "order": order, "label": label, "to_par": [], "yardages": [], "gir": []}
+                    by_bucket[key]["to_par"].append(hole_score.strokes - par)
                     by_bucket[key]["yardages"].append(yardage)
                     if hole_score.green_in_regulation is not None:
                         by_bucket[key]["gir"].append(1 if hole_score.green_in_regulation else 0)
@@ -1622,11 +1542,11 @@ def score_type_distribution_per_round(rounds: Iterable[Round]) -> List[Dict[str,
     """
     Percentage of holes by score type for each round.
 
-    Categories:
-    - eagle (includes eagle or better)
-    - birdie, par, bogey, double_bogey, triple_bogey, quad_bogey
+    Categories (chart groups):
+    - eagle (eagle or better)
+    - birdie, par, bogey, double_bogey, triple_bogey, quad_bogey (quad bogey or worse)
 
-    Anything worse than quad bogey is counted as quad_bogey.
+    A round with no scored holes of known par has unknown (None) percentages.
     """
     results: List[Dict[str, Any]] = []
 
@@ -1634,14 +1554,8 @@ def score_type_distribution_per_round(rounds: Iterable[Round]) -> List[Dict[str,
         counts = {name: 0 for name in SCORE_TYPE_ORDER}
         total = 0
 
-        for hole_score in _valid_hole_scores(round_obj):
-            if hole_score.hole_number is None or hole_score.strokes is None:
-                continue
-            par = round_obj.get_hole_par(hole_score.hole_number)
-            if par is None:
-                continue
-            score_type = _score_type_from_to_par(hole_score.strokes - par)
-            counts[score_type] += 1
+        for _, hole_score, par in _observed_holes([round_obj]):
+            counts[_score_type_from_to_par(hole_score.strokes - par)] += 1
             total += 1
 
         row: Dict[str, Any] = {
@@ -1650,7 +1564,7 @@ def score_type_distribution_per_round(rounds: Iterable[Round]) -> List[Dict[str,
             "holes_counted": total,
         }
         for name in SCORE_TYPE_ORDER:
-            row[name] = (counts[name] / total * 100.0) if total else 0.0
+            row[name] = (counts[name] / total * 100.0) if total else None
         results.append(row)
 
     return results
@@ -1660,30 +1574,18 @@ def score_type_distribution_by_hole(rounds: Iterable[Round]) -> List[Dict[str, A
     """Score-type percentage distribution by hole number for a specific course."""
     by_hole: Dict[int, Dict[str, Any]] = {}
 
-    for round_obj in rounds:
-        if not round_obj.course:
-            continue
-
-        for hole_score in _valid_hole_scores(round_obj):
-            if hole_score.hole_number is None or hole_score.strokes is None:
-                continue
-            hole = round_obj.course.get_hole(hole_score.hole_number)
-            if not hole or hole.par is None:
-                continue
-
-            entry = by_hole.setdefault(
-                hole_score.hole_number,
-                {
-                    "hole_number": hole_score.hole_number,
-                    "par": hole.par,
-                    "counts": {name: 0 for name in SCORE_TYPE_ORDER},
-                    "sample_size": 0,
-                },
-            )
-
-            score_type = _score_type_from_to_par(hole_score.strokes - hole.par)
-            entry["counts"][score_type] += 1
-            entry["sample_size"] += 1
+    for _, hole_score, par in _observed_holes(rounds):
+        entry = by_hole.setdefault(
+            hole_score.hole_number,
+            {
+                "hole_number": hole_score.hole_number,
+                "par": par,
+                "counts": {name: 0 for name in SCORE_TYPE_ORDER},
+                "sample_size": 0,
+            },
+        )
+        entry["counts"][_score_type_from_to_par(hole_score.strokes - par)] += 1
+        entry["sample_size"] += 1
 
     results: List[Dict[str, Any]] = []
     for hole_number in sorted(by_hole):
@@ -1695,8 +1597,7 @@ def score_type_distribution_by_hole(rounds: Iterable[Round]) -> List[Dict[str, A
             "sample_size": sample_size,
         }
         for name in SCORE_TYPE_ORDER:
-            count = entry["counts"][name]
-            row[name] = (count / sample_size) * 100.0 if sample_size else 0.0
+            row[name] = (entry["counts"][name] / sample_size) * 100.0
         results.append(row)
 
     return results
