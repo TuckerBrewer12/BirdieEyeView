@@ -36,6 +36,14 @@ class DashboardResponse(BaseModel):
     recent_rounds: List[RoundSummaryResponse]
     average_putts: Optional[float] = None
     average_gir: Optional[float] = None
+    # Round totals are by format: the fields above come from complete 18-hole rounds, these from
+    # complete nine-hole rounds (never doubled).
+    scoring_average_nine: Optional[float] = None
+    best_round_nine: Optional[int] = None
+    best_round_nine_id: Optional[str] = None
+    best_round_nine_course: Optional[str] = None
+    average_putts_nine: Optional[float] = None
+    average_gir_nine: Optional[float] = None
 
 
 class CourseSummaryResponse(BaseModel):

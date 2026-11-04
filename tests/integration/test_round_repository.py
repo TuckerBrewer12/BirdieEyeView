@@ -61,6 +61,35 @@ async def test_round_summary_aggregates_hole_scores(database_manager):
     assert len(summaries[0]["hole_scores_summary"]) == 18
 
 
+async def test_round_summary_reports_completeness_and_format(database_manager):
+    user, course, _ = await _create_linked_round(database_manager)
+    await database_manager.rounds.create_round(
+        Round(
+            course=course,
+            date=datetime(2026, 9, 8, tzinfo=timezone.utc),
+            hole_scores=[HoleScore(hole_number=n, strokes=4) for n in range(1, 4)],
+        ),
+        user.id,
+    )
+
+    summaries = await database_manager.rounds.get_round_summaries_for_user(user.id, limit=None)
+
+    assert [(row["is_complete"], row["hole_count"]) for row in summaries] == [(False, 18), (True, 18)]
+
+
+async def test_rounds_without_a_limit_return_the_full_history(database_manager):
+    user, course, _ = await _create_linked_round(database_manager)
+    for day in range(2, 24):
+        await database_manager.rounds.create_round(
+            Round(course=course, date=datetime(2026, 1, day, tzinfo=timezone.utc), hole_scores=make_complete_scores()),
+            user.id,
+        )
+
+    rounds = await database_manager.rounds.get_rounds_for_user(user.id, limit=None)
+
+    assert len(rounds) == 23
+
+
 async def test_get_rounds_for_user_filters_by_course(database_manager):
     user, course, saved_round = await _create_linked_round(database_manager)
 

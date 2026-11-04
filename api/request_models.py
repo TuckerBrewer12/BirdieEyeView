@@ -208,6 +208,9 @@ class SaveRoundRequest(BaseModel):
 
     @model_validator(mode="after")
     def _validate_hole_rows(self):
+        # The database stores 1-18 holes played per round; a round with no score has none.
+        if not any(h.strokes is not None for h in self.hole_scores):
+            raise ValueError("Enter a score for at least one hole.")
         hole_nums = [h.hole_number for h in self.hole_scores]
         if len(set(hole_nums)) != len(hole_nums):
             raise ValueError("hole_scores cannot contain duplicate hole_number values.")

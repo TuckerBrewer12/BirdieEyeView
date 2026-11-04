@@ -152,6 +152,8 @@ def make_round_summary(round_id: UUID) -> dict:
         "fairways_hit": 8,
         "notes": None,
         "hole_scores_summary": [{"hole_number": 1, "strokes": 4}],
+        "is_complete": True,
+        "hole_count": 18,
     }
 
 

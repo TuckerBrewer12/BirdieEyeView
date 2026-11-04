@@ -33,7 +33,7 @@ async def test_analytics_returns_empty_state():
     user = make_user(user_id)
     db = make_mock_database()
     db.users.get_user = AsyncMock(return_value=user)
-    db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], []])
+    db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])
 
     analytics = await stats.get_analytics(user_id, 50, None, None, db, user)
 
