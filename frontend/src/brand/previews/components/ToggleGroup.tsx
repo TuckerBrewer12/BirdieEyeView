@@ -1,4 +1,5 @@
 import { type ReactNode } from "react";
+import { Card, CardAction, CardHeader, CardTitle } from "@/brand/components/Card";
 import { ToggleGroup, ToggleGroupItem } from "@/brand/components/ToggleGroup";
 
 function Demo({ label, children }: { label: string; children: ReactNode }) {
@@ -22,13 +23,17 @@ export default function ToggleGroupPreview() {
       </Demo>
 
       <Demo label="Compact · 28 · inside a card header">
-        <div className="flex items-center justify-between rounded-card border border-border bg-card px-4 py-3.5">
-          <span className="text-base font-semibold text-card-foreground">Score trend</span>
-          <ToggleGroup aria-label="Score type" size="sm" defaultValue={["gross"]}>
-            <ToggleGroupItem value="gross">Gross</ToggleGroupItem>
-            <ToggleGroupItem value="net">Net</ToggleGroupItem>
-          </ToggleGroup>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Score trend</CardTitle>
+            <CardAction>
+              <ToggleGroup aria-label="Score type" size="sm" defaultValue={["gross"]}>
+                <ToggleGroupItem value="gross">Gross</ToggleGroupItem>
+                <ToggleGroupItem value="net">Net</ToggleGroupItem>
+              </ToggleGroup>
+            </CardAction>
+          </CardHeader>
+        </Card>
       </Demo>
 
       <Demo label="Full width · mobile · equal segments">
