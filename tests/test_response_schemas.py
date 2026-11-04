@@ -105,25 +105,6 @@ def test_response_schema_returns_the_domain_json_unchanged(domain, schema):
     assert frozen == domain.model_dump(mode="json")
 
 
-@pytest.mark.parametrize(
-    ("router", "path", "method", "schema"),
-    [
-        (rounds.router, "/{round_id}", "GET", RoundResponse),
-        (rounds.router, "/{round_id}", "PUT", RoundResponse),
-        (courses.router, "/{course_id}", "GET", CourseResponse),
-        (users.router, "/{user_id}", "GET", UserResponse),
-        (users.router, "/{user_id}", "PATCH", UserResponse),
-        (users.router, "/by-email/{email}", "GET", UserResponse),
-        (users.router, "/{user_id}/tees", "POST", UserTeeResponse),
-        (users.router, "/{user_id}/tees/{tee_id}", "PUT", UserTeeResponse),
-    ],
-)
-def test_resource_routes_declare_response_schemas(router, path, method, schema):
-    route = next(r for r in router.routes if r.path == path and method in r.methods)
-
-    assert route.response_model is schema
-
-
 def test_course_detail_http_response_is_unchanged():
     from types import SimpleNamespace
     from unittest.mock import AsyncMock

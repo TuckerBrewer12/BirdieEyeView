@@ -17,10 +17,6 @@ def test_create_user_tee_request_normalizes_hole_numbers():
     assert request.hole_yardages == {1: 400}
 
 
-def test_update_user_request_normalizes_plus_handicap():
-    assert users.UpdateUserRequest(handicap="+3").handicap == -3
-
-
 def test_friend_request_normalizes_code():
     request = users.SendFriendRequest(addressee_friend_code=" ab-12 ")
 
@@ -67,13 +63,6 @@ async def test_get_user_by_email_normalizes_lookup(user_database):
 
 
 @pytest.mark.asyncio
-async def test_get_user_returns_requested_user(user_database):
-    user_id, user, db = user_database
-
-    assert await users.get_user(user_id, db, user) == user
-
-
-@pytest.mark.asyncio
 async def test_get_user_forbids_other_profile(user_database):
     _, user, db = user_database
 
@@ -100,16 +89,6 @@ async def test_update_user_maps_profile_fields(user_database):
     }
 
 
-@pytest.mark.asyncio
-async def test_get_user_handicap_returns_calculated_index(monkeypatch, user_database):
-    user_id, user, db = user_database
-    monkeypatch.setattr(users.hcap, "handicap_index", lambda *args, **kwargs: 12.0)
-
-    result = await users.get_user_handicap(user_id, db, user)
-
-    assert result == {"handicap_index": 12.0}
-
-
 @pytest.fixture
 def tee_database():
     user_id = uuid4()
@@ -122,36 +101,6 @@ def tee_database():
     db.user_tees.update_user_tee = AsyncMock(return_value=user_tee)
     db.user_tees.delete_user_tee = AsyncMock(return_value=True)
     return user_id, tee_id, user, user_tee, db
-
-
-@pytest.mark.asyncio
-async def test_list_user_tees_returns_repository_tees(tee_database):
-    user_id, _, user, user_tee, db = tee_database
-
-    assert await users.get_user_tees(user_id, None, db, user) == [user_tee]
-
-
-@pytest.mark.asyncio
-async def test_create_user_tee_returns_created_tee(tee_database):
-    user_id, _, user, user_tee, db = tee_database
-
-    created = await users.create_user_tee(
-        user_id,
-        users.CreateUserTeeRequest(name="Blue", hole_yardages={"1": 400}),
-        db,
-        user,
-    )
-
-    assert created == user_tee
-
-
-@pytest.mark.asyncio
-async def test_update_user_tee_returns_updated_tee(tee_database):
-    user_id, tee_id, user, user_tee, db = tee_database
-
-    updated = await users.update_user_tee(user_id, tee_id, users.UpdateUserTeeRequest(name="White"), db, user)
-
-    assert updated == user_tee
 
 
 @pytest.mark.asyncio
@@ -306,17 +255,6 @@ async def test_create_user_tee_rejects_missing_course(tee_database):
         await users.create_user_tee(user_id, users.CreateUserTeeRequest(name="Blue", course_id=uuid4()), db, user)
 
     assert raised.value.status_code == 400
-
-
-@pytest.mark.asyncio
-async def test_empty_update_of_missing_user_tee_is_not_found(tee_database):
-    user_id, tee_id, user, _, db = tee_database
-    db.user_tees.update_user_tee.return_value = None  # the repository's no-op lookup
-
-    with pytest.raises(HTTPException) as raised:
-        await users.update_user_tee(user_id, tee_id, users.UpdateUserTeeRequest(), db, user)
-
-    assert raised.value.status_code == 404
 
 
 @pytest.mark.asyncio

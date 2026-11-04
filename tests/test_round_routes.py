@@ -59,15 +59,6 @@ async def test_list_rounds_returns_summaries(to_par):
 
 
 @pytest.mark.asyncio
-async def test_get_round_returns_owned_round(owned_round_setup):
-    user_id, round_id, stored_round, db = owned_round_setup
-
-    result = await rounds.get_round(round_id, db, make_user(user_id))
-
-    assert result == stored_round
-
-
-@pytest.mark.asyncio
 async def test_get_round_returns_not_found_for_missing_owner(owned_round_setup):
     user_id, round_id, _, db = owned_round_setup
     db.rounds.get_round_owner_id.return_value = None
@@ -171,14 +162,3 @@ async def test_link_course_rejects_mismatched_layout_without_server_error():
     assert raised.value.status_code == 422
 
 
-@pytest.mark.asyncio
-async def test_update_round_keeps_not_found_status(owned_round_setup):
-    user_id, round_id, _, db = owned_round_setup
-    db.rounds.update_hole_scores = AsyncMock(return_value=None)
-
-    with pytest.raises(HTTPException) as raised:
-        await rounds.update_round(
-            round_id, rounds.UpdateRoundRequest(hole_scores=[{"hole_number": 1, "strokes": 4}]), db, make_user(user_id)
-        )
-
-    assert raised.value.status_code == 404

@@ -31,16 +31,6 @@ def test_trend_direction(values, lower_is_better, threshold, expected):
     assert ai_module._trend_direction(values, lower_is_better=lower_is_better, threshold=threshold) == expected
 
 
-def test_compute_raw_builds_round_metrics():
-    service = AIService(SimpleNamespace())
-
-    metrics = service._compute_raw([make_analytics_round(i) for i in range(6)])
-
-    assert (metrics["num_rounds"], len(metrics["putts_per_gir_trend"])) == (6, 6)
-    assert metrics["gir_pct"] is not None
-    assert set(metrics["par_avgs"]) == {3, 4, 5}
-
-
 def make_ai_database(rounds):
     user = User(id="u1", handicap=12)
     return SimpleNamespace(

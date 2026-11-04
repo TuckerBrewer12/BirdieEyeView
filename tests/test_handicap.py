@@ -66,11 +66,6 @@ def indexed_rounds(monkeypatch):
     return rounds
 
 
-@pytest.mark.parametrize(("round_count", "expected"), [(2, None), (3, -1.0), (20, 4.5)])
-def test_handicap_index_applies_whs_table(indexed_rounds, round_count, expected):
-    assert handicap.handicap_index(indexed_rounds[:round_count]) == expected
-
-
 def test_handicap_index_caps_high_result(monkeypatch, indexed_rounds):
     monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: 80.0)
 

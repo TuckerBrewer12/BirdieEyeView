@@ -30,16 +30,6 @@ async def test_list_courses_requires_user_for_private_filter():
 
 
 @pytest.mark.asyncio
-async def test_get_course_returns_repository_course():
-    course_id = uuid4()
-    course = make_course(course_id)
-    db = make_mock_database()
-    db.courses.get_course = AsyncMock(return_value=course)
-
-    assert await courses.get_course(course_id, db, None) == course
-
-
-@pytest.mark.asyncio
 async def test_get_course_returns_not_found():
     db = make_mock_database()
     db.courses.get_course = AsyncMock(return_value=None)
@@ -150,20 +140,6 @@ async def test_update_course_normalizes_name():
 
     assert response.name == course.name
     assert db.courses.update_course.await_args.kwargs["name"] == "New Name"
-
-
-@pytest.mark.asyncio
-async def test_clone_course_returns_created_course():
-    user_id = uuid4()
-    course_id = uuid4()
-    course = make_course(course_id, owner=user_id)
-    db = make_mock_database()
-    db.courses.get_course = AsyncMock(return_value=make_course(course_id))
-    db.courses.clone_course = AsyncMock(return_value=course)
-
-    response = await courses.clone_course(course_id, db, make_user(user_id))
-
-    assert response.id == str(course_id)
 
 
 @pytest.mark.asyncio

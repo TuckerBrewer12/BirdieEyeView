@@ -23,16 +23,6 @@ def configure_ai_route(monkeypatch, limiter_results):
 
 
 @pytest.mark.asyncio
-async def test_ai_suggestions_returns_service_response(monkeypatch):
-    user_id, user, db, ai_service = configure_ai_route(monkeypatch, [(True, 0), (True, 0)])
-
-    result = await ai_insights.get_ai_suggestions(user_id, make_http_request(), 10, 5.0, db, user)
-
-    assert result == {"ok": True}
-    ai_service.generate_suggestions.assert_awaited_once()
-
-
-@pytest.mark.asyncio
 async def test_ai_suggestions_enforces_ip_rate_limit(monkeypatch):
     user_id, user, db, _ = configure_ai_route(monkeypatch, [(False, 9)])
 

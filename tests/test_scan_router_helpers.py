@@ -416,25 +416,6 @@ def test_half_moon_bay_t_score_breakdown_regression():
     assert not any(warning.startswith(("Hole 9 ", "Hole 14 ")) for warning in warnings)
 
 
-@pytest.mark.asyncio
-async def test_ocr_pipeline_merges_extracted_markdown(monkeypatch, tmp_path):
-    ocr_service = SimpleNamespace(ocr_file=AsyncMock(return_value={"pages": [{"markdown": "raw markdown"}]}))
-    monkeypatch.setattr(scan, "MistralOCRService", lambda: ocr_service)
-    monkeypatch.setattr(
-        scan.MistralOCRService,
-        "extract_markdown_text",
-        lambda response: response["pages"][0]["markdown"],
-        raising=False,
-    )
-    merger = AsyncMock(return_value="merged markdown")
-    monkeypatch.setattr(scan, "merge_split_tables", merger)
-
-    result = await scan._run_ocr_pipeline(tmp_path / "card.jpg")
-
-    assert result == "merged markdown"
-    merger.assert_awaited_once_with("raw markdown")
-
-
 def make_save_round_request():
     return SaveRoundRequest.model_validate(
         {

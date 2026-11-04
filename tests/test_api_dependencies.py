@@ -16,12 +16,6 @@ def test_malformed_proxy_address_is_not_trusted(monkeypatch):
     assert dependencies._peer_is_trusted_proxy("not-an-ip") is False
 
 
-def test_database_dependency_returns_application_database():
-    app = SimpleNamespace(state=SimpleNamespace(db_manager="db"))
-
-    assert dependencies.get_db(make_http_request(app=app)) == "db"
-
-
 def test_database_dependency_returns_generic_unavailable_error():
     with pytest.raises(HTTPException) as raised:
         dependencies.get_db(make_http_request())

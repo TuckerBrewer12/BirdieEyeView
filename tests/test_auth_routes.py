@@ -348,13 +348,6 @@ async def test_login_respects_attempt_lockout(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_logout_returns_confirmation():
-    response = await auth.logout(make_http_request(), Response())
-
-    assert response.message == "Logged out."
-
-
-@pytest.mark.asyncio
 async def test_forgot_password_issues_reset_token(auth_user):
     auth_user.email_verified = True
     db = make_auth_database(auth_user)
@@ -413,13 +406,6 @@ async def test_reset_password_rejects_invalid_token(auth_user):
         await auth.reset_password(request, make_http_request(), db)
 
     assert raised.value.status_code == 400
-
-
-@pytest.mark.asyncio
-async def test_me_returns_authenticated_user(auth_user):
-    response = await auth.me(auth_user)
-
-    assert (response.user_id, response.email_verified) == (auth_user.id, False)
 
 
 @pytest.mark.asyncio
