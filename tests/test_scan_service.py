@@ -79,15 +79,17 @@ def make_course(*, owner: str | None = None, external_id: str | None = None, blu
         user_id=owner,
         holes=[Hole(number=n, par=par, handicap=hcp) for n, (par, hcp) in enumerate(zip(PARS, HANDICAPS), start=1)],
         tees=[
-            Tee(color="Blue", hole_yardages=dict(enumerate(blue, start=1))),
+            Tee(color="Blue", course_rating=71.2, slope_rating=125, hole_yardages=dict(enumerate(blue, start=1))),
             Tee(color="White", hole_yardages=dict(enumerate(WHITE, start=1))),
         ],
     )
 
 
-def provider_tees(*, blue=BLUE, pars=PARS):
+def provider_tees(*, blue=BLUE, pars=PARS, blue_rating=(71.2, 125)):
     return [
-        ProviderTee("male", "Championship", dict(enumerate(pars, start=1)), dict(enumerate(blue, start=1))),
+        ProviderTee(
+            "male", "Championship", dict(enumerate(pars, start=1)), dict(enumerate(blue, start=1)), *blue_rating
+        ),
         ProviderTee("male", "White", dict(enumerate(PARS, start=1)), dict(enumerate(WHITE, start=1))),
     ]
 
@@ -198,6 +200,61 @@ async def test_picked_master_without_course_name_is_still_verified():
 
     provider.get_course_details.assert_awaited_once_with("ext-1")
     db.courses.apply_verified_scan.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_rating_only_correction_updates_master_when_provider_agrees():
+    service, db, provider = make_service()
+    master = make_course(external_id="ext-1")
+    master.tees[0] = Tee(color="Blue", course_rating=70.0, slope_rating=125, hole_yardages=dict(enumerate(BLUE, start=1)))
+    db.courses.get_course.return_value = master
+
+    await service.save_reviewed_scan(make_save_request(course_id=str(uuid4())))
+
+    provider.get_course_details.assert_awaited_once_with("ext-1")
+    blue = db.courses.apply_verified_scan.await_args.args[2][0]
+    assert (blue.course_rating, blue.slope_rating) == (71.2, 125)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("provider_rating", [(72.0, 125), (71.2, 130), (None, None)], ids=["course", "slope", "missing"])
+async def test_scanned_rating_must_match_provider(provider_rating):
+    service, db, _ = make_service(details=provider_tees(blue_rating=provider_rating))
+    db.courses.get_course.return_value = make_course(external_id="ext-1", blue=[y - 10 for y in BLUE])
+
+    await service.save_reviewed_scan(make_save_request(course_id=str(uuid4())))
+
+    db.courses.apply_verified_scan.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_scan_without_ratings_keeps_master_ratings():
+    service, db, provider = make_service()
+    db.courses.get_course.return_value = make_course(external_id="ext-1", blue=[y - 10 for y in BLUE])
+    request = make_save_request(
+        course_id=str(uuid4()),
+        all_tees=[{"color": "Blue", "hole_yardages": yardage_map(BLUE)}, {"color": "White", "hole_yardages": yardage_map(WHITE)}],
+    )
+
+    await service.save_reviewed_scan(request)
+
+    blue = db.courses.apply_verified_scan.await_args.args[2][0]
+    assert (blue.course_rating, blue.slope_rating) == (71.2, 125)
+
+
+@pytest.mark.asyncio
+async def test_missing_scanned_ratings_are_not_a_difference():
+    service, db, provider = make_service()
+    db.courses.get_course.return_value = make_course(external_id="ext-1")
+    request = make_save_request(
+        course_id=str(uuid4()),
+        all_tees=[{"color": "Blue", "hole_yardages": yardage_map(BLUE)}, {"color": "White", "hole_yardages": yardage_map(WHITE)}],
+    )
+
+    await service.save_reviewed_scan(request)
+
+    provider.get_course_details.assert_not_awaited()
+    db.courses.apply_verified_scan.assert_not_awaited()
 
 
 @pytest.mark.asyncio

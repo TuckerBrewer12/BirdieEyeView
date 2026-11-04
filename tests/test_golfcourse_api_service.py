@@ -149,7 +149,7 @@ async def test_course_details_returns_per_hole_tees_only(monkeypatch):
 
     assert FakeAsyncHttpClient.calls[0][1] == "/v1/courses/4%2F2"
     assert tees == [
-        ProviderTee("male", "Blue", {1: 4, 2: 3, 3: 5}, {1: 400, 2: 180, 3: 520}),
+        ProviderTee("male", "Blue", {1: 4, 2: 3, 3: 5}, {1: 400, 2: 180, 3: 520}, 72.1, 130),
         ProviderTee("female", "Red", {1: 4, 2: 4}, {1: 320, 2: 150}),
     ]
 

@@ -140,7 +140,7 @@ class ScanService:
             and scanned.has_required_course_data()
             and await self._verify_with_provider(course.external_course_id, scanned)
         ):
-            return _CoursePlan(course=course, verified_update=scanned)
+            return _CoursePlan(course=course, verified_update=self._keep_unscanned_ratings(course, scanned))
         return _CoursePlan(course=course)
 
     async def _verify_with_provider(self, external_course_id: str, scanned: Course) -> bool:
@@ -157,7 +157,9 @@ class ScanService:
     @staticmethod
     def _scan_matches_provider(scanned: Course, provider_tees: List[ProviderTee]) -> bool:
         """Exact match: each scanned tee equals some provider tee's yardage on every expected hole
-        (names ignored), and the scanned pars equal that provider tee's pars."""
+        (names ignored), the scanned pars equal that provider tee's pars, and any scanned course or
+        slope rating equals that provider tee's rating. A scanned rating the provider doesn't have
+        can't be verified, so it fails the match."""
         expected = scanned.get_expected_holes()
         if expected is None or not scanned.tees:
             return False
@@ -170,9 +172,36 @@ class ScanService:
             same_yardages = [
                 p for p in provider_tees if all(p.yardages.get(n) == tee.hole_yardages[n] for n in expected)
             ]
-            if not any(all(p.pars.get(n) == pars[n] for n in expected) for p in same_yardages):
+            if not any(
+                all(p.pars.get(n) == pars[n] for n in expected) and ScanService._ratings_match(tee, p)
+                for p in same_yardages
+            ):
                 return False
         return True
+
+    @staticmethod
+    def _keep_unscanned_ratings(course: Course, scanned: Course) -> Course:
+        """Tees are rewritten in full, so a tee scanned without ratings keeps the master's ratings."""
+        tees = []
+        for tee in scanned.tees:
+            known = course.get_tee(tee.color) if tee.color else None
+            if known is not None and tee.course_rating is None and tee.slope_rating is None and not tee.ratings:
+                tee = tee.model_copy(update={
+                    "course_rating": known.course_rating,
+                    "slope_rating": known.slope_rating,
+                    "rating_holes": known.rating_holes,
+                    "ratings": list(known.ratings),
+                })
+            tees.append(tee)
+        return scanned.model_copy(update={"tees": tees})
+
+    @staticmethod
+    def _ratings_match(tee: Tee, provider: ProviderTee) -> bool:
+        if tee.course_rating is not None and (
+            provider.course_rating is None or round(tee.course_rating, 1) != round(provider.course_rating, 1)
+        ):
+            return False
+        return tee.slope_rating is None or tee.slope_rating == provider.slope_rating
 
     @staticmethod
     def _scan_covers_course(course: Course, scanned: Course) -> bool:
@@ -196,8 +225,19 @@ class ScanService:
             existing = course.get_hole(hole.number) if hole.number is not None else None
             if existing is None or (hole.par, hole.handicap) != (existing.par, existing.handicap):
                 return True
-        known_yardages = [dict(tee.hole_yardages) for tee in course.tees]
-        return any(dict(tee.hole_yardages) not in known_yardages for tee in scanned.tees if tee.hole_yardages)
+        for tee in scanned.tees:
+            if not tee.hole_yardages:
+                continue
+            same = [known for known in course.tees if dict(known.hole_yardages) == dict(tee.hole_yardages)]
+            if not same:
+                return True
+            # A rating missing from the scan was not observed; only a scanned rating can differ.
+            if not any(
+                tee.course_rating in (None, known.course_rating) and tee.slope_rating in (None, known.slope_rating)
+                for known in same
+            ):
+                return True
+        return False
 
     @staticmethod
     def _require_complete(course: Course, selected_tee: Optional[str]) -> None:

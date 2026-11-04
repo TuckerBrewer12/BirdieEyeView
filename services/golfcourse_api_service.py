@@ -28,19 +28,25 @@ class CourseProviderNotFound(LookupError):
 
 @dataclass(frozen=True)
 class ProviderTee:
-    """Per-hole provider observations for one tee, used only for in-memory comparison.
+    """Provider observations for one tee, used only for in-memory comparison.
 
-    Provider data must never be stored; ratings, slopes, handicaps and location are not carried.
+    Provider data must never be stored. Handicaps and location are not carried.
     """
 
     group: str
     name: Optional[str]
     pars: Dict[int, int]
     yardages: Dict[int, int]
+    course_rating: Optional[float] = None
+    slope_rating: Optional[int] = None
 
 
 def _provider_int(value: Any) -> Optional[int]:
     return value if isinstance(value, int) and not isinstance(value, bool) else None
+
+
+def _provider_number(value: Any) -> Optional[float]:
+    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
 
 
 def _display_name(club_name: Optional[str], course_name: Optional[str]) -> Optional[str]:
@@ -170,7 +176,14 @@ class GolfCourseAPIService:
                     if (yards := _provider_int(hole.get("yardage"))) is not None:
                         yardages[number] = yards
                 name = tee.get("tee_name")
-                out.append(ProviderTee(str(group), name if isinstance(name, str) else None, pars, yardages))
+                out.append(ProviderTee(
+                    str(group),
+                    name if isinstance(name, str) else None,
+                    pars,
+                    yardages,
+                    course_rating=_provider_number(tee.get("course_rating")),
+                    slope_rating=_provider_int(tee.get("slope_rating")),
+                ))
         return out
 
     def _normalize_search_query(self, query: str) -> str:
