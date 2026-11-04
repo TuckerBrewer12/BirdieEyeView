@@ -4,10 +4,10 @@ import type {
   AnalyticsDto,
   AnalyticsInsightDto,
   AnalyticsKpisDto,
-  AnalyticsScoreTrendRowDto,
   GirTrendRowDto,
   GirVsNonGirRowDto,
   PuttsTrendRowDto,
+  ScoreTrendRowDto,
   ScoringByYardageRowDto,
   ThreePuttsTrendRowDto,
 } from "@/types/api";
@@ -68,7 +68,7 @@ export interface YardageBucket {
 }
 
 /** A round's score, and the server's five-round rolling average under it. */
-export type ScoreTrendPoint = AnalyticsScoreTrendRowDto;
+export type ScoreTrendPoint = ScoreTrendRowDto;
 export type { ShortGamePoint };
 
 /** A fact the server found worth a sentence, with which way it points. `present.ts` words it. */

@@ -6,7 +6,7 @@ import { cn } from "@/brand/cn";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { tokens } from "@/brand/theme";
 import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
-import { indexScale, knownValues, lastKnownIndex, niceExtent, rollingMean } from "./scales";
+import { indexScale, knownValues, lastKnownIndex, niceExtent } from "./scales";
 
 type TrendSeries = "both" | "score" | "handicap";
 
@@ -72,8 +72,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
   const firstPanel = showScore ? scorePanel : handicapPanel;
 
   // The par of the latest round that has one, drawn across the scores.
-  const parRow = [...data].reverse().find((d) => d.score != null && d.toPar != null);
-  const par = parRow ? parRow.score! - parRow.toPar! : null;
+  const par = [...data].reverse().find((d) => d.par != null)?.par ?? null;
 
   const x = indexScale(data.length, L.inset, gridRight - L.inset);
   const yScore = scaleLinear()
@@ -83,7 +82,8 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
     .domain(niceExtent(handicaps, 3, 0.5) ?? [9, 13])
     .range([handicapPanel.bottom, handicapPanel.top]);
 
-  const average = rollingMean(scores, L.average);
+  // The server's five-round average, drawn behind the dots.
+  const average = data.map((d) => d.rollingAverage);
   const averagePath =
     line<number | null>()
       .defined((v) => v != null)
@@ -325,23 +325,26 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
 
 /**
  * What the dots and the faint line mean. It sits in a card's header beside the
- * title, so it takes its own place rather than the chart's.
+ * title, so it takes its own place rather than the chart's. Each swatch is drawn
+ * with the chart's own marks, at the chart's size.
  */
 export function ScoreHandicapLegend({ className }: { className?: string }) {
+  const box = 2 * (L.dotCounts + tokens.lineWidth.outline);
+  const mid = box / 2;
   return (
-    <div data-slot="score-handicap-legend" className={cn("flex gap-3.5 text-body-sm text-foreground-secondary", className)}>
-      <span className="flex items-center gap-1.5">
-        <svg viewBox="0 0 10 10" aria-hidden="true" className="size-2.5">
-          <circle cx={5} cy={5} r={4} fill={tokens.color.chart.series1} />
+    <div data-slot="score-handicap-legend" className={cn("flex gap-4 text-body-sm text-foreground-secondary", className)}>
+      <span className="flex items-center gap-2">
+        <svg viewBox={`0 0 ${box} ${box}`} width={box} height={box} aria-hidden="true">
+          <circle cx={mid} cy={mid} r={L.dotCounts} fill={tokens.color.chart.series1} />
         </svg>
         Counts toward HI
       </span>
-      <span className="flex items-center gap-1.5">
-        <svg viewBox="0 0 10 10" aria-hidden="true" className="size-2.5">
+      <span className="flex items-center gap-2">
+        <svg viewBox={`0 0 ${box} ${box}`} width={box} height={box} aria-hidden="true">
           <circle
-            cx={5}
-            cy={5}
-            r={3.5}
+            cx={mid}
+            cy={mid}
+            r={L.dot}
             fill={tokens.color.card}
             stroke={tokens.color.chart.reference}
             strokeWidth={tokens.lineWidth.outline}
@@ -349,19 +352,19 @@ export function ScoreHandicapLegend({ className }: { className?: string }) {
         </svg>
         Doesn’t count
       </span>
-      <span className="flex items-center gap-1.5">
-        <svg viewBox="0 0 16 10" aria-hidden="true" className="h-2.5 w-4">
+      <span className="flex items-center gap-2">
+        <svg viewBox={`0 0 ${L.legendLine} ${box}`} width={L.legendLine} height={box} aria-hidden="true">
           <line
             x1={0}
-            x2={16}
-            y1={5}
-            y2={5}
+            x2={L.legendLine}
+            y1={mid}
+            y2={mid}
             stroke={tokens.color.chart.series1}
             strokeOpacity={tokens.opacity.recessed}
-            strokeWidth={2}
+            strokeWidth={L.stroke}
           />
         </svg>
-        {tokens.chart.stack.average}-rd avg
+        5-rd avg
       </span>
     </div>
   );

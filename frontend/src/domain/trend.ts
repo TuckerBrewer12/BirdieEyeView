@@ -11,11 +11,13 @@ export interface RoundTrendPoint {
   roundIndex: number;
   score: number | null;
   toPar: number | null;
+  /** The par the round's to par reads against: the holes played. */
+  par: number | null;
+  /** The average over this round and the four before it, as the server worked it. */
+  rollingAverage: number | null;
   /** The index after this round. Null until there are enough rounds to have one. */
   handicapIndex: number | null;
   courseName: string | null;
-  /** The round's score differential, as the server worked it. Null when the round isn't rated. */
-  differential: number | null;
   /** Where the round's differential stands in the WHS window, as the server read it. */
   differentialStatus: DifferentialStatus;
 }
@@ -39,9 +41,10 @@ export function trendPointsFrom(trends: ScoreAndHandicapTrends | null): RoundTre
       roundIndex: row.round_index,
       score: row.total_score,
       toPar: row.to_par,
+      par: row.par,
+      rollingAverage: row.rolling_average,
       handicapIndex: handicap?.handicap_index ?? null,
       courseName: row.course_name ?? null,
-      differential: handicap?.differential ?? null,
       differentialStatus: handicap?.differential_status ?? "unrated",
     };
   });

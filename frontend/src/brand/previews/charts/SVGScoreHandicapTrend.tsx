@@ -1,6 +1,10 @@
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/brand";
 import { SVGScoreHandicapTrend, ScoreHandicapLegend } from "@/brand/charts/SVGScoreHandicapTrend";
-import { trend } from "../scoreHandicapSample";
+import { trendPointsFrom } from "@/domain";
+import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
+
+/** The sample golfer's last 20 rounds, as the dashboard sends them. */
+const trend = trendPointsFrom(sampleGolfer.dashboard);
 
 /**
  * The dashboard's card at the size it is drawn on the board, 640 by 470. The

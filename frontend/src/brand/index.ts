@@ -124,7 +124,6 @@ export type { RadarAxis } from "./charts/RadarChart";
 export { ScoreGoalChart } from "./charts/ScoreGoalChart";
 export { RoundFlowChart } from "./charts/RoundFlowChart";
 export { ScoreTrendChart } from "./charts/ScoreTrendChart";
-export { HandicapIndexPanel } from "./charts/HandicapIndexPanel";
 export { SVGScoreHandicapTrend, ScoreHandicapLegend } from "./charts/SVGScoreHandicapTrend";
 export { ScoreTargetChart } from "./charts/ScoreTargetChart";
 export type { ScoreTargetShot } from "./charts/ScoreTargetChart";

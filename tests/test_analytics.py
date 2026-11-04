@@ -282,6 +282,8 @@ def test_score_trend():
 
     assert [row["total_score"] for row in rows] == [72, 81]
     assert [row["to_par"] for row in rows] == [0, 9]
+    # The par each to par reads against, sent so the chart can draw it without working it out.
+    assert [row["par"] for row in rows] == [72, 72]
 
 
 def test_score_trend_on_this_course_orders_by_date():

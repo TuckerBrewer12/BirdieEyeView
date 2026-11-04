@@ -95,7 +95,7 @@ async def get_dashboard(
         whs=dashboard.whs_breakdown(
             last_20, handicap_trend, hcap.score_differentials_per_round(last_20), calculated_hi
         ),
-        score_trend=analytics.score_trend(last_20),
+        score_trend=analytics.score_trend_with_rolling_average(last_20),
         handicap_trend=handicap_trend,
         scrambling_trend=analytics.scrambling_per_round(last_20),
         up_and_down_trend=analytics.up_and_down_trend(last_20),

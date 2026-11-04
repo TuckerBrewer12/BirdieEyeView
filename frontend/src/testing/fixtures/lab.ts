@@ -95,6 +95,7 @@ export const labAnalytics: AnalyticsDto = {
     course_name: COURSES[i % COURSES.length],
     total_score: score,
     to_par: score - 72,
+    par: 72,
     rolling_average: null,
   })),
   three_putts_trend: THREE_PUTTS.map((count, i) => ({

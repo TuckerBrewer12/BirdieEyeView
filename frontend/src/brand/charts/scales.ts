@@ -50,11 +50,3 @@ export function niceExtent(values: readonly Maybe[], count: number, flat: number
   const [niceLo, niceHi] = scaleLinear().domain([lo, hi]).nice(count).domain();
   return [niceLo, niceHi];
 }
-
-/** The mean of each value and the ones before it, `window` values at most; gaps are skipped. Null where nothing has been seen yet. */
-export function rollingMean(values: readonly Maybe[], window: number): (number | null)[] {
-  return values.map((_, i) => {
-    const seen = knownValues(values.slice(Math.max(0, i - window + 1), i + 1));
-    return seen.length === 0 ? null : seen.reduce((a, b) => a + b, 0) / seen.length;
-  });
-}
