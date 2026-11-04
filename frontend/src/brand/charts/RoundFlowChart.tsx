@@ -9,6 +9,7 @@ import { scoreKindLabel, scoreWashClass, toParFill, toParLabel, tokens } from "@
 import type { HoleScore, Round } from "@/domain";
 import { pluralize } from "@/domain/format";
 import type { ScoreKind } from "@/domain/score";
+import { HoleShape } from "./HoleScoreShapes";
 
 interface RoundFlowChartProps {
   round: Round;
@@ -44,13 +45,14 @@ function worstStretch(steps: FlowStep[]) {
 
 /**
  * How a round went, as a running score: the total to par after each hole, drawn as a step
- * that climbs on a bad hole and falls on a good one. Each hole's own score sits in a
- * square under its step, and the worst four-hole stretch is bracketed.
+ * that climbs on a bad hole and falls on a good one. Each hole's own score is marked
+ * under its step, and the worst four-hole stretch is bracketed.
  * Wider than a phone, so the plot scrolls sideways rather than shrinking its labels.
  */
 export function RoundFlowChart({ round }: RoundFlowChartProps) {
   const { width: W, height: H, pad: PAD, stroke, dot, labelGap, chip, bracket } = tokens.chart.flow;
-  const chipSize = tokens.size["hole-h"];
+  const holeW = tokens.size["hole-w"];
+  const holeH = tokens.size["hole-h"];
   // The OS setting, or a MotionConfig asking for stillness (the kit's screenshot harness).
   const prefersReduced = useReducedMotion();
   const configReduced = useReducedMotionConfig();
@@ -239,29 +241,20 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
 
             {steps.map((step) => (
               <g key={step.hole}>
-                <rect
-                  x={mid(step.hole) - chipSize / 2}
+                <foreignObject
+                  x={mid(step.hole) - holeW / 2}
                   y={chipTop}
-                  width={chipSize}
-                  height={chipSize}
-                  rx={step.toPar < 0 ? chipSize / 2 : chip.radius}
-                  fill={tokens.color.score[step.kind].base}
-                />
-                <text
-                  x={mid(step.hole)}
-                  y={chipTop + chipSize / 2}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize={tokens.type.label.size}
-                  fontFamily={tokens.font.sans}
-                  fontWeight="700"
-                  fill={tokens.color.score[step.kind].onBase}
+                  width={holeW}
+                  height={holeH}
+                  pointerEvents="none"
                 >
-                  {step.strokes}
-                </text>
+                  <div xmlns="http://www.w3.org/1999/xhtml" className="pointer-events-none flex">
+                    <HoleShape hole={step} />
+                  </div>
+                </foreignObject>
                 <text
                   x={mid(step.hole)}
-                  y={chipTop + chipSize + chip.gap}
+                  y={chipTop + holeH + chip.gap}
                   textAnchor="middle"
                   fontSize={tokens.type.meta.size}
                   fontFamily={tokens.font.sans}
