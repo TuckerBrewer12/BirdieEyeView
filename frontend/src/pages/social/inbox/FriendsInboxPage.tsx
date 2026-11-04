@@ -103,7 +103,7 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
         </ToggleGroup>
 
         {viewModel.answered && (
-          <Alert>
+          <Alert tone="success">
             <AlertDescription>{ANSWERED_NOTICES[viewModel.answered]}</AlertDescription>
           </Alert>
         )}

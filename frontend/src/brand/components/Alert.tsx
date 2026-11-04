@@ -1,13 +1,14 @@
 import * as React from "react";
 import { type VariantProps } from "class-variance-authority";
-import { X } from "lucide-react";
 import { cn } from "@/brand/cn";
-import { Button } from "./Button";
 import { alertVariants } from "./variants";
 
+type AlertVariantProps = VariantProps<typeof alertVariants>;
+
 /**
- * Danger interrupts a screen reader; the other tones are news and wait their
- * turn. Pass `role` to say otherwise.
+ * Every alert names its `tone`; there is no default colour. Danger interrupts
+ * a screen reader; the other tones are news and wait their turn. Pass `role`
+ * to say otherwise.
  */
 function Alert({
   className,
@@ -15,7 +16,10 @@ function Alert({
   variant,
   role,
   ...props
-}: React.ComponentProps<"div"> & VariantProps<typeof alertVariants>) {
+}: React.ComponentProps<"div"> & {
+  tone: NonNullable<AlertVariantProps["tone"]>;
+  variant?: AlertVariantProps["variant"];
+}) {
   return (
     <div
       data-slot="alert"
@@ -52,20 +56,6 @@ function AlertDescription({ className, ...props }: React.ComponentProps<"div">) 
   );
 }
 
-/** The next step the alert points at: a link under its text. */
-function AlertLink({ className, ...props }: React.ComponentProps<"a">) {
-  return (
-    <a
-      data-slot="alert-link"
-      className={cn(
-        "mt-1 w-fit font-semibold underline underline-offset-2 group-has-[>svg]/alert:col-start-2",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
 /** A control pinned to the top right, such as a retry button. */
 function AlertAction({ className, ...props }: React.ComponentProps<"div">) {
   return (
@@ -77,23 +67,4 @@ function AlertAction({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-/** The close button for an alert that can be put away; the caller decides what dismissing does. */
-function AlertDismiss({ className, ...props }: React.ComponentProps<typeof Button>) {
-  return (
-    <Button
-      data-slot="alert-dismiss"
-      variant="ghost"
-      size="icon-sm"
-      aria-label="Dismiss"
-      className={cn(
-        "absolute top-2 right-2 text-current hover:bg-current/10 hover:text-current dark:hover:bg-current/10",
-        className,
-      )}
-      {...props}
-    >
-      <X className="size-3.5 stroke-icon-active" />
-    </Button>
-  );
-}
-
-export { Alert, AlertTitle, AlertDescription, AlertLink, AlertAction, AlertDismiss };
+export { Alert, AlertTitle, AlertDescription, AlertAction };
