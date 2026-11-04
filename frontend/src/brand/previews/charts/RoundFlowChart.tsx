@@ -1,6 +1,9 @@
 import { RoundFlowChart } from "@/brand/charts/RoundFlowChart";
 import { Card, CardContent } from "@/brand/components/Card";
-import { overPar } from "../roundFlowRounds";
+import { Round } from "@/domain";
+import { overParRound } from "@/testing/fixtures/roundDetails";
+
+const overPar = Round.fromDto(overParRound);
 
 /** The whole chart in a card, at the width the round page gives it. */
 export default function RoundFlowChartPreview() {

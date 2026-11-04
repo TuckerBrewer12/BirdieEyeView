@@ -215,7 +215,7 @@ export class RoundDetailRobot {
   }
 
   async capture(name: string): Promise<this> {
-    if (await this.page.getByText("Momentum").isVisible()) {
+    if (await this.page.getByText("Round flow", { exact: true }).isVisible()) {
       await expect(this.page.locator("svg circle").last()).toBeVisible();
     }
     await expect(this.page).toHaveScreenshot(name, { fullPage: true });

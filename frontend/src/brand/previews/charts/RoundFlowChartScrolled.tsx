@@ -1,8 +1,11 @@
 import { RoundFlowChart } from "@/brand/charts/RoundFlowChart";
 import { Card, CardContent } from "@/brand/components/Card";
-import type { Round } from "@/domain";
-import { overPar, underPar } from "../roundFlowRounds";
+import { Round } from "@/domain";
+import { overParRound, underParRound } from "@/testing/fixtures/roundDetails";
 import { ScrolledToEnd } from "../ScrolledToEnd";
+
+const overPar = Round.fromDto(overParRound);
+const underPar = Round.fromDto(underParRound);
 
 function Flow({ round }: { round: Round }) {
   return (

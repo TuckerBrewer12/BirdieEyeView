@@ -648,8 +648,8 @@ export const chart = {
     dot: 4,
     /** From an axis label, or the end dot's label, to what it labels. */
     labelGap: 10,
-    /** The strip of hole scores under the plot: its gap from the plot and from the hole numbers, and a square's corner. */
-    chip: { gap: 20, radius: 4 },
+    /** The strip of hole marks under the plot: its gap from the plot and from the hole numbers. */
+    chip: { gap: 20 },
     /** The bracket over the worst stretch: its height above the plot, and its end ticks. */
     bracket: { rise: 7, tick: 5 },
   },

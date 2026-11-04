@@ -129,3 +129,18 @@ export const roundComparison: RoundComparisonDto = {
     { label: "All time", sample_size: 42, round_id: null, primary_value: 2.6, secondary_value: null },
   ],
 };
+
+const [flowTemplate, , flowBest] = storedRounds;
+const FLOW_PAR = [4, 4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 3, 5, 4, 4, 3, 4, 5];
+// The strokes on the redesign board's card: over par from the first hole, a rough stretch at
+// holes 4 to 7, and a birdie to finish.
+const FLOW_STROKES = [5, 4, 3, 6, 5, 4, 4, 4, 5, 4, 5, 3, 6, 4, 4, 4, 4, 4];
+
+/** A round that runs over par, with a worst stretch to bracket: the round flow board's round. */
+export const overParRound: RoundDto = roundResponse({
+  ...flowTemplate,
+  hole_scores: flowTemplate.hole_scores.map((hole, i) => ({ ...hole, par_played: FLOW_PAR[i], strokes: FLOW_STROKES[i] })),
+});
+
+/** Under par for most of the round, with one blow-up at the end. */
+export const underParRound: RoundDto = roundResponse(flowBest);

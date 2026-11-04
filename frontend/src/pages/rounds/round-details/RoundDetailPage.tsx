@@ -14,7 +14,6 @@ import {
   RoundFlowChart,
   RoundScorecard,
   RoundShareCard,
-  SectionLabel,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
@@ -175,15 +174,13 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         />
       </div>
 
-      {viewModel.showMomentum && (
-        <div className="mt-6">
-          <SectionLabel>Momentum</SectionLabel>
-          <Card>
-            <CardContent>
-              <RoundFlowChart round={played} />
-            </CardContent>
-          </Card>
-        </div>
+      {/* The chart titles itself "Round flow", so the card needs no section label over it. */}
+      {viewModel.showFlow && (
+        <Card className="mt-6">
+          <CardContent>
+            <RoundFlowChart round={played} />
+          </CardContent>
+        </Card>
       )}
 
       <RoundComparisonSection userId={userId} roundId={played.id} />

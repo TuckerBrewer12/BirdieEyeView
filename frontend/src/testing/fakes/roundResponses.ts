@@ -133,10 +133,42 @@ function countTrue(values: (boolean | null)[]): number | null {
   return recorded.length > 0 ? recorded.filter(Boolean).length : null;
 }
 
+function holeToPar(round: StoredRound, hole: StoredHole): number | null {
+  const par = holePar(round, hole);
+  return hole.strokes != null && par != null ? hole.strokes - par : null;
+}
+
+/** Round.running_to_par: the round's to par after each hole, skipping holes without one. */
+function runningToPar(round: StoredRound): Map<number, number> {
+  const running = new Map<number, number>();
+  let total = 0;
+  for (const hole of [...round.hole_scores].sort((a, b) => a.hole_number - b.hole_number)) {
+    const toPar = holeToPar(round, hole);
+    if (toPar == null) continue;
+    total += toPar;
+    running.set(hole.hole_number, total);
+  }
+  return running;
+}
+
+/** Round.worst_stretch: four straight holes that lost the most, two or more; the earliest on a tie. */
+function worstStretch(round: StoredRound): RoundDto["worst_stretch"] {
+  const toPar = new Map(round.hole_scores.map((hole) => [hole.hole_number, holeToPar(round, hole)]));
+  let worst: RoundDto["worst_stretch"] = null;
+  for (const first of [...toPar.keys()].sort((a, b) => a - b)) {
+    const run = holeNumbers(first, first + 3).map((n) => toPar.get(n));
+    if (run.some((v) => v == null)) continue;
+    const over = sum(run as number[]);
+    if (over >= 2 && (worst == null || over > worst.to_par)) worst = { first_hole: first, last_hole: first + 3, to_par: over };
+  }
+  return worst;
+}
+
 function holeResponses(round: StoredRound): HoleScoreDto[] {
+  const running = runningToPar(round);
   return round.hole_scores.map((hole) => {
     const par = holePar(round, hole);
-    const toPar = hole.strokes != null && par != null ? hole.strokes - par : null;
+    const toPar = holeToPar(round, hole);
     return {
       ...hole,
       net_score: null,
@@ -147,6 +179,7 @@ function holeResponses(round: StoredRound): HoleScoreDto[] {
       to_par: toPar,
       kind: kindFor(toPar),
       three_putt: hole.putts != null && hole.putts >= 3,
+      running_to_par: running.get(hole.hole_number) ?? null,
     };
   });
 }
@@ -184,6 +217,7 @@ export function roundResponse(round: StoredRound): RoundDto {
     hole_scores: holes,
     course_handicap: handicap,
     net_score: handicap != null && figured.total_score != null ? figured.total_score - handicap : null,
+    worst_stretch: worstStretch(round),
   };
 }
 
