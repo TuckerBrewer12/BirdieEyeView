@@ -531,6 +531,7 @@ def test_notable_achievements_lifetime_and_one_year():
     assert summary["best_performance_streaks_events"]["lifetime"]["longest_par_streak"] == {
         "date": "2026/2/1",
         "course": "Demo Course",
+        "round_id": "r1",
     }
 
     assert summary["home_course_records"]["lifetime"]["home_course_name"] is None

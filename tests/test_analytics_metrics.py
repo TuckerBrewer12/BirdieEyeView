@@ -1,12 +1,14 @@
 """Metric contracts: unknown vs zero, denominators, definitions, par authority, formats."""
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
 from analytics import stats
 from analytics.handicap import course_handicap, round_half_up, round_rating
 from models import Tee
 from models.hole_layout import FRONT_NINE, FULL_ROUND
-from tests.analytics_builders import course, par_round, round_
+from tests.analytics_builders import PARS_18, course, par_round, round_
 
 
 # ================================================================
@@ -193,3 +195,75 @@ def test_course_handicap_rounds_half_up_and_halves_the_index_for_nine_holes():
     assert round_half_up(16.95, 1) == 17.0
     assert round_half_up(2.5) == 3.0
     assert course_handicap(9.0, nine) == 4  # 4.5 + (35 - 36) = 3.5 -> 4
+
+
+# ================================================================
+# Achievements
+# ================================================================
+
+
+def test_a_partial_round_is_never_a_record_or_break():
+    one_hole = round_({1: {"strokes": 4}}, course_obj=course(18), round_id="partial")
+
+    summary = stats.notable_achievements([one_hole], reference_date=datetime(2026, 6, 1))
+
+    assert summary["scoring_records"]["lifetime"]["lowest_round"] is None
+    breaks = {row["threshold"]: row["achievement"] for row in summary["round_milestones"]["lifetime"]["score_breaks"]}
+    assert breaks[60] is None
+    assert summary["career_totals"]["lifetime"]["total_holes_played"] == 1
+
+
+def test_nine_hole_rounds_have_their_own_lowest_round():
+    nine = par_round(holes=FRONT_NINE, course_obj=course(9), round_id="nine")
+    eighteen = par_round(over=10, round_id="eighteen")
+
+    records = stats.notable_achievements([nine, eighteen], reference_date=datetime(2026, 6, 1))["scoring_records"]
+
+    assert records["lifetime"]["lowest_round"] == 82
+    assert records["lifetime"]["lowest_round_nine"] == 36
+
+
+def test_an_albatross_is_not_an_eagle():
+    scores = {n: {"strokes": p} for n, p in PARS_18.items()} | {5: {"strokes": 2}}  # par 5 in two
+    albatross = round_(scores, course_obj=course(18))
+
+    summary = stats.notable_achievements([albatross], reference_date=datetime(2026, 6, 1))
+
+    totals = summary["career_totals"]["lifetime"]
+    assert (totals["total_eagles"], totals["total_albatrosses"]) == (0, 1)
+    assert summary["round_milestones"]["lifetime"]["first_eagle"] is None
+
+
+def test_first_round_under_par_keeps_its_round_id():
+    under = par_round(over=-1, round_id="under")
+
+    event = stats.notable_achievements([under], reference_date=datetime(2026, 6, 1))["round_milestones"]["lifetime"][
+        "first_round_under_par"
+    ]
+
+    assert (event["score"], event["round_id"]) == (71, "under")
+
+
+def test_window_handles_mixed_dates_time_of_day_and_future_rounds():
+    reference = datetime(2026, 6, 1, 12)
+    aware = par_round(round_id="aware", date=datetime(2026, 5, 1, tzinfo=timezone.utc))
+    just_inside = par_round(over=-1, round_id="inside", date=reference - timedelta(days=365) + timedelta(hours=2))
+    future = par_round(over=-2, round_id="future", date=reference + timedelta(days=3))
+
+    summary = stats.notable_achievements([aware, just_inside, future], reference_date=reference)
+
+    assert summary["career_totals"]["one_year"]["rounds_played"] == 2
+    assert "first_round_under_par" in summary["round_milestones"]["one_year"]["new_personal_records_achieved"]
+
+
+def test_streaks_follow_dates_not_input_order():
+    early = round_({n: {"strokes": PARS_18[n] - 1} for n in (16, 17, 18)}, course_obj=course(18),
+                   round_id="early", date=datetime(2026, 1, 1))
+    late = round_({n: {"strokes": PARS_18[n] - 1} for n in (1, 2)}, course_obj=course(18),
+                  round_id="late", date=datetime(2026, 1, 2))
+
+    forward = stats.notable_achievements([early, late], reference_date=datetime(2026, 6, 1))
+    backward = stats.notable_achievements([late, early], reference_date=datetime(2026, 6, 1))
+
+    assert forward["best_performance_streaks"] == backward["best_performance_streaks"]
+    assert forward["best_performance_streaks"]["lifetime"]["longest_birdie_streak"] == 5

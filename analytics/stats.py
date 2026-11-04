@@ -18,10 +18,6 @@ SCORE_TYPE_ORDER = [
 ]
 
 
-def _valid_hole_scores(round_obj: Round):
-    return [score for score in round_obj.hole_scores if score.hole_number is not None]
-
-
 def _normalize_tee_label(value: Optional[str]) -> str:
     if not value:
         return ""
@@ -119,8 +115,9 @@ def _course_label(round_obj: Round) -> Optional[str]:
     return round_obj.course_name_played
 
 
-def _milestone_event(round_obj: Round) -> Optional[Dict[str, str]]:
-    if round_obj.date is None:
+def _milestone_event(round_obj: Optional[Round]) -> Optional[Dict[str, Optional[str]]]:
+    """Display event for a round: date, course and round_id (None for a missing or undated round)."""
+    if round_obj is None or round_obj.date is None:
         return None
     return {
         "date": _format_date_short(round_obj.date),
@@ -129,217 +126,200 @@ def _milestone_event(round_obj: Round) -> Optional[Dict[str, str]]:
     }
 
 
-def _count_score_type(rows: List[Dict[str, Any]], score_type: str) -> int:
-    return sum(1 for row in rows if row["score_type"] == score_type)
+# ================================================================
+# Achievements
+#
+# Round records, breaks and milestones use complete rounds only, by format: eighteen-hole totals
+# from complete 18-hole rounds, nine-hole totals alongside (never doubled). Hole totals and streaks
+# use every scored hole. Score names are exact (an albatross is not an eagle). Rounds are taken
+# in date order, and the one-year window keeps the time of day and excludes future-dated rounds.
+# ================================================================
+
+SCORE_BREAK_THRESHOLDS = [120, 110, 100, 95, 90, 85, 80, 75, 70, 65, 60]
+PUTT_BREAK_THRESHOLDS = list(range(45, 20, -3))
+GIR_BREAK_THRESHOLDS = list(range(3, 19, 3))
 
 
-def _count_three_putts(rows: List[Dict[str, Any]]) -> int:
-    return sum(1 for row in rows if row["putts"] is not None and row["putts"] >= 3)
-
-
-def _best_round_metric(
-    round_set: List[Round], fn
-) -> Optional[int]:
-    vals = [fn(round_obj) for round_obj in round_set]
-    vals = [value for value in vals if value is not None]
-    return max(vals) if vals else None
-
-
-def _achievement_hole_rows(round_set: List[Round]) -> List[Dict[str, Any]]:
+def _hole_rows(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
+    """One row per scored hole, rounds in date order; ``to_par`` is None when par is unknown."""
     rows: List[Dict[str, Any]] = []
-    for round_obj in round_set:
-        for hole_score in sorted(_valid_hole_scores(round_obj), key=lambda hs: hs.hole_number or 0):
-            if hole_score.hole_number is None:
-                continue
-            par = round_obj.get_hole_par(hole_score.hole_number)
-            score_type = (
-                _score_type_from_to_par(hole_score.strokes - par)
-                if (hole_score.strokes is not None and par is not None)
-                else None
-            )
-            rows.append(
-                {
-                    "round_id": round_obj.id,
-                    "date": round_obj.date,
-                    "course": (
-                        round_obj.course.name
-                        if round_obj.course and round_obj.course.name
-                        else (round_obj.course_name_played or "Unknown Course")
-                    ),
-                    "strokes": hole_score.strokes,
-                    "putts": hole_score.putts,
-                    "gir": hole_score.green_in_regulation is True,
-                    "score_type": score_type,
-                    "is_hio": hole_score.strokes == 1 if hole_score.strokes is not None else False,
-                }
-            )
+    for round_obj in rounds:
+        for score in el.scored_holes(round_obj):
+            par = el.hole_par(round_obj, score.hole_number)
+            rows.append({
+                "round": round_obj,
+                "strokes": score.strokes,
+                "putts": score.putts,
+                "gir": score.green_in_regulation is True,
+                "to_par": score.strokes - par if par is not None else None,
+            })
     return rows
 
 
-def _first_event_in_rounds(round_set: List[Round], predicate) -> Optional[Dict[str, str]]:
-    for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
-        for row in _achievement_hole_rows([round_obj]):
-            if predicate(row):
-                return _milestone_event(round_obj)
-    return None
+def _count(rows: List[Dict[str, Any]], predicate) -> int:
+    return sum(1 for row in rows if predicate(row))
 
 
-def _round_total_par(round_obj: Round) -> Optional[int]:
-    if round_obj.course and round_obj.course.par is not None:
-        return round_obj.course.par
-    pars: List[int] = []
-    for hole_score in _valid_hole_scores(round_obj):
-        if hole_score.hole_number is None:
+def _to_par_is(value: int):
+    return lambda row: row["to_par"] == value
+
+
+def _first_round(rounds: List[Round], predicate) -> Optional[Round]:
+    """Earliest round (input is chronological) satisfying ``predicate``."""
+    return next((r for r in rounds if predicate(r)), None)
+
+
+def _best_round(rounds: List[Round], metric, *, lower: bool) -> tuple[Optional[float], Optional[Round]]:
+    """Best metric value and the earliest round reaching it."""
+    best_value: Optional[float] = None
+    best: Optional[Round] = None
+    for round_obj in rounds:
+        value = metric(round_obj)
+        if value is None:
             continue
-        par = round_obj.get_hole_par(hole_score.hole_number)
-        if par is not None:
-            pars.append(par)
-    if not pars:
-        return None
-    return sum(pars)
+        if best_value is None or (value < best_value if lower else value > best_value):
+            best_value, best = value, round_obj
+    return best_value, best
 
 
-def _first_round_under_par_event(round_set: List[Round]) -> Optional[Dict[str, Any]]:
-    for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
-        total = round_obj.calculate_total_score()
-        round_par = _round_total_par(round_obj)
-        if total is None or round_par is None:
-            continue
-        if total < round_par:
-            event = _milestone_event(round_obj)
-            if event is None:
-                continue
-            return {
-                "score": total,
-                "date": event["date"],
-                "course": event["course"],
-            }
-    return None
-
-
-def _first_round_below(round_set: List[Round], threshold: int, *, inclusive: bool = False) -> Optional[Dict[str, str]]:
-    for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
-        total = round_obj.calculate_total_score()
-        if total is None:
-            continue
-        if (inclusive and total <= threshold) or (not inclusive and total < threshold):
-            return _milestone_event(round_obj)
-    return None
-
-
-def _streak_with_event(rows: List[Dict[str, Any]], predicate) -> tuple[int, Optional[Dict[str, str]]]:
+def _streak(rows: List[Dict[str, Any]], predicate) -> tuple[int, Optional[Dict[str, str]]]:
     best = 0
     best_event: Optional[Dict[str, str]] = None
     current = 0
     for row in rows:
-        if predicate(row):
-            current += 1
-            if current > best:
-                best = current
-                if row["date"] is not None:
-                    best_event = {
-                        "date": _format_date_short(row["date"]),
-                        "course": row["course"],
-                    }
-        else:
+        if not predicate(row):
             current = 0
+            continue
+        current += 1
+        if current > best:
+            best = current
+            best_event = _milestone_event(row["round"])
     return best, best_event
 
 
-def _lowest_9_with_event(round_set: List[Round]) -> tuple[Optional[int], Optional[Dict[str, str]]]:
-    best: Optional[int] = None
-    best_event: Optional[Dict[str, str]] = None
-    for round_obj in round_set:
-        by_hole = {score.hole_number: score for score in _valid_hole_scores(round_obj) if score.hole_number is not None}
-        front_vals = [by_hole.get(i).strokes for i in range(1, 10) if by_hole.get(i) and by_hole.get(i).strokes is not None]
-        back_vals = [by_hole.get(i).strokes for i in range(10, 19) if by_hole.get(i) and by_hole.get(i).strokes is not None]
-        if len(front_vals) == 9:
-            score = sum(front_vals)
-            if best is None or score < best:
-                best = score
-                best_event = _milestone_event(round_obj)
-        if len(back_vals) == 9:
-            score = sum(back_vals)
-            if best is None or score < best:
-                best = score
-                best_event = _milestone_event(round_obj)
-    return best, best_event
+def _lowest_nine_holes(rounds: List[Round]) -> tuple[Optional[int], Optional[Round]]:
+    """Lowest fully scored nine (holes 1-9 or 10-18) inside any round."""
+    def best_nine(round_obj: Round) -> Optional[int]:
+        by_hole = {score.hole_number: score.strokes for score in el.scored_holes(round_obj)}
+        nines = [
+            sum(by_hole[n] for n in numbers)
+            for numbers in (range(1, 10), range(10, 19))
+            if all(n in by_hole for n in numbers)
+        ]
+        return min(nines) if nines else None
 
-
-def _best_round_event(round_set: List[Round], metric_fn, *, prefer_lower: bool = False) -> Optional[Dict[str, str]]:
-    best_metric: Optional[float] = None
-    best_round: Optional[Round] = None
-    for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
-        metric = metric_fn(round_obj)
-        if metric is None:
-            continue
-        if best_metric is None:
-            best_metric = float(metric)
-            best_round = round_obj
-            continue
-        if prefer_lower and metric < best_metric:
-            best_metric = float(metric)
-            best_round = round_obj
-        if not prefer_lower and metric > best_metric:
-            best_metric = float(metric)
-            best_round = round_obj
-    if best_round is None:
-        return None
-    return _milestone_event(best_round)
-
-
-def _home_course_metrics_for_rounds(round_set: List[Round], home_course_id: Optional[str]) -> Dict[str, Any]:
-    if not home_course_id:
-        return {"home_course_name": None, "most_rounds_played": 0, "lowest_score": None, "lowest_score_event": None}
-
-    matched = [
-        round_obj
-        for round_obj in round_set
-        if round_obj.course and str(round_obj.course.id) == str(home_course_id)
-    ]
-    if not matched:
-        return {"home_course_name": None, "most_rounds_played": 0, "lowest_score": None, "lowest_score_event": None}
-
-    label = matched[0].course.name if matched[0].course and matched[0].course.name else "Home Course"
-    best_score: Optional[int] = None
-    best_round: Optional[Round] = None
-    for round_obj in sorted(matched, key=lambda r: r.date or datetime.max):
-        total_score = round_obj.calculate_total_score()
-        if total_score is None:
-            continue
-        if best_score is None or total_score < best_score:
-            best_score = total_score
-            best_round = round_obj
-    return {
-        "home_course_name": label,
-        "most_rounds_played": len(matched),
-        "lowest_score": best_score,
-        "lowest_score_event": _milestone_event(best_round) if best_round else None,
-    }
-
-
-def _first_round_with_putts_below(round_set: List[Round], threshold: int) -> Optional[Dict[str, str]]:
-    for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
-        total_putts = round_obj.get_total_putts()
-        if total_putts is not None and total_putts < threshold:
-            return _milestone_event(round_obj)
-    return None
+    return _best_round(rounds, best_nine, lower=True)
 
 
 def _round_gir_percentage(round_obj: Round) -> Optional[float]:
-    holes = len(_valid_hole_scores(round_obj))
+    holes = len(el.scored_holes(round_obj))
     gir = round_obj.get_total_gir()
-    if not holes or gir is None:
-        return None
-    return (gir / holes) * 100
+    return (gir / holes) * 100 if holes and gir is not None else None
 
 
-def _first_round_reaching_gir(round_set: List[Round], threshold: int) -> Optional[Dict[str, str]]:
-    for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
-        total_gir = round_obj.get_total_gir()
-        if total_gir is not None and total_gir >= threshold:
-            return _milestone_event(round_obj)
-    return None
+def _round_count(round_obj: Round, predicate) -> int:
+    return _count(_hole_rows([round_obj]), predicate)
+
+
+def _scoring_records(complete: List[Round], eighteen: List[Round], nine: List[Round], *, lifetime: bool):
+    total = Round.calculate_total_score
+    birdies = lambda r: _round_count(r, _to_par_is(-1))  # noqa: E731
+    eagles = lambda r: _round_count(r, _to_par_is(-2))  # noqa: E731
+    lowest, lowest_round = _best_round(eighteen, total, lower=True)
+    lowest_nine, lowest_nine_round = _best_round(nine, total, lower=True)
+    most_birdies, birdie_round = _best_round(complete, birdies, lower=False)
+    most_gir, gir_round = _best_round(complete, Round.get_total_gir, lower=False)
+    fewest_putts, putts_round = _best_round(eighteen, Round.get_total_putts, lower=True)
+    values = {
+        "lowest_round": lowest,
+        "lowest_round_nine": lowest_nine,
+        "most_birdies_in_round": most_birdies,
+        "most_gir_in_round": most_gir,
+        "fewest_putts_in_round": fewest_putts,
+    }
+    events = {
+        "lowest_round": _milestone_event(lowest_round),
+        "lowest_round_nine": _milestone_event(lowest_nine_round),
+        "most_birdies_in_round": _milestone_event(birdie_round),
+        "most_gir_in_round": _milestone_event(gir_round),
+        "fewest_putts_in_round": _milestone_event(putts_round),
+    }
+    if lifetime:
+        highest, highest_round = _best_round(eighteen, total, lower=False)
+        lowest_9, lowest_9_round = _lowest_nine_holes(complete + [r for r in eighteen if r not in complete])
+        most_eagles, eagle_round = _best_round(complete, eagles, lower=False)
+        values.update(highest_round=highest, lowest_9_holes=lowest_9, most_eagles_in_round=most_eagles)
+        events.update(
+            highest_round=_milestone_event(highest_round),
+            lowest_9_holes=_milestone_event(lowest_9_round),
+            most_eagles_in_round=_milestone_event(eagle_round),
+        )
+    return values, events
+
+
+def _career_totals(rounds: List[Round], rows: List[Dict[str, Any]], *, lifetime: bool) -> Dict[str, Any]:
+    counts = {
+        "birdies": _count(rows, _to_par_is(-1)),
+        "eagles": _count(rows, _to_par_is(-2)),
+        "albatrosses": _count(rows, lambda row: row["to_par"] is not None and row["to_par"] <= -3),
+        "hole_in_ones": _count(rows, lambda row: row["strokes"] == 1),
+        "pars": _count(rows, _to_par_is(0)),
+        "bogeys": _count(rows, _to_par_is(1)),
+        "double_bogeys": _count(rows, _to_par_is(2)),
+        "triple_bogeys": _count(rows, _to_par_is(3)),
+        "quad_bogeys_plus": _count(rows, lambda row: row["to_par"] is not None and row["to_par"] >= 4),
+        "gir": _count(rows, lambda row: row["gir"]),
+        "three_putts": _count(rows, lambda row: row["putts"] is not None and row["putts"] >= 3),
+    }
+    if not lifetime:
+        return {
+            "rounds_played": len(rounds),
+            **{key: counts[key] for key in (
+                "birdies", "eagles", "albatrosses", "hole_in_ones", "gir",
+                "double_bogeys", "triple_bogeys", "quad_bogeys_plus", "three_putts",
+            )},
+        }
+    return {
+        "total_rounds_played": len(rounds),
+        "total_holes_played": len(rows),
+        "total_birdies": counts["birdies"],
+        "total_eagles": counts["eagles"],
+        "total_albatrosses": counts["albatrosses"],
+        "total_hole_in_ones": counts["hole_in_ones"],
+        "total_pars": counts["pars"],
+        "total_bogeys": counts["bogeys"],
+        "total_double_bogeys": counts["double_bogeys"],
+        "total_triple_bogeys": counts["triple_bogeys"],
+        "total_quad_bogeys_plus": counts["quad_bogeys_plus"],
+        "total_gir": counts["gir"],
+        "total_3_putts": counts["three_putts"],
+    }
+
+
+def _streaks(rows: List[Dict[str, Any]]):
+    found = {
+        "longest_birdie_streak": _streak(rows, _to_par_is(-1)),
+        "longest_par_streak": _streak(rows, lambda row: row["to_par"] is not None and row["to_par"] <= 0),
+        "most_gir_in_a_row": _streak(rows, lambda row: row["gir"]),
+        "longest_2_putt_or_less_streak": _streak(rows, lambda row: row["putts"] is not None and row["putts"] <= 2),
+    }
+    return {key: value for key, (value, _) in found.items()}, {key: event for key, (_, event) in found.items()}
+
+
+def _home_course(rounds: List[Round], home_course_id: Optional[str]) -> Dict[str, Any]:
+    matched = [r for r in rounds if home_course_id and r.course and str(r.course.id) == str(home_course_id)]
+    if not matched:
+        return {"home_course_name": None, "most_rounds_played": 0, "lowest_score": None, "lowest_score_round": None}
+    home = matched[0].course
+    layout = home.get_expected_holes()
+    holes = el.NINE if layout is not None and len(layout) == 9 else el.EIGHTEEN
+    lowest, lowest_round = _best_round(el.complete_rounds(matched, holes), Round.calculate_total_score, lower=True)
+    return {
+        "home_course_name": home.name or "Home Course",
+        "most_rounds_played": len(matched),
+        "lowest_score": lowest,
+        "lowest_score_round": lowest_round,
+    }
 
 
 def notable_achievements(
@@ -352,340 +332,155 @@ def notable_achievements(
     """
     Aggregate player achievement stats for lifetime and a one-year window.
 
-    One-year window is rolling (default last 365 days) relative to `reference_date`
-    or current server time when omitted.
+    The one-year window is rolling (default last 365 days) relative to ``reference_date`` or the
+    current time, compared with the time of day kept; future-dated rounds are outside it.
     """
-    now = reference_date or datetime.now()
+    now = el.comparable_datetime(reference_date or datetime.now())
     cutoff = now - timedelta(days=days)
-    rounds_list = list(rounds)
+    rounds_list = el.chronological(rounds)
 
-    rounds_year = [r for r in rounds_list if r.date is not None and cutoff <= r.date <= now]
-
-    lifetime_holes = _achievement_hole_rows(rounds_list)
-    year_holes = _achievement_hole_rows(rounds_year)
-
-    lifetime_round_scores = [s for s in (r.calculate_total_score() for r in rounds_list) if s is not None]
-    year_round_scores = [s for s in (r.calculate_total_score() for r in rounds_year) if s is not None]
-
-    lowest_9_lifetime, lowest_9_lifetime_event = _lowest_9_with_event(rounds_list)
-
-    scoring_records = {
-        "lifetime": {
-            "lowest_round": min(lifetime_round_scores) if lifetime_round_scores else None,
-            "highest_round": max(lifetime_round_scores) if lifetime_round_scores else None,
-            "lowest_9_holes": lowest_9_lifetime,
-            "most_birdies_in_round": _best_round_metric(rounds_list, lambda r: _count_score_type(_achievement_hole_rows([r]), "birdie")),
-            "most_eagles_in_round": _best_round_metric(rounds_list, lambda r: _count_score_type(_achievement_hole_rows([r]), "eagle")),
-            "most_gir_in_round": _best_round_metric(rounds_list, lambda r: r.get_total_gir()),
-            "fewest_putts_in_round": min([value for value in (r.get_total_putts() for r in rounds_list) if value is not None], default=None),
-        },
-        "one_year": {
-            "lowest_round": min(year_round_scores) if year_round_scores else None,
-            "most_birdies_in_round": _best_round_metric(rounds_year, lambda r: _count_score_type(_achievement_hole_rows([r]), "birdie")),
-            "most_gir_in_round": _best_round_metric(rounds_year, lambda r: r.get_total_gir()),
-            "fewest_putts_in_round": min([value for value in (r.get_total_putts() for r in rounds_year) if value is not None], default=None),
-        },
-    }
-    scoring_records_events = {
-        "lifetime": {
-            "lowest_round": _best_round_event(rounds_list, lambda r: r.calculate_total_score(), prefer_lower=True),
-            "highest_round": _best_round_event(rounds_list, lambda r: r.calculate_total_score()),
-            "lowest_9_holes": lowest_9_lifetime_event,
-            "most_birdies_in_round": _best_round_event(rounds_list, lambda r: _count_score_type(_achievement_hole_rows([r]), "birdie")),
-            "most_eagles_in_round": _best_round_event(rounds_list, lambda r: _count_score_type(_achievement_hole_rows([r]), "eagle")),
-            "most_gir_in_round": _best_round_event(rounds_list, lambda r: r.get_total_gir()),
-            "fewest_putts_in_round": _best_round_event(rounds_list, lambda r: r.get_total_putts(), prefer_lower=True),
-        },
-        "one_year": {
-            "lowest_round": _best_round_event(rounds_year, lambda r: r.calculate_total_score(), prefer_lower=True),
-            "most_birdies_in_round": _best_round_event(rounds_year, lambda r: _count_score_type(_achievement_hole_rows([r]), "birdie")),
-            "most_gir_in_round": _best_round_event(rounds_year, lambda r: r.get_total_gir()),
-            "fewest_putts_in_round": _best_round_event(rounds_year, lambda r: r.get_total_putts(), prefer_lower=True),
-        },
-    }
-
-    career_totals = {
-        "lifetime": {
-            "total_rounds_played": len(rounds_list),
-            "total_holes_played": len(lifetime_holes),
-            "total_birdies": _count_score_type(lifetime_holes, "birdie"),
-            "total_eagles": _count_score_type(lifetime_holes, "eagle"),
-            "total_hole_in_ones": sum(1 for row in lifetime_holes if row["is_hio"]),
-            "total_pars": _count_score_type(lifetime_holes, "par"),
-            "total_bogeys": _count_score_type(lifetime_holes, "bogey"),
-            "total_double_bogeys": _count_score_type(lifetime_holes, "double_bogey"),
-            "total_triple_bogeys": _count_score_type(lifetime_holes, "triple_bogey"),
-            "total_quad_bogeys_plus": _count_score_type(lifetime_holes, "quad_bogey"),
-            "total_gir": sum(1 for row in lifetime_holes if row["gir"]),
-            "total_3_putts": _count_three_putts(lifetime_holes),
-        },
-        "one_year": {
-            "rounds_played": len(rounds_year),
-            "birdies": _count_score_type(year_holes, "birdie"),
-            "eagles": _count_score_type(year_holes, "eagle"),
-            "hole_in_ones": sum(1 for row in year_holes if row["is_hio"]),
-            "gir": sum(1 for row in year_holes if row["gir"]),
-            "double_bogeys": _count_score_type(year_holes, "double_bogey"),
-            "triple_bogeys": _count_score_type(year_holes, "triple_bogey"),
-            "quad_bogeys_plus": _count_score_type(year_holes, "quad_bogey"),
-            "three_putts": _count_three_putts(year_holes),
-        },
-    }
-
-    lifetime_birdie_streak, lifetime_birdie_event = _streak_with_event(lifetime_holes, lambda row: row["score_type"] == "birdie")
-    lifetime_par_streak, lifetime_par_event = _streak_with_event(
-        lifetime_holes,
-        lambda row: row["score_type"] in {"par", "birdie", "eagle"},
-    )
-    lifetime_gir_streak, lifetime_gir_event = _streak_with_event(lifetime_holes, lambda row: row["gir"])
-    lifetime_two_putt_streak, lifetime_two_putt_event = _streak_with_event(
-        lifetime_holes, lambda row: row["putts"] is not None and row["putts"] <= 2
-    )
-    one_year_birdie_streak, one_year_birdie_event = _streak_with_event(year_holes, lambda row: row["score_type"] == "birdie")
-    one_year_par_streak, one_year_par_event = _streak_with_event(
-        year_holes,
-        lambda row: row["score_type"] in {"par", "birdie", "eagle"},
-    )
-    one_year_gir_streak, one_year_gir_event = _streak_with_event(year_holes, lambda row: row["gir"])
-    one_year_two_putt_streak, one_year_two_putt_event = _streak_with_event(
-        year_holes, lambda row: row["putts"] is not None and row["putts"] <= 2
-    )
-
-    streaks = {
-        "lifetime": {
-            "longest_birdie_streak": lifetime_birdie_streak,
-            "longest_par_streak": lifetime_par_streak,
-            "most_gir_in_a_row": lifetime_gir_streak,
-            "longest_2_putt_or_less_streak": lifetime_two_putt_streak,
-        },
-        "one_year": {
-            "longest_birdie_streak": one_year_birdie_streak,
-            "longest_par_streak": one_year_par_streak,
-            "most_gir_in_a_row": one_year_gir_streak,
-            "longest_2_putt_or_less_streak": one_year_two_putt_streak,
-        },
-    }
-    best_performance_streaks_events = {
-        "lifetime": {
-            "longest_birdie_streak": lifetime_birdie_event,
-            "longest_par_streak": lifetime_par_event,
-            "most_gir_in_a_row": lifetime_gir_event,
-            "longest_2_putt_or_less_streak": lifetime_two_putt_event,
-        },
-        "one_year": {
-            "longest_birdie_streak": one_year_birdie_event,
-            "longest_par_streak": one_year_par_event,
-            "most_gir_in_a_row": one_year_gir_event,
-            "longest_2_putt_or_less_streak": one_year_two_putt_event,
-        },
-    }
-
-    home_lifetime = _home_course_metrics_for_rounds(rounds_list, home_course_id)
-    home_year = _home_course_metrics_for_rounds(rounds_year, home_course_id)
-    home_course_records = {
-        "lifetime": {
-            "home_course_name": home_lifetime["home_course_name"],
-            "lowest_score_on_home_course": home_lifetime["lowest_score"],
-            "most_rounds_played_at_home_course": home_lifetime["most_rounds_played"],
-        },
-        "one_year": {
-            "home_course_name": home_year["home_course_name"] or home_lifetime["home_course_name"],
-            "lowest_score_on_home_course": home_year["lowest_score"],
-        },
-    }
-    home_course_records_events = {
-        "lifetime": {
-            "lowest_score_on_home_course": home_lifetime["lowest_score_event"],
-        },
-        "one_year": {
-            "lowest_score_on_home_course": home_year["lowest_score_event"],
-        },
-    }
-
-    putting_milestones = {
-        "lifetime": {
-            "fewest_putts_in_round": min([value for value in (r.get_total_putts() for r in rounds_list) if value is not None], default=None),
-            "most_1_putts_in_round": _best_round_metric(rounds_list, lambda r: sum(1 for row in _achievement_hole_rows([r]) if row["putts"] == 1)),
-            "most_3_putts_in_round": _best_round_metric(rounds_list, lambda r: sum(1 for row in _achievement_hole_rows([r]) if row["putts"] is not None and row["putts"] >= 3)),
-        },
-        "one_year": {
-            "fewest_putts_in_round": min([value for value in (r.get_total_putts() for r in rounds_year) if value is not None], default=None),
-            "most_1_putts_in_round": _best_round_metric(rounds_year, lambda r: sum(1 for row in _achievement_hole_rows([r]) if row["putts"] == 1)),
-            "most_3_putts_in_round": _best_round_metric(rounds_year, lambda r: sum(1 for row in _achievement_hole_rows([r]) if row["putts"] is not None and row["putts"] >= 3)),
-        },
-    }
-    putting_milestones_events = {
-        "lifetime": {
-            "fewest_putts_in_round": _best_round_event(rounds_list, lambda r: r.get_total_putts(), prefer_lower=True),
-            "most_1_putts_in_round": _best_round_event(rounds_list, lambda r: sum(1 for row in _achievement_hole_rows([r]) if row["putts"] == 1)),
-            "most_3_putts_in_round": _best_round_event(
-                rounds_list, lambda r: sum(1 for row in _achievement_hole_rows([r]) if row["putts"] is not None and row["putts"] >= 3)
-            ),
-        },
-        "one_year": {
-            "fewest_putts_in_round": _best_round_event(rounds_year, lambda r: r.get_total_putts(), prefer_lower=True),
-            "most_1_putts_in_round": _best_round_event(rounds_year, lambda r: sum(1 for row in _achievement_hole_rows([r]) if row["putts"] == 1)),
-            "most_3_putts_in_round": _best_round_event(
-                rounds_year, lambda r: sum(1 for row in _achievement_hole_rows([r]) if row["putts"] is not None and row["putts"] >= 3)
-            ),
-        },
-    }
-
-    def _first_round_with_putts_below(round_set: List[Round], threshold: int) -> Optional[Dict[str, str]]:
-        for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
-            total_putts = round_obj.get_total_putts()
-            if total_putts is not None and total_putts < threshold:
-                return _milestone_event(round_obj)
-        return None
-
-    putting_thresholds = list(range(45, 20, -3))
-    putting_breaks: List[Dict[str, Any]] = []
-    for threshold in putting_thresholds:
-        putting_breaks.append(
-            {
-                "threshold": threshold,
-                "achievement": _first_round_with_putts_below(rounds_list, threshold),
-            }
+    def in_window(round_obj: Optional[Round]) -> bool:
+        return (
+            round_obj is not None
+            and round_obj.date is not None
+            and cutoff <= el.comparable_datetime(round_obj.date) <= now
         )
 
-    putting_milestones_in_window = 0
-    for row in putting_breaks:
-        achieved = row["achievement"]
-        if achieved and achieved.get("date"):
-            dt = datetime.strptime(achieved["date"], "%Y/%m/%d")
-            if dt >= cutoff:
-                putting_milestones_in_window += 1
+    rounds_year = [r for r in rounds_list if in_window(r)]
+    windows = {}
+    for name, window_rounds in (("lifetime", rounds_list), ("one_year", rounds_year)):
+        complete = el.complete_rounds(window_rounds)
+        windows[name] = {
+            "rounds": window_rounds,
+            "complete": complete,
+            "eighteen": el.complete_rounds(window_rounds, el.EIGHTEEN),
+            "nine": el.complete_rounds(window_rounds, el.NINE),
+            "rows": _hole_rows(window_rounds),
+        }
+    life, year = windows["lifetime"], windows["one_year"]
 
-    putting_milestones["lifetime"]["putt_breaks"] = putting_breaks
-    putting_milestones["one_year"]["putting_milestones_achieved_from_lifetime_set"] = putting_milestones_in_window
+    life_records, life_record_events = _scoring_records(life["complete"], life["eighteen"], life["nine"], lifetime=True)
+    year_records, year_record_events = _scoring_records(year["complete"], year["eighteen"], year["nine"], lifetime=False)
+    life_streaks, life_streak_events = _streaks(life["rows"])
+    year_streaks, year_streak_events = _streaks(year["rows"])
+    home_life = _home_course(life["rounds"], home_course_id)
+    home_year = _home_course(year["rounds"], home_course_id)
 
-    def _first_round_reaching_gir(round_set: List[Round], threshold: int) -> Optional[Dict[str, str]]:
-        for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
-            total_gir = round_obj.get_total_gir()
-            if total_gir is not None and total_gir >= threshold:
-                return _milestone_event(round_obj)
-        return None
+    one_putts = lambda r: _round_count(r, lambda row: row["putts"] == 1)  # noqa: E731
+    three_putts = lambda r: _round_count(r, lambda row: row["putts"] is not None and row["putts"] >= 3)  # noqa: E731
 
-    def _round_gir_percentage(round_obj: Round) -> Optional[float]:
-        holes = len(_valid_hole_scores(round_obj))
-        gir = round_obj.get_total_gir()
-        if not holes or gir is None:
-            return None
-        return (gir / holes) * 100
+    def putting(window, *, lifetime: bool):
+        fewest, fewest_round = _best_round(window["eighteen"], Round.get_total_putts, lower=True)
+        most_one, one_round = _best_round(window["complete"], one_putts, lower=False)
+        most_three, three_round = _best_round(window["complete"], three_putts, lower=False)
+        values = {"fewest_putts_in_round": fewest, "most_1_putts_in_round": most_one, "most_3_putts_in_round": most_three}
+        events = {
+            "fewest_putts_in_round": _milestone_event(fewest_round),
+            "most_1_putts_in_round": _milestone_event(one_round),
+            "most_3_putts_in_round": _milestone_event(three_round),
+        }
+        return values, events
 
-    gir_thresholds = list(range(3, 19, 3))
-    gir_breaks: List[Dict[str, Any]] = []
-    for threshold in gir_thresholds:
-        gir_breaks.append(
-            {
-                "threshold": threshold,
-                "achievement": _first_round_reaching_gir(rounds_list, threshold),
-            }
+    putt_values, putt_events = putting(life, lifetime=True)
+    year_putt_values, year_putt_events = putting(year, lifetime=False)
+    putt_break_rounds = {
+        threshold: _first_round(life["eighteen"], lambda r, t=threshold: (r.get_total_putts() or t) < t)
+        for threshold in PUTT_BREAK_THRESHOLDS
+    }
+    putt_values["putt_breaks"] = [
+        {"threshold": threshold, "achievement": _milestone_event(r)} for threshold, r in putt_break_rounds.items()
+    ]
+    year_putt_values["putting_milestones_achieved_from_lifetime_set"] = sum(
+        1 for r in putt_break_rounds.values() if in_window(r)
+    )
+
+    gir_break_rounds = {
+        threshold: _first_round(life["eighteen"], lambda r, t=threshold: (r.get_total_gir() or 0) >= t)
+        for threshold in GIR_BREAK_THRESHOLDS
+    }
+    highest_gir_pct, highest_gir_pct_round = _best_round(life["complete"], _round_gir_percentage, lower=False)
+    year_gir_pct, year_gir_pct_round = _best_round(year["complete"], _round_gir_percentage, lower=False)
+    year_best_gir, year_best_gir_round = _best_round(year["complete"], Round.get_total_gir, lower=False)
+
+    score_break_rounds = {
+        threshold: _first_round(
+            life["eighteen"], lambda r, t=threshold: r.calculate_total_score() < t
         )
-
-    lifetime_gir_counts = [r.get_total_gir() for r in rounds_list if r.get_total_gir() is not None]
-    lifetime_gir_pct = [_round_gir_percentage(r) for r in rounds_list]
-    lifetime_gir_pct = [value for value in lifetime_gir_pct if value is not None]
-
-    one_year_gir_candidates = []
-    for round_obj in rounds_year:
-        gir = round_obj.get_total_gir()
-        gir_pct = _round_gir_percentage(round_obj)
-        if gir is not None and gir_pct is not None and round_obj.date is not None:
-            one_year_gir_candidates.append((round_obj, gir, gir_pct))
-
-    best_gir_round_event: Optional[Dict[str, str]] = None
-    if one_year_gir_candidates:
-        best_round, _, _ = sorted(
-            one_year_gir_candidates,
-            key=lambda item: (-item[1], item[0].date or datetime.max),
-        )[0]
-        best_gir_round_event = _milestone_event(best_round)
-
-    highest_gir_pct_one_year = max((item[2] for item in one_year_gir_candidates), default=None)
-    best_gir_count_one_year = max((item[1] for item in one_year_gir_candidates), default=None)
-
-    gir_milestones_in_window = 0
-    for row in gir_breaks:
-        achieved = row["achievement"]
-        if achieved and achieved.get("date"):
-            dt = datetime.strptime(achieved["date"], "%Y/%m/%d")
-            if dt >= cutoff:
-                gir_milestones_in_window += 1
-
-    gir_milestones = {
-        "lifetime": {
-            "gir_breaks": gir_breaks,
-            "highest_gir_percentage_in_round": max(lifetime_gir_pct) if lifetime_gir_pct else None,
-            "most_gir_in_round": max(lifetime_gir_counts) if lifetime_gir_counts else None,
-        },
-        "one_year": {
-            "best_gir_round": best_gir_round_event,
-            "best_gir_in_round": best_gir_count_one_year,
-            "highest_gir_percentage": highest_gir_pct_one_year,
-            "gir_milestones_achieved_from_lifetime_set": gir_milestones_in_window,
-        },
+        for threshold in SCORE_BREAK_THRESHOLDS
     }
-    gir_milestones_events = {
-        "lifetime": {
-            "highest_gir_percentage_in_round": _best_round_event(rounds_list, _round_gir_percentage),
-            "most_gir_in_round": _best_round_event(rounds_list, lambda r: r.get_total_gir()),
-        },
-        "one_year": {
-            "best_gir_round": best_gir_round_event,
-            "highest_gir_percentage": _best_round_event(rounds_year, _round_gir_percentage),
-        },
+    under_par_round = _first_round(life["complete"], lambda r: (r.total_to_par() or 0) < 0)
+    first_under_par = None
+    if under_par_round is not None and under_par_round.date is not None:
+        first_under_par = {"score": under_par_round.calculate_total_score(), **_milestone_event(under_par_round)}
+    first_rounds = {
+        "first_eagle": _first_round(life["rounds"], lambda r: _round_count(r, _to_par_is(-2)) > 0),
+        "first_hole_in_one": _first_round(life["rounds"], lambda r: _round_count(r, lambda row: row["strokes"] == 1) > 0),
     }
 
-    break_thresholds = [120, 110, 100, 95, 90, 85, 80, 75, 70, 65, 60]
-    score_breaks: List[Dict[str, Any]] = []
-    for threshold in break_thresholds:
-        score_breaks.append(
-            {
-                "threshold": threshold,
-                "achievement": _first_round_below(rounds_list, threshold),
-            }
-        )
-
-    first_round_under_par = _first_round_under_par_event(rounds_list)
-    round_milestones_lifetime = {
-        "score_breaks": score_breaks,
-        "first_round_under_par": first_round_under_par,
-        "first_eagle": _first_event_in_rounds(rounds_list, lambda row: row["score_type"] == "eagle"),
-        "first_hole_in_one": _first_event_in_rounds(rounds_list, lambda row: row["is_hio"]),
-    }
-    new_records: List[str] = []
-    for row in score_breaks:
-        achieved = row["achievement"]
-        if achieved and achieved.get("date"):
-            dt = datetime.strptime(achieved["date"], "%Y/%m/%d")
-            if dt >= cutoff:
-                new_records.append(f"break_{row['threshold']}")
-    if first_round_under_par and first_round_under_par.get("date"):
-        dt = datetime.strptime(first_round_under_par["date"], "%Y/%m/%d")
-        if dt >= cutoff:
-            new_records.append("first_round_under_par")
-    for key in ("first_eagle", "first_hole_in_one"):
-        achieved = round_milestones_lifetime[key]
-        if achieved and achieved.get("date"):
-            dt = datetime.strptime(achieved["date"], "%Y/%m/%d")
-            if dt >= cutoff:
-                new_records.append(key)
+    new_records = [f"break_{t}" for t, r in score_break_rounds.items() if in_window(r)]
+    if in_window(under_par_round) and first_under_par is not None:
+        new_records.append("first_round_under_par")
+    new_records += [key for key, r in first_rounds.items() if in_window(r)]
 
     return {
-        "scoring_records": scoring_records,
-        "scoring_records_events": scoring_records_events,
-        "career_totals": career_totals,
-        "best_performance_streaks": streaks,
-        "best_performance_streaks_events": best_performance_streaks_events,
-        "home_course_records": home_course_records,
-        "home_course_records_events": home_course_records_events,
-        "putting_milestones": putting_milestones,
-        "putting_milestones_events": putting_milestones_events,
-        "gir_milestones": gir_milestones,
-        "gir_milestones_events": gir_milestones_events,
+        "scoring_records": {"lifetime": life_records, "one_year": year_records},
+        "scoring_records_events": {"lifetime": life_record_events, "one_year": year_record_events},
+        "career_totals": {
+            "lifetime": _career_totals(life["rounds"], life["rows"], lifetime=True),
+            "one_year": _career_totals(year["rounds"], year["rows"], lifetime=False),
+        },
+        "best_performance_streaks": {"lifetime": life_streaks, "one_year": year_streaks},
+        "best_performance_streaks_events": {"lifetime": life_streak_events, "one_year": year_streak_events},
+        "home_course_records": {
+            "lifetime": {
+                "home_course_name": home_life["home_course_name"],
+                "lowest_score_on_home_course": home_life["lowest_score"],
+                "most_rounds_played_at_home_course": home_life["most_rounds_played"],
+            },
+            "one_year": {
+                "home_course_name": home_year["home_course_name"] or home_life["home_course_name"],
+                "lowest_score_on_home_course": home_year["lowest_score"],
+            },
+        },
+        "home_course_records_events": {
+            "lifetime": {"lowest_score_on_home_course": _milestone_event(home_life["lowest_score_round"])},
+            "one_year": {"lowest_score_on_home_course": _milestone_event(home_year["lowest_score_round"])},
+        },
+        "putting_milestones": {"lifetime": putt_values, "one_year": year_putt_values},
+        "putting_milestones_events": {"lifetime": putt_events, "one_year": year_putt_events},
+        "gir_milestones": {
+            "lifetime": {
+                "gir_breaks": [
+                    {"threshold": t, "achievement": _milestone_event(r)} for t, r in gir_break_rounds.items()
+                ],
+                "highest_gir_percentage_in_round": highest_gir_pct,
+                "most_gir_in_round": life_records["most_gir_in_round"],
+            },
+            "one_year": {
+                "best_gir_round": _milestone_event(year_best_gir_round),
+                "best_gir_in_round": year_best_gir,
+                "highest_gir_percentage": year_gir_pct,
+                "gir_milestones_achieved_from_lifetime_set": sum(1 for r in gir_break_rounds.values() if in_window(r)),
+            },
+        },
+        "gir_milestones_events": {
+            "lifetime": {
+                "highest_gir_percentage_in_round": _milestone_event(highest_gir_pct_round),
+                "most_gir_in_round": life_record_events["most_gir_in_round"],
+            },
+            "one_year": {
+                "best_gir_round": _milestone_event(year_best_gir_round),
+                "highest_gir_percentage": _milestone_event(year_gir_pct_round),
+            },
+        },
         "round_milestones": {
-            "lifetime": round_milestones_lifetime,
+            "lifetime": {
+                "score_breaks": [
+                    {"threshold": t, "achievement": _milestone_event(r)} for t, r in score_break_rounds.items()
+                ],
+                "first_round_under_par": first_under_par,
+                **{key: _milestone_event(r) for key, r in first_rounds.items()},
+            },
             "one_year": {
                 "new_personal_records_achieved_count": len(new_records),
                 "new_personal_records_achieved": new_records,
