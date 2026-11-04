@@ -1,4 +1,4 @@
-import { type Page } from "@playwright/test";
+import { type Locator, type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
@@ -181,19 +181,21 @@ export class TheLabRobot {
     return this.shown("[data-slot=lab-performance]");
   }
 
+  private panelTab(label: LabPanelLabel): Locator {
+    return this.performance()
+      .getByRole("tablist", { name: "Performance panel" })
+      .getByRole("tab", { name: label, exact: true });
+  }
+
   /** Taps one of the phone's panel tabs. The shape card's Peak Game control is a different button. */
   async tapPanel(label: LabPanelLabel): Promise<this> {
-    await this.performance()
-      .locator("[data-slot=lab-panels]")
-      .getByRole("button", { name: label, exact: true })
-      .tap();
+    await this.panelTab(label).tap();
     return this;
   }
 
   /** The phone shows this panel, and only this one. */
   async seesPanel(label: LabPanelLabel): Promise<this> {
-    const tab = this.performance().locator("[data-slot=lab-panels]").getByRole("button", { name: label, exact: true });
-    await expect(tab).toHaveAttribute("aria-pressed", "true");
+    await expect(this.panelTab(label)).toHaveAttribute("aria-selected", "true");
     for (const [other, slot] of Object.entries(PANEL_CARD)) {
       await expect(this.performance().locator(`[data-slot=${slot}]`)).toHaveCount(other === label ? 1 : 0);
     }

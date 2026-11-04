@@ -39,7 +39,7 @@ export class CourseDetailRobot {
   }
 
   async tapPerformance(): Promise<this> {
-    await this.page.getByRole("button", { name: "My Performance" }).click();
+    await this.page.getByRole("tab", { name: "My Performance" }).click();
     return this;
   }
 

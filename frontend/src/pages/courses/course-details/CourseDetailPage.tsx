@@ -6,8 +6,7 @@ import {
   Button,
   LoadingState,
   PageTitle,
-  ToggleGroup,
-  ToggleGroupItem,
+  TabBar,
 } from "@/brand";
 import { CoursePerformanceSection } from "./components/CoursePerformanceSection";
 import { CourseScorecardSection } from "./components/CourseScorecardSection";
@@ -65,19 +64,13 @@ export function CourseDetailPage({ userId }: { userId: string }) {
         ))}
       </div>
 
-      <ToggleGroup
-        variant="outline"
-        spacing={2}
-        value={[viewModel.activeTab]}
-        onValueChange={(values) => viewModel.selectPageTab(values[0] ?? "")}
+      <TabBar
+        aria-label="Course sections"
+        tabs={viewModel.pageTabs}
+        value={viewModel.activeTab}
+        onValueChange={viewModel.selectPageTab}
         className="my-6"
-      >
-        {viewModel.pageTabs.map((tab) => (
-          <ToggleGroupItem key={tab.key} value={tab.key}>
-            {tab.label}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
+      />
 
       {viewModel.activeTab === "course" && <CourseScorecardSection userId={userId} course={course} />}
       {viewModel.activeTab === "performance" && <CoursePerformanceSection userId={userId} courseId={courseId} />}

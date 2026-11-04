@@ -158,7 +158,7 @@ export class AnalyticsRobot {
 
   /** The phone's section tabs. */
   private sectionTab(label: TabLabel): Locator {
-    return this.visible(this.page.getByRole("group", { name: "Section" })).getByRole("button", {
+    return this.visible(this.page.getByRole("tablist", { name: "Section" })).getByRole("tab", {
       name: label,
       exact: true,
     });
@@ -170,7 +170,7 @@ export class AnalyticsRobot {
   }
 
   async seesTabOpen(label: TabLabel, showing: string): Promise<this> {
-    await expect(this.sectionTab(label)).toHaveAttribute("aria-pressed", "true");
+    await expect(this.sectionTab(label)).toHaveAttribute("aria-selected", "true");
     await expect(this.visible(this.page.getByText(showing, { exact: true }))).toBeVisible();
     return this;
   }
