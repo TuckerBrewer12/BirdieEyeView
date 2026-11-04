@@ -101,3 +101,12 @@ def test_limit_must_be_positive():
     for bad in ("0", "-1"):
         with pytest.raises(argparse.ArgumentTypeError):
             export._positive_int(bad)
+
+
+def test_putts_on_gir_chart_draws_a_gap_for_rounds_without_data():
+    no_gir_putts = par_round(round_id="none")
+
+    _, ax = viz.plot_putts_per_gir([full_data_round("a"), no_gir_putts])
+
+    heights = [bar.get_height() for bar in ax.patches]
+    assert heights[0] > 0 and math.isnan(heights[1])

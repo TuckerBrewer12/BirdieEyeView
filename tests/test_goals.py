@@ -124,3 +124,12 @@ def test_savers_are_ranked_by_strokes():
 
     assert savers == sorted(savers, key=lambda saver: saver["strokes_saved"], reverse=True)
     assert all(saver["strokes_saved"] >= goals.MIN_SAVER_STROKES for saver in savers)
+
+
+def test_rounds_that_hit_every_green_count_in_missed_greens_per_round():
+    hit_every_green = round_({n: {"strokes": PARS_18[n], "green_in_regulation": True} for n in FULL_ROUND},
+                             course_obj=course(18), round_id="hit")
+
+    saver = by_type(goals.goal_report([missed_every_green(), hit_every_green], 70))["scrambling_opportunity"]
+
+    assert saver["strokes_saved"] == pytest.approx(1.35)  # 0.15 x (18 + 0) / 2 rounds

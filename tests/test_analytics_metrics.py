@@ -267,3 +267,35 @@ def test_streaks_follow_dates_not_input_order():
 
     assert forward["best_performance_streaks"] == backward["best_performance_streaks"]
     assert forward["best_performance_streaks"]["lifetime"]["longest_birdie_streak"] == 5
+
+
+# ================================================================
+# Review follow-ups
+# ================================================================
+
+
+def test_comparisons_only_average_complete_rounds_of_the_same_format():
+    nine = par_round(holes=FRONT_NINE, course_obj=course(9), over=9, round_id="nine", date=datetime(2026, 1, 1))
+    eighteen = par_round(over=18, round_id="eighteen", date=datetime(2026, 1, 2))
+
+    window = stats.score_comparison([nine, eighteen])[1]
+
+    assert (window["primary_value"], window["observations"]) == (90, 1)  # not (90 + 45) / 2
+
+
+def test_putt_comparisons_skip_incomplete_rounds():
+    full = round_({n: {"strokes": 4, "putts": 2} for n in FULL_ROUND}, course_obj=course(18), round_id="full")
+    one_hole = round_({1: {"strokes": 4, "putts": 2}}, course_obj=course(18), round_id="partial")
+
+    window = stats.putts_comparison([one_hole, full])[1]
+
+    assert window["primary_value"] == 36  # not (36 + 2) / 2
+
+
+def test_course_trend_handles_mixed_timezone_awareness():
+    aware = par_round(round_id="aware", date=datetime(2026, 1, 2, tzinfo=timezone.utc))
+    naive = par_round(round_id="naive", date=datetime(2026, 1, 1))
+
+    rows = stats.score_trend_on_this_course([aware, naive])
+
+    assert [row["round_id"] for row in rows] == ["naive", "aware"]

@@ -173,12 +173,13 @@ def _gir_opportunity(ctx: _GoalContext, gir_pct: Optional[float]) -> Optional[di
 
 
 def _scrambling_opportunity(ctx: _GoalContext) -> Optional[dict]:
-    rate = overall_scrambling(ctx.rounds)
+    # Rounds with GIR known on every hole, including rounds that missed no greens: their zero
+    # misses belong in the per-round average.
+    observed = [r for r in ctx.rounds if r.get_total_gir() is not None]
+    rate = overall_scrambling(observed)
     if rate["percentage"] is None or rate["percentage"] >= SCRAMBLING_TARGET_PERCENT:
         return None
-    # Missed greens actually observed per round (no default GIR, no assumed 18 holes).
-    rounds_with_misses = [r for r in ctx.rounds if overall_scrambling([r])["opportunities"]]
-    misses_per_round = rate["opportunities"] / len(rounds_with_misses)
+    misses_per_round = rate["opportunities"] / len(observed)
     gain_points = min((SCRAMBLING_TARGET_PERCENT - rate["percentage"]) / 100, MAX_SCRAMBLING_GAIN)
     saves = gain_points * misses_per_round
     if saves < MIN_SCRAMBLING_STROKES:

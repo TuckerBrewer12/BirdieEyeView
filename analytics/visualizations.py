@@ -245,7 +245,7 @@ def plot_putts_per_gir(rounds: Sequence[Round], labels: Optional[Sequence[str]] 
     rows = putts_per_gir(rounds)
     x_labels = _round_labels(rounds, labels, len(rows))
     x = list(range(len(x_labels)))
-    putts_on_gir = [row["putts_on_gir"] for row in rows]
+    putts_on_gir = [_gap(row["putts_on_gir"]) for row in rows]
 
     fig, ax = plt.subplots(figsize=(11, 5))
     ax.bar(x, putts_on_gir, alpha=0.8)
@@ -394,7 +394,7 @@ def plot_score_trend_on_this_course(rounds: Sequence[Round], course_label: Optio
         for i, row in enumerate(rows)
     ]
     x = list(range(len(rows)))
-    scores = [row["total_score"] for row in rows]
+    scores = [_gap(row["total_score"]) for row in rows]
 
     fig, ax = plt.subplots(figsize=(11, 5))
     ax.plot(x, scores, color="#0f172a", marker="o", linewidth=1.75)
