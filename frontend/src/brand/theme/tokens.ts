@@ -587,18 +587,6 @@ export const chart = {
     stroke: 2,
     dot: space.dot,
   },
-  /** A golfer's scores over time, one dot per round. */
-  trend: {
-    width: 560,
-    height: size.chart,
-    pad: { top: 16, right: 16, bottom: 28, left: 36 },
-    /** Room either side of the lowest and highest score, in strokes. */
-    headroom: 3,
-    dot: 4,
-    dotHover: 6,
-    /** Past this many rounds the date ticks would crowd, so they are left off. */
-    maxTicks: 12,
-  },
   /** A shape across a handful of measures, each axis 0–100 from the centre out. Labels sit past the rim. */
   radar: {
     width: 560,

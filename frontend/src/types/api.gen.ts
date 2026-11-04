@@ -942,6 +942,10 @@ export interface components {
             hole_averages_front_nine: number | null;
             /** Hole Averages Total */
             hole_averages_total: number | null;
+            /** Recent Average */
+            recent_average: number | null;
+            /** Recent Average Change */
+            recent_average_change: number | null;
             /** Rounds */
             rounds: components["schemas"]["RoundSummaryResponse"][];
             /** Rounds Played */
@@ -1101,11 +1105,15 @@ export interface components {
         };
         /**
          * CourseScoreTrendRow
-         * @description One round at the course, oldest first.
+         * @description One round at the course, oldest first, with its average over it and the four rounds before it.
          */
         CourseScoreTrendRow: {
             /** Date */
             date: string | null;
+            /** Par */
+            par: number | null;
+            /** Rolling Average */
+            rolling_average: number | null;
             /** Round Id */
             round_id: string | null;
             /** Round Index */

@@ -1,4 +1,4 @@
-import { EMPTY_COURSE_ANALYTICS, type RoundSummary, type ScorePoint } from "@/domain";
+import { EMPTY_COURSE_ANALYTICS, type RoundSummary, type RoundTrendPoint } from "@/domain";
 import { coursesRepository, type CoursesRepository } from "../../coursesRepository";
 import { useCourseAnalytics } from "../../useCourseAnalytics";
 
@@ -8,7 +8,10 @@ export interface CoursePerformanceViewModel {
   bestScore: number | null;
   worstScore: number | null;
   /** Every round here, oldest first. The chart plots the scored ones. */
-  trend: ScorePoint[];
+  trend: RoundTrendPoint[];
+  /** The last five rounds' average and its change on the first five, as the server sent them. */
+  recentAverage: number | null;
+  recentAverageChange: number | null;
   /** The golfer's rounds at this course, newest first. */
   rounds: RoundSummary[];
 }
@@ -27,6 +30,8 @@ export function useCoursePerformanceViewModel(
     bestScore: analytics.bestScore,
     worstScore: analytics.worstScore,
     trend: analytics.scoreTrend,
+    recentAverage: analytics.recentAverage,
+    recentAverageChange: analytics.recentAverageChange,
     rounds: analytics.rounds,
   };
 }

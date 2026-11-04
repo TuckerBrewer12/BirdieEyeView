@@ -32,6 +32,20 @@ def test_hero_figures_and_history_come_from_the_rounds():
     assert [r.id for r in response.rounds] == ["r3", "r2", "r1"]
     assert [row.total_score for row in response.score_trend_on_course] == [78, 72, 75]
     assert [row.to_par for row in response.score_trend_on_course] == [6, 0, 3]
+    # The score trend's average and par come from here, so the chart only draws them.
+    assert [row.par for row in response.score_trend_on_course] == [72, 72, 72]
+    assert [row.rolling_average for row in response.score_trend_on_course] == [78.0, 75.0, 75.0]
+    assert response.recent_average == 75.0
+    assert response.recent_average_change is None  # under ten scored rounds
+
+
+def test_recent_average_change_reads_the_last_five_against_the_first_five():
+    overs = [8, 6, 7, 5, 9, 4, 3, 5, 2, 1]  # first five average 7 over, last five 3
+    rounds = [_round(f"r{i}", i + 1, over) for i, over in enumerate(overs)]
+    response = course_analytics("c1", rounds)
+
+    assert response.recent_average == 75.0
+    assert response.recent_average_change == -4.0
 
 
 def test_per_hole_rows_are_typed():
