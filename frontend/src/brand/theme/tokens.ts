@@ -652,6 +652,8 @@ export const chart = {
     dot: 5,
     /** The eagle's ring and the hatching over a triple. */
     stroke: 1.5,
+    /** The second hatch over a triple, from the left edge to the top. */
+    hatch: 18,
     /** The double's outer box. */
     strokeThin: 1.25,
     /** Corner radii: par's box is the softest, a double's inner box the tightest. */
