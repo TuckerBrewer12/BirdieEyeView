@@ -3,12 +3,14 @@ import os
 from uuid import uuid4
 
 import pytest
+from io import BytesIO
+
 from PIL import Image
 
 from scripts import scan_reports as cli
 from services.scan_report_crypto import decode_key
 from services.scan_report_storage import ScanReportStorageConfig, report_object_key
-from services.scan_report_sanitizer import sanitize_scorecard
+from services.scan_report_sanitizer import JPEG_HEADER_INFO_KEYS, sanitize_scorecard
 from tests.scan_report_fixtures import report
 from tests.test_scan_report_storage import configure_environment, make_store
 
@@ -29,19 +31,23 @@ def test_download_authenticates_then_writes_only_generic_private_files(tmp_path,
     store = make_store()
     item = report()
     if legacy:
-        image, media = sanitize_scorecard(item.image, item.media_type)
-        store.client.objects[report_object_key(item.retry_key)] = store.cipher.encrypt(item, image, media)
+        # A report saved before images were stored as JPEG holds a clean PNG.
+        output = BytesIO()
+        Image.new("RGB", (30, 20), "white").save(output, "PNG")
+        store.client.objects[report_object_key(item.retry_key)] = store.cipher.encrypt(item, output.getvalue(), "image/png")
     else:
         store.save_sync(item)
     directory = cli.download_report(store, item.retry_key, tmp_path)
+    scorecard = "scorecard.png" if legacy else "scorecard.jpg"
     assert directory.name == str(item.retry_key)
-    assert {path.name for path in directory.iterdir()} == {"scorecard.png", "metadata.json"}
+    assert {path.name for path in directory.iterdir()} == {scorecard, "metadata.json"}
     metadata = json.loads((directory / "metadata.json").read_text())
     assert set(metadata) == {"schema_version", "retry_key", "category", "stage", "http_status", "media_type"}
     assert os.stat(directory).st_mode & 0o777 == 0o700
     assert all(os.stat(path).st_mode & 0o777 == 0o600 for path in directory.iterdir())
-    with Image.open(directory / "scorecard.png") as image:
-        assert image.size == (30, 20) and not image.info
+    with Image.open(directory / scorecard) as image:
+        assert image.size == (30, 20) and image.format == ("PNG" if legacy else "JPEG")
+        assert set(image.info) <= JPEG_HEADER_INFO_KEYS
     with pytest.raises(FileExistsError):
         cli.download_report(store, item.retry_key, tmp_path)
 

@@ -22,7 +22,7 @@ def test_encrypts_entire_report_with_fresh_nonce_and_authenticates_retry_key():
     assert restored.image == image
     assert restored.metadata.model_dump(mode="json") == {
         "schema_version": 1, "retry_key": str(item.retry_key), "category": "unreadable_scores",
-        "stage": "parse", "http_status": 422, "media_type": "image/png",
+        "stage": "parse", "http_status": 422, "media_type": "image/jpeg",
     }
 
 

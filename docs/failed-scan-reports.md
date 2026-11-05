@@ -117,8 +117,14 @@ account identifiers.
 ## Metadata sanitation
 
 `services/scan_report_sanitizer.py` decodes JPEG, PNG, WebP and supported HEIC,
-applies EXIF orientation, and writes fresh PNG pixels. EXIF/GPS, XMP, comments,
-ICC payloads and trailing bytes are not copied. Visible names are retained.
+applies EXIF orientation, and writes fresh JPEG pixels at the scanner's size: at
+most 2,000 px on the long edge, quality 80, the same as the frontend upload and the
+OCR input. Transparent areas become white. EXIF/GPS, XMP, comments, ICC payloads
+and trailing bytes are not copied; a stored JPEG carries only its standard JFIF
+header. Visible names are retained. The stored image is nearly pixel-identical to
+what the scanner read, not byte-identical. Storing lossless full-size PNG made
+each report 4–6× larger than the upload (about 2.5–5 MB); a report is now about
+the upload's size (roughly 300–500 KB).
 Multi-frame images are rejected rather than silently dropping frames. The
 adapter never falls back to storing the original file.
 
@@ -186,7 +192,8 @@ key file. Retrieval does not require collection to be enabled.
 ```
 
 Downloads authenticate/decrypt before creating a report directory. Files are
-`scorecard.png` or `scorecard.pdf`, and `metadata.json`, inside a UUID directory.
+`scorecard.jpg` (`scorecard.png` for reports saved before November 2026) or
+`scorecard.pdf`, and `metadata.json`, inside a UUID directory.
 Directories/files use `0700`/`0600`; existing output is never overwritten.
 The CLI paginates, accepts only report UUID4s, and hides SDK exceptions,
 credentials and contents on failure. There is no public retrieval endpoint or

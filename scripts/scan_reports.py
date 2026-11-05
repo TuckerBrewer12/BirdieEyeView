@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 from PIL import Image, ImageDraw
 
 from services.scan_report_crypto import decode_key
+from services.scan_report_sanitizer import JPEG_HEADER_INFO_KEYS
 from services.scan_report_service import AnonymousScanReport
 from services.scan_report_storage import ScanReportStorageConfig, report_object_key
 
@@ -49,7 +50,7 @@ def download_report(store, report_id: UUID, destination: Path) -> Path:
     directory = destination / str(report_id)
     destination.mkdir(parents=True, exist_ok=True, mode=0o700)
     directory.mkdir(mode=0o700)  # Refuse an existing directory, including symlinks.
-    suffix = {"image/png": "png", "application/pdf": "pdf"}[report.metadata.media_type]
+    suffix = {"image/jpeg": "jpg", "image/png": "png", "application/pdf": "pdf"}[report.metadata.media_type]
     image_path, metadata_path = directory / f"scorecard.{suffix}", directory / "metadata.json"
     try:
         _write_private(image_path, report.image)
@@ -87,7 +88,7 @@ def smoke_check(config: ScanReportStorageConfig, store):
         if b"synthetic-author-for-removal" in restored.image:
             raise ValueError("Embedded metadata was retained.")
         with Image.open(BytesIO(restored.image)) as image:
-            if image.size != (300, 100) or image.getexif() or image.info:
+            if image.size != (300, 100) or image.getexif() or set(image.info) - JPEG_HEADER_INFO_KEYS:
                 raise ValueError("Retrieved scorecard validation failed.")
         endpoint = config.endpoint.rstrip("/")
         key = store.object_key(item.retry_key)
