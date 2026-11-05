@@ -468,7 +468,7 @@ export const motion = {
   /** A section fading up as it scrolls into view (`Reveal`). */
   reveal: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as Ease },
   /** The card being read while a scan runs: it breathes, a line sweeps it, its corners pulse, the step rail fills. */
-  scanProgress: { breathe: 2.6, sweep: 1.6, pulse: 1.8, step: 0.4 },
+  scanProgress: { breathe: 2.6, sweep: 1.6, pulse: 1.8, cornerStagger: 0.45, step: 0.4 },
   /** The try-it panel moving between its steps. */
   scanStep: { upload: 0.3, processing: 0.25, review: 0.35 },
   /**

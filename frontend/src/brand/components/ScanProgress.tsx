@@ -67,7 +67,7 @@ function ScanProgress({ label, detail, phase, phaseCount, className }: ScanProgr
               corner.endsWith("l") ? "-left-2 border-l-2" : "-right-2 border-r-2",
             )}
             animate={{ opacity: [0.35, 1, 0.35] }}
-            transition={{ duration: tokens.motion.scanProgress.pulse, repeat: Infinity, delay: i * 0.45, ease: "easeInOut" }}
+            transition={{ duration: tokens.motion.scanProgress.pulse, repeat: Infinity, delay: i * tokens.motion.scanProgress.cornerStagger, ease: "easeInOut" }}
           />
         ))}
       </div>
