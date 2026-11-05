@@ -4,9 +4,9 @@
  * kit.js reads strings: a class name or a hex. Much of the kit's styling never passes through a
  * string, though. Framer Motion takes a duration as a number, an inline style takes a font size
  * as a number, and an SVG or Recharts prop takes a radius as a number. These rules catch a raw
- * number in those places and point at the token that already holds it: brand/theme/motion.ts
- * for motion, tokens.css (through a Tailwind utility or `typography` / `space` / `size` /
- * `radius`) for measures, and `chartLayout` in brand/theme/chart.ts for charts.
+ * number in those places and point at the token in brand/theme/tokens.ts that already holds it:
+ * `tokens.motion` for motion, a Tailwind utility or `tokens.type` / `space` / `size` / `radius`
+ * for measures, and `tokens.chart` for charts.
  *
  * 0 is never reported: it is the absence of a measure, not a choice of one. For motion 1 is
  * left alone too, since `scale: 1` is an element's natural size and `opacity: 1` its full self.
@@ -104,9 +104,8 @@ const noRawMotion = {
     schema: [],
     messages: {
       motion:
-        "`{{key}}: {{value}}` is a raw motion number. Use a token from brand/theme/motion.ts (motion.hoverScale, " +
-        "motion.tapScale, motion.spring, motion.duration.collapse, motion.draw, motion.pop, motion.entrance, " +
-        "motion.layout), or add one there.",
+        "`{{key}}: {{value}}` is a raw motion number. Use `tokens.motion` from brand/theme/tokens.ts (hoverScale, " +
+        "tapScale, spring, duration.collapse, draw, pop, entrance, layout, expand…), or add one there.",
     },
   },
   create(context) {
@@ -169,8 +168,8 @@ const noStyleMeasure = {
     messages: {
       measure:
         "`{{key}}: {{value}}` is a raw measure in an inline style. Use the token utility in className " +
-        "(text-meta, rounded-full, gap-tight, w-preview…), or `typography`, `space`, `size` or `radius` from " +
-        "@/brand/theme when it has to be a style. Add a token to brand/theme/tokens.css if there is none.",
+        "(text-meta, rounded-full, gap-tight, w-preview…), or `tokens.type`, `space`, `size` or `radius` from " +
+        "@/brand/theme when it has to be a style. Add a token to brand/theme/tokens.ts if there is none.",
       color:
         "`{{key}}: {{value}}` is an inline colour that skips the brand tokens. Use `colors.*` or `toParFill(...)` " +
         "from @/brand/theme, or a token utility (bg-card, text-score-birdie), so it follows dark mode.",
@@ -213,12 +212,12 @@ const noMeasureProp = {
     schema: [],
     messages: {
       measure:
-        "`{{name}}={{value}}` is a raw chart measure. Use `chartLayout` from brand/theme/chart.ts (ring, gauge, " +
-        "barRadius, barMaxWidth, plot, sparkline, trend, flow) or a size, space or radius token from " +
-        "brand/theme/tokens.css, or add one there.",
+        "`{{name}}={{value}}` is a raw chart measure. Use `tokens.chart` from brand/theme/tokens.ts (ring, gauge, " +
+        "barRadius, plot, sparkline, trend, flow…), or `tokens.lineWidth`, `opacity`, `space`, `size` or `radius`, " +
+        "or add one there.",
       icon:
         "`size={{value}}` sizes an icon with a raw number. Size it with a className (size-icon-xs, size-4), " +
-        "or add a size token to brand/theme/tokens.css.",
+        "or add a size token to brand/theme/tokens.ts.",
     },
   },
   create(context) {
