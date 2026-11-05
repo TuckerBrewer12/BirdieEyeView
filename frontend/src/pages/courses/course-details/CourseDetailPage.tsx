@@ -79,7 +79,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
         ))}
       </ToggleGroup>
 
-      {viewModel.activeTab === "course" && <CourseScorecardSection userId={userId} course={course} />}
+      {viewModel.activeTab === "course" && <CourseScorecardSection userId={userId} courseId={courseId} />}
       {viewModel.activeTab === "performance" && <CoursePerformanceSection userId={userId} courseId={courseId} />}
     </div>
   );

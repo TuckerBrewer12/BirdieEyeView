@@ -25,7 +25,7 @@ import { RecentRoundsTable } from "./RecentRoundsTable";
 import { ScanActionCard } from "./ScanActionCard";
 import { ScoreMixChart } from "./ScoreMixChart";
 import type { DashboardPageViewModel } from "../useDashboardPageViewModel";
-import { firstNameOf } from "../present";
+import { firstNameOf, initialsOf } from "../present";
 
 export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
@@ -46,7 +46,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
         {/* Left Main Content */}
         <div className="flex-1 min-w-0 flex flex-col">
           <ProfileHeroBanner
-            user={user ?? null}
+            initials={initialsOf(user ?? null)}
             handicapIndex={data.handicap_index}
             handicapLabel={formatHandicapIndex(data.handicap_index)}
             firstName={firstNameOf(user)}

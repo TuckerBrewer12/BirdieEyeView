@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { api } from "@/lib/api";
 import { apiUrl } from "@/lib/apiBase";
 import { setSessionToken, withAuthHeaders } from "@/lib/sessionToken";
 import {
@@ -41,11 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshSession = useCallback(async (): Promise<AuthState | null> => {
     try {
-      const res = await fetch(apiUrl("/api/auth/me"), {
-        credentials: "include",
-        headers: withAuthHeaders(),
-      });
-      if (res.status === 401 || res.status === 403) {
+      const data = await api.getAuthSession();
+      if (!data) {
         setSessionToken(null);
         setState((prev) =>
           prev.userId === null && prev.name === null && prev.email === null && prev.emailVerified === false
@@ -54,10 +52,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
         return null;
       }
-      if (!res.ok) {
-        throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.account));
-      }
-      const data = await parseJsonResponse<AuthUserDto>(res, USER_FACING_ERRORS.account);
       const nextState: AuthState = {
         userId: data.user_id,
         name: data.name,

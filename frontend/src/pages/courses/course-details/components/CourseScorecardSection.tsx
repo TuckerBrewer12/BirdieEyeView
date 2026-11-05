@@ -1,17 +1,17 @@
 import { Button, Card, CardContent, TeeSwatch } from "@/brand";
 import { cn } from "@/brand/cn";
 import { formatCourseHandicap } from "@/domain/handicap";
-import type { CourseDto } from "@/types/api";
 import { NineTable } from "./NineTable";
 import { useCourseScorecardViewModel } from "./useCourseScorecardViewModel";
 
 interface CourseScorecardSectionProps {
   userId: string;
-  course: CourseDto;
+  courseId: string;
 }
 
-export function CourseScorecardSection({ userId, course }: CourseScorecardSectionProps) {
-  const viewModel = useCourseScorecardViewModel(userId, course);
+export function CourseScorecardSection({ userId, courseId }: CourseScorecardSectionProps) {
+  const viewModel = useCourseScorecardViewModel(userId, courseId);
+  if (!viewModel) return null;
 
   return (
     <>
