@@ -418,7 +418,7 @@ class RoundRepositoryDB:
                     updates["tee_id"] = None
 
             set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates))
-            values = [UUID(round_id)] + list(updates.values())
+            values = [UUID(round_id), *updates.values()]
 
             where_clause = "id = $1"
             where_values = []

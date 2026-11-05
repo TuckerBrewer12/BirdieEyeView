@@ -1,6 +1,6 @@
 """Stats/dashboard API endpoints."""
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import List, Literal, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -133,12 +133,12 @@ async def get_analytics(
         else:
             try:
                 resolved_course_id = ensure_uuid_str(course_id, "course_id")
-            except ValueError as exc:
-                raise HTTPException(422, str(exc))
+            except ValueError:
+                raise HTTPException(422, "course_id must be a valid UUID.") from None
 
     # Resolve date_from filter
     date_from: Optional[date] = None
-    today = date.today()
+    today = datetime.now(timezone.utc).date()
     if timeframe == "ytd":
         date_from = date(today.year, 1, 1)
     elif timeframe == "1y":
@@ -292,11 +292,11 @@ async def get_milestones(
 
     achievements = analytics.notable_achievements(rounds_chrono, home_course_id=user.home_course_id)
 
-    def _parse_date(d: str) -> datetime:
+    def _parse_date(d: str) -> date:
         try:
-            return datetime.strptime(d, "%Y/%m/%d")
-        except Exception:
-            return datetime.min
+            return analytics.parse_date_short(d)
+        except ValueError:
+            return date.min
 
     milestones = []
 

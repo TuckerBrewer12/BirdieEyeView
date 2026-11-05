@@ -244,7 +244,7 @@ async def test_course_repository_queries_and_mutations(mock_pool):
 async def test_round_repository_helpers_updates_and_scans(mock_pool):
     pool, conn = mock_pool
     round_repository = RoundRepositoryDB(pool, AsyncMock())
-    round_id, user_id, course_id, tee_id = map(str, (uuid4(), uuid4(), uuid4(), uuid4()))
+    round_id, user_id = str(uuid4()), str(uuid4())
 
     assert await round_repository.get_round_owner_id("invalid") is None
     round_owner_id = uuid4()

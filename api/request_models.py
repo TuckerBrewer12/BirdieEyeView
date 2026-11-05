@@ -48,7 +48,7 @@ class TeeInput(BaseModel):
         for raw_k, raw_v in (value or {}).items():
             try:
                 hole_num = int(raw_k)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise ValueError("hole_yardages keys must be hole numbers (1-18).") from exc
             if not (1 <= hole_num <= 18):
                 raise ValueError("hole_yardages hole number must be between 1 and 18.")

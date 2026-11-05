@@ -127,7 +127,7 @@ def parse_mistral_scorecard_rows(
 
     split_maps = _find_split_col_maps(raw_lines)
     if split_maps is not None:
-        (front_lines, front_map, front_hdr_idx), (back_lines, back_map, back_hdr_idx) = split_maps
+        (front_lines, front_map, front_hdr_idx), (back_lines, back_map, _back_hdr_idx) = split_maps
 
         # Use require_name_match when a player name is given so we don't accidentally
         # pick up a different player's row as the anchor (e.g. G's row for player T).
@@ -1042,7 +1042,7 @@ def _apply_field_suppression(parsed: ParsedScorecardRows, row_hints: dict) -> No
 
 def _extract_course_name(lines: List[str]) -> Optional[str]:
     for line in lines[:12]:
-        # Example: "FALLS Hole Location Hole Assignment ..."
+        # The course name leads its line, as FALLS does in "FALLS Hole Location Hole Assignment ...".
         first = line.split(" ", 1)[0].strip(":")
         if _COURSE_RE.match(first) and first.lower() not in {"hole", "out", "in", "tot"}:
             return first.title()

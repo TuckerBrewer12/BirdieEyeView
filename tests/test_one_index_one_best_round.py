@@ -1,7 +1,7 @@
 """One handicap index and one best round: every screen that shows either reads the same one."""
 
 import importlib.util
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import UUID, uuid4
@@ -142,7 +142,7 @@ def test_the_trend_reads_the_20_rounds_ending_with_each_round():
         holes=[Hole(number=i, par=4) for i in range(1, 19)],
         tees=[Tee(color="Blue", course_rating=72.0, slope_rating=113.0)],
     )
-    start = datetime(2026, 1, 1)
+    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
     def played(over, day):
         return Round(id=f"r{day}", course=course, tee_box="Blue", date=start + timedelta(days=day), hole_scores=[
@@ -162,7 +162,7 @@ def _round(round_id, strokes_over, *, holes=18, par=4, day=0, course=None):
         id=round_id,
         course=course,
         course_name_played=f"Course {round_id}",
-        date=datetime(2026, 4, 1) + timedelta(days=day),
+        date=datetime(2026, 4, 1, tzinfo=timezone.utc) + timedelta(days=day),
         hole_scores=[
             HoleScore(hole_number=i, strokes=par + (1 if i <= strokes_over else 0), par_played=par, putts=1,
                       green_in_regulation=True)
@@ -178,7 +178,7 @@ def _mixed_season():
         Hole(number=i + 1, par=p) for i, p in enumerate([4, 4, 4, 3, 4, 4, 3, 4, 5] * 2)
     ])
     seventy_four = Round(
-        id="74-at-70", course=par_70, date=datetime(2026, 4, 2),
+        id="74-at-70", course=par_70, date=datetime(2026, 4, 2, tzinfo=timezone.utc),
         hole_scores=[HoleScore(hole_number=h.number, strokes=h.par + (1 if h.number <= 4 else 0), putts=2)
                      for h in par_70.holes],
     )
@@ -233,7 +233,7 @@ def test_the_course_page_best_round_is_never_a_nine():
 
 def test_records_and_milestones_set_by_a_rounds_total_count_full_rounds_only():
     season = _mixed_season()
-    achievements = stats.notable_achievements(season, reference_date=datetime(2026, 5, 1))
+    achievements = stats.notable_achievements(season, reference_date=date(2026, 5, 1))
     records = achievements["scoring_records"]["lifetime"]
     assert records["lowest_round"] == 74  # the lowest 18, a record by score: not the nine's 36
     assert achievements["scoring_records_events"]["lifetime"]["lowest_round"]["round_id"] == "74-at-70"

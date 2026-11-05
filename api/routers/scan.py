@@ -135,7 +135,7 @@ def _validate_upload_payload(path: Path, suffix: str) -> None:
                 raise HTTPException(400, "Image pixel count exceeds allowed size.")
     except HTTPException:
         raise
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         if suffix == ".heic" and not HEIC_DECODE_AVAILABLE:
             raise HTTPException(
                 400,
@@ -505,10 +505,8 @@ def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, boo
             t_open = time.perf_counter()
             if is_pdf:
                 # First page only for scorecard PDFs.
-                try:
+                with contextlib.suppress(EOFError):
                     img.seek(0)
-                except Exception:
-                    pass
             # Honor EXIF orientation before re-encoding.
             img = ImageOps.exif_transpose(img)
             if img.mode != "RGB":
@@ -565,6 +563,7 @@ def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, boo
             path.name,
             "pdf" if is_pdf else "image",
             e,
+            exc_info=True,
         )
         return path, False
 
@@ -594,7 +593,7 @@ async def prefetch_ocr(
         raise
     except Exception:
         logger.exception("Prefetch OCR failed")
-        raise HTTPException(500, "OCR failed. Please try again.")
+        raise HTTPException(500, "OCR failed. Please try again.") from None
     finally:
         if ocr_path != original_tmp_path and (not PREPROCESS_CACHE_ENABLED or not cache_hit):
             with contextlib.suppress(OSError):
@@ -631,20 +630,24 @@ async def extract_scan(
                 allow_newlines=True,
                 allow_empty=True,
             )
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        except ValueError:
+            raise HTTPException(
+                422, f"user_context must be plain text of at most {MAX_USER_CONTEXT_CHARS} characters."
+            ) from None
     if course_id is not None and course_id.strip():
         try:
             course_id = ensure_uuid_str(course_id, "course_id")
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        except ValueError:
+            raise HTTPException(422, "course_id must be a valid UUID.") from None
     elif course_id is not None:
         course_id = None
     if ocr_text is not None:
         try:
             ocr_text = sanitize_ocr_text(ocr_text, max_length=MAX_OCR_TEXT_CHARS)
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        except ValueError:
+            raise HTTPException(
+                422, f"ocr_text must be plain text of at most {MAX_OCR_TEXT_CHARS} characters."
+            ) from None
 
     original_tmp_path, upload_digest = _save_upload_to_temp(file, suffix)
 
@@ -751,15 +754,15 @@ async def extract_scan(
         )
 
     except FileNotFoundError:
-        raise HTTPException(400, "Uploaded file could not be processed")
+        raise HTTPException(400, "Uploaded file could not be processed") from None
     except EnvironmentError:
         logger.exception("Scan extraction service unavailable")
-        raise HTTPException(500, SCAN_FAILED)
+        raise HTTPException(500, SCAN_FAILED) from None
     except HTTPException:
         raise
     except Exception:
         logger.exception("Scan extraction error")
-        raise HTTPException(500, "Extraction failed. Please try again.")
+        raise HTTPException(500, "Extraction failed. Please try again.") from None
     finally:
         logger.info(
             "Scan extract request complete: total_ms=%.1f",
@@ -792,7 +795,7 @@ async def save_round(
         return SaveScanResponse(id=str(saved.id), total_score=saved.calculate_total_score())
     except ValueError:
         logger.exception("Save round validation failed")
-        raise HTTPException(400, ROUND_SAVE_FAILED)
+        raise HTTPException(400, ROUND_SAVE_FAILED) from None
     except Exception:
         logger.exception("Save round error")
-        raise HTTPException(500, "Save failed. Please try again.")
+        raise HTTPException(500, "Save failed. Please try again.") from None

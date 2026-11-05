@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
@@ -43,7 +43,7 @@ def _make_round(round_id: UUID, course: Course | None = None) -> Round:
         course=course,
         course_name_played="Played Course" if course is None else None,
         tee_box="Blue",
-        date=datetime(2026, 1, 2),
+        date=datetime(2026, 1, 2, tzinfo=timezone.utc),
         hole_scores=[
             HoleScore(hole_number=1, strokes=5, putts=2, par_played=4, fairway_hit=True),
             HoleScore(hole_number=2, strokes=4, putts=2, par_played=4, fairway_hit=False),
@@ -58,7 +58,7 @@ def _make_round_summary(round_id: UUID) -> Round:
         id=str(round_id),
         course=Course(id=str(uuid4()), name="Pebble Beach", location="Monterey", par=72),
         tee_box="Blue",
-        date=datetime(2026, 1, 2),
+        date=datetime(2026, 1, 2, tzinfo=timezone.utc),
         hole_scores=[
             HoleScore(hole_number=n, strokes=5 if n <= 8 else 4, putts=2, par_played=4)
             for n in range(1, 19)
@@ -67,7 +67,7 @@ def _make_round_summary(round_id: UUID) -> Round:
 
 
 def _make_friendship_row(requester: UUID, addressee: UUID) -> dict:
-    now = datetime(2026, 1, 1)
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
     return {
         "id": uuid4(),
         "requester_id": requester,
@@ -332,8 +332,8 @@ def test_user_response_is_the_profile_only():
         handicap=7.5,
         scoring_goal=79,
         email_verified=True,
-        created_at=datetime(2026, 2, 20),
-        last_handicap_update=datetime(2026, 3, 1),
+        created_at=datetime(2026, 2, 20, tzinfo=timezone.utc),
+        last_handicap_update=datetime(2026, 3, 1, tzinfo=timezone.utc),
         rounds=[_make_round(uuid4())],
     )
     assert users.user_response(user).model_dump() == {
@@ -343,7 +343,7 @@ def test_user_response_is_the_profile_only():
         "email": "golfer@example.com",
         "home_course_id": None,
         "handicap": 7.5,
-        "created_at": datetime(2026, 2, 20),
+        "created_at": datetime(2026, 2, 20, tzinfo=timezone.utc),
         "scoring_goal": 79,
     }
 
