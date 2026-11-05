@@ -250,7 +250,8 @@ export default defineConfig([
     plugins: { specs },
     rules: {
       // Robot steps (`seesX`, `capture`) hold the assertions, so a spec that calls them asserts.
-      'playwright/expect-expect': ['error', { assertFunctionPatterns: ['^sees', '^doesNotSee', '^isAt', '^goesTo', '^capture', '^expect'] }],
+      // `askedFor` checks the request the page sent the fake server.
+      'playwright/expect-expect': ['error', { assertFunctionPatterns: ['^sees', '^doesNotSee', '^isAt', '^goesTo', '^asked', '^capture', '^expect'] }],
     },
   },
   {
