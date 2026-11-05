@@ -1,4 +1,4 @@
-import { Input } from "@/brand/components/Input";
+import { Checkbox, Input } from "@/brand/components/Input";
 
 export default function InputPreview() {
   return (
@@ -8,6 +8,10 @@ export default function InputPreview() {
       <Input placeholder="Disabled" disabled />
       <Input placeholder="Invalid" aria-invalid />
       <Input size="cta" placeholder="you@example.com" />
+      <div className="flex items-center gap-3">
+        <Checkbox aria-label="Unchecked" />
+        <Checkbox defaultChecked aria-label="Checked" />
+      </div>
     </>
   );
 }
