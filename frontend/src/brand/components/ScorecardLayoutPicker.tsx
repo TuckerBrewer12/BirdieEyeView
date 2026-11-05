@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GripVertical } from "lucide-react";
 import { cn } from "@/brand/cn";
+import { tokens } from "@/brand/theme";
 import { Input } from "./Input";
 
 type DataRow = "score" | "putts" | "shots";
@@ -212,7 +213,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
               >
                 {active && (
                   <svg viewBox="0 0 8 7" className="size-2 text-primary-foreground" fill="none">
-                    <polyline points="1,3.5 3,5.5 7,1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <polyline points="1,3.5 3,5.5 7,1" stroke="currentColor" strokeWidth={tokens.stroke.check} strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
               </span>
@@ -230,7 +231,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            transition={tokens.motion.expand}
             className="overflow-hidden"
           >
             <div className="pt-1">
@@ -288,7 +289,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
                           tone,
                         )}
                       >
-                        <GripVertical size={13} className="shrink-0 text-primary-foreground/focus" />
+                        <GripVertical className="size-icon-sm shrink-0 text-primary-foreground/focus" />
                         <span className="text-xs font-semibold text-primary-foreground">{label}</span>
                       </div>
                     </div>

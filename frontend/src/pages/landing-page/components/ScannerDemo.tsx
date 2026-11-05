@@ -7,38 +7,13 @@ import { HANDICAP_TAP, TOUR_SCREENS, WIDE_FRAME_MEDIA, tourImage, type TourScree
 import { tokens } from "@/brand/theme";
 import { useScannerDemoViewModel, type DemoScorecardRow } from "./useScannerDemoViewModel";
 
-/**
- * This demo's cinematic timings, in seconds. Not interaction values: the sweep is a scanner
- * crossing a card, the crossfade one image replacing another, the tap a finger pressing a
- * button on a captured screen. A choice registering uses the kit's own `duration.collapse`.
- */
-const DEMO_MOTION = {
-  /** One image replacing another — the card giving way to the scorecard. */
-  crossfade: 0.8,
-  /** The scan line's full travel, top to bottom. */
-  sweep: 1.5,
-  /** A field or chip drawing the eye as the form fills itself in. */
-  emphasis: 0.3,
-  /** One on/off of the text caret in the name field. */
-  caretBlink: 0.8,
-  /** Mapped rows sliding in from the right. Looser than the kit's spring so the rows
-   *  overshoot enough to read as dropped into place. */
-  rowSpring: { type: "spring" as const, damping: 15 },
-  /** One app screen giving way to the next on the tour. */
-  screenChange: 0.5,
-  /** The incoming screen settling from just past full size. */
-  screenEnterScale: 1.02,
-  /** The photo stepping back as the scanned card replaces it. */
-  photoRecedeScale: 0.95,
-  /** A finger pressing the handicap: the ring closing in from wide, pressing, then letting go. */
-  tap: { duration: 0.7, reachScale: 1.6, pressScale: 0.8 },
-} as const;
+const DEMO_MOTION = tokens.motion.demo;
 
 /** The clean scorecard the scan resolves to. */
 function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 1.05 }}
+      initial={{ opacity: 0, scale: DEMO_MOTION.scorecardEnterScale }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: DEMO_MOTION.crossfade }}
@@ -120,7 +95,7 @@ function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
 
 function TypewriterLabel({ text }: { text: string }) {
   return (
-    <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ staggerChildren: 0.1 }}>
+    <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ staggerChildren: DEMO_MOTION.typeStagger }}>
       {text.split("").map((char, i) => (
         <motion.span key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.15 }}>
           {char}
@@ -136,7 +111,7 @@ function MappingPanel() {
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+      exit={{ opacity: 0, scale: DEMO_MOTION.recedeScale }}
       className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 pt-4 pb-16 sm:px-6"
     >
       <div className="flex w-full max-w-md flex-col overflow-hidden rounded-xl bg-card font-sans shadow-card">
@@ -180,7 +155,7 @@ function MappingPanel() {
               >
                 <motion.div
                   initial={{ scale: 1 }}
-                  animate={{ scale: [1, 1.05, 1] }}
+                  animate={{ scale: [1, DEMO_MOTION.emphasisScale, 1] }}
                   transition={{ delay: 1.2, duration: DEMO_MOTION.emphasis }}
                 >
                   <div className="text-xs font-bold text-score-birdie">To par</div>
@@ -198,7 +173,7 @@ function MappingPanel() {
               {["Putts", "Shots to green"].map((label, i) => (
                 <motion.div
                   key={label}
-                  initial={{ opacity: 0.4, scale: 0.95 }}
+                  initial={{ opacity: 0.4, scale: DEMO_MOTION.recedeScale }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 1.8 + i * 0.4, duration: DEMO_MOTION.emphasis }}
                   className="flex items-center gap-2 rounded-md border border-score-birdie/medium bg-accent px-3 py-1.5"
@@ -341,7 +316,7 @@ export function ScannerDemo() {
         animate={{
           filter: phase === "mapping" ? `brightness(0.5) blur(${tokens.blur.xs}px)` : "brightness(1) blur(0px)",
           opacity: scanned ? 0 : 1,
-          scale: scanned ? DEMO_MOTION.photoRecedeScale : 1,
+          scale: scanned ? DEMO_MOTION.recedeScale : 1,
         }}
         transition={{ duration: DEMO_MOTION.crossfade }}
       />

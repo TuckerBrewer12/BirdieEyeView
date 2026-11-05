@@ -136,6 +136,7 @@
   --brand-size-sheet: 28rem;
   --brand-size-target: 15rem;
   --brand-size-icon-xs: 11px;
+  --brand-size-icon-sm: 13px;
   --brand-size-hole-w: 30px;
   --brand-size-hole-h: 22px;
   --brand-size-profile-eagle: 28%;
@@ -147,9 +148,11 @@
   --brand-size-scorecard: 43.75rem;
   --brand-stroke-icon: 1.75;
   --brand-stroke-icon-active: 2.25;
+  --brand-stroke-check: 1.5;
   --brand-opacity-trace: 5%;
   --brand-opacity-faint: 8%;
   --brand-opacity-tint: 10%;
+  --brand-opacity-haze: 12%;
   --brand-opacity-soft: 15%;
   --brand-opacity-light: 20%;
   --brand-opacity-wash: 22%;
@@ -322,6 +325,7 @@
   --spacing-sheet: var(--brand-size-sheet);
   --spacing-target: var(--brand-size-target);
   --spacing-icon-xs: var(--brand-size-icon-xs);
+  --spacing-icon-sm: var(--brand-size-icon-sm);
   --spacing-hole-w: var(--brand-size-hole-w);
   --spacing-hole-h: var(--brand-size-hole-h);
   --spacing-profile-eagle: var(--brand-size-profile-eagle);
@@ -333,9 +337,11 @@
   --spacing-scorecard: var(--brand-size-scorecard);
   --stroke-width-icon: var(--brand-stroke-icon);
   --stroke-width-icon-active: var(--brand-stroke-icon-active);
+  --stroke-width-check: var(--brand-stroke-check);
   --opacity-trace: var(--brand-opacity-trace);
   --opacity-faint: var(--brand-opacity-faint);
   --opacity-tint: var(--brand-opacity-tint);
+  --opacity-haze: var(--brand-opacity-haze);
   --opacity-soft: var(--brand-opacity-soft);
   --opacity-light: var(--brand-opacity-light);
   --opacity-wash: var(--brand-opacity-wash);

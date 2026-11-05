@@ -23,7 +23,7 @@ const Y_TICKS = [-3, -2, -1, 0, 1, 2, 3];
  * Wider than a phone, so it scrolls sideways rather than shrinking its labels.
  */
 export function RoundFlowChart({ round }: RoundFlowChartProps) {
-  const { width: W, height: H, pad: PAD, extent, dot, dotHover } = tokens.chart.flow;
+  const { width: W, height: H, pad: PAD, extent, stroke, parLine, dot, dotHover } = tokens.chart.flow;
   // The OS setting, or a MotionConfig asking for stillness (the kit's screenshot harness).
   const prefersReduced = useReducedMotion();
   const configReduced = useReducedMotionConfig();
@@ -71,8 +71,8 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
             y1={y(0)}
             y2={y(0)}
             stroke={tokens.color.chart.muted}
-            strokeWidth={1.5}
-            strokeDasharray="5 4"
+            strokeWidth={parLine.stroke}
+            strokeDasharray={parLine.dash}
           />
 
           {first <= 9 && last > 9 && (
@@ -90,7 +90,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
             d={path}
             fill="none"
             stroke={tokens.color.chart.axis}
-            strokeWidth={2.5}
+            strokeWidth={stroke}
             strokeLinecap="round"
             strokeLinejoin="round"
             // Reduced motion starts at the end state, so there is nothing left to animate.
@@ -107,7 +107,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               r={hovered?.hole === hole.hole ? dotHover : dot}
               fill={tokens.color.score[hole.kind].base}
               stroke={tokens.color.card}
-              strokeWidth={1.5}
+              strokeWidth={tokens.lineWidth.outline}
               className="cursor-crosshair"
               initial={reduceMotion ? false : { scale: tokens.motion.pop.from, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -127,7 +127,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               y2={H - PAD.bottom}
               stroke={tokens.color.chart.muted}
               strokeWidth={tokens.lineWidth.border}
-              strokeDasharray="3 3"
+              strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
             />
           )}
 

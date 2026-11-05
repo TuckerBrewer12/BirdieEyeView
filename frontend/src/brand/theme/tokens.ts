@@ -358,6 +358,7 @@ export const size = {
   /** Widest a target of results grows. */
   target: "15rem",
   "icon-xs": 11,
+  "icon-sm": 13,
   "hole-w": 30,
   "hole-h": 22,
   // A profile bar's height in its row, by score: the worse the hole, the taller.
@@ -379,10 +380,12 @@ export const lineWidth = {
   outline: 1.5,
 };
 
-/** Icon line weight in the tab bar, unitless: lighter at rest, heavier on the current tab. */
+/** Icon line weights, unitless. The tab bar's are lighter at rest, heavier on the current tab. */
 export const stroke = {
   icon: 1.75,
   "icon-active": 2.25,
+  /** The tick in a checkbox. */
+  check: 1.5,
 };
 
 /** Blur radii, in pixels. `xs` is Tailwind's own step, named here so code can read it. */
@@ -400,6 +403,7 @@ export const opacity = {
   faint: "8%",
   /** An accent tint behind an icon or chip; a hairline ring. */
   tint: "10%",
+  haze: "12%",
   soft: "15%",
   light: "20%",
   /** Soft fill under a line or inside a shape. */
@@ -459,6 +463,44 @@ export const motion = {
   entrance: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as Ease },
   /** A block resizing into the space it has been given. */
   layout: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as Ease },
+  /** A panel opening under the control that asked for it. */
+  expand: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as Ease },
+  /** A section fading up as it scrolls into view (`Reveal`). */
+  reveal: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as Ease },
+  /** The card being read while a scan runs: it breathes, a line sweeps it, its corners pulse, the step rail fills. */
+  scanProgress: { breathe: 2.6, sweep: 1.6, pulse: 1.8, step: 0.4 },
+  /** The try-it panel moving between its steps. */
+  scanStep: { upload: 0.3, processing: 0.25, review: 0.35 },
+  /**
+   * The landing page demo's cinematic timings. Not interaction values: a scanner crossing a card,
+   * one image replacing another, a finger pressing a button on a captured screen.
+   */
+  demo: {
+    /** One image replacing another: the card giving way to the scorecard. */
+    crossfade: 0.8,
+    /** The scan line's full travel, top to bottom. */
+    sweep: 1.5,
+    /** A field or chip drawing the eye as the form fills itself in. */
+    emphasis: 0.3,
+    /** How far an emphasised choice swells before settling back. */
+    emphasisScale: 1.05,
+    /** One on/off of the text caret in the name field. */
+    caretBlink: 0.8,
+    /** Between the letters of a name typing itself in. */
+    typeStagger: 0.1,
+    /** Mapped rows sliding in, looser than `spring` so they overshoot into place. */
+    rowSpring: { type: "spring" as const, damping: 15 },
+    /** One app screen giving way to the next on the tour. */
+    screenChange: 0.5,
+    /** The incoming screen settling from just past full size. */
+    screenEnterScale: 1.02,
+    /** The read scorecard settling from past full size as it replaces the photo. */
+    scorecardEnterScale: 1.05,
+    /** Stepped back: the photo as the card replaces it, the panel as it leaves, a chip before it lights up. */
+    recedeScale: 0.95,
+    /** A finger pressing the handicap: the ring closing in from wide, pressing, then letting go. */
+    tap: { duration: 0.7, reachScale: 1.6, pressScale: 0.8 },
+  },
 };
 
 /** A length from above in pixels, for a chart that only takes numbers. Assumes 16px to the rem. */
@@ -520,6 +562,7 @@ export const chart = {
     pad: { top: 16, right: 16, bottom: 28, left: 36 },
     /** Room either side of the lowest and highest score, in strokes. */
     headroom: 3,
+    stroke: 2.5,
     dot: 4,
     dotHover: 6,
     /** Past this many rounds the date ticks would crowd, so they are left off. */
@@ -553,6 +596,8 @@ export const chart = {
     pad: { x: 8, y: 14 },
     /** Room at the right end of the goal line for its label. */
     labelRoom: 32,
+    /** The goal line, the line through the scores, and the ring round a score that missed. */
+    stroke: 1.5,
     dot: 4,
     dotReached: 5.5,
   },
@@ -592,7 +637,24 @@ export const chart = {
     pad: { top: 28, right: 16, bottom: 36, left: 40 },
     /** To-par beyond this is drawn at the edge, so one blow-up hole cannot flatten the rest. */
     extent: 5,
+    stroke: 2.5,
+    /** The dashed line at par. */
+    parLine: { stroke: 1.5, dash: "5 4" },
     dot: 4,
     dotHover: 6,
+  },
+  /** A hole's score marked the way a scorecard marks it, in a `w-hole-w h-hole-h` box: circles under par, boxes over. */
+  holeShape: {
+    width: size["hole-w"],
+    height: size["hole-h"],
+    circle: 9.5,
+    /** The eagle's dot inside its circle. */
+    dot: 5,
+    /** The eagle's ring and the hatching over a triple. */
+    stroke: 1.5,
+    /** The double's outer box. */
+    strokeThin: 1.25,
+    /** Corner radii: par's box is the softest, a double's inner box the tightest. */
+    corner: { par: 3, outer: 2.5, box: 2, inner: 1.5 },
   },
 };

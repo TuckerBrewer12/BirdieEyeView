@@ -19,7 +19,7 @@ type ScoredRow = ScorePoint & { score: number };
  * joined into a line over a soft fill. Hovering a dot shows its date and score.
  */
 export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
-  const { width: W, height: H, pad: PAD, headroom, dot, dotHover, maxTicks } = tokens.chart.trend;
+  const { width: W, height: H, pad: PAD, headroom, stroke, dot, dotHover, maxTicks } = tokens.chart.trend;
   const [hovered, setHovered] = useState<ScoredRow | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const areaId = `score-trend-area-${useId().replace(/:/g, "")}`;
@@ -60,7 +60,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
       >
         <defs>
           <linearGradient id={areaId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={tokens.color.primary} stopOpacity={0.12} />
+            <stop offset="5%" stopColor={tokens.color.primary} stopOpacity={tokens.opacity.haze} />
             <stop offset="95%" stopColor={tokens.color.primary} stopOpacity={0} />
           </linearGradient>
         </defs>
@@ -92,7 +92,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
           d={linePath}
           fill="none"
           stroke={tokens.color.primary}
-          strokeWidth={2.5}
+          strokeWidth={stroke}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
@@ -104,7 +104,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             r={hovered === row ? dotHover : dot}
             fill={toParFill(row.toPar)}
             stroke={tokens.color.card}
-            strokeWidth={1.5}
+            strokeWidth={tokens.lineWidth.outline}
           />
         ))}
         {hovered && (
@@ -115,7 +115,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             y2={H - PAD.bottom}
             stroke={tokens.color.chart.muted}
             strokeWidth={tokens.lineWidth.border}
-            strokeDasharray="3 3"
+            strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
           />
         )}
         {data.length <= maxTicks &&

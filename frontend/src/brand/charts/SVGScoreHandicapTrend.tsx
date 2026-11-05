@@ -118,7 +118,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
       >
         <defs>
           <linearGradient id={hiGrad} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="10%" stopColor={HANDICAP_COLOR} stopOpacity={0.1} />
+            <stop offset="10%" stopColor={HANDICAP_COLOR} stopOpacity={tokens.opacity.tint} />
             <stop offset="100%" stopColor={HANDICAP_COLOR} stopOpacity={0} />
           </linearGradient>
         </defs>
@@ -161,7 +161,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                 width={barW}
                 height={baseline - top}
                 fill={differentialFill(d.differentialStatus)}
-                fillOpacity={0.6}
+                fillOpacity={tokens.opacity.strong}
                 rx={tokens.radius.tick}
               />
             );

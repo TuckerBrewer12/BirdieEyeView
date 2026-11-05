@@ -7,11 +7,9 @@ interface HoleScoreShapesProps {
   numbered?: boolean;
 }
 
-const VB_W = 30;
-const VB_H = 22;
+const { width: VB_W, height: VB_H, circle: r, dot, stroke, strokeThin, corner } = tokens.chart.holeShape;
 const cx = VB_W / 2;
 const cy = VB_H / 2;
-const r = 9.5;
 
 /** One hole drawn the way a scorecard marks it: circles under par, boxes over. */
 export function HoleShape({ hole }: { hole: HoleSummary }) {
@@ -30,39 +28,39 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
     <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="h-hole-h w-hole-w">
       {kind === "eagle" && (
         <>
-          <circle cx={cx} cy={cy} r={5} fill={fill} />
-          <circle cx={cx} cy={cy} r={r} fill="none" stroke={fill} strokeWidth={1.5} />
+          <circle cx={cx} cy={cy} r={dot} fill={fill} />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke={fill} strokeWidth={stroke} />
         </>
       )}
       {kind === "birdie" && <circle cx={cx} cy={cy} r={r} fill={fill} />}
       {kind === "par" && (
-        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={3} fill={fill} />
+        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={corner.par} fill={fill} />
       )}
       {kind === "bogey" && (
-        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={2} fill={fill} />
+        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={corner.box} fill={fill} />
       )}
       {kind === "double" && (
         <>
-          <rect x={2.5} y={2.5} width={VB_W - 5} height={VB_H - 5} rx={1.5} fill={fill} />
+          <rect x={2.5} y={2.5} width={VB_W - 5} height={VB_H - 5} rx={corner.inner} fill={fill} />
           <rect
             x={0.5}
             y={0.5}
             width={VB_W - 1}
             height={VB_H - 1}
-            rx={2.5}
+            rx={corner.outer}
             fill="none"
             stroke={fill}
-            strokeWidth={1.25}
+            strokeWidth={strokeThin}
           />
         </>
       )}
       {(kind === "triple" || kind === "quad") && (
         <>
-          <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={2} fill={fill} />
-          <line x1={0} y1={7} x2={7} y2={0} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
-          <line x1={0} y1={18} x2={18} y2={0} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
-          <line x1={0} y1={VB_H} x2={VB_W} y2={0} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
-          <line x1={14} y1={VB_H} x2={VB_W} y2={8} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
+          <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={corner.box} fill={fill} />
+          <line x1={0} y1={7} x2={7} y2={0} stroke={onFill} strokeWidth={stroke} strokeLinecap="round" opacity={0.35} />
+          <line x1={0} y1={18} x2={18} y2={0} stroke={onFill} strokeWidth={stroke} strokeLinecap="round" opacity={0.35} />
+          <line x1={0} y1={VB_H} x2={VB_W} y2={0} stroke={onFill} strokeWidth={stroke} strokeLinecap="round" opacity={0.35} />
+          <line x1={14} y1={VB_H} x2={VB_W} y2={8} stroke={onFill} strokeWidth={stroke} strokeLinecap="round" opacity={0.35} />
         </>
       )}
       <text

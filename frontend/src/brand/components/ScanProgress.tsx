@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
+import { tokens } from "@/brand/theme";
 
 interface ScanProgressProps {
   label: string;
@@ -32,7 +33,7 @@ function ScanProgress({ label, detail, phase, phaseCount, className }: ScanProgr
         <motion.div
           className="relative h-36 w-56 overflow-hidden rounded-2xl border-2 border-primary/light bg-gradient-to-br from-card to-accent"
           animate={{ opacity: [0.92, 1, 0.92] }}
-          transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: tokens.motion.scanProgress.breathe, repeat: Infinity, ease: "easeInOut" }}
         >
           <div className="pointer-events-none absolute inset-0 flex select-none flex-col gap-2 p-3 pt-4">
             {ROWS.map((tone, row) => (
@@ -48,12 +49,12 @@ function ScanProgress({ label, detail, phase, phaseCount, className }: ScanProgr
           <motion.div
             className="pointer-events-none absolute right-0 left-0 h-px bg-primary shadow-card"
             animate={{ top: ["8%", "92%"] }}
-            transition={{ duration: 1.6, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+            transition={{ duration: tokens.motion.scanProgress.sweep, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
           />
           <motion.div
             className="pointer-events-none absolute right-0 left-0 h-10 bg-gradient-to-b from-primary/tint to-transparent"
             animate={{ top: ["-10%", "70%"] }}
-            transition={{ duration: 1.6, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+            transition={{ duration: tokens.motion.scanProgress.sweep, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
           />
         </motion.div>
 
@@ -66,7 +67,7 @@ function ScanProgress({ label, detail, phase, phaseCount, className }: ScanProgr
               corner.endsWith("l") ? "-left-2 border-l-2" : "-right-2 border-r-2",
             )}
             animate={{ opacity: [0.35, 1, 0.35] }}
-            transition={{ duration: 1.8, repeat: Infinity, delay: i * 0.45, ease: "easeInOut" }}
+            transition={{ duration: tokens.motion.scanProgress.pulse, repeat: Infinity, delay: i * 0.45, ease: "easeInOut" }}
           />
         ))}
       </div>
@@ -85,7 +86,7 @@ function ScanProgress({ label, detail, phase, phaseCount, className }: ScanProgr
               width: i < phase ? 18 : i === phase ? 32 : 6,
               opacity: i <= phase ? 1 : 0.18,
             }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            transition={{ duration: tokens.motion.scanProgress.step, ease: "easeOut" }}
           />
         ))}
       </div>
