@@ -20,8 +20,9 @@ Checks:
   3. Every src/pages/**/useXViewModel.ts(x) has a Vitest test named
      useXViewModelTest.ts(x) or useXViewModel.test.ts(x) in the same page
      folder (src/pages/<dir>/**).
-  4. Every *.spec.ts(x) under src/ is a .screenshot.spec.ts (look) or an
-     .espresso.spec.ts (behaviour); no Playwright project matches anything else.
+  4. Every *.spec.ts(x) under src/ is a .screenshot.spec.ts (look), an
+     .espresso.spec.ts (behaviour) or a .capture.spec.ts (the landing demo's
+     captures); no Playwright project matches anything else.
   5. No two files under src/brand/ export a component with the same name.
 """
 from __future__ import annotations
@@ -37,7 +38,7 @@ KIT_KINDS = ("components", "charts")
 COMPONENT_FILE_RE = re.compile(r"^[A-Z][A-Za-z0-9]*\.tsx$")
 PAGE_FILE_RE = re.compile(r"^[A-Z][A-Za-z0-9]*Page\.tsx$")
 VIEW_MODEL_FILE_RE = re.compile(r"^(use[A-Z][A-Za-z0-9]*ViewModel)\.tsx?$")
-SPEC_KINDS = (".screenshot.spec.ts", ".espresso.spec.ts")
+SPEC_KINDS = (".screenshot.spec.ts", ".espresso.spec.ts", ".capture.spec.ts")
 
 # A component name: starts upper-case and has a lower-case letter, so
 # SCREAMING_CASE constants are not counted.
@@ -119,8 +120,8 @@ def check_spec_kinds(src: Path) -> list[str]:
         if not spec.is_file() or spec.suffix not in (".ts", ".tsx") or spec.name.endswith(SPEC_KINDS):
             continue
         errors.append(
-            f"{rel(spec, src)}: a spec must be .screenshot.spec.ts (look only) or "
-            f".espresso.spec.ts (behaviour only). No Playwright project matches "
+            f"{rel(spec, src)}: a spec must be .screenshot.spec.ts (look only), "
+            f".espresso.spec.ts (behaviour only) or .capture.spec.ts (demo captures). No Playwright project matches "
             f"this name, so it never runs in a browser."
         )
     return errors
