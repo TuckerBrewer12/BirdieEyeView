@@ -360,7 +360,7 @@ async def run_suite(
         ocr_upload = _make_upload(prepared_name, image_bytes)
         ocr_start = clock()
         try:
-            response = await prefetch(ocr_upload, current_user=None)
+            response = await prefetch(ocr_upload)
             ocr_seconds = clock() - ocr_start
             ocr_seconds_by_image[image_name] = ocr_seconds
             if not isinstance(response, Mapping):

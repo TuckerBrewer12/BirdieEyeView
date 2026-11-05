@@ -9,7 +9,7 @@
 | Router | Responsibility |
 |---|---|
 | `auth.py` | Registration, login/logout, session lookup, verification, and password recovery. |
-| `scan.py` | OCR/extraction and reviewed-round saving. |
+| `scan.py` | OCR/extraction and reviewed-round saving. Upload checks, temporary files and OCR image preparation are delegated to [scan_uploads.py](../../api/scan_uploads.py) and [scan_image.py](../../services/scan_image.py). |
 | `scan_reports.py` | Anonymous failed-scan report submission. |
 | `courses.py` | Course lookup, ownership-aware editing, cloning, and course details. |
 | `rounds.py` | Round retrieval, edits, deletion, and course links. |
@@ -21,7 +21,7 @@ These files are in [api/routers](../../api/routers). Every request body is defin
 
 ## Typical request
 
-A frontend query calls an API helper; the router resolves authentication/database dependencies and validates the request. Workflow or repository calls produce domain data, then the router returns a response schema. In the current code, scan and stats routers also contain substantial assembly/calculation logic; moving that logic is a reviewed refactor direction, not a completed separation.
+A frontend query calls an API helper; the router resolves authentication/database dependencies and validates the request. Workflow or repository calls produce domain data, then the router returns a response schema. In the current code, the scan router still assembles parsed rows into the extraction response and the stats router still calculates results; moving that logic is roadmap step 3 (upload handling has already moved out of the scan router).
 
 ## Changing this domain
 

@@ -5,6 +5,7 @@ The active scanner is implemented across Services and the scan router. The legac
 ## Current flow
 
 1. Frontend scan hooks prepare an image/PDF and player/course hints. OCR can be prefetched before extraction.
+1. [scan_uploads.py](../../api/scan_uploads.py) checks the upload (name, content type, 20 MB, decodable image within the size caps, or a parseable PDF) and owns its temporary files: only the request creates temporary files and removes every one afterwards (including after a cancelled request or a failed write, flush or close), logging rather than raising a cleanup failure. File and image work runs in a worker thread that only writes into those existing files and never creates one, so a worker still running after its request was cancelled can't recreate a deleted file. [scan_image.py](../../services/scan_image.py) prepares the OCR input: a browser-ready 2,000 px JPEG passes through, other images become a 2,000 px quality-80 JPEG without metadata, and PDFs go to OCR as uploaded. `/extract` with prefetched OCR text validates the upload but doesn't re-encode it. `/ocr` has no user or database dependency.
 2. [mistral_ocr_service.py](../../services/mistral_ocr_service.py) calls Mistral and normalizes OCR output.
 3. [gemini_table_merger.py](../../services/gemini_table_merger.py) can join split table sections with validation/fallback behavior.
 4. [mistral_scorecard_parser.py](../../services/mistral_scorecard_parser.py) identifies rows, player selection, and hole columns and returns `ParsedScorecardRows`.
