@@ -9,7 +9,7 @@ import {
   FieldLabel,
   Input,
 } from "@/brand";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/auth";
 import { AuthLink } from "../components/AuthLink";
 import { AuthNotice } from "../components/AuthNotice";
 import { PasswordField } from "../components/PasswordField";
@@ -35,7 +35,7 @@ export function RegisterPage() {
         onSubmit={(event) => {
           event.preventDefault();
           viewModel.submit((email, message) =>
-            navigate(`/verify-pending?email=${encodeURIComponent(email)}`, {
+            void navigate(`/verify-pending?email=${encodeURIComponent(email)}`, {
               state: { flash: message, email },
             }),
           );

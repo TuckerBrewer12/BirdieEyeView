@@ -36,7 +36,7 @@ function Dropzone({ title, hint, accept = "image/*,application/pdf", onFile, cla
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => {
         event.preventDefault();
-        const file = event.dataTransfer.files[0];
+        const file = event.dataTransfer.files.item(0);
         if (file) onFile(file);
       }}
       className={cn(

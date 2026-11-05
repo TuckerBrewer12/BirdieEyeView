@@ -92,8 +92,8 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!dragging.current) return;
+    if (e.touches.length === 0) return;
     const touch = e.touches[0];
-    if (!touch) return;
     const el = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement | null;
     const rowHost = el?.closest("[data-row-index]") as HTMLElement | null;
     if (!rowHost) return;

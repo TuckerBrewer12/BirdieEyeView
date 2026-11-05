@@ -34,7 +34,7 @@ export function ScanPage({ userId }: { userId: string }) {
           {viewModel.savedRound ? (
             <ScanSuccessStep
               round={viewModel.savedRound}
-              onView={() => viewModel.openSavedRound((roundId) => navigate(`/rounds/${roundId}`))}
+              onView={() => viewModel.openSavedRound((roundId) => void navigate(`/rounds/${roundId}`))}
             />
           ) : (
             <LoadingState>Loading…</LoadingState>

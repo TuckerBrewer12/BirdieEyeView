@@ -109,7 +109,7 @@ export function useLabPageViewModel(
 
   const friends = useMemo(() => friendOptionsFrom(friendships ?? []), [friendships]);
   // A friend who has since gone falls back to the first one listed.
-  const selectedFriend = friends.find((f) => f.id === pickedFriendId) ?? friends[0] ?? null;
+  const selectedFriend = friends.find((f) => f.id === pickedFriendId) ?? friends.at(0) ?? null;
   const comparingFriend = mode === "benchmark" && comparison === "friend";
   // Who the server holds the golfer up against; nothing when it's their shape alone.
   const against = useMemo<BenchmarkTarget | null>(() => {

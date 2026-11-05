@@ -36,10 +36,10 @@ export function benchmarkKey(target: BenchmarkTarget): string {
 /** The Lab's reads and its one write, in memory. */
 export class FakeLabRepository implements LabRepository {
   user: UserDto;
-  readonly analytics: Record<string, AnalyticsDto>;
+  readonly analytics: Partial<Record<string, AnalyticsDto>>;
   goalReport: GoalReportDto | null;
   readonly friendships: InMemoryFriendships;
-  readonly benchmarks: Record<string, BenchmarkComparisonDto>;
+  readonly benchmarks: Partial<Record<string, BenchmarkComparisonDto>>;
   /** The comparisons asked for, keyed as the seed is, in order. */
   readonly benchmarkRequests: string[] = [];
   /** Golfers whose analytics were asked for, in order. */
