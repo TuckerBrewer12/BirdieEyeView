@@ -1,6 +1,6 @@
 import type { ElementType, ReactNode } from "react";
 import { CircleDot, Flag, TrendingDown, Trophy } from "lucide-react";
-import { Collection } from "@/brand";
+import { Collection, RowButton } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { Milestone } from "../model";
 import { milestoneWording } from "../present";
@@ -69,12 +69,8 @@ function MilestoneRow({ milestone, onClick }: { milestone: Milestone; onClick?: 
 
   if (!onClick) return <div className={row}>{content}</div>;
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(row, "cursor-pointer transition-colors hover:bg-muted/dense")}
-    >
+    <RowButton onClick={onClick} className={cn(row, "cursor-pointer hover:bg-muted/dense")}>
       {content}
-    </button>
+    </RowButton>
   );
 }

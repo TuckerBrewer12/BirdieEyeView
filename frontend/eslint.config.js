@@ -118,6 +118,10 @@ export default defineConfig([
   {
     files: ['src/**/*.tsx'],
     extends: [jsxA11y.flatConfigs.recommended],
+    settings: {
+      // Kit controls that render a native one, so a <label> around them labels a control.
+      'jsx-a11y': { components: { Checkbox: 'input' } },
+    },
   },
   {
     // Rules that need the type checker. Each one has caught a real bug class in this repo.

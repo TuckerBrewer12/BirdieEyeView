@@ -1,4 +1,5 @@
-import { Loader2, MapPin, X } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
+import { ClearButton } from "./Button";
 import { SearchField } from "./SearchField";
 import {
   Card,
@@ -139,20 +140,6 @@ export function CourseLinkSearch({
       <CardContent className={title ? undefined : "pt-0"}>{body}</CardContent>
       {footer}
     </Card>
-  );
-}
-
-function ClearButton({ onClick, label }: { onClick: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className="inline-flex text-muted-foreground hover:text-foreground"
-    >
-      <X className="size-4" />
-    </button>
   );
 }
 

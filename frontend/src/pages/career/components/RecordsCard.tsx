@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, Collection } from "@/brand";
+import { Card, CardContent, CardHeader, CardTitle, Collection, RowButton } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { CareerRecord } from "../model";
 import { RECORD_LABEL, eventDetail, recordValue } from "../present";
@@ -38,14 +38,13 @@ export function RecordsCard({ records, onOpenRound, className }: RecordsCardProp
               </>
             );
             return roundId ? (
-              <button
-                type="button"
+              <RowButton
                 data-slot="record-row"
-                className={cn(ROW, "rounded-md transition-colors hover:bg-muted/strong focus-visible:outline-2 focus-visible:outline-ring")}
+                className={cn(ROW, "rounded-md hover:bg-muted/strong focus-visible:outline-2 focus-visible:outline-ring")}
                 onClick={() => onOpenRound(roundId)}
               >
                 {body}
-              </button>
+              </RowButton>
             ) : (
               <div data-slot="record-row" className={ROW}>
                 {body}

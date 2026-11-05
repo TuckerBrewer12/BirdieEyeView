@@ -1,3 +1,4 @@
+import { RowButton } from "@/brand";
 import { cn } from "@/brand/cn";
 import { toParBadgeClass, toParLabel } from "@/brand/theme";
 import { formatCourseName } from "@/domain/course";
@@ -26,13 +27,12 @@ export function RecentRoundsTable({ rounds, onRoundClick }: RecentRoundsTablePro
         {rounds.map((r) => {
           const clickable = Boolean(onRoundClick);
           return (
-            <button
+            <RowButton
               key={r.id}
-              type="button"
               disabled={!clickable}
               onClick={() => onRoundClick?.(r.id)}
               className={cn(
-                "grid w-full grid-cols-recent-rounds gap-x-3 text-left transition-colors",
+                "grid w-full grid-cols-recent-rounds gap-x-3",
                 clickable
                   ? "cursor-pointer hover:bg-muted active:bg-muted/dense"
                   : "cursor-default",
@@ -54,7 +54,7 @@ export function RecentRoundsTable({ rounds, onRoundClick }: RecentRoundsTablePro
                   {toParLabel(r.toPar) ?? "—"}
                 </span>
               </span>
-            </button>
+            </RowButton>
           );
         })}
       </div>
