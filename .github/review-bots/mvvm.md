@@ -48,8 +48,9 @@ side for paint.
 
 **A golf word or rule copied into a component.** Score-kind names and
 groupings (`scoreKindLabel`, `groupScores`), to-par and handicap text ("E",
-"+2"), and WHS thresholds (`differentialStatus`) live in `frontend/src/domain/`.
-Flag a local label map, an inline `` `+${…}` ``, or a colour function that
+"+2") live in `frontend/src/domain/`. WHS rules, like whether a differential
+counts or is close to counting, come from the server (`differential_status` on
+the analytics handicap trend) and are painted with `differentialFillClass`. Flag a local label map, an inline `` `+${…}` ``, or a colour function that
 re-decides a golf rule, and name the domain function to use.
 
 **Mobile and desktop that have drifted.** Paired `Mobile*`/`*Desktop*`
@@ -87,5 +88,5 @@ Example:
 
 [
   {"path": "frontend/src/pages/dashboard/useDashboardPageViewModel.ts", "line": 120, "body": "The hook is returning a pre-painted handicap label. Return the index and let the view call formatHandicapIndex."},
-  {"path": "frontend/src/pages/dashboard/MobileDashboard.tsx", "line": 88, "body": "Course handicap is computed in the view. Use ratedCourseHandicap from @/domain so mobile and desktop cannot fork the WHS formula."}
+  {"path": "frontend/src/pages/dashboard/components/DashboardMobileLayout.tsx", "line": 88, "body": "Course handicap is computed in the view. Use ratedCourseHandicap from @/domain so mobile and desktop cannot fork the WHS formula."}
 ]

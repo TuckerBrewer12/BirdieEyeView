@@ -1,13 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
   SCORE_KINDS,
+  formatAverageToPar,
   playedScoreKinds,
   scoreKind,
   scoreKindCountLabel,
   scoreKindLabel,
+  scoreMixFrom,
   strokesToPar,
   toParLabel,
 } from "../score";
+
+describe("scoreMixFrom", () => {
+  it("reads a server row's double, triple and quad bogey shares as the mix's kinds", () => {
+    expect(
+      scoreMixFrom({ eagle: 1, birdie: 2, par: 3, bogey: 4, double_bogey: 5, triple_bogey: 6, quad_bogey: 7 }),
+    ).toEqual({ eagle: 1, birdie: 2, par: 3, bogey: 4, double: 5, triple: 6, quad: 7 });
+  });
+});
 
 describe("scoreKind", () => {
   it("returns null when strokes or par is missing", () => {
@@ -59,6 +69,25 @@ describe("scoreKindLabel", () => {
 describe("toParLabel", () => {
   it("writes even as E and over par with a plus", () => {
     expect([toParLabel(-2), toParLabel(0), toParLabel(3), toParLabel(null)]).toEqual(["-2", "E", "+3", null]);
+  });
+});
+
+describe("formatAverageToPar", () => {
+  it("writes an average to par to two places", () => {
+    expect(formatAverageToPar(0.8)).toBe("+0.8");
+    expect(formatAverageToPar(0.846)).toBe("+0.85");
+    expect(formatAverageToPar(-0.1)).toBe("-0.1");
+  });
+
+  it("is E for even, and for anything that rounds to it", () => {
+    expect(formatAverageToPar(0)).toBe("E");
+    expect(formatAverageToPar(0.004)).toBe("E");
+    expect(formatAverageToPar(-0.004)).toBe("E");
+  });
+
+  it("rounds a half the same way under par as over", () => {
+    expect(formatAverageToPar(0.125)).toBe("+0.13");
+    expect(formatAverageToPar(-0.125)).toBe("-0.13");
   });
 });
 

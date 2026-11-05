@@ -5,10 +5,9 @@ import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import {
   dashboardGoalReport,
   dashboardUser,
-  populatedAnalytics,
   populatedDashboard,
 } from "../../../testing/fixtures/dashboard";
-import { populatedRounds } from "../../../testing/fixtures/rounds";
+import { storedRounds } from "../../../testing/fixtures/rounds";
 
 const FROZEN_NOW = "2026-06-15T18:00:00.000Z";
 
@@ -31,10 +30,9 @@ export class DashboardRobot {
     await this.page.emulateMedia({ reducedMotion: "reduce" });
     await this.page.clock.setFixedTime(new Date(FROZEN_NOW));
     await FakeSession.install(this.page, {
-      rounds: populatedRounds,
+      rounds: storedRounds,
       handicapIndex: 12.4,
       dashboard: populatedDashboard,
-      analytics: populatedAnalytics,
       profile: dashboardUser,
       goalReport: dashboardGoalReport,
       ...seed,
@@ -90,6 +88,47 @@ export class DashboardRobot {
 
   async isAtRound(id: string): Promise<this> {
     await expect(this.page).toHaveURL(new RegExp(`/rounds/${id}`));
+    return this;
+  }
+
+  /** The phone's goal card; the desktop grid has its own copy. */
+  async tapGoal(): Promise<this> {
+    await this.page.locator("[data-slot=goal-card]").locator("visible=true").tap();
+    return this;
+  }
+
+  async isAtLab(): Promise<this> {
+    await expect(this.page).toHaveURL(/\/the-lab$/);
+    return this;
+  }
+
+  /** The phone's trend card; the desktop grid has its own copy of the chart. */
+  private trendCard() {
+    return this.page.locator("[data-slot=card]").filter({ hasText: "Score History" }).locator("visible=true");
+  }
+
+  async showTrend(label: "Score" | "HCP"): Promise<this> {
+    await this.trendCard().getByRole("button", { name: label }).tap();
+    return this;
+  }
+
+  async seesTrendShowing(label: "Score" | "HCP"): Promise<this> {
+    await expect(this.trendCard().getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true");
+    return this;
+  }
+
+  /** Taps the chart part-way across: 0 is the first round, 1 the last. */
+  async tapTrendAt(fraction: number): Promise<this> {
+    const chart = this.trendCard().locator("[data-slot=score-handicap-trend] svg");
+    await chart.scrollIntoViewIfNeeded();
+    const box = await chart.boundingBox();
+    if (!box) throw new Error("Trend chart is not on screen");
+    await this.page.touchscreen.tap(box.x + box.width * fraction, box.y + box.height / 2);
+    return this;
+  }
+
+  async seesTrendTooltip(text: string | RegExp): Promise<this> {
+    await expect(this.page.locator("[data-slot=score-handicap-trend]").locator("visible=true").getByText(text)).toBeVisible();
     return this;
   }
 

@@ -10,16 +10,18 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from pydantic import BaseModel
 from PIL import Image, ImageOps
 
 logger = logging.getLogger(__name__)
 
 from database.db_manager import DatabaseManager
+from analytics.handicap import tee_course_handicap
 from api.dependencies import get_current_user, get_optional_current_user, get_db
+from api.player_handicap import player_handicap_index
 from api.error_responses import ROUND_SAVE_FAILED, SCAN_FAILED
 from api.input_validation import ensure_uuid_str, normalize_course_display_name, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
+from api.schemas import ConfidenceLevel, OcrTextResponse, SaveScanResponse, ScanResponse
 from models import User
 from services.gemini_table_merger import merge_split_tables
 from services.mistral_ocr_service import MistralOCRService
@@ -91,13 +93,6 @@ def _env_bool(name: str, default: bool = False) -> bool:
 LOG_SENSITIVE_OCR_DEBUG = _env_bool("LOG_SENSITIVE_OCR_DEBUG", False)
 
 
-class ScanResponse(BaseModel):
-    """Response from scorecard extraction."""
-    round: dict
-    confidence: dict
-    fields_needing_review: list
-
-
 def _extract_upload_suffix(file: UploadFile) -> str:
     filename = (file.filename or "").strip()
     if not filename:
@@ -149,7 +144,7 @@ def _validate_upload_payload(path: Path, suffix: str) -> None:
         raise HTTPException(400, "Invalid or unreadable image upload.") from exc
 
 
-def _confidence_level(score: float) -> str:
+def _confidence_level(score: float) -> ConfidenceLevel:
     if score >= 0.85:
         return "high"
     if score >= 0.65:
@@ -368,6 +363,9 @@ def _build_round_from_parsed_rows(
             par_i = hole_par_lookup[i]  # guarded above
             if par_i is not None:
                 gir_val = shots_vals[i - 1] <= max(1, par_i - 2)
+        if gir_val is None and strokes is not None and putts is not None and hole_par_lookup.get(i) is not None:
+            # Without that row, strokes less putts is the shots it took to reach the green.
+            gir_val = strokes - putts <= hole_par_lookup[i] - 2  # type: ignore[operator]
 
         shots_val = shots_vals[i - 1]
         if shots_val is not None and not (1 <= shots_val <= 10):
@@ -398,6 +396,27 @@ def _build_round_from_parsed_rows(
         "notes": None,
     }
     return round_payload, fields_needing_review
+
+
+def _rated_tees(round_payload: Dict) -> List[Dict]:
+    """The card's tees that have both ratings, when the card has a par to rate them against."""
+    course = round_payload.get("course") or {}
+    if course.get("par") is None:
+        return []
+    return [
+        tee for tee in course.get("tees", [])
+        if tee.get("slope_rating") is not None and tee.get("course_rating") is not None
+    ]
+
+
+def _add_course_handicaps(round_payload: Dict, handicap_index: Optional[float]) -> None:
+    """Gives each rated tee on the card the golfer's course handicap off it, so the review can
+    show a net score for whichever tee they pick."""
+    par = (round_payload.get("course") or {}).get("par")
+    for tee in _rated_tees(round_payload):
+        tee["course_handicap"] = tee_course_handicap(
+            handicap_index, tee["slope_rating"], tee["course_rating"], par
+        )
 
 
 def _save_upload_to_temp(file: UploadFile, suffix: str) -> tuple[Path, str]:
@@ -550,7 +569,7 @@ def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, boo
         return path, False
 
 
-@router.post("/ocr")
+@router.post("/ocr", response_model=OcrTextResponse)
 async def prefetch_ocr(
     file: UploadFile = File(...),
     current_user: Optional[User] = Depends(get_optional_current_user),
@@ -570,7 +589,7 @@ async def prefetch_ocr(
         ocr_path, cache_hit = _normalize_upload_for_ocr(original_tmp_path, upload_digest)
         markdown_text = await _run_ocr_pipeline(ocr_path)
         logger.info("Prefetch OCR complete: user=%s chars=%d", getattr(current_user, "id", "anonymous"), len(markdown_text))
-        return {"ocr_text": markdown_text}
+        return OcrTextResponse(ocr_text=markdown_text)
     except HTTPException:
         raise
     except Exception:
@@ -584,7 +603,7 @@ async def prefetch_ocr(
             original_tmp_path.unlink()
 
 
-@router.post("/extract")
+@router.post("/extract", response_model=ScanResponse)
 async def extract_scan(
     file: UploadFile = File(...),
     user_context: Optional[str] = Form(None),
@@ -707,6 +726,8 @@ async def extract_scan(
                 "Unable to clearly read the score rows from this image. Please upload a cleaner image with clearer handwriting and better lighting, then try again.",
             )
 
+        if _rated_tees(round_data):
+            _add_course_handicaps(round_data, await player_handicap_index(db, current_user))
         confidence_data = _build_confidence_payload(round_data.get("hole_scores", []), fields_needing_review)
         t_parse_end = time.perf_counter()
         logger.info(
@@ -721,10 +742,12 @@ async def extract_scan(
             len(fields_needing_review),
         )
 
-        return ScanResponse(
-            round=round_data,
-            confidence=confidence_data,
-            fields_needing_review=fields_needing_review,
+        return ScanResponse.model_validate(
+            {
+                "round": round_data,
+                "confidence": confidence_data,
+                "fields_needing_review": fields_needing_review,
+            }
         )
 
     except FileNotFoundError:
@@ -748,7 +771,7 @@ async def extract_scan(
         original_tmp_path.unlink(missing_ok=True)
 
 
-@router.post("/save")
+@router.post("/save", response_model=SaveScanResponse)
 async def save_round(
     req: SaveRoundRequest,
     db: DatabaseManager = Depends(get_db),
@@ -766,7 +789,7 @@ async def save_round(
         )
         service = ScanService(db)
         saved = await service.save_reviewed_scan(req)
-        return {"id": saved.id, "total_score": saved.calculate_total_score()}
+        return SaveScanResponse(id=str(saved.id), total_score=saved.calculate_total_score())
     except ValueError:
         logger.exception("Save round validation failed")
         raise HTTPException(400, ROUND_SAVE_FAILED)

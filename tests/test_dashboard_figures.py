@@ -19,6 +19,13 @@ def test_scoring_average_over_all_or_the_last_few():
     assert dashboard.scoring_average([]) is None
 
 
+def test_scoring_average_change_reads_the_last_few_against_the_window():
+    rounds = [_round([5] * 18), _round([5] * 18), _round([4] * 18)]
+    # The last two average 81 against 84 over all three.
+    assert dashboard.scoring_average_change(rounds, 2) == -3.0
+    assert dashboard.scoring_average_change([]) is None
+
+
 def test_recent_form_pools_by_chance_and_is_null_without_data():
     form = dashboard.recent_form([_round([4] * 18, gir=True), _round([5] * 18, gir=False)])
     assert form["gir_pct"] == 50.0
@@ -27,6 +34,16 @@ def test_recent_form_pools_by_chance_and_is_null_without_data():
     empty = dashboard.recent_form([Round(hole_scores=[HoleScore(hole_number=1, strokes=4)])])
     assert empty["gir_pct"] is None
     assert empty["putts_per_18"] is None
+
+
+def test_putts_shown_prefers_the_last_five_and_rates_like_the_insights():
+    # 30 or fewer is strong, up to 34 fair, over 34 weak: the analytics page's thresholds.
+    assert dashboard.putts_shown(30.0, 33.0) == {"per_round": 30.0, "rating": "strong"}
+    assert dashboard.putts_shown(34.0, None) == {"per_round": 34.0, "rating": "fair"}
+    assert dashboard.putts_shown(34.4, None) == {"per_round": 34.4, "rating": "weak"}
+    # Without putts in the last five, every round's average stands in.
+    assert dashboard.putts_shown(None, 29.5) == {"per_round": 29.5, "rating": "strong"}
+    assert dashboard.putts_shown(None, None) == {"per_round": None, "rating": None}
 
 
 def test_score_mix_counts_classified_holes():

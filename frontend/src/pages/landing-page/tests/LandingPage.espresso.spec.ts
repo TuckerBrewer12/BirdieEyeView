@@ -14,6 +14,13 @@ test("the demo stays while a card is chosen and steps aside once it is scanned",
   await landing.seesDemo(false);
 });
 
+test("a failed scan keeps the photo and says why", async ({ landing }) => {
+  await landing.open({ scanFails: true });
+  await landing.chooseScorecard();
+  await landing.tapScan();
+  await landing.seesScanFailed();
+});
+
 test("the nav's sign up goes to register", async ({ landing }) => {
   await landing.open();
   await landing.tapSignUp();
@@ -33,6 +40,15 @@ test("the theme toggle switches the page, and the choice survives a reload", asy
 
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 } });
+
+  test("scan another is in reach on the scanned card and starts over", async ({ landing }) => {
+    await landing.open();
+    await landing.chooseScorecard();
+    await landing.tapScan();
+    await landing.seesScannedCard();
+    await landing.tapScanAnother();
+    await landing.seesScanner();
+  });
 
   test("the scanner is on screen without scrolling", async ({ landing }) => {
     await landing.open();

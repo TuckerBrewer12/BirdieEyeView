@@ -64,6 +64,14 @@ export default defineConfig({
       },
     },
     {
+      // Captures of the real app the landing page's hero demo plays through. They are
+      // served from public/, so a page change that makes one stale fails here.
+      name: "demo-tour",
+      testMatch: "**/*.capture.spec.ts",
+      snapshotPathTemplate: "{testDir}/../public/demo-tour/{arg}{ext}",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
       name: "espresso",
       testMatch: "**/*.espresso.spec.ts",
       use: {

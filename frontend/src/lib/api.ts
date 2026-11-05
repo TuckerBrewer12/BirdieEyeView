@@ -1,5 +1,21 @@
-import type { DashboardData, RoundSummary, Round, CourseSummary, Course, User, Friendship } from "@/types/golf";
-import type { AnalyticsData, AnalyticsFilters, CourseAnalyticsData, RoundComparison, GoalReport } from "@/types/analytics";
+import type { AnalyticsFilters } from "@/domain/analyticsFilters";
+import type { BenchmarkTarget } from "@/domain/benchmark";
+import type {
+  AnalyticsDto,
+  BenchmarkComparisonDto,
+  CourseAnalyticsDto,
+  CourseDto,
+  CourseSummaryDto,
+  DashboardDto,
+  FriendshipDto,
+  FriendshipStatusRequestDto,
+  GoalReportDto,
+  PlayedCourseDto,
+  RoundComparisonDto,
+  RoundDto,
+  RoundSummaryDto,
+  UserDto,
+} from "@/types/api";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
 import {
@@ -61,13 +77,13 @@ async function patchJSON<T>(path: string, body: unknown): Promise<T> {
 
 export const api = {
   getDashboard: (userId: string) =>
-    fetchJSON<DashboardData>(`/stats/dashboard/${userId}`),
+    fetchJSON<DashboardDto>(`/stats/dashboard/${userId}`),
 
   getRoundsForUser: (userId: string, limit = 100, offset = 0) =>
-    fetchJSON<RoundSummary[]>(`/rounds/user/${userId}?limit=${limit}&offset=${offset}`),
+    fetchJSON<RoundSummaryDto[]>(`/rounds/user/${userId}?limit=${limit}&offset=${offset}`),
 
   getRound: (roundId: string) =>
-    fetchJSON<Round>(`/rounds/${roundId}`),
+    fetchJSON<RoundDto>(`/rounds/${roundId}`),
 
   updateRound: (
     roundId: string,
@@ -78,10 +94,10 @@ export const api = {
       weather_conditions?: string;
       course_name_played?: string | null;
     }
-  ) => putJSON<Round>(`/rounds/${roundId}`, body),
+  ) => putJSON<RoundDto>(`/rounds/${roundId}`, body),
 
   linkCourse: (roundId: string, courseId: string) =>
-    postJSON<RoundSummary>(`/rounds/${roundId}/link-course`, { course_id: courseId }),
+    postJSON<RoundSummaryDto>(`/rounds/${roundId}/link-course`, { course_id: courseId }),
 
   deleteRound: async (roundId: string) => {
     const res = await fetchWithUserFacingError(apiUrl(`/api/rounds/${roundId}`), {
@@ -97,33 +113,30 @@ export const api = {
   getCourses: (userId?: string, limit = 50, offset = 0) => {
     const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
     if (userId) params.set("user_id", userId);
-    return fetchJSON<CourseSummary[]>(`/courses?${params}`);
+    return fetchJSON<CourseSummaryDto[]>(`/courses?${params}`);
   },
 
   searchCourses: (query: string, userId?: string, includeExternal = false) => {
     const params = new URLSearchParams({ q: query });
     if (userId) params.set("user_id", userId);
     if (includeExternal) params.set("include_external", "true");
-    return fetchJSON<CourseSummary[]>(`/courses/search?${params}`);
+    return fetchJSON<CourseSummaryDto[]>(`/courses/search?${params}`);
   },
 
   getCourse: (courseId: string) =>
-    fetchJSON<Course>(`/courses/${courseId}`),
+    fetchJSON<CourseDto>(`/courses/${courseId}`),
 
   getUser: (userId: string) =>
-    fetchJSON<User>(`/users/${userId}`),
+    fetchJSON<UserDto>(`/users/${userId}`),
 
   updateUser: (userId: string, body: { home_course_id?: string | null; handicap?: number | null; scoring_goal?: number | null }) =>
-    patchJSON<User>(`/users/${userId}`, body),
+    patchJSON<UserDto>(`/users/${userId}`, body),
 
   getGoalReport: (userId: string, limit = 50) =>
-    fetchJSON<GoalReport>(`/stats/${userId}/goal-report?limit=${limit}`),
+    fetchJSON<GoalReportDto>(`/stats/${userId}/goal-report?limit=${limit}`),
 
   cloneCourse: (courseId: string, userId: string) =>
-    postJSON<CourseSummary>(`/courses/${courseId}/clone?user_id=${encodeURIComponent(userId)}`, {}),
-
-  getUserHandicap: (userId: string) =>
-    fetchJSON<{ handicap_index: number | null }>(`/users/${userId}/handicap`),
+    postJSON<CourseSummaryDto>(`/courses/${courseId}/clone?user_id=${encodeURIComponent(userId)}`, {}),
 
   getAnalytics: (userId: string, filters: AnalyticsFilters | number = 50) => {
     const f: AnalyticsFilters = typeof filters === "number"
@@ -132,40 +145,36 @@ export const api = {
     const p = new URLSearchParams({ limit: String(f.limit) });
     if (f.timeframe !== "all") p.set("timeframe", f.timeframe);
     if (f.courseId !== "all") p.set("course_id", f.courseId);
-    return fetchJSON<AnalyticsData>(`/stats/analytics/${userId}?${p}`);
+    return fetchJSON<AnalyticsDto>(`/stats/analytics/${userId}?${p}`);
+  },
+
+  /** The golfer's last `limit` rounds held up against a handicap's shape, their peak's, or a friend's. */
+  getBenchmarkComparison: (userId: string, target: BenchmarkTarget, limit = 20) => {
+    const p = new URLSearchParams({ against: target.against, limit: String(limit) });
+    if (target.against === "handicap") p.set("handicap", String(target.handicap));
+    if (target.against === "friend") p.set("friend_id", target.friendId);
+    return fetchJSON<BenchmarkComparisonDto>(`/stats/${userId}/benchmark?${p}`);
   },
 
   getPlayedCourses: (userId: string) =>
-    fetchJSON<{ id: string; name: string | null; location: string | null }[]>(
-      `/stats/${userId}/played-courses`
-    ),
+    fetchJSON<PlayedCourseDto[]>(`/stats/${userId}/played-courses`),
 
   getRoundComparison: (userId: string, roundId: string) =>
-    fetchJSON<RoundComparison>(`/stats/compare/${userId}/${roundId}`),
+    fetchJSON<RoundComparisonDto>(`/stats/compare/${userId}/${roundId}`),
 
   getCourseAnalytics: (userId: string, courseId: string) =>
-    fetchJSON<CourseAnalyticsData>(`/stats/course-analytics/${userId}/${courseId}`),
+    fetchJSON<CourseAnalyticsDto>(`/stats/course-analytics/${userId}/${courseId}`),
 
-  getAISuggestions: (userId: string, limit = 50, targetHandicap?: number | null) => {
-    const params = new URLSearchParams({ limit: String(limit) });
-    if (targetHandicap != null) params.set("target_handicap", String(targetHandicap));
-    return fetchJSON<import("@/types/suggestions").AISuggestionsResponse>(
-      `/ai-insights/${userId}?${params}`
-    );
-  },
-
-  getFriendships: (status?: "pending" | "accepted" | "declined" | "blocked") => {
+  getFriendships: (status?: FriendshipDto["status"]) => {
     const params = new URLSearchParams();
     if (status) params.set("status", status);
     const suffix = params.toString() ? `?${params.toString()}` : "";
-    return fetchJSON<Friendship[]>(`/users/me/friends${suffix}`);
+    return fetchJSON<FriendshipDto[]>(`/users/me/friends${suffix}`);
   },
 
   sendFriendRequest: (addresseeFriendCode: string) =>
-    postJSON<Friendship>(`/users/me/friends`, { addressee_friend_code: addresseeFriendCode }),
+    postJSON<FriendshipDto>(`/users/me/friends`, { addressee_friend_code: addresseeFriendCode }),
 
-  updateFriendshipStatus: (
-    friendshipId: string,
-    status: "accepted" | "declined" | "blocked",
-  ) => patchJSON<Friendship>(`/users/me/friends/${friendshipId}`, { status }),
+  updateFriendshipStatus: (friendshipId: string, status: FriendshipStatusRequestDto["status"]) =>
+    patchJSON<FriendshipDto>(`/users/me/friends/${friendshipId}`, { status }),
 };

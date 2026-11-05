@@ -1,26 +1,10 @@
 export {
-  colors,
-  fonts,
-  typography,
-  tracking,
-  leading,
-  space,
-  size,
-  radius,
-  borderWidth,
-  ringWidth,
-  opacityRecessed,
-  opacityWash,
-  motion,
+  tokens,
   chartTooltipStyle,
   chartTickStyle,
-  chartLayout,
-  chartColors,
   SCORE_KEYS,
   scoreFillClass,
-  scoreKeyFor,
   toParFill,
-  toParTone,
   toParLabel,
   scoreKindLabel,
   toParDisplay,
@@ -28,7 +12,7 @@ export {
   toParBadgeClass,
   scoreOnFillClass,
 } from "./theme";
-export type { ScoreKey, ScoreSwatch, ScoreTone } from "./theme";
+export type { ScoreKey } from "./theme";
 export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/Alert";
 export {
   Card,
@@ -39,8 +23,14 @@ export {
   CardDescription,
   CardContent,
 } from "./components/Card";
+export { AppShell } from "./components/AppShell";
+export type { AppShellProps } from "./components/AppShell";
+export { AuthCard } from "./components/AuthCard";
+export type { AuthCardProps } from "./components/AuthCard";
 export { BrandMark } from "./components/BrandMark";
 export { Button } from "./components/Button";
+export { BottomNav } from "./components/BottomNav";
+export type { BottomNavProps } from "./components/BottomNav";
 export { Dropzone } from "./components/Dropzone";
 export { FileChip } from "./components/FileChip";
 export { Collapse } from "./components/Collapse";
@@ -80,6 +70,8 @@ export {
   InputGroupInput,
 } from "./components/InputGroup";
 export { PageHeader } from "./components/PageHeader";
+export { PersonRow } from "./components/PersonRow";
+export type { PersonRowProps } from "./components/PersonRow";
 export { PageTitle } from "./components/PageTitle";
 export { Meter } from "./components/Meter";
 export { Stat, StatLabel, StatValue, StatUnit, StatDelta } from "./components/Stat";
@@ -90,14 +82,18 @@ export { Reveal } from "./components/Reveal";
 export { ScanProgress } from "./components/ScanProgress";
 export { ScorecardLayoutPicker } from "./components/ScorecardLayoutPicker";
 export { ScorecardTable } from "./components/ScorecardTable";
-export type { ScorecardHole } from "./components/ScorecardTable";
+export type { ScorecardEdits } from "./components/ScorecardTable";
 export { Toggle } from "./components/Toggle";
 export { ToggleGroup, ToggleGroupItem } from "./components/ToggleGroup";
 export { RoundPreview } from "./components/RoundPreview";
 export { RoundShareCard } from "./components/RoundShareCard";
+export { RoundScorecard } from "./components/RoundScorecard";
 export { CoursePreview } from "./components/CoursePreview";
 export { ChartTabs } from "./components/ChartTabs";
 export { SectionLabel } from "./components/SectionLabel";
+export { SideNav } from "./components/SideNav";
+export type { SideNavProps, SideNavUser } from "./components/SideNav";
+export type { NavItem, RenderLink } from "./nav";
 export { ScoreCountChip } from "./components/ScoreCountChip";
 export { SearchField } from "./components/SearchField";
 export { SortControl } from "./components/SortControl";
@@ -123,7 +119,15 @@ export type { SparklineSeries, SparklineTone } from "./charts/Sparkline";
 export { HoleMetricBars } from "./charts/HoleMetricBars";
 export { HoleScoreMixBars } from "./charts/HoleScoreMixBars";
 export { HoleToParBars } from "./charts/HoleToParBars";
+export { RadarChart } from "./charts/RadarChart";
+export type { RadarAxis } from "./charts/RadarChart";
+export { ScoreGoalChart } from "./charts/ScoreGoalChart";
 export { RoundFlowChart } from "./charts/RoundFlowChart";
 export { ScoreTrendChart } from "./charts/ScoreTrendChart";
 export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
-export type { ScoreHandicapTrendPoint } from "./charts/SVGScoreHandicapTrend";
+export { ScoreTargetChart } from "./charts/ScoreTargetChart";
+export type { ScoreTargetShot } from "./charts/ScoreTargetChart";
+export { ToParBars } from "./charts/ToParBars";
+export type { ToParBar } from "./charts/ToParBars";
+export { TrendAreaChart } from "./charts/TrendAreaChart";
+export type { TrendAreaPoint, TrendAreaSeries, TrendAreaTone } from "./charts/TrendAreaChart";

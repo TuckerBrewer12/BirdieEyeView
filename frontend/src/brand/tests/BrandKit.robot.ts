@@ -19,4 +19,33 @@ export class BrandKitRobot {
     await expect(this.page.getByTestId("brand-stage")).toHaveScreenshot(name);
     return this;
   }
+
+  /** Opens a story that fills the window, as the app shell does, rather than sitting in the stage. */
+  async openFrame(story: string): Promise<this> {
+    await this.page.goto(`/__brand__/${story}`);
+    await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
+    await expect(this.page.getByTestId("brand-frame")).toBeVisible();
+    return this;
+  }
+
+  /** The whole window, for stories opened with `openFrame`. */
+  async captureFrame(name: string): Promise<this> {
+    await expect(this.page).toHaveScreenshot(name);
+    return this;
+  }
+
+  async tap(name: string): Promise<this> {
+    await this.page.getByRole("button", { name, exact: true }).first().click();
+    return this;
+  }
+
+  async hover(text: string): Promise<this> {
+    await this.page.getByText(text, { exact: true }).first().hover();
+    return this;
+  }
+
+  async sees(selector: string): Promise<this> {
+    await expect(this.page.locator(selector).first()).toBeVisible();
+    return this;
+  }
 }

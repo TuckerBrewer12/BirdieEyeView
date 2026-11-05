@@ -6,6 +6,8 @@ import {
 } from "./InputGroup";
 
 interface SearchFieldProps {
+  /** The input's id, so a FieldLabel can name it. */
+  id?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -14,6 +16,7 @@ interface SearchFieldProps {
 }
 
 export function SearchField({
+  id,
   value,
   onChange,
   placeholder,
@@ -23,6 +26,7 @@ export function SearchField({
   return (
     <InputGroup>
       <InputGroupInput
+        id={id}
         type="search"
         placeholder={placeholder}
         value={value}

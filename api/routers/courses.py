@@ -8,11 +8,13 @@ from typing import List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from api.dependencies import get_db, get_optional_current_user, get_current_user
+from api.player_handicap import player_handicap_index
 from api.error_responses import COURSE_SAVE_FAILED
 from api.input_validation import normalize_course_display_name, sanitize_search_query, sanitize_user_text
 from api.course_responses import course_detail
 from api.schemas import CourseResponse, CourseSummaryResponse
 from models import Course, Hole, Tee, User
+from models.course import CourseSummary
 from services import GolfCourseAPIService
 from services.golfcourse_api_service import _normalize_course_name
 
@@ -116,6 +118,19 @@ def _summarize_course(c) -> CourseSummaryResponse:
     )
 
 
+def _summary_response(s: CourseSummary) -> CourseSummaryResponse:
+    return CourseSummaryResponse(
+        id=s.id,
+        name=s.name,
+        external_course_id=s.external_course_id,
+        source="local",
+        location=s.location,
+        par=s.par,
+        total_holes=s.hole_count,
+        tee_count=s.tee_count,
+    )
+
+
 def _summarize_external_course(item: dict) -> CourseSummaryResponse:
     external_id = item.get("external_course_id")
     name = item.get("name")
@@ -147,8 +162,10 @@ async def list_courses(
     if user_id:
         if not current_user or str(current_user.id) != str(user_id):
             raise HTTPException(403, "Forbidden")
-    courses = await db.courses.list_courses(limit=limit, offset=offset, user_id=str(user_id) if user_id else None)
-    return [_summarize_course(c) for c in courses]
+    summaries = await db.courses.list_course_summaries(
+        limit=limit, offset=offset, user_id=str(user_id) if user_id else None
+    )
+    return [_summary_response(s) for s in summaries]
 
 
 @router.get("/search", response_model=List[CourseSummaryResponse])
@@ -173,8 +190,8 @@ async def search_courses(
     if include_external and not current_user:
         raise HTTPException(401, "Authentication required for external course lookup")
     effective_user_id = str(user_id) if user_id else (str(current_user.id) if current_user else None)
-    courses = await db.courses.search_courses(q, user_id=effective_user_id)
-    out = [_summarize_course(c) for c in courses]
+    summaries = await db.courses.search_course_summaries(q, user_id=effective_user_id)
+    out = [_summary_response(s) for s in summaries]
     if not include_external:
         return out
 
@@ -275,7 +292,7 @@ async def get_course(
         raise HTTPException(404, "Course not found")
     if course.user_id and (not current_user or str(current_user.id) != str(course.user_id)):
         raise HTTPException(403, "Forbidden")
-    return course_detail(course)
+    return course_detail(course, await player_handicap_index(db, current_user))
 
 
 @router.post("", status_code=201)

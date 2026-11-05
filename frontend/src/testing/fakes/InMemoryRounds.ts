@@ -1,32 +1,35 @@
-import type { Course, CourseSummary } from "../../types/golf";
-import type { CourseDto, RoundDto, RoundSummaryDto } from "../../types/api";
-import type { CourseAnalyticsData, RoundComparison } from "../../types/analytics";
+import type {
+  CourseAnalyticsDto,
+  CourseDto,
+  CourseSummaryDto,
+  RoundComparisonDto,
+  RoundDto,
+  RoundSummaryDto,
+  SaveScanRequestDto,
+} from "../../types/api";
 import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
 import { toCourseSummary } from "../fixtures/roundDetails";
 import { courseResponse } from "./courseResponses";
-import {
-  roundResponse,
-  storedFromRound,
-  storedFromSummary,
-  summaryResponse,
-  type StoredRound,
-} from "./roundResponses";
+import { bestRanks, roundResponse, storedFromRound, summaryResponse, type StoredRound } from "./roundResponses";
 
 export interface InMemoryRoundsSeed {
-  /** The round list, in order. */
-  rounds?: RoundSummaryDto[];
-  courses?: CourseSummary[];
+  /** The round list, in order, as the facts the server stores. */
+  rounds?: StoredRound[];
+  courses?: CourseSummaryDto[];
   /** Full rounds; one sharing an id with a listed round replaces its facts. */
   detailRounds?: RoundDto[];
-  fullCourses?: Course[];
-  courseAnalytics?: CourseAnalyticsData | null;
-  comparison?: RoundComparison | null;
+  fullCourses?: CourseDto[];
+  courseAnalytics?: CourseAnalyticsDto | null;
+  comparison?: RoundComparisonDto | null;
+  /** The handicap on the golfer's profile. Course handicaps come on the courses' tees, as the server sends them. */
   handicapIndex?: number | null;
   linkError?: string | null;
   updateError?: string | null;
   deleteError?: string | null;
   searchError?: string | null;
+  /** Saving a scan fails with this. */
+  saveError?: string | null;
   coursesError?: string | null;
   searchDelaysMs?: number[];
 }
@@ -66,15 +69,18 @@ export class InMemoryRounds {
   private stored: Map<string, StoredRound>;
   /** Ids of the rounds the list returns, in order. */
   private listed: string[];
-  courses: CourseSummary[];
-  fullCourses: Course[];
-  courseAnalytics: CourseAnalyticsData | null;
-  comparison: RoundComparison | null;
+  courses: CourseSummaryDto[];
+  fullCourses: CourseDto[];
+  courseAnalytics: CourseAnalyticsDto | null;
+  comparison: RoundComparisonDto | null;
   handicapIndex: number | null;
   linkError: string | null;
   updateError: string | null;
   deleteError: string | null;
   searchError: string | null;
+  saveError: string | null;
+  /** Every scan saved, as sent. */
+  savedScans: SaveScanRequestDto[] = [];
   coursesError: string | null;
   searchDelaysMs: number[];
   private searchCalls = 0;
@@ -82,7 +88,7 @@ export class InMemoryRounds {
 
   constructor(seed: InMemoryRoundsSeed = {}) {
     const rounds = seed.rounds ?? [];
-    this.stored = new Map(rounds.map((round) => [round.id, storedFromSummary(round)]));
+    this.stored = new Map(rounds.map((round) => [round.id, round]));
     for (const round of seed.detailRounds ?? []) {
       if (round.id) this.stored.set(round.id, storedFromRound(round));
     }
@@ -96,6 +102,7 @@ export class InMemoryRounds {
     this.updateError = seed.updateError ?? null;
     this.deleteError = seed.deleteError ?? null;
     this.searchError = seed.searchError ?? null;
+    this.saveError = seed.saveError ?? null;
     this.coursesError = seed.coursesError ?? null;
     this.searchDelaysMs = [...(seed.searchDelaysMs ?? [])];
     this.deletedIds = [];
@@ -105,10 +112,10 @@ export class InMemoryRounds {
     return this.searchDelaysMs[this.searchCalls++] ?? 0;
   }
 
-  searchCourses(query: string): CourseSummary[] {
+  searchCourses(query: string): CourseSummaryDto[] {
     if (this.searchError) throw new Error(this.searchError);
     const q = query.toLowerCase();
-    const byId = new Map<string, CourseSummary>();
+    const byId = new Map<string, CourseSummaryDto>();
     for (const course of this.fullCourses) {
       if (course.id) byId.set(course.id, toCourseSummary(course));
     }
@@ -118,13 +125,15 @@ export class InMemoryRounds {
     return [...byId.values()].filter((course) => (course.name ?? "").toLowerCase().includes(q));
   }
 
-  getCourses(): CourseSummary[] {
+  getCourses(): CourseSummaryDto[] {
     if (this.coursesError) throw new Error(this.coursesError);
     return this.courses;
   }
 
   getRoundsForUser(): RoundSummaryDto[] {
-    return this.listed.map((id) => summaryResponse(this.stored.get(id)!));
+    const rounds = this.listed.map((id) => this.stored.get(id)!);
+    const ranks = bestRanks(rounds);
+    return rounds.map((round, i) => summaryResponse(round, ranks[i]));
   }
 
   private find(roundId: string): StoredRound {
@@ -135,6 +144,41 @@ export class InMemoryRounds {
 
   getRound(roundId: string): RoundDto {
     return roundResponse(this.find(roundId));
+  }
+
+  /**
+   * Saves a checked scan as a new round at the top of the list, the way `/api/scan/save`
+   * does: linked to the course when one was picked, else under the name read off the card.
+   */
+  saveScan(body: SaveScanRequestDto): string {
+    if (this.saveError) throw new Error(this.saveError);
+    const id = `scanned-${this.stored.size + 1}`;
+    const linked = body.course_id
+      ? this.fullCourses.find((course) => course.id === body.course_id) ?? null
+      : null;
+    const parFor = (hole: number) => body.course_holes?.find((h) => h.hole_number === hole);
+    this.stored.set(id, {
+      id,
+      course: linked,
+      tee_box: body.tee_box ?? null,
+      date: body.date ?? null,
+      hole_scores: body.hole_scores.map((score) => ({
+        hole_number: score.hole_number,
+        strokes: score.strokes ?? null,
+        putts: score.putts ?? null,
+        fairway_hit: score.fairway_hit ?? null,
+        green_in_regulation: score.green_in_regulation ?? null,
+        par_played: parFor(score.hole_number)?.par ?? null,
+        handicap_played: parFor(score.hole_number)?.handicap ?? null,
+      })),
+      notes: body.notes ?? null,
+      weather_conditions: null,
+      course_name_played: linked ? null : (body.course_name ?? null),
+      user_tee: null,
+    });
+    this.listed = [id, ...this.listed];
+    this.savedScans = [...this.savedScans, body];
+    return id;
   }
 
   updateRound(roundId: string, body: UpdateRoundBody): RoundDto {
@@ -177,15 +221,11 @@ export class InMemoryRounds {
     throw new Error("Course not found.");
   }
 
-  getCourseAnalytics(courseId: string): CourseAnalyticsData {
+  getCourseAnalytics(courseId: string): CourseAnalyticsDto {
     return this.courseAnalytics ?? emptyCourseAnalytics(courseId);
   }
 
-  getRoundComparison(): RoundComparison | null {
+  getRoundComparison(): RoundComparisonDto | null {
     return this.comparison;
-  }
-
-  getUserHandicap(): { handicap_index: number | null } {
-    return { handicap_index: this.handicapIndex };
   }
 }

@@ -4,13 +4,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from typing import List, Optional
+from typing import List, Literal, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, NotFoundError
 from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
+from api.schemas import UserResponse
 from models import User, UserTee
-from analytics import handicap as hcap
 
 router = APIRouter()
 
@@ -111,22 +111,32 @@ class SendFriendRequest(BaseModel):
         return self
 
 
+FriendshipStatus = Literal["pending", "accepted", "declined", "blocked"]
+"""Every state a friendship row can be in (the `users.friendships.status` CHECK)."""
+
+
 class FriendshipStatusRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    status: str = Field(..., pattern="^(accepted|declined|blocked)$")
+    # A request can be answered but not put back to pending.
+    status: Literal["accepted", "declined", "blocked"]
 
 
 class FriendshipResponse(BaseModel):
     id: str
     requester_id: str
     addressee_id: str
-    status: str
+    status: FriendshipStatus
     created_at: str
     updated_at: str
     requester_name: Optional[str] = None
     requester_email: Optional[str] = None
     addressee_name: Optional[str] = None
     addressee_email: Optional[str] = None
+
+
+def user_response(user: User) -> UserResponse:
+    """A golfer's profile, without their rounds or account bookkeeping."""
+    return UserResponse.model_validate(user, from_attributes=True)
 
 
 def _friendship_row_to_response(row: dict) -> FriendshipResponse:
@@ -144,7 +154,7 @@ def _friendship_row_to_response(row: dict) -> FriendshipResponse:
     )
 
 
-@router.get("/by-email/{email}")
+@router.get("/by-email/{email}", response_model=UserResponse)
 async def get_user_by_email(
     email: str,
     db: DatabaseManager = Depends(get_db),
@@ -159,10 +169,10 @@ async def get_user_by_email(
     user = await db.users.get_user_by_email(normalized_email)
     if not user:
         raise HTTPException(404, "User not found")
-    return user
+    return user_response(user)
 
 
-@router.get("/{user_id}")
+@router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -173,10 +183,10 @@ async def get_user(
     user = await db.users.get_user(str(user_id))
     if not user:
         raise HTTPException(404, "User not found")
-    return user
+    return user_response(user)
 
 
-@router.patch("/{user_id}")
+@router.patch("/{user_id}", response_model=UserResponse)
 async def update_user(
     user_id: UUID,
     req: UpdateUserRequest,
@@ -200,29 +210,7 @@ async def update_user(
     user = await db.users.update_user(str(user_id), **updates)
     if not user:
         raise HTTPException(404, "User not found")
-    return user
-
-
-@router.get("/{user_id}/handicap")
-async def get_user_handicap(
-    user_id: UUID,
-    db: DatabaseManager = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Return the user's current WHS Handicap Index."""
-    if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
-    user = await db.users.get_user(str(user_id))
-    if not user:
-        raise HTTPException(404, "User not found")
-    rounds = await db.rounds.get_rounds_for_user(str(user_id))
-    rounds_chrono = list(reversed(rounds))
-    hi = hcap.handicap_index(
-        rounds_chrono,
-        seed_handicap=user.handicap,
-        seed_set_at=user.last_handicap_update,
-    )
-    return {"handicap_index": hi}
+    return user_response(user)
 
 
 # ================================================================

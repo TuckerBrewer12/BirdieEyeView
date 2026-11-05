@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./Card";
-import type { CourseSummary } from "@/types/golf";
+import type { CourseSummary } from "@/domain/course";
 
 interface CourseLinkSearchProps {
   query: string;
@@ -24,9 +24,13 @@ interface CourseLinkSearchProps {
   onUseCustomName?: (name: string) => void;
   autoFocus?: boolean;
   linkedName?: string;
+  /** Heads the picked course's card. */
+  linkedTitle?: string;
   customName?: string;
   onClear?: () => void;
   clearLabel?: string;
+  /** The search input's id, so a FieldLabel outside can name it. */
+  inputId?: string;
 }
 
 export function CourseLinkSearch({
@@ -42,15 +46,17 @@ export function CourseLinkSearch({
   onUseCustomName,
   autoFocus = true,
   linkedName,
+  linkedTitle = "Linked",
   customName,
   onClear,
   clearLabel = "Unlink course",
+  inputId,
 }: CourseLinkSearchProps) {
   if (linkedName && onClear) {
     return (
       <Card size="sm">
         <CardHeader>
-          <CardTitle>Linked</CardTitle>
+          <CardTitle>{linkedTitle}</CardTitle>
           <CardDescription>{linkedName}</CardDescription>
           <CardAction>
             <ClearButton onClick={onClear} label={clearLabel} />
@@ -82,6 +88,7 @@ export function CourseLinkSearch({
   const body = (
     <>
       <SearchField
+        id={inputId}
         value={query}
         onChange={onQueryChange}
         placeholder="Search courses…"

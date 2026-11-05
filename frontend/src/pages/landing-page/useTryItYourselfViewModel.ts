@@ -1,16 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
-import { usePublicScan } from "@/hooks/usePublicScan";
-import { getHole } from "@/domain";
-import type { ExtractedHoleScore, ScanResult } from "@/types/scan";
-
-interface ScannedHole {
-  hole: number;
-  par: number | null;
-  strokes: number | null;
-  putts: number | null;
-  greenInRegulation: boolean | null;
-  shotsToGreen: number | null;
-}
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { preparePhotoForUpload } from "@/data/photoUpload";
+import { scanRepository, type ScanRepository } from "@/data/scanRepository";
+import { useCardText, type PickedPhoto } from "@/data/useCardText";
+import { Round } from "@/domain";
+import { useExtractScorecard } from "@/data/useExtractScorecard";
 
 const PHASES = [
   { label: "Reading course details…", detail: "Identifying name, location & tee boxes" },
@@ -23,12 +16,11 @@ const PHASE_HOLD_MS = 3500;
 
 export interface TryItYourselfViewModel {
   step: "upload" | "processing" | "review";
-  file: File | null;
-  preview: string | null;
+  /** The picked photo, readied for upload. */
+  photo: File | null;
   error: string | null;
-  extracting: boolean;
   setUserContext: (context: string) => void;
-  handleFile: (file: File) => void;
+  pickPhoto: (photo: File) => void;
   extract: () => void;
   reset: () => void;
 
@@ -37,40 +29,30 @@ export interface TryItYourselfViewModel {
   phaseLabel: string;
   phaseDetail: string;
 
-  courseName: string | null;
-  courseLocation: string | null;
-  teeBox: string | null;
-  frontNine: ScannedHole[];
-  backNine: ScannedHole[];
-  roundTotal: { par: number | null; strokes: number | null };
+  /** The scanned card as a round, its figures read the way an unsaved edit's are. */
+  round: Round | null;
   hasScores: boolean;
 }
 
-function parFor(result: ScanResult, score: ExtractedHoleScore, index: number): number | null {
-  return getHole(result.round.course, score.hole_number ?? index + 1)?.par ?? null;
-}
-
-function toRows(result: ScanResult | null, from: number, to: number): ScannedHole[] {
-  if (!result) return [];
-  return (result.round.hole_scores ?? []).slice(from, to).map((score, i) => ({
-    hole: score.hole_number ?? from + i + 1,
-    par: parFor(result, score, from + i),
-    strokes: score.strokes,
-    putts: score.putts,
-    greenInRegulation: score.green_in_regulation,
-    shotsToGreen: score.shots_to_green,
-  }));
-}
-
-export function useTryItYourselfViewModel(): TryItYourselfViewModel {
-  const scan = usePublicScan();
+export function useTryItYourselfViewModel(
+  repository: ScanRepository = scanRepository,
+): TryItYourselfViewModel {
+  const [photo, setPhoto] = useState<PickedPhoto | null>(null);
+  const [userContext, setUserContext] = useState("");
   const [phase, setPhase] = useState(0);
+  // A later pick wins over an earlier one still being readied.
+  const latestPick = useRef(0);
+  const extraction = useExtractScorecard(repository);
+
+  const cardText = useCardText(photo, repository);
+
+  const step = extraction.isPending ? "processing" : extraction.data ? "review" : "upload";
 
   // The scan gives no progress events, so the phases are paced rather than
   // reported. Restarting at zero each time keeps a second scan from opening
   // on "Calculating confidence…".
   useEffect(() => {
-    if (scan.step !== "processing") return;
+    if (step !== "processing") return;
     const timer = setInterval(
       () => setPhase((current) => Math.min(current + 1, PHASES.length - 1)),
       PHASE_HOLD_MS,
@@ -79,40 +61,51 @@ export function useTryItYourselfViewModel(): TryItYourselfViewModel {
       clearInterval(timer);
       setPhase(0);
     };
-  }, [scan.step]);
+  }, [step]);
+
+  const { reset: resetExtraction, mutate } = extraction;
+
+  const pickPhoto = useCallback(
+    (picked: File) => {
+      const pick = ++latestPick.current;
+      resetExtraction();
+      void preparePhotoForUpload(picked).then((file) => {
+        if (pick === latestPick.current) setPhoto({ id: `${pick}`, file });
+      });
+    },
+    [resetExtraction],
+  );
 
   const extract = useCallback(() => {
-    void scan.handleExtract();
-  }, [scan]);
+    if (!photo) return;
+    mutate({ photo: photo.file, userContext, ocrText: cardText });
+  }, [photo, userContext, cardText, mutate]);
 
-  const result = scan.result;
-  const scores = result?.round.hole_scores ?? [];
+  const reset = useCallback(() => {
+    latestPick.current += 1;
+    setPhoto(null);
+    setUserContext("");
+    resetExtraction();
+  }, [resetExtraction]);
+
+  const result = extraction.data;
+  const round = useMemo(() => (result ? Round.fromScan(result.round) : null), [result]);
 
   return {
-    step: scan.step,
-    file: scan.file,
-    preview: scan.preview,
-    error: scan.error,
-    extracting: scan.extracting,
-    setUserContext: scan.setUserContext,
-    handleFile: scan.handleFile,
+    step,
+    photo: photo?.file ?? null,
+    error: extraction.error?.message ?? null,
+    setUserContext,
+    pickPhoto,
     extract,
-    reset: scan.reset,
+    reset,
 
     phase,
     phaseCount: PHASES.length,
     phaseLabel: PHASES[phase].label,
     phaseDetail: PHASES[phase].detail,
 
-    courseName: result?.round.course?.name ?? null,
-    courseLocation: result?.round.course?.location ?? null,
-    teeBox: result?.round.tee_box ?? null,
-    frontNine: toRows(result, 0, 9),
-    backNine: toRows(result, 9, 18),
-    roundTotal: {
-      par: result?.round.course?.par ?? null,
-      strokes: scores.reduce((total, score) => total + (score.strokes ?? 0), 0) || null,
-    },
-    hasScores: scores.length > 0,
+    round,
+    hasScores: (round?.holes.length ?? 0) > 0,
   };
 }

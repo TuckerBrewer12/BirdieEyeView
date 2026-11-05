@@ -8,13 +8,13 @@ import {
   StatLabel,
   StatValue,
 } from "@/brand";
-import type { ScoreMix } from "@/domain";
-import { avgLabel, pctLabel, puttsLabel } from "../present";
+import { formatOneDecimal, formatPercent, pluralize, type ScoreMix } from "@/domain";
+import { puttsLabel } from "../present";
 
 interface ScoringHeroCardProps {
   /** Scoring average over the last 20 rounds. */
   average: number | null;
-  /** The L20 average minus the L5 average: positive means the recent rounds came in lower. */
+  /** The server's L5 average minus L20, to a tenth: negative means the recent rounds came in lower. */
   change: number | null;
   /** Scores across the window, oldest first. */
   recentScores: number[];
@@ -39,13 +39,13 @@ export function ScoringHeroCard({
   putts,
   girPct,
 }: ScoringHeroCardProps) {
-  // Under a tenth of a stroke is noise, so the pill stays hidden.
-  const showChange = change != null && Math.abs(change) >= 0.1;
+  // The server rounds to a tenth, so no change at all hides the pill.
+  const showChange = change != null && change !== 0;
   const kpis = [
     { label: "Best", value: bestRound?.toString() ?? "—" },
     { label: "Rounds", value: totalRounds?.toString() ?? "—" },
     { label: "Putts", value: puttsLabel(putts) },
-    { label: "GIR", value: pctLabel(girPct) },
+    { label: "GIR", value: formatPercent(girPct) },
   ];
 
   return (
@@ -55,7 +55,7 @@ export function ScoringHeroCard({
           <StatLabel>Scoring Avg · L20</StatLabel>
           {showChange && (
             <StatDelta
-              direction={change > 0 ? "down" : "up"}
+              direction={change < 0 ? "down" : "up"}
               className="rounded-full px-2 py-0.5 data-[direction=down]:bg-score-birdie-muted data-[direction=up]:bg-score-bogey-muted"
             >
               {Math.abs(change).toFixed(1)} vs L5
@@ -64,15 +64,15 @@ export function ScoringHeroCard({
         </div>
 
         <div className="flex items-center gap-3.5">
-          <StatValue size="xl">{avgLabel(average)}</StatValue>
-          <Sparkline className="min-w-0 flex-1" series={[{ values: recentScores }]} fill mean />
+          <StatValue size="xl">{formatOneDecimal(average)}</StatValue>
+          <Sparkline className="min-w-0 flex-1" series={[{ values: recentScores }]} fill reference={average} />
         </div>
 
         {mix && (
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <StatLabel>Score Mix · L20</StatLabel>
-              {mixHoles > 0 && <span className="text-meta text-muted-foreground">{mixHoles} holes</span>}
+              {mixHoles > 0 && <span className="text-meta text-muted-foreground">{pluralize(mixHoles, "hole")}</span>}
             </div>
             <ScoreMixBar mix={mix} />
           </div>

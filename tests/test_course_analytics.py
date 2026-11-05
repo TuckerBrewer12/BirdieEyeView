@@ -53,3 +53,24 @@ def test_no_rounds_leaves_the_figures_empty():
     assert response.scoring_average is None
     assert response.best_score is None
     assert response.rounds == []
+
+
+def test_scorecard_nines_sum_the_per_hole_averages():
+    # r1 is a stroke over on holes 1-2, r2 is level: holes 1 and 2 average half a stroke over.
+    response = course_analytics("c1", [_round("r1", 1, 2), _round("r2", 8, 0)])
+    front, back = sum(PARS[:9]), sum(PARS[9:])
+    assert response.hole_averages_front_nine == front + 1.0
+    assert response.hole_averages_back_nine == back
+    assert response.hole_averages_total == front + back + 1.0
+
+
+def test_scorecard_nines_are_null_for_a_nine_not_played():
+    front_only = Round(
+        id="r1", course=COURSE, date=datetime(2026, 5, 1),
+        hole_scores=[HoleScore(hole_number=i + 1, strokes=p) for i, p in enumerate(PARS[:9])],
+    )
+    response = course_analytics("c1", [front_only])
+    assert response.hole_averages_front_nine == sum(PARS[:9])
+    assert response.hole_averages_back_nine is None
+    assert response.hole_averages_total == sum(PARS[:9])
+    assert course_analytics("c1", []).hole_averages_total is None

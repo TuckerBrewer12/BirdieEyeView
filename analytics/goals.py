@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from models.round import Round
+from analytics.peak import peak_gap, peak_meets_goal
 from analytics.stats import (
+    full_rounds,
     three_putts_per_round,
     score_type_distribution_per_round,
     scoring_by_yardage_buckets,
@@ -21,6 +23,16 @@ def _progress_pct(start: int, average: float, goal: int, on_track: bool) -> floa
     if on_track or start <= goal:
         return 100.0
     return min(100.0, max(0.0, (start - average) / (start - goal) * 100))
+
+
+def goal_attempts(rounds: List[Round], scoring_goal: int) -> List[Dict[str, Any]]:
+    """Each scored round, oldest first, and whether it met the goal: at or under it."""
+    attempts = []
+    for r in rounds:
+        score = r.calculate_total_score()
+        if score is not None:
+            attempts.append({"round_id": r.id, "score": score, "met_goal": score <= scoring_goal})
+    return attempts
 
 
 def goal_report(
@@ -39,16 +51,22 @@ def goal_report(
     if not scores:
         return {
             "scoring_average": None,
-            "best_score": None,
+            "lowest_score": None,
             "scoring_goal": scoring_goal,
             "gap": None,
             "on_track": False,
             "progress_pct": None,
+            "rounds_meeting_goal": 0,
+            "peak_gap": None,
+            "peak_meets_goal": None,
+            "attempts": [],
             "savers": [],
         }
 
     scoring_avg = sum(scores) / len(scores)
-    best_score = min(scores)
+    # A record, so full rounds only, as the career records have it: a nine's 45 is not a round of 45.
+    full_scores = [s for s in (r.calculate_total_score() for r in full_rounds(rounds)) if s is not None]
+    lowest_score = min(full_scores) if full_scores else None
     gap = scoring_avg - scoring_goal
     on_track = gap <= 0
     progress_pct = _progress_pct(scores[0], scoring_avg, scoring_goal, on_track)
@@ -239,10 +257,14 @@ def goal_report(
 
     return {
         "scoring_average": round(scoring_avg, 1),
-        "best_score": best_score,
+        "lowest_score": lowest_score,
         "scoring_goal": scoring_goal,
         "gap": round(gap, 1),
         "on_track": on_track,
         "progress_pct": progress_pct,
+        "rounds_meeting_goal": sum(1 for s in scores if s <= scoring_goal),
+        "peak_gap": peak_gap(rounds, scoring_goal),
+        "peak_meets_goal": peak_meets_goal(rounds, scoring_goal),
+        "attempts": goal_attempts(rounds, scoring_goal),
         "savers": savers,
     }

@@ -450,6 +450,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stats/{user_id}/benchmark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Benchmark Comparison
+         * @description The player's last `limit` rounds against a handicap's shape, the golfers their peak
+         *     rounds play like, or a friend's last `limit` rounds.
+         */
+        get: operations["get_benchmark_comparison_api_stats__user_id__benchmark_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stats/{user_id}/goal-report": {
         parameters: {
             query?: never;
@@ -564,26 +585,6 @@ export interface paths {
         head?: never;
         /** Update User */
         patch: operations["update_user_api_users__user_id__patch"];
-        trace?: never;
-    };
-    "/api/users/{user_id}/handicap": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get User Handicap
-         * @description Return the user's current WHS Handicap Index.
-         */
-        get: operations["get_user_handicap_api_users__user_id__handicap_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/users/{user_id}/tees": {
@@ -714,6 +715,96 @@ export interface components {
             /** User Id */
             user_id: string;
         };
+        /** AnalyticsKpis */
+        AnalyticsKpis: {
+            /** Average Putts */
+            average_putts: number | null;
+            /** Best Round */
+            best_round: number | null;
+            /** Best Round Course */
+            best_round_course: string | null;
+            /** Best Round Id */
+            best_round_id: string | null;
+            /** Gir Percentage */
+            gir_percentage: number | null;
+            /** Handicap Index */
+            handicap_index: number | null;
+            /** Putts Per Gir */
+            putts_per_gir: number | null;
+            /** Scoring Average */
+            scoring_average: number | null;
+            /** Scoring Average Change */
+            scoring_average_change: number | null;
+            /** Scrambling Percentage */
+            scrambling_percentage: number | null;
+            /** Three Putt Rate */
+            three_putt_rate: number | null;
+            /** Three Putts Per Round */
+            three_putts_per_round: number | null;
+            /**
+             * Total Rounds
+             * @default 0
+             */
+            total_rounds: number;
+            /** Up And Down Percentage */
+            up_and_down_percentage: number | null;
+        };
+        /**
+         * AnalyticsResponse
+         * @description The analytics page's figures over the rounds asked for. Every per-round series is oldest first.
+         */
+        AnalyticsResponse: {
+            /** Gir Trend */
+            gir_trend: components["schemas"]["GirTrendRow"][];
+            /** Gir Vs Non Gir */
+            gir_vs_non_gir: components["schemas"]["GirVsNonGirRow"][];
+            /** Handicap Trend */
+            handicap_trend: components["schemas"]["HandicapTrendRow"][];
+            /** Insights */
+            insights: (components["schemas"]["ScoringShiftInsight"] | components["schemas"]["BestParInsight"] | components["schemas"]["GirAverageInsight"] | components["schemas"]["GirShiftInsight"] | components["schemas"]["PuttsAverageInsight"] | components["schemas"]["PuttsShiftInsight"])[];
+            kpis: components["schemas"]["AnalyticsKpis"];
+            /** Net Score Trend */
+            net_score_trend: components["schemas"]["NetScoreTrendRow"][];
+            notable_achievements: components["schemas"]["NotableAchievements"];
+            peak_game: components["schemas"]["PeakGame"] | null;
+            /** Putts Trend */
+            putts_trend: components["schemas"]["PuttsTrendRow"][];
+            /** Score Differentials */
+            score_differentials: components["schemas"]["ScoreDifferentialRow"][];
+            score_mix: components["schemas"]["ScoreMix"];
+            /** Score Trend */
+            score_trend: components["schemas"]["AnalyticsScoreTrendRow"][];
+            /** Scoring By Handicap */
+            scoring_by_handicap: components["schemas"]["ScoringByHandicapRow"][];
+            /** Scoring By Par */
+            scoring_by_par: components["schemas"]["ScoringByParRow"][];
+            /** Scoring By Yardage */
+            scoring_by_yardage: components["schemas"]["ScoringByYardageRow"][];
+            /** Scrambling Trend */
+            scrambling_trend: components["schemas"]["ScramblingTrendRow"][];
+            /** Three Putts Trend */
+            three_putts_trend: components["schemas"]["ThreePuttsTrendRow"][];
+            /** Up And Down Trend */
+            up_and_down_trend: components["schemas"]["UpAndDownTrendRow"][];
+        };
+        /**
+         * AnalyticsScoreTrendRow
+         * @description A round's score, with its average over it and the four rounds before it.
+         */
+        AnalyticsScoreTrendRow: {
+            /** Course Name */
+            course_name: string | null;
+            /** Rolling Average */
+            rolling_average: number | null;
+            /** Round Id */
+            round_id: string | null;
+            /** Round Index */
+            round_index: number;
+            /** To Par */
+            to_par: number | null;
+            /** Total Score */
+            total_score: number | null;
+        };
         /** AuthUserResponse */
         AuthUserResponse: {
             /** Access Token */
@@ -730,6 +821,69 @@ export interface components {
             /** User Id */
             user_id: string;
         };
+        /**
+         * BenchmarkComparisonResponse
+         * @description The player's last rounds held up against a benchmark, and which benchmark it was.
+         */
+        BenchmarkComparisonResponse: {
+            /**
+             * Against
+             * @enum {string}
+             */
+            against: "handicap" | "peak" | "friend";
+            benchmark: components["schemas"]["BenchmarkShape"] | null;
+            /** Goal */
+            goal: number | null;
+            /** Handicap */
+            handicap: number | null;
+            /** Par Types */
+            par_types: components["schemas"]["ParTypeComparison"][];
+        };
+        /**
+         * BenchmarkShape
+         * @description A golfer's shape in golf terms: the Lab radar's axes. Null where they have no figure.
+         */
+        BenchmarkShape: {
+            /** Gir Percentage */
+            gir_percentage: number | null;
+            /** Par3 To Par */
+            par3_to_par: number | null;
+            /** Par4 To Par */
+            par4_to_par: number | null;
+            /** Par5 To Par */
+            par5_to_par: number | null;
+            /** Putts Per Gir */
+            putts_per_gir: number | null;
+            /** Scrambling Percentage */
+            scrambling_percentage: number | null;
+        };
+        /**
+         * BestParInsight
+         * @description The par type the player scores best on.
+         */
+        BestParInsight: {
+            /** Average To Par */
+            average_to_par: number;
+            /**
+             * Category
+             * @constant
+             */
+            category: "scoring";
+            /** Holes */
+            holes: number;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "best_par";
+            /** Par */
+            par: number;
+            /**
+             * Trend
+             * @enum {string}
+             */
+            trend: "up" | "down" | "flat";
+        };
         /** Body_extract_scan_api_scan_extract_post */
         Body_extract_scan_api_scan_extract_post: {
             /** Course Id */
@@ -745,6 +899,27 @@ export interface components {
         Body_prefetch_ocr_api_scan_ocr_post: {
             /** File */
             file: string;
+        };
+        /** CareerTotals */
+        CareerTotals: {
+            lifetime: components["schemas"]["LifetimeCareerTotals"];
+            one_year: components["schemas"]["OneYearCareerTotals"];
+        };
+        /**
+         * ComparisonRow
+         * @description The selected round, or a trailing average ending at it ("Last 5 Avg").
+         */
+        ComparisonRow: {
+            /** Label */
+            label: string;
+            /** Primary Value */
+            primary_value: number | null;
+            /** Round Id */
+            round_id: string | null;
+            /** Sample Size */
+            sample_size: number;
+            /** Secondary Value */
+            secondary_value: number | null;
         };
         /**
          * CourseAnalyticsResponse
@@ -765,6 +940,12 @@ export interface components {
             course_id: string;
             /** Gir Percentage By Hole */
             gir_percentage_by_hole: components["schemas"]["CourseHoleGirRow"][];
+            /** Hole Averages Back Nine */
+            hole_averages_back_nine: number | null;
+            /** Hole Averages Front Nine */
+            hole_averages_front_nine: number | null;
+            /** Hole Averages Total */
+            hole_averages_total: number | null;
             /** Rounds */
             rounds: components["schemas"]["RoundSummaryResponse"][];
             /** Rounds Played */
@@ -956,8 +1137,9 @@ export interface components {
             /**
              * Source
              * @default local
+             * @enum {string}
              */
-            source: string;
+            source: "local" | "external";
             /**
              * Tee Count
              * @default 0
@@ -1006,6 +1188,8 @@ export interface components {
             average_gir: number | null;
             /** Average Putts */
             average_putts: number | null;
+            /** Best Recent Round Id */
+            best_recent_round_id: string | null;
             /** Best Round */
             best_round: number | null;
             /** Best Round Course */
@@ -1015,8 +1199,14 @@ export interface components {
             handicap_change: components["schemas"]["HandicapChange"];
             /** Handicap Index */
             handicap_index: number | null;
+            /** Handicap Trend */
+            handicap_trend: components["schemas"]["HandicapTrendRow"][];
             /** Milestones */
             milestones: components["schemas"]["Milestone"][];
+            /** Putts Per Round */
+            putts_per_round: number | null;
+            /** Putts Rating */
+            putts_rating: ("strong" | "fair" | "weak") | null;
             recent_form: components["schemas"]["RecentForm"];
             /** Recent Rounds */
             recent_rounds: components["schemas"]["RoundSummaryResponse"][];
@@ -1027,15 +1217,38 @@ export interface components {
              * @default 0
              */
             score_mix_holes: number;
+            /** Score Trend */
+            score_trend: components["schemas"]["ScoreTrendRow"][];
             /** Scoring Average */
             scoring_average: number | null;
+            /** Scoring Average Change */
+            scoring_average_change: number | null;
             /** Scoring Average L20 */
             scoring_average_l20: number | null;
             /** Scoring Average L5 */
             scoring_average_l5: number | null;
+            /** Scrambling Trend */
+            scrambling_trend: components["schemas"]["ScramblingTrendRow"][];
             /** Total Rounds */
             total_rounds: number;
+            /** Up And Down Trend */
+            up_and_down_trend: components["schemas"]["UpAndDownTrendRow"][];
             whs: components["schemas"]["WhsBreakdown"];
+        };
+        /**
+         * FieldConfidence
+         * @description How sure the scan is of one reading.
+         */
+        FieldConfidence: {
+            /** Final Confidence */
+            final_confidence: number;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "high" | "medium" | "low" | "very_low";
+            /** Validation Flags */
+            validation_flags: string[];
         };
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
@@ -1060,15 +1273,191 @@ export interface components {
             requester_id: string;
             /** Requester Name */
             requester_name?: string | null;
-            /** Status */
-            status: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "declined" | "blocked";
             /** Updated At */
             updated_at: string;
         };
         /** FriendshipStatusRequest */
         FriendshipStatusRequest: {
-            /** Status */
-            status: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "accepted" | "declined" | "blocked";
+        };
+        /**
+         * GirAverageInsight
+         * @description Each round's GIR%, averaged.
+         */
+        GirAverageInsight: {
+            /**
+             * Category
+             * @constant
+             */
+            category: "gir";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "gir_average";
+            /** Percent */
+            percent: number;
+            /**
+             * Rating
+             * @enum {string}
+             */
+            rating: "strong" | "fair" | "weak";
+            /**
+             * Trend
+             * @enum {string}
+             */
+            trend: "up" | "down" | "flat";
+        };
+        /** GirMilestoneEvents */
+        GirMilestoneEvents: {
+            lifetime: components["schemas"]["LifetimeGirMilestoneEvents"];
+            one_year: components["schemas"]["OneYearGirMilestoneEvents"];
+        };
+        /** GirMilestones */
+        GirMilestones: {
+            lifetime: components["schemas"]["LifetimeGirMilestones"];
+            one_year: components["schemas"]["OneYearGirMilestones"];
+        };
+        /**
+         * GirShiftInsight
+         * @description GIR% moved between the earlier and later half of the rounds.
+         */
+        GirShiftInsight: {
+            /**
+             * Category
+             * @constant
+             */
+            category: "gir";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "gir_shift";
+            /** Points */
+            points: number;
+            /**
+             * Trend
+             * @enum {string}
+             */
+            trend: "up" | "down" | "flat";
+        };
+        /** GirTrendRow */
+        GirTrendRow: {
+            /** Gir Percentage */
+            gir_percentage: number | null;
+            /** Holes Played */
+            holes_played: number;
+            /** Round Id */
+            round_id: string | null;
+            /** Round Index */
+            round_index: number;
+            /** Total Gir */
+            total_gir: number | null;
+        };
+        /**
+         * GirVsNonGirRow
+         * @description Percent of GIR (or missed-green) holes in each score type.
+         */
+        GirVsNonGirRow: {
+            /** Birdie */
+            birdie: number;
+            /** Bogey */
+            bogey: number;
+            /**
+             * Bucket
+             * @enum {string}
+             */
+            bucket: "GIR" | "No GIR";
+            /** Double Bogey */
+            double_bogey: number;
+            /** Eagle */
+            eagle: number;
+            /** Holes Counted */
+            holes_counted: number;
+            /** Par */
+            par: number;
+            /** Quad Bogey */
+            quad_bogey: number;
+            /** Triple Bogey */
+            triple_bogey: number;
+        };
+        /**
+         * GoalAttempt
+         * @description One scored round in the window, and whether it met the goal (at or under it).
+         */
+        GoalAttempt: {
+            /** Met Goal */
+            met_goal: boolean;
+            /** Round Id */
+            round_id: string | null;
+            /** Score */
+            score: number;
+        };
+        /**
+         * GoalReportResponse
+         * @description How far the player's average is from their goal, with the savers worth the most strokes first.
+         */
+        GoalReportResponse: {
+            /** Attempts */
+            attempts: components["schemas"]["GoalAttempt"][];
+            /** Gap */
+            gap: number | null;
+            /** Lowest Score */
+            lowest_score: number | null;
+            /**
+             * On Track
+             * @default false
+             */
+            on_track: boolean;
+            /** Peak Gap */
+            peak_gap: number | null;
+            /** Peak Meets Goal */
+            peak_meets_goal: boolean | null;
+            /** Progress Pct */
+            progress_pct: number | null;
+            /**
+             * Rounds Meeting Goal
+             * @default 0
+             */
+            rounds_meeting_goal: number;
+            /** Savers */
+            savers: components["schemas"]["GoalSaver"][];
+            /** Scoring Average */
+            scoring_average: number | null;
+            /** Scoring Goal */
+            scoring_goal: number;
+        };
+        /**
+         * GoalSaver
+         * @description One place to find strokes, with the server's wording for it.
+         */
+        GoalSaver: {
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+            /** Detail */
+            detail: string;
+            /** Headline */
+            headline: string;
+            /** Percentage Of Gap */
+            percentage_of_gap: number;
+            /** Strokes Saved */
+            strokes_saved: number;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "three_putt_bleed" | "blowup_holes" | "achilles_heel" | "home_course_demon" | "gir_opportunity" | "scrambling_opportunity" | "par5_opportunity";
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1083,6 +1472,32 @@ export interface components {
             direction: ("up" | "down" | "flat") | null;
         };
         /**
+         * HandicapTrendRow
+         * @description The golfer's index after one round, oldest first: over the 20 rounds ending with it and off
+         *     the handicap they gave, so the last round's is the index every screen shows. With where the
+         *     round's differential stands against the current index.
+         */
+        HandicapTrendRow: {
+            /** Differential */
+            differential: number | null;
+            /**
+             * Differential Status
+             * @default unrated
+             * @enum {string}
+             */
+            differential_status: "counting" | "close" | "out" | "unrated";
+            /** Handicap Index */
+            handicap_index: number | null;
+            /** Hi Threshold */
+            hi_threshold: number | null;
+            /** Round Id */
+            round_id: string | null;
+            /** Round Index */
+            round_index: number;
+            /** Used In Hi */
+            used_in_hi: boolean | null;
+        };
+        /**
          * Hole
          * @description Represents a single hole on a golf course.
          */
@@ -1093,6 +1508,31 @@ export interface components {
             number: number | null;
             /** Par */
             par: number | null;
+        };
+        /**
+         * HoleConfidence
+         * @description How sure the scan is of one hole.
+         */
+        HoleConfidence: {
+            fields: components["schemas"]["HoleFieldConfidence"];
+            /** Hole Number */
+            hole_number: number;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "high" | "medium" | "low" | "very_low";
+            /** Overall */
+            overall: number;
+        };
+        /**
+         * HoleFieldConfidence
+         * @description How sure the scan is of each reading on a hole.
+         */
+        HoleFieldConfidence: {
+            green_in_regulation: components["schemas"]["FieldConfidence"] | null;
+            putts: components["schemas"]["FieldConfidence"] | null;
+            strokes: components["schemas"]["FieldConfidence"] | null;
         };
         /** HoleInput */
         HoleInput: {
@@ -1153,6 +1593,11 @@ export interface components {
             shots_to_green: number | null;
             /** Strokes */
             strokes: number | null;
+            /**
+             * Three Putt
+             * @default false
+             */
+            three_putt: boolean;
             /** To Par */
             to_par: number | null;
             /** Yardage */
@@ -1178,6 +1623,172 @@ export interface components {
             shots_to_green?: number | null;
             /** Strokes */
             strokes?: number | null;
+        };
+        /**
+         * HoleSummaryResponse
+         * @description One hole in a round list: what was taken and how it scored.
+         */
+        HoleSummaryResponse: {
+            /** Hole Number */
+            hole_number: number;
+            /** Kind */
+            kind: ("eagle" | "birdie" | "par" | "bogey" | "double" | "triple" | "quad") | null;
+            /** Strokes */
+            strokes: number | null;
+        };
+        /** HomeCourseRecordEvent */
+        HomeCourseRecordEvent: {
+            lowest_score_on_home_course: components["schemas"]["MilestoneEvent"] | null;
+        };
+        /** HomeCourseRecordEvents */
+        HomeCourseRecordEvents: {
+            lifetime: components["schemas"]["HomeCourseRecordEvent"];
+            one_year: components["schemas"]["HomeCourseRecordEvent"];
+        };
+        /** HomeCourseRecords */
+        HomeCourseRecords: {
+            lifetime: components["schemas"]["LifetimeHomeCourseRecords"];
+            one_year: components["schemas"]["OneYearHomeCourseRecords"];
+        };
+        /** LifetimeCareerTotals */
+        LifetimeCareerTotals: {
+            /**
+             * Total 3 Putts
+             * @default 0
+             */
+            total_3_putts: number;
+            /**
+             * Total Birdies
+             * @default 0
+             */
+            total_birdies: number;
+            /**
+             * Total Bogeys
+             * @default 0
+             */
+            total_bogeys: number;
+            /**
+             * Total Double Bogeys
+             * @default 0
+             */
+            total_double_bogeys: number;
+            /**
+             * Total Eagles
+             * @default 0
+             */
+            total_eagles: number;
+            /**
+             * Total Gir
+             * @default 0
+             */
+            total_gir: number;
+            /**
+             * Total Hole In Ones
+             * @default 0
+             */
+            total_hole_in_ones: number;
+            /**
+             * Total Holes Played
+             * @default 0
+             */
+            total_holes_played: number;
+            /**
+             * Total Pars
+             * @default 0
+             */
+            total_pars: number;
+            /**
+             * Total Quad Bogeys Plus
+             * @default 0
+             */
+            total_quad_bogeys_plus: number;
+            /**
+             * Total Rounds Played
+             * @default 0
+             */
+            total_rounds_played: number;
+            /**
+             * Total Triple Bogeys
+             * @default 0
+             */
+            total_triple_bogeys: number;
+        };
+        /** LifetimeGirMilestoneEvents */
+        LifetimeGirMilestoneEvents: {
+            highest_gir_percentage_in_round: components["schemas"]["MilestoneEvent"] | null;
+            most_gir_in_round: components["schemas"]["MilestoneEvent"] | null;
+        };
+        /** LifetimeGirMilestones */
+        LifetimeGirMilestones: {
+            /** Gir Breaks */
+            gir_breaks: components["schemas"]["ThresholdMilestone"][];
+            /** Highest Gir Percentage In Round */
+            highest_gir_percentage_in_round: number | null;
+            /** Most Gir In Round */
+            most_gir_in_round: number | null;
+        };
+        /** LifetimeHomeCourseRecords */
+        LifetimeHomeCourseRecords: {
+            /** Home Course Name */
+            home_course_name: string | null;
+            /** Lowest Score On Home Course */
+            lowest_score_on_home_course: number | null;
+            /**
+             * Most Rounds Played At Home Course
+             * @default 0
+             */
+            most_rounds_played_at_home_course: number;
+        };
+        /** LifetimePuttingMilestones */
+        LifetimePuttingMilestones: {
+            /** Fewest Putts In Round */
+            fewest_putts_in_round: number | null;
+            /** Most 1 Putts In Round */
+            most_1_putts_in_round: number | null;
+            /** Most 3 Putts In Round */
+            most_3_putts_in_round: number | null;
+            /** Putt Breaks */
+            putt_breaks: components["schemas"]["ThresholdMilestone"][];
+        };
+        /** LifetimeRoundMilestones */
+        LifetimeRoundMilestones: {
+            first_eagle: components["schemas"]["MilestoneAchievement"] | null;
+            first_hole_in_one: components["schemas"]["MilestoneAchievement"] | null;
+            first_round_under_par: components["schemas"]["UnderParEvent"] | null;
+            /** Score Breaks */
+            score_breaks: components["schemas"]["ThresholdMilestone"][];
+            /**
+             * Under Par Position
+             * @default 0
+             */
+            under_par_position: number;
+        };
+        /** LifetimeScoringRecordEvents */
+        LifetimeScoringRecordEvents: {
+            fewest_putts_in_round: components["schemas"]["MilestoneEvent"] | null;
+            highest_round: components["schemas"]["MilestoneEvent"] | null;
+            lowest_9_holes: components["schemas"]["MilestoneEvent"] | null;
+            lowest_round: components["schemas"]["MilestoneEvent"] | null;
+            most_birdies_in_round: components["schemas"]["MilestoneEvent"] | null;
+            most_eagles_in_round: components["schemas"]["MilestoneEvent"] | null;
+            most_gir_in_round: components["schemas"]["MilestoneEvent"] | null;
+        };
+        /** LifetimeScoringRecords */
+        LifetimeScoringRecords: {
+            /** Fewest Putts In Round */
+            fewest_putts_in_round: number | null;
+            /** Highest Round */
+            highest_round: number | null;
+            /** Lowest 9 Holes */
+            lowest_9_holes: number | null;
+            /** Lowest Round */
+            lowest_round: number | null;
+            /** Most Birdies In Round */
+            most_birdies_in_round: number | null;
+            /** Most Eagles In Round */
+            most_eagles_in_round: number | null;
+            /** Most Gir In Round */
+            most_gir_in_round: number | null;
         };
         /** LinkCourseRequest */
         LinkCourseRequest: {
@@ -1219,6 +1830,55 @@ export interface components {
             value: number;
         };
         /**
+         * MilestoneAchievement
+         * @description The round a milestone was first reached in.
+         */
+        MilestoneAchievement: {
+            /** Course */
+            course: string;
+            /** Date */
+            date: string;
+            /**
+             * In Window
+             * @default false
+             */
+            in_window: boolean;
+            /** Round Id */
+            round_id: string | null;
+        };
+        /**
+         * MilestoneEvent
+         * @description The round a record or milestone was set in. `date` reads 2026/5/28.
+         */
+        MilestoneEvent: {
+            /** Course */
+            course: string;
+            /** Date */
+            date: string;
+            /** Round Id */
+            round_id: string | null;
+        };
+        /**
+         * NetScoreTrendRow
+         * @description Gross less the course handicap the current index gives on the tee played. Null without ratings.
+         */
+        NetScoreTrendRow: {
+            /** Course Handicap */
+            course_handicap: number | null;
+            /** Course Name */
+            course_name: string | null;
+            /** Gross Score */
+            gross_score: number | null;
+            /** Net Score */
+            net_score: number | null;
+            /** Round Id */
+            round_id: string | null;
+            /** Round Index */
+            round_index: number;
+            /** To Par */
+            to_par: number | null;
+        };
+        /**
          * NineFigures
          * @description What one nine adds up to, for a scorecard's OUT and IN columns. The strokes are front_nine/back_nine.
          */
@@ -1238,6 +1898,337 @@ export interface components {
         Nines: {
             back: components["schemas"]["NineFigures"];
             front: components["schemas"]["NineFigures"];
+        };
+        /**
+         * NotableAchievements
+         * @description Records, totals, streaks and milestones over the rounds sent, and over the last `window_days`.
+         */
+        NotableAchievements: {
+            best_performance_streaks: components["schemas"]["WindowedPerformanceStreaks"];
+            best_performance_streaks_events: components["schemas"]["WindowedPerformanceStreakEvents"];
+            career_totals: components["schemas"]["CareerTotals"];
+            gir_milestones: components["schemas"]["GirMilestones"];
+            gir_milestones_events: components["schemas"]["GirMilestoneEvents"];
+            home_course_records: components["schemas"]["HomeCourseRecords"];
+            home_course_records_events: components["schemas"]["HomeCourseRecordEvents"];
+            putting_milestones: components["schemas"]["PuttingMilestones"];
+            putting_milestones_events: components["schemas"]["PuttingMilestoneEvents"];
+            round_milestones: components["schemas"]["RoundMilestones"];
+            scoring_records: components["schemas"]["ScoringRecords"];
+            scoring_records_events: components["schemas"]["ScoringRecordEvents"];
+            /**
+             * Window Days
+             * @default 365
+             */
+            window_days: number;
+        };
+        /**
+         * OcrTextResponse
+         * @description `POST /scan/ocr`: the card's text, read ahead so extract can skip that step.
+         */
+        OcrTextResponse: {
+            /** Ocr Text */
+            ocr_text: string;
+        };
+        /** OneYearCareerTotals */
+        OneYearCareerTotals: {
+            /**
+             * Birdies
+             * @default 0
+             */
+            birdies: number;
+            /**
+             * Double Bogeys
+             * @default 0
+             */
+            double_bogeys: number;
+            /**
+             * Eagles
+             * @default 0
+             */
+            eagles: number;
+            /**
+             * Gir
+             * @default 0
+             */
+            gir: number;
+            /**
+             * Hole In Ones
+             * @default 0
+             */
+            hole_in_ones: number;
+            /**
+             * Quad Bogeys Plus
+             * @default 0
+             */
+            quad_bogeys_plus: number;
+            /**
+             * Rounds Played
+             * @default 0
+             */
+            rounds_played: number;
+            /**
+             * Three Putts
+             * @default 0
+             */
+            three_putts: number;
+            /**
+             * Triple Bogeys
+             * @default 0
+             */
+            triple_bogeys: number;
+        };
+        /** OneYearGirMilestoneEvents */
+        OneYearGirMilestoneEvents: {
+            best_gir_round: components["schemas"]["MilestoneEvent"] | null;
+            highest_gir_percentage: components["schemas"]["MilestoneEvent"] | null;
+        };
+        /** OneYearGirMilestones */
+        OneYearGirMilestones: {
+            /** Best Gir In Round */
+            best_gir_in_round: number | null;
+            best_gir_round: components["schemas"]["MilestoneEvent"] | null;
+            /**
+             * Gir Milestones Achieved From Lifetime Set
+             * @default 0
+             */
+            gir_milestones_achieved_from_lifetime_set: number;
+            /** Highest Gir Percentage */
+            highest_gir_percentage: number | null;
+        };
+        /** OneYearHomeCourseRecords */
+        OneYearHomeCourseRecords: {
+            /** Home Course Name */
+            home_course_name: string | null;
+            /** Lowest Score On Home Course */
+            lowest_score_on_home_course: number | null;
+        };
+        /** OneYearPuttingMilestones */
+        OneYearPuttingMilestones: {
+            /** Fewest Putts In Round */
+            fewest_putts_in_round: number | null;
+            /** Most 1 Putts In Round */
+            most_1_putts_in_round: number | null;
+            /** Most 3 Putts In Round */
+            most_3_putts_in_round: number | null;
+            /**
+             * Putting Milestones Achieved From Lifetime Set
+             * @default 0
+             */
+            putting_milestones_achieved_from_lifetime_set: number;
+        };
+        /** OneYearRoundMilestones */
+        OneYearRoundMilestones: {
+            /**
+             * New Personal Records Achieved Count
+             * @default 0
+             */
+            new_personal_records_achieved_count: number;
+        };
+        /** OneYearScoringRecordEvents */
+        OneYearScoringRecordEvents: {
+            fewest_putts_in_round: components["schemas"]["MilestoneEvent"] | null;
+            lowest_round: components["schemas"]["MilestoneEvent"] | null;
+            most_birdies_in_round: components["schemas"]["MilestoneEvent"] | null;
+            most_gir_in_round: components["schemas"]["MilestoneEvent"] | null;
+        };
+        /** OneYearScoringRecords */
+        OneYearScoringRecords: {
+            /** Fewest Putts In Round */
+            fewest_putts_in_round: number | null;
+            /** Lowest Round */
+            lowest_round: number | null;
+            /** Most Birdies In Round */
+            most_birdies_in_round: number | null;
+            /** Most Gir In Round */
+            most_gir_in_round: number | null;
+        };
+        /**
+         * ParTypeComparison
+         * @description One par type's average to par, the player's against the benchmark's.
+         */
+        ParTypeComparison: {
+            /** Average To Par */
+            average_to_par: number | null;
+            /** Benchmark To Par */
+            benchmark_to_par: number | null;
+            /** Gap */
+            gap: number | null;
+            /**
+             * Par
+             * @enum {integer}
+             */
+            par: 3 | 4 | 5;
+            /** Verdict */
+            verdict: ("ahead" | "even" | "behind") | null;
+        };
+        /**
+         * PeakGame
+         * @description The player's best three rounds, lowest first (the older on a tie), and what they did differently.
+         */
+        PeakGame: {
+            /** Average */
+            average: number;
+            /** Impacts */
+            impacts: components["schemas"]["PeakImpact"][];
+            /** Rounds */
+            rounds: components["schemas"]["PeakRound"][];
+        };
+        /**
+         * PeakImpact
+         * @description One kind of hole, a round, in the peak rounds against every round, each to a hundredth.
+         *     `doubles` counts double bogeys and worse.
+         */
+        PeakImpact: {
+            /** Average */
+            average: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "birdies" | "bogeys" | "doubles";
+            /** Peak */
+            peak: number;
+            /** Strokes */
+            strokes: number;
+        };
+        /**
+         * PeakRound
+         * @description One of the player's best rounds.
+         */
+        PeakRound: {
+            /** Course Name */
+            course_name: string | null;
+            /** Round Id */
+            round_id: string | null;
+            /** Score */
+            score: number;
+        };
+        /**
+         * PerformanceStreakEvents
+         * @description The round each streak reached its length in.
+         */
+        PerformanceStreakEvents: {
+            longest_2_putt_or_less_streak: components["schemas"]["MilestoneEvent"] | null;
+            longest_birdie_streak: components["schemas"]["MilestoneEvent"] | null;
+            longest_par_streak: components["schemas"]["MilestoneEvent"] | null;
+            most_gir_in_a_row: components["schemas"]["MilestoneEvent"] | null;
+        };
+        /**
+         * PerformanceStreaks
+         * @description Longest runs of holes. A par streak counts par or better.
+         */
+        PerformanceStreaks: {
+            /**
+             * Longest 2 Putt Or Less Streak
+             * @default 0
+             */
+            longest_2_putt_or_less_streak: number;
+            /**
+             * Longest Birdie Streak
+             * @default 0
+             */
+            longest_birdie_streak: number;
+            /**
+             * Longest Par Streak
+             * @default 0
+             */
+            longest_par_streak: number;
+            /**
+             * Most Gir In A Row
+             * @default 0
+             */
+            most_gir_in_a_row: number;
+        };
+        /**
+         * PlayedCourseResponse
+         * @description A course the player has a round linked to.
+         */
+        PlayedCourseResponse: {
+            /** Id */
+            id: string;
+            /** Location */
+            location: string | null;
+            /** Name */
+            name: string | null;
+        };
+        /** PuttingMilestoneEvent */
+        PuttingMilestoneEvent: {
+            fewest_putts_in_round: components["schemas"]["MilestoneEvent"] | null;
+            most_1_putts_in_round: components["schemas"]["MilestoneEvent"] | null;
+            most_3_putts_in_round: components["schemas"]["MilestoneEvent"] | null;
+        };
+        /** PuttingMilestoneEvents */
+        PuttingMilestoneEvents: {
+            lifetime: components["schemas"]["PuttingMilestoneEvent"];
+            one_year: components["schemas"]["PuttingMilestoneEvent"];
+        };
+        /** PuttingMilestones */
+        PuttingMilestones: {
+            lifetime: components["schemas"]["LifetimePuttingMilestones"];
+            one_year: components["schemas"]["OneYearPuttingMilestones"];
+        };
+        /**
+         * PuttsAverageInsight
+         * @description Putts per round, over the rounds with putts recorded.
+         */
+        PuttsAverageInsight: {
+            /**
+             * Category
+             * @constant
+             */
+            category: "putting";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "putts_average";
+            /** Putts */
+            putts: number;
+            /**
+             * Rating
+             * @enum {string}
+             */
+            rating: "strong" | "fair" | "weak";
+            /**
+             * Trend
+             * @enum {string}
+             */
+            trend: "up" | "down" | "flat";
+        };
+        /**
+         * PuttsShiftInsight
+         * @description Putts per round moved between the earlier and later half of the rounds.
+         */
+        PuttsShiftInsight: {
+            /**
+             * Category
+             * @constant
+             */
+            category: "putting";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "putts_shift";
+            /** Putts */
+            putts: number;
+            /**
+             * Trend
+             * @enum {string}
+             */
+            trend: "up" | "down" | "flat";
+        };
+        /** PuttsTrendRow */
+        PuttsTrendRow: {
+            /** Holes Played */
+            holes_played: number;
+            /** Round Id */
+            round_id: string | null;
+            /** Round Index */
+            round_index: number;
+            /** Total Putts */
+            total_putts: number | null;
         };
         /**
          * RecentForm
@@ -1289,6 +2280,29 @@ export interface components {
             token: string;
         };
         /**
+         * RoundComparisonResponse
+         * @description A round against the player's trailing averages, one list per metric.
+         */
+        RoundComparisonResponse: {
+            /** Gir */
+            gir: components["schemas"]["ComparisonRow"][];
+            /** Putts */
+            putts: components["schemas"]["ComparisonRow"][];
+            /** Putts Per Gir */
+            putts_per_gir: components["schemas"]["ComparisonRow"][];
+            /** Score */
+            score: components["schemas"]["ComparisonRow"][];
+            /** Scrambling */
+            scrambling: components["schemas"]["ComparisonRow"][];
+            /** Three Putts */
+            three_putts: components["schemas"]["ComparisonRow"][];
+        };
+        /** RoundMilestones */
+        RoundMilestones: {
+            lifetime: components["schemas"]["LifetimeRoundMilestones"];
+            one_year: components["schemas"]["OneYearRoundMilestones"];
+        };
+        /**
          * RoundResponse
          * @description A full round: the stored round, its figures, and its hole scores.
          */
@@ -1296,6 +2310,8 @@ export interface components {
             /** Back Nine */
             back_nine: number | null;
             course: components["schemas"]["CourseResponse"] | null;
+            /** Course Handicap */
+            course_handicap: number | null;
             /** Course Name Played */
             course_name_played: string | null;
             /** Date */
@@ -1306,8 +2322,15 @@ export interface components {
             front_nine: number | null;
             /** Hole Scores */
             hole_scores: components["schemas"]["HoleScoreResponse"][];
+            /**
+             * Holes Played
+             * @default 0
+             */
+            holes_played: number;
             /** Id */
             id: string | null;
+            /** Net Score */
+            net_score: number | null;
             nines: components["schemas"]["Nines"];
             /** Notes */
             notes: string | null;
@@ -1332,47 +2355,34 @@ export interface components {
         };
         /**
          * RoundSummaryResponse
-         * @description A round for list views: where and when, its figures, and its hole scores.
+         * @description A round for list views: where and when, the figures a list shows, and a mark per hole.
          */
         RoundSummaryResponse: {
             /** Back Nine */
             back_nine: number | null;
+            /** Best Rank */
+            best_rank: number | null;
             /** Course Id */
             course_id: string | null;
-            /** Course Location */
-            course_location: string | null;
             /** Course Name */
             course_name: string | null;
-            /** Course Par */
-            course_par: number | null;
             /** Date */
             date: string | null;
-            /** Fairways Hit */
-            fairways_hit: number | null;
             /** Front Nine */
             front_nine: number | null;
             /** Hole Scores */
-            hole_scores: components["schemas"]["HoleScoreResponse"][];
+            hole_scores: components["schemas"]["HoleSummaryResponse"][];
             /** Id */
             id: string;
-            nines: components["schemas"]["Nines"];
-            /** Notes */
-            notes: string | null;
-            /** Par */
-            par: number | null;
             score_counts: components["schemas"]["ScoreCounts"];
             /** Tee Box */
             tee_box: string | null;
             /** To Par */
             to_par: number | null;
-            /** Total Gir */
-            total_gir: number | null;
             /** Total Putts */
             total_putts: number | null;
             /** Total Score */
             total_score: number | null;
-            /** Yards */
-            yards: number | null;
         };
         /**
          * SaveRoundRequest
@@ -1412,6 +2422,120 @@ export interface components {
              * @default
              */
             user_id: string;
+        };
+        /**
+         * SaveScanResponse
+         * @description `POST /scan/save`: the new round's id and total.
+         */
+        SaveScanResponse: {
+            /** Id */
+            id: string;
+            /** Total Score */
+            total_score: number | null;
+        };
+        /**
+         * ScanConfidence
+         * @description How sure the scan is of the card as a whole, and of each hole.
+         */
+        ScanConfidence: {
+            /** Hole Scores */
+            hole_scores: components["schemas"]["HoleConfidence"][];
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "high" | "medium" | "low" | "very_low";
+            /** Overall */
+            overall: number;
+        };
+        /**
+         * ScanResponse
+         * @description `POST /scan/extract`: the card as read, how sure the scan is, and what to check before saving.
+         */
+        ScanResponse: {
+            confidence: components["schemas"]["ScanConfidence"];
+            /** Fields Needing Review */
+            fields_needing_review: string[];
+            round: components["schemas"]["ScannedRound"];
+        };
+        /**
+         * ScannedCourse
+         * @description The course a scan read the card against.
+         */
+        ScannedCourse: {
+            /** Holes */
+            holes: components["schemas"]["ScannedHole"][];
+            /** Location */
+            location: string | null;
+            /** Name */
+            name: string | null;
+            /** Par */
+            par: number | null;
+            /** Tees */
+            tees: components["schemas"]["ScannedTee"][];
+        };
+        /**
+         * ScannedHole
+         * @description A hole as read off the card, or taken from the course the golfer picked.
+         */
+        ScannedHole: {
+            /** Handicap */
+            handicap: number | null;
+            /** Number */
+            number: number;
+            /** Par */
+            par: number | null;
+        };
+        /**
+         * ScannedHoleScore
+         * @description One hole's score as read off the card. Anything the scan couldn't read is null.
+         */
+        ScannedHoleScore: {
+            /** Fairway Hit */
+            fairway_hit: boolean | null;
+            /** Green In Regulation */
+            green_in_regulation: boolean | null;
+            /** Hole Number */
+            hole_number: number;
+            /** Putts */
+            putts: number | null;
+            /** Shots To Green */
+            shots_to_green: number | null;
+            /** Strokes */
+            strokes: number | null;
+        };
+        /**
+         * ScannedRound
+         * @description A round as read off a card, before the golfer checks and saves it.
+         */
+        ScannedRound: {
+            course: components["schemas"]["ScannedCourse"] | null;
+            /** Date */
+            date: string | null;
+            /** Hole Scores */
+            hole_scores: components["schemas"]["ScannedHoleScore"][];
+            /** Notes */
+            notes: string | null;
+            /** Tee Box */
+            tee_box: string | null;
+        };
+        /**
+         * ScannedTee
+         * @description A tee row read off the card, or one of the picked course's tees. Yardages are keyed by hole number.
+         */
+        ScannedTee: {
+            /** Color */
+            color: string | null;
+            /** Course Handicap */
+            course_handicap: number | null;
+            /** Course Rating */
+            course_rating: number | null;
+            /** Hole Yardages */
+            hole_yardages: {
+                [key: string]: number;
+            };
+            /** Slope Rating */
+            slope_rating: number | null;
         };
         /**
          * ScoreCounts
@@ -1454,6 +2578,21 @@ export interface components {
              */
             triple: number;
         };
+        /** ScoreDifferentialRow */
+        ScoreDifferentialRow: {
+            /** Course Rating */
+            course_rating: number | null;
+            /** Differential */
+            differential: number | null;
+            /** Round Id */
+            round_id: string | null;
+            /** Round Index */
+            round_index: number;
+            /** Score */
+            score: number | null;
+            /** Slope Rating */
+            slope_rating: number | null;
+        };
         /**
          * ScoreMix
          * @description Percent of classified holes in each score bucket.
@@ -1495,6 +2634,115 @@ export interface components {
              */
             triple: number;
         };
+        /**
+         * ScoreTrendRow
+         * @description One round's score, oldest first.
+         */
+        ScoreTrendRow: {
+            /** Course Name */
+            course_name: string | null;
+            /** Round Id */
+            round_id: string | null;
+            /** Round Index */
+            round_index: number;
+            /** To Par */
+            to_par: number | null;
+            /** Total Score */
+            total_score: number | null;
+        };
+        /** ScoringByHandicapRow */
+        ScoringByHandicapRow: {
+            /** Average To Par */
+            average_to_par: number;
+            /** Handicap */
+            handicap: number;
+            /** Sample Size */
+            sample_size: number;
+        };
+        /** ScoringByParRow */
+        ScoringByParRow: {
+            /** Average Strokes */
+            average_strokes: number;
+            /** Average To Par */
+            average_to_par: number;
+            /** Par */
+            par: number;
+            /** Sample Size */
+            sample_size: number;
+        };
+        /** ScoringByYardageRow */
+        ScoringByYardageRow: {
+            /** Average Strokes */
+            average_strokes: number;
+            /** Average To Par */
+            average_to_par: number;
+            /** Bucket Label */
+            bucket_label: string;
+            /** Bucket Order */
+            bucket_order: number;
+            /** Gir Percentage */
+            gir_percentage: number | null;
+            /** Par */
+            par: number;
+            /** Raw Scores */
+            raw_scores: components["schemas"]["YardageScore"][];
+            /** Sample Size */
+            sample_size: number;
+            score_mix: components["schemas"]["ScoreMix"];
+        };
+        /** ScoringRecordEvents */
+        ScoringRecordEvents: {
+            lifetime: components["schemas"]["LifetimeScoringRecordEvents"];
+            one_year: components["schemas"]["OneYearScoringRecordEvents"];
+        };
+        /** ScoringRecords */
+        ScoringRecords: {
+            lifetime: components["schemas"]["LifetimeScoringRecords"];
+            one_year: components["schemas"]["OneYearScoringRecords"];
+        };
+        /**
+         * ScoringShiftInsight
+         * @description The scoring average moved between the earlier and later half of the rounds.
+         */
+        ScoringShiftInsight: {
+            /**
+             * Category
+             * @constant
+             */
+            category: "scoring";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "scoring_shift";
+            /** Rounds */
+            rounds: number;
+            /** Strokes */
+            strokes: number;
+            /**
+             * Trend
+             * @enum {string}
+             */
+            trend: "up" | "down" | "flat";
+        };
+        /**
+         * ScramblingTrendRow
+         * @description Missed greens saved with par. The percentage is null without a missed green on a linked course.
+         */
+        ScramblingTrendRow: {
+            /** Round Id */
+            round_id: string | null;
+            /** Round Index */
+            round_index: number;
+            /** Scramble Failures */
+            scramble_failures: number;
+            /** Scramble Opportunities */
+            scramble_opportunities: number;
+            /** Scramble Successes */
+            scramble_successes: number;
+            /** Scrambling Percentage */
+            scrambling_percentage: number | null;
+        };
         /** SendFriendRequest */
         SendFriendRequest: {
             /** Addressee Friend Code */
@@ -1511,6 +2759,8 @@ export interface components {
             back_nine_yardage: number | null;
             /** Color */
             color: string | null;
+            /** Course Handicap */
+            course_handicap: number | null;
             /** Course Rating */
             course_rating: number | null;
             /** Front Nine Yardage */
@@ -1523,6 +2773,63 @@ export interface components {
             slope_rating: number | null;
             /** Total Yardage */
             total_yardage: number | null;
+        };
+        /**
+         * ThreePuttsTrendRow
+         * @description Three-putts in a round, as a share of the holes with putts recorded (0 without any).
+         */
+        ThreePuttsTrendRow: {
+            /** Holes With Putt Data */
+            holes_with_putt_data: number;
+            /** Round Id */
+            round_id: string | null;
+            /** Round Index */
+            round_index: number;
+            /** Three Putt Count */
+            three_putt_count: number;
+            /** Three Putt Percentage */
+            three_putt_percentage: number;
+        };
+        /**
+         * ThresholdMilestone
+         * @description The first round to get past `threshold`, or null until one does.
+         */
+        ThresholdMilestone: {
+            achievement: components["schemas"]["MilestoneAchievement"] | null;
+            /** Threshold */
+            threshold: number;
+        };
+        /** UnderParEvent */
+        UnderParEvent: {
+            /** Course */
+            course: string;
+            /** Date */
+            date: string;
+            /**
+             * In Window
+             * @default false
+             */
+            in_window: boolean;
+            /** Round Id */
+            round_id: string | null;
+            /** Score */
+            score: number;
+        };
+        /**
+         * UpAndDownTrendRow
+         * @description Missed greens finished in one putt or fewer. The percentage is null without a chance.
+         */
+        UpAndDownTrendRow: {
+            /** Opportunities */
+            opportunities: number;
+            /** Percentage */
+            percentage: number | null;
+            /** Round Id */
+            round_id: string | null;
+            /** Round Index */
+            round_index: number;
+            /** Successes */
+            successes: number;
         };
         /** UpdateCourseRequest */
         UpdateCourseRequest: {
@@ -1569,6 +2876,28 @@ export interface components {
             name?: string | null;
             /** Slope Rating */
             slope_rating?: number | null;
+        };
+        /**
+         * UserResponse
+         * @description A golfer's profile, as `GET`/`PATCH /users/{id}` send it. Their rounds are fetched separately.
+         */
+        UserResponse: {
+            /** Created At */
+            created_at: string | null;
+            /** Email */
+            email: string | null;
+            /** Friend Code */
+            friend_code: string | null;
+            /** Handicap */
+            handicap: number | null;
+            /** Home Course Id */
+            home_course_id: string | null;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string | null;
+            /** Scoring Goal */
+            scoring_goal: number | null;
         };
         /**
          * UserTee
@@ -1666,6 +2995,26 @@ export interface components {
              * @default false
              */
             used: boolean;
+        };
+        /** WindowedPerformanceStreakEvents */
+        WindowedPerformanceStreakEvents: {
+            lifetime: components["schemas"]["PerformanceStreakEvents"];
+            one_year: components["schemas"]["PerformanceStreakEvents"];
+        };
+        /** WindowedPerformanceStreaks */
+        WindowedPerformanceStreaks: {
+            lifetime: components["schemas"]["PerformanceStreaks"];
+            one_year: components["schemas"]["PerformanceStreaks"];
+        };
+        /**
+         * YardageScore
+         * @description One hole played in a yardage bucket.
+         */
+        YardageScore: {
+            /** To Par */
+            to_par: number;
+            /** Yardage */
+            yardage: number;
         };
         /** TeeInput */
         api__request_models__TeeInput: {
@@ -2388,7 +3737,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ScanResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2421,7 +3770,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["OcrTextResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2454,7 +3803,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SaveScanResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2489,7 +3838,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AnalyticsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2521,7 +3870,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["RoundComparisonResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2631,6 +3980,42 @@ export interface operations {
             };
         };
     };
+    get_benchmark_comparison_api_stats__user_id__benchmark_get: {
+        parameters: {
+            query: {
+                against: "handicap" | "peak" | "friend";
+                handicap?: number | null;
+                friend_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BenchmarkComparisonResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_goal_report_api_stats__user_id__goal_report_get: {
         parameters: {
             query?: {
@@ -2650,7 +4035,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["GoalReportResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2681,7 +4066,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["PlayedCourseResponse"][];
                 };
             };
             /** @description Validation Error */
@@ -2712,7 +4097,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["UserResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2842,7 +4227,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["UserResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2877,38 +4262,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_user_handicap_api_users__user_id__handicap_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                user_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["UserResponse"];
                 };
             };
             /** @description Validation Error */

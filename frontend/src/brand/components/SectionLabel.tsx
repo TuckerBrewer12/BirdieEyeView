@@ -20,7 +20,7 @@ function SectionLabel({
       {...props}
     >
       <div className="h-px w-8 rounded-full bg-primary/30" />
-      <span className="text-label font-bold uppercase tracking-section text-primary/50">
+      <span className="text-section uppercase text-primary/50">
         {children}
       </span>
     </div>

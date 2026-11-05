@@ -1,8 +1,8 @@
-import { colors, fonts, typography } from "@/brand/theme";
-import type { HoleScore, Round } from "@/domain";
+import { tokens } from "@/brand/theme";
+import type { HoleSummary, RoundSummary } from "@/domain";
 
 interface HoleScoreShapesProps {
-  round: Round;
+  round: RoundSummary;
   /** Puts each hole's number above its shape. */
   numbered?: boolean;
 }
@@ -14,7 +14,7 @@ const cy = VB_H / 2;
 const r = 9.5;
 
 /** One hole drawn the way a scorecard marks it: circles under par, boxes over. */
-function HoleShape({ hole }: { hole: HoleScore }) {
+export function HoleShape({ hole }: { hole: HoleSummary }) {
   const kind = hole.kind;
   if (kind == null) {
     return (
@@ -23,8 +23,8 @@ function HoleShape({ hole }: { hole: HoleScore }) {
       </div>
     );
   }
-  const fill = colors.score[kind].base;
-  const onFill = colors.score[kind].onBase;
+  const fill = tokens.color.score[kind].base;
+  const onFill = tokens.color.score[kind].onBase;
 
   return (
     <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="h-hole-h w-hole-w">
@@ -71,9 +71,9 @@ function HoleShape({ hole }: { hole: HoleScore }) {
         textAnchor="middle"
         dominantBaseline="central"
         fill={onFill}
-        fontSize={typography.caption}
+        fontSize={tokens.type.caption.size}
         fontWeight="700"
-        fontFamily={fonts.sans}
+        fontFamily={tokens.font.sans}
       >
         {hole.strokes}
       </text>

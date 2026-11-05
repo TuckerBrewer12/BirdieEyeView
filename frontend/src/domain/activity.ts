@@ -1,3 +1,5 @@
+import { isoDay, parseDay } from "./date";
+
 export interface ActivityDay {
   date: string;
   dayNum: number;
@@ -8,31 +10,6 @@ export interface ActivityDay {
 const WEEKS = 5;
 const DAYS_IN_WEEK = 7;
 const SATURDAY = 6;
-
-function formatLocalDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function parseLocalDate(dateStr: string): Date | null {
-  let clean = dateStr;
-  if (clean.includes("T")) clean = clean.split("T")[0];
-  clean = clean.replace(/\//g, "-").replace(/ /g, "-");
-  const parts = clean.split("-");
-  if (parts.length === 3) {
-    const parsed = new Date(
-      parseInt(parts[0], 10),
-      parseInt(parts[1], 10) - 1,
-      parseInt(parts[2], 10),
-      12,
-    );
-    return isNaN(parsed.getTime()) ? null : parsed;
-  }
-  const fallback = new Date(dateStr);
-  return isNaN(fallback.getTime()) ? null : fallback;
-}
 
 /**
  * Counts rounds on each local calendar day in the 5-week window that ends
@@ -48,9 +25,9 @@ export function activityDays(
   const counts = new Map<string, number>();
   for (const round of rounds) {
     if (!round.date) continue;
-    const parsed = parseLocalDate(round.date);
+    const parsed = parseDay(round.date);
     if (!parsed) continue;
-    const dateStr = formatLocalDate(parsed);
+    const dateStr = isoDay(parsed);
     counts.set(dateStr, (counts.get(dateStr) ?? 0) + 1);
   }
 
@@ -64,7 +41,7 @@ export function activityDays(
 
   const days: ActivityDay[] = [];
   for (let i = 0; i < daysOfHistory; i++) {
-    const dateStr = formatLocalDate(currentDay);
+    const dateStr = isoDay(currentDay);
     days.push({
       date: dateStr,
       dayNum: currentDay.getDate(),

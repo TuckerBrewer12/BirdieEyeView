@@ -2,43 +2,43 @@ import { useId, useState, type MouseEvent } from "react";
 import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import { chartColors, chartLayout, chartTickStyle, colors, toParFill } from "@/brand/theme";
-import { formatRoundDateHistory, formatRoundDateTick } from "@/lib/roundDate";
-import type { CourseScoreTrendRowDto } from "@/types/api";
+import { chartTickStyle, toParFill, tokens } from "@/brand/theme";
+import { formatDay, formatDayTick } from "@/domain/date";
+import type { ScorePoint } from "@/domain/courseAnalytics";
 import { indexScale, paddedExtent } from "./scales";
 
 interface ScoreTrendChartProps {
-  /** The server's trend rows, oldest first. Unscored rounds are left out. */
-  rows: CourseScoreTrendRowDto[];
+  /** The rounds, oldest first. Unscored rounds are left out. */
+  rows: ScorePoint[];
 }
 
-type ScoredRow = CourseScoreTrendRowDto & { total_score: number };
+type ScoredRow = ScorePoint & { score: number };
 
 /**
  * A golfer's scores over time: one dot per round, coloured by its score to par,
  * joined into a line over a soft fill. Hovering a dot shows its date and score.
  */
 export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
-  const { width: W, height: H, pad: PAD, headroom, dot, dotHover, maxTicks } = chartLayout.trend;
+  const { width: W, height: H, pad: PAD, headroom, dot, dotHover, maxTicks } = tokens.chart.trend;
   const [hovered, setHovered] = useState<ScoredRow | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const areaId = `score-trend-area-${useId().replace(/:/g, "")}`;
 
-  const data = rows.filter((row): row is ScoredRow => row.total_score != null);
+  const data = rows.filter((row): row is ScoredRow => row.score != null);
   if (data.length < 2) {
     return <div className="py-8 text-center text-sm text-muted-foreground">Not enough data</div>;
   }
 
   const x = indexScale(data.length, PAD.left, W - PAD.right);
   const y = scaleLinear()
-    .domain(paddedExtent(data.map((row) => row.total_score), headroom)!)
+    .domain(paddedExtent(data.map((row) => row.score), headroom)!)
     .range([H - PAD.bottom, PAD.top]);
-  const linePath = line<ScoredRow>().x((_, i) => x(i)).y((row) => y(row.total_score)).curve(curveMonotoneX)(data) ?? "";
+  const linePath = line<ScoredRow>().x((_, i) => x(i)).y((row) => y(row.score)).curve(curveMonotoneX)(data) ?? "";
   const areaPath =
     area<ScoredRow>()
       .x((_, i) => x(i))
       .y0(H - PAD.bottom)
-      .y1((row) => y(row.total_score))
+      .y1((row) => y(row.score))
       .curve(curveMonotoneX)(data) ?? "";
   const gridTicks = y.ticks(5);
   const hoveredIndex = hovered ? data.indexOf(hovered) : -1;
@@ -60,8 +60,8 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
       >
         <defs>
           <linearGradient id={areaId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={colors.primary} stopOpacity={0.12} />
-            <stop offset="95%" stopColor={colors.primary} stopOpacity={0} />
+            <stop offset="5%" stopColor={tokens.color.primary} stopOpacity={0.12} />
+            <stop offset="95%" stopColor={tokens.color.primary} stopOpacity={0} />
           </linearGradient>
         </defs>
         {gridTicks.map((tick) => (
@@ -71,8 +71,8 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             x2={W - PAD.right}
             y1={y(tick)}
             y2={y(tick)}
-            stroke={chartColors.muted}
-            strokeWidth={1}
+            stroke={tokens.color.chart.muted}
+            strokeWidth={tokens.lineWidth.border}
           />
         ))}
         {gridTicks.map((tick) => (
@@ -82,7 +82,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             y={y(tick) + 4}
             textAnchor="end"
             fontSize={chartTickStyle.fontSize}
-            fill={chartColors.axis}
+            fill={tokens.color.chart.axis}
           >
             {tick}
           </text>
@@ -91,19 +91,19 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
         <path
           d={linePath}
           fill="none"
-          stroke={colors.primary}
+          stroke={tokens.color.primary}
           strokeWidth={2.5}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         {data.map((row, i) => (
           <circle
-            key={row.round_index}
+            key={row.roundIndex}
             cx={x(i)}
-            cy={y(row.total_score)}
+            cy={y(row.score)}
             r={hovered === row ? dotHover : dot}
-            fill={toParFill(row.to_par)}
-            stroke={colors.card}
+            fill={toParFill(row.toPar)}
+            stroke={tokens.color.card}
             strokeWidth={1.5}
           />
         ))}
@@ -113,22 +113,22 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             x2={x(hoveredIndex)}
             y1={PAD.top}
             y2={H - PAD.bottom}
-            stroke={chartColors.muted}
-            strokeWidth={1}
+            stroke={tokens.color.chart.muted}
+            strokeWidth={tokens.lineWidth.border}
             strokeDasharray="3 3"
           />
         )}
         {data.length <= maxTicks &&
           data.map((row, i) => {
-            const tick = formatRoundDateTick(row.date);
+            const tick = formatDayTick(row.date);
             return tick ? (
               <text
-                key={`tick-${row.round_index}`}
+                key={`tick-${row.roundIndex}`}
                 x={x(i)}
                 y={H - PAD.bottom + 14}
                 textAnchor="middle"
                 fontSize={chartTickStyle.fontSize}
-                fill={chartColors.axis}
+                fill={tokens.color.chart.axis}
               >
                 {tick}
               </text>
@@ -143,9 +143,9 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             top: tooltipPos.y - 10,
           }}
         >
-          <div className="mb-1 text-meta text-muted-foreground">{formatRoundDateHistory(hovered.date) ?? "—"}</div>
-          <div className="text-sm font-bold text-foreground">{hovered.total_score}</div>
-          <ToParFigure toPar={hovered.to_par} />
+          <div className="mb-1 text-meta text-muted-foreground">{formatDay(hovered.date) ?? "—"}</div>
+          <div className="text-sm font-bold text-foreground">{hovered.score}</div>
+          <ToParFigure toPar={hovered.toPar} />
         </div>
       )}
     </div>

@@ -1,9 +1,9 @@
 import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../../testing/playwright";
-import type { Round } from "../../../../types/golf";
+import type { RoundDto } from "../../../../types/api";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
-import { formatCourseName } from "../../../../lib/courseName";
+import { formatCourseName } from "../../../../domain/course";
 
 /** Screen robot for /rounds/:id — same idea as an Android Espresso robot. */
 export class RoundDetailRobot {
@@ -21,7 +21,7 @@ export class RoundDetailRobot {
   }
 
   async open(
-    round: Round,
+    round: RoundDto,
     seed: Omit<FakeBackendSeed, "detailRounds"> = {},
   ): Promise<this> {
     await this.page.emulateMedia({ reducedMotion: "reduce" });
@@ -48,6 +48,64 @@ export class RoundDetailRobot {
   async tapCancelEdit(): Promise<this> {
     await this.page.getByRole("button", { name: "Cancel" }).click();
     await expect(this.page.getByRole("button", { name: "Edit" })).toBeVisible();
+    return this;
+  }
+
+  async typeStrokes(hole: number, strokes: number): Promise<this> {
+    await this.page.getByLabel(`Hole ${hole} strokes`).fill(String(strokes));
+    return this;
+  }
+
+  async clearStrokes(hole: number): Promise<this> {
+    await this.page.getByLabel(`Hole ${hole} strokes`).fill("");
+    return this;
+  }
+
+  async tapSave(): Promise<this> {
+    await this.page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(this.page.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
+    return this;
+  }
+
+  async seesScore(score: number): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(String(score), { exact: true })).toBeVisible();
+    return this;
+  }
+
+  /** The net score and course handicap in the header, as the server sent them. */
+  async seesNet(net: number, courseHandicap: number): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(`Net · hcp ${courseHandicap}`)).toBeVisible();
+    await expect(header.getByText(String(net), { exact: true })).toBeVisible();
+    return this;
+  }
+
+  async seesNoNet(): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(/^Net · hcp/)).toHaveCount(0);
+    return this;
+  }
+
+  async tapTee(color: string): Promise<this> {
+    await this.page.getByRole("group", { name: "Tee" }).getByRole("button", { name: color, exact: true }).click();
+    return this;
+  }
+
+  /** The text field a round gets when its course has no tees to pick from. */
+  async seesTeeField(): Promise<this> {
+    await expect(this.page.getByRole("textbox", { name: "Tee" })).toBeVisible();
+    return this;
+  }
+
+  async typeTee(tee: string): Promise<this> {
+    await this.page.getByRole("textbox", { name: "Tee" }).fill(tee);
+    return this;
+  }
+
+  async seesTee(tee: string): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(`${tee} tees`, { exact: true })).toBeVisible();
     return this;
   }
 

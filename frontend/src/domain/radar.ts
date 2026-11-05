@@ -1,5 +1,6 @@
-import type { AnalyticsKPIs, ScoringByParRow } from "@/types/analytics";
-import type { BenchmarkProfile } from "./benchmark";
+import type { AnalyticsKpisDto, ScoringByParRowDto } from "@/types/api";
+import type { BenchmarkShape } from "./benchmark";
+import { formatPercent, formatSignedOneDecimal } from "./format";
 
 export type RadarEntry = {
   axis: string;
@@ -10,81 +11,62 @@ export type RadarEntry = {
   hasData: boolean;
 };
 
-function fmtSign(v: number) {
-  return (v >= 0 ? "+" : "") + v.toFixed(1);
+const clamp = (v: number) => Math.max(0, Math.min(100, v));
+
+// Each axis is drawn 0–100 from the centre, further out being better. GIR and scrambling are
+// their own percentages. Putts per GIR maps 3.5 → 0 and 1.5 → 100; a par type's average to par
+// maps +2 → 0 and −0.5 → 100. A figure the golfer or the comparison has none of sits at the centre.
+const percentRadius = (pct: number | null) => clamp(pct ?? 0);
+const puttingRadius = (puttsPerGir: number | null) => clamp(((3.5 - (puttsPerGir ?? 3.5)) / 2.0) * 100);
+const parRadius = (averageToPar: number | null) => clamp(((2.0 - (averageToPar ?? 2.0)) / 2.5) * 100);
+
+const percentLabel = (pct: number | null) => (pct != null ? formatPercent(pct) : "—");
+const puttsLabel = (puttsPerGir: number | null) => (puttsPerGir != null ? `${puttsPerGir.toFixed(2)}/GIR` : "—");
+const toParLabel = (averageToPar: number | null) => (averageToPar != null ? formatSignedOneDecimal(averageToPar) : "—");
+
+/** The golfer's own figures, on the radar's axes. */
+function shapeOf(kpis: AnalyticsKpisDto, scoringByPar: ScoringByParRowDto[]): BenchmarkShape {
+  const parAverage = (par: number) =>
+    scoringByPar.find((row) => row.par === par && row.sample_size > 0)?.average_to_par ?? null;
+  return {
+    girPct: kpis.gir_percentage,
+    scramblingPct: kpis.scrambling_percentage,
+    puttsPerGir: kpis.putts_per_gir,
+    par3ToPar: parAverage(3),
+    par4ToPar: parAverage(4),
+    par5ToPar: parAverage(5),
+  };
 }
 
+interface Axis {
+  axis: string;
+  figure: keyof BenchmarkShape;
+  radius: (value: number | null) => number;
+  label: (value: number | null) => string;
+}
+
+const AXES: Axis[] = [
+  { axis: "GIR", figure: "girPct", radius: percentRadius, label: percentLabel },
+  { axis: "Scrambling", figure: "scramblingPct", radius: percentRadius, label: percentLabel },
+  { axis: "Putting", figure: "puttsPerGir", radius: puttingRadius, label: puttsLabel },
+  { axis: "Par 3s", figure: "par3ToPar", radius: parRadius, label: toParLabel },
+  { axis: "Par 4s", figure: "par4ToPar", radius: parRadius, label: toParLabel },
+  { axis: "Par 5s", figure: "par5ToPar", radius: parRadius, label: toParLabel },
+];
+
+/** The golfer's shape on the radar, and the comparison's behind it when there is one. */
 export function buildRadarData(
-  kpis: AnalyticsKPIs,
-  scoringByPar: ScoringByParRow[],
-  profile?: BenchmarkProfile,
+  kpis: AnalyticsKpisDto,
+  scoringByPar: ScoringByParRowDto[],
+  benchmark?: BenchmarkShape | null,
 ): RadarEntry[] {
-  const clamp = (v: number) => Math.max(0, Math.min(100, v));
-
-  const hasGir  = kpis.gir_percentage != null;
-  const hasScr  = kpis.scrambling_percentage != null;
-  const hasPutt = kpis.putts_per_gir != null;
-
-  const girPct   = kpis.gir_percentage ?? 0;
-  const scrPct   = kpis.scrambling_percentage ?? 0;
-  const puttsRaw = kpis.putts_per_gir ?? 3.5;
-
-  const p = profile ?? { gir: 0, scrambling: 0, putting: 0, par3: 0, par4: 0, par5: 0 };
-  const parRow = (par: number) => scoringByPar.find((r) => r.par === par && r.sample_size > 0);
-
-  const benchPutts = 3.5 - (p.putting * 2.0) / 100;
-  const benchPar3  = 2.0 - (p.par3  * 2.5) / 100;
-  const benchPar4  = 2.0 - (p.par4  * 2.5) / 100;
-  const benchPar5  = 2.0 - (p.par5  * 2.5) / 100;
-
-  return [
-    {
-      axis: "GIR",
-      value: clamp(girPct),
-      benchmark: p.gir,
-      userRaw: girPct.toFixed(0) + "%",
-      benchRaw: p.gir + "%",
-      hasData: hasGir,
-    },
-    {
-      axis: "Scrambling",
-      value: clamp(scrPct),
-      benchmark: p.scrambling,
-      userRaw: scrPct.toFixed(0) + "%",
-      benchRaw: p.scrambling + "%",
-      hasData: hasScr,
-    },
-    {
-      axis: "Putting",
-      value: clamp(((3.5 - puttsRaw) / 2.0) * 100),
-      benchmark: p.putting,
-      userRaw: puttsRaw.toFixed(2) + "/GIR",
-      benchRaw: benchPutts.toFixed(2) + "/GIR",
-      hasData: hasPutt,
-    },
-    {
-      axis: "Par 3s",
-      value: clamp(((2.0 - (parRow(3)?.average_to_par ?? 2.0)) / 2.5) * 100),
-      benchmark: p.par3,
-      userRaw: parRow(3) ? fmtSign(parRow(3)!.average_to_par) : "—",
-      benchRaw: fmtSign(benchPar3),
-      hasData: !!parRow(3),
-    },
-    {
-      axis: "Par 4s",
-      value: clamp(((2.0 - (parRow(4)?.average_to_par ?? 2.0)) / 2.5) * 100),
-      benchmark: p.par4,
-      userRaw: parRow(4) ? fmtSign(parRow(4)!.average_to_par) : "—",
-      benchRaw: fmtSign(benchPar4),
-      hasData: !!parRow(4),
-    },
-    {
-      axis: "Par 5s",
-      value: clamp(((2.0 - (parRow(5)?.average_to_par ?? 2.0)) / 2.5) * 100),
-      benchmark: p.par5,
-      userRaw: parRow(5) ? fmtSign(parRow(5)!.average_to_par) : "—",
-      benchRaw: fmtSign(benchPar5),
-      hasData: !!parRow(5),
-    },
-  ];
+  const mine = shapeOf(kpis, scoringByPar);
+  return AXES.map(({ axis, figure, radius, label }) => ({
+    axis,
+    value: radius(mine[figure]),
+    benchmark: radius(benchmark?.[figure] ?? null),
+    userRaw: label(mine[figure]),
+    benchRaw: label(benchmark?.[figure] ?? null),
+    hasData: mine[figure] != null,
+  }));
 }

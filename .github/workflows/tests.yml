@@ -129,6 +129,10 @@ jobs:
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'types'
         run: npm run check:api
 
+      - name: Generated token CSS is current
+        if: needs.changes.outputs.frontend == 'true' && matrix.check == 'types'
+        run: npm run check:tokens
+
       - name: TypeScript
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'types'
         run: npm run typecheck
