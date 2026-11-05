@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
+import { RowButton } from "@/brand/components/Button";
 import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
@@ -63,14 +64,13 @@ export function RoundPreview(props: RoundPreviewProps) {
     );
     // A row that opens the round is a button, so a keyboard can reach and press it.
     return onClick ? (
-      <button
-        type="button"
+      <RowButton
         data-slot="round-preview"
-        className={cn(row, "w-full cursor-pointer text-left hover:bg-muted")}
+        className={cn(row, "w-full cursor-pointer hover:bg-muted")}
         onClick={onClick}
       >
         {content}
-      </button>
+      </RowButton>
     ) : (
       <div data-slot="round-preview" className={row}>
         {content}
