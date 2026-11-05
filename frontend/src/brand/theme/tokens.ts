@@ -656,5 +656,7 @@ export const chart = {
     strokeThin: 1.25,
     /** Corner radii: par's box is the softest, a double's inner box the tightest. */
     corner: { par: 3, outer: 2.5, box: 2, inner: 1.5 },
+    /** How far a box sits in from the view box, on every side. */
+    inset: 0.5,
   },
 };
