@@ -110,6 +110,8 @@ def test_flags_hard_coded_hole_counts(snippet):
     [
         "ok = handicap <= 18",
         "ok = holes_played == HOLES_PER_ROUND",
+        "HOLES_PER_NINE = 9",
+        "HOLES_PER_ROUND: int = 18",
         "ok = len(xs) > 10",
         "ok = score >= 9",
         "xs = range(1, 6)",

@@ -11,6 +11,7 @@ from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
 from api.schemas import UserResponse
 from models import User, UserTee
+from models.hole import HOLES_PER_ROUND
 
 router = APIRouter()
 
@@ -24,8 +25,8 @@ def _validate_hole_yardages_dict(value: Optional[dict]) -> Optional[dict]:
             hole_num = int(raw_k)
         except Exception as exc:
             raise ValueError("hole_yardages keys must be numeric hole numbers.") from exc
-        if not (1 <= hole_num <= 18):
-            raise ValueError("hole_yardages hole number must be between 1 and 18.")
+        if not (1 <= hole_num <= HOLES_PER_ROUND):
+            raise ValueError(f"hole_yardages hole number must be between 1 and {HOLES_PER_ROUND}.")
         if raw_v is not None and not (50 <= int(raw_v) <= 700):
             raise ValueError("hole_yardages value must be between 50 and 700.")
         out[hole_num] = int(raw_v) if raw_v is not None else None

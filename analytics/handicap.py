@@ -6,6 +6,7 @@ import math
 from datetime import date, datetime
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+from models.hole import HOLES_PER_ROUND
 from models.round import Round
 from models.user import User
 
@@ -98,7 +99,7 @@ def _get_differential_for_round(round_obj: Round) -> Optional[float]:
     tee = round_obj.get_tee()
     if tee is not None and tee.course_rating is not None and tee.slope_rating is not None:
         # Exclude 9-hole/partial rounds tracked against 18-hole course ratings
-        if holes_played < 18 and tee.course_rating >= 50.0:
+        if holes_played < HOLES_PER_ROUND and tee.course_rating >= 50.0:
             return None
         return score_differential(total, tee.course_rating, tee.slope_rating)
 
@@ -106,7 +107,7 @@ def _get_differential_for_round(round_obj: Round) -> Optional[float]:
     par = round_obj.get_par()
     if par is None:
         return None
-    if holes_played < 18 and par >= 50:
+    if holes_played < HOLES_PER_ROUND and par >= 50:
         return None
     return float(total - par)
 

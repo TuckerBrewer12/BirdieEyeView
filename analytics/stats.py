@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Optional, get_args
 
 from analytics.handicap import round_course_handicap, round_net_score
+from models.hole import BACK_NINE, FRONT_NINE, HOLES_PER_NINE, HOLES_PER_ROUND
 from models.hole_score import ScoreKind, score_kind
 from models.round import Round
 
@@ -312,14 +313,14 @@ def _lowest_9_with_event(round_set: List[Round]) -> tuple[Optional[int], Optiona
     best_event: Optional[Dict[str, str]] = None
     for round_obj in round_set:
         by_hole = {score.hole_number: score for score in _valid_hole_scores(round_obj) if score.hole_number is not None}
-        front_vals = [by_hole.get(i).strokes for i in range(1, 10) if by_hole.get(i) and by_hole.get(i).strokes is not None]
-        back_vals = [by_hole.get(i).strokes for i in range(10, 19) if by_hole.get(i) and by_hole.get(i).strokes is not None]
-        if len(front_vals) == 9:
+        front_vals = [by_hole.get(i).strokes for i in FRONT_NINE if by_hole.get(i) and by_hole.get(i).strokes is not None]
+        back_vals = [by_hole.get(i).strokes for i in BACK_NINE if by_hole.get(i) and by_hole.get(i).strokes is not None]
+        if len(front_vals) == HOLES_PER_NINE:
             score = sum(front_vals)
             if best is None or score < best:
                 best = score
                 best_event = _milestone_event(round_obj)
-        if len(back_vals) == 9:
+        if len(back_vals) == HOLES_PER_NINE:
             score = sum(back_vals)
             if best is None or score < best:
                 best = score
@@ -1453,7 +1454,7 @@ def hole_average_nines(by_hole: List[Dict[str, Any]]) -> Dict[str, Optional[floa
         averages = [row["average_score"] for row in by_hole if row["hole_number"] in holes]
         return sum(averages) if averages else None
 
-    return {"front_nine": total(range(1, 10)), "back_nine": total(range(10, 19)), "total": total(range(1, 19))}
+    return {"front_nine": total(FRONT_NINE), "back_nine": total(BACK_NINE), "total": total(range(1, HOLES_PER_ROUND + 1))}
 
 
 def course_difficulty_profile_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:

@@ -143,12 +143,13 @@ def _hole_count_findings(tree: ast.AST) -> Iterator[Finding]:
                 literal = next(c for c in counts if c in HOLE_COUNTS)
                 yield node.lineno, f"comparison against hard-coded hole count {literal}; {CONSTANT_HINT}."
 
-        # Assignments: `hole_count = 18`, `num_holes: int = 9`.
+        # Assignments: `hole_count = 18`, `num_holes: int = 9`. Defining the named constant
+        # itself (`HOLES_PER_NINE = 9`) is what this check asks for, so it passes.
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
             targets = node.targets if isinstance(node, ast.Assign) else [node.target]
             value = _int_const(node.value) if node.value is not None else None
             if value in HOLE_COUNTS and any(
-                isinstance(t, ast.Name) and "hole" in t.id.lower() for t in targets
+                isinstance(t, ast.Name) and "hole" in t.id.lower() and not t.id.isupper() for t in targets
             ):
                 yield node.lineno, f"hole count hard-coded as {value}; {CONSTANT_HINT}."
 

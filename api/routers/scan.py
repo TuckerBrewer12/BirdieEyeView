@@ -23,6 +23,7 @@ from api.input_validation import ensure_uuid_str, normalize_course_display_name,
 from api.request_models import SaveRoundRequest
 from api.schemas import ConfidenceLevel, OcrTextResponse, SaveScanResponse, ScanResponse
 from models import User
+from models.hole import HOLES_PER_NINE, HOLES_PER_ROUND
 from services.gemini_table_merger import merge_split_tables
 from services.mistral_ocr_service import MistralOCRService
 from services.mistral_scorecard_parser import ParsedScorecardRows, parse_mistral_scorecard_rows
@@ -219,7 +220,7 @@ def _build_round_from_parsed_rows(
     fields_needing_review: List[str] = list(parsed.warnings)
 
     known_course = course_model is not None
-    hole_count = 18
+    hole_count = HOLES_PER_ROUND
 
     # Known-course metadata from DB (local course object).
     course_name = None
@@ -235,7 +236,7 @@ def _build_round_from_parsed_rows(
         course_par = course_model.get_par()
         model_holes = getattr(course_model, "holes", []) or []
         if model_holes:
-            hole_count = min(18, len(model_holes))
+            hole_count = min(HOLES_PER_ROUND, len(model_holes))
         for i in range(1, hole_count + 1):
             hole_obj = next((h for h in model_holes if getattr(h, "number", None) == i), None)
             p = getattr(hole_obj, "par", None) if hole_obj is not None else None
@@ -269,7 +270,7 @@ def _build_round_from_parsed_rows(
             course_holes.append({"number": i, "par": par_i, "handicap": handicap})
             hole_par_lookup[i] = par_i
         par_vals = [p for p in hole_par_lookup.values() if p is not None]
-        if len(par_vals) >= 9:
+        if len(par_vals) >= HOLES_PER_NINE:
             course_par = sum(par_vals)
         for tr in _safe_list_attr("tee_rows"):
             yardage_map = {
