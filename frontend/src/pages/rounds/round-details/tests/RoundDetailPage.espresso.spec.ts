@@ -29,6 +29,28 @@ test("a hole cleared in edit mode takes the net score away until it is saved", a
   await roundDetail.seesNoNet();
 });
 
+test("shows the net Stableford points off the golfer's course handicap", async ({ roundDetail }) => {
+  await roundDetail.open(ratedHalfMoonBayRound, { fullCourses: [ratedHalfMoonBayCourse] });
+  // 78 off 12 is net 66, six under: 42 points.
+  await roundDetail.seesStableford(42);
+});
+
+test("a round with no course handicap shows no Stableford points", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.seesScore(78);
+  await roundDetail.seesNoStableford();
+});
+
+test("a score typed in edit mode moves the Stableford points with it", async ({ roundDetail }) => {
+  await roundDetail.open(ratedHalfMoonBayRound, { fullCourses: [ratedHalfMoonBayCourse] });
+  await roundDetail.tapEdit();
+  // The first is stroke index 1: a 6 there is a net bogey, one point fewer than the net par.
+  await roundDetail.typeStrokes(1, 6);
+  await roundDetail.seesStableford(41);
+  await roundDetail.clearStrokes(1);
+  await roundDetail.seesNoStableford();
+});
+
 test("edit then cancel returns to the view actions", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapEdit();

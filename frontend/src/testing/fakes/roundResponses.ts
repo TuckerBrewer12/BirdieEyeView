@@ -94,6 +94,21 @@ function courseHandicap(round: StoredRound): number | null {
   return holesPlayed(round) >= 18 ? (teePlayed(round)?.course_handicap ?? null) : null;
 }
 
+/** Net Stableford points, as analytics/handicap.py `round_stableford` works them out. */
+function stableford(round: StoredRound, handicap: number | null): number | null {
+  if (handicap == null) return null;
+  const scored = round.hole_scores.filter((h) => h.strokes != null);
+  const holes = scored.map((h) => ({ strokes: h.strokes!, par: holePar(round, h), index: holeHandicap(round, h) }));
+  if (holes.some((h) => h.par == null || h.index == null)) return null;
+  const indexes = holes.map((h) => h.index!).sort((a, b) => a - b);
+  if (indexes.length !== 18 || indexes.some((index, i) => index !== i + 1)) return null;
+  const laps = Math.floor(Math.abs(handicap) / 18);
+  const extra = Math.abs(handicap) % 18;
+  const received = (index: number) =>
+    handicap >= 0 ? laps + (index <= extra ? 1 : 0) : -(laps + (index > 18 - extra ? 1 : 0));
+  return sum(holes.map((h) => Math.max(0, 2 + h.par! + received(h.index!) - h.strokes)));
+}
+
 function nineTotal(holes: StoredHole[], first: number, last: number): number | null {
   const strokes = holes
     .filter((h) => h.hole_number >= first && h.hole_number <= last && h.strokes != null)
@@ -184,6 +199,7 @@ export function roundResponse(round: StoredRound): RoundDto {
     hole_scores: holes,
     course_handicap: handicap,
     net_score: handicap != null && figured.total_score != null ? figured.total_score - handicap : null,
+    stableford_points: stableford(round, handicap),
   };
 }
 

@@ -1826,6 +1826,7 @@ export const sampleGolfer = {
       "notes": null,
       "par": 72,
       "score_counts": {"birdie": 1, "bogey": 4, "double": 0, "eagle": 0, "par": 13, "quad": 0, "triple": 0},
+      "stableford_points": 40,
       "tee_box": "Blue",
       "to_par": 3,
       "total_gir": 11,

@@ -70,8 +70,11 @@ const ninePlayed = round(
 export default function RoundDetailHeaderPreview() {
   return (
     <>
-      {/* Everything present: date, rated tee, net, both nines, stats, chips. */}
-      <RoundDetailHeader round={{ ...everyBucket, courseHandicap: 12, netScore: 73 }} teeRating="72.4 / 130" />
+      {/* Everything present: date, rated tee, net, both nines, stats with Stableford points, chips. */}
+      <RoundDetailHeader
+        round={{ ...everyBucket, courseHandicap: 12, netScore: 73, stablefordPoints: 35 }}
+        teeRating="72.4 / 130"
+      />
 
       {/* Level par, to check it reads green rather than red. */}
       <RoundDetailHeader round={levelPar} />

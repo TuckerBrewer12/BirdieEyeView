@@ -95,6 +95,8 @@ export interface Round extends RoundSummary {
   /** The golfer's strokes off the tee played, from their own index. Null without ratings, and for a nine. */
   courseHandicap: number | null;
   netScore: number | null;
+  /** Net Stableford points off that course handicap. Null without one, or without a par and a distinct stroke index on all 18 holes. */
+  stablefordPoints: number | null;
 }
 
 /** Unsaved changes to holes. A field left undefined keeps the hole's own value. */
@@ -209,6 +211,7 @@ function fromDto(dto: RoundDto): Round {
     holesPlayed: dto.holes_played,
     courseHandicap: dto.course_handicap,
     netScore: dto.net_score,
+    stablefordPoints: dto.stableford_points,
     bestRank: null,
   };
 }
@@ -237,6 +240,31 @@ function puttsOf(holes: HoleScore[]): number | null {
 function girOf(holes: HoleScore[]): number | null {
   const recorded = holes.filter((hole) => hole.gir != null);
   return recorded.length > 0 ? recorded.filter((hole) => hole.gir).length : null;
+}
+
+/**
+ * The strokes a course handicap gets on the hole with this stroke index, as analytics/handicap.py
+ * places them: hardest hole first, then round again past 18; a plus handicap gives them back from
+ * the easiest hole.
+ */
+function strokesReceived(courseHandicap: number, strokeIndex: number): number {
+  const laps = Math.floor(Math.abs(courseHandicap) / 18);
+  const extra = Math.abs(courseHandicap) % 18;
+  if (courseHandicap >= 0) return laps + (strokeIndex <= extra ? 1 : 0);
+  return -(laps + (strokeIndex > 18 - extra ? 1 : 0));
+}
+
+/** Net Stableford points, as analytics/handicap.py `round_stableford` works them out. */
+function stablefordOf(holes: HoleScore[], courseHandicap: number | null): number | null {
+  if (courseHandicap == null) return null;
+  const scored = holes.filter((hole) => hole.strokes != null);
+  if (scored.some((hole) => hole.par == null || hole.handicap == null)) return null;
+  const indexes = scored.map((hole) => hole.handicap!).sort((a, b) => a - b);
+  if (indexes.length !== 18 || indexes.some((index, i) => index !== i + 1)) return null;
+  return scored.reduce(
+    (sum, hole) => sum + Math.max(0, 2 + hole.par! + strokesReceived(courseHandicap, hole.handicap!) - hole.strokes!),
+    0,
+  );
 }
 
 /**
@@ -313,6 +341,7 @@ function previewEdits(round: Round, edits: HoleEdits, course?: CourseDto | null,
     holesPlayed: scored.length,
     courseHandicap,
     netScore: courseHandicap != null && score != null ? score - courseHandicap : null,
+    stablefordPoints: stablefordOf(holes, courseHandicap),
   };
 }
 
@@ -368,6 +397,7 @@ function fromScan(scan: ScannedRoundDto): Round {
     holesPlayed: 0,
     courseHandicap: null,
     netScore: null,
+    stablefordPoints: null,
   };
   return previewEdits(unread, {}, course, scan.tee_box);
 }
