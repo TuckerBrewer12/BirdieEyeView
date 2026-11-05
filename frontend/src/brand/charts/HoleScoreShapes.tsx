@@ -7,7 +7,7 @@ interface HoleScoreShapesProps {
   numbered?: boolean;
 }
 
-const { width: VB_W, height: VB_H, circle: r, dot, stroke, strokeThin, corner } = tokens.chart.holeShape;
+const { width: VB_W, height: VB_H, inset, circle: r, dot, stroke, strokeThin, corner } = tokens.chart.holeShape;
 const cx = VB_W / 2;
 const cy = VB_H / 2;
 
@@ -34,10 +34,10 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
       )}
       {kind === "birdie" && <circle cx={cx} cy={cy} r={r} fill={fill} />}
       {kind === "par" && (
-        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={corner.par} fill={fill} />
+        <rect x={inset} y={inset} width={VB_W - inset * 2} height={VB_H - inset * 2} rx={corner.par} fill={fill} />
       )}
       {kind === "bogey" && (
-        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={corner.box} fill={fill} />
+        <rect x={inset} y={inset} width={VB_W - inset * 2} height={VB_H - inset * 2} rx={corner.box} fill={fill} />
       )}
       {kind === "double" && (
         <>

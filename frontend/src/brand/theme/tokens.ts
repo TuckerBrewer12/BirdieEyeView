@@ -647,6 +647,8 @@ export const chart = {
   holeShape: {
     width: size["hole-w"],
     height: size["hole-h"],
+    /** How far a filled box sits in from each edge of the view box. */
+    inset: 0.5,
     circle: 9.5,
     /** The eagle's dot inside its circle. */
     dot: 5,
