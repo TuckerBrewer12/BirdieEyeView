@@ -4,9 +4,10 @@ Rules to catch, at lint time, the mistakes AI-written PRs keep making and review
 flagging after the push. Built from every PR comment and review (~1,200), the 134 bot fix PRs,
 the owner's own review comments and saved preferences, and the fix history on `main`.
 
-`[x]` is in the MVP draft PR. `[ ]` is proposed, not built yet. Counts are violations on the
-branch today; per repo policy, rules land failing and the violations get fixed, with no
-exemption lists.
+`[x]` is built (#374). `[ ]` is proposed, not built yet. Counts are the violations each rule
+found on 2026-10-22, when this was written. Each `[x]` rule landed with fixes for everything it
+found, with no exemption lists; on 2026-11-04 the golf, kit and view rules widened from the
+first refactored pages to every page.
 
 ## What the history shows
 
@@ -56,10 +57,9 @@ exemption lists.
 
 ## 3. Owner preferences, enforced
 
-- [x] No `@/components` imports from refactored code: 2 today (`DashboardPage.tsx:5`,
-      `RoundDetailPage.tsx:20`)
-- [x] Colour-blind mode: ban `colorBlind*` names and `@/lib/accessibility`/`chartPalettes`
-      imports: 127 + 14 today (feature removal); stale CLAUDE.md line rewritten
+- ~~No `@/components` imports from refactored code~~: dropped, `src/components` is gone (#458)
+- ~~Colour-blind mode: ban `colorBlind*` names and `@/lib/accessibility` imports~~: dropped,
+  the feature is gone (#458)
 - [x] Theme is CSS: ban `useTheme().resolved` and `classList.contains('dark')`: 2 today
 - [x] `test:screenshots:update` uses `--update-snapshots=all`
 - [x] Kit and page components don't import `@/types/api`/`@/types/golf`: 12 today
