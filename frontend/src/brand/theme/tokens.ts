@@ -468,7 +468,7 @@ export const motion = {
   /** A section fading up as it scrolls into view (`Reveal`). */
   reveal: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as Ease },
   /** The card being read while a scan runs: it breathes, a line sweeps it, its corners pulse, the step rail fills. */
-  scanProgress: { breathe: 2.6, sweep: 1.6, pulse: 1.8, step: 0.4 },
+  scanProgress: { breathe: 2.6, sweep: 1.6, pulse: 1.8, cornerStagger: 0.45, step: 0.4 },
   /** The try-it panel moving between its steps. */
   scanStep: { upload: 0.3, processing: 0.25, review: 0.35 },
   /**
@@ -656,5 +656,14 @@ export const chart = {
     strokeThin: 1.25,
     /** Corner radii: par's box is the softest, a double's inner box the tightest. */
     corner: { par: 3, outer: 2.5, box: 2, inner: 1.5 },
+    /** How far each box sits inside the mark: half a pixel keeps the edge crisp; a double's inner box sits deeper. */
+    inset: { box: 0.5, inner: 2.5 },
+    /** The triple's hatching, as `[x1, y1, x2, y2]` lines across the box. */
+    hatch: [
+      [0, 7, 7, 0],
+      [0, 18, 18, 0],
+      [0, size["hole-h"], size["hole-w"], 0],
+      [14, size["hole-h"], size["hole-w"], 8],
+    ],
   },
 };
