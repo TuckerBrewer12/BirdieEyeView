@@ -1,7 +1,7 @@
 /**
  * Lint rules for styling that skips the brand kit's tokens.
  *
- * Every colour and measure has a token in brand/theme/tokens.css and a Tailwind utility made
+ * Every colour and measure has a token in brand/theme/tokens.ts and a Tailwind utility made
  * from it (text-body, w-preview, bg-score-birdie-base). tokens.test.ts already scans
  * src/brand for raw lengths and colours; these rules catch the same mistakes in any file's
  * class strings, as you type. The rules for numbers outside class strings (motion, inline
@@ -106,7 +106,7 @@ const noArbitraryValue = {
     messages: {
       arbitrary:
         "`{{value}}` is an arbitrary Tailwind length. Use the token utility for it (text-body, w-preview, " +
-        "h-hole-h…), or add a token to brand/theme/tokens.css if there is none.",
+        "h-hole-h…), or add a token to brand/theme/tokens.ts if there is none.",
     },
   },
   create(context) {
@@ -155,10 +155,10 @@ const noOpacityWash = {
     messages: {
       opacity:
         "`{{value}}` fades a colour by hand. Use its `-muted` token (bg-score-birdie-muted, bg-muted), a named " +
-        "opacity (bg-primary/wash), or add an opacity token to brand/theme/tokens.css.",
+        "opacity (bg-primary/wash), or add an opacity token to brand/theme/tokens.ts.",
       stop:
         "`{{value}}` is a hand-picked gradient stop. Let the stops fall evenly, or add a token for the position to " +
-        "brand/theme/tokens.css.",
+        "brand/theme/tokens.ts.",
     },
   },
   create(context) {
@@ -179,7 +179,7 @@ const noFractionSize = {
     messages: {
       fraction:
         "`{{value}}` is a fraction off the layout grid. Halves, thirds, quarters, sixths and twelfths are fine; for " +
-        "anything else add a size token to brand/theme/tokens.css (like --brand-size-profile-*) and use its utility.",
+        "anything else add a size token to brand/theme/tokens.ts (like the `profile-*` sizes) and use its utility.",
     },
   },
   create(context) {
