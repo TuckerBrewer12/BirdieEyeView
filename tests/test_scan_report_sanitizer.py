@@ -6,16 +6,22 @@ import pytest
 from PIL import Image
 
 from services import scan_report_sanitizer as sanitizer
+from services.scan_report_sanitizer import JPEG_HEADER_INFO_KEYS
 from tests.scan_report_fixtures import IDENTIFIER, pdf_card, png_card
 
 
-def test_png_removes_identifiers_but_preserves_pixels_and_dimensions():
+def mean_difference(a, b):
+    return sum(abs(x - y) for x, y in zip(a.convert("RGB").tobytes(), b.convert("RGB").tobytes())) / (a.width * a.height * 3)
+
+
+def test_png_removes_identifiers_and_keeps_the_card_nearly_identical():
     source = png_card() + b"trailing-" + IDENTIFIER.encode()
     clean, media_type = sanitizer.sanitize_scorecard(source, "image/png")
-    assert media_type == "image/png" and IDENTIFIER.encode() not in clean
+    assert media_type == "image/jpeg" and IDENTIFIER.encode() not in clean
     with Image.open(BytesIO(source)) as a, Image.open(BytesIO(clean)) as b:
-        assert a.size == b.size and a.tobytes() == b.tobytes()
-        assert not b.info and not b.getexif()
+        # Stored as the scanner's JPEG: same size, not pixel-exact, visibly the same card.
+        assert b.format == "JPEG" and a.size == b.size and mean_difference(a, b) < 2
+        assert set(b.info) <= JPEG_HEADER_INFO_KEYS and not b.getexif()
 
 
 def test_jpeg_orientation_is_applied_without_exif_gps_or_comments():
@@ -30,7 +36,7 @@ def test_jpeg_orientation_is_applied_without_exif_gps_or_comments():
     with Image.open(BytesIO(clean)) as result:
         assert result.size == (10, 30)
         assert result.getpixel((0, 0))[0] > 240
-        assert not result.getexif() and not result.info
+        assert not result.getexif() and set(result.info) <= JPEG_HEADER_INFO_KEYS
     assert IDENTIFIER.encode() not in clean
 
 
@@ -44,9 +50,9 @@ def test_other_supported_images_are_reencoded_without_metadata(fmt, media_type):
     with Image.new("RGB", (20, 10), "white") as source:
         source.save(output, fmt, exif=exif)
     clean, actual_type = sanitizer.sanitize_scorecard(output.getvalue(), media_type)
-    assert actual_type == "image/png" and IDENTIFIER.encode() not in clean
+    assert actual_type == "image/jpeg" and IDENTIFIER.encode() not in clean
     with Image.open(BytesIO(clean)) as image:
-        assert image.size == (20, 10) and not image.info
+        assert image.size == (20, 10) and set(image.info) <= JPEG_HEADER_INFO_KEYS
 
 
 def test_pdf_rebuild_removes_hidden_text_properties_attachments_and_xmp():
@@ -112,3 +118,29 @@ def test_password_protected_pdf_is_rejected():
     writer.write(output)
     with pytest.raises(sanitizer.ReportSanitizationError):
         sanitizer.sanitize_scorecard(output.getvalue(), "application/pdf")
+
+
+def test_phone_photo_is_stored_at_the_scanners_size_without_location():
+    output = BytesIO()
+    exif = Image.Exif()
+    exif[315] = IDENTIFIER
+    exif[34853] = {1: "N", 2: (40.0, 1.0, 1.0)}  # GPS
+    with Image.effect_noise((4032, 3024), 40).convert("RGB") as photo:  # camera-like detail
+        photo.save(output, "JPEG", quality=92, exif=exif)
+    source = output.getvalue()
+    clean, media_type = sanitizer.sanitize_scorecard(source, "image/jpeg")
+    assert media_type == "image/jpeg" and IDENTIFIER.encode() not in clean
+    with Image.open(BytesIO(clean)) as image:
+        assert image.format == "JPEG" and image.size == (2000, 1500)  # long edge capped, aspect kept
+        assert not image.getexif() and set(image.info) <= JPEG_HEADER_INFO_KEYS
+    assert len(clean) < len(source) / 2  # a lossless full-size PNG was larger than the photo itself
+
+
+def test_transparent_areas_become_white_paper():
+    output = BytesIO()
+    with Image.new("RGBA", (20, 10), (0, 0, 0, 0)) as card:
+        card.putpixel((1, 1), (0, 100, 0, 255))
+        card.save(output, "PNG")
+    clean, _ = sanitizer.sanitize_scorecard(output.getvalue(), "image/png")
+    with Image.open(BytesIO(clean)) as image:
+        assert image.mode == "RGB" and min(image.getpixel((15, 8))) > 245

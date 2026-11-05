@@ -31,7 +31,8 @@ class StoredMetadata(BaseModel):
     category: FailureCategory
     stage: FailureStage
     http_status: int | None = Field(ge=100, le=599)
-    media_type: Literal["image/png", "application/pdf"]
+    # Images are stored as JPEG; reports saved before that change hold PNG and must stay readable.
+    media_type: Literal["image/jpeg", "image/png", "application/pdf"]
 
 
 @dataclass(frozen=True)
