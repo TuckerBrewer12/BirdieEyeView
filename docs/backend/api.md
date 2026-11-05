@@ -17,7 +17,7 @@
 | `stats.py` | Dashboard, analytics, comparison, handicap-related responses, and goal reports. |
 | `ai_insights.py` | Rule-based insight service endpoint. |
 
-These files are in [api/routers](../../api/routers). Request and response definitions live in `request_models.py`, `schemas.py`, and purpose-specific auth/report schema modules. `auth_utils.py`, `security.py`, rate limiters, and notification helpers support the request boundary.
+These files are in [api/routers](../../api/routers). Every request body is defined in [request_models.py](../../api/request_models.py) and every response model in [schemas.py](../../api/schemas.py) (plus purpose-specific auth/report schema modules); routers import them and define none of their own. Class and field names are part of the OpenAPI contract the frontend generates its types from, so keep them stable. The status routes (`/`, `/health`, `/api/health`) serve GET and HEAD for health checks but are kept out of the schema, so every operation ID is unique and the schema is the same in every process. `auth_utils.py`, `security.py`, rate limiters, and notification helpers support the request boundary.
 
 ## Typical request
 
@@ -25,7 +25,17 @@ A frontend query calls an API helper; the router resolves authentication/databas
 
 ## Changing this domain
 
-Keep parsing, authorization, HTTP statuses, and public error translation here. Match resource ownership on every read/write path; a frontend `userId` is not proof of authorization. Do not translate intended validation/404 errors into generic 500s. Preserve omitted-versus-null semantics for updates and coordinate request/model/schema constraints.
+Keep parsing, authorization, HTTP statuses, and public error translation here. Reply text comes from two catalogs: [messages.py](../../api/messages.py) for client errors, rate limits and success replies, and [error_responses.py](../../api/error_responses.py) for the generic text of every 5xx reply, which never carries exception details. [test_api_messages.py](../../tests/test_api_messages.py) enforces both rules. Match resource ownership on every read/write path; a frontend `userId` is not proof of authorization. Do not translate intended validation/404 errors into generic 500s. Preserve omitted-versus-null semantics for updates and coordinate request/model/schema constraints.
+
+Request numeric limits follow the domain models rather than defining their own: ratings, yardages and goals match [tee.py](../../models/tee.py) and [user.py](../../models/user.py). Every per-hole yardage map goes through `normalize_hole_yardages` in [request_models.py](../../api/request_models.py), which drops unknown entries and rejects a hole listed twice. Course rows the database keeps unique (hole numbers, handicap ranks, tee names in any case) are rejected at the request. Free-text request fields share one sanitizer rule (`sanitized_text`) under their own field name and limit. Round edits reuse `HoleScoreInput`, which does not accept `net_score`: a per-hole net score has no defined meaning yet, so responses still carry the stored value but requests cannot set it. Course creation takes no holes, holes 1–9, or holes 1–18.
+
+A course a user links to their own data (profile or registration home course, user tee) must be a master course or one they own; [course_access.py](../../api/course_access.py) holds that rule, and a registering user can only pick a master course. Expected repository errors map to 4xx: duplicates to 409, invalid values to 422, missing records to 404, and a missing referenced course to 400.
+
+Round, course, user and user-tee detail endpoints declare response models in [schemas.py](../../api/schemas.py) that freeze the fields those endpoints returned before. They are built from the domain model's serialized form, so computed values such as course par and round totals are kept, and a new domain field doesn't appear in the JSON until it is added there.
+
+Stats endpoints ([stats.py](../../api/routers/stats.py)) follow the [Analytics](analytics.md) rules: dashboard and analytics totals come from complete rounds by format, with nine-hole fields (`scoring_average_nine`, `best_round_nine`, …) alongside the 18-hole ones. Lifetime achievements, milestones, round comparison, course analytics and dashboard totals read the full history (`limit=None` on the round repository); recent windows keep their `limit`. The handicap shown anywhere is the user's current index from the full unfiltered history and their seed/reset. Empty and populated analytics responses come from the same code path. `course_id=home` with no home course returns an empty result. The goal report returns 404 for a missing user and 400 only when neither goal is set. Saving a round with no score is a 422.
+
+Course search (`GET /api/courses/search`) returns the user's own courses first, then master courses. With `include_external=true` it calls the golf course API only when the database has no match, and it does not attach provider IDs to local results. `POST /api/scan/save` returns 422 with a user-facing message when the save is rejected (no course, incomplete new course, invalid values); see [services](services.md) for the save rules.
 
 The report endpoint intentionally follows a separate anonymous path and does not require user/database resolution. Its contract is in [failed-scan reports](../failed-scan-reports.md).
 

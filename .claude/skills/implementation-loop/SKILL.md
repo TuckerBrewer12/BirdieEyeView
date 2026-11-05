@@ -1,6 +1,6 @@
 ---
 name: implementation-loop
-description: "Project-specific backend implementation and test iteration skill for the Golf ScoreCard app. Use only after the user approves an implementation plan, to edit code, add unit tests, run focused validation, iterate on failures, and finish without committing."
+description: Project-specific backend implementation, test iteration, and completion review skill for the Golf ScoreCard app. Use only after the user approves an implementation plan, to edit code, validate behavior, review for missed gaps, and finish without committing.
 ---
 
 # Implementation Loop (Claude Code wrapper)

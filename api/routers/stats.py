@@ -5,10 +5,12 @@ from typing import Literal, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from database.db_manager import DatabaseManager
+from api.messages import FORBIDDEN, NO_ROUNDS_FOUND, NO_SCORING_GOAL, ROUND_NOT_IN_HISTORY, USER_NOT_FOUND
 from api.dependencies import get_current_user, get_db
 from api.input_validation import ensure_uuid_str
 from models import User
 from api.schemas import DashboardResponse, RoundSummaryResponse
+from analytics import eligibility as el
 from analytics import stats as analytics
 from analytics import handicap as hcap
 
@@ -22,27 +24,16 @@ async def get_dashboard(
     current_user: User = Depends(get_current_user),
 ):
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     user = await db.users.get_user(str(user_id))
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, USER_NOT_FOUND)
 
-    # Single aggregate query for all summary stats (no hole_score fetches)
-    summaries = await db.rounds.get_round_summaries_for_user(str(user_id), limit=500, offset=0)
-
-    scores = [r["total_score"] for r in summaries if r["total_score"] is not None]
-    putts = [r["total_putts"] for r in summaries if r["total_putts"] is not None]
-    girs = [r["total_gir"] for r in summaries if r["total_gir"] is not None]
-
-    best_score = min(scores) if scores else None
-    best_round_id = None
-    best_course = None
-    if best_score is not None:
-        for r in summaries:
-            if r["total_score"] == best_score:
-                best_round_id = str(r["id"])
-                best_course = r["course_name"]
-                break
+    # Single aggregate query over the full history (no hole_score fetches). Round totals come
+    # from complete rounds by format; nine-hole rounds are reported alongside, never doubled.
+    summaries = await db.rounds.get_round_summaries_for_user(str(user_id), limit=None, offset=0)
+    eighteen = _format_totals(summaries, 18)
+    nine = _format_totals(summaries, 9)
 
     # Build recent_rounds response objects from summaries (first 5)
     def _summary_to_response(row: dict) -> RoundSummaryResponse:
@@ -55,11 +46,7 @@ async def get_dashboard(
             tee_box=row["tee_box"],
             date=row["round_date"],
             total_score=row["total_score"],
-            to_par=(
-                (row["total_score"] - row["course_par"])
-                if row["total_score"] is not None and row["course_par"] is not None
-                else None
-            ),
+            to_par=row["to_par"],
             front_nine=row["front_nine"],
             back_nine=row["back_nine"],
             total_putts=row["total_putts"],
@@ -70,31 +57,63 @@ async def get_dashboard(
 
     recent_rounds = [_summary_to_response(r) for r in summaries[:5]]
 
-    # Handicap index only needs the last 20 rounds (full model required for differentials)
-    hi_rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=20, offset=0)
-    rounds_chrono = list(reversed(hi_rounds_desc))
-    calculated_hi = hcap.handicap_index(rounds_chrono)
+    # Same handicap as every other screen: full history plus the user's seed and reset date.
+    history = await db.rounds.get_rounds_for_user(str(user_id), limit=None, offset=0)
+    calculated_hi = hcap.user_handicap_index(history, user)
 
     return DashboardResponse(
         total_rounds=len(summaries),
-        scoring_average=round(sum(scores) / len(scores), 1) if scores else None,
-        best_round=best_score,
-        best_round_id=best_round_id,
-        best_round_course=best_course,
+        scoring_average=eighteen["average"],
+        best_round=eighteen["best"],
+        best_round_id=eighteen["best_id"],
+        best_round_course=eighteen["best_course"],
         handicap_index=calculated_hi,
         recent_rounds=recent_rounds,
-        average_putts=round(sum(putts) / len(putts), 1) if putts else None,
-        average_gir=round(sum(girs) / len(girs), 1) if girs else None,
+        average_putts=eighteen["average_putts"],
+        average_gir=eighteen["average_gir"],
+        scoring_average_nine=nine["average"],
+        best_round_nine=nine["best"],
+        best_round_nine_id=nine["best_id"],
+        best_round_nine_course=nine["best_course"],
+        average_putts_nine=nine["average_putts"],
+        average_gir_nine=nine["average_gir"],
     )
 
 
-def _build_handicap_trend(hi_rounds, display_rounds):
-    """Compute rolling HI trend from hi_rounds, slice to display window, then annotate
-    used_in_hi based only on the displayed rounds so green count matches WHS best-N."""
-    full = hcap.handicap_trend(hi_rounds)
-    sliced = full[-len(display_rounds):]
-    hcap.annotate_used_in_hi(sliced)
-    return sliced
+def _format_totals(summaries: list, holes: int) -> dict:
+    """Average/best score, putts and GIR over complete rounds of one format (newest best wins ties)."""
+    rows = [
+        r for r in summaries
+        if r.get("is_complete") and r.get("hole_count") == holes and r["total_score"] is not None
+    ]
+
+    def average(key: str) -> Optional[float]:
+        values = [r[key] for r in rows if r[key] is not None]
+        return round(sum(values) / len(values), 1) if values else None
+
+    best = min(rows, key=lambda r: r["total_score"]) if rows else None
+    return {
+        "average": average("total_score"),
+        "best": best["total_score"] if best else None,
+        "best_id": str(best["id"]) if best else None,
+        "best_course": best["course_name"] if best else None,
+        "average_putts": average("total_putts"),
+        "average_gir": average("total_gir"),
+    }
+
+
+def _build_handicap_trend(history, display_rounds, user):
+    """Index trend over the full calculation history, shown only for the displayed rounds.
+
+    ``used_in_hi`` marks the rounds the current index actually uses (from the whole history),
+    so filters and the display window never change which rounds count.
+    """
+    full = hcap.handicap_trend(history, seed_handicap=user.handicap, seed_set_at=user.last_handicap_update)
+    shown = {str(r.id) for r in display_rounds}
+    entries = [entry for entry in full if str(entry["round_id"]) in shown]
+    for index, entry in enumerate(entries, start=1):
+        entry["round_index"] = index
+    return entries
 
 
 @router.get("/analytics/{user_id}")
@@ -110,16 +129,18 @@ async def get_analytics(
     target_user_id = str(user_id)
     can_view = viewer_id == target_user_id or await db.friendships.are_friends(viewer_id, target_user_id)
     if not can_view:
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     user = await db.users.get_user(target_user_id)
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, USER_NOT_FOUND)
 
-    # Resolve course_id filter
+    # Resolve course_id filter. "home" with no home course matches nothing, never all courses.
     resolved_course_id: Optional[str] = None
+    no_matching_course = False
     if course_id and course_id not in ("all", ""):
         if course_id == "home":
             resolved_course_id = str(user.home_course_id) if user.home_course_id else None
+            no_matching_course = resolved_course_id is None
         else:
             try:
                 resolved_course_id = ensure_uuid_str(course_id, "course_id")
@@ -134,195 +155,43 @@ async def get_analytics(
     elif timeframe == "1y":
         date_from = today - timedelta(days=365)
 
-    # DB returns newest-first; reverse for chronological trend ordering
-    rounds_desc = await db.rounds.get_rounds_for_user(
-        target_user_id, limit=limit, offset=0,
-        course_id=resolved_course_id,
-        date_from=date_from,
-    )
-    rounds = list(reversed(rounds_desc))
+    rounds: list = []
+    lifetime_rounds: list = []
+    if not no_matching_course:
+        # DB returns newest-first; reverse for chronological trend ordering
+        rounds_desc = await db.rounds.get_rounds_for_user(
+            target_user_id, limit=limit, offset=0,
+            course_id=resolved_course_id,
+            date_from=date_from,
+        )
+        rounds = list(reversed(rounds_desc))
 
-    # Fetch up to 19 extra rounds so handicap_trend uses a true rolling 20-round window
-    hi_rounds_desc = await db.rounds.get_rounds_for_user(
-        target_user_id, limit=limit + 19, offset=0,
-        course_id=resolved_course_id,
-        date_from=date_from,
-    )
-    hi_rounds = list(reversed(hi_rounds_desc))
+        # Lifetime achievements use the full history for the selected course (no limit or timeframe).
+        lifetime_rounds = list(reversed(await db.rounds.get_rounds_for_user(
+            target_user_id, limit=None, offset=0, course_id=resolved_course_id,
+        )))
 
-    if not rounds:
-        return {
-            "kpis": {
-                "scoring_average": None,
-                "gir_percentage": None,
-                "putts_per_gir": None,
-                "scrambling_percentage": None,
-                "up_and_down_percentage": None,
-                "handicap_index": None,
-                "total_rounds": 0,
-            },
-            "score_trend": [],
-            "net_score_trend": [],
-            "gir_trend": [],
-            "putts_trend": [],
-            "three_putts_trend": [],
-            "scrambling_trend": [],
-            "up_and_down_trend": [],
-            "score_type_distribution": [],
-            "scoring_by_par": [],
-            "scoring_by_handicap": [],
-            "gir_vs_non_gir": [],
-            "handicap_trend": [],
-            "score_differentials": [],
-            "notable_achievements": {
-                "scoring_records": {
-                    "lifetime": {},
-                    "one_year": {},
-                },
-                "scoring_records_events": {
-                    "lifetime": {},
-                    "one_year": {},
-                },
-                "career_totals": {
-                    "lifetime": {},
-                    "one_year": {},
-                },
-                "best_performance_streaks": {
-                    "lifetime": {},
-                    "one_year": {},
-                },
-                "best_performance_streaks_events": {
-                    "lifetime": {},
-                    "one_year": {},
-                },
-                "home_course_records": {
-                    "lifetime": {
-                        "home_course_name": None,
-                        "lowest_score_on_home_course": None,
-                        "most_rounds_played_at_home_course": 0,
-                    },
-                    "one_year": {
-                        "home_course_name": None,
-                        "lowest_score_on_home_course": None,
-                    },
-                },
-                "home_course_records_events": {
-                    "lifetime": {
-                        "lowest_score_on_home_course": None,
-                    },
-                    "one_year": {
-                        "lowest_score_on_home_course": None,
-                    },
-                },
-                "putting_milestones": {
-                    "lifetime": {
-                        "fewest_putts_in_round": None,
-                        "most_1_putts_in_round": None,
-                        "most_3_putts_in_round": None,
-                        "putt_breaks": [
-                            {"threshold": 45, "achievement": None},
-                            {"threshold": 42, "achievement": None},
-                            {"threshold": 39, "achievement": None},
-                            {"threshold": 36, "achievement": None},
-                            {"threshold": 33, "achievement": None},
-                            {"threshold": 30, "achievement": None},
-                            {"threshold": 27, "achievement": None},
-                            {"threshold": 24, "achievement": None},
-                            {"threshold": 21, "achievement": None},
-                        ],
-                    },
-                    "one_year": {
-                        "fewest_putts_in_round": None,
-                        "most_1_putts_in_round": None,
-                        "most_3_putts_in_round": None,
-                        "putting_milestones_achieved_from_lifetime_set": 0,
-                    },
-                },
-                "putting_milestones_events": {
-                    "lifetime": {
-                        "fewest_putts_in_round": None,
-                        "most_1_putts_in_round": None,
-                        "most_3_putts_in_round": None,
-                    },
-                    "one_year": {
-                        "fewest_putts_in_round": None,
-                        "most_1_putts_in_round": None,
-                        "most_3_putts_in_round": None,
-                    },
-                },
-                "gir_milestones": {
-                    "lifetime": {
-                        "gir_breaks": [
-                            {"threshold": 3, "achievement": None},
-                            {"threshold": 6, "achievement": None},
-                            {"threshold": 9, "achievement": None},
-                            {"threshold": 12, "achievement": None},
-                            {"threshold": 15, "achievement": None},
-                            {"threshold": 18, "achievement": None},
-                        ],
-                        "highest_gir_percentage_in_round": None,
-                        "most_gir_in_round": None,
-                    },
-                    "one_year": {
-                        "best_gir_round": None,
-                        "best_gir_in_round": None,
-                        "highest_gir_percentage": None,
-                        "gir_milestones_achieved_from_lifetime_set": 0,
-                    },
-                },
-                "gir_milestones_events": {
-                    "lifetime": {
-                        "highest_gir_percentage_in_round": None,
-                        "most_gir_in_round": None,
-                    },
-                    "one_year": {
-                        "best_gir_round": None,
-                        "highest_gir_percentage": None,
-                    },
-                },
-                "round_milestones": {
-                    "lifetime": {
-                        "score_breaks": [
-                            {"threshold": 120, "achievement": None},
-                            {"threshold": 110, "achievement": None},
-                            {"threshold": 100, "achievement": None},
-                            {"threshold": 95, "achievement": None},
-                            {"threshold": 90, "achievement": None},
-                            {"threshold": 85, "achievement": None},
-                            {"threshold": 80, "achievement": None},
-                            {"threshold": 75, "achievement": None},
-                            {"threshold": 70, "achievement": None},
-                            {"threshold": 65, "achievement": None},
-                            {"threshold": 60, "achievement": None},
-                        ],
-                        "first_round_under_par": None,
-                        "first_eagle": None,
-                        "first_hole_in_one": None,
-                    },
-                    "one_year": {
-                        "new_personal_records_achieved_count": 0,
-                        "new_personal_records_achieved": [],
-                    },
-                },
-                "window_days": 365,
-            },
-        }
-
-    scores = [r.calculate_total_score() for r in rounds if r.calculate_total_score() is not None]
+    # Empty and populated responses come from the same code path, so their keys always match.
+    by_format = el.by_format(rounds)
+    scores_18 = [r.calculate_total_score() for r in by_format[18]]
+    scores_9 = [r.calculate_total_score() for r in by_format[9]]
     gir_data = analytics.overall_gir_percentage(rounds)
     putts_gir_data = analytics.overall_putts_per_gir(rounds)
     scrambling_rows = analytics.scrambling_per_round(rounds)
-    scrambling_vals = [r["scrambling_percentage"] for r in scrambling_rows if r["scrambling_percentage"] is not None]
-    avg_scrambling = sum(scrambling_vals) / len(scrambling_vals) if scrambling_vals else None
+    avg_scrambling = analytics.overall_scrambling(rounds)["percentage"]
     ud_rows = analytics.up_and_down_trend(rounds)
-    ud_vals = [r["percentage"] for r in ud_rows if r["opportunities"] > 0]
-    avg_up_and_down = sum(ud_vals) / len(ud_vals) if ud_vals else None
+    avg_up_and_down = analytics.overall_up_and_down(rounds)["percentage"]
 
-    current_hi = hcap.handicap_index(hi_rounds)
+    # The handicap is the user's current index: full unfiltered history, never the chart filters.
+    handicap_history = lifetime_rounds if resolved_course_id is None and not no_matching_course else list(
+        reversed(await db.rounds.get_rounds_for_user(target_user_id, limit=None, offset=0))
+    )
+    current_hi = hcap.user_handicap_index(handicap_history, user)
 
     return {
         "kpis": {
-            "scoring_average": round(sum(scores) / len(scores), 1) if scores else None,
+            "scoring_average": round(sum(scores_18) / len(scores_18), 1) if scores_18 else None,
+            "scoring_average_nine": round(sum(scores_9) / len(scores_9), 1) if scores_9 else None,
             "gir_percentage": (
                 round(gir_data["gir_percentage"], 1)
                 if gir_data["gir_percentage"] is not None
@@ -350,10 +219,10 @@ async def get_analytics(
         "scoring_by_yardage": analytics.scoring_by_yardage_buckets(rounds),
         "scoring_by_handicap": analytics.scoring_vs_hole_handicap(rounds),
         "gir_vs_non_gir": analytics.gir_vs_non_gir_score_distribution(rounds),
-        "handicap_trend": _build_handicap_trend(hi_rounds, rounds),
+        "handicap_trend": _build_handicap_trend(handicap_history, rounds, user),
         "score_differentials": hcap.score_differentials_per_round(rounds),
         "notable_achievements": analytics.notable_achievements(
-            rounds,
+            lifetime_rounds,
             home_course_id=user.home_course_id,
         ),
     }
@@ -367,7 +236,7 @@ async def get_played_courses(
 ):
     """Return distinct courses the user has rounds linked to."""
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     return await db.rounds.get_played_courses_for_user(str(user_id))
 
 
@@ -379,10 +248,12 @@ async def get_goal_report(
     current_user: User = Depends(get_current_user),
 ):
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     user = await db.users.get_user(str(user_id))
-    if not user or not user.scoring_goal:
-        raise HTTPException(400, "No scoring goal set")
+    if not user:
+        raise HTTPException(404, USER_NOT_FOUND)
+    if user.scoring_goal is None and user.scoring_goal_nine is None:
+        raise HTTPException(400, NO_SCORING_GOAL)
 
     rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=limit)
     rounds = list(reversed(rounds_desc))
@@ -396,7 +267,7 @@ async def get_goal_report(
             home_course_rounds = list(reversed(home_rounds_desc))
 
     from analytics.goals import goal_report
-    return goal_report(rounds, user.scoring_goal, home_course_rounds)
+    return goal_report(rounds, user.scoring_goal, home_course_rounds, scoring_goal_nine=user.scoring_goal_nine)
 
 
 @router.get("/compare/{user_id}/{round_id}")
@@ -407,16 +278,17 @@ async def get_round_comparison(
     current_user: User = Depends(get_current_user),
 ):
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
-    rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=200, offset=0)
+        raise HTTPException(403, FORBIDDEN)
+    # Full history, so an older round is still found and compared with what came before it.
+    rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=None, offset=0)
     rounds = list(reversed(rounds_desc))  # chronological order
 
     if not rounds:
-        raise HTTPException(404, "No rounds found")
+        raise HTTPException(404, NO_ROUNDS_FOUND)
 
     round_index = next((i for i, r in enumerate(rounds) if str(r.id) == str(round_id)), None)
     if round_index is None:
-        raise HTTPException(404, "Round not found in user history")
+        raise HTTPException(404, ROUND_NOT_IN_HISTORY)
 
     return {
         "score": analytics.score_comparison(rounds, round_index=round_index),
@@ -437,24 +309,19 @@ async def get_milestones(
 ):
     """Return a flat, sorted list of lifetime milestone events for the user."""
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     user = await db.users.get_user(str(user_id))
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, USER_NOT_FOUND)
 
-    all_rounds = await db.rounds.get_rounds_for_user(str(user_id), limit=500, offset=0)
+    all_rounds = await db.rounds.get_rounds_for_user(str(user_id), limit=None, offset=0)
     rounds_chrono = list(reversed(all_rounds))
+    round_dates = {str(r.id): el.comparable_datetime(r.date) for r in rounds_chrono if r.date is not None}
 
     if not rounds_chrono:
         return {"milestones": []}
 
     achievements = analytics.notable_achievements(rounds_chrono, home_course_id=user.home_course_id)
-
-    def _parse_date(d: str) -> datetime:
-        try:
-            return datetime.strptime(d, "%Y/%m/%d")
-        except Exception:
-            return datetime.min
 
     milestones = []
 
@@ -528,7 +395,8 @@ async def get_milestones(
                 "round_id": a.get("round_id"),
             })
 
-    milestones.sort(key=lambda m: _parse_date(m["date"]), reverse=True)
+    # Sort by the round's real date (not the display string); ties keep their insertion order.
+    milestones.sort(key=lambda m: round_dates.get(str(m.get("round_id")), datetime.min), reverse=True)
     return {"milestones": milestones[:limit]}
 
 
@@ -540,12 +408,12 @@ async def get_course_analytics(
     current_user: User = Depends(get_current_user),
 ):
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     user = await db.users.get_user(str(user_id))
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, USER_NOT_FOUND)
 
-    rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=500, offset=0, course_id=str(course_id))
+    rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=None, offset=0, course_id=str(course_id))
     course_rounds = list(reversed(rounds_desc))
 
     return {

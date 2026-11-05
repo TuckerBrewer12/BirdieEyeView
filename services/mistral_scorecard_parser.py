@@ -23,7 +23,6 @@ class ParsedTeeRow(BaseGolfModel):
 class ParsedScorecardRows(BaseGolfModel):
     """Structured row extraction from raw OCR markdown/text."""
 
-    course_name: Optional[str] = None
     hole_numbers: List[int] = Field(default_factory=list)
     tee_rows: List[ParsedTeeRow] = Field(default_factory=list)
     par_row: List[Optional[int]] = Field(default_factory=list)
@@ -48,7 +47,6 @@ class ParsedScorecardRows(BaseGolfModel):
 _INT_RE = re.compile(r"(?<!\d)-?\d{1,4}(?!\d)")
 _ROMAN_RE = re.compile(r"^(?:i|ii|iii|iv|v|vi|vii|viii|ix|x)$", re.IGNORECASE)
 _HANDICAP_RE = re.compile(r"\b(handicap|hdcp|hcp|h\.c\.p)\b", re.IGNORECASE)
-_COURSE_RE = re.compile(r"^[A-Z0-9 '&.-]{3,}$")
 _NAME_RE = re.compile(r"\bmy name is\s+([a-z0-9][a-z0-9 '.\-]{0,40})\b", re.IGNORECASE)
 _ROW_NAME_RE = re.compile(r"\b(?:scan|read|use)\s+([a-z0-9][a-z0-9 '\-]{1,40})\s+row\b", re.IGNORECASE)
 _TO_PAR_TOKEN_RE = re.compile(r"[+\-−]?\d+|[①②③④⑤⑥⑦⑧⑨❶❷❸❹❺❻❼❽❾➀➁➂➃➄➅➆➇➈⓿⓪]|[eE]")
@@ -244,7 +242,6 @@ def parse_mistral_scorecard_rows(
     row_hints = row_hints_2d
     parsed.player_name = player_name_2d
     parsed.score_to_par_hint = row_hints["score_to_par"]
-    parsed.course_name = _extract_course_name(lines)
     parsed.hole_numbers = _extract_hole_numbers(lines)
     if len(parsed.hole_numbers) < 9:
         parsed.warnings.append("Could not confidently detect hole header row")
@@ -734,7 +731,6 @@ def _merge_parsed_halves(
         return a9 + b9
 
     merged = ParsedScorecardRows(extraction_mode="2d_column_split")
-    merged.course_name = front.course_name or back.course_name
     merged.player_name = front.player_name or back.player_name
     merged.score_to_par_hint = front.score_to_par_hint or back.score_to_par_hint
     merged.warnings = front.warnings + back.warnings
@@ -1237,15 +1233,6 @@ def _apply_field_suppression(parsed: ParsedScorecardRows, row_hints: dict) -> No
         parsed.putts_row = []
     if row_hints.get("suppress_gir"):
         parsed.gir_row = []
-
-
-def _extract_course_name(lines: List[str]) -> Optional[str]:
-    for line in lines[:12]:
-        # Example: "FALLS Hole Location Hole Assignment ..."
-        first = line.split(" ", 1)[0].strip(":")
-        if _COURSE_RE.match(first) and first.lower() not in {"hole", "out", "in", "tot"}:
-            return first.title()
-    return None
 
 
 def _line_ints(line: str, *, max_abs: Optional[int] = None) -> List[int]:

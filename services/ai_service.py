@@ -1,10 +1,23 @@
-"""Rule-based AI insight engine for golf performance suggestions."""
+"""Rule-based insight engine for golf performance suggestions (no LLM or provider calls).
+
+Metrics come from ``analytics.stats`` so insights follow the same eligibility, par and
+missing-data rules as the analytics screens. Per-round figures (scoring to par, putts per round,
+three-putts per round) use complete 18-hole rounds, matching the per-round benchmarks.
+
+Policy values, kept as they were and not re-tuned here:
+- ``_BENCHMARKS``: per-handicap-band targets. Their source dataset and cohort are not recorded,
+  so treat them as product assumptions, not measured population averages.
+- Priority multipliers in each insight (4, 0.25, 0.15, 2.5, 12, capped at 10) only order insights
+  across different units; they are not stroke estimates.
+- ``_trend_direction`` uses a 0.1 change threshold and needs 4 observations; fewer is "stable".
+"""
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from analytics import eligibility as el
 from analytics import handicap as hcap
 from analytics import stats as analytics
 from api.schemas import AIComparisonItem, AIInsightItem, AIStrengthItem, AISuggestionsResponse
@@ -65,8 +78,11 @@ _BENCHMARKS: Dict[tuple, Dict[str, float]] = {
 
 
 def _get_benchmark(hi: Optional[float]) -> tuple[Dict[str, float], str]:
+    """Benchmark band for a Handicap Index; plus handicaps (below 0) use the lowest band."""
     if hi is None:
         return _BENCHMARKS[(20, 28)], "Unrated"
+    if hi < 0:
+        return _BENCHMARKS[(0, 5)], "Plus HCP"
     for lo, hi_bound, label in _BENCHMARK_RANGES:
         if lo <= hi < hi_bound:
             return _BENCHMARKS[(lo, hi_bound)], label
@@ -107,11 +123,9 @@ class AIService:
         )
         rounds = list(reversed(rounds_desc))  # chronological order
 
-        hi = hcap.handicap_index(
-            rounds,
-            seed_handicap=(user.handicap if user else None),
-            seed_set_at=(user.last_handicap_update if user else None),
-        )
+        # Same index as every other screen: full history plus the user's seed and reset date.
+        history = await self._db.rounds.get_rounds_for_user(user_id, limit=None, offset=0)
+        hi = hcap.user_handicap_index(history, user)
         if target_handicap is not None:
             benchmark, _ = _get_benchmark(target_handicap)
             hi_label = _TARGET_LABELS.get(target_handicap, _get_benchmark(target_handicap)[1])
@@ -150,7 +164,6 @@ class AIService:
         insights.sort(
             key=lambda x: (-x.priority_score, 0 if x.trend_direction == "declining" else 1)
         )
-        insights = insights[:7]
 
         strengths = self._compute_strengths(raw, benchmark)
 
@@ -170,122 +183,52 @@ class AIService:
     # ── Raw data pipeline ─────────────────────────────────────────────────────
 
     def _compute_raw(self, rounds: list) -> Dict[str, Any]:
-        gir_data = analytics.overall_gir_percentage(rounds)
-        gir_pct = gir_data.get("gir_percentage")
+        eighteen = el.complete_rounds(rounds, el.EIGHTEEN)
 
-        putts_gir_data = analytics.overall_putts_per_gir(rounds)
-        putts_per_gir = putts_gir_data.get("putts_per_gir")
+        gir_pct = analytics.overall_gir_percentage(rounds)["gir_percentage"]
+        putts_per_gir = analytics.overall_putts_per_gir(rounds)["putts_per_gir"]
+        scrambling = analytics.overall_scrambling(rounds)
 
-        scrambling_rows = analytics.scrambling_per_round(rounds)
-        scrambling_vals = [
-            r["scrambling_percentage"]
-            for r in scrambling_rows
-            if r.get("scramble_opportunities", 0) > 0
-        ]
-        avg_scrambling = sum(scrambling_vals) / len(scrambling_vals) if scrambling_vals else None
+        # Per-round putting benchmarks assume every hole's putts are known: use only those rounds,
+        # and keep rounds without putt data out of both the average and the trend.
+        putting_rounds = [r for r in eighteen if r.get_total_putts() is not None]
+        three_putt_counts = [row["three_putt_count"] for row in analytics.three_putts_per_round(putting_rounds)]
+        putts_vals = [r.get_total_putts() for r in putting_rounds]
+        to_par_vals = [r.total_to_par() for r in eighteen if r.total_to_par() is not None]
 
-        three_putt_rows = analytics.three_putts_per_round(rounds)
-        three_putt_counts = [
-            r["three_putt_count"]
-            for r in three_putt_rows
-            if r.get("holes_with_putt_data", 0) > 0
-        ]
-        avg_three_putts = (
-            sum(three_putt_counts) / len(three_putt_counts) if three_putt_counts else None
-        )
+        par_rows = {row["par"]: row for row in analytics.scoring_by_par(rounds)}
+        par_trend: Dict[int, List[Optional[float]]] = {3: [], 4: [], 5: []}
+        for round_obj in rounds:
+            by_par = {row["par"]: row["average_to_par"] for row in analytics.scoring_by_par([round_obj])}
+            for par in par_trend:
+                par_trend[par].append(by_par.get(par))
 
-        par_avgs, par_counts = self._par_stats(rounds)
-        par_avgs_trend = self._par_stats_per_round(rounds)
-
-        putts_rows = analytics.putts_per_round(rounds)
-        putts_vals = [r["total_putts"] for r in putts_rows if r.get("total_putts") is not None]
-        avg_putts_per_round = sum(putts_vals) / len(putts_vals) if putts_vals else None
-
-        score_trend_rows = analytics.score_trend(rounds)
-        to_par_vals = [r["to_par"] for r in score_trend_rows if r.get("to_par") is not None]
-        avg_to_par = sum(to_par_vals) / len(to_par_vals) if to_par_vals else None
-
-        gir_per_round_rows = analytics.gir_per_round(rounds)
-        gir_values = [row.get("gir_percentage") for row in gir_per_round_rows]
-
-        three_putt_trend = [r["three_putt_count"] for r in three_putt_rows]
-        putts_per_gir_trend = self._putts_per_gir_per_round(rounds)
+        gir_holes = [row["gir_with_putt_data"] for row in analytics.putts_per_gir(rounds)]
+        rounds_with_gir_putts = [count for count in gir_holes if count]
 
         return {
             "gir_pct": gir_pct,
             "putts_per_gir": putts_per_gir,
-            "avg_scrambling": avg_scrambling,
-            "avg_three_putts": avg_three_putts,
-            "avg_putts_per_round": avg_putts_per_round,
-            "avg_to_par": avg_to_par,
-            "par_avgs": par_avgs,
-            "par_counts": par_counts,
-            "par_avgs_trend": par_avgs_trend,
-            "gir_values": gir_values,
-            "three_putt_trend": three_putt_trend,
-            "putts_per_gir_trend": putts_per_gir_trend,
-            "scrambling_rounds_with_data": len(scrambling_vals),
+            "avg_scrambling": scrambling["percentage"],
+            "avg_three_putts": el.average(three_putt_counts),
+            "avg_putts_per_round": el.average(putts_vals),
+            "avg_to_par": el.average(to_par_vals),
+            "par_avgs": {par: row["average_to_par"] for par, row in par_rows.items()},
+            "par_counts": {par: row["sample_size"] for par, row in par_rows.items()},
+            "par_avgs_trend": par_trend,
+            "gir_values": [row["gir_percentage"] for row in analytics.gir_per_round(rounds)],
+            "three_putt_trend": three_putt_counts,
+            "putts_per_gir_trend": [row["putts_per_gir"] for row in analytics.putts_per_gir(rounds)],
+            "gir_holes_per_round": el.average(rounds_with_gir_putts),
+            "scrambling_rounds_with_data": sum(
+                1 for r in rounds if analytics.overall_scrambling([r])["opportunities"]
+            ),
             "num_rounds": len(rounds),
+            "rounds_by_par": {
+                par: sum(1 for r in rounds if any(row["par"] == par for row in analytics.scoring_by_par([r])))
+                for par in (3, 4, 5)
+            },
         }
-
-    @staticmethod
-    def _par_stats_per_round(rounds: list) -> Dict[int, List[Optional[float]]]:
-        """Per-round avg to par by par type — used for trend detection."""
-        result: Dict[int, List[Optional[float]]] = {3: [], 4: [], 5: []}
-        for r in rounds:
-            by_par: Dict[int, List[float]] = {}
-            for hs in r.hole_scores:
-                if hs.strokes is None:
-                    continue
-                par: Optional[int] = None
-                if r.course and hs.hole_number:
-                    hole = r.course.get_hole(hs.hole_number)
-                    if hole and hole.par:
-                        par = hole.par
-                if par is None:
-                    par = hs.par_played
-                if par not in (3, 4, 5):
-                    continue
-                by_par.setdefault(par, []).append(float(hs.strokes - par))
-            for p in (3, 4, 5):
-                vals = by_par.get(p, [])
-                result[p].append(sum(vals) / len(vals) if vals else None)
-        return result
-
-    @staticmethod
-    def _par_stats(rounds: list) -> tuple[Dict[int, float], Dict[int, int]]:
-        """Single-pass: returns (avg_to_par_by_par, hole_count_by_par)."""
-        by_par: Dict[int, List[float]] = {}
-        for r in rounds:
-            for hs in r.hole_scores:
-                if hs.strokes is None:
-                    continue
-                par: Optional[int] = None
-                if r.course and hs.hole_number:
-                    hole = r.course.get_hole(hs.hole_number)
-                    if hole and hole.par:
-                        par = hole.par
-                if par is None:
-                    par = hs.par_played
-                if par not in (3, 4, 5):
-                    continue
-                by_par.setdefault(par, []).append(float(hs.strokes - par))
-        avgs = {p: sum(vals) / len(vals) for p, vals in by_par.items() if vals}
-        counts = {p: len(vals) for p, vals in by_par.items() if vals}
-        return avgs, counts
-
-    @staticmethod
-    def _putts_per_gir_per_round(rounds: list) -> List[Optional[float]]:
-        results: List[Optional[float]] = []
-        for r in rounds:
-            gir_scores = [
-                hs for hs in r.hole_scores
-                if hs.green_in_regulation is True and hs.putts is not None
-            ]
-            results.append(
-                sum(hs.putts for hs in gir_scores) / len(gir_scores) if gir_scores else None
-            )
-        return results
 
     # ── Insight generators ────────────────────────────────────────────────────
 
@@ -323,8 +266,8 @@ class AIService:
         trend = _trend_direction(par_avgs_trend.get(worst_par, []))
 
         hole_count = raw.get("par_counts", {}).get(worst_par, 0)
-        num_rounds = raw.get("num_rounds", 1)
-        avg_holes_per_round = (hole_count / num_rounds) if num_rounds else 4.0
+        rounds_with_par = raw.get("rounds_by_par", {}).get(worst_par, 0)
+        avg_holes_per_round = (hole_count / rounds_with_par) if rounds_with_par else 0.0
 
         what_if = (
             f"Closing the gap on {par_labels[worst_par]} saves "
@@ -399,7 +342,7 @@ class AIService:
                 "Distance control first — most missed greens come from poor yardage management",
                 "Pre-shot check: front, middle, and back of green yardage",
             ],
-            what_if="Each 5% GIR improvement saves approximately 1 stroke per round",
+            what_if="Rule of thumb (not calibrated to your data): each 5 points of GIR is worth about 1 stroke per round",
         )
 
     def _insight_scrambling(
@@ -418,16 +361,16 @@ class AIService:
         priority = min(10.0, gap * 0.15)
 
         return AIInsightItem(
-            category="Up & Down",
+            category="Scrambling",
             category_group="Short Game",
             title="Build Your Short Game",
             description=(
-                f"You get up and down {round(avg_scrambling, 1)}% of the time vs "
+                f"You make par or better after missing the green {round(avg_scrambling, 1)}% of the time vs "
                 f"the {round(bench, 0):.0f}% benchmark."
             ),
             priority_score=round(priority, 2),
             key_metric=round(avg_scrambling, 1),
-            metric_label="Up & Down %",
+            metric_label="Scrambling %",
             benchmark=round(bench, 1),
             trend_direction="stable",
             drill_tips=[
@@ -435,7 +378,7 @@ class AIService:
                 "Develop a bump-and-run for tight lies: more consistent than a flop",
                 "20 bunker shots per session targeting your landing zone",
             ],
-            what_if="Improving up & down rate by 10% saves roughly 1–1.5 strokes per round",
+            what_if="Rule of thumb (not calibrated to your data): 10 more points of scrambling is worth about 1–1.5 strokes per round",
         )
 
     def _insight_three_putts(
@@ -458,7 +401,7 @@ class AIService:
             category_group="Putting",
             title="Eliminate 3-Putts",
             description=(
-                f"You average {round(avg_three_putts, 1)} three-putts per round "
+                f"You average {round(avg_three_putts, 1)} three-putts or worse per round "
                 f"vs the {round(bench, 1)} benchmark."
             ),
             priority_score=round(priority, 2),
@@ -472,8 +415,8 @@ class AIService:
                 "Walk off lag putt distance before addressing the ball",
             ],
             what_if=(
-                f"Each 3-putt eliminated saves 1 stroke — "
-                f"cutting by {round(gap, 1)} saves {round(gap, 1)} strokes/round"
+                f"Each 3+ putt turned into a two-putt saves at least 1 stroke — "
+                f"cutting {round(gap, 1)} per round saves at least {round(gap, 1)} strokes/round"
             ),
         )
 
@@ -511,8 +454,9 @@ class AIService:
                 "Speed control drill: putt to the fringe from 20 feet — pace, not hole",
             ],
             what_if=(
-                f"Reducing putts per GIR to {round(bench, 2)} "
-                f"saves ~{round(gap * 8, 1)} strokes/round"
+                f"Reducing putts per GIR to {round(bench, 2)} on your "
+                f"~{round(raw.get('gir_holes_per_round') or 0, 1)} greens hit per round "
+                f"saves ~{round(gap * (raw.get('gir_holes_per_round') or 0), 1)} strokes/round"
             ),
         )
 
@@ -551,7 +495,7 @@ class AIService:
             _item("Par 3 Avg to Par", "Ball Striking", par_avgs.get(3), "par3_avg_to_par", " strokes", True),
             _item("Par 4 Avg to Par", "Ball Striking", par_avgs.get(4), "par4_avg_to_par", " strokes", True),
             _item("Par 5 Avg to Par", "Ball Striking", par_avgs.get(5), "par5_avg_to_par", " strokes", True),
-            _item("Up & Down %", "Short Game", raw.get("avg_scrambling"), "scrambling_pct", "%", False),
+            _item("Scrambling %", "Short Game", raw.get("avg_scrambling"), "scrambling_pct", "%", False),
             _item("Putts per Round", "Putting", raw.get("avg_putts_per_round"), "putts_per_round", " putts", True),
             _item("Putts per GIR", "Putting", raw.get("putts_per_gir"), "putts_per_gir", " putts", True),
             _item("3-Putts per Round", "Putting", raw.get("avg_three_putts"), "three_putts_per_round", " putts", True),
@@ -575,7 +519,7 @@ class AIService:
                     metric_label="GIR %",
                     player_value=round(gir_pct, 1),
                     benchmark_value=round(bench, 1),
-                    margin_description=f"{round(gir_pct - bench, 1)}% above benchmark",
+                    margin_description=f"{round(gir_pct - bench, 1)} percentage points above benchmark",
                 ))
 
         avg_scrambling = raw.get("avg_scrambling")
@@ -583,12 +527,12 @@ class AIService:
             bench = benchmark["scrambling_pct"]
             if bench > 0 and avg_scrambling >= bench * (1 + threshold):
                 strengths.append(AIStrengthItem(
-                    category="Up & Down",
+                    category="Scrambling",
                     title="Excellent Short Game",
-                    metric_label="Up & Down %",
+                    metric_label="Scrambling %",
                     player_value=round(avg_scrambling, 1),
                     benchmark_value=round(bench, 1),
-                    margin_description=f"{round(avg_scrambling - bench, 1)}% above benchmark",
+                    margin_description=f"{round(avg_scrambling - bench, 1)} percentage points above benchmark",
                 ))
 
         putts_per_gir = raw.get("putts_per_gir")

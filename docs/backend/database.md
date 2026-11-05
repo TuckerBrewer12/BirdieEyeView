@@ -21,7 +21,7 @@ The API lifecycle creates a pool and DatabaseManager. Services/routers call a re
 
 ## Changing this domain
 
-Coordinate schema definitions, migrations, converters, model fields, and request/response semantics. A local model field is not persisted merely because it exists. Group logically atomic writes into an explicit transaction; do not assume multiple repository calls share one transaction. Keep null/omission/update rules intentional, and use database constraints to enforce agreed rules under concurrency.
+Coordinate schema definitions, migrations, converters, model fields, and request/response semantics. A local model field is not persisted merely because it exists. Group logically atomic writes into an explicit transaction; do not assume multiple repository calls share one transaction. To make several repository writes one unit, open `DatabaseManager.transaction()` and pass its connection as `connection=` to write methods that accept it (`create_course`, `fill_course_gaps`, `apply_verified_scan`, `create_round`, and related lookups); each then runs as a savepoint inside the caller's transaction. Without `connection=`, a method keeps its own transaction. Keep null/omission/update rules intentional, and use database constraints to enforce agreed rules under concurrency.
 
 The current Models refactor still needs migrations and converter/repository support for its added coverage/rating/goal metadata. This guide does not claim those database changes exist or have been applied to production.
 

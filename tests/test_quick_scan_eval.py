@@ -44,18 +44,14 @@ def make_result(case_id, matched, total=10, *, error=None):
     )
 
 
-def test_committed_manifest_defines_four_cases_and_expected_cell_counts():
+def test_every_committed_case_loads_with_its_image_and_full_hole_coverage():
+    # Growth-proof: adding scorecards to the manifest needs no change here.
     cases = load_cases()
 
-    assert [case.case_id for case in cases] == [
-        "half_moon_bay_g",
-        "half_moon_bay_t",
-        "blue_rock_tucker",
-        "eagle_vines_tucker",
-    ]
-    assert [case.expected_cells for case in cases] == [54, 54, 18, 18]
-    assert cases[2].user_context == "my name is Tucker. no putts recorded"
-    assert cases[3].user_context == "my name is Tucker. no putts recorded. scores written to par"
+    assert cases and len({case.case_id for case in cases}) == len(cases)
+    for case in cases:
+        assert (quick_eval.SCORECARD_DIR / case.image).is_file(), case.case_id
+        assert case.expected and case.expected_cells == 18 * len(case.expected), case.case_id
 
 
 def test_manifest_requires_complete_hole_coverage(tmp_path):

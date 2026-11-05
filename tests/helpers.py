@@ -144,6 +144,7 @@ def make_round_summary(round_id: UUID) -> dict:
         "tee_box": "Blue",
         "round_date": datetime(2026, 1, 2),
         "total_score": 80,
+        "to_par": 8,
         "front_nine": 40,
         "back_nine": 40,
         "total_putts": 30,
@@ -151,6 +152,8 @@ def make_round_summary(round_id: UUID) -> dict:
         "fairways_hit": 8,
         "notes": None,
         "hole_scores_summary": [{"hole_number": 1, "strokes": 4}],
+        "is_complete": True,
+        "hole_count": 18,
     }
 
 
@@ -192,7 +195,7 @@ def make_scoring_round(
         course = Course(
             name="Rated Course",
             holes=[Hole(number=number, par=4, handicap=number) for number in range(1, 19)],
-            tees=[Tee(color="Blue", course_rating=72.0, slope_rating=113.0)],
+            tees=[Tee(color="Blue", course_rating=72.0, slope_rating=113.0, rating_holes=tuple(range(1, 19)))],
         )
         tee_box = "Blue"
     return Round(
@@ -201,6 +204,7 @@ def make_scoring_round(
         course=course,
         tee_box=tee_box,
         hole_scores=scores,
+        intended_holes=tuple(range(1, holes + 1)),
     )
 
 

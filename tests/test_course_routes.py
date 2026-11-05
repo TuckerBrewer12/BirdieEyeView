@@ -10,18 +10,6 @@ from tests.helpers import make_course, make_mock_database, make_user
 
 
 @pytest.mark.asyncio
-async def test_list_courses_returns_summaries():
-    user_id = uuid4()
-    course = make_course(uuid4())
-    db = make_mock_database()
-    db.courses.list_courses = AsyncMock(return_value=[course])
-
-    listed = await courses.list_courses(20, 0, user_id, db, make_user(user_id))
-
-    assert (listed[0].name, listed[0].total_holes) == ("Pebble Beach", 1)
-
-
-@pytest.mark.asyncio
 async def test_list_courses_requires_user_for_private_filter():
     with pytest.raises(HTTPException) as raised:
         await courses.list_courses(20, 0, uuid4(), make_mock_database(), None)
@@ -30,31 +18,10 @@ async def test_list_courses_requires_user_for_private_filter():
 
 
 @pytest.mark.asyncio
-async def test_get_course_returns_repository_course():
-    course_id = uuid4()
-    course = make_course(course_id)
-    db = make_mock_database()
-    db.courses.get_course = AsyncMock(return_value=course)
-
-    assert await courses.get_course(course_id, db, None) == course
-
-
-@pytest.mark.asyncio
-async def test_get_course_returns_not_found():
-    db = make_mock_database()
-    db.courses.get_course = AsyncMock(return_value=None)
-
-    with pytest.raises(HTTPException) as raised:
-        await courses.get_course(uuid4(), db, None)
-
-    assert raised.value.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_course_search_merges_valid_external_results(monkeypatch):
+async def test_course_search_uses_provider_only_without_local_results(monkeypatch):
     user_id = uuid4()
     db = make_mock_database()
-    db.courses.search_courses = AsyncMock(return_value=[make_course(uuid4())])
+    db.courses.search_courses = AsyncMock(return_value=[])
     external_service = MagicMock()
     external_service.search_external_courses = AsyncMock(
         return_value=[
@@ -80,6 +47,24 @@ async def test_course_search_merges_valid_external_results(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_course_search_skips_provider_when_database_has_matches(monkeypatch):
+    user_id = uuid4()
+    local = make_course(uuid4())
+    db = make_mock_database()
+    db.courses.search_courses = AsyncMock(return_value=[local])
+    external_service = MagicMock()
+    external_service.search_external_courses = AsyncMock(
+        return_value=[{"external_course_id": "ext-1", "name": local.name}]
+    )
+    monkeypatch.setattr(courses, "GolfCourseAPIService", lambda: external_service)
+
+    results = await courses.search_courses("Pebble", user_id, True, db, make_user(user_id))
+
+    assert [(result.id, result.external_course_id) for result in results] == [(local.id, None)]
+    external_service.search_external_courses.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_external_course_search_requires_authentication():
     with pytest.raises(HTTPException) as raised:
         await courses.search_courses("Pebble", None, True, make_mock_database(), None)
@@ -99,65 +84,9 @@ def make_create_request():
     return courses.CreateCourseRequest(
         name=" pebble BEACH ",
         location="Monterey",
-        holes=[{"number": 1, "par": 4, "handicap": 1}],
+        holes=[{"number": n, "par": 4, "handicap": n} for n in range(1, 10)],
         tees=[{"color": "Blue", "hole_yardages": {1: 400}}],
     )
-
-
-@pytest.mark.asyncio
-async def test_create_course_assigns_owner():
-    user_id = uuid4()
-    course_id = uuid4()
-    db = make_mock_database()
-    db.courses.create_course = AsyncMock(return_value=make_course(course_id, owner=user_id))
-
-    response = await courses.create_course(make_create_request(), None, db, make_user(user_id))
-
-    assert response.id == str(course_id)
-    assert db.courses.create_course.await_args.kwargs["user_id"] == str(user_id)
-
-
-@pytest.mark.asyncio
-async def test_update_course_normalizes_name():
-    user_id = uuid4()
-    course_id = uuid4()
-    course = make_course(course_id, owner=user_id)
-    db = make_mock_database()
-    db.courses.get_course = AsyncMock(return_value=course)
-    db.courses.update_course = AsyncMock(return_value=course)
-
-    response = await courses.update_course(
-        course_id, courses.UpdateCourseRequest(name="new NAME"), db, make_user(user_id)
-    )
-
-    assert response.name == course.name
-    assert db.courses.update_course.await_args.kwargs["name"] == "New Name"
-
-
-@pytest.mark.asyncio
-async def test_clone_course_returns_created_course():
-    user_id = uuid4()
-    course_id = uuid4()
-    course = make_course(course_id, owner=user_id)
-    db = make_mock_database()
-    db.courses.get_course = AsyncMock(return_value=make_course(course_id))
-    db.courses.clone_course = AsyncMock(return_value=course)
-
-    response = await courses.clone_course(course_id, db, make_user(user_id))
-
-    assert response.id == str(course_id)
-
-
-@pytest.mark.asyncio
-async def test_create_course_maps_duplicate_error_to_conflict():
-    user_id = uuid4()
-    db = make_mock_database()
-    db.courses.create_course = AsyncMock(side_effect=DuplicateError())
-
-    with pytest.raises(HTTPException) as raised:
-        await courses.create_course(make_create_request(), None, db, make_user(user_id))
-
-    assert raised.value.status_code == 409
 
 
 @pytest.mark.asyncio
@@ -177,14 +106,47 @@ async def test_create_course_hides_integrity_error_detail():
     assert sql_error not in raised.value.detail
 
 
+# ================================================================
+# API domain: course structure, bounds and error translation
+# ================================================================
+
+NINE_HOLES = [{"number": n, "par": 4, "handicap": n} for n in range(1, 10)]
+
+
+# Partial layouts, bad yardages and repeated tee names are covered through HTTP in
+# test_api_http_contracts.py; the repeated handicap rank is only checked here.
+def test_create_course_request_rejects_a_repeated_handicap_rank():
+    with pytest.raises(ValueError, match="handicap rank"):
+        courses.CreateCourseRequest(name="Pebble", holes=NINE_HOLES[:8] + [{"number": 9, "par": 4, "handicap": 1}])
+
+
+@pytest.mark.parametrize("count", [9, 18])
+def test_create_course_request_accepts_nine_or_eighteen_holes(count):
+    holes = [{"number": n, "par": 4, "handicap": n} for n in range(1, count + 1)]
+
+    assert len(courses.CreateCourseRequest(name="Pebble", holes=holes).holes) == count
+
+
+def test_update_course_request_accepts_nine_hole_par_and_nullable_location():
+    request = courses.UpdateCourseRequest(par=36, location=None)
+
+    assert request.model_dump(exclude_unset=True) == {"par": 36, "location": None}
+
+
+def test_update_course_request_rejects_null_name():
+    with pytest.raises(ValueError, match="name cannot be null"):
+        courses.UpdateCourseRequest(name=None)
+
+
 @pytest.mark.asyncio
-async def test_clone_course_maps_missing_course_to_not_found():
+async def test_created_course_ratings_record_the_layout():
     user_id = uuid4()
     db = make_mock_database()
-    db.courses.get_course = AsyncMock(return_value=make_course(uuid4()))
-    db.courses.clone_course = AsyncMock(side_effect=NotFoundError())
+    db.courses.create_course = AsyncMock(side_effect=lambda course, user_id=None: course.model_copy(update={"id": "c1"}))
+    request = courses.CreateCourseRequest(
+        name="Pebble", holes=NINE_HOLES, tees=[{"color": "Blue", "course_rating": 35.2, "slope_rating": 120}]
+    )
 
-    with pytest.raises(HTTPException) as raised:
-        await courses.clone_course(uuid4(), db, make_user(user_id))
+    await courses.create_course(request, None, db, make_user(user_id))
 
-    assert raised.value.status_code == 404
+    assert db.courses.create_course.await_args.args[0].tees[0].rating_holes == tuple(range(1, 10))

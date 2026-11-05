@@ -1,6 +1,6 @@
 ---
 name: make-code-change
-description: "Project-specific backend orchestration workflow for the Golf ScoreCard app. Use when the user asks Codex to implement a complete backend feature, bug fix, refactor, or test change in this repository through a structured flow: codebase recon, written implementation plan, mandatory user confirmation, implementation loop, unit test validation, and docs update."
+description: "Project-specific backend orchestration workflow for the Golf ScoreCard app. Use when the user asks Codex to implement a complete backend feature, bug fix, refactor, or test change in this repository through a structured flow: codebase recon, written implementation plan, mandatory user confirmation, implementation loop, E2E-first test validation, and docs update."
 ---
 
 # Make Code Change
@@ -86,6 +86,24 @@ Respect this repository's backend architecture, described in `docs/architecture.
 - Business logic: `services/scan_service.py` and the other `services/` workflows.
 - API request models: `api/request_models.py` and `api/schemas.py`.
 - Tests: Python pytest under `tests/`, including marked PostgreSQL integration tests under `tests/integration/`. Commands live in `docs/practices/testing.md`.
+
+## Testing Priority
+
+This is the single testing policy for every phase. Recon, planning, and the implementation loop apply it and do not restate it.
+
+New coverage for a change is end-to-end first:
+
+1. **E2E (default).** Prove any behavior reachable through the API in `tests/integration/test_api_e2e.py`: the real FastAPI app on the disposable PostgreSQL database, with only true external boundaries replaced (email, OCR and table-merge providers, report storage, external course search). Extend an existing E2E test when it already sets up the scenario.
+2. **PostgreSQL integration.** Use it for SQL, constraint, transaction, and concurrency behavior the API cannot observe directly.
+3. **Unit tests only when absolutely necessary.** Add one only when E2E cannot reasonably prove the behavior, and name the reason in the plan:
+   - a pure rule with many boundary cases (analytics, handicap, parser, validation repeated across many request fields), where one request per case is impractical;
+   - behavior the API cannot reach, such as CLI scripts, or parsing of provider output behind a paid call;
+   - a failure path the real app and database cannot trigger (provider timeout, storage failure), faked at the true boundary;
+   - a rule across the whole codebase that no single request can show, such as a guard that scans source files.
+
+   Do not add a unit test that repeats what an E2E test proves, mirrors the implementation's structure, or exists to raise coverage. Existing unit tests broken by the change are updated, not rewritten as E2E by default.
+
+Coverage gates: CI's total and changed-line coverage gates (`.github/workflows/tests.yml`) currently measure the unit suite only. If a change proven by E2E fails the changed-line gate, report it to the user and propose revising the gate. Never add filler unit tests to pass it.
 
 Do not make commits. Leave final review and commit decisions to the user.
 
