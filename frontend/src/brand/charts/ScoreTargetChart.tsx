@@ -119,7 +119,7 @@ export function ScoreTargetChart({ shots, className, "aria-label": ariaLabel }: 
         <div
           data-slot="score-target-tooltip"
           className={cn(
-            "pointer-events-none absolute z-10 -translate-y-full rounded-xl border border-border bg-card/95 px-3 py-2 text-xs shadow-card",
+            "pointer-events-none absolute z-10 -translate-y-full rounded-xl border border-border bg-card/frosted px-3 py-2 text-xs shadow-card",
             shown.cx > c ? "-ml-3 -translate-x-full" : "ml-3",
           )}
           style={{ left: `${(shown.cx / size) * 100}%`, top: `${(shown.cy / size) * 100}%` }}

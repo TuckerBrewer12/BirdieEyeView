@@ -96,7 +96,7 @@ export function CourseLinkSearch({
         loading={searching}
       />
       {results.length > 0 && (
-        <ul className="mt-1.5 divide-y divide-border overflow-hidden rounded-lg ring-1 ring-foreground/10">
+        <ul className="mt-1.5 divide-y divide-border overflow-hidden rounded-lg ring-1 ring-foreground/tint">
           {results.map((course) => (
             <li key={course.id}>
               <ResultRow course={course} linking={linking} onSelect={onSelectCourse} />

@@ -41,7 +41,7 @@ export function RecordsCard({ records, onOpenRound, className }: RecordsCardProp
               <button
                 type="button"
                 data-slot="record-row"
-                className={cn(ROW, "rounded-md transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-ring")}
+                className={cn(ROW, "rounded-md transition-colors hover:bg-muted/strong focus-visible:outline-2 focus-visible:outline-ring")}
                 onClick={() => onOpenRound(roundId)}
               >
                 {body}

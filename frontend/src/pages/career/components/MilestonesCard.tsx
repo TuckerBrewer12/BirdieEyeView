@@ -73,7 +73,7 @@ export function MilestonesCard({
                 type="button"
                 data-slot="milestone-row"
                 data-achieved="true"
-                className={cn(ROW, "rounded-md transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-ring")}
+                className={cn(ROW, "rounded-md transition-colors hover:bg-muted/strong focus-visible:outline-2 focus-visible:outline-ring")}
                 onClick={() => onOpenRound(roundId)}
               >
                 {body}

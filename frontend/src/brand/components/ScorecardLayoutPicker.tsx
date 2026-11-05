@@ -172,7 +172,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
               onClick={() => setIsTopar(value)}
               className={`flex flex-col items-start px-3 py-2.5 rounded-xl border text-left transition-all ${
                 isTopar === value
-                  ? "border-primary bg-primary/5 shadow-sm"
+                  ? "border-primary bg-primary/trace shadow-sm"
                   : "border-input bg-card hover:border-border"
               }`}
             >
@@ -201,7 +201,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
               onClick={toggle}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
                 active
-                  ? "border-primary bg-primary/10 text-primary"
+                  ? "border-primary bg-primary/tint text-primary"
                   : "border-input bg-card text-muted-foreground hover:border-border"
               }`}
             >
@@ -288,7 +288,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
                           tone,
                         )}
                       >
-                        <GripVertical size={13} className="shrink-0 text-primary-foreground/50" />
+                        <GripVertical size={13} className="shrink-0 text-primary-foreground/focus" />
                         <span className="text-xs font-semibold text-primary-foreground">{label}</span>
                       </div>
                     </div>

@@ -88,11 +88,11 @@ function BottomNav({
             aria-label="Close menu"
             tabIndex={-1}
             onClick={close}
-            className="fixed inset-0 bg-foreground/20 dark:bg-background/60"
+            className="fixed inset-0 bg-foreground/light dark:bg-background/strong"
           />
           <div
             data-slot="bottom-nav-menu"
-            className="absolute inset-x-3 bottom-full mb-3 rounded-2xl border border-border bg-card/95 shadow-card backdrop-blur-sm"
+            className="absolute inset-x-3 bottom-full mb-3 rounded-2xl border border-border bg-card/frosted shadow-card backdrop-blur-sm"
           >
             <p className="px-4 pt-4 pb-2 text-xs font-bold tracking-section text-muted-foreground uppercase">
               {moreLabel}
@@ -119,7 +119,7 @@ function BottomNav({
                   variant="ghost"
                   onClick={onSignOut}
                   disabled={signingOut}
-                  className="h-auto w-full justify-start gap-2 rounded-xl px-3 py-2.5 font-normal text-destructive hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/20"
+                  className="h-auto w-full justify-start gap-2 rounded-xl px-3 py-2.5 font-normal text-destructive hover:bg-destructive/tint hover:text-destructive dark:hover:bg-destructive/light"
                 >
                   <LogOut aria-hidden />
                   {signingOut ? "Signing out…" : "Sign out"}

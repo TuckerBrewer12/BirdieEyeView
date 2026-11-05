@@ -11,7 +11,7 @@ interface RecentRoundsTableProps {
 export function RecentRoundsTable({ rounds, onRoundClick }: RecentRoundsTableProps) {
   return (
     <div data-slot="recent-rounds-table">
-      <div className="grid grid-cols-recent-rounds gap-x-3 bg-muted/60 text-left">
+      <div className="grid grid-cols-recent-rounds gap-x-3 bg-muted/strong text-left">
         <div className="py-3 pl-3 text-eyebrow uppercase text-muted-foreground">
           Course
         </div>
@@ -34,7 +34,7 @@ export function RecentRoundsTable({ rounds, onRoundClick }: RecentRoundsTablePro
               className={cn(
                 "grid w-full grid-cols-recent-rounds gap-x-3 text-left transition-colors",
                 clickable
-                  ? "cursor-pointer hover:bg-muted active:bg-muted/80"
+                  ? "cursor-pointer hover:bg-muted active:bg-muted/dense"
                   : "cursor-default",
               )}
             >

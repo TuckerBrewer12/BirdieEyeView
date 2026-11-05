@@ -390,10 +390,33 @@ export const blur = {
   xs: 4,
 };
 
+/**
+ * How strongly a colour shows through, faintest first: `bg-primary/tint`, `ring-ring/focus`.
+ * A colour faded by a bare number (`bg-primary/10`) is flagged by lint.
+ */
 export const opacity = {
-  recessed: "35%",
+  /** A hint of colour behind a selected or hovered row. */
+  trace: "5%",
+  faint: "8%",
+  /** An accent tint behind an icon or chip; a hairline ring. */
+  tint: "10%",
+  soft: "15%",
+  light: "20%",
   /** Soft fill under a line or inside a shape. */
   wash: "22%",
+  quarter: "25%",
+  mild: "30%",
+  recessed: "35%",
+  medium: "40%",
+  /** The focus ring, and half-strength ink. */
+  focus: "50%",
+  strong: "60%",
+  heavy: "70%",
+  dense: "80%",
+  /** A sticky bar or header over scrolling content. */
+  opaque: "90%",
+  /** A chart tooltip over the plot. */
+  frosted: "95%",
 };
 
 /** Shadows follow `--shadow`, so they deepen in dark mode. sm/md/lg keep Tailwind's geometry. */

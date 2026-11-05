@@ -19,8 +19,8 @@ function SectionLabel({
       className={cn("mb-6 flex items-center gap-3", className)}
       {...props}
     >
-      <div className="h-px w-8 rounded-full bg-primary/30" />
-      <span className="text-section uppercase text-primary/50">
+      <div className="h-px w-8 rounded-full bg-primary/mild" />
+      <span className="text-section uppercase text-primary/focus">
         {children}
       </span>
     </div>

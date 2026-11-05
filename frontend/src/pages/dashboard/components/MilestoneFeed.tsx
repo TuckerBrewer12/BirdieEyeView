@@ -13,10 +13,10 @@ const ICON_MAP: Record<Milestone["kind"], ElementType> = {
 };
 
 const COLOR_MAP: Record<Milestone["kind"], string> = {
-  under_par: "bg-primary/10 text-primary",
-  score_break: "bg-score-eagle/15 text-score-eagle",
-  putt_break: "bg-score-double/15 text-score-double",
-  par_streak: "bg-score-quad/15 text-score-quad",
+  under_par: "bg-primary/tint text-primary",
+  score_break: "bg-score-eagle/soft text-score-eagle",
+  putt_break: "bg-score-double/soft text-score-double",
+  par_streak: "bg-score-quad/soft text-score-quad",
 };
 
 interface MilestoneFeedProps {
@@ -72,7 +72,7 @@ function MilestoneRow({ milestone, onClick }: { milestone: Milestone; onClick?: 
     <button
       type="button"
       onClick={onClick}
-      className={cn(row, "cursor-pointer transition-colors hover:bg-muted/80")}
+      className={cn(row, "cursor-pointer transition-colors hover:bg-muted/dense")}
     >
       {content}
     </button>

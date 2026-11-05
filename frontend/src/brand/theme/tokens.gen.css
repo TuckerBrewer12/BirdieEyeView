@@ -147,8 +147,22 @@
   --brand-size-scorecard: 43.75rem;
   --brand-stroke-icon: 1.75;
   --brand-stroke-icon-active: 2.25;
-  --brand-opacity-recessed: 35%;
+  --brand-opacity-trace: 5%;
+  --brand-opacity-faint: 8%;
+  --brand-opacity-tint: 10%;
+  --brand-opacity-soft: 15%;
+  --brand-opacity-light: 20%;
   --brand-opacity-wash: 22%;
+  --brand-opacity-quarter: 25%;
+  --brand-opacity-mild: 30%;
+  --brand-opacity-recessed: 35%;
+  --brand-opacity-medium: 40%;
+  --brand-opacity-focus: 50%;
+  --brand-opacity-strong: 60%;
+  --brand-opacity-heavy: 70%;
+  --brand-opacity-dense: 80%;
+  --brand-opacity-opaque: 90%;
+  --brand-opacity-frosted: 95%;
   --brand-ring-width: 3px;
 }
 
@@ -319,8 +333,22 @@
   --spacing-scorecard: var(--brand-size-scorecard);
   --stroke-width-icon: var(--brand-stroke-icon);
   --stroke-width-icon-active: var(--brand-stroke-icon-active);
-  --opacity-recessed: var(--brand-opacity-recessed);
+  --opacity-trace: var(--brand-opacity-trace);
+  --opacity-faint: var(--brand-opacity-faint);
+  --opacity-tint: var(--brand-opacity-tint);
+  --opacity-soft: var(--brand-opacity-soft);
+  --opacity-light: var(--brand-opacity-light);
   --opacity-wash: var(--brand-opacity-wash);
+  --opacity-quarter: var(--brand-opacity-quarter);
+  --opacity-mild: var(--brand-opacity-mild);
+  --opacity-recessed: var(--brand-opacity-recessed);
+  --opacity-medium: var(--brand-opacity-medium);
+  --opacity-focus: var(--brand-opacity-focus);
+  --opacity-strong: var(--brand-opacity-strong);
+  --opacity-heavy: var(--brand-opacity-heavy);
+  --opacity-dense: var(--brand-opacity-dense);
+  --opacity-opaque: var(--brand-opacity-opaque);
+  --opacity-frosted: var(--brand-opacity-frosted);
   --text-title--font-weight: 700;
   --text-title--letter-spacing: -0.5px;
   --text-hero--font-weight: 700;

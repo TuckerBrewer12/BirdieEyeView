@@ -27,7 +27,7 @@ export function CourseScorecardSection({ userId, course }: CourseScorecardSectio
               onClick={() => viewModel.selectTee(tee.color ?? "")}
               className={cn(
                 "h-auto gap-2 px-3 py-2 text-xs text-muted-foreground",
-                selected && "ring-2 ring-primary/30",
+                selected && "ring-2 ring-primary/mild",
               )}
             >
               <TeeSwatch color={tee.color} className="size-3 shrink-0 rounded-full" />
@@ -36,7 +36,7 @@ export function CourseScorecardSection({ userId, course }: CourseScorecardSectio
               {tee.slope_rating != null && <span>/ Slope {tee.slope_rating}</span>}
               {tee.total_yardage != null && <span>/ {tee.total_yardage} yds</span>}
               {courseHandicap != null && (
-                <span className="rounded bg-primary/10 px-1.5 py-0.5 text-caption font-semibold text-primary">
+                <span className="rounded bg-primary/tint px-1.5 py-0.5 text-caption font-semibold text-primary">
                   CH {formatCourseHandicap(courseHandicap)}
                 </span>
               )}
