@@ -258,11 +258,14 @@ export function TrendAreaChart({
               <div className="max-w-40 truncate text-label text-muted-foreground">{point.subtitle}</div>
             )}
             <div className="mt-1.5 flex flex-col gap-0.5">
-              {series.map((s, i) => (
-                <TooltipRow key={s.label} label={s.label}>
-                  {point.values[i] != null ? format(point.values[i]!) : "—"}
-                </TooltipRow>
-              ))}
+              {series.map((s, i) => {
+                const value = point.values[i];
+                return (
+                  <TooltipRow key={s.label} label={s.label}>
+                    {value != null ? format(value) : "—"}
+                  </TooltipRow>
+                );
+              })}
               {point.notes?.map((note) => (
                 <TooltipRow key={note.label} label={note.label}>
                   {note.value}

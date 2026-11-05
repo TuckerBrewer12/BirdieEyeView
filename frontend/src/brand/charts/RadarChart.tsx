@@ -53,7 +53,8 @@ export function RadarChart({
   };
   const outline = (values: number[]) => values.map((v, i) => point(i, v).join(",")).join(" ");
 
-  const compared = axes.every((axis) => axis.benchmark != null);
+  const benchmarks = axes.flatMap((axis) => (axis.benchmark != null ? [axis.benchmark] : []));
+  const compared = benchmarks.length === axes.length;
 
   return (
     <div data-slot="radar-chart" className={cn("w-full", className)}>
@@ -80,7 +81,7 @@ export function RadarChart({
         {compared && (
           <g data-slot="radar-benchmark">
             <polygon
-              points={outline(axes.map((axis) => axis.benchmark!))}
+              points={outline(benchmarks)}
               fill={tokens.color.chart.axis}
               fillOpacity={tokens.opacity.wash}
               stroke={tokens.color.chart.axis}
@@ -88,7 +89,7 @@ export function RadarChart({
               strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
             />
             {axes.map((axis, i) => {
-              const [x, y] = point(i, axis.benchmark!);
+              const [x, y] = point(i, benchmarks[i]);
               return <circle key={axis.label} cx={x} cy={y} r={dot * 0.75} fill={tokens.color.chart.axis} />;
             })}
           </g>

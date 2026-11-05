@@ -95,6 +95,7 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
         {series.map((s, i) => {
           const color = STROKE[s.tone ?? "primary"];
           const end = lastKnownIndex(s.values);
+          const endValue = end >= 0 ? s.values[end] : null;
           return (
             <g key={i}>
               <path
@@ -105,10 +106,10 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              {end >= 0 && (
+              {endValue != null && (
                 <circle
                   cx={x(end)}
-                  cy={y(s.values[end]!)}
+                  cy={y(endValue)}
                   r={dot}
                   fill={tokens.color.card}
                   stroke={color}

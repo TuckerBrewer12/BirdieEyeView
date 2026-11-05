@@ -141,7 +141,7 @@ function RoundFigures({ round }: { round: Pick<Round, "score" | "toPar" | "cours
 }
 
 function CourseField({ review }: { review: ScanReviewViewModel }) {
-  const { courseSearch } = review;
+  const { courseSearch, nameToKeep } = review;
   return (
     <Field>
       <FieldLabel htmlFor="review-course">Course</FieldLabel>
@@ -160,14 +160,14 @@ function CourseField({ review }: { review: ScanReviewViewModel }) {
         onClear={review.changeCourse}
         clearLabel="Change course"
       />
-      {review.nameToKeep && (
+      {nameToKeep && (
         <Button
           variant="linkMuted"
           size="xs"
           className="h-auto self-start p-0"
-          onClick={() => review.nameCourse(review.nameToKeep!)}
+          onClick={() => review.nameCourse(nameToKeep)}
         >
-          Save as "{formatCourseName(review.nameToKeep)}" without linking →
+          Save as "{formatCourseName(nameToKeep)}" without linking →
         </Button>
       )}
     </Field>
