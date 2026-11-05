@@ -38,10 +38,10 @@ const LENGTH = /\d(?:px|rem|em)(?![a-z])/;
 
 const MEASURE_PROPS = new Set([
   "strokeWidth", "rx", "ry", "r", "innerRadius", "outerRadius", "cornerRadius", "maxBarSize", "barSize", "barGap",
-  "fontSize", "strokeDasharray", "stopOpacity", "fillOpacity", "strokeOpacity", "tickSize", "tickMargin",
+  "fontSize", "strokeDasharray", "opacity", "stopOpacity", "fillOpacity", "strokeOpacity", "tickSize", "tickMargin",
 ]);
 /** Opacity of 1 is the default, not a measure. */
-const OPACITY_PROPS = new Set(["stopOpacity", "fillOpacity", "strokeOpacity"]);
+const OPACITY_PROPS = new Set(["opacity", "stopOpacity", "fillOpacity", "strokeOpacity"]);
 
 /** The number a literal holds, `-3` included, or null for anything computed. */
 function numberOf(node) {

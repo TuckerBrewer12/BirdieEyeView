@@ -98,6 +98,7 @@ tester.run("kit/no-measure-prop", kitNumbers.rules["no-measure-prop"], {
     "const el = <Pie innerRadius={chartLayout.ring.inner} outerRadius={chartLayout.ring.outer} />;",
     "const el = <circle r={dotR} strokeWidth={0} />;",
     "const el = <rect rx={chartLayout.barRadius[0]} fillOpacity={1} />;",
+    "const el = <g opacity={1} />;",
     'const el = <path strokeDasharray={dash} stroke="var(--chart-axis)" />;',
     // `size` is only an icon's measure on an icon.
     'const el = <Card size="sm" />;',
@@ -108,6 +109,7 @@ tester.run("kit/no-measure-prop", kitNumbers.rules["no-measure-prop"], {
     { code: "const el = <rect rx={2} />;", errors: [{ messageId: "measure" }] },
     { code: 'const el = <CartesianGrid strokeDasharray="3 3" />;', errors: [{ messageId: "measure" }] },
     { code: "const el = <stop stopOpacity={0.22} />;", errors: [{ messageId: "measure" }] },
+    { code: "const el = <line opacity={0.35} />;", errors: [{ messageId: "measure" }] },
     { code: "const el = <line strokeWidth={4} />;", errors: [{ messageId: "measure" }] },
     {
       code: 'import { ChevronRight as Chevron } from "lucide-react";\nconst el = <Chevron size={14} />;',
