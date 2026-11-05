@@ -7,7 +7,7 @@ interface HoleScoreShapesProps {
   numbered?: boolean;
 }
 
-const { width: VB_W, height: VB_H, circle: r, dot, stroke, strokeThin, corner } = tokens.chart.holeShape;
+const { width: VB_W, height: VB_H, circle: r, dot, stroke, strokeThin, corner, inset } = tokens.chart.holeShape;
 const cx = VB_W / 2;
 const cy = VB_H / 2;
 
@@ -56,7 +56,7 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
       )}
       {(kind === "triple" || kind === "quad") && (
         <>
-          <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={corner.box} fill={fill} />
+          <rect x={inset} y={inset} width={VB_W - inset * 2} height={VB_H - inset * 2} rx={corner.box} fill={fill} />
           <line x1={0} y1={7} x2={7} y2={0} stroke={onFill} strokeWidth={stroke} strokeLinecap="round" opacity={tokens.opacity.recessed} />
           <line x1={0} y1={18} x2={18} y2={0} stroke={onFill} strokeWidth={stroke} strokeLinecap="round" opacity={tokens.opacity.recessed} />
           <line x1={0} y1={VB_H} x2={VB_W} y2={0} stroke={onFill} strokeWidth={stroke} strokeLinecap="round" opacity={tokens.opacity.recessed} />
