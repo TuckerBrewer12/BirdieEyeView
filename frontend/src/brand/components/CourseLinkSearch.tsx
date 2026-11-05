@@ -22,7 +22,8 @@ interface CourseLinkSearchProps {
   linking?: boolean;
   reviewVariant?: boolean;
   onUseCustomName?: (name: string) => void;
-  autoFocus?: boolean;
+  /** Puts the caret in the search when it appears: only where the golfer just opened it. */
+  focusOnOpen?: boolean;
   linkedName?: string;
   /** Heads the picked course's card. */
   linkedTitle?: string;
@@ -44,7 +45,7 @@ export function CourseLinkSearch({
   linking = false,
   reviewVariant = false,
   onUseCustomName,
-  autoFocus = true,
+  focusOnOpen = false,
   linkedName,
   linkedTitle = "Linked",
   customName,
@@ -92,7 +93,7 @@ export function CourseLinkSearch({
         value={query}
         onChange={onQueryChange}
         placeholder="Search courses…"
-        autoFocus={autoFocus}
+        focusOnOpen={focusOnOpen}
         loading={searching}
       />
       {results.length > 0 && (

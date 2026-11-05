@@ -47,15 +47,9 @@ export function RoundPreview(props: RoundPreviewProps) {
   const { round, variant, onClick, onLinkClick } = props;
 
   if (variant === "history") {
-    return (
-      <div
-        data-slot="round-preview"
-        className={cn(
-          "flex items-center justify-between px-5 py-3",
-          onClick && "cursor-pointer hover:bg-muted",
-        )}
-        onClick={onClick}
-      >
+    const row = "flex items-center justify-between px-5 py-3";
+    const content = (
+      <>
         <span className="text-sm text-muted-foreground">
           {formatDay(round.date) ?? "—"}
         </span>
@@ -65,6 +59,21 @@ export function RoundPreview(props: RoundPreviewProps) {
             {toParLabel(round.toPar) ?? "—"}
           </span>
         </div>
+      </>
+    );
+    // A row that opens the round is a button, so a keyboard can reach and press it.
+    return onClick ? (
+      <button
+        type="button"
+        data-slot="round-preview"
+        className={cn(row, "w-full cursor-pointer text-left hover:bg-muted")}
+        onClick={onClick}
+      >
+        {content}
+      </button>
+    ) : (
+      <div data-slot="round-preview" className={row}>
+        {content}
       </div>
     );
   }

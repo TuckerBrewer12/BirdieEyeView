@@ -120,7 +120,6 @@ export function RegisterPage() {
             linkedTitle="Selected"
             onClear={viewModel.clearHomeCourse}
             clearLabel="Change home course"
-            autoFocus={false}
           />
           <FieldDescription>
             Pick it from the list. Not there? Leave it blank and set it later in Settings.

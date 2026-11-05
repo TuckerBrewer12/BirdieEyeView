@@ -124,7 +124,6 @@ export function ScanPage({ userId }: { userId: string }) {
                   onQueryChange={viewModel.courseSearch.setQuery}
                   onSelectCourse={viewModel.pickPresetCourse}
                   onClose={viewModel.courseSearch.reset}
-                  autoFocus={false}
                   linkedName={viewModel.presetCourse ? formatCourseName(viewModel.presetCourse.name) : undefined}
                   onClear={viewModel.clearPresetCourse}
                   clearLabel="Clear course"

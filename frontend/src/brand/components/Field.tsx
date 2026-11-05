@@ -23,9 +23,14 @@ function Field({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function FieldLabel({ className, ...props }: React.ComponentProps<"label">) {
+function FieldLabel({
+  className,
+  htmlFor,
+  ...props
+}: React.ComponentProps<"label">) {
   return (
     <label
+      htmlFor={htmlFor}
       data-slot="field-label"
       className={cn(
         "text-xs font-semibold text-muted-foreground select-none group-has-disabled/field:opacity-50",

@@ -118,6 +118,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
             customName={editor.customName}
             onClear={editor.changeCourse}
             clearLabel="Change course"
+            focusOnOpen
           />
           {editor.playedNameToKeep && (
             <Button

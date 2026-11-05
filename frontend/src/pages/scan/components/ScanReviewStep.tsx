@@ -71,7 +71,7 @@ export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanRe
               <CardTitle>Your card</CardTitle>
             </CardHeader>
             <CardContent>
-              <img src={photoUrl} alt="The scorecard photo" className="max-h-96 w-full rounded-lg object-contain" />
+              <img src={photoUrl} alt="Your scorecard" className="max-h-96 w-full rounded-lg object-contain" />
             </CardContent>
           </Card>
         )}
@@ -153,7 +153,6 @@ function CourseField({ review }: { review: ScanReviewViewModel }) {
         onQueryChange={courseSearch.setQuery}
         onSelectCourse={review.pickCourse}
         onClose={courseSearch.reset}
-        autoFocus={false}
         reviewVariant
         onUseCustomName={review.nameCourse}
         linkedName={review.linkedName ? formatCourseName(review.linkedName) : undefined}
