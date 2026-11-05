@@ -7,7 +7,7 @@ interface HoleScoreShapesProps {
   numbered?: boolean;
 }
 
-const { width: VB_W, height: VB_H, circle: r, dot, stroke, strokeThin, corner } = tokens.chart.holeShape;
+const { width: VB_W, height: VB_H, circle: r, dot, stroke, strokeThin, corner, hatch } = tokens.chart.holeShape;
 const cx = VB_W / 2;
 const cy = VB_H / 2;
 
@@ -60,7 +60,7 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
           <line x1={0} y1={7} x2={7} y2={0} stroke={onFill} strokeWidth={stroke} strokeLinecap="round" opacity={tokens.opacity.recessed} />
           <line x1={0} y1={18} x2={18} y2={0} stroke={onFill} strokeWidth={stroke} strokeLinecap="round" opacity={tokens.opacity.recessed} />
           <line x1={0} y1={VB_H} x2={VB_W} y2={0} stroke={onFill} strokeWidth={stroke} strokeLinecap="round" opacity={tokens.opacity.recessed} />
-          <line x1={14} y1={VB_H} x2={VB_W} y2={8} stroke={onFill} strokeWidth={stroke} strokeLinecap="round" opacity={tokens.opacity.recessed} />
+          <line x1={hatch.x1} y1={VB_H} x2={VB_W} y2={hatch.y2} stroke={onFill} strokeWidth={stroke} strokeLinecap="round" opacity={tokens.opacity.recessed} />
         </>
       )}
       <text

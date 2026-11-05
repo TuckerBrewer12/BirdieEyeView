@@ -656,5 +656,7 @@ export const chart = {
     strokeThin: 1.25,
     /** Corner radii: par's box is the softest, a double's inner box the tightest. */
     corner: { par: 3, outer: 2.5, box: 2, inner: 1.5 },
+    /** The last hatch line over a triple, from the bottom edge to the right. */
+    hatch: { x1: 14, y2: 8 },
   },
 };
