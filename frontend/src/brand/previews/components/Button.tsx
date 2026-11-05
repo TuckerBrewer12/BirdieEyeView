@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { Button } from "@/brand/components/Button";
+import { Button, RowButton } from "@/brand/components/Button";
 
 export default function ButtonPreview() {
   return (
@@ -49,6 +49,11 @@ export default function ButtonPreview() {
         <Button variant="outline" size="cta" shape="pill">
           Sign in
         </Button>
+      </div>
+      <div className="overflow-hidden rounded-card border border-border bg-card">
+        <RowButton className="w-full cursor-pointer px-3 py-2 text-sm text-foreground hover:bg-muted">
+          Open round
+        </RowButton>
       </div>
     </>
   );
