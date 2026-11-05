@@ -7,7 +7,7 @@ interface HoleScoreShapesProps {
   numbered?: boolean;
 }
 
-const { width: VB_W, height: VB_H, circle: r, dot, stroke, strokeThin, corner } = tokens.chart.holeShape;
+const { width: VB_W, height: VB_H, circle: r, dot, stroke, strokeThin, corner, inset } = tokens.chart.holeShape;
 const cx = VB_W / 2;
 const cy = VB_H / 2;
 
@@ -41,7 +41,7 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
       )}
       {kind === "double" && (
         <>
-          <rect x={2.5} y={2.5} width={VB_W - 5} height={VB_H - 5} rx={corner.inner} fill={fill} />
+          <rect x={inset} y={inset} width={VB_W - inset * 2} height={VB_H - inset * 2} rx={corner.inner} fill={fill} />
           <rect
             x={0.5}
             y={0.5}

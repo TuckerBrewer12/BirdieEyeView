@@ -654,6 +654,8 @@ export const chart = {
     stroke: 1.5,
     /** The double's outer box. */
     strokeThin: 1.25,
+    /** How far the double's filled box sits in from each edge. */
+    inset: 2.5,
     /** Corner radii: par's box is the softest, a double's inner box the tightest. */
     corner: { par: 3, outer: 2.5, box: 2, inner: 1.5 },
   },
