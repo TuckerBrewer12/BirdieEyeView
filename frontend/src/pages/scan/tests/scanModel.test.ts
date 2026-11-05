@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { pebbleBeachSummary } from "@/testing/fixtures/courses";
 import { SCANNED_COURSE_NAME, scannedCard } from "@/testing/fixtures/scan";
-import { holeList } from "../present";
+import { USER_FACING_ERRORS } from "@/lib/userFacingErrors";
+import { holeList, SCAN_RETAKE_TIP, scanFailureNotice } from "../present";
 import { reviewCourseFrom, reviewFromScan, reviewFromSetup, saveRequestFrom, todayIso, withHoleEdit } from "../scanModel";
 
 const draft = reviewFromScan(scannedCard, "2026-10-15");
@@ -50,5 +51,21 @@ describe("holeList", () => {
     expect(holeList([3])).toBe("hole 3");
     expect(holeList([3, 7])).toBe("holes 3 and 7");
     expect(holeList([3, 7, 12])).toBe("holes 3, 7 and 12");
+  });
+});
+
+describe("scanFailureNotice", () => {
+  it("swaps the generic failure for what to try", () => {
+    expect(scanFailureNotice(USER_FACING_ERRORS.scan)).toEqual({
+      title: "Couldn't read this card",
+      detail: SCAN_RETAKE_TIP,
+    });
+  });
+
+  it("keeps a reason the server gave", () => {
+    expect(scanFailureNotice("File too large. Maximum size is 20 MB.")).toEqual({
+      title: "Couldn't read this card",
+      detail: "File too large. Maximum size is 20 MB.",
+    });
   });
 });

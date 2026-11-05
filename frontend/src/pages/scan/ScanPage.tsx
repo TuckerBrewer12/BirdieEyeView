@@ -1,8 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { PenLine, ScanLine } from "lucide-react";
 import {
-  Alert,
-  AlertDescription,
   CourseLinkSearch,
   LoadingState,
   PageHeader,
@@ -17,6 +15,7 @@ import { ScanReviewStep } from "./components/ScanReviewStep";
 import { ScanSetupStep } from "./components/ScanSetupStep";
 import { ScanSuccessStep } from "./components/ScanSuccessStep";
 import { ScanUploadStep } from "./components/ScanUploadStep";
+import { scanFailureNotice } from "./present";
 import { useScanPageViewModel } from "./useScanPageViewModel";
 
 const TITLE = "Scan Scorecard";
@@ -103,12 +102,6 @@ export function ScanPage({ userId }: { userId: string }) {
             </ToggleGroupItem>
           </ToggleGroup>
 
-          {viewModel.error && (
-            <Alert variant="destructive">
-              <AlertDescription>{viewModel.error}</AlertDescription>
-            </Alert>
-          )}
-
           {viewModel.step === "setup" ? (
             <ScanSetupStep setup={viewModel.setup} />
           ) : (
@@ -139,6 +132,8 @@ export function ScanPage({ userId }: { userId: string }) {
                 onClear={viewModel.clearPhoto}
                 onContextChange={viewModel.setUserContext}
                 onExtract={viewModel.extract}
+                failure={viewModel.error ? scanFailureNotice(viewModel.error) : null}
+                onEnterByHand={() => viewModel.setMode("manual")}
               />
             </>
           )}
