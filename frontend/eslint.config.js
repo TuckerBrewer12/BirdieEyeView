@@ -15,12 +15,6 @@ import specs from './eslint/specs.js'
 // the lists of restricted syntax and imports are built from these pieces in every block that
 // sets them.
 
-/** Colour-blind mode is being removed; nothing new should reach for it. */
-const NO_COLOR_BLIND = [{
-  selector: 'Identifier[name=/colou?r_?blind/i]',
-  message: 'Colour-blind mode is being removed. Paint scores from the brand tokens instead of a colour-blind palette.',
-}]
-
 /** Looks come from tokens and `dark:` variants; useTheme() is only for toggling and saving the choice. */
 const THEME_IS_CSS = [
   {
@@ -74,25 +68,17 @@ const NO_RAW_CONTROLS = [{
   message: 'Use the kit’s control (Button, Input, InputGroup, ToggleGroup, SortControl from @/brand) instead of a raw element.',
 }]
 
-/** Refactored pages and the kit never reach back into the legacy tree. */
-const NO_LEGACY_COMPONENTS = {
-  group: ['@/components', '@/components/*', '**/src/components/**'],
-  message: 'Refactored pages and the kit never import from src/components. Use the kit (@/brand), or port the piece into the kit first.',
-}
-
 /** Kit components and page components take domain types; the API's shapes stop at the data layer. */
 const NO_API_TYPES_IN_COMPONENTS = {
   group: ['@/types/api', '@/types/api.gen', '@/types/golf'],
   message: 'Components take the domain’s types (@/domain), not the API’s. Map the response in the repository or view model.',
 }
 
-/** Files that the brand kit's and golf rules cover. Each page joins this list as it is refactored. */
+/** Files that the brand kit's and golf rules cover: the kit, the app shell and every page. */
 const REFACTORED = [
   'src/brand/**/*.{ts,tsx}',
-  'src/pages/dashboard/**/*.{ts,tsx}',
-  'src/pages/landing-page/**/*.{ts,tsx}',
-  'src/pages/courses/**/*.{ts,tsx}',
-  'src/pages/rounds/**/*.{ts,tsx}',
+  'src/app/**/*.{ts,tsx}',
+  'src/pages/**/*.{ts,tsx}',
 ]
 const REFACTORED_IGNORES = [
   // The homes these rules point to: score words, paint and token mirrors.
@@ -162,13 +148,7 @@ export default defineConfig([
   {
     files: ['src/**/*.{ts,tsx}'],
     rules: {
-      'no-restricted-syntax': ['error', ...NO_COLOR_BLIND, ...THEME_IS_CSS, ...NO_RAW_API_FETCH],
-      'no-restricted-imports': ['error', {
-        patterns: [{
-          group: ['@/lib/accessibility', '@/lib/chartPalettes', '**/lib/accessibility', '**/lib/chartPalettes'],
-          message: 'Colour-blind mode is being removed. Paint scores from the brand tokens instead.',
-        }],
-      }],
+      'no-restricted-syntax': ['error', ...THEME_IS_CSS, ...NO_RAW_API_FETCH],
     },
   },
   {
@@ -204,10 +184,6 @@ export default defineConfig([
             group: ['@capacitor/*'],
             message: 'Put native APIs behind an adapter the app passes in.',
           },
-          {
-            group: ['@/lib/accessibility', '@/lib/chartPalettes', '**/lib/accessibility', '**/lib/chartPalettes'],
-            message: 'Colour-blind mode is being removed. Paint scores from the brand tokens instead.',
-          },
         ],
       }],
       'no-restricted-globals': ['error',
@@ -216,13 +192,12 @@ export default defineConfig([
         { name: 'localStorage', message: 'Use a storage adapter the app passes in.' },
         { name: 'sessionStorage', message: 'Use a storage adapter the app passes in.' },
       ],
-      'no-restricted-syntax': ['error', ...IMPORT_META, ...NO_COLOR_BLIND, ...THEME_IS_CSS, ...NO_RAW_API_FETCH],
+      'no-restricted-syntax': ['error', ...IMPORT_META, ...THEME_IS_CSS, ...NO_RAW_API_FETCH],
     },
   },
   {
     // Golf rules and score paint have one home each: the server and domain/ for figures and
-    // rules, brand/theme/score.ts for words and colour. Colours, lengths and motion come from
-    // brand/theme. On for the kit and the pages already moved onto it.
+    // rules, brand/theme for words, colour, lengths and motion.
     files: REFACTORED,
     ignores: REFACTORED_IGNORES,
     plugins: { golf, kit },
@@ -239,16 +214,14 @@ export default defineConfig([
       'kit/no-raw-motion': 'error',
       'kit/no-style-measure': 'error',
       'kit/no-measure-prop': 'error',
-      // A different rule id from no-restricted-imports, so it doesn't replace the shared-code list above.
-      '@typescript-eslint/no-restricted-imports': ['error', { patterns: [NO_LEGACY_COMPONENTS] }],
     },
   },
   {
-    // Views in the refactored pages: lay out what the view model hands over, with kit controls.
+    // Views: lay out what the view model hands over, with kit controls.
     files: REFACTORED.map((glob) => glob.replace('{ts,tsx}', 'tsx')),
     ignores: [...REFACTORED_IGNORES, 'src/brand/components/**'],
     rules: {
-      'no-restricted-syntax': ['error', ...NO_COLOR_BLIND, ...THEME_IS_CSS, ...NO_RAW_API_FETCH, ...VIEW_SHAPING, ...NO_RAW_CONTROLS],
+      'no-restricted-syntax': ['error', ...THEME_IS_CSS, ...NO_RAW_API_FETCH, ...VIEW_SHAPING, ...NO_RAW_CONTROLS],
     },
   },
   {
@@ -256,14 +229,14 @@ export default defineConfig([
     files: ['src/brand/components/**/*.tsx'],
     ignores: REFACTORED_IGNORES,
     rules: {
-      'no-restricted-syntax': ['error', ...NO_COLOR_BLIND, ...THEME_IS_CSS, ...NO_RAW_API_FETCH, ...VIEW_SHAPING],
+      'no-restricted-syntax': ['error', ...THEME_IS_CSS, ...NO_RAW_API_FETCH, ...VIEW_SHAPING],
     },
   },
   {
     files: ['src/brand/**/*.{ts,tsx}', 'src/pages/**/components/**/*.{ts,tsx}'],
     ignores: REFACTORED_IGNORES,
     rules: {
-      '@typescript-eslint/no-restricted-imports': ['error', { patterns: [NO_LEGACY_COMPONENTS, NO_API_TYPES_IN_COMPONENTS] }],
+      '@typescript-eslint/no-restricted-imports': ['error', { patterns: [NO_API_TYPES_IN_COMPONENTS] }],
     },
   },
   {
@@ -289,7 +262,7 @@ export default defineConfig([
   {
     files: ['src/**/*.espresso.spec.ts'],
     rules: {
-      'no-restricted-syntax': ['error', ...NO_COLOR_BLIND, {
+      'no-restricted-syntax': ['error', {
         selector: "CallExpression[callee.property.name=/^(toHaveScreenshot|toHaveCSS|capture)$/], CallExpression[callee.name='getComputedStyle']",
         message: 'Espresso specs check behaviour. Put look checks in the screenshot spec through the robot’s capture().',
       }],
