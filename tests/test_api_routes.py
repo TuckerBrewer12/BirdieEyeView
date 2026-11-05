@@ -527,7 +527,7 @@ async def test_stats_auxiliary_endpoints(monkeypatch):
     assert round_comparison.score[0].primary_value == 9
 
     db.rounds.get_rounds_for_user.return_value = []
-    assert await stats.get_milestones(user_id, 12, db, user) == {"milestones": []}
+    assert (await stats.get_milestones(user_id, 12, db, user)).model_dump() == {"milestones": []}
 
     course_analytics = await stats.get_course_analytics(user_id, course_id, db, user)
     assert course_analytics.rounds_played == 0

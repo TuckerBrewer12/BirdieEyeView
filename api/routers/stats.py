@@ -1,6 +1,6 @@
 """Stats/dashboard API endpoints."""
 
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from typing import List, Literal, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -11,12 +11,14 @@ from models import User
 from api.round_responses import round_summary
 from api.course_analytics_responses import course_analytics
 from api.analytics_responses import analytics_response
+from api.milestone_responses import milestones_response
 from api.schemas import (
     AnalyticsResponse,
     BenchmarkComparisonResponse,
     CourseAnalyticsResponse,
     DashboardResponse,
     GoalReportResponse,
+    LifetimeMilestonesResponse,
     PlayedCourseResponse,
     RoundComparisonResponse,
 )
@@ -270,108 +272,23 @@ async def get_round_comparison(
     )
 
 
-@router.get("/milestones/{user_id}")
+@router.get("/milestones/{user_id}", response_model=LifetimeMilestonesResponse)
 async def get_milestones(
     user_id: UUID,
     limit: int = Query(default=12, ge=1, le=50),
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Return a flat, sorted list of lifetime milestone events for the user."""
+    """The golfer's lifetime firsts (score, GIR and putt breaks, first round under par, eagle,
+    hole in one), newest first."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, "Forbidden")
     user = await db.users.get_user(str(user_id))
     if not user:
         raise HTTPException(404, "User not found")
 
-    all_rounds = await db.rounds.get_rounds_for_user(str(user_id), limit=500, offset=0)
-    rounds_chrono = list(reversed(all_rounds))
-
-    if not rounds_chrono:
-        return {"milestones": []}
-
-    achievements = analytics.notable_achievements(rounds_chrono, home_course_id=user.home_course_id)
-
-    def _parse_date(d: str) -> datetime:
-        try:
-            return datetime.strptime(d, "%Y/%m/%d")
-        except Exception:
-            return datetime.min
-
-    milestones = []
-
-    # Score breaks (break 120, 110, 100, 95, 90, 85, 80, 75, 70 …)
-    for item in achievements["round_milestones"]["lifetime"]["score_breaks"]:
-        a = item["achievement"]
-        if a:
-            milestones.append({
-                "type": "score_break",
-                "label": f"First to break {item['threshold']}",
-                "date": a["date"],
-                "course": a["course"],
-                "round_id": a.get("round_id"),
-            })
-
-    # First round under par
-    under_par = achievements["round_milestones"]["lifetime"]["first_round_under_par"]
-    if under_par:
-        milestones.append({
-            "type": "under_par",
-            "label": "First round under par",
-            "date": under_par["date"],
-            "course": under_par["course"],
-            "round_id": under_par.get("round_id"),
-        })
-
-    # First eagle
-    eagle = achievements["round_milestones"]["lifetime"]["first_eagle"]
-    if eagle:
-        milestones.append({
-            "type": "eagle",
-            "label": "First eagle",
-            "date": eagle["date"],
-            "course": eagle["course"],
-            "round_id": eagle.get("round_id"),
-        })
-
-    # Hole in one
-    hio = achievements["round_milestones"]["lifetime"]["first_hole_in_one"]
-    if hio:
-        milestones.append({
-            "type": "hole_in_one",
-            "label": "Hole in one",
-            "date": hio["date"],
-            "course": hio["course"],
-            "round_id": hio.get("round_id"),
-        })
-
-    # GIR breaks (first 3, 6, 9, 12, 15, 18 GIR in a round)
-    for item in achievements["gir_milestones"]["lifetime"]["gir_breaks"]:
-        a = item["achievement"]
-        if a:
-            pct = round(item["threshold"] / 18 * 100)
-            milestones.append({
-                "type": "gir_break",
-                "label": f"First {item['threshold']} GIR in a round ({pct}%)",
-                "date": a["date"],
-                "course": a["course"],
-                "round_id": a.get("round_id"),
-            })
-
-    # Putt breaks (first round under 45, 42, 39, 36, 33, 30 … putts)
-    for item in achievements["putting_milestones"]["lifetime"]["putt_breaks"]:
-        a = item["achievement"]
-        if a:
-            milestones.append({
-                "type": "putt_break",
-                "label": f"First round under {item['threshold']} putts",
-                "date": a["date"],
-                "course": a["course"],
-                "round_id": a.get("round_id"),
-            })
-
-    milestones.sort(key=lambda m: _parse_date(m["date"]), reverse=True)
-    return {"milestones": milestones[:limit]}
+    rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=500, offset=0)
+    return milestones_response(list(reversed(rounds_desc)), home_course_id=user.home_course_id, limit=limit)
 
 
 @router.get("/course-analytics/{user_id}/{course_id}", response_model=CourseAnalyticsResponse)

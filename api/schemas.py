@@ -199,6 +199,24 @@ class Milestone(ResponseModel):
     round_id: Optional[str] = None
 
 
+LifetimeMilestoneType = Literal["score_break", "under_par", "eagle", "hole_in_one", "gir_break", "putt_break"]
+
+
+class LifetimeMilestone(ResponseModel):
+    """A lifetime first: the round that first broke a score, putt or GIR mark, or that held the
+    first round under par, eagle or hole in one. `date` reads 2026/5/28."""
+    type: LifetimeMilestoneType
+    label: str
+    date: str
+    course: str
+    round_id: Optional[str] = None
+
+
+class LifetimeMilestonesResponse(ResponseModel):
+    """`GET /stats/milestones/{user}`: the golfer's lifetime firsts, newest first."""
+    milestones: List[LifetimeMilestone]
+
+
 DifferentialStatus = Literal["counting", "close", "out", "unrated"]
 
 

@@ -439,7 +439,8 @@ export interface paths {
         };
         /**
          * Get Milestones
-         * @description Return a flat, sorted list of lifetime milestone events for the user.
+         * @description The golfer's lifetime firsts (score, GIR and putt breaks, first round under par, eagle,
+         *     hole in one), newest first.
          */
         get: operations["get_milestones_api_stats_milestones__user_id__get"];
         put?: never;
@@ -1738,6 +1739,34 @@ export interface components {
              * @default 0
              */
             most_rounds_played_at_home_course: number;
+        };
+        /**
+         * LifetimeMilestone
+         * @description A lifetime first: the round that first broke a score, putt or GIR mark, or that held the
+         *     first round under par, eagle or hole in one. `date` reads 2026/5/28.
+         */
+        LifetimeMilestone: {
+            /** Course */
+            course: string;
+            /** Date */
+            date: string;
+            /** Label */
+            label: string;
+            /** Round Id */
+            round_id: string | null;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "score_break" | "under_par" | "eagle" | "hole_in_one" | "gir_break" | "putt_break";
+        };
+        /**
+         * LifetimeMilestonesResponse
+         * @description `GET /stats/milestones/{user}`: the golfer's lifetime firsts, newest first.
+         */
+        LifetimeMilestonesResponse: {
+            /** Milestones */
+            milestones: components["schemas"]["LifetimeMilestone"][];
         };
         /** LifetimePuttingMilestones */
         LifetimePuttingMilestones: {
@@ -3966,7 +3995,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["LifetimeMilestonesResponse"];
                 };
             };
             /** @description Validation Error */
