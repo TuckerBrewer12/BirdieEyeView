@@ -1,6 +1,6 @@
 import { Crosshair, Flame, Home, Ruler, Shuffle, Target, TrendingUp, type LucideIcon } from "lucide-react";
 import { Card, CardContent, Meter, Stat, StatUnit, StatValue } from "@/brand";
-import { formatPercent } from "@/domain";
+import { formatOneDecimal, formatPercent } from "@/domain";
 import type { Saver } from "../model";
 import { SAVER_LABEL } from "../present";
 
@@ -36,7 +36,7 @@ export function SaverCard({ saver }: { saver: Saver }) {
           </div>
           <Stat align="end">
             <StatValue size="sm" className="text-primary">
-              −{saver.strokesSaved.toFixed(1)}
+              −{formatOneDecimal(saver.strokesSaved)}
               <StatUnit>strokes</StatUnit>
             </StatValue>
           </Stat>

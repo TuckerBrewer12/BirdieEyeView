@@ -103,13 +103,14 @@ export function Sparkline({
             y2={referenceY}
             stroke={tokens.color.border}
             strokeWidth={tokens.lineWidth.border}
-            strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
+            strokeDasharray={tokens.chart.guideDash}
           />
         )}
         {fill && <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />}
         {series.map((s, i) => {
           const color = STROKE[s.tone ?? "primary"];
           const end = lastKnownIndex(s.values);
+          const endValue = end >= 0 ? s.values[end] : null;
           return (
             <g key={i}>
               <path
@@ -120,10 +121,10 @@ export function Sparkline({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              {end >= 0 && (
+              {endValue != null && (
                 <circle
                   cx={x(end)}
-                  cy={y(s.values[end]!)}
+                  cy={y(endValue)}
                   r={dot}
                   fill={tokens.color.card}
                   stroke={color}

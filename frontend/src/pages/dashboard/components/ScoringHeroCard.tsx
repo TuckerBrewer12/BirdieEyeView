@@ -59,7 +59,7 @@ export function ScoringHeroCard({
           <StatLabel>Scoring Avg · L20</StatLabel>
           {showChange && (
             <StatDelta direction={change < 0 ? "down" : "up"} tone={changeVerdict ?? "neutral"} pill>
-              {Math.abs(change).toFixed(1)} vs L5
+              {formatOneDecimal(Math.abs(change))} vs L5
             </StatDelta>
           )}
         </div>

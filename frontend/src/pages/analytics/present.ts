@@ -235,7 +235,10 @@ export interface HeadlineFigure {
   trend?: (number | null)[];
 }
 
-/** The headline figures over the filtered rounds, worded for their tiles. */
+/**
+ * The headline figures, worded for their tiles: the golfer's own handicap index whatever the
+ * filters, and the rest over the filtered rounds.
+ */
 export function headlineFigures(analytics: Analytics): HeadlineFigure[] {
   const { kpis } = analytics;
   const change = kpis.scoring_average_change;

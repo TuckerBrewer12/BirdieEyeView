@@ -1,7 +1,7 @@
 import { Button, Card, CardContent, Meter } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { GoalProgress } from "../model";
-import { goalScoreToBreak, goalTargetLabel } from "@/domain";
+import { formatOneDecimal, goalScoreToBreak, goalTargetLabel } from "@/domain";
 
 interface GoalCardProps {
   /** Null until a goal is set, which shows the prompt to set one. */
@@ -41,7 +41,7 @@ export function GoalCard({ goal, onOpen, className }: GoalCardProps) {
             </div>
             <div className="mb-3">
               <div className="flex justify-between text-meta text-muted-foreground mb-1">
-                <span>{goal.average != null ? `Avg ${goal.average.toFixed(1)}` : null}</span>
+                <span>{goal.average != null ? `Avg ${formatOneDecimal(goal.average)}` : null}</span>
                 <span>Goal {goalScoreToBreak(goal.target)}</span>
               </div>
               <Meter

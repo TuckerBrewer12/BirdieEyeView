@@ -57,14 +57,13 @@ def test_score_mix_counts_classified_holes():
 def test_handicap_change_reads_the_window():
     trend = [{"handicap_index": v} for v in (14.0, 13.5, 13.0, 12.8, 12.6, 12.4)]
     assert dashboard.handicap_change(trend) == {
-        "delta": -1.6, "direction": "down", "delta_verdict": "good", "direction_verdict": "good",
+        "delta": -1.6, "direction": "down", "delta_verdict": "good",
     }
     assert dashboard.handicap_change([{"handicap_index": 10.0}]) == {
-        "delta": None, "direction": None, "delta_verdict": None, "direction_verdict": None,
+        "delta": None, "direction": None, "delta_verdict": None,
     }
     flat = [{"handicap_index": v} for v in (10.0, 10.1, 10.2)]
     assert dashboard.handicap_change(flat)["direction"] == "flat"
-    assert dashboard.handicap_change(flat)["direction_verdict"] == "neutral"
 
 
 def test_change_verdict_reads_a_fall_as_good():

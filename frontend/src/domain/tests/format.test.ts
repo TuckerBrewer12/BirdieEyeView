@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatOneDecimal, formatPercent, pluralize, pluralNoun } from "../format";
+import { formatFileSize, formatOneDecimal, formatPercent, formatWhole, pluralize, pluralNoun } from "../format";
 
 describe("pluralNoun", () => {
   it("gives the bare noun, for callers that render the count themselves", () => {
@@ -60,5 +60,20 @@ describe("formatOneDecimal", () => {
     expect(formatOneDecimal(82.44)).toBe("82.4");
     expect(formatOneDecimal(33)).toBe("33.0");
     expect(formatOneDecimal(null)).toBe("—");
+  });
+});
+
+describe("formatWhole", () => {
+  it("rounds to a whole number, or a dash", () => {
+    expect(formatWhole(31.4)).toBe("31");
+    expect(formatWhole(31.5)).toBe("32");
+    expect(formatWhole(null)).toBe("—");
+  });
+});
+
+describe("formatFileSize", () => {
+  it("writes whole kilobytes", () => {
+    expect(formatFileSize(421_888)).toBe("412 KB");
+    expect(formatFileSize(300)).toBe("0 KB");
   });
 });

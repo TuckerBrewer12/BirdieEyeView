@@ -1,10 +1,16 @@
 import { Stat, StatCard, StatDelta, StatLabel, StatUnit, StatValue } from "@/brand/components/Stat";
+import { formatOneDecimal } from "@/domain";
 import { labAnalytics } from "@/testing/fixtures/lab";
 import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 
 const golfer = sampleGolfer.analytics;
 const dashboard = sampleGolfer.dashboard;
 const scores = (rows: { total_score: number | null }[]) => rows.map((row) => row.total_score);
+/** How far a scoring average moved, unsigned, as its tile shows it. */
+const moved = (change: number | null | undefined) => formatOneDecimal(change != null ? Math.abs(change) : null);
+const golferTone = golfer.kpis.scoring_average_verdict ?? "neutral";
+const labTone = labAnalytics.kpis.scoring_average_verdict ?? "neutral";
+const dashboardTone = dashboard.scoring_average_verdict ?? "neutral";
 
 export default function StatPreview() {
   return (
@@ -14,18 +20,18 @@ export default function StatPreview() {
           label="Scoring Avg"
           value={String(golfer.kpis.scoring_average)}
           trend={scores(golfer.score_trend)}
-          delta={Math.abs(golfer.kpis.scoring_average_change!).toFixed(1)}
+          delta={moved(golfer.kpis.scoring_average_change)}
           direction="down"
-          tone={golfer.kpis.scoring_average_verdict!}
+          tone={golferTone}
           note="last 5 vs all"
         />
         <StatCard
           label="Scoring Avg"
           value={String(labAnalytics.kpis.scoring_average)}
           trend={scores(labAnalytics.score_trend)}
-          delta={Math.abs(labAnalytics.kpis.scoring_average_change!).toFixed(1)}
+          delta={moved(labAnalytics.kpis.scoring_average_change)}
           direction="up"
-          tone={labAnalytics.kpis.scoring_average_verdict!}
+          tone={labTone}
           note="last 5 vs all"
         />
         <StatCard label="Best Round" value={String(dashboard.best_round)} note={dashboard.best_round_course} />
@@ -37,8 +43,8 @@ export default function StatPreview() {
           <StatLabel>Scoring avg · L20</StatLabel>
           <StatValue size="xl">{dashboard.scoring_average_l20}</StatValue>
         </Stat>
-        <StatDelta direction="down" tone={dashboard.scoring_average_verdict!} pill>
-          {Math.abs(dashboard.scoring_average_change!).toFixed(1)} vs L5
+        <StatDelta direction="down" tone={dashboardTone} pill>
+          {moved(dashboard.scoring_average_change)} vs L5
         </StatDelta>
       </div>
 

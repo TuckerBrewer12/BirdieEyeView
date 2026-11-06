@@ -91,10 +91,10 @@ def test_goal_attempts_mark_each_scored_round_at_or_under_the_goal():
     assert goals.goal_report([Round()], 89)["attempts"] == []
 
 
-def test_lowest_round_takes_the_first_on_a_tie():
+def test_best_round_takes_the_first_on_a_tie():
     newest_first = [_scored(85, "new"), _scored(82, "tied-newer"), _scored(82, "tied-older"), Round(id="blank")]
-    assert dashboard.lowest_round(newest_first).id == "tied-newer"
-    assert dashboard.lowest_round([Round(id="blank")]) is None
+    assert analytics.best_round(newest_first).id == "tied-newer"
+    assert analytics.best_round([Round(id="blank")]) is None
 
 
 def test_goal_report_counts_rounds_meeting_the_goal_and_the_peak_gap():

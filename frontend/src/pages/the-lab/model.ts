@@ -15,7 +15,7 @@ export type LabSections = Pick<AnalyticsDto, "kpis" | "scoring_by_par" | "putts_
  * reads them as they come.
  */
 export type LabAnalytics = LabSections & {
-  /** The server's lowest score in the window: the best score until the goal report has one. */
+  /** The server's lowest full round in the window, until the goal report has its own. */
   lowestScore: number | null;
 };
 
@@ -69,7 +69,8 @@ export interface GoalStanding {
   gap: number | null;
   progressPct: number | null;
   onTrack: boolean;
-  bestScore: number | null;
+  /** The lowest full round in the window, a record: not the round list's best, which goes by to par. */
+  lowestScore: number | null;
   /** Rounds in the window at or under the goal. Null before the report loads. */
   roundsMeetingGoal: number | null;
   /** Each scored round in the window, oldest first, marked met or not. Empty before the report loads. */
@@ -90,7 +91,7 @@ export function goalStandingFrom(
     gap: report?.gap ?? null,
     progressPct: report?.progress_pct ?? null,
     onTrack: report?.on_track ?? false,
-    bestScore: report?.best_score ?? null,
+    lowestScore: report?.lowest_score ?? null,
     roundsMeetingGoal: report?.rounds_meeting_goal ?? null,
     attempts: goalAttemptsFrom(report?.attempts ?? []),
     savers: (report?.savers ?? []).map((saver) => ({

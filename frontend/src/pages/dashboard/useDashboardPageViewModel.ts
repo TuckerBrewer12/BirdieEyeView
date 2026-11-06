@@ -25,7 +25,6 @@ import {
   whsFrom,
   type ChangeVerdict,
   type GoalProgress,
-  type HiTrend,
   type Milestone,
   type PuttsRating,
   type ShortGameTrend,
@@ -33,7 +32,7 @@ import {
   type WhsBreakdown,
 } from "./model";
 
-export type { ChangeVerdict, HiTrend, TrendView, WhsBreakdown };
+export type { ChangeVerdict, TrendView, WhsBreakdown };
 
 export interface DashboardPageViewModel {
   data: DashboardDto | null;
@@ -58,8 +57,6 @@ export interface DashboardPageViewModel {
   /** Null until the window has a scored hole. */
   l20ScoreMix: ScoreMix | null;
   mixHoleCount: number;
-  hiTrend: HiTrend | null;
-  hiTrendVerdict: ChangeVerdict | null;
   girPct: number | null;
   /** The last five rounds' score mix. Null until they have a scored hole. */
   recentScoreMix: ScoreMix | null;
@@ -136,7 +133,7 @@ export function useDashboardPageViewModel(
     user: user ?? null,
     loading,
     error: error as Error | null,
-    refetch,
+    refetch: () => void refetch(),
     trend,
     recentScores,
     shortGameTrend,
@@ -148,8 +145,6 @@ export function useDashboardPageViewModel(
     handicapDeltaVerdict: data?.handicap_change.delta_verdict ?? null,
     l20ScoreMix: data && data.score_mix_holes > 0 ? data.score_mix : null,
     mixHoleCount: data?.score_mix_holes ?? 0,
-    hiTrend: data?.handicap_change.direction ?? null,
-    hiTrendVerdict: data?.handicap_change.direction_verdict ?? null,
     girPct: data?.recent_form.gir_pct ?? null,
     recentScoreMix: data?.recent_score_mix ?? null,
     scramblingPct: data?.recent_form.scrambling_pct ?? null,

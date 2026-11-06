@@ -9,7 +9,6 @@ import {
 } from "@/domain";
 import type { UserDto } from "@/types/api";
 import {
-  type HiTrend,
   type Milestone,
   type WhsRound,
 } from "./model";
@@ -17,6 +16,17 @@ import {
 
 export function firstNameOf(user: UserDto | null): string {
   return user?.name?.split(" ")[0] ?? "Golfer";
+}
+
+/** Up to two initials for the avatar: "Jordan Spieth" reads "JS"; no name reads "G" for golfer. */
+export function initialsOf(user: UserDto | null): string {
+  if (!user?.name) return "G";
+  return user.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 /** Today above the greeting: "Mon · Jun 15". */
@@ -73,8 +83,6 @@ export function usedLegend(countUsed: number, usedCount: number): string | null 
 export function whsContextNote(countUsed: number): string {
   return `The World Handicap System uses your best ${countUsed || "N"} ${pluralNoun(countUsed || 2, "differential")} from the last 20 rounds. Differentials measure how well you played relative to the course difficulty.`;
 }
-
-export type { HiTrend };
 
 const MILESTONE_WORDING: Record<Milestone["kind"], { title: string; figure: (value: number) => string }> = {
   under_par: { title: "First round under par", figure: String },

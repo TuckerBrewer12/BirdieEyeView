@@ -38,5 +38,6 @@ test("leaving with unsaved changes", async ({ settings }) => {
 
 test("settings failed to load", async ({ settings }) => {
   await settings.openFailed();
+  await settings.seesLoadError();
   await settings.capture("settings-error.png");
 });

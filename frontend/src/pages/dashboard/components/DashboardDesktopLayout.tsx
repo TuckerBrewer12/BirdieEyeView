@@ -11,7 +11,7 @@ import {
   SVGScoreHandicapTrend,
   Sparkline,
   Stat,
-  StatDelta,
+  StatCard,
   StatLabel,
   StatValue,
 } from "@/brand";
@@ -25,13 +25,13 @@ import { RecentRoundsTable } from "./RecentRoundsTable";
 import { ScanActionCard } from "./ScanActionCard";
 import { ScoreMixChart } from "./ScoreMixChart";
 import type { DashboardPageViewModel } from "../useDashboardPageViewModel";
-import { firstNameOf } from "../present";
+import { firstNameOf, initialsOf } from "../present";
 
 export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
   const {
     data, user, shortGameTrend,
-    trend, milestones, last20ScoringAvg, hiTrend, hiTrendVerdict,
+    trend, recentScores, milestones, last20ScoringAvg, scoringAverageChange, scoringAverageVerdict,
     recentScoreMix, girPct, scramblingPct, upAndDownPct, putts, puttsRating,
     bestRound, sidebarRounds, goal,
     openHandicapSheet,
@@ -46,7 +46,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
         {/* Left Main Content */}
         <div className="flex-1 min-w-0 flex flex-col">
           <ProfileHeroBanner
-            user={user ?? null}
+            initials={initialsOf(user ?? null)}
             handicapIndex={data.handicap_index}
             handicapLabel={formatHandicapIndex(data.handicap_index)}
             firstName={firstNameOf(user)}
@@ -60,28 +60,26 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
                 <RoundPreview
                   round={bestRound}
                   variant="highlight"
-                  onClick={bestRound ? () => navigate(`/rounds/${bestRound.id}`) : undefined}
+                  onClick={bestRound ? () => void navigate(`/rounds/${bestRound.id}`) : undefined}
                 />
               </CardContent>
             </Card>
 
-            <Card className="lg:col-span-1">
-              <CardContent>
-                <div className="flex flex-col gap-5 h-full justify-between">
-                  <div className="flex items-center justify-between">
-                    <Stat>
-                      <StatLabel>Scoring Avg (L20)</StatLabel>
-                      <StatValue size="lg">{formatOneDecimal(last20ScoringAvg)}</StatValue>
-                    </Stat>
-                    <StatDelta direction={hiTrend} tone={hiTrendVerdict ?? "neutral"} />
-                  </div>
-                  <Stat>
-                    <StatLabel>Total Rounds</StatLabel>
-                    <StatValue size="lg">{data.total_rounds}</StatValue>
-                  </Stat>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col gap-4 md:gap-5 lg:col-span-1 *:flex-1">
+              <StatCard
+                label="Scoring Avg (L20)"
+                value={formatOneDecimal(last20ScoringAvg)}
+                trend={recentScores}
+                tone={scoringAverageVerdict ?? "neutral"}
+                // The server rounds to a tenth, so no change at all shows no move.
+                {...(scoringAverageChange != null && scoringAverageChange !== 0 && {
+                  delta: formatOneDecimal(Math.abs(scoringAverageChange)),
+                  direction: scoringAverageChange < 0 ? "down" : "up",
+                  note: "vs L5",
+                })}
+              />
+              <StatCard label="Total Rounds" value={data.total_rounds} />
+            </div>
 
             <Card className="md:col-span-2 lg:col-span-2">
               <CardHeader>
@@ -160,12 +158,12 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
               <CardContent>
                 <MilestoneFeed
                   milestones={milestones}
-                  onRoundClick={(id) => navigate(`/rounds/${id}`)}
+                  onRoundClick={(id) => void navigate(`/rounds/${id}`)}
                 />
               </CardContent>
             </Card>
 
-            <GoalCard className="lg:col-span-1" goal={goal} onOpen={() => navigate("/the-lab")} />
+            <GoalCard className="lg:col-span-1" goal={goal} onOpen={() => void navigate("/the-lab")} />
 
             <div className="lg:col-span-3 flex justify-end gap-3 mt-4 lg:hidden">
               <Button nativeButton={false} render={<Link to="/rounds" />}>
@@ -181,7 +179,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
 
         {/* Right Sidebar */}
         <div className="w-72 shrink-0 hidden xl:flex flex-col gap-6 sticky top-20 self-start">
-          <ScanActionCard onClick={() => navigate("/scan")} />
+          <ScanActionCard onClick={() => void navigate("/scan")} />
 
           <Card size="sm">
             <CardHeader>
@@ -201,7 +199,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
               <div className="max-h-96 overflow-y-auto -mx-1">
                 <RecentRoundsTable
                   rounds={sidebarRounds}
-                  onRoundClick={(id) => navigate(`/rounds/${id}`)}
+                  onRoundClick={(id) => void navigate(`/rounds/${id}`)}
                 />
               </div>
               <div className="mt-4">

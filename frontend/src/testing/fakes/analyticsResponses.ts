@@ -32,6 +32,9 @@ export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
       up_and_down_percentage: null,
       handicap_index: analytics.kpis.handicap_index,
       total_rounds: 0,
+      best_round: null,
+      best_round_id: null,
+      best_round_course: null,
       average_putts: null,
       three_putts_per_round: null,
       three_putt_rate: null,
@@ -54,7 +57,8 @@ export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
     score_mix: { eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0 },
     insights: [],
     peak_game: null,
-    // No round, so no lowest one. The best round's card reads these.
+    // No round, so no record either.
+
     notable_achievements: {
       ...analytics.notable_achievements,
       scoring_records: {
