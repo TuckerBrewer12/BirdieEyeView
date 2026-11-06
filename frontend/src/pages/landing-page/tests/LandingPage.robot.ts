@@ -25,13 +25,23 @@ export class LandingRobot {
     return this;
   }
 
-  /** `scanFails`: the scan endpoint errors, as it does when the server can't read a card. */
-  async open({ scanFails = false }: { scanFails?: boolean } = {}): Promise<this> {
+  /**
+   * `scanFails`: the scan endpoint errors, as it does when the server can't read a card.
+   * `holdScan`: the scan doesn't answer, so the reading step stays on screen.
+   */
+  async open({
+    scanFails = false,
+    holdScan = false,
+  }: { scanFails?: boolean; holdScan?: boolean } = {}): Promise<this> {
     // The hero's scan loop is decoration and holds on step one under reduced
     // motion. Emulating it here is what makes the page deterministic enough to
     // have a baseline — `test.use({ reducedMotion })` does not reach the page.
     await this.page.emulateMedia({ reducedMotion: "reduce" });
-    await FakeSession.install(this.page, { signedOut: true, scan: scanFails ? undefined : scannedCard });
+    await FakeSession.install(this.page, {
+      signedOut: true,
+      scan: scanFails ? undefined : scannedCard,
+      holdScan,
+    });
     await this.page.goto("/");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -114,6 +124,17 @@ export class LandingRobot {
 
   async tapScan(): Promise<this> {
     await this.page.getByRole("button", { name: "Scan my scorecard" }).click();
+    return this;
+  }
+
+  /** The card being read, on the first of the shared steps. */
+  async seesReading(): Promise<this> {
+    const reading = this.page.locator("[data-slot=scan-progress]");
+    await expect(reading.getByText("Reading your card")).toBeVisible();
+    await expect(reading.getByRole("listitem", { name: "Course and tees" })).toHaveAttribute(
+      "aria-current",
+      "step",
+    );
     return this;
   }
 
