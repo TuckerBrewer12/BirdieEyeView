@@ -41,7 +41,7 @@ function RoundScorecard({ round, teeBox, teeRating, edits, toCheck, action, clas
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 bg-primary px-5 py-4 leading-tight text-primary-foreground dark:bg-accent dark:text-foreground">
         <div>
           <div className="text-base font-bold">{formatCourseName(round.course?.name)}</div>
-          {subtitle && <div className="mt-0.5 text-xs opacity-80">{subtitle}</div>}
+          {subtitle && <div className="mt-0.5 text-xs text-primary-foreground/strong dark:text-foreground/strong">{subtitle}</div>}
         </div>
         {action}
       </div>
