@@ -6,8 +6,9 @@ import logging
 import os
 import tempfile
 import time
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence, Tuple, TypeVar
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from PIL import Image, ImageOps
@@ -22,7 +23,7 @@ from api.error_responses import ROUND_SAVE_FAILED, SCAN_FAILED
 from api.input_validation import ensure_uuid_str, normalize_course_display_name, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
 from api.schemas import ConfidenceLevel, OcrTextResponse, SaveScanResponse, ScanResponse
-from models import User
+from models import Course, User
 from services.gemini_table_merger import merge_split_tables
 from services.mistral_ocr_service import MistralOCRService
 from services.mistral_scorecard_parser import ParsedScorecardRows, parse_mistral_scorecard_rows
@@ -206,196 +207,242 @@ def _build_confidence_payload(
     }
 
 
+# A card has at most 18 holes; with no course picked the review always shows 18.
+CARD_HOLES = 18
+# A reading outside these is taken as a misread and left blank.
+STROKES_RANGE = (1, 15)
+PUTTS_RANGE = (0, 10)
+SHOTS_TO_GREEN_RANGE = (1, 10)
+HOLE_PAR_RANGE = (3, 6)
+# The putts that are trusted to tell a to-par "1" from a "-1" whose minus sign OCR missed.
+SIGN_EVIDENCE_PUTTS_RANGE = (0, 6)
+
+_Cell = TypeVar("_Cell")
+
+
+def _in_range(value: Optional[int], bounds: Tuple[int, int]) -> bool:
+    return value is not None and bounds[0] <= value <= bounds[1]
+
+
+def _padded(row: Sequence[Optional[_Cell]], length: int) -> List[Optional[_Cell]]:
+    """A row's first `length` cells, with blanks for any the card didn't have."""
+    cells: List[Optional[_Cell]] = list(row[:length])
+    return cells + [None] * (length - len(cells))
+
+
+def _tee_payload(
+    color: Optional[str],
+    slope_rating: Optional[float],
+    course_rating: Optional[float],
+    yardages: Dict[int, Optional[int]],
+) -> Dict:
+    """A tee as the review shows it: yardages keyed by hole number as text, blanks left out."""
+    return {
+        "color": color,
+        "slope_rating": slope_rating,
+        "course_rating": course_rating,
+        "hole_yardages": {str(hole): yards for hole, yards in yardages.items() if yards is not None},
+    }
+
+
+@dataclass
+class _CardCourse:
+    """The course a card is read against: from the database when the golfer picked one, else off the card."""
+
+    name: Optional[str]
+    location: Optional[str]
+    par: Optional[int]
+    holes: List[Dict]  # holes 1..n in order
+    tees: List[Dict]
+
+    def hole_par(self, number: int) -> Optional[int]:
+        return self.holes[number - 1]["par"]
+
+    def payload(self) -> Dict:
+        return {
+            "name": self.name,
+            "location": self.location,
+            "par": self.par,
+            "holes": self.holes,
+            "tees": self.tees,
+        }
+
+
+def _course_from_model(course: Course) -> _CardCourse:
+    """The picked course's holes (up to 18, or 18 blank ones if it has none) and tees."""
+    hole_count = min(CARD_HOLES, len(course.holes)) if course.holes else CARD_HOLES
+    holes: List[Dict] = []
+    for number in range(1, hole_count + 1):
+        hole = course.get_hole(number)
+        entry: Dict = {"number": number, "par": hole.par if hole is not None else None}
+        if hole is not None and hole.handicap is not None:
+            entry["handicap"] = hole.handicap
+        holes.append(entry)
+    return _CardCourse(
+        name=course.name,
+        location=course.location,
+        par=course.get_par(),
+        holes=holes,
+        tees=[
+            _tee_payload(tee.color, tee.slope_rating, tee.course_rating, dict(tee.hole_yardages))
+            for tee in course.tees
+        ],
+    )
+
+
+def _course_from_rows(parsed: ParsedScorecardRows) -> _CardCourse:
+    """The course as printed on the card. Its par is only worked out once nine holes have one."""
+    pars = [par if _in_range(par, HOLE_PAR_RANGE) else None for par in _padded(parsed.par_row, CARD_HOLES)]
+    stroke_indexes = _padded(parsed.handicap_row, CARD_HOLES)
+    known_pars = [par for par in pars if par is not None]
+    return _CardCourse(
+        name=normalize_course_display_name(parsed.course_name) if parsed.course_name else None,
+        location=None,
+        par=sum(known_pars) if len(known_pars) >= 9 else None,
+        holes=[
+            {"number": number, "par": par, "handicap": stroke_index}
+            for number, (par, stroke_index) in enumerate(zip(pars, stroke_indexes), start=1)
+        ],
+        tees=[
+            _tee_payload(row.label, None, None, dict(enumerate(row.yardages[:CARD_HOLES], start=1)))
+            for row in parsed.tee_rows
+        ],
+    )
+
+
+def _sign_corrected(
+    hole: int,
+    raw_score: Optional[int],
+    par: Optional[int],
+    shots_to_green: Optional[int],
+    putts: Optional[int],
+    review: List[str],
+) -> Optional[int]:
+    """On a to-par card OCR can miss the minus sign and read "-1" as "1". When the shots to the
+    green plus putts against par say birdie, the "1" becomes "-1" and the change is noted."""
+    if (
+        raw_score != 1
+        or par is None
+        or shots_to_green is None
+        or putts is None
+        or not _in_range(shots_to_green, SHOTS_TO_GREEN_RANGE)
+        or not _in_range(putts, SIGN_EVIDENCE_PUTTS_RANGE)
+    ):
+        return raw_score
+    if shots_to_green + putts - par == -1:
+        review.append(f"Hole {hole} score sign corrected (birdie vs bogey disambiguated)")
+        return -1
+    return raw_score
+
+
+def _strokes(hole: int, raw_score: Optional[int], par: Optional[int], to_par: bool, review: List[str]) -> Optional[int]:
+    """The hole's strokes. A to-par reading is added to the hole's par; a blank, or a to-par
+    reading on a hole with no par, is noted for review. An impossible score is dropped quietly."""
+    if raw_score is None:
+        review.append(f"Hole {hole} strokes missing")
+        return None
+    if not to_par:
+        strokes = raw_score
+    elif par is None:
+        review.append(f"Hole {hole} cannot convert to-par score without known par")
+        return None
+    else:
+        strokes = par + raw_score
+    return strokes if _in_range(strokes, STROKES_RANGE) else None
+
+
+def _putts(hole: int, putts: Optional[int], strokes: Optional[int], review: List[str]) -> Optional[int]:
+    """The hole's putts, dropped and noted when out of range or more than the hole's strokes."""
+    if putts is None:
+        return None
+    if not _in_range(putts, PUTTS_RANGE):
+        review.append(f"Hole {hole} putts out of range")
+        return None
+    if strokes is not None and putts > strokes:
+        review.append(f"Hole {hole} putts exceed strokes")
+        return None
+    return putts
+
+
+def _green_in_regulation(
+    marked: Optional[bool],
+    shots_to_green: Optional[int],
+    strokes: Optional[int],
+    putts: Optional[int],
+    par: Optional[int],
+) -> Optional[bool]:
+    """A green the card marks stands. Otherwise, with the hole's par, it's hit when the green was
+    reached in par less two: from the shots-to-green row when the card has one, else from strokes
+    less putts."""
+    if marked is not None or par is None:
+        return marked
+    if shots_to_green is not None:
+        return shots_to_green <= max(1, par - 2)
+    if strokes is not None and putts is not None:
+        return strokes - putts <= par - 2
+    return None
+
+
 def _build_round_from_parsed_rows(
     parsed: ParsedScorecardRows,
     *,
-    course_model: Optional[object],
+    course_model: Optional[Course],
     to_par_scoring: Optional[bool],
 ) -> tuple[Dict, List[str]]:
-    def _safe_list_attr(name: str):
-        value = getattr(parsed, name, [])
-        return value if isinstance(value, list) else []
+    """The round a scan sends for review, and the notes on what to check before saving.
 
-    fields_needing_review: List[str] = list(parsed.warnings)
+    With a course picked, its holes and tees stand in for the card's. Scores are to par when the
+    golfer says so, or, when they didn't say, when the card's own hint says so. The notes start
+    with the parser's warnings, then go hole by hole.
+    """
+    review: List[str] = list(parsed.warnings)
+    course = _course_from_model(course_model) if course_model is not None else _course_from_rows(parsed)
+    to_par = (to_par_scoring if to_par_scoring is not None else parsed.score_to_par_hint) is True
 
-    known_course = course_model is not None
-    hole_count = 18
-
-    # Known-course metadata from DB (local course object).
-    course_name = None
-    course_location = None
-    course_par = None
-    course_holes: List[Dict] = []
-    course_tees: List[Dict] = []
-    hole_par_lookup: Dict[int, Optional[int]] = {}
-
-    if known_course:
-        course_name = getattr(course_model, "name", None)
-        course_location = getattr(course_model, "location", None)
-        course_par = course_model.get_par()
-        model_holes = getattr(course_model, "holes", []) or []
-        if model_holes:
-            hole_count = min(18, len(model_holes))
-        for i in range(1, hole_count + 1):
-            hole_obj = next((h for h in model_holes if getattr(h, "number", None) == i), None)
-            p = getattr(hole_obj, "par", None) if hole_obj is not None else None
-            hcp = getattr(hole_obj, "handicap", None) if hole_obj is not None else None
-            hole_par_lookup[i] = p
-            course_holes.append({"number": i, "par": p})
-            if hcp is not None:
-                course_holes[-1]["handicap"] = hcp
-        for tee in (getattr(course_model, "tees", []) or []):
-            yardages = getattr(tee, "hole_yardages", {}) or {}
-            course_tees.append(
-                {
-                    "color": getattr(tee, "color", None),
-                    "slope_rating": getattr(tee, "slope_rating", None),
-                    "course_rating": getattr(tee, "course_rating", None),
-                    "hole_yardages": {str(k): v for k, v in yardages.items() if v is not None},
-                }
-            )
-    else:
-        # Unknown-course path uses parsed OCR rows.
-        course_name = normalize_course_display_name(parsed.course_name) if parsed.course_name else None
-        parsed_pars = list(_safe_list_attr("par_row")[:hole_count])
-        while len(parsed_pars) < hole_count:
-            parsed_pars.append(None)
-        for i in range(1, hole_count + 1):
-            handicap_row = _safe_list_attr("handicap_row")
-            handicap = handicap_row[i - 1] if i - 1 < len(handicap_row) else None
-            par_i = parsed_pars[i - 1]
-            if par_i is not None and not (3 <= par_i <= 6):
-                par_i = None
-            course_holes.append({"number": i, "par": par_i, "handicap": handicap})
-            hole_par_lookup[i] = par_i
-        par_vals = [p for p in hole_par_lookup.values() if p is not None]
-        if len(par_vals) >= 9:
-            course_par = sum(par_vals)
-        for tr in _safe_list_attr("tee_rows"):
-            yardage_map = {
-                str(i + 1): y
-                for i, y in enumerate(tr.yardages[:hole_count])
-                if y is not None
-            }
-            course_tees.append(
-                {
-                    "color": tr.label,
-                    "slope_rating": None,
-                    "course_rating": None,
-                    "hole_yardages": yardage_map,
-                }
-            )
-
-    score_vals = list(_safe_list_attr("score_row")[:hole_count])
-    while len(score_vals) < hole_count:
-        score_vals.append(None)
-    putt_vals = list(_safe_list_attr("putts_row")[:hole_count])
-    while len(putt_vals) < hole_count:
-        putt_vals.append(None)
-    raw_putt_vals = list(_safe_list_attr("raw_putts_row")[:hole_count])
-    while len(raw_putt_vals) < hole_count:
-        raw_putt_vals.append(None)
-    gir_vals = list(_safe_list_attr("gir_row")[:hole_count])
-    while len(gir_vals) < hole_count:
-        gir_vals.append(None)
-    shots_vals = list(_safe_list_attr("shots_to_green_row")[:hole_count])
-    while len(shots_vals) < hole_count:
-        shots_vals.append(None)
-    raw_shots_vals = list(_safe_list_attr("raw_shots_to_green_row")[:hole_count])
-    while len(raw_shots_vals) < hole_count:
-        raw_shots_vals.append(None)
-
-    effective_to_par = to_par_scoring if to_par_scoring is not None else (parsed.score_to_par_hint is True)
-
+    holes = len(course.holes)
+    rows = zip(
+        _padded(parsed.score_row, holes),
+        _padded(parsed.putts_row, holes),
+        _padded(parsed.raw_putts_row, holes),
+        _padded(parsed.shots_to_green_row, holes),
+        _padded(parsed.raw_shots_to_green_row, holes),
+        _padded(parsed.gir_row, holes),
+    )
     hole_scores: List[Dict] = []
-    for i in range(1, hole_count + 1):
-        raw_score = score_vals[i - 1]
-        sign_putts = raw_putt_vals[i - 1] if raw_putt_vals[i - 1] is not None else putt_vals[i - 1]
-        sign_shots = raw_shots_vals[i - 1] if raw_shots_vals[i - 1] is not None else shots_vals[i - 1]
-        if (
-            effective_to_par is True
-            and raw_score == 1
-            and sign_shots is not None
-            and sign_putts is not None
-            and 1 <= sign_shots <= 10
-            and 0 <= sign_putts <= 6
-            and hole_par_lookup.get(i) is not None
-        ):
-            # OCR can miss the minus sign and read "-1" as "1".
-            # Use shots+putts vs par to disambiguate when possible.
-            est = (sign_shots + sign_putts) - hole_par_lookup[i]  # type: ignore[index]
-            if est in (-1, 1):
-                if est != raw_score:
-                    fields_needing_review.append(
-                        f"Hole {i} score sign corrected (birdie vs bogey disambiguated)"
-                    )
-                raw_score = est
-
-        strokes: Optional[int]
-        if raw_score is None:
-            strokes = None
-            fields_needing_review.append(f"Hole {i} strokes missing")
-        elif effective_to_par is True:
-            par_i = hole_par_lookup.get(i)
-            if par_i is None:
-                strokes = None
-                fields_needing_review.append(
-                    f"Hole {i} cannot convert to-par score without known par"
-                )
-            else:
-                converted = par_i + raw_score
-                strokes = converted if 1 <= converted <= 15 else None
-        else:
-            strokes = raw_score if 1 <= raw_score <= 15 else None
-
-        putts = putt_vals[i - 1]
-        if putts is not None and not (0 <= putts <= 10):
-            putts = None
-            fields_needing_review.append(f"Hole {i} putts out of range")
-        if putts is not None and strokes is not None and putts > strokes:
-            putts = None
-            fields_needing_review.append(f"Hole {i} putts exceed strokes")
-
-        gir_val = gir_vals[i - 1]
-        if gir_val is None and shots_vals[i - 1] is not None and hole_par_lookup.get(i) is not None:
-            # Derive GIR from shots-to-green row when present:
-            # GIR if reached green in <= par-2 strokes.
-            par_i = hole_par_lookup[i]  # guarded above
-            if par_i is not None:
-                gir_val = shots_vals[i - 1] <= max(1, par_i - 2)
-        if gir_val is None and strokes is not None and putts is not None and hole_par_lookup.get(i) is not None:
-            # Without that row, strokes less putts is the shots it took to reach the green.
-            gir_val = strokes - putts <= hole_par_lookup[i] - 2  # type: ignore[operator]
-
-        shots_val = shots_vals[i - 1]
-        if shots_val is not None and not (1 <= shots_val <= 10):
-            shots_val = None
-
+    for number, (score, putts, raw_putts, shots, raw_shots, marked_gir) in enumerate(rows, start=1):
+        par = course.hole_par(number)
+        if to_par:
+            # The hidden rows survive the golfer saying they don't track putts or shots.
+            score = _sign_corrected(
+                number,
+                score,
+                par,
+                shots_to_green=raw_shots if raw_shots is not None else shots,
+                putts=raw_putts if raw_putts is not None else putts,
+                review=review,
+            )
+        strokes = _strokes(number, score, par, to_par, review)
+        kept_putts = _putts(number, putts, strokes, review)
         hole_scores.append(
             {
-                "hole_number": i,
+                "hole_number": number,
                 "strokes": strokes,
-                "putts": putts,
-                "shots_to_green": shots_val,
+                "putts": kept_putts,
+                "shots_to_green": shots if _in_range(shots, SHOTS_TO_GREEN_RANGE) else None,
                 "fairway_hit": None,
-                "green_in_regulation": gir_val,
+                # The raw shots cell decides the green even when it's then dropped as out of range.
+                "green_in_regulation": _green_in_regulation(marked_gir, shots, strokes, kept_putts, par),
             }
         )
 
     round_payload = {
-        "course": {
-            "name": course_name,
-            "location": course_location,
-            "par": course_par,
-            "holes": course_holes,
-            "tees": course_tees,
-        },
+        "course": course.payload(),
         "tee_box": None,
         "date": None,
         "hole_scores": hole_scores,
         "notes": None,
     }
-    return round_payload, fields_needing_review
+    return round_payload, review
 
 
 def _rated_tees(round_payload: Dict) -> List[Dict]:
