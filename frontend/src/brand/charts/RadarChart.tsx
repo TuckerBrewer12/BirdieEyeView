@@ -57,7 +57,8 @@ export function RadarChart({
   };
   const outline = (values: number[]) => values.map((v, i) => point(i, v).join(",")).join(" ");
 
-  const compared = axes.every((axis) => axis.benchmark != null);
+  const benchmarks = axes.flatMap((axis) => (axis.benchmark != null ? [axis.benchmark] : []));
+  const compared = benchmarks.length === axes.length;
   // Ahead of the comparison reads as a birdie and behind it as a bogey; even, or no verdict, the shape's own colour.
   const toneOf = (axis: RadarAxis) =>
     axis.verdict === "ahead"
@@ -101,11 +102,11 @@ export function RadarChart({
         {compared && (
           <polygon
             data-slot="radar-benchmark"
-            points={outline(axes.map((axis) => axis.benchmark!))}
+            points={outline(benchmarks)}
             fill="none"
             stroke={tokens.color.mutedForeground}
             strokeWidth={strokeSecondary}
-            strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
+            strokeDasharray={tokens.chart.guideDash}
             strokeLinejoin="round"
           />
         )}
@@ -113,7 +114,7 @@ export function RadarChart({
         <polygon
           points={outline(axes.map((axis) => axis.value))}
           fill={tokens.color.primary}
-          fillOpacity={tokens.opacity.tint}
+          fillOpacity={tokens.opacity.faint}
           stroke={tokens.color.primary}
           strokeWidth={stroke}
           strokeLinejoin="round"

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
@@ -43,7 +43,7 @@ def _make_round(round_id: UUID, course: Course | None = None) -> Round:
         course=course,
         course_name_played="Played Course" if course is None else None,
         tee_box="Blue",
-        date=datetime(2026, 1, 2),
+        date=datetime(2026, 1, 2, tzinfo=timezone.utc),
         hole_scores=[
             HoleScore(hole_number=1, strokes=5, putts=2, par_played=4, fairway_hit=True),
             HoleScore(hole_number=2, strokes=4, putts=2, par_played=4, fairway_hit=False),
@@ -58,7 +58,7 @@ def _make_round_summary(round_id: UUID) -> Round:
         id=str(round_id),
         course=Course(id=str(uuid4()), name="Pebble Beach", location="Monterey", par=72),
         tee_box="Blue",
-        date=datetime(2026, 1, 2),
+        date=datetime(2026, 1, 2, tzinfo=timezone.utc),
         hole_scores=[
             HoleScore(hole_number=n, strokes=5 if n <= 8 else 4, putts=2, par_played=4)
             for n in range(1, 19)
@@ -67,7 +67,7 @@ def _make_round_summary(round_id: UUID) -> Round:
 
 
 def _make_friendship_row(requester: UUID, addressee: UUID) -> dict:
-    now = datetime(2026, 1, 1)
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
     return {
         "id": uuid4(),
         "requester_id": requester,
@@ -332,8 +332,8 @@ def test_user_response_is_the_profile_only():
         handicap=7.5,
         scoring_goal=79,
         email_verified=True,
-        created_at=datetime(2026, 2, 20),
-        last_handicap_update=datetime(2026, 3, 1),
+        created_at=datetime(2026, 2, 20, tzinfo=timezone.utc),
+        last_handicap_update=datetime(2026, 3, 1, tzinfo=timezone.utc),
         rounds=[_make_round(uuid4())],
     )
     assert users.user_response(user).model_dump() == {
@@ -343,13 +343,14 @@ def test_user_response_is_the_profile_only():
         "email": "golfer@example.com",
         "home_course_id": None,
         "handicap": 7.5,
-        "created_at": datetime(2026, 2, 20),
+        "created_at": datetime(2026, 2, 20, tzinfo=timezone.utc),
         "scoring_goal": 79,
     }
 
     schemas = app.openapi()["components"]["schemas"]
     assert set(schemas["UserResponse"]["required"]) == set(users.UserResponse.model_fields)
-    assert schemas["HandicapIndexResponse"]["required"] == ["handicap_index"]
+    # The golfer's index comes on the dashboard and analytics, not from an endpoint of its own.
+    assert "/api/users/{user_id}/handicap" not in app.openapi()["paths"]
     for path, method in [
         ("/api/users/{user_id}", "get"),
         ("/api/users/{user_id}", "patch"),
@@ -360,7 +361,7 @@ def test_user_response_is_the_profile_only():
 
 
 @pytest.mark.asyncio
-async def test_user_get_update_and_handicap(monkeypatch):
+async def test_user_get_and_update():
     user_id = uuid4()
     course_id = uuid4()
     user = _make_user(user_id, handicap=12.0)
@@ -369,8 +370,6 @@ async def test_user_get_update_and_handicap(monkeypatch):
     db.users.get_user = AsyncMock(return_value=user)
     db.users.update_user = AsyncMock(return_value=user)
     db.courses.get_course = AsyncMock(return_value=_make_course(course_id))
-    db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
-    monkeypatch.setattr(hcap, "handicap_index", lambda *args, **kwargs: 12.0)
 
     profile = users.user_response(user)
     assert await users.get_user_by_email("GOLFER@example.com", db, user) == profile
@@ -382,7 +381,6 @@ async def test_user_get_update_and_handicap(monkeypatch):
         "handicap_index": -2.0,
         "scoring_goal": 85,
     }
-    assert (await users.get_user_handicap(user_id, db, user)).handicap_index == 12.0
 
     with pytest.raises(HTTPException) as exc:
         await users.get_user(uuid4(), db, user)

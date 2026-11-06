@@ -14,7 +14,7 @@ const base: PerformanceShapeCardProps = {
   peak,
   goalLabel: "Break 90",
   scoringAverage: 91.7,
-  bestScore: 89,
+  lowestScore: 89,
   recentTrend: 0.5,
   comparison: 15,
   onComparisonChange: () => {},
