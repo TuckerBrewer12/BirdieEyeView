@@ -12,7 +12,7 @@ import {
   RoundScorecard,
 } from "@/brand";
 import { useFilePreview } from "@/platform/useFilePreview";
-import { SCAN_STEPS } from "@/domain/scan";
+import { SCAN_READING_LABEL, SCAN_STEPS } from "@/domain/scan";
 import { tokens } from "@/brand/theme";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
@@ -82,7 +82,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
             transition={{ duration: tokens.motion.scanStep.processing }}
           >
             <ScanProgress
-              label="Reading your card"
+              label={SCAN_READING_LABEL}
               steps={SCAN_STEPS}
               phase={viewModel.phase}
               className="mx-auto max-w-sm"

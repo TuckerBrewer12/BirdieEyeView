@@ -7,6 +7,9 @@ import type { HoleEdits } from "./round";
  */
 export const SCAN_STEPS = ["Course and tees", "Scores and putts", "Yardages and par", "Checking totals"] as const;
 
+/** The progress card's title while those steps run. */
+export const SCAN_READING_LABEL = "Reading your card";
+
 /** The scan reports no progress, so each step is held this long rather than reported. */
 export const SCAN_STEP_HOLD_MS = 3500;
 

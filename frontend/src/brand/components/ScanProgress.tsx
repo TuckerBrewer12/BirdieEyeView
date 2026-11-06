@@ -43,7 +43,7 @@ function ScanProgress({ label, steps, phase, className }: ScanProgressProps) {
       data-slot="scan-progress"
       role="status"
       aria-live="polite"
-      className={cn("gap-3.5 p-5", className)}
+      className={cn("gap-3 p-5", className)}
     >
       <div className="flex items-center gap-3">
         <svg
@@ -63,7 +63,7 @@ function ScanProgress({ label, steps, phase, className }: ScanProgressProps) {
         <p className="text-lg font-bold text-foreground">{label}</p>
       </div>
 
-      <ol className="flex flex-col gap-3.5">
+      <ol className="flex flex-col gap-3">
         {steps.map((step, i) => {
           const state: StepState = i < phase ? "done" : i === phase ? "now" : "next";
           return (
@@ -71,7 +71,7 @@ function ScanProgress({ label, steps, phase, className }: ScanProgressProps) {
               key={step}
               data-state={state}
               aria-current={state === "now" ? "step" : undefined}
-              className={cn("flex items-center gap-2.5 text-sm", STEP_TEXT[state])}
+              className={cn("flex items-center gap-2 text-sm", STEP_TEXT[state])}
             >
               <span
                 aria-hidden
