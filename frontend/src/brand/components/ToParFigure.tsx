@@ -1,5 +1,5 @@
 import { cn } from "@/brand/cn";
-import { toParDisplay, toParLabel, toParTextClass } from "@/brand/theme";
+import { toParDisplay, toParLabel, toParStatTextClass, toParTextClass } from "@/brand/theme";
 
 function ToParFigure({
   toPar,
@@ -14,9 +14,7 @@ function ToParFigure({
   const label = size === "stat" ? toParDisplay(toPar, "-") : toParLabel(toPar);
   if (!label) return null;
 
-  const tone = size === "stat"
-    ? toPar <= 0 ? "text-score-birdie" : "text-score-bogey"
-    : toParTextClass(toPar);
+  const tone = size === "stat" ? toParStatTextClass(toPar) : toParTextClass(toPar);
 
   return (
     <span

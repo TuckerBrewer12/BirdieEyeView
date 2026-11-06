@@ -53,6 +53,11 @@ export class LandingRobot {
     return this;
   }
 
+  /** The same toggle, tapped again with the menu open. */
+  async closeMenu(): Promise<this> {
+    return this.openMenu();
+  }
+
   async seesHeadline(text: string): Promise<this> {
     await expect(this.page.getByRole("heading", { level: 1 })).toContainText(text);
     return this;

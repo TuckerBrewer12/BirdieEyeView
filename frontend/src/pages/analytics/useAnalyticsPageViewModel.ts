@@ -32,6 +32,7 @@ export interface AnalyticsPageViewModel {
   playedCourses: PlayedCourse[];
   hasHomeCourse: boolean;
 
+  /** The server's best round in the window, once it has loaded; null without one. */
   bestRound: RoundSummary | null;
 
   rangePar: RangePar;
@@ -69,7 +70,7 @@ export function useAnalyticsPageViewModel(
     filtered: isFiltered(filters),
     playedCourses,
     hasHomeCourse: !!user?.home_course_id,
-    bestRound: analytics?.bestRound?.roundId ? (bestRound ?? null) : null,
+    bestRound: analytics?.bestRound ? (bestRound ?? null) : null,
     rangePar: pickedRangePar ?? defaultRangePar(analytics?.yardageBuckets ?? []),
     setRangePar,
     tab,

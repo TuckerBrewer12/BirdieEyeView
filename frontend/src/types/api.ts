@@ -8,7 +8,8 @@ export type CourseDto = Schemas["CourseResponse"];
 export type CourseSummaryDto = Schemas["CourseSummaryResponse"];
 export type UserDto = Schemas["UserResponse"];
 export type UserTeeDto = Schemas["UserTee"];
-export type HandicapIndexDto = Schemas["HandicapIndexResponse"];
+
+
 export type HoleScoreDto = Schemas["HoleScoreResponse"];
 export type HoleSummaryDto = Schemas["HoleSummaryResponse"];
 export type ScoreCountsDto = Schemas["ScoreCounts"];

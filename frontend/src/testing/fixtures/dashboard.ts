@@ -63,6 +63,7 @@ export const populatedDashboard: DashboardDto = {
   best_round_course: "Blue Rock",
   handicap_index: 12.4,
   recent_rounds: populatedRounds,
+  // The 69, the best of the rounds listed.
   best_recent_round_id: "round-3",
   average_putts: 32,
   average_gir: 8,
@@ -103,7 +104,7 @@ export const populatedDashboard: DashboardDto = {
 
 export const dashboardGoalReport: GoalReportDto = {
   scoring_average: 76.8,
-  best_score: 69,
+  lowest_score: 69,
   scoring_goal: 79,
   gap: 2.2,
   on_track: false,

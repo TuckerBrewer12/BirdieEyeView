@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "./brand/theme/tokens.css";
+@import "./brand/theme/tokens.gen.css";
 @custom-variant dark (&:where(.dark, .dark *));
 
 * {

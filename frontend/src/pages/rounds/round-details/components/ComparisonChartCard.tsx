@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from "react";
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/brand";
-import { chartColors, chartLayout, chartTickStyle, chartTooltipStyle, colors } from "@/brand/theme";
+import { chartTickStyle, chartTooltipStyle, tokens } from "@/brand/theme";
 import { pluralize } from "@/domain/format";
 
 export interface ComparisonBar {
@@ -49,15 +49,15 @@ function ComparisonChartCard({
       </CardHeader>
       <CardContent className="h-chart">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={chartLayout.margin}>
+          <BarChart data={chartData} margin={tokens.chart.margin}>
             <defs>
               <linearGradient id={selectedFill} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={chartColors.accent} stopOpacity={1} />
-                <stop offset="100%" stopColor={colors.primary} stopOpacity={1} />
+                <stop offset="0%" stopColor={tokens.color.chart.accent} stopOpacity={1} />
+                <stop offset="100%" stopColor={tokens.color.primary} stopOpacity={1} />
               </linearGradient>
             </defs>
-            <XAxis dataKey="label" tick={{ ...chartTickStyle, fill: chartColors.axis }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ ...chartTickStyle, fill: chartColors.axis }} tickLine={false} axisLine={false} />
+            <XAxis dataKey="label" tick={chartTickStyle} tickLine={false} axisLine={false} />
+            <YAxis tick={chartTickStyle} tickLine={false} axisLine={false} />
             <Tooltip
               formatter={((v: number, _name: string, props: { payload: { sampleSize: number } }) => [
                 formatNumber(v),
@@ -65,9 +65,9 @@ function ComparisonChartCard({
               ]) as Fmt}
               contentStyle={chartTooltipStyle}
             />
-            <Bar dataKey="value" radius={chartLayout.barRadius} isAnimationActive={false}>
+            <Bar dataKey="value" radius={tokens.chart.barRadius} isAnimationActive={false}>
               {chartData.map((d) => (
-                <Cell key={d.label} fill={d.isSelected ? `url(#${selectedFill})` : chartColors.muted} />
+                <Cell key={d.label} fill={d.isSelected ? `url(#${selectedFill})` : tokens.color.chart.muted} />
               ))}
             </Bar>
           </BarChart>

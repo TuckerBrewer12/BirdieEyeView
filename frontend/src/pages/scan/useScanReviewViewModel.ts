@@ -1,13 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
 import { scanRepository, type ScanRepository } from "@/data/scanRepository";
-import { useHandicapIndex } from "@/data/useHandicapIndex";
-import { getTee, ratedCourseHandicap, strokesToCheck, teeColors, type Round } from "@/domain";
+import { strokesToCheck, teeColors, type Round } from "@/domain";
 import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/domain/course";
 import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
 import { useCourse } from "../courses/useCourse";
-import { roundsRepository, type RoundsRepository } from "../rounds/roundsRepository";
 import { reviewCourseFrom, reviewedRound, saveRequestFrom, todayIso, withHoleEdit, type ScanReviewDraft } from "./scanModel";
 import { newScanSession, useScanSession } from "./scanSession";
 import { useSaveScan } from "./useSaveScan";
@@ -15,19 +13,16 @@ import { useSaveScan } from "./useSaveScan";
 export interface ScanReviewRepositories {
   scan: ScanRepository;
   courses: CoursesRepository;
-  rounds: Pick<RoundsRepository, "getUserHandicap">;
 }
 
 const defaultRepositories: ScanReviewRepositories = {
   scan: scanRepository,
   courses: coursesRepository,
-  rounds: roundsRepository,
 };
 
 export interface ScanReviewViewModel {
   round: Round | null;
   toCheck: number[];
-  courseHandicap: number | null;
   setStrokes: (hole: number, strokes: number | null) => void;
   setPutts: (hole: number, putts: number | null) => void;
   setGir: (hole: number, gir: boolean | null) => void;
@@ -57,7 +52,7 @@ export function useScanReviewViewModel(
   userId: string,
   repositories: ScanReviewRepositories = defaultRepositories,
 ): ScanReviewViewModel {
-  const { scan, courses, rounds } = repositories;
+  const { scan, courses } = repositories;
   const { session, setSession } = useScanSession();
   const draft = session.review;
   const [linkError, setLinkError] = useState<string | null>(null);
@@ -70,7 +65,6 @@ export function useScanReviewViewModel(
   const { reset: resetSearch, setQuery: setSearchQuery } = courseSearch;
   const { mutateAsync: saveScan, isPending: saving, error: saveError, reset: resetSave } =
     useSaveScan(userId, scan);
-  const handicapIndex = useHandicapIndex(userId, rounds);
 
   const linkedId = draft?.course.status === "linked" ? (draft.course.id ?? undefined) : undefined;
   const linkedQuery = useCourse(linkedId, courses);
@@ -130,12 +124,10 @@ export function useScanReviewViewModel(
   const course = draft?.course;
   const scannedCourse = draft?.scan.round.course ?? null;
   const teeBox = draft?.teeBox ?? "";
-  const tee = linkedCourse ? getTee(linkedCourse, teeBox) : getTee(scannedCourse, teeBox);
 
   return {
     round,
     toCheck: draft ? strokesToCheck(draft.scan, draft.holes) : [],
-    courseHandicap: ratedCourseHandicap(handicapIndex, tee, round?.par ?? null),
     setStrokes: (hole, strokes) => update((current) => withHoleEdit(current, hole, { strokes })),
     setPutts: (hole, putts) => update((current) => withHoleEdit(current, hole, { putts })),
     setGir: (hole, gir) => update((current) => withHoleEdit(current, hole, { gir })),

@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { courseResponse } from "@/testing/fakes/courseResponses";
 import { roundResponse } from "@/testing/fakes/roundResponses";
-import { halfMoonBayCourse, halfMoonBayRound, pebbleBeachCourse, scannedRound } from "@/testing/fixtures/roundDetails";
+import {
+  halfMoonBayCourse,
+  halfMoonBayRound,
+  pebbleBeachCourse,
+  ratedHalfMoonBayRound,
+  scannedRound,
+} from "@/testing/fixtures/roundDetails";
 import { populatedRounds, storedRounds } from "@/testing/fixtures/rounds";
 import { scannedTeeCard } from "@/testing/fixtures/scan";
 import { Round } from "../round";
@@ -67,11 +73,22 @@ describe("Round.previewEdits", () => {
     const round = Round.fromDto(halfMoonBayRound);
     const preview = Round.previewEdits(round, { 1: { strokes: 4 }, 2: { strokes: null } });
     expect(preview.score).toBe(73);
-    expect(preview.toPar).toBe(1);
+    // Against the 17 holes still scored (par 68), the way the server reads a round cut short.
+    expect(preview.toPar).toBe(5);
     expect(preview.frontNine.total).toBeNull();
+    // Tee ratings are for 18 holes, so a blanked hole takes the net score away until it is filled.
+    expect(preview).toMatchObject({ holesPlayed: 17, courseHandicap: null, netScore: null });
     expect(preview.holes[0]).toMatchObject({ strokes: 4, toPar: 0, kind: "par" });
     expect(preview.scoreCounts.par).toBe(round.scoreCounts.par);
     expect(round.score).toBe(78);
+  });
+
+  it("nets an edited score off the server's course handicap, and marks three-putts as the server does", () => {
+    const round = Round.fromDto(ratedHalfMoonBayRound);
+    expect(round).toMatchObject({ holesPlayed: 18, courseHandicap: 12, netScore: 78 - 12 });
+    const preview = Round.previewEdits(round, { 1: { strokes: round.holes[0].strokes! + 1, putts: 3 } });
+    expect(preview).toMatchObject({ courseHandicap: 12, netScore: 79 - 12 });
+    expect(preview.holes[0].threePutt).toBe(true);
   });
 
   it("recomputes putts and greens from edited holes", () => {

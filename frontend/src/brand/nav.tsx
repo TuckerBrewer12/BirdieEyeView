@@ -1,4 +1,4 @@
-import type { ComponentType, MouseEventHandler, ReactElement, ReactNode } from "react";
+import type { ComponentType, MouseEventHandler, ReactNode } from "react";
 import { useRender } from "@base-ui/react/use-render";
 
 interface NavItem {
@@ -8,9 +8,13 @@ interface NavItem {
   active?: boolean;
 }
 
-type RenderLink = (href: string) => ReactElement;
+type RenderLink = (href: string) => useRender.RenderProp;
 
-const plainAnchor: RenderLink = (href) => <a href={href} />;
+const plainAnchor: RenderLink = (href) => ({ children, ...props }) => (
+  <a href={href} {...props}>
+    {children}
+  </a>
+);
 
 function NavLink({
   item,

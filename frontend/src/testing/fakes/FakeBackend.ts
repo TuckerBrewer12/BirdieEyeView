@@ -73,17 +73,17 @@ export class FakeBackend {
   profile: UserDto | undefined;
   dashboard: DashboardDto | undefined;
   analytics: AnalyticsDto | null | undefined;
-  analyticsByGolfer: Record<string, AnalyticsDto>;
+  analyticsByGolfer: Partial<Record<string, AnalyticsDto>>;
   readonly analyticsByCourse: Record<string, AnalyticsDto>;
   readonly playedCourses: PlayedCourseDto[];
   readonly analyticsRequests: AnalyticsFilters[] = [];
   goalReport: GoalReportDto | null | undefined;
-  readonly benchmarks: Record<string, BenchmarkComparisonDto>;
+  readonly benchmarks: Partial<Record<string, BenchmarkComparisonDto>>;
   scan: ScanDto | undefined;
   profileError: string | null;
   updateUserError: string | null;
   signedOut: boolean;
-  readonly accounts: Record<string, FakeAccount>;
+  readonly accounts: Partial<Record<string, FakeAccount>>;
   readonly verifyTokens: Set<string>;
   readonly resetTokens: Set<string>;
   readonly authErrors: Partial<Record<FakeAuthEndpoint, string>>;
@@ -371,10 +371,6 @@ export class FakeBackend {
           body: { detail: err instanceof Error ? err.message : "Course not found." },
         };
       }
-    }
-
-    if (verb === "GET" && /\/api\/users\/[^/]+\/handicap$/.test(path)) {
-      return { status: 200, body: this.store.getUserHandicap() };
     }
 
     if (verb === "GET" && /\/api\/stats\/course-analytics\//.test(path)) {

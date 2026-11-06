@@ -7,6 +7,8 @@ export interface StoredTee {
   hole_yardages: Record<number, number>;
   slope_rating: number | null;
   course_rating: number | null;
+  /** What the server works out off the signed-in golfer's index; a fixture sets it, since the fake knows no index. */
+  course_handicap?: number | null;
 }
 
 export interface StoredCourse {
@@ -52,6 +54,7 @@ function teeResponse(tee: StoredTee): TeeDto {
     total_yardage: tee.total_yardage ?? (holeYards.length > 0 ? sum(holeYards) : null),
     front_nine_yardage: nineYardage(tee, 1),
     back_nine_yardage: nineYardage(tee, 10),
+    course_handicap: tee.course_handicap ?? null,
   };
 }
 

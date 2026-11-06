@@ -1,10 +1,8 @@
 import { test } from "./AppShell.robot";
 
-test.describe("More menu", () => {
-  test.beforeEach(({ isMobile }) => {
-    test.skip(!isMobile, "The tab bar and its menu are phone-only.");
-  });
-
+// these cover what only the shell shows — the phone's More menu open. The tab
+// bar and its menu are phone-only.
+test.describe("More menu", { tag: "@phone" }, () => {
   test("open", async ({ shell }) => {
     await shell.open("/rounds");
     await shell.openMore();

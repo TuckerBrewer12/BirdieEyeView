@@ -1,11 +1,11 @@
 import type { DifferentialStatus } from "@/domain/handicap";
-import { colors } from "./colors";
+import { color } from "./tokens";
 
 const DIFFERENTIAL_FILL: Record<DifferentialStatus, string> = {
-  counting: colors.score.birdie.base,
-  close: colors.score.eagle.base,
-  out: colors.destructive,
-  unrated: colors.score.par.base,
+  counting: color.score.birdie.base,
+  close: color.score.eagle.base,
+  out: color.destructive,
+  unrated: color.score.par.base,
 };
 
 export function differentialFill(status: DifferentialStatus): string {

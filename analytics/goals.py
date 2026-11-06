@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 from models.round import Round
 from analytics.peak import peak_gap, peak_meets_goal
 from analytics.stats import (
+    full_rounds,
     three_putts_per_round,
     score_type_distribution_per_round,
     scoring_by_yardage_buckets,
@@ -41,7 +42,7 @@ def goal_report(
     if not scores:
         return {
             "scoring_average": None,
-            "best_score": None,
+            "lowest_score": None,
             "scoring_goal": scoring_goal,
             "gap": None,
             "on_track": False,
@@ -54,7 +55,9 @@ def goal_report(
         }
 
     scoring_avg = sum(scores) / len(scores)
-    best_score = min(scores)
+    # A record, so full rounds only, as the career records have it: a nine's 45 is not a round of 45.
+    full_scores = [s for s in (r.calculate_total_score() for r in full_rounds(rounds)) if s is not None]
+    lowest_score = min(full_scores) if full_scores else None
     gap = scoring_avg - scoring_goal
     on_track = gap <= 0
     progress_pct = _progress_pct(scores[0], scoring_avg, scoring_goal, on_track)
@@ -231,7 +234,7 @@ def goal_report(
 
     return {
         "scoring_average": round(scoring_avg, 1),
-        "best_score": best_score,
+        "lowest_score": lowest_score,
         "scoring_goal": scoring_goal,
         "gap": round(gap, 1),
         "on_track": on_track,

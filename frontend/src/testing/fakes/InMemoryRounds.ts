@@ -2,7 +2,6 @@ import type {
   CourseAnalyticsDto,
   CourseDto,
   CourseSummaryDto,
-  HandicapIndexDto,
   RoundComparisonDto,
   RoundDto,
   RoundSummaryDto,
@@ -12,7 +11,7 @@ import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
 import { toCourseSummary } from "../fixtures/roundDetails";
 import { courseResponse } from "./courseResponses";
-import { roundResponse, storedFromRound, summaryResponse, type StoredRound } from "./roundResponses";
+import { bestRanks, roundResponse, storedFromRound, summaryResponse, type StoredRound } from "./roundResponses";
 
 export interface InMemoryRoundsSeed {
   rounds?: StoredRound[];
@@ -21,6 +20,7 @@ export interface InMemoryRoundsSeed {
   fullCourses?: CourseDto[];
   courseAnalytics?: CourseAnalyticsDto | null;
   comparison?: RoundComparisonDto | null;
+  /** The handicap on the golfer's profile. Course handicaps come on the courses' tees, as the server sends them. */
   handicapIndex?: number | null;
   linkError?: string | null;
   updateError?: string | null;
@@ -124,7 +124,9 @@ export class InMemoryRounds {
   }
 
   getRoundsForUser(): RoundSummaryDto[] {
-    return this.listed.map((id) => summaryResponse(this.stored.get(id)!));
+    const rounds = this.listed.map((id) => this.stored.get(id)!);
+    const ranks = bestRanks(rounds);
+    return rounds.map((round, i) => summaryResponse(round, ranks[i]));
   }
 
   private find(roundId: string): StoredRound {
@@ -214,9 +216,5 @@ export class InMemoryRounds {
 
   getRoundComparison(): RoundComparisonDto | null {
     return this.comparison;
-  }
-
-  getUserHandicap(): HandicapIndexDto {
-    return { handicap_index: this.handicapIndex };
   }
 }

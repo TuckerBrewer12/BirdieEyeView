@@ -60,7 +60,7 @@ export function reviewFromScan(result: ScanDto, today: string): ScanReviewDraft 
 }
 
 export function reviewFromSetup(setup: ManualSetup, course: CourseDto | null): ScanReviewDraft {
-  const holes = course?.holes.length
+  const holes = course != null && course.holes.length > 0
     ? course.holes.map((hole, i) => ({ number: hole.number ?? i + 1, par: hole.par, handicap: hole.handicap }))
     : Array.from({ length: 18 }, (_, i) => ({ number: i + 1, par: null, handicap: null }));
   const tees: ScannedTeeDto[] = (course?.tees ?? []).map((tee) => ({
@@ -68,6 +68,7 @@ export function reviewFromSetup(setup: ManualSetup, course: CourseDto | null): S
     slope_rating: tee.slope_rating,
     course_rating: tee.course_rating,
     hole_yardages: { ...tee.hole_yardages },
+    course_handicap: tee.course_handicap,
   }));
   const blankScores: ScannedHoleScoreDto[] = holes.map((hole) => ({
     hole_number: hole.number,

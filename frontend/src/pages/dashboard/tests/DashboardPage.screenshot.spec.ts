@@ -20,8 +20,7 @@ test("handicap sheet open", async ({ dashboard }) => {
   await dashboard.capture("dashboard-handicap-sheet.png", { fullPage: false });
 });
 
-test("phone trend handicap and round tooltip", async ({ dashboard, isMobile }) => {
-  test.skip(!isMobile, "No phone trend at desktop width.");
+test("phone trend handicap and round tooltip", { tag: "@phone" }, async ({ dashboard }) => {
   await dashboard.open();
   await dashboard.showTrend("HCP");
   await dashboard.seesTrendShowing("HCP");

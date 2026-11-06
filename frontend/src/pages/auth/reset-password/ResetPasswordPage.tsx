@@ -1,6 +1,6 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthCard, Button } from "@/brand";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/auth";
 import { AuthLink } from "../components/AuthLink";
 import { AuthNotice } from "../components/AuthNotice";
 import { PasswordField } from "../components/PasswordField";
@@ -39,7 +39,7 @@ export function ResetPasswordPage() {
         {viewModel.done ? (
           <Button
             size="cta"
-            onClick={() => navigate("/login", { state: { flash: viewModel.notice } })}
+            onClick={() => void navigate("/login", { state: { flash: viewModel.notice } })}
           >
             Continue to sign in
           </Button>

@@ -8,8 +8,6 @@ import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
 
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
 
-const CHARTS_DRAWN_MS = 2500;
-
 type TabLabel = "Scoring" | "Ball Striking" | "Putting" | "Profile" | "Range View";
 
 export class AnalyticsRobot {
@@ -56,7 +54,6 @@ export class AnalyticsRobot {
 
   async openWithoutRounds(): Promise<this> {
     await this.install({ analytics: withoutRounds(sampleGolfer.analytics), playedCourses: [] });
-    await this.seesNoRoundsYet();
     return this;
   }
 
@@ -88,6 +85,10 @@ export class AnalyticsRobot {
 
   async openCourseMenu(): Promise<this> {
     await this.visible(this.page.getByRole("combobox", { name: "Course" })).click();
+    return this;
+  }
+
+  async seesCourseMenu(): Promise<this> {
     await expect(this.page.getByRole("listbox")).toBeVisible();
     await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
     return this;
@@ -101,7 +102,11 @@ export class AnalyticsRobot {
 
   async openBestRound(): Promise<this> {
     await this.visible(this.page.getByRole("button", { name: /Best Recent Round/ })).click();
-    await expect(this.page).toHaveURL(new RegExp(`/rounds/${BEST_ROUND_ID}$`));
+    return this;
+  }
+
+  async isAtRound(id: string): Promise<this> {
+    await expect(this.page).toHaveURL(new RegExp(`/rounds/${id}$`));
     return this;
   }
 
@@ -164,8 +169,6 @@ export class AnalyticsRobot {
   }
 
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
-    await this.page.waitForLoadState("networkidle");
-    await this.page.waitForTimeout(CHARTS_DRAWN_MS);
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
     return this;
   }

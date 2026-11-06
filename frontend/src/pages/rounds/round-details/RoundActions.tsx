@@ -52,7 +52,7 @@ export function RoundActions({
         ) : confirmDelete ? (
           <Alert
             variant="destructive"
-            className="flex w-auto items-center gap-2 bg-destructive/5 py-1.5"
+            className="flex w-auto items-center gap-2 bg-destructive/faint py-1.5"
           >
             <AlertDescription className="text-body text-destructive">
               Delete this round?

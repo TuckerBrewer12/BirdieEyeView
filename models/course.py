@@ -2,7 +2,7 @@ from pydantic import Field
 from typing import List, Optional
 
 from .base import BaseGolfModel
-from .hole import Hole
+from .hole import BACK_NINE, FRONT_NINE, HOLES_PER_NINE, HOLES_PER_ROUND, Hole
 from .tee import Tee
 
 
@@ -37,21 +37,21 @@ class Course(BaseGolfModel):
 
     @property
     def calculated_par(self) -> Optional[int]:
-        if len(self.holes) != 18 or any(h.par is None for h in self.holes):
+        if len(self.holes) != HOLES_PER_ROUND or any(h.par is None for h in self.holes):
             return None
         return sum(h.par for h in self.holes if h.par is not None)
 
     @property
     def front_nine_par(self) -> Optional[int]:
-        front = [h for h in self.holes if h.number is not None and 1 <= h.number <= 9]
-        if len(front) < 9 or any(h.par is None for h in front):
+        front = [h for h in self.holes if h.number in FRONT_NINE]
+        if len(front) < HOLES_PER_NINE or any(h.par is None for h in front):
             return None
         return sum(h.par for h in front if h.par is not None)
 
     @property
     def back_nine_par(self) -> Optional[int]:
-        back = [h for h in self.holes if h.number is not None and 10 <= h.number <= 18]
-        if len(back) < 9 or any(h.par is None for h in back):
+        back = [h for h in self.holes if h.number in BACK_NINE]
+        if len(back) < HOLES_PER_NINE or any(h.par is None for h in back):
             return None
         return sum(h.par for h in back if h.par is not None)
 

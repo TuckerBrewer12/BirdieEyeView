@@ -69,7 +69,7 @@ function NativePicker({ onPick }: { onPick: (photo: File) => void }) {
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
+        <div className="flex size-12 items-center justify-center rounded-full bg-primary/tint">
           <ScanLine className="size-5 text-primary" />
         </div>
         <div>

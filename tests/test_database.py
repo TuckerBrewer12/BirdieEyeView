@@ -294,6 +294,7 @@ async def test_course_repo_search_course_summaries_in_one_query(mock_pool):
     assert params == ["%Peb%", None]
 
 
+
 @pytest.mark.asyncio
 async def test_user_repo_create_user_persists_friend_code(mock_pool):
     pool, conn = mock_pool
@@ -438,7 +439,7 @@ async def test_round_repo_create_round_populates_par_from_course(mock_pool):
     saved = await repo.create_round(r, user_id=str(uuid4()), course_id=str(course_id))
 
     assert saved is not None
-    sql, tuples = conn.executemany.call_args[0]
+    _sql, tuples = conn.executemany.call_args[0]
     assert tuples[0][1] == hole_id
     assert tuples[0][9] == 4
 

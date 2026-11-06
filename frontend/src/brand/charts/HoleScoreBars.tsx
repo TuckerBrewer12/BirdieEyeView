@@ -1,5 +1,5 @@
 import { cn } from "@/brand/cn";
-import { scoreFillClass, type ScoreKey } from "@/brand/theme";
+import { scoreFillClass, scoreProfileHeightClass } from "@/brand/theme";
 import type { HoleSummary } from "@/domain";
 
 interface HoleScoreBarsProps {
@@ -8,16 +8,6 @@ interface HoleScoreBarsProps {
   className?: string;
 }
 
-const PROFILE_HEIGHT: Record<ScoreKey, string> = {
-  eagle: "h-profile-eagle",
-  birdie: "h-profile-birdie",
-  par: "h-profile-par",
-  bogey: "h-profile-bogey",
-  double: "h-profile-double",
-  triple: "h-profile-worse",
-  quad: "h-profile-worse",
-};
-
 export function HoleScoreBars({ holes, variant = "strip", className }: HoleScoreBarsProps) {
   if (holes.length === 0) return null;
   const profile = variant === "profile";
@@ -25,7 +15,7 @@ export function HoleScoreBars({ holes, variant = "strip", className }: HoleScore
   return (
     <div
       data-slot="hole-score-bars"
-      className={cn("flex", profile ? "h-6 items-end gap-hair" : "h-2.5 gap-bar", className)}
+      className={cn("flex", profile ? "h-6 items-end gap-bar" : "h-2.5 gap-bar", className)}
     >
       {holes.map((hole) => {
         const kind = hole.kind ?? "par";
@@ -35,8 +25,8 @@ export function HoleScoreBars({ holes, variant = "strip", className }: HoleScore
             className={cn(
               "flex-1",
               scoreFillClass(kind),
-              profile ? cn("rounded-t-tick", PROFILE_HEIGHT[kind]) : "rounded-bar",
-              kind === "par" && "opacity-(--brand-opacity-recessed)",
+              profile ? cn("rounded-t-tick", scoreProfileHeightClass(kind)) : "rounded-bar",
+              kind === "par" && "opacity-recessed",
             )}
           />
         );

@@ -6,7 +6,7 @@ const modules = import.meta.glob(["./previews/*/*.tsx", "../pages/**/previews/*.
   eager: true,
 }) as Record<string, { default: ComponentType }>;
 
-const previews: Record<string, ComponentType> = {};
+const previews: Partial<Record<string, ComponentType>> = {};
 for (const [path, module] of Object.entries(modules)) {
   const story = path.slice(path.lastIndexOf("/") + 1, -".tsx".length);
   if (previews[story]) throw new Error(`Duplicate brand preview: ${story}`);

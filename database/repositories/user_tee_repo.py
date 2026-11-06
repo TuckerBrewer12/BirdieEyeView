@@ -75,7 +75,7 @@ class UserTeeRepositoryDB:
             )
 
         set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates))
-        values = [UUID(tee_id)] + list(updates.values())
+        values = [UUID(tee_id), *updates.values()]
         where_clause = "id = $1"
         if user_id:
             values.append(UUID(user_id))

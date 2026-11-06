@@ -87,6 +87,8 @@ export const scannedTeeCard: ScannedRoundDto = {
         slope_rating: 133,
         course_rating: 73.4,
         hole_yardages: Object.fromEntries(BLUE_YARDS.map((yards, i) => [String(i + 1), yards])),
+        // What the server sends a golfer with a 10.0 index: 10 × 133 / 113 + (73.4 − 72) = 13.17.
+        course_handicap: 13,
       },
     ],
   },

@@ -47,6 +47,8 @@ export default defineConfig({
     {
       name: "desktop",
       testMatch: "**/*.screenshot.spec.ts",
+      // Tests tagged @phone capture what only the phone layout has: its tab bar, menus and tabs.
+      grepInvert: /@phone/,
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 720 },

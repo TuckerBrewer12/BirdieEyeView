@@ -253,6 +253,39 @@
             ],
             "title": "Average Putts"
           },
+          "best_round": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Round"
+          },
+          "best_round_course": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Round Course"
+          },
+          "best_round_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Round Id"
+          },
           "gir_percentage": {
             "anyOf": [
               {
@@ -366,6 +399,9 @@
           "up_and_down_percentage",
           "handicap_index",
           "total_rounds",
+          "best_round",
+          "best_round_id",
+          "best_round_course",
           "average_putts",
           "three_putts_per_round",
           "three_putt_rate",
@@ -2534,17 +2570,6 @@
             "title": "Attempts",
             "type": "array"
           },
-          "best_score": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Best Score"
-          },
           "gap": {
             "anyOf": [
               {
@@ -2555,6 +2580,17 @@
               }
             ],
             "title": "Gap"
+          },
+          "lowest_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lowest Score"
           },
           "on_track": {
             "default": false,
@@ -2624,7 +2660,7 @@
         },
         "required": [
           "scoring_average",
-          "best_score",
+          "lowest_score",
           "scoring_goal",
           "gap",
           "on_track",
@@ -2736,29 +2772,8 @@
         "title": "HandicapChange",
         "type": "object"
       },
-      "HandicapIndexResponse": {
-        "description": "A golfer's current WHS Handicap Index; null until they have enough rounds or a seed handicap.",
-        "properties": {
-          "handicap_index": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Handicap Index"
-          }
-        },
-        "required": [
-          "handicap_index"
-        ],
-        "title": "HandicapIndexResponse",
-        "type": "object"
-      },
       "HandicapTrendRow": {
-        "description": "The handicap index after one round, oldest first, and where its differential stands.",
+        "description": "The golfer's index after one round, oldest first: over the 20 rounds ending with it and off\nthe handicap they gave, so the last round's is the index every screen shows. With where the\nround's differential stands against the current index.",
         "properties": {
           "differential": {
             "anyOf": [
@@ -3259,6 +3274,11 @@
             ],
             "title": "Strokes"
           },
+          "three_putt": {
+            "default": false,
+            "title": "Three Putt",
+            "type": "boolean"
+          },
           "to_par": {
             "anyOf": [
               {
@@ -3296,7 +3316,8 @@
           "handicap",
           "yardage",
           "to_par",
-          "kind"
+          "kind",
+          "three_putt"
         ],
         "title": "HoleScoreResponse",
         "type": "object"
@@ -3790,10 +3811,16 @@
             },
             "title": "Score Breaks",
             "type": "array"
+          },
+          "under_par_position": {
+            "default": 0,
+            "title": "Under Par Position",
+            "type": "integer"
           }
         },
         "required": [
           "score_breaks",
+          "under_par_position",
           "first_round_under_par",
           "first_eagle",
           "first_hole_in_one"
@@ -5482,6 +5509,17 @@
               }
             ]
           },
+          "course_handicap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Handicap"
+          },
           "course_name_played": {
             "anyOf": [
               {
@@ -5534,6 +5572,11 @@
             "title": "Hole Scores",
             "type": "array"
           },
+          "holes_played": {
+            "default": 0,
+            "title": "Holes Played",
+            "type": "integer"
+          },
           "id": {
             "anyOf": [
               {
@@ -5544,6 +5587,17 @@
               }
             ],
             "title": "Id"
+          },
+          "net_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Score"
           },
           "nines": {
             "$ref": "#/components/schemas/Nines"
@@ -5673,6 +5727,7 @@
           "nines",
           "yards",
           "score_counts",
+          "holes_played",
           "id",
           "course",
           "tee_box",
@@ -5681,7 +5736,9 @@
           "notes",
           "course_name_played",
           "user_tee",
-          "hole_scores"
+          "hole_scores",
+          "course_handicap",
+          "net_score"
         ],
         "title": "RoundResponse",
         "type": "object"
@@ -5698,6 +5755,17 @@
               }
             ],
             "title": "Back Nine"
+          },
+          "best_rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Rank"
           },
           "course_id": {
             "anyOf": [
@@ -5815,7 +5883,8 @@
           "back_nine",
           "total_putts",
           "score_counts",
-          "hole_scores"
+          "hole_scores",
+          "best_rank"
         ],
         "title": "RoundSummaryResponse",
         "type": "object"
@@ -6326,6 +6395,17 @@
             ],
             "title": "Color"
           },
+          "course_handicap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Handicap"
+          },
           "course_rating": {
             "anyOf": [
               {
@@ -6360,7 +6440,8 @@
           "color",
           "slope_rating",
           "course_rating",
-          "hole_yardages"
+          "hole_yardages",
+          "course_handicap"
         ],
         "title": "ScannedTee",
         "type": "object"
@@ -6895,6 +6976,17 @@
             ],
             "title": "Color"
           },
+          "course_handicap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Handicap"
+          },
           "course_rating": {
             "anyOf": [
               {
@@ -6954,7 +7046,8 @@
           "hole_yardages",
           "total_yardage",
           "front_nine_yardage",
-          "back_nine_yardage"
+          "back_nine_yardage",
+          "course_handicap"
         ],
         "title": "TeeResponse",
         "type": "object"
@@ -9934,54 +10027,6 @@
           }
         ],
         "summary": "Update User",
-        "tags": [
-          "users"
-        ]
-      }
-    },
-    "/api/users/{user_id}/handicap": {
-      "get": {
-        "operationId": "get_user_handicap_api_users__user_id__handicap_get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HandicapIndexResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Get User Handicap",
         "tags": [
           "users"
         ]

@@ -1,10 +1,8 @@
 import { EMPTY_COURSE_ANALYTICS } from "@/domain/courseAnalytics";
 import { useState } from "react";
-import { useHandicapIndex } from "@/data/useHandicapIndex";
 import { teesByLength } from "@/domain/course";
-import { ratedCourseHandicap } from "@/domain/handicap";
-import type { CourseDto } from "@/types/api";
 import { coursesRepository, type CoursesRepository } from "../../coursesRepository";
+import { useCourse } from "../../useCourse";
 import { useCourseAnalytics } from "../../useCourseAnalytics";
 import {
   nineFrom,
@@ -21,14 +19,19 @@ export interface CourseScorecardViewModel {
   backNine: ScorecardNine;
 }
 
+/**
+ * The course's scorecard, read off one tee, with the golfer's averages once they have played it.
+ * Null until the course has loaded; the page loads it first, so this reads it from the cache.
+ */
 export function useCourseScorecardViewModel(
   userId: string,
-  course: CourseDto,
+  courseId: string,
   repository: CoursesRepository = coursesRepository,
-): CourseScorecardViewModel {
+): CourseScorecardViewModel | null {
   const [picked, setPicked] = useState<string | null | undefined>(undefined);
-  const handicapIndex = useHandicapIndex(userId, repository);
-  const { data: analytics = EMPTY_COURSE_ANALYTICS } = useCourseAnalytics(userId, course.id ?? undefined, repository);
+  const { data: course } = useCourse(courseId, repository);
+  const { data: analytics = EMPTY_COURSE_ANALYTICS } = useCourseAnalytics(userId, courseId, repository);
+  if (!course) return null;
 
   const tee = selectedTee(course, picked);
   const averages = personalAverages(analytics);
@@ -37,7 +40,7 @@ export function useCourseScorecardViewModel(
     teeChips: teesByLength(course).map((t) => ({
       tee: t,
       selected: t.color?.toLowerCase() === tee?.color?.toLowerCase(),
-      courseHandicap: ratedCourseHandicap(handicapIndex, t, course.par),
+      courseHandicap: t.course_handicap,
     })),
     selectTee: (color) => {
       const current = tee?.color ?? null;

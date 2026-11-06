@@ -148,7 +148,7 @@ async def _issue_verification_token(db: DatabaseManager, user: User, request: Re
     )
     verify_url = _build_verification_url(request, raw_token)
     try:
-        send_verification_email(user.email or "", verify_url)
+        await send_verification_email(user.email or "", verify_url)
     except Exception:
         logger.exception(
             "Auth verification email send failed: user_id=%s email_fp=%s",
@@ -202,7 +202,7 @@ async def register(req: RegisterRequest, request: Request, db: DatabaseManager =
             password_hash=password_hash,
         )
     except DuplicateError:
-        raise HTTPException(409, "An account with this email already exists")
+        raise HTTPException(409, "An account with this email already exists") from None
 
     await _issue_verification_token(db, user, request)
     logger.info(
@@ -419,7 +419,7 @@ async def forgot_password(
             )
             reset_url = _build_password_reset_url(request, raw_token)
             try:
-                send_password_reset_email(user.email or "", reset_url)
+                await send_password_reset_email(user.email or "", reset_url)
             except Exception:
                 logger.exception(
                     "Auth forgot-password email send failed: user_id=%s email_fp=%s ip=%s",

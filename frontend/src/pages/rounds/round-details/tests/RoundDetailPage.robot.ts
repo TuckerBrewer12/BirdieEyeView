@@ -40,13 +40,25 @@ export class RoundDetailRobot {
 
   async tapEdit(): Promise<this> {
     await this.page.getByRole("button", { name: "Edit", exact: true }).click();
+    await this.seesEditing();
+    return this;
+  }
+
+  /** Edit mode: the round's actions are Save and Cancel. */
+  async seesEditing(): Promise<this> {
     await expect(this.page.getByRole("button", { name: "Save", exact: true })).toBeVisible();
     return this;
   }
 
   async tapCancelEdit(): Promise<this> {
     await this.page.getByRole("button", { name: "Cancel" }).click();
-    await expect(this.page.getByRole("button", { name: "Edit" })).toBeVisible();
+    return this;
+  }
+
+  /** Out of edit mode: Edit is back in place of Save. */
+  async seesViewActions(): Promise<this> {
+    await expect(this.page.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
     return this;
   }
 
@@ -69,6 +81,20 @@ export class RoundDetailRobot {
   async seesScore(score: number): Promise<this> {
     const header = this.page.locator('[data-slot="round-detail-header"]');
     await expect(header.getByText(String(score), { exact: true })).toBeVisible();
+    return this;
+  }
+
+  /** The net score and course handicap in the header, as the server sent them. */
+  async seesNet(net: number, courseHandicap: number): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(`Net · hcp ${courseHandicap}`)).toBeVisible();
+    await expect(header.getByText(String(net), { exact: true })).toBeVisible();
+    return this;
+  }
+
+  async seesNoNet(): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(/^Net · hcp/)).toHaveCount(0);
     return this;
   }
 
@@ -95,6 +121,10 @@ export class RoundDetailRobot {
 
   async tapDelete(): Promise<this> {
     await this.page.getByRole("button", { name: "Delete" }).click();
+    return this;
+  }
+
+  async seesDeleteConfirm(): Promise<this> {
     await expect(this.page.getByText("Delete this round?")).toBeVisible();
     return this;
   }
@@ -112,6 +142,12 @@ export class RoundDetailRobot {
 
   async tapLinkCourse(): Promise<this> {
     await this.page.getByRole("button", { name: "Link course" }).click();
+    return this;
+  }
+
+  /** A round with no course behind it offers to link one. */
+  async seesLinkCourse(): Promise<this> {
+    await expect(this.page.getByRole("button", { name: "Link course" })).toBeVisible();
     return this;
   }
 

@@ -52,7 +52,7 @@ describe("useLabPageViewModel", () => {
       gap: 2.7,
       progressPct: 64,
       onTrack: false,
-      bestScore: 89,
+      lowestScore: 89,
     });
     expect(result.current.goal?.savers.map((s) => s.kind)).toEqual([
       "three_putt_bleed",
@@ -69,7 +69,9 @@ describe("useLabPageViewModel", () => {
     expect(result.current.goal).toBeNull();
     expect(result.current.peak).toBeNull();
     expect(result.current.roundsMeetingGoal).toBeNull();
-    expect(result.current.bestScore).toBe(89);
+    // The lowest score falls back to the analytics record.
+
+    expect(result.current.lowestScore).toBe(89);
     expect(repository.analyticsRequests).toEqual(["user-1"]);
   });
 

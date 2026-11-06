@@ -18,3 +18,13 @@ export function formatSignedOneDecimal(value: number): string {
 export function formatOneDecimal(value: number | null | undefined): string {
   return value != null ? value.toFixed(1) : "—";
 }
+
+/** A figure rounded to a whole number, for a rate shown beside its own unit: "31". A dash when there is nothing to show. */
+export function formatWhole(value: number | null | undefined): string {
+  return value != null ? value.toFixed(0) : "—";
+}
+
+/** A file's size in whole kilobytes: "412 KB". */
+export function formatFileSize(bytes: number): string {
+  return `${Math.round(bytes / 1024)} KB`;
+}

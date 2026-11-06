@@ -2,10 +2,8 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { queryKeys } from "@/data/queryKeys";
-import { useHandicapIndex } from "@/data/useHandicapIndex";
 import { Round } from "@/domain/round";
 import { getTee } from "@/domain/course";
-import { ratedCourseHandicap } from "@/domain/handicap";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
 import { useDeleteRound } from "../useDeleteRound";
 import { teeRatingLabel } from "./roundDetailModel";
@@ -15,7 +13,6 @@ export interface RoundDetailUiState {
   loading: boolean;
   loadError: string | null;
   played: Round | null;
-  courseHandicap: number | null;
   teeRating: string | null;
   editor: RoundEditorViewModel;
   confirmDelete: boolean;
@@ -56,7 +53,6 @@ export function useRoundDetailPageViewModel(
     enabled: !!roundId,
     staleTime: 5 * 60 * 1000,
   });
-  const handicapIndex = useHandicapIndex(userId, repository);
 
   const editor = useRoundEditorViewModel(userId, round, repository);
   const { start: startEditing } = editor;
@@ -83,7 +79,6 @@ export function useRoundDetailPageViewModel(
     loading: isLoading,
     loadError: isError ? messageFrom(roundError, "Could not load this round.") : null,
     played,
-    courseHandicap: ratedCourseHandicap(handicapIndex, tee, played?.par ?? null),
     teeRating: teeRatingLabel(tee),
     editor,
     confirmDelete,

@@ -1,4 +1,4 @@
-import { colors, scoreKindLabel, type ScoreKey } from "@/brand/theme";
+import { scoreKindLabel, type ScoreKey, tokens } from "@/brand/theme";
 import {
   SCORE_KINDS,
   formatCourseName,
@@ -14,8 +14,20 @@ import {
   type WhsRound,
 } from "./model";
 
+
 export function firstNameOf(user: UserDto | null): string {
   return user?.name?.split(" ")[0] ?? "Golfer";
+}
+
+/** Up to two initials for the avatar: "Jordan Spieth" reads "JS"; no name reads "G" for golfer. */
+export function initialsOf(user: UserDto | null): string {
+  if (!user?.name) return "G";
+  return user.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 export function greetingDateLabel(now = new Date()): string {
@@ -37,10 +49,11 @@ export function colorizeMix(mix: ScoreMix): ColoredMixItem[] {
   return SCORE_KINDS.flatMap((kind) => {
     const value = Math.round(mix[kind] * 10) / 10;
     return value > 0
-      ? [{ name: kind, label: scoreKindLabel(kind), value, color: colors.score[kind].base }]
+      ? [{ name: kind, label: scoreKindLabel(kind), value, color: tokens.color.score[kind].base }]
       : [];
   });
 }
+
 
 export function courseLabelForWhs(row: WhsRound): string {
   return row.courseName ? formatCourseName(row.courseName) : `Round ${row.roundIndex}`;
@@ -83,3 +96,4 @@ export function milestoneWording(milestone: Milestone): { title: string; figure:
   const wording = MILESTONE_WORDING[milestone.kind];
   return { title: wording.title, figure: wording.figure(milestone.value) };
 }
+

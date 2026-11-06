@@ -3,7 +3,7 @@ import { HoleShape } from "@/brand/charts/HoleScoreShapes";
 import { Button } from "@/brand/components/Button";
 import { Input } from "@/brand/components/Input";
 import { scoreFillClass, scoreOnFillClass, toParDisplay, toParTextClass } from "@/brand/theme";
-import { isThreePutt, type HoleScore, type Nine, type Round } from "@/domain";
+import type { HoleScore, Nine, Round } from "@/domain";
 
 export interface ScorecardEdits {
   onStrokesChange: (hole: number, strokes: number | null) => void;
@@ -52,7 +52,7 @@ function GirMark({ gir, className }: { gir: boolean | null; className?: string }
   if (gir == null) return <span className="text-muted-foreground">·</span>;
   return (
     <span
-      className={cn("inline-block size-2.5 rounded-sm", gir ? "bg-primary" : "bg-destructive/30", className)}
+      className={cn("inline-block size-2.5 rounded-sm", gir ? "bg-primary" : "bg-destructive/recessed", className)}
     />
   );
 }
@@ -172,7 +172,7 @@ function ScorecardTable({ nine, label, round, teeBox, edits, toCheck, className 
           {round && <td className={TOTAL_CELL}>{show(round.par)}</td>}
         </tr>
 
-        <tr className={cn("text-sm text-foreground", edits && "bg-muted/40")}>
+        <tr className={cn("text-sm text-foreground", edits && "bg-muted/recessed")}>
           <td className={LABEL_CELL}>Score</td>
           {holes.map((hole) => (
             <ScoreCell key={hole.hole} hole={hole} edits={edits} check={!!toCheck?.includes(hole.hole)} />
@@ -197,7 +197,7 @@ function ScorecardTable({ nine, label, round, teeBox, edits, toCheck, className 
         </tr>
 
         {showPutts && (
-          <tr className={cn("text-xs text-muted-foreground", edits && "bg-muted/40")}>
+          <tr className={cn("text-xs text-muted-foreground", edits && "bg-muted/recessed")}>
             <td className={LABEL_CELL}>Putts</td>
             {holes.map((hole) =>
               edits ? (
@@ -212,7 +212,7 @@ function ScorecardTable({ nine, label, round, teeBox, edits, toCheck, className 
               ) : (
                 <td
                   key={hole.hole}
-                  className={cn(CELL, isThreePutt(hole.putts) && "font-bold text-destructive")}
+                  className={cn(CELL, hole.threePutt && "font-bold text-destructive")}
                 >
                   {hole.putts ?? "·"}
                 </td>

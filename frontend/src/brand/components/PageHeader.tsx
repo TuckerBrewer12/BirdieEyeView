@@ -10,7 +10,7 @@ interface PageHeaderProps {
 }
 
 const BAR =
-  "fixed top-0 right-0 left-0 z-40 flex items-center border-b border-border bg-background/90 px-4 py-3 shadow-hairline backdrop-blur-xl md:left-64 md:px-8";
+  "fixed top-0 right-0 left-0 z-40 flex items-center border-b border-border bg-background/glass px-4 py-3 shadow-hairline backdrop-blur-xl md:left-64 md:px-8";
 
 function PageHeaderText({ title, subtitle }: Pick<PageHeaderProps, "title" | "subtitle">) {
   return (

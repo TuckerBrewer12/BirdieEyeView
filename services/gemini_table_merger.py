@@ -86,5 +86,5 @@ async def merge_split_tables(markdown: str) -> str:
         return markdown
 
     except Exception as exc:
-        logger.warning("Gemini table merge failed; using original markdown. err=%s", exc)
+        logger.warning("Gemini table merge failed; using original markdown. err=%s", exc, exc_info=True)
         return markdown

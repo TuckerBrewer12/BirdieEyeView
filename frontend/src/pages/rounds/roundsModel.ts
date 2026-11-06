@@ -24,6 +24,8 @@ export interface ListedRound {
   score: number | null;
   toPar: number | null;
   course: { name: string | null } | null;
+  /** The server's Best order: full rounds by to par, then nines and rounds cut short. */
+  bestRank: number | null;
 }
 
 export const SORT_LABELS: Record<SortKey, string> = {
@@ -37,9 +39,10 @@ export const SORT_OPTIONS: readonly SortOption[] = (
   Object.keys(SORT_LABELS) as SortKey[]
 ).map((value) => ({ value, label: SORT_LABELS[value] }));
 
+/** Best always lists the best round first, by to par, whatever sort the golfer chose. */
 export function effectiveSort(mode: FilterMode, chosen: Sort): Sort & { locked: boolean } {
   return mode === "best"
-    ? { key: "total_score", ascending: true, locked: true }
+    ? { key: "to_par", ascending: true, locked: true }
     : { ...chosen, locked: false };
 }
 
@@ -78,6 +81,10 @@ function sortValue(round: ListedRound, key: SortKey): number | string | null {
   }
 }
 
+/**
+ * The rounds a chip, a search and a sort leave on screen, in order. Rounds with no value sort last.
+ * Best follows the server's order, which ranks every full round ahead of a nine.
+ */
 export function filterRounds<R extends ListedRound>(
   rounds: readonly R[],
   mode: FilterMode,
@@ -95,9 +102,10 @@ export function filterRounds<R extends ListedRound>(
     result = result.filter((r) => r.course?.name?.toLowerCase().includes(q));
   }
   const { key, ascending } = effectiveSort(mode, chosen);
+  const valueOf = (round: R) => (mode === "best" ? round.bestRank : sortValue(round, key));
   return result.sort((a, b) => {
-    const av = sortValue(a, key);
-    const bv = sortValue(b, key);
+    const av = valueOf(a);
+    const bv = valueOf(b);
     if (av === null) return 1;
     if (bv === null) return -1;
     if (av < bv) return ascending ? -1 : 1;

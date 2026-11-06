@@ -22,7 +22,7 @@ interface InsightNoteProps {
 export function InsightNote({ narrative, className }: InsightNoteProps) {
   const Icon = ICON[narrative.trend];
   return (
-    <div data-slot="insight-note" className={cn("flex items-start gap-3 rounded-xl bg-primary/5 px-3 py-2", className)}>
+    <div data-slot="insight-note" className={cn("flex items-start gap-3 rounded-xl bg-primary/faint px-3 py-2", className)}>
       <Icon aria-hidden className={cn("mt-0.5 size-4 shrink-0", TONE_CLASS[narrativeTone(narrative)])} />
       <p className="text-sm leading-relaxed text-muted-foreground">{narrative.text}</p>
     </div>

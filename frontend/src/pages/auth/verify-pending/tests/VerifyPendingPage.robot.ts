@@ -19,7 +19,7 @@ export class VerifyPendingRobot extends AuthScreenRobot {
     return this;
   }
 
-  async isSentHome(): Promise<this> {
+  async isAtHome(): Promise<this> {
     await this.isAt("/", 10_000);
     await expect(this.page.getByRole("heading", { name: "Verify your email" })).toHaveCount(0);
     return this;

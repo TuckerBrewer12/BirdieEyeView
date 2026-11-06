@@ -82,7 +82,7 @@ def test_the_gir_average_points_up_from_half_the_greens():
 
 
 def test_the_putts_average_points_down_when_low_and_up_when_high():
-    trend = lambda putts: insights([], [], [], _putts(putts))[0]["trend"]  # noqa: E731
+    trend = lambda putts: insights([], [], [], _putts(putts))[0]["trend"]
     assert (trend(32), trend(33), trend(36), trend(37)) == ("down", "flat", "flat", "up")
 
 

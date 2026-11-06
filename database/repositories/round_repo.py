@@ -6,6 +6,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from models import HoleScore, Round
+from models.hole import HOLES_PER_NINE, HOLES_PER_ROUND
 from database.converters import round_from_rows, round_from_summary_row, round_to_row, hole_score_to_row, user_tee_from_row, course_from_rows
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from database.repositories.course_repo import CourseRepositoryDB
@@ -358,7 +359,7 @@ class RoundRepositoryDB:
                     updates["tee_id"] = None
 
             set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates))
-            values = [UUID(round_id)] + list(updates.values())
+            values = [UUID(round_id), *updates.values()]
 
             where_clause = "id = $1"
             where_values = []
@@ -471,7 +472,8 @@ class RoundRepositoryDB:
                 valid_strokes = [r["strokes"] for r in score_rows if r["strokes"] is not None]
                 new_total = sum(valid_strokes) if valid_strokes else None
                 holes_played = len(valid_strokes)
-                is_complete = holes_played == 18
+                holes_on_card = HOLES_PER_ROUND if len(score_rows) > HOLES_PER_NINE else HOLES_PER_NINE
+                is_complete = holes_played == holes_on_card
 
                 if user_id:
                     await conn.execute(

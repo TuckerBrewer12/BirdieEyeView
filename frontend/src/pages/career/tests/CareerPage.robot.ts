@@ -167,13 +167,12 @@ export class CareerRobot {
     return this;
   }
 
-  async isOnRound(roundId: string): Promise<this> {
+  async isAtRound(roundId: string): Promise<this> {
     await expect(this.page).toHaveURL(new RegExp(`/rounds/${roundId}$`));
     return this;
   }
 
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
-    await this.page.waitForLoadState("networkidle");
     // A tap lower down scrolls the page; back at the top the fixed shell sits where it belongs.
     await this.page.evaluate(() => window.scrollTo(0, 0));
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });

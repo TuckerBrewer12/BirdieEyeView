@@ -9,13 +9,14 @@ const compared: RadarAxis[] = [
   { label: "Par 5s", value: 64, benchmark: 58, valueLabel: "+0.4", benchmarkLabel: "+0.5" },
 ];
 
+/** No comparison: the shape alone, on four axes. */
+const alone: RadarAxis[] = compared.slice(0, 4).map(({ label, value, valueLabel }) => ({ label, value, valueLabel }));
+
 export default function RadarChartPreview() {
   return (
     <>
       <RadarChart axes={compared} aria-label="Shape against a break-80 golfer" />
-      <RadarChart
-        axes={compared.slice(0, 4).map(({ label, value, valueLabel }) => ({ label, value, valueLabel }))}
-      />
+      <RadarChart axes={alone} />
       <RadarChart axes={compared.slice(0, 2)} empty="Play a few more rounds to see your shape." />
       <div className="max-w-xs">
         <RadarChart axes={compared} compact aria-label="Shape against a break-80 golfer, on a phone" />

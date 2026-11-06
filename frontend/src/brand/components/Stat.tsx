@@ -18,7 +18,7 @@ function StatLabel({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="stat-label"
-      className={cn("text-meta font-bold uppercase tracking-eyebrow text-muted-foreground", className)}
+      className={cn("text-eyebrow uppercase text-muted-foreground", className)}
       {...props}
     />
   );

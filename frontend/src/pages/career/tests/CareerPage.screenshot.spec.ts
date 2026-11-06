@@ -2,12 +2,14 @@ import { test } from "./CareerPage.robot";
 
 test("populated career", async ({ career }) => {
   await career.open();
+  await career.seesCareer();
   await career.capture("career-populated.png");
 });
 
 test("populated career in dark mode", async ({ career }) => {
   await career.dark();
   await career.open();
+  await career.seesCareer();
   await career.capture("career-populated-dark.png");
 });
 
@@ -30,15 +32,26 @@ test("load failed", async ({ career }) => {
   await career.capture("career-load-failed.png");
 });
 
-for (const tab of ["Putting", "GIR"] as const) {
-  for (const dark of [false, true]) {
-    test(`phone ${tab} milestones${dark ? " in dark mode" : ""}`, async ({ career, isMobile }) => {
-      test.skip(!isMobile, "The milestone tabs are phone-only.");
-      if (dark) await career.dark();
+const PHONE_TABS = [
+  { tab: "Putting", milestone: "Break 30 Putts", file: "putting" },
+  { tab: "GIR", milestone: "9/18 GIR", file: "gir" },
+] as const;
+
+test.describe("phone milestones", { tag: "@phone" }, () => {
+  for (const { tab, milestone, file } of PHONE_TABS) {
+    test(`${tab} milestones`, async ({ career }) => {
       await career.open();
       await career.tapMilestoneTab(tab);
-      await career.seesMilestone("Milestones", tab === "Putting" ? "Break 30 Putts" : "9/18 GIR", true);
-      await career.capture(`career-milestones-${tab.toLowerCase()}${dark ? "-dark" : ""}.png`);
+      await career.seesMilestone("Milestones", milestone, true);
+      await career.capture(`career-milestones-${file}.png`);
+    });
+
+    test(`${tab} milestones in dark mode`, async ({ career }) => {
+      await career.dark();
+      await career.open();
+      await career.tapMilestoneTab(tab);
+      await career.seesMilestone("Milestones", milestone, true);
+      await career.capture(`career-milestones-${file}-dark.png`);
     });
   }
-}
+});

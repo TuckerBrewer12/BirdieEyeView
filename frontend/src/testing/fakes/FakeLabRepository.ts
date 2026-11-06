@@ -32,10 +32,10 @@ export function benchmarkKey(target: BenchmarkTarget): string {
 
 export class FakeLabRepository implements LabRepository {
   user: UserDto;
-  readonly analytics: Record<string, AnalyticsDto>;
+  readonly analytics: Partial<Record<string, AnalyticsDto>>;
   goalReport: GoalReportDto | null;
   readonly friendships: InMemoryFriendships;
-  readonly benchmarks: Record<string, BenchmarkComparisonDto>;
+  readonly benchmarks: Partial<Record<string, BenchmarkComparisonDto>>;
   readonly benchmarkRequests: string[] = [];
   readonly analyticsRequests: string[] = [];
   readonly analyticsFilters: AnalyticsFilters[] = [];

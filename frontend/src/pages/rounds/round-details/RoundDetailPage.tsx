@@ -65,17 +65,16 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         onEdit={viewModel.enterEditMode}
         onSave={editor.save}
         onCancelEdit={editor.cancel}
-        onShare={() => shareRound(roundShareMessage(played))}
+        onShare={() => void shareRound(roundShareMessage(played))}
         onDelete={viewModel.requestDelete}
-        onConfirmDelete={() => viewModel.confirmDeleteRound(() => navigate("/rounds"))}
+        onConfirmDelete={() => viewModel.confirmDeleteRound(() => void navigate("/rounds"))}
         onCancelDelete={viewModel.cancelDelete}
-        onBack={() => navigate(-1)}
+        onBack={() => void navigate(-1)}
       />
 
       <RoundDetailHeader
         round={played}
         teeRating={viewModel.teeRating}
-        courseHandicap={viewModel.courseHandicap}
       />
 
       {viewModel.showLinkButton && (
@@ -118,6 +117,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
             customName={editor.customName}
             onClear={editor.changeCourse}
             clearLabel="Change course"
+            focusOnOpen
           />
           {editor.playedNameToKeep && (
             <Button

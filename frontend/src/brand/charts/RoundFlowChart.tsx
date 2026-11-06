@@ -2,17 +2,8 @@ import { useState, type MouseEvent } from "react";
 import { AnimatePresence, motion, useReducedMotion, useReducedMotionConfig } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { curveMonotoneX, line } from "d3-shape";
-import {
-  chartColors,
-  chartLayout,
-  colors,
-  fonts,
-  motion as motionTokens,
-  scoreKindLabel,
-  toParLabel,
-  toParTextClass,
-  typography,
-} from "@/brand/theme";
+import { cn } from "@/brand/cn";
+import { scoreKindLabel, scoreWashClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
 import type { HoleScore, Round } from "@/domain";
 import { pluralize } from "@/domain/format";
 import type { ScoreKind } from "@/domain/score";
@@ -26,7 +17,7 @@ type FlowHole = HoleScore & { strokes: number; toPar: number; kind: ScoreKind };
 const Y_TICKS = [-3, -2, -1, 0, 1, 2, 3];
 
 export function RoundFlowChart({ round }: RoundFlowChartProps) {
-  const { width: W, height: H, pad: PAD, extent, dot, dotHover } = chartLayout.flow;
+  const { width: W, height: H, pad: PAD, extent, stroke, parLine, dot, dotHover } = tokens.chart.flow;
   const prefersReduced = useReducedMotion();
   const configReduced = useReducedMotionConfig();
   const reduceMotion = prefersReduced || configReduced;
@@ -71,9 +62,9 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
             x2={W - PAD.right}
             y1={y(0)}
             y2={y(0)}
-            stroke={chartColors.muted}
-            strokeWidth={1.5}
-            strokeDasharray="5 4"
+            stroke={tokens.color.chart.muted}
+            strokeWidth={parLine.stroke}
+            strokeDasharray={parLine.dash}
           />
 
           {first <= 9 && last > 9 && (
@@ -82,21 +73,21 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               x2={x(9.5)}
               y1={PAD.top}
               y2={H - PAD.bottom}
-              stroke={colors.border}
-              strokeWidth={1}
+              stroke={tokens.color.border}
+              strokeWidth={tokens.lineWidth.border}
             />
           )}
 
           <motion.path
             d={path}
             fill="none"
-            stroke={chartColors.axis}
-            strokeWidth={2.5}
+            stroke={tokens.color.chart.axis}
+            strokeWidth={stroke}
             strokeLinecap="round"
             strokeLinejoin="round"
             initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
-            transition={motionTokens.draw}
+            transition={tokens.motion.draw}
           />
 
           {holes.map((hole, i) => (
@@ -105,16 +96,16 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               cx={x(hole.hole)}
               cy={yOf(hole.toPar)}
               r={hovered?.hole === hole.hole ? dotHover : dot}
-              fill={colors.score[hole.kind].base}
-              stroke={colors.card}
-              strokeWidth={1.5}
+              fill={tokens.color.score[hole.kind].base}
+              stroke={tokens.color.card}
+              strokeWidth={tokens.lineWidth.outline}
               className="cursor-crosshair"
-              initial={reduceMotion ? false : { scale: motionTokens.pop.from, opacity: 0 }}
+              initial={reduceMotion ? false : { scale: tokens.motion.pop.from, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{
-                delay: motionTokens.pop.delay + i * motionTokens.pop.stagger,
-                duration: motionTokens.pop.duration,
-                ease: motionTokens.pop.ease,
+                delay: tokens.motion.pop.delay + i * tokens.motion.pop.stagger,
+                duration: tokens.motion.pop.duration,
+                ease: tokens.motion.pop.ease,
               }}
             />
           ))}
@@ -125,9 +116,9 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               x2={x(hovered.hole)}
               y1={PAD.top}
               y2={H - PAD.bottom}
-              stroke={chartColors.muted}
-              strokeWidth={1}
-              strokeDasharray="3 3"
+              stroke={tokens.color.chart.muted}
+              strokeWidth={tokens.lineWidth.border}
+              strokeDasharray={tokens.chart.guideDash}
             />
           )}
 
@@ -137,9 +128,9 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               x={x(hole.hole)}
               y={H - PAD.bottom + 14}
               textAnchor="middle"
-              fontSize={typography.meta}
-              fontFamily={fonts.sans}
-              fill={hovered?.hole === hole.hole ? colors.foreground : chartColors.axis}
+              fontSize={tokens.type.meta.size}
+              fontFamily={tokens.font.sans}
+              fill={hovered?.hole === hole.hole ? tokens.color.foreground : tokens.color.chart.axis}
               fontWeight={hovered?.hole === hole.hole ? "600" : "400"}
             >
               {hole.hole}
@@ -152,8 +143,8 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               x={PAD.left - 8}
               y={y(toPar) + 4}
               textAnchor="end"
-              fontSize={typography.caption}
-              fontFamily={fonts.sans}
+              fontSize={tokens.type.caption.size}
+              fontFamily={tokens.font.sans}
               fill="currentColor"
               className={toParTextClass(toPar)}
               fontWeight="500"
@@ -167,24 +158,20 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
           {hovered && (
             <motion.div
               key={hovered.hole}
-              className="pointer-events-none absolute z-10 min-w-32 rounded-xl border border-border bg-card/95 px-3 py-2.5 text-body-sm shadow-card"
+              className="pointer-events-none absolute z-10 min-w-32 rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card"
               style={{
                 left: tooltipPos.x + (tooltipPos.x > W * 0.65 ? -150 : 14),
                 top: tooltipPos.y - 10,
               }}
-              initial={{ opacity: 0, scale: motionTokens.tapScale, y: 4 }}
+              initial={{ opacity: 0, scale: tokens.motion.tapScale, y: 4 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: motionTokens.tapScale, y: 4 }}
-              transition={{ duration: motionTokens.duration.collapse }}
+              exit={{ opacity: 0, scale: tokens.motion.tapScale, y: 4 }}
+              transition={{ duration: tokens.motion.duration.collapse }}
             >
               <div className="mb-1.5 flex items-center justify-between gap-3">
                 <span className="text-sm font-bold text-card-foreground">Hole {hovered.hole}</span>
                 <span
-                  className="rounded-full px-1.5 py-0.5 text-xs font-semibold"
-                  style={{
-                    background: colors.score[hovered.kind].muted,
-                    color: colors.score[hovered.kind].onMuted,
-                  }}
+                  className={cn("rounded-full px-1.5 py-0.5 text-xs font-semibold", scoreWashClass(hovered.kind))}
                 >
                   {scoreKindLabel(hovered.kind)}
                 </span>

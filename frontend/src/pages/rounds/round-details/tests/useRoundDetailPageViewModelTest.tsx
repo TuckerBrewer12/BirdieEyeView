@@ -5,7 +5,8 @@ import type { ReactNode } from "react";
 import { pebbleBeachSummary } from "@/testing/fixtures/courses";
 import {
   halfMoonBayRound,
-  pebbleBeachCourse,
+  ratedHalfMoonBayRound,
+  ratedPebbleBeachCourse,
   scannedRound,
 } from "@/testing/fixtures/roundDetails";
 import {
@@ -47,12 +48,10 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.showMomentum).toBe(true);
   });
 
-  it("computes the course handicap from the index and the active tee", async () => {
-    const { result } = renderVm("round-1", {
-      detailRounds: [halfMoonBayRound],
-      handicapIndex: 10.4,
-    });
-    await waitFor(() => expect(result.current.courseHandicap).toBe(12));
+  it("shows the course handicap and net score the server sent", async () => {
+    const { result } = renderVm("round-1", { detailRounds: [ratedHalfMoonBayRound] });
+    await waitFor(() => expect(result.current.played?.courseHandicap).toBe(12));
+    expect(result.current.played?.netScore).toBe(result.current.played!.score! - 12);
   });
 
   it("live-totals a cleared hole in edit mode instead of falling back", async () => {
@@ -87,16 +86,15 @@ describe("useRoundDetailPageViewModel", () => {
 
   it("reads the round against a course picked in edit mode", async () => {
     const { result } = renderVm("round-1", {
-      detailRounds: [halfMoonBayRound],
-      fullCourses: [pebbleBeachCourse],
-      handicapIndex: 10.4,
+      detailRounds: [ratedHalfMoonBayRound],
+      fullCourses: [ratedPebbleBeachCourse],
     });
-    await waitFor(() => expect(result.current.courseHandicap).toBe(12));
+    await waitFor(() => expect(result.current.played?.courseHandicap).toBe(12));
     act(() => result.current.enterEditMode());
     await act(async () => {
       await result.current.editor.pickCourse(pebbleBeachSummary);
     });
-    expect(result.current.courseHandicap).toBe(16);
+    expect(result.current.played?.courseHandicap).toBe(16);
   });
 
   it("shows the saved round once a save lands", async () => {

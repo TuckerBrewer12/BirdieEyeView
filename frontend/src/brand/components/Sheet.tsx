@@ -25,7 +25,7 @@ function SheetOverlay({
     <SheetPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "z-50 bg-foreground/40 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0",
+        "z-50 bg-foreground/recessed transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0",
         contained ? "absolute inset-0" : "fixed inset-0",
         className,
       )}
@@ -108,7 +108,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sheet-footer"
       className={cn(
-        "mt-auto flex flex-col gap-2 border-t border-border bg-muted/50 p-4",
+        "mt-auto flex flex-col gap-2 border-t border-border bg-muted/half p-4",
         className,
       )}
       {...props}

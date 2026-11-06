@@ -6,8 +6,8 @@ import { PageTitle } from "./PageTitle";
 
 interface AuthCardProps extends Omit<React.ComponentProps<"div">, "title"> {
   title: React.ReactNode;
-  description?: React.ReactNode;
-  footer?: React.ReactNode;
+  description?: string;
+  footer?: React.ReactElement;
   children: React.ReactNode;
 }
 

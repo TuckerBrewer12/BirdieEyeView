@@ -1,5 +1,5 @@
 import importlib.util
-from datetime import datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 from uuid import UUID
 
@@ -26,10 +26,10 @@ def _two_rounds():
         par=72,
         holes=[Hole(number=i, par=3 if i <= 4 else 4 if i <= 14 else 5, handicap=i) for i in range(1, 19)],
     )
-    first = Round(id="r1", course=course, date=datetime(2026, 2, 1), hole_scores=[
+    first = Round(id="r1", course=course, date=datetime(2026, 2, 1, tzinfo=timezone.utc), hole_scores=[
         HoleScore(hole_number=i, strokes=4, putts=2, green_in_regulation=i <= 10) for i in range(1, 19)
     ])
-    second = Round(id="r2", course=course, date=datetime(2026, 2, 2), hole_scores=[
+    second = Round(id="r2", course=course, date=datetime(2026, 2, 2, tzinfo=timezone.utc), hole_scores=[
         HoleScore(hole_number=i, strokes=5 if i % 2 else 4, putts=2 if i % 2 else 1, green_in_regulation=i % 2 == 0)
         for i in range(1, 19)
     ])
@@ -38,7 +38,7 @@ def _two_rounds():
 
 def test_analytics_response_works_out_the_figures_the_page_shows():
     rounds = _two_rounds()
-    response = analytics_response(rounds, rounds, today=datetime(2026, 2, 15))
+    response = analytics_response(rounds, rounds, today=date(2026, 2, 15))
 
     assert response.kpis.average_putts == 31.5
     assert [row.rolling_average for row in response.score_trend] == [72.0, 76.5]
@@ -59,13 +59,13 @@ def test_analytics_response_works_out_the_figures_the_page_shows():
 
 def test_analytics_response_marks_milestones_against_the_last_year_ending_today():
     rounds = _two_rounds()
-    breaks = lambda response: response.notable_achievements.round_milestones  # noqa: E731
+    breaks = lambda response: response.notable_achievements.round_milestones
 
-    now = breaks(analytics_response(rounds, rounds, today=datetime(2026, 2, 15)))
+    now = breaks(analytics_response(rounds, rounds, today=date(2026, 2, 15)))
     assert now.one_year.new_personal_records_achieved_count == 8
     assert all(row.achievement.in_window for row in now.lifetime.score_breaks if row.achievement)
 
-    later = breaks(analytics_response(rounds, rounds, today=datetime(2027, 3, 1)))
+    later = breaks(analytics_response(rounds, rounds, today=date(2027, 3, 1)))
     assert later.one_year.new_personal_records_achieved_count == 0
     assert not any(row.achievement.in_window for row in later.lifetime.score_breaks if row.achievement)
 
@@ -108,7 +108,7 @@ async def test_analytics_sections_drop_nothing_the_stats_functions_return(season
     assert sent["scoring_by_yardage"] == analytics.scoring_by_yardage_buckets(rounds)
     assert sent["scoring_by_handicap"] == analytics.scoring_vs_hole_handicap(rounds)
     assert sent["gir_vs_non_gir"] == analytics.gir_vs_non_gir_score_distribution(rounds)
-    assert sent["handicap_trend"] == hcap.windowed_handicap_trend(rounds, len(rounds))
+    assert sent["handicap_trend"] == hcap.player_handicap_trend(user, rounds)
     assert sent["score_differentials"] == hcap.score_differentials_per_round(rounds)
     assert sent["notable_achievements"] == analytics.notable_achievements(
         rounds, home_course_id=user.home_course_id

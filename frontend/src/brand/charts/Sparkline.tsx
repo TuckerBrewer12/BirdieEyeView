@@ -2,14 +2,14 @@ import { useId } from "react";
 import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
-import { borderWidth, chartLayout, colors, opacityWash, space } from "@/brand/theme";
+import { tokens } from "@/brand/theme";
 import { indexScale, knownValues, lastKnownIndex, paddedExtent } from "./scales";
 
 type SparklineTone = "primary" | "contrast";
 
 const STROKE: Record<SparklineTone, string> = {
-  primary: colors.primary,
-  contrast: colors.score.triple.text,
+  primary: tokens.color.primary,
+  contrast: tokens.color.score.triple.text,
 };
 
 const SWATCH: Record<SparklineTone, string> = {
@@ -33,7 +33,7 @@ interface SparklineProps {
 
 export function Sparkline({ series, domain, fill = false, reference = null, className }: SparklineProps) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
-  const { width: W, height: H, pad, stroke, dot } = chartLayout.sparkline;
+  const { width: W, height: H, pad, stroke, dot } = tokens.chart.sparkline;
 
   const length = Math.max(0, ...series.map((s) => s.values.length));
   const all = series.flatMap((s) => s.values);
@@ -68,7 +68,7 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
         {fill && (
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={STROKE[series[0].tone ?? "primary"]} stopOpacity={opacityWash} />
+              <stop offset="0%" stopColor={STROKE[series[0].tone ?? "primary"]} stopOpacity={tokens.opacity.wash} />
               <stop offset="100%" stopColor={STROKE[series[0].tone ?? "primary"]} stopOpacity={0} />
             </linearGradient>
           </defs>
@@ -79,15 +79,16 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
             x2={W - pad}
             y1={referenceY}
             y2={referenceY}
-            stroke={colors.border}
-            strokeWidth={borderWidth}
-            strokeDasharray={`${space.dot} ${space.dot}`}
+            stroke={tokens.color.border}
+            strokeWidth={tokens.lineWidth.border}
+            strokeDasharray={tokens.chart.guideDash}
           />
         )}
         {fill && <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />}
         {series.map((s, i) => {
           const color = STROKE[s.tone ?? "primary"];
           const end = lastKnownIndex(s.values);
+          const endValue = end >= 0 ? s.values[end] : null;
           return (
             <g key={i}>
               <path
@@ -98,12 +99,12 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              {end >= 0 && (
+              {endValue != null && (
                 <circle
                   cx={x(end)}
-                  cy={y(s.values[end]!)}
+                  cy={y(endValue)}
                   r={dot}
-                  fill={colors.card}
+                  fill={tokens.color.card}
                   stroke={color}
                   strokeWidth={stroke}
                 />

@@ -162,7 +162,7 @@ class ScanService:
                 continue
             try:
                 hole_num = int(k)
-            except Exception:
+            except (TypeError, ValueError):
                 continue
             out[hole_num] = int(v)
         return out
@@ -257,7 +257,7 @@ class ScanService:
             return None, None
         try:
             rows = await self._course_api.search_external_courses(req.course_name, limit=8)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             logger.info("External lookup skipped for '%s': %s", req.course_name, exc)
             return None, None
         if not rows:

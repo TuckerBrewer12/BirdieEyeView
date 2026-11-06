@@ -34,7 +34,7 @@ export function BestRoundCard({ round }: { round: RoundSummary }) {
   return (
     <Card>
       <CardContent>
-        <RoundPreview round={round} variant="highlight" onClick={() => navigate(`/rounds/${round.id}`)} />
+        <RoundPreview round={round} variant="highlight" onClick={() => void navigate(`/rounds/${round.id}`)} />
       </CardContent>
     </Card>
   );

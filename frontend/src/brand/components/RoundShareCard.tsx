@@ -39,7 +39,7 @@ const RoundShareCard = React.forwardRef<HTMLDivElement, RoundShareCardProps>(
           {date && <div className="mt-0.5 text-xs text-muted-foreground">{date}</div>}
 
           <div className="mt-3 flex items-end gap-2.5">
-            <div className="font-mono text-hero leading-none font-bold tracking-hero text-foreground">
+            <div className="font-mono text-hero text-foreground">
               {round.score ?? "—"}
             </div>
             <div className="pb-1">

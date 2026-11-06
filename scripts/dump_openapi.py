@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from api.main import app  # noqa: E402
+from api.main import app
 
 OUT = Path(__file__).resolve().parent.parent / "frontend" / "openapi.json"
 

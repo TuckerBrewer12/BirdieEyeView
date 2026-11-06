@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { api } from "@/lib/api";
 import { apiUrl } from "@/lib/apiBase";
 import { setSessionToken, withAuthHeaders } from "@/lib/sessionToken";
 import {
@@ -8,32 +9,8 @@ import {
   USER_FACING_ERRORS,
 } from "@/lib/userFacingErrors";
 import type { AuthUserDto, MessageDto, RegisterDto } from "@/types/api";
+import { AuthContext, type AuthState } from "./auth";
 
-interface AuthState {
-  userId: string | null;
-  name: string | null;
-  email: string | null;
-  emailVerified: boolean;
-}
-
-interface AuthContextValue extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
-  register: (
-    name: string,
-    email: string,
-    password: string,
-    options?: { handicap?: number | null; home_course_id?: string | null },
-  ) => Promise<string>;
-  resendVerification: (email: string) => Promise<string>;
-  verifyEmail: (token: string) => Promise<string>;
-  forgotPassword: (email: string) => Promise<string>;
-  resetPassword: (token: string, newPassword: string) => Promise<string>;
-  refreshSession: () => Promise<AuthState | null>;
-  logout: () => Promise<void>;
-  loading: boolean;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
 const EMPTY_AUTH_STATE: AuthState = {
   userId: null,
   name: null,
@@ -65,11 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshSession = useCallback(async (): Promise<AuthState | null> => {
     try {
-      const res = await fetch(apiUrl("/api/auth/me"), {
-        credentials: "include",
-        headers: withAuthHeaders(),
-      });
-      if (res.status === 401 || res.status === 403) {
+      const data = await api.getAuthSession();
+      if (!data) {
         setSessionToken(null);
         setState((prev) =>
           prev.userId === null && prev.name === null && prev.email === null && prev.emailVerified === false
@@ -78,10 +52,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
         return null;
       }
-      if (!res.ok) {
-        throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.account));
-      }
-      const data = await parseJsonResponse<AuthUserDto>(res, USER_FACING_ERRORS.account);
       const nextState: AuthState = {
         userId: data.user_id,
         name: data.name,
@@ -103,7 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refreshSession().finally(() => setLoading(false));
+    // refreshSession settles every failure itself, so this never rejects.
+    void refreshSession().finally(() => setLoading(false));
   }, [refreshSession]);
 
   useEffect(() => {
@@ -198,11 +169,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
-  return ctx;
 }

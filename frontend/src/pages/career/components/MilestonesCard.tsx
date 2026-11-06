@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Check, ChevronRight } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Collection } from "@/brand";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Collection, RowButton } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { Milestone } from "../model";
 import { milestoneKey, milestoneLabel } from "../present";
@@ -64,16 +64,15 @@ export function MilestonesCard({
             );
             const roundId = milestone.achieved ? milestone.roundId : null;
             return roundId ? (
-              <button
-                type="button"
+              <RowButton
                 data-slot="milestone-row"
                 data-achieved="true"
-                className={cn(ROW, "rounded-md transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-ring")}
+                className={cn(ROW, "rounded-md hover:bg-muted/strong focus-visible:outline-2 focus-visible:outline-ring")}
                 onClick={() => onOpenRound(roundId)}
               >
                 {body}
                 <ChevronRight aria-hidden className="size-4 shrink-0 text-muted-foreground" />
-              </button>
+              </RowButton>
             ) : (
               <div data-slot="milestone-row" data-achieved={String(milestone.achieved)} className={ROW}>
                 {body}

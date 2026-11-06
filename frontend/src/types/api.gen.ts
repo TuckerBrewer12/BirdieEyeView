@@ -551,23 +551,6 @@ export interface paths {
         patch: operations["update_user_api_users__user_id__patch"];
         trace?: never;
     };
-    "/api/users/{user_id}/handicap": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get User Handicap */
-        get: operations["get_user_handicap_api_users__user_id__handicap_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/users/{user_id}/tees": {
         parameters: {
             query?: never;
@@ -688,6 +671,12 @@ export interface components {
         AnalyticsKpis: {
             /** Average Putts */
             average_putts: number | null;
+            /** Best Round */
+            best_round: number | null;
+            /** Best Round Course */
+            best_round_course: string | null;
+            /** Best Round Id */
+            best_round_id: string | null;
             /** Gir Percentage */
             gir_percentage: number | null;
             /** Handicap Index */
@@ -1348,10 +1337,10 @@ export interface components {
         GoalReportResponse: {
             /** Attempts */
             attempts: components["schemas"]["GoalAttempt"][];
-            /** Best Score */
-            best_score: number | null;
             /** Gap */
             gap: number | null;
+            /** Lowest Score */
+            lowest_score: number | null;
             /**
              * On Track
              * @default false
@@ -1408,16 +1397,10 @@ export interface components {
             direction: ("up" | "down" | "flat") | null;
         };
         /**
-         * HandicapIndexResponse
-         * @description A golfer's current WHS Handicap Index; null until they have enough rounds or a seed handicap.
-         */
-        HandicapIndexResponse: {
-            /** Handicap Index */
-            handicap_index: number | null;
-        };
-        /**
          * HandicapTrendRow
-         * @description The handicap index after one round, oldest first, and where its differential stands.
+         * @description The golfer's index after one round, oldest first: over the 20 rounds ending with it and off
+         *     the handicap they gave, so the last round's is the index every screen shows. With where the
+         *     round's differential stands against the current index.
          */
         HandicapTrendRow: {
             /** Differential */
@@ -1523,6 +1506,11 @@ export interface components {
             shots_to_green: number | null;
             /** Strokes */
             strokes: number | null;
+            /**
+             * Three Putt
+             * @default false
+             */
+            three_putt: boolean;
             /** To Par */
             to_par: number | null;
             /** Yardage */
@@ -1679,6 +1667,11 @@ export interface components {
             first_round_under_par: components["schemas"]["UnderParEvent"] | null;
             /** Score Breaks */
             score_breaks: components["schemas"]["ThresholdMilestone"][];
+            /**
+             * Under Par Position
+             * @default 0
+             */
+            under_par_position: number;
         };
         /** LifetimeScoringRecordEvents */
         LifetimeScoringRecordEvents: {
@@ -2200,6 +2193,8 @@ export interface components {
             /** Back Nine */
             back_nine: number | null;
             course: components["schemas"]["CourseResponse"] | null;
+            /** Course Handicap */
+            course_handicap: number | null;
             /** Course Name Played */
             course_name_played: string | null;
             /** Date */
@@ -2210,8 +2205,15 @@ export interface components {
             front_nine: number | null;
             /** Hole Scores */
             hole_scores: components["schemas"]["HoleScoreResponse"][];
+            /**
+             * Holes Played
+             * @default 0
+             */
+            holes_played: number;
             /** Id */
             id: string | null;
+            /** Net Score */
+            net_score: number | null;
             nines: components["schemas"]["Nines"];
             /** Notes */
             notes: string | null;
@@ -2238,6 +2240,8 @@ export interface components {
         RoundSummaryResponse: {
             /** Back Nine */
             back_nine: number | null;
+            /** Best Rank */
+            best_rank: number | null;
             /** Course Id */
             course_id: string | null;
             /** Course Name */
@@ -2381,6 +2385,8 @@ export interface components {
         ScannedTee: {
             /** Color */
             color: string | null;
+            /** Course Handicap */
+            course_handicap: number | null;
             /** Course Rating */
             course_rating: number | null;
             /** Hole Yardages */
@@ -2603,6 +2609,8 @@ export interface components {
             back_nine_yardage: number | null;
             /** Color */
             color: string | null;
+            /** Course Handicap */
+            course_handicap: number | null;
             /** Course Rating */
             course_rating: number | null;
             /** Front Nine Yardage */
@@ -4099,37 +4107,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_user_handicap_api_users__user_id__handicap_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                user_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HandicapIndexResponse"];
                 };
             };
             /** @description Validation Error */

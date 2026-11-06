@@ -1,7 +1,7 @@
 import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartColors, chartLayout, chartTooltipStyle, toParFill } from "@/brand/theme";
+import { chartTooltipStyle, toParFill, chartTickStyle, tokens } from "@/brand/theme";
 import { formatAverageToPar } from "@/domain/score";
-import { AXIS_TICK, type TooltipFormatter } from "./holeBarParts";
+import { type TooltipFormatter } from "./holeBarParts";
 
 interface ToParBar {
   label: string;
@@ -18,16 +18,16 @@ export function ToParBars({ bars, valueLabel = "Avg to Par" }: ToParBarsProps) {
   return (
     <div data-slot="to-par-bars" className="h-chart">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={bars} margin={chartLayout.margin}>
-          <XAxis dataKey="label" tick={AXIS_TICK} tickLine={false} axisLine={false} interval={0} />
+        <BarChart data={bars} margin={tokens.chart.margin}>
+          <XAxis dataKey="label" tick={chartTickStyle} tickLine={false} axisLine={false} interval={0} />
           <YAxis
-            tick={AXIS_TICK}
+            tick={chartTickStyle}
             tickLine={false}
             axisLine={false}
             tickFormatter={(value: number) => formatAverageToPar(value)}
           />
           <Tooltip
-            cursor={{ fill: chartColors.muted }}
+            cursor={{ fill: tokens.color.chart.muted }}
             contentStyle={chartTooltipStyle}
             formatter={((value: number, _name: unknown, item: { payload?: ToParBar }) => [
               item.payload?.detail
@@ -36,8 +36,8 @@ export function ToParBars({ bars, valueLabel = "Avg to Par" }: ToParBarsProps) {
               valueLabel,
             ]) as TooltipFormatter}
           />
-          <ReferenceLine y={0} stroke={chartColors.muted} />
-          <Bar dataKey="toPar" radius={chartLayout.barRadius} isAnimationActive={false}>
+          <ReferenceLine y={0} stroke={tokens.color.chart.muted} />
+          <Bar dataKey="toPar" radius={tokens.chart.barRadius} isAnimationActive={false}>
             {bars.map((bar) => (
               <Cell key={bar.label} fill={toParFill(bar.toPar)} />
             ))}

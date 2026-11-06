@@ -21,7 +21,7 @@ import {
   toParDisplay,
   toParTextClass,
 } from "@/brand";
-import { formatCourseHandicap, netScore } from "@/domain";
+import { formatCourseHandicap, type Round } from "@/domain";
 import { formatCourseName } from "@/domain/course";
 import { pluralNoun, pluralize } from "@/domain/format";
 import { holeList } from "../present";
@@ -65,14 +65,14 @@ export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanRe
               <CardTitle>Your card</CardTitle>
             </CardHeader>
             <CardContent>
-              <img src={photoUrl} alt="The scorecard photo" className="max-h-96 w-full rounded-lg object-contain" />
+              <img src={photoUrl} alt="Your scorecard" className="max-h-96 w-full rounded-lg object-contain" />
             </CardContent>
           </Card>
         )}
 
         <Card size="sm">
           <CardContent className="flex flex-col gap-4">
-            <RoundFigures score={round.score} toPar={round.toPar} courseHandicap={review.courseHandicap} />
+            <RoundFigures round={round} />
             <CourseField review={review} />
             <TeeField review={review} />
             <Field>
@@ -113,16 +113,9 @@ export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanRe
   );
 }
 
-function RoundFigures({
-  score,
-  toPar,
-  courseHandicap,
-}: {
-  score: number | null;
-  toPar: number | null;
-  courseHandicap: number | null;
-}) {
-  const net = courseHandicap != null && score != null ? netScore(score, courseHandicap) : null;
+/** The round's score so far, against par, and net once the tee is rated and every hole is scored. */
+function RoundFigures({ round }: { round: Pick<Round, "score" | "toPar" | "courseHandicap" | "netScore"> }) {
+  const { score, toPar, courseHandicap, netScore } = round;
   return (
     <div className="grid grid-cols-3 gap-3 border-b border-border pb-4">
       <Stat>
@@ -135,14 +128,14 @@ function RoundFigures({
       </Stat>
       <Stat>
         <StatLabel>{courseHandicap != null ? `Net · hcp ${formatCourseHandicap(courseHandicap)}` : "Net"}</StatLabel>
-        <StatValue>{net ?? "—"}</StatValue>
+        <StatValue>{netScore ?? "—"}</StatValue>
       </Stat>
     </div>
   );
 }
 
 function CourseField({ review }: { review: ScanReviewViewModel }) {
-  const { courseSearch } = review;
+  const { courseSearch, nameToKeep } = review;
   return (
     <Field>
       <FieldLabel htmlFor="review-course">Course</FieldLabel>
@@ -154,7 +147,6 @@ function CourseField({ review }: { review: ScanReviewViewModel }) {
         onQueryChange={courseSearch.setQuery}
         onSelectCourse={review.pickCourse}
         onClose={courseSearch.reset}
-        autoFocus={false}
         reviewVariant
         onUseCustomName={review.nameCourse}
         linkedName={review.linkedName ? formatCourseName(review.linkedName) : undefined}
@@ -162,14 +154,14 @@ function CourseField({ review }: { review: ScanReviewViewModel }) {
         onClear={review.changeCourse}
         clearLabel="Change course"
       />
-      {review.nameToKeep && (
+      {nameToKeep && (
         <Button
           variant="linkMuted"
           size="xs"
           className="h-auto self-start p-0"
-          onClick={() => review.nameCourse(review.nameToKeep!)}
+          onClick={() => review.nameCourse(nameToKeep)}
         >
-          Save as "{formatCourseName(review.nameToKeep)}" without linking →
+          Save as "{formatCourseName(nameToKeep)}" without linking →
         </Button>
       )}
     </Field>

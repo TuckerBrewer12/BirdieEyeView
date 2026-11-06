@@ -35,7 +35,7 @@ export function ActivityHeatmap({ rounds = [], today }: ActivityHeatmapProps) {
               className={cn(
                 "flex size-7 items-center justify-center rounded-lg text-label font-semibold transition-all",
                 isActive
-                  ? "bg-score-birdie text-primary-foreground ring-1 ring-score-birdie/50"
+                  ? "bg-score-birdie text-primary-foreground ring-1 ring-score-birdie/half"
                   : day.inFuture
                     ? "bg-transparent text-transparent"
                     : "bg-muted text-muted-foreground",

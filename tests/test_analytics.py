@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, timezone
 
 import pytest
 
@@ -79,8 +79,8 @@ def _build_rounds():
         for i in range(1, 19)
     ]
 
-    round_1 = Round(id="r1", course=course, date=datetime(2026, 2, 1), hole_scores=round_1_scores)
-    round_2 = Round(id="r2", course=course, date=datetime(2026, 2, 2), hole_scores=round_2_scores)
+    round_1 = Round(id="r1", course=course, date=datetime(2026, 2, 1, tzinfo=timezone.utc), hole_scores=round_1_scores)
+    round_2 = Round(id="r2", course=course, date=datetime(2026, 2, 2, tzinfo=timezone.utc), hole_scores=round_2_scores)
     return [round_1, round_2]
 
 
@@ -311,7 +311,7 @@ def test_scoring_by_yardage_buckets_handles_tee_label_variants():
         id="r-yardage-1",
         course=course,
         tee_box="Blue tees",
-        date=datetime(2026, 3, 1),
+        date=datetime(2026, 3, 1, tzinfo=timezone.utc),
         hole_scores=hole_scores,
     )
 
@@ -342,7 +342,7 @@ def test_scoring_by_yardage_buckets_falls_back_to_user_tee_yardages():
         course=course,
         tee_box="Unknown Tee",
         user_tee=user_tee,
-        date=datetime(2026, 3, 2),
+        date=datetime(2026, 3, 2, tzinfo=timezone.utc),
         hole_scores=hole_scores,
     )
 
@@ -481,7 +481,7 @@ def test_scoring_vs_hole_handicap():
 
 def test_notable_achievements_lifetime_and_one_year():
     rounds = _build_rounds()
-    summary = notable_achievements(rounds, reference_date=datetime(2026, 2, 15), days=365)
+    summary = notable_achievements(rounds, reference_date=date(2026, 2, 15), days=365)
 
     assert summary["window_days"] == 365
     assert summary["scoring_records"]["lifetime"]["lowest_round"] == 72
@@ -585,7 +585,7 @@ def test_scoring_by_yardage_buckets_send_each_bands_average_and_score_mix():
         HoleScore(hole_number=i, strokes=strokes.get(i, course.get_hole(i).par), green_in_regulation=True)
         for i in range(1, 19)
     ]
-    round_obj = Round(id="r-yardage", course=course, tee_box="Blue", date=datetime(2026, 3, 1), hole_scores=hole_scores)
+    round_obj = Round(id="r-yardage", course=course, tee_box="Blue", date=datetime(2026, 3, 1, tzinfo=timezone.utc), hole_scores=hole_scores)
 
     par3 = next(row for row in scoring_by_yardage_buckets([round_obj]) if row["par"] == 3)
     assert par3["bucket_label"] == "150–199"
@@ -602,7 +602,7 @@ def test_notable_achievements_mark_each_milestone_first_reached_in_the_window():
     ace = Round(
         id="r3",
         course=course,
-        date=datetime(2026, 2, 10),
+        date=datetime(2026, 2, 10, tzinfo=timezone.utc),
         hole_scores=[
             HoleScore(
                 hole_number=i,
@@ -613,7 +613,7 @@ def test_notable_achievements_mark_each_milestone_first_reached_in_the_window():
             for i in range(1, 19)
         ],
     )
-    summary = notable_achievements(rounds + [ace], reference_date=datetime(2026, 2, 12), days=10)
+    summary = notable_achievements([*rounds, ace], reference_date=date(2026, 2, 12), days=10)
 
     putt_breaks = {row["threshold"]: row["achievement"] for row in summary["putting_milestones"]["lifetime"]["putt_breaks"]}
     assert {t: putt_breaks[t]["in_window"] for t in (45, 42, 39, 36, 33, 30)} == {

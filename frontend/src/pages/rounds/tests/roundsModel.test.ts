@@ -9,12 +9,13 @@ import {
   type Sort,
 } from "../roundsModel";
 
-function round(course: string | null, score: number | null, date = "2026-01-01"): ListedRound {
+function round(course: string | null, score: number | null, date = "2026-01-01", bestRank: number | null = null): ListedRound {
   return {
     course: course == null ? null : { name: course },
     score,
     toPar: score == null ? null : score - 72,
     date,
+    bestRank,
   };
 }
 
@@ -42,10 +43,11 @@ describe("filterRounds", () => {
     expect(filterRounds(rounds, "all", "", byScoreLowFirst).map((r) => r.score)).toEqual([80, 90, null]);
   });
 
-  it("Best lists the lowest score first whatever sort was chosen", () => {
-    const rounds = [round("A", 85), round("B", 72), round("C", 90)];
+  it("Best follows the server's order whatever sort was chosen, unplaced rounds last", () => {
+    // A nine of 38 has the lowest score, but the server ranks every full round ahead of it.
+    const rounds = [round("A", 85, undefined, 2), round("Nine", 38, undefined, 3), round("B", 74, undefined, 1), round("C", null)];
     expect(filterRounds(rounds, "best", "", { key: "course_name", ascending: false }).map((r) => r.score))
-      .toEqual([72, 85, 90]);
+      .toEqual([74, 85, 38, null]);
   });
 
   it("L20 keeps the twenty most recent rounds, however they arrive", () => {
@@ -94,8 +96,8 @@ describe("effectiveSort", () => {
     expect(effectiveSort("all", byDate)).toEqual({ ...byDate, locked: false });
   });
 
-  it("locks Best to score, lowest first", () => {
-    expect(effectiveSort("best", byDate)).toEqual({ key: "total_score", ascending: true, locked: true });
+  it("locks Best to to par, lowest first", () => {
+    expect(effectiveSort("best", byDate)).toEqual({ key: "to_par", ascending: true, locked: true });
   });
 });
 

@@ -3,6 +3,11 @@ import { queryKeys } from "@/data/queryKeys";
 import { scanRepository, type ScanRepository } from "@/data/scanRepository";
 import type { SaveScanRequestDto } from "@/types/api";
 
+/**
+ * Saves a checked scan as a new round and resolves to its id. Every screen that counts
+ * rounds — the list, the dashboard, the analytics, and the course handicaps the new round
+ * moves on rounds and courses — refetches.
+ */
 export function useSaveScan(userId: string, repository: ScanRepository = scanRepository) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -11,7 +16,8 @@ export function useSaveScan(userId: string, repository: ScanRepository = scanRep
       for (const queryKey of [
         queryKeys.rounds(userId),
         queryKeys.dashboard(userId),
-        queryKeys.handicap(userId),
+        queryKeys.allRounds(),
+        queryKeys.allCourses(),
         queryKeys.analytics(userId),
         queryKeys.goalReport(userId),
         queryKeys.playedCourses(userId),

@@ -2,11 +2,11 @@ import asyncpg
 from typing import List, Optional
 from uuid import UUID
 
-from database.exceptions import DuplicateError
+from database.exceptions import AlreadyFriendsError, FriendRequestBlockedError
 
 
 class FriendshipRepositoryDB:
-    VALID_STATUSES = {"pending", "accepted", "declined", "blocked"}
+    VALID_STATUSES = frozenset({"pending", "accepted", "declined", "blocked"})
 
     def __init__(self, pool: asyncpg.Pool):
         self._pool = pool
@@ -28,9 +28,9 @@ class FriendshipRepositoryDB:
             if row:
                 status = row["status"]
                 if status == "accepted":
-                    raise DuplicateError("Users are already friends")
+                    raise AlreadyFriendsError("Users are already friends")
                 if status == "blocked":
-                    raise DuplicateError("Friend request blocked for this pair")
+                    raise FriendRequestBlockedError("Friend request blocked for this pair")
 
                 updated = await conn.fetchrow(
                     """UPDATE users.friendships

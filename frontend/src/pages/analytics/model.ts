@@ -29,10 +29,10 @@ export interface PlayedCourse {
   location: string | null;
 }
 
+/** The server's best round in the window (the round list's Best order), and where it was played. */
 export interface BestRoundEvent {
-  roundId: string | null;
-  course: string;
-  date: string;
+  roundId: string;
+  course: string | null;
 }
 
 export interface GirSplit {
@@ -71,7 +71,9 @@ export interface Analytics {
   puttsTrend: PuttsTrendRowDto[];
   threePuttTrend: ThreePuttsTrendRowDto[];
   shortGameTrend: ShortGamePoint[];
+  /** The server's best round's score in the window. */
   bestScore: number | null;
+  /** The server's best round in the window. */
   bestRound: BestRoundEvent | null;
   scoreMix: ScoreMix;
   girSplit: GirSplit[];
@@ -108,7 +110,6 @@ export function analyticsFrom(data: AnalyticsDto): Analytics {
   const girTrend = data.gir_trend.filter((row) => row.gir_percentage != null && row.total_gir != null);
   const puttsTrend = data.putts_trend.filter((row) => row.total_putts != null);
   const roundsWithPutts = new Set(puttsTrend.map((row) => row.round_id));
-  const lowest = data.notable_achievements.scoring_records_events.lifetime.lowest_round;
 
   return {
     sections: data,
@@ -120,8 +121,10 @@ export function analyticsFrom(data: AnalyticsDto): Analytics {
     puttsTrend,
     threePuttTrend: data.three_putts_trend.filter((row) => roundsWithPutts.has(row.round_id)),
     shortGameTrend: shortGamePointsFrom(data.scrambling_trend, data.up_and_down_trend),
-    bestScore: data.notable_achievements.scoring_records.lifetime.lowest_round ?? null,
-    bestRound: lowest ? { roundId: lowest.round_id, course: lowest.course, date: lowest.date } : null,
+    bestScore: data.kpis.best_round ?? null,
+    bestRound: data.kpis.best_round_id
+      ? { roundId: data.kpis.best_round_id, course: data.kpis.best_round_course ?? null }
+      : null,
     scoreMix: data.score_mix,
     girSplit: girSplitFrom(data.gir_vs_non_gir),
     yardageBuckets: yardageBucketsFrom(data.scoring_by_yardage),

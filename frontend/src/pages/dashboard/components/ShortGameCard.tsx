@@ -1,5 +1,5 @@
 import { Button, Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, Meter, Stat, StatLabel, StatUnit, StatValue } from "@/brand";
-import { TOUR_SHORT_GAME, formatPercent } from "@/domain";
+import { TOUR_SHORT_GAME, formatPercent, formatWhole } from "@/domain";
 
 interface ShortGameCardProps {
   scramblingPct: number | null;
@@ -30,7 +30,7 @@ export function ShortGameCard({ scramblingPct, upAndDownPct, onOpenLab }: ShortG
             <Stat>
               <StatLabel>{label}</StatLabel>
               <StatValue size="md">
-                {value != null ? value.toFixed(0) : "—"}
+                {formatWhole(value)}
                 {value != null && <StatUnit>%</StatUnit>}
               </StatValue>
             </Stat>

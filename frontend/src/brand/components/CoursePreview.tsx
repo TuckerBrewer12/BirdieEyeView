@@ -2,7 +2,7 @@ import { useState } from "react";
 import { MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
-import { motion as motionTokens } from "@/brand/theme";
+import { tokens } from "@/brand/theme";
 import { formatCourseName, type CourseSummary } from "@/domain/course";
 
 interface CoursePreviewProps {
@@ -40,9 +40,9 @@ export function CoursePreview({ course, onClick, focused = false }: CoursePrevie
           onClick();
         }
       } : undefined}
-      whileHover={onClick ? { scale: motionTokens.hoverScale } : undefined}
-      whileTap={onClick ? { scale: motionTokens.tapScale } : undefined}
-      transition={motionTokens.spring}
+      whileHover={onClick ? { scale: tokens.motion.hoverScale } : undefined}
+      whileTap={onClick ? { scale: tokens.motion.tapScale } : undefined}
+      transition={tokens.motion.spring}
       className={cn(
         "flex flex-col gap-2 overflow-hidden rounded-card border border-border bg-card p-4 transition-shadow",
         onClick ? "cursor-pointer hover:shadow-card" : "cursor-default",

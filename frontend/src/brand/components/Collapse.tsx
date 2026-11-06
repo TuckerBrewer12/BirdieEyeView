@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/brand/cn";
-import { motion as motionTokens } from "@/brand/theme";
+import { tokens } from "@/brand/theme";
 
 interface CollapseProps {
   open: boolean;
@@ -19,7 +19,7 @@ function Collapse({ open, children, className }: CollapseProps) {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: motionTokens.duration.collapse }}
+          transition={{ duration: tokens.motion.duration.collapse }}
           className={cn("overflow-hidden", className)}
         >
           {children}

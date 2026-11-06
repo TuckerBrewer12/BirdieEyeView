@@ -1,6 +1,5 @@
 from typing import Any, Dict, List, Literal, Optional
 
-from analytics import handicap as hcap
 from analytics import stats as analytics
 from analytics.insights import Rating, putts_rating
 from models import Round
@@ -22,16 +21,6 @@ def scoring_average(rounds: List[Round], window: Optional[int] = None) -> Option
     if window is not None:
         scores = scores[-window:]
     return sum(scores) / len(scores) if scores else None
-
-
-def lowest_round(rounds: List[Round]) -> Optional[Round]:
-    best: Optional[Round] = None
-    best_score: Optional[int] = None
-    for r in rounds:
-        score = r.calculate_total_score()
-        if score is not None and (best_score is None or score < best_score):
-            best, best_score = r, score
-    return best
 
 
 def scoring_average_change(
@@ -91,8 +80,11 @@ def whs_breakdown(
     rounds: List[Round],
     handicap_trend: List[Dict[str, Any]],
     differentials: List[Dict[str, Any]],
-    handicap_index: Optional[float],
+    index_window: Dict[str, Any],
 ) -> Dict[str, Any]:
+    """The rounds in the WHS window, newest first, which ones count, and their average differential.
+    `index_window` is the golfer's index and how it was reached (`handicap.player_index_window`),
+    so the breakdown adds up to the index shown."""
     by_index = {d["round_index"]: d for d in differentials}
     score_rows = analytics.score_trend(rounds)
     rows = []
@@ -109,17 +101,15 @@ def whs_breakdown(
             "used": trend.get("used_in_hi") is True,
         })
     rows.reverse()
-    window_size = min(sum(1 for r in rows if r["differential"] is not None), 20)
-    count_used, adjustment = hcap.whs_window(window_size)
     used = [r["differential"] for r in rows if r["used"] and r["differential"] is not None]
     return {
         "rows": rows,
-        "window_size": window_size,
-        "count_used": count_used,
-        "adjustment": adjustment,
+        "window_size": index_window["rated"],
+        "count_used": index_window["count"],
+        "adjustment": index_window["adjustment"],
         "diff_avg": sum(used) / len(used) if used else None,
         "has_rated_rounds": any(d.get("course_rating") is not None for d in differentials),
-        "show_calculation": handicap_index is not None and window_size >= 3,
+        "show_calculation": index_window["index"] is not None and index_window["rated"] >= 3,
     }
 
 

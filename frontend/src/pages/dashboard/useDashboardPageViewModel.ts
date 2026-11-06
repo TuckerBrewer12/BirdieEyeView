@@ -121,7 +121,7 @@ export function useDashboardPageViewModel(
     user: user ?? null,
     loading,
     error: error as Error | null,
-    refetch,
+    refetch: () => void refetch(),
     trend,
     recentScores,
     shortGameTrend,

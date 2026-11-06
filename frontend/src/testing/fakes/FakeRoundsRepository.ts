@@ -6,7 +6,7 @@ import {
   type RoundEdits,
   type RoundSummary,
 } from "../../domain";
-import type { CourseDto, HandicapIndexDto, RoundComparisonDto } from "../../types/api";
+import type { CourseDto, RoundComparisonDto } from "../../types/api";
 import { updateRequestFrom, type RoundsRepository } from "../../pages/rounds/roundsRepository";
 import { InMemoryRounds, type InMemoryRoundsSeed } from "./InMemoryRounds";
 
@@ -52,10 +52,6 @@ export class FakeRoundsRepository implements RoundsRepository {
 
   async getRoundComparison(): Promise<RoundComparisonDto | null> {
     return this.store.getRoundComparison();
-  }
-
-  async getUserHandicap(): Promise<HandicapIndexDto> {
-    return this.store.getUserHandicap();
   }
 
   async searchCourses(query: string): Promise<CourseSummary[]> {

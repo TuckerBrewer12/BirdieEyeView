@@ -214,7 +214,7 @@ class CourseRepositoryDB:
         self,
         name: str,
         location: Optional[str] = None,
-        user_id: str = None,
+        user_id: Optional[str] = None,
     ) -> Optional[Course]:
         uid = UUID(user_id)
         async with self._pool.acquire() as conn:
@@ -582,7 +582,7 @@ class CourseRepositoryDB:
                     return None
 
             set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates))
-            values = [UUID(course_id)] + list(updates.values())
+            values = [UUID(course_id), *updates.values()]
 
             row = await conn.fetchrow(
                 f"UPDATE courses.courses SET {set_clause} WHERE id = $1 RETURNING *",

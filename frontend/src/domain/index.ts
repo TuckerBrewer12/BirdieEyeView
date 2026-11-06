@@ -2,7 +2,6 @@ export {
   SCORE_KINDS,
   formatAverageToPar,
   roundAverageToPar,
-  isThreePutt,
   playedScoreKinds,
   scoreKind,
   scoreKindCountLabel,
@@ -51,17 +50,20 @@ export type {
 export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekdayDay, isoDay, parseDay } from "./date";
 export type { DayParts } from "./date";
 
-export { formatOneDecimal, formatPercent, formatSignedOneDecimal, pluralNoun, pluralize } from "./format";
+export {
+  formatFileSize,
+  formatOneDecimal,
+  formatPercent,
+  formatSignedOneDecimal,
+  formatWhole,
+  pluralNoun,
+  pluralize,
+} from "./format";
 
 export { roundShareMessage } from "./share";
 export type { ShareMessage } from "./share";
 
-export {
-  ratedCourseHandicap,
-  netScore,
-  formatHandicapIndex,
-  formatCourseHandicap,
-} from "./handicap";
+export { formatHandicapIndex, formatCourseHandicap } from "./handicap";
 
 export { Round } from "./round";
 export type {

@@ -1,4 +1,4 @@
-import { colors, fonts, typography } from "@/brand/theme";
+import { tokens } from "@/brand/theme";
 import type { HoleSummary, RoundSummary } from "@/domain";
 
 interface HoleScoreShapesProps {
@@ -6,11 +6,12 @@ interface HoleScoreShapesProps {
   numbered?: boolean;
 }
 
-const VB_W = 30;
-const VB_H = 22;
+const { width: VB_W, height: VB_H, circle: r, dot, stroke, strokeThin, corner, inset, hatch } = tokens.chart.holeShape;
 const cx = VB_W / 2;
 const cy = VB_H / 2;
-const r = 9.5;
+
+/** A box `by` in from every edge of the mark. */
+const boxInset = (by: number) => ({ x: by, y: by, width: VB_W - 2 * by, height: VB_H - 2 * by });
 
 export function HoleShape({ hole }: { hole: HoleSummary }) {
   const kind = hole.kind;
@@ -21,46 +22,42 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
       </div>
     );
   }
-  const fill = colors.score[kind].base;
-  const onFill = colors.score[kind].onBase;
+  const fill = tokens.color.score[kind].base;
+  const onFill = tokens.color.score[kind].onBase;
 
   return (
     <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="h-hole-h w-hole-w">
       {kind === "eagle" && (
         <>
-          <circle cx={cx} cy={cy} r={5} fill={fill} />
-          <circle cx={cx} cy={cy} r={r} fill="none" stroke={fill} strokeWidth={1.5} />
+          <circle cx={cx} cy={cy} r={dot} fill={fill} />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke={fill} strokeWidth={stroke} />
         </>
       )}
       {kind === "birdie" && <circle cx={cx} cy={cy} r={r} fill={fill} />}
-      {kind === "par" && (
-        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={3} fill={fill} />
-      )}
-      {kind === "bogey" && (
-        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={2} fill={fill} />
-      )}
+      {kind === "par" && <rect {...boxInset(inset.box)} rx={corner.par} fill={fill} />}
+      {kind === "bogey" && <rect {...boxInset(inset.box)} rx={corner.box} fill={fill} />}
       {kind === "double" && (
         <>
-          <rect x={2.5} y={2.5} width={VB_W - 5} height={VB_H - 5} rx={1.5} fill={fill} />
-          <rect
-            x={0.5}
-            y={0.5}
-            width={VB_W - 1}
-            height={VB_H - 1}
-            rx={2.5}
-            fill="none"
-            stroke={fill}
-            strokeWidth={1.25}
-          />
+          <rect {...boxInset(inset.inner)} rx={corner.inner} fill={fill} />
+          <rect {...boxInset(inset.box)} rx={corner.outer} fill="none" stroke={fill} strokeWidth={strokeThin} />
         </>
       )}
       {(kind === "triple" || kind === "quad") && (
         <>
-          <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={2} fill={fill} />
-          <line x1={0} y1={7} x2={7} y2={0} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
-          <line x1={0} y1={18} x2={18} y2={0} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
-          <line x1={0} y1={VB_H} x2={VB_W} y2={0} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
-          <line x1={14} y1={VB_H} x2={VB_W} y2={8} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
+          <rect {...boxInset(inset.box)} rx={corner.box} fill={fill} />
+          {hatch.map(([x1, y1, x2, y2]) => (
+            <line
+              key={`${x1}-${y1}`}
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke={onFill}
+              strokeWidth={stroke}
+              strokeLinecap="round"
+              opacity={tokens.opacity.recessed}
+            />
+          ))}
         </>
       )}
       <text
@@ -69,9 +66,9 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
         textAnchor="middle"
         dominantBaseline="central"
         fill={onFill}
-        fontSize={typography.caption}
+        fontSize={tokens.type.caption.size}
         fontWeight="700"
-        fontFamily={fonts.sans}
+        fontFamily={tokens.font.sans}
       >
         {hole.strokes}
       </text>

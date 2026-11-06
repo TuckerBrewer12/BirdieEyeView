@@ -1,5 +1,5 @@
 import { cn } from "@/brand/cn";
-import { chartColors, chartLayout, chartTickStyle, colors, opacityWash, space } from "@/brand/theme";
+import { chartTickStyle, tokens } from "@/brand/theme";
 
 interface RadarAxis {
   label: string;
@@ -24,7 +24,7 @@ export function RadarChart({
   className,
   "aria-label": ariaLabel,
 }: RadarChartProps) {
-  const layout = compact ? { ...chartLayout.radar, ...chartLayout.radarCompact } : chartLayout.radar;
+  const layout = compact ? { ...tokens.chart.radar, ...tokens.chart.radarCompact } : tokens.chart.radar;
   const { width: W, height: H, radius: R, labelGap, valueGap, rings, dot, stroke } = layout;
 
   if (axes.length < 3) {
@@ -40,7 +40,8 @@ export function RadarChart({
   };
   const outline = (values: number[]) => values.map((v, i) => point(i, v).join(",")).join(" ");
 
-  const compared = axes.every((axis) => axis.benchmark != null);
+  const benchmarks = axes.flatMap((axis) => (axis.benchmark != null ? [axis.benchmark] : []));
+  const compared = benchmarks.length === axes.length;
 
   return (
     <div data-slot="radar-chart" className={cn("w-full", className)}>
@@ -55,43 +56,43 @@ export function RadarChart({
             key={ring}
             points={outline(axes.map(() => ring))}
             fill="none"
-            stroke={chartColors.muted}
-            strokeWidth={1}
+            stroke={tokens.color.chart.muted}
+            strokeWidth={tokens.lineWidth.border}
           />
         ))}
         {axes.map((axis, i) => {
           const [x, y] = point(i, 100);
-          return <line key={axis.label} x1={cx} y1={cy} x2={x} y2={y} stroke={chartColors.muted} strokeWidth={1} />;
+          return <line key={axis.label} x1={cx} y1={cy} x2={x} y2={y} stroke={tokens.color.chart.muted} strokeWidth={tokens.lineWidth.border} />;
         })}
 
         {compared && (
           <g data-slot="radar-benchmark">
             <polygon
-              points={outline(axes.map((axis) => axis.benchmark!))}
-              fill={chartColors.axis}
-              fillOpacity={opacityWash}
-              stroke={chartColors.axis}
+              points={outline(benchmarks)}
+              fill={tokens.color.chart.axis}
+              fillOpacity={tokens.opacity.wash}
+              stroke={tokens.color.chart.axis}
               strokeWidth={stroke * 0.75}
-              strokeDasharray={`${space.dot} ${space.dot}`}
+              strokeDasharray={tokens.chart.guideDash}
             />
             {axes.map((axis, i) => {
-              const [x, y] = point(i, axis.benchmark!);
-              return <circle key={axis.label} cx={x} cy={y} r={dot * 0.75} fill={chartColors.axis} />;
+              const [x, y] = point(i, benchmarks[i]);
+              return <circle key={axis.label} cx={x} cy={y} r={dot * 0.75} fill={tokens.color.chart.axis} />;
             })}
           </g>
         )}
 
         <polygon
           points={outline(axes.map((axis) => axis.value))}
-          fill={colors.primary}
-          fillOpacity={opacityWash}
-          stroke={colors.primary}
+          fill={tokens.color.primary}
+          fillOpacity={tokens.opacity.wash}
+          stroke={tokens.color.primary}
           strokeWidth={stroke}
           strokeLinejoin="round"
         />
         {axes.map((axis, i) => {
           const [x, y] = point(i, axis.value);
-          return <circle key={axis.label} cx={x} cy={y} r={dot} fill={colors.primary} />;
+          return <circle key={axis.label} cx={x} cy={y} r={dot} fill={tokens.color.primary} />;
         })}
 
         {axes.map((axis, i) => {
@@ -109,15 +110,15 @@ export function RadarChart({
                 textAnchor={anchor}
                 fontSize={chartTickStyle.fontSize}
                 fontWeight="600"
-                fill={colors.mutedForeground}
+                fill={tokens.color.mutedForeground}
               >
                 {axis.label}
               </text>
               {axis.valueLabel && (
                 <text x={x} y={top + valueGap} textAnchor={anchor} fontSize={chartTickStyle.fontSize} fontWeight="700">
-                  <tspan fill={colors.primary}>{axis.valueLabel}</tspan>
+                  <tspan fill={tokens.color.primary}>{axis.valueLabel}</tspan>
                   {compared && axis.benchmarkLabel && (
-                    <tspan fill={colors.mutedForeground}> vs {axis.benchmarkLabel}</tspan>
+                    <tspan fill={tokens.color.mutedForeground}> vs {axis.benchmarkLabel}</tspan>
                   )}
                 </text>
               )}

@@ -1,10 +1,9 @@
-import type { ReactNode } from "react";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { Alert, AlertDescription } from "@/brand";
 
 interface AuthNoticeProps {
   tone: "success" | "error";
-  children: ReactNode;
+  children: string | null;
 }
 
 export function AuthNotice({ tone, children }: AuthNoticeProps) {

@@ -73,13 +73,17 @@ export function nineFrom(
   return {
     side,
     tee,
-    holes: holes.map((n) => ({
-      hole: n,
-      par: getHole(course, n)?.par ?? null,
-      handicap: getHole(course, n)?.handicap ?? null,
-      yards: tee?.hole_yardages[n] || null,
-      personalAverage: averages?.byHole[n] ?? null,
-    })),
+    holes: holes.map((n) => {
+      // A 0 is a yardage the card didn't have, not a hole with no length.
+      const yards = tee?.hole_yardages[n];
+      return {
+        hole: n,
+        par: getHole(course, n)?.par ?? null,
+        handicap: getHole(course, n)?.handicap ?? null,
+        yards: yards != null && yards > 0 ? yards : null,
+        personalAverage: averages?.byHole[n] ?? null,
+      };
+    }),
     par: back ? course.back_nine_par : course.front_nine_par,
     yards: (back ? tee?.back_nine_yardage : tee?.front_nine_yardage) ?? null,
     personalAverage: (back ? averages?.back : averages?.front) ?? null,

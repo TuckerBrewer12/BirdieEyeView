@@ -45,7 +45,7 @@ export function ScanSuccessStep({ round, onView }: ScanSuccessStepProps) {
           </Stat>
 
           <div className="flex w-full flex-col gap-2">
-            <Button size="lg" disabled={sharing} onClick={() => share(roundShareMessage(round))}>
+            <Button size="lg" disabled={sharing} onClick={() => void share(roundShareMessage(round))}>
               {sharing ? (
                 <Loader2 data-icon="inline-start" className="animate-spin" />
               ) : (
