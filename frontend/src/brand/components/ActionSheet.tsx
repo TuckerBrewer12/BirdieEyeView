@@ -54,7 +54,7 @@ function ActionSheetContent({
         </div>
         <ActionSheetPrimitive.Close
           data-slot="action-sheet-cancel"
-          className="h-14 rounded-2xl bg-card text-lg font-bold text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-14 rounded-2xl bg-card text-lg font-bold text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/half"
         >
           Cancel
         </ActionSheetPrimitive.Close>
@@ -74,7 +74,7 @@ function ActionSheetAction({
     <ActionSheetPrimitive.Close
       data-slot="action-sheet-action"
       className={cn(
-        "flex h-14 w-full items-center justify-center gap-2.5 border-t border-border text-lg font-medium text-primary outline-none first-of-type:border-t-0 hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-5",
+        "flex h-14 w-full items-center justify-center gap-2.5 border-t border-border text-lg font-medium text-primary outline-none first-of-type:border-t-0 hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/half [&_svg]:size-5",
         className,
       )}
       {...props}
