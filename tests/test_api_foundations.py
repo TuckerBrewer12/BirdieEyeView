@@ -309,6 +309,43 @@ def test_unhandled_api_errors_return_generic_detail():
     assert "foreign_key" not in response.text
 
 
+def test_large_responses_are_gzipped_with_cors_headers():
+    app = api_main.create_app()
+
+    @app.get("/api/test-large")
+    async def large():
+        return {"rows": [{"hole": i, "strokes": 4} for i in range(200)]}
+
+    @app.get("/api/test-small")
+    async def small():
+        return {"ok": True}
+
+    @app.get("/api/auth/test-large")
+    async def auth_large():
+        return {"access_token": "x" * 2000}
+
+    client = TestClient(app, base_url="http://localhost")
+    headers = {"user-agent": "browser", "accept-encoding": "gzip", "origin": "http://localhost:5173"}
+
+    large_response = client.get("/api/test-large", headers=headers)
+    assert large_response.headers["content-encoding"] == "gzip"
+    assert int(large_response.headers["content-length"]) < 1024
+    assert large_response.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert "Accept-Encoding" in large_response.headers["vary"]
+    assert len(large_response.json()["rows"]) == 200
+
+    assert "content-encoding" not in client.get("/api/test-small", headers=headers).headers
+    assert "content-encoding" not in client.get("/api/auth/test-large", headers=headers).headers
+
+    preflight = client.options(
+        "/api/test-large",
+        headers={**headers, "access-control-request-method": "GET"},
+    )
+    assert preflight.status_code == 200
+    assert preflight.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert "content-encoding" not in preflight.headers
+
+
 @pytest.mark.asyncio
 async def test_lifespan_initializes_and_closes_database(monkeypatch):
     app = api_main.FastAPI()
