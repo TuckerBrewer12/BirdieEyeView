@@ -65,12 +65,6 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
   const bracketY = PAD.top - bracket.rise;
   const chipTop = bottom + chip.gap;
 
-  const figures = [
-    { label: "Out", toPar: round.frontNine.toPar },
-    { label: "In", toPar: round.backNine.toPar },
-    { label: "Total", toPar: round.toPar },
-  ];
-
   const handleMouseMove = (e: MouseEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const hole = Math.floor(x.invert((e.clientX - rect.left) * (W / rect.width)));
@@ -82,21 +76,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
     (worst ? `, ${toParLabel(worst.toPar)} over holes ${worst.firstHole} to ${worst.lastHole}` : "");
 
   return (
-    <div data-slot="round-flow-chart" className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-start justify-between gap-x-5 gap-y-2">
-        <div>
-          <div className="text-base font-semibold text-card-foreground">Round flow</div>
-          <div className="mt-0.5 text-body-sm text-muted-foreground">Running score to par, hole by hole</div>
-        </div>
-        <div className="flex gap-5 text-body-sm text-foreground-secondary">
-          {figures.map((figure) => (
-            <div key={figure.label}>
-              {figure.label} <ToParFigure toPar={figure.toPar} />
-            </div>
-          ))}
-        </div>
-      </div>
-
+    <div data-slot="round-flow-chart">
       <div className="overflow-x-auto">
         <div className="relative min-w-chart-wide select-none">
           <svg
@@ -283,6 +263,24 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
           </AnimatePresence>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** The round's to par out, in and in total, as the server sent them: what the flow ends on, for its card's header. */
+export function RoundFlowFigures({ round }: RoundFlowChartProps) {
+  const figures = [
+    { label: "Out", toPar: round.frontNine.toPar },
+    { label: "In", toPar: round.backNine.toPar },
+    { label: "Total", toPar: round.toPar },
+  ];
+  return (
+    <div data-slot="round-flow-figures" className="flex gap-5 text-body-sm text-foreground-secondary">
+      {figures.map((figure) => (
+        <div key={figure.label}>
+          {figure.label} <ToParFigure toPar={figure.toPar} />
+        </div>
+      ))}
     </div>
   );
 }

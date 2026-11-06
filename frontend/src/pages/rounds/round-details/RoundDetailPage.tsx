@@ -7,11 +7,16 @@ import {
   AlertDescription,
   Button,
   Card,
+  CardAction,
   CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   CourseLinkSearch,
   Input,
   LoadingState,
   RoundFlowChart,
+  RoundFlowFigures,
   RoundScorecard,
   RoundShareCard,
   ToggleGroup,
@@ -175,9 +180,15 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         />
       </div>
 
-      {/* The chart titles itself "Round flow", so the card needs no section label over it. */}
       {viewModel.showFlow && (
         <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="font-semibold">Round flow</CardTitle>
+            <CardDescription className="text-body-sm">Running score to par, hole by hole</CardDescription>
+            <CardAction>
+              <RoundFlowFigures round={played} />
+            </CardAction>
+          </CardHeader>
           <CardContent>
             <RoundFlowChart round={played} />
           </CardContent>
