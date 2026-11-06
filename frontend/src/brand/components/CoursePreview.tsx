@@ -2,9 +2,8 @@ import { useState } from "react";
 import { MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
-import { motion as motionTokens } from "@/brand/theme";
-import { formatCourseName } from "@/lib/courseName";
-import type { CourseSummary } from "@/types/golf";
+import { tokens } from "@/brand/theme";
+import { formatCourseName, type CourseSummary } from "@/domain/course";
 
 interface CoursePreviewProps {
   course: CourseSummary;
@@ -42,9 +41,9 @@ export function CoursePreview({ course, onClick, focused = false }: CoursePrevie
           onClick();
         }
       } : undefined}
-      whileHover={onClick ? { scale: motionTokens.hoverScale } : undefined}
-      whileTap={onClick ? { scale: motionTokens.tapScale } : undefined}
-      transition={motionTokens.spring}
+      whileHover={onClick ? { scale: tokens.motion.hoverScale } : undefined}
+      whileTap={onClick ? { scale: tokens.motion.tapScale } : undefined}
+      transition={tokens.motion.spring}
       className={cn(
         "flex flex-col gap-2 overflow-hidden rounded-card border border-border bg-card p-4 transition-shadow",
         onClick ? "cursor-pointer hover:shadow-card" : "cursor-default",
@@ -65,8 +64,8 @@ export function CoursePreview({ course, onClick, focused = false }: CoursePrevie
 
       <div className="mt-1 flex gap-4">
         <Stat label="Par" value={course.par} />
-        <Stat label="Holes" value={course.total_holes} />
-        <Stat label="Tees" value={course.tee_count} />
+        <Stat label="Holes" value={course.holeCount} />
+        <Stat label="Tees" value={course.teeCount} />
       </div>
     </motion.div>
   );

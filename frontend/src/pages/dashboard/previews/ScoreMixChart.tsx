@@ -3,16 +3,8 @@ import { ScoreMixChart } from "../components/ScoreMixChart";
 export default function ScoreMixChartPreview() {
   return (
     <div className="flex flex-col gap-4">
-      <ScoreMixChart
-        mix={[
-          { name: "birdie", value: 10 },
-          { name: "par", value: 40 },
-          { name: "bogey", value: 35 },
-          { name: "double", value: 10 },
-          { name: "triple", value: 5 },
-        ]}
-      />
-      <ScoreMixChart mix={[]} />
+      <ScoreMixChart mix={{ eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 }} />
+      <ScoreMixChart mix={null} />
     </div>
   );
 }

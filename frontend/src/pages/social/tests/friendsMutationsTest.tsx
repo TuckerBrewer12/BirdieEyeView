@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { queryKeys } from "@/data/queryKeys";
 import { golfers, populatedFriendships } from "@/testing/fixtures/friendships";
 import { FakeFriendsRepository } from "@/testing/fakes/FakeFriendsRepository";
-import type { Friendship } from "../friendsModel";
+import type { Friendship } from "@/data/friendsModel";
 import { useRespondToRequest } from "../useRespondToRequest";
 import { useSendFriendRequest } from "../useSendFriendRequest";
 
@@ -47,10 +47,9 @@ describe("useSendFriendRequest", () => {
 });
 
 describe("useRespondToRequest", () => {
-  it("swaps the answered request into the cache and refetches the Lab's friends", async () => {
+  it("swaps the answered request into the cache", async () => {
     const { client, repository, wrapper } = setup();
     client.setQueryData(queryKeys.friendships("user-1"), await repository.getFriendships("user-1"));
-    client.setQueryData(queryKeys.friendshipsAccepted, []);
     const { result } = renderHook(() => useRespondToRequest("user-1", repository), { wrapper });
 
     act(() => result.current.mutate({ friendshipId: "friendship-riley", answer: "accepted" }));
@@ -58,7 +57,6 @@ describe("useRespondToRequest", () => {
 
     const riley = cached(client)?.find((f) => f.id === "friendship-riley");
     expect(riley?.status).toBe("accepted");
-    expect(client.getQueryState(queryKeys.friendshipsAccepted)?.isInvalidated).toBe(true);
   });
 
   it("leaves the cache alone when the server refuses", async () => {

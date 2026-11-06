@@ -1,4 +1,4 @@
-import type { CourseAnalyticsData } from "../../types/analytics";
+import type { CourseAnalyticsDto } from "../../types/api";
 import { courseAnalyticsResponse, type CourseHoleStats } from "../fakes/courseAnalyticsResponses";
 import { storedRounds } from "./rounds";
 
@@ -7,7 +7,7 @@ const PARS = [4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5];
 /** Two rounds at a hole, so every rate below is out of two. */
 const SAMPLE = 2;
 
-export function emptyCourseAnalytics(courseId: string): CourseAnalyticsData {
+export function emptyCourseAnalytics(courseId: string): CourseAnalyticsDto {
   return courseAnalyticsResponse(courseId, []);
 }
 
@@ -26,6 +26,10 @@ const halfMoonBayHoleStats: CourseHoleStats = {
     average_to_par: toParOn(hole_number),
     sample_size: SAMPLE,
   })),
+  // Each nine is a par 36 with three holes half a stroke over and six half a stroke under.
+  hole_averages_front_nine: 34.5,
+  hole_averages_back_nine: 34.5,
+  hole_averages_total: 69,
   gir_percentage_by_hole: hole((hole_number, par) => {
     const gir_hits = hole_number % 2 === 0 ? 2 : 1;
     return { hole_number, par, gir_hits, sample_size: SAMPLE, gir_percentage: (gir_hits / SAMPLE) * 100 };
@@ -71,7 +75,7 @@ const halfMoonBayHoleStats: CourseHoleStats = {
 };
 
 /** The player's two stored rounds at Half Moon Bay, as GET /stats/course-analytics sends them. */
-export const halfMoonBayAnalytics: CourseAnalyticsData = courseAnalyticsResponse(
+export const halfMoonBayAnalytics: CourseAnalyticsDto = courseAnalyticsResponse(
   "course-hmb",
   storedRounds,
   halfMoonBayHoleStats,

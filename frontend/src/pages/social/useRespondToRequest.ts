@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
-import { withFriendship, type Friendship, type FriendshipAnswer } from "./friendsModel";
-import { friendsRepository, type FriendsRepository } from "./friendsRepository";
+import { withFriendship, type Friendship, type FriendshipAnswer } from "@/data/friendsModel";
+import { friendsRepository, type FriendsRepository } from "@/data/friendsRepository";
 
 export interface RespondVariables {
   friendshipId: string;
@@ -10,8 +10,8 @@ export interface RespondVariables {
 
 /**
  * Accepts, declines or blocks a request the golfer received. The answered
- * friendship replaces its cached copy, and the Lab's friend list refetches,
- * since an accepted request is a new friend to compare against.
+ * friendship replaces its cached copy, which The Lab reads too, so an
+ * accepted request is a friend to compare against straight away.
  */
 export function useRespondToRequest(
   userId: string,
@@ -25,7 +25,6 @@ export function useRespondToRequest(
       queryClient.setQueryData<Friendship[]>(queryKeys.friendships(userId), (prev) =>
         prev ? withFriendship(prev, answered) : prev,
       );
-      void queryClient.invalidateQueries({ queryKey: queryKeys.friendshipsAccepted });
     },
   });
 }

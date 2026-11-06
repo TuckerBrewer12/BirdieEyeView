@@ -1,5 +1,6 @@
 import { test } from "./RoundsPage.robot";
 import { searchableCourses } from "../../../testing/fixtures/courses";
+import type { StoredRound } from "../../../testing/fakes/roundResponses";
 import { nRounds, storedRounds } from "../../../testing/fixtures/rounds";
 
 test("All chip is pressed by default", async ({ rounds }) => {
@@ -29,12 +30,27 @@ test("course chip filters to that course", async ({ rounds }) => {
   await rounds.seesRoundCount(1);
 });
 
-test("Best chip lists the lowest score first", async ({ rounds }) => {
+test("Best chip lists the best round first", async ({ rounds }) => {
   await rounds.open(storedRounds);
   await rounds.tapChip("Best");
   await rounds.seesRoundCount(4);
+  await rounds.seesFirstRound("Blue Rock");
   await rounds.tapRound("Blue Rock");
   await rounds.isAtRound("round-3");
+});
+
+test("Best chip ranks a full round ahead of a nine with a lower score", async ({ rounds }) => {
+  const [, , blueRock] = storedRounds;
+  const nine: StoredRound = {
+    ...blueRock,
+    id: "round-nine",
+    course: null,
+    course_name_played: "Twilight Nine",
+    hole_scores: blueRock.hole_scores.slice(0, 9),
+  };
+  await rounds.open([nine, ...storedRounds]);
+  await rounds.tapChip("Best");
+  await rounds.seesFirstRound("Blue Rock");
 });
 
 test("sorting by score puts the highest score first", async ({ rounds }) => {
@@ -83,16 +99,16 @@ test("load more reveals the remaining rounds", async ({ rounds }) => {
   await rounds.seesCourse("Course 1");
 });
 
-test("a one-character course query does not search", async ({ rounds }) => {
+test("a one-character course query clears the results instead of searching", async ({ rounds }) => {
   await rounds.open(storedRounds, { courses: searchableCourses });
   await rounds.openLinkFor("Scanned Scorecard");
-  await rounds.searchCourses("P");
-  await rounds.seesNoCourseResults();
-  await rounds.doesNotSeeNoCoursesFound();
-
-  // Two characters reach the backend, so only the length held the first one back.
   await rounds.searchCourses("Pe");
   await rounds.seesCourseResult("Pebble Beach");
+
+  // "P" matches Pebble Beach too, so a search for it would keep the result on screen.
+  await rounds.searchCourses("P");
+  await rounds.doesNotSeeCourseResults();
+  await rounds.doesNotSeeNoCoursesFound();
 });
 
 test("a course search with no hits says so", async ({ rounds }) => {

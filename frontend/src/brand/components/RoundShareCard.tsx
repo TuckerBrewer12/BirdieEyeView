@@ -6,8 +6,8 @@ import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
 import { Stat, StatLabel, StatValue } from "@/brand/components/Stat";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { playedScoreKinds, scoreKindCountLabel, type Round } from "@/domain";
-import { formatCourseName } from "@/lib/courseName";
-import { formatRoundDateLong } from "@/lib/roundDate";
+import { formatCourseName } from "@/domain/course";
+import { formatWeekdayDay } from "@/domain/date";
 
 interface RoundShareCardProps extends React.ComponentProps<"div"> {
   round: Round;
@@ -20,7 +20,7 @@ interface RoundShareCardProps extends React.ComponentProps<"div"> {
  */
 const RoundShareCard = React.forwardRef<HTMLDivElement, RoundShareCardProps>(
   ({ round, className, ...props }, ref) => {
-    const date = formatRoundDateLong(round.date);
+    const date = formatWeekdayDay(round.date);
     const played = playedScoreKinds(round.scoreCounts);
 
     return (
@@ -44,7 +44,7 @@ const RoundShareCard = React.forwardRef<HTMLDivElement, RoundShareCardProps>(
           {date && <div className="mt-0.5 text-xs text-muted-foreground">{date}</div>}
 
           <div className="mt-3 flex items-end gap-2.5">
-            <div className="font-mono text-hero leading-none font-bold tracking-hero text-foreground">
+            <div className="font-mono text-hero text-foreground">
               {round.score ?? "—"}
             </div>
             <div className="pb-1">

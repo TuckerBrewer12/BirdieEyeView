@@ -55,6 +55,10 @@ export class RoundsRobot {
 
   async openSortMenu(): Promise<this> {
     await this.page.getByRole("combobox", { name: "Sort by" }).click();
+    return this;
+  }
+
+  async seesSortMenu(): Promise<this> {
     await expect(this.page.getByRole("listbox")).toBeVisible();
     await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
     return this;
@@ -93,10 +97,6 @@ export class RoundsRobot {
     return this;
   }
 
-  private async settleCourseSearch(): Promise<void> {
-    await this.page.waitForTimeout(500);
-  }
-
   async seesCourseResult(name: string): Promise<this> {
     await expect(
       this.page.locator("[data-slot=course-result]").filter({ hasText: name }),
@@ -104,8 +104,7 @@ export class RoundsRobot {
     return this;
   }
 
-  async seesNoCourseResults(): Promise<this> {
-    await this.settleCourseSearch();
+  async doesNotSeeCourseResults(): Promise<this> {
     await expect(this.page.locator("[data-slot=course-result]")).toHaveCount(0);
     return this;
   }
@@ -147,7 +146,7 @@ export class RoundsRobot {
     ).toBeVisible();
     await search.evaluate((el) => {
       el.scrollIntoView({ block: "end", inline: "nearest" });
-      const nav = document.querySelector("nav.fixed.bottom-0");
+      const nav = document.querySelector("[data-slot=app-shell-bottom]");
       const extra =
         nav instanceof HTMLElement && getComputedStyle(nav).display !== "none"
           ? nav.getBoundingClientRect().height
@@ -165,6 +164,12 @@ export class RoundsRobot {
 
   async doesNotSeeLinkPanel(): Promise<this> {
     await expect(this.page.getByPlaceholder("Search courses…")).toHaveCount(0);
+    return this;
+  }
+
+  /** The round listed first, by its course name. */
+  async seesFirstRound(courseName: string): Promise<this> {
+    await expect(this.page.locator('[data-slot="round-preview"]').first()).toContainText(courseName);
     return this;
   }
 

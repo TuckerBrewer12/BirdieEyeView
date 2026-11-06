@@ -1,6 +1,7 @@
 import { cn } from "@/brand/cn";
 import { SCORE_KEYS, scoreFillClass, scoreKindLabel } from "@/brand/theme";
-import type { ScoreMix } from "@/domain";
+import { formatPercent } from "@/domain/format";
+import type { ScoreMix } from "@/domain/score";
 
 interface ScoreMixBarProps {
   mix: ScoreMix;
@@ -11,7 +12,7 @@ interface ScoreMixBarProps {
 export function ScoreMixBar({ mix, className }: ScoreMixBarProps) {
   // Slivers under half a percent would only draw as a seam, so the bar and legend both skip them.
   const shown = SCORE_KEYS.filter((kind) => mix[kind] > 0.5);
-  const pct = (kind: (typeof shown)[number]) => `${mix[kind].toFixed(0)}%`;
+  const pct = (kind: (typeof shown)[number]) => formatPercent(mix[kind]);
 
   return (
     <div data-slot="score-mix-bar" className={cn("flex flex-col gap-2", className)}>

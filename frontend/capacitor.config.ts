@@ -2,6 +2,8 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const devServerUrl = process.env.CAPACITOR_SERVER_URL?.trim();
 
+// The native build cannot read CSS, so the splash and status bar colours copy
+// primary and background from src/brand/theme/tokens.ts; tokens.test.ts keeps them equal.
 const config: CapacitorConfig = {
   appId: 'com.tuckerbrewer.golfscorecard',
   appName: 'Golf Scorecard',

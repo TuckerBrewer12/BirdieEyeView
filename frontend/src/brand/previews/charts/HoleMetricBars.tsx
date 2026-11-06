@@ -1,12 +1,15 @@
 import { HoleMetricBars } from "@/brand/charts/HoleMetricBars";
+import { courseAnalyticsFrom } from "@/domain/courseAnalytics";
 import { halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
+
+const analytics = courseAnalyticsFrom(halfMoonBayAnalytics);
 
 export default function HoleMetricBarsPreview() {
   return (
     <>
-      <HoleMetricBars metric="gir" rows={halfMoonBayAnalytics.gir_percentage_by_hole} />
-      <HoleMetricBars metric="putts" rows={halfMoonBayAnalytics.average_putts_by_hole} />
-      <HoleMetricBars metric="variance" rows={halfMoonBayAnalytics.score_variance_by_hole} />
+      <HoleMetricBars metric="gir" rows={analytics.gir} />
+      <HoleMetricBars metric="putts" rows={analytics.putts} />
+      <HoleMetricBars metric="variance" rows={analytics.variance} />
     </>
   );
 }

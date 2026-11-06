@@ -1,4 +1,4 @@
-import type { ComparisonRow, RoundComparison } from "@/types/analytics";
+import type { ComparisonRowDto, RoundComparisonDto } from "@/types/api";
 
 export type ChartTabKey = "score" | "short_game" | "gir";
 
@@ -20,7 +20,7 @@ export const CHART_TABS: ChartTabItem[] = [
   { key: "gir", label: "GIR" },
 ];
 
-function barsFrom(rows: ComparisonRow[]) {
+function barsFrom(rows: ComparisonRowDto[]) {
   return rows.map((row) => ({
     label: row.label,
     value: row.primary_value,
@@ -28,7 +28,7 @@ function barsFrom(rows: ComparisonRow[]) {
   }));
 }
 
-export function chartsFrom(comparison: RoundComparison): ComparisonChartItem[] {
+export function chartsFrom(comparison: RoundComparisonDto): ComparisonChartItem[] {
   return [
     { title: "Score", primaryLabel: "score", group: "score", bars: barsFrom(comparison.score) },
     { title: "Putts", primaryLabel: "putts", group: "short_game", bars: barsFrom(comparison.putts) },

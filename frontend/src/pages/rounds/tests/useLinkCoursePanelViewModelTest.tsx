@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
 import { storedRounds } from "@/testing/fixtures/rounds";
-import { pebbleBeach } from "@/testing/fixtures/courses";
+import { pebbleBeach, pebbleBeachSummary } from "@/testing/fixtures/courses";
 import {
   FakeRoundsRepository,
   type FakeRoundsRepositorySeed,
@@ -33,7 +33,7 @@ describe("useLinkCoursePanelViewModel", () => {
 
   it("picking a course links the round and tells the page", async () => {
     const { result, repository, linked } = renderVm();
-    act(() => result.current.selectCourse(pebbleBeach));
+    act(() => result.current.selectCourse(pebbleBeachSummary));
 
     await waitFor(() => expect(linked).toEqual(["round-4"]));
     expect(repository.store.getRound("round-4").course?.name).toBe("Pebble Beach");
@@ -42,7 +42,7 @@ describe("useLinkCoursePanelViewModel", () => {
 
   it("a failed link shows why and does not tell the page", async () => {
     const { result, linked } = renderVm({ rounds: storedRounds, linkError: "nope" });
-    act(() => result.current.selectCourse(pebbleBeach));
+    act(() => result.current.selectCourse(pebbleBeachSummary));
 
     await waitFor(() => expect(result.current.error).toBe("nope"));
     expect(result.current.linking).toBe(false);

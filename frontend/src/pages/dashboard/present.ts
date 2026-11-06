@@ -1,30 +1,38 @@
-import { colors, scoreKindLabel, type ScoreKey } from "@/brand/theme";
-import { formatCourseName } from "@/lib/courseName";
-import type { User } from "@/types/golf";
+import { scoreKindLabel, type ScoreKey, tokens } from "@/brand/theme";
+import {
+  SCORE_KINDS,
+  formatCourseName,
+  formatSignedOneDecimal,
+  formatWeekdayDay,
+  pluralNoun,
+  type ScoreMix,
+} from "@/domain";
+import type { UserDto } from "@/types/api";
 import {
   type HiTrend,
   type Milestone,
-  type ScoreMixItem,
   type WhsRound,
 } from "./model";
 
 
-export function firstNameOf(user: User | null): string {
+export function firstNameOf(user: UserDto | null): string {
   return user?.name?.split(" ")[0] ?? "Golfer";
 }
 
+/** Up to two initials for the avatar: "Jordan Spieth" reads "JS"; no name reads "G" for golfer. */
+export function initialsOf(user: UserDto | null): string {
+  if (!user?.name) return "G";
+  return user.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+/** Today above the greeting: "Mon · Jun 15". */
 export function greetingDateLabel(now = new Date()): string {
-  const day = now.toLocaleDateString("en-US", { weekday: "short" });
-  const date = now.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  return `${day} · ${date}`;
-}
-
-export function avgLabel(value: number | null): string {
-  return value != null ? value.toFixed(1) : "—";
-}
-
-export function pctLabel(value: number | null | undefined, empty = "—"): string {
-  return value != null ? `${value.toFixed(0)}%` : empty;
+  return formatWeekdayDay(now, { year: false }) ?? "";
 }
 
 export function puttsLabel(putts: number | null): string {
@@ -38,12 +46,14 @@ export interface ColoredMixItem {
   color: string;
 }
 
-export function colorizeMix(mix: ScoreMixItem[]): ColoredMixItem[] {
-  return mix.map((item) => ({
-    ...item,
-    label: scoreKindLabel(item.name),
-    color: colors.score[item.name].base,
-  }));
+/** The mix's bars, in bucket order, to a tenth of a percent: a kind with no holes has no bar. */
+export function colorizeMix(mix: ScoreMix): ColoredMixItem[] {
+  return SCORE_KINDS.flatMap((kind) => {
+    const value = Math.round(mix[kind] * 10) / 10;
+    return value > 0
+      ? [{ name: kind, label: scoreKindLabel(kind), value, color: tokens.color.score[kind].base }]
+      : [];
+  });
 }
 
 
@@ -58,8 +68,7 @@ export function ratingLabelForWhs(row: WhsRound): string | null {
 }
 
 export function differentialLabel(value: number | null): string {
-  if (value == null) return "—";
-  return value >= 0 ? `+${value.toFixed(1)}` : value.toFixed(1);
+  return value != null ? formatSignedOneDecimal(value) : "—";
 }
 
 export function adjustmentLabel(adjustment: number): string | null {
@@ -69,11 +78,11 @@ export function adjustmentLabel(adjustment: number): string | null {
 
 export function usedLegend(countUsed: number, usedCount: number): string | null {
   if (usedCount <= 0) return null;
-  return `Green rows are the ${countUsed} best differential${countUsed !== 1 ? "s" : ""} used in your index`;
+  return `Green rows are the ${countUsed} best ${pluralNoun(countUsed, "differential")} used in your index`;
 }
 
 export function whsContextNote(countUsed: number): string {
-  return `The World Handicap System uses your best ${countUsed || "N"} differentials from the last 20 rounds. Differentials measure how well you played relative to the course difficulty.`;
+  return `The World Handicap System uses your best ${countUsed || "N"} ${pluralNoun(countUsed || 2, "differential")} from the last 20 rounds. Differentials measure how well you played relative to the course difficulty.`;
 }
 
 export type { HiTrend };
@@ -92,22 +101,3 @@ export function milestoneWording(milestone: Milestone): { title: string; figure:
   return { title: wording.title, figure: wording.figure(milestone.value) };
 }
 
-/** The goal is stored as the highest score that meets it, so 79 means the player is out to break 80. */
-export function goalScoreToBreak(target: number): number {
-  return target + 1;
-}
-
-/** A stored goal of 79 reads "Break 80". */
-export function goalTargetLabel(target: number): string {
-  return `Break ${goalScoreToBreak(target)}`;
-}
-
-export type PuttsBand = "good" | "fair" | "poor";
-
-/** Which colour band a putts-per-round figure sits in: under 30, up to 35, or more. */
-export function puttsBand(putts: number | null): PuttsBand | null {
-  if (putts == null) return null;
-  if (putts < 30) return "good";
-  if (putts <= 35) return "fair";
-  return "poor";
-}

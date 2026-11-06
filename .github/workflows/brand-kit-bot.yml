@@ -4,7 +4,6 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - "frontend/src/components/**"
       - "frontend/src/pages/**"
       - "frontend/src/brand/**"
   workflow_dispatch:
@@ -89,7 +88,7 @@ jobs:
         env:
           BOT_NAME: "🎨 Brand Kit Bot"
           BOT_PROMPT: .github/review-bots/brand-kit.md
-          BOT_PATHSPEC: "frontend/src/components frontend/src/pages frontend/src/brand"
+          BOT_PATHSPEC: "frontend/src/pages frontend/src/brand"
           BOT_CLEAN: "Nothing to flag against the brand kit in this PR."
           BOT_LEAD: "against the brand kit"
           BASE_SHA: ${{ steps.pr.outputs.base }}

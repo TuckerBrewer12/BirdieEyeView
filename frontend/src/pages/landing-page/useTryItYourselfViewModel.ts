@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { preparePhotoForUpload } from "@/data/photoUpload";
-import { queryKeys } from "@/data/queryKeys";
 import { scanRepository, type ScanRepository } from "@/data/scanRepository";
+import { useCardText, type PickedPhoto } from "@/data/useCardText";
 import { Round } from "@/domain";
-import { useExtractScorecard } from "./useExtractScorecard";
+import { useExtractScorecard } from "@/data/useExtractScorecard";
 
 const PHASES = [
   { label: "Reading course details…", detail: "Identifying name, location & tee boxes" },
@@ -38,23 +37,14 @@ export interface TryItYourselfViewModel {
 export function useTryItYourselfViewModel(
   repository: ScanRepository = scanRepository,
 ): TryItYourselfViewModel {
-  const [photo, setPhoto] = useState<{ id: string; file: File } | null>(null);
+  const [photo, setPhoto] = useState<PickedPhoto | null>(null);
   const [userContext, setUserContext] = useState("");
   const [phase, setPhase] = useState(0);
   // A later pick wins over an earlier one still being readied.
   const latestPick = useRef(0);
   const extraction = useExtractScorecard(repository);
 
-  // The card's text is read as soon as the photo is picked, so the scan itself
-  // has less to do. It is keyed on the photo, so a new pick never sends an old
-  // card's text. Failing is fine: extract reads the card itself.
-  const cardText = useQuery({
-    queryKey: queryKeys.scanText(photo?.id ?? null),
-    queryFn: () => repository.readText(photo!.file),
-    enabled: photo != null,
-    staleTime: Infinity,
-    retry: false,
-  });
+  const cardText = useCardText(photo, repository);
 
   const step = extraction.isPending ? "processing" : extraction.data ? "review" : "upload";
 
@@ -88,8 +78,8 @@ export function useTryItYourselfViewModel(
 
   const extract = useCallback(() => {
     if (!photo) return;
-    mutate({ photo: photo.file, userContext, ocrText: cardText.data ?? null });
-  }, [photo, userContext, cardText.data, mutate]);
+    mutate({ photo: photo.file, userContext, ocrText: cardText });
+  }, [photo, userContext, cardText, mutate]);
 
   const reset = useCallback(() => {
     latestPick.current += 1;

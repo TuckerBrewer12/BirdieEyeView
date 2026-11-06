@@ -1,6 +1,6 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { chartLayout, colors } from "@/brand";
-import { pctLabel } from "../present";
+import { tokens } from "@/brand";
+import { formatPercent } from "@/domain";
 
 interface GirDonutProps {
   /** Greens in regulation, 0–100. Unknown draws an empty ring and a dash. */
@@ -16,23 +16,23 @@ export function GirDonut({ pct }: GirDonutProps) {
           <Pie
             data={[{ value: hit }, { value: 100 - hit }]}
             dataKey="value"
-            innerRadius={chartLayout.ring.inner}
-            outerRadius={chartLayout.ring.outer}
+            innerRadius={tokens.chart.ring.inner}
+            outerRadius={tokens.chart.ring.outer}
             stroke="none"
             isAnimationActive={false}
             startAngle={90}
             endAngle={-270}
           >
-            <Cell fill={colors.score.birdie.base} />
-            <Cell fill={colors.muted} />
+            <Cell fill={tokens.color.score.birdie.base} />
+            <Cell fill={tokens.color.muted} />
           </Pie>
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
         <div className="text-4xl font-semibold tracking-stat text-card-foreground">
-          {pctLabel(pct)}
+          {formatPercent(pct)}
         </div>
-        <div className="text-meta font-bold text-muted-foreground uppercase tracking-eyebrow">GIR</div>
+        <div className="text-eyebrow text-muted-foreground uppercase">GIR</div>
       </div>
     </div>
   );

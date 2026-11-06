@@ -37,6 +37,10 @@ class HoleScore(BaseGolfModel):
                 raise ValueError(f"Putts ({self.putts}) cannot exceed strokes ({self.strokes})")
         return self
 
+    def is_three_putt(self) -> bool:
+        """Three or more putts: the putting miss a scorecard calls out. False when putts weren't kept."""
+        return self.putts is not None and self.putts >= 3
+
     def to_par(self, par: Optional[int] = None) -> Optional[int]:
         """Calculate score relative to par. Falls back to par_played if par not passed."""
         if self.strokes is None:

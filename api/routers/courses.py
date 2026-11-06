@@ -8,6 +8,7 @@ from typing import List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from api.dependencies import get_db, get_optional_current_user, get_current_user
+from api.player_handicap import player_handicap_index
 from api.error_responses import COURSE_SAVE_FAILED
 from api.input_validation import normalize_course_display_name, sanitize_search_query, sanitize_user_text
 from api.course_responses import course_detail
@@ -180,8 +181,8 @@ async def search_courses(
 ):
     try:
         q = sanitize_search_query(q, max_length=120)
-    except ValueError as exc:
-        raise HTTPException(422, str(exc))
+    except ValueError:
+        raise HTTPException(422, "q must be plain text of at most 120 characters.") from None
 
     if user_id:
         if not current_user or str(current_user.id) != str(user_id):
@@ -291,7 +292,7 @@ async def get_course(
         raise HTTPException(404, "Course not found")
     if course.user_id and (not current_user or str(current_user.id) != str(course.user_id)):
         raise HTTPException(403, "Forbidden")
-    return course_detail(course)
+    return course_detail(course, await player_handicap_index(db, current_user))
 
 
 @router.post("", status_code=201)
@@ -327,10 +328,10 @@ async def create_course(
         created = await db.courses.create_course(course, user_id=effective_user_id)
         return _summarize_course(created)
     except DuplicateError:
-        raise HTTPException(409, "A course with that name already exists for this user")
+        raise HTTPException(409, "A course with that name already exists for this user") from None
     except IntegrityError:
         logger.exception("Course creation integrity failure")
-        raise HTTPException(500, COURSE_SAVE_FAILED)
+        raise HTTPException(500, COURSE_SAVE_FAILED) from None
 
 
 @router.put("/{course_id}")
@@ -370,6 +371,6 @@ async def clone_course(
         cloned = await db.courses.clone_course(str(course_id), str(current_user.id))
         return _summarize_course(cloned)
     except NotFoundError:
-        raise HTTPException(404, "Source course not found")
+        raise HTTPException(404, "Source course not found") from None
     except DuplicateError:
-        raise HTTPException(409, "You already have a custom copy of this course")
+        raise HTTPException(409, "You already have a custom copy of this course") from None

@@ -1,26 +1,39 @@
 import type { ExtractRequest, ScanRepository } from "../../data/scanRepository";
-import type { ScanResult } from "../../types/scan";
+import type { SaveScanRequestDto, ScanDto } from "../../types/api";
+import { InMemoryRounds } from "./InMemoryRounds";
 
 export interface FakeScanRepositorySeed {
   /** What extract reads off any card. Unset, extract fails. */
-  result?: ScanResult;
+  result?: ScanDto;
   /** What reading the card ahead of time returns. */
   text?: string | null;
   /** Extract fails with this, as the server's user-facing message. */
   extractError?: string;
   /** Extract waits for `finishExtract()`, so a test can see the scan in progress. */
   holdExtract?: boolean;
+  /**
+   * Where saved scans go. Share a FakeRoundsRepository's store and the saved round can be
+   * read back; set its `saveError` to make saving fail.
+   */
+  store?: InMemoryRounds;
 }
 
 /** Stands in for the scan endpoints and records what the page sent. */
 export class FakeScanRepository implements ScanRepository {
   readonly readPhotos: File[] = [];
   readonly extractRequests: ExtractRequest[] = [];
+  readonly store: InMemoryRounds;
   private readonly seed: FakeScanRepositorySeed;
   private release: (() => void) | null = null;
 
   constructor(seed: FakeScanRepositorySeed = {}) {
     this.seed = seed;
+    this.store = seed.store ?? new InMemoryRounds();
+  }
+
+  /** Every scan saved, as sent. */
+  get saveRequests(): SaveScanRequestDto[] {
+    return this.store.savedScans;
   }
 
   async readText(photo: File): Promise<string | null> {
@@ -28,7 +41,7 @@ export class FakeScanRepository implements ScanRepository {
     return this.seed.text ?? null;
   }
 
-  async extract(request: ExtractRequest): Promise<ScanResult> {
+  async extract(request: ExtractRequest): Promise<ScanDto> {
     this.extractRequests.push(request);
     if (this.seed.holdExtract) {
       await new Promise<void>((resolve) => {
@@ -38,6 +51,10 @@ export class FakeScanRepository implements ScanRepository {
     if (this.seed.extractError) throw new Error(this.seed.extractError);
     if (!this.seed.result) throw new Error("Could not read this scorecard.");
     return this.seed.result;
+  }
+
+  async save(request: SaveScanRequestDto): Promise<string> {
+    return this.store.saveScan(request);
   }
 
   /** Lets a held extract answer. */

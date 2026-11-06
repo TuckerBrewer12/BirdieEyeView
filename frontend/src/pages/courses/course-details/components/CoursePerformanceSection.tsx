@@ -57,20 +57,21 @@ export function CoursePerformanceSection({ userId, courseId }: CoursePerformance
 
       <div>
         <SectionLabel>Round History</SectionLabel>
-        <Collection
-          layout="divided"
-          className="overflow-hidden rounded-xl border border-border bg-card"
-          items={viewModel.rounds}
-          keyFor={(round) => round.id}
-          empty="No rounds at this course."
-          renderItem={(round) => (
-            <RoundPreview
-              variant="history"
-              round={round}
-              onClick={() => navigate(`/rounds/${round.id}`)}
-            />
-          )}
-        />
+        <Card className="py-0">
+          <Collection
+            layout="divided"
+            items={viewModel.rounds}
+            keyFor={(round) => round.id}
+            empty="No rounds at this course."
+            renderItem={(round) => (
+              <RoundPreview
+                variant="history"
+                round={round}
+                onClick={() => void navigate(`/rounds/${round.id}`)}
+              />
+            )}
+          />
+        </Card>
       </div>
 
       <CourseChartsSection userId={userId} courseId={courseId} />

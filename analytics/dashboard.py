@@ -6,8 +6,8 @@ them, so the dashboard and the analytics page read the same numbers.
 
 from typing import Any, Dict, List, Literal, Optional
 
-from analytics import handicap as hcap
 from analytics import stats as analytics
+from analytics.insights import Rating, putts_rating
 from models import Round
 from models.hole_score import ScoreKind
 
@@ -31,14 +31,19 @@ def scoring_average(rounds: List[Round], window: Optional[int] = None) -> Option
     return sum(scores) / len(scores) if scores else None
 
 
-def scoring_average_change(rounds: List[Round], window: int = RECENT_ROUNDS) -> Optional[float]:
+def scoring_average_change(
+    rounds: List[Round], window: int = RECENT_ROUNDS, full_window: bool = False
+) -> Optional[float]:
     """How far the last `window` rounds' average sits from the whole window's, to a tenth.
-    Negative means the recent rounds came in lower."""
+    Negative means the recent rounds came in lower. With `full_window`, null until `window`
+    rounds have a score."""
     overall = scoring_average(rounds)
     recent = scoring_average(rounds, window)
     if overall is None or recent is None:
         return None
-    return round(recent - overall, 1)
+    if full_window and sum(1 for r in rounds if r.calculate_total_score() is not None) < window:
+        return None
+    return analytics.round_half_up(recent - overall, 1)
 
 
 def recent_form(rounds: List[Round], window: int = RECENT_ROUNDS) -> Dict[str, Optional[float]]:
@@ -53,6 +58,17 @@ def recent_form(rounds: List[Round], window: int = RECENT_ROUNDS) -> Dict[str, O
         "up_and_down_pct": _pooled_pct(analytics.up_and_down_trend(recent), "successes", "opportunities"),
         "putts_per_18": sum(r["total_putts"] for r in putt_rows) / putt_holes * 18 if putt_holes else None,
     }
+
+
+def putts_shown(recent_putts_per_18: Optional[float], average_putts: Optional[float]) -> Dict[str, Any]:
+    """The putts figure the dashboard shows, and how good it is.
+
+    The last five rounds' putts per 18 when they have putts, else the average over every round.
+    Rated by `insights.putts_rating`, so the dashboard and the analytics page agree.
+    """
+    putts = recent_putts_per_18 if recent_putts_per_18 is not None else average_putts
+    rating: Optional[Rating] = putts_rating(putts) if putts is not None else None
+    return {"per_round": putts, "rating": rating}
 
 
 def score_mix(rounds: List[Round]) -> Dict[str, Any]:
@@ -83,9 +99,11 @@ def whs_breakdown(
     rounds: List[Round],
     handicap_trend: List[Dict[str, Any]],
     differentials: List[Dict[str, Any]],
-    handicap_index: Optional[float],
+    index_window: Dict[str, Any],
 ) -> Dict[str, Any]:
-    """The rounds in the WHS window, newest first, which ones count, and their average differential."""
+    """The rounds in the WHS window, newest first, which ones count, and their average differential.
+    `index_window` is the golfer's index and how it was reached (`handicap.player_index_window`),
+    so the breakdown adds up to the index shown."""
     by_index = {d["round_index"]: d for d in differentials}
     score_rows = analytics.score_trend(rounds)
     rows = []
@@ -102,17 +120,15 @@ def whs_breakdown(
             "used": trend.get("used_in_hi") is True,
         })
     rows.reverse()
-    window_size = min(sum(1 for r in rows if r["differential"] is not None), 20)
-    count_used, adjustment = hcap.whs_window(window_size)
     used = [r["differential"] for r in rows if r["used"] and r["differential"] is not None]
     return {
         "rows": rows,
-        "window_size": window_size,
-        "count_used": count_used,
-        "adjustment": adjustment,
+        "window_size": index_window["rated"],
+        "count_used": index_window["count"],
+        "adjustment": index_window["adjustment"],
         "diff_avg": sum(used) / len(used) if used else None,
         "has_rated_rounds": any(d.get("course_rating") is not None for d in differentials),
-        "show_calculation": handicap_index is not None and window_size >= 3,
+        "show_calculation": index_window["index"] is not None and index_window["rated"] >= 3,
     }
 
 

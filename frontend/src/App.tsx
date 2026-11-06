@@ -1,23 +1,25 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
 import { useEffect } from "react";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import { ScanProvider } from "./context/ScanContext";
-import { AppLayout } from "./components/layout/AppLayout";
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
-import { VerifyPendingPage } from "./pages/VerifyPendingPage";
-import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
-import { ResetPasswordPage } from "./pages/ResetPasswordPage";
-import { VerifyEmailPage } from "./pages/VerifyEmailPage";
+import { AuthProvider } from "./context/AuthContext";
+import { useAuth } from "./context/auth";
+import { ScanPage, ScanSessionProvider } from "./pages/scan";
+import { AppLayout } from "./app/AppLayout";
+import {
+  ForgotPasswordPage,
+  LoginPage,
+  RegisterPage,
+  ResetPasswordPage,
+  VerifyEmailPage,
+  VerifyPendingPage,
+} from "./pages/auth";
 import { LandingPage } from "./pages/landing-page";
 
 import { DashboardPage } from "./pages/dashboard";
 import { RoundsPage, RoundDetailPage } from "./pages/rounds";
 import { CoursesPage, CourseDetailPage } from "./pages/courses";
-import { ScanPage } from "./pages/ScanPage";
-import { AnalyticsPage } from "./pages/AnalyticsPage";
-import { CareerPage } from "./pages/CareerPage";
-import { TheLabPage } from "./pages/TheLabPage";
+import { AnalyticsPage } from "./pages/analytics";
+import { CareerPage } from "./pages/career";
+import { TheLabPage } from "./pages/the-lab";
 import { SettingsPage } from "./pages/settings";
 import { SocialPage, FriendsInboxPage } from "./pages/social";
 import { BrandHarness } from "./brand/BrandHarness";
@@ -48,9 +50,9 @@ function RootRoutes() {
 
   return (
     <AuthProvider>
-      <ScanProvider>
+      <ScanSessionProvider>
         <AppRoutes />
-      </ScanProvider>
+      </ScanSessionProvider>
     </AuthProvider>
   );
 }
@@ -62,7 +64,7 @@ function AppRoutes() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-400">Loading…</div>
+        <div className="text-muted-foreground">Loading…</div>
       </div>
     );
   }

@@ -1,41 +1,58 @@
+import { useEffect, useId, useRef } from "react";
 import { Search, Loader2 } from "lucide-react";
 import {
   InputGroup,
-  InputGroupAddon,
+  InputGroupAddonLabel,
   InputGroupInput,
 } from "./InputGroup";
 
 interface SearchFieldProps {
+  /** The input's id, so a FieldLabel can name it. */
+  id?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  autoFocus?: boolean;
+  /**
+   * Puts the caret in the field when it appears. Only for a field the golfer just opened (a panel,
+   * a "Change course"), never one that is there when the page loads.
+   */
+  focusOnOpen?: boolean;
   loading?: boolean;
 }
 
 export function SearchField({
+  id,
   value,
   onChange,
   placeholder,
-  autoFocus,
+  focusOnOpen = false,
   loading,
 }: SearchFieldProps) {
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
+  const input = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (focusOnOpen) input.current?.focus();
+  }, [focusOnOpen]);
+
   return (
     <InputGroup>
       <InputGroupInput
+        ref={input}
+        id={inputId}
         type="search"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        autoFocus={autoFocus}
       />
-      <InputGroupAddon>
+      <InputGroupAddonLabel htmlFor={inputId}>
         <Search />
-      </InputGroupAddon>
+      </InputGroupAddonLabel>
       {loading && (
-        <InputGroupAddon align="inline-end">
+        <InputGroupAddonLabel htmlFor={inputId} align="inline-end">
           <Loader2 className="animate-spin" />
-        </InputGroupAddon>
+        </InputGroupAddonLabel>
       )}
     </InputGroup>
   );

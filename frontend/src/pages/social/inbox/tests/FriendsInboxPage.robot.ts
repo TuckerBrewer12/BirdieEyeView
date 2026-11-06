@@ -30,6 +30,16 @@ export class FriendsInboxRobot {
     return this.isOpen();
   }
 
+  async openFailed(message: string): Promise<this> {
+    await this.open({ loadError: message });
+    return this.seesError(message);
+  }
+
+  async doesNotSeeEmptyState(): Promise<this> {
+    await expect(this.page.getByText(/^No (received|sent) requests yet\.$/)).toHaveCount(0);
+    return this;
+  }
+
   async isOpen(): Promise<this> {
     await expect(this.page).toHaveURL(/\/inbox$/);
     await expect(this.page.getByRole("heading", { name: "Inbox", level: 1 }).last()).toBeVisible();
@@ -76,12 +86,12 @@ export class FriendsInboxRobot {
     return this;
   }
 
-  async canAnswer(name: string): Promise<this> {
+  async seesAnswerButtons(name: string): Promise<this> {
     await expect(this.page.getByRole("button", { name: `Accept ${name}` })).toBeVisible();
     return this;
   }
 
-  async cannotAnswer(name: string): Promise<this> {
+  async seesNoAnswerButtons(name: string): Promise<this> {
     await expect(this.row(name)).toBeVisible();
     await expect(this.page.getByRole("button", { name: `Accept ${name}` })).toHaveCount(0);
     return this;

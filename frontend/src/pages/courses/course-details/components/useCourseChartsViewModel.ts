@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
+import { EMPTY_COURSE_ANALYTICS } from "@/domain/courseAnalytics";
 import { coursesRepository, type CoursesRepository } from "../../coursesRepository";
 import { useCourseAnalytics } from "../../useCourseAnalytics";
 import {
   CHART_TABS,
-  EMPTY_ANALYTICS,
   chartsFrom,
   type ChartTabKey,
   type CourseChart,
@@ -26,7 +26,7 @@ export function useCourseChartsViewModel(
   repository: CoursesRepository = coursesRepository,
 ): CourseChartsViewModel {
   const [chartTab, setChartTab] = useState<ChartTabKey>("score");
-  const { data: analytics = EMPTY_ANALYTICS } = useCourseAnalytics(userId, courseId, repository);
+  const { data: analytics = EMPTY_COURSE_ANALYTICS } = useCourseAnalytics(userId, courseId, repository);
   const charts = useMemo(() => chartsFrom(analytics), [analytics]);
 
   return {

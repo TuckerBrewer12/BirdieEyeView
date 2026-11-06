@@ -1,7 +1,7 @@
 """Stats/dashboard API endpoints."""
 
-from datetime import date, datetime, timedelta
-from typing import Literal, Optional
+from datetime import date, datetime, timedelta, timezone
+from typing import List, Literal, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from database.db_manager import DatabaseManager
@@ -10,12 +10,26 @@ from api.input_validation import ensure_uuid_str
 from models import User
 from api.round_responses import round_summary
 from api.course_analytics_responses import course_analytics
-from api.schemas import CourseAnalyticsResponse, DashboardResponse
+from api.analytics_responses import analytics_response
+from api.schemas import (
+    AnalyticsResponse,
+    BenchmarkComparisonResponse,
+    CourseAnalyticsResponse,
+    DashboardResponse,
+    GoalReportResponse,
+    PlayedCourseResponse,
+    RoundComparisonResponse,
+)
 from analytics import stats as analytics
+from analytics import benchmarks
 from analytics import dashboard
 from analytics import handicap as hcap
+from analytics.goals import goal_report
 
 router = APIRouter()
+
+# The most rounds the analytics page reads at once.
+MAX_ANALYTICS_ROUNDS = 500
 
 
 @router.get("/dashboard/{user_id}", response_model=DashboardResponse)
@@ -39,58 +53,65 @@ async def get_dashboard(
     putts = [p for p in (r.get_total_putts() for r in summaries) if p is not None]
     girs = [g for g in (r.get_total_gir() for r in summaries) if g is not None]
 
-    best = min(scored, key=lambda r: r.calculate_total_score()) if scored else None
+    # Best as the round list's Best ranks rounds; newest first, so a tie goes to the newest.
+    best = analytics.best_round(summaries)
+    best_summary = round_summary(best) if best else None
 
-    recent_rounds = [round_summary(r) for r in summaries[:5]]
+    recent = summaries[:5]
+    recent_rounds = [round_summary(r) for r in recent]
+    best_recent = analytics.best_round(recent)
 
     # The last 20 rounds, plus 19 before them so the handicap trend has a full rolling window.
     hi_rounds = list(reversed(await db.rounds.get_rounds_for_user(str(user_id), limit=39, offset=0)))
     last_20 = hi_rounds[-20:]
-    calculated_hi = hcap.player_handicap_index(last_20, user)
-    handicap_trend = _build_handicap_trend(hi_rounds, last_20)
+    # The golfer's own index, as `api/player_handicap.player_handicap_index` reads it: the same
+    # last 20 rounds, held at the handicap they gave. The trend's last point is the same index.
+    index_window = hcap.player_index_window(user, hi_rounds)
+    handicap_trend = hcap.player_handicap_trend(user, hi_rounds)[-len(last_20):] if last_20 else []
     mix = dashboard.score_mix(last_20)
     recent_mix = dashboard.score_mix(last_20[-dashboard.RECENT_ROUNDS:])
+    form = dashboard.recent_form(last_20)
+    average_putts = round(sum(putts) / len(putts), 1) if putts else None
+    putts_shown = dashboard.putts_shown(form["putts_per_18"], average_putts)
 
     return DashboardResponse(
         total_rounds=total_rounds,
         scoring_average=round(sum(scores) / len(scores), 1) if scores else None,
-        best_round=round_summary(best) if best else None,
-        handicap_index=calculated_hi,
+        best_round=best_summary.total_score if best_summary else None,
+        best_round_id=best_summary.id if best_summary else None,
+        best_round_course=best_summary.course_name if best_summary else None,
+        handicap_index=index_window["index"],
         recent_rounds=recent_rounds,
-        average_putts=round(sum(putts) / len(putts), 1) if putts else None,
+        best_recent_round_id=best_recent.id if best_recent else None,
+        average_putts=average_putts,
         average_gir=round(sum(girs) / len(girs), 1) if girs else None,
+        putts_per_round=putts_shown["per_round"],
+        putts_rating=putts_shown["rating"],
         scoring_average_l20=dashboard.scoring_average(last_20),
         scoring_average_l5=dashboard.scoring_average(last_20, dashboard.RECENT_ROUNDS),
         scoring_average_change=dashboard.scoring_average_change(last_20),
         handicap_change=dashboard.handicap_change(handicap_trend),
-        recent_form=dashboard.recent_form(last_20),
+        recent_form=form,
         score_mix=mix["percentages"],
         recent_score_mix=recent_mix["percentages"],
         score_mix_holes=mix["holes"],
-        # The summaries carry each hole's par, putts and GIR, all the milestones read. Oldest
-        # first, so a par streak can run from one round into the next.
         milestones=dashboard.lifetime_milestones(
             analytics.notable_achievements(list(reversed(summaries)), home_course_id=user.home_course_id)
         ),
         whs=dashboard.whs_breakdown(
-            last_20, handicap_trend, hcap.score_differentials_per_round(last_20), calculated_hi
+            last_20, handicap_trend, hcap.score_differentials_per_round(last_20), index_window
         ),
+        score_trend=analytics.score_trend(last_20),
+        handicap_trend=handicap_trend,
+        scrambling_trend=analytics.scrambling_per_round(last_20),
+        up_and_down_trend=analytics.up_and_down_trend(last_20),
     )
 
 
-def _build_handicap_trend(hi_rounds, display_rounds):
-    """Compute rolling HI trend from hi_rounds, slice to display window, then annotate
-    used_in_hi based only on the displayed rounds so green count matches WHS best-N."""
-    full = hcap.handicap_trend(hi_rounds)
-    sliced = full[-len(display_rounds):]
-    hcap.annotate_used_in_hi(sliced)
-    return sliced
-
-
-@router.get("/analytics/{user_id}")
+@router.get("/analytics/{user_id}", response_model=AnalyticsResponse)
 async def get_analytics(
     user_id: UUID,
-    limit: int = Query(default=50, ge=1, le=500),
+    limit: int = Query(default=50, ge=1, le=MAX_ANALYTICS_ROUNDS),
     course_id: Optional[str] = Query(default=None),
     timeframe: Optional[Literal["ytd", "1y"]] = Query(default=None),
     db: DatabaseManager = Depends(get_db),
@@ -113,12 +134,12 @@ async def get_analytics(
         else:
             try:
                 resolved_course_id = ensure_uuid_str(course_id, "course_id")
-            except ValueError as exc:
-                raise HTTPException(422, str(exc))
+            except ValueError:
+                raise HTTPException(422, "course_id must be a valid UUID.") from None
 
     # Resolve date_from filter
     date_from: Optional[date] = None
-    today = date.today()
+    today = datetime.now(timezone.utc).date()
     if timeframe == "ytd":
         date_from = date(today.year, 1, 1)
     elif timeframe == "1y":
@@ -132,224 +153,24 @@ async def get_analytics(
     )
     rounds = list(reversed(rounds_desc))
 
-    # Fetch up to 19 extra rounds so handicap_trend uses a true rolling 20-round window
-    hi_rounds_desc = await db.rounds.get_rounds_for_user(
-        target_user_id, limit=limit + 19, offset=0,
-        course_id=resolved_course_id,
-        date_from=date_from,
+    # The golfer's own rounds, unfiltered, with up to 19 more before the page's so the index after
+    # each has a full 20-round window. A course or timeframe narrows the rounds shown, not the
+    # golfer's index: that reads every round they played. Narrowed, the page's rounds can be any
+    # of theirs, so read as many as the page can ask for.
+    filtered = resolved_course_id is not None or date_from is not None
+    history_desc = await db.rounds.get_rounds_for_user(
+        target_user_id, limit=(MAX_ANALYTICS_ROUNDS if filtered else limit) + 19, offset=0,
     )
-    hi_rounds = list(reversed(hi_rounds_desc))
 
-    if not rounds:
-        return {
-            "kpis": {
-                "scoring_average": None,
-                "gir_percentage": None,
-                "putts_per_gir": None,
-                "scrambling_percentage": None,
-                "up_and_down_percentage": None,
-                "handicap_index": None,
-                "total_rounds": 0,
-            },
-            "score_trend": [],
-            "net_score_trend": [],
-            "gir_trend": [],
-            "putts_trend": [],
-            "three_putts_trend": [],
-            "scrambling_trend": [],
-            "up_and_down_trend": [],
-            "score_type_distribution": [],
-            "scoring_by_par": [],
-            "scoring_by_handicap": [],
-            "gir_vs_non_gir": [],
-            "handicap_trend": [],
-            "score_differentials": [],
-            "notable_achievements": {
-                "scoring_records": {
-                    "lifetime": {},
-                    "one_year": {},
-                },
-                "scoring_records_events": {
-                    "lifetime": {},
-                    "one_year": {},
-                },
-                "career_totals": {
-                    "lifetime": {},
-                    "one_year": {},
-                },
-                "best_performance_streaks": {
-                    "lifetime": {},
-                    "one_year": {},
-                },
-                "best_performance_streaks_events": {
-                    "lifetime": {},
-                    "one_year": {},
-                },
-                "home_course_records": {
-                    "lifetime": {
-                        "home_course_name": None,
-                        "lowest_score_on_home_course": None,
-                        "most_rounds_played_at_home_course": 0,
-                    },
-                    "one_year": {
-                        "home_course_name": None,
-                        "lowest_score_on_home_course": None,
-                    },
-                },
-                "home_course_records_events": {
-                    "lifetime": {
-                        "lowest_score_on_home_course": None,
-                    },
-                    "one_year": {
-                        "lowest_score_on_home_course": None,
-                    },
-                },
-                "putting_milestones": {
-                    "lifetime": {
-                        "fewest_putts_in_round": None,
-                        "most_1_putts_in_round": None,
-                        "most_3_putts_in_round": None,
-                        "putt_breaks": [
-                            {"threshold": 45, "achievement": None},
-                            {"threshold": 42, "achievement": None},
-                            {"threshold": 39, "achievement": None},
-                            {"threshold": 36, "achievement": None},
-                            {"threshold": 33, "achievement": None},
-                            {"threshold": 30, "achievement": None},
-                            {"threshold": 27, "achievement": None},
-                            {"threshold": 24, "achievement": None},
-                            {"threshold": 21, "achievement": None},
-                        ],
-                    },
-                    "one_year": {
-                        "fewest_putts_in_round": None,
-                        "most_1_putts_in_round": None,
-                        "most_3_putts_in_round": None,
-                        "putting_milestones_achieved_from_lifetime_set": 0,
-                    },
-                },
-                "putting_milestones_events": {
-                    "lifetime": {
-                        "fewest_putts_in_round": None,
-                        "most_1_putts_in_round": None,
-                        "most_3_putts_in_round": None,
-                    },
-                    "one_year": {
-                        "fewest_putts_in_round": None,
-                        "most_1_putts_in_round": None,
-                        "most_3_putts_in_round": None,
-                    },
-                },
-                "gir_milestones": {
-                    "lifetime": {
-                        "gir_breaks": [
-                            {"threshold": 3, "achievement": None},
-                            {"threshold": 6, "achievement": None},
-                            {"threshold": 9, "achievement": None},
-                            {"threshold": 12, "achievement": None},
-                            {"threshold": 15, "achievement": None},
-                            {"threshold": 18, "achievement": None},
-                        ],
-                        "highest_gir_percentage_in_round": None,
-                        "most_gir_in_round": None,
-                    },
-                    "one_year": {
-                        "best_gir_round": None,
-                        "best_gir_in_round": None,
-                        "highest_gir_percentage": None,
-                        "gir_milestones_achieved_from_lifetime_set": 0,
-                    },
-                },
-                "gir_milestones_events": {
-                    "lifetime": {
-                        "highest_gir_percentage_in_round": None,
-                        "most_gir_in_round": None,
-                    },
-                    "one_year": {
-                        "best_gir_round": None,
-                        "highest_gir_percentage": None,
-                    },
-                },
-                "round_milestones": {
-                    "lifetime": {
-                        "score_breaks": [
-                            {"threshold": 120, "achievement": None},
-                            {"threshold": 110, "achievement": None},
-                            {"threshold": 100, "achievement": None},
-                            {"threshold": 95, "achievement": None},
-                            {"threshold": 90, "achievement": None},
-                            {"threshold": 85, "achievement": None},
-                            {"threshold": 80, "achievement": None},
-                            {"threshold": 75, "achievement": None},
-                            {"threshold": 70, "achievement": None},
-                            {"threshold": 65, "achievement": None},
-                            {"threshold": 60, "achievement": None},
-                        ],
-                        "first_round_under_par": None,
-                        "first_eagle": None,
-                        "first_hole_in_one": None,
-                    },
-                    "one_year": {
-                        "new_personal_records_achieved_count": 0,
-                        "new_personal_records_achieved": [],
-                    },
-                },
-                "window_days": 365,
-            },
-        }
-
-    scores = [r.calculate_total_score() for r in rounds if r.calculate_total_score() is not None]
-    gir_data = analytics.overall_gir_percentage(rounds)
-    putts_gir_data = analytics.overall_putts_per_gir(rounds)
-    scrambling_rows = analytics.scrambling_per_round(rounds)
-    scrambling_vals = [r["scrambling_percentage"] for r in scrambling_rows if r["scrambling_percentage"] is not None]
-    avg_scrambling = sum(scrambling_vals) / len(scrambling_vals) if scrambling_vals else None
-    ud_rows = analytics.up_and_down_trend(rounds)
-    ud_vals = [r["percentage"] for r in ud_rows if r["opportunities"] > 0]
-    avg_up_and_down = sum(ud_vals) / len(ud_vals) if ud_vals else None
-
-    current_hi = hcap.handicap_index(hi_rounds)
-
-    return {
-        "kpis": {
-            "scoring_average": round(sum(scores) / len(scores), 1) if scores else None,
-            "gir_percentage": (
-                round(gir_data["gir_percentage"], 1)
-                if gir_data["gir_percentage"] is not None
-                else None
-            ),
-            "putts_per_gir": (
-                round(putts_gir_data["putts_per_gir"], 2)
-                if putts_gir_data["putts_per_gir"] is not None
-                else None
-            ),
-            "scrambling_percentage": round(avg_scrambling, 1) if avg_scrambling is not None else None,
-            "up_and_down_percentage": round(avg_up_and_down, 1) if avg_up_and_down is not None else None,
-            "handicap_index": current_hi,
-            "total_rounds": len(rounds),
-        },
-        "score_trend": analytics.score_trend(rounds),
-        "net_score_trend": analytics.net_score_trend(rounds, current_hi),
-        "gir_trend": analytics.gir_per_round(rounds),
-        "putts_trend": analytics.putts_per_round(rounds),
-        "three_putts_trend": analytics.three_putts_per_round(rounds),
-        "scrambling_trend": scrambling_rows,
-        "up_and_down_trend": ud_rows,
-        "score_type_distribution": analytics.score_type_distribution_per_round(rounds),
-        "scoring_by_par": analytics.scoring_by_par(rounds),
-        "scoring_by_yardage": analytics.scoring_by_yardage_buckets(rounds),
-        "scoring_by_handicap": analytics.scoring_vs_hole_handicap(rounds),
-        "gir_vs_non_gir": analytics.gir_vs_non_gir_score_distribution(rounds),
-        "handicap_trend": _build_handicap_trend(hi_rounds, rounds),
-        "score_differentials": hcap.score_differentials_per_round(rounds),
-        "notable_achievements": analytics.notable_achievements(
-            rounds,
-            home_course_id=user.home_course_id,
-        ),
-    }
+    return analytics_response(
+        rounds,
+        list(reversed(history_desc)),
+        home_course_id=user.home_course_id,
+        user=user,
+    )
 
 
-@router.get("/{user_id}/played-courses")
+@router.get("/{user_id}/played-courses", response_model=List[PlayedCourseResponse])
 async def get_played_courses(
     user_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -358,10 +179,11 @@ async def get_played_courses(
     """Return distinct courses the user has rounds linked to."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, "Forbidden")
-    return await db.rounds.get_played_courses_for_user(str(user_id))
+    courses = await db.rounds.get_played_courses_for_user(str(user_id))
+    return [PlayedCourseResponse(**course) for course in courses]
 
 
-@router.get("/{user_id}/goal-report")
+@router.get("/{user_id}/goal-report", response_model=GoalReportResponse)
 async def get_goal_report(
     user_id: UUID,
     limit: int = Query(default=50, ge=1, le=500),
@@ -385,11 +207,42 @@ async def get_goal_report(
         if home_rounds_desc:
             home_course_rounds = list(reversed(home_rounds_desc))
 
-    from analytics.goals import goal_report
-    return goal_report(rounds, user.scoring_goal, home_course_rounds)
+    return GoalReportResponse.model_validate(goal_report(rounds, user.scoring_goal, home_course_rounds))
 
 
-@router.get("/compare/{user_id}/{round_id}")
+@router.get("/{user_id}/benchmark", response_model=BenchmarkComparisonResponse)
+async def get_benchmark_comparison(
+    user_id: UUID,
+    against: Literal["handicap", "peak", "friend"],
+    handicap: Optional[int] = Query(default=None),
+    friend_id: Optional[UUID] = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=500),
+    db: DatabaseManager = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """The player's last `limit` rounds against a handicap's shape, the golfers their peak
+    rounds play like, or a friend's last `limit` rounds."""
+    viewer_id = str(current_user.id)
+    if viewer_id != str(user_id):
+        raise HTTPException(403, "Forbidden")
+    rounds = list(reversed(await db.rounds.get_rounds_for_user(viewer_id, limit=limit)))
+
+    if against == "handicap":
+        if handicap is None or benchmarks.handicap_benchmark(handicap) is None:
+            raise HTTPException(422, "No benchmark for that handicap")
+        return BenchmarkComparisonResponse.model_validate(benchmarks.handicap_comparison(rounds, handicap))
+    if against == "peak":
+        return BenchmarkComparisonResponse.model_validate(benchmarks.peak_comparison(rounds))
+
+    if friend_id is None:
+        raise HTTPException(422, "friend_id is required")
+    if not await db.friendships.are_friends(viewer_id, str(friend_id)):
+        raise HTTPException(403, "Forbidden")
+    friend_rounds = list(reversed(await db.rounds.get_rounds_for_user(str(friend_id), limit=limit)))
+    return BenchmarkComparisonResponse.model_validate(benchmarks.friend_comparison(rounds, friend_rounds))
+
+
+@router.get("/compare/{user_id}/{round_id}", response_model=RoundComparisonResponse)
 async def get_round_comparison(
     user_id: UUID,
     round_id: UUID,
@@ -408,14 +261,14 @@ async def get_round_comparison(
     if round_index is None:
         raise HTTPException(404, "Round not found in user history")
 
-    return {
-        "score": analytics.score_comparison(rounds, round_index=round_index),
-        "putts": analytics.putts_comparison(rounds, round_index=round_index),
-        "gir": analytics.gir_comparison(rounds, round_index=round_index),
-        "three_putts": analytics.three_putts_comparison(rounds, round_index=round_index),
-        "putts_per_gir": analytics.putts_per_gir_comparison(rounds, round_index=round_index),
-        "scrambling": analytics.scrambling_comparison(rounds, round_index=round_index),
-    }
+    return RoundComparisonResponse(
+        score=analytics.score_comparison(rounds, round_index=round_index),
+        putts=analytics.putts_comparison(rounds, round_index=round_index),
+        gir=analytics.gir_comparison(rounds, round_index=round_index),
+        three_putts=analytics.three_putts_comparison(rounds, round_index=round_index),
+        putts_per_gir=analytics.putts_per_gir_comparison(rounds, round_index=round_index),
+        scrambling=analytics.scrambling_comparison(rounds, round_index=round_index),
+    )
 
 
 @router.get("/milestones/{user_id}")
@@ -440,11 +293,11 @@ async def get_milestones(
 
     achievements = analytics.notable_achievements(rounds_chrono, home_course_id=user.home_course_id)
 
-    def _parse_date(d: str) -> datetime:
+    def _parse_date(d: str) -> date:
         try:
-            return datetime.strptime(d, "%Y/%m/%d")
-        except Exception:
-            return datetime.min
+            return analytics.parse_date_short(d)
+        except ValueError:
+            return date.min
 
     milestones = []
 

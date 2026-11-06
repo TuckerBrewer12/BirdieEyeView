@@ -11,22 +11,33 @@ import asyncio
 import json
 import random
 import sys
-from datetime import datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from fastapi.encoders import jsonable_encoder  # noqa: E402
+from fastapi.encoders import jsonable_encoder
 
-from api.round_responses import round_detail  # noqa: E402
-from api.routers import stats  # noqa: E402
-from models import Course, Hole, HoleScore, Round, Tee, User  # noqa: E402
+from analytics.stats import best_round
+from api.analytics_responses import analytics_response
+from api.player_handicap import player_handicap_index
+from api.round_responses import round_detail
+from api.routers import stats, users
+from models import Course, Hole, HoleScore, Round, Tee, User
 
 OUT = Path(__file__).resolve().parent.parent / "frontend" / "src" / "testing" / "fixtures" / "sampleGolfer.ts"
 
 # Seeded, so a re-run writes the same golfer and the captures stay put.
 rng = random.Random(7)
+
+# Ten months after the season: the last year then starts after the golfer's March rounds.
+A_YEAR_ON = date(2027, 4, 1)
+
+
+def _naive(day: date, hour: int = 0) -> datetime:
+    """A time with no zone, as the database's timestamp and date columns come back."""
+    return datetime.combine(day, time(hour))
 
 
 def _id(name: str) -> str:
@@ -84,7 +95,7 @@ USER = User(
     email_verified=True,
     home_course_id=PRESIDIO.id,
     handicap=None,
-    created_at=datetime(2026, 2, 20),
+    created_at=_naive(date(2026, 2, 20)),
     scoring_goal=79,
 )
 
@@ -109,7 +120,7 @@ def _hole(number: int, par: int, skill: float) -> HoleScore:
 
 
 def _season() -> list[Round]:
-    start = datetime(2026, 2, 28, 9, 0)
+    start = _naive(date(2026, 2, 28), 9)
     rounds = []
     for i, course in enumerate(SCHEDULE):
         skill = 1 - i / (len(SCHEDULE) - 1)
@@ -147,6 +158,13 @@ def _database(rounds: list[Round]):
         ]
         return picked[offset:offset + limit]
 
+    async def get_played_courses_for_user(_user_id):
+        courses = {r.course.id: r.course for r in rounds}.values()
+        return [
+            {"id": c.id, "name": c.name, "location": c.location}
+            for c in sorted(courses, key=lambda c: c.name)
+        ]
+
     async def count_rounds_for_user(_user_id):
         return len(rounds)
 
@@ -158,6 +176,7 @@ def _database(rounds: list[Round]):
         rounds = _Repo(
             get_round_summaries_for_user=get_round_summaries_for_user,
             get_rounds_for_user=get_rounds_for_user,
+            get_played_courses_for_user=get_played_courses_for_user,
             count_rounds_for_user=count_rounds_for_user,
         )
         friendships = _Repo(are_friends=are_friends)
@@ -165,7 +184,12 @@ def _database(rounds: list[Round]):
     return Database()
 
 
-async def _responses() -> dict:
+def _achievements_a_year_on(rounds: list[Round]):
+    """The golfer's records and milestones as the server works them out on `A_YEAR_ON`."""
+    return analytics_response(rounds, rounds, home_course_id=USER.home_course_id, today=A_YEAR_ON).notable_achievements
+
+
+async def _responses() -> tuple[dict, dict]:
     rounds = _season()
     db = _database(rounds)
     user_id = UUID(USER.id)
@@ -173,36 +197,43 @@ async def _responses() -> dict:
     dashboard = await stats.get_dashboard(user_id, db, USER)
     analytics = await stats.get_analytics(user_id, 50, None, None, db, USER)
     goal_report = await stats.get_goal_report(user_id, 20, db, USER)
+    played_courses = await stats.get_played_courses(user_id, db, USER)
+    # Analytics' course filter, for the course played least, so the figures plainly change.
+    links_analytics = await stats.get_analytics(user_id, 50, HALF_MOON_BAY.id, None, db, USER)
 
-    best = min(rounds, key=lambda r: r.calculate_total_score())
-    profile = {
-        "id": USER.id,
-        "name": USER.name,
-        "email": USER.email,
-        "home_course_id": USER.home_course_id,
-        "handicap": dashboard.handicap_index,
-        "created_at": USER.created_at,
-        "scoring_goal": USER.scoring_goal,
-    }
-    return jsonable_encoder({
+    best = best_round(sorted(rounds, key=lambda r: r.date, reverse=True))
+    profile = users.user_response(USER.model_copy(update={"handicap": dashboard.handicap_index}))
+    seed = jsonable_encoder({
         "user": {"user_id": USER.id, "name": USER.name, "email": USER.email, "email_verified": True},
         "profile": profile,
         "handicapIndex": dashboard.handicap_index,
         "dashboard": dashboard,
         "analytics": analytics,
+        "analyticsByCourse": {HALF_MOON_BAY.id: links_analytics},
+        "playedCourses": played_courses,
         "goalReport": goal_report,
         # The tour's pages never ask for the round list; Analytics opens just the best round.
-        "detailRounds": [round_detail(best)],
+        "detailRounds": [round_detail(best, await player_handicap_index(db, USER))],
     })
+    return seed, jsonable_encoder(_achievements_a_year_on(rounds))
 
 
 HEADER = """\
 // Generated by scripts/sample_golfer.py from a seeded season run through the real stats
 // endpoints. Do not edit by hand; re-run the script instead.
+import type { NotableAchievementsDto } from "../../types/api";
 import type { FakeBackendSeed } from "../fakes/FakeBackend";
 
 /** The golfer the landing page's demo tour is captured with. */
 export const sampleGolfer = """
+
+A_YEAR_ON_HEADER = """
+
+/**
+ * The same golfer's records and milestones on 2027-04-01: the server's last year then starts
+ * after their March rounds.
+ */
+export const achievementsAYearOn = """
 
 
 def _format(value, depth: int = 0) -> str:
@@ -221,9 +252,11 @@ def _format(value, depth: int = 0) -> str:
 
 
 def main() -> int:
-    seed = asyncio.run(_responses())
-    body = _format(seed)
-    OUT.write_text(HEADER + body + " satisfies FakeBackendSeed;\n")
+    seed, a_year_on = asyncio.run(_responses())
+    OUT.write_text(
+        HEADER + _format(seed) + " satisfies FakeBackendSeed;\n"
+        + A_YEAR_ON_HEADER + _format(a_year_on) + " satisfies NotableAchievementsDto;\n"
+    )
     print(f"wrote {OUT.relative_to(Path.cwd()) if OUT.is_relative_to(Path.cwd()) else OUT}")
     return 0
 

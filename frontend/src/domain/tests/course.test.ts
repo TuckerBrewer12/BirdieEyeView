@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { Course } from "@/types/golf";
+import type { CourseDto } from "@/types/api";
 import { courseResponse, type StoredCourse, type StoredTee } from "@/testing/fakes/courseResponses";
 import {
   chooseCompatibleTee,
+  courseSummaryFrom,
   extractTeeColorToken,
   getHole,
   getTee,
@@ -26,7 +27,7 @@ const blue: StoredTee = {
   course_rating: 72.4,
 };
 
-function course(overrides: Partial<StoredCourse> = {}): Course {
+function course(overrides: Partial<StoredCourse> = {}): CourseDto {
   return courseResponse({
     id: "c1",
     name: "Test",
@@ -73,5 +74,31 @@ describe("teesByLength", () => {
     expect(chooseCompatibleTee("Blue", ["Blue", "White"])).toBe("Blue");
     expect(chooseCompatibleTee("blue tees", ["Blue", "White"])).toBe("Blue");
     expect(chooseCompatibleTee("Gold", ["Blue", "White"])).toBeNull();
+  });
+});
+
+describe("courseSummaryFrom", () => {
+  it("reads a listed course, and keeps the provider's id for one found there", () => {
+    expect(
+      courseSummaryFrom({
+        id: "external:9",
+        name: "Torrey Pines",
+        location: "La Jolla, CA",
+        par: 72,
+        total_holes: 18,
+        tee_count: 4,
+        source: "external",
+        external_course_id: "ext-9",
+      }),
+    ).toEqual({
+      id: "external:9",
+      name: "Torrey Pines",
+      location: "La Jolla, CA",
+      par: 72,
+      holeCount: 18,
+      teeCount: 4,
+      source: "external",
+      externalId: "ext-9",
+    });
   });
 });

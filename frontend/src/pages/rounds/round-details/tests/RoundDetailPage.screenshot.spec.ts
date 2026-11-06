@@ -4,14 +4,15 @@ import {
   halfMoonBayCourse,
   halfMoonBayRound,
   pebbleBeachCourse,
+  ratedHalfMoonBayCourse,
+  ratedHalfMoonBayRound,
   roundComparison,
   scannedRound,
 } from "../../../../testing/fixtures/roundDetails";
 
 test("populated round", async ({ roundDetail }) => {
-  await roundDetail.open(halfMoonBayRound, {
-    fullCourses: [halfMoonBayCourse],
-    handicapIndex: 10.4,
+  await roundDetail.open(ratedHalfMoonBayRound, {
+    fullCourses: [ratedHalfMoonBayCourse],
   });
   await roundDetail.seesCourse("Half Moon Bay");
   await roundDetail.capture("round-detail-populated.png");
@@ -19,9 +20,8 @@ test("populated round", async ({ roundDetail }) => {
 
 test("populated round in dark mode", async ({ roundDetail }) => {
   await roundDetail.dark();
-  await roundDetail.open(halfMoonBayRound, {
-    fullCourses: [halfMoonBayCourse],
-    handicapIndex: 10.4,
+  await roundDetail.open(ratedHalfMoonBayRound, {
+    fullCourses: [ratedHalfMoonBayCourse],
   });
   await roundDetail.seesCourse("Half Moon Bay");
   await roundDetail.capture("round-detail-populated-dark.png");
@@ -29,6 +29,7 @@ test("populated round in dark mode", async ({ roundDetail }) => {
 
 test("unlinked round", async ({ roundDetail }) => {
   await roundDetail.open(scannedRound);
+  await roundDetail.seesLinkCourse();
   await roundDetail.capture("round-detail-unlinked.png");
 });
 
@@ -55,6 +56,7 @@ test("course link failed", async ({ roundDetail }) => {
 test("delete confirmation", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapDelete();
+  await roundDetail.seesDeleteConfirm();
   await roundDetail.capture("round-detail-delete-confirm.png");
 });
 
@@ -71,6 +73,7 @@ test("comparison charts", async ({ roundDetail }) => {
 test("edit mode", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapEdit();
+  await roundDetail.seesEditing();
   await roundDetail.capture("round-detail-edit.png");
 });
 

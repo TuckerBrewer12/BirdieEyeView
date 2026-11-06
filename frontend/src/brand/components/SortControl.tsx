@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Check } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ChevronDown } from "lucide-react";
 import { Select } from "@base-ui/react/select";
 import { cn } from "@/brand/cn";
 
@@ -12,9 +12,12 @@ interface SortControlProps<T extends string> {
   value: T;
   options: readonly SortOption<T>[];
   onChange: (value: T) => void;
-  ascending: boolean;
-  onToggleDirection: () => void;
+  /** Leave off `onToggleDirection` and the control only picks: no arrow, a chevron on the label. */
+  ascending?: boolean;
+  onToggleDirection?: () => void;
   directionDisabled?: boolean;
+  /** What the menu picks, for screen readers. */
+  "aria-label"?: string;
   className?: string;
 }
 
@@ -23,9 +26,10 @@ function SortControl<T extends string>({
   value,
   options,
   onChange,
-  ascending,
+  ascending = true,
   onToggleDirection,
   directionDisabled = false,
+  "aria-label": ariaLabel = "Sort by",
   className,
 }: SortControlProps<T>) {
   return (
@@ -39,10 +43,14 @@ function SortControl<T extends string>({
         modal={false}
       >
         <Select.Trigger
-          aria-label="Sort by"
-          className="rounded-sm px-0.5 text-label font-semibold text-primary outline-none select-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/50"
+          aria-label={ariaLabel}
+          className={cn(
+            "rounded-sm px-0.5 text-label font-semibold text-primary outline-none select-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/half",
+            !onToggleDirection && "inline-flex items-center gap-0.5",
+          )}
         >
           {label}
+          {!onToggleDirection && <ChevronDown aria-hidden className="size-3.5" />}
         </Select.Trigger>
         <Select.Portal>
           <Select.Positioner
@@ -54,7 +62,7 @@ function SortControl<T extends string>({
           >
             <Select.Popup
               data-slot="sort-menu"
-              className="min-w-28 origin-(--transform-origin) overflow-hidden rounded-lg bg-card p-1 text-card-foreground shadow-md ring-1 ring-foreground/10 outline-none duration-100 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
+              className="min-w-28 origin-(--transform-origin) overflow-hidden rounded-lg bg-card p-1 text-card-foreground shadow-md ring-1 ring-foreground/tint outline-none duration-100 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
             >
               <Select.List className="!block w-full">
                 {options.map((option) => (
@@ -74,19 +82,21 @@ function SortControl<T extends string>({
           </Select.Positioner>
         </Select.Portal>
       </Select.Root>
-      <button
-        type="button"
-        aria-label={ascending ? "Sort descending" : "Sort ascending"}
-        disabled={directionDisabled}
-        onClick={onToggleDirection}
-        className="inline-flex size-5 items-center justify-center rounded-sm text-primary outline-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-40"
-      >
-        {directionDisabled || ascending ? (
-          <ArrowUp className="size-3.5" />
-        ) : (
-          <ArrowDown className="size-3.5" />
-        )}
-      </button>
+      {onToggleDirection && (
+        <button
+          type="button"
+          aria-label={ascending ? "Sort descending" : "Sort ascending"}
+          disabled={directionDisabled}
+          onClick={onToggleDirection}
+          className="inline-flex size-5 items-center justify-center rounded-sm text-primary outline-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/half disabled:cursor-default disabled:opacity-40"
+        >
+          {directionDisabled || ascending ? (
+            <ArrowUp className="size-3.5" />
+          ) : (
+            <ArrowDown className="size-3.5" />
+          )}
+        </button>
+      )}
     </div>
   );
 }

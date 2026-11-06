@@ -8,8 +8,8 @@ import {
   StatLabel,
   StatValue,
 } from "@/brand";
-import type { ScoreMix } from "@/domain";
-import { avgLabel, pctLabel, puttsLabel } from "../present";
+import { formatOneDecimal, formatPercent, pluralize, type ScoreMix } from "@/domain";
+import { puttsLabel } from "../present";
 
 interface ScoringHeroCardProps {
   /** Scoring average over the last 20 rounds. */
@@ -45,7 +45,7 @@ export function ScoringHeroCard({
     { label: "Best", value: bestRound?.toString() ?? "—" },
     { label: "Rounds", value: totalRounds?.toString() ?? "—" },
     { label: "Putts", value: puttsLabel(putts) },
-    { label: "GIR", value: pctLabel(girPct) },
+    { label: "GIR", value: formatPercent(girPct) },
   ];
 
   return (
@@ -58,21 +58,21 @@ export function ScoringHeroCard({
               direction={change < 0 ? "down" : "up"}
               className="rounded-full px-2 py-0.5 data-[direction=down]:bg-score-birdie-muted data-[direction=up]:bg-score-bogey-muted"
             >
-              {Math.abs(change).toFixed(1)} vs L5
+              {formatOneDecimal(Math.abs(change))} vs L5
             </StatDelta>
           )}
         </div>
 
         <div className="flex items-center gap-3.5">
-          <StatValue size="xl">{avgLabel(average)}</StatValue>
-          <Sparkline className="min-w-0 flex-1" series={[{ values: recentScores }]} fill mean />
+          <StatValue size="xl">{formatOneDecimal(average)}</StatValue>
+          <Sparkline className="min-w-0 flex-1" series={[{ values: recentScores }]} fill reference={average} />
         </div>
 
         {mix && (
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <StatLabel>Score Mix · L20</StatLabel>
-              {mixHoles > 0 && <span className="text-meta text-muted-foreground">{mixHoles} holes</span>}
+              {mixHoles > 0 && <span className="text-meta text-muted-foreground">{pluralize(mixHoles, "hole")}</span>}
             </div>
             <ScoreMixBar mix={mix} />
           </div>

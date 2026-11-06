@@ -1,15 +1,13 @@
 import { cn } from "@/brand/cn";
 import { HoleScoreBars, PageTitle, ScoreCountChip, ToParFigure } from "@/brand";
-import { formatCourseHandicap, netScore, playedScoreKinds, scoreKindCountLabel, type Nine, type Round } from "@/domain";
-import { formatCourseName } from "@/lib/courseName";
-import { formatRoundDateLong } from "@/lib/roundDate";
+import { formatCourseHandicap, playedScoreKinds, scoreKindCountLabel, type Nine, type Round } from "@/domain";
+import { formatCourseName } from "@/domain/course";
+import { formatWeekdayDay } from "@/domain/date";
 
 export interface RoundDetailHeaderProps {
   round: Round;
   /** "72.4 / 130", when the tee is rated. */
   teeRating?: string | null;
-  /** The player's handicap on this course. Shows the net score when known. */
-  courseHandicap?: number | null;
   className?: string;
 }
 
@@ -23,7 +21,7 @@ function NineBars({ nine, label, className }: {
     <div className={cn("min-w-0 flex-1", className)}>
       <HoleScoreBars holes={nine.holes} variant="profile" />
       {nine.total != null && (
-        <div className="mt-1 text-caption font-bold uppercase tracking-kicker text-muted-foreground">
+        <div className="mt-1 text-kicker uppercase text-muted-foreground">
           {label} <span className="font-mono">{nine.total}</span>
         </div>
       )}
@@ -34,19 +32,18 @@ function NineBars({ nine, label, className }: {
 /**
  * The identity and shape of one round: what was played, when, how it went.
  */
-export function RoundDetailHeader({ round, teeRating, courseHandicap, className }: RoundDetailHeaderProps) {
-  const dateLabel = formatRoundDateLong(round.date);
-  const net = courseHandicap != null && round.score != null ? netScore(round.score, courseHandicap) : null;
+export function RoundDetailHeader({ round, teeRating, className }: RoundDetailHeaderProps) {
+  const dateLabel = formatWeekdayDay(round.date);
 
   return (
     <div data-slot="round-detail-header" className={cn("mb-4", className)}>
       <div className="pb-3.5">
         {dateLabel && (
-          <div className="mb-1 text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
+          <div className="mb-1 text-eyebrow uppercase text-muted-foreground">
             {dateLabel}
           </div>
         )}
-        <PageTitle className="pt-0 leading-display tracking-display">
+        <PageTitle className="pt-0 leading-display">
           {formatCourseName(round.course?.name)}
         </PageTitle>
         {(round.teeBox || teeRating) && (
@@ -65,19 +62,19 @@ export function RoundDetailHeader({ round, teeRating, courseHandicap, className 
       <div className="flex items-end gap-3.5 border-y border-border py-3.5">
         <div className="flex shrink-0 items-end">
           <div>
-            <div className="font-mono text-hero font-bold leading-none tracking-hero text-foreground">
+            <div className="font-mono text-hero text-foreground">
               {round.score ?? "—"}
             </div>
             <ToParFigure toPar={round.toPar} size="stat" />
           </div>
-          {courseHandicap != null && net != null && (
+          {round.courseHandicap != null && round.netScore != null && (
             <>
               <div className="mx-3.5 h-11 w-px shrink-0 bg-border" />
               <div>
-                <div className="mb-chip text-caption font-bold uppercase tracking-net text-muted-foreground">
-                  Net · hcp {formatCourseHandicap(courseHandicap)}
+                <div className="mb-chip text-caption font-bold uppercase tracking-eyebrow text-muted-foreground">
+                  Net · hcp {formatCourseHandicap(round.courseHandicap)}
                 </div>
-                <div className="font-mono text-lg font-bold leading-none text-primary">{net}</div>
+                <div className="font-mono text-lg font-bold leading-none text-primary">{round.netScore}</div>
               </div>
             </>
           )}
@@ -100,7 +97,7 @@ export function RoundDetailHeader({ round, teeRating, courseHandicap, className 
           )}
           {round.gir != null && (
             <span>
-              <span className="font-semibold text-primary">{round.gir}</span>/18 GIR
+              <span className="font-semibold text-primary">{round.gir}</span>/{round.holesPlayed} GIR
             </span>
           )}
         </div>

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -94,11 +94,15 @@ def test_goal_report_without_scores_returns_empty_report():
 
     assert report == {
         "scoring_average": None,
-        "best_score": None,
+        "lowest_score": None,
         "scoring_goal": 85,
         "gap": None,
         "on_track": False,
         "progress_pct": None,
+        "rounds_meeting_goal": 0,
+        "peak_gap": None,
+        "peak_meets_goal": None,
+        "attempts": [],
         "savers": [],
     }
 
@@ -127,7 +131,7 @@ def test_goal_report_ranks_all_actionable_savers(monkeypatch):
         "par5_opportunity",
     }
     assert report["scoring_average"] == 90.0
-    assert report["best_score"] == 90
+    assert report["lowest_score"] == 90
     assert report["gap"] == 5.0
     assert report["on_track"] is False
     assert report["savers"] == sorted(report["savers"], key=lambda saver: saver["strokes_saved"], reverse=True)
@@ -199,9 +203,9 @@ def test_handicap_index_applies_whs_table_seed_and_cap(monkeypatch):
 
 def test_seed_handicap_filters_early_rounds_and_honors_seed_date(monkeypatch):
     rounds = [
-        Round(id="old-high", date=datetime(2025, 1, 1)),
-        Round(id="old-low", date=datetime(2025, 1, 2)),
-        Round(id="new-high", date=datetime(2025, 2, 1)),
+        Round(id="old-high", date=datetime(2025, 1, 1, tzinfo=timezone.utc)),
+        Round(id="old-low", date=datetime(2025, 1, 2, tzinfo=timezone.utc)),
+        Round(id="new-high", date=datetime(2025, 2, 1, tzinfo=timezone.utc)),
     ]
     differentials_by_round = {"old-high": 20.0, "old-low": 10.0, "new-high": 22.0}
     monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: differentials_by_round[item.id])
@@ -210,56 +214,38 @@ def test_seed_handicap_filters_early_rounds_and_honors_seed_date(monkeypatch):
     assert handicap._eligible_differentials(
         rounds,
         seed_handicap=15.0,
-        seed_set_at=datetime(2025, 1, 15),
+        seed_set_at=datetime(2025, 1, 15, tzinfo=timezone.utc),
     ) == [10.0, 22.0]
     assert handicap.handicap_index(rounds[:1], seed_handicap=15.0) == 15.0
     assert handicap.handicap_index(rounds[1:2], seed_handicap=15.0) == 10.0
 
 
-def test_player_handicap_index_reads_the_last_20_rounds_with_the_players_seed(monkeypatch):
-    # Five early rounds the golfer has since outgrown, then twenty that make up the index.
-    rounds = [Round(id=f"early-{index}") for index in range(5)] + [Round(id=str(index)) for index in range(20)]
-    differentials = {f"early-{index}": 2.0 for index in range(5)}
-    differentials.update({str(index): float(index + 10) for index in range(20)})
-    monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: differentials[item.id])
-
-    # The best 8 of the last 20 (10..17), not the five 2.0s from before the window.
-    assert handicap.player_handicap_index(rounds, None) == 13.5
-    assert handicap.player_handicap_index(rounds, None) == handicap.handicap_index(rounds[-20:])
-
-    # Rounds before the golfer entered an index only count when they beat it.
-    seeded = User(name="Golfer", handicap=12.0, last_handicap_update=datetime(2025, 6, 1))
-    dated = [
-        Round(id=f"before-{index}", date=datetime(2025, 5, 1 + index)) for index in range(17)
-    ] + [Round(id=f"after-{index}", date=datetime(2025, 7, 1 + index)) for index in range(3)]
-    differentials.update({f"before-{index}": float(index + 5) for index in range(17)})
-    differentials.update({f"after-{index}": 30.0 for index in range(3)})
-    # Seven before-rounds beat 12.0 (5..11): ten differentials, so the best three count.
-    assert handicap.player_handicap_index(dated, seeded) == 6.0
-    assert handicap.player_handicap_index(dated, seeded) == handicap.handicap_index(
-        dated, seed_handicap=12.0, seed_set_at=datetime(2025, 6, 1)
-    )
-    assert handicap.player_handicap_index([], seeded) == 12.0
-
-
-def test_handicap_trend_and_annotation_prefers_recent_tie(monkeypatch):
+def test_handicap_trend_marks_the_counting_rounds_and_prefers_a_recent_tie(monkeypatch):
     rounds = [Round(id=str(index)) for index in range(4)]
     differentials_by_round = {"0": 12.0, "1": 10.0, "2": 10.0, "3": 14.0}
     monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: differentials_by_round[item.id])
 
-    trend = handicap.handicap_trend(rounds)
+    trend = handicap.player_handicap_trend(None, rounds)
     assert [entry["handicap_index"] for entry in trend] == [None, None, 8.0, 9.0]
-
-    handicap.annotate_used_in_hi(trend)
     assert trend[1]["used_in_hi"] is False
     assert trend[2]["used_in_hi"] is True
     assert all(entry["hi_threshold"] == 10.0 for entry in trend)
     # 12.0 is two strokes off the 10.0 cut-off, so it reads as close; 14.0 does not.
     assert [entry["differential_status"] for entry in trend] == ["close", "close", "counting", "out"]
 
-    short = [{"differential": None}, {"differential": 8.0}]
-    handicap.annotate_used_in_hi(short)
-    assert short == [
-        {"differential": None, "hi_threshold": None, "used_in_hi": None, "differential_status": "unrated"},
-        {"differential": 8.0, "hi_threshold": None, "used_in_hi": False, "differential_status": "out"},
+    monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: {"0": None, "1": 8.0}[item.id])
+    short = handicap.player_handicap_trend(None, rounds[:2])
+    assert [(e["used_in_hi"], e["hi_threshold"], e["differential_status"]) for e in short] == [
+        (None, None, "unrated"),
+        (False, None, "out"),
     ]
+
+
+def test_a_handicap_the_golfer_gave_holds_the_trend_until_rounds_count(monkeypatch):
+    rounds = [Round(id=str(index)) for index in range(2)]
+    monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: {"0": 20.0, "1": 9.0}[item.id])
+    user = User(id="u", handicap=12.0)
+    trend = handicap.player_handicap_trend(user, rounds)
+    # Onboarding: an early round only counts where it beats the 12.0 they gave.
+    assert [entry["handicap_index"] for entry in trend] == [12.0, 9.0]
+    assert handicap.player_handicap_index(user, rounds) == 9.0

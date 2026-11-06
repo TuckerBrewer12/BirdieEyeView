@@ -107,7 +107,8 @@ class AIService:
         )
         rounds = list(reversed(rounds_desc))  # chronological order
 
-        hi = hcap.player_handicap_index(rounds, user)
+        # The golfer's own index, over their last 20 rounds, as every screen shows it.
+        hi = hcap.player_handicap_index(user, rounds)
         if target_handicap is not None:
             benchmark, _ = _get_benchmark(target_handicap)
             hi_label = _TARGET_LABELS.get(target_handicap, _get_benchmark(target_handicap)[1])

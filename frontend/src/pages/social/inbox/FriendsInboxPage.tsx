@@ -13,7 +13,7 @@ import {
   ToggleGroupItem,
 } from "@/brand";
 import { cn } from "@/brand/cn";
-import type { Friendship, FriendshipStatus } from "../friendsModel";
+import type { Friendship, FriendshipStatus } from "@/data/friendsModel";
 import {
   ANSWERED_NOTICES,
   STATUS_LABELS,
@@ -80,7 +80,7 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
             variant="linkMuted"
             size="xs"
             className="mb-4 h-auto gap-1.5 p-0 text-body"
-            onClick={() => navigate("/social")}
+            onClick={() => void navigate("/social")}
           >
             <ArrowLeft className="size-4" />
             Back to social

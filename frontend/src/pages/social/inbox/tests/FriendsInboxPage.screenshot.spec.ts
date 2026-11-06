@@ -5,14 +5,14 @@ const seed = { friendships: populatedFriendships, golfers };
 
 test("received requests", async ({ inbox }) => {
   await inbox.open(seed);
-  await inbox.canAnswer("Riley Brooks");
+  await inbox.seesAnswerButtons("Riley Brooks");
   await inbox.capture("inbox-received.png");
 });
 
 test("received requests in dark mode", async ({ inbox }) => {
   await inbox.dark();
   await inbox.open(seed);
-  await inbox.canAnswer("Riley Brooks");
+  await inbox.seesAnswerButtons("Riley Brooks");
   await inbox.capture("inbox-received-dark.png");
 });
 
@@ -41,4 +41,10 @@ test("empty inbox", async ({ inbox }) => {
   await inbox.open();
   await inbox.seesEmptyState("received");
   await inbox.capture("inbox-empty.png");
+});
+
+test("load error does not show empty copy", async ({ inbox }) => {
+  await inbox.openFailed("Could not load your inbox.");
+  await inbox.doesNotSeeEmptyState();
+  await inbox.capture("inbox-load-error.png");
 });

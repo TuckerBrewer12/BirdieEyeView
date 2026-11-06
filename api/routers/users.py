@@ -6,11 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing import List, Literal, Optional
 from database.db_manager import DatabaseManager
-from database.exceptions import DuplicateError, NotFoundError
+from database.exceptions import AlreadyFriendsError, DuplicateError, FriendRequestBlockedError, NotFoundError
 from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email, normalize_handicap_value, sanitize_user_text
+from api.schemas import UserResponse
 from models import User, UserTee
-from analytics import handicap as hcap
+from models.hole import HOLES_PER_ROUND
 
 router = APIRouter()
 
@@ -22,10 +23,10 @@ def _validate_hole_yardages_dict(value: Optional[dict]) -> Optional[dict]:
     for raw_k, raw_v in value.items():
         try:
             hole_num = int(raw_k)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise ValueError("hole_yardages keys must be numeric hole numbers.") from exc
-        if not (1 <= hole_num <= 18):
-            raise ValueError("hole_yardages hole number must be between 1 and 18.")
+        if not (1 <= hole_num <= HOLES_PER_ROUND):
+            raise ValueError(f"hole_yardages hole number must be between 1 and {HOLES_PER_ROUND}.")
         if raw_v is not None and not (50 <= int(raw_v) <= 700):
             raise ValueError("hole_yardages value must be between 50 and 700.")
         out[hole_num] = int(raw_v) if raw_v is not None else None
@@ -134,6 +135,11 @@ class FriendshipResponse(BaseModel):
     addressee_email: Optional[str] = None
 
 
+def user_response(user: User) -> UserResponse:
+    """A golfer's profile, without their rounds or account bookkeeping."""
+    return UserResponse.model_validate(user, from_attributes=True)
+
+
 def _friendship_row_to_response(row: dict) -> FriendshipResponse:
     return FriendshipResponse(
         id=str(row["id"]),
@@ -149,7 +155,7 @@ def _friendship_row_to_response(row: dict) -> FriendshipResponse:
     )
 
 
-@router.get("/by-email/{email}")
+@router.get("/by-email/{email}", response_model=UserResponse)
 async def get_user_by_email(
     email: str,
     db: DatabaseManager = Depends(get_db),
@@ -157,17 +163,17 @@ async def get_user_by_email(
 ):
     try:
         normalized_email = normalize_email(email)
-    except ValueError as exc:
-        raise HTTPException(422, str(exc))
+    except ValueError:
+        raise HTTPException(422, "Invalid email format.") from None
     if normalized_email != (current_user.email or "").lower():
         raise HTTPException(403, "Forbidden")
     user = await db.users.get_user_by_email(normalized_email)
     if not user:
         raise HTTPException(404, "User not found")
-    return user
+    return user_response(user)
 
 
-@router.get("/{user_id}")
+@router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -178,10 +184,10 @@ async def get_user(
     user = await db.users.get_user(str(user_id))
     if not user:
         raise HTTPException(404, "User not found")
-    return user
+    return user_response(user)
 
 
-@router.patch("/{user_id}")
+@router.patch("/{user_id}", response_model=UserResponse)
 async def update_user(
     user_id: UUID,
     req: UpdateUserRequest,
@@ -205,23 +211,7 @@ async def update_user(
     user = await db.users.update_user(str(user_id), **updates)
     if not user:
         raise HTTPException(404, "User not found")
-    return user
-
-
-@router.get("/{user_id}/handicap")
-async def get_user_handicap(
-    user_id: UUID,
-    db: DatabaseManager = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Return the user's current WHS Handicap Index."""
-    if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
-    user = await db.users.get_user(str(user_id))
-    if not user:
-        raise HTTPException(404, "User not found")
-    rounds = await db.rounds.get_rounds_for_user(str(user_id), limit=hcap.WHS_WINDOW)
-    return {"handicap_index": hcap.player_handicap_index(list(reversed(rounds)), user)}
+    return user_response(user)
 
 
 # ================================================================
@@ -262,7 +252,7 @@ async def create_user_tee(
     try:
         return await db.user_tees.create_user_tee(tee)
     except DuplicateError:
-        raise HTTPException(409, f"User tee '{req.name}' already exists for this course")
+        raise HTTPException(409, f"User tee '{req.name}' already exists for this course") from None
 
 
 @router.put("/{user_id}/tees/{tee_id}", response_model=UserTee)
@@ -280,7 +270,7 @@ async def update_user_tee(
     try:
         return await db.user_tees.update_user_tee(str(tee_id), user_id=str(user_id), **updates)
     except NotFoundError:
-        raise HTTPException(404, "User tee not found")
+        raise HTTPException(404, "User tee not found") from None
 
 
 @router.delete("/{user_id}/tees/{tee_id}", status_code=204)
@@ -320,13 +310,15 @@ async def send_friend_request(
 
     try:
         row = await db.friendships.send_request(str(current_user.id), str(addressee_user_id))
-        rows = await db.friendships.list_for_user(str(current_user.id))
-        match = next((r for r in rows if str(r["id"]) == str(row["id"])), row)
-        return _friendship_row_to_response(match)
-    except ValueError as e:
-        raise HTTPException(400, str(e))
-    except DuplicateError as e:
-        raise HTTPException(409, str(e))
+    except ValueError:
+        raise HTTPException(400, "Cannot friend yourself") from None
+    except AlreadyFriendsError:
+        raise HTTPException(409, "Users are already friends") from None
+    except FriendRequestBlockedError:
+        raise HTTPException(409, "Friend request blocked for this pair") from None
+    rows = await db.friendships.list_for_user(str(current_user.id))
+    match = next((r for r in rows if str(r["id"]) == str(row["id"])), row)
+    return _friendship_row_to_response(match)
 
 
 @router.patch("/me/friends/{friendship_id}", response_model=FriendshipResponse)
@@ -341,8 +333,8 @@ async def update_friendship_status(
         updated = await db.friendships.update_status(
             str(friendship_id), str(current_user.id), req.status
         )
-    except ValueError as e:
-        raise HTTPException(400, str(e))
+    except ValueError:
+        raise HTTPException(400, "Invalid friendship status") from None
     if not updated:
         raise HTTPException(404, "Friendship not found or action not permitted")
 
