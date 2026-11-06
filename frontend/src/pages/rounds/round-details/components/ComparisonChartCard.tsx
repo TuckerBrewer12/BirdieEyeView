@@ -24,12 +24,6 @@ function formatNumber(value: number | null): string {
   return Number.isInteger(value) ? `${value}` : value.toFixed(1);
 }
 
-/**
- * One cohort comparison: this round's figure, then the bars alongside it.
- *
- * The first bar is this round and takes the accent gradient; the rest recede.
- * Callers pass finished bars — no Round, no ComparisonRow.
- */
 function ComparisonChartCard({
   title,
   primaryLabel,
@@ -42,8 +36,6 @@ function ComparisonChartCard({
     sampleSize: bar.sampleSize,
     isSelected: i === 0,
   }));
-  // Mobile and desktop both mount these cards, so a shared gradient id
-  // would resolve to the hidden copy and the selected bar would not paint.
   const selectedFill = `selectedBarGrad${useId().replace(/:/g, "")}`;
 
   return (
@@ -73,7 +65,6 @@ function ComparisonChartCard({
               ]) as Fmt}
               contentStyle={chartTooltipStyle}
             />
-            {/* Recharts grows bars with CSS; Playwright's screenshot pass freezes that at height 0. */}
             <Bar dataKey="value" radius={tokens.chart.barRadius} isAnimationActive={false}>
               {chartData.map((d) => (
                 <Cell key={d.label} fill={d.isSelected ? `url(#${selectedFill})` : tokens.color.chart.muted} />

@@ -1,6 +1,5 @@
 import { PageHeader } from "@/brand/components/PageHeader";
 
-// The bar is pinned in an app; `static` sets it in the stage so it can be captured.
 export default function PageHeaderPreview() {
   return (
     <>

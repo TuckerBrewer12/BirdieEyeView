@@ -5,18 +5,12 @@ import { chartTickStyle, tokens } from "@/brand/theme";
 import { indexScale, paddedExtent } from "./scales";
 
 interface ScoreGoalChartProps {
-  /** Rounds, oldest first, each marked met or not as the server judged it. */
   attempts: GoalAttempt[];
-  /** The highest score that meets the goal, 79 to break 80: where the goal line is drawn. */
   goal: number;
   className?: string;
   "aria-label"?: string;
 }
 
-/**
- * Rounds against a scoring goal: one dot per round, lower scores higher up, joined by a
- * faint line, with the goal dashed across. A round that met the goal is filled.
- */
 export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLabel }: ScoreGoalChartProps) {
   const { width: W, height: H, pad, labelRoom, stroke, dot, dotReached } = tokens.chart.goal;
 
@@ -26,7 +20,6 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
 
   const scores = attempts.map((attempt) => attempt.score);
   const x = indexScale(scores.length, pad.x, W - pad.x);
-  // A stroke of room past the lowest and highest, so no dot sits on the edge.
   const y = scaleLinear()
     .domain(paddedExtent([...scores, goal], 1)!)
     .range([pad.y, H - pad.y]);

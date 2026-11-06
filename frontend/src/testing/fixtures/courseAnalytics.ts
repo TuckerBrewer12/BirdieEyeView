@@ -4,7 +4,6 @@ import { storedRounds } from "./rounds";
 
 const PARS = [4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5];
 
-/** Two rounds at a hole, so every rate below is out of two. */
 const SAMPLE = 2;
 
 export function emptyCourseAnalytics(courseId: string): CourseAnalyticsDto {
@@ -15,7 +14,6 @@ function hole<T>(build: (hole: number, par: number) => T): T[] {
   return PARS.map((par, i) => build(i + 1, par));
 }
 
-/** Every third hole: a par and a bogey. The rest: a birdie and a par. */
 const toParOn = (holeNumber: number) => (holeNumber % 3 === 0 ? 0.5 : -0.5);
 
 const halfMoonBayHoleStats: CourseHoleStats = {
@@ -26,7 +24,6 @@ const halfMoonBayHoleStats: CourseHoleStats = {
     average_to_par: toParOn(hole_number),
     sample_size: SAMPLE,
   })),
-  // Each nine is a par 36 with three holes half a stroke over and six half a stroke under.
   hole_averages_front_nine: 34.5,
   hole_averages_back_nine: 34.5,
   hole_averages_total: 69,
@@ -74,7 +71,6 @@ const halfMoonBayHoleStats: CourseHoleStats = {
   })),
 };
 
-/** The player's two stored rounds at Half Moon Bay, as GET /stats/course-analytics sends them. */
 export const halfMoonBayAnalytics: CourseAnalyticsDto = courseAnalyticsResponse(
   "course-hmb",
   storedRounds,

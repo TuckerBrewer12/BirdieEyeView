@@ -7,14 +7,12 @@ import { labAnalyticsByGolfer, labBenchmarks, labGoalReport, labUser } from "../
 
 type LabPanelLabel = "By Par" | "Putting" | "Peak";
 
-/** The card each of the phone's panels shows. */
 const PANEL_CARD: Record<LabPanelLabel, string> = {
   "By Par": "par-type-card",
   Putting: "putting-card",
   Peak: "peak-game-card",
 };
 
-/** Screen robot for /the-lab — same idea as an Android Espresso robot. */
 export class TheLabRobot {
   private readonly page: Page;
   private backend: FakeBackend | null = null;
@@ -30,7 +28,6 @@ export class TheLabRobot {
     return this;
   }
 
-  /** A golfer out to break 90, with two friends; seed fields replace the defaults. */
   async open(seed: FakeBackendSeed = {}): Promise<this> {
     await this.page.emulateMedia({ reducedMotion: "reduce" });
     this.backend = await FakeSession.install(this.page, {
@@ -50,12 +47,10 @@ export class TheLabRobot {
     return this.open({ profile: { ...labUser, scoring_goal: null } });
   }
 
-  /** Opens with the golfer's analytics failing to load. */
   async openFailing(): Promise<this> {
     return this.open({ analyticsByGolfer: {}, analytics: null });
   }
 
-  /** The server comes back: the golfer's analytics load from here on. */
   async analyticsRecover(): Promise<this> {
     if (this.backend) this.backend.analyticsByGolfer = labAnalyticsByGolfer;
     return this;
@@ -76,10 +71,6 @@ export class TheLabRobot {
     return this;
   }
 
-  /**
-   * The page renders its phone and desktop layouts and CSS shows one, so every lookup takes
-   * the copy on screen.
-   */
   private shown(selector: string) {
     return this.page.locator(selector).filter({ visible: true });
   }
@@ -101,7 +92,6 @@ export class TheLabRobot {
     return this;
   }
 
-  /** The goal standing card leads with the goal: "Break 85". */
   async seesGoalStanding(label: string): Promise<this> {
     await expect(this.shown("[data-slot=goal-standing]").getByText(label, { exact: true })).toBeVisible();
     return this;
@@ -112,7 +102,6 @@ export class TheLabRobot {
     return this;
   }
 
-  /** Goal reports wait until `goalReportsArrive()`, as a slow server's would. */
   holdGoalReports(): this {
     this.backend?.holdGoalReports();
     return this;
@@ -123,19 +112,16 @@ export class TheLabRobot {
     return this;
   }
 
-  /** The attempts card's count of rounds that met the goal: "1". */
   async seesTimesAchieved(count: string): Promise<this> {
     await expect(this.shown("[data-slot=attempts-card] [data-slot=stat-value]")).toHaveText(count);
     return this;
   }
 
-  /** No attempts card: the goal's report, which marks each round, hasn't come yet. */
   async seesNoAttempts(): Promise<this> {
     await expect(this.shown("[data-slot=attempts-card]")).toHaveCount(0);
     return this;
   }
 
-  /** The next save fails with this message, as the API would answer. */
   failSavesWith(detail: string): this {
     if (this.backend) this.backend.updateUserError = detail;
     return this;
@@ -176,12 +162,10 @@ export class TheLabRobot {
     return this;
   }
 
-  /** The phone's Performance section: the panel tabs and the open panel. */
   private performance() {
     return this.shown("[data-slot=lab-performance]");
   }
 
-  /** Taps one of the phone's panel tabs. The shape card's Peak Game control is a different button. */
   async tapPanel(label: LabPanelLabel): Promise<this> {
     await this.performance()
       .locator("[data-slot=lab-panels]")
@@ -190,7 +174,6 @@ export class TheLabRobot {
     return this;
   }
 
-  /** The phone shows this panel, and only this one. */
   async seesPanel(label: LabPanelLabel): Promise<this> {
     const tab = this.performance().locator("[data-slot=lab-panels]").getByRole("button", { name: label, exact: true });
     await expect(tab).toHaveAttribute("aria-pressed", "true");
@@ -200,7 +183,6 @@ export class TheLabRobot {
     return this;
   }
 
-  /** The peak-versus-average bars on the phone's Peak panel. */
   async seesPeakBars(): Promise<this> {
     await expect(this.performance().getByText("Peak vs. average, a round", { exact: true })).toBeVisible();
     return this;
@@ -216,14 +198,12 @@ export class TheLabRobot {
     return this;
   }
 
-  /** The radar draws the comparison's dashed shape once there is one. */
   async seesComparisonDrawn(drawn: boolean): Promise<this> {
     await expect(this.shapeCard().locator("[data-slot=radar-benchmark]")).toHaveCount(drawn ? 1 : 0);
     return this;
   }
 
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
-    // A tap lower down scrolls the page; back at the top the fixed shell sits where it belongs.
     await this.page.evaluate(() => window.scrollTo(0, 0));
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
     return this;

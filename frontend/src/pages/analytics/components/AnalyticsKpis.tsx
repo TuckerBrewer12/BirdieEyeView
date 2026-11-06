@@ -3,9 +3,7 @@ import { cn } from "@/brand/cn";
 
 interface AnalyticsKpi {
   label: string;
-  /** Formatted by the page: "7.0", "82.9", "—". */
   value: string;
-  /** A quieter line under the figure, like the course the best round was at. */
   detail?: string | null;
 }
 
@@ -14,10 +12,6 @@ interface AnalyticsKpisProps {
   className?: string;
 }
 
-/**
- * The headline figures over the filtered rounds, one card each: in one row when there is room,
- * else three over two so no card sits alone.
- */
 export function AnalyticsKpis({ kpis, className }: AnalyticsKpisProps) {
   return (
     <div data-slot="analytics-kpis" className={cn("@container", className)}>

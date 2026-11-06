@@ -18,7 +18,6 @@ import type {
   Saver,
 } from "./model";
 
-/** A friend's name, or a stand-in when the server has none. */
 export function friendName(friend: FriendOption | null): string {
   return friend?.name ?? "Unknown golfer";
 }
@@ -32,10 +31,6 @@ const HANDICAP_LABEL: Record<(typeof COMPARISON_HANDICAPS)[number], string> = {
   25: "Breaks 100",
 };
 
-/**
- * The comparisons on offer, keyed for a toggle group (whose values are strings):
- * none, each handicap benchmark, then a friend.
- */
 export const COMPARISON_OPTIONS: { key: string; value: ComparisonTargetValue; label: string }[] = [
   { key: "none", value: null, label: "Just me" },
   ...COMPARISON_HANDICAPS.map((handicap) => ({
@@ -50,13 +45,11 @@ export function comparisonKey(value: ComparisonTargetValue): string {
   return COMPARISON_OPTIONS.find((option) => option.value === value)?.key ?? "none";
 }
 
-/** Null for a key that is not an option, as when the pressed toggle is pressed again. */
 export function comparisonFromKey(key: string | undefined): { value: ComparisonTargetValue } | null {
   const option = COMPARISON_OPTIONS.find((o) => o.key === key);
   return option ? { value: option.value } : null;
 }
 
-/** What the grey shape behind the golfer's is: "Breaks 80", "Avery Lin", "Your peak game". */
 export function benchmarkName(
   mode: RadarMode,
   comparison: ComparisonTargetValue,
@@ -68,7 +61,6 @@ export function benchmarkName(
   return HANDICAP_LABEL[comparison as keyof typeof HANDICAP_LABEL] ?? null;
 }
 
-/** The radar card's heading: who the golfer is up against. */
 export function benchmarkHeading(
   mode: RadarMode,
   comparison: ComparisonTargetValue,
@@ -92,26 +84,22 @@ const HANDICAP_HEADING: Record<(typeof COMPARISON_HANDICAPS)[number], string> = 
   25: "You vs. Break-100 Shape",
 };
 
-/** A goal as the golfer picked it: "Break 80". */
 export function goalLabel(target: number | null): string | null {
   return target != null ? goalTargetLabel(target) : null;
 }
 
-/** A line under the goal's figures: met, or how far there is to go. */
 export function goalStandingNote(goal: GoalStanding): string | null {
   if (goal.onTrack) return `Your average already breaks ${goalScoreToBreak(goal.target)}. Keep it there.`;
   if (goal.gap == null) return null;
   return `${goal.gap.toFixed(1)} strokes a round to go.`;
 }
 
-/** How the best rounds stand against the goal: "Your best rounds already break 80." Null until the gap loads. */
 export function peakGapNote(peak: PeakGame, goalLabel: string): string | null {
   if (peak.gapToGoal == null || peak.meetsGoal == null) return null;
   if (peak.meetsGoal) return `Your best rounds already ${goalLabel.toLowerCase()}. Make it your new normal.`;
   return `${peak.gapToGoal.toFixed(1)} strokes from ${goalLabel.toLowerCase()} on your best days.`;
 }
 
-/** The phone's panel tabs. */
 export const LAB_PANEL_LABEL: Record<LabPanel, string> = {
   "by-par": "By Par",
   putting: "Putting",
@@ -124,17 +112,12 @@ export const PEAK_IMPACT_LABEL: Record<PeakImpact["kind"], string> = {
   doubles: "Doubles+",
 };
 
-/** The last five rounds against the 20-round average, in words. */
 export function recentTrendNote(trend: number): string {
   if (trend === 0) return "Scoring right at your 20-round average lately.";
   const way = trend > 0 ? "above" : "below";
   return `Trending ${Math.abs(trend).toFixed(1)} strokes ${way} your 20-round average.`;
 }
 
-/**
- * The line under a par type, and the gap it is coloured with, in the words of the server's
- * verdict. Null without a comparison.
- */
 export function parTypeGapNote(row: ParTypeRow, benchmarkName: string): { text: string; gap: number } | null {
   if (row.benchmarkToPar == null || row.gap == null || row.verdict == null) return null;
   const mark = `${benchmarkName} ${formatAverageToPar(row.benchmarkToPar)}`;
@@ -146,10 +129,6 @@ export function parTypeGapNote(row: ParTypeRow, benchmarkName: string): { text: 
   return { text: `${mark} · ${detail}`, gap: row.gap };
 }
 
-/**
- * A count of strokes with its sign, and the tone to paint it.
- * A gain is good, so the tone is to-par of the negation: "+1.2 strokes" reads birdie.
- */
 export function signedStrokes(strokes: number): { text: string; tone: string } {
   const rounded = Math.round(strokes * 10) / 10;
   return {
@@ -158,7 +137,6 @@ export function signedStrokes(strokes: number): { text: string; tone: string } {
   };
 }
 
-/** What each kind of saver is about, in a couple of words. The server words the rest. */
 export const SAVER_LABEL: Record<Saver["kind"], string> = {
   three_putt_bleed: "3-Putts",
   blowup_holes: "Blow-ups",
@@ -169,7 +147,6 @@ export const SAVER_LABEL: Record<Saver["kind"], string> = {
   par5_opportunity: "Par 5s",
 };
 
-/** How many times the goal was met, in words: "keep going", "once!", "3 rounds". */
 export function timesMetLabel(count: number): string {
   if (count === 0) return "keep going";
   if (count === 1) return "once!";

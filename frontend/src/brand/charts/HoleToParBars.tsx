@@ -6,11 +6,9 @@ import { holeLabel, type TooltipFormatter } from "./holeBarParts";
 
 interface HoleToParBarsProps {
   rows: HoleToPar[];
-  /** The rows are ranked rather than in course order, so each tick names its hole: "H3". */
   ranked?: boolean;
 }
 
-/** Average score to par on each hole: a bar up for over par, down for under, painted by the score. */
 export function HoleToParBars({ rows, ranked = false }: HoleToParBarsProps) {
   return (
     <div data-slot="hole-to-par-bars" className="h-chart">

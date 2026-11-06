@@ -3,8 +3,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { isColorValue, modes, palette, type ColorTree, type ColorValue } from "./tokens";
 
-// vitest runs with the frontend package as cwd; import.meta.url is not a
-// file: URL under the jsdom environment.
 const srcDir = join(process.cwd(), "src");
 const brandDir = join(srcDir, "brand");
 const themeDir = join(brandDir, "theme");
@@ -17,7 +15,6 @@ const API_TYPES = join(srcDir, "types", "api.gen.ts");
 
 const read = (path: string) => readFileSync(path, "utf8");
 
-/** Drop comments so docs can mention `#fff` or `9px` without failing the test. */
 function withoutComments(src: string): string {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 }
@@ -35,11 +32,9 @@ function sources(dir: string, { skipTests }: { skipTests: boolean }, found: stri
   return found;
 }
 
-/** Hex literals, rgb()/hsl()/oklch()/color-mix(), and raw Tailwind palette utilities. */
 const COLOR_LITERAL =
   /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch|color-mix)\(|\b(?:bg|text|border|ring|fill|stroke|from|via|to|divide|shadow|outline|placeholder|accent|decoration)-(?:white|black)\b|\b(?:bg|text|border|ring|fill|stroke|from|via|to|divide|shadow|outline|placeholder|accent|decoration)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/g;
 
-/** Raw lengths. Tailwind scale classes (p-4, text-sm) do not match. */
 const UNIT_LITERAL = /[-+]?\d+(?:\.\d+)?(?:px|rem|em)\b/g;
 
 function offenders(files: string[], pattern: RegExp, allowed: Set<string>) {

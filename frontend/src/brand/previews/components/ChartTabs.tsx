@@ -35,8 +35,6 @@ function Tabs() {
   );
 }
 
-// The harness is desktop-width, so this is the md+ grid of every chart. The tabs and
-// the two mobile layouts show below md, in the course and round pages' mobile screenshots.
 export default function ChartTabsPreview() {
   return <Tabs />;
 }

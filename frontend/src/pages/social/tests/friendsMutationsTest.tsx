@@ -65,7 +65,6 @@ describe("useRespondToRequest", () => {
     client.setQueryData(queryKeys.friendships("user-1"), before);
     const { result } = renderHook(() => useRespondToRequest("user-1", repository), { wrapper });
 
-    // A request the golfer sent is not theirs to accept.
     act(() => result.current.mutate({ friendshipId: "friendship-casey", answer: "accepted" }));
     await waitFor(() => expect(result.current.isError).toBe(true));
 

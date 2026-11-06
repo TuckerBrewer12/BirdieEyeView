@@ -4,7 +4,6 @@ import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import type { StoredRound } from "../../../testing/fakes/roundResponses";
 
-/** Screen robot for /rounds — same idea as an Android Espresso robot. */
 export class RoundsRobot {
   private readonly page: Page;
 

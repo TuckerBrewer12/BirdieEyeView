@@ -13,11 +13,6 @@ interface RoundShareCardProps extends React.ComponentProps<"div"> {
   round: Round;
 }
 
-/**
- * A round as an image to share: where and when, the score, every hole marked the way a
- * scorecard marks it, and how the holes added up. A fixed width, because it is captured
- * as a PNG rather than laid out on a page.
- */
 const RoundShareCard = React.forwardRef<HTMLDivElement, RoundShareCardProps>(
   ({ round, className, ...props }, ref) => {
     const date = formatWeekdayDay(round.date);

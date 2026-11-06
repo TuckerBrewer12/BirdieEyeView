@@ -1,26 +1,18 @@
 import type { AnalyticsDto } from "../../types/api";
 import { achievementsAYearOn, sampleGolfer } from "../fixtures/sampleGolfer";
 
-/**
- * The fake backend's copy of `GET /stats/analytics/{id}`'s course filter. The figures themselves
- * are taken as given (generated from the real endpoint by scripts/sample_golfer.py), not worked out.
- */
 export interface AnalyticsSeed {
-  /** Every course's rounds: what "All Courses" answers with. */
   analytics: AnalyticsDto;
-  /** A course's own response, keyed by course id. */
   byCourse?: Record<string, AnalyticsDto>;
   homeCourseId?: string | null;
 }
 
-/** The response for `course_id` ("all", "home" or an id). A course with no rounds answers empty. */
 export function analyticsForCourse(seed: AnalyticsSeed, courseId: string): AnalyticsDto {
   if (courseId === "all") return seed.analytics;
   const resolved = courseId === "home" ? seed.homeCourseId : courseId;
   return (resolved ? seed.byCourse?.[resolved] : undefined) ?? withoutRounds(seed.analytics);
 }
 
-/** What the server sends when no round matches the filters: every series empty, no figures. */
 export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
   return {
     ...analytics,
@@ -72,10 +64,6 @@ export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
   };
 }
 
-/**
- * The sample golfer's analytics as the server sends them on 2027-04-01: the same rounds, with
- * the last year starting after their March ones.
- */
 export const sampleAnalyticsAYearOn: AnalyticsDto = {
   ...sampleGolfer.analytics,
   notable_achievements: achievementsAYearOn,

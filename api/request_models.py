@@ -1,5 +1,3 @@
-"""Typed Pydantic request/input models shared across API routers."""
-
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -68,11 +66,10 @@ class CourseHoleInput(BaseModel):
 
 
 class SaveRoundRequest(BaseModel):
-    """Request to save a reviewed/edited round."""
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    user_id: str = ""  # populated from JWT by the endpoint; ignored if sent by client
-    course_id: Optional[str] = None   # explicit DB course id — skips fuzzy match when provided
+    user_id: str = ""
+    course_id: Optional[str] = None
     external_course_id: Optional[str] = Field(default=None, max_length=100)
     course_name: Optional[str] = None
     course_location: Optional[str] = None

@@ -18,14 +18,12 @@ const THEME_OPTIONS: { value: ThemePreference; label: string; Icon: typeof Sun }
 ];
 
 interface PreferencesSectionProps {
-  /** Applies and is kept the moment it is picked, like the device's own setting. */
   theme: ThemePreference;
   onThemeChange: (theme: ThemePreference) => void;
   getUpdates: boolean;
   onGetUpdatesChange: (on: boolean) => void;
 }
 
-/** Theme and updates. Updates is kept with Save. */
 export function PreferencesSection({
   theme,
   onThemeChange,
@@ -46,7 +44,6 @@ export function PreferencesSection({
             spacing={0}
             value={[theme]}
             onValueChange={(values) => {
-              // Pressing the chosen option again would clear it; a theme is always chosen.
               const next = values[0];
               if (isThemePreference(next)) onThemeChange(next);
             }}

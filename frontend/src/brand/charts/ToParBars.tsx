@@ -4,24 +4,16 @@ import { formatAverageToPar } from "@/domain/score";
 import { type TooltipFormatter } from "./holeBarParts";
 
 interface ToParBar {
-  /** Under the bar: "Par 3", "7". */
   label: string;
-  /** The average score to par. */
   toPar: number;
-  /** After the figure in the tooltip, like how many holes it covers. */
   detail?: string;
 }
 
 interface ToParBarsProps {
   bars: ToParBar[];
-  /** Names the figure in the tooltip. */
   valueLabel?: string;
 }
 
-/**
- * Average score to par for a handful of groups (par types, hole difficulty): a bar up for
- * over par, down for under, painted by the score.
- */
 export function ToParBars({ bars, valueLabel = "Avg to Par" }: ToParBarsProps) {
   return (
     <div data-slot="to-par-bars" className="h-chart">

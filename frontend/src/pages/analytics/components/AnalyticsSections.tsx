@@ -25,16 +25,10 @@ import {
 import { GirSplitCard } from "./GirSplitCard";
 import { TrendCard } from "./TrendCard";
 
-/*
- * The cards of each part of the game. The desktop sets each part's cards in a two-column grid;
- * the phone stacks one part's cards under its tab. The `lg:` spans only reach the desktop grid.
- */
-
 interface SectionProps {
   analytics: Analytics;
 }
 
-/** The lowest round in the window; it opens that round. */
 export function BestRoundCard({ round }: { round: RoundSummary }) {
   const navigate = useNavigate();
   return (
@@ -132,7 +126,6 @@ export function PuttingCards({ analytics }: SectionProps) {
   );
 }
 
-/** How the golfer scores by par type and by how hard the hole is. */
 export function ProfileCards({ analytics }: SectionProps) {
   const { sections } = analytics;
 

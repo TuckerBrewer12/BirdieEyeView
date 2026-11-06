@@ -72,7 +72,6 @@ describe("the server's figures", () => {
     expect(peak.average).toBe(89.7);
     expect(peak.overallAverage).toBe(91.7);
     expect(peak.gapToGoal).toBe(0.7);
-    // Before the goal's report loads, the peak stands without a gap.
     expect(peakGameFrom(labAnalytics, 89, null)?.gapToGoal).toBeNull();
   });
 

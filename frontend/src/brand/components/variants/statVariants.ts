@@ -18,12 +18,9 @@ const statValueVariants = cva(
   {
     variants: {
       size: {
-        /** A row of small figures, like the four under a hero number. */
         sm: "text-base",
         md: "text-2xl",
-        /** A card's headline figure. */
         lg: "text-4xl",
-        /** The one number a screen leads with. */
         xl: "text-6xl font-bold tracking-hero",
       },
     },

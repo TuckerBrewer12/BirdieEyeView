@@ -12,10 +12,6 @@ import {
 import { formatCourseName } from "@/domain/course";
 import type { ScanSetupViewModel } from "../useScanSetupViewModel";
 
-/**
- * Before typing scores in by hand: the course (a saved one, or a name to keep), the tee and
- * the date. All of it can be changed again on the card.
- */
 export function ScanSetupStep({ setup }: { setup: ScanSetupViewModel }) {
   return (
     <Card size="sm" data-slot="scan-setup">
@@ -66,7 +62,6 @@ function CourseField({ setup }: { setup: ScanSetupViewModel }) {
   );
 }
 
-/** The picked course's tees to choose from, else a box to type the tee into. */
 function TeeField({ setup }: { setup: ScanSetupViewModel }) {
   const pick = setup.tees.length > 0;
   return (

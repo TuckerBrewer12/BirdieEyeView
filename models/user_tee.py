@@ -6,7 +6,6 @@ from .base import BaseGolfModel
 
 
 class UserTee(BaseGolfModel):
-    """A user-owned tee configuration, optionally linked to a master course."""
     id: Optional[str] = None
     user_id: str
     course_id: Optional[str] = None

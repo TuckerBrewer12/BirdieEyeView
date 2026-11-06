@@ -12,13 +12,9 @@ import { formatOneDecimal, formatPercent, pluralize, type ScoreMix } from "@/dom
 import { puttsLabel } from "../present";
 
 interface ScoringHeroCardProps {
-  /** Scoring average over the last 20 rounds. */
   average: number | null;
-  /** The server's L5 average minus L20, to a tenth: negative means the recent rounds came in lower. */
   change: number | null;
-  /** Scores across the window, oldest first. */
   recentScores: number[];
-  /** Null until the window has a scored hole. */
   mix: ScoreMix | null;
   mixHoles: number;
   bestRound: number | null;
@@ -27,7 +23,6 @@ interface ScoringHeroCardProps {
   girPct: number | null;
 }
 
-/** The mobile dashboard's lead card: the scoring average, where it's heading, and how the holes went. */
 export function ScoringHeroCard({
   average,
   change,
@@ -39,7 +34,6 @@ export function ScoringHeroCard({
   putts,
   girPct,
 }: ScoringHeroCardProps) {
-  // The server rounds to a tenth, so no change at all hides the pill.
   const showChange = change != null && change !== 0;
   const kpis = [
     { label: "Best", value: bestRound?.toString() ?? "—" },

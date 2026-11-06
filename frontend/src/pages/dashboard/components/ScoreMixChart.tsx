@@ -11,7 +11,6 @@ function percent(value: number | string | ReadonlyArray<number | string> | undef
 }
 
 interface ScoreMixChartProps {
-  /** Percent of holes at each score kind. Null, or no holes, shows "No data yet". */
   mix: ScoreMix | null;
 }
 

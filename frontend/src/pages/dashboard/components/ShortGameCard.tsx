@@ -2,13 +2,11 @@ import { Button, Card, CardAction, CardContent, CardDescription, CardHeader, Car
 import { TOUR_SHORT_GAME, formatPercent, formatWhole } from "@/domain";
 
 interface ShortGameCardProps {
-  /** Over the last five rounds; null when there was nothing to measure. */
   scramblingPct: number | null;
   upAndDownPct: number | null;
   onOpenLab: () => void;
 }
 
-/** Scrambling and up-and-down over the last five rounds, each against the tour's rate. */
 export function ShortGameCard({ scramblingPct, upAndDownPct, onOpenLab }: ShortGameCardProps) {
   const rates = [
     { label: "Scrambling", value: scramblingPct, tour: TOUR_SHORT_GAME.scrambling },

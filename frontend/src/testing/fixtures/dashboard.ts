@@ -9,7 +9,6 @@ import type {
 } from "../../types/api";
 import { populatedRounds } from "./rounds";
 
-/** Five-round window: one used differential, no WHS adjustment. */
 const scoreTrend: ScoreTrendRowDto[] = [
   { round_index: 1, round_id: "round-4", total_score: 85, to_par: 13, course_name: "Scanned Scorecard" },
   { round_index: 2, round_id: "round-3", total_score: 69, to_par: -3, course_name: "Blue Rock" },
@@ -25,7 +24,6 @@ const handicapTrend: HandicapTrendRowDto[] = scoreTrend.map((row, i) => ({
   used_in_hi: row.round_id === "round-3",
   differential: [18.2, 4.1, 8.0, 11.5, 13.0][i],
   hi_threshold: 6,
-  // 8.0 sits two strokes off the 6 cut-off, so the server reads it as close.
   differential_status: (["out", "counting", "close", "out", "out"] as const)[i],
 }));
 
@@ -69,10 +67,8 @@ export const populatedDashboard: DashboardDto = {
   best_recent_round_id: "round-3",
   average_putts: 32,
   average_gir: 8,
-  // The last five rounds' 32 a round: between 30 and 34 rates fair.
   putts_per_round: 32,
   putts_rating: "fair",
-  // The figures the server works out from the trend window below.
   scoring_average_l20: 76.8,
   scoring_average_l5: 76.8,
   scoring_average_change: 0,
@@ -81,7 +77,6 @@ export const populatedDashboard: DashboardDto = {
   score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
   recent_score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
   score_mix_holes: 90,
-  // Round 3 is a 69 on a par 72 with 28 putts: the first round under par, and under 30 putts.
   milestones: [
     { kind: "under_par", value: 69, date: "2026-04-18", course: "Blue Rock", round_id: "round-3" },
     { kind: "putt_break", value: 30, date: "2026-04-18", course: "Blue Rock", round_id: "round-3" },
@@ -114,7 +109,6 @@ export const dashboardGoalReport: GoalReportDto = {
   gap: 2.2,
   on_track: false,
   progress_pct: 100,
-  // The 69, 72 and 78 meet it; their average of 73 is six strokes inside it.
   rounds_meeting_goal: 3,
   peak_gap: -6,
   peak_meets_goal: true,

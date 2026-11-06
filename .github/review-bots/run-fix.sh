@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# Apply one review finding as a PR targeting the original PR's branch.
-#
-# Required env: FINDING_JSON PR_NUMBER HEAD_REF GITHUB_REPOSITORY GH_TOKEN
-# Optional: HEAD_SHA BOT_MODEL CURSOR_API_KEY
 set -euo pipefail
 
 BOTS="$(cd "$(dirname "$0")" && pwd)"
@@ -38,7 +34,6 @@ if [[ -n "$existing" ]]; then
   exit 0
 fi
 
-# Same issue, different finding id (the model rephrased on a later commit).
 open_prs="$(gh pr list --repo "$GITHUB_REPOSITORY" --base "$HEAD_REF" --state open \
   --json number,url,title,body,headRefName || echo '[]')"
 similar="$(FINDING_JSON="$FINDING_JSON" OPEN_PRS="$open_prs" PR_NUMBER="$PR_NUMBER" \
@@ -85,8 +80,6 @@ Addresses a ${BOT_NAME} finding on #${PR_NUMBER}.
 EOF
 )"
 
-# These branches are bot-owned (`bot-fix/pr-N/...`); replacing a failed attempt
-# is the point of --force, not rewriting anyone else's work.
 git push --force origin "HEAD:refs/heads/${BRANCH}"
 
 gh label create skip-bots --repo "$GITHUB_REPOSITORY" \

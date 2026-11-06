@@ -1,11 +1,6 @@
 import type { CourseAnalyticsDto } from "../../types/api";
 import { summaryResponse, type StoredRound } from "./roundResponses";
 
-/**
- * The fake backend's copy of api/course_analytics_responses.py. The rounds-level figures (count,
- * average, best, worst, trend, history) come from the stored rounds, the way the server works
- * them out. The per-hole rows are taken as given rather than copying analytics/stats.py.
- */
 
 export type CourseHoleStats = Omit<
   CourseAnalyticsDto,

@@ -3,7 +3,6 @@ import type { CourseSummary } from "@/domain/course";
 import type { HomeCourse } from "../model";
 
 interface HomeCourseSectionProps {
-  /** The picked course; null shows the search. */
   homeCourse: HomeCourse | null;
   query: string;
   results: CourseSummary[];
@@ -13,7 +12,6 @@ interface HomeCourseSectionProps {
   onClear: () => void;
 }
 
-/** Which course counts as home. Pick one from a search, or remove it. */
 export function HomeCourseSection({
   homeCourse,
   query,

@@ -1,4 +1,3 @@
-/** Where choices that stay on this device are kept: localStorage on the web. */
 export interface PreferenceStorage {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
@@ -6,7 +5,6 @@ export interface PreferenceStorage {
 
 let storage: PreferenceStorage | null = null;
 
-/** The app edge passes the platform's store; until then nothing is read or kept. */
 export function configurePreferenceStorage(next: PreferenceStorage | null): void {
   storage = next;
 }

@@ -41,7 +41,6 @@ interface LayoutProps {
   analytics: Analytics;
 }
 
-/** No round matches the filters. The filters stay up so the golfer can widen them again. */
 function EmptyAnalytics({ vm }: { vm: AnalyticsPageViewModel }) {
   const message = (
     <div className="flex h-48 items-center justify-center text-center">
@@ -66,7 +65,6 @@ function EmptyAnalytics({ vm }: { vm: AnalyticsPageViewModel }) {
 function AnalyticsLayouts({ vm, analytics }: LayoutProps) {
   return (
     <>
-      {/* CSS picks the layout, so the page renders the same on the server and the first paint. */}
       <div className="md:hidden">
         <AnalyticsMobileLayout vm={vm} analytics={analytics} />
       </div>

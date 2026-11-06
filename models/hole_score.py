@@ -8,7 +8,6 @@ ScoreKind = Literal["eagle", "birdie", "par", "bogey", "double", "triple", "quad
 
 
 def score_kind(to_par: Optional[int]) -> Optional[ScoreKind]:
-    """The seven buckets the app shows a hole in. Eagle takes anything better, quad anything worse."""
     if to_par is None:
         return None
     if to_par <= -2:
@@ -19,7 +18,6 @@ def score_kind(to_par: Optional[int]) -> Optional[ScoreKind]:
 
 
 class HoleScore(BaseGolfModel):
-    """Represents a player's score on a single hole (raw scanned data)."""
     hole_number: Optional[int] = Field(None, ge=1, le=18)
     strokes: Optional[int] = Field(None, ge=1, le=15)
     net_score: Optional[int] = Field(None, ge=-3, le=15)
@@ -42,7 +40,6 @@ class HoleScore(BaseGolfModel):
         return self.putts is not None and self.putts >= 3
 
     def to_par(self, par: Optional[int] = None) -> Optional[int]:
-        """Calculate score relative to par. Falls back to par_played if par not passed."""
         if self.strokes is None:
             return None
         effective_par = par if par is not None else self.par_played
@@ -51,7 +48,6 @@ class HoleScore(BaseGolfModel):
         return self.strokes - effective_par
 
     def get_score_type(self, par: Optional[int] = None) -> Optional[str]:
-        """Get score name (eagle, birdie, par, bogey, etc.). Falls back to par_played."""
         relative = self.to_par(par)
         if relative is None:
             return None

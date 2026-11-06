@@ -30,7 +30,6 @@ export function initialsOf(user: UserDto | null): string {
     .toUpperCase();
 }
 
-/** Today above the greeting: "Mon · Jun 15". */
 export function greetingDateLabel(now = new Date()): string {
   return formatWeekdayDay(now, { year: false }) ?? "";
 }
@@ -46,7 +45,6 @@ export interface ColoredMixItem {
   color: string;
 }
 
-/** The mix's bars, in bucket order, to a tenth of a percent: a kind with no holes has no bar. */
 export function colorizeMix(mix: ScoreMix): ColoredMixItem[] {
   return SCORE_KINDS.flatMap((kind) => {
     const value = Math.round(mix[kind] * 10) / 10;
@@ -89,13 +87,11 @@ export type { HiTrend };
 
 const MILESTONE_WORDING: Record<Milestone["kind"], { title: string; figure: (value: number) => string }> = {
   under_par: { title: "First round under par", figure: String },
-  // A break is a round that came in under the threshold, so 80 reads "<80".
   score_break: { title: "Best score", figure: (threshold) => `<${threshold}` },
   putt_break: { title: "Fewest putts", figure: (threshold) => `<${threshold}` },
   par_streak: { title: "Longest par streak", figure: String },
 };
 
-/** What a milestone is, and the number the feed shows beside it. */
 export function milestoneWording(milestone: Milestone): { title: string; figure: string } {
   const wording = MILESTONE_WORDING[milestone.kind];
   return { title: wording.title, figure: wording.figure(milestone.value) };

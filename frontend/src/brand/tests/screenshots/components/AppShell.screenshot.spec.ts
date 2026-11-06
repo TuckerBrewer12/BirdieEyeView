@@ -16,7 +16,6 @@ test.describe("AppShell", () => {
     await kit.captureFrame("app-shell-dark.png");
   });
 
-  // The kit runs at desktop only, so the phone captures set their own viewport.
   test.describe("on a phone", () => {
     test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 

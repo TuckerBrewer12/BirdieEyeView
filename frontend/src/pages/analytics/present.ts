@@ -39,7 +39,6 @@ const TAB_LABELS: Record<AnalyticsTab, string> = {
   range: "Range View",
 };
 
-/** The phone's section tabs, in order. */
 export const ANALYTICS_TAB_OPTIONS: readonly { value: AnalyticsTab; label: string }[] = ANALYTICS_TABS.map((tab) => ({
   value: tab,
   label: TAB_LABELS[tab],
@@ -51,14 +50,12 @@ export function emptyMessage(filtered: boolean): string {
   return filtered ? "No rounds found for the selected filters." : "Play some rounds to see your analytics.";
 }
 
-/** An insight as a sentence, with the arrow beside it and whether up is good. */
 export interface Narrative {
   text: string;
   trend: Insight["trend"];
   positiveUp: boolean;
 }
 
-/** How an insight's arrow reads: moving the good way, the bad way, or holding. */
 export type NarrativeTone = "good" | "bad" | "neutral";
 
 export function narrativeTone({ trend, positiveUp }: Narrative): NarrativeTone {
@@ -66,7 +63,6 @@ export function narrativeTone({ trend, positiveUp }: Narrative): NarrativeTone {
   return (trend === "up") === positiveUp ? "good" : "bad";
 }
 
-/** More greens is better; fewer strokes and fewer putts are. */
 const UP_IS_GOOD: Record<InsightCategory, boolean> = { scoring: false, gir: true, putting: false };
 
 const GIR_VERDICT: Record<InsightRating, string> = {
@@ -110,31 +106,26 @@ function sentence(insight: Insight): string {
   }
 }
 
-/** An insight in words, with the server's arrow. */
 export function narrativeFor(insight: Insight): Narrative {
   return { text: sentence(insight), trend: insight.trend, positiveUp: UP_IS_GOOD[insight.category] };
 }
 
-/** The first insight in a category, worded; the phone shows one per section. */
 export function leadNarrative(insights: Insight[], category: InsightCategory): Narrative | null {
   const lead = insights.find((insight) => insight.category === category);
   return lead ? narrativeFor(lead) : null;
 }
 
-/** Which insights head each phone section; profile and range view have none. */
 const TAB_INSIGHTS: Partial<Record<AnalyticsTab, InsightCategory>> = {
   scoring: "scoring",
   "ball-striking": "gir",
   putting: "putting",
 };
 
-/** The sentence that heads a phone section, or null if it has none. */
 export function tabNarrative(insights: Insight[], tab: AnalyticsTab): Narrative | null {
   const category = TAB_INSIGHTS[tab];
   return category ? leadNarrative(insights, category) : null;
 }
 
-/** The round counts the filter offers. "All" asks for as many as the server allows. */
 export const LIMIT_OPTIONS: readonly { value: number; label: string }[] = [
   { value: 10, label: "10" },
   { value: 20, label: "20" },
@@ -148,7 +139,6 @@ export const TIMEFRAME_OPTIONS: readonly { value: AnalyticsFilters["timeframe"];
   { value: "1y", label: "12 Mo" },
 ];
 
-/** The course filter's choices: every course, the home course if the golfer has one, then each course played. */
 export function courseOptions(
   playedCourses: PlayedCourse[],
   hasHomeCourse: boolean,
@@ -172,7 +162,6 @@ function roundPoint(
   return { tick: row.round_index, title: `Round ${row.round_index}`, subtitle: row.course_name ?? null, values };
 }
 
-/** Each round's score beside its five-round rolling average. */
 export function scoreTrendPoints(rows: ScoreTrendPoint[]): TrendAreaPoint[] {
   return rows.map((row) => roundPoint(row, [row.total_score, row.rolling_average]));
 }
@@ -195,7 +184,6 @@ export function girPoints(rows: GirTrendRowDto[]): TrendAreaPoint[] {
   }));
 }
 
-/** Each round's scrambling rate beside its up-and-down rate. */
 export function shortGamePoints(rows: ShortGamePoint[]): TrendAreaPoint[] {
   return rows.map((row) => roundPoint({ round_index: row.roundIndex }, [row.scrambling, row.upAndDown]));
 }
@@ -239,7 +227,6 @@ export function headlineFigures(analytics: Analytics): { label: string; value: s
   ];
 }
 
-/** The dashed line across the score trend at the scoring average: "Avg 82.9". */
 export function averageReference(average: number | null | undefined): { value: number; label: string } | null {
   return average != null ? { value: average, label: `Avg ${average}` } : null;
 }

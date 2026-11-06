@@ -1,7 +1,6 @@
 import type { FriendshipDto } from "../../types/api";
 import type { FakeGolfer } from "../fakes/InMemoryFriendships";
 
-/** The signed-in golfer, as FakeBackend's TEST_USER. */
 const ME = { id: "user-1", name: "Test Golfer", email: "test@example.com" };
 
 export const avery: FakeGolfer = {
@@ -58,7 +57,6 @@ function friendship(
   };
 }
 
-/** Newest change first, as the server lists them. */
 export const populatedFriendships: FriendshipDto[] = [
   friendship("friendship-riley", riley, ME, "pending", "2026-10-28T15:30:00"),
   friendship("friendship-casey", ME, casey, "pending", "2026-10-26T09:00:00"),

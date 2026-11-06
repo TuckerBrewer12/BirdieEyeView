@@ -12,25 +12,18 @@ type TrendSeries = "both" | "score" | "handicap";
 
 interface SVGScoreHandicapTrendProps {
   data: RoundTrendPoint[];
-  /** Which line to draw. `both` puts the handicap on a second axis at the right. */
   series?: TrendSeries;
-  /** The phone shape: narrower and taller. Meant for one series at a time. */
   compact?: boolean;
 }
 
 const SCORE_COLOR = tokens.color.primary;
 const HANDICAP_COLOR = tokens.color.score.double.text;
 
-/** Selection is kept per series, so switching the line clears it. */
 interface Selection {
   series: TrendSeries;
   index: number;
 }
 
-/**
- * Scores as bars under a line, the handicap index as a second line, or either
- * alone. Hovering with a mouse or tapping on a phone picks a round.
- */
 export function SVGScoreHandicapTrend({ data, series = "both", compact = false }: SVGScoreHandicapTrendProps) {
   const plot = compact ? { ...tokens.chart.plot, ...tokens.chart.plotCompact } : tokens.chart.plot;
   const { width: W, height: H, pad: PAD } = plot;
@@ -53,12 +46,10 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
   }
 
   const x = indexScale(data.length, PAD.left, W - PAD.right);
-  // Five strokes of headroom on the score axis, half a point on the handicap axis.
   const yScore = scaleLinear().domain(paddedExtent(scores, 5) ?? [60, 100]).range([H - PAD.bottom, PAD.top]);
   const yHandicap = scaleLinear()
     .domain(paddedExtent(handicaps, 0.5) ?? [-0.5, 10.5])
     .range([H - PAD.bottom, PAD.top]);
-  // The left axis belongs to whichever line leads.
   const yLeft = showScore ? yScore : yHandicap;
   const hasHandicap = knownValues(handicaps).length > 0;
 
@@ -111,7 +102,6 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
         }}
         onPointerDown={(e) => {
           if (e.pointerType === "mouse") return;
-          // A tap picks a round and a second tap on it puts it down.
           const index = indexAt(e);
           setSelection(active === index ? null : { series, index });
         }}
@@ -246,7 +236,6 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             key={`${series}-${active}`}
             className={cn(
               "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
-              // Past two thirds of the way across, the card opens to the left of the point.
               x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
             )}
             style={{ left: `${(x(active) / W) * 100}%`, top: `${(pointY / H) * 100}%` }}
@@ -326,7 +315,6 @@ function EmptyTrend({ compact, children }: { compact: boolean; children: ReactNo
   );
 }
 
-/** About five round numbers along the bottom, evenly spaced from the first. */
 function xTickIndexes(count: number): number[] {
   const step = Math.max(1, Math.floor((count - 1) / 4));
   return Array.from({ length: Math.ceil(count / step) }, (_, i) => i * step).filter((i) => i < count);

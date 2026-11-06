@@ -1,17 +1,17 @@
 class DatabaseError(Exception):
-    """Base for all database errors."""
+    pass
 
 
 class NotFoundError(DatabaseError):
-    """Entity not found."""
+    pass
 
 
 class DuplicateError(DatabaseError):
-    """Unique constraint violation."""
+    pass
 
 
 class IntegrityError(DatabaseError):
-    """Foreign key or check constraint violation."""
+    pass
 
 
 class AlreadyFriendsError(DuplicateError):

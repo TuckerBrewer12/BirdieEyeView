@@ -1,15 +1,8 @@
 import type { ScanDto } from "@/types/api";
 import type { HoleEdits } from "./round";
 
-/** How sure the scan has to be of a score for it to pass without a second look. */
 const SURE = "high";
 
-/**
- * The holes whose score the scan wasn't sure of and the golfer hasn't typed over yet, in hole order.
- *
- * Only strokes count. Putts, fairways and greens are often not on a card at all, so a gap there
- * is nothing to stop and check. A hole stops counting once the golfer types a score into it.
- */
 export function strokesToCheck(scan: ScanDto, edits: HoleEdits = {}): number[] {
   return scan.confidence.hole_scores
     .filter((hole) => {

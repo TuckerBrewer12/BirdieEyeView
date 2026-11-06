@@ -17,17 +17,11 @@ interface PasswordFieldProps {
   onChange: (value: string) => void;
   autoComplete: "current-password" | "new-password";
   placeholder?: string;
-  /** Why this password can't be sent; shown under the field and announced. */
   error?: string | null;
-  /** What the reveal button shows, for its name: "Show password", "Show confirm password". */
   revealName?: string;
   children?: ReactNode;
 }
 
-/**
- * A password input with a button that shows what was typed. Whether it is showing is the
- * field's own business, so the view model never hears about it.
- */
 export function PasswordField({
   id,
   label,

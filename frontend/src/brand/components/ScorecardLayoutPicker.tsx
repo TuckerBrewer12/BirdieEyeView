@@ -23,10 +23,8 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
   const [hasShotsToGreen, setHasShotsToGreen] = useState(false);
   const [isTopar, setIsTopar] = useState(false);
   const [rowOrder, setRowOrder] = useState<DataRow[]>(["score"]);
-  // which data-row index the Name label sits beside
   const [nameRowIndex, setNameRowIndex] = useState(0);
 
-  // "row" drag = reordering data rows; "name" drag = repositioning Name label
   const dragging = useRef<{ type: "row"; src: number } | { type: "name" } | null>(null);
 
   const syncRowOrder = (prev: DataRow[], nextHasPutts: boolean, nextHasShots: boolean): DataRow[] => {
@@ -51,14 +49,12 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
     });
   };
 
-  // Build user_context string
   useEffect(() => {
     const parts: string[] = [];
     if (playerName.trim()) parts.push(`my name is ${playerName.trim()}`);
     if (!hasPutts) parts.push("no putts recorded");
     if (isTopar) parts.push("scores written to par");
 
-    // Always send row order + name position when the picker is active
     if (hasPutts || hasShotsToGreen) {
       const nameRowType = rowOrder[safeNameRowIndex] ?? "score";
       const nameLabel = nameRowType === "shots" ? "shots to green" : nameRowType;
@@ -71,7 +67,6 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
     onContextChange(parts.join(". "));
   }, [playerName, hasPutts, hasShotsToGreen, isTopar, rowOrder, safeNameRowIndex, onContextChange]);
 
-  // dragover handler shared by each row slot
   const handleRowDragOver = (e: React.DragEvent, i: number) => {
     e.preventDefault();
     if (!dragging.current) return;
@@ -144,7 +139,6 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
 
   return (
     <div className="space-y-3">
-      {/* Player name */}
       <div>
         <p className="text-eyebrow font-semibold text-muted-foreground uppercase mb-1.5">
           Your name on the card
@@ -157,7 +151,6 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
         />
       </div>
 
-      {/* Scoring format selector */}
       <div>
         <p className="text-eyebrow font-semibold text-muted-foreground uppercase mb-1.5">
           Scoring format
@@ -186,7 +179,6 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
         </div>
       </div>
 
-      {/* What else is on the card */}
       <div>
         <p className="text-eyebrow font-semibold text-muted-foreground uppercase mb-1.5">
           Also on the card
@@ -223,7 +215,6 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
         </div>
       </div>
 
-      {/* Row order picker */}
       <AnimatePresence>
         {showPicker && (
           <motion.div
@@ -253,7 +244,6 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
                       onTouchEnd={endPointerDrag}
                       onTouchCancel={endPointerDrag}
                     >
-                      {/* Left column: Name indicator or empty drop target */}
                       <div className="w-16 shrink-0">
                         {nameHere ? (
                           <div
@@ -270,12 +260,10 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
                             </span>
                           </div>
                         ) : (
-                          // invisible drop target so Name can be dragged here
                           <div className="h-full min-h-9.5 rounded-lg" />
                         )}
                       </div>
 
-                      {/* Right column: draggable data row */}
                       <div
                         draggable
                         onDragStart={() => { dragging.current = { type: "row", src: i }; }}

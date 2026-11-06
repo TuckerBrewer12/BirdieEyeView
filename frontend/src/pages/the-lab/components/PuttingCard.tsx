@@ -12,7 +12,6 @@ import {
 import { formatOneDecimal, formatPercent } from "@/domain";
 import type { PuttingSummary } from "../model";
 
-/** Three-putts and putts a round over the last 20 rounds, and the putts trend. */
 export function PuttingCard({ putting, className }: { putting: PuttingSummary; className?: string }) {
   const noData = putting.threePuttsPerRound == null && putting.puttsPerRound == null;
 

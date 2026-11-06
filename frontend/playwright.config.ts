@@ -57,8 +57,6 @@ export default defineConfig({
     {
       name: "mobile",
       testMatch: "**/*.screenshot.spec.ts",
-      // Isolated previews — the kit's and each page's — are captured once, at
-      // desktop. Only whole-page specs are worth a second viewport.
       testIgnore: ["**/brand/**", "**/tests/screenshots/**"],
       use: {
         ...devices["iPhone 14"],
@@ -66,8 +64,6 @@ export default defineConfig({
       },
     },
     {
-      // Captures of the real app the landing page's hero demo plays through. They are
-      // served from public/, so a page change that makes one stale fails here.
       name: "demo-tour",
       testMatch: "**/*.capture.spec.ts",
       snapshotPathTemplate: "{testDir}/../public/demo-tour/{arg}{ext}",

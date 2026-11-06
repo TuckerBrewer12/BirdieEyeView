@@ -230,7 +230,6 @@ def test_handicap_trend_marks_the_counting_rounds_and_prefers_a_recent_tie(monke
     assert trend[1]["used_in_hi"] is False
     assert trend[2]["used_in_hi"] is True
     assert all(entry["hi_threshold"] == 10.0 for entry in trend)
-    # 12.0 is two strokes off the 10.0 cut-off, so it reads as close; 14.0 does not.
     assert [entry["differential_status"] for entry in trend] == ["close", "close", "counting", "out"]
 
     monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: {"0": None, "1": 8.0}[item.id])

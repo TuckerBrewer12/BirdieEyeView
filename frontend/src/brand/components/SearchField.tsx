@@ -7,7 +7,6 @@ import {
 } from "./InputGroup";
 
 interface SearchFieldProps {
-  /** The input's id, so a FieldLabel can name it. */
   id?: string;
   value: string;
   onChange: (value: string) => void;

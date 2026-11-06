@@ -1,5 +1,3 @@
-"""Client for calling Mistral OCR API with local files."""
-
 from __future__ import annotations
 
 import asyncio
@@ -14,22 +12,13 @@ from typing import Any, Dict, List, Optional, override
 import httpx
 try:
     from bs4 import BeautifulSoup
-except Exception:  # noqa: BLE001
+except ImportError:
     BeautifulSoup = None
 
 logger = logging.getLogger(__name__)
 
 
 class MistralOCRService:
-    """Thin wrapper around Mistral OCR API.
-
-    Env vars:
-    - MISTRAL_API_KEY (required)
-    - MISTRAL_BASE_URL (optional, default: https://api.mistral.ai)
-    - MISTRAL_OCR_PATH (optional, default: /v1/ocr)
-    - MISTRAL_OCR_MODEL (optional, default: mistral-ocr-latest)
-    """
-
     def __init__(
         self,
         *,
@@ -54,7 +43,6 @@ class MistralOCRService:
         include_headers: bool = False,
         include_footers: bool = False,
     ) -> Dict[str, Any]:
-        """OCR a local file and return raw Mistral JSON response."""
         if not self._api_key:
             raise EnvironmentError("MISTRAL_API_KEY environment variable is not set")
 
@@ -95,11 +83,6 @@ class MistralOCRService:
 
     @staticmethod
     def extract_markdown_text(ocr_response: Dict[str, Any]) -> str:
-        """Convert Mistral OCR HTML tables to markdown for downstream Gemini merge.
-
-        Each HTML table is converted individually to a markdown pipe table.
-        Gemini handles merging split front/back nine tables.
-        """
         pages = ocr_response.get("pages")
         if not isinstance(pages, list):
             output_text = ocr_response.get("markdown") or ocr_response.get("text")
@@ -123,7 +106,6 @@ class MistralOCRService:
             text = page.get("markdown") or page.get("text")
             if isinstance(text, str) and text.strip():
                 if html_tables:
-                    # Keep non-table page text (notes/labels) even when table blocks exist.
                     non_table = MistralOCRService._extract_non_table_text(text)
                     if non_table:
                         chunks.append(non_table)
@@ -134,7 +116,6 @@ class MistralOCRService:
 
     @staticmethod
     def _html_to_rows(html: str) -> List[List[str]]:
-        """Parse an HTML table into a list of row cell-lists."""
         if BeautifulSoup is not None:
             soup = BeautifulSoup(html, "html.parser")
             return [
@@ -186,7 +167,6 @@ class MistralOCRService:
 
     @staticmethod
     def _rows_to_markdown(rows: List[List[str]]) -> str:
-        """Convert a list of rows to a markdown pipe table string."""
         if not rows:
             return ""
         return "\n".join(
@@ -196,7 +176,6 @@ class MistralOCRService:
 
     @staticmethod
     def _extract_non_table_text(text: str) -> str:
-        """Remove markdown table lines and keep surrounding non-table text."""
         kept_lines: List[str] = []
         for raw_line in text.splitlines():
             line = raw_line.strip()

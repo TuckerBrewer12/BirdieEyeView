@@ -1,6 +1,5 @@
 import type { CourseDto, CourseSummaryDto, TeeDto } from "@/types/api";
 
-/** A course as a list or a search shows it. */
 export interface CourseSummary {
   id: string;
   name: string | null;
@@ -8,9 +7,7 @@ export interface CourseSummary {
   par: number | null;
   holeCount: number;
   teeCount: number;
-  /** Where it was found: saved here, or the course provider's and not saved yet. */
   source: "local" | "external";
-  /** The course provider's id, for a course found there. Saving a round links it by this. */
   externalId: string | null;
 }
 
@@ -33,7 +30,6 @@ export const BACK_HOLES = [10, 11, 12, 13, 14, 15, 16, 17, 18] as const;
 type HasTees<T extends { color: string | null }> = { tees: T[] };
 type HasHoles<T extends { number: number | null }> = { holes: T[] };
 
-/** A course name in title case, or "Unknown": "half moon BAY" reads "Half Moon Bay". */
 export function formatCourseName(name: string | null | undefined): string {
   if (!name) return "Unknown";
   return name
@@ -63,7 +59,6 @@ export function teeColors(course: CourseDto | null | undefined): string[] {
   return course?.tees.map((tee) => tee.color).filter((color): color is string => !!color) ?? [];
 }
 
-/** Colour words a tee's name is read for, in match order. "combo" names a mixed tee. */
 const TEE_COLORS = [
   "black", "blue", "white", "gold", "red", "green", "silver",
   "yellow", "orange", "purple", "brown", "combo",
@@ -71,14 +66,12 @@ const TEE_COLORS = [
 
 export type TeeColor = (typeof TEE_COLORS)[number];
 
-/** The colour word in a tee's name: "Back Blue" is blue. Null when it names no colour. */
 export function extractTeeColorToken(value: string | null | undefined): TeeColor | null {
   const text = (value ?? "").toLowerCase();
   if (!text) return null;
   return TEE_COLORS.find((token) => text.includes(token)) ?? null;
 }
 
-/** The tee among `teeColors` that `current` names: the same name, else the same colour word. */
 export function chooseCompatibleTee(current: string, teeColors: string[]): string | null {
   const trimmed = current.trim();
   if (!trimmed || teeColors.length === 0) return null;
@@ -89,7 +82,6 @@ export function chooseCompatibleTee(current: string, teeColors: string[]): strin
   return teeColors.find((c) => extractTeeColorToken(c) === currentToken) ?? null;
 }
 
-/** Named tees, longest first by the total the server sends. Ties keep the course's order. */
 export function teesByLength(course: CourseDto): TeeDto[] {
   return course.tees
     .filter((tee) => !!tee.color)

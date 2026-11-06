@@ -3,15 +3,12 @@ import { formatHandicapIndex, formatOneDecimal } from "@/domain";
 
 interface GreetingHeaderProps {
   firstName: string;
-  /** "Mon · Jun 15". */
   dateLabel: string;
   handicapIndex: number | null;
-  /** How the index moved over the last six rated rounds; negative is an improvement. */
   handicapChange: number | null;
   onHandicapClick: () => void;
 }
 
-/** The phone dashboard's top line: today, a hello, and the handicap that opens its breakdown. */
 export function GreetingHeader({
   firstName,
   dateLabel,

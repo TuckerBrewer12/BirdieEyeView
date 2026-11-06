@@ -4,22 +4,10 @@ import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
 
 interface RevealProps extends React.ComponentProps<"div"> {
-  /** Seconds to wait before this one starts, for staggering a row. */
   delay?: number;
-  /** How much of the element must be on screen before it plays. */
   amount?: number;
 }
 
-/**
- * Fades a section up as it scrolls into view, once.
- *
- * Replaces the landing page's `ScrollSection`, which had been reduced to a bare
- * `<div>` that swallowed its own `delay` and `amount` props — every caller was
- * passing a stagger that did nothing.
- *
- * Holds still for a visitor who asked for reduced motion: entrances are
- * decoration, and a page that moves on scroll is the thing that setting is for.
- */
 function Reveal({ className, children, delay = 0, amount = 0.2, ...props }: RevealProps) {
   const reducedMotion = useReducedMotion();
 

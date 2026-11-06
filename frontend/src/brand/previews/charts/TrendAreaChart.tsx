@@ -16,14 +16,12 @@ const percent = (value: number) => `${Math.round(value)}%`;
 export default function TrendAreaChartPreview() {
   return (
     <>
-      {/* One figure over a fill, against its average. */}
       <TrendAreaChart
         points={girRates.map((rate, i) => round(i, [rate]))}
         series={[{ label: "GIR", tone: "birdie" }]}
         format={percent}
         reference={{ value: 36, label: "Avg 36%" }}
       />
-      {/* Two figures side by side, with a gap where a round has none. */}
       <TrendAreaChart
         points={scrambling.map((rate, i) => round(i, [rate, upAndDown[i]]))}
         series={[

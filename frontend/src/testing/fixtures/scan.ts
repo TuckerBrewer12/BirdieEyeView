@@ -6,7 +6,6 @@ const PARS = [4, 4, 3, 5, 4, 4, 3, 5, 3, 4, 5, 4, 3, 4, 4, 5, 3, 4];
 const STROKES = [5, 4, 3, 6, 5, 4, 4, 5, 3, 4, 6, 5, 3, 5, 4, 5, 4, 4];
 const PUTTS = [2, 1, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 2, 2, 3, 2];
 
-/** What extract sends back for a clean, fully read 18-hole card. */
 export const scannedCard: ScanDto = {
   round: {
     course: {
@@ -32,7 +31,6 @@ export const scannedCard: ScanDto = {
   fields_needing_review: [],
 };
 
-/** The holes `unsureCard` couldn't read a score for, or read one it wasn't sure of. */
 export const UNSURE_HOLES = [4, 11];
 
 const level = (sure: boolean): FieldConfidenceDto["level"] => (sure ? "high" : "very_low");
@@ -42,10 +40,6 @@ const confidence = (value: number, sure: boolean): FieldConfidenceDto => ({
   validation_flags: [],
 });
 
-/**
- * The same card, read less cleanly: no score on hole 4, a score on hole 11 the scan wasn't sure of,
- * and putts it couldn't read on hole 2. Only the two scores are worth checking.
- */
 export const unsureCard: ScanDto = {
   ...scannedCard,
   round: {
@@ -81,7 +75,6 @@ const TEE_CARD_STROKES = [5, 4, 3, 7, 4, 5, 2, 6, 4, 5, 6, 3, 4, 5, 4, 4, 5, 5];
 const SHOTS_TO_GREEN = [3, 2, 1, 4, 2, 3, 1, 3, 2, 3, 3, 1, 2, 3, 2, 2, 3, 3];
 const BLUE_YARDS = [402, 388, 176, 521, 410, 395, 162, 540, 418, 405, 512, 188, 377, 430, 392, 171, 548, 421];
 
-/** A card read with its tee's yardages and shots-to-green, but no putts or greens. */
 export const scannedTeeCard: ScannedRoundDto = {
   course: {
     name: "Torrey Pines",

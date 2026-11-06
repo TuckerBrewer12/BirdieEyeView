@@ -16,7 +16,6 @@ import {
 const halfMoonBayRound = Round.detailFromDto(halfMoonBayDto);
 const scannedRound = Round.detailFromDto(scannedDto);
 
-/** Starts editing `round`, then applies `actions` in order. */
 function edit(round: RoundDetail, ...actions: RoundEditAction[]): OpenRoundEditor {
   const state = [{ type: "start", round } as RoundEditAction, ...actions].reduce(roundEditor, closedEditor);
   if (!state.editing) throw new Error("expected an open editor");

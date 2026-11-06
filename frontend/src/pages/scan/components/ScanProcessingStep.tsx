@@ -8,11 +8,9 @@ const PHASES = [
 ] as const;
 
 interface ScanProcessingStepProps {
-  /** Which phase of reading the card to show. */
   phase: number;
 }
 
-/** The card being read. The scan reports no progress, so the phases are paced, not measured. */
 export function ScanProcessingStep({ phase }: ScanProcessingStepProps) {
   const shown = Math.min(Math.max(phase, 0), PHASES.length - 1);
   return (

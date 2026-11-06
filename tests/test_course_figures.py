@@ -1,5 +1,3 @@
-"""The Course model works out a course's figures, and the course response carries them."""
-
 from api.course_responses import course_detail
 from api.round_responses import round_detail
 from models import Course, Hole, HoleScore, Round, Tee

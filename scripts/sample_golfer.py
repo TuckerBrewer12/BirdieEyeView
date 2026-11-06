@@ -1,12 +1,3 @@
-"""Write the sample golfer the landing page's demo tour is captured with.
-
-A season of believable rounds is run through the real stats endpoints, so every
-screen in the tour shows the same player with figures the server worked out.
-
-Run from the repo root: python scripts/sample_golfer.py
-Output: frontend/src/testing/fixtures/sampleGolfer.ts (generated; do not edit)
-"""
-
 import asyncio
 import json
 import random
@@ -28,10 +19,8 @@ from models import Course, Hole, HoleScore, Round, Tee, User
 
 OUT = Path(__file__).resolve().parent.parent / "frontend" / "src" / "testing" / "fixtures" / "sampleGolfer.ts"
 
-# Seeded, so a re-run writes the same golfer and the captures stay put.
 rng = random.Random(7)
 
-# Ten months after the season: the last year then starts after the golfer's March rounds.
 A_YEAR_ON = date(2027, 4, 1)
 
 
@@ -83,7 +72,6 @@ SHARP_PARK = _course(
     [372, 505, 360, 158, 425, 348, 498, 176, 392, 381, 142, 410, 527, 366, 167, 389, 489, 401],
 )
 
-# Home course most weeks, the links now and then.
 SCHEDULE = [PRESIDIO, PRESIDIO, SHARP_PARK, PRESIDIO, HALF_MOON_BAY, PRESIDIO, SHARP_PARK, PRESIDIO,
             PRESIDIO, HALF_MOON_BAY, PRESIDIO, SHARP_PARK, PRESIDIO, PRESIDIO, HALF_MOON_BAY, PRESIDIO,
             SHARP_PARK, PRESIDIO, PRESIDIO, HALF_MOON_BAY, PRESIDIO, PRESIDIO, SHARP_PARK, PRESIDIO]
@@ -101,7 +89,6 @@ USER = User(
 
 
 def _hole(number: int, par: int, skill: float) -> HoleScore:
-    """One hole for a mid-teens player; skill falls toward 0 as the season goes on."""
     gir = rng.random() < 0.40 - 0.18 * skill
     to_green = par - 2 if gir else par - 2 + (2 if rng.random() < 0.08 + 0.22 * skill else 1)
     if gir:
@@ -181,7 +168,6 @@ def _database(rounds: list[Round]):
 
 
 def _achievements_a_year_on(rounds: list[Round]):
-    """The golfer's records and milestones as the server works them out on `A_YEAR_ON`."""
     return analytics_response(rounds, rounds, home_course_id=USER.home_course_id, today=A_YEAR_ON).notable_achievements
 
 
@@ -194,7 +180,6 @@ async def _responses() -> tuple[dict, dict]:
     analytics = await stats.get_analytics(user_id, 50, None, None, db, USER)
     goal_report = await stats.get_goal_report(user_id, 20, db, USER)
     played_courses = await stats.get_played_courses(user_id, db, USER)
-    # Analytics' course filter, for the course played least, so the figures plainly change.
     links_analytics = await stats.get_analytics(user_id, 50, HALF_MOON_BAY.id, None, db, USER)
 
     best = best_round(sorted(rounds, key=lambda r: r.date, reverse=True))
@@ -208,7 +193,6 @@ async def _responses() -> tuple[dict, dict]:
         "analyticsByCourse": {HALF_MOON_BAY.id: links_analytics},
         "playedCourses": played_courses,
         "goalReport": goal_report,
-        # The tour's pages never ask for the round list; Analytics opens just the best round.
         "detailRounds": [round_detail(best, await player_handicap_index(db, USER))],
     })
     return seed, jsonable_encoder(_achievements_a_year_on(rounds))
@@ -233,7 +217,6 @@ export const achievementsAYearOn = """
 
 
 def _format(value, depth: int = 0) -> str:
-    """JSON with each flat object or list on one line, so a hole or a trend point reads as a row."""
     flat = json.dumps(value, sort_keys=True, separators=(", ", ": "))
     if not isinstance(value, (dict, list)) or not any(isinstance(v, (dict, list)) for v in (
         value.values() if isinstance(value, dict) else value

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { isThemePreference, resolveTheme, type ThemePreference } from "@/domain/theme";
 import { THEME_STORAGE_KEY, ThemeContext, type ThemeValue } from "./theme";
 
-/** Keys from before there was one preference; read once so nobody loses their choice. */
 const LEGACY_KEYS = ["settings_theme", "public_theme"];
 
 const DARK_QUERY = "(prefers-color-scheme: dark)";
@@ -37,10 +36,6 @@ function deviceIsDark(): boolean {
   return darkQuery()?.matches ?? false;
 }
 
-/**
- * The one owner of the theme. It saves the preference, puts `dark` on <html>, and follows the device
- * while the preference is "system". Components read it through `useTheme` only to change the theme.
- */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreferenceState] = useState<ThemePreference>(readPreference);
   const [deviceDark, setDeviceDark] = useState(deviceIsDark);

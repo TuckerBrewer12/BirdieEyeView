@@ -10,10 +10,8 @@ import { PerformanceShapeCard } from "./PerformanceShapeCard";
 import { PuttingCard } from "./PuttingCard";
 import { SaverCard } from "./SaverCard";
 
-/** The attempts chart needs a few rounds to say anything. */
 const MIN_ATTEMPTS = 3;
 
-/** The Lab from md up: the goal, where to find strokes, the golfer's shape, and their best rounds. */
 export function LabDesktopLayout({ vm }: { vm: LabPageViewModel }) {
   const target = vm.goal?.target ?? null;
   const label = goalLabel(target);

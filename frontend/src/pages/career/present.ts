@@ -70,12 +70,10 @@ export function milestoneLabel(milestone: Milestone): string {
   }
 }
 
-/** A stable key for a milestone in its list. */
 export function milestoneKey(milestone: Milestone): string {
   return "threshold" in milestone ? `${milestone.kind}-${milestone.threshold}` : milestone.kind;
 }
 
-/** Where and when a record was set: "May 25, 2026 · Presidio Golf Course". */
 export function eventDetail(event: CareerEvent | null): string | null {
   if (!event) return null;
   return [formatDay(event.date) ?? event.date, event.course].filter(Boolean).join(" · ");
@@ -85,7 +83,6 @@ export function recordValue(value: number | null): string {
   return value != null ? String(value) : "—";
 }
 
-/** The note over the last year's score milestones. */
 export function newRecordsNote(count: number, windowDays: number): string {
   return `${count} new personal ${pluralNoun(count, "record")} in the last ${windowDays} days.`;
 }
@@ -96,7 +93,6 @@ export const PAGE_SUBTITLE = "Player achievement records";
 
 export const EMPTY_MESSAGE ="Play some rounds to start your career record.";
 
-/** The radar's spokes: the golfer's own shape, labelled with their figures. */
 export function profileAxes(profile: RadarEntry[]): RadarAxis[] {
   return profile.map((entry) => ({ label: entry.axis, value: entry.value, valueLabel: entry.userRaw }));
 }

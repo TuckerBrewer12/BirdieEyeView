@@ -1,5 +1,3 @@
-"""AI Suggestions router."""
-
 import logging
 from hashlib import sha256
 from typing import Optional

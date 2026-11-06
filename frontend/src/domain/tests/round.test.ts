@@ -33,7 +33,6 @@ describe("Round.fromSummary", () => {
 const yardsFrom = (base: number) =>
   Object.fromEntries(Array.from({ length: 18 }, (_, i) => [i + 1, base + i]));
 
-/** Half Moon Bay with hole yardages on both tees, played from the blues. */
 const measuredCourse = courseResponse({
   ...halfMoonBayCourse,
   tees: [

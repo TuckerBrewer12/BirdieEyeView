@@ -3,7 +3,6 @@ import { Sparkline } from "@/brand/charts/Sparkline";
 export default function SparklinePreview() {
   return (
     <div className="flex flex-col gap-6">
-      {/* The dashed line is the rounds' average as the server sent it: 76.8. */}
       <Sparkline series={[{ values: [85, 69, 72, 78, 80] }]} fill reference={76.8} />
       <Sparkline
         domain={[0, 100]}

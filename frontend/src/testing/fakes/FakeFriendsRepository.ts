@@ -6,7 +6,6 @@ import {
 import type { FriendsRepository } from "../../data/friendsRepository";
 import { InMemoryFriendships, type InMemoryFriendshipsSeed } from "./InMemoryFriendships";
 
-/** Maps the in-memory server's rows the way the real repository maps the API's. */
 export class FakeFriendsRepository implements FriendsRepository {
   readonly store: InMemoryFriendships;
   getFriendshipsCalls = 0;

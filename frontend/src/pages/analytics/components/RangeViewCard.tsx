@@ -9,7 +9,6 @@ interface RangeViewCardProps {
   className?: string;
 }
 
-/** How the golfer scores from each yardage band, one par type at a time. */
 export function RangeViewCard({ buckets, par, onParChange, className }: RangeViewCardProps) {
   const shown = buckets.filter((bucket) => bucket.par === par);
   const played = new Set(buckets.map((bucket) => bucket.par));

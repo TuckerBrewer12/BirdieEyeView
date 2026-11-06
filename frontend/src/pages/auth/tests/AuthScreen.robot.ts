@@ -5,7 +5,6 @@ import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBa
 
 export type AuthSeed = Omit<FakeBackendSeed, "signedOut">;
 
-/** What every signed-out screen's robot can do: arrive signed out, read the notices, capture. */
 export class AuthScreenRobot {
   protected readonly page: Page;
   backend: FakeBackend | null = null;
@@ -21,7 +20,6 @@ export class AuthScreenRobot {
     return this;
   }
 
-  /** Lands signed out on `path` and waits for the screen's heading. */
   protected async visit(path: string, heading: string, seed: AuthSeed = {}): Promise<void> {
     this.backend = await FakeSession.install(this.page, { ...seed, signedOut: true });
     await this.page.goto(path);
@@ -75,7 +73,6 @@ export class AuthScreenRobot {
     return this;
   }
 
-  /** A message under one field, from checks the form runs before sending anything. */
   async seesFieldError(text: string): Promise<this> {
     await expect(this.page.locator("[data-slot=field-error]").filter({ hasText: text })).toBeVisible();
     return this;

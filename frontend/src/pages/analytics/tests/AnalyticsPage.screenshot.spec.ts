@@ -46,8 +46,6 @@ test("load failed", async ({ analytics }) => {
   await analytics.capture("analytics-load-failed.png");
 });
 
-// A phone shows one part of the game at a time; desktop shows every section. Scoring opens first,
-// so the populated captures above already show it.
 const PHONE_TABS = [
   { tab: "Ball Striking", showing: "GIR % per Round", file: "ball-striking" },
   { tab: "Putting", showing: "Total Putts per Round", file: "putting" },

@@ -11,10 +11,6 @@ const WEEKS = 5;
 const DAYS_IN_WEEK = 7;
 const SATURDAY = 6;
 
-/**
- * Counts rounds on each local calendar day in the 5-week window that ends
- * on the Saturday of this week. Days after today stay in the grid as future.
- */
 export function activityDays(
   rounds: { date: string | null }[],
   todayInput: Date = new Date(),

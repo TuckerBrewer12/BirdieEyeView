@@ -1,5 +1,3 @@
-"""A player's analytics at one course, built in one place from their rounds there."""
-
 from typing import List
 
 from analytics import stats as analytics
@@ -9,7 +7,6 @@ from models import Round
 
 
 def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResponse:
-    """The player's figures at one course, from their rounds there (oldest first)."""
     scores = [s for s in (r.calculate_total_score() for r in rounds) if s is not None]
     by_hole = analytics.average_score_relative_to_par_by_hole(rounds)
     nines = analytics.hole_average_nines(by_hole)

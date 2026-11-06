@@ -9,7 +9,6 @@ export default function MilestonesCardPreview() {
   return (
     <>
       <MilestonesCard title={MILESTONE_GROUP_TITLE.scoring} milestones={lifetime.scoring} onOpenRound={() => {}} />
-      {/* The last year: the server's new personal records, and a note counting them. */}
       <MilestonesCard
         title={MILESTONE_GROUP_TITLE.scoring}
         milestones={year.scoring}
@@ -23,7 +22,6 @@ export default function MilestonesCardPreview() {
         empty={NO_NEW_RECORDS}
         onOpenRound={() => {}}
       />
-      {/* Ten months on, only the GIR milestone reached in the last year still counts. */}
       <MilestonesCard
         title={MILESTONE_GROUP_TITLE.gir}
         milestones={laterCareer.windows.one_year.gir}

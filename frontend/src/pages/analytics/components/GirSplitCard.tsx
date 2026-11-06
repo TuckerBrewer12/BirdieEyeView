@@ -9,7 +9,6 @@ interface GirSplitCardProps {
   className?: string;
 }
 
-/** How holes go when the green is hit against when it is missed: one score mix each. */
 export function GirSplitCard({ split, className }: GirSplitCardProps) {
   return (
     <Card data-slot="gir-split-card" className={className}>

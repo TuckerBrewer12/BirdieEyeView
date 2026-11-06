@@ -28,44 +28,28 @@ const SWATCH: Record<TrendAreaTone, string> = {
 };
 
 interface TrendAreaSeries {
-  /** Names the line in the tooltip, and in a legend when there are two. */
   label: string;
   tone?: TrendAreaTone;
 }
 
 interface TrendAreaPoint {
-  /** Under the point on the bottom axis: the round number. */
   tick: string | number;
-  /** The tooltip's heading: "Round 12". */
   title: string;
-  /** A quieter line under the heading, like the course. */
   subtitle?: string | null;
-  /** One value per series, in the same order. Null leaves a gap. */
   values: (number | null)[];
-  /** More figures for the tooltip, under the series values. */
   notes?: { label: string; value: string }[];
 }
 
 interface TrendAreaChartProps {
-  /** One per round, oldest first. */
   points: TrendAreaPoint[];
-  /** The first is the figure, drawn over a soft fill. A second is drawn as a thinner line beside it. */
   series: [TrendAreaSeries] | [TrendAreaSeries, TrendAreaSeries];
-  /** How a value reads on the axis and in the tooltip. */
   format?: (value: number) => string;
-  /** The value range to draw against. Defaults to the values' own range, padded. */
   domain?: [number, number];
-  /** A dashed line across at a value worth measuring against: the average, par. */
   reference?: { value: number; label: string } | null;
   className?: string;
   "aria-label"?: string;
 }
 
-/**
- * A figure over a golfer's rounds: one line over a soft fill, oldest on the left, with a second
- * line beside it if wanted. Hovering with a mouse or tapping on a phone picks a round and shows
- * its figures.
- */
 export function TrendAreaChart({
   points,
   series,
@@ -137,7 +121,6 @@ export function TrendAreaChart({
         }}
         onPointerDown={(event) => {
           if (event.pointerType === "mouse") return;
-          // A tap picks a round and a second tap on it puts it down.
           const index = indexAt(event);
           setActive(active === index ? null : index);
         }}
@@ -244,7 +227,6 @@ export function TrendAreaChart({
             data-slot="trend-area-tooltip"
             className={cn(
               "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
-              // Past two thirds of the way across, the card opens to the left of the point.
               x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
             )}
             style={{ left: `${(x(active) / W) * 100}%`, top: `${(pointY / H) * 100}%` }}
@@ -318,11 +300,9 @@ function AxisLabel({
   );
 }
 
-/** About `count` evenly spaced indexes from the first, always ending on the last. */
 function tickIndexes(length: number, count: number): number[] {
   const step = Math.max(1, Math.ceil((length - 1) / (count - 1)));
   const ticks = Array.from({ length: Math.ceil(length / step) }, (_, i) => i * step).filter((i) => i < length);
-  // Drop a tick that would crowd the last one.
   if (ticks.length > 1 && length - 1 - ticks[ticks.length - 1] < step / 2) ticks.pop();
   if (ticks[ticks.length - 1] !== length - 1) ticks.push(length - 1);
   return ticks;

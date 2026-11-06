@@ -13,7 +13,6 @@ interface AnalyticsDesktopLayoutProps {
   analytics: Analytics;
 }
 
-/** The title and the filters, pinned while the figures scroll under them. */
 export function AnalyticsDesktopHeader({ vm }: { vm: AnalyticsPageViewModel }) {
   return (
     <div className="sticky top-0 z-30 -mx-6 mb-6 flex flex-col gap-3 border-b border-border bg-background/glass px-6 py-3 backdrop-blur-xl">
@@ -37,7 +36,6 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-/** The analytics page from md up: the headline figures, the best round, then each part of the game. */
 export function AnalyticsDesktopLayout({ vm, analytics }: AnalyticsDesktopLayoutProps) {
   return (
     <div className="flex flex-col gap-10 pb-12">

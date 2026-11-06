@@ -8,9 +8,7 @@ interface ScoreMixBarProps {
   className?: string;
 }
 
-/** How a player's holes split across score kinds: one stacked bar, then each kind's share under it. */
 export function ScoreMixBar({ mix, className }: ScoreMixBarProps) {
-  // Slivers under half a percent would only draw as a seam, so the bar and legend both skip them.
   const shown = SCORE_KEYS.filter((kind) => mix[kind] > 0.5);
   const pct = (kind: (typeof shown)[number]) => formatPercent(mix[kind]);
 

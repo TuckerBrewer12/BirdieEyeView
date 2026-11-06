@@ -4,7 +4,6 @@ import type { CourseDto } from "../../../../types/api";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 
-/** Screen robot for /courses/:courseId — same idea as an Android Espresso robot. */
 export class CourseDetailRobot {
   private readonly page: Page;
 

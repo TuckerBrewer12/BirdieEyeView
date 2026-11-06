@@ -33,7 +33,6 @@ SUGGESTION_FENCE_RE = re.compile(
 
 
 def finding_id(path: str, body: str) -> str:
-    """Stable across line-number shifts so a synchronize does not open a second PR."""
     return hashlib.sha1(f"{path}\n{body.strip()}".encode()).hexdigest()[:8]
 
 
@@ -65,7 +64,6 @@ def parse_metadata(body: str) -> dict[str, Any] | None:
 
 
 def is_fix_command(body: str) -> bool:
-    """True when the comment *is* a /fix command, not a bot note that mentions it."""
     text = (body or "").strip()
     if not text:
         return False
@@ -74,7 +72,6 @@ def is_fix_command(body: str) -> bool:
 
 
 def normalize_suggestion(raw: object) -> str | None:
-    """Turn a model `suggestion` field into source text, or None if unusable."""
     if raw is None:
         return None
     if isinstance(raw, list):
@@ -91,7 +88,6 @@ def normalize_suggestion(raw: object) -> str | None:
 
 
 def suggestion_fence(text: str) -> str:
-    """GitHub's commit-suggestion block. Accepting it replaces the commented lines."""
     return f"```suggestion\n{text.rstrip()}\n```"
 
 
@@ -106,7 +102,6 @@ def decorate_body(
     bot_name: str,
     suggestion: str | None = None,
 ) -> tuple[str, str]:
-    """Return (comment markdown, finding id)."""
     fid = finding_id(path, body)
     prompt = links.discussion_prompt(
         repo=repo,
@@ -219,7 +214,6 @@ def cmd_parse_meta() -> int:
 
 
 def cmd_from_comment() -> int:
-    """Build a one-element fix payload from a `/fix` reply."""
     body = os.environ.get("COMMENT_BODY", "")
     parent = os.environ.get("PARENT_BODY", "")
     if not is_fix_command(body):
@@ -251,7 +245,6 @@ def cmd_from_comment() -> int:
 
 
 def finding_text(comment: str) -> str:
-    """Strip the footer/metadata so later steps see the original finding text."""
     text = META_RE.sub("", comment).strip()
     cuts: list[int] = []
     for marker in (f"[{links.DISCUSS_LABEL}](", "```suggestion"):

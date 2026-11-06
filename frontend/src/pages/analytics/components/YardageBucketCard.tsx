@@ -17,7 +17,6 @@ interface YardageBucketCardProps {
   className?: string;
 }
 
-/** One yardage band: what the golfer averages there, every hole on a target, and how the holes split. */
 export function YardageBucketCard({ bucket, className }: YardageBucketCardProps) {
   return (
     <Card data-slot="yardage-bucket-card" size="sm" className={className}>

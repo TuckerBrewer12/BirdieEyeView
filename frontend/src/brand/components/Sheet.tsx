@@ -4,16 +4,6 @@ import { X } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { Button } from "./Button";
 
-/**
- * A right-side drawer with shadcn's slot tree (Trigger / Content / Header /
- * Title / Description / Footer) so pages compose the same way.
- *
- * The chrome is ours, not a paste: card tokens, a dim overlay, one edge
- * (right — that is the handicap breakdown), and `contained` so the brand
- * preview can host the panel inside the stage instead of portaling over
- * the page.
- */
-
 function Sheet(props: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
 }

@@ -12,7 +12,6 @@ interface AnalyticsFilterBarProps {
   className?: string;
 }
 
-/** How many rounds, over what stretch, at which course: the filters every figure below answers to. */
 export function AnalyticsFilterBar({
   filters,
   onChange,

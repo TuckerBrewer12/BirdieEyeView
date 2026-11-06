@@ -8,16 +8,11 @@ import type { ScorePoint } from "@/domain/courseAnalytics";
 import { indexScale, paddedExtent } from "./scales";
 
 interface ScoreTrendChartProps {
-  /** The rounds, oldest first. Unscored rounds are left out. */
   rows: ScorePoint[];
 }
 
 type ScoredRow = ScorePoint & { score: number };
 
-/**
- * A golfer's scores over time: one dot per round, coloured by its score to par,
- * joined into a line over a soft fill. Hovering a dot shows its date and score.
- */
 export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
   const { width: W, height: H, pad: PAD, headroom, stroke, dot, dotHover, maxTicks } = tokens.chart.trend;
   const [hovered, setHovered] = useState<ScoredRow | null>(null);

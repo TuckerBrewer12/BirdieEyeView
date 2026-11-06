@@ -2,7 +2,6 @@ import { Round } from "@/domain";
 import { roundResponse, type StoredHole } from "@/testing/fakes/roundResponses";
 import { RoundDetailHeader } from "../components/RoundDetailHeader";
 
-/** strokes-to-par per hole, as par-4 holes. */
 function nine(from: number, toPars: number[], par: number | null = 4): StoredHole[] {
   return toPars.map((toPar, i) => ({
     hole_number: from + i,
@@ -15,7 +14,6 @@ function nine(from: number, toPars: number[], par: number | null = 4): StoredHol
   }));
 }
 
-/** A round as the server would send it, played on the named card with no linked course. */
 function round(name: string, date: string | null, teeBox: string | null, holes: StoredHole[]): Round {
   return Round.fromDto(
     roundResponse({
@@ -32,7 +30,6 @@ function round(name: string, date: string | null, teeBox: string | null, holes: 
   );
 }
 
-// One of every bucket, so each bar height and chip colour is exercised. 32 putts, 7 greens.
 const everyBucket = round(
   "Half Moon Bay",
   "2026-06-15T18:00:00.000Z",
@@ -51,7 +48,6 @@ const levelPar = round(
   [...nine(1, [0, -1, 0, 1, 0, 0, 0, 0, 0]), ...nine(10, [0, 0, -1, 0, 0, 1, 0, 0, 0])],
 );
 
-// Strokes read off the card, but no par for any hole.
 const scanned = round("Scanned Scorecard", null, null, [
   ...nine(1, [1, 1, 1, 1, 1, 1, 1, 1, 1], null),
   ...nine(10, [1, 1, 1, 1, 0, 0, 0, 0, 0], null),
@@ -70,16 +66,12 @@ const ninePlayed = round(
 export default function RoundDetailHeaderPreview() {
   return (
     <>
-      {/* Everything present: date, rated tee, net, both nines, stats, chips. */}
       <RoundDetailHeader round={{ ...everyBucket, courseHandicap: 12, netScore: 73 }} teeRating="72.4 / 130" />
 
-      {/* Level par, to check it reads green rather than red. */}
       <RoundDetailHeader round={levelPar} />
 
-      {/* A scanned card with no par: no tee, no net, no to-par, no chips. */}
       <RoundDetailHeader round={scanned} />
 
-      {/* A part-played front nine — bars draw, but the total is withheld. */}
       <RoundDetailHeader round={partPlayed} />
 
       {/* A nine on its own: greens out of nine, and no net off an 18-hole rating. */}

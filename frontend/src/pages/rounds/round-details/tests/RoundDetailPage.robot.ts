@@ -5,7 +5,6 @@ import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 import { formatCourseName } from "../../../../domain/course";
 
-/** Screen robot for /rounds/:id — same idea as an Android Espresso robot. */
 export class RoundDetailRobot {
   private readonly page: Page;
 
@@ -104,7 +103,6 @@ export class RoundDetailRobot {
     return this;
   }
 
-  /** The text field a round gets when its course has no tees to pick from. */
   async seesTeeField(): Promise<this> {
     await expect(this.page.getByRole("textbox", { name: "Tee" })).toBeVisible();
     return this;

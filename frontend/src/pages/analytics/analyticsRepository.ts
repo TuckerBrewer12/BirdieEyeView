@@ -8,12 +8,10 @@ import { roundsRepository, type RoundsRepository } from "../rounds/roundsReposit
 import type { PlayedCourseDto } from "@/types/api";
 import type { PlayedCourse } from "./model";
 
-/** The shared analytics read (`data/useAnalytics`), plus what only this page asks for. */
 export interface AnalyticsRepository
   extends SharedAnalyticsRepository,
     Pick<UserRepository, "getUser">,
     Pick<RoundsRepository, "getRound"> {
-  /** The courses the golfer has a round at, for the course filter. */
   getPlayedCourses(userId: string): Promise<PlayedCourse[]>;
 }
 

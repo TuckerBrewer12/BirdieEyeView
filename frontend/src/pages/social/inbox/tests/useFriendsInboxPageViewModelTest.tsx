@@ -66,7 +66,6 @@ describe("useFriendsInboxPageViewModel", () => {
     const riley = result.current.requests.find((r) => r.id === "friendship-riley");
     expect(riley?.status).toBe("accepted");
     expect(result.current.canRespond(riley!)).toBe(false);
-    // The answer comes back from the mutation, not another fetch.
     expect(repository.getFriendshipsCalls).toBe(1);
   });
 

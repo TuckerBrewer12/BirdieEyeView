@@ -1,14 +1,12 @@
 import { test as base, expect } from "../../../../testing/playwright";
 import { AuthScreenRobot, type AuthSeed } from "../../tests/AuthScreen.robot";
 
-/** Screen robot for `/login`, signed out. */
 export class LoginRobot extends AuthScreenRobot {
   async open(seed: AuthSeed = {}): Promise<this> {
     await this.visit("/login", "Sign in", seed);
     return this;
   }
 
-  /** Arrives the way another screen sends someone here, with an email and a line to show. */
   async arriveWith(state: { email?: string; flash?: string }, seed: AuthSeed = {}): Promise<this> {
     await this.visitWithState("/login", "Sign in", state, seed);
     return this;
@@ -51,7 +49,6 @@ export class LoginRobot extends AuthScreenRobot {
     return this;
   }
 
-  /** Signed in: off this screen and onto the app's home. */
   async isSignedIn(): Promise<this> {
     await this.isAt("/");
     await expect(this.page.getByRole("heading", { name: "Sign in" })).toHaveCount(0);

@@ -4,12 +4,10 @@ import { Button } from "@/brand";
 
 interface AuthLinkProps {
   to: string;
-  /** Router state for the next screen, such as the email to fill in. */
   state?: unknown;
   children: ReactNode;
 }
 
-/** A link to a neighbouring auth screen, sized to sit inside a line of footer text. */
 export function AuthLink({ to, state, children }: AuthLinkProps) {
   return (
     <Button

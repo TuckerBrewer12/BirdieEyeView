@@ -109,7 +109,6 @@ export {
   SheetDescription,
 } from "./components/Sheet";
 
-// Charts
 export { ActivityHeatmap } from "./charts/ActivityHeatmap";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";

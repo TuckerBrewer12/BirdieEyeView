@@ -9,17 +9,14 @@ export interface ScanUploadPhoto {
 }
 
 interface ScanUploadStepProps {
-  /** The picked photo, or null before one is picked. */
   photo: ScanUploadPhoto | null;
   onPick: (photo: File) => void;
   onClear: () => void;
   onContextChange: (context: string) => void;
   onExtract: () => void;
-  /** On a phone app, the camera and photo library stand in for the drop zone. */
   native?: boolean;
 }
 
-/** Picking the card's photo, saying what's on it, and starting the scan. */
 export function ScanUploadStep({
   photo,
   onPick,

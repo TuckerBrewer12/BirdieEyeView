@@ -13,9 +13,7 @@ import {
 } from "../courseDetailModel";
 
 export interface CourseScorecardViewModel {
-  /** Longest tee first. */
   teeChips: TeeChip[];
-  /** Picks a tee, or clears it when it is already picked. */
   selectTee: (color: string) => void;
   frontNine: ScorecardNine;
   backNine: ScorecardNine;
@@ -30,7 +28,6 @@ export function useCourseScorecardViewModel(
   courseId: string,
   repository: CoursesRepository = coursesRepository,
 ): CourseScorecardViewModel | null {
-  // Undefined until the golfer picks: the scorecard then follows the longest tee.
   const [picked, setPicked] = useState<string | null | undefined>(undefined);
   const { data: course } = useCourse(courseId, repository);
   const { data: analytics = EMPTY_COURSE_ANALYTICS } = useCourseAnalytics(userId, courseId, repository);

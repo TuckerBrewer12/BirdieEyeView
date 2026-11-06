@@ -8,7 +8,6 @@ import type { UserDto } from "../../../types/api";
 
 type ThemeLabel = "Light" | "Dark" | "System";
 
-/** A golfer with a friend code, a handicap and a home course. */
 export function settingsProfile(overrides: Partial<UserDto> = {}): UserDto {
   return {
     id: TEST_USER.user_id,
@@ -23,7 +22,6 @@ export function settingsProfile(overrides: Partial<UserDto> = {}): UserDto {
   };
 }
 
-/** Screen robot for /settings. */
 export class SettingsRobot {
   private readonly page: Page;
   private backend: FakeBackend | null = null;
@@ -105,7 +103,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** The next load of settings succeeds, as the API would once the failure has cleared. */
   nextLoadSucceeds(): this {
     if (this.backend) this.backend.profileError = null;
     return this;
@@ -116,7 +113,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** The failed-load alert is gone and the settings form is on screen. */
   async seesForm(): Promise<this> {
     await expect(this.page.getByRole("alert")).toHaveCount(0);
     await expect(this.themeControl()).toBeVisible();
@@ -130,7 +126,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** The next save fails with this message, as the API would answer. */
   failSavesWith(detail: string): this {
     if (this.backend) this.backend.updateUserError = detail;
     return this;
@@ -161,13 +156,11 @@ export class SettingsRobot {
     return this;
   }
 
-  /** Lets the page write to and read from the clipboard, as a player who allowed it would. */
   async allowClipboard(): Promise<this> {
     await this.page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
     return this;
   }
 
-  /** The browser turns clipboard writes down, as it does without permission or focus. */
   async blockClipboard(): Promise<this> {
     await this.page.addInitScript(() => {
       Object.defineProperty(navigator, "clipboard", {
@@ -267,7 +260,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** Back to /settings through the nav, keeping the same backend. */
   async returnToSettings(): Promise<this> {
     await this.leaveTo("Settings");
     await expect(this.themeControl()).toBeVisible();
@@ -279,7 +271,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** The unsaved-changes prompt shows why the save failed. */
   async seesLeavePromptError(message: string): Promise<this> {
     await expect(this.leavePrompt().getByRole("alert").filter({ hasText: message })).toBeVisible();
     return this;
@@ -301,14 +292,12 @@ export class SettingsRobot {
     return this;
   }
 
-  /** Left without stopping on the unsaved-changes prompt, or after answering it. */
   async isAt(path: string): Promise<this> {
     await expect(this.leavePrompt()).toHaveCount(0);
     await expect.poll(() => new URL(this.page.url()).pathname).toBe(path);
     return this;
   }
 
-  /** Still on this path; the unsaved-changes prompt may still be open. */
   async staysAt(path: string): Promise<this> {
     await expect.poll(() => new URL(this.page.url()).pathname).toBe(path);
     return this;

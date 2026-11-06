@@ -8,7 +8,6 @@ const DIFFERENTIAL_FILL: Record<DifferentialStatus, string> = {
   unrated: color.score.par.base,
 };
 
-/** The bar colour for a round's differential, from where it stands in the WHS window. */
 export function differentialFill(status: DifferentialStatus): string {
   return DIFFERENTIAL_FILL[status];
 }

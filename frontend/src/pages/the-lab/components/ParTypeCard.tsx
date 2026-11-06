@@ -4,19 +4,16 @@ import { formatAverageToPar } from "@/domain";
 import type { ParTypeRow } from "../model";
 import { parTypeGapNote } from "../present";
 
-/** A par type's bar is full at this many strokes over par a hole. */
 const BAR_FULL_AT = 2.4;
 
 const toBar = (averageToPar: number) => (Math.max(0, averageToPar) / BAR_FULL_AT) * 100;
 
 interface ParTypeCardProps {
   rows: ParTypeRow[];
-  /** What the marker on each bar is: "Breaks 80", a friend's name. Null with no comparison. */
   benchmarkName: string | null;
   className?: string;
 }
 
-/** Strokes over par a hole on par 3s, 4s and 5s, each marked against the comparison. */
 export function ParTypeCard({ rows, benchmarkName, className }: ParTypeCardProps) {
   return (
     <Card data-slot="par-type-card" className={className}>

@@ -22,7 +22,6 @@ function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-/** The editor is handed its round, so there is nothing to load first. */
 function renderEditor(round: RoundDto, seed: FakeRoundsRepositorySeed = {}) {
   const repository = new FakeRoundsRepository({ detailRounds: [round], ...seed });
   const hook = renderHook(

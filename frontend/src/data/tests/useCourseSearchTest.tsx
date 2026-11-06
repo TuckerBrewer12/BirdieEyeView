@@ -15,7 +15,6 @@ function renderSearch(seed: FakeRoundsRepositorySeed = { courses: searchableCour
   return { repository, ...rendered };
 }
 
-/** Run the debounce out and let the search promise settle. */
 async function advancePastDebounce(ms = DEBOUNCE_MS) {
   await act(async () => {
     await vi.advanceTimersByTimeAsync(ms);
@@ -131,7 +130,6 @@ describe("useCourseSearch", () => {
   });
 
   it("a slow earlier search cannot overwrite a newer one", async () => {
-    // First search takes 500ms, second 10ms, so the first resolves last.
     const { result, repository } = renderSearch({
       courses: searchableCourses,
       searchDelaysMs: [500, 10],
@@ -149,7 +147,6 @@ describe("useCourseSearch", () => {
     expect(result.current.results).toEqual([]);
     expect(result.current.searching).toBe(false);
 
-    // The stale "pebble" response now arrives and must be ignored.
     await advancePastDebounce(500);
     expect(result.current.results).toEqual([]);
     expect(result.current.searching).toBe(false);

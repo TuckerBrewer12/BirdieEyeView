@@ -4,8 +4,6 @@ on:
   pull_request_review_comment:
     types: [created]
 
-# Workflow file for this event comes from the default branch. The reusable
-# workflow it calls opens the fix PR with write permissions of its own.
 permissions:
   contents: write
   pull-requests: write

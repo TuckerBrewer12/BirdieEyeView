@@ -12,7 +12,6 @@ import {
 
 const PARS = [4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5];
 
-/** Every hole 400 yards off the blue tee, so each nine is 3600. */
 const measured = courseResponse({
   id: "c1",
   name: "Measured",

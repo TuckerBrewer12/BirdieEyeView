@@ -130,7 +130,6 @@ describe("careerFrom", () => {
       c.windows.one_year[group].filter((m) => m.achieved).map(labelOf);
 
     expect(reached(career, "putting")).toHaveLength(6);
-    // By April 2027 the March 2026 rounds have left the server's last year; the May 2026 one hasn't.
     expect(reached(later, "putting")).toEqual([]);
     expect(reached(later, "gir")).toEqual(["gir-break:9"]);
     expect(later.windows.lifetime.gir.filter((m) => m.achieved)).toHaveLength(3);

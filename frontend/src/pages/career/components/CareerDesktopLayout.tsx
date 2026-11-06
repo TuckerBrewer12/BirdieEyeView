@@ -17,7 +17,6 @@ export interface CareerLayoutProps {
   onOpenRound: (roundId: string) => void;
 }
 
-/** Career from md up: the handicap and the golfer's shape, then the window's records and milestones. */
 export function CareerDesktopLayout({ vm, career, figures, onOpenRound }: CareerLayoutProps) {
   return (
     <div className="flex flex-col gap-6 pb-12">

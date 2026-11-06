@@ -5,14 +5,12 @@ import { Button } from "./Button";
 
 interface FileChipProps {
   name: string;
-  /** Size in bytes; rendered as whole kilobytes. */
   sizeBytes: number;
   previewUrl?: string | null;
   onClear: () => void;
   className?: string;
 }
 
-/** The file a visitor picked, with a thumbnail and a way to start over. */
 function FileChip({ name, sizeBytes, previewUrl, onClear, className }: FileChipProps) {
   return (
     <div

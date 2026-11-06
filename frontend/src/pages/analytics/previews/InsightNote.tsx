@@ -1,7 +1,6 @@
 import { InsightNote } from "../components/InsightNote";
 import { narrativeFor } from "../present";
 
-// One of each tone: scores coming down (good), putts climbing (bad), and a flat average.
 export default function InsightNotePreview() {
   return (
     <div className="flex max-w-md flex-col gap-3">

@@ -17,14 +17,6 @@ export interface RoundActionsProps {
   onBack: () => void;
 }
 
-/**
- * The toolbar above a round: back, and whichever of edit / share / delete the
- * current mode allows.
- *
- * This lives with the page rather than in the kit because it is all intent and
- * no data — eight callbacks and five flags, none of which describe a round.
- * The kit supplies the Button and Alert; the page owns the choreography.
- */
 export function RoundActions({
   editMode,
   saving,

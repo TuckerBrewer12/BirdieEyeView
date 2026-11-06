@@ -70,10 +70,8 @@ export const pebbleBeachCourse: CourseDto = courseResponse({
 
 const [hmbRound, , , scanned] = storedRounds;
 
-/** Round 1 with its full course, as GET /rounds/{id} returns it. */
 export const halfMoonBayRound: RoundDto = roundResponse({ ...hmbRound, course: halfMoonBayCourse });
 
-/** Round 4: a scanned card with no linked course. */
 export const scannedRound: RoundDto = roundResponse(scanned);
 
 /** A course as the server sends it to a golfer with an index: each tee carries their course handicap off it. */
@@ -90,7 +88,6 @@ export const ratedPebbleBeachCourse: CourseDto = withCourseHandicaps(pebbleBeach
 /** Round 1 for the same golfer: off the Blue tee's 12, net 66. */
 export const ratedHalfMoonBayRound: RoundDto = roundResponse({ ...hmbRound, course: ratedHalfMoonBayCourse });
 
-/** Comparison cohorts for a round: this round first, then the baselines. */
 export const roundComparison: RoundComparisonDto = {
   score: [
     { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 78, secondary_value: null },

@@ -12,16 +12,13 @@ import {
 } from "@/brand";
 
 interface HandicapSectionProps {
-  /** The handicap as typed. */
   value: string;
-  /** Why it cannot be saved, or null. */
   error: string | null;
   onChange: (value: string) => void;
 }
 
 const ID = "settings-handicap";
 
-/** The handicap index the player sets by hand, which the app starts from. */
 export function HandicapSection({ value, error, onChange }: HandicapSectionProps) {
   return (
     <Card>

@@ -8,8 +8,6 @@ const alertVariants = cva(
         default: "border-border bg-card text-card-foreground",
         destructive:
           "border-destructive/recessed bg-card text-destructive *:data-[slot=alert-description]:text-destructive/glass *:[svg]:text-current",
-        /* A request that went through: a link sent, a password changed. Pass
-           role="status" with it, since it is news rather than a problem. */
         success:
           "border-primary/recessed bg-accent text-accent-foreground *:data-[slot=alert-description]:text-accent-foreground *:[svg]:text-primary",
       },

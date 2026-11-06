@@ -31,7 +31,6 @@ export interface RegisterViewModel {
   setPassword: (password: string) => void;
   confirm: string;
   setConfirm: (confirm: string) => void;
-  /** As typed: "+3.0" for a plus handicap. Read through `domain/handicap` on submit. */
   handicap: string;
   setHandicap: (handicap: string) => void;
 
@@ -43,12 +42,9 @@ export interface RegisterViewModel {
   pickHomeCourse: (course: CourseSummary) => void;
   clearHomeCourse: () => void;
 
-  /** Why a field can't be sent, from the last submit; editing a field clears its own. */
   fieldErrors: RegisterErrors;
-  /** The server's refusal, such as an email already in use. */
   error: string | null;
   submitting: boolean;
-  /** Checks the fields, then creates the account; `onRegistered` gets the email and the server's message. */
   submit: (onRegistered: (email: string, message: string) => void) => void;
 }
 

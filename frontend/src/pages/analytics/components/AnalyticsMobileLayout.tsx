@@ -13,7 +13,6 @@ interface AnalyticsMobileLayoutProps {
   analytics: Analytics;
 }
 
-/** The title and the filters, above the figures. */
 export function AnalyticsMobileHeader({ vm }: { vm: AnalyticsPageViewModel }) {
   return (
     <div className="flex flex-col gap-3">
@@ -28,10 +27,6 @@ export function AnalyticsMobileHeader({ vm }: { vm: AnalyticsPageViewModel }) {
   );
 }
 
-/**
- * The analytics page below md: the desktop's headline figures and cards, with each part of the
- * game behind a tab so the phone shows one at a time.
- */
 export function AnalyticsMobileLayout({ vm, analytics }: AnalyticsMobileLayoutProps) {
   const narrative = tabNarrative(analytics.insights, vm.tab);
 
@@ -47,7 +42,6 @@ export function AnalyticsMobileLayout({ vm, analytics }: AnalyticsMobileLayoutPr
           size="sm"
           value={[vm.tab]}
           onValueChange={(values) => {
-            // Tapping the open tab would empty the group; one section is always open.
             const next = ANALYTICS_TAB_OPTIONS.find((option) => option.value === values[0]);
             if (next) vm.setTab(next.value);
           }}

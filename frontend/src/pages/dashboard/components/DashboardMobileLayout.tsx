@@ -74,7 +74,6 @@ export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
               spacing={0}
               value={[trendView]}
               onValueChange={(values) => {
-                // Tapping the pressed item would empty the group; the card always shows one line.
                 if (values[0] === "score" || values[0] === "handicap") setTrendView(values[0]);
               }}
             >

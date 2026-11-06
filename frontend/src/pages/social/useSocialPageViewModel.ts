@@ -8,17 +8,14 @@ import { useSendFriendRequest } from "./useSendFriendRequest";
 export interface SocialPageViewModel {
   loading: boolean;
   loadError: string | null;
-  /** Empty copy — false while loading or when a load error is showing. */
   showEmpty: boolean;
   friends: Friendship[];
 
   friendCode: string;
   setFriendCode: (code: string) => void;
   sending: boolean;
-  /** Send was pressed with nothing typed. */
   codeMissing: boolean;
   sendError: string | null;
-  /** The last request went through; cleared once the golfer types again. */
   sent: boolean;
   sendRequest: () => void;
 }
@@ -42,7 +39,6 @@ export function useSocialPageViewModel(
   const friends = useMemo(() => acceptedFriends(data), [data]);
   const loadError = isError ? messageFrom(error, "Could not load your friends.") : null;
 
-  // Friend codes are upper case, so the field shows them that way as they are typed.
   const setFriendCode = useCallback(
     (code: string) => {
       setCode(code.toUpperCase());

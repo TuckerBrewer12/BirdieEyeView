@@ -1,8 +1,3 @@
--- Migration 013: trigram indexes for course search
--- Course search and fuzzy name lookup filter with name/location ILIKE '%q%'
--- and name % q, which a btree index can't serve. GIN trigram indexes let them
--- skip the sequential scan. pg_trgm is already enabled by schema.sql.
-
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;

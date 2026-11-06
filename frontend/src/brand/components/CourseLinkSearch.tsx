@@ -26,12 +26,10 @@ interface CourseLinkSearchProps {
   /** Puts the caret in the search when it appears: only where the golfer just opened it. */
   focusOnOpen?: boolean;
   linkedName?: string;
-  /** Heads the picked course's card. */
   linkedTitle?: string;
   customName?: string;
   onClear?: () => void;
   clearLabel?: string;
-  /** The search input's id, so a FieldLabel outside can name it. */
   inputId?: string;
 }
 

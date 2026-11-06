@@ -19,33 +19,25 @@ import { useBestRound } from "./useBestRound";
 import { usePlayedCourses } from "./usePlayedCourses";
 
 export interface AnalyticsPageViewModel {
-  /** Nothing to show yet: the first load for this golfer. */
   loading: boolean;
-  /** New filters are loading; the last filters' figures stay up meanwhile. */
   refreshing: boolean;
   loadError: string | null;
   retry: () => void;
-  /** Null until the first load lands. */
   analytics: Analytics | null;
-  /** Loaded, and no round matches the filters. */
   showEmpty: boolean;
 
   filters: AnalyticsFilters;
   setFilters: (filters: AnalyticsFilters) => void;
-  /** A course or timeframe is narrowing the rounds. */
   filtered: boolean;
   playedCourses: PlayedCourse[];
-  /** The golfer has a home course, so the course filter offers it. */
   hasHomeCourse: boolean;
 
   /** The server's best round in the window, once it has loaded; null without one. */
   bestRound: RoundSummary | null;
 
-  /** The par type the range view shows. Until one is picked, par 4s if there are any. */
   rangePar: RangePar;
   setRangePar: (par: RangePar) => void;
 
-  /** The phone layout's open section. */
   tab: AnalyticsTab;
   setTab: (tab: AnalyticsTab) => void;
 }

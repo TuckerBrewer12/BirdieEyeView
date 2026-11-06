@@ -4,7 +4,6 @@ import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 import { SocialRobot } from "../../tests/SocialPage.robot";
 
-/** Screen robot for /inbox — same idea as an Android Espresso robot. */
 export class FriendsInboxRobot {
   private readonly page: Page;
 
@@ -51,7 +50,6 @@ export class FriendsInboxRobot {
     const toggle = this.page.getByRole("button", { name: new RegExp(`^${tab} \\(`) });
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-pressed", "true");
-    // Park the pointer so the capture doesn't catch the tab mid-hover.
     await this.page.mouse.move(0, 0);
     return this;
   }

@@ -1,5 +1,3 @@
-"""Course responses, built one way from the Course model so every endpoint agrees."""
-
 from typing import Optional
 
 from analytics.handicap import tee_course_handicap

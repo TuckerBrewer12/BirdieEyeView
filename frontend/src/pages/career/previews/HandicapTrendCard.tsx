@@ -9,7 +9,6 @@ export default function HandicapTrendCardPreview() {
         handicapIndex={sampleCareer.handicapIndex}
         roundCount={sampleCareer.roundCount}
       />
-      {/* A plus index, written the way golfers write it, in the phone's drawing. */}
       <HandicapTrendCard
         trend={sampleCareer.handicapTrend.map((point) => ({
           ...point,
@@ -19,7 +18,6 @@ export default function HandicapTrendCardPreview() {
         roundCount={sampleCareer.roundCount}
         compact
       />
-      {/* Two rounds in: no index yet. */}
       <HandicapTrendCard trend={sampleCareer.handicapTrend.slice(0, 2)} handicapIndex={null} roundCount={2} />
     </>
   );

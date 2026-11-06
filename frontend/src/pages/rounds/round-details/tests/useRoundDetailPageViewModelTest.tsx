@@ -190,8 +190,6 @@ describe("useRoundDetailPageViewModel", () => {
     };
     const { result } = renderVm("round-1", { detailRounds: [partial] });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    // Bars still draw, but a part-played nine reports no total — the same rule
-    // the round-list query uses, so the two screens cannot disagree.
     expect(result.current.played?.frontNine.holes).toHaveLength(5);
     expect(result.current.played?.frontNine.total).toBeNull();
     expect(result.current.played?.backNine.holes).toHaveLength(0);

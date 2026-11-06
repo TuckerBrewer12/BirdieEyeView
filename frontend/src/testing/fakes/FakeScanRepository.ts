@@ -3,22 +3,13 @@ import type { SaveScanRequestDto, ScanDto } from "../../types/api";
 import { InMemoryRounds } from "./InMemoryRounds";
 
 export interface FakeScanRepositorySeed {
-  /** What extract reads off any card. Unset, extract fails. */
   result?: ScanDto;
-  /** What reading the card ahead of time returns. */
   text?: string | null;
-  /** Extract fails with this, as the server's user-facing message. */
   extractError?: string;
-  /** Extract waits for `finishExtract()`, so a test can see the scan in progress. */
   holdExtract?: boolean;
-  /**
-   * Where saved scans go. Share a FakeRoundsRepository's store and the saved round can be
-   * read back; set its `saveError` to make saving fail.
-   */
   store?: InMemoryRounds;
 }
 
-/** Stands in for the scan endpoints and records what the page sent. */
 export class FakeScanRepository implements ScanRepository {
   readonly readPhotos: File[] = [];
   readonly extractRequests: ExtractRequest[] = [];
@@ -31,7 +22,6 @@ export class FakeScanRepository implements ScanRepository {
     this.store = seed.store ?? new InMemoryRounds();
   }
 
-  /** Every scan saved, as sent. */
   get saveRequests(): SaveScanRequestDto[] {
     return this.store.savedScans;
   }
@@ -57,7 +47,6 @@ export class FakeScanRepository implements ScanRepository {
     return this.store.saveScan(request);
   }
 
-  /** Lets a held extract answer. */
   finishExtract(): void {
     this.release?.();
     this.release = null;

@@ -33,7 +33,6 @@ test.describe("on a phone", () => {
     await dashboard.open();
     await dashboard.showTrend("HCP");
     await dashboard.seesTrendShowing("HCP");
-    // Round 3 of 5 sits just past the middle of the plot.
     await dashboard.tapTrendAt(0.55);
     await dashboard.seesTrendTooltip("Round 3");
     await dashboard.seesTrendTooltip("HI");

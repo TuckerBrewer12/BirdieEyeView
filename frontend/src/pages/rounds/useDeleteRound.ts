@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 
-/** Deletes a round, and refetches every screen that counted it. */
 export function useDeleteRound(
   userId: string,
   repository: RoundsRepository = roundsRepository,

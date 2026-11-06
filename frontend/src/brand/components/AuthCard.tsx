@@ -5,25 +5,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "./Ca
 import { PageTitle } from "./PageTitle";
 
 interface AuthCardProps extends Omit<React.ComponentProps<"div">, "title"> {
-  /** The page's heading. It renders as the h1, so it names the screen. */
   title: React.ReactNode;
-  /** One line under the title saying what this screen is for. */
   description?: string;
-  /** The way out under the form: "Don't have an account? Create one". */
   footer?: React.ReactElement;
   children: React.ReactNode;
 }
 
-/**
- * The frame every signed-out screen sits in: the brand mark, then one card
- * centred on the page with a title, a line of description, the form, and a
- * footer link to the neighbouring screen.
- *
- * Sign in, register, both password screens and both verify screens each laid
- * this out by hand, down to their own copy of the logo, so it lives here once.
- * The card fills the screen's height and centres itself; pass `className` to
- * change that when it sits inside something else, as the kit preview does.
- */
 function AuthCard({ title, description, footer, children, className, ...props }: AuthCardProps) {
   return (
     <div

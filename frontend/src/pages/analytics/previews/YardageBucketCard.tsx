@@ -9,7 +9,6 @@ export default function YardageBucketCardPreview() {
   return (
     <div className="flex flex-col gap-4">
       <YardageBucketCard bucket={busiest} />
-      {/* A band with no holes listed: the target says so and the mix bar stays off. */}
       <YardageBucketCard bucket={{ ...busiest, label: "500+", holes: 0, girPercent: null, results: [] }} />
     </div>
   );

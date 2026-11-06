@@ -4,7 +4,6 @@ import { FakeSession } from "../../testing/fakes/FakeSession";
 import { FakeBackend, type FakeBackendSeed } from "../../testing/fakes/FakeBackend";
 import { storedRounds } from "../../testing/fixtures/rounds";
 
-/** Screen robot for the signed-in shell: the side rail, the tab bar and its More menu. */
 export class AppShellRobot {
   private readonly page: Page;
   backend: FakeBackend | null = null;
@@ -13,7 +12,6 @@ export class AppShellRobot {
     this.page = page;
   }
 
-  /** Whichever nav the viewport shows; the other is display:none and out of the tree. */
   private nav(): Locator {
     return this.page.getByRole("navigation", { name: "Main" });
   }
@@ -42,7 +40,6 @@ export class AppShellRobot {
     return this;
   }
 
-  /** A link in the side rail on a wide screen, or a tab on a phone. */
   async tapNav(label: string): Promise<this> {
     await this.nav().getByRole("link", { name: label, exact: true }).click();
     return this;
@@ -69,7 +66,6 @@ export class AppShellRobot {
     return this;
   }
 
-  /** The sign-out on the rail's account row shows on hover; on a phone it is in More. */
   async signOut(): Promise<this> {
     const account = this.page.locator("[data-slot=side-nav]");
     if (await account.isVisible()) {
@@ -106,7 +102,6 @@ export class AppShellRobot {
   }
 
   async seesSignedOut(): Promise<this> {
-    // Signed out, the app falls back to the landing page at /.
     await expect(this.page).toHaveURL(/\/$/);
     await expect(this.nav()).toHaveCount(0);
     expect(this.backend?.signedOut).toBe(true);

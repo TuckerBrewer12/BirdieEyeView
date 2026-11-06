@@ -13,9 +13,6 @@ export type RadarEntry = {
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
 
-// Each axis is drawn 0–100 from the centre, further out being better. GIR and scrambling are
-// their own percentages. Putts per GIR maps 3.5 → 0 and 1.5 → 100; a par type's average to par
-// maps +2 → 0 and −0.5 → 100. A figure the golfer or the comparison has none of sits at the centre.
 const percentRadius = (pct: number | null) => clamp(pct ?? 0);
 const puttingRadius = (puttsPerGir: number | null) => clamp(((3.5 - (puttsPerGir ?? 3.5)) / 2.0) * 100);
 const parRadius = (averageToPar: number | null) => clamp(((2.0 - (averageToPar ?? 2.0)) / 2.5) * 100);
@@ -24,7 +21,6 @@ const percentLabel = (pct: number | null) => (pct != null ? formatPercent(pct) :
 const puttsLabel = (puttsPerGir: number | null) => (puttsPerGir != null ? `${puttsPerGir.toFixed(2)}/GIR` : "—");
 const toParLabel = (averageToPar: number | null) => (averageToPar != null ? formatSignedOneDecimal(averageToPar) : "—");
 
-/** The golfer's own figures, on the radar's axes. */
 function shapeOf(kpis: AnalyticsKpisDto, scoringByPar: ScoringByParRowDto[]): BenchmarkShape {
   const parAverage = (par: number) =>
     scoringByPar.find((row) => row.par === par && row.sample_size > 0)?.average_to_par ?? null;
@@ -54,7 +50,6 @@ const AXES: Axis[] = [
   { axis: "Par 5s", figure: "par5ToPar", radius: parRadius, label: toParLabel },
 ];
 
-/** The golfer's shape on the radar, and the comparison's behind it when there is one. */
 export function buildRadarData(
   kpis: AnalyticsKpisDto,
   scoringByPar: ScoringByParRowDto[],

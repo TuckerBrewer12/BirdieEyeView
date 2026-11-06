@@ -68,18 +68,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
       return nextState;
     } catch {
-      // Network/CORS/parser issues should not immediately clear a valid session.
       return latestStateRef.current.userId ? latestStateRef.current : null;
     }
   }, []);
 
-  // On mount, try to re-hydrate from session cookie.
   useEffect(() => {
     // refreshSession settles every failure itself, so this never rejects.
     void refreshSession().finally(() => setLoading(false));
   }, [refreshSession]);
 
-  // Keep auth state in sync when user returns to a tab after actions in another tab.
   useEffect(() => {
     const handleFocus = () => {
       void refreshSession();

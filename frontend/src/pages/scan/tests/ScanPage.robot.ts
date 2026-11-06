@@ -5,11 +5,9 @@ import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { scannedCard } from "../../../testing/fixtures/scan";
 
-/** A real card photo, so the chosen file has something in its thumbnail. */
 const CARD_PHOTO = fileURLToPath(new URL("../../../../public/hero/physical-card.jpg", import.meta.url));
 const CARD_NAME = "physical-card.jpg";
 
-/** Screen robot for `/scan` — same idea as an Android Espresso robot. */
 export class ScanRobot {
   private readonly page: Page;
   private backend: FakeBackend | null = null;
@@ -19,7 +17,6 @@ export class ScanRobot {
     this.page = page;
   }
 
-  /** The page's own title; the pinned header repeats it. */
   private title() {
     return this.page.locator("[data-slot=page-title]").filter({ hasText: "Scan Scorecard" });
   }
@@ -31,13 +28,8 @@ export class ScanRobot {
     return this;
   }
 
-  /**
-   * Opens the scan page signed in. By default any card scans as `scannedCard`; pass
-   * `scan: undefined` for a scan the server can't read, or `holdScan` to watch one run.
-   */
   async open(seed: FakeBackendSeed = {}): Promise<this> {
     await this.page.emulateMedia({ reducedMotion: "reduce" });
-    // Manual entry's date defaults to today; a fixed day keeps its capture stable.
     await this.page.clock.setFixedTime(new Date("2026-10-15T12:00:00Z"));
     this.backend = await FakeSession.install(this.page, { scan: scannedCard, ...seed });
     await this.page.goto("/scan");
@@ -46,7 +38,6 @@ export class ScanRobot {
     return this;
   }
 
-  /** The upload step, before a photo is picked. */
   async seesUpload(): Promise<this> {
     await expect(this.page.getByText("Drop your scorecard here")).toBeVisible();
     return this;
@@ -58,7 +49,6 @@ export class ScanRobot {
     return this;
   }
 
-  /** The picked photo, as a thumbnail with its name, ready to scan. */
   async seesChosenCard(): Promise<this> {
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
     await expect(this.page.locator('[data-slot=file-chip] img[src^="data:image/"]')).toBeVisible();
@@ -75,7 +65,6 @@ export class ScanRobot {
     return this;
   }
 
-  /** The card being read, on its first phase. */
   async seesProcessing(): Promise<this> {
     await expect(
       this.page.locator("[data-slot=scan-progress]").filter({ hasText: "Reading course details…" }),
@@ -83,13 +72,11 @@ export class ScanRobot {
     return this;
   }
 
-  /** Lets a scan opened with `holdScan` answer. */
   async finishScan(): Promise<this> {
     this.backend?.finishScan();
     return this;
   }
 
-  /** The scanned card, back to check before saving. */
   async seesReview(courseName: string): Promise<this> {
     await expect(this.page.locator("[data-slot=page-title]").filter({ hasText: "Check your card" })).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Save Round" })).toBeVisible();
@@ -112,7 +99,6 @@ export class ScanRobot {
     return this;
   }
 
-  /** The saved round's score, and how it stood against par. */
   async seesSavedScore(score: number, toPar: string): Promise<this> {
     const saved = this.page.locator("[data-slot=scan-saved]");
     await expect(saved.locator("[data-slot=stat-value]")).toHaveText(String(score));
@@ -120,10 +106,6 @@ export class ScanRobot {
     return this;
   }
 
-  /**
-   * Shares the saved round. The test browser has no share sheet, so the image comes down as a
-   * file instead.
-   */
   async tapShare(): Promise<this> {
     const download = this.page.waitForEvent("download");
     await this.page.getByRole("button", { name: "Share Round" }).click();
@@ -131,7 +113,6 @@ export class ScanRobot {
     return this;
   }
 
-  /** The round went out as an image named for its course. */
   async seesSharedImage(fileName: string): Promise<this> {
     expect(this.shared?.suggestedFilename()).toBe(fileName);
     await expect(this.page.getByRole("button", { name: "Share Round" })).toBeEnabled();
@@ -148,33 +129,28 @@ export class ScanRobot {
     return this;
   }
 
-  /** How many rounds the fake server holds that came from a scan. */
   async seesSavedRounds(count: number): Promise<this> {
     expect(this.backend?.store.savedScans).toHaveLength(count);
     return this;
   }
 
-  /** The round just saved was linked to this course. */
   async seesSavedCourse(courseId: string): Promise<this> {
     expect(this.backend?.store.savedScans.at(-1)?.course_id).toBe(courseId);
     return this;
   }
 
-  /** The review's course, linked to a saved one. */
   async seesLinkedCourse(name: string): Promise<this> {
     await expect(this.page.getByText("Linked", { exact: true })).toBeVisible();
     await expect(this.page.getByText(name, { exact: true }).first()).toBeVisible();
     return this;
   }
 
-  /** Saving failed: the reason shows, and the card is still there to save again. */
   async seesSaveFailed(message: string): Promise<this> {
     await expect(this.page.getByRole("alert")).toContainText(message);
     await expect(this.page.getByRole("button", { name: "Save Round" })).toBeEnabled();
     return this;
   }
 
-  /** The scan failed: the reason shows, and the photo is still there to try again. */
   async seesScanFailed(): Promise<this> {
     await expect(this.page.getByRole("alert")).toContainText("We couldn't scan this scorecard.");
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
@@ -192,7 +168,6 @@ export class ScanRobot {
     return this;
   }
 
-  /** A course picked ahead of the scan. */
   async seesPresetCourse(name: string): Promise<this> {
     await expect(this.page.getByText(name, { exact: true })).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Clear course" })).toBeVisible();
@@ -215,14 +190,12 @@ export class ScanRobot {
     return this;
   }
 
-  /** The manual-entry form, before any scores. */
   async seesSetup(): Promise<this> {
     await expect(this.page.getByRole("button", { name: "Start Entering Scores" })).toBeVisible();
     await expect(this.page.getByText("Drop your scorecard here")).toHaveCount(0);
     return this;
   }
 
-  /** Looks up a course on the manual-entry form. */
   async searchSetupCourse(query: string): Promise<this> {
     await this.setupSearch().fill(query);
     return this;
@@ -233,26 +206,22 @@ export class ScanRobot {
     return this;
   }
 
-  /** Keeps the typed name for a course the search doesn't have. */
   async keepTypedCourse(name: string): Promise<this> {
     await this.page.getByRole("button", { name: `Save as "${name}"`, exact: true }).click();
     return this;
   }
 
-  /** The course chosen for manual entry, picked or typed. */
   async seesSetupCourse(name: string): Promise<this> {
     await expect(this.page.getByText(name, { exact: true })).toBeVisible();
     await expect(this.setupSearch()).toHaveCount(0);
     return this;
   }
 
-  /** Opens the search again from the chosen course. */
   async changeSetupCourse(label: "Change course" | "Edit name"): Promise<this> {
     await this.page.getByRole("button", { name: label }).click();
     return this;
   }
 
-  /** The manual-entry search, open on this query. */
   async seesSetupSearch(query: string): Promise<this> {
     await expect(this.setupSearch()).toHaveValue(query);
     return this;
@@ -262,7 +231,6 @@ export class ScanRobot {
     return this.page.getByRole("searchbox", { name: "Course (optional)" });
   }
 
-  /** Picks a tee from the chosen course's tees. */
   async chooseTee(color: string): Promise<this> {
     await this.teeChip(color).click();
     return this;
@@ -273,7 +241,6 @@ export class ScanRobot {
     return this;
   }
 
-  /** Types the tee, when the course has no tees to pick from. */
   async typeTee(tee: string): Promise<this> {
     await this.teeField().fill(tee);
     return this;
@@ -292,25 +259,21 @@ export class ScanRobot {
     return this.page.getByRole("group", { name: "Tee played" }).getByRole("button", { name: color, exact: true });
   }
 
-  /** A hole's strokes cell on the card being checked, ringed or not. */
   private strokesCell(hole: number) {
     return this.page.getByRole("textbox", { name: new RegExp(`^Hole ${hole} strokes`) });
   }
 
-  /** Types one hole's strokes on the card being checked. */
   async typeStrokes(hole: number, strokes: number): Promise<this> {
     await this.strokesCell(hole).fill(String(strokes));
     await expect(this.strokesCell(hole)).toHaveValue(String(strokes));
     return this;
   }
 
-  /** Types one hole's putts on the card being checked. */
   async typePutts(hole: number, putts: number): Promise<this> {
     await this.page.getByRole("textbox", { name: `Hole ${hole} putts`, exact: true }).fill(String(putts));
     return this;
   }
 
-  /** The scores the scan wasn't sure of: counted above the card, and ringed on it. */
   async seesScoresToCheck(holes: number[]): Promise<this> {
     const count = holes.length === 1 ? "1 score to check" : `${holes.length} scores to check`;
     await expect(this.page.locator("[data-slot=scores-to-check]")).toContainText(count);
@@ -321,14 +284,12 @@ export class ScanRobot {
     return this;
   }
 
-  /** Nothing on the card is in doubt. */
   async seesNothingToCheck(): Promise<this> {
     await expect(this.page.locator("[data-slot=scores-to-check]")).toHaveCount(0);
     await expect(this.page.locator("td[data-check]")).toHaveCount(0);
     return this;
   }
 
-  /** The round's score so far, as the card being checked adds up. */
   async seesRoundScore(score: number): Promise<this> {
     await expect(
       this.page.locator("[data-slot=stat]").filter({ hasText: /^Score/ }).locator("[data-slot=stat-value]"),
@@ -336,46 +297,39 @@ export class ScanRobot {
     return this;
   }
 
-  /** Saves the round under the name read off the card, without linking a course. */
   async keepCardName(name: string): Promise<this> {
     await this.page.getByRole("button", { name: `Save as "${name}" without linking →` }).click();
     await expect(this.page.getByText("Saving without a linked course")).toBeVisible();
     return this;
   }
 
-  /** Picks the tee played from the chips the card's or the linked course's tees offer. */
   async pickReviewTee(color: string): Promise<this> {
     await this.chooseTee(color);
     await this.seesTee(color);
     return this;
   }
 
-  /** Types the tee played, when there are no tees to pick from. */
   async typeReviewTee(tee: string): Promise<this> {
     return this.typeTee(tee);
   }
 
-  /** The tee kept on the round just saved. */
   async seesSavedTee(tee: string): Promise<this> {
     expect(this.backend?.store.savedScans.at(-1)?.tee_box).toBe(tee);
     return this;
   }
 
-  /** The strokes kept for a hole on the round just saved. */
   async seesSavedStrokes(hole: number, strokes: number): Promise<this> {
     const saved = this.backend?.store.savedScans.at(-1);
     expect(saved?.hole_scores.find((score) => score.hole_number === hole)?.strokes).toBe(strokes);
     return this;
   }
 
-  /** The putts kept for a hole on the round just saved. */
   async seesSavedPutts(hole: number, putts: number): Promise<this> {
     const saved = this.backend?.store.savedScans.at(-1);
     expect(saved?.hole_scores.find((score) => score.hole_number === hole)?.putts).toBe(putts);
     return this;
   }
 
-  /** The round just saved kept this name and no linked course. */
   async seesSavedCourseName(name: string): Promise<this> {
     const saved = this.backend?.store.savedScans.at(-1);
     expect(saved?.course_id ?? null).toBeNull();
@@ -388,7 +342,6 @@ export class ScanRobot {
     return this;
   }
 
-  /** A card with no scores yet, to type them into. */
   async seesBlankCard(): Promise<this> {
     await expect(this.page.locator("[data-slot=page-title]").filter({ hasText: "Enter your scores" })).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Save Round" })).toBeVisible();
@@ -396,7 +349,6 @@ export class ScanRobot {
     return this;
   }
 
-  /** Leaves through the sidebar, as a golfer looking something up mid-scan would. */
   async leaveTo(label: string): Promise<this> {
     await this.page.getByRole("link", { name: label, exact: true }).click();
     await expect(this.title()).toHaveCount(0);
@@ -408,10 +360,6 @@ export class ScanRobot {
     return this;
   }
 
-  /**
-   * A full-page capture. The scan animation keeps moving under reduced motion, so a capture
-   * of the processing step masks it: the card, and the corner brackets that pulse outside it.
-   */
   async capture(name: string, { maskScanAnimation = false } = {}): Promise<this> {
     const animation = this.page.locator("[data-slot=scan-progress] > div").first();
     const mask = maskScanAnimation ? [animation, animation.locator(":scope > div")] : [];

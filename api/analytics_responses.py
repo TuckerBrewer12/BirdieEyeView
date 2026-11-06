@@ -1,5 +1,3 @@
-"""The analytics page's response, built in one place from the player's rounds."""
-
 from datetime import date
 from typing import Any, Dict, List, Optional
 

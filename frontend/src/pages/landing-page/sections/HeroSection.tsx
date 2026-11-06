@@ -6,8 +6,6 @@ import { TryItYourselfSection } from "./TryItYourselfSection";
 
 export function HeroSection() {
   const viewModel = useTryItYourselfViewModel();
-  // The demo shows what a scan does until the visitor starts one of their
-  // own; then it steps aside so their scorecard gets the full width.
   const showDemo = viewModel.step === "upload";
 
   return (

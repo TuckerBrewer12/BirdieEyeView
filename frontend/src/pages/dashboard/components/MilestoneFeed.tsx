@@ -24,13 +24,11 @@ interface MilestoneFeedProps {
   onRoundClick?: (roundId: string) => void;
 }
 
-/** Lifetime bests, newest first. A milestone set in a saved round opens it. */
 export function MilestoneFeed({ milestones, onRoundClick }: MilestoneFeedProps) {
   return (
     <div data-slot="milestone-feed">
       <Collection
         items={milestones}
-        // The server sends at most one milestone of each kind.
         keyFor={(m) => m.kind}
         empty="No milestones yet — keep playing!"
         renderItem={(m) => {
@@ -64,7 +62,6 @@ function MilestoneRow({ milestone, onClick }: { milestone: Milestone; onClick?: 
       </span>
     </>
   );
-  // The card already pads its content, so the row's own padding hangs into it.
   const row = "-mx-2 flex items-center gap-2.5 rounded-xl p-2 text-left";
 
   if (!onClick) return <div className={row}>{content}</div>;

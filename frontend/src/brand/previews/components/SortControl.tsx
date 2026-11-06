@@ -32,7 +32,6 @@ export default function SortControlPreview() {
         onToggleDirection={() => {}}
         directionDisabled
       />
-      {/* No direction: the control only picks, like a filter. */}
       <SortControl
         label="All Courses"
         value="all"

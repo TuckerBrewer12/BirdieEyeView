@@ -6,7 +6,6 @@ import type { HoleFigure } from "@/domain/courseAnalytics";
 import { holeLabel, type TooltipFormatter } from "./holeBarParts";
 
 interface HoleMetricBarsProps {
-  /** The figure the rows hold. Variance rows come ranked, least consistent first, so the ticks name their holes. */
   metric: "gir" | "putts" | "variance";
   rows: HoleFigure[];
 }
@@ -35,7 +34,6 @@ const METRICS = {
   },
 } as const;
 
-/** One figure per hole as a bar: GIR rate, average putts, or how much the score swings. */
 export function HoleMetricBars({ metric, rows }: HoleMetricBarsProps) {
   const spec = METRICS[metric];
   const gradientId = `hole-metric-${metric}-${useId().replace(/:/g, "")}`;

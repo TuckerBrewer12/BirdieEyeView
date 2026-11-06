@@ -32,7 +32,6 @@ test("load failed", async ({ career }) => {
   await career.capture("career-load-failed.png");
 });
 
-// A phone shows one milestone list at a time; desktop shows them all.
 const PHONE_TABS = [
   { tab: "Putting", milestone: "Break 30 Putts", file: "putting" },
   { tab: "GIR", milestone: "9/18 GIR", file: "gir" },

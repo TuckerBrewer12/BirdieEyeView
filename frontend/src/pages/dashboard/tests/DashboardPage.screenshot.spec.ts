@@ -20,13 +20,10 @@ test("handicap sheet open", async ({ dashboard }) => {
   await dashboard.capture("dashboard-handicap-sheet.png", { fullPage: false });
 });
 
-// The HCP toggle and tap tooltip belong to the phone trend. Desktop keeps
-// the combined chart, so there is nothing to switch on that project.
 test("phone trend handicap and round tooltip", { tag: "@phone" }, async ({ dashboard }) => {
   await dashboard.open();
   await dashboard.showTrend("HCP");
   await dashboard.seesTrendShowing("HCP");
-  // Round 3 of 5 sits just past the middle of the plot.
   await dashboard.tapTrendAt(0.55);
   await dashboard.seesTrendTooltip("Round 3");
   await dashboard.seesTrendTooltip("HI");

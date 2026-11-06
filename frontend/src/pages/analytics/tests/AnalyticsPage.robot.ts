@@ -6,12 +6,10 @@ import { withoutRounds } from "../../../testing/fakes/analyticsResponses";
 import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
 import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
 
-// A few days after the sample golfer's last round, the way the demo tour sees them.
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
 
 type TabLabel = "Scoring" | "Ball Striking" | "Putting" | "Profile" | "Range View";
 
-/** Screen robot for /analytics. */
 export class AnalyticsRobot {
   private readonly page: Page;
   private backend: FakeBackend | null = null;
@@ -20,12 +18,10 @@ export class AnalyticsRobot {
     this.page = page;
   }
 
-  /** The control on screen: the desktop and phone layouts each render their own. */
   private visible(locator: Locator): Locator {
     return locator.locator("visible=true").first();
   }
 
-  /** The round count: the Rounds figure among the headline figures, on either layout. */
   private roundCount(count: number): Locator {
     return this.visible(
       this.page
@@ -50,27 +46,23 @@ export class AnalyticsRobot {
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
   }
 
-  /** The sample golfer's season: 24 rounds over three courses. */
   async open(seed: FakeBackendSeed = {}): Promise<this> {
     await this.install(seed);
     await this.seesRounds(24);
     return this;
   }
 
-  /** A golfer with no rounds yet. */
   async openWithoutRounds(): Promise<this> {
     await this.install({ analytics: withoutRounds(sampleGolfer.analytics), playedCourses: [] });
     return this;
   }
 
-  /** Analytics fails to load. */
   async openFailed(): Promise<this> {
     await this.install({ analytics: null });
     await expect(this.page.getByRole("alert")).toBeVisible();
     return this;
   }
 
-  /** The next load succeeds, as the API would once the failure has cleared. */
   nextLoadSucceeds(): this {
     if (this.backend) this.backend.analytics = sampleGolfer.analytics;
     return this;
@@ -96,14 +88,12 @@ export class AnalyticsRobot {
     return this;
   }
 
-  /** The course filter's menu, open. */
   async seesCourseMenu(): Promise<this> {
     await expect(this.page.getByRole("listbox")).toBeVisible();
     await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
     return this;
   }
 
-  /** Picks a course from the course filter's menu, on either layout. */
   async pickCourse(name: string): Promise<this> {
     await this.visible(this.page.getByRole("combobox", { name: "Course" })).click();
     await this.page.getByRole("option", { name, exact: true }).click();
@@ -120,13 +110,11 @@ export class AnalyticsRobot {
     return this;
   }
 
-  /** A par type in the range view: 3, 4 or 5. */
   async pickRangePar(par: 3 | 4 | 5): Promise<this> {
     await this.visible(this.page.getByRole("button", { name: `Par ${par}`, exact: true })).click();
     return this;
   }
 
-  /** A yardage band's card in the range view, by its band: "350–399". */
   async seesYardageBand(label: string): Promise<this> {
     await expect(this.visible(this.page.locator("[data-slot=yardage-bucket-card]").getByText(label))).toBeVisible();
     return this;
@@ -137,13 +125,11 @@ export class AnalyticsRobot {
     return this;
   }
 
-  /** A timeframe or round-count pill in the filter bar: "YTD", "12 Mo", "10", "All"… */
   async pickRange(label: string): Promise<this> {
     await this.visible(this.page.getByRole("button", { name: label, exact: true })).click();
     return this;
   }
 
-  /** The last analytics request asked the server for these filters. */
   async askedFor(filters: Partial<AnalyticsFilters>): Promise<this> {
     await expect.poll(() => this.backend?.analyticsRequests.at(-1)).toMatchObject(filters);
     return this;
@@ -159,7 +145,6 @@ export class AnalyticsRobot {
     return this;
   }
 
-  /** The phone's section tabs. */
   private sectionTab(label: TabLabel): Locator {
     return this.visible(this.page.getByRole("group", { name: "Section" })).getByRole("button", {
       name: label,
@@ -178,7 +163,6 @@ export class AnalyticsRobot {
     return this;
   }
 
-  /** The open section leads with this sentence about the golfer's game. */
   async seesInsight(text: RegExp): Promise<this> {
     await expect(this.visible(this.page.locator("[data-slot=insight-note]"))).toHaveText(text);
     return this;
@@ -196,10 +180,7 @@ export const test = base.extend<{ analytics: AnalyticsRobot }>({
   },
 });
 
-/** The course the sample golfer played least; the seed carries its own figures. */
 export const LINKS = "Half Moon Bay Golf Links";
-/** The seed has no figures for this course, so the fake answers as if no round there matched. */
 export const UNSEEDED_COURSE = "Sharp Park Golf Course";
 
-/** The round the server marks lowest in the sample golfer's season. */
 export const BEST_ROUND_ID = sampleGolfer.analytics.notable_achievements.scoring_records_events.lifetime.lowest_round!.round_id;

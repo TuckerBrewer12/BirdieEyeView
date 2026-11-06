@@ -19,7 +19,6 @@ interface RoundListProps {
 }
 
 interface RoundHighlightProps {
-  /** Null while the player has no round to celebrate yet. */
   round: RoundSummary | null;
   variant: "highlight";
   onClick?: () => void;
@@ -28,9 +27,7 @@ interface RoundHighlightProps {
 interface RoundTicketProps {
   round: RoundSummary;
   variant: "ticket";
-  /** The eyebrow over the course name, worded by the screen: "Last Round". */
   label: string;
-  /** Shown with a chevron when the ticket opens the round, like "Open card". */
   actionLabel?: string;
   onClick?: () => void;
 }
@@ -162,7 +159,6 @@ export function RoundPreview(props: RoundPreviewProps) {
   );
 }
 
-/** The round worth showing off: the trophy, the marked card, the number. */
 function RoundHighlight({
   round,
   onClick,
@@ -225,10 +221,6 @@ function RoundHighlight({
   );
 }
 
-/**
- * A round as a ticket: where and when, the number, a bar per hole and what it held.
- * The screen words the eyebrow and the action, so the kit holds only the layout.
- */
 function RoundTicket({ round, label, actionLabel, onClick }: Omit<RoundTicketProps, "variant">) {
   const courseName = round.course?.name ? formatCourseName(round.course.name) : "Unknown course";
   const kinds = playedScoreKinds(round.scoreCounts);

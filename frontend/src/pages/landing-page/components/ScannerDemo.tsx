@@ -9,7 +9,6 @@ import { useScannerDemoViewModel, type DemoScorecardRow } from "./useScannerDemo
 
 const DEMO_MOTION = tokens.motion.demo;
 
-/** The clean scorecard the scan resolves to. */
 function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
   return (
     <motion.div
@@ -105,7 +104,6 @@ function TypewriterLabel({ text }: { text: string }) {
   );
 }
 
-/** The "what's on your card" panel the scan asks about before reading. */
 function MappingPanel() {
   return (
     <motion.div
@@ -232,7 +230,6 @@ function MappingPanel() {
   );
 }
 
-/** One capture of the app, wide or narrow to match the frame. Decorative, so no alt text. */
 function TourPicture({ screen }: { screen: TourScreen }) {
   return (
     <picture>
@@ -244,7 +241,6 @@ function TourPicture({ screen }: { screen: TourScreen }) {
 
 const percent = (share: number) => `${share * 100}%`;
 
-/** The handicap's place in each capture, for the tap to land on. */
 const TAP_POSITION = {
   "--tap-x": percent(HANDICAP_TAP.narrow.x),
   "--tap-y": percent(HANDICAP_TAP.narrow.y),
@@ -252,7 +248,6 @@ const TAP_POSITION = {
   "--tap-y-wide": percent(HANDICAP_TAP.wide.y),
 } as CSSProperties;
 
-/** A finger pressing the dashboard's handicap. */
 function HandicapTap() {
   return (
     <div
@@ -272,10 +267,6 @@ function HandicapTap() {
   );
 }
 
-/**
- * The app the scan lands in. Each capture is pinned to the frame's top edge in its
- * own aspect, so the tap's percentages line up with the picture underneath.
- */
 function AppScreen({ screen, tapping }: { screen: TourScreen; tapping: boolean }) {
   return (
     <motion.div
@@ -329,7 +320,6 @@ export function ScannerDemo() {
         {screen && <AppScreen key="app" screen={screen} tapping={tapping} />}
       </AnimatePresence>
 
-      {/* Fetched while the round is on show, so the tour never waits on a download. */}
       {tourPrimed && (
         <div hidden>
           {TOUR_SCREENS.map((tourScreen) => (

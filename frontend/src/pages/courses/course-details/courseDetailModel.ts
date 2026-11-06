@@ -22,7 +22,6 @@ export const CHART_TABS: TabItem<ChartTabKey>[] = [
   { key: "variance", label: "Variance" },
 ];
 
-/** A tee button: the tee and what the golfer would play off it. */
 export interface TeeChip {
   tee: TeeDto;
   selected: boolean;
@@ -34,14 +33,11 @@ export interface ScorecardHole {
   par: number | null;
   handicap: number | null;
   yards: number | null;
-  /** The golfer's average strokes here, when they have played the course. */
   personalAverage: number | null;
 }
 
-/** One nine of the course scorecard. The back nine also carries the course totals. */
 export interface ScorecardNine {
   side: "front" | "back";
-  /** The tee whose yardages fill the yards row; null hides the row. */
   tee: TeeDto | null;
   holes: ScorecardHole[];
   par: number | null;
@@ -55,12 +51,10 @@ export type CourseChart =
   | { kind: "scoreType"; group: ChartTabKey; rows: HoleScoreMix[] }
   | { kind: "gir" | "putts" | "variance"; group: ChartTabKey; rows: HoleFigure[] };
 
-/** The golfer's average strokes per hole, and summed by nine as the server added them. */
 export interface PersonalAverages extends NineAverages {
   byHole: Record<number, number>;
 }
 
-/** The golfer's averages, or null until they have played the course. */
 export function personalAverages(analytics: CourseAnalytics): PersonalAverages | null {
   if (analytics.roundsPlayed === 0) return null;
   const rows = analytics.holeToPar;
@@ -103,10 +97,6 @@ export function nineFrom(
   };
 }
 
-/**
- * The tee the scorecard shows: the golfer's pick, or the longest until they pick one.
- * `picked` is undefined before any pick and null once they tap the selected tee off.
- */
 export function selectedTee(course: CourseDto, picked: string | null | undefined): TeeDto | null {
   if (picked === undefined) return teesByLength(course)[0] ?? null;
   return getTee(course, picked);

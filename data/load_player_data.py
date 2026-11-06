@@ -1,21 +1,12 @@
-"""Load player JSON data (courses + rounds) into the database.
-    pip install -r requirements.txt  
-    python3 data/load_player_data.py data/scheffler_courses.json data/scheffler_rounds.json "Scottie Scheffler" "scheffler@example.com"
-"""
-
 import asyncio
 import json
 import sys
 import os
 
-# Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models import Course, HoleScore, Round, User
 from database.connection import DatabasePool
-
-# User has a forward reference to Round — resolve it
-User.model_rebuild()
 
 
 async def load_data(
@@ -25,7 +16,6 @@ async def load_data(
     player_email: str,
     dsn: str = None,
 ):
-    # Read JSON files
     with open(courses_path) as f:
         courses_data = json.load(f)
     with open(rounds_path) as f:
@@ -33,7 +23,6 @@ async def load_data(
 
     print(f"Loaded {len(courses_data)} courses, {len(rounds_data)} rounds from JSON")
 
-    # Connect to database
     pool = DatabasePool()
     await pool.initialize(dsn=dsn)
 
@@ -41,7 +30,6 @@ async def load_data(
     db = DatabaseManager(pool.pool)
 
     try:
-        # 1. Create or find user
         user = await db.users.get_user_by_email(player_email)
         if user:
             print(f"Found existing user: {user.name} ({user.id})")
@@ -49,8 +37,7 @@ async def load_data(
             user = await db.users.create_user(User(name=player_name, email=player_email))
             print(f"Created user: {user.name} ({user.id})")
 
-        # 2. Load courses (skip duplicates)
-        course_map = {}  # name -> Course (with DB-generated id)
+        course_map = {}
         for c_data in courses_data:
             name = c_data["name"]
             existing = await db.courses.find_course_by_name(name)
@@ -64,7 +51,6 @@ async def load_data(
 
         print(f"\n{len(course_map)} courses ready")
 
-        # 3. Load rounds (skip duplicates by user + course + date)
         existing_rounds = await db.rounds.get_rounds_for_user(user.id, limit=9999)
         existing_keys = {
             (r.course.id if r.course else None, r.date.strftime("%Y-%m-%d") if r.date else None)
@@ -81,7 +67,6 @@ async def load_data(
                 skipped += 1
                 continue
 
-            # Duplicate check: same course + date
             if (course.id, r_data["date"]) in existing_keys:
                 print(f"  EXISTS: {r_data.get('tournament', '?')} {r_data['date']} — skipping")
                 skipped += 1

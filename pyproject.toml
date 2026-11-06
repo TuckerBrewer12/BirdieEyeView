@@ -9,18 +9,15 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-# Deliberately narrow. These are correctness/dead-code rules, not style rules.
-# Style-only families (E501 line length, UP modernization) are intentionally
-# excluded so the signal here stays actionable. Widen this list over time.
 select = [
-    "E4",   # imports
-    "E7",   # statement-level mistakes
-    "E9",   # syntax / IO errors
-    "F",    # pyflakes: undefined names, unused imports/vars
-    "B",    # flake8-bugbear: likely bugs
-    "C4",   # flake8-comprehensions
-    "SIM",  # flake8-simplify
-    "RET",  # flake8-return
+    "E4",
+    "E7",
+    "E9",
+    "F",
+    "B",
+    "C4",
+    "SIM",
+    "RET",
     # Families below each trace back to a mistake that shipped in a past PR.
     "ARG",     # unused arguments: endpoints took current_user and never checked it, so anyone could read/delete others' rounds (f2092b9)
     "BLE001",  # blind except: `except Exception` turned DB failures into 404s (b63cc0b)
@@ -38,15 +35,15 @@ select = [
 ]
 ignore = [
     "B008",   # function-call-in-default-argument: this IS the FastAPI Depends() idiom
-    "B905",   # zip-without-explicit-strict
-    "E402",   # module-import-not-at-top: intentional in scripts//conftest sys.path shims
-    "E731",   # lambda-assignment
-    "RET504", # unnecessary-assign: often clearer with the named intermediate
-    "SIM102", # collapsible-if
-    "SIM105", # suppressible-exception
-    "SIM112", # uncapitalized-environment-variables
-    "SIM117", # multiple-with-statements
-    "C420",   # unnecessary-dict-comprehension-for-iterable
+    "B905",
+    "E402",
+    "E731",
+    "RET504",
+    "SIM102",
+    "SIM105",
+    "SIM112",
+    "SIM117",
+    "C420",
     "RUF001", # ambiguous-unicode-character-string: en-dashes/minus signs in UI strings are intentional
     "RUF002", # ambiguous-unicode-character-docstring: same, in docstrings
     "RUF003", # ambiguous-unicode-character-comment: same, in comments

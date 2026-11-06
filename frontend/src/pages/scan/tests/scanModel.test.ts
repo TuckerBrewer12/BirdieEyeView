@@ -40,7 +40,6 @@ describe("saveRequestFrom", () => {
 
 describe("todayIso", () => {
   it("is the golfer's day, not UTC's, in the evening", () => {
-    // 20:00 on the 14th in Los Angeles (the unit tests' timezone) is already the 15th in UTC.
     expect(todayIso(new Date(2026, 5, 14, 20))).toBe("2026-06-14");
   });
 });

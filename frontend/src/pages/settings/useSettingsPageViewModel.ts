@@ -14,10 +14,8 @@ export interface SettingsPageViewModel {
   retry: () => void;
   friendCode: string | null;
   handicapInput: string;
-  /** Why the typed handicap cannot be saved, or null when it can. */
   handicapError: string | null;
   setHandicapInput: (value: string) => void;
-  /** The home course in the form; null shows the search. */
   homeCourse: HomeCourse | null;
   courseQuery: string;
   courseResults: CourseSummary[];
@@ -27,23 +25,15 @@ export interface SettingsPageViewModel {
   clearHomeCourse: () => void;
   getUpdates: boolean;
   setGetUpdates: (on: boolean) => void;
-  /** The form differs from what is saved. */
   dirty: boolean;
   canSave: boolean;
   saving: boolean;
   saveError: string | null;
-  /** The last save went through and nothing has changed since. */
   saved: boolean;
-  /** Saves the form; `onSaved` runs once it has gone through. */
   save: (onSaved?: () => void) => void;
-  /** Puts the form back to what is saved. */
   discard: () => void;
 }
 
-/**
- * The Settings form. The form holds only what the player has changed; everything else reads
- * through from the saved settings, so a save that refetches them leaves nothing to reset.
- */
 export function useSettingsPageViewModel(
   userId: string,
   repository: SettingsRepository = settingsRepository,

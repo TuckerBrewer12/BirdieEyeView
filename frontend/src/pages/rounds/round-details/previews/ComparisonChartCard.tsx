@@ -1,6 +1,5 @@
 import { ComparisonChartCard } from "../components/ComparisonChartCard";
 
-/** Integer headline, four cohorts, first bar selected. */
 const score = [
   { label: "This round", value: 78, sampleSize: 1 },
   { label: "Last 5", value: 81.4, sampleSize: 5 },
@@ -8,7 +7,6 @@ const score = [
   { label: "All time", value: 84.9, sampleSize: 42 },
 ];
 
-/** One-decimal headline, shorter series. */
 const putts = [
   { label: "This round", value: 1.7, sampleSize: 1 },
   { label: "Last 5", value: 1.9, sampleSize: 5 },
@@ -19,7 +17,6 @@ export default function ComparisonChartCardPreview() {
     <>
       <ComparisonChartCard title="Score" primaryLabel="score" bars={score} />
       <ComparisonChartCard title="Putts per GIR" primaryLabel="putts/GIR" bars={putts} />
-      {/* A missing figure still renders a card; the headline is an em dash. */}
       <ComparisonChartCard
         title="GIR"
         primaryLabel="GIR"

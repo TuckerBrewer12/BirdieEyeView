@@ -3,7 +3,6 @@ import { tokens } from "@/brand";
 import { formatPercent } from "@/domain";
 
 interface GirDonutProps {
-  /** Greens in regulation, 0–100. Unknown draws an empty ring and a dash. */
   pct: number | null;
 }
 

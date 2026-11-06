@@ -4,21 +4,14 @@ export function formatHandicapIndex(hi: number | null | undefined): string {
   return hi.toFixed(1);
 }
 
-/** A course handicap as golfers write it: whole strokes, and "+2" for a plus handicap. */
 export function formatCourseHandicap(ch: number | null | undefined): string {
   if (ch == null) return "—";
   if (ch < 0) return `+${Math.abs(ch)}`;
   return String(ch);
 }
 
-/**
- * Where a round's differential stands in the WHS window: counted toward the index,
- * within two strokes of the cut-off, outside it, or not rated at all. The server
- * decides it (`analytics/handicap.py`) and sends it on each handicap-trend point.
- */
 export type DifferentialStatus = "counting" | "close" | "out" | "unrated";
 
-/** The lowest index WHS allows: a +10. Stored negative, as the server stores it. */
 const MIN_HANDICAP_INDEX = -10;
 const MAX_HANDICAP_INDEX = 54;
 const HANDICAP_PATTERN = /^\+?(?:\d+\.?\d*|\.\d+)$/;
@@ -33,7 +26,6 @@ function formatAbsOneDecimal(value: number): string {
   return Number.isInteger(abs) ? String(abs) : abs.toFixed(1);
 }
 
-/** An index as the player types it into a field: "+5" for a plus handicap, no trailing ".0". Empty when unset. */
 export function formatHandicapInputValue(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) {
     return "";
@@ -44,7 +36,6 @@ export function formatHandicapInputValue(value: number | null | undefined): stri
   return formatAbsOneDecimal(value);
 }
 
-/** Reads a typed index ("+3.0", "18.4", or blank to clear) into the stored value, or says what is wrong. */
 export function parseHandicapInput(raw: string): HandicapParseResult {
   const trimmed = raw.trim();
   if (!trimmed) {

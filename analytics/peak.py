@@ -1,22 +1,13 @@
-"""A player's peak game: their best few rounds, and what those rounds did differently.
-
-The Lab sets the peak against the player's goal and draws its shape behind theirs.
-Every function takes the rounds oldest first.
-"""
-
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from analytics.stats import best_round_ranks, full_rounds, round_half_up
 from models import Round
 
 PEAK_ROUNDS = 3
-# Two rounds are the fewest a peak can be told from the rest with.
 PEAK_MIN_ROUNDS = 2
 
 ImpactKind = Literal["birdies", "bogeys", "doubles"]
 
-# What a hole of each kind is worth against par: a birdie gains a stroke, a bogey loses one,
-# and a double or worse is counted at two.
 STROKES_PER_HOLE: Dict[ImpactKind, int] = {"birdies": 1, "bogeys": -1, "doubles": -2}
 
 
@@ -25,8 +16,6 @@ def _course_name(round_: Round) -> Optional[str]:
 
 
 def _per_round(rounds: List[Round]) -> Optional[Dict[ImpactKind, float]]:
-    """Birdies, bogeys and doubles or worse a round, over the rounds with a hole that has a par.
-    Null when none has one."""
     counted = [counts for counts in (r.get_score_counts() for r in rounds) if counts]
     if not counted:
         return None
@@ -68,9 +57,6 @@ def peak_average(rounds: List[Round]) -> Optional[float]:
 
 
 def peak_impacts(rounds: List[Round]) -> List[Dict[str, Any]]:
-    """Birdies, bogeys and doubles a round in the peak rounds against every round, and the
-    strokes a round each difference is worth: positive when the peak rounds gain them.
-    Each to a hundredth. Empty without a peak or a hole with a par."""
     peak = _per_round(peak_rounds(rounds))
     every = _per_round(rounds)
     if peak is None or every is None:
@@ -103,12 +89,10 @@ def peak_game(rounds: List[Round]) -> Optional[Dict[str, Any]]:
 
 
 def peak_gap(rounds: List[Round], scoring_goal: int) -> Optional[float]:
-    """The peak average less the goal, to a tenth: at or under 0 when the best rounds already meet it."""
     average = peak_average(rounds)
     return round_half_up(average - scoring_goal, 1) if average is not None else None
 
 
 def peak_meets_goal(rounds: List[Round], scoring_goal: int) -> Optional[bool]:
-    """Whether the peak rounds' average is at or under the goal. Null without a peak."""
     average = peak_average(rounds)
     return average <= scoring_goal if average is not None else None

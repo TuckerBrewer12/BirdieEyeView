@@ -4,12 +4,6 @@ import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { statValueVariants, statVariants } from "./variants";
 
-/**
- * A figure and what it measures: the scoring average, a handicap, a rate.
- *
- * The parts compose like `Card`, so a caller can put the label above the
- * value or under it. The caller formats the value; this owns the type.
- */
 function Stat({
   className,
   align = "start",
@@ -40,7 +34,6 @@ function StatValue({
   );
 }
 
-/** A unit after the value, set smaller and quieter: the `%` in 38%, the `HCP` after 12.4. */
 function StatUnit({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
@@ -61,11 +54,6 @@ const DIRECTION_TONES: Record<StatDirection, string> = {
   flat: "text-muted-foreground",
 };
 
-/**
- * Which way a figure moved. Scores, handicaps and putts improve as they fall,
- * so down reads as a birdie and up as a bogey. With no children it is the
- * arrow alone; children are the amount, set beside it.
- */
 function StatDelta({
   direction,
   className,

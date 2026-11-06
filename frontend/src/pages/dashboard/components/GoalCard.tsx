@@ -4,13 +4,11 @@ import type { GoalProgress } from "../model";
 import { formatOneDecimal, goalScoreToBreak, goalTargetLabel } from "@/domain";
 
 interface GoalCardProps {
-  /** Null until a goal is set, which shows the prompt to set one. */
   goal: GoalProgress | null;
   onOpen: () => void;
   className?: string;
 }
 
-/** The scoring goal, how close the player is, and what to work on. Opens The Lab. */
 export function GoalCard({ goal, onOpen, className }: GoalCardProps) {
   return (
     <Card

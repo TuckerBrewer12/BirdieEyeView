@@ -1,5 +1,3 @@
-"""World Handicap System (WHS) handicap index calculation."""
-
 from __future__ import annotations
 
 import math
@@ -10,32 +8,29 @@ from models.hole import HOLES_PER_ROUND
 from models.round import Round
 from models.user import User
 
-# WHS reduction table: number of differentials available → (count_to_use, adjustment)
-# Requires at least 3 rounds with valid course rating + slope to produce a handicap.
 _WHS_TABLE: List[tuple[int, float]] = [
-    (1, -2.0),   # 3 rounds
-    (1, -1.0),   # 4
-    (1, 0.0),    # 5
-    (2, -1.0),   # 6
-    (2, 0.0),    # 7
-    (2, 0.0),    # 8
-    (3, 0.0),    # 9
-    (3, 0.0),    # 10
-    (3, 0.0),    # 11
-    (4, 0.0),    # 12
-    (4, 0.0),    # 13
-    (4, 0.0),    # 14
-    (5, 0.0),    # 15
-    (5, 0.0),    # 16
-    (6, 0.0),    # 17
-    (6, 0.0),    # 18
-    (7, 0.0),    # 19
-    (8, 0.0),    # 20+
+    (1, -2.0),
+    (1, -1.0),
+    (1, 0.0),
+    (2, -1.0),
+    (2, 0.0),
+    (2, 0.0),
+    (3, 0.0),
+    (3, 0.0),
+    (3, 0.0),
+    (4, 0.0),
+    (4, 0.0),
+    (4, 0.0),
+    (5, 0.0),
+    (5, 0.0),
+    (6, 0.0),
+    (6, 0.0),
+    (7, 0.0),
+    (8, 0.0),
 ]
 
 
 def whs_window(rated_rounds: int) -> tuple[int, float]:
-    """How many of the best differentials count, and the adjustment, for this many rated rounds."""
     n = min(rated_rounds, 20)
     if n < 3:
         return 0, 0.0
@@ -43,7 +38,6 @@ def whs_window(rated_rounds: int) -> tuple[int, float]:
 
 
 def score_differential(score: int, course_rating: float, slope_rating: float) -> float:
-    """WHS score differential = (Score - Course Rating) × 113 / Slope Rating."""
     return (score - course_rating) * 113.0 / slope_rating
 
 
@@ -84,12 +78,6 @@ def round_net_score(round_obj: Round, handicap_index: Optional[float]) -> Option
 
 
 def _get_differential_for_round(round_obj: Round) -> Optional[float]:
-    """Return the score differential for a round, or None if data is unavailable.
-
-    When slope/course_rating are available uses the WHS formula. When they are
-    absent (unlinked rounds) falls back to score-to-par (equivalent to slope=113,
-    rating=par), which keeps the handicap index moving correctly without rated data.
-    """
     total = round_obj.calculate_total_score()
     if total is None:
         return None
@@ -98,12 +86,10 @@ def _get_differential_for_round(round_obj: Round) -> Optional[float]:
 
     tee = round_obj.get_tee()
     if tee is not None and tee.course_rating is not None and tee.slope_rating is not None:
-        # Exclude 9-hole/partial rounds tracked against 18-hole course ratings
         if holes_played < HOLES_PER_ROUND and tee.course_rating >= 50.0:
             return None
         return score_differential(total, tee.course_rating, tee.slope_rating)
 
-    # Fallback: no tee ratings available — use score-to-par as differential
     par = round_obj.get_par()
     if par is None:
         return None
@@ -113,7 +99,6 @@ def _get_differential_for_round(round_obj: Round) -> Optional[float]:
 
 
 def score_differentials_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """Return per-round differentials (oldest-first list of rounds)."""
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
         diff = _get_differential_for_round(round_obj)
@@ -211,7 +196,6 @@ def _index_window(
     # Lowest first; on a tie the more recent round counts, as WHS has it.
     ranked = sorted(eligible, key=lambda pair: (pair[1], -pair[0]))
     best = ranked[:count]
-    # WHS caps index at 54.0
     hi = min(sum(d for _, d in best) / count + adjustment, 54.0)
     window.update(
         index=round(hi, 1),
@@ -343,13 +327,10 @@ def player_handicap_trend(user: Optional[User], history: List[Round]) -> List[Di
     return trend
 
 
-# How far over the counting cut-off a differential can be and still read as close.
 CLOSE_TO_COUNTING = 2.0
 
 
 def differential_status(differential: Optional[float], used: bool, threshold: Optional[float]) -> str:
-    """Where a round's differential stands in the WHS window: "counting" (one of the best N),
-    "close" (within CLOSE_TO_COUNTING of the cut-off), "out", or "unrated" without a differential."""
     if differential is None:
         return "unrated"
     if used:

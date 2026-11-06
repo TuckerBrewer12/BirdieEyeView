@@ -1,5 +1,3 @@
-"""The analytics page's insights: which facts the rounds support, which way each points, and how good an average is."""
-
 import pytest
 
 from analytics.insights import gir_rating, insights, putts_rating
@@ -30,7 +28,6 @@ def test_a_climbing_scoring_average_points_up():
 
 
 def test_splits_the_rounds_before_skipping_unscored_ones():
-    # Halves are [90, None, 90] and [80, 80, 80]; the unscored round doesn't move the split.
     [shift] = insights(_scores(90, None, 90, 80, 80, 80), [], [], [])
     assert shift["strokes"] == 10
     assert shift["rounds"] == 6

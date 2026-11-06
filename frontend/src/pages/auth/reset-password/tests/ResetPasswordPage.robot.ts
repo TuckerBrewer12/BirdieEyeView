@@ -3,9 +3,7 @@ import { AuthScreenRobot, type AuthSeed } from "../../tests/AuthScreen.robot";
 
 export const RESET_TOKEN = "reset-token-from-email";
 
-/** Screen robot for `/reset-password`, opened from the emailed link. */
 export class ResetPasswordRobot extends AuthScreenRobot {
-  /** `token` is what the link carries; the backend honours `RESET_TOKEN` unless told otherwise. */
   async open(token: string | null = RESET_TOKEN, seed: AuthSeed = {}): Promise<this> {
     const path = token == null ? "/reset-password" : `/reset-password?token=${token}`;
     await this.visit(path, "Reset password", { resetTokens: [RESET_TOKEN], ...seed });

@@ -1,6 +1,5 @@
 import { RadarChart, type RadarAxis } from "@/brand/charts/RadarChart";
 
-/** A mid-handicapper's six axes against a break-80 shape. */
 const compared: RadarAxis[] = [
   { label: "GIR", value: 38, benchmark: 44, valueLabel: "38%", benchmarkLabel: "44%" },
   { label: "Scrambling", value: 29, benchmark: 41, valueLabel: "29%", benchmarkLabel: "41%" },
@@ -19,7 +18,6 @@ export default function RadarChartPreview() {
       <RadarChart axes={compared} aria-label="Shape against a break-80 golfer" />
       <RadarChart axes={alone} />
       <RadarChart axes={compared.slice(0, 2)} empty="Play a few more rounds to see your shape." />
-      {/* On a phone: the compact drawing at a phone's width. */}
       <div className="max-w-xs">
         <RadarChart axes={compared} compact aria-label="Shape against a break-80 golfer, on a phone" />
       </div>

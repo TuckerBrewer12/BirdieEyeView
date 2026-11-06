@@ -12,19 +12,12 @@ interface RoundFlowChartProps {
   round: Round;
 }
 
-/** A hole that can be plotted: scored, with a par the server classified it against. */
 type FlowHole = HoleScore & { strokes: number; toPar: number; kind: ScoreKind };
 
 const Y_TICKS = [-3, -2, -1, 0, 1, 2, 3];
 
-/**
- * How a round went hole by hole: each hole's score to par, joined into a line,
- * over-par holes above the dashed par line and under-par ones below it.
- * Wider than a phone, so it scrolls sideways rather than shrinking its labels.
- */
 export function RoundFlowChart({ round }: RoundFlowChartProps) {
   const { width: W, height: H, pad: PAD, extent, stroke, parLine, dot, dotHover } = tokens.chart.flow;
-  // The OS setting, or a MotionConfig asking for stillness (the kit's screenshot harness).
   const prefersReduced = useReducedMotion();
   const configReduced = useReducedMotionConfig();
   const reduceMotion = prefersReduced || configReduced;
@@ -39,7 +32,6 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
   const first = holes[0].hole;
   const last = holes[holes.length - 1].hole;
   const x = scaleLinear().domain([first, last]).range([PAD.left, W - PAD.right]);
-  // Over par plots upward: a bad hole is a climb.
   const y = scaleLinear().domain([-extent, extent]).range([H - PAD.bottom, PAD.top]);
   const yOf = (toPar: number) => y(Math.max(-extent, Math.min(extent, toPar)));
 
@@ -93,7 +85,6 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
             strokeWidth={stroke}
             strokeLinecap="round"
             strokeLinejoin="round"
-            // Reduced motion starts at the end state, so there is nothing left to animate.
             initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
             transition={tokens.motion.draw}

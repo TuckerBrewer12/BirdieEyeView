@@ -2,7 +2,6 @@
 @import "./brand/theme/tokens.gen.css";
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* iOS WebView: remove tap highlight and 300ms click delay */
 * {
   -webkit-tap-highlight-color: transparent;
 }

@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""Frontend coverage comment: Vitest changed-line % plus AI screen counts.
-
-Subcommands:
-    lines      coverage-final.json + diff → JSON {covered, executable, files}
-    inventory  scan frontend/src for screenshot and espresso test titles
-    comment    upsert the sticky PR comment
-"""
 from __future__ import annotations
 
 import argparse
@@ -57,7 +50,6 @@ def skip_as_non_executable(text: str) -> bool:
 
 
 def added_source(diff: str) -> dict[str, dict[int, str]]:
-    """Map path -> {new-file line number: added text}."""
     out: dict[str, dict[int, str]] = {}
     path: str | None = None
     lineno = 0
@@ -89,7 +81,6 @@ def repo_relative(path: str, repo: Path) -> str:
 
 
 def coverage_lines(file_cov: dict) -> tuple[set[int], set[int]]:
-    """Executable and covered line numbers from an Istanbul file record."""
     executable: set[int] = set()
     covered: set[int] = set()
 
@@ -187,7 +178,6 @@ def inventory_markdown(src_root: Path) -> str:
 
 
 def extract_object(text: str) -> str:
-    """Pull the first balanced JSON object out of model stdout."""
     start = text.find("{")
     if start == -1:
         return ""

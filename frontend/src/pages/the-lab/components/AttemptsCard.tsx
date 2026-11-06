@@ -15,16 +15,12 @@ import { goalTargetLabel, pluralize, type GoalAttempt } from "@/domain";
 import { timesMetLabel } from "../present";
 
 interface AttemptsCardProps {
-  /** The latest rounds, oldest first, each marked met or not by the goal report. */
   attempts: GoalAttempt[];
-  /** The goal as stored: 79 to break 80. */
   target: number;
-  /** How many rounds in the window met it, as the goal report counted them. Null while it loads. */
   timesMet: number | null;
   className?: string;
 }
 
-/** The latest rounds against the goal, and how often it has been met. */
 export function AttemptsCard({ attempts, target, timesMet, className }: AttemptsCardProps) {
   return (
     <Card data-slot="attempts-card" className={className}>

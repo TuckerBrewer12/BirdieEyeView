@@ -89,7 +89,6 @@ export function ScanPage({ userId }: { userId: string }) {
             spacing={0}
             value={[viewModel.mode]}
             onValueChange={(values) => {
-              // Pressing the chosen mode again would clear it; one is always chosen.
               if (values[0] === "scan" || values[0] === "manual") viewModel.setMode(values[0]);
             }}
           >

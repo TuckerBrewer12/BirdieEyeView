@@ -1,5 +1,3 @@
-"""Round responses, built one way from the Round model so every endpoint agrees."""
-
 from typing import Dict, List, Optional
 
 from analytics.handicap import round_course_handicap, round_net_score
@@ -62,7 +60,6 @@ def _figures(round_: Round) -> dict:
 
 
 def round_summary(round_: Round, best_rank: Optional[int] = None) -> RoundSummaryResponse:
-    """A round for list views: only what a list draws, so a long list stays small."""
     return RoundSummaryResponse(
         id=str(round_.id),
         course_id=str(round_.course.id) if round_.course and round_.course.id else None,

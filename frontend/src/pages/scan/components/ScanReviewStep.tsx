@@ -29,17 +29,11 @@ import type { ScanReviewViewModel } from "../useScanReviewViewModel";
 
 interface ScanReviewStepProps {
   review: ScanReviewViewModel;
-  /** Scores typed in by hand: there is no photo, and nothing the scan was unsure of. */
   manual: boolean;
-  /** The photo the card was read from. */
   photoUrl: string | null;
   onStartOver: () => void;
 }
 
-/**
- * Checking a card before it is saved: the scorecard to type over, with the scores the scan
- * wasn't sure of ringed, beside the photo it was read from, the course, the tee and the date.
- */
 export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanReviewStepProps) {
   const { round, toCheck } = review;
   if (!round) return null;

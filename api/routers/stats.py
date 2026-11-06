@@ -1,5 +1,3 @@
-"""Stats/dashboard API endpoints."""
-
 from datetime import date, datetime, timedelta, timezone
 from typing import List, Literal, Optional
 from uuid import UUID
@@ -44,7 +42,6 @@ async def get_dashboard(
     if not user:
         raise HTTPException(404, "User not found")
 
-    # One query for every round's hole scores; the Round model works out each figure.
     summaries = await db.rounds.get_round_summaries_for_user(str(user_id), limit=500, offset=0)
 
     scored = [r for r in summaries if r.calculate_total_score() is not None]
@@ -60,7 +57,6 @@ async def get_dashboard(
     recent_rounds = [round_summary(r) for r in recent]
     best_recent = analytics.best_round(recent)
 
-    # The last 20 rounds, plus 19 before them so the handicap trend has a full rolling window.
     hi_rounds = list(reversed(await db.rounds.get_rounds_for_user(str(user_id), limit=39, offset=0)))
     last_20 = hi_rounds[-20:]
     # The golfer's own index, as `api/player_handicap.player_handicap_index` reads it: the same
@@ -125,7 +121,6 @@ async def get_analytics(
     if not user:
         raise HTTPException(404, "User not found")
 
-    # Resolve course_id filter
     resolved_course_id: Optional[str] = None
     if course_id and course_id not in ("all", ""):
         if course_id == "home":
@@ -136,7 +131,6 @@ async def get_analytics(
             except ValueError:
                 raise HTTPException(422, "course_id must be a valid UUID.") from None
 
-    # Resolve date_from filter
     date_from: Optional[date] = None
     today = datetime.now(timezone.utc).date()
     if timeframe == "ytd":
@@ -144,7 +138,6 @@ async def get_analytics(
     elif timeframe == "1y":
         date_from = today - timedelta(days=365)
 
-    # DB returns newest-first; reverse for chronological trend ordering
     rounds_desc = await db.rounds.get_rounds_for_user(
         target_user_id, limit=limit, offset=0,
         course_id=resolved_course_id,
@@ -175,7 +168,6 @@ async def get_played_courses(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Return distinct courses the user has rounds linked to."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, "Forbidden")
     courses = await db.rounds.get_played_courses_for_user(str(user_id))
@@ -251,7 +243,7 @@ async def get_round_comparison(
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, "Forbidden")
     rounds_desc = await db.rounds.get_rounds_for_user(str(user_id), limit=200, offset=0)
-    rounds = list(reversed(rounds_desc))  # chronological order
+    rounds = list(reversed(rounds_desc))
 
     if not rounds:
         raise HTTPException(404, "No rounds found")
@@ -277,7 +269,6 @@ async def get_milestones(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Return a flat, sorted list of lifetime milestone events for the user."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, "Forbidden")
     user = await db.users.get_user(str(user_id))
@@ -300,7 +291,6 @@ async def get_milestones(
 
     milestones = []
 
-    # Score breaks (break 120, 110, 100, 95, 90, 85, 80, 75, 70 …)
     for item in achievements["round_milestones"]["lifetime"]["score_breaks"]:
         a = item["achievement"]
         if a:
@@ -312,7 +302,6 @@ async def get_milestones(
                 "round_id": a.get("round_id"),
             })
 
-    # First round under par
     under_par = achievements["round_milestones"]["lifetime"]["first_round_under_par"]
     if under_par:
         milestones.append({
@@ -323,7 +312,6 @@ async def get_milestones(
             "round_id": under_par.get("round_id"),
         })
 
-    # First eagle
     eagle = achievements["round_milestones"]["lifetime"]["first_eagle"]
     if eagle:
         milestones.append({
@@ -334,7 +322,6 @@ async def get_milestones(
             "round_id": eagle.get("round_id"),
         })
 
-    # Hole in one
     hio = achievements["round_milestones"]["lifetime"]["first_hole_in_one"]
     if hio:
         milestones.append({
@@ -345,7 +332,6 @@ async def get_milestones(
             "round_id": hio.get("round_id"),
         })
 
-    # GIR breaks (first 3, 6, 9, 12, 15, 18 GIR in a round)
     for item in achievements["gir_milestones"]["lifetime"]["gir_breaks"]:
         a = item["achievement"]
         if a:
@@ -358,7 +344,6 @@ async def get_milestones(
                 "round_id": a.get("round_id"),
             })
 
-    # Putt breaks (first round under 45, 42, 39, 36, 33, 30 … putts)
     for item in achievements["putting_milestones"]["lifetime"]["putt_breaks"]:
         a = item["achievement"]
         if a:

@@ -83,7 +83,6 @@ describe("useLabPageViewModel", () => {
     await waitFor(() => expect(result.current.goal?.target).toBe(84));
 
     expect(repository.updates).toEqual([{ scoring_goal: 84 }]);
-    // The report is for the old goal, so the new goal's is asked for, and its figures wait for it.
     await waitFor(() => expect(result.current.goal?.average).not.toBeNull());
     expect(repository.goalReportRequests).toBeGreaterThanOrEqual(2);
   });
@@ -96,7 +95,6 @@ describe("useLabPageViewModel", () => {
     act(() => result.current.setGoal(84));
     await waitFor(() => expect(result.current.goal?.target).toBe(84));
 
-    // The new goal's report is still on its way: no figures, rather than the last goal's.
     expect(result.current.roundsMeetingGoal).toBeNull();
     expect(result.current.goal?.gap).toBeNull();
     expect(result.current.peak?.gapToGoal).toBeNull();
@@ -119,7 +117,6 @@ describe("useLabPageViewModel", () => {
     const { result } = await loaded();
 
     expect(result.current.attempts).toHaveLength(12);
-    // The report marks which met the goal: only the 89.
     expect(result.current.attempts.filter((a) => a.metGoal).map((a) => a.score)).toEqual([89]);
     expect(result.current.roundsMeetingGoal).toBe(1);
     expect(result.current.recentTrend).toBe(0.5);
@@ -160,7 +157,6 @@ describe("useLabPageViewModel", () => {
     act(() => result.current.setComparison(5));
     await waitFor(() => expect(result.current.benchmark).not.toBeNull());
     expect(result.current.benchmark).toEqual(benchmarkShapeFrom(labBenchmarks["handicap:5"].benchmark!));
-    // The par types come with the server's gap and verdict against the 5.
     expect(result.current.parTypes.map((row) => [row.benchmarkToPar, row.gap, row.verdict])).toEqual([
       [0.2, 0.72, "behind"],
       [0.5, 0.62, "behind"],
@@ -181,7 +177,6 @@ describe("useLabPageViewModel", () => {
     act(() => result.current.selectFriend(jordan.id));
     await waitFor(() => expect(result.current.friendComparison).toBe("no-rounds"));
     expect(result.current.benchmark).toBeNull();
-    // The server compares with each friend; their analytics are never fetched.
     expect(repository.benchmarkRequests).toEqual([`friend:${avery.id}`, `friend:${jordan.id}`]);
     expect(repository.analyticsRequests).toEqual(["user-1"]);
   });
@@ -201,7 +196,6 @@ describe("useLabPageViewModel", () => {
     act(() => result.current.setRadarMode("peak"));
 
     expect(result.current.radarMode).toBe("peak");
-    // The server picked the golfers who break 90, nearest the peak's 89.7.
     await waitFor(() => expect(result.current.benchmark).toEqual(benchmarkShapeFrom(breaks90Shape)));
   });
 
@@ -218,7 +212,6 @@ describe("useLabPageViewModel", () => {
     const { client, repository } = await loaded();
 
     expect(repository.analyticsFilters).toEqual([LAB_FILTERS]);
-    // The same entry the Analytics page reads for these filters, so neither fetches it twice.
     expect(client.getQueryData(queryKeys.analytics("user-1", LAB_FILTERS))).toBe(labAnalyticsByGolfer["user-1"]);
   });
 
@@ -231,7 +224,6 @@ describe("useLabPageViewModel", () => {
     await waitFor(() => expect(result.current.benchmark?.scramblingPct).toBe(41));
     act(() => result.current.setComparison("friend"));
 
-    // Back to the friend: the cached comparison shows at once while it refreshes.
     expect(result.current.friendComparison).toBe("ready");
     expect(repository.benchmarkRequests.slice(0, 2)).toEqual([`friend:${avery.id}`, "handicap:5"]);
     const cached = client.getQueryCache().findAll({ queryKey: queryKeys.analytics("user-1") });
@@ -284,7 +276,6 @@ describe("useLabPageViewModel", () => {
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    // These rounds have par types but no putts logged.
     expect(result.current.panels).toEqual(["by-par"]);
     expect(result.current.panel).toBe("by-par");
   });

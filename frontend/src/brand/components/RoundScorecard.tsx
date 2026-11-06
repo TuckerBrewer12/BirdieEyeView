@@ -6,24 +6,14 @@ import { formatCourseName } from "@/domain/course";
 
 interface RoundScorecardProps {
   round: Round;
-  /** The tee played, which names the yardage row. */
   teeBox?: string | null;
-  /** Names the tee on the course line too, for a screen that doesn't show it anywhere else. */
   showTee?: boolean;
-  /** Makes scores, putts and greens editable. The round shown should already carry the edits. */
   edits?: ScorecardEdits;
-  /** Holes whose score is in doubt, like one a scan couldn't read for sure. Their score cell is ringed. */
   toCheck?: readonly number[];
-  /** Sits at the right of the header, like a "Scan another" button. */
   action?: ReactNode;
   className?: string;
 }
 
-/**
- * A round as a scorecard: the course, then a ScorecardTable per nine, the closing one carrying
- * the round's totals. The tables are wider than a phone, so they scroll sideways under a header
- * that stays put, keeping the action in reach.
- */
 function RoundScorecard({ round, teeBox, showTee = false, edits, toCheck, action, className }: RoundScorecardProps) {
   const nines = [
     { nine: round.frontNine, label: "OUT" },

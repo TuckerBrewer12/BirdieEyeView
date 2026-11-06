@@ -12,11 +12,9 @@ interface SortControlProps<T extends string> {
   value: T;
   options: readonly SortOption<T>[];
   onChange: (value: T) => void;
-  /** Leave off `onToggleDirection` and the control only picks: no arrow, a chevron on the label. */
   ascending?: boolean;
   onToggleDirection?: () => void;
   directionDisabled?: boolean;
-  /** What the menu picks, for screen readers. */
   "aria-label"?: string;
   className?: string;
 }

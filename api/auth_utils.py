@@ -1,5 +1,3 @@
-"""JWT and password hashing utilities for authentication."""
-
 import os
 import secrets
 import uuid
@@ -34,8 +32,6 @@ def _is_prod_like_runtime() -> bool:
     app_env = os.environ.get("APP_ENV", "development").strip().lower()
     if app_env in {"production", "prod", "staging"}:
         return True
-    # Railway deploys should default to hardened cookie behavior even if APP_ENV
-    # was not explicitly configured.
     return bool(os.environ.get("RAILWAY_ENVIRONMENT_ID"))
 
 
@@ -64,7 +60,6 @@ def get_access_token_cookie_name() -> str:
 
 
 def get_cookie_secure_flag() -> bool:
-    # Keep localhost dev workable while using secure-by-default in production.
     return _env_bool("AUTH_COOKIE_SECURE", _is_prod_like_runtime())
 
 

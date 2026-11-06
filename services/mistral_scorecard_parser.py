@@ -1,5 +1,3 @@
-"""Row-oriented parser adapter for Mistral OCR scorecard output."""
-
 from __future__ import annotations
 
 import logging
@@ -15,15 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 class ParsedTeeRow(BaseGolfModel):
-    """A detected tee/yardage row."""
-
     label: str
     yardages: List[Optional[int]] = Field(default_factory=list)
 
 
 class ParsedScorecardRows(BaseGolfModel):
-    """Structured row extraction from raw OCR markdown/text."""
-
     course_name: Optional[str] = None
     hole_numbers: List[int] = Field(default_factory=list)
     tee_rows: List[ParsedTeeRow] = Field(default_factory=list)
@@ -35,9 +29,6 @@ class ParsedScorecardRows(BaseGolfModel):
     score_row: List[Optional[int]] = Field(default_factory=list)
     putts_row: List[Optional[int]] = Field(default_factory=list)
     gir_row: List[Optional[bool]] = Field(default_factory=list)
-    # Internal-only helper rows retained for downstream score-sign disambiguation.
-    # These are populated before field suppression so callers can still use row evidence
-    # even when the user opted not to track/display putts or shots.
     raw_shots_to_green_row: List[Optional[int]] = Field(default_factory=list)
     raw_putts_row: List[Optional[int]] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)
@@ -56,33 +47,26 @@ _NAME_ON_ROW_RE = re.compile(r"name on (shots?(?: to green)?|putts?|score)\s+row
 _SIMPLE_ROW_ORDER_RE = re.compile(r"row order:\s*([a-z ,]+?)(?:\.|$)", re.IGNORECASE)
 
 _CIRCLED_TO_DIGIT = {
-    # Standard circled ①-⑨
     "①": "1", "②": "2", "③": "3", "④": "4", "⑤": "5",
     "⑥": "6", "⑦": "7", "⑧": "8", "⑨": "9",
-    # Bold/negative circled ❶-❾
     "❶": "1", "❷": "2", "❸": "3", "❹": "4", "❺": "5",
     "❻": "6", "❼": "7", "❽": "8", "❾": "9",
-    # Dingbat circled ➀-➈
     "➀": "1", "➁": "2", "➂": "3", "➃": "4", "➄": "5",
     "➅": "6", "➆": "7", "➇": "8", "➈": "9",
-    # Zero variants
     "⓪": "0", "⓿": "0",
 }
 
 
 def _tokenize_nameish(value: str) -> List[str]:
-    """Normalize free-form OCR/name text into lowercase alphanumeric tokens."""
     return re.findall(r"[a-z0-9]+", (value or "").lower())
 
 
 def _name_matches_tokens(candidate_text: str, preferred_name: str) -> bool:
-    """Token-aware match that avoids short-name substring false positives."""
     candidate_tokens = _tokenize_nameish(candidate_text)
     preferred_tokens = _tokenize_nameish(preferred_name)
     if not candidate_tokens or not preferred_tokens:
         return False
 
-    # Single-letter names (e.g. "T") must match an isolated token.
     if len(preferred_tokens) == 1 and len(preferred_tokens[0]) == 1:
         return preferred_tokens[0] in candidate_tokens
 
@@ -101,19 +85,10 @@ def parse_mistral_scorecard_rows(
     *,
     user_context: Optional[str] = None,
 ) -> ParsedScorecardRows:
-    """Parse row-level scorecard data from Mistral OCR markdown/text.
-
-    This parser is intentionally conservative and best-effort:
-    - Detects hole header row (1..18)
-    - Detects tee/yardage rows (roman/tee labels + large numbers)
-    - Detects handicap row
-    - Detects player's score row (+ next two rows for putts/GIR when available)
-    """
     text = (markdown_text or "").strip()
 
 
 
-    # 2D pre-pass: extract by column map for precise hole-number alignment.
     raw_lines = text.splitlines()
     row_hints_2d = _extract_row_hints(user_context)
     player_name_2d = _extract_player_name_hint(user_context)
@@ -130,16 +105,11 @@ def parse_mistral_scorecard_rows(
     if split_maps is not None:
         (front_lines, front_map, front_hdr_idx), (back_lines, back_map, _back_hdr_idx) = split_maps
 
-        # Use require_name_match when a player name is given so we don't accidentally
-        # pick up a different player's row as the anchor (e.g. G's row for player T).
         front_result, front_anchor_idx = _extract_2d_from_raw_lines(
             front_lines, front_map, player_name_2d, row_hints_2d, min_scores=4,
             require_name_match=bool(player_name_2d),
         )
         if front_result is not None and front_anchor_idx >= 0:
-            # Reuse the same row offset in the back-9 block.
-            # front_anchor_idx is absolute to front_lines. back_lines starts dynamically at its header.
-            # So offset = absolute - header.
             header_offset = front_anchor_idx - front_hdr_idx
 
             back_result, _ = _extract_2d_from_raw_lines(
@@ -152,23 +122,17 @@ def parse_mistral_scorecard_rows(
                 _apply_field_suppression(merged, row_hints_2d)
                 return merged
 
-        # Second-pass: player's 18-hole section is entirely within back_lines.
-        # This happens when multiple scorecards share one page — the second player's
-        # front nine appears in the back section using front_map column alignment.
         if player_name_2d and front_result is None:
             front_in_back, back_front_anchor = _extract_2d_from_raw_lines(
                 back_lines, front_map, player_name_2d, row_hints_2d, min_scores=4,
                 require_name_match=True,
             )
             if front_in_back is not None and back_front_anchor >= 0:
-                # Found player's front nine in back_lines. Now find their back nine
-                # which occupies a sub-section with a different (unlabeled) col_map.
                 unlabeled = _find_unlabeled_section_col_map(
                     back_lines, start_after_idx=back_front_anchor + 2, start_hole=10
                 )
                 if unlabeled is not None:
                     back_nine_col_map, par_row_idx = unlabeled
-                    # Score row is typically 1-2 rows after the par row (skip blank).
                     back_nine_score_approx = par_row_idx + 2
                     back_in_back, _ = _extract_2d_from_raw_lines(
                         back_lines, back_nine_col_map, player_name_2d, row_hints_2d,
@@ -180,7 +144,6 @@ def parse_mistral_scorecard_rows(
                         _apply_field_suppression(merged, row_hints_2d)
                         return merged
 
-    # Single full-table path.
     col_map = _find_hole_column_map(raw_lines)
     if col_map is not None:
         result_2d, _ = _extract_2d_from_raw_lines(
@@ -231,8 +194,6 @@ def parse_mistral_scorecard_rows(
         _apply_field_suppression(parsed, row_hints)
         return parsed
 
-    # Name-based row mapping: user told us which data row their name appears on.
-    # This takes priority — we know exactly which OCR line is which.
     name_on_row = _parse_name_on_row(user_context or "")
     simple_row_order = _parse_simple_row_order(user_context or "")
     if name_on_row and simple_row_order:
@@ -240,8 +201,6 @@ def parse_mistral_scorecard_rows(
         _apply_field_suppression(parsed, row_hints)
         return parsed
 
-    # Context-aware row mapping:
-    # e.g. "first row shots onto green, second row putts, third row final score (to par)"
     if row_hints["row_order_explicit"]:
         parsed.shots_to_green_row = _coerce_18_ints(anchor_vals, max_abs=10)
         putts_vals = _extract_next_small_int_row(lines, anchor_idx + 1, max_abs=6)
@@ -255,19 +214,14 @@ def parse_mistral_scorecard_rows(
             parsed.score_row = _coerce_18_ints(score_vals, max_abs=15)
         else:
             parsed.warnings.append("Could not detect final score row at expected third row")
-        # Try to derive GIR from shots-to-green when hole pars are known later.
         _apply_field_suppression(parsed, row_hints)
         return parsed
 
-    # Explicit single-row score card hint: treat anchor as score only.
     if row_hints["single_score_row"]:
         parsed.score_row = _coerce_18_ints(anchor_vals, max_abs=15)
         _apply_field_suppression(parsed, row_hints)
         return parsed
 
-    # Default mapping: anchor row is score.
-    # 0 or negative can't be total strokes. Re-extract with the to-par parser so circled
-    # symbols get correct signs (① = -1, not 1 — _line_ints always returns positive face value).
     if any(v <= 0 for v in anchor_vals):
         to_par_vals = _extract_to_par_at(lines, anchor_idx)
         parsed.score_row = _coerce_18_ints(to_par_vals or anchor_vals, max_abs=9)
@@ -277,8 +231,6 @@ def parse_mistral_scorecard_rows(
     putts_vals = _extract_next_small_int_row(lines, anchor_idx + 1, max_abs=6)
     if putts_vals:
         parsed.putts_row = _coerce_18_ints(putts_vals, max_abs=6)
-    # Secondary small-int row can still help disambiguate to-par sign on ambiguous "1"
-    # even when the user does not want putts/shots displayed.
     aux_shots_vals = _extract_next_small_int_row(lines, anchor_idx + 2, max_abs=6)
     if aux_shots_vals:
         aux_row = _coerce_18_ints(aux_shots_vals, max_abs=10)
@@ -289,8 +241,6 @@ def parse_mistral_scorecard_rows(
         if gir_vals:
             parsed.gir_row = _coerce_18_bools(gir_vals)
 
-    # Heuristic correction: if anchor looks like shots-to-green and third row looks like to-par scores,
-    # remap to [shots, putts, score].
     if _looks_like_shots_row(parsed.score_row) and not parsed.gir_row:
         alt_putts = _extract_next_small_int_row(lines, anchor_idx + 1, max_abs=6)
         alt_score = _extract_next_small_int_row(lines, anchor_idx + 2, max_abs=6)
@@ -306,7 +256,6 @@ def parse_mistral_scorecard_rows(
 
 
 def _parse_name_on_row(ctx: str) -> Optional[str]:
-    """Return which row type the player's name appears on ('score', 'putts', 'shots')."""
     m = _NAME_ON_ROW_RE.search(ctx)
     if not m:
         return None
@@ -319,7 +268,6 @@ def _parse_name_on_row(ctx: str) -> Optional[str]:
 
 
 def _parse_simple_row_order(ctx: str) -> List[str]:
-    """Parse 'row order: shots to green, putts, score' into ['shots', 'putts', 'score']."""
     m = _SIMPLE_ROW_ORDER_RE.search(ctx)
     if not m:
         return []
@@ -336,7 +284,6 @@ def _parse_simple_row_order(ctx: str) -> List[str]:
 
 
 def _extract_row_at(lines: List[str], line_idx: int, *, max_abs: int) -> List[int]:
-    """Extract integers from the line at line_idx, searching ±1 lines for OCR jitter."""
     for delta in (0, 1, -1, 2, -2):
         i = line_idx + delta
         if 0 <= i < len(lines):
@@ -348,7 +295,6 @@ def _extract_row_at(lines: List[str], line_idx: int, *, max_abs: int) -> List[in
 
 
 def _extract_to_par_at(lines: List[str], line_idx: int) -> List[int]:
-    """Extract to-par values from the line at line_idx, searching ±1 lines."""
     for delta in (0, 1, -1, 2, -2):
         i = line_idx + delta
         if 0 <= i < len(lines):
@@ -367,12 +313,6 @@ def _apply_name_based_mapping(
     row_order: List[str],
     row_hints: dict,
 ) -> None:
-    """Map OCR lines to data rows using the player name line as a positional anchor.
-
-    name_line_idx: the OCR line index that contains the player's name text.
-    name_on_row:   which data type that line holds ('score', 'putts', 'shots').
-    row_order:     ordered list of data types top-to-bottom, e.g. ['shots', 'putts', 'score'].
-    """
     if name_on_row not in row_order:
         parsed.warnings.append(f"Name row type '{name_on_row}' missing from row order {row_order}")
         return
@@ -417,7 +357,6 @@ def _normalize_lines(text: str) -> List[str]:
         line = raw.strip()
         if not line:
             continue
-        # Convert markdown table separators and normalize spacing.
         if line.startswith("|") and line.endswith("|"):
             line = line.strip("|").replace("|", " ")
         line = re.sub(r"\s+", " ", line).strip()
@@ -426,12 +365,7 @@ def _normalize_lines(text: str) -> List[str]:
     return out
 
 
-# ================================================================
-# 2D column-aligned extraction helpers
-# ================================================================
-
 def _split_pipe_row(line: str) -> List[str]:
-    """Split a markdown pipe-delimited row into trimmed cell strings."""
     s = line.strip()
     if "|" not in s:
         return []
@@ -440,12 +374,6 @@ def _split_pipe_row(line: str) -> List[str]:
 
 
 def _find_col_map_in_lines(lines: List[str], *, min_holes: int = 9) -> Optional[Dict[int, int]]:
-    """Scan lines for a pipe row containing sequential hole numbers.
-
-    Unlike _find_hole_column_map, holes need not start at 1 — this handles
-    back-9 tables where the header is '10 | 11 | ... | 18'.
-    Returns {hole_number: col_index} or None.
-    """
     for line in lines:
         cells = _split_pipe_row(line)
         if len(cells) < min_holes + 1:
@@ -461,10 +389,8 @@ def _find_col_map_in_lines(lines: List[str], *, min_holes: int = 9) -> Optional[
         if len(col_map) < min_holes:
             continue
         sorted_holes = sorted(col_map.keys())
-        # Must be contiguous sequential holes.
         if sorted_holes != list(range(sorted_holes[0], sorted_holes[0] + len(sorted_holes))):
             continue
-        # Column indices must be monotonically increasing.
         if any(col_map[sorted_holes[i + 1]] <= col_map[sorted_holes[i]] for i in range(len(sorted_holes) - 1)):
             continue
         return col_map
@@ -472,7 +398,6 @@ def _find_col_map_in_lines(lines: List[str], *, min_holes: int = 9) -> Optional[
 
 
 def _find_hole_column_map(raw_lines: List[str]) -> Optional[Dict[int, int]]:
-    """Find the hole-number header row for a full or front-9 table (starts at 1)."""
     col_map = _find_col_map_in_lines(raw_lines)
     if col_map is None:
         return None
@@ -484,16 +409,6 @@ def _find_hole_column_map(raw_lines: List[str]) -> Optional[Dict[int, int]]:
 def _find_split_col_maps(
     raw_lines: List[str],
 ) -> Optional[Tuple[Tuple[List[str], Dict[int, int], int], Tuple[List[str], Dict[int, int], int]]]:
-    """Detect the classic golf-scorecard split: front-9 table + back-9 table.
-
-    Scorecards often have an empty pipe row (|  |  |  |) linking both halves,
-    so we can't split by blank lines. Instead, scan for two distinct hole-header
-    rows: one starting at hole 1, one starting at hole 10.
-
-    Returns ((front_lines, front_map), (back_lines, back_map)) if found, else None.
-    Front lines = all raw_lines up to (not including) the back header row.
-    Back lines  = all raw_lines from the back header row onward.
-    """
     front_header_idx: Optional[int] = None
     back_header_idx: Optional[int] = None
     front_map: Optional[Dict[int, int]] = None
@@ -513,12 +428,12 @@ def _find_split_col_maps(
         if front_header_idx is not None and back_header_idx is not None:
             break
 
-    if front_header_idx is None or back_header_idx is None:
+    if front_header_idx is None or back_header_idx is None or front_map is None or back_map is None:
         return None
 
     front_lines = raw_lines[:back_header_idx]
     back_lines = raw_lines[back_header_idx:]
-    return (front_lines, front_map, front_header_idx), (back_lines, back_map, back_header_idx)  # type: ignore[return-value]
+    return (front_lines, front_map, front_header_idx), (back_lines, back_map, back_header_idx)
 
 
 def _find_unlabeled_section_col_map(
@@ -527,26 +442,16 @@ def _find_unlabeled_section_col_map(
     *,
     start_hole: int = 10,
 ) -> Optional[Tuple[Dict[int, int], int]]:
-    """Find a 9-hole col_map from an unlabeled par row (no text label in col0).
-
-    Used to locate a player's back-nine section when the OCR renders it as a
-    separate mini-table without a P|10-18 hole-number header.
-
-    Returns (col_map, row_idx_in_lines) or None.
-    col_map maps {10:0, 11:1, ..., 18:8} (col0 = first data column).
-    """
     for i, line in enumerate(lines):
         if i <= start_after_idx:
             continue
         cells = _split_pipe_row(line)
         if len(cells) < HOLES_PER_NINE:
             continue
-        # col0 must be a number, not a text label
         try:
             int(cells[0].strip())
         except ValueError:
             continue
-        # First 9 cells must all be valid par values (3-6)
         try:
             par_vals = [int(cells[j].strip()) for j in range(HOLES_PER_NINE)]
         except (ValueError, IndexError):
@@ -561,12 +466,8 @@ def _merge_parsed_halves(
     front: "ParsedScorecardRows",
     back: "ParsedScorecardRows",
 ) -> "ParsedScorecardRows":
-    """Merge two 9-hole ParsedScorecardRows (front/back) into one 18-hole result."""
-
     def _merge_lists(a: list, b: list) -> list:
-        # Front half: holes 1-9 → indices 0-8 of a.
         a9 = (list(a) + [None] * 9)[:9]
-        # Back half: _col_map_to_18_list places holes 10-18 at indices 9-17 of b.
         b_padded = list(b) + [None] * 18
         b9 = b_padded[9:18]
         return a9 + b9
@@ -585,7 +486,6 @@ def _merge_parsed_halves(
     merged.gir_row = _merge_lists(front.gir_row, back.gir_row)
     merged.shots_to_green_row = _merge_lists(front.shots_to_green_row, back.shots_to_green_row)
 
-    # Merge tee rows by label.
     tee_dict: Dict[str, "ParsedTeeRow"] = {}
     for tr in front.tee_rows:
         tee_dict[tr.label] = ParsedTeeRow(label=tr.label, yardages=_merge_lists(tr.yardages, []))
@@ -600,7 +500,6 @@ def _merge_parsed_halves(
 
 
 def _parse_int_cell(cell: str, *, max_abs: Optional[int] = None) -> Optional[int]:
-    """Extract the first integer from a single cell string."""
     normalized = cell.replace("−", "-")
     for k, v in _CIRCLED_TO_DIGIT.items():
         normalized = normalized.replace(k, v)
@@ -614,7 +513,6 @@ def _parse_int_cell(cell: str, *, max_abs: Optional[int] = None) -> Optional[int
 
 
 def _parse_to_par_cell(cell: str) -> Optional[int]:
-    """Extract a to-par value from a single cell (circled digits → negative)."""
     normalized = cell.replace("−", "-")
     tokens = _TO_PAR_TOKEN_RE.findall(normalized)
     for tok in tokens:
@@ -638,7 +536,6 @@ def _extract_values_by_col_map(
     *,
     parse_fn: Callable[[str], Optional[int]],
 ) -> Dict[int, Optional[int]]:
-    """Extract one value per hole using the column map."""
     result: Dict[int, Optional[int]] = {}
     for hole_num, col_idx in col_map.items():
         if col_idx >= len(row_cells):
@@ -649,7 +546,6 @@ def _extract_values_by_col_map(
 
 
 def _col_map_to_18_list(d: Dict[int, Optional[int]]) -> List[Optional[int]]:
-    """Convert hole-number-keyed dict to an 18-item positional list."""
     out: List[Optional[int]] = [None] * HOLES_PER_ROUND
     for hole_num, val in d.items():
         if 1 <= hole_num <= HOLES_PER_ROUND:
@@ -658,12 +554,9 @@ def _col_map_to_18_list(d: Dict[int, Optional[int]]) -> List[Optional[int]]:
 
 
 def _identify_row_label(cells: List[str]) -> str:
-    """Classify a pipe row by its label cell (cells[0])."""
     if not cells:
         return "unknown"
     label = cells[0].lower().strip()
-    # A true separator row has only dashes/colons/spaces in the label cell (e.g. `---`).
-    # An *empty* label cell is a nameless data row — treat as score_candidate, not separator.
     if label and set(label).issubset({"-", ":", " "}):
         return "separator"
     if "hole" in label:
@@ -687,23 +580,10 @@ def _extract_2d_from_raw_lines(
     forced_anchor_line_idx: Optional[int] = None,
     require_name_match: bool = False,
 ) -> Tuple[Optional[ParsedScorecardRows], int]:
-    """Extract all scorecard data using hole-column alignment.
-
-    Returns (result, anchor_line_idx). anchor_line_idx is the index within
-    raw_lines of the score anchor row (-1 if not found). The caller can pass
-    this value back as forced_anchor_line_idx to extract a second half-table
-    at the same row offset, skipping the anchor search entirely.
-
-    When require_name_match=True and a player_name is given, the fallback
-    (first score_candidate after handicap) is disabled — returns (None, -1)
-    if the name is not found. This prevents wrong-player anchor selection.
-
-    Returns (None, -1) if fewer than min_scores values could be extracted.
-    """
     parsed = ParsedScorecardRows(extraction_mode="2d_column")
     preferred_name = (player_name or "").lower().strip()
 
-    classified: List[Tuple[str, List[str], int]] = []  # (label, cells, raw_line_idx)
+    classified: List[Tuple[str, List[str], int]] = []
     for i, line in enumerate(raw_lines):
         cells = _split_pipe_row(line)
         if len(cells) < 2:
@@ -711,7 +591,6 @@ def _extract_2d_from_raw_lines(
         label = _identify_row_label(cells)
         classified.append((label, cells, i))
 
-    # Par row
     for label, cells, _ in classified:
         if label == "par":
             d = _extract_values_by_col_map(cells, col_map, parse_fn=lambda c: _parse_int_cell(c, max_abs=10))
@@ -721,15 +600,12 @@ def _extract_2d_from_raw_lines(
                 parsed.par_row = vals
             break
 
-    # Handicap row
     for label, cells, _ in classified:
         if label == "handicap":
             d = _extract_values_by_col_map(cells, col_map, parse_fn=lambda c: _parse_int_cell(c, max_abs=18))
             parsed.handicap_row = _col_map_to_18_list(d)
             break
 
-    # Tee rows: any non-structural row whose col-mapped values are all positive
-    # with at least half in yardage range (≥100).  No hardcoded color names needed.
     for label, cells, _ in classified:
         if label in ("separator", "hole", "par", "handicap"):
             continue
@@ -748,18 +624,10 @@ def _extract_2d_from_raw_lines(
             if not any(tr.label == tee_label for tr in parsed.tee_rows):
                 parsed.tee_rows.append(ParsedTeeRow(label=tee_label, yardages=yardages))
 
-    # ------------------------------------------------------------------
-    # Anchor selection: the row we treat as the player's score row.
-    # ------------------------------------------------------------------
     anchor_classified_idx: Optional[int] = None
     anchor_cells: Optional[List[str]] = None
     anchor_raw_line_idx: int = -1
 
-    # Hint path: caller supplies an approximate anchor line index (split-table merge).
-    # OCR multi-line cells and differing row counts between front/back can shift rows
-    # by up to ±4, so we search that window and pick the candidate with the most
-    # parseable score values. Par-subtotal rows (cells[0] contains "/", e.g. "35/34")
-    # are skipped so the actual score row wins over the par row.
     if forced_anchor_line_idx is not None and forced_anchor_line_idx >= 0:
         best_cls_i: Optional[int] = None
         best_count: int = 0
@@ -769,7 +637,7 @@ def _extract_2d_from_raw_lines(
                 continue
             if label in ("separator", "hole", "par", "handicap", "tee"):
                 continue
-            if "/" in cells[0]:  # skip par-subtotal rows like "35/34"
+            if "/" in cells[0]:
                 continue
             d = _extract_values_by_col_map(cells, col_map, parse_fn=lambda c: _parse_int_cell(c, max_abs=15))
             cnt = sum(1 for v in d.values() if v is not None)
@@ -782,7 +650,6 @@ def _extract_2d_from_raw_lines(
             anchor_raw_line_idx = classified[best_cls_i][2]
 
     if anchor_cells is None:
-        # Find handicap row index in classified list (bounds anchor search below it)
         handicap_classified_idx = next(
             (i for i, (lbl, _, _) in enumerate(classified) if lbl == "handicap"), -1
         )
@@ -793,7 +660,6 @@ def _extract_2d_from_raw_lines(
                 name_matched = _name_matches_tokens(label_cell, preferred_name)
                 if not name_matched:
                     continue
-                # Validate: row must have at least a few parseable score-range values.
                 d = _extract_values_by_col_map(
                     cells, col_map, parse_fn=lambda c: _parse_int_cell(c, max_abs=15)
                 )
@@ -830,7 +696,6 @@ def _extract_2d_from_raw_lines(
         anchor_classified_idx, anchor_raw_line_idx, anchor_cells,
     )
 
-    # Extract score row values
     if row_hints.get("score_to_par"):
         score_parse_fn: Callable[[str], Optional[int]] = _parse_to_par_cell
         parsed.score_to_par_hint = True
@@ -839,7 +704,6 @@ def _extract_2d_from_raw_lines(
 
     score_dict = _extract_values_by_col_map(anchor_cells, col_map, parse_fn=score_parse_fn)
 
-    # Auto-detect to-par: if any extracted value ≤ 0, re-extract with to-par parser
     raw_score_vals = list(score_dict.values())
     if not row_hints.get("score_to_par") and any(v is not None and v <= 0 for v in raw_score_vals):
         score_dict = _extract_values_by_col_map(anchor_cells, col_map, parse_fn=_parse_to_par_cell)
@@ -847,11 +711,6 @@ def _extract_2d_from_raw_lines(
 
     parsed.score_row = _col_map_to_18_list(score_dict)
 
-    # ------------------------------------------------------------------
-    # Row-order-aware extraction of putts/shots relative to anchor.
-    # The user specifies which row their name appears on and the row order,
-    # so we use those offsets exactly rather than guessing +1/+2.
-    # ------------------------------------------------------------------
     name_on_row: Optional[str] = row_hints.get("name_on_row")
     row_order: List[str] = row_hints.get("row_order") or []
 
@@ -883,7 +742,6 @@ def _extract_2d_from_raw_lines(
             name_pos, score_offset, putts_offset, shots_offset,
         )
 
-        # Re-extract score from the correct offset (anchor may be putts or shots row)
         if score_offset is not None:
             score_cells = _classified_at_offset(score_offset)
             logger.debug("2D extract: score_offset=%d", score_offset)
@@ -916,7 +774,6 @@ def _extract_2d_from_raw_lines(
 
     else:
         logger.debug("2D extract: no row_order/name_on_row, using default putts scan")
-        # Default: anchor is score row, putts is the next candidate row below it.
         if anchor_classified_idx is not None:
             found_putts = False
             for label, cells, _ in classified[anchor_classified_idx + 1:anchor_classified_idx + 6]:
@@ -930,9 +787,6 @@ def _extract_2d_from_raw_lines(
                         found_putts = True
                         logger.info("2D extract: putts found via scan cells=%s", cells)
                         continue
-                    # Keep a second compact numeric row internally for to-par sign
-                    # disambiguation (+1 vs -1). We intentionally do not surface this
-                    # as shots_to_green unless explicitly mapped.
                     if _looks_like_shots_row(vals):
                         parsed.raw_shots_to_green_row = vals
                         logger.info("2D extract: internal secondary row captured for sign disambiguation")
@@ -956,8 +810,6 @@ def _extract_2d_from_raw_lines(
     return parsed, anchor_raw_line_idx
 
 
-# ================================================================
-
 def _extract_player_name_hint(user_context: Optional[str]) -> Optional[str]:
     ctx = (user_context or "").strip()
     if not ctx:
@@ -968,8 +820,6 @@ def _extract_player_name_hint(user_context: Optional[str]) -> Optional[str]:
     if not m:
         return None
     name = m.group(1).strip()
-    # Truncate at the first sentence-ending period so "T. scores written…"
-    # yields "T" rather than "T. Scores Written To Par…".
     if "." in name:
         name = name[: name.index(".")].strip()
     return " ".join(w.capitalize() for w in name.split()) or None
@@ -1051,7 +901,7 @@ def _extract_course_name(lines: List[str]) -> Optional[str]:
 
 
 def _line_ints(line: str, *, max_abs: Optional[int] = None) -> List[int]:
-    replaced = line.replace("−", "-")  # normalize Unicode minus sign
+    replaced = line.replace("−", "-")
     for k, v in _CIRCLED_TO_DIGIT.items():
         replaced = replaced.replace(k, v)
     nums = [int(x) for x in _INT_RE.findall(replaced)]
@@ -1069,7 +919,6 @@ def _extract_hole_numbers(lines: List[str]) -> List[int]:
         seq = [n for n in nums if 1 <= n <= 18]
         if len(seq) > len(best):
             best = seq
-    # prefer unique ordered 1..18-ish sequence
     dedup: List[int] = []
     seen = set()
     for n in best:
@@ -1086,7 +935,6 @@ def _extract_par_row(lines: List[str]) -> List[int]:
             continue
         nums = _line_ints(line, max_abs=15)
         normalized = _normalize_hole_values(nums)
-        # Hole pars should be mostly 3/4/5.
         hole_like = [n for n in normalized if 3 <= n <= 6]
         if len(hole_like) >= HOLES_PER_NINE:
             return normalized[:HOLES_PER_ROUND]
@@ -1115,7 +963,6 @@ def _extract_tee_rows(lines: List[str]) -> List[Tuple[str, List[int]]]:
         nums = _normalize_hole_values(nums)
         if len(nums) < HOLES_PER_NINE:
             continue
-        # All values must be positive; at least half must be yardage-range (≥100).
         if any(n <= 0 for n in nums):
             continue
         large = [n for n in nums if n >= 100]
@@ -1136,8 +983,6 @@ def _extract_score_row(
     start = (handicap_idx + 1) if handicap_idx is not None else 0
     preferred_name = (player_name or "").lower().strip()
 
-    # Pass 1: row containing player name hint.
-    # Search ±2 lines around the named line in case OCR splits name from scores.
     if preferred_name:
         for i in range(len(lines)):
             if not _name_matches_tokens(lines[i], preferred_name):
@@ -1153,7 +998,6 @@ def _extract_score_row(
         if require_name_match:
             return None, []
 
-    # Pass 2: first small-number row after handicap that doesn't look like tee row.
     for i in range(start, len(lines)):
         line = lines[i]
         lower = line.lower()
@@ -1190,11 +1034,9 @@ def _extract_next_to_par_row(lines: List[str], start_idx: int) -> List[int]:
 def _extract_next_gir_like_row(lines: List[str], start_idx: int) -> List[Optional[bool]]:
     for i in range(max(0, start_idx), min(len(lines), start_idx + 8)):
         line = lines[i]
-        # Convert common circle markers to digits first.
         normalized = line
         for k, v in _CIRCLED_TO_DIGIT.items():
             normalized = normalized.replace(k, v)
-        # Keep only explicit 0/1 tokens.
         tokens = re.findall(r"(?<!\d)[01](?!\d)", normalized)
         if len(tokens) >= HOLES_PER_NINE:
             return [t == "1" for t in tokens[:HOLES_PER_ROUND]]
@@ -1221,18 +1063,10 @@ def _coerce_18_bools(values: List[Optional[bool]]) -> List[Optional[bool]]:
 
 
 def _line_to_par_values(line: str) -> List[int]:
-    """Parse a score-to-par row while preserving signs and circled symbols.
-
-    Rules:
-    - Circled 1 variants are treated as -1 (common birdie notation on cards).
-    - Circled 0 / E are treated as 0.
-    - Signed ints are preserved.
-    """
     raw = line.replace("−", "-")
     tokens = _TO_PAR_TOKEN_RE.findall(raw)
     vals: List[int] = []
     for tok in tokens:
-        # Circled digit on a to-par card = negative (① = -1 birdie, ② = -2 eagle, ⓪ = 0 par)
         if tok in _CIRCLED_TO_DIGIT:
             digit = int(_CIRCLED_TO_DIGIT[tok])
             vals.append(-digit if digit > 0 else 0)
@@ -1247,11 +1081,6 @@ def _line_to_par_values(line: str) -> List[int]:
 
 
 def _normalize_hole_values(values: List[int]) -> List[int]:
-    """Best-effort normalize a row to 18 hole cells, dropping subtotal columns.
-
-    Common table layout in OCR:
-    [h1..h9, OUT, h10..h18, IN, TOT]
-    """
     if len(values) <= HOLES_PER_ROUND:
         return values
 
@@ -1270,7 +1099,6 @@ def _normalize_hole_values(values: List[int]) -> List[int]:
     if len(values) == 19:
         if looks_like_front_subtotal(values[9], values[:9]):
             return values[:9] + values[10:19]
-        # Likely [h1..h18, TOT] (or similar trailing aggregate) — keep first 18 holes.
         return values[:HOLES_PER_ROUND]
 
     return values[:HOLES_PER_ROUND]
