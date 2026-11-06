@@ -3,12 +3,14 @@ import { test } from "./RegisterPage.robot";
 
 test("create account", async ({ register }) => {
   await register.open();
+  await register.seesHeading("Create account");
   await register.capture("register.png");
 });
 
 test("create account in dark mode", async ({ register }) => {
   await register.dark();
   await register.open();
+  await register.seesHeading("Create account");
   await register.capture("register-dark.png");
 });
 
@@ -22,7 +24,8 @@ test("fields that can't be sent", async ({ register }) => {
 
 test("home course results open", async ({ register }) => {
   await register.open();
-  await register.searchHomeCourse("Pebble", pebbleBeach.name!);
+  await register.searchHomeCourse("Pebble");
+  await register.seesCourseResult(pebbleBeach.name!);
   await register.capture("register-course-results.png");
 });
 
@@ -30,5 +33,6 @@ test("home course picked", async ({ register }) => {
   await register.open();
   await register.fillIn({ handicap: "+2.5" });
   await register.pickHomeCourse("Pebble", pebbleBeach.name!);
+  await register.seesHomeCourse(pebbleBeach.name!);
   await register.capture("register-home-course.png");
 });

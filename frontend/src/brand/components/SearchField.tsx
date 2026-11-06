@@ -1,10 +1,11 @@
 import type * as React from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Search, Loader2, X } from "lucide-react";
 import { cn } from "@/brand/cn";
 import {
   InputGroup,
   InputGroupAddon,
+  InputGroupAddonLabel,
   InputGroupButton,
   InputGroupInput,
 } from "./InputGroup";
@@ -14,19 +15,32 @@ interface SearchFieldProps
   extends Omit<React.ComponentProps<typeof InputGroupInput>, "value" | "onChange" | "type"> {
   value: string;
   onChange: (value: string) => void;
+  /**
+   * Puts the caret in the field when it appears. Only for a field the golfer just opened (a panel,
+   * a "Change course"), never one that is there when the page loads.
+   */
+  focusOnOpen?: boolean;
   loading?: boolean;
   /** Shows a `/` hint while the field is empty, and makes the `/` key focus it. */
   shortcut?: boolean;
 }
 
 export function SearchField({
+  id,
   value,
   onChange,
+  focusOnOpen = false,
   loading,
   shortcut = false,
   ...inputProps
 }: SearchFieldProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
+  const input = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (focusOnOpen) input.current?.focus();
+  }, [focusOnOpen]);
 
   useEffect(() => {
     if (!shortcut) return;
@@ -34,29 +48,30 @@ export function SearchField({
       if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return;
       if ((event.target as HTMLElement).closest("input, textarea, select, [contenteditable]")) return;
       event.preventDefault();
-      inputRef.current?.focus();
+      input.current?.focus();
     };
     document.addEventListener("keydown", focusOnSlash);
     return () => document.removeEventListener("keydown", focusOnSlash);
   }, [shortcut]);
 
   return (
-    <InputGroup size="inline" className="bg-card">
+    <InputGroup className="bg-card">
       <InputGroupInput
-        ref={inputRef}
+        ref={input}
+        id={inputId}
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="[&::-webkit-search-cancel-button]:hidden"
         {...inputProps}
       />
-      <InputGroupAddon className={cn(value && "text-foreground")}>
+      <InputGroupAddonLabel htmlFor={inputId} className={cn(value && "text-foreground")}>
         <Search />
-      </InputGroupAddon>
+      </InputGroupAddonLabel>
       {loading && (
-        <InputGroupAddon align="inline-end">
+        <InputGroupAddonLabel htmlFor={inputId} align="inline-end">
           <Loader2 className="animate-spin" />
-        </InputGroupAddon>
+        </InputGroupAddonLabel>
       )}
       {value ? (
         <InputGroupAddon align="inline-end">
@@ -66,7 +81,7 @@ export function SearchField({
             aria-label="Clear search"
             onClick={() => {
               onChange("");
-              inputRef.current?.focus();
+              input.current?.focus();
             }}
           >
             <X className="size-3.5" />

@@ -1,8 +1,6 @@
 import { ArrowDown, ArrowUp, Check, ChevronDown } from "lucide-react";
 import { Select } from "@base-ui/react/select";
 import { cn } from "@/brand/cn";
-import { Button } from "./Button";
-import { buttonVariants } from "./variants";
 
 interface SortOption<T extends string> {
   value: T;
@@ -10,14 +8,11 @@ interface SortOption<T extends string> {
 }
 
 interface SortControlProps<T extends string> {
-  /** The current choice, as it reads in the trigger. */
   label: string;
-  /** A muted word before the label ("Sort"), for a control that says what it picks. */
-  caption?: string;
   value: T;
   options: readonly SortOption<T>[];
   onChange: (value: T) => void;
-  /** Leave off `onToggleDirection` and the control only picks: no arrow beside it. */
+  /** Leave off `onToggleDirection` and the control only picks: no arrow, a chevron on the label. */
   ascending?: boolean;
   onToggleDirection?: () => void;
   directionDisabled?: boolean;
@@ -28,7 +23,6 @@ interface SortControlProps<T extends string> {
 
 function SortControl<T extends string>({
   label,
-  caption,
   value,
   options,
   onChange,
@@ -39,7 +33,7 @@ function SortControl<T extends string>({
   className,
 }: SortControlProps<T>) {
   return (
-    <div data-slot="sort-control" className={cn("inline-flex items-center gap-1", className)}>
+    <div data-slot="sort-control" className={cn("inline-flex items-center gap-0.5", className)}>
       <Select.Root
         value={value}
         onValueChange={(next) => {
@@ -50,11 +44,13 @@ function SortControl<T extends string>({
       >
         <Select.Trigger
           aria-label={ariaLabel}
-          className={buttonVariants({ variant: "ghost", className: "text-body font-semibold" })}
+          className={cn(
+            "rounded-sm px-0.5 text-label font-semibold text-primary outline-none select-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/half",
+            !onToggleDirection && "inline-flex items-center gap-0.5",
+          )}
         >
-          {caption && <span className="font-medium text-muted-foreground">{caption}</span>}
           {label}
-          <ChevronDown aria-hidden className="size-3" />
+          {!onToggleDirection && <ChevronDown aria-hidden className="size-3.5" />}
         </Select.Trigger>
         <Select.Portal>
           <Select.Positioner
@@ -66,7 +62,7 @@ function SortControl<T extends string>({
           >
             <Select.Popup
               data-slot="sort-menu"
-              className="min-w-28 origin-(--transform-origin) overflow-hidden rounded-lg bg-card p-1 text-card-foreground shadow-md ring-1 ring-foreground/10 outline-none duration-100 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
+              className="min-w-28 origin-(--transform-origin) overflow-hidden rounded-lg bg-card p-1 text-card-foreground shadow-md ring-1 ring-foreground/tint outline-none duration-100 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
             >
               <Select.List className="!block w-full">
                 {options.map((option) => (
@@ -87,19 +83,19 @@ function SortControl<T extends string>({
         </Select.Portal>
       </Select.Root>
       {onToggleDirection && (
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
+          type="button"
           aria-label={ascending ? "Sort descending" : "Sort ascending"}
           disabled={directionDisabled}
           onClick={onToggleDirection}
+          className="inline-flex size-5 items-center justify-center rounded-sm text-primary outline-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/half disabled:cursor-default disabled:opacity-40"
         >
           {directionDisabled || ascending ? (
             <ArrowUp className="size-3.5" />
           ) : (
             <ArrowDown className="size-3.5" />
           )}
-        </Button>
+        </button>
       )}
     </div>
   );

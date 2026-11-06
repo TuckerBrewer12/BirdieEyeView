@@ -48,7 +48,7 @@ export function CoursesPage({ userId }: CoursesPageProps) {
           renderItem={(course) => (
             <CoursePreview
               course={course}
-              onClick={() => navigate(`/courses/${course.id}`)}
+              onClick={() => void navigate(`/courses/${course.id}`)}
             />
           )}
         />

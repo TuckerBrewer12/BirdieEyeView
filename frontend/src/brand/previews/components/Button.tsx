@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { Button } from "@/brand/components/Button";
+import { Button, RowButton } from "@/brand/components/Button";
 
 export default function ButtonPreview() {
   return (
@@ -50,6 +50,10 @@ export default function ButtonPreview() {
           Sign in
         </Button>
       </div>
+      <RowButton className="flex w-full items-center justify-between rounded-lg px-3 py-2 hover:bg-muted">
+        <span className="text-sm font-medium text-foreground">Pebble Beach Golf Links</span>
+        <span className="text-sm text-muted-foreground">78</span>
+      </RowButton>
     </>
   );
 }

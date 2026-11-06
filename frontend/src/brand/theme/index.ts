@@ -6,11 +6,13 @@ export {
   scoreFillClass,
   scoreOnFillClass,
   scoreWashClass,
+  scoreProfileHeightClass,
   toParFill,
   toParLabel,
   scoreKindLabel,
   toParDisplay,
   toParTextClass,
+  toParStatTextClass,
   toParBadgeClass,
 } from "./score";
 export type { ScoreKey } from "./score";

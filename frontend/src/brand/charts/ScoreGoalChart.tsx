@@ -18,7 +18,7 @@ interface ScoreGoalChartProps {
  * faint line, with the goal dashed across. A round that met the goal is filled.
  */
 export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLabel }: ScoreGoalChartProps) {
-  const { width: W, height: H, pad, labelRoom, dot, dotReached } = tokens.chart.goal;
+  const { width: W, height: H, pad, labelRoom, stroke, dot, dotReached } = tokens.chart.goal;
 
   if (attempts.length < 2) {
     return <div className="py-6 text-center text-sm text-muted-foreground">Not enough rounds yet</div>;
@@ -46,8 +46,8 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
           y1={goalY}
           y2={goalY}
           stroke={tokens.color.primary}
-          strokeWidth={1.5}
-          strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
+          strokeWidth={stroke}
+          strokeDasharray={tokens.chart.guideDash}
         />
         <text
           x={W - pad.x - labelRoom + 4}
@@ -62,7 +62,7 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
           points={scores.map((score, i) => `${x(i)},${y(score)}`).join(" ")}
           fill="none"
           stroke={tokens.color.chart.muted}
-          strokeWidth={1.5}
+          strokeWidth={stroke}
           strokeLinejoin="round"
           strokeLinecap="round"
         />
@@ -75,7 +75,7 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
             r={metGoal ? dotReached : dot}
             fill={metGoal ? tokens.color.score.birdie.base : tokens.color.card}
             stroke={metGoal ? "none" : tokens.color.chart.axis}
-            strokeWidth={1.5}
+            strokeWidth={stroke}
           />
         ))}
       </svg>

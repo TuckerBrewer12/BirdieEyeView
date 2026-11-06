@@ -1,4 +1,4 @@
-import { act, render, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import type { ReactNode } from "react";
@@ -117,29 +117,26 @@ describe("useScanPageViewModel", () => {
   it("keeps a running scan when the golfer leaves the page and comes back", async () => {
     const doubles = fakes({ result: scannedCard, holdExtract: true });
     const client = newClient();
-    const Wrapper = wrapperFor(client);
-    const latest: { current: ScanPageViewModel | null } = { current: null };
-    const seen = (viewModel: ScanPageViewModel) => {
-      latest.current = viewModel;
-    };
-    function Screen({ onRender }: { onRender: (viewModel: ScanPageViewModel) => void }) {
-      onRender(useScanPageViewModel("user-1", doubles.repositories));
-      return null;
-    }
-    // The provider stays mounted throughout, as it does above the app's routes.
-    const view = render(<Wrapper><Screen onRender={seen} /></Wrapper>);
-    const current = latest as Current;
-    await pick(current);
-    act(() => current.current.extract());
-    await waitFor(() => expect(current.current.step).toBe("processing"));
+    const Session = wrapperFor(client);
+    // The provider stays mounted throughout, as it does above the app's routes; only the page
+    // (the view model) unmounts while the golfer is away.
+    let onPage = true;
+    const { result, rerender } = renderHook(() => useScanPageViewModel("user-1", doubles.repositories), {
+      wrapper: ({ children }) => <Session>{onPage ? children : null}</Session>,
+    });
+    await pick(result);
+    act(() => result.current.extract());
+    await waitFor(() => expect(result.current.step).toBe("processing"));
 
-    view.rerender(<Wrapper>{null}</Wrapper>);
+    onPage = false;
+    rerender();
     act(() => doubles.scan.finishExtract());
     await waitFor(() => expect(client.isMutating()).toBe(0));
-    view.rerender(<Wrapper><Screen onRender={seen} /></Wrapper>);
+    onPage = true;
+    rerender();
 
-    await waitFor(() => expect(current.current.step).toBe("review"));
-    expect(current.current.review.round?.course?.name).toBe(SCANNED_COURSE_NAME);
+    await waitFor(() => expect(result.current.step).toBe("review"));
+    expect(result.current.review.round?.course?.name).toBe(SCANNED_COURSE_NAME);
   });
 
   it("returns to the photo with the reason when the scan fails", async () => {

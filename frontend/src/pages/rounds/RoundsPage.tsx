@@ -52,8 +52,6 @@ export function RoundsPage({ userId }: RoundsPageProps) {
         <div className="flex max-w-full items-center gap-3 overflow-x-auto [scrollbar-width:none]">
           <ToggleGroup
             aria-label="Rounds"
-            variant="outline"
-            spacing={0}
             value={[viewModel.filterMode]}
             onValueChange={(values) => viewModel.setFilterMode(values[0] ?? "all")}
           >
@@ -86,7 +84,6 @@ export function RoundsPage({ userId }: RoundsPageProps) {
             {pluralize(viewModel.filteredRounds.length, "round")}
           </span>
           <SortControl
-            caption="Sort"
             label={viewModel.sortLabel}
             value={viewModel.effectiveSortKey}
             options={viewModel.sortOptions}
@@ -107,7 +104,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
                 round={r}
                 onClick={() => {
                   if (viewModel.isLinkOpen(r.id)) return;
-                  navigate(`/rounds/${r.id}`);
+                  void navigate(`/rounds/${r.id}`);
                 }}
                 onLinkClick={() => viewModel.toggleLink(r.id)}
               />

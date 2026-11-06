@@ -19,6 +19,17 @@ export function firstNameOf(user: UserDto | null): string {
   return user?.name?.split(" ")[0] ?? "Golfer";
 }
 
+/** Up to two initials for the avatar: "Jordan Spieth" reads "JS"; no name reads "G" for golfer. */
+export function initialsOf(user: UserDto | null): string {
+  if (!user?.name) return "G";
+  return user.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 /** Today above the greeting: "Mon · Jun 15". */
 export function greetingDateLabel(now = new Date()): string {
   return formatWeekdayDay(now, { year: false }) ?? "";

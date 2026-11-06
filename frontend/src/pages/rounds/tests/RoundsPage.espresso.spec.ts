@@ -99,16 +99,16 @@ test("load more reveals the remaining rounds", async ({ rounds }) => {
   await rounds.seesCourse("Course 1");
 });
 
-test("a one-character course query does not search", async ({ rounds }) => {
+test("a one-character course query clears the results instead of searching", async ({ rounds }) => {
   await rounds.open(storedRounds, { courses: searchableCourses });
   await rounds.openLinkFor("Scanned Scorecard");
-  await rounds.searchCourses("P");
-  await rounds.seesNoCourseResults();
-  await rounds.doesNotSeeNoCoursesFound();
-
-  // Two characters reach the backend, so only the length held the first one back.
   await rounds.searchCourses("Pe");
   await rounds.seesCourseResult("Pebble Beach");
+
+  // "P" matches Pebble Beach too, so a search for it would keep the result on screen.
+  await rounds.searchCourses("P");
+  await rounds.doesNotSeeCourseResults();
+  await rounds.doesNotSeeNoCoursesFound();
 });
 
 test("a course search with no hits says so", async ({ rounds }) => {
