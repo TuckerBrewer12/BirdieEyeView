@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/brand/cn";
 import { ScorecardTable, type ScorecardEdits } from "@/brand/components/ScorecardTable";
-import type { Round } from "@/domain";
+import { pluralize, type Round } from "@/domain";
 import { formatCourseName } from "@/domain/course";
 
 interface RoundScorecardProps {
@@ -27,7 +27,7 @@ interface RoundScorecardProps {
 function RoundScorecard({ round, teeBox, teeRating, edits, toCheck, action, className }: RoundScorecardProps) {
   const teeLine = [
     teeBox && `${teeBox} tees`,
-    round.yards != null && `${round.yards.toLocaleString("en-US")} yds`,
+    round.yards != null && pluralize(round.yards, "yd"),
     teeRating,
   ].filter(Boolean);
   // A card with no tee read still says where it was played.
