@@ -12,6 +12,8 @@ BOTS="$(cd "$(dirname "$0")" && pwd)"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 # shellcheck source=cursor-run.sh
 source "$BOTS/cursor-run.sh"
+# shellcheck source=pr-lib.sh
+source "$BOTS/pr-lib.sh"
 
 emit_no_fixes() {
   if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
@@ -20,9 +22,8 @@ emit_no_fixes() {
   fi
 }
 
-BASE="$(git merge-base "$BASE_SHA" "$HEAD_SHA")"
 # shellcheck disable=SC2086
-git diff --unified=6 "$BASE" "$HEAD_SHA" -- $BOT_PATHSPEC > "$WORK/diff.patch"
+pr_diff "$WORK/diff.patch" $BOT_PATHSPEC
 
 if [[ ! -s "$WORK/diff.patch" ]]; then
   echo "No changes under '${BOT_PATHSPEC}'."
@@ -38,12 +39,7 @@ gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
 COMMENTS_JSON="$WORK/comments.json" REVIEWS_JSON="$WORK/reviews.json" \
   python3 "$BOTS/previous.py" collect > "$WORK/previous.json"
 
-{
-  cat "$BOT_PROMPT"
-  printf '\n---\n\n## The diff to review\n\n```diff\n'
-  cat "$WORK/diff.patch"
-  printf '\n```\n'
-} > "$WORK/prompt.txt"
+review_prompt "$BOT_PROMPT" "$WORK/diff.patch" > "$WORK/prompt.txt"
 
 BOTS_DIR="$BOTS" PREVIOUS_JSON="$WORK/previous.json" python3 - "$WORK/prompt.txt" <<'PY'
 import json

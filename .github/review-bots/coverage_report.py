@@ -12,11 +12,16 @@ import argparse
 import json
 import os
 import re
-import subprocess
 import sys
 from pathlib import Path
 
-HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+_BOTS = Path(__file__).resolve().parent
+if str(_BOTS) not in sys.path:
+    sys.path.insert(0, str(_BOTS))
+
+import sticky
+from post_review import added_source, extract_balanced
+
 TEST_TITLE = re.compile(r"""^\s*(?:test|it)\(\s*(?:'([^'\\]*)'|"([^"\\]*)")""", re.M)
 MARKER = "<!-- frontend-coverage-bot -->"
 
@@ -54,29 +59,6 @@ def skip_as_non_executable(text: str) -> bool:
     if stripped.startswith(("import ", "export type ", "export interface ", "type ", "interface ")):
         return True
     return stripped.startswith("export {") and " from " in stripped
-
-
-def added_source(diff: str) -> dict[str, dict[int, str]]:
-    """Map path -> {new-file line number: added text}."""
-    out: dict[str, dict[int, str]] = {}
-    path: str | None = None
-    lineno = 0
-
-    for raw in diff.splitlines():
-        if raw.startswith("+++ b/"):
-            path = raw[6:]
-            out.setdefault(path, {})
-        elif raw.startswith("@@"):
-            match = HUNK.match(raw)
-            if match:
-                lineno = int(match.group(1))
-        elif path and raw.startswith("+"):
-            out[path][lineno] = raw[1:]
-            lineno += 1
-        elif path and (raw.startswith(" ") or raw == ""):
-            lineno += 1
-
-    return out
 
 
 def repo_relative(path: str, repo: Path) -> str:
@@ -186,36 +168,6 @@ def inventory_markdown(src_root: Path) -> str:
     return "\n".join(parts).rstrip() + "\n"
 
 
-def extract_object(text: str) -> str:
-    """Pull the first balanced JSON object out of model stdout."""
-    start = text.find("{")
-    if start == -1:
-        return ""
-
-    depth = 0
-    in_string = False
-    escaped = False
-
-    for i, ch in enumerate(text[start:], start):
-        if in_string:
-            if escaped:
-                escaped = False
-            elif ch == "\\":
-                escaped = True
-            elif ch == '"':
-                in_string = False
-            continue
-        if ch == '"':
-            in_string = True
-        elif ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-            if depth == 0:
-                return text[start : i + 1]
-    return ""
-
-
 def parse_layer(raw: object, key: str) -> dict:
     layer = raw.get(key) if isinstance(raw, dict) else None
     if not isinstance(layer, dict):
@@ -245,7 +197,7 @@ def parse_layer(raw: object, key: str) -> dict:
 
 
 def parse_ai(text: str) -> dict:
-    blob = extract_object(text)
+    blob = extract_balanced(text, "{", "}")
     if not blob:
         return {"screenshots": parse_layer({}, "screenshots"), "espresso": parse_layer({}, "espresso")}
     try:
@@ -313,54 +265,6 @@ def render_comment(lines: dict, ai: dict, espresso: dict | None = None) -> str:
     return "\n".join(body) + "\n"
 
 
-def gh_api(args: list[str], *, input_text: str | None = None) -> str:
-    result = subprocess.run(
-        ["gh", "api", *args],
-        input=input_text,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        sys.stderr.write(result.stderr)
-        raise SystemExit(result.returncode)
-    return result.stdout
-
-
-def upsert_comment(body: str) -> None:
-    repo = os.environ["GITHUB_REPOSITORY"]
-    pr = os.environ["PR_NUMBER"]
-    raw = gh_api(["--paginate", f"repos/{repo}/issues/{pr}/comments"])
-    comments = json.loads(raw) if raw.strip() else []
-    existing = next((c for c in comments if MARKER in (c.get("body") or "")), None)
-
-    payload = json.dumps({"body": body})
-    if existing:
-        gh_api(
-            [
-                "-X",
-                "PATCH",
-                f"repos/{repo}/issues/comments/{existing['id']}",
-                "--input",
-                "-",
-            ],
-            input_text=payload,
-        )
-        print(f"Updated comment {existing['id']}.")
-    else:
-        gh_api(
-            [
-                "-X",
-                "POST",
-                f"repos/{repo}/issues/{pr}/comments",
-                "--input",
-                "-",
-            ],
-            input_text=payload,
-        )
-        print("Posted coverage comment.")
-
-
 def cmd_lines(args: argparse.Namespace) -> int:
     diff = Path(args.diff).read_text()
     coverage = Path(args.coverage) if args.coverage else None
@@ -384,7 +288,7 @@ def cmd_comment(args: argparse.Namespace) -> int:
         ai = parse_ai(Path(args.ai).read_text())
     else:
         ai = parse_ai("")
-    upsert_comment(render_comment(lines, ai, espresso))
+    sticky.upsert_comment(MARKER, render_comment(lines, ai, espresso))
     return 0
 
 
