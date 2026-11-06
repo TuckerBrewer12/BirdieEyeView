@@ -1,8 +1,8 @@
 import { EMPTY_COURSE_ANALYTICS } from "@/domain/courseAnalytics";
 import { useState } from "react";
 import { teesByLength } from "@/domain/course";
-import type { CourseDto } from "@/types/api";
 import { coursesRepository, type CoursesRepository } from "../../coursesRepository";
+import { useCourse } from "../../useCourse";
 import { useCourseAnalytics } from "../../useCourseAnalytics";
 import {
   nineFrom,
@@ -21,15 +21,20 @@ export interface CourseScorecardViewModel {
   backNine: ScorecardNine;
 }
 
-/** The course's scorecard, read off one tee, with the golfer's averages once they have played it. */
+/**
+ * The course's scorecard, read off one tee, with the golfer's averages once they have played it.
+ * Null until the course has loaded; the page loads it first, so this reads it from the cache.
+ */
 export function useCourseScorecardViewModel(
   userId: string,
-  course: CourseDto,
+  courseId: string,
   repository: CoursesRepository = coursesRepository,
-): CourseScorecardViewModel {
+): CourseScorecardViewModel | null {
   // Undefined until the golfer picks: the scorecard then follows the longest tee.
   const [picked, setPicked] = useState<string | null | undefined>(undefined);
-  const { data: analytics = EMPTY_COURSE_ANALYTICS } = useCourseAnalytics(userId, course.id ?? undefined, repository);
+  const { data: course } = useCourse(courseId, repository);
+  const { data: analytics = EMPTY_COURSE_ANALYTICS } = useCourseAnalytics(userId, courseId, repository);
+  if (!course) return null;
 
   const tee = selectedTee(course, picked);
   const averages = personalAverages(analytics);

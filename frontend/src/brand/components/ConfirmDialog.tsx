@@ -49,7 +49,7 @@ function ConfirmDialog({
           <AlertDialogPrimitive.Popup
             data-slot="confirm-dialog"
             className={cn(
-              "flex w-full flex-col gap-1.5 rounded-t-sheet bg-card px-5 py-6 text-card-foreground outline-none transition-[opacity,translate,scale] duration-200 ease-out data-ending-style:translate-y-full data-ending-style:opacity-0 data-starting-style:translate-y-full data-starting-style:opacity-0",
+              "flex w-full flex-col gap-1.5 rounded-t-sheet bg-card px-5 py-6 text-card-foreground outline-none transition duration-200 ease-out data-ending-style:translate-y-full data-ending-style:opacity-0 data-starting-style:translate-y-full data-starting-style:opacity-0",
               "@md:m-auto @md:max-w-sm @md:gap-2 @md:rounded-2xl @md:p-6 @md:shadow-lg @md:data-ending-style:translate-y-0 @md:data-ending-style:scale-95 @md:data-starting-style:translate-y-0 @md:data-starting-style:scale-95",
               className,
             )}

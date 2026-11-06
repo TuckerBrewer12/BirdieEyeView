@@ -77,7 +77,7 @@ class GolfCourseAPIService:
                 data = resp.json()
                 items = self._extract_items(data)
                 return self._normalize_items(items, limit=limit)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise RuntimeError(f"GolfCourseAPI search failed: {exc}") from exc
 
     def _normalize_search_query(self, query: str) -> str:

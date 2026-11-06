@@ -57,7 +57,7 @@ function SheetPortal({ contained = false, children }: { contained?: boolean; chi
       <SheetPrimitive.Backdrop
         data-slot="sheet-overlay"
         className={cn(
-          "inset-0 z-50 bg-foreground/40 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0",
+          "inset-0 z-50 bg-foreground/recessed transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0",
           position,
         )}
       />
@@ -140,7 +140,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sheet-footer"
       className={cn(
-        "mt-auto flex flex-col gap-2 border-t border-border bg-muted/50 p-4",
+        "mt-auto flex flex-col gap-2 border-t border-border bg-muted/half p-4",
         className,
       )}
       {...props}
@@ -203,7 +203,7 @@ function SheetOption({
       aria-pressed={selected}
       data-slot="sheet-option"
       className={cn(
-        "flex h-13 w-full items-center rounded-card px-2 text-left text-base text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 aria-pressed:font-semibold",
+        "flex h-13 w-full items-center rounded-card px-2 text-left text-base text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/half aria-pressed:font-semibold",
         className,
       )}
       {...props}

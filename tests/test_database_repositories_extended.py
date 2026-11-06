@@ -244,7 +244,7 @@ async def test_course_repository_queries_and_mutations(mock_pool):
 async def test_round_repository_helpers_updates_and_scans(mock_pool):
     pool, conn = mock_pool
     round_repository = RoundRepositoryDB(pool, AsyncMock())
-    round_id, user_id, course_id, tee_id = map(str, (uuid4(), uuid4(), uuid4(), uuid4()))
+    round_id, user_id = str(uuid4()), str(uuid4())
 
     assert await round_repository.get_round_owner_id("invalid") is None
     round_owner_id = uuid4()
@@ -291,3 +291,20 @@ async def test_round_repository_helpers_updates_and_scans(mock_pool):
     assert await round_repository.save_scan(image_path="card.png", llm_model="model", llm_raw_json={"ok": True}) == str(scan_id)
     conn.fetch.return_value = [{"id": scan_id}]
     assert await round_repository.get_scans_for_round(round_id) == [{"id": scan_id}]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("scored", "on_card", "complete"),
+    [(9, 9, True), (8, 9, False), (18, 18, True), (17, 18, False)],
+)
+async def test_editing_scores_marks_a_nine_or_eighteen_complete(mock_pool, scored, on_card, complete):
+    pool, conn = mock_pool
+    round_repository = RoundRepositoryDB(pool, AsyncMock())
+    round_repository.get_round = AsyncMock(return_value="updated")
+    conn.fetchrow.return_value = {"course_id": None}
+    conn.fetch.return_value = [{"strokes": 4 if n < scored else None} for n in range(on_card)]
+
+    assert await round_repository.update_hole_scores(str(uuid4()), [HoleScore(hole_number=1, strokes=4)]) == "updated"
+    *_, holes_played, is_complete = conn.execute.await_args.args
+    assert (holes_played, is_complete) == (scored, complete)

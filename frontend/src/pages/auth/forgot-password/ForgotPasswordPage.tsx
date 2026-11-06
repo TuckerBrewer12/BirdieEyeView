@@ -1,5 +1,5 @@
 import { AuthCard, Button, Field, FieldLabel, Input } from "@/brand";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/auth";
 import { AuthLink } from "../components/AuthLink";
 import { AuthNotice } from "../components/AuthNotice";
 import { useForgotPasswordViewModel } from "./useForgotPasswordViewModel";
