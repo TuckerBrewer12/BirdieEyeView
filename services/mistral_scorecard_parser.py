@@ -9,6 +9,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 from pydantic import Field
 
 from models.base import BaseGolfModel
+from models.hole import HOLES_PER_NINE, HOLES_PER_ROUND
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +128,7 @@ def parse_mistral_scorecard_rows(
 
     split_maps = _find_split_col_maps(raw_lines)
     if split_maps is not None:
-        (front_lines, front_map, front_hdr_idx), (back_lines, back_map, back_hdr_idx) = split_maps
+        (front_lines, front_map, front_hdr_idx), (back_lines, back_map, _back_hdr_idx) = split_maps
 
         # Use require_name_match when a player name is given so we don't accidentally
         # pick up a different player's row as the anchor (e.g. G's row for player T).
@@ -205,7 +206,7 @@ def parse_mistral_scorecard_rows(
     parsed.score_to_par_hint = row_hints["score_to_par"]
     parsed.course_name = _extract_course_name(lines)
     parsed.hole_numbers = _extract_hole_numbers(lines)
-    if len(parsed.hole_numbers) < 9:
+    if len(parsed.hole_numbers) < HOLES_PER_NINE:
         parsed.warnings.append("Could not confidently detect hole header row")
     par_vals = _extract_par_row(lines)
     if par_vals:
@@ -341,8 +342,8 @@ def _extract_row_at(lines: List[str], line_idx: int, *, max_abs: int) -> List[in
         if 0 <= i < len(lines):
             nums = _line_ints(lines[i], max_abs=max_abs)
             normalized = _normalize_hole_values(nums)
-            if len(normalized) >= 9:
-                return normalized[:18]
+            if len(normalized) >= HOLES_PER_NINE:
+                return normalized[:HOLES_PER_ROUND]
     return []
 
 
@@ -353,8 +354,8 @@ def _extract_to_par_at(lines: List[str], line_idx: int) -> List[int]:
         if 0 <= i < len(lines):
             vals = _line_to_par_values(lines[i])
             normalized = _normalize_hole_values(vals)
-            if len(normalized) >= 9:
-                return normalized[:18]
+            if len(normalized) >= HOLES_PER_NINE:
+                return normalized[:HOLES_PER_ROUND]
     return []
 
 
@@ -538,7 +539,7 @@ def _find_unlabeled_section_col_map(
         if i <= start_after_idx:
             continue
         cells = _split_pipe_row(line)
-        if len(cells) < 9:
+        if len(cells) < HOLES_PER_NINE:
             continue
         # col0 must be a number, not a text label
         try:
@@ -547,11 +548,11 @@ def _find_unlabeled_section_col_map(
             continue
         # First 9 cells must all be valid par values (3-6)
         try:
-            par_vals = [int(cells[j].strip()) for j in range(9)]
+            par_vals = [int(cells[j].strip()) for j in range(HOLES_PER_NINE)]
         except (ValueError, IndexError):
             continue
         if all(3 <= v <= 6 for v in par_vals) and 25 <= sum(par_vals) <= 45:
-            col_map = {start_hole + j: j for j in range(9)}
+            col_map = {start_hole + j: j for j in range(HOLES_PER_NINE)}
             return col_map, i
     return None
 
@@ -649,9 +650,9 @@ def _extract_values_by_col_map(
 
 def _col_map_to_18_list(d: Dict[int, Optional[int]]) -> List[Optional[int]]:
     """Convert hole-number-keyed dict to an 18-item positional list."""
-    out: List[Optional[int]] = [None] * 18
+    out: List[Optional[int]] = [None] * HOLES_PER_ROUND
     for hole_num, val in d.items():
-        if 1 <= hole_num <= 18:
+        if 1 <= hole_num <= HOLES_PER_ROUND:
             out[hole_num - 1] = val
     return out
 
@@ -1042,7 +1043,7 @@ def _apply_field_suppression(parsed: ParsedScorecardRows, row_hints: dict) -> No
 
 def _extract_course_name(lines: List[str]) -> Optional[str]:
     for line in lines[:12]:
-        # Example: "FALLS Hole Location Hole Assignment ..."
+        # The course name leads its line, as FALLS does in "FALLS Hole Location Hole Assignment ...".
         first = line.split(" ", 1)[0].strip(":")
         if _COURSE_RE.match(first) and first.lower() not in {"hole", "out", "in", "tot"}:
             return first.title()
@@ -1087,8 +1088,8 @@ def _extract_par_row(lines: List[str]) -> List[int]:
         normalized = _normalize_hole_values(nums)
         # Hole pars should be mostly 3/4/5.
         hole_like = [n for n in normalized if 3 <= n <= 6]
-        if len(hole_like) >= 9:
-            return normalized[:18]
+        if len(hole_like) >= HOLES_PER_NINE:
+            return normalized[:HOLES_PER_ROUND]
     return []
 
 
@@ -1112,7 +1113,7 @@ def _extract_tee_rows(lines: List[str]) -> List[Tuple[str, List[int]]]:
         label = parts[0]
         nums = _line_ints(line)
         nums = _normalize_hole_values(nums)
-        if len(nums) < 9:
+        if len(nums) < HOLES_PER_NINE:
             continue
         # All values must be positive; at least half must be yardage-range (≥100).
         if any(n <= 0 for n in nums):
@@ -1147,8 +1148,8 @@ def _extract_score_row(
                     continue
                 nums = _line_ints(lines[j], max_abs=15)
                 normalized = _normalize_hole_values(nums)
-                if len(normalized) >= 9:
-                    return j, normalized[:18]
+                if len(normalized) >= HOLES_PER_NINE:
+                    return j, normalized[:HOLES_PER_ROUND]
         if require_name_match:
             return None, []
 
@@ -1163,8 +1164,8 @@ def _extract_score_row(
             continue
         nums = _line_ints(line, max_abs=15)
         normalized = _normalize_hole_values(nums)
-        if len(normalized) >= 9:
-            return i, normalized[:18]
+        if len(normalized) >= HOLES_PER_NINE:
+            return i, normalized[:HOLES_PER_ROUND]
     return None, []
 
 
@@ -1172,8 +1173,8 @@ def _extract_next_small_int_row(lines: List[str], start_idx: int, *, max_abs: in
     for i in range(max(0, start_idx), min(len(lines), start_idx + 6)):
         nums = _line_ints(lines[i], max_abs=max_abs)
         normalized = _normalize_hole_values(nums)
-        if len(normalized) >= 9:
-            return normalized[:18]
+        if len(normalized) >= HOLES_PER_NINE:
+            return normalized[:HOLES_PER_ROUND]
     return []
 
 
@@ -1181,8 +1182,8 @@ def _extract_next_to_par_row(lines: List[str], start_idx: int) -> List[int]:
     for i in range(max(0, start_idx), min(len(lines), start_idx + 6)):
         vals = _line_to_par_values(lines[i])
         normalized = _normalize_hole_values(vals)
-        if len(normalized) >= 9:
-            return normalized[:18]
+        if len(normalized) >= HOLES_PER_NINE:
+            return normalized[:HOLES_PER_ROUND]
     return []
 
 
@@ -1195,26 +1196,26 @@ def _extract_next_gir_like_row(lines: List[str], start_idx: int) -> List[Optiona
             normalized = normalized.replace(k, v)
         # Keep only explicit 0/1 tokens.
         tokens = re.findall(r"(?<!\d)[01](?!\d)", normalized)
-        if len(tokens) >= 9:
-            return [t == "1" for t in tokens[:18]]
+        if len(tokens) >= HOLES_PER_NINE:
+            return [t == "1" for t in tokens[:HOLES_PER_ROUND]]
     return []
 
 
 def _coerce_18_ints(values: List[int], *, max_abs: Optional[int] = None) -> List[Optional[int]]:
     out: List[Optional[int]] = []
-    for n in values[:18]:
+    for n in values[:HOLES_PER_ROUND]:
         if max_abs is not None and abs(n) > max_abs:
             out.append(None)
         else:
             out.append(n)
-    while len(out) < 18:
+    while len(out) < HOLES_PER_ROUND:
         out.append(None)
     return out
 
 
 def _coerce_18_bools(values: List[Optional[bool]]) -> List[Optional[bool]]:
-    out = list(values[:18])
-    while len(out) < 18:
+    out = list(values[:HOLES_PER_ROUND])
+    while len(out) < HOLES_PER_ROUND:
         out.append(None)
     return out
 
@@ -1251,7 +1252,7 @@ def _normalize_hole_values(values: List[int]) -> List[int]:
     Common table layout in OCR:
     [h1..h9, OUT, h10..h18, IN, TOT]
     """
-    if len(values) <= 18:
+    if len(values) <= HOLES_PER_ROUND:
         return values
 
     def looks_like_front_subtotal(subtotal: int, front_nine: List[int]) -> bool:
@@ -1264,25 +1265,20 @@ def _normalize_hole_values(values: List[int]) -> List[int]:
         return abs(subtotal) >= max_hole + 3
 
     if len(values) >= 20:
-        candidate = values[:9] + values[10:19]
-        if len(candidate) == 18:
-            return candidate
-        return values[:18]
+        return values[:9] + values[10:19]
 
     if len(values) == 19:
         if looks_like_front_subtotal(values[9], values[:9]):
-            candidate = values[:9] + values[10:19]
-            if len(candidate) == 18:
-                return candidate
+            return values[:9] + values[10:19]
         # Likely [h1..h18, TOT] (or similar trailing aggregate) — keep first 18 holes.
-        return values[:18]
+        return values[:HOLES_PER_ROUND]
 
-    return values[:18]
+    return values[:HOLES_PER_ROUND]
 
 
 def _looks_like_to_par_row(values: List[Optional[int]]) -> bool:
     nums = [v for v in values if v is not None]
-    if len(nums) < 9:
+    if len(nums) < HOLES_PER_NINE:
         return False
     in_range = [v for v in nums if -4 <= v <= 4]
     if len(in_range) < int(0.9 * len(nums)):
@@ -1293,6 +1289,6 @@ def _looks_like_to_par_row(values: List[Optional[int]]) -> bool:
 
 def _looks_like_shots_row(values: List[Optional[int]]) -> bool:
     nums = [v for v in values if v is not None]
-    if len(nums) < 9:
+    if len(nums) < HOLES_PER_NINE:
         return False
     return all(1 <= v <= 6 for v in nums) and (sum(nums) / len(nums) <= 3.5)

@@ -28,6 +28,7 @@ export function LinkCoursePanel({ userId, roundId, title, onClose, onLinked }: L
         onQueryChange={viewModel.setQuery}
         onSelectCourse={viewModel.selectCourse}
         onClose={onClose}
+        focusOnOpen
       />
     </div>
   );

@@ -35,7 +35,7 @@ export function FriendCodeSection({ friendCode }: FriendCodeSectionProps) {
             value={friendCode ?? "Unavailable"}
             className="font-mono"
           />
-          <Button variant="outline" onClick={copyCode} disabled={!friendCode}>
+          <Button variant="outline" onClick={() => void copyCode()} disabled={!friendCode}>
             {copy === "copied" ? <Check data-icon="inline-start" /> : <Copy data-icon="inline-start" />}
             {copy === "copied" ? "Copied" : "Copy"}
           </Button>

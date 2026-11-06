@@ -17,7 +17,7 @@ test("verifying from the emailed link elsewhere sends the waiting screen home", 
 }) => {
   await verifyPending.open("sam@example.com");
   verifyPending.verifyElsewhere();
-  await verifyPending.isSentHome();
+  await verifyPending.isAtHome();
 });
 
 test("a refused resend says why", async ({ verifyPending }) => {
