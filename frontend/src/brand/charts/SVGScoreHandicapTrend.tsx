@@ -118,7 +118,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
       >
         <defs>
           <linearGradient id={hiGrad} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="10%" stopColor={HANDICAP_COLOR} stopOpacity={0.1} />
+            <stop offset="10%" stopColor={HANDICAP_COLOR} stopOpacity={tokens.opacity.tint} />
             <stop offset="100%" stopColor={HANDICAP_COLOR} stopOpacity={0} />
           </linearGradient>
         </defs>
@@ -161,7 +161,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                 width={barW}
                 height={baseline - top}
                 fill={differentialFill(d.differentialStatus)}
-                fillOpacity={0.6}
+                fillOpacity={tokens.opacity.strong}
                 rx={tokens.radius.tick}
               />
             );
@@ -201,7 +201,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             y2={baseline}
             stroke={tokens.color.chart.muted}
             strokeWidth={tokens.lineWidth.border}
-            strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
+            strokeDasharray={tokens.chart.guideDash}
           />
         )}
 
@@ -245,7 +245,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
           <motion.div
             key={`${series}-${active}`}
             className={cn(
-              "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/95 px-3 py-2.5 text-body-sm shadow-card",
+              "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
               // Past two thirds of the way across, the card opens to the left of the point.
               x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
             )}

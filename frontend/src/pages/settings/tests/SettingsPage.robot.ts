@@ -94,7 +94,14 @@ export class SettingsRobot {
     });
     await this.page.goto("/settings");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
+    await this.seesLoadError();
+    return this;
+  }
+
+  /** Settings failed to load: an error with a way to try again, in place of the form. */
+  async seesLoadError(): Promise<this> {
     await expect(this.page.getByRole("alert")).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Try again" })).toBeVisible();
     return this;
   }
 

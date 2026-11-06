@@ -10,7 +10,11 @@ function renderTheme() {
   return renderHook(() => useTheme(), { wrapper });
 }
 
-const isDark = () => document.documentElement.classList.contains("dark");
+/** Every token flips on `dark`, so the class on <html> is the theme the page is drawn in. */
+function expectTheme(theme: "light" | "dark") {
+  if (theme === "dark") expect(document.documentElement).toHaveClass("dark");
+  else expect(document.documentElement).not.toHaveClass("dark");
+}
 
 describe("ThemeProvider", () => {
   let device: FakeColorScheme;
@@ -31,11 +35,11 @@ describe("ThemeProvider", () => {
     const { result } = renderTheme();
     expect(result.current.preference).toBe("system");
     expect(result.current.resolved).toBe("dark");
-    expect(isDark()).toBe(true);
+    expectTheme("dark");
 
     act(() => device.setDark(false));
     expect(result.current.resolved).toBe("light");
-    expect(isDark()).toBe(false);
+    expectTheme("light");
   });
 
   it("saves an explicit choice and stops following the device", () => {
@@ -45,10 +49,10 @@ describe("ThemeProvider", () => {
     act(() => result.current.toggle());
     expect(result.current.preference).toBe("dark");
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
-    expect(isDark()).toBe(true);
+    expectTheme("dark");
 
     act(() => device.setDark(false));
-    expect(isDark()).toBe(true);
+    expectTheme("dark");
   });
 
   it("keeps a choice saved under the old signed-in or signed-out keys", () => {

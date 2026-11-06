@@ -43,7 +43,7 @@ export function FriendCodeSection({ friendCode }: FriendCodeSectionProps) {
           value={friendCode ?? "Unavailable"}
           copied={copy === "copied"}
           disabled={!friendCode}
-          onCopy={copyCode}
+          onCopy={() => void copyCode()}
         />
       </SettingsGroup>
       {copy === "failed" && (

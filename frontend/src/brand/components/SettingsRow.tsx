@@ -86,9 +86,7 @@ function SettingsRow<V extends string = string>(props: SettingsRowProps<V>) {
           {text}
           <ToggleGroup
             aria-labelledby={labelId}
-            variant="outline"
             size="sm"
-            spacing={0}
             value={[props.value]}
             // Pressing the chosen option again would clear it; one is always chosen.
             onValueChange={(values) => values[0] && props.onValueChange(values[0] as V)}
