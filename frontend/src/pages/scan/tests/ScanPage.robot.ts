@@ -396,6 +396,32 @@ export class ScanRobot {
     return this;
   }
 
+  /** Leaves for the Courses page, opens `name` and taps its "Scan a round". */
+  async scanFromCourse(name: string): Promise<this> {
+    await this.leaveTo("Courses");
+    await this.page.getByRole("button", { name: `View ${name} details` }).click();
+    await this.page.getByRole("button", { name: "Scan a round" }).click();
+    await expect(this.title()).toBeVisible();
+    return this;
+  }
+
+  /** No course picked ahead of the scan: the search for one is showing. */
+  async seesNoPresetCourse(): Promise<this> {
+    await expect(this.page.getByPlaceholder("Search courses…")).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Clear course" })).toHaveCount(0);
+    return this;
+  }
+
+  /** Taps Extract and checks the scan went out to be read against this saved course. */
+  async tapExtractAgainst(courseId: string): Promise<this> {
+    const sent = this.page.waitForRequest((request) => request.url().includes("/api/scan/extract"));
+    await this.tapExtract();
+    // The scan is a multipart form; latin1 keeps the photo's bytes from breaking the text.
+    const form = ((await sent).postDataBuffer() ?? Buffer.alloc(0)).toString("latin1");
+    expect(form).toMatch(new RegExp(`name="course_id"\\r\\n\\r\\n${courseId}\\r\\n`));
+    return this;
+  }
+
   async returnToScan(): Promise<this> {
     await this.page.getByRole("link", { name: "Scan Scorecard", exact: true }).click();
     return this;

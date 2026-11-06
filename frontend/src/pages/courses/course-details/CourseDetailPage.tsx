@@ -1,9 +1,11 @@
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin, ScanLine } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
   AlertDescription,
   Button,
+  Card,
+  CardContent,
   LoadingState,
   PageTitle,
   ToggleGroup,
@@ -56,7 +58,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
           {course.location}
         </div>
       )}
-      <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
+      <div className="mt-2 mb-6 flex gap-4 text-sm text-muted-foreground">
         {headerStats.map((stat) => (
           <span key={stat.label}>
             <span>{stat.label}</span>{" "}
@@ -65,21 +67,35 @@ export function CourseDetailPage({ userId }: { userId: string }) {
         ))}
       </div>
 
-      <ToggleGroup
-        variant="outline"
-        spacing={2}
-        value={[viewModel.activeTab]}
-        onValueChange={(values) => viewModel.selectPageTab(values[0] ?? "")}
-        className="my-6"
-      >
-        {viewModel.pageTabs.map((tab) => (
-          <ToggleGroupItem key={tab.key} value={tab.key}>
-            {tab.label}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
+      {/* One tab alone is no choice: until the golfer has played here, the course is all there is. */}
+      {viewModel.pageTabs.length > 1 && (
+        <ToggleGroup
+          variant="outline"
+          spacing={2}
+          value={[viewModel.activeTab]}
+          onValueChange={(values) => viewModel.selectPageTab(values[0] ?? "")}
+          className="mb-6"
+        >
+          {viewModel.pageTabs.map((tab) => (
+            <ToggleGroupItem key={tab.key} value={tab.key}>
+              {tab.label}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      )}
 
       {viewModel.activeTab === "course" && <CourseScorecardSection userId={userId} course={course} />}
+      {viewModel.scanHere && (
+        <Card size="sm" className="mt-4">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">You haven't played here yet.</p>
+            <Button onClick={() => navigate("/scan", { state: viewModel.scanHere })}>
+              <ScanLine data-icon="inline-start" />
+              Scan a round
+            </Button>
+          </CardContent>
+        </Card>
+      )}
       {viewModel.activeTab === "performance" && <CoursePerformanceSection userId={userId} courseId={courseId} />}
     </div>
   );

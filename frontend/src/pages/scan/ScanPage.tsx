@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { PenLine, ScanLine } from "lucide-react";
 import {
   Alert,
@@ -18,13 +19,25 @@ import { ScanSetupStep } from "./components/ScanSetupStep";
 import { ScanSuccessStep } from "./components/ScanSuccessStep";
 import { ScanUploadStep } from "./components/ScanUploadStep";
 import { useScanPageViewModel } from "./useScanPageViewModel";
+import { presetCourseFrom } from "./scanModel";
 
 const TITLE = "Scan Scorecard";
 
 export function ScanPage({ userId }: { userId: string }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const viewModel = useScanPageViewModel(userId);
   const previewUrl = useFilePreview(viewModel.photo);
+  const { arriveWithCourse } = viewModel;
+
+  // A page that sent a course along (a course's "Scan a round") picks it ahead. The state is
+  // then dropped, so reloading or coming back later doesn't pick it again.
+  useEffect(() => {
+    const course = presetCourseFrom(location.state);
+    if (!course) return;
+    arriveWithCourse(course);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.state, location.pathname, arriveWithCourse, navigate]);
 
   switch (viewModel.step) {
     case "success":

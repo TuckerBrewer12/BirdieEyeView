@@ -58,6 +58,29 @@ export function todayIso(now: Date = new Date()): string {
   return isoDay(now);
 }
 
+/**
+ * What another page hands `/scan` in router state to start a card at a course it shows:
+ * `navigate("/scan", { state: scanAtCourse(course) })`. The course is picked ahead, so the
+ * scan reads the card against it.
+ */
+export interface ScanArrival {
+  presetCourse: PickedCourse;
+}
+
+export function scanAtCourse(course: { id: string; name?: string | null }): ScanArrival {
+  return { presetCourse: { id: course.id, name: course.name ?? course.id } };
+}
+
+/** The saved course a page sent along to `/scan`, read from router state, or null. */
+export function presetCourseFrom(state: unknown): PickedCourse | null {
+  if (typeof state !== "object" || state === null || !("presetCourse" in state)) return null;
+  const course: unknown = (state as { presetCourse: unknown }).presetCourse;
+  if (typeof course !== "object" || course === null) return null;
+  const { id, name } = course as { id?: unknown; name?: unknown };
+  if (typeof id !== "string" || id === "" || typeof name !== "string") return null;
+  return { id, name };
+}
+
 /** A course name as a search query: trimmed, single-spaced. */
 export function courseQueryFrom(name: string | null | undefined): string {
   return (name ?? "").trim().replace(/\s+/g, " ");

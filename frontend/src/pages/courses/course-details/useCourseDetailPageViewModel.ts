@@ -2,6 +2,7 @@ import { useState } from "react";
 import { formatCourseName } from "@/domain/course";
 import { messageFrom } from "@/lib/userFacingErrors";
 import type { CourseDto } from "@/types/api";
+import { scanAtCourse, type ScanArrival } from "../../scan/scanModel";
 import { coursesRepository, type CoursesRepository } from "../coursesRepository";
 import { useCourse } from "../useCourse";
 import { useCourseAnalytics } from "../useCourseAnalytics";
@@ -16,6 +17,11 @@ export interface CourseDetailPageViewModel {
   pageTabs: TabItem<PageTabKey>[];
   activeTab: PageTabKey;
   selectPageTab: (key: string) => void;
+  /**
+   * Until the golfer has played here: what to hand `/scan` so "Scan a round" opens with this
+   * course picked ahead. Null once they have a round here.
+   */
+  scanHere: ScanArrival | null;
 }
 
 /** The course page: which tab is showing. The scorecard and performance sections own the rest. */
@@ -39,5 +45,6 @@ export function useCourseDetailPageViewModel(
     selectPageTab: (key) => {
       if (key === "course" || key === "performance") setActiveTab(key);
     },
+    scanHere: course && courseId && !hasPlayed ? scanAtCourse({ id: course.id ?? courseId, name: course.name }) : null,
   };
 }

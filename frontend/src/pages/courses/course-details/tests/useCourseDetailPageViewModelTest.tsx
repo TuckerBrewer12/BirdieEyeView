@@ -2,6 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
+import { halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
 import { halfMoonBayCourse } from "@/testing/fixtures/roundDetails";
 import { FakeCoursesRepository } from "@/testing/fakes/FakeCoursesRepository";
 import { useCourseDetailPageViewModel } from "../useCourseDetailPageViewModel";
@@ -27,9 +28,30 @@ describe("useCourseDetailPageViewModel", () => {
     expect(result.current.activeTab).toBe("course");
   });
 
+  it("offers to scan a round here, with this course picked ahead, until the golfer has played here", async () => {
+    const repository = new FakeCoursesRepository();
+    repository.fullCourses = [halfMoonBayCourse];
+    const { result } = renderVm(repository);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.scanHere).toEqual({
+      presetCourse: { id: "course-hmb", name: halfMoonBayCourse.name },
+    });
+  });
+
+  it("offers both tabs and no scan prompt once the golfer has played here", async () => {
+    const repository = new FakeCoursesRepository();
+    repository.fullCourses = [halfMoonBayCourse];
+    repository.analytics = halfMoonBayAnalytics;
+    const { result } = renderVm(repository);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.pageTabs.map((tab) => tab.key)).toEqual(["course", "performance"]);
+    expect(result.current.scanHere).toBeNull();
+  });
+
   it("surfaces a load error when the course is missing", async () => {
     const { result } = renderVm(new FakeCoursesRepository(), "missing");
     await waitFor(() => expect(result.current.loadError).toBe("Course not found."));
     expect(result.current.course).toBeNull();
+    expect(result.current.scanHere).toBeNull();
   });
 });

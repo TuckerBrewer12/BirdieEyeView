@@ -35,6 +35,22 @@ export function newScanSession(today: string = todayIso()): ScanSession {
   };
 }
 
+/**
+ * The session after arriving from another page with a course to scan at (a course's "Scan a
+ * round"). A card already under way wins: a photo picked, a card being checked or a round
+ * just saved, or a course chosen for typing scores in. Otherwise the golfer lands on the
+ * upload step with that course picked ahead.
+ */
+export function withArrivingCourse(session: ScanSession, course: PickedCourse): ScanSession {
+  const underWay =
+    session.photo !== null ||
+    session.review !== null ||
+    session.savedRoundId !== null ||
+    (session.mode === "manual" && session.setup.course !== null);
+  if (underWay) return session;
+  return { ...session, mode: "scan", presetCourse: course, error: null };
+}
+
 export interface ScanSessionStore {
   session: ScanSession;
   setSession: Dispatch<SetStateAction<ScanSession>>;

@@ -19,7 +19,7 @@ import {
   type ScanMode,
   type ScanStep,
 } from "./scanModel";
-import { newScanSession, useScanSession } from "./scanSession";
+import { newScanSession, useScanSession, withArrivingCourse } from "./scanSession";
 import { useSavedRound } from "./useSavedRound";
 import { useScanReviewViewModel, type ScanReviewViewModel } from "./useScanReviewViewModel";
 import { useScanSetupViewModel, type ScanSetupViewModel } from "./useScanSetupViewModel";
@@ -58,6 +58,11 @@ export interface ScanPageViewModel {
   courseSearch: CourseSearch;
   pickPresetCourse: (course: CourseSummary) => void;
   clearPresetCourse: () => void;
+  /**
+   * Arriving from a page that sent a course along (a course's "Scan a round"): picks it ahead
+   * unless a card is already under way, which the golfer comes back to as it was.
+   */
+  arriveWithCourse: (course: PickedCourse) => void;
 
   // Processing
   /** Which phase of reading the card is showing, from 0 to `SCAN_PHASE_COUNT - 1`. */
@@ -183,6 +188,11 @@ export function useScanPageViewModel(
     [setSession],
   );
 
+  const arriveWithCourse = useCallback(
+    (course: PickedCourse) => setSession((current) => withArrivingCourse(current, course)),
+    [setSession],
+  );
+
   const extract = useCallback(() => {
     const { photo, userContext, presetCourse } = session;
     if (!photo) return;
@@ -232,6 +242,7 @@ export function useScanPageViewModel(
     courseSearch,
     pickPresetCourse,
     clearPresetCourse,
+    arriveWithCourse,
 
     phase,
 

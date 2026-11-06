@@ -1,5 +1,6 @@
 import { test } from "./ScanPage.robot";
 import { strokesToPar, toParLabel } from "../../../domain/score";
+import { pebbleBeach } from "../../../testing/fixtures/courses";
 import { pebbleBeachCourse } from "../../../testing/fixtures/roundDetails";
 import { SCANNED_COURSE_NAME, scannedCard, UNSURE_HOLES, unsureCard } from "../../../testing/fixtures/scan";
 
@@ -258,4 +259,25 @@ test("a saved round shows its score against par, and shares as an image", async 
   await scan.seesSavedScore(CARD_SCORE, toParLabel(strokesToPar(CARD_SCORE, CARD_PAR))!);
   await scan.tapShare();
   await scan.seesSharedImage("scorecard-half-moon-bay-golf-links.png");
+});
+
+test("a course's Scan a round opens the upload with that course picked, and the scan reads against it", async ({
+  scan,
+}) => {
+  await scan.open({ courses: [pebbleBeach], fullCourses: [pebbleBeachCourse] });
+  await scan.seesNoPresetCourse();
+  await scan.scanFromCourse("Pebble Beach");
+  await scan.seesUpload();
+  await scan.seesPresetCourse("Pebble Beach");
+  await scan.chooseScorecard();
+  await scan.tapExtractAgainst(pebbleBeachCourse.id!);
+  await scan.seesReview(SCANNED_COURSE_NAME);
+});
+
+test("a course's Scan a round leaves a card already under way as it was", async ({ scan }) => {
+  await scan.open({ courses: [pebbleBeach], fullCourses: [pebbleBeachCourse] });
+  await scan.chooseScorecard();
+  await scan.scanFromCourse("Pebble Beach");
+  await scan.seesChosenCard();
+  await scan.seesNoPresetCourse();
 });

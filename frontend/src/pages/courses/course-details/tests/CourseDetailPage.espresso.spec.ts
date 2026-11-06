@@ -33,3 +33,21 @@ test("tapping a history round opens its detail", async ({ courseDetail }) => {
   await courseDetail.tapHistoryRound("Jun 15, 2026");
   await courseDetail.isAtRound("round-1");
 });
+
+test("a course not played yet offers to scan a round there, with the course picked ahead", async ({
+  courseDetail,
+  page,
+}) => {
+  await courseDetail.open(halfMoonBayCourse);
+  await courseDetail.seesNotPlayedYet();
+  await courseDetail.tapScanRound();
+  await courseDetail.isScanningAt("Half Moon Bay");
+  // Back returns to the course; the scan page dropped the hand-over, so it isn't replayed.
+  await page.goBack();
+  await courseDetail.isAtCourse("course-hmb");
+});
+
+test("a course played already shows its tabs and no scan prompt", async ({ courseDetail }) => {
+  await courseDetail.open(halfMoonBayCourse, { courseAnalytics: halfMoonBayAnalytics });
+  await courseDetail.seesPlayedHere();
+});

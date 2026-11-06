@@ -211,6 +211,7 @@ Key files:
 - `src/types/` holds only `api.gen.ts` and `api.ts`: every response the frontend reads is typed by a backend `response_model` and used by its `*Dto` name. Request shapes the frontend builds live in `domain/` (`AnalyticsFilters` in `domain/analyticsFilters.ts`).
 - `src/domain/course.ts` / `src/domain/courseAnalytics.ts` — `CourseSummary` (list and search results) and `CourseAnalytics` (a golfer's figures at one course, with the per-hole rows the kit's hole charts take), mapped from the DTOs in the repositories. Kit components take these domain types, never DTOs.
 - `src/pages/scan/` — upload → processing → setup → review → success; passes the course's holes as `course_holes` on save
+  - Another page starts a card at a course with `navigate("/scan", { state: scanAtCourse(course) })` (`scanModel.ts`; the course page's "Scan a round" does): the course is picked ahead unless a card is already under way (`withArrivingCourse` in `scanSession.ts`), and the state is dropped once read.
 - `src/pages/the-lab/` — goal picker (7 thresholds: 100/95/90/85/80/75/72), goal savers (`components/SaverCard.tsx`) and peer comparison
 - `src/brand/components/RoundScorecard.tsx` — the scorecard (read-only and editable) with the To Par row
 

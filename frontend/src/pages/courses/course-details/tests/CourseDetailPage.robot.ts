@@ -50,6 +50,36 @@ export class CourseDetailRobot {
     return this;
   }
 
+  /** Not played here yet: no tabs, just the course and a way to log a round at it. */
+  async seesNotPlayedYet(): Promise<this> {
+    await expect(this.page.getByText("You haven't played here yet.")).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Scan a round" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "My Performance" })).toHaveCount(0);
+    await expect(this.page.getByRole("button", { name: "Course", exact: true })).toHaveCount(0);
+    return this;
+  }
+
+  /** Played here: both tabs, and no prompt to scan a first round. */
+  async seesPlayedHere(): Promise<this> {
+    await expect(this.page.getByRole("button", { name: "My Performance" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Scan a round" })).toHaveCount(0);
+    return this;
+  }
+
+  async tapScanRound(): Promise<this> {
+    await this.page.getByRole("button", { name: "Scan a round" }).click();
+    return this;
+  }
+
+  /** On the scan page's upload step, with `courseName` picked ahead of the scan. */
+  async isScanningAt(courseName: string): Promise<this> {
+    await expect(this.page).toHaveURL(/\/scan$/);
+    await expect(this.page.getByText("Drop your scorecard here")).toBeVisible();
+    await expect(this.page.getByText(courseName, { exact: true })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Clear course" })).toBeVisible();
+    return this;
+  }
+
   async tapHistoryRound(dateLabel: string): Promise<this> {
     await this.page.getByText(dateLabel, { exact: true }).click();
     return this;
