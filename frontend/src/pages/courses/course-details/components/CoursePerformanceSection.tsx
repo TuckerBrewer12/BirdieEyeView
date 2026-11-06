@@ -88,7 +88,7 @@ export function CoursePerformanceSection({ userId, courseId }: CoursePerformance
               <RoundPreview
                 variant="history"
                 round={round}
-                onClick={() => navigate(`/rounds/${round.id}`)}
+                onClick={() => void navigate(`/rounds/${round.id}`)}
               />
             )}
           />

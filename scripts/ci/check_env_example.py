@@ -58,7 +58,7 @@ def env_keys_in_code() -> dict[str, str]:
 
 def _env_key_from_node(node: ast.AST) -> str | None:
     """Extract the key from os.getenv("X") / os.environ.get("X") / os.environ["X"]."""
-    # os.environ["X"]
+    # os.environ["X"] lookups
     if isinstance(node, ast.Subscript):
         target = node.value
         if (

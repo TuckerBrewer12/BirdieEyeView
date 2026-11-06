@@ -1,6 +1,6 @@
 """A player's analytics at one course come back typed, with the hero figures worked out."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from api.course_analytics_responses import course_analytics
 from models import Course, Hole, HoleScore, Round
@@ -14,7 +14,7 @@ def _round(round_id, day, over):
     return Round(
         id=round_id,
         course=COURSE,
-        date=datetime(2026, 5, day),
+        date=datetime(2026, 5, day, tzinfo=timezone.utc),
         hole_scores=[
             HoleScore(hole_number=i + 1, strokes=p + (1 if i < over else 0), putts=2, green_in_regulation=i % 2 == 0)
             for i, p in enumerate(PARS)
@@ -80,7 +80,7 @@ def test_scorecard_nines_sum_the_per_hole_averages():
 
 def test_scorecard_nines_are_null_for_a_nine_not_played():
     front_only = Round(
-        id="r1", course=COURSE, date=datetime(2026, 5, 1),
+        id="r1", course=COURSE, date=datetime(2026, 5, 1, tzinfo=timezone.utc),
         hole_scores=[HoleScore(hole_number=i + 1, strokes=p) for i, p in enumerate(PARS[:9])],
     )
     response = course_analytics("c1", [front_only])

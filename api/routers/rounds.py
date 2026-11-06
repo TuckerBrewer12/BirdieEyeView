@@ -193,10 +193,10 @@ async def update_round(
         return round_detail(updated, await player_handicap_index(db, current_user))
 
     except NotFoundError:
-        raise HTTPException(404, "Round not found")
+        raise HTTPException(404, "Round not found") from None
     except Exception:
         logger.exception("Update round error")
-        raise HTTPException(500, "Update failed. Please try again.")
+        raise HTTPException(500, "Update failed. Please try again.") from None
 
 
 @router.post("/{round_id}/link-course", response_model=RoundSummaryResponse)
@@ -284,7 +284,7 @@ async def link_course_to_round(
         raise
     except Exception:
         logger.exception("Link course error")
-        raise HTTPException(500, "Link failed. Please try again.")
+        raise HTTPException(500, "Link failed. Please try again.") from None
 
 
 @router.delete("/{round_id}", status_code=204)

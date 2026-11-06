@@ -21,10 +21,23 @@ select = [
     "C4",   # flake8-comprehensions
     "SIM",  # flake8-simplify
     "RET",  # flake8-return
+    # Families below each trace back to a mistake that shipped in a past PR.
+    "ARG",     # unused arguments: endpoints took current_user and never checked it, so anyone could read/delete others' rounds (f2092b9)
+    "BLE001",  # blind except: `except Exception` turned DB failures into 404s (b63cc0b)
+    "DTZ",     # naive datetimes compared against tz-aware DB timestamps (#347)
+    "ASYNC",   # blocking calls inside async def stall the whole event loop
+    "TID251",  # banned APIs (see banned-api below): sync requests.post email send from async handlers (api/auth_notifications.py)
+    "SLF001",  # private member access: a router reached into db.rounds._pool instead of going through the repo
+    "RUF",     # ruff-specific: mutable class defaults, unused noqa, implicit Optional, etc.
+    "PGH003",  # blanket `# type: ignore` hides every error on the line, not the one you meant
+    "PGH004",  # blanket `# noqa` hides every rule on the line, not the one you meant
+    "ERA001",  # commented-out code: dead code left behind by AI edits
+    "T20",     # print() in app code bypasses logging and can leak data to stdout
+    "FAST001", # redundant response_model duplicating the return annotation
+    "FAST003", # path parameter declared in the route but missing from the signature
 ]
 ignore = [
     "B008",   # function-call-in-default-argument: this IS the FastAPI Depends() idiom
-    "B904",   # raise-without-from-inside-except: 25 existing sites, cosmetic
     "B905",   # zip-without-explicit-strict
     "E402",   # module-import-not-at-top: intentional in scripts//conftest sys.path shims
     "E731",   # lambda-assignment
@@ -34,10 +47,24 @@ ignore = [
     "SIM112", # uncapitalized-environment-variables
     "SIM117", # multiple-with-statements
     "C420",   # unnecessary-dict-comprehension-for-iterable
+    "RUF001", # ambiguous-unicode-character-string: en-dashes/minus signs in UI strings are intentional
+    "RUF002", # ambiguous-unicode-character-docstring: same, in docstrings
+    "RUF003", # ambiguous-unicode-character-comment: same, in comments
 ]
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"requests".msg = "Blocking HTTP client: it stalls the event loop when called from a FastAPI handler (api/auth_notifications.py). Use httpx.AsyncClient (httpx is already in requirements.txt)."
+"time.sleep".msg = "Blocks the event loop. Use `await asyncio.sleep(...)`."
+
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["F401", "F811"]
+# Tests: fixtures/mock.patch inject args that go unused, tests poke at private
+# state on purpose, and print() is fine in test output.
+"tests/**" = ["F401", "F811", "ARG", "SLF001", "T20", "TID251"]
+# One-off CLI scripts and CI bots: print() is their output, and they run outside the event loop.
+"scripts/**" = ["T20", "TID251"]
+".github/**" = ["T20", "TID251"]
+"analytics/demo.py" = ["T20"]
+"analytics/visualize*.py" = ["T20"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -20,10 +20,9 @@ test("handicap sheet open", async ({ dashboard }) => {
   await dashboard.capture("dashboard-handicap-sheet.png", { fullPage: false });
 });
 
-test("phone trend handicap and round tooltip", async ({ dashboard, isMobile }) => {
-  // The HCP toggle and tap tooltip belong to the phone trend. Desktop keeps
-  // the combined chart, so there is nothing to switch on that project.
-  test.skip(!isMobile, "No phone trend at desktop width.");
+// The HCP toggle and tap tooltip belong to the phone trend. Desktop keeps
+// the combined chart, so there is nothing to switch on that project.
+test("phone trend handicap and round tooltip", { tag: "@phone" }, async ({ dashboard }) => {
   await dashboard.open();
   await dashboard.showTrend("HCP");
   await dashboard.seesTrendShowing("HCP");
