@@ -37,7 +37,7 @@ from .stats import (
 
 def _load_plt():
     try:
-        import matplotlib.pyplot as plt  # type: ignore
+        import matplotlib.pyplot as plt
     except ImportError as exc:
         raise RuntimeError(
             "matplotlib is required for visualizations. Install it with: pip install matplotlib"
