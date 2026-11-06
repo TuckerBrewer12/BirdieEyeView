@@ -42,7 +42,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
         variant="linkMuted"
         size="xs"
         className="mb-4 h-auto gap-1.5 p-0 text-body"
-        onClick={() => navigate("/courses")}
+        onClick={() => void navigate("/courses")}
       >
         <ArrowLeft className="size-4" />
         Back to courses
@@ -72,7 +72,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
         className="my-6"
       />
 
-      {viewModel.activeTab === "course" && <CourseScorecardSection userId={userId} course={course} />}
+      {viewModel.activeTab === "course" && <CourseScorecardSection userId={userId} courseId={courseId} />}
       {viewModel.activeTab === "performance" && <CoursePerformanceSection userId={userId} courseId={courseId} />}
     </div>
   );

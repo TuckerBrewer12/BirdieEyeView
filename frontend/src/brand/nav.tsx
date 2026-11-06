@@ -1,4 +1,4 @@
-import type { ComponentType, MouseEventHandler, ReactElement, ReactNode } from "react";
+import type { ComponentType, MouseEventHandler, ReactNode } from "react";
 import { useRender } from "@base-ui/react/use-render";
 
 /**
@@ -16,9 +16,13 @@ interface NavItem {
  * Turns an href into the element a nav link renders as — `<Link to={href} />`
  * for the app's router. Unset, links are plain anchors.
  */
-type RenderLink = (href: string) => ReactElement;
+type RenderLink = (href: string) => useRender.RenderProp;
 
-const plainAnchor: RenderLink = (href) => <a href={href} />;
+const plainAnchor: RenderLink = (href) => ({ children, ...props }) => (
+  <a href={href} {...props}>
+    {children}
+  </a>
+);
 
 /**
  * A nav link in whatever element the caller's router needs. It stays a link

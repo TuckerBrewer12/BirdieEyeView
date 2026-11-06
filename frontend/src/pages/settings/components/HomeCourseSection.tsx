@@ -37,7 +37,6 @@ export function HomeCourseSection({
           onQueryChange={onQueryChange}
           onSelectCourse={onPick}
           onClose={onClear}
-          autoFocus={false}
           linkedTitle="Selected"
           linkedName={homeCourse ? (homeCourse.name ?? "Unnamed course") : undefined}
           onClear={onClear}

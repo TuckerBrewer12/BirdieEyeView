@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from models.course import Course
@@ -53,9 +53,9 @@ def _build_demo_rounds() -> list[Round]:
     ]
 
     return [
-        Round(id="R1", course=course, date=datetime(2026, 2, 1), hole_scores=round_1_scores),
-        Round(id="R2", course=course, date=datetime(2026, 2, 8), hole_scores=round_2_scores),
-        Round(id="R3", course=course, date=datetime(2026, 2, 15), hole_scores=round_3_scores),
+        Round(id="R1", course=course, date=datetime(2026, 2, 1, tzinfo=timezone.utc), hole_scores=round_1_scores),
+        Round(id="R2", course=course, date=datetime(2026, 2, 8, tzinfo=timezone.utc), hole_scores=round_2_scores),
+        Round(id="R3", course=course, date=datetime(2026, 2, 15, tzinfo=timezone.utc), hole_scores=round_3_scores),
     ]
 
 

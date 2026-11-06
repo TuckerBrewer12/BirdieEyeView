@@ -5,7 +5,7 @@ from .friendship_repo import FriendshipRepositoryDB
 
 __all__ = [
     "CourseRepositoryDB",
-    "UserRepositoryDB",
-    "RoundRepositoryDB",
     "FriendshipRepositoryDB",
+    "RoundRepositoryDB",
+    "UserRepositoryDB",
 ]
