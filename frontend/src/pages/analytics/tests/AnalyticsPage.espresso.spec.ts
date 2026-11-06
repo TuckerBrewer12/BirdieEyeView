@@ -1,4 +1,4 @@
-import { LINKS, UNSEEDED_COURSE, test } from "./AnalyticsPage.robot";
+import { BEST_ROUND_ID, LINKS, UNSEEDED_COURSE, test } from "./AnalyticsPage.robot";
 
 test("opens on the last 50 rounds at every course", async ({ analytics }) => {
   await analytics.open();
@@ -45,6 +45,7 @@ test("a failed load can be retried", async ({ analytics }) => {
 test("the best round's card opens that round", async ({ analytics }) => {
   await analytics.open();
   await analytics.openBestRound();
+  await analytics.isAtRound(BEST_ROUND_ID);
 });
 
 test("the range view opens on par 4s and switches par type", async ({ analytics }) => {
@@ -121,5 +122,6 @@ test.describe("on a phone", () => {
   test("the best round's card opens that round", async ({ analytics }) => {
     await analytics.open();
     await analytics.openBestRound();
+    await analytics.isAtRound(BEST_ROUND_ID);
   });
 });
