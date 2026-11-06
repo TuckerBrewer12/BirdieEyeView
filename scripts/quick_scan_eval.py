@@ -1,7 +1,8 @@
-"""Run the small live scorecard accuracy evaluation suite.
+"""Run a live scorecard accuracy evaluation suite.
 
 Usage:
     python -m scripts.quick_scan_eval
+    python -m scripts.quick_scan_eval --suite large
 
 The runner mirrors the production frontend flow: OCR each unique image once,
 then pass the prefetched OCR text through the production extract path for each
@@ -10,6 +11,7 @@ target player. Accuracy failures are reported but do not fail the process.
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
 import mimetypes
@@ -33,6 +35,10 @@ from starlette.datastructures import Headers
 ROOT_DIR = Path(__file__).resolve().parents[1]
 SCORECARD_DIR = ROOT_DIR / "tests" / "test_scorecards"
 DEFAULT_MANIFEST_PATH = SCORECARD_DIR / "quick_eval_cases.json"
+SUITE_MANIFEST_PATHS = {
+    "quick": DEFAULT_MANIFEST_PATH,
+    "large": SCORECARD_DIR / "scan_eval_cases.json",
+}
 SUPPORTED_FIELDS = frozenset({"strokes", "putts", "shots_to_green"})
 SUPPORTED_SCORE_FORMATS = frozenset({"raw_strokes", "to_par"})
 ALL_HOLES = frozenset(range(1, 19))
@@ -454,12 +460,12 @@ def _case_status(result: CaseResult) -> str:
     return "FAILED"
 
 
-def render_report(run: SuiteRun) -> str:
+def render_report(run: SuiteRun, *, suite: str = "quick") -> str:
     summary = summarize(run.case_results)
     total_cells = sum(result.total_cells for result in run.case_results)
     matched_cells = sum(result.matched_cells for result in run.case_results)
     lines = [
-        "Quick scan evaluation",
+        f"{suite.capitalize()} scan evaluation",
         "=" * 72,
         f"{len(run.ocr_seconds_by_image)} images | {summary.total} cases | "
         f"{matched_cells}/{total_cells} numeric cells correct",
@@ -522,20 +528,23 @@ def _validate_provider_keys() -> None:
         raise EvalConfigurationError(f"Missing required environment variables: {', '.join(missing)}")
 
 
-def main() -> int:
+def main(argv: Optional[list[str]] = None) -> int:
+    parser = argparse.ArgumentParser(description="Run a live scorecard scan evaluation.")
+    parser.add_argument("--suite", choices=SUITE_MANIFEST_PATHS, default="quick")
+    suite = parser.parse_args(argv).suite
     load_dotenv(ROOT_DIR / ".env")
     try:
         _validate_provider_keys()
-        cases = load_cases()
+        cases = load_cases(SUITE_MANIFEST_PATHS[suite])
         run = asyncio.run(run_suite(cases))
     except EvalConfigurationError as exc:
-        print(f"Quick scan evaluation could not start: {exc}", file=sys.stderr)
+        print(f"{suite.capitalize()} scan evaluation could not start: {exc}", file=sys.stderr)
         return 2
     except KeyboardInterrupt:
-        print("Quick scan evaluation interrupted.", file=sys.stderr)
+        print(f"{suite.capitalize()} scan evaluation interrupted.", file=sys.stderr)
         return 130
 
-    print(render_report(run))
+    print(render_report(run, suite=suite))
     return exit_code_for_run(run)
 
 

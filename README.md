@@ -48,20 +48,21 @@ Open [http://localhost:5173](http://localhost:5173). Backend runs on port 8000; 
 Copy `.env.example` to `.env` and fill required keys (`GOOGLE_API_KEY`, `MISTRAL_API_KEY`, `SECRET_KEY`, `DATABASE_URL`).  
 For auth emails in production, also set `RESEND_API_KEY` and `AUTH_FROM_EMAIL`.
 
-## Quick Scan Evaluation
+## Scan Evaluation
 
-Use the small live evaluation suite while iterating on the scorecard scanning algorithm:
+Run the live scan evaluator locally from the repository root.
 
 ```bash
 source .venv/bin/activate
-python -m scripts.quick_scan_eval
+python -m scripts.quick_scan_eval                # quick suite
+python -m scripts.quick_scan_eval --suite large  # larger suite
 ```
 
-The command requires both `MISTRAL_API_KEY` and `GOOGLE_API_KEY`. It runs the three images in `tests/test_scorecards` through the same OCR-prefetch and extraction flow used by the app. The Half Moon Bay image is OCR-scanned once and evaluated for both players, for four cases total.
+Both commands require `MISTRAL_API_KEY` and `GOOGLE_API_KEY`. The evaluator uses the app's OCR-prefetch and extraction flow and shares one OCR result across all target players on an image. The [quick manifest](tests/test_scorecards/quick_eval_cases.json) contains four cases across three images. The [large manifest](tests/test_scorecards/scan_eval_cases.json) contains 25 reviewed cases across 15 images. Each case's `user_context` holds only hints the app or parser understands. Remarks for people go in an optional `notes` field, which the scanner never sees. A layout the scanner doesn't support yet carries a `known_gap` explanation and is reported as a known gap, for example the two Lake Chabot cases, whose card has no final score row.
 
 The answer key grades final numeric values by field and hole number. To-par handwriting is compared against normalized raw strokes. Cards with recorded putts and shots-to-green grade those fields too. Results are cumulative: a 100% case also counts in the 90%+ and 80%+ totals. Cases below 80% are labeled failed and list every mismatch, but accuracy failures do not make the command exit unsuccessfully.
 
-The report includes OCR/merge time per image, extraction and effective time per case, and total suite time. Provider latency varies, so use timings as directional comparisons while iterating rather than controlled benchmarks. The live evaluation is opt-in and is not run by ordinary pytest or GitHub Actions.
+The report includes OCR/merge time per image, extraction and effective time per case, and total suite time. Provider latency varies across runs. Ordinary pytest uses deterministic provider replacements.
 
 For production hardening (HTTPS, secret handling, DB network restrictions, security logging), see:
 
