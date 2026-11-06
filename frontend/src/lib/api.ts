@@ -2,6 +2,7 @@ import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type { BenchmarkTarget } from "@/domain/benchmark";
 import type {
   AnalyticsDto,
+  AuthUserDto,
   BenchmarkComparisonDto,
   CourseAnalyticsDto,
   CourseDto,
@@ -10,10 +11,14 @@ import type {
   FriendshipDto,
   FriendshipStatusRequestDto,
   GoalReportDto,
+  OcrTextDto,
   PlayedCourseDto,
   RoundComparisonDto,
   RoundDto,
   RoundSummaryDto,
+  SaveScanDto,
+  SaveScanRequestDto,
+  ScanDto,
   UserDto,
 } from "@/types/api";
 import { apiUrl } from "@/lib/apiBase";
@@ -36,17 +41,29 @@ async function fetchJSON<T>(path: string): Promise<T> {
   return parseJsonResponse<T>(res);
 }
 
-async function postJSON<T>(path: string, body: unknown): Promise<T> {
+async function postJSON<T>(path: string, body: unknown, fallback?: string): Promise<T> {
   const res = await fetchWithUserFacingError(apiUrl(`/api${path}`), {
     method: "POST",
     credentials: "include",
     headers: withAuthHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
-  });
+  }, fallback);
   if (!res.ok) {
-    throw new Error(await getUserFacingError(res));
+    throw new Error(await getUserFacingError(res, fallback));
   }
-  return parseJsonResponse<T>(res);
+  return parseJsonResponse<T>(res, fallback);
+}
+
+/** A multipart POST: a scorecard photo and the fields sent with it. */
+async function postForm(path: string, fields: Record<string, string | File>, fallback?: string): Promise<Response> {
+  const form = new FormData();
+  for (const [name, value] of Object.entries(fields)) form.append(name, value);
+  return fetchWithUserFacingError(apiUrl(`/api${path}`), {
+    method: "POST",
+    credentials: "include",
+    headers: withAuthHeaders(),
+    body: form,
+  }, fallback);
 }
 
 async function putJSON<T>(path: string, body: unknown): Promise<T> {
@@ -76,6 +93,39 @@ async function patchJSON<T>(path: string, body: unknown): Promise<T> {
 }
 
 export const api = {
+  /** The signed-in user, or null when the session has ended (401 or 403). */
+  getAuthSession: async (): Promise<AuthUserDto | null> => {
+    const res = await fetchWithUserFacingError(apiUrl("/api/auth/me"), {
+      credentials: "include",
+      headers: withAuthHeaders(),
+    }, USER_FACING_ERRORS.account);
+    if (res.status === 401 || res.status === 403) return null;
+    if (!res.ok) {
+      throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.account));
+    }
+    return parseJsonResponse<AuthUserDto>(res, USER_FACING_ERRORS.account);
+  },
+
+  /** The card's text, read ahead of the scan. Null when the server could not read it. */
+  readScanText: async (photo: File): Promise<string | null> => {
+    const res = await postForm("/scan/ocr", { file: photo });
+    if (!res.ok) return null;
+    const body = await parseJsonResponse<OcrTextDto>(res);
+    return body.ocr_text || null;
+  },
+
+  /** Reads a scorecard photo. `fields` carries the photo as `file` and the optional context fields. */
+  extractScan: async (fields: Record<string, string | File>): Promise<ScanDto> => {
+    const res = await postForm("/scan/extract", fields, USER_FACING_ERRORS.scan);
+    if (!res.ok) {
+      throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.scan));
+    }
+    return parseJsonResponse<ScanDto>(res, USER_FACING_ERRORS.scan);
+  },
+
+  saveScan: (request: SaveScanRequestDto) =>
+    postJSON<SaveScanDto>("/scan/save", request, USER_FACING_ERRORS.saveRound),
+
   getDashboard: (userId: string) =>
     fetchJSON<DashboardDto>(`/stats/dashboard/${userId}`),
 

@@ -6,7 +6,7 @@ Every function takes the rounds oldest first.
 
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
-from analytics.stats import round_half_up
+from analytics.stats import best_round_ranks, full_rounds, round_half_up
 from models import Round
 
 PEAK_ROUNDS = 3
@@ -39,26 +39,28 @@ def _per_round(rounds: List[Round]) -> Optional[Dict[ImpactKind, float]]:
 
 
 def _peak(rounds: List[Round]) -> List[Tuple[Round, int]]:
-    """The lowest-scoring rounds with their scores, best first; on a tie the older round comes
-    first. Empty under two scored rounds."""
+    """The best full rounds with their scores, best first, ranked as the round list ranks them
+    (`best_round_ranks`, lowest to par); on a tie the older round comes first. A nine is never
+    in the peak. Empty under two scored full rounds."""
     scored: List[Tuple[Round, int]] = []
-    for r in rounds:
+    for r in full_rounds(rounds):
         score = r.calculate_total_score()
         if score is not None:
             scored.append((r, score))
-    if len(scored) < PEAK_MIN_ROUNDS:
+    ranks = best_round_ranks([r for r, _ in scored])
+    if len(ranks) < PEAK_MIN_ROUNDS:
         return []
-    return sorted(scored, key=lambda pair: pair[1])[:PEAK_ROUNDS]
+    return [scored[i] for i in sorted(ranks, key=ranks.__getitem__)[:PEAK_ROUNDS]]
 
 
 def peak_rounds(rounds: List[Round]) -> List[Round]:
-    """The lowest-scoring rounds, best first; on a tie the older round comes first.
-    Empty under two scored rounds."""
+    """The best full rounds, best first; on a tie the older round comes first.
+    Empty under two scored full rounds."""
     return [r for r, _ in _peak(rounds)]
 
 
 def peak_average(rounds: List[Round]) -> Optional[float]:
-    """The peak rounds' average score, unrounded. Null under two scored rounds."""
+    """The peak rounds' average score, unrounded. Null under two scored full rounds."""
     best = _peak(rounds)
     if not best:
         return None
@@ -86,7 +88,7 @@ def peak_impacts(rounds: List[Round]) -> List[Dict[str, Any]]:
 
 def peak_game(rounds: List[Round]) -> Optional[Dict[str, Any]]:
     """The best three rounds, their average to a tenth, and what they did differently.
-    Null under two scored rounds."""
+    Null under two scored full rounds."""
     best = _peak(rounds)
     if not best:
         return None
