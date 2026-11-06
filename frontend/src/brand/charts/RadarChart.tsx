@@ -86,7 +86,7 @@ export function RadarChart({
               fillOpacity={tokens.opacity.wash}
               stroke={tokens.color.chart.axis}
               strokeWidth={stroke * 0.75}
-              strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
+              strokeDasharray={tokens.chart.guideDash}
             />
             {axes.map((axis, i) => {
               const [x, y] = point(i, benchmarks[i]);

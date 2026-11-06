@@ -88,7 +88,7 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
             y2={referenceY}
             stroke={tokens.color.border}
             strokeWidth={tokens.lineWidth.border}
-            strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
+            strokeDasharray={tokens.chart.guideDash}
           />
         )}
         {fill && <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />}

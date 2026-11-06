@@ -173,7 +173,7 @@ export function TrendAreaChart({
               y2={y(reference.value)}
               stroke={tokens.color.chart.axis}
               strokeWidth={tokens.lineWidth.border}
-              strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
+              strokeDasharray={tokens.chart.guideDash}
             />
             <AxisLabel x={W - PAD.right} y={y(reference.value) - 6} anchor="end">
               {reference.label}
@@ -203,7 +203,7 @@ export function TrendAreaChart({
             y2={baseline}
             stroke={tokens.color.chart.muted}
             strokeWidth={tokens.lineWidth.border}
-            strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
+            strokeDasharray={tokens.chart.guideDash}
           />
         )}
 

@@ -201,7 +201,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             y2={baseline}
             stroke={tokens.color.chart.muted}
             strokeWidth={tokens.lineWidth.border}
-            strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
+            strokeDasharray={tokens.chart.guideDash}
           />
         )}
 

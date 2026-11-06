@@ -47,7 +47,7 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
           y2={goalY}
           stroke={tokens.color.primary}
           strokeWidth={stroke}
-          strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
+          strokeDasharray={tokens.chart.guideDash}
         />
         <text
           x={W - pad.x - labelRoom + 4}

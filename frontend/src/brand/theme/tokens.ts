@@ -525,6 +525,8 @@ export const chart = {
     right: [0, px(radius.sm), px(radius.sm), 0] as Corners,
   },
   margin: { top: 4, right: 8, left: -20, bottom: 0 },
+  /** The dotted guide lines charts draw behind their data: grid rings, reference lines, the hover crosshair. */
+  guideDash: "3 3",
   /** Widest a Recharts bar grows when there are few of them. */
   barMaxWidth: 28,
   /** A full ring sized to fill the chart height. */
