@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implementation Plan"
+  short_description: "Write a concrete project change plan"
+  default_prompt: "Use $implementation-plan to turn recon findings into a confirmation-ready plan."

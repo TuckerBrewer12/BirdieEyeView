@@ -1,0 +1,52 @@
+name: Brand Kit Bot
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "frontend/src/components/**"
+      - "frontend/src/pages/**"
+      - "frontend/src/brand/**"
+
+concurrency:
+  group: brand-kit-bot-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  brand-kit:
+    name: Brand Kit Bot
+    runs-on: ubuntu-latest
+
+    # Skip drafts, skip on the `skip-bots` label, and skip fork PRs, which
+    # cannot read OPENCODE_API_KEY.
+    if: >-
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-bots') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # The installer adds ~/.opencode/bin to $GITHUB_PATH itself.
+      - name: Install opencode
+        run: curl -fsSL https://opencode.ai/install | bash
+
+      - name: Review
+        env:
+          BOT_NAME: "🎨 Brand Kit Bot"
+          BOT_PROMPT: .github/review-bots/brand-kit.md
+          BOT_PATHSPEC: "frontend/src/components frontend/src/pages frontend/src/brand"
+          BOT_CLEAN: "Nothing to flag against the brand kit in this PR."
+          BOT_LEAD: "against the brand kit"
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        run: bash .github/review-bots/run-bot.sh

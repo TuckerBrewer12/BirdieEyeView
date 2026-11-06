@@ -1,0 +1,4 @@
+interface:
+  display_name: "Make Code Change"
+  short_description: "Plan and implement project changes"
+  default_prompt: "Use $make-code-change to plan, confirm, implement, and test this project change."

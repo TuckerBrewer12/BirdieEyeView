@@ -115,7 +115,6 @@ export function GooeyInput({
   const inputLayoutId = `gooey-input-field-${safeId}`;
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const prevExpandedRef = useRef(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue);
 
@@ -134,20 +133,20 @@ export function GooeyInput({
 
   const setExpanded = useCallback(
     (next: boolean) => {
+      if (!next) {
+        setSearchText("");
+      }
       setIsExpanded(next);
       onOpenChange?.(next);
     },
-    [onOpenChange],
+    [onOpenChange, setSearchText],
   );
 
   useEffect(() => {
     if (isExpanded) {
       inputRef.current?.focus();
-    } else if (prevExpandedRef.current) {
-      setSearchText("");
     }
-    prevExpandedRef.current = isExpanded;
-  }, [isExpanded, setSearchText]);
+  }, [isExpanded]);
 
   const buttonVariants = useMemo(
     () => ({

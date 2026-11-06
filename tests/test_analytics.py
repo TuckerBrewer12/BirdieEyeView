@@ -230,41 +230,42 @@ def test_score_variance_by_hole():
     rows = score_variance_by_hole(rounds)
 
     assert len(rows) == 18
-    assert rows[0]["score_std_dev"] >= rows[1]["score_std_dev"]
-    assert rows[0]["variance_rank"] == 1
-    assert rows[1]["variance_rank"] == 2
-
     by_hole = {row["hole_number"]: row for row in rows}
     # Hole 2 scores are 4 and 4 in synthetic data: zero variance.
     assert by_hole[2]["score_variance"] == pytest.approx(0.0)
     assert by_hole[2]["score_std_dev"] == pytest.approx(0.0)
     assert by_hole[2]["sample_size"] == 2
+    # Two observations per hole is below the 3-observation minimum: nothing is ranked.
+    assert all(row["variance_rank"] is None for row in rows)
+
+    ranked = score_variance_by_hole(rounds + [rounds[1].model_copy(update={"id": "r3"})])
+    assert ranked[0]["score_std_dev"] >= ranked[1]["score_std_dev"]
+    assert (ranked[0]["variance_rank"], ranked[1]["variance_rank"]) == (1, 2)
 
 
 def test_three_putts_per_round():
     rounds = _build_rounds()
-    rows = three_putts_per_round(rounds)
+    three_and_four = rounds[0].model_copy(deep=True)
+    for score in three_and_four.hole_scores:
+        score.putts = {1: 3, 2: 4}.get(score.hole_number, 2)
+    rows = three_putts_per_round([rounds[0], three_and_four])
 
-    # In round 1, all holes are 2-putts.
-    assert rows[0]["three_putt_count"] == 0
-    assert rows[0]["holes_with_putt_data"] == 18
-    assert rows[0]["three_putt_percentage"] == 0.0
-
-    # In round 2, odd holes are 2-putts and even holes are 1-putts.
-    assert rows[1]["three_putt_count"] == 0
-    assert rows[1]["holes_with_putt_data"] == 18
-    assert rows[1]["three_putt_percentage"] == 0.0
+    # Round 1: all 2-putts.
+    assert (rows[0]["three_putt_count"], rows[0]["holes_with_putt_data"], rows[0]["three_putt_percentage"]) == (0, 18, 0.0)
+    # Same round with a 3-putt and a 4-putt: both count as 3 or more.
+    assert rows[1]["three_putt_count"] == 2
+    assert rows[1]["three_putt_percentage"] == pytest.approx(2 / 18 * 100)
 
 
 def test_scrambling_per_round():
     rounds = _build_rounds()
     rows = scrambling_per_round(rounds)
 
-    # Round 1: holes 11-18 are missed GIRs; par4 on 11-14 are 4 (success),
-    # par5 on 15-18 are 4 (not par, no success).
+    # Round 1: holes 11-18 are missed GIRs; par4 on 11-14 are 4 (par) and par5 on 15-18
+    # are 4 (birdie). Scrambling counts par or better, so all eight succeed.
     assert rows[0]["scramble_opportunities"] == 8
-    assert rows[0]["scramble_successes"] == 4
-    assert rows[0]["scrambling_percentage"] == 50.0
+    assert rows[0]["scramble_successes"] == 8
+    assert rows[0]["scrambling_percentage"] == 100.0
 
     # Round 2: missed GIR on odd holes only (9 opps), all odd scores are 5.
     # Success only on odd par5 holes (15,17): 2 successes.
@@ -504,8 +505,8 @@ def test_notable_achievements_lifetime_and_one_year():
     assert summary["scoring_records"]["lifetime"]["lowest_round"] == 72
     assert summary["scoring_records"]["lifetime"]["highest_round"] == 81
     assert summary["scoring_records"]["one_year"]["lowest_round"] == 72
-    assert summary["scoring_records_events"]["lifetime"]["lowest_round"] == {"date": "2026/2/1", "course": "Demo Course"}
-    assert summary["scoring_records_events"]["lifetime"]["highest_round"] == {"date": "2026/2/2", "course": "Demo Course"}
+    assert summary["scoring_records_events"]["lifetime"]["lowest_round"] == {"date": "2026/2/1", "course": "Demo Course", "round_id": "r1"}
+    assert summary["scoring_records_events"]["lifetime"]["highest_round"] == {"date": "2026/2/2", "course": "Demo Course", "round_id": "r2"}
 
     lifetime_totals = summary["career_totals"]["lifetime"]
     assert lifetime_totals["total_rounds_played"] == 2
@@ -529,6 +530,7 @@ def test_notable_achievements_lifetime_and_one_year():
     assert summary["best_performance_streaks_events"]["lifetime"]["longest_par_streak"] == {
         "date": "2026/2/1",
         "course": "Demo Course",
+        "round_id": "r1",
     }
 
     assert summary["home_course_records"]["lifetime"]["home_course_name"] is None
@@ -542,7 +544,7 @@ def test_notable_achievements_lifetime_and_one_year():
     assert putt_breaks[30]["date"] == "2026/2/2"
     assert putt_breaks[27] is None
     assert summary["putting_milestones"]["one_year"]["putting_milestones_achieved_from_lifetime_set"] == 6
-    assert summary["putting_milestones_events"]["lifetime"]["fewest_putts_in_round"] == {"date": "2026/2/2", "course": "Demo Course"}
+    assert summary["putting_milestones_events"]["lifetime"]["fewest_putts_in_round"] == {"date": "2026/2/2", "course": "Demo Course", "round_id": "r2"}
 
     breaks = {row["threshold"]: row["achievement"] for row in summary["round_milestones"]["lifetime"]["score_breaks"]}
     assert breaks[120]["date"] == "2026/2/1"
@@ -560,8 +562,8 @@ def test_notable_achievements_lifetime_and_one_year():
     assert gir_breaks[12] is None
     assert summary["gir_milestones"]["lifetime"]["most_gir_in_round"] == 10
     assert summary["gir_milestones"]["lifetime"]["highest_gir_percentage_in_round"] == pytest.approx((10 / 18) * 100)
-    assert summary["gir_milestones"]["one_year"]["best_gir_round"] == {"date": "2026/2/1", "course": "Demo Course"}
+    assert summary["gir_milestones"]["one_year"]["best_gir_round"] == {"date": "2026/2/1", "course": "Demo Course", "round_id": "r1"}
     assert summary["gir_milestones"]["one_year"]["best_gir_in_round"] == 10
     assert summary["gir_milestones"]["one_year"]["highest_gir_percentage"] == pytest.approx((10 / 18) * 100)
     assert summary["gir_milestones"]["one_year"]["gir_milestones_achieved_from_lifetime_set"] == 3
-    assert summary["gir_milestones_events"]["lifetime"]["most_gir_in_round"] == {"date": "2026/2/1", "course": "Demo Course"}
+    assert summary["gir_milestones_events"]["lifetime"]["most_gir_in_round"] == {"date": "2026/2/1", "course": "Demo Course", "round_id": "r1"}

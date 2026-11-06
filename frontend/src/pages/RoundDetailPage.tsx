@@ -1,22 +1,22 @@
-import { useState, useCallback, useRef, useMemo, useEffect } from "react";
+import { useState, useCallback, useRef, useMemo, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Pencil, Trash2, Link2, CalendarDays, Share2 } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Link2 } from "lucide-react";
 import { ShareCard } from "@/components/share/ShareCard";
 import { useShareRound } from "@/hooks/useShareRound";
 import type { CourseSummary } from "@/types/golf";
-import { CourseLinkSearch, CourseLinkChip, CustomNameChip } from "@/components/CourseLinkSearch";
+import { CourseLinkSearch } from "@/brand";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from "recharts";
 import { ScrollSection } from "@/components/analytics/ScrollSection";
 import { api } from "@/lib/api";
+import { useCourseSearch } from "@/hooks/useCourseSearch";
 import { getStoredColorBlindMode } from "@/lib/accessibility";
 import { getColorBlindPalette, type ChartPalette } from "@/lib/chartPalettes";
 import { formatCourseName } from "@/lib/courseName";
-import { formatToPar, calcCourseHandicap, calcNetScore } from "@/types/golf";
+import { calcCourseHandicap, calcNetScore } from "@/types/golf";
 import type { ComparisonRow } from "@/types/analytics";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
-import { RoundStory } from "@/components/round-detail/RoundStory";
+import { RoundDetailHeader } from "@/components/round-detail/RoundDetailHeader";
 import { RoundFlowTimeline } from "@/components/analytics/RoundFlowTimeline";
 
 const tooltipStyle = {
@@ -40,8 +40,7 @@ function SectionLabel({ children }: { children: string }) {
 }
 
 type EditedScores = Record<number, { strokes: number | null; putts: number | null; gir?: boolean | null }>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Fmt = (v: any, name: any, props: any) => any;
+type Fmt = (value: unknown, name: unknown, props: unknown) => ReactNode | [ReactNode, string];
 
 function formatNumber(value: number | null): string {
   if (value == null) return "—";
@@ -116,25 +115,17 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const [editedTeeBox, setEditedTeeBox] = useState("");
   const [availableTees, setAvailableTees] = useState<string[]>([]);
   const [showLinkCourse, setShowLinkCourse] = useState(false);
-  const [linkQuery, setLinkQuery] = useState("");
-  const [linkResults, setLinkResults] = useState<CourseSummary[]>([]);
-  const [linkSearching, setLinkSearching] = useState(false);
   const [linking, setLinking] = useState(false);
-  const linkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const linkSearch = useCourseSearch(userId);
+  const { reset: resetLinkSearch } = linkSearch;
   // Edit-mode course state
   const [editCoursePendingLink, setEditCoursePendingLink] = useState<CourseSummary | null>(null);
   const [editCourseChanging, setEditCourseChanging] = useState(false);
   const [editCourseNameValue, setEditCourseNameValue] = useState("");
   const [editCourseNameConfirmed, setEditCourseNameConfirmed] = useState(false);
-  const [editCourseQuery, setEditCourseQuery] = useState("");
-  const [editCourseResults, setEditCourseResults] = useState<CourseSummary[]>([]);
-  const [editCourseSearching, setEditCourseSearching] = useState(false);
-  const editCourseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (linkTimer.current) clearTimeout(linkTimer.current);
-    if (editCourseTimer.current) clearTimeout(editCourseTimer.current);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const editCourseSearch = useCourseSearch(userId);
+  const { reset: resetEditCourseSearch } = editCourseSearch;
   const colorBlindMode = useMemo(() => getStoredColorBlindMode(), []);
   const colorBlindPalette = useMemo(() => getColorBlindPalette(colorBlindMode), [colorBlindMode]);
   const { cardRef: shareCardRef, share: shareRound, sharing } = useShareRound();
@@ -209,8 +200,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const handleSelectEditCourse = useCallback(async (course: CourseSummary) => {
     setEditCoursePendingLink(course);
     setEditCourseChanging(false);
-    setEditCourseQuery("");
-    setEditCourseResults([]);
+    resetEditCourseSearch();
     const teeColors = await loadTeesForCourse(course.id, []);
     setEditedTeeBox((prev) => {
       const current = (prev ?? "").trim();
@@ -221,7 +211,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       }
       return teeColors.length === 1 ? teeColors[0] : "";
     });
-  }, [loadTeesForCourse, chooseCompatibleTee]);
+  }, [loadTeesForCourse, chooseCompatibleTee, resetEditCourseSearch]);
 
   const enterEditMode = useCallback(async () => {
     if (!round) return;
@@ -249,12 +239,11 @@ export function RoundDetailPage({ userId }: { userId: string }) {
     setEditCourseChanging(false);
     setEditCourseNameValue(hasCustomName ? round.course_name_played! : "");
     setEditCourseNameConfirmed(hasCustomName);
-    setEditCourseQuery("");
-    setEditCourseResults([]);
+    resetEditCourseSearch();
 
     setEditMode(true);
     setConfirmDelete(false);
-  }, [round, loadTeesForCourse]);
+  }, [round, loadTeesForCourse, resetEditCourseSearch]);
 
   const cancelEdit = useCallback(() => {
     setEditMode(false);
@@ -263,13 +252,13 @@ export function RoundDetailPage({ userId }: { userId: string }) {
     setEditCourseChanging(false);
     setEditCourseNameValue("");
     setEditCourseNameConfirmed(false);
-    setEditCourseQuery("");
-    setEditCourseResults([]);
-  }, []);
+    resetEditCourseSearch();
+  }, [resetEditCourseSearch]);
 
   const handleSave = useCallback(async () => {
     if (!round || !roundId) return;
     setSaving(true);
+    setActionError(null);
     try {
       // Link to DB course if user picked one
       if (editCoursePendingLink) {
@@ -314,6 +303,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       setEditCourseNameConfirmed(false);
     } catch (err) {
       console.error("Save failed:", err);
+      setActionError(err instanceof Error ? err.message : "Could not save this round.");
     } finally {
       setSaving(false);
     }
@@ -354,49 +344,22 @@ export function RoundDetailPage({ userId }: { userId: string }) {
     []
   );
 
-  const handleLinkQuery = useCallback((q: string) => {
-    setLinkQuery(q);
-    if (linkTimer.current) clearTimeout(linkTimer.current);
-    if (q.trim().length < 2) { setLinkResults([]); return; }
-    linkTimer.current = setTimeout(async () => {
-      setLinkSearching(true);
-      try {
-        const results = await api.searchCourses(q.trim(), userId);
-        setLinkResults(results);
-      } catch { setLinkResults([]); }
-      finally { setLinkSearching(false); }
-    }, 300);
-  }, [userId]);
-
-  const handleEditCourseQuery = useCallback((q: string) => {
-    setEditCourseQuery(q);
-    if (editCourseTimer.current) clearTimeout(editCourseTimer.current);
-    if (q.trim().length < 2) { setEditCourseResults([]); return; }
-    editCourseTimer.current = setTimeout(async () => {
-      setEditCourseSearching(true);
-      try {
-        const results = await api.searchCourses(q.trim(), userId);
-        setEditCourseResults(results);
-      } catch { setEditCourseResults([]); }
-      finally { setEditCourseSearching(false); }
-    }, 300);
-  }, [userId]);
-
   const handleSelectCourse = useCallback(async (course: CourseSummary) => {
     if (!roundId) return;
     setLinking(true);
+    setActionError(null);
     try {
       await api.linkCourse(roundId, course.id);
       await queryClient.invalidateQueries({ queryKey: ["round", roundId] });
       setShowLinkCourse(false);
-      setLinkQuery("");
-      setLinkResults([]);
+      resetLinkSearch();
     } catch (err) {
       console.error("Link failed:", err);
+      setActionError(err instanceof Error ? err.message : "Could not link this round to that course.");
     } finally {
       setLinking(false);
     }
-  }, [roundId, queryClient]);
+  }, [roundId, queryClient, resetLinkSearch]);
 
   if (!round) {
     return (
@@ -423,6 +386,27 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const toPar = coursePar !== null ? totalScore - coursePar : null;
 
   const courseName = formatCourseName(round.course_name_played ?? round.course?.name);
+  const editLinkedName = editCoursePendingLink?.name
+    ?? (!editCourseChanging ? round.course?.name ?? undefined : undefined);
+  const editCustomName = !editLinkedName && editCourseNameConfirmed && editCourseNameValue
+    ? editCourseNameValue
+    : undefined;
+  const editPickingCourse = !editLinkedName && !editCustomName;
+
+  const activeTeeBox = editMode ? editedTeeBox : round.tee_box;
+  const tee = activeTeeBox
+    ? round.course?.tees.find((t) => t.color?.toLowerCase() === activeTeeBox.toLowerCase()) ?? null
+    : null;
+  const courseHandicap =
+    handicapIndex != null &&
+    tee?.slope_rating != null &&
+    tee?.course_rating != null &&
+    coursePar != null
+      ? calcCourseHandicap(handicapIndex, tee.slope_rating, tee.course_rating, coursePar)
+      : null;
+  const netScore = courseHandicap != null && totalScore > 0
+    ? calcNetScore(totalScore, courseHandicap)
+    : null;
 
   return (
     <div>
@@ -431,291 +415,114 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         <ShareCard ref={shareCardRef} round={round} courseName={courseName} />
       </div>
 
-      <Link
-        to="/rounds"
-        className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary mb-4"
-      >
-        <ArrowLeft size={16} />
-        Back to Rounds
-      </Link>
-
-      <PageHeader
-        title={courseName}
-        subtitle={
-          round.date
-            ? new Date(round.date).toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })
-            : undefined
-        }
-      />
-
-      {/* ── Inline Hero Header ── */}
-      <div className="py-2 mb-4">
-        <div className="flex items-start justify-between gap-4">
-          {/* Left: identity */}
-          <div className="min-w-0">
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-gray-900 leading-tight truncate">
-              {courseName}
-            </h1>
-            <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-              {round.date && (
-                <div className="flex items-center gap-1.5 text-sm text-gray-400">
-                  <CalendarDays size={13} />
-                  <span>
-                    {new Date(round.date).toLocaleDateString("en-US", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
-              )}
-              {!round.course && !showLinkCourse && (
-                <button
-                  onClick={() => setShowLinkCourse(true)}
-                  className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-primary transition-colors"
-                >
-                  <Link2 size={12} />
-                  Link course
-                </button>
-              )}
-            </div>
-            {showLinkCourse && (
-              <div className="mt-3">
-                <CourseLinkSearch
-                  title="Link to a saved course"
-                  query={linkQuery}
-                  results={linkResults}
-                  searching={linkSearching}
-                  linking={linking}
-                  onQueryChange={handleLinkQuery}
-                  onSelectCourse={handleSelectCourse}
-                  onClose={() => { setShowLinkCourse(false); setLinkQuery(""); setLinkResults([]); }}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Right: action buttons */}
-          <div className="flex items-center gap-2 shrink-0">
-            {!editMode ? (
-              <>
-                <button
-                  onClick={() => shareRound(round, courseName)}
-                  disabled={sharing}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <Share2 size={14} />
-                  {sharing ? "…" : "Share"}
-                </button>
-                <button
-                  onClick={enterEditMode}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-                >
-                  <Pencil size={14} />
-                  Edit
-                </button>
-                {!confirmDelete ? (
-                  <button
-                    onClick={() => setConfirmDelete(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50"
-                  >
-                    <Trash2 size={14} />
-                    Delete
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg">
-                    <span className="text-sm text-red-700 font-medium">Delete this round?</span>
-                    <button onClick={handleDelete} disabled={deleting} className="text-sm font-semibold text-red-700 hover:text-red-900 disabled:opacity-50">
-                      {deleting ? "Deleting…" : "Yes"}
-                    </button>
-                    <button onClick={() => setConfirmDelete(false)} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="px-3 py-1.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50"
-                >
-                  {saving ? "Saving…" : "Save"}
-                </button>
-                <button
-                  onClick={cancelEdit}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {(() => {
-        const activeTeeBox = editMode ? editedTeeBox : round.tee_box;
-        const tee = activeTeeBox
-          ? round.course?.tees.find((t) => t.color?.toLowerCase() === activeTeeBox.toLowerCase()) ?? null
-          : null;
-        const courseHandicap =
-          handicapIndex != null &&
-          tee?.slope_rating != null &&
-          tee?.course_rating != null &&
-          coursePar != null
-            ? calcCourseHandicap(handicapIndex, tee.slope_rating, tee.course_rating, coursePar)
-            : null;
-        const netScore = courseHandicap != null && totalScore > 0
-          ? calcNetScore(totalScore, courseHandicap)
-          : null;
-
-        return (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-6">
-            {/* Mobile: 2-row grid */}
-            <div className="md:hidden">
-              <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100">
-                <div className="flex flex-col items-center justify-center px-3 py-3">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Score</div>
-                  <div className="text-2xl font-bold text-gray-900">{totalScore || "–"}</div>
-                </div>
-                <div className="flex flex-col items-center justify-center px-3 py-3">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">To Par</div>
-                  <div className={`text-2xl font-bold ${toPar !== null && toPar < 0 ? "text-emerald-600" : toPar !== null && toPar > 0 ? "text-red-500" : "text-gray-900"}`}>
-                    {formatToPar(toPar)}
-                  </div>
-                </div>
-                <div className="flex flex-col items-center justify-center px-3 py-3">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Net</div>
-                  <div className={`text-2xl font-bold ${netScore != null && coursePar != null ? netScore <= coursePar ? "text-emerald-600" : "text-red-500" : "text-gray-900"}`}>
-                    {netScore ?? "–"}
-                  </div>
-                  {courseHandicap != null && (
-                    <div className="text-[9px] text-gray-400 mt-0.5">HCP {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}</div>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 divide-x divide-gray-100">
-                <div className="flex flex-col items-center justify-center px-3 py-3">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Tee</div>
-                  <div className="text-2xl font-bold text-gray-900">{activeTeeBox || "–"}</div>
-                </div>
-                <div className="flex flex-col items-center justify-center px-3 py-3">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Par</div>
-                  <div className="text-2xl font-bold text-gray-900">{coursePar ?? "–"}</div>
-                </div>
-              </div>
-            </div>
-            {/* Desktop: single-row flex */}
-            <div className="hidden md:flex items-stretch divide-x divide-gray-100">
-              <div className="flex-1 flex flex-col items-center justify-center px-4 py-4">
-                <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Score</div>
-                <div className="text-4xl font-bold text-gray-900">{totalScore || "–"}</div>
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-center px-4 py-4">
-                <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">To Par</div>
-                <div className={`text-4xl font-bold ${toPar !== null && toPar < 0 ? "text-emerald-600" : toPar !== null && toPar > 0 ? "text-red-500" : "text-gray-900"}`}>
-                  {formatToPar(toPar)}
-                </div>
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-center px-4 py-4">
-                <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Net</div>
-                <div className={`text-4xl font-bold ${netScore != null && coursePar != null ? netScore <= coursePar ? "text-emerald-600" : "text-red-500" : "text-gray-900"}`}>
-                  {netScore ?? "–"}
-                </div>
-                {courseHandicap != null && (
-                  <div className="text-[11px] text-gray-400 mt-0.5">HCP {courseHandicap < 0 ? `+${Math.abs(courseHandicap)}` : courseHandicap}</div>
-                )}
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-center px-4 py-4">
-                <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Tee</div>
-                <div className="text-4xl font-bold text-gray-900">{activeTeeBox || "–"}</div>
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-center px-4 py-4">
-                <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Par</div>
-                <div className="text-4xl font-bold text-gray-900">{coursePar ?? "–"}</div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* Course link / name section — visible in edit mode */}
-      {editMode && (
-        <div className="mb-4">
-          {editCoursePendingLink ? (
-            <CourseLinkChip
-              name={editCoursePendingLink.name ?? ""}
-              onClear={() => {
-                setEditCoursePendingLink(null);
-                setEditCourseChanging(false);
-                setEditCourseQuery("");
-                setEditCourseResults([]);
-                void restoreAvailableTeesFromRound();
-              }}
-            />
-          ) : round.course && !editCourseChanging ? (
-            <div className="flex items-center gap-2">
-              <CourseLinkChip
-                name={round.course.name ?? ""}
-                onClear={() => setEditCourseChanging(true)}
-              />
-            </div>
-          ) : editCourseChanging || !round.course ? (
-            editCourseNameConfirmed && editCourseNameValue ? (
-              <CustomNameChip
-                name={editCourseNameValue}
-                onClear={() => { setEditCourseNameConfirmed(false); setEditCourseNameValue(""); setEditCourseQuery(""); }}
-              />
-            ) : (
-              <div>
-                <CourseLinkSearch
-                  query={editCourseQuery}
-                  results={editCourseResults}
-                  searching={editCourseSearching}
-                  onQueryChange={handleEditCourseQuery}
-                  onSelectCourse={(c) => { void handleSelectEditCourse(c); }}
-                  onClose={() => {
-                    setEditCourseChanging(false);
-                    setEditCourseQuery("");
-                    setEditCourseResults([]);
-                    void restoreAvailableTeesFromRound();
-                  }}
-                  reviewVariant
-                  onUseCustomName={(name) => {
-                    setEditCourseNameValue(name);
-                    setEditCourseNameConfirmed(true);
-                    setEditCoursePendingLink(null);
-                    setEditCourseChanging(false);
-                    setEditCourseQuery("");
-                    setEditCourseResults([]);
-                    void restoreAvailableTeesFromRound();
-                  }}
-                />
-                {round.course_name_played && !editCourseQuery && !editCourseNameConfirmed && (
-                  <button
-                    type="button"
-                    onClick={() => { setEditCourseNameValue(round.course_name_played!); setEditCourseNameConfirmed(true); }}
-                    className="mt-1.5 text-xs text-gray-400 hover:text-primary transition-colors"
-                  >
-                    Keep "{round.course_name_played}" without linking →
-                  </button>
-                )}
-              </div>
-            )
-          ) : null}
+      {actionError && (
+        <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {actionError}
         </div>
       )}
 
-      {/* Story view (normal) / Scorecard grid (edit) */}
-      {!editMode && <RoundStory round={round} />}
+      <RoundDetailHeader
+        round={round}
+        courseName={courseName}
+        totalScore={totalScore}
+        toPar={toPar}
+        netScore={netScore}
+        courseHandicap={courseHandicap}
+        tee={tee}
+        editMode={editMode}
+        saving={saving}
+        confirmDelete={confirmDelete}
+        deleting={deleting}
+        sharing={sharing}
+        onEdit={enterEditMode}
+        onSave={handleSave}
+        onCancelEdit={cancelEdit}
+        onShare={() => shareRound(round, courseName)}
+        onDelete={() => setConfirmDelete(true)}
+        onConfirmDelete={handleDelete}
+        onCancelDelete={() => setConfirmDelete(false)}
+        onBack={() => navigate(-1)}
+      />
 
-      <div className={!editMode ? "mt-5" : ""}>
+      {/* Course link button — visible in view mode when not linked */}
+      {!editMode && !round.course && !showLinkCourse && (
+        <div className="mb-3 -mt-2">
+          <button
+            onClick={() => setShowLinkCourse(true)}
+            className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-primary transition-colors"
+          >
+            <Link2 size={12} />
+            Link course
+          </button>
+        </div>
+      )}
+      {showLinkCourse && (
+        <div className="mb-4">
+          <CourseLinkSearch
+            title="Link to a saved course"
+            query={linkSearch.query}
+            results={linkSearch.results}
+            searching={linkSearch.searching}
+            linking={linking}
+            onQueryChange={linkSearch.setQuery}
+            onSelectCourse={handleSelectCourse}
+            onClose={() => { setShowLinkCourse(false); resetLinkSearch(); }}
+          />
+        </div>
+      )}
+
+      {editMode && (
+        <div className="mb-4">
+          <CourseLinkSearch
+            query={editCourseSearch.query}
+            results={editCourseSearch.results}
+            searching={editCourseSearch.searching}
+            onQueryChange={editCourseSearch.setQuery}
+            onSelectCourse={(c) => { void handleSelectEditCourse(c); }}
+            onClose={() => {
+              setEditCourseChanging(false);
+              resetEditCourseSearch();
+              void restoreAvailableTeesFromRound();
+            }}
+            reviewVariant
+            onUseCustomName={(name) => {
+              setEditCourseNameValue(name);
+              setEditCourseNameConfirmed(true);
+              setEditCoursePendingLink(null);
+              setEditCourseChanging(false);
+              resetEditCourseSearch();
+              void restoreAvailableTeesFromRound();
+            }}
+            linkedName={editLinkedName}
+            customName={editCustomName}
+            onClear={() => {
+              if (editCoursePendingLink) {
+                setEditCoursePendingLink(null);
+                setEditCourseChanging(false);
+                resetEditCourseSearch();
+                void restoreAvailableTeesFromRound();
+              } else if (round.course && !editCourseChanging) {
+                setEditCourseChanging(true);
+              } else {
+                setEditCourseNameConfirmed(false);
+                setEditCourseNameValue("");
+                resetEditCourseSearch();
+              }
+            }}
+          />
+          {editPickingCourse && round.course_name_played && !editCourseSearch.query && !editCourseNameConfirmed && (
+            <button
+              type="button"
+              onClick={() => { setEditCourseNameValue(round.course_name_played!); setEditCourseNameConfirmed(true); }}
+              className="mt-1.5 text-xs text-gray-400 hover:text-primary transition-colors"
+            >
+              Keep "{round.course_name_played}" without linking →
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className={!editMode ? "mt-2" : ""}>
         <ScorecardGrid
           round={round}
           editMode={editMode}

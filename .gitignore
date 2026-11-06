@@ -15,9 +15,14 @@ credentials/
 # Frontend
 frontend/node_modules/
 frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/playwright/.cache/
 
 # Session notes
 sessions/
+.codex/change-artifacts/
 
 # Claude Code agent worktrees
 .claude/worktrees/

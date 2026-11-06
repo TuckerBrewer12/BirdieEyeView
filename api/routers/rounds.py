@@ -4,89 +4,21 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing import List, Optional
 from database.db_manager import DatabaseManager
-from database.exceptions import NotFoundError
+from database.exceptions import IntegrityError, NotFoundError
+from api.messages import (
+    COURSE_NOT_FOUND, FORBIDDEN, ROUND_CHANGES_INVALID, ROUND_HOLES_DONT_MATCH_COURSE, ROUND_NOT_FOUND,
+)
+from api.error_responses import ROUND_LINK_FAILED, ROUND_UPDATE_FAILED
 from api.dependencies import get_current_user, get_db
-from api.input_validation import sanitize_user_text
-from api.schemas import RoundSummaryResponse
+from api.request_models import LinkCourseRequest, UpdateRoundRequest
+from api.schemas import RoundResponse, RoundSummaryResponse
 from models import HoleScore, User
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-
-class HoleScoreUpdate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    hole_number: int = Field(..., ge=1, le=18)
-    strokes: Optional[int] = Field(default=None, ge=1, le=15)
-    putts: Optional[int] = Field(default=None, ge=0, le=10)
-    fairway_hit: Optional[bool] = None
-    green_in_regulation: Optional[bool] = None
-    net_score: Optional[int] = None
-    shots_to_green: Optional[int] = Field(default=None, ge=1, le=10)
-    par_played: Optional[int] = Field(default=None, ge=3, le=6)
-    handicap_played: Optional[int] = Field(default=None, ge=1, le=18)
-
-    @model_validator(mode="after")
-    def _validate_putts_vs_strokes(self):
-        if self.putts is not None and self.strokes is not None and self.putts > self.strokes:
-            raise ValueError("putts cannot exceed strokes.")
-        return self
-
-
-class UpdateRoundRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-
-    hole_scores: Optional[List[HoleScoreUpdate]] = Field(default=None, max_length=18)
-    notes: Optional[str] = None
-    weather_conditions: Optional[str] = None
-    tee_box: Optional[str] = None
-    course_name_played: Optional[str] = None
-
-    @field_validator("course_name_played")
-    @classmethod
-    def _validate_course_name_played(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="course_name_played", max_length=255)
-
-    @field_validator("notes")
-    @classmethod
-    def _validate_notes(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="notes", max_length=2_000, allow_newlines=True)
-
-    @field_validator("weather_conditions")
-    @classmethod
-    def _validate_weather(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="weather_conditions", max_length=200)
-
-    @field_validator("tee_box")
-    @classmethod
-    def _validate_tee_box(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
-        return sanitize_user_text(v, field_name="tee_box", max_length=40)
-
-    @model_validator(mode="after")
-    def _validate_unique_holes(self):
-        if self.hole_scores:
-            holes = [h.hole_number for h in self.hole_scores]
-            if len(set(holes)) != len(holes):
-                raise ValueError("hole_scores cannot contain duplicate hole_number values.")
-        return self
-
-
-class LinkCourseRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    course_id: UUID
 
 
 def summarize_round(r) -> RoundSummaryResponse:
@@ -120,7 +52,7 @@ async def get_rounds_for_user(
     current_user: User = Depends(get_current_user),
 ):
     if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     rows = await db.rounds.get_round_summaries_for_user(str(user_id), limit=limit, offset=offset)
     return [
         RoundSummaryResponse(
@@ -132,17 +64,14 @@ async def get_rounds_for_user(
             tee_box=row["tee_box"],
             date=row["round_date"],
             total_score=row["total_score"],
-            to_par=(
-                (row["total_score"] - row["course_par"])
-                if row["total_score"] is not None and row["course_par"] is not None
-                else None
-            ),
+            to_par=row["to_par"],
             front_nine=row["front_nine"],
             back_nine=row["back_nine"],
             total_putts=row["total_putts"],
             total_gir=row["total_gir"],
             fairways_hit=row["fairways_hit"],
             notes=row["notes"],
+            hole_scores_summary=row.get("hole_scores_summary"),
         )
         for row in rows
     ]
@@ -151,21 +80,21 @@ async def get_rounds_for_user(
 async def _check_round_ownership(round_id: UUID, current_user: User, db: DatabaseManager):
     owner_id = await db.rounds.get_round_owner_id(str(round_id))
     if owner_id is None:
-        raise HTTPException(404, "Round not found")
+        raise HTTPException(404, ROUND_NOT_FOUND)
     if owner_id != str(current_user.id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
 
 
 async def _check_course_access(course_id: UUID, current_user: User, db: DatabaseManager):
     course = await db.courses.get_course(str(course_id))
     if not course:
-        raise HTTPException(404, "Course not found")
+        raise HTTPException(404, COURSE_NOT_FOUND)
     if course.user_id and str(course.user_id) != str(current_user.id):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, FORBIDDEN)
     return course
 
 
-@router.get("/{round_id}")
+@router.get("/{round_id}", response_model=RoundResponse)
 async def get_round(
     round_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -174,11 +103,11 @@ async def get_round(
     await _check_round_ownership(round_id, current_user, db)
     round_ = await db.rounds.get_round(str(round_id))
     if not round_:
-        raise HTTPException(404, "Round not found")
+        raise HTTPException(404, ROUND_NOT_FOUND)
     return round_
 
 
-@router.put("/{round_id}")
+@router.put("/{round_id}", response_model=RoundResponse)
 async def update_round(
     round_id: UUID,
     req: UpdateRoundRequest,
@@ -197,7 +126,6 @@ async def update_round(
                     putts=hs.putts,
                     fairway_hit=hs.fairway_hit,
                     green_in_regulation=hs.green_in_regulation,
-                    net_score=hs.net_score,
                     shots_to_green=hs.shots_to_green,
                     par_played=hs.par_played,
                     handicap_played=hs.handicap_played,
@@ -213,7 +141,7 @@ async def update_round(
             updated = await db.rounds.get_round(str(round_id))
 
         if not updated:
-            raise HTTPException(404, "Round not found")
+            raise HTTPException(404, ROUND_NOT_FOUND)
 
         # Update metadata fields
         meta_updates = {}
@@ -235,11 +163,16 @@ async def update_round(
 
         return updated
 
+    except HTTPException:
+        raise
     except NotFoundError:
-        raise HTTPException(404, "Round not found")
+        raise HTTPException(404, ROUND_NOT_FOUND)
+    except IntegrityError:
+        logger.warning("Update round rejected", exc_info=True)
+        raise HTTPException(422, ROUND_CHANGES_INVALID)
     except Exception:
         logger.exception("Update round error")
-        raise HTTPException(500, "Update failed. Please try again.")
+        raise HTTPException(500, ROUND_UPDATE_FAILED)
 
 
 @router.post("/{round_id}/link-course", response_model=RoundSummaryResponse)
@@ -261,14 +194,20 @@ async def link_course_to_round(
         # Fill course gaps from the round's par_played values
         round_ = await db.rounds.get_round(str(round_id))
         if not round_:
-            raise HTTPException(404, "Round not found")
+            raise HTTPException(404, ROUND_NOT_FOUND)
+        destination_course = await db.courses.get_course(str(req.course_id))
+        fill_destination_course = bool(
+            destination_course
+            and destination_course.user_id
+            and str(destination_course.user_id) == str(current_user.id)
+        )
 
         scan_holes = [
             {"hole_number": hs.hole_number, "par": hs.par_played, "handicap": hs.handicap_played}
             for hs in round_.hole_scores
             if hs.hole_number is not None and hs.par_played is not None
         ]
-        if scan_holes:
+        if scan_holes and fill_destination_course:
             await db.courses.fill_course_gaps(str(req.course_id), scan_holes)
 
         # If round carries tee details (user tee or linked course tee), merge them
@@ -299,7 +238,7 @@ async def link_course_to_round(
                     if v is not None
                 }
 
-        if source_tee_name:
+        if source_tee_name and fill_destination_course:
             await db.courses.fill_course_gaps(
                 str(req.course_id),
                 [],
@@ -315,13 +254,16 @@ async def link_course_to_round(
             user_id=str(current_user.id),
         )
         if not updated:
-            raise HTTPException(404, "Round not found")
+            raise HTTPException(404, ROUND_NOT_FOUND)
         return summarize_round(updated)
     except HTTPException:
         raise
+    except IntegrityError:
+        logger.warning("Link course rejected", exc_info=True)
+        raise HTTPException(422, ROUND_HOLES_DONT_MATCH_COURSE)
     except Exception:
         logger.exception("Link course error")
-        raise HTTPException(500, "Link failed. Please try again.")
+        raise HTTPException(500, ROUND_LINK_FAILED)
 
 
 @router.delete("/{round_id}", status_code=204)

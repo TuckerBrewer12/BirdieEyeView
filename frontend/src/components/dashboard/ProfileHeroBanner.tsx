@@ -3,6 +3,7 @@ import type { User } from "@/types/golf";
 interface ProfileHeroBannerProps {
   user: User | null;
   handicapIndex: number | null;
+  onHandicapClick?: () => void;
 }
 
 function formatHI(hi: number | null | undefined): string {
@@ -11,7 +12,7 @@ function formatHI(hi: number | null | undefined): string {
   return hi.toFixed(1);
 }
 
-export function ProfileHeroBanner({ user, handicapIndex }: ProfileHeroBannerProps) {
+export function ProfileHeroBanner({ user, handicapIndex, onHandicapClick }: ProfileHeroBannerProps) {
   const firstName = user?.name ? user.name.split(" ")[0] : "Golfer";
   const initials = user?.name
     ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -40,7 +41,11 @@ export function ProfileHeroBanner({ user, handicapIndex }: ProfileHeroBannerProp
         </div>
 
         {handicapIndex != null && (
-          <div className="flex flex-col items-start bg-gray-50 border border-gray-100 rounded-2xl p-4 min-w-[140px]">
+          <button
+            type="button"
+            onClick={onHandicapClick}
+            className="flex flex-col items-start bg-gray-50 border border-gray-100 rounded-2xl p-4 min-w-[140px] hover:bg-gray-100 hover:border-gray-200 transition-colors text-left"
+          >
             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
               Handicap
             </div>
@@ -48,7 +53,7 @@ export function ProfileHeroBanner({ user, handicapIndex }: ProfileHeroBannerProp
               {formatHI(handicapIndex)}
               <span className="text-sm font-semibold text-gray-400 tracking-wide">HCP</span>
             </div>
-          </div>
+          </button>
         )}
       </div>
     </div>

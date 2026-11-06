@@ -1,3 +1,5 @@
+import type { FailedScanAttempt } from "./scanReport";
+
 export interface ExtractedHoleScore {
   hole_number: number | null;
   strokes: number | null;
@@ -75,6 +77,8 @@ export interface ScanState {
   editedDate: string;
   editedTeeBox: string | null;
   error: string | null;
+  failedScan: FailedScanAttempt | null;
+  scanAttemptId: string | null;
   userContext: string;
   prefetchedOcrText: string | null;
   // Review step: user-selected course override
@@ -100,6 +104,8 @@ export const initialScanState: ScanState = {
   editedDate: "",
   editedTeeBox: null,
   error: null,
+  failedScan: null,
+  scanAttemptId: null,
   userContext: "",
   prefetchedOcrText: null,
   reviewCourseId: null,

@@ -1,46 +1,134 @@
+"""Export a player's analytics charts from PostgreSQL to PNG files.
+
+Each run writes to its own ``<outdir>/<player>/<timestamp>/`` folder, so files from earlier runs or
+other players never mix into a report. A chart is exported only when its own metric has data, and
+every figure is closed after saving, including when saving fails. "Overall" charts cover the loaded
+rounds (``--limit`` most recent).
+"""
+
 from __future__ import annotations
 
 import argparse
 import asyncio
+import re
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import Callable, List, Optional
 
+from analytics import eligibility as el
+from analytics import stats
 from analytics.visualizations import (
     plot_average_putts_by_hole,
     plot_average_score_relative_to_par_by_hole,
     plot_average_score_when_gir_vs_missed,
     plot_course_difficulty_profile_by_hole,
-    plot_gir_percentage_by_hole,
     plot_gir_comparison,
     plot_gir_per_round,
+    plot_gir_percentage_by_hole,
     plot_gir_vs_non_gir_score_distribution,
     plot_overall_gir_percentage,
     plot_overall_putts_per_gir,
     plot_putts_comparison,
+    plot_putts_per_gir,
     plot_putts_per_gir_comparison,
     plot_putts_per_gir_rate_per_round,
-    plot_putts_per_gir,
     plot_putts_per_round,
     plot_score_comparison,
-    plot_score_type_distribution_by_hole,
+    plot_score_trend,
     plot_score_trend_on_this_course,
-    plot_scrambling_comparison,
-    plot_scrambling_per_round,
+    plot_score_type_distribution_by_hole,
+    plot_score_type_distribution_per_round,
     plot_score_variance_by_hole,
     plot_scoring_by_par,
-    plot_score_trend,
-    plot_score_type_distribution_per_round,
     plot_scoring_vs_handicap,
+    plot_scrambling_comparison,
+    plot_scrambling_per_round,
     plot_three_putt_percentage_per_round,
     plot_three_putts_comparison,
     plot_three_putts_per_round,
 )
-from database.connection import DatabasePool
-from database.db_manager import DatabaseManager
 from models.round import Round
 
 
-def _primary_course_rounds(rounds: List[Round]) -> tuple[str, List[Round]] | None:
+# ---- availability: ask the metric itself whether it has anything to show
+
+def _any_complete(rounds: List[Round]) -> bool:
+    return bool(el.complete_rounds(rounds))
+
+
+def _has_putts(rounds: List[Round]) -> bool:
+    return any(row["three_putt_count"] is not None for row in stats.three_putts_per_round(rounds))
+
+
+def _has_round_putt_totals(rounds: List[Round]) -> bool:
+    return any(row["total_putts"] is not None for row in stats.putts_per_round(rounds))
+
+
+def _has_putts_per_gir(rounds: List[Round]) -> bool:
+    return stats.overall_putts_per_gir(rounds)["putts_per_gir"] is not None
+
+
+def _has_gir(rounds: List[Round]) -> bool:
+    return stats.overall_gir_percentage(rounds)["gir_percentage"] is not None
+
+
+def _has_scrambling(rounds: List[Round]) -> bool:
+    return stats.overall_scrambling(rounds)["opportunities"] > 0
+
+
+@dataclass(frozen=True)
+class Chart:
+    folder: str
+    name: str
+    plot: Callable
+    available: Callable[[List[Round]], bool]
+    course: bool = False  # plotted for the most-played course with its label
+
+
+CHARTS = [
+    Chart("round_trends", "score_trend", plot_score_trend, _any_complete),
+    Chart("round_comparison", "score_comparison", plot_score_comparison, _any_complete),
+    Chart("overall_player", "scoring_vs_handicap", plot_scoring_vs_handicap,
+          lambda r: bool(stats.scoring_vs_hole_handicap(r))),
+    Chart("overall_player", "scoring_by_par", plot_scoring_by_par, lambda r: bool(stats.scoring_by_par(r))),
+    Chart("round_trends", "score_type_distribution_per_round", plot_score_type_distribution_per_round,
+          lambda r: any(row["holes_counted"] for row in stats.score_type_distribution_per_round(r))),
+    Chart("round_trends", "putts_per_round", plot_putts_per_round, _has_round_putt_totals),
+    Chart("round_comparison", "putts_comparison", plot_putts_comparison, _has_round_putt_totals),
+    Chart("round_trends", "three_putts_per_round", plot_three_putts_per_round, _has_putts),
+    Chart("round_trends", "three_putt_percentage_per_round", plot_three_putt_percentage_per_round, _has_putts),
+    Chart("round_comparison", "three_putts_comparison", plot_three_putts_comparison, _has_putts),
+    Chart("round_trends", "putts_per_gir", plot_putts_per_gir, _has_putts_per_gir),
+    Chart("round_trends", "putts_per_gir_rate_per_round", plot_putts_per_gir_rate_per_round, _has_putts_per_gir),
+    Chart("round_comparison", "putts_per_gir_comparison", plot_putts_per_gir_comparison, _has_putts_per_gir),
+    Chart("overall_player", "overall_putts_per_gir", plot_overall_putts_per_gir, _has_putts_per_gir),
+    Chart("round_trends", "gir_per_round", plot_gir_per_round, _has_gir),
+    Chart("round_comparison", "gir_comparison", plot_gir_comparison, _has_gir),
+    Chart("overall_player", "gir_vs_non_gir_score_distribution", plot_gir_vs_non_gir_score_distribution, _has_gir),
+    Chart("overall_player", "overall_gir_percentage", plot_overall_gir_percentage, _has_gir),
+    Chart("round_trends", "scrambling_per_round", plot_scrambling_per_round, _has_scrambling),
+    Chart("round_comparison", "scrambling_comparison", plot_scrambling_comparison, _has_scrambling),
+    Chart("course_player", "average_score_relative_to_par_by_hole", plot_average_score_relative_to_par_by_hole,
+          lambda r: bool(stats.average_score_relative_to_par_by_hole(r)), course=True),
+    Chart("course_player", "gir_percentage_by_hole", plot_gir_percentage_by_hole,
+          lambda r: bool(stats.gir_percentage_by_hole(r)), course=True),
+    Chart("course_player", "average_putts_by_hole", plot_average_putts_by_hole,
+          lambda r: bool(stats.average_putts_by_hole(r)), course=True),
+    Chart("course_player", "score_type_distribution_by_hole", plot_score_type_distribution_by_hole,
+          lambda r: bool(stats.score_type_distribution_by_hole(r)), course=True),
+    Chart("course_player", "course_difficulty_profile_by_hole", plot_course_difficulty_profile_by_hole,
+          lambda r: bool(stats.course_difficulty_profile_by_hole(r)), course=True),
+    Chart("course_player", "average_score_when_gir_vs_missed", plot_average_score_when_gir_vs_missed,
+          lambda r: any(row["holes_counted"] for row in stats.average_score_when_gir_vs_missed(r)), course=True),
+    Chart("course_player", "score_variance_by_hole", plot_score_variance_by_hole,
+          lambda r: bool(stats.score_variance_by_hole(r)), course=True),
+    Chart("course_player", "score_trend_on_this_course", plot_score_trend_on_this_course, _any_complete, course=True),
+]
+
+
+def _primary_course_rounds(rounds: List[Round]) -> Optional[tuple[str, List[Round]]]:
+    """Rounds on the most-played linked course in the loaded rounds (ties: first seen)."""
     grouped: dict[str, tuple[str, List[Round]]] = {}
     for round_obj in rounds:
         if not round_obj.course:
@@ -51,106 +139,71 @@ def _primary_course_rounds(rounds: List[Round]) -> tuple[str, List[Round]] | Non
         if key not in grouped:
             grouped[key] = (round_obj.course.name or "Course", [])
         grouped[key][1].append(round_obj)
-
     if not grouped:
         return None
-
     _, (course_label, course_rounds) = max(grouped.items(), key=lambda item: len(item[1][1]))
     return course_label, course_rounds
 
 
+def _slug(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "player"
+
+
+def _save(fig, path: Path) -> None:
+    """Save then always close the figure, so a failed save doesn't leave it open."""
+    from analytics.visualizations import _load_plt
+
+    try:
+        fig.savefig(path, dpi=150)
+    except Exception as error:
+        raise RuntimeError(f"Could not save chart {path.name}: {error}") from error
+    finally:
+        _load_plt().close(fig)
+
+
+def export_charts(player_label: str, rounds: List[Round], outdir: Path, *, now: Optional[datetime] = None) -> List[Path]:
+    """Write every chart that has data into a new run folder and return the written paths."""
+    run_dir = Path(outdir) / _slug(player_label) / (now or datetime.now()).strftime("%Y%m%d-%H%M%S")
+    run_dir.mkdir(parents=True, exist_ok=False)
+    rounds = el.chronological(rounds)
+    course = _primary_course_rounds(rounds)
+
+    written: List[Path] = []
+    for chart in CHARTS:
+        chart_rounds = course[1] if chart.course and course else (None if chart.course else rounds)
+        if chart_rounds is None or not chart.available(chart_rounds):
+            print(f"Skipping {chart.name}: no data for this chart.")
+            continue
+        figure = chart.plot(chart_rounds, course_label=course[0]) if chart.course else chart.plot(chart_rounds)
+        folder = run_dir / chart.folder
+        folder.mkdir(parents=True, exist_ok=True)
+        path = folder / f"{chart.name}.png"
+        _save(figure[0], path)
+        written.append(path)
+    return written
+
+
+def _positive_int(value: str) -> int:
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be a positive number of rounds")
+    return number
+
+
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Generate analytics charts for a player from PostgreSQL data."
-    )
+    parser = argparse.ArgumentParser(description="Generate analytics charts for a player from PostgreSQL data.")
     parser.add_argument("--email", required=True, help="Player email in users.users")
-    parser.add_argument(
-        "--outdir",
-        default="analytics/output",
-        help="Directory where chart PNGs are written",
-    )
-    parser.add_argument(
-        "--limit",
-        type=int,
-        default=200,
-        help="Max rounds to load for the player",
-    )
-    parser.add_argument(
-        "--dsn",
-        default=None,
-        help="Optional PostgreSQL DSN. If omitted, uses connection defaults.",
-    )
+    parser.add_argument("--outdir", default="analytics/output",
+                        help="Base directory; each run writes to <outdir>/<player>/<timestamp>/")
+    parser.add_argument("--limit", type=_positive_int, default=200, help="Most recent rounds to load (positive)")
+    parser.add_argument("--dsn", default=None, help="Optional PostgreSQL DSN. If omitted, uses connection defaults.")
     return parser.parse_args()
 
 
-def _has_putt_data(rounds: List[Round]) -> bool:
-    for round_obj in rounds:
-        for score in round_obj.hole_scores:
-            if score.putts is not None:
-                return True
-    return False
-
-
-def _has_putts_per_gir_data(rounds: List[Round]) -> bool:
-    for round_obj in rounds:
-        for score in round_obj.hole_scores:
-            if score.green_in_regulation is True and score.putts is not None:
-                return True
-    return False
-
-
-def _has_gir_data(rounds: List[Round]) -> bool:
-    for round_obj in rounds:
-        for score in round_obj.hole_scores:
-            if score.green_in_regulation is not None:
-                return True
-    return False
-
-
-def _has_handicap_scoring_data(rounds: List[Round]) -> bool:
-    for round_obj in rounds:
-        if not round_obj.course:
-            continue
-        for score in round_obj.hole_scores:
-            if score.hole_number is None or score.strokes is None:
-                continue
-            hole = round_obj.course.get_hole(score.hole_number)
-            if hole and hole.par is not None and hole.handicap is not None:
-                return True
-    return False
-
-
-def _has_scrambling_data(rounds: List[Round]) -> bool:
-    for round_obj in rounds:
-        if not round_obj.course:
-            continue
-        for score in round_obj.hole_scores:
-            if (
-                score.hole_number is None
-                or score.strokes is None
-                or score.green_in_regulation is None
-            ):
-                continue
-            hole = round_obj.course.get_hole(score.hole_number)
-            if hole and hole.par is not None:
-                return True
-    return False
-
-
-def _has_par_scoring_data(rounds: List[Round]) -> bool:
-    for round_obj in rounds:
-        if not round_obj.course:
-            continue
-        for score in round_obj.hole_scores:
-            if score.hole_number is None or score.strokes is None:
-                continue
-            hole = round_obj.course.get_hole(score.hole_number)
-            if hole and hole.par in (3, 4, 5):
-                return True
-    return False
-
-
 async def _load_rounds(email: str, dsn: str | None, limit: int) -> tuple[str, List[Round]]:
+    from database.connection import DatabasePool
+    from database.db_manager import DatabaseManager
+
     pool = DatabasePool()
     await pool.initialize(dsn=dsn)
     db = DatabaseManager(pool.pool)
@@ -161,8 +214,7 @@ async def _load_rounds(email: str, dsn: str | None, limit: int) -> tuple[str, Li
         rounds = await db.rounds.get_rounds_for_user(user.id, limit=limit)
         if not rounds:
             raise RuntimeError(f"No rounds found for user: {email}")
-        rounds.sort(key=lambda r: r.date or 0)
-        return user.name or email, rounds
+        return user.name or email, el.chronological(rounds)
     finally:
         await pool.close()
 
@@ -170,187 +222,8 @@ async def _load_rounds(email: str, dsn: str | None, limit: int) -> tuple[str, Li
 async def main_async() -> None:
     args = _parse_args()
     player_label, rounds = await _load_rounds(args.email, args.dsn, args.limit)
-
-    outdir = Path(args.outdir)
-    outdir.mkdir(parents=True, exist_ok=True)
-    round_comparison_dir = outdir / "round_comparison"
-    round_trends_dir = outdir / "round_trends"
-    overall_player_dir = outdir / "overall_player"
-    course_player_dir = outdir / "course_player"
-    round_comparison_dir.mkdir(parents=True, exist_ok=True)
-    round_trends_dir.mkdir(parents=True, exist_ok=True)
-    overall_player_dir.mkdir(parents=True, exist_ok=True)
-    course_player_dir.mkdir(parents=True, exist_ok=True)
-
-    written: list[Path] = []
-
-    fig, _ = plot_score_trend(rounds)
-    score_path = round_trends_dir / "score_trend.png"
-    fig.savefig(score_path, dpi=150)
-    written.append(score_path)
-
-    fig, _, _ = plot_score_comparison(rounds)
-    score_compare_path = round_comparison_dir / "score_comparison.png"
-    fig.savefig(score_compare_path, dpi=150)
-    written.append(score_compare_path)
-
-    if _has_handicap_scoring_data(rounds):
-        fig, _ = plot_scoring_vs_handicap(rounds)
-        svh_path = overall_player_dir / "scoring_vs_handicap.png"
-        fig.savefig(svh_path, dpi=150)
-        written.append(svh_path)
-    else:
-        print("Skipping score-vs-handicap chart: missing par/handicap or strokes data.")
-
-    if _has_par_scoring_data(rounds):
-        fig, _ = plot_scoring_by_par(rounds)
-        sbp_path = overall_player_dir / "scoring_by_par.png"
-        fig.savefig(sbp_path, dpi=150)
-        written.append(sbp_path)
-    else:
-        print("Skipping scoring-by-par chart: missing par or strokes data.")
-
-    if _has_par_scoring_data(rounds):
-        fig, _ = plot_score_type_distribution_per_round(rounds)
-        std_path = round_trends_dir / "score_type_distribution_per_round.png"
-        fig.savefig(std_path, dpi=150)
-        written.append(std_path)
-    else:
-        print("Skipping score-type distribution chart: missing par or strokes data.")
-
-    if _has_putt_data(rounds):
-        fig, _ = plot_putts_per_round(rounds)
-        putts_path = round_trends_dir / "putts_per_round.png"
-        fig.savefig(putts_path, dpi=150)
-        written.append(putts_path)
-
-        fig, _ = plot_putts_comparison(rounds)
-        putts_compare_path = round_comparison_dir / "putts_comparison.png"
-        fig.savefig(putts_compare_path, dpi=150)
-        written.append(putts_compare_path)
-
-        fig, _ = plot_three_putts_per_round(rounds)
-        three_putts_path = round_trends_dir / "three_putts_per_round.png"
-        fig.savefig(three_putts_path, dpi=150)
-        written.append(three_putts_path)
-
-        fig, _ = plot_three_putt_percentage_per_round(rounds)
-        three_putts_pct_path = round_trends_dir / "three_putt_percentage_per_round.png"
-        fig.savefig(three_putts_pct_path, dpi=150)
-        written.append(three_putts_pct_path)
-
-        fig, _, _ = plot_three_putts_comparison(rounds)
-        three_putts_compare_path = round_comparison_dir / "three_putts_comparison.png"
-        fig.savefig(three_putts_compare_path, dpi=150)
-        written.append(three_putts_compare_path)
-    else:
-        print("Skipping putts chart: no putt values found.")
-
-    if _has_putts_per_gir_data(rounds):
-        fig, _ = plot_putts_per_gir(rounds)
-        ppg_path = round_trends_dir / "putts_per_gir.png"
-        fig.savefig(ppg_path, dpi=150)
-        written.append(ppg_path)
-
-        fig, _ = plot_putts_per_gir_rate_per_round(rounds)
-        ppg_rate_path = round_trends_dir / "putts_per_gir_rate_per_round.png"
-        fig.savefig(ppg_rate_path, dpi=150)
-        written.append(ppg_rate_path)
-
-        fig, _, _ = plot_putts_per_gir_comparison(rounds)
-        ppg_compare_path = round_comparison_dir / "putts_per_gir_comparison.png"
-        fig.savefig(ppg_compare_path, dpi=150)
-        written.append(ppg_compare_path)
-
-        fig, _ = plot_overall_putts_per_gir(rounds)
-        overall_ppg_path = overall_player_dir / "overall_putts_per_gir.png"
-        fig.savefig(overall_ppg_path, dpi=150)
-        written.append(overall_ppg_path)
-    else:
-        print("Skipping putts-per-GIR chart: missing GIR holes with putt data.")
-
-    if _has_gir_data(rounds):
-        fig, _ = plot_gir_per_round(rounds)
-        gir_path = round_trends_dir / "gir_per_round.png"
-        fig.savefig(gir_path, dpi=150)
-        written.append(gir_path)
-
-        fig, _, _ = plot_gir_comparison(rounds)
-        gir_compare_recent_path = round_comparison_dir / "gir_comparison.png"
-        fig.savefig(gir_compare_recent_path, dpi=150)
-        written.append(gir_compare_recent_path)
-
-        fig, _ = plot_gir_vs_non_gir_score_distribution(rounds)
-        gir_compare_path = overall_player_dir / "gir_vs_non_gir_score_distribution.png"
-        fig.savefig(gir_compare_path, dpi=150)
-        written.append(gir_compare_path)
-
-        fig, _ = plot_overall_gir_percentage(rounds)
-        overall_gir_path = overall_player_dir / "overall_gir_percentage.png"
-        fig.savefig(overall_gir_path, dpi=150)
-        written.append(overall_gir_path)
-    else:
-        print("Skipping GIR chart: no GIR values found.")
-
-    if _has_scrambling_data(rounds):
-        fig, _ = plot_scrambling_per_round(rounds)
-        scrambling_path = round_trends_dir / "scrambling_per_round.png"
-        fig.savefig(scrambling_path, dpi=150)
-        written.append(scrambling_path)
-
-        fig, _, _ = plot_scrambling_comparison(rounds)
-        scrambling_compare_path = round_comparison_dir / "scrambling_comparison.png"
-        fig.savefig(scrambling_compare_path, dpi=150)
-        written.append(scrambling_compare_path)
-    else:
-        print("Skipping scrambling chart: missing GIR/par/strokes data.")
-
-    primary_course = _primary_course_rounds(rounds)
-    if primary_course:
-        course_label, course_rounds = primary_course
-        fig, _ = plot_average_score_relative_to_par_by_hole(course_rounds, course_label=course_label)
-        course_hole_path = course_player_dir / "average_score_relative_to_par_by_hole.png"
-        fig.savefig(course_hole_path, dpi=150)
-        written.append(course_hole_path)
-
-        fig, _ = plot_gir_percentage_by_hole(course_rounds, course_label=course_label)
-        course_gir_hole_path = course_player_dir / "gir_percentage_by_hole.png"
-        fig.savefig(course_gir_hole_path, dpi=150)
-        written.append(course_gir_hole_path)
-
-        fig, _ = plot_average_putts_by_hole(course_rounds, course_label=course_label)
-        course_putts_hole_path = course_player_dir / "average_putts_by_hole.png"
-        fig.savefig(course_putts_hole_path, dpi=150)
-        written.append(course_putts_hole_path)
-
-        fig, _ = plot_score_type_distribution_by_hole(course_rounds, course_label=course_label)
-        course_score_type_hole_path = course_player_dir / "score_type_distribution_by_hole.png"
-        fig.savefig(course_score_type_hole_path, dpi=150)
-        written.append(course_score_type_hole_path)
-
-        fig, _ = plot_course_difficulty_profile_by_hole(course_rounds, course_label=course_label)
-        course_difficulty_path = course_player_dir / "course_difficulty_profile_by_hole.png"
-        fig.savefig(course_difficulty_path, dpi=150)
-        written.append(course_difficulty_path)
-
-        fig, _ = plot_average_score_when_gir_vs_missed(course_rounds, course_label=course_label)
-        course_gir_impact_path = course_player_dir / "average_score_when_gir_vs_missed.png"
-        fig.savefig(course_gir_impact_path, dpi=150)
-        written.append(course_gir_impact_path)
-
-        fig, _ = plot_score_variance_by_hole(course_rounds, course_label=course_label)
-        course_variance_path = course_player_dir / "score_variance_by_hole.png"
-        fig.savefig(course_variance_path, dpi=150)
-        written.append(course_variance_path)
-
-        fig, _ = plot_score_trend_on_this_course(course_rounds, course_label=course_label)
-        course_trend_path = course_player_dir / "score_trend_on_this_course.png"
-        fig.savefig(course_trend_path, dpi=150)
-        written.append(course_trend_path)
-    else:
-        print("Skipping course-hole chart: no rounds with course data.")
-
-    print(f"Generated {len(written)} chart(s) for {player_label}:")
+    written = export_charts(player_label, rounds, Path(args.outdir))
+    print(f"Generated {len(written)} chart(s) for {player_label} from its {len(rounds)} most recent rounds:")
     for path in written:
         print(path.resolve())
 

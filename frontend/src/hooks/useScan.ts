@@ -1,13 +1,21 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import type { CourseSummary } from "@/types/golf";
 import type { ScanState, ScanResult, ExtractedHoleScore, ManualTee } from "@/types/scan";
 import { initialScanState } from "@/types/scan";
 import { api } from "@/lib/api";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
-import { initializeScores, countBadScanNulls } from "@/lib/scanUtils";
+import { initializeScores } from "@/lib/scanUtils";
+import { failedScanAttempt, readScanFailure } from "@/lib/scanReports";
+import { useFailedScanReport } from "@/hooks/useFailedScanReport";
+import type { ScanFailure } from "@/types/scanReport";
+import {
+  fetchWithUserFacingError,
+  getUserFacingError,
+  parseJsonResponse,
+  USER_FACING_ERRORS,
+} from "@/lib/userFacingErrors";
 
 function normalizeCourseQueryForSearch(value: string): string {
   return value.trim().replace(/\s+/g, " ");
@@ -67,13 +75,17 @@ export function useScan(
   scanState: ScanState,
   setScanState: React.Dispatch<React.SetStateAction<ScanState>>
 ) {
-  const navigate = useNavigate();
   const { step, scanMode, selectedCourseId, selectedCourseName, file, result, editedScores, scoreMetadata, editedDate, editedTeeBox, userContext, prefetchedOcrText, reviewCourseId, reviewExternalCourseId, reviewCourseName, manualCourseHoles, manualCourseTees, savedRoundId } = scanState;
 
   const update = useCallback(
-    (patch: Partial<ScanState>) => setScanState((prev) => ({ ...prev, ...patch })),
+    (patch: Partial<ScanState>) => setScanState((prev) => ({
+      ...prev,
+      ...patch,
+      ...(patch.file !== undefined || patch.scanMode !== undefined ? { failedScan: null, scanAttemptId: null } : {}),
+    })),
     [setScanState]
   );
+  const report = useFailedScanReport(scanState.failedScan);
 
   // Transient UI state — fine to reset on navigation
   const [saving, setSaving] = useState(false);
@@ -180,6 +192,7 @@ export function useScan(
   const activePrefetchPromise = useRef<{ fileId: string; promise: Promise<string | null> } | null>(null);
 
   const handleFile = useCallback((f: File) => {
+    update({ failedScan: null, scanAttemptId: null, step: "upload", error: null, prefetchedOcrText: null });
     const fileId = `${f.name}-${f.size}-${Date.now()}`;
     activePrefetch.current = fileId;
     activePrefetchPromise.current = null;
@@ -250,7 +263,12 @@ export function useScan(
 
   const handleExtract = useCallback(async () => {
     if (!file) return;
-    update({ step: "processing", error: null });
+    const scanAttemptId = crypto.randomUUID();
+    update({ step: "processing", error: null, failedScan: null, scanAttemptId });
+    const finishAttempt = (patch: Partial<ScanState>) => setScanState((prev) =>
+      prev.scanAttemptId === scanAttemptId && prev.file === file ? { ...prev, ...patch } : prev,
+    );
+    let failure: ScanFailure = { category: "network_error", stage: "unknown", http_status: null };
 
     let ocrTextToUse = prefetchedOcrText;
     const inflight = activePrefetchPromise.current;
@@ -272,25 +290,19 @@ export function useScan(
     }
 
     try {
-      const res = await fetch(apiUrl("/api/scan/extract"), {
+      const res = await fetchWithUserFacingError(apiUrl("/api/scan/extract"), {
         method: "POST",
         credentials: "include",
         headers: withAuthHeaders(),
         body: formData,
-      });
+      }, USER_FACING_ERRORS.scan);
       if (!res.ok) {
-        const errText = await res.text();
-        let message = `Error ${res.status}`;
-        try {
-          const errJson = JSON.parse(errText);
-          if (errJson.detail) message = errJson.detail;
-        } catch {
-          if (errText) message = errText;
-        }
-        throw new Error(message);
+        failure = await readScanFailure(res);
+        throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.scan));
       }
 
-      const data: ScanResult = await res.json();
+      failure = { category: "invalid_response", stage: "unknown", http_status: res.status };
+      const data = await parseJsonResponse<ScanResult>(res, USER_FACING_ERRORS.scan);
       const { editedScores: initialScores, scoreMetadata: initialMeta } = initializeScores(
         data.round.hole_scores,
         data.fields_needing_review,
@@ -299,7 +311,7 @@ export function useScan(
       const inferredTeeBox =
         data.round.tee_box
         ?? (data.round.course?.tees?.length === 1 ? (data.round.course.tees[0].color ?? null) : null);
-      update({
+      finishAttempt({
         result: data,
         editedScores: initialScores,
         scoreMetadata: initialMeta,
@@ -326,9 +338,13 @@ export function useScan(
         setReviewCourseResults([]);
       }
     } catch (err) {
-      update({ error: err instanceof Error ? err.message : "Extraction failed", step: "upload" });
+      finishAttempt({
+        error: err instanceof Error ? err.message : "Extraction failed",
+        step: "upload",
+        failedScan: failedScanAttempt(file, failure),
+      });
     }
-  }, [file, selectedCourseId, userContext, prefetchedOcrText, update, handleReviewCourseQuery]);
+  }, [file, selectedCourseId, userContext, prefetchedOcrText, update, setScanState, handleReviewCourseQuery]);
 
   useEffect(() => {
     if (!file) {
@@ -446,7 +462,7 @@ export function useScan(
     update({ error: null });
 
     try {
-      const res = await fetch(apiUrl("/api/scan/save"), {
+      const res = await fetchWithUserFacingError(apiUrl("/api/scan/save"), {
         method: "POST",
         credentials: "include",
         headers: withAuthHeaders({ "Content-Type": "application/json" }),
@@ -497,19 +513,13 @@ export function useScan(
               hole_yardages: t.hole_yardages ?? {},
             })),
         }),
-      });
+      }, USER_FACING_ERRORS.saveRound);
 
       if (!res.ok) {
-        const errText = await res.text();
-        let message = "Failed to save round";
-        try {
-          const errJson = JSON.parse(errText);
-          if (errJson.detail) message = errJson.detail;
-        } catch { if (errText) message = errText; }
-        throw new Error(message);
+        throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.saveRound));
       }
 
-      const saved = await res.json();
+      const saved = await parseJsonResponse<{ id: string }>(res, USER_FACING_ERRORS.saveRound);
       setScanState({ ...initialScanState, step: "success", savedRoundId: saved.id });
       setSaving(false);
     } catch (err) {
@@ -518,9 +528,7 @@ export function useScan(
     }
     // Note: setSaving(false) is intentionally omitted on success because we
     // navigate away immediately; keeping it true prevents double-submit during navigation.
-  }, [result, userId, reviewCourseId, reviewExternalCourseId, reviewCourseName, editedTeeBox, editedDate, editedScores, update, setScanState, navigate]);
-
-  const badScanNullCount = countBadScanNulls(editedScores);
+  }, [result, userId, reviewCourseId, reviewExternalCourseId, reviewCourseName, editedTeeBox, editedDate, editedScores, update, setScanState]);
 
   return {
     // Derived state from scanState
@@ -532,7 +540,6 @@ export function useScan(
     result,
     editedScores,
     scoreMetadata,
-    badScanNullCount,
     editedDate,
     editedTeeBox,
     userContext,
@@ -543,6 +550,7 @@ export function useScan(
     manualCourseTees,
     savedRoundId,
     error: scanState.error,
+    report,
     preview: scanState.preview,
 
     // update helper

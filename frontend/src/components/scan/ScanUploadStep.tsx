@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import type { ScanState } from "@/types/scan";
 import type { CourseSummary } from "@/types/golf";
 import { formatCourseName } from "@/lib/courseName";
+import { ReportFailedScan } from "./ReportFailedScan";
+import type { FailedScanReportViewModel } from "@/types/scanReport";
 
 interface ScanUploadStepProps {
   scanMode: ScanState["scanMode"];
@@ -14,6 +16,7 @@ interface ScanUploadStepProps {
   file: File | null;
   preview: string | null;
   error: string | null;
+  report: FailedScanReportViewModel;
   dragOver: boolean;
   courseQuery: string;
   courseResults: CourseSummary[];
@@ -38,6 +41,7 @@ export function ScanUploadStep({
   file,
   preview,
   error,
+  report,
   dragOver,
   courseQuery,
   courseResults,
@@ -66,12 +70,13 @@ export function ScanUploadStep({
     <div>
       <PageHeader title="Scan Scorecard" subtitle="Choose how to process your scorecard" />
 
-      {error && (
+      {error && !report.available && (
         <div role="alert" className="mb-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300 flex items-center gap-2">
           <AlertTriangle size={16} />
           {error}
         </div>
       )}
+      <ReportFailedScan report={report} error={error} />
 
       {/* Mode selector */}
       <div className="grid grid-cols-2 gap-3 mb-6">

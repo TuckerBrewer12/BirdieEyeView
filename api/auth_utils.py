@@ -69,10 +69,14 @@ def get_cookie_secure_flag() -> bool:
 
 
 def get_cookie_samesite() -> str:
-    raw = os.environ.get("AUTH_COOKIE_SAMESITE", "lax").strip().lower()
+    # Default to "none" in production so the cookie is sent on cross-origin fetch
+    # requests (frontend domain ≠ API domain). Lax blocks cross-site AJAX, which
+    # causes "Not authenticated" on mobile Safari after login.
+    default = "none" if _is_prod_like_runtime() else "lax"
+    raw = os.environ.get("AUTH_COOKIE_SAMESITE", default).strip().lower()
     if raw in {"lax", "strict", "none"}:
         return raw
-    return "lax"
+    return default
 
 
 def get_email_verification_ttl_minutes() -> int:

@@ -34,6 +34,10 @@ button, a, [role="button"], label {
   cursor: pointer;
 }
 
+html {
+  background-color: #f8faf8;
+}
+
 body {
   margin: 0;
   font-family: "Inter", system-ui, -apple-system, sans-serif;
@@ -41,9 +45,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #f8faf8;
   color: #1a2e1a;
-  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
+:root.dark html,
 :root.dark body {
   background-color: #111213;
   color: #e6edf3;

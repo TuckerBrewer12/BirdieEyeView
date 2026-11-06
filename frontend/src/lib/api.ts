@@ -2,81 +2,61 @@ import type { DashboardData, RoundSummary, Round, CourseSummary, Course, User, M
 import type { AnalyticsData, AnalyticsFilters, CourseAnalyticsData, RoundComparison, GoalReport } from "@/types/analytics";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
-
-async function parseJSONBody<T>(res: Response): Promise<T> {
-  const text = await res.text();
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    if (/^\s*</.test(text)) {
-      throw new Error("API returned HTML instead of JSON. Check VITE_API_BASE_URL points to your backend (include https://).");
-    }
-    throw new Error("API returned an invalid JSON payload.");
-  }
-}
-
-async function parseErrorMessage(res: Response): Promise<string> {
-  const text = await res.text();
-  const fallback = `API error: ${res.status}`;
-  if (!text) return fallback;
-  try {
-    return JSON.parse(text).detail ?? fallback;
-  } catch {
-    if (/^\s*</.test(text)) {
-      return "API returned HTML instead of JSON. Check VITE_API_BASE_URL points to your backend (include https://).";
-    }
-    return text;
-  }
-}
+import {
+  fetchWithUserFacingError,
+  getUserFacingError,
+  parseJsonResponse,
+  USER_FACING_ERRORS,
+} from "@/lib/userFacingErrors";
 
 async function fetchJSON<T>(path: string): Promise<T> {
-  const res = await fetch(apiUrl(`/api${path}`), {
+  const res = await fetchWithUserFacingError(apiUrl(`/api${path}`), {
     credentials: "include",
     headers: withAuthHeaders(),
   });
   if (!res.ok) {
-    throw new Error(await parseErrorMessage(res));
+    throw new Error(await getUserFacingError(res));
   }
-  return parseJSONBody<T>(res);
+  return parseJsonResponse<T>(res);
 }
 
 async function postJSON<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(apiUrl(`/api${path}`), {
+  const res = await fetchWithUserFacingError(apiUrl(`/api${path}`), {
     method: "POST",
     credentials: "include",
     headers: withAuthHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    throw new Error(await parseErrorMessage(res));
+    throw new Error(await getUserFacingError(res));
   }
-  return parseJSONBody<T>(res);
+  return parseJsonResponse<T>(res);
 }
 
 async function putJSON<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(apiUrl(`/api${path}`), {
+  const res = await fetchWithUserFacingError(apiUrl(`/api${path}`), {
     method: "PUT",
     credentials: "include",
     headers: withAuthHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    throw new Error(await parseErrorMessage(res));
+    throw new Error(await getUserFacingError(res));
   }
-  return parseJSONBody<T>(res);
+  return parseJsonResponse<T>(res);
 }
 
 async function patchJSON<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(apiUrl(`/api${path}`), {
+  const res = await fetchWithUserFacingError(apiUrl(`/api${path}`), {
     method: "PATCH",
     credentials: "include",
     headers: withAuthHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    throw new Error(await parseErrorMessage(res));
+    throw new Error(await getUserFacingError(res));
   }
-  return parseJSONBody<T>(res);
+  return parseJsonResponse<T>(res);
 }
 
 export const api = {
@@ -103,14 +83,16 @@ export const api = {
   linkCourse: (roundId: string, courseId: string) =>
     postJSON<RoundSummary>(`/rounds/${roundId}/link-course`, { course_id: courseId }),
 
-  deleteRound: (roundId: string) =>
-    fetch(apiUrl(`/api/rounds/${roundId}`), {
+  deleteRound: async (roundId: string) => {
+    const res = await fetchWithUserFacingError(apiUrl(`/api/rounds/${roundId}`), {
       method: "DELETE",
       credentials: "include",
       headers: withAuthHeaders(),
-    }).then((res) => {
-      if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
-    }),
+    }, USER_FACING_ERRORS.deleteRound);
+    if (!res.ok) {
+      throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.deleteRound));
+    }
+  },
 
   getCourses: (userId?: string, limit = 50, offset = 0) => {
     const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });

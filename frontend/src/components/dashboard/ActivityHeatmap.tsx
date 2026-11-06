@@ -44,7 +44,7 @@ export function ActivityHeatmap({ rounds = [] }: ActivityHeatmapProps) {
     endDate.setDate(endDate.getDate() + offset);
 
     const daysOfHistory = 5 * 7; 
-    let currentDay = new Date(endDate);
+    const currentDay = new Date(endDate);
     currentDay.setDate(currentDay.getDate() - daysOfHistory + 1);
     currentDay.setHours(12, 0, 0, 0);
 

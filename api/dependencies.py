@@ -4,6 +4,9 @@ import os
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from api.messages import INVALID_OR_EXPIRED_TOKEN, NOT_AUTHENTICATED, USER_NOT_FOUND
+from api.error_responses import SERVICE_UNAVAILABLE
+
 
 def _env_bool(name: str, default: bool) -> bool:
     raw = os.environ.get(name)
@@ -52,7 +55,7 @@ def get_db(request: Request) -> DatabaseManager:
     """FastAPI dependency that provides the DatabaseManager."""
     db_manager = getattr(request.app.state, "db_manager", None)
     if db_manager is None:
-        raise HTTPException(503, "Database is unavailable. Please retry shortly.")
+        raise HTTPException(503, SERVICE_UNAVAILABLE)
     return db_manager
 
 
@@ -64,14 +67,14 @@ async def get_current_user(
     """Decode the Bearer JWT and return the authenticated User."""
     token = credentials.credentials if credentials else request.cookies.get(get_access_token_cookie_name())
     if not token:
-        raise HTTPException(401, "Not authenticated")
+        raise HTTPException(401, NOT_AUTHENTICATED)
     payload = decode_access_token(token)
     if not payload:
-        raise HTTPException(401, "Invalid or expired token")
+        raise HTTPException(401, INVALID_OR_EXPIRED_TOKEN)
     user_id = payload.get("sub")
     user = await db.users.get_user(user_id)
     if not user:
-        raise HTTPException(401, "User not found")
+        raise HTTPException(401, USER_NOT_FOUND)
     return user
 
 

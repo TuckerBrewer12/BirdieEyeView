@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codebase Recon"
+  short_description: "Map likely files for a change"
+  default_prompt: "Use $codebase-recon to inspect this project and write a branch-named recon note."

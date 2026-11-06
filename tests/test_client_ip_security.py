@@ -1,22 +1,12 @@
-from starlette.requests import Request
-
 from api.dependencies import client_ip
+from tests.helpers import make_http_request
 
 
-def _request_with_client(*, peer_host: str, x_forwarded_for: str | None = None) -> Request:
-    headers = []
-    if x_forwarded_for is not None:
-        headers.append((b"x-forwarded-for", x_forwarded_for.encode("utf-8")))
-    scope = {
-        "type": "http",
-        "method": "GET",
-        "path": "/",
-        "headers": headers,
-        "client": (peer_host, 12345),
-        "server": ("testserver", 80),
-        "scheme": "http",
-    }
-    return Request(scope)
+def _request_with_client(*, peer_host: str, x_forwarded_for: str | None = None):
+    headers = [] if x_forwarded_for is None else [
+        (b"x-forwarded-for", x_forwarded_for.encode("utf-8"))
+    ]
+    return make_http_request(headers=headers, client=(peer_host, 12345))
 
 
 def test_client_ip_uses_peer_by_default(monkeypatch):
@@ -38,4 +28,3 @@ def test_client_ip_ignores_forwarded_header_from_untrusted_peer(monkeypatch):
     monkeypatch.setenv("TRUSTED_PROXY_CIDRS", "10.0.0.0/8")
     request = _request_with_client(peer_host="198.51.100.9", x_forwarded_for="203.0.113.10")
     assert client_ip(request) == "198.51.100.9"
-

@@ -63,7 +63,6 @@ export function ScanPage({ userId }: { userId: string }) {
         onSelectReviewCourse={scan.selectReviewCourse}
         onUpdate={scan.update}
         scoreMetadata={scan.scoreMetadata}
-        badScanNullCount={scan.badScanNullCount}
         onScoreChange={scan.handleScoreChange}
         onGirChange={scan.handleGirChange}
         onSave={scan.handleSave}
@@ -84,6 +83,7 @@ export function ScanPage({ userId }: { userId: string }) {
         file={scan.file}
         preview={scan.preview}
         error={scan.error}
+        report={scan.report}
         dragOver={scan.dragOver}
         courseQuery={scan.courseQuery}
         courseResults={scan.courseResults}

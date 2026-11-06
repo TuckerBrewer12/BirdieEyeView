@@ -18,14 +18,13 @@ export function VerifyEmailPage() {
   const { verifyEmail } = useAuth();
   const [searchParams] = useSearchParams();
   const token = useMemo(() => (searchParams.get("token") ?? "").trim(), [searchParams]);
-  const [result, setResult] = useState<{ kind: "success" | "error"; message: string } | null>(null);
+  const [result, setResult] = useState<{ token: string; kind: "success" | "error"; message: string } | null>(null);
   const verificationRef = useRef<{ token: string; promise: Promise<string> } | null>(null);
 
   useEffect(() => {
     if (!token) {
       return;
     }
-    setResult(null);
     if (!verificationRef.current || verificationRef.current.token !== token) {
       verificationRef.current = { token, promise: verifyEmail(token) };
     }
@@ -34,11 +33,12 @@ export function VerifyEmailPage() {
     verificationRef.current.promise
       .then((msg) => {
         if (!active) return;
-        setResult({ kind: "success", message: msg });
+        setResult({ token, kind: "success", message: msg });
       })
       .catch((err) => {
         if (!active) return;
         setResult({
+          token,
           kind: "error",
           message: err instanceof Error ? err.message : "Could not verify email.",
         });
@@ -48,12 +48,13 @@ export function VerifyEmailPage() {
     };
   }, [token, verifyEmail]);
 
+  const currentResult = result?.token === token ? result : null;
   const status: "idle" | "verifying" | "success" | "error" =
-    !token ? "idle" : result ? result.kind : "verifying";
+    !token ? "idle" : currentResult ? currentResult.kind : "verifying";
   const message = !token
     ? "Missing verification token. Use the link from your email."
-    : result
-      ? result.message
+    : currentResult
+      ? currentResult.message
       : "Verifying your email…";
 
   const panelClass =

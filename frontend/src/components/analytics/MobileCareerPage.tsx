@@ -87,14 +87,11 @@ export function MobileCareerPage({
   scoreBreaksAbove70,
   scoreBreaks70AndBelow,
   totalHoles,
-  gaugeData: _gaugeData,
-  hiColor: _hiColor,
   hiDisplay,
   trendPrimary,
   successColor,
   neutralColor,
   gridColor,
-  mutedFill: _mutedFill,
   scoreColors,
 }: MobileCareerPageProps) {
   const [milestoneTab, setMilestoneTab] = useState<"career" | "putting" | "gir">("career");

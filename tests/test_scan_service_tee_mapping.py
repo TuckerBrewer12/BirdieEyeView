@@ -42,12 +42,13 @@ def test_canonicalize_played_tee_box_prefers_existing_course_tee_label_on_yardag
     assert canonical == "White"
 
 
-def test_canonicalize_played_tee_box_defaults_single_course_tee_when_unset() -> None:
+def test_canonicalize_played_tee_box_never_invents_a_selection() -> None:
     service = _svc()
     course = Course(
         name="Single Tee Course",
         tees=[Tee(color="Gold", hole_yardages={1: 300, 2: 320, 3: 150})],
     )
+    scan_tees = [TeeInput(color="Gold", hole_yardages={"1": 300, "2": 320, "3": 150})]
 
-    canonical = service._canonicalize_played_tee_box(course, None, [])
-    assert canonical == "Gold"
+    assert service._canonicalize_played_tee_box(course, None, []) is None
+    assert service._canonicalize_played_tee_box(course, None, scan_tees) is None
