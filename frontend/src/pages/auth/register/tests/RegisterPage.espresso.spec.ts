@@ -9,6 +9,7 @@ test("a new account is created with its handicap and home course, then waits for
   await register.open();
   await register.fillIn({ handicap: "+2.5" });
   await register.pickHomeCourse("Pebble", pebbleBeach.name!);
+  await register.seesHomeCourse(pebbleBeach.name!);
   await register.submit();
 
   await register.isWaitingForVerification("sam@example.com");
@@ -28,6 +29,7 @@ test("a home course changed back to none is not sent", async ({ register }) => {
   await register.open();
   await register.fillIn({});
   await register.pickHomeCourse("Pebble", pebbleBeach.name!);
+  await register.seesHomeCourse(pebbleBeach.name!);
   await register.changeHomeCourse();
   await register.submit();
 

@@ -5,6 +5,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Checkbox,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
@@ -59,11 +60,9 @@ export function PreferencesSection({
 
         <label className="flex items-center justify-between gap-3 py-3 last:pb-0">
           <span className="text-sm text-card-foreground">Get updates</span>
-          <input
-            type="checkbox"
+          <Checkbox
             checked={getUpdates}
             onChange={(event) => onGetUpdatesChange(event.target.checked)}
-            className="size-4 accent-primary"
           />
         </label>
       </CardContent>

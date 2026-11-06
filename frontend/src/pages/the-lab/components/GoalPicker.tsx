@@ -26,10 +26,9 @@ export function GoalPicker({ value, onChange, disabled, className }: GoalPickerP
         label={current?.label ?? "Pick a goal"}
         value={current ? String(current.value) : ""}
         options={OPTIONS}
-        disabled={disabled}
         onChange={(next) => {
           const goal = GOAL_OPTIONS.find((option) => String(option.value) === next);
-          if (goal) onChange(goal.value);
+          if (goal && !disabled) onChange(goal.value);
         }}
       />
     </div>

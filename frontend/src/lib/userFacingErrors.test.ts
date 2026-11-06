@@ -21,7 +21,8 @@ describe("messageFrom", () => {
 describe("fetchWithUserFacingError", () => {
   it("hides network failure details", async () => {
     const networkError = "getaddrinfo ENOTFOUND internal-api.example";
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error(networkError)));
+    // A fetch that fails the way a DNS lookup does.
+    vi.stubGlobal("fetch", () => Promise.reject(new Error(networkError)));
 
     await expect(
       fetchWithUserFacingError("/api/scan", undefined, USER_FACING_ERRORS.scan),

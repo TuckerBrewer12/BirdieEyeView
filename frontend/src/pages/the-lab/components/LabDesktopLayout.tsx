@@ -65,7 +65,7 @@ export function LabDesktopLayout({ vm }: { vm: LabPageViewModel }) {
           peak={vm.peak}
           goalLabel={label}
           scoringAverage={vm.scoringAverage}
-          bestScore={vm.bestScore}
+          lowestScore={vm.lowestScore}
           recentTrend={vm.recentTrend}
           comparison={vm.comparison}
           onComparisonChange={vm.setComparison}

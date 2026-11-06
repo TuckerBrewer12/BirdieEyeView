@@ -58,7 +58,7 @@ export function ScoringHeroCard({
               direction={change < 0 ? "down" : "up"}
               className="rounded-full px-2 py-0.5 data-[direction=down]:bg-score-birdie-muted data-[direction=up]:bg-score-bogey-muted"
             >
-              {Math.abs(change).toFixed(1)} vs L5
+              {formatOneDecimal(Math.abs(change))} vs L5
             </StatDelta>
           )}
         </div>

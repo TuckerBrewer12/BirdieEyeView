@@ -115,6 +115,12 @@ export class TheLabRobot {
     return this;
   }
 
+  /** A menu's options are showing. */
+  async seesMenuOpen(): Promise<this> {
+    await expect(this.page.getByRole("listbox")).toBeVisible();
+    return this;
+  }
+
   async pickGoal(label: string): Promise<this> {
     await this.pickFrom(this.goalPicker(), label);
     return this;

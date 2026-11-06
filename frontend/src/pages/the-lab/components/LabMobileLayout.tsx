@@ -67,7 +67,7 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
           peak={vm.peak}
           goalLabel={label}
           scoringAverage={vm.scoringAverage}
-          bestScore={vm.bestScore}
+          lowestScore={vm.lowestScore}
           recentTrend={vm.recentTrend}
           comparison={vm.comparison}
           onComparisonChange={vm.setComparison}
@@ -89,6 +89,7 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
             <ToggleGroup
               data-slot="lab-panels"
               aria-label="Performance panel"
+              variant="outline"
               size="sm"
               value={[vm.panel]}
               onValueChange={(values) => {

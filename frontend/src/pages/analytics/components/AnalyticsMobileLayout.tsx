@@ -43,6 +43,7 @@ export function AnalyticsMobileLayout({ vm, analytics }: AnalyticsMobileLayoutPr
       <section data-slot="analytics-sections" className="flex flex-col gap-3">
         <ToggleGroup
           aria-label="Section"
+          variant="outline"
           size="sm"
           value={[vm.tab]}
           onValueChange={(values) => {

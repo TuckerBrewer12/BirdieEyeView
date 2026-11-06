@@ -16,13 +16,30 @@ type ToggleGroupProps = ToggleGroupPrimitive.Props & {
   size?: SegmentedSize;
   /** Stretch to the row, the options sharing its width equally (a phone). */
   fill?: boolean;
+  /**
+   * @deprecated Ignored: every group is segmented. Only the page-section tabs
+   * still pass `variant` and `spacing`, until they move to `TabBar`.
+   */
+  variant?: "default" | "outline";
+  /** @deprecated Ignored, as `variant`. */
+  spacing?: number;
 };
 
 /**
  * A segmented control: two to four short options on a recessed track, one raised.
  * It switches a view in place; more options, or long labels, belong in a menu.
  */
-function ToggleGroup({ className, size = "default", fill = false, children, ...props }: ToggleGroupProps) {
+function ToggleGroup({
+  className,
+  size = "default",
+  fill = false,
+  variant,
+  spacing,
+  children,
+  ...props
+}: ToggleGroupProps) {
+  void variant;
+  void spacing;
   return (
     <ToggleGroupPrimitive
       data-slot="toggle-group"

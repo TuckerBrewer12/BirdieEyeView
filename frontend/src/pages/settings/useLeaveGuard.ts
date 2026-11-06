@@ -51,7 +51,7 @@ export function useLeaveGuard(active: boolean): LeaveGuard {
   const stay = useCallback(() => setPendingPath(null), []);
   const leave = useCallback(() => {
     setPendingPath(null);
-    if (pendingPath) navigate(pendingPath);
+    if (pendingPath) void navigate(pendingPath);
   }, [navigate, pendingPath]);
 
   return { blocked: pendingPath !== null, stay, leave };
