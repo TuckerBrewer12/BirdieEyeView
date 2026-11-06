@@ -55,6 +55,8 @@ class EvalCase:
     source_score_format: str
     user_context: str
     expected: Mapping[str, Mapping[int, int]]
+    # A layout the scanner doesn't support yet: still graded, but reported as a known gap.
+    known_gap: Optional[str] = None
 
     @property
     def expected_cells(self) -> int:
@@ -166,6 +168,11 @@ def load_cases(
                 f"{label}: source_score_format must be one of {sorted(SUPPORTED_SCORE_FORMATS)}"
             )
         user_context = _require_string(raw, "user_context", label)
+        # `user_context` is exactly what the app would send. People-only remarks go in `notes`,
+        # which the scanner never sees; `known_gap` names an unsupported layout.
+        for optional in ("notes", "known_gap"):
+            if optional in raw and (not isinstance(raw[optional], str) or not raw[optional].strip()):
+                raise EvalConfigurationError(f"{label}: {optional} must be a non-empty string when present")
 
         raw_expected = raw.get("expected")
         if not isinstance(raw_expected, dict) or not raw_expected:
@@ -212,6 +219,7 @@ def load_cases(
                 source_score_format=source_score_format,
                 user_context=user_context,
                 expected=expected,
+                known_gap=raw.get("known_gap"),
             )
         )
 
@@ -461,6 +469,8 @@ def render_report(run: SuiteRun) -> str:
         f"  {summary.at_least_90}/{summary.total} were 90% or better",
         f"  {summary.at_least_80}/{summary.total} were 80% or better",
         f"  {summary.failed}/{summary.total} failed below 80% or had an operational error",
+        f"  {summary.total - run.completed_cases}/{summary.total} had an operational error",
+        f"  {sum(1 for r in run.case_results if r.case.known_gap)}/{summary.total} are known scanner gaps",
         "",
         "Cases",
     ]
@@ -472,6 +482,8 @@ def render_report(run: SuiteRun) -> str:
             f"{result.matched_cells}/{result.total_cells} ({accuracy:.1f}%) | "
             f"extract {result.extraction_seconds:.2f}s | effective {result.effective_seconds:.2f}s"
         )
+        if result.case.known_gap:
+            lines.append(f"    KNOWN GAP: {result.case.known_gap}")
         if result.operational_error:
             lines.append(f"    {result.operational_error}")
         for mismatch in result.mismatches:
