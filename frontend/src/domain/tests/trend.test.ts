@@ -7,6 +7,7 @@ describe("trendPointsFrom", () => {
     const [first, second] = trendPointsFrom(populatedDashboard);
     expect(first).toEqual({
       roundIndex: 1,
+      roundId: "round-4",
       score: 85,
       toPar: 13,
       par: 72,

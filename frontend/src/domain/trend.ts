@@ -9,6 +9,8 @@ import type { DifferentialStatus } from "./handicap";
 /** One round on the score and handicap trend. */
 export interface RoundTrendPoint {
   roundIndex: number;
+  /** Which round this point is, so the server's best round can be found on the trend. */
+  roundId: string | null;
   score: number | null;
   toPar: number | null;
   /** The par the round's to par reads against: the holes played. */
@@ -39,6 +41,7 @@ export function trendPointsFrom(trends: ScoreAndHandicapTrends | null): RoundTre
     const handicap = trends.handicap_trend[i];
     return {
       roundIndex: row.round_index,
+      roundId: row.round_id,
       score: row.total_score,
       toPar: row.to_par,
       par: row.par,

@@ -81,6 +81,7 @@ export const EMPTY_COURSE_ANALYTICS: CourseAnalytics = {
 function scorePoint(row: CourseScoreTrendRowDto): RoundTrendPoint {
   return {
     roundIndex: row.round_index,
+    roundId: row.round_id,
     score: row.total_score,
     toPar: row.to_par,
     par: row.par,
@@ -97,6 +98,21 @@ function holeToPar(row: CourseHoleToParRowDto | CourseHoleDifficultyRowDto): Hol
 
 function scoreMix(row: CourseHoleScoreTypeRowDto): HoleScoreMix {
   return { hole: row.hole_number, rounds: row.sample_size, ...scoreMixFrom(row) };
+}
+
+/**
+ * Where the server's best round sits on the trend, oldest first.
+ * That round is the one ranked first: the newest full round by to par.
+ * Null when none of the rounds is ranked, or that round is not on the trend.
+ */
+export function bestRoundPlace(
+  rounds: Pick<RoundSummary, "id" | "bestRank">[],
+  trend: Pick<RoundTrendPoint, "roundId">[],
+): number | null {
+  const bestId = rounds.find((round) => round.bestRank === 1)?.id;
+  if (bestId == null) return null;
+  const place = trend.findIndex((point) => point.roundId === bestId);
+  return place >= 0 ? place : null;
 }
 
 export function courseAnalyticsFrom(dto: CourseAnalyticsDto): CourseAnalytics {

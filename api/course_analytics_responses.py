@@ -4,7 +4,7 @@ from typing import List
 
 from analytics import stats as analytics
 from analytics.dashboard import scoring_average
-from api.round_responses import round_summary
+from api.round_responses import round_list
 from api.schemas import CourseAnalyticsResponse
 from models import Round
 
@@ -17,7 +17,9 @@ def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResp
     trend_scores = [row["total_score"] for row in trend]
     nines = analytics.hole_average_nines(by_hole)
     # The best round as the round list ranks it, so a nine is never best over a full round.
-    best = analytics.best_round(list(reversed(rounds)))
+    # Newest first, so a tie goes to the newer round; the list's best rank names that same round.
+    listed = list(reversed(rounds))
+    best = analytics.best_round(listed)
     recent = scoring_average(rounds, window=5)
     return CourseAnalyticsResponse(
         course_id=course_id,
@@ -25,7 +27,7 @@ def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResp
         scoring_average=sum(scores) / len(scores) if scores else None,
         best_score=best.calculate_total_score() if best else None,
         worst_score=max(scores) if scores else None,
-        rounds=[round_summary(r) for r in reversed(rounds)],
+        rounds=round_list(listed),
         score_trend_on_course=trend,
         recent_average=analytics.round_half_up(recent) if recent is not None else None,
         recent_average_change=analytics.recent_average_change(trend_scores),

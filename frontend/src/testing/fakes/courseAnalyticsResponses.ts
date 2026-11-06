@@ -1,5 +1,5 @@
 import type { CourseAnalyticsDto } from "../../types/api";
-import { summaryResponse, type StoredRound } from "./roundResponses";
+import { bestRanks, summaryResponse, type StoredRound } from "./roundResponses";
 
 /**
  * The fake backend's copy of api/course_analytics_responses.py. The rounds-level figures (count,
@@ -42,19 +42,24 @@ export function courseAnalyticsResponse(
   stored: StoredRound[],
   holeStats: CourseHoleStats = NO_HOLE_STATS,
 ): CourseAnalyticsDto {
-  const played = stored
+  const oldestFirst = stored
     .filter((round) => round.course?.id === courseId)
-    .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))
-    .map(summaryResponse);
+    .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""));
+  // Newest first, so a tie goes to the newer round, as analytics.stats.best_round does.
+  const newestFirst = [...oldestFirst].reverse();
+  const ranks = bestRanks(newestFirst);
+  const rounds = newestFirst.map((round, i) => summaryResponse(round, ranks[i]));
+  const played = [...rounds].reverse();
   const scores = played.map((round) => round.total_score).filter((score): score is number => score != null);
+  const best = rounds.find((round) => round.best_rank === 1);
 
   return {
     course_id: courseId,
     rounds_played: played.length,
     scoring_average: scores.length > 0 ? scores.reduce((total, score) => total + score, 0) / scores.length : null,
-    best_score: scores.length > 0 ? Math.min(...scores) : null,
+    best_score: best?.total_score ?? null,
     worst_score: scores.length > 0 ? Math.max(...scores) : null,
-    rounds: [...played].reverse(),
+    rounds,
     // analytics.stats.score_trend_on_this_course: each round with the average over it and the four before.
     score_trend_on_course: played.map((round, i) => {
       const window = played
