@@ -64,6 +64,17 @@ The answer key grades final numeric values by field and hole number. To-par hand
 
 The report includes OCR/merge time per image, extraction and effective time per case, and total suite time. Provider latency varies across runs. Ordinary pytest uses deterministic provider replacements.
 
+### Run from a pull request
+
+In GitHub, create the two labels below if they are missing and configure `MISTRAL_API_KEY` and `GOOGLE_API_KEY` as repository Actions secrets. On a mergeable PR from a branch in the same repository, add one label to start the matching suite.
+
+| PR label | Suite |
+|---|---|
+| `run-scan-evals` | Large |
+| `run-quick-scan-eval` | Quick |
+
+The [live eval workflow](.github/workflows/scan-evals.yml) evaluates the PR merge commit, posts accuracy and timing on the PR, and uploads a detailed report to the Actions run. The check is optional for merging. Remove and re-add the label to request a new run after a push. A new request on the same PR supersedes a paid run already in progress.
+
 For production hardening (HTTPS, secret handling, DB network restrictions, security logging), see:
 
 - `SECURITY_DEPLOYMENT.md`
