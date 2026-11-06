@@ -13,6 +13,7 @@ export type CourseHoleStats = Omit<
   | "rounds_played"
   | "scoring_average"
   | "best_score"
+  | "best_round_id"
   | "worst_score"
   | "rounds"
   | "score_trend_on_course"
@@ -47,12 +48,15 @@ export function courseAnalyticsResponse(
     .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))
     .map(summaryResponse);
   const scores = played.map((round) => round.total_score).filter((score): score is number => score != null);
+  // analytics.stats.best_round: the newest round on the best score.
+  const best = [...played].reverse().find((round) => round.total_score === Math.min(...scores));
 
   return {
     course_id: courseId,
     rounds_played: played.length,
     scoring_average: scores.length > 0 ? scores.reduce((total, score) => total + score, 0) / scores.length : null,
-    best_score: scores.length > 0 ? Math.min(...scores) : null,
+    best_score: best?.total_score ?? null,
+    best_round_id: best?.id ?? null,
     worst_score: scores.length > 0 ? Math.max(...scores) : null,
     rounds: [...played].reverse(),
     // analytics.stats.score_trend_on_this_course: each round with the average over it and the four before.

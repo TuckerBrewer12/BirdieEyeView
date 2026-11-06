@@ -22,8 +22,8 @@ interface SVGScoreHandicapTrendProps {
    * average drawn as the lead line rather than behind dots that mark which rounds count.
    */
   plain?: boolean;
-  /** The best score, as the server found it. Its first round is marked in place of the latest. */
-  best?: number | null;
+  /** Where the server's best round sits in `data`. That round is marked in place of the latest. */
+  bestIndex?: number | null;
 }
 
 const L = tokens.chart.stack;
@@ -50,7 +50,7 @@ export function SVGScoreHandicapTrend({
   series = "both",
   compact = false,
   plain = false,
-  best = null,
+  bestIndex = null,
 }: SVGScoreHandicapTrendProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
 
@@ -117,7 +117,7 @@ export function SVGScoreHandicapTrend({
   const clearOfPar = (y: number) => parY == null || Math.abs(y - parY) > tokens.type.label.size;
 
   const lastScore = lastKnownIndex(scores);
-  const bestIndex = best == null ? -1 : scores.indexOf(best);
+  const best = bestIndex != null ? (scores[bestIndex] ?? null) : null;
   const lastHandicap = lastKnownIndex(handicaps);
 
   const indexAt = (e: PointerEvent<SVGSVGElement>) => {
@@ -282,7 +282,7 @@ export function SVGScoreHandicapTrend({
             );
           })}
 
-        {showScore && best != null && bestIndex >= 0 && (
+        {showScore && best != null && bestIndex != null && (
           <g data-slot="score-trend-best">
             <circle
               cx={x(bestIndex)}

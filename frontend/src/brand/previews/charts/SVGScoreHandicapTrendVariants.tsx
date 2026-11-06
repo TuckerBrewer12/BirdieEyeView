@@ -19,7 +19,7 @@ export default function SVGScoreHandicapTrendVariantsPreview() {
         <SVGScoreHandicapTrend data={trend} series="score" compact />
         <SVGScoreHandicapTrend data={trend} series="handicap" compact />
       </div>
-      <SVGScoreHandicapTrend data={course.scoreTrend} series="score" plain best={course.bestScore} />
+      <SVGScoreHandicapTrend data={course.scoreTrend} series="score" plain bestIndex={course.bestTrendIndex} />
       <SVGScoreHandicapTrend data={[]} />
     </>
   );

@@ -23,6 +23,7 @@ describe("useCoursePerformanceViewModel", () => {
 
     expect([result.current.scoringAverage, result.current.bestScore, result.current.worstScore]).toEqual([75, 72, 78]);
     expect(result.current.trend.map((row) => row.score)).toEqual([72, 78]);
+    expect(result.current.bestTrendIndex).toBe(0);
     expect(result.current.rounds.map((round) => round.id)).toEqual(["round-1", "round-2"]);
   });
 });

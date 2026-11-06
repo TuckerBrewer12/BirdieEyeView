@@ -39,6 +39,13 @@ def test_hero_figures_and_history_come_from_the_rounds():
     assert response.recent_average_change is None  # under ten scored rounds
 
 
+def test_best_round_id_names_the_newest_round_on_the_best_score():
+    rounds = [_round("r1", 1, 2), _round("r2", 8, 4), _round("r3", 15, 2)]  # oldest first
+    response = course_analytics("c1", rounds)
+
+    assert (response.best_score, response.best_round_id) == (74, "r3")
+
+
 def test_recent_average_change_reads_the_last_five_against_the_first_five():
     overs = [8, 6, 7, 5, 9, 4, 3, 5, 2, 1]  # first five average 7 over, last five 3
     rounds = [_round(f"r{i}", i + 1, over) for i, over in enumerate(overs)]

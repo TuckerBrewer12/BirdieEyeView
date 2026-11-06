@@ -24,6 +24,7 @@ def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResp
         rounds_played=len(rounds),
         scoring_average=sum(scores) / len(scores) if scores else None,
         best_score=best.calculate_total_score() if best else None,
+        best_round_id=best.id if best else None,
         worst_score=max(scores) if scores else None,
         rounds=[round_summary(r) for r in reversed(rounds)],
         score_trend_on_course=trend,

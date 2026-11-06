@@ -914,6 +914,8 @@ export interface components {
             average_score_relative_to_par_by_hole: components["schemas"]["CourseHoleToParRow"][];
             /** Average Score When Gir Vs Missed */
             average_score_when_gir_vs_missed: components["schemas"]["CourseGirImpactRow"][];
+            /** Best Round Id */
+            best_round_id: string | null;
             /** Best Score */
             best_score: number | null;
             /** Course Difficulty Profile By Hole */

@@ -930,6 +930,8 @@ class CourseAnalyticsResponse(ResponseModel):
     rounds_played: int
     scoring_average: Optional[float] = None
     best_score: Optional[int] = None
+    # The round best_score is from, so the score trend marks that round and not another on the same score.
+    best_round_id: Optional[str] = None
     worst_score: Optional[int] = None
     rounds: List[RoundSummaryResponse] = Field(default_factory=list)  # newest first
     score_trend_on_course: List[CourseScoreTrendRow] = Field(default_factory=list)

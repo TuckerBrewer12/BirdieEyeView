@@ -968,6 +968,17 @@
             "title": "Average Score When Gir Vs Missed",
             "type": "array"
           },
+          "best_round_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Round Id"
+          },
           "best_score": {
             "anyOf": [
               {
@@ -1112,6 +1123,7 @@
           "rounds_played",
           "scoring_average",
           "best_score",
+          "best_round_id",
           "worst_score",
           "rounds",
           "score_trend_on_course",

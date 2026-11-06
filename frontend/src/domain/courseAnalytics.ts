@@ -38,6 +38,8 @@ export interface CourseAnalytics {
   roundsPlayed: number;
   scoringAverage: number | null;
   bestScore: number | null;
+  /** Where the server's best round sits on `scoreTrend`. Null with no scored round. */
+  bestTrendIndex: number | null;
   worstScore: number | null;
   /** The golfer's rounds here, newest first. */
   rounds: RoundSummary[];
@@ -63,6 +65,7 @@ export const EMPTY_COURSE_ANALYTICS: CourseAnalytics = {
   roundsPlayed: 0,
   scoringAverage: null,
   bestScore: null,
+  bestTrendIndex: null,
   worstScore: null,
   rounds: [],
   scoreTrend: [],
@@ -100,10 +103,12 @@ function scoreMix(row: CourseHoleScoreTypeRowDto): HoleScoreMix {
 }
 
 export function courseAnalyticsFrom(dto: CourseAnalyticsDto): CourseAnalytics {
+  const bestTrendIndex = dto.score_trend_on_course.findIndex((row) => row.round_id != null && row.round_id === dto.best_round_id);
   return {
     roundsPlayed: dto.rounds_played,
     scoringAverage: dto.scoring_average,
     bestScore: dto.best_score,
+    bestTrendIndex: bestTrendIndex >= 0 ? bestTrendIndex : null,
     worstScore: dto.worst_score,
     rounds: dto.rounds.map(Round.fromSummary),
     scoreTrend: dto.score_trend_on_course.map(scorePoint),

@@ -9,6 +9,8 @@ export interface CoursePerformanceViewModel {
   worstScore: number | null;
   /** Every round here, oldest first. The chart plots the scored ones. */
   trend: RoundTrendPoint[];
+  /** Where the server's best round sits on `trend`, for the chart to mark. */
+  bestTrendIndex: number | null;
   /** The last five rounds' average and its change on the first five, as the server sent them. */
   recentAverage: number | null;
   recentAverageChange: number | null;
@@ -30,6 +32,7 @@ export function useCoursePerformanceViewModel(
     bestScore: analytics.bestScore,
     worstScore: analytics.worstScore,
     trend: analytics.scoreTrend,
+    bestTrendIndex: analytics.bestTrendIndex,
     recentAverage: analytics.recentAverage,
     recentAverageChange: analytics.recentAverageChange,
     rounds: analytics.rounds,
