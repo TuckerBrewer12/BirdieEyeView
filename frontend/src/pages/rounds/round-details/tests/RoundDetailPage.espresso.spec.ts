@@ -4,34 +4,88 @@ import {
   halfMoonBayCourse,
   halfMoonBayRound,
   pebbleBeachCourse,
+  ratedHalfMoonBayCourse,
+  ratedHalfMoonBayRound,
   scannedRound,
 } from "../../../../testing/fixtures/roundDetails";
-import { populatedRounds } from "../../../../testing/fixtures/rounds";
+import { storedRounds } from "../../../../testing/fixtures/rounds";
 
 test("shows the course name and score", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.seesCourse("Half Moon Bay");
 });
 
+test("shows the net score the server works out off the golfer's index", async ({ roundDetail }) => {
+  await roundDetail.open(ratedHalfMoonBayRound, { fullCourses: [ratedHalfMoonBayCourse] });
+  await roundDetail.seesScore(78);
+  await roundDetail.seesNet(66, 12);
+});
+
+test("a hole cleared in edit mode takes the net score away until it is saved", async ({ roundDetail }) => {
+  await roundDetail.open(ratedHalfMoonBayRound, { fullCourses: [ratedHalfMoonBayCourse] });
+  await roundDetail.seesNet(66, 12);
+  await roundDetail.tapEdit();
+  await roundDetail.clearStrokes(1);
+  await roundDetail.seesNoNet();
+});
+
 test("edit then cancel returns to the view actions", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapEdit();
   await roundDetail.tapCancelEdit();
+  await roundDetail.seesViewActions();
+});
+
+test("a hole's score typed in edit mode is kept after saving", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.seesScore(78);
+  await roundDetail.tapEdit();
+  await roundDetail.typeStrokes(1, 7);
+  await roundDetail.tapSave();
+  await roundDetail.seesScore(80);
+});
+
+test("a hole's score cleared in edit mode stays cleared after saving", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.seesScore(78);
+  await roundDetail.tapEdit();
+  await roundDetail.clearStrokes(1);
+  await roundDetail.tapSave();
+  await roundDetail.seesScore(73);
+});
+
+test("a tee picked in edit mode is kept after saving", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.seesTee("Blue");
+  await roundDetail.tapEdit();
+  await roundDetail.tapTee("White");
+  await roundDetail.tapSave();
+  await roundDetail.seesTee("White");
+});
+
+test("a tee typed on a round with no course tees is kept after saving", async ({ roundDetail }) => {
+  await roundDetail.open(scannedRound);
+  await roundDetail.tapEdit();
+  await roundDetail.typeTee("White");
+  await roundDetail.tapSave();
+  await roundDetail.seesTee("White");
 });
 
 test("delete confirm then cancel leaves the round", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapDelete();
+  await roundDetail.seesDeleteConfirm();
   await roundDetail.cancelDelete();
   await roundDetail.seesCourse("Half Moon Bay");
 });
 
 test("delete confirm then yes returns to the list", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, {
-    rounds: populatedRounds,
+    rounds: storedRounds,
     fullCourses: [halfMoonBayCourse],
   });
   await roundDetail.tapDelete();
+  await roundDetail.seesDeleteConfirm();
   await roundDetail.confirmDelete();
   await roundDetail.isAtRounds();
 });

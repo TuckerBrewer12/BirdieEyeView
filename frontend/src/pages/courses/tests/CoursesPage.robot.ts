@@ -1,6 +1,6 @@
 import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
-import type { CourseSummary } from "../../../types/golf";
+import type { CourseSummaryDto } from "../../../types/api";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 
@@ -20,7 +20,7 @@ export class CoursesRobot {
   }
 
   async open(
-    courses: CourseSummary[],
+    courses: CourseSummaryDto[],
     seed: Omit<FakeBackendSeed, "courses"> = {},
   ): Promise<this> {
     await FakeSession.install(this.page, { courses, ...seed });

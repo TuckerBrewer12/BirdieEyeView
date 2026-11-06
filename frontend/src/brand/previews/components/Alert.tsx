@@ -1,4 +1,4 @@
-import { CircleAlert, Info } from "lucide-react";
+import { CircleAlert, CircleCheck, Info } from "lucide-react";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/brand/components/Alert";
 import { Button } from "@/brand/components/Button";
 
@@ -8,6 +8,13 @@ export default function AlertPreview() {
       <Alert variant="destructive">
         <AlertDescription>
           Could not link that round to the selected course.
+        </AlertDescription>
+      </Alert>
+
+      <Alert variant="success" role="status">
+        <CircleCheck />
+        <AlertDescription>
+          If this account exists, a password reset link has been sent.
         </AlertDescription>
       </Alert>
 

@@ -1,35 +1,85 @@
-export { SCORE_KINDS, scoreKind, strokesToPar } from "./score";
-export type { ScoreKind } from "./score";
+export {
+  SCORE_KINDS,
+  formatAverageToPar,
+  roundAverageToPar,
+  playedScoreKinds,
+  scoreKind,
+  scoreKindCountLabel,
+  scoreMixFrom,
+  strokesToPar,
+  toParLabel,
+} from "./score";
+export type { ScoreKind, ScoreMix, ScoreTypeShares } from "./score";
 
-export { GOAL_OPTIONS, GOAL_BENCHMARK, HANDICAP_BENCHMARK } from "./benchmark";
-export type { BenchmarkProfile, ComparisonTargetValue } from "./benchmark";
+export {
+  GOAL_OPTIONS,
+  COMPARISON_HANDICAPS,
+  TOUR_SHORT_GAME,
+  benchmarkComparisonFrom,
+  benchmarkShapeFrom,
+  goalAttemptsFrom,
+  goalScoreToBreak,
+  goalTargetLabel,
+} from "./benchmark";
+export type {
+  BenchmarkComparison,
+  BenchmarkShape,
+  BenchmarkTarget,
+  ComparisonTargetValue,
+  GoalAttempt,
+  ParTypeComparison,
+  ParTypeVerdict,
+} from "./benchmark";
 
 export { buildRadarData } from "./radar";
 export type { RadarEntry } from "./radar";
 
-export {
-  FRONT_HOLES,
-  BACK_HOLES,
-  ALL_HOLES,
-  getTee,
-  getHole,
-  coursePar,
-  teeColors,
-  teeYards,
-  teeYardsForHoles,
-  longestTee,
-} from "./course";
-export type { YardageSource } from "./course";
+export { courseSummaryFrom, formatCourseName, getTee, teeColors } from "./course";
+export type { CourseSummary } from "./course";
+
+export { EMPTY_COURSE_ANALYTICS, courseAnalyticsFrom } from "./courseAnalytics";
+export type {
+  CourseAnalytics,
+  HoleFigure,
+  HoleScoreMix,
+  HoleToPar,
+  NineAverages,
+  ScorePoint,
+} from "./courseAnalytics";
+
+export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekdayDay, isoDay, parseDay } from "./date";
+export type { DayParts } from "./date";
 
 export {
-  courseHandicap,
-  ratedCourseHandicap,
-  netScore,
-  formatHandicapIndex,
-} from "./handicap";
+  formatFileSize,
+  formatOneDecimal,
+  formatPercent,
+  formatSignedOneDecimal,
+  formatWhole,
+  pluralNoun,
+  pluralize,
+} from "./format";
+
+export { roundShareMessage } from "./share";
+export type { ShareMessage } from "./share";
+
+export { formatHandicapIndex, formatCourseHandicap } from "./handicap";
 
 export { Round } from "./round";
-export type { HoleScore, Nine, RoundCourse, ScoreCounts, StrokeOverrides } from "./round";
+export type {
+  CourseEdit,
+  HoleEdits,
+  HoleScore,
+  HoleSummary,
+  Nine,
+  RoundDetail,
+  RoundEdits,
+  RoundSummary,
+} from "./round";
 
-export { activityDays } from "./activity";
-export type { ActivityDay } from "./activity";
+export type { AnalyticsFilters } from "./analyticsFilters";
+
+export { shortGamePointsFrom, trendPointsFrom } from "./trend";
+export type { RoundTrendPoint, ShortGamePoint } from "./trend";
+
+export { strokesToCheck } from "./scan";

@@ -10,6 +10,8 @@ export default function HoleScoreBarsPreview() {
       <HoleScoreBars holes={overPar.holes} />
       <HoleScoreBars holes={best.holes} />
       <HoleScoreBars holes={overPar.frontNine.holes} />
+      <HoleScoreBars holes={overPar.frontNine.holes} variant="profile" />
+      <HoleScoreBars holes={best.backNine.holes} variant="profile" />
     </>
   );
 }

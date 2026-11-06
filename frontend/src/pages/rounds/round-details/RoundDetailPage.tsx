@@ -1,20 +1,26 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Link2 } from "lucide-react";
-import { ShareCard } from "@/components/share/ShareCard";
-import { useShareRound } from "@/hooks/useShareRound";
+import { useShareRound } from "@/platform/useShareRound";
+import { roundShareMessage } from "@/domain/share";
 import {
   Alert,
   AlertDescription,
   Button,
+  Card,
+  CardContent,
   CourseLinkSearch,
+  Input,
   LoadingState,
+  RoundFlowChart,
+  RoundScorecard,
+  RoundShareCard,
   SectionLabel,
+  ToggleGroup,
+  ToggleGroupItem,
 } from "@/brand";
 import { LinkCoursePanel } from "../components/LinkCoursePanel";
 import { RoundComparisonSection } from "./components/RoundComparisonSection";
 import { RoundDetailHeader } from "./components/RoundDetailHeader";
-import { ScorecardGrid } from "@/components/round-detail/ScorecardGrid";
-import { RoundFlowTimeline } from "@/components/analytics/RoundFlowTimeline";
 import { RoundActions } from "./RoundActions";
 import { useRoundDetailPageViewModel } from "./useRoundDetailPageViewModel";
 
@@ -27,7 +33,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   if (viewModel.loading) {
     return <LoadingState>Loading round...</LoadingState>;
   }
-  if (viewModel.loadError || !viewModel.round || !viewModel.played) {
+  if (viewModel.loadError || !viewModel.played) {
     return (
       <Alert variant="destructive">
         <AlertDescription>{viewModel.loadError ?? "Could not load this round."}</AlertDescription>
@@ -35,14 +41,14 @@ export function RoundDetailPage({ userId }: { userId: string }) {
     );
   }
 
-  const round = viewModel.round;
   const played = viewModel.played;
   const editor = viewModel.editor;
 
   return (
     <div>
-      <div className="pointer-events-none fixed -left-[9999px] top-0">
-        <ShareCard ref={shareCardRef} round={round} courseName={viewModel.courseName} />
+      {/* Rendered just off the right edge, so the share button can capture it as an image. */}
+      <div aria-hidden className="pointer-events-none fixed top-0 left-full">
+        <RoundShareCard ref={shareCardRef} round={played} />
       </div>
 
       {viewModel.actionError && (
@@ -60,17 +66,16 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         onEdit={viewModel.enterEditMode}
         onSave={editor.save}
         onCancelEdit={editor.cancel}
-        onShare={() => shareRound(round, viewModel.courseName)}
+        onShare={() => void shareRound(roundShareMessage(played))}
         onDelete={viewModel.requestDelete}
-        onConfirmDelete={() => viewModel.confirmDeleteRound(() => navigate("/rounds"))}
+        onConfirmDelete={() => viewModel.confirmDeleteRound(() => void navigate("/rounds"))}
         onCancelDelete={viewModel.cancelDelete}
-        onBack={() => navigate(-1)}
+        onBack={() => void navigate(-1)}
       />
 
       <RoundDetailHeader
         round={played}
         teeRating={viewModel.teeRating}
-        courseHandicap={viewModel.courseHandicap}
       />
 
       {viewModel.showLinkButton && (
@@ -113,6 +118,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
             customName={editor.customName}
             onClear={editor.changeCourse}
             clearLabel="Change course"
+            focusOnOpen
           />
           {editor.playedNameToKeep && (
             <Button
@@ -124,30 +130,60 @@ export function RoundDetailPage({ userId }: { userId: string }) {
               Keep "{editor.playedNameToKeep}" without linking →
             </Button>
           )}
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-xs font-semibold text-muted-foreground">Tee</span>
+            {editor.availableTees.length > 0 ? (
+              <ToggleGroup
+                variant="outline"
+                size="sm"
+                aria-label="Tee"
+                value={editor.teeBox ? [editor.teeBox] : []}
+                onValueChange={(values) => editor.setTeeBox(values[0] ?? "")}
+              >
+                {editor.availableTees.map((color) => (
+                  <ToggleGroupItem key={color} value={color}>
+                    {color}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            ) : (
+              <Input
+                aria-label="Tee"
+                autoComplete="off"
+                placeholder="e.g. White"
+                value={editor.teeBox}
+                onChange={(e) => editor.setTeeBox(e.target.value)}
+                className="w-28"
+              />
+            )}
+          </div>
         </div>
       )}
 
       <div className={!editor.editing ? "mt-2" : ""}>
-        <ScorecardGrid
-          round={round}
-          editMode={editor.editing}
-          editedScores={editor.scores}
-          editedTeeBox={editor.teeBox}
-          availableTees={editor.availableTees}
-          onScoreChange={editor.setScore}
-          onTeeBoxChange={editor.setTeeBox}
-          onGirChange={editor.setGir}
+        <RoundScorecard
+          round={played}
+          teeBox={editor.activeTeeBox}
+          edits={
+            editor.editing
+              ? {
+                  onStrokesChange: (hole, strokes) => editor.setScore(hole, "strokes", strokes),
+                  onPuttsChange: (hole, putts) => editor.setScore(hole, "putts", putts),
+                  onGirChange: editor.setGir,
+                }
+              : undefined
+          }
         />
       </div>
 
       {viewModel.showMomentum && (
         <div className="mt-6">
           <SectionLabel>Momentum</SectionLabel>
-          <div className="overflow-x-auto rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <div className="min-w-[720px]">
-              <RoundFlowTimeline round={round} />
-            </div>
-          </div>
+          <Card>
+            <CardContent>
+              <RoundFlowChart round={played} />
+            </CardContent>
+          </Card>
         </div>
       )}
 

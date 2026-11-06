@@ -4,6 +4,7 @@ import {
   Collapse,
   Collection,
   LoadingState,
+  PageHeader,
   PageTitle,
   RoundPreview,
   SearchField,
@@ -11,14 +12,13 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { formatCourseName } from "@/lib/courseName";
-import { pluralize } from "@/lib/pluralize";
-import type { Round } from "@/domain";
+import { formatCourseName } from "@/domain/course";
+import { pluralize } from "@/domain/format";
+import type { RoundSummary } from "@/domain";
 import { LinkCoursePanel } from "./components/LinkCoursePanel";
 import { useRoundsPageViewModel } from "./useRoundsPageViewModel";
 
-function linkTitleFor(round: Round): string {
+function linkTitleFor(round: RoundSummary): string {
   return `Link "${round.course?.name ? formatCourseName(round.course.name) : "this round"}" to a saved course`;
 }
 
@@ -34,7 +34,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
   return (
     <div>
-      <PageHeader title="Rounds" subtitle={`${pluralize(viewModel.rounds.length, "round")} played`} scrollThreshold={100} />
+      <PageHeader title="Rounds" subtitle={`${pluralize(viewModel.rounds.length, "round")} played`} revealAt={100} />
 
       <div className="flex flex-col gap-2.5 pb-6">
 
@@ -61,7 +61,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
         </ToggleGroup>
 
         <div className="flex items-center justify-between px-1 pt-0.5">
-          <span className="text-[13px] font-bold text-foreground">
+          <span className="text-body font-bold text-foreground">
             {pluralize(viewModel.filteredRounds.length, "round")}
           </span>
           <SortControl
@@ -85,7 +85,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
                 round={r}
                 onClick={() => {
                   if (viewModel.isLinkOpen(r.id)) return;
-                  navigate(`/rounds/${r.id}`);
+                  void navigate(`/rounds/${r.id}`);
                 }}
                 onLinkClick={() => viewModel.toggleLink(r.id)}
               />

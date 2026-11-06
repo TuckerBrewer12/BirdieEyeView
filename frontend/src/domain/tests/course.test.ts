@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
-import type { Course, Tee } from "@/types/golf";
+import type { CourseDto } from "@/types/api";
+import { courseResponse, type StoredCourse, type StoredTee } from "@/testing/fakes/courseResponses";
 import {
-  coursePar,
+  chooseCompatibleTee,
+  courseSummaryFrom,
+  extractTeeColorToken,
   getHole,
   getTee,
-  longestTee,
   teeColors,
-  teeYards,
+  teesByLength,
 } from "../course";
 
-const white: Tee = {
+const white: StoredTee = {
   color: "White",
   total_yardage: 6200,
   hole_yardages: { 1: 350, 2: 400 },
@@ -17,7 +19,7 @@ const white: Tee = {
   course_rating: 71.2,
 };
 
-const blue: Tee = {
+const blue: StoredTee = {
   color: "Blue",
   total_yardage: null,
   hole_yardages: { 1: 370, 2: 430 },
@@ -25,8 +27,8 @@ const blue: Tee = {
   course_rating: 72.4,
 };
 
-function course(overrides: Partial<Course> = {}): Course {
-  return {
+function course(overrides: Partial<StoredCourse> = {}): CourseDto {
+  return courseResponse({
     id: "c1",
     name: "Test",
     location: null,
@@ -37,7 +39,7 @@ function course(overrides: Partial<Course> = {}): Course {
     ],
     tees: [white, blue],
     ...overrides,
-  };
+  });
 }
 
 describe("getTee / getHole", () => {
@@ -53,41 +55,50 @@ describe("getTee / getHole", () => {
   });
 });
 
-describe("coursePar", () => {
-  it("prefers the stored par", () => {
-    expect(coursePar(course({ par: 71 }))).toBe(71);
-  });
-
-  it("sums hole pars when stored par is missing and every hole has par", () => {
-    expect(coursePar(course({ par: null }))).toBe(9);
-  });
-
-  it("returns null when a hole par is missing", () => {
-    expect(
-      coursePar(
-        course({
-          par: null,
-          holes: [
-            { number: 1, par: 4, handicap: 1 },
-            { number: 2, par: null, handicap: 2 },
-          ],
-        }),
-      ),
-    ).toBeNull();
-  });
-});
-
-describe("teeYards / longestTee", () => {
-  it("uses stored yardage, then the hole-yardage sum", () => {
-    expect(teeYards(white)).toBe(6200);
-    expect(teeYards(blue)).toBe(800);
-  });
-
-  it("picks the longest tee", () => {
-    expect(longestTee(course())?.color).toBe("White");
+describe("teesByLength", () => {
+  it("puts the longest tee first", () => {
+    expect(teesByLength(course()).map((tee) => tee.color)).toEqual(["White", "Blue"]);
+    expect(teesByLength(course({ tees: [blue, white] })).map((tee) => tee.color)).toEqual(["White", "Blue"]);
   });
 
   it("lists tee colors", () => {
     expect(teeColors(course())).toEqual(["White", "Blue"]);
+  });
+
+  it("reads the colour word in a tee's name", () => {
+    expect(extractTeeColorToken("Blue tees")).toBe("blue");
+    expect(extractTeeColorToken("championship")).toBeNull();
+  });
+
+  it("matches an exact tee, then the same colour word", () => {
+    expect(chooseCompatibleTee("Blue", ["Blue", "White"])).toBe("Blue");
+    expect(chooseCompatibleTee("blue tees", ["Blue", "White"])).toBe("Blue");
+    expect(chooseCompatibleTee("Gold", ["Blue", "White"])).toBeNull();
+  });
+});
+
+describe("courseSummaryFrom", () => {
+  it("reads a listed course, and keeps the provider's id for one found there", () => {
+    expect(
+      courseSummaryFrom({
+        id: "external:9",
+        name: "Torrey Pines",
+        location: "La Jolla, CA",
+        par: 72,
+        total_holes: 18,
+        tee_count: 4,
+        source: "external",
+        external_course_id: "ext-9",
+      }),
+    ).toEqual({
+      id: "external:9",
+      name: "Torrey Pines",
+      location: "La Jolla, CA",
+      par: 72,
+      holeCount: 18,
+      teeCount: 4,
+      source: "external",
+      externalId: "ext-9",
+    });
   });
 });

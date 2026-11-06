@@ -1,35 +1,21 @@
-import type { User } from "@/types/golf";
-import { Button } from "@/brand";
-import { Card, CardContent } from "@/brand";
-import { PageTitle } from "@/brand";
+import { Button, Card, CardContent, PageTitle, Stat, StatLabel, StatUnit, StatValue } from "@/brand";
 
 interface ProfileHeroBannerProps {
-  user: User | null;
+  /** The avatar's letters: "JS". */
+  initials: string;
   handicapIndex: number | null;
   handicapLabel: string;
   firstName: string;
   onHandicapClick?: () => void;
 }
 
-function initialsFor(user: User | null): string {
-  if (!user?.name) return "G";
-  return user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 export function ProfileHeroBanner({
-  user,
+  initials,
   handicapIndex,
   handicapLabel,
   firstName,
   onHandicapClick,
 }: ProfileHeroBannerProps) {
-  const initials = initialsFor(user);
-
   return (
     <Card data-slot="profile-hero-banner">
       <CardContent>
@@ -41,7 +27,7 @@ export function ProfileHeroBanner({
               </span>
             </div>
             <div>
-              <div className="mb-1 text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
+              <div className="mb-1 text-eyebrow uppercase text-muted-foreground">
                 Welcome back
               </div>
               <PageTitle size="lg">Hello, {firstName}</PageTitle>
@@ -53,17 +39,15 @@ export function ProfileHeroBanner({
               type="button"
               variant="outline"
               onClick={onHandicapClick}
-              className="h-auto min-w-36 flex-col items-start gap-1 px-4 py-4"
+              className="h-auto min-w-36 justify-start p-4"
             >
-              <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
-                Handicap
-              </div>
-              <div className="flex items-baseline gap-1 text-3xl font-black leading-none text-card-foreground">
-                {handicapLabel}
-                <span className="text-sm font-semibold tracking-wide text-muted-foreground">
-                  HCP
-                </span>
-              </div>
+              <Stat>
+                <StatLabel>Handicap</StatLabel>
+                <StatValue size="lg">
+                  {handicapLabel}
+                  <StatUnit>HCP</StatUnit>
+                </StatValue>
+              </Stat>
             </Button>
           )}
         </div>

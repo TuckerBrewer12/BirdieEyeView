@@ -14,7 +14,7 @@ export function configureSessionStorage(next: TokenStorage | null): void {
   storage = next;
 }
 
-export function getSessionToken(): string | null {
+function getSessionToken(): string | null {
   if (!storage) return null;
   const token = storage.getItem(ACCESS_TOKEN_KEY)?.trim() ?? "";
   return token || null;

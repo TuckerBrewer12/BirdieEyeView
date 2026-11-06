@@ -2,22 +2,37 @@ import { test } from "./LandingPage.robot";
 
 test("landing page", async ({ landing }) => {
   await landing.open();
-  await landing.seesHeadline("Just Snap a Scorecard.");
+  await landing.seesHeadline("Scan your scorecard.");
   await landing.capture("landing.png");
 });
 
 test("landing page in dark mode", async ({ landing }) => {
   await landing.dark();
   await landing.open();
-  await landing.seesHeadline("Just Snap a Scorecard.");
+  await landing.seesHeadline("Scan your scorecard.");
   await landing.capture("landing-dark.png");
 });
 
-test("mobile nav menu open", async ({ landing, isMobile }) => {
-  // The menu button only exists below the md breakpoint, so there is nothing
-  // to open on the desktop project.
-  test.skip(!isMobile, "No menu button at desktop width.");
+test("a chosen card, ready to scan", async ({ landing }) => {
+  await landing.open();
+  await landing.chooseScorecard();
+  await landing.seesChosenCard();
+  await landing.capture("landing-card-chosen.png");
+});
+
+test("a scanned card gets the full width", async ({ landing }) => {
+  await landing.open();
+  await landing.chooseScorecard();
+  await landing.tapScan();
+  await landing.seesScannedCard();
+  await landing.capture("landing-scanned.png");
+});
+
+// The menu button only exists below the md breakpoint, so there is nothing
+// to open on the desktop project.
+test("mobile nav menu open", { tag: "@phone" }, async ({ landing }) => {
   await landing.open();
   await landing.openMenu();
+  await landing.seesMenuOpen(true);
   await landing.capture("landing-menu-open.png");
 });

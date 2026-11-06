@@ -1,67 +1,60 @@
-import type { Round } from "../../domain";
-import type { Course, CourseSummary } from "../../types/golf";
-import type { CourseAnalyticsData } from "../../types/analytics";
+import { courseAnalyticsFrom, type CourseAnalytics } from "../../domain/courseAnalytics";
+import { courseSummaryFrom, type CourseSummary } from "../../domain/course";
+import type { CourseAnalyticsDto, CourseDto, CourseSummaryDto } from "../../types/api";
 import type { CoursesRepository } from "../../pages/courses/coursesRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
+import { courseResponse } from "./courseResponses";
 
 export class FakeCoursesRepository implements CoursesRepository {
   readonly getCoursesCalls: string[] = [];
   readonly searchQueries: string[] = [];
-  courses: CourseSummary[];
-  fullCourses: Course[] = [];
-  analytics: CourseAnalyticsData | null = null;
-  handicapIndex: number | null = null;
-  rounds: Round[] = [];
+  courses: CourseSummaryDto[];
+  fullCourses: CourseDto[] = [];
+  analytics: CourseAnalyticsDto | null = null;
   error: Error | null = null;
   courseError: Error | null = null;
 
-  constructor(courses: CourseSummary[] = []) {
+  constructor(courses: CourseSummaryDto[] = []) {
     this.courses = [...courses];
   }
 
   async getCourses(userId?: string): Promise<CourseSummary[]> {
     this.getCoursesCalls.push(userId ?? "");
     if (this.error) throw this.error;
-    return this.courses;
+    return this.courses.map(courseSummaryFrom);
   }
 
   async searchCourses(query: string): Promise<CourseSummary[]> {
     this.searchQueries.push(query);
     if (this.error) throw this.error;
     const needle = query.toLowerCase();
-    return this.courses.filter((course) =>
-      course.name?.toLowerCase().includes(needle)
-      || course.location?.toLowerCase().includes(needle),
-    );
+    return this.courses
+      .filter((course) =>
+        course.name?.toLowerCase().includes(needle)
+        || course.location?.toLowerCase().includes(needle),
+      )
+      .map(courseSummaryFrom);
   }
 
-  async getCourse(courseId: string): Promise<Course> {
+  async getCourse(courseId: string): Promise<CourseDto> {
     if (this.courseError) throw this.courseError;
     const full = this.fullCourses.find((course) => course.id === courseId);
     if (full) return full;
     const summary = this.courses.find((course) => course.id === courseId);
     if (summary) {
-      return {
+      return courseResponse({
         id: summary.id,
         name: summary.name,
         location: summary.location,
         par: summary.par,
         holes: [],
         tees: [],
-      };
+      });
     }
     throw new Error("Course not found.");
   }
 
-  async getCourseAnalytics(_userId: string, courseId: string): Promise<CourseAnalyticsData> {
-    return this.analytics ?? emptyCourseAnalytics(courseId);
-  }
-
-  async getUserHandicap(): Promise<{ handicap_index: number | null }> {
-    return { handicap_index: this.handicapIndex };
-  }
-
-  async getRoundsForUser(): Promise<Round[]> {
-    return this.rounds;
+  async getCourseAnalytics(_userId: string, courseId: string): Promise<CourseAnalytics> {
+    return courseAnalyticsFrom(this.analytics ?? emptyCourseAnalytics(courseId));
   }
 }

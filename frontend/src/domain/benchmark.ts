@@ -1,7 +1,9 @@
-export interface BenchmarkProfile {
-  gir: number; scrambling: number; putting: number;
-  par3: number; par4: number; par5: number;
-}
+import type {
+  BenchmarkComparisonDto,
+  BenchmarkShapeDto,
+  GoalAttemptDto,
+  ParTypeComparisonDto,
+} from "@/types/api";
 
 /** Handicap index, no comparison, or a friend's rounds. */
 export type ComparisonTargetValue = number | null | "friend";
@@ -16,27 +18,90 @@ export const GOAL_OPTIONS = [
   { label: "Break 72",  value: 71 },
 ] as const;
 
-// Normalized 0–100 per axis representing a golfer at each scoring threshold.
-// GIR & Scrambling values are real percentages (0–100).
-// Putting & par scores are normalized via the same formula as buildRadarData.
-export const GOAL_BENCHMARK: Record<number, BenchmarkProfile> = {
-  // Updated from "Representative amateur golf statistics by score and skill band"
-  // (score-band -> handicap proxy mapping from the PDF).
-  99: { gir: 10, scrambling: 18, putting: 66, par3: 41, par4: 6,  par5: 0  }, // <100 (HI~25)
-  94: { gir: 17, scrambling: 20, putting: 66, par3: 49, par4: 29, par5: 23 }, // <95  (HI~20)
-  89: { gir: 24, scrambling: 21, putting: 70, par3: 56, par4: 39, par5: 36 }, // <90  (HI~15)
-  84: { gir: 36, scrambling: 31, putting: 73, par3: 65, par4: 54, par5: 51 }, // <85  (HI~10)
-  79: { gir: 44, scrambling: 41, putting: 78, par3: 72, par4: 60, par5: 58 }, // <80  (HI~5)
-  74: { gir: 53, scrambling: 44, putting: 80, par3: 77, par4: 66, par5: 69 }, // interpolated (<80 to scratch)
-  71: { gir: 61, scrambling: 47, putting: 83, par3: 81, par4: 73, par5: 80 }, // scratch (HI~0)
-};
+/** The handicaps a golfer can hold their shape up against. The server has a benchmark for each. */
+export const COMPARISON_HANDICAPS = [0, 5, 10, 15, 20, 25] as const;
 
-// ComparisonTargetToggle handicap values → benchmark profiles
-export const HANDICAP_BENCHMARK: Record<number, BenchmarkProfile> = {
-  0:  { gir: 61, scrambling: 47, putting: 83, par3: 81, par4: 73, par5: 80 },
-  5:  { gir: 44, scrambling: 41, putting: 78, par3: 72, par4: 60, par5: 58 },
-  10: { gir: 36, scrambling: 31, putting: 73, par3: 65, par4: 54, par5: 51 },
-  15: { gir: 24, scrambling: 21, putting: 70, par3: 56, par4: 39, par5: 36 },
-  20: { gir: 17, scrambling: 20, putting: 66, par3: 49, par4: 29, par5: 23 },
-  25: { gir: 10, scrambling: 18, putting: 66, par3: 41, par4: 6,  par5: 0  },
-};
+/** The goal is stored as the highest score that meets it, so 79 means the golfer is out to break 80. */
+export function goalScoreToBreak(target: number): number {
+  return target + 1;
+}
+
+/** A stored goal of 79 reads "Break 80". */
+export function goalTargetLabel(target: number): string {
+  return `Break ${goalScoreToBreak(target)}`;
+}
+
+/** One scored round against the goal, as the server's goal report marked it. */
+export interface GoalAttempt {
+  roundId: string | null;
+  score: number;
+  metGoal: boolean;
+}
+
+export function goalAttemptsFrom(dtos: readonly GoalAttemptDto[]): GoalAttempt[] {
+  return dtos.map((dto) => ({ roundId: dto.round_id, score: dto.score, metGoal: dto.met_goal }));
+}
+
+/** A golfer's shape in golf terms: the radar's axes. Null where they have no figure. */
+export interface BenchmarkShape {
+  girPct: number | null;
+  scramblingPct: number | null;
+  puttsPerGir: number | null;
+  par3ToPar: number | null;
+  par4ToPar: number | null;
+  par5ToPar: number | null;
+}
+
+/** Who The Lab asks the server to hold the golfer up against. */
+export type BenchmarkTarget =
+  | { against: "handicap"; handicap: number }
+  | { against: "peak" }
+  | { against: "friend"; friendId: string };
+
+/** Where the golfer's par type stands against the benchmark's, as the server judged it. */
+export type ParTypeVerdict = NonNullable<ParTypeComparisonDto["verdict"]>;
+
+/** One par type's average to par, the golfer's against the comparison's. */
+export interface ParTypeComparison {
+  par: 3 | 4 | 5;
+  /** Null with no holes of this par played. */
+  averageToPar: number | null;
+  /** Null with nothing to compare. */
+  benchmarkToPar: number | null;
+  /** The golfer's less the benchmark's, to a hundredth: negative is fewer strokes. */
+  gap: number | null;
+  verdict: ParTypeVerdict | null;
+}
+
+/** The server's comparison: the benchmark's shape (null when there is none to draw) and each par type against it. */
+export interface BenchmarkComparison {
+  benchmark: BenchmarkShape | null;
+  parTypes: ParTypeComparison[];
+}
+
+export function benchmarkShapeFrom(dto: BenchmarkShapeDto): BenchmarkShape {
+  return {
+    girPct: dto.gir_percentage,
+    scramblingPct: dto.scrambling_percentage,
+    puttsPerGir: dto.putts_per_gir,
+    par3ToPar: dto.par3_to_par,
+    par4ToPar: dto.par4_to_par,
+    par5ToPar: dto.par5_to_par,
+  };
+}
+
+export function benchmarkComparisonFrom(dto: BenchmarkComparisonDto): BenchmarkComparison {
+  return {
+    benchmark: dto.benchmark ? benchmarkShapeFrom(dto.benchmark) : null,
+    parTypes: dto.par_types.map((row) => ({
+      par: row.par,
+      averageToPar: row.average_to_par,
+      benchmarkToPar: row.benchmark_to_par,
+      gap: row.gap,
+      verdict: row.verdict,
+    })),
+  };
+}
+
+/** Tour players' short game, in percent: what the dashboard measures a player's last five rounds against. */
+export const TOUR_SHORT_GAME = { scrambling: 57, upAndDown: 50 } as const;

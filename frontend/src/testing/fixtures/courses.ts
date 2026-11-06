@@ -1,12 +1,14 @@
-import type { CourseSummary } from "../../types/golf";
+import { courseSummaryFrom } from "../../domain/course";
+import type { CourseSummaryDto } from "../../types/api";
 import { pebbleBeachCourse, toCourseSummary } from "./roundDetails";
 
-export { toCourseSummary };
-
+/** Pebble Beach as the server lists it. */
 export const pebbleBeach = toCourseSummary(pebbleBeachCourse);
+/** Pebble Beach as a repository hands it to a page: a search result to pick. */
+export const pebbleBeachSummary = courseSummaryFrom(pebbleBeach);
 export const searchableCourses = [pebbleBeach];
 
-export const populatedCourses: CourseSummary[] = [
+export const populatedCourses: CourseSummaryDto[] = [
   {
     id: "course-hmb",
     name: "Half Moon Bay",
@@ -14,6 +16,8 @@ export const populatedCourses: CourseSummary[] = [
     par: 72,
     total_holes: 18,
     tee_count: 4,
+    external_course_id: null,
+    source: "local",
   },
   {
     id: "course-blue-rock",
@@ -22,6 +26,8 @@ export const populatedCourses: CourseSummary[] = [
     par: 72,
     total_holes: 18,
     tee_count: 3,
+    external_course_id: null,
+    source: "local",
   },
   {
     id: "course-pebble",
@@ -30,5 +36,7 @@ export const populatedCourses: CourseSummary[] = [
     par: 72,
     total_holes: 18,
     tee_count: 5,
+    external_course_id: null,
+    source: "local",
   },
 ];

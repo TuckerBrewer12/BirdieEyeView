@@ -4,7 +4,7 @@ import { buttonVariants } from "./components/variants";
 
 describe("cn", () => {
   it("keeps primary foreground when merging a type-scale size", () => {
-    expect(cn("bg-primary text-primary-foreground", "text-button-sm")).toContain(
+    expect(cn("bg-primary text-primary-foreground", "text-body-sm")).toContain(
       "text-primary-foreground",
     );
   });

@@ -21,6 +21,7 @@ export default function HoleScoreShapesPreview() {
       <HoleScoreShapes round={best} />
       <HoleScoreShapes round={partlyScored} />
       <HoleScoreShapes round={frontNineOnly} />
+      <HoleScoreShapes round={best} numbered />
     </>
   );
 }

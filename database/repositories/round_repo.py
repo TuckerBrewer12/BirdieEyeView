@@ -8,6 +8,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from models import HoleScore, Round
+from models.hole import HOLES_PER_NINE, HOLES_PER_ROUND
 from database.converters import round_from_rows, round_from_summary_row, round_to_row, hole_score_to_row, user_tee_from_row, course_from_rows
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from database.repositories.course_repo import CourseRepositoryDB
@@ -205,38 +206,45 @@ class RoundRepositoryDB:
     async def get_round_summaries_for_user(
         self, user_id: str, *, limit: int = 100, offset: int = 0
     ) -> List[Round]:
-        """Rounds for list views in one query: hole scores and course par, no tees.
+        """Rounds for list views in one query: strokes, putts, greens and pars, no tees.
 
+        The page of rounds is picked first, so only those rounds' holes are gathered.
         Only facts come back; the Round model works out the score, nines and to-par.
         """
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
-                """SELECT
-                    r.id, r.course_id, r.tee_box_played, r.round_date, r.notes, r.course_name_played,
+                """WITH page AS (
+                    SELECT id, course_id, tee_box_played, round_date, course_name_played
+                    FROM users.rounds
+                    WHERE user_id = $1
+                    ORDER BY round_date DESC NULLS LAST, id
+                    LIMIT $2 OFFSET $3
+                )
+                SELECT
+                    p.id, p.course_id, p.tee_box_played, p.round_date, p.course_name_played,
                     c.name AS course_name,
-                    c.location AS course_location,
                     c.par AS course_par,
-                    json_agg(
+                    holes.hole_scores
+                FROM page p
+                LEFT JOIN courses.courses c ON c.id = p.course_id
+                LEFT JOIN LATERAL (
+                    SELECT json_agg(
                         json_build_object(
                             'hole_number', hs.hole_number,
                             'strokes', hs.strokes,
                             'putts', hs.putts,
-                            'fairway_hit', hs.fairway_hit,
                             'green_in_regulation', hs.green_in_regulation,
                             'par_played', hs.par_played,
                             'course_par', ch.par
                         )
                         ORDER BY hs.hole_number
-                    ) FILTER (WHERE hs.hole_number IS NOT NULL) AS hole_scores
-                FROM users.rounds r
-                LEFT JOIN courses.courses c ON r.course_id = c.id
-                LEFT JOIN users.hole_scores hs ON hs.round_id = r.id
-                LEFT JOIN courses.holes ch
-                    ON ch.course_id = r.course_id AND ch.hole_number = hs.hole_number
-                WHERE r.user_id = $1
-                GROUP BY r.id, c.name, c.location, c.par
-                ORDER BY r.round_date DESC NULLS LAST
-                LIMIT $2 OFFSET $3""",
+                    ) AS hole_scores
+                    FROM users.hole_scores hs
+                    LEFT JOIN courses.holes ch
+                        ON ch.course_id = p.course_id AND ch.hole_number = hs.hole_number
+                    WHERE hs.round_id = p.id AND hs.hole_number IS NOT NULL
+                ) holes ON true
+                ORDER BY p.round_date DESC NULLS LAST, p.id""",
                 UUID(user_id), limit, offset,
             )
             return [round_from_summary_row(r) for r in rows]
@@ -411,7 +419,7 @@ class RoundRepositoryDB:
                     updates["tee_id"] = None
 
             set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates))
-            values = [UUID(round_id)] + list(updates.values())
+            values = [UUID(round_id), *updates.values()]
 
             where_clause = "id = $1"
             where_values = []
@@ -532,7 +540,8 @@ class RoundRepositoryDB:
                 valid_strokes = [r["strokes"] for r in score_rows if r["strokes"] is not None]
                 new_total = sum(valid_strokes) if valid_strokes else None
                 holes_played = len(valid_strokes)
-                is_complete = holes_played == 18
+                holes_on_card = HOLES_PER_ROUND if len(score_rows) > HOLES_PER_NINE else HOLES_PER_NINE
+                is_complete = holes_played == holes_on_card
 
                 if user_id:
                     await conn.execute(
