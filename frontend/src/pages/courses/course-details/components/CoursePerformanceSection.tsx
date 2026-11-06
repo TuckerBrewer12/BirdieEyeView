@@ -72,7 +72,7 @@ export function CoursePerformanceSection({ userId, courseId }: CoursePerformance
           )}
         </CardHeader>
         <CardContent>
-          <SVGScoreHandicapTrend data={viewModel.trend} series="score" plain best={viewModel.bestScore} />
+          <SVGScoreHandicapTrend data={viewModel.trend} series="score" plain bestAt={viewModel.bestAt} />
         </CardContent>
       </Card>
 

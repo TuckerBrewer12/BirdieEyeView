@@ -22,8 +22,11 @@ interface SVGScoreHandicapTrendProps {
    * average drawn as the lead line rather than behind dots that mark which rounds count.
    */
   plain?: boolean;
-  /** The best score, as the server found it. Its first round is marked in place of the latest. */
-  best?: number | null;
+  /**
+   * The best round's place in `data`, oldest first. The server picks that round: the newest full
+   * round by to par. Marked in place of the latest score.
+   */
+  bestAt?: number | null;
 }
 
 const L = tokens.chart.stack;
@@ -50,7 +53,7 @@ export function SVGScoreHandicapTrend({
   series = "both",
   compact = false,
   plain = false,
-  best = null,
+  bestAt = null,
 }: SVGScoreHandicapTrendProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
 
@@ -117,7 +120,8 @@ export function SVGScoreHandicapTrend({
   const clearOfPar = (y: number) => parY == null || Math.abs(y - parY) > tokens.type.label.size;
 
   const lastScore = lastKnownIndex(scores);
-  const bestIndex = best == null ? -1 : scores.indexOf(best);
+  const bestIndex = bestAt != null && bestAt >= 0 && bestAt < data.length ? bestAt : -1;
+  const bestScore = bestIndex >= 0 ? scores[bestIndex] : null;
   const lastHandicap = lastKnownIndex(handicaps);
 
   const indexAt = (e: PointerEvent<SVGSVGElement>) => {
@@ -282,23 +286,23 @@ export function SVGScoreHandicapTrend({
             );
           })}
 
-        {showScore && best != null && bestIndex >= 0 && (
+        {showScore && bestScore != null && (
           <g data-slot="score-trend-best">
             <circle
               cx={x(bestIndex)}
-              cy={yScore(best)}
+              cy={yScore(bestScore)}
               r={L.dotHover}
               fill={tokens.color.score.birdie.base}
               stroke={tokens.color.card}
               strokeWidth={tokens.lineWidth.outline}
             />
-            <FigureLabel x={x(bestIndex)} y={yScore(best) - L.scoreLift} anchor={edgeAnchor(x(bestIndex), gridRight)} color={tokens.color.score.birdie.base}>
-              Best {best}
+            <FigureLabel x={x(bestIndex)} y={yScore(bestScore) - L.scoreLift} anchor={edgeAnchor(x(bestIndex), gridRight)} color={tokens.color.score.birdie.base}>
+              Best {bestScore}
             </FigureLabel>
           </g>
         )}
 
-        {showScore && best == null && lastScoreValue != null && (
+        {showScore && bestScore == null && lastScoreValue != null && (
           <FigureLabel x={x(lastScore)} y={yScore(lastScoreValue) - L.scoreLift} anchor="middle" color={tokens.color.foreground}>
             {lastScoreValue}
           </FigureLabel>

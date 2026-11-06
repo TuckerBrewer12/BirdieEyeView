@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { emptyCourseAnalytics, halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
-import { EMPTY_COURSE_ANALYTICS, courseAnalyticsFrom } from "../courseAnalytics";
+import { EMPTY_COURSE_ANALYTICS, bestRoundPlace, courseAnalyticsFrom } from "../courseAnalytics";
 
 describe("courseAnalyticsFrom", () => {
   const analytics = courseAnalyticsFrom(halfMoonBayAnalytics);
@@ -10,6 +10,9 @@ describe("courseAnalyticsFrom", () => {
       2, 75, 72, 78,
     ]);
     expect(analytics.rounds.map((round) => round.id)).toEqual(["round-1", "round-2"]);
+    expect(analytics.scoreTrend.map((point) => point.roundId)).toEqual(["round-2", "round-1"]);
+    // The older round, the 72, is the one the server ranked first.
+    expect(bestRoundPlace(analytics.rounds, analytics.scoreTrend)).toBe(0);
     expect(analytics.scoreTrend.map((point) => [point.score, point.toPar])).toEqual(
       halfMoonBayAnalytics.score_trend_on_course.map((row) => [row.total_score, row.to_par]),
     );
@@ -45,5 +48,17 @@ describe("courseAnalyticsFrom", () => {
 
   it("reads a course the golfer hasn't played as empty", () => {
     expect(courseAnalyticsFrom(emptyCourseAnalytics("course-hmb"))).toEqual(EMPTY_COURSE_ANALYTICS);
+    expect(bestRoundPlace([], [])).toBeNull();
+  });
+
+  it("places the round the server ranked first, not the oldest matching score", () => {
+    const rounds = [
+      { id: "nine", bestRank: 2 },
+      { id: "full-new", bestRank: 1 },
+      { id: "full-old", bestRank: 3 },
+    ];
+    const trend = [{ roundId: "full-old" }, { roundId: "nine" }, { roundId: "full-new" }];
+    expect(bestRoundPlace(rounds, trend)).toBe(2);
+    expect(bestRoundPlace([{ id: "a", bestRank: null }], [{ roundId: "a" }])).toBeNull();
   });
 });

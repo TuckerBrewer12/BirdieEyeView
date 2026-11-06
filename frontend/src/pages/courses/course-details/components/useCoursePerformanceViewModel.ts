@@ -1,4 +1,4 @@
-import { EMPTY_COURSE_ANALYTICS, type RoundSummary, type RoundTrendPoint } from "@/domain";
+import { EMPTY_COURSE_ANALYTICS, bestRoundPlace, type RoundSummary, type RoundTrendPoint } from "@/domain";
 import { coursesRepository, type CoursesRepository } from "../../coursesRepository";
 import { useCourseAnalytics } from "../../useCourseAnalytics";
 
@@ -9,6 +9,8 @@ export interface CoursePerformanceViewModel {
   worstScore: number | null;
   /** Every round here, oldest first. The chart plots the scored ones. */
   trend: RoundTrendPoint[];
+  /** The server's best round's place on `trend`. Null when it ranked none. */
+  bestAt: number | null;
   /** The last five rounds' average and its change on the first five, as the server sent them. */
   recentAverage: number | null;
   recentAverageChange: number | null;
@@ -30,6 +32,7 @@ export function useCoursePerformanceViewModel(
     bestScore: analytics.bestScore,
     worstScore: analytics.worstScore,
     trend: analytics.scoreTrend,
+    bestAt: bestRoundPlace(analytics.rounds, analytics.scoreTrend),
     recentAverage: analytics.recentAverage,
     recentAverageChange: analytics.recentAverageChange,
     rounds: analytics.rounds,

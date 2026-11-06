@@ -30,6 +30,8 @@ def test_hero_figures_and_history_come_from_the_rounds():
     assert response.scoring_average == 75.0
     assert (response.best_score, response.worst_score) == (72, 78)
     assert [r.id for r in response.rounds] == ["r3", "r2", "r1"]
+    # Newest first: +3, even par, +6. Even par is best, then +3, then +6.
+    assert [r.best_rank for r in response.rounds] == [2, 1, 3]
     assert [row.total_score for row in response.score_trend_on_course] == [78, 72, 75]
     assert [row.to_par for row in response.score_trend_on_course] == [6, 0, 3]
     # The score trend's average and par come from here, so the chart only draws them.

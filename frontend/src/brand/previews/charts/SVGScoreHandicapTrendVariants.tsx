@@ -1,5 +1,5 @@
 import { SVGScoreHandicapTrend } from "@/brand/charts/SVGScoreHandicapTrend";
-import { courseAnalyticsFrom, trendPointsFrom } from "@/domain";
+import { bestRoundPlace, courseAnalyticsFrom, trendPointsFrom } from "@/domain";
 import { halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
 import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 
@@ -19,7 +19,12 @@ export default function SVGScoreHandicapTrendVariantsPreview() {
         <SVGScoreHandicapTrend data={trend} series="score" compact />
         <SVGScoreHandicapTrend data={trend} series="handicap" compact />
       </div>
-      <SVGScoreHandicapTrend data={course.scoreTrend} series="score" plain best={course.bestScore} />
+      <SVGScoreHandicapTrend
+        data={course.scoreTrend}
+        series="score"
+        plain
+        bestAt={bestRoundPlace(course.rounds, course.scoreTrend)}
+      />
       <SVGScoreHandicapTrend data={[]} />
     </>
   );
