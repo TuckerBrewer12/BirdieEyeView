@@ -1084,12 +1084,6 @@ def score_trend_on_this_course(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     return results
 
 
-def recent_average(scores: List[Optional[float]], window: int = 5) -> Optional[float]:
-    """The last `window` scores' average, to a tenth. Rounds without a score are skipped."""
-    known = [s for s in scores if s is not None][-window:]
-    return round_half_up(sum(known) / len(known)) if known else None
-
-
 def recent_average_change(scores: List[Optional[float]], window: int = 5) -> Optional[float]:
     """The last `window` scores' average less the first `window`'s, to a tenth: negative when the
     recent rounds came in lower. Null until there are two windows of scores to compare."""
