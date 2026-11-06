@@ -10,6 +10,9 @@ from fastapi import HTTPException
 from jose import jwk, jwt
 from jose.exceptions import JOSEError, JWTError
 
+from api.error_responses import SERVICE_UNAVAILABLE
+from api.messages import INVALID_APPLE_TOKEN
+
 APPLE_ISSUER = "https://appleid.apple.com"
 APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys"
 _APPLE_KEYS_CACHE: tuple[float, list[dict[str, Any]]] | None = None
@@ -49,7 +52,7 @@ def _get_apple_keys() -> list[dict[str, Any]]:
     response.raise_for_status()
     keys = response.json().get("keys", [])
     if not isinstance(keys, list):
-        raise HTTPException(401, "Invalid Apple sign-in token")
+        raise HTTPException(401, INVALID_APPLE_TOKEN)
     _APPLE_KEYS_CACHE = (now, keys)
     return keys
 
@@ -65,18 +68,18 @@ def _parse_email_verified(value: object) -> bool:
 def verify_apple_identity_token(identity_token: str, name: str | None = None) -> AppleIdentity:
     client_ids = get_apple_client_ids()
     if not client_ids:
-        raise HTTPException(500, "Apple sign-in is not configured")
+        raise HTTPException(500, SERVICE_UNAVAILABLE)
 
     try:
         header = jwt.get_unverified_header(identity_token)
     except JWTError as exc:
-        raise HTTPException(401, "Invalid Apple sign-in token") from exc
+        raise HTTPException(401, INVALID_APPLE_TOKEN) from exc
 
     key_id = header.get("kid")
     algorithm = header.get("alg")
     key_data = next((key for key in _get_apple_keys() if key.get("kid") == key_id), None)
     if not key_data or algorithm != "RS256":
-        raise HTTPException(401, "Invalid Apple sign-in token")
+        raise HTTPException(401, INVALID_APPLE_TOKEN)
 
     try:
         public_key = jwk.construct(key_data, algorithm).to_pem()
@@ -88,11 +91,11 @@ def verify_apple_identity_token(identity_token: str, name: str | None = None) ->
             issuer=APPLE_ISSUER,
         )
     except (JOSEError, JWTError) as exc:
-        raise HTTPException(401, "Invalid Apple sign-in token") from exc
+        raise HTTPException(401, INVALID_APPLE_TOKEN) from exc
 
     subject = str(payload.get("sub") or "").strip()
     if not subject:
-        raise HTTPException(401, "Invalid Apple sign-in token")
+        raise HTTPException(401, INVALID_APPLE_TOKEN)
 
     email = str(payload.get("email") or "").strip().lower() or None
     email_verified = _parse_email_verified(payload.get("email_verified"))

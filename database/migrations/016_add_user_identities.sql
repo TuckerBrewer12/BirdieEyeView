@@ -1,4 +1,4 @@
--- Migration 013: link external sign-in identities to app users
+-- Migration 016: link external sign-in identities to app users
 
 CREATE TABLE IF NOT EXISTS users.user_identities (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

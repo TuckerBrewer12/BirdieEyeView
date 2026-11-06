@@ -14,6 +14,11 @@ from api.messages import (
     TOO_MANY_SIGNUPS, TOO_MANY_SIGNUPS_FOR_EMAIL, TOO_MANY_VERIFICATION_RESENDS,
     TOO_MANY_VERIFICATION_RESENDS_FOR_EMAIL, VERIFICATION_SENT_IF_ACCOUNT_EXISTS,
 )
+from api.messages import (
+    APPLE_ACCOUNT_LINKED_ELSEWHERE, APPLE_EMAIL_MISSING, APPLE_EMAIL_NOT_VERIFIED, APPLE_LINK_REQUIRES_PASSWORD_SIGN_IN,
+    GOOGLE_ACCOUNT_LINKED_ELSEWHERE, GOOGLE_LINK_REQUIRES_PASSWORD_SIGN_IN, TOO_MANY_APPLE_SIGN_INS,
+    TOO_MANY_GOOGLE_SIGN_INS,
+)
 from api.auth_notifications import send_password_reset_email, send_verification_email
 from api.course_access import load_linkable_course
 from api.auth_schemas import (
@@ -403,7 +408,7 @@ async def google_login(
         key=f"google:req:ip:{request_ip}",
         limit=_env_int("GOOGLE_LOGIN_RATE_LIMIT_MAX_ATTEMPTS", 30),
         window_seconds=_env_int("GOOGLE_LOGIN_RATE_LIMIT_WINDOW_SECONDS", 60),
-        detail="Too many Google sign-in requests. Please try again shortly.",
+        detail=TOO_MANY_GOOGLE_SIGN_INS,
     )
 
     identity = verify_google_credential(req.credential)
@@ -419,10 +424,7 @@ async def google_login(
                     _email_fingerprint(identity.email),
                     request_ip,
                 )
-                raise HTTPException(
-                    409,
-                    "An account with this email already exists. Sign in with email and password before linking Google.",
-                )
+                raise HTTPException(409, GOOGLE_LINK_REQUIRES_PASSWORD_SIGN_IN)
             try:
                 await db.users.link_auth_identity(
                     user_id=existing["id"],
@@ -438,7 +440,7 @@ async def google_login(
                     _email_fingerprint(identity.email),
                     request_ip,
                 )
-                raise HTTPException(409, "This Google account is already linked to another user")
+                raise HTTPException(409, GOOGLE_ACCOUNT_LINKED_ELSEWHERE)
             if not existing["email_verified"]:
                 await db.users.mark_email_verified(existing["id"])
             auth_user = {
@@ -468,7 +470,7 @@ async def google_login(
                     _email_fingerprint(identity.email),
                     request_ip,
                 )
-                raise HTTPException(409, "An account with this email already exists")
+                raise HTTPException(409, EMAIL_ALREADY_REGISTERED)
             auth_user = {
                 "id": str(user.id),
                 "name": user.name or "",
@@ -507,7 +509,7 @@ async def apple_login(
         key=f"apple:req:ip:{request_ip}",
         limit=_env_int("APPLE_LOGIN_RATE_LIMIT_MAX_ATTEMPTS", 30),
         window_seconds=_env_int("APPLE_LOGIN_RATE_LIMIT_WINDOW_SECONDS", 60),
-        detail="Too many Apple sign-in requests. Please try again shortly.",
+        detail=TOO_MANY_APPLE_SIGN_INS,
     )
 
     identity = verify_apple_identity_token(req.identity_token, req.name)
@@ -517,13 +519,13 @@ async def apple_login(
             _email_fingerprint(identity.email),
             request_ip,
         )
-        raise HTTPException(403, "Apple account email is not verified")
+        raise HTTPException(403, APPLE_EMAIL_NOT_VERIFIED)
     auth_user = await db.users.get_auth_user_by_identity("apple", identity.subject)
 
     if not auth_user:
         if not identity.email:
             logger.warning("Auth Apple rejected: ip=%s reason=missing_email", request_ip)
-            raise HTTPException(400, "Apple did not return an email for this account")
+            raise HTTPException(400, APPLE_EMAIL_MISSING)
 
         existing = await db.users.get_auth_user_by_email(identity.email)
         if existing:
@@ -534,10 +536,7 @@ async def apple_login(
                     _email_fingerprint(identity.email),
                     request_ip,
                 )
-                raise HTTPException(
-                    409,
-                    "An account with this email already exists. Sign in with email and password before linking Apple.",
-                )
+                raise HTTPException(409, APPLE_LINK_REQUIRES_PASSWORD_SIGN_IN)
             try:
                 await db.users.link_auth_identity(
                     user_id=existing["id"],
@@ -553,7 +552,7 @@ async def apple_login(
                     _email_fingerprint(identity.email),
                     request_ip,
                 )
-                raise HTTPException(409, "This Apple account is already linked to another user")
+                raise HTTPException(409, APPLE_ACCOUNT_LINKED_ELSEWHERE)
             if not existing["email_verified"]:
                 await db.users.mark_email_verified(existing["id"])
             auth_user = {
@@ -583,7 +582,7 @@ async def apple_login(
                     _email_fingerprint(identity.email),
                     request_ip,
                 )
-                raise HTTPException(409, "An account with this email already exists")
+                raise HTTPException(409, EMAIL_ALREADY_REGISTERED)
             auth_user = {
                 "id": str(user.id),
                 "name": user.name or "",

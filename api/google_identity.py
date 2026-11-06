@@ -4,6 +4,9 @@ import os
 from dataclasses import dataclass
 from fastapi import HTTPException
 
+from api.error_responses import SERVICE_UNAVAILABLE
+from api.messages import GOOGLE_EMAIL_NOT_VERIFIED, INVALID_GOOGLE_TOKEN
+
 
 @dataclass(frozen=True)
 class GoogleIdentity:
@@ -39,13 +42,13 @@ def is_authoritative_google_email(identity: GoogleIdentity) -> bool:
 def verify_google_credential(credential: str) -> GoogleIdentity:
     client_ids = get_google_oauth_client_ids()
     if not client_ids:
-        raise HTTPException(500, "Google sign-in is not configured")
+        raise HTTPException(500, SERVICE_UNAVAILABLE)
 
     try:
         from google.auth.transport import requests as google_requests
         from google.oauth2 import id_token
     except ImportError as exc:
-        raise HTTPException(500, "Google sign-in dependency is not installed") from exc
+        raise HTTPException(500, SERVICE_UNAVAILABLE) from exc
 
     try:
         payload = id_token.verify_oauth2_token(
@@ -54,20 +57,20 @@ def verify_google_credential(credential: str) -> GoogleIdentity:
             client_ids,
         )
     except ValueError as exc:
-        raise HTTPException(401, "Invalid Google sign-in token") from exc
+        raise HTTPException(401, INVALID_GOOGLE_TOKEN) from exc
 
     issuer = payload.get("iss")
     if issuer not in {"accounts.google.com", "https://accounts.google.com"}:
-        raise HTTPException(401, "Invalid Google sign-in token")
+        raise HTTPException(401, INVALID_GOOGLE_TOKEN)
 
     subject = str(payload.get("sub") or "").strip()
     email = str(payload.get("email") or "").strip().lower()
     if not subject or not email:
-        raise HTTPException(401, "Invalid Google sign-in token")
+        raise HTTPException(401, INVALID_GOOGLE_TOKEN)
 
     email_verified = bool(payload.get("email_verified"))
     if not email_verified:
-        raise HTTPException(403, "Google account email is not verified")
+        raise HTTPException(403, GOOGLE_EMAIL_NOT_VERIFIED)
 
     name = str(payload.get("name") or payload.get("given_name") or email.split("@")[0]).strip()
     hosted_domain = str(payload.get("hd") or "").strip() or None
