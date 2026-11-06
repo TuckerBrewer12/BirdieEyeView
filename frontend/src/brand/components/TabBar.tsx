@@ -66,7 +66,7 @@ function TabBar({ tabs, value, onValueChange, "aria-label": ariaLabel, className
           <Tabs.Tab
             key={tab.key}
             value={tab.key}
-            className="h-10 shrink-0 cursor-pointer border-b-2 border-transparent text-sm font-medium text-foreground-secondary outline-none focus-visible:ring-3 focus-visible:ring-ring/50 aria-selected:border-primary aria-selected:font-bold aria-selected:text-foreground"
+            className="h-10 shrink-0 cursor-pointer border-b-2 border-transparent text-sm font-medium text-foreground-secondary outline-none focus-visible:ring-3 focus-visible:ring-ring/half aria-selected:border-primary aria-selected:font-bold aria-selected:text-foreground"
           >
             {tab.label}
           </Tabs.Tab>
