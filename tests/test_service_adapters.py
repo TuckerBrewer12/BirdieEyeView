@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from typing import ClassVar
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -28,7 +29,7 @@ class _Response:
 
 class _AsyncClient:
     response = _Response({})
-    calls = []
+    calls: ClassVar[list] = []
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs

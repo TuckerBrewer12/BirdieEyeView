@@ -167,9 +167,9 @@ async def _load_rounds(email: str, dsn: str | None, limit: int) -> tuple[str, Li
         await pool.close()
 
 
-async def main_async() -> None:
+def main() -> None:
     args = _parse_args()
-    player_label, rounds = await _load_rounds(args.email, args.dsn, args.limit)
+    player_label, rounds = asyncio.run(_load_rounds(args.email, args.dsn, args.limit))
 
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -353,10 +353,6 @@ async def main_async() -> None:
     print(f"Generated {len(written)} chart(s) for {player_label}:")
     for path in written:
         print(path.resolve())
-
-
-def main() -> None:
-    asyncio.run(main_async())
 
 
 if __name__ == "__main__":

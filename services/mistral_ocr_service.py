@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import logging
 import mimetypes
 import os
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, override
 
 import httpx
 try:
@@ -57,11 +58,7 @@ class MistralOCRService:
         if not self._api_key:
             raise EnvironmentError("MISTRAL_API_KEY environment variable is not set")
 
-        path = Path(file_path)
-        if not path.exists():
-            raise FileNotFoundError(f"File not found: {path}")
-
-        data_url = self._build_data_url(path)
+        data_url = await asyncio.to_thread(self._build_data_url, Path(file_path))
         payload: Dict[str, Any] = {
             "model": self._model,
             "document": {"type": "document_url", "document_url": data_url},
@@ -85,10 +82,12 @@ class MistralOCRService:
                 resp = await client.post(path_part, headers=headers, json=payload)
                 resp.raise_for_status()
                 return resp.json()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise RuntimeError(f"Mistral OCR failed: {exc}") from exc
 
     def _build_data_url(self, path: Path) -> str:
+        if not path.exists():
+            raise FileNotFoundError(f"File not found: {path}")
         mime_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
         raw = path.read_bytes()
         b64 = base64.b64encode(raw).decode("ascii")
@@ -152,6 +151,7 @@ class MistralOCRService:
                 self._cell_parts: List[str] = []
                 self._current_row: List[str] = []
 
+            @override
             def handle_starttag(self, tag: str, attrs: List[tuple[str, Optional[str]]]) -> None:
                 lower = tag.lower()
                 if lower == "tr":
@@ -161,10 +161,12 @@ class MistralOCRService:
                     self._in_cell = True
                     self._cell_parts = []
 
+            @override
             def handle_data(self, data: str) -> None:
                 if self._in_cell:
                     self._cell_parts.append(data)
 
+            @override
             def handle_endtag(self, tag: str) -> None:
                 lower = tag.lower()
                 if self._in_row and lower in {"td", "th"} and self._in_cell:
