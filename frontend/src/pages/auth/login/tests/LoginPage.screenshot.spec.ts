@@ -5,12 +5,14 @@ const UNVERIFIED = { "new@example.com": { password: "birdie123", verified: false
 
 test("sign in", async ({ login }) => {
   await login.open();
+  await login.seesHeading("Sign in");
   await login.capture("login.png");
 });
 
 test("sign in in dark mode", async ({ login }) => {
   await login.dark();
   await login.open();
+  await login.seesHeading("Sign in");
   await login.capture("login-dark.png");
 });
 

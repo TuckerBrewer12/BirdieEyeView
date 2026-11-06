@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -203,9 +203,9 @@ def test_handicap_index_applies_whs_table_seed_and_cap(monkeypatch):
 
 def test_seed_handicap_filters_early_rounds_and_honors_seed_date(monkeypatch):
     rounds = [
-        Round(id="old-high", date=datetime(2025, 1, 1)),
-        Round(id="old-low", date=datetime(2025, 1, 2)),
-        Round(id="new-high", date=datetime(2025, 2, 1)),
+        Round(id="old-high", date=datetime(2025, 1, 1, tzinfo=timezone.utc)),
+        Round(id="old-low", date=datetime(2025, 1, 2, tzinfo=timezone.utc)),
+        Round(id="new-high", date=datetime(2025, 2, 1, tzinfo=timezone.utc)),
     ]
     differentials_by_round = {"old-high": 20.0, "old-low": 10.0, "new-high": 22.0}
     monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: differentials_by_round[item.id])
@@ -214,7 +214,7 @@ def test_seed_handicap_filters_early_rounds_and_honors_seed_date(monkeypatch):
     assert handicap._eligible_differentials(
         rounds,
         seed_handicap=15.0,
-        seed_set_at=datetime(2025, 1, 15),
+        seed_set_at=datetime(2025, 1, 15, tzinfo=timezone.utc),
     ) == [10.0, 22.0]
     assert handicap.handicap_index(rounds[:1], seed_handicap=15.0) == 15.0
     assert handicap.handicap_index(rounds[1:2], seed_handicap=15.0) == 10.0

@@ -1,6 +1,6 @@
 """The analytics page's response, built in one place from the player's rounds."""
 
-from datetime import datetime
+from datetime import date
 from typing import Any, Dict, List, Optional
 
 from analytics import dashboard
@@ -41,7 +41,7 @@ def analytics_response(
     rounds: List[Round],
     history: List[Round],
     home_course_id: Optional[str] = None,
-    today: Optional[datetime] = None,
+    today: Optional[date] = None,
     user: Optional[User] = None,
 ) -> AnalyticsResponse:
     """Every analytics section over `rounds` (oldest first). `history` is the golfer's own rounds,

@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import math
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Optional, get_args
 
 from analytics.handicap import round_course_handicap, round_net_score
+from models.hole import BACK_NINE, FRONT_NINE, HOLES_PER_NINE, HOLES_PER_ROUND
 from models.hole_score import ScoreKind, score_kind
 from models.round import Round
 
@@ -141,6 +142,17 @@ def _format_date_short(dt: datetime) -> str:
     return f"{dt.year}/{dt.month}/{dt.day}"
 
 
+def parse_date_short(text: str) -> date:
+    """The day `_format_date_short` wrote, e.g. 2026/5/28."""
+    year, month, day = (int(part) for part in text.split("/"))
+    return date(year, month, day)
+
+
+def _oldest_first(round_set: Iterable[Round]) -> List[Round]:
+    """Rounds by date, undated ones last."""
+    return sorted(round_set, key=lambda r: (r.date is None, r.date))
+
+
 def _course_label(round_obj: Round) -> Optional[str]:
     if round_obj.course and round_obj.course.name:
         return round_obj.course.name
@@ -157,11 +169,11 @@ def _milestone_event(round_obj: Round) -> Optional[Dict[str, str]]:
     }
 
 
-def _mark_in_window(event: Optional[Dict[str, Any]], cutoff: datetime) -> bool:
+def _mark_in_window(event: Optional[Dict[str, Any]], cutoff: date) -> bool:
     """Marks a milestone's first round as inside the window or not, and returns which."""
     if not event:
         return False
-    event["in_window"] = datetime.strptime(event["date"], "%Y/%m/%d") >= cutoff
+    event["in_window"] = parse_date_short(event["date"]) >= cutoff
     return event["in_window"]
 
 
@@ -213,7 +225,7 @@ def _achievement_hole_rows(round_set: List[Round]) -> List[Dict[str, Any]]:
 
 
 def _first_event_in_rounds(round_set: List[Round], predicate) -> Optional[Dict[str, str]]:
-    for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
+    for round_obj in _oldest_first(round_set):
         for row in _achievement_hole_rows([round_obj]):
             if predicate(row):
                 return _milestone_event(round_obj)
@@ -248,7 +260,7 @@ def under_par_position(thresholds: List[int], par: int) -> int:
 
 
 def _first_round_under_par_event(round_set: List[Round]) -> Optional[Dict[str, Any]]:
-    for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
+    for round_obj in _oldest_first(round_set):
         total = round_obj.calculate_total_score()
         round_par = _round_total_par(round_obj)
         if total is None or round_par is None:
@@ -267,7 +279,7 @@ def _first_round_under_par_event(round_set: List[Round]) -> Optional[Dict[str, A
 
 
 def _first_round_below(round_set: List[Round], threshold: int, *, inclusive: bool = False) -> Optional[Dict[str, str]]:
-    for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
+    for round_obj in _oldest_first(round_set):
         total = round_obj.calculate_total_score()
         if total is None:
             continue
@@ -301,14 +313,14 @@ def _lowest_9_with_event(round_set: List[Round]) -> tuple[Optional[int], Optiona
     best_event: Optional[Dict[str, str]] = None
     for round_obj in round_set:
         by_hole = {score.hole_number: score for score in _valid_hole_scores(round_obj) if score.hole_number is not None}
-        front_vals = [by_hole.get(i).strokes for i in range(1, 10) if by_hole.get(i) and by_hole.get(i).strokes is not None]
-        back_vals = [by_hole.get(i).strokes for i in range(10, 19) if by_hole.get(i) and by_hole.get(i).strokes is not None]
-        if len(front_vals) == 9:
+        front_vals = [by_hole.get(i).strokes for i in FRONT_NINE if by_hole.get(i) and by_hole.get(i).strokes is not None]
+        back_vals = [by_hole.get(i).strokes for i in BACK_NINE if by_hole.get(i) and by_hole.get(i).strokes is not None]
+        if len(front_vals) == HOLES_PER_NINE:
             score = sum(front_vals)
             if best is None or score < best:
                 best = score
                 best_event = _milestone_event(round_obj)
-        if len(back_vals) == 9:
+        if len(back_vals) == HOLES_PER_NINE:
             score = sum(back_vals)
             if best is None or score < best:
                 best = score
@@ -319,7 +331,7 @@ def _lowest_9_with_event(round_set: List[Round]) -> tuple[Optional[int], Optiona
 def _best_round_event(round_set: List[Round], metric_fn, *, prefer_lower: bool = False) -> Optional[Dict[str, str]]:
     best_metric: Optional[float] = None
     best_round: Optional[Round] = None
-    for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
+    for round_obj in _oldest_first(round_set):
         metric = metric_fn(round_obj)
         if metric is None:
             continue
@@ -353,7 +365,7 @@ def _home_course_metrics_for_rounds(round_set: List[Round], home_course_id: Opti
     label = matched[0].course.name if matched[0].course and matched[0].course.name else "Home Course"
     best_score: Optional[int] = None
     best_round: Optional[Round] = None
-    for round_obj in sorted(full_rounds(matched), key=lambda r: r.date or datetime.max):
+    for round_obj in _oldest_first(full_rounds(matched)):
         total_score = round_obj.calculate_total_score()
         if total_score is None:
             continue
@@ -369,7 +381,7 @@ def _home_course_metrics_for_rounds(round_set: List[Round], home_course_id: Opti
 
 
 def _first_round_with_putts_below(round_set: List[Round], threshold: int) -> Optional[Dict[str, str]]:
-    for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
+    for round_obj in _oldest_first(round_set):
         total_putts = round_obj.get_total_putts()
         if total_putts is not None and total_putts < threshold:
             return _milestone_event(round_obj)
@@ -385,7 +397,7 @@ def _round_gir_percentage(round_obj: Round) -> Optional[float]:
 
 
 def _first_round_reaching_gir(round_set: List[Round], threshold: int) -> Optional[Dict[str, str]]:
-    for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
+    for round_obj in _oldest_first(round_set):
         total_gir = round_obj.get_total_gir()
         if total_gir is not None and total_gir >= threshold:
             return _milestone_event(round_obj)
@@ -395,21 +407,21 @@ def _first_round_reaching_gir(round_set: List[Round], threshold: int) -> Optiona
 def notable_achievements(
     rounds: Iterable[Round],
     *,
-    reference_date: Optional[datetime] = None,
+    reference_date: Optional[date] = None,
     days: int = 365,
     home_course_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Aggregate player achievement stats for lifetime and a one-year window.
 
-    One-year window is rolling (default last 365 days) relative to `reference_date`
-    or current server time when omitted.
+    One-year window is rolling (default last 365 days, counted in calendar days) up to
+    `reference_date`, or today's UTC date when omitted.
     """
-    now = reference_date or datetime.now()
-    cutoff = now - timedelta(days=days)
+    today = reference_date or datetime.now(timezone.utc).date()
+    cutoff = today - timedelta(days=days)
     rounds_list = list(rounds)
 
-    rounds_year = [r for r in rounds_list if r.date is not None and cutoff <= r.date <= now]
+    rounds_year = [r for r in rounds_list if r.date is not None and cutoff <= r.date.date() <= today]
     # A record or milestone set by a round's total (lowest, highest, fewest putts, most greens,
     # breaking a score) counts only full rounds: a nine's 40 is not a round of 40.
     full_list = full_rounds(rounds_list)
@@ -585,13 +597,6 @@ def notable_achievements(
         },
     }
 
-    def _first_round_with_putts_below(round_set: List[Round], threshold: int) -> Optional[Dict[str, str]]:
-        for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
-            total_putts = round_obj.get_total_putts()
-            if total_putts is not None and total_putts < threshold:
-                return _milestone_event(round_obj)
-        return None
-
     putting_thresholds = list(range(45, 20, -3))
     putting_breaks: List[Dict[str, Any]] = []
     for threshold in putting_thresholds:
@@ -606,20 +611,6 @@ def notable_achievements(
 
     putting_milestones["lifetime"]["putt_breaks"] = putting_breaks
     putting_milestones["one_year"]["putting_milestones_achieved_from_lifetime_set"] = putting_milestones_in_window
-
-    def _first_round_reaching_gir(round_set: List[Round], threshold: int) -> Optional[Dict[str, str]]:
-        for round_obj in sorted(round_set, key=lambda r: r.date or datetime.max):
-            total_gir = round_obj.get_total_gir()
-            if total_gir is not None and total_gir >= threshold:
-                return _milestone_event(round_obj)
-        return None
-
-    def _round_gir_percentage(round_obj: Round) -> Optional[float]:
-        holes = len(_valid_hole_scores(round_obj))
-        gir = round_obj.get_total_gir()
-        if not holes or gir is None:
-            return None
-        return (gir / holes) * 100
 
     gir_thresholds = list(range(3, 19, 3))
     gir_breaks: List[Dict[str, Any]] = []
@@ -646,7 +637,7 @@ def notable_achievements(
     if one_year_gir_candidates:
         best_round, _, _ = sorted(
             one_year_gir_candidates,
-            key=lambda item: (-item[1], item[0].date or datetime.max),
+            key=lambda item: (-item[1], item[0].date),
         )[0]
         best_gir_round_event = _milestone_event(best_round)
 
@@ -1463,7 +1454,7 @@ def hole_average_nines(by_hole: List[Dict[str, Any]]) -> Dict[str, Optional[floa
         averages = [row["average_score"] for row in by_hole if row["hole_number"] in holes]
         return sum(averages) if averages else None
 
-    return {"front_nine": total(range(1, 10)), "back_nine": total(range(10, 19)), "total": total(range(1, 19))}
+    return {"front_nine": total(FRONT_NINE), "back_nine": total(BACK_NINE), "total": total(range(1, HOLES_PER_ROUND + 1))}
 
 
 def course_difficulty_profile_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
