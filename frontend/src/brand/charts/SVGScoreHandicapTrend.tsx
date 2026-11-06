@@ -4,8 +4,9 @@ import { scaleLinear } from "d3-scale";
 import { curveStepAfter, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import { tokens } from "@/brand/theme";
+import { differentialFill, tokens } from "@/brand/theme";
 import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
+import type { DifferentialStatus } from "@/domain/handicap";
 import { indexScale, knownValues, lastKnownIndex, niceExtent } from "./scales";
 
 type TrendSeries = "both" | "score" | "handicap";
@@ -102,8 +103,6 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
   // The "Par" label has the room, so a tick figure that would run into it steps aside.
   const clearOfPar = (y: number) => parY == null || Math.abs(y - parY) > tokens.type.label.size;
 
-  // The server says which rounds' differentials count toward the index.
-  const counts = data.map((d) => d.differentialStatus === "counting");
   const lastScore = lastKnownIndex(scores);
   const lastHandicap = lastKnownIndex(handicaps);
 
@@ -118,7 +117,12 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
   const pointValue = point ? (showScore ? point.score : point.handicapIndex) : null;
   const pointY = pointValue != null ? (showScore ? yScore(pointValue) : yHandicap(pointValue)) : null;
 
-  const handicapDots = new Set([lastHandicap, active].filter((i): i is number => i != null && i >= 0));
+  const handicapDots = [...new Set([lastHandicap, active])].flatMap((i) => {
+    const value = i != null && i >= 0 ? handicaps[i] : null;
+    return value != null && i != null ? [{ i, value }] : [];
+  });
+  const lastScoreValue = lastScore >= 0 ? scores[lastScore] : null;
+  const lastHandicapValue = lastHandicap >= 0 ? handicaps[lastHandicap] : null;
 
   return (
     <div data-slot="score-handicap-trend" className="relative select-none">
@@ -237,32 +241,32 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
         {showScore &&
           data.map((d, i) => {
             if (d.score == null) return null;
-            const counting = counts[i];
+            // The server says where each round's differential stands toward the index.
             return (
               <circle
                 key={`dot-${i}`}
                 cx={x(i)}
                 cy={yScore(d.score)}
-                r={active === i ? L.dotHover : counting ? L.dotCounts : L.dot}
-                fill={counting ? tokens.color.chart.series1 : tokens.color.card}
-                stroke={counting ? tokens.color.card : tokens.color.chart.reference}
+                r={active === i ? L.dotHover : d.differentialStatus === "counting" ? L.dotCounts : L.dot}
+                fill={differentialFill(d.differentialStatus)}
+                stroke={tokens.color.card}
                 strokeWidth={tokens.lineWidth.outline}
               />
             );
           })}
 
-        {showScore && lastScore >= 0 && (
-          <FigureLabel x={x(lastScore)} y={yScore(scores[lastScore]!) - L.scoreLift} anchor="middle" color={tokens.color.foreground}>
-            {scores[lastScore]}
+        {showScore && lastScoreValue != null && (
+          <FigureLabel x={x(lastScore)} y={yScore(lastScoreValue) - L.scoreLift} anchor="middle" color={tokens.color.foreground}>
+            {lastScoreValue}
           </FigureLabel>
         )}
 
         {showHandicap &&
-          [...handicapDots].map((i) => (
+          handicapDots.map(({ i, value }) => (
             <circle
               key={`handicap-dot-${i}`}
               cx={x(i)}
-              cy={yHandicap(handicaps[i]!)}
+              cy={yHandicap(value)}
               r={active === i ? L.dotHover : L.dotLast}
               fill={tokens.color.chart.series2}
               stroke={tokens.color.card}
@@ -270,14 +274,14 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             />
           ))}
 
-        {showHandicap && lastHandicap >= 0 && (
+        {showHandicap && lastHandicapValue != null && (
           <FigureLabel
             x={x(lastHandicap) - L.lastLift}
-            y={yHandicap(handicaps[lastHandicap]!) - L.lastLift}
+            y={yHandicap(lastHandicapValue) - L.lastLift}
             anchor="end"
             color={tokens.color.chart.series2}
           >
-            {formatHandicapIndex(handicaps[lastHandicap])}
+            {formatHandicapIndex(lastHandicapValue)}
           </FigureLabel>
         )}
       </svg>
@@ -323,6 +327,13 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
   );
 }
 
+/** The differential statuses the legend names, in the order a golfer reads them. */
+const LEGEND_STATUSES: { status: DifferentialStatus; label: string }[] = [
+  { status: "counting", label: "Counts toward HI" },
+  { status: "close", label: "Close to counting" },
+  { status: "out", label: "Doesn’t count" },
+];
+
 /**
  * What the dots and the faint line mean. It sits in a card's header beside the
  * title, so it takes its own place rather than the chart's. Each swatch is drawn
@@ -333,25 +344,14 @@ export function ScoreHandicapLegend({ className }: { className?: string }) {
   const mid = box / 2;
   return (
     <div data-slot="score-handicap-legend" className={cn("flex gap-4 text-body-sm text-foreground-secondary", className)}>
-      <span className="flex items-center gap-2">
-        <svg viewBox={`0 0 ${box} ${box}`} width={box} height={box} aria-hidden="true">
-          <circle cx={mid} cy={mid} r={L.dotCounts} fill={tokens.color.chart.series1} />
-        </svg>
-        Counts toward HI
-      </span>
-      <span className="flex items-center gap-2">
-        <svg viewBox={`0 0 ${box} ${box}`} width={box} height={box} aria-hidden="true">
-          <circle
-            cx={mid}
-            cy={mid}
-            r={L.dot}
-            fill={tokens.color.card}
-            stroke={tokens.color.chart.reference}
-            strokeWidth={tokens.lineWidth.outline}
-          />
-        </svg>
-        Doesn’t count
-      </span>
+      {LEGEND_STATUSES.map(({ status, label }) => (
+        <span key={status} className="flex items-center gap-2">
+          <svg viewBox={`0 0 ${box} ${box}`} width={box} height={box} aria-hidden="true">
+            <circle cx={mid} cy={mid} r={status === "counting" ? L.dotCounts : L.dot} fill={differentialFill(status)} />
+          </svg>
+          {label}
+        </span>
+      ))}
       <span className="flex items-center gap-2">
         <svg viewBox={`0 0 ${L.legendLine} ${box}`} width={L.legendLine} height={box} aria-hidden="true">
           <line
