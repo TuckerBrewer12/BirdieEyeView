@@ -149,6 +149,7 @@ Every page is MVVM on the brand kit. Under `frontend/src/`:
 - `lib/` — transport only: the API client (`api.ts`), its base URL, the session token and user-facing error wording.
 - `context/` — `AuthContext` and the theme provider.
 - `testing/` — `Fake*` doubles, fixtures and Playwright helpers.
+- Accessibility: `testing/a11y.ts` `expectAccessible(page)` runs axe-core (`@axe-core/playwright`, WCAG 2.1 A/AA) over a page; `app/tests/Accessibility.espresso.spec.ts` runs it on every screen at desktop and phone width, so a new screen gets a line there. Rules that still fail app-wide sit in `KNOWN_FAILURES` with their reason; fix a screen rather than adding to it. A sideways-scrolling area with nothing focusable inside takes `role="region"`, an `aria-label` and `tabIndex={0}` so a keyboard can scroll it.
 
 Shared code (`domain/`, `data/`, repositories, `*Model.ts`, view models) imports nothing from `@/brand`, `react-router` or the DOM; eslint enforces it.
 

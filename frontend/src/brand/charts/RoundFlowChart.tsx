@@ -57,7 +57,14 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
   };
 
   return (
-    <div data-slot="round-flow-chart" className="overflow-x-auto">
+    // Focusable so a keyboard can scroll the chart sideways on a phone.
+    <div
+      data-slot="round-flow-chart"
+      role="region"
+      aria-label="Round flow by hole"
+      tabIndex={0}
+      className="overflow-x-auto outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset"
+    >
       <div className="relative min-w-chart-wide select-none">
         <svg
           viewBox={`0 0 ${W} ${H}`}

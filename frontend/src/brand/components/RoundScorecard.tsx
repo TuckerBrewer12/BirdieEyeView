@@ -43,7 +43,13 @@ function RoundScorecard({ round, teeBox, showTee = false, edits, toCheck, action
         </div>
         {action}
       </div>
-      <div className="overflow-x-auto">
+      {/* Focusable so a keyboard can scroll the nines sideways on a phone. */}
+      <div
+        role="region"
+        aria-label="Scorecard"
+        tabIndex={0}
+        className="overflow-x-auto outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset"
+      >
         <div className="min-w-scorecard">
           {nines.map(({ nine, label }, i) => (
             <div key={label}>
