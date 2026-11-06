@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
 import { useEffect } from "react";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
+import { useAuth } from "./context/auth";
 import { ScanPage, ScanSessionProvider } from "./pages/scan";
 import { AppLayout } from "./app/AppLayout";
 import {

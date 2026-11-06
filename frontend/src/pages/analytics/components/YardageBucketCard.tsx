@@ -9,7 +9,7 @@ import {
   StatValue,
   toParTextClass,
 } from "@/brand";
-import { formatAverageToPar, formatPercent, pluralize } from "@/domain";
+import { formatAverageToPar, formatOneDecimal, formatPercent, pluralize } from "@/domain";
 import type { YardageBucket } from "../model";
 
 interface YardageBucketCardProps {
@@ -33,7 +33,7 @@ export function YardageBucketCard({ bucket, className }: YardageBucketCardProps)
           <div className="flex shrink-0 gap-4">
             <Stat align="end">
               <StatLabel>Avg</StatLabel>
-              <StatValue size="sm">{bucket.averageScore.toFixed(1)}</StatValue>
+              <StatValue size="sm">{formatOneDecimal(bucket.averageScore)}</StatValue>
             </Stat>
             <Stat align="end">
               <StatLabel>To Par</StatLabel>

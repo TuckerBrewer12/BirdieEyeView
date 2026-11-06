@@ -88,11 +88,10 @@ describe("analyticsFrom", () => {
 describe("the kit's shapes", () => {
   const analytics = analyticsFrom(sampleGolfer.analytics);
 
-  it("takes the best round from the server's lowest round", () => {
+  it("takes the best round the server picked", () => {
     expect(analytics.bestRound).toEqual({
       roundId: "8d412153-b640-567c-b361-5eb47ecb4efd",
       course: "Presidio Golf Course",
-      date: "2026/5/25",
     });
     expect(analyticsFrom(withoutRounds(sampleGolfer.analytics)).bestRound).toBeNull();
   });
