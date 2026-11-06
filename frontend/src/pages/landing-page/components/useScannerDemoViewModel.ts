@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
-import type { ScoreKind } from "@/domain";
+import { scoreKind, strokesToPar, type ScoreKind } from "@/domain";
 import type { TourScreen } from "./demoTour";
 
 export type ScannerPhase =
@@ -57,19 +57,24 @@ export interface DemoScorecardRow {
 
 /**
  * The sample card, written out as the server would read it. It is a demo with no server
- * behind it, so each hole's to par and score kind are fixed here rather than worked out.
+ * behind it, so each hole's to par and score kind are worked out from its strokes and par.
  */
 const SCORECARD: DemoScorecardRow[] = [
-  { hole: 1, par: 4, strokes: 5, putts: 2, greenInRegulation: false, toPar: 1, score: "bogey" },
-  { hole: 2, par: 4, strokes: 5, putts: 1, greenInRegulation: false, toPar: 1, score: "bogey" },
-  { hole: 3, par: 3, strokes: 3, putts: 2, greenInRegulation: true, toPar: 0, score: "par" },
-  { hole: 4, par: 5, strokes: 6, putts: 2, greenInRegulation: false, toPar: 1, score: "bogey" },
-  { hole: 5, par: 4, strokes: 5, putts: 2, greenInRegulation: false, toPar: 1, score: "bogey" },
-  { hole: 6, par: 4, strokes: 5, putts: 3, greenInRegulation: true, toPar: 1, score: "bogey" },
-  { hole: 7, par: 3, strokes: 4, putts: 3, greenInRegulation: true, toPar: 1, score: "bogey" },
-  { hole: 8, par: 5, strokes: 6, putts: 2, greenInRegulation: false, toPar: 1, score: "bogey" },
-  { hole: 9, par: 3, strokes: 4, putts: 2, greenInRegulation: false, toPar: 1, score: "bogey" },
-];
+  { hole: 1, par: 4, strokes: 5, putts: 2, greenInRegulation: false },
+  { hole: 2, par: 4, strokes: 5, putts: 1, greenInRegulation: false },
+  { hole: 3, par: 3, strokes: 3, putts: 2, greenInRegulation: true },
+  { hole: 4, par: 5, strokes: 6, putts: 2, greenInRegulation: false },
+  { hole: 5, par: 4, strokes: 5, putts: 2, greenInRegulation: false },
+  { hole: 6, par: 4, strokes: 5, putts: 3, greenInRegulation: true },
+  { hole: 7, par: 3, strokes: 4, putts: 3, greenInRegulation: true },
+  { hole: 8, par: 5, strokes: 6, putts: 2, greenInRegulation: false },
+  { hole: 9, par: 3, strokes: 4, putts: 2, greenInRegulation: false },
+].map((hole) => {
+  const toPar = strokesToPar(hole.strokes, hole.par);
+  const score = scoreKind(hole.strokes, hole.par);
+  if (toPar == null || score == null) throw new Error("A demo hole needs strokes and par.");
+  return { ...hole, toPar, score };
+});
 
 export interface ScannerDemoViewModel {
   phase: ScannerPhase;
