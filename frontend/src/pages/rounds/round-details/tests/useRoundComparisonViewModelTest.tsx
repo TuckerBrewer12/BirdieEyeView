@@ -2,7 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import type { RoundComparison } from "@/types/analytics";
+import type { RoundComparisonDto } from "@/types/api";
 import { FakeRoundsRepository } from "@/testing/fakes/FakeRoundsRepository";
 import { useRoundComparisonViewModel } from "../components/useRoundComparisonViewModel";
 
@@ -15,7 +15,7 @@ function row(label: string, value: number) {
   return { label, sample_size: 4, round_id: "round-1", primary_value: value, secondary_value: null };
 }
 
-const sampleComparison: RoundComparison = {
+const sampleComparison: RoundComparisonDto = {
   score: [row("This round", 78)],
   putts: [row("This round", 32)],
   gir: [row("This round", 7)],
@@ -24,7 +24,7 @@ const sampleComparison: RoundComparison = {
   scrambling: [row("This round", 3)],
 };
 
-function renderVm(comparison: RoundComparison) {
+function renderVm(comparison: RoundComparisonDto) {
   const repository = new FakeRoundsRepository({ comparison });
   return renderHook(() => useRoundComparisonViewModel("user-1", "round-1", repository), { wrapper });
 }

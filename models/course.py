@@ -2,7 +2,7 @@ from pydantic import Field
 from typing import List, Optional
 
 from .base import BaseGolfModel
-from .hole import Hole
+from .hole import BACK_NINE, FRONT_NINE, HOLES_PER_NINE, HOLES_PER_ROUND, Hole
 from .tee import Tee
 
 
@@ -46,22 +46,33 @@ class Course(BaseGolfModel):
     @property
     def calculated_par(self) -> Optional[int]:
         """Calculate total par from holes."""
-        if len(self.holes) != 18 or any(h.par is None for h in self.holes):
+        if len(self.holes) != HOLES_PER_ROUND or any(h.par is None for h in self.holes):
             return None
         return sum(h.par for h in self.holes if h.par is not None)
 
     @property
     def front_nine_par(self) -> Optional[int]:
         """Calculate par for holes 1-9."""
-        front = [h for h in self.holes if h.number is not None and 1 <= h.number <= 9]
-        if len(front) < 9 or any(h.par is None for h in front):
+        front = [h for h in self.holes if h.number in FRONT_NINE]
+        if len(front) < HOLES_PER_NINE or any(h.par is None for h in front):
             return None
         return sum(h.par for h in front if h.par is not None)
 
     @property
     def back_nine_par(self) -> Optional[int]:
         """Calculate par for holes 10-18."""
-        back = [h for h in self.holes if h.number is not None and 10 <= h.number <= 18]
-        if len(back) < 9 or any(h.par is None for h in back):
+        back = [h for h in self.holes if h.number in BACK_NINE]
+        if len(back) < HOLES_PER_NINE or any(h.par is None for h in back):
             return None
         return sum(h.par for h in back if h.par is not None)
+
+
+class CourseSummary(BaseGolfModel):
+    """A course as lists show it: its par and how many holes and tees it has, without the holes and tees."""
+    id: str
+    name: Optional[str] = None
+    external_course_id: Optional[str] = None
+    location: Optional[str] = None
+    par: Optional[int] = None
+    hole_count: int = 0
+    tee_count: int = 0

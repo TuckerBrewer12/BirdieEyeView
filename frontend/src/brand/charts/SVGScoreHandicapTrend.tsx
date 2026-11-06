@@ -4,20 +4,7 @@ import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import {
-  borderWidth,
-  chartColors,
-  chartLayout,
-  colors,
-  fonts,
-  motion as motionTokens,
-  radius,
-  ringWidth,
-  space,
-  toParFill,
-  typography,
-  differentialFill,
-} from "@/brand/theme";
+import { toParFill, differentialFill, tokens } from "@/brand/theme";
 import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
 import { indexScale, knownValues, paddedExtent } from "./scales";
 
@@ -31,8 +18,8 @@ interface SVGScoreHandicapTrendProps {
   compact?: boolean;
 }
 
-const SCORE_COLOR = colors.primary;
-const HANDICAP_COLOR = colors.score.double.text;
+const SCORE_COLOR = tokens.color.primary;
+const HANDICAP_COLOR = tokens.color.score.double.text;
 
 /** Selection is kept per series, so switching the line clears it. */
 interface Selection {
@@ -45,7 +32,7 @@ interface Selection {
  * alone. Hovering with a mouse or tapping on a phone picks a round.
  */
 export function SVGScoreHandicapTrend({ data, series = "both", compact = false }: SVGScoreHandicapTrendProps) {
-  const plot = compact ? { ...chartLayout.plot, ...chartLayout.plotCompact } : chartLayout.plot;
+  const plot = compact ? { ...tokens.chart.plot, ...tokens.chart.plotCompact } : tokens.chart.plot;
   const { width: W, height: H, pad: PAD } = plot;
   const hiGrad = `hiGrad${useId().replace(/:/g, "")}`;
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -131,21 +118,21 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
       >
         <defs>
           <linearGradient id={hiGrad} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="10%" stopColor={HANDICAP_COLOR} stopOpacity={0.1} />
+            <stop offset="10%" stopColor={HANDICAP_COLOR} stopOpacity={tokens.opacity.tint} />
             <stop offset="100%" stopColor={HANDICAP_COLOR} stopOpacity={0} />
           </linearGradient>
         </defs>
 
         {yLeft.ticks(5).map((v) => (
           <g key={`left-${v}`}>
-            <line x1={PAD.left} x2={W - PAD.right} y1={yLeft(v)} y2={yLeft(v)} stroke={colors.border} strokeWidth={borderWidth} />
-            <AxisLabel x={PAD.left - 12} y={yLeft(v) + 4} anchor="end" color={chartColors.axis}>
+            <line x1={PAD.left} x2={W - PAD.right} y1={yLeft(v)} y2={yLeft(v)} stroke={tokens.color.border} strokeWidth={tokens.lineWidth.border} />
+            <AxisLabel x={PAD.left - 12} y={yLeft(v) + 4} anchor="end" color={tokens.color.chart.axis}>
               {showScore ? v : formatHandicapIndex(v)}
             </AxisLabel>
           </g>
         ))}
 
-        <line x1={PAD.left} x2={W - PAD.right} y1={baseline} y2={baseline} stroke={chartColors.muted} strokeWidth={borderWidth} />
+        <line x1={PAD.left} x2={W - PAD.right} y1={baseline} y2={baseline} stroke={tokens.color.chart.muted} strokeWidth={tokens.lineWidth.border} />
 
         {series === "both" &&
           hasHandicap &&
@@ -156,7 +143,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
           ))}
 
         {xTicks.map((i) => (
-          <AxisLabel key={`x-${i}`} x={x(i)} y={baseline + 16} anchor="middle" color={chartColors.axis}>
+          <AxisLabel key={`x-${i}`} x={x(i)} y={baseline + 16} anchor="middle" color={tokens.color.chart.axis}>
             {i + 1}
           </AxisLabel>
         ))}
@@ -174,8 +161,8 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                 width={barW}
                 height={baseline - top}
                 fill={differentialFill(d.differentialStatus)}
-                fillOpacity={0.6}
-                rx={radius.tick}
+                fillOpacity={tokens.opacity.strong}
+                rx={tokens.radius.tick}
               />
             );
           })}
@@ -187,7 +174,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
               d={handicapPath}
               fill="none"
               stroke={HANDICAP_COLOR}
-              strokeWidth={series === "both" ? space.bar : chartLayout.sparkline.stroke}
+              strokeWidth={series === "both" ? tokens.lineWidth.outline : tokens.chart.sparkline.stroke}
               strokeOpacity={series === "both" ? 0.7 : 1}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -200,7 +187,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             d={scorePath}
             fill="none"
             stroke={SCORE_COLOR}
-            strokeWidth={chartLayout.sparkline.stroke}
+            strokeWidth={tokens.chart.sparkline.stroke}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -212,9 +199,9 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             x2={x(active)}
             y1={PAD.top}
             y2={baseline}
-            stroke={chartColors.muted}
-            strokeWidth={borderWidth}
-            strokeDasharray={`${space.dot} ${space.dot}`}
+            stroke={tokens.color.chart.muted}
+            strokeWidth={tokens.lineWidth.border}
+            strokeDasharray={tokens.chart.guideDash}
           />
         )}
 
@@ -228,8 +215,8 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
               cy={showScore ? yScore(value) : yHandicap(value)}
               r={active === i ? plot.dotHover : plot.dot}
               fill={showScore ? toParFill(d.toPar) : HANDICAP_COLOR}
-              stroke={colors.card}
-              strokeWidth={space.bar}
+              stroke={tokens.color.card}
+              strokeWidth={tokens.lineWidth.outline}
             />
           );
         })}
@@ -242,9 +229,9 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                 x={x(i)}
                 y={yScore(d.score) - 8}
                 textAnchor="middle"
-                fontSize={typography.caption}
-                fontFamily={fonts.sans}
-                fill={chartColors.axis}
+                fontSize={tokens.type.caption.size}
+                fontFamily={tokens.font.sans}
+                fill={tokens.color.chart.axis}
                 fontWeight="600"
               >
                 {d.score}
@@ -258,15 +245,15 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
           <motion.div
             key={`${series}-${active}`}
             className={cn(
-              "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/95 px-3 py-2.5 text-body-sm shadow-card",
+              "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
               // Past two thirds of the way across, the card opens to the left of the point.
               x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
             )}
             style={{ left: `${(x(active) / W) * 100}%`, top: `${(pointY / H) * 100}%` }}
-            initial={{ opacity: 0, scale: motionTokens.tapScale }}
+            initial={{ opacity: 0, scale: tokens.motion.tapScale }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: motionTokens.tapScale }}
-            transition={{ duration: motionTokens.duration.collapse }}
+            exit={{ opacity: 0, scale: tokens.motion.tapScale }}
+            transition={{ duration: tokens.motion.duration.collapse }}
           >
             <div className="mb-1 text-sm font-bold text-card-foreground">Round {point.roundIndex}</div>
             {point.courseName && (
@@ -312,13 +299,13 @@ function AxisLabel({
       x={x}
       y={y}
       textAnchor={anchor}
-      fontSize={typography.label}
+      fontSize={tokens.type.label.size}
       fontWeight="600"
-      fontFamily={fonts.sans}
+      fontFamily={tokens.font.sans}
       fill={color}
       paintOrder="stroke"
-      stroke={colors.card}
-      strokeWidth={ringWidth}
+      stroke={tokens.color.card}
+      strokeWidth={tokens.lineWidth.ring}
       strokeLinejoin="round"
     >
       {children}

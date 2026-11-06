@@ -8,7 +8,7 @@ import {
   PageTitle,
   SearchField,
 } from "@/brand";
-import { pluralize } from "@/lib/pluralize";
+import { pluralize } from "@/domain/format";
 import { useCoursesPageViewModel } from "./useCoursesPageViewModel";
 
 interface CoursesPageProps { userId: string; }
@@ -47,7 +47,7 @@ export function CoursesPage({ userId }: CoursesPageProps) {
           renderItem={(course) => (
             <CoursePreview
               course={course}
-              onClick={() => navigate(`/courses/${course.id}`)}
+              onClick={() => void navigate(`/courses/${course.id}`)}
             />
           )}
         />

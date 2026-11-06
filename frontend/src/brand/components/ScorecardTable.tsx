@@ -3,7 +3,7 @@ import { HoleShape } from "@/brand/charts/HoleScoreShapes";
 import { Button } from "@/brand/components/Button";
 import { Input } from "@/brand/components/Input";
 import { scoreFillClass, scoreOnFillClass, toParDisplay, toParTextClass } from "@/brand/theme";
-import { isThreePutt, type HoleScore, type Nine, type Round } from "@/domain";
+import type { HoleScore, Nine, Round } from "@/domain";
 
 export interface ScorecardEdits {
   onStrokesChange: (hole: number, strokes: number | null) => void;
@@ -21,6 +21,8 @@ interface ScorecardTableProps {
   teeBox?: string | null;
   /** Makes scores, putts and greens editable. The nine shown should already carry the edits. */
   edits?: ScorecardEdits;
+  /** Holes whose score is in doubt, like one a scan couldn't read for sure. Their score cell is ringed. */
+  toCheck?: readonly number[];
   className?: string;
 }
 
@@ -56,7 +58,7 @@ function GirMark({ gir, className }: { gir: boolean | null; className?: string }
   if (gir == null) return <span className="text-muted-foreground">·</span>;
   return (
     <span
-      className={cn("inline-block size-2.5 rounded-sm", gir ? "bg-primary" : "bg-destructive/30", className)}
+      className={cn("inline-block size-2.5 rounded-sm", gir ? "bg-primary" : "bg-destructive/recessed", className)}
     />
   );
 }
@@ -82,31 +84,47 @@ function CountInput({
         const parsed = parseCount(e.target.value);
         if (parsed !== undefined) onChange(parsed);
       }}
-      className={cn("mx-auto h-7 w-8 px-0 text-center text-sm font-semibold", className)}
+      // Block, so it centres under the hole number like the rest of the column.
+      className={cn("mx-auto block h-7 w-8 px-0 text-center text-sm font-semibold", className)}
     />
   );
 }
 
-function ScoreCell({ hole, edits }: { hole: HoleScore; edits?: ScorecardEdits }) {
+/** Rings a score cell whose score is in doubt. */
+const CHECK_RING = "ring-2 ring-destructive ring-offset-1 ring-offset-card";
+
+function ScoreCell({ hole, edits, check }: { hole: HoleScore; edits?: ScorecardEdits; check: boolean }) {
   if (!edits) {
     return (
-      <td className="px-1 py-1.5">
+      <td className="px-1 py-1.5" data-check={check || undefined}>
         <div className="flex justify-center">
-          <HoleShape hole={hole} />
+          {check ? (
+            <span className={cn("inline-flex rounded-md", CHECK_RING)}>
+              <HoleShape hole={hole} />
+            </span>
+          ) : (
+            <HoleShape hole={hole} />
+          )}
         </div>
       </td>
     );
   }
   return (
-    <td className="px-1 py-1">
-      <CountInput
-        label={`Hole ${hole.hole} strokes`}
-        value={hole.strokes}
-        onChange={(strokes) => edits.onStrokesChange(hole.hole, strokes)}
-        className={
-          hole.kind ? cn("border-transparent", scoreFillClass(hole.kind), scoreOnFillClass(hole.kind)) : "border-dashed"
-        }
-      />
+    <td className="px-1 py-1" data-check={check || undefined}>
+      {/* The fill sits behind a clear input: an input's own dark background would cover it. */}
+      <div className={cn("mx-auto w-8 rounded-lg", hole.kind && scoreFillClass(hole.kind))}>
+        <CountInput
+          label={check ? `Hole ${hole.hole} strokes, to check` : `Hole ${hole.hole} strokes`}
+          value={hole.strokes}
+          onChange={(strokes) => edits.onStrokesChange(hole.hole, strokes)}
+          className={cn(
+            "bg-transparent dark:bg-transparent",
+            hole.kind ? cn("border-transparent", scoreOnFillClass(hole.kind)) : "border-dashed",
+            check && CHECK_RING,
+            check && !hole.kind && "border-destructive",
+          )}
+        />
+      </div>
     </td>
   );
 }
@@ -120,7 +138,7 @@ function ScoreCell({ hole, edits }: { hole: HoleScore; edits?: ScorecardEdits })
  * greens always do while editing), because a scanned card often has none, and a row of dashes
  * reads as a failed scan rather than a card that never held the data.
  */
-function ScorecardTable({ nine, label, round, teeBox, edits, className }: ScorecardTableProps) {
+function ScorecardTable({ nine, label, round, teeBox, edits, toCheck, className }: ScorecardTableProps) {
   const holes = nine.holes;
   const showYards = holes.some((hole) => hole.yardage != null);
   const showHandicap = holes.some((hole) => hole.handicap != null);
@@ -172,10 +190,10 @@ function ScorecardTable({ nine, label, round, teeBox, edits, className }: Scorec
           {round && <td className={TOTAL_CELL}>{show(round.par)}</td>}
         </tr>
 
-        <tr className={cn("text-sm text-foreground", edits && "bg-muted/40")}>
+        <tr className={cn("text-sm text-foreground", edits && "bg-muted/recessed")}>
           <td className={LABEL_CELL}>Score</td>
           {holes.map((hole) => (
-            <ScoreCell key={hole.hole} hole={hole} edits={edits} />
+            <ScoreCell key={hole.hole} hole={hole} edits={edits} check={!!toCheck?.includes(hole.hole)} />
           ))}
           <td className={NINE_CELL}>{show(nine.total)}</td>
           {round && <td className={cn(TOTAL_CELL, "text-base")}>{show(round.score)}</td>}
@@ -197,7 +215,7 @@ function ScorecardTable({ nine, label, round, teeBox, edits, className }: Scorec
         </tr>
 
         {showPutts && (
-          <tr className={cn("text-xs text-muted-foreground", edits && "bg-muted/40")}>
+          <tr className={cn("text-xs text-muted-foreground", edits && "bg-muted/recessed")}>
             <td className={LABEL_CELL}>Putts</td>
             {holes.map((hole) =>
               edits ? (
@@ -212,7 +230,7 @@ function ScorecardTable({ nine, label, round, teeBox, edits, className }: Scorec
               ) : (
                 <td
                   key={hole.hole}
-                  className={cn(CELL, isThreePutt(hole.putts) && "font-bold text-destructive")}
+                  className={cn(CELL, hole.threePutt && "font-bold text-destructive")}
                 >
                   {hole.putts ?? "·"}
                 </td>

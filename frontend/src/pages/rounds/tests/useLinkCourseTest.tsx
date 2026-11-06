@@ -3,14 +3,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
 import { queryKeys } from "@/data/queryKeys";
-import { populatedRounds } from "@/testing/fixtures/rounds";
+import { storedRounds } from "@/testing/fixtures/rounds";
 import { pebbleBeach } from "@/testing/fixtures/courses";
 import { FakeRoundsRepository } from "@/testing/fakes/FakeRoundsRepository";
 import { useLinkCourse } from "../useLinkCourse";
 
 function setup() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const repository = new FakeRoundsRepository({ rounds: populatedRounds, courses: [pebbleBeach] });
+  const repository = new FakeRoundsRepository({ rounds: storedRounds, courses: [pebbleBeach] });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );

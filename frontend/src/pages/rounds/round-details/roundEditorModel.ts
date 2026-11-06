@@ -1,6 +1,6 @@
 import { chooseCompatibleTee, teeColors } from "@/domain/course";
 import type { CourseEdit, HoleEdits, RoundDetail, RoundEdits } from "@/domain";
-import type { Course } from "@/types/golf";
+import type { CourseDto } from "@/types/api";
 
 /** Edits exist only while editing, so a closed editor cannot hold stale scores. */
 export type RoundEditor = { editing: false } | ({ editing: true } & RoundEdits);
@@ -13,14 +13,14 @@ export type RoundEditAction =
   | { type: "setScore"; hole: number; field: "strokes" | "putts"; value: number | null }
   | { type: "setGir"; hole: number; value: boolean | null }
   | { type: "setTeeBox"; teeBox: string }
-  | { type: "linkCourse"; course: Course }
+  | { type: "linkCourse"; course: CourseDto }
   | { type: "useCustomName"; name: string }
   | { type: "changeCourse" }
   | { type: "restoreCourse"; round: RoundDetail };
 
 export const closedEditor: RoundEditor = { editing: false };
 
-export function courseEditFromRound(round: RoundDetail): CourseEdit {
+function courseEditFromRound(round: RoundDetail): CourseEdit {
   if (round.linkedCourse) return { status: "linked", course: round.linkedCourse };
   if (round.playedName) return { status: "custom", name: round.playedName };
   return { status: "picking" };
@@ -33,7 +33,7 @@ function holesFrom(round: RoundDetail): HoleEdits {
 }
 
 /** Keep the tee if the new course has a matching one, take its only tee, or leave it for the golfer to pick. */
-function teeOnCourse(current: string, course: Course): string {
+function teeOnCourse(current: string, course: CourseDto): string {
   const tees = teeColors(course);
   if (tees.length === 0) return current;
   if (current.trim()) {

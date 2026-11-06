@@ -1,0 +1,1 @@
+export { TheLabPage } from "./TheLabPage";

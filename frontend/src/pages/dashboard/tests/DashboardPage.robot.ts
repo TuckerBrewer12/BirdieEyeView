@@ -5,10 +5,9 @@ import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import {
   dashboardGoalReport,
   dashboardUser,
-  populatedAnalytics,
   populatedDashboard,
 } from "../../../testing/fixtures/dashboard";
-import { populatedRounds } from "../../../testing/fixtures/rounds";
+import { storedRounds } from "../../../testing/fixtures/rounds";
 
 const FROZEN_NOW = "2026-06-15T18:00:00.000Z";
 
@@ -31,10 +30,9 @@ export class DashboardRobot {
     await this.page.emulateMedia({ reducedMotion: "reduce" });
     await this.page.clock.setFixedTime(new Date(FROZEN_NOW));
     await FakeSession.install(this.page, {
-      rounds: populatedRounds,
+      rounds: storedRounds,
       handicapIndex: 12.4,
       dashboard: populatedDashboard,
-      analytics: populatedAnalytics,
       profile: dashboardUser,
       goalReport: dashboardGoalReport,
       ...seed,

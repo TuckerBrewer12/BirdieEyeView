@@ -61,7 +61,7 @@ class ScanService:
         if req.course_id:
             try:
                 course = await self._db.courses.get_course(req.course_id)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise ValueError("Selected course_id is invalid.") from exc
             if course:
                 if course.user_id and str(course.user_id) != str(req.user_id):

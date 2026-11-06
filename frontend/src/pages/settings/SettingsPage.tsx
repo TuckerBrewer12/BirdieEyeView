@@ -1,531 +1,94 @@
-import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Monitor, Moon, Sun } from "lucide-react";
-import { useBeforeUnload, useLocation } from "react-router-dom";
-import { PageHeader, ToggleGroup, ToggleGroupItem } from "@/brand";
-import { api } from "@/lib/api";
-import { formatHandicapInputValue, parseHandicapInput } from "@/lib/handicap";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  Button,
+  LoadingState,
+  PageHeader,
+  PageTitle,
+} from "@/brand";
 import { useTheme } from "@/context/theme";
-import { getStoredColorBlindMode, setStoredColorBlindMode } from "@/lib/accessibility";
-import { isThemePreference, type ThemePreference } from "@/domain/theme";
-import type { ColorBlindMode } from "@/lib/accessibility";
-import type { CourseSummary } from "@/types/golf";
-
-const UPDATES_PREF_KEY = "settings_get_updates";
-const COLORBLIND_MODES: Array<{ key: ColorBlindMode; label: string }> = [
-  { key: "none", label: "No Filter" },
-  { key: "protanopia", label: "Protanopia" },
-  { key: "deuteranopia", label: "Deuteranopia" },
-  { key: "tritanopia", label: "Tritanopia" },
-];
-
-/** Applied and saved as soon as it is picked, like the device's own setting. */
-const THEME_OPTIONS: { value: ThemePreference; label: string; Icon: typeof Sun }[] = [
-  { value: "light", label: "Light", Icon: Sun },
-  { value: "dark", label: "Dark", Icon: Moon },
-  { value: "system", label: "System", Icon: Monitor },
-];
+import { FriendCodeSection } from "./components/FriendCodeSection";
+import { HandicapSection } from "./components/HandicapSection";
+import { HomeCourseSection } from "./components/HomeCourseSection";
+import { PreferencesSection } from "./components/PreferencesSection";
+import { UnsavedChangesSheet } from "./components/UnsavedChangesSheet";
+import { useLeaveGuard } from "./useLeaveGuard";
+import { useSettingsPageViewModel } from "./useSettingsPageViewModel";
 
 export function SettingsPage({ userId }: { userId: string }) {
-  const location = useLocation();
-  const [homeCourseQuery, setHomeCourseQuery] = useState<string>("");
-  const [searchResults, setSearchResults] = useState<CourseSummary[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const [homeCourseId, setHomeCourseId] = useState<string>("");
-  const [handicapInput, setHandicapInput] = useState<string>("");
-  const [friendCode, setFriendCode] = useState<string>("");
-  const [getUpdates, setGetUpdates] = useState<boolean>(true);
-  const { preference: theme, setPreference: setThemePreference } = useTheme();
-  const [colorBlindMode, setColorBlindMode] = useState<ColorBlindMode>(() => getStoredColorBlindMode());
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string>("");
-  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
-  const initializedRef = useRef(false);
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (searchTimer.current) clearTimeout(searchTimer.current); }, []);
-  const bypassGuardRef = useRef(false);
-  const baselineRef = useRef<{
-    homeCourseId: string;
-    homeCourseQuery: string;
-    handicapInput: string;
-    getUpdates: boolean;
-    colorBlindMode: ColorBlindMode;
-  } | null>(null);
+  const viewModel = useSettingsPageViewModel(userId);
+  const { preference: theme, setPreference: setTheme } = useTheme();
+  const guard = useLeaveGuard(viewModel.dirty);
 
-  const { data: settingsData, isLoading: loading } = useQuery({
-    queryKey: ["settings", userId],
-    queryFn: async () => {
-      const [user, globalCoursesResult, userCoursesResult] = await Promise.all([
-        api.getUser(userId),
-        api.getCourses(undefined, 200, 0).catch(() => [] as CourseSummary[]),
-        api.getCourses(userId, 200, 0).catch(() => [] as CourseSummary[]),
-      ]);
-      const merged = [...globalCoursesResult, ...userCoursesResult];
-      const byId = new Map<string, CourseSummary>();
-      for (const course of merged) byId.set(course.id, course);
-      const allCourses = Array.from(byId.values());
-      let homeCourseQueryDefault = "";
-      if (user.home_course_id) {
-        const selected = allCourses.find((c) => c.id === user.home_course_id);
-        if (selected?.name) {
-          homeCourseQueryDefault = selected.name;
-        } else {
-          const courseFromId = await api.getCourse(user.home_course_id).catch(() => null);
-          homeCourseQueryDefault = courseFromId?.name ?? "";
-        }
-      }
-      return { user, allCourses, homeCourseQueryDefault };
-    },
-  });
-
-  // Initialize form state once when data first loads
-  useEffect(() => {
-    if (!settingsData || initializedRef.current) return;
-    initializedRef.current = true;
-    const savedUpdates = localStorage.getItem(UPDATES_PREF_KEY);
-    const updatesPref = savedUpdates !== null ? savedUpdates === "true" : true;
-    const initialHomeCourseId = settingsData.user.home_course_id ?? "";
-    const initialHandicap = formatHandicapInputValue(settingsData.user.handicap);
-    const initialColorBlind = getStoredColorBlindMode();
-    setGetUpdates(updatesPref);
-    setHomeCourseId(initialHomeCourseId);
-    setHandicapInput(initialHandicap);
-    setFriendCode(settingsData.user.friend_code ?? "");
-    setHomeCourseQuery(settingsData.homeCourseQueryDefault);
-    setColorBlindMode(initialColorBlind);
-    baselineRef.current = {
-      homeCourseId: initialHomeCourseId,
-      homeCourseQuery: settingsData.homeCourseQueryDefault,
-      handicapInput: initialHandicap,
-      getUpdates: updatesPref,
-      colorBlindMode: initialColorBlind,
-    };
-  }, [settingsData]);
-
-  const hasUnsavedChanges = (() => {
-    const baseline = baselineRef.current;
-    if (!baseline) return false;
-    return (
-      baseline.homeCourseId !== homeCourseId ||
-      baseline.homeCourseQuery !== homeCourseQuery ||
-      baseline.handicapInput !== handicapInput ||
-      baseline.getUpdates !== getUpdates ||
-      baseline.colorBlindMode !== colorBlindMode
-    );
-  })();
-
-  useBeforeUnload((event) => {
-    if (!hasUnsavedChanges) return;
-    event.preventDefault();
-    event.returnValue = "";
-  });
-
-  // In-app navigation guard (works with BrowserRouter + NavLink)
-  useEffect(() => {
-    const onClickCapture = (event: MouseEvent) => {
-      if (!hasUnsavedChanges || bypassGuardRef.current) return;
-      if (event.defaultPrevented || event.button !== 0) return;
-      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-
-      const target = event.target as Element | null;
-      const anchor = target?.closest("a[href]") as HTMLAnchorElement | null;
-      if (!anchor) return;
-      if (anchor.target && anchor.target !== "_self") return;
-
-      let nextPath = "";
-      try {
-        const url = new URL(anchor.href, window.location.origin);
-        if (url.origin !== window.location.origin) return;
-        nextPath = `${url.pathname}${url.search}${url.hash}`;
-      } catch {
-        return;
-      }
-
-      const currentPath = `${location.pathname}${location.search}${location.hash}`;
-      if (!nextPath || nextPath === currentPath) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-      setShowUnsavedModal(true);
-    };
-
-    document.addEventListener("click", onClickCapture, true);
-    return () => document.removeEventListener("click", onClickCapture, true);
-  }, [hasUnsavedChanges, location.pathname, location.search, location.hash]);
-
-  // Browser Back/Forward guard
-  useEffect(() => {
-    const onPopState = () => {
-      if (!hasUnsavedChanges || bypassGuardRef.current) return;
-      const nextPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-      const currentPath = `${location.pathname}${location.search}${location.hash}`;
-      if (nextPath === currentPath) return;
-
-      // Restore current URL immediately, then ask for confirmation.
-      window.history.pushState(null, "", currentPath);
-      setShowUnsavedModal(true);
-    };
-
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
-  }, [hasUnsavedChanges, location.pathname, location.search, location.hash]);
-
-  const handleHomeCourseQueryChange = (value: string) => {
-    setHomeCourseQuery(value);
-    setHomeCourseId("");
-    setShowResults(true);
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    const q = value.trim();
-    if (q.length < 2) { setSearchResults([]); return; }
-    searchTimer.current = setTimeout(() => {
-      api.searchCourses(q, userId).then(setSearchResults).catch(() => setSearchResults([]));
-    }, 250);
-  };
-
-  const selectHomeCourse = (course: CourseSummary) => {
-    setHomeCourseId(course.id);
-    setHomeCourseQuery(course.name ?? "");
-    setShowResults(false);
-  };
-
-  const clearHomeCourse = () => {
-    setHomeCourseId("");
-    setHomeCourseQuery("");
-    setSearchResults([]);
-    setShowResults(false);
-  };
-
-
-  const setColorBlindPreference = (mode: ColorBlindMode) => {
-    setColorBlindMode(mode);
-  };
-
-  const colorBlindIndex = COLORBLIND_MODES.findIndex((m) => m.key === colorBlindMode);
-  const colorBlindDisplay = COLORBLIND_MODES[colorBlindIndex]?.label ?? "No Filter";
-
-  const stepColorBlindMode = (direction: -1 | 1) => {
-    const next = (colorBlindIndex + direction + COLORBLIND_MODES.length) % COLORBLIND_MODES.length;
-    setColorBlindPreference(COLORBLIND_MODES[next].key);
-  };
-
-  const persistSettings = async (): Promise<boolean> => {
-    const courses = settingsData?.allCourses ?? [];
-    setSaving(true);
-    setMessage("");
-    try {
-      let selectedHomeCourseId = homeCourseId;
-      const normalizedQuery = homeCourseQuery.trim().toLowerCase();
-      if (normalizedQuery !== "" && !selectedHomeCourseId) {
-        const exact = courses.find((course) => (course.name ?? "").trim().toLowerCase() === normalizedQuery);
-        if (exact) {
-          selectedHomeCourseId = exact.id;
-        } else {
-          setMessage("Select a home course from the suggestions, or clear it.");
-          return false;
-        }
-      }
-
-      const { value: handicap, error: handicapError } = parseHandicapInput(handicapInput);
-      if (handicapError) {
-        setMessage(handicapError);
-        return false;
-      }
-
-      await api.updateUser(userId, {
-        home_course_id: selectedHomeCourseId || null,
-        handicap,
-      });
-      setStoredColorBlindMode(colorBlindMode);
-      const refreshedUser = await api.getUser(userId);
-
-      setHomeCourseId(refreshedUser.home_course_id ?? "");
-      setHandicapInput(formatHandicapInputValue(refreshedUser.handicap));
-      setFriendCode(refreshedUser.friend_code ?? "");
-      if (refreshedUser.home_course_id) {
-        const selected = (settingsData?.allCourses ?? []).find((course) => course.id === refreshedUser.home_course_id);
-        setHomeCourseQuery(selected?.name ?? homeCourseQuery);
-      } else {
-        setHomeCourseQuery("");
-      }
-      localStorage.setItem(UPDATES_PREF_KEY, String(getUpdates));
-      baselineRef.current = {
-        homeCourseId: refreshedUser.home_course_id ?? "",
-        homeCourseQuery: refreshedUser.home_course_id
-          ? ((settingsData?.allCourses ?? []).find((course) => course.id === refreshedUser.home_course_id)?.name ?? homeCourseQuery)
-          : "",
-        handicapInput: formatHandicapInputValue(refreshedUser.handicap),
-        getUpdates,
-        colorBlindMode,
-      };
-      setMessage("Settings saved.");
-      return true;
-    } catch (error) {
-      const text = error instanceof Error ? error.message : "Failed to save settings.";
-      setMessage(text);
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveSettings = async () => {
-    await persistSettings();
-  };
-
-  const resetToBaseline = () => {
-    const baseline = baselineRef.current;
-    if (!baseline) return;
-    setHomeCourseId(baseline.homeCourseId);
-    setHomeCourseQuery(baseline.homeCourseQuery);
-    setHandicapInput(baseline.handicapInput);
-    setGetUpdates(baseline.getUpdates);
-    setColorBlindMode(baseline.colorBlindMode);
-    setSearchResults([]);
-    setShowResults(false);
-  };
-
-  const handleConfirmAndSave = async () => {
-    const ok = await persistSettings();
-    if (ok) {
-      setShowUnsavedModal(false);
-    }
-  };
-
-  const handleDiscardAndLeave = () => {
-    resetToBaseline();
-    setShowUnsavedModal(false);
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-400">Loading settings...</div>
-      </div>
-    );
-  }
+  if (viewModel.loading) return <LoadingState>Loading settings…</LoadingState>;
 
   return (
     <div>
       <PageHeader title="Settings" subtitle="Manage account preferences" revealAt={100} />
-      <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-5">Settings</h1>
-      <div className="max-w-3xl space-y-5">
-        <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-gray-700">Friend Code</h2>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={friendCode || "Unavailable"}
-              readOnly
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-gray-50"
-            />
-            <button
-              type="button"
-              onClick={async () => {
-                if (!friendCode) return;
-                try {
-                  await navigator.clipboard.writeText(friendCode);
-                  setMessage("Friend code copied.");
-                } catch {
-                  setMessage("Could not copy friend code.");
-                }
-              }}
-              className="rounded-md border border-gray-300 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50"
-            >
-              Copy
-            </button>
-          </div>
-          <p className="text-xs text-gray-500">
-            Share this code so other users can send you a friend request.
-          </p>
-        </section>
 
-        <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-gray-700">Preferences</h2>
-          <div className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5">
-            <span id="theme-label" className="text-sm text-gray-700">Theme</span>
-            <ToggleGroup
-              aria-labelledby="theme-label"
-              variant="outline"
-              size="sm"
-              spacing={0}
-              value={[theme]}
-              onValueChange={(values) => {
-                // Pressing the chosen option again would clear it; a theme is always chosen.
-                const next = values[0];
-                if (isThemePreference(next)) setThemePreference(next);
-              }}
-            >
-              {THEME_OPTIONS.map(({ value, label, Icon }) => (
-                <ToggleGroupItem key={value} value={value}>
-                  <Icon data-icon="inline-start" />
-                  {label}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          </div>
-          <label className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5">
-            <span className="text-sm text-gray-700">Get updates</span>
-            <input
-              type="checkbox"
-              checked={getUpdates}
-              onChange={(event) => setGetUpdates(event.target.checked)}
-              className="h-4 w-4"
-            />
-          </label>
+      <div className="flex max-w-3xl flex-col gap-4 pb-6">
+        <PageTitle>Settings</PageTitle>
 
-          <div className="space-y-2">
-            <div className="rounded-xl border border-gray-300 overflow-hidden">
-              <div className="flex flex-wrap items-stretch">
-                <div className="px-3 py-2.5 text-xs font-bold tracking-wider uppercase text-gray-700 bg-gray-50 border-r border-b border-gray-300 flex-1 min-w-[130px]">
-                  Color Blind Mode
-                </div>
-                <div className="flex items-stretch flex-1 min-w-[180px] border-b border-gray-300 sm:border-b-0">
-                  <button
-                    type="button"
-                    onClick={() => stepColorBlindMode(-1)}
-                    aria-label="Previous color blind mode"
-                    className="px-3 py-2.5 text-gray-600 bg-white border-r border-gray-300 hover:bg-gray-50 shrink-0"
-                  >
-                    ‹
-                  </button>
-                  <div className="px-3 py-2.5 bg-white border-r border-gray-300 flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-gray-900">{colorBlindDisplay}</div>
-                    <div className="mt-1 flex gap-1">
-                      {COLORBLIND_MODES.map((m, i) => (
-                        <span
-                          key={m.key}
-                          className={`h-1.5 flex-1 rounded-sm ${
-                            i === colorBlindIndex ? "bg-primary" : "bg-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => stepColorBlindMode(1)}
-                    aria-label="Next color blind mode"
-                    className="px-3 py-2.5 text-gray-600 bg-white hover:bg-gray-50 shrink-0"
-                  >
-                    ›
-                  </button>
-                </div>
-              </div>
+        {viewModel.loadError ? (
+          <Alert variant="destructive">
+            <AlertDescription>{viewModel.loadError}</AlertDescription>
+            <AlertAction>
+              <Button variant="outline" size="sm" onClick={viewModel.retry}>
+                Try again
+              </Button>
+            </AlertAction>
+          </Alert>
+        ) : (
+          <>
+            <FriendCodeSection friendCode={viewModel.friendCode} />
+            <HandicapSection
+              value={viewModel.handicapInput}
+              error={viewModel.handicapError}
+              onChange={viewModel.setHandicapInput}
+            />
+            <HomeCourseSection
+              homeCourse={viewModel.homeCourse}
+              query={viewModel.courseQuery}
+              results={viewModel.courseResults}
+              searching={viewModel.searchingCourses}
+              onQueryChange={viewModel.setCourseQuery}
+              onPick={viewModel.pickHomeCourse}
+              onClear={viewModel.clearHomeCourse}
+            />
+            <PreferencesSection
+              theme={theme}
+              onThemeChange={setTheme}
+              getUpdates={viewModel.getUpdates}
+              onGetUpdatesChange={viewModel.setGetUpdates}
+            />
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Button onClick={() => viewModel.save()} disabled={!viewModel.canSave}>
+                {viewModel.saving ? "Saving…" : "Save settings"}
+              </Button>
+              {viewModel.saved && <span className="text-sm text-muted-foreground">Settings saved.</span>}
+              {viewModel.saveError && !guard.blocked && (
+                <span role="alert" className="text-sm font-medium text-destructive">
+                  {viewModel.saveError}
+                </span>
+              )}
             </div>
-            <p className="text-xs text-gray-500">
-              Preview modes now; chart color remapping will be applied in the next step.
-            </p>
-          </div>
-        </section>
-
-        <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-gray-700">Home Course</h2>
-          <div className="relative">
-            <input
-              type="text"
-              value={homeCourseQuery}
-              onChange={(event) => handleHomeCourseQueryChange(event.target.value)}
-              onFocus={() => setShowResults(true)}
-              placeholder="Type course name..."
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            />
-            {showResults && searchResults.length > 0 ? (
-              <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-56 overflow-auto">
-                {searchResults.map((course) => (
-                  <button
-                    key={course.id}
-                    type="button"
-                    onMouseDown={() => selectHomeCourse(course)}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                  >
-                    <div className="text-gray-900">{course.name ?? "Unnamed Course"}</div>
-                    {course.location ? <div className="text-xs text-gray-500">{course.location}</div> : null}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={clearHomeCourse}
-              className="rounded-md border border-gray-300 px-2.5 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
-            >
-              Set No Home Course
-            </button>
-            {homeCourseId ? (
-              <span className="text-xs text-gray-600">
-                Selected: {(settingsData?.allCourses ?? []).find((course) => course.id === homeCourseId)?.name ?? homeCourseQuery}
-              </span>
-            ) : (
-              <span className="text-xs text-gray-500">No home course selected.</span>
-            )}
-          </div>
-          <p className="text-xs text-gray-500">
-            This controls home-course records in your achievements analytics.
-          </p>
-        </section>
-
-        <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-gray-700">Handicap</h2>
-          <label className="block text-sm text-gray-700" htmlFor="settings-handicap">
-            Manual Handicap Index
-          </label>
-          <input
-            id="settings-handicap"
-            type="text"
-            inputMode="decimal"
-            value={handicapInput}
-            onChange={(event) => setHandicapInput(event.target.value)}
-            placeholder="e.g. +5.0"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-          />
-          <p className="text-xs text-gray-500">
-            Leave blank to clear handicap. Allowed range: +10 through 54.
-          </p>
-        </section>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={saveSettings}
-            disabled={saving}
-            className="rounded-lg bg-gray-900 text-white px-4 py-2 text-sm font-medium disabled:opacity-60"
-          >
-            {saving ? "Saving..." : "Save Settings"}
-          </button>
-          {message ? <span className="text-sm text-gray-600">{message}</span> : null}
-        </div>
+          </>
+        )}
       </div>
 
-      {showUnsavedModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white shadow-xl p-5">
-            <h3 className="text-base font-semibold text-gray-900">Unsaved changes detected</h3>
-            <p className="mt-2 text-sm text-gray-600">
-              There are unsaved changes made in Settings. Do you want to confirm these changes before leaving this page?
-              If you choose not to confirm, your pending edits will be discarded.
-            </p>
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={handleConfirmAndSave}
-                disabled={saving}
-                className="rounded-lg bg-gray-900 text-white px-3.5 py-2 text-sm font-medium disabled:opacity-60"
-              >
-                {saving ? "Saving..." : "Yes, confirm changes"}
-              </button>
-              <button
-                type="button"
-                onClick={handleDiscardAndLeave}
-                className="rounded-lg border border-gray-300 bg-white text-gray-700 px-3.5 py-2 text-sm font-medium hover:bg-gray-50"
-              >
-                No, don&apos;t confirm changes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <UnsavedChangesSheet
+        open={guard.blocked}
+        saving={viewModel.saving}
+        error={viewModel.saveError}
+        onSave={() => viewModel.save(guard.leave)}
+        onDiscard={() => {
+          viewModel.discard();
+          guard.leave();
+        }}
+        onStay={guard.stay}
+      />
     </div>
   );
 }

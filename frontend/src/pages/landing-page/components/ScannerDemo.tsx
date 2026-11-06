@@ -2,19 +2,18 @@ import type { CSSProperties } from "react";
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/brand/cn";
-import { scoreFillClass, toParDisplay } from "@/brand";
+import { scoreFillClass, toParDisplay, toParTextClass } from "@/brand";
 import { HANDICAP_TAP, TOUR_SCREENS, WIDE_FRAME_MEDIA, tourImage, type TourScreen } from "./demoTour";
-import {
-  DEMO_MOTION,
-  useScannerDemoViewModel,
-  type DemoScorecardRow,
-} from "./useScannerDemoViewModel";
+import { tokens } from "@/brand/theme";
+import { useScannerDemoViewModel, type DemoScorecardRow } from "./useScannerDemoViewModel";
+
+const DEMO_MOTION = tokens.motion.demo;
 
 /** The clean scorecard the scan resolves to. */
 function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 1.05 }}
+      initial={{ opacity: 0, scale: DEMO_MOTION.scorecardEnterScale }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: DEMO_MOTION.crossfade }}
@@ -23,8 +22,8 @@ function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
       <div className="flex items-center justify-between rounded-t-lg bg-demo-card-header p-3 text-xs text-primary-foreground shadow-md md:text-sm">
         <span className="font-semibold">Half Moon Bay Golf Course</span>
         <div className="text-right">
-          <div className="text-caption font-bold uppercase tracking-chip text-primary-foreground/90 sm:text-xs">Blue tees</div>
-          <div className="text-caption text-primary-foreground/70">Rating 70.8 / Slope 127</div>
+          <div className="text-caption font-bold uppercase tracking-chip text-primary-foreground/glass sm:text-xs">Blue tees</div>
+          <div className="text-caption text-primary-foreground/strong">Rating 70.8 / Slope 127</div>
         </div>
       </div>
 
@@ -64,7 +63,8 @@ function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
           {rows.map((row) => (
             <div
               key={row.hole}
-              className={`py-2 font-semibold ${row.overPar ? "text-score-bogey" : "text-muted-foreground"}`}
+              className={cn("py-2 font-semibold", toParTextClass(row.toPar))}
+
             >
               {toParDisplay(row.toPar)}
             </div>
@@ -95,7 +95,7 @@ function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
 
 function TypewriterLabel({ text }: { text: string }) {
   return (
-    <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ staggerChildren: 0.1 }}>
+    <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ staggerChildren: DEMO_MOTION.typeStagger }}>
       {text.split("").map((char, i) => (
         <motion.span key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.15 }}>
           {char}
@@ -111,7 +111,7 @@ function MappingPanel() {
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+      exit={{ opacity: 0, scale: DEMO_MOTION.recedeScale }}
       className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 pt-4 pb-16 sm:px-6"
     >
       <div className="flex w-full max-w-md flex-col overflow-hidden rounded-xl bg-card font-sans shadow-card">
@@ -150,16 +150,16 @@ function MappingPanel() {
               <motion.div
                 initial={{ opacity: 0.5 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 1.2, duration: DEMO_MOTION.select }}
+                transition={{ delay: 1.2, duration: tokens.motion.duration.collapse }}
                 className="flex flex-1 flex-col justify-center rounded-md border-2 border-score-birdie bg-accent p-2"
               >
                 <motion.div
                   initial={{ scale: 1 }}
-                  animate={{ scale: [1, 1.05, 1] }}
+                  animate={{ scale: [1, DEMO_MOTION.emphasisScale, 1] }}
                   transition={{ delay: 1.2, duration: DEMO_MOTION.emphasis }}
                 >
                   <div className="text-xs font-bold text-score-birdie">To par</div>
-                  <div className="text-caption text-score-birdie/70">e.g. +1, -1, E</div>
+                  <div className="text-caption text-score-birdie/strong">e.g. +1, -1, E</div>
                 </motion.div>
               </motion.div>
             </div>
@@ -173,10 +173,10 @@ function MappingPanel() {
               {["Putts", "Shots to green"].map((label, i) => (
                 <motion.div
                   key={label}
-                  initial={{ opacity: 0.4, scale: 0.95 }}
+                  initial={{ opacity: 0.4, scale: DEMO_MOTION.recedeScale }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 1.8 + i * 0.4, duration: DEMO_MOTION.emphasis }}
-                  className="flex items-center gap-2 rounded-md border border-score-birdie/40 bg-accent px-3 py-1.5"
+                  className="flex items-center gap-2 rounded-md border border-score-birdie/recessed bg-accent px-3 py-1.5"
                 >
                   <motion.div
                     initial={{ scale: 0 }}
@@ -266,7 +266,7 @@ function HandicapTap() {
           opacity: [0, 1, 0.9],
         }}
         transition={{ duration: DEMO_MOTION.tap.duration, ease: "easeOut" }}
-        className="size-12 rounded-full border-2 border-primary bg-primary/20 shadow-card"
+        className="size-12 rounded-full border-2 border-primary bg-primary/wash shadow-card"
       />
     </div>
   );
@@ -314,9 +314,9 @@ export function ScannerDemo() {
         className="absolute inset-0 h-full w-full origin-left object-cover"
         initial={false}
         animate={{
-          filter: phase === "mapping" ? "brightness(0.5) blur(3px)" : "brightness(1) blur(0px)",
+          filter: phase === "mapping" ? `brightness(0.5) blur(${tokens.blur.xs}px)` : "brightness(1) blur(0px)",
           opacity: scanned ? 0 : 1,
-          scale: scanned ? DEMO_MOTION.photoRecedeScale : 1,
+          scale: scanned ? DEMO_MOTION.recedeScale : 1,
         }}
         transition={{ duration: DEMO_MOTION.crossfade }}
       />
@@ -345,14 +345,14 @@ export function ScannerDemo() {
             animate={{ top: "120%" }}
             exit={{ opacity: 0 }}
             transition={{ duration: DEMO_MOTION.sweep, ease: "linear" }}
-            className="pointer-events-none absolute right-0 left-0 z-30 h-32 border-b-2 border-primary bg-gradient-to-b from-transparent via-primary/10 to-primary/40"
+            className="pointer-events-none absolute right-0 left-0 z-30 h-32 border-b-2 border-primary bg-gradient-to-b from-transparent via-primary/tint to-primary/recessed"
           />
         )}
       </AnimatePresence>
 
       <motion.div
         layout
-        className="absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full whitespace-nowrap bg-foreground/90 px-4 py-2 text-xs font-semibold tracking-chip text-background shadow-card backdrop-blur"
+        className="absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full whitespace-nowrap bg-foreground/glass px-4 py-2 text-xs font-semibold tracking-chip text-background shadow-card backdrop-blur"
       >
         {phase === "mapping" && <Type className="size-3.5 text-primary" />}
         {phase === "scanning" && <ScanLine className="size-3.5 animate-pulse text-score-birdie" />}

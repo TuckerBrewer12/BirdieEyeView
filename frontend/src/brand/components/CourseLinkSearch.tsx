@@ -1,4 +1,5 @@
-import { Loader2, MapPin, X } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
+import { ClearButton } from "./Button";
 import { SearchField } from "./SearchField";
 import {
   Card,
@@ -9,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./Card";
-import type { CourseSummary } from "@/types/golf";
+import type { CourseSummary } from "@/domain/course";
 
 interface CourseLinkSearchProps {
   query: string;
@@ -22,11 +23,16 @@ interface CourseLinkSearchProps {
   linking?: boolean;
   reviewVariant?: boolean;
   onUseCustomName?: (name: string) => void;
-  autoFocus?: boolean;
+  /** Puts the caret in the search when it appears: only where the golfer just opened it. */
+  focusOnOpen?: boolean;
   linkedName?: string;
+  /** Heads the picked course's card. */
+  linkedTitle?: string;
   customName?: string;
   onClear?: () => void;
   clearLabel?: string;
+  /** The search input's id, so a FieldLabel outside can name it. */
+  inputId?: string;
 }
 
 export function CourseLinkSearch({
@@ -40,17 +46,19 @@ export function CourseLinkSearch({
   linking = false,
   reviewVariant = false,
   onUseCustomName,
-  autoFocus = true,
+  focusOnOpen = false,
   linkedName,
+  linkedTitle = "Linked",
   customName,
   onClear,
   clearLabel = "Unlink course",
+  inputId,
 }: CourseLinkSearchProps) {
   if (linkedName && onClear) {
     return (
       <Card size="sm">
         <CardHeader>
-          <CardTitle>Linked</CardTitle>
+          <CardTitle>{linkedTitle}</CardTitle>
           <CardDescription>{linkedName}</CardDescription>
           <CardAction>
             <ClearButton onClick={onClear} label={clearLabel} />
@@ -82,14 +90,15 @@ export function CourseLinkSearch({
   const body = (
     <>
       <SearchField
+        id={inputId}
         value={query}
         onChange={onQueryChange}
         placeholder="Search courses…"
-        autoFocus={autoFocus}
+        focusOnOpen={focusOnOpen}
         loading={searching}
       />
       {results.length > 0 && (
-        <ul className="mt-1.5 divide-y divide-border overflow-hidden rounded-lg ring-1 ring-foreground/10">
+        <ul className="mt-1.5 divide-y divide-border overflow-hidden rounded-lg ring-1 ring-foreground/tint">
           {results.map((course) => (
             <li key={course.id}>
               <ResultRow course={course} linking={linking} onSelect={onSelectCourse} />
@@ -131,20 +140,6 @@ export function CourseLinkSearch({
       <CardContent className={title ? undefined : "pt-0"}>{body}</CardContent>
       {footer}
     </Card>
-  );
-}
-
-function ClearButton({ onClick, label }: { onClick: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className="inline-flex text-muted-foreground hover:text-foreground"
-    >
-      <X className="size-4" />
-    </button>
   );
 }
 

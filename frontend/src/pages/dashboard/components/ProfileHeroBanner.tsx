@@ -1,33 +1,21 @@
-import type { User } from "@/types/golf";
 import { Button, Card, CardContent, PageTitle, Stat, StatLabel, StatUnit, StatValue } from "@/brand";
 
 interface ProfileHeroBannerProps {
-  user: User | null;
+  /** The avatar's letters: "JS". */
+  initials: string;
   handicapIndex: number | null;
   handicapLabel: string;
   firstName: string;
   onHandicapClick?: () => void;
 }
 
-function initialsFor(user: User | null): string {
-  if (!user?.name) return "G";
-  return user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 export function ProfileHeroBanner({
-  user,
+  initials,
   handicapIndex,
   handicapLabel,
   firstName,
   onHandicapClick,
 }: ProfileHeroBannerProps) {
-  const initials = initialsFor(user);
-
   return (
     <Card data-slot="profile-hero-banner">
       <CardContent>
@@ -39,7 +27,7 @@ export function ProfileHeroBanner({
               </span>
             </div>
             <div>
-              <div className="mb-1 text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">
+              <div className="mb-1 text-eyebrow uppercase text-muted-foreground">
                 Welcome back
               </div>
               <PageTitle size="lg">Hello, {firstName}</PageTitle>

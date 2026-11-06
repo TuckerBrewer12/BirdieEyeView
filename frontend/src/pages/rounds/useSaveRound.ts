@@ -25,7 +25,7 @@ export function useSaveRound(
       for (const queryKey of [
         queryKeys.rounds(userId),
         queryKeys.roundComparison(userId, round.id),
-        queryKeys.careerAnalytics(userId),
+        queryKeys.analytics(userId),
         queryKeys.dashboard(userId),
       ]) {
         void queryClient.invalidateQueries({ queryKey });

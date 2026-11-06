@@ -1,7 +1,7 @@
 import { Button, Card, CardContent, Meter } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { GoalProgress } from "../model";
-import { goalScoreToBreak, goalTargetLabel } from "../present";
+import { formatOneDecimal, goalScoreToBreak, goalTargetLabel } from "@/domain";
 
 interface GoalCardProps {
   /** Null until a goal is set, which shows the prompt to set one. */
@@ -32,7 +32,7 @@ export function GoalCard({ goal, onOpen, className }: GoalCardProps) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <div>
-                <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground mb-0.5">Scoring Goal</div>
+                <div className="text-eyebrow uppercase text-muted-foreground mb-0.5">Scoring Goal</div>
                 <div className="text-sm font-bold text-card-foreground">
                   Target: {goalTargetLabel(goal.target)}
                 </div>
@@ -41,7 +41,7 @@ export function GoalCard({ goal, onOpen, className }: GoalCardProps) {
             </div>
             <div className="mb-3">
               <div className="flex justify-between text-meta text-muted-foreground mb-1">
-                <span>{goal.average != null ? `Avg ${goal.average.toFixed(1)}` : null}</span>
+                <span>{goal.average != null ? `Avg ${formatOneDecimal(goal.average)}` : null}</span>
                 <span>Goal {goalScoreToBreak(goal.target)}</span>
               </div>
               <Meter
@@ -59,7 +59,7 @@ export function GoalCard({ goal, onOpen, className }: GoalCardProps) {
           </div>
         ) : (
           <div className="flex flex-col items-start justify-center h-full gap-2">
-            <div className="text-meta font-bold uppercase tracking-eyebrow text-muted-foreground">Scoring Goal</div>
+            <div className="text-eyebrow uppercase text-muted-foreground">Scoring Goal</div>
             <p className="text-sm text-muted-foreground">Set a scoring goal to track your progress.</p>
             <Button
               variant="link"

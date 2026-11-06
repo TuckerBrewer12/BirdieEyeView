@@ -263,6 +263,60 @@ async def test_course_repo_create_course_persists_external_course_id(mock_pool):
     assert conn.fetchrow.call_args.args[2] == "gc_12345"
 
 
+def _course_summary_row(course_id, **overrides):
+    """Helper: one row of the course summary queries."""
+    row = {
+        "id": course_id, "name": "Pebble Beach", "external_course_id": None,
+        "location": "Monterey", "par": 72, "hole_count": 18, "tee_count": 3,
+    }
+    row.update(overrides)
+    return row
+
+
+@pytest.mark.asyncio
+async def test_course_repo_list_course_summaries_in_one_query(mock_pool):
+    pool, conn = mock_pool
+    repo = CourseRepositoryDB(pool)
+    course_id, user_id = uuid4(), uuid4()
+    conn.fetch.return_value = [_course_summary_row(course_id)]
+
+    summaries = await repo.list_course_summaries(limit=10, offset=20, user_id=str(user_id))
+
+    assert conn.fetch.await_count == 1
+    conn.fetchrow.assert_not_called()
+    query, *params = conn.fetch.await_args.args
+    assert params == [10, 20, user_id]
+    assert "ORDER BY name LIMIT $1 OFFSET $2" in query
+    assert [(s.id, s.name, s.par, s.hole_count, s.tee_count) for s in summaries] == [
+        (str(course_id), "Pebble Beach", 72, 18, 3)
+    ]
+
+    await repo.list_course_summaries()
+    _, *params = conn.fetch.await_args.args
+    assert params == [50, 0, None]  # NULL user_id: master courses only
+
+
+@pytest.mark.asyncio
+async def test_course_repo_search_course_summaries_in_one_query(mock_pool):
+    pool, conn = mock_pool
+    repo = CourseRepositoryDB(pool)
+    user_id = uuid4()
+    conn.fetch.return_value = [_course_summary_row(uuid4(), par=None, hole_count=0, tee_count=0)]
+
+    summaries = await repo.search_course_summaries("Peb", user_id=str(user_id))
+
+    assert conn.fetch.await_count == 1
+    conn.fetchrow.assert_not_called()
+    query, *params = conn.fetch.await_args.args
+    assert params == ["%Peb%", user_id]
+    assert "(name ILIKE $1 OR location ILIKE $1)" in query
+    assert (summaries[0].par, summaries[0].hole_count, summaries[0].tee_count) == (None, 0, 0)
+
+    await repo.search_course_summaries("Peb")
+    _, *params = conn.fetch.await_args.args
+    assert params == ["%Peb%", None]
+
+
 # ================================================================
 # RoundRepositoryDB
 # ================================================================
@@ -338,6 +392,29 @@ async def test_round_repo_get_round_not_found(mock_pool):
 
 
 @pytest.mark.asyncio
+async def test_round_summaries_pick_the_page_before_gathering_holes(mock_pool):
+    pool, conn = mock_pool
+    repo = RoundRepositoryDB(pool, course_repo=AsyncMock())
+    round_id, course_id, user_id = uuid4(), uuid4(), uuid4()
+    conn.fetch.return_value = [{
+        "id": round_id, "course_id": course_id, "tee_box_played": "Blue", "round_date": None,
+        "course_name_played": None, "course_name": "Blue Rock", "course_par": 72,
+        "hole_scores": [{"hole_number": 1, "strokes": 3, "putts": 1, "green_in_regulation": True,
+                         "par_played": None, "course_par": 4}],
+    }]
+
+    [summary] = await repo.get_round_summaries_for_user(str(user_id), limit=5, offset=10)
+
+    sql, *args = conn.fetch.call_args.args
+    assert args == [user_id, 5, 10]
+    # The page is cut inside the CTE, so json_agg only ever sees the rounds being returned.
+    assert sql.index("LIMIT $2 OFFSET $3") < sql.index("json_agg")
+    assert "GROUP BY" not in sql
+    assert summary.course.name == "Blue Rock"
+    assert summary.get_score_kind(1) == "birdie"
+
+
+@pytest.mark.asyncio
 async def test_round_repo_create_round_no_course(mock_pool):
     """create_round with no course: hole_id=None, par_played from HoleScore preserved."""
     pool, conn = mock_pool
@@ -397,7 +474,7 @@ async def test_round_repo_create_round_populates_par_from_course(mock_pool):
     saved = await repo.create_round(r, user_id=str(uuid4()), course_id=str(course_id))
 
     assert saved is not None
-    sql, tuples = conn.executemany.call_args[0]
+    _sql, tuples = conn.executemany.call_args[0]
     assert tuples[0][1] == hole_id  # hole_id resolved from map
     assert tuples[0][9] == 4        # par_played populated from course.holes
 

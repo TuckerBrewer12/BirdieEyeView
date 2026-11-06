@@ -1,6 +1,6 @@
 import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../../testing/playwright";
-import type { Course } from "../../../../types/golf";
+import type { CourseDto } from "../../../../types/api";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 
@@ -20,7 +20,7 @@ export class CourseDetailRobot {
   }
 
   async open(
-    course: Course,
+    course: CourseDto,
     seed: Omit<FakeBackendSeed, "fullCourses"> = {},
   ): Promise<this> {
     await this.page.emulateMedia({ reducedMotion: "reduce" });
@@ -78,6 +78,11 @@ export class CourseDetailRobot {
     await FakeSession.install(this.page, {});
     await this.page.goto("/courses/missing");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
+    return this;
+  }
+
+  /** The error a course id with no course behind it gets, in place of the course. */
+  async seesNotFound(): Promise<this> {
     await expect(this.page.getByRole("alert")).toBeVisible();
     return this;
   }

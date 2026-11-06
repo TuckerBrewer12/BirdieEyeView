@@ -1,9 +1,10 @@
 import { useCallback, useReducer, useState } from "react";
 import { teeColors } from "@/domain/course";
-import { useCourseSearch } from "@/hooks/useCourseSearch";
+import { useCourseSearch } from "@/data/useCourseSearch";
 import { messageFrom } from "@/lib/userFacingErrors";
 import type { CourseEdit, HoleEdits, RoundDetail } from "@/domain";
-import type { Course, CourseSummary } from "@/types/golf";
+import type { CourseSummary } from "@/domain/course";
+import type { CourseDto } from "@/types/api";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
 import { useSaveRound } from "../useSaveRound";
 import { closedEditor, roundEditor } from "./roundEditorModel";
@@ -20,7 +21,7 @@ export interface RoundEditorViewModel {
   teeBox: string;
   course: CourseEdit;
   /** The course and tee the round is read against: the ones being edited in, else the round's own. */
-  activeCourse: Course | null;
+  activeCourse: CourseDto | null;
   activeTeeBox: string | null;
   availableTees: string[];
   linkedName: string | undefined;

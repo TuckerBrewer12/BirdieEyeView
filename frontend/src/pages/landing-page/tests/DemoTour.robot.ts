@@ -10,9 +10,6 @@ const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
 /** How far the measured handicap may sit from HANDICAP_TAP before the tap misses it. */
 const TAP_TOLERANCE = 0.02;
 
-/** Time for the charts to finish drawing in, which is not something `toHaveScreenshot` waits for. */
-const CHARTS_DRAWN_MS = 2500;
-
 /** Screen robot for the hero demo's captures of the signed-in app. */
 export class DemoTourRobot {
   private readonly page: Page;
@@ -61,15 +58,27 @@ export class DemoTourRobot {
     return this;
   }
 
+  /** The sample golfer's 24 rounds among the headline figures, so the charts have their data. */
+  async seesAnalytics(): Promise<this> {
+    const rounds = this.page.getByText("Rounds", { exact: true }).locator("xpath=following-sibling::*[1]");
+    await expect(rounds.filter({ hasText: /^24$/ }).locator("visible=true").first()).toBeVisible();
+    return this;
+  }
+
   async openLab(): Promise<this> {
     await this.page.goto("/the-lab");
     await expect(this.page.getByRole("heading", { name: "The Lab" }).locator("visible=true")).toBeVisible();
     return this;
   }
 
+  /** The par-type card, which both layouts open on, filled in from the golfer's rounds. */
+  async seesLab(): Promise<this> {
+    await expect(this.page.locator("[data-slot=par-type-card]").locator("visible=true").first()).toBeVisible();
+    return this;
+  }
+
   async capture(name: string): Promise<this> {
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
-    await this.page.waitForTimeout(CHARTS_DRAWN_MS);
     // Device scale, so the phone captures stay sharp on a phone.
     await expect(this.page).toHaveScreenshot(name, { scale: "device" });
     return this;

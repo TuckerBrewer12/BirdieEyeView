@@ -1,7 +1,8 @@
 import { CoursePreview } from "@/brand/components/CoursePreview";
+import { courseSummaryFrom } from "@/domain/course";
 import { populatedCourses } from "@/testing/fixtures/courses";
 
-const [halfMoonBay, blueRock, pebbleBeach] = populatedCourses;
+const [halfMoonBay, blueRock, pebbleBeach] = populatedCourses.map(courseSummaryFrom);
 
 /** Compose-style @Preview for CoursePreview. */
 export default function CoursePreviewPreview() {

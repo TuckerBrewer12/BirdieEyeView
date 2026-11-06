@@ -1,23 +1,13 @@
 import { cn } from "@/brand/cn";
-import { scoreFillClass, type ScoreKey } from "@/brand/theme";
-import type { HoleScore } from "@/domain";
+import { scoreFillClass, scoreProfileHeightClass } from "@/brand/theme";
+import type { HoleSummary } from "@/domain";
 
 interface HoleScoreBarsProps {
-  holes: HoleScore[];
+  holes: HoleSummary[];
   /** `strip` is one even row; `profile` stands each bar taller the worse the hole went. */
   variant?: "strip" | "profile";
   className?: string;
 }
-
-const PROFILE_HEIGHT: Record<ScoreKey, string> = {
-  eagle: "h-profile-eagle",
-  birdie: "h-profile-birdie",
-  par: "h-profile-par",
-  bogey: "h-profile-bogey",
-  double: "h-profile-double",
-  triple: "h-profile-worse",
-  quad: "h-profile-worse",
-};
 
 /** A round at a glance: one bar per hole, coloured by how it was scored. */
 export function HoleScoreBars({ holes, variant = "strip", className }: HoleScoreBarsProps) {
@@ -27,7 +17,7 @@ export function HoleScoreBars({ holes, variant = "strip", className }: HoleScore
   return (
     <div
       data-slot="hole-score-bars"
-      className={cn("flex", profile ? "h-6 items-end gap-hair" : "h-2.5 gap-bar", className)}
+      className={cn("flex", profile ? "h-6 items-end gap-bar" : "h-2.5 gap-bar", className)}
     >
       {holes.map((hole) => {
         // Par is the baseline, so it recedes and the misses stand out. Unscored holes read as par.
@@ -38,8 +28,8 @@ export function HoleScoreBars({ holes, variant = "strip", className }: HoleScore
             className={cn(
               "flex-1",
               scoreFillClass(kind),
-              profile ? cn("rounded-t-tick", PROFILE_HEIGHT[kind]) : "rounded-bar",
-              kind === "par" && "opacity-(--brand-opacity-recessed)",
+              profile ? cn("rounded-t-tick", scoreProfileHeightClass(kind)) : "rounded-bar",
+              kind === "par" && "opacity-recessed",
             )}
           />
         );

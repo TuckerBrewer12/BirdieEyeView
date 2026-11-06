@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
@@ -6,10 +6,13 @@ import pytest
 from fastapi import HTTPException
 from pydantic import ValidationError
 
+from analytics import handicap as hcap
+from api.main import app
 from api.round_responses import round_summary
 from api.routers import ai_insights, courses, rounds, stats, users
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from models import Course, Hole, HoleScore, Round, User, UserTee
+from models.course import CourseSummary
 from tests.helpers import make_http_request, make_mock_database
 
 
@@ -28,13 +31,19 @@ def _make_course(course_id: UUID, *, owner: UUID | None = None) -> Course:
     )
 
 
+def _make_course_summary(course_id: UUID) -> CourseSummary:
+    return CourseSummary(
+        id=str(course_id), name="Pebble Beach", location="Monterey", par=72, hole_count=1, tee_count=2,
+    )
+
+
 def _make_round(round_id: UUID, course: Course | None = None) -> Round:
     return Round(
         id=str(round_id),
         course=course,
         course_name_played="Played Course" if course is None else None,
         tee_box="Blue",
-        date=datetime(2026, 1, 2),
+        date=datetime(2026, 1, 2, tzinfo=timezone.utc),
         hole_scores=[
             HoleScore(hole_number=1, strokes=5, putts=2, par_played=4, fairway_hit=True),
             HoleScore(hole_number=2, strokes=4, putts=2, par_played=4, fairway_hit=False),
@@ -49,7 +58,7 @@ def _make_round_summary(round_id: UUID) -> Round:
         id=str(round_id),
         course=Course(id=str(uuid4()), name="Pebble Beach", location="Monterey", par=72),
         tee_box="Blue",
-        date=datetime(2026, 1, 2),
+        date=datetime(2026, 1, 2, tzinfo=timezone.utc),
         hole_scores=[
             HoleScore(hole_number=n, strokes=5 if n <= 8 else 4, putts=2, par_played=4)
             for n in range(1, 19)
@@ -58,7 +67,7 @@ def _make_round_summary(round_id: UUID) -> Round:
 
 
 def _make_friendship_row(requester: UUID, addressee: UUID) -> dict:
-    now = datetime(2026, 1, 1)
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
     return {
         "id": uuid4(),
         "requester_id": requester,
@@ -78,12 +87,23 @@ async def test_course_listing_lookup_and_authorization():
     user = _make_user(user_id)
     course = _make_course(course_id)
     db = make_mock_database()
-    db.courses.list_courses = AsyncMock(return_value=[course])
+    db.courses.list_course_summaries = AsyncMock(return_value=[_make_course_summary(course_id)])
     db.courses.get_course = AsyncMock(return_value=course)
 
     listed = await courses.list_courses(20, 0, user_id, db, user)
-    assert listed[0].name == "Pebble Beach"
-    assert listed[0].total_holes == 1
+    assert listed[0].model_dump() == {
+        "id": str(course_id),
+        "name": "Pebble Beach",
+        "external_course_id": None,
+        "source": "local",
+        "location": "Monterey",
+        "par": 72,
+        "total_holes": 1,
+        "tee_count": 2,
+    }
+    assert db.courses.list_course_summaries.await_args.kwargs == {
+        "limit": 20, "offset": 0, "user_id": str(user_id),
+    }
     fetched = await courses.get_course(course_id, db, None)
     assert fetched.id == course.id
     assert fetched.name == "Pebble Beach"
@@ -101,9 +121,8 @@ async def test_course_listing_lookup_and_authorization():
 @pytest.mark.asyncio
 async def test_course_search_merges_external_results(monkeypatch):
     user_id = uuid4()
-    local_course = _make_course(uuid4())
     db = make_mock_database()
-    db.courses.search_courses = AsyncMock(return_value=[local_course])
+    db.courses.search_course_summaries = AsyncMock(return_value=[_make_course_summary(uuid4())])
     external_service = MagicMock()
     external_service.search_external_courses = AsyncMock(return_value=[
         {"external_course_id": "ext-1", "name": "Pebble Beach", "city": "Monterey"},
@@ -113,6 +132,8 @@ async def test_course_search_merges_external_results(monkeypatch):
     monkeypatch.setattr(courses, "GolfCourseAPIService", lambda: external_service)
 
     search_results = await courses.search_courses("Pebble", user_id, True, db, _make_user(user_id))
+    assert db.courses.search_course_summaries.await_args.kwargs == {"user_id": str(user_id)}
+    assert search_results[0].source == "local"
     assert search_results[0].external_course_id == "ext-1"
     assert search_results[1].name == "Spyglass Hill"
     assert search_results[1].source == "external"
@@ -181,11 +202,14 @@ def test_round_request_validation_and_summary():
     summary = round_summary(_make_round(uuid4()))
     assert summary.total_score == 9
     assert summary.to_par == 1
-    assert summary.fairways_hit == 1
+    assert summary.total_putts == 4
     assert summary.course_name == "Played Course"
     assert summary.front_nine is None
     assert (summary.score_counts.bogey, summary.score_counts.par, summary.score_counts.birdie) == (1, 1, 0)
-    assert [(h.par, h.to_par, h.kind) for h in summary.hole_scores] == [(4, 1, "bogey"), (4, 0, "par")]
+    assert [h.model_dump() for h in summary.hole_scores] == [
+        {"hole_number": 1, "strokes": 5, "kind": "bogey"},
+        {"hole_number": 2, "strokes": 4, "kind": "par"},
+    ]
 
 
 @pytest.mark.asyncio
@@ -201,6 +225,7 @@ async def test_round_listing_get_update_and_delete():
     db.rounds.update_hole_scores = AsyncMock(return_value=stored_round)
     db.rounds.update_round = AsyncMock(return_value=stored_round)
     db.rounds.delete_round = AsyncMock(return_value=True)
+    db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
 
     listed = await rounds.get_rounds_for_user(user_id, 10, 0, db, user)
     assert listed[0].to_par == 8
@@ -278,8 +303,65 @@ def test_user_request_validation():
         users.CreateUserTeeRequest(name="Blue", hole_yardages={"bad": 400})
 
 
+def test_friendship_status_is_typed():
+    """The friendship status is a fixed set, so the generated client gets a union, not a string."""
+    response_status = users.FriendshipResponse.model_json_schema()["properties"]["status"]
+    assert response_status["enum"] == ["pending", "accepted", "declined", "blocked"]
+
+    request_status = users.FriendshipStatusRequest.model_json_schema()["properties"]["status"]
+    assert request_status["enum"] == ["accepted", "declined", "blocked"]
+    assert users.FriendshipStatusRequest(status="declined").status == "declined"
+    with pytest.raises(ValidationError):
+        users.FriendshipStatusRequest(status="pending")
+    with pytest.raises(ValidationError):
+        users.FriendshipResponse(
+            id="f-1",
+            requester_id="u-1",
+            addressee_id="u-2",
+            status="maybe",
+            created_at="",
+            updated_at="",
+        )
+
+
+def test_user_response_is_the_profile_only():
+    """A user is sent as their profile: no rounds, no account bookkeeping, and a typed schema."""
+    user = _make_user(
+        uuid4(),
+        friend_code="BIRD-1234",
+        handicap=7.5,
+        scoring_goal=79,
+        email_verified=True,
+        created_at=datetime(2026, 2, 20, tzinfo=timezone.utc),
+        last_handicap_update=datetime(2026, 3, 1, tzinfo=timezone.utc),
+        rounds=[_make_round(uuid4())],
+    )
+    assert users.user_response(user).model_dump() == {
+        "id": user.id,
+        "friend_code": "BIRD-1234",
+        "name": "Golfer",
+        "email": "golfer@example.com",
+        "home_course_id": None,
+        "handicap": 7.5,
+        "created_at": datetime(2026, 2, 20, tzinfo=timezone.utc),
+        "scoring_goal": 79,
+    }
+
+    schemas = app.openapi()["components"]["schemas"]
+    assert set(schemas["UserResponse"]["required"]) == set(users.UserResponse.model_fields)
+    # The golfer's index comes on the dashboard and analytics, not from an endpoint of its own.
+    assert "/api/users/{user_id}/handicap" not in app.openapi()["paths"]
+    for path, method in [
+        ("/api/users/{user_id}", "get"),
+        ("/api/users/{user_id}", "patch"),
+        ("/api/users/by-email/{email}", "get"),
+    ]:
+        response = app.openapi()["paths"][path][method]["responses"]["200"]
+        assert response["content"]["application/json"]["schema"] == {"$ref": "#/components/schemas/UserResponse"}
+
+
 @pytest.mark.asyncio
-async def test_user_get_update_and_handicap(monkeypatch):
+async def test_user_get_and_update():
     user_id = uuid4()
     course_id = uuid4()
     user = _make_user(user_id, handicap=12.0)
@@ -288,19 +370,17 @@ async def test_user_get_update_and_handicap(monkeypatch):
     db.users.get_user = AsyncMock(return_value=user)
     db.users.update_user = AsyncMock(return_value=user)
     db.courses.get_course = AsyncMock(return_value=_make_course(course_id))
-    db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
-    monkeypatch.setattr(users.hcap, "handicap_index", lambda *args, **kwargs: 12.0)
 
-    assert await users.get_user_by_email("GOLFER@example.com", db, user) == user
-    assert await users.get_user(user_id, db, user) == user
+    profile = users.user_response(user)
+    assert await users.get_user_by_email("GOLFER@example.com", db, user) == profile
+    assert await users.get_user(user_id, db, user) == profile
     request = users.UpdateUserRequest(home_course_id=course_id, handicap="+2", scoring_goal=85)
-    assert await users.update_user(user_id, request, db, user) == user
+    assert await users.update_user(user_id, request, db, user) == profile
     assert db.users.update_user.await_args.kwargs == {
         "home_course_id": str(course_id),
         "handicap_index": -2.0,
         "scoring_goal": 85,
     }
-    assert await users.get_user_handicap(user_id, db, user) == {"handicap_index": 12.0}
 
     with pytest.raises(HTTPException) as exc:
         await users.get_user(uuid4(), db, user)
@@ -394,7 +474,7 @@ async def test_dashboard_and_empty_analytics(monkeypatch):
     db.users.get_user = AsyncMock(return_value=user)
     db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[_make_round_summary(round_id)])
     db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])
-    monkeypatch.setattr(stats.hcap, "handicap_index", lambda rounds: 10.0)
+    monkeypatch.setattr(stats.hcap, "handicap_index", lambda rounds, **_: 10.0)
 
     dashboard = await stats.get_dashboard(user_id, db, user)
     assert dashboard.total_rounds == 1
@@ -403,11 +483,18 @@ async def test_dashboard_and_empty_analytics(monkeypatch):
     assert dashboard.scoring_average_l20 is None
     assert dashboard.whs.window_size == 0
     assert dashboard.milestones == []
+    assert dashboard.score_trend == []
+    assert dashboard.handicap_trend == []
 
-    db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], []])
+    # The page's rounds, the handicap window's, and the golfer's last 20 for their own index.
+    db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])
     analytics = await stats.get_analytics(user_id, 50, None, None, db, user)
-    assert analytics["kpis"]["total_rounds"] == 0
-    assert analytics["notable_achievements"]["round_milestones"]["lifetime"]["first_eagle"] is None
+    assert analytics.kpis.total_rounds == 0
+    assert analytics.kpis.scoring_average is None
+    assert analytics.scoring_by_yardage == []
+    assert analytics.notable_achievements.round_milestones.lifetime.first_eagle is None
+    assert analytics.notable_achievements.career_totals.lifetime.total_birdies == 0
+    assert len(analytics.notable_achievements.round_milestones.lifetime.score_breaks) == 11
 
 
 @pytest.mark.asyncio
@@ -419,15 +506,25 @@ async def test_stats_auxiliary_endpoints(monkeypatch):
     stored_round = _make_round(round_id)
     db = make_mock_database()
     db.users.get_user = AsyncMock(return_value=user)
-    db.rounds.get_played_courses_for_user = AsyncMock(return_value=[{"id": str(course_id)}])
+    db.rounds.get_played_courses_for_user = AsyncMock(
+        return_value=[{"id": str(course_id), "name": "Pebble Beach", "location": None}]
+    )
     db.rounds.get_rounds_for_user = AsyncMock(return_value=[stored_round])
 
-    assert await stats.get_played_courses(user_id, db, user) == [{"id": str(course_id)}]
-    monkeypatch.setattr("analytics.goals.goal_report", lambda rounds, scoring_goal, home: {"gap": 5})
-    assert (await stats.get_goal_report(user_id, 50, db, user))["gap"] == 5
+    played = await stats.get_played_courses(user_id, db, user)
+    assert [c.model_dump() for c in played] == [{"id": str(course_id), "name": "Pebble Beach", "location": None}]
+
+    report = await stats.get_goal_report(user_id, 50, db, user)
+    assert report.scoring_goal == 85
+    assert report.scoring_average == 9.0
+    assert report.on_track is True
 
     round_comparison = await stats.get_round_comparison(user_id, round_id, db, user)
-    assert set(round_comparison) == {"score", "putts", "gir", "three_putts", "putts_per_gir", "scrambling"}
+    assert set(round_comparison.model_dump()) == {
+        "score", "putts", "gir", "three_putts", "putts_per_gir", "scrambling",
+    }
+    assert round_comparison.score[0].label == "Selected Round"
+    assert round_comparison.score[0].primary_value == 9
 
     db.rounds.get_rounds_for_user.return_value = []
     assert await stats.get_milestones(user_id, 12, db, user) == {"milestones": []}
@@ -436,6 +533,41 @@ async def test_stats_auxiliary_endpoints(monkeypatch):
     assert course_analytics.rounds_played == 0
     assert course_analytics.course_id == str(course_id)
     assert course_analytics.scoring_average is None
+
+
+@pytest.mark.asyncio
+async def test_benchmark_comparison_endpoint():
+    user_id, friend_id = uuid4(), uuid4()
+    user = _make_user(user_id)
+    db = make_mock_database()
+    db.rounds.get_rounds_for_user = AsyncMock(return_value=[_make_round_summary(uuid4()), _make_round_summary(uuid4())])
+    db.friendships.are_friends = AsyncMock(return_value=True)
+
+    handicap = await stats.get_benchmark_comparison(user_id, "handicap", 15, None, 20, db, user)
+    assert (handicap.against, handicap.handicap) == ("handicap", 15)
+    assert handicap.benchmark.par4_to_par == 1.025
+    # Eight bogeys and ten pars on par 4s: +0.44 a hole against the 15's +1.025.
+    assert (handicap.par_types[1].gap, handicap.par_types[1].verdict) == (-0.58, "ahead")
+
+    peak = await stats.get_benchmark_comparison(user_id, "peak", None, None, 20, db, user)
+    assert peak.goal == 79  # two rounds of 80 play like the golfers who break 80
+
+    friend = await stats.get_benchmark_comparison(user_id, "friend", None, friend_id, 20, db, user)
+    assert friend.benchmark.par4_to_par == pytest.approx(8 / 18)
+    db.friendships.are_friends.assert_awaited_with(str(user_id), str(friend_id))
+
+    for against, handicap_arg, friend_arg in [("handicap", 7, None), ("handicap", None, None), ("friend", None, None)]:
+        with pytest.raises(HTTPException) as missing:
+            await stats.get_benchmark_comparison(user_id, against, handicap_arg, friend_arg, 20, db, user)
+        assert missing.value.status_code == 422
+
+    db.friendships.are_friends = AsyncMock(return_value=False)
+    with pytest.raises(HTTPException) as stranger:
+        await stats.get_benchmark_comparison(user_id, "friend", None, friend_id, 20, db, user)
+    assert stranger.value.status_code == 403
+    with pytest.raises(HTTPException) as someone_else:
+        await stats.get_benchmark_comparison(friend_id, "handicap", 15, None, 20, db, user)
+    assert someone_else.value.status_code == 403
 
 
 @pytest.mark.asyncio
