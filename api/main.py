@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager, suppress
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 
@@ -133,6 +134,14 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Compress the routes' JSON. Round lists and analytics are 20-110 KB and shrink
+    # about 10x. Level 6 costs under 1 ms on the largest of them; level 9 (Starlette's
+    # default) is 2-3x slower for 1-10% fewer bytes. Bodies under 1 KB go out as they are.
+    # It must sit inside security_middleware below (added before it, so it wraps the
+    # routes directly): that middleware re-streams every body, and GZipMiddleware
+    # compresses a streamed body whatever its size and without a Content-Length.
+    app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=6)
 
     traffic_monitor = SecurityTrafficMonitor(
         request_window_sec=env_int("TRAFFIC_WINDOW_SECONDS", 60),

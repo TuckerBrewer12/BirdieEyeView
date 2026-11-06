@@ -1,3 +1,5 @@
+import gzip
+import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
@@ -307,6 +309,38 @@ def test_unhandled_api_errors_return_generic_detail():
     assert response.json() == {"detail": "Something went wrong. Please try again."}
     assert "secret" not in response.text
     assert "foreign_key" not in response.text
+
+
+def test_large_json_responses_are_gzipped():
+    app = api_main.create_app()
+    rows = [{"hole": n, "strokes": 4, "putts": 2, "par": 4} for n in range(1, 400)]
+
+    @app.get("/api/test-large")
+    async def large():
+        return rows
+
+    client = TestClient(app, base_url="http://localhost")
+    browser = {"user-agent": "browser", "accept-encoding": "gzip, deflate, br"}
+
+    with client.stream("GET", "/api/test-large", headers=browser) as response:
+        wire = b"".join(response.iter_raw())
+    assert response.headers["content-encoding"] == "gzip"
+    assert "accept-encoding" in response.headers["vary"].lower()
+    assert len(wire) < len(json.dumps(rows)) / 5
+    # Compressed once, not streamed: it keeps a Content-Length.
+    assert response.headers["content-length"] == str(len(wire))
+    assert json.loads(gzip.decompress(wire)) == rows
+    # The security middleware's headers survive compression.
+    assert response.headers["x-content-type-options"] == "nosniff"
+
+    # A client that doesn't ask for gzip gets the body as it is.
+    plain = client.get("/api/test-large", headers={"user-agent": "browser", "accept-encoding": "identity"})
+    assert "content-encoding" not in plain.headers
+    assert plain.json() == rows
+
+    # Small bodies aren't worth compressing.
+    small = client.get("/", headers=browser)
+    assert "content-encoding" not in small.headers
 
 
 @pytest.mark.asyncio
