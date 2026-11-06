@@ -8,9 +8,9 @@ interface AuthCardProps extends Omit<React.ComponentProps<"div">, "title"> {
   /** The page's heading. It renders as the h1, so it names the screen. */
   title: React.ReactNode;
   /** One line under the title saying what this screen is for. */
-  description?: React.ReactNode;
+  description?: string;
   /** The way out under the form: "Don't have an account? Create one". */
-  footer?: React.ReactNode;
+  footer?: React.ReactElement;
   children: React.ReactNode;
 }
 

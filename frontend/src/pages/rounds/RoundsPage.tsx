@@ -85,7 +85,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
                 round={r}
                 onClick={() => {
                   if (viewModel.isLinkOpen(r.id)) return;
-                  navigate(`/rounds/${r.id}`);
+                  void navigate(`/rounds/${r.id}`);
                 }}
                 onLinkClick={() => viewModel.toggleLink(r.id)}
               />

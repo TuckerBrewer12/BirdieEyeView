@@ -3,12 +3,14 @@ import { test } from "./ResetPasswordPage.robot";
 
 test("reset password", async ({ reset }) => {
   await reset.open();
+  await reset.seesHeading("Reset password");
   await reset.capture("reset-password.png");
 });
 
 test("reset password in dark mode", async ({ reset }) => {
   await reset.dark();
   await reset.open();
+  await reset.seesHeading("Reset password");
   await reset.capture("reset-password-dark.png");
 });
 

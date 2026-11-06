@@ -1,5 +1,5 @@
 import { cn } from "@/brand/cn";
-import { scoreFillClass, type ScoreKey } from "@/brand/theme";
+import { scoreFillClass, scoreProfileHeightClass } from "@/brand/theme";
 import type { HoleSummary } from "@/domain";
 
 interface HoleScoreBarsProps {
@@ -12,16 +12,6 @@ interface HoleScoreBarsProps {
   variant?: "nine" | "profile";
   className?: string;
 }
-
-const PROFILE_HEIGHT: Record<ScoreKey, string> = {
-  eagle: "h-profile-eagle",
-  birdie: "h-profile-birdie",
-  par: "h-profile-par",
-  bogey: "h-profile-bogey",
-  double: "h-profile-double",
-  triple: "h-profile-worse",
-  quad: "h-profile-worse",
-};
 
 /** A nine at a glance: one bar per hole, coloured by how it was scored. */
 export function HoleScoreBars({ holes, variant = "nine", className }: HoleScoreBarsProps) {
@@ -41,7 +31,7 @@ export function HoleScoreBars({ holes, variant = "nine", className }: HoleScoreB
             key={hole.hole}
             className={cn(
               scoreFillClass(kind),
-              profile ? cn("flex-1 rounded-t-tick", PROFILE_HEIGHT[kind]) : "rounded-tick",
+              profile ? cn("flex-1 rounded-t-tick", scoreProfileHeightClass(kind)) : "rounded-tick",
               kind === "par" && "opacity-recessed",
             )}
           />

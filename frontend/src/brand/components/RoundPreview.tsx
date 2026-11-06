@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
-import { Button } from "@/brand/components/Button";
+import { Button, RowButton } from "@/brand/components/Button";
 import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
@@ -49,15 +49,9 @@ export function RoundPreview(props: RoundPreviewProps) {
   const { round, variant, onClick, onLinkClick } = props;
 
   if (variant === "history") {
-    return (
-      <div
-        data-slot="round-preview"
-        className={cn(
-          "flex items-center justify-between px-5 py-3",
-          onClick && "cursor-pointer hover:bg-muted",
-        )}
-        onClick={onClick}
-      >
+    const row = "flex items-center justify-between px-5 py-3";
+    const content = (
+      <>
         <span className="text-sm text-muted-foreground">
           {formatDay(round.date) ?? "—"}
         </span>
@@ -67,6 +61,20 @@ export function RoundPreview(props: RoundPreviewProps) {
             {toParLabel(round.toPar) ?? "—"}
           </span>
         </div>
+      </>
+    );
+    // A row that opens the round is a button, so a keyboard can reach and press it.
+    return onClick ? (
+      <RowButton
+        data-slot="round-preview"
+        className={cn(row, "w-full cursor-pointer hover:bg-muted")}
+        onClick={onClick}
+      >
+        {content}
+      </RowButton>
+    ) : (
+      <div data-slot="round-preview" className={row}>
+        {content}
       </div>
     );
   }
@@ -185,7 +193,7 @@ function RoundHighlight({
       )}
     >
       <div className="flex shrink-0 items-center gap-3">
-        <div className="flex size-12 items-center justify-center rounded-full border border-score-eagle/30 bg-score-eagle/15 text-score-eagle">
+        <div className="flex size-12 items-center justify-center rounded-full border border-score-eagle/recessed bg-score-eagle/tint text-score-eagle">
           <Trophy className="size-5" />
         </div>
         <div>

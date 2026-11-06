@@ -220,7 +220,10 @@ export function handicapBars(rows: ScoringByHandicapRowDto[]): ToParBar[] {
   }));
 }
 
-/** The headline figures over the filtered rounds, worded for their cards. */
+/**
+ * The headline figures, worded for their cards: the golfer's own handicap index whatever the
+ * filters, and the rest over the filtered rounds.
+ */
 export function headlineFigures(analytics: Analytics): { label: string; value: string; detail?: string | null }[] {
   const { kpis } = analytics;
   return [
