@@ -55,7 +55,6 @@ function CourseField({ setup }: { setup: ScanSetupViewModel }) {
         onQueryChange={courseSearch.setQuery}
         onSelectCourse={setup.pickCourse}
         onClose={courseSearch.reset}
-        autoFocus={false}
         reviewVariant
         onUseCustomName={setup.nameCourse}
         linkedName={setup.linkedName ? formatCourseName(setup.linkedName) : undefined}

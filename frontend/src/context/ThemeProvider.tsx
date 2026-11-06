@@ -28,8 +28,13 @@ function savePreference(preference: ThemePreference): void {
   }
 }
 
+/** The device's dark-mode query, or null where there is none (jsdom, old webviews). */
+function darkQuery(): MediaQueryList | null {
+  return typeof window.matchMedia === "function" ? window.matchMedia(DARK_QUERY) : null;
+}
+
 function deviceIsDark(): boolean {
-  return window.matchMedia?.(DARK_QUERY).matches ?? false;
+  return darkQuery()?.matches ?? false;
 }
 
 /**
@@ -42,7 +47,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const resolved = resolveTheme(preference, deviceDark);
 
   useEffect(() => {
-    const query = window.matchMedia?.(DARK_QUERY);
+    const query = darkQuery();
     if (!query) return;
     const onChange = (event: MediaQueryListEvent) => setDeviceDark(event.matches);
     query.addEventListener("change", onChange);

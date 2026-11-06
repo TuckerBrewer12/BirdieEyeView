@@ -258,7 +258,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
         <Line
           {...line}
           label="Score"
-          className={cn(ROW, "text-body font-bold text-foreground", edits && "bg-muted/40")}
+          className={cn(ROW, "text-body font-bold text-foreground", edits && "bg-muted/recessed")}
           labelClassName="text-foreground"
           cell={(hole) => <ScoreCell hole={hole} edits={edits} check={!!toCheck?.includes(hole.hole)} />}
           isCheck={(hole) => !!toCheck?.includes(hole.hole)}
@@ -281,7 +281,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
           <Line
             {...line}
             label="Putts"
-            className={cn(ROW, figures, edits && "bg-muted/40")}
+            className={cn(ROW, figures, edits && "bg-muted/recessed")}
             labelClassName="text-foreground-secondary"
             cell={(hole) =>
               edits ? (

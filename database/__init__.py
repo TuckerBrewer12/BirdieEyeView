@@ -4,14 +4,14 @@ from .repositories import CourseRepositoryDB, UserRepositoryDB, RoundRepositoryD
 from .exceptions import DatabaseError, NotFoundError, DuplicateError, IntegrityError
 
 __all__ = [
-    "DatabasePool",
-    "db",
-    "DatabaseManager",
     "CourseRepositoryDB",
-    "UserRepositoryDB",
-    "RoundRepositoryDB",
     "DatabaseError",
-    "NotFoundError",
+    "DatabaseManager",
+    "DatabasePool",
     "DuplicateError",
     "IntegrityError",
+    "NotFoundError",
+    "RoundRepositoryDB",
+    "UserRepositoryDB",
+    "db",
 ]

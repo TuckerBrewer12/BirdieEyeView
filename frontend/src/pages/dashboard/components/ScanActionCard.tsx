@@ -35,7 +35,7 @@ export function ScanActionCard({ onClick }: ScanActionCardProps) {
               </div>
             </div>
           </div>
-          <div className="flex size-8 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-primary/10">
+          <div className="flex size-8 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-primary/tint">
             <ArrowRight className="size-4 -rotate-45 text-muted-foreground transition-transform group-hover:rotate-0 group-hover:text-primary" />
           </div>
         </div>

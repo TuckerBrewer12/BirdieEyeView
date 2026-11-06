@@ -15,7 +15,7 @@ const noop = () => {};
 function Panel({ children }: { children: ReactNode }) {
   return (
     <div className="overflow-x-auto rounded-card border border-border bg-card shadow-sm">
-      <div className="min-w-scorecard px-3 pt-2 pb-4">{children}</div>
+      <div className="min-w-scorecard-round px-3 pt-2 pb-4">{children}</div>
     </div>
   );
 }

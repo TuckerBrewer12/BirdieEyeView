@@ -46,7 +46,7 @@ function RoundScorecard({ round, teeBox, teeRating, edits, toCheck, action, clas
         {action}
       </div>
       <div className="overflow-x-auto">
-        <div className="min-w-scorecard px-3 pt-2 pb-4">
+        <div className="min-w-scorecard-round px-3 pt-2 pb-4">
           <ScorecardTable round={round} teeBox={teeBox} edits={edits} toCheck={toCheck} />
         </div>
       </div>
