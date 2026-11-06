@@ -1,5 +1,5 @@
 import { Ellipsis, Plus } from "lucide-react";
-import { Button } from "@/brand/components/Button";
+import { Button, RowButton } from "@/brand/components/Button";
 import { cn } from "@/brand/cn";
 
 /* Every variant the app uses, under the board's name where it has one. */
@@ -72,6 +72,11 @@ function Panel({ theme }: { theme: "Light" | "Dark" }) {
           Sign in
         </Button>
       </div>
+      <div className="text-label font-semibold text-muted-foreground">Row</div>
+      <RowButton className="flex w-full items-center justify-between rounded-lg px-3 py-2 hover:bg-muted">
+        <span className="text-sm font-medium text-foreground">Pebble Beach Golf Links</span>
+        <span className="text-sm text-muted-foreground">78</span>
+      </RowButton>
     </div>
   );
 }

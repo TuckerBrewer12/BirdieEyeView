@@ -157,6 +157,7 @@
   --brand-size-sheet: 28rem;
   --brand-size-target: 15rem;
   --brand-size-icon-xs: 11px;
+  --brand-size-icon-sm: 13px;
   --brand-size-hole-w: 30px;
   --brand-size-hole-h: 22px;
   --brand-size-profile-eagle: 28%;
@@ -168,8 +169,14 @@
   --brand-size-scorecard: 43.75rem;
   --brand-stroke-icon: 1.75;
   --brand-stroke-icon-active: 2.25;
-  --brand-opacity-recessed: 35%;
+  --brand-stroke-check: 1.5;
+  --brand-opacity-faint: 8%;
+  --brand-opacity-tint: 12%;
   --brand-opacity-wash: 22%;
+  --brand-opacity-recessed: 35%;
+  --brand-opacity-half: 50%;
+  --brand-opacity-strong: 70%;
+  --brand-opacity-glass: 90%;
   --brand-ring-width: 3px;
 }
 
@@ -360,6 +367,7 @@
   --spacing-sheet: var(--brand-size-sheet);
   --spacing-target: var(--brand-size-target);
   --spacing-icon-xs: var(--brand-size-icon-xs);
+  --spacing-icon-sm: var(--brand-size-icon-sm);
   --spacing-hole-w: var(--brand-size-hole-w);
   --spacing-hole-h: var(--brand-size-hole-h);
   --spacing-profile-eagle: var(--brand-size-profile-eagle);
@@ -371,8 +379,14 @@
   --spacing-scorecard: var(--brand-size-scorecard);
   --stroke-width-icon: var(--brand-stroke-icon);
   --stroke-width-icon-active: var(--brand-stroke-icon-active);
-  --opacity-recessed: var(--brand-opacity-recessed);
+  --stroke-width-check: var(--brand-stroke-check);
+  --opacity-faint: var(--brand-opacity-faint);
+  --opacity-tint: var(--brand-opacity-tint);
   --opacity-wash: var(--brand-opacity-wash);
+  --opacity-recessed: var(--brand-opacity-recessed);
+  --opacity-half: var(--brand-opacity-half);
+  --opacity-strong: var(--brand-opacity-strong);
+  --opacity-glass: var(--brand-opacity-glass);
   --text-title--font-weight: 700;
   --text-title--letter-spacing: -0.5px;
   --text-hero--font-weight: 700;

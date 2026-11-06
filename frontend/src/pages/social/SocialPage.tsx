@@ -41,7 +41,7 @@ export function SocialPage({ userId }: SocialPageProps) {
             <PageTitle>Social</PageTitle>
             <p className="mt-1 text-sm text-muted-foreground">Add friends with their friend code</p>
           </div>
-          <Button variant="outline" onClick={() => navigate("/inbox")}>
+          <Button variant="outline" onClick={() => void navigate("/inbox")}>
             <Inbox />
             Inbox
           </Button>
