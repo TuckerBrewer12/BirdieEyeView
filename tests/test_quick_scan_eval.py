@@ -44,18 +44,41 @@ def make_result(case_id, matched, total=10, *, error=None):
     )
 
 
-def test_committed_manifest_defines_four_cases_and_expected_cell_counts():
-    cases = load_cases()
+@pytest.mark.parametrize(
+    "manifest_path", quick_eval.SUITE_MANIFEST_PATHS.values(), ids=tuple(quick_eval.SUITE_MANIFEST_PATHS),
+)
+def test_every_committed_case_loads_with_its_image_and_full_hole_coverage(manifest_path):
+    # Growth-proof: adding scorecards to the manifest needs no change here.
+    cases = load_cases(manifest_path)
 
-    assert [case.case_id for case in cases] == [
-        "half_moon_bay_g",
-        "half_moon_bay_t",
-        "blue_rock_tucker",
-        "eagle_vines_tucker",
-    ]
-    assert [case.expected_cells for case in cases] == [54, 54, 18, 18]
-    assert cases[2].user_context == "my name is Tucker. no putts recorded"
-    assert cases[3].user_context == "my name is Tucker. no putts recorded. scores written to par"
+    assert cases and len({case.case_id for case in cases}) == len(cases)
+    for case in cases:
+        assert (quick_eval.SCORECARD_DIR / case.image).is_file(), case.case_id
+        assert case.expected and case.expected_cells == 18 * len(case.expected), case.case_id
+
+
+@pytest.mark.parametrize(
+    ("argv", "manifest_name", "suite"),
+    [
+        ([], "quick_eval_cases.json", "Quick"),
+        (["--suite", "quick"], "quick_eval_cases.json", "Quick"),
+        (["--suite", "large"], "scan_eval_cases.json", "Large"),
+    ],
+)
+def test_main_selects_requested_suite(argv, manifest_name, suite, monkeypatch, capsys):
+    expected_cases = load_cases(quick_eval.SCORECARD_DIR / manifest_name)
+
+    async def fake_run_suite(cases):
+        assert cases == expected_cases
+        return SuiteRun([make_result("example", 0)], {"card.png": 0.1}, 0.2)
+
+    monkeypatch.setattr(quick_eval, "load_dotenv", lambda *args: None)
+    monkeypatch.setattr(quick_eval, "run_suite", fake_run_suite)
+    monkeypatch.setenv("MISTRAL_API_KEY", "test-mistral")
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-google")
+
+    assert quick_eval.main(argv) == 0
+    assert capsys.readouterr().out.startswith(f"{suite} scan evaluation\n")
 
 
 def test_manifest_requires_complete_hole_coverage(tmp_path):
@@ -136,6 +159,48 @@ def test_summary_buckets_are_cumulative_and_errors_fail():
     assert (summary.at_least_90, summary.at_least_80, summary.failed) == (2, 3, 2)
 
 
+def write_manifest(tmp_path, **extra):
+    scorecard_dir = tmp_path / "cards"
+    scorecard_dir.mkdir(exist_ok=True)
+    (scorecard_dir / "card.png").write_bytes(b"image")
+    case = {
+        "id": "case", "image": "card.png", "player_name": "Player", "source_score_format": "raw_strokes",
+        "user_context": "my name is Player", "expected": {"strokes": {str(h): 4 for h in range(1, 19)}}, **extra,
+    }
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(json.dumps({"version": 1, "cases": [case]}), encoding="utf-8")
+    return manifest_path, scorecard_dir
+
+
+def test_notes_stay_out_of_the_scan_and_known_gaps_load(tmp_path):
+    manifest_path, scorecard_dir = write_manifest(tmp_path, notes="Initial may look like G.", known_gap="No score row.")
+
+    [case] = load_cases(manifest_path, scorecard_dir=scorecard_dir)
+
+    assert case.known_gap == "No score row."
+    assert "Initial" not in case.user_context  # notes are for people, never sent to the scanner
+
+
+@pytest.mark.parametrize("field", ["notes", "known_gap"])
+@pytest.mark.parametrize("value", ["", "   ", 3, None])
+def test_notes_and_known_gap_must_be_text(tmp_path, field, value):
+    manifest_path, scorecard_dir = write_manifest(tmp_path, **{field: value})
+
+    with pytest.raises(EvalConfigurationError, match=f"{field} must be a non-empty string"):
+        load_cases(manifest_path, scorecard_dir=scorecard_dir)
+
+
+def test_report_marks_and_counts_known_gaps():
+    gap = make_result("lake_chabot_g", 0, error="Extraction failed: no score rows")
+    gap.case = EvalCase(**{**gap.case.__dict__, "known_gap": "The card has no final score row."})
+    run = SuiteRun(case_results=[make_result("ok", 10), gap], ocr_seconds_by_image={"card.png": 1.0}, suite_seconds=2.0)
+
+    report = render_report(run)
+
+    assert "1/2 are known scanner gaps" in report
+    assert "KNOWN GAP: The card has no final score row." in report
+
+
 def test_report_includes_cumulative_counts_mismatches_errors_and_timing():
     failed = make_result("failed_case", 7)
     failed.mismatches = [CellMismatch("strokes", 8, 4, None)]
@@ -153,6 +218,8 @@ def test_report_includes_cumulative_counts_mismatches_errors_and_timing():
     assert "1/3 were 100% correct" in report
     assert "1/3 were 90% or better" in report
     assert "2/3 failed below 80% or had an operational error" in report
+    assert "1/3 had an operational error" in report
+    assert "0/3 are known scanner gaps" in report
     assert "strokes hole 8: expected 4, got None" in report
     assert "OCR failed: timeout" in report
     assert "OCR + merge card.png: 2.25s" in report

@@ -1,7 +1,8 @@
-"""Run the small live scorecard accuracy evaluation suite.
+"""Run a live scorecard accuracy evaluation suite.
 
 Usage:
     python -m scripts.quick_scan_eval
+    python -m scripts.quick_scan_eval --suite large
 
 The runner mirrors the production frontend flow: OCR each unique image once,
 then pass the prefetched OCR text through the production extract path for each
@@ -10,6 +11,7 @@ target player. Accuracy failures are reported but do not fail the process.
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
 import mimetypes
@@ -33,6 +35,10 @@ from starlette.datastructures import Headers
 ROOT_DIR = Path(__file__).resolve().parents[1]
 SCORECARD_DIR = ROOT_DIR / "tests" / "test_scorecards"
 DEFAULT_MANIFEST_PATH = SCORECARD_DIR / "quick_eval_cases.json"
+SUITE_MANIFEST_PATHS = {
+    "quick": DEFAULT_MANIFEST_PATH,
+    "large": SCORECARD_DIR / "scan_eval_cases.json",
+}
 SUPPORTED_FIELDS = frozenset({"strokes", "putts", "shots_to_green"})
 SUPPORTED_SCORE_FORMATS = frozenset({"raw_strokes", "to_par"})
 ALL_HOLES = frozenset(range(1, 19))
@@ -55,6 +61,8 @@ class EvalCase:
     source_score_format: str
     user_context: str
     expected: Mapping[str, Mapping[int, int]]
+    # A layout the scanner doesn't support yet: still graded, but reported as a known gap.
+    known_gap: Optional[str] = None
 
     @property
     def expected_cells(self) -> int:
@@ -166,6 +174,11 @@ def load_cases(
                 f"{label}: source_score_format must be one of {sorted(SUPPORTED_SCORE_FORMATS)}"
             )
         user_context = _require_string(raw, "user_context", label)
+        # `user_context` is exactly what the app would send. People-only remarks go in `notes`,
+        # which the scanner never sees; `known_gap` names an unsupported layout.
+        for optional in ("notes", "known_gap"):
+            if optional in raw and (not isinstance(raw[optional], str) or not raw[optional].strip()):
+                raise EvalConfigurationError(f"{label}: {optional} must be a non-empty string when present")
 
         raw_expected = raw.get("expected")
         if not isinstance(raw_expected, dict) or not raw_expected:
@@ -212,6 +225,7 @@ def load_cases(
                 source_score_format=source_score_format,
                 user_context=user_context,
                 expected=expected,
+                known_gap=raw.get("known_gap"),
             )
         )
 
@@ -446,12 +460,12 @@ def _case_status(result: CaseResult) -> str:
     return "FAILED"
 
 
-def render_report(run: SuiteRun) -> str:
+def render_report(run: SuiteRun, *, suite: str = "quick") -> str:
     summary = summarize(run.case_results)
     total_cells = sum(result.total_cells for result in run.case_results)
     matched_cells = sum(result.matched_cells for result in run.case_results)
     lines = [
-        "Quick scan evaluation",
+        f"{suite.capitalize()} scan evaluation",
         "=" * 72,
         f"{len(run.ocr_seconds_by_image)} images | {summary.total} cases | "
         f"{matched_cells}/{total_cells} numeric cells correct",
@@ -461,6 +475,8 @@ def render_report(run: SuiteRun) -> str:
         f"  {summary.at_least_90}/{summary.total} were 90% or better",
         f"  {summary.at_least_80}/{summary.total} were 80% or better",
         f"  {summary.failed}/{summary.total} failed below 80% or had an operational error",
+        f"  {summary.total - run.completed_cases}/{summary.total} had an operational error",
+        f"  {sum(1 for r in run.case_results if r.case.known_gap)}/{summary.total} are known scanner gaps",
         "",
         "Cases",
     ]
@@ -472,6 +488,8 @@ def render_report(run: SuiteRun) -> str:
             f"{result.matched_cells}/{result.total_cells} ({accuracy:.1f}%) | "
             f"extract {result.extraction_seconds:.2f}s | effective {result.effective_seconds:.2f}s"
         )
+        if result.case.known_gap:
+            lines.append(f"    KNOWN GAP: {result.case.known_gap}")
         if result.operational_error:
             lines.append(f"    {result.operational_error}")
         for mismatch in result.mismatches:
@@ -510,20 +528,23 @@ def _validate_provider_keys() -> None:
         raise EvalConfigurationError(f"Missing required environment variables: {', '.join(missing)}")
 
 
-def main() -> int:
+def main(argv: Optional[list[str]] = None) -> int:
+    parser = argparse.ArgumentParser(description="Run a live scorecard scan evaluation.")
+    parser.add_argument("--suite", choices=SUITE_MANIFEST_PATHS, default="quick")
+    suite = parser.parse_args(argv).suite
     load_dotenv(ROOT_DIR / ".env")
     try:
         _validate_provider_keys()
-        cases = load_cases()
+        cases = load_cases(SUITE_MANIFEST_PATHS[suite])
         run = asyncio.run(run_suite(cases))
     except EvalConfigurationError as exc:
-        print(f"Quick scan evaluation could not start: {exc}", file=sys.stderr)
+        print(f"{suite.capitalize()} scan evaluation could not start: {exc}", file=sys.stderr)
         return 2
     except KeyboardInterrupt:
-        print("Quick scan evaluation interrupted.", file=sys.stderr)
+        print(f"{suite.capitalize()} scan evaluation interrupted.", file=sys.stderr)
         return 130
 
-    print(render_report(run))
+    print(render_report(run, suite=suite))
     return exit_code_for_run(run)
 
 
