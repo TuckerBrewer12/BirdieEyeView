@@ -8,8 +8,10 @@ from contextlib import asynccontextmanager, suppress
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from starlette.types import Receive, Scope, Send
 
 logging.basicConfig(
     level=logging.INFO,
@@ -54,6 +56,16 @@ def _env_float(name: str, default: float) -> float:
         return float(raw)
     except (TypeError, ValueError):
         return default
+
+
+class _GZipOutsideAuthMiddleware(GZipMiddleware):
+    """Gzip responses, except auth ones: login puts the access token in its body (BREACH)."""
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "http" and scope["path"].startswith("/api/auth/"):
+            await self.app(scope, receive, send)
+            return
+        await super().__call__(scope, receive, send)
 
 
 @asynccontextmanager
@@ -116,6 +128,10 @@ def create_app() -> FastAPI:
         version="1.0.0",
         lifespan=lifespan,
     )
+
+    # Added first so it sits innermost: CORS answers preflights before they reach it and
+    # stamps its headers on the compressed response on the way out.
+    app.add_middleware(_GZipOutsideAuthMiddleware, minimum_size=1024)
 
     allowed_hosts = parse_allowed_hosts()
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
