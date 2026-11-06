@@ -26,7 +26,7 @@ interface SideNavProps {
 }
 
 const linkStates =
-  "text-sidebar-foreground/72 transition-colors duration-150 hover:bg-sidebar-foreground/8 hover:text-sidebar-foreground data-active:bg-sidebar-foreground/12 data-active:text-sidebar-foreground [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:stroke-icon";
+  "text-sidebar-foreground/strong transition-colors duration-150 hover:bg-sidebar-foreground/faint hover:text-sidebar-foreground data-active:bg-sidebar-foreground/tint data-active:text-sidebar-foreground [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:stroke-icon";
 
 const linkClass = cn(
   "flex h-10 items-center gap-3 rounded-card px-3 text-sm font-medium data-active:font-semibold",
@@ -76,19 +76,19 @@ function SideNav({
         ))}
       </div>
 
-      <div className="mx-1 my-2 h-px bg-sidebar-foreground/10" />
+      <div className="mx-1 my-2 h-px bg-sidebar-foreground/tint" />
 
       <div className="group flex items-center gap-2.5 pt-1.5 pr-1 pl-2">
         <span
           aria-hidden
-          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-foreground/14 text-xs font-bold"
+          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-foreground/tint text-xs font-bold"
         >
           {user.initials}
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{user.name}</p>
           {user.detail && (
-            <p className="truncate text-xs text-sidebar-foreground/40">{user.detail}</p>
+            <p className="truncate text-xs text-sidebar-foreground/recessed">{user.detail}</p>
           )}
         </div>
         {onSignOut && (
@@ -99,7 +99,7 @@ function SideNav({
             disabled={signingOut}
             aria-label={signingOut ? "Signing out…" : "Sign out"}
             title="Sign out"
-            className="text-sidebar-foreground/40 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground focus-visible:opacity-100 dark:hover:bg-sidebar-foreground/10"
+            className="text-sidebar-foreground/recessed opacity-0 transition-opacity group-hover:opacity-100 hover:bg-sidebar-foreground/tint hover:text-sidebar-foreground focus-visible:opacity-100 dark:hover:bg-sidebar-foreground/tint"
           >
             <LogOut aria-hidden className="size-3.75" />
           </Button>
