@@ -28,15 +28,12 @@ PASSWORD_RESET_COMPLETE = "Password has been reset. You can now sign in."
 INVALID_GOOGLE_TOKEN = "Invalid Google sign-in token"
 GOOGLE_EMAIL_NOT_VERIFIED = "Google account email is not verified"
 GOOGLE_ACCOUNT_LINKED_ELSEWHERE = "This Google account is already linked to another user"
-GOOGLE_LINK_REQUIRES_PASSWORD_SIGN_IN = (
-    "An account with this email already exists. Sign in with email and password before linking Google."
-)
 INVALID_APPLE_TOKEN = "Invalid Apple sign-in token"
 APPLE_EMAIL_NOT_VERIFIED = "Apple account email is not verified"
 APPLE_EMAIL_MISSING = "Apple did not return an email for this account"
 APPLE_ACCOUNT_LINKED_ELSEWHERE = "This Apple account is already linked to another user"
-APPLE_LINK_REQUIRES_PASSWORD_SIGN_IN = (
-    "An account with this email already exists. Sign in with email and password before linking Apple."
+PROVIDER_EMAIL_NEEDS_PASSWORD_SIGN_IN = (
+    "An account with this email already exists. Sign in with your email and password."
 )
 
 # Rate limits
@@ -57,6 +54,7 @@ TOO_MANY_LOGIN_ATTEMPTS = "Too many login attempts. Please try again shortly."
 TOO_MANY_RESET_ATTEMPTS = "Too many reset attempts. Please try again later."
 TOO_MANY_GOOGLE_SIGN_INS = "Too many Google sign-in requests. Please try again shortly."
 TOO_MANY_APPLE_SIGN_INS = "Too many Apple sign-in requests. Please try again shortly."
+TOO_MANY_APPLE_NONCE_REQUESTS = "Too many Apple sign-in attempts. Please try again shortly."
 
 # Users and friends
 USER_NOT_FOUND = "User not found"

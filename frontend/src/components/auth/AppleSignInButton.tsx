@@ -1,11 +1,12 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { AppleSignIn, ErrorCode, SignInScope } from "@capawesome/capacitor-apple-sign-in";
 import { Apple } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface AppleSignInButtonProps {
   disabled?: boolean;
-  onCredential: (identityToken: string, name?: string) => Promise<void>;
+  onCredential: (identityToken: string, nonce: string, name?: string) => Promise<void>;
   onError: (message: string) => void;
 }
 
@@ -28,6 +29,7 @@ interface AppleAuth {
     scope: string;
     redirectURI: string;
     state: string;
+    nonce: string;
     usePopup: boolean;
   }) => void;
   signIn: () => Promise<AppleAuthResponse>;
@@ -40,6 +42,9 @@ declare global {
     };
   }
 }
+
+// Nonces live 10 minutes on the server; refresh a prefetched one before it gets close.
+const NONCE_MAX_AGE_MS = 8 * 60 * 1000;
 
 let appleScriptPromise: Promise<void> | null = null;
 let nativeAppleClientId: string | null = null;
@@ -119,10 +124,34 @@ export function AppleSignInButton({
   onCredential,
   onError,
 }: AppleSignInButtonProps) {
+  const { requestAppleNonce } = useAuth();
   const [loading, setLoading] = useState(false);
   const stateRef = useRef<string>("");
+  const nonceRef = useRef<{ value: string; fetchedAt: number } | null>(null);
   const clientId = getAppleClientId();
   const isNative = Capacitor.isNativePlatform();
+
+  // Prefetch so the web popup opens inside the click; fetching at click time can trip popup blockers.
+  const prefetchNonce = useCallback(() => {
+    requestAppleNonce()
+      .then((value) => {
+        nonceRef.current = { value, fetchedAt: Date.now() };
+      })
+      .catch(() => {
+        nonceRef.current = null; // takeNonce() retries and reports the error on click
+      });
+  }, [requestAppleNonce]);
+
+  useEffect(() => {
+    if (clientId) prefetchNonce();
+  }, [clientId, prefetchNonce]);
+
+  const takeNonce = async (): Promise<string> => {
+    const cached = nonceRef.current;
+    nonceRef.current = null; // each nonce is used for one attempt only
+    if (cached && Date.now() - cached.fetchedAt < NONCE_MAX_AGE_MS) return cached.value;
+    return requestAppleNonce();
+  };
 
   if (!clientId) {
     return (
@@ -138,11 +167,13 @@ export function AppleSignInButton({
     setLoading(true);
     try {
       const state = randomState();
+      const nonce = await takeNonce();
       await initializeNativeApple(clientId);
       const result = await AppleSignIn.signIn({
         redirectUrl: getAppleRedirectUri(),
         scopes: [SignInScope.Email, SignInScope.FullName],
         state,
+        nonce,
       });
       if (result.state && result.state !== state) {
         onError("Apple sign-in state did not match.");
@@ -152,12 +183,13 @@ export function AppleSignInButton({
         onError("Apple did not return a sign-in credential.");
         return;
       }
-      await onCredential(result.idToken, formatNativeAppleName(result));
+      await onCredential(result.idToken, nonce, formatNativeAppleName(result));
     } catch (err) {
       if (getNativeErrorCode(err) === ErrorCode.SignInCanceled) return;
       onError(err instanceof Error ? err.message : "Apple sign-in failed.");
     } finally {
       setLoading(false);
+      prefetchNonce();
     }
   };
 
@@ -173,12 +205,14 @@ export function AppleSignInButton({
       }
 
       const state = randomState();
+      const nonce = await takeNonce();
       stateRef.current = state;
       window.AppleID.auth.init({
         clientId,
         scope: "name email",
         redirectURI: getAppleRedirectUri(),
         state,
+        nonce,
         usePopup: true,
       });
 
@@ -194,11 +228,12 @@ export function AppleSignInButton({
         return;
       }
 
-      await onCredential(identityToken, formatAppleName(result));
+      await onCredential(identityToken, nonce, formatAppleName(result));
     } catch (err) {
       onError(err instanceof Error ? err.message : "Apple sign-in failed.");
     } finally {
       setLoading(false);
+      prefetchNonce();
     }
   };
 

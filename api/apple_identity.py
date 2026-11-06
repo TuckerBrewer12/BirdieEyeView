@@ -1,22 +1,17 @@
 """Sign in with Apple identity token verification."""
 
+import hmac
 import os
-import time
 from dataclasses import dataclass
-from typing import Any
 
-import requests
 from fastapi import HTTPException
-from jose import jwk, jwt
-from jose.exceptions import JOSEError, JWTError
 
 from api.error_responses import SERVICE_UNAVAILABLE
 from api.messages import INVALID_APPLE_TOKEN
+from api.provider_tokens import JwksCache, ProviderTokenError, ProviderUnavailableError, verify_id_token
 
 APPLE_ISSUER = "https://appleid.apple.com"
-APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys"
-_APPLE_KEYS_CACHE: tuple[float, list[dict[str, Any]]] | None = None
-_APPLE_KEYS_TTL_SECONDS = 3600
+APPLE_KEYS = JwksCache("https://appleid.apple.com/auth/keys")
 
 
 @dataclass(frozen=True)
@@ -42,21 +37,6 @@ def get_apple_client_ids() -> list[str]:
     return list(dict.fromkeys(client_ids))
 
 
-def _get_apple_keys() -> list[dict[str, Any]]:
-    global _APPLE_KEYS_CACHE
-    now = time.time()
-    if _APPLE_KEYS_CACHE and now - _APPLE_KEYS_CACHE[0] < _APPLE_KEYS_TTL_SECONDS:
-        return _APPLE_KEYS_CACHE[1]
-
-    response = requests.get(APPLE_KEYS_URL, timeout=10)
-    response.raise_for_status()
-    keys = response.json().get("keys", [])
-    if not isinstance(keys, list):
-        raise HTTPException(401, INVALID_APPLE_TOKEN)
-    _APPLE_KEYS_CACHE = (now, keys)
-    return keys
-
-
 def _parse_email_verified(value: object) -> bool:
     if isinstance(value, bool):
         return value
@@ -65,45 +45,29 @@ def _parse_email_verified(value: object) -> bool:
     return False
 
 
-def verify_apple_identity_token(identity_token: str, name: str | None = None) -> AppleIdentity:
+async def verify_apple_identity_token(identity_token: str, nonce: str, name: str | None = None) -> AppleIdentity:
+    """Verify the token and that Apple signed it for ``nonce``. The caller still consumes the nonce."""
     client_ids = get_apple_client_ids()
     if not client_ids:
         raise HTTPException(500, SERVICE_UNAVAILABLE)
 
     try:
-        header = jwt.get_unverified_header(identity_token)
-    except JWTError as exc:
+        payload = await verify_id_token(identity_token, keys=APPLE_KEYS, audiences=client_ids, issuers=(APPLE_ISSUER,))
+    except ProviderUnavailableError as exc:
+        raise HTTPException(503, SERVICE_UNAVAILABLE) from exc
+    except ProviderTokenError as exc:
         raise HTTPException(401, INVALID_APPLE_TOKEN) from exc
 
-    key_id = header.get("kid")
-    algorithm = header.get("alg")
-    key_data = next((key for key in _get_apple_keys() if key.get("kid") == key_id), None)
-    if not key_data or algorithm != "RS256":
-        raise HTTPException(401, INVALID_APPLE_TOKEN)
-
-    try:
-        public_key = jwk.construct(key_data, algorithm).to_pem()
-        payload = jwt.decode(
-            identity_token,
-            public_key,
-            algorithms=["RS256"],
-            audience=client_ids,
-            issuer=APPLE_ISSUER,
-        )
-    except (JOSEError, JWTError) as exc:
-        raise HTTPException(401, INVALID_APPLE_TOKEN) from exc
-
-    subject = str(payload.get("sub") or "").strip()
-    if not subject:
+    token_nonce = payload.get("nonce")
+    if not isinstance(token_nonce, str) or not hmac.compare_digest(token_nonce, nonce):
         raise HTTPException(401, INVALID_APPLE_TOKEN)
 
     email = str(payload.get("email") or "").strip().lower() or None
-    email_verified = _parse_email_verified(payload.get("email_verified"))
     cleaned_name = (name or "").strip()[:100] or None
 
     return AppleIdentity(
-        subject=subject,
+        subject=str(payload["sub"]).strip(),
         email=email,
-        email_verified=email_verified,
+        email_verified=_parse_email_verified(payload.get("email_verified")),
         name=cleaned_name,
     )

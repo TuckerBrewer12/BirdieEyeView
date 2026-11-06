@@ -120,9 +120,9 @@ export function RegisterPage() {
     setError(message);
   }, []);
 
-  const handleAppleCredential = useCallback(async (identityToken: string, name?: string) => {
+  const handleAppleCredential = useCallback(async (identityToken: string, nonce: string, name?: string) => {
     setError(null);
-    await loginWithApple(identityToken, name);
+    await loginWithApple(identityToken, nonce, name);
     navigate("/");
   }, [loginWithApple, navigate]);
 

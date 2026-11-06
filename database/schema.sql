@@ -199,6 +199,21 @@ CREATE TRIGGER trg_user_identities_updated_at
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- =============
+-- users.auth_nonces
+-- One-time nonces for Sign in with Apple, stored by SHA-256 hash.
+-- =============
+CREATE TABLE IF NOT EXISTS users.auth_nonces (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    provider VARCHAR(32) NOT NULL CHECK (provider IN ('apple')),
+    nonce_hash CHAR(64) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_nonces_expires_at ON users.auth_nonces (expires_at);
+
+-- =============
 -- users.auth_tokens
 -- One-time tokens used for email verification and password reset.
 -- Token values are stored as hashes only.

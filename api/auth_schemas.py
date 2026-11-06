@@ -64,6 +64,8 @@ class AppleAuthRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     identity_token: str = Field(..., min_length=100, max_length=8192)
+    # The one-time value from POST /api/auth/apple/nonce that the client passed to Apple.
+    nonce: str = Field(..., min_length=32, max_length=128)
     name: str | None = Field(default=None, max_length=100)
 
     @field_validator("name")
@@ -72,6 +74,11 @@ class AppleAuthRequest(BaseModel):
         if v is None:
             return None
         return sanitize_user_text(v, field_name="name", max_length=100)
+
+
+class AppleNonceResponse(BaseModel):
+    nonce: str
+    expires_in: int
 
 
 class AuthUserResponse(BaseModel):

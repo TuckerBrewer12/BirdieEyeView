@@ -18,12 +18,15 @@ from urllib.parse import parse_qs, urlparse
 
 import asyncpg
 import pytest
+import httpx
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
-from jose import jwt
+from jose import jwk, jwt
 from PIL import Image
 
 import api.main as api_main
-from api import auth_utils
+from api import apple_identity, auth_utils, error_responses, google_identity, messages
 from api.routers import auth, scan, scan_reports
 from database import DatabaseManager
 from models import Course, Hole, Tee
@@ -99,7 +102,9 @@ def api(monkeypatch):
     monkeypatch.setenv("SECRET_KEY", "e2e-only-secret-key-not-used-anywhere-else-0123")
     monkeypatch.setenv("APP_ENV", "development")
     for limit in ("REGISTER_RATE_LIMIT_MAX_ATTEMPTS", "REGISTER_RATE_LIMIT_PER_EMAIL_ATTEMPTS",
-                  "LOGIN_REQUEST_RATE_LIMIT_MAX_ATTEMPTS", "FORGOT_PASSWORD_RATE_LIMIT_MAX_ATTEMPTS"):
+                  "LOGIN_REQUEST_RATE_LIMIT_MAX_ATTEMPTS", "FORGOT_PASSWORD_RATE_LIMIT_MAX_ATTEMPTS",
+                  "GOOGLE_LOGIN_RATE_LIMIT_MAX_ATTEMPTS", "APPLE_LOGIN_RATE_LIMIT_MAX_ATTEMPTS",
+                  "APPLE_NONCE_RATE_LIMIT_MAX_ATTEMPTS"):
         monkeypatch.setenv(limit, "1000")
     # Auth limiters live at module level; give each test empty buckets so no test inherits
     # another's attempts (the middleware limiter is already fresh per create_app()).
@@ -840,3 +845,238 @@ def test_api_schema_has_unique_operation_ids_and_status_routes_still_answer(api)
         assert api.client.get(path).status_code == 200, path
         head = api.client.head(path)
         assert (head.status_code, head.content) == (200, b""), path
+
+
+# ================================================================
+# Google and Apple sign-in. Tokens are signed with test RSA keys; only the providers'
+# key download (JWKS over HTTP) is replaced, so signature and claim checks run for real.
+# ================================================================
+
+GOOGLE_CLIENT = "web-client.apps.googleusercontent.com"
+APPLE_CLIENTS = ("com.example.web.service", "com.example.golf.app")
+
+
+@dataclasses.dataclass
+class _SigningKey:
+    kid: str
+    private_pem: str
+    public_jwk: dict
+
+
+def _signing_key(kid: str) -> _SigningKey:
+    private = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    pem = private.private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
+    ).decode()
+    public_pem = private.public_key().public_bytes(
+        serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode()
+    return _SigningKey(kid, pem, {**jwk.construct(public_pem, "RS256").to_dict(), "kid": kid, "use": "sig"})
+
+
+class IdentityProviders:
+    """Fake Google and Apple key servers, plus helpers that sign provider-shaped tokens."""
+
+    def __init__(self, api: Api):
+        self.api = api
+        self.keys = {"google": [_signing_key("google-1")], "apple": [_signing_key("apple-1")]}
+        self.down = False
+
+    def handle(self, request: httpx.Request) -> httpx.Response:
+        if self.down:
+            raise httpx.ConnectError("provider unreachable", request=request)
+        provider = "google" if request.url.host == "www.googleapis.com" else "apple"
+        return httpx.Response(200, json={"keys": [key.public_jwk for key in self.keys[provider]]})
+
+    def rotate(self, provider: str) -> None:
+        self.keys[provider].append(_signing_key(f"{provider}-{len(self.keys[provider]) + 1}"))
+
+    def token(self, provider: str, claims: dict, *, key: _SigningKey | None = None, kid: str | None = None) -> str:
+        key = key or self.keys[provider][-1]
+        return jwt.encode(claims, key.private_pem, algorithm="RS256", headers={"kid": kid or key.kid})
+
+    @staticmethod
+    def claims(provider: str, **overrides) -> dict:
+        now = int(datetime.now(timezone.utc).timestamp())
+        base = {"sub": f"{provider}-sub-1", "iat": now, "exp": now + 600, "email_verified": True}
+        if provider == "google":
+            base |= {"iss": "https://accounts.google.com", "aud": GOOGLE_CLIENT, "email": "golfer@gmail.com",
+                     "name": "Google Golfer"}
+        else:
+            base |= {"iss": "https://appleid.apple.com", "aud": APPLE_CLIENTS[1], "email": "golfer@icloud.com"}
+        return {k: v for k, v in (base | overrides).items() if v is not None}
+
+    def nonce(self) -> str:
+        response = self.api.client.post("/api/auth/apple/nonce")
+        assert response.status_code == 200, response.text
+        return response.json()["nonce"]
+
+    def google(self, token: str):
+        return self.api.client.post("/api/auth/google", json={"credential": token})
+
+    def apple(self, token: str, nonce: str, name: str | None = None):
+        return self.api.client.post("/api/auth/apple", json={"identity_token": token, "nonce": nonce, "name": name})
+
+    def sign_in(self, provider: str, **overrides):
+        """Sign in with a valid token for ``provider`` (claims overridable)."""
+        if provider == "google":
+            return self.google(self.token("google", self.claims("google", **overrides)))
+        nonce = self.nonce()
+        return self.apple(self.token("apple", self.claims("apple", nonce=nonce, **overrides)), nonce)
+
+
+@pytest.fixture
+def providers(api, monkeypatch):
+    monkeypatch.setenv("GOOGLE_OAUTH_CLIENT_ID", GOOGLE_CLIENT)
+    monkeypatch.setenv("APPLE_CLIENT_IDS", ",".join(APPLE_CLIENTS))
+    fake = IdentityProviders(api)
+    for keys in (google_identity.GOOGLE_KEYS, apple_identity.APPLE_KEYS):
+        monkeypatch.setattr(keys, "transport", httpx.MockTransport(fake.handle))
+        keys.clear()
+    yield fake
+    google_identity.GOOGLE_KEYS.clear()
+    apple_identity.APPLE_KEYS.clear()
+
+
+def _user_id_for(api: Api, email: str) -> str:
+    async def fetch():
+        conn = await asyncpg.connect(api.url)
+        try:
+            return [str(row["id"]) for row in await conn.fetch("SELECT id FROM users.users WHERE email = $1", email)]
+        finally:
+            await conn.close()
+
+    ids = asyncio.run(fetch())
+    assert len(ids) == 1, ids
+    return ids[0]
+
+
+def test_google_sign_in_creates_an_account_then_signs_back_in(api, providers):
+    first = providers.sign_in("google")
+    assert first.status_code == 200, first.text
+    body = first.json()
+    assert (body["email"], body["name"], body["email_verified"]) == ("golfer@gmail.com", "Google Golfer", True)
+
+    assert api.client.get("/api/auth/me").json()["user_id"] == body["user_id"]  # session cookie
+    api.client.cookies.clear()
+    me = api.client.get("/api/auth/me", headers={"Authorization": f"Bearer {body['access_token']}"})
+    assert me.json()["user_id"] == body["user_id"]
+
+    again = providers.sign_in("google")
+    assert again.json()["user_id"] == body["user_id"]
+    assert _user_id_for(api, "golfer@gmail.com") == body["user_id"]
+    assert api.login("golfer@gmail.com").status_code == 401  # the account has no password
+
+
+def test_provider_sign_in_links_to_a_verified_password_account(api, providers):
+    owner = api.user("golfer@gmail.com")
+
+    response = providers.sign_in("google")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["user_id"] == owner["id"]
+    assert api.login("golfer@gmail.com").status_code == 200  # the owner's password still works
+
+
+@pytest.mark.parametrize("provider", ["google", "apple"])
+def test_provider_sign_in_claims_an_unverified_account_and_drops_its_password(api, providers, provider):
+    email = "golfer@gmail.com" if provider == "google" else "golfer@icloud.com"
+    api.register(email)  # someone who does not own the address registers it first
+    squatter_link = api.token_from("verify", email)
+
+    response = providers.sign_in(provider)
+
+    assert response.status_code == 200, response.text
+    assert response.json()["user_id"] == _user_id_for(api, email)
+    assert api.login(email).status_code == 401  # the squatter's password is gone
+    api.client.cookies.clear()
+    assert api.client.post("/api/auth/verify-email", json={"token": squatter_link}).status_code == 400
+    me = api.client.get("/api/auth/me", headers={"Authorization": f"Bearer {response.json()['access_token']}"})
+    assert me.json()["email_verified"] is True
+
+
+def test_google_email_without_authority_cannot_link_to_an_existing_account(api, providers):
+    owner = api.user("pro@club.example")
+
+    refused = providers.sign_in("google", email="pro@club.example")
+    assert refused.status_code == 409
+    assert refused.json()["detail"] == messages.PROVIDER_EMAIL_NEEDS_PASSWORD_SIGN_IN
+
+    # A Workspace account (hd claim) is authoritative for its domain, so it may link.
+    linked = providers.sign_in("google", email="pro@club.example", hd="club.example")
+    assert linked.json()["user_id"] == owner["id"]
+
+
+def test_provider_tokens_are_rejected_unless_signature_issuer_audience_and_expiry_match(api, providers):
+    stranger = _signing_key("stranger")
+    hour_ago = int(datetime.now(timezone.utc).timestamp()) - 3600
+    for provider, detail in (("google", messages.INVALID_GOOGLE_TOKEN), ("apple", messages.INVALID_APPLE_TOKEN)):
+        known_kid = providers.keys[provider][0].kid
+        cases = {
+            "wrong audience": providers.token(provider, providers.claims(provider, aud="someone-else")),
+            "wrong issuer": providers.token(provider, providers.claims(provider, iss="https://evil.example")),
+            "expired": providers.token(provider, providers.claims(provider, iat=hour_ago - 600, exp=hour_ago)),
+            "missing subject": providers.token(provider, providers.claims(provider, sub=None)),
+            "forged signature": providers.token(provider, providers.claims(provider), key=stranger, kid=known_kid),
+            "HS256": jwt.encode(providers.claims(provider), "shared-secret", algorithm="HS256",
+                                     headers={"kid": known_kid}),
+        }
+        for case, token in cases.items():
+            if provider == "google":
+                response = providers.google(token)
+            else:
+                nonce = providers.nonce()
+                response = providers.apple(token, nonce)
+            assert (response.status_code, response.json()["detail"]) == (401, detail), (provider, case)
+
+
+def test_apple_sign_in_needs_a_fresh_single_use_nonce(api, providers):
+    nonce = providers.nonce()
+    token = providers.token("apple", providers.claims("apple", nonce=nonce, aud=APPLE_CLIENTS[1]))
+    first = providers.apple(token, nonce, name="Apple Golfer")
+    assert first.status_code == 200, first.text  # any configured audience is accepted
+    assert first.json()["name"] == "Apple Golfer"
+    assert providers.apple(token, nonce).status_code == 401  # replay
+
+    no_nonce = api.client.post("/api/auth/apple", json={"identity_token": token})
+    assert no_nonce.status_code == 422
+
+    signed_for, offered = providers.nonce(), providers.nonce()
+    mismatched = providers.token("apple", providers.claims("apple", nonce=signed_for))
+    assert providers.apple(mismatched, offered).status_code == 401
+    # The failed attempt burned neither nonce.
+    assert providers.apple(mismatched, signed_for).status_code == 200
+    reuse_offered = providers.token("apple", providers.claims("apple", nonce=offered))
+    assert providers.apple(reuse_offered, offered).status_code == 200
+
+    expired = providers.nonce()
+    asyncio.run(_sql(api.url, "UPDATE users.auth_nonces SET expires_at = (now() AT TIME ZONE 'UTC') - interval '1 minute'"))
+    assert providers.apple(providers.token("apple", providers.claims("apple", nonce=expired)), expired).status_code == 401
+
+    never_issued = "n" * 43
+    forged = providers.token("apple", providers.claims("apple", nonce=never_issued))
+    assert providers.apple(forged, never_issued).status_code == 401
+
+
+def test_apple_first_sign_in_needs_a_verified_email(api, providers):
+    missing = providers.sign_in("apple", email=None)
+    assert (missing.status_code, missing.json()["detail"]) == (400, messages.APPLE_EMAIL_MISSING)
+
+    unverified = providers.sign_in("apple", email_verified="false")
+    assert (unverified.status_code, unverified.json()["detail"]) == (403, messages.APPLE_EMAIL_NOT_VERIFIED)
+
+
+def test_provider_key_rotation_and_outage(api, providers, monkeypatch):
+    assert providers.sign_in("google").status_code == 200  # caches google-1
+    monkeypatch.setattr(google_identity.GOOGLE_KEYS, "MIN_REFRESH_SECONDS", 0)
+    providers.rotate("google")
+    rotated = providers.sign_in("google")  # signed with google-2, unknown to the cache
+    assert rotated.status_code == 200, rotated.text
+
+    providers.down = True
+    for keys in (google_identity.GOOGLE_KEYS, apple_identity.APPLE_KEYS):
+        keys.clear()
+    for provider in ("google", "apple"):
+        response = providers.sign_in(provider)
+        assert response.status_code == 503, provider
+        assert response.json()["detail"] == error_responses.SERVICE_UNAVAILABLE

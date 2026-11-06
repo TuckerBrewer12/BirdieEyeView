@@ -22,7 +22,8 @@ interface AuthState {
 interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: (credential: string) => Promise<void>;
-  loginWithApple: (identityToken: string, name?: string) => Promise<void>;
+  requestAppleNonce: () => Promise<string>;
+  loginWithApple: (identityToken: string, nonce: string, name?: string) => Promise<void>;
   register: (
     name: string,
     email: string,
@@ -170,8 +171,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const loginWithApple = async (identityToken: string, name?: string) => {
-    const data = await callAuth<AuthUserPayload>("/apple", { identity_token: identityToken, name: name ?? null });
+  // One-time value the Apple button passes to Apple; the backend accepts it once, within 10 minutes.
+  const requestAppleNonce = useCallback(async () => {
+    const data = await callAuth<{ nonce: string; expires_in: number }>("/apple/nonce", {});
+    return data.nonce;
+  }, []);
+
+  const loginWithApple = async (identityToken: string, nonce: string, name?: string) => {
+    const data = await callAuth<AuthUserPayload>("/apple", {
+      identity_token: identityToken,
+      nonce,
+      name: name ?? null,
+    });
     setSessionToken(data.access_token ?? null);
     setState({
       userId: data.user_id,
@@ -241,6 +252,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ...state,
         login,
         loginWithGoogle,
+        requestAppleNonce,
         loginWithApple,
         register,
         resendVerification,

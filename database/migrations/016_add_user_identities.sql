@@ -1,4 +1,4 @@
--- Migration 016: link external sign-in identities to app users
+-- Migration 016: link external sign-in identities to app users; one-time Apple sign-in nonces
 
 CREATE TABLE IF NOT EXISTS users.user_identities (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -23,3 +23,16 @@ DROP TRIGGER IF EXISTS trg_user_identities_updated_at ON users.user_identities;
 CREATE TRIGGER trg_user_identities_updated_at
     BEFORE UPDATE ON users.user_identities
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- One-time nonces for Sign in with Apple, stored by SHA-256 hash.
+CREATE TABLE IF NOT EXISTS users.auth_nonces (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    provider VARCHAR(32) NOT NULL CHECK (provider IN ('apple')),
+    nonce_hash CHAR(64) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_nonces_expires_at
+    ON users.auth_nonces (expires_at);

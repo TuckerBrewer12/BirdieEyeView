@@ -155,3 +155,39 @@ async def test_delete_user_removes_user(database_manager):
 
     assert deleted is True
     assert await database_manager.users.get_user(created.id) is None
+
+
+async def test_create_user_with_identity_leaves_no_user_when_the_identity_is_taken(database_manager):
+    owner = await database_manager.users.create_user_with_identity(
+        User(name="Owner", email="owner@example.com", email_verified=True),
+        provider="google",
+        provider_user_id="google-sub-1",
+        provider_email="owner@example.com",
+    )
+
+    with pytest.raises(DuplicateError):
+        await database_manager.users.create_user_with_identity(
+            User(name="Other", email="other@example.com", email_verified=True),
+            provider="google",
+            provider_user_id="google-sub-1",
+            provider_email="other@example.com",
+        )
+
+    assert await database_manager.users.get_user_by_email("other@example.com") is None
+    linked = await database_manager.users.get_auth_user_by_identity("google", "google-sub-1")
+    assert linked["id"] == str(owner.id)
+
+
+async def test_create_user_with_identity_retries_a_taken_friend_code_inside_its_transaction(database_manager):
+    taken = await create_user(database_manager, email="first@example.com")
+
+    created = await database_manager.users.create_user_with_identity(
+        User(name="Second", email="second@example.com", email_verified=True, friend_code=taken.friend_code),
+        provider="apple",
+        provider_user_id="apple-sub-1",
+        provider_email="second@example.com",
+    )
+
+    assert created.friend_code != taken.friend_code
+    linked = await database_manager.users.get_auth_user_by_identity("apple", "apple-sub-1")
+    assert linked["id"] == str(created.id)

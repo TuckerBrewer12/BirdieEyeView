@@ -3,6 +3,7 @@
 import hashlib
 import logging
 import os
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
@@ -15,14 +16,15 @@ from api.messages import (
     TOO_MANY_VERIFICATION_RESENDS_FOR_EMAIL, VERIFICATION_SENT_IF_ACCOUNT_EXISTS,
 )
 from api.messages import (
-    APPLE_ACCOUNT_LINKED_ELSEWHERE, APPLE_EMAIL_MISSING, APPLE_EMAIL_NOT_VERIFIED, APPLE_LINK_REQUIRES_PASSWORD_SIGN_IN,
-    GOOGLE_ACCOUNT_LINKED_ELSEWHERE, GOOGLE_LINK_REQUIRES_PASSWORD_SIGN_IN, TOO_MANY_APPLE_SIGN_INS,
-    TOO_MANY_GOOGLE_SIGN_INS,
+    APPLE_ACCOUNT_LINKED_ELSEWHERE, APPLE_EMAIL_MISSING, APPLE_EMAIL_NOT_VERIFIED, GOOGLE_ACCOUNT_LINKED_ELSEWHERE,
+    GOOGLE_EMAIL_NOT_VERIFIED, INVALID_APPLE_TOKEN, PROVIDER_EMAIL_NEEDS_PASSWORD_SIGN_IN, TOO_MANY_APPLE_NONCE_REQUESTS,
+    TOO_MANY_APPLE_SIGN_INS, TOO_MANY_GOOGLE_SIGN_INS,
 )
 from api.auth_notifications import send_password_reset_email, send_verification_email
 from api.course_access import load_linkable_course
 from api.auth_schemas import (
     AppleAuthRequest,
+    AppleNonceResponse,
     AuthUserResponse,
     ForgotPasswordRequest,
     GoogleAuthRequest,
@@ -395,6 +397,97 @@ async def login(
     )
 
 
+APPLE_NONCE_TTL_SECONDS = 600
+
+
+@dataclass(frozen=True)
+class _ProviderSignIn:
+    """A verified provider identity, reduced to what the shared sign-in flow needs."""
+
+    provider: str  # "google" or "apple"
+    subject: str
+    email: str | None
+    email_verified: bool
+    email_trusted: bool  # the provider owns the address, so it may claim an existing account
+    name: str
+
+
+_PROVIDER_REPLIES = {
+    "google": {"label": "Google", "unverified": GOOGLE_EMAIL_NOT_VERIFIED, "linked": GOOGLE_ACCOUNT_LINKED_ELSEWHERE},
+    "apple": {"label": "Apple", "unverified": APPLE_EMAIL_NOT_VERIFIED, "linked": APPLE_ACCOUNT_LINKED_ELSEWHERE},
+}
+
+
+async def _find_or_create_provider_user(sign_in: _ProviderSignIn, request_ip: str, db: DatabaseManager) -> dict:
+    """Return the account for a verified provider identity, linking or creating it on first sign-in."""
+    replies = _PROVIDER_REPLIES[sign_in.provider]
+    auth_user = await db.users.get_auth_user_by_identity(sign_in.provider, sign_in.subject)
+    if auth_user:
+        return auth_user
+
+    if not sign_in.email:
+        logger.warning("Auth %s rejected: ip=%s reason=missing_email", replies["label"], request_ip)
+        raise HTTPException(400, APPLE_EMAIL_MISSING)
+    email_fp = _email_fingerprint(sign_in.email)
+    if not sign_in.email_verified:
+        logger.warning("Auth %s rejected: email_fp=%s ip=%s reason=email_unverified", replies["label"], email_fp, request_ip)
+        raise HTTPException(403, replies["unverified"])
+
+    existing = await db.users.get_auth_user_by_email(sign_in.email)
+    try:
+        if existing is None:
+            user = await db.users.create_user_with_identity(
+                User(name=sign_in.name, email=sign_in.email, email_verified=True),
+                provider=sign_in.provider,
+                provider_user_id=sign_in.subject,
+                provider_email=sign_in.email,
+            )
+            return {"id": str(user.id), "name": user.name or "", "email": user.email, "email_verified": True}
+        if not sign_in.email_trusted:
+            logger.warning(
+                "Auth %s link rejected: user_id=%s email_fp=%s ip=%s reason=non_authoritative_email",
+                replies["label"], existing["id"], email_fp, request_ip,
+            )
+            raise HTTPException(409, PROVIDER_EMAIL_NEEDS_PASSWORD_SIGN_IN)
+        if not existing["email_verified"]:
+            logger.warning(
+                "Auth %s claimed unverified account: user_id=%s email_fp=%s ip=%s password_cleared=true",
+                replies["label"], existing["id"], email_fp, request_ip,
+            )
+        return await db.users.link_identity_to_email_owner(
+            existing["id"],
+            provider=sign_in.provider,
+            provider_user_id=sign_in.subject,
+            provider_email=sign_in.email,
+        )
+    except DuplicateError:
+        # A concurrent sign-in created the account, or this identity is linked to another user.
+        logger.warning("Auth %s rejected: email_fp=%s ip=%s reason=duplicate", replies["label"], email_fp, request_ip)
+        raise HTTPException(409, replies["linked"] if existing else EMAIL_ALREADY_REGISTERED)
+
+
+async def _sign_in_with_provider(
+    sign_in: _ProviderSignIn, request: Request, response: Response, db: DatabaseManager
+) -> AuthUserResponse:
+    """Find, link or create the account, then issue the same session as password login."""
+    request_ip = client_ip(request)
+    auth_user = await _find_or_create_provider_user(sign_in, request_ip, db)
+    token = create_access_token(auth_user["id"])
+    _set_auth_cookie(response, token)
+    email = auth_user["email"] or sign_in.email or ""
+    logger.info(
+        "Auth %s success: user_id=%s email_fp=%s ip=%s",
+        _PROVIDER_REPLIES[sign_in.provider]["label"], auth_user["id"], _email_fingerprint(email), request_ip,
+    )
+    return AuthUserResponse(
+        user_id=auth_user["id"],
+        name=auth_user["name"] or "",
+        email=email,
+        email_verified=True,
+        access_token=token,
+    )
+
+
 @router.post("/google", response_model=AuthUserResponse)
 async def google_login(
     req: GoogleAuthRequest,
@@ -402,98 +495,39 @@ async def google_login(
     response: Response,
     db: DatabaseManager = Depends(get_db),
 ):
-    request_ip = client_ip(request)
     _check_auth_rate_limit(
         limiter=auth_request_rate_limiter,
-        key=f"google:req:ip:{request_ip}",
+        key=f"google:req:ip:{client_ip(request)}",
         limit=_env_int("GOOGLE_LOGIN_RATE_LIMIT_MAX_ATTEMPTS", 30),
         window_seconds=_env_int("GOOGLE_LOGIN_RATE_LIMIT_WINDOW_SECONDS", 60),
         detail=TOO_MANY_GOOGLE_SIGN_INS,
     )
-
-    identity = verify_google_credential(req.credential)
-    auth_user = await db.users.get_auth_user_by_identity("google", identity.subject)
-
-    if not auth_user:
-        existing = await db.users.get_auth_user_by_email(identity.email)
-        if existing:
-            if not is_authoritative_google_email(identity):
-                logger.warning(
-                    "Auth Google link rejected: user_id=%s email_fp=%s ip=%s reason=non_authoritative_email",
-                    existing["id"],
-                    _email_fingerprint(identity.email),
-                    request_ip,
-                )
-                raise HTTPException(409, GOOGLE_LINK_REQUIRES_PASSWORD_SIGN_IN)
-            try:
-                await db.users.link_auth_identity(
-                    user_id=existing["id"],
-                    provider="google",
-                    provider_user_id=identity.subject,
-                    provider_email=identity.email,
-                    email_verified=identity.email_verified,
-                )
-            except DuplicateError:
-                logger.warning(
-                    "Auth Google link rejected: user_id=%s email_fp=%s ip=%s reason=identity_conflict",
-                    existing["id"],
-                    _email_fingerprint(identity.email),
-                    request_ip,
-                )
-                raise HTTPException(409, GOOGLE_ACCOUNT_LINKED_ELSEWHERE)
-            if not existing["email_verified"]:
-                await db.users.mark_email_verified(existing["id"])
-            auth_user = {
-                **existing,
-                "email_verified": True,
-            }
-        else:
-            try:
-                user = await db.users.create_user(
-                    User(
-                        name=identity.name,
-                        email=identity.email,
-                        email_verified=True,
-                    ),
-                    password_hash=None,
-                )
-                await db.users.link_auth_identity(
-                    user_id=str(user.id),
-                    provider="google",
-                    provider_user_id=identity.subject,
-                    provider_email=identity.email,
-                    email_verified=identity.email_verified,
-                )
-            except DuplicateError:
-                logger.warning(
-                    "Auth Google create rejected: email_fp=%s ip=%s reason=duplicate",
-                    _email_fingerprint(identity.email),
-                    request_ip,
-                )
-                raise HTTPException(409, EMAIL_ALREADY_REGISTERED)
-            auth_user = {
-                "id": str(user.id),
-                "name": user.name or "",
-                "email": user.email or identity.email,
-                "password_hash": None,
-                "email_verified": True,
-            }
-
-    token = create_access_token(auth_user["id"])
-    _set_auth_cookie(response, token)
-    logger.info(
-        "Auth Google success: user_id=%s email_fp=%s ip=%s",
-        auth_user["id"],
-        _email_fingerprint(auth_user["email"] or identity.email),
-        request_ip,
+    identity = await verify_google_credential(req.credential)
+    sign_in = _ProviderSignIn(
+        provider="google",
+        subject=identity.subject,
+        email=identity.email,
+        email_verified=identity.email_verified,
+        email_trusted=is_authoritative_google_email(identity),
+        name=identity.name,
     )
-    return AuthUserResponse(
-        user_id=auth_user["id"],
-        name=auth_user["name"] or "",
-        email=auth_user["email"] or identity.email,
-        email_verified=True,
-        access_token=token,
+    return await _sign_in_with_provider(sign_in, request, response, db)
+
+
+@router.post("/apple/nonce", response_model=AppleNonceResponse)
+async def apple_nonce(request: Request, db: DatabaseManager = Depends(get_db)):
+    """Issue a one-time nonce for the client to pass to Apple; /apple accepts it once, within 10 minutes."""
+    _check_auth_rate_limit(
+        limiter=auth_request_rate_limiter,
+        key=f"apple:nonce:ip:{client_ip(request)}",
+        limit=_env_int("APPLE_NONCE_RATE_LIMIT_MAX_ATTEMPTS", 30),
+        window_seconds=_env_int("APPLE_NONCE_RATE_LIMIT_WINDOW_SECONDS", 60),
+        detail=TOO_MANY_APPLE_NONCE_REQUESTS,
     )
+    nonce = generate_one_time_token()
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=APPLE_NONCE_TTL_SECONDS)
+    await db.users.create_auth_nonce("apple", hash_one_time_token(nonce), expires_at)
+    return AppleNonceResponse(nonce=nonce, expires_in=APPLE_NONCE_TTL_SECONDS)
 
 
 @router.post("/apple", response_model=AuthUserResponse)
@@ -511,101 +545,20 @@ async def apple_login(
         window_seconds=_env_int("APPLE_LOGIN_RATE_LIMIT_WINDOW_SECONDS", 60),
         detail=TOO_MANY_APPLE_SIGN_INS,
     )
-
-    identity = verify_apple_identity_token(req.identity_token, req.name)
-    if identity.email and not identity.email_verified:
-        logger.warning(
-            "Auth Apple rejected: email_fp=%s ip=%s reason=email_unverified",
-            _email_fingerprint(identity.email),
-            request_ip,
-        )
-        raise HTTPException(403, APPLE_EMAIL_NOT_VERIFIED)
-    auth_user = await db.users.get_auth_user_by_identity("apple", identity.subject)
-
-    if not auth_user:
-        if not identity.email:
-            logger.warning("Auth Apple rejected: ip=%s reason=missing_email", request_ip)
-            raise HTTPException(400, APPLE_EMAIL_MISSING)
-
-        existing = await db.users.get_auth_user_by_email(identity.email)
-        if existing:
-            if not identity.email_verified:
-                logger.warning(
-                    "Auth Apple link rejected: user_id=%s email_fp=%s ip=%s reason=email_unverified",
-                    existing["id"],
-                    _email_fingerprint(identity.email),
-                    request_ip,
-                )
-                raise HTTPException(409, APPLE_LINK_REQUIRES_PASSWORD_SIGN_IN)
-            try:
-                await db.users.link_auth_identity(
-                    user_id=existing["id"],
-                    provider="apple",
-                    provider_user_id=identity.subject,
-                    provider_email=identity.email,
-                    email_verified=identity.email_verified,
-                )
-            except DuplicateError:
-                logger.warning(
-                    "Auth Apple link rejected: user_id=%s email_fp=%s ip=%s reason=identity_conflict",
-                    existing["id"],
-                    _email_fingerprint(identity.email),
-                    request_ip,
-                )
-                raise HTTPException(409, APPLE_ACCOUNT_LINKED_ELSEWHERE)
-            if not existing["email_verified"]:
-                await db.users.mark_email_verified(existing["id"])
-            auth_user = {
-                **existing,
-                "email_verified": True,
-            }
-        else:
-            try:
-                user = await db.users.create_user(
-                    User(
-                        name=identity.name or identity.email.split("@")[0],
-                        email=identity.email,
-                        email_verified=identity.email_verified,
-                    ),
-                    password_hash=None,
-                )
-                await db.users.link_auth_identity(
-                    user_id=str(user.id),
-                    provider="apple",
-                    provider_user_id=identity.subject,
-                    provider_email=identity.email,
-                    email_verified=identity.email_verified,
-                )
-            except DuplicateError:
-                logger.warning(
-                    "Auth Apple create rejected: email_fp=%s ip=%s reason=duplicate",
-                    _email_fingerprint(identity.email),
-                    request_ip,
-                )
-                raise HTTPException(409, EMAIL_ALREADY_REGISTERED)
-            auth_user = {
-                "id": str(user.id),
-                "name": user.name or "",
-                "email": user.email or identity.email,
-                "password_hash": None,
-                "email_verified": bool(user.email_verified),
-            }
-
-    token = create_access_token(auth_user["id"])
-    _set_auth_cookie(response, token)
-    logger.info(
-        "Auth Apple success: user_id=%s email_fp=%s ip=%s",
-        auth_user["id"],
-        _email_fingerprint(auth_user["email"] or identity.email or ""),
-        request_ip,
+    identity = await verify_apple_identity_token(req.identity_token, req.nonce, req.name)
+    # Consume only after Apple's signature covers this nonce, so a forged token cannot burn it.
+    if not await db.users.consume_auth_nonce("apple", hash_one_time_token(req.nonce)):
+        logger.warning("Auth Apple rejected: ip=%s reason=nonce_unknown_expired_or_used", request_ip)
+        raise HTTPException(401, INVALID_APPLE_TOKEN)
+    sign_in = _ProviderSignIn(
+        provider="apple",
+        subject=identity.subject,
+        email=identity.email,
+        email_verified=identity.email_verified,
+        email_trusted=identity.email_verified,
+        name=identity.name or (identity.email or "").split("@")[0],
     )
-    return AuthUserResponse(
-        user_id=auth_user["id"],
-        name=auth_user["name"] or "",
-        email=auth_user["email"] or identity.email or "",
-        email_verified=True,
-        access_token=token,
-    )
+    return await _sign_in_with_provider(sign_in, request, response, db)
 
 
 @router.post("/logout", response_model=MessageResponse)
