@@ -80,11 +80,11 @@ export function PeakGameCard({ peak, impacts, goalLabel, className }: PeakGameCa
                   <Meter
                     value={(impact.peak / scale) * 100}
                     marker={(impact.average / scale) * 100}
-                    aria-label={`${PEAK_IMPACT_LABEL[impact.kind]}: ${impact.peak.toFixed(1)} a round at your peak, ${impact.average.toFixed(1)} on average`}
+                    aria-label={`${PEAK_IMPACT_LABEL[impact.kind]}: ${formatOneDecimal(impact.peak)} a round at your peak, ${formatOneDecimal(impact.average)} on average`}
                   />
                   <div className="flex justify-between text-caption text-muted-foreground">
-                    <span>Peak {impact.peak.toFixed(1)}</span>
-                    <span>Avg {impact.average.toFixed(1)} (tick)</span>
+                    <span>Peak {formatOneDecimal(impact.peak)}</span>
+                    <span>Avg {formatOneDecimal(impact.average)} (tick)</span>
                   </div>
                 </div>
               );

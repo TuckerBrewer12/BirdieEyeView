@@ -36,6 +36,8 @@ interface SortControlProps<T extends string> {
   ascending?: boolean;
   onToggleDirection?: () => void;
   directionDisabled?: boolean;
+  /** While a pick is saving: the menu does not open. */
+  disabled?: boolean;
   /** What the menu picks: the trigger's name for screen readers and the phone sheet's title. */
   "aria-label"?: string;
   className?: string;
@@ -53,6 +55,7 @@ function SortControl<T extends string>({
   ascending = true,
   onToggleDirection,
   directionDisabled = false,
+  disabled = false,
   "aria-label": ariaLabel = "Sort by",
   className,
 }: SortControlProps<T>) {
@@ -66,6 +69,7 @@ function SortControl<T extends string>({
           aria-label={ariaLabel}
           variant={variant}
           size="sm"
+          disabled={disabled}
           className="hidden md:inline-flex"
         >
           {label}
@@ -87,6 +91,7 @@ function SortControl<T extends string>({
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetTrigger
           aria-label={ariaLabel}
+          disabled={disabled}
           render={<Button variant={variant} size="sm" className="md:hidden" />}
         >
           {label}

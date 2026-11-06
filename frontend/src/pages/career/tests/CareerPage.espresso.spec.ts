@@ -34,7 +34,7 @@ test("a record opens the round it was set in", async ({ career }) => {
 
   await career.openRecord("Lowest Round");
 
-  await career.isOnRound(LOWEST_ROUND_ID);
+  await career.isAtRound(LOWEST_ROUND_ID);
 });
 
 test("a milestone opens the round it was first reached in", async ({ career }) => {
@@ -42,7 +42,7 @@ test("a milestone opens the round it was first reached in", async ({ career }) =
 
   await career.openMilestone("Career Milestones", "Break 80");
 
-  await career.isOnRound(BREAK_80_ROUND_ID);
+  await career.isAtRound(BREAK_80_ROUND_ID);
 });
 
 test("a year on, a putting milestone first reached before the last year drops out of it", async ({ career }) => {

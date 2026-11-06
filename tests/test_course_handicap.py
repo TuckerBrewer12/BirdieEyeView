@@ -1,6 +1,6 @@
 """Course handicaps and net scores are worked out once, on the server, off the golfer's own index."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
 
@@ -44,7 +44,7 @@ def _round(course: Course, over: int, holes: int = 18, played: datetime | None =
         id=str(uuid4()),
         course=course,
         tee_box="Blue",
-        date=played or datetime(2026, 5, 1),
+        date=played or datetime(2026, 5, 1, tzinfo=timezone.utc),
         hole_scores=[
             HoleScore(hole_number=i + 1, strokes=PARS[i] + (1 if i < over else 0), putts=2)
             for i in range(holes)
@@ -99,7 +99,7 @@ async def test_the_round_endpoint_and_analytics_net_a_round_off_the_same_index()
     user_id = uuid4()
     user = User(id=str(user_id), name="Sam", email="sam@example.com", handicap=6.0)
     course = _course()
-    start = datetime(2026, 3, 1)
+    start = datetime(2026, 3, 1, tzinfo=timezone.utc)
     season = [_round(course, over=n, played=start + timedelta(days=7 * i)) for i, n in enumerate((12, 9, 15, 10))]
     newest_first = list(reversed(season))
     db = make_mock_database()

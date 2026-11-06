@@ -56,6 +56,10 @@ export class RoundsRobot {
   /** The sort menu open: a dropdown on desktop, a bottom sheet on a phone. */
   async openSortMenu(): Promise<this> {
     await this.page.getByRole("button", { name: "Sort by", exact: true }).click();
+    return this;
+  }
+
+  async seesSortMenu(): Promise<this> {
     await expect(this.page.locator("[data-slot=sort-menu], [data-slot=sort-sheet]")).toBeVisible();
     return this;
   }
@@ -96,10 +100,6 @@ export class RoundsRobot {
     return this;
   }
 
-  private async settleCourseSearch(): Promise<void> {
-    await this.page.waitForTimeout(500);
-  }
-
   async seesCourseResult(name: string): Promise<this> {
     await expect(
       this.page.locator("[data-slot=course-result]").filter({ hasText: name }),
@@ -107,8 +107,7 @@ export class RoundsRobot {
     return this;
   }
 
-  async seesNoCourseResults(): Promise<this> {
-    await this.settleCourseSearch();
+  async doesNotSeeCourseResults(): Promise<this> {
     await expect(this.page.locator("[data-slot=course-result]")).toHaveCount(0);
     return this;
   }

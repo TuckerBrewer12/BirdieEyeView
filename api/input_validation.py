@@ -17,7 +17,7 @@ def ensure_uuid_str(value: str, field_name: str) -> str:
     """Return canonical UUID string or raise ValueError."""
     try:
         return str(UUID(str(value)))
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise ValueError(f"{field_name} must be a valid UUID.") from exc
 
 

@@ -28,7 +28,7 @@ export type { AppShellProps } from "./components/AppShell";
 export { AuthCard } from "./components/AuthCard";
 export type { AuthCardProps } from "./components/AuthCard";
 export { BrandMark } from "./components/BrandMark";
-export { Button } from "./components/Button";
+export { Button, ClearButton, RowButton } from "./components/Button";
 export { BottomNav } from "./components/BottomNav";
 export type { BottomNavProps } from "./components/BottomNav";
 export { MoreMenu } from "./components/MoreMenu";
@@ -62,7 +62,7 @@ export {
   toggleVariants,
 } from "./components/variants";
 export { Field, FieldLabel, FieldDescription, FieldError } from "./components/Field";
-export { Input } from "./components/Input";
+export { Checkbox, Input } from "./components/Input";
 export { LoadingState } from "./components/LoadingState";
 export {
   InputGroup,

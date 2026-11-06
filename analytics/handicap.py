@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import math
 from datetime import date, datetime
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+from models.hole import HOLES_PER_ROUND
 from models.round import Round
 from models.user import User
 
@@ -98,7 +99,7 @@ def _get_differential_for_round(round_obj: Round) -> Optional[float]:
     tee = round_obj.get_tee()
     if tee is not None and tee.course_rating is not None and tee.slope_rating is not None:
         # Exclude 9-hole/partial rounds tracked against 18-hole course ratings
-        if holes_played < 18 and tee.course_rating >= 50.0:
+        if holes_played < HOLES_PER_ROUND and tee.course_rating >= 50.0:
             return None
         return score_differential(total, tee.course_rating, tee.slope_rating)
 
@@ -106,7 +107,7 @@ def _get_differential_for_round(round_obj: Round) -> Optional[float]:
     par = round_obj.get_par()
     if par is None:
         return None
-    if holes_played < 18 and par >= 50:
+    if holes_played < HOLES_PER_ROUND and par >= 50:
         return None
     return float(total - par)
 
@@ -130,6 +131,42 @@ def score_differentials_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any
     return results
 
 
+# The WHS window: an index reads the golfer's last 20 rounds.
+WHS_ROUNDS = 20
+
+
+def _eligible(
+    rounds: List[Round],
+    diffs: List[Optional[float]],
+    *,
+    seed_handicap: Optional[float] = None,
+    transition_rounds: int = 10,
+    seed_set_at: Optional[datetime] = None,
+) -> List[Tuple[int, float]]:
+    """Each round that counts toward an index, as (its position in `rounds`, its differential),
+    in round order.
+
+    With a seed handicap (the one the golfer gave):
+    - with seed_set_at: rounds before seed_set_at only count when they improve on the seed;
+      rounds on/after seed_set_at all count.
+    - without seed_set_at: onboarding, where the first `transition_rounds` rated rounds only
+      count when they improve on the seed.
+    """
+    rated = [(i, d) for i, d in enumerate(diffs) if d is not None]
+    if seed_handicap is None:
+        return rated
+    if seed_set_at is not None:
+        cutoff: date = seed_set_at.date()
+        eligible: List[Tuple[int, float]] = []
+        for i, d in rated:
+            played = rounds[i].date
+            day = played.date() if isinstance(played, datetime) else played
+            if day is None or day >= cutoff or d < seed_handicap:
+                eligible.append((i, d))
+        return eligible
+    return [(i, d) for k, (i, d) in enumerate(rated) if k >= transition_rounds or d < seed_handicap]
+
+
 def _eligible_differentials(
     rounds: List[Round],
     *,
@@ -137,98 +174,115 @@ def _eligible_differentials(
     transition_rounds: int = 10,
     seed_set_at: Optional[datetime] = None,
 ) -> List[float]:
-    """
-    Build the differential list used for HI calculations.
-
-    If seed_handicap is provided:
-    - with seed_set_at: rounds before seed_set_at only contribute when they
-      improve on the seed; rounds on/after seed_set_at all contribute.
-    - without seed_set_at: onboarding behavior where first `transition_rounds`
-      valid rounds only contribute when they improve on the seed.
-    """
-    if seed_handicap is None:
-        diffs = [_get_differential_for_round(r) for r in rounds]
-        return [d for d in diffs if d is not None]
-
-    if seed_set_at is not None:
-        cutoff: date = seed_set_at.date()
-        before: List[float] = []
-        after: List[float] = []
-        for r in rounds:
-            d = _get_differential_for_round(r)
-            if d is None:
-                continue
-            round_day = r.date.date() if isinstance(r.date, datetime) else r.date
-            if round_day is not None and round_day < cutoff:
-                before.append(d)
-            else:
-                after.append(d)
-        return [d for d in before if d < seed_handicap] + after
-
+    """The differentials an index over `rounds` reads, in round order."""
     diffs = [_get_differential_for_round(r) for r in rounds]
-    valid = [d for d in diffs if d is not None]
-    early = valid[:transition_rounds]
-    late = valid[transition_rounds:]
-    early_improving = [d for d in early if d < seed_handicap]
-    return early_improving + late
+    return [d for _, d in _eligible(
+        rounds, diffs, seed_handicap=seed_handicap, transition_rounds=transition_rounds, seed_set_at=seed_set_at,
+    )]
+
+
+def _index_window(
+    rounds: List[Round],
+    diffs: List[Optional[float]],
+    use_last_n: int = WHS_ROUNDS,
+    *,
+    seed_handicap: Optional[float] = None,
+    transition_rounds: int = 10,
+    seed_set_at: Optional[datetime] = None,
+) -> Dict[str, Any]:
+    """The index over `rounds` and how it was reached: the positions of the differentials that
+    count, the highest of them (the cut-off), how many differentials the window has, and the
+    WHS count and adjustment for that many."""
+    eligible = _eligible(
+        rounds, diffs, seed_handicap=seed_handicap, transition_rounds=transition_rounds, seed_set_at=seed_set_at,
+    )[-use_last_n:]
+    n = len(eligible)
+    window: Dict[str, Any] = {
+        "index": None, "counting": set(), "threshold": None, "rated": n, "count": 0, "adjustment": 0.0,
+    }
+    if n < 3:
+        # With a handicap the golfer gave, hold it during onboarding, but let an exceptional
+        # early round lower it even before there are three.
+        if seed_handicap is not None:
+            window["index"] = round(min([seed_handicap] + [d for _, d in eligible]), 1)
+        return window
+
+    count, adjustment = whs_window(n)
+    # Lowest first; on a tie the more recent round counts, as WHS has it.
+    ranked = sorted(eligible, key=lambda pair: (pair[1], -pair[0]))
+    best = ranked[:count]
+    # WHS caps index at 54.0
+    hi = min(sum(d for _, d in best) / count + adjustment, 54.0)
+    window.update(
+        index=round(hi, 1),
+        counting={i for i, _ in best},
+        threshold=ranked[count - 1][1],
+        count=count,
+        adjustment=adjustment,
+    )
+    return window
+
+
+def index_window(
+    rounds: Iterable[Round],
+    use_last_n: int = WHS_ROUNDS,
+    *,
+    seed_handicap: Optional[float] = None,
+    transition_rounds: int = 10,
+    seed_set_at: Optional[datetime] = None,
+) -> Dict[str, Any]:
+    """The index over `rounds` (oldest first) with the differentials that make it; see `_index_window`."""
+    all_rounds = list(rounds)
+    return _index_window(
+        all_rounds,
+        [_get_differential_for_round(r) for r in all_rounds],
+        use_last_n,
+        seed_handicap=seed_handicap,
+        transition_rounds=transition_rounds,
+        seed_set_at=seed_set_at,
+    )
 
 
 def handicap_index(
     rounds: Iterable[Round],
-    use_last_n: int = 20,
+    use_last_n: int = WHS_ROUNDS,
     *,
     seed_handicap: Optional[float] = None,
     transition_rounds: int = 10,
     seed_set_at: Optional[datetime] = None,
 ) -> Optional[float]:
     """
-    Calculate the current WHS Handicap Index.
+    Calculate the WHS Handicap Index over `rounds` (oldest first).
 
-    Uses the last `use_last_n` rounds with valid differentials. Applies the
-    WHS reduction table when fewer than 20 valid rounds are available. Returns
-    None if fewer than 3 valid rounds exist.
+    Uses the last `use_last_n` differentials, with the WHS reduction table when there are
+    fewer than 20. None under three, unless a seed handicap holds it.
     """
-    all_rounds = list(rounds)
-    eligible = _eligible_differentials(
-        all_rounds,
+    return index_window(
+        rounds,
+        use_last_n,
         seed_handicap=seed_handicap,
         transition_rounds=transition_rounds,
         seed_set_at=seed_set_at,
-    )
-    # Take only last N eligible differentials
-    recent = eligible[-use_last_n:]
-    valid = sorted(recent)
-
-    n = len(valid)
-    if n < 3:
-        # With a user-provided seed handicap, hold the seed during onboarding,
-        # but allow exceptional early rounds to lower it even before 3 rounds.
-        if seed_handicap is not None:
-            if n == 0:
-                return round(seed_handicap, 1)
-            return round(min(seed_handicap, min(valid)), 1)
-        return None
-
-    # WHS table is indexed by (n - 3) capped at 17 (for 20+)
-    table_idx = min(n - 3, len(_WHS_TABLE) - 1)
-    count, adjustment = _WHS_TABLE[table_idx]
-
-    best = valid[:count]
-    hi = (sum(best) / len(best)) + adjustment
-
-    # WHS caps index at 54.0
-    hi = min(hi, 54.0)
-    return round(hi, 1)
+    )["index"]
 
 
-def player_handicap_index(user: User, rounds: Iterable[Round]) -> Optional[float]:
-    """The golfer's current index over their recent rounds (oldest first), held at the handicap
-    they gave until their rounds say otherwise. Course handicaps and net scores use it."""
-    return handicap_index(
-        rounds,
-        seed_handicap=user.handicap,
-        seed_set_at=user.last_handicap_update,
-    )
+def _seed(user: Optional[User]) -> Dict[str, Any]:
+    """The handicap the golfer gave, and when: their index holds at it until their rounds say otherwise."""
+    if user is None:
+        return {"seed_handicap": None, "seed_set_at": None}
+    return {"seed_handicap": user.handicap, "seed_set_at": user.last_handicap_update}
+
+
+def player_index_window(user: Optional[User], rounds: Iterable[Round]) -> Dict[str, Any]:
+    """The golfer's current index over their last 20 rounds (of `rounds`, oldest first), held at
+    the handicap they gave until their rounds say otherwise, with the differentials that make it."""
+    return index_window(list(rounds)[-WHS_ROUNDS:], **_seed(user))
+
+
+def player_handicap_index(user: Optional[User], rounds: Iterable[Round]) -> Optional[float]:
+    """The golfer's current index: the one every screen shows, and that course handicaps and
+    net scores start from. `rounds` are theirs, oldest first, ending with the latest."""
+    return player_index_window(user, rounds)["index"]
 
 
 def handicap_trend(
@@ -239,23 +293,22 @@ def handicap_trend(
     seed_set_at: Optional[datetime] = None,
 ) -> List[Dict[str, Any]]:
     """
-    Rolling handicap index after each round (oldest-first).
-
-    Each entry shows what the handicap index would have been after that round
-    was played. Returns None for rounds where not enough history exists.
+    The index after each round (oldest first): the index over the 20 rounds ending with it,
+    the window the current index reads, so the last point is the current index.
     """
     all_rounds = list(rounds)
+    diffs = [_get_differential_for_round(r) for r in all_rounds]
     results: List[Dict[str, Any]] = []
-
-    # Compute differentials and rolling HI for each round
     for i, round_obj in enumerate(all_rounds, start=1):
-        hi = handicap_index(
-            all_rounds[:i],
+        start = max(0, i - WHS_ROUNDS)
+        hi = _index_window(
+            all_rounds[start:i],
+            diffs[start:i],
             seed_handicap=seed_handicap,
             transition_rounds=transition_rounds,
             seed_set_at=seed_set_at,
-        )
-        this_diff = _get_differential_for_round(round_obj)
+        )["index"]
+        this_diff = diffs[i - 1]
         results.append(
             {
                 "round_index": i,
@@ -267,17 +320,27 @@ def handicap_trend(
                 "differential_status": "unrated",
             }
         )
-
     return results
 
 
-def windowed_handicap_trend(hi_rounds: List[Round], display_count: int) -> List[Dict[str, Any]]:
-    """The rolling index over `hi_rounds`, cut to the last `display_count` rounds, with the WHS
-    best-N marked among only those, so the counting rounds match the index the window gives."""
-    full = handicap_trend(hi_rounds)
-    sliced = full[-display_count:] if display_count else []
-    annotate_used_in_hi(sliced)
-    return sliced
+def player_handicap_trend(user: Optional[User], history: List[Round]) -> List[Dict[str, Any]]:
+    """The golfer's index after each round of `history` (theirs, oldest first, ending with the
+    latest), off the handicap they gave, so the last point is the index every screen shows. Each
+    round is marked by where its differential stands against that index: one of the differentials
+    it counts, close to the cut-off, out, or unrated."""
+    trend = handicap_trend(history, **_seed(user))
+    current = player_index_window(user, history)
+    offset = max(0, len(history) - WHS_ROUNDS)
+    counting = {offset + i for i in current["counting"]}
+    threshold = current["threshold"]
+    for i, entry in enumerate(trend):
+        diff = entry["differential"]
+        used = i in counting
+        entry["hi_threshold"] = round(threshold, 1) if threshold is not None else None
+        entry["used_in_hi"] = None if diff is None else used
+        # A round older than the last 20 is out of the window, however low its differential.
+        entry["differential_status"] = differential_status(diff, used, threshold if i >= offset else None)
+    return trend
 
 
 # How far over the counting cut-off a differential can be and still read as close.
@@ -294,38 +357,3 @@ def differential_status(differential: Optional[float], used: bool, threshold: Op
     if threshold is not None and differential - threshold <= CLOSE_TO_COUNTING:
         return "close"
     return "out"
-
-
-def annotate_used_in_hi(entries: List[Dict[str, Any]]) -> None:
-    """
-    Annotate a list of trend entries (in-place) with used_in_hi, hi_threshold and differential_status.
-    Marks exactly the WHS best-N rounds as used. Ties at the threshold boundary are
-    broken by recency (most recent round wins), matching WHS practice.
-    Call this AFTER slicing to the display window.
-    """
-    # Collect (entry_index, differential) for valid rounds, last 20 only
-    valid: List[tuple[int, float]] = [
-        (i, e["differential"]) for i, e in enumerate(entries) if e["differential"] is not None
-    ]
-    recent = valid[-20:]
-    n = len(recent)
-
-    threshold: Optional[float] = None
-    used_indices: set[int] = set()
-
-    if n >= 3:
-        count, _ = _WHS_TABLE[min(n - 3, len(_WHS_TABLE) - 1)]
-        # Sort by differential asc; break ties by entry index desc (most recent first)
-        sorted_recent = sorted(recent, key=lambda x: (x[1], -x[0]))
-        used = sorted_recent[:count]
-        used_indices = {idx for idx, _ in used}
-        threshold = sorted_recent[count - 1][1]
-
-    for i, entry in enumerate(entries):
-        diff = entry["differential"]
-        entry["hi_threshold"] = round(threshold, 1) if threshold is not None else None
-        if diff is None:
-            entry["used_in_hi"] = None
-        else:
-            entry["used_in_hi"] = i in used_indices
-        entry["differential_status"] = differential_status(diff, i in used_indices, threshold)
