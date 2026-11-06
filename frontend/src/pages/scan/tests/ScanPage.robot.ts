@@ -275,10 +275,17 @@ export class ScanRobot {
 
   /** Types the tee, when the course has no tees to pick from. */
   async typeTee(tee: string): Promise<this> {
-    const field = this.page.getByRole("textbox", { name: "Tee played" });
-    await field.fill(tee);
-    await expect(field).toHaveValue(tee);
+    await this.teeField().fill(tee);
     return this;
+  }
+
+  async seesTypedTee(tee: string): Promise<this> {
+    await expect(this.teeField()).toHaveValue(tee);
+    return this;
+  }
+
+  private teeField() {
+    return this.page.getByRole("textbox", { name: "Tee played" });
   }
 
   private teeChip(color: string) {

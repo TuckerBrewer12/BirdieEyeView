@@ -49,7 +49,7 @@ export function ScanSuccessStep({ round, onView }: ScanSuccessStepProps) {
           <Button size="lg" className="flex-1" onClick={onView}>
             View round
           </Button>
-          <Button size="lg" variant="outline" disabled={sharing} onClick={() => share(roundShareMessage(round))}>
+          <Button size="lg" variant="outline" disabled={sharing} onClick={() => void share(roundShareMessage(round))}>
             {sharing ? "Preparing…" : "Share"}
           </Button>
         </div>

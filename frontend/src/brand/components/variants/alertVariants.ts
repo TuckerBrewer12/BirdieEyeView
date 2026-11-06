@@ -6,7 +6,7 @@ import { cva } from "class-variance-authority";
  * pairing is a `compoundVariants` entry over the `status` tokens.
  */
 const alertVariants = cva(
-  "group/alert relative grid w-full gap-y-0.5 rounded-xl border-callout py-3 pr-3 pl-3.5 text-left text-body has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2.5 *:[svg]:mt-px *:[svg]:self-start *:[svg]:text-current *:[svg:not([class*='size-'])]:size-4",
+  "group/alert relative grid w-full gap-y-0.5 rounded-xl border-callout p-3 text-left text-body has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:mt-px *:[svg]:self-start *:[svg]:text-current *:[svg:not([class*='size-'])]:size-4",
   {
     variants: {
       tone: {

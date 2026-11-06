@@ -23,9 +23,14 @@ function Field({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function FieldLabel({ className, ...props }: React.ComponentProps<"label">) {
+function FieldLabel({
+  className,
+  htmlFor,
+  ...props
+}: React.ComponentProps<"label">) {
   return (
     <label
+      htmlFor={htmlFor}
       data-slot="field-label"
       className={cn(
         "text-xs font-semibold text-muted-foreground select-none group-has-disabled/field:opacity-50",
@@ -50,7 +55,11 @@ function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
  * Renders nothing when there is no message, so a view can hand it a view
  * model's nullable error straight through without a ternary in the JSX.
  */
-function FieldError({ className, children, ...props }: React.ComponentProps<"p">) {
+function FieldError({
+  className,
+  children,
+  ...props
+}: Omit<React.ComponentProps<"p">, "children"> & { children?: string | null }) {
   if (!children) return null;
 
   return (

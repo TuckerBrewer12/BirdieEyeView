@@ -13,6 +13,7 @@ import {
 } from "@/brand";
 import { useFilePreview } from "@/platform/useFilePreview";
 import { SCAN_STEPS } from "@/domain/scan";
+import { tokens } from "@/brand/theme";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
 export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfViewModel }) {
@@ -27,7 +28,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: tokens.motion.scanStep.upload }}
             className="p-6"
           >
             <p className="mb-4 text-center text-xs font-semibold uppercase tracking-eyebrow text-primary">
@@ -78,7 +79,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: tokens.motion.scanStep.processing }}
           >
             <ScanProgress
               label="Reading your card"
@@ -95,7 +96,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.35 }}
+            transition={{ duration: tokens.motion.scanStep.review }}
           >
             {viewModel.round && (
               <RoundScorecard

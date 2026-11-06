@@ -5,14 +5,14 @@ const seed = { friendships: populatedFriendships, golfers };
 
 test("received requests", async ({ inbox }) => {
   await inbox.open(seed);
-  await inbox.canAnswer("Riley Brooks");
+  await inbox.seesAnswerButtons("Riley Brooks");
   await inbox.capture("inbox-received.png");
 });
 
 test("received requests in dark mode", async ({ inbox }) => {
   await inbox.dark();
   await inbox.open(seed);
-  await inbox.canAnswer("Riley Brooks");
+  await inbox.seesAnswerButtons("Riley Brooks");
   await inbox.capture("inbox-received-dark.png");
 });
 

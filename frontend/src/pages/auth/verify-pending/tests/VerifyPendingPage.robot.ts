@@ -22,7 +22,7 @@ export class VerifyPendingRobot extends AuthScreenRobot {
   }
 
   /** Home, once the screen's session check sees the account verified. It checks every few seconds. */
-  async isSentHome(): Promise<this> {
+  async isAtHome(): Promise<this> {
     await this.isAt("/", 10_000);
     await expect(this.page.getByRole("heading", { name: "Verify your email" })).toHaveCount(0);
     return this;
