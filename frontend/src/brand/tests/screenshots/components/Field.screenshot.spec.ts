@@ -9,6 +9,7 @@ test.describe("Field", () => {
   test("light", async ({ page }) => {
     const kit = new BrandKitRobot(page);
     await kit.openFrame("Field");
+    await kit.focus("Name on scorecard");
     await kit.captureFrame("field.png");
   });
 
@@ -16,6 +17,7 @@ test.describe("Field", () => {
     await enableDark(page);
     const kit = new BrandKitRobot(page);
     await kit.openFrame("Field");
+    await kit.focus("Name on scorecard");
     await kit.captureFrame("field-dark.png");
   });
 });

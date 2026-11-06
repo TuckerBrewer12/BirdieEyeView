@@ -33,8 +33,8 @@ export default function FieldPreview() {
         <div className="flex flex-col gap-1.5">
           <Field>
             <FieldLabel htmlFor="preview-name">Name on scorecard</FieldLabel>
-            {/* Focus is the browser's own :focus-visible; the story takes it on load. */}
-            <Input id="preview-name" type="text" defaultValue="Tuck" autoFocus />
+            {/* Focus is the browser's own :focus-visible; the screenshot spec focuses it. */}
+            <Input id="preview-name" type="text" defaultValue="Tuck" />
           </Field>
           <Caption>Focused</Caption>
         </div>
@@ -86,16 +86,18 @@ export default function FieldPreview() {
 
         <div className="flex flex-col gap-3">
           <div className="rounded-xl border border-border bg-card">
-            <label className="flex min-h-14 items-center gap-3 px-4">
-              <span className="flex-1 text-field font-medium">Handicap index</span>
+            <div className="flex min-h-14 items-center gap-3 px-4">
+              <label htmlFor="preview-handicap-inline" className="flex-1 text-body-lg font-medium">
+                Handicap index
+              </label>
               <Input
+                id="preview-handicap-inline"
                 size="inline"
                 type="text"
                 defaultValue="8.4"
-                aria-label="Handicap index"
                 className="w-22 text-right"
               />
-            </label>
+            </div>
           </div>
           <Caption>Inline · inside a settings row</Caption>
         </div>

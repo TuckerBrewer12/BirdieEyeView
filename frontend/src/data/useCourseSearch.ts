@@ -42,7 +42,7 @@ export function useCourseSearch(
       setSearching(false);
       return;
     }
-    timer.current = setTimeout(async () => {
+    const search = async () => {
       const request = (latestRequest.current += 1);
       const isCurrent = () => request === latestRequest.current;
       setSearching(true);
@@ -54,7 +54,8 @@ export function useCourseSearch(
       } finally {
         if (isCurrent()) setSearching(false);
       }
-    }, DEBOUNCE_MS);
+    };
+    timer.current = setTimeout(() => void search(), DEBOUNCE_MS);
   }, [userId, repository]);
 
   const reset = useCallback(() => {

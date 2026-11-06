@@ -3,7 +3,7 @@ import { fieldRing } from "./fieldRing";
 
 const inputVariants = cva(
   [
-    "w-full min-w-0 border border-input bg-transparent text-base text-foreground md:text-field transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-body file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 dark:bg-input/30 dark:disabled:bg-input/80",
+    "w-full min-w-0 border border-input bg-transparent text-base text-foreground md:text-body-lg transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-body file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/half disabled:opacity-50 dark:bg-input/recessed dark:disabled:bg-input/strong",
     fieldRing,
   ],
   {
