@@ -190,7 +190,7 @@ function RoundHighlight({
       )}
     >
       <div className="flex shrink-0 items-center gap-3">
-        <div className="flex size-12 items-center justify-center rounded-full border border-score-eagle/mild bg-score-eagle/soft text-score-eagle">
+        <div className="flex size-12 items-center justify-center rounded-full border border-score-eagle/recessed bg-score-eagle/tint text-score-eagle">
           <Trophy className="size-5" />
         </div>
         <div>

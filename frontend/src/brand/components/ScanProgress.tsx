@@ -12,7 +12,7 @@ interface ScanProgressProps {
 }
 
 const CORNERS = ["tl", "tr", "bl", "br"] as const;
-const ROWS = ["bg-muted-foreground/medium", "bg-primary/quarter", "bg-muted-foreground/medium", "bg-muted-foreground/quarter"];
+const ROWS = ["bg-muted-foreground/recessed", "bg-primary/wash", "bg-muted-foreground/recessed", "bg-muted-foreground/wash"];
 
 /**
  * The card-being-read animation shown while a scan is in flight.
@@ -31,7 +31,7 @@ function ScanProgress({ label, detail, phase, phaseCount, className }: ScanProgr
     >
       <div className="relative mb-10">
         <motion.div
-          className="relative h-36 w-56 overflow-hidden rounded-2xl border-2 border-primary/light bg-gradient-to-br from-card to-accent"
+          className="relative h-36 w-56 overflow-hidden rounded-2xl border-2 border-primary/wash bg-gradient-to-br from-card to-accent"
           animate={{ opacity: [0.92, 1, 0.92] }}
           transition={{ duration: tokens.motion.scanProgress.breathe, repeat: Infinity, ease: "easeInOut" }}
         >

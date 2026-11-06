@@ -40,7 +40,7 @@ function Dropzone({ title, hint, accept = "image/*,application/pdf", onFile, cla
         if (file) onFile(file);
       }}
       className={cn(
-        "flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-input p-8 transition-colors hover:border-primary/medium hover:bg-primary/trace focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/focus focus-visible:outline-none",
+        "flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-input p-8 transition-colors hover:border-primary/recessed hover:bg-primary/faint focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/half focus-visible:outline-none",
         className,
       )}
     >

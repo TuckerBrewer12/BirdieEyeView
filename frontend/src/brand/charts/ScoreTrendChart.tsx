@@ -60,7 +60,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
       >
         <defs>
           <linearGradient id={areaId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={tokens.color.primary} stopOpacity={tokens.opacity.haze} />
+            <stop offset="5%" stopColor={tokens.color.primary} stopOpacity={tokens.opacity.tint} />
             <stop offset="95%" stopColor={tokens.color.primary} stopOpacity={0} />
           </linearGradient>
         </defs>

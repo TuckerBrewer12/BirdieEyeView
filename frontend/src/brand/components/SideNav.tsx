@@ -26,7 +26,7 @@ interface SideNavProps {
 }
 
 const linkClass =
-  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/focus transition-all duration-150 hover:bg-sidebar-foreground/faint hover:text-sidebar-foreground data-active:bg-sidebar-foreground/soft data-active:font-semibold data-active:text-sidebar-foreground [&_svg]:size-4.5 [&_svg]:shrink-0";
+  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/half transition-all duration-150 hover:bg-sidebar-foreground/faint hover:text-sidebar-foreground data-active:bg-sidebar-foreground/tint data-active:font-semibold data-active:text-sidebar-foreground [&_svg]:size-4.5 [&_svg]:shrink-0";
 
 /**
  * The app's left rail: the brand at the top, the places to go, and the
@@ -53,11 +53,11 @@ function SideNav({
     >
       <div className="p-4">
         <div className="flex items-center gap-2.5 px-3 py-2.5">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-sidebar-foreground/soft">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-sidebar-foreground/tint">
             <Flag aria-hidden className="size-3.5" />
           </span>
           <span className="flex-1 truncate text-sm font-semibold">BirdieEyeView</span>
-          <ChevronsUpDown aria-hidden className="size-3.5 shrink-0 text-sidebar-foreground/mild" />
+          <ChevronsUpDown aria-hidden className="size-3.5 shrink-0 text-sidebar-foreground/recessed" />
         </div>
       </div>
 
@@ -91,14 +91,14 @@ function SideNav({
         <div className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-150 hover:bg-sidebar-foreground/faint">
           <span
             aria-hidden
-            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-foreground/soft text-xs font-bold"
+            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-foreground/tint text-xs font-bold"
           >
             {user.initials}
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{user.name}</p>
             {user.detail && (
-              <p className="truncate text-xs text-sidebar-foreground/medium">{user.detail}</p>
+              <p className="truncate text-xs text-sidebar-foreground/recessed">{user.detail}</p>
             )}
           </div>
           {onSignOut && (
@@ -109,7 +109,7 @@ function SideNav({
               disabled={signingOut}
               aria-label={signingOut ? "Signing out…" : "Sign out"}
               title="Sign out"
-              className="text-sidebar-foreground/medium opacity-0 transition-opacity group-hover:opacity-100 hover:bg-sidebar-foreground/tint hover:text-sidebar-foreground focus-visible:opacity-100 dark:hover:bg-sidebar-foreground/tint"
+              className="text-sidebar-foreground/recessed opacity-0 transition-opacity group-hover:opacity-100 hover:bg-sidebar-foreground/tint hover:text-sidebar-foreground focus-visible:opacity-100 dark:hover:bg-sidebar-foreground/tint"
             >
               <LogOut aria-hidden className="size-3.75" />
             </Button>

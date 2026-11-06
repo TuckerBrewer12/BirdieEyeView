@@ -16,7 +16,7 @@ interface AnalyticsDesktopLayoutProps {
 /** The title and the filters, pinned while the figures scroll under them. */
 export function AnalyticsDesktopHeader({ vm }: { vm: AnalyticsPageViewModel }) {
   return (
-    <div className="sticky top-0 z-30 -mx-6 mb-6 flex flex-col gap-3 border-b border-border bg-background/opaque px-6 py-3 backdrop-blur-xl">
+    <div className="sticky top-0 z-30 -mx-6 mb-6 flex flex-col gap-3 border-b border-border bg-background/glass px-6 py-3 backdrop-blur-xl">
       <PageTitle size="lg">Analytics</PageTitle>
       <AnalyticsFilterBar
         filters={vm.filters}

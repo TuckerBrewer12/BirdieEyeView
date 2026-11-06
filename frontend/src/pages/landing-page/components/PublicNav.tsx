@@ -15,7 +15,7 @@ export function PublicNav() {
   return (
     <Collapsible
       render={<nav />}
-      className="sticky top-0 z-50 border-b border-border bg-card/opaque backdrop-blur-sm"
+      className="sticky top-0 z-50 border-b border-border bg-card/glass backdrop-blur-sm"
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link to="/" aria-label="BirdieEyeView home">

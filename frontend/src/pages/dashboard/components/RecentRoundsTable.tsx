@@ -34,7 +34,7 @@ export function RecentRoundsTable({ rounds, onRoundClick }: RecentRoundsTablePro
               className={cn(
                 "grid w-full grid-cols-recent-rounds gap-x-3",
                 clickable
-                  ? "cursor-pointer hover:bg-muted active:bg-muted/dense"
+                  ? "cursor-pointer hover:bg-muted active:bg-muted/strong"
                   : "cursor-default",
               )}
             >

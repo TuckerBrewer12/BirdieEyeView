@@ -27,7 +27,7 @@ export function CourseScorecardSection({ userId, courseId }: CourseScorecardSect
               onClick={() => viewModel.selectTee(tee.color ?? "")}
               className={cn(
                 "h-auto gap-2 px-3 py-2 text-xs text-muted-foreground",
-                selected && "ring-2 ring-primary/mild",
+                selected && "ring-2 ring-primary/recessed",
               )}
             >
               <TeeSwatch color={tee.color} className="size-3 shrink-0 rounded-full" />

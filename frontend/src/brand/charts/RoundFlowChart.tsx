@@ -167,7 +167,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
           {hovered && (
             <motion.div
               key={hovered.hole}
-              className="pointer-events-none absolute z-10 min-w-32 rounded-xl border border-border bg-card/frosted px-3 py-2.5 text-body-sm shadow-card"
+              className="pointer-events-none absolute z-10 min-w-32 rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card"
               style={{
                 left: tooltipPos.x + (tooltipPos.x > W * 0.65 ? -150 : 14),
                 top: tooltipPos.y - 10,

@@ -45,7 +45,7 @@ function SortControl<T extends string>({
         <Select.Trigger
           aria-label={ariaLabel}
           className={cn(
-            "rounded-sm px-0.5 text-label font-semibold text-primary outline-none select-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/focus",
+            "rounded-sm px-0.5 text-label font-semibold text-primary outline-none select-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/half",
             !onToggleDirection && "inline-flex items-center gap-0.5",
           )}
         >
@@ -88,7 +88,7 @@ function SortControl<T extends string>({
           aria-label={ascending ? "Sort descending" : "Sort ascending"}
           disabled={directionDisabled}
           onClick={onToggleDirection}
-          className="inline-flex size-5 items-center justify-center rounded-sm text-primary outline-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/focus disabled:cursor-default disabled:opacity-40"
+          className="inline-flex size-5 items-center justify-center rounded-sm text-primary outline-none hover:opacity-80 focus-visible:ring-3 focus-visible:ring-ring/half disabled:cursor-default disabled:opacity-40"
         >
           {directionDisabled || ascending ? (
             <ArrowUp className="size-3.5" />
