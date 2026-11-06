@@ -1,5 +1,5 @@
 import { Button, PageTitle, Stat, StatDelta, StatLabel, StatValue } from "@/brand";
-import { formatHandicapIndex } from "@/domain";
+import { formatHandicapIndex, formatOneDecimal } from "@/domain";
 
 interface GreetingHeaderProps {
   firstName: string;
@@ -39,7 +39,7 @@ export function GreetingHeader({
           <StatValue size="md">{formatHandicapIndex(handicapIndex)}</StatValue>
           {moved && (
             <StatDelta direction={handicapChange < 0 ? "down" : "up"}>
-              {Math.abs(handicapChange).toFixed(1)}
+              {formatOneDecimal(Math.abs(handicapChange))}
             </StatDelta>
           )}
         </Stat>

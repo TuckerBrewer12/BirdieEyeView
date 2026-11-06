@@ -23,6 +23,7 @@ from api.input_validation import ensure_uuid_str, normalize_course_display_name,
 from api.request_models import SaveRoundRequest
 from api.schemas import ConfidenceLevel, OcrTextResponse, SaveScanResponse, ScanResponse
 from models import User
+from models.hole import HOLES_PER_NINE, HOLES_PER_ROUND
 from services.gemini_table_merger import merge_split_tables
 from services.mistral_ocr_service import MistralOCRService
 from services.mistral_scorecard_parser import ParsedScorecardRows, parse_mistral_scorecard_rows
@@ -135,7 +136,7 @@ def _validate_upload_payload(path: Path, suffix: str) -> None:
                 raise HTTPException(400, "Image pixel count exceeds allowed size.")
     except HTTPException:
         raise
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         if suffix == ".heic" and not HEIC_DECODE_AVAILABLE:
             raise HTTPException(
                 400,
@@ -219,7 +220,7 @@ def _build_round_from_parsed_rows(
     fields_needing_review: List[str] = list(parsed.warnings)
 
     known_course = course_model is not None
-    hole_count = 18
+    hole_count = HOLES_PER_ROUND
 
     # Known-course metadata from DB (local course object).
     course_name = None
@@ -235,7 +236,7 @@ def _build_round_from_parsed_rows(
         course_par = course_model.get_par()
         model_holes = getattr(course_model, "holes", []) or []
         if model_holes:
-            hole_count = min(18, len(model_holes))
+            hole_count = min(HOLES_PER_ROUND, len(model_holes))
         for i in range(1, hole_count + 1):
             hole_obj = next((h for h in model_holes if getattr(h, "number", None) == i), None)
             p = getattr(hole_obj, "par", None) if hole_obj is not None else None
@@ -269,7 +270,7 @@ def _build_round_from_parsed_rows(
             course_holes.append({"number": i, "par": par_i, "handicap": handicap})
             hole_par_lookup[i] = par_i
         par_vals = [p for p in hole_par_lookup.values() if p is not None]
-        if len(par_vals) >= 9:
+        if len(par_vals) >= HOLES_PER_NINE:
             course_par = sum(par_vals)
         for tr in _safe_list_attr("tee_rows"):
             yardage_map = {
@@ -505,10 +506,8 @@ def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, boo
             t_open = time.perf_counter()
             if is_pdf:
                 # First page only for scorecard PDFs.
-                try:
+                with contextlib.suppress(EOFError):
                     img.seek(0)
-                except Exception:
-                    pass
             # Honor EXIF orientation before re-encoding.
             img = ImageOps.exif_transpose(img)
             if img.mode != "RGB":
@@ -565,6 +564,7 @@ def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, boo
             path.name,
             "pdf" if is_pdf else "image",
             e,
+            exc_info=True,
         )
         return path, False
 
@@ -594,7 +594,7 @@ async def prefetch_ocr(
         raise
     except Exception:
         logger.exception("Prefetch OCR failed")
-        raise HTTPException(500, "OCR failed. Please try again.")
+        raise HTTPException(500, "OCR failed. Please try again.") from None
     finally:
         if ocr_path != original_tmp_path and (not PREPROCESS_CACHE_ENABLED or not cache_hit):
             with contextlib.suppress(OSError):
@@ -631,20 +631,24 @@ async def extract_scan(
                 allow_newlines=True,
                 allow_empty=True,
             )
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        except ValueError:
+            raise HTTPException(
+                422, f"user_context must be plain text of at most {MAX_USER_CONTEXT_CHARS} characters."
+            ) from None
     if course_id is not None and course_id.strip():
         try:
             course_id = ensure_uuid_str(course_id, "course_id")
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        except ValueError:
+            raise HTTPException(422, "course_id must be a valid UUID.") from None
     elif course_id is not None:
         course_id = None
     if ocr_text is not None:
         try:
             ocr_text = sanitize_ocr_text(ocr_text, max_length=MAX_OCR_TEXT_CHARS)
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        except ValueError:
+            raise HTTPException(
+                422, f"ocr_text must be plain text of at most {MAX_OCR_TEXT_CHARS} characters."
+            ) from None
 
     original_tmp_path, upload_digest = _save_upload_to_temp(file, suffix)
 
@@ -751,15 +755,15 @@ async def extract_scan(
         )
 
     except FileNotFoundError:
-        raise HTTPException(400, "Uploaded file could not be processed")
+        raise HTTPException(400, "Uploaded file could not be processed") from None
     except EnvironmentError:
         logger.exception("Scan extraction service unavailable")
-        raise HTTPException(500, SCAN_FAILED)
+        raise HTTPException(500, SCAN_FAILED) from None
     except HTTPException:
         raise
     except Exception:
         logger.exception("Scan extraction error")
-        raise HTTPException(500, "Extraction failed. Please try again.")
+        raise HTTPException(500, "Extraction failed. Please try again.") from None
     finally:
         logger.info(
             "Scan extract request complete: total_ms=%.1f",
@@ -792,7 +796,7 @@ async def save_round(
         return SaveScanResponse(id=str(saved.id), total_score=saved.calculate_total_score())
     except ValueError:
         logger.exception("Save round validation failed")
-        raise HTTPException(400, ROUND_SAVE_FAILED)
+        raise HTTPException(400, ROUND_SAVE_FAILED) from None
     except Exception:
         logger.exception("Save round error")
-        raise HTTPException(500, "Save failed. Please try again.")
+        raise HTTPException(500, "Save failed. Please try again.") from None

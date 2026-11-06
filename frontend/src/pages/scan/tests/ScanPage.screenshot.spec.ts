@@ -150,6 +150,7 @@ test("manual entry under a typed course name", async ({ scan }) => {
   await scan.keepTypedCourse("Muni Nine");
   await scan.seesSetupCourse("Muni Nine");
   await scan.typeTee("Gold");
+  await scan.seesTypedTee("Gold");
   await scan.capture("scan-manual-course-named.png");
 });
 

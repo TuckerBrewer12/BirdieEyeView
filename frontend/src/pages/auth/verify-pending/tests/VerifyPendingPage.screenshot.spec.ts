@@ -3,12 +3,14 @@ import { test } from "./VerifyPendingPage.robot";
 
 test("waiting for the link", async ({ verifyPending }) => {
   await verifyPending.open();
+  await verifyPending.seesEmail("sam@example.com");
   await verifyPending.capture("verify-pending.png");
 });
 
 test("waiting for the link in dark mode", async ({ verifyPending }) => {
   await verifyPending.dark();
   await verifyPending.open();
+  await verifyPending.seesEmail("sam@example.com");
   await verifyPending.capture("verify-pending-dark.png");
 });
 

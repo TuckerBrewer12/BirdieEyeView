@@ -230,7 +230,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             y2={lastPanel.bottom}
             stroke={tokens.color.chart.muted}
             strokeWidth={tokens.lineWidth.border}
-            strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
+            strokeDasharray={tokens.chart.guideDash}
           />
         )}
 
@@ -287,7 +287,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
           <motion.div
             key={`${shown}-${active}`}
             className={cn(
-              "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/95 px-3 py-2.5 text-body-sm shadow-card",
+              "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
               // Past two thirds of the way across, the card opens to the left of the point.
               x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
             )}

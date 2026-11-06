@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { test } from "@playwright/test";
 import { BrandKitRobot } from "../../../../../brand/tests/BrandKit.robot";
 import { enableDark } from "../../../../../brand/tests/previewScreenshot";
 
@@ -6,7 +6,7 @@ test.describe("ComparisonChartCard", () => {
   test("light", async ({ page }) => {
     const kit = new BrandKitRobot(page);
     await kit.open("ComparisonChartCard");
-    await expect(page.locator(".recharts-bar-rectangle path").first()).toBeVisible();
+    await kit.sees(".recharts-bar-rectangle path");
     await kit.capture("comparison-chart-card.png");
   });
 
@@ -14,7 +14,7 @@ test.describe("ComparisonChartCard", () => {
     await enableDark(page);
     const kit = new BrandKitRobot(page);
     await kit.open("ComparisonChartCard");
-    await expect(page.locator(".recharts-bar-rectangle path").first()).toBeVisible();
+    await kit.sees(".recharts-bar-rectangle path");
     await kit.capture("comparison-chart-card-dark.png");
   });
 });

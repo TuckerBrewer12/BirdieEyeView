@@ -35,7 +35,7 @@ describe("goalStandingFrom", () => {
       gap: null,
       progressPct: null,
       onTrack: false,
-      bestScore: null,
+      lowestScore: null,
       roundsMeetingGoal: null,
       attempts: [],
       savers: [],
