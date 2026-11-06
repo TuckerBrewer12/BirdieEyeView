@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Union
 
 from .base import BaseGolfModel
 from .course import Course
+from .hole import HOLES_PER_NINE, HOLES_PER_ROUND
 from .hole_score import HoleScore, ScoreKind, score_kind
 from .tee import Tee
 from .user_tee import UserTee
@@ -68,7 +69,7 @@ class Round(BaseGolfModel):
             s.strokes for s in self.hole_scores
             if s.hole_number is not None and first <= s.hole_number <= last and s.strokes is not None
         ]
-        return sum(strokes) if len(strokes) == 9 else None
+        return sum(strokes) if len(strokes) == HOLES_PER_NINE else None
 
     def _scores_on(self, first: int, last: int) -> List[HoleScore]:
         return [s for s in self.hole_scores if s.hole_number is not None and first <= s.hole_number <= last]
@@ -122,7 +123,7 @@ class Round(BaseGolfModel):
         """Check if all holes have scores."""
         if not self.hole_scores:
             return False
-        expected = 18 if len(self.hole_scores) > 9 else 9
+        expected = HOLES_PER_ROUND if len(self.hole_scores) > HOLES_PER_NINE else HOLES_PER_NINE
         valid_scores = [s for s in self.hole_scores if s.strokes is not None]
         return len(valid_scores) == expected
 

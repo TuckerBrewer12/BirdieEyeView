@@ -253,6 +253,39 @@
             ],
             "title": "Average Putts"
           },
+          "best_round": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Round"
+          },
+          "best_round_course": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Round Course"
+          },
+          "best_round_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Round Id"
+          },
           "gir_percentage": {
             "anyOf": [
               {
@@ -366,6 +399,9 @@
           "up_and_down_percentage",
           "handicap_index",
           "total_rounds",
+          "best_round",
+          "best_round_id",
+          "best_round_course",
           "average_putts",
           "three_putts_per_round",
           "three_putt_rate",
@@ -2542,17 +2578,6 @@
             "title": "Attempts",
             "type": "array"
           },
-          "best_score": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Best Score"
-          },
           "gap": {
             "anyOf": [
               {
@@ -2563,6 +2588,17 @@
               }
             ],
             "title": "Gap"
+          },
+          "lowest_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lowest Score"
           },
           "on_track": {
             "default": false,
@@ -2632,7 +2668,7 @@
         },
         "required": [
           "scoring_average",
-          "best_score",
+          "lowest_score",
           "scoring_goal",
           "gap",
           "on_track",
@@ -2745,29 +2781,8 @@
         "title": "HandicapChange",
         "type": "object"
       },
-      "HandicapIndexResponse": {
-        "description": "A golfer's current WHS Handicap Index; null until they have enough rounds or a seed handicap.",
-        "properties": {
-          "handicap_index": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Handicap Index"
-          }
-        },
-        "required": [
-          "handicap_index"
-        ],
-        "title": "HandicapIndexResponse",
-        "type": "object"
-      },
       "HandicapTrendRow": {
-        "description": "The handicap index after one round, oldest first, and where its differential stands.",
+        "description": "The golfer's index after one round, oldest first: over the 20 rounds ending with it and off\nthe handicap they gave, so the last round's is the index every screen shows. With where the\nround's differential stands against the current index.",
         "properties": {
           "differential": {
             "anyOf": [
@@ -10106,55 +10121,6 @@
           }
         ],
         "summary": "Update User",
-        "tags": [
-          "users"
-        ]
-      }
-    },
-    "/api/users/{user_id}/handicap": {
-      "get": {
-        "description": "Return the user's current WHS Handicap Index.",
-        "operationId": "get_user_handicap_api_users__user_id__handicap_get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HandicapIndexResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Get User Handicap",
         "tags": [
           "users"
         ]

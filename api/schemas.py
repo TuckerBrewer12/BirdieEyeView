@@ -221,10 +221,12 @@ class ScoreTrendRow(ResponseModel):
 
 
 class HandicapTrendRow(ResponseModel):
-    """The handicap index after one round, oldest first, and where its differential stands."""
+    """The golfer's index after one round, oldest first: over the 20 rounds ending with it and off
+    the handicap they gave, so the last round's is the index every screen shows. With where the
+    round's differential stands against the current index."""
     round_index: int
     round_id: Optional[str] = None
-    handicap_index: Optional[float] = None  # null until there are three rated rounds
+    handicap_index: Optional[float] = None  # null until there are three rated rounds or a handicap they gave
     differential: Optional[float] = None
     used_in_hi: Optional[bool] = None  # null without a differential
     hi_threshold: Optional[float] = None  # the highest differential that still counts
@@ -254,12 +256,14 @@ class DashboardResponse(ResponseModel):
     """Aggregated stats for the dashboard page. Every figure is worked out here, not on the client."""
     total_rounds: int
     scoring_average: Optional[float] = None
+    # The best round, the one the round list's Best puts first (`analytics.stats.best_round`):
+    # lowest to par among full rounds, a nine only without one. Its score, id and course.
     best_round: Optional[int] = None
     best_round_id: Optional[str] = None
     best_round_course: Optional[str] = None
-    handicap_index: Optional[float] = None
+    handicap_index: Optional[float] = None  # the golfer's own index (`api/player_handicap.py`)
     recent_rounds: List[RoundSummaryResponse]
-    best_recent_round_id: Optional[str] = None  # the lowest-scoring of recent_rounds; the newest on a tie
+    best_recent_round_id: Optional[str] = None  # the best of recent_rounds, ranked the same way; the newest on a tie
     average_putts: Optional[float] = None
     average_gir: Optional[float] = None
     # The putts the dashboard shows: the last five rounds per 18, else every round's average,
@@ -291,8 +295,15 @@ class AnalyticsKpis(ResponseModel):
     putts_per_gir: Optional[float] = None
     scrambling_percentage: Optional[float] = None  # the average of each round's rate
     up_and_down_percentage: Optional[float] = None
+    # The golfer's own index (`api/player_handicap.py`), whatever the filter: a course or a
+    # timeframe narrows the rounds, not the golfer's handicap.
     handicap_index: Optional[float] = None
     total_rounds: int = 0
+    # The best of the rounds asked for, ranked as the round list's Best ranks them
+    # (`analytics.stats.best_round`): its score, id and course. Null without a scored round.
+    best_round: Optional[int] = None
+    best_round_id: Optional[str] = None
+    best_round_course: Optional[str] = None
     average_putts: Optional[float] = None  # per round, over the rounds with putts recorded; to a tenth
     # Over the rounds with putts recorded, to a tenth: three-putts a round, and each round's rate averaged.
     three_putts_per_round: Optional[float] = None
@@ -815,7 +826,7 @@ class GoalAttempt(ResponseModel):
 class GoalReportResponse(ResponseModel):
     """How far the player's average is from their goal, with the savers worth the most strokes first."""
     scoring_average: Optional[float] = None
-    best_score: Optional[int] = None
+    lowest_score: Optional[int] = None  # the lowest full round in the window
     scoring_goal: int
     gap: Optional[float] = None  # average less goal; at or below 0 is on track
     on_track: bool = False
@@ -1016,11 +1027,6 @@ class UserResponse(ResponseModel):
     handicap: Optional[float] = None
     created_at: Optional[datetime] = None
     scoring_goal: Optional[int] = None
-
-
-class HandicapIndexResponse(ResponseModel):
-    """A golfer's current WHS Handicap Index; null until they have enough rounds or a seed handicap."""
-    handicap_index: Optional[float] = None
 
 
 # ================================================================

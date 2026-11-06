@@ -1,33 +1,21 @@
-import type { UserDto } from "@/types/api";
 import { Button, Card, CardContent, PageTitle, Stat, StatLabel, StatUnit, StatValue } from "@/brand";
 
 interface ProfileHeroBannerProps {
-  user: UserDto | null;
+  /** The avatar's letters: "JS". */
+  initials: string;
   handicapIndex: number | null;
   handicapLabel: string;
   firstName: string;
   onHandicapClick?: () => void;
 }
 
-function initialsFor(user: UserDto | null): string {
-  if (!user?.name) return "G";
-  return user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 export function ProfileHeroBanner({
-  user,
+  initials,
   handicapIndex,
   handicapLabel,
   firstName,
   onHandicapClick,
 }: ProfileHeroBannerProps) {
-  const initials = initialsFor(user);
-
   return (
     <Card data-slot="profile-hero-banner">
       <CardContent>

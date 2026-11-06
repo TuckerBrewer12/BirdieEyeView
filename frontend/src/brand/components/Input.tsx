@@ -21,4 +21,16 @@ function Input({
   );
 }
 
-export { Input };
+/** A native checkbox, sized to a line of body text and ticked in the brand colour. */
+function Checkbox({ className, ...props }: Omit<React.ComponentProps<"input">, "type">) {
+  return (
+    <input
+      type="checkbox"
+      data-slot="checkbox"
+      className={cn("size-4 accent-primary", className)}
+      {...props}
+    />
+  );
+}
+
+export { Checkbox, Input };

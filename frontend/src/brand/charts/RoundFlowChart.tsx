@@ -18,8 +18,6 @@ interface RoundFlowChartProps {
 /** A hole on the flow: scored, classified, and with the round's to par after it, all the server's. */
 type FlowHole = HoleScore & { strokes: number; toPar: number; kind: ScoreKind; runningToPar: number };
 
-const DASH = `${tokens.space.dot} ${tokens.space.dot}`;
-
 /**
  * How a round went, as a running score: the server's total to par after each hole, drawn as a
  * step that climbs on a bad hole and falls on a good one. Each hole's own score is marked under
@@ -141,7 +139,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
                   y2={y(tick)}
                   stroke={tick === 0 ? tokens.color.chart.reference : tokens.color.chart.grid}
                   strokeWidth={tokens.lineWidth.border}
-                  strokeDasharray={tick === 0 ? DASH : undefined}
+                  strokeDasharray={tick === 0 ? tokens.chart.guideDash : undefined}
                 />
                 <text
                   x={PAD.left - labelGap}
@@ -201,7 +199,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
                   y2={bottom}
                   stroke={tokens.color.chart.reference}
                   strokeWidth={tokens.lineWidth.border}
-                  strokeDasharray={DASH}
+                  strokeDasharray={tokens.chart.guideDash}
                 />
                 <circle
                   cx={mid(hovered.hole)}
@@ -242,7 +240,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               <motion.div
                 key={hovered.hole}
                 className={cn(
-                  "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/95 px-3 py-2.5 text-body-sm shadow-card",
+                  "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
                   // Past two thirds of the way across, the card opens to the left of the hole.
                   mid(hovered.hole) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
                 )}

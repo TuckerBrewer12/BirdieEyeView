@@ -53,8 +53,8 @@ export function GoalStandingCard({ goal, className }: GoalStandingCardProps) {
                 <StatValue size="lg">{formatOneDecimal(goal.average)}</StatValue>
               </Stat>
               <Stat>
-                <StatLabel>Best</StatLabel>
-                <StatValue size="lg">{goal.bestScore ?? "—"}</StatValue>
+                <StatLabel>Lowest</StatLabel>
+                <StatValue size="lg">{goal.lowestScore ?? "—"}</StatValue>
               </Stat>
               <Stat>
                 <StatLabel>Gap</StatLabel>
