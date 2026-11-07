@@ -28,7 +28,7 @@ export type { AppShellProps } from "./components/AppShell";
 export { AuthCard } from "./components/AuthCard";
 export type { AuthCardProps } from "./components/AuthCard";
 export { BrandMark } from "./components/BrandMark";
-export { Button } from "./components/Button";
+export { Button, ClearButton, RowButton } from "./components/Button";
 export { BottomNav } from "./components/BottomNav";
 export type { BottomNavProps } from "./components/BottomNav";
 export { Dropzone } from "./components/Dropzone";
@@ -60,7 +60,7 @@ export {
   toggleVariants,
 } from "./components/variants";
 export { Field, FieldLabel, FieldDescription, FieldError } from "./components/Field";
-export { Input } from "./components/Input";
+export { Checkbox, Input } from "./components/Input";
 export { LoadingState } from "./components/LoadingState";
 export {
   InputGroup,
@@ -96,6 +96,8 @@ export type { SideNavProps, SideNavUser } from "./components/SideNav";
 export type { NavItem, RenderLink } from "./nav";
 export { ScoreCountChip } from "./components/ScoreCountChip";
 export { SearchField } from "./components/SearchField";
+export { FilterChip, FilterChipGroup } from "./components/FilterChip";
+export type { FilterChipProps } from "./components/FilterChip";
 export { SortControl } from "./components/SortControl";
 export { CourseLinkSearch } from "./components/CourseLinkSearch";
 export {

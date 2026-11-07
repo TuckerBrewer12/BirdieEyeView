@@ -181,8 +181,8 @@ async def search_courses(
 ):
     try:
         q = sanitize_search_query(q, max_length=120)
-    except ValueError as exc:
-        raise HTTPException(422, str(exc))
+    except ValueError:
+        raise HTTPException(422, "q must be plain text of at most 120 characters.") from None
 
     if user_id:
         if not current_user or str(current_user.id) != str(user_id):
@@ -328,10 +328,10 @@ async def create_course(
         created = await db.courses.create_course(course, user_id=effective_user_id)
         return _summarize_course(created)
     except DuplicateError:
-        raise HTTPException(409, "A course with that name already exists for this user")
+        raise HTTPException(409, "A course with that name already exists for this user") from None
     except IntegrityError:
         logger.exception("Course creation integrity failure")
-        raise HTTPException(500, COURSE_SAVE_FAILED)
+        raise HTTPException(500, COURSE_SAVE_FAILED) from None
 
 
 @router.put("/{course_id}")
@@ -371,6 +371,6 @@ async def clone_course(
         cloned = await db.courses.clone_course(str(course_id), str(current_user.id))
         return _summarize_course(cloned)
     except NotFoundError:
-        raise HTTPException(404, "Source course not found")
+        raise HTTPException(404, "Source course not found") from None
     except DuplicateError:
-        raise HTTPException(409, "You already have a custom copy of this course")
+        raise HTTPException(409, "You already have a custom copy of this course") from None

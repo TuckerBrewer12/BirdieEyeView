@@ -258,7 +258,7 @@ class CourseRepositoryDB:
         self,
         name: str,
         location: Optional[str] = None,
-        user_id: str = None,
+        user_id: Optional[str] = None,
     ) -> Optional[Course]:
         """Find a course owned by this specific user (excludes masters)."""
         uid = UUID(user_id)
@@ -691,7 +691,7 @@ class CourseRepositoryDB:
                     return None  # Not found or not owned by this user
 
             set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates))
-            values = [UUID(course_id)] + list(updates.values())
+            values = [UUID(course_id), *updates.values()]
 
             row = await conn.fetchrow(
                 f"UPDATE courses.courses SET {set_clause} WHERE id = $1 RETURNING *",

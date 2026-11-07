@@ -12,6 +12,8 @@ export interface CourseFilterOption {
   key: string;
   label: string;
   mode: FilterMode;
+  /** How many listed rounds the chip leaves; set on course chips only. */
+  count?: number;
 }
 
 export interface SortOption {
@@ -64,21 +66,24 @@ export function sortAfterPicking(current: Sort, picked: SortKey): Sort {
     : { key: picked, ascending: picked === "course_name" };
 }
 
-/** All, L20 and Best, then the six most-played courses. */
+/** The scopes over every course: all rounds, the last twenty, the best first. */
+export const SCOPE_CHIPS: readonly CourseFilterOption[] = [
+  { key: "all", label: "All", mode: "all" },
+  { key: "l20", label: "L20", mode: "l20" },
+  { key: "best", label: "Best", mode: "best" },
+];
+
+/** The six most-played courses, most played first, each with its number of rounds. */
 export function courseChips(rounds: readonly ListedRound[]): CourseFilterOption[] {
   const counts = new Map<string, number>();
   for (const r of rounds) {
     const name = r.course?.name;
     if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
   }
-  const courses = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name]) => name);
-
-  return [
-    { key: "all", label: "All", mode: "all" },
-    { key: "l20", label: "L20", mode: "l20" },
-    { key: "best", label: "Best", mode: "best" },
-    ...courses.map((name) => ({ key: name, label: formatCourseName(name), mode: name })),
-  ];
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([name, count]) => ({ key: name, label: formatCourseName(name), mode: name, count }));
 }
 
 function sortValue(round: ListedRound, key: SortKey): number | string | null {

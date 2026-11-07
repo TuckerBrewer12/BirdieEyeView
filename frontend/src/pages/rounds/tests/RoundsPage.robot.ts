@@ -40,13 +40,18 @@ export class RoundsRobot {
     return this;
   }
 
+  /** A scope (All, L20, Best) or a course chip, whose name ends in its number of rounds. */
+  private chip(label: string) {
+    return this.page.getByRole("button", { name: new RegExp(`^${label}( ?\\d+)?$`) });
+  }
+
   async tapChip(label: string): Promise<this> {
-    await this.page.getByRole("button", { name: label, exact: true }).click();
+    await this.chip(label).click();
     return this;
   }
 
   async seesChipPressed(label: string): Promise<this> {
-    await expect(this.page.getByRole("button", { name: label, exact: true })).toHaveAttribute(
+    await expect(this.chip(label)).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -55,6 +60,10 @@ export class RoundsRobot {
 
   async openSortMenu(): Promise<this> {
     await this.page.getByRole("combobox", { name: "Sort by" }).click();
+    return this;
+  }
+
+  async seesSortMenu(): Promise<this> {
     await expect(this.page.getByRole("listbox")).toBeVisible();
     await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
     return this;
@@ -93,10 +102,6 @@ export class RoundsRobot {
     return this;
   }
 
-  private async settleCourseSearch(): Promise<void> {
-    await this.page.waitForTimeout(500);
-  }
-
   async seesCourseResult(name: string): Promise<this> {
     await expect(
       this.page.locator("[data-slot=course-result]").filter({ hasText: name }),
@@ -104,8 +109,7 @@ export class RoundsRobot {
     return this;
   }
 
-  async seesNoCourseResults(): Promise<this> {
-    await this.settleCourseSearch();
+  async doesNotSeeCourseResults(): Promise<this> {
     await expect(this.page.locator("[data-slot=course-result]")).toHaveCount(0);
     return this;
   }

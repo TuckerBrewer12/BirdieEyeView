@@ -1,5 +1,6 @@
 import { RotateCcw } from "lucide-react";
 import { cn } from "@/brand/cn";
+import { formatFileSize } from "@/domain";
 import { Button } from "./Button";
 
 interface FileChipProps {
@@ -27,7 +28,7 @@ function FileChip({ name, sizeBytes, previewUrl, onClear, className }: FileChipP
       )}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{name}</p>
-        <p className="text-xs text-muted-foreground">{Math.round(sizeBytes / 1024)} KB</p>
+        <p className="text-xs text-muted-foreground">{formatFileSize(sizeBytes)}</p>
       </div>
       <Button
         variant="ghost"

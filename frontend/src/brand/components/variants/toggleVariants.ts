@@ -1,13 +1,15 @@
 import { cva } from "class-variance-authority";
 
 const toggleVariants = cva(
-  "group/toggle inline-flex items-center justify-center gap-1 rounded-lg text-sm font-medium whitespace-nowrap transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:border-primary data-[pressed]:bg-primary data-[pressed]:text-primary-foreground data-[pressed]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/toggle inline-flex items-center justify-center gap-1 rounded-lg text-sm font-medium whitespace-nowrap transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/half disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/wash aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:border-primary data-[pressed]:bg-primary data-[pressed]:text-primary-foreground data-[pressed]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary dark:aria-invalid:ring-destructive/recessed [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default: "bg-transparent",
         outline:
           "border border-input bg-transparent hover:bg-muted aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:border-primary data-[pressed]:bg-primary data-[pressed]:text-primary-foreground data-[pressed]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary",
+        /* A filter you switch on and off: tinted, not filled, when on. */
+        chip: "border border-border bg-card text-body text-foreground aria-pressed:border-primary/recessed aria-pressed:bg-accent aria-pressed:text-primary aria-pressed:hover:bg-accent data-[pressed]:border-primary/recessed data-[pressed]:bg-accent data-[pressed]:text-primary",
       },
       size: {
         default:
