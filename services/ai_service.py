@@ -167,36 +167,22 @@ class AIService:
     # ── Raw data pipeline ─────────────────────────────────────────────────────
 
     def _compute_raw(self, rounds: list) -> Dict[str, Any]:
-        gir_data = analytics.overall_gir_percentage(rounds)
-        gir_pct = gir_data.get("gir_percentage")
+        gir_pct = analytics.gir_percentage(rounds)
 
         putts_gir_data = analytics.overall_putts_per_gir(rounds)
         putts_per_gir = putts_gir_data.get("putts_per_gir")
 
         scrambling_rows = analytics.scrambling_per_round(rounds)
-        scrambling_vals = [
-            r["scrambling_percentage"]
-            for r in scrambling_rows
-            if r.get("scramble_opportunities", 0) > 0
-        ]
-        avg_scrambling = sum(scrambling_vals) / len(scrambling_vals) if scrambling_vals else None
+        scrambling_rounds_with_data = sum(1 for r in scrambling_rows if r["scramble_opportunities"] > 0)
+        avg_scrambling = analytics.scrambling_percentage(rounds)
 
         three_putt_rows = analytics.three_putts_per_round(rounds)
-        three_putt_counts = [
-            r["three_putt_count"]
-            for r in three_putt_rows
-            if r.get("holes_with_putt_data", 0) > 0
-        ]
-        avg_three_putts = (
-            sum(three_putt_counts) / len(three_putt_counts) if three_putt_counts else None
-        )
+        avg_three_putts = analytics.three_putt_averages(rounds)["per_round"]
 
         par_avgs, par_counts = self._par_stats(rounds)
         par_avgs_trend = self._par_stats_per_round(rounds)
 
-        putts_rows = analytics.putts_per_round(rounds)
-        putts_vals = [r["total_putts"] for r in putts_rows if r.get("total_putts") is not None]
-        avg_putts_per_round = sum(putts_vals) / len(putts_vals) if putts_vals else None
+        avg_putts_per_round = analytics.average_putts(rounds)
 
         score_trend_rows = analytics.score_trend(rounds)
         to_par_vals = [r["to_par"] for r in score_trend_rows if r.get("to_par") is not None]
@@ -221,7 +207,7 @@ class AIService:
             "gir_values": gir_values,
             "three_putt_trend": three_putt_trend,
             "putts_per_gir_trend": putts_per_gir_trend,
-            "scrambling_rounds_with_data": len(scrambling_vals),
+            "scrambling_rounds_with_data": scrambling_rounds_with_data,
             "num_rounds": len(rounds),
         }
 

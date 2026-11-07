@@ -41,7 +41,7 @@ describe("careerFrom", () => {
       kind: "lowest-round",
       value: 75,
       event: {
-        date: "2026/5/25",
+        date: "2026-05-25",
         course: "Presidio Golf Course",
         roundId: achievements.scoring_records_events.lifetime.lowest_round!.round_id,
       },
@@ -98,7 +98,7 @@ describe("careerFrom", () => {
 
   it("counts the first eagle and a round under par in the last year when the server says they fell in it", () => {
     const lifetime = achievements.round_milestones.lifetime;
-    const event = { course: "Presidio Golf Course", date: "2026/5/1", round_id: "eagle-round" };
+    const event = { course: "Presidio Golf Course", date: "2026-05-01", round_id: "eagle-round" };
     const career = careerFrom(
       withAchievements({
         round_milestones: {

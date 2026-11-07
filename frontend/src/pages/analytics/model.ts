@@ -1,4 +1,4 @@
-import { scoreMixFrom, shortGamePointsFrom, type ScoreMix, type ShortGamePoint } from "@/domain";
+import { shortGamePointsFrom, type ScoreMix, type ShortGamePoint } from "@/domain";
 import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type {
   AnalyticsDto,
@@ -107,11 +107,7 @@ export interface Analytics {
 
 /** The server's GIR and no-GIR rows, keyed by score kind. */
 export function girSplitFrom(rows: GirVsNonGirRowDto[]): GirSplit[] {
-  return rows.map((row) => ({
-    bucket: row.bucket,
-    holes: row.holes_counted,
-    mix: scoreMixFrom(row),
-  }));
+  return rows.map(({ bucket, holes_counted: holes, ...mix }) => ({ bucket, holes, mix }));
 }
 
 /** The server's yardage bands, in its order: by par, then band. */

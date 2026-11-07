@@ -35,7 +35,7 @@ describe("career present", () => {
   });
 
   it("says where and when a record was set", () => {
-    expect(eventDetail({ date: "2026/5/25", course: "Presidio Golf Course", roundId: null })).toBe(
+    expect(eventDetail({ date: "2026-05-25", course: "Presidio Golf Course", roundId: null })).toBe(
       "May 25, 2026 · Presidio Golf Course",
     );
     expect(eventDetail({ date: "someday", course: "Presidio Golf Course", roundId: null })).toBe(

@@ -107,9 +107,9 @@ describe("the kit's shapes", () => {
         birdie: row.birdie,
         par: row.par,
         bogey: row.bogey,
-        double: row.double_bogey,
-        triple: row.triple_bogey,
-        quad: row.quad_bogey,
+        double: row.double,
+        triple: row.triple,
+        quad: row.quad,
       },
     });
   });

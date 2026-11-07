@@ -114,7 +114,7 @@ class RoundSummaryResponse(ResponseModel):
     """A round for list views: where and when, the figures a list shows, and a mark per hole."""
     id: str
     course_id: Optional[str] = None
-    course_name: Optional[str] = None
+    course_name: Optional[str] = None  # the linked course's name, else the name the round was saved with
     tee_box: Optional[str] = None
     date: Optional[datetime] = None
     total_score: Optional[int] = None
@@ -132,6 +132,7 @@ class RoundSummaryResponse(ResponseModel):
 class RoundResponse(RoundFigures):
     """A full round: the stored round, its figures, and its hole scores."""
     id: Optional[str] = None
+    course_name: Optional[str] = None  # the linked course's name, else the name the round was saved with
     course: Optional[CourseResponse] = None
     tee_box: Optional[str] = None
     date: Optional[datetime] = None
@@ -157,11 +158,12 @@ class ScoreMix(ResponseModel):
 
 
 class RecentForm(ResponseModel):
-    """Rates over the last five rounds, pooled by chances. Null when there is nothing to measure."""
+    """The last five rounds' rates, pooled by chances, and putts a round, each to a tenth and
+    worked out as the analytics KPIs are. Null when there is nothing to measure."""
     gir_pct: Optional[float] = None
     scrambling_pct: Optional[float] = None
     up_and_down_pct: Optional[float] = None
-    putts_per_18: Optional[float] = None
+    average_putts: Optional[float] = None
 
 
 class HandicapChange(ResponseModel):
@@ -194,7 +196,7 @@ class Milestone(ResponseModel):
     """A lifetime best. `value` is the score, the putt threshold, or the streak length."""
     kind: Literal["under_par", "score_break", "putt_break", "par_streak"]
     value: int
-    date: str
+    date: str  # the day it was set: 2026-05-28
     course: str
     round_id: Optional[str] = None
 
@@ -255,9 +257,8 @@ class DashboardResponse(ResponseModel):
     handicap_index: Optional[float] = None  # the golfer's own index (`api/player_handicap.py`)
     recent_rounds: List[RoundSummaryResponse]
     best_recent_round_id: Optional[str] = None  # the best of recent_rounds, ranked the same way; the newest on a tie
-    average_putts: Optional[float] = None
-    average_gir: Optional[float] = None
-    # The putts the dashboard shows: the last five rounds per 18, else every round's average,
+    average_putts: Optional[float] = None  # putts a round over every round with putts, to a tenth
+    # The putts the dashboard shows: the last five rounds' average, else every round's,
     # rated as the analytics insights rate putts.
     putts_per_round: Optional[float] = None
     putts_rating: Optional[InsightRating] = None
@@ -281,10 +282,12 @@ class DashboardResponse(ResponseModel):
 
 
 class AnalyticsKpis(ResponseModel):
-    scoring_average: Optional[float] = None
-    gir_percentage: Optional[float] = None
+    scoring_average: Optional[float] = None  # to a tenth, as every screen's scoring average
     putts_per_gir: Optional[float] = None
-    scrambling_percentage: Optional[float] = None  # the average of each round's rate
+    # Each rate pooled over every chance in the rounds, to a tenth (`analytics.stats`): GIR over
+    # the holes that recorded it, scrambling and up-and-down over the missed greens.
+    gir_percentage: Optional[float] = None
+    scrambling_percentage: Optional[float] = None
     up_and_down_percentage: Optional[float] = None
     # The golfer's own index (`api/player_handicap.py`), whatever the filter: a course or a
     # timeframe narrows the rounds, not the golfer's handicap.
@@ -296,7 +299,7 @@ class AnalyticsKpis(ResponseModel):
     best_round_id: Optional[str] = None
     best_round_course: Optional[str] = None
     average_putts: Optional[float] = None  # per round, over the rounds with putts recorded; to a tenth
-    # Over the rounds with putts recorded, to a tenth: three-putts a round, and each round's rate averaged.
+    # Over the rounds with putts recorded, to a tenth: three-putts a round, and the share of holes three-putted.
     three_putts_per_round: Optional[float] = None
     three_putt_rate: Optional[float] = None
     # The last five scored rounds' average less every round's, to a tenth: negative when the
@@ -376,16 +379,16 @@ class ScoringByHandicapRow(ResponseModel):
 
 
 class GirVsNonGirRow(ResponseModel):
-    """Percent of GIR (or missed-green) holes in each score type."""
+    """Percent of GIR (or missed-green) holes in each score kind."""
     bucket: Literal["GIR", "No GIR"]
     holes_counted: int
     eagle: float
     birdie: float
     par: float
     bogey: float
-    double_bogey: float
-    triple_bogey: float
-    quad_bogey: float
+    double: float
+    triple: float
+    quad: float
 
 
 class ScoreDifferentialRow(ResponseModel):
@@ -398,7 +401,7 @@ class ScoreDifferentialRow(ResponseModel):
 
 
 class MilestoneEvent(ResponseModel):
-    """The round a record or milestone was set in. `date` reads 2026/5/28."""
+    """The round a record or milestone was set in. `date` is the day it was played: 2026-05-28."""
     date: str
     course: str
     round_id: Optional[str] = None
@@ -669,7 +672,7 @@ class BestParInsight(ResponseModel):
 
 
 class GirAverageInsight(ResponseModel):
-    """Each round's GIR%, averaged."""
+    """GIR% over the rounds, pooled over the holes that recorded it, as the KPI reads it."""
     kind: Literal["gir_average"]
     category: Literal["gir"]
     trend: InsightTrend
@@ -896,16 +899,16 @@ class CourseHolePuttsRow(ResponseModel):
 
 
 class CourseHoleScoreTypeRow(ResponseModel):
-    """Percent of rounds that landed in each score type on the hole. `par` is the par percentage."""
+    """Percent of rounds that landed in each score kind on the hole. `par` is the par percentage."""
     hole_number: int
     sample_size: int
     eagle: float
     birdie: float
     par: float
     bogey: float
-    double_bogey: float
-    triple_bogey: float
-    quad_bogey: float
+    double: float
+    triple: float
+    quad: float
 
 
 class CourseGirImpactRow(ResponseModel):

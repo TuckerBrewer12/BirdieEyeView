@@ -50,9 +50,11 @@ def test_analytics_response_works_out_the_figures_the_page_shows():
     assert response.score_mix == ScoreMix(birdie=16.67, par=47.22, bogey=30.56, double=5.56)
     assert [insight.model_dump() for insight in response.insights] == [
         {"kind": "best_par", "category": "scoring", "trend": "down", "par": 5, "average_to_par": -0.75, "holes": 8},
-        {"kind": "gir_average", "category": "gir", "trend": "up", "rating": "fair", "percent": pytest.approx(52.78, abs=0.01)},
+        {"kind": "gir_average", "category": "gir", "trend": "up", "rating": "fair", "percent": 52.8},
         {"kind": "putts_average", "category": "putting", "trend": "down", "rating": "fair", "putts": 31.5},
     ]
+    # The insights read the KPIs' figures: 19 greens of 36, and 63 putts over two rounds.
+    assert response.kpis.gir_percentage == 52.8
     assert response.notable_achievements.scoring_records.lifetime.lowest_round == 72
     assert (response.kpis.three_putts_per_round, response.kpis.three_putt_rate) == (0.0, 0.0)
     assert response.kpis.scoring_average_change is None  # under five rounds

@@ -47,9 +47,9 @@ const halfMoonBayHoleStats: CourseHoleStats = {
     birdie: hole_number % 3 === 0 ? 0 : 50,
     par: 50,
     bogey: hole_number % 3 === 0 ? 50 : 0,
-    double_bogey: 0,
-    triple_bogey: 0,
-    quad_bogey: 0,
+    double: 0,
+    triple: 0,
+    quad: 0,
   })),
   course_difficulty_profile_by_hole: hole((hole_number, par) => ({
     hole_number,

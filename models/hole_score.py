@@ -1,10 +1,11 @@
 from pydantic import Field, model_validator
-from typing import Literal, Optional
+from typing import List, Literal, Optional, get_args
 
 from .base import BaseGolfModel
 
 
 ScoreKind = Literal["eagle", "birdie", "par", "bogey", "double", "triple", "quad"]
+SCORE_KINDS: List[ScoreKind] = list(get_args(ScoreKind))
 
 
 def score_kind(to_par: Optional[int]) -> Optional[ScoreKind]:
@@ -49,25 +50,3 @@ class HoleScore(BaseGolfModel):
         if effective_par is None:
             return None
         return self.strokes - effective_par
-
-    def get_score_type(self, par: Optional[int] = None) -> Optional[str]:
-        """Get score name (eagle, birdie, par, bogey, etc.). Falls back to par_played."""
-        relative = self.to_par(par)
-        if relative is None:
-            return None
-
-        score_names = {
-            -3: "albatross",
-            -2: "eagle",
-            -1: "birdie",
-            0: "par",
-            1: "bogey",
-            2: "double bogey",
-            3: "triple bogey",
-            4: "quadruple bogey",
-        }
-        if relative <= -3:
-            return "albatross"
-        if relative >= 5:
-            return "5+ over"
-        return score_names.get(relative)

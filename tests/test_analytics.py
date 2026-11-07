@@ -9,6 +9,7 @@ from analytics.stats import (
     course_difficulty_profile_by_hole,
     gir_comparison,
     gir_per_round,
+    gir_percentage,
     gir_percentage_by_hole,
     gir_vs_non_gir_score_distribution,
     overall_gir_percentage,
@@ -146,7 +147,18 @@ def test_overall_putts_per_gir_and_gir_percentage():
     assert overall_gir["holes_played"] == 36
     assert overall_gir["total_gir"] == 19
     assert overall_gir["total_missed_gir"] == 17
-    assert overall_gir["gir_percentage"] == pytest.approx((19 / 36) * 100)
+    assert overall_gir["gir_percentage"] == 52.8  # 19 of 36, to a tenth
+
+
+def test_gir_percentage_pools_the_holes_that_recorded_it():
+    """A hole with no GIR kept is not a missed green, and a round without GIR adds no holes."""
+    kept = Round(hole_scores=[
+        HoleScore(hole_number=i, strokes=4, green_in_regulation=(i <= 3) if i <= 6 else None) for i in range(1, 19)
+    ])
+    unkept = Round(hole_scores=[HoleScore(hole_number=i, strokes=4) for i in range(1, 19)])
+    assert gir_percentage([kept, unkept]) == 50.0
+    assert gir_per_round([kept])[0]["gir_percentage"] == 50.0
+    assert gir_percentage([unkept]) is None
 
 
 def test_recent_comparison_snapshots():
@@ -196,7 +208,7 @@ def test_gir_vs_non_gir_score_distribution():
     assert by_bucket["GIR"]["par"] == pytest.approx((11 / 19) * 100)
     assert by_bucket["GIR"]["birdie"] == pytest.approx((2 / 19) * 100)
 
-    assert by_bucket["No GIR"]["double_bogey"] == pytest.approx((2 / 17) * 100)
+    assert by_bucket["No GIR"]["double"] == pytest.approx((2 / 17) * 100)
     assert by_bucket["No GIR"]["bogey"] == pytest.approx((5 / 17) * 100)
     assert by_bucket["No GIR"]["par"] == pytest.approx((6 / 17) * 100)
     assert by_bucket["No GIR"]["birdie"] == pytest.approx((4 / 17) * 100)
@@ -207,9 +219,9 @@ def test_gir_vs_non_gir_score_distribution():
             "birdie",
             "par",
             "bogey",
-            "double_bogey",
-            "triple_bogey",
-            "quad_bogey",
+            "double",
+            "triple",
+            "quad",
         ))
         assert total_pct == pytest.approx(100.0)
 
@@ -436,7 +448,7 @@ def test_score_type_distribution_by_hole():
     # Hole 1 (par 3): scores are 4 and 5 -> bogey 50%, double 50%
     assert by_hole[1]["sample_size"] == 2
     assert by_hole[1]["bogey"] == pytest.approx(50.0)
-    assert by_hole[1]["double_bogey"] == pytest.approx(50.0)
+    assert by_hole[1]["double"] == pytest.approx(50.0)
     assert by_hole[1]["par"] == 0.0
 
     # Hole 2 (par 3): scores are 4 and 4 -> bogey 100%
@@ -448,9 +460,9 @@ def test_score_type_distribution_by_hole():
         + by_hole[1]["birdie"]
         + by_hole[1]["par"]
         + by_hole[1]["bogey"]
-        + by_hole[1]["double_bogey"]
-        + by_hole[1]["triple_bogey"]
-        + by_hole[1]["quad_bogey"]
+        + by_hole[1]["double"]
+        + by_hole[1]["triple"]
+        + by_hole[1]["quad"]
     )
     assert total_pct_hole_1 == pytest.approx(100.0)
 
@@ -468,7 +480,7 @@ def test_score_type_distribution_per_round():
     # holes 1-4 (par3): +2 on odd, +1 on even -> 2 double, 2 bogey
     # holes 5-14 (par4): +1 on odd, 0 on even -> 5 bogey, 5 par
     # holes 15-18 (par5): 0 on odd, -1 on even -> 2 par, 2 birdie
-    assert rows[1]["double_bogey"] == pytest.approx((2 / 18) * 100)
+    assert rows[1]["double"] == pytest.approx((2 / 18) * 100)
     assert rows[1]["bogey"] == pytest.approx((7 / 18) * 100)
     assert rows[1]["par"] == pytest.approx((7 / 18) * 100)
     assert rows[1]["birdie"] == pytest.approx((2 / 18) * 100)
@@ -478,9 +490,9 @@ def test_score_type_distribution_per_round():
         + rows[1]["birdie"]
         + rows[1]["par"]
         + rows[1]["bogey"]
-        + rows[1]["double_bogey"]
-        + rows[1]["triple_bogey"]
-        + rows[1]["quad_bogey"]
+        + rows[1]["double"]
+        + rows[1]["triple"]
+        + rows[1]["quad"]
     )
     assert total_pct == pytest.approx(100.0)
 
@@ -507,8 +519,8 @@ def test_notable_achievements_lifetime_and_one_year():
     assert summary["scoring_records"]["lifetime"]["lowest_round"] == 72
     assert summary["scoring_records"]["lifetime"]["highest_round"] == 81
     assert summary["scoring_records"]["one_year"]["lowest_round"] == 72
-    assert summary["scoring_records_events"]["lifetime"]["lowest_round"] == {"date": "2026/2/1", "course": "Demo Course", "round_id": "r1"}
-    assert summary["scoring_records_events"]["lifetime"]["highest_round"] == {"date": "2026/2/2", "course": "Demo Course", "round_id": "r2"}
+    assert summary["scoring_records_events"]["lifetime"]["lowest_round"] == {"date": "2026-02-01", "course": "Demo Course", "round_id": "r1"}
+    assert summary["scoring_records_events"]["lifetime"]["highest_round"] == {"date": "2026-02-02", "course": "Demo Course", "round_id": "r2"}
 
     lifetime_totals = summary["career_totals"]["lifetime"]
     assert lifetime_totals["total_rounds_played"] == 2
@@ -530,7 +542,7 @@ def test_notable_achievements_lifetime_and_one_year():
     assert year_totals["triple_bogeys"] == 0
     assert summary["best_performance_streaks"]["lifetime"]["longest_par_streak"] == 14
     assert summary["best_performance_streaks_events"]["lifetime"]["longest_par_streak"] == {
-        "date": "2026/2/1",
+        "date": "2026-02-01",
         "course": "Demo Course",
         "round_id": "r1",
     }
@@ -540,35 +552,35 @@ def test_notable_achievements_lifetime_and_one_year():
     assert summary["home_course_records"]["lifetime"]["most_rounds_played_at_home_course"] == 0
 
     putt_breaks = {row["threshold"]: row["achievement"] for row in summary["putting_milestones"]["lifetime"]["putt_breaks"]}
-    assert putt_breaks[45]["date"] == "2026/2/1"
-    assert putt_breaks[42]["date"] == "2026/2/1"
-    assert putt_breaks[39]["date"] == "2026/2/1"
-    assert putt_breaks[30]["date"] == "2026/2/2"
+    assert putt_breaks[45]["date"] == "2026-02-01"
+    assert putt_breaks[42]["date"] == "2026-02-01"
+    assert putt_breaks[39]["date"] == "2026-02-01"
+    assert putt_breaks[30]["date"] == "2026-02-02"
     assert putt_breaks[27] is None
     assert summary["putting_milestones"]["one_year"]["putting_milestones_achieved_from_lifetime_set"] == 6
-    assert summary["putting_milestones_events"]["lifetime"]["fewest_putts_in_round"] == {"date": "2026/2/2", "course": "Demo Course", "round_id": "r2"}
+    assert summary["putting_milestones_events"]["lifetime"]["fewest_putts_in_round"] == {"date": "2026-02-02", "course": "Demo Course", "round_id": "r2"}
 
     breaks = {row["threshold"]: row["achievement"] for row in summary["round_milestones"]["lifetime"]["score_breaks"]}
-    assert breaks[120]["date"] == "2026/2/1"
+    assert breaks[120]["date"] == "2026-02-01"
     assert breaks[120]["course"] == "Demo Course"
-    assert breaks[75]["date"] == "2026/2/1"
+    assert breaks[75]["date"] == "2026-02-01"
     assert breaks[70] is None
     assert summary["round_milestones"]["lifetime"]["first_round_under_par"] is None
     assert summary["round_milestones"]["lifetime"]["first_eagle"] is None
     assert summary["round_milestones"]["lifetime"]["first_hole_in_one"] is None
 
     gir_breaks = {row["threshold"]: row["achievement"] for row in summary["gir_milestones"]["lifetime"]["gir_breaks"]}
-    assert gir_breaks[3]["date"] == "2026/2/1"
-    assert gir_breaks[6]["date"] == "2026/2/1"
-    assert gir_breaks[9]["date"] == "2026/2/1"
+    assert gir_breaks[3]["date"] == "2026-02-01"
+    assert gir_breaks[6]["date"] == "2026-02-01"
+    assert gir_breaks[9]["date"] == "2026-02-01"
     assert gir_breaks[12] is None
     assert summary["gir_milestones"]["lifetime"]["most_gir_in_round"] == 10
     assert summary["gir_milestones"]["lifetime"]["highest_gir_percentage_in_round"] == pytest.approx((10 / 18) * 100)
-    assert summary["gir_milestones"]["one_year"]["best_gir_round"] == {"date": "2026/2/1", "course": "Demo Course", "round_id": "r1"}
+    assert summary["gir_milestones"]["one_year"]["best_gir_round"] == {"date": "2026-02-01", "course": "Demo Course", "round_id": "r1"}
     assert summary["gir_milestones"]["one_year"]["best_gir_in_round"] == 10
     assert summary["gir_milestones"]["one_year"]["highest_gir_percentage"] == pytest.approx((10 / 18) * 100)
     assert summary["gir_milestones"]["one_year"]["gir_milestones_achieved_from_lifetime_set"] == 3
-    assert summary["gir_milestones_events"]["lifetime"]["most_gir_in_round"] == {"date": "2026/2/1", "course": "Demo Course", "round_id": "r1"}
+    assert summary["gir_milestones_events"]["lifetime"]["most_gir_in_round"] == {"date": "2026-02-01", "course": "Demo Course", "round_id": "r1"}
 
 
 def test_round_half_up_takes_a_half_up_as_the_app_always_has():

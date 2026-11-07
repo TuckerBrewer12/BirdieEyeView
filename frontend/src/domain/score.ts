@@ -16,30 +16,6 @@ export type ScoreKind = (typeof SCORE_KINDS)[number];
 /** Share of holes at each score kind, in percent. */
 export type ScoreMix = Record<ScoreKind, number>;
 
-/** A server row with a share for each score kind, named as the per-hole and GIR-split rows name them. */
-export interface ScoreTypeShares {
-  eagle: number;
-  birdie: number;
-  par: number;
-  bogey: number;
-  double_bogey: number;
-  triple_bogey: number;
-  quad_bogey: number;
-}
-
-/** A server row's score-kind shares as a {@link ScoreMix}. The server's own `score_mix` fields already are one. */
-export function scoreMixFrom(row: ScoreTypeShares): ScoreMix {
-  return {
-    eagle: row.eagle,
-    birdie: row.birdie,
-    par: row.par,
-    bogey: row.bogey,
-    double: row.double_bogey,
-    triple: row.triple_bogey,
-    quad: row.quad_bogey,
-  };
-}
-
 /**
  * Classify a hole from strokes and par. Unknown inputs return null —
  * presentation layers decide how to paint a missing score.

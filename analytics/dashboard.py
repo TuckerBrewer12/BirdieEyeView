@@ -9,36 +9,21 @@ from typing import Any, Dict, List, Literal, Optional
 from analytics import stats as analytics
 from analytics.insights import Rating, putts_rating
 from models import Round
-from models.hole_score import ScoreKind
+from models.hole_score import SCORE_KINDS
 
 RECENT_ROUNDS = 5
-SCORE_KINDS: List[ScoreKind] = ["eagle", "birdie", "par", "bogey", "double", "triple", "quad"]
 
 HandicapDirection = Literal["up", "down", "flat"]
-
-
-def _pooled_pct(rows: List[Dict[str, Any]], successes: str, chances: str) -> Optional[float]:
-    """A rate pooled over every chance in the rows, not averaged per round."""
-    total = sum(r[chances] or 0 for r in rows)
-    return sum(r[successes] or 0 for r in rows) / total * 100 if total > 0 else None
-
-
-def scoring_average(rounds: List[Round], window: Optional[int] = None) -> Optional[float]:
-    """Average score over the last `window` scored rounds, or all of them."""
-    scores = [s for s in (r.calculate_total_score() for r in rounds) if s is not None]
-    if window is not None:
-        scores = scores[-window:]
-    return sum(scores) / len(scores) if scores else None
 
 
 def scoring_average_change(
     rounds: List[Round], window: int = RECENT_ROUNDS, full_window: bool = False
 ) -> Optional[float]:
-    """How far the last `window` rounds' average sits from the whole window's, to a tenth.
-    Negative means the recent rounds came in lower. With `full_window`, null until `window`
-    rounds have a score."""
-    overall = scoring_average(rounds)
-    recent = scoring_average(rounds, window)
+    """How far the last `window` rounds' scoring average sits from the whole window's, to a tenth:
+    the difference of the two averages as shown. Negative means the recent rounds came in lower.
+    With `full_window`, null until `window` rounds have a score."""
+    overall = analytics.scoring_average(rounds)
+    recent = analytics.scoring_average(rounds, window)
     if overall is None or recent is None:
         return None
     if full_window and sum(1 for r in rounds if r.calculate_total_score() is not None) < window:
@@ -47,26 +32,24 @@ def scoring_average_change(
 
 
 def recent_form(rounds: List[Round], window: int = RECENT_ROUNDS) -> Dict[str, Optional[float]]:
-    """GIR, scrambling and up-and-down rates, and putts per 18, over the last `window` rounds."""
+    """GIR, scrambling and up-and-down rates and putts a round over the last `window` rounds,
+    worked out as the analytics page works them out over its rounds."""
     recent = rounds[-window:]
-    gir_rows = [r for r in analytics.gir_per_round(recent) if r["total_gir"] is not None and r["holes_played"]]
-    putt_rows = [r for r in analytics.putts_per_round(recent) if r["total_putts"] is not None and r["holes_played"]]
-    putt_holes = sum(r["holes_played"] for r in putt_rows)
     return {
-        "gir_pct": _pooled_pct(gir_rows, "total_gir", "holes_played"),
-        "scrambling_pct": _pooled_pct(analytics.scrambling_per_round(recent), "scramble_successes", "scramble_opportunities"),
-        "up_and_down_pct": _pooled_pct(analytics.up_and_down_trend(recent), "successes", "opportunities"),
-        "putts_per_18": sum(r["total_putts"] for r in putt_rows) / putt_holes * 18 if putt_holes else None,
+        "gir_pct": analytics.gir_percentage(recent),
+        "scrambling_pct": analytics.scrambling_percentage(recent),
+        "up_and_down_pct": analytics.up_and_down_percentage(recent),
+        "average_putts": analytics.average_putts(recent),
     }
 
 
-def putts_shown(recent_putts_per_18: Optional[float], average_putts: Optional[float]) -> Dict[str, Any]:
+def putts_shown(recent_putts: Optional[float], average_putts: Optional[float]) -> Dict[str, Any]:
     """The putts figure the dashboard shows, and how good it is.
 
-    The last five rounds' putts per 18 when they have putts, else the average over every round.
+    The last five rounds' putts a round when they have putts, else the average over every round.
     Rated by `insights.putts_rating`, so the dashboard and the analytics page agree.
     """
-    putts = recent_putts_per_18 if recent_putts_per_18 is not None else average_putts
+    putts = recent_putts if recent_putts is not None else average_putts
     rating: Optional[Rating] = putts_rating(putts) if putts is not None else None
     return {"per_round": putts, "rating": rating}
 
@@ -132,10 +115,6 @@ def whs_breakdown(
     }
 
 
-def _iso_date(raw: str) -> str:
-    return str(raw).split("T")[0]
-
-
 def _lowest_threshold(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     reached = [r for r in rows if r.get("achievement")]
     return min(reached, key=lambda r: r["threshold"]) if reached else None
@@ -154,7 +133,7 @@ def lifetime_milestones(achievements: Dict[str, Any]) -> List[Dict[str, Any]]:
         return {
             "kind": kind,
             "value": value,
-            "date": _iso_date(event["date"]),
+            "date": event["date"],
             "course": event["course"],
             "round_id": event.get("round_id"),
         }

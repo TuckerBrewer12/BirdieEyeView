@@ -20,10 +20,6 @@ ImpactKind = Literal["birdies", "bogeys", "doubles"]
 STROKES_PER_HOLE: Dict[ImpactKind, int] = {"birdies": 1, "bogeys": -1, "doubles": -2}
 
 
-def _course_name(round_: Round) -> Optional[str]:
-    return round_.course.name if round_.course else round_.course_name_played
-
-
 def _per_round(rounds: List[Round]) -> Optional[Dict[ImpactKind, float]]:
     """Birdies, bogeys and doubles or worse a round, over the rounds with a hole that has a par.
     Null when none has one."""
@@ -94,7 +90,7 @@ def peak_game(rounds: List[Round]) -> Optional[Dict[str, Any]]:
         return None
     return {
         "rounds": [
-            {"round_id": r.id, "course_name": _course_name(r), "score": score}
+            {"round_id": r.id, "course_name": r.course_name(), "score": score}
             for r, score in best
         ],
         "average": round_half_up(sum(score for _, score in best) / len(best), 1),

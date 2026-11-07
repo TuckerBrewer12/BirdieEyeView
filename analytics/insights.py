@@ -1,11 +1,15 @@
 """What stands out in a player's rounds, for the analytics page to put into words.
 
 Each insight is a fact and the figures behind it: which way it points (`trend`) and, for an
-average, how good it is (`rating`). The page words it; the judgement is made here.
-Every function takes the trend rows the analytics response already builds, oldest first.
+average, how good it is (`rating`). The page words it; the judgement is made here. Every figure
+is worked out as the analytics KPIs work it out (`analytics.stats`), so an insight's GIR% or
+putts reads the same as the KPI beside it. Every function takes the rounds oldest first.
 """
 
 from typing import Any, Dict, List, Literal, Optional
+
+from analytics import stats
+from models import Round
 
 Trend = Literal["up", "down", "flat"]
 Rating = Literal["strong", "fair", "weak"]
@@ -20,17 +24,10 @@ PUTTS_SHIFT_MIN_PUTTS = 0.5
 SHIFT_MIN_ROUNDS = 4
 
 
-def _mean(values: List[float]) -> float:
-    return sum(values) / len(values)
-
-
-def _halves_change(values: List[float]) -> Optional[float]:
-    """The later half's average less the earlier half's. An odd one out goes to the later half."""
-    mid = len(values) // 2
-    earlier, later = values[:mid], values[mid:]
-    if not earlier or not later:
-        return None
-    return _mean(later) - _mean(earlier)
+def _halves(rounds: List[Round]) -> tuple[List[Round], List[Round]]:
+    """The earlier and later half of the rounds. An odd one out goes to the later half."""
+    mid = len(rounds) // 2
+    return rounds[:mid], rounds[mid:]
 
 
 def gir_rating(percent: float) -> Rating:
@@ -47,16 +44,14 @@ def putts_rating(putts: float) -> Rating:
     return "fair" if putts <= 34 else "weak"
 
 
-def _scoring_shift(score_trend: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+def _scoring_shift(rounds: List[Round]) -> Optional[Dict[str, Any]]:
     """The earlier half of the rounds' scoring average less the later half's: positive when scores came down."""
-    if len(score_trend) < SCORING_SHIFT_MIN_ROUNDS:
+    if len(rounds) < SCORING_SHIFT_MIN_ROUNDS:
         return None
-    mid = len(score_trend) // 2
-    earlier = [row["total_score"] for row in score_trend[:mid] if row["total_score"] is not None]
-    later = [row["total_score"] for row in score_trend[mid:] if row["total_score"] is not None]
-    if not earlier or not later:
+    earlier, later = (stats.scoring_average(half) for half in _halves(rounds))
+    if earlier is None or later is None:
         return None
-    strokes = _mean(earlier) - _mean(later)
+    strokes = stats.round_half_up(earlier - later)
     if abs(strokes) < SCORING_SHIFT_MIN_STROKES:
         return None
     return {
@@ -64,7 +59,7 @@ def _scoring_shift(score_trend: List[Dict[str, Any]]) -> Optional[Dict[str, Any]
         "category": "scoring",
         "trend": "down" if strokes > 0 else "up",
         "strokes": strokes,
-        "rounds": len(score_trend),
+        "rounds": len(rounds),
     }
 
 
@@ -83,12 +78,13 @@ def _best_par(scoring_by_par: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     }
 
 
-def _gir(gir_trend: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """The average of each round's GIR%, and how far it moved from the earlier half of the rounds to the later."""
-    rates = [row["gir_percentage"] for row in gir_trend if row["gir_percentage"] is not None]
+def _gir(rounds: List[Round]) -> List[Dict[str, Any]]:
+    """GIR% over the rounds (`stats.gir_percentage`), and how far it moved from the earlier half
+    of the rounds that recorded it to the later."""
+    recorded = [r for r in rounds if stats.gir_percentage([r]) is not None]
     found: List[Dict[str, Any]] = []
-    if rates:
-        percent = _mean(rates)
+    percent = stats.gir_percentage(recorded)
+    if percent is not None:
         found.append({
             "kind": "gir_average",
             "category": "gir",
@@ -96,19 +92,21 @@ def _gir(gir_trend: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             "rating": gir_rating(percent),
             "percent": percent,
         })
-    if len(rates) >= SHIFT_MIN_ROUNDS:
-        points = _halves_change(rates)
-        if points is not None and abs(points) >= GIR_SHIFT_MIN_POINTS:
+    earlier, later = (stats.gir_percentage(half) for half in _halves(recorded))
+    if len(recorded) >= SHIFT_MIN_ROUNDS and earlier is not None and later is not None:
+        points = stats.round_half_up(later - earlier)
+        if abs(points) >= GIR_SHIFT_MIN_POINTS:
             found.append({"kind": "gir_shift", "category": "gir", "trend": "up" if points > 0 else "down", "points": points})
     return found
 
 
-def _putts(putts_trend: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Putts per round, and how far they came down from the earlier half of the rounds to the later."""
-    putts = [row["total_putts"] for row in putts_trend if row["total_putts"] is not None]
+def _putts(rounds: List[Round]) -> List[Dict[str, Any]]:
+    """Putts a round (`stats.average_putts`), and how far they came down from the earlier half of
+    the rounds with putts to the later."""
+    recorded = [r for r in rounds if r.get_total_putts() is not None]
     found: List[Dict[str, Any]] = []
-    if putts:
-        average = _mean(putts)
+    average = stats.average_putts(recorded)
+    if average is not None:
         trend: Trend = "down" if average <= 32 else ("flat" if average <= 36 else "up")
         found.append({
             "kind": "putts_average",
@@ -117,20 +115,16 @@ def _putts(putts_trend: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             "rating": putts_rating(average),
             "putts": average,
         })
-    if len(putts) >= SHIFT_MIN_ROUNDS:
-        change = _halves_change(putts)
-        if change is not None and abs(change) >= PUTTS_SHIFT_MIN_PUTTS:
+    earlier, later = (stats.average_putts(half) for half in _halves(recorded))
+    if len(recorded) >= SHIFT_MIN_ROUNDS and earlier is not None and later is not None:
+        change = stats.round_half_up(later - earlier)
+        if abs(change) >= PUTTS_SHIFT_MIN_PUTTS:
             # Positive when putts came down.
             found.append({"kind": "putts_shift", "category": "putting", "trend": "down" if change < 0 else "up", "putts": -change})
     return found
 
 
-def insights(
-    score_trend: List[Dict[str, Any]],
-    gir_trend: List[Dict[str, Any]],
-    scoring_by_par: List[Dict[str, Any]],
-    putts_trend: List[Dict[str, Any]],
-) -> List[Dict[str, Any]]:
+def insights(rounds: List[Round], scoring_by_par: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Every insight the rounds support, scoring first, then greens, then putting."""
-    found = [_scoring_shift(score_trend), _best_par(scoring_by_par)]
-    return [insight for insight in found if insight is not None] + _gir(gir_trend) + _putts(putts_trend)
+    found = [_scoring_shift(rounds), _best_par(scoring_by_par)]
+    return [insight for insight in found if insight is not None] + _gir(rounds) + _putts(rounds)

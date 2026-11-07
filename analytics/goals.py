@@ -7,14 +7,16 @@ from typing import Any, Dict, List, Optional
 from models.round import Round
 from analytics.peak import peak_gap, peak_meets_goal
 from analytics.stats import (
-    full_rounds,
-    three_putts_per_round,
-    score_type_distribution_per_round,
-    scoring_by_yardage_buckets,
     course_difficulty_profile_by_hole,
-    overall_gir_percentage,
-    scrambling_per_round,
+    full_rounds,
+    gir_percentage,
+    round_half_up,
+    score_type_distribution_per_round,
+    scoring_average,
     scoring_by_par,
+    scoring_by_yardage_buckets,
+    scrambling_percentage,
+    three_putt_averages,
 )
 
 
@@ -45,10 +47,10 @@ def goal_report(
 
     Returns gap analysis and ranked list of highest-ROI improvement areas (savers).
     """
-    scores = [r.calculate_total_score() for r in rounds]
-    scores = [s for s in scores if s is not None]
+    scores = [s for s in (r.calculate_total_score() for r in rounds) if s is not None]
+    scoring_avg = scoring_average(rounds)
 
-    if not scores:
+    if scoring_avg is None:
         return {
             "scoring_average": None,
             "lowest_score": None,
@@ -63,46 +65,42 @@ def goal_report(
             "savers": [],
         }
 
-    scoring_avg = sum(scores) / len(scores)
     # A record, so full rounds only, as the career records have it: a nine's 45 is not a round of 45.
     full_scores = [s for s in (r.calculate_total_score() for r in full_rounds(rounds)) if s is not None]
     lowest_score = min(full_scores) if full_scores else None
-    gap = scoring_avg - scoring_goal
+    gap = round_half_up(scoring_avg - scoring_goal)
     on_track = gap <= 0
     progress_pct = _progress_pct(scores[0], scoring_avg, scoring_goal, on_track)
 
     savers: List[Dict[str, Any]] = []
 
     # A. Three-Putt Bleed
-    three_putt_rows = three_putts_per_round(rounds)
-    rounds_with_putt_data = [r for r in three_putt_rows if r["holes_with_putt_data"] > 0]
-    if rounds_with_putt_data:
-        avg_three_putts = sum(r["three_putt_count"] for r in rounds_with_putt_data) / len(rounds_with_putt_data)
-        if avg_three_putts >= 0.1:
-            pct = (avg_three_putts / gap * 100) if gap > 0 else 0.0
-            savers.append({
-                "type": "three_putt_bleed",
-                "strokes_saved": round(avg_three_putts, 2),
-                "percentage_of_gap": round(min(pct, 999.0), 1),
-                "headline": f"Eliminate 3-putts → −{avg_three_putts:.1f} strokes/round",
-                "detail": (
-                    f"You average {avg_three_putts:.1f} three-putts per round. "
-                    f"Converting them to 2-putts closes {pct:.0f}% of your {gap:.1f}-stroke gap."
-                    if gap > 0 else
-                    f"You average {avg_three_putts:.1f} three-putts per round — keep eliminating them to push lower."
-                ),
-                "data": {"avg_three_putts": round(avg_three_putts, 2)},
-            })
+    avg_three_putts = three_putt_averages(rounds)["per_round"]
+    if avg_three_putts is not None and avg_three_putts >= 0.1:
+        pct = (avg_three_putts / gap * 100) if gap > 0 else 0.0
+        savers.append({
+            "type": "three_putt_bleed",
+            "strokes_saved": round(avg_three_putts, 2),
+            "percentage_of_gap": round(min(pct, 999.0), 1),
+            "headline": f"Eliminate 3-putts → −{avg_three_putts:.1f} strokes/round",
+            "detail": (
+                f"You average {avg_three_putts:.1f} three-putts per round. "
+                f"Converting them to 2-putts closes {pct:.0f}% of your {gap:.1f}-stroke gap."
+                if gap > 0 else
+                f"You average {avg_three_putts:.1f} three-putts per round — keep eliminating them to push lower."
+            ),
+            "data": {"avg_three_putts": round(avg_three_putts, 2)},
+        })
 
     # B. Blowup Holes
     dist_rows = score_type_distribution_per_round(rounds)
     dist_rows_with_data = [r for r in dist_rows if r["holes_counted"] > 0]
     if dist_rows_with_data:
         avg_doubles = sum(
-            (r["double_bogey"] / 100) * r["holes_counted"] for r in dist_rows_with_data
+            (r["double"] / 100) * r["holes_counted"] for r in dist_rows_with_data
         ) / len(dist_rows_with_data)
         avg_triples_plus = sum(
-            ((r["triple_bogey"] + r["quad_bogey"]) / 100) * r["holes_counted"]
+            ((r["triple"] + r["quad"]) / 100) * r["holes_counted"]
             for r in dist_rows_with_data
         ) / len(dist_rows_with_data)
 
@@ -179,8 +177,7 @@ def goal_report(
                 })
 
     # E. GIR Opportunity
-    gir_data = overall_gir_percentage(rounds)
-    gir_pct = gir_data.get("gir_percentage")
+    gir_pct = gir_percentage(rounds)
     if gir_pct is not None and gir_pct < 45:
         # Each GIR miss that becomes a GIR saves roughly 0.5–0.7 strokes vs scrambling
         # Estimate: improving GIR by 10 percentage points ≈ 1 extra GIR per round ≈ 0.6 strokes saved
@@ -202,30 +199,27 @@ def goal_report(
             })
 
     # F. Scrambling Opportunity
-    scrambling_rows = scrambling_per_round(rounds)
-    scrambling_vals = [r["scrambling_percentage"] for r in scrambling_rows if r["scrambling_percentage"] is not None]
-    if scrambling_vals:
-        avg_scrambling = sum(scrambling_vals) / len(scrambling_vals)
-        if avg_scrambling < 50:
-            # Avg amateur scrambling ~35–40%, tour avg ~60%. Each extra save = 1 stroke.
-            # Estimate GIR misses per round ≈ 18 * (1 - gir_pct/100)
-            gir_pct_for_scramble = gir_data.get("gir_percentage") or 33.0
-            misses_per_round = 18 * (1 - gir_pct_for_scramble / 100)
-            scramble_gap = 50 - avg_scrambling  # pp below benchmark
-            realistic_saves = min(scramble_gap / 100, 0.15) * misses_per_round
-            if realistic_saves >= 0.15:
-                pct = (realistic_saves / gap * 100) if gap > 0 else 0.0
-                savers.append({
-                    "type": "scrambling_opportunity",
-                    "strokes_saved": round(realistic_saves, 2),
-                    "percentage_of_gap": round(min(pct, 999.0), 1),
-                    "headline": f"Improve scrambling → {avg_scrambling:.0f}% (target 50%)",
-                    "detail": (
-                        f"You scramble successfully {avg_scrambling:.0f}% of the time when missing greens. "
-                        f"Reaching 50% saves roughly {realistic_saves:.1f} strokes per round through better chip-and-putt."
-                    ),
-                    "data": {"scrambling_percentage": round(avg_scrambling, 1)},
-                })
+    avg_scrambling = scrambling_percentage(rounds)
+    if avg_scrambling is not None and avg_scrambling < 50:
+        # Avg amateur scrambling ~35–40%, tour avg ~60%. Each extra save = 1 stroke.
+        # Estimate GIR misses per round ≈ 18 * (1 - gir_pct/100)
+        gir_pct_for_scramble = gir_pct or 33.0
+        misses_per_round = 18 * (1 - gir_pct_for_scramble / 100)
+        scramble_gap = 50 - avg_scrambling  # pp below benchmark
+        realistic_saves = min(scramble_gap / 100, 0.15) * misses_per_round
+        if realistic_saves >= 0.15:
+            pct = (realistic_saves / gap * 100) if gap > 0 else 0.0
+            savers.append({
+                "type": "scrambling_opportunity",
+                "strokes_saved": round(realistic_saves, 2),
+                "percentage_of_gap": round(min(pct, 999.0), 1),
+                "headline": f"Improve scrambling → {avg_scrambling:.0f}% (target 50%)",
+                "detail": (
+                    f"You scramble successfully {avg_scrambling:.0f}% of the time when missing greens. "
+                    f"Reaching 50% saves roughly {realistic_saves:.1f} strokes per round through better chip-and-putt."
+                ),
+                "data": {"scrambling_percentage": round(avg_scrambling, 1)},
+            })
 
     # G. Par 5 Opportunity
     par_rows = scoring_by_par(rounds)
@@ -256,10 +250,10 @@ def goal_report(
     savers = [s for s in savers if s["strokes_saved"] >= 0.1]
 
     return {
-        "scoring_average": round(scoring_avg, 1),
+        "scoring_average": scoring_avg,
         "lowest_score": lowest_score,
         "scoring_goal": scoring_goal,
-        "gap": round(gap, 1),
+        "gap": gap,
         "on_track": on_track,
         "progress_pct": progress_pct,
         "rounds_meeting_goal": sum(1 for s in scores if s <= scoring_goal),

@@ -393,8 +393,8 @@
         },
         "required": [
           "scoring_average",
-          "gir_percentage",
           "putts_per_gir",
+          "gir_percentage",
           "scrambling_percentage",
           "up_and_down_percentage",
           "handicap_index",
@@ -1369,7 +1369,7 @@
         "type": "object"
       },
       "CourseHoleScoreTypeRow": {
-        "description": "Percent of rounds that landed in each score type on the hole. `par` is the par percentage.",
+        "description": "Percent of rounds that landed in each score kind on the hole. `par` is the par percentage.",
         "properties": {
           "birdie": {
             "title": "Birdie",
@@ -1379,8 +1379,8 @@
             "title": "Bogey",
             "type": "number"
           },
-          "double_bogey": {
-            "title": "Double Bogey",
+          "double": {
+            "title": "Double",
             "type": "number"
           },
           "eagle": {
@@ -1395,16 +1395,16 @@
             "title": "Par",
             "type": "number"
           },
-          "quad_bogey": {
-            "title": "Quad Bogey",
+          "quad": {
+            "title": "Quad",
             "type": "number"
           },
           "sample_size": {
             "title": "Sample Size",
             "type": "integer"
           },
-          "triple_bogey": {
-            "title": "Triple Bogey",
+          "triple": {
+            "title": "Triple",
             "type": "number"
           }
         },
@@ -1415,9 +1415,9 @@
           "birdie",
           "par",
           "bogey",
-          "double_bogey",
-          "triple_bogey",
-          "quad_bogey"
+          "double",
+          "triple",
+          "quad"
         ],
         "title": "CourseHoleScoreTypeRow",
         "type": "object"
@@ -1911,17 +1911,6 @@
       "DashboardResponse": {
         "description": "Aggregated stats for the dashboard page. Every figure is worked out here, not on the client.",
         "properties": {
-          "average_gir": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Average Gir"
-          },
           "average_putts": {
             "anyOf": [
               {
@@ -2136,7 +2125,6 @@
           "recent_rounds",
           "best_recent_round_id",
           "average_putts",
-          "average_gir",
           "putts_per_round",
           "putts_rating",
           "scoring_average_l20",
@@ -2312,7 +2300,7 @@
         "type": "object"
       },
       "GirAverageInsight": {
-        "description": "Each round's GIR%, averaged.",
+        "description": "GIR% over the rounds, pooled over the holes that recorded it, as the KPI reads it.",
         "properties": {
           "category": {
             "const": "gir",
@@ -2480,7 +2468,7 @@
         "type": "object"
       },
       "GirVsNonGirRow": {
-        "description": "Percent of GIR (or missed-green) holes in each score type.",
+        "description": "Percent of GIR (or missed-green) holes in each score kind.",
         "properties": {
           "birdie": {
             "title": "Birdie",
@@ -2498,8 +2486,8 @@
             "title": "Bucket",
             "type": "string"
           },
-          "double_bogey": {
-            "title": "Double Bogey",
+          "double": {
+            "title": "Double",
             "type": "number"
           },
           "eagle": {
@@ -2514,12 +2502,12 @@
             "title": "Par",
             "type": "number"
           },
-          "quad_bogey": {
-            "title": "Quad Bogey",
+          "quad": {
+            "title": "Quad",
             "type": "number"
           },
-          "triple_bogey": {
-            "title": "Triple Bogey",
+          "triple": {
+            "title": "Triple",
             "type": "number"
           }
         },
@@ -2530,9 +2518,9 @@
           "birdie",
           "par",
           "bogey",
-          "double_bogey",
-          "triple_bogey",
-          "quad_bogey"
+          "double",
+          "triple",
+          "quad"
         ],
         "title": "GirVsNonGirRow",
         "type": "object"
@@ -4153,7 +4141,7 @@
         "type": "object"
       },
       "MilestoneEvent": {
-        "description": "The round a record or milestone was set in. `date` reads 2026/5/28.",
+        "description": "The round a record or milestone was set in. `date` is the day it was played: 2026-05-28.",
         "properties": {
           "course": {
             "title": "Course",
@@ -5272,8 +5260,19 @@
         "type": "object"
       },
       "RecentForm": {
-        "description": "Rates over the last five rounds, pooled by chances. Null when there is nothing to measure.",
+        "description": "The last five rounds' rates, pooled by chances, and putts a round, each to a tenth and\nworked out as the analytics KPIs are. Null when there is nothing to measure.",
         "properties": {
+          "average_putts": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Putts"
+          },
           "gir_pct": {
             "anyOf": [
               {
@@ -5284,17 +5283,6 @@
               }
             ],
             "title": "Gir Pct"
-          },
-          "putts_per_18": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Putts Per 18"
           },
           "scrambling_pct": {
             "anyOf": [
@@ -5323,7 +5311,7 @@
           "gir_pct",
           "scrambling_pct",
           "up_and_down_pct",
-          "putts_per_18"
+          "average_putts"
         ],
         "title": "RecentForm",
         "type": "object"
@@ -5543,6 +5531,17 @@
             ],
             "title": "Course Handicap"
           },
+          "course_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Name"
+          },
           "course_name_played": {
             "anyOf": [
               {
@@ -5752,6 +5751,7 @@
           "score_counts",
           "holes_played",
           "id",
+          "course_name",
           "course",
           "tee_box",
           "date",
@@ -9479,65 +9479,6 @@
           }
         ],
         "summary": "Get Dashboard",
-        "tags": [
-          "stats"
-        ]
-      }
-    },
-    "/api/stats/milestones/{user_id}": {
-      "get": {
-        "description": "Return a flat, sorted list of lifetime milestone events for the user.",
-        "operationId": "get_milestones_api_stats_milestones__user_id__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 12,
-              "maximum": 50,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Get Milestones",
         "tags": [
           "stats"
         ]

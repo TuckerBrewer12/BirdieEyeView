@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import ValidationError
 
 from models import Course, Hole, Tee, HoleScore, Round, User, UserTee
+from models.hole_score import score_kind
 
 
 # ================================================================
@@ -97,21 +98,20 @@ def test_hole_score_validation_and_logic():
 
     hs = HoleScore(hole_number=1, strokes=5, putts=2, par_played=4)
     assert hs.to_par() == 1
-    assert hs.get_score_type() == "bogey"
+    assert score_kind(hs.to_par()) == "bogey"
 
     # Explicit par arg overrides par_played
     assert hs.to_par(par=5) == 0
-    assert hs.get_score_type(par=5) == "par"
 
-    # Common score types via par_played
-    assert HoleScore(strokes=3, par_played=5).get_score_type() == "eagle"
-    assert HoleScore(strokes=3, par_played=4).get_score_type() == "birdie"
-    assert HoleScore(strokes=6, par_played=4).get_score_type() == "double bogey"
-    assert HoleScore(strokes=7, par_played=4).get_score_type() == "triple bogey"
+    # The score kinds, via par_played
+    assert score_kind(HoleScore(strokes=3, par_played=5).to_par()) == "eagle"
+    assert score_kind(HoleScore(strokes=3, par_played=4).to_par()) == "birdie"
+    assert score_kind(HoleScore(strokes=6, par_played=4).to_par()) == "double"
+    assert score_kind(HoleScore(strokes=7, par_played=4).to_par()) == "triple"
 
     # None strokes → always None
     assert HoleScore(strokes=None, par_played=4).to_par() is None
-    assert HoleScore(strokes=None, par_played=None).get_score_type() is None
+    assert score_kind(HoleScore(strokes=None, par_played=None).to_par()) is None
 
 
 def test_hole_score_par_played_validation():
@@ -133,20 +133,18 @@ def test_hole_score_par_played_validation():
 
 
 def test_hole_score_to_par_no_par_data():
-    """to_par and get_score_type return None when neither par arg nor par_played is set."""
+    """to_par, and so the score kind, is None when neither par arg nor par_played is set."""
     hs = HoleScore(strokes=5)  # no par_played
     assert hs.to_par() is None
-    assert hs.get_score_type() is None
+    assert score_kind(hs.to_par()) is None
 
 
-def test_score_type_extremes():
-    # Albatross: ≤ −3
-    assert HoleScore(strokes=2, par_played=5).get_score_type() == "albatross"
-    assert HoleScore(strokes=3, par_played=6).get_score_type() == "albatross"
-
-    # 5+ over
-    assert HoleScore(strokes=9, par_played=4).get_score_type() == "5+ over"
-    assert HoleScore(strokes=10, par_played=4).get_score_type() == "5+ over"
+def test_score_kind_ends_are_open():
+    # Eagle takes anything better, quad anything worse.
+    assert score_kind(HoleScore(strokes=2, par_played=5).to_par()) == "eagle"
+    assert score_kind(HoleScore(strokes=3, par_played=6).to_par()) == "eagle"
+    assert score_kind(HoleScore(strokes=8, par_played=4).to_par()) == "quad"
+    assert score_kind(HoleScore(strokes=10, par_played=4).to_par()) == "quad"
 
 
 # ================================================================
@@ -192,6 +190,25 @@ def test_round_to_par_with_course():
     assert r.get_par() == 72
     assert r.score_to_par(1) == 1
     assert r.total_to_par() == 18
+
+
+def test_round_par_is_the_par_of_the_holes_played():
+    """One par for a round: a nine on an 18-hole course plays to 36, and a full round whose
+    holes have no par reads the course's."""
+    course = Course(holes=[Hole(number=i, par=4) for i in range(1, 19)])
+    nine = Round(course=course, hole_scores=[HoleScore(hole_number=i, strokes=5) for i in range(1, 10)])
+    assert nine.get_par() == 36
+    assert nine.total_to_par() == 9
+
+    no_hole_pars = Round(course=Course(par=71), hole_scores=[HoleScore(hole_number=i, strokes=4) for i in range(1, 19)])
+    assert no_hole_pars.get_par() == 71
+    assert Round(course=Course(par=71), hole_scores=no_hole_pars.hole_scores[:9]).get_par() is None
+
+
+def test_round_course_name_prefers_the_linked_course():
+    assert Round(course=Course(name="Presidio"), course_name_played="presidio gc").course_name() == "Presidio"
+    assert Round(course_name_played="Twilight Nine").course_name() == "Twilight Nine"
+    assert Round().course_name() is None
 
 
 def test_round_to_par_without_course_fallback():

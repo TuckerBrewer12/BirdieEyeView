@@ -74,14 +74,10 @@ def player_shape(rounds: List[Round]) -> Optional[Dict[str, Any]]:
     A figure they have nothing for is null. Null without a round."""
     if not rounds:
         return None
-    scrambling = [
-        r["scrambling_percentage"] for r in analytics.scrambling_per_round(rounds)
-        if r["scrambling_percentage"] is not None
-    ]
     par_averages = _par_averages(analytics.scoring_by_par(rounds))
     return {
-        "gir_percentage": _rounded(analytics.overall_gir_percentage(rounds)["gir_percentage"], 1),
-        "scrambling_percentage": _rounded(sum(scrambling) / len(scrambling), 1) if scrambling else None,
+        "gir_percentage": analytics.gir_percentage(rounds),
+        "scrambling_percentage": analytics.scrambling_percentage(rounds),
         "putts_per_gir": _rounded(analytics.overall_putts_per_gir(rounds)["putts_per_gir"], 2),
         **{f"par{par}_to_par": par_averages[par] for par in PARS},
     }

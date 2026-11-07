@@ -7,6 +7,7 @@ from uuid import uuid4
 import pytest
 
 from analytics import dashboard
+from analytics import stats as analytics
 from analytics.handicap import whs_window
 from api.routers import stats
 from models import HoleScore, Round, User
@@ -20,11 +21,13 @@ def _round(strokes, par=4, putts=2, gir=None):
     ])
 
 
-def test_scoring_average_over_all_or_the_last_few():
+def test_scoring_average_over_all_or_the_last_few_to_a_tenth():
     rounds = [_round([5] * 18), _round([4] * 18), _round([4] * 9)]
-    assert dashboard.scoring_average(rounds) == (90 + 72 + 36) / 3
-    assert dashboard.scoring_average(rounds, 2) == (72 + 36) / 2
-    assert dashboard.scoring_average([]) is None
+    assert analytics.scoring_average(rounds) == 66.0  # (90 + 72 + 36) / 3
+    assert analytics.scoring_average(rounds, 2) == 54.0
+    assert analytics.scoring_average([_round([5] * 18), _round([4] * 17 + [5])]) == 81.5
+    assert analytics.scoring_average([_round([5] * 18), _round([4] * 18), _round([4] * 17 + [5])]) == 78.3
+    assert analytics.scoring_average([]) is None
 
 
 def test_scoring_average_change_reads_the_last_few_against_the_window():
@@ -34,14 +37,21 @@ def test_scoring_average_change_reads_the_last_few_against_the_window():
     assert dashboard.scoring_average_change([]) is None
 
 
-def test_recent_form_pools_by_chance_and_is_null_without_data():
-    form = dashboard.recent_form([_round([4] * 18, gir=True), _round([5] * 18, gir=False)])
+def test_recent_form_reads_the_shared_figures_and_is_null_without_data():
+    rounds = [_round([4] * 18, gir=True), _round([5] * 18, gir=False)]
+    form = dashboard.recent_form(rounds)
+    assert form == {
+        "gir_pct": analytics.gir_percentage(rounds),
+        "scrambling_pct": analytics.scrambling_percentage(rounds),
+        "up_and_down_pct": analytics.up_and_down_percentage(rounds),
+        "average_putts": analytics.average_putts(rounds),
+    }
     assert form["gir_pct"] == 50.0
-    assert form["putts_per_18"] == 36.0
+    assert form["average_putts"] == 36.0
 
     empty = dashboard.recent_form([Round(hole_scores=[HoleScore(hole_number=1, strokes=4)])])
     assert empty["gir_pct"] is None
-    assert empty["putts_per_18"] is None
+    assert empty["average_putts"] is None
 
 
 def test_putts_shown_prefers_the_last_five_and_rates_like_the_insights():
@@ -79,7 +89,7 @@ def test_whs_window_matches_the_table():
 def test_milestones_prefer_the_first_round_under_par_and_come_newest_first():
     achievements = {
         "round_milestones": {"lifetime": {
-            "first_round_under_par": {"score": 71, "date": "2026-05-02T00:00:00", "course": "Blue Rock"},
+            "first_round_under_par": {"score": 71, "date": "2026-05-02", "course": "Blue Rock"},
             "score_breaks": [{"threshold": 80, "achievement": {"date": "2026-01-01", "course": "Muni"}}],
         }},
         "putting_milestones": {"lifetime": {"putt_breaks": [

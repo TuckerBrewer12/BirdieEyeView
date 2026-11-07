@@ -6,7 +6,7 @@ import type {
   CourseScoreTrendRowDto,
 } from "@/types/api";
 import { Round, type RoundSummary } from "./round";
-import { scoreMixFrom, type ScoreKind } from "./score";
+import type { ScoreKind } from "./score";
 
 /** One round's score on a trend, oldest first. */
 export interface ScorePoint {
@@ -89,8 +89,8 @@ function holeToPar(row: CourseHoleToParRowDto | CourseHoleDifficultyRowDto): Hol
   return { hole: row.hole_number, averageScore: row.average_score, averageToPar: row.average_to_par };
 }
 
-function scoreMix(row: CourseHoleScoreTypeRowDto): HoleScoreMix {
-  return { hole: row.hole_number, rounds: row.sample_size, ...scoreMixFrom(row) };
+function scoreMix({ hole_number: hole, sample_size: rounds, ...mix }: CourseHoleScoreTypeRowDto): HoleScoreMix {
+  return { hole, rounds, ...mix };
 }
 
 export function courseAnalyticsFrom(dto: CourseAnalyticsDto): CourseAnalytics {
