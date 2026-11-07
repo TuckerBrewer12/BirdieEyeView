@@ -1,5 +1,5 @@
 import { test } from "@playwright/test";
-import { capturePreview, enableDark } from "../../../../brand/tests/previewScreenshot";
+import { capturePreview, enableDark } from "../../previewScreenshot";
 
 test.describe("ScoreMixChart", () => {
   test("light", async ({ page }) => {

@@ -1,7 +1,7 @@
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { chartTickStyle, chartTooltipStyle, tokens } from "@/brand";
-import { formatPercent, type ScoreMix } from "@/domain";
-import { colorizeMix } from "../present";
+import { chartTickStyle, chartTooltipStyle, scoreKindLabel, tokens } from "@/brand/theme";
+import { formatPercent } from "@/domain/format";
+import { playedScoreKinds, type ScoreMix } from "@/domain/score";
 
 const TICK = { ...chartTickStyle, fontWeight: 700 };
 
@@ -15,8 +15,14 @@ interface ScoreMixChartProps {
   mix: ScoreMix | null;
 }
 
+/** How a golfer's holes split across score kinds: a bar per kind they made, in its colour. */
 export function ScoreMixChart({ mix }: ScoreMixChartProps) {
-  const bars = mix ? colorizeMix(mix) : [];
+  // To a tenth of a percent, so the axis reads the figures the tooltip shows.
+  const bars = (mix ? playedScoreKinds(mix) : []).map(({ kind, count }) => ({
+    kind,
+    label: scoreKindLabel(kind),
+    value: Math.round(count * 10) / 10,
+  }));
   if (bars.length === 0) {
     return <div className="text-sm text-muted-foreground text-center py-8">No data yet</div>;
   }
@@ -29,8 +35,8 @@ export function ScoreMixChart({ mix }: ScoreMixChartProps) {
           <YAxis tick={TICK} tickLine={false} axisLine={false} unit="%" />
           <Tooltip contentStyle={chartTooltipStyle} formatter={percent} />
           <Bar dataKey="value" radius={tokens.chart.barRadius} maxBarSize={tokens.chart.barMaxWidth}>
-            {bars.map((entry) => (
-              <Cell key={entry.name} fill={entry.color} />
+            {bars.map((bar) => (
+              <Cell key={bar.kind} fill={tokens.color.score[bar.kind].base} />
             ))}
           </Bar>
         </BarChart>
@@ -38,3 +44,5 @@ export function ScoreMixChart({ mix }: ScoreMixChartProps) {
     </div>
   );
 }
+
+export type { ScoreMixChartProps };

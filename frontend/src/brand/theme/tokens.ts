@@ -518,6 +518,17 @@ export const chart = {
   margin: { top: 4, right: 8, left: -20, bottom: 0 },
   /** The dotted guide lines charts draw behind their data: grid rings, reference lines, the hover crosshair. */
   guideDash: "3 3",
+  /** Where a hover card sits against the point or pointer it describes. */
+  tooltip: {
+    /** Past this share of the chart's width, the card opens to the left so it stays inside. */
+    flipAt: 0.65,
+    /** From a plotted point to the card's near edge. */
+    gap: 12,
+    /** From the pointer to the card's near edge: a little wider, clear of the cursor. */
+    pointerGap: 14,
+    /** How far above the pointer the card's top sits. */
+    pointerLift: 10,
+  },
   /** Widest a Recharts bar grows when there are few of them. */
   barMaxWidth: 28,
   /** A full ring sized to fill the chart height. */
@@ -622,6 +633,8 @@ export const chart = {
     dotHover: 5,
     /** How near the pointer has to be to a dot, in the chart's units, to pick it. */
     hitRadius: 10,
+    /** The target is round, so a dot's card opens away from the middle. */
+    tooltipFlipAt: 0.5,
   },
   /** A round hole by hole, as wide as `w-chart-wide`, which it scrolls at. */
   flow: {

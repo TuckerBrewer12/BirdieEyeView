@@ -1,12 +1,13 @@
-import { useId, useState, type PointerEvent, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useId, type ReactNode } from "react";
 import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { toParFill, differentialFill, tokens } from "@/brand/theme";
 import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
+import { ChartTooltip } from "./ChartTooltip";
 import { indexScale, knownValues, paddedExtent } from "./scales";
+import { pointAnchor, useNearestPoint } from "./useNearestPoint";
 
 type TrendSeries = "both" | "score" | "handicap";
 
@@ -21,12 +22,6 @@ interface SVGScoreHandicapTrendProps {
 const SCORE_COLOR = tokens.color.primary;
 const HANDICAP_COLOR = tokens.color.score.double.text;
 
-/** Selection is kept per series, so switching the line clears it. */
-interface Selection {
-  series: TrendSeries;
-  index: number;
-}
-
 /**
  * Scores as bars under a line, the handicap index as a second line, or either
  * alone. Hovering with a mouse or tapping on a phone picks a round.
@@ -35,7 +30,8 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
   const plot = compact ? { ...tokens.chart.plot, ...tokens.chart.plotCompact } : tokens.chart.plot;
   const { width: W, height: H, pad: PAD } = plot;
   const hiGrad = `hiGrad${useId().replace(/:/g, "")}`;
-  const [selection, setSelection] = useState<Selection | null>(null);
+  // A pick belongs to its series, so switching the line clears it.
+  const { active, svgProps } = useNearestPoint(series);
 
   const showScore = series !== "handicap";
   const showHandicap = series !== "score";
@@ -87,34 +83,18 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
   const showLabels = showScore && !compact && data.length <= 15;
   const xTicks = compact ? xTickIndexes(data.length) : [];
 
-  const indexAt = (e: PointerEvent<SVGSVGElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const index = Math.round(x.invert((e.clientX - rect.left) * (W / rect.width)));
-    return Math.max(0, Math.min(data.length - 1, index));
-  };
-
-  const active = selection?.series === series ? selection.index : null;
+  const xs = data.map((_, i) => x(i));
   const point = active != null ? data[active] : null;
   const pointValue = point ? (showScore ? point.score : point.handicapIndex) : null;
   const pointY = pointValue != null ? (showScore ? yScore(pointValue) : yHandicap(pointValue)) : null;
+  const anchor = active != null && pointY != null ? pointAnchor(x(active), pointY, W, H) : null;
 
   return (
     <div data-slot="score-handicap-trend" className="relative select-none">
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="w-full touch-pan-y overflow-visible"
-        onPointerMove={(e) => {
-          if (e.pointerType === "mouse") setSelection({ series, index: indexAt(e) });
-        }}
-        onPointerLeave={(e) => {
-          if (e.pointerType === "mouse") setSelection(null);
-        }}
-        onPointerDown={(e) => {
-          if (e.pointerType === "mouse") return;
-          // A tap picks a round and a second tap on it puts it down.
-          const index = indexAt(e);
-          setSelection(active === index ? null : { series, index });
-        }}
+        {...svgProps(xs, W)}
       >
         <defs>
           <linearGradient id={hiGrad} x1="0" y1="0" x2="0" y2="1">
@@ -169,16 +149,16 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
 
         {showHandicap && hasHandicap && (
           <>
-            <path d={handicapArea} fill={`url(#${hiGrad})`} stroke="none" />
-            <path
-              d={handicapPath}
-              fill="none"
-              stroke={HANDICAP_COLOR}
-              strokeWidth={series === "both" ? tokens.lineWidth.outline : tokens.chart.sparkline.stroke}
-              strokeOpacity={series === "both" ? 0.7 : 1}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <path d={handicapArea} fill={`url(#${hiGrad})`} stroke="none" />
+          <path
+            d={handicapPath}
+            fill="none"
+            stroke={HANDICAP_COLOR}
+            strokeWidth={series === "both" ? tokens.lineWidth.outline : tokens.chart.sparkline.stroke}
+            strokeOpacity={series === "both" ? 0.7 : 1}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
           </>
         )}
 
@@ -240,21 +220,9 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
           )}
       </svg>
 
-      <AnimatePresence>
-        {point && active != null && pointY != null && (
-          <motion.div
-            key={`${series}-${active}`}
-            className={cn(
-              "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
-              // Past two thirds of the way across, the card opens to the left of the point.
-              x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
-            )}
-            style={{ left: `${(x(active) / W) * 100}%`, top: `${(pointY / H) * 100}%` }}
-            initial={{ opacity: 0, scale: tokens.motion.tapScale }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: tokens.motion.tapScale }}
-            transition={{ duration: tokens.motion.duration.collapse }}
-          >
+      <ChartTooltip anchor={anchor} id={`${series}-${active}`}>
+        {point && (
+          <>
             <div className="mb-1 text-sm font-bold text-card-foreground">Round {point.roundIndex}</div>
             {point.courseName && (
               <div className="mb-1.5 max-w-40 truncate text-label text-muted-foreground">{point.courseName}</div>
@@ -274,9 +242,9 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                 <span className="font-semibold text-score-double">{formatHandicapIndex(point.handicapIndex)}</span>
               </div>
             )}
-          </motion.div>
+          </>
         )}
-      </AnimatePresence>
+      </ChartTooltip>
     </div>
   );
 }

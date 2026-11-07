@@ -16,10 +16,8 @@ export function RoundComparisonSection({ userId, roundId }: RoundComparisonSecti
       <SectionLabel>Round Comparison</SectionLabel>
       <ChartTabs
         tabs={viewModel.chartTabs}
-        value={viewModel.chartTab}
-        onValueChange={viewModel.selectChartTab}
         charts={viewModel.charts}
-        selectedCharts={viewModel.selectedCharts}
+        groupOf={(chart) => chart.group}
         keyFor={(chart) => chart.title}
         mobileLayout="pairs"
         renderChart={(chart) => (

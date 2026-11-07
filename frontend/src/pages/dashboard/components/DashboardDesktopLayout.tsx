@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
   RoundPreview,
+  ScoreMixChart,
   SVGScoreHandicapTrend,
   Sparkline,
   Stat,
@@ -23,7 +24,6 @@ import { ProfileHeroBanner } from "./ProfileHeroBanner";
 import { PuttsGauge } from "./PuttsGauge";
 import { RecentRoundsTable } from "./RecentRoundsTable";
 import { ScanActionCard } from "./ScanActionCard";
-import { ScoreMixChart } from "./ScoreMixChart";
 import type { DashboardPageViewModel } from "../useDashboardPageViewModel";
 import { firstNameOf, initialsOf } from "../present";
 
