@@ -10,6 +10,7 @@ import {
   CardContent,
   CourseLinkSearch,
   Input,
+  LoadError,
   LoadingState,
   RoundFlowChart,
   RoundScorecard,
@@ -35,9 +36,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   }
   if (viewModel.loadError || !viewModel.played) {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>{viewModel.loadError ?? "Could not load this round."}</AlertDescription>
-      </Alert>
+      <LoadError message={viewModel.loadError ?? "Could not load this round."} />
     );
   }
 

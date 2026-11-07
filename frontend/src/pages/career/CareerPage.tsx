@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Alert, AlertAction, AlertDescription, Button, LoadingState, PageHeader, PageTitle } from "@/brand";
+import { EmptyState, LoadError, LoadingState, PageHeader, PageTitle } from "@/brand";
 import { CareerDesktopLayout } from "./components/CareerDesktopLayout";
 import { CareerMobileLayout } from "./components/CareerMobileLayout";
 import { EMPTY_MESSAGE, PAGE_SUBTITLE } from "./present";
@@ -13,14 +13,7 @@ export function CareerPage({ userId }: { userId: string }) {
 
   if (!vm.career || !vm.figures) {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>{vm.loadError ?? "Could not load your career."}</AlertDescription>
-        <AlertAction>
-          <Button variant="outline" size="xs" onClick={vm.retry}>
-            Retry
-          </Button>
-        </AlertAction>
-      </Alert>
+      <LoadError message={vm.loadError ?? "Could not load your career."} onRetry={vm.retry} />
     );
   }
 
@@ -28,7 +21,7 @@ export function CareerPage({ userId }: { userId: string }) {
     return (
       <div className="flex flex-col gap-2 pt-2">
         <PageTitle>Career</PageTitle>
-        <p className="py-16 text-center text-sm text-muted-foreground">{EMPTY_MESSAGE}</p>
+        <EmptyState>{EMPTY_MESSAGE}</EmptyState>
       </div>
     );
   }

@@ -2,19 +2,20 @@ import { CheckCircle, Circle } from "lucide-react";
 import {
   Alert,
   AlertDescription,
+  EmptyState,
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/brand";
+import { teeRatingLabel } from "@/domain/course";
 import { formatHandicapIndex } from "@/domain/handicap";
 import type { WhsBreakdown } from "../model";
 import {
   adjustmentLabel,
   courseLabelForWhs,
   differentialLabel,
-  ratingLabelForWhs,
   usedLegend,
   whsContextNote,
 } from "../present";
@@ -125,7 +126,7 @@ export function HandicapBreakdownSheet({
             </div>
 
             {rows.length === 0 ? (
-              <div className="text-sm text-muted-foreground text-center py-8">No rounds yet</div>
+              <EmptyState>No rounds yet</EmptyState>
             ) : (
               <div className="rounded-card border border-border overflow-hidden divide-y divide-border">
                 <div className="grid grid-cols-handicap-breakdown gap-2 px-4 py-2 bg-muted text-meta font-bold uppercase tracking-kicker text-muted-foreground">
@@ -146,9 +147,9 @@ export function HandicapBreakdownSheet({
                       <div className="text-sm font-medium text-card-foreground truncate">
                         {courseLabelForWhs(row)}
                       </div>
-                      {ratingLabelForWhs(row) && (
+                      {teeRatingLabel(row.courseRating, row.slopeRating) && (
                         <div className="text-meta text-muted-foreground font-mono mt-0.5">
-                          {ratingLabelForWhs(row)}
+                          {teeRatingLabel(row.courseRating, row.slopeRating)}
                         </div>
                       )}
                     </div>

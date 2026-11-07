@@ -1,17 +1,12 @@
-import { SCORE_KINDS, toParLabel, type ScoreKind } from "@/domain/score";
+import { type ScoreKind } from "@/domain/score";
 import { color } from "./tokens";
 
 // The words are golf, so they live in the domain; the theme re-exports them beside the colours.
-export { scoreKindLabel, toParLabel } from "@/domain/score";
-
-/** Display order for legends and mix bars. Same set as `ScoreKind`. */
-export const SCORE_KEYS = SCORE_KINDS;
-
-export type ScoreKey = ScoreKind;
+export { scoreKindLabel, toParDisplay, toParLabel } from "@/domain/score";
 
 // Every lookup below is spelled out in full so Tailwind finds each class when it scans the source.
 
-const SCORE_FILL_CLASS: Record<ScoreKey, string> = {
+const SCORE_FILL_CLASS: Record<ScoreKind, string> = {
   eagle: "bg-score-eagle-base",
   birdie: "bg-score-birdie-base",
   par: "bg-score-par-base",
@@ -22,11 +17,11 @@ const SCORE_FILL_CLASS: Record<ScoreKey, string> = {
 };
 
 /** Tailwind background for a hole's score chip. */
-export function scoreFillClass(key: ScoreKey): string {
+export function scoreFillClass(key: ScoreKind): string {
   return SCORE_FILL_CLASS[key];
 }
 
-const SCORE_ON_FILL_CLASS: Record<ScoreKey, string> = {
+const SCORE_ON_FILL_CLASS: Record<ScoreKind, string> = {
   eagle: "text-score-eagle-on-base",
   birdie: "text-score-birdie-on-base",
   par: "text-score-par-on-base",
@@ -37,11 +32,11 @@ const SCORE_ON_FILL_CLASS: Record<ScoreKey, string> = {
 };
 
 /** Tailwind text colour that reads on `scoreFillClass`. */
-export function scoreOnFillClass(key: ScoreKey): string {
+export function scoreOnFillClass(key: ScoreKind): string {
   return SCORE_ON_FILL_CLASS[key];
 }
 
-const SCORE_WASH_CLASS: Record<ScoreKey, string> = {
+const SCORE_WASH_CLASS: Record<ScoreKind, string> = {
   eagle: "bg-score-eagle-muted text-score-eagle-on-muted",
   birdie: "bg-score-birdie-muted text-score-birdie-on-muted",
   par: "bg-score-par-muted text-score-par-on-muted",
@@ -52,11 +47,11 @@ const SCORE_WASH_CLASS: Record<ScoreKey, string> = {
 };
 
 /** A score's light wash and the ink that reads on it, for a tag or tooltip. */
-export function scoreWashClass(key: ScoreKey): string {
+export function scoreWashClass(key: ScoreKind): string {
   return SCORE_WASH_CLASS[key];
 }
 
-const SCORE_PROFILE_HEIGHT_CLASS: Record<ScoreKey, string> = {
+const SCORE_PROFILE_HEIGHT_CLASS: Record<ScoreKind, string> = {
   eagle: "h-profile-eagle",
   birdie: "h-profile-birdie",
   par: "h-profile-par",
@@ -67,7 +62,7 @@ const SCORE_PROFILE_HEIGHT_CLASS: Record<ScoreKey, string> = {
 };
 
 /** Tailwind height for a hole's bar in a round profile: the worse the hole went, the taller it stands. */
-export function scoreProfileHeightClass(key: ScoreKey): string {
+export function scoreProfileHeightClass(key: ScoreKind): string {
   return SCORE_PROFILE_HEIGHT_CLASS[key];
 }
 
@@ -85,10 +80,6 @@ function toParKind(toPar: number | null): "eagle" | "birdie" | "par" | "bogey" {
 /** A round's to-par as a fill colour, for SVG paint and chart-library props. */
 export function toParFill(toPar: number | null): string {
   return color.score[toParKind(toPar)].base;
-}
-
-export function toParDisplay(toPar: number | null, empty = "—"): string {
-  return toParLabel(toPar) ?? empty;
 }
 
 /** Tailwind text color for a to-par figure: under par reads birdie, over reads bogey. */

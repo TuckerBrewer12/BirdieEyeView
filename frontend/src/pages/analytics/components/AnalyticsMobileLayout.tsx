@@ -1,9 +1,8 @@
-import { PageTitle, ToggleGroup, ToggleGroupItem } from "@/brand";
+import { EmptyState, PageTitle, StatTiles, ToggleGroup, ToggleGroupItem } from "@/brand";
 import type { Analytics, AnalyticsTab } from "../model";
 import { ANALYTICS_TAB_OPTIONS, RANGE_VIEW_EMPTY, headlineFigures, tabNarrative } from "../present";
 import type { AnalyticsPageViewModel } from "../useAnalyticsPageViewModel";
 import { AnalyticsFilterBar } from "./AnalyticsFilterBar";
-import { AnalyticsKpis } from "./AnalyticsKpis";
 import { BallStrikingCards, BestRoundCard, ProfileCards, PuttingCards, ScoringCards } from "./AnalyticsSections";
 import { InsightNote } from "./InsightNote";
 import { RangeViewCard } from "./RangeViewCard";
@@ -38,7 +37,7 @@ export function AnalyticsMobileLayout({ vm, analytics }: AnalyticsMobileLayoutPr
   return (
     <div className="flex flex-col gap-5 pt-2 pb-6">
       <AnalyticsMobileHeader vm={vm} />
-      <AnalyticsKpis kpis={headlineFigures(analytics)} />
+      <StatTiles tiles={headlineFigures(analytics)} />
 
       <section data-slot="analytics-sections" className="flex flex-col gap-3">
         <ToggleGroup
@@ -86,7 +85,7 @@ function SectionCards({ tab, vm, analytics }: AnalyticsMobileLayoutProps & { tab
       return analytics.yardageBuckets.length > 0 ? (
         <RangeViewCard buckets={analytics.yardageBuckets} par={vm.rangePar} onParChange={vm.setRangePar} />
       ) : (
-        <p className="py-12 text-center text-sm text-muted-foreground">{RANGE_VIEW_EMPTY}</p>
+        <EmptyState>{RANGE_VIEW_EMPTY}</EmptyState>
       );
   }
 }

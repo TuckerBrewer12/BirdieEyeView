@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, ToggleGroup, ToggleGroupItem } from "@/brand";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, ToggleGroup, ToggleGroupItem } from "@/brand";
 import { RANGE_PARS, type RangePar, type YardageBucket } from "../model";
 import { YardageBucketCard } from "./YardageBucketCard";
 
@@ -46,7 +46,7 @@ export function RangeViewCard({ buckets, par, onParChange, className }: RangeVie
             ))}
           </div>
         ) : (
-          <p className="py-12 text-center text-sm text-muted-foreground">No Par {par} yardage data recorded</p>
+          <EmptyState>No Par {par} yardage data recorded</EmptyState>
         )}
       </CardContent>
     </Card>

@@ -14,6 +14,7 @@ import {
   FieldError,
   FieldLabel,
   Input,
+  LoadError,
   PageHeader,
   PageTitle,
   PersonRow,
@@ -99,9 +100,7 @@ export function SocialPage({ userId }: SocialPageProps) {
 
           {viewModel.loadError && (
             <CardContent>
-              <Alert variant="destructive">
-                <AlertDescription>{viewModel.loadError}</AlertDescription>
-              </Alert>
+              <LoadError message={viewModel.loadError} />
             </CardContent>
           )}
 

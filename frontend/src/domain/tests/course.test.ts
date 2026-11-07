@@ -8,6 +8,7 @@ import {
   getHole,
   getTee,
   teeColors,
+  teeRatingLabel,
   teesByLength,
 } from "../course";
 
@@ -100,5 +101,16 @@ describe("courseSummaryFrom", () => {
       source: "external",
       externalId: "ext-9",
     });
+  });
+});
+
+describe("teeRatingLabel", () => {
+  it("writes the course rating over the slope", () => {
+    expect(teeRatingLabel(71.2, 125)).toBe("71.2 / 125");
+  });
+
+  it("is null without both ratings", () => {
+    expect(teeRatingLabel(71.2, null)).toBeNull();
+    expect(teeRatingLabel(undefined, 125)).toBeNull();
   });
 });

@@ -2,7 +2,7 @@ import { useId, type ReactNode } from "react";
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/brand";
 import { chartTickStyle, chartTooltipStyle, tokens } from "@/brand/theme";
-import { pluralize } from "@/domain/format";
+import { formatUpToOneDecimal, pluralize } from "@/domain/format";
 
 export interface ComparisonBar {
   label: string;
@@ -18,11 +18,6 @@ export interface ComparisonChartCardProps {
 }
 
 type Fmt = (value: unknown, name: unknown, props: unknown) => ReactNode | [ReactNode, string];
-
-function formatNumber(value: number | null): string {
-  if (value == null) return "—";
-  return Number.isInteger(value) ? `${value}` : value.toFixed(1);
-}
 
 /**
  * One cohort comparison: this round's figure, then the bars alongside it.
@@ -51,7 +46,7 @@ function ComparisonChartCard({
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>
-          <span className="font-bold text-primary">{formatNumber(bars[0]?.value ?? null)}</span>
+          <span className="font-bold text-primary">{formatUpToOneDecimal(bars[0]?.value ?? null)}</span>
           {" "}{primaryLabel} this round
         </CardDescription>
       </CardHeader>
@@ -68,7 +63,7 @@ function ComparisonChartCard({
             <YAxis tick={chartTickStyle} tickLine={false} axisLine={false} />
             <Tooltip
               formatter={((v: number, _name: string, props: { payload: { sampleSize: number } }) => [
-                formatNumber(v),
+                formatUpToOneDecimal(v),
                 `${primaryLabel} (${pluralize(props.payload.sampleSize, "round")})`,
               ]) as Fmt}
               contentStyle={chartTooltipStyle}

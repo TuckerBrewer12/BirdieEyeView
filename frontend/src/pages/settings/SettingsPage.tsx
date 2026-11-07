@@ -1,8 +1,6 @@
 import {
-  Alert,
-  AlertAction,
-  AlertDescription,
   Button,
+  LoadError,
   LoadingState,
   PageHeader,
   PageTitle,
@@ -31,14 +29,7 @@ export function SettingsPage({ userId }: { userId: string }) {
         <PageTitle>Settings</PageTitle>
 
         {viewModel.loadError ? (
-          <Alert variant="destructive">
-            <AlertDescription>{viewModel.loadError}</AlertDescription>
-            <AlertAction>
-              <Button variant="outline" size="sm" onClick={viewModel.retry}>
-                Try again
-              </Button>
-            </AlertAction>
-          </Alert>
+          <LoadError message={viewModel.loadError} onRetry={viewModel.retry} />
         ) : (
           <>
             <FriendCodeSection friendCode={viewModel.friendCode} />

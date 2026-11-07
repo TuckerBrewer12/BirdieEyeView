@@ -1,8 +1,8 @@
 import { TeeSwatch } from "@/brand";
+import { formatOneDecimal } from "@/domain/format";
 import type { ScorecardNine } from "../courseDetailModel";
 
 const dash = (value: number | null) => (value == null ? "—" : String(value));
-const average = (value: number | null) => (value == null ? "—" : value.toFixed(1));
 
 export function NineTable({ nine }: { nine: ScorecardNine }) {
   const { tee, totals } = nine;
@@ -62,11 +62,11 @@ export function NineTable({ nine }: { nine: ScorecardNine }) {
           <tr className="border-b border-border text-xs font-semibold text-primary">
             <td className="px-3 py-1.5 font-medium">My Avg</td>
             {nine.holes.map((cell) => (
-              <td key={cell.hole} className="px-2 py-1.5 text-center">{average(cell.personalAverage)}</td>
+              <td key={cell.hole} className="px-2 py-1.5 text-center">{formatOneDecimal(cell.personalAverage)}</td>
             ))}
-            <td className="bg-muted px-2 py-1.5 text-center font-bold">{average(nine.personalAverage)}</td>
+            <td className="bg-muted px-2 py-1.5 text-center font-bold">{formatOneDecimal(nine.personalAverage)}</td>
             {totals && (
-              <td className="bg-muted px-2 py-1.5 text-center font-bold">{average(totals.personalAverage)}</td>
+              <td className="bg-muted px-2 py-1.5 text-center font-bold">{formatOneDecimal(totals.personalAverage)}</td>
             )}
           </tr>
         )}

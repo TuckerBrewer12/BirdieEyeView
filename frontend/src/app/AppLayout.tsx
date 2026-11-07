@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AppShell, BottomNav, SideNav, type RenderLink } from "@/brand";
 import { useAuth } from "@/context/auth";
-import { initialsOf, navigationFor } from "./navigation";
+import { initialsOf } from "@/domain";
+import { navigationFor } from "./navigation";
 import { useSignOut } from "./useSignOut";
 
 const routerLink: RenderLink = (href) => <Link to={href} />;

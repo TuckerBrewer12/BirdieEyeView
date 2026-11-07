@@ -1,9 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import {
-  Alert,
-  AlertDescription,
   Collection,
   CoursePreview,
+  LoadError,
   PageHeader,
   PageTitle,
   SearchField,
@@ -32,9 +31,7 @@ export function CoursesPage({ userId }: CoursesPageProps) {
         />
 
         {viewModel.error && (
-          <Alert variant="destructive">
-            <AlertDescription>{viewModel.error}</AlertDescription>
-          </Alert>
+          <LoadError message={viewModel.error} />
         )}
 
         <Collection

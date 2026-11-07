@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { initialsOf, isCurrent, navigationFor } from "../navigation";
+import { isCurrent, navigationFor } from "../navigation";
 
 const activeLabels = (items: { label: string; active?: boolean }[]) =>
   items.filter((item) => item.active).map((item) => item.label);
@@ -40,18 +40,5 @@ describe("navigationFor", () => {
     const nav = navigationFor("/");
     expect(activeLabels(nav.side)).toEqual(["Dashboard"]);
     expect(activeLabels(nav.tabs)).toEqual(["Home"]);
-  });
-});
-
-describe("initialsOf", () => {
-  it("takes the first letters of the first two words", () => {
-    expect(initialsOf("avery lin")).toBe("AL");
-    expect(initialsOf("Jordan Castellanos Whitfield")).toBe("JC");
-    expect(initialsOf("  Sam  ")).toBe("S");
-  });
-
-  it("falls back to ? with no name", () => {
-    expect(initialsOf(null)).toBe("?");
-    expect(initialsOf("   ")).toBe("?");
   });
 });

@@ -1,10 +1,12 @@
-import { scoreKindLabel, type ScoreKey, tokens } from "@/brand/theme";
+import { scoreKindLabel, tokens } from "@/brand/theme";
 import {
   SCORE_KINDS,
   formatCourseName,
+  formatOneDecimal,
   formatSignedOneDecimal,
   formatWeekdayDay,
   pluralNoun,
+  type ScoreKind,
   type ScoreMix,
 } from "@/domain";
 import type { UserDto } from "@/types/api";
@@ -19,28 +21,17 @@ export function firstNameOf(user: UserDto | null): string {
   return user?.name?.split(" ")[0] ?? "Golfer";
 }
 
-/** Up to two initials for the avatar: "Jordan Spieth" reads "JS"; no name reads "G" for golfer. */
-export function initialsOf(user: UserDto | null): string {
-  if (!user?.name) return "G";
-  return user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 /** Today above the greeting: "Mon · Jun 15". */
 export function greetingDateLabel(now = new Date()): string {
   return formatWeekdayDay(now, { year: false }) ?? "";
 }
 
 export function puttsLabel(putts: number | null): string {
-  return putts != null && putts > 0 ? putts.toFixed(1) : "—";
+  return putts != null && putts > 0 ? formatOneDecimal(putts) : "—";
 }
 
 export interface ColoredMixItem {
-  name: ScoreKey;
+  name: ScoreKind;
   label: string;
   value: number;
   color: string;
@@ -59,12 +50,6 @@ export function colorizeMix(mix: ScoreMix): ColoredMixItem[] {
 
 export function courseLabelForWhs(row: WhsRound): string {
   return row.courseName ? formatCourseName(row.courseName) : `Round ${row.roundIndex}`;
-}
-
-export function ratingLabelForWhs(row: WhsRound): string | null {
-  return row.courseRating != null && row.slopeRating != null
-    ? `${row.courseRating} / ${row.slopeRating}`
-    : null;
 }
 
 export function differentialLabel(value: number | null): string {

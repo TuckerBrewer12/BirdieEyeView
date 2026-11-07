@@ -1,10 +1,9 @@
 import type { ReactNode } from "react";
-import { PageTitle, SectionLabel } from "@/brand";
+import { PageTitle, SectionLabel, StatTiles } from "@/brand";
 import type { Analytics } from "../model";
 import { headlineFigures } from "../present";
 import type { AnalyticsPageViewModel } from "../useAnalyticsPageViewModel";
 import { AnalyticsFilterBar } from "./AnalyticsFilterBar";
-import { AnalyticsKpis } from "./AnalyticsKpis";
 import { BallStrikingCards, BestRoundCard, ProfileCards, PuttingCards, ScoringCards } from "./AnalyticsSections";
 import { RangeViewCard } from "./RangeViewCard";
 
@@ -42,7 +41,7 @@ export function AnalyticsDesktopLayout({ vm, analytics }: AnalyticsDesktopLayout
   return (
     <div className="flex flex-col gap-10 pb-12">
       <div className="flex flex-col gap-5">
-        <AnalyticsKpis kpis={headlineFigures(analytics)} />
+        <StatTiles tiles={headlineFigures(analytics)} />
         {vm.bestRound && <BestRoundCard round={vm.bestRound} />}
       </div>
 

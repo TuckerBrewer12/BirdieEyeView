@@ -1,6 +1,7 @@
 import { useId, useState, type MouseEvent } from "react";
 import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
+import { EmptyState } from "@/brand/components/EmptyState";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { chartTickStyle, toParFill, tokens } from "@/brand/theme";
 import { formatDay, formatDayTick } from "@/domain/date";
@@ -26,7 +27,7 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
 
   const data = rows.filter((row): row is ScoredRow => row.score != null);
   if (data.length < 2) {
-    return <div className="py-8 text-center text-sm text-muted-foreground">Not enough data</div>;
+    return <EmptyState>Not enough data</EmptyState>;
   }
 
   const x = indexScale(data.length, PAD.left, W - PAD.right);

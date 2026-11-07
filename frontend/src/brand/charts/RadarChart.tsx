@@ -1,4 +1,5 @@
 import { cn } from "@/brand/cn";
+import { EmptyState } from "@/brand/components/EmptyState";
 import { chartTickStyle, tokens } from "@/brand/theme";
 
 interface RadarAxis {
@@ -41,7 +42,7 @@ export function RadarChart({
   const { width: W, height: H, radius: R, labelGap, valueGap, rings, dot, stroke } = layout;
 
   if (axes.length < 3) {
-    return <div className="py-8 text-center text-sm text-muted-foreground">{empty}</div>;
+    return <EmptyState>{empty}</EmptyState>;
   }
 
   const cx = W / 2;

@@ -1,9 +1,8 @@
 import { ArrowLeft, MapPin } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Alert,
-  AlertDescription,
   Button,
+  LoadError,
   LoadingState,
   PageTitle,
   ToggleGroup,
@@ -25,9 +24,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
 
   if (viewModel.loadError || !course || !courseId) {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>{viewModel.loadError ?? "Course not found."}</AlertDescription>
-      </Alert>
+      <LoadError message={viewModel.loadError ?? "Course not found."} />
     );
   }
 
