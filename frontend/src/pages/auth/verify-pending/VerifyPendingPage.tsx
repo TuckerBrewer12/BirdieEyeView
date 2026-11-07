@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 import { AuthCard, Button, Field, FieldLabel, Input } from "@/brand";
 import { cn } from "@/brand/cn";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/auth";
 import { AuthLink } from "../components/AuthLink";
 import { AuthNotice } from "../components/AuthNotice";
 import { useVerifyPendingViewModel, type VerifyPendingArrival } from "./useVerifyPendingViewModel";
@@ -13,7 +13,7 @@ export function VerifyPendingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const state = (useLocation().state ?? {}) as VerifyPendingArrival;
-  const goHome = useCallback(() => navigate("/", { replace: true }), [navigate]);
+  const goHome = useCallback(() => void navigate("/", { replace: true }), [navigate]);
   const viewModel = useVerifyPendingViewModel(
     auth,
     { userId: auth.userId, emailVerified: auth.emailVerified },
@@ -54,7 +54,6 @@ export function VerifyPendingPage() {
           <Input
             id="verify-email"
             type="email"
-            size="cta"
             value={viewModel.email}
             onChange={(event) => viewModel.setEmail(event.target.value)}
             autoComplete="email"

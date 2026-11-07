@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthCard, Button, Field, FieldLabel, Input } from "@/brand";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/auth";
 import { AuthLink } from "../components/AuthLink";
 import { AuthNotice } from "../components/AuthNotice";
 import { PasswordField } from "../components/PasswordField";
@@ -25,7 +25,7 @@ export function LoginPage() {
         className="flex flex-col gap-5"
         onSubmit={(event) => {
           event.preventDefault();
-          viewModel.submit(() => navigate("/"));
+          viewModel.submit(() => void navigate("/"));
         }}
       >
         <AuthNotice tone="success">{viewModel.notice}</AuthNotice>
@@ -36,7 +36,6 @@ export function LoginPage() {
           <Input
             id="login-email"
             type="email"
-            size="cta"
             value={viewModel.email}
             onChange={(event) => viewModel.setEmail(event.target.value)}
             required

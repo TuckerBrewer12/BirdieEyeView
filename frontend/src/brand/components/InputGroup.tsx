@@ -42,12 +42,28 @@ function InputGroupAddon({
       data-slot="input-group-addon"
       data-align={align}
       className={cn(inputGroupAddonVariants({ align }), className)}
-      onClick={(e) => {
-        if ((e.target as HTMLElement).closest("button")) {
-          return;
-        }
-        e.currentTarget.parentElement?.querySelector("input")?.focus();
-      }}
+      {...props}
+    />
+  );
+}
+
+/**
+ * An addon that stands for its input, like a search icon: pressing it puts the caret in the input,
+ * as a native label does. Keep text and buttons out of it, since a label's text joins the input's
+ * accessible name.
+ */
+function InputGroupAddonLabel({
+  className,
+  align = "inline-start",
+  htmlFor,
+  ...props
+}: React.ComponentProps<"label"> & { htmlFor: string } & VariantProps<typeof inputGroupAddonVariants>) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      data-slot="input-group-addon"
+      data-align={align}
+      className={cn(inputGroupAddonVariants({ align }), className)}
       {...props}
     />
   );
@@ -100,7 +116,7 @@ function InputGroupInput({
       data-slot="input-group-control"
       size={size ?? groupSize}
       className={cn(
-        "h-full flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent",
+        "h-full flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 field-focus:ring-0 disabled:bg-transparent field-invalid:ring-0 dark:bg-transparent dark:disabled:bg-transparent",
         className,
       )}
       {...props}
@@ -111,6 +127,7 @@ function InputGroupInput({
 export {
   InputGroup,
   InputGroupAddon,
+  InputGroupAddonLabel,
   InputGroupButton,
   InputGroupText,
   InputGroupInput,

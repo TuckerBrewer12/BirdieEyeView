@@ -1,5 +1,5 @@
 import { AuthCard, Button, Field, FieldLabel, Input } from "@/brand";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/auth";
 import { AuthLink } from "../components/AuthLink";
 import { AuthNotice } from "../components/AuthNotice";
 import { useForgotPasswordViewModel } from "./useForgotPasswordViewModel";
@@ -32,7 +32,6 @@ export function ForgotPasswordPage() {
           <Input
             id="forgot-email"
             type="email"
-            size="cta"
             value={viewModel.email}
             onChange={(event) => viewModel.setEmail(event.target.value)}
             required

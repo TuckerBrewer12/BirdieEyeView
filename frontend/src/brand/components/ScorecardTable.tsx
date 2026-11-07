@@ -58,7 +58,7 @@ function GirMark({ gir, className }: { gir: boolean | null; className?: string }
   if (gir == null) return <span className="text-muted-foreground">·</span>;
   return (
     <span
-      className={cn("inline-block size-2.5 rounded-sm", gir ? "bg-primary" : "bg-destructive/30", className)}
+      className={cn("inline-block size-2.5 rounded-sm", gir ? "bg-primary" : "bg-destructive/recessed", className)}
     />
   );
 }
@@ -76,6 +76,7 @@ function CountInput({
 }) {
   return (
     <Input
+      size="inline"
       aria-label={label}
       inputMode="numeric"
       autoComplete="off"
@@ -190,7 +191,7 @@ function ScorecardTable({ nine, label, round, teeBox, edits, toCheck, className 
           {round && <td className={TOTAL_CELL}>{show(round.par)}</td>}
         </tr>
 
-        <tr className={cn("text-sm text-foreground", edits && "bg-muted/40")}>
+        <tr className={cn("text-sm text-foreground", edits && "bg-muted/recessed")}>
           <td className={LABEL_CELL}>Score</td>
           {holes.map((hole) => (
             <ScoreCell key={hole.hole} hole={hole} edits={edits} check={!!toCheck?.includes(hole.hole)} />
@@ -215,7 +216,7 @@ function ScorecardTable({ nine, label, round, teeBox, edits, toCheck, className 
         </tr>
 
         {showPutts && (
-          <tr className={cn("text-xs text-muted-foreground", edits && "bg-muted/40")}>
+          <tr className={cn("text-xs text-muted-foreground", edits && "bg-muted/recessed")}>
             <td className={LABEL_CELL}>Putts</td>
             {holes.map((hole) =>
               edits ? (

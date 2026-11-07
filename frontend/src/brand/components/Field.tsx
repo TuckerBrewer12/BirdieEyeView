@@ -1,4 +1,5 @@
 import * as React from "react";
+import { CircleAlert } from "lucide-react";
 import { cn } from "@/brand/cn";
 
 /**
@@ -23,12 +24,17 @@ function Field({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function FieldLabel({ className, ...props }: React.ComponentProps<"label">) {
+function FieldLabel({
+  className,
+  htmlFor,
+  ...props
+}: React.ComponentProps<"label">) {
   return (
     <label
+      htmlFor={htmlFor}
       data-slot="field-label"
       className={cn(
-        "text-xs font-semibold text-muted-foreground select-none group-has-disabled/field:opacity-50",
+        "text-body font-semibold text-foreground-secondary select-none group-has-disabled/field:opacity-50",
         className,
       )}
       {...props}
@@ -40,7 +46,7 @@ function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
   return (
     <p
       data-slot="field-description"
-      className={cn("text-xs font-normal text-muted-foreground", className)}
+      className={cn("text-body font-normal text-muted-foreground", className)}
       {...props}
     />
   );
@@ -50,16 +56,21 @@ function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
  * Renders nothing when there is no message, so a view can hand it a view
  * model's nullable error straight through without a ternary in the JSX.
  */
-function FieldError({ className, children, ...props }: React.ComponentProps<"p">) {
+function FieldError({
+  className,
+  children,
+  ...props
+}: Omit<React.ComponentProps<"p">, "children"> & { children?: string | null }) {
   if (!children) return null;
 
   return (
     <p
       data-slot="field-error"
       role="alert"
-      className={cn("text-xs font-medium text-destructive", className)}
+      className={cn("flex items-center gap-1.5 text-body font-medium text-destructive", className)}
       {...props}
     >
+      <CircleAlert aria-hidden className="size-4 shrink-0 fill-current stroke-card" />
       {children}
     </p>
   );

@@ -1,5 +1,9 @@
+import logging
+
 import asyncpg
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 class DatabasePool:
@@ -10,12 +14,12 @@ class DatabasePool:
 
     async def initialize(
         self,
-        dsn: str = None,
+        dsn: Optional[str] = None,
         *,
         host: str = "localhost",
         port: int = 5432,
         database: str = "golf_scorecard",
-        user: str = None,
+        user: Optional[str] = None,
         password: str = "",
         min_size: int = 2,
         max_size: int = 10,
@@ -66,6 +70,7 @@ class DatabasePool:
                 await conn.fetchval("SELECT 1")
             return True
         except Exception:
+            logger.warning("Database health check failed", exc_info=True)
             return False
 
 

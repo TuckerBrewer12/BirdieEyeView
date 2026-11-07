@@ -25,7 +25,7 @@ export default function AuthCardPreview() {
       </Alert>
       <Field>
         <FieldLabel htmlFor="auth-card-email">Email</FieldLabel>
-        <Input id="auth-card-email" type="email" size="cta" placeholder="you@example.com" />
+        <Input id="auth-card-email" type="email" placeholder="you@example.com" />
       </Field>
       <Button size="cta">Send reset link</Button>
     </AuthCard>

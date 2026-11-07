@@ -30,12 +30,13 @@ export function FriendCodeSection({ friendCode }: FriendCodeSectionProps) {
       <CardContent className="flex flex-col gap-1.5">
         <div className="flex items-center gap-2">
           <Input
+            size="inline"
             readOnly
             aria-label="Friend code"
             value={friendCode ?? "Unavailable"}
             className="font-mono"
           />
-          <Button variant="outline" onClick={copyCode} disabled={!friendCode}>
+          <Button variant="outline" onClick={() => void copyCode()} disabled={!friendCode}>
             {copy === "copied" ? <Check data-icon="inline-start" /> : <Copy data-icon="inline-start" />}
             {copy === "copied" ? "Copied" : "Copy"}
           </Button>
