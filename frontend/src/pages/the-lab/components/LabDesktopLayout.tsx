@@ -27,7 +27,13 @@ export function LabDesktopLayout({ vm }: { vm: LabPageViewModel }) {
           <p className="mt-1 text-sm text-muted-foreground">Your blueprint to lower scores.</p>
         </div>
         <div className="flex flex-col items-start gap-1 lg:items-end">
-          <GoalPicker value={target} onChange={vm.setGoal} disabled={vm.savingGoal} className="flex-wrap" />
+          <GoalPicker
+            options={vm.goalOptions}
+            value={target}
+            onChange={vm.setGoal}
+            disabled={vm.savingGoal}
+            className="flex-wrap"
+          />
         </div>
       </div>
 
@@ -68,6 +74,7 @@ export function LabDesktopLayout({ vm }: { vm: LabPageViewModel }) {
           lowestScore={vm.lowestScore}
           recentTrend={vm.recentTrend}
           comparison={vm.comparison}
+          handicaps={vm.handicaps}
           onComparisonChange={vm.setComparison}
           friends={vm.friends}
           selectedFriend={vm.selectedFriend}
@@ -84,7 +91,9 @@ export function LabDesktopLayout({ vm }: { vm: LabPageViewModel }) {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <ParTypeCard
             rows={vm.parTypes}
-            benchmarkName={vm.benchmark ? benchmarkName(vm.radarMode, vm.comparison, vm.selectedFriend) : null}
+            benchmarkName={
+              vm.benchmark ? benchmarkName(vm.radarMode, vm.comparison, vm.selectedFriend, vm.handicaps) : null
+            }
           />
           {vm.putting && <PuttingCard putting={vm.putting} />}
         </div>

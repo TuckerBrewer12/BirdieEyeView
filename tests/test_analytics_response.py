@@ -55,6 +55,9 @@ def test_analytics_response_works_out_the_figures_the_page_shows():
     ]
     # The insights read the KPIs' figures: 19 greens of 36, and 63 putts over two rounds.
     assert response.kpis.gir_percentage == 52.8
+    # The Lab's radar reads the same figures, with each par type's average from the breakdown.
+    assert response.shape.gir_percentage == 52.8
+    assert response.shape.par5_to_par == -0.75
     assert response.notable_achievements.scoring_records.lifetime.lowest_round == 72
     assert (response.kpis.three_putts_per_round, response.kpis.three_putt_rate) == (0.0, 0.0)
     assert response.kpis.scoring_average_change is None  # under five rounds

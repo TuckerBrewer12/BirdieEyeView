@@ -93,6 +93,14 @@ export const labAnalytics: AnalyticsDto = {
     { par: 4, average_to_par: 1.12, average_strokes: 5.12, sample_size: 120 },
     { par: 5, average_to_par: 0.85, average_strokes: 5.85, sample_size: 48 },
   ],
+  shape: {
+    gir_percentage: 28,
+    scrambling_percentage: 22,
+    putts_per_gir: 2.05,
+    par3_to_par: 0.92,
+    par4_to_par: 1.12,
+    par5_to_par: 0.85,
+  },
   score_trend: SCORES.map((score, i) => ({
     round_index: i + 1,
     round_id: `lab-${i + 1}`,
@@ -114,6 +122,15 @@ export const labAnalytics: AnalyticsDto = {
     total_putts: putts,
     holes_played: 18,
   })),
+};
+
+const averyShape: BenchmarkShapeDto = {
+  gir_percentage: 44,
+  scrambling_percentage: 38,
+  putts_per_gir: 1.92,
+  par3_to_par: 0.35,
+  par4_to_par: 0.55,
+  par5_to_par: 0.3,
 };
 
 /** Avery plays to about 81: more greens, better par 3s. Jordan has no rounds. */
@@ -140,6 +157,7 @@ export const averyLabAnalytics: AnalyticsDto = {
     { par: 4, average_to_par: 0.55, average_strokes: 4.55, sample_size: 80 },
     { par: 5, average_to_par: 0.3, average_strokes: 5.3, sample_size: 32 },
   ],
+  shape: averyShape,
 };
 
 /** Analytics by golfer, as FakeBackend serves them. */
@@ -207,15 +225,6 @@ const breaks80Shape: BenchmarkShapeDto = {
   par5_to_par: 0.55,
 };
 
-const averyShape: BenchmarkShapeDto = {
-  gir_percentage: 44,
-  scrambling_percentage: 38,
-  putts_per_gir: 1.92,
-  par3_to_par: 0.35,
-  par4_to_par: 0.55,
-  par5_to_par: 0.3,
-};
-
 /** The golfer's par 3s, 4s and 5s (+0.92, +1.12, +0.85) against a shape's, as the server judged them. */
 function parTypes(
   shape: BenchmarkShapeDto | null,
@@ -233,14 +242,37 @@ function parTypes(
 
 const BREAKS_90_JUDGED: [number, ParTypeComparisonDto["verdict"]][] = [[0.32, "behind"], [0.1, "behind"], [-0.25, "ahead"]];
 
+/** The goals and handicaps the server has benchmarks for, which every comparison lists. */
+const ON_OFFER: Pick<BenchmarkComparisonDto, "goals" | "handicaps"> = {
+  goals: [99, 94, 89, 84, 79, 74, 71],
+  handicaps: [
+    { handicap: 0, goal: 71 },
+    { handicap: 5, goal: 79 },
+    { handicap: 10, goal: 84 },
+    { handicap: 15, goal: 89 },
+    { handicap: 20, goal: 94 },
+    { handicap: 25, goal: 99 },
+  ],
+};
+
 /** `GET /stats/{id}/benchmark` for each comparison The Lab's tests make, keyed as FakeBackend looks them up. */
 export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
+  // No comparison: the golfer's par types alone.
+  alone: {
+    against: null,
+    handicap: null,
+    goal: null,
+    benchmark: null,
+    par_types: parTypes(null, []),
+    ...ON_OFFER,
+  },
   "handicap:15": {
     against: "handicap",
     handicap: 15,
     goal: null,
     benchmark: breaks90Shape,
     par_types: parTypes(breaks90Shape, BREAKS_90_JUDGED),
+    ...ON_OFFER,
   },
   "handicap:5": {
     against: "handicap",
@@ -248,6 +280,7 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
     goal: null,
     benchmark: breaks80Shape,
     par_types: parTypes(breaks80Shape, [[0.72, "behind"], [0.62, "behind"], [0.3, "behind"]]),
+    ...ON_OFFER,
   },
   // The best three average 89.7, nearest the golfers who break 90.
   peak: {
@@ -256,6 +289,7 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
     goal: 89,
     benchmark: breaks90Shape,
     par_types: parTypes(breaks90Shape, BREAKS_90_JUDGED),
+    ...ON_OFFER,
   },
   [`friend:${avery.id}`]: {
     against: "friend",
@@ -263,6 +297,7 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
     goal: null,
     benchmark: averyShape,
     par_types: parTypes(averyShape, [[0.57, "behind"], [0.57, "behind"], [0.55, "behind"]]),
+    ...ON_OFFER,
   },
   // Jordan has no rounds: nothing to draw or compare with.
   [`friend:${jordan.id}`]: {
@@ -271,5 +306,6 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
     goal: null,
     benchmark: null,
     par_types: parTypes(null, []),
+    ...ON_OFFER,
   },
 };

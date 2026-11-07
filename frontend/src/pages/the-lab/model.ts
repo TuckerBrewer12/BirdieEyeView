@@ -1,5 +1,11 @@
 import type { Friendship } from "@/data/friendsModel";
-import { goalAttemptsFrom, type GoalAttempt, type ParTypeComparison } from "@/domain/benchmark";
+import {
+  benchmarkShapeFrom,
+  goalAttemptsFrom,
+  type BenchmarkShape,
+  type GoalAttempt,
+  type ParTypeComparison,
+} from "@/domain/benchmark";
 import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type { AnalyticsDto, GoalReportDto, GoalSaverDto, PeakImpactDto } from "@/types/api";
 
@@ -7,25 +13,20 @@ import type { AnalyticsDto, GoalReportDto, GoalSaverDto, PeakImpactDto } from "@
 export const LAB_FILTERS: AnalyticsFilters = { limit: 20, timeframe: "all", courseId: "all" };
 
 /** The analytics sections The Lab's figures read, as the server sent them. */
-export type LabSections = Pick<AnalyticsDto, "kpis" | "scoring_by_par" | "putts_trend" | "peak_game">;
+export type LabSections = Pick<AnalyticsDto, "kpis" | "putts_trend" | "peak_game">;
 
-/**
- * The part of a golfer's last 20 rounds of analytics The Lab reads, picked from the shared
- * analytics query. The rows keep the server's shape: the radar's scale in `domain/radar`
- * reads them as they come.
- */
+/** The part of a golfer's last 20 rounds of analytics The Lab reads, picked from the shared analytics query. */
 export type LabAnalytics = LabSections & {
-  /** The server's lowest full round in the window, until the goal report has its own. */
-  lowestScore: number | null;
+  /** The golfer's figures on the radar's axes, as the server worked them out. Null without a round. */
+  shape: BenchmarkShape | null;
 };
 
 export function labAnalyticsFrom(dto: AnalyticsDto): LabAnalytics {
   return {
     kpis: dto.kpis,
-    scoring_by_par: dto.scoring_by_par,
     putts_trend: dto.putts_trend,
     peak_game: dto.peak_game,
-    lowestScore: dto.notable_achievements.scoring_records.lifetime.lowest_round ?? null,
+    shape: dto.shape ? benchmarkShapeFrom(dto.shape) : null,
   };
 }
 
@@ -179,12 +180,4 @@ export function puttingSummaryFrom(analytics: LabSections): PuttingSummary {
     puttsPerRound: analytics.kpis.average_putts,
     puttsTrend: analytics.putts_trend.slice(-20).map((row) => row.total_putts),
   };
-}
-
-/** Each par type's average to par with nothing to compare it with: the golfer's figures alone. */
-export function parTypeRowsFrom(analytics: LabSections): ParTypeRow[] {
-  return ([3, 4, 5] as const).map((par) => {
-    const row = analytics.scoring_by_par.find((r) => r.par === par && r.sample_size > 0);
-    return { par, averageToPar: row?.average_to_par ?? null, benchmarkToPar: null, gap: null, verdict: null };
-  });
 }

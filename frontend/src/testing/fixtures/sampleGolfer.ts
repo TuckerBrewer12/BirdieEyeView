@@ -946,6 +946,7 @@ export const sampleGolfer = {
       {"round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "scramble_failures": 8, "scramble_opportunities": 10, "scramble_successes": 2, "scrambling_percentage": 20.0},
       {"round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "scramble_failures": 6, "scramble_opportunities": 9, "scramble_successes": 3, "scrambling_percentage": 33.33333333333333}
     ],
+    "shape": {"gir_percentage": 33.1, "par3_to_par": 0.625, "par4_to_par": 0.5875000000000004, "par5_to_par": 0.635416666666667, "putts_per_gir": 2.02, "scrambling_percentage": 30.8},
     "three_putts_trend": [
       {"holes_with_putt_data": 18, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "three_putt_count": 0, "three_putt_percentage": 0.0},
       {"holes_with_putt_data": 18, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "three_putt_count": 2, "three_putt_percentage": 11.11111111111111},
@@ -1416,6 +1417,7 @@ export const sampleGolfer = {
         {"round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "scramble_failures": 9, "scramble_opportunities": 15, "scramble_successes": 6, "scrambling_percentage": 40.0},
         {"round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "scramble_failures": 8, "scramble_opportunities": 10, "scramble_successes": 2, "scrambling_percentage": 20.0}
       ],
+      "shape": {"gir_percentage": 29.2, "par3_to_par": 0.625, "par4_to_par": 0.7999999999999998, "par5_to_par": 0.625, "putts_per_gir": 2.19, "scrambling_percentage": 25.5},
       "three_putts_trend": [
         {"holes_with_putt_data": 18, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "three_putt_count": 3, "three_putt_percentage": 16.666666666666664},
         {"holes_with_putt_data": 18, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "three_putt_count": 5, "three_putt_percentage": 27.77777777777778},
@@ -1427,6 +1429,28 @@ export const sampleGolfer = {
         {"opportunities": 12, "percentage": 50.0, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "successes": 6},
         {"opportunities": 15, "percentage": 53.3, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "successes": 8},
         {"opportunities": 10, "percentage": 30.0, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "successes": 3}
+      ]
+    }
+  },
+  "benchmarks": {
+    "alone": {
+      "against": null,
+      "benchmark": null,
+      "goal": null,
+      "goals": [99, 94, 89, 84, 79, 74, 71],
+      "handicap": null,
+      "handicaps": [
+        {"goal": 71, "handicap": 0},
+        {"goal": 79, "handicap": 5},
+        {"goal": 84, "handicap": 10},
+        {"goal": 89, "handicap": 15},
+        {"goal": 94, "handicap": 20},
+        {"goal": 99, "handicap": 25}
+      ],
+      "par_types": [
+        {"average_to_par": 0.5375000000000001, "benchmark_to_par": null, "gap": null, "par": 3, "verdict": null},
+        {"average_to_par": 0.5549999999999997, "benchmark_to_par": null, "gap": null, "par": 4, "verdict": null},
+        {"average_to_par": 0.6500000000000004, "benchmark_to_par": null, "gap": null, "par": 5, "verdict": null}
       ]
     }
   },

@@ -207,7 +207,7 @@ async def get_goal_report(
 @router.get("/{user_id}/benchmark", response_model=BenchmarkComparisonResponse)
 async def get_benchmark_comparison(
     user_id: UUID,
-    against: Literal["handicap", "peak", "friend"],
+    against: Optional[Literal["handicap", "peak", "friend"]] = Query(default=None),
     handicap: Optional[int] = Query(default=None),
     friend_id: Optional[UUID] = Query(default=None),
     limit: int = Query(default=20, ge=1, le=500),
@@ -215,12 +215,15 @@ async def get_benchmark_comparison(
     current_user: User = Depends(get_current_user),
 ):
     """The player's last `limit` rounds against a handicap's shape, the golfers their peak
-    rounds play like, or a friend's last `limit` rounds."""
+    rounds play like, or a friend's last `limit` rounds; with no `against`, their par types alone.
+    Every response lists the goals and handicaps on offer."""
     viewer_id = str(current_user.id)
     if viewer_id != str(user_id):
         raise HTTPException(403, "Forbidden")
     rounds = list(reversed(await db.rounds.get_rounds_for_user(viewer_id, limit=limit)))
 
+    if against is None:
+        return BenchmarkComparisonResponse.model_validate(benchmarks.solo_comparison(rounds))
     if against == "handicap":
         if handicap is None or benchmarks.handicap_benchmark(handicap) is None:
             raise HTTPException(422, "No benchmark for that handicap")

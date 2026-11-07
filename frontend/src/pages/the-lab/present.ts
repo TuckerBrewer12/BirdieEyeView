@@ -1,10 +1,10 @@
 import { toParTextClass } from "@/brand";
 import {
-  COMPARISON_HANDICAPS,
   formatAverageToPar,
   goalScoreToBreak,
   goalTargetLabel,
   pluralize,
+  type BenchmarkHandicap,
   type ComparisonTargetValue,
 } from "@/domain";
 import type {
@@ -23,36 +23,55 @@ export function friendName(friend: FriendOption | null): string {
   return friend?.name ?? "Unknown golfer";
 }
 
-const HANDICAP_LABEL: Record<(typeof COMPARISON_HANDICAPS)[number], string> = {
-  0: "Scratch",
-  5: "Breaks 80",
-  10: "Breaks 85",
-  15: "Breaks 90",
-  20: "Breaks 95",
-  25: "Breaks 100",
-};
+/** A handicap's benchmark by the score its golfers break: "Scratch", "Breaks 80". */
+function handicapLabel({ handicap, goal }: BenchmarkHandicap): string {
+  return handicap === 0 ? "Scratch" : `Breaks ${goalScoreToBreak(goal)}`;
+}
+
+function handicapHeading({ handicap, goal }: BenchmarkHandicap): string {
+  return handicap === 0 ? "You vs. Scratch" : `You vs. Break-${goalScoreToBreak(goal)} Shape`;
+}
+
+function comparedHandicap(
+  comparison: ComparisonTargetValue,
+  handicaps: readonly BenchmarkHandicap[],
+): BenchmarkHandicap | null {
+  return handicaps.find((option) => option.handicap === comparison) ?? null;
+}
+
+export interface ComparisonOption {
+  key: string;
+  value: ComparisonTargetValue;
+  label: string;
+}
 
 /**
  * The comparisons on offer, keyed for a toggle group (whose values are strings):
- * none, each handicap benchmark, then a friend.
+ * none, each handicap the server has a benchmark for, then a friend.
  */
-export const COMPARISON_OPTIONS: { key: string; value: ComparisonTargetValue; label: string }[] = [
-  { key: "none", value: null, label: "Just me" },
-  ...COMPARISON_HANDICAPS.map((handicap) => ({
-    key: String(handicap),
-    value: handicap,
-    label: HANDICAP_LABEL[handicap],
-  })),
-  { key: "friend", value: "friend", label: "A friend" },
-];
+export function comparisonOptions(handicaps: readonly BenchmarkHandicap[]): ComparisonOption[] {
+  return [
+    { key: "none", value: null, label: "Just me" },
+    ...handicaps.map((option) => ({
+      key: String(option.handicap),
+      value: option.handicap,
+      label: handicapLabel(option),
+    })),
+    { key: "friend", value: "friend", label: "A friend" },
+  ];
+}
 
 export function comparisonKey(value: ComparisonTargetValue): string {
-  return COMPARISON_OPTIONS.find((option) => option.value === value)?.key ?? "none";
+  if (value == null) return "none";
+  return String(value);
 }
 
 /** Null for a key that is not an option, as when the pressed toggle is pressed again. */
-export function comparisonFromKey(key: string | undefined): { value: ComparisonTargetValue } | null {
-  const option = COMPARISON_OPTIONS.find((o) => o.key === key);
+export function comparisonFromKey(
+  key: string | undefined,
+  options: readonly ComparisonOption[],
+): { value: ComparisonTargetValue } | null {
+  const option = options.find((o) => o.key === key);
   return option ? { value: option.value } : null;
 }
 
@@ -61,11 +80,12 @@ export function benchmarkName(
   mode: RadarMode,
   comparison: ComparisonTargetValue,
   friend: FriendOption | null,
+  handicaps: readonly BenchmarkHandicap[],
 ): string | null {
   if (mode === "peak") return "Your peak game";
   if (comparison === "friend") return friendName(friend);
-  if (comparison == null) return null;
-  return HANDICAP_LABEL[comparison as keyof typeof HANDICAP_LABEL] ?? null;
+  const handicap = comparedHandicap(comparison, handicaps);
+  return handicap ? handicapLabel(handicap) : null;
 }
 
 /** The radar card's heading: who the golfer is up against. */
@@ -74,23 +94,15 @@ export function benchmarkHeading(
   comparison: ComparisonTargetValue,
   friend: FriendOption | null,
   peak: PeakGame | null,
+  handicaps: readonly BenchmarkHandicap[],
 ): string {
   if (mode === "peak") {
     return peak ? `You vs. Your Peak Game (avg ${peak.average.toFixed(1)})` : "Peak Game";
   }
   if (comparison === "friend") return friend ? `You vs. ${friendName(friend)}` : "You vs. Friend";
-  if (comparison == null) return "Your Performance Shape";
-  return HANDICAP_HEADING[comparison as keyof typeof HANDICAP_HEADING] ?? "Your Performance Shape";
+  const handicap = comparedHandicap(comparison, handicaps);
+  return handicap ? handicapHeading(handicap) : "Your Performance Shape";
 }
-
-const HANDICAP_HEADING: Record<(typeof COMPARISON_HANDICAPS)[number], string> = {
-  0: "You vs. Scratch",
-  5: "You vs. Break-80 Shape",
-  10: "You vs. Break-85 Shape",
-  15: "You vs. Break-90 Shape",
-  20: "You vs. Break-95 Shape",
-  25: "You vs. Break-100 Shape",
-};
 
 /** A goal as the golfer picked it: "Break 80". */
 export function goalLabel(target: number | null): string | null {

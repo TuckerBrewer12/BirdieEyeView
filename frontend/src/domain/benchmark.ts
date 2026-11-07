@@ -8,19 +8,6 @@ import type {
 /** Handicap index, no comparison, or a friend's rounds. */
 export type ComparisonTargetValue = number | null | "friend";
 
-export const GOAL_OPTIONS = [
-  { label: "Break 100", value: 99 },
-  { label: "Break 95",  value: 94 },
-  { label: "Break 90",  value: 89 },
-  { label: "Break 85",  value: 84 },
-  { label: "Break 80",  value: 79 },
-  { label: "Break 75",  value: 74 },
-  { label: "Break 72",  value: 71 },
-] as const;
-
-/** The handicaps a golfer can hold their shape up against. The server has a benchmark for each. */
-export const COMPARISON_HANDICAPS = [0, 5, 10, 15, 20, 25] as const;
-
 /** The goal is stored as the highest score that meets it, so 79 means the golfer is out to break 80. */
 export function goalScoreToBreak(target: number): number {
   return target + 1;
@@ -73,10 +60,23 @@ export interface ParTypeComparison {
   verdict: ParTypeVerdict | null;
 }
 
-/** The server's comparison: the benchmark's shape (null when there is none to draw) and each par type against it. */
+/** A handicap the server has a benchmark for, and the goal, as stored, its golfers play to. */
+export interface BenchmarkHandicap {
+  handicap: number;
+  goal: number;
+}
+
+/**
+ * The server's comparison: the benchmark's shape (null when there is none to draw) and each par
+ * type against it, with every goal and handicap it has a benchmark for.
+ */
 export interface BenchmarkComparison {
   benchmark: BenchmarkShape | null;
   parTypes: ParTypeComparison[];
+  /** The goals a golfer can pick, as stored, the highest score first. */
+  goals: number[];
+  /** The handicaps a golfer can compare with, scratch first. */
+  handicaps: BenchmarkHandicap[];
 }
 
 export function benchmarkShapeFrom(dto: BenchmarkShapeDto): BenchmarkShape {
@@ -100,6 +100,8 @@ export function benchmarkComparisonFrom(dto: BenchmarkComparisonDto): BenchmarkC
       gap: row.gap,
       verdict: row.verdict,
     })),
+    goals: dto.goals,
+    handicaps: dto.handicaps,
   };
 }
 

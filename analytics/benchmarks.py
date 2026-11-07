@@ -12,7 +12,7 @@ from analytics import stats as analytics
 from analytics.peak import peak_game
 from models import Round
 
-Against = Literal["handicap", "peak", "friend"]
+Against = Optional[Literal["handicap", "peak", "friend"]]
 Verdict = Literal["ahead", "even", "behind"]
 PARS = (3, 4, 5)
 
@@ -43,6 +43,16 @@ SHAPE_FIELDS = (
 
 def _shape(row: Dict[str, Any]) -> Dict[str, Any]:
     return {field: row[field] for field in SHAPE_FIELDS}
+
+
+def goal_options() -> List[int]:
+    """The goals a golfer can pick, as stored, the highest score first: breaking 100 down to breaking 72."""
+    return [row["goal"] for row in reversed(BENCHMARKS)]
+
+
+def handicap_options() -> List[Dict[str, int]]:
+    """The handicaps a golfer can compare with, scratch first, each with the goal its golfers play to."""
+    return [{"handicap": row["handicap"], "goal": row["goal"]} for row in BENCHMARKS if row["handicap"] is not None]
 
 
 def handicap_benchmark(handicap: int) -> Optional[Dict[str, Any]]:
@@ -114,14 +124,21 @@ def comparison(
     handicap: Optional[int] = None,
     goal: Optional[int] = None,
 ) -> Dict[str, Any]:
-    """The player's par types against `benchmark`, and which benchmark it was."""
+    """The player's par types against `benchmark`, which benchmark it was, and every one on offer."""
     return {
         "against": against,
         "handicap": handicap,
         "goal": goal,
         "benchmark": benchmark,
         "par_types": par_type_comparison(analytics.scoring_by_par(rounds), benchmark),
+        "goals": goal_options(),
+        "handicaps": handicap_options(),
     }
+
+
+def solo_comparison(rounds: List[Round]) -> Dict[str, Any]:
+    """The player's par types with nothing to compare them with."""
+    return comparison(rounds, None, None)
 
 
 def handicap_comparison(rounds: List[Round], handicap: int) -> Dict[str, Any]:

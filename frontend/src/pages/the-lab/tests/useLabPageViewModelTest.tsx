@@ -60,6 +60,14 @@ describe("useLabPageViewModel", () => {
       "gir_opportunity",
     ]);
     expect(result.current.goal?.savers[0].headline).toBe(labGoalReport.savers[0].headline);
+    expect(result.current.lowestScore).toBe(89);
+  });
+
+  it("offers the goals and handicaps the server has benchmarks for", async () => {
+    const { result } = await loaded();
+
+    expect(result.current.goalOptions).toEqual(labBenchmarks.alone.goals);
+    expect(result.current.handicaps.map((h) => h.handicap)).toEqual([0, 5, 10, 15, 20, 25]);
   });
 
   it("has no goal, and asks for no report, until one is set", async () => {
@@ -69,9 +77,9 @@ describe("useLabPageViewModel", () => {
     expect(result.current.goal).toBeNull();
     expect(result.current.peak).toBeNull();
     expect(result.current.roundsMeetingGoal).toBeNull();
-    // The lowest score falls back to the analytics record.
-
-    expect(result.current.lowestScore).toBe(89);
+    // The lowest score is the goal report's, so there is none without a goal.
+    expect(result.current.lowestScore).toBeNull();
+    expect(repository.goalReportRequests).toBe(0);
     expect(repository.analyticsRequests).toEqual(["user-1"]);
   });
 
@@ -142,10 +150,11 @@ describe("useLabPageViewModel", () => {
     expect(result.current.putting).toMatchObject({ threePuttsPerRound: 2, threePuttRate: 11.1, puttsPerRound: 34.5 });
   });
 
-  it("draws the shape alone, then against a handicap benchmark", async () => {
+  it("draws the server's shape alone, then against a handicap benchmark", async () => {
     const { repository, result } = await loaded();
 
     expect(result.current.benchmark).toBeNull();
+    expect(result.current.radar.map((e) => e.userRaw)).toEqual(["28%", "22%", "2.05/GIR", "+0.92", "+1.12", "+0.85"]);
     expect(result.current.radar.map((e) => e.axis)).toEqual([
       "GIR",
       "Scrambling",
@@ -154,8 +163,9 @@ describe("useLabPageViewModel", () => {
       "Par 4s",
       "Par 5s",
     ]);
+    expect(result.current.parTypes.map((row) => row.averageToPar)).toEqual([0.92, 1.12, 0.85]);
     expect(result.current.parTypes.every((row) => row.benchmarkToPar == null)).toBe(true);
-    expect(repository.benchmarkRequests).toEqual([]);
+    expect(repository.benchmarkRequests).toEqual(["alone"]);
 
     act(() => result.current.setComparison(5));
     await waitFor(() => expect(result.current.benchmark).not.toBeNull());
@@ -166,7 +176,7 @@ describe("useLabPageViewModel", () => {
       [0.5, 0.62, "behind"],
       [0.55, 0.3, "behind"],
     ]);
-    expect(repository.benchmarkRequests).toEqual(["handicap:5"]);
+    expect(repository.benchmarkRequests).toEqual(["alone", "handicap:5"]);
   });
 
   it("compares with the first friend, and loads the one picked", async () => {
@@ -182,7 +192,7 @@ describe("useLabPageViewModel", () => {
     await waitFor(() => expect(result.current.friendComparison).toBe("no-rounds"));
     expect(result.current.benchmark).toBeNull();
     // The server compares with each friend; their analytics are never fetched.
-    expect(repository.benchmarkRequests).toEqual([`friend:${avery.id}`, `friend:${jordan.id}`]);
+    expect(repository.benchmarkRequests).toEqual(["alone", `friend:${avery.id}`, `friend:${jordan.id}`]);
     expect(repository.analyticsRequests).toEqual(["user-1"]);
   });
 
@@ -233,7 +243,7 @@ describe("useLabPageViewModel", () => {
 
     // Back to the friend: the cached comparison shows at once while it refreshes.
     expect(result.current.friendComparison).toBe("ready");
-    expect(repository.benchmarkRequests.slice(0, 2)).toEqual([`friend:${avery.id}`, "handicap:5"]);
+    expect(repository.benchmarkRequests.slice(0, 3)).toEqual(["alone", `friend:${avery.id}`, "handicap:5"]);
     const cached = client.getQueryCache().findAll({ queryKey: queryKeys.analytics("user-1") });
     expect(cached.map((query) => query.queryKey[2])).toEqual(expect.arrayContaining([LAB_FILTERS, "benchmark"]));
   });
@@ -299,5 +309,19 @@ describe("useLabPageViewModel", () => {
     act(() => result.current.retry());
 
     await waitFor(() => expect(result.current.analytics).not.toBeNull());
+  });
+
+  it("reports the benchmarks on offer failing to load, and retries them", async () => {
+    const { alone, ...others } = labBenchmarks;
+    const { repository, result } = setup({ ...POPULATED, benchmarks: others });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.error?.message).toBe("No benchmark to compare with.");
+    expect(result.current.goalOptions).toEqual([]);
+
+    repository.benchmarks.alone = alone;
+    act(() => result.current.retry());
+
+    await waitFor(() => expect(result.current.error).toBeNull());
+    expect(result.current.goalOptions).toHaveLength(7);
   });
 });

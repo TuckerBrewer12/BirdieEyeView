@@ -26,8 +26,9 @@ export interface FakeLabSeed {
   benchmarks?: Record<string, BenchmarkComparisonDto>;
 }
 
-/** How a comparison is keyed in the seed: "handicap:5", "peak", "friend:user-avery". */
-export function benchmarkKey(target: BenchmarkTarget): string {
+/** How a comparison is keyed in the seed: "alone", "handicap:5", "peak", "friend:user-avery". */
+export function benchmarkKey(target: BenchmarkTarget | null): string {
+  if (target == null) return "alone";
   if (target.against === "handicap") return `handicap:${target.handicap}`;
   if (target.against === "friend") return `friend:${target.friendId}`;
   return "peak";
@@ -129,7 +130,7 @@ export class FakeLabRepository implements LabRepository {
     this.heldBenchmark = null;
   }
 
-  async getBenchmarkComparison(_userId: string, target: BenchmarkTarget): Promise<BenchmarkComparison> {
+  async getBenchmarkComparison(_userId: string, target: BenchmarkTarget | null): Promise<BenchmarkComparison> {
     const key = benchmarkKey(target);
     this.benchmarkRequests.push(key);
     if (this.heldBenchmark) await this.heldBenchmark;

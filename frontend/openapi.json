@@ -546,6 +546,16 @@
             "title": "Scrambling Trend",
             "type": "array"
           },
+          "shape": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BenchmarkShape"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "three_putts_trend": {
             "items": {
               "$ref": "#/components/schemas/ThreePuttsTrendRow"
@@ -579,7 +589,8 @@
           "notable_achievements",
           "score_mix",
           "insights",
-          "peak_game"
+          "peak_game",
+          "shape"
         ],
         "title": "AnalyticsResponse",
         "type": "object"
@@ -698,16 +709,23 @@
         "type": "object"
       },
       "BenchmarkComparisonResponse": {
-        "description": "The player's last rounds held up against a benchmark, and which benchmark it was.",
+        "description": "The player's last rounds held up against a benchmark, which benchmark it was, and every one on offer.",
         "properties": {
           "against": {
-            "enum": [
-              "handicap",
-              "peak",
-              "friend"
+            "anyOf": [
+              {
+                "enum": [
+                  "handicap",
+                  "peak",
+                  "friend"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "title": "Against",
-            "type": "string"
+            "title": "Against"
           },
           "benchmark": {
             "anyOf": [
@@ -730,6 +748,13 @@
             ],
             "title": "Goal"
           },
+          "goals": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Goals",
+            "type": "array"
+          },
           "handicap": {
             "anyOf": [
               {
@@ -740,6 +765,13 @@
               }
             ],
             "title": "Handicap"
+          },
+          "handicaps": {
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkHandicap"
+            },
+            "title": "Handicaps",
+            "type": "array"
           },
           "par_types": {
             "items": {
@@ -754,9 +786,30 @@
           "handicap",
           "goal",
           "benchmark",
-          "par_types"
+          "par_types",
+          "goals",
+          "handicaps"
         ],
         "title": "BenchmarkComparisonResponse",
+        "type": "object"
+      },
+      "BenchmarkHandicap": {
+        "description": "A handicap with a benchmark, and the goal, as stored, its golfers play to.",
+        "properties": {
+          "goal": {
+            "title": "Goal",
+            "type": "integer"
+          },
+          "handicap": {
+            "title": "Handicap",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "handicap",
+          "goal"
+        ],
+        "title": "BenchmarkHandicap",
         "type": "object"
       },
       "BenchmarkShape": {
@@ -9486,7 +9539,7 @@
     },
     "/api/stats/{user_id}/benchmark": {
       "get": {
-        "description": "The player's last `limit` rounds against a handicap's shape, the golfers their peak\nrounds play like, or a friend's last `limit` rounds.",
+        "description": "The player's last `limit` rounds against a handicap's shape, the golfers their peak\nrounds play like, or a friend's last `limit` rounds; with no `against`, their par types alone.\nEvery response lists the goals and handicaps on offer.",
         "operationId": "get_benchmark_comparison_api_stats__user_id__benchmark_get",
         "parameters": [
           {
@@ -9502,15 +9555,22 @@
           {
             "in": "query",
             "name": "against",
-            "required": true,
+            "required": false,
             "schema": {
-              "enum": [
-                "handicap",
-                "peak",
-                "friend"
+              "anyOf": [
+                {
+                  "enum": [
+                    "handicap",
+                    "peak",
+                    "friend"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
               ],
-              "title": "Against",
-              "type": "string"
+              "title": "Against"
             }
           },
           {

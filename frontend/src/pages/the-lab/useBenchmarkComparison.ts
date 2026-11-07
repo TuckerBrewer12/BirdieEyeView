@@ -4,9 +4,9 @@ import type { BenchmarkTarget } from "@/domain/benchmark";
 import { labRepository, type LabRepository } from "./labRepository";
 
 /**
- * The server's comparison of the golfer's last 20 rounds with one benchmark, cached per
- * benchmark. Waits while there is nothing to compare with. A comparison never stands in for
- * another's while the next one loads.
+ * The server's comparison of the golfer's last 20 rounds with one benchmark, or with none for a
+ * null target, cached per benchmark. A comparison never stands in for another's while the next
+ * one loads.
  */
 export function useBenchmarkComparison(
   userId: string,
@@ -15,7 +15,6 @@ export function useBenchmarkComparison(
 ) {
   return useQuery({
     queryKey: queryKeys.benchmarkComparison(userId, target),
-    queryFn: () => repository.getBenchmarkComparison(userId, target!),
-    enabled: target != null,
+    queryFn: () => repository.getBenchmarkComparison(userId, target),
   });
 }

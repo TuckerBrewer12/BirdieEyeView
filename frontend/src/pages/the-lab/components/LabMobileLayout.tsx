@@ -38,6 +38,7 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
           </CardHeader>
           <CardContent>
             <GoalPicker
+              options={vm.goalOptions}
               value={target}
               onChange={vm.setGoal}
               disabled={vm.savingGoal}
@@ -72,6 +73,7 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
           lowestScore={vm.lowestScore}
           recentTrend={vm.recentTrend}
           comparison={vm.comparison}
+          handicaps={vm.handicaps}
           onComparisonChange={vm.setComparison}
           friends={vm.friends}
           selectedFriend={vm.selectedFriend}
@@ -120,7 +122,7 @@ function LabPanelContent({ panel, vm, goalLabel }: { panel: LabPanel; vm: LabPag
     return (
       <ParTypeCard
         rows={vm.parTypes}
-        benchmarkName={vm.benchmark ? benchmarkName(vm.radarMode, vm.comparison, vm.selectedFriend) : null}
+        benchmarkName={vm.benchmark ? benchmarkName(vm.radarMode, vm.comparison, vm.selectedFriend, vm.handicaps) : null}
       />
     );
   }

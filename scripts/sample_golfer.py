@@ -197,6 +197,8 @@ async def _responses() -> tuple[dict, dict]:
     dashboard = await stats.get_dashboard(user_id, db, USER)
     analytics = await stats.get_analytics(user_id, 50, None, None, db, USER)
     goal_report = await stats.get_goal_report(user_id, 20, db, USER)
+    # The Lab's par types alone, with the goals and handicaps there are benchmarks for.
+    benchmark = await stats.get_benchmark_comparison(user_id, None, None, None, 20, db, USER)
     played_courses = await stats.get_played_courses(user_id, db, USER)
     # Analytics' course filter, for the course played least, so the figures plainly change.
     links_analytics = await stats.get_analytics(user_id, 50, HALF_MOON_BAY.id, None, db, USER)
@@ -212,6 +214,7 @@ async def _responses() -> tuple[dict, dict]:
         "analyticsByCourse": {HALF_MOON_BAY.id: links_analytics},
         "playedCourses": played_courses,
         "goalReport": goal_report,
+        "benchmarks": {"alone": benchmark},
         # The tour's pages never ask for the round list; Analytics opens just the best round.
         "detailRounds": [round_detail(best, await player_handicap_index(db, USER))],
     })

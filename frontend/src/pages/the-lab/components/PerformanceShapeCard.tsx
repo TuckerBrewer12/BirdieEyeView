@@ -8,15 +8,22 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
-import { formatCourseName, formatOneDecimal, pluralize, type ComparisonTargetValue, type RadarEntry } from "@/domain";
+import {
+  formatCourseName,
+  formatOneDecimal,
+  pluralize,
+  type BenchmarkHandicap,
+  type ComparisonTargetValue,
+  type RadarEntry,
+} from "@/domain";
 import type { FriendComparison } from "../useLabPageViewModel";
 import type { FriendOption, PeakGame, RadarMode } from "../model";
 import {
-  COMPARISON_OPTIONS,
   benchmarkHeading,
   benchmarkName,
   comparisonFromKey,
   comparisonKey,
+  comparisonOptions,
   friendName,
   peakGapNote,
   recentTrendNote,
@@ -32,6 +39,8 @@ export interface PerformanceShapeCardProps {
   lowestScore: number | null;
   recentTrend: number | null;
   comparison: ComparisonTargetValue;
+  /** The handicaps the server has a benchmark for, scratch first. */
+  handicaps: readonly BenchmarkHandicap[];
   onComparisonChange: (target: ComparisonTargetValue) => void;
   friends: FriendOption[];
   selectedFriend: FriendOption | null;
@@ -59,8 +68,9 @@ function friendNote(state: FriendComparison, friend: FriendOption | null): strin
 
 /** The golfer's shape on the radar, beside the controls that pick what it is held up against. */
 export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
-  const { mode, peak, comparison, selectedFriend, friendComparison, radar, compared, missingAxes } = props;
-  const legend = compared ? benchmarkName(mode, comparison, selectedFriend) : null;
+  const { mode, peak, comparison, handicaps, selectedFriend, friendComparison, radar, compared, missingAxes } = props;
+  const legend = compared ? benchmarkName(mode, comparison, selectedFriend, handicaps) : null;
+  const options = comparisonOptions(handicaps);
   const note = friendComparison ? friendNote(friendComparison, selectedFriend) : null;
   const compareLabelId = useId();
 
@@ -69,7 +79,7 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
       <div className="flex flex-col divide-y divide-border @3xl:flex-row @3xl:divide-x @3xl:divide-y-0">
         <div className="flex w-full shrink-0 flex-col gap-4 p-5 @3xl:w-72">
           <p className="text-base font-bold text-card-foreground">
-            {benchmarkHeading(mode, comparison, selectedFriend, peak)}
+            {benchmarkHeading(mode, comparison, selectedFriend, peak, handicaps)}
           </p>
 
           <ToggleGroup
@@ -156,12 +166,12 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
                 size="sm"
                 value={[comparisonKey(comparison)]}
                 onValueChange={(values) => {
-                  const next = comparisonFromKey(values[0]);
+                  const next = comparisonFromKey(values[0], options);
                   if (next) props.onComparisonChange(next.value);
                 }}
                 className="w-full flex-wrap"
               >
-                {COMPARISON_OPTIONS.map((option) => (
+                {options.map((option) => (
                   <ToggleGroupItem key={option.key} value={option.key}>
                     {option.label}
                   </ToggleGroupItem>
