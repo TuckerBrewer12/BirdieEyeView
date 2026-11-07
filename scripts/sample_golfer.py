@@ -165,6 +165,9 @@ def _database(rounds: list[Round]):
             for c in sorted(courses, key=lambda c: c.name)
         ]
 
+    async def count_rounds_for_user(_user_id):
+        return len(rounds)
+
     async def are_friends(_a, _b):
         return False
 
@@ -174,6 +177,7 @@ def _database(rounds: list[Round]):
             get_round_summaries_for_user=get_round_summaries_for_user,
             get_rounds_for_user=get_rounds_for_user,
             get_played_courses_for_user=get_played_courses_for_user,
+            count_rounds_for_user=count_rounds_for_user,
         )
         friendships = _Repo(are_friends=are_friends)
 

@@ -47,6 +47,9 @@ def _database(user: User, rounds: list[Round]):
     async def get_round_owner_id(_round_id):
         return user.id
 
+    async def count_rounds_for_user(_user_id):
+        return len(rounds)
+
     async def are_friends(_a, _b):
         return False
 
@@ -57,6 +60,7 @@ def _database(user: User, rounds: list[Round]):
             get_rounds_for_user=get_rounds_for_user,
             get_round=get_round,
             get_round_owner_id=get_round_owner_id,
+            count_rounds_for_user=count_rounds_for_user,
         ),
         friendships=SimpleNamespace(are_friends=are_friends),
     )

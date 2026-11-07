@@ -46,6 +46,7 @@ async def get_dashboard(
 
     # One query for every round's hole scores; the Round model works out each figure.
     summaries = await db.rounds.get_round_summaries_for_user(str(user_id), limit=500, offset=0)
+    total_rounds = await db.rounds.count_rounds_for_user(str(user_id))
 
     scored = [r for r in summaries if r.calculate_total_score() is not None]
     scores = [r.calculate_total_score() for r in scored]
@@ -74,7 +75,7 @@ async def get_dashboard(
     putts_shown = dashboard.putts_shown(form["putts_per_18"], average_putts)
 
     return DashboardResponse(
-        total_rounds=len(summaries),
+        total_rounds=total_rounds,
         scoring_average=round(sum(scores) / len(scores), 1) if scores else None,
         best_round=best_summary.total_score if best_summary else None,
         best_round_id=best_summary.id if best_summary else None,
@@ -95,7 +96,7 @@ async def get_dashboard(
         recent_score_mix=recent_mix["percentages"],
         score_mix_holes=mix["holes"],
         milestones=dashboard.lifetime_milestones(
-            analytics.notable_achievements(last_20, home_course_id=user.home_course_id)
+            analytics.notable_achievements(list(reversed(summaries)), home_course_id=user.home_course_id)
         ),
         whs=dashboard.whs_breakdown(
             last_20, handicap_trend, hcap.score_differentials_per_round(last_20), index_window
