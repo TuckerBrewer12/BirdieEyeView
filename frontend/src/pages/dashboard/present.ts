@@ -1,11 +1,8 @@
-import { scoreKindLabel, type ScoreKey, tokens } from "@/brand/theme";
 import {
-  SCORE_KINDS,
   formatCourseName,
   formatSignedOneDecimal,
   formatWeekdayDay,
   pluralNoun,
-  type ScoreMix,
 } from "@/domain";
 import type { UserDto } from "@/types/api";
 import {
@@ -38,24 +35,6 @@ export function greetingDateLabel(now = new Date()): string {
 export function puttsLabel(putts: number | null): string {
   return putts != null && putts > 0 ? putts.toFixed(1) : "—";
 }
-
-export interface ColoredMixItem {
-  name: ScoreKey;
-  label: string;
-  value: number;
-  color: string;
-}
-
-/** The mix's bars, in bucket order, to a tenth of a percent: a kind with no holes has no bar. */
-export function colorizeMix(mix: ScoreMix): ColoredMixItem[] {
-  return SCORE_KINDS.flatMap((kind) => {
-    const value = Math.round(mix[kind] * 10) / 10;
-    return value > 0
-      ? [{ name: kind, label: scoreKindLabel(kind), value, color: tokens.color.score[kind].base }]
-      : [];
-  });
-}
-
 
 export function courseLabelForWhs(row: WhsRound): string {
   return row.courseName ? formatCourseName(row.courseName) : `Round ${row.roundIndex}`;

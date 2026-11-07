@@ -1,5 +1,4 @@
-import { useState, type MouseEvent } from "react";
-import { AnimatePresence, motion, useReducedMotion, useReducedMotionConfig } from "framer-motion";
+import { motion, useReducedMotion, useReducedMotionConfig } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
@@ -7,6 +6,8 @@ import { scoreKindLabel, scoreWashClass, toParLabel, toParTextClass, tokens } fr
 import type { HoleScore, Round } from "@/domain";
 import { pluralize } from "@/domain/format";
 import type { ScoreKind } from "@/domain/score";
+import { ChartTooltip } from "./ChartTooltip";
+import { useNearestPoint } from "./useNearestPoint";
 
 interface RoundFlowChartProps {
   round: Round;
@@ -28,8 +29,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
   const prefersReduced = useReducedMotion();
   const configReduced = useReducedMotionConfig();
   const reduceMotion = prefersReduced || configReduced;
-  const [hovered, setHovered] = useState<FlowHole | null>(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const { active, pointer, svgProps } = useNearestPoint();
 
   const holes = round.holes.filter(
     (hole): hole is FlowHole => hole.strokes != null && hole.toPar != null && hole.kind != null,
@@ -49,12 +49,8 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
       .y((hole) => yOf(hole.toPar))
       .curve(curveMonotoneX)(holes) ?? "";
 
-  const handleMouseMove = (e: MouseEvent<SVGSVGElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const number = Math.round(x.invert((e.clientX - rect.left) * (W / rect.width)));
-    setHovered(holes.find((hole) => hole.hole === Math.max(first, Math.min(last, number))) ?? null);
-    setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  };
+  const xs = holes.map((hole) => x(hole.hole));
+  const hovered = active != null ? holes[active] : null;
 
   return (
     <div data-slot="round-flow-chart" className="overflow-x-auto">
@@ -62,8 +58,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="w-full overflow-visible"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={() => setHovered(null)}
+          {...svgProps(xs, W)}
         >
           <line
             x1={PAD.left}
@@ -163,20 +158,9 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
           ))}
         </svg>
 
-        <AnimatePresence>
+        <ChartTooltip anchor={hovered ? pointer : null} placement="pointer" id={hovered?.hole ?? ""}>
           {hovered && (
-            <motion.div
-              key={hovered.hole}
-              className="pointer-events-none absolute z-10 min-w-32 rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card"
-              style={{
-                left: tooltipPos.x + (tooltipPos.x > W * 0.65 ? -150 : 14),
-                top: tooltipPos.y - 10,
-              }}
-              initial={{ opacity: 0, scale: tokens.motion.tapScale, y: 4 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: tokens.motion.tapScale, y: 4 }}
-              transition={{ duration: tokens.motion.duration.collapse }}
-            >
+            <>
               <div className="mb-1.5 flex items-center justify-between gap-3">
                 <span className="text-sm font-bold text-card-foreground">Hole {hovered.hole}</span>
                 <span
@@ -199,9 +183,9 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
                   </span>
                 )}
               </div>
-            </motion.div>
+            </>
           )}
-        </AnimatePresence>
+        </ChartTooltip>
       </div>
     </div>
   );

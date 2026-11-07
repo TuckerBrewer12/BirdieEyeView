@@ -1,10 +1,11 @@
-import { useId, useState, type PointerEvent, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useId, type ReactNode } from "react";
 import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
+import { ChartTooltip } from "./ChartTooltip";
 import { indexScale, knownValues, paddedExtent } from "./scales";
+import { pointAnchor, useNearestPoint } from "./useNearestPoint";
 
 type TrendAreaTone = "primary" | "birdie" | "bogey" | "eagle" | "neutral" | "contrast";
 
@@ -78,7 +79,7 @@ export function TrendAreaChart({
   const layout = tokens.chart.trendArea;
   const { width: W, height: H, pad: PAD } = layout;
   const gradientId = `trend-area-${useId().replace(/:/g, "")}`;
-  const [active, setActive] = useState<number | null>(null);
+  const { active, svgProps } = useNearestPoint();
 
   const first = points.map((point) => point.values[0] ?? null);
   if (points.length < 2 || knownValues(first).length < 2) {
@@ -112,15 +113,11 @@ export function TrendAreaChart({
   const showDots = points.length <= layout.maxDots;
   const xTicks = tickIndexes(points.length, layout.xTicks);
 
-  const indexAt = (event: PointerEvent<SVGSVGElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const index = Math.round(x.invert((event.clientX - rect.left) * (W / rect.width)));
-    return Math.max(0, Math.min(points.length - 1, index));
-  };
-
+  const xs = points.map((_, i) => x(i));
   const point = active != null ? points[active] : null;
   const pointValue = point?.values.find((value) => value != null) ?? null;
   const pointY = pointValue != null ? y(pointValue) : null;
+  const anchor = active != null && pointY != null ? pointAnchor(x(active), pointY, W, H) : null;
 
   return (
     <div data-slot="trend-area-chart" className={cn("relative flex flex-col gap-2 select-none", className)}>
@@ -129,18 +126,7 @@ export function TrendAreaChart({
         className="block h-auto w-full touch-pan-y overflow-visible"
         role="img"
         aria-label={ariaLabel}
-        onPointerMove={(event) => {
-          if (event.pointerType === "mouse") setActive(indexAt(event));
-        }}
-        onPointerLeave={(event) => {
-          if (event.pointerType === "mouse") setActive(null);
-        }}
-        onPointerDown={(event) => {
-          if (event.pointerType === "mouse") return;
-          // A tap picks a round and a second tap on it puts it down.
-          const index = indexAt(event);
-          setActive(active === index ? null : index);
-        }}
+        {...svgProps(xs, W)}
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -237,22 +223,9 @@ export function TrendAreaChart({
         </div>
       )}
 
-      <AnimatePresence>
-        {point && active != null && pointY != null && (
-          <motion.div
-            key={active}
-            data-slot="trend-area-tooltip"
-            className={cn(
-              "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
-              // Past two thirds of the way across, the card opens to the left of the point.
-              x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
-            )}
-            style={{ left: `${(x(active) / W) * 100}%`, top: `${(pointY / H) * 100}%` }}
-            initial={{ opacity: 0, scale: tokens.motion.tapScale }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: tokens.motion.tapScale }}
-            transition={{ duration: tokens.motion.duration.collapse }}
-          >
+      <ChartTooltip anchor={anchor} id={active ?? ""} data-slot="trend-area-tooltip">
+        {point && (
+          <>
             <div className="text-sm font-bold text-card-foreground">{point.title}</div>
             {point.subtitle && (
               <div className="max-w-40 truncate text-label text-muted-foreground">{point.subtitle}</div>
@@ -272,9 +245,9 @@ export function TrendAreaChart({
                 </TooltipRow>
               ))}
             </div>
-          </motion.div>
+          </>
         )}
-      </AnimatePresence>
+      </ChartTooltip>
     </div>
   );
 }

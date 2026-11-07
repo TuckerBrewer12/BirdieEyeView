@@ -1,4 +1,4 @@
-import { ScoreMixChart } from "../components/ScoreMixChart";
+import { ScoreMixChart } from "@/brand/charts/ScoreMixChart";
 
 export default function ScoreMixChartPreview() {
   return (

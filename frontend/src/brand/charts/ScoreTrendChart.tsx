@@ -1,11 +1,13 @@
-import { useId, useState, type MouseEvent } from "react";
+import { useId } from "react";
 import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { chartTickStyle, toParFill, tokens } from "@/brand/theme";
 import { formatDay, formatDayTick } from "@/domain/date";
 import type { ScorePoint } from "@/domain/courseAnalytics";
+import { ChartTooltip } from "./ChartTooltip";
 import { indexScale, paddedExtent } from "./scales";
+import { useNearestPoint } from "./useNearestPoint";
 
 interface ScoreTrendChartProps {
   /** The rounds, oldest first. Unscored rounds are left out. */
@@ -20,8 +22,7 @@ type ScoredRow = ScorePoint & { score: number };
  */
 export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
   const { width: W, height: H, pad: PAD, headroom, stroke, dot, dotHover, maxTicks } = tokens.chart.trend;
-  const [hovered, setHovered] = useState<ScoredRow | null>(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const { active, pointer, svgProps } = useNearestPoint();
   const areaId = `score-trend-area-${useId().replace(/:/g, "")}`;
 
   const data = rows.filter((row): row is ScoredRow => row.score != null);
@@ -41,22 +42,15 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
       .y1((row) => y(row.score))
       .curve(curveMonotoneX)(data) ?? "";
   const gridTicks = y.ticks(5);
-  const hoveredIndex = hovered ? data.indexOf(hovered) : -1;
-
-  const handleMouseMove = (event: MouseEvent<SVGSVGElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const index = Math.round(x.invert((event.clientX - rect.left) * (W / rect.width)));
-    setHovered(data[Math.max(0, Math.min(data.length - 1, index))]);
-    setTooltipPos({ x: event.clientX - rect.left, y: event.clientY - rect.top });
-  };
+  const hovered = active != null ? data[active] : null;
+  const xs = data.map((_, i) => x(i));
 
   return (
     <div data-slot="score-trend-chart" className="relative select-none">
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="w-full overflow-visible"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={() => setHovered(null)}
+        {...svgProps(xs, W)}
       >
         <defs>
           <linearGradient id={areaId} x1="0" y1="0" x2="0" y2="1">
@@ -101,16 +95,16 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             key={row.roundIndex}
             cx={x(i)}
             cy={y(row.score)}
-            r={hovered === row ? dotHover : dot}
+            r={active === i ? dotHover : dot}
             fill={toParFill(row.toPar)}
             stroke={tokens.color.card}
             strokeWidth={tokens.lineWidth.outline}
           />
         ))}
-        {hovered && (
+        {active != null && (
           <line
-            x1={x(hoveredIndex)}
-            x2={x(hoveredIndex)}
+            x1={x(active)}
+            x2={x(active)}
             y1={PAD.top}
             y2={H - PAD.bottom}
             stroke={tokens.color.chart.muted}
@@ -135,19 +129,15 @@ export function ScoreTrendChart({ rows }: ScoreTrendChartProps) {
             ) : null;
           })}
       </svg>
-      {hovered && (
-        <div
-          className="pointer-events-none absolute z-10 min-w-28 rounded-xl border border-border bg-card px-3 py-2.5 text-xs shadow-card"
-          style={{
-            left: tooltipPos.x + (tooltipPos.x > W * 0.68 ? -145 : 14),
-            top: tooltipPos.y - 10,
-          }}
-        >
-          <div className="mb-1 text-meta text-muted-foreground">{formatDay(hovered.date) ?? "—"}</div>
-          <div className="text-sm font-bold text-foreground">{hovered.score}</div>
-          <ToParFigure toPar={hovered.toPar} />
-        </div>
-      )}
+      <ChartTooltip anchor={hovered ? pointer : null} placement="pointer" id={hovered?.roundIndex ?? ""}>
+        {hovered && (
+          <>
+            <div className="mb-1 text-meta text-muted-foreground">{formatDay(hovered.date) ?? "—"}</div>
+            <div className="text-sm font-bold text-foreground">{hovered.score}</div>
+            <ToParFigure toPar={hovered.toPar} />
+          </>
+        )}
+      </ChartTooltip>
     </div>
   );
 }

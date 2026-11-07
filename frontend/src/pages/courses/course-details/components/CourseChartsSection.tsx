@@ -49,10 +49,8 @@ export function CourseChartsSection({ userId, courseId }: CourseChartsSectionPro
       <SectionLabel>Hole-by-Hole Breakdown</SectionLabel>
       <ChartTabs
         tabs={viewModel.chartTabs}
-        value={viewModel.chartTab}
-        onValueChange={viewModel.selectChartTab}
         charts={viewModel.charts}
-        selectedCharts={viewModel.selectedCharts}
+        groupOf={(chart) => chart.group}
         keyFor={(chart) => chart.kind}
         renderChart={(chart) => (
           <Card>

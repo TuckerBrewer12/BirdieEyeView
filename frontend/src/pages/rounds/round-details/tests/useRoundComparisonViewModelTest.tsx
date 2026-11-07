@@ -1,4 +1,4 @@
-import { renderHook, waitFor, act } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
@@ -30,7 +30,7 @@ function renderVm(comparison: RoundComparisonDto) {
 }
 
 describe("useRoundComparisonViewModel", () => {
-  it("exposes finished comparison charts and Score as the active tab", async () => {
+  it("exposes finished comparison charts under their tabs", async () => {
     const { result } = renderVm(sampleComparison);
     await waitFor(() => expect(result.current.show).toBe(true));
     expect(result.current.charts.map((c) => c.title)).toEqual([
@@ -46,26 +46,14 @@ describe("useRoundComparisonViewModel", () => {
       value: 78,
       sampleSize: 4,
     });
-    expect(result.current.selectedCharts.map((c) => c.title)).toEqual(["Score"]);
-  });
-
-  it("a tab shows only its own charts", async () => {
-    const { result } = renderVm(sampleComparison);
-    await waitFor(() => expect(result.current.show).toBe(true));
-    act(() => result.current.selectChartTab("short_game"));
-    expect(result.current.chartTab).toBe("short_game");
-    expect(result.current.selectedCharts.map((c) => c.title)).toEqual([
-      "Putts",
-      "3-Putts",
-      "Putts per GIR",
-      "Scrambling",
+    expect(result.current.charts.map((c) => c.group)).toEqual([
+      "score",
+      "short_game",
+      "gir",
+      "short_game",
+      "short_game",
+      "short_game",
     ]);
-  });
-
-  it("ignores a tab it does not have", async () => {
-    const { result } = renderVm(sampleComparison);
-    await waitFor(() => expect(result.current.show).toBe(true));
-    act(() => result.current.selectChartTab("driving"));
-    expect(result.current.chartTab).toBe("score");
+    expect(result.current.chartTabs.map((tab) => tab.key)).toEqual(["score", "short_game", "gir"]);
   });
 });

@@ -184,7 +184,7 @@ Every colour is a token in `src/brand/theme/tokens.ts`, used through its Tailwin
 All animation is `framer-motion`, with its numbers from `tokens.motion` in `@/brand/theme`: `hoverScale` / `tapScale` on `spring` for hover and press, `entrance` for content arriving, `layout` for a block resizing, `draw` and `pop` for a chart line and its points, `duration.collapse`. `Reveal` fades a section up as it scrolls in and holds still for reduced motion. Fast enough to feel snappy, slow enough to register; no raw `stiffness` or `duration` in a component.
 
 ### Charts
-Golf-native visualizations over generic chart types where possible. SVG charts use a `viewBox` and D3 scales (`d3-scale`, `d3-shape`) for the maths; Recharts draws trend, bar and area charts. SVG paint and Recharts props take `tokens.color.*` (`stroke={tokens.color.chart.muted}`), plus `chartTooltipStyle` and `chartTickStyle`. Geometry is `tokens.chart`. Tooltips find the nearest point on `onMouseMove` and close on `onMouseLeave`.
+Golf-native visualizations over generic chart types where possible. SVG charts use a `viewBox` and D3 scales (`d3-scale`, `d3-shape`) for the maths; Recharts draws trend, bar and area charts. SVG paint and Recharts props take `tokens.color.*` (`stroke={tokens.color.chart.muted}`), plus `chartTooltipStyle` and `chartTickStyle`. Geometry is `tokens.chart`. An SVG chart picks the point under the pointer with `useNearestPoint` (a mouse hovers, a tap picks and a second tap drops it) and shows it in the kit's `ChartTooltip`, placed by `tokens.chart.tooltip`.
 
 ### Brand tokens (`src/brand/`)
 
