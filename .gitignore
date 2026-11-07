@@ -27,3 +27,6 @@ sessions/
 
 # Claude Code agent worktrees
 .claude/worktrees/
+
+# Hypothesis example database (property tests)
+.hypothesis/

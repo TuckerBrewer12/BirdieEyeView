@@ -49,8 +49,13 @@ def score_differential(score: int, course_rating: float, slope_rating: float) ->
 
 def course_handicap(handicap_index: float, slope_rating: float, course_rating: float, par: int) -> int:
     """WHS course handicap = Index × Slope / 113 + (Course Rating − Par), to the nearest stroke.
-    A half goes up, so a 12.5 plays off 13 and a plus 0.5 off scratch."""
-    return math.floor(handicap_index * slope_rating / 113 + (course_rating - par) + 0.5)
+    A half goes up, so a 12.5 plays off 13 and a plus 0.5 off scratch.
+
+    The sum is rounded to 6 places first: in floats 0.2 + (69.3 − 70) is −0.5000000000000028,
+    which would floor to −1 instead of going up to scratch. With an index and rating in tenths
+    and a whole-number slope, a value that isn't exactly a half is at least 1/1130 away from one,
+    so 6 places can't pull a real −0.501 onto the half."""
+    return math.floor(round(handicap_index * slope_rating / 113 + (course_rating - par), 6) + 0.5)
 
 
 def tee_course_handicap(
