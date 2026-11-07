@@ -1,4 +1,4 @@
-import { Alert, AlertAction, AlertDescription, Button, LoadingState, PageHeader } from "@/brand";
+import { LoadError, LoadingState, PageHeader } from "@/brand";
 import { LabDesktopLayout } from "./components/LabDesktopLayout";
 import { LabMobileLayout } from "./components/LabMobileLayout";
 import { useLabPageViewModel } from "./useLabPageViewModel";
@@ -10,14 +10,7 @@ export function TheLabPage({ userId }: { userId: string }) {
 
   if (!vm.analytics) {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>{vm.error?.message ?? "The Lab failed to load."}</AlertDescription>
-        <AlertAction>
-          <Button variant="outline" size="xs" onClick={vm.retry}>
-            Retry
-          </Button>
-        </AlertAction>
-      </Alert>
+      <LoadError message={vm.error?.message ?? "The Lab failed to load."} onRetry={vm.retry} />
     );
   }
 

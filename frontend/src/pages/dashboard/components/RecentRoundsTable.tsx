@@ -1,6 +1,6 @@
 import { RowButton } from "@/brand";
 import { cn } from "@/brand/cn";
-import { toParBadgeClass, toParLabel } from "@/brand/theme";
+import { toParBadgeClass, toParDisplay } from "@/brand/theme";
 import { formatCourseName } from "@/domain/course";
 import type { RoundSummary } from "@/domain";
 
@@ -51,7 +51,7 @@ export function RecentRoundsTable({ rounds, onRoundClick }: RecentRoundsTablePro
                     toParBadgeClass(r.toPar),
                   )}
                 >
-                  {toParLabel(r.toPar) ?? "—"}
+                  {toParDisplay(r.toPar)}
                 </span>
               </span>
             </RowButton>

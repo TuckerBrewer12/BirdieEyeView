@@ -6,7 +6,7 @@ import {
   formatOneDecimal,
   formatPercent,
   pluralize,
-  toParLabel,
+  toParDisplay,
 } from "@/domain";
 import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type {
@@ -182,7 +182,7 @@ export function netScorePoints(rows: NetScoreTrendRowDto[]): TrendAreaPoint[] {
     ...roundPoint(row, [row.net_score]),
     notes: [
       { label: "Gross", value: row.gross_score != null ? String(row.gross_score) : "—" },
-      { label: "To Par", value: toParLabel(row.to_par) ?? "—" },
+      { label: "To Par", value: toParDisplay(row.to_par) },
       { label: "Course HCP", value: formatCourseHandicap(row.course_handicap) },
     ],
   }));

@@ -15,7 +15,7 @@ import {
   StatLabel,
   StatValue,
 } from "@/brand";
-import { formatHandicapIndex, formatOneDecimal, formatPercent } from "@/domain";
+import { formatHandicapIndex, formatOneDecimal, formatPercent, initialsOf } from "@/domain";
 import { GirDonut } from "./GirDonut";
 import { GoalCard } from "./GoalCard";
 import { MilestoneFeed } from "./MilestoneFeed";
@@ -25,7 +25,7 @@ import { RecentRoundsTable } from "./RecentRoundsTable";
 import { ScanActionCard } from "./ScanActionCard";
 import { ScoreMixChart } from "./ScoreMixChart";
 import type { DashboardPageViewModel } from "../useDashboardPageViewModel";
-import { firstNameOf, initialsOf } from "../present";
+import { firstNameOf } from "../present";
 
 export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
@@ -46,7 +46,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
         {/* Left Main Content */}
         <div className="flex-1 min-w-0 flex flex-col">
           <ProfileHeroBanner
-            initials={initialsOf(user ?? null)}
+            initials={initialsOf(user?.name, "G")}
             handicapIndex={data.handicap_index}
             handicapLabel={formatHandicapIndex(data.handicap_index)}
             firstName={firstNameOf(user)}

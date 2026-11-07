@@ -2,13 +2,7 @@ import { useDashboardPageViewModel } from "./useDashboardPageViewModel";
 import { DashboardMobileLayout } from "./components/DashboardMobileLayout";
 import { DashboardDesktopLayout } from "./components/DashboardDesktopLayout";
 import { HandicapBreakdownSheet } from "./components/HandicapBreakdownSheet";
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  Button,
-  LoadingState,
-} from "@/brand";
+import { LoadError, LoadingState } from "@/brand";
 
 interface DashboardPageProps {
   userId: string;
@@ -23,16 +17,10 @@ export function DashboardPage({ userId }: DashboardPageProps) {
 
   if (!vm.data) {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>
-          {vm.error?.message ?? "Dashboard data failed to load."}
-        </AlertDescription>
-        <AlertAction>
-          <Button variant="outline" size="xs" onClick={() => void vm.refetch()}>
-            Retry
-          </Button>
-        </AlertAction>
-      </Alert>
+      <LoadError
+        message={vm.error?.message ?? "Dashboard data failed to load."}
+        onRetry={() => void vm.refetch()}
+      />
     );
   }
 

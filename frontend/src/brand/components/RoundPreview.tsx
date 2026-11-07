@@ -6,7 +6,7 @@ import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { RowButton } from "@/brand/components/Button";
 import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import { toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
+import { toParBadgeClass, toParDisplay, toParLabel, toParTextClass, tokens } from "@/brand/theme";
 import { playedScoreKinds, scoreKindCountLabel, type RoundSummary } from "@/domain";
 import { formatCourseName } from "@/domain/course";
 import { formatDay, formatDayShort, dayParts } from "@/domain/date";
@@ -57,7 +57,7 @@ export function RoundPreview(props: RoundPreviewProps) {
         <div className="flex items-center gap-3">
           <span className="text-sm font-bold text-foreground">{round.score ?? "—"}</span>
           <span className={cn("rounded px-1.5 py-0.5 text-xs font-semibold", toParBadgeClass(round.toPar))}>
-            {toParLabel(round.toPar) ?? "—"}
+            {toParDisplay(round.toPar)}
           </span>
         </div>
       </>

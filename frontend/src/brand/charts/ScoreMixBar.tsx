@@ -1,5 +1,6 @@
 import { cn } from "@/brand/cn";
-import { SCORE_KEYS, scoreFillClass, scoreKindLabel } from "@/brand/theme";
+import { scoreFillClass, scoreKindLabel } from "@/brand/theme";
+import { SCORE_KINDS } from "@/domain/score";
 import { formatPercent } from "@/domain/format";
 import type { ScoreMix } from "@/domain/score";
 
@@ -11,7 +12,7 @@ interface ScoreMixBarProps {
 /** How a player's holes split across score kinds: one stacked bar, then each kind's share under it. */
 export function ScoreMixBar({ mix, className }: ScoreMixBarProps) {
   // Slivers under half a percent would only draw as a seam, so the bar and legend both skip them.
-  const shown = SCORE_KEYS.filter((kind) => mix[kind] > 0.5);
+  const shown = SCORE_KINDS.filter((kind) => mix[kind] > 0.5);
   const pct = (kind: (typeof shown)[number]) => formatPercent(mix[kind]);
 
   return (

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/brand/cn";
+import { initialsOf } from "@/domain/format";
 
 interface PersonRowProps {
   name: string;
@@ -12,16 +13,6 @@ interface PersonRowProps {
   /** Buttons or a status at the end of the row. */
   actions?: ReactNode;
   className?: string;
-}
-
-function initialsOf(name: string): string {
-  const letters = name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word.charAt(0))
-    .join("");
-  return letters.toUpperCase() || "?";
 }
 
 /**

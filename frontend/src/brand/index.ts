@@ -2,7 +2,6 @@ export {
   tokens,
   chartTooltipStyle,
   chartTickStyle,
-  SCORE_KEYS,
   scoreFillClass,
   toParFill,
   toParLabel,
@@ -12,7 +11,6 @@ export {
   toParBadgeClass,
   scoreOnFillClass,
 } from "./theme";
-export type { ScoreKey } from "./theme";
 export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/Alert";
 export {
   Card,
@@ -61,6 +59,9 @@ export {
 } from "./components/variants";
 export { Field, FieldLabel, FieldDescription, FieldError } from "./components/Field";
 export { Checkbox, Input } from "./components/Input";
+export { EmptyState } from "./components/EmptyState";
+export { LoadError } from "./components/LoadError";
+export type { LoadErrorProps } from "./components/LoadError";
 export { LoadingState } from "./components/LoadingState";
 export {
   InputGroup,
@@ -76,6 +77,8 @@ export { PageTitle } from "./components/PageTitle";
 export { Meter } from "./components/Meter";
 export { Stat, StatLabel, StatValue, StatUnit, StatDelta } from "./components/Stat";
 export type { StatDirection } from "./components/Stat";
+export { StatTiles } from "./components/StatTiles";
+export type { StatTile, StatTilesProps } from "./components/StatTiles";
 export { TeeSwatch } from "./components/TeeSwatch";
 export { ToParFigure } from "./components/ToParFigure";
 export { Reveal } from "./components/Reveal";

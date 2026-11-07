@@ -7,6 +7,7 @@ export {
   scoreKindCountLabel,
   scoreMixFrom,
   strokesToPar,
+  toParDisplay,
   toParLabel,
 } from "./score";
 export type { ScoreKind, ScoreMix, ScoreTypeShares } from "./score";
@@ -55,7 +56,9 @@ export {
   formatOneDecimal,
   formatPercent,
   formatSignedOneDecimal,
+  formatUpToOneDecimal,
   formatWhole,
+  initialsOf,
   pluralNoun,
   pluralize,
 } from "./format";

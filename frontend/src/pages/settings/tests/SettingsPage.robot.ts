@@ -101,7 +101,7 @@ export class SettingsRobot {
   /** Settings failed to load: an error with a way to try again, in place of the form. */
   async seesLoadError(): Promise<this> {
     await expect(this.page.getByRole("alert")).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Try again" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Retry" })).toBeVisible();
     return this;
   }
 
@@ -112,7 +112,7 @@ export class SettingsRobot {
   }
 
   async tryAgain(): Promise<this> {
-    await this.page.getByRole("button", { name: "Try again" }).click();
+    await this.page.getByRole("button", { name: "Retry" }).click();
     return this;
   }
 

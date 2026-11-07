@@ -38,10 +38,3 @@ export function chartsFrom(comparison: RoundComparisonDto): ComparisonChartItem[
     { title: "Scrambling", primaryLabel: "scramble successes", group: "short_game", bars: barsFrom(comparison.scrambling) },
   ];
 }
-
-export function teeRatingLabel(
-  tee: { course_rating: number | null; slope_rating: number | null } | null | undefined,
-): string | null {
-  if (tee?.course_rating == null || tee?.slope_rating == null) return null;
-  return `${tee.course_rating} / ${tee.slope_rating}`;
-}

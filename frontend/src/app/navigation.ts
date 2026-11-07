@@ -66,15 +66,3 @@ export function navigationFor(pathname: string): AppNavigation {
     items.map((item) => ({ ...item, active: isCurrent(pathname, item.href) }));
   return { side: mark(SIDE), sideFooter: mark(SIDE_FOOTER), tabs: mark(TABS), more: mark(MORE) };
 }
-
-/** Avatar letters: the first letter of each of the first two words, or "?" with no name. */
-export function initialsOf(name: string | null): string {
-  if (!name?.trim()) return "?";
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word.charAt(0))
-    .join("")
-    .toUpperCase();
-}

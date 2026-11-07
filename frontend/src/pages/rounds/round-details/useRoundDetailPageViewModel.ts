@@ -3,10 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { queryKeys } from "@/data/queryKeys";
 import { Round } from "@/domain/round";
-import { getTee } from "@/domain/course";
+import { getTee, teeRatingLabel } from "@/domain/course";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
 import { useDeleteRound } from "../useDeleteRound";
-import { teeRatingLabel } from "./roundDetailModel";
 import { useRoundEditorViewModel, type RoundEditorViewModel } from "./useRoundEditorViewModel";
 
 export interface RoundDetailUiState {
@@ -83,7 +82,7 @@ export function useRoundDetailPageViewModel(
     loading: isLoading,
     loadError: isError ? messageFrom(roundError, "Could not load this round.") : null,
     played,
-    teeRating: teeRatingLabel(tee),
+    teeRating: teeRatingLabel(tee?.course_rating, tee?.slope_rating),
     editor,
     confirmDelete,
     deleting,

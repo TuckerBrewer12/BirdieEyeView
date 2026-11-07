@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, ScoreMixBar } from "@/brand";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, ScoreMixBar } from "@/brand";
 import type { ScoreMix } from "@/domain";
 import { pluralize } from "@/domain/format";
 
@@ -20,7 +20,7 @@ export function ScoreMixCard({ mix, holesPlayed, className }: ScoreMixCardProps)
         {holesPlayed > 0 ? (
           <ScoreMixBar mix={mix} />
         ) : (
-          <p className="py-4 text-center text-sm text-muted-foreground">No holes scored yet</p>
+          <EmptyState>No holes scored yet</EmptyState>
         )}
       </CardContent>
     </Card>

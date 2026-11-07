@@ -1,4 +1,4 @@
-import { Alert, AlertAction, AlertDescription, Button, LoadingState } from "@/brand";
+import { EmptyState, LoadError, LoadingState } from "@/brand";
 import { AnalyticsDesktopHeader, AnalyticsDesktopLayout } from "./components/AnalyticsDesktopLayout";
 import { AnalyticsMobileHeader, AnalyticsMobileLayout } from "./components/AnalyticsMobileLayout";
 import type { Analytics } from "./model";
@@ -18,14 +18,7 @@ export function AnalyticsPage({ userId }: AnalyticsPageProps) {
 
   if (!vm.analytics) {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>{vm.loadError ?? "Could not load your analytics."}</AlertDescription>
-        <AlertAction>
-          <Button variant="outline" size="xs" onClick={vm.retry}>
-            Retry
-          </Button>
-        </AlertAction>
-      </Alert>
+      <LoadError message={vm.loadError ?? "Could not load your analytics."} onRetry={vm.retry} />
     );
   }
 
@@ -43,11 +36,7 @@ interface LayoutProps {
 
 /** No round matches the filters. The filters stay up so the golfer can widen them again. */
 function EmptyAnalytics({ vm }: { vm: AnalyticsPageViewModel }) {
-  const message = (
-    <div className="flex h-48 items-center justify-center text-center">
-      <p className="text-sm text-muted-foreground">{emptyMessage(vm.filtered)}</p>
-    </div>
-  );
+  const message = <EmptyState>{emptyMessage(vm.filtered)}</EmptyState>;
 
   return (
     <>

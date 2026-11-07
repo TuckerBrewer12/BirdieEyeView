@@ -7,10 +7,9 @@ import {
   RoundPreview,
   ScoreTrendChart,
   SectionLabel,
-  Stat,
-  StatLabel,
-  StatValue,
+  StatTiles,
 } from "@/brand";
+import { formatOneDecimal } from "@/domain/format";
 import { CourseChartsSection } from "./CourseChartsSection";
 import { useCoursePerformanceViewModel } from "./useCoursePerformanceViewModel";
 
@@ -26,25 +25,14 @@ export function CoursePerformanceSection({ userId, courseId }: CoursePerformance
   const viewModel = useCoursePerformanceViewModel(userId, courseId);
   const heroStats = [
     { label: "Rounds Played", value: String(viewModel.roundsPlayed) },
-    { label: "Scoring Avg", value: viewModel.scoringAverage?.toFixed(1) ?? "—" },
+    { label: "Scoring Avg", value: formatOneDecimal(viewModel.scoringAverage) },
     { label: "Best Round", value: dash(viewModel.bestScore) },
     { label: "Worst Round", value: dash(viewModel.worstScore) },
   ];
 
   return (
     <Reveal className="space-y-8">
-      <div className="flex flex-wrap gap-3">
-        {heroStats.map((stat) => (
-          <Card key={stat.label} size="sm" className="min-w-28 flex-1">
-            <CardContent>
-              <Stat>
-                <StatValue>{stat.value}</StatValue>
-                <StatLabel>{stat.label}</StatLabel>
-              </Stat>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <StatTiles tiles={heroStats} />
 
       <div>
         <SectionLabel>Score Trend</SectionLabel>

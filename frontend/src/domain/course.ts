@@ -43,6 +43,11 @@ export function formatCourseName(name: string | null | undefined): string {
     .join(" ");
 }
 
+/** A tee's ratings as a card prints them, "71.2 / 125", or null without both. */
+export function teeRatingLabel(courseRating: number | null | undefined, slopeRating: number | null | undefined): string | null {
+  return courseRating != null && slopeRating != null ? `${courseRating} / ${slopeRating}` : null;
+}
+
 export function getTee<T extends { color: string | null }>(
   course: HasTees<T> | null | undefined,
   color: string | null | undefined,

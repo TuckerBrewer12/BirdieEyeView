@@ -1,9 +1,10 @@
 import * as React from "react";
 import { cn } from "@/brand/cn";
-import { scoreFillClass, scoreOnFillClass, type ScoreKey } from "@/brand/theme";
+import { scoreFillClass, scoreOnFillClass } from "@/brand/theme";
+import type { ScoreKind } from "@/domain/score";
 
 interface ScoreCountChipProps extends React.ComponentProps<"div"> {
-  kind: ScoreKey;
+  kind: ScoreKind;
   count: number;
 }
 

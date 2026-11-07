@@ -6,6 +6,7 @@ import {
   AlertDescription,
   Button,
   Dropzone,
+  EmptyState,
   FileChip,
   ScanProgress,
   ScorecardLayoutPicker,
@@ -113,9 +114,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
             )}
 
             {!viewModel.hasScores && (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No scores detected — try a clearer photo.
-              </p>
+              <EmptyState>No scores detected — try a clearer photo.</EmptyState>
             )}
 
             <div className="border-t border-border px-6 py-5 text-center">

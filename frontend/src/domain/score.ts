@@ -95,6 +95,11 @@ export function toParLabel(toPar: number | null | undefined): string | null {
   return `${toPar}`;
 }
 
+/** A to-par as `toParLabel` words it, or `empty` when there is none. */
+export function toParDisplay(toPar: number | null | undefined, empty = "—"): string {
+  return toParLabel(toPar) ?? empty;
+}
+
 /**
  * An average to par to two places. Halves round away from even on both sides, so
  * -0.125 is -0.13 just as +0.125 is +0.13.

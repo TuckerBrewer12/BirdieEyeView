@@ -4,6 +4,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  EmptyState,
   Sparkline,
   Stat,
   StatLabel,
@@ -24,7 +25,7 @@ export function PuttingCard({ putting, className }: { putting: PuttingSummary; c
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {noData ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">No putting data yet</p>
+          <EmptyState>No putting data yet</EmptyState>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-3">

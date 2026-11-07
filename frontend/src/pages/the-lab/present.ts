@@ -2,6 +2,7 @@ import { toParTextClass } from "@/brand";
 import {
   COMPARISON_HANDICAPS,
   formatAverageToPar,
+  formatSignedOneDecimal,
   goalScoreToBreak,
   goalTargetLabel,
   pluralize,
@@ -151,9 +152,8 @@ export function parTypeGapNote(row: ParTypeRow, benchmarkName: string): { text: 
  * A gain is good, so the tone is to-par of the negation: "+1.2 strokes" reads birdie.
  */
 export function signedStrokes(strokes: number): { text: string; tone: string } {
-  const rounded = Math.round(strokes * 10) / 10;
   return {
-    text: `${rounded > 0 ? "+" : ""}${rounded.toFixed(1)} strokes`,
+    text: `${formatSignedOneDecimal(strokes)} strokes`,
     tone: toParTextClass(-strokes),
   };
 }

@@ -1,5 +1,6 @@
 import { scaleLinear } from "d3-scale";
 import { cn } from "@/brand/cn";
+import { EmptyState } from "@/brand/components/EmptyState";
 import type { GoalAttempt } from "@/domain/benchmark";
 import { chartTickStyle, tokens } from "@/brand/theme";
 import { indexScale, paddedExtent } from "./scales";
@@ -21,7 +22,7 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
   const { width: W, height: H, pad, labelRoom, stroke, dot, dotReached } = tokens.chart.goal;
 
   if (attempts.length < 2) {
-    return <div className="py-6 text-center text-sm text-muted-foreground">Not enough rounds yet</div>;
+    return <EmptyState>Not enough rounds yet</EmptyState>;
   }
 
   const scores = attempts.map((attempt) => attempt.score);
