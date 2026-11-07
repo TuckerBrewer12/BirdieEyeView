@@ -457,7 +457,7 @@ export const lineWidth = {
   outline: 1.5,
 };
 
-/** Icon line weight, unitless: lighter at rest, heavier on a current item. */
+/** Icon line weights, unitless: lighter at rest, heavier on a current item. */
 export const stroke = {
   icon: 1.75,
   "icon-active": 2.25,
