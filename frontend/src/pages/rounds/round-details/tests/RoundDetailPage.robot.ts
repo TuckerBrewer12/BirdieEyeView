@@ -93,6 +93,19 @@ export class RoundDetailRobot {
     return this;
   }
 
+  /** The round's net Stableford points in the header. */
+  async seesStableford(points: number): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(`${points} Stableford pts`, { exact: true })).toBeVisible();
+    return this;
+  }
+
+  async seesNoStableford(): Promise<this> {
+    const header = this.page.locator('[data-slot="round-detail-header"]');
+    await expect(header.getByText(/Stableford pts$/)).toHaveCount(0);
+    return this;
+  }
+
   async seesNoNet(): Promise<this> {
     const header = this.page.locator('[data-slot="round-detail-header"]');
     await expect(header.getByText(/^Net · hcp/)).toHaveCount(0);

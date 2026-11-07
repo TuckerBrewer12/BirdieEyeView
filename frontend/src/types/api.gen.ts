@@ -2337,6 +2337,8 @@ export interface components {
             /** Par */
             par: number | null;
             score_counts: components["schemas"]["ScoreCounts"];
+            /** Stableford Points */
+            stableford_points: number | null;
             /** Tee Box */
             tee_box: string | null;
             /** To Par */

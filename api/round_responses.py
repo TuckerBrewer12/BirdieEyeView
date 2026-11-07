@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Optional
 
-from analytics.handicap import round_course_handicap, round_net_score
+from analytics.handicap import round_course_handicap, round_net_score, round_stableford
 from analytics.stats import best_round_ranks
 from api.course_responses import course_detail
 from api.schemas import (
@@ -96,8 +96,8 @@ def round_list(rounds: List[Round]) -> List[RoundSummaryResponse]:
 
 def round_detail(round_: Round, handicap_index: Optional[float] = None) -> RoundResponse:
     """A full round, as the detail page and the edit form read it. With the signed-in golfer's
-    index it carries their course handicap and net score, worked out the way the net-score trend
-    works them out, and the course's tees carry the course handicap off each."""
+    index it carries their course handicap, net score and net Stableford points, worked out the
+    way the net-score trend works them out, and the course's tees carry the course handicap off each."""
     return RoundResponse(
         **_figures(round_),
         id=round_.id,
@@ -111,4 +111,5 @@ def round_detail(round_: Round, handicap_index: Optional[float] = None) -> Round
         hole_scores=_hole_scores(round_),
         course_handicap=round_course_handicap(round_, handicap_index),
         net_score=round_net_score(round_, handicap_index),
+        stableford_points=round_stableford(round_, handicap_index),
     )

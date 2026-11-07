@@ -83,6 +83,45 @@ def round_net_score(round_obj: Round, handicap_index: Optional[float]) -> Option
     return gross - strokes
 
 
+def strokes_received(course_handicap: int, stroke_index: int) -> int:
+    """The strokes a course handicap gets on the hole with this stroke index (1 hardest, 18 easiest).
+    They go out hardest hole first, a stroke a hole, then round again: an 8 gets one on SI 1–8,
+    a 20 gets one everywhere and a second on SI 1–2. A plus handicap gives strokes back from the
+    easiest hole up, so a plus 2 gives one back on SI 17 and 18."""
+    if course_handicap >= 0:
+        laps, extra = divmod(course_handicap, 18)
+        return laps + (1 if stroke_index <= extra else 0)
+    laps, extra = divmod(-course_handicap, 18)
+    return -(laps + (1 if stroke_index > 18 - extra else 0))
+
+
+def stableford_points(strokes: int, par: int, received: int) -> int:
+    """Net Stableford points for a hole: 2 for a net par, one more for each stroke under it,
+    one fewer for each over, never below 0."""
+    return max(0, 2 + par + received - strokes)
+
+
+def round_stableford(round_obj: Round, handicap_index: Optional[float]) -> Optional[int]:
+    """The round's net Stableford points off the golfer's course handicap for it. Only for a full
+    round on a rated tee (the course handicap needs both) whose 18 holes each have a par and a
+    distinct stroke index from 1 to 18, since the strokes can't be placed otherwise."""
+    strokes = round_course_handicap(round_obj, handicap_index)
+    if strokes is None:
+        return None
+    holes: List[Tuple[int, int, int]] = []  # (strokes, par, stroke index) for each scored hole
+    for hs in round_obj.hole_scores:
+        if hs.hole_number is None or hs.strokes is None:
+            continue
+        par = round_obj.get_hole_par(hs.hole_number)
+        index = round_obj.get_hole_handicap(hs.hole_number)
+        if par is None or index is None:
+            return None
+        holes.append((hs.strokes, par, index))
+    if sorted(index for _, _, index in holes) != list(range(1, 19)):
+        return None
+    return sum(stableford_points(score, par, strokes_received(strokes, index)) for score, par, index in holes)
+
+
 def _get_differential_for_round(round_obj: Round) -> Optional[float]:
     """Return the score differential for a round, or None if data is unavailable.
 

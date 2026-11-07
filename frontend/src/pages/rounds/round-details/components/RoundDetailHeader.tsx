@@ -88,7 +88,7 @@ export function RoundDetailHeader({ round, teeRating, className }: RoundDetailHe
         )}
       </div>
 
-      {(round.putts != null || round.gir != null) && (
+      {(round.putts != null || round.gir != null || round.stablefordPoints != null) && (
         <div className="flex gap-4 pt-2 font-mono text-xs text-muted-foreground">
           {round.putts != null && (
             <span>
@@ -98,6 +98,11 @@ export function RoundDetailHeader({ round, teeRating, className }: RoundDetailHe
           {round.gir != null && (
             <span>
               <span className="font-semibold text-primary">{round.gir}</span>/{round.holesPlayed} GIR
+            </span>
+          )}
+          {round.stablefordPoints != null && (
+            <span>
+              <span className="font-semibold text-primary">{round.stablefordPoints}</span> Stableford pts
             </span>
           )}
         </div>

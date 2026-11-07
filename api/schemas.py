@@ -143,6 +143,9 @@ class RoundResponse(RoundFigures):
     # Off the signed-in golfer's index and the tee played. Null without ratings, and for a nine.
     course_handicap: Optional[int] = None
     net_score: Optional[int] = None
+    # Net Stableford points off that course handicap. Also null unless all 18 holes have a par and
+    # a distinct stroke index, since the strokes can't be placed without them.
+    stableford_points: Optional[int] = None
 
 
 class ScoreMix(ResponseModel):

@@ -5,6 +5,7 @@ import {
   halfMoonBayCourse,
   halfMoonBayRound,
   pebbleBeachCourse,
+  ratedHalfMoonBayCourse,
   ratedHalfMoonBayRound,
   scannedRound,
 } from "@/testing/fixtures/roundDetails";
@@ -90,6 +91,30 @@ describe("Round.previewEdits", () => {
     const preview = Round.previewEdits(round, { 1: { strokes: round.holes[0].strokes! + 1, putts: 3 } });
     expect(preview).toMatchObject({ courseHandicap: 12, netScore: 79 - 12 });
     expect(preview.holes[0].threePutt).toBe(true);
+  });
+
+  it("scores net Stableford off the course handicap, the way the server does", () => {
+    // 78 off 12 is net 66, six under: 36 + 6 points. Stroke index runs 1–18 down the card.
+    const round = Round.fromDto(ratedHalfMoonBayRound);
+    expect(round.stablefordPoints).toBe(42);
+    // A bogey on the first (stroke index 1, a stroke received) becomes a double: net bogey, one point fewer.
+    expect(Round.previewEdits(round, { 1: { strokes: 6 } }).stablefordPoints).toBe(41);
+    // A ten on the 13th (no stroke) was already worth 1 as a bogey; anything worse is 0, never less.
+    expect(Round.previewEdits(round, { 13: { strokes: 10 } }).stablefordPoints).toBe(41);
+    // A blank hole leaves no course handicap, so no points.
+    expect(Round.previewEdits(round, { 1: { strokes: null } }).stablefordPoints).toBeNull();
+  });
+
+  it("scores no Stableford when the strokes can't be placed", () => {
+    const round = Round.fromDto(ratedHalfMoonBayRound);
+    // A misread card: the first two holes both read as stroke index 1.
+    const doubled = {
+      ...ratedHalfMoonBayCourse,
+      holes: ratedHalfMoonBayCourse.holes.map((hole) => (hole.number === 2 ? { ...hole, handicap: 1 } : hole)),
+    };
+    expect(Round.previewEdits(round, {}, doubled, "Blue").stablefordPoints).toBeNull();
+    // No course handicap: the unrated round.
+    expect(Round.fromDto(halfMoonBayRound).stablefordPoints).toBeNull();
   });
 
   it("recomputes putts and greens from edited holes", () => {
