@@ -1,9 +1,10 @@
 import * as React from "react";
-import { LogOut, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { NavLink, type NavItem, type RenderLink } from "@/brand/nav";
-import { Button } from "./Button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./Collapsible";
+import { MoreMenu } from "./MoreMenu";
+import { Sheet, SheetContent, SheetTrigger } from "./Sheet";
+import type { SideNavUser } from "./SideNav";
 
 interface BottomNavProps {
   /** The tabs along the bar. Four fit a phone. */
@@ -11,6 +12,8 @@ interface BottomNavProps {
   /** Everything else, in a menu the last tab opens. */
   moreItems?: NavItem[];
   moreLabel?: string;
+  /** The golfer, shown at the top of the menu. */
+  user?: SideNavUser;
   /** Adds a sign-out row to the menu. */
   onSignOut?: () => void;
   signingOut?: boolean;
@@ -21,17 +24,18 @@ interface BottomNavProps {
 }
 
 const tabClass =
-  "flex flex-1 flex-col items-center justify-center gap-0.5 text-meta font-semibold text-muted-foreground transition-colors data-active:text-primary data-panel-open:text-primary [&_svg]:size-5 [&_svg]:stroke-icon data-active:[&_svg]:stroke-icon-active data-panel-open:[&_svg]:stroke-icon-active";
+  "flex flex-1 flex-col items-center justify-center gap-0.5 text-meta font-semibold text-muted-foreground transition-colors data-active:text-primary data-popup-open:text-primary [&_svg]:size-5 [&_svg]:stroke-icon data-active:[&_svg]:stroke-icon-active data-popup-open:[&_svg]:stroke-icon-active";
 
 /**
- * The phone's tab bar: a few tabs and a "More" tab that opens a menu of the
- * rest above the bar. Taking any link folds the menu, as does tapping the
- * dimmed page or pressing Escape. `AppShell` pins it to the bottom edge.
+ * The phone's tab bar: a few tabs and a "More" tab that opens the rest in a
+ * bottom `Sheet` over the page. Taking a link closes the sheet, as do tapping
+ * the dimmed page and Escape. `AppShell` pins the bar to the bottom edge.
  */
 function BottomNav({
   tabs,
   moreItems = [],
   moreLabel = "More",
+  user,
   onSignOut,
   signingOut = false,
   renderLink,
@@ -43,93 +47,38 @@ function BottomNav({
   const moreActive = moreItems.some((item) => item.active);
   const hasMenu = moreItems.length > 0 || onSignOut != null;
 
-  React.useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, close]);
-
   return (
-    <Collapsible
-      open={open}
-      onOpenChange={setOpen}
-      render={<nav aria-label={label} />}
-      data-slot="bottom-nav"
-      className={cn("relative", className)}
-    >
-      {/* Raised so the bar stays clear of the dimmed page while the menu is open. */}
-      <div className="relative z-10 border-t border-border bg-card pb-safe-bottom">
+    <nav aria-label={label} data-slot="bottom-nav" className={cn("relative", className)}>
+      <div className="border-t border-border bg-card pb-safe-bottom">
         <div className="flex h-14 items-stretch">
           {tabs.map((item) => (
-            <NavLink key={item.href} item={item} renderLink={renderLink} onClick={close} className={tabClass}>
+            <NavLink key={item.href} item={item} renderLink={renderLink} className={tabClass}>
               <item.icon aria-hidden />
               <span>{item.label}</span>
             </NavLink>
           ))}
           {hasMenu && (
-            <CollapsibleTrigger
-              data-active={moreActive ? "" : undefined}
-              className={tabClass}
-            >
-              <Menu aria-hidden />
-              <span>{moreLabel}</span>
-            </CollapsibleTrigger>
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger data-active={moreActive ? "" : undefined} className={tabClass}>
+                <Menu aria-hidden />
+                <span>{moreLabel}</span>
+              </SheetTrigger>
+              <SheetContent side="bottom" showCloseButton={false} data-slot="bottom-nav-menu">
+                <MoreMenu
+                  items={moreItems}
+                  user={user}
+                  title={moreLabel}
+                  onSignOut={onSignOut}
+                  signingOut={signingOut}
+                  renderLink={renderLink}
+                  onNavigate={close}
+                />
+              </SheetContent>
+            </Sheet>
           )}
         </div>
       </div>
-
-      {hasMenu && (
-        <CollapsibleContent>
-          <button
-            type="button"
-            aria-label="Close menu"
-            tabIndex={-1}
-            onClick={close}
-            className="fixed inset-0 bg-foreground/wash dark:bg-background/strong"
-          />
-          <div
-            data-slot="bottom-nav-menu"
-            className="absolute inset-x-3 bottom-full mb-3 rounded-2xl border border-border bg-card/glass shadow-card backdrop-blur-sm"
-          >
-            <p className="px-4 pt-4 pb-2 text-xs font-bold tracking-section text-muted-foreground uppercase">
-              {moreLabel}
-            </p>
-            {moreItems.length > 0 && (
-              <div className="grid grid-cols-2 gap-1 px-2 pb-2">
-                {moreItems.map((item) => (
-                  <NavLink
-                    key={item.href}
-                    item={item}
-                    renderLink={renderLink}
-                    onClick={close}
-                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-active:bg-accent data-active:font-semibold data-active:text-primary [&_svg]:size-4"
-                  >
-                    <item.icon aria-hidden />
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
-              </div>
-            )}
-            {onSignOut && (
-              <div className="px-2 pb-3">
-                <Button
-                  variant="ghost"
-                  onClick={onSignOut}
-                  disabled={signingOut}
-                  className="h-auto w-full justify-start gap-2 rounded-xl px-3 py-2.5 font-normal text-destructive hover:bg-destructive/tint hover:text-destructive dark:hover:bg-destructive/wash"
-                >
-                  <LogOut aria-hidden />
-                  {signingOut ? "Signing out…" : "Sign out"}
-                </Button>
-              </div>
-            )}
-          </div>
-        </CollapsibleContent>
-      )}
-    </Collapsible>
+    </nav>
   );
 }
 

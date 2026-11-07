@@ -16,6 +16,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const onSignOut = () => {
     if (!signOut.isPending) signOut.mutate();
   };
+  const user = {
+    name: auth.name ?? "Golfer",
+    initials: initialsOf(auth.name),
+    detail: auth.email ?? undefined,
+  };
 
   return (
     <AppShell
@@ -23,11 +28,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <SideNav
           items={nav.side}
           secondaryItems={nav.sideFooter}
-          user={{
-            name: auth.name ?? "Golfer",
-            initials: initialsOf(auth.name),
-            detail: auth.email ?? undefined,
-          }}
+          user={user}
           onSignOut={onSignOut}
           signingOut={signOut.isPending}
           renderLink={routerLink}
@@ -37,6 +38,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <BottomNav
           tabs={nav.tabs}
           moreItems={nav.more}
+          user={user}
           onSignOut={onSignOut}
           signingOut={signOut.isPending}
           renderLink={routerLink}

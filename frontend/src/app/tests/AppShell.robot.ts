@@ -60,7 +60,7 @@ export class AppShellRobot {
   }
 
   async tapOutsideMenu(): Promise<this> {
-    await this.page.getByRole("button", { name: "Close menu" }).click({ position: { x: 20, y: 20 } });
+    await this.page.locator("[data-slot=sheet-overlay]").click({ position: { x: 20, y: 20 } });
     return this;
   }
 
@@ -113,8 +113,9 @@ export class AppShellRobot {
     return this;
   }
 
+  /** The viewport: the More sheet sits over the screen, not the page. */
   async capture(name: string): Promise<this> {
-    await expect(this.page).toHaveScreenshot(name, { fullPage: true });
+    await expect(this.page).toHaveScreenshot(name);
     return this;
   }
 }
