@@ -343,7 +343,7 @@ export function ScoreHandicapLegend({ className }: { className?: string }) {
   const box = 2 * (L.dotCounts + tokens.lineWidth.outline);
   const mid = box / 2;
   return (
-    <div data-slot="score-handicap-legend" className={cn("flex gap-4 text-body-sm text-foreground-secondary", className)}>
+    <div data-slot="score-handicap-legend" className={cn("flex flex-wrap justify-end gap-x-4 gap-y-1 text-body-sm text-foreground-secondary", className)}>
       {LEGEND_STATUSES.map(({ status, label }) => (
         <span key={status} className="flex items-center gap-2">
           <svg viewBox={`0 0 ${box} ${box}`} width={box} height={box} aria-hidden="true">

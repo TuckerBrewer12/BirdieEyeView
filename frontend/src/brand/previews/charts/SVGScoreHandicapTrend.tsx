@@ -15,7 +15,7 @@ export default function SVGScoreHandicapTrendPreview() {
     <div data-testid="brand-frame" className="fixed inset-0 overflow-auto bg-background p-6">
       <Card className="gap-4 py-5">
         <CardHeader className="px-6">
-          <CardTitle className="font-semibold">Score &amp; Handicap</CardTitle>
+          <CardTitle className="font-semibold whitespace-nowrap">Score &amp; Handicap</CardTitle>
           <CardDescription className="text-body-sm">Last 20 rounds</CardDescription>
           <CardAction>
             <ScoreHandicapLegend />
