@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  roundsRepository,
-  type CourseSearchRepository,
-} from "@/pages/rounds/roundsRepository";
+import { courseRepository, type CourseSearchRepository } from "./courseRepository";
 import type { CourseSummary } from "@/domain/course";
 
 const MIN_QUERY_LENGTH = 2;
@@ -18,7 +15,7 @@ export interface CourseSearch {
 
 export function useCourseSearch(
   userId?: string,
-  repository: CourseSearchRepository = roundsRepository,
+  repository: CourseSearchRepository = courseRepository,
 ): CourseSearch {
   const [query, setQueryState] = useState("");
   const [results, setResults] = useState<CourseSummary[]>([]);

@@ -1,17 +1,18 @@
 import { Button, Card, CardContent, Meter } from "@/brand";
 import { cn } from "@/brand/cn";
-import type { GoalProgress } from "../model";
 import { formatOneDecimal, goalScoreToBreak, goalTargetLabel } from "@/domain";
+import type { GoalStanding } from "@/domain/goal";
 
 interface GoalCardProps {
   /** Null until a goal is set, which shows the prompt to set one. */
-  goal: GoalProgress | null;
+  goal: GoalStanding | null;
   onOpen: () => void;
   className?: string;
 }
 
 /** The scoring goal, how close the player is, and what to work on. Opens The Lab. */
 export function GoalCard({ goal, onOpen, className }: GoalCardProps) {
+  const focus = goal?.savers[0]?.headline;
   return (
     <Card
       data-slot="goal-card"
@@ -50,10 +51,10 @@ export function GoalCard({ goal, onOpen, className }: GoalCardProps) {
                 aria-label={`Progress to ${goalTargetLabel(goal.target).toLowerCase()}`}
               />
             </div>
-            {goal.focus && (
+            {focus && (
               <p className="text-label text-muted-foreground leading-relaxed">
                 <span className="font-semibold text-secondary-foreground">Focus: </span>
-                {goal.focus}
+                {focus}
               </p>
             )}
           </div>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAnalytics } from "@/data/useAnalytics";
+import { useRound } from "@/data/useRound";
 import { useUser } from "@/data/useUser";
 import type { RoundSummary } from "@/domain";
 import { messageFrom } from "@/lib/userFacingErrors";
@@ -15,7 +16,6 @@ import {
   type PlayedCourse,
   type RangePar,
 } from "./model";
-import { useBestRound } from "./useBestRound";
 import { usePlayedCourses } from "./usePlayedCourses";
 
 export interface AnalyticsPageViewModel {
@@ -63,7 +63,7 @@ export function useAnalyticsPageViewModel(
   const { data: user } = useUser(userId, repository);
 
   const analytics = data ?? null;
-  const { data: bestRound } = useBestRound(analytics?.bestRound?.roundId ?? null, repository);
+  const { data: bestRound } = useRound(analytics?.bestRound?.roundId ?? null, repository);
   const loadError = isError ? messageFrom(error, "Could not load your analytics.") : null;
 
   return {

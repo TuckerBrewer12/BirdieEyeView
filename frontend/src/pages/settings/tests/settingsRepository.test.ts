@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { devicePreferencesFrom, settingsFrom } from "../settingsRepository";
-import { formChanged, type SettingsForm } from "../model";
+import { devicePreferencesFrom } from "../settingsRepository";
+import { formChanged, settingsFrom, type SettingsForm } from "../model";
 import type { UserDto } from "@/types/api";
 
 const user: UserDto = {

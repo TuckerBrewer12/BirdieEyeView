@@ -1,8 +1,8 @@
 import { EMPTY_COURSE_ANALYTICS } from "@/domain/courseAnalytics";
 import { useState } from "react";
 import { teesByLength } from "@/domain/course";
+import { useCourse } from "@/data/useCourse";
 import { coursesRepository, type CoursesRepository } from "../../coursesRepository";
-import { useCourse } from "../../useCourse";
 import { useCourseAnalytics } from "../../useCourseAnalytics";
 import {
   nineFrom,

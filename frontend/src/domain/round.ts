@@ -97,8 +97,27 @@ export interface Round extends RoundSummary {
   netScore: number | null;
 }
 
-/** Unsaved changes to holes. A field left undefined keeps the hole's own value. */
-export type HoleEdits = Record<number, { strokes?: number | null; putts?: number | null; gir?: boolean | null }>;
+/** An unsaved change to one hole. A field left undefined keeps the hole's own value; null clears it. */
+export interface HoleEdit {
+  strokes?: number | null;
+  putts?: number | null;
+  gir?: boolean | null;
+}
+
+/** Unsaved changes to holes, by hole number. */
+export type HoleEdits = Record<number, HoleEdit>;
+
+/** The hole's strokes, putts and green with the edit applied. */
+export function editedHole(
+  hole: { strokes: number | null; putts: number | null; gir: boolean | null },
+  edit: HoleEdit | undefined,
+): { strokes: number | null; putts: number | null; gir: boolean | null } {
+  return {
+    strokes: edit?.strokes !== undefined ? edit.strokes : hole.strokes,
+    putts: edit?.putts !== undefined ? edit.putts : hole.putts,
+    gir: edit?.gir !== undefined ? edit.gir : hole.gir,
+  };
+}
 
 /**
  * A round as the detail page and its editor read it: the round, plus the full course it is linked
@@ -254,10 +273,7 @@ function previewEdits(round: Round, edits: HoleEdits, course?: CourseDto | null,
     tee ? tee.hole_yardages[hole] ?? null : yardsCleared ? null : current;
 
   const holes = round.holes.map((hole) => {
-    const edit = edits[hole.hole];
-    const strokes = edit?.strokes !== undefined ? edit.strokes : hole.strokes;
-    const putts = edit?.putts !== undefined ? edit.putts : hole.putts;
-    const gir = edit?.gir !== undefined ? edit.gir : hole.gir;
+    const { strokes, putts, gir } = editedHole(hole, edits[hole.hole]);
     const courseHole = getHole(course, hole.hole);
     const par = courseHole?.par ?? hole.par;
     return {

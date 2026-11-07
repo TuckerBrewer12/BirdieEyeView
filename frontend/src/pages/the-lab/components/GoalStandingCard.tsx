@@ -10,7 +10,7 @@ import {
   StatValue,
 } from "@/brand";
 import { formatOneDecimal, goalScoreToBreak, goalTargetLabel } from "@/domain";
-import type { GoalStanding } from "../model";
+import type { GoalStanding } from "@/domain/goal";
 import { goalStandingNote } from "../present";
 
 interface GoalStandingCardProps {

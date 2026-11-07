@@ -1,6 +1,6 @@
 import { labGoalReport } from "@/testing/fixtures/lab";
 import { GoalStandingCard } from "../components/GoalStandingCard";
-import { goalStandingFrom } from "../model";
+import { goalStandingFrom } from "@/domain/goal";
 
 export default function GoalStandingCardPreview() {
   const goal = goalStandingFrom(89, labGoalReport)!;

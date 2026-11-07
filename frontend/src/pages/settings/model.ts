@@ -1,3 +1,5 @@
+import type { UserDto } from "@/types/api";
+
 /** The course the player calls home. The name is null when that course could not be read. */
 export interface HomeCourse {
   id: string;
@@ -11,6 +13,15 @@ export interface Settings {
   /** The index the player set by hand, as stored (negative for a plus handicap). */
   handicap: number | null;
   homeCourse: HomeCourse | null;
+}
+
+/** The user as Settings shows it, with the home course's name read separately. */
+export function settingsFrom(user: UserDto, homeCourseName: string | null): Settings {
+  return {
+    friendCode: user.friend_code || null,
+    handicap: user.handicap,
+    homeCourse: user.home_course_id ? { id: user.home_course_id, name: homeCourseName } : null,
+  };
 }
 
 /** Choices kept on this device, not on the account. */

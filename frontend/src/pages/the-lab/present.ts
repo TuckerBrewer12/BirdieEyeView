@@ -7,15 +7,14 @@ import {
   pluralize,
   type ComparisonTargetValue,
 } from "@/domain";
+import type { GoalStanding, Saver } from "@/domain/goal";
 import type {
   FriendOption,
-  GoalStanding,
   LabPanel,
   ParTypeRow,
   PeakGame,
   PeakImpact,
   RadarMode,
-  Saver,
 } from "./model";
 
 /** A friend's name, or a stand-in when the server has none. */

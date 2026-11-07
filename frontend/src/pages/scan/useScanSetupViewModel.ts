@@ -1,9 +1,9 @@
 import { useCallback } from "react";
 import { teeColors } from "@/domain";
+import { courseRepository, type CourseRepository } from "@/data/courseRepository";
+import { useCourse } from "@/data/useCourse";
 import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
 import type { CourseSummary } from "@/domain/course";
-import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
-import { useCourse } from "../courses/useCourse";
 import { reviewFromSetup, todayIso, type ManualSetup } from "./scanModel";
 import { useScanSession } from "./scanSession";
 
@@ -45,7 +45,7 @@ export interface ScanSetupViewModel {
  */
 export function useScanSetupViewModel(
   userId: string,
-  courses: CoursesRepository = coursesRepository,
+  courses: CourseRepository = courseRepository,
 ): ScanSetupViewModel {
   const { session, setSession } = useScanSession();
   const { setup } = session;

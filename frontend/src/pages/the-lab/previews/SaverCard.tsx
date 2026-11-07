@@ -1,6 +1,6 @@
 import { labGoalReport } from "@/testing/fixtures/lab";
 import { SaverCard } from "../components/SaverCard";
-import { goalStandingFrom } from "../model";
+import { goalStandingFrom } from "@/domain/goal";
 
 export default function SaverCardPreview() {
   const [first, second] = goalStandingFrom(89, labGoalReport)!.savers;

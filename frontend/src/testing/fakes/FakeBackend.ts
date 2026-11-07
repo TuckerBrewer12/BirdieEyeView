@@ -5,13 +5,13 @@ import {
   type InMemoryFriendshipsSeed,
 } from "./InMemoryFriendships";
 import type { FriendshipAnswer } from "../../data/friendsModel";
-import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import type {
   AnalyticsDto,
   BenchmarkComparisonDto,
   DashboardDto,
   GoalReportDto,
   PlayedCourseDto,
+  RoundChangesDto,
   SaveScanRequestDto,
   ScanDto,
   UserChangesDto,
@@ -369,7 +369,7 @@ export class FakeBackend {
         try {
           return {
             status: 200,
-            body: this.store.updateRound(roundId, (body ?? {}) as UpdateRoundBody),
+            body: this.store.updateRound(roundId, (body ?? {}) as RoundChangesDto),
           };
         } catch (err) {
           const detail = err instanceof Error ? err.message : "Could not save this round.";

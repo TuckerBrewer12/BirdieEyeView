@@ -1,9 +1,8 @@
 import { useCallback, useState } from "react";
 import { parseHandicapInput } from "@/domain/handicap";
+import { courseRepository, type CourseSearchRepository } from "@/data/courseRepository";
 import { useCourseSearch } from "@/data/useCourseSearch";
 import { messageFrom } from "@/lib/userFacingErrors";
-import type { CourseSearchRepository } from "@/pages/rounds/roundsRepository";
-import { coursesRepository } from "@/pages/courses/coursesRepository";
 import type { CourseSummary } from "@/domain/course";
 import type { AuthActions } from "../authActions";
 import { hasErrors, newPasswordErrors } from "../authModel";
@@ -54,7 +53,7 @@ export interface RegisterViewModel {
 
 export function useRegisterViewModel(
   auth: Pick<AuthActions, "register">,
-  courses: CourseSearchRepository = coursesRepository,
+  courses: CourseSearchRepository = courseRepository,
 ): RegisterViewModel {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

@@ -1,5 +1,6 @@
 import { useCallback, useReducer, useState } from "react";
 import { teeColors } from "@/domain/course";
+import { useFetchCourse } from "@/data/useCourse";
 import { useCourseSearch } from "@/data/useCourseSearch";
 import { messageFrom } from "@/lib/userFacingErrors";
 import type { CourseEdit, HoleEdits, RoundDetail } from "@/domain";
@@ -54,6 +55,7 @@ export function useRoundEditorViewModel(
   const [editor, dispatch] = useReducer(roundEditor, closedEditor);
   const [courseLoadError, setCourseLoadError] = useState<string | null>(null);
   const search = useCourseSearch(userId, repository);
+  const fetchCourse = useFetchCourse(repository);
   const { reset: resetSearch } = search;
   const { mutate: saveRound, isPending: saving, error: saveError, reset: resetSave } =
     useSaveRound(userId, repository);
@@ -90,11 +92,11 @@ export function useRoundEditorViewModel(
     clearErrors();
     resetSearch();
     try {
-      dispatch({ type: "linkCourse", course: await repository.getCourse(course.id) });
+      dispatch({ type: "linkCourse", course: await fetchCourse(course.id) });
     } catch (err) {
       setCourseLoadError(messageFrom(err, "Could not load that course."));
     }
-  }, [repository, clearErrors, resetSearch]);
+  }, [fetchCourse, clearErrors, resetSearch]);
 
   const course = editor.editing ? editor.course : PICKING;
   const activeCourse =

@@ -1,23 +1,23 @@
 import { useCallback, useMemo, useState } from "react";
+import { courseRepository, type CourseRepository } from "@/data/courseRepository";
 import { scanRepository, type ScanRepository } from "@/data/scanRepository";
+import { useCourse } from "@/data/useCourse";
 import { strokesToCheck, teeColors, type Round } from "@/domain";
 import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/domain/course";
-import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
-import { useCourse } from "../courses/useCourse";
 import { reviewCourseFrom, reviewedRound, saveRequestFrom, todayIso, withHoleEdit, type ScanReviewDraft } from "./scanModel";
 import { newScanSession, useScanSession } from "./scanSession";
 import { useSaveScan } from "./useSaveScan";
 
 export interface ScanReviewRepositories {
   scan: ScanRepository;
-  courses: CoursesRepository;
+  courses: CourseRepository;
 }
 
 const defaultRepositories: ScanReviewRepositories = {
   scan: scanRepository,
-  courses: coursesRepository,
+  courses: courseRepository,
 };
 
 export interface ScanReviewViewModel {

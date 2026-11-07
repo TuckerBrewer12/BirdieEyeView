@@ -2,8 +2,8 @@ import { useState } from "react";
 import { formatCourseName } from "@/domain/course";
 import { messageFrom } from "@/lib/userFacingErrors";
 import type { CourseDto } from "@/types/api";
+import { useCourse } from "@/data/useCourse";
 import { coursesRepository, type CoursesRepository } from "../coursesRepository";
-import { useCourse } from "../useCourse";
 import { useCourseAnalytics } from "../useCourseAnalytics";
 import { PAGE_TABS, type PageTabKey, type TabItem } from "./courseDetailModel";
 

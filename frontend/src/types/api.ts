@@ -68,6 +68,8 @@ export type FriendshipDto = Schemas["FriendshipResponse"];
 export type FriendshipStatusRequestDto = Schemas["FriendshipStatusRequest"];
 /** What `PATCH /users/{id}` takes. A field left out keeps its value; null clears it. */
 export type UserChangesDto = Schemas["UpdateUserRequest"];
+/** What `PUT /rounds/{id}` takes. A field left out keeps its value; null clears it. */
+export type RoundChangesDto = Schemas["UpdateRoundRequest"];
 
 export type AuthUserDto = Schemas["AuthUserResponse"];
 export type RegisterDto = Schemas["RegisterResponse"];

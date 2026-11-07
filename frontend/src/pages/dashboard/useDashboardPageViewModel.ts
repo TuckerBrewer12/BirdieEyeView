@@ -11,6 +11,7 @@ import {
   type RoundTrendPoint,
   type ScoreMix,
 } from "@/domain";
+import { goalStandingFrom, type GoalStanding } from "@/domain/goal";
 import type { DashboardDto, UserDto } from "@/types/api";
 import {
   dashboardRepository,
@@ -18,12 +19,10 @@ import {
 } from "./dashboardRepository";
 import {
   bestRecentRoundFrom,
-  goalProgress,
   milestonesFrom,
   recentScoresFrom,
   recentShortGame,
   whsFrom,
-  type GoalProgress,
   type HiTrend,
   type Milestone,
   type PuttsRating,
@@ -76,7 +75,7 @@ export interface DashboardPageViewModel {
   sidebarRounds: RoundSummary[];
   whs: WhsBreakdown;
   /** Null until the player sets a scoring goal. */
-  goal: GoalProgress | null;
+  goal: GoalStanding | null;
 }
 
 const EMPTY_WHS: WhsBreakdown = {
@@ -158,6 +157,6 @@ export function useDashboardPageViewModel(
     recentRounds: rounds.slice(0, 3),
     sidebarRounds: rounds.slice(0, 10),
     whs: data ? whsFrom(data.whs) : EMPTY_WHS,
-    goal: goalProgress(user?.scoring_goal, report),
+    goal: goalStandingFrom(user?.scoring_goal, report),
   };
 }

@@ -1,6 +1,6 @@
 import type { RoundSummary } from "@/domain/round";
 import type { RoundTrendPoint, ShortGamePoint } from "@/domain/trend";
-import type { DashboardDto, GoalReportDto, MilestoneDto, WhsBreakdownDto } from "@/types/api";
+import type { DashboardDto, MilestoneDto, WhsBreakdownDto } from "@/types/api";
 
 /** How good the putts per round are, as the server rated them. */
 export type PuttsRating = NonNullable<DashboardDto["putts_rating"]>;
@@ -84,30 +84,6 @@ export function whsFrom(dto: WhsBreakdownDto): WhsBreakdown {
     diffAvg: dto.diff_avg,
     hasRatedRounds: dto.has_rated_rounds,
     showCalculation: dto.show_calculation,
-  };
-}
-
-/** Where the player stands against their scoring goal, as the goal report measured it. */
-export interface GoalProgress {
-  /** The goal as stored: 79 means breaking 80. */
-  target: number;
-  /** Null until the goal report loads. */
-  average: number | null;
-  progressPct: number | null;
-  onTrack: boolean;
-  /** Headline of the saver worth the most strokes. */
-  focus: string | null;
-}
-
-/** Null until the player has set a goal. */
-export function goalProgress(scoringGoal: number | null | undefined, report: GoalReportDto | null): GoalProgress | null {
-  if (scoringGoal == null) return null;
-  return {
-    target: scoringGoal,
-    average: report?.scoring_average ?? null,
-    progressPct: report?.progress_pct ?? null,
-    onTrack: report?.on_track ?? false,
-    focus: report?.savers[0]?.headline ?? null,
   };
 }
 
