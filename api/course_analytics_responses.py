@@ -3,6 +3,7 @@
 from typing import List
 
 from analytics import stats as analytics
+from analytics.dashboard import scoring_average
 from api.round_responses import round_summary
 from api.schemas import CourseAnalyticsResponse
 from models import Round
@@ -12,17 +13,23 @@ def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResp
     """The player's figures at one course, from their rounds there (oldest first)."""
     scores = [s for s in (r.calculate_total_score() for r in rounds) if s is not None]
     by_hole = analytics.average_score_relative_to_par_by_hole(rounds)
+    trend = analytics.score_trend_on_this_course(rounds)
+    trend_scores = [row["total_score"] for row in trend]
     nines = analytics.hole_average_nines(by_hole)
     # The best round as the round list ranks it, so a nine is never best over a full round.
     best = analytics.best_round(list(reversed(rounds)))
+    recent = scoring_average(rounds, window=5)
     return CourseAnalyticsResponse(
         course_id=course_id,
         rounds_played=len(rounds),
         scoring_average=sum(scores) / len(scores) if scores else None,
         best_score=best.calculate_total_score() if best else None,
+        best_round_id=best.id if best else None,
         worst_score=max(scores) if scores else None,
         rounds=[round_summary(r) for r in reversed(rounds)],
-        score_trend_on_course=analytics.score_trend_on_this_course(rounds),
+        score_trend_on_course=trend,
+        recent_average=analytics.round_half_up(recent) if recent is not None else None,
+        recent_average_change=analytics.recent_average_change(trend_scores),
         average_score_relative_to_par_by_hole=by_hole,
         hole_averages_front_nine=nines["front_nine"],
         hole_averages_back_nine=nines["back_nine"],

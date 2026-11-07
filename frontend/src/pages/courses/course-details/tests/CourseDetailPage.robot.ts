@@ -45,7 +45,7 @@ export class CourseDetailRobot {
 
   async seesPerformance(): Promise<this> {
     await expect(this.page.getByText("Rounds Played")).toBeVisible();
-    await expect(this.page.getByText("Score Trend", { exact: true })).toBeVisible();
+    await expect(this.page.getByText("Score trend", { exact: true })).toBeVisible();
     await expect(this.page.getByText("Round History", { exact: true })).toBeVisible();
     return this;
   }

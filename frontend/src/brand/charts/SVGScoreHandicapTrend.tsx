@@ -5,7 +5,7 @@ import { curveStepAfter, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { differentialFill, tokens } from "@/brand/theme";
-import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
+import { formatHandicapIndex, formatOneDecimal, type RoundTrendPoint } from "@/domain";
 import type { DifferentialStatus } from "@/domain/handicap";
 import { indexScale, knownValues, lastKnownIndex, niceExtent } from "./scales";
 
@@ -17,6 +17,13 @@ interface SVGScoreHandicapTrendProps {
   series?: TrendSeries;
   /** The phone shape: narrower. Meant for one series at a time. */
   compact?: boolean;
+  /**
+   * Rounds that say nothing about the handicap, like one course's: every dot alike, and the
+   * average drawn as the lead line rather than behind dots that mark which rounds count.
+   */
+  plain?: boolean;
+  /** Where the server's best round sits in `data`. That round is marked in place of the latest. */
+  bestIndex?: number | null;
 }
 
 const L = tokens.chart.stack;
@@ -38,7 +45,13 @@ interface Panel {
  * index as a step line, stacked as two small multiples on the same rounds, or
  * either alone. Hovering with a mouse or tapping on a phone picks a round.
  */
-export function SVGScoreHandicapTrend({ data, series = "both", compact = false }: SVGScoreHandicapTrendProps) {
+export function SVGScoreHandicapTrend({
+  data,
+  series = "both",
+  compact = false,
+  plain = false,
+  bestIndex = null,
+}: SVGScoreHandicapTrendProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
 
   const scores = data.map((d) => d.score);
@@ -104,6 +117,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
   const clearOfPar = (y: number) => parY == null || Math.abs(y - parY) > tokens.type.label.size;
 
   const lastScore = lastKnownIndex(scores);
+  const best = bestIndex != null ? (scores[bestIndex] ?? null) : null;
   const lastHandicap = lastKnownIndex(handicaps);
 
   const indexAt = (e: PointerEvent<SVGSVGElement>) => {
@@ -175,7 +189,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                   strokeDasharray={L.dash}
                 />
                 <AxisLabel x={labelX} y={parY + L.labelDrop}>
-                  Par
+                  Par {par}
                 </AxisLabel>
               </>
             )}
@@ -183,7 +197,7 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
               d={averagePath}
               fill="none"
               stroke={tokens.color.chart.series1}
-              strokeOpacity={tokens.opacity.recessed}
+              strokeOpacity={plain ? 1 : tokens.opacity.recessed}
               strokeWidth={L.stroke}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -241,6 +255,19 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
         {showScore &&
           data.map((d, i) => {
             if (d.score == null) return null;
+            if (plain) {
+              return (
+                <circle
+                  key={`dot-${i}`}
+                  cx={x(i)}
+                  cy={yScore(d.score)}
+                  r={active === i ? L.dotHover : L.dot}
+                  fill={active === i ? tokens.color.foreground : tokens.color.borderStrong}
+                  stroke={tokens.color.card}
+                  strokeWidth={active === i ? tokens.lineWidth.outline : 0}
+                />
+              );
+            }
             // The server says where each round's differential stands toward the index.
             return (
               <circle
@@ -255,7 +282,23 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
             );
           })}
 
-        {showScore && lastScoreValue != null && (
+        {showScore && best != null && bestIndex != null && (
+          <g data-slot="score-trend-best">
+            <circle
+              cx={x(bestIndex)}
+              cy={yScore(best)}
+              r={L.dotHover}
+              fill={tokens.color.score.birdie.base}
+              stroke={tokens.color.card}
+              strokeWidth={tokens.lineWidth.outline}
+            />
+            <FigureLabel x={x(bestIndex)} y={yScore(best) - L.scoreLift} anchor={edgeAnchor(x(bestIndex), gridRight)} color={tokens.color.score.birdie.base}>
+              Best {best}
+            </FigureLabel>
+          </g>
+        )}
+
+        {showScore && best == null && lastScoreValue != null && (
           <FigureLabel x={x(lastScore)} y={yScore(lastScoreValue) - L.scoreLift} anchor="middle" color={tokens.color.foreground}>
             {lastScoreValue}
           </FigureLabel>
@@ -312,6 +355,12 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                   {point.score}
                   <ToParFigure toPar={point.toPar} />
                 </span>
+              </div>
+            )}
+            {showScore && point.rollingAverage != null && (
+              <div className="mt-0.5 flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">5-rd avg</span>
+                <span className="font-semibold text-card-foreground">{formatOneDecimal(point.rollingAverage)}</span>
               </div>
             )}
             {showHandicap && point.handicapIndex != null && (
@@ -403,7 +452,7 @@ function FigureLabel({
 }: {
   x: number;
   y: number;
-  anchor: "middle" | "end";
+  anchor: "start" | "middle" | "end";
   color: string;
   children: ReactNode;
 }) {
@@ -440,4 +489,11 @@ function xTickIndexes(count: number): number[] {
   const last = count - 1;
   const fifths = Array.from({ length: Math.floor(last / 5) }, (_, i) => (i + 1) * 5 - 1).filter((i) => last - i > 2);
   return [0, ...fifths.filter((i) => i > 2), last];
+}
+
+/** A label over a dot near either end of the grid reads inward, so the card's edge doesn't cut it. */
+function edgeAnchor(x: number, right: number): "start" | "middle" | "end" {
+  if (x < L.labelEdge) return "start";
+  if (x > right - L.labelEdge) return "end";
+  return "middle";
 }

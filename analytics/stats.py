@@ -1068,16 +1068,30 @@ def score_trend_on_this_course(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
     results: List[Dict[str, Any]] = []
     for index, (_, round_obj) in enumerate(ordered_rounds, start=1):
+        total_score = round_obj.calculate_total_score()
         results.append(
             {
                 "round_index": index,
                 "round_id": round_obj.id,
                 "date": round_obj.date,
-                "total_score": round_obj.calculate_total_score(),
+                "total_score": total_score,
                 "to_par": round_obj.total_to_par(),
+                "par": round_obj.scored_par() if total_score is not None else None,
             }
         )
+    for row, average in zip(results, rolling_average([row["total_score"] for row in results])):
+        row["rolling_average"] = average
     return results
+
+
+def recent_average_change(scores: List[Optional[float]], window: int = 5) -> Optional[float]:
+    """The last `window` scores' average less the first `window`'s, to a tenth: negative when the
+    recent rounds came in lower. Null until there are two windows of scores to compare."""
+    known = [s for s in scores if s is not None]
+    if len(known) < window * 2:
+        return None
+    first, last = known[:window], known[-window:]
+    return round_half_up(sum(last) / window - sum(first) / window)
 
 
 def gir_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:

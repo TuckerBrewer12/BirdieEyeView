@@ -1,16 +1,22 @@
 import { useNavigate } from "react-router-dom";
 import {
   Card,
+  CardAction,
   CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   Collection,
   Reveal,
   RoundPreview,
-  ScoreTrendChart,
+  SVGScoreHandicapTrend,
   SectionLabel,
   Stat,
+  StatDelta,
   StatLabel,
   StatValue,
 } from "@/brand";
+import { formatOneDecimal } from "@/domain";
 import { CourseChartsSection } from "./CourseChartsSection";
 import { useCoursePerformanceViewModel } from "./useCoursePerformanceViewModel";
 
@@ -24,6 +30,7 @@ const dash = (value: number | null) => (value == null ? "—" : String(value));
 export function CoursePerformanceSection({ userId, courseId }: CoursePerformanceSectionProps) {
   const navigate = useNavigate();
   const viewModel = useCoursePerformanceViewModel(userId, courseId);
+  const change = viewModel.recentAverageChange;
   const heroStats = [
     { label: "Rounds Played", value: String(viewModel.roundsPlayed) },
     { label: "Scoring Avg", value: viewModel.scoringAverage?.toFixed(1) ?? "—" },
@@ -46,14 +53,28 @@ export function CoursePerformanceSection({ userId, courseId }: CoursePerformance
         ))}
       </div>
 
-      <div>
-        <SectionLabel>Score Trend</SectionLabel>
-        <Card>
-          <CardContent className="pt-6">
-            <ScoreTrendChart rows={viewModel.trend} />
-          </CardContent>
-        </Card>
-      </div>
+      <Card data-slot="course-score-trend">
+        <CardHeader>
+          <CardTitle>Score trend</CardTitle>
+          <CardDescription>Each round, with 5-round average</CardDescription>
+          {viewModel.recentAverage != null && (
+            <CardAction>
+              <Stat align="end">
+                <StatValue className="flex items-center gap-2">
+                  {formatOneDecimal(viewModel.recentAverage)}
+                  {change != null && change !== 0 && (
+                    <StatDelta direction={change < 0 ? "down" : "up"}>{formatOneDecimal(Math.abs(change))}</StatDelta>
+                  )}
+                </StatValue>
+                <StatLabel>{change != null ? "Avg, last 5 vs first 5" : "Avg, last 5"}</StatLabel>
+              </Stat>
+            </CardAction>
+          )}
+        </CardHeader>
+        <CardContent>
+          <SVGScoreHandicapTrend data={viewModel.trend} series="score" plain bestIndex={viewModel.bestTrendIndex} />
+        </CardContent>
+      </Card>
 
       <div>
         <SectionLabel>Round History</SectionLabel>

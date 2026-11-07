@@ -7,16 +7,7 @@ import type {
 } from "@/types/api";
 import { Round, type RoundSummary } from "./round";
 import { scoreMixFrom, type ScoreKind } from "./score";
-
-/** One round's score on a trend, oldest first. */
-export interface ScorePoint {
-  /** The round's place in the golfer's history, unique on the trend. */
-  roundIndex: number;
-  /** When the round was played, if the card had a date. */
-  date: string | null;
-  score: number | null;
-  toPar: number | null;
-}
+import type { RoundTrendPoint } from "./trend";
 
 /** A golfer's average score on one hole, and how far over or under par that is. */
 export interface HoleToPar {
@@ -47,11 +38,16 @@ export interface CourseAnalytics {
   roundsPlayed: number;
   scoringAverage: number | null;
   bestScore: number | null;
+  /** Where the server's best round sits on `scoreTrend`. Null with no scored round. */
+  bestTrendIndex: number | null;
   worstScore: number | null;
   /** The golfer's rounds here, newest first. */
   rounds: RoundSummary[];
-  /** Every round here, oldest first. Unscored rounds have a null score. */
-  scoreTrend: ScorePoint[];
+  /** Every round here, oldest first, with the server's five-round average. Unscored rounds have a null score. */
+  scoreTrend: RoundTrendPoint[];
+  /** The last five scored rounds' average, and it less the first five's (null under ten scored rounds). */
+  recentAverage: number | null;
+  recentAverageChange: number | null;
   /** In course order. */
   holeToPar: HoleToPar[];
   /** The per-hole averages summed over each nine and every hole, as the server added them. Null for a nine not played. */
@@ -69,9 +65,12 @@ export const EMPTY_COURSE_ANALYTICS: CourseAnalytics = {
   roundsPlayed: 0,
   scoringAverage: null,
   bestScore: null,
+  bestTrendIndex: null,
   worstScore: null,
   rounds: [],
   scoreTrend: [],
+  recentAverage: null,
+  recentAverageChange: null,
   holeToPar: [],
   nineAverages: { front: null, back: null, total: null },
   difficulty: [],
@@ -81,8 +80,18 @@ export const EMPTY_COURSE_ANALYTICS: CourseAnalytics = {
   variance: [],
 };
 
-function scorePoint(row: CourseScoreTrendRowDto): ScorePoint {
-  return { roundIndex: row.round_index, date: row.date, score: row.total_score, toPar: row.to_par };
+/** A round on the course's score trend. One course's rounds say nothing about the handicap. */
+function scorePoint(row: CourseScoreTrendRowDto): RoundTrendPoint {
+  return {
+    roundIndex: row.round_index,
+    score: row.total_score,
+    toPar: row.to_par,
+    par: row.par,
+    rollingAverage: row.rolling_average,
+    handicapIndex: null,
+    courseName: null,
+    differentialStatus: "unrated",
+  };
 }
 
 function holeToPar(row: CourseHoleToParRowDto | CourseHoleDifficultyRowDto): HoleToPar {
@@ -94,13 +103,17 @@ function scoreMix(row: CourseHoleScoreTypeRowDto): HoleScoreMix {
 }
 
 export function courseAnalyticsFrom(dto: CourseAnalyticsDto): CourseAnalytics {
+  const bestTrendIndex = dto.score_trend_on_course.findIndex((row) => row.round_id != null && row.round_id === dto.best_round_id);
   return {
     roundsPlayed: dto.rounds_played,
     scoringAverage: dto.scoring_average,
     bestScore: dto.best_score,
+    bestTrendIndex: bestTrendIndex >= 0 ? bestTrendIndex : null,
     worstScore: dto.worst_score,
     rounds: dto.rounds.map(Round.fromSummary),
     scoreTrend: dto.score_trend_on_course.map(scorePoint),
+    recentAverage: dto.recent_average,
+    recentAverageChange: dto.recent_average_change,
     holeToPar: dto.average_score_relative_to_par_by_hole.map(holeToPar),
     nineAverages: {
       front: dto.hole_averages_front_nine,

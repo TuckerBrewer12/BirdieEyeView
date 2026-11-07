@@ -914,6 +914,8 @@ export interface components {
             average_score_relative_to_par_by_hole: components["schemas"]["CourseHoleToParRow"][];
             /** Average Score When Gir Vs Missed */
             average_score_when_gir_vs_missed: components["schemas"]["CourseGirImpactRow"][];
+            /** Best Round Id */
+            best_round_id: string | null;
             /** Best Score */
             best_score: number | null;
             /** Course Difficulty Profile By Hole */
@@ -928,6 +930,10 @@ export interface components {
             hole_averages_front_nine: number | null;
             /** Hole Averages Total */
             hole_averages_total: number | null;
+            /** Recent Average */
+            recent_average: number | null;
+            /** Recent Average Change */
+            recent_average_change: number | null;
             /** Rounds */
             rounds: components["schemas"]["RoundSummaryResponse"][];
             /** Rounds Played */
@@ -1087,11 +1093,15 @@ export interface components {
         };
         /**
          * CourseScoreTrendRow
-         * @description One round at the course, oldest first.
+         * @description One round at the course, oldest first, with its average over it and the four rounds before it.
          */
         CourseScoreTrendRow: {
             /** Date */
             date: string | null;
+            /** Par */
+            par: number | null;
+            /** Rolling Average */
+            rolling_average: number | null;
             /** Round Id */
             round_id: string | null;
             /** Round Index */

@@ -638,6 +638,8 @@ export const chart = {
     legendLine: 16,
     /** Where the handicap's last figure sits, up and to the left of its dot. */
     lastLift: 8,
+    /** Closer than this to either end of the grid, a label over a dot reads inward. */
+    labelEdge: 40,
     /** Where the last score sits, straight above its dot. */
     scoreLift: 10,
   },
@@ -648,19 +650,6 @@ export const chart = {
     pad: space.tight,
     stroke: 2,
     dot: space.dot,
-  },
-  /** A golfer's scores over time, one dot per round. */
-  trend: {
-    width: 560,
-    height: size.chart,
-    pad: { top: 16, right: 16, bottom: 28, left: 36 },
-    /** Room either side of the lowest and highest score, in strokes. */
-    headroom: 3,
-    stroke: 2.5,
-    dot: 4,
-    dotHover: 6,
-    /** Past this many rounds the date ticks would crowd, so they are left off. */
-    maxTicks: 12,
   },
   /** A shape across a handful of measures, each axis 0–100 from the centre out. Labels sit past the rim. */
   radar: {

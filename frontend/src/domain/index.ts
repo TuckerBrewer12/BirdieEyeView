@@ -44,7 +44,6 @@ export type {
   HoleScoreMix,
   HoleToPar,
   NineAverages,
-  ScorePoint,
 } from "./courseAnalytics";
 
 export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekdayDay, isoDay, parseDay } from "./date";

@@ -9,8 +9,21 @@ import { summaryResponse, type StoredRound } from "./roundResponses";
 
 export type CourseHoleStats = Omit<
   CourseAnalyticsDto,
-  "course_id" | "rounds_played" | "scoring_average" | "best_score" | "worst_score" | "rounds" | "score_trend_on_course"
+  | "course_id"
+  | "rounds_played"
+  | "scoring_average"
+  | "best_score"
+  | "best_round_id"
+  | "worst_score"
+  | "rounds"
+  | "score_trend_on_course"
+  | "recent_average"
+  | "recent_average_change"
 >;
+
+/** To a tenth, a half up, as analytics.stats.round_half_up does. */
+const tenth = (value: number) => Math.floor(value * 10 + 0.5) / 10;
+const mean = (values: number[]) => values.reduce((total, value) => total + value, 0) / values.length;
 
 const NO_HOLE_STATS: CourseHoleStats = {
   average_score_relative_to_par_by_hole: [],
@@ -35,21 +48,35 @@ export function courseAnalyticsResponse(
     .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))
     .map(summaryResponse);
   const scores = played.map((round) => round.total_score).filter((score): score is number => score != null);
+  // analytics.stats.best_round: the newest round on the best score.
+  const best = [...played].reverse().find((round) => round.total_score === Math.min(...scores));
 
   return {
     course_id: courseId,
     rounds_played: played.length,
     scoring_average: scores.length > 0 ? scores.reduce((total, score) => total + score, 0) / scores.length : null,
-    best_score: scores.length > 0 ? Math.min(...scores) : null,
+    best_score: best?.total_score ?? null,
+    best_round_id: best?.id ?? null,
     worst_score: scores.length > 0 ? Math.max(...scores) : null,
     rounds: [...played].reverse(),
-    score_trend_on_course: played.map((round, i) => ({
-      round_index: i + 1,
-      round_id: round.id,
-      date: round.date,
-      total_score: round.total_score,
-      to_par: round.to_par,
-    })),
+    // analytics.stats.score_trend_on_this_course: each round with the average over it and the four before.
+    score_trend_on_course: played.map((round, i) => {
+      const window = played
+        .slice(Math.max(0, i - 4), i + 1)
+        .map((r) => r.total_score)
+        .filter((score): score is number => score != null);
+      return {
+        round_index: i + 1,
+        round_id: round.id,
+        date: round.date,
+        total_score: round.total_score,
+        to_par: round.to_par,
+        par: round.total_score != null && round.to_par != null ? round.total_score - round.to_par : null,
+        rolling_average: window.length > 0 ? tenth(mean(window)) : null,
+      };
+    }),
+    recent_average: scores.length > 0 ? tenth(mean(scores.slice(-5))) : null,
+    recent_average_change: scores.length >= 10 ? tenth(mean(scores.slice(-5)) - mean(scores.slice(0, 5))) : null,
     ...holeStats,
   };
 }

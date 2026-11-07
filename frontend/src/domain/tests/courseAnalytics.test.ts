@@ -13,6 +13,22 @@ describe("courseAnalyticsFrom", () => {
     expect(analytics.scoreTrend.map((point) => [point.score, point.toPar])).toEqual(
       halfMoonBayAnalytics.score_trend_on_course.map((row) => [row.total_score, row.to_par]),
     );
+    // The trend's average and its headline are the server's, read as sent.
+    expect(analytics.scoreTrend.map((point) => point.rollingAverage)).toEqual(
+      halfMoonBayAnalytics.score_trend_on_course.map((row) => row.rolling_average),
+    );
+    expect([analytics.recentAverage, analytics.recentAverageChange]).toEqual([
+      halfMoonBayAnalytics.recent_average,
+      halfMoonBayAnalytics.recent_average_change,
+    ]);
+    expect(analytics.scoreTrend.every((point) => point.differentialStatus === "unrated")).toBe(true);
+  });
+
+  it("places the server's best round on the trend by its id, not by its score", () => {
+    expect(analytics.bestTrendIndex).toBe(0);
+    const later = { ...halfMoonBayAnalytics, best_round_id: "round-1" };
+    expect(courseAnalyticsFrom(later).bestTrendIndex).toBe(1);
+    expect(courseAnalyticsFrom({ ...halfMoonBayAnalytics, best_round_id: null }).bestTrendIndex).toBeNull();
   });
 
   it("names each hole row by hole, with the score kinds keyed the way the kit keys them", () => {
