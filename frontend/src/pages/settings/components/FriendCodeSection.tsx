@@ -1,6 +1,15 @@
 import { useState } from "react";
-import { Check, Copy } from "lucide-react";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from "@/brand";
+import {
+  Alert,
+  AlertDescription,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  SettingsGroup,
+  SettingsRow,
+} from "@/brand";
 
 interface FriendCodeSectionProps {
   /** Null until the server has given the player one. */
@@ -22,30 +31,28 @@ export function FriendCodeSection({ friendCode }: FriendCodeSectionProps) {
   };
 
   return (
-    <Card>
+    <Card className="pb-0">
       <CardHeader>
         <CardTitle>Friend code</CardTitle>
         <CardDescription>Share this code so other players can send you a friend request.</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <Input
-            readOnly
-            aria-label="Friend code"
-            value={friendCode ?? "Unavailable"}
-            className="font-mono"
-          />
-          <Button variant="outline" onClick={() => void copyCode()} disabled={!friendCode}>
-            {copy === "copied" ? <Check data-icon="inline-start" /> : <Copy data-icon="inline-start" />}
-            {copy === "copied" ? "Copied" : "Copy"}
-          </Button>
-        </div>
-        {copy === "failed" && (
-          <p role="alert" className="text-xs font-medium text-destructive">
-            Could not copy your friend code.
-          </p>
-        )}
-      </CardContent>
+      <SettingsGroup>
+        <SettingsRow
+          type="copy"
+          label="Your code"
+          value={friendCode ?? "Unavailable"}
+          copied={copy === "copied"}
+          disabled={!friendCode}
+          onCopy={() => void copyCode()}
+        />
+      </SettingsGroup>
+      {copy === "failed" && (
+        <CardContent className="pb-4">
+          <Alert variant="destructive">
+            <AlertDescription>Could not copy your friend code.</AlertDescription>
+          </Alert>
+        </CardContent>
+      )}
     </Card>
   );
 }

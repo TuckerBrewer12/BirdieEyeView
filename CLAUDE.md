@@ -177,7 +177,7 @@ Every colour is a token in `src/brand/theme/tokens.ts`, used through its Tailwin
 - **Page:** `PageTitle`, `PageHeader` (the bar pinned once the title scrolls off), `SectionLabel` (the eyebrow above a section), `AppShell`.
 - **Surfaces:** `Card` (`CardHeader`, `CardTitle`, `CardContent`, …), `Sheet`, `Alert`, `Collapse` / `Collapsible`.
 - **Figures:** `Stat` (a figure and its label, `sm`–`xl`), `ToParFigure`, `ScoreCountChip`, `Meter`, `TeeSwatch`.
-- **Lists and controls:** `Collection` (a list with its loading and empty states), `Button` (`default`, `outline`, `secondary`, `ghost`, `destructive`, `link`, `linkMuted`; `shape="pill"`), `ToggleGroup`, `SortControl`, `SearchField`, `Input`, `Field`.
+- **Lists and controls:** `Collection` (a list with its loading and empty states), `Button` (`default`, `outline`, `secondary`, `ghost`, `destructive`, `link`, `linkMuted`; `shape="pill"`), `ToggleGroup`, `Switch`, `SettingsRow` (in a `SettingsGroup`), `PersonRow`, `SortControl`, `SearchField`, `Input`, `Field`.
 - **Golf:** `RoundPreview`, `CoursePreview`, `RoundScorecard`, `ScorecardTable`, and the charts in `brand/charts/`.
 
 ### Motion
