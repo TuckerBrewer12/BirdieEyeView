@@ -50,21 +50,19 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
     return (
       <>
         <Button
-          size="sm"
-          disabled={busy}
-          aria-label={`Accept ${name}`}
-          onClick={() => viewModel.respond(request.id, "accepted")}
-        >
-          Accept
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
+          variant="ghost"
           disabled={busy}
           aria-label={`Decline ${name}`}
           onClick={() => viewModel.respond(request.id, "declined")}
         >
           Decline
+        </Button>
+        <Button
+          disabled={busy}
+          aria-label={`Accept ${name}`}
+          onClick={() => viewModel.respond(request.id, "accepted")}
+        >
+          Accept
         </Button>
       </>
     );

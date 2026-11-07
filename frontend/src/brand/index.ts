@@ -70,6 +70,7 @@ export {
   InputGroupInput,
 } from "./components/InputGroup";
 export { PageHeader } from "./components/PageHeader";
+export { ListRow } from "./components/ListRow";
 export { PersonRow } from "./components/PersonRow";
 export type { PersonRowProps } from "./components/PersonRow";
 export { PageTitle } from "./components/PageTitle";
