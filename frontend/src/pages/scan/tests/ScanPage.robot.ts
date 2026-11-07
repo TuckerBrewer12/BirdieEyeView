@@ -78,7 +78,7 @@ export class ScanRobot {
   /** The card being read, on its first phase. */
   async seesProcessing(): Promise<this> {
     await expect(
-      this.page.locator("[data-slot=scan-progress]").filter({ hasText: "Reading course details…" }),
+      this.page.locator("[data-slot=scan-progress]").filter({ hasText: "Reading your card" }),
     ).toBeVisible();
     return this;
   }
@@ -108,7 +108,7 @@ export class ScanRobot {
   }
 
   async seesSaved(): Promise<this> {
-    await expect(this.page.getByRole("heading", { name: "Round saved!" })).toBeVisible();
+    await expect(this.page.getByRole("heading", { name: "Round saved" })).toBeVisible();
     return this;
   }
 
@@ -126,7 +126,7 @@ export class ScanRobot {
    */
   async tapShare(): Promise<this> {
     const download = this.page.waitForEvent("download");
-    await this.page.getByRole("button", { name: "Share Round" }).click();
+    await this.page.getByRole("button", { name: "Share", exact: true }).click();
     this.shared = await download;
     return this;
   }
@@ -134,12 +134,12 @@ export class ScanRobot {
   /** The round went out as an image named for its course. */
   async seesSharedImage(fileName: string): Promise<this> {
     expect(this.shared?.suggestedFilename()).toBe(fileName);
-    await expect(this.page.getByRole("button", { name: "Share Round" })).toBeEnabled();
+    await expect(this.page.getByRole("button", { name: "Share", exact: true })).toBeEnabled();
     return this;
   }
 
   async tapViewRound(): Promise<this> {
-    await this.page.getByRole("button", { name: "View Round" }).click();
+    await this.page.getByRole("button", { name: "View round" }).click();
     return this;
   }
 

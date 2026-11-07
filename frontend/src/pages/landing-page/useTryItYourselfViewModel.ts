@@ -3,16 +3,8 @@ import { preparePhotoForUpload } from "@/data/photoUpload";
 import { scanRepository, type ScanRepository } from "@/data/scanRepository";
 import { useCardText, type PickedPhoto } from "@/data/useCardText";
 import { Round } from "@/domain";
+import { SCAN_STEPS, SCAN_STEP_HOLD_MS } from "@/domain/scan";
 import { useExtractScorecard } from "@/data/useExtractScorecard";
-
-const PHASES = [
-  { label: "Reading course details…", detail: "Identifying name, location & tee boxes" },
-  { label: "Extracting hole scores…", detail: "Parsing your scorecard row by row" },
-  { label: "Verifying yardages & par…", detail: "Cross-checking hole data" },
-  { label: "Calculating confidence…", detail: "Flagging fields that may need review" },
-] as const;
-
-const PHASE_HOLD_MS = 3500;
 
 export interface TryItYourselfViewModel {
   step: "upload" | "processing" | "review";
@@ -25,9 +17,6 @@ export interface TryItYourselfViewModel {
   reset: () => void;
 
   phase: number;
-  phaseCount: number;
-  phaseLabel: string;
-  phaseDetail: string;
 
   /** The scanned card as a round, its figures read the way an unsaved edit's are. */
   round: Round | null;
@@ -50,12 +39,12 @@ export function useTryItYourselfViewModel(
 
   // The scan gives no progress events, so the phases are paced rather than
   // reported. Restarting at zero each time keeps a second scan from opening
-  // on "Calculating confidence…".
+  // on its last step.
   useEffect(() => {
     if (step !== "processing") return;
     const timer = setInterval(
-      () => setPhase((current) => Math.min(current + 1, PHASES.length - 1)),
-      PHASE_HOLD_MS,
+      () => setPhase((current) => Math.min(current + 1, SCAN_STEPS.length - 1)),
+      SCAN_STEP_HOLD_MS,
     );
     return () => {
       clearInterval(timer);
@@ -101,9 +90,6 @@ export function useTryItYourselfViewModel(
     reset,
 
     phase,
-    phaseCount: PHASES.length,
-    phaseLabel: PHASES[phase].label,
-    phaseDetail: PHASES[phase].detail,
 
     round,
     hasScores: (round?.holes.length ?? 0) > 0,

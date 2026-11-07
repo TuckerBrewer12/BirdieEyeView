@@ -459,6 +459,12 @@ export const lineWidth = {
   outline: 1.5,
 };
 
+/** The spinner on a scan in flight, in its SVG's own units: a ring, a quarter of it lit. */
+export const spinner = {
+  box: 36,
+  radius: 14,
+};
+
 /** Border widths that are not Tailwind's own steps: `border-callout`, the edge of an `Alert`. */
 export const borderWidth = {
   callout: lineWidth.outline,
@@ -542,8 +548,6 @@ export const motion = {
   expand: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as Ease },
   /** A section fading up as it scrolls into view (`Reveal`). */
   reveal: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as Ease },
-  /** The card being read while a scan runs: it breathes, a line sweeps it, its corners pulse, the step rail fills. */
-  scanProgress: { breathe: 2.6, sweep: 1.6, pulse: 1.8, cornerStagger: 0.45, step: 0.4 },
   /** The try-it panel moving between its steps. */
   scanStep: { upload: 0.3, processing: 0.25, review: 0.35 },
   /**

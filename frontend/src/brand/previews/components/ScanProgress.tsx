@@ -1,12 +1,12 @@
 import { ScanProgress } from "@/brand/components/ScanProgress";
+import { SCAN_STEPS } from "@/domain/scan";
 
 export default function ScanProgressPreview() {
   return (
     <ScanProgress
-      label="Extracting hole scores…"
-      detail="Parsing your scorecard row by row"
+      label="Reading your card"
+      steps={SCAN_STEPS}
       phase={1}
-      phaseCount={4}
     />
   );
 }
