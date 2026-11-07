@@ -21,6 +21,13 @@ test("empty list", async ({ rounds }) => {
   await rounds.capture("rounds-empty.png");
 });
 
+test("load error does not show empty copy", async ({ rounds }) => {
+  await rounds.openFailed();
+  await rounds.seesLoadError();
+  await rounds.doesNotSeeEmptyState();
+  await rounds.capture("rounds-error.png");
+});
+
 test("course link panel open", async ({ rounds }) => {
   await rounds.open(storedRounds);
   await rounds.openLinkFor("Scanned Scorecard");

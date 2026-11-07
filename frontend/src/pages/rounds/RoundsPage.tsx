@@ -1,5 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import {
+  Alert,
+  AlertAction,
+  AlertDescription,
   Button,
   Collapse,
   Collection,
@@ -30,6 +33,22 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
   if (viewModel.loading) {
     return <LoadingState>Loading rounds...</LoadingState>;
+  }
+
+  if (viewModel.loadError) {
+    return (
+      <div className="flex flex-col gap-2.5 pb-6">
+        <PageTitle>Rounds</PageTitle>
+        <Alert variant="destructive">
+          <AlertDescription>{viewModel.loadError}</AlertDescription>
+          <AlertAction>
+            <Button variant="outline" size="xs" onClick={viewModel.retry}>
+              Retry
+            </Button>
+          </AlertAction>
+        </Alert>
+      </div>
+    );
   }
 
   return (
@@ -78,7 +97,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
         <Collection
           items={viewModel.visibleRounds}
           keyFor={(r) => r.id}
-          empty="No rounds found."
+          empty={viewModel.showEmpty ? "No rounds found." : undefined}
           renderItem={(r) => (
             <>
               <RoundPreview

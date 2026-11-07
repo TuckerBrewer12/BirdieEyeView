@@ -2,11 +2,12 @@ import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../../testing/playwright";
 import type { CourseDto } from "../../../../types/api";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
-import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
+import type { FakeBackend, FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 
 /** Screen robot for /courses/:courseId — same idea as an Android Espresso robot. */
 export class CourseDetailRobot {
   private readonly page: Page;
+  private backend: FakeBackend | null = null;
 
   constructor(page: Page) {
     this.page = page;
@@ -24,7 +25,7 @@ export class CourseDetailRobot {
     seed: Omit<FakeBackendSeed, "fullCourses"> = {},
   ): Promise<this> {
     await this.page.emulateMedia({ reducedMotion: "reduce" });
-    await FakeSession.install(this.page, { fullCourses: [course], ...seed });
+    this.backend = await FakeSession.install(this.page, { fullCourses: [course], ...seed });
     await this.page.goto(`/courses/${course.id}`);
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.getByRole("button", { name: "Back to courses" })).toBeVisible();
@@ -47,6 +48,27 @@ export class CourseDetailRobot {
     await expect(this.page.getByText("Rounds Played")).toBeVisible();
     await expect(this.page.getByText("Score Trend", { exact: true })).toBeVisible();
     await expect(this.page.getByText("Round History", { exact: true })).toBeVisible();
+    return this;
+  }
+
+  /** The next load of the golfer's figures here succeeds, as the API would once the failure has cleared. */
+  nextLoadSucceeds(): this {
+    if (this.backend) this.backend.store.courseAnalyticsError = null;
+    return this;
+  }
+
+  async seesPerformanceError(): Promise<this> {
+    await expect(this.page.getByRole("alert")).toContainText("Could not load your rounds at this course.");
+    return this;
+  }
+
+  async doesNotSeeNoRounds(): Promise<this> {
+    await expect(this.page.getByText("No rounds at this course.")).toHaveCount(0);
+    return this;
+  }
+
+  async retry(): Promise<this> {
+    await this.page.getByRole("button", { name: "Retry" }).click();
     return this;
   }
 

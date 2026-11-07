@@ -1,12 +1,13 @@
 import { type Locator, type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
-import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
+import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import type { StoredRound } from "../../../testing/fakes/roundResponses";
 
 /** Screen robot for /rounds — same idea as an Android Espresso robot. */
 export class RoundsRobot {
   private readonly page: Page;
+  private backend: FakeBackend | null = null;
 
   constructor(page: Page) {
     this.page = page;
@@ -27,11 +28,35 @@ export class RoundsRobot {
     rounds: StoredRound[],
     seed: Omit<FakeBackendSeed, "rounds"> = {},
   ): Promise<this> {
-    await FakeSession.install(this.page, { rounds, ...seed });
+    this.backend = await FakeSession.install(this.page, { rounds, ...seed });
     await this.page.goto("/rounds");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.getByPlaceholder("Search by course…")).toBeVisible();
     await this.seesChipPressed("All");
+    return this;
+  }
+
+  /** The round list fails to load. */
+  async openFailed(rounds: StoredRound[] = []): Promise<this> {
+    this.backend = await FakeSession.install(this.page, { rounds, roundsError: "Could not load your rounds." });
+    await this.page.goto("/rounds");
+    await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
+    return this;
+  }
+
+  /** The next load succeeds, as the API would once the failure has cleared. */
+  nextLoadSucceeds(): this {
+    if (this.backend) this.backend.store.roundsError = null;
+    return this;
+  }
+
+  async seesLoadError(): Promise<this> {
+    await expect(this.page.getByRole("alert")).toContainText("Could not load your rounds.");
+    return this;
+  }
+
+  async retry(): Promise<this> {
+    await this.page.getByRole("button", { name: "Retry" }).click();
     return this;
   }
 
@@ -136,6 +161,11 @@ export class RoundsRobot {
 
   async seesEmptyState(): Promise<this> {
     await expect(this.page.getByText("No rounds found.")).toBeVisible();
+    return this;
+  }
+
+  async doesNotSeeEmptyState(): Promise<this> {
+    await expect(this.page.getByText("No rounds found.")).toHaveCount(0);
     return this;
   }
 

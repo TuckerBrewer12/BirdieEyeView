@@ -33,3 +33,18 @@ test("tapping a history round opens its detail", async ({ courseDetail }) => {
   await courseDetail.tapHistoryRound("Jun 15, 2026");
   await courseDetail.isAtRound("round-1");
 });
+
+test("a failed performance load shows the error, not no rounds, and a retry brings the figures in", async ({ courseDetail }) => {
+  await courseDetail.open(halfMoonBayCourse, {
+    courseAnalytics: halfMoonBayAnalytics,
+    courseAnalyticsError: "Could not load your rounds at this course.",
+  });
+  await courseDetail.tapPerformance();
+  await courseDetail.seesPerformanceError();
+  await courseDetail.doesNotSeeNoRounds();
+
+  courseDetail.nextLoadSucceeds();
+  await courseDetail.retry();
+
+  await courseDetail.seesPerformance();
+});

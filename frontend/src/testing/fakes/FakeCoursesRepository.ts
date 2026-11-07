@@ -11,6 +11,7 @@ export class FakeCoursesRepository implements CoursesRepository {
   courses: CourseSummaryDto[];
   fullCourses: CourseDto[] = [];
   analytics: CourseAnalyticsDto | null = null;
+  analyticsError: Error | null = null;
   error: Error | null = null;
   courseError: Error | null = null;
 
@@ -55,6 +56,7 @@ export class FakeCoursesRepository implements CoursesRepository {
   }
 
   async getCourseAnalytics(_userId: string, courseId: string): Promise<CourseAnalytics> {
+    if (this.analyticsError) throw this.analyticsError;
     return courseAnalyticsFrom(this.analytics ?? emptyCourseAnalytics(courseId));
   }
 }
