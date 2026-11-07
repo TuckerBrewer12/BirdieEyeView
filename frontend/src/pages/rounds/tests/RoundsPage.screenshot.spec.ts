@@ -42,5 +42,5 @@ test("sort menu open", async ({ rounds }) => {
   await rounds.open(storedRounds);
   await rounds.openSortMenu();
   await rounds.seesSortMenu();
-  await rounds.capture("rounds-sort-open.png");
+  await rounds.capture("rounds-sort-open.png", { fullPage: false });
 });
