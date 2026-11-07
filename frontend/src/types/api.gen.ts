@@ -1589,6 +1589,8 @@ export interface components {
             par_played: number | null;
             /** Putts */
             putts: number | null;
+            /** Running To Par */
+            running_to_par: number | null;
             /** Shots To Green */
             shots_to_green: number | null;
             /** Strokes */
@@ -2350,6 +2352,7 @@ export interface components {
             user_tee: components["schemas"]["UserTee"] | null;
             /** Weather Conditions */
             weather_conditions: string | null;
+            worst_stretch: components["schemas"]["WorstStretch"] | null;
             /** Yards */
             yards: number | null;
         };
@@ -3005,6 +3008,18 @@ export interface components {
         WindowedPerformanceStreaks: {
             lifetime: components["schemas"]["PerformanceStreaks"];
             one_year: components["schemas"]["PerformanceStreaks"];
+        };
+        /**
+         * WorstStretch
+         * @description The four holes in a row that lost the most to par, when they lost two or more.
+         */
+        WorstStretch: {
+            /** First Hole */
+            first_hole: number;
+            /** Last Hole */
+            last_hole: number;
+            /** To Par */
+            to_par: number;
         };
         /**
          * YardageScore

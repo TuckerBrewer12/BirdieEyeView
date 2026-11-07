@@ -3265,6 +3265,17 @@
             ],
             "title": "Putts"
           },
+          "running_to_par": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Running To Par"
+          },
           "shots_to_green": {
             "anyOf": [
               {
@@ -3330,7 +3341,8 @@
           "yardage",
           "to_par",
           "kind",
-          "three_putt"
+          "three_putt",
+          "running_to_par"
         ],
         "title": "HoleScoreResponse",
         "type": "object"
@@ -5726,6 +5738,16 @@
             ],
             "title": "Weather Conditions"
           },
+          "worst_stretch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorstStretch"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "yards": {
             "anyOf": [
               {
@@ -5761,7 +5783,8 @@
           "user_tee",
           "hole_scores",
           "course_handicap",
-          "net_score"
+          "net_score",
+          "worst_stretch"
         ],
         "title": "RoundResponse",
         "type": "object"
@@ -7876,6 +7899,30 @@
           "one_year"
         ],
         "title": "WindowedPerformanceStreaks",
+        "type": "object"
+      },
+      "WorstStretch": {
+        "description": "The four holes in a row that lost the most to par, when they lost two or more.",
+        "properties": {
+          "first_hole": {
+            "title": "First Hole",
+            "type": "integer"
+          },
+          "last_hole": {
+            "title": "Last Hole",
+            "type": "integer"
+          },
+          "to_par": {
+            "title": "To Par",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "first_hole",
+          "last_hole",
+          "to_par"
+        ],
+        "title": "WorstStretch",
         "type": "object"
       },
       "YardageScore": {

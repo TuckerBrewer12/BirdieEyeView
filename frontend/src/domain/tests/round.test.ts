@@ -4,6 +4,7 @@ import { roundResponse } from "@/testing/fakes/roundResponses";
 import {
   halfMoonBayCourse,
   halfMoonBayRound,
+  overParRound,
   pebbleBeachCourse,
   ratedHalfMoonBayRound,
   scannedRound,
@@ -63,6 +64,20 @@ function sumOf(yards: Record<string, number>): number {
 }
 
 describe("Round.previewEdits", () => {
+  it("reads the round's flow as the server sent it", () => {
+    const round = Round.fromDto(overParRound);
+    expect(round.holes.slice(0, 7).map((hole) => hole.runningToPar)).toEqual([1, 1, 1, 2, 3, 3, 4]);
+    expect(round.worstStretch).toEqual({ firstHole: 4, lastHole: 7, toPar: 3 });
+  });
+
+  it("clears the server's flow once an edit moves a hole's score", () => {
+    const round = Round.fromDto(overParRound);
+    expect(Round.previewEdits(round, { 1: { putts: 1 } }).worstStretch).toEqual(round.worstStretch);
+    const edited = Round.previewEdits(round, { 1: { strokes: 4 } });
+    expect(edited.worstStretch).toBeNull();
+    expect(edited.holes.every((hole) => hole.runningToPar == null)).toBe(true);
+  });
+
   it("reproduces the server's figures when nothing is edited", () => {
     for (const stored of storedRounds) {
       const round = Round.fromDto(roundResponse(stored));

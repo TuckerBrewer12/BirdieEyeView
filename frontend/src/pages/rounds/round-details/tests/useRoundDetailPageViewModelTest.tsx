@@ -45,7 +45,7 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.played?.toPar).toBe(6);
     expect(result.current.teeRating).toBe("72.4 / 130");
     expect(result.current.showLinkButton).toBe(false);
-    expect(result.current.showMomentum).toBe(true);
+    expect(result.current.showFlow).toBe(true);
   });
 
   it("shows the course handicap and net score the server sent", async () => {
@@ -61,6 +61,8 @@ describe("useRoundDetailPageViewModel", () => {
     act(() => result.current.editor.setScore(1, "strokes", null));
     expect(result.current.played?.score).toBe(73);
     expect(result.current.played?.holes.find((h) => h.hole === 1)?.strokes).toBeNull();
+    // The running to par is the server's, so the flow chart waits for the save.
+    expect(result.current.showFlow).toBe(false);
   });
 
   it("live-totals putts and greens edited in edit mode", async () => {
