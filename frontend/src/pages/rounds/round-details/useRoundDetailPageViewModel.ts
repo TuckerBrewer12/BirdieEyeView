@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { messageFrom } from "@/lib/userFacingErrors";
-import { queryKeys } from "@/data/queryKeys";
+import { useRound } from "@/data/useRound";
 import { Round } from "@/domain/round";
 import { getTee } from "@/domain/course";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
@@ -46,17 +45,7 @@ export function useRoundDetailPageViewModel(
   const { mutate: deleteRound, isPending: deleting, error: deleteError, reset: resetDelete } =
     useDeleteRound(userId, repository);
 
-  const {
-    data: round,
-    isLoading,
-    isError,
-    error: roundError,
-  } = useQuery({
-    queryKey: queryKeys.round(roundId),
-    queryFn: () => repository.getRound(roundId!),
-    enabled: !!roundId,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: round, isLoading, isError, error: roundError } = useRound(roundId, repository);
 
   const editor = useRoundEditorViewModel(userId, round, repository);
   const { start: startEditing } = editor;

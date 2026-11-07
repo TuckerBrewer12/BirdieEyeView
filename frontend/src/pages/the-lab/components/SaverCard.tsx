@@ -1,7 +1,7 @@
 import { Crosshair, Flame, Home, Ruler, Shuffle, Target, TrendingUp, type LucideIcon } from "lucide-react";
 import { Card, CardContent, Meter, Stat, StatUnit, StatValue } from "@/brand";
 import { formatOneDecimal, formatPercent } from "@/domain";
-import type { Saver } from "../model";
+import type { Saver } from "@/domain/goal";
 import { SAVER_LABEL } from "../present";
 
 const SAVER_ICON: Record<Saver["kind"], LucideIcon> = {

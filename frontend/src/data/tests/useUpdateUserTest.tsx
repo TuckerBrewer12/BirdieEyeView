@@ -3,16 +3,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import type { ReactNode } from "react";
 import { FakeSettingsRepository } from "@/testing/fakes/FakeSettingsRepository";
+import { pebbleBeach } from "@/testing/fixtures/courses";
 import { queryKeys } from "../queryKeys";
 import { useUpdateUser } from "../useUpdateUser";
 
 function setup() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const repository = new FakeSettingsRepository({ user: { handicap: 12, scoring_goal: 89 } });
+  const repository = new FakeSettingsRepository({ user: { handicap: 12, scoring_goal: 89 }, courses: [pebbleBeach] });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
-  const { result } = renderHook(() => useUpdateUser("user-1", repository), { wrapper });
+  const { result } = renderHook(() => useUpdateUser("user-1", repository, repository), { wrapper });
   return { client, repository, result };
 }
 
@@ -30,7 +31,6 @@ describe("useUpdateUser", () => {
   it("marks the figures that start from the profile stale", async () => {
     const { client, result } = setup();
     const keys = [
-      queryKeys.settings("user-1"),
       queryKeys.round("round-1"),
       queryKeys.course("course-1"),
       queryKeys.dashboard("user-1"),
@@ -43,6 +43,15 @@ describe("useUpdateUser", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     for (const key of keys) expect(client.getQueryState(key)?.isInvalidated).toBe(true);
+  });
+
+  it("has a newly picked home course loaded by the time the save settles", async () => {
+    const { client, result } = setup();
+
+    act(() => result.current.mutate({ home_course_id: pebbleBeach.id }));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(client.getQueryData<{ name: string | null }>(queryKeys.course(pebbleBeach.id))?.name).toBe(pebbleBeach.name);
   });
 
   it("leaves the cache alone when the save fails", async () => {

@@ -2,9 +2,9 @@ import {
   analyticsRepository as sharedAnalyticsRepository,
   type AnalyticsRepository as SharedAnalyticsRepository,
 } from "@/data/analyticsRepository";
+import { roundRepository, type RoundRepository } from "@/data/roundRepository";
 import { userRepository, type UserRepository } from "@/data/userRepository";
 import { api } from "@/lib/api";
-import { roundsRepository, type RoundsRepository } from "../rounds/roundsRepository";
 import type { PlayedCourseDto } from "@/types/api";
 import type { PlayedCourse } from "./model";
 
@@ -12,7 +12,7 @@ import type { PlayedCourse } from "./model";
 export interface AnalyticsRepository
   extends SharedAnalyticsRepository,
     Pick<UserRepository, "getUser">,
-    Pick<RoundsRepository, "getRound"> {
+    RoundRepository {
   /** The courses the golfer has a round at, for the course filter. */
   getPlayedCourses(userId: string): Promise<PlayedCourse[]>;
 }
@@ -25,5 +25,5 @@ export const analyticsRepository: AnalyticsRepository = {
   getAnalytics: (userId, filters) => sharedAnalyticsRepository.getAnalytics(userId, filters),
   getPlayedCourses: async (userId) => (await api.getPlayedCourses(userId)).map(playedCourseFrom),
   getUser: (userId) => userRepository.getUser(userId),
-  getRound: (roundId) => roundsRepository.getRound(roundId),
+  getRound: (roundId) => roundRepository.getRound(roundId),
 };

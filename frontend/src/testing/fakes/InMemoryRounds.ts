@@ -2,12 +2,12 @@ import type {
   CourseAnalyticsDto,
   CourseDto,
   CourseSummaryDto,
+  RoundChangesDto,
   RoundComparisonDto,
   RoundDto,
   RoundSummaryDto,
   SaveScanRequestDto,
 } from "../../types/api";
-import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
 import { toCourseSummary } from "../fixtures/roundDetails";
 import { courseResponse } from "./courseResponses";
@@ -34,7 +34,7 @@ export interface InMemoryRoundsSeed {
   searchDelaysMs?: number[];
 }
 
-function applyUpdate(round: StoredRound, body: UpdateRoundBody): StoredRound {
+function applyUpdate(round: StoredRound, body: RoundChangesDto): StoredRound {
   const scores = body.hole_scores
     ? round.hole_scores.map((score) => {
         const edited = body.hole_scores?.find((h) => h.hole_number === score.hole_number);
@@ -181,7 +181,7 @@ export class InMemoryRounds {
     return id;
   }
 
-  updateRound(roundId: string, body: UpdateRoundBody): RoundDto {
+  updateRound(roundId: string, body: RoundChangesDto): RoundDto {
     if (this.updateError) throw new Error(this.updateError);
     const updated = applyUpdate(this.find(roundId), body);
     this.stored.set(roundId, updated);

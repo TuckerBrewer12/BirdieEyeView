@@ -1,7 +1,8 @@
-import type { DevicePreferences, Settings } from "../../pages/settings/model";
+import type { DevicePreferences } from "../../pages/settings/model";
 import type { SettingsRepository } from "../../pages/settings/settingsRepository";
 import { courseSummaryFrom, type CourseSummary } from "../../domain/course";
-import type { CourseSummaryDto, UserChangesDto, UserDto } from "../../types/api";
+import type { CourseDto, CourseSummaryDto, UserChangesDto, UserDto } from "../../types/api";
+import { courseResponse } from "./courseResponses";
 
 export interface FakeSettingsSeed {
   user?: Partial<UserDto>;
@@ -9,7 +10,7 @@ export interface FakeSettingsSeed {
   device?: Partial<DevicePreferences>;
 }
 
-/** One player's settings in memory: their user row, the courses to search, and device choices. */
+/** One player's settings in memory: their user row, the courses to search and read, and device choices. */
 export class FakeSettingsRepository implements SettingsRepository {
   user: UserDto;
   courses: CourseSummaryDto[];
@@ -35,16 +36,22 @@ export class FakeSettingsRepository implements SettingsRepository {
     this.device = { getUpdates: true, ...device };
   }
 
-  async getSettings(): Promise<Settings> {
+  async getUser(): Promise<UserDto> {
     if (this.loadError) throw this.loadError;
-    const home = this.courses.find((course) => course.id === this.user.home_course_id);
-    return {
-      friendCode: this.user.friend_code ?? null,
-      handicap: this.user.handicap,
-      homeCourse: this.user.home_course_id
-        ? { id: this.user.home_course_id, name: home?.name ?? null }
-        : null,
-    };
+    return this.user;
+  }
+
+  async getCourse(courseId: string): Promise<CourseDto> {
+    const course = this.courses.find((candidate) => candidate.id === courseId);
+    if (!course) throw new Error("Course not found.");
+    return courseResponse({
+      id: course.id,
+      name: course.name,
+      location: course.location,
+      par: course.par,
+      holes: [],
+      tees: [],
+    });
   }
 
   async updateUser(_userId: string, changes: UserChangesDto): Promise<UserDto> {

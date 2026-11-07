@@ -13,6 +13,7 @@ import type {
   GoalReportDto,
   OcrTextDto,
   PlayedCourseDto,
+  RoundChangesDto,
   RoundComparisonDto,
   RoundDto,
   RoundSummaryDto,
@@ -135,16 +136,8 @@ export const api = {
   getRound: (roundId: string) =>
     fetchJSON<RoundDto>(`/rounds/${roundId}`),
 
-  updateRound: (
-    roundId: string,
-    body: {
-      hole_scores?: { hole_number: number; strokes?: number | null; putts?: number | null; fairway_hit?: boolean | null; green_in_regulation?: boolean | null }[];
-      tee_box?: string | null;
-      notes?: string;
-      weather_conditions?: string;
-      course_name_played?: string | null;
-    }
-  ) => putJSON<RoundDto>(`/rounds/${roundId}`, body),
+  updateRound: (roundId: string, changes: RoundChangesDto) =>
+    putJSON<RoundDto>(`/rounds/${roundId}`, changes),
 
   linkCourse: (roundId: string, courseId: string) =>
     postJSON<RoundSummaryDto>(`/rounds/${roundId}/link-course`, { course_id: courseId }),

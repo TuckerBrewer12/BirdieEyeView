@@ -5,20 +5,19 @@ import { useGoalReport } from "@/data/useGoalReport";
 import { useUpdateUser } from "@/data/useUpdateUser";
 import { useUser } from "@/data/useUser";
 import type { BenchmarkShape, BenchmarkTarget, ComparisonTargetValue, GoalAttempt } from "@/domain/benchmark";
+import { goalStandingFrom, type GoalStanding } from "@/domain/goal";
 import { buildRadarData, type RadarEntry } from "@/domain/radar";
 import { labRepository, type LabRepository } from "./labRepository";
 import { useBenchmarkComparison } from "./useBenchmarkComparison";
 import {
   LAB_FILTERS,
   friendOptionsFrom,
-  goalStandingFrom,
   labAnalyticsFrom,
   labPanelsFrom,
   parTypeRowsFrom,
   peakGameFrom,
   puttingSummaryFrom,
   type FriendOption,
-  type GoalStanding,
   type LabAnalytics,
   type LabPanel,
   type ParTypeRow,

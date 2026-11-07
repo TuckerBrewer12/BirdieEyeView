@@ -2,6 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
+import { queryKeys } from "@/data/queryKeys";
 import { pebbleBeachSummary } from "@/testing/fixtures/courses";
 import {
   halfMoonBayCourse,
@@ -17,19 +18,18 @@ import { Round } from "@/domain";
 import type { RoundDto } from "@/types/api";
 import { useRoundEditorViewModel } from "../useRoundEditorViewModel";
 
-function wrapper({ children }: { children: ReactNode }) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
-}
-
 /** The editor is handed its round, so there is nothing to load first. */
 function renderEditor(round: RoundDto, seed: FakeRoundsRepositorySeed = {}) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
   const repository = new FakeRoundsRepository({ detailRounds: [round], ...seed });
   const hook = renderHook(
     () => useRoundEditorViewModel("user-1", Round.detailFromDto(round), repository),
     { wrapper },
   );
-  return { ...hook, repository };
+  return { ...hook, client, repository };
 }
 
 describe("useRoundEditorViewModel", () => {
@@ -81,6 +81,15 @@ describe("useRoundEditorViewModel", () => {
     expect(result.current.linkedName).toBe("Pebble Beach");
     expect(result.current.teeBox).toBe("Blue");
     expect(result.current.activeCourse?.name).toBe("Pebble Beach");
+  });
+
+  it("loads a picked course into the cache every screen reads courses from", async () => {
+    const { client, result } = renderEditor(halfMoonBayRound, { fullCourses: [pebbleBeachCourse] });
+    act(() => result.current.start());
+    await act(async () => {
+      await result.current.pickCourse(pebbleBeachSummary);
+    });
+    expect(client.getQueryData(queryKeys.course(pebbleBeachSummary.id))).toEqual(result.current.activeCourse);
   });
 
   it("a course that will not load says why", async () => {

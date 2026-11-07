@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { courseRepository, type CourseRepository } from "@/data/courseRepository";
 import { preparePhotoForUpload } from "@/data/photoUpload";
+import { roundRepository, type RoundRepository } from "@/data/roundRepository";
 import { scanRepository, type ScanRepository } from "@/data/scanRepository";
 import { useCardText } from "@/data/useCardText";
 import { useExtractScorecard, useIsExtractingScorecard } from "@/data/useExtractScorecard";
+import { useRound } from "@/data/useRound";
 import type { RoundDetail } from "@/domain";
 import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/domain/course";
-import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
-import { roundsRepository, type RoundsRepository } from "../rounds/roundsRepository";
 import {
   courseQueryFrom,
   reviewFromScan,
@@ -20,20 +21,19 @@ import {
   type ScanStep,
 } from "./scanModel";
 import { newScanSession, useScanSession } from "./scanSession";
-import { useSavedRound } from "./useSavedRound";
 import { useScanReviewViewModel, type ScanReviewViewModel } from "./useScanReviewViewModel";
 import { useScanSetupViewModel, type ScanSetupViewModel } from "./useScanSetupViewModel";
 
 export interface ScanPageRepositories {
   scan: ScanRepository;
-  courses: CoursesRepository;
-  rounds: Pick<RoundsRepository, "getRound">;
+  courses: CourseRepository;
+  rounds: RoundRepository;
 }
 
 const defaultRepositories: ScanPageRepositories = {
   scan: scanRepository,
-  courses: coursesRepository,
-  rounds: roundsRepository,
+  courses: courseRepository,
+  rounds: roundRepository,
 };
 
 export interface ScanPageViewModel {
@@ -100,7 +100,7 @@ export function useScanPageViewModel(
   const cardText = useCardText(session.photo, scan);
   const { mutateAsync: extractCard } = useExtractScorecard(scan);
   const extracting = useIsExtractingScorecard();
-  const savedRound = useSavedRound(session.savedRoundId, rounds);
+  const savedRound = useRound(session.savedRoundId, rounds);
 
   const step: ScanStep = session.savedRoundId
     ? "success"

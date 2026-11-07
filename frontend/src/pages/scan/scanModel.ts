@@ -1,4 +1,4 @@
-import { Round, isoDay, type HoleEdits } from "@/domain";
+import { Round, editedHole, getTee, isoDay, type HoleEdits } from "@/domain";
 import type { CourseSummary } from "@/domain/course";
 import type {
   CourseDto,
@@ -183,8 +183,7 @@ export function saveRequestFrom(userId: string, draft: ScanReviewDraft): SaveSca
         ? { external_course_id: picked.externalId, course_name: courseName }
         : { course_name: courseName };
 
-  const teeKey = teeBox?.toLowerCase();
-  const tee = teeKey ? course?.tees?.find((t) => t.color?.toLowerCase() === teeKey) : undefined;
+  const tee = getTee(course, teeBox);
   const teeRatings: Partial<SaveScanRequestDto> = tee
     ? {
         tee_slope_rating: tee.slope_rating,
@@ -201,15 +200,17 @@ export function saveRequestFrom(userId: string, draft: ScanReviewDraft): SaveSca
     ...teeRatings,
     date: draft.date,
     hole_scores: scan.round.hole_scores.map((score) => {
-      const hole = score.hole_number;
-      const edit = holes[hole];
+      const { strokes, putts, gir } = editedHole(
+        { strokes: score.strokes, putts: score.putts, gir: score.green_in_regulation },
+        holes[score.hole_number],
+      );
       return {
-        hole_number: hole,
-        strokes: edit?.strokes !== undefined ? edit.strokes : score.strokes,
-        putts: edit?.putts !== undefined ? edit.putts : score.putts,
+        hole_number: score.hole_number,
+        strokes,
+        putts,
         shots_to_green: score.shots_to_green,
         fairway_hit: score.fairway_hit,
-        green_in_regulation: edit?.gir !== undefined ? edit.gir : score.green_in_regulation,
+        green_in_regulation: gir,
       };
     }),
     course_holes: course?.holes.map((hole) => ({ hole_number: hole.number, par: hole.par, handicap: hole.handicap })),

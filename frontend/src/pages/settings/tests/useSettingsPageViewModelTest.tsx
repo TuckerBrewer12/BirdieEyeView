@@ -92,7 +92,23 @@ describe("useSettingsPageViewModel", () => {
     expect(repository.device).toEqual({ getUpdates: false });
     expect(result.current.dirty).toBe(false);
     expect(result.current.handicapInput).toBe("+1.2");
-    expect(result.current.homeCourse?.id).toBe(pebbleBeachSummary.id);
+    expect(result.current.homeCourse).toEqual({ id: pebbleBeachSummary.id, name: pebbleBeachSummary.name });
+  });
+
+  it("reads the golfer and home course from the entries the rest of the app shares", async () => {
+    const { client } = await loaded({ user: { home_course_id: pebbleBeachSummary.id } });
+
+    expect(client.getQueryData<{ home_course_id: string | null }>(queryKeys.user("user-1"))?.home_course_id)
+      .toBe(pebbleBeachSummary.id);
+    expect(client.getQueryData<{ name: string | null }>(queryKeys.course(pebbleBeachSummary.id))?.name)
+      .toBe(pebbleBeachSummary.name);
+  });
+
+  it("still shows a home course that cannot be read, without its name", async () => {
+    const { result } = await loaded({ user: { home_course_id: "course-gone" } });
+
+    expect(result.current.loadError).toBeNull();
+    expect(result.current.homeCourse).toEqual({ id: "course-gone", name: null });
   });
 
   it("clears the handicap and home course when they are emptied", async () => {

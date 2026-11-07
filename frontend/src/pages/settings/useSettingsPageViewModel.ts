@@ -1,12 +1,13 @@
 import { useCallback, useMemo, useState } from "react";
-import { useUpdateUser } from "@/data/useUpdateUser";
-import { formatHandicapInputValue, parseHandicapInput } from "@/domain/handicap";
+import { useCourse } from "@/data/useCourse";
 import { useCourseSearch } from "@/data/useCourseSearch";
+import { useUpdateUser } from "@/data/useUpdateUser";
+import { useUser } from "@/data/useUser";
+import { formatHandicapInputValue, parseHandicapInput } from "@/domain/handicap";
 import { messageFrom } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/domain/course";
-import { formChanged, type HomeCourse, type SettingsForm } from "./model";
+import { formChanged, settingsFrom, type HomeCourse, type SettingsForm } from "./model";
 import { settingsRepository, type SettingsRepository } from "./settingsRepository";
-import { useSettings } from "./useSettings";
 
 export interface SettingsPageViewModel {
   loading: boolean;
@@ -41,15 +42,24 @@ export interface SettingsPageViewModel {
 }
 
 /**
- * The Settings form. The form holds only what the player has changed; everything else reads
- * through from the saved settings, so a save that refetches them leaves nothing to reset.
+ * The Settings form, over the shared user and home course queries. The form holds only what the
+ * player has changed; everything else reads through from the saved user, so a save that writes
+ * it leaves nothing to reset.
  */
 export function useSettingsPageViewModel(
   userId: string,
   repository: SettingsRepository = settingsRepository,
 ): SettingsPageViewModel {
-  const { data: settings, isLoading: loading, error: loadError, refetch } = useSettings(userId, repository);
-  const updateUser = useUpdateUser(userId, repository);
+  const user = useUser(userId, repository);
+  // A home course that can't be read still shows, without its name.
+  const homeCourse = useCourse(user.data?.home_course_id ?? undefined, repository);
+  const settings = useMemo(
+    () => (user.data ? settingsFrom(user.data, homeCourse.data?.name ?? null) : undefined),
+    [user.data, homeCourse.data],
+  );
+  const loading = user.isLoading || homeCourse.isLoading;
+  const loadError = user.error;
+  const updateUser = useUpdateUser(userId, repository, repository);
   const courseSearch = useCourseSearch(userId, repository);
   const [device, setDevice] = useState(() => repository.readDevicePreferences());
   const [edits, setEdits] = useState<Partial<SettingsForm>>({});
@@ -106,7 +116,7 @@ export function useSettingsPageViewModel(
   return {
     loading,
     loadError: loadError ? messageFrom(loadError, "Could not load your settings.") : null,
-    retry: () => void refetch(),
+    retry: () => void user.refetch(),
     friendCode: settings?.friendCode ?? null,
     handicapInput: form.handicapInput,
     handicapError,
