@@ -38,7 +38,6 @@ export type ScramblingTrendRowDto = Schemas["ScramblingTrendRow"];
 export type UpAndDownTrendRowDto = Schemas["UpAndDownTrendRow"];
 export type AnalyticsDto = Schemas["AnalyticsResponse"];
 export type AnalyticsKpisDto = Schemas["AnalyticsKpis"];
-export type AnalyticsScoreTrendRowDto = Schemas["AnalyticsScoreTrendRow"];
 /** One of the analytics page's insights, told apart by `kind`. The page words it. */
 export type AnalyticsInsightDto = AnalyticsDto["insights"][number];
 export type NetScoreTrendRowDto = Schemas["NetScoreTrendRow"];

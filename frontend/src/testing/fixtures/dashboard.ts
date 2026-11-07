@@ -11,11 +11,11 @@ import { populatedRounds } from "./rounds";
 
 /** Five-round window: one used differential, no WHS adjustment. */
 const scoreTrend: ScoreTrendRowDto[] = [
-  { round_index: 1, round_id: "round-4", total_score: 85, to_par: 13, course_name: "Scanned Scorecard" },
-  { round_index: 2, round_id: "round-3", total_score: 69, to_par: -3, course_name: "Blue Rock" },
-  { round_index: 3, round_id: "round-2", total_score: 72, to_par: 0, course_name: "Half Moon Bay" },
-  { round_index: 4, round_id: "round-1", total_score: 78, to_par: 6, course_name: "Half Moon Bay" },
-  { round_index: 5, round_id: "round-5", total_score: 80, to_par: 8, course_name: "Muni" },
+  { round_index: 1, round_id: "round-4", total_score: 85, to_par: 13, par: 72, rolling_average: 85, course_name: "Scanned Scorecard" },
+  { round_index: 2, round_id: "round-3", total_score: 69, to_par: -3, par: 72, rolling_average: 77, course_name: "Blue Rock" },
+  { round_index: 3, round_id: "round-2", total_score: 72, to_par: 0, par: 72, rolling_average: 75.3, course_name: "Half Moon Bay" },
+  { round_index: 4, round_id: "round-1", total_score: 78, to_par: 6, par: 72, rolling_average: 76, course_name: "Half Moon Bay" },
+  { round_index: 5, round_id: "round-5", total_score: 80, to_par: 8, par: 72, rolling_average: 76.8, course_name: "Muni" },
 ];
 
 const handicapTrend: HandicapTrendRowDto[] = scoreTrend.map((row, i) => ({

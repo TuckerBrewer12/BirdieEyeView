@@ -203,16 +203,20 @@ class Round(BaseGolfModel):
             return None
         return sum(pars)  # type: ignore[arg-type]
 
+    def scored_par(self) -> Optional[int]:
+        """The par `total_to_par` reads against: the par of the holes played, or the course's
+        par for a full round whose holes have none."""
+        par = self.played_par()
+        if par is None and self.holes_played() >= 18:
+            par = self.get_par()
+        return par
+
     def total_to_par(self) -> Optional[int]:
         """Strokes against the par of the holes played, so a nine or a round cut short reads
         against its own holes rather than the full course. A full round whose holes have no par
         falls back to the course's par."""
         total = self.calculate_total_score()
-        if total is None:
-            return None
-        par = self.played_par()
-        if par is None and self.holes_played() >= 18:
-            par = self.get_par()
-        if par is None:
+        par = self.scored_par()
+        if total is None or par is None:
             return None
         return total - par
