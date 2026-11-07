@@ -1,6 +1,17 @@
-import { Camera, Images, ScanLine } from "lucide-react";
-import { Button, Card, CardContent, Dropzone, FileChip, ScorecardLayoutPicker } from "@/brand";
+import { Camera, CircleAlert, Images, PenLine, RotateCw, ScanLine } from "lucide-react";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Button,
+  Card,
+  CardContent,
+  Dropzone,
+  FileChip,
+  ScorecardLayoutPicker,
+} from "@/brand";
 import { isNative, pickImageNative } from "@/platform/nativeCamera";
+import type { ScanFailureNotice } from "../present";
 
 export interface ScanUploadPhoto {
   name: string;
@@ -15,6 +26,13 @@ interface ScanUploadStepProps {
   onClear: () => void;
   onContextChange: (context: string) => void;
   onExtract: () => void;
+  /**
+   * Why the last scan of this photo failed. It shows beside the photo, and the button reads the
+   * card again rather than starting fresh.
+   */
+  failure?: ScanFailureNotice | null;
+  /** Offered with a failure: give up on the photo and type the scores in. */
+  onEnterByHand?: () => void;
   /** On a phone app, the camera and photo library stand in for the drop zone. */
   native?: boolean;
 }
@@ -26,6 +44,8 @@ export function ScanUploadStep({
   onClear,
   onContextChange,
   onExtract,
+  failure = null,
+  onEnterByHand,
   native = isNative,
 }: ScanUploadStepProps) {
   if (!photo) {
@@ -44,6 +64,21 @@ export function ScanUploadStep({
   return (
     <Card>
       <CardContent className="flex flex-col gap-4">
+        {failure && (
+          <Alert variant="destructive">
+            <CircleAlert />
+            <AlertTitle>{failure.title}</AlertTitle>
+            <AlertDescription>
+              <span>{failure.detail}</span>
+              {onEnterByHand && (
+                <Button variant="link" size="sm" className="flex w-fit px-0 has-data-[icon=inline-start]:pl-0" onClick={onEnterByHand}>
+                  <PenLine data-icon="inline-start" />
+                  Type the scores in instead
+                </Button>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
         <FileChip
           name={photo.name}
           sizeBytes={photo.sizeBytes}
@@ -55,8 +90,17 @@ export function ScanUploadStep({
           <ScorecardLayoutPicker onContextChange={onContextChange} />
         </div>
         <Button size="lg" onClick={onExtract}>
-          <ScanLine data-icon="inline-start" />
-          Extract Scorecard
+          {failure ? (
+            <>
+              <RotateCw data-icon="inline-start" />
+              Read card again
+            </>
+          ) : (
+            <>
+              <ScanLine data-icon="inline-start" />
+              Extract Scorecard
+            </>
+          )}
         </Button>
       </CardContent>
     </Card>

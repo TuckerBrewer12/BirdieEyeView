@@ -175,10 +175,36 @@ export class ScanRobot {
   }
 
   /** The scan failed: the reason shows, and the photo is still there to try again. */
+  /** The scan failed: the photo is still there, with what to try and a button to read it again. */
   async seesScanFailed(): Promise<this> {
-    await expect(this.page.getByRole("alert")).toContainText("We couldn't scan this scorecard.");
+    const alert = this.page.getByRole("alert");
+    await expect(alert).toContainText("Couldn't read this card");
+    await expect(alert).toContainText("Try a flatter, brighter photo");
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Extract Scorecard" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Read card again" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Extract Scorecard" })).toHaveCount(0);
+    return this;
+  }
+
+  async seesNoFailure(): Promise<this> {
+    await expect(this.page.getByRole("alert")).toHaveCount(0);
+    return this;
+  }
+
+  /** The next scan reads the card as `scannedCard`, so a retry gets through. */
+  async scanWorksNextTime(): Promise<this> {
+    if (this.backend) this.backend.scan = scannedCard;
+    return this;
+  }
+
+  async tapReadAgain(): Promise<this> {
+    await this.page.getByRole("button", { name: "Read card again" }).click();
+    return this;
+  }
+
+  /** Gives up on the photo from the failure notice. */
+  async tapTypeScoresInstead(): Promise<this> {
+    await this.page.getByRole("button", { name: "Type the scores in instead" }).click();
     return this;
   }
 
