@@ -7,6 +7,7 @@ import {
   StatDelta,
   StatLabel,
   StatValue,
+  type StatTone,
 } from "@/brand";
 import { formatOneDecimal, formatPercent, pluralize, type ScoreMix } from "@/domain";
 import { puttsLabel } from "../present";
@@ -16,6 +17,8 @@ interface ScoringHeroCardProps {
   average: number | null;
   /** The server's L5 average minus L20, to a tenth: negative means the recent rounds came in lower. */
   change: number | null;
+  /** The server's verdict on that change. */
+  changeVerdict: StatTone | null;
   /** Scores across the window, oldest first. */
   recentScores: number[];
   /** Null until the window has a scored hole. */
@@ -31,6 +34,7 @@ interface ScoringHeroCardProps {
 export function ScoringHeroCard({
   average,
   change,
+  changeVerdict,
   recentScores,
   mix,
   mixHoles,
@@ -54,10 +58,7 @@ export function ScoringHeroCard({
         <div className="flex items-center justify-between">
           <StatLabel>Scoring Avg · L20</StatLabel>
           {showChange && (
-            <StatDelta
-              direction={change < 0 ? "down" : "up"}
-              className="rounded-full px-2 py-0.5 data-[direction=down]:bg-score-birdie-muted data-[direction=up]:bg-score-bogey-muted"
-            >
+            <StatDelta direction={change < 0 ? "down" : "up"} tone={changeVerdict ?? "neutral"} pill>
               {formatOneDecimal(Math.abs(change))} vs L5
             </StatDelta>
           )}

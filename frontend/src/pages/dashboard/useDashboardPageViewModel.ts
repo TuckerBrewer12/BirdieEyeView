@@ -23,8 +23,8 @@ import {
   recentScoresFrom,
   recentShortGame,
   whsFrom,
+  type ChangeVerdict,
   type GoalProgress,
-  type HiTrend,
   type Milestone,
   type PuttsRating,
   type ShortGameTrend,
@@ -32,7 +32,7 @@ import {
   type WhsBreakdown,
 } from "./model";
 
-export type { HiTrend, TrendView, WhsBreakdown };
+export type { ChangeVerdict, TrendView, WhsBreakdown };
 
 export interface DashboardPageViewModel {
   data: DashboardDto | null;
@@ -50,11 +50,13 @@ export interface DashboardPageViewModel {
   last20ScoringAvg: number | null;
   /** L5 minus L20 as the server worked it out: negative when the recent rounds came in lower. */
   scoringAverageChange: number | null;
+  /** The server's verdict on that change. */
+  scoringAverageVerdict: ChangeVerdict | null;
   handicapDelta: number | null;
+  handicapDeltaVerdict: ChangeVerdict | null;
   /** Null until the window has a scored hole. */
   l20ScoreMix: ScoreMix | null;
   mixHoleCount: number;
-  hiTrend: HiTrend | null;
   girPct: number | null;
   /** The last five rounds' score mix. Null until they have a scored hole. */
   recentScoreMix: ScoreMix | null;
@@ -138,10 +140,11 @@ export function useDashboardPageViewModel(
     milestones: data ? milestonesFrom(data.milestones) : [],
     last20ScoringAvg: data?.scoring_average_l20 ?? null,
     scoringAverageChange: data?.scoring_average_change ?? null,
+    scoringAverageVerdict: data?.scoring_average_verdict ?? null,
     handicapDelta: data?.handicap_change.delta ?? null,
+    handicapDeltaVerdict: data?.handicap_change.delta_verdict ?? null,
     l20ScoreMix: data && data.score_mix_holes > 0 ? data.score_mix : null,
     mixHoleCount: data?.score_mix_holes ?? 0,
-    hiTrend: data?.handicap_change.direction ?? null,
     girPct: data?.recent_form.gir_pct ?? null,
     recentScoreMix: data?.recent_score_mix ?? null,
     scramblingPct: data?.recent_form.scrambling_pct ?? null,
