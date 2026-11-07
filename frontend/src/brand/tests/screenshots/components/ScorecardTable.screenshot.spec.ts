@@ -1,13 +1,21 @@
 import { test } from "@playwright/test";
-import { capturePreview, enableDark } from "../../previewScreenshot";
+import { BrandKitRobot } from "../../BrandKit.robot";
+import { enableDark } from "../../previewScreenshot";
 
 test.describe("ScorecardTable", () => {
+  // The board's width: the table is wider than the stage.
+  test.use({ viewport: { width: 960, height: 1500 } });
+
   test("light", async ({ page }) => {
-    await capturePreview(page, "ScorecardTable", "scorecard-table.png");
+    const kit = new BrandKitRobot(page);
+    await kit.openFrame("ScorecardTable");
+    await kit.captureFrame("scorecard-table.png");
   });
 
   test("dark", async ({ page }) => {
     await enableDark(page);
-    await capturePreview(page, "ScorecardTable", "scorecard-table-dark.png");
+    const kit = new BrandKitRobot(page);
+    await kit.openFrame("ScorecardTable");
+    await kit.captureFrame("scorecard-table-dark.png");
   });
 });

@@ -107,7 +107,6 @@ export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanRe
       <RoundScorecard
         round={round}
         teeBox={review.teeBox || null}
-        showTee
         toCheck={toCheck}
         edits={{
           onStrokesChange: review.setStrokes,

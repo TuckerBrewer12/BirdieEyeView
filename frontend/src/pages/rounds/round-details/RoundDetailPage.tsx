@@ -164,6 +164,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         <RoundScorecard
           round={played}
           teeBox={editor.activeTeeBox}
+          teeRating={viewModel.teeRating}
           edits={
             editor.editing
               ? {

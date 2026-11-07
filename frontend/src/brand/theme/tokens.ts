@@ -445,8 +445,10 @@ export const size = {
   "profile-bogey": "72%",
   "profile-double": "92%",
   "profile-worse": "100%",
-  /** Width a full scorecard needs before it scrolls sideways. */
+  /** Width a course's scorecard needs before it scrolls sideways. */
   scorecard: "43.75rem",
+  /** Width a round's scorecard, all 18 holes in one table, needs before it scrolls sideways. */
+  "scorecard-round": "54rem",
 };
 
 /** Line widths, in pixels. */
