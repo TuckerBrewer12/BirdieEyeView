@@ -13,7 +13,11 @@ const CHARTS = [
   { title: "3-Putts", tab: "putts" },
 ];
 
-function Tabs() {
+/**
+ * Below md, the TabBar over the active tab's charts; from md up, every chart in a grid.
+ * The spec captures it at both widths.
+ */
+export default function ChartTabsPreview() {
   const [tab, setTab] = useState("putts");
   return (
     <ChartTabs
@@ -33,10 +37,4 @@ function Tabs() {
       )}
     />
   );
-}
-
-// The harness is desktop-width, so this is the md+ grid of every chart. The tabs and
-// the two mobile layouts show below md, in the course and round pages' mobile screenshots.
-export default function ChartTabsPreview() {
-  return <Tabs />;
 }

@@ -13,11 +13,13 @@ def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResp
     scores = [s for s in (r.calculate_total_score() for r in rounds) if s is not None]
     by_hole = analytics.average_score_relative_to_par_by_hole(rounds)
     nines = analytics.hole_average_nines(by_hole)
+    # The best round as the round list ranks it, so a nine is never best over a full round.
+    best = analytics.best_round(list(reversed(rounds)))
     return CourseAnalyticsResponse(
         course_id=course_id,
         rounds_played=len(rounds),
         scoring_average=sum(scores) / len(scores) if scores else None,
-        best_score=min(scores) if scores else None,
+        best_score=best.calculate_total_score() if best else None,
         worst_score=max(scores) if scores else None,
         rounds=[round_summary(r) for r in reversed(rounds)],
         score_trend_on_course=analytics.score_trend_on_this_course(rounds),

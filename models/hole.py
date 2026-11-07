@@ -3,9 +3,15 @@ from typing import Optional
 
 from .base import BaseGolfModel
 
+# A round is 18 holes, or one nine of them.
+HOLES_PER_NINE = 9
+HOLES_PER_ROUND = 18
+FRONT_NINE = range(1, HOLES_PER_NINE + 1)
+BACK_NINE = range(HOLES_PER_NINE + 1, HOLES_PER_ROUND + 1)
+
 
 class Hole(BaseGolfModel):
     """Represents a single hole on a golf course."""
-    number: Optional[int] = Field(None, ge=1, le=18)
+    number: Optional[int] = Field(None, ge=1, le=HOLES_PER_ROUND)
     par: Optional[int] = Field(None, ge=3, le=6)
-    handicap: Optional[int] = Field(None, ge=1, le=18)
+    handicap: Optional[int] = Field(None, ge=1, le=HOLES_PER_ROUND)

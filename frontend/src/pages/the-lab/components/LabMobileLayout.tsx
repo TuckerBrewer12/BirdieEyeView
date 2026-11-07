@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle, PageTitle, SectionLabel, ToggleGroup, ToggleGroupItem } from "@/brand";
+import { Card, CardContent, CardHeader, CardTitle, PageTitle, SectionLabel, TabBar } from "@/brand";
 import type { LabPanel } from "../model";
 import type { LabPageViewModel } from "../useLabPageViewModel";
 import { LAB_PANEL_LABEL, benchmarkName, goalLabel } from "../present";
@@ -69,7 +69,7 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
           peak={vm.peak}
           goalLabel={label}
           scoringAverage={vm.scoringAverage}
-          bestScore={vm.bestScore}
+          lowestScore={vm.lowestScore}
           recentTrend={vm.recentTrend}
           comparison={vm.comparison}
           onComparisonChange={vm.setComparison}
@@ -88,25 +88,16 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
         <section data-slot="lab-performance">
           <SectionLabel className="mb-3">Performance</SectionLabel>
           {vm.panels.length > 1 && (
-            <ToggleGroup
-              data-slot="lab-panels"
+            <TabBar
               aria-label="Performance panel"
-              variant="outline"
-              size="sm"
-              value={[vm.panel]}
-              onValueChange={(values) => {
-                // Tapping the open tab would empty the group; one panel is always open.
-                const next = vm.panels.find((panel) => panel === values[0]);
+              tabs={vm.panels.map((panel) => ({ key: panel, label: LAB_PANEL_LABEL[panel] }))}
+              value={vm.panel}
+              onValueChange={(key) => {
+                const next = vm.panels.find((panel) => panel === key);
                 if (next) vm.setPanel(next);
               }}
               className="mb-3"
-            >
-              {vm.panels.map((panel) => (
-                <ToggleGroupItem key={panel} value={panel}>
-                  {LAB_PANEL_LABEL[panel]}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+            />
           )}
           <LabPanelContent panel={vm.panel} vm={vm} goalLabel={label} />
         </section>

@@ -92,19 +92,19 @@ export class FakeBackend {
   profile: UserDto | undefined;
   dashboard: DashboardDto | undefined;
   analytics: AnalyticsDto | null | undefined;
-  analyticsByGolfer: Record<string, AnalyticsDto>;
+  analyticsByGolfer: Partial<Record<string, AnalyticsDto>>;
   readonly analyticsByCourse: Record<string, AnalyticsDto>;
   readonly playedCourses: PlayedCourseDto[];
   /** What each analytics request asked for, in order. */
   readonly analyticsRequests: AnalyticsFilters[] = [];
   goalReport: GoalReportDto | null | undefined;
-  readonly benchmarks: Record<string, BenchmarkComparisonDto>;
+  readonly benchmarks: Partial<Record<string, BenchmarkComparisonDto>>;
   scan: ScanDto | undefined;
   profileError: string | null;
   updateUserError: string | null;
   /** Flips to false when a sign-in or a verification link starts a session. */
   signedOut: boolean;
-  readonly accounts: Record<string, FakeAccount>;
+  readonly accounts: Partial<Record<string, FakeAccount>>;
   readonly verifyTokens: Set<string>;
   readonly resetTokens: Set<string>;
   readonly authErrors: Partial<Record<FakeAuthEndpoint, string>>;

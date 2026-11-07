@@ -9,9 +9,6 @@ import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
 // A few days after the sample golfer's last round, the way the demo tour sees them.
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
 
-/** The charts draw themselves in, which `toHaveScreenshot` does not wait for. */
-const CHARTS_DRAWN_MS = 2500;
-
 type TabLabel = "Scoring" | "Ball Striking" | "Putting" | "Profile" | "Range View";
 
 /** Screen robot for /analytics. */
@@ -63,7 +60,6 @@ export class AnalyticsRobot {
   /** A golfer with no rounds yet. */
   async openWithoutRounds(): Promise<this> {
     await this.install({ analytics: withoutRounds(sampleGolfer.analytics), playedCourses: [] });
-    await this.seesNoRoundsYet();
     return this;
   }
 
@@ -95,9 +91,13 @@ export class AnalyticsRobot {
     return this;
   }
 
-  /** The course filter's menu, open. */
   async openCourseMenu(): Promise<this> {
     await this.visible(this.page.getByRole("combobox", { name: "Course" })).click();
+    return this;
+  }
+
+  /** The course filter's menu, open. */
+  async seesCourseMenu(): Promise<this> {
     await expect(this.page.getByRole("listbox")).toBeVisible();
     await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
     return this;
@@ -110,10 +110,13 @@ export class AnalyticsRobot {
     return this;
   }
 
-  /** The best round's card opens that round. */
   async openBestRound(): Promise<this> {
     await this.visible(this.page.getByRole("button", { name: /Best Recent Round/ })).click();
-    await expect(this.page).toHaveURL(new RegExp(`/rounds/${BEST_ROUND_ID}$`));
+    return this;
+  }
+
+  async isAtRound(id: string): Promise<this> {
+    await expect(this.page).toHaveURL(new RegExp(`/rounds/${id}$`));
     return this;
   }
 
@@ -158,7 +161,7 @@ export class AnalyticsRobot {
 
   /** The phone's section tabs. */
   private sectionTab(label: TabLabel): Locator {
-    return this.visible(this.page.getByRole("group", { name: "Section" })).getByRole("button", {
+    return this.visible(this.page.getByRole("tablist", { name: "Section" })).getByRole("tab", {
       name: label,
       exact: true,
     });
@@ -170,7 +173,7 @@ export class AnalyticsRobot {
   }
 
   async seesTabOpen(label: TabLabel, showing: string): Promise<this> {
-    await expect(this.sectionTab(label)).toHaveAttribute("aria-pressed", "true");
+    await expect(this.sectionTab(label)).toHaveAttribute("aria-selected", "true");
     await expect(this.visible(this.page.getByText(showing, { exact: true }))).toBeVisible();
     return this;
   }
@@ -182,8 +185,6 @@ export class AnalyticsRobot {
   }
 
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
-    await this.page.waitForLoadState("networkidle");
-    await this.page.waitForTimeout(CHARTS_DRAWN_MS);
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
     return this;
   }

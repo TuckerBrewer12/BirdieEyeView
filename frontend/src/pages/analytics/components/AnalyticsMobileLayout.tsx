@@ -1,4 +1,4 @@
-import { PageTitle, ToggleGroup, ToggleGroupItem } from "@/brand";
+import { PageTitle, TabBar } from "@/brand";
 import type { Analytics, AnalyticsTab } from "../model";
 import { ANALYTICS_TAB_OPTIONS, RANGE_VIEW_EMPTY, headlineFigures, tabNarrative } from "../present";
 import type { AnalyticsPageViewModel } from "../useAnalyticsPageViewModel";
@@ -41,24 +41,15 @@ export function AnalyticsMobileLayout({ vm, analytics }: AnalyticsMobileLayoutPr
       <AnalyticsKpis kpis={headlineFigures(analytics)} />
 
       <section data-slot="analytics-sections" className="flex flex-col gap-3">
-        <ToggleGroup
+        <TabBar
           aria-label="Section"
-          variant="outline"
-          size="sm"
-          value={[vm.tab]}
-          onValueChange={(values) => {
-            // Tapping the open tab would empty the group; one section is always open.
-            const next = ANALYTICS_TAB_OPTIONS.find((option) => option.value === values[0]);
+          tabs={ANALYTICS_TAB_OPTIONS.map((option) => ({ key: option.value, label: option.label }))}
+          value={vm.tab}
+          onValueChange={(key) => {
+            const next = ANALYTICS_TAB_OPTIONS.find((option) => option.value === key);
             if (next) vm.setTab(next.value);
           }}
-          className="max-w-full overflow-x-auto [scrollbar-width:none]"
-        >
-          {ANALYTICS_TAB_OPTIONS.map((option) => (
-            <ToggleGroupItem key={option.value} value={option.value}>
-              {option.label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+        />
 
         {narrative && <InsightNote narrative={narrative} />}
         <SectionCards tab={vm.tab} vm={vm} analytics={analytics} />

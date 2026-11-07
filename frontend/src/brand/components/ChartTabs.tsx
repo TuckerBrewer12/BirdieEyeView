@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { cn } from "@/brand/cn";
-import { ToggleGroup, ToggleGroupItem } from "./ToggleGroup";
+import { TabBar } from "./TabBar";
 
 interface ChartTabsProps<T> {
   tabs: { key: string; label: string }[];
@@ -33,19 +33,13 @@ function ChartTabs<T>({
   return (
     <div data-slot="chart-tabs">
       <div className="md:hidden">
-        <ToggleGroup
-          variant="outline"
-          spacing={2}
-          value={[value]}
-          onValueChange={(values) => onValueChange(values[0] ?? "")}
-          className="mb-4 max-w-full overflow-x-auto [scrollbar-width:none]"
-        >
-          {tabs.map((tab) => (
-            <ToggleGroupItem key={tab.key} value={tab.key}>
-              {tab.label}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+        <TabBar
+          tabs={tabs}
+          value={value}
+          onValueChange={onValueChange}
+          aria-label="Chart sections"
+          className="mb-4"
+        />
         <div
           className={cn(
             mobileLayout === "stack" && "space-y-5",

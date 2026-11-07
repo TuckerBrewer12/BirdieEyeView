@@ -39,7 +39,7 @@ export class CourseDetailRobot {
   }
 
   async tapPerformance(): Promise<this> {
-    await this.page.getByRole("button", { name: "My Performance" }).click();
+    await this.page.getByRole("tab", { name: "My Performance" }).click();
     return this;
   }
 
@@ -78,6 +78,11 @@ export class CourseDetailRobot {
     await FakeSession.install(this.page, {});
     await this.page.goto("/courses/missing");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
+    return this;
+  }
+
+  /** The error a course id with no course behind it gets, in place of the course. */
+  async seesNotFound(): Promise<this> {
     await expect(this.page.getByRole("alert")).toBeVisible();
     return this;
   }

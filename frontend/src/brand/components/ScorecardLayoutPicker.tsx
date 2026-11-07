@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GripVertical } from "lucide-react";
 import { cn } from "@/brand/cn";
+import { tokens } from "@/brand/theme";
 import { Input } from "./Input";
 
 type DataRow = "score" | "putts" | "shots";
@@ -91,8 +92,8 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!dragging.current) return;
+    if (e.touches.length === 0) return;
     const touch = e.touches[0];
-    if (!touch) return;
     const el = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement | null;
     const rowHost = el?.closest("[data-row-index]") as HTMLElement | null;
     if (!rowHost) return;
@@ -172,7 +173,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
               onClick={() => setIsTopar(value)}
               className={`flex flex-col items-start px-3 py-2.5 rounded-xl border text-left transition-all ${
                 isTopar === value
-                  ? "border-primary bg-primary/5 shadow-sm"
+                  ? "border-primary bg-primary/faint shadow-sm"
                   : "border-input bg-card hover:border-border"
               }`}
             >
@@ -201,7 +202,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
               onClick={toggle}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
                 active
-                  ? "border-primary bg-primary/10 text-primary"
+                  ? "border-primary bg-primary/tint text-primary"
                   : "border-input bg-card text-muted-foreground hover:border-border"
               }`}
             >
@@ -212,7 +213,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
               >
                 {active && (
                   <svg viewBox="0 0 8 7" className="size-2 text-primary-foreground" fill="none">
-                    <polyline points="1,3.5 3,5.5 7,1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <polyline points="1,3.5 3,5.5 7,1" stroke="currentColor" strokeWidth={tokens.stroke.check} strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
               </span>
@@ -230,7 +231,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            transition={tokens.motion.expand}
             className="overflow-hidden"
           >
             <div className="pt-1">
@@ -288,7 +289,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
                           tone,
                         )}
                       >
-                        <GripVertical size={13} className="shrink-0 text-primary-foreground/50" />
+                        <GripVertical className="size-icon-sm shrink-0 text-primary-foreground/half" />
                         <span className="text-xs font-semibold text-primary-foreground">{label}</span>
                       </div>
                     </div>

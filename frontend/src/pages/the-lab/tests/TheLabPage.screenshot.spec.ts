@@ -30,23 +30,47 @@ test("compared with a friend", async ({ lab }) => {
 const PANELS = [
   { tab: "By Par", file: "by-par" },
   { tab: "Putting", file: "putting" },
-  { tab: "Peak", file: "peak" },
 ] as const;
 
-for (const { tab, file } of PANELS) {
-  for (const dark of [false, true]) {
-    test(`phone ${tab} panel${dark ? " in dark mode" : ""}`, async ({ lab, isMobile }) => {
-      test.skip(!isMobile, "The panel tabs are phone-only.");
-      if (dark) await lab.dark();
+test.describe("phone panels", { tag: "@phone" }, () => {
+  for (const { tab, file } of PANELS) {
+    test(`${tab} panel`, async ({ lab }) => {
       await lab.open();
       await lab.seesLab();
       await lab.tapPanel(tab);
       await lab.seesPanel(tab);
-      if (tab === "Peak") await lab.seesPeakBars();
-      await lab.capture(`lab-panel-${file}${dark ? "-dark" : ""}.png`);
+      await lab.capture(`lab-panel-${file}.png`);
+    });
+
+    test(`${tab} panel in dark mode`, async ({ lab }) => {
+      await lab.dark();
+      await lab.open();
+      await lab.seesLab();
+      await lab.tapPanel(tab);
+      await lab.seesPanel(tab);
+      await lab.capture(`lab-panel-${file}-dark.png`);
     });
   }
-}
+
+  test("Peak panel", async ({ lab }) => {
+    await lab.open();
+    await lab.seesLab();
+    await lab.tapPanel("Peak");
+    await lab.seesPanel("Peak");
+    await lab.seesPeakBars();
+    await lab.capture("lab-panel-peak.png");
+  });
+
+  test("Peak panel in dark mode", async ({ lab }) => {
+    await lab.dark();
+    await lab.open();
+    await lab.seesLab();
+    await lab.tapPanel("Peak");
+    await lab.seesPanel("Peak");
+    await lab.seesPeakBars();
+    await lab.capture("lab-panel-peak-dark.png");
+  });
+});
 
 test("load error", async ({ lab }) => {
   await lab.openFailing();

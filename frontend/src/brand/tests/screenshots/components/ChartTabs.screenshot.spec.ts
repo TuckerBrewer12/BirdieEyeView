@@ -1,13 +1,29 @@
 import { test } from "@playwright/test";
-import { capturePreview, enableDark } from "../../previewScreenshot";
+import { BrandKitRobot } from "../../BrandKit.robot";
+import { enableDark } from "../../previewScreenshot";
 
 test.describe("ChartTabs", () => {
-  test("light", async ({ page }) => {
-    await capturePreview(page, "ChartTabs", "chart-tabs.png");
+  test("desktop grid", async ({ page }) => {
+    const kit = new BrandKitRobot(page);
+    await kit.open("ChartTabs");
+    await kit.capture("chart-tabs.png");
   });
 
   test("dark", async ({ page }) => {
     await enableDark(page);
-    await capturePreview(page, "ChartTabs", "chart-tabs-dark.png");
+    const kit = new BrandKitRobot(page);
+    await kit.open("ChartTabs");
+    await kit.capture("chart-tabs-dark.png");
+  });
+
+  test.describe("phone", () => {
+    // Below md: the tab bar over the open tab's charts.
+    test.use({ viewport: { width: 390, height: 400 } });
+
+    test("tabs", async ({ page }) => {
+      const kit = new BrandKitRobot(page);
+      await kit.open("ChartTabs");
+      await kit.capture("chart-tabs-phone.png");
+    });
   });
 });
