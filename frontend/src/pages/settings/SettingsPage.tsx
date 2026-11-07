@@ -31,7 +31,7 @@ export function SettingsPage({ userId }: { userId: string }) {
         <PageTitle>Settings</PageTitle>
 
         {viewModel.loadError ? (
-          <Alert variant="destructive">
+          <Alert tone="danger">
             <AlertDescription>{viewModel.loadError}</AlertDescription>
             <AlertAction>
               <Button variant="outline" size="sm" onClick={viewModel.retry}>

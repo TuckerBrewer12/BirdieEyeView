@@ -24,5 +24,6 @@ test("performance tab", async ({ courseDetail }) => {
 
 test("missing course", async ({ courseDetail }) => {
   await courseDetail.openMissing();
+  await courseDetail.seesNotFound();
   await courseDetail.capture("course-detail-missing.png");
 });

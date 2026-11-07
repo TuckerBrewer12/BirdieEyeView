@@ -33,6 +33,7 @@ test("edit then cancel returns to the view actions", async ({ roundDetail }) => 
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapEdit();
   await roundDetail.tapCancelEdit();
+  await roundDetail.seesViewActions();
 });
 
 test("a hole's score typed in edit mode is kept after saving", async ({ roundDetail }) => {
@@ -73,6 +74,7 @@ test("a tee typed on a round with no course tees is kept after saving", async ({
 test("delete confirm then cancel leaves the round", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapDelete();
+  await roundDetail.seesDeleteConfirm();
   await roundDetail.cancelDelete();
   await roundDetail.seesCourse("Half Moon Bay");
 });
@@ -83,6 +85,7 @@ test("delete confirm then yes returns to the list", async ({ roundDetail }) => {
     fullCourses: [halfMoonBayCourse],
   });
   await roundDetail.tapDelete();
+  await roundDetail.seesDeleteConfirm();
   await roundDetail.confirmDelete();
   await roundDetail.isAtRounds();
 });

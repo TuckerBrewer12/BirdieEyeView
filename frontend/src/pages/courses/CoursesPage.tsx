@@ -32,7 +32,7 @@ export function CoursesPage({ userId }: CoursesPageProps) {
         />
 
         {viewModel.error && (
-          <Alert variant="destructive">
+          <Alert tone="danger">
             <AlertDescription>{viewModel.error}</AlertDescription>
           </Alert>
         )}
@@ -47,7 +47,7 @@ export function CoursesPage({ userId }: CoursesPageProps) {
           renderItem={(course) => (
             <CoursePreview
               course={course}
-              onClick={() => navigate(`/courses/${course.id}`)}
+              onClick={() => void navigate(`/courses/${course.id}`)}
             />
           )}
         />

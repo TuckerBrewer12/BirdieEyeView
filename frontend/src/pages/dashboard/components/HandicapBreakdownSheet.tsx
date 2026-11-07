@@ -68,7 +68,7 @@ export function HandicapBreakdownSheet({
                 = (Score − Course Rating) × 113 ÷ Slope Rating
               </div>
               {!hasRatedRounds && (
-                <Alert className="mt-2">
+                <Alert tone="info" variant="outline" className="mt-2">
                   <AlertDescription>
                     Your rounds don't have slope/rating data — using score-to-par as differential
                   </AlertDescription>

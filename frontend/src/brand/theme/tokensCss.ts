@@ -1,5 +1,6 @@
 import {
   blur,
+  borderWidth,
   breakpoints,
   cssName,
   font,
@@ -82,6 +83,7 @@ const SECTIONS: Section[] = [
   { group: radius, prefix: "radius", theme: "radius", format: pixels },
   { group: space, prefix: "space", theme: "spacing", format: pixels },
   { group: size, prefix: "size", theme: "spacing", format: pixels },
+  { group: borderWidth, prefix: "border-width", theme: "border-width", format: pixels },
   { group: stroke, prefix: "stroke", theme: "stroke-width", format: unitless },
   { group: opacity, prefix: "opacity", theme: "opacity", format: unitless },
 ];

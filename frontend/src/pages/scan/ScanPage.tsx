@@ -34,7 +34,7 @@ export function ScanPage({ userId }: { userId: string }) {
           {viewModel.savedRound ? (
             <ScanSuccessStep
               round={viewModel.savedRound}
-              onView={() => viewModel.openSavedRound((roundId) => navigate(`/rounds/${roundId}`))}
+              onView={() => viewModel.openSavedRound((roundId) => void navigate(`/rounds/${roundId}`))}
             />
           ) : (
             <LoadingState>Loading…</LoadingState>
@@ -104,7 +104,7 @@ export function ScanPage({ userId }: { userId: string }) {
           </ToggleGroup>
 
           {viewModel.error && (
-            <Alert variant="destructive">
+            <Alert tone="danger">
               <AlertDescription>{viewModel.error}</AlertDescription>
             </Alert>
           )}
@@ -124,7 +124,6 @@ export function ScanPage({ userId }: { userId: string }) {
                   onQueryChange={viewModel.courseSearch.setQuery}
                   onSelectCourse={viewModel.pickPresetCourse}
                   onClose={viewModel.courseSearch.reset}
-                  autoFocus={false}
                   linkedName={viewModel.presetCourse ? formatCourseName(viewModel.presetCourse.name) : undefined}
                   onClear={viewModel.clearPresetCourse}
                   clearLabel="Clear course"

@@ -58,13 +58,8 @@ export function RoundActions({
             </Button>
           </>
         ) : confirmDelete ? (
-          <Alert
-            variant="destructive"
-            className="flex w-auto items-center gap-2 bg-destructive/5 py-1.5"
-          >
-            <AlertDescription className="text-body text-destructive">
-              Delete this round?
-            </AlertDescription>
+          <Alert tone="danger" variant="outline" className="flex w-auto items-center gap-2 py-1.5">
+            <AlertDescription>Delete this round?</AlertDescription>
             <Button
               variant="linkMuted"
               size="xs"

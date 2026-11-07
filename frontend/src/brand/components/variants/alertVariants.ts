@@ -1,21 +1,37 @@
 import { cva } from "class-variance-authority";
 
+/**
+ * A callout. `tone` picks the status colour and `variant` how loudly it is
+ * used: solid fills with it (the default), outline rings a card in it. Each
+ * pairing is a `compoundVariants` entry over the `status` tokens.
+ */
 const alertVariants = cva(
-  "group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg]:text-current *:[svg:not([class*='size-'])]:size-4",
+  "group/alert relative grid w-full gap-y-0.5 rounded-xl border-callout p-3 text-left text-body has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:mt-px *:[svg]:self-start *:[svg]:text-current *:[svg:not([class*='size-'])]:size-4",
   {
     variants: {
+      tone: {
+        info: "",
+        success: "",
+        warning: "",
+        danger: "",
+      },
       variant: {
-        default: "border-border bg-card text-card-foreground",
-        destructive:
-          "border-destructive/40 bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current",
-        /* A request that went through: a link sent, a password changed. Pass
-           role="status" with it, since it is news rather than a problem. */
-        success:
-          "border-primary/40 bg-accent text-accent-foreground *:data-[slot=alert-description]:text-accent-foreground *:[svg]:text-primary",
+        solid: "",
+        outline: "bg-card text-foreground-secondary *:data-[slot=alert-title]:text-foreground",
       },
     },
+    compoundVariants: [
+      { variant: "solid", tone: "info", className: "border-status-info-base bg-status-info-base text-status-info-on-base" },
+      { variant: "solid", tone: "success", className: "border-status-success-base bg-status-success-base text-status-success-on-base" },
+      { variant: "solid", tone: "warning", className: "border-status-warning-base bg-status-warning-base text-status-warning-on-base" },
+      { variant: "solid", tone: "danger", className: "border-status-danger-base bg-status-danger-base text-status-danger-on-base" },
+      { variant: "outline", tone: "info", className: "border-status-info *:[svg]:text-status-info" },
+      { variant: "outline", tone: "success", className: "border-status-success *:[svg]:text-status-success" },
+      { variant: "outline", tone: "warning", className: "border-status-warning *:[svg]:text-status-warning" },
+      { variant: "outline", tone: "danger", className: "border-status-danger *:[svg]:text-status-danger" },
+    ],
     defaultVariants: {
-      variant: "default",
+      variant: "solid",
     },
   },
 );

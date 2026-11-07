@@ -80,7 +80,7 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
             variant="linkMuted"
             size="xs"
             className="mb-4 h-auto gap-1.5 p-0 text-body"
-            onClick={() => navigate("/social")}
+            onClick={() => void navigate("/social")}
           >
             <ArrowLeft className="size-4" />
             Back to social
@@ -103,13 +103,13 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
         </ToggleGroup>
 
         {viewModel.answered && (
-          <Alert>
+          <Alert tone="success">
             <AlertDescription>{ANSWERED_NOTICES[viewModel.answered]}</AlertDescription>
           </Alert>
         )}
 
         {(viewModel.loadError ?? viewModel.respondError) && (
-          <Alert variant="destructive">
+          <Alert tone="danger">
             <AlertDescription>{viewModel.loadError ?? viewModel.respondError}</AlertDescription>
           </Alert>
         )}

@@ -18,7 +18,7 @@ export function AnalyticsPage({ userId }: AnalyticsPageProps) {
 
   if (!vm.analytics) {
     return (
-      <Alert variant="destructive">
+      <Alert tone="danger">
         <AlertDescription>{vm.loadError ?? "Could not load your analytics."}</AlertDescription>
         <AlertAction>
           <Button variant="outline" size="xs" onClick={vm.retry}>
