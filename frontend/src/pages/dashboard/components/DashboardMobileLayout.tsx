@@ -25,9 +25,9 @@ export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
 
   if (!data) return null;
 
-  const openRound = (id: string) => navigate(`/rounds/${id}`);
-  const openLab = () => navigate("/the-lab");
-  const lastRound = recentRounds[0] ?? null;
+  const openRound = (id: string) => void navigate(`/rounds/${id}`);
+  const openLab = () => void navigate("/the-lab");
+  const lastRound = recentRounds.at(0) ?? null;
 
   return (
     <div className="flex flex-col gap-3.5 pt-2">
@@ -69,9 +69,7 @@ export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
           <CardAction>
             <ToggleGroup
               aria-label="Trend line"
-              variant="outline"
               size="sm"
-              spacing={0}
               value={[trendView]}
               onValueChange={(values) => {
                 // Tapping the pressed item would empty the group; the card always shows one line.

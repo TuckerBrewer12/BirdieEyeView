@@ -41,8 +41,6 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
               value={target}
               onChange={vm.setGoal}
               disabled={vm.savingGoal}
-              spacing={1.5}
-              className="flex-wrap"
             />
           </CardContent>
         </Card>
@@ -69,7 +67,7 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
           peak={vm.peak}
           goalLabel={label}
           scoringAverage={vm.scoringAverage}
-          bestScore={vm.bestScore}
+          lowestScore={vm.lowestScore}
           recentTrend={vm.recentTrend}
           comparison={vm.comparison}
           onComparisonChange={vm.setComparison}

@@ -80,7 +80,7 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
             variant="linkMuted"
             size="xs"
             className="mb-4 h-auto gap-1.5 p-0 text-body"
-            onClick={() => navigate("/social")}
+            onClick={() => void navigate("/social")}
           >
             <ArrowLeft className="size-4" />
             Back to social
@@ -90,8 +90,6 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
         </div>
 
         <ToggleGroup
-          variant="outline"
-          spacing={2}
           value={[viewModel.tab]}
           onValueChange={(values) => {
             const next = values[0] as InboxTab | undefined;

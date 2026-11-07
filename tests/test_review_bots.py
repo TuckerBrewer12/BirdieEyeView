@@ -377,7 +377,7 @@ def test_parse_model_output_object_and_array():
 
 
 def test_post_review_does_not_reopen_previous_issue(tmp_path, bot_env, monkeypatch):
-    original, fid = findings.decorate_body(
+    _original, fid = findings.decorate_body(
         body="`#e5e7eb` should be a token.",
         path="frontend/src/brand/components/Badge.tsx",
         line=2,

@@ -47,8 +47,6 @@ export function RoundsPage({ userId }: RoundsPageProps) {
         />
 
         <ToggleGroup
-          variant="outline"
-          spacing={2}
           value={[viewModel.filterMode]}
           onValueChange={(values) => viewModel.setFilterMode(values[0] ?? "all")}
           className="max-w-full overflow-x-auto [scrollbar-width:none]"
@@ -85,7 +83,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
                 round={r}
                 onClick={() => {
                   if (viewModel.isLinkOpen(r.id)) return;
-                  navigate(`/rounds/${r.id}`);
+                  void navigate(`/rounds/${r.id}`);
                 }}
                 onLinkClick={() => viewModel.toggleLink(r.id)}
               />

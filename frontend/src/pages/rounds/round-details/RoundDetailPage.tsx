@@ -66,11 +66,11 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         onEdit={viewModel.enterEditMode}
         onSave={editor.save}
         onCancelEdit={editor.cancel}
-        onShare={() => shareRound(roundShareMessage(played))}
+        onShare={() => void shareRound(roundShareMessage(played))}
         onDelete={viewModel.requestDelete}
-        onConfirmDelete={() => viewModel.confirmDeleteRound(() => navigate("/rounds"))}
+        onConfirmDelete={() => viewModel.confirmDeleteRound(() => void navigate("/rounds"))}
         onCancelDelete={viewModel.cancelDelete}
-        onBack={() => navigate(-1)}
+        onBack={() => void navigate(-1)}
       />
 
       <RoundDetailHeader
@@ -118,6 +118,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
             customName={editor.customName}
             onClear={editor.changeCourse}
             clearLabel="Change course"
+            focusOnOpen
           />
           {editor.playedNameToKeep && (
             <Button
@@ -133,7 +134,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
             <span className="text-xs font-semibold text-muted-foreground">Tee</span>
             {editor.availableTees.length > 0 ? (
               <ToggleGroup
-                variant="outline"
                 size="sm"
                 aria-label="Tee"
                 value={editor.teeBox ? [editor.teeBox] : []}

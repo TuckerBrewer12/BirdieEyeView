@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from api.input_validation import ensure_uuid_str, normalize_course_display_name, sanitize_user_text
+from models.hole import HOLES_PER_ROUND
 
 
 class HoleScoreInput(BaseModel):
@@ -48,10 +49,10 @@ class TeeInput(BaseModel):
         for raw_k, raw_v in (value or {}).items():
             try:
                 hole_num = int(raw_k)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise ValueError("hole_yardages keys must be hole numbers (1-18).") from exc
-            if not (1 <= hole_num <= 18):
-                raise ValueError("hole_yardages hole number must be between 1 and 18.")
+            if not (1 <= hole_num <= HOLES_PER_ROUND):
+                raise ValueError(f"hole_yardages hole number must be between 1 and {HOLES_PER_ROUND}.")
             if raw_v is not None and not (50 <= int(raw_v) <= 700):
                 raise ValueError("hole_yardages value must be between 50 and 700.")
             out[str(hole_num)] = int(raw_v) if raw_v is not None else None

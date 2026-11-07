@@ -38,7 +38,7 @@ export interface AnalyticsPageViewModel {
   /** The golfer has a home course, so the course filter offers it. */
   hasHomeCourse: boolean;
 
-  /** The server's lowest round in the window, once it has loaded; null without one. */
+  /** The server's best round in the window, once it has loaded; null without one. */
   bestRound: RoundSummary | null;
 
   /** The par type the range view shows. Until one is picked, par 4s if there are any. */
@@ -78,7 +78,7 @@ export function useAnalyticsPageViewModel(
     filtered: isFiltered(filters),
     playedCourses,
     hasHomeCourse: !!user?.home_course_id,
-    bestRound: analytics?.bestRound?.roundId ? (bestRound ?? null) : null,
+    bestRound: analytics?.bestRound ? (bestRound ?? null) : null,
     rangePar: pickedRangePar ?? defaultRangePar(analytics?.yardageBuckets ?? []),
     setRangePar,
     tab,

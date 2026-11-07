@@ -55,7 +55,6 @@ function CourseField({ setup }: { setup: ScanSetupViewModel }) {
         onQueryChange={courseSearch.setQuery}
         onSelectCourse={setup.pickCourse}
         onClose={courseSearch.reset}
-        autoFocus={false}
         reviewVariant
         onUseCustomName={setup.nameCourse}
         linkedName={setup.linkedName ? formatCourseName(setup.linkedName) : undefined}
@@ -75,7 +74,6 @@ function TeeField({ setup }: { setup: ScanSetupViewModel }) {
       <FieldLabel htmlFor={pick ? undefined : "setup-tee"}>Tee played</FieldLabel>
       {pick ? (
         <ToggleGroup
-          variant="outline"
           size="sm"
           aria-label="Tee played"
           value={setup.teeBox ? [setup.teeBox] : []}
