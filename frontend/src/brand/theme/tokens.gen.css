@@ -149,7 +149,6 @@
   --brand-space-nudge: 5px;
   --brand-space-nudge-sm: 3px;
   --brand-space-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --brand-size-date-rail: 54px;
   --brand-size-preview: 390px;
   --brand-size-chart: 180px;
   --brand-size-chart-compact: 210px;
@@ -359,7 +358,6 @@
   --spacing-nudge: var(--brand-space-nudge);
   --spacing-nudge-sm: var(--brand-space-nudge-sm);
   --spacing-safe-bottom: var(--brand-space-safe-bottom);
-  --spacing-date-rail: var(--brand-size-date-rail);
   --spacing-preview: var(--brand-size-preview);
   --spacing-chart: var(--brand-size-chart);
   --spacing-chart-compact: var(--brand-size-chart-compact);
@@ -400,7 +398,6 @@
   --text-section--letter-spacing: 0.18em;
   --blur-xs: 4px;
   --ring-width-3: var(--brand-ring-width);
-  --grid-template-columns-round-preview: var(--brand-size-date-rail) 1fr auto;
   --grid-template-columns-handicap-breakdown: 1fr auto auto auto;
   --grid-template-columns-recent-rounds: 1fr auto auto;
 }

@@ -425,7 +425,6 @@ export const radius = {
 
 /** Widths and heights that are not on the 4px scale. */
 export const size = {
-  "date-rail": 54,
   preview: 390,
   chart: 180,
   "chart-compact": 210,
@@ -500,9 +499,8 @@ export const shadow = {
   lg: "0 10px 15px -3px var(--shadow), 0 4px 6px -4px var(--shadow)",
 };
 
-/** Named grid column templates: `grid-cols-round-preview`. */
+/** Named grid column templates: `grid-cols-handicap-breakdown`. */
 export const gridColumns = {
-  "round-preview": "var(--brand-size-date-rail) 1fr auto",
   "handicap-breakdown": "1fr auto auto auto",
   "recent-rounds": "1fr auto auto",
 };
