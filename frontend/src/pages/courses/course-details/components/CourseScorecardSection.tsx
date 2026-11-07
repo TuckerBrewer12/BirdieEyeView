@@ -45,7 +45,13 @@ export function CourseScorecardSection({ userId, courseId }: CourseScorecardSect
         </div>
       )}
 
-      <Card className="overflow-x-auto py-0">
+      {/* Focusable so a keyboard can scroll the card sideways on a phone. */}
+      <Card
+        role="region"
+        aria-label="Course scorecard"
+        tabIndex={0}
+        className="overflow-x-auto py-0 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
         <CardContent className="min-w-scorecard px-0">
           <NineTable nine={viewModel.frontNine} />
           <div className="border-t-2 border-border" />
