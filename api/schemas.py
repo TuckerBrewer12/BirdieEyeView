@@ -741,6 +741,16 @@ class PeakGame(ResponseModel):
     impacts: List[PeakImpact] = Field(default_factory=list)  # birdies, bogeys, doubles; empty without pars
 
 
+class BenchmarkShape(ResponseModel):
+    """A golfer's shape in golf terms: the Lab radar's axes. Null where they have no figure."""
+    gir_percentage: Optional[float] = None
+    scrambling_percentage: Optional[float] = None
+    putts_per_gir: Optional[float] = None
+    par3_to_par: Optional[float] = None
+    par4_to_par: Optional[float] = None
+    par5_to_par: Optional[float] = None
+
+
 class AnalyticsResponse(ResponseModel):
     """The analytics page's figures over the rounds asked for. Every per-round series is oldest first."""
     kpis: AnalyticsKpis = Field(default_factory=AnalyticsKpis)
@@ -761,6 +771,7 @@ class AnalyticsResponse(ResponseModel):
     score_mix: ScoreMix = Field(default_factory=ScoreMix)  # each score kind's share of every counted hole, to a hundredth
     insights: List[AnalyticsInsight] = Field(default_factory=list)  # scoring, then greens, then putting
     peak_game: Optional[PeakGame] = None  # null under two scored rounds
+    shape: Optional[BenchmarkShape] = None  # the player's figures on the Lab radar's axes; null without a round
 
 
 class PlayedCourseResponse(ResponseModel):
@@ -832,16 +843,6 @@ class GoalReportResponse(ResponseModel):
     savers: List[GoalSaver] = Field(default_factory=list)
 
 
-class BenchmarkShape(ResponseModel):
-    """A golfer's shape in golf terms: the Lab radar's axes. Null where they have no figure."""
-    gir_percentage: Optional[float] = None
-    scrambling_percentage: Optional[float] = None
-    putts_per_gir: Optional[float] = None
-    par3_to_par: Optional[float] = None
-    par4_to_par: Optional[float] = None
-    par5_to_par: Optional[float] = None
-
-
 class ParTypeComparison(ResponseModel):
     """One par type's average to par, the player's against the benchmark's."""
     par: Literal[3, 4, 5]
@@ -852,14 +853,22 @@ class ParTypeComparison(ResponseModel):
     verdict: Optional[Literal["ahead", "even", "behind"]] = None
 
 
+class BenchmarkHandicap(ResponseModel):
+    """A handicap with a benchmark, and the goal, as stored, its golfers play to."""
+    handicap: int
+    goal: int
+
+
 class BenchmarkComparisonResponse(ResponseModel):
-    """The player's last rounds held up against a benchmark, and which benchmark it was."""
-    against: Literal["handicap", "peak", "friend"]
+    """The player's last rounds held up against a benchmark, which benchmark it was, and every one on offer."""
+    against: Optional[Literal["handicap", "peak", "friend"]] = None  # null: the player's par types alone
     handicap: Optional[int] = None  # the handicap compared with
     goal: Optional[int] = None  # for the peak: the goal, as stored, whose golfers score nearest it
     # Null when the friend has no rounds or the player has no peak game.
     benchmark: Optional[BenchmarkShape] = None
     par_types: List[ParTypeComparison] = Field(default_factory=list)  # par 3, 4 and 5
+    goals: List[int] = Field(default_factory=list)  # the goals a golfer can pick, as stored, the highest first
+    handicaps: List[BenchmarkHandicap] = Field(default_factory=list)  # the handicaps to compare with, scratch first
 
 
 class CourseScoreTrendRow(ResponseModel):

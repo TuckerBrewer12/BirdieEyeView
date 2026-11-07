@@ -51,14 +51,15 @@ def analytics_response(
     best_round = analytics.best_round(list(reversed(rounds)))
     best = round_summary(best_round) if best_round else None
     three_putts = analytics.three_putt_averages(rounds)
-    shape = player_shape(rounds) or {}
+    shape = player_shape(rounds)
+    figures = shape or {}
 
     return AnalyticsResponse(
         kpis=AnalyticsKpis(
             scoring_average=analytics.scoring_average(rounds),
-            gir_percentage=shape.get("gir_percentage"),
-            putts_per_gir=shape.get("putts_per_gir"),
-            scrambling_percentage=shape.get("scrambling_percentage"),
+            gir_percentage=figures.get("gir_percentage"),
+            putts_per_gir=figures.get("putts_per_gir"),
+            scrambling_percentage=figures.get("scrambling_percentage"),
             up_and_down_percentage=analytics.up_and_down_percentage(rounds),
             handicap_index=player_index,
             total_rounds=len(rounds),
@@ -91,4 +92,5 @@ def analytics_response(
         },
         insights=insights(rounds, scoring_by_par),
         peak_game=peak_game(rounds),
+        shape=shape,
     )

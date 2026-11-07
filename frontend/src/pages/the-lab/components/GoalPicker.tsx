@@ -1,7 +1,9 @@
 import { ToggleGroup, ToggleGroupItem } from "@/brand";
-import { GOAL_OPTIONS } from "@/domain";
+import { goalTargetLabel } from "@/domain";
 
 interface GoalPickerProps {
+  /** The goals on offer, as stored, in the order shown. */
+  options: readonly number[];
   /** The goal as stored (79 to break 80), or null with none set. */
   value: number | null;
   onChange: (target: number) => void;
@@ -13,7 +15,7 @@ interface GoalPickerProps {
 }
 
 /** The scoring goals a golfer can set, one pressed. */
-export function GoalPicker({ value, onChange, disabled, spacing = 0, className }: GoalPickerProps) {
+export function GoalPicker({ options, value, onChange, disabled, spacing = 0, className }: GoalPickerProps) {
   return (
     <ToggleGroup
       data-slot="goal-picker"
@@ -25,14 +27,14 @@ export function GoalPicker({ value, onChange, disabled, spacing = 0, className }
       value={value != null ? [String(value)] : []}
       onValueChange={(values) => {
         // Pressing the chosen goal again would clear it; the goal only ever changes to another.
-        const next = GOAL_OPTIONS.find((option) => String(option.value) === values[0]);
-        if (next) onChange(next.value);
+        const next = options.find((option) => String(option) === values[0]);
+        if (next != null) onChange(next);
       }}
       className={className}
     >
-      {GOAL_OPTIONS.map((option) => (
-        <ToggleGroupItem key={option.value} value={String(option.value)}>
-          {option.label}
+      {options.map((option) => (
+        <ToggleGroupItem key={option} value={String(option)}>
+          {goalTargetLabel(option)}
         </ToggleGroupItem>
       ))}
     </ToggleGroup>

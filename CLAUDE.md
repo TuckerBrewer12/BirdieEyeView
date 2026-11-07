@@ -109,7 +109,7 @@ Key files:
 - `GET/POST /api/users/{id}/tees` — list/create user tees
 - `PUT/DELETE /api/users/{id}/tees/{tee_id}` — update/delete user tees
 - `GET /api/stats/{user_id}/goal-report?limit=` — goal gap analysis + ranked savers, and each scored round marked met or not (`attempts`)
-- `GET /api/stats/{user_id}/benchmark?against=handicap|peak|friend&handicap=&friend_id=` — The Lab's comparison: the benchmark's shape and each par type's gap and verdict against it
+- `GET /api/stats/{user_id}/benchmark?against=handicap|peak|friend&handicap=&friend_id=` — The Lab's comparison: the benchmark's shape and each par type's gap and verdict against it; with no `against`, the par types alone. Every response lists the goals and handicaps there are benchmarks for (`goals`, `handicaps`)
 
 ### `database/` — Async PostgreSQL layer (asyncpg)
 
@@ -212,7 +212,7 @@ Key files:
 - `src/types/` holds only `api.gen.ts` and `api.ts`: every response the frontend reads is typed by a backend `response_model` and used by its `*Dto` name. Request shapes the frontend builds live in `domain/` (`AnalyticsFilters` in `domain/analyticsFilters.ts`).
 - `src/domain/course.ts` / `src/domain/courseAnalytics.ts` — `CourseSummary` (list and search results) and `CourseAnalytics` (a golfer's figures at one course, with the per-hole rows the kit's hole charts take), mapped from the DTOs in the repositories. Kit components take these domain types, never DTOs.
 - `src/pages/scan/` — upload → processing → setup → review → success; passes the course's holes as `course_holes` on save
-- `src/pages/the-lab/` — goal picker (7 thresholds: 100/95/90/85/80/75/72), goal savers (`components/SaverCard.tsx`) and peer comparison
+- `src/pages/the-lab/` — goal picker (the server's 7 thresholds: 100/95/90/85/80/75/72), goal savers (`components/SaverCard.tsx`) and peer comparison
 - `src/brand/components/RoundScorecard.tsx` — the scorecard (read-only and editable) with the To Par row
 
 **Confidence display:** only `strokes` fields count as actionable review items (not putts/fairway/gir). Null putts shows N/A when putts weren't recorded on the card.
@@ -234,8 +234,8 @@ Implemented. Exposes per-player analytics via `api/routers/stats.py`.
 - `analytics/insights.py` — the analytics page's insights: scoring, GIR and putts shifts between the earlier and later half of the rounds, the best par type, and GIR/putts averages with a `rating`. Each carries its `kind`, `category` and `trend`; the page words them. `putts_rating` (30 or fewer strong, up to 34 fair) is the one putts rating; the dashboard uses it too.
 - `analytics/peak.py` — The Lab's peak game: the best three full rounds (two at least, ranked by `best_round_ranks`), their average, and birdies/bogeys/doubles a round against every round with the strokes each difference is worth (`AnalyticsResponse.peak_game`); `peak_gap` and `peak_meets_goal` against a goal for the goal report.
 - `analytics/goals.py` — `goal_report(rounds, scoring_goal, home_course_rounds)` — computes gap to goal, rounds meeting it, each scored round marked met or not, the peak game's gap to it, and ranks highest-ROI improvement areas ("savers"): three-putt bleed, blowup holes, achilles heel yardage zone, home course demon hole, GIR opportunity, scrambling opportunity, par 5 opportunity
-- `analytics/benchmarks.py` — The Lab's benchmarks: one table of amateur shapes by goal (and the handicap each stands for) in golf units (GIR%, scrambling%, putts per GIR, par 3/4/5 average to par); the goal nearest a peak average; a friend's shape from their rounds; and each par type's gap and ahead/even/behind verdict against a benchmark. `GET /stats/{id}/benchmark` sends it as `BenchmarkComparisonResponse`.
-- The Lab reads `AnalyticsResponse` at limit 20 (`kpis.three_putts_per_round`, `three_putt_rate`, `average_putts`, `scoring_average_change`, `peak_game`), the goal report and the benchmark comparison. Only the radar's 0–100 drawing scale stays in `frontend/src/domain/radar.ts`.
+- `analytics/benchmarks.py` — The Lab's benchmarks: one table of amateur shapes by goal (and the handicap each stands for) in golf units (GIR%, scrambling%, putts per GIR, par 3/4/5 average to par); the goal nearest a peak average; a friend's shape from their rounds; and each par type's gap and ahead/even/behind verdict against a benchmark. `GET /stats/{id}/benchmark` sends it as `BenchmarkComparisonResponse`, with the goals (`goal_options`) and handicaps (`handicap_options`) on offer; `AnalyticsResponse.shape` is the player's own (`player_shape`), which The Lab's and the career page's radars draw.
+- The Lab reads `AnalyticsResponse` at limit 20 (`kpis.three_putts_per_round`, `three_putt_rate`, `average_putts`, `scoring_average_change`, `peak_game`), the goal report (its `lowest_score` is The Lab's lowest round) and the benchmark comparison. Only the radar's 0–100 drawing scale stays in `frontend/src/domain/radar.ts`; its par-type labels use `formatAverageToPar`, as every average to par does.
 
 ## Imports
 

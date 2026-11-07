@@ -577,6 +577,10 @@ async def test_benchmark_comparison_endpoint():
     # Eight bogeys and ten pars on par 4s: +0.44 a hole against the 15's +1.025.
     assert (handicap.par_types[1].gap, handicap.par_types[1].verdict) == (-0.58, "ahead")
 
+    alone = await stats.get_benchmark_comparison(user_id, None, None, None, 20, db, user)
+    assert (alone.against, alone.benchmark, alone.par_types[1].gap) == (None, None, None)
+    assert alone.goals[0] == 99 and alone.handicaps[0].handicap == 0
+
     peak = await stats.get_benchmark_comparison(user_id, "peak", None, None, 20, db, user)
     assert peak.goal == 79  # two rounds of 80 play like the golfers who break 80
 

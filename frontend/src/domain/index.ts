@@ -11,8 +11,6 @@ export {
 export type { ScoreKind, ScoreMix } from "./score";
 
 export {
-  GOAL_OPTIONS,
-  COMPARISON_HANDICAPS,
   TOUR_SHORT_GAME,
   benchmarkComparisonFrom,
   benchmarkShapeFrom,
@@ -22,6 +20,7 @@ export {
 } from "./benchmark";
 export type {
   BenchmarkComparison,
+  BenchmarkHandicap,
   BenchmarkShape,
   BenchmarkTarget,
   ComparisonTargetValue,

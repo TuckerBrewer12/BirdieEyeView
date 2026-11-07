@@ -440,7 +440,8 @@ export interface paths {
         /**
          * Get Benchmark Comparison
          * @description The player's last `limit` rounds against a handicap's shape, the golfers their peak
-         *     rounds play like, or a friend's last `limit` rounds.
+         *     rounds play like, or a friend's last `limit` rounds; with no `against`, their par types alone.
+         *     Every response lists the goals and handicaps on offer.
          */
         get: operations["get_benchmark_comparison_api_stats__user_id__benchmark_get"];
         put?: never;
@@ -762,6 +763,7 @@ export interface components {
             scoring_by_yardage: components["schemas"]["ScoringByYardageRow"][];
             /** Scrambling Trend */
             scrambling_trend: components["schemas"]["ScramblingTrendRow"][];
+            shape: components["schemas"]["BenchmarkShape"] | null;
             /** Three Putts Trend */
             three_putts_trend: components["schemas"]["ThreePuttsTrendRow"][];
             /** Up And Down Trend */
@@ -803,21 +805,32 @@ export interface components {
         };
         /**
          * BenchmarkComparisonResponse
-         * @description The player's last rounds held up against a benchmark, and which benchmark it was.
+         * @description The player's last rounds held up against a benchmark, which benchmark it was, and every one on offer.
          */
         BenchmarkComparisonResponse: {
-            /**
-             * Against
-             * @enum {string}
-             */
-            against: "handicap" | "peak" | "friend";
+            /** Against */
+            against: ("handicap" | "peak" | "friend") | null;
             benchmark: components["schemas"]["BenchmarkShape"] | null;
             /** Goal */
             goal: number | null;
+            /** Goals */
+            goals: number[];
             /** Handicap */
             handicap: number | null;
+            /** Handicaps */
+            handicaps: components["schemas"]["BenchmarkHandicap"][];
             /** Par Types */
             par_types: components["schemas"]["ParTypeComparison"][];
+        };
+        /**
+         * BenchmarkHandicap
+         * @description A handicap with a benchmark, and the goal, as stored, its golfers play to.
+         */
+        BenchmarkHandicap: {
+            /** Goal */
+            goal: number;
+            /** Handicap */
+            handicap: number;
         };
         /**
          * BenchmarkShape
@@ -3930,8 +3943,8 @@ export interface operations {
     };
     get_benchmark_comparison_api_stats__user_id__benchmark_get: {
         parameters: {
-            query: {
-                against: "handicap" | "peak" | "friend";
+            query?: {
+                against?: ("handicap" | "peak" | "friend") | null;
                 handicap?: number | null;
                 friend_id?: string | null;
                 limit?: number;

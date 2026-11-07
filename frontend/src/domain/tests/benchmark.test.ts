@@ -7,7 +7,7 @@ import {
   goalScoreToBreak,
   goalTargetLabel,
 } from "@/domain";
-import { averyLabAnalytics, labBenchmarks, labGoalReport } from "@/testing/fixtures/lab";
+import { labBenchmarks, labGoalReport } from "@/testing/fixtures/lab";
 
 describe("goals", () => {
   it("reads a stored goal as the score to break", () => {
@@ -37,20 +37,41 @@ describe("benchmark comparison", () => {
   it("has no shape when the server has none to draw", () => {
     expect(benchmarkComparisonFrom(labBenchmarks["friend:user-jordan"]).benchmark).toBeNull();
   });
+
+  it("lists the goals and handicaps the server has benchmarks for", () => {
+    const { goals, handicaps } = benchmarkComparisonFrom(labBenchmarks.alone);
+    expect(goals.map(goalTargetLabel)).toEqual([
+      "Break 100",
+      "Break 95",
+      "Break 90",
+      "Break 85",
+      "Break 80",
+      "Break 75",
+      "Break 72",
+    ]);
+    expect(handicaps[1]).toEqual({ handicap: 5, goal: 79 });
+  });
 });
 
 describe("radar scale", () => {
   it("draws a friend's shape at their own figures", () => {
     const shape = benchmarkShapeFrom(labBenchmarks["friend:user-avery"].benchmark!);
-    const entries = buildRadarData(averyLabAnalytics.kpis, averyLabAnalytics.scoring_by_par, shape);
+    const entries = buildRadarData(shape, shape);
     for (const entry of entries) expect(entry.benchmark).toBeCloseTo(entry.value, 5);
-    expect(entries.map((entry) => entry.benchRaw)).toEqual(["44%", "38%", "1.92/GIR", "+0.3", "+0.6", "+0.3"]);
+    // A par type's average reads as it does everywhere else, to two places.
+    expect(entries.map((entry) => entry.benchRaw)).toEqual(["44%", "38%", "1.92/GIR", "+0.35", "+0.55", "+0.3"]);
   });
 
   it("puts a figure the comparison has none of at the centre", () => {
+    const mine = benchmarkShapeFrom(labBenchmarks["friend:user-avery"].benchmark!);
     const shape = { ...benchmarkShapeFrom(labBenchmarks["handicap:15"].benchmark!), par5ToPar: null };
-    const par5 = buildRadarData(averyLabAnalytics.kpis, averyLabAnalytics.scoring_by_par, shape)[5];
-    expect(par5.benchmark).toBe(0);
-    expect(par5.benchRaw).toBe("—");
+    const entries = buildRadarData(mine, shape);
+    expect(entries[5].benchmark).toBe(0);
+    expect(entries[5].benchRaw).toBe("—");
+    expect(entries[3].benchRaw).toBe("+0.6");
+  });
+
+  it("has nothing to draw for a golfer with no shape", () => {
+    expect(buildRadarData(null).every((entry) => !entry.hasData && entry.userRaw === "—")).toBe(true);
   });
 });

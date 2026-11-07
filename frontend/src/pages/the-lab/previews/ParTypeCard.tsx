@@ -1,7 +1,8 @@
 import { benchmarkComparisonFrom } from "@/domain";
-import { labAnalytics, labBenchmarks } from "@/testing/fixtures/lab";
+import { labBenchmarks } from "@/testing/fixtures/lab";
 import { ParTypeCard } from "../components/ParTypeCard";
-import { parTypeRowsFrom } from "../model";
+
+const [par3, par4, par5] = benchmarkComparisonFrom(labBenchmarks.alone).parTypes;
 
 export default function ParTypeCardPreview() {
   return (
@@ -9,7 +10,7 @@ export default function ParTypeCardPreview() {
       <ParTypeCard rows={benchmarkComparisonFrom(labBenchmarks["handicap:15"]).parTypes} benchmarkName="Breaks 90" />
       {/* No comparison, and no par 5s played. */}
       <ParTypeCard
-        rows={parTypeRowsFrom({ ...labAnalytics, scoring_by_par: labAnalytics.scoring_by_par.slice(0, 2) })}
+        rows={[par3, par4, { ...par5, averageToPar: null }]}
         benchmarkName={null}
       />
     </>

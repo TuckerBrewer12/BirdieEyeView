@@ -11,8 +11,11 @@ export interface LabRepository
     GoalReportRepository,
     Pick<UserRepository, "getUser" | "updateUser">,
     Pick<FriendsRepository, "getFriendships"> {
-  /** The golfer's last 20 rounds against a handicap's shape, their peak's, or a friend's, as the server compared them. */
-  getBenchmarkComparison(userId: string, target: BenchmarkTarget): Promise<BenchmarkComparison>;
+  /**
+   * The golfer's last 20 rounds against a handicap's shape, their peak's, or a friend's, as the
+   * server compared them; with no target, their par types alone and the benchmarks on offer.
+   */
+  getBenchmarkComparison(userId: string, target: BenchmarkTarget | null): Promise<BenchmarkComparison>;
 }
 
 export const labRepository: LabRepository = {

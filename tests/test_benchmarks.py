@@ -86,3 +86,15 @@ def test_handicap_comparison_names_the_handicap():
     found = benchmarks.handicap_comparison([_round([(4, 5)])], 5)
     assert (found["against"], found["handicap"], found["goal"]) == ("handicap", 5, None)
     assert found["par_types"][1]["gap"] == 0.5
+
+
+def test_every_comparison_lists_the_benchmarks_on_offer():
+    found = benchmarks.solo_comparison([_round([(4, 5)])])
+    assert (found["against"], found["benchmark"]) == (None, None)
+    assert found["par_types"][1]["average_to_par"] == 1.0
+    assert found["goals"] == [99, 94, 89, 84, 79, 74, 71]
+    assert found["handicaps"] == [
+        {"handicap": 0, "goal": 71}, {"handicap": 5, "goal": 79}, {"handicap": 10, "goal": 84},
+        {"handicap": 15, "goal": 89}, {"handicap": 20, "goal": 94}, {"handicap": 25, "goal": 99},
+    ]
+    assert benchmarks.handicap_comparison([_round([(4, 5)])], 5)["goals"] == found["goals"]

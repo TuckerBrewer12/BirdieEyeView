@@ -56,6 +56,7 @@ export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
     score_mix: { eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0 },
     insights: [],
     peak_game: null,
+    shape: null,
     // No round, so no record either.
 
     notable_achievements: {

@@ -7,7 +7,6 @@ import {
   friendOptionsFrom,
   goalStandingFrom,
   labAnalyticsFrom,
-  parTypeRowsFrom,
   peakGameFrom,
   puttingSummaryFrom,
 } from "../model";
@@ -16,12 +15,15 @@ import {
   benchmarkName,
   comparisonFromKey,
   comparisonKey,
+  comparisonOptions,
   goalStandingNote,
   parTypeGapNote,
   peakGapNote,
   recentTrendNote,
   signedStrokes,
 } from "../present";
+
+const { handicaps } = benchmarkComparisonFrom(labBenchmarks.alone);
 
 describe("goalStandingFrom", () => {
   it("is null with no goal", () => {
@@ -82,33 +84,56 @@ describe("the server's figures", () => {
     expect(putting.puttsTrend).toHaveLength(12);
   });
 
-  it("falls back to the window's lowest score from the server's records", () => {
-    expect(labAnalyticsFrom(labAnalytics).lowestScore).toBe(89);
-  });
-
-  it("reads each par type alone when there is nothing to compare with", () => {
-    const rows = parTypeRowsFrom(labAnalytics);
-    expect(rows.map((r) => r.averageToPar)).toEqual([0.92, 1.12, 0.85]);
-    expect(rows.every((r) => r.benchmarkToPar == null && r.gap == null && r.verdict == null)).toBe(true);
+  it("takes the golfer's shape as the server worked it out", () => {
+    expect(labAnalyticsFrom(labAnalytics).shape).toEqual({
+      girPct: 28,
+      scramblingPct: 22,
+      puttsPerGir: 2.05,
+      par3ToPar: 0.92,
+      par4ToPar: 1.12,
+      par5ToPar: 0.85,
+    });
+    expect(labAnalyticsFrom({ ...labAnalytics, shape: null }).shape).toBeNull();
   });
 });
 
 describe("present", () => {
+  it("offers no comparison, each handicap the server has a benchmark for, then a friend", () => {
+    expect(comparisonOptions(handicaps).map((option) => option.label)).toEqual([
+      "Just me",
+      "Scratch",
+      "Breaks 80",
+      "Breaks 85",
+      "Breaks 90",
+      "Breaks 95",
+      "Breaks 100",
+      "A friend",
+    ]);
+  });
+
   it("round-trips a comparison through its toggle key", () => {
+    const options = comparisonOptions(handicaps);
     for (const value of [null, 0, 15, "friend"] as const) {
-      expect(comparisonFromKey(comparisonKey(value))).toEqual({ value });
+      expect(comparisonFromKey(comparisonKey(value), options)).toEqual({ value });
     }
-    expect(comparisonFromKey(undefined)).toBeNull();
+    expect(comparisonFromKey(undefined, options)).toBeNull();
+    expect(comparisonFromKey("7", options)).toBeNull();
   });
 
   it("names what the golfer is compared with", () => {
     const avery = { id: "user-avery", name: "Avery Lin" };
-    expect(benchmarkName("peak", 5, avery)).toBe("Your peak game");
-    expect(benchmarkName("benchmark", "friend", avery)).toBe("Avery Lin");
-    expect(benchmarkName("benchmark", 5, null)).toBe("Breaks 80");
-    expect(benchmarkName("benchmark", null, null)).toBeNull();
-    expect(benchmarkHeading("benchmark", 15, null, null)).toBe("You vs. Break-90 Shape");
-    expect(benchmarkHeading("benchmark", "friend", { id: "x", name: null }, null)).toBe("You vs. Unknown golfer");
+    expect(benchmarkName("peak", 5, avery, handicaps)).toBe("Your peak game");
+    expect(benchmarkName("benchmark", "friend", avery, handicaps)).toBe("Avery Lin");
+    expect(benchmarkName("benchmark", 5, null, handicaps)).toBe("Breaks 80");
+    expect(benchmarkName("benchmark", 0, null, handicaps)).toBe("Scratch");
+    expect(benchmarkName("benchmark", null, null, handicaps)).toBeNull();
+    // Before the server's handicaps load, a handicap has no name yet.
+    expect(benchmarkName("benchmark", 5, null, [])).toBeNull();
+    expect(benchmarkHeading("benchmark", 15, null, null, handicaps)).toBe("You vs. Break-90 Shape");
+    expect(benchmarkHeading("benchmark", 0, null, null, handicaps)).toBe("You vs. Scratch");
+    expect(benchmarkHeading("benchmark", "friend", { id: "x", name: null }, null, handicaps)).toBe(
+      "You vs. Unknown golfer",
+    );
   });
 
   it("words the goal and peak gaps", () => {
@@ -127,7 +152,7 @@ describe("present", () => {
     expect(parTypeGapNote(par5, "Breaks 90")?.text).toBe("Breaks 90 +1.1 · ahead of it");
     const even = { par: 4 as const, averageToPar: 1, benchmarkToPar: 1.004, gap: 0, verdict: "even" as const };
     expect(parTypeGapNote(even, "Breaks 90")).toEqual({ text: "Breaks 90 +1 · even with it", gap: 0 });
-    expect(parTypeGapNote(parTypeRowsFrom(labAnalytics)[0], "Breaks 90")).toBeNull();
+    expect(parTypeGapNote(benchmarkComparisonFrom(labBenchmarks.alone).parTypes[0], "Breaks 90")).toBeNull();
   });
 
   it("words strokes and trends with their sign", () => {

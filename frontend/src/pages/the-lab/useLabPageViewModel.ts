@@ -4,7 +4,13 @@ import { useFriendships } from "@/data/useFriendships";
 import { useGoalReport } from "@/data/useGoalReport";
 import { useUpdateUser } from "@/data/useUpdateUser";
 import { useUser } from "@/data/useUser";
-import type { BenchmarkShape, BenchmarkTarget, ComparisonTargetValue, GoalAttempt } from "@/domain/benchmark";
+import type {
+  BenchmarkHandicap,
+  BenchmarkShape,
+  BenchmarkTarget,
+  ComparisonTargetValue,
+  GoalAttempt,
+} from "@/domain/benchmark";
 import { buildRadarData, type RadarEntry } from "@/domain/radar";
 import { labRepository, type LabRepository } from "./labRepository";
 import { useBenchmarkComparison } from "./useBenchmarkComparison";
@@ -14,7 +20,6 @@ import {
   goalStandingFrom,
   labAnalyticsFrom,
   labPanelsFrom,
-  parTypeRowsFrom,
   peakGameFrom,
   puttingSummaryFrom,
   type FriendOption,
@@ -32,7 +37,7 @@ import {
 export type FriendComparison = "no-friends" | "loading" | "no-rounds" | "ready";
 
 export interface LabPageViewModel {
-  /** True until the golfer's analytics first load. */
+  /** True until the golfer's analytics and the benchmarks on offer first load. */
   loading: boolean;
   error: Error | null;
   retry: () => void;
@@ -45,10 +50,15 @@ export interface LabPageViewModel {
   goalSaveError: Error | null;
 
   scoringAverage: number | null;
-  /** The lowest full round in the window, as the goal report or analytics records it. */
+  /** The goal report's lowest full round in the window. Null without a goal, and until its report loads. */
   lowestScore: number | null;
   /** Last five rounds against the window's average; negative is lower. */
   recentTrend: number | null;
+
+  /** The goals the golfer can pick, as stored, the highest score first. Empty until they load. */
+  goalOptions: number[];
+  /** The handicaps the golfer can compare with, scratch first. Empty until they load. */
+  handicaps: BenchmarkHandicap[];
 
   radarMode: RadarMode;
   setRadarMode: (mode: RadarMode) => void;
@@ -117,12 +127,14 @@ export function useLabPageViewModel(
     if (comparison === "friend") return selectedFriend ? { against: "friend", friendId: selectedFriend.id } : null;
     return comparison != null ? { against: "handicap", handicap: comparison } : null;
   }, [mode, comparison, selectedFriend]);
+  // The golfer's par types alone, and the goals and handicaps there are benchmarks for.
+  const alone = useBenchmarkComparison(userId, null, repository);
   const compared = useBenchmarkComparison(userId, against, repository);
   const comparisonData = against ? (compared.data ?? null) : null;
   const benchmark = comparisonData?.benchmark ?? null;
 
   const radarAll = useMemo(
-    () => (analytics ? buildRadarData(analytics.kpis, analytics.scoring_by_par, benchmark) : []),
+    () => (analytics ? buildRadarData(analytics.shape, benchmark) : []),
     [analytics, benchmark],
   );
 
@@ -144,10 +156,7 @@ export function useLabPageViewModel(
     [peak],
   );
 
-  const parTypes = useMemo(
-    () => comparisonData?.parTypes ?? (analytics ? parTypeRowsFrom(analytics) : []),
-    [comparisonData, analytics],
-  );
+  const parTypes = comparisonData?.parTypes ?? alone.data?.parTypes ?? [];
   const putting = useMemo(() => (analytics ? puttingSummaryFrom(analytics) : null), [analytics]);
   const panels = labPanelsFrom(parTypes, putting, peak);
   const panel = pickedPanel != null && panels.includes(pickedPanel) ? pickedPanel : (panels[0] ?? null);
@@ -157,9 +166,12 @@ export function useLabPageViewModel(
   const setGoal = useCallback((next: number) => mutate({ scoring_goal: next }), [mutate]);
 
   return {
-    loading: mine.isLoading,
-    error: mine.error,
-    retry: () => void mine.refetch(),
+    loading: mine.isLoading || alone.isLoading,
+    error: mine.error ?? alone.error,
+    retry: () => {
+      void mine.refetch();
+      void alone.refetch();
+    },
     analytics,
 
     goal,
@@ -168,8 +180,11 @@ export function useLabPageViewModel(
     goalSaveError: updateUser.error,
 
     scoringAverage: analytics?.kpis.scoring_average ?? null,
-    lowestScore: report?.lowest_score ?? analytics?.lowestScore ?? null,
+    lowestScore: goal?.lowestScore ?? null,
     recentTrend: analytics?.kpis.scoring_average_change ?? null,
+
+    goalOptions: alone.data?.goals ?? [],
+    handicaps: alone.data?.handicaps ?? [],
 
     radarMode: mode,
     setRadarMode,

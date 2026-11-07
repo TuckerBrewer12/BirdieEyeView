@@ -1,4 +1,4 @@
-import { buildRadarData, trendPointsFrom, type RadarEntry, type RoundTrendPoint, type ScoreMix } from "@/domain";
+import { benchmarkShapeFrom, buildRadarData, trendPointsFrom, type RadarEntry, type RoundTrendPoint, type ScoreMix } from "@/domain";
 import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type { AnalyticsDto, MilestoneAchievementDto, MilestoneEventDto, NotableAchievementsDto } from "@/types/api";
 
@@ -221,7 +221,7 @@ export function careerFrom(dto: AnalyticsDto): Career {
     handicapIndex: dto.kpis.handicap_index ?? null,
     handicapTrend: trendPointsFrom(dto),
     scoreMix: dto.score_mix,
-    profile: buildRadarData(dto.kpis, dto.scoring_by_par).filter((entry) => entry.hasData),
+    profile: buildRadarData(dto.shape ? benchmarkShapeFrom(dto.shape) : null).filter((entry) => entry.hasData),
     windowDays: a.window_days,
     windows: {
       lifetime: windowFrom(a, "lifetime"),
