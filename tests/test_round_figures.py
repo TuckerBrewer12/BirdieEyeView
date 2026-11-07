@@ -130,7 +130,7 @@ def test_list_row_becomes_a_round_that_reads_course_par_first():
     assert round_.course.name == "Blue Rock"
     assert round_.get_hole_par(1) == 4
     assert round_.get_hole_par(2) == 3
-    assert round_.get_par() == 72
+    assert round_.get_par() == 7  # the par of the two holes played, not the course's 72
     assert round_.get_total_putts() == 3
     assert round_.get_total_gir() == 1
 

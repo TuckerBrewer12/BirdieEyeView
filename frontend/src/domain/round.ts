@@ -192,7 +192,7 @@ function fromDto(dto: RoundDto): Round {
     date: dto.date,
     course: {
       id: course?.id ?? null,
-      name: dto.course_name_played ?? course?.name ?? null,
+      name: dto.course_name,
       location: course?.location ?? null,
       par: course?.par ?? null,
     },
@@ -290,10 +290,11 @@ function previewEdits(round: Round, edits: HoleEdits, course?: CourseDto | null,
   const girEdited = holes.some((hole, i) => hole.gir !== round.holes[i].gir);
   const scored = holes.filter((hole) => hole.strokes != null);
   const score = scored.length > 0 ? scored.reduce((sum, hole) => sum + hole.strokes!, 0) : null;
-  const par = (course ? course.par ?? round.par : round.par) ?? sumIfAll(holes.map((hole) => hole.par));
-  // To par reads against the holes played, so a nine or a round cut short reads against its own holes.
+  // The par of the holes played, so a nine or a round cut short reads against its own holes. A
+  // full round whose holes have no par reads the course's.
   const fullRound = scored.length >= 18;
-  const toPar = strokesToPar(score, sumIfAll(scored.map((hole) => hole.par)) ?? (fullRound ? par : null));
+  const par = sumIfAll(scored.map((hole) => hole.par)) ?? (fullRound ? ((course ?? round.course)?.par ?? null) : null);
+  const toPar = strokesToPar(score, par);
   // Tee ratings are for 18 holes. A picked tee sends the golfer's course handicap off it.
   const courseHandicap = !fullRound ? null : tee ? tee.course_handicap : yardsCleared ? null : round.courseHandicap;
   const scoreCounts = Object.fromEntries(SCORE_KINDS.map((kind) => [kind, 0])) as ScoreCounts;

@@ -430,26 +430,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/stats/milestones/{user_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Milestones
-         * @description Return a flat, sorted list of lifetime milestone events for the user.
-         */
-        get: operations["get_milestones_api_stats_milestones__user_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/stats/{user_id}/benchmark": {
         parameters: {
             query?: never;
@@ -1025,27 +1005,27 @@ export interface components {
         };
         /**
          * CourseHoleScoreTypeRow
-         * @description Percent of rounds that landed in each score type on the hole. `par` is the par percentage.
+         * @description Percent of rounds that landed in each score kind on the hole. `par` is the par percentage.
          */
         CourseHoleScoreTypeRow: {
             /** Birdie */
             birdie: number;
             /** Bogey */
             bogey: number;
-            /** Double Bogey */
-            double_bogey: number;
+            /** Double */
+            double: number;
             /** Eagle */
             eagle: number;
             /** Hole Number */
             hole_number: number;
             /** Par */
             par: number;
-            /** Quad Bogey */
-            quad_bogey: number;
+            /** Quad */
+            quad: number;
             /** Sample Size */
             sample_size: number;
-            /** Triple Bogey */
-            triple_bogey: number;
+            /** Triple */
+            triple: number;
         };
         /** CourseHoleToParRow */
         CourseHoleToParRow: {
@@ -1184,8 +1164,6 @@ export interface components {
          * @description Aggregated stats for the dashboard page. Every figure is worked out here, not on the client.
          */
         DashboardResponse: {
-            /** Average Gir */
-            average_gir: number | null;
             /** Average Putts */
             average_putts: number | null;
             /** Best Recent Round Id */
@@ -1291,7 +1269,7 @@ export interface components {
         };
         /**
          * GirAverageInsight
-         * @description Each round's GIR%, averaged.
+         * @description GIR% over the rounds, pooled over the holes that recorded it, as the KPI reads it.
          */
         GirAverageInsight: {
             /**
@@ -1365,7 +1343,7 @@ export interface components {
         };
         /**
          * GirVsNonGirRow
-         * @description Percent of GIR (or missed-green) holes in each score type.
+         * @description Percent of GIR (or missed-green) holes in each score kind.
          */
         GirVsNonGirRow: {
             /** Birdie */
@@ -1377,18 +1355,18 @@ export interface components {
              * @enum {string}
              */
             bucket: "GIR" | "No GIR";
-            /** Double Bogey */
-            double_bogey: number;
+            /** Double */
+            double: number;
             /** Eagle */
             eagle: number;
             /** Holes Counted */
             holes_counted: number;
             /** Par */
             par: number;
-            /** Quad Bogey */
-            quad_bogey: number;
-            /** Triple Bogey */
-            triple_bogey: number;
+            /** Quad */
+            quad: number;
+            /** Triple */
+            triple: number;
         };
         /**
          * GoalAttempt
@@ -1848,7 +1826,7 @@ export interface components {
         };
         /**
          * MilestoneEvent
-         * @description The round a record or milestone was set in. `date` reads 2026/5/28.
+         * @description The round a record or milestone was set in. `date` is the day it was played: 2026-05-28.
          */
         MilestoneEvent: {
             /** Course */
@@ -2232,13 +2210,14 @@ export interface components {
         };
         /**
          * RecentForm
-         * @description Rates over the last five rounds, pooled by chances. Null when there is nothing to measure.
+         * @description The last five rounds' rates, pooled by chances, and putts a round, each to a tenth and
+         *     worked out as the analytics KPIs are. Null when there is nothing to measure.
          */
         RecentForm: {
+            /** Average Putts */
+            average_putts: number | null;
             /** Gir Pct */
             gir_pct: number | null;
-            /** Putts Per 18 */
-            putts_per_18: number | null;
             /** Scrambling Pct */
             scrambling_pct: number | null;
             /** Up And Down Pct */
@@ -2312,6 +2291,8 @@ export interface components {
             course: components["schemas"]["CourseResponse"] | null;
             /** Course Handicap */
             course_handicap: number | null;
+            /** Course Name */
+            course_name: string | null;
             /** Course Name Played */
             course_name_played: string | null;
             /** Date */
@@ -3934,39 +3915,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_milestones_api_stats_milestones__user_id__get: {
-        parameters: {
-            query?: {
-                limit?: number;
-            };
-            header?: never;
-            path: {
-                user_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

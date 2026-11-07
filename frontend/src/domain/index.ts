@@ -5,11 +5,10 @@ export {
   playedScoreKinds,
   scoreKind,
   scoreKindCountLabel,
-  scoreMixFrom,
   strokesToPar,
   toParLabel,
 } from "./score";
-export type { ScoreKind, ScoreMix, ScoreTypeShares } from "./score";
+export type { ScoreKind, ScoreMix } from "./score";
 
 export {
   GOAL_OPTIONS,

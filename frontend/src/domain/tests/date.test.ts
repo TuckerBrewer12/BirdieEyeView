@@ -21,7 +21,7 @@ describe("parseDay", () => {
     expect(day && isoDay(day)).toBe("2026-06-15");
   });
 
-  it("reads the career events' year/month/day", () => {
+  it("reads a year/month/day", () => {
     const day = parseDay("2026/5/8");
     expect(day && isoDay(day)).toBe("2026-05-08");
   });

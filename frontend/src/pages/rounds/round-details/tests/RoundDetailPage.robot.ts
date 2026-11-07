@@ -29,7 +29,7 @@ export class RoundDetailRobot {
     await this.page.goto(`/rounds/${round.id}`);
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.getByRole("button", { name: "Rounds" })).toBeVisible();
-    const name = formatCourseName(round.course_name_played ?? round.course?.name);
+    const name = formatCourseName(round.course?.name ?? round.course_name_played);
     await expect(this.page.getByText(name).first()).toBeVisible();
     return this;
   }

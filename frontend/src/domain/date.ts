@@ -1,7 +1,8 @@
 /**
  * Dates as the app reads and writes them. A round's date is a calendar day: the
- * server sends "2026-06-15T00:00:00", fixtures and forms use "2026-06-15", career
- * events "2026/6/15". Each names the same day in every timezone.
+ * server sends "2026-06-15T00:00:00", and "2026-06-15" for the day a record or
+ * milestone was set; fixtures and forms use "2026-06-15", and "2026/6/15" reads too.
+ * Each names the same day in every timezone.
  *
  * `new Date("2026-06-15")` is UTC midnight, which is the evening before in the
  * Americas, so a date-only string never goes to `Date` here. A string with an

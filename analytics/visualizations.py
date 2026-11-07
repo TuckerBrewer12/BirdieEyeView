@@ -281,9 +281,9 @@ def plot_gir_vs_non_gir_score_distribution(rounds: Iterable[Round]):
         ("birdie", "Birdie"),
         ("par", "Par"),
         ("bogey", "Bogey"),
-        ("double_bogey", "Double"),
-        ("triple_bogey", "Triple"),
-        ("quad_bogey", "Quad+"),
+        ("double", "Double"),
+        ("triple", "Triple"),
+        ("quad", "Quad+"),
     ]
 
     fig, ax = plt.subplots(figsize=(9, 6))
@@ -571,9 +571,9 @@ def plot_score_type_distribution_per_round(
         ("birdie", "Birdie"),
         ("par", "Par"),
         ("bogey", "Bogey"),
-        ("double_bogey", "Double"),
-        ("triple_bogey", "Triple"),
-        ("quad_bogey", "Quad+"),
+        ("double", "Double"),
+        ("triple", "Triple"),
+        ("quad", "Quad+"),
     ]
 
     fig, ax = plt.subplots(figsize=(12, 6))
@@ -608,9 +608,9 @@ def plot_score_type_distribution_by_hole(
         ("birdie", "Birdie"),
         ("par", "Par"),
         ("bogey", "Bogey"),
-        ("double_bogey", "Double"),
-        ("triple_bogey", "Triple"),
-        ("quad_bogey", "Quad+"),
+        ("double", "Double"),
+        ("triple", "Triple"),
+        ("quad", "Quad+"),
     ]
 
     fig, ax = plt.subplots(figsize=(12, 6))

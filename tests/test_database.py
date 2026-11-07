@@ -15,6 +15,7 @@ from database.converters import (
     user_from_row,
 )
 from models import Course, Hole, Tee, Round, HoleScore, UserTee, User
+from models.hole_score import score_kind
 
 
 def _round_row(round_id, *, course_id=None, course_name_played=None, tee_box_played=None, total_score=80):
@@ -65,7 +66,7 @@ def test_hole_score_converter_maps_par_played():
     assert hs.par_played == 4
     assert hs.handicap_played == 7
     assert hs.to_par() == 1          # 5 - 4, using par_played fallback
-    assert hs.get_score_type() == "bogey"
+    assert score_kind(hs.to_par()) == "bogey"
 
 
 def test_hole_score_converter_null_par_played():

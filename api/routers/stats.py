@@ -48,11 +48,6 @@ async def get_dashboard(
     summaries = await db.rounds.get_round_summaries_for_user(str(user_id), limit=500, offset=0)
     total_rounds = await db.rounds.count_rounds_for_user(str(user_id))
 
-    scored = [r for r in summaries if r.calculate_total_score() is not None]
-    scores = [r.calculate_total_score() for r in scored]
-    putts = [p for p in (r.get_total_putts() for r in summaries) if p is not None]
-    girs = [g for g in (r.get_total_gir() for r in summaries) if g is not None]
-
     # Best as the round list's Best ranks rounds; newest first, so a tie goes to the newest.
     best = analytics.best_round(summaries)
     best_summary = round_summary(best) if best else None
@@ -71,12 +66,12 @@ async def get_dashboard(
     mix = dashboard.score_mix(last_20)
     recent_mix = dashboard.score_mix(last_20[-dashboard.RECENT_ROUNDS:])
     form = dashboard.recent_form(last_20)
-    average_putts = round(sum(putts) / len(putts), 1) if putts else None
-    putts_shown = dashboard.putts_shown(form["putts_per_18"], average_putts)
+    average_putts = analytics.average_putts(summaries)
+    putts_shown = dashboard.putts_shown(form["average_putts"], average_putts)
 
     return DashboardResponse(
         total_rounds=total_rounds,
-        scoring_average=round(sum(scores) / len(scores), 1) if scores else None,
+        scoring_average=analytics.scoring_average(summaries),
         best_round=best_summary.total_score if best_summary else None,
         best_round_id=best_summary.id if best_summary else None,
         best_round_course=best_summary.course_name if best_summary else None,
@@ -84,11 +79,10 @@ async def get_dashboard(
         recent_rounds=recent_rounds,
         best_recent_round_id=best_recent.id if best_recent else None,
         average_putts=average_putts,
-        average_gir=round(sum(girs) / len(girs), 1) if girs else None,
         putts_per_round=putts_shown["per_round"],
         putts_rating=putts_shown["rating"],
-        scoring_average_l20=dashboard.scoring_average(last_20),
-        scoring_average_l5=dashboard.scoring_average(last_20, dashboard.RECENT_ROUNDS),
+        scoring_average_l20=analytics.scoring_average(last_20),
+        scoring_average_l5=analytics.scoring_average(last_20, dashboard.RECENT_ROUNDS),
         scoring_average_change=dashboard.scoring_average_change(last_20),
         handicap_change=dashboard.handicap_change(handicap_trend),
         recent_form=form,
@@ -269,110 +263,6 @@ async def get_round_comparison(
         putts_per_gir=analytics.putts_per_gir_comparison(rounds, round_index=round_index),
         scrambling=analytics.scrambling_comparison(rounds, round_index=round_index),
     )
-
-
-@router.get("/milestones/{user_id}")
-async def get_milestones(
-    user_id: UUID,
-    limit: int = Query(default=12, ge=1, le=50),
-    db: DatabaseManager = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Return a flat, sorted list of lifetime milestone events for the user."""
-    if str(current_user.id) != str(user_id):
-        raise HTTPException(403, "Forbidden")
-    user = await db.users.get_user(str(user_id))
-    if not user:
-        raise HTTPException(404, "User not found")
-
-    all_rounds = await db.rounds.get_rounds_for_user(str(user_id), limit=500, offset=0)
-    rounds_chrono = list(reversed(all_rounds))
-
-    if not rounds_chrono:
-        return {"milestones": []}
-
-    achievements = analytics.notable_achievements(rounds_chrono, home_course_id=user.home_course_id)
-
-    def _parse_date(d: str) -> date:
-        try:
-            return analytics.parse_date_short(d)
-        except ValueError:
-            return date.min
-
-    milestones = []
-
-    # Score breaks (break 120, 110, 100, 95, 90, 85, 80, 75, 70 …)
-    for item in achievements["round_milestones"]["lifetime"]["score_breaks"]:
-        a = item["achievement"]
-        if a:
-            milestones.append({
-                "type": "score_break",
-                "label": f"First to break {item['threshold']}",
-                "date": a["date"],
-                "course": a["course"],
-                "round_id": a.get("round_id"),
-            })
-
-    # First round under par
-    under_par = achievements["round_milestones"]["lifetime"]["first_round_under_par"]
-    if under_par:
-        milestones.append({
-            "type": "under_par",
-            "label": "First round under par",
-            "date": under_par["date"],
-            "course": under_par["course"],
-            "round_id": under_par.get("round_id"),
-        })
-
-    # First eagle
-    eagle = achievements["round_milestones"]["lifetime"]["first_eagle"]
-    if eagle:
-        milestones.append({
-            "type": "eagle",
-            "label": "First eagle",
-            "date": eagle["date"],
-            "course": eagle["course"],
-            "round_id": eagle.get("round_id"),
-        })
-
-    # Hole in one
-    hio = achievements["round_milestones"]["lifetime"]["first_hole_in_one"]
-    if hio:
-        milestones.append({
-            "type": "hole_in_one",
-            "label": "Hole in one",
-            "date": hio["date"],
-            "course": hio["course"],
-            "round_id": hio.get("round_id"),
-        })
-
-    # GIR breaks (first 3, 6, 9, 12, 15, 18 GIR in a round)
-    for item in achievements["gir_milestones"]["lifetime"]["gir_breaks"]:
-        a = item["achievement"]
-        if a:
-            pct = round(item["threshold"] / 18 * 100)
-            milestones.append({
-                "type": "gir_break",
-                "label": f"First {item['threshold']} GIR in a round ({pct}%)",
-                "date": a["date"],
-                "course": a["course"],
-                "round_id": a.get("round_id"),
-            })
-
-    # Putt breaks (first round under 45, 42, 39, 36, 33, 30 … putts)
-    for item in achievements["putting_milestones"]["lifetime"]["putt_breaks"]:
-        a = item["achievement"]
-        if a:
-            milestones.append({
-                "type": "putt_break",
-                "label": f"First round under {item['threshold']} putts",
-                "date": a["date"],
-                "course": a["course"],
-                "round_id": a.get("round_id"),
-            })
-
-    milestones.sort(key=lambda m: _parse_date(m["date"]), reverse=True)
-    return {"milestones": milestones[:limit]}
 
 
 @router.get("/course-analytics/{user_id}/{course_id}", response_model=CourseAnalyticsResponse)

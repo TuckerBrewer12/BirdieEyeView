@@ -18,7 +18,7 @@ def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResp
     return CourseAnalyticsResponse(
         course_id=course_id,
         rounds_played=len(rounds),
-        scoring_average=sum(scores) / len(scores) if scores else None,
+        scoring_average=analytics.scoring_average(rounds),
         best_score=best.calculate_total_score() if best else None,
         worst_score=max(scores) if scores else None,
         rounds=[round_summary(r) for r in reversed(rounds)],

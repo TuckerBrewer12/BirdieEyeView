@@ -68,7 +68,6 @@ export const populatedDashboard: DashboardDto = {
   // The 69, the best of the rounds listed.
   best_recent_round_id: "round-3",
   average_putts: 32,
-  average_gir: 8,
   // The last five rounds' 32 a round: between 30 and 34 rates fair.
   putts_per_round: 32,
   putts_rating: "fair",
@@ -77,7 +76,7 @@ export const populatedDashboard: DashboardDto = {
   scoring_average_l5: 76.8,
   scoring_average_change: 0,
   handicap_change: { delta: -1.6, direction: "down" },
-  recent_form: { gir_pct: (35 / 90) * 100, scrambling_pct: 37.5, up_and_down_pct: 100 / 3, putts_per_18: 32 },
+  recent_form: { gir_pct: 38.9, scrambling_pct: 37.5, up_and_down_pct: 33.3, average_putts: 32 },
   score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
   recent_score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
   score_mix_holes: 90,

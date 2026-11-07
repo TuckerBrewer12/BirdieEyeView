@@ -160,11 +160,22 @@ class Round(BaseGolfModel):
         return None
 
     def get_par(self) -> Optional[int]:
-        """Get course par — from course, or calculated from par_played on hole scores."""
-        if self.course:
+        """The par the round is played against: the par of the holes with a score, so a nine or a
+        round cut short reads against its own holes rather than the full course. None if any of
+        them has no par, except that a full round whose holes have no par reads the course's par."""
+        pars = [self.get_hole_par(s.hole_number) for s in self.hole_scores
+                if s.strokes is not None and s.hole_number is not None]
+        if pars and all(p is not None for p in pars):
+            return sum(pars)  # type: ignore[arg-type]
+        if self.course and self.holes_played() >= HOLES_PER_ROUND:
             return self.course.get_par()
-        pars = [hs.par_played for hs in self.hole_scores if hs.par_played is not None]
-        return sum(pars) if pars else None
+        return None
+
+    def course_name(self) -> Optional[str]:
+        """Where the round was played: the linked course's name, else the name it was saved with."""
+        if self.course and self.course.name:
+            return self.course.name
+        return self.course_name_played
 
     def score_to_par(self, hole_number: int) -> Optional[int]:
         """Get score relative to par for a specific hole."""
@@ -187,32 +198,8 @@ class Round(BaseGolfModel):
                 counts[kind] = counts.get(kind, 0) + 1
         return counts
 
-    def get_score_type(self, hole_number: int) -> Optional[str]:
-        """Get score name (eagle, birdie, par, bogey, etc.) for a hole."""
-        score = self.get_hole_score(hole_number)
-        par = self.get_hole_par(hole_number)
-        if score and par:
-            return score.get_score_type(par)
-        return None
-
-    def played_par(self) -> Optional[int]:
-        """The par of the holes that have a score, or None if any of them has no par."""
-        pars = [self.get_hole_par(s.hole_number) for s in self.hole_scores
-                if s.strokes is not None and s.hole_number is not None]
-        if not pars or any(p is None for p in pars):
-            return None
-        return sum(pars)  # type: ignore[arg-type]
-
     def total_to_par(self) -> Optional[int]:
-        """Strokes against the par of the holes played, so a nine or a round cut short reads
-        against its own holes rather than the full course. A full round whose holes have no par
-        falls back to the course's par."""
+        """Strokes against the round's par (`get_par`)."""
         total = self.calculate_total_score()
-        if total is None:
-            return None
-        par = self.played_par()
-        if par is None and self.holes_played() >= 18:
-            par = self.get_par()
-        if par is None:
-            return None
-        return total - par
+        par = self.get_par()
+        return total - par if total is not None and par is not None else None

@@ -66,7 +66,7 @@ def round_summary(round_: Round, best_rank: Optional[int] = None) -> RoundSummar
     return RoundSummaryResponse(
         id=str(round_.id),
         course_id=str(round_.course.id) if round_.course and round_.course.id else None,
-        course_name=round_.course_name_played or (round_.course.name if round_.course else None),
+        course_name=round_.course_name(),
         tee_box=round_.tee_box,
         date=round_.date,
         total_score=round_.calculate_total_score(),
@@ -101,6 +101,7 @@ def round_detail(round_: Round, handicap_index: Optional[float] = None) -> Round
     return RoundResponse(
         **_figures(round_),
         id=round_.id,
+        course_name=round_.course_name(),
         course=course_detail(round_.course, handicap_index) if round_.course else None,
         tee_box=round_.tee_box,
         date=round_.date,

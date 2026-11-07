@@ -33,8 +33,8 @@ export const sampleGolfer = {
       {"gir_percentage": 50.0, "holes_played": 18, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "total_gir": 9}
     ],
     "gir_vs_non_gir": [
-      {"birdie": 16.083916083916083, "bogey": 18.181818181818183, "bucket": "GIR", "double_bogey": 0.0, "eagle": 0.0, "holes_counted": 143, "par": 65.73426573426573, "quad_bogey": 0.0, "triple_bogey": 0.0},
-      {"birdie": 0.0, "bogey": 50.17301038062284, "bucket": "No GIR", "double_bogey": 17.647058823529413, "eagle": 0.0, "holes_counted": 289, "par": 30.79584775086505, "quad_bogey": 0.0, "triple_bogey": 1.384083044982699}
+      {"birdie": 16.083916083916083, "bogey": 18.181818181818183, "bucket": "GIR", "double": 0.0, "eagle": 0.0, "holes_counted": 143, "par": 65.73426573426573, "quad": 0.0, "triple": 0.0},
+      {"birdie": 0.0, "bogey": 50.17301038062284, "bucket": "No GIR", "double": 17.647058823529413, "eagle": 0.0, "holes_counted": 289, "par": 30.79584775086505, "quad": 0.0, "triple": 1.384083044982699}
     ],
     "handicap_trend": [
       {"differential": 8.7, "differential_status": "out", "handicap_index": null, "hi_threshold": 9.5, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "used_in_hi": false},
@@ -63,13 +63,13 @@ export const sampleGolfer = {
       {"differential": 7.0, "differential_status": "counting", "handicap_index": 7.0, "hi_threshold": 9.5, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "used_in_hi": true}
     ],
     "insights": [
-      {"category": "scoring", "kind": "scoring_shift", "rounds": 24, "strokes": 4.333333333333329, "trend": "down"},
+      {"category": "scoring", "kind": "scoring_shift", "rounds": 24, "strokes": 4.3, "trend": "down"},
       {"average_to_par": 0.5875000000000004, "category": "scoring", "holes": 240, "kind": "best_par", "par": 4, "trend": "flat"},
-      {"category": "gir", "kind": "gir_average", "percent": 33.101851851851855, "rating": "fair", "trend": "flat"},
-      {"category": "gir", "kind": "gir_shift", "points": 11.57407407407408, "trend": "up"},
-      {"category": "putting", "kind": "putts_average", "putts": 32.666666666666664, "rating": "fair", "trend": "flat"}
+      {"category": "gir", "kind": "gir_average", "percent": 33.1, "rating": "fair", "trend": "flat"},
+      {"category": "gir", "kind": "gir_shift", "points": 11.6, "trend": "up"},
+      {"category": "putting", "kind": "putts_average", "putts": 32.7, "rating": "fair", "trend": "flat"}
     ],
-    "kpis": {"average_putts": 32.7, "best_round": 75, "best_round_course": "Presidio Golf Course", "best_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "gir_percentage": 33.1, "handicap_index": 7.0, "putts_per_gir": 2.02, "scoring_average": 82.9, "scoring_average_change": -3.9, "scrambling_percentage": 31.6, "three_putt_rate": 13.2, "three_putts_per_round": 2.4, "total_rounds": 24, "up_and_down_percentage": 39.5},
+    "kpis": {"average_putts": 32.7, "best_round": 75, "best_round_course": "Presidio Golf Course", "best_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "gir_percentage": 33.1, "handicap_index": 7.0, "putts_per_gir": 2.02, "scoring_average": 82.9, "scoring_average_change": -3.9, "scrambling_percentage": 30.8, "three_putt_rate": 13.2, "three_putts_per_round": 2.4, "total_rounds": 24, "up_and_down_percentage": 39.4},
     "net_score_trend": [
       {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 81, "net_score": 74, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "to_par": 9},
       {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 88, "net_score": 81, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "to_par": 16},
@@ -103,16 +103,16 @@ export const sampleGolfer = {
       },
       "best_performance_streaks_events": {
         "lifetime": {
-          "longest_2_putt_or_less_streak": {"course": "Presidio Golf Course", "date": "2026/3/5", "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243"},
-          "longest_birdie_streak": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
-          "longest_par_streak": {"course": "Sharp Park Golf Course", "date": "2026/5/28", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806"},
-          "most_gir_in_a_row": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"}
+          "longest_2_putt_or_less_streak": {"course": "Presidio Golf Course", "date": "2026-03-05", "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243"},
+          "longest_birdie_streak": {"course": "Presidio Golf Course", "date": "2026-03-01", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "longest_par_streak": {"course": "Sharp Park Golf Course", "date": "2026-05-28", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806"},
+          "most_gir_in_a_row": {"course": "Presidio Golf Course", "date": "2026-05-13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"}
         },
         "one_year": {
-          "longest_2_putt_or_less_streak": {"course": "Presidio Golf Course", "date": "2026/3/5", "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243"},
-          "longest_birdie_streak": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
-          "longest_par_streak": {"course": "Sharp Park Golf Course", "date": "2026/5/28", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806"},
-          "most_gir_in_a_row": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"}
+          "longest_2_putt_or_less_streak": {"course": "Presidio Golf Course", "date": "2026-03-05", "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243"},
+          "longest_birdie_streak": {"course": "Presidio Golf Course", "date": "2026-03-01", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "longest_par_streak": {"course": "Sharp Park Golf Course", "date": "2026-05-28", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806"},
+          "most_gir_in_a_row": {"course": "Presidio Golf Course", "date": "2026-05-13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"}
         }
       },
       "career_totals": {
@@ -123,15 +123,15 @@ export const sampleGolfer = {
         "lifetime": {
           "gir_breaks": [
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
               "threshold": 3
             },
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/20", "in_window": true, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-20", "in_window": true, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"},
               "threshold": 6
             },
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/5/21", "in_window": true, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-05-21", "in_window": true, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd"},
               "threshold": 9
             },
             {"achievement": null, "threshold": 12},
@@ -143,19 +143,19 @@ export const sampleGolfer = {
         },
         "one_year": {
           "best_gir_in_round": 11,
-          "best_gir_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+          "best_gir_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
           "gir_milestones_achieved_from_lifetime_set": 3,
           "highest_gir_percentage": 61.111111111111114
         }
       },
       "gir_milestones_events": {
         "lifetime": {
-          "highest_gir_percentage_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
-          "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+          "highest_gir_percentage_in_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+          "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
         },
         "one_year": {
-          "best_gir_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
-          "highest_gir_percentage": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+          "best_gir_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+          "highest_gir_percentage": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
         }
       },
       "home_course_records": {
@@ -164,10 +164,10 @@ export const sampleGolfer = {
       },
       "home_course_records_events": {
         "lifetime": {
-          "lowest_score_on_home_course": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+          "lowest_score_on_home_course": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
         },
         "one_year": {
-          "lowest_score_on_home_course": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+          "lowest_score_on_home_course": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
         }
       },
       "putting_milestones": {
@@ -177,27 +177,27 @@ export const sampleGolfer = {
           "most_3_putts_in_round": 5,
           "putt_breaks": [
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
               "threshold": 45
             },
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
               "threshold": 42
             },
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
               "threshold": 39
             },
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
               "threshold": 36
             },
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
               "threshold": 33
             },
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
               "threshold": 30
             },
             {"achievement": null, "threshold": 27},
@@ -209,14 +209,14 @@ export const sampleGolfer = {
       },
       "putting_milestones_events": {
         "lifetime": {
-          "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
-          "most_1_putts_in_round": {"course": "Sharp Park Golf Course", "date": "2026/4/14", "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab"},
-          "most_3_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/20", "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"}
+          "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026-03-01", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "most_1_putts_in_round": {"course": "Sharp Park Golf Course", "date": "2026-04-14", "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab"},
+          "most_3_putts_in_round": {"course": "Presidio Golf Course", "date": "2026-03-20", "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"}
         },
         "one_year": {
-          "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
-          "most_1_putts_in_round": {"course": "Sharp Park Golf Course", "date": "2026/4/14", "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab"},
-          "most_3_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/20", "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"}
+          "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026-03-01", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "most_1_putts_in_round": {"course": "Sharp Park Golf Course", "date": "2026-04-14", "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab"},
+          "most_3_putts_in_round": {"course": "Presidio Golf Course", "date": "2026-03-20", "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"}
         }
       },
       "round_milestones": {
@@ -226,31 +226,31 @@ export const sampleGolfer = {
           "first_round_under_par": null,
           "score_breaks": [
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
               "threshold": 120
             },
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
               "threshold": 110
             },
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
               "threshold": 100
             },
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
               "threshold": 95
             },
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
               "threshold": 90
             },
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
               "threshold": 85
             },
             {
-              "achievement": {"course": "Presidio Golf Course", "date": "2026/5/13", "in_window": true, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+              "achievement": {"course": "Presidio Golf Course", "date": "2026-05-13", "in_window": true, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
               "threshold": 80
             },
             {"achievement": null, "threshold": 75},
@@ -268,19 +268,19 @@ export const sampleGolfer = {
       },
       "scoring_records_events": {
         "lifetime": {
-          "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
-          "highest_round": {"course": "Sharp Park Golf Course", "date": "2026/3/8", "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638"},
-          "lowest_9_holes": {"course": "Presidio Golf Course", "date": "2026/5/8", "round_id": "5ba4527d-c48a-549c-a054-9306305065af"},
-          "lowest_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
-          "most_birdies_in_round": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
-          "most_eagles_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
-          "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+          "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026-03-01", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "highest_round": {"course": "Sharp Park Golf Course", "date": "2026-03-08", "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638"},
+          "lowest_9_holes": {"course": "Presidio Golf Course", "date": "2026-05-08", "round_id": "5ba4527d-c48a-549c-a054-9306305065af"},
+          "lowest_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+          "most_birdies_in_round": {"course": "Presidio Golf Course", "date": "2026-05-13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+          "most_eagles_in_round": {"course": "Presidio Golf Course", "date": "2026-03-01", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
         },
         "one_year": {
-          "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
-          "lowest_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
-          "most_birdies_in_round": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
-          "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+          "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026-03-01", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "lowest_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+          "most_birdies_in_round": {"course": "Presidio Golf Course", "date": "2026-05-13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+          "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
         }
       },
       "window_days": 365
@@ -1008,8 +1008,8 @@ export const sampleGolfer = {
         {"gir_percentage": 44.44444444444444, "holes_played": 18, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "total_gir": 8}
       ],
       "gir_vs_non_gir": [
-        {"birdie": 9.523809523809524, "bogey": 28.57142857142857, "bucket": "GIR", "double_bogey": 0.0, "eagle": 0.0, "holes_counted": 21, "par": 61.904761904761905, "quad_bogey": 0.0, "triple_bogey": 0.0},
-        {"birdie": 0.0, "bogey": 56.86274509803921, "bucket": "No GIR", "double_bogey": 15.686274509803921, "eagle": 0.0, "holes_counted": 51, "par": 25.49019607843137, "quad_bogey": 0.0, "triple_bogey": 1.9607843137254901}
+        {"birdie": 9.523809523809524, "bogey": 28.57142857142857, "bucket": "GIR", "double": 0.0, "eagle": 0.0, "holes_counted": 21, "par": 61.904761904761905, "quad": 0.0, "triple": 0.0},
+        {"birdie": 0.0, "bogey": 56.86274509803921, "bucket": "No GIR", "double": 15.686274509803921, "eagle": 0.0, "holes_counted": 51, "par": 25.49019607843137, "quad": 0.0, "triple": 1.9607843137254901}
       ],
       "handicap_trend": [
         {"differential": 16.4, "differential_status": "out", "handicap_index": 8.7, "hi_threshold": 9.5, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "used_in_hi": false},
@@ -1019,12 +1019,12 @@ export const sampleGolfer = {
       ],
       "insights": [
         {"average_to_par": 0.625, "category": "scoring", "holes": 16, "kind": "best_par", "par": 3, "trend": "flat"},
-        {"category": "gir", "kind": "gir_average", "percent": 29.166666666666664, "rating": "weak", "trend": "flat"},
-        {"category": "gir", "kind": "gir_shift", "points": 2.7777777777777786, "trend": "up"},
+        {"category": "gir", "kind": "gir_average", "percent": 29.2, "rating": "weak", "trend": "flat"},
+        {"category": "gir", "kind": "gir_shift", "points": 2.8, "trend": "up"},
         {"category": "putting", "kind": "putts_average", "putts": 33.0, "rating": "fair", "trend": "flat"},
         {"category": "putting", "kind": "putts_shift", "putts": 3.0, "trend": "down"}
       ],
-      "kpis": {"average_putts": 33.0, "best_round": 81, "best_round_course": "Half Moon Bay Golf Links", "best_round_id": "fab7f282-178f-506b-9713-9764f5104099", "gir_percentage": 29.2, "handicap_index": 7.0, "putts_per_gir": 2.19, "scoring_average": 85.0, "scoring_average_change": null, "scrambling_percentage": 24.8, "three_putt_rate": 15.3, "three_putts_per_round": 2.8, "total_rounds": 4, "up_and_down_percentage": 40.5},
+      "kpis": {"average_putts": 33.0, "best_round": 81, "best_round_course": "Half Moon Bay Golf Links", "best_round_id": "fab7f282-178f-506b-9713-9764f5104099", "gir_percentage": 29.2, "handicap_index": 7.0, "putts_per_gir": 2.19, "scoring_average": 85.0, "scoring_average_change": null, "scrambling_percentage": 25.5, "three_putt_rate": 15.3, "three_putts_per_round": 2.8, "total_rounds": 4, "up_and_down_percentage": 41.2},
       "net_score_trend": [
         {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 90, "net_score": 83, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "to_par": 18},
         {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 86, "net_score": 79, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "to_par": 14},
@@ -1038,16 +1038,16 @@ export const sampleGolfer = {
         },
         "best_performance_streaks_events": {
           "lifetime": {
-            "longest_2_putt_or_less_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
-            "longest_birdie_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
-            "longest_par_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
-            "most_gir_in_a_row": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+            "longest_2_putt_or_less_streak": {"course": "Half Moon Bay Golf Links", "date": "2026-05-17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "longest_birdie_streak": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "longest_par_streak": {"course": "Half Moon Bay Golf Links", "date": "2026-04-25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_gir_in_a_row": {"course": "Half Moon Bay Golf Links", "date": "2026-04-07", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
           },
           "one_year": {
-            "longest_2_putt_or_less_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
-            "longest_birdie_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
-            "longest_par_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
-            "most_gir_in_a_row": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+            "longest_2_putt_or_less_streak": {"course": "Half Moon Bay Golf Links", "date": "2026-05-17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "longest_birdie_streak": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "longest_par_streak": {"course": "Half Moon Bay Golf Links", "date": "2026-04-25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_gir_in_a_row": {"course": "Half Moon Bay Golf Links", "date": "2026-04-07", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
           }
         },
         "career_totals": {
@@ -1058,11 +1058,11 @@ export const sampleGolfer = {
           "lifetime": {
             "gir_breaks": [
               {
-                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
                 "threshold": 3
               },
               {
-                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "in_window": true, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"},
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026-04-07", "in_window": true, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"},
                 "threshold": 6
               },
               {"achievement": null, "threshold": 9},
@@ -1075,19 +1075,19 @@ export const sampleGolfer = {
           },
           "one_year": {
             "best_gir_in_round": 8,
-            "best_gir_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "best_gir_round": {"course": "Half Moon Bay Golf Links", "date": "2026-05-17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
             "gir_milestones_achieved_from_lifetime_set": 2,
             "highest_gir_percentage": 44.44444444444444
           }
         },
         "gir_milestones_events": {
           "lifetime": {
-            "highest_gir_percentage_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
-            "most_gir_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
+            "highest_gir_percentage_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-05-17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "most_gir_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-05-17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
           },
           "one_year": {
-            "best_gir_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
-            "highest_gir_percentage": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
+            "best_gir_round": {"course": "Half Moon Bay Golf Links", "date": "2026-05-17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "highest_gir_percentage": {"course": "Half Moon Bay Golf Links", "date": "2026-05-17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
           }
         },
         "home_course_records": {
@@ -1105,23 +1105,23 @@ export const sampleGolfer = {
             "most_3_putts_in_round": 5,
             "putt_breaks": [
               {
-                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
                 "threshold": 45
               },
               {
-                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
                 "threshold": 42
               },
               {
-                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
                 "threshold": 39
               },
               {
-                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
                 "threshold": 36
               },
               {
-                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "in_window": true, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026-04-25", "in_window": true, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
                 "threshold": 33
               },
               {"achievement": null, "threshold": 30},
@@ -1134,14 +1134,14 @@ export const sampleGolfer = {
         },
         "putting_milestones_events": {
           "lifetime": {
-            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
-            "most_1_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
-            "most_3_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-04-25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_1_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-04-25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_3_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-04-07", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
           },
           "one_year": {
-            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
-            "most_1_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
-            "most_3_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-04-25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_1_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-04-25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_3_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-04-07", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
           }
         },
         "round_milestones": {
@@ -1151,27 +1151,27 @@ export const sampleGolfer = {
             "first_round_under_par": null,
             "score_breaks": [
               {
-                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
                 "threshold": 120
               },
               {
-                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
                 "threshold": 110
               },
               {
-                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
                 "threshold": 100
               },
               {
-                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
                 "threshold": 95
               },
               {
-                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "in_window": true, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"},
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026-04-07", "in_window": true, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"},
                 "threshold": 90
               },
               {
-                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "in_window": true, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026-04-25", "in_window": true, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
                 "threshold": 85
               },
               {"achievement": null, "threshold": 80},
@@ -1190,19 +1190,19 @@ export const sampleGolfer = {
         },
         "scoring_records_events": {
           "lifetime": {
-            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
-            "highest_round": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
-            "lowest_9_holes": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
-            "lowest_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
-            "most_birdies_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
-            "most_eagles_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
-            "most_gir_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
+            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-04-25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "highest_round": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "lowest_9_holes": {"course": "Half Moon Bay Golf Links", "date": "2026-05-17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "lowest_round": {"course": "Half Moon Bay Golf Links", "date": "2026-05-17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "most_birdies_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "most_eagles_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "most_gir_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-05-17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
           },
           "one_year": {
-            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
-            "lowest_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
-            "most_birdies_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
-            "most_gir_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
+            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-04-25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "lowest_round": {"course": "Half Moon Bay Golf Links", "date": "2026-05-17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "most_birdies_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-03-18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "most_gir_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-05-17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
           }
         },
         "window_days": 365
@@ -1431,7 +1431,6 @@ export const sampleGolfer = {
     }
   },
   "dashboard": {
-    "average_gir": 6.0,
     "average_putts": 32.7,
     "best_recent_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd",
     "best_round": 75,
@@ -1462,13 +1461,13 @@ export const sampleGolfer = {
       {"differential": 7.0, "differential_status": "counting", "handicap_index": 7.0, "hi_threshold": 9.5, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "used_in_hi": true}
     ],
     "milestones": [
-      {"course": "Sharp Park Golf Course", "date": "2026/5/28", "kind": "par_streak", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "value": 7},
-      {"course": "Presidio Golf Course", "date": "2026/5/13", "kind": "score_break", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "value": 80},
-      {"course": "Presidio Golf Course", "date": "2026/3/1", "kind": "putt_break", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "value": 30}
+      {"course": "Sharp Park Golf Course", "date": "2026-05-28", "kind": "par_streak", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "value": 7},
+      {"course": "Presidio Golf Course", "date": "2026-05-13", "kind": "score_break", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "value": 80},
+      {"course": "Presidio Golf Course", "date": "2026-03-01", "kind": "putt_break", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "value": 30}
     ],
     "putts_per_round": 33.6,
     "putts_rating": "fair",
-    "recent_form": {"gir_pct": 50.0, "putts_per_18": 33.6, "scrambling_pct": 35.55555555555556, "up_and_down_pct": 37.77777777777778},
+    "recent_form": {"average_putts": 33.6, "gir_pct": 50.0, "scrambling_pct": 35.6, "up_and_down_pct": 37.8},
     "recent_rounds": [
       {
         "back_nine": 38,
@@ -1792,6 +1791,7 @@ export const sampleGolfer = {
         "user_id": null
       },
       "course_handicap": 7,
+      "course_name": "Presidio Golf Course",
       "course_name_played": null,
       "date": "2026-05-25T09:00:00",
       "fairways_hit": 7,
@@ -1884,7 +1884,7 @@ export const sampleGolfer = {
         "type": "blowup_holes"
       },
       {
-        "data": {"scrambling_percentage": 32.4},
+        "data": {"scrambling_percentage": 31.7},
         "detail": "You scramble successfully 32% of the time when missing greens. Reaching 50% saves roughly 1.7 strokes per round through better chip-and-putt.",
         "headline": "Improve scrambling \u2192 32% (target 50%)",
         "percentage_of_gap": 52.3,
@@ -1949,16 +1949,16 @@ export const achievementsAYearOn = {
   },
   "best_performance_streaks_events": {
     "lifetime": {
-      "longest_2_putt_or_less_streak": {"course": "Presidio Golf Course", "date": "2026/3/5", "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243"},
-      "longest_birdie_streak": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
-      "longest_par_streak": {"course": "Sharp Park Golf Course", "date": "2026/5/28", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806"},
-      "most_gir_in_a_row": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"}
+      "longest_2_putt_or_less_streak": {"course": "Presidio Golf Course", "date": "2026-03-05", "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243"},
+      "longest_birdie_streak": {"course": "Presidio Golf Course", "date": "2026-03-01", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+      "longest_par_streak": {"course": "Sharp Park Golf Course", "date": "2026-05-28", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806"},
+      "most_gir_in_a_row": {"course": "Presidio Golf Course", "date": "2026-05-13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"}
     },
     "one_year": {
-      "longest_2_putt_or_less_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
-      "longest_birdie_streak": {"course": "Presidio Golf Course", "date": "2026/4/11", "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b"},
-      "longest_par_streak": {"course": "Sharp Park Golf Course", "date": "2026/5/28", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806"},
-      "most_gir_in_a_row": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"}
+      "longest_2_putt_or_less_streak": {"course": "Half Moon Bay Golf Links", "date": "2026-05-17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+      "longest_birdie_streak": {"course": "Presidio Golf Course", "date": "2026-04-11", "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b"},
+      "longest_par_streak": {"course": "Sharp Park Golf Course", "date": "2026-05-28", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806"},
+      "most_gir_in_a_row": {"course": "Presidio Golf Course", "date": "2026-05-13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"}
     }
   },
   "career_totals": {
@@ -1969,15 +1969,15 @@ export const achievementsAYearOn = {
     "lifetime": {
       "gir_breaks": [
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
           "threshold": 3
         },
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/20", "in_window": false, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-20", "in_window": false, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"},
           "threshold": 6
         },
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/5/21", "in_window": true, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-05-21", "in_window": true, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd"},
           "threshold": 9
         },
         {"achievement": null, "threshold": 12},
@@ -1989,19 +1989,19 @@ export const achievementsAYearOn = {
     },
     "one_year": {
       "best_gir_in_round": 11,
-      "best_gir_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+      "best_gir_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
       "gir_milestones_achieved_from_lifetime_set": 1,
       "highest_gir_percentage": 61.111111111111114
     }
   },
   "gir_milestones_events": {
     "lifetime": {
-      "highest_gir_percentage_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
-      "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+      "highest_gir_percentage_in_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+      "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
     },
     "one_year": {
-      "best_gir_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
-      "highest_gir_percentage": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+      "best_gir_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+      "highest_gir_percentage": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
     }
   },
   "home_course_records": {
@@ -2010,10 +2010,10 @@ export const achievementsAYearOn = {
   },
   "home_course_records_events": {
     "lifetime": {
-      "lowest_score_on_home_course": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+      "lowest_score_on_home_course": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
     },
     "one_year": {
-      "lowest_score_on_home_course": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+      "lowest_score_on_home_course": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
     }
   },
   "putting_milestones": {
@@ -2023,27 +2023,27 @@ export const achievementsAYearOn = {
       "most_3_putts_in_round": 5,
       "putt_breaks": [
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
           "threshold": 45
         },
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
           "threshold": 42
         },
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
           "threshold": 39
         },
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
           "threshold": 36
         },
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
           "threshold": 33
         },
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
           "threshold": 30
         },
         {"achievement": null, "threshold": 27},
@@ -2055,14 +2055,14 @@ export const achievementsAYearOn = {
   },
   "putting_milestones_events": {
     "lifetime": {
-      "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
-      "most_1_putts_in_round": {"course": "Sharp Park Golf Course", "date": "2026/4/14", "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab"},
-      "most_3_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/20", "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"}
+      "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026-03-01", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+      "most_1_putts_in_round": {"course": "Sharp Park Golf Course", "date": "2026-04-14", "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab"},
+      "most_3_putts_in_round": {"course": "Presidio Golf Course", "date": "2026-03-20", "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"}
     },
     "one_year": {
-      "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
-      "most_1_putts_in_round": {"course": "Sharp Park Golf Course", "date": "2026/4/14", "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab"},
-      "most_3_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+      "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026-05-13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+      "most_1_putts_in_round": {"course": "Sharp Park Golf Course", "date": "2026-04-14", "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab"},
+      "most_3_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026-04-07", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
     }
   },
   "round_milestones": {
@@ -2072,31 +2072,31 @@ export const achievementsAYearOn = {
       "first_round_under_par": null,
       "score_breaks": [
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
           "threshold": 120
         },
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
           "threshold": 110
         },
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
           "threshold": 100
         },
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
           "threshold": 95
         },
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
           "threshold": 90
         },
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-03-01", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
           "threshold": 85
         },
         {
-          "achievement": {"course": "Presidio Golf Course", "date": "2026/5/13", "in_window": true, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+          "achievement": {"course": "Presidio Golf Course", "date": "2026-05-13", "in_window": true, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
           "threshold": 80
         },
         {"achievement": null, "threshold": 75},
@@ -2114,19 +2114,19 @@ export const achievementsAYearOn = {
   },
   "scoring_records_events": {
     "lifetime": {
-      "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
-      "highest_round": {"course": "Sharp Park Golf Course", "date": "2026/3/8", "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638"},
-      "lowest_9_holes": {"course": "Presidio Golf Course", "date": "2026/5/8", "round_id": "5ba4527d-c48a-549c-a054-9306305065af"},
-      "lowest_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
-      "most_birdies_in_round": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
-      "most_eagles_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
-      "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+      "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026-03-01", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+      "highest_round": {"course": "Sharp Park Golf Course", "date": "2026-03-08", "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638"},
+      "lowest_9_holes": {"course": "Presidio Golf Course", "date": "2026-05-08", "round_id": "5ba4527d-c48a-549c-a054-9306305065af"},
+      "lowest_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+      "most_birdies_in_round": {"course": "Presidio Golf Course", "date": "2026-05-13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+      "most_eagles_in_round": {"course": "Presidio Golf Course", "date": "2026-03-01", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+      "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
     },
     "one_year": {
-      "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
-      "lowest_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
-      "most_birdies_in_round": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
-      "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+      "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026-05-13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+      "lowest_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+      "most_birdies_in_round": {"course": "Presidio Golf Course", "date": "2026-05-13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+      "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026-05-25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
     }
   },
   "window_days": 365

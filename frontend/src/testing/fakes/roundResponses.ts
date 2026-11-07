@@ -70,23 +70,25 @@ function kindFor(toPar: number | null): ScoreKind | null {
   return (["birdie", "par", "bogey", "double", "triple"] as const)[toPar + 1];
 }
 
-function roundPar(round: StoredRound): number | null {
-  if (round.course) return coursePar(round.course);
-  const pars = round.hole_scores.map((h) => h.par_played).filter((p): p is number => p != null);
-  return pars.length > 0 ? sum(pars) : null;
-}
-
 function holesPlayed(round: StoredRound): number {
   return round.hole_scores.filter((h) => h.strokes != null).length;
 }
 
-/** Strokes against the par of the holes played; a full round whose holes have no par reads against the course's. */
-function toPar(round: StoredRound, total: number | null): number | null {
-  if (total == null) return null;
+/** The par of the holes played; a full round whose holes have no par reads the course's. */
+function roundPar(round: StoredRound): number | null {
   const pars = round.hole_scores.filter((h) => h.strokes != null).map((h) => holePar(round, h));
-  const played = pars.length > 0 && pars.every((p) => p != null) ? sum(pars as number[]) : null;
-  const par = played ?? (holesPlayed(round) >= 18 ? roundPar(round) : null);
-  return par != null ? total - par : null;
+  if (pars.length > 0 && pars.every((p) => p != null)) return sum(pars as number[]);
+  return round.course && holesPlayed(round) >= 18 ? coursePar(round.course) : null;
+}
+
+function toPar(round: StoredRound, total: number | null): number | null {
+  const par = roundPar(round);
+  return total != null && par != null ? total - par : null;
+}
+
+/** The linked course's name, else the name the round was saved with. */
+function courseName(round: StoredRound): string | null {
+  return round.course?.name ?? round.course_name_played;
 }
 
 /** The tee's course handicap, for a full round: tee ratings are for 18 holes. */
@@ -180,6 +182,7 @@ export function roundResponse(round: StoredRound): RoundDto {
   return {
     ...round,
     ...figured,
+    course_name: courseName(round),
     course: round.course ? courseResponse(round.course) : null,
     hole_scores: holes,
     course_handicap: handicap,
@@ -211,7 +214,7 @@ export function summaryResponse(round: StoredRound, bestRank: number | null = nu
   return {
     id: round.id,
     course_id: round.course?.id ?? null,
-    course_name: round.course_name_played ?? round.course?.name ?? null,
+    course_name: courseName(round),
     tee_box: round.tee_box,
     date: round.date,
     total_score,

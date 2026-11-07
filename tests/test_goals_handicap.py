@@ -40,17 +40,17 @@ def _make_round(
 def _patch_goal_inputs(monkeypatch, *, active: bool = True) -> None:
     monkeypatch.setattr(
         goals,
-        "three_putts_per_round",
-        lambda rounds: [{"holes_with_putt_data": 18, "three_putt_count": 2 if active else 0}],
+        "three_putt_averages",
+        lambda rounds: {"per_round": 2.0 if active else 0.0, "rate": None},
     )
     monkeypatch.setattr(
         goals,
         "score_type_distribution_per_round",
         lambda rounds: [{
             "holes_counted": 18,
-            "double_bogey": 20 if active else 0,
-            "triple_bogey": 10 if active else 0,
-            "quad_bogey": 5 if active else 0,
+            "double": 20 if active else 0,
+            "triple": 10 if active else 0,
+            "quad": 5 if active else 0,
         }],
     )
     monkeypatch.setattr(
@@ -68,16 +68,8 @@ def _patch_goal_inputs(monkeypatch, *, active: bool = True) -> None:
         "course_difficulty_profile_by_hole",
         lambda rounds: [{"hole_number": 7, "average_to_par": 1.5 if active else 0, "sample_size": 5}],
     )
-    monkeypatch.setattr(
-        goals,
-        "overall_gir_percentage",
-        lambda rounds: {"gir_percentage": 20.0 if active else 60.0},
-    )
-    monkeypatch.setattr(
-        goals,
-        "scrambling_per_round",
-        lambda rounds: [{"scrambling_percentage": 20.0 if active else 70.0}],
-    )
+    monkeypatch.setattr(goals, "gir_percentage", lambda rounds: 20.0 if active else 60.0)
+    monkeypatch.setattr(goals, "scrambling_percentage", lambda rounds: 20.0 if active else 70.0)
     monkeypatch.setattr(
         goals,
         "scoring_by_par",
