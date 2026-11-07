@@ -173,7 +173,7 @@ export function TrendAreaChart({
               y2={y(reference.value)}
               stroke={tokens.color.chart.axis}
               strokeWidth={tokens.lineWidth.border}
-              strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
+              strokeDasharray={tokens.chart.guideDash}
             />
             <AxisLabel x={W - PAD.right} y={y(reference.value) - 6} anchor="end">
               {reference.label}
@@ -203,7 +203,7 @@ export function TrendAreaChart({
             y2={baseline}
             stroke={tokens.color.chart.muted}
             strokeWidth={tokens.lineWidth.border}
-            strokeDasharray={`${tokens.space.dot} ${tokens.space.dot}`}
+            strokeDasharray={tokens.chart.guideDash}
           />
         )}
 
@@ -243,7 +243,7 @@ export function TrendAreaChart({
             key={active}
             data-slot="trend-area-tooltip"
             className={cn(
-              "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/95 px-3 py-2.5 text-body-sm shadow-card",
+              "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
               // Past two thirds of the way across, the card opens to the left of the point.
               x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
             )}
@@ -258,11 +258,14 @@ export function TrendAreaChart({
               <div className="max-w-40 truncate text-label text-muted-foreground">{point.subtitle}</div>
             )}
             <div className="mt-1.5 flex flex-col gap-0.5">
-              {series.map((s, i) => (
-                <TooltipRow key={s.label} label={s.label}>
-                  {point.values[i] != null ? format(point.values[i]!) : "—"}
-                </TooltipRow>
-              ))}
+              {series.map((s, i) => {
+                const value = point.values[i];
+                return (
+                  <TooltipRow key={s.label} label={s.label}>
+                    {value != null ? format(value) : "—"}
+                  </TooltipRow>
+                );
+              })}
               {point.notes?.map((note) => (
                 <TooltipRow key={note.label} label={note.label}>
                   {note.value}

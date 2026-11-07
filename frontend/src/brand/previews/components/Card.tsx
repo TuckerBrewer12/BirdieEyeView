@@ -1,4 +1,3 @@
-import { X } from "lucide-react";
 import {
   Card,
   CardAction,
@@ -8,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/brand/components/Card";
-import { Button } from "@/brand/components/Button";
+import { Button, ClearButton } from "@/brand/components/Button";
 
 export default function CardPreview() {
   return (
@@ -30,13 +29,7 @@ export default function CardPreview() {
           <CardTitle>Linked</CardTitle>
           <CardDescription>Pebble Beach Golf Links</CardDescription>
           <CardAction>
-            <button
-              type="button"
-              aria-label="Unlink course"
-              className="inline-flex text-muted-foreground"
-            >
-              <X className="size-4" />
-            </button>
+            <ClearButton label="Unlink course" />
           </CardAction>
         </CardHeader>
       </Card>
@@ -46,13 +39,7 @@ export default function CardPreview() {
           <CardTitle>Muni Tuesday</CardTitle>
           <CardDescription>Saving without a linked course</CardDescription>
           <CardAction>
-            <button
-              type="button"
-              aria-label="Edit name"
-              className="inline-flex text-muted-foreground"
-            >
-              <X className="size-4" />
-            </button>
+            <ClearButton label="Edit name" />
           </CardAction>
         </CardHeader>
       </Card>

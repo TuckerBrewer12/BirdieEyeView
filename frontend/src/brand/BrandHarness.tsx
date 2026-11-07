@@ -8,7 +8,7 @@ const modules = import.meta.glob(["./previews/*/*.tsx", "../pages/**/previews/*.
 
 // Stories are addressed by file name alone, so the kit and every page share
 // one namespace — a name in two places would silently shadow the other.
-const previews: Record<string, ComponentType> = {};
+const previews: Partial<Record<string, ComponentType>> = {};
 for (const [path, module] of Object.entries(modules)) {
   const story = path.slice(path.lastIndexOf("/") + 1, -".tsx".length);
   if (previews[story]) throw new Error(`Duplicate brand preview: ${story}`);

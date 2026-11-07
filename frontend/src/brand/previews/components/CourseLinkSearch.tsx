@@ -34,7 +34,6 @@ export default function CourseLinkSearchPreview() {
         onQueryChange={() => {}}
         onSelectCourse={() => {}}
         onClose={() => {}}
-        autoFocus={false}
       />
       <CourseLinkSearch
         title="Link to a saved course"
@@ -44,7 +43,6 @@ export default function CourseLinkSearchPreview() {
         onQueryChange={() => {}}
         onSelectCourse={() => {}}
         onClose={() => {}}
-        autoFocus={false}
       />
       <CourseLinkSearch
         query="Half Moon"
@@ -55,7 +53,6 @@ export default function CourseLinkSearchPreview() {
         onQueryChange={() => {}}
         onSelectCourse={() => {}}
         onClose={() => {}}
-        autoFocus={false}
       />
       <CourseLinkSearch
         query=""
@@ -64,7 +61,6 @@ export default function CourseLinkSearchPreview() {
         onQueryChange={() => {}}
         onSelectCourse={() => {}}
         onClose={() => {}}
-        autoFocus={false}
         linkedName="Pebble Beach Golf Links"
         onClear={() => {}}
       />
@@ -75,7 +71,6 @@ export default function CourseLinkSearchPreview() {
         onQueryChange={() => {}}
         onSelectCourse={() => {}}
         onClose={() => {}}
-        autoFocus={false}
         customName="Muni Tuesday"
         onClear={() => {}}
       />
