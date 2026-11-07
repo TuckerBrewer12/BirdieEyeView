@@ -138,7 +138,7 @@ export class LandingRobot {
   }
 
   async tapSignUp(): Promise<this> {
-    await this.page.getByRole("link", { name: "Sign Up", exact: true }).click();
+    await this.page.getByRole("button", { name: "Sign Up", exact: true }).click();
     return this;
   }
 

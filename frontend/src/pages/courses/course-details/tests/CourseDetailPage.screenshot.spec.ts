@@ -22,6 +22,14 @@ test("performance tab", async ({ courseDetail }) => {
   await courseDetail.capture("course-detail-performance.png");
 });
 
+test("performance tab when the golfer's rounds here fail to load", async ({ courseDetail }) => {
+  await courseDetail.open(halfMoonBayCourse, { courseAnalyticsError: "Could not load your rounds at this course." });
+  await courseDetail.tapPerformance();
+  await courseDetail.seesPerformanceError();
+  await courseDetail.doesNotSeeNoRounds();
+  await courseDetail.capture("course-detail-performance-error.png");
+});
+
 test("missing course", async ({ courseDetail }) => {
   await courseDetail.openMissing();
   await courseDetail.seesNotFound();

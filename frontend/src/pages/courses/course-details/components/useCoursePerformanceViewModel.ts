@@ -1,8 +1,14 @@
 import { EMPTY_COURSE_ANALYTICS, type RoundSummary, type ScorePoint } from "@/domain";
+import { messageFrom } from "@/lib/userFacingErrors";
 import { coursesRepository, type CoursesRepository } from "../../coursesRepository";
 import { useCourseAnalytics } from "../../useCourseAnalytics";
 
 export interface CoursePerformanceViewModel {
+  /** No figures yet: the page waits for the first load, so this is a retry after a failed one. */
+  loading: boolean;
+  /** The figures failed to load and there are none to show. */
+  loadError: string | null;
+  retry: () => void;
   roundsPlayed: number;
   scoringAverage: number | null;
   bestScore: number | null;
@@ -19,9 +25,13 @@ export function useCoursePerformanceViewModel(
   courseId: string,
   repository: CoursesRepository = coursesRepository,
 ): CoursePerformanceViewModel {
-  const { data: analytics = EMPTY_COURSE_ANALYTICS } = useCourseAnalytics(userId, courseId, repository);
+  const { data, isPending, isError, error, refetch } = useCourseAnalytics(userId, courseId, repository);
+  const analytics = data ?? EMPTY_COURSE_ANALYTICS;
 
   return {
+    loading: isPending,
+    loadError: isError && !data ? messageFrom(error, "Could not load your rounds at this course.") : null,
+    retry: () => void refetch(),
     roundsPlayed: analytics.roundsPlayed,
     scoringAverage: analytics.scoringAverage,
     bestScore: analytics.bestScore,

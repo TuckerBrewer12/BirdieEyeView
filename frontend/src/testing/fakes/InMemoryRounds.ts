@@ -21,6 +21,10 @@ export interface InMemoryRoundsSeed {
   detailRounds?: RoundDto[];
   fullCourses?: CourseDto[];
   courseAnalytics?: CourseAnalyticsDto | null;
+  /** The round list fails to load with this. */
+  roundsError?: string | null;
+  /** The golfer's figures at a course fail to load with this. */
+  courseAnalyticsError?: string | null;
   comparison?: RoundComparisonDto | null;
   /** The handicap on the golfer's profile. Course handicaps come on the courses' tees, as the server sends them. */
   handicapIndex?: number | null;
@@ -82,6 +86,8 @@ export class InMemoryRounds {
   /** Every scan saved, as sent. */
   savedScans: SaveScanRequestDto[] = [];
   coursesError: string | null;
+  roundsError: string | null;
+  courseAnalyticsError: string | null;
   searchDelaysMs: number[];
   private searchCalls = 0;
   deletedIds: string[];
@@ -104,6 +110,8 @@ export class InMemoryRounds {
     this.searchError = seed.searchError ?? null;
     this.saveError = seed.saveError ?? null;
     this.coursesError = seed.coursesError ?? null;
+    this.roundsError = seed.roundsError ?? null;
+    this.courseAnalyticsError = seed.courseAnalyticsError ?? null;
     this.searchDelaysMs = [...(seed.searchDelaysMs ?? [])];
     this.deletedIds = [];
   }
@@ -131,6 +139,7 @@ export class InMemoryRounds {
   }
 
   getRoundsForUser(): RoundSummaryDto[] {
+    if (this.roundsError) throw new Error(this.roundsError);
     const rounds = this.listed.map((id) => this.stored.get(id)!);
     const ranks = bestRanks(rounds);
     return rounds.map((round, i) => summaryResponse(round, ranks[i]));
@@ -222,6 +231,7 @@ export class InMemoryRounds {
   }
 
   getCourseAnalytics(courseId: string): CourseAnalyticsDto {
+    if (this.courseAnalyticsError) throw new Error(this.courseAnalyticsError);
     return this.courseAnalytics ?? emptyCourseAnalytics(courseId);
   }
 

@@ -18,7 +18,7 @@ function wrapper({ children }: { children: ReactNode }) {
 
 function renderVm(seed: FakeRoundsRepositorySeed = { rounds: storedRounds }) {
   const repository = new FakeRoundsRepository(seed);
-  return renderHook(() => useRoundsPageViewModel("user-1", repository), { wrapper });
+  return { repository, ...renderHook(() => useRoundsPageViewModel("user-1", repository), { wrapper }) };
 }
 
 describe("useRoundsPageViewModel", () => {
@@ -68,5 +68,24 @@ describe("useRoundsPageViewModel", () => {
 
     expect(result.current.isLinkOpen("round-4")).toBe(false);
     expect(result.current.isLinkOpen("round-1")).toBe(true);
+  });
+
+  it("reports a failed load without the empty copy, and a retry brings the rounds in", async () => {
+    const { result, repository } = renderVm({ rounds: storedRounds, roundsError: "Could not load your rounds." });
+    await waitFor(() => expect(result.current.loadError).toBe("Could not load your rounds."));
+    expect(result.current.showEmpty).toBe(false);
+
+    repository.store.roundsError = null;
+    act(() => result.current.retry());
+
+    await waitFor(() => expect(result.current.rounds).toHaveLength(4));
+    expect(result.current.loadError).toBeNull();
+  });
+
+  it("shows the empty copy only for a successful empty list", async () => {
+    const { result } = renderVm({ rounds: [] });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.loadError).toBeNull();
+    expect(result.current.showEmpty).toBe(true);
   });
 });

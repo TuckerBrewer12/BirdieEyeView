@@ -117,3 +117,15 @@ test("a course search with no hits says so", async ({ rounds }) => {
   await rounds.searchCourses("zzzz");
   await rounds.seesNoCoursesFound();
 });
+
+test("a failed load shows the error, not the empty list, and a retry brings the rounds in", async ({ rounds }) => {
+  await rounds.openFailed(storedRounds);
+  await rounds.seesLoadError();
+  await rounds.doesNotSeeEmptyState();
+
+  rounds.nextLoadSucceeds();
+  await rounds.retry();
+
+  await rounds.seesCourse("Half Moon Bay");
+  await rounds.seesRoundCount(4);
+});

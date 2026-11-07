@@ -1,8 +1,8 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import { halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
+import { emptyCourseAnalytics, halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
 import { FakeCoursesRepository } from "@/testing/fakes/FakeCoursesRepository";
 import { useCoursePerformanceViewModel } from "../components/useCoursePerformanceViewModel";
 
@@ -24,5 +24,33 @@ describe("useCoursePerformanceViewModel", () => {
     expect([result.current.scoringAverage, result.current.bestScore, result.current.worstScore]).toEqual([75, 72, 78]);
     expect(result.current.trend.map((row) => row.score)).toEqual([72, 78]);
     expect(result.current.rounds.map((round) => round.id)).toEqual(["round-1", "round-2"]);
+  });
+
+  it("reports a failed load, rather than no rounds, and a retry brings the figures in", async () => {
+    const repository = new FakeCoursesRepository();
+    repository.analytics = halfMoonBayAnalytics;
+    repository.analyticsError = new Error("Could not load your rounds at this course.");
+    const { result } = renderHook(
+      () => useCoursePerformanceViewModel("user-1", "course-hmb", repository),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.loadError).toBe("Could not load your rounds at this course."));
+
+    repository.analyticsError = null;
+    act(() => result.current.retry());
+
+    await waitFor(() => expect(result.current.roundsPlayed).toBe(2));
+    expect(result.current.loadError).toBeNull();
+  });
+
+  it("has no error when the golfer simply has no rounds here", async () => {
+    const repository = new FakeCoursesRepository();
+    repository.analytics = emptyCourseAnalytics("course-hmb");
+    const { result } = renderHook(
+      () => useCoursePerformanceViewModel("user-1", "course-hmb", repository),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.rounds).toEqual([]));
+    expect(result.current.loadError).toBeNull();
   });
 });

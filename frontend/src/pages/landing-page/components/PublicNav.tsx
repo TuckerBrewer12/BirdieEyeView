@@ -23,10 +23,10 @@ export function PublicNav() {
         </Link>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Button variant="outline" shape="pill" render={<Link to="/login" />}>
+          <Button variant="outline" shape="pill" nativeButton={false} render={<Link to="/login" />}>
             Sign In
           </Button>
-          <Button shape="pill" render={<Link to="/register" />}>
+          <Button shape="pill" nativeButton={false} render={<Link to="/register" />}>
             Sign Up
           </Button>
           <Button
@@ -55,10 +55,10 @@ export function PublicNav() {
           <span className="dark:hidden">Dark Mode</span>
           <span className="hidden dark:inline">Light Mode</span>
         </Button>
-        <Button variant="outline" shape="pill" render={<Link to="/login" />}>
+        <Button variant="outline" shape="pill" nativeButton={false} render={<Link to="/login" />}>
           Sign In
         </Button>
-        <Button shape="pill" render={<Link to="/register" />}>
+        <Button shape="pill" nativeButton={false} render={<Link to="/register" />}>
           Sign Up
         </Button>
       </CollapsibleContent>

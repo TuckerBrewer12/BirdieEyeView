@@ -1,8 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  Button,
   Card,
   CardContent,
   Collection,
+  LoadingState,
   Reveal,
   RoundPreview,
   ScoreTrendChart,
@@ -24,6 +29,24 @@ const dash = (value: number | null) => (value == null ? "—" : String(value));
 export function CoursePerformanceSection({ userId, courseId }: CoursePerformanceSectionProps) {
   const navigate = useNavigate();
   const viewModel = useCoursePerformanceViewModel(userId, courseId);
+
+  if (viewModel.loading) {
+    return <LoadingState>Loading your rounds here...</LoadingState>;
+  }
+
+  if (viewModel.loadError) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{viewModel.loadError}</AlertDescription>
+        <AlertAction>
+          <Button variant="outline" size="xs" onClick={viewModel.retry}>
+            Retry
+          </Button>
+        </AlertAction>
+      </Alert>
+    );
+  }
+
   const heroStats = [
     { label: "Rounds Played", value: String(viewModel.roundsPlayed) },
     { label: "Scoring Avg", value: viewModel.scoringAverage?.toFixed(1) ?? "—" },

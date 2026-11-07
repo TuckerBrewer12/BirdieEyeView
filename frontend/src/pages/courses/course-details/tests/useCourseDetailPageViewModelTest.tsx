@@ -32,4 +32,16 @@ describe("useCourseDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.loadError).toBe("Course not found."));
     expect(result.current.course).toBeNull();
   });
+
+  it("offers the performance tab when the golfer's rounds here failed to load, so it can say so", async () => {
+    const repository = new FakeCoursesRepository();
+    repository.fullCourses = [halfMoonBayCourse];
+    repository.analyticsError = new Error("Could not load your rounds at this course.");
+    const { result } = renderVm(repository);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.pageTabs.map((tab) => tab.key)).toEqual(["course", "performance"]);
+
+    act(() => result.current.selectPageTab("performance"));
+    expect(result.current.activeTab).toBe("performance");
+  });
 });

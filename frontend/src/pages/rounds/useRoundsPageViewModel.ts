@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import type { RoundSummary } from "@/domain";
+import { messageFrom } from "@/lib/userFacingErrors";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 import {
   SORT_LABELS,
@@ -22,6 +23,10 @@ export type { CourseFilterOption, FilterMode, SortKey, SortOption };
 
 export interface RoundsUiState {
   loading: boolean;
+  /** The list failed to load and there is none to show. */
+  loadError: string | null;
+  /** Empty copy — false while loading or when a load error is showing. */
+  showEmpty: boolean;
   rounds: RoundSummary[];
   filteredRounds: RoundSummary[];
   visibleRounds: RoundSummary[];
@@ -37,6 +42,7 @@ export interface RoundsUiState {
 }
 
 export interface RoundsPageViewModel extends RoundsUiState {
+  retry: () => void;
   loadMore: () => void;
   setSearch: (q: string) => void;
   setFilterMode: (mode: FilterMode) => void;
@@ -52,10 +58,11 @@ export function useRoundsPageViewModel(
   userId: string,
   repository: RoundsRepository = roundsRepository,
 ): RoundsPageViewModel {
-  const { data: rounds = [], isLoading: loading } = useQuery({
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: queryKeys.rounds(userId),
     queryFn: () => repository.getRoundsForUser(userId, 100),
   });
+  const rounds = useMemo(() => data ?? [], [data]);
 
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<Sort>({ key: "date", ascending: false });
@@ -99,9 +106,13 @@ export function useRoundsPageViewModel(
   const visibleRounds = filteredRounds.slice(0, visibleCount);
   const remainingCount = Math.max(0, filteredRounds.length - visibleCount);
   const effective = effectiveSort(filterMode, sort);
+  const loadError = isError && !data ? messageFrom(error, "Could not load your rounds.") : null;
 
   return {
     loading,
+    loadError,
+    retry: () => void refetch(),
+    showEmpty: !loading && loadError == null && filteredRounds.length === 0,
     rounds,
     filteredRounds,
     visibleRounds,

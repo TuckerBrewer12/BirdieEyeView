@@ -119,7 +119,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
             )}
 
             <div className="border-t border-border px-6 py-5 text-center">
-              <Button render={<Link to="/register" />}>
+              <Button nativeButton={false} render={<Link to="/register" />}>
                 Sign up to save this round
                 <ArrowRight data-icon="inline-end" />
               </Button>
