@@ -747,6 +747,9 @@
             },
             "title": "Par Types",
             "type": "array"
+          },
+          "verdicts": {
+            "$ref": "#/components/schemas/BenchmarkVerdicts"
           }
         },
         "required": [
@@ -754,7 +757,8 @@
           "handicap",
           "goal",
           "benchmark",
-          "par_types"
+          "par_types",
+          "verdicts"
         ],
         "title": "BenchmarkComparisonResponse",
         "type": "object"
@@ -838,6 +842,117 @@
           "par5_to_par"
         ],
         "title": "BenchmarkShape",
+        "type": "object"
+      },
+      "BenchmarkVerdicts": {
+        "description": "Each radar axis against the benchmark: ahead, even or behind. Null without both figures.",
+        "properties": {
+          "gir_percentage": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ahead",
+                  "even",
+                  "behind"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gir Percentage"
+          },
+          "par3_to_par": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ahead",
+                  "even",
+                  "behind"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Par3 To Par"
+          },
+          "par4_to_par": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ahead",
+                  "even",
+                  "behind"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Par4 To Par"
+          },
+          "par5_to_par": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ahead",
+                  "even",
+                  "behind"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Par5 To Par"
+          },
+          "putts_per_gir": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ahead",
+                  "even",
+                  "behind"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Putts Per Gir"
+          },
+          "scrambling_percentage": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ahead",
+                  "even",
+                  "behind"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scrambling Percentage"
+          }
+        },
+        "required": [
+          "gir_percentage",
+          "scrambling_percentage",
+          "putts_per_gir",
+          "par3_to_par",
+          "par4_to_par",
+          "par5_to_par"
+        ],
+        "title": "BenchmarkVerdicts",
         "type": "object"
       },
       "BestParInsight": {

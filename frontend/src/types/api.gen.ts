@@ -838,6 +838,7 @@ export interface components {
             handicap: number | null;
             /** Par Types */
             par_types: components["schemas"]["ParTypeComparison"][];
+            verdicts: components["schemas"]["BenchmarkVerdicts"];
         };
         /**
          * BenchmarkShape
@@ -856,6 +857,24 @@ export interface components {
             putts_per_gir: number | null;
             /** Scrambling Percentage */
             scrambling_percentage: number | null;
+        };
+        /**
+         * BenchmarkVerdicts
+         * @description Each radar axis against the benchmark: ahead, even or behind. Null without both figures.
+         */
+        BenchmarkVerdicts: {
+            /** Gir Percentage */
+            gir_percentage: ("ahead" | "even" | "behind") | null;
+            /** Par3 To Par */
+            par3_to_par: ("ahead" | "even" | "behind") | null;
+            /** Par4 To Par */
+            par4_to_par: ("ahead" | "even" | "behind") | null;
+            /** Par5 To Par */
+            par5_to_par: ("ahead" | "even" | "behind") | null;
+            /** Putts Per Gir */
+            putts_per_gir: ("ahead" | "even" | "behind") | null;
+            /** Scrambling Percentage */
+            scrambling_percentage: ("ahead" | "even" | "behind") | null;
         };
         /**
          * BestParInsight
