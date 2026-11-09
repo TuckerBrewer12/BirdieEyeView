@@ -15,8 +15,8 @@ test.describe("SortControl", () => {
   test("menu", async ({ page }) => {
     const kit = new BrandKitRobot(page);
     await kit.open("SortControl");
-    await page.getByRole("combobox", { name: "Sort by" }).first().click();
-    await expect(page.getByRole("listbox")).toBeVisible();
+    await page.getByRole("button", { name: "Sort by", exact: true }).first().click();
+    await expect(page.getByRole("menu")).toBeVisible();
     await expect(page.locator("[data-slot=sort-menu]")).toHaveScreenshot(
       "sort-control-menu.png",
     );
@@ -26,8 +26,8 @@ test.describe("SortControl", () => {
     await enableDark(page);
     const kit = new BrandKitRobot(page);
     await kit.open("SortControl");
-    await page.getByRole("combobox", { name: "Sort by" }).first().click();
-    await expect(page.getByRole("listbox")).toBeVisible();
+    await page.getByRole("button", { name: "Sort by", exact: true }).first().click();
+    await expect(page.getByRole("menu")).toBeVisible();
     await expect(page.locator("[data-slot=sort-menu]")).toHaveScreenshot("sort-control-menu-dark.png");
   });
 });

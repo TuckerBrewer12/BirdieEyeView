@@ -1,9 +1,9 @@
-import { ChevronRight, Link2, Trophy } from "lucide-react";
+import { ChevronRight, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
-import { RowButton } from "@/brand/components/Button";
+import { Button, RowButton } from "@/brand/components/Button";
 import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
@@ -13,6 +13,7 @@ import { formatDay, formatDayShort, dayParts } from "@/domain/date";
 
 interface RoundListProps {
   round: RoundSummary;
+  /** Default is the dated row; `history` a plain line. */
   variant?: "history";
   onClick?: () => void;
   onLinkClick?: () => void;
@@ -80,12 +81,22 @@ export function RoundPreview(props: RoundPreviewProps) {
 
   const dateParts = dayParts(round.date);
   const courseName = round.course?.name ? formatCourseName(round.course.name) : null;
+  const unlinked = !round.course?.id;
+  const nines =
+    round.frontNine.total != null && round.backNine.total != null
+      ? `${round.frontNine.total} – ${round.backNine.total}`
+      : null;
+  const meta = [
+    round.teeBox ? `${round.teeBox} tees` : null,
+    nines,
+    round.putts != null ? `${round.putts} putts` : null,
+  ].filter(Boolean);
 
   return (
     <motion.div
       data-slot="round-preview"
       className={cn(
-        "grid grid-cols-round-preview items-center gap-2.5 overflow-hidden rounded-card border border-border bg-card transition-shadow",
+        "flex items-stretch gap-4 rounded-xl border border-border bg-card px-4 py-3 transition-shadow",
         onClick ? "cursor-pointer hover:shadow-card" : "cursor-default",
       )}
       whileHover={onClick ? { scale: tokens.motion.hoverScale } : undefined}
@@ -93,67 +104,59 @@ export function RoundPreview(props: RoundPreviewProps) {
       transition={tokens.motion.spring}
       onClick={onClick}
     >
-      <div className="flex flex-col items-center justify-center gap-0.5 self-stretch rounded-l-lg bg-muted py-2.5 text-center">
+      <div className="box-content flex w-11 shrink-0 flex-col items-center justify-center border-r border-border pr-4 text-center">
         {dateParts ? (
           <>
-            <span className="text-kicker uppercase text-muted-foreground">
+            <span className="text-label font-semibold uppercase tracking-chip text-muted-foreground">
               {dateParts.month}
             </span>
-            <span className="text-lg font-bold leading-none text-foreground">
-              {dateParts.day}
-            </span>
-            <span className="text-caption text-muted-foreground">{dateParts.year}</span>
+            <span className="text-xl font-bold leading-none text-foreground">{dateParts.day}</span>
           </>
         ) : (
-          <span className="text-caption text-muted-foreground">—</span>
+          <span className="text-label text-muted-foreground">—</span>
         )}
       </div>
 
-      <div className="flex min-w-0 flex-col gap-0.5 py-2.5">
-        <div className="flex min-w-0 items-center gap-tight">
-          <span className="min-w-0 flex-1 truncate text-base font-bold tracking-name text-foreground">
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-base font-semibold text-foreground">
             {courseName ?? "Unknown course"}
           </span>
-          {!round.course?.id && onLinkClick && (
-            <button
-              type="button"
+          {unlinked && onLinkClick && (
+            <Button
+              variant="outline"
+              size="xs"
+              shape="pill"
               aria-label={`Link ${courseName ?? "this round"} to a saved course`}
               onClick={(e) => {
                 e.stopPropagation();
                 onLinkClick();
               }}
-              className="flex shrink-0 items-center border-none bg-transparent p-0 text-muted-foreground hover:text-foreground"
             >
-              <Link2 className="size-icon-xs" />
-            </button>
+              Unlinked
+            </Button>
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-meta text-muted-foreground">
-          {round.frontNine.total != null && round.backNine.total != null && (
-            <span>
-              <strong className="font-bold text-foreground">
-                {round.frontNine.total}·{round.backNine.total}
-              </strong>
-            </span>
-          )}
-          {round.putts != null && (
-            <span>
-              <strong className="font-bold text-foreground">{round.putts}</strong> putts
-            </span>
-          )}
-          {round.teeBox && <span>{round.teeBox}</span>}
-        </div>
+        {meta.length > 0 && <div className="text-body-sm text-foreground-secondary">{meta.join(" · ")}</div>}
 
-        <HoleScoreBars holes={round.holes} className="mt-1" />
+        {round.holes.length > 0 && (
+          <div className="flex gap-3">
+            <HoleScoreBars holes={round.frontNine.holes} className="flex-1" />
+            <HoleScoreBars holes={round.backNine.holes} className="flex-1" />
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-col items-end gap-0.5 whitespace-nowrap pr-3.5 text-right">
-        <span className="text-2xl font-bold leading-none tracking-stat text-foreground">
-          {round.score ?? "—"}
-        </span>
+      <div className="flex w-16 shrink-0 flex-col items-end justify-center gap-1 whitespace-nowrap text-right">
+        <span className="text-title text-foreground">{round.score ?? "—"}</span>
         {round.toPar != null && (
-          <span className={cn("text-meta font-bold", toParTextClass(round.toPar))}>
+          <span
+            className={cn(
+              "rounded-full bg-muted px-2 py-0.5 text-body-sm font-semibold",
+              toParTextClass(round.toPar),
+            )}
+          >
             {toParLabel(round.toPar)}
           </span>
         )}

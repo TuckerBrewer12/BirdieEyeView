@@ -20,6 +20,12 @@ test("tapping a milestone opens its round", async ({ dashboard }) => {
   await dashboard.isAtRound("round-3");
 });
 
+test("tapping a played day on the activity calendar opens its round", async ({ dashboard }) => {
+  await dashboard.open();
+  await dashboard.tapActivityDay("2026-06-15");
+  await dashboard.isAtRound("round-1");
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 

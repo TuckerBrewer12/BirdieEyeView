@@ -67,6 +67,7 @@ export const labAnalytics: AnalyticsDto = {
     three_putt_rate: 11.1,
     // The last five average 92.2 against 91.67 over all twelve.
     scoring_average_change: 0.5,
+    scoring_average_verdict: "bad",
   },
   peak_game: {
     rounds: [
@@ -135,6 +136,7 @@ export const averyLabAnalytics: AnalyticsDto = {
     three_putts_per_round: null,
     three_putt_rate: null,
     scoring_average_change: null,
+    scoring_average_verdict: null,
   },
   scoring_by_par: [
     { par: 3, average_to_par: 0.35, average_strokes: 3.35, sample_size: 32 },

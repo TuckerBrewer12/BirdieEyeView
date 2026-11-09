@@ -69,7 +69,7 @@ export const sampleGolfer = {
       {"category": "gir", "kind": "gir_shift", "points": 11.57407407407408, "trend": "up"},
       {"category": "putting", "kind": "putts_average", "putts": 32.666666666666664, "rating": "fair", "trend": "flat"}
     ],
-    "kpis": {"average_putts": 32.7, "best_round": 75, "best_round_course": "Presidio Golf Course", "best_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "gir_percentage": 33.1, "handicap_index": 7.0, "putts_per_gir": 2.02, "scoring_average": 82.9, "scoring_average_change": -3.9, "scrambling_percentage": 31.6, "three_putt_rate": 13.2, "three_putts_per_round": 2.4, "total_rounds": 24, "up_and_down_percentage": 39.5},
+    "kpis": {"average_putts": 32.7, "best_round": 75, "best_round_course": "Presidio Golf Course", "best_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "gir_percentage": 33.1, "handicap_index": 7.0, "putts_per_gir": 2.02, "scoring_average": 82.9, "scoring_average_change": -3.9, "scoring_average_verdict": "good", "scrambling_percentage": 31.6, "three_putt_rate": 13.2, "three_putts_per_round": 2.4, "total_rounds": 24, "up_and_down_percentage": 39.5},
     "net_score_trend": [
       {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 81, "net_score": 74, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "to_par": 9},
       {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 88, "net_score": 81, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "to_par": 16},
@@ -1024,7 +1024,7 @@ export const sampleGolfer = {
         {"category": "putting", "kind": "putts_average", "putts": 33.0, "rating": "fair", "trend": "flat"},
         {"category": "putting", "kind": "putts_shift", "putts": 3.0, "trend": "down"}
       ],
-      "kpis": {"average_putts": 33.0, "best_round": 81, "best_round_course": "Half Moon Bay Golf Links", "best_round_id": "fab7f282-178f-506b-9713-9764f5104099", "gir_percentage": 29.2, "handicap_index": 7.0, "putts_per_gir": 2.19, "scoring_average": 85.0, "scoring_average_change": null, "scrambling_percentage": 24.8, "three_putt_rate": 15.3, "three_putts_per_round": 2.8, "total_rounds": 4, "up_and_down_percentage": 40.5},
+      "kpis": {"average_putts": 33.0, "best_round": 81, "best_round_course": "Half Moon Bay Golf Links", "best_round_id": "fab7f282-178f-506b-9713-9764f5104099", "gir_percentage": 29.2, "handicap_index": 7.0, "putts_per_gir": 2.19, "scoring_average": 85.0, "scoring_average_change": null, "scoring_average_verdict": null, "scrambling_percentage": 24.8, "three_putt_rate": 15.3, "three_putts_per_round": 2.8, "total_rounds": 4, "up_and_down_percentage": 40.5},
       "net_score_trend": [
         {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 90, "net_score": 83, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "to_par": 18},
         {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 86, "net_score": 79, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "to_par": 14},
@@ -1437,7 +1437,7 @@ export const sampleGolfer = {
     "best_round": 75,
     "best_round_course": "Presidio Golf Course",
     "best_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd",
-    "handicap_change": {"delta": -1.3, "direction": "down"},
+    "handicap_change": {"delta": -1.3, "delta_verdict": "good", "direction": "down"},
     "handicap_index": 7.0,
     "handicap_trend": [
       {"differential": 16.4, "differential_status": "out", "handicap_index": 8.7, "hi_threshold": 9.5, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "used_in_hi": false},
@@ -1670,6 +1670,7 @@ export const sampleGolfer = {
     "scoring_average_change": -3.3,
     "scoring_average_l20": 82.3,
     "scoring_average_l5": 79.0,
+    "scoring_average_verdict": "good",
     "scrambling_trend": [
       {"round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "scramble_failures": 12, "scramble_opportunities": 14, "scramble_successes": 2, "scrambling_percentage": 14.285714285714285},
       {"round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "round_index": 2, "scramble_failures": 7, "scramble_opportunities": 11, "scramble_successes": 4, "scrambling_percentage": 36.36363636363637},
