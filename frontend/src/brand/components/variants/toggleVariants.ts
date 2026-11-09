@@ -6,9 +6,9 @@ const toggleVariants = cva(
     variants: {
       variant: {
         default: "bg-transparent",
-        /* One option of a segmented control: bare until chosen, then a raised card-coloured segment. */
+        /* One option of a segmented control: bare until chosen, then a raised card-coloured pill. */
         segmented:
-          "font-semibold text-foreground-secondary hover:bg-transparent aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-sm data-[pressed]:bg-card data-[pressed]:text-foreground data-[pressed]:shadow-sm",
+          "rounded-full font-semibold text-foreground-secondary hover:bg-transparent aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-sm data-[pressed]:bg-card data-[pressed]:text-foreground data-[pressed]:shadow-sm",
       },
       size: {
         default:

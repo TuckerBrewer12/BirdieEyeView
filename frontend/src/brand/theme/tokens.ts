@@ -32,6 +32,7 @@ export const palette = {
   white: "#ffffff",
   black: "#000000",
   sage: {
+    25: "#f3f4ef",
     50: "#f5f6f3",
     100: "#eef0ec",
     150: "#eceee9",
@@ -40,6 +41,7 @@ export const palette = {
     400: "#9aa39d",
     500: "#69756d",
     600: "#4b5750",
+    800: "#1e2b24",
     900: "#15201a",
   },
   charcoal: {
@@ -151,8 +153,9 @@ const status = (kind: string, base: string, text: ColorValue = alias(`status-${k
 });
 
 const light = {
-  background: sage[50],
-  foreground: sage[900],
+  // The soft surface: a warm page, ink a step off black, cards lifted by shadow rather than ruled.
+  background: sage[25],
+  foreground: sage[800],
   // Labels and body copy one step back from the page's ink.
   foregroundSecondary: sage[600],
   card: white,
@@ -178,6 +181,8 @@ const light = {
   destructiveHover: red[800],
   // Ambient shadow for lifted surfaces; alpha so it reads on any backdrop.
   shadow: alpha(slate[900], 0.1),
+  // A card's two-layer lift: a tight contact shadow and a wide, faint spread.
+  surfaceShadow: { near: alpha(sage[900], 0.04), far: alpha(sage[900], 0.06) },
 
   // Alerts and badges. Solid: `bg-status-info-base text-status-info-on-base`;
   // outline: `border-status-info text-status-info` on a card.
@@ -285,6 +290,7 @@ export const modes = {
     destructiveHover: red[700],
     // Black reads as nothing on a dark page, so lift with a stronger halo.
     shadow: alpha(black, 0.55),
+    surfaceShadow: { near: alpha(black, 0.3), far: alpha(black, 0.35) },
     // The fills stay; the ink on a dark card is a lighter step of each.
     status: {
       info: { text: blue[400] },
@@ -419,6 +425,8 @@ export const radius = {
   bar: 1.5,
   tick: 2,
   card: 10,
+  /** A card on the page: the soft surface's large corner. */
+  surface: 22,
   tooltip: 12,
   /** The top corners of a bottom sheet. */
   sheet: 20,
@@ -498,6 +506,8 @@ export const opacity = {
 /** Shadows follow `--shadow`, so they deepen in dark mode. sm/md/lg keep Tailwind's geometry. */
 export const shadow = {
   card: "0 6px 20px var(--shadow)",
+  /** A card resting on the page: no rule, lifted by a near and a far shadow. */
+  surface: "0 1px 2px var(--surface-shadow-near), 0 8px 24px var(--surface-shadow-far)",
   hairline: "0 1px 0 var(--shadow)",
   sm: "0 1px 3px 0 var(--shadow), 0 1px 2px -1px var(--shadow)",
   md: "0 4px 6px -1px var(--shadow), 0 2px 4px -2px var(--shadow)",
