@@ -1,5 +1,5 @@
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/brand";
-import { SVGScoreHandicapTrend, ScoreHandicapLegend } from "@/brand/charts/SVGScoreHandicapTrend";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/brand";
+import { SVGScoreHandicapTrend } from "@/brand/charts/SVGScoreHandicapTrend";
 import { trendPointsFrom } from "@/domain";
 import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 
@@ -17,9 +17,6 @@ export default function SVGScoreHandicapTrendPreview() {
         <CardHeader className="px-6">
           <CardTitle className="font-semibold whitespace-nowrap">Score &amp; Handicap</CardTitle>
           <CardDescription className="text-body-sm">Last 20 rounds</CardDescription>
-          <CardAction>
-            <ScoreHandicapLegend />
-          </CardAction>
         </CardHeader>
         <CardContent className="px-6">
           <SVGScoreHandicapTrend data={trend} />

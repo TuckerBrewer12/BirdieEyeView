@@ -6,7 +6,6 @@ import { cn } from "@/brand/cn";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { differentialFill, tokens } from "@/brand/theme";
 import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
-import type { DifferentialStatus } from "@/domain/handicap";
 import { indexScale, knownValues, lastKnownIndex, niceExtent } from "./scales";
 
 type TrendSeries = "both" | "score" | "handicap";
@@ -327,48 +326,6 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
   );
 }
 
-/** The differential statuses the legend names, in the order a golfer reads them. */
-const LEGEND_STATUSES: { status: DifferentialStatus; label: string }[] = [
-  { status: "counting", label: "Counts toward HI" },
-  { status: "close", label: "Close to counting" },
-  { status: "out", label: "Doesn’t count" },
-];
-
-/**
- * What the dots and the faint line mean. It sits in a card's header beside the
- * title, so it takes its own place rather than the chart's. Each swatch is drawn
- * with the chart's own marks, at the chart's size.
- */
-export function ScoreHandicapLegend({ className }: { className?: string }) {
-  const box = 2 * (L.dotCounts + tokens.lineWidth.outline);
-  const mid = box / 2;
-  return (
-    <div data-slot="score-handicap-legend" className={cn("flex flex-wrap justify-end gap-x-4 gap-y-1 text-body-sm text-foreground-secondary", className)}>
-      {LEGEND_STATUSES.map(({ status, label }) => (
-        <span key={status} className="flex items-center gap-2">
-          <svg viewBox={`0 0 ${box} ${box}`} width={box} height={box} aria-hidden="true">
-            <circle cx={mid} cy={mid} r={status === "counting" ? L.dotCounts : L.dot} fill={differentialFill(status)} />
-          </svg>
-          {label}
-        </span>
-      ))}
-      <span className="flex items-center gap-2">
-        <svg viewBox={`0 0 ${L.legendLine} ${box}`} width={L.legendLine} height={box} aria-hidden="true">
-          <line
-            x1={0}
-            x2={L.legendLine}
-            y1={mid}
-            y2={mid}
-            stroke={tokens.color.chart.series1}
-            strokeOpacity={tokens.opacity.recessed}
-            strokeWidth={L.stroke}
-          />
-        </svg>
-        5-rd avg
-      </span>
-    </div>
-  );
-}
 
 function PanelTitle({ y, children }: { y: number; children: ReactNode }) {
   return (

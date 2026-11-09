@@ -135,7 +135,6 @@ export {
 } from "./components/DropdownMenu";
 
 // Charts
-export { ActivityCalendar } from "./charts/ActivityCalendar";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
 export { ScoreMixBar } from "./charts/ScoreMixBar";
@@ -151,7 +150,7 @@ export type { RadarAxis } from "./charts/RadarChart";
 export { ScoreGoalChart } from "./charts/ScoreGoalChart";
 export { RoundFlowChart, RoundFlowFigures } from "./charts/RoundFlowChart";
 export { ScoreTrendChart } from "./charts/ScoreTrendChart";
-export { SVGScoreHandicapTrend, ScoreHandicapLegend } from "./charts/SVGScoreHandicapTrend";
+export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
 export { ScoreTargetChart } from "./charts/ScoreTargetChart";
 export type { ScoreTargetShot } from "./charts/ScoreTargetChart";
 export { ToParBars } from "./charts/ToParBars";
