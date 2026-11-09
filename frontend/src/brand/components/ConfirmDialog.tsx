@@ -24,7 +24,7 @@ type ConfirmDialogProps = Pick<AlertDialogPrimitive.Root.Props, "open" | "onOpen
  * and dim, and lays out by the room it has (a container query): under `@md`
  * it rises from the bottom with the buttons stacked, from there up it is
  * centred with the buttons in a row. The confirm is the kit's destructive
- * button.
+ * button; Cancel is outlined beside it and plain under it.
  */
 function ConfirmDialog({
   open,
@@ -49,20 +49,35 @@ function ConfirmDialog({
           <AlertDialogPrimitive.Popup
             data-slot="confirm-dialog"
             className={cn(
-              "flex w-full flex-col gap-1.5 rounded-t-sheet bg-card px-5 py-6 text-card-foreground outline-none transition duration-200 ease-out data-ending-style:translate-y-full data-ending-style:opacity-0 data-starting-style:translate-y-full data-starting-style:opacity-0",
-              "@md:m-auto @md:max-w-sm @md:gap-2 @md:rounded-2xl @md:p-6 @md:shadow-lg @md:data-ending-style:translate-y-0 @md:data-ending-style:scale-95 @md:data-starting-style:translate-y-0 @md:data-starting-style:scale-95",
+              "flex w-full flex-col gap-1.5 rounded-t-sheet bg-card px-5 pt-2.5 pb-8 text-card-foreground outline-none transition duration-200 ease-out data-ending-style:translate-y-full data-ending-style:opacity-0 data-starting-style:translate-y-full data-starting-style:opacity-0",
+              "@md:m-auto @md:max-w-100 @md:rounded-2xl @md:p-6 @md:shadow-lg @md:data-ending-style:translate-y-0 @md:data-ending-style:scale-95 @md:data-starting-style:translate-y-0 @md:data-starting-style:scale-95",
               className,
             )}
             {...props}
           >
-            <AlertDialogPrimitive.Title className="text-lg font-bold">{title}</AlertDialogPrimitive.Title>
+            {/* The bottom sheet's handle, as `Sheet` draws it; the centred dialog has none. */}
+            <div
+              aria-hidden
+              data-slot="confirm-dialog-handle"
+              className="mb-2.5 h-1 w-9 shrink-0 self-center rounded-full bg-border-strong @md:hidden"
+            />
+            <AlertDialogPrimitive.Title className="text-lg font-semibold">{title}</AlertDialogPrimitive.Title>
             {detail && (
-              <AlertDialogPrimitive.Description className="text-sm text-foreground-secondary">
+              <AlertDialogPrimitive.Description className="text-sm leading-normal text-foreground-secondary">
                 {detail}
               </AlertDialogPrimitive.Description>
             )}
-            <div className="mt-3 flex flex-col-reverse gap-2 @md:flex-row @md:justify-end">
-              <AlertDialogPrimitive.Close render={<Button variant="outline" size="lg" />}>
+            <div className="mt-3.5 flex flex-col-reverse gap-2 @md:flex-row @md:justify-end">
+              {/* Outlined beside the confirm; on the sheet, under a full-width confirm, it is a plain line. */}
+              <AlertDialogPrimitive.Close
+                render={
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="@max-md:border-transparent @max-md:bg-transparent @max-md:shadow-none"
+                  />
+                }
+              >
                 {cancelLabel}
               </AlertDialogPrimitive.Close>
               <Button variant="destructive" size="lg" disabled={pending} onClick={onConfirm}>

@@ -24,7 +24,7 @@ export default function ConfirmDialogPreview() {
             contained
             initialFocus={false}
             title="Delete this round?"
-            detail="Half Moon Bay · Jun 15 · 78. This can’t be undone."
+            detail="Half Moon Bay · Jun 15 · 78. Your stats and handicap will update. This can’t be undone."
             confirmLabel="Delete round"
           />
         </div>
@@ -41,7 +41,7 @@ export default function ConfirmDialogPreview() {
             contained
             initialFocus={false}
             title="Delete this round?"
-            detail="Half Moon Bay · Jun 15 · 78"
+            detail="Half Moon Bay · Jun 15 · 78. Your stats and handicap will update."
             confirmLabel="Delete round"
           />
         </div>

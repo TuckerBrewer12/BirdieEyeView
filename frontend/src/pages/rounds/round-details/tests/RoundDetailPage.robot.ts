@@ -238,7 +238,7 @@ export class RoundDetailRobot {
 
   /** `fullPage: false` for a dialog, which sits over the viewport, not the page. */
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
-    if (await this.page.getByText("Momentum").isVisible()) {
+    if (await this.page.getByText("Round flow", { exact: true }).isVisible()) {
       await expect(this.page.locator("svg circle").last()).toBeVisible();
     }
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
