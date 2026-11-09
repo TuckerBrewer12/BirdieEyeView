@@ -6,9 +6,10 @@ import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { Button, RowButton } from "@/brand/components/Button";
 import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
 import { ToParFigure } from "@/brand/components/ToParFigure";
+import { ToParPill } from "@/brand/components/ToParPill";
 import { toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
 import { playedScoreKinds, scoreKindCountLabel, type RoundSummary } from "@/domain";
-import { formatCourseName } from "@/domain/course";
+import { courseLabel, formatCourseName } from "@/domain/course";
 import { formatDay, formatDayShort, dayParts } from "@/domain/date";
 
 interface RoundListProps {
@@ -132,7 +133,7 @@ export function RoundPreview(props: RoundPreviewProps) {
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span className="truncate text-base font-semibold text-foreground">
-            {courseName ?? "Unknown course"}
+            {courseLabel(round.course?.name)}
           </span>
           {unlinked && onLinkClick && (
             <Button
@@ -163,14 +164,7 @@ export function RoundPreview(props: RoundPreviewProps) {
       <div className="flex w-16 shrink-0 flex-col items-end justify-center gap-1 whitespace-nowrap text-right">
         <span className="text-title text-foreground">{round.score ?? "—"}</span>
         {round.toPar != null && (
-          <span
-            className={cn(
-              "rounded-full bg-muted px-2 py-0.5 text-body-sm font-semibold",
-              toParTextClass(round.toPar),
-            )}
-          >
-            {toParLabel(round.toPar)}
-          </span>
+          <ToParPill toPar={round.toPar} ground="muted" />
         )}
       </div>
     </motion.div>
@@ -213,7 +207,7 @@ function RoundHighlight({
             Best Recent Round
           </div>
           <div className="font-bold leading-tight text-card-foreground transition-colors group-hover:text-primary">
-            {round.course?.name ? formatCourseName(round.course.name) : "Unknown course"}
+            {courseLabel(round.course?.name)}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
             {formatDayShort(round.date) ?? "—"}
@@ -232,7 +226,7 @@ function RoundHighlight({
       </div>
 
       <div className="shrink-0 text-right">
-        <div className="text-4xl font-black tracking-tighter text-card-foreground transition-colors group-hover:text-primary">
+        <div className="text-figure-lg font-black tracking-tighter text-card-foreground transition-colors group-hover:text-primary">
           {round.score ?? "—"}
         </div>
       </div>
@@ -245,7 +239,7 @@ function RoundHighlight({
  * The screen words the eyebrow and the action, so the kit holds only the layout.
  */
 function RoundTicket({ round, label, actionLabel, onClick }: Omit<RoundTicketProps, "variant">) {
-  const courseName = round.course?.name ? formatCourseName(round.course.name) : "Unknown course";
+  const courseName = courseLabel(round.course?.name);
   const kinds = playedScoreKinds(round.scoreCounts);
 
   return (
@@ -278,7 +272,7 @@ function RoundTicket({ round, label, actionLabel, onClick }: Omit<RoundTicketPro
           </div>
         </div>
         <div className="flex shrink-0 flex-col items-end">
-          <span className="text-4xl font-semibold leading-none tracking-stat text-card-foreground">
+          <span className="text-figure-lg leading-none tracking-stat text-card-foreground">
             {round.score ?? "—"}
           </span>
           <ToParFigure toPar={round.toPar} />
@@ -321,7 +315,7 @@ function RoundTicket({ round, label, actionLabel, onClick }: Omit<RoundTicketPro
  */
 function RoundCompact({ round, layout = "inline", onClick }: Omit<RoundCompactProps, "variant">) {
   const stacked = layout === "stacked";
-  const courseName = round.course?.name ? formatCourseName(round.course.name) : "Unknown course";
+  const courseName = courseLabel(round.course?.name);
   const date = formatDayShort(round.date) ?? "—";
 
   return (
@@ -331,8 +325,8 @@ function RoundCompact({ round, layout = "inline", onClick }: Omit<RoundCompactPr
       onClick={onClick}
       disabled={!onClick}
       className={cn(
-        "flex w-full items-center rounded-2xl",
-        stacked ? "gap-3 px-3 py-2.75" : "gap-4.5 px-3.5 py-3",
+        "w-full items-center rounded-2xl",
+        stacked ? "flex gap-3 px-3 py-3" : "grid grid-cols-round-row gap-4 px-3.5 py-3",
         onClick ? "cursor-pointer hover:bg-muted/half" : "cursor-default",
       )}
     >
@@ -343,25 +337,15 @@ function RoundCompact({ round, layout = "inline", onClick }: Omit<RoundCompactPr
         </span>
       ) : (
         <>
-          <span className="w-13 shrink-0 text-body text-muted-foreground">{date}</span>
-          <span className="min-w-0 flex-1 truncate text-body-lg font-semibold text-foreground">{courseName}</span>
-          <span className="flex-[1.3]">
-            {round.holes.length > 0 && <HoleScoreBars holes={round.holes} variant="strip" />}
-          </span>
+          <span className="text-body text-muted-foreground">{date}</span>
+          <span className="min-w-0 truncate text-body-lg font-semibold text-foreground">{courseName}</span>
+          <span>{round.holes.length > 0 && <HoleScoreBars holes={round.holes} variant="strip" />}</span>
         </>
       )}
-      <span className={cn("shrink-0 text-xl font-semibold text-foreground", !stacked && "w-10 text-right")}>
+      <span className={cn("shrink-0 text-xl font-semibold text-foreground", !stacked && "text-right")}>
         {round.score ?? "—"}
       </span>
-      <span
-        className={cn(
-          "shrink-0 rounded-full bg-background py-0.75 text-center text-body-sm font-semibold",
-          stacked ? "w-9.5" : "w-10",
-          toParTextClass(round.toPar),
-        )}
-      >
-        {toParLabel(round.toPar) ?? "—"}
-      </span>
+      <ToParPill toPar={round.toPar} size="row" />
     </RowButton>
   );
 }

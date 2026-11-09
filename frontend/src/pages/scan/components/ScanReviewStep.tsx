@@ -1,4 +1,4 @@
-import { CircleAlert, Loader2 } from "lucide-react";
+import { ArrowRight, CircleAlert, Loader2 } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -167,7 +167,8 @@ function CourseField({ review }: { review: ScanReviewViewModel }) {
           className="h-auto self-start p-0"
           onClick={() => review.nameCourse(nameToKeep)}
         >
-          Save as "{formatCourseName(nameToKeep)}" without linking →
+          Save as "{formatCourseName(nameToKeep)}" without linking
+          <ArrowRight aria-hidden />
         </Button>
       )}
     </Field>

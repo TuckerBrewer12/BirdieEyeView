@@ -8,8 +8,8 @@ import { activityMonth } from "@/domain/activity";
 
 interface ActivityCalendarProps {
   rounds?: RoundSummary[];
-  /** Picks the month it opens on. Frozen in previews so the calendar does not drift. */
-  today?: Date;
+  /** Picks the month it opens on. The screen's view model reads the clock; previews freeze it. */
+  today: Date;
   /** Opens a played day's round (the first, when it has two). */
   onOpenRound: (roundId: string) => void;
 }
@@ -19,8 +19,7 @@ const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"] as const;
 /** A month of play: a green dot on each day with a round. Step through months with the arrows. */
 export function ActivityCalendar({ rounds = [], today, onOpenRound }: ActivityCalendarProps) {
   const [shown, setShown] = useState(() => {
-    const now = today ?? new Date();
-    return { year: now.getFullYear(), month: now.getMonth() };
+    return { year: today.getFullYear(), month: today.getMonth() };
   });
   const month = useMemo(() => activityMonth(rounds, shown.year, shown.month), [rounds, shown]);
 

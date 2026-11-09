@@ -1,3 +1,4 @@
+import { Card } from "@/brand/components/Card";
 import { Collection } from "@/brand/components/Collection";
 import { RoundPreview } from "@/brand/components/RoundPreview";
 import { Round } from "@/domain";
@@ -25,20 +26,22 @@ export default function RoundPreviewPreview() {
         keyFor={(round) => round.id}
         renderItem={(round) => <RoundPreview variant="history" round={round} />}
       />
-      <Collection
-        layout="divided"
-        className="overflow-hidden rounded-surface bg-card shadow-surface"
-        items={[overPar, evenPar, best, unlinked]}
-        keyFor={(round) => round.id}
-        renderItem={(round) => <RoundPreview variant="compact" round={round} onClick={() => {}} />}
-      />
-      <Collection
-        layout="divided"
-        className="w-preview overflow-hidden rounded-surface bg-card shadow-surface"
-        items={[overPar, evenPar, best]}
-        keyFor={(round) => round.id}
-        renderItem={(round) => <RoundPreview variant="compact" layout="stacked" round={round} onClick={() => {}} />}
-      />
+      <Card className="gap-0 py-0">
+        <Collection
+          layout="divided"
+          items={[overPar, evenPar, best, unlinked]}
+          keyFor={(round) => round.id}
+          renderItem={(round) => <RoundPreview variant="compact" round={round} onClick={() => {}} />}
+        />
+      </Card>
+      <Card className="w-preview gap-0 py-0">
+        <Collection
+          layout="divided"
+          items={[overPar, evenPar, best]}
+          keyFor={(round) => round.id}
+          renderItem={(round) => <RoundPreview variant="compact" layout="stacked" round={round} onClick={() => {}} />}
+        />
+      </Card>
     </>
   );
 }

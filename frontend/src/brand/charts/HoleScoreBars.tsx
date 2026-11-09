@@ -35,7 +35,7 @@ export function HoleScoreBars({ holes, variant = "nine", size, className }: Hole
     : cn(
         "grid",
         strip ? "grid-cols-18" : "grid-cols-9",
-        pill ? cn(PILL_HEIGHT[pill], pill === "lg" ? "gap-1" : "gap-0.75") : "h-2 gap-chip",
+        pill ? cn(PILL_HEIGHT[pill], pill === "lg" ? "gap-1" : "gap-chip") : "h-2 gap-chip",
       );
 
   return (

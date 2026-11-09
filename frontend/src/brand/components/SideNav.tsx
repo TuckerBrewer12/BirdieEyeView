@@ -26,7 +26,7 @@ interface SideNavProps {
 }
 
 const linkStates =
-  "text-sidebar-foreground/strong transition-colors duration-150 hover:bg-sidebar-foreground/faint hover:text-sidebar-foreground data-active:bg-sidebar-foreground/tint data-active:text-sidebar-foreground [&_svg]:size-4.5 [&_svg]:shrink-0 [&_svg]:stroke-icon";
+  "text-sidebar-foreground/strong transition-colors duration-150 hover:bg-sidebar-foreground/faint hover:text-sidebar-foreground data-active:bg-sidebar-foreground/tint data-active:text-sidebar-foreground [&_svg]:size-icon-md [&_svg]:shrink-0 [&_svg]:stroke-icon";
 
 const linkClass = cn(
   "flex h-10 items-center gap-3 rounded-card px-3 text-sm font-medium data-active:font-semibold",
@@ -101,7 +101,7 @@ function SideNav({
             title="Sign out"
             className="text-sidebar-foreground/recessed opacity-0 transition-opacity group-hover:opacity-100 hover:bg-sidebar-foreground/tint hover:text-sidebar-foreground focus-visible:opacity-100 dark:hover:bg-sidebar-foreground/tint"
           >
-            <LogOut aria-hidden className="size-3.75" />
+            <LogOut aria-hidden className="size-4" />
           </Button>
         )}
         {secondaryItems.map((item) => (

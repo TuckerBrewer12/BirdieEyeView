@@ -86,6 +86,7 @@ export {
 export type { StatDirection, StatTone } from "./components/Stat";
 export { TeeSwatch } from "./components/TeeSwatch";
 export { ToParFigure } from "./components/ToParFigure";
+export { ToParPill } from "./components/ToParPill";
 export { Reveal } from "./components/Reveal";
 export { ScanProgress } from "./components/ScanProgress";
 export { ScorecardLayoutPicker } from "./components/ScorecardLayoutPicker";

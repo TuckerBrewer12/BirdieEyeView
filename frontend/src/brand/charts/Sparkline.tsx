@@ -50,7 +50,7 @@ interface SparklineProps {
 }
 
 // The card and mini lines are drawn at the size they show, so they keep it rather than fill the row.
-const OWN_WIDTH = { card: "w-37.5", mini: "w-11 shrink-0" } as const;
+const OWN_WIDTH = { card: "w-sparkline-card", mini: "w-sparkline-mini shrink-0" } as const;
 
 /** Which way a figure has been heading: a small line, no axes, the latest value marked. */
 export function Sparkline({

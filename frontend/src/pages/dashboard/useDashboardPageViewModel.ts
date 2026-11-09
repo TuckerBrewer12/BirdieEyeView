@@ -21,11 +21,14 @@ import {
   type HandicapMonth,
   type WhsBreakdown,
 } from "./model";
+import { greetingFor } from "./present";
 
 export type { ChangeVerdict, WhsBreakdown };
 
 export interface DashboardPageViewModel {
   data: DashboardDto | null;
+  /** "Good evening", for the hour it is. */
+  greeting: string;
   user: UserDto | null;
   loading: boolean;
   error: Error | null;
@@ -73,6 +76,8 @@ const RECENT_ROUNDS = 3;
 export function useDashboardPageViewModel(
   userId: string,
   repository: DashboardRepository = dashboardRepository,
+  /** The clock the greeting reads; a test pins it. */
+  now: () => Date = () => new Date(),
 ): DashboardPageViewModel {
   const [handicapSheetOpen, setHandicapSheetOpen] = useState(false);
 
@@ -98,6 +103,7 @@ export function useDashboardPageViewModel(
 
   return {
     data,
+    greeting: greetingFor(now()),
     user: user ?? null,
     loading,
     error: error as Error | null,

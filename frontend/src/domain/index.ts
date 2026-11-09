@@ -35,7 +35,7 @@ export type {
 export { buildRadarData } from "./radar";
 export type { RadarEntry } from "./radar";
 
-export { courseSummaryFrom, formatCourseName, getTee, teeColors } from "./course";
+export { courseLabel, courseSummaryFrom, formatCourseName, getTee, teeColors } from "./course";
 export type { CourseSummary } from "./course";
 
 export { EMPTY_COURSE_ANALYTICS, courseAnalyticsFrom } from "./courseAnalytics";

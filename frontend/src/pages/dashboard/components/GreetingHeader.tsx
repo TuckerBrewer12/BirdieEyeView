@@ -1,9 +1,8 @@
-import { RowButton, Sparkline, StatDelta } from "@/brand";
-import { cn } from "@/brand/cn";
+import { Card, RowButton, Sparkline } from "@/brand";
 import { formatHandicapIndex } from "@/domain";
 import type { HandicapMonth } from "../model";
 import { moveOf } from "../present";
-import { SURFACE } from "./DashboardCards";
+import { MoveDelta } from "./MoveDelta";
 
 interface GreetingHeaderProps {
   /** "Good evening". */
@@ -21,15 +20,6 @@ interface GreetingHeaderProps {
 export function GreetingHeader({ greeting, name, handicap, handicapLine, onHandicapClick, compact = false }: GreetingHeaderProps) {
   const move = moveOf(handicap.change);
   const index = formatHandicapIndex(handicap.index);
-  const delta = (className: string) => (
-    <StatDelta
-      direction={move.direction}
-      tone={handicap.verdict ?? "neutral"}
-      className={cn("font-semibold", handicap.verdict === "good" && "text-primary", className)}
-    >
-      {move.amount}
-    </StatDelta>
-  );
   const label = `Handicap ${index}. Open the breakdown`;
 
   if (compact) {
@@ -39,20 +29,19 @@ export function GreetingHeader({ greeting, name, handicap, handicapLine, onHandi
           <div className="text-sm text-muted-foreground">{greeting}</div>
           <h1 className="truncate text-figure-sm leading-tight tracking-title">{name}</h1>
         </div>
-        <RowButton
-          aria-label={label}
-          onClick={onHandicapClick}
-          className={cn(SURFACE, "flex min-h-16 cursor-pointer items-center gap-3 py-3 pr-3.5 pl-4 hover:shadow-card")}
+        <Card
+          render={<RowButton aria-label={label} onClick={onHandicapClick} />}
+          className="min-h-16 shrink-0 cursor-pointer flex-row items-center gap-3 py-3 pr-3.5 pl-4"
         >
           <span className="flex flex-col">
             <span className="text-body-sm text-muted-foreground">Handicap</span>
             <span className="flex items-baseline gap-1.5">
-              <span className="text-3xl leading-none font-semibold tracking-display">{index}</span>
-              {delta("text-body-sm")}
+              <span className="text-figure-sm leading-none">{index}</span>
+              <MoveDelta change={handicap.change} verdict={handicap.verdict} className="font-semibold" />
             </span>
           </span>
           <Sparkline size="mini" series={[{ values: handicapLine, tone: "index" }]} />
-        </RowButton>
+        </Card>
       </div>
     );
   }
@@ -68,7 +57,7 @@ export function GreetingHeader({ greeting, name, handicap, handicapLine, onHandi
         Handicap <b className="font-semibold text-foreground">{index}</b>
         {move.direction && (
           <>
-            {delta("text-body-lg")}
+            <MoveDelta change={handicap.change} verdict={handicap.verdict} className="text-body-lg font-semibold" />
             <span>this month</span>
           </>
         )}

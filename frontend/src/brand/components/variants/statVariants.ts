@@ -34,7 +34,8 @@ const statValueVariants = cva("flex items-baseline gap-1 leading-none tabular-nu
 const statDeltaVariants = cva("inline-flex items-center gap-1 text-body-sm font-bold whitespace-nowrap", {
   variants: {
     tone: {
-      good: "text-score-birdie",
+      // A good move reads in the brand's green, as every figure card on the soft surface has it.
+      good: "text-primary",
       bad: "text-score-bogey",
       neutral: "text-muted-foreground",
     },

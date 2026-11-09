@@ -52,10 +52,6 @@ export function countNoun(kind: ScoreKind, count: number): string {
   return scoreKindNoun(kind, count).toLowerCase();
 }
 
-export function courseLabel(course: string | null | undefined): string {
-  return course ? formatCourseName(course) : "Unknown course";
-}
-
 /** "Blue Rock · Apr 18": where and when the best round was. */
 export function bestWhere(best: BestRound): string {
   return [best.course ? formatCourseName(best.course) : null, formatDayShort(best.date)].filter(Boolean).join(" · ");

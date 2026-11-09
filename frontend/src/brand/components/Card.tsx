@@ -1,22 +1,45 @@
 import * as React from "react";
+import { useRender } from "@base-ui/react/use-render";
 import { cn } from "@/brand/cn";
 
+const CARD_CORNER = {
+  default: "rounded-surface",
+  /** The card a page leads with, a step rounder than the cards under it. */
+  lead: "rounded-lead",
+  "lead-phone": "rounded-lead-phone",
+} as const;
+
+/**
+ * The kit's card: a borderless surface resting on the page. `size` sets its inner spacing (`lg` for
+ * a dashboard's figure cards). `render` makes the whole card another element, a router link most
+ * often (`render={<Link to="…" />}`); a card that goes somewhere lifts on hover.
+ */
 function Card({
   className,
   size = "default",
+  corner = "default",
+  render,
   ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
-  return (
-    <div
-      data-slot="card"
-      data-size={size}
-      className={cn(
-        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-surface bg-card py-(--card-spacing) text-sm text-card-foreground shadow-surface [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-surface *:[img:last-child]:rounded-b-surface",
+}: React.ComponentProps<"div"> & {
+  size?: "default" | "sm" | "lg";
+  corner?: keyof typeof CARD_CORNER;
+  render?: useRender.RenderProp;
+}) {
+  return useRender({
+    render: render ?? <div />,
+    props: {
+      // A caller's data-slot names the card for its page's tests and styles.
+      "data-slot": "card",
+      "data-size": size,
+      ...props,
+      className: cn(
+        "group/card flex flex-col gap-(--card-spacing) overflow-hidden bg-card py-(--card-spacing) text-sm text-card-foreground shadow-surface [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=lg]:[--card-spacing:--spacing(5)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-surface *:[img:last-child]:rounded-b-surface",
+        CARD_CORNER[corner],
+        render && "transition-shadow hover:shadow-card",
         className,
-      )}
-      {...props}
-    />
-  );
+      ),
+    },
+  });
 }
 
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {

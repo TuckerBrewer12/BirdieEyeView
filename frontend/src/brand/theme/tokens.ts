@@ -398,6 +398,12 @@ export const type = {
   figure: { size: 34, weight: 600, tracking: tracking.display },
   /** The same on a phone, and a phone's greeting. */
   "figure-sm": { size: 28, weight: 600, tracking: tracking.display },
+  /** A round's score set large in a list row or ticket. */
+  "figure-lg": { size: 36, weight: 600, tracking: tracking.display },
+  /** The landing page's headline, stepping up with the screen. */
+  "display-sm": { size: 36, weight: 800, tracking: tracking.hero, leading: leading.display },
+  display: { size: 48, weight: 800, tracking: tracking.hero, leading: leading.display },
+  "display-lg": { size: 60, weight: 800, tracking: tracking.hero, leading: leading.display },
   /** The last round's course on the dashboard. */
   name: { size: 22, weight: 600, tracking: tracking.name },
   /** The last round's score, the biggest number on the dashboard. */
@@ -423,6 +429,8 @@ export const space = {
   hair: 2.5,
   chip: 3,
   dot: 3,
+  /** A phone page's side margin. */
+  "page-phone": 18,
   tight: 5,
   /** What a control's corner gives up inside its group, so the corners nest. */
   nudge: 5,
@@ -471,6 +479,11 @@ export const size = {
   target: "15rem",
   "icon-xs": 11,
   "icon-sm": 13,
+  /** A nav item's icon, a sheet's close, a card's chevron. */
+  "icon-md": 18,
+  /** The lines drawn at their own size, under a card's figure and beside a phone's handicap. */
+  "sparkline-card": 150,
+  "sparkline-mini": 44,
   "hole-w": 30,
   "hole-h": 22,
   // A profile bar's height in its row, by score: the worse the hole, the taller.
@@ -542,6 +555,8 @@ export const gridColumns = {
   "handicap-breakdown": "1fr auto auto auto",
   /** The dashboard's last round: the round, then how it went, as wide as its line is drawn. */
   "last-round": "minmax(0, 1fr) 23.75rem",
+  /** A round as one row of a card's list: date, course, a cell per hole (a little wider), score, to-par. */
+  "round-row": "3.25rem minmax(0, 1fr) minmax(0, 1.3fr) 2.5rem 2.5rem",
   /** The dashboard's row of cards: three figures, then the goal a little wider. */
   "dashboard-cards": "repeat(3, minmax(0, 1fr)) 1.15fr",
   /** A label column, then two equal state columns (default, disabled). */
@@ -721,9 +736,9 @@ export const chart = {
     /** The compact line beside a KPI tile's figure, drawn at its own size so the stroke stays 2px. */
     compact: { width: 96, height: 32 },
     /** The flat line under a card's lead figure: the scoring average's. No end dot. */
-    card: { width: 150, height: 30, pad: 4, stroke: 2.5, dot: 0 },
+    card: { width: size["sparkline-card"], height: 30, pad: 4, stroke: 2.5, dot: 0 },
     /** The small line beside a figure in a phone's header card: the handicap's. Its end dot filled. */
-    mini: { width: 44, height: 30, pad: 3, stroke: 2.5, dot: 3 },
+    mini: { width: size["sparkline-mini"], height: 30, pad: 3, stroke: 2.5, dot: 3 },
   },
   /** A golfer's scores over time, one dot per round. */
   trend: {

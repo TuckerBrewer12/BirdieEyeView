@@ -3,6 +3,7 @@ import {
   Alert,
   AlertDescription,
   Button,
+  Card,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -10,17 +11,16 @@ import {
   SheetClose,
   SheetContent,
   SheetTitle,
-  StatDelta,
   useFromBreakpoint,
 } from "@/brand";
 import { cn } from "@/brand/cn";
 import { formatHandicapIndex, formatOneDecimal } from "@/domain";
 import type { ChangeVerdict, WhsBreakdown, WhsRound } from "../model";
+import { MoveDelta } from "./MoveDelta";
 import {
   adjustmentLabel,
   courseLabelForWhs,
   differentialLabel,
-  moveOf,
   ratingLabelForWhs,
   scoreAndRatingForWhs,
   whsContextNote,
@@ -50,7 +50,6 @@ export function HandicapBreakdownSheet({
   whs,
 }: HandicapBreakdownSheetProps) {
   const wide = useFromBreakpoint("md");
-  const move = moveOf(handicapChange);
   const { rows, windowSize, countUsed, adjustment, diffAvg, hasRatedRounds } = whs;
   const adjustmentText = adjustmentLabel(adjustment);
   const stats = [
@@ -61,12 +60,8 @@ export function HandicapBreakdownSheet({
 
   const index = (
     <div className="flex items-baseline gap-2.5">
-      <span className={cn("leading-none font-semibold tracking-hero text-foreground", wide ? "text-5xl" : "text-hero")}>
-        {formatHandicapIndex(handicapIndex)}
-      </span>
-      <StatDelta direction={move.direction} tone={handicapVerdict ?? "neutral"} className="text-body font-semibold">
-        {move.amount}
-      </StatDelta>
+      <span className="text-hero leading-none font-semibold text-foreground">{formatHandicapIndex(handicapIndex)}</span>
+      <MoveDelta change={handicapChange} verdict={handicapVerdict} className="text-body font-semibold" />
     </div>
   );
 
@@ -75,10 +70,7 @@ export function HandicapBreakdownSheet({
       <SheetContent
         side={wide ? "right" : "bottom"}
         showCloseButton={false}
-        className={cn(
-          "gap-5 overflow-y-auto",
-          wide ? "max-w-sheet border-l-0 p-6 shadow-card" : "h-sheet-tall gap-4.5 rounded-t-sheet px-5 pt-2.5 pb-7.5",
-        )}
+        className="h-sheet-tall gap-4 overflow-y-auto rounded-t-sheet px-5 pt-2.5 pb-8 md:h-full md:max-w-sheet md:gap-5 md:rounded-none md:border-l-0 md:p-6 md:shadow-card"
       >
         {wide ? (
           <>
@@ -102,14 +94,14 @@ export function HandicapBreakdownSheet({
           </div>
         )}
 
-        <div className="grid auto-cols-fr grid-flow-col overflow-hidden rounded-2xl bg-card shadow-surface">
+        <Card className="grid auto-cols-fr grid-flow-col gap-0 py-0">
           {stats.map((stat) => (
             <div key={stat.label} className="px-3.5 py-3 not-first:border-l not-first:border-border">
               <div className="text-lg font-semibold text-foreground">{stat.value}</div>
               <div className="mt-0.5 text-label text-muted-foreground">{stat.label}</div>
             </div>
           ))}
-        </div>
+        </Card>
 
         {!hasRatedRounds && (
           <Alert>
@@ -126,14 +118,14 @@ export function HandicapBreakdownSheet({
               <span className="flex gap-7">
                 <span>Score</span>
                 <span>Diff</span>
-                <span className="w-4.5" />
+                <span className="w-icon-md" />
               </span>
             </div>
           )}
           {rows.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">No rounds yet</div>
           ) : (
-            rows.map((row) => <WhsRow key={row.roundIndex} row={row} wide={wide} />)
+            rows.map((row) => <WhsRow key={row.roundIndex} row={row} />)
           )}
         </div>
 
@@ -163,27 +155,19 @@ export function HandicapBreakdownSheet({
 }
 
 /** One round in the window: where, its rating, its score and differential, and whether it counts. */
-function WhsRow({ row, wide }: { row: WhsRound; wide: boolean }) {
+function WhsRow({ row }: { row: WhsRound }) {
   return (
-    <div
-      className={cn(
-        "flex items-center gap-3 border-t",
-        wide ? "border-chart-grid px-0.5 py-3 first:border-muted" : "border-chart-grid py-3 first:border-t-0",
-      )}
-    >
+    <div className="flex items-center gap-3 border-t border-border py-3 first:border-t-0 md:px-0.5">
       <div className="min-w-0 flex-1">
-        <div className={cn("truncate font-semibold text-foreground", wide ? "text-sm" : "text-body-lg")}>
-          {courseLabelForWhs(row)}
-        </div>
-        <div className="text-body-sm text-muted-foreground">
-          {wide ? ratingLabelForWhs(row) : scoreAndRatingForWhs(row)}
-        </div>
+        <div className="truncate text-body-lg font-semibold text-foreground md:text-sm">{courseLabelForWhs(row)}</div>
+        {/* The phone has no score column, so its line under the course carries the score. */}
+        <div className="text-body-sm text-muted-foreground md:hidden">{scoreAndRatingForWhs(row)}</div>
+        <div className="hidden text-body-sm text-muted-foreground md:block">{ratingLabelForWhs(row)}</div>
       </div>
-      {wide && <div className="w-10 text-right text-sm font-semibold text-foreground">{row.score ?? "—"}</div>}
+      <div className="hidden w-10 text-right text-sm font-semibold text-foreground md:block">{row.score ?? "—"}</div>
       <div
         className={cn(
-          "text-right",
-          wide ? "w-12 text-sm" : "text-body-lg",
+          "text-right text-body-lg md:w-12 md:text-sm",
           row.used ? "font-bold text-foreground" : "font-medium text-muted-foreground",
         )}
       >
@@ -192,8 +176,7 @@ function WhsRow({ row, wide }: { row: WhsRound; wide: boolean }) {
       <span
         aria-label={row.used ? "Counts toward index" : "Not counted"}
         className={cn(
-          "inline-flex shrink-0 items-center justify-center rounded-full",
-          wide ? "size-4.5" : "size-5",
+          "inline-flex size-5 shrink-0 items-center justify-center rounded-full md:size-icon-md",
           row.used ? "bg-primary text-primary-foreground" : "border border-border-strong",
         )}
       >

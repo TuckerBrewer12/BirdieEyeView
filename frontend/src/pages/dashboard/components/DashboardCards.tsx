@@ -1,30 +1,15 @@
-import { ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { ProgressRing, ScoreMixBar, ScoreMixDonut, Sparkline, StatDelta } from "@/brand";
+import { Card, ProgressRing, ScoreMixBar, ScoreMixDonut, Sparkline } from "@/brand";
 import { cn } from "@/brand/cn";
 import { toParDisplay, toParTextClass } from "@/brand/theme";
 import { formatOneDecimal, goalTargetLabel, type ScoreMix } from "@/domain";
 import { hasScoreMix, type BestRound, type ChangeVerdict, type GoalProgress } from "../model";
-import { bestLabel, bestWhere, goalSeasonLine, goalStatusLabel, moveOf } from "../present";
+import { MoveDelta } from "./MoveDelta";
+import { bestLabel, bestWhere, goalSeasonLine, goalStatusLabel } from "../present";
 
-/** A card on the page, as the dashboard's figures sit: no rule, the soft surface's shadow. */
-export const SURFACE = "rounded-surface bg-card text-card-foreground shadow-surface";
-const LINK_SURFACE = cn(SURFACE, "transition-shadow hover:shadow-card");
-const CARD_PADDING = { wide: "px-5.5 py-5", phone: "px-4.5 py-4" } as const;
-
-/** A move the server judged: good moves read in the brand's green, as the canvas has them. */
-function Delta({ change, verdict, className }: { change: number | null; verdict: ChangeVerdict | null; className?: string }) {
-  const move = moveOf(change);
-  return (
-    <StatDelta
-      direction={move.direction}
-      tone={verdict ?? "neutral"}
-      className={cn("font-semibold", verdict === "good" && "text-primary", className)}
-    >
-      {move.amount}
-    </StatDelta>
-  );
-}
+/** Inside a figure card: the soft card's spacing at the size the dashboard's figures sit. */
+const CARD = { wide: "gap-1.5 px-5", phone: "gap-1 px-4" } as const;
 
 interface ScoringAverageCardProps {
   average: number | null;
@@ -38,19 +23,16 @@ interface ScoringAverageCardProps {
 /** The scoring average over the last five rounds, its move, and on a wide screen its line. */
 export function ScoringAverageCard({ average, change, verdict, line, compact = false }: ScoringAverageCardProps) {
   return (
-    <div
-      data-slot="scoring-average-card"
-      className={cn(SURFACE, "flex flex-col", compact ? cn(CARD_PADDING.phone, "gap-1") : cn(CARD_PADDING.wide, "gap-1.5"))}
-    >
+    <Card data-slot="scoring-average-card" size={compact ? "default" : "lg"} className={compact ? CARD.phone : CARD.wide}>
       <div className={cn("text-muted-foreground", compact ? "text-body-sm" : "text-body")}>
         {compact ? "Scoring avg" : "Scoring average"}
       </div>
       <div className={cn("flex items-baseline", compact ? "gap-1.5" : "gap-2")}>
         <span className={compact ? "text-figure-sm" : "text-figure"}>{formatOneDecimal(average)}</span>
-        <Delta change={change} verdict={verdict} className={compact ? "text-body-sm" : "text-body"} />
+        <MoveDelta change={change} verdict={verdict} className={cn("font-semibold", compact ? "text-body-sm" : "text-body")} />
       </div>
       {!compact && <Sparkline size="card" series={[{ values: line, tone: "primary" }]} />}
-    </div>
+    </Card>
   );
 }
 
@@ -68,24 +50,25 @@ export function BestRoundCard({ best, compact = false }: { best: BestRound | nul
         {best && !compact && (
           <span className={cn("text-body font-semibold", toParTextClass(best.toPar))}>{toParDisplay(best.toPar, "")}</span>
         )}
-        {best?.roundId && compact && (
-          <span aria-hidden className="text-body-sm font-semibold text-primary">
-            →
-          </span>
-        )}
+        {best?.roundId && compact && <ArrowRight aria-hidden className="size-3.5 text-primary" />}
       </div>
-      {best && !compact && <div className="text-body font-semibold text-primary">{bestWhere(best)} →</div>}
+      {best && !compact && (
+        <div className="flex items-center gap-1 text-body font-semibold text-primary">
+          {bestWhere(best)}
+          {best.roundId && <ArrowRight aria-hidden className="size-3.5" />}
+        </div>
+      )}
     </>
   );
-  const layout = cn("flex flex-col", compact ? cn(CARD_PADDING.phone, "gap-1") : cn(CARD_PADDING.wide, "gap-1.5"));
-  return best?.roundId ? (
-    <Link to={`/rounds/${best.roundId}`} data-slot="best-round-card" className={cn(LINK_SURFACE, layout)}>
+  return (
+    <Card
+      data-slot="best-round-card"
+      size={compact ? "default" : "lg"}
+      render={best?.roundId ? <Link to={`/rounds/${best.roundId}`} /> : undefined}
+      className={compact ? CARD.phone : CARD.wide}
+    >
       {body}
-    </Link>
-  ) : (
-    <div data-slot="best-round-card" className={cn(SURFACE, layout)}>
-      {body}
-    </div>
+    </Card>
   );
 }
 
@@ -99,9 +82,10 @@ interface ScoreMixCardProps {
 /** How the last five rounds' holes split across score kinds: a ring on a wide screen, a bar on a phone. */
 export function ScoreMixCard({ mix, compact = false, className }: ScoreMixCardProps) {
   return (
-    <div
+    <Card
       data-slot="score-mix-card"
-      className={cn(SURFACE, "flex flex-col", compact ? cn(CARD_PADDING.phone, "gap-2.5") : cn(CARD_PADDING.wide, "gap-3"), className)}
+      size={compact ? "default" : "lg"}
+      className={cn(compact ? "gap-2.5 px-4" : "gap-3 px-5", className)}
     >
       <div className={cn("text-muted-foreground", compact ? "text-body-sm" : "text-body")}>Score mix · last 5</div>
       {!hasScoreMix(mix) ? (
@@ -111,7 +95,7 @@ export function ScoreMixCard({ mix, compact = false, className }: ScoreMixCardPr
       ) : (
         <ScoreMixDonut mix={mix} />
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -128,15 +112,10 @@ interface GoalCardProps {
 export function GoalCard({ goal, seasonRounds, compact = false, className }: GoalCardProps) {
   const target = goal ? goalTargetLabel(goal.target) : "Set a scoring goal";
   return (
-    <Link
-      to="/the-lab"
+    <Card
       data-slot="goal-card"
-      className={cn(
-        LINK_SURFACE,
-        "flex items-center",
-        compact ? cn(CARD_PADDING.phone, "gap-4") : "gap-4.5 px-5.5 py-4.5",
-        className,
-      )}
+      render={<Link to="/the-lab" />}
+      className={cn("flex-row items-center gap-4", compact ? "px-4" : "px-5", className)}
     >
       <ProgressRing
         value={goal?.progressPct ?? null}
@@ -159,7 +138,7 @@ export function GoalCard({ goal, seasonRounds, compact = false, className }: Goa
           <div className="text-body text-foreground-secondary">Pick a score to break in The Lab</div>
         )}
       </div>
-      {compact && <ChevronRight aria-hidden className="size-4.5 text-muted-foreground" />}
-    </Link>
+      {compact && <ChevronRight aria-hidden className="size-icon-md text-muted-foreground" />}
+    </Card>
   );
 }

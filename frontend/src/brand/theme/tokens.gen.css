@@ -122,6 +122,10 @@
   --brand-text-greeting: 30px;
   --brand-text-figure: 34px;
   --brand-text-figure-sm: 28px;
+  --brand-text-figure-lg: 36px;
+  --brand-text-display-sm: 36px;
+  --brand-text-display: 48px;
+  --brand-text-display-lg: 60px;
   --brand-text-name: 22px;
   --brand-text-scoreboard: 76px;
   --brand-text-scoreboard-sm: 52px;
@@ -160,6 +164,7 @@
   --brand-space-hair: 2.5px;
   --brand-space-chip: 3px;
   --brand-space-dot: 3px;
+  --brand-space-page-phone: 18px;
   --brand-space-tight: 5px;
   --brand-space-nudge: 5px;
   --brand-space-nudge-sm: 3px;
@@ -174,6 +179,9 @@
   --brand-size-target: 15rem;
   --brand-size-icon-xs: 11px;
   --brand-size-icon-sm: 13px;
+  --brand-size-icon-md: 18px;
+  --brand-size-sparkline-card: 150px;
+  --brand-size-sparkline-mini: 44px;
   --brand-size-hole-w: 30px;
   --brand-size-hole-h: 22px;
   --brand-size-profile-eagle: 28%;
@@ -352,6 +360,10 @@
   --text-greeting: var(--brand-text-greeting);
   --text-figure: var(--brand-text-figure);
   --text-figure-sm: var(--brand-text-figure-sm);
+  --text-figure-lg: var(--brand-text-figure-lg);
+  --text-display-sm: var(--brand-text-display-sm);
+  --text-display: var(--brand-text-display);
+  --text-display-lg: var(--brand-text-display-lg);
   --text-name: var(--brand-text-name);
   --text-scoreboard: var(--brand-text-scoreboard);
   --text-scoreboard-sm: var(--brand-text-scoreboard-sm);
@@ -390,6 +402,7 @@
   --spacing-hair: var(--brand-space-hair);
   --spacing-chip: var(--brand-space-chip);
   --spacing-dot: var(--brand-space-dot);
+  --spacing-page-phone: var(--brand-space-page-phone);
   --spacing-tight: var(--brand-space-tight);
   --spacing-nudge: var(--brand-space-nudge);
   --spacing-nudge-sm: var(--brand-space-nudge-sm);
@@ -404,6 +417,9 @@
   --spacing-target: var(--brand-size-target);
   --spacing-icon-xs: var(--brand-size-icon-xs);
   --spacing-icon-sm: var(--brand-size-icon-sm);
+  --spacing-icon-md: var(--brand-size-icon-md);
+  --spacing-sparkline-card: var(--brand-size-sparkline-card);
+  --spacing-sparkline-mini: var(--brand-size-sparkline-mini);
   --spacing-hole-w: var(--brand-size-hole-w);
   --spacing-hole-h: var(--brand-size-hole-h);
   --spacing-profile-eagle: var(--brand-size-profile-eagle);
@@ -432,6 +448,17 @@
   --text-figure--letter-spacing: -0.6px;
   --text-figure-sm--font-weight: 600;
   --text-figure-sm--letter-spacing: -0.6px;
+  --text-figure-lg--font-weight: 600;
+  --text-figure-lg--letter-spacing: -0.6px;
+  --text-display-sm--font-weight: 800;
+  --text-display-sm--letter-spacing: -1.8px;
+  --text-display-sm--line-height: 1.1;
+  --text-display--font-weight: 800;
+  --text-display--letter-spacing: -1.8px;
+  --text-display--line-height: 1.1;
+  --text-display-lg--font-weight: 800;
+  --text-display-lg--letter-spacing: -1.8px;
+  --text-display-lg--line-height: 1.1;
   --text-name--font-weight: 600;
   --text-name--letter-spacing: -0.3px;
   --text-scoreboard--font-weight: 600;
@@ -456,6 +483,7 @@
   --ring-width-3: var(--brand-ring-width);
   --grid-template-columns-handicap-breakdown: 1fr auto auto auto;
   --grid-template-columns-last-round: minmax(0, 1fr) 23.75rem;
+  --grid-template-columns-round-row: 3.25rem minmax(0, 1fr) minmax(0, 1.3fr) 2.5rem 2.5rem;
   --grid-template-columns-dashboard-cards: repeat(3, minmax(0, 1fr)) 1.15fr;
   --grid-template-columns-state-grid: 6rem repeat(2, minmax(0, 1fr));
 }
