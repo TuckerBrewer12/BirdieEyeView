@@ -31,7 +31,8 @@ export function GreetingHeader({ greeting, name, handicap, handicapLine, onHandi
         </div>
         <Card
           render={<RowButton aria-label={label} onClick={onHandicapClick} />}
-          className="min-h-16 shrink-0 cursor-pointer flex-row items-center gap-3 py-3 pr-3.5 pl-4"
+          interactive
+          className="min-h-16 shrink-0 flex-row items-center gap-3 py-3 pr-3.5 pl-4"
         >
           <span className="flex flex-col">
             <span className="text-body-sm text-muted-foreground">Handicap</span>

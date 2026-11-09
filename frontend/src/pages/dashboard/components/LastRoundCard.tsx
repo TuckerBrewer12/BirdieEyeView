@@ -27,6 +27,7 @@ export function LastRoundCard({ round, compact = false, className }: LastRoundCa
       data-slot="last-round-card"
       corner={compact ? "lead-phone" : "lead"}
       render={<Link to={`/rounds/${round.id}`} />}
+      interactive
       aria-label={`Last round at ${courseLabel(round.course?.name)}: ${score}, ${toPar}. Open the round`}
       className={cn(compact ? "gap-3.5 px-5 py-6" : "grid grid-cols-last-round gap-8 px-8 py-7", className)}
     >

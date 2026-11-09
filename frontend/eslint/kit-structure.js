@@ -60,7 +60,7 @@ const noHandmadeCard = {
     schema: [],
     messages: {
       card:
-        "`bg-card` with `{{other}}` is the kit's Card surface rebuilt by hand. Use <Card> (or <CardLink> for a " +
+        "`bg-card` with `{{other}}` is the kit's Card surface rebuilt by hand. Use <Card> (with `render={<Link />}` and `interactive` for a " +
         "card that is a link, `corner` for the rounder lead card), so a change to the card reaches every one.",
     },
   },

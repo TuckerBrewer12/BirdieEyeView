@@ -49,7 +49,7 @@ export default function CardPreview() {
         <div className="text-figure">74.7</div>
       </Card>
 
-      <Card corner="lead" render={<a href="#round" aria-label="Half Moon Bay, the lead card" />} className="px-6">
+      <Card corner="lead" render={<a href="#round" aria-label="Half Moon Bay, the lead card" />} interactive className="px-6">
         <div className="text-body text-muted-foreground">The lead card, a link</div>
         <div className="text-name">Half Moon Bay</div>
       </Card>

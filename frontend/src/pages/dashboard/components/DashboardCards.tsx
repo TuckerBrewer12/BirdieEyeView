@@ -61,6 +61,7 @@ export function BestRoundCard({ best, compact = false }: { best: BestRound | nul
       data-slot="best-round-card"
       size={compact ? "default" : "lg"}
       render={best?.roundId ? <Link to={`/rounds/${best.roundId}`} /> : undefined}
+      interactive={best?.roundId != null}
       className={compact ? CARD.phone : CARD.wide}
     >
       {body}
@@ -113,6 +114,7 @@ export function GoalCard({ goal, seasonRounds, compact = false, className }: Goa
     <Card
       data-slot="goal-card"
       render={<Link to="/the-lab" />}
+      interactive
       className={cn("flex-row items-center gap-4", compact ? "px-4" : "px-5", className)}
     >
       <ProgressRing

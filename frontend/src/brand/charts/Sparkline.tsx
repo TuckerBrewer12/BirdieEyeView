@@ -11,7 +11,8 @@ type SparklineTone = "primary" | "contrast" | "good" | "bad" | "index";
 const STROKE: Record<SparklineTone, string> = {
   primary: tokens.color.primary,
   contrast: tokens.color.score.triple.text,
-  good: tokens.color.score.birdie.text,
+  // A good move is the brand's green, as StatDelta draws the verdict beside it.
+  good: tokens.color.primary,
   bad: tokens.color.score.bogey.text,
   index: tokens.color.chart.series2,
 };
@@ -19,7 +20,7 @@ const STROKE: Record<SparklineTone, string> = {
 const SWATCH: Record<SparklineTone, string> = {
   primary: "bg-primary",
   contrast: "bg-score-triple",
-  good: "bg-score-birdie",
+  good: "bg-primary",
   bad: "bg-score-bogey",
   index: "bg-chart-series2",
 };

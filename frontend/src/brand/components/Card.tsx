@@ -11,19 +11,22 @@ const CARD_CORNER = {
 
 /**
  * The kit's card: a borderless surface resting on the page. `size` sets its inner spacing (`lg` for
- * a dashboard's figure cards). `render` makes the whole card another element, a router link most
- * often (`render={<Link to="…" />}`); a card that goes somewhere lifts on hover.
+ * a dashboard's figure cards). `render` makes the whole card another element: a router link
+ * (`render={<Link to="…" />}`), a button, or a `<section>`. `interactive` is for a card the golfer
+ * presses, which lifts on hover; a section stays put.
  */
 function Card({
   className,
   size = "default",
   corner = "default",
   render,
+  interactive = false,
   ...props
 }: React.ComponentProps<"div"> & {
   size?: "default" | "sm" | "lg";
   corner?: keyof typeof CARD_CORNER;
   render?: useRender.RenderProp;
+  interactive?: boolean;
 }) {
   return useRender({
     render: render ?? <div />,
@@ -35,7 +38,7 @@ function Card({
       className: cn(
         "group/card flex flex-col gap-(--card-spacing) overflow-hidden bg-card py-(--card-spacing) text-sm text-card-foreground shadow-surface [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=lg]:[--card-spacing:--spacing(5)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-surface *:[img:last-child]:rounded-b-surface",
         CARD_CORNER[corner],
-        render && "transition-shadow hover:shadow-card",
+        interactive && "cursor-pointer transition-shadow hover:shadow-card",
         className,
       ),
     },
