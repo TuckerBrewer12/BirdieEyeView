@@ -48,7 +48,7 @@ export type {
   ScorePoint,
 } from "./courseAnalytics";
 
-export { dayParts, formatDay, formatDayShort, formatDayTick, formatMonthOf, formatWeekdayDay, formatWeekdayShort, isoDay, parseDay } from "./date";
+export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekdayDay, formatWeekdayShort, isoDay, parseDay } from "./date";
 export type { DayParts } from "./date";
 
 export {

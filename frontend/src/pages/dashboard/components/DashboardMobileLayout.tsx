@@ -32,7 +32,7 @@ export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
           line={vm.averageLine}
         />
         <BestRoundCard compact best={vm.best} />
-        <GoalCard compact goal={vm.goal} seasonRounds={vm.season.rounds} className="col-span-2" />
+        <GoalCard compact goal={vm.goal} seasonRounds={vm.roundsThisYear} className="col-span-2" />
       </div>
 
       <RecentRounds compact rounds={vm.recentRounds} />

@@ -58,7 +58,7 @@ describe("useDashboardPageViewModel", () => {
     expect(result.current.averageLine).toEqual(populatedDashboard.score_trend.map((row) => row.rolling_average));
   });
 
-  it("carries the best round, the season and the goal as the server and goal report have them", async () => {
+  it("carries the best round, the year's rounds, the recent score mix and the goal as the server and goal report have them", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.goal?.progressPct).toBe(82));
     expect(result.current.best).toEqual({
@@ -68,8 +68,8 @@ describe("useDashboardPageViewModel", () => {
       course: "Blue Rock",
       date: "2026-04-18T18:00:00.000Z",
     });
-    expect(result.current.season.rounds).toBe(4);
-    expect(result.current.season.months).toHaveLength(6);
+    expect(result.current.roundsThisYear).toBe(4);
+    expect(result.current.recentMix).toEqual(populatedDashboard.recent_score_mix);
     expect(result.current.goal).toEqual({ target: 79, progressPct: 82, onTrack: true });
   });
 

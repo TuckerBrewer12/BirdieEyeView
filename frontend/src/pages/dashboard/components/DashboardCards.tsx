@@ -1,11 +1,11 @@
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { ProgressRing, Sparkline, StatDelta } from "@/brand";
+import { ProgressRing, ScoreMixBar, Sparkline, StatDelta } from "@/brand";
 import { cn } from "@/brand/cn";
 import { toParDisplay, toParTextClass } from "@/brand/theme";
-import { formatMonthOf, formatOneDecimal, goalTargetLabel } from "@/domain";
-import type { BestRound, ChangeVerdict, GoalProgress, Season } from "../model";
-import { bestLabel, bestWhere, goalSeasonLine, goalStatusLabel, moveOf, roundsLabel } from "../present";
+import { formatOneDecimal, goalTargetLabel, type ScoreMix } from "@/domain";
+import { hasScoreMix, type BestRound, type ChangeVerdict, type GoalProgress } from "../model";
+import { bestLabel, bestWhere, goalSeasonLine, goalStatusLabel, moveOf } from "../present";
 
 /** A card on the page, as the dashboard's figures sit: no rule, the soft surface's shadow. */
 export const SURFACE = "rounded-surface bg-card text-card-foreground shadow-surface";
@@ -89,23 +89,13 @@ export function BestRoundCard({ best, compact = false }: { best: BestRound | nul
   );
 }
 
-/** How many rounds this year, and which of the last six months had one. */
-export function SeasonCard({ season }: { season: Season }) {
+/** How the last five rounds' holes split across score kinds. */
+export function ScoreMixCard({ mix }: { mix: ScoreMix }) {
   return (
-    <div data-slot="season-card" className={cn(SURFACE, CARD_PADDING.wide, "flex flex-col gap-1.5")}>
-      <div className="text-body text-muted-foreground">Rounds this season</div>
-      <div className="text-figure">{season.rounds}</div>
-      <ol aria-label="Months played" className="mt-1 flex gap-1.25">
-        {season.months.map(({ month, rounds }) => (
-          <li key={month} className="flex flex-col items-center gap-1">
-            <span aria-hidden className={cn("size-3.5 rounded-full", rounds > 0 ? "bg-primary" : "bg-chart-grid")} />
-            <span className="sr-only">{`${formatMonthOf(month, "long")}: ${roundsLabel(rounds)}`}</span>
-            <span aria-hidden className="text-meta text-muted-foreground">
-              {formatMonthOf(month, "narrow")}
-            </span>
-          </li>
-        ))}
-      </ol>
+    <div data-slot="score-mix-card" className={cn(SURFACE, CARD_PADDING.wide, "flex flex-col gap-1.5")}>
+      <div className="text-body text-muted-foreground">Score mix · last 5</div>
+      <ScoreMixBar mix={mix} className="mt-2" />
+      {!hasScoreMix(mix) && <div className="text-figure">—</div>}
     </div>
   );
 }

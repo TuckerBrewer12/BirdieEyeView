@@ -71,11 +71,6 @@ export function goalStatusLabel(onTrack: boolean): string {
   return onTrack ? "On track" : "Not yet";
 }
 
-/** "3 rounds", "no rounds": a month's golf, read out. */
-export function roundsLabel(rounds: number): string {
-  return rounds === 0 ? "no rounds" : `${rounds} ${pluralNoun(rounds, "round")}`;
-}
-
 /** "On track · 4 rounds this season": the phone's goal line. */
 export function goalSeasonLine(onTrack: boolean, seasonRounds: number): string {
   return `${goalStatusLabel(onTrack)} · ${seasonRounds} ${pluralNoun(seasonRounds, "round")} this season`;

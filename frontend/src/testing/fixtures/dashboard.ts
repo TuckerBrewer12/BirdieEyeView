@@ -111,17 +111,7 @@ export const populatedDashboard: DashboardDto = {
   scrambling_trend: scramblingTrend,
   up_and_down_trend: upAndDownTrend,
   // Mar 9, Apr 18, May 2 and Jun 15, seen from mid-June.
-  season: {
-    rounds: 4,
-    months: [
-      { month: "2026-01", rounds: 0 },
-      { month: "2026-02", rounds: 0 },
-      { month: "2026-03", rounds: 1 },
-      { month: "2026-04", rounds: 1 },
-      { month: "2026-05", rounds: 1 },
-      { month: "2026-06", rounds: 1 },
-    ],
-  },
+  rounds_this_year: 4,
   // Jun 15 at Half Moon Bay, the newest round: bogeys out, a birdie on 18, +6.
   last_round_flow: [1, 1, 1, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 6, 7, 7, 6].map((to_par, i) => ({ hole_number: i + 1, to_par })),
 };

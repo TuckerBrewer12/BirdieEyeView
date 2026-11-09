@@ -1201,6 +1201,11 @@ export interface components {
             /** Recent Rounds */
             recent_rounds: components["schemas"]["RoundSummaryResponse"][];
             recent_score_mix: components["schemas"]["ScoreMix"];
+            /**
+             * Rounds This Year
+             * @default 0
+             */
+            rounds_this_year: number;
             score_mix: components["schemas"]["ScoreMix"];
             /**
              * Score Mix Holes
@@ -1221,7 +1226,6 @@ export interface components {
             scoring_average_verdict: ("good" | "bad" | "neutral") | null;
             /** Scrambling Trend */
             scrambling_trend: components["schemas"]["ScramblingTrendRow"][];
-            season: components["schemas"]["SeasonActivity"];
             /** Total Rounds */
             total_rounds: number;
             /** Up And Down Trend */
@@ -2755,29 +2759,6 @@ export interface components {
             scramble_successes: number;
             /** Scrambling Percentage */
             scrambling_percentage: number | null;
-        };
-        /**
-         * SeasonActivity
-         * @description Rounds this calendar year, and each of the last six months' count, oldest first.
-         */
-        SeasonActivity: {
-            /** Months */
-            months: components["schemas"]["SeasonMonth"][];
-            /**
-             * Rounds
-             * @default 0
-             */
-            rounds: number;
-        };
-        /** SeasonMonth */
-        SeasonMonth: {
-            /** Month */
-            month: string;
-            /**
-             * Rounds
-             * @default 0
-             */
-            rounds: number;
         };
         /** SendFriendRequest */
         SendFriendRequest: {

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { useGoalReport } from "@/data/useGoalReport";
 import { useUser } from "@/data/useUser";
-import { Round, trendPointsFrom, type RoundSummary, type RunningToPar } from "@/domain";
+import { Round, trendPointsFrom, type RoundSummary, type RunningToPar, type ScoreMix } from "@/domain";
 import type { DashboardDto, UserDto } from "@/types/api";
 import {
   dashboardRepository,
@@ -14,13 +14,11 @@ import {
   goalProgress,
   handicapMonthFrom,
   lastRoundFlowFrom,
-  seasonFrom,
   whsFrom,
   type BestRound,
   type ChangeVerdict,
   type GoalProgress,
   type HandicapMonth,
-  type Season,
   type WhsBreakdown,
 } from "./model";
 
@@ -46,7 +44,10 @@ export interface DashboardPageViewModel {
   recentRounds: RoundSummary[];
   /** Null before a scored round. */
   best: BestRound | null;
-  season: Season;
+  /** Rounds this calendar year: the phone's goal line. */
+  roundsThisYear: number;
+  /** Each score kind's share of the last five rounds' holes. */
+  recentMix: ScoreMix;
   /** Null until the player sets a scoring goal. */
   goal: GoalProgress | null;
   whs: WhsBreakdown;
@@ -66,7 +67,7 @@ const EMPTY_WHS: WhsBreakdown = {
 };
 
 const EMPTY_HANDICAP: HandicapMonth = { index: null, change: null, verdict: null };
-const EMPTY_SEASON: Season = { rounds: 0, months: [] };
+const EMPTY_MIX: ScoreMix = { eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0 };
 const RECENT_ROUNDS = 3;
 
 export function useDashboardPageViewModel(
@@ -108,7 +109,8 @@ export function useDashboardPageViewModel(
     lastRoundFlow,
     recentRounds: rounds.slice(1, 1 + RECENT_ROUNDS),
     best: data ? bestRoundFrom(data) : null,
-    season: data ? seasonFrom(data) : EMPTY_SEASON,
+    roundsThisYear: data?.rounds_this_year ?? 0,
+    recentMix: data?.recent_score_mix ?? EMPTY_MIX,
     goal: goalProgress(user?.scoring_goal, goalReport ?? null),
     whs: data ? whsFrom(data.whs) : EMPTY_WHS,
     handicapSheetOpen,

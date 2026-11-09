@@ -2018,6 +2018,11 @@
           "recent_score_mix": {
             "$ref": "#/components/schemas/ScoreMix"
           },
+          "rounds_this_year": {
+            "default": 0,
+            "title": "Rounds This Year",
+            "type": "integer"
+          },
           "score_mix": {
             "$ref": "#/components/schemas/ScoreMix"
           },
@@ -2100,9 +2105,6 @@
             "title": "Scrambling Trend",
             "type": "array"
           },
-          "season": {
-            "$ref": "#/components/schemas/SeasonActivity"
-          },
           "total_rounds": {
             "title": "Total Rounds",
             "type": "integer"
@@ -2148,7 +2150,7 @@
           "handicap_trend",
           "scrambling_trend",
           "up_and_down_trend",
-          "season",
+          "rounds_this_year",
           "last_round_flow"
         ],
         "title": "DashboardResponse",
@@ -7059,48 +7061,6 @@
           "scrambling_percentage"
         ],
         "title": "ScramblingTrendRow",
-        "type": "object"
-      },
-      "SeasonActivity": {
-        "description": "Rounds this calendar year, and each of the last six months' count, oldest first.",
-        "properties": {
-          "months": {
-            "items": {
-              "$ref": "#/components/schemas/SeasonMonth"
-            },
-            "title": "Months",
-            "type": "array"
-          },
-          "rounds": {
-            "default": 0,
-            "title": "Rounds",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "rounds",
-          "months"
-        ],
-        "title": "SeasonActivity",
-        "type": "object"
-      },
-      "SeasonMonth": {
-        "properties": {
-          "month": {
-            "title": "Month",
-            "type": "string"
-          },
-          "rounds": {
-            "default": 0,
-            "title": "Rounds",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "month",
-          "rounds"
-        ],
-        "title": "SeasonMonth",
         "type": "object"
       },
       "SendFriendRequest": {

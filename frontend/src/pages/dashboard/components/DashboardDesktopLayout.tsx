@@ -1,6 +1,6 @@
 import type { DashboardPageViewModel } from "../useDashboardPageViewModel";
 import { firstNameOf, greetingFor } from "../present";
-import { BestRoundCard, GoalCard, ScoringAverageCard, SeasonCard } from "./DashboardCards";
+import { BestRoundCard, GoalCard, ScoreMixCard, ScoringAverageCard } from "./DashboardCards";
 import { RecentRounds } from "./RecentRounds";
 import { GreetingHeader } from "./GreetingHeader";
 import { LastRoundCard } from "./LastRoundCard";
@@ -30,8 +30,8 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
           line={vm.averageLine}
         />
         <BestRoundCard best={vm.best} />
-        <SeasonCard season={vm.season} />
-        <GoalCard goal={vm.goal} seasonRounds={vm.season.rounds} />
+        <ScoreMixCard mix={vm.recentMix} />
+        <GoalCard goal={vm.goal} seasonRounds={vm.roundsThisYear} />
       </div>
 
       <RecentRounds rounds={vm.recentRounds} />

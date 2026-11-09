@@ -118,21 +118,11 @@ def test_handicap_change_this_month_reads_from_the_last_round_before_the_first()
     assert dashboard.handicap_change_this_month(rounds, trend, date(2026, 7, 2)) == 0.0
 
 
-def test_season_counts_this_year_and_the_last_six_months():
+def test_rounds_this_year_count_only_this_calendar_year():
     from datetime import date
-    rounds = [_dated(date(2025, 12, 30)), _dated(date(2026, 3, 9)), _dated(date(2026, 4, 18)), _dated(date(2026, 6, 15)), _dated(date(2026, 6, 20))]
-    season = dashboard.season_activity(rounds, date(2026, 6, 21))
-    assert season["rounds"] == 4
-    assert season["months"] == [
-        {"month": "2026-01", "rounds": 0},
-        {"month": "2026-02", "rounds": 0},
-        {"month": "2026-03", "rounds": 1},
-        {"month": "2026-04", "rounds": 1},
-        {"month": "2026-05", "rounds": 0},
-        {"month": "2026-06", "rounds": 2},
-    ]
-    # Across the new year, the months run back into the last one.
-    assert dashboard.season_activity(rounds, date(2026, 2, 1))["months"][0]["month"] == "2025-09"
+    rounds = [_dated(date(2025, 12, 30)), _dated(date(2026, 3, 9)), _dated(date(2026, 6, 15)), _dated(date(2026, 6, 20))]
+    assert dashboard.rounds_this_year(rounds, date(2026, 6, 21)) == 3
+    assert dashboard.rounds_this_year(rounds, date(2027, 1, 2)) == 0
 
 
 def test_round_flow_is_the_running_to_par_hole_by_hole():

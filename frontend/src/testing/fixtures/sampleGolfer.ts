@@ -1664,6 +1664,7 @@ export const sampleGolfer = {
       }
     ],
     "recent_score_mix": {"birdie": 5.555555555555555, "bogey": 35.55555555555556, "double": 4.444444444444445, "eagle": 0.0, "par": 54.44444444444444, "quad": 0.0, "triple": 0.0},
+    "rounds_this_year": 24,
     "score_mix": {"birdie": 5.555555555555555, "bogey": 39.72222222222222, "double": 10.277777777777777, "eagle": 0.0, "par": 43.611111111111114, "quad": 0.0, "triple": 0.8333333333333334},
     "score_mix_holes": 360,
     "score_trend": [
@@ -1715,17 +1716,6 @@ export const sampleGolfer = {
       {"round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 19, "scramble_failures": 8, "scramble_opportunities": 10, "scramble_successes": 2, "scrambling_percentage": 20.0},
       {"round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 20, "scramble_failures": 6, "scramble_opportunities": 9, "scramble_successes": 3, "scrambling_percentage": 33.33333333333333}
     ],
-    "season": {
-      "months": [
-        {"month": "2026-01", "rounds": 0},
-        {"month": "2026-02", "rounds": 0},
-        {"month": "2026-03", "rounds": 8},
-        {"month": "2026-04", "rounds": 8},
-        {"month": "2026-05", "rounds": 8},
-        {"month": "2026-06", "rounds": 0}
-      ],
-      "rounds": 24
-    },
     "total_rounds": 24,
     "up_and_down_trend": [
       {"opportunities": 14, "percentage": 28.6, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "successes": 4},

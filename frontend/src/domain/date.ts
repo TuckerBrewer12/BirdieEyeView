@@ -92,12 +92,6 @@ export function formatWeekdayShort(input: DayInput): string | null {
   return `${day.toLocaleDateString("en-US", { weekday: "short" })}, ${day.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 }
 
-/** "2026-04" as "A" (`narrow`, under a dot in a row of months) or "April" (`long`). */
-export function formatMonthOf(month: string, width: "narrow" | "long"): string {
-  const day = toDay(`${month}-01`);
-  return day ? day.toLocaleDateString("en-US", { month: width }) : "";
-}
-
 export interface DayParts {
   /** "JUN" */
   month: string;

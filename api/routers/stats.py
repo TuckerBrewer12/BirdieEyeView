@@ -114,7 +114,7 @@ async def get_dashboard(
         handicap_trend=handicap_trend,
         scrambling_trend=analytics.scrambling_per_round(last_20),
         up_and_down_trend=analytics.up_and_down_trend(last_20),
-        season=dashboard.season_activity(summaries, today),
+        rounds_this_year=dashboard.rounds_this_year(summaries, today),
         last_round_flow=dashboard.round_flow(summaries[0] if summaries else None),
     )
 

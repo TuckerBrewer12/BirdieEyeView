@@ -183,17 +183,6 @@ class HandicapChange(ResponseModel):
     this_month_verdict: Optional[ChangeVerdict] = None
 
 
-class SeasonMonth(ResponseModel):
-    month: str  # YYYY-MM
-    rounds: int = 0
-
-
-class SeasonActivity(ResponseModel):
-    """Rounds this calendar year, and each of the last six months' count, oldest first."""
-    rounds: int = 0
-    months: List[SeasonMonth] = Field(default_factory=list)
-
-
 class HoleRunningToPar(ResponseModel):
     hole_number: int
     to_par: int  # the round's to par after this hole
@@ -313,7 +302,7 @@ class DashboardResponse(ResponseModel):
     handicap_trend: List[HandicapTrendRow] = Field(default_factory=list)
     scrambling_trend: List[ScramblingTrendRow] = Field(default_factory=list)
     up_and_down_trend: List[UpAndDownTrendRow] = Field(default_factory=list)
-    season: SeasonActivity = Field(default_factory=SeasonActivity)
+    rounds_this_year: int = 0  # the goal card's "rounds this season"
     # The newest round's to par after each hole: the dashboard's "How it went".
     last_round_flow: List[HoleRunningToPar] = Field(default_factory=list)
 

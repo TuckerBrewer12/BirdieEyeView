@@ -131,31 +131,15 @@ def handicap_change_this_month(
     return round(indexes[-1] - before, 1)
 
 
-SEASON_MONTHS = 6
-
-
 def today() -> date:
     """The day the dashboard reads "this month" and "this season" against. A seam, so a generated
     fixture can pin it."""
     return datetime.now(timezone.utc).date()
 
 
-def season_activity(rounds: List[Round], today: date) -> Dict[str, Any]:
-    """Rounds played this calendar year, and how many in each of the last six months, oldest month
-    first, as `YYYY-MM`."""
-    days = [d for d in (_round_day(r) for r in rounds) if d is not None]
-    months = []
-    year, month = today.year, today.month
-    for _ in range(SEASON_MONTHS):
-        months.append((year, month))
-        year, month = (year, month - 1) if month > 1 else (year - 1, 12)
-    return {
-        "rounds": sum(1 for d in days if d.year == today.year),
-        "months": [
-            {"month": f"{y:04d}-{m:02d}", "rounds": sum(1 for d in days if (d.year, d.month) == (y, m))}
-            for y, m in reversed(months)
-        ],
-    }
+def rounds_this_year(rounds: List[Round], today: date) -> int:
+    """Rounds played this calendar year: the dashboard's "rounds this season"."""
+    return sum(1 for d in (_round_day(r) for r in rounds) if d is not None and d.year == today.year)
 
 
 def round_flow(round_: Optional[Round]) -> List[Dict[str, int]]:

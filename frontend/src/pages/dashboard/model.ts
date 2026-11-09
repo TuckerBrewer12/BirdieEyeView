@@ -1,4 +1,5 @@
 import type { RunningToPar } from "@/domain/round";
+import type { ScoreMix } from "@/domain/score";
 import type { DashboardDto, GoalReportDto, WhsBreakdownDto } from "@/types/api";
 
 /** The server's verdict on a figure's move: a score or a handicap falling is good. */
@@ -41,14 +42,9 @@ export function handicapMonthFrom(dto: DashboardDto): HandicapMonth {
   };
 }
 
-/** How much golf this year: the year's rounds and the last six months, oldest first. */
-export interface Season {
-  rounds: number;
-  months: { month: string; rounds: number }[];
-}
-
-export function seasonFrom(dto: DashboardDto): Season {
-  return { rounds: dto.season.rounds, months: dto.season.months };
+/** Whether a mix has any holes in it: a player with no classified holes has none to split. */
+export function hasScoreMix(mix: ScoreMix): boolean {
+  return Object.values(mix).some((share) => share > 0);
 }
 
 /** The last round's to par after each hole, as the server ran it. */
