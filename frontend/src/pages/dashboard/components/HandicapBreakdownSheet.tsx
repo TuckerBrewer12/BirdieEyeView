@@ -1,194 +1,205 @@
-import { CheckCircle, Circle } from "lucide-react";
+import { Check, ChevronDown, X } from "lucide-react";
 import {
   Alert,
   AlertDescription,
+  Button,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
   Sheet,
+  SheetClose,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
   SheetTitle,
+  StatDelta,
+  StatStrip,
+  useFromBreakpoint,
 } from "@/brand";
-import { formatHandicapIndex } from "@/domain/handicap";
-import type { WhsBreakdown } from "../model";
+import { cn } from "@/brand/cn";
+import { formatHandicapIndex, formatOneDecimal } from "@/domain";
+import type { ChangeVerdict, WhsBreakdown, WhsRound } from "../model";
 import {
   adjustmentLabel,
   courseLabelForWhs,
   differentialLabel,
+  moveOf,
   ratingLabelForWhs,
-  usedLegend,
+  scoreAndRatingForWhs,
   whsContextNote,
+  windowFillLabel,
 } from "../present";
 
 interface HandicapBreakdownSheetProps {
   open: boolean;
   onClose: () => void;
   handicapIndex: number | null | undefined;
+  /** How far the index moved across the dashboard's window, and the server's verdict on it. */
+  handicapChange: number | null;
+  handicapVerdict: ChangeVerdict | null;
   whs: WhsBreakdown;
 }
 
+/**
+ * How the handicap index was reached: the index, the window's rounds and which of them count.
+ * A panel from the right on a wide screen, a sheet from the bottom on a phone.
+ */
 export function HandicapBreakdownSheet({
   open,
   onClose,
   handicapIndex,
+  handicapChange,
+  handicapVerdict,
   whs,
 }: HandicapBreakdownSheetProps) {
-  const handicapIndexLabel = formatHandicapIndex(handicapIndex);
-  const {
-    rows,
-    windowSize,
-    countUsed,
-    adjustment,
-    diffAvg,
-    hasRatedRounds,
-    showCalculation,
-  } = whs;
+  const wide = useFromBreakpoint("md");
+  const move = moveOf(handicapChange);
+  const { rows, windowSize, countUsed, adjustment, diffAvg, hasRatedRounds } = whs;
   const adjustmentText = adjustmentLabel(adjustment);
-  const diffAvgLabel = diffAvg != null ? diffAvg.toFixed(2) : null;
-  const legend = usedLegend(countUsed, rows.filter((r) => r.used).length);
-  const contextNote = whsContextNote(countUsed);
+  const stats = [
+    { value: windowFillLabel(windowSize), label: "Rounds so far" },
+    { value: String(countUsed), label: "Best used" },
+    { value: formatOneDecimal(diffAvg), label: wide ? "Avg differential" : "Avg diff" },
+  ];
+
+  const index = (
+    <div className="flex items-baseline gap-2.5">
+      <span className={cn("leading-none font-semibold tracking-hero text-foreground", wide ? "text-5xl" : "text-hero")}>
+        {formatHandicapIndex(handicapIndex)}
+      </span>
+      <StatDelta direction={move.direction} tone={handicapVerdict ?? "neutral"} className="text-body font-semibold">
+        {move.amount}
+      </StatDelta>
+    </div>
+  );
 
   return (
     <Sheet open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Handicap Index</SheetTitle>
-          <SheetDescription>
-            {handicapIndexLabel} HCP
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 pb-4">
-          <div>
-            <div className="text-eyebrow uppercase text-muted-foreground mb-3">
-              WHS Formula
+      <SheetContent
+        side={wide ? "right" : "bottom"}
+        showCloseButton={false}
+        className={cn(
+          "gap-5 overflow-y-auto",
+          wide ? "max-w-sheet border-l-0 p-6 shadow-card" : "h-sheet-tall gap-4.5 rounded-t-sheet px-5 pt-2.5 pb-7.5",
+        )}
+      >
+        {wide ? (
+          <>
+            <div className="flex items-center justify-between">
+              <SheetTitle className="text-body-lg font-semibold">Handicap index</SheetTitle>
+              <SheetClose render={<Button variant="ghost" size="icon" aria-label="Close" />}>
+                <X />
+              </SheetClose>
             </div>
-            <div className="bg-muted rounded-card p-4">
-              <div className="text-sm font-semibold text-secondary-foreground mb-1">Score Differential</div>
-              <div className="font-mono text-xs text-muted-foreground leading-relaxed">
-                = (Score − Course Rating) × 113 ÷ Slope Rating
-              </div>
-              {!hasRatedRounds && (
-                <Alert className="mt-2">
-                  <AlertDescription>
-                    Your rounds don't have slope/rating data — using score-to-par as differential
-                  </AlertDescription>
-                </Alert>
-              )}
+            {index}
+          </>
+        ) : (
+          <div className="flex items-end justify-between">
+            <div className="flex flex-col gap-1">
+              <SheetTitle className="text-body font-semibold text-foreground-secondary">Handicap index</SheetTitle>
+              {index}
             </div>
+            <SheetClose render={<Button variant="secondary" size="icon-sm" shape="pill" aria-label="Close" />}>
+              <X />
+            </SheetClose>
           </div>
+        )}
 
-          {showCalculation && (
-            <div>
-              <div className="text-eyebrow uppercase text-muted-foreground mb-3">
-                Current Calculation
-              </div>
-              <div className="bg-accent rounded-card p-4 space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Rounds in window</span>
-                  <span className="font-semibold text-card-foreground">{windowSize} of 20</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Best differentials used</span>
-                  <span className="font-semibold text-card-foreground">{countUsed}</span>
-                </div>
-                {diffAvgLabel && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Their average</span>
-                    <span className="font-semibold text-card-foreground font-mono">{diffAvgLabel}</span>
-                  </div>
-                )}
-                {adjustmentText && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">WHS adjustment</span>
-                    <span className="font-semibold text-card-foreground font-mono">{adjustmentText}</span>
-                  </div>
-                )}
-                <div className="border-t border-border pt-3 flex justify-between">
-                  <span className="text-sm font-bold text-primary">Handicap Index</span>
-                  <span className="text-sm font-black text-primary font-mono">
-                    {handicapIndexLabel}
-                  </span>
-                </div>
-              </div>
+        <StatStrip className="rounded-2xl">
+          {stats.map((stat) => (
+            <div key={stat.label} className="px-3.5 py-3 not-first:border-l not-first:border-border">
+              <div className="text-lg font-semibold text-foreground">{stat.value}</div>
+              <div className="mt-0.5 text-label text-muted-foreground">{stat.label}</div>
+            </div>
+          ))}
+        </StatStrip>
 
-              {adjustment !== 0 && (
-                <div className="mt-2 px-1 text-label text-muted-foreground leading-relaxed">
-                  With only {windowSize} rounds, WHS applies a {adjustment} adjustment to encourage more play before the index fully stabilizes.
-                </div>
-              )}
+        {!hasRatedRounds && (
+          <Alert>
+            <AlertDescription>
+              These rounds have no course rating or slope, so each differential is the score to par.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="flex flex-col">
+          {wide && rows.length > 0 && (
+            <div className="flex justify-between px-0.5 pb-2 text-label font-semibold text-muted-foreground">
+              <span>Round</span>
+              <span className="flex gap-7">
+                <span>Score</span>
+                <span>Diff</span>
+                <span className="w-4.5" />
+              </span>
             </div>
           )}
-
-          <div>
-            <div className="text-eyebrow uppercase text-muted-foreground mb-3">
-              Recent Rounds · Last {rows.length}
-            </div>
-
-            {rows.length === 0 ? (
-              <div className="text-sm text-muted-foreground text-center py-8">No rounds yet</div>
-            ) : (
-              <div className="rounded-card border border-border overflow-hidden divide-y divide-border">
-                <div className="grid grid-cols-handicap-breakdown gap-2 px-4 py-2 bg-muted text-meta font-bold uppercase tracking-kicker text-muted-foreground">
-                  <span>Course</span>
-                  <span className="text-right w-10">Score</span>
-                  <span className="text-right w-16">Diff</span>
-                  <span className="w-5" />
-                </div>
-
-                {rows.map((row) => (
-                  <div
-                    key={row.roundIndex}
-                    className={`grid grid-cols-handicap-breakdown gap-2 px-4 py-3 items-center ${
-                      row.used ? "bg-accent" : ""
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-card-foreground truncate">
-                        {courseLabelForWhs(row)}
-                      </div>
-                      {ratingLabelForWhs(row) && (
-                        <div className="text-meta text-muted-foreground font-mono mt-0.5">
-                          {ratingLabelForWhs(row)}
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-sm font-mono font-semibold text-secondary-foreground text-right w-10">
-                      {row.score != null ? String(row.score) : "—"}
-                    </div>
-                    <div className={`text-sm font-mono font-bold text-right w-16 ${
-                      row.differential == null
-                        ? "text-muted-foreground"
-                        : row.used
-                          ? "text-primary"
-                          : "text-muted-foreground"
-                    }`}>
-                      {differentialLabel(row.differential)}
-                    </div>
-                    <div className="w-5 flex justify-center">
-                      {row.used ? (
-                        <CheckCircle className="size-3.5 text-primary shrink-0" />
-                      ) : row.differential != null ? (
-                        <Circle className="size-3.5 text-muted-foreground shrink-0" />
-                      ) : null}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {legend && (
-              <div className="mt-3 flex items-center gap-2 text-label text-muted-foreground px-1">
-                <CheckCircle className="size-3 text-primary shrink-0" />
-                <span>{legend}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="text-label text-muted-foreground leading-relaxed pb-4 px-1">
-            {contextNote}
-          </div>
+          {rows.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">No rounds yet</div>
+          ) : (
+            rows.map((row) => <WhsRow key={row.roundIndex} row={row} wide={wide} />)
+          )}
         </div>
+
+        <Collapsible>
+          <CollapsibleTrigger
+            render={<Button variant="link" size="sm" className="group self-start px-0" />}
+          >
+            How it’s calculated
+            <ChevronDown aria-hidden className="size-3 transition-transform group-data-panel-open:rotate-180" />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="flex flex-col gap-3 pt-2 text-body-sm text-foreground-secondary">
+              <p>Each round’s differential is (score − course rating) × 113 ÷ slope rating.</p>
+              <p>{whsContextNote(countUsed)}</p>
+              {adjustmentText && (
+                <p>
+                  With only {windowSize} rounds, the index takes a {adjustmentText} adjustment until there are
+                  more.
+                </p>
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** One round in the window: where, its rating, its score and differential, and whether it counts. */
+function WhsRow({ row, wide }: { row: WhsRound; wide: boolean }) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 border-t",
+        wide ? "border-chart-grid px-0.5 py-3 first:border-muted" : "border-chart-grid py-3 first:border-t-0",
+      )}
+    >
+      <div className="min-w-0 flex-1">
+        <div className={cn("truncate font-semibold text-foreground", wide ? "text-sm" : "text-body-lg")}>
+          {courseLabelForWhs(row)}
+        </div>
+        <div className="text-body-sm text-muted-foreground">
+          {wide ? ratingLabelForWhs(row) : scoreAndRatingForWhs(row)}
+        </div>
+      </div>
+      {wide && <div className="w-10 text-right text-sm font-semibold text-foreground">{row.score ?? "—"}</div>}
+      <div
+        className={cn(
+          "text-right",
+          wide ? "w-12 text-sm" : "text-body-lg",
+          row.used ? "font-bold text-foreground" : "font-medium text-muted-foreground",
+        )}
+      >
+        {differentialLabel(row.differential)}
+      </div>
+      <span
+        aria-label={row.used ? "Counts toward index" : "Not counted"}
+        className={cn(
+          "inline-flex shrink-0 items-center justify-center rounded-full",
+          wide ? "size-4.5" : "size-5",
+          row.used ? "bg-primary text-primary-foreground" : "border border-border-strong",
+        )}
+      >
+        {row.used && <Check aria-hidden className="size-2.5 stroke-3" />}
+      </span>
+    </div>
   );
 }

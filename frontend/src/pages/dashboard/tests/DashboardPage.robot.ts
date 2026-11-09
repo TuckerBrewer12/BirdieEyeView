@@ -46,7 +46,7 @@ export class DashboardRobot {
 
   async seesGreeting(): Promise<this> {
     await expect(
-      this.page.getByText(/^(Hi Test|Hello, Test)$/).locator("visible=true"),
+      this.page.getByText(/^Hi, Test$/).locator("visible=true"),
     ).toBeVisible();
     return this;
   }
@@ -67,14 +67,47 @@ export class DashboardRobot {
   }
 
   async seesHandicapSheet(): Promise<this> {
-    await expect(this.page.getByRole("heading", { name: "Handicap Index" })).toBeVisible();
-    await expect(this.page.getByText("WHS Formula")).toBeVisible();
+    await expect(this.page.getByRole("heading", { name: "Handicap index" })).toBeVisible();
+    await expect(this.page.getByText("Rounds so far")).toBeVisible();
     await expect(this.page.locator("[data-slot=sheet-overlay]")).toBeVisible();
     return this;
   }
 
   async doesNotSeeHandicapSheet(): Promise<this> {
-    await expect(this.page.getByRole("heading", { name: "Handicap Index" })).toHaveCount(0);
+    await expect(this.page.getByRole("heading", { name: "Handicap index" })).toHaveCount(0);
+    return this;
+  }
+
+  /** Last 5 / Last 20, above the figures. */
+  async showWindow(label: "Last 5" | "Last 20"): Promise<this> {
+    await this.page.getByRole("group", { name: "Range" }).locator("visible=true").getByRole("button", { name: label }).click();
+    return this;
+  }
+
+  async seesWindow(label: "Last 5" | "Last 20"): Promise<this> {
+    await expect(
+      this.page.getByRole("group", { name: "Range" }).locator("visible=true").getByRole("button", { name: label }),
+    ).toHaveAttribute("aria-pressed", "true");
+    return this;
+  }
+
+  async openRecentRound(course: string): Promise<this> {
+    await this.page
+      .locator("[data-slot=round-preview][data-variant=compact]")
+      .locator("visible=true")
+      .filter({ hasText: course })
+      .first()
+      .click();
+    return this;
+  }
+
+  async viewAllRounds(): Promise<this> {
+    await this.page.getByRole("button", { name: "View all" }).locator("visible=true").click();
+    return this;
+  }
+
+  async isAtRounds(): Promise<this> {
+    await expect(this.page).toHaveURL(/\/rounds$/);
     return this;
   }
 
@@ -105,36 +138,6 @@ export class DashboardRobot {
 
   async isAtLab(): Promise<this> {
     await expect(this.page).toHaveURL(/\/the-lab$/);
-    return this;
-  }
-
-  /** The phone's trend card; the desktop grid has its own copy of the chart. */
-  private trendCard() {
-    return this.page.locator("[data-slot=card]").filter({ hasText: "Score History" }).locator("visible=true");
-  }
-
-  async showTrend(label: "Score" | "HCP"): Promise<this> {
-    await this.trendCard().getByRole("button", { name: label }).tap();
-    return this;
-  }
-
-  async seesTrendShowing(label: "Score" | "HCP"): Promise<this> {
-    await expect(this.trendCard().getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true");
-    return this;
-  }
-
-  /** Taps the chart part-way across: 0 is the first round, 1 the last. */
-  async tapTrendAt(fraction: number): Promise<this> {
-    const chart = this.trendCard().locator("[data-slot=score-handicap-trend] svg");
-    await chart.scrollIntoViewIfNeeded();
-    const box = await chart.boundingBox();
-    if (!box) throw new Error("Trend chart is not on screen");
-    await this.page.touchscreen.tap(box.x + box.width * fraction, box.y + box.height / 2);
-    return this;
-  }
-
-  async seesTrendTooltip(text: string | RegExp): Promise<this> {
-    await expect(this.page.locator("[data-slot=score-handicap-trend]").locator("visible=true").getByText(text)).toBeVisible();
     return this;
   }
 

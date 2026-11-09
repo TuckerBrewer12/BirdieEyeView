@@ -3,20 +3,13 @@ import { CircleDot, Flag, TrendingDown, Trophy } from "lucide-react";
 import { Collection, RowButton } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { Milestone } from "../model";
-import { milestoneWording } from "../present";
+import { milestoneWhere, milestoneWording } from "../present";
 
 const ICON_MAP: Record<Milestone["kind"], ElementType> = {
   under_par: TrendingDown,
   score_break: Trophy,
   putt_break: CircleDot,
   par_streak: Flag,
-};
-
-const COLOR_MAP: Record<Milestone["kind"], string> = {
-  under_par: "bg-primary/tint text-primary",
-  score_break: "bg-score-eagle/tint text-score-eagle",
-  putt_break: "bg-score-double/tint text-score-double",
-  par_streak: "bg-score-quad/tint text-score-quad",
 };
 
 interface MilestoneFeedProps {
@@ -30,9 +23,10 @@ export function MilestoneFeed({ milestones, onRoundClick }: MilestoneFeedProps) 
     <div data-slot="milestone-feed">
       <Collection
         items={milestones}
+        className="gap-1"
         // The server sends at most one milestone of each kind.
         keyFor={(m) => m.kind}
-        empty="No milestones yet — keep playing!"
+        empty="No milestones yet. Keep playing."
         renderItem={(m) => {
           const roundId = m.roundId;
           return (
@@ -52,24 +46,22 @@ function MilestoneRow({ milestone, onClick }: { milestone: Milestone; onClick?: 
   const { title, figure } = milestoneWording(milestone);
   const content: ReactNode = (
     <>
-      <div className={cn("shrink-0 rounded-lg p-2", COLOR_MAP[milestone.kind])}>
-        <Icon className="size-icon-xs" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold leading-tight text-card-foreground">{title}</p>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">{milestone.course}</p>
-      </div>
-      <span className="shrink-0 text-lg font-bold tracking-stat tabular-nums text-card-foreground">
-        {figure}
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border text-primary">
+        <Icon aria-hidden className="size-4" />
       </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-foreground">{title}</span>
+        <span className="block truncate text-body-sm text-muted-foreground">{milestoneWhere(milestone)}</span>
+      </span>
+      <span className="shrink-0 text-lg font-semibold tabular-nums text-foreground">{figure}</span>
     </>
   );
-  // The card already pads its content, so the row's own padding hangs into it.
-  const row = "-mx-2 flex items-center gap-2.5 rounded-xl p-2 text-left";
+  // The card pads its content, so the row's own padding hangs into it.
+  const row = "-mx-2 flex items-center gap-3 rounded-xl px-2 py-1";
 
   if (!onClick) return <div className={row}>{content}</div>;
   return (
-    <RowButton onClick={onClick} className={cn(row, "cursor-pointer hover:bg-muted/strong")}>
+    <RowButton onClick={onClick} className={cn(row, "cursor-pointer hover:bg-muted/half")}>
       {content}
     </RowButton>
   );

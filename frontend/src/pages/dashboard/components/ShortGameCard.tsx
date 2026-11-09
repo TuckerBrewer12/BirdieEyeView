@@ -1,49 +1,34 @@
-import { Button, Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle, Meter, Stat, StatLabel, StatUnit, StatValue } from "@/brand";
-import { TOUR_SHORT_GAME, formatPercent, formatWhole } from "@/domain";
+import { Card, Meter } from "@/brand";
+import { TOUR_SHORT_GAME, formatPercent } from "@/domain";
 
 interface ShortGameCardProps {
-  /** Over the last five rounds; null when there was nothing to measure. */
+  /** Over the picked window; null when there was nothing to measure. */
   scramblingPct: number | null;
   upAndDownPct: number | null;
-  onOpenLab: () => void;
 }
 
-/** Scrambling and up-and-down over the last five rounds, each against the tour's rate. */
-export function ShortGameCard({ scramblingPct, upAndDownPct, onOpenLab }: ShortGameCardProps) {
+/** Scrambling and up-and-down, each against the tour's rate marked on its bar. */
+export function ShortGameCard({ scramblingPct, upAndDownPct }: ShortGameCardProps) {
   const rates = [
     { label: "Scrambling", value: scramblingPct, tour: TOUR_SHORT_GAME.scrambling },
-    { label: "Up & Down", value: upAndDownPct, tour: TOUR_SHORT_GAME.upAndDown },
+    { label: "Up & down", value: upAndDownPct, tour: TOUR_SHORT_GAME.upAndDown },
   ];
 
   return (
-    <Card data-slot="short-game-card">
-      <CardHeader>
-        <CardTitle>Short Game</CardTitle>
-        <CardDescription>Last 5 rounds</CardDescription>
-        <CardAction>
-          <Button variant="link" size="sm" onClick={onOpenLab}>
-            Open Lab →
-          </Button>
-        </CardAction>
-      </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-4">
-        {rates.map(({ label, value, tour }) => (
-          <div key={label} className="flex flex-col gap-1.5">
-            <Stat>
-              <StatLabel>{label}</StatLabel>
-              <StatValue size="md">
-                {formatWhole(value)}
-                {value != null && <StatUnit>%</StatUnit>}
-              </StatValue>
-            </Stat>
-            <Meter value={value} marker={tour} size="sm" aria-label={`${label} against the tour's ${formatPercent(tour)}`} />
-            <div className="flex justify-between text-caption text-muted-foreground">
-              <span>You {formatPercent(value)}</span>
-              <span>Tour {formatPercent(tour)}</span>
-            </div>
-          </div>
-        ))}
-      </CardContent>
+    <Card data-slot="short-game-card" className="grid grid-cols-2 gap-4 px-4 py-3.5">
+      {rates.map(({ label, value, tour }) => (
+        <div key={label} className="flex flex-col gap-2">
+          <div className="text-body-sm font-medium text-foreground-secondary">{label}</div>
+          <div className="text-2xl font-semibold tracking-title text-foreground">{formatPercent(value)}</div>
+          <Meter
+            value={value}
+            marker={tour}
+            size="sm"
+            aria-label={`${label} against the tour's ${formatPercent(tour)}`}
+          />
+          <div className="text-label text-muted-foreground">Tour {formatPercent(tour)}</div>
+        </div>
+      ))}
     </Card>
   );
 }

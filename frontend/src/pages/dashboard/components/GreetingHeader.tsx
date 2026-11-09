@@ -1,52 +1,43 @@
-import { Button, PageTitle, Stat, StatDelta, StatLabel, StatValue, type StatTone } from "@/brand";
-import { formatHandicapIndex, formatOneDecimal } from "@/domain";
+import { RowButton, StatDelta } from "@/brand";
+import { formatHandicapIndex } from "@/domain";
+import type { ChangeVerdict } from "../model";
+import { moveOf } from "../present";
 
 interface GreetingHeaderProps {
-  firstName: string;
-  /** "Mon · Jun 15". */
-  dateLabel: string;
+  greeting: string;
   handicapIndex: number | null;
-  /** How the index moved over the last six rated rounds; negative is an improvement. */
+  /** How far the index moved across the picked window. */
   handicapChange: number | null;
-  /** The server's verdict on that change. */
-  handicapVerdict: StatTone | null;
+  handicapVerdict: ChangeVerdict | null;
   onHandicapClick: () => void;
 }
 
-/** The phone dashboard's top line: today, a hello, and the handicap that opens its breakdown. */
+/** The phone's top line: the greeting, and the handicap index that opens its breakdown. */
 export function GreetingHeader({
-  firstName,
-  dateLabel,
+  greeting,
   handicapIndex,
   handicapChange,
   handicapVerdict,
   onHandicapClick,
 }: GreetingHeaderProps) {
-  const moved = handicapChange != null && handicapChange !== 0;
-
+  const move = moveOf(handicapChange);
+  const index = formatHandicapIndex(handicapIndex);
   return (
-    <div data-slot="greeting-header" className="flex items-start justify-between gap-4 px-1">
-      <div>
-        <div className="mb-1 text-label font-semibold uppercase tracking-eyebrow text-muted-foreground">
-          {dateLabel}
-        </div>
-        <PageTitle size="compact">Hi {firstName}</PageTitle>
-      </div>
-      <Button
-        variant="ghost"
+    <div data-slot="greeting-header" className="flex items-center justify-between gap-3">
+      <h1 className="text-title font-semibold text-foreground">{greeting}</h1>
+      <RowButton
+        aria-label={`Handicap ${index}. Open details`}
         onClick={onHandicapClick}
-        className="h-auto cursor-pointer p-1 text-right"
+        className="flex cursor-pointer flex-col items-end py-1"
       >
-        <Stat align="end">
-          <StatLabel>Handicap</StatLabel>
-          <StatValue size="md">{formatHandicapIndex(handicapIndex)}</StatValue>
-          {moved && (
-            <StatDelta direction={handicapChange < 0 ? "down" : "up"} tone={handicapVerdict ?? "neutral"}>
-              {formatOneDecimal(Math.abs(handicapChange))}
-            </StatDelta>
-          )}
-        </Stat>
-      </Button>
+        <span className="text-label font-medium text-muted-foreground">Handicap</span>
+        <span className="mt-0.5 flex items-baseline gap-1.5">
+          <StatDelta direction={move.direction} tone={handicapVerdict ?? "neutral"} className="text-label">
+            {move.amount}
+          </StatDelta>
+          <span className="text-2xl leading-none font-semibold tracking-title text-foreground">{index}</span>
+        </span>
+      </RowButton>
     </div>
   );
 }

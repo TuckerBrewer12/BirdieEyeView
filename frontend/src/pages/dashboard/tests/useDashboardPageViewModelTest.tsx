@@ -2,7 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import { Round, shortGamePointsFrom } from "@/domain";
+import { Round } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 import {
   dashboardGoalReport,
@@ -11,7 +11,7 @@ import {
 } from "@/testing/fixtures/dashboard";
 import { FakeDashboardRepository } from "@/testing/fakes/FakeDashboardRepository";
 import { useDashboardPageViewModel } from "../useDashboardPageViewModel";
-import { bestRecentRoundFrom, recentShortGame } from "../model";
+import { bestRecentRoundFrom, windowFiguresFrom } from "../model";
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -34,20 +34,28 @@ function renderVm(seed: ConstructorParameters<typeof FakeDashboardRepository>[0]
 }
 
 describe("useDashboardPageViewModel", () => {
-  it("exposes scoring average, handicap, and mix after load", async () => {
+  it("measures the last five rounds first, as the server worked them out", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.last20ScoringAvg).toBeCloseTo(76.8, 1);
-    expect(result.current.scoringAverageChange).toBe(0);
+    expect(result.current.window).toBe("last5");
+    expect(result.current.figures).toEqual(windowFiguresFrom(populatedDashboard.windows.last_5));
+    expect(result.current.figures).toMatchObject({ scoringAverage: 76.8, scoringAverageChange: -2.1, handicapChange: -1.6 });
     expect(result.current.data?.handicap_index).toBe(12.4);
     expect(result.current.user?.name).toBe("Test Golfer");
-    expect(result.current.l20ScoreMix).toEqual(populatedDashboard.score_mix);
-    expect(result.current.recentScoreMix).toEqual(populatedDashboard.recent_score_mix);
-    // The putts and their rating come as the server picked and rated them.
-    expect([result.current.putts, result.current.puttsRating]).toEqual([32, "fair"]);
-    expect(result.current.recentScores).toEqual(
-      populatedDashboard.score_trend.flatMap((row) => (row.total_score != null ? [row.total_score] : [])),
-    );
+  });
+
+  it("switches to the last 20 rounds", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.setWindow("last20"));
+    expect(result.current.window).toBe("last20");
+    expect(result.current.figures).toEqual(windowFiguresFrom(populatedDashboard.windows.last_20));
+    expect(result.current.figures?.scoringAverageVerdict).toBe("bad");
+  });
+
+  it("has no score mix for a window without a scored hole", () => {
+    const figures = windowFiguresFrom({ ...populatedDashboard.windows.last_5, score_mix_holes: 0 });
+    expect(figures.scoreMix).toBeNull();
   });
 
   it("opens and closes the handicap sheet", async () => {
@@ -79,21 +87,16 @@ describe("useDashboardPageViewModel", () => {
     expect(result.current.bestRound?.holes).toHaveLength(18);
   });
 
-  it("shows the three most recent rounds with the hole strips the list carries", async () => {
+  it("lists four recent rounds on a wide screen and three on a phone, hole strips and all", async () => {
     const { result } = renderVm();
-    await waitFor(() => expect(result.current.recentRounds).toHaveLength(3));
+    await waitFor(() => expect(result.current.recentRounds).toHaveLength(4));
     expect(result.current.recentRounds.map((r) => r.id)).toEqual(
+      populatedRounds.slice(0, 4).map((r) => r.id),
+    );
+    expect(result.current.phoneRounds.map((r) => r.id)).toEqual(
       populatedRounds.slice(0, 3).map((r) => r.id),
     );
     expect(result.current.recentRounds[0].holes[0].kind).toBe("bogey");
-  });
-
-  it("defaults the trend tab to score and can switch to HCP", async () => {
-    const { result } = renderVm();
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.trendView).toBe("score");
-    act(() => result.current.setTrendView("handicap"));
-    expect(result.current.trendView).toBe("handicap");
   });
 
   it("surfaces an error when the dashboard fetch fails", async () => {
@@ -105,13 +108,30 @@ describe("useDashboardPageViewModel", () => {
     expect(result.current.error?.message).toBe("Dashboard data failed to load.");
   });
 
-  it("draws the trends from the dashboard response", async () => {
+  it("draws the window's rounds from the dashboard response", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.trend).toHaveLength(populatedDashboard.score_trend.length);
+    expect(result.current.trend).toHaveLength(5);
     expect(result.current.trend[1]).toMatchObject({ score: 69, differentialStatus: "counting" });
-    expect(result.current.shortGameTrend?.scrambling).toEqual([37.5, 37.5, 37.5, 37.5, 37.5]);
-    expect(result.current.shortGameTrend?.upAndDown).toEqual([33.3, 33.3, 33.3, 33.3, 33.3]);
+    expect(result.current.handicapLine).toEqual(populatedDashboard.handicap_trend.map((row) => row.handicap_index));
+    expect(result.current.averageLine).toEqual(populatedDashboard.score_trend.map((row) => row.rolling_average));
+    expect(result.current.scramblingLine).toEqual([37.5, 37.5, 37.5, 37.5, 37.5]);
+  });
+
+  it("draws only the last five of a longer trend while the last five are picked", async () => {
+    const { result } = renderVm({
+      dashboard: {
+        ...populatedDashboard,
+        score_trend: [...populatedDashboard.score_trend, ...populatedDashboard.score_trend],
+        handicap_trend: [...populatedDashboard.handicap_trend, ...populatedDashboard.handicap_trend],
+      },
+      user: dashboardUser,
+      goalReport: dashboardGoalReport,
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.trend).toHaveLength(5);
+    act(() => result.current.setWindow("last20"));
+    expect(result.current.trend).toHaveLength(10);
   });
 
   it("has no trend while the window is empty", async () => {
@@ -121,15 +141,15 @@ describe("useDashboardPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.data?.total_rounds).toBe(4);
     expect(result.current.trend).toEqual([]);
-    expect(result.current.recentScores).toEqual([]);
-    expect(result.current.shortGameTrend).toBeNull();
+    expect(result.current.averageLine).toEqual([]);
+    expect(result.current.scramblingLine).toEqual([]);
   });
 
   it("exposes the scoring goal from the user and report", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     await waitFor(() => expect(result.current.goal?.focus).toBe("Fewer three-putts"));
-    expect(result.current.goal).toMatchObject({ target: 79, average: 76.8, onTrack: false });
+    expect(result.current.goal).toMatchObject({ target: 79, average: 76.8, progressPct: 82, onTrack: true });
   });
 
   it("has no best round or WHS rows when there is no index", async () => {
@@ -154,32 +174,5 @@ describe("dashboard model", () => {
     expect(bestRecentRoundFrom(rounds, "round-3")?.id).toBe("round-3");
     expect(bestRecentRoundFrom(rounds, null)).toBeNull();
     expect(bestRecentRoundFrom([], "round-3")).toBeNull();
-  });
-
-  it("keeps the last twelve rounds with both short-game rates", () => {
-    const rounds = Array.from({ length: 14 }, (_, i) => i + 1);
-    const trend = recentShortGame(
-      shortGamePointsFrom(
-        rounds.map((i) => ({
-          round_index: i,
-          round_id: `r${i}`,
-          scramble_opportunities: 8,
-          scramble_successes: 4,
-          scramble_failures: 4,
-          scrambling_percentage: i,
-        })),
-        // Round 14 has no up-and-down chance, so it has no rate and drops out of both lines.
-        rounds.map((i) => ({
-          round_index: i,
-          round_id: `r${i}`,
-          opportunities: i < 14 ? 5 : 0,
-          successes: i < 14 ? 2 : 0,
-          percentage: i < 14 ? i * 10 : null,
-        })),
-      ),
-    );
-    expect(trend?.scrambling).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
-    expect(trend?.upAndDown).toEqual([20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130]);
-    expect(recentShortGame([])).toBeNull();
   });
 });

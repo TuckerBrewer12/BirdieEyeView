@@ -1,108 +1,91 @@
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Button,
   Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
   Collection,
   RoundPreview,
-  SVGScoreHandicapTrend,
-  ToggleGroup,
-  ToggleGroupItem,
+  ScoreHandicapOverlay,
+  ScoreHandicapOverlayLegend,
+  ScoreMixBar,
 } from "@/brand";
 import { GoalCard } from "./GoalCard";
 import { GreetingHeader } from "./GreetingHeader";
 import { ScoringHeroCard } from "./ScoringHeroCard";
 import { ShortGameCard } from "./ShortGameCard";
+import { WindowSwitch } from "./WindowSwitch";
 import type { DashboardPageViewModel } from "../useDashboardPageViewModel";
-import { firstNameOf, greetingDateLabel } from "../present";
+import { greetingOf } from "../present";
 
+/** The phone dashboard: one column, the scoring average first and the rounds last. */
 export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
-  const { data, recentRounds, trendView, setTrendView, goal } = vm;
-
-  if (!data) return null;
+  const { data, figures } = vm;
+  if (!data || !figures) return null;
 
   const openRound = (id: string) => void navigate(`/rounds/${id}`);
-  const openLab = () => void navigate("/the-lab");
-  const lastRound = recentRounds.at(0) ?? null;
+  const bestId = data.best_round_id;
 
   return (
-    <div className="flex flex-col gap-3.5 pt-2">
+    <div className="flex flex-col gap-3.5">
       <GreetingHeader
-        firstName={firstNameOf(vm.user)}
-        dateLabel={greetingDateLabel()}
+        greeting={greetingOf(vm.user)}
         handicapIndex={data.handicap_index}
-        handicapChange={vm.handicapDelta}
-        handicapVerdict={vm.handicapDeltaVerdict}
+        handicapChange={figures.handicapChange}
+        handicapVerdict={figures.handicapVerdict}
         onHandicapClick={vm.openHandicapSheet}
       />
 
+      <WindowSwitch value={vm.window} onChange={vm.setWindow} size="sm" className="self-start" />
+
       <ScoringHeroCard
-        average={vm.last20ScoringAvg}
-        change={vm.scoringAverageChange}
-        changeVerdict={vm.scoringAverageVerdict}
-        recentScores={vm.recentScores}
-        mix={vm.l20ScoreMix}
-        mixHoles={vm.mixHoleCount}
-        bestRound={data.best_round ?? null}
+        average={figures.scoringAverage}
+        change={figures.scoringAverageChange}
+        changeVerdict={figures.scoringAverageVerdict}
+        line={vm.averageLine}
+        bestRound={data.best_round}
+        bestCourse={data.best_round_course}
         totalRounds={data.total_rounds}
-        putts={vm.putts}
-        girPct={vm.girPct}
+        onBestClick={bestId ? () => openRound(bestId) : undefined}
       />
 
-      {lastRound && (
-        <RoundPreview
-          variant="ticket"
-          round={lastRound}
-          label="Last Round"
-          actionLabel="Open card"
-          onClick={() => openRound(lastRound.id)}
-        />
+      {figures.scoreMix && (
+        <Card className="gap-2.5 px-4 py-3.5">
+          <h2 className="text-body-lg font-semibold text-foreground">Score mix</h2>
+          <ScoreMixBar mix={figures.scoreMix} legend="key" />
+        </Card>
       )}
 
-      <GoalCard goal={goal} onOpen={openLab} />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Score History</CardTitle>
-          <CardAction>
-            <ToggleGroup
-              aria-label="Trend line"
-              size="sm"
-              value={[trendView]}
-              onValueChange={(values) => {
-                // Tapping the pressed item would empty the group; the card always shows one line.
-                if (values[0] === "score" || values[0] === "handicap") setTrendView(values[0]);
-              }}
-            >
-              <ToggleGroupItem value="score">Score</ToggleGroupItem>
-              <ToggleGroupItem value="handicap">HCP</ToggleGroupItem>
-            </ToggleGroup>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <SVGScoreHandicapTrend data={vm.trend} series={trendView} compact />
-        </CardContent>
+      <Card className="gap-2.5 px-4 py-3.5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-body-lg font-semibold text-foreground">Scores</h2>
+          <ScoreHandicapOverlayLegend />
+        </div>
+        <ScoreHandicapOverlay data={vm.trend} compact />
       </Card>
 
-      <ShortGameCard scramblingPct={vm.scramblingPct} upAndDownPct={vm.upAndDownPct} onOpenLab={openLab} />
+      <GoalCard goal={vm.goal} onOpen={() => void navigate("/the-lab")} compact />
 
-      <section className="flex flex-col gap-2.5">
-        <div className="flex items-center justify-between px-1">
-          <h2 className="text-base font-semibold text-foreground">Recent Rounds</h2>
-          <Button variant="link" size="sm" nativeButton={false} render={<Link to="/rounds" />}>
-            View all →
+      <ShortGameCard scramblingPct={figures.scramblingPct} upAndDownPct={figures.upAndDownPct} />
+
+      <section className="flex flex-col gap-3.5">
+        <div className="flex items-center justify-between px-1 pt-1.5">
+          <h2 className="text-lg font-semibold text-foreground">Recent rounds</h2>
+          <Button variant="link" className="px-0" nativeButton={false} render={<Link to="/rounds" />}>
+            View all
           </Button>
         </div>
-        <Collection
-          items={recentRounds}
-          keyFor={(round) => round.id}
-          empty="No rounds yet"
-          renderItem={(round) => <RoundPreview round={round} onClick={() => openRound(round.id)} />}
-        />
+        <Card className="gap-0 py-0">
+          <Collection
+            layout="divided"
+            className="divide-chart-grid"
+            items={vm.phoneRounds}
+            keyFor={(round) => round.id}
+            empty="No rounds yet"
+            renderItem={(round) => (
+              <RoundPreview variant="compact" layout="stacked" round={round} onClick={() => openRound(round.id)} />
+            )}
+          />
+        </Card>
       </section>
     </div>
   );

@@ -1,93 +1,79 @@
-import {
-  Card,
-  CardContent,
-  ScoreMixBar,
-  Sparkline,
-  Stat,
-  StatDelta,
-  StatLabel,
-  StatValue,
-  type StatTone,
-} from "@/brand";
-import { formatOneDecimal, formatPercent, pluralize, type ScoreMix } from "@/domain";
-import { puttsLabel } from "../present";
+import { ChevronRight } from "lucide-react";
+import { Card, RowButton, Sparkline, StatDelta } from "@/brand";
+import { formatOneDecimal } from "@/domain";
+import type { ChangeVerdict } from "../model";
+import { bestLabel, moveOf } from "../present";
 
 interface ScoringHeroCardProps {
-  /** Scoring average over the last 20 rounds. */
   average: number | null;
-  /** The server's L5 average minus L20, to a tenth: negative means the recent rounds came in lower. */
+  /** How far the average moved, and the server's verdict on it. */
   change: number | null;
-  /** The server's verdict on that change. */
-  changeVerdict: StatTone | null;
-  /** Scores across the window, oldest first. */
-  recentScores: number[];
-  /** Null until the window has a scored hole. */
-  mix: ScoreMix | null;
-  mixHoles: number;
+  changeVerdict: ChangeVerdict | null;
+  /** Each round's five-round average across the window, oldest first. */
+  line: (number | null)[];
   bestRound: number | null;
-  totalRounds: number | null;
-  putts: number | null;
-  girPct: number | null;
+  bestCourse: string | null;
+  totalRounds: number;
+  /** Opens the best round. None without one to open. */
+  onBestClick?: () => void;
 }
 
-/** The mobile dashboard's lead card: the scoring average, where it's heading, and how the holes went. */
+const LINE_TONE = { good: "good", bad: "bad", neutral: "muted" } as const;
+
+/** The phone's lead card: the scoring average and its line, then the best round and the count. */
 export function ScoringHeroCard({
   average,
   change,
   changeVerdict,
-  recentScores,
-  mix,
-  mixHoles,
+  line,
   bestRound,
+  bestCourse,
   totalRounds,
-  putts,
-  girPct,
+  onBestClick,
 }: ScoringHeroCardProps) {
-  // The server rounds to a tenth, so no change at all hides the pill.
-  const showChange = change != null && change !== 0;
-  const kpis = [
-    { label: "Best", value: bestRound?.toString() ?? "—" },
-    { label: "Rounds", value: totalRounds?.toString() ?? "—" },
-    { label: "Putts", value: puttsLabel(putts) },
-    { label: "GIR", value: formatPercent(girPct) },
-  ];
+  const move = moveOf(change);
+  const tone = changeVerdict ?? "neutral";
+  const best = (
+    <>
+      <span className="flex items-center gap-1 text-lg font-semibold text-foreground">
+        {bestRound ?? "—"}
+        {onBestClick && <ChevronRight aria-hidden className="size-3 text-primary" />}
+      </span>
+      <span className="mt-0.5 text-label font-semibold text-primary">{bestLabel(bestCourse)}</span>
+    </>
+  );
 
   return (
-    <Card data-slot="scoring-hero-card">
-      <CardContent className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <StatLabel>Scoring Avg · L20</StatLabel>
-          {showChange && (
-            <StatDelta direction={change < 0 ? "down" : "up"} tone={changeVerdict ?? "neutral"} pill>
-              {formatOneDecimal(Math.abs(change))} vs L5
+    <Card data-slot="scoring-hero-card" className="gap-3.5 p-4">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <div className="text-body-sm font-medium text-foreground-secondary">Scoring avg</div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-hero font-semibold text-foreground">{formatOneDecimal(average)}</span>
+            <StatDelta direction={move.direction} tone={tone} className="text-body font-semibold">
+              {move.amount}
             </StatDelta>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3.5">
-          <StatValue size="xl">{formatOneDecimal(average)}</StatValue>
-          <Sparkline className="min-w-0 flex-1" series={[{ values: recentScores }]} fill reference={average} />
-        </div>
-
-        {mix && (
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <StatLabel>Score Mix · L20</StatLabel>
-              {mixHoles > 0 && <span className="text-meta text-muted-foreground">{pluralize(mixHoles, "hole")}</span>}
-            </div>
-            <ScoreMixBar mix={mix} />
           </div>
-        )}
-
-        <div className="grid grid-cols-4 border-t border-border pt-3">
-          {kpis.map(({ label, value }) => (
-            <Stat key={label} align="center">
-              <StatLabel>{label}</StatLabel>
-              <StatValue size="sm">{value}</StatValue>
-            </Stat>
-          ))}
         </div>
-      </CardContent>
+        <Sparkline size="hero" className="w-30" series={[{ values: line, tone: LINE_TONE[tone] }]} />
+      </div>
+      <div className="grid grid-cols-2 border-t border-chart-grid pt-3">
+        {onBestClick ? (
+          <RowButton
+            aria-label={`Best round: ${bestRound ?? "none"}. Open round`}
+            onClick={onBestClick}
+            className="flex cursor-pointer flex-col items-center py-0.5"
+          >
+            {best}
+          </RowButton>
+        ) : (
+          <div className="flex flex-col items-center py-0.5">{best}</div>
+        )}
+        <div className="flex flex-col items-center border-l border-chart-grid py-0.5">
+          <span className="text-lg font-semibold text-foreground">{totalRounds}</span>
+          <span className="mt-0.5 text-label text-muted-foreground">Rounds played</span>
+        </div>
+      </div>
     </Card>
   );
 }

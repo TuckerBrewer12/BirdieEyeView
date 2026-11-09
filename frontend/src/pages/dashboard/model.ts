@@ -1,12 +1,12 @@
 import type { RoundSummary } from "@/domain/round";
-import type { RoundTrendPoint, ShortGamePoint } from "@/domain/trend";
-import type { DashboardDto, GoalReportDto, MilestoneDto, WhsBreakdownDto } from "@/types/api";
+import type { ScoreMix } from "@/domain/score";
+import type { DashboardDto, DashboardWindowDto, GoalReportDto, MilestoneDto, WhsBreakdownDto } from "@/types/api";
 
 /** How good the putts per round are, as the server rated them. */
 export type PuttsRating = NonNullable<DashboardDto["putts_rating"]>;
 
-/** Which line the phone's trend card shows. */
-export type TrendView = "score" | "handicap";
+/** Which stretch of rounds the dashboard measures: the Last 5 / Last 20 switch. */
+export type DashboardWindowKey = "last5" | "last20";
 /** The server's verdict on a figure's move: a score or a handicap falling is good. */
 export type ChangeVerdict = NonNullable<DashboardDto["scoring_average_verdict"]>;
 
@@ -15,36 +15,37 @@ export function bestRecentRoundFrom(rounds: RoundSummary[], bestId: string | nul
   return rounds.find((round) => round.id === bestId) ?? null;
 }
 
-/** The scores of the rounds in the trend, oldest first, skipping rounds without one. */
-export function recentScoresFrom(trend: RoundTrendPoint[]): number[] {
-  return trend.flatMap((point) => (point.score != null ? [point.score] : []));
+/** The dashboard's figures over one window of rounds, as the server worked them out. */
+export interface WindowFigures {
+  /** How many rounds the window asks for: 5 or 20. */
+  size: number;
+  /** How many of them have a score. */
+  rounds: number;
+  scoringAverage: number | null;
+  /** Against the last 20's average for the last five, every round's for the last 20. */
+  scoringAverageChange: number | null;
+  scoringAverageVerdict: ChangeVerdict | null;
+  /** The newest index less the window's first. */
+  handicapChange: number | null;
+  handicapVerdict: ChangeVerdict | null;
+  scramblingPct: number | null;
+  upAndDownPct: number | null;
+  /** Null until the window has a scored hole. */
+  scoreMix: ScoreMix | null;
 }
 
-/** Scrambling and up-and-down rates for the same rounds, oldest first. */
-export interface ShortGameTrend {
-  scrambling: number[];
-  upAndDown: number[];
-}
-
-/** The short-game card draws at most this many rounds. */
-const SHORT_GAME_ROUNDS = 12;
-
-/**
- * The last twelve rounds with both rates, for the card's two lines. A round without a missed
- * green has no rate, so it drops out of both lines. Null until there are two to draw.
- */
-export function recentShortGame(points: ShortGamePoint[]): ShortGameTrend | null {
-  const paired = points
-    .flatMap((point) =>
-      point.scrambling != null && point.upAndDown != null
-        ? [{ scrambling: point.scrambling, upAndDown: point.upAndDown }]
-        : [],
-    )
-    .slice(-SHORT_GAME_ROUNDS);
-  if (paired.length < 2) return null;
+export function windowFiguresFrom(dto: DashboardWindowDto): WindowFigures {
   return {
-    scrambling: paired.map((row) => row.scrambling),
-    upAndDown: paired.map((row) => row.upAndDown),
+    size: dto.size,
+    rounds: dto.rounds,
+    scoringAverage: dto.scoring_average,
+    scoringAverageChange: dto.scoring_average_change,
+    scoringAverageVerdict: dto.scoring_average_verdict,
+    handicapChange: dto.handicap_change,
+    handicapVerdict: dto.handicap_verdict,
+    scramblingPct: dto.scrambling_pct,
+    upAndDownPct: dto.up_and_down_pct,
+    scoreMix: dto.score_mix_holes > 0 ? dto.score_mix : null,
   };
 }
 

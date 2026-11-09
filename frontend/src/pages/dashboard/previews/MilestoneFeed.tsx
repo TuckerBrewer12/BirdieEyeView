@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/brand";
+import { Card } from "@/brand";
 import { MilestoneFeed } from "../components/MilestoneFeed";
 import type { Milestone } from "../model";
 
@@ -12,16 +12,12 @@ const brokeEighty: Milestone[] = [
   { kind: "score_break", value: 80, date: "2026-06-15", course: "Half Moon Bay Old Course", roundId: "round-1" },
 ];
 
-/** Drawn at the width of the dashboard's one-column card, where long titles have to wrap. */
+/** Drawn at the width of the dashboard's right-hand column. */
 function MilestoneCard({ items }: { items: Milestone[] }) {
   return (
-    <Card className="w-52">
-      <CardHeader>
-        <CardTitle>Milestones</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <MilestoneFeed milestones={items} onRoundClick={() => {}} />
-      </CardContent>
+    <Card className="w-80 gap-3.5 px-5 py-4.5">
+      <h2 className="text-body-lg font-semibold text-foreground">Milestones</h2>
+      <MilestoneFeed milestones={items} onRoundClick={() => {}} />
     </Card>
   );
 }

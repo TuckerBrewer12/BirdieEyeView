@@ -26,6 +26,25 @@ test("tapping a played day on the activity calendar opens its round", async ({ d
   await dashboard.isAtRound("round-1");
 });
 
+test("the range switches to the last 20 rounds", async ({ dashboard }) => {
+  await dashboard.open();
+  await dashboard.seesWindow("Last 5");
+  await dashboard.showWindow("Last 20");
+  await dashboard.seesWindow("Last 20");
+});
+
+test("tapping a recent round opens it", async ({ dashboard }) => {
+  await dashboard.open();
+  await dashboard.openRecentRound("Blue Rock");
+  await dashboard.isAtRound("round-3");
+});
+
+test("view all opens the round list", async ({ dashboard }) => {
+  await dashboard.open();
+  await dashboard.viewAllRounds();
+  await dashboard.isAtRounds();
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
@@ -35,13 +54,11 @@ test.describe("on a phone", () => {
     await dashboard.isAtLab();
   });
 
-  test("the trend switches to the handicap, and a tap picks a round", async ({ dashboard }) => {
+  test("the handicap opens its breakdown from the bottom", async ({ dashboard }) => {
     await dashboard.open();
-    await dashboard.showTrend("HCP");
-    await dashboard.seesTrendShowing("HCP");
-    // Round 3 of 5 sits in the middle of the grid, which stops short of the axis figures on the right.
-    await dashboard.tapTrendAt(0.43);
-    await dashboard.seesTrendTooltip("Round 3");
-    await dashboard.seesTrendTooltip("HI");
+    await dashboard.openHandicapSheet();
+    await dashboard.seesHandicapSheet();
+    await dashboard.closeHandicapSheet();
+    await dashboard.doesNotSeeHandicapSheet();
   });
 });

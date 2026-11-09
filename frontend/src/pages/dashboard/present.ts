@@ -1,60 +1,48 @@
-import { scoreKindLabel, type ScoreKey, tokens } from "@/brand/theme";
 import {
-  SCORE_KINDS,
   formatCourseName,
+  formatDayShort,
+  formatOneDecimal,
   formatSignedOneDecimal,
-  formatWeekdayDay,
   pluralNoun,
-  type ScoreMix,
 } from "@/domain";
 import type { UserDto } from "@/types/api";
-import {
-  type Milestone,
-  type WhsRound,
-} from "./model";
-
+import type { Milestone, WhsRound } from "./model";
 
 export function firstNameOf(user: UserDto | null): string {
   return user?.name?.split(" ")[0] ?? "Golfer";
 }
 
-/** Up to two initials for the avatar: "Jordan Spieth" reads "JS"; no name reads "G" for golfer. */
-export function initialsOf(user: UserDto | null): string {
-  if (!user?.name) return "G";
-  return user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+/** "Hi, Tucker": the dashboard's greeting. */
+export function greetingOf(user: UserDto | null): string {
+  return `Hi, ${firstNameOf(user)}`;
 }
 
-/** Today above the greeting: "Mon · Jun 15". */
-export function greetingDateLabel(now = new Date()): string {
-  return formatWeekdayDay(now, { year: false }) ?? "";
+/** A figure's move as the strip shows it: which way, and how far, unsigned. No move shows nothing. */
+export interface Move {
+  direction: "up" | "down" | null;
+  amount: string;
 }
 
-export function puttsLabel(putts: number | null): string {
-  return putts != null && putts > 0 ? putts.toFixed(1) : "—";
+export function moveOf(change: number | null): Move {
+  if (change == null || change === 0) return { direction: null, amount: "" };
+  return { direction: change < 0 ? "down" : "up", amount: formatOneDecimal(Math.abs(change)) };
 }
 
-export interface ColoredMixItem {
-  name: ScoreKey;
-  label: string;
-  value: number;
-  color: string;
+/** "Best · Blue Rock": the best round's figure, named by where it was played. */
+export function bestLabel(course: string | null | undefined): string {
+  return course ? `Best · ${formatCourseName(course)}` : "Best";
 }
 
-/** The mix's bars, in bucket order, to a tenth of a percent: a kind with no holes has no bar. */
-export function colorizeMix(mix: ScoreMix): ColoredMixItem[] {
-  return SCORE_KINDS.flatMap((kind) => {
-    const value = Math.round(mix[kind] * 10) / 10;
-    return value > 0
-      ? [{ name: kind, label: scoreKindLabel(kind), value, color: tokens.color.score[kind].base }]
-      : [];
-  });
+/** The goal card's verdict beside the target. */
+export function goalStatusLabel(onTrack: boolean): string {
+  return onTrack ? "On track" : "Not yet";
 }
 
+/** "Next: fewer three-putts": the saver worth the most strokes, as the next thing to work on. */
+export function goalNextLabel(focus: string | null): string | null {
+  if (!focus) return null;
+  return `Next: ${focus.charAt(0).toLowerCase()}${focus.slice(1)}`;
+}
 
 export function courseLabelForWhs(row: WhsRound): string {
   return row.courseName ? formatCourseName(row.courseName) : `Round ${row.roundIndex}`;
@@ -66,18 +54,23 @@ export function ratingLabelForWhs(row: WhsRound): string | null {
     : null;
 }
 
+/** The phone's row line: "80 · 72.4 / 130". */
+export function scoreAndRatingForWhs(row: WhsRound): string {
+  return [row.score != null ? String(row.score) : "—", ratingLabelForWhs(row)].filter(Boolean).join(" · ");
+}
+
 export function differentialLabel(value: number | null): string {
   return value != null ? formatSignedOneDecimal(value) : "—";
+}
+
+/** "5 of 20": how full the WHS window is. */
+export function windowFillLabel(windowSize: number): string {
+  return `${windowSize} of 20`;
 }
 
 export function adjustmentLabel(adjustment: number): string | null {
   if (adjustment === 0) return null;
   return adjustment > 0 ? `+${adjustment}` : String(adjustment);
-}
-
-export function usedLegend(countUsed: number, usedCount: number): string | null {
-  if (usedCount <= 0) return null;
-  return `Green rows are the ${countUsed} best ${pluralNoun(countUsed, "differential")} used in your index`;
 }
 
 export function whsContextNote(countUsed: number): string {
@@ -98,3 +91,7 @@ export function milestoneWording(milestone: Milestone): { title: string; figure:
   return { title: wording.title, figure: wording.figure(milestone.value) };
 }
 
+/** "Blue Rock · Apr 18": where and when a milestone was set. */
+export function milestoneWhere(milestone: Milestone): string {
+  return [formatCourseName(milestone.course), formatDayShort(milestone.date)].filter(Boolean).join(" · ");
+}

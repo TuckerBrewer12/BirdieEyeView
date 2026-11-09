@@ -13,22 +13,16 @@ test("populated dashboard in dark mode", async ({ dashboard }) => {
   await dashboard.capture("dashboard-populated-dark.png");
 });
 
+test("last 20 rounds picked", async ({ dashboard }) => {
+  await dashboard.open();
+  await dashboard.showWindow("Last 20");
+  await dashboard.seesWindow("Last 20");
+  await dashboard.capture("dashboard-last-20.png");
+});
+
 test("handicap sheet open", async ({ dashboard }) => {
   await dashboard.open();
   await dashboard.openHandicapSheet();
   await dashboard.seesHandicapSheet();
   await dashboard.capture("dashboard-handicap-sheet.png", { fullPage: false });
-});
-
-// The HCP toggle and tap tooltip belong to the phone trend. Desktop keeps
-// the combined chart, so there is nothing to switch on that project.
-test("phone trend handicap and round tooltip", { tag: "@phone" }, async ({ dashboard }) => {
-  await dashboard.open();
-  await dashboard.showTrend("HCP");
-  await dashboard.seesTrendShowing("HCP");
-  // Round 3 of 5 sits in the middle of the grid, which stops short of the axis figures on the right.
-  await dashboard.tapTrendAt(0.43);
-  await dashboard.seesTrendTooltip("Round 3");
-  await dashboard.seesTrendTooltip("HI");
-  await dashboard.capture("dashboard-trend-handicap.png");
 });

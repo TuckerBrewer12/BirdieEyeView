@@ -3,14 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { useGoalReport } from "@/data/useGoalReport";
 import { useUser } from "@/data/useUser";
-import {
-  Round,
-  shortGamePointsFrom,
-  trendPointsFrom,
-  type RoundSummary,
-  type RoundTrendPoint,
-  type ScoreMix,
-} from "@/domain";
+import { Round, trendPointsFrom, type RoundSummary, type RoundTrendPoint } from "@/domain";
 import type { DashboardDto, UserDto } from "@/types/api";
 import {
   dashboardRepository,
@@ -20,19 +13,17 @@ import {
   bestRecentRoundFrom,
   goalProgress,
   milestonesFrom,
-  recentScoresFrom,
-  recentShortGame,
   whsFrom,
+  windowFiguresFrom,
   type ChangeVerdict,
+  type DashboardWindowKey,
   type GoalProgress,
   type Milestone,
-  type PuttsRating,
-  type ShortGameTrend,
-  type TrendView,
   type WhsBreakdown,
+  type WindowFigures,
 } from "./model";
 
-export type { ChangeVerdict, TrendView, WhsBreakdown };
+export type { ChangeVerdict, DashboardWindowKey, WhsBreakdown, WindowFigures };
 
 export interface DashboardPageViewModel {
   data: DashboardDto | null;
@@ -40,42 +31,31 @@ export interface DashboardPageViewModel {
   loading: boolean;
   error: Error | null;
   refetch: () => void;
-  /** Score and handicap per round across the window, oldest first. */
+  /** The Last 5 / Last 20 switch. */
+  window: DashboardWindowKey;
+  setWindow: (window: DashboardWindowKey) => void;
+  /** The figures over the picked window. Null until the dashboard loads. */
+  figures: WindowFigures | null;
+  /** Score and handicap per round across the picked window, oldest first. */
   trend: RoundTrendPoint[];
-  /** Scores across the trend window, oldest first. */
-  recentScores: number[];
-  /** Null until two rounds have both short-game rates. */
-  shortGameTrend: ShortGameTrend | null;
+  /** The index after each round in the window, oldest first: the handicap figure's line. */
+  handicapLine: (number | null)[];
+  /** Each round's five-round average in the window: the scoring average's line. */
+  averageLine: (number | null)[];
+  /** Each round's scrambling rate in the window: null where it had no missed green. */
+  scramblingLine: (number | null)[];
   milestones: Milestone[];
-  last20ScoringAvg: number | null;
-  /** L5 minus L20 as the server worked it out: negative when the recent rounds came in lower. */
-  scoringAverageChange: number | null;
-  /** The server's verdict on that change. */
-  scoringAverageVerdict: ChangeVerdict | null;
-  handicapDelta: number | null;
-  handicapDeltaVerdict: ChangeVerdict | null;
-  /** Null until the window has a scored hole. */
-  l20ScoreMix: ScoreMix | null;
-  mixHoleCount: number;
-  girPct: number | null;
-  /** The last five rounds' score mix. Null until they have a scored hole. */
-  recentScoreMix: ScoreMix | null;
-  scramblingPct: number | null;
-  upAndDownPct: number | null;
-  /** Putts per round: the last five rounds', else every round's, as the server picked them. */
-  putts: number | null;
-  /** The server's rating of those putts. Null without putts. */
-  puttsRating: PuttsRating | null;
   handicapSheetOpen: boolean;
   openHandicapSheet: () => void;
   closeHandicapSheet: () => void;
-  trendView: TrendView;
-  setTrendView: (view: TrendView) => void;
+  /** Every round the dashboard lists, newest first: the calendar's. */
   rounds: RoundSummary[];
   /** The best of the listed rounds, as the server picked it. */
   bestRound: RoundSummary | null;
+  /** The desktop card's rows. */
   recentRounds: RoundSummary[];
-  sidebarRounds: RoundSummary[];
+  /** The phone's, one fewer. */
+  phoneRounds: RoundSummary[];
   whs: WhsBreakdown;
   /** Null until the player sets a scoring goal. */
   goal: GoalProgress | null;
@@ -91,12 +71,15 @@ const EMPTY_WHS: WhsBreakdown = {
   showCalculation: false,
 };
 
+const DESKTOP_ROUNDS = 4;
+const PHONE_ROUNDS = 3;
+
 export function useDashboardPageViewModel(
   userId: string,
   repository: DashboardRepository = dashboardRepository,
 ): DashboardPageViewModel {
   const [handicapSheetOpen, setHandicapSheetOpen] = useState(false);
-  const [trendView, setTrendView] = useState<TrendView>("score");
+  const [window, setWindow] = useState<DashboardWindowKey>("last5");
 
   const { data: fetched, isLoading: loading, error, refetch } = useQuery({
     queryKey: queryKeys.dashboard(userId),
@@ -120,13 +103,16 @@ export function useDashboardPageViewModel(
   const openHandicapSheet = useCallback(() => setHandicapSheetOpen(true), []);
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
 
-  const trend = useMemo(() => trendPointsFrom(data), [data]);
-  const recentScores = useMemo(() => recentScoresFrom(trend), [trend]);
-  const shortGameTrend = useMemo(
-    () => (data ? recentShortGame(shortGamePointsFrom(data.scrambling_trend, data.up_and_down_trend)) : null),
-    [data],
+  const figures = useMemo(
+    () => (data ? windowFiguresFrom(window === "last5" ? data.windows.last_5 : data.windows.last_20) : null),
+    [data, window],
   );
-  const report = goalReport ?? null;
+  const size = figures?.size ?? 0;
+  const trend = useMemo(() => trendPointsFrom(data).slice(-size), [data, size]);
+  const scramblingLine = useMemo(
+    () => (data?.scrambling_trend ?? []).slice(-size).map((row) => row.scrambling_percentage),
+    [data, size],
+  );
 
   return {
     data,
@@ -134,33 +120,22 @@ export function useDashboardPageViewModel(
     loading,
     error: error as Error | null,
     refetch: () => void refetch(),
+    window,
+    setWindow,
+    figures,
     trend,
-    recentScores,
-    shortGameTrend,
+    handicapLine: trend.map((point) => point.handicapIndex),
+    averageLine: trend.map((point) => point.rollingAverage),
+    scramblingLine,
     milestones: data ? milestonesFrom(data.milestones) : [],
-    last20ScoringAvg: data?.scoring_average_l20 ?? null,
-    scoringAverageChange: data?.scoring_average_change ?? null,
-    scoringAverageVerdict: data?.scoring_average_verdict ?? null,
-    handicapDelta: data?.handicap_change.delta ?? null,
-    handicapDeltaVerdict: data?.handicap_change.delta_verdict ?? null,
-    l20ScoreMix: data && data.score_mix_holes > 0 ? data.score_mix : null,
-    mixHoleCount: data?.score_mix_holes ?? 0,
-    girPct: data?.recent_form.gir_pct ?? null,
-    recentScoreMix: data?.recent_score_mix ?? null,
-    scramblingPct: data?.recent_form.scrambling_pct ?? null,
-    upAndDownPct: data?.recent_form.up_and_down_pct ?? null,
-    putts: data?.putts_per_round ?? null,
-    puttsRating: data?.putts_rating ?? null,
     handicapSheetOpen,
     openHandicapSheet,
     closeHandicapSheet,
-    trendView,
-    setTrendView,
     rounds,
     bestRound,
-    recentRounds: rounds.slice(0, 3),
-    sidebarRounds: rounds.slice(0, 10),
+    recentRounds: rounds.slice(0, DESKTOP_ROUNDS),
+    phoneRounds: rounds.slice(0, PHONE_ROUNDS),
     whs: data ? whsFrom(data.whs) : EMPTY_WHS,
-    goal: goalProgress(user?.scoring_goal, report),
+    goal: goalProgress(user?.scoring_goal, goalReport ?? null),
   };
 }

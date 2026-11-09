@@ -1,22 +1,25 @@
-import { Button, Card, CardContent, Meter } from "@/brand";
+import { Button, Card, Meter } from "@/brand";
 import { cn } from "@/brand/cn";
+import { formatOneDecimal, goalTargetLabel } from "@/domain";
 import type { GoalProgress } from "../model";
-import { formatOneDecimal, goalScoreToBreak, goalTargetLabel } from "@/domain";
+import { goalNextLabel, goalStatusLabel } from "../present";
 
 interface GoalCardProps {
   /** Null until a goal is set, which shows the prompt to set one. */
   goal: GoalProgress | null;
   onOpen: () => void;
+  /** The phone's tighter padding. */
+  compact?: boolean;
   className?: string;
 }
 
-/** The scoring goal, how close the player is, and what to work on. Opens The Lab. */
-export function GoalCard({ goal, onOpen, className }: GoalCardProps) {
+/** The scoring goal, how close the player is, and what to work on next. Opens The Lab. */
+export function GoalCard({ goal, onOpen, compact = false, className }: GoalCardProps) {
+  const next = goal ? goalNextLabel(goal.focus) : null;
   return (
     <Card
       data-slot="goal-card"
-      className={cn("cursor-pointer", className)}
-      size="sm"
+      className={cn("cursor-pointer", compact ? "gap-2.5 px-4 py-3.5" : "gap-3 px-5 py-4.5", className)}
       onClick={onOpen}
       role="button"
       tabIndex={0}
@@ -27,53 +30,39 @@ export function GoalCard({ goal, onOpen, className }: GoalCardProps) {
         }
       }}
     >
-      <CardContent>
-        {goal ? (
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <div className="text-eyebrow uppercase text-muted-foreground mb-0.5">Scoring Goal</div>
-                <div className="text-sm font-bold text-card-foreground">
-                  Target: {goalTargetLabel(goal.target)}
-                </div>
-              </div>
-              <span className="text-label font-semibold text-primary">Goals →</span>
+      {goal ? (
+        <>
+          <div className="flex items-baseline justify-between">
+            <div className="text-body-lg font-semibold text-foreground">{goalTargetLabel(goal.target)}</div>
+            <div className={cn("text-body-sm font-semibold", goal.onTrack ? "text-score-birdie" : "text-muted-foreground")}>
+              {goalStatusLabel(goal.onTrack)}
             </div>
-            <div className="mb-3">
-              <div className="flex justify-between text-meta text-muted-foreground mb-1">
-                <span>{goal.average != null ? `Avg ${formatOneDecimal(goal.average)}` : null}</span>
-                <span>Goal {goalScoreToBreak(goal.target)}</span>
-              </div>
-              <Meter
-                value={goal.progressPct}
-                tone={goal.onTrack ? "success" : "progress"}
-                aria-label={`Progress to ${goalTargetLabel(goal.target).toLowerCase()}`}
-              />
-            </div>
-            {goal.focus && (
-              <p className="text-label text-muted-foreground leading-relaxed">
-                <span className="font-semibold text-secondary-foreground">Focus: </span>
-                {goal.focus}
-              </p>
-            )}
           </div>
-        ) : (
-          <div className="flex flex-col items-start justify-center h-full gap-2">
-            <div className="text-eyebrow uppercase text-muted-foreground">Scoring Goal</div>
-            <p className="text-sm text-muted-foreground">Set a scoring goal to track your progress.</p>
-            <Button
-              variant="link"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpen();
-              }}
-            >
-              Set a goal →
-            </Button>
+          <Meter value={goal.progressPct} aria-label={`Progress to ${goalTargetLabel(goal.target).toLowerCase()}`} />
+          <div className="flex justify-between gap-3 text-body-sm text-foreground-secondary">
+            <span>
+              Avg <b className="font-semibold text-foreground">{formatOneDecimal(goal.average)}</b>
+            </span>
+            {next && <span className="truncate">{next}</span>}
           </div>
-        )}
-      </CardContent>
+        </>
+      ) : (
+        <>
+          <div className="text-body-lg font-semibold text-foreground">Scoring goal</div>
+          <p className="text-body-sm text-foreground-secondary">Set a goal to see how close your rounds are.</p>
+          <Button
+            variant="link"
+            size="sm"
+            className="self-start px-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen();
+            }}
+          >
+            Set a goal
+          </Button>
+        </>
+      )}
     </Card>
   );
 }
