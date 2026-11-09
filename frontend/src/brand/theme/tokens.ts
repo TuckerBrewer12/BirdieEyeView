@@ -814,7 +814,10 @@ export const chart = {
     /** The bracket over the worst stretch: its height above the plot, and its end ticks. */
     bracket: { rise: 7, tick: 5 },
   },
-  /** A hole's score marked the way a scorecard marks it, in a `w-hole-w h-hole-h` box: circles under par, boxes over. */
+  /**
+   * A hole's score marked the way a scorecard marks it, in a `w-hole-w h-hole-h` box (`size-hole-h`
+   * when square): circles under par, boxes over.
+   */
   holeShape: {
     width: size["hole-w"],
     height: size["hole-h"],
@@ -835,6 +838,14 @@ export const chart = {
       [0, 18, 18, 0],
       [0, size["hole-h"], size["hole-w"], 0],
       [14, size["hole-h"], size["hole-w"], 8],
+    ],
+    /** The same hatching across the square mark, `hole-h` a side. */
+    squareHatch: [
+      [0, 7, 7, 0],
+      [0, 15, 15, 0],
+      [0, size["hole-h"], size["hole-h"], 0],
+      [7, size["hole-h"], size["hole-h"], 7],
+      [15, size["hole-h"], size["hole-h"], 15],
     ],
   },
 };

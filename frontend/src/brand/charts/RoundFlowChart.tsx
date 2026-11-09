@@ -26,7 +26,8 @@ type FlowHole = HoleScore & { strokes: number; toPar: number; kind: ScoreKind; r
  */
 export function RoundFlowChart({ round }: RoundFlowChartProps) {
   const { width: W, height: H, pad: PAD, stroke, dot, labelGap, chip, bracket } = tokens.chart.flow;
-  const holeW = tokens.size["hole-w"];
+  // The strip's marks are square, a `hole-h` side.
+  const holeW = tokens.size["hole-h"];
   const holeH = tokens.size["hole-h"];
   // The OS setting, or a MotionConfig asking for stillness (the kit's screenshot harness).
   const prefersReduced = useReducedMotion();
@@ -197,7 +198,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
                 {/* The scorecard's own hole mark, so a score reads the same here as on the card. */}
                 <foreignObject x={mid(step.hole) - holeW / 2} y={chipTop} width={holeW} height={holeH} pointerEvents="none">
                   <div className="pointer-events-none flex">
-                    <HoleShape hole={step} />
+                    <HoleShape hole={step} square />
                   </div>
                 </foreignObject>
                 <text

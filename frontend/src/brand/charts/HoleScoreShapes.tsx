@@ -1,3 +1,4 @@
+import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
 import type { HoleSummary, RoundSummary } from "@/domain";
 
@@ -7,19 +8,24 @@ interface HoleScoreShapesProps {
   numbered?: boolean;
 }
 
-const { width: VB_W, height: VB_H, circle: r, dot, stroke, strokeThin, corner, inset, hatch } = tokens.chart.holeShape;
-const cx = VB_W / 2;
-const cy = VB_H / 2;
+const { width, height: VB_H, circle: r, dot, stroke, strokeThin, corner, inset, hatch, squareHatch } =
+  tokens.chart.holeShape;
 
-/** A box `by` in from every edge of the mark. */
-const boxInset = (by: number) => ({ x: by, y: by, width: VB_W - 2 * by, height: VB_H - 2 * by });
-
-/** One hole drawn the way a scorecard marks it: circles under par, boxes over. */
-export function HoleShape({ hole }: { hole: HoleSummary }) {
+/**
+ * One hole drawn the way a scorecard marks it: circles under par, boxes over. A scorecard cell is
+ * wider than tall; `square` draws the boxes square, as the round flow's strip shows them.
+ */
+export function HoleShape({ hole, square = false }: { hole: HoleSummary; square?: boolean }) {
+  const VB_W = square ? VB_H : width;
+  const cx = VB_W / 2;
+  const cy = VB_H / 2;
+  /** A box `by` in from every edge of the mark. */
+  const boxInset = (by: number) => ({ x: by, y: by, width: VB_W - 2 * by, height: VB_H - 2 * by });
+  const box = square ? "size-hole-h" : "h-hole-h w-hole-w";
   const kind = hole.kind;
   if (kind == null) {
     return (
-      <div className="flex h-hole-h w-hole-w items-center justify-center rounded-sm bg-muted">
+      <div className={cn("flex items-center justify-center rounded-sm bg-muted", box)}>
         <span className="text-caption font-bold text-muted-foreground">·</span>
       </div>
     );
@@ -28,7 +34,7 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
   const onFill = tokens.color.score[kind].onBase;
 
   return (
-    <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="h-hole-h w-hole-w">
+    <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className={box}>
       {kind === "eagle" && (
         <>
           <circle cx={cx} cy={cy} r={dot} fill={fill} />
@@ -47,7 +53,7 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
       {(kind === "triple" || kind === "quad") && (
         <>
           <rect {...boxInset(inset.box)} rx={corner.box} fill={fill} />
-          {hatch.map(([x1, y1, x2, y2]) => (
+          {(square ? squareHatch : hatch).map(([x1, y1, x2, y2]) => (
             <line
               key={`${x1}-${y1}`}
               x1={x1}
