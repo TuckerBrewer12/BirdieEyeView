@@ -15,6 +15,8 @@ RECENT_ROUNDS = 5
 SCORE_KINDS: List[ScoreKind] = ["eagle", "birdie", "par", "bogey", "double", "triple", "quad"]
 
 HandicapDirection = Literal["up", "down", "flat"]
+# Whether a figure's move is for the better (a score or a handicap falling is good): shown green, red or muted.
+ChangeVerdict = Literal["good", "bad", "neutral"]
 
 
 def _pooled_pct(rows: List[Dict[str, Any]], successes: str, chances: str) -> Optional[float]:
@@ -44,6 +46,13 @@ def scoring_average_change(
     if full_window and sum(1 for r in rounds if r.calculate_total_score() is not None) < window:
         return None
     return analytics.round_half_up(recent - overall, 1)
+
+
+def change_verdict(change: Optional[float]) -> Optional[ChangeVerdict]:
+    """Whether a move in a figure that improves as it falls (a score, a handicap) is for the better."""
+    if change is None:
+        return None
+    return "neutral" if change == 0 else ("good" if change < 0 else "bad")
 
 
 def recent_form(rounds: List[Round], window: int = RECENT_ROUNDS) -> Dict[str, Optional[float]]:
@@ -92,7 +101,11 @@ def handicap_change(handicap_trend: List[Dict[str, Any]]) -> Dict[str, Any]:
     if len(indexes) >= 3:
         fall = indexes[0] - indexes[-1]
         direction = "flat" if abs(fall) < 0.3 else ("down" if fall > 0 else "up")
-    return {"delta": delta, "direction": direction}
+    return {
+        "delta": delta,
+        "direction": direction,
+        "delta_verdict": change_verdict(delta),
+    }
 
 
 def whs_breakdown(

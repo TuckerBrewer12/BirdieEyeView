@@ -9,7 +9,6 @@ import {
 } from "@/domain";
 import type { UserDto } from "@/types/api";
 import {
-  type HiTrend,
   type Milestone,
   type WhsRound,
 } from "./model";
@@ -84,8 +83,6 @@ export function usedLegend(countUsed: number, usedCount: number): string | null 
 export function whsContextNote(countUsed: number): string {
   return `The World Handicap System uses your best ${countUsed || "N"} ${pluralNoun(countUsed || 2, "differential")} from the last 20 rounds. Differentials measure how well you played relative to the course difficulty.`;
 }
-
-export type { HiTrend };
 
 const MILESTONE_WORDING: Record<Milestone["kind"], { title: string; figure: (value: number) => string }> = {
   under_par: { title: "First round under par", figure: String },
