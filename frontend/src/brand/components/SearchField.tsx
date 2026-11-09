@@ -1,6 +1,6 @@
 import type * as React from "react";
 import { useEffect, useId, useRef } from "react";
-import { Search, Loader2, X } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 import { cn } from "@/brand/cn";
 import {
   InputGroup,
@@ -10,9 +10,9 @@ import {
   InputGroupInput,
 } from "./InputGroup";
 
-/** Other input props (an `id` for a FieldLabel, combobox ARIA, `onKeyDown`) go to the input. */
+/** Other input props (a placeholder, an `aria-label`, combobox ARIA, `onKeyDown`) go to the input. */
 interface SearchFieldProps
-  extends Omit<React.ComponentProps<typeof InputGroupInput>, "value" | "onChange" | "type"> {
+  extends Omit<React.ComponentProps<typeof InputGroupInput>, "value" | "onChange" | "type" | "size"> {
   value: string;
   onChange: (value: string) => void;
   /**
@@ -21,17 +21,20 @@ interface SearchFieldProps
    */
   focusOnOpen?: boolean;
   loading?: boolean;
-  /** Shows a `/` hint while the field is empty, and makes the `/` key focus it. */
-  shortcut?: boolean;
+  className?: string;
 }
 
+/**
+ * Search, as the pages show it: 40 tall on the card's surface, a magnifier that darkens once
+ * there's a query, and a button that clears it and keeps the caret in the field.
+ */
 export function SearchField({
   id,
   value,
   onChange,
   focusOnOpen = false,
   loading,
-  shortcut = false,
+  className,
   ...inputProps
 }: SearchFieldProps) {
   const generatedId = useId();
@@ -42,20 +45,8 @@ export function SearchField({
     if (focusOnOpen) input.current?.focus();
   }, [focusOnOpen]);
 
-  useEffect(() => {
-    if (!shortcut) return;
-    const focusOnSlash = (event: KeyboardEvent) => {
-      if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return;
-      if ((event.target as HTMLElement).closest("input, textarea, select, [contenteditable]")) return;
-      event.preventDefault();
-      input.current?.focus();
-    };
-    document.addEventListener("keydown", focusOnSlash);
-    return () => document.removeEventListener("keydown", focusOnSlash);
-  }, [shortcut]);
-
   return (
-    <InputGroup className="bg-card">
+    <InputGroup size="inline" className={className}>
       <InputGroupInput
         ref={input}
         id={inputId}
@@ -73,11 +64,12 @@ export function SearchField({
           <Loader2 className="animate-spin" />
         </InputGroupAddonLabel>
       )}
-      {value ? (
+      {value && !loading && (
         <InputGroupAddon align="inline-end">
           <InputGroupButton
             size="icon-sm"
             variant="secondary"
+            className="size-7"
             aria-label="Clear search"
             onClick={() => {
               onChange("");
@@ -87,12 +79,6 @@ export function SearchField({
             <X className="size-3.5" />
           </InputGroupButton>
         </InputGroupAddon>
-      ) : (
-        shortcut && (
-          <InputGroupAddon align="inline-end">
-            <kbd className="border border-border px-1.5 text-label font-semibold">/</kbd>
-          </InputGroupAddon>
-        )
       )}
     </InputGroup>
   );

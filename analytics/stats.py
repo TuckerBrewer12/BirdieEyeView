@@ -979,6 +979,7 @@ def score_trend(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
                 "round_id": round_obj.id,
                 "total_score": total_score,
                 "to_par": total_to_par,
+                "par": round_obj.scored_par() if total_score is not None else None,
                 "course_name": course_name,
             }
         )

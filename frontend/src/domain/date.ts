@@ -58,6 +58,12 @@ export function formatDayShort(input: DayInput): string | null {
   return day ? day.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
 }
 
+/** "October 2026": the activity calendar's month. */
+export function formatMonth(input: DayInput): string | null {
+  const day = toDay(input);
+  return day ? day.toLocaleDateString("en-US", { month: "long", year: "numeric" }) : null;
+}
+
 /** "Jun 15, 2026": round history rows, career records, a friend request's last update. */
 export function formatDay(input: DayInput): string | null {
   const day = toDay(input);
@@ -77,6 +83,13 @@ export function formatWeekdayDay(input: DayInput, { year = true }: { year?: bool
   ];
   if (year) parts.push(String(day.getFullYear()));
   return parts.join(" · ");
+}
+
+/** "Sun, Jun 15": a day this year, with its weekday. */
+export function formatWeekdayShort(input: DayInput): string | null {
+  const day = toDay(input);
+  if (!day) return null;
+  return `${day.toLocaleDateString("en-US", { weekday: "short" })}, ${day.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 }
 
 export interface DayParts {

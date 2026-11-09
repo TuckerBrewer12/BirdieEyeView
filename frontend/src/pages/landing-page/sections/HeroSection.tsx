@@ -20,7 +20,7 @@ export function HeroSection() {
             transition={tokens.motion.entrance}
             className="mb-8 text-center lg:text-left"
           >
-            <h1 className="mb-5 text-4xl text-balance leading-display font-extrabold tracking-hero text-foreground md:text-5xl lg:text-6xl">
+            <h1 className="mb-5 text-display-sm text-balance text-foreground md:text-display lg:text-display-lg">
               Scan your scorecard.
             </h1>
             <div className="flex flex-col gap-2 text-lg text-balance text-muted-foreground">

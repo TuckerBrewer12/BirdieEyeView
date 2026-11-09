@@ -6,7 +6,6 @@ import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 import {
   SORT_LABELS,
   SORT_OPTIONS,
-  SCOPE_CHIPS,
   courseChips,
   effectiveSort,
   filterRounds,
@@ -29,10 +28,7 @@ export interface RoundsUiState {
   remainingCount: number;
   search: string;
   filterMode: FilterMode;
-  /** All, L20 and Best. */
-  scopes: readonly CourseFilterOption[];
-  /** The most-played courses, each with its number of rounds. */
-  courseChips: CourseFilterOption[];
+  chips: CourseFilterOption[];
   sortAsc: boolean;
   sortLabel: string;
   sortOptions: readonly SortOption[];
@@ -115,8 +111,7 @@ export function useRoundsPageViewModel(
     setSearch,
     filterMode,
     setFilterMode,
-    scopes: SCOPE_CHIPS,
-    courseChips: chips,
+    chips,
     sortAsc: effective.ascending,
     sortLabel: SORT_LABELS[effective.key],
     sortOptions: SORT_OPTIONS,

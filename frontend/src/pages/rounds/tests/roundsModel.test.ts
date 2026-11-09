@@ -102,14 +102,13 @@ describe("effectiveSort", () => {
 });
 
 describe("courseChips", () => {
-  it("offers the six most-played courses, each with its number of rounds", () => {
+  it("offers All, L20 and Best, then the six most-played courses", () => {
     const rounds = [
       ...["G", "F", "E", "D", "C", "B", "A"].flatMap((name, i) =>
         Array.from({ length: i + 1 }, () => round(name, 80)),
       ),
       round(null, 80),
     ];
-    expect(courseChips(rounds).map((c) => c.mode)).toEqual(["A", "B", "C", "D", "E", "F"]);
-    expect(courseChips(rounds).map((c) => c.count)).toEqual([7, 6, 5, 4, 3, 2]);
+    expect(courseChips(rounds).map((c) => c.mode)).toEqual(["all", "l20", "best", "A", "B", "C", "D", "E", "F"]);
   });
 });

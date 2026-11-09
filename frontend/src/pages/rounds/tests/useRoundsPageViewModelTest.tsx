@@ -25,7 +25,10 @@ describe("useRoundsPageViewModel", () => {
   it("puts the most-played course first among the course chips", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.courseChips[0]).toMatchObject({ label: "Half Moon Bay", count: 2 });
+    const courseChips = result.current.chips
+      .filter((chip) => chip.mode !== "all" && chip.mode !== "l20" && chip.mode !== "best")
+      .map((chip) => chip.label);
+    expect(courseChips[0]).toBe("Half Moon Bay");
   });
 
   it("Best mode follows the server's to-par order and locks sort", async () => {
