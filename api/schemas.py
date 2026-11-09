@@ -72,6 +72,7 @@ class HoleScoreResponse(ResponseModel):
     to_par: Optional[int] = None
     kind: Optional[ScoreKind] = None
     three_putt: bool = False  # three or more putts; false when putts weren't kept
+    running_to_par: Optional[int] = None  # the round's to par after this hole; null when it has none
 
 
 class NineFigures(ResponseModel):
@@ -130,6 +131,13 @@ class RoundSummaryResponse(ResponseModel):
     best_rank: Optional[int] = None
 
 
+class WorstStretch(ResponseModel):
+    """The four holes in a row that lost the most to par, when they lost two or more."""
+    first_hole: int
+    last_hole: int
+    to_par: int
+
+
 class RoundResponse(RoundFigures):
     """A full round: the stored round, its figures, and its hole scores."""
     id: Optional[str] = None
@@ -144,6 +152,7 @@ class RoundResponse(RoundFigures):
     # Off the signed-in golfer's index and the tee played. Null without ratings, and for a nine.
     course_handicap: Optional[int] = None
     net_score: Optional[int] = None
+    worst_stretch: Optional[WorstStretch] = None
 
 
 class ScoreMix(ResponseModel):

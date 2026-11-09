@@ -794,18 +794,21 @@ export const chart = {
     /** How near the pointer has to be to a dot, in the chart's units, to pick it. */
     hitRadius: 10,
   },
-  /** A round hole by hole, as wide as `w-chart-wide`, which it scrolls at. */
+  /** The running score through a round, a step per hole, as wide as `w-chart-wide`, which it scrolls at. */
   flow: {
     width: px(size["chart-wide"]),
-    height: 220,
-    pad: { top: 28, right: 16, bottom: 36, left: 40 },
-    /** To-par beyond this is drawn at the edge, so one blow-up hole cannot flatten the rest. */
-    extent: 5,
-    stroke: 2.5,
-    /** The dashed line at par. */
-    parLine: { stroke: 1.5, dash: "5 4" },
+    height: 270,
+    /** `top` leaves room above the plot for the worst-stretch bracket; `bottom` for the hole strip under it. */
+    pad: { top: 32, right: 24, bottom: 74, left: 36 },
+    stroke: 2,
+    /** The dot where the line ends. */
     dot: 4,
-    dotHover: 6,
+    /** From an axis label, or the end dot's label, to what it labels. */
+    labelGap: 10,
+    /** The strip of hole marks under the plot: its gap from the plot and from the hole numbers. */
+    chip: { gap: 20 },
+    /** The bracket over the worst stretch: its height above the plot, and its end ticks. */
+    bracket: { rise: 7, tick: 5 },
   },
   /** A hole's score marked the way a scorecard marks it, in a `w-hole-w h-hole-h` box: circles under par, boxes over. */
   holeShape: {
