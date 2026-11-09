@@ -1,74 +1,57 @@
 import type { ReactNode } from "react";
 import { cn } from "@/brand/cn";
+import { Card } from "@/brand/components/Card";
 import { ScorecardTable, type ScorecardEdits } from "@/brand/components/ScorecardTable";
+import { useFromBreakpoint } from "@/brand/useFromBreakpoint";
 import type { Round } from "@/domain";
-import { formatCourseName } from "@/domain/course";
+import { courseLabel } from "@/domain/course";
 
 interface RoundScorecardProps {
   round: Round;
   /** The tee played, which names the yardage row. */
   teeBox?: string | null;
-  /** Names the tee on the course line too, for a screen that doesn't show it anywhere else. */
-  showTee?: boolean;
   /** Makes scores, putts and greens editable. The round shown should already carry the edits. */
   edits?: ScorecardEdits;
   /** Holes whose score is in doubt, like one a scan couldn't read for sure. Their score cell is ringed. */
   toCheck?: readonly number[];
-  /** Sits at the right of the header, like a "Scan another" button. */
+  /** Sits at the right of the course line, like a "Scan another" button. */
   action?: ReactNode;
   className?: string;
 }
 
 /**
- * A round as a scorecard: the course, then a ScorecardTable per nine, the closing one carrying
- * the round's totals. The tables are wider than a phone, so they scroll sideways under a header
- * that stays put, keeping the action in reach.
+ * A round as a scorecard: the course line, then a ScorecardTable of all eighteen holes with the nines
+ * and the round totalled. A phone has no room for eighteen across, so it stacks the front nine over the
+ * back, each closed by its own total.
  */
-function RoundScorecard({ round, teeBox, showTee = false, edits, toCheck, action, className }: RoundScorecardProps) {
-  const nines = [
-    { nine: round.frontNine, label: "OUT" },
-    { nine: round.backNine, label: "IN" },
-  ].filter(({ nine }) => nine.holes.length > 0);
-  const subtitle = [round.course?.location, showTee && teeBox && `${teeBox} tees`].filter(Boolean).join(" · ");
+function RoundScorecard({ round, teeBox, edits, toCheck, action, className }: RoundScorecardProps) {
+  // Which tables to draw, not how they look: the phone's two nines are a different table.
+  const wide = useFromBreakpoint("md");
+  // Where the course is, read off the card or the saved course; a saved round with no course says so.
+  const where = round.course?.location ?? (round.course?.id == null ? "not linked to a course" : null);
+  const courseLine = [courseLabel(round.course?.name), where].filter(Boolean).join(" · ");
+  const table = { round, teeBox, edits, toCheck };
 
   return (
-    <div
-      data-slot="round-scorecard"
-      className={cn("overflow-hidden rounded-card border border-border bg-card shadow-sm", className)}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 bg-primary px-4 py-3 text-primary-foreground">
-        <div>
-          <div className="text-base font-bold">{formatCourseName(round.course?.name)}</div>
-          {subtitle && <div className="text-xs opacity-60">{subtitle}</div>}
-        </div>
+    <Card data-slot="round-scorecard" className={cn("gap-0 py-0", className)}>
+      <div className="flex min-h-11 items-center justify-between gap-4 bg-primary px-4 py-2.5 text-body-sm font-semibold text-primary-foreground md:px-5 dark:bg-accent dark:text-foreground">
+        <span className="min-w-0 truncate">{courseLine}</span>
         {action}
       </div>
-      <div className="overflow-x-auto">
-        <div className="min-w-scorecard">
-          {nines.map(({ nine, label }, i) => (
-            <div key={label}>
-              {i > 0 && (
-                <div className="flex items-center gap-3 border-y border-border bg-muted/strong px-4 py-1.5">
-                  <div className="h-px flex-1 bg-border" />
-                  <span className="text-xs font-semibold tracking-eyebrow text-muted-foreground uppercase">
-                    Back Nine
-                  </span>
-                  <div className="h-px flex-1 bg-border" />
-                </div>
-              )}
-              <ScorecardTable
-                nine={nine}
-                label={label}
-                round={i === nines.length - 1 ? round : undefined}
-                teeBox={teeBox}
-                edits={edits}
-                toCheck={toCheck}
-              />
-            </div>
-          ))}
+      {wide ? (
+        <div className="overflow-x-auto">
+          <div className="min-w-scorecard-round px-3 pt-1 pb-2.5">
+            <ScorecardTable {...table} />
+          </div>
         </div>
-      </div>
-    </div>
+      ) : (
+        <div className="pb-1">
+          <ScorecardTable {...table} nine="front" />
+          <div aria-hidden className="h-1.5 bg-background" />
+          <ScorecardTable {...table} nine="back" />
+        </div>
+      )}
+    </Card>
   );
 }
 

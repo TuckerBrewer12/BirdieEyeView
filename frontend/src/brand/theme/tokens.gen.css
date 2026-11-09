@@ -184,6 +184,7 @@
   --brand-size-sparkline-mini: 44px;
   --brand-size-hole-w: 30px;
   --brand-size-hole-h: 22px;
+  --brand-size-hole-lg: 28px;
   --brand-size-profile-eagle: 28%;
   --brand-size-profile-birdie: 40%;
   --brand-size-profile-par: 52%;
@@ -191,6 +192,7 @@
   --brand-size-profile-double: 92%;
   --brand-size-profile-worse: 100%;
   --brand-size-scorecard: 43.75rem;
+  --brand-size-scorecard-round: 54rem;
   --brand-stroke-icon: 1.75;
   --brand-stroke-icon-active: 2.25;
   --brand-stroke-check: 1.5;
@@ -422,6 +424,7 @@
   --spacing-sparkline-mini: var(--brand-size-sparkline-mini);
   --spacing-hole-w: var(--brand-size-hole-w);
   --spacing-hole-h: var(--brand-size-hole-h);
+  --spacing-hole-lg: var(--brand-size-hole-lg);
   --spacing-profile-eagle: var(--brand-size-profile-eagle);
   --spacing-profile-birdie: var(--brand-size-profile-birdie);
   --spacing-profile-par: var(--brand-size-profile-par);
@@ -429,6 +432,7 @@
   --spacing-profile-double: var(--brand-size-profile-double);
   --spacing-profile-worse: var(--brand-size-profile-worse);
   --spacing-scorecard: var(--brand-size-scorecard);
+  --spacing-scorecard-round: var(--brand-size-scorecard-round);
   --stroke-width-icon: var(--brand-stroke-icon);
   --stroke-width-icon-active: var(--brand-stroke-icon-active);
   --stroke-width-check: var(--brand-stroke-check);
