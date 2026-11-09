@@ -430,7 +430,6 @@ export const radius = {
 export const size = {
   /** The side rail's width: `AppShell` sets it and clears the page past it. */
   rail: 240,
-  "date-rail": 54,
   preview: 390,
   chart: 180,
   "chart-compact": 210,
@@ -505,9 +504,8 @@ export const shadow = {
   lg: "0 10px 15px -3px var(--shadow), 0 4px 6px -4px var(--shadow)",
 };
 
-/** Named grid column templates: `grid-cols-round-preview`. */
+/** Named grid column templates: `grid-cols-handicap-breakdown`. */
 export const gridColumns = {
-  "round-preview": "var(--brand-size-date-rail) 1fr auto",
   "handicap-breakdown": "1fr auto auto auto",
   "recent-rounds": "1fr auto auto",
   /** A label column, then two equal state columns (default, disabled). */

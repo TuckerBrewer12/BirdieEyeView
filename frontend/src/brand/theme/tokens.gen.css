@@ -151,7 +151,6 @@
   --brand-space-nudge-sm: 3px;
   --brand-space-safe-bottom: max(env(safe-area-inset-bottom, 0px), 22px);
   --brand-size-rail: 240px;
-  --brand-size-date-rail: 54px;
   --brand-size-preview: 390px;
   --brand-size-chart: 180px;
   --brand-size-chart-compact: 210px;
@@ -363,7 +362,6 @@
   --spacing-nudge-sm: var(--brand-space-nudge-sm);
   --spacing-safe-bottom: var(--brand-space-safe-bottom);
   --spacing-rail: var(--brand-size-rail);
-  --spacing-date-rail: var(--brand-size-date-rail);
   --spacing-preview: var(--brand-size-preview);
   --spacing-chart: var(--brand-size-chart);
   --spacing-chart-compact: var(--brand-size-chart-compact);
@@ -407,7 +405,6 @@
   --text-section--letter-spacing: 0.18em;
   --blur-xs: 4px;
   --ring-width-3: var(--brand-ring-width);
-  --grid-template-columns-round-preview: var(--brand-size-date-rail) 1fr auto;
   --grid-template-columns-handicap-breakdown: 1fr auto auto auto;
   --grid-template-columns-recent-rounds: 1fr auto auto;
   --grid-template-columns-state-grid: 6rem repeat(2, minmax(0, 1fr));
