@@ -3,8 +3,6 @@ import type {
   GoalReportDto,
   HandicapTrendRowDto,
   ScoreTrendRowDto,
-  ScramblingTrendRowDto,
-  UpAndDownTrendRowDto,
   UserDto,
 } from "../../types/api";
 import { populatedRounds } from "./rounds";
@@ -29,23 +27,6 @@ const handicapTrend: HandicapTrendRowDto[] = scoreTrend.map((row, i) => ({
   differential_status: (["out", "counting", "close", "out", "out"] as const)[i],
 }));
 
-const scramblingTrend: ScramblingTrendRowDto[] = scoreTrend.map((row) => ({
-  round_index: row.round_index,
-  round_id: row.round_id,
-  scramble_opportunities: 8,
-  scramble_successes: 3,
-  scramble_failures: 5,
-  scrambling_percentage: 37.5,
-}));
-
-const upAndDownTrend: UpAndDownTrendRowDto[] = scoreTrend.map((row) => ({
-  round_index: row.round_index,
-  round_id: row.round_id,
-  opportunities: 6,
-  successes: 2,
-  percentage: 33.3,
-}));
-
 export const dashboardUser: UserDto = {
   id: "user-1",
   name: "Test Golfer",
@@ -58,8 +39,6 @@ export const dashboardUser: UserDto = {
 };
 
 export const populatedDashboard: DashboardDto = {
-  total_rounds: 4,
-  scoring_average: 76,
   best_round: 69,
   best_round_id: "round-3",
   best_round_course: "Blue Rock",
@@ -67,30 +46,13 @@ export const populatedDashboard: DashboardDto = {
   best_round_date: "2026-04-18T18:00:00.000Z",
   handicap_index: 12.4,
   recent_rounds: populatedRounds,
-  // The 69, the best of the rounds listed.
-  best_recent_round_id: "round-3",
-  average_putts: 32,
-  average_gir: 8,
-  // The last five rounds' 32 a round: between 30 and 34 rates fair.
-  putts_per_round: 32,
-  putts_rating: "fair",
-  // The figures the server works out from the trend window below.
-  scoring_average_l20: 76.8,
-  // The last five come in 2.1 under the last 20.
+  // The last five come in 2.1 under the last 20 (76.8).
   scoring_average_l5: 74.7,
   scoring_average_change: -2.1,
   scoring_average_verdict: "good",
   // The index stood at 14.0 after May 2, the last round before June began.
-  handicap_change: { delta: -1.6, direction: "down", delta_verdict: "good", this_month: -1.6, this_month_verdict: "good" },
-  recent_form: { gir_pct: (35 / 90) * 100, scrambling_pct: 37.5, up_and_down_pct: 100 / 3, putts_per_18: 32 },
-  score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
+  handicap_change: { this_month: -1.6, this_month_verdict: "good" },
   recent_score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
-  score_mix_holes: 90,
-  // Round 3 is a 69 on a par 72 with 28 putts: the first round under par, and under 30 putts.
-  milestones: [
-    { kind: "under_par", value: 69, date: "2026-04-18", course: "Blue Rock", round_id: "round-3" },
-    { kind: "putt_break", value: 30, date: "2026-04-18", course: "Blue Rock", round_id: "round-3" },
-  ],
   whs: {
     rows: [
       { round_index: 5, course_name: "Muni", course_rating: 72.4, slope_rating: 130, score: 80, differential: 13, used: false },
@@ -104,16 +66,11 @@ export const populatedDashboard: DashboardDto = {
     adjustment: 0,
     diff_avg: 4.1,
     has_rated_rounds: true,
-    show_calculation: true,
   },
   score_trend: scoreTrend,
   handicap_trend: handicapTrend,
-  scrambling_trend: scramblingTrend,
-  up_and_down_trend: upAndDownTrend,
   // Mar 9, Apr 18, May 2 and Jun 15, seen from mid-June.
   rounds_this_year: 4,
-  // Jun 15 at Half Moon Bay, the newest round: bogeys out, a birdie on 18, +6.
-  last_round_flow: [1, 1, 1, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 6, 7, 7, 6].map((to_par, i) => ({ hole_number: i + 1, to_par })),
 };
 
 export const dashboardGoalReport: GoalReportDto = {

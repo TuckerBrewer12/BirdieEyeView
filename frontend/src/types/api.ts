@@ -23,7 +23,6 @@ export type RoundSummaryDto = Schemas["RoundSummaryResponse"];
 export type DashboardDto = Schemas["DashboardResponse"];
 export type ScoreMixDto = Schemas["ScoreMix"];
 export type WhsBreakdownDto = Schemas["WhsBreakdown"];
-export type MilestoneDto = Schemas["Milestone"];
 export type CourseAnalyticsDto = Schemas["CourseAnalyticsResponse"];
 export type CourseScoreTrendRowDto = Schemas["CourseScoreTrendRow"];
 export type CourseHoleToParRowDto = Schemas["CourseHoleToParRow"];

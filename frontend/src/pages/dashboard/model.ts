@@ -1,4 +1,3 @@
-import type { RunningToPar } from "@/domain/round";
 import type { ScoreMix } from "@/domain/score";
 import type { DashboardDto, GoalReportDto, WhsBreakdownDto } from "@/types/api";
 
@@ -47,11 +46,6 @@ export function hasScoreMix(mix: ScoreMix): boolean {
   return Object.values(mix).some((share) => share > 0);
 }
 
-/** The last round's to par after each hole, as the server ran it. */
-export function lastRoundFlowFrom(dto: DashboardDto): RunningToPar[] {
-  return dto.last_round_flow.map((point) => ({ hole: point.hole_number, toPar: point.to_par }));
-}
-
 export interface WhsRound {
   roundIndex: number;
   courseName: string | null;
@@ -69,7 +63,6 @@ export interface WhsBreakdown {
   adjustment: number;
   diffAvg: number | null;
   hasRatedRounds: boolean;
-  showCalculation: boolean;
 }
 
 export function whsFrom(dto: WhsBreakdownDto): WhsBreakdown {
@@ -88,7 +81,6 @@ export function whsFrom(dto: WhsBreakdownDto): WhsBreakdown {
     adjustment: dto.adjustment,
     diffAvg: dto.diff_avg,
     hasRatedRounds: dto.has_rated_rounds,
-    showCalculation: dto.show_calculation,
   };
 }
 

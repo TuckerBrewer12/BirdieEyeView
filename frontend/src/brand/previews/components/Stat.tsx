@@ -41,7 +41,7 @@ export default function StatPreview() {
       <div className="flex items-end justify-between">
         <Stat>
           <StatLabel>Scoring avg · L20</StatLabel>
-          <StatValue size="xl">{dashboard.scoring_average_l20}</StatValue>
+          <StatValue size="xl">{dashboard.scoring_average_l5}</StatValue>
         </Stat>
         <StatDelta direction="down" tone={dashboardTone} pill>
           {moved(dashboard.scoring_average_change)} vs L5

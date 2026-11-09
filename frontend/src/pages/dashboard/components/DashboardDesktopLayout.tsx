@@ -20,7 +20,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
         onHandicapClick={vm.openHandicapSheet}
       />
 
-      {vm.lastRound && <LastRoundCard round={vm.lastRound} flow={vm.lastRoundFlow} />}
+      {vm.lastRound && <LastRoundCard round={vm.lastRound} />}
 
       <div className="grid grid-cols-dashboard-cards gap-4">
         <ScoringAverageCard

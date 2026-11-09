@@ -21,6 +21,10 @@ const statValueVariants = cva("flex items-baseline gap-1 leading-none tabular-nu
       md: "text-2xl font-semibold tracking-stat",
       /** A card's headline figure, a KPI tile's. */
       lg: "text-stat",
+      /** A figure card's number on the soft surface, as the dashboard's row has it. */
+      card: "text-figure",
+      /** The same on a phone. */
+      "card-sm": "text-figure-sm",
       /** The one number a screen leads with. */
       xl: "text-6xl font-bold tracking-hero",
     },
@@ -55,4 +59,15 @@ const statDeltaVariants = cva("inline-flex items-center gap-1 text-body-sm font-
   },
 });
 
-export { statVariants, statValueVariants, statDeltaVariants };
+/** What a figure measures: set in the secondary ink, or `quiet` in the muted one, as a card's caption. */
+const statLabelVariants = cva("text-body", {
+  variants: {
+    tone: {
+      default: "font-medium text-foreground-secondary",
+      quiet: "text-muted-foreground",
+    },
+  },
+  defaultVariants: { tone: "default" },
+});
+
+export { statVariants, statValueVariants, statDeltaVariants, statLabelVariants };

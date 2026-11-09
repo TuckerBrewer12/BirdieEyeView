@@ -254,7 +254,7 @@ export function summaryResponse(round: StoredRound, bestRank: number | null = nu
     back_nine,
     total_putts,
     score_counts,
-    hole_scores: holes.map(({ hole_number, strokes, kind }) => ({ hole_number, strokes, kind })),
+    hole_scores: holes.map(({ hole_number, strokes, kind, running_to_par }) => ({ hole_number, strokes, kind, running_to_par })),
     best_rank: bestRank,
   };
 }

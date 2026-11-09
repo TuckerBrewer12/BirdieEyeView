@@ -76,7 +76,6 @@ export type {
   RoundDetail,
   RoundEdits,
   RoundSummary,
-  RunningToPar,
 } from "./round";
 
 export type { AnalyticsFilters } from "./analyticsFilters";

@@ -146,12 +146,7 @@ async def test_dashboard_carries_the_trends_analytics_draws_for_the_last_20(seas
     assert dashboard.score_trend == trends.score_trend
     assert all(row.rolling_average is not None and row.par is not None for row in dashboard.score_trend)
     assert dashboard.handicap_trend == trends.handicap_trend
-    assert dashboard.scrambling_trend == trends.scrambling_trend
-    assert dashboard.up_and_down_trend == trends.up_and_down_trend
     assert all(row.differential_status != "unrated" for row in dashboard.handicap_trend)
-    # The best of the five rounds the dashboard lists, which need not be the best ever.
-    best_recent = min(dashboard.recent_rounds, key=lambda r: r.total_score)
-    assert dashboard.best_recent_round_id == best_recent.id
     # The scoring average's move and the server's verdict on it, which the desktop tile shows.
     assert dashboard.scoring_average_change is not None
     assert dashboard.scoring_average_verdict == dashboard_figures.change_verdict(dashboard.scoring_average_change)

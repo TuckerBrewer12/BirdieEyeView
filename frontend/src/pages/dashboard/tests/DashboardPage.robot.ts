@@ -53,8 +53,8 @@ export class DashboardRobot {
 
   async seesScoringAverage(label: string): Promise<this> {
     await expect(
-      this.page.locator("[data-slot=scoring-average-card]").locator("visible=true").getByText(label, { exact: true }),
-    ).toBeVisible();
+      this.page.locator("[data-slot=scoring-average-card]").locator("visible=true").locator("[data-slot=stat-value]"),
+    ).toContainText(label);
     return this;
   }
 

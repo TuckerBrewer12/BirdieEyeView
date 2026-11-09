@@ -21,7 +21,7 @@ describe("Round.fromSummary", () => {
     expect(round.frontNine.total).toBe(40);
     expect(round.backNine.total).toBe(38);
     expect(round.putts).toBe(32);
-    expect(round.holes[0]).toEqual({ hole: 1, strokes: 5, kind: "bogey" });
+    expect(round.holes[0]).toEqual({ hole: 1, strokes: 5, kind: "bogey", runningToPar: 1 });
   });
 
   it("splits the holes into nines by hole number", () => {

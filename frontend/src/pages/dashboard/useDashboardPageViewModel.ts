@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { useGoalReport } from "@/data/useGoalReport";
 import { useUser } from "@/data/useUser";
-import { Round, trendPointsFrom, type RoundSummary, type RunningToPar, type ScoreMix } from "@/domain";
+import { Round, trendPointsFrom, type RoundSummary, type ScoreMix } from "@/domain";
 import type { DashboardDto, UserDto } from "@/types/api";
 import {
   dashboardRepository,
@@ -13,7 +13,6 @@ import {
   bestRoundFrom,
   goalProgress,
   handicapMonthFrom,
-  lastRoundFlowFrom,
   whsFrom,
   type BestRound,
   type ChangeVerdict,
@@ -41,8 +40,6 @@ export interface DashboardPageViewModel {
   averageLine: (number | null)[];
   /** The newest round, the dashboard's lead. Null before the first round. */
   lastRound: RoundSummary | null;
-  /** The newest round's running score to par. */
-  lastRoundFlow: RunningToPar[];
   /** The three rounds before it. */
   recentRounds: RoundSummary[];
   /** Null before a scored round. */
@@ -66,7 +63,6 @@ const EMPTY_WHS: WhsBreakdown = {
   adjustment: 0,
   diffAvg: null,
   hasRatedRounds: false,
-  showCalculation: false,
 };
 
 const EMPTY_HANDICAP: HandicapMonth = { index: null, change: null, verdict: null };
@@ -96,7 +92,6 @@ export function useDashboardPageViewModel(
     [data?.recent_rounds],
   );
   const trend = useMemo(() => trendPointsFrom(data), [data]);
-  const lastRoundFlow = useMemo(() => (data ? lastRoundFlowFrom(data) : []), [data]);
 
   const openHandicapSheet = useCallback(() => setHandicapSheetOpen(true), []);
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
@@ -112,7 +107,6 @@ export function useDashboardPageViewModel(
     handicapLine: trend.map((point) => point.handicapIndex),
     averageLine: trend.map((point) => point.rollingAverage),
     lastRound: rounds[0] ?? null,
-    lastRoundFlow,
     recentRounds: rounds.slice(1, 1 + RECENT_ROUNDS),
     best: data ? bestRoundFrom(data) : null,
     roundsThisYear: data?.rounds_this_year ?? 0,

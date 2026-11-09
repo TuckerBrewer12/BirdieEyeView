@@ -1852,41 +1852,8 @@
         "type": "object"
       },
       "DashboardResponse": {
-        "description": "Aggregated stats for the dashboard page. Every figure is worked out here, not on the client.",
+        "description": "What the dashboard shows. Every figure is worked out here, not on the client.",
         "properties": {
-          "average_gir": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Average Gir"
-          },
-          "average_putts": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Average Putts"
-          },
-          "best_recent_round_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Best Recent Round Id"
-          },
           "best_round": {
             "anyOf": [
               {
@@ -1964,50 +1931,6 @@
             "title": "Handicap Trend",
             "type": "array"
           },
-          "last_round_flow": {
-            "items": {
-              "$ref": "#/components/schemas/HoleRunningToPar"
-            },
-            "title": "Last Round Flow",
-            "type": "array"
-          },
-          "milestones": {
-            "items": {
-              "$ref": "#/components/schemas/Milestone"
-            },
-            "title": "Milestones",
-            "type": "array"
-          },
-          "putts_per_round": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Putts Per Round"
-          },
-          "putts_rating": {
-            "anyOf": [
-              {
-                "enum": [
-                  "strong",
-                  "fair",
-                  "weak"
-                ],
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Putts Rating"
-          },
-          "recent_form": {
-            "$ref": "#/components/schemas/RecentForm"
-          },
           "recent_rounds": {
             "items": {
               "$ref": "#/components/schemas/RoundSummaryResponse"
@@ -2023,31 +1946,12 @@
             "title": "Rounds This Year",
             "type": "integer"
           },
-          "score_mix": {
-            "$ref": "#/components/schemas/ScoreMix"
-          },
-          "score_mix_holes": {
-            "default": 0,
-            "title": "Score Mix Holes",
-            "type": "integer"
-          },
           "score_trend": {
             "items": {
               "$ref": "#/components/schemas/ScoreTrendRow"
             },
             "title": "Score Trend",
             "type": "array"
-          },
-          "scoring_average": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scoring Average"
           },
           "scoring_average_change": {
             "anyOf": [
@@ -2059,17 +1963,6 @@
               }
             ],
             "title": "Scoring Average Change"
-          },
-          "scoring_average_l20": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scoring Average L20"
           },
           "scoring_average_l5": {
             "anyOf": [
@@ -2098,31 +1991,11 @@
             ],
             "title": "Scoring Average Verdict"
           },
-          "scrambling_trend": {
-            "items": {
-              "$ref": "#/components/schemas/ScramblingTrendRow"
-            },
-            "title": "Scrambling Trend",
-            "type": "array"
-          },
-          "total_rounds": {
-            "title": "Total Rounds",
-            "type": "integer"
-          },
-          "up_and_down_trend": {
-            "items": {
-              "$ref": "#/components/schemas/UpAndDownTrendRow"
-            },
-            "title": "Up And Down Trend",
-            "type": "array"
-          },
           "whs": {
             "$ref": "#/components/schemas/WhsBreakdown"
           }
         },
         "required": [
-          "total_rounds",
-          "scoring_average",
           "best_round",
           "best_round_id",
           "best_round_course",
@@ -2130,28 +2003,15 @@
           "best_round_date",
           "handicap_index",
           "recent_rounds",
-          "best_recent_round_id",
-          "average_putts",
-          "average_gir",
-          "putts_per_round",
-          "putts_rating",
-          "scoring_average_l20",
           "scoring_average_l5",
           "scoring_average_change",
           "scoring_average_verdict",
           "handicap_change",
-          "recent_form",
-          "score_mix",
           "recent_score_mix",
-          "score_mix_holes",
-          "milestones",
           "whs",
           "score_trend",
           "handicap_trend",
-          "scrambling_trend",
-          "up_and_down_trend",
-          "rounds_this_year",
-          "last_round_flow"
+          "rounds_this_year"
         ],
         "title": "DashboardResponse",
         "type": "object"
@@ -2745,49 +2605,6 @@
       },
       "HandicapChange": {
         "properties": {
-          "delta": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Delta"
-          },
-          "delta_verdict": {
-            "anyOf": [
-              {
-                "enum": [
-                  "good",
-                  "bad",
-                  "neutral"
-                ],
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Delta Verdict"
-          },
-          "direction": {
-            "anyOf": [
-              {
-                "enum": [
-                  "up",
-                  "down",
-                  "flat"
-                ],
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Direction"
-          },
           "this_month": {
             "anyOf": [
               {
@@ -2817,9 +2634,6 @@
           }
         },
         "required": [
-          "delta",
-          "direction",
-          "delta_verdict",
           "this_month",
           "this_month_verdict"
         ],
@@ -3079,24 +2893,6 @@
           "number"
         ],
         "title": "HoleInput",
-        "type": "object"
-      },
-      "HoleRunningToPar": {
-        "properties": {
-          "hole_number": {
-            "title": "Hole Number",
-            "type": "integer"
-          },
-          "to_par": {
-            "title": "To Par",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "hole_number",
-          "to_par"
-        ],
-        "title": "HoleRunningToPar",
         "type": "object"
       },
       "HoleScoreInput": {
@@ -3525,7 +3321,7 @@
         "type": "object"
       },
       "HoleSummaryResponse": {
-        "description": "One hole in a round list: what was taken and how it scored.",
+        "description": "One hole in a round list: what was taken, how it scored and where the round stood after it.",
         "properties": {
           "hole_number": {
             "title": "Hole Number",
@@ -3551,6 +3347,17 @@
             ],
             "title": "Kind"
           },
+          "running_to_par": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Running To Par"
+          },
           "strokes": {
             "anyOf": [
               {
@@ -3566,7 +3373,8 @@
         "required": [
           "hole_number",
           "strokes",
-          "kind"
+          "kind",
+          "running_to_par"
         ],
         "title": "HoleSummaryResponse",
         "type": "object"
@@ -4141,53 +3949,6 @@
           "message"
         ],
         "title": "MessageResponse",
-        "type": "object"
-      },
-      "Milestone": {
-        "description": "A lifetime best. `value` is the score, the putt threshold, or the streak length.",
-        "properties": {
-          "course": {
-            "title": "Course",
-            "type": "string"
-          },
-          "date": {
-            "title": "Date",
-            "type": "string"
-          },
-          "kind": {
-            "enum": [
-              "under_par",
-              "score_break",
-              "putt_break",
-              "par_streak"
-            ],
-            "title": "Kind",
-            "type": "string"
-          },
-          "round_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Round Id"
-          },
-          "value": {
-            "title": "Value",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "kind",
-          "value",
-          "date",
-          "course",
-          "round_id"
-        ],
-        "title": "Milestone",
         "type": "object"
       },
       "MilestoneAchievement": {
@@ -5344,63 +5105,6 @@
           "holes_played"
         ],
         "title": "PuttsTrendRow",
-        "type": "object"
-      },
-      "RecentForm": {
-        "description": "Rates over the last five rounds, pooled by chances. Null when there is nothing to measure.",
-        "properties": {
-          "gir_pct": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Gir Pct"
-          },
-          "putts_per_18": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Putts Per 18"
-          },
-          "scrambling_pct": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scrambling Pct"
-          },
-          "up_and_down_pct": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Up And Down Pct"
-          }
-        },
-        "required": [
-          "gir_pct",
-          "scrambling_pct",
-          "up_and_down_pct",
-          "putts_per_18"
-        ],
-        "title": "RecentForm",
         "type": "object"
       },
       "RegisterRequest": {
@@ -7854,11 +7558,6 @@
             "title": "Rows",
             "type": "array"
           },
-          "show_calculation": {
-            "default": false,
-            "title": "Show Calculation",
-            "type": "boolean"
-          },
           "window_size": {
             "default": 0,
             "title": "Window Size",
@@ -7871,8 +7570,7 @@
           "count_used",
           "adjustment",
           "diff_avg",
-          "has_rated_rounds",
-          "show_calculation"
+          "has_rated_rounds"
         ],
         "title": "WhsBreakdown",
         "type": "object"

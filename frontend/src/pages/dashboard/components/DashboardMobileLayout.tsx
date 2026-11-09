@@ -21,7 +21,7 @@ export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
         onHandicapClick={vm.openHandicapSheet}
       />
 
-      {vm.lastRound && <LastRoundCard compact round={vm.lastRound} flow={vm.lastRoundFlow} />}
+      {vm.lastRound && <LastRoundCard compact round={vm.lastRound} />}
 
       <div className="grid grid-cols-2 gap-3">
         <ScoringAverageCard

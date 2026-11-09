@@ -2,12 +2,12 @@ import { scaleLinear } from "d3-scale";
 import { curveBumpX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { toParLabel, tokens } from "@/brand/theme";
-import type { RunningToPar } from "@/domain";
-import { indexScale } from "./scales";
+import type { HoleSummary } from "@/domain";
+import { indexScale, paddedExtent } from "./scales";
 
 interface RunningToParLineProps {
-  /** The round's to par after each hole, in hole order, as the server ran it. */
-  flow: RunningToPar[];
+  /** The round's holes in order; the line runs through each one's `runningToPar`. */
+  holes: HoleSummary[];
   /** The phone's shorter line, with no figures round it. */
   compact?: boolean;
   className?: string;
@@ -19,7 +19,9 @@ const R = tokens.chart.running;
  * How a round went: its running score to par from the first tee, a smooth line over a dotted
  * level line, ending on a dot. The wide one marks level, the turn, the last hole and the finish.
  */
-export function RunningToParLine({ flow, compact = false, className }: RunningToParLineProps) {
+export function RunningToParLine({ holes, compact = false, className }: RunningToParLineProps) {
+  // The holes the server could run: a hole it can't read has no point on the line.
+  const flow = holes.flatMap((hole) => (hole.runningToPar == null ? [] : [{ hole: hole.hole, toPar: hole.runningToPar }]));
   if (flow.length < 2) return null;
 
   const W = compact ? R.widthCompact : R.width;
@@ -27,7 +29,7 @@ export function RunningToParLine({ flow, compact = false, className }: RunningTo
   const values = flow.map((point) => point.toPar);
   // A stroke of room above the worst and below the best, and level always on the plot.
   const y = scaleLinear()
-    .domain([Math.min(0, ...values) - 1, Math.max(0, ...values) + 1])
+    .domain(paddedExtent([0, ...values], 1) ?? [-1, 1])
     .range(compact ? [R.bottomCompact, R.topCompact] : [R.bottom, R.top]);
   const x = indexScale(flow.length, compact ? R.firstCompact : R.first, compact ? R.lastCompact : R.last);
 

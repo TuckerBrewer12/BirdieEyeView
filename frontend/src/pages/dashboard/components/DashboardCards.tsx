@@ -1,8 +1,8 @@
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Card, ProgressRing, ScoreMixBar, ScoreMixDonut, Sparkline } from "@/brand";
+import { Card, ProgressRing, ScoreMixBar, ScoreMixDonut, Sparkline, StatLabel, StatValue, ToParFigure } from "@/brand";
 import { cn } from "@/brand/cn";
-import { toParDisplay, toParTextClass } from "@/brand/theme";
+import { toParTextClass } from "@/brand/theme";
 import { formatOneDecimal, goalTargetLabel, type ScoreMix } from "@/domain";
 import { hasScoreMix, type BestRound, type ChangeVerdict, type GoalProgress } from "../model";
 import { MoveDelta } from "./MoveDelta";
@@ -24,13 +24,13 @@ interface ScoringAverageCardProps {
 export function ScoringAverageCard({ average, change, verdict, line, compact = false }: ScoringAverageCardProps) {
   return (
     <Card data-slot="scoring-average-card" size={compact ? "default" : "lg"} className={compact ? CARD.phone : CARD.wide}>
-      <div className={cn("text-muted-foreground", compact ? "text-body-sm" : "text-body")}>
+      <StatLabel tone="quiet" className={compact ? "text-body-sm" : undefined}>
         {compact ? "Scoring avg" : "Scoring average"}
-      </div>
-      <div className={cn("flex items-baseline", compact ? "gap-1.5" : "gap-2")}>
-        <span className={compact ? "text-figure-sm" : "text-figure"}>{formatOneDecimal(average)}</span>
+      </StatLabel>
+      <StatValue size={compact ? "card-sm" : "card"} className={compact ? "gap-1.5" : "gap-2"}>
+        {formatOneDecimal(average)}
         <MoveDelta change={change} verdict={verdict} className={cn("font-semibold", compact ? "text-body-sm" : "text-body")} />
-      </div>
+      </StatValue>
       {!compact && <Sparkline size="card" series={[{ values: line, tone: "primary" }]} />}
     </Card>
   );
@@ -40,18 +40,14 @@ export function ScoringAverageCard({ average, change, verdict, line, compact = f
 export function BestRoundCard({ best, compact = false }: { best: BestRound | null; compact?: boolean }) {
   const body = (
     <>
-      <div className={cn("text-muted-foreground", compact ? "truncate text-body-sm" : "text-body")}>
+      <StatLabel tone="quiet" className={compact ? "truncate text-body-sm" : undefined}>
         {compact ? bestLabel(best) : "Best round"}
-      </div>
-      <div className={cn("flex items-baseline", compact ? "gap-1.5" : "gap-2")}>
-        <span className={cn(compact ? "text-figure-sm" : "text-figure", best ? toParTextClass(best.toPar) : "text-foreground")}>
-          {best?.score ?? "—"}
-        </span>
-        {best && !compact && (
-          <span className={cn("text-body font-semibold", toParTextClass(best.toPar))}>{toParDisplay(best.toPar, "")}</span>
-        )}
+      </StatLabel>
+      <StatValue size={compact ? "card-sm" : "card"} className={compact ? "gap-1.5" : "gap-2"}>
+        <span className={best ? toParTextClass(best.toPar) : undefined}>{best?.score ?? "—"}</span>
+        {best && !compact && <ToParFigure toPar={best.toPar} className="text-body font-semibold" />}
         {best?.roundId && compact && <ArrowRight aria-hidden className="size-3.5 text-primary" />}
-      </div>
+      </StatValue>
       {best && !compact && (
         <div className="flex items-center gap-1 text-body font-semibold text-primary">
           {bestWhere(best)}
@@ -87,9 +83,11 @@ export function ScoreMixCard({ mix, compact = false, className }: ScoreMixCardPr
       size={compact ? "default" : "lg"}
       className={cn(compact ? "gap-2.5 px-4" : "gap-3 px-5", className)}
     >
-      <div className={cn("text-muted-foreground", compact ? "text-body-sm" : "text-body")}>Score mix · last 5</div>
+      <StatLabel tone="quiet" className={compact ? "text-body-sm" : undefined}>
+        Score mix · last 5
+      </StatLabel>
       {!hasScoreMix(mix) ? (
-        <div className={compact ? "text-figure-sm" : "text-figure"}>—</div>
+        <StatValue size={compact ? "card-sm" : "card"}>—</StatValue>
       ) : compact ? (
         <ScoreMixBar mix={mix} />
       ) : (

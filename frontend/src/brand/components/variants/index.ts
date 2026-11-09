@@ -6,4 +6,4 @@ export { pageTitleVariants } from "./pageTitleVariants";
 export { teeSwatchVariants } from "./teeSwatchVariants";
 export { toggleVariants } from "./toggleVariants";
 export { meterTrackVariants, meterIndicatorVariants } from "./meterVariants";
-export { statDeltaVariants, statVariants, statValueVariants } from "./statVariants";
+export { statDeltaVariants, statLabelVariants, statVariants, statValueVariants } from "./statVariants";

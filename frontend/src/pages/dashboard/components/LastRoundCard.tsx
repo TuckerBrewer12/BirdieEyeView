@@ -3,13 +3,11 @@ import { ArrowRight } from "lucide-react";
 import { Card, HoleScoreBars, RunningToParLine, ToParPill } from "@/brand";
 import { cn } from "@/brand/cn";
 import { scoreCountTextClass, toParDisplay } from "@/brand/theme";
-import { courseLabel, playedScoreKinds, type RoundSummary, type RunningToPar } from "@/domain";
+import { courseLabel, playedScoreKinds, type RoundSummary } from "@/domain";
 import { countNoun, lastRoundLabel, ninesAndTee } from "../present";
 
 interface LastRoundCardProps {
   round: RoundSummary;
-  /** Its running score to par, hole by hole. */
-  flow: RunningToPar[];
   /** The phone's card: the score beside the course, the round as one strip, a shorter line. */
   compact?: boolean;
   className?: string;
@@ -19,7 +17,7 @@ interface LastRoundCardProps {
  * The dashboard's lead: the newest round, its score, its holes at a glance, how it went hole by
  * hole and what it was made of. Opens the round.
  */
-export function LastRoundCard({ round, flow, compact = false, className }: LastRoundCardProps) {
+export function LastRoundCard({ round, compact = false, className }: LastRoundCardProps) {
   const toPar = toParDisplay(round.toPar);
   const score = round.score ?? "—";
   const pill = <ToParPill toPar={round.toPar} size={compact ? "md" : "lg"} />;
@@ -45,7 +43,7 @@ export function LastRoundCard({ round, flow, compact = false, className }: LastR
             </div>
           </div>
           <HoleScoreBars holes={round.holes} variant="strip" size="md" />
-          <RunningToParLine flow={flow} compact />
+          <RunningToParLine holes={round.holes} compact />
           <ScoreCounts round={round} action="View" className="gap-3.5" />
         </>
       ) : (
@@ -68,7 +66,7 @@ export function LastRoundCard({ round, flow, compact = false, className }: LastR
           </div>
           <div className="flex flex-col justify-center gap-2">
             <div className="text-body text-muted-foreground">How it went</div>
-            <RunningToParLine flow={flow} />
+            <RunningToParLine holes={round.holes} />
           </div>
         </>
       )}

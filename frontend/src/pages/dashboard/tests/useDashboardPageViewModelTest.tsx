@@ -35,12 +35,11 @@ function renderVm(seed: ConstructorParameters<typeof FakeDashboardRepository>[0]
 }
 
 describe("useDashboardPageViewModel", () => {
-  it("leads with the newest round and its running score", async () => {
+  it("leads with the newest round, its holes carrying where it stood after each", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.lastRound?.id).toBe(populatedRounds[0].id);
-    expect(result.current.lastRoundFlow).toHaveLength(18);
-    expect(result.current.lastRoundFlow[17]).toEqual({ hole: 18, toPar: 6 });
+    expect(result.current.lastRound?.holes[17]?.runningToPar).toBe(result.current.lastRound?.toPar);
     expect(result.current.user?.name).toBe("Test Golfer");
   });
 
@@ -110,13 +109,11 @@ describe("useDashboardPageViewModel", () => {
         best_round: null,
         best_round_id: null,
         recent_rounds: [],
-        last_round_flow: [],
         handicap_change: { ...populatedDashboard.handicap_change, this_month: null, this_month_verdict: null },
       },
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.lastRound).toBeNull();
-    expect(result.current.lastRoundFlow).toEqual([]);
     expect(result.current.recentRounds).toEqual([]);
     expect(result.current.best).toBeNull();
     expect(result.current.handicap).toEqual({ index: null, change: null, verdict: null });
