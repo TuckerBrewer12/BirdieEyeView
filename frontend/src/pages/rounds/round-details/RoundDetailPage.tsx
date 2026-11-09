@@ -7,14 +7,18 @@ import {
   AlertDescription,
   Button,
   Card,
+  CardAction,
   CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   CourseLinkSearch,
   Input,
   LoadingState,
   RoundFlowChart,
+  RoundFlowFigures,
   RoundScorecard,
   RoundShareCard,
-  SectionLabel,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
@@ -175,15 +179,19 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         />
       </div>
 
-      {viewModel.showMomentum && (
-        <div className="mt-6">
-          <SectionLabel>Momentum</SectionLabel>
-          <Card>
-            <CardContent>
-              <RoundFlowChart round={played} />
-            </CardContent>
-          </Card>
-        </div>
+      {viewModel.showFlow && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="font-semibold">Round flow</CardTitle>
+            <CardDescription className="text-body-sm">Running score to par, hole by hole</CardDescription>
+            <CardAction>
+              <RoundFlowFigures round={played} />
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <RoundFlowChart round={played} />
+          </CardContent>
+        </Card>
       )}
 
       <RoundComparisonSection userId={userId} roundId={played.id} />

@@ -23,7 +23,8 @@ export interface RoundDetailUiState {
   actionError: string | null;
   showLinkCourse: boolean;
   showLinkButton: boolean;
-  showMomentum: boolean;
+  /** The round flow chart: three or more holes with the server's running to par. An unsaved score edit has none. */
+  showFlow: boolean;
 }
 
 export interface RoundDetailPageViewModel extends RoundDetailUiState {
@@ -91,7 +92,8 @@ export function useRoundDetailPageViewModel(
       editor.error ?? (deleteError ? messageFrom(deleteError, "Could not delete this round.") : null),
     showLinkCourse,
     showLinkButton: !!round && !editor.editing && !round.linkedCourse && !showLinkCourse,
-    showMomentum: (played?.holes.filter((hole) => hole.kind != null).length ?? 0) >= 3,
+    // The round's flow is the server's, so an edit that changes a hole's score hides it until the save.
+    showFlow: (played?.holes.filter((hole) => hole.runningToPar != null).length ?? 0) >= 3,
     enterEditMode,
     requestDelete: () => setConfirmDelete(true),
     confirmDeleteRound,
