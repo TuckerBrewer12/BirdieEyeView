@@ -1,9 +1,9 @@
 import {
-  BarChart2,
+  ChartNoAxesColumn,
   FlaskConical,
+  House,
   Inbox,
-  LayoutDashboard,
-  ListOrdered,
+  List,
   MapPin,
   ScanLine,
   Settings,
@@ -13,10 +13,10 @@ import {
 import { BottomNav } from "@/brand/components/BottomNav";
 
 const tabs = [
-  { href: "/", label: "Home", icon: LayoutDashboard },
+  { href: "/", label: "Home", icon: House },
+  { href: "/rounds", label: "Rounds", icon: List },
   { href: "/scan", label: "Scan", icon: ScanLine },
-  { href: "/rounds", label: "Rounds", icon: ListOrdered },
-  { href: "/analytics", label: "Analytics", icon: BarChart2 },
+  { href: "/analytics", label: "Analytics", icon: ChartNoAxesColumn },
 ];
 
 const more = [
@@ -40,10 +40,10 @@ export default function BottomNavPreview() {
   return (
     <>
       <div className="flex h-preview flex-col justify-end">
-        <BottomNav tabs={at(tabs, "/")} moreItems={more} onSignOut={() => {}} />
+        <BottomNav tabs={at(tabs, "/rounds")} featuredHref="/scan" moreItems={more} onSignOut={() => {}} />
       </div>
       {/* On a page behind More, the More tab is the lit one. */}
-      <BottomNav tabs={tabs} moreItems={at(more, "/courses")} onSignOut={() => {}} />
+      <BottomNav tabs={tabs} featuredHref="/scan" moreItems={at(more, "/courses")} onSignOut={() => {}} />
     </>
   );
 }
