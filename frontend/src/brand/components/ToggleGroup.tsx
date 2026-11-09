@@ -1,77 +1,72 @@
 import * as React from "react";
 import { Toggle as TogglePrimitive } from "@base-ui/react/toggle";
 import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group";
-import { type VariantProps } from "class-variance-authority";
 import { cn } from "@/brand/cn";
 import { toggleVariants } from "./variants";
 
-const ToggleGroupContext = React.createContext<
-  VariantProps<typeof toggleVariants> & {
-    spacing?: number;
-    orientation?: "horizontal" | "vertical";
-  }
->({
+type SegmentedSize = "default" | "sm";
+
+const ToggleGroupContext = React.createContext<{ size: SegmentedSize; fill: boolean }>({
   size: "default",
-  variant: "default",
-  spacing: 2,
-  orientation: "horizontal",
+  fill: false,
 });
 
+type ToggleGroupProps = ToggleGroupPrimitive.Props & {
+  /** `default` is 32 on the page; `sm` is the compact 28 for a card header. */
+  size?: SegmentedSize;
+  /** Stretch to the row, the options sharing its width equally (a phone). */
+  fill?: boolean;
+  /**
+   * @deprecated Ignored: every group is segmented. Only the page-section tabs
+   * still pass `variant` and `spacing`, until they move to `TabBar`.
+   */
+  variant?: "default" | "outline";
+  /** @deprecated Ignored, as `variant`. */
+  spacing?: number;
+};
+
+/**
+ * A segmented control: two to four short options on a recessed track, one raised.
+ * It switches a view in place; more options, or long labels, belong in a menu.
+ */
 function ToggleGroup({
   className,
+  size = "default",
+  fill = false,
   variant,
-  size,
-  spacing = 2,
-  orientation = "horizontal",
+  spacing,
   children,
   ...props
-}: ToggleGroupPrimitive.Props &
-  VariantProps<typeof toggleVariants> & {
-    spacing?: number;
-  }) {
+}: ToggleGroupProps) {
+  void variant;
+  void spacing;
   return (
     <ToggleGroupPrimitive
       data-slot="toggle-group"
-      data-variant={variant}
       data-size={size}
-      data-spacing={spacing}
-      data-orientation={orientation}
-      style={{ "--gap": spacing } as React.CSSProperties}
-      orientation={orientation}
       className={cn(
-        "group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] rounded-lg data-[size=sm]:rounded-md data-vertical:flex-col data-vertical:items-stretch",
+        "flex items-center gap-0.5 bg-muted",
+        size === "sm" ? "rounded-lg p-0.5" : "rounded-card p-chip",
+        fill ? "w-full" : "w-fit",
         className,
       )}
       {...props}
     >
-      <ToggleGroupContext.Provider value={{ variant, size, spacing, orientation }}>
-        {children}
-      </ToggleGroupContext.Provider>
+      <ToggleGroupContext.Provider value={{ size, fill }}>{children}</ToggleGroupContext.Provider>
     </ToggleGroupPrimitive>
   );
 }
 
-function ToggleGroupItem({
-  className,
-  children,
-  variant = "default",
-  size = "default",
-  ...props
-}: TogglePrimitive.Props & VariantProps<typeof toggleVariants>) {
-  const context = React.useContext(ToggleGroupContext);
+function ToggleGroupItem({ className, children, ...props }: TogglePrimitive.Props) {
+  const { size, fill } = React.useContext(ToggleGroupContext);
 
   return (
     <TogglePrimitive
       data-slot="toggle-group-item"
-      data-variant={context.variant || variant}
-      data-size={context.size || size}
-      data-spacing={context.spacing}
+      data-size={size}
       className={cn(
-        "shrink-0 group-data-[spacing=0]/toggle-group:rounded-none group-data-[spacing=0]/toggle-group:px-2 focus:z-10 focus-visible:z-10 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-end]:pr-1.5 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-start]:pl-1.5 group-data-horizontal/toggle-group:data-[spacing=0]:first:rounded-l-lg group-data-vertical/toggle-group:data-[spacing=0]:first:rounded-t-lg group-data-horizontal/toggle-group:data-[spacing=0]:last:rounded-r-lg group-data-vertical/toggle-group:data-[spacing=0]:last:rounded-b-lg group-data-horizontal/toggle-group:data-[spacing=0]:data-[variant=outline]:border-l-0 group-data-vertical/toggle-group:data-[spacing=0]:data-[variant=outline]:border-t-0 group-data-horizontal/toggle-group:data-[spacing=0]:data-[variant=outline]:first:border-l group-data-vertical/toggle-group:data-[spacing=0]:data-[variant=outline]:first:border-t",
-        toggleVariants({
-          variant: context.variant || variant,
-          size: context.size || size,
-        }),
+        toggleVariants({ variant: "segmented", size }),
+        fill ? "min-w-0 flex-1 basis-0" : "shrink-0",
         className,
       )}
       {...props}
