@@ -85,6 +85,13 @@ export function formatWeekdayDay(input: DayInput, { year = true }: { year?: bool
   return parts.join(" · ");
 }
 
+/** "Sun, Jun 15": a day this year, with its weekday. */
+export function formatWeekdayShort(input: DayInput): string | null {
+  const day = toDay(input);
+  if (!day) return null;
+  return `${day.toLocaleDateString("en-US", { weekday: "short" })}, ${day.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+}
+
 export interface DayParts {
   /** "JUN" */
   month: string;

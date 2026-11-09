@@ -40,24 +40,34 @@ export class DashboardRobot {
     await this.page.goto("/");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await this.seesGreeting();
-    await expect(this.page.getByText("Blue Rock").locator("visible=true").first()).toBeVisible();
+    await expect(this.page.locator("[data-slot=last-round-card]").locator("visible=true")).toBeVisible();
     return this;
   }
 
+  /** "Good evening, Test" on a wide screen; the name under the greeting on a phone. */
   async seesGreeting(): Promise<this> {
-    await expect(
-      this.page.getByText(/^(Hi Test|Hello, Test)$/).locator("visible=true"),
-    ).toBeVisible();
+    await expect(this.page.getByRole("heading", { name: /Test$/ }).locator("visible=true")).toBeVisible();
+    await expect(this.page.getByText(/^Good evening/).locator("visible=true").first()).toBeVisible();
     return this;
   }
 
   async seesScoringAverage(label: string): Promise<this> {
-    await expect(this.page.getByText(label, { exact: true }).locator("visible=true").first()).toBeVisible();
+    await expect(
+      this.page.locator("[data-slot=scoring-average-card]").locator("visible=true").locator("[data-slot=stat-value]"),
+    ).toContainText(label);
+    return this;
+  }
+
+  async seesLastRound(course: string, score: string): Promise<this> {
+    const card = this.page.locator("[data-slot=last-round-card]").locator("visible=true");
+    await expect(card).toContainText(course);
+    await expect(card).toContainText(score);
+    await expect(card.getByRole("img", { name: /^Running score to par/ })).toBeVisible();
     return this;
   }
 
   async openHandicapSheet(): Promise<this> {
-    await this.page.getByRole("button", { name: /Handicap/ }).click();
+    await this.page.getByRole("button", { name: /^Handicap/ }).locator("visible=true").click();
     return this;
   }
 
@@ -67,37 +77,53 @@ export class DashboardRobot {
   }
 
   async seesHandicapSheet(): Promise<this> {
-    await expect(this.page.getByRole("heading", { name: "Handicap Index" })).toBeVisible();
-    await expect(this.page.getByText("WHS Formula")).toBeVisible();
+    await expect(this.page.getByRole("heading", { name: "Handicap index" })).toBeVisible();
+    await expect(this.page.getByText("Rounds so far")).toBeVisible();
     await expect(this.page.locator("[data-slot=sheet-overlay]")).toBeVisible();
     return this;
   }
 
   async doesNotSeeHandicapSheet(): Promise<this> {
-    await expect(this.page.getByRole("heading", { name: "Handicap Index" })).toHaveCount(0);
+    await expect(this.page.getByRole("heading", { name: "Handicap index" })).toHaveCount(0);
     return this;
   }
 
-  async tapMilestone(title: string): Promise<this> {
+  async openLastRound(): Promise<this> {
+    await this.page.locator("[data-slot=last-round-card]").locator("visible=true").click();
+    return this;
+  }
+
+  async openBestRound(): Promise<this> {
+    await this.page.locator("[data-slot=best-round-card]").locator("visible=true").click();
+    return this;
+  }
+
+  async openRecentRound(course: string): Promise<this> {
     await this.page
-      .locator("[data-slot=milestone-feed]")
-      .getByRole("button", { name: title })
+      .locator("[data-slot=recent-rounds]")
+      .locator("visible=true")
+      .locator("[data-slot=round-preview]")
+      .filter({ hasText: course })
+      .first()
       .click();
     return this;
   }
 
-  /** A played day on the desktop activity calendar, as "2026-06-15". */
-  async tapActivityDay(day: string): Promise<this> {
-    await this.page.getByRole("button", { name: `Open round on ${day}` }).locator("visible=true").click();
+  async seeAllRounds(): Promise<this> {
+    await this.page.getByRole("link", { name: "See all" }).locator("visible=true").click();
+    return this;
+  }
+
+  async isAtRounds(): Promise<this> {
+    await expect(this.page).toHaveURL(/\/rounds$/);
     return this;
   }
 
   async isAtRound(id: string): Promise<this> {
-    await expect(this.page).toHaveURL(new RegExp(`/rounds/${id}`));
+    await expect(this.page).toHaveURL(new RegExp(`/rounds/${id}$`));
     return this;
   }
 
-  /** The phone's goal card; the desktop grid has its own copy. */
   async tapGoal(): Promise<this> {
     await this.page.locator("[data-slot=goal-card]").locator("visible=true").tap();
     return this;
@@ -105,36 +131,6 @@ export class DashboardRobot {
 
   async isAtLab(): Promise<this> {
     await expect(this.page).toHaveURL(/\/the-lab$/);
-    return this;
-  }
-
-  /** The phone's trend card; the desktop grid has its own copy of the chart. */
-  private trendCard() {
-    return this.page.locator("[data-slot=card]").filter({ hasText: "Score History" }).locator("visible=true");
-  }
-
-  async showTrend(label: "Score" | "HCP"): Promise<this> {
-    await this.trendCard().getByRole("button", { name: label }).tap();
-    return this;
-  }
-
-  async seesTrendShowing(label: "Score" | "HCP"): Promise<this> {
-    await expect(this.trendCard().getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true");
-    return this;
-  }
-
-  /** Taps the chart part-way across: 0 is the first round, 1 the last. */
-  async tapTrendAt(fraction: number): Promise<this> {
-    const chart = this.trendCard().locator("[data-slot=score-handicap-trend] svg");
-    await chart.scrollIntoViewIfNeeded();
-    const box = await chart.boundingBox();
-    if (!box) throw new Error("Trend chart is not on screen");
-    await this.page.touchscreen.tap(box.x + box.width * fraction, box.y + box.height / 2);
-    return this;
-  }
-
-  async seesTrendTooltip(text: string | RegExp): Promise<this> {
-    await expect(this.page.locator("[data-slot=score-handicap-trend]").locator("visible=true").getByText(text)).toBeVisible();
     return this;
   }
 

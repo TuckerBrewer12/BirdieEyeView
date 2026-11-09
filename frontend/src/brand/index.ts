@@ -86,6 +86,7 @@ export {
 export type { StatDirection, StatTone } from "./components/Stat";
 export { TeeSwatch } from "./components/TeeSwatch";
 export { ToParFigure } from "./components/ToParFigure";
+export { ToParPill } from "./components/ToParPill";
 export { Reveal } from "./components/Reveal";
 export { ScanProgress } from "./components/ScanProgress";
 export { ScorecardLayoutPicker } from "./components/ScorecardLayoutPicker";
@@ -134,10 +135,11 @@ export {
 } from "./components/DropdownMenu";
 
 // Charts
-export { ActivityCalendar } from "./charts/ActivityCalendar";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
 export { ScoreMixBar } from "./charts/ScoreMixBar";
+export { ScoreMixDonut } from "./charts/ScoreMixDonut";
+export { RunningToParLine } from "./charts/RunningToParLine";
 export { Sparkline } from "./charts/Sparkline";
 export type { SparklineSeries, SparklineTone } from "./charts/Sparkline";
 export { HoleMetricBars } from "./charts/HoleMetricBars";
@@ -148,10 +150,13 @@ export type { RadarAxis } from "./charts/RadarChart";
 export { ScoreGoalChart } from "./charts/ScoreGoalChart";
 export { RoundFlowChart, RoundFlowFigures } from "./charts/RoundFlowChart";
 export { ScoreTrendChart } from "./charts/ScoreTrendChart";
-export { SVGScoreHandicapTrend, ScoreHandicapLegend } from "./charts/SVGScoreHandicapTrend";
+export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
 export { ScoreTargetChart } from "./charts/ScoreTargetChart";
 export type { ScoreTargetShot } from "./charts/ScoreTargetChart";
 export { ToParBars } from "./charts/ToParBars";
 export type { ToParBar } from "./charts/ToParBars";
 export { TrendAreaChart } from "./charts/TrendAreaChart";
 export type { TrendAreaPoint, TrendAreaSeries, TrendAreaTone } from "./charts/TrendAreaChart";
+
+export { useFromBreakpoint } from "./useFromBreakpoint";
+export { ProgressRing } from "./components/ProgressRing";

@@ -3,7 +3,7 @@ import { type VariantProps } from "class-variance-authority";
 import { cn } from "@/brand/cn";
 import { Sparkline, type SparklineTone } from "@/brand/charts/Sparkline";
 import { Card, CardContent } from "./Card";
-import { statDeltaVariants, statValueVariants, statVariants } from "./variants";
+import { statDeltaVariants, statLabelVariants, statValueVariants, statVariants } from "./variants";
 
 /**
  * A figure and what it measures: the scoring average, a handicap, a rate.
@@ -22,14 +22,12 @@ function Stat({
   );
 }
 
-function StatLabel({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="stat-label"
-      className={cn("text-body font-medium text-foreground-secondary", className)}
-      {...props}
-    />
-  );
+function StatLabel({
+  className,
+  tone = "default",
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof statLabelVariants>) {
+  return <div data-slot="stat-label" className={cn(statLabelVariants({ tone, className }))} {...props} />;
 }
 
 function StatValue({
@@ -136,7 +134,7 @@ function StatCard({
         <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
           <StatValue size="lg">{value}</StatValue>
           {trend && (
-            <Sparkline compact className="mb-1 w-24 shrink-0" series={[{ values: trend, tone: TREND_TONE[tone] }]} />
+            <Sparkline size="compact" className="mb-1 w-24 shrink-0" series={[{ values: trend, tone: TREND_TONE[tone] }]} />
           )}
         </div>
         {(direction != null || note != null) && (

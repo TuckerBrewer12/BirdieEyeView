@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { Link2 } from "lucide-react";
+import { ArrowRight, Link2 } from "lucide-react";
 import { useShareRound } from "@/platform/useShareRound";
 import { roundShareMessage } from "@/domain/share";
 import {
@@ -131,7 +131,8 @@ export function RoundDetailPage({ userId }: { userId: string }) {
               className="mt-1.5 h-auto p-0"
               onClick={editor.keepPlayedName}
             >
-              Keep "{editor.playedNameToKeep}" without linking →
+              Keep "{editor.playedNameToKeep}" without linking
+              <ArrowRight aria-hidden />
             </Button>
           )}
           <div className="mt-3 flex items-center gap-2">

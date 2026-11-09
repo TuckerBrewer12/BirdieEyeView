@@ -11,11 +11,13 @@ import type {
 import { BACK_HOLES, FRONT_HOLES, getHole, getTee } from "./course";
 import { SCORE_KINDS, scoreKind, strokesToPar, type ScoreKind } from "./score";
 
-/** One hole as a round list marks it: what was taken and how it scored. */
+/** One hole as a round list marks it: what was taken, how it scored, and where the round stood after it. */
 export interface HoleSummary {
   hole: number;
   strokes: number | null;
   kind: ScoreKind | null;
+  /** The round's to par after this hole, as the server ran it. Null for a hole it can't read. */
+  runningToPar: number | null;
 }
 
 /** One hole as played. Par, handicap, yardage, to-par and kind come from the server. */
@@ -35,6 +37,13 @@ export interface HoleScore extends HoleSummary {
   threePutt: boolean;
   /** The round's to par after this hole, as the server ran it. Null for a hole it can't read. */
   runningToPar: number | null;
+}
+
+/** The four holes in a row that lost the most to par, when they lost two or more. */
+export interface WorstStretch {
+  firstHole: number;
+  lastHole: number;
+  toPar: number;
 }
 
 /** The four holes in a row that lost the most to par, when they lost two or more. */
@@ -175,7 +184,7 @@ function nines(
 }
 
 function holeSummary(dto: HoleSummaryDto): HoleSummary {
-  return { hole: dto.hole_number, strokes: dto.strokes, kind: dto.kind };
+  return { hole: dto.hole_number, strokes: dto.strokes, kind: dto.kind, runningToPar: dto.running_to_par };
 }
 
 function fromSummary(dto: RoundSummaryDto): RoundSummary {

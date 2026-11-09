@@ -65,6 +65,7 @@ def _figures(round_: Round) -> dict:
 
 def round_summary(round_: Round, best_rank: Optional[int] = None) -> RoundSummaryResponse:
     """A round for list views: only what a list draws, so a long list stays small."""
+    running = round_.running_to_par()
     return RoundSummaryResponse(
         id=str(round_.id),
         course_id=str(round_.course.id) if round_.course and round_.course.id else None,
@@ -82,6 +83,7 @@ def round_summary(round_: Round, best_rank: Optional[int] = None) -> RoundSummar
                 hole_number=hs.hole_number,
                 strokes=hs.strokes,
                 kind=round_.get_score_kind(hs.hole_number),
+                running_to_par=running.get(hs.hole_number),
             )
             for hs in round_.hole_scores
             if hs.hole_number is not None

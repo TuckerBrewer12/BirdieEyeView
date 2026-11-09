@@ -106,3 +106,11 @@ tester.run("golf/no-shadowed-golf-type", golf.rules["no-shadowed-golf-type"], {
   ],
 });
 
+
+tester.run("golf/no-course-fallback", golf.rules["no-course-fallback"], {
+  valid: ['const name = courseLabel(round.course?.name);', 'const hint = "Unknown courses can be linked later";'],
+  invalid: [
+    { code: 'const name = course ? formatCourseName(course) : "Unknown course";', errors: [{ messageId: "fallback" }] },
+    { code: "const el = <span>{name ?? \"Unknown Course\"}</span>;", errors: [{ messageId: "fallback" }] },
+  ],
+});

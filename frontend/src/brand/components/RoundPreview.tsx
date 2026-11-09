@@ -1,14 +1,13 @@
-import { ChevronRight, Trophy } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { Button, RowButton } from "@/brand/components/Button";
-import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
-import { ToParFigure } from "@/brand/components/ToParFigure";
+import { ToParPill } from "@/brand/components/ToParPill";
 import { toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
-import { playedScoreKinds, scoreKindCountLabel, type RoundSummary } from "@/domain";
-import { formatCourseName } from "@/domain/course";
+import type { RoundSummary } from "@/domain";
+import { courseLabel, formatCourseName } from "@/domain/course";
 import { formatDay, formatDayShort, dayParts } from "@/domain/date";
 
 interface RoundListProps {
@@ -26,24 +25,23 @@ interface RoundHighlightProps {
   onClick?: () => void;
 }
 
-interface RoundTicketProps {
+interface RoundCompactProps {
   round: RoundSummary;
-  variant: "ticket";
-  /** The eyebrow over the course name, worded by the screen: "Last Round". */
-  label: string;
-  /** Shown with a chevron when the ticket opens the round, like "Open card". */
-  actionLabel?: string;
+  /** A row in a card's list of rounds: the date, the course, a strip of the holes, the score. */
+  variant: "compact";
+  /** `stacked` is the phone's: the date under the course, and no strip. */
+  layout?: "inline" | "stacked";
   onClick?: () => void;
 }
 
-type RoundPreviewProps = RoundListProps | RoundHighlightProps | RoundTicketProps;
+type RoundPreviewProps = RoundListProps | RoundHighlightProps | RoundCompactProps;
 
 export function RoundPreview(props: RoundPreviewProps) {
   if (props.variant === "highlight") {
     return <RoundHighlight round={props.round} onClick={props.onClick} />;
   }
-  if (props.variant === "ticket") {
-    return <RoundTicket {...props} />;
+  if (props.variant === "compact") {
+    return <RoundCompact {...props} />;
   }
 
   const { round, variant, onClick, onLinkClick } = props;
@@ -120,7 +118,7 @@ export function RoundPreview(props: RoundPreviewProps) {
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <span className="truncate text-base font-semibold text-foreground">
-            {courseName ?? "Unknown course"}
+            {courseLabel(round.course?.name)}
           </span>
           {unlinked && onLinkClick && (
             <Button
@@ -151,14 +149,7 @@ export function RoundPreview(props: RoundPreviewProps) {
       <div className="flex w-16 shrink-0 flex-col items-end justify-center gap-1 whitespace-nowrap text-right">
         <span className="text-title text-foreground">{round.score ?? "—"}</span>
         {round.toPar != null && (
-          <span
-            className={cn(
-              "rounded-full bg-muted px-2 py-0.5 text-body-sm font-semibold",
-              toParTextClass(round.toPar),
-            )}
-          >
-            {toParLabel(round.toPar)}
-          </span>
+          <ToParPill toPar={round.toPar} ground="muted" />
         )}
       </div>
     </motion.div>
@@ -201,7 +192,7 @@ function RoundHighlight({
             Best Recent Round
           </div>
           <div className="font-bold leading-tight text-card-foreground transition-colors group-hover:text-primary">
-            {round.course?.name ? formatCourseName(round.course.name) : "Unknown course"}
+            {courseLabel(round.course?.name)}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
             {formatDayShort(round.date) ?? "—"}
@@ -220,7 +211,7 @@ function RoundHighlight({
       </div>
 
       <div className="shrink-0 text-right">
-        <div className="text-4xl font-black tracking-tighter text-card-foreground transition-colors group-hover:text-primary">
+        <div className="text-figure-lg font-black tracking-tighter text-card-foreground transition-colors group-hover:text-primary">
           {round.score ?? "—"}
         </div>
       </div>
@@ -229,76 +220,42 @@ function RoundHighlight({
 }
 
 /**
- * A round as a ticket: where and when, the number, a bar per hole and what it held.
- * The screen words the eyebrow and the action, so the kit holds only the layout.
+ * A round as one row of a card's list of rounds: when, where, a cell per hole coloured by how it
+ * went, and the score with its to-par. On a phone the date goes under the course and the cells go.
  */
-function RoundTicket({ round, label, actionLabel, onClick }: Omit<RoundTicketProps, "variant">) {
-  const courseName = round.course?.name ? formatCourseName(round.course.name) : "Unknown course";
-  const kinds = playedScoreKinds(round.scoreCounts);
+function RoundCompact({ round, layout = "inline", onClick }: Omit<RoundCompactProps, "variant">) {
+  const stacked = layout === "stacked";
+  const courseName = courseLabel(round.course?.name);
+  const date = formatDayShort(round.date) ?? "—";
 
   return (
-    <button
-      type="button"
+    <RowButton
       data-slot="round-preview"
+      data-variant="compact"
       onClick={onClick}
       disabled={!onClick}
       className={cn(
-        "group flex w-full flex-col gap-3.5 rounded-card border border-border bg-card p-4 text-left",
-        onClick ? "cursor-pointer" : "cursor-default",
+        "w-full items-center rounded-2xl",
+        stacked ? "flex gap-3 px-3 py-3" : "grid grid-cols-round-row gap-4 px-3.5 py-3",
+        onClick ? "cursor-pointer hover:bg-muted/half" : "cursor-default",
       )}
     >
-      <div className="flex w-full items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="mb-1 text-eyebrow uppercase text-muted-foreground">
-            {label}
-          </div>
-          <div className="truncate text-lg font-bold leading-tight tracking-name text-card-foreground">
-            {courseName}
-          </div>
-          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>{formatDayShort(round.date) ?? "—"}</span>
-            {round.teeBox && (
-              <>
-                <span aria-hidden className="size-1 rounded-full bg-current opacity-50" />
-                <span>{round.teeBox}</span>
-              </>
-            )}
-          </div>
-        </div>
-        <div className="flex shrink-0 flex-col items-end">
-          <span className="text-4xl font-semibold leading-none tracking-stat text-card-foreground">
-            {round.score ?? "—"}
-          </span>
-          <ToParFigure toPar={round.toPar} />
-        </div>
-      </div>
-
-      {round.holes.length > 0 && (
-        <div className="w-full">
-          <HoleScoreBars holes={round.holes} variant="profile" />
-          <div className="mt-1 flex justify-between text-caption text-muted-foreground">
-            <span>1</span>
-            <span>{Math.ceil(round.holes.length / 2)}</span>
-            <span>{round.holes.length}</span>
-          </div>
-        </div>
+      {stacked ? (
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-body-lg font-semibold text-foreground">{courseName}</span>
+          <span className="text-body-sm text-muted-foreground">{date}</span>
+        </span>
+      ) : (
+        <>
+          <span className="text-body text-muted-foreground">{date}</span>
+          <span className="min-w-0 truncate text-body-lg font-semibold text-foreground">{courseName}</span>
+          <span>{round.holes.length > 0 && <HoleScoreBars holes={round.holes} variant="strip" />}</span>
+        </>
       )}
-
-      <div className="flex w-full items-center justify-between gap-3 border-t border-dashed border-border pt-3">
-        <div className="flex flex-wrap gap-1.5">
-          {kinds.map(({ kind, count }) => (
-            <ScoreCountChip key={kind} kind={kind} count={count}>
-              {scoreKindCountLabel(kind, count)}
-            </ScoreCountChip>
-          ))}
-        </div>
-        {onClick && actionLabel && (
-          <span className="flex shrink-0 items-center gap-0.5 text-xs font-semibold text-primary group-hover:underline">
-            {actionLabel}
-            <ChevronRight aria-hidden className="size-icon-xs" />
-          </span>
-        )}
-      </div>
-    </button>
+      <span className={cn("shrink-0 text-xl font-semibold text-foreground", !stacked && "text-right")}>
+        {round.score ?? "—"}
+      </span>
+      <ToParPill toPar={round.toPar} size="row" />
+    </RowButton>
   );
 }

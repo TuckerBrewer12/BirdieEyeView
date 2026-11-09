@@ -339,6 +339,8 @@ export const font = {
 /** Line heights, unitless. */
 export const leading = {
   display: 1.1,
+  /** The last round's score sits tight on the line under it. */
+  scoreboard: 0.9,
 };
 
 /**
@@ -351,6 +353,8 @@ export const tracking = {
   display: -0.6,
   stat: -0.8,
   hero: -1.8,
+  /** The last round's score: tight enough that two digits read as one mark. */
+  scoreboard: -2.5,
   chip: 0.5,
   kicker: 1,
   eyebrow: 1.4,
@@ -384,8 +388,27 @@ export const type = {
   body: { size: 13 },
   /** Large body copy: a list row's name, a large button's label, a field's value. */
   "body-lg": { size: 15 },
+  /** A card's heading on the soft surface: "Recent rounds", the goal on a phone. */
+  subhead: { size: 17, weight: 600 },
   /** A page's title. */
   title: { size: 26, weight: 700, tracking: tracking.title },
+  /** The dashboard's greeting: "Good evening, Tucker". */
+  greeting: { size: 30, weight: 600, tracking: tracking.title },
+  /** A card's lead figure on the soft surface: the scoring average, the best round. */
+  figure: { size: 34, weight: 600, tracking: tracking.display },
+  /** The same on a phone, and a phone's greeting. */
+  "figure-sm": { size: 28, weight: 600, tracking: tracking.display },
+  /** A round's score set large in a list row or ticket. */
+  "figure-lg": { size: 36, weight: 600, tracking: tracking.display },
+  /** The landing page's headline, stepping up with the screen. */
+  "display-sm": { size: 36, weight: 800, tracking: tracking.hero, leading: leading.display },
+  display: { size: 48, weight: 800, tracking: tracking.hero, leading: leading.display },
+  "display-lg": { size: 60, weight: 800, tracking: tracking.hero, leading: leading.display },
+  /** The last round's course on the dashboard. */
+  name: { size: 22, weight: 600, tracking: tracking.name },
+  /** The last round's score, the biggest number on the dashboard. */
+  scoreboard: { size: 76, weight: 600, tracking: tracking.scoreboard, leading: leading.scoreboard },
+  "scoreboard-sm": { size: 52, weight: 600, tracking: tracking.scoreboard, leading: leading.scoreboard },
   /** The one big figure on a card: a round's score. */
   hero: { size: 44, weight: 700, tracking: tracking.hero, leading: 1 },
   /** The tracked capitals above a figure or a group of rows. */
@@ -406,6 +429,8 @@ export const space = {
   hair: 2.5,
   chip: 3,
   dot: 3,
+  /** A phone page's side margin. */
+  "page-phone": 18,
   tight: 5,
   /** What a control's corner gives up inside its group, so the corners nest. */
   nudge: 5,
@@ -427,6 +452,9 @@ export const radius = {
   card: 10,
   /** A card on the page: the soft surface's large corner. */
   surface: 22,
+  /** The card a page leads with, a step rounder than the cards under it. */
+  lead: 24,
+  "lead-phone": 26,
   tooltip: 12,
   /** The top corners of a bottom sheet. */
   sheet: 20,
@@ -443,11 +471,19 @@ export const size = {
   "chart-compact": 210,
   /** Width a hole-by-hole chart needs before it scrolls sideways. */
   "chart-wide": "45rem",
-  sheet: "28rem",
+  /** A side sheet's width. */
+  sheet: 420,
+  /** A bottom sheet that holds a table, not a list of options: the handicap breakdown. */
+  "sheet-tall": 640,
   /** Widest a target of results grows. */
   target: "15rem",
   "icon-xs": 11,
   "icon-sm": 13,
+  /** A nav item's icon, a sheet's close, a card's chevron. */
+  "icon-md": 18,
+  /** The lines drawn at their own size, under a card's figure and beside a phone's handicap. */
+  "sparkline-card": 150,
+  "sparkline-mini": 44,
   "hole-w": 30,
   "hole-h": 22,
   // A profile bar's height in its row, by score: the worse the hole, the taller.
@@ -517,7 +553,12 @@ export const shadow = {
 /** Named grid column templates: `grid-cols-handicap-breakdown`. */
 export const gridColumns = {
   "handicap-breakdown": "1fr auto auto auto",
-  "recent-rounds": "1fr auto auto",
+  /** The dashboard's last round: the round, then how it went, as wide as its line is drawn. */
+  "last-round": "minmax(0, 1fr) 23.75rem",
+  /** A round as one row of a card's list: date, course, a cell per hole (a little wider), score, to-par. */
+  "round-row": "3.25rem minmax(0, 1fr) minmax(0, 1.3fr) 2.5rem 2.5rem",
+  /** The dashboard's row of cards: three figures, then the goal a little wider. */
+  "dashboard-cards": "repeat(3, minmax(0, 1fr)) 1.15fr",
   /** A label column, then two equal state columns (default, disabled). */
   "state-grid": "6rem repeat(2, minmax(0, 1fr))",
 };
@@ -528,6 +569,8 @@ export const gridColumns = {
  */
 export const breakpoints = {
   sm: 40,
+  /** Tailwind's own: the side rail and the desktop layouts start here. */
+  md: 48,
 };
 
 type Ease = [number, number, number, number];
@@ -612,10 +655,6 @@ export const chart = {
   guideDash: "3 3",
   /** Widest a Recharts bar grows when there are few of them. */
   barMaxWidth: 28,
-  /** A full ring sized to fill the chart height. */
-  ring: { inner: 50, outer: 68 },
-  /** A half gauge drawn up from the bottom edge of its box. */
-  gauge: { inner: 52, outer: 72 },
   /**
    * Score over handicap index, stacked as two small multiples that share the round axis.
    * Unitless, scaled to the container. The grid ends `axis` short of the right edge,
@@ -657,6 +696,37 @@ export const chart = {
     scoreLift: 10,
   },
   /** A figure's trend line. */
+  /** The last round's running score to par, hole by hole: the dashboard's "How it went". */
+  running: {
+    width: 380,
+    height: 150,
+    /** Where the first hole and the last sit, from the left; the line starts at level on the edge. */
+    first: 12,
+    last: 368,
+    top: 18,
+    bottom: 134,
+    widthCompact: 314,
+    heightCompact: 92,
+    firstCompact: 10,
+    lastCompact: 304,
+    topCompact: 10,
+    bottomCompact: 82,
+    stroke: 3,
+    level: 1.5,
+    levelDash: "2 6",
+    dot: 6,
+    dotCompact: 5,
+    rim: 3,
+    rimCompact: 2.5,
+    /** How far the closing figure sits above the last point, and level's "E" below the line. */
+    closeLift: 14,
+    levelDrop: 18,
+  },
+  /** A goal's progress as a ring. */
+  /** `strokeThick` is the phone's: the ring is drawn smaller there, so its stroke grows to hold. */
+  progressRing: { size: 96, radius: 40, stroke: 10, strokeThick: 11 },
+  /** A score mix as a ring of slices, in a `size` box centred on the origin: a hollow centre, a gap between slices. */
+  donut: { size: 96, outer: 46, inner: 30, padAngle: 0.04, corner: 2 },
   sparkline: {
     width: 300,
     height: 56,
@@ -665,6 +735,10 @@ export const chart = {
     dot: space.dot,
     /** The compact line beside a KPI tile's figure, drawn at its own size so the stroke stays 2px. */
     compact: { width: 96, height: 32 },
+    /** The flat line under a card's lead figure: the scoring average's. No end dot. */
+    card: { width: size["sparkline-card"], height: 30, pad: 4, stroke: 2.5, dot: 0 },
+    /** The small line beside a figure in a phone's header card: the handicap's. Its end dot filled. */
+    mini: { width: size["sparkline-mini"], height: 30, pad: 3, stroke: 2.5, dot: 3 },
   },
   /** A golfer's scores over time, one dot per round. */
   trend: {

@@ -1,11 +1,33 @@
 import { GreetingHeader } from "../components/GreetingHeader";
 
+const line = [14.1, 13.8, 13.9, 13.2, 12.9, 12.4];
+
 export default function GreetingHeaderPreview() {
   return (
-    <div className="flex flex-col gap-6">
-      <GreetingHeader firstName="Test" dateLabel="Mon · Jun 15" handicapIndex={12.4} handicapChange={-1.6} handicapVerdict="good" onHandicapClick={() => {}} />
-      <GreetingHeader firstName="Sam" dateLabel="Sat · Oct 3" handicapIndex={-1.2} handicapChange={0.4} handicapVerdict="bad" onHandicapClick={() => {}} />
-      <GreetingHeader firstName="Golfer" dateLabel="Tue · Jan 6" handicapIndex={null} handicapChange={null} handicapVerdict={null} onHandicapClick={() => {}} />
+    <div className="flex w-preview flex-col gap-6 bg-background p-5">
+      <GreetingHeader
+        greeting="Good evening"
+        name="Tucker"
+        handicap={{ index: 12.4, change: -1.6, verdict: "good" }}
+        handicapLine={line}
+        onHandicapClick={() => {}}
+      />
+      <GreetingHeader
+        compact
+        greeting="Good evening"
+        name="Tucker"
+        handicap={{ index: 12.4, change: -1.6, verdict: "good" }}
+        handicapLine={line}
+        onHandicapClick={() => {}}
+      />
+      <GreetingHeader
+        compact
+        greeting="Good morning"
+        name="Golfer"
+        handicap={{ index: null, change: null, verdict: null }}
+        handicapLine={[]}
+        onHandicapClick={() => {}}
+      />
     </div>
   );
 }

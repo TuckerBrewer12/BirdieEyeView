@@ -15,7 +15,7 @@ export default function ScoreMixBarPreview() {
       </Card>
       <Card className="gap-2 px-4">
         <div className="text-label font-semibold text-muted-foreground">Shares of every hole</div>
-        <ScoreMixBar mix={populatedDashboard.score_mix} />
+        <ScoreMixBar mix={populatedDashboard.recent_score_mix} />
       </Card>
       <Card className="gap-2 px-4">
         <div className="text-label font-semibold text-muted-foreground">A rough round</div>

@@ -82,6 +82,11 @@ export function scoreKindLabel(kind: ScoreKind): string {
   return SCORE_KIND_LABEL[kind].one;
 }
 
+/** The kind's word for `count` holes, without the count: "Birdie", "Pars". */
+export function scoreKindNoun(kind: ScoreKind, count: number): string {
+  return count === 1 ? SCORE_KIND_LABEL[kind].one : SCORE_KIND_LABEL[kind].many;
+}
+
 /** The word for `count` holes of one kind: "1 Birdie", "3 Birdies". */
 export function scoreKindCountLabel(kind: ScoreKind, count: number): string {
   return pluralNoun(count, SCORE_KIND_LABEL[kind].one, SCORE_KIND_LABEL[kind].many);
