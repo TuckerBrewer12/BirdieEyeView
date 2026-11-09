@@ -134,7 +134,7 @@ export {
 } from "./components/DropdownMenu";
 
 // Charts
-export { ActivityHeatmap } from "./charts/ActivityHeatmap";
+export { ActivityCalendar } from "./charts/ActivityCalendar";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
 export { ScoreMixBar } from "./charts/ScoreMixBar";
