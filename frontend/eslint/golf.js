@@ -216,6 +216,31 @@ const noShadowedGolfType = {
   },
 };
 
+/** The words a missing course name falls back to. */
+const COURSE_FALLBACK = /^unknown course$/i;
+
+const noCourseFallback = {
+  meta: {
+    type: "problem",
+    docs: { description: "Name a round's course through domain/course.ts, not a fallback written in place." },
+    schema: [],
+    messages: {
+      fallback:
+        "\"{{value}}\" is the course-name fallback written in place. Use courseLabel() from @/domain, which formats " +
+        "the name and falls back the same way everywhere.",
+    },
+  },
+  create(context) {
+    const check = (node, text) => {
+      if (COURSE_FALLBACK.test(text.trim())) context.report({ node, messageId: "fallback", data: { value: text.trim() } });
+    };
+    return {
+      Literal: (node) => typeof node.value === "string" && check(node, node.value),
+      JSXText: (node) => check(node, node.value),
+    };
+  },
+};
+
 export default {
   meta: { name: "golf" },
   rules: {
@@ -224,5 +249,6 @@ export default {
     "no-golf-math": noGolfMath,
     "no-par-fallback": noParFallback,
     "no-shadowed-golf-type": noShadowedGolfType,
+    "no-course-fallback": noCourseFallback,
   },
 };

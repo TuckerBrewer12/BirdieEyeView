@@ -170,7 +170,7 @@ export class RoundDetailRobot {
   }
 
   async pickCourse(name: string): Promise<this> {
-    await this.page.getByRole("button", { name: new RegExp(name) }).click();
+    await this.page.getByRole("option", { name: new RegExp(name) }).click();
     return this;
   }
 
@@ -180,13 +180,13 @@ export class RoundDetailRobot {
   }
 
   async saveAsCustomName(name: string): Promise<this> {
-    await this.page.getByRole("button", { name: `Save as "${name}"` }).click();
+    await this.page.getByRole("button", { name: `Save as “${name}”` }).click();
     return this;
   }
 
   async seesCustomNameCard(name: string): Promise<this> {
     await expect(this.page.getByText(name).first()).toBeVisible();
-    await expect(this.page.getByText("Saving without a linked course")).toBeVisible();
+    await expect(this.page.getByText("Custom name · not linked to a course")).toBeVisible();
     await expect(this.page.getByPlaceholder("Search courses…")).toHaveCount(0);
     return this;
   }
@@ -204,12 +204,12 @@ export class RoundDetailRobot {
   }
 
   async tapKeepPlayedName(name: string): Promise<this> {
-    await this.page.getByRole("button", { name: `Keep "${name}" without linking →` }).click();
+    await this.page.getByRole("button", { name: `Keep "${name}" without linking` }).click();
     return this;
   }
 
   async tapEditCourseName(): Promise<this> {
-    await this.page.getByRole("button", { name: "Edit name" }).click();
+    await this.page.getByRole("button", { name: "Link course" }).click();
     return this;
   }
 
@@ -237,7 +237,7 @@ export class RoundDetailRobot {
   }
 
   async capture(name: string): Promise<this> {
-    if (await this.page.getByText("Momentum").isVisible()) {
+    if (await this.page.getByText("Round flow", { exact: true }).isVisible()) {
       await expect(this.page.locator("svg circle").last()).toBeVisible();
     }
     await expect(this.page).toHaveScreenshot(name, { fullPage: true });

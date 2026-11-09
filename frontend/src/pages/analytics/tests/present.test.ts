@@ -73,12 +73,20 @@ describe("the layouts' words", () => {
     expect(courseOptions([], false)).toEqual([{ value: "all", label: "All Courses" }]);
   });
 
-  it("words the headline figures, with the best round's course under it", () => {
+  it("words the headline figures, with the scoring move and the best round's course under them", () => {
     expect(headlineFigures(analytics)).toEqual([
       { label: "Handicap Index", value: "7.0" },
       { label: "Rounds", value: "24" },
-      { label: "Scoring Avg", value: "82.9" },
-      { label: "Best Round", value: "75", detail: "Presidio Golf Course" },
+      {
+        label: "Scoring Avg",
+        value: "82.9",
+        trend: analytics.scoreTrend.map((row) => row.total_score),
+        tone: "good",
+        delta: "3.9",
+        direction: "down",
+        note: "last 5 vs all",
+      },
+      { label: "Best Round", value: "75", note: "Presidio Golf Course" },
       { label: "Avg Putts", value: "32.7" },
     ]);
     expect(headlineFigures(analyticsFrom(withoutRounds(sampleGolfer.analytics))).map((kpi) => kpi.value)).toEqual([

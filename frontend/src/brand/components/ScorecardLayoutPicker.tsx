@@ -263,7 +263,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
                             onTouchStart={() => { dragging.current = { type: "name" }; }}
                             onTouchEnd={endPointerDrag}
                             onTouchCancel={endPointerDrag}
-                            className="flex h-full min-h-9.5 cursor-grab touch-none items-center justify-center rounded-lg border border-scan-row-name bg-scan-row-name select-none active:cursor-grabbing"
+                            className="flex h-full min-h-10 cursor-grab touch-none items-center justify-center rounded-lg border border-scan-row-name bg-scan-row-name select-none active:cursor-grabbing"
                           >
                             <span className="text-meta font-bold text-primary-foreground uppercase tracking-chip">
                               Name
@@ -271,7 +271,7 @@ export function ScorecardLayoutPicker({ onContextChange }: ScorecardLayoutPicker
                           </div>
                         ) : (
                           // invisible drop target so Name can be dragged here
-                          <div className="h-full min-h-9.5 rounded-lg" />
+                          <div className="h-full min-h-10 rounded-lg" />
                         )}
                       </div>
 

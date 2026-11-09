@@ -9,6 +9,10 @@ from .hole_score import HoleScore, ScoreKind, score_kind
 from .tee import Tee
 from .user_tee import UserTee
 
+# A round's worst stretch: this many holes in a row, losing at least this many strokes to par.
+STRETCH_HOLES = 4
+STRETCH_LEAST = 2
+
 
 class Round(BaseGolfModel):
     """Represents a round of golf played by a user."""
@@ -203,16 +207,50 @@ class Round(BaseGolfModel):
             return None
         return sum(pars)  # type: ignore[arg-type]
 
+    def scored_par(self) -> Optional[int]:
+        """The par `total_to_par` reads against: the par of the holes played, or the course's
+        par for a full round whose holes have none."""
+        par = self.played_par()
+        if par is None and self.holes_played() >= 18:
+            par = self.get_par()
+        return par
+
     def total_to_par(self) -> Optional[int]:
         """Strokes against the par of the holes played, so a nine or a round cut short reads
         against its own holes rather than the full course. A full round whose holes have no par
         falls back to the course's par."""
         total = self.calculate_total_score()
-        if total is None:
-            return None
-        par = self.played_par()
-        if par is None and self.holes_played() >= 18:
-            par = self.get_par()
-        if par is None:
+        par = self.scored_par()
+        if total is None or par is None:
             return None
         return total - par
+
+    def running_to_par(self) -> Dict[int, int]:
+        """The round's score to par after each hole, by hole number. A hole without a to par (no
+        score, or no par) is left out and moves nothing, rather than reading as level."""
+        running: Dict[int, int] = {}
+        total = 0
+        for s in sorted(self.hole_scores, key=lambda s: s.hole_number or 0):
+            to_par = self.score_to_par(s.hole_number) if s.hole_number is not None else None
+            if to_par is None:
+                continue
+            total += to_par
+            running[s.hole_number] = total
+        return running
+
+    def worst_stretch(self) -> Optional[Dict[str, int]]:
+        """The STRETCH_HOLES straight holes that lost the most to par, when they lost
+        STRETCH_LEAST or more: the first and last hole and the strokes over. The earliest wins a tie."""
+        to_par = {
+            s.hole_number: self.score_to_par(s.hole_number)
+            for s in self.hole_scores if s.hole_number is not None
+        }
+        worst: Optional[Dict[str, int]] = None
+        for first in sorted(to_par):
+            holes = range(first, first + STRETCH_HOLES)
+            if any(to_par.get(h) is None for h in holes):
+                continue
+            over = sum(to_par[h] for h in holes)  # type: ignore[misc]
+            if over >= STRETCH_LEAST and (worst is None or over > worst["to_par"]):
+                worst = {"first_hole": first, "last_hole": first + STRETCH_HOLES - 1, "to_par": over}
+        return worst
