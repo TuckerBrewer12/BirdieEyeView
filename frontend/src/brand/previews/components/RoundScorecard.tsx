@@ -9,13 +9,13 @@ const noop = () => {};
 
 /**
  * A scorecard is wider than the stage, so the preview fills the window the way the board does: capture it
- * at the board's width for the full card, and at a phone's to see it scroll sideways under its header.
+ * at the board's width for the full card, and at a phone's for the two nines stacked.
  */
 export default function RoundScorecardPreview() {
   return (
-    <div data-testid="brand-frame" className="fixed inset-0 flex flex-col gap-6 overflow-auto bg-background p-6">
-      <RoundScorecard round={linked} teeBox="Blue" teeRating="71.6 / 128" />
-      {/* With an action in the header, and no rating for the tee. */}
+    <div data-testid="brand-frame" className="fixed inset-0 flex flex-col gap-6 overflow-auto bg-background p-6 *:shrink-0">
+      <RoundScorecard round={linked} teeBox="Blue" />
+      {/* With an action on the course line. */}
       <RoundScorecard
         round={linked}
         teeBox="Blue"
@@ -25,7 +25,7 @@ export default function RoundScorecardPreview() {
           </Button>
         }
       />
-      {/* Being edited, with two scores in doubt. */}
+      {/* A scanned card being edited, not linked to a course, with two scores in doubt. */}
       <RoundScorecard
         round={Round.fromDto(scannedRound)}
         edits={{ onStrokesChange: noop, onPuttsChange: noop, onGirChange: noop }}

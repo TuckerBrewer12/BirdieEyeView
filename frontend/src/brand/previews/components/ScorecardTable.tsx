@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Card } from "@/brand/components/Card";
 import { ScorecardTable } from "@/brand/components/ScorecardTable";
 import { Round, strokesToCheck } from "@/domain";
 import { scannedTeeCard, unsureCard } from "@/testing/fixtures/scan";
@@ -14,9 +15,9 @@ const noop = () => {};
 /** The card a table sits in on a scorecard, so the preview reads like the board. */
 function Panel({ children }: { children: ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-card border border-border bg-card shadow-sm">
-      <div className="min-w-scorecard-round px-3 pt-2 pb-4">{children}</div>
-    </div>
+    <Card className="gap-0 overflow-x-auto py-0">
+      <div className="min-w-scorecard-round px-3 pt-1 pb-2.5">{children}</div>
+    </Card>
   );
 }
 
@@ -42,6 +43,10 @@ export default function ScorecardTablePreview() {
       <Panel>
         <ScorecardTable round={unsure} toCheck={[2]} />
       </Panel>
+      {/* One nine, closed by its own total, as a phone stacks them. */}
+      <Card className="w-preview gap-0 py-0">
+        <ScorecardTable round={linked} teeBox="Blue" nine="back" />
+      </Card>
     </div>
   );
 }

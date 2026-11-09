@@ -127,7 +127,8 @@ export class LandingRobot {
 
   /** The visitor's own card, read back as a scorecard. */
   async seesScannedCard(): Promise<this> {
-    await expect(this.page.getByText(SCANNED_COURSE_NAME, { exact: true })).toBeVisible();
+    // The course leads the scorecard's course line, before where it is.
+    await expect(this.page.getByText(`${SCANNED_COURSE_NAME} ·`, { exact: false })).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Scan another" })).toBeVisible();
     return this;
   }

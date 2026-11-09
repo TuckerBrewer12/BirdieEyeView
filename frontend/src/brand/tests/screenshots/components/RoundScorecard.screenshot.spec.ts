@@ -23,7 +23,7 @@ test.describe("RoundScorecard", () => {
   test.describe("on a phone", () => {
     test.use({ viewport: { width: 390, height: 1260 }, hasTouch: true });
 
-    test("scrolls sideways", async ({ page }) => {
+    test("stacks the nines", async ({ page }) => {
       const kit = new BrandKitRobot(page);
       await kit.openFrame("RoundScorecard");
       await kit.captureFrame("round-scorecard-phone.png");

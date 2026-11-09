@@ -101,7 +101,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
               <RoundScorecard
                 round={viewModel.round}
                 teeBox={viewModel.round.teeBox}
-                className="rounded-none border-0 shadow-none"
+                className="rounded-none shadow-none"
                 action={
                   <Button variant="secondary" size="xs" onClick={viewModel.reset}>
                     <RotateCcw data-icon="inline-start" />

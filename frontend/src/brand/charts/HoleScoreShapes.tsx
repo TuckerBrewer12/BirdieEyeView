@@ -13,15 +13,24 @@ const { width, height: VB_H, circle: r, dot, stroke, strokeThin, corner, inset, 
 
 /**
  * One hole drawn the way a scorecard marks it: circles under par, boxes over. A scorecard cell is
- * wider than tall; `square` draws the boxes square, as the round flow's strip shows them.
+ * wider than tall; `square` draws the boxes square, as the round flow's strip and the scorecard show them.
  */
-export function HoleShape({ hole, square = false }: { hole: HoleSummary; square?: boolean }) {
+export function HoleShape({
+  hole,
+  square = false,
+  size = "default",
+}: {
+  hole: HoleSummary;
+  square?: boolean;
+  /** `lg` is a scorecard's score cell, where the mark is the figure. Square marks only. */
+  size?: "default" | "lg";
+}) {
   const VB_W = square ? VB_H : width;
   const cx = VB_W / 2;
   const cy = VB_H / 2;
   /** A box `by` in from every edge of the mark. */
   const boxInset = (by: number) => ({ x: by, y: by, width: VB_W - 2 * by, height: VB_H - 2 * by });
-  const box = square ? "size-hole-h" : "h-hole-h w-hole-w";
+  const box = square ? (size === "lg" ? "size-hole-lg" : "size-hole-h") : "h-hole-h w-hole-w";
   const kind = hole.kind;
   if (kind == null) {
     return (

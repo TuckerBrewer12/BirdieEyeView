@@ -486,6 +486,8 @@ export const size = {
   "sparkline-mini": 44,
   "hole-w": 30,
   "hole-h": 22,
+  /** A scorecard's score mark, square. */
+  "hole-lg": 28,
   // A profile bar's height in its row, by score: the worse the hole, the taller.
   "profile-eagle": "28%",
   "profile-birdie": "40%",

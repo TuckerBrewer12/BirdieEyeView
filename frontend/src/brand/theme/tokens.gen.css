@@ -184,6 +184,7 @@
   --brand-size-sparkline-mini: 44px;
   --brand-size-hole-w: 30px;
   --brand-size-hole-h: 22px;
+  --brand-size-hole-lg: 28px;
   --brand-size-profile-eagle: 28%;
   --brand-size-profile-birdie: 40%;
   --brand-size-profile-par: 52%;
@@ -423,6 +424,7 @@
   --spacing-sparkline-mini: var(--brand-size-sparkline-mini);
   --spacing-hole-w: var(--brand-size-hole-w);
   --spacing-hole-h: var(--brand-size-hole-h);
+  --spacing-hole-lg: var(--brand-size-hole-lg);
   --spacing-profile-eagle: var(--brand-size-profile-eagle);
   --spacing-profile-birdie: var(--brand-size-profile-birdie);
   --spacing-profile-par: var(--brand-size-profile-par);

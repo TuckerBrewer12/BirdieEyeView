@@ -3,6 +3,7 @@ import { HoleShape } from "@/brand/charts/HoleScoreShapes";
 import { cn } from "@/brand/cn";
 import { Button } from "@/brand/components/Button";
 import { Input } from "@/brand/components/Input";
+import { TeeSwatch } from "@/brand/components/TeeSwatch";
 import { scoreFillClass, scoreOnFillClass, toParDisplay, toParTextClass } from "@/brand/theme";
 import type { HoleScore, Nine, Round } from "@/domain";
 
@@ -20,16 +21,21 @@ interface ScorecardTableProps {
   edits?: ScorecardEdits;
   /** Holes whose score is in doubt, like one a scan couldn't read for sure. Their score cell is ringed. */
   toCheck?: readonly number[];
+  /**
+   * Draws one nine, closed by its own total, as a phone shows the card: two of these stacked, front
+   * then back, in place of the one wide table. Left out, every hole is across with Out, In and Tot.
+   */
+  nine?: "front" | "back";
   className?: string;
 }
 
-/** Every row's height, the score's too: its hole marks and inputs fit inside it. */
-const ROW = "h-8";
-/** The label column, and the type every label shares. */
-const LABEL = "w-18 px-2 text-left text-body-sm font-semibold whitespace-nowrap";
+/** Row heights by what the row holds: the score's marks get the most room, the reference rows the least. */
+const ROW = { figures: "h-8", small: "h-7", score: "h-11" } as const;
+/** The type every label shares. */
+const LABEL = "pl-3 text-left text-label font-semibold whitespace-nowrap";
 /** Out, In and Tot sit on the page's own tone, apart from the holes. */
-const TOTAL = "bg-background p-0 text-center font-bold";
-const SMALL = cn(ROW, "text-label font-medium text-muted-foreground");
+const TOTAL = "bg-background p-0 text-center font-semibold";
+const SMALL = cn(ROW.small, "text-label font-medium text-muted-foreground");
 
 function show(value: number | null): string {
   return value == null ? "-" : String(value);
@@ -90,7 +96,7 @@ function CountInput({
         if (parsed !== undefined) onChange(parsed);
       }}
       // Block, so it centres under the hole number like the rest of the column.
-      className={cn("mx-auto block h-7 w-8 px-0 text-center text-sm font-semibold", className)}
+      className={cn("mx-auto block h-7 w-7 px-0 text-center text-sm font-semibold", className)}
     />
   );
 }
@@ -98,18 +104,29 @@ function CountInput({
 /** Rings a score cell whose score is in doubt. */
 const CHECK_RING = "ring-2 ring-destructive ring-offset-1 ring-offset-card";
 
-function ScoreCell({ hole, edits, check }: { hole: HoleScore; edits?: ScorecardEdits; check: boolean }) {
+function ScoreCell({
+  hole,
+  edits,
+  check,
+  compact,
+}: {
+  hole: HoleScore;
+  edits?: ScorecardEdits;
+  check: boolean;
+  /** A phone's nine, where a hole's column is too narrow for the large mark. */
+  compact: boolean;
+}) {
   if (!edits) {
     // The one hole mark the kit draws, so a score reads the same here as on the round flow.
     return (
       <span className={cn("inline-flex align-middle", check && cn("rounded-md", CHECK_RING))}>
-        <HoleShape hole={hole} />
+        <HoleShape hole={hole} square size={compact ? "default" : "lg"} />
       </span>
     );
   }
   return (
     // The fill sits behind a clear input: an input's own dark background would cover it.
-    <div className={cn("mx-auto w-8 rounded-lg", hole.kind && scoreFillClass(hole.kind))}>
+    <div className={cn("mx-auto w-7 rounded-lg", hole.kind && scoreFillClass(hole.kind))}>
       <CountInput
         label={check ? `Hole ${hole.hole} strokes, to check` : `Hole ${hole.hole} strokes`}
         value={hole.strokes}
@@ -126,8 +143,10 @@ function ScoreCell({ hole, edits, check }: { hole: HoleScore; edits?: ScorecardE
 }
 
 interface LineProps {
-  front: Nine;
-  back: Nine;
+  /** The nines across, each closed by its total. */
+  nines: readonly Nine[];
+  /** Whether the row ends on the round's total, after both nines. */
+  withTot: boolean;
   label: ReactNode;
   /** The row's height and type, which its cells inherit. */
   className?: string;
@@ -144,8 +163,8 @@ interface LineProps {
 
 /** One row: its label, a cell per hole, and the nine and round figures where the holes close. */
 function Line({
-  front,
-  back,
+  nines,
+  withTot,
   label,
   className,
   labelClassName,
@@ -170,11 +189,8 @@ function Line({
       <th scope="row" className={cn(LABEL, labelClassName)}>
         {label}
       </th>
-      {front.holes.map(holeCell)}
-      {front.holes.length > 0 && total("out", nineCell?.(front))}
-      {back.holes.map(holeCell)}
-      {back.holes.length > 0 && total("in", nineCell?.(back))}
-      {total("tot", totCell)}
+      {nines.flatMap((nine, i) => [...nine.holes.map(holeCell), total(`nine-${i}`, nineCell?.(nine))])}
+      {withTot && total("tot", totCell)}
     </tr>
   );
 }
@@ -188,50 +204,76 @@ function Line({
  * and greens always do while editing), because a scanned card often has none, and a row of dashes
  * reads as a failed scan rather than a card that never held the data.
  */
-function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardTableProps) {
-  const { frontNine: front, backNine: back } = round;
-  const holes = [...front.holes, ...back.holes];
+function ScorecardTable({ round, teeBox, edits, toCheck, nine, className }: ScorecardTableProps) {
+  const { frontNine, backNine } = round;
+  const shown = nine === "front" ? [frontNine] : nine === "back" ? [backNine] : [frontNine, backNine];
+  const nines = shown.filter((part) => part.holes.length > 0);
+  const nineNames = new Map<Nine, string>([
+    [frontNine, "Out"],
+    [backNine, "In"],
+  ]);
+  const withTot = nine == null;
+  const holes = nines.flatMap((part) => part.holes);
   const showYards = holes.some((hole) => hole.yardage != null);
-  const showHandicap = holes.some((hole) => hole.handicap != null);
+  // A phone's nine has no room for the stroke index; the wide card keeps it.
+  const showHandicap = withTot && holes.some((hole) => hole.handicap != null);
   const showPutts = edits != null || holes.some((hole) => hole.putts != null);
   const showGir = edits != null || holes.some((hole) => hole.gir != null);
   const showFairway = holes.some((hole) => hole.fairway != null);
   const showShots = holes.some((hole) => hole.shotsToGreen != null);
-  const line = { front, back };
-  const figures = "text-body font-medium text-foreground-secondary";
+  const line = { nines, withTot };
+  const figures = "text-body-sm font-medium text-foreground-secondary";
 
   return (
     <table data-slot="scorecard-table" className={cn("w-full table-fixed border-collapse", className)}>
+      <colgroup>
+        <col className={withTot ? "w-16" : "w-14"} />
+        {/* A phone's nine gives its total room for a nine's yardage; the wide card shares it out. */}
+        {!withTot && (
+          <>
+            {holes.map((hole) => (
+              <col key={hole.hole} />
+            ))}
+            <col className="w-10" />
+          </>
+        )}
+      </colgroup>
       <tbody className="divide-y divide-border border-b border-border">
-        <tr className={cn(ROW, "bg-background text-body-sm font-bold text-foreground-secondary")}>
+        <tr className={cn(ROW.figures, "bg-background text-label font-semibold text-foreground-secondary")}>
           <th scope="row" className={LABEL}>
             Hole
           </th>
-          {front.holes.map((hole) => (
-            <td key={hole.hole} className="p-0 text-center">
-              {hole.hole}
-            </td>
-          ))}
-          {front.holes.length > 0 && <td className="p-0 text-center">Out</td>}
-          {back.holes.map((hole) => (
-            <td key={hole.hole} className="p-0 text-center">
-              {hole.hole}
-            </td>
-          ))}
-          {back.holes.length > 0 && <td className="p-0 text-center">In</td>}
-          <td className="p-0 text-center">Tot</td>
+          {nines.flatMap((part) => [
+            ...part.holes.map((hole) => (
+              <td key={hole.hole} className="p-0 text-center">
+                {hole.hole}
+              </td>
+            )),
+            <td key={`total-${nineNames.get(part)}`} className="p-0 text-center">
+              {nineNames.get(part)}
+            </td>,
+          ])}
+          {withTot && <td className="p-0 text-center">Tot</td>}
         </tr>
 
         {showYards && (
           <Line
             {...line}
-            label={teeBox || "Yards"}
-            className={SMALL}
-            labelClassName="capitalize text-muted-foreground"
+            label={
+              teeBox ? (
+                <span className="inline-flex items-center gap-1.5 capitalize">
+                  <TeeSwatch color={teeBox} className="size-2 shrink-0 rounded-full" />
+                  {teeBox}
+                </span>
+              ) : (
+                "Yards"
+              )
+            }
+            className={cn(SMALL, !withTot && "text-caption")}
+            labelClassName="text-muted-foreground"
             cell={(hole) => show(hole.yardage)}
-            nineCell={(nine) => show(nine.yards)}
+            nineCell={(part) => show(part.yards)}
             totCell={show(round.yards)}
-            totalClassName="font-medium"
           />
         )}
 
@@ -248,32 +290,31 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
         <Line
           {...line}
           label="Par"
-          className={cn(ROW, figures)}
+          className={cn(ROW.figures, figures)}
           labelClassName="text-foreground-secondary"
           cell={(hole) => show(hole.par)}
-          nineCell={(nine) => show(nine.par)}
+          nineCell={(part) => show(part.par)}
           totCell={show(round.par)}
         />
 
         <Line
           {...line}
           label="Score"
-          className={cn(ROW, "text-body font-bold text-foreground", edits && "bg-muted/recessed")}
+          className={cn(ROW.score, "text-body font-semibold text-foreground", edits && "bg-muted/recessed")}
           labelClassName="text-foreground"
-          cell={(hole) => <ScoreCell hole={hole} edits={edits} check={!!toCheck?.includes(hole.hole)} />}
+          cell={(hole) => <ScoreCell hole={hole} edits={edits} check={!!toCheck?.includes(hole.hole)} compact={!withTot} />}
           isCheck={(hole) => !!toCheck?.includes(hole.hole)}
-          nineCell={(nine) => show(nine.total)}
+          nineCell={(part) => show(part.total)}
           totCell={show(round.score)}
-          totalClassName="text-base"
         />
 
         <Line
           {...line}
           label="To par"
-          className={cn(ROW, "text-label font-semibold")}
+          className={cn(ROW.small, "text-label font-semibold")}
           labelClassName="text-muted-foreground"
           cell={(hole) => <span className={toParTextClass(hole.toPar)}>{toParDisplay(hole.toPar, "-")}</span>}
-          nineCell={(nine) => <span className={toParTextClass(nine.toPar)}>{toParDisplay(nine.toPar, "-")}</span>}
+          nineCell={(part) => <span className={toParTextClass(part.toPar)}>{toParDisplay(part.toPar, "-")}</span>}
           totCell={<span className={toParTextClass(round.toPar)}>{toParDisplay(round.toPar, "-")}</span>}
         />
 
@@ -281,7 +322,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
           <Line
             {...line}
             label="Putts"
-            className={cn(ROW, figures, edits && "bg-muted/recessed")}
+            className={cn(ROW.figures, figures, edits && "bg-muted/recessed")}
             labelClassName="text-foreground-secondary"
             cell={(hole) =>
               edits ? (
@@ -289,13 +330,13 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
                   label={`Hole ${hole.hole} putts`}
                   value={hole.putts}
                   onChange={(putts) => edits.onPuttsChange(hole.hole, putts)}
-                  className="h-6 text-xs font-normal"
+                  className="h-6 w-6 text-xs font-normal"
                 />
               ) : (
                 <span className={cn(hole.threePutt && "font-bold text-destructive")}>{hole.putts ?? "·"}</span>
               )
             }
-            nineCell={(nine) => show(nine.putts)}
+            nineCell={(part) => show(part.putts)}
             totCell={show(round.putts)}
           />
         )}
@@ -304,7 +345,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
           <Line
             {...line}
             label="GIR"
-            className={cn(ROW, figures)}
+            className={cn(ROW.figures, figures)}
             labelClassName="text-foreground-secondary"
             cell={(hole) =>
               edits ? (
@@ -321,7 +362,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
                 <HitMark hit={hole.gir} />
               )
             }
-            nineCell={(nine) => show(nine.gir)}
+            nineCell={(part) => show(part.gir)}
             totCell={show(round.gir)}
           />
         )}
@@ -330,7 +371,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, className }: ScorecardT
           <Line
             {...line}
             label="Fairway"
-            className={cn(ROW, figures)}
+            className={cn(ROW.figures, figures)}
             labelClassName="text-foreground-secondary"
             cell={(hole) => <HitMark hit={hole.fairway} />}
           />
