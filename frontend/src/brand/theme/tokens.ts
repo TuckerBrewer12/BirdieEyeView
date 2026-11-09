@@ -402,8 +402,8 @@ export const space = {
   /** What a control's corner gives up inside its group, so the corners nest. */
   nudge: 5,
   "nudge-sm": 3,
-  /** The phone's home-indicator strip, which a bar pinned to the bottom pads past. */
-  "safe-bottom": "env(safe-area-inset-bottom, 0px)",
+  /** What a bar pinned to the bottom pads past: the phone's home-indicator strip, never less than 22px. */
+  "safe-bottom": "max(env(safe-area-inset-bottom, 0px), 22px)",
 };
 
 /** Shadcn's base radius, `--radius`; the named steps below sit around it. */
@@ -458,7 +458,7 @@ export const lineWidth = {
   outline: 1.5,
 };
 
-/** Icon line weights, unitless. The tab bar's are lighter at rest, heavier on the current tab. */
+/** Icon line weights, unitless: lighter at rest, heavier on a current item. */
 export const stroke = {
   icon: 1.75,
   "icon-active": 2.25,

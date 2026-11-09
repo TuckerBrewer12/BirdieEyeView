@@ -147,7 +147,7 @@
   --brand-space-tight: 5px;
   --brand-space-nudge: 5px;
   --brand-space-nudge-sm: 3px;
-  --brand-space-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --brand-space-safe-bottom: max(env(safe-area-inset-bottom, 0px), 22px);
   --brand-size-rail: 240px;
   --brand-size-date-rail: 54px;
   --brand-size-preview: 390px;
