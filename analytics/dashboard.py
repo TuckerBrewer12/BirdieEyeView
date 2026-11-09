@@ -4,6 +4,7 @@ Every function takes the rounds (oldest first) or the trend rows analytics alrea
 them, so the dashboard and the analytics page read the same numbers.
 """
 
+from datetime import date, datetime, timezone
 from typing import Any, Dict, List, Literal, Optional
 
 from analytics import stats as analytics
@@ -108,47 +109,60 @@ def handicap_change(handicap_trend: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
-def handicap_move(handicap_trend: List[Dict[str, Any]], window: int) -> Optional[float]:
-    """How far the index moved across the last `window` rounds: the newest index less the first
-    one in the window, to a tenth. Null until the window holds two indexes."""
-    indexes = [r["handicap_index"] for r in handicap_trend[-window:] if r["handicap_index"] is not None]
-    return round(indexes[-1] - indexes[0], 1) if len(indexes) >= 2 else None
+def _round_day(round_: Round) -> Optional[date]:
+    return round_.date.date() if round_.date is not None else None
 
 
-def window_figures(
-    last_20: List[Round],
-    handicap_trend: List[Dict[str, Any]],
-    window: int,
-    baseline_average: Optional[float],
-) -> Dict[str, Any]:
-    """The dashboard's figures over its last `window` rounds, for the Last 5 / Last 20 switch.
+def handicap_change_this_month(
+    rounds: List[Round], handicap_trend: List[Dict[str, Any]], today: date
+) -> Optional[float]:
+    """How far the index has moved since this month began: the newest index less the index after
+    the last round played before the 1st, to a tenth. `rounds` and `handicap_trend` line up, oldest
+    first. Null without an index from before this month, or without one now."""
+    month_start = today.replace(day=1)
+    before: Optional[float] = None
+    for round_, row in zip(rounds, handicap_trend):
+        day = _round_day(round_)
+        if day is not None and day < month_start and row["handicap_index"] is not None:
+            before = row["handicap_index"]
+    indexes = [r["handicap_index"] for r in handicap_trend if r["handicap_index"] is not None]
+    if before is None or not indexes:
+        return None
+    return round(indexes[-1] - before, 1)
 
-    The scoring average's change is against `baseline_average`: the last 20 rounds' for the last
-    five, every round's for the last 20. Rates are pooled over the window's chances.
-    """
-    rounds = last_20[-window:]
-    average = scoring_average(rounds)
-    change = (
-        analytics.round_half_up(average - baseline_average, 1)
-        if average is not None and baseline_average is not None
-        else None
-    )
-    move = handicap_move(handicap_trend, window)
-    form = recent_form(rounds, window)
-    mix = score_mix(rounds)
+
+SEASON_MONTHS = 6
+
+
+def today() -> date:
+    """The day the dashboard reads "this month" and "this season" against. A seam, so a generated
+    fixture can pin it."""
+    return datetime.now(timezone.utc).date()
+
+
+def season_activity(rounds: List[Round], today: date) -> Dict[str, Any]:
+    """Rounds played this calendar year, and how many in each of the last six months, oldest month
+    first, as `YYYY-MM`."""
+    days = [d for d in (_round_day(r) for r in rounds) if d is not None]
+    months = []
+    year, month = today.year, today.month
+    for _ in range(SEASON_MONTHS):
+        months.append((year, month))
+        year, month = (year, month - 1) if month > 1 else (year - 1, 12)
     return {
-        "size": window,
-        "rounds": sum(1 for r in rounds if r.calculate_total_score() is not None),
-        "scoring_average": analytics.round_half_up(average, 1) if average is not None else None,
-        "scoring_average_change": change,
-        "scoring_average_verdict": change_verdict(change),
-        "handicap_change": move,
-        "handicap_verdict": change_verdict(move),
-        "scrambling_pct": form["scrambling_pct"],
-        "up_and_down_pct": form["up_and_down_pct"],
-        "score_mix": mix["percentages"],
-        "score_mix_holes": mix["holes"],
+        "rounds": sum(1 for d in days if d.year == today.year),
+        "months": [
+            {"month": f"{y:04d}-{m:02d}", "rounds": sum(1 for d in days if (d.year, d.month) == (y, m))}
+            for y, m in reversed(months)
+        ],
     }
+
+
+def round_flow(round_: Optional[Round]) -> List[Dict[str, int]]:
+    """A round's to par after each hole (`Round.running_to_par`), hole by hole: the last round's line."""
+    if round_ is None:
+        return []
+    return [{"hole_number": hole, "to_par": to_par} for hole, to_par in sorted(round_.running_to_par().items())]
 
 
 def whs_breakdown(

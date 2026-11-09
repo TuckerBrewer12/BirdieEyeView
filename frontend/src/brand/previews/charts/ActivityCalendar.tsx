@@ -16,16 +16,10 @@ const rounds = PLAYED.map((day, i) => ({
 
 export default function ActivityCalendarPreview() {
   return (
-    <div className="flex items-start gap-6">
-      <Card className="flex-1">
-        <CardContent>
-          <ActivityCalendar rounds={rounds} today={TODAY} onOpenRound={() => {}} />
-        </CardContent>
-      </Card>
-      {/* The dashboard's card: this month, days to come faded. */}
-      <Card className="w-80 px-4.5 py-4">
-        <ActivityCalendar rounds={rounds} today={new Date(2026, 9, 17, 12)} onOpenRound={() => {}} variant="month" />
-      </Card>
-    </div>
+    <Card>
+      <CardContent>
+        <ActivityCalendar rounds={rounds} today={TODAY} onOpenRound={() => {}} />
+      </CardContent>
+    </Card>
   );
 }

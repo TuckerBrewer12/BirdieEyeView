@@ -50,23 +50,3 @@ export function niceExtent(values: readonly Maybe[], count: number, flat: number
   const [niceLo, niceHi] = scaleLinear().domain([lo, hi]).nice(count).domain();
   return [niceLo, niceHi];
 }
-
-/**
- * The span the values cover, out to the step below the lowest (`floor`) and the step above the
- * highest (`ceiling`), so a value never sits on the edge: scores 69 to 85 in fives and tens run
- * 65 to 90. Null when there is nothing to measure.
- */
-export function steppedExtent(values: readonly Maybe[], floor: number, ceiling: number): [number, number] | null {
-  const known = knownValues(values);
-  if (known.length === 0) return null;
-  const lo = Math.floor(Math.min(...known) / floor) * floor;
-  const hi = Math.ceil(Math.max(...known) / ceiling) * ceiling;
-  return [lo, hi === lo ? hi + ceiling : hi];
-}
-
-/** Every multiple of `step` inside the domain, past its bottom edge: the grid lines a plot draws. */
-export function stepsWithin([lo, hi]: number[], step: number): number[] {
-  const steps: number[] = [];
-  for (let v = Math.floor(lo / step) * step + step; v <= hi; v += step) steps.push(v);
-  return steps;
-}

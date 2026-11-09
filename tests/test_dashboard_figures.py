@@ -99,28 +99,43 @@ def test_milestones_prefer_the_first_round_under_par_and_come_newest_first():
     assert dashboard.lifetime_milestones({}) == []
 
 
-def test_handicap_move_reads_across_the_window():
-    trend = [{"handicap_index": v} for v in (None, 14.4, 13.9, 13.3, 12.9, 12.4)]
-    assert dashboard.handicap_move(trend, 5) == -2.0
-    assert dashboard.handicap_move(trend, 2) == -0.5
-    assert dashboard.handicap_move([{"handicap_index": 12.0}], 5) is None
+def _dated(day, strokes=None):
+    from datetime import datetime, time
+    round_ = _round(strokes or [4] * 18)
+    round_.date = datetime.combine(day, time(12))  # naive, as the database's dates come back
+    return round_
 
 
-def test_window_figures_measure_the_last_few_against_a_baseline():
-    rounds = [_round([5] * 18), _round([5] * 18), _round([4] * 18)]
-    trend = [{"handicap_index": v} for v in (15.0, 14.0, 13.0)]
-    last_two = dashboard.window_figures(rounds, trend, 2, dashboard.scoring_average(rounds))
-    assert last_two["size"] == 2
-    assert last_two["rounds"] == 2
-    assert last_two["scoring_average"] == 81.0
-    # 81 against the whole window's 84.
-    assert last_two["scoring_average_change"] == -3.0
-    assert last_two["scoring_average_verdict"] == "good"
-    assert last_two["handicap_change"] == -1.0
-    assert last_two["handicap_verdict"] == "good"
-    assert last_two["score_mix_holes"] == 36
-    assert last_two["score_mix"]["par"] == 50.0
+def test_handicap_change_this_month_reads_from_the_last_round_before_the_first():
+    from datetime import date
+    rounds = [_dated(date(2026, 4, 18)), _dated(date(2026, 5, 2)), _dated(date(2026, 6, 3)), _dated(date(2026, 6, 15))]
+    trend = [{"handicap_index": v} for v in (14.0, 13.6, 13.2, 12.4)]
+    # The index after May 2 was 13.6; it is 12.4 now.
+    assert dashboard.handicap_change_this_month(rounds, trend, date(2026, 6, 20)) == -1.2
+    # Nothing before April began, so there is nothing to measure from.
+    assert dashboard.handicap_change_this_month(rounds, trend, date(2026, 4, 20)) is None
+    # No round this month yet: the index hasn't moved.
+    assert dashboard.handicap_change_this_month(rounds, trend, date(2026, 7, 2)) == 0.0
 
-    no_baseline = dashboard.window_figures(rounds, [], 2, None)
-    assert no_baseline["scoring_average_change"] is None
-    assert no_baseline["handicap_change"] is None
+
+def test_season_counts_this_year_and_the_last_six_months():
+    from datetime import date
+    rounds = [_dated(date(2025, 12, 30)), _dated(date(2026, 3, 9)), _dated(date(2026, 4, 18)), _dated(date(2026, 6, 15)), _dated(date(2026, 6, 20))]
+    season = dashboard.season_activity(rounds, date(2026, 6, 21))
+    assert season["rounds"] == 4
+    assert season["months"] == [
+        {"month": "2026-01", "rounds": 0},
+        {"month": "2026-02", "rounds": 0},
+        {"month": "2026-03", "rounds": 1},
+        {"month": "2026-04", "rounds": 1},
+        {"month": "2026-05", "rounds": 0},
+        {"month": "2026-06", "rounds": 2},
+    ]
+    # Across the new year, the months run back into the last one.
+    assert dashboard.season_activity(rounds, date(2026, 2, 1))["months"][0]["month"] == "2025-09"
+
+
+def test_round_flow_is_the_running_to_par_hole_by_hole():
+    flow = dashboard.round_flow(_round([5, 4, 3] + [4] * 15))
+    assert flow[:3] == [{"hole_number": 1, "to_par": 1}, {"hole_number": 2, "to_par": 1}, {"hole_number": 3, "to_par": 0}]
+    assert dashboard.round_flow(None) == []

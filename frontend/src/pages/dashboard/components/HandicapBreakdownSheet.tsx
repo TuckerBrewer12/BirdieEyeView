@@ -11,7 +11,6 @@ import {
   SheetContent,
   SheetTitle,
   StatDelta,
-  StatStrip,
   useFromBreakpoint,
 } from "@/brand";
 import { cn } from "@/brand/cn";
@@ -32,7 +31,7 @@ interface HandicapBreakdownSheetProps {
   open: boolean;
   onClose: () => void;
   handicapIndex: number | null | undefined;
-  /** How far the index moved across the dashboard's window, and the server's verdict on it. */
+  /** How far the index moved this month, and the server's verdict on it. */
   handicapChange: number | null;
   handicapVerdict: ChangeVerdict | null;
   whs: WhsBreakdown;
@@ -103,14 +102,14 @@ export function HandicapBreakdownSheet({
           </div>
         )}
 
-        <StatStrip className="rounded-2xl">
+        <div className="grid auto-cols-fr grid-flow-col overflow-hidden rounded-2xl bg-card shadow-surface">
           {stats.map((stat) => (
             <div key={stat.label} className="px-3.5 py-3 not-first:border-l not-first:border-border">
               <div className="text-lg font-semibold text-foreground">{stat.value}</div>
               <div className="mt-0.5 text-label text-muted-foreground">{stat.label}</div>
             </div>
           ))}
-        </StatStrip>
+        </div>
 
         {!hasRatedRounds && (
           <Alert>

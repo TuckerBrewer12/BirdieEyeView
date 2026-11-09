@@ -3,21 +3,28 @@ import {
   formatDayShort,
   formatOneDecimal,
   formatSignedOneDecimal,
+  formatWeekdayShort,
   pluralNoun,
+  scoreKindNoun,
+  type RoundSummary,
+  type ScoreKind,
 } from "@/domain";
 import type { UserDto } from "@/types/api";
-import type { Milestone, WhsRound } from "./model";
+import type { BestRound, WhsRound } from "./model";
 
 export function firstNameOf(user: UserDto | null): string {
   return user?.name?.split(" ")[0] ?? "Golfer";
 }
 
-/** "Hi, Tucker": the dashboard's greeting. */
-export function greetingOf(user: UserDto | null): string {
-  return `Hi, ${firstNameOf(user)}`;
+/** "Good evening": the greeting for the hour it is where the player is. */
+export function greetingFor(now: Date): string {
+  const hour = now.getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 }
 
-/** A figure's move as the strip shows it: which way, and how far, unsigned. No move shows nothing. */
+/** A figure's move: which way, and how far, unsigned. No move shows nothing. */
 export interface Move {
   direction: "up" | "down" | null;
   amount: string;
@@ -28,20 +35,50 @@ export function moveOf(change: number | null): Move {
   return { direction: change < 0 ? "down" : "up", amount: formatOneDecimal(Math.abs(change)) };
 }
 
-/** "Best · Blue Rock": the best round's figure, named by where it was played. */
-export function bestLabel(course: string | null | undefined): string {
-  return course ? `Best · ${formatCourseName(course)}` : "Best";
+/** "Last round · Sun, Jun 15" on a wide screen, "Last round · Jun 15" on a phone. */
+export function lastRoundLabel(date: string | null, { weekday }: { weekday: boolean }): string {
+  const day = weekday ? formatWeekdayShort(date) : formatDayShort(date);
+  return day ? `Last round · ${day}` : "Last round";
 }
 
-/** The goal card's verdict beside the target. */
+/** "40 · 38 · Blue": the nines' totals and the tee played. */
+export function ninesAndTee(round: RoundSummary): string {
+  const tee = round.teeBox ? round.teeBox.charAt(0).toUpperCase() + round.teeBox.slice(1) : null;
+  return [round.frontNine.total, round.backNine.total, tee].filter((part) => part != null).join(" · ");
+}
+
+/** "pars" in "10 pars": the word after a count of holes, lower case as it reads in a sentence. */
+export function countNoun(kind: ScoreKind, count: number): string {
+  return scoreKindNoun(kind, count).toLowerCase();
+}
+
+export function courseLabel(course: string | null | undefined): string {
+  return course ? formatCourseName(course) : "Unknown course";
+}
+
+/** "Blue Rock · Apr 18": where and when the best round was. */
+export function bestWhere(best: BestRound): string {
+  return [best.course ? formatCourseName(best.course) : null, formatDayShort(best.date)].filter(Boolean).join(" · ");
+}
+
+/** "Best · Blue Rock": the phone's best-round label. */
+export function bestLabel(best: BestRound | null): string {
+  return best?.course ? `Best · ${formatCourseName(best.course)}` : "Best";
+}
+
+/** The goal's verdict. */
 export function goalStatusLabel(onTrack: boolean): string {
   return onTrack ? "On track" : "Not yet";
 }
 
-/** "Next: fewer three-putts": the saver worth the most strokes, as the next thing to work on. */
-export function goalNextLabel(focus: string | null): string | null {
-  if (!focus) return null;
-  return `Next: ${focus.charAt(0).toLowerCase()}${focus.slice(1)}`;
+/** "3 rounds", "no rounds": a month's golf, read out. */
+export function roundsLabel(rounds: number): string {
+  return rounds === 0 ? "no rounds" : `${rounds} ${pluralNoun(rounds, "round")}`;
+}
+
+/** "On track · 4 rounds this season": the phone's goal line. */
+export function goalSeasonLine(onTrack: boolean, seasonRounds: number): string {
+  return `${goalStatusLabel(onTrack)} · ${seasonRounds} ${pluralNoun(seasonRounds, "round")} this season`;
 }
 
 export function courseLabelForWhs(row: WhsRound): string {
@@ -75,23 +112,4 @@ export function adjustmentLabel(adjustment: number): string | null {
 
 export function whsContextNote(countUsed: number): string {
   return `The World Handicap System uses your best ${countUsed || "N"} ${pluralNoun(countUsed || 2, "differential")} from the last 20 rounds. Differentials measure how well you played relative to the course difficulty.`;
-}
-
-const MILESTONE_WORDING: Record<Milestone["kind"], { title: string; figure: (value: number) => string }> = {
-  under_par: { title: "First round under par", figure: String },
-  // A break is a round that came in under the threshold, so 80 reads "<80".
-  score_break: { title: "Best score", figure: (threshold) => `<${threshold}` },
-  putt_break: { title: "Fewest putts", figure: (threshold) => `<${threshold}` },
-  par_streak: { title: "Longest par streak", figure: String },
-};
-
-/** What a milestone is, and the number the feed shows beside it. */
-export function milestoneWording(milestone: Milestone): { title: string; figure: string } {
-  const wording = MILESTONE_WORDING[milestone.kind];
-  return { title: wording.title, figure: wording.figure(milestone.value) };
-}
-
-/** "Blue Rock · Apr 18": where and when a milestone was set. */
-export function milestoneWhere(milestone: Milestone): string {
-  return [formatCourseName(milestone.course), formatDayShort(milestone.date)].filter(Boolean).join(" · ");
 }

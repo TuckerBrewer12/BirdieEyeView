@@ -84,8 +84,6 @@ export {
   StatCard,
 } from "./components/Stat";
 export type { StatDirection, StatTone } from "./components/Stat";
-export { StatStrip, StatStripItem } from "./components/StatStrip";
-export type { StatStripItemProps } from "./components/StatStrip";
 export { TeeSwatch } from "./components/TeeSwatch";
 export { ToParFigure } from "./components/ToParFigure";
 export { Reveal } from "./components/Reveal";
@@ -140,7 +138,7 @@ export { ActivityCalendar } from "./charts/ActivityCalendar";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
 export { ScoreMixBar } from "./charts/ScoreMixBar";
-export { ScoreHandicapOverlay, ScoreHandicapOverlayLegend } from "./charts/ScoreHandicapOverlay";
+export { RunningToParLine } from "./charts/RunningToParLine";
 export { Sparkline } from "./charts/Sparkline";
 export type { SparklineSeries, SparklineTone } from "./charts/Sparkline";
 export { HoleMetricBars } from "./charts/HoleMetricBars";
@@ -160,3 +158,4 @@ export { TrendAreaChart } from "./charts/TrendAreaChart";
 export type { TrendAreaPoint, TrendAreaSeries, TrendAreaTone } from "./charts/TrendAreaChart";
 
 export { useFromBreakpoint } from "./useFromBreakpoint";
+export { ProgressRing } from "./components/ProgressRing";

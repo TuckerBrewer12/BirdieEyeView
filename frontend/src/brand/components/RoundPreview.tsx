@@ -40,7 +40,7 @@ interface RoundCompactProps {
   round: RoundSummary;
   /** A row in a card's list of rounds: the date, the course, a strip of the holes, the score. */
   variant: "compact";
-  /** `stacked` is the phone's: no tees or putts, the score over its to-par. */
+  /** `stacked` is the phone's: the date under the course, and no strip. */
   layout?: "inline" | "stacked";
   onClick?: () => void;
 }
@@ -316,25 +316,13 @@ function RoundTicket({ round, label, actionLabel, onClick }: Omit<RoundTicketPro
 }
 
 /**
- * A round as one row of a card's list: the date, the course, a cell per hole coloured by how it
- * went, and the score with its to-par. The card draws the rules between rows.
+ * A round as one row of a card's list of rounds: when, where, a cell per hole coloured by how it
+ * went, and the score with its to-par. On a phone the date goes under the course and the cells go.
  */
 function RoundCompact({ round, layout = "inline", onClick }: Omit<RoundCompactProps, "variant">) {
   const stacked = layout === "stacked";
-  const dateParts = dayParts(round.date);
   const courseName = round.course?.name ? formatCourseName(round.course.name) : "Unknown course";
-  const meta = [round.teeBox, round.putts != null ? `${round.putts} putts` : null].filter(Boolean).join(" · ");
-  const toPar = round.toPar != null && (
-    <span
-      className={cn(
-        "rounded-full bg-muted text-center font-semibold",
-        stacked ? "px-1.75 py-px text-label" : "w-10 py-0.5 text-body-sm",
-        toParTextClass(round.toPar),
-      )}
-    >
-      {toParLabel(round.toPar)}
-    </span>
-  );
+  const date = formatDayShort(round.date) ?? "—";
 
   return (
     <RowButton
@@ -343,43 +331,37 @@ function RoundCompact({ round, layout = "inline", onClick }: Omit<RoundCompactPr
       onClick={onClick}
       disabled={!onClick}
       className={cn(
-        "flex w-full items-center",
-        stacked ? "gap-3 px-3.5 py-3" : "gap-4 px-5 py-3",
+        "flex w-full items-center rounded-2xl",
+        stacked ? "gap-3 px-3 py-2.75" : "gap-4.5 px-3.5 py-3",
         onClick ? "cursor-pointer hover:bg-muted/half" : "cursor-default",
       )}
     >
-      <span className={cn("flex shrink-0 flex-col items-center", stacked ? "w-7.5" : "w-9")}>
-        {dateParts ? (
-          <>
-            <span className="text-meta font-semibold uppercase tracking-chip text-muted-foreground">{dateParts.month}</span>
-            <span className="text-lg font-semibold leading-tight text-foreground">{dateParts.day}</span>
-          </>
-        ) : (
-          <span className="text-label text-muted-foreground">—</span>
-        )}
-      </span>
-
-      <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <span className="flex min-w-0 items-baseline gap-2">
-          <span className="truncate text-sm font-semibold text-foreground">{courseName}</span>
-          {!stacked && meta && <span className="shrink-0 text-body-sm text-muted-foreground">{meta}</span>}
-        </span>
-        {round.holes.length > 0 && (
-          <HoleScoreBars holes={round.holes} variant="strip" className={stacked ? undefined : "max-w-90"} />
-        )}
-      </span>
-
       {stacked ? (
-        <span className="flex shrink-0 flex-col items-end gap-0.75">
-          <span className="text-xl font-semibold leading-none text-foreground">{round.score ?? "—"}</span>
-          {toPar}
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-body-lg font-semibold text-foreground">{courseName}</span>
+          <span className="text-body-sm text-muted-foreground">{date}</span>
         </span>
       ) : (
         <>
-          <span className="shrink-0 text-figure text-foreground">{round.score ?? "—"}</span>
-          {toPar}
+          <span className="w-13 shrink-0 text-body text-muted-foreground">{date}</span>
+          <span className="min-w-0 flex-1 truncate text-body-lg font-semibold text-foreground">{courseName}</span>
+          <span className="flex-[1.3]">
+            {round.holes.length > 0 && <HoleScoreBars holes={round.holes} variant="strip" />}
+          </span>
         </>
       )}
+      <span className={cn("shrink-0 text-xl font-semibold text-foreground", !stacked && "w-10 text-right")}>
+        {round.score ?? "—"}
+      </span>
+      <span
+        className={cn(
+          "shrink-0 rounded-full bg-background py-0.75 text-center text-body-sm font-semibold",
+          stacked ? "w-9.5" : "w-10",
+          toParTextClass(round.toPar),
+        )}
+      >
+        {toParLabel(round.toPar) ?? "—"}
+      </span>
     </RowButton>
   );
 }

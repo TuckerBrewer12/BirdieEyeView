@@ -1436,8 +1436,10 @@ export const sampleGolfer = {
     "best_recent_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd",
     "best_round": 75,
     "best_round_course": "Presidio Golf Course",
+    "best_round_date": "2026-05-25T09:00:00",
     "best_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd",
-    "handicap_change": {"delta": -1.3, "delta_verdict": "good", "direction": "down"},
+    "best_round_to_par": 3,
+    "handicap_change": {"delta": -1.3, "delta_verdict": "good", "direction": "down", "this_month": 0.0, "this_month_verdict": "neutral"},
     "handicap_index": 7.0,
     "handicap_trend": [
       {"differential": 16.4, "differential_status": "out", "handicap_index": 8.7, "hi_threshold": 9.5, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "used_in_hi": false},
@@ -1460,6 +1462,26 @@ export const sampleGolfer = {
       {"differential": 3.6, "differential_status": "counting", "handicap_index": 7.4, "hi_threshold": 9.5, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "round_index": 22, "used_in_hi": true},
       {"differential": 9.6, "differential_status": "close", "handicap_index": 7.4, "hi_threshold": 9.5, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "used_in_hi": false},
       {"differential": 7.0, "differential_status": "counting", "handicap_index": 7.0, "hi_threshold": 9.5, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "used_in_hi": true}
+    ],
+    "last_round_flow": [
+      {"hole_number": 1, "to_par": 0},
+      {"hole_number": 2, "to_par": 0},
+      {"hole_number": 3, "to_par": 0},
+      {"hole_number": 4, "to_par": 1},
+      {"hole_number": 5, "to_par": 1},
+      {"hole_number": 6, "to_par": 1},
+      {"hole_number": 7, "to_par": 3},
+      {"hole_number": 8, "to_par": 4},
+      {"hole_number": 9, "to_par": 5},
+      {"hole_number": 10, "to_par": 5},
+      {"hole_number": 11, "to_par": 4},
+      {"hole_number": 12, "to_par": 5},
+      {"hole_number": 13, "to_par": 6},
+      {"hole_number": 14, "to_par": 6},
+      {"hole_number": 15, "to_par": 6},
+      {"hole_number": 16, "to_par": 6},
+      {"hole_number": 17, "to_par": 7},
+      {"hole_number": 18, "to_par": 7}
     ],
     "milestones": [
       {"course": "Sharp Park Golf Course", "date": "2026/5/28", "kind": "par_streak", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "value": 7},
@@ -1693,6 +1715,17 @@ export const sampleGolfer = {
       {"round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 19, "scramble_failures": 8, "scramble_opportunities": 10, "scramble_successes": 2, "scrambling_percentage": 20.0},
       {"round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 20, "scramble_failures": 6, "scramble_opportunities": 9, "scramble_successes": 3, "scrambling_percentage": 33.33333333333333}
     ],
+    "season": {
+      "months": [
+        {"month": "2026-01", "rounds": 0},
+        {"month": "2026-02", "rounds": 0},
+        {"month": "2026-03", "rounds": 8},
+        {"month": "2026-04", "rounds": 8},
+        {"month": "2026-05", "rounds": 8},
+        {"month": "2026-06", "rounds": 0}
+      ],
+      "rounds": 24
+    },
     "total_rounds": 24,
     "up_and_down_trend": [
       {"opportunities": 14, "percentage": 28.6, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "successes": 4},
@@ -1745,34 +1778,6 @@ export const sampleGolfer = {
       ],
       "show_calculation": true,
       "window_size": 20
-    },
-    "windows": {
-      "last_20": {
-        "handicap_change": -1.7,
-        "handicap_verdict": "good",
-        "rounds": 20,
-        "score_mix": {"birdie": 5.555555555555555, "bogey": 39.72222222222222, "double": 10.277777777777777, "eagle": 0.0, "par": 43.611111111111114, "quad": 0.0, "triple": 0.8333333333333334},
-        "score_mix_holes": 360,
-        "scoring_average": 82.3,
-        "scoring_average_change": -0.6,
-        "scoring_average_verdict": "good",
-        "scrambling_pct": 31.73913043478261,
-        "size": 20,
-        "up_and_down_pct": 40.43478260869565
-      },
-      "last_5": {
-        "handicap_change": -1.4,
-        "handicap_verdict": "good",
-        "rounds": 5,
-        "score_mix": {"birdie": 5.555555555555555, "bogey": 35.55555555555556, "double": 4.444444444444445, "eagle": 0.0, "par": 54.44444444444444, "quad": 0.0, "triple": 0.0},
-        "score_mix_holes": 90,
-        "scoring_average": 79.0,
-        "scoring_average_change": -3.3,
-        "scoring_average_verdict": "good",
-        "scrambling_pct": 35.55555555555556,
-        "size": 5,
-        "up_and_down_pct": 37.77777777777778
-      }
     }
   },
   "detailRounds": [

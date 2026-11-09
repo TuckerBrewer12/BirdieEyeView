@@ -3,27 +3,28 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { useGoalReport } from "@/data/useGoalReport";
 import { useUser } from "@/data/useUser";
-import { Round, trendPointsFrom, type RoundSummary, type RoundTrendPoint } from "@/domain";
+import { Round, trendPointsFrom, type RoundSummary, type RunningToPar } from "@/domain";
 import type { DashboardDto, UserDto } from "@/types/api";
 import {
   dashboardRepository,
   type DashboardRepository,
 } from "./dashboardRepository";
 import {
-  bestRecentRoundFrom,
+  bestRoundFrom,
   goalProgress,
-  milestonesFrom,
+  handicapMonthFrom,
+  lastRoundFlowFrom,
+  seasonFrom,
   whsFrom,
-  windowFiguresFrom,
+  type BestRound,
   type ChangeVerdict,
-  type DashboardWindowKey,
   type GoalProgress,
-  type Milestone,
+  type HandicapMonth,
+  type Season,
   type WhsBreakdown,
-  type WindowFigures,
 } from "./model";
 
-export type { ChangeVerdict, DashboardWindowKey, WhsBreakdown, WindowFigures };
+export type { ChangeVerdict, WhsBreakdown };
 
 export interface DashboardPageViewModel {
   data: DashboardDto | null;
@@ -31,34 +32,27 @@ export interface DashboardPageViewModel {
   loading: boolean;
   error: Error | null;
   refetch: () => void;
-  /** The Last 5 / Last 20 switch. */
-  window: DashboardWindowKey;
-  setWindow: (window: DashboardWindowKey) => void;
-  /** The figures over the picked window. Null until the dashboard loads. */
-  figures: WindowFigures | null;
-  /** Score and handicap per round across the picked window, oldest first. */
-  trend: RoundTrendPoint[];
-  /** The index after each round in the window, oldest first: the handicap figure's line. */
+  /** The index and its move this month: the greeting's line and the phone's handicap card. */
+  handicap: HandicapMonth;
+  /** The index after each of the last 20 rounds, oldest first: the phone's handicap line. */
   handicapLine: (number | null)[];
-  /** Each round's five-round average in the window: the scoring average's line. */
+  /** Each round's five-round average, oldest first: the scoring average's line. */
   averageLine: (number | null)[];
-  /** Each round's scrambling rate in the window: null where it had no missed green. */
-  scramblingLine: (number | null)[];
-  milestones: Milestone[];
+  /** The newest round, the dashboard's lead. Null before the first round. */
+  lastRound: RoundSummary | null;
+  /** The newest round's running score to par. */
+  lastRoundFlow: RunningToPar[];
+  /** The three rounds before it. */
+  earlierRounds: RoundSummary[];
+  /** Null before a scored round. */
+  best: BestRound | null;
+  season: Season;
+  /** Null until the player sets a scoring goal. */
+  goal: GoalProgress | null;
+  whs: WhsBreakdown;
   handicapSheetOpen: boolean;
   openHandicapSheet: () => void;
   closeHandicapSheet: () => void;
-  /** Every round the dashboard lists, newest first: the calendar's. */
-  rounds: RoundSummary[];
-  /** The best of the listed rounds, as the server picked it. */
-  bestRound: RoundSummary | null;
-  /** The desktop card's rows. */
-  recentRounds: RoundSummary[];
-  /** The phone's, one fewer. */
-  phoneRounds: RoundSummary[];
-  whs: WhsBreakdown;
-  /** Null until the player sets a scoring goal. */
-  goal: GoalProgress | null;
 }
 
 const EMPTY_WHS: WhsBreakdown = {
@@ -71,15 +65,15 @@ const EMPTY_WHS: WhsBreakdown = {
   showCalculation: false,
 };
 
-const DESKTOP_ROUNDS = 4;
-const PHONE_ROUNDS = 3;
+const EMPTY_HANDICAP: HandicapMonth = { index: null, change: null, verdict: null };
+const EMPTY_SEASON: Season = { rounds: 0, months: [] };
+const EARLIER_ROUNDS = 3;
 
 export function useDashboardPageViewModel(
   userId: string,
   repository: DashboardRepository = dashboardRepository,
 ): DashboardPageViewModel {
   const [handicapSheetOpen, setHandicapSheetOpen] = useState(false);
-  const [window, setWindow] = useState<DashboardWindowKey>("last5");
 
   const { data: fetched, isLoading: loading, error, refetch } = useQuery({
     queryKey: queryKeys.dashboard(userId),
@@ -95,24 +89,11 @@ export function useDashboardPageViewModel(
     () => (data?.recent_rounds ?? []).map(Round.fromSummary),
     [data?.recent_rounds],
   );
-  const bestRound = useMemo(
-    () => bestRecentRoundFrom(rounds, data?.best_recent_round_id),
-    [rounds, data?.best_recent_round_id],
-  );
+  const trend = useMemo(() => trendPointsFrom(data), [data]);
+  const lastRoundFlow = useMemo(() => (data ? lastRoundFlowFrom(data) : []), [data]);
 
   const openHandicapSheet = useCallback(() => setHandicapSheetOpen(true), []);
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
-
-  const figures = useMemo(
-    () => (data ? windowFiguresFrom(window === "last5" ? data.windows.last_5 : data.windows.last_20) : null),
-    [data, window],
-  );
-  const size = figures?.size ?? 0;
-  const trend = useMemo(() => trendPointsFrom(data).slice(-size), [data, size]);
-  const scramblingLine = useMemo(
-    () => (data?.scrambling_trend ?? []).slice(-size).map((row) => row.scrambling_percentage),
-    [data, size],
-  );
 
   return {
     data,
@@ -120,22 +101,18 @@ export function useDashboardPageViewModel(
     loading,
     error: error as Error | null,
     refetch: () => void refetch(),
-    window,
-    setWindow,
-    figures,
-    trend,
+    handicap: data ? handicapMonthFrom(data) : EMPTY_HANDICAP,
     handicapLine: trend.map((point) => point.handicapIndex),
     averageLine: trend.map((point) => point.rollingAverage),
-    scramblingLine,
-    milestones: data ? milestonesFrom(data.milestones) : [],
+    lastRound: rounds[0] ?? null,
+    lastRoundFlow,
+    earlierRounds: rounds.slice(1, 1 + EARLIER_ROUNDS),
+    best: data ? bestRoundFrom(data) : null,
+    season: data ? seasonFrom(data) : EMPTY_SEASON,
+    goal: goalProgress(user?.scoring_goal, goalReport ?? null),
+    whs: data ? whsFrom(data.whs) : EMPTY_WHS,
     handicapSheetOpen,
     openHandicapSheet,
     closeHandicapSheet,
-    rounds,
-    bestRound,
-    recentRounds: rounds.slice(0, DESKTOP_ROUNDS),
-    phoneRounds: rounds.slice(0, PHONE_ROUNDS),
-    whs: data ? whsFrom(data.whs) : EMPTY_WHS,
-    goal: goalProgress(user?.scoring_goal, goalReport ?? null),
   };
 }

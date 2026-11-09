@@ -48,9 +48,9 @@ export function DashboardPage({ userId }: DashboardPageProps) {
       <HandicapBreakdownSheet
         open={vm.handicapSheetOpen}
         onClose={vm.closeHandicapSheet}
-        handicapIndex={vm.data.handicap_index}
-        handicapChange={vm.figures?.handicapChange ?? null}
-        handicapVerdict={vm.figures?.handicapVerdict ?? null}
+        handicapIndex={vm.handicap.index}
+        handicapChange={vm.handicap.change}
+        handicapVerdict={vm.handicap.verdict}
         whs={vm.whs}
       />
     </>

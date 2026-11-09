@@ -1,9 +1,10 @@
 import { test } from "./DashboardPage.robot";
 
-test("shows greeting and scoring average", async ({ dashboard }) => {
+test("leads with the last round", async ({ dashboard }) => {
   await dashboard.open();
   await dashboard.seesGreeting();
-  await dashboard.seesScoringAverage("76.8");
+  await dashboard.seesLastRound("Half Moon Bay", "78");
+  await dashboard.seesScoringAverage("74.7");
 });
 
 test("handicap sheet opens and closes", async ({ dashboard }) => {
@@ -14,39 +15,38 @@ test("handicap sheet opens and closes", async ({ dashboard }) => {
   await dashboard.doesNotSeeHandicapSheet();
 });
 
-test("tapping a milestone opens its round", async ({ dashboard }) => {
+test("the last round opens it", async ({ dashboard }) => {
   await dashboard.open();
-  await dashboard.tapMilestone("First round under par");
-  await dashboard.isAtRound("round-3");
-});
-
-test("tapping a played day on the activity calendar opens its round", async ({ dashboard }) => {
-  await dashboard.open();
-  await dashboard.tapActivityDay("2026-06-15");
+  await dashboard.openLastRound();
   await dashboard.isAtRound("round-1");
 });
 
-test("the range switches to the last 20 rounds", async ({ dashboard }) => {
+test("the best round opens it", async ({ dashboard }) => {
   await dashboard.open();
-  await dashboard.seesWindow("Last 5");
-  await dashboard.showWindow("Last 20");
-  await dashboard.seesWindow("Last 20");
-});
-
-test("tapping a recent round opens it", async ({ dashboard }) => {
-  await dashboard.open();
-  await dashboard.openRecentRound("Blue Rock");
+  await dashboard.openBestRound();
   await dashboard.isAtRound("round-3");
 });
 
-test("view all opens the round list", async ({ dashboard }) => {
+test("tapping an earlier round opens it", async ({ dashboard }) => {
   await dashboard.open();
-  await dashboard.viewAllRounds();
+  await dashboard.openEarlierRound("Blue Rock");
+  await dashboard.isAtRound("round-3");
+});
+
+test("see all opens the round list", async ({ dashboard }) => {
+  await dashboard.open();
+  await dashboard.seeAllRounds();
   await dashboard.isAtRounds();
 });
 
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test("leads with the last round", async ({ dashboard }) => {
+    await dashboard.open();
+    await dashboard.seesLastRound("Half Moon Bay", "78");
+    await dashboard.seesScoringAverage("74.7");
+  });
 
   test("tapping the goal card opens The Lab", async ({ dashboard }) => {
     await dashboard.open();

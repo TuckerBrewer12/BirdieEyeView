@@ -1909,6 +1909,18 @@
             ],
             "title": "Best Round Course"
           },
+          "best_round_date": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Round Date"
+          },
           "best_round_id": {
             "anyOf": [
               {
@@ -1919,6 +1931,17 @@
               }
             ],
             "title": "Best Round Id"
+          },
+          "best_round_to_par": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Round To Par"
           },
           "handicap_change": {
             "$ref": "#/components/schemas/HandicapChange"
@@ -1939,6 +1962,13 @@
               "$ref": "#/components/schemas/HandicapTrendRow"
             },
             "title": "Handicap Trend",
+            "type": "array"
+          },
+          "last_round_flow": {
+            "items": {
+              "$ref": "#/components/schemas/HoleRunningToPar"
+            },
+            "title": "Last Round Flow",
             "type": "array"
           },
           "milestones": {
@@ -2070,6 +2100,9 @@
             "title": "Scrambling Trend",
             "type": "array"
           },
+          "season": {
+            "$ref": "#/components/schemas/SeasonActivity"
+          },
           "total_rounds": {
             "title": "Total Rounds",
             "type": "integer"
@@ -2083,9 +2116,6 @@
           },
           "whs": {
             "$ref": "#/components/schemas/WhsBreakdown"
-          },
-          "windows": {
-            "$ref": "#/components/schemas/DashboardWindows"
           }
         },
         "required": [
@@ -2094,6 +2124,8 @@
           "best_round",
           "best_round_id",
           "best_round_course",
+          "best_round_to_par",
+          "best_round_date",
           "handicap_index",
           "recent_rounds",
           "best_recent_round_id",
@@ -2116,150 +2148,10 @@
           "handicap_trend",
           "scrambling_trend",
           "up_and_down_trend",
-          "windows"
+          "season",
+          "last_round_flow"
         ],
         "title": "DashboardResponse",
-        "type": "object"
-      },
-      "DashboardWindow": {
-        "description": "The dashboard's figures over its last `size` rounds (`analytics.dashboard.window_figures`).",
-        "properties": {
-          "handicap_change": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Handicap Change"
-          },
-          "handicap_verdict": {
-            "anyOf": [
-              {
-                "enum": [
-                  "good",
-                  "bad",
-                  "neutral"
-                ],
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Handicap Verdict"
-          },
-          "rounds": {
-            "default": 0,
-            "title": "Rounds",
-            "type": "integer"
-          },
-          "score_mix": {
-            "$ref": "#/components/schemas/ScoreMix"
-          },
-          "score_mix_holes": {
-            "default": 0,
-            "title": "Score Mix Holes",
-            "type": "integer"
-          },
-          "scoring_average": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scoring Average"
-          },
-          "scoring_average_change": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scoring Average Change"
-          },
-          "scoring_average_verdict": {
-            "anyOf": [
-              {
-                "enum": [
-                  "good",
-                  "bad",
-                  "neutral"
-                ],
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scoring Average Verdict"
-          },
-          "scrambling_pct": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scrambling Pct"
-          },
-          "size": {
-            "title": "Size",
-            "type": "integer"
-          },
-          "up_and_down_pct": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Up And Down Pct"
-          }
-        },
-        "required": [
-          "size",
-          "rounds",
-          "scoring_average",
-          "scoring_average_change",
-          "scoring_average_verdict",
-          "handicap_change",
-          "handicap_verdict",
-          "scrambling_pct",
-          "up_and_down_pct",
-          "score_mix",
-          "score_mix_holes"
-        ],
-        "title": "DashboardWindow",
-        "type": "object"
-      },
-      "DashboardWindows": {
-        "description": "The Last 5 / Last 20 switch's two windows.",
-        "properties": {
-          "last_20": {
-            "$ref": "#/components/schemas/DashboardWindow"
-          },
-          "last_5": {
-            "$ref": "#/components/schemas/DashboardWindow"
-          }
-        },
-        "required": [
-          "last_5",
-          "last_20"
-        ],
-        "title": "DashboardWindows",
         "type": "object"
       },
       "FieldConfidence": {
@@ -2893,12 +2785,41 @@
               }
             ],
             "title": "Direction"
+          },
+          "this_month": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "This Month"
+          },
+          "this_month_verdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "good",
+                  "bad",
+                  "neutral"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "This Month Verdict"
           }
         },
         "required": [
           "delta",
           "direction",
-          "delta_verdict"
+          "delta_verdict",
+          "this_month",
+          "this_month_verdict"
         ],
         "title": "HandicapChange",
         "type": "object"
@@ -3156,6 +3077,24 @@
           "number"
         ],
         "title": "HoleInput",
+        "type": "object"
+      },
+      "HoleRunningToPar": {
+        "properties": {
+          "hole_number": {
+            "title": "Hole Number",
+            "type": "integer"
+          },
+          "to_par": {
+            "title": "To Par",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "hole_number",
+          "to_par"
+        ],
+        "title": "HoleRunningToPar",
         "type": "object"
       },
       "HoleScoreInput": {
@@ -7120,6 +7059,48 @@
           "scrambling_percentage"
         ],
         "title": "ScramblingTrendRow",
+        "type": "object"
+      },
+      "SeasonActivity": {
+        "description": "Rounds this calendar year, and each of the last six months' count, oldest first.",
+        "properties": {
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/SeasonMonth"
+            },
+            "title": "Months",
+            "type": "array"
+          },
+          "rounds": {
+            "default": 0,
+            "title": "Rounds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rounds",
+          "months"
+        ],
+        "title": "SeasonActivity",
+        "type": "object"
+      },
+      "SeasonMonth": {
+        "properties": {
+          "month": {
+            "title": "Month",
+            "type": "string"
+          },
+          "rounds": {
+            "default": 0,
+            "title": "Rounds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "month",
+          "rounds"
+        ],
+        "title": "SeasonMonth",
         "type": "object"
       },
       "SendFriendRequest": {

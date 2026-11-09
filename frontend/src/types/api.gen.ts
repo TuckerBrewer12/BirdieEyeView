@@ -1178,13 +1178,19 @@ export interface components {
             best_round: number | null;
             /** Best Round Course */
             best_round_course: string | null;
+            /** Best Round Date */
+            best_round_date: string | null;
             /** Best Round Id */
             best_round_id: string | null;
+            /** Best Round To Par */
+            best_round_to_par: number | null;
             handicap_change: components["schemas"]["HandicapChange"];
             /** Handicap Index */
             handicap_index: number | null;
             /** Handicap Trend */
             handicap_trend: components["schemas"]["HandicapTrendRow"][];
+            /** Last Round Flow */
+            last_round_flow: components["schemas"]["HoleRunningToPar"][];
             /** Milestones */
             milestones: components["schemas"]["Milestone"][];
             /** Putts Per Round */
@@ -1215,53 +1221,12 @@ export interface components {
             scoring_average_verdict: ("good" | "bad" | "neutral") | null;
             /** Scrambling Trend */
             scrambling_trend: components["schemas"]["ScramblingTrendRow"][];
+            season: components["schemas"]["SeasonActivity"];
             /** Total Rounds */
             total_rounds: number;
             /** Up And Down Trend */
             up_and_down_trend: components["schemas"]["UpAndDownTrendRow"][];
             whs: components["schemas"]["WhsBreakdown"];
-            windows: components["schemas"]["DashboardWindows"];
-        };
-        /**
-         * DashboardWindow
-         * @description The dashboard's figures over its last `size` rounds (`analytics.dashboard.window_figures`).
-         */
-        DashboardWindow: {
-            /** Handicap Change */
-            handicap_change: number | null;
-            /** Handicap Verdict */
-            handicap_verdict: ("good" | "bad" | "neutral") | null;
-            /**
-             * Rounds
-             * @default 0
-             */
-            rounds: number;
-            score_mix: components["schemas"]["ScoreMix"];
-            /**
-             * Score Mix Holes
-             * @default 0
-             */
-            score_mix_holes: number;
-            /** Scoring Average */
-            scoring_average: number | null;
-            /** Scoring Average Change */
-            scoring_average_change: number | null;
-            /** Scoring Average Verdict */
-            scoring_average_verdict: ("good" | "bad" | "neutral") | null;
-            /** Scrambling Pct */
-            scrambling_pct: number | null;
-            /** Size */
-            size: number;
-            /** Up And Down Pct */
-            up_and_down_pct: number | null;
-        };
-        /**
-         * DashboardWindows
-         * @description The Last 5 / Last 20 switch's two windows.
-         */
-        DashboardWindows: {
-            last_20: components["schemas"]["DashboardWindow"];
-            last_5: components["schemas"]["DashboardWindow"];
         };
         /**
          * FieldConfidence
@@ -1500,6 +1465,10 @@ export interface components {
             delta_verdict: ("good" | "bad" | "neutral") | null;
             /** Direction */
             direction: ("up" | "down" | "flat") | null;
+            /** This Month */
+            this_month: number | null;
+            /** This Month Verdict */
+            this_month_verdict: ("good" | "bad" | "neutral") | null;
         };
         /**
          * HandicapTrendRow
@@ -1572,6 +1541,13 @@ export interface components {
             number: number;
             /** Par */
             par?: number | null;
+        };
+        /** HoleRunningToPar */
+        HoleRunningToPar: {
+            /** Hole Number */
+            hole_number: number;
+            /** To Par */
+            to_par: number;
         };
         /** HoleScoreInput */
         HoleScoreInput: {
@@ -2779,6 +2755,29 @@ export interface components {
             scramble_successes: number;
             /** Scrambling Percentage */
             scrambling_percentage: number | null;
+        };
+        /**
+         * SeasonActivity
+         * @description Rounds this calendar year, and each of the last six months' count, oldest first.
+         */
+        SeasonActivity: {
+            /** Months */
+            months: components["schemas"]["SeasonMonth"][];
+            /**
+             * Rounds
+             * @default 0
+             */
+            rounds: number;
+        };
+        /** SeasonMonth */
+        SeasonMonth: {
+            /** Month */
+            month: string;
+            /**
+             * Rounds
+             * @default 0
+             */
+            rounds: number;
         };
         /** SendFriendRequest */
         SendFriendRequest: {

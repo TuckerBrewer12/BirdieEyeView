@@ -132,9 +132,6 @@ async def test_the_dashboards_breakdown_and_change_add_up_to_the_index_shown(gol
     assert len(counting) == whs.count_used
     indexes = [row.handicap_index for row in dashboard.handicap_trend if row.handicap_index is not None]
     assert dashboard.handicap_change.delta == round(indexes[-1] - indexes[-6], 1)
-    # The Last 5 / Last 20 switch reads the same trend: the newest index less the window's first.
-    assert dashboard.windows.last_5.handicap_change == round(indexes[-1] - indexes[-5], 1)
-    assert dashboard.windows.last_20.handicap_change == round(indexes[-1] - indexes[0], 1)
 
 
 def test_the_trend_reads_the_20_rounds_ending_with_each_round():

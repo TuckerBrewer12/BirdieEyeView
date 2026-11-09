@@ -5,15 +5,15 @@ import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
 import { indexScale, knownValues, lastKnownIndex, paddedExtent } from "./scales";
 
-/** `good` and `bad` carry the server's verdict on the move the line shows; `muted` is no verdict. */
-type SparklineTone = "primary" | "contrast" | "good" | "bad" | "muted";
+/** `good` and `bad` carry the server's verdict on the move the line shows; `index` is the handicap's blue. */
+type SparklineTone = "primary" | "contrast" | "good" | "bad" | "index";
 
 const STROKE: Record<SparklineTone, string> = {
   primary: tokens.color.primary,
   contrast: tokens.color.score.triple.text,
   good: tokens.color.score.birdie.text,
   bad: tokens.color.score.bogey.text,
-  muted: tokens.color.chart.reference,
+  index: tokens.color.chart.series2,
 };
 
 const SWATCH: Record<SparklineTone, string> = {
@@ -21,7 +21,7 @@ const SWATCH: Record<SparklineTone, string> = {
   contrast: "bg-score-triple",
   good: "bg-score-birdie",
   bad: "bg-score-bogey",
-  muted: "bg-chart-reference",
+  index: "bg-chart-series2",
 };
 
 interface SparklineSeries {
@@ -41,13 +41,16 @@ interface SparklineProps {
   /** A dashed line at this value: the average the server worked out for the line. None without it. */
   reference?: number | null;
   /**
-   * `compact` is the squatter 96 x 32 box beside a KPI tile's figure; `strip` the flat 120 x 24
-   * line under a figure in a stat strip and `hero` the 120 x 44 one beside a phone card's lead
-   * figure, both with their end dot filled. Each is drawn at its own size so the stroke stays 2px.
+   * `compact` is the squatter 96 x 32 box beside a KPI tile's figure; `card` the flat 150 x 30
+   * line under a card's lead figure, with no end dot; `mini` the 44 x 30 one beside a figure in a
+   * phone's header card, its end dot filled. Each is drawn at its own size so its stroke holds.
    */
-  size?: "default" | "compact" | "strip" | "hero";
+  size?: "default" | "compact" | "card" | "mini";
   className?: string;
 }
+
+// The card and mini lines are drawn at the size they show, so they keep it rather than fill the row.
+const OWN_WIDTH = { card: "w-37.5", mini: "w-11 shrink-0" } as const;
 
 /** Which way a figure has been heading: a small line, no axes, the latest value marked. */
 export function Sparkline({
@@ -59,14 +62,14 @@ export function Sparkline({
   className,
 }: SparklineProps) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
-  const { stroke } = tokens.chart.sparkline;
   const { sparkline } = tokens.chart;
   const { width: W, height: H } = size === "default" ? sparkline : sparkline[size];
-  // The strip and hero lines sit beside a figure with no card rim to clear, so their dot is filled.
-  const own = size === "strip" || size === "hero" ? sparkline[size] : null;
+  // The card and mini lines sit on a card with no rim to clear, so a dot they draw is filled.
+  const own = size === "card" || size === "mini" ? sparkline[size] : null;
   const filled = own != null;
   const pad = own?.pad ?? sparkline.pad;
   const dot = own?.dot ?? sparkline.dot;
+  const stroke = own?.stroke ?? sparkline.stroke;
 
   const length = Math.max(0, ...series.map((s) => s.values.length));
   const all = series.flatMap((s) => s.values);
@@ -97,7 +100,10 @@ export function Sparkline({
   const labelled = series.filter((s) => s.label);
 
   return (
-    <div data-slot="sparkline" className={cn("flex flex-col gap-1.5", className)}>
+    <div
+      data-slot="sparkline"
+      className={cn("flex flex-col gap-1.5", (size === "card" || size === "mini") && OWN_WIDTH[size], className)}
+    >
       <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full overflow-visible" aria-hidden>
         {fill && (
           <defs>
@@ -133,7 +139,7 @@ export function Sparkline({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              {endValue != null && (
+              {endValue != null && dot > 0 && (
                 <circle
                   cx={x(end)}
                   cy={y(endValue)}

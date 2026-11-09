@@ -5,6 +5,7 @@ export {
   playedScoreKinds,
   scoreKind,
   scoreKindCountLabel,
+  scoreKindNoun,
   scoreMixFrom,
   strokesToPar,
   toParLabel,
@@ -47,7 +48,7 @@ export type {
   ScorePoint,
 } from "./courseAnalytics";
 
-export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekdayDay, isoDay, parseDay } from "./date";
+export { dayParts, formatDay, formatDayShort, formatDayTick, formatMonthOf, formatWeekdayDay, formatWeekdayShort, isoDay, parseDay } from "./date";
 export type { DayParts } from "./date";
 
 export {
@@ -75,6 +76,7 @@ export type {
   RoundDetail,
   RoundEdits,
   RoundSummary,
+  RunningToPar,
 } from "./round";
 
 export type { AnalyticsFilters } from "./analyticsFilters";

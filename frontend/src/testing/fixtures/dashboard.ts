@@ -63,6 +63,8 @@ export const populatedDashboard: DashboardDto = {
   best_round: 69,
   best_round_id: "round-3",
   best_round_course: "Blue Rock",
+  best_round_to_par: -3,
+  best_round_date: "2026-04-18T18:00:00.000Z",
   handicap_index: 12.4,
   recent_rounds: populatedRounds,
   // The 69, the best of the rounds listed.
@@ -74,10 +76,12 @@ export const populatedDashboard: DashboardDto = {
   putts_rating: "fair",
   // The figures the server works out from the trend window below.
   scoring_average_l20: 76.8,
-  scoring_average_l5: 76.8,
-  scoring_average_change: 0,
-  scoring_average_verdict: "neutral",
-  handicap_change: { delta: -1.6, direction: "down", delta_verdict: "good" },
+  // The last five come in 2.1 under the last 20.
+  scoring_average_l5: 74.7,
+  scoring_average_change: -2.1,
+  scoring_average_verdict: "good",
+  // The index stood at 14.0 after May 2, the last round before June began.
+  handicap_change: { delta: -1.6, direction: "down", delta_verdict: "good", this_month: -1.6, this_month_verdict: "good" },
   recent_form: { gir_pct: (35 / 90) * 100, scrambling_pct: 37.5, up_and_down_pct: 100 / 3, putts_per_18: 32 },
   score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
   recent_score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
@@ -106,36 +110,20 @@ export const populatedDashboard: DashboardDto = {
   handicap_trend: handicapTrend,
   scrambling_trend: scramblingTrend,
   up_and_down_trend: upAndDownTrend,
-  // The Last 5 / Last 20 switch. The window holds five rounds, so both read the same rounds; the
-  // last five are measured against the last 20, the last 20 against every round.
-  windows: {
-    last_5: {
-      size: 5,
-      rounds: 5,
-      scoring_average: 76.8,
-      scoring_average_change: -2.1,
-      scoring_average_verdict: "good",
-      handicap_change: -1.6,
-      handicap_verdict: "good",
-      scrambling_pct: 37.5,
-      up_and_down_pct: 100 / 3,
-      score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
-      score_mix_holes: 90,
-    },
-    last_20: {
-      size: 20,
-      rounds: 5,
-      scoring_average: 76.8,
-      scoring_average_change: 0.8,
-      scoring_average_verdict: "bad",
-      handicap_change: -1.6,
-      handicap_verdict: "good",
-      scrambling_pct: 37.5,
-      up_and_down_pct: 100 / 3,
-      score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
-      score_mix_holes: 90,
-    },
+  // Mar 9, Apr 18, May 2 and Jun 15, seen from mid-June.
+  season: {
+    rounds: 4,
+    months: [
+      { month: "2026-01", rounds: 0 },
+      { month: "2026-02", rounds: 0 },
+      { month: "2026-03", rounds: 1 },
+      { month: "2026-04", rounds: 1 },
+      { month: "2026-05", rounds: 1 },
+      { month: "2026-06", rounds: 1 },
+    ],
   },
+  // Jun 15 at Half Moon Bay, the newest round: bogeys out, a birdie on 18, +6.
+  last_round_flow: [1, 1, 1, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 6, 7, 7, 6].map((to_par, i) => ({ hole_number: i + 1, to_par })),
 };
 
 export const dashboardGoalReport: GoalReportDto = {

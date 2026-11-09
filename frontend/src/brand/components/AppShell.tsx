@@ -22,7 +22,7 @@ function AppShell({ sideNav, bottomNav, className, children, ...props }: AppShel
         </div>
       )}
       {/* The padding clears the tab bar on phones and the rail on wide screens. */}
-      <main data-slot="app-shell-main" className="px-5 pt-14 pb-28 md:ml-rail md:px-10 md:pt-12 md:pb-12">
+      <main data-slot="app-shell-main" className="px-4.5 pt-15 pb-28 md:ml-rail md:px-11 md:pt-11 md:pb-12">
         {children}
       </main>
       {bottomNav != null && (

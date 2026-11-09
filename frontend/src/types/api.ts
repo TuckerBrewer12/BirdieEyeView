@@ -21,7 +21,6 @@ export type NinesDto = Schemas["Nines"];
 export type RoundDto = Schemas["RoundResponse"];
 export type RoundSummaryDto = Schemas["RoundSummaryResponse"];
 export type DashboardDto = Schemas["DashboardResponse"];
-export type DashboardWindowDto = Schemas["DashboardWindow"];
 export type ScoreMixDto = Schemas["ScoreMix"];
 export type WhsBreakdownDto = Schemas["WhsBreakdown"];
 export type MilestoneDto = Schemas["Milestone"];

@@ -65,12 +65,6 @@ export function formatMonth(input: DayInput): string | null {
 }
 
 /** "Jun 15, 2026": round history rows, career records, a friend request's last update. */
-/** "June": a month on its own, for a calendar that sits in the current year. */
-export function formatMonthName(input: DayInput): string | null {
-  const day = toDay(input);
-  return day ? day.toLocaleDateString("en-US", { month: "long" }) : null;
-}
-
 export function formatDay(input: DayInput): string | null {
   const day = toDay(input);
   return day ? day.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
@@ -89,6 +83,19 @@ export function formatWeekdayDay(input: DayInput, { year = true }: { year?: bool
   ];
   if (year) parts.push(String(day.getFullYear()));
   return parts.join(" · ");
+}
+
+/** "Sun, Jun 15": a day this year, with its weekday. */
+export function formatWeekdayShort(input: DayInput): string | null {
+  const day = toDay(input);
+  if (!day) return null;
+  return `${day.toLocaleDateString("en-US", { weekday: "short" })}, ${day.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+}
+
+/** "2026-04" as "A" (`narrow`, under a dot in a row of months) or "April" (`long`). */
+export function formatMonthOf(month: string, width: "narrow" | "long"): string {
+  const day = toDay(`${month}-01`);
+  return day ? day.toLocaleDateString("en-US", { month: width }) : "";
 }
 
 export interface DayParts {

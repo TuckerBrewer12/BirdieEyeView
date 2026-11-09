@@ -18,6 +18,12 @@ export interface HoleSummary {
   kind: ScoreKind | null;
 }
 
+/** A round's to par after one hole, as the server ran it: a point on the round's running line. */
+export interface RunningToPar {
+  hole: number;
+  toPar: number;
+}
+
 /** One hole as played. Par, handicap, yardage, to-par and kind come from the server. */
 export interface HoleScore extends HoleSummary {
   par: number | null;

@@ -178,28 +178,25 @@ class HandicapChange(ResponseModel):
     delta: Optional[float] = None  # change over the last six rated rounds
     direction: Optional[Literal["up", "down", "flat"]] = None  # over the window; under 0.3 is flat
     delta_verdict: Optional[ChangeVerdict] = None
+    # Since this month began: the newest index less the one after the last round before the 1st.
+    this_month: Optional[float] = None
+    this_month_verdict: Optional[ChangeVerdict] = None
 
 
-class DashboardWindow(ResponseModel):
-    """The dashboard's figures over its last `size` rounds (`analytics.dashboard.window_figures`)."""
-    size: int
-    rounds: int = 0  # scored rounds in the window
-    scoring_average: Optional[float] = None
-    # Against the last 20 rounds' average for the last five, every round's for the last 20.
-    scoring_average_change: Optional[float] = None
-    scoring_average_verdict: Optional[ChangeVerdict] = None
-    handicap_change: Optional[float] = None  # the newest index less the window's first, to a tenth
-    handicap_verdict: Optional[ChangeVerdict] = None
-    scrambling_pct: Optional[float] = None
-    up_and_down_pct: Optional[float] = None
-    score_mix: ScoreMix = Field(default_factory=ScoreMix)
-    score_mix_holes: int = 0
+class SeasonMonth(ResponseModel):
+    month: str  # YYYY-MM
+    rounds: int = 0
 
 
-class DashboardWindows(ResponseModel):
-    """The Last 5 / Last 20 switch's two windows."""
-    last_5: DashboardWindow = Field(default_factory=lambda: DashboardWindow(size=5))
-    last_20: DashboardWindow = Field(default_factory=lambda: DashboardWindow(size=20))
+class SeasonActivity(ResponseModel):
+    """Rounds this calendar year, and each of the last six months' count, oldest first."""
+    rounds: int = 0
+    months: List[SeasonMonth] = Field(default_factory=list)
+
+
+class HoleRunningToPar(ResponseModel):
+    hole_number: int
+    to_par: int  # the round's to par after this hole
 
 
 class WhsRound(ResponseModel):
@@ -287,6 +284,8 @@ class DashboardResponse(ResponseModel):
     best_round: Optional[int] = None
     best_round_id: Optional[str] = None
     best_round_course: Optional[str] = None
+    best_round_to_par: Optional[int] = None
+    best_round_date: Optional[datetime] = None
     handicap_index: Optional[float] = None  # the golfer's own index (`api/player_handicap.py`)
     recent_rounds: List[RoundSummaryResponse]
     best_recent_round_id: Optional[str] = None  # the best of recent_rounds, ranked the same way; the newest on a tie
@@ -314,7 +313,9 @@ class DashboardResponse(ResponseModel):
     handicap_trend: List[HandicapTrendRow] = Field(default_factory=list)
     scrambling_trend: List[ScramblingTrendRow] = Field(default_factory=list)
     up_and_down_trend: List[UpAndDownTrendRow] = Field(default_factory=list)
-    windows: DashboardWindows = Field(default_factory=DashboardWindows)
+    season: SeasonActivity = Field(default_factory=SeasonActivity)
+    # The newest round's to par after each hole: the dashboard's "How it went".
+    last_round_flow: List[HoleRunningToPar] = Field(default_factory=list)
 
 
 class AnalyticsKpis(ResponseModel):

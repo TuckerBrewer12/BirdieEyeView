@@ -1,13 +1,13 @@
 import { test } from "@playwright/test";
 import { capturePreview, enableDark } from "../../../../brand/tests/previewScreenshot";
 
-test.describe("MilestoneFeed", () => {
+test.describe("LastRoundCard", () => {
   test("light", async ({ page }) => {
-    await capturePreview(page, "MilestoneFeed", "milestone-feed.png");
+    await capturePreview(page, "LastRoundCard", "last-round-card.png");
   });
 
   test("dark", async ({ page }) => {
     await enableDark(page);
-    await capturePreview(page, "MilestoneFeed", "milestone-feed-dark.png");
+    await capturePreview(page, "LastRoundCard", "last-round-card-dark.png");
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { indexScale, knownValues, lastKnownIndex, niceExtent, paddedExtent, steppedExtent, stepsWithin } from "./scales";
+import { indexScale, knownValues, lastKnownIndex, niceExtent, paddedExtent } from "./scales";
 
 describe("chart scales", () => {
   it("skips missing values", () => {
@@ -28,14 +28,5 @@ describe("chart scales", () => {
     expect(niceExtent([9.8, 12.5], 3, 0.5)).toEqual([9, 13]);
     expect(niceExtent([72, 72], 3, 1)).toEqual([71, 73]);
     expect(niceExtent([null], 5, 2)).toBeNull();
-  });
-
-  it("steps a range out to the step below and above, and grids it", () => {
-    expect(steppedExtent([85, 69, 72, 78, 80], 5, 10)).toEqual([65, 90]);
-    expect(steppedExtent([14, 12.4, null], 1, 1)).toEqual([12, 14]);
-    expect(steppedExtent([80], 5, 10)).toEqual([80, 90]);
-    expect(steppedExtent([null], 5, 10)).toBeNull();
-    expect(stepsWithin([65, 90], 10)).toEqual([70, 80, 90]);
-    expect(stepsWithin([12, 15], 1)).toEqual([13, 14, 15]);
   });
 });

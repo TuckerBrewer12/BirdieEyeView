@@ -18,11 +18,6 @@ export default function ScoreMixBarPreview() {
         <ScoreMixBar mix={populatedDashboard.score_mix} />
       </Card>
       <Card className="gap-2 px-4">
-        <div className="text-label font-semibold text-muted-foreground">Keyed, as the dashboard sets it</div>
-        <ScoreMixBar mix={populatedDashboard.score_mix} legend="key" size="lg" />
-        <ScoreMixBar mix={populatedDashboard.score_mix} legend="key" />
-      </Card>
-      <Card className="gap-2 px-4">
         <div className="text-label font-semibold text-muted-foreground">A rough round</div>
         <ScoreMixBar mix={overPar.scoreCounts} counted />
       </Card>
