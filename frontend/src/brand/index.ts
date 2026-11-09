@@ -74,8 +74,16 @@ export { PersonRow } from "./components/PersonRow";
 export type { PersonRowProps } from "./components/PersonRow";
 export { PageTitle } from "./components/PageTitle";
 export { Meter } from "./components/Meter";
-export { Stat, StatLabel, StatValue, StatUnit, StatDelta } from "./components/Stat";
-export type { StatDirection } from "./components/Stat";
+export {
+  Stat,
+  StatLabel,
+  StatValue,
+  StatUnit,
+  StatNote,
+  StatDelta,
+  StatCard,
+} from "./components/Stat";
+export type { StatDirection, StatTone } from "./components/Stat";
 export { TeeSwatch } from "./components/TeeSwatch";
 export { ToParFigure } from "./components/ToParFigure";
 export { Reveal } from "./components/Reveal";
@@ -107,10 +115,26 @@ export {
   SheetFooter,
   SheetTitle,
   SheetDescription,
+  SheetOptions,
+  SheetOption,
 } from "./components/Sheet";
+export type { SheetSide } from "./components/Sheet";
+export {
+  ActionSheet,
+  ActionSheetTrigger,
+  ActionSheetContent,
+  ActionSheetAction,
+} from "./components/ActionSheet";
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "./components/DropdownMenu";
 
 // Charts
-export { ActivityHeatmap } from "./charts/ActivityHeatmap";
+export { ActivityCalendar } from "./charts/ActivityCalendar";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
 export { ScoreMixBar } from "./charts/ScoreMixBar";
@@ -124,7 +148,7 @@ export type { RadarAxis } from "./charts/RadarChart";
 export { ScoreGoalChart } from "./charts/ScoreGoalChart";
 export { RoundFlowChart, RoundFlowFigures } from "./charts/RoundFlowChart";
 export { ScoreTrendChart } from "./charts/ScoreTrendChart";
-export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
+export { SVGScoreHandicapTrend, ScoreHandicapLegend } from "./charts/SVGScoreHandicapTrend";
 export { ScoreTargetChart } from "./charts/ScoreTargetChart";
 export type { ScoreTargetShot } from "./charts/ScoreTargetChart";
 export { ToParBars } from "./charts/ToParBars";

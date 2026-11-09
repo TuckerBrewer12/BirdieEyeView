@@ -1,17 +1,19 @@
 import { useNavigate, Link } from "react-router-dom";
 import {
-  ActivityHeatmap,
+  ActivityCalendar,
   Button,
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
   RoundPreview,
+  ScoreHandicapLegend,
   SVGScoreHandicapTrend,
   Sparkline,
   Stat,
-  StatDelta,
+  StatCard,
   StatLabel,
   StatValue,
 } from "@/brand";
@@ -31,7 +33,7 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const navigate = useNavigate();
   const {
     data, user, shortGameTrend,
-    trend, milestones, last20ScoringAvg, hiTrend,
+    trend, recentScores, milestones, last20ScoringAvg, scoringAverageChange, scoringAverageVerdict,
     recentScoreMix, girPct, scramblingPct, upAndDownPct, putts, puttsRating,
     bestRound, sidebarRounds, goal,
     openHandicapSheet,
@@ -65,28 +67,29 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
               </CardContent>
             </Card>
 
-            <Card className="lg:col-span-1">
-              <CardContent>
-                <div className="flex flex-col gap-5 h-full justify-between">
-                  <div className="flex items-center justify-between">
-                    <Stat>
-                      <StatLabel>Scoring Avg (L20)</StatLabel>
-                      <StatValue size="lg">{formatOneDecimal(last20ScoringAvg)}</StatValue>
-                    </Stat>
-                    <StatDelta direction={hiTrend} />
-                  </div>
-                  <Stat>
-                    <StatLabel>Total Rounds</StatLabel>
-                    <StatValue size="lg">{data.total_rounds}</StatValue>
-                  </Stat>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col gap-4 md:gap-5 lg:col-span-1 *:flex-1">
+              <StatCard
+                label="Scoring Avg (L20)"
+                value={formatOneDecimal(last20ScoringAvg)}
+                trend={recentScores}
+                tone={scoringAverageVerdict ?? "neutral"}
+                // The server rounds to a tenth, so no change at all shows no move.
+                {...(scoringAverageChange != null && scoringAverageChange !== 0 && {
+                  delta: formatOneDecimal(Math.abs(scoringAverageChange)),
+                  direction: scoringAverageChange < 0 ? "down" : "up",
+                  note: "vs L5",
+                })}
+              />
+              <StatCard label="Total Rounds" value={data.total_rounds} />
+            </div>
 
             <Card className="md:col-span-2 lg:col-span-2">
               <CardHeader>
-                <CardTitle>Score & Handicap Trend</CardTitle>
+                <CardTitle className="whitespace-nowrap">Score & Handicap Trend</CardTitle>
                 <CardDescription>Last 20 rounds</CardDescription>
+                <CardAction>
+                  <ScoreHandicapLegend />
+                </CardAction>
               </CardHeader>
               <CardContent>
                 <SVGScoreHandicapTrend data={trend} />
@@ -186,10 +189,10 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
           <Card size="sm">
             <CardHeader>
               <CardTitle>Activity</CardTitle>
-              <CardDescription>Last 30 days</CardDescription>
+              <CardDescription>Rounds by day</CardDescription>
             </CardHeader>
             <CardContent>
-              <ActivityHeatmap rounds={vm.rounds} />
+              <ActivityCalendar rounds={vm.rounds} onOpenRound={(id) => void navigate(`/rounds/${id}`)} />
             </CardContent>
           </Card>
 

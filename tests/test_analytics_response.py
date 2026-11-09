@@ -8,6 +8,7 @@ from uuid import UUID
 import pytest
 from fastapi.encoders import jsonable_encoder
 
+from analytics import dashboard as dashboard_figures
 from analytics import handicap as hcap
 from analytics import stats as analytics
 from api.analytics_responses import analytics_response
@@ -56,6 +57,7 @@ def test_analytics_response_works_out_the_figures_the_page_shows():
     assert response.notable_achievements.scoring_records.lifetime.lowest_round == 72
     assert (response.kpis.three_putts_per_round, response.kpis.three_putt_rate) == (0.0, 0.0)
     assert response.kpis.scoring_average_change is None  # under five rounds
+    assert response.kpis.scoring_average_verdict is None
     peak = response.peak_game
     assert [(r.round_id, r.score) for r in peak.rounds] == [("r1", 72), ("r2", 81)]
     assert peak.average == 76.5
@@ -140,10 +142,9 @@ async def test_dashboard_carries_the_trends_analytics_draws_for_the_last_20(seas
 
     assert isinstance(dashboard, DashboardResponse)
     assert len(dashboard.score_trend) == 20
-    # Analytics adds a rolling average to each round; the dashboard doesn't draw one.
-    assert [row.model_dump() for row in dashboard.score_trend] == [
-        row.model_dump(exclude={"rolling_average"}) for row in trends.score_trend
-    ]
+    # The same rounds with the same five-round average and par, so the score chart reads alike on both.
+    assert dashboard.score_trend == trends.score_trend
+    assert all(row.rolling_average is not None and row.par is not None for row in dashboard.score_trend)
     assert dashboard.handicap_trend == trends.handicap_trend
     assert dashboard.scrambling_trend == trends.scrambling_trend
     assert dashboard.up_and_down_trend == trends.up_and_down_trend
@@ -151,6 +152,9 @@ async def test_dashboard_carries_the_trends_analytics_draws_for_the_last_20(seas
     # The best of the five rounds the dashboard lists, which need not be the best ever.
     best_recent = min(dashboard.recent_rounds, key=lambda r: r.total_score)
     assert dashboard.best_recent_round_id == best_recent.id
+    # The scoring average's move and the server's verdict on it, which the desktop tile shows.
+    assert dashboard.scoring_average_change is not None
+    assert dashboard.scoring_average_verdict == dashboard_figures.change_verdict(dashboard.scoring_average_change)
 
 
 @pytest.mark.asyncio

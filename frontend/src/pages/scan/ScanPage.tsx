@@ -85,8 +85,6 @@ export function ScanPage({ userId }: { userId: string }) {
 
           <ToggleGroup
             aria-label="How to add the round"
-            variant="outline"
-            spacing={0}
             value={[viewModel.mode]}
             onValueChange={(values) => {
               // Pressing the chosen mode again would clear it; one is always chosen.

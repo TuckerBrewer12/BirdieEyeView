@@ -9,6 +9,8 @@ describe("trendPointsFrom", () => {
       roundIndex: 1,
       score: 85,
       toPar: 13,
+      par: 72,
+      rollingAverage: 85,
       handicapIndex: 14,
       courseName: "Scanned Scorecard",
       differentialStatus: "out",
@@ -18,7 +20,9 @@ describe("trendPointsFrom", () => {
 
   it("pairs by position when the handicap trend's round numbers run ahead", () => {
     const trends = {
-      score_trend: [{ round_index: 1, round_id: "a", total_score: 80, to_par: 8, course_name: null }],
+      score_trend: [
+        { round_index: 1, round_id: "a", total_score: 80, to_par: 8, par: 72, course_name: null, rolling_average: 80 },
+      ],
       handicap_trend: [{
         round_index: 21,
         round_id: "a",

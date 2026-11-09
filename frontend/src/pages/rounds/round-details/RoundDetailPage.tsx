@@ -138,7 +138,6 @@ export function RoundDetailPage({ userId }: { userId: string }) {
             <span className="text-xs font-semibold text-muted-foreground">Tee</span>
             {editor.availableTees.length > 0 ? (
               <ToggleGroup
-                variant="outline"
                 size="sm"
                 aria-label="Tee"
                 value={editor.teeBox ? [editor.teeBox] : []}

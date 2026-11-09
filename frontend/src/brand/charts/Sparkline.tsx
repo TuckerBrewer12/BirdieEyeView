@@ -5,16 +5,21 @@ import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
 import { indexScale, knownValues, lastKnownIndex, paddedExtent } from "./scales";
 
-type SparklineTone = "primary" | "contrast";
+/** `good` and `bad` carry the server's verdict on the move the line shows. */
+type SparklineTone = "primary" | "contrast" | "good" | "bad";
 
 const STROKE: Record<SparklineTone, string> = {
   primary: tokens.color.primary,
   contrast: tokens.color.score.triple.text,
+  good: tokens.color.score.birdie.text,
+  bad: tokens.color.score.bogey.text,
 };
 
 const SWATCH: Record<SparklineTone, string> = {
   primary: "bg-primary",
   contrast: "bg-score-triple",
+  good: "bg-score-birdie",
+  bad: "bg-score-bogey",
 };
 
 interface SparklineSeries {
@@ -33,13 +38,23 @@ interface SparklineProps {
   fill?: boolean;
   /** A dashed line at this value: the average the server worked out for the line. None without it. */
   reference?: number | null;
+  /** Drawn to the squatter 96 x 32 box that sits beside a figure (a KPI tile), not the wide card line. */
+  compact?: boolean;
   className?: string;
 }
 
 /** Which way a figure has been heading: a small line, no axes, the latest value marked. */
-export function Sparkline({ series, domain, fill = false, reference = null, className }: SparklineProps) {
+export function Sparkline({
+  series,
+  domain,
+  fill = false,
+  reference = null,
+  compact = false,
+  className,
+}: SparklineProps) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
-  const { width: W, height: H, pad, stroke, dot } = tokens.chart.sparkline;
+  const { pad, stroke, dot } = tokens.chart.sparkline;
+  const { width: W, height: H } = compact ? tokens.chart.sparkline.compact : tokens.chart.sparkline;
 
   const length = Math.max(0, ...series.map((s) => s.values.length));
   const all = series.flatMap((s) => s.values);

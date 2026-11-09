@@ -1,18 +1,30 @@
-import { SVGScoreHandicapTrend } from "@/brand/charts/SVGScoreHandicapTrend";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/brand";
+import { SVGScoreHandicapTrend, ScoreHandicapLegend } from "@/brand/charts/SVGScoreHandicapTrend";
 import { trendPointsFrom } from "@/domain";
-import { populatedDashboard } from "@/testing/fixtures/dashboard";
+import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 
-const data = trendPointsFrom(populatedDashboard);
+/** The sample golfer's last 20 rounds, as the dashboard sends them. */
+const trend = trendPointsFrom(sampleGolfer.dashboard);
 
+/**
+ * The dashboard's card at the size it is drawn on the board, 640 by 470. The
+ * chart fills the window, as the app shell does, so capture it at that viewport.
+ */
 export default function SVGScoreHandicapTrendPreview() {
   return (
-    <>
-      <SVGScoreHandicapTrend data={data} />
-      <div className="grid grid-cols-2 gap-3">
-        <SVGScoreHandicapTrend data={data} series="score" compact />
-        <SVGScoreHandicapTrend data={data} series="handicap" compact />
-      </div>
-      <SVGScoreHandicapTrend data={[]} />
-    </>
+    <div data-testid="brand-frame" className="fixed inset-0 overflow-auto bg-background p-6">
+      <Card className="gap-4 py-5">
+        <CardHeader className="px-6">
+          <CardTitle className="font-semibold whitespace-nowrap">Score &amp; Handicap</CardTitle>
+          <CardDescription className="text-body-sm">Last 20 rounds</CardDescription>
+          <CardAction>
+            <ScoreHandicapLegend />
+          </CardAction>
+        </CardHeader>
+        <CardContent className="px-6">
+          <SVGScoreHandicapTrend data={trend} />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

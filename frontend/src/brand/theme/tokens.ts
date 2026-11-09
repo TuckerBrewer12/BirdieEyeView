@@ -61,7 +61,7 @@ export const palette = {
     900: "#17291d",
     950: "#08130c",
   },
-  forest: { 700: "#2d7a3a", 750: "#2d4c3b", 800: "#1e3d25", 900: "#152d1b" },
+  forest: { 700: "#2d7a3a", 750: "#2d4c3b", 800: "#1e3d25" },
   denim: { 500: "#3d6fb6", 700: "#2457a6" },
   gray: { 100: "#f3f4f6", 200: "#e5e7eb", 600: "#4b5563", 700: "#374151" },
   slate: { 600: "#475569", 900: "#0f172a" },
@@ -203,7 +203,6 @@ const light = {
   // The app's side rail: the brand's own surface, the same in both modes.
   sidebar: {
     DEFAULT: forest[800],
-    end: forest[900],
     foreground: white,
   },
 
@@ -385,6 +384,8 @@ export const type = {
   hero: { size: 44, weight: 700, tracking: tracking.hero, leading: 1 },
   /** The tracked capitals above a figure or a group of rows. */
   eyebrow: { size: 10, weight: 700, tracking: tracking.eyebrow },
+  /** A card's headline figure: a KPI tile's. */
+  stat: { size: 32, weight: 700, tracking: tracking.stat, leading: leading.display },
   /** The smaller tracked capitals on a chip or a header strip. */
   kicker: { size: 9, weight: 700, tracking: tracking.kicker },
   /** The label above a page section (`SectionLabel`). */
@@ -403,8 +404,8 @@ export const space = {
   /** What a control's corner gives up inside its group, so the corners nest. */
   nudge: 5,
   "nudge-sm": 3,
-  /** The phone's home-indicator strip, which a bar pinned to the bottom pads past. */
-  "safe-bottom": "env(safe-area-inset-bottom, 0px)",
+  /** What a bar pinned to the bottom pads past: the phone's home-indicator strip, never less than 22px. */
+  "safe-bottom": "max(env(safe-area-inset-bottom, 0px), 22px)",
 };
 
 /** Shadcn's base radius, `--radius`; the named steps below sit around it. */
@@ -419,13 +420,16 @@ export const radius = {
   tick: 2,
   card: 10,
   tooltip: 12,
+  /** The top corners of a bottom sheet. */
+  sheet: 20,
   addon: "calc(var(--radius) - var(--brand-space-nudge))",
   control: "calc(var(--radius) - var(--brand-space-nudge-sm))",
 };
 
 /** Widths and heights that are not on the 4px scale. */
 export const size = {
-  "date-rail": 54,
+  /** The side rail's width: `AppShell` sets it and clears the page past it. */
+  rail: 240,
   preview: 390,
   chart: 180,
   "chart-compact": 210,
@@ -457,7 +461,7 @@ export const lineWidth = {
   outline: 1.5,
 };
 
-/** Icon line weights, unitless. The tab bar's are lighter at rest, heavier on the current tab. */
+/** Icon line weights, unitless: lighter at rest, heavier on a current item. */
 export const stroke = {
   icon: 1.75,
   "icon-active": 2.25,
@@ -500,11 +504,12 @@ export const shadow = {
   lg: "0 10px 15px -3px var(--shadow), 0 4px 6px -4px var(--shadow)",
 };
 
-/** Named grid column templates: `grid-cols-round-preview`. */
+/** Named grid column templates: `grid-cols-handicap-breakdown`. */
 export const gridColumns = {
-  "round-preview": "var(--brand-size-date-rail) 1fr auto",
   "handicap-breakdown": "1fr auto auto auto",
   "recent-rounds": "1fr auto auto",
+  /** A label column, then two equal state columns (default, disabled). */
+  "state-grid": "6rem repeat(2, minmax(0, 1fr))",
 };
 
 /**
@@ -601,21 +606,45 @@ export const chart = {
   ring: { inner: 50, outer: 68 },
   /** A half gauge drawn up from the bottom edge of its box. */
   gauge: { inner: 52, outer: 72 },
-  plot: {
-    width: 560,
-    height: size.chart,
-    pad: { top: 12, right: 64, bottom: 20, left: 52 },
-    barMin: 4,
-    barMax: 14,
-    barGap: 2,
-    dot: 3.5,
+  /**
+   * Score over handicap index, stacked as two small multiples that share the round axis.
+   * Unitless, scaled to the container. The grid ends `axis` short of the right edge,
+   * where the tick labels sit.
+   */
+  stack: {
+    width: 544,
+    /** A phone's narrower drawing. */
+    widthCompact: 320,
+    /** Room right of the grid for tick labels, and the gap between the grid and them. */
+    axis: 44,
+    labelGap: 10,
+    /** How far a tick label's baseline sits below its line, so the figure centres on it. */
+    labelDrop: 4,
+    /** Slack at either end of the round axis, so a dot never sits on the plot's edge. */
+    inset: 6,
+    /** Both panels: the drawing's height, each panel's title baseline, its grid's top and bottom, the round numbers' baseline. */
+    both: {
+      height: 320,
+      score: { title: 8, top: 22, bottom: 172 },
+      handicap: { title: 214, top: 226, bottom: 292 },
+      ticks: 314,
+    },
+    /** One panel alone: the card above it names the line, so there is no title. The rooms are what the grid and the round numbers leave at the foot. */
+    single: { height: 200, compactHeight: 220, top: 12, bottomRoom: 28, ticksRoom: 6 },
+    dot: 3.75,
+    dotCounts: 4.5,
+    dotLast: 4,
     dotHover: 6,
-  },
-  /** The same plot on a phone: narrower and taller, one series at a time, so no right-hand axis. */
-  plotCompact: {
-    width: 320,
-    height: size["chart-compact"],
-    pad: { top: 16, right: 16, bottom: 32, left: 44 },
+    /** The five-round average under the dots, and the handicap line. */
+    stroke: 2.5,
+    strokeHandicap: 2,
+    dash: "3 4",
+    /** The legend's swatch for the average line. */
+    legendLine: 16,
+    /** Where the handicap's last figure sits, up and to the left of its dot. */
+    lastLift: 8,
+    /** Where the last score sits, straight above its dot. */
+    scoreLift: 10,
   },
   /** A figure's trend line. */
   sparkline: {
@@ -624,6 +653,8 @@ export const chart = {
     pad: space.tight,
     stroke: 2,
     dot: space.dot,
+    /** The compact line beside a KPI tile's figure, drawn at its own size so the stroke stays 2px. */
+    compact: { width: 96, height: 32 },
   },
   /** A golfer's scores over time, one dot per round. */
   trend: {

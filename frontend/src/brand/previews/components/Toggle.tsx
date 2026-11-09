@@ -16,13 +16,8 @@ export default function TogglePreview() {
         </Toggle>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Toggle variant="outline">Outline</Toggle>
-        <Toggle variant="outline" size="sm">
-          Small
-        </Toggle>
-        <Toggle variant="outline" size="lg">
-          Large
-        </Toggle>
+        <Toggle defaultPressed>Default</Toggle>
+        <Toggle size="sm">Small</Toggle>
       </div>
     </>
   );

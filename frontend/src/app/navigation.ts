@@ -1,8 +1,11 @@
 import {
   BarChart2,
+  ChartNoAxesColumn,
   FlaskConical,
+  House,
   Inbox,
   LayoutDashboard,
+  List,
   ListOrdered,
   MapPin,
   ScanLine,
@@ -29,12 +32,12 @@ const SIDE: Destination[] = [
 /** Pinned at the foot of the side rail. */
 const SIDE_FOOTER: Destination[] = [{ href: "/settings", label: "Settings", icon: Settings }];
 
-/** The phone's tab bar. */
+/** The phone's tab bar, Scan raised at its middle (with "More" after these four). */
 const TABS: Destination[] = [
-  { href: "/", label: "Home", icon: LayoutDashboard },
+  { href: "/", label: "Home", icon: House },
+  { href: "/rounds", label: "Rounds", icon: List },
   { href: "/scan", label: "Scan", icon: ScanLine },
-  { href: "/rounds", label: "Rounds", icon: ListOrdered },
-  { href: "/analytics", label: "Analytics", icon: BarChart2 },
+  { href: "/analytics", label: "Analytics", icon: ChartNoAxesColumn },
 ];
 
 /** The rest, behind the tab bar's More menu. */

@@ -180,7 +180,6 @@ function TeeField({ review }: { review: ScanReviewViewModel }) {
       <FieldLabel htmlFor={review.tees.length > 0 ? undefined : "review-tee"}>Tee played</FieldLabel>
       {review.tees.length > 0 ? (
         <ToggleGroup
-          variant="outline"
           size="sm"
           aria-label="Tee played"
           value={review.teeBox ? [review.teeBox] : []}

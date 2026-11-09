@@ -341,6 +341,22 @@
             ],
             "title": "Scoring Average Change"
           },
+          "scoring_average_verdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "good",
+                  "bad",
+                  "neutral"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average Verdict"
+          },
           "scrambling_percentage": {
             "anyOf": [
               {
@@ -405,7 +421,8 @@
           "average_putts",
           "three_putts_per_round",
           "three_putt_rate",
-          "scoring_average_change"
+          "scoring_average_change",
+          "scoring_average_verdict"
         ],
         "title": "AnalyticsKpis",
         "type": "object"
@@ -513,7 +530,7 @@
           },
           "score_trend": {
             "items": {
-              "$ref": "#/components/schemas/AnalyticsScoreTrendRow"
+              "$ref": "#/components/schemas/ScoreTrendRow"
             },
             "title": "Score Trend",
             "type": "array"
@@ -582,80 +599,6 @@
           "peak_game"
         ],
         "title": "AnalyticsResponse",
-        "type": "object"
-      },
-      "AnalyticsScoreTrendRow": {
-        "description": "A round's score, with its average over it and the four rounds before it.",
-        "properties": {
-          "course_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Course Name"
-          },
-          "rolling_average": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Rolling Average"
-          },
-          "round_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Round Id"
-          },
-          "round_index": {
-            "title": "Round Index",
-            "type": "integer"
-          },
-          "to_par": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "To Par"
-          },
-          "total_score": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Total Score"
-          }
-        },
-        "required": [
-          "round_index",
-          "round_id",
-          "total_score",
-          "to_par",
-          "course_name",
-          "rolling_average"
-        ],
-        "title": "AnalyticsScoreTrendRow",
         "type": "object"
       },
       "AuthUserResponse": {
@@ -2104,6 +2047,22 @@
             ],
             "title": "Scoring Average L5"
           },
+          "scoring_average_verdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "good",
+                  "bad",
+                  "neutral"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average Verdict"
+          },
           "scrambling_trend": {
             "items": {
               "$ref": "#/components/schemas/ScramblingTrendRow"
@@ -2142,6 +2101,7 @@
           "scoring_average_l20",
           "scoring_average_l5",
           "scoring_average_change",
+          "scoring_average_verdict",
           "handicap_change",
           "recent_form",
           "score_mix",
@@ -2757,6 +2717,22 @@
             ],
             "title": "Delta"
           },
+          "delta_verdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "good",
+                  "bad",
+                  "neutral"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta Verdict"
+          },
           "direction": {
             "anyOf": [
               {
@@ -2776,7 +2752,8 @@
         },
         "required": [
           "delta",
-          "direction"
+          "direction",
+          "delta_verdict"
         ],
         "title": "HandicapChange",
         "type": "object"
@@ -6676,7 +6653,7 @@
         "type": "object"
       },
       "ScoreTrendRow": {
-        "description": "One round's score, oldest first.",
+        "description": "One round's score, oldest first, with its average over it and the four rounds before it.",
         "properties": {
           "course_name": {
             "anyOf": [
@@ -6688,6 +6665,28 @@
               }
             ],
             "title": "Course Name"
+          },
+          "par": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Par"
+          },
+          "rolling_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolling Average"
           },
           "round_id": {
             "anyOf": [
@@ -6732,7 +6731,9 @@
           "round_id",
           "total_score",
           "to_par",
-          "course_name"
+          "par",
+          "course_name",
+          "rolling_average"
         ],
         "title": "ScoreTrendRow",
         "type": "object"

@@ -20,6 +20,12 @@ test("tapping a milestone opens its round", async ({ dashboard }) => {
   await dashboard.isAtRound("round-3");
 });
 
+test("tapping a played day on the activity calendar opens its round", async ({ dashboard }) => {
+  await dashboard.open();
+  await dashboard.tapActivityDay("2026-06-15");
+  await dashboard.isAtRound("round-1");
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
@@ -33,8 +39,8 @@ test.describe("on a phone", () => {
     await dashboard.open();
     await dashboard.showTrend("HCP");
     await dashboard.seesTrendShowing("HCP");
-    // Round 3 of 5 sits just past the middle of the plot.
-    await dashboard.tapTrendAt(0.55);
+    // Round 3 of 5 sits in the middle of the grid, which stops short of the axis figures on the right.
+    await dashboard.tapTrendAt(0.43);
     await dashboard.seesTrendTooltip("Round 3");
     await dashboard.seesTrendTooltip("HI");
   });

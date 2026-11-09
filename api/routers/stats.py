@@ -72,6 +72,7 @@ async def get_dashboard(
     form = dashboard.recent_form(last_20)
     average_putts = round(sum(putts) / len(putts), 1) if putts else None
     putts_shown = dashboard.putts_shown(form["putts_per_18"], average_putts)
+    scoring_change = dashboard.scoring_average_change(last_20)
 
     return DashboardResponse(
         total_rounds=len(summaries),
@@ -88,7 +89,8 @@ async def get_dashboard(
         putts_rating=putts_shown["rating"],
         scoring_average_l20=dashboard.scoring_average(last_20),
         scoring_average_l5=dashboard.scoring_average(last_20, dashboard.RECENT_ROUNDS),
-        scoring_average_change=dashboard.scoring_average_change(last_20),
+        scoring_average_change=scoring_change,
+        scoring_average_verdict=dashboard.change_verdict(scoring_change),
         handicap_change=dashboard.handicap_change(handicap_trend),
         recent_form=form,
         score_mix=mix["percentages"],
@@ -100,7 +102,7 @@ async def get_dashboard(
         whs=dashboard.whs_breakdown(
             last_20, handicap_trend, hcap.score_differentials_per_round(last_20), index_window
         ),
-        score_trend=analytics.score_trend(last_20),
+        score_trend=analytics.score_trend_with_rolling_average(last_20),
         handicap_trend=handicap_trend,
         scrambling_trend=analytics.scrambling_per_round(last_20),
         up_and_down_trend=analytics.up_and_down_trend(last_20),

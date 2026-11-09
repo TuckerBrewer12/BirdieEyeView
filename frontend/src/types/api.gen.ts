@@ -735,6 +735,8 @@ export interface components {
             scoring_average: number | null;
             /** Scoring Average Change */
             scoring_average_change: number | null;
+            /** Scoring Average Verdict */
+            scoring_average_verdict: ("good" | "bad" | "neutral") | null;
             /** Scrambling Percentage */
             scrambling_percentage: number | null;
             /** Three Putt Rate */
@@ -773,7 +775,7 @@ export interface components {
             score_differentials: components["schemas"]["ScoreDifferentialRow"][];
             score_mix: components["schemas"]["ScoreMix"];
             /** Score Trend */
-            score_trend: components["schemas"]["AnalyticsScoreTrendRow"][];
+            score_trend: components["schemas"]["ScoreTrendRow"][];
             /** Scoring By Handicap */
             scoring_by_handicap: components["schemas"]["ScoringByHandicapRow"][];
             /** Scoring By Par */
@@ -786,24 +788,6 @@ export interface components {
             three_putts_trend: components["schemas"]["ThreePuttsTrendRow"][];
             /** Up And Down Trend */
             up_and_down_trend: components["schemas"]["UpAndDownTrendRow"][];
-        };
-        /**
-         * AnalyticsScoreTrendRow
-         * @description A round's score, with its average over it and the four rounds before it.
-         */
-        AnalyticsScoreTrendRow: {
-            /** Course Name */
-            course_name: string | null;
-            /** Rolling Average */
-            rolling_average: number | null;
-            /** Round Id */
-            round_id: string | null;
-            /** Round Index */
-            round_index: number;
-            /** To Par */
-            to_par: number | null;
-            /** Total Score */
-            total_score: number | null;
         };
         /** AuthUserResponse */
         AuthUserResponse: {
@@ -1227,6 +1211,8 @@ export interface components {
             scoring_average_l20: number | null;
             /** Scoring Average L5 */
             scoring_average_l5: number | null;
+            /** Scoring Average Verdict */
+            scoring_average_verdict: ("good" | "bad" | "neutral") | null;
             /** Scrambling Trend */
             scrambling_trend: components["schemas"]["ScramblingTrendRow"][];
             /** Total Rounds */
@@ -1468,6 +1454,8 @@ export interface components {
         HandicapChange: {
             /** Delta */
             delta: number | null;
+            /** Delta Verdict */
+            delta_verdict: ("good" | "bad" | "neutral") | null;
             /** Direction */
             direction: ("up" | "down" | "flat") | null;
         };
@@ -2639,11 +2627,15 @@ export interface components {
         };
         /**
          * ScoreTrendRow
-         * @description One round's score, oldest first.
+         * @description One round's score, oldest first, with its average over it and the four rounds before it.
          */
         ScoreTrendRow: {
             /** Course Name */
             course_name: string | null;
+            /** Par */
+            par: number | null;
+            /** Rolling Average */
+            rolling_average: number | null;
             /** Round Id */
             round_id: string | null;
             /** Round Index */

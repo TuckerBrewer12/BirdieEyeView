@@ -4,6 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
+from analytics.dashboard import ChangeVerdict
 from models import Hole, UserTee
 from models.hole_score import ScoreKind
 
@@ -176,6 +177,7 @@ class RecentForm(ResponseModel):
 class HandicapChange(ResponseModel):
     delta: Optional[float] = None  # change over the last six rated rounds
     direction: Optional[Literal["up", "down", "flat"]] = None  # over the window; under 0.3 is flat
+    delta_verdict: Optional[ChangeVerdict] = None
 
 
 class WhsRound(ResponseModel):
@@ -212,12 +214,14 @@ DifferentialStatus = Literal["counting", "close", "out", "unrated"]
 
 
 class ScoreTrendRow(ResponseModel):
-    """One round's score, oldest first."""
+    """One round's score, oldest first, with its average over it and the four rounds before it."""
     round_index: int
     round_id: Optional[str] = None
     total_score: Optional[int] = None
     to_par: Optional[int] = None
+    par: Optional[int] = None  # the par to_par reads against: the holes played
     course_name: Optional[str] = None
+    rolling_average: Optional[float] = None  # to a tenth; rounds without a score are skipped
 
 
 class HandicapTrendRow(ResponseModel):
@@ -275,6 +279,7 @@ class DashboardResponse(ResponseModel):
     scoring_average_l5: Optional[float] = None
     # L5 minus L20, to a tenth: negative when the recent rounds came in lower.
     scoring_average_change: Optional[float] = None
+    scoring_average_verdict: Optional[ChangeVerdict] = None
     handicap_change: HandicapChange = Field(default_factory=HandicapChange)
     recent_form: RecentForm = Field(default_factory=RecentForm)
     score_mix: ScoreMix = Field(default_factory=ScoreMix)
@@ -311,11 +316,7 @@ class AnalyticsKpis(ResponseModel):
     # The last five scored rounds' average less every round's, to a tenth: negative when the
     # recent rounds came in lower. Null under five scored rounds.
     scoring_average_change: Optional[float] = None
-
-
-class AnalyticsScoreTrendRow(ScoreTrendRow):
-    """A round's score, with its average over it and the four rounds before it."""
-    rolling_average: Optional[float] = None  # to a tenth; rounds without a score are skipped
+    scoring_average_verdict: Optional[ChangeVerdict] = None
 
 
 class NetScoreTrendRow(ResponseModel):
@@ -750,7 +751,7 @@ class PeakGame(ResponseModel):
 class AnalyticsResponse(ResponseModel):
     """The analytics page's figures over the rounds asked for. Every per-round series is oldest first."""
     kpis: AnalyticsKpis = Field(default_factory=AnalyticsKpis)
-    score_trend: List[AnalyticsScoreTrendRow] = Field(default_factory=list)
+    score_trend: List[ScoreTrendRow] = Field(default_factory=list)
     net_score_trend: List[NetScoreTrendRow] = Field(default_factory=list)
     gir_trend: List[GirTrendRow] = Field(default_factory=list)
     putts_trend: List[PuttsTrendRow] = Field(default_factory=list)
