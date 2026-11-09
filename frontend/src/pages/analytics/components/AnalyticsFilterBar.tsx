@@ -27,9 +27,7 @@ export function AnalyticsFilterBar({
     <div data-slot="analytics-filter-bar" className={cn("flex flex-wrap items-center gap-3", className)}>
       <ToggleGroup
         aria-label="Rounds"
-        variant="outline"
         size="sm"
-        spacing={0}
         value={[String(filters.limit)]}
         onValueChange={(values) => {
           const next = LIMIT_OPTIONS.find((option) => String(option.value) === values[0]);
@@ -45,9 +43,7 @@ export function AnalyticsFilterBar({
 
       <ToggleGroup
         aria-label="Timeframe"
-        variant="outline"
         size="sm"
-        spacing={0}
         value={[filters.timeframe]}
         onValueChange={(values) => {
           const next = TIMEFRAME_OPTIONS.find((option) => option.value === values[0]);

@@ -43,7 +43,6 @@
   --chart-muted: #e5e7eb;
   --chart-accent: #4ade80;
   --sidebar: #1e3d25;
-  --sidebar-end: #152d1b;
   --sidebar-foreground: #ffffff;
   --score-eagle-base: #a16207;
   --score-eagle-muted: #fef3c7;
@@ -149,7 +148,8 @@
   --brand-space-tight: 5px;
   --brand-space-nudge: 5px;
   --brand-space-nudge-sm: 3px;
-  --brand-space-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --brand-space-safe-bottom: max(env(safe-area-inset-bottom, 0px), 22px);
+  --brand-size-rail: 240px;
   --brand-size-date-rail: 54px;
   --brand-size-preview: 390px;
   --brand-size-chart: 180px;
@@ -181,7 +181,7 @@
   --brand-ring-width: 3px;
 }
 
-:root.dark {
+:root.dark, .dark {
   --background: #0e1210;
   --foreground: #e9eeea;
   --foreground-secondary: #b3bdb6;
@@ -250,7 +250,6 @@
   --color-chart-muted: var(--chart-muted);
   --color-chart-accent: var(--chart-accent);
   --color-sidebar: var(--sidebar);
-  --color-sidebar-end: var(--sidebar-end);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-score-eagle-base: var(--score-eagle-base);
   --color-score-eagle-muted: var(--score-eagle-muted);
@@ -361,6 +360,7 @@
   --spacing-nudge: var(--brand-space-nudge);
   --spacing-nudge-sm: var(--brand-space-nudge-sm);
   --spacing-safe-bottom: var(--brand-space-safe-bottom);
+  --spacing-rail: var(--brand-size-rail);
   --spacing-date-rail: var(--brand-size-date-rail);
   --spacing-preview: var(--brand-size-preview);
   --spacing-chart: var(--brand-size-chart);
@@ -405,4 +405,5 @@
   --grid-template-columns-round-preview: var(--brand-size-date-rail) 1fr auto;
   --grid-template-columns-handicap-breakdown: 1fr auto auto auto;
   --grid-template-columns-recent-rounds: 1fr auto auto;
+  --grid-template-columns-state-grid: 6rem repeat(2, minmax(0, 1fr));
 }

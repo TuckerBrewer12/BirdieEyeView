@@ -23,9 +23,7 @@ export function RangeViewCard({ buckets, par, onParChange, className }: RangeVie
       <CardContent className="flex flex-col gap-4">
         <ToggleGroup
           aria-label="Par type"
-          variant="outline"
           size="sm"
-          spacing={0}
           value={[String(par)]}
           onValueChange={(values) => {
             const next = RANGE_PARS.find((option) => String(option) === values[0]);

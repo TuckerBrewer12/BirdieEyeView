@@ -165,7 +165,7 @@ Every colour is a token in `src/brand/theme/tokens.ts`, used through its Tailwin
 - **Surfaces and ink:** `bg-background` (page), `bg-card` + `text-card-foreground`, `text-foreground`, `text-muted-foreground` (secondary text, captions), `bg-muted`, `bg-secondary`, `bg-accent`, `border-border`, `border-input`, `ring-ring`.
 - **Brand:** `bg-primary` / `text-primary` / `text-primary-foreground` — forest green for primary actions, accents and section labels. `text-destructive` for errors and deletes.
 - **Score kinds** (`eagle`, `birdie`, `par`, `bogey`, `double`, `triple`, `quad`) encode data: `text-score-<kind>` for ink, `bg-score-<kind>-base` + `text-score-<kind>-on-base` for a fill, `bg-score-<kind>-muted` for a wash. When the kind or to-par is only known at runtime use `scoreFillClass()`, `scoreOnFillClass()`, `toParTextClass()` or `toParBadgeClass()` from `@/brand/theme`.
-- **Other families:** `from-sidebar to-sidebar-end` + `text-sidebar-foreground` (the side rail), `bg-tee-<colour>` / `text-tee-<colour>-on` (through `TeeSwatch`), `bg-scan-row-<row>` (scorecard layout rows), and `tokens.color.chart.*` for chart chrome.
+- **Other families:** `bg-sidebar` + `text-sidebar-foreground` (the side rail), `bg-tee-<colour>` / `text-tee-<colour>-on` (through `TeeSwatch`), `bg-scan-row-<row>` (scorecard layout rows), and `tokens.color.chart.*` for chart chrome.
 
 ### Type and measures
 - DM Sans (`font-sans`) and DM Mono (`font-mono`); the body font is set once in `index.css`.
