@@ -11,19 +11,21 @@ import asyncio
 import json
 import random
 import sys
-from datetime import datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from fastapi.encoders import jsonable_encoder  # noqa: E402
+from fastapi.encoders import jsonable_encoder
 
-from api.analytics_responses import analytics_response  # noqa: E402
-from api.player_handicap import player_handicap_index  # noqa: E402
-from api.round_responses import round_detail  # noqa: E402
-from api.routers import stats, users  # noqa: E402
-from models import Course, Hole, HoleScore, Round, Tee, User  # noqa: E402
+from analytics.stats import best_round
+from api.analytics_responses import analytics_response
+from api.player_handicap import player_handicap_index
+from api.round_responses import round_detail
+from analytics import dashboard as dashboard_module
+from api.routers import stats, users
+from models import Course, Hole, HoleScore, Round, Tee, User
 
 OUT = Path(__file__).resolve().parent.parent / "frontend" / "src" / "testing" / "fixtures" / "sampleGolfer.ts"
 
@@ -31,7 +33,12 @@ OUT = Path(__file__).resolve().parent.parent / "frontend" / "src" / "testing" / 
 rng = random.Random(7)
 
 # Ten months after the season: the last year then starts after the golfer's March rounds.
-A_YEAR_ON = datetime(2027, 4, 1, 18, 0)
+A_YEAR_ON = date(2027, 4, 1)
+
+
+def _naive(day: date, hour: int = 0) -> datetime:
+    """A time with no zone, as the database's timestamp and date columns come back."""
+    return datetime.combine(day, time(hour))
 
 
 def _id(name: str) -> str:
@@ -89,7 +96,7 @@ USER = User(
     email_verified=True,
     home_course_id=PRESIDIO.id,
     handicap=None,
-    created_at=datetime(2026, 2, 20),
+    created_at=_naive(date(2026, 2, 20)),
     scoring_goal=79,
 )
 
@@ -114,7 +121,7 @@ def _hole(number: int, par: int, skill: float) -> HoleScore:
 
 
 def _season() -> list[Round]:
-    start = datetime(2026, 2, 28, 9, 0)
+    start = _naive(date(2026, 2, 28), 9)
     rounds = []
     for i, course in enumerate(SCHEDULE):
         skill = 1 - i / (len(SCHEDULE) - 1)
@@ -183,6 +190,10 @@ async def _responses() -> tuple[dict, dict]:
     rounds = _season()
     db = _database(rounds)
     user_id = UUID(USER.id)
+    # "This month" and "this season" read against the day after the last round, not the day the
+    # script runs, so a re-run writes the same golfer.
+    last_day = max(r.date for r in rounds).date()
+    dashboard_module.today = lambda: last_day + timedelta(days=1)
 
     dashboard = await stats.get_dashboard(user_id, db, USER)
     analytics = await stats.get_analytics(user_id, 50, None, None, db, USER)
@@ -191,7 +202,7 @@ async def _responses() -> tuple[dict, dict]:
     # Analytics' course filter, for the course played least, so the figures plainly change.
     links_analytics = await stats.get_analytics(user_id, 50, HALF_MOON_BAY.id, None, db, USER)
 
-    best = min(rounds, key=lambda r: r.calculate_total_score())
+    best = best_round(sorted(rounds, key=lambda r: r.date, reverse=True))
     profile = users.user_response(USER.model_copy(update={"handicap": dashboard.handicap_index}))
     seed = jsonable_encoder({
         "user": {"user_id": USER.id, "name": USER.name, "email": USER.email, "email_verified": True},

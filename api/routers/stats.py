@@ -1,13 +1,12 @@
 """Stats/dashboard API endpoints."""
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import List, Literal, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from database.db_manager import DatabaseManager
 from api.dependencies import get_current_user, get_db
 from api.input_validation import ensure_uuid_str
-from api.player_handicap import player_handicap_index
 from models import User
 from api.round_responses import round_summary
 from api.course_analytics_responses import course_analytics
@@ -29,6 +28,9 @@ from analytics.goals import goal_report
 
 router = APIRouter()
 
+# The most rounds the analytics page reads at once.
+MAX_ANALYTICS_ROUNDS = 500
+
 
 @router.get("/dashboard/{user_id}", response_model=DashboardResponse)
 async def get_dashboard(
@@ -45,67 +47,46 @@ async def get_dashboard(
     # One query for every round's hole scores; the Round model works out each figure.
     summaries = await db.rounds.get_round_summaries_for_user(str(user_id), limit=500, offset=0)
 
-    scored = [r for r in summaries if r.calculate_total_score() is not None]
-    scores = [r.calculate_total_score() for r in scored]
-    putts = [p for p in (r.get_total_putts() for r in summaries) if p is not None]
-    girs = [g for g in (r.get_total_gir() for r in summaries) if g is not None]
-
-    best = dashboard.lowest_round(summaries)
+    # Best as the round list's Best ranks rounds; newest first, so a tie goes to the newest.
+    best = analytics.best_round(summaries)
     best_summary = round_summary(best) if best else None
-
-    recent = summaries[:5]
-    recent_rounds = [round_summary(r) for r in recent]
-    best_recent = dashboard.lowest_round(recent)
 
     # The last 20 rounds, plus 19 before them so the handicap trend has a full rolling window.
     hi_rounds = list(reversed(await db.rounds.get_rounds_for_user(str(user_id), limit=39, offset=0)))
     last_20 = hi_rounds[-20:]
-    calculated_hi = hcap.handicap_index(last_20)
-    handicap_trend = hcap.windowed_handicap_trend(hi_rounds, len(last_20))
-    mix = dashboard.score_mix(last_20)
-    recent_mix = dashboard.score_mix(last_20[-dashboard.RECENT_ROUNDS:])
-    form = dashboard.recent_form(last_20)
-    average_putts = round(sum(putts) / len(putts), 1) if putts else None
-    putts_shown = dashboard.putts_shown(form["putts_per_18"], average_putts)
+    # The golfer's own index, as `api/player_handicap.player_handicap_index` reads it: the same
+    # last 20 rounds, held at the handicap they gave. The trend's last point is the same index.
+    index_window = hcap.player_index_window(user, hi_rounds)
+    handicap_trend = hcap.player_handicap_trend(user, hi_rounds)[-len(last_20):] if last_20 else []
+    scoring_change = dashboard.scoring_average_change(last_20)
+    today = dashboard.today()
 
     return DashboardResponse(
-        total_rounds=len(summaries),
-        scoring_average=round(sum(scores) / len(scores), 1) if scores else None,
         best_round=best_summary.total_score if best_summary else None,
         best_round_id=best_summary.id if best_summary else None,
         best_round_course=best_summary.course_name if best_summary else None,
-        handicap_index=calculated_hi,
-        recent_rounds=recent_rounds,
-        best_recent_round_id=best_recent.id if best_recent else None,
-        average_putts=average_putts,
-        average_gir=round(sum(girs) / len(girs), 1) if girs else None,
-        putts_per_round=putts_shown["per_round"],
-        putts_rating=putts_shown["rating"],
-        scoring_average_l20=dashboard.scoring_average(last_20),
+        best_round_to_par=best_summary.to_par if best_summary else None,
+        best_round_date=best_summary.date if best_summary else None,
+        handicap_index=index_window["index"],
+        recent_rounds=[round_summary(r) for r in summaries[:4]],
         scoring_average_l5=dashboard.scoring_average(last_20, dashboard.RECENT_ROUNDS),
-        scoring_average_change=dashboard.scoring_average_change(last_20),
-        handicap_change=dashboard.handicap_change(handicap_trend),
-        recent_form=form,
-        score_mix=mix["percentages"],
-        recent_score_mix=recent_mix["percentages"],
-        score_mix_holes=mix["holes"],
-        milestones=dashboard.lifetime_milestones(
-            analytics.notable_achievements(last_20, home_course_id=user.home_course_id)
-        ),
+        scoring_average_change=scoring_change,
+        scoring_average_verdict=dashboard.change_verdict(scoring_change),
+        handicap_change=dashboard.handicap_change(last_20, handicap_trend, today),
+        recent_score_mix=dashboard.score_mix(last_20[-dashboard.RECENT_ROUNDS:])["percentages"],
         whs=dashboard.whs_breakdown(
-            last_20, handicap_trend, hcap.score_differentials_per_round(last_20), calculated_hi
+            last_20, handicap_trend, hcap.score_differentials_per_round(last_20), index_window
         ),
-        score_trend=analytics.score_trend(last_20),
+        score_trend=analytics.score_trend_with_rolling_average(last_20),
         handicap_trend=handicap_trend,
-        scrambling_trend=analytics.scrambling_per_round(last_20),
-        up_and_down_trend=analytics.up_and_down_trend(last_20),
+        rounds_this_year=dashboard.rounds_this_year(summaries, today),
     )
 
 
 @router.get("/analytics/{user_id}", response_model=AnalyticsResponse)
 async def get_analytics(
     user_id: UUID,
-    limit: int = Query(default=50, ge=1, le=500),
+    limit: int = Query(default=50, ge=1, le=MAX_ANALYTICS_ROUNDS),
     course_id: Optional[str] = Query(default=None),
     timeframe: Optional[Literal["ytd", "1y"]] = Query(default=None),
     db: DatabaseManager = Depends(get_db),
@@ -128,12 +109,12 @@ async def get_analytics(
         else:
             try:
                 resolved_course_id = ensure_uuid_str(course_id, "course_id")
-            except ValueError as exc:
-                raise HTTPException(422, str(exc))
+            except ValueError:
+                raise HTTPException(422, "course_id must be a valid UUID.") from None
 
     # Resolve date_from filter
     date_from: Optional[date] = None
-    today = date.today()
+    today = datetime.now(timezone.utc).date()
     if timeframe == "ytd":
         date_from = date(today.year, 1, 1)
     elif timeframe == "1y":
@@ -147,19 +128,20 @@ async def get_analytics(
     )
     rounds = list(reversed(rounds_desc))
 
-    # Fetch up to 19 extra rounds so handicap_trend uses a true rolling 20-round window
-    hi_rounds_desc = await db.rounds.get_rounds_for_user(
-        target_user_id, limit=limit + 19, offset=0,
-        course_id=resolved_course_id,
-        date_from=date_from,
+    # The golfer's own rounds, unfiltered, with up to 19 more before the page's so the index after
+    # each has a full 20-round window. A course or timeframe narrows the rounds shown, not the
+    # golfer's index: that reads every round they played. Narrowed, the page's rounds can be any
+    # of theirs, so read as many as the page can ask for.
+    filtered = resolved_course_id is not None or date_from is not None
+    history_desc = await db.rounds.get_rounds_for_user(
+        target_user_id, limit=(MAX_ANALYTICS_ROUNDS if filtered else limit) + 19, offset=0,
     )
-    hi_rounds = list(reversed(hi_rounds_desc))
 
     return analytics_response(
         rounds,
-        hi_rounds,
+        list(reversed(history_desc)),
         home_course_id=user.home_course_id,
-        player_index=await player_handicap_index(db, user),
+        user=user,
     )
 
 
@@ -286,11 +268,11 @@ async def get_milestones(
 
     achievements = analytics.notable_achievements(rounds_chrono, home_course_id=user.home_course_id)
 
-    def _parse_date(d: str) -> datetime:
+    def _parse_date(d: str) -> date:
         try:
-            return datetime.strptime(d, "%Y/%m/%d")
-        except Exception:
-            return datetime.min
+            return analytics.parse_date_short(d)
+        except ValueError:
+            return date.min
 
     milestones = []
 

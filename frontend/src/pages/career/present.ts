@@ -59,6 +59,7 @@ export function milestoneLabel(milestone: Milestone): string {
     case "putt-break":
       return `Break ${milestone.threshold} Putts`;
     case "gir-break":
+      // The server reaches greens milestones on full rounds only, so a nine never claims one.
       return `${milestone.threshold}/18 GIR`;
     case "under-par":
       return "Round Under Par";

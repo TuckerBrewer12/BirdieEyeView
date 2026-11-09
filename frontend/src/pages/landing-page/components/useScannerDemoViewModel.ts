@@ -52,27 +52,32 @@ export interface DemoScorecardRow {
   putts: number;
   greenInRegulation: boolean;
   toPar: number;
-  overPar: boolean;
   score: ScoreKind;
 }
 
-const SAMPLE = {
-  par: [4, 4, 3, 5, 4, 4, 3, 5, 3],
-  strokes: [5, 5, 3, 6, 5, 5, 4, 6, 4],
-  putts: [2, 1, 2, 2, 2, 3, 3, 2, 2],
-  gir: [false, false, true, false, false, true, true, false, false],
-};
-
-const SCORECARD: DemoScorecardRow[] = SAMPLE.par.map((par, i) => ({
-  hole: i + 1,
-  par,
-  strokes: SAMPLE.strokes[i],
-  putts: SAMPLE.putts[i],
-  greenInRegulation: SAMPLE.gir[i],
-  toPar: strokesToPar(SAMPLE.strokes[i], par) ?? 0,
-  overPar: SAMPLE.strokes[i] > par,
-  score: scoreKind(SAMPLE.strokes[i], par) ?? "par",
-}));
+/**
+ * The sample card the scan resolves to. To par and the score kind are worked out from
+ * par and strokes, so this demo follows the same golf rules as a saved round.
+ */
+const SCORECARD: DemoScorecardRow[] = [
+  { hole: 1, par: 4, strokes: 5, putts: 2, greenInRegulation: false },
+  { hole: 2, par: 4, strokes: 5, putts: 1, greenInRegulation: false },
+  { hole: 3, par: 3, strokes: 3, putts: 2, greenInRegulation: true },
+  { hole: 4, par: 5, strokes: 6, putts: 2, greenInRegulation: false },
+  { hole: 5, par: 4, strokes: 5, putts: 2, greenInRegulation: false },
+  { hole: 6, par: 4, strokes: 5, putts: 3, greenInRegulation: true },
+  { hole: 7, par: 3, strokes: 4, putts: 3, greenInRegulation: true },
+  { hole: 8, par: 5, strokes: 6, putts: 2, greenInRegulation: false },
+  { hole: 9, par: 3, strokes: 4, putts: 2, greenInRegulation: false },
+].map((hole) => {
+  const toPar = strokesToPar(hole.strokes, hole.par);
+  const score = scoreKind(hole.strokes, hole.par);
+  // Both helpers return null only when par or strokes is missing, which this card never is.
+  if (toPar == null || score == null) {
+    throw new Error(`Hole ${hole.hole} is missing par or strokes`);
+  }
+  return { ...hole, toPar, score };
+});
 
 export interface ScannerDemoViewModel {
   phase: ScannerPhase;

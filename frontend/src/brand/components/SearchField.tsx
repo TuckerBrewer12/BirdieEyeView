@@ -19,6 +19,10 @@ interface SearchFieldProps
   shortcut?: boolean;
 }
 
+/**
+ * Search, as the pages show it: 40 tall on the card's surface, a magnifier that darkens once
+ * there's a query, and a button that clears it and keeps the caret in the field.
+ */
 export function SearchField({
   value,
   onChange,
@@ -52,10 +56,26 @@ export function SearchField({
       />
       <InputGroupAddon className={cn(value && "text-foreground")}>
         <Search />
-      </InputGroupAddon>
+      </InputGroupAddonLabel>
       {loading && (
-        <InputGroupAddon align="inline-end">
+        <InputGroupAddonLabel htmlFor={inputId} align="inline-end">
           <Loader2 className="animate-spin" />
+        </InputGroupAddonLabel>
+      )}
+      {value && !loading && (
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            size="icon-sm"
+            variant="secondary"
+            className="size-7"
+            aria-label="Clear search"
+            onClick={() => {
+              onChange("");
+              input.current?.focus();
+            }}
+          >
+            <X className="size-3.5" />
+          </InputGroupButton>
         </InputGroupAddon>
       )}
       {value ? (

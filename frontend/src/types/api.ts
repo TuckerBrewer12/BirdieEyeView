@@ -12,7 +12,8 @@ export type CourseDto = Schemas["CourseResponse"];
 export type CourseSummaryDto = Schemas["CourseSummaryResponse"];
 export type UserDto = Schemas["UserResponse"];
 export type UserTeeDto = Schemas["UserTee"];
-export type HandicapIndexDto = Schemas["HandicapIndexResponse"];
+
+
 export type HoleScoreDto = Schemas["HoleScoreResponse"];
 export type HoleSummaryDto = Schemas["HoleSummaryResponse"];
 export type ScoreCountsDto = Schemas["ScoreCounts"];
@@ -22,7 +23,6 @@ export type RoundSummaryDto = Schemas["RoundSummaryResponse"];
 export type DashboardDto = Schemas["DashboardResponse"];
 export type ScoreMixDto = Schemas["ScoreMix"];
 export type WhsBreakdownDto = Schemas["WhsBreakdown"];
-export type MilestoneDto = Schemas["Milestone"];
 export type CourseAnalyticsDto = Schemas["CourseAnalyticsResponse"];
 export type CourseScoreTrendRowDto = Schemas["CourseScoreTrendRow"];
 export type CourseHoleToParRowDto = Schemas["CourseHoleToParRow"];
@@ -37,7 +37,6 @@ export type ScramblingTrendRowDto = Schemas["ScramblingTrendRow"];
 export type UpAndDownTrendRowDto = Schemas["UpAndDownTrendRow"];
 export type AnalyticsDto = Schemas["AnalyticsResponse"];
 export type AnalyticsKpisDto = Schemas["AnalyticsKpis"];
-export type AnalyticsScoreTrendRowDto = Schemas["AnalyticsScoreTrendRow"];
 /** One of the analytics page's insights, told apart by `kind`. The page words it. */
 export type AnalyticsInsightDto = AnalyticsDto["insights"][number];
 export type NetScoreTrendRowDto = Schemas["NetScoreTrendRow"];

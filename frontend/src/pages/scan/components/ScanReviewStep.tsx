@@ -1,4 +1,4 @@
-import { CircleAlert, Loader2 } from "lucide-react";
+import { ArrowRight, CircleAlert, Loader2 } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -71,7 +71,7 @@ export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanRe
               <CardTitle>Your card</CardTitle>
             </CardHeader>
             <CardContent>
-              <img src={photoUrl} alt="The scorecard photo" className="max-h-96 w-full rounded-lg object-contain" />
+              <img src={photoUrl} alt="Your scorecard" className="max-h-96 w-full rounded-lg object-contain" />
             </CardContent>
           </Card>
         )}
@@ -141,7 +141,7 @@ function RoundFigures({ round }: { round: Pick<Round, "score" | "toPar" | "cours
 }
 
 function CourseField({ review }: { review: ScanReviewViewModel }) {
-  const { courseSearch } = review;
+  const { courseSearch, nameToKeep } = review;
   return (
     <Field>
       <FieldLabel htmlFor="review-course">Course</FieldLabel>
@@ -153,7 +153,6 @@ function CourseField({ review }: { review: ScanReviewViewModel }) {
         onQueryChange={courseSearch.setQuery}
         onSelectCourse={review.pickCourse}
         onClose={courseSearch.reset}
-        autoFocus={false}
         reviewVariant
         onUseCustomName={review.nameCourse}
         linkedName={review.linkedName ? formatCourseName(review.linkedName) : undefined}
@@ -161,14 +160,15 @@ function CourseField({ review }: { review: ScanReviewViewModel }) {
         onClear={review.changeCourse}
         clearLabel="Change course"
       />
-      {review.nameToKeep && (
+      {nameToKeep && (
         <Button
           variant="linkMuted"
           size="xs"
           className="h-auto self-start p-0"
-          onClick={() => review.nameCourse(review.nameToKeep!)}
+          onClick={() => review.nameCourse(nameToKeep)}
         >
-          Save as "{formatCourseName(review.nameToKeep)}" without linking →
+          Save as "{formatCourseName(nameToKeep)}" without linking
+          <ArrowRight aria-hidden />
         </Button>
       )}
     </Field>
@@ -181,7 +181,6 @@ function TeeField({ review }: { review: ScanReviewViewModel }) {
       <FieldLabel htmlFor={review.tees.length > 0 ? undefined : "review-tee"}>Tee played</FieldLabel>
       {review.tees.length > 0 ? (
         <ToggleGroup
-          variant="outline"
           size="sm"
           aria-label="Tee played"
           value={review.teeBox ? [review.teeBox] : []}

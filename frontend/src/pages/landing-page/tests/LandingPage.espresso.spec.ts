@@ -54,4 +54,13 @@ test.describe("on a phone", () => {
     await landing.open();
     await landing.seesScanner();
   });
+
+  test("the menu toggle opens and closes the menu", async ({ landing }) => {
+    await landing.open();
+    await landing.seesMenuOpen(false);
+    await landing.openMenu();
+    await landing.seesMenuOpen(true);
+    await landing.closeMenu();
+    await landing.seesMenuOpen(false);
+  });
 });

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AppShell, BottomNav, SideNav, type RenderLink } from "@/brand";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/auth";
 import { initialsOf, navigationFor } from "./navigation";
 import { useSignOut } from "./useSignOut";
 
@@ -36,6 +36,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       bottomNav={
         <BottomNav
           tabs={nav.tabs}
+          featuredHref="/scan"
           moreItems={nav.more}
           onSignOut={onSignOut}
           signingOut={signOut.isPending}

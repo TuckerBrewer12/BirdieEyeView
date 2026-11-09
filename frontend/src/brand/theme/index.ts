@@ -3,14 +3,17 @@ export { fromBreakpoint } from "./breakpoints";
 export { chartTooltipStyle, chartTickStyle } from "./chart";
 export {
   SCORE_KEYS,
+  scoreCountTextClass,
   scoreFillClass,
   scoreOnFillClass,
   scoreWashClass,
+  scoreProfileHeightClass,
   toParFill,
   toParLabel,
   scoreKindLabel,
   toParDisplay,
   toParTextClass,
+  toParStatTextClass,
   toParBadgeClass,
 } from "./score";
 export type { ScoreKey } from "./score";

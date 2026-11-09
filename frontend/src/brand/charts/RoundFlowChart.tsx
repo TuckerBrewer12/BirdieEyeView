@@ -1,208 +1,287 @@
 import { useState, type MouseEvent } from "react";
 import { AnimatePresence, motion, useReducedMotion, useReducedMotionConfig } from "framer-motion";
 import { scaleLinear } from "d3-scale";
-import { curveMonotoneX, line } from "d3-shape";
+import { curveStepAfter, line } from "d3-shape";
 import { cn } from "@/brand/cn";
-import { scoreKindLabel, scoreWashClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
+import { ToParFigure } from "@/brand/components/ToParFigure";
+import { paddedExtent } from "@/brand/charts/scales";
+import { scoreKindLabel, scoreWashClass, toParFill, toParLabel, tokens } from "@/brand/theme";
 import type { HoleScore, Round } from "@/domain";
 import { pluralize } from "@/domain/format";
 import type { ScoreKind } from "@/domain/score";
+import { HoleShape } from "./HoleScoreShapes";
 
 interface RoundFlowChartProps {
   round: Round;
 }
 
-/** A hole that can be plotted: scored, with a par the server classified it against. */
-type FlowHole = HoleScore & { strokes: number; toPar: number; kind: ScoreKind };
-
-const Y_TICKS = [-3, -2, -1, 0, 1, 2, 3];
+/** A hole on the flow: scored, classified, and with the round's to par after it, all the server's. */
+type FlowHole = HoleScore & { strokes: number; toPar: number; kind: ScoreKind; runningToPar: number };
 
 /**
- * How a round went hole by hole: each hole's score to par, joined into a line,
- * over-par holes above the dashed par line and under-par ones below it.
- * Wider than a phone, so it scrolls sideways rather than shrinking its labels.
+ * How a round went, as a running score: the server's total to par after each hole, drawn as a
+ * step that climbs on a bad hole and falls on a good one. Each hole's own score is marked under
+ * its step, the way the scorecard marks it, and the server's worst four-hole stretch is bracketed.
+ * Wider than a phone, so the plot scrolls sideways rather than shrinking its labels.
  */
 export function RoundFlowChart({ round }: RoundFlowChartProps) {
-  const { width: W, height: H, pad: PAD, extent, dot, dotHover } = tokens.chart.flow;
+  const { width: W, height: H, pad: PAD, stroke, dot, labelGap, chip, bracket } = tokens.chart.flow;
+  // The strip's marks are square, a `hole-h` side.
+  const holeW = tokens.size["hole-h"];
+  const holeH = tokens.size["hole-h"];
   // The OS setting, or a MotionConfig asking for stillness (the kit's screenshot harness).
   const prefersReduced = useReducedMotion();
   const configReduced = useReducedMotionConfig();
   const reduceMotion = prefersReduced || configReduced;
   const [hovered, setHovered] = useState<FlowHole | null>(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
-  const holes = round.holes.filter(
-    (hole): hole is FlowHole => hole.strokes != null && hole.toPar != null && hole.kind != null,
+  const steps = round.holes.filter(
+    (hole): hole is FlowHole =>
+      hole.strokes != null && hole.toPar != null && hole.kind != null && hole.runningToPar != null,
   );
-  if (holes.length < 3) return null;
+  if (steps.length < 3) return null;
 
-  const first = holes[0].hole;
-  const last = holes[holes.length - 1].hole;
-  const x = scaleLinear().domain([first, last]).range([PAD.left, W - PAD.right]);
-  // Over par plots upward: a bad hole is a climb.
-  const y = scaleLinear().domain([-extent, extent]).range([H - PAD.bottom, PAD.top]);
-  const yOf = (toPar: number) => y(Math.max(-extent, Math.min(extent, toPar)));
+  const first = steps[0].hole;
+  const last = steps[steps.length - 1].hole;
+  const final = steps[steps.length - 1];
+
+  const bottom = H - PAD.bottom;
+  // Each hole owns a column from x(hole) to x(hole + 1).
+  const x = scaleLinear().domain([first, last + 1]).range([PAD.left, W - PAD.right]);
+  const mid = (hole: number) => x(hole + 0.5);
+  // The line starts at level, so level is always on the scale, with a stroke of room either side.
+  const y = scaleLinear()
+    .domain(paddedExtent([0, ...steps.map((step) => step.runningToPar)], 1)!)
+    .range([bottom, PAD.top]);
+  const ticks = y.ticks(4).filter(Number.isInteger);
 
   const path =
-    line<FlowHole>()
-      .x((hole) => x(hole.hole))
-      .y((hole) => yOf(hole.toPar))
-      .curve(curveMonotoneX)(holes) ?? "";
+    line().curve(curveStepAfter)([
+      [x(first), y(0)],
+      ...steps.map((step): [number, number] => [x(step.hole), y(step.runningToPar)]),
+      [x(last + 1), y(final.runningToPar)],
+    ]) ?? "";
+
+  const worst = round.worstStretch;
+  const bracketY = PAD.top - bracket.rise;
+  const chipTop = bottom + chip.gap;
 
   const handleMouseMove = (e: MouseEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const number = Math.round(x.invert((e.clientX - rect.left) * (W / rect.width)));
-    setHovered(holes.find((hole) => hole.hole === Math.max(first, Math.min(last, number))) ?? null);
-    setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    const hole = Math.floor(x.invert((e.clientX - rect.left) * (W / rect.width)));
+    setHovered(steps.find((step) => step.hole === Math.max(first, Math.min(last, hole))) ?? null);
   };
 
+  const description =
+    `Running score to par: ${toParLabel(final.runningToPar)} after hole ${last}` +
+    (worst ? `, ${toParLabel(worst.toPar)} over holes ${worst.firstHole} to ${worst.lastHole}` : "");
+
   return (
-    <div data-slot="round-flow-chart" className="overflow-x-auto">
-      <div className="relative min-w-chart-wide select-none">
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          className="w-full overflow-visible"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={() => setHovered(null)}
-        >
-          <line
-            x1={PAD.left}
-            x2={W - PAD.right}
-            y1={y(0)}
-            y2={y(0)}
-            stroke={tokens.color.chart.muted}
-            strokeWidth={1.5}
-            strokeDasharray="5 4"
-          />
-
-          {first <= 9 && last > 9 && (
-            <line
-              x1={x(9.5)}
-              x2={x(9.5)}
-              y1={PAD.top}
-              y2={H - PAD.bottom}
-              stroke={tokens.color.border}
-              strokeWidth={tokens.lineWidth.border}
-            />
-          )}
-
-          <motion.path
-            d={path}
-            fill="none"
-            stroke={tokens.color.chart.axis}
-            strokeWidth={2.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            // Reduced motion starts at the end state, so there is nothing left to animate.
-            initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 1 }}
-            transition={tokens.motion.draw}
-          />
-
-          {holes.map((hole, i) => (
-            <motion.circle
-              key={hole.hole}
-              cx={x(hole.hole)}
-              cy={yOf(hole.toPar)}
-              r={hovered?.hole === hole.hole ? dotHover : dot}
-              fill={tokens.color.score[hole.kind].base}
-              stroke={tokens.color.card}
-              strokeWidth={1.5}
-              className="cursor-crosshair"
-              initial={reduceMotion ? false : { scale: tokens.motion.pop.from, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{
-                delay: tokens.motion.pop.delay + i * tokens.motion.pop.stagger,
-                duration: tokens.motion.pop.duration,
-                ease: tokens.motion.pop.ease,
-              }}
-            />
-          ))}
-
-          {hovered && (
-            <line
-              x1={x(hovered.hole)}
-              x2={x(hovered.hole)}
-              y1={PAD.top}
-              y2={H - PAD.bottom}
-              stroke={tokens.color.chart.muted}
-              strokeWidth={tokens.lineWidth.border}
-              strokeDasharray="3 3"
-            />
-          )}
-
-          {holes.map((hole) => (
-            <text
-              key={`label-${hole.hole}`}
-              x={x(hole.hole)}
-              y={H - PAD.bottom + 14}
-              textAnchor="middle"
-              fontSize={tokens.type.meta.size}
-              fontFamily={tokens.font.sans}
-              fill={hovered?.hole === hole.hole ? tokens.color.foreground : tokens.color.chart.axis}
-              fontWeight={hovered?.hole === hole.hole ? "600" : "400"}
-            >
-              {hole.hole}
-            </text>
-          ))}
-
-          {Y_TICKS.map((toPar) => (
-            <text
-              key={`tick-${toPar}`}
-              x={PAD.left - 8}
-              y={y(toPar) + 4}
-              textAnchor="end"
-              fontSize={tokens.type.caption.size}
-              fontFamily={tokens.font.sans}
-              fill="currentColor"
-              className={toParTextClass(toPar)}
-              fontWeight="500"
-            >
-              {toParLabel(toPar)}
-            </text>
-          ))}
-        </svg>
-
-        <AnimatePresence>
-          {hovered && (
-            <motion.div
-              key={hovered.hole}
-              className="pointer-events-none absolute z-10 min-w-32 rounded-xl border border-border bg-card/95 px-3 py-2.5 text-body-sm shadow-card"
-              style={{
-                left: tooltipPos.x + (tooltipPos.x > W * 0.65 ? -150 : 14),
-                top: tooltipPos.y - 10,
-              }}
-              initial={{ opacity: 0, scale: tokens.motion.tapScale, y: 4 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: tokens.motion.tapScale, y: 4 }}
-              transition={{ duration: tokens.motion.duration.collapse }}
-            >
-              <div className="mb-1.5 flex items-center justify-between gap-3">
-                <span className="text-sm font-bold text-card-foreground">Hole {hovered.hole}</span>
-                <span
-                  className={cn("rounded-full px-1.5 py-0.5 text-xs font-semibold", scoreWashClass(hovered.kind))}
+    <div data-slot="round-flow-chart">
+      <div className="overflow-x-auto">
+        <div className="relative min-w-chart-wide select-none">
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            role="img"
+            aria-label={description}
+            className="block w-full overflow-visible"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => setHovered(null)}
+          >
+            {worst && (
+              <g>
+                <path
+                  d={`M${x(worst.firstHole) + tokens.space.dot} ${bracketY + bracket.tick} V${bracketY} H${x(worst.lastHole + 1) - tokens.space.dot} V${bracketY + bracket.tick}`}
+                  fill="none"
+                  stroke={toParFill(worst.toPar)}
+                  strokeWidth={tokens.lineWidth.outline}
+                  strokeLinejoin="round"
+                />
+                <text
+                  x={x((worst.firstHole + worst.lastHole + 1) / 2)}
+                  y={bracketY - bracket.tick}
+                  textAnchor="middle"
+                  fontSize={tokens.type.label.size}
+                  fontFamily={tokens.font.sans}
+                  fontWeight="600"
+                  fill={toParFill(worst.toPar)}
                 >
-                  {scoreKindLabel(hovered.kind)}
-                </span>
-              </div>
-              <div className="mb-1 font-medium text-card-foreground">
-                {hovered.strokes} strokes
-                <span className="ml-1 font-normal text-muted-foreground">
-                  ({toParLabel(hovered.toPar)}) · Par {hovered.par}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <span>{hovered.putts != null ? pluralize(hovered.putts, "putt") : "Putts N/A"}</span>
-                {hovered.gir != null && (
-                  <span className={hovered.gir ? "text-score-birdie" : undefined}>
-                    {hovered.gir ? "GIR ✓" : "No GIR"}
-                  </span>
+                  {toParLabel(worst.toPar)} over holes {worst.firstHole}–{worst.lastHole}
+                </text>
+              </g>
+            )}
+
+            {ticks.map((tick) => (
+              <g key={tick}>
+                <line
+                  x1={PAD.left}
+                  x2={W - PAD.right}
+                  y1={y(tick)}
+                  y2={y(tick)}
+                  stroke={tick === 0 ? tokens.color.chart.reference : tokens.color.chart.grid}
+                  strokeWidth={tokens.lineWidth.border}
+                  strokeDasharray={tick === 0 ? tokens.chart.guideDash : undefined}
+                />
+                <text
+                  x={PAD.left - labelGap}
+                  y={y(tick)}
+                  textAnchor="end"
+                  dominantBaseline="central"
+                  fontSize={tokens.type.label.size}
+                  fontFamily={tokens.font.sans}
+                  fill={tokens.color.mutedForeground}
+                >
+                  {toParLabel(tick)}
+                </text>
+              </g>
+            ))}
+
+            {first <= 9 && last > 9 && (
+              <line
+                x1={x(10)}
+                x2={x(10)}
+                y1={0}
+                y2={H}
+                stroke={tokens.color.border}
+                strokeWidth={tokens.lineWidth.border}
+              />
+            )}
+
+            <motion.path
+              d={path}
+              fill="none"
+              stroke={tokens.color.foreground}
+              strokeWidth={stroke}
+              strokeLinejoin="round"
+              // Reduced motion starts at the end state, so there is nothing left to animate.
+              initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={tokens.motion.draw}
+            />
+            <circle cx={x(last + 1)} cy={y(final.runningToPar)} r={dot} fill={tokens.color.foreground} />
+            <text
+              x={x(last + 1)}
+              y={y(final.runningToPar) - labelGap}
+              textAnchor="end"
+              fontSize={tokens.type["body-sm"].size}
+              fontFamily={tokens.font.sans}
+              fontWeight="700"
+              fill={toParFill(final.runningToPar)}
+            >
+              {toParLabel(final.runningToPar)}
+            </text>
+
+            {hovered && (
+              <>
+                <line
+                  x1={mid(hovered.hole)}
+                  x2={mid(hovered.hole)}
+                  y1={PAD.top}
+                  y2={bottom}
+                  stroke={tokens.color.chart.reference}
+                  strokeWidth={tokens.lineWidth.border}
+                  strokeDasharray={tokens.chart.guideDash}
+                />
+                <circle
+                  cx={mid(hovered.hole)}
+                  cy={y(hovered.runningToPar)}
+                  r={dot}
+                  fill={tokens.color.foreground}
+                  stroke={tokens.color.card}
+                  strokeWidth={tokens.lineWidth.outline}
+                />
+              </>
+            )}
+
+            {steps.map((step) => (
+              <g key={step.hole}>
+                {/* The scorecard's own hole mark, so a score reads the same here as on the card. */}
+                <foreignObject x={mid(step.hole) - holeW / 2} y={chipTop} width={holeW} height={holeH} pointerEvents="none">
+                  <div className="pointer-events-none flex">
+                    <HoleShape hole={step} square />
+                  </div>
+                </foreignObject>
+                <text
+                  x={mid(step.hole)}
+                  y={chipTop + holeH + chip.gap}
+                  textAnchor="middle"
+                  fontSize={tokens.type.meta.size}
+                  fontFamily={tokens.font.sans}
+                  fill={hovered?.hole === step.hole ? tokens.color.foreground : tokens.color.mutedForeground}
+                  fontWeight={hovered?.hole === step.hole ? "600" : "400"}
+                >
+                  {step.hole}
+                </text>
+              </g>
+            ))}
+          </svg>
+
+          <AnimatePresence>
+            {hovered && (
+              <motion.div
+                key={hovered.hole}
+                className={cn(
+                  "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
+                  // Past two thirds of the way across, the card opens to the left of the hole.
+                  mid(hovered.hole) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
                 )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                style={{
+                  left: `${(mid(hovered.hole) / W) * 100}%`,
+                  top: `${(y(hovered.runningToPar) / H) * 100}%`,
+                }}
+                initial={{ opacity: 0, scale: tokens.motion.tapScale }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: tokens.motion.tapScale }}
+                transition={{ duration: tokens.motion.duration.collapse }}
+              >
+                <div className="mb-1.5 flex items-center justify-between gap-3">
+                  <span className="text-sm font-bold text-card-foreground">Hole {hovered.hole}</span>
+                  <span
+                    className={cn("rounded-full px-1.5 py-0.5 text-xs font-semibold", scoreWashClass(hovered.kind))}
+                  >
+                    {scoreKindLabel(hovered.kind)}
+                  </span>
+                </div>
+                <div className="mb-1 font-medium text-card-foreground">
+                  {hovered.strokes} strokes
+                  <span className="ml-1 font-normal text-muted-foreground">
+                    ({toParLabel(hovered.toPar)}) · Par {hovered.par}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <span>{hovered.putts != null ? pluralize(hovered.putts, "putt") : "Putts N/A"}</span>
+                  {hovered.gir != null && (
+                    <span className={hovered.gir ? "text-score-birdie" : undefined}>
+                      {hovered.gir ? "GIR ✓" : "No GIR"}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-1 text-muted-foreground">
+                  Round <ToParFigure toPar={hovered.runningToPar} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
+    </div>
+  );
+}
+
+/** The round's to par out, in and in total, as the server sent them: what the flow ends on, for its card's header. */
+export function RoundFlowFigures({ round }: RoundFlowChartProps) {
+  const figures = [
+    { label: "Out", toPar: round.frontNine.toPar },
+    { label: "In", toPar: round.backNine.toPar },
+    { label: "Total", toPar: round.toPar },
+  ];
+  return (
+    <div data-slot="round-flow-figures" className="flex gap-5 text-body-sm text-foreground-secondary">
+      {figures.map((figure) => (
+        <div key={figure.label}>
+          {figure.label} <ToParFigure toPar={figure.toPar} />
+        </div>
+      ))}
     </div>
   );
 }

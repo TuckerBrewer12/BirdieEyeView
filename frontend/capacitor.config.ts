@@ -20,7 +20,7 @@ const config: CapacitorConfig = {
     StatusBar: {
       overlaysWebView: false,
       style: 'DEFAULT',
-      backgroundColor: '#f5f6f3',
+      backgroundColor: '#f3f4ef',
     },
   },
   ...(devServerUrl
@@ -35,7 +35,7 @@ const config: CapacitorConfig = {
     contentInset: 'automatic',
   },
   android: {
-    backgroundColor: '#f5f6f3',
+    backgroundColor: '#f3f4ef',
   },
 };
 

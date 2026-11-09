@@ -1,5 +1,16 @@
 import { Camera, Images, ScanLine } from "lucide-react";
-import { Button, Card, CardContent, Dropzone, FileChip, ScorecardLayoutPicker } from "@/brand";
+import {
+  ActionSheet,
+  ActionSheetAction,
+  ActionSheetContent,
+  ActionSheetTrigger,
+  Button,
+  Card,
+  CardContent,
+  Dropzone,
+  FileChip,
+  ScorecardLayoutPicker,
+} from "@/brand";
 import { isNative, pickImageNative } from "@/platform/nativeCamera";
 
 export interface ScanUploadPhoto {
@@ -72,23 +83,27 @@ function NativePicker({ onPick }: { onPick: (photo: File) => void }) {
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
+        <div className="flex size-12 items-center justify-center rounded-full bg-primary/tint">
           <ScanLine className="size-5 text-primary" />
         </div>
         <div>
           <p className="text-sm font-semibold text-foreground">Scan your scorecard</p>
           <p className="mt-1 text-xs text-muted-foreground">Take a photo or pick one from your library</p>
         </div>
-        <div className="flex gap-3">
-          <Button onClick={() => void pick("camera")}>
+        <ActionSheet>
+          <ActionSheetTrigger render={<Button />}>
             <Camera data-icon="inline-start" />
-            Take Photo
-          </Button>
-          <Button variant="outline" onClick={() => void pick("photos")}>
-            <Images data-icon="inline-start" />
-            Photo Library
-          </Button>
-        </div>
+            Add Scorecard
+          </ActionSheetTrigger>
+          <ActionSheetContent title="Add scorecard">
+            <ActionSheetAction icon={<Camera aria-hidden />} onClick={() => void pick("camera")}>
+              Take photo
+            </ActionSheetAction>
+            <ActionSheetAction icon={<Images aria-hidden />} onClick={() => void pick("photos")}>
+              Choose from library
+            </ActionSheetAction>
+          </ActionSheetContent>
+        </ActionSheet>
       </CardContent>
     </Card>
   );

@@ -58,16 +58,23 @@ export class RoundsRobot {
     return this;
   }
 
+  /** The sort menu open: a dropdown on desktop, a bottom sheet on a phone. */
   async openSortMenu(): Promise<this> {
-    await this.page.getByRole("combobox", { name: "Sort by" }).click();
-    await expect(this.page.getByRole("listbox")).toBeVisible();
-    await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
+    await this.page.getByRole("button", { name: "Sort by", exact: true }).click();
+    return this;
+  }
+
+  async seesSortMenu(): Promise<this> {
+    await expect(this.page.locator("[data-slot=sort-menu], [data-slot=sort-sheet]")).toBeVisible();
     return this;
   }
 
   async sortBy(label: string): Promise<this> {
     await this.openSortMenu();
-    await this.page.getByRole("option", { name: label, exact: true }).click();
+    await this.page
+      .getByRole("menuitemradio", { name: label, exact: true })
+      .or(this.page.locator("[data-slot=sheet-option]").getByText(label, { exact: true }))
+      .click();
     return this;
   }
 
@@ -98,10 +105,6 @@ export class RoundsRobot {
     return this;
   }
 
-  private async settleCourseSearch(): Promise<void> {
-    await this.page.waitForTimeout(500);
-  }
-
   async seesCourseResult(name: string): Promise<this> {
     await expect(
       this.page.locator("[data-slot=course-result]").filter({ hasText: name }),
@@ -109,8 +112,7 @@ export class RoundsRobot {
     return this;
   }
 
-  async seesNoCourseResults(): Promise<this> {
-    await this.settleCourseSearch();
+  async doesNotSeeCourseResults(): Promise<this> {
     await expect(this.page.locator("[data-slot=course-result]")).toHaveCount(0);
     return this;
   }
@@ -190,8 +192,9 @@ export class RoundsRobot {
     return this;
   }
 
-  async capture(name: string): Promise<this> {
-    await expect(this.page).toHaveScreenshot(name, { fullPage: true });
+  /** `fullPage: false` for an open sheet or menu, which sits over the viewport, not the page. */
+  async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
+    await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
     return this;
   }
 }

@@ -2,12 +2,14 @@ import { LINKS, UNSEEDED_COURSE, test } from "./AnalyticsPage.robot";
 
 test("populated analytics", async ({ analytics }) => {
   await analytics.open();
+  await analytics.seesRounds(24);
   await analytics.capture("analytics-populated.png");
 });
 
 test("populated analytics in dark mode", async ({ analytics }) => {
   await analytics.dark();
   await analytics.open();
+  await analytics.seesRounds(24);
   await analytics.capture("analytics-populated-dark.png");
 });
 
@@ -21,7 +23,8 @@ test("filtered to one course", async ({ analytics }) => {
 test("course menu open", async ({ analytics }) => {
   await analytics.open();
   await analytics.openCourseMenu();
-  await analytics.capture("analytics-course-menu.png");
+  await analytics.seesCourseMenu();
+  await analytics.capture("analytics-course-menu.png", { fullPage: false });
 });
 
 test("no rounds match the filters", async ({ analytics }) => {
@@ -33,6 +36,7 @@ test("no rounds match the filters", async ({ analytics }) => {
 
 test("no rounds yet", async ({ analytics }) => {
   await analytics.openWithoutRounds();
+  await analytics.seesNoRoundsYet();
   await analytics.capture("analytics-no-rounds.png");
 });
 
@@ -51,15 +55,21 @@ const PHONE_TABS = [
   { tab: "Range View", showing: "Performance by yardage and par", file: "range" },
 ] as const;
 
-for (const { tab, showing, file } of PHONE_TABS) {
-  for (const dark of [false, true]) {
-    test(`phone ${tab} section${dark ? " in dark mode" : ""}`, async ({ analytics, isMobile }) => {
-      test.skip(!isMobile, "The sections are tabs on the phone only.");
-      if (dark) await analytics.dark();
+test.describe("phone sections", { tag: "@phone" }, () => {
+  for (const { tab, showing, file } of PHONE_TABS) {
+    test(`${tab} section`, async ({ analytics }) => {
       await analytics.open();
       await analytics.openTab(tab);
       await analytics.seesTabOpen(tab, showing);
-      await analytics.capture(`analytics-${file}${dark ? "-dark" : ""}.png`);
+      await analytics.capture(`analytics-${file}.png`);
+    });
+
+    test(`${tab} section in dark mode`, async ({ analytics }) => {
+      await analytics.dark();
+      await analytics.open();
+      await analytics.openTab(tab);
+      await analytics.seesTabOpen(tab, showing);
+      await analytics.capture(`analytics-${file}-dark.png`);
     });
   }
-}
+});

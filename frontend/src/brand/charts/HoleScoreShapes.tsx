@@ -1,3 +1,4 @@
+import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
 import type { HoleSummary, RoundSummary } from "@/domain";
 
@@ -7,18 +8,24 @@ interface HoleScoreShapesProps {
   numbered?: boolean;
 }
 
-const VB_W = 30;
-const VB_H = 22;
-const cx = VB_W / 2;
-const cy = VB_H / 2;
-const r = 9.5;
+const { width, height: VB_H, circle: r, dot, stroke, strokeThin, corner, inset, hatch, squareHatch } =
+  tokens.chart.holeShape;
 
-/** One hole drawn the way a scorecard marks it: circles under par, boxes over. */
-export function HoleShape({ hole }: { hole: HoleSummary }) {
+/**
+ * One hole drawn the way a scorecard marks it: circles under par, boxes over. A scorecard cell is
+ * wider than tall; `square` draws the boxes square, as the round flow's strip shows them.
+ */
+export function HoleShape({ hole, square = false }: { hole: HoleSummary; square?: boolean }) {
+  const VB_W = square ? VB_H : width;
+  const cx = VB_W / 2;
+  const cy = VB_H / 2;
+  /** A box `by` in from every edge of the mark. */
+  const boxInset = (by: number) => ({ x: by, y: by, width: VB_W - 2 * by, height: VB_H - 2 * by });
+  const box = square ? "size-hole-h" : "h-hole-h w-hole-w";
   const kind = hole.kind;
   if (kind == null) {
     return (
-      <div className="flex h-hole-h w-hole-w items-center justify-center rounded-sm bg-muted">
+      <div className={cn("flex items-center justify-center rounded-sm bg-muted", box)}>
         <span className="text-caption font-bold text-muted-foreground">·</span>
       </div>
     );
@@ -27,42 +34,38 @@ export function HoleShape({ hole }: { hole: HoleSummary }) {
   const onFill = tokens.color.score[kind].onBase;
 
   return (
-    <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="h-hole-h w-hole-w">
+    <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className={box}>
       {kind === "eagle" && (
         <>
-          <circle cx={cx} cy={cy} r={5} fill={fill} />
-          <circle cx={cx} cy={cy} r={r} fill="none" stroke={fill} strokeWidth={1.5} />
+          <circle cx={cx} cy={cy} r={dot} fill={fill} />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke={fill} strokeWidth={stroke} />
         </>
       )}
       {kind === "birdie" && <circle cx={cx} cy={cy} r={r} fill={fill} />}
-      {kind === "par" && (
-        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={3} fill={fill} />
-      )}
-      {kind === "bogey" && (
-        <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={2} fill={fill} />
-      )}
+      {kind === "par" && <rect {...boxInset(inset.box)} rx={corner.par} fill={fill} />}
+      {kind === "bogey" && <rect {...boxInset(inset.box)} rx={corner.box} fill={fill} />}
       {kind === "double" && (
         <>
-          <rect x={2.5} y={2.5} width={VB_W - 5} height={VB_H - 5} rx={1.5} fill={fill} />
-          <rect
-            x={0.5}
-            y={0.5}
-            width={VB_W - 1}
-            height={VB_H - 1}
-            rx={2.5}
-            fill="none"
-            stroke={fill}
-            strokeWidth={1.25}
-          />
+          <rect {...boxInset(inset.inner)} rx={corner.inner} fill={fill} />
+          <rect {...boxInset(inset.box)} rx={corner.outer} fill="none" stroke={fill} strokeWidth={strokeThin} />
         </>
       )}
       {(kind === "triple" || kind === "quad") && (
         <>
-          <rect x={0.5} y={0.5} width={VB_W - 1} height={VB_H - 1} rx={2} fill={fill} />
-          <line x1={0} y1={7} x2={7} y2={0} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
-          <line x1={0} y1={18} x2={18} y2={0} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
-          <line x1={0} y1={VB_H} x2={VB_W} y2={0} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
-          <line x1={14} y1={VB_H} x2={VB_W} y2={8} stroke={onFill} strokeWidth={1.5} strokeLinecap="round" opacity={0.35} />
+          <rect {...boxInset(inset.box)} rx={corner.box} fill={fill} />
+          {(square ? squareHatch : hatch).map(([x1, y1, x2, y2]) => (
+            <line
+              key={`${x1}-${y1}`}
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke={onFill}
+              strokeWidth={stroke}
+              strokeLinecap="round"
+              opacity={tokens.opacity.recessed}
+            />
+          ))}
         </>
       )}
       <text

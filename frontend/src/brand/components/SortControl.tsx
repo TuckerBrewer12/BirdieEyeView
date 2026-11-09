@@ -1,5 +1,5 @@
-import { ArrowDown, ArrowUp, Check, ChevronDown } from "lucide-react";
-import { Select } from "@base-ui/react/select";
+import { useState } from "react";
+import { ArrowDown, ArrowUp, ChevronDown } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { Button } from "./Button";
 import { buttonVariants } from "./variants";
@@ -21,11 +21,17 @@ interface SortControlProps<T extends string> {
   ascending?: boolean;
   onToggleDirection?: () => void;
   directionDisabled?: boolean;
-  /** What the menu picks, for screen readers. */
+  /** While a pick is saving: the menu does not open. */
+  disabled?: boolean;
+  /** What the menu picks: the trigger's name for screen readers and the phone sheet's title. */
   "aria-label"?: string;
   className?: string;
 }
 
+/**
+ * Picks one of a few options. From `md` up the options drop down under the
+ * button; on a phone they rise in a bottom sheet with 52px rows.
+ */
 function SortControl<T extends string>({
   label,
   caption,
@@ -35,9 +41,13 @@ function SortControl<T extends string>({
   ascending = true,
   onToggleDirection,
   directionDisabled = false,
+  disabled = false,
   "aria-label": ariaLabel = "Sort by",
   className,
 }: SortControlProps<T>) {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const variant = onToggleDirection ? "ghost" : "outline";
+
   return (
     <div data-slot="sort-control" className={cn("inline-flex items-center gap-1", className)}>
       <Select.Root
@@ -64,28 +74,45 @@ function SortControl<T extends string>({
             sideOffset={4}
             className="z-50"
           >
-            <Select.Popup
-              data-slot="sort-menu"
-              className="min-w-28 origin-(--transform-origin) overflow-hidden rounded-lg bg-card p-1 text-card-foreground shadow-md ring-1 ring-foreground/10 outline-none duration-100 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
-            >
-              <Select.List className="!block w-full">
-                {options.map((option) => (
-                  <Select.Item
-                    key={option.value}
-                    value={option.value}
-                    className="relative flex w-full cursor-default items-center rounded-md py-1.5 pr-8 pl-2 text-sm outline-none select-none data-highlighted:bg-muted data-highlighted:text-foreground data-selected:bg-primary data-selected:text-primary-foreground data-selected:data-highlighted:bg-primary data-selected:data-highlighted:text-primary-foreground"
-                  >
-                    <Select.ItemText>{option.label}</Select.ItemText>
-                    <Select.ItemIndicator className="absolute right-2 inline-flex">
-                      <Check className="size-3.5" />
-                    </Select.ItemIndicator>
-                  </Select.Item>
-                ))}
-              </Select.List>
-            </Select.Popup>
-          </Select.Positioner>
-        </Select.Portal>
-      </Select.Root>
+            {options.map((option) => (
+              <DropdownMenuRadioItem key={option.value} value={option.value}>
+                {option.label}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetTrigger
+          aria-label={ariaLabel}
+          disabled={disabled}
+          render={<Button variant={variant} size="sm" className="md:hidden" />}
+        >
+          {label}
+          <ChevronDown aria-hidden data-icon="inline-end" className="size-3" />
+        </SheetTrigger>
+        <SheetContent side="bottom" data-slot="sort-sheet">
+          <SheetHeader>
+            <SheetTitle>{ariaLabel}</SheetTitle>
+          </SheetHeader>
+          <SheetOptions>
+            {options.map((option) => (
+              <SheetOption
+                key={option.value}
+                selected={option.value === value}
+                onClick={() => {
+                  onChange(option.value);
+                  setSheetOpen(false);
+                }}
+              >
+                {option.label}
+              </SheetOption>
+            ))}
+          </SheetOptions>
+        </SheetContent>
+      </Sheet>
+
       {onToggleDirection && (
         <Button
           variant="ghost"

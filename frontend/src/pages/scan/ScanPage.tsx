@@ -34,7 +34,7 @@ export function ScanPage({ userId }: { userId: string }) {
           {viewModel.savedRound ? (
             <ScanSuccessStep
               round={viewModel.savedRound}
-              onView={() => viewModel.openSavedRound((roundId) => navigate(`/rounds/${roundId}`))}
+              onView={() => viewModel.openSavedRound((roundId) => void navigate(`/rounds/${roundId}`))}
             />
           ) : (
             <LoadingState>Loading…</LoadingState>
@@ -85,8 +85,6 @@ export function ScanPage({ userId }: { userId: string }) {
 
           <ToggleGroup
             aria-label="How to add the round"
-            variant="outline"
-            spacing={0}
             value={[viewModel.mode]}
             onValueChange={(values) => {
               // Pressing the chosen mode again would clear it; one is always chosen.
@@ -124,7 +122,6 @@ export function ScanPage({ userId }: { userId: string }) {
                   onQueryChange={viewModel.courseSearch.setQuery}
                   onSelectCourse={viewModel.pickPresetCourse}
                   onClose={viewModel.courseSearch.reset}
-                  autoFocus={false}
                   linkedName={viewModel.presetCourse ? formatCourseName(viewModel.presetCourse.name) : undefined}
                   onClear={viewModel.clearPresetCourse}
                   clearLabel="Clear course"

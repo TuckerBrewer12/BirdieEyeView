@@ -1,4 +1,3 @@
-import { X } from "lucide-react";
 import {
   Card,
   CardAction,
@@ -8,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/brand/components/Card";
-import { Button } from "@/brand/components/Button";
+import { Button, ClearButton } from "@/brand/components/Button";
 
 export default function CardPreview() {
   return (
@@ -30,13 +29,7 @@ export default function CardPreview() {
           <CardTitle>Linked</CardTitle>
           <CardDescription>Pebble Beach Golf Links</CardDescription>
           <CardAction>
-            <button
-              type="button"
-              aria-label="Unlink course"
-              className="inline-flex text-muted-foreground"
-            >
-              <X className="size-4" />
-            </button>
+            <ClearButton label="Unlink course" />
           </CardAction>
         </CardHeader>
       </Card>
@@ -46,15 +39,19 @@ export default function CardPreview() {
           <CardTitle>Muni Tuesday</CardTitle>
           <CardDescription>Saving without a linked course</CardDescription>
           <CardAction>
-            <button
-              type="button"
-              aria-label="Edit name"
-              className="inline-flex text-muted-foreground"
-            >
-              <X className="size-4" />
-            </button>
+            <ClearButton label="Edit name" />
           </CardAction>
         </CardHeader>
+      </Card>
+
+      <Card size="lg" className="gap-1.5 px-5">
+        <div className="text-body text-muted-foreground">A figure card</div>
+        <div className="text-figure">74.7</div>
+      </Card>
+
+      <Card corner="lead" render={<a href="#round" aria-label="Half Moon Bay, the lead card" />} interactive className="px-6">
+        <div className="text-body text-muted-foreground">The lead card, a link</div>
+        <div className="text-name">Half Moon Bay</div>
       </Card>
     </>
   );

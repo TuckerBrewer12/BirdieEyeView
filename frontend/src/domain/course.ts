@@ -34,6 +34,11 @@ type HasTees<T extends { color: string | null }> = { tees: T[] };
 type HasHoles<T extends { number: number | null }> = { holes: T[] };
 
 /** A course name in title case, or "Unknown": "half moon BAY" reads "Half Moon Bay". */
+/** A round's course as it reads on screen: its name formatted, or "Unknown course" when the card had none. */
+export function courseLabel(name: string | null | undefined): string {
+  return name ? formatCourseName(name) : "Unknown course";
+}
+
 export function formatCourseName(name: string | null | undefined): string {
   if (!name) return "Unknown";
   return name

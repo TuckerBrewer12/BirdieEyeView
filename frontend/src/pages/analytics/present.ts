@@ -1,4 +1,4 @@
-import type { ToParBar, TrendAreaPoint } from "@/brand";
+import type { StatDirection, StatTone, ToParBar, TrendAreaPoint } from "@/brand";
 import {
   formatAverageToPar,
   formatCourseHandicap,
@@ -220,17 +220,47 @@ export function handicapBars(rows: ScoringByHandicapRowDto[]): ToParBar[] {
   }));
 }
 
-/** The headline figures over the filtered rounds, worded for their cards. */
-export function headlineFigures(analytics: Analytics): { label: string; value: string; detail?: string | null }[] {
+/** One headline figure, worded for its tile. */
+export interface HeadlineFigure {
+  label: string;
+  /** Formatted: "7.0", "82.9", "—". */
+  value: string;
+  /** How far it moved, unsigned ("3.9"), with its arrow and the server's verdict on the move. */
+  delta?: string;
+  direction?: StatDirection | null;
+  tone?: StatTone;
+  /** What the move is against, or a quieter line under the figure (the best round's course). */
+  note?: string | null;
+  /** The figure round by round, oldest first. */
+  trend?: (number | null)[];
+}
+
+/**
+ * The headline figures, worded for their tiles: the golfer's own handicap index whatever the
+ * filters, and the rest over the filtered rounds.
+ */
+export function headlineFigures(analytics: Analytics): HeadlineFigure[] {
   const { kpis } = analytics;
+  const change = kpis.scoring_average_change;
+  const moved = change != null && change !== 0;
   return [
     { label: "Handicap Index", value: formatHandicapIndex(kpis.handicap_index) },
     { label: "Rounds", value: String(kpis.total_rounds) },
-    { label: "Scoring Avg", value: kpis.scoring_average != null ? String(kpis.scoring_average) : "—" },
+    {
+      label: "Scoring Avg",
+      value: kpis.scoring_average != null ? String(kpis.scoring_average) : "—",
+      trend: analytics.scoreTrend.map((row) => row.total_score),
+      tone: kpis.scoring_average_verdict ?? "neutral",
+      ...(moved && {
+        delta: formatOneDecimal(Math.abs(change)),
+        direction: change < 0 ? "down" : "up",
+        note: "last 5 vs all",
+      }),
+    },
     {
       label: "Best Round",
       value: analytics.bestScore != null ? String(analytics.bestScore) : "—",
-      detail: analytics.bestRound?.course,
+      note: analytics.bestRound?.course,
     },
     { label: "Avg Putts", value: formatOneDecimal(kpis.average_putts) },
   ];

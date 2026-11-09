@@ -3,19 +3,17 @@ import type {
   GoalReportDto,
   HandicapTrendRowDto,
   ScoreTrendRowDto,
-  ScramblingTrendRowDto,
-  UpAndDownTrendRowDto,
   UserDto,
 } from "../../types/api";
 import { populatedRounds } from "./rounds";
 
 /** Five-round window: one used differential, no WHS adjustment. */
 const scoreTrend: ScoreTrendRowDto[] = [
-  { round_index: 1, round_id: "round-4", total_score: 85, to_par: 13, course_name: "Scanned Scorecard" },
-  { round_index: 2, round_id: "round-3", total_score: 69, to_par: -3, course_name: "Blue Rock" },
-  { round_index: 3, round_id: "round-2", total_score: 72, to_par: 0, course_name: "Half Moon Bay" },
-  { round_index: 4, round_id: "round-1", total_score: 78, to_par: 6, course_name: "Half Moon Bay" },
-  { round_index: 5, round_id: "round-5", total_score: 80, to_par: 8, course_name: "Muni" },
+  { round_index: 1, round_id: "round-4", total_score: 85, to_par: 13, par: 72, rolling_average: 85, course_name: "Scanned Scorecard" },
+  { round_index: 2, round_id: "round-3", total_score: 69, to_par: -3, par: 72, rolling_average: 77, course_name: "Blue Rock" },
+  { round_index: 3, round_id: "round-2", total_score: 72, to_par: 0, par: 72, rolling_average: 75.3, course_name: "Half Moon Bay" },
+  { round_index: 4, round_id: "round-1", total_score: 78, to_par: 6, par: 72, rolling_average: 76, course_name: "Half Moon Bay" },
+  { round_index: 5, round_id: "round-5", total_score: 80, to_par: 8, par: 72, rolling_average: 76.8, course_name: "Muni" },
 ];
 
 const handicapTrend: HandicapTrendRowDto[] = scoreTrend.map((row, i) => ({
@@ -27,23 +25,6 @@ const handicapTrend: HandicapTrendRowDto[] = scoreTrend.map((row, i) => ({
   hi_threshold: 6,
   // 8.0 sits two strokes off the 6 cut-off, so the server reads it as close.
   differential_status: (["out", "counting", "close", "out", "out"] as const)[i],
-}));
-
-const scramblingTrend: ScramblingTrendRowDto[] = scoreTrend.map((row) => ({
-  round_index: row.round_index,
-  round_id: row.round_id,
-  scramble_opportunities: 8,
-  scramble_successes: 3,
-  scramble_failures: 5,
-  scrambling_percentage: 37.5,
-}));
-
-const upAndDownTrend: UpAndDownTrendRowDto[] = scoreTrend.map((row) => ({
-  round_index: row.round_index,
-  round_id: row.round_id,
-  opportunities: 6,
-  successes: 2,
-  percentage: 33.3,
 }));
 
 export const dashboardUser: UserDto = {
@@ -58,34 +39,20 @@ export const dashboardUser: UserDto = {
 };
 
 export const populatedDashboard: DashboardDto = {
-  total_rounds: 4,
-  scoring_average: 76,
   best_round: 69,
   best_round_id: "round-3",
   best_round_course: "Blue Rock",
+  best_round_to_par: -3,
+  best_round_date: "2026-04-18T18:00:00.000Z",
   handicap_index: 12.4,
   recent_rounds: populatedRounds,
-  // The 69, the lowest of the rounds listed.
-  best_recent_round_id: "round-3",
-  average_putts: 32,
-  average_gir: 8,
-  // The last five rounds' 32 a round: between 30 and 34 rates fair.
-  putts_per_round: 32,
-  putts_rating: "fair",
-  // The figures the server works out from the trend window below.
-  scoring_average_l20: 76.8,
-  scoring_average_l5: 76.8,
-  scoring_average_change: 0,
-  handicap_change: { delta: -1.6, direction: "down" },
-  recent_form: { gir_pct: (35 / 90) * 100, scrambling_pct: 37.5, up_and_down_pct: 100 / 3, putts_per_18: 32 },
-  score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
+  // The last five come in 2.1 under the last 20 (76.8).
+  scoring_average_l5: 74.7,
+  scoring_average_change: -2.1,
+  scoring_average_verdict: "good",
+  // The index stood at 14.0 after May 2, the last round before June began.
+  handicap_change: { this_month: -1.6, this_month_verdict: "good" },
   recent_score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
-  score_mix_holes: 90,
-  // Round 3 is a 69 on a par 72 with 28 putts: the first round under par, and under 30 putts.
-  milestones: [
-    { kind: "under_par", value: 69, date: "2026-04-18", course: "Blue Rock", round_id: "round-3" },
-    { kind: "putt_break", value: 30, date: "2026-04-18", course: "Blue Rock", round_id: "round-3" },
-  ],
   whs: {
     rows: [
       { round_index: 5, course_name: "Muni", course_rating: 72.4, slope_rating: 130, score: 80, differential: 13, used: false },
@@ -99,21 +66,21 @@ export const populatedDashboard: DashboardDto = {
     adjustment: 0,
     diff_avg: 4.1,
     has_rated_rounds: true,
-    show_calculation: true,
   },
   score_trend: scoreTrend,
   handicap_trend: handicapTrend,
-  scrambling_trend: scramblingTrend,
-  up_and_down_trend: upAndDownTrend,
+  // Mar 9, Apr 18, May 2 and Jun 15, seen from mid-June.
+  rounds_this_year: 4,
 };
 
 export const dashboardGoalReport: GoalReportDto = {
   scoring_average: 76.8,
-  best_score: 69,
+  lowest_score: 69,
   scoring_goal: 79,
-  gap: 2.2,
-  on_track: false,
-  progress_pct: 100,
+  // The 76.8 average sits 2.2 inside the goal of breaking 80.
+  gap: -2.2,
+  on_track: true,
+  progress_pct: 82,
   // The 69, 72 and 78 meet it; their average of 73 is six strokes inside it.
   rounds_meeting_goal: 3,
   peak_gap: -6,

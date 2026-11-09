@@ -56,6 +56,37 @@ export function scoreWashClass(key: ScoreKey): string {
   return SCORE_WASH_CLASS[key];
 }
 
+const SCORE_PROFILE_HEIGHT_CLASS: Record<ScoreKey, string> = {
+  eagle: "h-profile-eagle",
+  birdie: "h-profile-birdie",
+  par: "h-profile-par",
+  bogey: "h-profile-bogey",
+  double: "h-profile-double",
+  triple: "h-profile-worse",
+  quad: "h-profile-worse",
+};
+
+/** Tailwind height for a hole's bar in a round profile: the worse the hole went, the taller it stands. */
+export function scoreProfileHeightClass(key: ScoreKey): string {
+  return SCORE_PROFILE_HEIGHT_CLASS[key];
+}
+
+const SCORE_COUNT_TEXT_CLASS: Record<ScoreKey, string> = {
+  eagle: "text-score-eagle",
+  birdie: "text-score-birdie",
+  // Pars are the baseline, so their count reads in ink.
+  par: "text-foreground",
+  bogey: "text-score-bogey",
+  double: "text-score-double",
+  triple: "text-score-triple",
+  quad: "text-score-quad",
+};
+
+/** Tailwind text colour for how many holes of a kind a round had: the "7" in "7 bogeys". */
+export function scoreCountTextClass(key: ScoreKey): string {
+  return SCORE_COUNT_TEXT_CLASS[key];
+}
+
 /**
  * The score colour for a round's to-par, not a hole's. Even and missing recede
  * as par; a round does not earn eagle/quad the way a hole does.
@@ -80,6 +111,11 @@ export function toParDisplay(toPar: number | null, empty = "—"): string {
 export function toParTextClass(toPar: number | null): string {
   if (toPar == null || toPar === 0) return "text-muted-foreground";
   return toPar < 0 ? "text-score-birdie" : "text-score-bogey";
+}
+
+/** Tailwind text color for a round header's to-par: level par is a good round, so it reads birdie. */
+export function toParStatTextClass(toPar: number): string {
+  return toPar <= 0 ? "text-score-birdie" : "text-score-bogey";
 }
 
 /** Badge fill + text for a to-par figure on a history row. */

@@ -25,13 +25,13 @@ export class RegisterRobot extends AuthScreenRobot {
     return this;
   }
 
-  /** Types into the home course search and waits for `name` among the results. */
-  async searchHomeCourse(query: string, name: string): Promise<this> {
+  async searchHomeCourse(query: string): Promise<this> {
     await this.fill("Home course (optional)", query);
     await expect(this.page.getByRole("option", { name: new RegExp(name) })).toBeVisible();
     return this;
   }
 
+  /** Searches for `query` and picks `name` from the results. */
   async pickHomeCourse(query: string, name: string): Promise<this> {
     await this.searchHomeCourse(query, name);
     await this.page.getByRole("option", { name: new RegExp(name) }).click();
