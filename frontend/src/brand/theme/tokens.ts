@@ -61,7 +61,7 @@ export const palette = {
     900: "#17291d",
     950: "#08130c",
   },
-  forest: { 700: "#2d7a3a", 750: "#2d4c3b", 800: "#1e3d25", 900: "#152d1b" },
+  forest: { 700: "#2d7a3a", 750: "#2d4c3b", 800: "#1e3d25" },
   denim: { 500: "#3d6fb6", 700: "#2457a6" },
   gray: { 100: "#f3f4f6", 200: "#e5e7eb", 600: "#4b5563", 700: "#374151" },
   slate: { 600: "#475569", 900: "#0f172a" },
@@ -203,7 +203,6 @@ const light = {
   // The app's side rail: the brand's own surface, the same in both modes.
   sidebar: {
     DEFAULT: forest[800],
-    end: forest[900],
     foreground: white,
   },
 
@@ -425,6 +424,8 @@ export const radius = {
 
 /** Widths and heights that are not on the 4px scale. */
 export const size = {
+  /** The side rail's width: `AppShell` sets it and clears the page past it. */
+  rail: 240,
   "date-rail": 54,
   preview: 390,
   chart: 180,
