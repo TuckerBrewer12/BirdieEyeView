@@ -21,7 +21,6 @@ export function LinkCoursePanel({ userId, roundId, title, onClose, onLinked }: L
       )}
       <CourseLinkSearch
         title={title}
-        description="Adds par, yardage and handicap data to this round."
         query={viewModel.query}
         results={viewModel.results}
         searching={viewModel.searching}

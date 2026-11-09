@@ -2,7 +2,22 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, ChevronDown } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { Button } from "./Button";
-import { buttonVariants } from "./variants";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "./DropdownMenu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetOption,
+  SheetOptions,
+  SheetTitle,
+  SheetTrigger,
+} from "./Sheet";
 
 interface SortOption<T extends string> {
   value: T;
@@ -10,14 +25,14 @@ interface SortOption<T extends string> {
 }
 
 interface SortControlProps<T extends string> {
-  /** The current choice, as it reads in the trigger. */
   label: string;
-  /** A muted word before the label ("Sort"), for a control that says what it picks. */
-  caption?: string;
   value: T;
   options: readonly SortOption<T>[];
   onChange: (value: T) => void;
-  /** Leave off `onToggleDirection` and the control only picks: no arrow beside it. */
+  /**
+   * Leave off `onToggleDirection` and the control only picks, like a filter:
+   * no arrow, and a bordered button instead of a quiet one.
+   */
   ascending?: boolean;
   onToggleDirection?: () => void;
   directionDisabled?: boolean;
@@ -34,7 +49,6 @@ interface SortControlProps<T extends string> {
  */
 function SortControl<T extends string>({
   label,
-  caption,
   value,
   options,
   onChange,
@@ -49,30 +63,21 @@ function SortControl<T extends string>({
   const variant = onToggleDirection ? "ghost" : "outline";
 
   return (
-    <div data-slot="sort-control" className={cn("inline-flex items-center gap-1", className)}>
-      <Select.Root
-        value={value}
-        onValueChange={(next) => {
-          if (next != null) onChange(next);
-        }}
-        items={options}
-        modal={false}
-      >
-        <Select.Trigger
+    <div data-slot="sort-control" className={cn("inline-flex items-center gap-0.5", className)}>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger
           aria-label={ariaLabel}
-          className={buttonVariants({ variant: "ghost", className: "text-body font-semibold" })}
+          variant={variant}
+          size="sm"
+          disabled={disabled}
+          className="hidden md:inline-flex"
         >
-          {caption && <span className="font-medium text-muted-foreground">{caption}</span>}
           {label}
-          <ChevronDown aria-hidden className="size-3" />
-        </Select.Trigger>
-        <Select.Portal>
-          <Select.Positioner
-            side="bottom"
-            align="end"
-            alignItemWithTrigger={false}
-            sideOffset={4}
-            className="z-50"
+        </DropdownMenuTrigger>
+        <DropdownMenuContent data-slot="sort-menu" align="end" sideOffset={4}>
+          <DropdownMenuRadioGroup
+            value={value}
+            onValueChange={(next: T) => onChange(next)}
           >
             {options.map((option) => (
               <DropdownMenuRadioItem key={option.value} value={option.value}>
@@ -116,16 +121,12 @@ function SortControl<T extends string>({
       {onToggleDirection && (
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           aria-label={ascending ? "Sort descending" : "Sort ascending"}
           disabled={directionDisabled}
           onClick={onToggleDirection}
         >
-          {directionDisabled || ascending ? (
-            <ArrowUp className="size-3.5" />
-          ) : (
-            <ArrowDown className="size-3.5" />
-          )}
+          {directionDisabled || ascending ? <ArrowUp /> : <ArrowDown />}
         </Button>
       )}
     </div>

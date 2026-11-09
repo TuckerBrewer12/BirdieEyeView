@@ -1,5 +1,5 @@
 import { useId, useState, type KeyboardEvent, type ReactNode } from "react";
-import { CircleCheck, FlagTriangleRight, Loader2, Pencil, X } from "lucide-react";
+import { CircleCheck, CornerDownLeft, Loader2, Pencil, X } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { Button } from "./Button";
 import { Card } from "./Card";
@@ -15,8 +15,6 @@ interface CourseLinkSearchProps {
   /** Esc, while the search is open. */
   onClose: () => void;
   title?: string;
-  /** Sits under the title: what linking gives the round. */
-  description?: string;
   linking?: boolean;
   reviewVariant?: boolean;
   onUseCustomName?: (name: string) => void;
@@ -41,7 +39,6 @@ export function CourseLinkSearch({
   onSelectCourse,
   onClose,
   title,
-  description,
   linking = false,
   reviewVariant = false,
   onUseCustomName,
@@ -95,7 +92,7 @@ export function CourseLinkSearch({
     } else if (results.length > 0 && event.key === "ArrowUp") {
       event.preventDefault();
       setActiveIndex((active - 1 + results.length) % results.length);
-    } else if (event.key === "Enter" && results[active] && !linking) {
+    } else if (event.key === "Enter" && active >= 0 && !linking) {
       event.preventDefault();
       onSelectCourse(results[active]);
     }
@@ -109,12 +106,7 @@ export function CourseLinkSearch({
         <div className="flex flex-col gap-2.5 px-3.5 pt-3.5 pb-2.5">
           {title && (
             <div className="flex items-start gap-2">
-              <div className="flex-1">
-                <div className="text-sm font-semibold">{title}</div>
-                {description && (
-                  <div className="mt-0.5 text-body-sm text-muted-foreground">{description}</div>
-                )}
-              </div>
+              <div className="flex-1 text-sm font-semibold">{title}</div>
               {/* Esc closes it from a keyboard; a phone has no Esc. */}
               <Button
                 variant="ghost"
@@ -132,7 +124,7 @@ export function CourseLinkSearch({
             role="combobox"
             aria-expanded={results.length > 0}
             aria-controls={listId}
-            aria-activedescendant={results[active] ? `${listId}-${active}` : undefined}
+            aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
             placeholder="Search courses…"
             value={query}
             onChange={(q) => {
@@ -140,7 +132,7 @@ export function CourseLinkSearch({
               onQueryChange(q);
             }}
             onKeyDown={onKeyDown}
-            autoFocus={autoFocus}
+            focusOnOpen={focusOnOpen}
             loading={searching}
           />
         </div>
@@ -174,12 +166,6 @@ export function CourseLinkSearch({
           </div>
         )}
 
-        {results.length > 0 && (
-          <div className="flex justify-between border-t border-border px-3.5 py-2 text-label text-muted-foreground">
-            <span>↑ ↓ to move · Enter to link</span>
-            <span>Esc to close</span>
-          </div>
-        )}
       </Card>
 
       {noMatch && (
@@ -302,16 +288,6 @@ function ResultRow({
         active && "bg-muted",
       )}
     >
-      <span
-        className={cn(
-          "flex size-8 shrink-0 items-center justify-center rounded-lg border",
-          active
-            ? "border-input bg-card text-primary"
-            : "border-border bg-background text-muted-foreground",
-        )}
-      >
-        <FlagTriangleRight className="size-3.5" />
-      </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium text-foreground">
           <Highlight text={name} query={query} />
@@ -327,7 +303,13 @@ function ResultRow({
       {linking && active ? (
         <Loader2 className="size-3 animate-spin text-muted-foreground" />
       ) : (
-        active && <span className="text-label font-semibold text-primary">Enter ↵</span>
+        active && (
+          // The key that links it, shown on the row the arrow keys are on.
+          <span aria-hidden className="flex items-center gap-1 text-label font-semibold text-foreground-secondary">
+            Enter
+            <CornerDownLeft className="size-3" />
+          </span>
+        )
       )}
     </button>
   );

@@ -338,7 +338,7 @@ export class ScanRobot {
 
   /** Saves the round under the name read off the card, without linking a course. */
   async keepCardName(name: string): Promise<this> {
-    await this.page.getByRole("button", { name: `Save as "${name}" without linking →` }).click();
+    await this.page.getByRole("button", { name: `Save as "${name}" without linking` }).click();
     await expect(this.page.getByText("Custom name · not linked to a course")).toBeVisible();
     return this;
   }

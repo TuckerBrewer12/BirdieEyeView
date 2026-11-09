@@ -105,8 +105,6 @@ export type { SideNavProps, SideNavUser } from "./components/SideNav";
 export type { NavItem, RenderLink } from "./nav";
 export { ScoreCountChip } from "./components/ScoreCountChip";
 export { SearchField } from "./components/SearchField";
-export { FilterChip, FilterChipGroup } from "./components/FilterChip";
-export type { FilterChipProps } from "./components/FilterChip";
 export { SortControl } from "./components/SortControl";
 export { CourseLinkSearch } from "./components/CourseLinkSearch";
 export {

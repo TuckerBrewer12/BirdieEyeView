@@ -29,7 +29,6 @@ export function CoursesPage({ userId }: CoursesPageProps) {
           value={viewModel.search}
           onChange={viewModel.setSearch}
           loading={viewModel.loading}
-          shortcut
         />
 
         {viewModel.error && (

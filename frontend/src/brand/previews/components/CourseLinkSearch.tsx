@@ -29,7 +29,6 @@ const idle = {
   onQueryChange: () => {},
   onSelectCourse: () => {},
   onClose: () => {},
-  autoFocus: false,
 };
 
 function Group({ label, children }: { label: string; children: ReactNode }) {
@@ -47,9 +46,8 @@ export default function CourseLinkSearchPreview() {
       <Group label="CourseLinkSearch · searching">
         <CourseLinkSearch
           {...idle}
-          autoFocus
+          focusOnOpen
           title="Link to a course"
-          description="Adds par, yardage and handicap data to this round."
           query="peb"
           results={[pebble, spyglass]}
         />

@@ -6,10 +6,9 @@ const toggleVariants = cva(
     variants: {
       variant: {
         default: "bg-transparent",
-        outline:
-          "border border-input bg-transparent hover:bg-muted aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:border-primary data-[pressed]:bg-primary data-[pressed]:text-primary-foreground data-[pressed]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary",
-        /* A filter you switch on and off: tinted, not filled, when on. */
-        chip: "border border-border bg-card text-body text-foreground aria-pressed:border-primary/40 aria-pressed:bg-accent aria-pressed:text-primary aria-pressed:hover:bg-accent data-[pressed]:border-primary/40 data-[pressed]:bg-accent data-[pressed]:text-primary",
+        /* One option of a segmented control: bare until chosen, then a raised card-coloured pill. */
+        segmented:
+          "rounded-full font-semibold text-foreground-secondary hover:bg-transparent aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-sm data-[pressed]:bg-card data-[pressed]:text-foreground data-[pressed]:shadow-sm",
       },
       size: {
         default:

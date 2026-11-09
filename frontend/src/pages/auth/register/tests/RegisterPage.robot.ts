@@ -27,14 +27,24 @@ export class RegisterRobot extends AuthScreenRobot {
 
   async searchHomeCourse(query: string): Promise<this> {
     await this.fill("Home course (optional)", query);
+    return this;
+  }
+
+  /** `name` among the home course search's results. */
+  async seesCourseResult(name: string): Promise<this> {
     await expect(this.page.getByRole("option", { name: new RegExp(name) })).toBeVisible();
     return this;
   }
 
   /** Searches for `query` and picks `name` from the results. */
   async pickHomeCourse(query: string, name: string): Promise<this> {
-    await this.searchHomeCourse(query, name);
+    await this.searchHomeCourse(query);
     await this.page.getByRole("option", { name: new RegExp(name) }).click();
+    return this;
+  }
+
+  /** `name` picked as the home course, in place of the search. */
+  async seesHomeCourse(name: string): Promise<this> {
     await expect(this.page.getByText(name, { exact: true })).toBeVisible();
     return this;
   }

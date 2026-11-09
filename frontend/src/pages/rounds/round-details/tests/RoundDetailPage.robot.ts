@@ -209,11 +209,7 @@ export class RoundDetailRobot {
   }
 
   async tapEditCourseName(): Promise<this> {
-    await this.page
-      .locator("[data-slot=card]")
-      .filter({ hasText: "Custom name · not linked to a course" })
-      .getByRole("button", { name: "Link course" })
-      .click();
+    await this.page.getByRole("button", { name: "Link course" }).click();
     return this;
   }
 
