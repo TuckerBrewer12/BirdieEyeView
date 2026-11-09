@@ -74,8 +74,16 @@ export { PersonRow } from "./components/PersonRow";
 export type { PersonRowProps } from "./components/PersonRow";
 export { PageTitle } from "./components/PageTitle";
 export { Meter } from "./components/Meter";
-export { Stat, StatLabel, StatValue, StatUnit, StatDelta } from "./components/Stat";
-export type { StatDirection } from "./components/Stat";
+export {
+  Stat,
+  StatLabel,
+  StatValue,
+  StatUnit,
+  StatNote,
+  StatDelta,
+  StatCard,
+} from "./components/Stat";
+export type { StatDirection, StatTone } from "./components/Stat";
 export { TeeSwatch } from "./components/TeeSwatch";
 export { ToParFigure } from "./components/ToParFigure";
 export { Reveal } from "./components/Reveal";

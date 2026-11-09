@@ -36,12 +36,14 @@ export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
         dateLabel={greetingDateLabel()}
         handicapIndex={data.handicap_index}
         handicapChange={vm.handicapDelta}
+        handicapVerdict={vm.handicapDeltaVerdict}
         onHandicapClick={vm.openHandicapSheet}
       />
 
       <ScoringHeroCard
         average={vm.last20ScoringAvg}
         change={vm.scoringAverageChange}
+        changeVerdict={vm.scoringAverageVerdict}
         recentScores={vm.recentScores}
         mix={vm.l20ScoreMix}
         mixHoles={vm.mixHoleCount}
