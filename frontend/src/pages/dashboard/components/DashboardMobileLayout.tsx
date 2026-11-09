@@ -1,6 +1,6 @@
 import type { DashboardPageViewModel } from "../useDashboardPageViewModel";
 import { firstNameOf, greetingFor } from "../present";
-import { BestRoundCard, GoalCard, ScoringAverageCard } from "./DashboardCards";
+import { BestRoundCard, GoalCard, ScoreMixCard, ScoringAverageCard } from "./DashboardCards";
 import { RecentRounds } from "./RecentRounds";
 import { GreetingHeader } from "./GreetingHeader";
 import { LastRoundCard } from "./LastRoundCard";
@@ -32,6 +32,7 @@ export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
           line={vm.averageLine}
         />
         <BestRoundCard compact best={vm.best} />
+        <ScoreMixCard compact mix={vm.recentMix} className="col-span-2" />
         <GoalCard compact goal={vm.goal} seasonRounds={vm.roundsThisYear} className="col-span-2" />
       </div>
 

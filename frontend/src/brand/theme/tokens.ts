@@ -710,6 +710,8 @@ export const chart = {
   /** A goal's progress as a ring. */
   /** `strokeThick` is the phone's: the ring is drawn smaller there, so its stroke grows to hold. */
   progressRing: { size: 96, radius: 40, stroke: 10, strokeThick: 11 },
+  /** A score mix as a ring of slices, in a `size` box centred on the origin: a hollow centre, a gap between slices. */
+  donut: { size: 96, outer: 46, inner: 30, padAngle: 0.04, corner: 2 },
   sparkline: {
     width: 300,
     height: 56,

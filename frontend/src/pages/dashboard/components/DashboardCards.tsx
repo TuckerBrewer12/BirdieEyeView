@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { ProgressRing, ScoreMixBar, Sparkline, StatDelta } from "@/brand";
+import { ProgressRing, ScoreMixBar, ScoreMixDonut, Sparkline, StatDelta } from "@/brand";
 import { cn } from "@/brand/cn";
 import { toParDisplay, toParTextClass } from "@/brand/theme";
 import { formatOneDecimal, goalTargetLabel, type ScoreMix } from "@/domain";
@@ -89,13 +89,28 @@ export function BestRoundCard({ best, compact = false }: { best: BestRound | nul
   );
 }
 
-/** How the last five rounds' holes split across score kinds. */
-export function ScoreMixCard({ mix }: { mix: ScoreMix }) {
+interface ScoreMixCardProps {
+  mix: ScoreMix;
+  /** The phone's: the mix as one bar across the card. */
+  compact?: boolean;
+  className?: string;
+}
+
+/** How the last five rounds' holes split across score kinds: a ring on a wide screen, a bar on a phone. */
+export function ScoreMixCard({ mix, compact = false, className }: ScoreMixCardProps) {
   return (
-    <div data-slot="score-mix-card" className={cn(SURFACE, CARD_PADDING.wide, "flex flex-col gap-1.5")}>
-      <div className="text-body text-muted-foreground">Score mix · last 5</div>
-      <ScoreMixBar mix={mix} className="mt-2" />
-      {!hasScoreMix(mix) && <div className="text-figure">—</div>}
+    <div
+      data-slot="score-mix-card"
+      className={cn(SURFACE, "flex flex-col", compact ? cn(CARD_PADDING.phone, "gap-2.5") : cn(CARD_PADDING.wide, "gap-3"), className)}
+    >
+      <div className={cn("text-muted-foreground", compact ? "text-body-sm" : "text-body")}>Score mix · last 5</div>
+      {!hasScoreMix(mix) ? (
+        <div className={compact ? "text-figure-sm" : "text-figure"}>—</div>
+      ) : compact ? (
+        <ScoreMixBar mix={mix} />
+      ) : (
+        <ScoreMixDonut mix={mix} />
+      )}
     </div>
   );
 }

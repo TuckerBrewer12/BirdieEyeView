@@ -29,8 +29,8 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
           verdict={data.scoring_average_verdict}
           line={vm.averageLine}
         />
-        <BestRoundCard best={vm.best} />
         <ScoreMixCard mix={vm.recentMix} />
+        <BestRoundCard best={vm.best} />
         <GoalCard goal={vm.goal} seasonRounds={vm.roundsThisYear} />
       </div>
 

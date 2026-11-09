@@ -138,6 +138,7 @@ export { ActivityCalendar } from "./charts/ActivityCalendar";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
 export { ScoreMixBar } from "./charts/ScoreMixBar";
+export { ScoreMixDonut } from "./charts/ScoreMixDonut";
 export { RunningToParLine } from "./charts/RunningToParLine";
 export { Sparkline } from "./charts/Sparkline";
 export type { SparklineSeries, SparklineTone } from "./charts/Sparkline";
