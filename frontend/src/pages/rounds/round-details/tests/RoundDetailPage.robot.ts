@@ -122,7 +122,7 @@ export class RoundDetailRobot {
   }
 
   async tapDelete(): Promise<this> {
-    await this.page.getByRole("button", { name: "Delete" }).click();
+    await this.page.getByRole("button", { name: "Delete", exact: true }).click();
     return this;
   }
 
@@ -138,7 +138,7 @@ export class RoundDetailRobot {
   }
 
   async confirmDelete(): Promise<this> {
-    await this.page.getByRole("button", { name: "Yes" }).click();
+    await this.page.getByRole("button", { name: "Delete round" }).click();
     return this;
   }
 
@@ -236,11 +236,12 @@ export class RoundDetailRobot {
     return this;
   }
 
-  async capture(name: string): Promise<this> {
+  /** `fullPage: false` for a dialog, which sits over the viewport, not the page. */
+  async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
     if (await this.page.getByText("Round flow", { exact: true }).isVisible()) {
       await expect(this.page.locator("svg circle").last()).toBeVisible();
     }
-    await expect(this.page).toHaveScreenshot(name, { fullPage: true });
+    await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
     return this;
   }
 }

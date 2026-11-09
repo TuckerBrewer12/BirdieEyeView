@@ -133,6 +133,8 @@ export {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from "./components/DropdownMenu";
+export { ConfirmDialog } from "./components/ConfirmDialog";
+export type { ConfirmDialogProps } from "./components/ConfirmDialog";
 
 // Charts
 export { HoleScoreBars } from "./charts/HoleScoreBars";
