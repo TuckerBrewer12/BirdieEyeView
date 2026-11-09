@@ -341,6 +341,22 @@
             ],
             "title": "Scoring Average Change"
           },
+          "scoring_average_verdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "good",
+                  "bad",
+                  "neutral"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average Verdict"
+          },
           "scrambling_percentage": {
             "anyOf": [
               {
@@ -405,7 +421,8 @@
           "average_putts",
           "three_putts_per_round",
           "three_putt_rate",
-          "scoring_average_change"
+          "scoring_average_change",
+          "scoring_average_verdict"
         ],
         "title": "AnalyticsKpis",
         "type": "object"
@@ -2104,6 +2121,22 @@
             ],
             "title": "Scoring Average L5"
           },
+          "scoring_average_verdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "good",
+                  "bad",
+                  "neutral"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average Verdict"
+          },
           "scrambling_trend": {
             "items": {
               "$ref": "#/components/schemas/ScramblingTrendRow"
@@ -2142,6 +2175,7 @@
           "scoring_average_l20",
           "scoring_average_l5",
           "scoring_average_change",
+          "scoring_average_verdict",
           "handicap_change",
           "recent_form",
           "score_mix",
@@ -2757,6 +2791,22 @@
             ],
             "title": "Delta"
           },
+          "delta_verdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "good",
+                  "bad",
+                  "neutral"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta Verdict"
+          },
           "direction": {
             "anyOf": [
               {
@@ -2776,7 +2826,8 @@
         },
         "required": [
           "delta",
-          "direction"
+          "direction",
+          "delta_verdict"
         ],
         "title": "HandicapChange",
         "type": "object"

@@ -86,6 +86,12 @@ export class DashboardRobot {
     return this;
   }
 
+  /** A played day on the desktop activity calendar, as "2026-06-15". */
+  async tapActivityDay(day: string): Promise<this> {
+    await this.page.getByRole("button", { name: `Open round on ${day}` }).locator("visible=true").click();
+    return this;
+  }
+
   async isAtRound(id: string): Promise<this> {
     await expect(this.page).toHaveURL(new RegExp(`/rounds/${id}`));
     return this;

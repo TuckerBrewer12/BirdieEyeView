@@ -1,4 +1,4 @@
-import { Button, PageTitle, Stat, StatDelta, StatLabel, StatValue } from "@/brand";
+import { Button, PageTitle, Stat, StatDelta, StatLabel, StatValue, type StatTone } from "@/brand";
 import { formatHandicapIndex, formatOneDecimal } from "@/domain";
 
 interface GreetingHeaderProps {
@@ -8,6 +8,8 @@ interface GreetingHeaderProps {
   handicapIndex: number | null;
   /** How the index moved over the last six rated rounds; negative is an improvement. */
   handicapChange: number | null;
+  /** The server's verdict on that change. */
+  handicapVerdict: StatTone | null;
   onHandicapClick: () => void;
 }
 
@@ -17,6 +19,7 @@ export function GreetingHeader({
   dateLabel,
   handicapIndex,
   handicapChange,
+  handicapVerdict,
   onHandicapClick,
 }: GreetingHeaderProps) {
   const moved = handicapChange != null && handicapChange !== 0;
@@ -38,7 +41,7 @@ export function GreetingHeader({
           <StatLabel>Handicap</StatLabel>
           <StatValue size="md">{formatHandicapIndex(handicapIndex)}</StatValue>
           {moved && (
-            <StatDelta direction={handicapChange < 0 ? "down" : "up"}>
+            <StatDelta direction={handicapChange < 0 ? "down" : "up"} tone={handicapVerdict ?? "neutral"}>
               {formatOneDecimal(Math.abs(handicapChange))}
             </StatDelta>
           )}
