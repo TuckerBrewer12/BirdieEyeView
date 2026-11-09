@@ -98,9 +98,9 @@ export class DashboardRobot {
     return this;
   }
 
-  async openEarlierRound(course: string): Promise<this> {
+  async openRecentRound(course: string): Promise<this> {
     await this.page
-      .locator("[data-slot=earlier-rounds]")
+      .locator("[data-slot=recent-rounds]")
       .locator("visible=true")
       .locator("[data-slot=round-preview]")
       .filter({ hasText: course })

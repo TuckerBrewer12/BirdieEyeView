@@ -27,9 +27,9 @@ test("the best round opens it", async ({ dashboard }) => {
   await dashboard.isAtRound("round-3");
 });
 
-test("tapping an earlier round opens it", async ({ dashboard }) => {
+test("tapping a recent round opens it", async ({ dashboard }) => {
   await dashboard.open();
-  await dashboard.openEarlierRound("Blue Rock");
+  await dashboard.openRecentRound("Blue Rock");
   await dashboard.isAtRound("round-3");
 });
 

@@ -43,7 +43,7 @@ export interface DashboardPageViewModel {
   /** The newest round's running score to par. */
   lastRoundFlow: RunningToPar[];
   /** The three rounds before it. */
-  earlierRounds: RoundSummary[];
+  recentRounds: RoundSummary[];
   /** Null before a scored round. */
   best: BestRound | null;
   season: Season;
@@ -67,7 +67,7 @@ const EMPTY_WHS: WhsBreakdown = {
 
 const EMPTY_HANDICAP: HandicapMonth = { index: null, change: null, verdict: null };
 const EMPTY_SEASON: Season = { rounds: 0, months: [] };
-const EARLIER_ROUNDS = 3;
+const RECENT_ROUNDS = 3;
 
 export function useDashboardPageViewModel(
   userId: string,
@@ -106,7 +106,7 @@ export function useDashboardPageViewModel(
     averageLine: trend.map((point) => point.rollingAverage),
     lastRound: rounds[0] ?? null,
     lastRoundFlow,
-    earlierRounds: rounds.slice(1, 1 + EARLIER_ROUNDS),
+    recentRounds: rounds.slice(1, 1 + RECENT_ROUNDS),
     best: data ? bestRoundFrom(data) : null,
     season: data ? seasonFrom(data) : EMPTY_SEASON,
     goal: goalProgress(user?.scoring_goal, goalReport ?? null),

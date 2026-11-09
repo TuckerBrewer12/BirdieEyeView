@@ -47,7 +47,7 @@ describe("useDashboardPageViewModel", () => {
   it("lists the three rounds before the last one", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.earlierRounds.map((r) => r.id)).toEqual(populatedRounds.slice(1, 4).map((r) => r.id));
+    expect(result.current.recentRounds.map((r) => r.id)).toEqual(populatedRounds.slice(1, 4).map((r) => r.id));
   });
 
   it("carries the index and its move this month", async () => {
@@ -117,7 +117,7 @@ describe("useDashboardPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.lastRound).toBeNull();
     expect(result.current.lastRoundFlow).toEqual([]);
-    expect(result.current.earlierRounds).toEqual([]);
+    expect(result.current.recentRounds).toEqual([]);
     expect(result.current.best).toBeNull();
     expect(result.current.handicap).toEqual({ index: null, change: null, verdict: null });
   });

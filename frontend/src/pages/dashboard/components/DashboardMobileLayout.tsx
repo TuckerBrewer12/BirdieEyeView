@@ -1,7 +1,7 @@
 import type { DashboardPageViewModel } from "../useDashboardPageViewModel";
 import { firstNameOf, greetingFor } from "../present";
 import { BestRoundCard, GoalCard, ScoringAverageCard } from "./DashboardCards";
-import { EarlierRounds } from "./EarlierRounds";
+import { RecentRounds } from "./RecentRounds";
 import { GreetingHeader } from "./GreetingHeader";
 import { LastRoundCard } from "./LastRoundCard";
 
@@ -35,7 +35,7 @@ export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
         <GoalCard compact goal={vm.goal} seasonRounds={vm.season.rounds} className="col-span-2" />
       </div>
 
-      <EarlierRounds compact rounds={vm.earlierRounds} />
+      <RecentRounds compact rounds={vm.recentRounds} />
     </div>
   );
 }

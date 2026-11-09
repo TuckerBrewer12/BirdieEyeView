@@ -388,7 +388,7 @@ export const type = {
   body: { size: 13 },
   /** Large body copy: a list row's name, a large button's label, a field's value. */
   "body-lg": { size: 15 },
-  /** A card's heading on the soft surface: "Earlier rounds", the goal on a phone. */
+  /** A card's heading on the soft surface: "Recent rounds", the goal on a phone. */
   subhead: { size: 17, weight: 600 },
   /** A page's title. */
   title: { size: 26, weight: 700, tracking: tracking.title },
