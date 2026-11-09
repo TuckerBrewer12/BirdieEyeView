@@ -35,6 +35,15 @@ export interface HoleScore extends HoleSummary {
   toPar: number | null;
   /** Three or more putts, as the server marks it. */
   threePutt: boolean;
+  /** The round's to par after this hole, as the server ran it. Null for a hole it can't read. */
+  runningToPar: number | null;
+}
+
+/** The four holes in a row that lost the most to par, when they lost two or more. */
+export interface WorstStretch {
+  firstHole: number;
+  lastHole: number;
+  toPar: number;
 }
 
 /** The four holes in a row that lost the most to par, when they lost two or more. */
