@@ -107,7 +107,23 @@ export {
   SheetFooter,
   SheetTitle,
   SheetDescription,
+  SheetOptions,
+  SheetOption,
 } from "./components/Sheet";
+export type { SheetSide } from "./components/Sheet";
+export {
+  ActionSheet,
+  ActionSheetTrigger,
+  ActionSheetContent,
+  ActionSheetAction,
+} from "./components/ActionSheet";
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "./components/DropdownMenu";
 
 // Charts
 export { ActivityHeatmap } from "./charts/ActivityHeatmap";

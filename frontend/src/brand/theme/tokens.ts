@@ -418,6 +418,8 @@ export const radius = {
   tick: 2,
   card: 10,
   tooltip: 12,
+  /** The top corners of a bottom sheet. */
+  sheet: 20,
   addon: "calc(var(--radius) - var(--brand-space-nudge))",
   control: "calc(var(--radius) - var(--brand-space-nudge-sm))",
 };
