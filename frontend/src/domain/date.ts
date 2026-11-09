@@ -65,6 +65,12 @@ export function formatMonth(input: DayInput): string | null {
 }
 
 /** "Jun 15, 2026": round history rows, career records, a friend request's last update. */
+/** "June": a month on its own, for a calendar that sits in the current year. */
+export function formatMonthName(input: DayInput): string | null {
+  const day = toDay(input);
+  return day ? day.toLocaleDateString("en-US", { month: "long" }) : null;
+}
+
 export function formatDay(input: DayInput): string | null {
   const day = toDay(input);
   return day ? day.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;

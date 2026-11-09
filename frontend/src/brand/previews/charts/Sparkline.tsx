@@ -19,8 +19,8 @@ export default function SparklinePreview() {
       <Sparkline series={[{ values: [88] }]} />
       {/* The compact line a KPI tile draws, in the server's verdict on the move. */}
       <div className="flex gap-6">
-        <Sparkline compact className="w-24" series={[{ values: scores(sampleGolfer.analytics.score_trend), tone: "good" }]} />
-        <Sparkline compact className="w-24" series={[{ values: scores(labAnalytics.score_trend), tone: "bad" }]} />
+        <Sparkline size="compact" className="w-24" series={[{ values: scores(sampleGolfer.analytics.score_trend), tone: "good" }]} />
+        <Sparkline size="compact" className="w-24" series={[{ values: scores(labAnalytics.score_trend), tone: "bad" }]} />
       </div>
     </div>
   );

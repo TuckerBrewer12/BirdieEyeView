@@ -5,14 +5,15 @@ import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
 import { indexScale, knownValues, lastKnownIndex, paddedExtent } from "./scales";
 
-/** `good` and `bad` carry the server's verdict on the move the line shows. */
-type SparklineTone = "primary" | "contrast" | "good" | "bad";
+/** `good` and `bad` carry the server's verdict on the move the line shows; `muted` is no verdict. */
+type SparklineTone = "primary" | "contrast" | "good" | "bad" | "muted";
 
 const STROKE: Record<SparklineTone, string> = {
   primary: tokens.color.primary,
   contrast: tokens.color.score.triple.text,
   good: tokens.color.score.birdie.text,
   bad: tokens.color.score.bogey.text,
+  muted: tokens.color.chart.reference,
 };
 
 const SWATCH: Record<SparklineTone, string> = {
@@ -20,6 +21,7 @@ const SWATCH: Record<SparklineTone, string> = {
   contrast: "bg-score-triple",
   good: "bg-score-birdie",
   bad: "bg-score-bogey",
+  muted: "bg-chart-reference",
 };
 
 interface SparklineSeries {
@@ -38,8 +40,12 @@ interface SparklineProps {
   fill?: boolean;
   /** A dashed line at this value: the average the server worked out for the line. None without it. */
   reference?: number | null;
-  /** Drawn to the squatter 96 x 32 box that sits beside a figure (a KPI tile), not the wide card line. */
-  compact?: boolean;
+  /**
+   * `compact` is the squatter 96 x 32 box beside a KPI tile's figure; `strip` the flat 120 x 24
+   * line under a figure in a stat strip and `hero` the 120 x 44 one beside a phone card's lead
+   * figure, both with their end dot filled. Each is drawn at its own size so the stroke stays 2px.
+   */
+  size?: "default" | "compact" | "strip" | "hero";
   className?: string;
 }
 
@@ -49,12 +55,18 @@ export function Sparkline({
   domain,
   fill = false,
   reference = null,
-  compact = false,
+  size = "default",
   className,
 }: SparklineProps) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
-  const { pad, stroke, dot } = tokens.chart.sparkline;
-  const { width: W, height: H } = compact ? tokens.chart.sparkline.compact : tokens.chart.sparkline;
+  const { stroke } = tokens.chart.sparkline;
+  const { sparkline } = tokens.chart;
+  const { width: W, height: H } = size === "default" ? sparkline : sparkline[size];
+  // The strip and hero lines sit beside a figure with no card rim to clear, so their dot is filled.
+  const own = size === "strip" || size === "hero" ? sparkline[size] : null;
+  const filled = own != null;
+  const pad = own?.pad ?? sparkline.pad;
+  const dot = own?.dot ?? sparkline.dot;
 
   const length = Math.max(0, ...series.map((s) => s.values.length));
   const all = series.flatMap((s) => s.values);
@@ -126,9 +138,9 @@ export function Sparkline({
                   cx={x(end)}
                   cy={y(endValue)}
                   r={dot}
-                  fill={tokens.color.card}
-                  stroke={color}
-                  strokeWidth={stroke}
+                  fill={filled ? color : tokens.color.card}
+                  stroke={filled ? "none" : color}
+                  strokeWidth={filled ? 0 : stroke}
                 />
               )}
             </g>

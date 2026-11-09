@@ -136,7 +136,7 @@ function StatCard({
         <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
           <StatValue size="lg">{value}</StatValue>
           {trend && (
-            <Sparkline compact className="mb-1 w-24 shrink-0" series={[{ values: trend, tone: TREND_TONE[tone] }]} />
+            <Sparkline size="compact" className="mb-1 w-24 shrink-0" series={[{ values: trend, tone: TREND_TONE[tone] }]} />
           )}
         </div>
         {(direction != null || note != null) && (

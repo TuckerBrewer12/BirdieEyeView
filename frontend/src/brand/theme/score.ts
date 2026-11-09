@@ -87,6 +87,11 @@ export function toParFill(toPar: number | null): string {
   return color.score[toParKind(toPar)].base;
 }
 
+/** A score's dot on a trend: under par stands out in birdie green, every other round in ink. */
+export function underParDotFill(toPar: number | null): string {
+  return toPar != null && toPar < 0 ? color.score.birdie.base : color.foreground;
+}
+
 export function toParDisplay(toPar: number | null, empty = "—"): string {
   return toParLabel(toPar) ?? empty;
 }

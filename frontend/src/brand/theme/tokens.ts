@@ -386,6 +386,10 @@ export const type = {
   "body-lg": { size: 15 },
   /** A page's title. */
   title: { size: 26, weight: 700, tracking: tracking.title },
+  /** A page's greeting on the soft surface: the dashboard's "Hi, Tucker". */
+  heading: { size: 28, weight: 600, tracking: tracking.display },
+  /** A list row's figure: a round's score in a row of rounds. */
+  figure: { size: 22, weight: 600, tracking: tracking.title, leading: 1 },
   /** The one big figure on a card: a round's score. */
   hero: { size: 44, weight: 700, tracking: tracking.hero, leading: 1 },
   /** The tracked capitals above a figure or a group of rows. */
@@ -439,11 +443,16 @@ export const size = {
   /** The side rail's width: `AppShell` sets it and clears the page past it. */
   rail: 240,
   preview: 390,
+  /** The dashboard scores card's width at desktop: its plot is drawn 594 wide. */
+  "chart-overlay": 634,
   chart: 180,
   "chart-compact": 210,
   /** Width a hole-by-hole chart needs before it scrolls sideways. */
   "chart-wide": "45rem",
-  sheet: "28rem",
+  /** A side sheet's width. */
+  sheet: 420,
+  /** A bottom sheet that holds a table, not a list of options: the handicap breakdown. */
+  "sheet-tall": 640,
   /** Widest a target of results grows. */
   target: "15rem",
   "icon-xs": 11,
@@ -528,6 +537,8 @@ export const gridColumns = {
  */
 export const breakpoints = {
   sm: 40,
+  /** Tailwind's own: the side rail and the desktop layouts start here. */
+  md: 48,
 };
 
 type Ease = [number, number, number, number];
@@ -657,6 +668,44 @@ export const chart = {
     scoreLift: 10,
   },
   /** A figure's trend line. */
+  /** The dashboard's scores card: score dots over the handicap's line, on one plot. */
+  overlay: {
+    width: 594,
+    height: 200,
+    widthCompact: 324,
+    heightCompact: 150,
+    /** Where the first and last rounds sit, from the left and right edges. */
+    left: 50,
+    right: 64,
+    leftCompact: 40,
+    rightCompact: 44,
+    /** The grid's ends, from the left and right edges: room for the tick figures. */
+    gridLeft: 28,
+    gridRight: 38,
+    gridLeftCompact: 22,
+    gridRightCompact: 28,
+    top: 12,
+    bottom: 14,
+    dot: 5.5,
+    dotCompact: 5,
+    handicapDot: 3,
+    /** The card-coloured rim round a score's dot. */
+    rim: 2,
+    /** How far a score's figure sits above its dot. */
+    figureLift: 11,
+    figureLiftCompact: 10,
+    /** Where the latest index's figure sits, right of and below its point. */
+    latestOffset: { x: 10, y: 16 },
+    latestOffsetCompact: { x: 8, y: 16 },
+    scoreStroke: 1.5,
+    handicapStroke: 2.5,
+    dash: "3 4",
+    /** Scores run from the five below the lowest to the ten above the highest, gridded every ten. */
+    scoreFloor: 5,
+    scoreCeiling: 10,
+    /** Past this many rounds the figures crowd, so only the latest and the lowest keep theirs. */
+    labelAll: 10,
+  },
   sparkline: {
     width: 300,
     height: 56,
@@ -665,6 +714,10 @@ export const chart = {
     dot: space.dot,
     /** The compact line beside a KPI tile's figure, drawn at its own size so the stroke stays 2px. */
     compact: { width: 96, height: 32 },
+    /** The flat line under a figure in a stat strip, its end dot filled. */
+    strip: { width: 120, height: 24, pad: 4, dot: 2.5 },
+    /** The line beside a phone card's lead figure, its end dot filled. */
+    hero: { width: 120, height: 44, pad: 4, dot: 3 },
   },
   /** A golfer's scores over time, one dot per round. */
   trend: {

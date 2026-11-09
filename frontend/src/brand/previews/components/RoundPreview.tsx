@@ -25,6 +25,20 @@ export default function RoundPreviewPreview() {
         keyFor={(round) => round.id}
         renderItem={(round) => <RoundPreview variant="history" round={round} />}
       />
+      <Collection
+        layout="divided"
+        className="overflow-hidden rounded-surface bg-card shadow-surface"
+        items={[overPar, evenPar, best, unlinked]}
+        keyFor={(round) => round.id}
+        renderItem={(round) => <RoundPreview variant="compact" round={round} onClick={() => {}} />}
+      />
+      <Collection
+        layout="divided"
+        className="w-preview overflow-hidden rounded-surface bg-card shadow-surface"
+        items={[overPar, evenPar, best]}
+        keyFor={(round) => round.id}
+        renderItem={(round) => <RoundPreview variant="compact" layout="stacked" round={round} onClick={() => {}} />}
+      />
     </>
   );
 }

@@ -49,4 +49,11 @@ describe("ActivityCalendar", () => {
     expect(onOpenRound.calls).toEqual([["1"]]);
     expect(screen.getByText("Played · tap a day to open the round")).toBeTruthy();
   });
+
+  it("as the month card, names the month alone and has no arrows", () => {
+    render(<ActivityCalendar rounds={rounds} today={TODAY} onOpenRound={() => {}} variant="month" />);
+    expect(screen.getByText("October")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Previous month" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Open round on 2026-10-14" })).toBeTruthy();
+  });
 });

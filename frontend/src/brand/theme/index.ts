@@ -8,6 +8,7 @@ export {
   scoreWashClass,
   scoreProfileHeightClass,
   toParFill,
+  underParDotFill,
   toParLabel,
   scoreKindLabel,
   toParDisplay,
