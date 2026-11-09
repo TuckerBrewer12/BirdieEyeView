@@ -26,7 +26,7 @@ type ToggleGroupProps = ToggleGroupPrimitive.Props & {
 };
 
 /**
- * A segmented control: two to four short options on a recessed track, one raised.
+ * A segmented control: two to four short options on a recessed pill track, one raised.
  * It switches a view in place; more options, or long labels, belong in a menu.
  */
 function ToggleGroup({
@@ -46,7 +46,7 @@ function ToggleGroup({
       data-size={size}
       className={cn(
         "flex items-center gap-0.5 bg-muted",
-        size === "sm" ? "rounded-lg p-0.5" : "rounded-card p-chip",
+        "rounded-full", size === "sm" ? "p-0.5" : "p-chip",
         fill ? "w-full" : "w-fit",
         className,
       )}
