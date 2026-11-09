@@ -1,4 +1,4 @@
-import { CircleAlert, Loader2 } from "lucide-react";
+import { ArrowRight, CircleAlert, Loader2 } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -107,7 +107,6 @@ export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanRe
       <RoundScorecard
         round={round}
         teeBox={review.teeBox || null}
-        showTee
         toCheck={toCheck}
         edits={{
           onStrokesChange: review.setStrokes,
@@ -167,7 +166,8 @@ function CourseField({ review }: { review: ScanReviewViewModel }) {
           className="h-auto self-start p-0"
           onClick={() => review.nameCourse(nameToKeep)}
         >
-          Save as "{formatCourseName(nameToKeep)}" without linking →
+          Save as "{formatCourseName(nameToKeep)}" without linking
+          <ArrowRight aria-hidden />
         </Button>
       )}
     </Field>
@@ -180,7 +180,6 @@ function TeeField({ review }: { review: ScanReviewViewModel }) {
       <FieldLabel htmlFor={review.tees.length > 0 ? undefined : "review-tee"}>Tee played</FieldLabel>
       {review.tees.length > 0 ? (
         <ToggleGroup
-          variant="outline"
           size="sm"
           aria-label="Tee played"
           value={review.teeBox ? [review.teeBox] : []}

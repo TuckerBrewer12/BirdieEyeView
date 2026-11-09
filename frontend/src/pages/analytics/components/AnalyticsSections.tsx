@@ -149,7 +149,7 @@ export function ProfileCards({ analytics }: SectionProps) {
       <Card>
         <CardHeader>
           <CardTitle>Avg Score by Hole Difficulty</CardTitle>
-          <CardDescription>Handicap 1 (hardest) → 18 (easiest)</CardDescription>
+          <CardDescription>Handicap 1 (hardest) to 18 (easiest)</CardDescription>
         </CardHeader>
         <CardContent>
           <ToParBars bars={handicapBars(sections.scoring_by_handicap)} />

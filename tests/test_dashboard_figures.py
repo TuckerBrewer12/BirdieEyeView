@@ -26,26 +26,6 @@ def test_scoring_average_change_reads_the_last_few_against_the_window():
     assert dashboard.scoring_average_change([]) is None
 
 
-def test_recent_form_pools_by_chance_and_is_null_without_data():
-    form = dashboard.recent_form([_round([4] * 18, gir=True), _round([5] * 18, gir=False)])
-    assert form["gir_pct"] == 50.0
-    assert form["putts_per_18"] == 36.0
-
-    empty = dashboard.recent_form([Round(hole_scores=[HoleScore(hole_number=1, strokes=4)])])
-    assert empty["gir_pct"] is None
-    assert empty["putts_per_18"] is None
-
-
-def test_putts_shown_prefers_the_last_five_and_rates_like_the_insights():
-    # 30 or fewer is strong, up to 34 fair, over 34 weak: the analytics page's thresholds.
-    assert dashboard.putts_shown(30.0, 33.0) == {"per_round": 30.0, "rating": "strong"}
-    assert dashboard.putts_shown(34.0, None) == {"per_round": 34.0, "rating": "fair"}
-    assert dashboard.putts_shown(34.4, None) == {"per_round": 34.4, "rating": "weak"}
-    # Without putts in the last five, every round's average stands in.
-    assert dashboard.putts_shown(None, 29.5) == {"per_round": 29.5, "rating": "strong"}
-    assert dashboard.putts_shown(None, None) == {"per_round": None, "rating": None}
-
-
 def test_score_mix_counts_classified_holes():
     mix = dashboard.score_mix([_round([3, 4, 4, 5])])
     assert mix["holes"] == 4
@@ -54,12 +34,11 @@ def test_score_mix_counts_classified_holes():
     assert mix["percentages"]["quad"] == 0.0
 
 
-def test_handicap_change_reads_the_window():
-    trend = [{"handicap_index": v} for v in (14.0, 13.5, 13.0, 12.8, 12.6, 12.4)]
-    assert dashboard.handicap_change(trend) == {"delta": -1.6, "direction": "down"}
-    assert dashboard.handicap_change([{"handicap_index": 10.0}]) == {"delta": None, "direction": None}
-    flat = [{"handicap_index": v} for v in (10.0, 10.1, 10.2)]
-    assert dashboard.handicap_change(flat)["direction"] == "flat"
+def test_change_verdict_reads_a_fall_as_good():
+    assert dashboard.change_verdict(-1.2) == "good"
+    assert dashboard.change_verdict(0.4) == "bad"
+    assert dashboard.change_verdict(0.0) == "neutral"
+    assert dashboard.change_verdict(None) is None
 
 
 def test_whs_window_matches_the_table():
@@ -68,21 +47,39 @@ def test_whs_window_matches_the_table():
     assert whs_window(40) == (8, 0.0)
 
 
-def test_milestones_prefer_the_first_round_under_par_and_come_newest_first():
-    achievements = {
-        "round_milestones": {"lifetime": {
-            "first_round_under_par": {"score": 71, "date": "2026-05-02T00:00:00", "course": "Blue Rock"},
-            "score_breaks": [{"threshold": 80, "achievement": {"date": "2026-01-01", "course": "Muni"}}],
-        }},
-        "putting_milestones": {"lifetime": {"putt_breaks": [
-            {"threshold": 30, "achievement": {"date": "2026-06-01", "course": "Muni", "round_id": "r9"}},
-            {"threshold": 27, "achievement": None},
-        ]}},
-        "best_performance_streaks": {"lifetime": {"longest_par_streak": 4}},
-        "best_performance_streaks_events": {"lifetime": {"longest_par_streak": None}},
+
+def _dated(day, strokes=None):
+    from datetime import datetime, time
+    round_ = _round(strokes or [4] * 18)
+    round_.date = datetime.combine(day, time(12))  # naive, as the database's dates come back
+    return round_
+
+
+def test_handicap_change_this_month_reads_from_the_last_round_before_the_first():
+    from datetime import date
+    rounds = [_dated(date(2026, 4, 18)), _dated(date(2026, 5, 2)), _dated(date(2026, 6, 3)), _dated(date(2026, 6, 15))]
+    trend = [{"handicap_index": v} for v in (14.0, 13.6, 13.2, 12.4)]
+    # The index after May 2 was 13.6; it is 12.4 now.
+    assert dashboard.handicap_change_this_month(rounds, trend, date(2026, 6, 20)) == -1.2
+    # Nothing before April began, so there is nothing to measure from.
+    assert dashboard.handicap_change_this_month(rounds, trend, date(2026, 4, 20)) is None
+    # No round this month yet: the index hasn't moved.
+    assert dashboard.handicap_change_this_month(rounds, trend, date(2026, 7, 2)) == 0.0
+
+
+def test_rounds_this_year_count_only_this_calendar_year():
+    from datetime import date
+    rounds = [_dated(date(2025, 12, 30)), _dated(date(2026, 3, 9)), _dated(date(2026, 6, 15)), _dated(date(2026, 6, 20))]
+    assert dashboard.rounds_this_year(rounds, date(2026, 6, 21)) == 3
+    assert dashboard.rounds_this_year(rounds, date(2027, 1, 2)) == 0
+
+
+def test_handicap_change_is_the_move_this_month_with_its_verdict():
+    from datetime import date
+    rounds = [_dated(date(2026, 5, 20)), _dated(date(2026, 6, 3)), _dated(date(2026, 6, 14))]
+    trend = [{"handicap_index": v} for v in (14.0, 13.2, 12.4)]
+    assert dashboard.handicap_change(rounds, trend, date(2026, 6, 21)) == {"this_month": -1.6, "this_month_verdict": "good"}
+    # Nothing played before the 1st: no move to report.
+    assert dashboard.handicap_change(rounds[1:], trend[1:], date(2026, 6, 21)) == {
+        "this_month": None, "this_month_verdict": None,
     }
-    assert dashboard.lifetime_milestones(achievements) == [
-        {"kind": "putt_break", "value": 30, "date": "2026-06-01", "course": "Muni", "round_id": "r9"},
-        {"kind": "under_par", "value": 71, "date": "2026-05-02", "course": "Blue Rock", "round_id": None},
-    ]
-    assert dashboard.lifetime_milestones({}) == []

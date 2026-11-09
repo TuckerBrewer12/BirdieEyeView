@@ -19,6 +19,7 @@ from models import Round
 
 
 def _hole_scores(round_: Round) -> list[HoleScoreResponse]:
+    running = round_.running_to_par()
     return [
         HoleScoreResponse(
             **hs.model_dump(),
@@ -28,6 +29,7 @@ def _hole_scores(round_: Round) -> list[HoleScoreResponse]:
             to_par=round_.score_to_par(hs.hole_number),
             kind=round_.get_score_kind(hs.hole_number),
             three_putt=hs.is_three_putt(),
+            running_to_par=running.get(hs.hole_number),
         )
         for hs in round_.hole_scores
         if hs.hole_number is not None
@@ -63,6 +65,7 @@ def _figures(round_: Round) -> dict:
 
 def round_summary(round_: Round, best_rank: Optional[int] = None) -> RoundSummaryResponse:
     """A round for list views: only what a list draws, so a long list stays small."""
+    running = round_.running_to_par()
     return RoundSummaryResponse(
         id=str(round_.id),
         course_id=str(round_.course.id) if round_.course and round_.course.id else None,
@@ -80,6 +83,7 @@ def round_summary(round_: Round, best_rank: Optional[int] = None) -> RoundSummar
                 hole_number=hs.hole_number,
                 strokes=hs.strokes,
                 kind=round_.get_score_kind(hs.hole_number),
+                running_to_par=running.get(hs.hole_number),
             )
             for hs in round_.hole_scores
             if hs.hole_number is not None
@@ -111,4 +115,5 @@ def round_detail(round_: Round, handicap_index: Optional[float] = None) -> Round
         hole_scores=_hole_scores(round_),
         course_handicap=round_course_handicap(round_, handicap_index),
         net_score=round_net_score(round_, handicap_index),
+        worst_stretch=round_.worst_stretch(),
     )

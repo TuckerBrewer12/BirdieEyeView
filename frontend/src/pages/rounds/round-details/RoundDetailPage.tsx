@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { Link2 } from "lucide-react";
+import { ArrowRight, Link2 } from "lucide-react";
 import { useShareRound } from "@/platform/useShareRound";
 import { roundShareMessage } from "@/domain/share";
 import {
@@ -7,14 +7,18 @@ import {
   AlertDescription,
   Button,
   Card,
+  CardAction,
   CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   CourseLinkSearch,
   Input,
   LoadingState,
   RoundFlowChart,
+  RoundFlowFigures,
   RoundScorecard,
   RoundShareCard,
-  SectionLabel,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
@@ -127,14 +131,14 @@ export function RoundDetailPage({ userId }: { userId: string }) {
               className="mt-1.5 h-auto p-0"
               onClick={editor.keepPlayedName}
             >
-              Keep "{editor.playedNameToKeep}" without linking →
+              Keep "{editor.playedNameToKeep}" without linking
+              <ArrowRight aria-hidden />
             </Button>
           )}
           <div className="mt-3 flex items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground">Tee</span>
             {editor.availableTees.length > 0 ? (
               <ToggleGroup
-                variant="outline"
                 size="sm"
                 aria-label="Tee"
                 value={editor.teeBox ? [editor.teeBox] : []}
@@ -176,15 +180,19 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         />
       </div>
 
-      {viewModel.showMomentum && (
-        <div className="mt-6">
-          <SectionLabel>Momentum</SectionLabel>
-          <Card>
-            <CardContent>
-              <RoundFlowChart round={played} />
-            </CardContent>
-          </Card>
-        </div>
+      {viewModel.showFlow && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="font-semibold">Round flow</CardTitle>
+            <CardDescription className="text-body-sm">Running score to par, hole by hole</CardDescription>
+            <CardAction>
+              <RoundFlowFigures round={played} />
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <RoundFlowChart round={played} />
+          </CardContent>
+        </Card>
       )}
 
       <RoundComparisonSection userId={userId} roundId={played.id} />

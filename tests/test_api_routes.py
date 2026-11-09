@@ -207,8 +207,8 @@ def test_round_request_validation_and_summary():
     assert summary.front_nine is None
     assert (summary.score_counts.bogey, summary.score_counts.par, summary.score_counts.birdie) == (1, 1, 0)
     assert [h.model_dump() for h in summary.hole_scores] == [
-        {"hole_number": 1, "strokes": 5, "kind": "bogey"},
-        {"hole_number": 2, "strokes": 4, "kind": "par"},
+        {"hole_number": 1, "strokes": 5, "kind": "bogey", "running_to_par": 1},
+        {"hole_number": 2, "strokes": 4, "kind": "par", "running_to_par": 1},
     ]
 
 
@@ -477,14 +477,14 @@ async def test_dashboard_and_empty_analytics(monkeypatch):
     monkeypatch.setattr(stats.hcap, "handicap_index", lambda rounds, **_: 10.0)
 
     dashboard = await stats.get_dashboard(user_id, db, user)
-    assert dashboard.total_rounds == 1
-    assert dashboard.scoring_average == 80.0
     assert dashboard.best_round_id == str(round_id)
-    assert dashboard.scoring_average_l20 is None
+    assert dashboard.scoring_average_l5 is None
     assert dashboard.whs.window_size == 0
-    assert dashboard.milestones == []
     assert dashboard.score_trend == []
     assert dashboard.handicap_trend == []
+    # The newest round's holes carry where it stood after each, so its last is its to par.
+    last = dashboard.recent_rounds[0]
+    assert last.hole_scores[-1].running_to_par == last.to_par
 
     # The page's rounds, the handicap window's, and the golfer's last 20 for their own index.
     db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])

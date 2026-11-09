@@ -6,6 +6,8 @@ const inputGroupVariants = cva(
     variants: {
       size: {
         default: "h-8 rounded-lg",
+        /** A field that stands alone on a page, as search does: a button's height, the card's corner. */
+        inline: "h-10 rounded-card bg-card",
         cta: "h-12 rounded-xl",
       },
     },
@@ -21,9 +23,9 @@ const inputGroupAddonVariants = cva(
     variants: {
       align: {
         "inline-start":
-          "order-first pl-2 has-[>button]:-ml-1 has-[>kbd]:-ml-0.5 group-data-[size=cta]/input-group:pl-4",
+          "order-first pl-2 has-[>button]:-ml-1 has-[>kbd]:-ml-0.5 group-data-[size=inline]/input-group:pl-3 group-data-[size=cta]/input-group:pl-4",
         "inline-end":
-          "order-last pr-2 has-[>button]:-mr-1 has-[>kbd]:-mr-0.5 group-data-[size=cta]/input-group:pr-4",
+          "order-last pr-2 has-[>button]:-mr-1 has-[>kbd]:-mr-0.5 group-data-[size=inline]/input-group:pr-1.5 group-data-[size=cta]/input-group:pr-4",
         "block-start":
           "order-first w-full justify-start px-2.5 pt-2 group-has-[>input]/input-group:pt-2 [.border-b]:pb-2",
         "block-end":

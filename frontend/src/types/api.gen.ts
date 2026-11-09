@@ -735,6 +735,8 @@ export interface components {
             scoring_average: number | null;
             /** Scoring Average Change */
             scoring_average_change: number | null;
+            /** Scoring Average Verdict */
+            scoring_average_verdict: ("good" | "bad" | "neutral") | null;
             /** Scrambling Percentage */
             scrambling_percentage: number | null;
             /** Three Putt Rate */
@@ -773,7 +775,7 @@ export interface components {
             score_differentials: components["schemas"]["ScoreDifferentialRow"][];
             score_mix: components["schemas"]["ScoreMix"];
             /** Score Trend */
-            score_trend: components["schemas"]["AnalyticsScoreTrendRow"][];
+            score_trend: components["schemas"]["ScoreTrendRow"][];
             /** Scoring By Handicap */
             scoring_by_handicap: components["schemas"]["ScoringByHandicapRow"][];
             /** Scoring By Par */
@@ -786,24 +788,6 @@ export interface components {
             three_putts_trend: components["schemas"]["ThreePuttsTrendRow"][];
             /** Up And Down Trend */
             up_and_down_trend: components["schemas"]["UpAndDownTrendRow"][];
-        };
-        /**
-         * AnalyticsScoreTrendRow
-         * @description A round's score, with its average over it and the four rounds before it.
-         */
-        AnalyticsScoreTrendRow: {
-            /** Course Name */
-            course_name: string | null;
-            /** Rolling Average */
-            rolling_average: number | null;
-            /** Round Id */
-            round_id: string | null;
-            /** Round Index */
-            round_index: number;
-            /** To Par */
-            to_par: number | null;
-            /** Total Score */
-            total_score: number | null;
         };
         /** AuthUserResponse */
         AuthUserResponse: {
@@ -1181,58 +1165,40 @@ export interface components {
         };
         /**
          * DashboardResponse
-         * @description Aggregated stats for the dashboard page. Every figure is worked out here, not on the client.
+         * @description What the dashboard shows. Every figure is worked out here, not on the client.
          */
         DashboardResponse: {
-            /** Average Gir */
-            average_gir: number | null;
-            /** Average Putts */
-            average_putts: number | null;
-            /** Best Recent Round Id */
-            best_recent_round_id: string | null;
             /** Best Round */
             best_round: number | null;
             /** Best Round Course */
             best_round_course: string | null;
+            /** Best Round Date */
+            best_round_date: string | null;
             /** Best Round Id */
             best_round_id: string | null;
+            /** Best Round To Par */
+            best_round_to_par: number | null;
             handicap_change: components["schemas"]["HandicapChange"];
             /** Handicap Index */
             handicap_index: number | null;
             /** Handicap Trend */
             handicap_trend: components["schemas"]["HandicapTrendRow"][];
-            /** Milestones */
-            milestones: components["schemas"]["Milestone"][];
-            /** Putts Per Round */
-            putts_per_round: number | null;
-            /** Putts Rating */
-            putts_rating: ("strong" | "fair" | "weak") | null;
-            recent_form: components["schemas"]["RecentForm"];
             /** Recent Rounds */
             recent_rounds: components["schemas"]["RoundSummaryResponse"][];
             recent_score_mix: components["schemas"]["ScoreMix"];
-            score_mix: components["schemas"]["ScoreMix"];
             /**
-             * Score Mix Holes
+             * Rounds This Year
              * @default 0
              */
-            score_mix_holes: number;
+            rounds_this_year: number;
             /** Score Trend */
             score_trend: components["schemas"]["ScoreTrendRow"][];
-            /** Scoring Average */
-            scoring_average: number | null;
             /** Scoring Average Change */
             scoring_average_change: number | null;
-            /** Scoring Average L20 */
-            scoring_average_l20: number | null;
             /** Scoring Average L5 */
             scoring_average_l5: number | null;
-            /** Scrambling Trend */
-            scrambling_trend: components["schemas"]["ScramblingTrendRow"][];
-            /** Total Rounds */
-            total_rounds: number;
-            /** Up And Down Trend */
-            up_and_down_trend: components["schemas"]["UpAndDownTrendRow"][];
+            /** Scoring Average Verdict */
+            scoring_average_verdict: ("good" | "bad" | "neutral") | null;
             whs: components["schemas"]["WhsBreakdown"];
         };
         /**
@@ -1466,10 +1432,10 @@ export interface components {
         };
         /** HandicapChange */
         HandicapChange: {
-            /** Delta */
-            delta: number | null;
-            /** Direction */
-            direction: ("up" | "down" | "flat") | null;
+            /** This Month */
+            this_month: number | null;
+            /** This Month Verdict */
+            this_month_verdict: ("good" | "bad" | "neutral") | null;
         };
         /**
          * HandicapTrendRow
@@ -1589,6 +1555,8 @@ export interface components {
             par_played: number | null;
             /** Putts */
             putts: number | null;
+            /** Running To Par */
+            running_to_par: number | null;
             /** Shots To Green */
             shots_to_green: number | null;
             /** Strokes */
@@ -1626,13 +1594,15 @@ export interface components {
         };
         /**
          * HoleSummaryResponse
-         * @description One hole in a round list: what was taken and how it scored.
+         * @description One hole in a round list: what was taken, how it scored and where the round stood after it.
          */
         HoleSummaryResponse: {
             /** Hole Number */
             hole_number: number;
             /** Kind */
             kind: ("eagle" | "birdie" | "par" | "bogey" | "double" | "triple" | "quad") | null;
+            /** Running To Par */
+            running_to_par: number | null;
             /** Strokes */
             strokes: number | null;
         };
@@ -1809,25 +1779,6 @@ export interface components {
         MessageResponse: {
             /** Message */
             message: string;
-        };
-        /**
-         * Milestone
-         * @description A lifetime best. `value` is the score, the putt threshold, or the streak length.
-         */
-        Milestone: {
-            /** Course */
-            course: string;
-            /** Date */
-            date: string;
-            /**
-             * Kind
-             * @enum {string}
-             */
-            kind: "under_par" | "score_break" | "putt_break" | "par_streak";
-            /** Round Id */
-            round_id: string | null;
-            /** Value */
-            value: number;
         };
         /**
          * MilestoneAchievement
@@ -2230,20 +2181,6 @@ export interface components {
             /** Total Putts */
             total_putts: number | null;
         };
-        /**
-         * RecentForm
-         * @description Rates over the last five rounds, pooled by chances. Null when there is nothing to measure.
-         */
-        RecentForm: {
-            /** Gir Pct */
-            gir_pct: number | null;
-            /** Putts Per 18 */
-            putts_per_18: number | null;
-            /** Scrambling Pct */
-            scrambling_pct: number | null;
-            /** Up And Down Pct */
-            up_and_down_pct: number | null;
-        };
         /** RegisterRequest */
         RegisterRequest: {
             /** Email */
@@ -2350,6 +2287,7 @@ export interface components {
             user_tee: components["schemas"]["UserTee"] | null;
             /** Weather Conditions */
             weather_conditions: string | null;
+            worst_stretch: components["schemas"]["WorstStretch"] | null;
             /** Yards */
             yards: number | null;
         };
@@ -2636,11 +2574,15 @@ export interface components {
         };
         /**
          * ScoreTrendRow
-         * @description One round's score, oldest first.
+         * @description One round's score, oldest first, with its average over it and the four rounds before it.
          */
         ScoreTrendRow: {
             /** Course Name */
             course_name: string | null;
+            /** Par */
+            par: number | null;
+            /** Rolling Average */
+            rolling_average: number | null;
             /** Round Id */
             round_id: string | null;
             /** Round Index */
@@ -2966,11 +2908,6 @@ export interface components {
             /** Rows */
             rows: components["schemas"]["WhsRound"][];
             /**
-             * Show Calculation
-             * @default false
-             */
-            show_calculation: boolean;
-            /**
              * Window Size
              * @default 0
              */
@@ -3005,6 +2942,18 @@ export interface components {
         WindowedPerformanceStreaks: {
             lifetime: components["schemas"]["PerformanceStreaks"];
             one_year: components["schemas"]["PerformanceStreaks"];
+        };
+        /**
+         * WorstStretch
+         * @description The four holes in a row that lost the most to par, when they lost two or more.
+         */
+        WorstStretch: {
+            /** First Hole */
+            first_hole: number;
+            /** Last Hole */
+            last_hole: number;
+            /** To Par */
+            to_par: number;
         };
         /**
          * YardageScore

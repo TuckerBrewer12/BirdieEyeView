@@ -1,14 +1,16 @@
 import * as React from "react";
 import { type VariantProps } from "class-variance-authority";
-import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { cn } from "@/brand/cn";
-import { statValueVariants, statVariants } from "./variants";
+import { Sparkline, type SparklineTone } from "@/brand/charts/Sparkline";
+import { Card, CardContent } from "./Card";
+import { statDeltaVariants, statLabelVariants, statValueVariants, statVariants } from "./variants";
 
 /**
  * A figure and what it measures: the scoring average, a handicap, a rate.
  *
  * The parts compose like `Card`, so a caller can put the label above the
  * value or under it. The caller formats the value; this owns the type.
+ * `StatCard` sets them as a KPI tile.
  */
 function Stat({
   className,
@@ -20,14 +22,12 @@ function Stat({
   );
 }
 
-function StatLabel({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="stat-label"
-      className={cn("text-eyebrow uppercase text-muted-foreground", className)}
-      {...props}
-    />
-  );
+function StatLabel({
+  className,
+  tone = "default",
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof statLabelVariants>) {
+  return <div data-slot="stat-label" className={cn(statLabelVariants({ tone, className }))} {...props} />;
 }
 
 function StatValue({
@@ -45,51 +45,110 @@ function StatUnit({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="stat-unit"
-      className={cn("text-sm font-semibold tracking-normal text-muted-foreground", className)}
+      className={cn("text-base font-semibold tracking-normal text-foreground-secondary", className)}
+      {...props}
+    />
+  );
+}
+
+/** What a change is measured against: the "last 5 vs all" after a delta. */
+function StatNote({ className, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="stat-note"
+      className={cn("text-body-sm text-muted-foreground", className)}
       {...props}
     />
   );
 }
 
 type StatDirection = "up" | "down" | "flat";
+/** Whether the move was for the better: the server's verdict (`good`, `bad`, `neutral`). */
+type StatTone = "good" | "bad" | "neutral";
 
-const DIRECTION_ICONS = { up: TrendingUp, down: TrendingDown, flat: Minus } as const;
-
-const DIRECTION_TONES: Record<StatDirection, string> = {
-  down: "text-score-birdie",
-  up: "text-score-bogey",
-  flat: "text-muted-foreground",
-};
+const DIRECTION_GLYPHS = { up: "▲", down: "▼", flat: "–" } as const;
 
 /**
- * Which way a figure moved. Scores, handicaps and putts improve as they fall,
- * so down reads as a birdie and up as a bogey. With no children it is the
- * arrow alone; children are the amount, set beside it.
+ * Which way a figure moved: a triangle, and the amount beside it as children.
+ * The arrow is the direction; the colour is `tone`, the server's verdict on
+ * whether that move is for the better. `pill` sets it on a wash of its tone.
  */
 function StatDelta({
   direction,
+  tone,
+  pill = false,
   className,
   children,
   ...props
-}: React.ComponentProps<"span"> & { direction: StatDirection | null }) {
+}: React.ComponentProps<"span"> & VariantProps<typeof statDeltaVariants> & {
+  direction: StatDirection | null;
+  tone: StatTone;
+}) {
   if (direction == null) return null;
-  const Icon = DIRECTION_ICONS[direction];
   return (
     <span
       data-slot="stat-delta"
       data-direction={direction}
-      className={cn(
-        "inline-flex items-center gap-1 text-label font-semibold whitespace-nowrap",
-        DIRECTION_TONES[direction],
-        className,
-      )}
+      data-tone={tone}
+      className={cn(statDeltaVariants({ tone, pill, className }))}
       {...props}
     >
-      <Icon aria-hidden className={children == null ? "size-4" : "size-icon-xs"} />
+      <span aria-hidden>{DIRECTION_GLYPHS[direction]}</span>
       {children}
     </span>
   );
 }
 
-export { Stat, StatLabel, StatValue, StatUnit, StatDelta };
-export type { StatDirection };
+interface StatCardProps extends Omit<React.ComponentProps<"div">, "children"> {
+  label: React.ReactNode;
+  value: React.ReactNode;
+  /** The figure across recent rounds, oldest first: drawn as a small line beside the value. */
+  trend?: (number | null)[] | null;
+  /** The amount it moved, beside the triangle. */
+  delta?: React.ReactNode;
+  direction?: StatDirection | null;
+  /** The server's verdict on the move: colours the delta and the trend line. */
+  tone?: StatTone;
+  /** What the delta is against ("last 5 vs all"), or a quiet line under the figure. */
+  note?: React.ReactNode;
+}
+
+const TREND_TONE: Record<StatTone, SparklineTone> = { good: "good", bad: "bad", neutral: "primary" };
+
+/** A KPI tile: the figure, its trend line, and how it moved against the last stretch. */
+function StatCard({
+  label,
+  value,
+  trend,
+  delta,
+  direction = null,
+  tone = "neutral",
+  note,
+  className,
+  ...props
+}: StatCardProps) {
+  return (
+    <Card data-slot="stat-card" size="sm" className={className} {...props}>
+      <CardContent className="flex flex-col gap-2">
+        <StatLabel>{label}</StatLabel>
+        <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
+          <StatValue size="lg">{value}</StatValue>
+          {trend && (
+            <Sparkline size="compact" className="mb-1 w-24 shrink-0" series={[{ values: trend, tone: TREND_TONE[tone] }]} />
+          )}
+        </div>
+        {(direction != null || note != null) && (
+          <div className="flex flex-wrap items-center gap-x-2">
+            <StatDelta direction={direction} tone={tone}>
+              {delta}
+            </StatDelta>
+            {note != null && <StatNote>{note}</StatNote>}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export { Stat, StatLabel, StatValue, StatUnit, StatNote, StatDelta, StatCard };
+export type { StatDirection, StatTone };

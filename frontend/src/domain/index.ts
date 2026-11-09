@@ -5,6 +5,7 @@ export {
   playedScoreKinds,
   scoreKind,
   scoreKindCountLabel,
+  scoreKindNoun,
   scoreMixFrom,
   strokesToPar,
   toParLabel,
@@ -34,7 +35,7 @@ export type {
 export { buildRadarData } from "./radar";
 export type { RadarEntry } from "./radar";
 
-export { courseSummaryFrom, formatCourseName, getTee, teeColors } from "./course";
+export { courseLabel, courseSummaryFrom, formatCourseName, getTee, teeColors } from "./course";
 export type { CourseSummary } from "./course";
 
 export { EMPTY_COURSE_ANALYTICS, courseAnalyticsFrom } from "./courseAnalytics";
@@ -47,7 +48,7 @@ export type {
   ScorePoint,
 } from "./courseAnalytics";
 
-export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekdayDay, isoDay, parseDay } from "./date";
+export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekdayDay, formatWeekdayShort, isoDay, parseDay } from "./date";
 export type { DayParts } from "./date";
 
 export {
