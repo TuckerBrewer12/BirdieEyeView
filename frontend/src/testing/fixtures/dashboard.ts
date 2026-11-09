@@ -106,15 +106,46 @@ export const populatedDashboard: DashboardDto = {
   handicap_trend: handicapTrend,
   scrambling_trend: scramblingTrend,
   up_and_down_trend: upAndDownTrend,
+  // The Last 5 / Last 20 switch. The window holds five rounds, so both read the same rounds; the
+  // last five are measured against the last 20, the last 20 against every round.
+  windows: {
+    last_5: {
+      size: 5,
+      rounds: 5,
+      scoring_average: 76.8,
+      scoring_average_change: -2.1,
+      scoring_average_verdict: "good",
+      handicap_change: -1.6,
+      handicap_verdict: "good",
+      scrambling_pct: 37.5,
+      up_and_down_pct: 100 / 3,
+      score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
+      score_mix_holes: 90,
+    },
+    last_20: {
+      size: 20,
+      rounds: 5,
+      scoring_average: 76.8,
+      scoring_average_change: 0.8,
+      scoring_average_verdict: "bad",
+      handicap_change: -1.6,
+      handicap_verdict: "good",
+      scrambling_pct: 37.5,
+      up_and_down_pct: 100 / 3,
+      score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
+      score_mix_holes: 90,
+    },
+  },
 };
 
 export const dashboardGoalReport: GoalReportDto = {
   scoring_average: 76.8,
   lowest_score: 69,
   scoring_goal: 79,
-  gap: 2.2,
-  on_track: false,
-  progress_pct: 100,
+  // The 76.8 average sits 2.2 inside the goal of breaking 80.
+  gap: -2.2,
+  on_track: true,
+  progress_pct: 82,
   // The 69, 72 and 78 meet it; their average of 73 is six strokes inside it.
   rounds_meeting_goal: 3,
   peak_gap: -6,

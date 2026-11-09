@@ -108,6 +108,49 @@ def handicap_change(handicap_trend: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def handicap_move(handicap_trend: List[Dict[str, Any]], window: int) -> Optional[float]:
+    """How far the index moved across the last `window` rounds: the newest index less the first
+    one in the window, to a tenth. Null until the window holds two indexes."""
+    indexes = [r["handicap_index"] for r in handicap_trend[-window:] if r["handicap_index"] is not None]
+    return round(indexes[-1] - indexes[0], 1) if len(indexes) >= 2 else None
+
+
+def window_figures(
+    last_20: List[Round],
+    handicap_trend: List[Dict[str, Any]],
+    window: int,
+    baseline_average: Optional[float],
+) -> Dict[str, Any]:
+    """The dashboard's figures over its last `window` rounds, for the Last 5 / Last 20 switch.
+
+    The scoring average's change is against `baseline_average`: the last 20 rounds' for the last
+    five, every round's for the last 20. Rates are pooled over the window's chances.
+    """
+    rounds = last_20[-window:]
+    average = scoring_average(rounds)
+    change = (
+        analytics.round_half_up(average - baseline_average, 1)
+        if average is not None and baseline_average is not None
+        else None
+    )
+    move = handicap_move(handicap_trend, window)
+    form = recent_form(rounds, window)
+    mix = score_mix(rounds)
+    return {
+        "size": window,
+        "rounds": sum(1 for r in rounds if r.calculate_total_score() is not None),
+        "scoring_average": analytics.round_half_up(average, 1) if average is not None else None,
+        "scoring_average_change": change,
+        "scoring_average_verdict": change_verdict(change),
+        "handicap_change": move,
+        "handicap_verdict": change_verdict(move),
+        "scrambling_pct": form["scrambling_pct"],
+        "up_and_down_pct": form["up_and_down_pct"],
+        "score_mix": mix["percentages"],
+        "score_mix_holes": mix["holes"],
+    }
+
+
 def whs_breakdown(
     rounds: List[Round],
     handicap_trend: List[Dict[str, Any]],

@@ -1745,6 +1745,34 @@ export const sampleGolfer = {
       ],
       "show_calculation": true,
       "window_size": 20
+    },
+    "windows": {
+      "last_20": {
+        "handicap_change": -1.7,
+        "handicap_verdict": "good",
+        "rounds": 20,
+        "score_mix": {"birdie": 5.555555555555555, "bogey": 39.72222222222222, "double": 10.277777777777777, "eagle": 0.0, "par": 43.611111111111114, "quad": 0.0, "triple": 0.8333333333333334},
+        "score_mix_holes": 360,
+        "scoring_average": 82.3,
+        "scoring_average_change": -0.6,
+        "scoring_average_verdict": "good",
+        "scrambling_pct": 31.73913043478261,
+        "size": 20,
+        "up_and_down_pct": 40.43478260869565
+      },
+      "last_5": {
+        "handicap_change": -1.4,
+        "handicap_verdict": "good",
+        "rounds": 5,
+        "score_mix": {"birdie": 5.555555555555555, "bogey": 35.55555555555556, "double": 4.444444444444445, "eagle": 0.0, "par": 54.44444444444444, "quad": 0.0, "triple": 0.0},
+        "score_mix_holes": 90,
+        "scoring_average": 79.0,
+        "scoring_average_change": -3.3,
+        "scoring_average_verdict": "good",
+        "scrambling_pct": 35.55555555555556,
+        "size": 5,
+        "up_and_down_pct": 37.77777777777778
+      }
     }
   },
   "detailRounds": [

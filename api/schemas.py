@@ -171,6 +171,28 @@ class HandicapChange(ResponseModel):
     delta_verdict: Optional[ChangeVerdict] = None
 
 
+class DashboardWindow(ResponseModel):
+    """The dashboard's figures over its last `size` rounds (`analytics.dashboard.window_figures`)."""
+    size: int
+    rounds: int = 0  # scored rounds in the window
+    scoring_average: Optional[float] = None
+    # Against the last 20 rounds' average for the last five, every round's for the last 20.
+    scoring_average_change: Optional[float] = None
+    scoring_average_verdict: Optional[ChangeVerdict] = None
+    handicap_change: Optional[float] = None  # the newest index less the window's first, to a tenth
+    handicap_verdict: Optional[ChangeVerdict] = None
+    scrambling_pct: Optional[float] = None
+    up_and_down_pct: Optional[float] = None
+    score_mix: ScoreMix = Field(default_factory=ScoreMix)
+    score_mix_holes: int = 0
+
+
+class DashboardWindows(ResponseModel):
+    """The Last 5 / Last 20 switch's two windows."""
+    last_5: DashboardWindow = Field(default_factory=lambda: DashboardWindow(size=5))
+    last_20: DashboardWindow = Field(default_factory=lambda: DashboardWindow(size=20))
+
+
 class WhsRound(ResponseModel):
     round_index: int
     course_name: Optional[str] = None
@@ -283,6 +305,7 @@ class DashboardResponse(ResponseModel):
     handicap_trend: List[HandicapTrendRow] = Field(default_factory=list)
     scrambling_trend: List[ScramblingTrendRow] = Field(default_factory=list)
     up_and_down_trend: List[UpAndDownTrendRow] = Field(default_factory=list)
+    windows: DashboardWindows = Field(default_factory=DashboardWindows)
 
 
 class AnalyticsKpis(ResponseModel):

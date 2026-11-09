@@ -97,3 +97,30 @@ def test_milestones_prefer_the_first_round_under_par_and_come_newest_first():
         {"kind": "under_par", "value": 71, "date": "2026-05-02", "course": "Blue Rock", "round_id": None},
     ]
     assert dashboard.lifetime_milestones({}) == []
+
+
+def test_handicap_move_reads_across_the_window():
+    trend = [{"handicap_index": v} for v in (None, 14.4, 13.9, 13.3, 12.9, 12.4)]
+    assert dashboard.handicap_move(trend, 5) == -2.0
+    assert dashboard.handicap_move(trend, 2) == -0.5
+    assert dashboard.handicap_move([{"handicap_index": 12.0}], 5) is None
+
+
+def test_window_figures_measure_the_last_few_against_a_baseline():
+    rounds = [_round([5] * 18), _round([5] * 18), _round([4] * 18)]
+    trend = [{"handicap_index": v} for v in (15.0, 14.0, 13.0)]
+    last_two = dashboard.window_figures(rounds, trend, 2, dashboard.scoring_average(rounds))
+    assert last_two["size"] == 2
+    assert last_two["rounds"] == 2
+    assert last_two["scoring_average"] == 81.0
+    # 81 against the whole window's 84.
+    assert last_two["scoring_average_change"] == -3.0
+    assert last_two["scoring_average_verdict"] == "good"
+    assert last_two["handicap_change"] == -1.0
+    assert last_two["handicap_verdict"] == "good"
+    assert last_two["score_mix_holes"] == 36
+    assert last_two["score_mix"]["par"] == 50.0
+
+    no_baseline = dashboard.window_figures(rounds, [], 2, None)
+    assert no_baseline["scoring_average_change"] is None
+    assert no_baseline["handicap_change"] is None

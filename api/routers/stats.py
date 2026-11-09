@@ -16,6 +16,7 @@ from api.schemas import (
     BenchmarkComparisonResponse,
     CourseAnalyticsResponse,
     DashboardResponse,
+    DashboardWindows,
     GoalReportResponse,
     PlayedCourseResponse,
     RoundComparisonResponse,
@@ -73,6 +74,8 @@ async def get_dashboard(
     average_putts = round(sum(putts) / len(putts), 1) if putts else None
     putts_shown = dashboard.putts_shown(form["putts_per_18"], average_putts)
     scoring_change = dashboard.scoring_average_change(last_20)
+    l20_average = dashboard.scoring_average(last_20)
+    every_average = sum(scores) / len(scores) if scores else None
 
     return DashboardResponse(
         total_rounds=len(summaries),
@@ -87,7 +90,7 @@ async def get_dashboard(
         average_gir=round(sum(girs) / len(girs), 1) if girs else None,
         putts_per_round=putts_shown["per_round"],
         putts_rating=putts_shown["rating"],
-        scoring_average_l20=dashboard.scoring_average(last_20),
+        scoring_average_l20=l20_average,
         scoring_average_l5=dashboard.scoring_average(last_20, dashboard.RECENT_ROUNDS),
         scoring_average_change=scoring_change,
         scoring_average_verdict=dashboard.change_verdict(scoring_change),
@@ -106,6 +109,10 @@ async def get_dashboard(
         handicap_trend=handicap_trend,
         scrambling_trend=analytics.scrambling_per_round(last_20),
         up_and_down_trend=analytics.up_and_down_trend(last_20),
+        windows=DashboardWindows(
+            last_5=dashboard.window_figures(last_20, handicap_trend, dashboard.RECENT_ROUNDS, l20_average),
+            last_20=dashboard.window_figures(last_20, handicap_trend, 20, every_average),
+        ),
     )
 
 

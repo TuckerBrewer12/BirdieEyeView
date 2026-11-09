@@ -485,6 +485,8 @@ async def test_dashboard_and_empty_analytics(monkeypatch):
     assert dashboard.milestones == []
     assert dashboard.score_trend == []
     assert dashboard.handicap_trend == []
+    assert dashboard.windows.last_5.size == 5
+    assert dashboard.windows.last_20.scoring_average is None
 
     # The page's rounds, the handicap window's, and the golfer's last 20 for their own index.
     db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])

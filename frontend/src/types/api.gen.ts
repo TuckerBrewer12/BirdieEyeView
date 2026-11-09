@@ -1220,6 +1220,48 @@ export interface components {
             /** Up And Down Trend */
             up_and_down_trend: components["schemas"]["UpAndDownTrendRow"][];
             whs: components["schemas"]["WhsBreakdown"];
+            windows: components["schemas"]["DashboardWindows"];
+        };
+        /**
+         * DashboardWindow
+         * @description The dashboard's figures over its last `size` rounds (`analytics.dashboard.window_figures`).
+         */
+        DashboardWindow: {
+            /** Handicap Change */
+            handicap_change: number | null;
+            /** Handicap Verdict */
+            handicap_verdict: ("good" | "bad" | "neutral") | null;
+            /**
+             * Rounds
+             * @default 0
+             */
+            rounds: number;
+            score_mix: components["schemas"]["ScoreMix"];
+            /**
+             * Score Mix Holes
+             * @default 0
+             */
+            score_mix_holes: number;
+            /** Scoring Average */
+            scoring_average: number | null;
+            /** Scoring Average Change */
+            scoring_average_change: number | null;
+            /** Scoring Average Verdict */
+            scoring_average_verdict: ("good" | "bad" | "neutral") | null;
+            /** Scrambling Pct */
+            scrambling_pct: number | null;
+            /** Size */
+            size: number;
+            /** Up And Down Pct */
+            up_and_down_pct: number | null;
+        };
+        /**
+         * DashboardWindows
+         * @description The Last 5 / Last 20 switch's two windows.
+         */
+        DashboardWindows: {
+            last_20: components["schemas"]["DashboardWindow"];
+            last_5: components["schemas"]["DashboardWindow"];
         };
         /**
          * FieldConfidence

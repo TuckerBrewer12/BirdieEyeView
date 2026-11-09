@@ -2083,6 +2083,9 @@
           },
           "whs": {
             "$ref": "#/components/schemas/WhsBreakdown"
+          },
+          "windows": {
+            "$ref": "#/components/schemas/DashboardWindows"
           }
         },
         "required": [
@@ -2112,9 +2115,151 @@
           "score_trend",
           "handicap_trend",
           "scrambling_trend",
-          "up_and_down_trend"
+          "up_and_down_trend",
+          "windows"
         ],
         "title": "DashboardResponse",
+        "type": "object"
+      },
+      "DashboardWindow": {
+        "description": "The dashboard's figures over its last `size` rounds (`analytics.dashboard.window_figures`).",
+        "properties": {
+          "handicap_change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handicap Change"
+          },
+          "handicap_verdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "good",
+                  "bad",
+                  "neutral"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handicap Verdict"
+          },
+          "rounds": {
+            "default": 0,
+            "title": "Rounds",
+            "type": "integer"
+          },
+          "score_mix": {
+            "$ref": "#/components/schemas/ScoreMix"
+          },
+          "score_mix_holes": {
+            "default": 0,
+            "title": "Score Mix Holes",
+            "type": "integer"
+          },
+          "scoring_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average"
+          },
+          "scoring_average_change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average Change"
+          },
+          "scoring_average_verdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "good",
+                  "bad",
+                  "neutral"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average Verdict"
+          },
+          "scrambling_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scrambling Pct"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          },
+          "up_and_down_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Up And Down Pct"
+          }
+        },
+        "required": [
+          "size",
+          "rounds",
+          "scoring_average",
+          "scoring_average_change",
+          "scoring_average_verdict",
+          "handicap_change",
+          "handicap_verdict",
+          "scrambling_pct",
+          "up_and_down_pct",
+          "score_mix",
+          "score_mix_holes"
+        ],
+        "title": "DashboardWindow",
+        "type": "object"
+      },
+      "DashboardWindows": {
+        "description": "The Last 5 / Last 20 switch's two windows.",
+        "properties": {
+          "last_20": {
+            "$ref": "#/components/schemas/DashboardWindow"
+          },
+          "last_5": {
+            "$ref": "#/components/schemas/DashboardWindow"
+          }
+        },
+        "required": [
+          "last_5",
+          "last_20"
+        ],
+        "title": "DashboardWindows",
         "type": "object"
       },
       "FieldConfidence": {
