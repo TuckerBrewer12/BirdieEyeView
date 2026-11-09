@@ -1,6 +1,6 @@
 import { cn } from "@/brand/cn";
-import { HoleScoreBars, PageTitle, ScoreCountChip, ToParFigure } from "@/brand";
-import { formatCourseHandicap, playedScoreKinds, scoreKindCountLabel, type Nine, type Round } from "@/domain";
+import { HoleScoreBars, PageTitle, ScoreMixBar, ToParFigure } from "@/brand";
+import { formatCourseHandicap, type Nine, type Round } from "@/domain";
 import { formatCourseName } from "@/domain/course";
 import { formatWeekdayDay } from "@/domain/date";
 
@@ -103,13 +103,7 @@ export function RoundDetailHeader({ round, teeRating, className }: RoundDetailHe
         </div>
       )}
 
-      <div className="flex flex-wrap gap-1.5 pt-2.5">
-        {playedScoreKinds(round.scoreCounts).map(({ kind, count }) => (
-          <ScoreCountChip key={kind} kind={kind} count={count}>
-            {scoreKindCountLabel(kind, count)}
-          </ScoreCountChip>
-        ))}
-      </div>
+      <ScoreMixBar mix={round.scoreCounts} counted className="pt-3" />
     </div>
   );
 }
