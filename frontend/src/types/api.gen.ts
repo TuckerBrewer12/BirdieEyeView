@@ -775,7 +775,7 @@ export interface components {
             score_differentials: components["schemas"]["ScoreDifferentialRow"][];
             score_mix: components["schemas"]["ScoreMix"];
             /** Score Trend */
-            score_trend: components["schemas"]["AnalyticsScoreTrendRow"][];
+            score_trend: components["schemas"]["ScoreTrendRow"][];
             /** Scoring By Handicap */
             scoring_by_handicap: components["schemas"]["ScoringByHandicapRow"][];
             /** Scoring By Par */
@@ -788,24 +788,6 @@ export interface components {
             three_putts_trend: components["schemas"]["ThreePuttsTrendRow"][];
             /** Up And Down Trend */
             up_and_down_trend: components["schemas"]["UpAndDownTrendRow"][];
-        };
-        /**
-         * AnalyticsScoreTrendRow
-         * @description A round's score, with its average over it and the four rounds before it.
-         */
-        AnalyticsScoreTrendRow: {
-            /** Course Name */
-            course_name: string | null;
-            /** Rolling Average */
-            rolling_average: number | null;
-            /** Round Id */
-            round_id: string | null;
-            /** Round Index */
-            round_index: number;
-            /** To Par */
-            to_par: number | null;
-            /** Total Score */
-            total_score: number | null;
         };
         /** AuthUserResponse */
         AuthUserResponse: {
@@ -2642,11 +2624,15 @@ export interface components {
         };
         /**
          * ScoreTrendRow
-         * @description One round's score, oldest first.
+         * @description One round's score, oldest first, with its average over it and the four rounds before it.
          */
         ScoreTrendRow: {
             /** Course Name */
             course_name: string | null;
+            /** Par */
+            par: number | null;
+            /** Rolling Average */
+            rolling_average: number | null;
             /** Round Id */
             round_id: string | null;
             /** Round Index */

@@ -3,11 +3,13 @@ import {
   ActivityCalendar,
   Button,
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
   RoundPreview,
+  ScoreHandicapLegend,
   SVGScoreHandicapTrend,
   Sparkline,
   Stat,
@@ -83,8 +85,11 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
 
             <Card className="md:col-span-2 lg:col-span-2">
               <CardHeader>
-                <CardTitle>Score & Handicap Trend</CardTitle>
+                <CardTitle className="whitespace-nowrap">Score & Handicap Trend</CardTitle>
                 <CardDescription>Last 20 rounds</CardDescription>
+                <CardAction>
+                  <ScoreHandicapLegend />
+                </CardAction>
               </CardHeader>
               <CardContent>
                 <SVGScoreHandicapTrend data={trend} />

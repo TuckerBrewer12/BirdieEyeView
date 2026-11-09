@@ -148,7 +148,7 @@ export type { RadarAxis } from "./charts/RadarChart";
 export { ScoreGoalChart } from "./charts/ScoreGoalChart";
 export { RoundFlowChart } from "./charts/RoundFlowChart";
 export { ScoreTrendChart } from "./charts/ScoreTrendChart";
-export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
+export { SVGScoreHandicapTrend, ScoreHandicapLegend } from "./charts/SVGScoreHandicapTrend";
 export { ScoreTargetChart } from "./charts/ScoreTargetChart";
 export type { ScoreTargetShot } from "./charts/ScoreTargetChart";
 export { ToParBars } from "./charts/ToParBars";

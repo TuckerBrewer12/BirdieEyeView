@@ -142,10 +142,9 @@ async def test_dashboard_carries_the_trends_analytics_draws_for_the_last_20(seas
 
     assert isinstance(dashboard, DashboardResponse)
     assert len(dashboard.score_trend) == 20
-    # Analytics adds a rolling average to each round; the dashboard doesn't draw one.
-    assert [row.model_dump() for row in dashboard.score_trend] == [
-        row.model_dump(exclude={"rolling_average"}) for row in trends.score_trend
-    ]
+    # The same rounds with the same five-round average and par, so the score chart reads alike on both.
+    assert dashboard.score_trend == trends.score_trend
+    assert all(row.rolling_average is not None and row.par is not None for row in dashboard.score_trend)
     assert dashboard.handicap_trend == trends.handicap_trend
     assert dashboard.scrambling_trend == trends.scrambling_trend
     assert dashboard.up_and_down_trend == trends.up_and_down_trend
