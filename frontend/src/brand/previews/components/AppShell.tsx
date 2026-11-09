@@ -1,4 +1,14 @@
-import { BarChart2, LayoutDashboard, ListOrdered, MapPin, ScanLine, Settings } from "lucide-react";
+import {
+  BarChart2,
+  ChartNoAxesColumn,
+  House,
+  LayoutDashboard,
+  List,
+  ListOrdered,
+  MapPin,
+  ScanLine,
+  Settings,
+} from "lucide-react";
 import { AppShell } from "@/brand/components/AppShell";
 import { BottomNav } from "@/brand/components/BottomNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/brand/components/Card";
@@ -14,10 +24,10 @@ const side = [
 ];
 
 const tabs = [
-  { href: "/", label: "Home", icon: LayoutDashboard },
+  { href: "/", label: "Home", icon: House },
+  { href: "/rounds", label: "Rounds", icon: List, active: true },
   { href: "/scan", label: "Scan", icon: ScanLine },
-  { href: "/rounds", label: "Rounds", icon: ListOrdered, active: true },
-  { href: "/analytics", label: "Analytics", icon: BarChart2 },
+  { href: "/analytics", label: "Analytics", icon: ChartNoAxesColumn },
 ];
 
 const more = [
@@ -42,7 +52,7 @@ export default function AppShellPreview() {
             onSignOut={() => {}}
           />
         }
-        bottomNav={<BottomNav tabs={tabs} moreItems={more} onSignOut={() => {}} />}
+        bottomNav={<BottomNav tabs={tabs} featuredHref="/scan" moreItems={more} onSignOut={() => {}} />}
       >
         <div className="flex flex-col gap-4">
           <PageTitle>Rounds</PageTitle>

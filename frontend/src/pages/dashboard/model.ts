@@ -7,7 +7,8 @@ export type PuttsRating = NonNullable<DashboardDto["putts_rating"]>;
 
 /** Which line the phone's trend card shows. */
 export type TrendView = "score" | "handicap";
-export type HiTrend = "up" | "down" | "flat";
+/** The server's verdict on a figure's move: a score or a handicap falling is good. */
+export type ChangeVerdict = NonNullable<DashboardDto["scoring_average_verdict"]>;
 
 /** The listed round the server picked as the best of them. Null when it picked none. */
 export function bestRecentRoundFrom(rounds: RoundSummary[], bestId: string | null | undefined): RoundSummary | null {

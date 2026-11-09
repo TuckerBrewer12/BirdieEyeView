@@ -51,7 +51,6 @@ export function CareerMobileLayout({ vm, career, figures, onOpenRound }: CareerL
           <ToggleGroup
             data-slot="milestone-tabs"
             aria-label="Milestones"
-            variant="outline"
             size="sm"
             value={[group]}
             onValueChange={(values) => {
