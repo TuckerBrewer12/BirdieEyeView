@@ -26,6 +26,32 @@ test("compared with a friend", async ({ lab }) => {
   await lab.capture("lab-friend-compare.png");
 });
 
+// The goal, the comparison and the friend are menus; each is captured open.
+test("goal menu open", async ({ lab }) => {
+  await lab.open();
+  await lab.seesLab();
+  await lab.openGoalMenu();
+  await lab.seesMenuOpen();
+  await lab.capture("lab-goal-menu.png");
+});
+
+test("compare menu open", async ({ lab }) => {
+  await lab.open();
+  await lab.seesLab();
+  await lab.openCompareMenu();
+  await lab.seesMenuOpen();
+  await lab.capture("lab-compare-menu.png");
+});
+
+test("friend menu open", async ({ lab }) => {
+  await lab.open();
+  await lab.compareWith("A friend");
+  await lab.seesShapeHeading("You vs. Avery Lin");
+  await lab.openFriendMenu();
+  await lab.seesMenuOpen();
+  await lab.capture("lab-friend-menu.png");
+});
+
 // A phone shows par types, putting and the peak game one tab at a time; desktop shows every card.
 const PANELS = [
   { tab: "By Par", file: "by-par" },

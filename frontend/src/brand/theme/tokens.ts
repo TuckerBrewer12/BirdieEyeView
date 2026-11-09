@@ -61,7 +61,7 @@ export const palette = {
     900: "#17291d",
     950: "#08130c",
   },
-  forest: { 700: "#2d7a3a", 750: "#2d4c3b", 800: "#1e3d25", 900: "#152d1b" },
+  forest: { 700: "#2d7a3a", 750: "#2d4c3b", 800: "#1e3d25" },
   denim: { 500: "#3d6fb6", 700: "#2457a6" },
   gray: { 100: "#f3f4f6", 200: "#e5e7eb", 600: "#4b5563", 700: "#374151" },
   slate: { 600: "#475569", 900: "#0f172a" },
@@ -203,7 +203,6 @@ const light = {
   // The app's side rail: the brand's own surface, the same in both modes.
   sidebar: {
     DEFAULT: forest[800],
-    end: forest[900],
     foreground: white,
   },
 
@@ -405,8 +404,8 @@ export const space = {
   /** What a control's corner gives up inside its group, so the corners nest. */
   nudge: 5,
   "nudge-sm": 3,
-  /** The phone's home-indicator strip, which a bar pinned to the bottom pads past. */
-  "safe-bottom": "env(safe-area-inset-bottom, 0px)",
+  /** What a bar pinned to the bottom pads past: the phone's home-indicator strip, never less than 22px. */
+  "safe-bottom": "max(env(safe-area-inset-bottom, 0px), 22px)",
 };
 
 /** Shadcn's base radius, `--radius`; the named steps below sit around it. */
@@ -421,12 +420,16 @@ export const radius = {
   tick: 2,
   card: 10,
   tooltip: 12,
+  /** The top corners of a bottom sheet. */
+  sheet: 20,
   addon: "calc(var(--radius) - var(--brand-space-nudge))",
   control: "calc(var(--radius) - var(--brand-space-nudge-sm))",
 };
 
 /** Widths and heights that are not on the 4px scale. */
 export const size = {
+  /** The side rail's width: `AppShell` sets it and clears the page past it. */
+  rail: 240,
   "date-rail": 54,
   preview: 390,
   chart: 180,
@@ -459,7 +462,7 @@ export const lineWidth = {
   outline: 1.5,
 };
 
-/** Icon line weights, unitless. The tab bar's are lighter at rest, heavier on the current tab. */
+/** Icon line weights, unitless: lighter at rest, heavier on a current item. */
 export const stroke = {
   icon: 1.75,
   "icon-active": 2.25,
@@ -507,6 +510,8 @@ export const gridColumns = {
   "round-preview": "var(--brand-size-date-rail) 1fr auto",
   "handicap-breakdown": "1fr auto auto auto",
   "recent-rounds": "1fr auto auto",
+  /** A label column, then two equal state columns (default, disabled). */
+  "state-grid": "6rem repeat(2, minmax(0, 1fr))",
 };
 
 /**

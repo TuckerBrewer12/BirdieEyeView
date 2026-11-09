@@ -71,9 +71,7 @@ export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
           <CardAction>
             <ToggleGroup
               aria-label="Trend line"
-              variant="outline"
               size="sm"
-              spacing={0}
               value={[trendView]}
               onValueChange={(values) => {
                 // Tapping the pressed item would empty the group; the card always shows one line.
