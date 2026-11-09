@@ -216,12 +216,12 @@ export class SettingsRobot {
   }
 
   async pickHomeCourse(name: string): Promise<this> {
-    await this.homeCourseCard().getByRole("button", { name: new RegExp(name) }).click();
+    await this.homeCourseCard().getByRole("option", { name: new RegExp(name) }).click();
     return this;
   }
 
   async seesCourseResult(name: string): Promise<this> {
-    await expect(this.homeCourseCard().getByRole("button", { name: new RegExp(name) })).toBeVisible();
+    await expect(this.homeCourseCard().getByRole("option", { name: new RegExp(name) })).toBeVisible();
     return this;
   }
 
