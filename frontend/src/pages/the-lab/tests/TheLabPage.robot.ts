@@ -88,16 +88,24 @@ export class TheLabRobot {
     return this.shown("[data-slot=goal-picker]");
   }
 
-  /** Opens a menu (the goal, the comparison, the friend) and waits for its options. */
-  private async openMenu(menu: Locator): Promise<void> {
-    await menu.getByRole("combobox").click();
-    await expect(this.page.getByRole("listbox")).toBeVisible();
+  /** A picker's trigger: the menu button on desktop, the sheet's on a phone. */
+  private trigger(menu: Locator): Locator {
+    return menu.getByRole("button").locator("visible=true").first();
   }
 
-  /** Opens a menu and picks one of its options. */
+  /** Opens a menu (the goal, the comparison, the friend) and waits for its options. */
+  private async openMenu(menu: Locator): Promise<void> {
+    await this.trigger(menu).click();
+    await this.seesMenuOpen();
+  }
+
+  /** Opens a menu and picks one of its options: a radio item on desktop, a sheet row on a phone. */
   private async pickFrom(menu: Locator, label: string): Promise<void> {
     await this.openMenu(menu);
-    await this.page.getByRole("option", { name: label, exact: true }).click();
+    await this.page
+      .getByRole("menuitemradio", { name: label, exact: true })
+      .or(this.page.locator("[data-slot=sheet-option]").getByText(label, { exact: true }))
+      .click();
   }
 
   async openGoalMenu(): Promise<this> {
@@ -115,9 +123,10 @@ export class TheLabRobot {
     return this;
   }
 
-  /** A menu's options are showing. */
+  /** A menu's options are showing: a dropdown on desktop, a bottom sheet on a phone. The last
+   * menu may still be fading out, so only the open one counts. */
   async seesMenuOpen(): Promise<this> {
-    await expect(this.page.getByRole("listbox")).toBeVisible();
+    await expect(this.page.locator(":is([data-slot=sort-menu], [data-slot=sort-sheet])[data-open]")).toBeVisible();
     return this;
   }
 
@@ -127,7 +136,7 @@ export class TheLabRobot {
   }
 
   async seesGoalPicked(label: string): Promise<this> {
-    await expect(this.goalPicker().getByRole("combobox")).toHaveText(label);
+    await expect(this.trigger(this.goalPicker())).toHaveText(label);
     return this;
   }
 
