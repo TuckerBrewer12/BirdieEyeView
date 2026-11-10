@@ -890,20 +890,39 @@ export interface components {
             one_year: components["schemas"]["OneYearCareerTotals"];
         };
         /**
-         * ComparisonRow
-         * @description The selected round, or a trailing average ending at it ("Last 5 Avg").
+         * ComparisonFigure
+         * @description One figure of a round against its average: the round's value, the average, this less that,
+         *     and whether the difference is good, bad or neutral for the golfer.
          */
-        ComparisonRow: {
-            /** Label */
-            label: string;
-            /** Primary Value */
-            primary_value: number | null;
-            /** Round Id */
-            round_id: string | null;
-            /** Sample Size */
-            sample_size: number;
-            /** Secondary Value */
-            secondary_value: number | null;
+        ComparisonFigure: {
+            /** Average */
+            average: number | null;
+            /** Difference */
+            difference: number | null;
+            /**
+             * Metric
+             * @enum {string}
+             */
+            metric: "score" | "putts" | "greens" | "three_putts" | "putts_per_gir" | "scrambling";
+            /** Value */
+            value: number | null;
+            /** Verdict */
+            verdict: ("good" | "bad" | "neutral") | null;
+        };
+        /**
+         * ComparisonWindowResponse
+         * @description The rounds before this one that a window averages: the last five, twenty, or all.
+         */
+        ComparisonWindowResponse: {
+            /** Metrics */
+            metrics: components["schemas"]["ComparisonFigure"][];
+            /** Rounds */
+            rounds: number;
+            /**
+             * Window
+             * @enum {string}
+             */
+            window: "l5" | "l20" | "all";
         };
         /**
          * CourseAnalyticsResponse
@@ -2218,21 +2237,11 @@ export interface components {
         };
         /**
          * RoundComparisonResponse
-         * @description A round against the player's trailing averages, one list per metric.
+         * @description A round against the golfer's average over the rounds before it, one entry per window.
          */
         RoundComparisonResponse: {
-            /** Gir */
-            gir: components["schemas"]["ComparisonRow"][];
-            /** Putts */
-            putts: components["schemas"]["ComparisonRow"][];
-            /** Putts Per Gir */
-            putts_per_gir: components["schemas"]["ComparisonRow"][];
-            /** Score */
-            score: components["schemas"]["ComparisonRow"][];
-            /** Scrambling */
-            scrambling: components["schemas"]["ComparisonRow"][];
-            /** Three Putts */
-            three_putts: components["schemas"]["ComparisonRow"][];
+            /** Windows */
+            windows: components["schemas"]["ComparisonWindowResponse"][];
         };
         /** RoundMilestones */
         RoundMilestones: {

@@ -57,6 +57,7 @@ export {
   formatPercent,
   formatSignedOneDecimal,
   formatWhole,
+  formatCount,
   pluralNoun,
   pluralize,
 } from "./format";

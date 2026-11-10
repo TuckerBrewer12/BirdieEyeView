@@ -105,6 +105,7 @@ export type { SideNavProps, SideNavUser } from "./components/SideNav";
 export type { NavItem, RenderLink } from "./nav";
 export { ScoreCountChip } from "./components/ScoreCountChip";
 export { SearchField } from "./components/SearchField";
+export { TeePicker } from "./components/TeePicker";
 export { SortControl } from "./components/SortControl";
 export { CourseLinkSearch } from "./components/CourseLinkSearch";
 export {
@@ -128,6 +129,7 @@ export {
 } from "./components/ActionSheet";
 export {
   DropdownMenu,
+  DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuRadioGroup,

@@ -23,6 +23,7 @@ from api.schemas import (
 from analytics import stats as analytics
 from analytics import benchmarks
 from analytics import dashboard
+from analytics import round_comparison
 from analytics import handicap as hcap
 from analytics.goals import goal_report
 
@@ -236,14 +237,7 @@ async def get_round_comparison(
     if round_index is None:
         raise HTTPException(404, "Round not found in user history")
 
-    return RoundComparisonResponse(
-        score=analytics.score_comparison(rounds, round_index=round_index),
-        putts=analytics.putts_comparison(rounds, round_index=round_index),
-        gir=analytics.gir_comparison(rounds, round_index=round_index),
-        three_putts=analytics.three_putts_comparison(rounds, round_index=round_index),
-        putts_per_gir=analytics.putts_per_gir_comparison(rounds, round_index=round_index),
-        scrambling=analytics.scrambling_comparison(rounds, round_index=round_index),
-    )
+    return RoundComparisonResponse.model_validate(round_comparison.round_vs_average(rounds, round_index))
 
 
 @router.get("/milestones/{user_id}")

@@ -6,6 +6,8 @@ import {
   pebbleBeachCourse,
   ratedHalfMoonBayCourse,
   ratedHalfMoonBayRound,
+  roundComparison,
+  firstRoundComparison,
   scannedRound,
 } from "../../../../testing/fixtures/roundDetails";
 import { storedRounds } from "../../../../testing/fixtures/rounds";
@@ -18,12 +20,12 @@ test("shows the course name and score", async ({ roundDetail }) => {
 test("shows the net score the server works out off the golfer's index", async ({ roundDetail }) => {
   await roundDetail.open(ratedHalfMoonBayRound, { fullCourses: [ratedHalfMoonBayCourse] });
   await roundDetail.seesScore(78);
-  await roundDetail.seesNet(66, 12);
+  await roundDetail.seesNet(66);
 });
 
 test("a hole cleared in edit mode takes the net score away until it is saved", async ({ roundDetail }) => {
   await roundDetail.open(ratedHalfMoonBayRound, { fullCourses: [ratedHalfMoonBayCourse] });
-  await roundDetail.seesNet(66, 12);
+  await roundDetail.seesNet(66);
   await roundDetail.tapEdit();
   await roundDetail.clearStrokes(1);
   await roundDetail.seesNoNet();
@@ -155,4 +157,39 @@ test("keeping the played name goes back to the custom-name card", async ({ round
   await roundDetail.tapEditCourseName();
   await roundDetail.tapKeepPlayedName("Scanned Scorecard");
   await roundDetail.seesCustomNameCard("Scanned Scorecard");
+});
+
+test("vs your average opens on the last 20 and switches window", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse], comparison: roundComparison });
+  await roundDetail.seesComparison("L20", { label: "Score", average: "80.4", difference: "\u22122.4" });
+  await roundDetail.tapComparisonWindow("L5");
+  await roundDetail.seesComparison("L5", { label: "Score", average: "81.4", difference: "\u22123.4" });
+});
+
+test("a first round has no average to compare with", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse], comparison: firstRoundComparison });
+  await roundDetail.seesNoComparisonYet();
+});
+
+test.describe("on a phone", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test("delete asks from a sheet and returns to the list", async ({ roundDetail }) => {
+    await roundDetail.open(halfMoonBayRound, {
+      fullCourses: [halfMoonBayCourse],
+      rounds: storedRounds,
+    });
+    await roundDetail.tapDelete();
+    await roundDetail.seesDeleteConfirm();
+    await roundDetail.confirmDelete();
+    await roundDetail.isAtRounds();
+  });
+
+  test("a score typed on the phone's front nine is kept after saving", async ({ roundDetail }) => {
+    await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+    await roundDetail.tapEdit();
+    await roundDetail.typeStrokes(1, 7);
+    await roundDetail.tapSave();
+    await roundDetail.seesScore(80);
+  });
 });

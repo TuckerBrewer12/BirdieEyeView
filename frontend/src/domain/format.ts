@@ -31,6 +31,11 @@ export function formatWhole(value: number | null | undefined): string {
   return value != null ? value.toFixed(0) : "—";
 }
 
+/** A count on its own, grouped by thousands: "6,697". A dash when there is nothing to show. */
+export function formatCount(value: number | null | undefined): string {
+  return value != null ? value.toLocaleString("en-US") : "—";
+}
+
 /** A file's size in whole kilobytes: "412 KB". */
 export function formatFileSize(bytes: number): string {
   return `${Math.round(bytes / 1024)} KB`;

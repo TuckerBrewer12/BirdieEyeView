@@ -906,14 +906,10 @@
         "title": "CareerTotals",
         "type": "object"
       },
-      "ComparisonRow": {
-        "description": "The selected round, or a trailing average ending at it (\"Last 5 Avg\").",
+      "ComparisonFigure": {
+        "description": "One figure of a round against its average: the round's value, the average, this less that,\nand whether the difference is good, bad or neutral for the golfer.",
         "properties": {
-          "label": {
-            "title": "Label",
-            "type": "string"
-          },
-          "primary_value": {
+          "average": {
             "anyOf": [
               {
                 "type": "number"
@@ -922,43 +918,99 @@
                 "type": "null"
               }
             ],
-            "title": "Primary Value"
+            "title": "Average"
           },
-          "round_id": {
+          "difference": {
             "anyOf": [
               {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difference"
+          },
+          "metric": {
+            "enum": [
+              "score",
+              "putts",
+              "greens",
+              "three_putts",
+              "putts_per_gir",
+              "scrambling"
+            ],
+            "title": "Metric",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "good",
+                  "bad",
+                  "neutral"
+                ],
                 "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Round Id"
-          },
-          "sample_size": {
-            "title": "Sample Size",
-            "type": "integer"
-          },
-          "secondary_value": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Secondary Value"
+            "title": "Verdict"
           }
         },
         "required": [
-          "label",
-          "sample_size",
-          "round_id",
-          "primary_value",
-          "secondary_value"
+          "metric",
+          "value",
+          "average",
+          "difference",
+          "verdict"
         ],
-        "title": "ComparisonRow",
+        "title": "ComparisonFigure",
+        "type": "object"
+      },
+      "ComparisonWindowResponse": {
+        "description": "The rounds before this one that a window averages: the last five, twenty, or all.",
+        "properties": {
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonFigure"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "rounds": {
+            "title": "Rounds",
+            "type": "integer"
+          },
+          "window": {
+            "enum": [
+              "l5",
+              "l20",
+              "all"
+            ],
+            "title": "Window",
+            "type": "string"
+          }
+        },
+        "required": [
+          "window",
+          "rounds",
+          "metrics"
+        ],
+        "title": "ComparisonWindowResponse",
         "type": "object"
       },
       "CourseAnalyticsResponse": {
@@ -5215,58 +5267,18 @@
         "type": "object"
       },
       "RoundComparisonResponse": {
-        "description": "A round against the player's trailing averages, one list per metric.",
+        "description": "A round against the golfer's average over the rounds before it, one entry per window.",
         "properties": {
-          "gir": {
+          "windows": {
             "items": {
-              "$ref": "#/components/schemas/ComparisonRow"
+              "$ref": "#/components/schemas/ComparisonWindowResponse"
             },
-            "title": "Gir",
-            "type": "array"
-          },
-          "putts": {
-            "items": {
-              "$ref": "#/components/schemas/ComparisonRow"
-            },
-            "title": "Putts",
-            "type": "array"
-          },
-          "putts_per_gir": {
-            "items": {
-              "$ref": "#/components/schemas/ComparisonRow"
-            },
-            "title": "Putts Per Gir",
-            "type": "array"
-          },
-          "score": {
-            "items": {
-              "$ref": "#/components/schemas/ComparisonRow"
-            },
-            "title": "Score",
-            "type": "array"
-          },
-          "scrambling": {
-            "items": {
-              "$ref": "#/components/schemas/ComparisonRow"
-            },
-            "title": "Scrambling",
-            "type": "array"
-          },
-          "three_putts": {
-            "items": {
-              "$ref": "#/components/schemas/ComparisonRow"
-            },
-            "title": "Three Putts",
+            "title": "Windows",
             "type": "array"
           }
         },
         "required": [
-          "score",
-          "putts",
-          "gir",
-          "three_putts",
-          "putts_per_gir",
-          "scrambling"
+          "windows"
         ],
         "title": "RoundComparisonResponse",
         "type": "object"

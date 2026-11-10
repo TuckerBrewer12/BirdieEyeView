@@ -471,6 +471,8 @@ export const size = {
   "chart-compact": 210,
   /** Width a hole-by-hole chart needs before it scrolls sideways. */
   "chart-wide": "45rem",
+  /** The narrowest the round flow draws, a 24px column a hole, before it scrolls sideways. */
+  "chart-flow": "30.75rem",
   /** A side sheet's width. */
   sheet: 420,
   /** A bottom sheet that holds a table, not a list of options: the handicap breakdown. */
@@ -563,6 +565,14 @@ export const gridColumns = {
   "round-row": "3.25rem minmax(0, 1fr) minmax(0, 1.3fr) 2.5rem 2.5rem",
   /** The dashboard's row of cards: three figures, then the goal a little wider. */
   "dashboard-cards": "repeat(3, minmax(0, 1fr)) 1.15fr",
+  /** Round detail's summary: the score, net, putts and greens, then the score mix. */
+  "round-summary": "1.1fr 1fr 1fr 1fr 1.6fr",
+  /** The same on a phone: the score, then net, putts and greens, the mix under them. */
+  "round-summary-phone": "1.3fr 1fr 1fr 1fr",
+  /** Round detail's round flow beside how the round compares with the golfer's average. */
+  "round-detail": "minmax(0, 1.35fr) minmax(0, 1fr)",
+  /** A row of "vs your average": the figure's name, this round, the average, the difference. */
+  "versus-row": "minmax(0, 1fr) 2.75rem 2.75rem 3.25rem",
   /** A label column, then two equal state columns (default, disabled). */
   "state-grid": "6rem repeat(2, minmax(0, 1fr))",
 };
@@ -819,9 +829,13 @@ export const chart = {
     /** How near the pointer has to be to a dot, in the chart's units, to pick it. */
     hitRadius: 10,
   },
-  /** The running score through a round, a step per hole, as wide as `w-chart-wide`, which it scrolls at. */
+  /**
+   * The running score through a round, a step per hole. It draws as wide as its card, `width` until
+   * it is measured, and scrolls sideways below `minWidth` (`min-w-chart-flow`).
+   */
   flow: {
     width: px(size["chart-wide"]),
+    minWidth: px(size["chart-flow"]),
     height: 270,
     /** `top` leaves room above the plot for the worst-stretch bracket; `bottom` for the hole strip under it. */
     pad: { top: 32, right: 24, bottom: 74, left: 36 },

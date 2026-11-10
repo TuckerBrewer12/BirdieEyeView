@@ -70,6 +70,14 @@ export function formatDay(input: DayInput): string | null {
   return day ? day.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
 }
 
+/** "Mon, Jun 15, 2026": a round's date over its course name. */
+export function formatFullDay(input: DayInput): string | null {
+  const day = toDay(input);
+  return day
+    ? day.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })
+    : null;
+}
+
 /**
  * "Mon · Jun 15 · 2026": the eyebrow above a round's course name. Without the year,
  * "Mon · Jun 15", as in the dashboard greeting.

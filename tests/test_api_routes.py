@@ -520,11 +520,10 @@ async def test_stats_auxiliary_endpoints(monkeypatch):
     assert report.on_track is True
 
     round_comparison = await stats.get_round_comparison(user_id, round_id, db, user)
-    assert set(round_comparison.model_dump()) == {
-        "score", "putts", "gir", "three_putts", "putts_per_gir", "scrambling",
-    }
-    assert round_comparison.score[0].label == "Selected Round"
-    assert round_comparison.score[0].primary_value == 9
+    assert [w.window for w in round_comparison.windows] == ["l5", "l20", "all"]
+    score = round_comparison.windows[0].metrics[0]
+    assert score.metric == "score"
+    assert score.value == 9
 
     db.rounds.get_rounds_for_user.return_value = []
     assert await stats.get_milestones(user_id, 12, db, user) == {"milestones": []}

@@ -80,27 +80,27 @@ export class RoundDetailRobot {
   }
 
   async seesScore(score: number): Promise<this> {
-    const header = this.page.locator('[data-slot="round-detail-header"]');
-    await expect(header.getByText(String(score), { exact: true })).toBeVisible();
+    const summary = this.page.locator('[data-slot="round-summary"]');
+    await expect(summary.getByText(String(score), { exact: true }).first()).toBeVisible();
     return this;
   }
 
-  /** The net score and course handicap in the header, as the server sent them. */
-  async seesNet(net: number, courseHandicap: number): Promise<this> {
-    const header = this.page.locator('[data-slot="round-detail-header"]');
-    await expect(header.getByText(`Net · hcp ${courseHandicap}`)).toBeVisible();
-    await expect(header.getByText(String(net), { exact: true })).toBeVisible();
+  /** The net score in the summary, as the server sent it. */
+  async seesNet(net: number): Promise<this> {
+    const summary = this.page.locator('[data-slot="round-summary"]');
+    await expect(summary.getByText("Net", { exact: true }).locator("..")).toContainText(String(net));
     return this;
   }
 
+  /** A dash where the net was: no net until the edit is saved. */
   async seesNoNet(): Promise<this> {
-    const header = this.page.locator('[data-slot="round-detail-header"]');
-    await expect(header.getByText(/^Net · hcp/)).toHaveCount(0);
+    const summary = this.page.locator('[data-slot="round-summary"]');
+    await expect(summary.getByText("Net", { exact: true }).locator("..")).toContainText("—");
     return this;
   }
 
   async tapTee(color: string): Promise<this> {
-    await this.page.getByRole("group", { name: "Tee" }).getByRole("button", { name: color, exact: true }).click();
+    await this.page.getByRole("radiogroup", { name: "Tee" }).getByRole("radio", { name: new RegExp(`^${color}`) }).click();
     return this;
   }
 
@@ -115,19 +115,23 @@ export class RoundDetailRobot {
     return this;
   }
 
+  /** The tee on the date line over the course name. */
   async seesTee(tee: string): Promise<this> {
-    const header = this.page.locator('[data-slot="round-detail-header"]');
-    await expect(header.getByText(`${tee} tees`, { exact: true })).toBeVisible();
+    await expect(this.page.locator('[data-slot="round-title"]')).toContainText(`${tee} tees`);
     return this;
   }
 
+  /** Delete sits in the More menu. */
   async tapDelete(): Promise<this> {
-    await this.page.getByRole("button", { name: "Delete", exact: true }).click();
+    await this.page.getByRole("button", { name: "More actions" }).click();
+    await this.page.getByRole("menuitem", { name: "Delete round" }).click();
     return this;
   }
 
   async seesDeleteConfirm(): Promise<this> {
-    await expect(this.page.getByText("Delete this round?")).toBeVisible();
+    const dialog = this.page.getByRole("alertdialog");
+    await expect(dialog.getByText("Delete this round?")).toBeVisible();
+    await expect(dialog.getByText(/Your stats and handicap will update/)).toBeVisible();
     return this;
   }
 
@@ -142,19 +146,15 @@ export class RoundDetailRobot {
     return this;
   }
 
+  /** "Link to a course" sits in the More menu of a round with no course behind it. */
   async tapLinkCourse(): Promise<this> {
-    await this.page.getByRole("button", { name: "Link course" }).click();
-    return this;
-  }
-
-  /** A round with no course behind it offers to link one. */
-  async seesLinkCourse(): Promise<this> {
-    await expect(this.page.getByRole("button", { name: "Link course" })).toBeVisible();
+    await this.page.getByRole("button", { name: "More actions" }).click();
+    await this.page.getByRole("menuitem", { name: "Link to a course" }).click();
     return this;
   }
 
   async seesLinkPanel(): Promise<this> {
-    await expect(this.page.getByText("Link to a saved course")).toBeVisible();
+    await expect(this.page.getByText("Link to a course", { exact: true })).toBeVisible();
     await expect(this.page.getByPlaceholder("Search courses…")).toBeVisible();
     return this;
   }
@@ -218,8 +218,12 @@ export class RoundDetailRobot {
     return this;
   }
 
+  /** A linked round's More menu holds Delete alone. */
   async doesNotSeeLinkCourse(): Promise<this> {
-    await expect(this.page.getByRole("button", { name: "Link course" })).toHaveCount(0);
+    await this.page.getByRole("button", { name: "More actions" }).click();
+    await expect(this.page.getByRole("menuitem", { name: "Delete round" })).toBeVisible();
+    await expect(this.page.getByRole("menuitem", { name: "Link to a course" })).toHaveCount(0);
+    await this.page.keyboard.press("Escape");
     return this;
   }
 
@@ -228,17 +232,30 @@ export class RoundDetailRobot {
     return this;
   }
 
-  async seesComparison(): Promise<this> {
-    await expect(this.page.getByText("Round Comparison")).toBeVisible();
-    const bar = this.page.locator(".recharts-bar-rectangle path").locator("visible=true").nth(1);
-    await expect(bar).toBeVisible();
-    await expect.poll(async () => (await bar.boundingBox())?.height ?? 0).toBeGreaterThan(10);
+  /** "vs your average", on the window picked, with a figure's row: its name, this round, the average, the difference. */
+  async seesComparison(window: string, row: { label: string; average: string; difference: string }): Promise<this> {
+    const card = this.page.locator('[data-slot="round-comparison"]');
+    await expect(card.getByText("vs your average")).toBeVisible();
+    await expect(card.getByRole("button", { name: window, exact: true })).toHaveAttribute("aria-pressed", "true");
+    const line = card.getByText(row.label, { exact: true }).locator("..");
+    await expect(line).toContainText(row.average);
+    await expect(line).toContainText(row.difference);
+    return this;
+  }
+
+  async tapComparisonWindow(window: string): Promise<this> {
+    await this.page.locator('[data-slot="round-comparison"]').getByRole("button", { name: window, exact: true }).click();
+    return this;
+  }
+
+  async seesNoComparisonYet(): Promise<this> {
+    await expect(this.page.getByText("No earlier rounds to compare with yet.")).toBeVisible();
     return this;
   }
 
   /** `fullPage: false` for a dialog, which sits over the viewport, not the page. */
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
-    if (await this.page.getByText("Round flow", { exact: true }).isVisible()) {
+    if (await this.page.locator('[data-slot="round-flow"]').isVisible()) {
       await expect(this.page.locator("svg circle").last()).toBeVisible();
     }
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
