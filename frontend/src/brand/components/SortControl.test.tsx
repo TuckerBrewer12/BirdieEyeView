@@ -26,4 +26,19 @@ describe("SortControl", () => {
   it("leaves both triggers enabled by default", () => {
     for (const trigger of renderSort(false)) expect(trigger).toBeEnabled();
   });
+
+  it("names the phone's icon trigger by what it picks and the pick", () => {
+    render(
+      <SortControl
+        label="Newest"
+        value="date"
+        options={OPTIONS}
+        onChange={new FakeHandler().handle}
+        prefix="Sort"
+        phoneIcon={<span />}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Sort by: Newest" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sort by" })).toHaveTextContent("SortNewest");
+  });
 });

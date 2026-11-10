@@ -29,6 +29,8 @@ interface CourseLinkSearchProps {
   clearLabel?: string;
   /** The search input's id, so a FieldLabel outside can name it. */
   inputId?: string;
+  /** `plain` drops the card, for a sheet that is already the surface. */
+  surface?: "card" | "plain";
 }
 
 export function CourseLinkSearch({
@@ -49,7 +51,9 @@ export function CourseLinkSearch({
   onClear,
   clearLabel = "Change",
   inputId,
+  surface = "card",
 }: CourseLinkSearchProps) {
+  const plain = surface === "plain";
   const listId = useId();
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -100,10 +104,8 @@ export function CourseLinkSearch({
 
   return (
     <div className="flex flex-col gap-2.5">
-      <Card
-        className={cn("gap-0 p-0 text-foreground", results.length > 0 && "shadow-card")}
-      >
-        <div className="flex flex-col gap-2.5 px-3.5 pt-3.5 pb-2.5">
+      <Surface plain={plain} className={cn("gap-0 p-0 text-foreground", !plain && results.length > 0 && "shadow-card")}>
+        <div className={cn("flex flex-col gap-2.5", plain ? "pb-2.5" : "px-3.5 pt-3.5 pb-2.5")}>
           {title && (
             <div className="flex items-start gap-2">
               <div className="flex-1 text-sm font-semibold">{title}</div>
@@ -142,7 +144,7 @@ export function CourseLinkSearch({
             id={listId}
             role="listbox"
             aria-label="Matching courses"
-            className="border-t border-border p-1.5"
+            className={cn("border-t border-border", plain ? "py-1.5" : "p-1.5")}
           >
             {results.map((course, index) => (
               <ResultRow
@@ -166,10 +168,10 @@ export function CourseLinkSearch({
           </div>
         )}
 
-      </Card>
+      </Surface>
 
       {noMatch && (
-        <Card className="gap-2.5 p-3.5">
+        <Surface plain={plain} className={cn("gap-2.5", !plain && "p-3.5")}>
           <div className="text-body text-foreground-secondary">
             No saved courses match{" "}
             <b className="font-semibold text-foreground">“{trimmed}”</b>.
@@ -179,9 +181,18 @@ export function CourseLinkSearch({
               <SaveAsButton name={trimmed} onUseCustomName={onUseCustomName} outlined />
             </div>
           )}
-        </Card>
+        </Surface>
       )}
     </div>
+  );
+}
+
+/** The kit's card, or for `plain` the same column with no surface of its own. */
+function Surface({ plain, className, children }: { plain: boolean; className?: string; children: ReactNode }) {
+  return plain ? (
+    <div className={cn("flex flex-col", className)}>{children}</div>
+  ) : (
+    <Card className={className}>{children}</Card>
   );
 }
 

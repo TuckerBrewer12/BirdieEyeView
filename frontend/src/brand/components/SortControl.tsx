@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ChevronDown } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { Button } from "./Button";
@@ -40,6 +40,16 @@ interface SortControlProps<T extends string> {
   disabled?: boolean;
   /** What the menu picks: the trigger's name for screen readers and the phone sheet's title. */
   "aria-label"?: string;
+  /** A quiet word before the pick on the desktop trigger: "Sort" in "Sort Newest". */
+  prefix?: string;
+  /** The phone trigger's label, where the desktop one is too long for the row: "Course" for "All courses". */
+  phoneLabel?: string;
+  /** Makes the phone trigger this icon alone, named "Sort by: Newest", for a title row with no room for words. */
+  phoneIcon?: ReactNode;
+  /** A picker that sits in a row of text, unboxed like a sort, though it has no direction. */
+  quiet?: boolean;
+  /** `default` is 40 tall, beside a page's search field; `sm` is 32, in a card or a list's header. */
+  size?: "sm" | "default";
   className?: string;
 }
 
@@ -57,10 +67,15 @@ function SortControl<T extends string>({
   directionDisabled = false,
   disabled = false,
   "aria-label": ariaLabel = "Sort by",
+  prefix,
+  phoneLabel,
+  phoneIcon,
+  quiet = false,
+  size = "sm",
   className,
 }: SortControlProps<T>) {
   const [sheetOpen, setSheetOpen] = useState(false);
-  const variant = onToggleDirection ? "ghost" : "outline";
+  const variant = onToggleDirection || quiet ? "ghost" : "outline";
 
   return (
     <div data-slot="sort-control" className={cn("inline-flex items-center gap-0.5", className)}>
@@ -68,10 +83,11 @@ function SortControl<T extends string>({
         <DropdownMenuTrigger
           aria-label={ariaLabel}
           variant={variant}
-          size="sm"
+          size={size}
           disabled={disabled}
           className="hidden md:inline-flex"
         >
+          {prefix && <span className="font-medium text-muted-foreground">{prefix}</span>}
           {label}
         </DropdownMenuTrigger>
         <DropdownMenuContent data-slot="sort-menu" align="end" sideOffset={4}>
@@ -80,7 +96,7 @@ function SortControl<T extends string>({
             onValueChange={(next: T) => onChange(next)}
           >
             {options.map((option) => (
-              <DropdownMenuRadioItem key={option.value} value={option.value}>
+              <DropdownMenuRadioItem key={option.value} value={option.value} closeOnClick>
                 {option.label}
               </DropdownMenuRadioItem>
             ))}
@@ -89,14 +105,24 @@ function SortControl<T extends string>({
       </DropdownMenu>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetTrigger
-          aria-label={ariaLabel}
-          disabled={disabled}
-          render={<Button variant={variant} size="sm" className="md:hidden" />}
-        >
-          {label}
-          <ChevronDown aria-hidden data-icon="inline-end" className="size-3" />
-        </SheetTrigger>
+        {phoneIcon != null ? (
+          <SheetTrigger
+            aria-label={`${ariaLabel}: ${label}`}
+            disabled={disabled}
+            render={<Button variant="ghost" size="icon" className="md:hidden" />}
+          >
+            {phoneIcon}
+          </SheetTrigger>
+        ) : (
+          <SheetTrigger
+            aria-label={ariaLabel}
+            disabled={disabled}
+            render={<Button variant={variant} size={size} className="md:hidden" />}
+          >
+            {phoneLabel ?? label}
+            <ChevronDown aria-hidden data-icon="inline-end" className="size-3" />
+          </SheetTrigger>
+        )}
         <SheetContent side="bottom" data-slot="sort-sheet">
           <SheetHeader>
             <SheetTitle>{ariaLabel}</SheetTitle>

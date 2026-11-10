@@ -1,13 +1,12 @@
-import { Trophy } from "lucide-react";
-import { motion } from "framer-motion";
+import { ChevronRight, Trophy } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { Button, RowButton } from "@/brand/components/Button";
 import { ToParPill } from "@/brand/components/ToParPill";
-import { toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
+import { toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
 import type { RoundSummary } from "@/domain";
-import { courseLabel, formatCourseName } from "@/domain/course";
+import { courseLabel } from "@/domain/course";
 import { formatDay, formatDayShort, dayParts } from "@/domain/date";
 
 interface RoundListProps {
@@ -78,81 +77,80 @@ export function RoundPreview(props: RoundPreviewProps) {
   }
 
   const dateParts = dayParts(round.date);
-  const courseName = round.course?.name ? formatCourseName(round.course.name) : null;
+  const courseName = courseLabel(round.course?.name);
   const unlinked = !round.course?.id;
-  const nines =
-    round.frontNine.total != null && round.backNine.total != null
-      ? `${round.frontNine.total} – ${round.backNine.total}`
-      : null;
   const meta = [
-    round.teeBox ? `${round.teeBox} tees` : null,
-    nines,
+    round.frontNine.total != null && round.backNine.total != null
+      ? `${round.frontNine.total} · ${round.backNine.total}`
+      : null,
     round.putts != null ? `${round.putts} putts` : null,
+    round.teeBox,
   ].filter(Boolean);
 
+  // The course name is the row's one button; its ::after stretches over the whole row, so the row
+  // opens from anywhere while "Link" stays a button of its own above it.
   return (
-    <motion.div
+    <div
       data-slot="round-preview"
-      className={cn(
-        "flex items-stretch gap-4 rounded-xl border border-border bg-card px-4 py-3 transition-shadow",
-        onClick ? "cursor-pointer hover:shadow-card" : "cursor-default",
-      )}
-      whileHover={onClick ? { scale: tokens.motion.hoverScale } : undefined}
-      whileTap={onClick ? { scale: tokens.motion.tapScale } : undefined}
-      transition={tokens.motion.spring}
-      onClick={onClick}
+      className="relative flex items-center gap-3 px-3.5 py-3 transition-colors hover:bg-muted/half md:gap-4 md:px-5 md:py-3.5"
     >
-      <div className="box-content flex w-11 shrink-0 flex-col items-center justify-center border-r border-border pr-4 text-center">
+      <div className="flex w-8 shrink-0 flex-col items-center text-center md:w-9">
         {dateParts ? (
           <>
-            <span className="text-label font-semibold uppercase tracking-chip text-muted-foreground">
+            <span className="text-meta font-semibold uppercase tracking-chip text-muted-foreground">
               {dateParts.month}
             </span>
-            <span className="text-xl font-bold leading-none text-foreground">{dateParts.day}</span>
+            <span className="text-lg leading-tight font-bold text-foreground md:text-xl">{dateParts.day}</span>
           </>
         ) : (
           <span className="text-label text-muted-foreground">—</span>
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-base font-semibold text-foreground">
-            {courseLabel(round.course?.name)}
-          </span>
-          {unlinked && onLinkClick && (
-            <Button
-              variant="outline"
-              size="xs"
-              shape="pill"
-              aria-label={`Link ${courseName ?? "this round"} to a saved course`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onLinkClick();
-              }}
-            >
-              Unlinked
-            </Button>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex min-w-0 flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-x-2.5 md:gap-y-1">
+          <RowButton
+            onClick={onClick}
+            disabled={!onClick}
+            className={cn(
+              "min-w-0 max-w-full truncate text-body-lg font-semibold text-foreground outline-none after:absolute after:inset-0 focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset",
+              onClick ? "cursor-pointer" : "cursor-default",
+            )}
+          >
+            <span>{courseName}</span>
+          </RowButton>
+          {(meta.length > 0 || unlinked) && (
+            <span className="text-body-sm text-muted-foreground">
+              {meta.join(" · ")}
+              {unlinked && onLinkClick && (
+                <span className="relative z-10">
+                  {meta.length > 0 && " · "}
+                  Not linked ·{" "}
+                  <Button
+                    variant="link"
+                    size="xs"
+                    className="h-auto p-0 text-body-sm font-semibold underline underline-offset-3"
+                    aria-label={`Link ${courseName} to a saved course`}
+                    onClick={onLinkClick}
+                  >
+                    Link
+                  </Button>
+                </span>
+              )}
+            </span>
           )}
         </div>
-
-        {meta.length > 0 && <div className="text-body-sm text-foreground-secondary">{meta.join(" · ")}</div>}
-
         {round.holes.length > 0 && (
-          <div className="flex gap-3">
-            <HoleScoreBars holes={round.frontNine.holes} className="flex-1" />
-            <HoleScoreBars holes={round.backNine.holes} className="flex-1" />
-          </div>
+          <HoleScoreBars holes={round.holes} variant="strip" className="w-full md:max-w-115" />
         )}
       </div>
 
-      <div className="flex w-16 shrink-0 flex-col items-end justify-center gap-1 whitespace-nowrap text-right">
-        <span className="text-title text-foreground">{round.score ?? "—"}</span>
-        {round.toPar != null && (
-          <ToParPill toPar={round.toPar} ground="muted" />
-        )}
+      <div className="flex shrink-0 flex-col items-end gap-1 md:flex-row md:items-center md:gap-4">
+        <span className="text-name leading-none font-bold text-foreground md:text-title">{round.score ?? "—"}</span>
+        <ToParPill toPar={round.toPar} size="row" ground="muted" />
       </div>
-    </motion.div>
+      <ChevronRight aria-hidden className="hidden size-3.5 shrink-0 text-muted-foreground md:block" />
+    </div>
   );
 }
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ArrowUpDown } from "lucide-react";
 import { SortControl } from "@/brand/components/SortControl";
 
 const options = [
@@ -42,6 +43,33 @@ export default function SortControlPreview() {
         ]}
         onChange={() => {}}
         aria-label="Course"
+      />
+      {/* A page's sort: "Sort Newest" at 40 tall, an icon alone on a phone. */}
+      <SortControl
+        label="Newest"
+        value="newest"
+        options={[
+          { value: "newest", label: "Newest" },
+          { value: "oldest", label: "Oldest" },
+        ]}
+        onChange={() => {}}
+        prefix="Sort"
+        phoneIcon={<ArrowUpDown />}
+        quiet
+        size="default"
+      />
+      {/* A page's filter, shorter on a phone. */}
+      <SortControl
+        label="All courses"
+        phoneLabel="Course"
+        value="all"
+        options={[
+          { value: "all", label: "All courses" },
+          { value: "home", label: "Home Course" },
+        ]}
+        onChange={() => {}}
+        aria-label="Course"
+        size="default"
       />
     </>
   );
