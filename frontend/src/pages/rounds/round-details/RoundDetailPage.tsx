@@ -8,9 +8,14 @@ import {
   AlertDescription,
   Button,
   Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
   CourseLinkSearch,
   Input,
   LoadingState,
+  PageTitle,
   RoundFlowChart,
   RoundFlowFigures,
   RoundScorecard,
@@ -77,9 +82,9 @@ export function RoundDetailPage({ userId }: { userId: string }) {
 
       <div data-slot="round-title">
         {viewModel.dateLine && <div className="text-body text-muted-foreground">{viewModel.dateLine}</div>}
-        <h1 className="mt-0.5 text-title font-semibold text-foreground md:text-greeting">
+        <PageTitle size="heading" className="mt-0.5">
           {courseLabel(played.course?.name)}
-        </h1>
+        </PageTitle>
       </div>
 
       {viewModel.showLinkCourse && (
@@ -115,7 +120,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
               focusOnOpen
             />
             {editor.playedNameToKeep && (
-              <Button variant="linkMuted" size="xs" className="mt-1.5 h-auto p-0" onClick={editor.keepPlayedName}>
+              <Button variant="linkMuted" size="inline" className="mt-1.5" onClick={editor.keepPlayedName}>
                 Keep "{editor.playedNameToKeep}" without linking
                 <ArrowRight aria-hidden />
               </Button>
@@ -160,12 +165,18 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       {!editor.editing && (
         <div className="grid grid-cols-1 items-start gap-3.5 md:grid-cols-round-detail md:gap-4">
           {viewModel.showFlow && (
-            <Card data-slot="round-flow" size="lg" className="px-5">
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="text-body-lg font-semibold text-foreground">Round flow</h2>
-                <RoundFlowFigures round={played} />
-              </div>
-              <RoundFlowChart round={played} />
+            <Card data-slot="round-flow" size="lg">
+              <CardHeader>
+                <CardTitle level={2} className="text-body-lg font-semibold">
+                  Round flow
+                </CardTitle>
+                <CardAction>
+                  <RoundFlowFigures round={played} />
+                </CardAction>
+              </CardHeader>
+              <CardContent>
+                <RoundFlowChart round={played} />
+              </CardContent>
             </Card>
           )}
           <RoundComparisonSection userId={userId} roundId={played.id} />

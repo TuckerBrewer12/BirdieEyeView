@@ -85,10 +85,10 @@ export class RoundDetailRobot {
     return this;
   }
 
-  /** The net score in the summary, as the server sent it. */
-  async seesNet(net: number): Promise<this> {
+  /** The net score in the summary and the course handicap it came off, as the server sent them. */
+  async seesNet(net: number, courseHandicap: number): Promise<this> {
     const summary = this.page.locator('[data-slot="round-summary"]');
-    await expect(summary.getByText("Net", { exact: true }).locator("..")).toContainText(String(net));
+    await expect(summary.getByText(`Net · hcp ${courseHandicap}`, { exact: true }).locator("..")).toContainText(String(net));
     return this;
   }
 
@@ -100,7 +100,7 @@ export class RoundDetailRobot {
   }
 
   async tapTee(color: string): Promise<this> {
-    await this.page.getByRole("radiogroup", { name: "Tee" }).getByRole("radio", { name: new RegExp(`^${color}`) }).click();
+    await this.page.getByRole("group", { name: "Tee" }).getByRole("button", { name: new RegExp(`^${color}`, "i") }).click();
     return this;
   }
 

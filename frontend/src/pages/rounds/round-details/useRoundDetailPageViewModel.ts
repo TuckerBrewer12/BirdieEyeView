@@ -2,9 +2,9 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { queryKeys } from "@/data/queryKeys";
-import { Round } from "@/domain/round";
-import { formatCourseName } from "@/domain/course";
-import { formatDayShort, formatFullDay } from "@/domain/date";
+import { Round, roundLine } from "@/domain/round";
+import { formatTeeName, getTee, teeRatingLabel } from "@/domain/course";
+import { formatWeekday } from "@/domain/date";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
 import { useDeleteRound } from "../useDeleteRound";
 import { teeOptions } from "./roundDetailModel";
@@ -15,7 +15,7 @@ export interface RoundDetailUiState {
   loadError: string | null;
   /** The round as played: read against the course and tee being edited in, with the edits applied. */
   played: Round | null;
-  /** Over the course name: "Mon, Jun 15, 2026 · Blue tees". */
+  /** Over the course name: "Mon, Jun 15, 2026 · Blue tees · 72.4 / 130". */
   dateLine: string | null;
   /** The round as the delete dialog names it: "Half Moon Bay · Jun 15 · 78". */
   deleteLine: string;
@@ -85,17 +85,17 @@ export function useRoundDetailPageViewModel(
     if (!round) return null;
     return editor.editing ? Round.previewEdits(round, editor.scores, editor.activeCourse, editor.activeTeeBox) : round;
   }, [round, editor.editing, editor.scores, editor.activeCourse, editor.activeTeeBox]);
-  const courseName = played?.course?.name ? formatCourseName(played.course.name) : null;
-  const teeLine = played?.teeBox ? `${played.teeBox} tees` : null;
+  const tee = getTee(editor.activeCourse, editor.activeTeeBox);
 
   return {
     loading: isLoading,
     loadError: isError ? messageFrom(roundError, "Could not load this round.") : null,
     played,
-    dateLine: [formatFullDay(played?.date), teeLine].filter(Boolean).join(" · ") || null,
-    deleteLine: [courseName ?? "This round", formatDayShort(played?.date), played?.score]
-      .filter((part) => part != null)
-      .join(" · "),
+    dateLine:
+      [formatWeekday(played?.date), played?.teeBox ? formatTeeName(played.teeBox) : null, teeRatingLabel(tee)]
+        .filter(Boolean)
+        .join(" · ") || null,
+    deleteLine: played ? roundLine(played) : "",
     teeOptions: teeOptions(editor.activeCourse),
     editor,
     confirmDelete,

@@ -176,8 +176,162 @@ const noBreakpointStyling = {
   },
 };
 
+/** A page's file, as against the kit's: the kit is where headings, figures and sizes are built. */
+const inKit = (filename) => /[\\/]src[\\/]brand[\\/]/.test(filename);
+
+const noRawHeading = {
+  meta: {
+    type: "problem",
+    docs: { description: "Use the kit's title pieces instead of a raw heading in a page." },
+    schema: [],
+    messages: {
+      title:
+        "A raw <h1> in a page sets its own type. Use <PageTitle> (with its `size` for a heading or a landing " +
+        "headline), so every page title follows the kit.",
+      heading:
+        "A raw <{{tag}}> in a page sets its own type. Head a card with <CardHeader><CardTitle render={<{{tag}} />}>, " +
+        "or a section with <SectionLabel>, so the heading follows the kit.",
+    },
+  },
+  create(context) {
+    if (inKit(context.filename)) return {};
+    return {
+      JSXOpeningElement(node) {
+        if (node.name.type !== "JSXIdentifier" || !/^h[1-6]$/.test(node.name.name)) return;
+        const tag = node.name.name;
+        context.report({ node, messageId: tag === "h1" ? "title" : "heading", data: { tag } });
+      },
+    };
+  },
+};
+
+/** The type roles a kit piece owns: figures (Stat), page headings and headlines (PageTitle). */
+const FIGURE_TYPE = /(?:^|[\s:])text-(figure(?:-sm|-lg)?|display(?:-sm|-lg)?|hero|heading|stat)(?![\w-])/;
+
+const noFigureType = {
+  meta: {
+    type: "problem",
+    docs: { description: "Set a figure with Stat and a heading with PageTitle instead of their type roles." },
+    schema: [],
+    messages: {
+      figure:
+        "`text-{{role}}` is the type of a kit figure or title. Set a figure with <StatValue size=…> (and its " +
+        "<StatLabel>), a page heading with <PageTitle size=…>, so the pair of label and figure is built once.",
+    },
+  },
+  create(context) {
+    if (inKit(context.filename)) return {};
+    const check = (node) => {
+      for (const s of classStrings(node)) {
+        const match = FIGURE_TYPE.exec(s);
+        if (match) {
+          context.report({ node, messageId: "figure", data: { role: match[1] } });
+          return;
+        }
+      }
+    };
+    return {
+      "JSXAttribute[name.name='className'] > JSXExpressionContainer"(node) {
+        check(node.expression);
+      },
+      "JSXAttribute[name.name='className'] > Literal": check,
+    };
+  },
+};
+
+/** Kit controls sized by their `size` variant. */
+const SIZED = new Set(["Button", "DropdownMenuTrigger", "ToggleGroupItem"]);
+/** Classes that size a control: its height, box, corners and padding. */
+const SIZE_CLASS = /(?:^|[\s:])(h|size|rounded|p|px|py|pl|pr|pt|pb)-[\w.]+/;
+
+const noButtonSizeOverride = {
+  meta: {
+    type: "problem",
+    docs: { description: "Size a kit control with its `size` variant, not classes." },
+    schema: [],
+    messages: {
+      size:
+        "`{{cls}}` resizes <{{name}}> by hand. Use one of its sizes (`toolbar`, `icon-sm`, `lg`, …) or add one " +
+        "to its variants, so every control of that size matches.",
+    },
+  },
+  create(context) {
+    if (inKit(context.filename)) return {};
+    return {
+      JSXOpeningElement(node) {
+        if (node.name.type !== "JSXIdentifier" || !SIZED.has(node.name.name)) return;
+        const value = classNameOf(node);
+        if (!value) return;
+        for (const s of classStrings(value)) {
+          const match = SIZE_CLASS.exec(s);
+          if (match) {
+            context.report({ node, messageId: "size", data: { cls: match[0].trim(), name: node.name.name } });
+            return;
+          }
+        }
+      },
+    };
+  },
+};
+
+const noHandmadeRadio = {
+  meta: {
+    type: "problem",
+    docs: { description: "Build a group of choices on the kit's toggle group, not raw elements with roles." },
+    schema: [],
+    messages: {
+      role:
+        "role=\"{{role}}\" on a raw <{{tag}}> is a choice group built by hand, without the arrow keys and focus " +
+        "handling. Use ToggleGroup, PickerMenu or a Base UI primitive, as TeePicker does.",
+    },
+  },
+  create(context) {
+    return {
+      "JSXAttribute[name.name='role']"(node) {
+        const role = node.value?.type === "Literal" ? node.value.value : null;
+        if (!["radio", "radiogroup", "tab", "tablist", "menuitemradio"].includes(role)) return;
+        const opening = node.parent;
+        if (opening.name.type !== "JSXIdentifier" || !/^[a-z]/.test(opening.name.name)) return;
+        context.report({ node, messageId: "role", data: { role, tag: opening.name.name } });
+      },
+    };
+  },
+};
+
+/** The two files numbers and dates are worded in. */
+const FORMAT_HOME = /[\\/]src[\\/]domain[\\/](format|date)\.ts$/;
+
+const noFormatOutsideDomain = {
+  meta: {
+    type: "problem",
+    docs: { description: "Word numbers and dates with domain/format.ts and domain/date.ts." },
+    schema: [],
+    messages: {
+      format:
+        "`{{call}}` formats a figure in place. Use (or add) a formatter in domain/format.ts or domain/date.ts, " +
+        "so the same figure reads the same on every screen.",
+    },
+  },
+  create(context) {
+    if (FORMAT_HOME.test(context.filename)) return {};
+    return {
+      "CallExpression[callee.property.name=/^(toFixed|toLocaleString|toLocaleDateString|toLocaleTimeString)$/]"(node) {
+        context.report({ node, messageId: "format", data: { call: `.${node.callee.property.name}()` } });
+      },
+      "NewExpression[callee.object.name='Intl']"(node) {
+        context.report({ node, messageId: "format", data: { call: `Intl.${node.callee.property.name}` } });
+      },
+    };
+  },
+};
+
 export default {
   rules: {
+    "no-raw-heading": noRawHeading,
+    "no-figure-type": noFigureType,
+    "no-button-size-override": noButtonSizeOverride,
+    "no-handmade-radio": noHandmadeRadio,
+    "no-format-outside-domain": noFormatOutsideDomain,
     "no-handmade-card": noHandmadeCard,
     "no-tone-override": noToneOverride,
     "no-handmade-to-par-pill": noHandmadeToParPill,

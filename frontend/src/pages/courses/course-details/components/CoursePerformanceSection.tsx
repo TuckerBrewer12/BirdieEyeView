@@ -1,3 +1,4 @@
+import { formatOneDecimal } from "@/domain/format";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -26,7 +27,7 @@ export function CoursePerformanceSection({ userId, courseId }: CoursePerformance
   const viewModel = useCoursePerformanceViewModel(userId, courseId);
   const heroStats = [
     { label: "Rounds Played", value: String(viewModel.roundsPlayed) },
-    { label: "Scoring Avg", value: viewModel.scoringAverage?.toFixed(1) ?? "—" },
+    { label: "Scoring Avg", value: formatOneDecimal(viewModel.scoringAverage) },
     { label: "Best Round", value: dash(viewModel.bestScore) },
     { label: "Worst Round", value: dash(viewModel.worstScore) },
   ];

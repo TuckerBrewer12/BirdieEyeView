@@ -119,7 +119,7 @@
   --brand-text-body-lg: 15px;
   --brand-text-subhead: 17px;
   --brand-text-title: 26px;
-  --brand-text-greeting: 30px;
+  --brand-text-heading: 30px;
   --brand-text-figure: 34px;
   --brand-text-figure-sm: 28px;
   --brand-text-figure-lg: 36px;
@@ -360,7 +360,7 @@
   --text-body-lg: var(--brand-text-body-lg);
   --text-subhead: var(--brand-text-subhead);
   --text-title: var(--brand-text-title);
-  --text-greeting: var(--brand-text-greeting);
+  --text-heading: var(--brand-text-heading);
   --text-figure: var(--brand-text-figure);
   --text-figure-sm: var(--brand-text-figure-sm);
   --text-figure-lg: var(--brand-text-figure-lg);
@@ -448,8 +448,8 @@
   --text-subhead--font-weight: 600;
   --text-title--font-weight: 700;
   --text-title--letter-spacing: -0.5px;
-  --text-greeting--font-weight: 600;
-  --text-greeting--letter-spacing: -0.5px;
+  --text-heading--font-weight: 600;
+  --text-heading--letter-spacing: -0.5px;
   --text-figure--font-weight: 600;
   --text-figure--letter-spacing: -0.6px;
   --text-figure-sm--font-weight: 600;

@@ -1,3 +1,4 @@
+import { formatCount } from "@/domain/format";
 import { Card, CardContent, CardHeader, CardTitle, Stat, StatLabel, StatValue } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { CareerTotal } from "../model";
@@ -20,7 +21,7 @@ export function TotalsCard({ title, totals, className }: TotalsCardProps) {
         {totals.map((total) => (
           <Stat key={total.kind} className="rounded-xl bg-muted p-3">
             <StatLabel>{TOTAL_LABEL[total.kind]}</StatLabel>
-            <StatValue>{total.value.toLocaleString("en-US")}</StatValue>
+            <StatValue>{formatCount(total.value)}</StatValue>
           </Stat>
         ))}
       </CardContent>

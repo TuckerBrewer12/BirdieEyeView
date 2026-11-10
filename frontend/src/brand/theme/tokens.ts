@@ -392,8 +392,8 @@ export const type = {
   subhead: { size: 17, weight: 600 },
   /** A page's title. */
   title: { size: 26, weight: 700, tracking: tracking.title },
-  /** The dashboard's greeting: "Good evening, Tucker". */
-  greeting: { size: 30, weight: 600, tracking: tracking.title },
+  /** A page's heading at 30, lighter than a title: the dashboard's greeting, a round's course. Set through PageTitle. */
+  heading: { size: 30, weight: 600, tracking: tracking.title },
   /** A card's lead figure on the soft surface: the scoring average, the best round. */
   figure: { size: 34, weight: 600, tracking: tracking.display },
   /** The same on a phone, and a phone's greeting. */

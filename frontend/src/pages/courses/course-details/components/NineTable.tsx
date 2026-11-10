@@ -1,8 +1,9 @@
+import { formatOneDecimal } from "@/domain/format";
 import { TeeSwatch } from "@/brand";
 import type { ScorecardNine } from "../courseDetailModel";
 
 const dash = (value: number | null) => (value == null ? "—" : String(value));
-const average = (value: number | null) => (value == null ? "—" : value.toFixed(1));
+const average = formatOneDecimal;
 
 export function NineTable({ nine }: { nine: ScorecardNine }) {
   const { tee, totals } = nine;

@@ -8,15 +8,19 @@ import {
   nineFrom,
   personalAverages,
   selectedTee,
+  teeOption,
   type ScorecardNine,
-  type TeeChip,
+  type TeeOption,
 } from "../courseDetailModel";
 
 export interface CourseScorecardViewModel {
   /** Longest tee first. */
-  teeChips: TeeChip[];
-  /** Picks a tee, or clears it when it is already picked. */
+  teeOptions: TeeOption[];
+  /** The tee the scorecard reads, or null once the golfer clears it. */
+  selectedTee: string | null;
   selectTee: (color: string) => void;
+  /** Picks no tee: the scorecard drops its yards row. */
+  clearTee: () => void;
   frontNine: ScorecardNine;
   backNine: ScorecardNine;
 }
@@ -40,15 +44,10 @@ export function useCourseScorecardViewModel(
   const averages = personalAverages(analytics);
 
   return {
-    teeChips: teesByLength(course).map((t) => ({
-      tee: t,
-      selected: t.color?.toLowerCase() === tee?.color?.toLowerCase(),
-      courseHandicap: t.course_handicap,
-    })),
-    selectTee: (color) => {
-      const current = tee?.color ?? null;
-      setPicked(current?.toLowerCase() === color.toLowerCase() ? null : color);
-    },
+    teeOptions: teesByLength(course).flatMap((t) => teeOption(t) ?? []),
+    selectedTee: tee?.color ?? null,
+    selectTee: setPicked,
+    clearTee: () => setPicked(null),
     frontNine: nineFrom(course, "front", tee, averages),
     backNine: nineFrom(course, "back", tee, averages),
   };

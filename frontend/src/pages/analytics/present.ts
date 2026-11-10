@@ -4,6 +4,7 @@ import {
   formatCourseHandicap,
   formatHandicapIndex,
   formatOneDecimal,
+  formatWhole,
   formatPercent,
   pluralize,
   toParLabel,
@@ -84,7 +85,7 @@ const PUTTS_VERDICT: Record<InsightRating, string> = {
 function sentence(insight: Insight): string {
   switch (insight.kind) {
     case "scoring_shift": {
-      const strokes = Math.abs(insight.strokes).toFixed(1);
+      const strokes = formatOneDecimal(Math.abs(insight.strokes));
       return insight.strokes > 0
         ? `Your scoring average has improved by ${strokes} strokes over the last ${pluralize(insight.rounds, "round")}.`
         : `Your scoring average has climbed by ${strokes} strokes recently — worth monitoring.`;
@@ -94,15 +95,15 @@ function sentence(insight: Insight): string {
     case "gir_average":
       return `Your average GIR% is ${formatPercent(insight.percent, 1)} — ${GIR_VERDICT[insight.rating]}`;
     case "gir_shift": {
-      const points = Math.abs(insight.points).toFixed(0);
+      const points = formatWhole(Math.abs(insight.points));
       return insight.points > 0
         ? `GIR% trending up ${points} points over recent rounds — ball striking improving.`
         : `GIR% has dipped ${points} points recently — iron consistency worth a look.`;
     }
     case "putts_average":
-      return `Averaging ${insight.putts.toFixed(1)} putts per round — ${PUTTS_VERDICT[insight.rating]}`;
+      return `Averaging ${formatOneDecimal(insight.putts)} putts per round — ${PUTTS_VERDICT[insight.rating]}`;
     case "putts_shift": {
-      const putts = Math.abs(insight.putts).toFixed(1);
+      const putts = formatOneDecimal(Math.abs(insight.putts));
       return insight.putts > 0
         ? `Putts per round improving — down ${putts} strokes on average.`
         : `Putts per round up ${putts} strokes recently.`;

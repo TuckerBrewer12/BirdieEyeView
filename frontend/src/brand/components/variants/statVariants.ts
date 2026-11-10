@@ -25,6 +25,10 @@ const statValueVariants = cva("flex items-baseline gap-1 leading-none tabular-nu
       card: "text-figure",
       /** The same on a phone. */
       "card-sm": "text-figure-sm",
+      /** The figures beside a round's score, as round detail's summary sets them: smaller on a phone. */
+      summary: "text-lg font-semibold tracking-stat md:text-figure-sm",
+      /** A sheet's lead figure: the handicap index in its breakdown. */
+      hero: "text-hero font-semibold",
       /** The one number a screen leads with. */
       xl: "text-6xl font-bold tracking-hero",
     },

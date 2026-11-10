@@ -162,8 +162,8 @@ function CourseField({ review }: { review: ScanReviewViewModel }) {
       {nameToKeep && (
         <Button
           variant="linkMuted"
-          size="xs"
-          className="h-auto self-start p-0"
+          size="inline"
+          className="self-start"
           onClick={() => review.nameCourse(nameToKeep)}
         >
           Save as "{formatCourseName(nameToKeep)}" without linking

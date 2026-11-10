@@ -1,6 +1,7 @@
 import type { RoundComparisonDto } from "@/types/api";
 import type { CourseDto } from "@/types/api";
-import { formatOneDecimal } from "@/domain/format";
+import { formatOneDecimal, formatSigned, formatTwoDecimals } from "@/domain/format";
+import type { Round } from "@/domain";
 
 /** The rounds "vs your average" averages: the last five before this one, the last twenty, or all. */
 export type ComparisonWindow = RoundComparisonDto["windows"][number]["window"];
@@ -44,17 +45,8 @@ export interface ComparisonWindowRows {
 
 function figure(value: number | null, metric: ComparisonMetric, fixed: boolean): string {
   if (value == null) return "—";
-  if (HUNDREDTHS.has(metric)) return value.toFixed(2);
+  if (HUNDREDTHS.has(metric)) return formatTwoDecimals(value);
   return fixed ? formatOneDecimal(value) : String(value);
-}
-
-/** "+2.4", "−2.4" (a true minus), "0.0". */
-function signed(value: number, metric: ComparisonMetric): string {
-  const digits = HUNDREDTHS.has(metric) ? 2 : 1;
-  const amount = Math.abs(value).toFixed(digits);
-  if (value > 0) return `+${amount}`;
-  if (value < 0) return `−${amount}`;
-  return amount;
 }
 
 /** Each window's rows, keyed by window. Figures with no average yet are left out. */
@@ -69,7 +61,7 @@ export function comparisonFrom(dto: RoundComparisonDto): Partial<Record<Comparis
         label: METRIC_LABELS[metric.metric],
         value: figure(metric.value, metric.metric, false),
         average: figure(metric.average, metric.metric, true),
-        difference: signed(metric.difference, metric.metric),
+        difference: formatSigned(metric.difference, HUNDREDTHS.has(metric.metric) ? 2 : 1),
         verdict: metric.verdict,
         direction: metric.difference > 0 ? "up" : metric.difference < 0 ? "down" : "flat",
       });
@@ -86,4 +78,28 @@ export function teeOptions(course: CourseDto | null): { name: string; yards: num
     if (tee.color) options.push({ name: tee.color, yards: tee.total_yardage });
   }
   return options;
+}
+
+/** One figure beside the score in the summary card. */
+export interface SummaryFigure {
+  label: string;
+  value: string;
+  /** Read after the value, smaller: "/18" after the greens hit. */
+  unit?: string;
+}
+
+/** Net (with the course handicap it came off), putts and greens, worded for the summary card. */
+export function summaryFigures(round: Round): SummaryFigure[] {
+  return [
+    {
+      label: round.courseHandicap != null ? `Net · hcp ${round.courseHandicap}` : "Net",
+      value: round.netScore?.toString() ?? "—",
+    },
+    { label: "Putts", value: round.putts?.toString() ?? "—" },
+    {
+      label: "Greens",
+      value: round.gir?.toString() ?? "—",
+      unit: round.gir != null ? `/${round.holesPlayed}` : undefined,
+    },
+  ];
 }

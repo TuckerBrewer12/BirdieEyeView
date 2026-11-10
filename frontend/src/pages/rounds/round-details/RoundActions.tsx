@@ -56,17 +56,17 @@ export function RoundActions({
 }: RoundActionsProps) {
   return (
     <div data-slot="round-actions" className="flex items-center justify-between gap-3">
-      <Button variant="outline" className="h-11 gap-1 rounded-xl pr-4 pl-2.5 text-body-lg md:text-sm" onClick={onBack}>
-        <ChevronLeft className="size-4" />
+      <Button variant="outline" size="toolbar" onClick={onBack}>
+        <ChevronLeft data-icon="inline-start" />
         Rounds
       </Button>
 
       {editMode ? (
         <div className="flex items-center gap-2">
-          <Button variant="ghost" className="h-11 rounded-xl px-4" onClick={onCancelEdit}>
+          <Button variant="ghost" size="toolbar" onClick={onCancelEdit}>
             Cancel
           </Button>
-          <Button className="h-11 rounded-xl px-6" disabled={saving} onClick={onSave}>
+          <Button size="toolbar" disabled={saving} onClick={onSave}>
             {saving ? "Saving…" : "Save"}
           </Button>
         </div>
@@ -74,7 +74,7 @@ export function RoundActions({
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            className="size-11 rounded-xl p-0 md:w-auto md:px-5"
+            size="toolbar-icon-phone"
             aria-label="Share"
             disabled={sharing}
             onClick={onShare}
@@ -84,14 +84,14 @@ export function RoundActions({
               Share
             </span>
           </Button>
-          <Button variant="outline" className="size-11 rounded-xl p-0 md:w-auto md:px-5" aria-label="Edit" onClick={onEdit}>
+          <Button variant="outline" size="toolbar-icon-phone" aria-label="Edit" onClick={onEdit}>
             <Pencil className="md:hidden" />
             <span aria-hidden className="hidden md:inline">
               Edit
             </span>
           </Button>
           <DropdownMenu modal={false}>
-            <DropdownMenuTrigger chevron={false} className="size-11 rounded-xl p-0" aria-label="More actions">
+            <DropdownMenuTrigger chevron={false} size="toolbar-icon" aria-label="More actions">
               <MoreHorizontal />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">

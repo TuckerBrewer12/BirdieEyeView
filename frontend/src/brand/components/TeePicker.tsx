@@ -1,3 +1,5 @@
+import { Toggle as TogglePrimitive } from "@base-ui/react/toggle";
+import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group";
 import { cn } from "@/brand/cn";
 import { formatCount } from "@/domain/format";
 import { TeeSwatch } from "./TeeSwatch";
@@ -7,13 +9,17 @@ interface TeeOption {
   name: string;
   /** Its total yardage, when every hole has one. */
   yards: number | null;
+  /** More about it after the yardage, worded by the caller: "72.4 / 130 · CH 12". */
+  detail?: string | null;
 }
 
 interface TeePickerProps {
   tees: readonly TeeOption[];
-  /** The tee picked, by name; none is picked when it matches no tee. */
+  /** The tee picked, by name; none is pressed when it matches no tee. */
   value: string;
   onChange: (name: string) => void;
+  /** Lets the picked chip be pressed again to pick none. Left out, a tee is always picked. */
+  onClear?: () => void;
   /** What the row picks, named for screen readers and shown before the chips. */
   label?: string;
   className?: string;
@@ -21,42 +27,42 @@ interface TeePickerProps {
 
 /**
  * Picks the tee a round was played from: a row of pill chips, each the tee's swatch, its name and
- * its yardage, the picked one ringed. A radio group, so arrow keys aren't needed to read it: each
- * chip is a button that says whether it is checked.
+ * its yardage, the picked one ringed. Built on the same toggle group as `ToggleGroup`, so arrow keys
+ * move between the chips; only the look differs, a chip a tee rather than a segmented track.
  */
-function TeePicker({ tees, value, onChange, label = "Tee", className }: TeePickerProps) {
+function TeePicker({ tees, value, onChange, onClear, label = "Tee", className }: TeePickerProps) {
+  const picked = tees.find((tee) => tee.name.toLowerCase() === value.toLowerCase())?.name;
+
   return (
-    <div
-      role="radiogroup"
-      aria-label={label}
-      data-slot="tee-picker"
-      className={cn("flex flex-wrap items-center gap-2", className)}
-    >
+    <div data-slot="tee-picker" className={cn("flex flex-wrap items-center gap-2", className)}>
       <span aria-hidden className="mr-0.5 text-body font-semibold text-foreground-secondary">
         {label}
       </span>
-      {tees.map((tee) => {
-        const checked = tee.name.toLowerCase() === value.toLowerCase();
-        return (
-          <button
+      <ToggleGroupPrimitive
+        aria-label={label}
+        value={picked ? [picked] : []}
+        onValueChange={(values: string[]) => {
+          // Pressing the picked chip again keeps it, unless the caller lets it clear.
+          if (values[0]) onChange(values[0]);
+          else onClear?.();
+        }}
+        className="flex flex-wrap items-center gap-2"
+      >
+        {tees.map((tee) => (
+          <TogglePrimitive
             key={tee.name}
-            type="button"
-            role="radio"
-            aria-checked={checked}
-            onClick={() => onChange(tee.name)}
-            className={cn(
-              "flex h-9 items-center gap-2 rounded-full bg-card pr-3 pl-2.5 text-body text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              checked ? "font-bold ring-2 ring-foreground" : "font-medium ring-1 ring-input hover:bg-muted",
-            )}
+            value={tee.name}
+            className="flex h-9 items-center gap-2 rounded-full bg-card pr-3 pl-2.5 text-body font-medium text-foreground ring-1 ring-input transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-pressed:font-bold data-pressed:ring-2 data-pressed:ring-foreground data-pressed:hover:bg-card"
           >
             <TeeSwatch color={tee.name} className="size-3.5 rounded-full ring-1 ring-border-strong ring-inset" />
             <span className="capitalize">{tee.name}</span>
             {tee.yards != null && (
               <span className="text-body-sm font-medium text-muted-foreground">{formatCount(tee.yards)}</span>
             )}
-          </button>
-        );
-      })}
+            {tee.detail && <span className="text-body-sm font-medium text-muted-foreground">{tee.detail}</span>}
+          </TogglePrimitive>
+        ))}
+      </ToggleGroupPrimitive>
     </div>
   );
 }

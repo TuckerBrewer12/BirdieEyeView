@@ -20,12 +20,12 @@ test("shows the course name and score", async ({ roundDetail }) => {
 test("shows the net score the server works out off the golfer's index", async ({ roundDetail }) => {
   await roundDetail.open(ratedHalfMoonBayRound, { fullCourses: [ratedHalfMoonBayCourse] });
   await roundDetail.seesScore(78);
-  await roundDetail.seesNet(66);
+  await roundDetail.seesNet(66, 12);
 });
 
 test("a hole cleared in edit mode takes the net score away until it is saved", async ({ roundDetail }) => {
   await roundDetail.open(ratedHalfMoonBayRound, { fullCourses: [ratedHalfMoonBayCourse] });
-  await roundDetail.seesNet(66);
+  await roundDetail.seesNet(66, 12);
   await roundDetail.tapEdit();
   await roundDetail.clearStrokes(1);
   await roundDetail.seesNoNet();
@@ -174,7 +174,7 @@ test("a first round has no average to compare with", async ({ roundDetail }) => 
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
-  test("delete asks from a sheet and returns to the list", async ({ roundDetail }) => {
+  test("delete asks to confirm and returns to the list", async ({ roundDetail }) => {
     await roundDetail.open(halfMoonBayRound, {
       fullCourses: [halfMoonBayCourse],
       rounds: storedRounds,

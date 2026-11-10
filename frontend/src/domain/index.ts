@@ -48,15 +48,16 @@ export type {
   ScorePoint,
 } from "./courseAnalytics";
 
-export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekdayDay, formatWeekdayShort, isoDay, parseDay } from "./date";
+export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekday, isoDay, parseDay } from "./date";
 export type { DayParts } from "./date";
 
 export {
   formatFileSize,
   formatOneDecimal,
   formatPercent,
-  formatSignedOneDecimal,
+  formatSigned,
   formatWhole,
+  formatTwoDecimals,
   formatCount,
   pluralNoun,
   pluralize,

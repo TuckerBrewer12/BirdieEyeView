@@ -4,6 +4,7 @@ import { chartTooltipStyle, chartTickStyle, tokens } from "@/brand/theme";
 import { formatPercent } from "@/domain/format";
 import type { HoleFigure } from "@/domain/courseAnalytics";
 import { holeLabel, type TooltipFormatter } from "./holeBarParts";
+import { formatTwoDecimals } from "@/domain/format";
 
 interface HoleMetricBarsProps {
   /** The figure the rows hold. Variance rows come ranked, least consistent first, so the ticks name their holes. */
@@ -21,14 +22,14 @@ const METRICS = {
   },
   putts: {
     label: "Avg putts",
-    format: (value: number) => value.toFixed(2),
+    format: formatTwoDecimals,
     domain: undefined,
     gradient: [tokens.color.muted, tokens.color.mutedForeground],
     tick: undefined,
   },
   variance: {
     label: "Std dev",
-    format: (value: number) => value.toFixed(2),
+    format: formatTwoDecimals,
     domain: undefined,
     gradient: [tokens.color.score.eagle.base, tokens.color.score.bogey.base],
     tick: holeLabel,

@@ -8,7 +8,7 @@ measured against the form it was played on. A round with no earlier rounds has n
 from typing import Any, Callable, Dict, List, Literal, Optional
 
 from analytics import stats
-from analytics.dashboard import ChangeVerdict
+from analytics.dashboard import change_verdict
 from models import Round
 
 ComparisonWindow = Literal["l5", "l20", "all"]
@@ -27,15 +27,6 @@ METRICS: List[tuple[ComparisonMetric, _Rows, str, bool, int]] = [
     ("putts_per_gir", stats.putts_per_gir, "putts_per_gir", True, 2),
     ("scrambling", stats.scrambling_per_round, "scramble_successes", False, 1),
 ]
-
-
-def _verdict(difference: Optional[float], lower_is_better: bool) -> Optional[ChangeVerdict]:
-    if difference is None:
-        return None
-    if difference == 0:
-        return "neutral"
-    better = difference < 0 if lower_is_better else difference > 0
-    return "good" if better else "bad"
 
 
 def _metric(
@@ -64,7 +55,7 @@ def _metric(
         "value": shown_value,
         "average": shown_average,
         "difference": difference,
-        "verdict": _verdict(difference, lower_is_better),
+        "verdict": change_verdict(difference, lower_is_better),
     }
 
 
