@@ -1,4 +1,4 @@
-import { SortControl } from "@/brand";
+import { PickerMenu } from "@/brand";
 import { GOAL_OPTIONS } from "@/domain";
 
 interface GoalPickerProps {
@@ -21,7 +21,7 @@ export function GoalPicker({ value, onChange, disabled, className }: GoalPickerP
 
   return (
     <div data-slot="goal-picker" className={className}>
-      <SortControl
+      <PickerMenu
         aria-label="Scoring goal"
         label={current?.label ?? "Pick a goal"}
         value={current ? String(current.value) : ""}

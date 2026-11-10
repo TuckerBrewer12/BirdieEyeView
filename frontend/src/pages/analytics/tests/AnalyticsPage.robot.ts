@@ -99,7 +99,7 @@ export class AnalyticsRobot {
 
   /** The course filter's menu, open. */
   async seesCourseMenu(): Promise<this> {
-    await expect(this.page.locator("[data-slot=sort-menu], [data-slot=sort-sheet]")).toBeVisible();
+    await expect(this.page.locator("[data-slot=picker-options]")).toBeVisible();
     return this;
   }
 

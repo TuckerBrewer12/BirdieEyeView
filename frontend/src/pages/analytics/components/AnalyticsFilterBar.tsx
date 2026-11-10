@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { Button, SortControl, ToggleGroup, ToggleGroupItem } from "@/brand";
+import { Button, PickerMenu, ToggleGroup, ToggleGroupItem } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { AnalyticsFilters, PlayedCourse } from "../model";
 import { LIMIT_OPTIONS, TIMEFRAME_OPTIONS, courseOptions } from "../present";
@@ -58,7 +58,7 @@ export function AnalyticsFilterBar({
       </ToggleGroup>
 
       <div className="flex items-center gap-1">
-        <SortControl
+        <PickerMenu
           aria-label="Course"
           label={course.label}
           value={course.value}

@@ -104,7 +104,10 @@ export function CourseLinkSearch({
 
   return (
     <div className="flex flex-col gap-2.5">
-      <Surface plain={plain} className={cn("gap-0 p-0 text-foreground", !plain && results.length > 0 && "shadow-card")}>
+      <Card
+        surface={plain ? "none" : "raised"}
+        className={cn("gap-0 p-0 text-foreground", !plain && results.length > 0 && "shadow-card")}
+      >
         <div className={cn("flex flex-col gap-2.5", plain ? "pb-2.5" : "px-3.5 pt-3.5 pb-2.5")}>
           {title && (
             <div className="flex items-start gap-2">
@@ -168,10 +171,10 @@ export function CourseLinkSearch({
           </div>
         )}
 
-      </Surface>
+      </Card>
 
       {noMatch && (
-        <Surface plain={plain} className={cn("gap-2.5", !plain && "p-3.5")}>
+        <Card surface={plain ? "none" : "raised"} className={cn("gap-2.5", !plain && "p-3.5")}>
           <div className="text-body text-foreground-secondary">
             No saved courses match{" "}
             <b className="font-semibold text-foreground">“{trimmed}”</b>.
@@ -181,18 +184,9 @@ export function CourseLinkSearch({
               <SaveAsButton name={trimmed} onUseCustomName={onUseCustomName} outlined />
             </div>
           )}
-        </Surface>
+        </Card>
       )}
     </div>
-  );
-}
-
-/** The kit's card, or for `plain` the same column with no surface of its own. */
-function Surface({ plain, className, children }: { plain: boolean; className?: string; children: ReactNode }) {
-  return plain ? (
-    <div className={cn("flex flex-col", className)}>{children}</div>
-  ) : (
-    <Card className={className}>{children}</Card>
   );
 }
 

@@ -9,8 +9,14 @@ import {
   type RoundsQuery,
 } from "../roundsModel";
 
-function round(course: string | null, toPar: number | null, date = "2026-01-01", bestRank: number | null = null): ListedRound {
-  return { course: course == null ? null : { name: course }, toPar, date, bestRank };
+function round(
+  course: string | null,
+  toPar: number | null,
+  date = "2026-01-01",
+  bestRank: number | null = null,
+  worstRank: number | null = null,
+): ListedRound {
+  return { course: course == null ? null : { name: course }, toPar, date, bestRank, worstRank };
 }
 
 const query = (over: Partial<RoundsQuery> = {}): RoundsQuery => ({
@@ -41,9 +47,10 @@ describe("filterRounds", () => {
     expect(filterRounds(rounds, query({ sort: "oldest" })).map((r) => r.course?.name)).toEqual(["C", "A", "B"]);
   });
 
-  it("puts the worst round to par first, and a round with no score last", () => {
-    const rounds = [round("A", null), round("B", 18), round("C", 8)];
-    expect(filterRounds(rounds, query({ sort: "worst" })).map((r) => r.toPar)).toEqual([18, 8, null]);
+  it("Worst score follows the server's order, a full round ahead of a nine, unplaced rounds last", () => {
+    // The nine is furthest over par, but the server ranks every full round ahead of it.
+    const rounds = [round("A", null), round("Nine", 20, undefined, 3, 3), round("B", 18, undefined, 2, 1), round("C", 8, undefined, 1, 2)];
+    expect(filterRounds(rounds, query({ sort: "worst" })).map((r) => r.course?.name)).toEqual(["B", "C", "Nine", "A"]);
   });
 
   it("Best score follows the server's order, unplaced rounds last", () => {
@@ -68,7 +75,7 @@ describe("filterRounds", () => {
   });
 
   it("does not reorder the list it was given", () => {
-    const rounds = [round("A", 18), round("B", 8)];
+    const rounds = [round("A", 18, undefined, 2, 1), round("B", 8, undefined, 1, 2)];
     filterRounds(rounds, query({ sort: "worst" }));
     expect(rounds.map((r) => r.toPar)).toEqual([18, 8]);
   });

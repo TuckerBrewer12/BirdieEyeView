@@ -33,7 +33,7 @@ export function courseAnalyticsResponse(
   const played = stored
     .filter((round) => round.course?.id === courseId)
     .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))
-    .map(summaryResponse);
+    .map((round) => summaryResponse(round));
   const scores = played.map((round) => round.total_score).filter((score): score is number => score != null);
 
   return {

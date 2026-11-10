@@ -66,7 +66,7 @@ export type { ShareMessage } from "./share";
 
 export { formatHandicapIndex, formatCourseHandicap } from "./handicap";
 
-export { Round } from "./round";
+export { Round, roundLine } from "./round";
 export type {
   CourseEdit,
   HoleEdits,

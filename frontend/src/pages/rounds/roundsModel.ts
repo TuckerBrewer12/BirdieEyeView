@@ -18,6 +18,8 @@ export interface ListedRound {
   course: { name: string | null } | null;
   /** The server's Best order: full rounds by to par, then nines and rounds cut short. */
   bestRank: number | null;
+  /** The server's Worst order: full rounds furthest over par, then nines and rounds cut short. */
+  worstRank: number | null;
 }
 
 export const SCOPE_OPTIONS: readonly Option<Scope>[] = [
@@ -42,8 +44,9 @@ export const SORT_OPTIONS: readonly Option<SortKey>[] = (Object.keys(SORT_LABELS
   (value) => ({ value, label: SORT_LABELS[value] }),
 );
 
-/** The course menu's "every course" entry. */
+/** The course menu's "every course" entry: its value, and the words for it. */
 export const ALL_COURSES = "";
+export const ALL_COURSES_LABEL = "All courses";
 
 /** Best always lists the best round first, whatever sort the golfer chose. */
 export function effectiveSort(scope: Scope, chosen: SortKey): SortKey {
@@ -64,7 +67,7 @@ export function courseOptions(rounds: readonly ListedRound[]): Option<string>[] 
   }
   const courses = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name);
   return [
-    { value: ALL_COURSES, label: "All courses" },
+    { value: ALL_COURSES, label: ALL_COURSES_LABEL },
     ...courses.map((name) => ({ value: name, label: formatCourseName(name) })),
   ];
 }
@@ -76,7 +79,7 @@ const SORTS: Record<SortKey, { value: (round: ListedRound) => number | string | 
   newest: { value: (r) => r.date ?? "", ascending: false },
   oldest: { value: (r) => r.date ?? "", ascending: true },
   best: { value: (r) => r.bestRank, ascending: true },
-  worst: { value: (r) => r.toPar, ascending: false },
+  worst: { value: (r) => r.worstRank, ascending: true },
   course: { value: (r) => r.course?.name?.toLowerCase() ?? null, ascending: true },
 };
 
@@ -90,8 +93,8 @@ export interface RoundsQuery {
 
 /**
  * The rounds a scope, a course, a search and a sort leave on screen, in order. Last 20 is the
- * twenty newest at the course picked. Best score follows the server's order, which ranks every
- * full round ahead of a nine.
+ * twenty newest at the course picked. Best and Worst score follow the server's orders, which
+ * rank every full round ahead of a nine either way.
  */
 export function filterRounds<R extends ListedRound>(rounds: readonly R[], query: RoundsQuery): R[] {
   let result = [...rounds];

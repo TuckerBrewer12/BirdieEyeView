@@ -76,7 +76,7 @@ export class RoundsRobot {
   }
 
   async seesSortMenu(): Promise<this> {
-    await expect(this.page.locator("[data-slot=sort-menu], [data-slot=sort-sheet]")).toBeVisible();
+    await expect(this.page.locator("[data-slot=picker-options]")).toBeVisible();
     return this;
   }
 

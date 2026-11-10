@@ -190,6 +190,8 @@ def test_best_puts_full_rounds_first_by_to_par_then_nines():
     listed = [level_par_nine, seventy_four_at_par_70, unrated, seventy_five_at_par_72]
 
     assert [r.best_rank for r in round_list(listed)] == [3, 2, None, 1]
+    # Worst first, a full round is still ahead of the nine.
+    assert [r.worst_rank for r in round_list(listed)] == [3, 1, None, 2]
 
 
 def test_a_round_under_par_reads_after_the_score_breaks_above_the_golfers_usual_par():

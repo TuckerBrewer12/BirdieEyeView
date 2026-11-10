@@ -11,7 +11,7 @@ import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
 import { toCourseSummary } from "../fixtures/roundDetails";
 import { courseResponse } from "./courseResponses";
-import { bestRanks, roundResponse, storedFromRound, summaryResponse, type StoredRound } from "./roundResponses";
+import { listRanks, roundResponse, storedFromRound, summaryResponse, type StoredRound } from "./roundResponses";
 
 export interface InMemoryRoundsSeed {
   /** The round list, in order, as the facts the server stores. */
@@ -132,7 +132,7 @@ export class InMemoryRounds {
 
   getRoundsForUser(): RoundSummaryDto[] {
     const rounds = this.listed.map((id) => this.stored.get(id)!);
-    const ranks = bestRanks(rounds);
+    const ranks = listRanks(rounds);
     return rounds.map((round, i) => summaryResponse(round, ranks[i]));
   }
 
