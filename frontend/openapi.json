@@ -5695,6 +5695,17 @@
               }
             ],
             "title": "Total Score"
+          },
+          "worst_rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worst Rank"
           }
         },
         "required": [
@@ -5710,7 +5721,8 @@
           "total_putts",
           "score_counts",
           "hole_scores",
-          "best_rank"
+          "best_rank",
+          "worst_rank"
         ],
         "title": "RoundSummaryResponse",
         "type": "object"

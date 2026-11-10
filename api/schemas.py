@@ -130,6 +130,8 @@ class RoundSummaryResponse(ResponseModel):
     # Place among the rounds listed with it, best first: full rounds by to par, then nines and
     # rounds cut short. Null for a round with no to par, and outside the round list.
     best_rank: Optional[int] = None
+    # The same, worst first: full rounds furthest over par, then nines and rounds cut short.
+    worst_rank: Optional[int] = None
 
 
 class WorstStretch(ResponseModel):

@@ -1,11 +1,12 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
-import type { RoundSummary } from "@/domain";
-import { formatDayShort } from "@/domain/date";
+import { roundLine, type RoundSummary } from "@/domain";
+import { formatCourseName } from "@/domain/course";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 import {
   ALL_COURSES,
+  ALL_COURSES_LABEL,
   SCOPE_OPTIONS,
   SORT_LABELS,
   SORT_OPTIONS,
@@ -20,11 +21,13 @@ import {
 
 export type { Option, Scope, SortKey };
 
-/** The round a link sheet is for, worded for its title: "Scanned Scorecard · Mar 9 · 85". */
+/** The round a link sheet is for, worded: its title line and the button that keeps it as it is. */
 export interface LinkingRound {
   id: string;
-  courseName: string | null;
+  /** "Scanned Scorecard · Mar 9 · 85". */
   line: string;
+  /** "Keep as “Scanned Scorecard”", or "Leave it unlinked" for a round with no name. */
+  keepLabel: string;
 }
 
 export interface RoundsUiState {
@@ -65,9 +68,12 @@ export interface RoundsPageViewModel extends RoundsUiState {
 }
 
 function linkingRound(round: RoundSummary): LinkingRound {
-  const courseName = round.course?.name ?? null;
-  const line = [courseName, formatDayShort(round.date), round.score].filter((part) => part != null).join(" · ");
-  return { id: round.id, courseName, line };
+  const name = round.course?.name;
+  return {
+    id: round.id,
+    line: roundLine(round),
+    keepLabel: name ? `Keep as “${formatCourseName(name)}”` : "Leave it unlinked",
+  };
 }
 
 export function useRoundsPageViewModel(
@@ -140,7 +146,7 @@ export function useRoundsPageViewModel(
     pickScope,
     course,
     courseOptions: courses,
-    courseLabel: courses.find((option) => option.value === course)?.label ?? "All courses",
+    courseLabel: courses.find((option) => option.value === course)?.label ?? ALL_COURSES_LABEL,
     setCourse,
     sortKey,
     sortLabel: SORT_LABELS[sortKey],

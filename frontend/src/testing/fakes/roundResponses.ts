@@ -222,24 +222,33 @@ export function roundResponse(round: StoredRound): RoundDto {
 }
 
 /**
- * Each round's place in the list's Best order, as `analytics.stats.best_round_ranks` gives it:
- * full rounds by to par, then nines and rounds cut short. Ties keep the list's order.
+ * Each round's place in the list's Best and Worst orders, as `analytics.stats.best_round_ranks`
+ * and `worst_round_ranks` give them: full rounds by to par, best or worst first, then nines and
+ * rounds cut short the same way. Ties keep the list's order.
  */
-export function bestRanks(rounds: StoredRound[]): (number | null)[] {
+export function listRanks(rounds: StoredRound[]): { best: number | null; worst: number | null }[] {
   const keyed = rounds.map((round, i) => {
     const scored = round.hole_scores.filter((h) => h.strokes != null);
     const total = scored.length > 0 ? sum(scored.map((h) => h.strokes!)) : null;
     return { i, short: holesPlayed(round) < 18, toPar: toPar(round, total) };
   });
-  const ranked = keyed
-    .filter((k) => k.toPar != null)
-    .sort((a, b) => Number(a.short) - Number(b.short) || a.toPar! - b.toPar! || a.i - b.i);
-  const ranks: (number | null)[] = rounds.map(() => null);
-  ranked.forEach((k, place) => (ranks[k.i] = place + 1));
-  return ranks;
+  const placed = keyed.filter((k) => k.toPar != null);
+  const place = (direction: 1 | -1) => {
+    const ranks: (number | null)[] = rounds.map(() => null);
+    [...placed]
+      .sort((a, b) => Number(a.short) - Number(b.short) || direction * (a.toPar! - b.toPar!) || a.i - b.i)
+      .forEach((k, at) => (ranks[k.i] = at + 1));
+    return ranks;
+  };
+  const best = place(1);
+  const worst = place(-1);
+  return rounds.map((_, i) => ({ best: best[i] ?? null, worst: worst[i] ?? null }));
 }
 
-export function summaryResponse(round: StoredRound, bestRank: number | null = null): RoundSummaryDto {
+export function summaryResponse(
+  round: StoredRound,
+  ranks: { best: number | null; worst: number | null } = { best: null, worst: null },
+): RoundSummaryDto {
   const holes = holeResponses(round);
   const { total_score, to_par, front_nine, back_nine, total_putts, score_counts } = figures(round, holes);
   return {
@@ -255,7 +264,8 @@ export function summaryResponse(round: StoredRound, bestRank: number | null = nu
     total_putts,
     score_counts,
     hole_scores: holes.map(({ hole_number, strokes, kind, running_to_par }) => ({ hole_number, strokes, kind, running_to_par })),
-    best_rank: bestRank,
+    best_rank: ranks.best,
+    worst_rank: ranks.worst,
   };
 }
 

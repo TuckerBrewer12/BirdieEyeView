@@ -15,13 +15,12 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SortControl,
+  PickerMenu,
   ToggleGroup,
   ToggleGroupItem,
   useFromBreakpoint,
 } from "@/brand";
 import { pluralize } from "@/domain/format";
-import { formatCourseName } from "@/domain/course";
 import { LinkCoursePanel } from "./components/LinkCoursePanel";
 import { useRoundsPageViewModel } from "./useRoundsPageViewModel";
 
@@ -38,44 +37,47 @@ export function RoundsPage({ userId }: RoundsPageProps) {
     return <LoadingState>Loading rounds...</LoadingState>;
   }
 
-  const sort = {
-    label: viewModel.sortLabel,
-    value: viewModel.sortKey,
-    options: viewModel.sortOptions,
-    onChange: viewModel.selectSort,
-    prefix: "Sort",
-    phoneIcon: <ArrowUpDown />,
-    quiet: true,
-    size: "default",
-  } as const;
-
   return (
     <div>
       <PageHeader title="Rounds" subtitle={pluralize(viewModel.filteredRounds.length, "round")} revealAt={100} />
 
       <div className="flex flex-col gap-3.5 pb-6 md:gap-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-baseline gap-2.5">
+        {/*
+          One row of controls that wraps: on a phone the title shares its line with the search and
+          sort icons and the filters wrap under it; from md the title takes a line of its own and
+          the sort moves to the end of the filters. Order, not a second copy, places the sort.
+        */}
+        <div className="flex flex-wrap items-center gap-x-1 gap-y-3.5 md:gap-x-2.5 md:gap-y-4">
+          <div className="order-1 flex min-w-0 flex-1 items-baseline gap-2.5 md:basis-full">
             <PageTitle>Rounds</PageTitle>
             <span data-slot="round-count" className="text-body-lg font-semibold text-muted-foreground">
               {viewModel.filteredRounds.length}
             </span>
           </div>
-          <div className="flex items-center gap-1 md:hidden">
+          {!linkInline && (
             <Button
               variant="ghost"
               size="icon"
               aria-label="Search"
               aria-pressed={viewModel.searchOpen}
               onClick={viewModel.toggleSearch}
+              className="order-2"
             >
               <Search />
             </Button>
-            <SortControl {...sort} className="md:hidden" />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-2.5">
+          )}
+          <PickerMenu
+            aria-label="Sort by"
+            label={viewModel.sortLabel}
+            value={viewModel.sortKey}
+            options={viewModel.sortOptions}
+            onChange={viewModel.selectSort}
+            prefix="Sort"
+            compactIcon={<ArrowUpDown />}
+            variant="ghost"
+            size="default"
+            className="order-3 md:order-6 md:ml-auto"
+          />
           {/* A phone opens the search from its icon, and the field takes the caret as it appears. */}
           {(linkInline || viewModel.searchOpen) && (
             <SearchField
@@ -84,15 +86,15 @@ export function RoundsPage({ userId }: RoundsPageProps) {
               value={viewModel.search}
               onChange={viewModel.setSearch}
               focusOnOpen={!linkInline}
-              className="md:max-w-80 md:flex-1"
+              className="order-4 basis-full md:max-w-80 md:flex-1 md:basis-auto"
             />
           )}
-          <div className="flex items-center gap-2 md:contents">
+          <div className="order-5 flex basis-full items-center gap-2 md:contents">
             <ToggleGroup
               aria-label="Scope"
               value={[viewModel.scope]}
               onValueChange={(values: string[]) => viewModel.pickScope(values[0])}
-              className="w-full md:w-fit"
+              className="w-full md:order-5 md:w-fit"
             >
               {viewModel.scopeOptions.map((option) => (
                 <ToggleGroupItem
@@ -104,18 +106,17 @@ export function RoundsPage({ userId }: RoundsPageProps) {
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
-            <SortControl
+            <PickerMenu
+              aria-label="Course"
               label={viewModel.courseLabel}
-              phoneLabel="Course"
+              compactLabel="Course"
               value={viewModel.course}
               options={viewModel.courseOptions}
               onChange={viewModel.setCourse}
-              aria-label="Course"
               size="default"
-              className="shrink-0"
+              className="shrink-0 md:order-5"
             />
           </div>
-          <SortControl {...sort} className="hidden md:ml-auto md:inline-flex" />
         </div>
 
         <Card className="gap-0 py-0">
@@ -179,9 +180,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
                   />
                 </div>
                 <Button variant="outline" size="lg" className="w-full" onClick={viewModel.closeLink}>
-                  {viewModel.linking.courseName
-                    ? `Keep as “${formatCourseName(viewModel.linking.courseName)}”`
-                    : "Leave it unlinked"}
+                  {viewModel.linking.keepLabel}
                 </Button>
               </div>
             )}

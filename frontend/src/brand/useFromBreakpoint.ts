@@ -8,13 +8,16 @@ import type { breakpoints } from "./theme/tokens";
  */
 export function useFromBreakpoint(name: keyof typeof breakpoints): boolean {
   const query = fromBreakpoint(name);
+  // A window with no media queries (a unit test's) reads as narrow, as a server render does.
+  const media = typeof window.matchMedia === "function";
   return useSyncExternalStore(
     (onChange) => {
+      if (!media) return () => {};
       const list = window.matchMedia(query);
       list.addEventListener("change", onChange);
       return () => list.removeEventListener("change", onChange);
     },
-    () => window.matchMedia(query).matches,
+    () => media && window.matchMedia(query).matches,
     () => false,
   );
 }

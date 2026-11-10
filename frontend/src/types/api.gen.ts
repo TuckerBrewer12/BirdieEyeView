@@ -2330,6 +2330,8 @@ export interface components {
             total_putts: number | null;
             /** Total Score */
             total_score: number | null;
+            /** Worst Rank */
+            worst_rank: number | null;
         };
         /**
          * SaveRoundRequest
