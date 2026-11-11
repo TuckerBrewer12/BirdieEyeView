@@ -19,7 +19,7 @@ from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MERGE_MODEL = "gemini-3.1-flash-lite-preview"
+GEMINI_MERGE_MODEL = "gemini-3.5-flash"
 
 _CANONICAL_HEADER = [
     "HOLE", "1", "2", "3", "4", "5", "6", "7", "8", "9", "OUT",
