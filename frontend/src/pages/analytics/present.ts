@@ -1,164 +1,232 @@
-import type { StatDirection, StatTone, ToParBar, TrendAreaPoint } from "@/brand";
+import type { Column, ShareLegendItem, ShareSegment, StatDirection, TrendAreaPoint } from "@/brand";
 import {
   formatAverageToPar,
-  formatCourseHandicap,
-  formatHandicapIndex,
   formatOneDecimal,
-  formatWhole,
   formatPercent,
+  formatWhole,
   pluralize,
-  toParLabel,
+  scoreKindLabel,
+  type ParTypeComparison,
+  type ScoreMix,
 } from "@/domain";
-import type { AnalyticsFilters } from "@/domain/analyticsFilters";
-import type {
-  GirTrendRowDto,
-  NetScoreTrendRowDto,
-  PuttsTrendRowDto,
-  ScoringByHandicapRowDto,
-  ScoringByParRowDto,
-  ThreePuttsTrendRowDto,
-} from "@/types/api";
 import {
   ANALYTICS_TABS,
   type Analytics,
   type AnalyticsTab,
   type GirSplit,
-  type Insight,
-  type InsightCategory,
+  type HeadlineFigure,
+  type HoleDifficulty,
   type PlayedCourse,
-  type ScoreTrendPoint,
-  type ShortGamePoint,
+  type PuttsPerHole,
+  type RoundSeriesPoint,
+  type ThreePuttRound,
+  type YardageBucket,
 } from "./model";
 
-type InsightRating = Extract<Insight, { rating: unknown }>["rating"];
-
-const TAB_LABELS: Record<AnalyticsTab, string> = {
-  scoring: "Scoring",
-  "ball-striking": "Ball Striking",
-  putting: "Putting",
+const TAB_LABEL: Record<AnalyticsTab, string> = {
   profile: "Profile",
-  range: "Range View",
+  scoring: "Scoring",
+  "ball-striking": "Ball striking",
+  putting: "Putting",
+  approach: "Approach",
 };
 
-/** The phone's section tabs, in order. */
-export const ANALYTICS_TAB_OPTIONS: readonly { value: AnalyticsTab; label: string }[] = ANALYTICS_TABS.map((tab) => ({
-  value: tab,
-  label: TAB_LABELS[tab],
+/** The tab bar's tabs, in order. */
+export const ANALYTICS_TAB_OPTIONS: readonly { key: AnalyticsTab; label: string }[] = ANALYTICS_TABS.map((tab) => ({
+  key: tab,
+  label: TAB_LABEL[tab],
 }));
 
-export const RANGE_VIEW_EMPTY = "Play more rounds to unlock Range View data.";
+/** The round counts the menu offers. "All rounds" asks for as many as the server allows. */
+export const LIMIT_OPTIONS: readonly { value: string; label: string }[] = [
+  { value: "10", label: "Last 10 rounds" },
+  { value: "20", label: "Last 20 rounds" },
+  { value: "50", label: "Last 50 rounds" },
+  { value: "500", label: "All rounds" },
+];
+
+/** The course menu's choices: every course, the home course if the golfer has one, then each course played. */
+export function courseOptions(playedCourses: readonly PlayedCourse[], hasHomeCourse: boolean): { value: string; label: string }[] {
+  return [
+    { value: "all", label: "All courses" },
+    ...(hasHomeCourse ? [{ value: "home", label: "Home course" }] : []),
+    ...playedCourses.map((course) => ({ value: course.id, label: course.name ?? "Unnamed course" })),
+  ];
+}
+
+/** "24 rounds", beside the title. */
+export function roundCountLabel(count: number): string {
+  return pluralize(count, "round");
+}
 
 export function emptyMessage(filtered: boolean): string {
-  return filtered ? "No rounds found for the selected filters." : "Play some rounds to see your analytics.";
+  return filtered ? "No rounds at this course yet." : "Play some rounds to see your analytics.";
 }
 
-/** An insight as a sentence, with the arrow beside it and whether up is good. */
-export interface Narrative {
-  text: string;
-  trend: Insight["trend"];
-  positiveUp: boolean;
+/** One headline figure as its tile shows it. */
+export interface HeadlineTile {
+  metric: HeadlineFigure["metric"];
+  label: string;
+  value: string;
+  /** The move, unsigned, beside the triangle; null under five rounds. */
+  change: string | null;
+  direction: StatDirection | null;
+  tone: "good" | "bad" | "neutral";
+  trend: number[];
 }
 
-/** How an insight's arrow reads: moving the good way, the bad way, or holding. */
-export type NarrativeTone = "good" | "bad" | "neutral";
-
-export function narrativeTone({ trend, positiveUp }: Narrative): NarrativeTone {
-  if (trend === "flat") return "neutral";
-  return (trend === "up") === positiveUp ? "good" : "bad";
-}
-
-/** More greens is better; fewer strokes and fewer putts are. */
-const UP_IS_GOOD: Record<InsightCategory, boolean> = { scoring: false, gir: true, putting: false };
-
-const GIR_VERDICT: Record<InsightRating, string> = {
-  strong: "excellent ball striking.",
-  fair: "improving this is one of the fastest routes to lower scores.",
-  weak: "irons are the area to target for the biggest scoring gains.",
+const HEADLINE_LABEL: Record<HeadlineFigure["metric"], string> = {
+  scoring_average: "Scoring avg",
+  gir_percentage: "Greens hit",
+  average_putts: "Putts / round",
+  scrambling_percentage: "Scrambling",
+  three_putt_rate: "3-putt rate",
 };
 
-const PUTTS_VERDICT: Record<InsightRating, string> = {
-  strong: "outstanding on the green.",
-  fair: "solid putting.",
-  weak: "reducing three-putts is the fastest path to lower scores.",
-};
+const PERCENT_METRICS = new Set<HeadlineFigure["metric"]>(["gir_percentage", "scrambling_percentage", "three_putt_rate"]);
 
-function sentence(insight: Insight): string {
-  switch (insight.kind) {
-    case "scoring_shift": {
-      const strokes = formatOneDecimal(Math.abs(insight.strokes));
-      return insight.strokes > 0
-        ? `Your scoring average has improved by ${strokes} strokes over the last ${pluralize(insight.rounds, "round")}.`
-        : `Your scoring average has climbed by ${strokes} strokes recently — worth monitoring.`;
-    }
-    case "best_par":
-      return `You score best on par ${insight.par}s — averaging ${formatAverageToPar(insight.average_to_par)} across ${pluralize(insight.holes, "hole")}.`;
-    case "gir_average":
-      return `Your average GIR% is ${formatPercent(insight.percent, 1)} — ${GIR_VERDICT[insight.rating]}`;
-    case "gir_shift": {
-      const points = formatWhole(Math.abs(insight.points));
-      return insight.points > 0
-        ? `GIR% trending up ${points} points over recent rounds — ball striking improving.`
-        : `GIR% has dipped ${points} points recently — iron consistency worth a look.`;
-    }
-    case "putts_average":
-      return `Averaging ${formatOneDecimal(insight.putts)} putts per round — ${PUTTS_VERDICT[insight.rating]}`;
-    case "putts_shift": {
-      const putts = formatOneDecimal(Math.abs(insight.putts));
-      return insight.putts > 0
-        ? `Putts per round improving — down ${putts} strokes on average.`
-        : `Putts per round up ${putts} strokes recently.`;
-    }
-  }
+function directionOf(change: number | null): StatDirection | null {
+  if (change == null) return null;
+  if (change === 0) return "flat";
+  return change > 0 ? "up" : "down";
 }
 
-/** An insight in words, with the server's arrow. */
-export function narrativeFor(insight: Insight): Narrative {
-  return { text: sentence(insight), trend: insight.trend, positiveUp: UP_IS_GOOD[insight.category] };
+/** The headline's tiles, in the server's order. */
+export function headlineTiles(figures: readonly HeadlineFigure[]): HeadlineTile[] {
+  return figures.map((figure) => {
+    const percent = PERCENT_METRICS.has(figure.metric);
+    const change = figure.change == null ? null : Math.abs(figure.change);
+    return {
+      metric: figure.metric,
+      label: HEADLINE_LABEL[figure.metric],
+      value: percent ? formatPercent(figure.value) : formatOneDecimal(figure.value),
+      change: change == null || change === 0 ? null : percent ? formatWhole(change) : formatOneDecimal(change),
+      direction: directionOf(figure.change),
+      tone: figure.verdict ?? "neutral",
+      trend: figure.trend,
+    };
+  });
 }
 
-/** The first insight in a category, worded; the phone shows one per section. */
-export function leadNarrative(insights: Insight[], category: InsightCategory): Narrative | null {
-  const lead = insights.find((insight) => insight.category === category);
-  return lead ? narrativeFor(lead) : null;
+/** The phone shows four tiles: scrambling has its own bar under Ball striking. */
+export function onPhone(tile: HeadlineTile): boolean {
+  return tile.metric !== "scrambling_percentage";
 }
 
-/** Which insights head each phone section; profile and range view have none. */
-const TAB_INSIGHTS: Partial<Record<AnalyticsTab, InsightCategory>> = {
-  scoring: "scoring",
-  "ball-striking": "gir",
-  putting: "putting",
-};
-
-/** The sentence that heads a phone section, or null if it has none. */
-export function tabNarrative(insights: Insight[], tab: AnalyticsTab): Narrative | null {
-  const category = TAB_INSIGHTS[tab];
-  return category ? leadNarrative(insights, category) : null;
+/** A figure each round for the trend chart: the round's figure, then its five-round average. */
+export function seriesPoints(series: readonly RoundSeriesPoint[], format: (value: number) => string): TrendAreaPoint[] {
+  return series.map((point, i) => ({
+    tick: i + 1,
+    title: `Round ${i + 1}`,
+    subtitle: point.course,
+    values: [point.value, point.rollingAverage],
+    notes: point.rollingAverage != null ? [{ label: "5-round avg", value: format(point.rollingAverage) }] : undefined,
+  }));
 }
 
-/** The round counts the filter offers. "All" asks for as many as the server allows. */
-export const LIMIT_OPTIONS: readonly { value: number; label: string }[] = [
-  { value: 10, label: "10" },
-  { value: 20, label: "20" },
-  { value: 50, label: "50" },
-  { value: 500, label: "All" },
-];
+/** The dashed line across a trend: the average over every round shown. */
+export function averageLine(
+  average: number | null | undefined,
+  format: (value: number) => string,
+): { value: number; label: string } | null {
+  return average != null ? { value: average, label: `Avg ${format(average)}` } : null;
+}
 
-export const TIMEFRAME_OPTIONS: readonly { value: AnalyticsFilters["timeframe"]; label: string }[] = [
-  { value: "all", label: "All Time" },
-  { value: "ytd", label: "YTD" },
-  { value: "1y", label: "12 Mo" },
-];
+export const formatScore = formatOneDecimal;
+export const formatPutts = formatOneDecimal;
+export const formatGreens = (value: number) => formatPercent(value);
 
-/** The course filter's choices: every course, the home course if the golfer has one, then each course played. */
-export function courseOptions(
-  playedCourses: PlayedCourse[],
-  hasHomeCourse: boolean,
-): { value: string; label: string }[] {
+/** A score mix as share-bar segments; triples and worse fold into one, as the legend reads. */
+export function mixSegments(mix: ScoreMix): ShareSegment[] {
+  const worse = mix.triple + mix.quad;
   return [
-    { value: "all", label: "All Courses" },
-    ...(hasHomeCourse ? [{ value: "home", label: "Home Course" }] : []),
-    ...playedCourses.map((course) => ({ value: course.id, label: course.name ?? "Unnamed Course" })),
+    ...(["eagle", "birdie", "par", "bogey", "double"] as const).map((kind) => ({
+      key: kind,
+      share: mix[kind],
+      tone: kind,
+      label: scoreKindLabel(kind),
+    })),
+    { key: "triple", share: worse, tone: "triple", label: "Triple+" },
   ];
+}
+
+/** The score mix's legend: each kind with its share, the empty ones left out. */
+export function mixLegend(mix: ScoreMix, withFigures: boolean): ShareLegendItem[] {
+  return mixSegments(mix)
+    .filter((segment) => segment.share > 0)
+    .map((segment) => ({
+      key: segment.key,
+      tone: segment.tone,
+      label: segment.label,
+      figure: withFigures ? formatPercent(segment.share) : undefined,
+    }));
+}
+
+/** The legend under the green and approach bars: the kinds any of them show. */
+export function mixesLegend(mixes: readonly ScoreMix[]): ShareLegendItem[] {
+  const shown = new Set(mixes.flatMap((mix) => mixSegments(mix).filter((s) => s.share > 0).map((s) => s.key)));
+  return mixSegments(mixes[0] ?? ({} as ScoreMix))
+    .filter((segment) => shown.has(segment.key))
+    .map((segment) => ({ key: segment.key, tone: segment.tone, label: segment.label }));
+}
+
+/** "Par 4". */
+export function parLabel(par: number): string {
+  return `Par ${par}`;
+}
+
+/** A par type's bar: its average to par against the benchmark's tick, both on one scale. */
+export interface ParTypeBar {
+  par: number;
+  label: string;
+  value: string;
+  /** Percent along the track, 0–100. */
+  fill: number;
+  mark: number | null;
+  verdict: ParTypeComparison["verdict"];
+}
+
+/** The scale the par bars share: none to two over par. */
+const PAR_SCALE = 2;
+
+const along = (toPar: number) => Math.min(100, Math.max(0, (toPar / PAR_SCALE) * 100));
+
+export function parTypeBars(rows: readonly ParTypeComparison[]): ParTypeBar[] {
+  return rows.flatMap((row) =>
+    row.averageToPar == null
+      ? []
+      : [
+          {
+            par: row.par,
+            label: parLabel(row.par),
+            value: formatAverageToPar(row.averageToPar),
+            fill: along(row.averageToPar),
+            mark: row.benchmarkToPar != null ? along(row.benchmarkToPar) : null,
+            verdict: row.verdict,
+          },
+        ],
+  );
+}
+
+/** "Tick = 10 handicap", under the par bars. */
+export function benchmarkNote(handicap: number | null): string | null {
+  if (handicap == null) return null;
+  return handicap === 0 ? "Tick = scratch" : `Tick = ${handicap} handicap`;
+}
+
+/** The holes by handicap as columns, the server's hardest three marked. */
+export function difficultyColumns(holes: readonly HoleDifficulty[]): Column[] {
+  return holes.map((hole) => ({
+    key: String(hole.handicap),
+    value: Math.max(0, hole.averageToPar),
+    marked: hole.hardest,
+    label: String(hole.handicap),
+  }));
+}
+
+/** The rounds' three-putts as columns, the costly ones marked. */
+export function threePuttColumns(rounds: readonly ThreePuttRound[]): Column[] {
+  return rounds.map((round, i) => ({ key: String(i), value: round.count, marked: round.costly }));
 }
 
 export const GIR_SPLIT_LABEL: Record<GirSplit["bucket"], string> = {
@@ -166,108 +234,104 @@ export const GIR_SPLIT_LABEL: Record<GirSplit["bucket"], string> = {
   "No GIR": "Green missed",
 };
 
-function roundPoint(
-  row: { round_index: number; course_name?: string | null },
-  values: (number | null)[],
-): TrendAreaPoint {
-  return { tick: row.round_index, title: `Round ${row.round_index}`, subtitle: row.course_name ?? null, values };
+/** "143 holes". */
+export function holesLabel(count: number): string {
+  return pluralize(count, "hole");
 }
 
-/** Each round's score beside its five-round rolling average. */
-export function scoreTrendPoints(rows: ScoreTrendPoint[]): TrendAreaPoint[] {
-  return rows.map((row) => roundPoint(row, [row.total_score, row.rolling_average]));
-}
-
-export function netScorePoints(rows: NetScoreTrendRowDto[]): TrendAreaPoint[] {
-  return rows.map((row) => ({
-    ...roundPoint(row, [row.net_score]),
-    notes: [
-      { label: "Gross", value: row.gross_score != null ? String(row.gross_score) : "—" },
-      { label: "To Par", value: toParLabel(row.to_par) ?? "—" },
-      { label: "Course HCP", value: formatCourseHandicap(row.course_handicap) },
-    ],
-  }));
-}
-
-export function girPoints(rows: GirTrendRowDto[]): TrendAreaPoint[] {
-  return rows.map((row) => ({
-    ...roundPoint(row, [row.gir_percentage]),
-    notes: [{ label: "Greens", value: `${row.total_gir ?? "—"} of ${row.holes_played}` }],
-  }));
-}
-
-/** Each round's scrambling rate beside its up-and-down rate. */
-export function shortGamePoints(rows: ShortGamePoint[]): TrendAreaPoint[] {
-  return rows.map((row) => roundPoint({ round_index: row.roundIndex }, [row.scrambling, row.upAndDown]));
-}
-
-export function puttsPoints(rows: PuttsTrendRowDto[]): TrendAreaPoint[] {
-  return rows.map((row) => roundPoint(row, [row.total_putts]));
-}
-
-export function threePuttPoints(rows: ThreePuttsTrendRowDto[]): TrendAreaPoint[] {
-  return rows.map((row) => roundPoint(row, [row.three_putt_count]));
-}
-
-export function parBars(rows: ScoringByParRowDto[]): ToParBar[] {
-  return rows.map((row) => ({ label: `Par ${row.par}`, toPar: row.average_to_par, detail: pluralize(row.sample_size, "hole") }));
-}
-
-export function handicapBars(rows: ScoringByHandicapRowDto[]): ToParBar[] {
-  return rows.map((row) => ({
-    label: String(row.handicap),
-    toPar: row.average_to_par,
-    detail: pluralize(row.sample_size, "hole"),
-  }));
-}
-
-/** One headline figure, worded for its tile. */
-export interface HeadlineFigure {
-  label: string;
-  /** Formatted: "7.0", "82.9", "—". */
-  value: string;
-  /** How far it moved, unsigned ("3.9"), with its arrow and the server's verdict on the move. */
-  delta?: string;
-  direction?: StatDirection | null;
-  tone?: StatTone;
-  /** What the move is against, or a quieter line under the figure (the best round's course). */
-  note?: string | null;
-  /** The figure round by round, oldest first. */
-  trend?: (number | null)[];
-}
-
-/**
- * The headline figures, worded for their tiles: the golfer's own handicap index whatever the
- * filters, and the rest over the filtered rounds.
- */
-export function headlineFigures(analytics: Analytics): HeadlineFigure[] {
-  const { kpis } = analytics;
-  const change = kpis.scoring_average_change;
-  const moved = change != null && change !== 0;
+/** The putts a hole as share-bar segments: a one-putt reads as a birdie, a three-putt as a bogey. */
+export function puttsPerHoleSegments(putts: PuttsPerHole): ShareSegment[] {
   return [
-    { label: "Handicap Index", value: formatHandicapIndex(kpis.handicap_index) },
-    { label: "Rounds", value: String(kpis.total_rounds) },
-    {
-      label: "Scoring Avg",
-      value: kpis.scoring_average != null ? String(kpis.scoring_average) : "—",
-      trend: analytics.scoreTrend.map((row) => row.total_score),
-      tone: kpis.scoring_average_verdict ?? "neutral",
-      ...(moved && {
-        delta: formatOneDecimal(Math.abs(change)),
-        direction: change < 0 ? "down" : "up",
-        note: "last 5 vs all",
-      }),
-    },
-    {
-      label: "Best Round",
-      value: analytics.bestScore != null ? String(analytics.bestScore) : "—",
-      note: analytics.bestRound?.course,
-    },
-    { label: "Avg Putts", value: formatOneDecimal(kpis.average_putts) },
+    { key: "one", share: putts.oneOrFewer, tone: "birdie", label: "1 putt" },
+    { key: "two", share: putts.two, tone: "par", label: "2 putts" },
+    { key: "three", share: putts.threeOrMore, tone: "bogey", label: "3+ putts" },
   ];
 }
 
-/** The dashed line across the score trend at the scoring average: "Avg 82.9". */
-export function averageReference(average: number | null | undefined): { value: number; label: string } | null {
-  return average != null ? { value: average, label: `Avg ${average}` } : null;
+/** One short-game figure's bar, against the tour's mark. */
+export interface ShortGameBar {
+  label: string;
+  value: string;
+  fill: number | null;
+  tour: string | null;
+  mark: number | null;
+}
+
+export function shortGameBars(game: {
+  scrambling: number | null;
+  upAndDown: number | null;
+  tourScrambling: number | null;
+  tourUpAndDown: number | null;
+}): ShortGameBar[] {
+  return [
+    { label: "Scrambling", value: game.scrambling, tour: game.tourScrambling },
+    { label: "Up & down", value: game.upAndDown, tour: game.tourUpAndDown },
+  ].map((row) => ({
+    label: row.label,
+    value: formatPercent(row.value),
+    fill: row.value,
+    tour: row.tour != null ? formatPercent(row.tour) : null,
+    mark: row.tour,
+  }));
+}
+
+/** A yardage band as its card shows it. */
+export interface BucketCard {
+  key: string;
+  range: string;
+  holes: string;
+  /** "+0.56". */
+  toPar: string;
+  greens: string;
+  worst: boolean;
+  mix: ScoreMix;
+  segments: ShareSegment[];
+}
+
+export function bucketCards(buckets: readonly YardageBucket[], par: number): BucketCard[] {
+  return buckets
+    .filter((bucket) => bucket.par === par)
+    .map((bucket) => ({
+      key: `${bucket.par}-${bucket.label}`,
+      range: bucket.label,
+      holes: holesLabel(bucket.holes),
+      toPar: formatAverageToPar(bucket.averageToPar),
+      greens: formatPercent(bucket.girPercent),
+      worst: bucket.worst,
+      mix: bucket.mix,
+      segments: mixSegments(bucket.mix),
+    }));
+}
+
+export const APPROACH_EMPTY = "Play rounds on courses with yardages to see how you score from each distance.";
+
+/** "Avg 1.4", beside the three-putt columns. */
+export function threePuttAverage(perRound: number | null): string {
+  return formatOneDecimal(perRound);
+}
+
+/** The phone's putting figures over the section: putts a round and three-putt rate with their moves, and putts a green. */
+export function puttingFigures(analytics: Analytics): {
+  key: string;
+  label: string;
+  value: string;
+  change: string | null;
+  direction: StatDirection | null;
+  tone: HeadlineTile["tone"];
+}[] {
+  const tiles = headlineTiles(analytics.headline);
+  const putts = tiles.find((tile) => tile.metric === "average_putts");
+  const threes = tiles.find((tile) => tile.metric === "three_putt_rate");
+  return [
+    ...(putts ? [{ ...putts, key: putts.metric }] : []),
+    {
+      key: "putts_per_gir",
+      label: "Putts / GIR",
+      value: formatOneDecimal(analytics.kpis.putts_per_gir),
+      change: null,
+      direction: null,
+      tone: "neutral" as const,
+    },
+    ...(threes ? [{ ...threes, key: threes.metric }] : []),
+  ];
 }

@@ -20,7 +20,7 @@ export const queryKeys = {
   /** The goal report, per goal: a report for one goal never stands in for another's. Leave the goal out for all of them. */
   goalReport: (userId: string, goal?: number) =>
     goal === undefined ? (["goal-report", userId] as const) : (["goal-report", userId, goal] as const),
-  /** A golfer's analytics, per set of filters. The Analytics page and The Lab read the same entries. */
+  /** A golfer's analytics, per set of filters. The Analytics page and its Profile read the same entries. */
   analytics: (userId: string, filters?: unknown) =>
     filters === undefined
       ? (["analytics", userId] as const)

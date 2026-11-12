@@ -43,6 +43,11 @@ export default function PickerMenuPreview() {
         onChange={() => {}}
         size="default"
       />
+      {/* Two menus sharing a phone's row, each stretched to half. */}
+      <div className="flex w-80 gap-2">
+        <PickerMenu aria-label="Rounds" label="Last 50 rounds" value="all" options={courses} onChange={() => {}} size="default" fill />
+        <PickerMenu aria-label="Course" label="All courses" value="all" options={courses} onChange={() => {}} size="default" fill />
+      </div>
       {/* While a pick saves. */}
       <PickerMenu aria-label="Scoring goal" label="Break 90" value="all" options={courses} onChange={() => {}} disabled />
     </>

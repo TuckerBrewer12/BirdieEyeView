@@ -1,7 +1,6 @@
 import {
   BarChart2,
   ChartNoAxesColumn,
-  FlaskConical,
   House,
   Inbox,
   LayoutDashboard,
@@ -24,7 +23,6 @@ const SIDE: Destination[] = [
   { href: "/rounds", label: "Rounds", icon: ListOrdered },
   { href: "/courses", label: "Courses", icon: MapPin },
   { href: "/analytics", label: "Analytics", icon: BarChart2 },
-  { href: "/the-lab", label: "The Lab", icon: FlaskConical },
   { href: "/career", label: "Career", icon: Trophy },
   { href: "/social", label: "Social", icon: Users },
 ];
@@ -43,7 +41,6 @@ const TABS: Destination[] = [
 /** The rest, behind the tab bar's More menu. */
 const MORE: Destination[] = [
   { href: "/courses", label: "Courses", icon: MapPin },
-  { href: "/the-lab", label: "The Lab", icon: FlaskConical },
   { href: "/career", label: "Career", icon: Trophy },
   { href: "/social", label: "Social", icon: Users },
   { href: "/inbox", label: "Inbox", icon: Inbox },

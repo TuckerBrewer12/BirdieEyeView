@@ -1,6 +1,6 @@
 export * as tokens from "./tokens";
 export { fromBreakpoint } from "./breakpoints";
-export { chartTooltipStyle, chartTickStyle } from "./chart";
+export { chartTickStyle } from "./chart";
 export {
   SCORE_KEYS,
   scoreCountTextClass,

@@ -55,8 +55,10 @@ export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
     handicap_trend: [],
     score_differentials: [],
     score_mix: { eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0 },
-    insights: [],
     peak_game: null,
+    headline: analytics.headline.map((figure) => ({ ...figure, value: null, change: null, verdict: null, trend: [] })),
+    putts_per_hole: { holes: 0, one_or_fewer: 0, two: 0, three_or_more: 0 },
+    par_types: analytics.par_types.map((row) => ({ ...row, average_to_par: null, gap: null, verdict: null })),
     // No round, so no record either.
 
     notable_achievements: {

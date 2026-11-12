@@ -1,6 +1,5 @@
 import {
   ChartNoAxesColumn,
-  FlaskConical,
   House,
   Inbox,
   List,
@@ -21,7 +20,6 @@ const tabs = [
 
 const more = [
   { href: "/courses", label: "Courses", icon: MapPin },
-  { href: "/the-lab", label: "The Lab", icon: FlaskConical },
   { href: "/career", label: "Career", icon: Trophy },
   { href: "/social", label: "Social", icon: Users },
   { href: "/inbox", label: "Inbox", icon: Inbox },

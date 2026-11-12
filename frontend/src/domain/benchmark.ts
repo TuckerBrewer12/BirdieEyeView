@@ -53,7 +53,7 @@ export interface BenchmarkShape {
   par5ToPar: number | null;
 }
 
-/** Who The Lab asks the server to hold the golfer up against. */
+/** Who Profile asks the server to hold the golfer up against. */
 export type BenchmarkTarget =
   | { against: "handicap"; handicap: number }
   | { against: "peak" }
@@ -109,15 +109,17 @@ export function benchmarkComparisonFrom(dto: BenchmarkComparisonDto): BenchmarkC
       par4ToPar: dto.verdicts.par4_to_par,
       par5ToPar: dto.verdicts.par5_to_par,
     },
-    parTypes: dto.par_types.map((row) => ({
-      par: row.par,
-      averageToPar: row.average_to_par,
-      benchmarkToPar: row.benchmark_to_par,
-      gap: row.gap,
-      verdict: row.verdict,
-    })),
+    parTypes: parTypesFrom(dto.par_types),
   };
 }
 
-/** Tour players' short game, in percent: what the dashboard measures a player's last five rounds against. */
-export const TOUR_SHORT_GAME = { scrambling: 57, upAndDown: 50 } as const;
+/** The server's par type rows, each the golfer's against a benchmark's. */
+export function parTypesFrom(rows: readonly ParTypeComparisonDto[]): ParTypeComparison[] {
+  return rows.map((row) => ({
+    par: row.par,
+    averageToPar: row.average_to_par,
+    benchmarkToPar: row.benchmark_to_par,
+    gap: row.gap,
+    verdict: row.verdict,
+  }));
+}

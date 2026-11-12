@@ -58,22 +58,22 @@ export class DemoTourRobot {
     return this;
   }
 
-  /** The sample golfer's 24 rounds among the headline figures, so the charts have their data. */
+  /** The sample golfer's 24 rounds beside the title, so the charts have their data. */
   async seesAnalytics(): Promise<this> {
-    const rounds = this.page.getByText("Rounds", { exact: true }).locator("xpath=following-sibling::*[1]");
-    await expect(rounds.filter({ hasText: /^24$/ }).locator("visible=true").first()).toBeVisible();
+    await expect(this.page.getByText(/^24 rounds$/).locator("visible=true").first()).toBeVisible();
     return this;
   }
 
+  /** The Lab's old address, which opens the analytics page's Profile. */
   async openLab(): Promise<this> {
     await this.page.goto("/the-lab");
-    await expect(this.page.getByRole("heading", { name: "The Lab" }).locator("visible=true")).toBeVisible();
+    await expect(this.page.getByRole("tab", { name: "Profile", selected: true }).locator("visible=true")).toBeVisible();
     return this;
   }
 
-  /** The par-type card, which both layouts open on, filled in from the golfer's rounds. */
+  /** The goal card and the shape, filled in from the golfer's rounds. */
   async seesLab(): Promise<this> {
-    await expect(this.page.locator("[data-slot=par-type-card]").locator("visible=true").first()).toBeVisible();
+    await expect(this.page.locator("[data-slot=shape-card]").locator("visible=true").first()).toBeVisible();
     return this;
   }
 

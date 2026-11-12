@@ -74,3 +74,32 @@ export function buildRadarData(
     verdict: verdicts?.[figure] ?? null,
   }));
 }
+
+/** One axis the golfer is ahead or behind on, and by how many of the radar's 0–100 points. */
+export interface RadarGap {
+  axis: string;
+  /** The golfer's less the comparison's, in radar points, whole: positive is further out. */
+  points: number;
+}
+
+/** Where the golfer stands on the radar against the comparison, by the server's verdicts. */
+export interface RadarStanding {
+  /** Biggest lead first. */
+  ahead: RadarGap[];
+  /** Biggest deficit first. */
+  behind: RadarGap[];
+  /** The axes with a verdict. */
+  judged: number;
+}
+
+/** The axes the server judged ahead or behind, each with its gap on the radar's scale. */
+export function radarStanding(entries: readonly RadarEntry[]): RadarStanding {
+  const gap = (entry: RadarEntry): RadarGap => ({ axis: entry.axis, points: Math.round(entry.value - entry.benchmark) });
+  const ahead = entries.filter((entry) => entry.verdict === "ahead").map(gap);
+  const behind = entries.filter((entry) => entry.verdict === "behind").map(gap);
+  return {
+    ahead: ahead.sort((a, b) => b.points - a.points),
+    behind: behind.sort((a, b) => a.points - b.points),
+    judged: entries.filter((entry) => entry.verdict != null).length,
+  };
+}

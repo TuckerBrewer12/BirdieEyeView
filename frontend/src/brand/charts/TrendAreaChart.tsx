@@ -4,6 +4,7 @@ import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
 import { ChartTooltip } from "./ChartTooltip";
+import { useChartWidth } from "./useChartWidth";
 import { indexScale, knownValues, paddedExtent } from "./scales";
 
 type TrendAreaTone = "primary" | "birdie" | "bogey" | "eagle" | "neutral" | "contrast";
@@ -31,6 +32,8 @@ interface TrendAreaSeries {
   /** Names the line in the tooltip, and in a legend when there are two. */
   label: string;
   tone?: TrendAreaTone;
+  /** `dots` marks each round alone, with no line or fill: the scores under their running average. */
+  mark?: "line" | "dots";
 }
 
 interface TrendAreaPoint {
@@ -49,7 +52,10 @@ interface TrendAreaPoint {
 interface TrendAreaChartProps {
   /** One per round, oldest first. */
   points: TrendAreaPoint[];
-  /** The first is the figure, drawn over a soft fill. A second is drawn as a thinner line beside it. */
+  /**
+   * The first is the figure, drawn over a soft fill, or as dots alone; a second is drawn beside it, a
+   * thinner line beside a line, the lead line beside dots.
+   */
   series: [TrendAreaSeries] | [TrendAreaSeries, TrendAreaSeries];
   /** How a value reads on the axis and in the tooltip. */
   format?: (value: number) => string;
@@ -63,8 +69,9 @@ interface TrendAreaChartProps {
 
 /**
  * A figure over a golfer's rounds: one line over a soft fill, oldest on the left, with a second
- * line beside it if wanted. Hovering with a mouse or tapping on a phone picks a round and shows
- * its figures.
+ * line beside it if wanted, or each round as a dot under its average's line. It draws at its box's
+ * width, so its labels keep their size. Hovering with a mouse or tapping on a phone picks a round
+ * and shows its figures.
  */
 export function TrendAreaChart({
   points,
@@ -76,7 +83,8 @@ export function TrendAreaChart({
   "aria-label": ariaLabel,
 }: TrendAreaChartProps) {
   const layout = tokens.chart.trendArea;
-  const { width: W, height: H, pad: PAD } = layout;
+  const { height: H, pad: PAD } = layout;
+  const [W, measureRef] = useChartWidth(layout.width, layout.minWidth);
   const gradientId = `trend-area-${useId().replace(/:/g, "")}`;
   const [active, setActive] = useState<number | null>(null);
 
@@ -109,6 +117,9 @@ export function TrendAreaChart({
     .curve(curveMonotoneX);
 
   const lead = STROKE[series[0].tone ?? "primary"];
+  // The line drawn full weight: the first, unless the first is dots.
+  const leadLine = series.findIndex((s) => s.mark !== "dots");
+  const hasDots = series.some((s) => s.mark === "dots");
   const showDots = points.length <= layout.maxDots;
   const xTicks = tickIndexes(points.length, layout.xTicks);
 
@@ -123,7 +134,7 @@ export function TrendAreaChart({
   const pointY = pointValue != null ? y(pointValue) : null;
 
   return (
-    <div data-slot="trend-area-chart" className={cn("relative flex flex-col gap-2 select-none", className)}>
+    <div ref={measureRef} data-slot="trend-area-chart" className={cn("relative flex flex-col gap-2 select-none", className)}>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full touch-pan-y overflow-visible"
@@ -181,19 +192,21 @@ export function TrendAreaChart({
           </g>
         )}
 
-        <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />
+        {series[0].mark !== "dots" && <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />}
 
-        {series.map((s, i) => (
-          <path
-            key={s.label}
-            d={trace(valuesOf(i)) ?? ""}
-            fill="none"
-            stroke={STROKE[s.tone ?? "primary"]}
-            strokeWidth={i === 0 ? layout.stroke : layout.strokeSecondary}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        ))}
+        {series.map((s, i) =>
+          s.mark === "dots" ? null : (
+            <path
+              key={s.label}
+              d={trace(valuesOf(i)) ?? ""}
+              fill="none"
+              stroke={STROKE[s.tone ?? "primary"]}
+              strokeWidth={i === leadLine ? layout.stroke : layout.strokeSecondary}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ),
+        )}
 
         {active != null && pointY != null && (
           <line
@@ -210,14 +223,17 @@ export function TrendAreaChart({
         {series.map((s, i) =>
           points.map((p, index) => {
             const value = p.values[i];
-            if (value == null || (!showDots && active !== index)) return null;
+            const dotted = s.mark === "dots";
+            // Beside the rounds' own dots, a line marks only the round picked.
+            const lineDots = showDots && !hasDots;
+            if (value == null || (!dotted && !lineDots && active !== index)) return null;
             return (
               <circle
                 key={`dot-${i}-${index}`}
                 cx={x(index)}
                 cy={y(value)}
                 r={active === index ? layout.dotHover : layout.dot}
-                fill={STROKE[s.tone ?? "primary"]}
+                fill={dotted && active !== index ? tokens.color.chart.axis : STROKE[s.tone ?? "primary"]}
                 stroke={tokens.color.card}
                 strokeWidth={tokens.lineWidth.outline}
               />

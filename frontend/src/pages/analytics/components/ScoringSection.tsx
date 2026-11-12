@@ -1,0 +1,96 @@
+import { ColumnBars, Meter, ShareBar, ShareLegend, ToggleGroup, ToggleGroupItem, TrendAreaChart } from "@/brand";
+import type { Analytics } from "../model";
+import {
+  averageLine,
+  benchmarkNote,
+  difficultyColumns,
+  formatScore,
+  mixLegend,
+  mixSegments,
+  parTypeBars,
+  seriesPoints,
+} from "../present";
+import type { ScoreReading } from "../useAnalyticsPageViewModel";
+import { ParTypeRow } from "./ParTypeRow";
+import { SectionCard } from "./SectionCard";
+
+interface ScoringSectionProps {
+  analytics: Analytics;
+  reading: ScoreReading;
+  onReadingChange: (reading: ScoreReading) => void;
+}
+
+const READINGS: { value: ScoreReading; label: string }[] = [
+  { value: "gross", label: "Gross" },
+  { value: "net", label: "Net" },
+];
+
+/** Scoring: the score each round with its five-round line and the mix of scores, then by par type and by hole difficulty. */
+export function ScoringSection({ analytics, reading, onReadingChange }: ScoringSectionProps) {
+  const series = reading === "net" ? analytics.netTrend : analytics.scoreTrend;
+  const note = benchmarkNote(analytics.benchmarkHandicap);
+  return (
+    <div data-slot="scoring-section" className="flex flex-col gap-4">
+      <SectionCard
+        title="Score trend"
+        action={
+          <ToggleGroup
+            size="sm"
+            aria-label="Score type"
+            value={[reading]}
+            onValueChange={(values: string[]) => {
+              const next = READINGS.find((option) => option.value === values[0]);
+              if (next) onReadingChange(next.value);
+            }}
+          >
+            {READINGS.map((option) => (
+              <ToggleGroupItem key={option.value} value={option.value}>
+                {option.label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        }
+      >
+        <TrendAreaChart
+          aria-label={reading === "net" ? "Net score each round" : "Score each round"}
+          points={seriesPoints(series, formatScore)}
+          series={[
+            { label: reading === "net" ? "Net" : "Score", tone: "neutral", mark: "dots" },
+            { label: "5-round avg", tone: "primary" },
+          ]}
+          reference={reading === "gross" ? averageLine(analytics.kpis.scoring_average, formatScore) : null}
+        />
+        <div className="flex flex-col gap-2.5 border-t border-border pt-3.5 md:flex-row md:items-center md:gap-4">
+          <span className="text-body font-semibold md:w-18">Score mix</span>
+          <ShareBar size="sm" segments={mixSegments(analytics.scoreMix)} className="md:flex-1" />
+          <ShareLegend items={mixLegend(analytics.scoreMix, true)} />
+        </div>
+      </SectionCard>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-analytics-pair">
+        <SectionCard title="By hole par" description={note} data-slot="by-hole-par">
+          {parTypeBars(analytics.parTypes).map((bar) => (
+            <ParTypeRow key={bar.par} label={bar.label} value={bar.value}>
+              <Meter
+                value={bar.fill}
+                marker={bar.mark}
+                tone={bar.verdict === "behind" ? "bad" : "success"}
+                aria-label={`${bar.label}: ${bar.value} a hole`}
+              />
+            </ParTypeRow>
+          ))}
+        </SectionCard>
+        <SectionCard
+          title="By hole difficulty"
+          description="Hardest to easiest by handicap · worst three in red"
+          data-slot="by-hole-difficulty"
+        >
+          <ColumnBars
+            aria-label="Average to par by hole handicap, 1 the hardest"
+            columns={difficultyColumns(analytics.holeDifficulty)}
+          />
+        </SectionCard>
+      </div>
+    </div>
+  );
+}

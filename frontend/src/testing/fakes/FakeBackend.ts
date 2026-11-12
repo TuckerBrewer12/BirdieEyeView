@@ -49,7 +49,7 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   dashboard?: DashboardDto;
   analytics?: AnalyticsDto | null;
   /**
-   * Analytics by golfer, for screens that read someone else's (The Lab's friend comparison).
+   * Analytics by golfer, for screens that read someone else's (a friend's).
    * A golfer with none here gets `analytics`.
    */
   analyticsByGolfer?: Record<string, AnalyticsDto>;

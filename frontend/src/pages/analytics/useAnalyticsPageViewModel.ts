@@ -1,22 +1,25 @@
 import { useState } from "react";
 import { useAnalytics } from "@/data/useAnalytics";
 import { useUser } from "@/data/useUser";
-import type { RoundSummary } from "@/domain";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { analyticsRepository, type AnalyticsRepository } from "./analyticsRepository";
 import {
   DEFAULT_FILTERS,
+  DEFAULT_TAB,
   analyticsFrom,
-  defaultRangePar,
+  defaultApproachPar,
   isFiltered,
   type Analytics,
   type AnalyticsFilters,
   type AnalyticsTab,
+  type ApproachPar,
   type PlayedCourse,
-  type RangePar,
 } from "./model";
-import { useBestRound } from "./useBestRound";
+import { useProfile, type Profile } from "./useProfile";
 import { usePlayedCourses } from "./usePlayedCourses";
+
+/** The score trend's two readings. */
+export type ScoreReading = "gross" | "net";
 
 export interface AnalyticsPageViewModel {
   /** Nothing to show yet: the first load for this golfer. */
@@ -31,39 +34,46 @@ export interface AnalyticsPageViewModel {
   showEmpty: boolean;
 
   filters: AnalyticsFilters;
-  setFilters: (filters: AnalyticsFilters) => void;
-  /** A course or timeframe is narrowing the rounds. */
+  setLimit: (limit: number) => void;
+  setCourse: (courseId: string) => void;
+  /** A course is narrowing the rounds. */
   filtered: boolean;
   playedCourses: PlayedCourse[];
-  /** The golfer has a home course, so the course filter offers it. */
+  /** The golfer has a home course, so the course menu offers it. */
   hasHomeCourse: boolean;
 
-  /** The server's best round in the window, once it has loaded; null without one. */
-  bestRound: RoundSummary | null;
-
-  /** The par type the range view shows. Until one is picked, par 4s if there are any. */
-  rangePar: RangePar;
-  setRangePar: (par: RangePar) => void;
-
-  /** The phone layout's open section. */
   tab: AnalyticsTab;
   setTab: (tab: AnalyticsTab) => void;
+
+  scoreReading: ScoreReading;
+  setScoreReading: (reading: ScoreReading) => void;
+
+  /** The par type the approach section shows. Until one is picked, par 4s if there are any. */
+  approachPar: ApproachPar;
+  setApproachPar: (par: ApproachPar) => void;
+
+  /** The Profile section, over the golfer's last 20 rounds whatever the filters. */
+  profile: Profile;
 }
 
 export function useAnalyticsPageViewModel(
   userId: string,
+  initialTab: AnalyticsTab = DEFAULT_TAB,
   repository: AnalyticsRepository = analyticsRepository,
 ): AnalyticsPageViewModel {
   const [filters, setFilters] = useState<AnalyticsFilters>(DEFAULT_FILTERS);
-  const [tab, setTab] = useState<AnalyticsTab>("scoring");
-  const [pickedRangePar, setRangePar] = useState<RangePar | null>(null);
+  const [tab, setTab] = useState<AnalyticsTab>(initialTab);
+  const [scoreReading, setScoreReading] = useState<ScoreReading>("gross");
+  const [pickedPar, setApproachPar] = useState<ApproachPar | null>(null);
 
   const { data, isPending, isPlaceholderData, isError, error, refetch } = useAnalytics(userId, filters, analyticsFrom, repository);
   const { data: playedCourses = [] } = usePlayedCourses(userId, repository);
   const { data: user } = useUser(userId, repository);
+  // Read once Profile has been opened, and kept while the golfer moves between sections.
+  const [profileOpened, setProfileOpened] = useState(initialTab === "profile");
+  const profile = useProfile(userId, profileOpened, repository);
 
   const analytics = data ?? null;
-  const { data: bestRound } = useBestRound(analytics?.bestRound?.roundId ?? null, repository);
   const loadError = isError ? messageFrom(error, "Could not load your analytics.") : null;
 
   return {
@@ -74,14 +84,20 @@ export function useAnalyticsPageViewModel(
     analytics,
     showEmpty: analytics != null && loadError == null && analytics.roundCount === 0,
     filters,
-    setFilters,
+    setLimit: (limit) => setFilters((current) => ({ ...current, limit })),
+    setCourse: (courseId) => setFilters((current) => ({ ...current, courseId })),
     filtered: isFiltered(filters),
     playedCourses,
     hasHomeCourse: !!user?.home_course_id,
-    bestRound: analytics?.bestRound ? (bestRound ?? null) : null,
-    rangePar: pickedRangePar ?? defaultRangePar(analytics?.yardageBuckets ?? []),
-    setRangePar,
     tab,
-    setTab,
+    setTab: (next) => {
+      if (next === "profile") setProfileOpened(true);
+      setTab(next);
+    },
+    scoreReading,
+    setScoreReading,
+    approachPar: pickedPar ?? defaultApproachPar(analytics?.yardageBuckets ?? []),
+    setApproachPar,
+    profile,
   };
 }

@@ -3,22 +3,36 @@ import { cn } from "@/brand/cn";
 import type { GoalAttempt } from "@/domain/benchmark";
 import { chartTickStyle, tokens } from "@/brand/theme";
 import { indexScale, paddedExtent } from "./scales";
+import { useChartWidth } from "./useChartWidth";
 
 interface ScoreGoalChartProps {
   /** Rounds, oldest first, each marked met or not as the server judged it. */
   attempts: GoalAttempt[];
   /** The highest score that meets the goal, 79 to break 80: where the goal line is drawn. */
   goal: number;
+  /** The goal's words at the end of its line: "Break 80". */
+  goalLabel?: string;
+  /** Each round's score over its dot, the ones that met the goal in bold. */
+  scoreLabels?: boolean;
   className?: string;
   "aria-label"?: string;
 }
 
 /**
  * Rounds against a scoring goal: one dot per round, lower scores higher up, joined by a
- * faint line, with the goal dashed across. A round that met the goal is filled.
+ * faint line, with the goal dashed across and named at its start. A round that met the goal is
+ * filled; with `scoreLabels` each dot carries its score. It draws at its box's width, so the labels keep their size.
  */
-export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLabel }: ScoreGoalChartProps) {
-  const { width: W, height: H, pad, labelRoom, stroke, dot, dotReached } = tokens.chart.goal;
+export function ScoreGoalChart({
+  attempts,
+  goal,
+  goalLabel = "Goal",
+  scoreLabels = false,
+  className,
+  "aria-label": ariaLabel,
+}: ScoreGoalChartProps) {
+  const { width, minWidth, height: H, pad, stroke, dot, dotReached } = tokens.chart.goal;
+  const [W, measureRef] = useChartWidth(width, minWidth);
 
   if (attempts.length < 2) {
     return <div className="py-6 text-center text-sm text-muted-foreground">Not enough rounds yet</div>;
@@ -33,7 +47,7 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
   const goalY = y(goal);
 
   return (
-    <div data-slot="score-goal-chart" className={cn("w-full", className)}>
+    <div ref={measureRef} data-slot="score-goal-chart" className={cn("w-full", className)}>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full overflow-visible"
@@ -42,7 +56,7 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
       >
         <line
           x1={pad.x}
-          x2={W - pad.x - labelRoom}
+          x2={W - pad.x}
           y1={goalY}
           y2={goalY}
           stroke={tokens.color.primary}
@@ -50,13 +64,14 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
           strokeDasharray={tokens.chart.guideDash}
         />
         <text
-          x={W - pad.x - labelRoom + 4}
-          y={goalY + 4}
+          x={pad.x}
+          y={goalY - tokens.space.dot}
+          textAnchor="start"
           fontSize={chartTickStyle.fontSize}
-          fontWeight="600"
+          fontWeight="700"
           fill={tokens.color.primary}
         >
-          Goal
+          {goalLabel}
         </text>
         <polyline
           points={scores.map((score, i) => `${x(i)},${y(score)}`).join(" ")}
@@ -78,6 +93,20 @@ export function ScoreGoalChart({ attempts, goal, className, "aria-label": ariaLa
             strokeWidth={stroke}
           />
         ))}
+        {scoreLabels &&
+          attempts.map(({ score, metGoal }, i) => (
+            <text
+              key={i}
+              x={x(i)}
+              y={y(score) - dotReached - tokens.space.dot}
+              textAnchor="middle"
+              fontSize={chartTickStyle.fontSize}
+              fontWeight={metGoal ? "700" : "500"}
+              fill={metGoal ? tokens.color.score.birdie.text : tokens.color.mutedForeground}
+            >
+              {score}
+            </text>
+          ))}
       </svg>
     </div>
   );

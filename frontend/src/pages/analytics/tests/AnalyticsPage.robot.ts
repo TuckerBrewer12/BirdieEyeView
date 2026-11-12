@@ -9,7 +9,7 @@ import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
 // A few days after the sample golfer's last round, the way the demo tour sees them.
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
 
-type TabLabel = "Scoring" | "Ball Striking" | "Putting" | "Profile" | "Range View";
+type TabLabel = "Profile" | "Scoring" | "Ball striking" | "Putting" | "Approach";
 
 /** Screen robot for /analytics. */
 export class AnalyticsRobot {
@@ -25,14 +25,9 @@ export class AnalyticsRobot {
     return locator.locator("visible=true").first();
   }
 
-  /** The round count: the Rounds figure among the headline figures, on either layout. */
+  /** The round count beside the title: "24 rounds". */
   private roundCount(count: number): Locator {
-    return this.visible(
-      this.page
-        .getByText("Rounds", { exact: true })
-        .locator("xpath=following-sibling::*[1]")
-        .filter({ hasText: new RegExp(`^${count}$`) }),
-    );
+    return this.visible(this.page.getByText(new RegExp(`^${count} rounds?$`)));
   }
 
   async dark(): Promise<this> {
@@ -42,11 +37,11 @@ export class AnalyticsRobot {
     return this;
   }
 
-  private async install(seed: FakeBackendSeed): Promise<void> {
+  private async install(seed: FakeBackendSeed, path = "/analytics"): Promise<void> {
     await this.page.emulateMedia({ reducedMotion: "reduce" });
     await this.page.clock.setFixedTime(new Date(FROZEN_NOW));
     this.backend = await FakeSession.install(this.page, { ...sampleGolfer, ...seed });
-    await this.page.goto("/analytics");
+    await this.page.goto(path);
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
   }
 
@@ -54,6 +49,12 @@ export class AnalyticsRobot {
   async open(seed: FakeBackendSeed = {}): Promise<this> {
     await this.install(seed);
     await this.seesRounds(24);
+    return this;
+  }
+
+  /** The Lab's old address, which now lands on Profile. */
+  async openLab(): Promise<this> {
+    await this.install({}, "/the-lab");
     return this;
   }
 
@@ -113,36 +114,79 @@ export class AnalyticsRobot {
     return this;
   }
 
-  async openBestRound(): Promise<this> {
-    await this.visible(this.page.getByRole("button", { name: /Best Recent Round/ })).click();
-    return this;
-  }
-
-  async isAtRound(id: string): Promise<this> {
-    await expect(this.page).toHaveURL(new RegExp(`/rounds/${id}$`));
-    return this;
-  }
-
-  /** A par type in the range view: 3, 4 or 5. */
-  async pickRangePar(par: 3 | 4 | 5): Promise<this> {
+  /** A par type in Approach: 3, 4 or 5. */
+  async pickApproachPar(par: 3 | 4 | 5): Promise<this> {
     await this.visible(this.page.getByRole("button", { name: `Par ${par}`, exact: true })).click();
     return this;
   }
 
-  /** A yardage band's card in the range view, by its band: "350–399". */
+  /** A yardage band's card in Approach, by its band: "350–399". */
   async seesYardageBand(label: string): Promise<this> {
-    await expect(this.visible(this.page.locator("[data-slot=yardage-bucket-card]").getByText(label))).toBeVisible();
+    await expect(this.visible(this.page.locator("[data-slot=yardage-band]").getByText(label))).toBeVisible();
     return this;
   }
 
-  async clearCourse(): Promise<this> {
-    await this.visible(this.page.getByRole("button", { name: "Clear course filter" })).click();
+  /** The round count menu: "Last 10 rounds", "All rounds"… */
+  async pickRoundCount(label: string): Promise<this> {
+    await this.visible(this.page.getByRole("button", { name: "Rounds", exact: true })).click();
+    await this.page
+      .getByRole("menuitemradio", { name: label, exact: true })
+      .or(this.page.locator("[data-slot=sheet-option]").getByText(label, { exact: true }))
+      .click();
     return this;
   }
 
-  /** A timeframe or round-count pill in the filter bar: "YTD", "12 Mo", "10", "All"… */
-  async pickRange(label: string): Promise<this> {
+  /** Gross or Net on the score trend. */
+  async pickScoreReading(label: "Gross" | "Net"): Promise<this> {
     await this.visible(this.page.getByRole("button", { name: label, exact: true })).click();
+    return this;
+  }
+
+  async seesScoreTrend(label: "Score each round" | "Net score each round"): Promise<this> {
+    await expect(this.visible(this.page.getByRole("img", { name: label }))).toBeVisible();
+    return this;
+  }
+
+  /** The goal menu: "Break 85"… */
+  async pickGoal(label: string): Promise<this> {
+    await this.visible(this.page.getByRole("button", { name: "Scoring goal" })).click();
+    await this.page
+      .getByRole("menuitemradio", { name: label, exact: true })
+      .or(this.page.locator("[data-slot=sheet-option]").getByText(label, { exact: true }))
+      .click();
+    return this;
+  }
+
+  /** The goal was saved to the golfer's profile. */
+  async seesGoalSaved(goal: number): Promise<this> {
+    await expect.poll(() => this.backend?.profile?.scoring_goal).toBe(goal);
+    return this;
+  }
+
+  /** The comparison menu: "10 handicap", a friend's name. */
+  async compareWith(label: string): Promise<this> {
+    await this.visible(this.page.getByRole("button", { name: "Compare with" })).click();
+    await this.page
+      .getByRole("menuitemradio", { name: label, exact: true })
+      .or(this.page.locator("[data-slot=sheet-option]").getByText(label, { exact: true }))
+      .click();
+    return this;
+  }
+
+  /** The radar's comparison, by name. */
+  async seesComparedWith(name: string): Promise<this> {
+    await expect(this.visible(this.page.getByRole("img", { name: `Your shape against ${name}` }))).toBeVisible();
+    return this;
+  }
+
+  /** Where to find the strokes to the goal. */
+  async seesSavers(heading: RegExp): Promise<this> {
+    await expect(this.visible(this.page.locator("[data-slot=savers]"))).toContainText(heading);
+    return this;
+  }
+
+  async seesPeakGame(): Promise<this> {
+    await expect(this.visible(this.page.locator("[data-slot=peak-card]"))).toBeVisible();
     return this;
   }
 
@@ -153,7 +197,7 @@ export class AnalyticsRobot {
   }
 
   async seesNoMatchingRounds(): Promise<this> {
-    await expect(this.visible(this.page.getByText("No rounds found for the selected filters."))).toBeVisible();
+    await expect(this.visible(this.page.getByText("No rounds at this course yet."))).toBeVisible();
     return this;
   }
 
@@ -162,7 +206,7 @@ export class AnalyticsRobot {
     return this;
   }
 
-  /** The phone's section tabs. */
+  /** The page's section tabs. */
   private sectionTab(label: TabLabel): Locator {
     return this.visible(this.page.getByRole("tablist", { name: "Analytics sections" })).getByRole("tab", {
       name: label,
@@ -175,15 +219,10 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** The tab is selected, and its section shows this card's title. */
   async seesTabOpen(label: TabLabel, showing: string): Promise<this> {
     await expect(this.sectionTab(label)).toHaveAttribute("aria-selected", "true");
     await expect(this.visible(this.page.getByText(showing, { exact: true }))).toBeVisible();
-    return this;
-  }
-
-  /** The open section leads with this sentence about the golfer's game. */
-  async seesInsight(text: RegExp): Promise<this> {
-    await expect(this.visible(this.page.locator("[data-slot=insight-note]"))).toHaveText(text);
     return this;
   }
 
@@ -203,6 +242,3 @@ export const test = base.extend<{ analytics: AnalyticsRobot }>({
 export const LINKS = "Half Moon Bay Golf Links";
 /** The seed has no figures for this course, so the fake answers as if no round there matched. */
 export const UNSEEDED_COURSE = "Sharp Park Golf Course";
-
-/** The round the server marks lowest in the sample golfer's season. */
-export const BEST_ROUND_ID = sampleGolfer.analytics.notable_achievements.scoring_records_events.lifetime.lowest_round!.round_id;

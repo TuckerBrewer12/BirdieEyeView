@@ -1,6 +1,5 @@
 export {
   tokens,
-  chartTooltipStyle,
   chartTickStyle,
   SCORE_KEYS,
   scoreFillClass,
@@ -102,7 +101,6 @@ export { RoundScorecard } from "./components/RoundScorecard";
 export { CoursePreview } from "./components/CoursePreview";
 export { TabBar } from "./components/TabBar";
 export type { TabBarProps } from "./components/TabBar";
-export { SectionLabel } from "./components/SectionLabel";
 export { SideNav } from "./components/SideNav";
 export type { SideNavProps, SideNavUser } from "./components/SideNav";
 export type { NavItem, RenderLink } from "./nav";
@@ -145,6 +143,10 @@ export type { ConfirmDialogProps } from "./components/ConfirmDialog";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
 export { ScoreMixBar } from "./charts/ScoreMixBar";
+export { ShareBar, ShareLegend } from "./charts/ShareBar";
+export type { ShareSegment, ShareLegendItem } from "./charts/ShareBar";
+export { ColumnBars } from "./charts/ColumnBars";
+export type { Column } from "./charts/ColumnBars";
 export { ScoreMixDonut } from "./charts/ScoreMixDonut";
 export { RunningToParLine } from "./charts/RunningToParLine";
 export { Sparkline } from "./charts/Sparkline";
@@ -156,10 +158,6 @@ export { RoundFlowChart, RoundFlowFigures } from "./charts/RoundFlowChart";
 export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
 export { HoleProfileChart } from "./charts/HoleProfileChart";
 export { HoleGreensPuttsChart } from "./charts/HoleGreensPuttsChart";
-export { ScoreTargetChart } from "./charts/ScoreTargetChart";
-export type { ScoreTargetShot } from "./charts/ScoreTargetChart";
-export { ToParBars } from "./charts/ToParBars";
-export type { ToParBar } from "./charts/ToParBars";
 export { TrendAreaChart } from "./charts/TrendAreaChart";
 export type { TrendAreaPoint, TrendAreaSeries, TrendAreaTone } from "./charts/TrendAreaChart";
 

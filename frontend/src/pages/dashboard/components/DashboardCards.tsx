@@ -106,13 +106,13 @@ interface GoalCardProps {
   className?: string;
 }
 
-/** The scoring goal as a ring of how far along, and whether it's on track. Opens The Lab. */
+/** The scoring goal as a ring of how far along, and whether it's on track. Opens Analytics' Profile. */
 export function GoalCard({ goal, seasonRounds, compact = false, className }: GoalCardProps) {
   const target = goal ? goalTargetLabel(goal.target) : "Set a scoring goal";
   return (
     <Card
       data-slot="goal-card"
-      render={<Link to="/the-lab" />}
+      render={<Link to="/analytics?tab=profile" />}
       interactive
       className={cn("flex-row items-center gap-4", compact ? "px-4" : "px-5", className)}
     >
@@ -134,7 +134,7 @@ export function GoalCard({ goal, seasonRounds, compact = false, className }: Goa
             </div>
           )
         ) : (
-          <div className="text-body text-foreground-secondary">Pick a score to break in The Lab</div>
+          <div className="text-body text-foreground-secondary">Pick a score to break in Analytics</div>
         )}
       </div>
       {compact && <ChevronRight aria-hidden className="size-icon-md text-muted-foreground" />}

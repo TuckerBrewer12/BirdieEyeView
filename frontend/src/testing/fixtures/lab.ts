@@ -110,13 +110,17 @@ export const labAnalytics: AnalyticsDto = {
     three_putt_count: count,
     three_putt_percentage: pct(count),
     holes_with_putt_data: 18,
+    costly: count >= 3,
   })),
   putts_trend: PUTTS.map((putts, i) => ({
     round_index: i + 1,
     round_id: `lab-${i + 1}`,
     total_putts: putts,
     holes_played: 18,
+    rolling_average: null,
   })),
+  // A step better than 17.8.
+  next_level_handicap: 15,
 };
 
 /** Avery plays to about 81: more greens, better par 3s. Jordan has no rounds. */
@@ -169,24 +173,24 @@ export const labGoalReport: GoalReportDto = {
       type: "three_putt_bleed",
       strokes_saved: 1.2,
       percentage_of_gap: 44,
-      headline: "You average 2.0 three-putts a round",
-      detail: "Halving them would save about 1.2 strokes a round.",
+      headline: "Cut out 3-putts",
+      detail: "2.0 a round",
       data: {},
     },
     {
       type: "blowup_holes",
       strokes_saved: 0.9,
       percentage_of_gap: 33,
-      headline: "3.6 holes a round end in double bogey or worse",
-      detail: "Turning one of them into a bogey saves about 0.9 strokes.",
+      headline: "Turn doubles into bogeys",
+      detail: "3.6 doubles or worse a round",
       data: {},
     },
     {
       type: "gir_opportunity",
       strokes_saved: 0.6,
       percentage_of_gap: 22,
-      headline: "You hit 28% of greens in regulation",
-      detail: "Two more greens a round is worth about 0.6 strokes.",
+      headline: "Hit more greens",
+      detail: "28% of greens",
       data: {},
     },
   ],

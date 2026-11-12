@@ -2,13 +2,13 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import type { ReactNode } from "react";
-import { FakeLabRepository } from "@/testing/fakes/FakeLabRepository";
-import { labGoalReport } from "@/testing/fixtures/lab";
+import { FakeAnalyticsRepository } from "@/testing/fakes/FakeAnalyticsRepository";
+import { labAnalytics, labGoalReport } from "@/testing/fixtures/lab";
 import { useGoalReport } from "../useGoalReport";
 
 function setup(goal: number | null) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const repository = new FakeLabRepository({ goalReport: labGoalReport });
+  const repository = new FakeAnalyticsRepository({ analytics: labAnalytics, goalReport: labGoalReport });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
