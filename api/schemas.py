@@ -749,23 +749,26 @@ class PlayedCourseResponse(ResponseModel):
     location: Optional[str] = None
 
 
-class ComparisonRow(ResponseModel):
-    """The selected round, or a trailing average ending at it ("Last 5 Avg")."""
-    label: str
-    sample_size: int
-    round_id: Optional[str] = None  # set on the selected round's row only
-    primary_value: Optional[float] = None
-    secondary_value: Optional[float] = None
+class ComparisonFigure(ResponseModel):
+    """One figure of a round against its average: the round's value, the average, this less that,
+    and whether the difference is good, bad or neutral for the golfer."""
+    metric: Literal["score", "putts", "greens", "three_putts", "putts_per_gir", "scrambling"]
+    value: Optional[float] = None
+    average: Optional[float] = None
+    difference: Optional[float] = None
+    verdict: Optional[Literal["good", "bad", "neutral"]] = None
+
+
+class ComparisonWindowResponse(ResponseModel):
+    """The rounds before this one that a window averages: the last five, twenty, or all."""
+    window: Literal["l5", "l20", "all"]
+    rounds: int
+    metrics: List[ComparisonFigure] = Field(default_factory=list)
 
 
 class RoundComparisonResponse(ResponseModel):
-    """A round against the player's trailing averages, one list per metric."""
-    score: List[ComparisonRow] = Field(default_factory=list)  # strokes, then to par
-    putts: List[ComparisonRow] = Field(default_factory=list)
-    gir: List[ComparisonRow] = Field(default_factory=list)  # greens, then percent
-    three_putts: List[ComparisonRow] = Field(default_factory=list)  # count, then percent
-    putts_per_gir: List[ComparisonRow] = Field(default_factory=list)
-    scrambling: List[ComparisonRow] = Field(default_factory=list)  # saves, then percent
+    """A round against the golfer's average over the rounds before it, one entry per window."""
+    windows: List[ComparisonWindowResponse] = Field(default_factory=list)
 
 
 GoalSaverType = Literal[

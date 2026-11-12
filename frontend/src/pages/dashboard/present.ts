@@ -2,8 +2,8 @@ import {
   formatCourseName,
   formatDayShort,
   formatOneDecimal,
-  formatSignedOneDecimal,
-  formatWeekdayShort,
+  formatSigned,
+  formatWeekday,
   pluralNoun,
   scoreKindNoun,
   type RoundSummary,
@@ -37,7 +37,7 @@ export function moveOf(change: number | null): Move {
 
 /** "Last round · Sun, Jun 15" on a wide screen, "Last round · Jun 15" on a phone. */
 export function lastRoundLabel(date: string | null, { weekday }: { weekday: boolean }): string {
-  const day = weekday ? formatWeekdayShort(date) : formatDayShort(date);
+  const day = weekday ? formatWeekday(date, { year: false }) : formatDayShort(date);
   return day ? `Last round · ${day}` : "Last round";
 }
 
@@ -88,7 +88,7 @@ export function scoreAndRatingForWhs(row: WhsRound): string {
 }
 
 export function differentialLabel(value: number | null): string {
-  return value != null ? formatSignedOneDecimal(value) : "—";
+  return value != null ? formatSigned(value) : "—";
 }
 
 /** "5 of 20": how full the WHS window is. */

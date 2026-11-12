@@ -132,7 +132,7 @@ describe("present", () => {
 
   it("words strokes and trends with their sign", () => {
     expect(signedStrokes(1.23)).toEqual({ text: "+1.2 strokes", tone: "text-score-birdie" });
-    expect(signedStrokes(-0.44)).toEqual({ text: "-0.4 strokes", tone: "text-score-bogey" });
+    expect(signedStrokes(-0.44)).toEqual({ text: "\u22120.4 strokes", tone: "text-score-bogey" });
     expect(signedStrokes(0.04).tone).toBe("text-score-birdie");
     expect(signedStrokes(0).tone).toBe("text-muted-foreground");
     expect(recentTrendNote(0.5)).toBe("Trending 0.5 strokes above your 20-round average.");

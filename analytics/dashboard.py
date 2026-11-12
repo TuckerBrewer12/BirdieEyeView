@@ -41,11 +41,14 @@ def scoring_average_change(
     return analytics.round_half_up(recent - overall, 1)
 
 
-def change_verdict(change: Optional[float]) -> Optional[ChangeVerdict]:
-    """Whether a move in a figure that improves as it falls (a score, a handicap) is for the better."""
+def change_verdict(change: Optional[float], lower_is_better: bool = True) -> Optional[ChangeVerdict]:
+    """Whether a move in a figure is for the better. Most improve as they fall (a score, a
+    handicap, putts); `lower_is_better=False` is for one that improves as it rises (greens hit)."""
     if change is None:
         return None
-    return "neutral" if change == 0 else ("good" if change < 0 else "bad")
+    if change == 0:
+        return "neutral"
+    return "good" if (change < 0) == lower_is_better else "bad"
 
 
 def score_mix(rounds: List[Round]) -> Dict[str, Any]:

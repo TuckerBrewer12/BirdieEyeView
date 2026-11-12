@@ -219,3 +219,71 @@ tester.run("kit/no-breakpoint-styling", kit.rules["no-breakpoint-styling"], {
     },
   ],
 });
+
+const PAGE = "/app/src/pages/rounds/RoundsPage.tsx";
+const KIT = "/app/src/brand/components/PageTitle.tsx";
+
+tester.run("kit/no-raw-heading", kit.rules["no-raw-heading"], {
+  valid: [
+    { code: 'const el = <PageTitle size="heading">Half Moon Bay</PageTitle>;', filename: PAGE },
+    { code: "const el = <CardTitle level={2}>Round flow</CardTitle>;", filename: PAGE },
+    // The kit is where headings are built.
+    { code: 'const el = <h1 className="text-title" />;', filename: KIT },
+  ],
+  invalid: [
+    { code: 'const el = <h1 className="text-title">Rounds</h1>;', filename: PAGE, errors: [{ messageId: "title" }] },
+    { code: "const el = <h2>vs your average</h2>;", filename: PAGE, errors: [{ messageId: "heading" }] },
+  ],
+});
+
+tester.run("kit/no-figure-type", kit.rules["no-figure-type"], {
+  valid: [
+    { code: 'const el = <StatValue size="card">78</StatValue>;', filename: PAGE },
+    // `text-figure` lives in the kit's Stat variants.
+    { code: 'const el = <div className="text-figure" />;', filename: "/app/src/brand/components/Stat.tsx" },
+    { code: 'const el = <span className="text-title" />;', filename: PAGE },
+  ],
+  invalid: [
+    { code: 'const el = <span className="text-figure leading-none">78</span>;', filename: PAGE, errors: [{ messageId: "figure" }] },
+    { code: 'const el = <h1 className={cn("md:text-heading", x)} />;', filename: PAGE, errors: [{ messageId: "figure" }] },
+    { code: 'const el = <span className="text-hero" />;', filename: PAGE, errors: [{ messageId: "figure" }] },
+  ],
+});
+
+tester.run("kit/no-button-size-override", kit.rules["no-button-size-override"], {
+  valid: [
+    { code: 'const el = <Button size="toolbar" className="w-full md:ml-auto" />;', filename: PAGE },
+    { code: 'const el = <Button variant="link" size="inline" className="mb-4 self-start" />;', filename: PAGE },
+  ],
+  invalid: [
+    { code: 'const el = <Button className="h-11 rounded-xl px-4" />;', filename: PAGE, errors: [{ messageId: "size" }] },
+    { code: 'const el = <DropdownMenuTrigger className="size-11 p-0" />;', filename: PAGE, errors: [{ messageId: "size" }] },
+    { code: 'const el = <X render={<Button size="sm" className="group px-0" />} />;', filename: PAGE, errors: [{ messageId: "size" }] },
+  ],
+});
+
+tester.run("kit/no-handmade-radio", kit.rules["no-handmade-radio"], {
+  valid: [
+    'const el = <ToggleGroup aria-label="Tee" />;',
+    'const el = <div role="group" />;',
+    // A kit component's own role prop is its business.
+    'const el = <Thing role="radio" />;',
+  ],
+  invalid: [
+    { code: 'const el = <div role="radiogroup" />;', errors: [{ messageId: "role" }] },
+    { code: 'const el = <button role="radio" aria-checked />;', errors: [{ messageId: "role" }] },
+  ],
+});
+
+tester.run("kit/no-format-outside-domain", kit.rules["no-format-outside-domain"], {
+  valid: [
+    { code: "const s = formatOneDecimal(x);", filename: PAGE },
+    { code: "const s = x.toFixed(1);", filename: "/app/src/domain/format.ts" },
+    { code: 'const s = d.toLocaleDateString("en-US");', filename: "/app/src/domain/date.ts" },
+  ],
+  invalid: [
+    { code: "const s = x.toFixed(2);", filename: PAGE, errors: [{ messageId: "format" }] },
+    { code: 'const s = n.toLocaleString("en-US");', filename: "/app/src/brand/components/X.tsx", errors: [{ messageId: "format" }] },
+    { code: 'const f = new Intl.NumberFormat("en-US");', filename: "/app/src/domain/handicap.ts", errors: [{ messageId: "format" }] },
+  ],
+});

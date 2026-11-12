@@ -1,4 +1,4 @@
-import { Card, RowButton, Sparkline } from "@/brand";
+import { Card, PageTitle, RowButton, Sparkline, StatValue } from "@/brand";
 import { formatHandicapIndex } from "@/domain";
 import type { HandicapMonth } from "../model";
 import { moveOf } from "../present";
@@ -27,7 +27,7 @@ export function GreetingHeader({ greeting, name, handicap, handicapLine, onHandi
       <div data-slot="greeting-header" className="flex items-center justify-between gap-3 pl-1">
         <div className="min-w-0">
           <div className="text-sm text-muted-foreground">{greeting}</div>
-          <h1 className="truncate text-figure-sm leading-tight tracking-title">{name}</h1>
+          <PageTitle size="figure">{name}</PageTitle>
         </div>
         <Card
           render={<RowButton aria-label={label} onClick={onHandicapClick} />}
@@ -37,7 +37,7 @@ export function GreetingHeader({ greeting, name, handicap, handicapLine, onHandi
           <span className="flex flex-col">
             <span className="text-body-sm text-muted-foreground">Handicap</span>
             <span className="flex items-baseline gap-1.5">
-              <span className="text-figure-sm leading-none">{index}</span>
+              <StatValue size="card-sm">{index}</StatValue>
               <MoveDelta change={handicap.change} verdict={handicap.verdict} className="font-semibold" />
             </span>
           </span>
@@ -49,7 +49,7 @@ export function GreetingHeader({ greeting, name, handicap, handicapLine, onHandi
 
   return (
     <div data-slot="greeting-header">
-      <h1 className="text-greeting">{`${greeting}, ${name}`}</h1>
+      <PageTitle size="heading">{`${greeting}, ${name}`}</PageTitle>
       <RowButton
         aria-label={label}
         onClick={onHandicapClick}
