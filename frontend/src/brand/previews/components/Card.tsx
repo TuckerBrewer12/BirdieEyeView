@@ -53,6 +53,25 @@ export default function CardPreview() {
         <div className="text-body text-muted-foreground">The lead card, a link</div>
         <div className="text-name">Half Moon Bay</div>
       </Card>
+
+      {/* A card that heads a section: its title is a heading. */}
+      <Card size="lg">
+        <CardHeader>
+          <CardTitle level={2} className="text-body-lg font-semibold">
+            Round flow
+          </CardTitle>
+          <CardAction className="text-body-sm text-muted-foreground">Out +4 · In +2</CardAction>
+        </CardHeader>
+      </Card>
+
+      {/* surface="none": the card's spacing with no surface, as inside a sheet. */}
+      <div className="rounded-xl bg-muted p-3">
+        <Card surface="none" size="sm">
+          <CardHeader>
+            <CardTitle>On the sheet's own surface</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
     </>
   );
 }

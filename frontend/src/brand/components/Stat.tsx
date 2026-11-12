@@ -77,12 +77,15 @@ function StatDelta({
   direction,
   tone,
   pill = false,
+  glyph = true,
   className,
   children,
   ...props
 }: React.ComponentProps<"span"> & VariantProps<typeof statDeltaVariants> & {
   direction: StatDirection | null;
   tone: StatTone;
+  /** Leave the triangle off where the amount's sign already says which way, as in "−2.4". */
+  glyph?: boolean;
 }) {
   if (direction == null) return null;
   return (
@@ -93,7 +96,7 @@ function StatDelta({
       className={cn(statDeltaVariants({ tone, pill, className }))}
       {...props}
     >
-      <span aria-hidden>{DIRECTION_GLYPHS[direction]}</span>
+      {glyph && <span aria-hidden>{DIRECTION_GLYPHS[direction]}</span>}
       {children}
     </span>
   );

@@ -1,3 +1,4 @@
+import { formatOneDecimal, formatSigned, formatTwoDecimals } from "@/domain/format";
 import { toParTextClass } from "@/brand";
 import {
   COMPARISON_HANDICAPS,
@@ -76,7 +77,7 @@ export function benchmarkHeading(
   peak: PeakGame | null,
 ): string {
   if (mode === "peak") {
-    return peak ? `You vs. Your Peak Game (avg ${peak.average.toFixed(1)})` : "Peak Game";
+    return peak ? `You vs. Your Peak Game (avg ${formatOneDecimal(peak.average)})` : "Peak Game";
   }
   if (comparison === "friend") return friend ? `You vs. ${friendName(friend)}` : "You vs. Friend";
   if (comparison == null) return "Your Performance Shape";
@@ -101,14 +102,14 @@ export function goalLabel(target: number | null): string | null {
 export function goalStandingNote(goal: GoalStanding): string | null {
   if (goal.onTrack) return `Your average already breaks ${goalScoreToBreak(goal.target)}. Keep it there.`;
   if (goal.gap == null) return null;
-  return `${goal.gap.toFixed(1)} strokes a round to go.`;
+  return `${formatOneDecimal(goal.gap)} strokes a round to go.`;
 }
 
 /** How the best rounds stand against the goal: "Your best rounds already break 80." Null until the gap loads. */
 export function peakGapNote(peak: PeakGame, goalLabel: string): string | null {
   if (peak.gapToGoal == null || peak.meetsGoal == null) return null;
   if (peak.meetsGoal) return `Your best rounds already ${goalLabel.toLowerCase()}. Make it your new normal.`;
-  return `${peak.gapToGoal.toFixed(1)} strokes from ${goalLabel.toLowerCase()} on your best days.`;
+  return `${formatOneDecimal(peak.gapToGoal)} strokes from ${goalLabel.toLowerCase()} on your best days.`;
 }
 
 /** The phone's panel tabs. */
@@ -128,7 +129,7 @@ export const PEAK_IMPACT_LABEL: Record<PeakImpact["kind"], string> = {
 export function recentTrendNote(trend: number): string {
   if (trend === 0) return "Scoring right at your 20-round average lately.";
   const way = trend > 0 ? "above" : "below";
-  return `Trending ${Math.abs(trend).toFixed(1)} strokes ${way} your 20-round average.`;
+  return `Trending ${formatOneDecimal(Math.abs(trend))} strokes ${way} your 20-round average.`;
 }
 
 /**
@@ -140,7 +141,7 @@ export function parTypeGapNote(row: ParTypeRow, benchmarkName: string): { text: 
   const mark = `${benchmarkName} ${formatAverageToPar(row.benchmarkToPar)}`;
   const detail = {
     ahead: "ahead of it",
-    behind: `${row.gap.toFixed(2)} a hole to close`,
+    behind: `${formatTwoDecimals(row.gap)} a hole to close`,
     even: "even with it",
   }[row.verdict];
   return { text: `${mark} · ${detail}`, gap: row.gap };
@@ -151,9 +152,8 @@ export function parTypeGapNote(row: ParTypeRow, benchmarkName: string): { text: 
  * A gain is good, so the tone is to-par of the negation: "+1.2 strokes" reads birdie.
  */
 export function signedStrokes(strokes: number): { text: string; tone: string } {
-  const rounded = Math.round(strokes * 10) / 10;
   return {
-    text: `${rounded > 0 ? "+" : ""}${rounded.toFixed(1)} strokes`,
+    text: `${formatSigned(Math.round(strokes * 10) / 10)} strokes`,
     tone: toParTextClass(-strokes),
   };
 }

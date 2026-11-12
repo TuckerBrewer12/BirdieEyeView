@@ -48,6 +48,19 @@ export function formatCourseName(name: string | null | undefined): string {
     .join(" ");
 }
 
+/** A tee as a round names it, whatever case it was stored in: "Blue tees", "Back Gold tees". */
+export function formatTeeName(tee: string): string {
+  return `${formatCourseName(tee)} tees`;
+}
+
+/** A tee's rating and slope, as a scorecard prints them: "72.4 / 130". Null without both. */
+export function teeRatingLabel(
+  tee: { course_rating: number | null; slope_rating: number | null } | null | undefined,
+): string | null {
+  if (tee?.course_rating == null || tee?.slope_rating == null) return null;
+  return `${tee.course_rating} / ${tee.slope_rating}`;
+}
+
 export function getTee<T extends { color: string | null }>(
   course: HasTees<T> | null | undefined,
   color: string | null | undefined,

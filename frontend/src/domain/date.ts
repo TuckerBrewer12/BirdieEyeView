@@ -71,25 +71,14 @@ export function formatDay(input: DayInput): string | null {
 }
 
 /**
- * "Mon · Jun 15 · 2026": the eyebrow above a round's course name. Without the year,
- * "Mon · Jun 15", as in the dashboard greeting.
+ * A day with its weekday: "Mon, Jun 15, 2026" over a round's course name and on its share card;
+ * without the year, "Sun, Jun 15", a day this year.
  */
-export function formatWeekdayDay(input: DayInput, { year = true }: { year?: boolean } = {}): string | null {
+export function formatWeekday(input: DayInput, { year = true }: { year?: boolean } = {}): string | null {
   const day = toDay(input);
-  if (!day) return null;
-  const parts = [
-    day.toLocaleDateString("en-US", { weekday: "short" }),
-    day.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-  ];
-  if (year) parts.push(String(day.getFullYear()));
-  return parts.join(" · ");
-}
-
-/** "Sun, Jun 15": a day this year, with its weekday. */
-export function formatWeekdayShort(input: DayInput): string | null {
-  const day = toDay(input);
-  if (!day) return null;
-  return `${day.toLocaleDateString("en-US", { weekday: "short" })}, ${day.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+  return day
+    ? day.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", ...(year && { year: "numeric" }) })
+    : null;
 }
 
 export interface DayParts {

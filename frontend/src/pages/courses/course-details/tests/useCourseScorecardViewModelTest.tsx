@@ -27,8 +27,6 @@ async function renderVm(repository: FakeCoursesRepository, course = halfMoonBayC
   };
 }
 
-const selected = (chips: { tee: { color: string | null }; selected: boolean }[]) =>
-  chips.find((chip) => chip.selected)?.tee.color ?? null;
 
 describe("useCourseScorecardViewModel", () => {
   it("is empty until the course has loaded", () => {
@@ -38,24 +36,25 @@ describe("useCourseScorecardViewModel", () => {
 
   it("shows the course handicap the server sends on each tee", async () => {
     const vm = await renderVm(new FakeCoursesRepository(), ratedHalfMoonBayCourse);
-    expect(vm.current().teeChips[0]?.courseHandicap).toBe(12);
-    expect(vm.current().teeChips[1]?.courseHandicap).toBe(9);
+    expect(vm.current().teeOptions[0]?.courseHandicap).toBe(12);
+    expect(vm.current().teeOptions[1]?.courseHandicap).toBe(9);
+    expect(vm.current().teeOptions[0]?.detail).toMatch(/ · CH 12$/);
   });
 
   it("shows no course handicap on a tee the server sent none for", async () => {
     const vm = await renderVm(new FakeCoursesRepository());
-    expect(vm.current().teeChips.map((chip) => chip.courseHandicap)).toEqual([null, null]);
+    expect(vm.current().teeOptions.map((tee) => tee.courseHandicap)).toEqual([null, null]);
   });
 
-  it("clears the tee when the picked one is tapped again, hiding the yards row", async () => {
+  it("clears the tee when the golfer clears it, hiding the yards row", async () => {
     const vm = await renderVm(new FakeCoursesRepository());
-    expect(selected(vm.current().teeChips)).toBe("Blue");
+    expect(vm.current().selectedTee).toBe("Blue");
 
     act(() => vm.current().selectTee("White"));
-    expect(selected(vm.current().teeChips)).toBe("White");
+    expect(vm.current().selectedTee).toBe("White");
 
-    act(() => vm.current().selectTee("white"));
-    expect(selected(vm.current().teeChips)).toBeNull();
+    act(() => vm.current().clearTee());
+    expect(vm.current().selectedTee).toBeNull();
     expect(vm.current().backNine.tee).toBeNull();
   });
 

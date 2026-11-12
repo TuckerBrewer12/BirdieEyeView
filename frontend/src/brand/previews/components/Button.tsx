@@ -1,4 +1,4 @@
-import { Ellipsis, Plus } from "lucide-react";
+import { ChevronLeft, Ellipsis, Plus, Share } from "lucide-react";
 import { Button, RowButton } from "@/brand/components/Button";
 import { cn } from "@/brand/cn";
 
@@ -61,6 +61,27 @@ function Panel({ theme }: { theme: "Light" | "Dark" }) {
         </Button>
         <Button variant="ghost" size="icon-xs" aria-label="Add">
           <Plus />
+        </Button>
+      </div>
+      <div className="text-label font-semibold text-muted-foreground">Toolbar · 44, an icon alone on a phone · inline</div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="outline" size="toolbar">
+          <ChevronLeft data-icon="inline-start" />
+          Rounds
+        </Button>
+        <Button variant="outline" size="toolbar-icon-phone" aria-label="Share">
+          <Share />
+          <span aria-hidden className="hidden md:inline">
+            Share
+          </span>
+        </Button>
+        <Button variant="outline" size="toolbar-icon" aria-label="More actions">
+          <Ellipsis />
+        </Button>
+        <Button size="toolbar">Save</Button>
+        <Button variant="linkMuted" size="inline">
+          <ChevronLeft />
+          Back to courses
         </Button>
       </div>
       <div className="text-label font-semibold text-muted-foreground">Landing · cta, pill</div>

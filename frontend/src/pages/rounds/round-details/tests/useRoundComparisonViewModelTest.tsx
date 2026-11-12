@@ -4,6 +4,7 @@ import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
 import type { RoundComparisonDto } from "@/types/api";
 import { FakeRoundsRepository } from "@/testing/fakes/FakeRoundsRepository";
+import { firstRoundComparison, roundComparison } from "@/testing/fixtures/roundDetails";
 import { useRoundComparisonViewModel } from "../components/useRoundComparisonViewModel";
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -11,61 +12,43 @@ function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-function row(label: string, value: number) {
-  return { label, sample_size: 4, round_id: "round-1", primary_value: value, secondary_value: null };
-}
-
-const sampleComparison: RoundComparisonDto = {
-  score: [row("This round", 78)],
-  putts: [row("This round", 32)],
-  gir: [row("This round", 7)],
-  three_putts: [row("This round", 2)],
-  putts_per_gir: [row("This round", 1.8)],
-  scrambling: [row("This round", 3)],
-};
-
-function renderVm(comparison: RoundComparisonDto) {
+function renderVm(comparison: RoundComparisonDto | null) {
   const repository = new FakeRoundsRepository({ comparison });
   return renderHook(() => useRoundComparisonViewModel("user-1", "round-1", repository), { wrapper });
 }
 
 describe("useRoundComparisonViewModel", () => {
-  it("exposes finished comparison charts and Score as the active tab", async () => {
-    const { result } = renderVm(sampleComparison);
+  it("opens on the last 20, each figure worded with its difference and the server's verdict", async () => {
+    const { result } = renderVm(roundComparison);
     await waitFor(() => expect(result.current.show).toBe(true));
-    expect(result.current.charts.map((c) => c.title)).toEqual([
-      "Score",
-      "Putts",
-      "GIR",
-      "3-Putts",
-      "Putts per GIR",
-      "Scrambling",
-    ]);
-    expect(result.current.charts[0]?.bars[0]).toEqual({
-      label: "This round",
-      value: 78,
-      sampleSize: 4,
-    });
-    expect(result.current.selectedCharts.map((c) => c.title)).toEqual(["Score"]);
-  });
-
-  it("a tab shows only its own charts", async () => {
-    const { result } = renderVm(sampleComparison);
-    await waitFor(() => expect(result.current.show).toBe(true));
-    act(() => result.current.selectChartTab("short_game"));
-    expect(result.current.chartTab).toBe("short_game");
-    expect(result.current.selectedCharts.map((c) => c.title)).toEqual([
-      "Putts",
-      "3-Putts",
-      "Putts per GIR",
-      "Scrambling",
+    expect(result.current.window).toBe("l20");
+    expect(result.current.rows.map((row) => [row.label, row.value, row.average, row.difference, row.verdict])).toEqual([
+      ["Score", "78", "80.4", "−2.4", "good"],
+      ["Putts", "32", "33.1", "−1.1", "good"],
+      ["Greens hit", "7", "4.9", "+2.1", "good"],
+      ["3-putts", "1", "1.9", "−0.9", "good"],
+      ["Putts / GIR", "1.71", "1.95", "−0.24", "good"],
+      ["Scrambling", "4", "2.6", "+1.4", "good"],
     ]);
   });
 
-  it("ignores a tab it does not have", async () => {
-    const { result } = renderVm(sampleComparison);
+  it("switches window, and keeps it when the pressed one is tapped again", async () => {
+    const { result } = renderVm(roundComparison);
     await waitFor(() => expect(result.current.show).toBe(true));
-    act(() => result.current.selectChartTab("driving"));
-    expect(result.current.chartTab).toBe("score");
+    act(() => result.current.pickWindow("l5"));
+    expect(result.current.rows[0]?.average).toBe("81.4");
+    act(() => result.current.pickWindow(undefined));
+    expect(result.current.window).toBe("l5");
+  });
+
+  it("has no rows for a round with nothing before it", async () => {
+    const { result } = renderVm(firstRoundComparison);
+    await waitFor(() => expect(result.current.show).toBe(true));
+    expect(result.current.rows).toEqual([]);
+  });
+
+  it("stays hidden with no comparison", async () => {
+    const { result } = renderVm(null);
+    await waitFor(() => expect(result.current.show).toBe(false));
   });
 });

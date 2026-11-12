@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from "react";
+import { useCallback, useState, type MouseEvent } from "react";
 import { AnimatePresence, motion, useReducedMotion, useReducedMotionConfig } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { curveStepAfter, line } from "d3-shape";
@@ -22,10 +22,20 @@ type FlowHole = HoleScore & { strokes: number; toPar: number; kind: ScoreKind; r
  * How a round went, as a running score: the server's total to par after each hole, drawn as a
  * step that climbs on a bad hole and falls on a good one. Each hole's own score is marked under
  * its step, the way the scorecard marks it, and the server's worst four-hole stretch is bracketed.
- * Wider than a phone, so the plot scrolls sideways rather than shrinking its labels.
+ * It fills its card; narrower than a phone allows, the plot scrolls sideways rather than shrinking its labels.
  */
 export function RoundFlowChart({ round }: RoundFlowChartProps) {
-  const { width: W, height: H, pad: PAD, stroke, dot, labelGap, chip, bracket } = tokens.chart.flow;
+  const { width, minWidth, height: H, pad: PAD, stroke, dot, labelGap, chip, bracket } = tokens.chart.flow;
+  // The plot is drawn at the width it has, so its labels keep their size: a wide card spreads the
+  // holes, a narrow one packs them down to `minWidth` and then scrolls.
+  const [measured, setMeasured] = useState<number | null>(null);
+  const measure = useCallback((node: HTMLDivElement | null) => {
+    if (!node || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(([entry]) => setMeasured(entry.contentRect.width));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  const W = Math.max(minWidth, measured ?? width);
   // The strip's marks are square, a `hole-h` side.
   const holeW = tokens.size["hole-h"];
   const holeH = tokens.size["hole-h"];
@@ -78,8 +88,8 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
 
   return (
     <div data-slot="round-flow-chart">
-      <div className="overflow-x-auto">
-        <div className="relative min-w-chart-wide select-none">
+      <div ref={measure} className="overflow-x-auto">
+        <div className="relative min-w-chart-flow select-none">
           <svg
             viewBox={`0 0 ${W} ${H}`}
             role="img"
