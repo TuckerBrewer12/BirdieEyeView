@@ -1,9 +1,9 @@
 import { useId, useState, type PointerEvent, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { area, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
+import { ChartTooltip } from "./ChartTooltip";
 import { indexScale, knownValues, paddedExtent } from "./scales";
 
 type TrendAreaTone = "primary" | "birdie" | "bogey" | "eagle" | "neutral" | "contrast";
@@ -237,22 +237,13 @@ export function TrendAreaChart({
         </div>
       )}
 
-      <AnimatePresence>
+      <ChartTooltip
+        id={point && active != null && pointY != null ? active : null}
+        at={{ x: x(active ?? 0) / W, y: (pointY ?? 0) / H }}
+        className="min-w-32"
+      >
         {point && active != null && pointY != null && (
-          <motion.div
-            key={active}
-            data-slot="trend-area-tooltip"
-            className={cn(
-              "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
-              // Past two thirds of the way across, the card opens to the left of the point.
-              x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
-            )}
-            style={{ left: `${(x(active) / W) * 100}%`, top: `${(pointY / H) * 100}%` }}
-            initial={{ opacity: 0, scale: tokens.motion.tapScale }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: tokens.motion.tapScale }}
-            transition={{ duration: tokens.motion.duration.collapse }}
-          >
+          <>
             <div className="text-sm font-bold text-card-foreground">{point.title}</div>
             {point.subtitle && (
               <div className="max-w-40 truncate text-label text-muted-foreground">{point.subtitle}</div>
@@ -272,9 +263,9 @@ export function TrendAreaChart({
                 </TooltipRow>
               ))}
             </div>
-          </motion.div>
+          </>
         )}
-      </AnimatePresence>
+      </ChartTooltip>
     </div>
   );
 }

@@ -166,10 +166,12 @@ export const api = {
     return fetchJSON<CourseSummaryDto[]>(`/courses?${params}`);
   },
 
-  searchCourses: (query: string, userId?: string, includeExternal = false) => {
+  /** `includeRecord` adds the golfer's record at each course, as the course list shows it. */
+  searchCourses: (query: string, userId?: string, includeExternal = false, includeRecord = false) => {
     const params = new URLSearchParams({ q: query });
     if (userId) params.set("user_id", userId);
     if (includeExternal) params.set("include_external", "true");
+    if (includeRecord) params.set("include_record", "true");
     return fetchJSON<CourseSummaryDto[]>(`/courses/search?${params}`);
   },
 

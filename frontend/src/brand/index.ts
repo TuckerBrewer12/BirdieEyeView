@@ -74,13 +74,24 @@ export { PersonRow } from "./components/PersonRow";
 export type { PersonRowProps } from "./components/PersonRow";
 export { PageTitle } from "./components/PageTitle";
 export { Meter } from "./components/Meter";
-export { Stat, StatLabel, StatValue, StatUnit, StatDelta } from "./components/Stat";
-export type { StatDirection } from "./components/Stat";
+export {
+  Stat,
+  StatLabel,
+  StatValue,
+  StatUnit,
+  StatNote,
+  StatDelta,
+  StatCard,
+} from "./components/Stat";
+export type { StatDirection, StatTone } from "./components/Stat";
 export { TeeSwatch } from "./components/TeeSwatch";
 export { ToParFigure } from "./components/ToParFigure";
-export { Reveal } from "./components/Reveal";
+export { ToParPill } from "./components/ToParPill";
 export { ScanProgress } from "./components/ScanProgress";
 export { ScorecardLayoutPicker } from "./components/ScorecardLayoutPicker";
+export { ScorecardCard } from "./components/ScorecardCard";
+export { ScorecardGrid } from "./components/ScorecardGrid";
+export type { ScorecardRow } from "./components/ScorecardGrid";
 export { ScorecardTable } from "./components/ScorecardTable";
 export type { ScorecardEdits } from "./components/ScorecardTable";
 export { Toggle } from "./components/Toggle";
@@ -89,14 +100,14 @@ export { RoundPreview } from "./components/RoundPreview";
 export { RoundShareCard } from "./components/RoundShareCard";
 export { RoundScorecard } from "./components/RoundScorecard";
 export { CoursePreview } from "./components/CoursePreview";
-export { ChartTabs } from "./components/ChartTabs";
 export { SectionLabel } from "./components/SectionLabel";
 export { SideNav } from "./components/SideNav";
 export type { SideNavProps, SideNavUser } from "./components/SideNav";
 export type { NavItem, RenderLink } from "./nav";
 export { ScoreCountChip } from "./components/ScoreCountChip";
 export { SearchField } from "./components/SearchField";
-export { SortControl } from "./components/SortControl";
+export { TeePicker } from "./components/TeePicker";
+export { PickerMenu } from "./components/PickerMenu";
 export { CourseLinkSearch } from "./components/CourseLinkSearch";
 export {
   Sheet,
@@ -107,27 +118,48 @@ export {
   SheetFooter,
   SheetTitle,
   SheetDescription,
+  SheetOptions,
+  SheetOption,
 } from "./components/Sheet";
+export type { SheetSide } from "./components/Sheet";
+export {
+  ActionSheet,
+  ActionSheetTrigger,
+  ActionSheetContent,
+  ActionSheetAction,
+} from "./components/ActionSheet";
+export {
+  DropdownMenu,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "./components/DropdownMenu";
+export { ConfirmDialog } from "./components/ConfirmDialog";
+export type { ConfirmDialogProps } from "./components/ConfirmDialog";
 
 // Charts
-export { ActivityHeatmap } from "./charts/ActivityHeatmap";
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
 export { ScoreMixBar } from "./charts/ScoreMixBar";
+export { ScoreMixDonut } from "./charts/ScoreMixDonut";
+export { RunningToParLine } from "./charts/RunningToParLine";
 export { Sparkline } from "./charts/Sparkline";
 export type { SparklineSeries, SparklineTone } from "./charts/Sparkline";
-export { HoleMetricBars } from "./charts/HoleMetricBars";
-export { HoleScoreMixBars } from "./charts/HoleScoreMixBars";
-export { HoleToParBars } from "./charts/HoleToParBars";
 export { RadarChart } from "./charts/RadarChart";
 export type { RadarAxis } from "./charts/RadarChart";
 export { ScoreGoalChart } from "./charts/ScoreGoalChart";
-export { RoundFlowChart } from "./charts/RoundFlowChart";
-export { ScoreTrendChart } from "./charts/ScoreTrendChart";
+export { RoundFlowChart, RoundFlowFigures } from "./charts/RoundFlowChart";
 export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
+export { HoleProfileChart } from "./charts/HoleProfileChart";
+export { HoleGreensPuttsChart } from "./charts/HoleGreensPuttsChart";
 export { ScoreTargetChart } from "./charts/ScoreTargetChart";
 export type { ScoreTargetShot } from "./charts/ScoreTargetChart";
 export { ToParBars } from "./charts/ToParBars";
 export type { ToParBar } from "./charts/ToParBars";
 export { TrendAreaChart } from "./charts/TrendAreaChart";
 export type { TrendAreaPoint, TrendAreaSeries, TrendAreaTone } from "./charts/TrendAreaChart";
+
+export { useFromBreakpoint } from "./useFromBreakpoint";
+export { ProgressRing } from "./components/ProgressRing";

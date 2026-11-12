@@ -8,6 +8,8 @@ const course = (id: string, name: string, location: string): CourseSummary => ({
   par: 72,
   holeCount: 18,
   teeCount: 4,
+  tees: [],
+  record: null,
   source: "local",
   externalId: null,
 });

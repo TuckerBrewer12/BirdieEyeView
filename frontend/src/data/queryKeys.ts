@@ -7,11 +7,15 @@ export const queryKeys = {
     ["round-comparison", userId, roundId] as const,
   dashboard: (userId: string) => ["dashboard", userId] as const,
   courses: (userId: string, search = "") => ["courses", userId, search] as const,
+  /** Every course list entry for the golfer, searched or not. Each carries their record at the course. */
+  allCourseLists: (userId: string) => ["courses", userId] as const,
   course: (courseId: string | undefined) => ["course", courseId] as const,
   /** Every course's detail. Each tee carries the golfer's course handicap off their index. */
   allCourses: () => ["course"] as const,
   courseAnalytics: (userId: string, courseId: string | undefined) =>
     ["course-analytics", userId, courseId] as const,
+  /** The golfer's figures at every course. */
+  allCourseAnalytics: (userId: string) => ["course-analytics", userId] as const,
   user: (userId: string) => ["user", userId] as const,
   /** The goal report, per goal: a report for one goal never stands in for another's. Leave the goal out for all of them. */
   goalReport: (userId: string, goal?: number) =>

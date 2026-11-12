@@ -1,4 +1,4 @@
-import { ToggleGroup, ToggleGroupItem } from "@/brand";
+import { PickerMenu } from "@/brand";
 import { GOAL_OPTIONS } from "@/domain";
 
 interface GoalPickerProps {
@@ -7,34 +7,30 @@ interface GoalPickerProps {
   onChange: (target: number) => void;
   /** While a pick is saving. */
   disabled?: boolean;
-  /** 0 joins the goals into one control; a gap sets them apart, so a row that wraps on a phone still reads. */
-  spacing?: number;
   className?: string;
 }
 
-/** The scoring goals a golfer can set, one pressed. */
-export function GoalPicker({ value, onChange, disabled, spacing = 0, className }: GoalPickerProps) {
+const OPTIONS = GOAL_OPTIONS.map((option) => ({ value: String(option.value), label: option.label }));
+
+/**
+ * The scoring goals a golfer can set, as a menu: seven goals are too many for a
+ * segmented control. The trigger reads the goal that is set.
+ */
+export function GoalPicker({ value, onChange, disabled, className }: GoalPickerProps) {
+  const current = GOAL_OPTIONS.find((option) => option.value === value);
+
   return (
-    <ToggleGroup
-      data-slot="goal-picker"
-      aria-label="Scoring goal"
-      variant="outline"
-      size="sm"
-      spacing={spacing}
-      disabled={disabled}
-      value={value != null ? [String(value)] : []}
-      onValueChange={(values) => {
-        // Pressing the chosen goal again would clear it; the goal only ever changes to another.
-        const next = GOAL_OPTIONS.find((option) => String(option.value) === values[0]);
-        if (next) onChange(next.value);
-      }}
-      className={className}
-    >
-      {GOAL_OPTIONS.map((option) => (
-        <ToggleGroupItem key={option.value} value={String(option.value)}>
-          {option.label}
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
+    <div data-slot="goal-picker" className={className}>
+      <PickerMenu
+        aria-label="Scoring goal"
+        label={current?.label ?? "Pick a goal"}
+        value={current ? String(current.value) : ""}
+        options={OPTIONS}
+        onChange={(next) => {
+          const goal = GOAL_OPTIONS.find((option) => String(option.value) === next);
+          if (goal && !disabled) onChange(goal.value);
+        }}
+      />
+    </div>
   );
 }

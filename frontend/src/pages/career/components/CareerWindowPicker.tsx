@@ -16,9 +16,7 @@ export function CareerWindowPicker({ value, onChange, windowDays, className }: C
     <ToggleGroup
       data-slot="career-window-picker"
       aria-label="Records window"
-      variant="outline"
       size="sm"
-      spacing={0}
       value={[value]}
       onValueChange={(values) => {
         // Tapping the picked window would empty the group; one window is always picked.

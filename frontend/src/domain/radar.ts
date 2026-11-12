@@ -1,6 +1,6 @@
 import type { AnalyticsKpisDto, ScoringByParRowDto } from "@/types/api";
 import type { BenchmarkShape, BenchmarkVerdict, BenchmarkVerdicts } from "./benchmark";
-import { formatPercent, formatSignedOneDecimal } from "./format";
+import { formatPercent, formatSigned, formatTwoDecimals } from "./format";
 
 export type RadarEntry = {
   axis: string;
@@ -23,8 +23,8 @@ const puttingRadius = (puttsPerGir: number | null) => clamp(((3.5 - (puttsPerGir
 const parRadius = (averageToPar: number | null) => clamp(((2.0 - (averageToPar ?? 2.0)) / 2.5) * 100);
 
 const percentLabel = (pct: number | null) => (pct != null ? formatPercent(pct) : "—");
-const puttsLabel = (puttsPerGir: number | null) => (puttsPerGir != null ? `${puttsPerGir.toFixed(2)}/GIR` : "—");
-const toParLabel = (averageToPar: number | null) => (averageToPar != null ? formatSignedOneDecimal(averageToPar) : "—");
+const puttsLabel = (puttsPerGir: number | null) => (puttsPerGir != null ? `${formatTwoDecimals(puttsPerGir)}/GIR` : "—");
+const toParLabel = (averageToPar: number | null) => (averageToPar != null ? formatSigned(averageToPar) : "—");
 
 /** The golfer's own figures, on the radar's axes. */
 function shapeOf(kpis: AnalyticsKpisDto, scoringByPar: ScoringByParRowDto[]): BenchmarkShape {

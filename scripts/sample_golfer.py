@@ -23,6 +23,7 @@ from analytics.stats import best_round
 from api.analytics_responses import analytics_response
 from api.player_handicap import player_handicap_index
 from api.round_responses import round_detail
+from analytics import dashboard as dashboard_module
 from api.routers import stats, users
 from models import Course, Hole, HoleScore, Round, Tee, User
 
@@ -189,6 +190,10 @@ async def _responses() -> tuple[dict, dict]:
     rounds = _season()
     db = _database(rounds)
     user_id = UUID(USER.id)
+    # "This month" and "this season" read against the day after the last round, not the day the
+    # script runs, so a re-run writes the same golfer.
+    last_day = max(r.date for r in rounds).date()
+    dashboard_module.today = lambda: last_day + timedelta(days=1)
 
     dashboard = await stats.get_dashboard(user_id, db, USER)
     analytics = await stats.get_analytics(user_id, 50, None, None, db, USER)

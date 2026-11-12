@@ -62,10 +62,16 @@ const VIEW_SHAPING = [
   },
 ]
 
+/** The clock is state: a view that reads it renders differently on every pass and can't be previewed at a fixed time. */
+const NO_VIEW_CLOCK = [{
+  selector: "NewExpression[callee.name='Date'][arguments.length=0], CallExpression[callee.object.name='Date'][callee.property.name='now']",
+  message: 'Reading the clock in a view hides state. Have the view model read it (and take a clock a test can pin) and hand over what it means.',
+}]
+
 /** Native controls the kit already wraps, with its focus, sizing and dark-mode styles. */
 const NO_RAW_CONTROLS = [{
   selector: 'JSXOpeningElement[name.name=/^(button|input|select|textarea)$/]',
-  message: 'Use the kit’s control (Button, Input, InputGroup, ToggleGroup, SortControl from @/brand) instead of a raw element.',
+  message: 'Use the kit’s control (Button, Input, InputGroup, ToggleGroup, PickerMenu from @/brand) instead of a raw element.',
 }]
 
 /** Kit components and page components take domain types; the API's shapes stop at the data layer. */
@@ -211,6 +217,7 @@ export default defineConfig([
       'golf/no-golf-math': 'error',
       'golf/no-shadowed-golf-type': 'error',
       'golf/no-par-fallback': 'error',
+      'golf/no-course-fallback': 'error',
       'kit/no-arbitrary-value': 'error',
       'kit/no-color-literal': 'error',
       'kit/no-opacity-wash': 'error',
@@ -218,14 +225,36 @@ export default defineConfig([
       'kit/no-raw-motion': 'error',
       'kit/no-style-measure': 'error',
       'kit/no-measure-prop': 'error',
+      'kit/no-off-scale-spacing': 'error',
+      'kit/no-chart-color-class': 'error',
+      'kit/no-display-size': 'error',
+      'kit/no-text-arrow': 'error',
+      'kit/no-handmade-card': 'error',
+      'kit/no-tone-override': 'error',
+      'kit/no-handmade-to-par-pill': 'error',
+      'kit/no-breakpoint-styling': 'error',
+      'kit/no-raw-heading': 'error',
+      'kit/no-figure-type': 'error',
+      'kit/no-button-size-override': 'error',
+      'kit/no-handmade-radio': 'error',
+      'kit/no-to-par-tone': 'error',
+      'kit/no-raw-table': 'error',
+      'kit/no-handmade-chart-tooltip': 'error',
     },
+  },
+  {
+    // Numbers and dates are worded in domain/format.ts and domain/date.ts, wherever they are shown.
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: REFACTORED_IGNORES,
+    plugins: { kit },
+    rules: { 'kit/no-format-outside-domain': 'error' },
   },
   {
     // Views: lay out what the view model hands over, with kit controls.
     files: REFACTORED.map((glob) => glob.replace('{ts,tsx}', 'tsx')),
     ignores: [...REFACTORED_IGNORES, 'src/brand/components/**'],
     rules: {
-      'no-restricted-syntax': ['error', ...THEME_IS_CSS, ...NO_RAW_API_FETCH, ...VIEW_SHAPING, ...NO_RAW_CONTROLS],
+      'no-restricted-syntax': ['error', ...THEME_IS_CSS, ...NO_RAW_API_FETCH, ...VIEW_SHAPING, ...NO_VIEW_CLOCK, ...NO_RAW_CONTROLS],
     },
   },
   {
@@ -233,7 +262,7 @@ export default defineConfig([
     files: ['src/brand/components/**/*.tsx'],
     ignores: REFACTORED_IGNORES,
     rules: {
-      'no-restricted-syntax': ['error', ...THEME_IS_CSS, ...NO_RAW_API_FETCH, ...VIEW_SHAPING],
+      'no-restricted-syntax': ['error', ...THEME_IS_CSS, ...NO_RAW_API_FETCH, ...VIEW_SHAPING, ...NO_VIEW_CLOCK],
     },
   },
   {

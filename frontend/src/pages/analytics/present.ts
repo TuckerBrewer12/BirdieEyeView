@@ -1,9 +1,10 @@
-import type { ToParBar, TrendAreaPoint } from "@/brand";
+import type { StatDirection, StatTone, ToParBar, TrendAreaPoint } from "@/brand";
 import {
   formatAverageToPar,
   formatCourseHandicap,
   formatHandicapIndex,
   formatOneDecimal,
+  formatWhole,
   formatPercent,
   pluralize,
   toParLabel,
@@ -84,7 +85,7 @@ const PUTTS_VERDICT: Record<InsightRating, string> = {
 function sentence(insight: Insight): string {
   switch (insight.kind) {
     case "scoring_shift": {
-      const strokes = Math.abs(insight.strokes).toFixed(1);
+      const strokes = formatOneDecimal(Math.abs(insight.strokes));
       return insight.strokes > 0
         ? `Your scoring average has improved by ${strokes} strokes over the last ${pluralize(insight.rounds, "round")}.`
         : `Your scoring average has climbed by ${strokes} strokes recently — worth monitoring.`;
@@ -94,15 +95,15 @@ function sentence(insight: Insight): string {
     case "gir_average":
       return `Your average GIR% is ${formatPercent(insight.percent, 1)} — ${GIR_VERDICT[insight.rating]}`;
     case "gir_shift": {
-      const points = Math.abs(insight.points).toFixed(0);
+      const points = formatWhole(Math.abs(insight.points));
       return insight.points > 0
         ? `GIR% trending up ${points} points over recent rounds — ball striking improving.`
         : `GIR% has dipped ${points} points recently — iron consistency worth a look.`;
     }
     case "putts_average":
-      return `Averaging ${insight.putts.toFixed(1)} putts per round — ${PUTTS_VERDICT[insight.rating]}`;
+      return `Averaging ${formatOneDecimal(insight.putts)} putts per round — ${PUTTS_VERDICT[insight.rating]}`;
     case "putts_shift": {
-      const putts = Math.abs(insight.putts).toFixed(1);
+      const putts = formatOneDecimal(Math.abs(insight.putts));
       return insight.putts > 0
         ? `Putts per round improving — down ${putts} strokes on average.`
         : `Putts per round up ${putts} strokes recently.`;
@@ -220,20 +221,47 @@ export function handicapBars(rows: ScoringByHandicapRowDto[]): ToParBar[] {
   }));
 }
 
+/** One headline figure, worded for its tile. */
+export interface HeadlineFigure {
+  label: string;
+  /** Formatted: "7.0", "82.9", "—". */
+  value: string;
+  /** How far it moved, unsigned ("3.9"), with its arrow and the server's verdict on the move. */
+  delta?: string;
+  direction?: StatDirection | null;
+  tone?: StatTone;
+  /** What the move is against, or a quieter line under the figure (the best round's course). */
+  note?: string | null;
+  /** The figure round by round, oldest first. */
+  trend?: (number | null)[];
+}
+
 /**
- * The headline figures, worded for their cards: the golfer's own handicap index whatever the
+ * The headline figures, worded for their tiles: the golfer's own handicap index whatever the
  * filters, and the rest over the filtered rounds.
  */
-export function headlineFigures(analytics: Analytics): { label: string; value: string; detail?: string | null }[] {
+export function headlineFigures(analytics: Analytics): HeadlineFigure[] {
   const { kpis } = analytics;
+  const change = kpis.scoring_average_change;
+  const moved = change != null && change !== 0;
   return [
     { label: "Handicap Index", value: formatHandicapIndex(kpis.handicap_index) },
     { label: "Rounds", value: String(kpis.total_rounds) },
-    { label: "Scoring Avg", value: kpis.scoring_average != null ? String(kpis.scoring_average) : "—" },
+    {
+      label: "Scoring Avg",
+      value: kpis.scoring_average != null ? String(kpis.scoring_average) : "—",
+      trend: analytics.scoreTrend.map((row) => row.total_score),
+      tone: kpis.scoring_average_verdict ?? "neutral",
+      ...(moved && {
+        delta: formatOneDecimal(Math.abs(change)),
+        direction: change < 0 ? "down" : "up",
+        note: "last 5 vs all",
+      }),
+    },
     {
       label: "Best Round",
       value: analytics.bestScore != null ? String(analytics.bestScore) : "—",
-      detail: analytics.bestRound?.course,
+      note: analytics.bestRound?.course,
     },
     { label: "Avg Putts", value: formatOneDecimal(kpis.average_putts) },
   ];

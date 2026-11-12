@@ -71,6 +71,22 @@ export function scoreProfileHeightClass(key: ScoreKey): string {
   return SCORE_PROFILE_HEIGHT_CLASS[key];
 }
 
+const SCORE_COUNT_TEXT_CLASS: Record<ScoreKey, string> = {
+  eagle: "text-score-eagle",
+  birdie: "text-score-birdie",
+  // Pars are the baseline, so their count reads in ink.
+  par: "text-foreground",
+  bogey: "text-score-bogey",
+  double: "text-score-double",
+  triple: "text-score-triple",
+  quad: "text-score-quad",
+};
+
+/** Tailwind text colour for how many holes of a kind a round had: the "7" in "7 bogeys". */
+export function scoreCountTextClass(key: ScoreKey): string {
+  return SCORE_COUNT_TEXT_CLASS[key];
+}
+
 /**
  * The score colour for a round's to-par, not a hole's. Even and missing recede
  * as par; a round does not earn eagle/quad the way a hole does.
@@ -85,6 +101,21 @@ function toParKind(toPar: number | null): "eagle" | "birdie" | "par" | "bogey" {
 /** A round's to-par as a fill colour, for SVG paint and chart-library props. */
 export function toParFill(toPar: number | null): string {
   return color.score[toParKind(toPar)].base;
+}
+
+/** A server verdict as a fill, for SVG paint: good reads like a birdie, bad like a bogey, neutral as quiet ink. */
+export function verdictFill(verdict: "good" | "bad" | "neutral" | null): string {
+  if (verdict === "good") return color.score.birdie.base;
+  if (verdict === "bad") return color.score.bogey.base;
+  return color.mutedForeground;
+}
+
+/**
+ * The same for a small mark on a chart (a sliver of bar, a dot): level reads as quiet ink rather
+ * than par's pale fill, which a mark that small would lose on the card.
+ */
+export function toParMarkFill(toPar: number | null): string {
+  return toParKind(toPar) === "par" ? color.mutedForeground : toParFill(toPar);
 }
 
 export function toParDisplay(toPar: number | null, empty = "—"): string {

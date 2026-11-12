@@ -1,4 +1,4 @@
-import { type Page } from "@playwright/test";
+import { type Locator, type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
@@ -88,16 +88,55 @@ export class TheLabRobot {
     return this.shown("[data-slot=goal-picker]");
   }
 
+  /** A picker's trigger: the menu button on desktop, the sheet's on a phone. */
+  private trigger(menu: Locator): Locator {
+    return menu.getByRole("button").locator("visible=true").first();
+  }
+
+  /** Opens a menu (the goal, the comparison, the friend) and waits for its options. */
+  private async openMenu(menu: Locator): Promise<void> {
+    await this.trigger(menu).click();
+    await this.seesMenuOpen();
+  }
+
+  /** Opens a menu and picks one of its options: a radio item on desktop, a sheet row on a phone. */
+  private async pickFrom(menu: Locator, label: string): Promise<void> {
+    await this.openMenu(menu);
+    await this.page
+      .getByRole("menuitemradio", { name: label, exact: true })
+      .or(this.page.locator("[data-slot=sheet-option]").getByText(label, { exact: true }))
+      .click();
+  }
+
+  async openGoalMenu(): Promise<this> {
+    await this.openMenu(this.goalPicker());
+    return this;
+  }
+
+  async openCompareMenu(): Promise<this> {
+    await this.openMenu(this.shapeCard().locator("[data-slot=comparison-picker]"));
+    return this;
+  }
+
+  async openFriendMenu(): Promise<this> {
+    await this.openMenu(this.shapeCard().locator("[data-slot=friend-picker]"));
+    return this;
+  }
+
+  /** A menu's options are showing: a dropdown on desktop, a bottom sheet on a phone. The last
+   * menu may still be fading out, so only the open one counts. */
+  async seesMenuOpen(): Promise<this> {
+    await expect(this.page.locator(":is([data-slot=picker-options])[data-open]")).toBeVisible();
+    return this;
+  }
+
   async pickGoal(label: string): Promise<this> {
-    await this.goalPicker().getByRole("button", { name: label, exact: true }).click();
+    await this.pickFrom(this.goalPicker(), label);
     return this;
   }
 
   async seesGoalPicked(label: string): Promise<this> {
-    await expect(this.goalPicker().getByRole("button", { name: label, exact: true })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    await expect(this.trigger(this.goalPicker())).toHaveText(label);
     return this;
   }
 
@@ -156,18 +195,12 @@ export class TheLabRobot {
   }
 
   async compareWith(label: string): Promise<this> {
-    await this.shapeCard()
-      .locator("[data-slot=comparison-picker]")
-      .getByRole("button", { name: label, exact: true })
-      .click();
+    await this.pickFrom(this.shapeCard().locator("[data-slot=comparison-picker]"), label);
     return this;
   }
 
   async pickFriend(name: string): Promise<this> {
-    await this.shapeCard()
-      .locator("[data-slot=friend-picker]")
-      .getByRole("button", { name, exact: true })
-      .click();
+    await this.pickFrom(this.shapeCard().locator("[data-slot=friend-picker]"), name);
     return this;
   }
 

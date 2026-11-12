@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { Button, SortControl, ToggleGroup, ToggleGroupItem } from "@/brand";
+import { Button, PickerMenu, ToggleGroup, ToggleGroupItem } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { AnalyticsFilters, PlayedCourse } from "../model";
 import { LIMIT_OPTIONS, TIMEFRAME_OPTIONS, courseOptions } from "../present";
@@ -27,9 +27,7 @@ export function AnalyticsFilterBar({
     <div data-slot="analytics-filter-bar" className={cn("flex flex-wrap items-center gap-3", className)}>
       <ToggleGroup
         aria-label="Rounds"
-        variant="outline"
         size="sm"
-        spacing={0}
         value={[String(filters.limit)]}
         onValueChange={(values) => {
           const next = LIMIT_OPTIONS.find((option) => String(option.value) === values[0]);
@@ -45,9 +43,7 @@ export function AnalyticsFilterBar({
 
       <ToggleGroup
         aria-label="Timeframe"
-        variant="outline"
         size="sm"
-        spacing={0}
         value={[filters.timeframe]}
         onValueChange={(values) => {
           const next = TIMEFRAME_OPTIONS.find((option) => option.value === values[0]);
@@ -62,7 +58,7 @@ export function AnalyticsFilterBar({
       </ToggleGroup>
 
       <div className="flex items-center gap-1">
-        <SortControl
+        <PickerMenu
           aria-label="Course"
           label={course.label}
           value={course.value}

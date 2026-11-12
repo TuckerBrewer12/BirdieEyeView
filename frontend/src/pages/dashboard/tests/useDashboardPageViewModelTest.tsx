@@ -2,7 +2,6 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
-import { Round, shortGamePointsFrom } from "@/domain";
 import { populatedRounds } from "@/testing/fixtures/rounds";
 import {
   dashboardGoalReport,
@@ -11,7 +10,9 @@ import {
 } from "@/testing/fixtures/dashboard";
 import { FakeDashboardRepository } from "@/testing/fakes/FakeDashboardRepository";
 import { useDashboardPageViewModel } from "../useDashboardPageViewModel";
-import { bestRecentRoundFrom, recentShortGame } from "../model";
+import { bestRoundFrom } from "../model";
+import { greetingFor, lastRoundLabel, ninesAndTee } from "../present";
+import { Round } from "@/domain";
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -34,20 +35,41 @@ function renderVm(seed: ConstructorParameters<typeof FakeDashboardRepository>[0]
 }
 
 describe("useDashboardPageViewModel", () => {
-  it("exposes scoring average, handicap, and mix after load", async () => {
+  it("leads with the newest round, its holes carrying where it stood after each", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.last20ScoringAvg).toBeCloseTo(76.8, 1);
-    expect(result.current.scoringAverageChange).toBe(0);
-    expect(result.current.data?.handicap_index).toBe(12.4);
+    expect(result.current.lastRound?.id).toBe(populatedRounds[0].id);
+    expect(result.current.lastRound?.holes[17]?.runningToPar).toBe(result.current.lastRound?.toPar);
     expect(result.current.user?.name).toBe("Test Golfer");
-    expect(result.current.l20ScoreMix).toEqual(populatedDashboard.score_mix);
-    expect(result.current.recentScoreMix).toEqual(populatedDashboard.recent_score_mix);
-    // The putts and their rating come as the server picked and rated them.
-    expect([result.current.putts, result.current.puttsRating]).toEqual([32, "fair"]);
-    expect(result.current.recentScores).toEqual(
-      populatedDashboard.score_trend.flatMap((row) => (row.total_score != null ? [row.total_score] : [])),
-    );
+  });
+
+  it("lists the three rounds before the last one", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.recentRounds.map((r) => r.id)).toEqual(populatedRounds.slice(1, 4).map((r) => r.id));
+  });
+
+  it("carries the index and its move this month", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.handicap).toEqual({ index: 12.4, change: -1.6, verdict: "good" });
+    expect(result.current.handicapLine).toEqual(populatedDashboard.handicap_trend.map((row) => row.handicap_index));
+    expect(result.current.averageLine).toEqual(populatedDashboard.score_trend.map((row) => row.rolling_average));
+  });
+
+  it("carries the best round, the year's rounds, the recent score mix and the goal as the server and goal report have them", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.goal?.progressPct).toBe(82));
+    expect(result.current.best).toEqual({
+      roundId: "round-3",
+      score: 69,
+      toPar: -3,
+      course: "Blue Rock",
+      date: "2026-04-18T18:00:00.000Z",
+    });
+    expect(result.current.roundsThisYear).toBe(4);
+    expect(result.current.recentMix).toEqual(populatedDashboard.recent_score_mix);
+    expect(result.current.goal).toEqual({ target: 79, progressPct: 82, onTrack: true });
   });
 
   it("opens and closes the handicap sheet", async () => {
@@ -64,36 +86,10 @@ describe("useDashboardPageViewModel", () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.whs.rows.length).toBe(5);
-    expect(result.current.whs.showCalculation).toBe(true);
     expect(result.current.whs.countUsed).toBe(1);
     const used = result.current.whs.rows.filter((r) => r.used);
     expect(used).toHaveLength(1);
     expect(used[0]?.courseName).toBe("Blue Rock");
-  });
-
-  it("shows the listed round the server picked as best, hole strip and all", async () => {
-    const { result } = renderVm();
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    await waitFor(() => expect(result.current.bestRound?.id).toBe("round-3"));
-    expect(result.current.bestRound?.score).toBe(69);
-    expect(result.current.bestRound?.holes).toHaveLength(18);
-  });
-
-  it("shows the three most recent rounds with the hole strips the list carries", async () => {
-    const { result } = renderVm();
-    await waitFor(() => expect(result.current.recentRounds).toHaveLength(3));
-    expect(result.current.recentRounds.map((r) => r.id)).toEqual(
-      populatedRounds.slice(0, 3).map((r) => r.id),
-    );
-    expect(result.current.recentRounds[0].holes[0].kind).toBe("bogey");
-  });
-
-  it("defaults the trend tab to score and can switch to HCP", async () => {
-    const { result } = renderVm();
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.trendView).toBe("score");
-    act(() => result.current.setTrendView("handicap"));
-    expect(result.current.trendView).toBe("handicap");
   });
 
   it("surfaces an error when the dashboard fetch fails", async () => {
@@ -105,81 +101,44 @@ describe("useDashboardPageViewModel", () => {
     expect(result.current.error?.message).toBe("Dashboard data failed to load.");
   });
 
-  it("draws the trends from the dashboard response", async () => {
-    const { result } = renderVm();
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.trend).toHaveLength(populatedDashboard.score_trend.length);
-    expect(result.current.trend[1]).toMatchObject({ score: 69, differentialStatus: "counting" });
-    expect(result.current.shortGameTrend?.scrambling).toEqual([37.5, 37.5, 37.5, 37.5, 37.5]);
-    expect(result.current.shortGameTrend?.upAndDown).toEqual([33.3, 33.3, 33.3, 33.3, 33.3]);
-  });
-
-  it("has no trend while the window is empty", async () => {
-    const { result } = renderVm({
-      dashboard: { ...populatedDashboard, score_trend: [], handicap_trend: [], scrambling_trend: [], up_and_down_trend: [] },
-    });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.data?.total_rounds).toBe(4);
-    expect(result.current.trend).toEqual([]);
-    expect(result.current.recentScores).toEqual([]);
-    expect(result.current.shortGameTrend).toBeNull();
-  });
-
-  it("exposes the scoring goal from the user and report", async () => {
-    const { result } = renderVm();
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    await waitFor(() => expect(result.current.goal?.focus).toBe("Fewer three-putts"));
-    expect(result.current.goal).toMatchObject({ target: 79, average: 76.8, onTrack: false });
-  });
-
-  it("has no best round or WHS rows when there is no index", async () => {
+  it("has no last round, best round or move before the first round", async () => {
     const { result } = renderVm({
       dashboard: {
         ...populatedDashboard,
         handicap_index: null,
+        best_round: null,
+        best_round_id: null,
         recent_rounds: [],
-        whs: { ...populatedDashboard.whs, rows: [], window_size: 0, count_used: 0, show_calculation: false },
+        handicap_change: { ...populatedDashboard.handicap_change, this_month: null, this_month_verdict: null },
       },
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.data?.handicap_index).toBeNull();
-    expect(result.current.bestRound).toBeNull();
-    expect(result.current.whs.rows).toEqual([]);
+    expect(result.current.lastRound).toBeNull();
+    expect(result.current.recentRounds).toEqual([]);
+    expect(result.current.best).toBeNull();
+    expect(result.current.handicap).toEqual({ index: null, change: null, verdict: null });
   });
 });
 
-describe("dashboard model", () => {
-  it("finds the round the server picked as best among those listed", () => {
-    const rounds = populatedRounds.map(Round.fromSummary);
-    expect(bestRecentRoundFrom(rounds, "round-3")?.id).toBe("round-3");
-    expect(bestRecentRoundFrom(rounds, null)).toBeNull();
-    expect(bestRecentRoundFrom([], "round-3")).toBeNull();
+describe("dashboard wording", () => {
+  it("greets by the hour", () => {
+    expect(greetingFor(new Date(2026, 5, 15, 8))).toBe("Good morning");
+    expect(greetingFor(new Date(2026, 5, 15, 13))).toBe("Good afternoon");
+    expect(greetingFor(new Date(2026, 5, 15, 19))).toBe("Good evening");
   });
 
-  it("keeps the last twelve rounds with both short-game rates", () => {
-    const rounds = Array.from({ length: 14 }, (_, i) => i + 1);
-    const trend = recentShortGame(
-      shortGamePointsFrom(
-        rounds.map((i) => ({
-          round_index: i,
-          round_id: `r${i}`,
-          scramble_opportunities: 8,
-          scramble_successes: 4,
-          scramble_failures: 4,
-          scrambling_percentage: i,
-        })),
-        // Round 14 has no up-and-down chance, so it has no rate and drops out of both lines.
-        rounds.map((i) => ({
-          round_index: i,
-          round_id: `r${i}`,
-          opportunities: i < 14 ? 5 : 0,
-          successes: i < 14 ? 2 : 0,
-          percentage: i < 14 ? i * 10 : null,
-        })),
-      ),
-    );
-    expect(trend?.scrambling).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
-    expect(trend?.upAndDown).toEqual([20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130]);
-    expect(recentShortGame([])).toBeNull();
+  it("names the last round's day, with its weekday on a wide screen", () => {
+    expect(lastRoundLabel("2026-06-15T18:00:00.000Z", { weekday: true })).toBe("Last round · Mon, Jun 15");
+    expect(lastRoundLabel("2026-06-15T18:00:00.000Z", { weekday: false })).toBe("Last round · Jun 15");
+    expect(lastRoundLabel(null, { weekday: true })).toBe("Last round");
+  });
+
+  it("sets the nines beside the tee", () => {
+    const round = Round.fromSummary(populatedRounds[0]);
+    expect(ninesAndTee(round)).toBe(`${round.frontNine.total} · ${round.backNine.total} · Blue`);
+  });
+
+  it("has no best round before a scored one", () => {
+    expect(bestRoundFrom({ ...populatedDashboard, best_round: null })).toBeNull();
   });
 });

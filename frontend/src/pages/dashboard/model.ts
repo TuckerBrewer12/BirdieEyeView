@@ -1,50 +1,49 @@
-import type { RoundSummary } from "@/domain/round";
-import type { RoundTrendPoint, ShortGamePoint } from "@/domain/trend";
-import type { DashboardDto, GoalReportDto, MilestoneDto, WhsBreakdownDto } from "@/types/api";
+import type { ScoreMix } from "@/domain/score";
+import type { DashboardDto, GoalReportDto, WhsBreakdownDto } from "@/types/api";
 
-/** How good the putts per round are, as the server rated them. */
-export type PuttsRating = NonNullable<DashboardDto["putts_rating"]>;
+/** The server's verdict on a figure's move: a score or a handicap falling is good. */
+export type ChangeVerdict = NonNullable<DashboardDto["scoring_average_verdict"]>;
 
-/** Which line the phone's trend card shows. */
-export type TrendView = "score" | "handicap";
-export type HiTrend = "up" | "down" | "flat";
-
-/** The listed round the server picked as the best of them. Null when it picked none. */
-export function bestRecentRoundFrom(rounds: RoundSummary[], bestId: string | null | undefined): RoundSummary | null {
-  return rounds.find((round) => round.id === bestId) ?? null;
+/** The best round the player has, as the server picked it: the dashboard's best-round card. */
+export interface BestRound {
+  roundId: string | null;
+  score: number;
+  toPar: number | null;
+  course: string | null;
+  date: string | null;
 }
 
-/** The scores of the rounds in the trend, oldest first, skipping rounds without one. */
-export function recentScoresFrom(trend: RoundTrendPoint[]): number[] {
-  return trend.flatMap((point) => (point.score != null ? [point.score] : []));
-}
-
-/** Scrambling and up-and-down rates for the same rounds, oldest first. */
-export interface ShortGameTrend {
-  scrambling: number[];
-  upAndDown: number[];
-}
-
-/** The short-game card draws at most this many rounds. */
-const SHORT_GAME_ROUNDS = 12;
-
-/**
- * The last twelve rounds with both rates, for the card's two lines. A round without a missed
- * green has no rate, so it drops out of both lines. Null until there are two to draw.
- */
-export function recentShortGame(points: ShortGamePoint[]): ShortGameTrend | null {
-  const paired = points
-    .flatMap((point) =>
-      point.scrambling != null && point.upAndDown != null
-        ? [{ scrambling: point.scrambling, upAndDown: point.upAndDown }]
-        : [],
-    )
-    .slice(-SHORT_GAME_ROUNDS);
-  if (paired.length < 2) return null;
+/** Null until there's a scored round. */
+export function bestRoundFrom(dto: DashboardDto): BestRound | null {
+  if (dto.best_round == null) return null;
   return {
-    scrambling: paired.map((row) => row.scrambling),
-    upAndDown: paired.map((row) => row.upAndDown),
+    roundId: dto.best_round_id ?? null,
+    score: dto.best_round,
+    toPar: dto.best_round_to_par ?? null,
+    course: dto.best_round_course ?? null,
+    date: dto.best_round_date ?? null,
   };
+}
+
+/** The handicap index and how far it moved since the month began. */
+export interface HandicapMonth {
+  index: number | null;
+  /** Null before there's an index from before the 1st. */
+  change: number | null;
+  verdict: ChangeVerdict | null;
+}
+
+export function handicapMonthFrom(dto: DashboardDto): HandicapMonth {
+  return {
+    index: dto.handicap_index ?? null,
+    change: dto.handicap_change.this_month ?? null,
+    verdict: dto.handicap_change.this_month_verdict ?? null,
+  };
+}
+
+/** Whether a mix has any holes in it: a player with no classified holes has none to split. */
+export function hasScoreMix(mix: ScoreMix): boolean {
+  return Object.values(mix).some((share) => share > 0);
 }
 
 export interface WhsRound {
@@ -64,7 +63,6 @@ export interface WhsBreakdown {
   adjustment: number;
   diffAvg: number | null;
   hasRatedRounds: boolean;
-  showCalculation: boolean;
 }
 
 export function whsFrom(dto: WhsBreakdownDto): WhsBreakdown {
@@ -83,7 +81,6 @@ export function whsFrom(dto: WhsBreakdownDto): WhsBreakdown {
     adjustment: dto.adjustment,
     diffAvg: dto.diff_avg,
     hasRatedRounds: dto.has_rated_rounds,
-    showCalculation: dto.show_calculation,
   };
 }
 
@@ -92,11 +89,8 @@ export interface GoalProgress {
   /** The goal as stored: 79 means breaking 80. */
   target: number;
   /** Null until the goal report loads. */
-  average: number | null;
   progressPct: number | null;
   onTrack: boolean;
-  /** Headline of the saver worth the most strokes. */
-  focus: string | null;
 }
 
 /** Null until the player has set a goal. */
@@ -104,29 +98,7 @@ export function goalProgress(scoringGoal: number | null | undefined, report: Goa
   if (scoringGoal == null) return null;
   return {
     target: scoringGoal,
-    average: report?.scoring_average ?? null,
     progressPct: report?.progress_pct ?? null,
     onTrack: report?.on_track ?? false,
-    focus: report?.savers[0]?.headline ?? null,
   };
-}
-
-/** A lifetime best the server found, kept as the fact: what kind it is and the number it was set at. */
-export interface Milestone {
-  kind: MilestoneDto["kind"];
-  /** The score for a round under par, the threshold broken for score and putt breaks, the length of a par streak. */
-  value: number;
-  date: string;
-  course: string;
-  roundId: string | null;
-}
-
-export function milestonesFrom(dtos: MilestoneDto[]): Milestone[] {
-  return dtos.map((dto) => ({
-    kind: dto.kind,
-    value: dto.value,
-    date: dto.date,
-    course: dto.course,
-    roundId: dto.round_id,
-  }));
 }

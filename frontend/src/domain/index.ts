@@ -5,6 +5,7 @@ export {
   playedScoreKinds,
   scoreKind,
   scoreKindCountLabel,
+  scoreKindNoun,
   scoreMixFrom,
   strokesToPar,
   toParLabel,
@@ -34,28 +35,23 @@ export type {
 export { buildRadarData } from "./radar";
 export type { RadarEntry } from "./radar";
 
-export { courseSummaryFrom, formatCourseName, getTee, teeColors } from "./course";
+export { courseLabel, courseSummaryFrom, formatCourseName, getTee, teeColors } from "./course";
 export type { CourseSummary } from "./course";
 
 export { EMPTY_COURSE_ANALYTICS, courseAnalyticsFrom } from "./courseAnalytics";
-export type {
-  CourseAnalytics,
-  HoleFigure,
-  HoleScoreMix,
-  HoleToPar,
-  NineAverages,
-  ScorePoint,
-} from "./courseAnalytics";
+export type { CourseAnalytics, HoleStats, NineFigures, PuttsVerdict } from "./courseAnalytics";
 
-export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekdayDay, isoDay, parseDay } from "./date";
+export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekday, isoDay, parseDay } from "./date";
 export type { DayParts } from "./date";
 
 export {
   formatFileSize,
   formatOneDecimal,
   formatPercent,
-  formatSignedOneDecimal,
+  formatSigned,
   formatWhole,
+  formatTwoDecimals,
+  formatCount,
   pluralNoun,
   pluralize,
 } from "./format";
@@ -65,7 +61,7 @@ export type { ShareMessage } from "./share";
 
 export { formatHandicapIndex, formatCourseHandicap } from "./handicap";
 
-export { Round } from "./round";
+export { Round, roundLine } from "./round";
 export type {
   CourseEdit,
   HoleEdits,

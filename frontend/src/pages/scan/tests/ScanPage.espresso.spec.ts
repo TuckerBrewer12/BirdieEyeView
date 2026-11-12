@@ -239,7 +239,7 @@ test("a typed course name can be edited, and a picked course changed", async ({ 
   await scan.chooseManualEntry();
   await scan.searchSetupCourse("Muni Nine");
   await scan.keepTypedCourse("Muni Nine");
-  await scan.changeSetupCourse("Edit name");
+  await scan.changeSetupCourse("Link course");
   await scan.seesSetupSearch("Muni Nine");
   await scan.searchSetupCourse("Pebble");
   await scan.pickSetupCourse("Pebble Beach");
