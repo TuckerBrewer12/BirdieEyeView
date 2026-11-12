@@ -1,4 +1,4 @@
-import { Card, Stat, StatLabel, StatValue, toParTextClass } from "@/brand";
+import { Card, Stat, StatLabel, StatValue, ToParFigure } from "@/brand";
 import type { RecordFigure } from "../courseDetailModel";
 
 /** A figure's to par and when, set small beside it: "+6 · Jun 15", the to par coloured. */
@@ -6,7 +6,7 @@ function Detail({ figure }: { figure: RecordFigure }) {
   if (!figure.toPar && !figure.note) return null;
   return (
     <span className="text-caption font-bold whitespace-nowrap text-muted-foreground">
-      {figure.toPar && <span className={toParTextClass(figure.toPar.value)}>{figure.toPar.label}</span>}
+      {figure.toPar && <ToParFigure toPar={figure.toPar.value} label={figure.toPar.label} size="inherit" />}
       {figure.toPar && figure.note && " · "}
       {figure.note}
     </span>

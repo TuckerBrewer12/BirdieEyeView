@@ -291,7 +291,7 @@ async def test_course_repo_list_course_summaries_in_one_query(mock_pool):
     assert [(s.id, s.name, s.par, s.hole_count, s.tee_count, s.tee_colors) for s in summaries] == [
         (str(course_id), "Pebble Beach", 72, 18, 3, ["Blue", "White", "Red"])
     ]
-    assert "ORDER BY (SELECT COALESCE(SUM(y.yardage), 0)" in query  # longest tee first
+    assert "WHERE y.tee_id = t.id) DESC, lower(t.color)" in query  # longest tee first, ties by colour
 
     await repo.list_course_summaries()
     _, *params = conn.fetch.await_args.args
@@ -408,12 +408,18 @@ async def test_round_summaries_pick_the_page_before_gathering_holes(mock_pool):
     [summary] = await repo.get_round_summaries_for_user(str(user_id), limit=5, offset=10)
 
     sql, *args = conn.fetch.call_args.args
-    assert args == [user_id, 5, 10]
+    assert args == [user_id, 5, 10, None]
     # The page is cut inside the CTE, so json_agg only ever sees the rounds being returned.
     assert sql.index("LIMIT $2 OFFSET $3") < sql.index("json_agg")
     assert "GROUP BY" not in sql
     assert summary.course.name == "Blue Rock"
     assert summary.get_score_kind(1) == "birdie"
+
+    # The course list's record: every round at its courses, with no cap.
+    await repo.get_round_summaries_for_user(str(user_id), limit=None, course_ids=[str(course_id)])
+    sql, *args = conn.fetch.call_args.args
+    assert args == [user_id, None, 0, [course_id]]
+    assert "course_id = ANY($4::uuid[])" in sql
 
 
 @pytest.mark.asyncio

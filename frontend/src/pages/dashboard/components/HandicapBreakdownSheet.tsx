@@ -54,9 +54,18 @@ export function HandicapBreakdownSheet({
   const { rows, windowSize, countUsed, adjustment, diffAvg, hasRatedRounds } = whs;
   const adjustmentText = adjustmentLabel(adjustment);
   const stats = [
-    { value: windowFillLabel(windowSize), label: "Rounds so far" },
-    { value: String(countUsed), label: "Best used" },
-    { value: formatOneDecimal(diffAvg), label: wide ? "Avg differential" : "Avg diff" },
+    { key: "rounds", value: windowFillLabel(windowSize), label: "Rounds so far" },
+    { key: "used", value: String(countUsed), label: "Best used" },
+    {
+      key: "differential",
+      value: formatOneDecimal(diffAvg),
+      label: (
+        <>
+          <span className="md:hidden">Avg diff</span>
+          <span className="hidden md:inline">Avg differential</span>
+        </>
+      ),
+    },
   ];
 
   const index = (
@@ -97,7 +106,7 @@ export function HandicapBreakdownSheet({
 
         <Card className="grid auto-cols-fr grid-flow-col gap-0 py-0">
           {stats.map((stat) => (
-            <div key={stat.label} className="px-3.5 py-3 not-first:border-l not-first:border-border">
+            <div key={stat.key} className="px-3.5 py-3 not-first:border-l not-first:border-border">
               <div className="text-lg font-semibold text-foreground">{stat.value}</div>
               <div className="mt-0.5 text-label text-muted-foreground">{stat.label}</div>
             </div>

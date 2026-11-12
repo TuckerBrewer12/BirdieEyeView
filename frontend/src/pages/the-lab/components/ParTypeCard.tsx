@@ -1,5 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Meter, toParTextClass } from "@/brand";
-import { cn } from "@/brand/cn";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Meter, ToParFigure } from "@/brand";
 import { formatAverageToPar } from "@/domain";
 import type { ParTypeRow } from "../model";
 import { parTypeGapNote } from "../present";
@@ -53,7 +52,7 @@ export function ParTypeCard({ rows, benchmarkName, className }: ParTypeCardProps
                 aria-label={`${label}: ${formatAverageToPar(row.averageToPar)} a hole`}
               />
               {comparison && (
-                <p className={cn("text-label", toParTextClass(comparison.gap))}>{comparison.text}</p>
+                <ToParFigure toPar={comparison.gap} size="inherit" label={comparison.text} className="text-label" />
               )}
             </div>
           );

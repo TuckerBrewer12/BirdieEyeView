@@ -1,4 +1,4 @@
-import type { CourseDto, CourseSummaryDto, TeeDto } from "@/types/api";
+import type { CourseDto, CourseSummaryDto } from "@/types/api";
 
 /** A course as a list or a search shows it. */
 export interface CourseSummary {
@@ -124,9 +124,3 @@ export function chooseCompatibleTee(current: string, teeColors: string[]): strin
   return teeColors.find((c) => extractTeeColorToken(c) === currentToken) ?? null;
 }
 
-/** Named tees, longest first by the total the server sends. Ties keep the course's order. */
-export function teesByLength(course: CourseDto): TeeDto[] {
-  return course.tees
-    .filter((tee) => !!tee.color)
-    .sort((a, b) => (b.total_yardage ?? 0) - (a.total_yardage ?? 0));
-}

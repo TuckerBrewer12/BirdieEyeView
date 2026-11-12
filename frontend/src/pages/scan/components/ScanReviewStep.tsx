@@ -18,8 +18,7 @@ import {
   StatValue,
   ToggleGroup,
   ToggleGroupItem,
-  toParDisplay,
-  toParTextClass,
+  ToParFigure,
 } from "@/brand";
 import { formatCourseHandicap, type Round } from "@/domain";
 import { formatCourseName } from "@/domain/course";
@@ -129,7 +128,9 @@ function RoundFigures({ round }: { round: Pick<Round, "score" | "toPar" | "cours
       </Stat>
       <Stat>
         <StatLabel>To par</StatLabel>
-        <StatValue className={toParTextClass(toPar)}>{toParDisplay(toPar)}</StatValue>
+        <StatValue>
+          <ToParFigure toPar={toPar} size="inherit" empty="—" />
+        </StatValue>
       </Stat>
       <Stat>
         <StatLabel>{courseHandicap != null ? `Net · hcp ${formatCourseHandicap(courseHandicap)}` : "Net"}</StatLabel>

@@ -8,7 +8,6 @@ import {
   getHole,
   getTee,
   teeColors,
-  teesByLength,
 } from "../course";
 
 const white: StoredTee = {
@@ -55,12 +54,7 @@ describe("getTee / getHole", () => {
   });
 });
 
-describe("teesByLength", () => {
-  it("puts the longest tee first", () => {
-    expect(teesByLength(course()).map((tee) => tee.color)).toEqual(["White", "Blue"]);
-    expect(teesByLength(course({ tees: [blue, white] })).map((tee) => tee.color)).toEqual(["White", "Blue"]);
-  });
-
+describe("teeColors", () => {
   it("lists tee colors", () => {
     expect(teeColors(course())).toEqual(["White", "Blue"]);
   });

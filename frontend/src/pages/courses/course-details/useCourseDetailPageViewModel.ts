@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { teesByLength } from "@/domain/course";
 import type { CourseAnalytics } from "@/domain/courseAnalytics";
 import { formatCourseName } from "@/domain/course";
 import type { RoundSummary } from "@/domain/round";
@@ -10,6 +9,7 @@ import { useCourse } from "../useCourse";
 import { useCourseAnalytics } from "../useCourseAnalytics";
 import {
   RECENT_ROUNDS,
+  namedTees,
   nineFrom,
   recordFigures,
   selectedTee,
@@ -25,8 +25,8 @@ export interface CourseDetailPageViewModel {
   courseName: string;
   /** "Half Moon Bay, CA · Par 72". */
   courseLine: string | null;
-  /** The tees by name, longest first. */
-  tees: string[];
+  /** The tees by name, longest first, with their yardage. */
+  tees: { name: string; yards: number | null }[];
   /** The tee the scorecard reads. */
   selectedTee: string | null;
   selectTee: (name: string) => void;
@@ -66,7 +66,7 @@ export function useCourseDetailPageViewModel(
     courseLine: course
       ? [course.location, course.par != null ? `Par ${course.par}` : null].filter(Boolean).join(" · ") || null
       : null,
-    tees: course ? teesByLength(course).flatMap((t) => (t.color ? [t.color] : [])) : [],
+    tees: course ? namedTees(course).flatMap((t) => (t.color ? [{ name: t.color, yards: t.total_yardage }] : [])) : [],
     selectedTee: tee?.color ?? null,
     selectTee: setPicked,
     teeLine: tee ? teeLine(tee) : null,

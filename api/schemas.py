@@ -52,7 +52,7 @@ class CourseResponse(ResponseModel):
     front_nine_par: Optional[int] = None  # null until all nine holes have a par
     back_nine_par: Optional[int] = None
     holes: List[Hole] = Field(default_factory=list)
-    tees: List[TeeResponse] = Field(default_factory=list)
+    tees: List[TeeResponse] = Field(default_factory=list)  # longest first, ties by colour (Course.tees_by_length)
 
 
 class HoleScoreResponse(ResponseModel):
@@ -894,7 +894,7 @@ class CourseSummaryResponse(ResponseModel):
     par: Optional[int] = None
     total_holes: int = 0
     tee_count: int = 0
-    tees: List[str] = Field(default_factory=list)  # the tee colours, longest first
+    tees: List[str] = Field(default_factory=list)  # the tee colours, longest first (Course.tees_by_length)
     # The signed-in golfer's record here (`stats.course_record`); 0 and null when they haven't played it.
     rounds_played: int = 0
     scoring_average: Optional[float] = None

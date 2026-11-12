@@ -34,17 +34,13 @@ describe("TeePicker", () => {
     expect(change.calls).toEqual([]);
   });
 
-  it("clears the tee when the caller lets it and its chip is pressed again", () => {
-    const cleared = new FakeHandler();
-    render(<TeePicker tees={TEES} value="Blue" onChange={new FakeHandler().handle} onClear={cleared.handle} />);
-    fireEvent.click(screen.getByRole("button", { name: /^Blue/ }));
-    expect(cleared.calls).toHaveLength(1);
-  });
-
-  it("shows a tee's detail after its yardage", () => {
-    render(
-      <TeePicker tees={[{ name: "Blue", yards: 6697, detail: "72.4 / 130 · CH 12" }]} value="Blue" onChange={new FakeHandler().handle} />,
-    );
-    expect(screen.getByRole("button", { name: /^Blue/ })).toHaveTextContent("Blue6,69772.4 / 130 · CH 12");
+  it("as a segmented track, names each tee and picks one, keeping it when pressed again", () => {
+    const change = new FakeHandler<[string]>();
+    render(<TeePicker variant="segmented" tees={TEES} value="Blue" onChange={change.handle} />);
+    expect(screen.getByRole("group", { name: "Tee" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Blue" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Blue" }));
+    fireEvent.click(screen.getByRole("button", { name: "White" }));
+    expect(change.calls).toEqual([["White"]]);
   });
 });

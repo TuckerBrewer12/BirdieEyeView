@@ -85,7 +85,7 @@ export function RoundsPage({ userId }: RoundsPageProps) {
               aria-label="Search rounds"
               value={viewModel.search}
               onChange={viewModel.setSearch}
-              focusOnOpen={!linkInline}
+              focusOnOpen={viewModel.searchOpen}
               className="order-4 basis-full md:max-w-80 md:flex-1 md:basis-auto"
             />
           )}

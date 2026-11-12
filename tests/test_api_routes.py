@@ -99,7 +99,7 @@ async def test_course_listing_lookup_and_authorization():
               hole_scores=[HoleScore(hole_number=n, strokes=4 + (n <= over), par_played=4) for n in range(1, 19)])
         for day, over in ((9, 10), (2, 6))
     ]
-    db.rounds.get_rounds_for_user = AsyncMock(return_value=played)
+    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=played)
 
     listed = await courses.list_courses(20, 0, user_id, db, user)
     assert listed[0].model_dump() == {
@@ -115,6 +115,10 @@ async def test_course_listing_lookup_and_authorization():
         "rounds_played": 2,
         "scoring_average": 80.0,
         "best_score": 78,
+    }
+    # Every round at the listed courses, uncapped.
+    assert db.rounds.get_round_summaries_for_user.await_args.kwargs == {
+        "limit": None, "course_ids": [str(course_id), str(other_id)],
     }
     # A course the golfer hasn't played carries no record.
     assert (listed[1].rounds_played, listed[1].scoring_average, listed[1].best_score) == (0, None, None)
@@ -156,9 +160,9 @@ async def test_course_search_merges_external_results(monkeypatch):
     assert search_results[1].source == "external"
     assert search_results[0].rounds_played == 0  # the link search doesn't load the golfer's rounds
 
-    db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
+    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[])
     await courses.search_courses("Pebble", user_id, False, True, db, _make_user(user_id))
-    assert db.rounds.get_rounds_for_user.await_count == 1  # the course list's search does
+    assert db.rounds.get_round_summaries_for_user.await_count == 1  # the course list's search does
 
     with pytest.raises(HTTPException) as exc:
         await courses.search_courses("Pebble", None, True, False, db, None)

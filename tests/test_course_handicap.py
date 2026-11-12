@@ -131,8 +131,9 @@ async def test_a_course_sends_the_signed_in_golfers_course_handicap_per_tee():
     db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
 
     signed_in = await courses.get_course(UUID(course.id), db, user)
-    # 10.4 × 124 / 113 + (70.1 − 72) = 9.51
-    assert [t.course_handicap for t in signed_in.tees] == [12, 10, None]
+    # No tee has yardages, so they list by colour: Blue, Red, White. 10.4 × 124 / 113 + (70.1 − 72) = 9.51
+    assert [t.color for t in signed_in.tees] == ["Blue", "Red", "White"]
+    assert [t.course_handicap for t in signed_in.tees] == [12, None, 10]
 
     signed_out = await courses.get_course(UUID(course.id), db, None)
     assert [t.course_handicap for t in signed_out.tees] == [None, None, None]

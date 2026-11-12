@@ -116,7 +116,7 @@ def _summarize_course(c) -> CourseSummaryResponse:
         par=c.get_par(),
         total_holes=len(c.holes),
         tee_count=len(c.tees),
-        tees=[t.color for t in sorted(c.tees, key=lambda t: -(t.get_total_yardage() or 0)) if t.color],
+        tees=[t.color for t in c.tees_by_length() if t.color],
     )
 
 
@@ -142,10 +142,16 @@ def _summary_response(s: CourseSummary, record: Optional[dict] = None) -> Course
 async def _summary_responses(
     db: DatabaseManager, summaries: List[CourseSummary], user: Optional[User]
 ) -> List[CourseSummaryResponse]:
-    """The courses for the list, each with the golfer's record there (`stats.course_record`)."""
+    """The courses for the list, each with the golfer's record there (`stats.course_record`).
+
+    The record reads the light round summaries (strokes and pars, no tees) of every round the
+    golfer has at the listed courses, with no cap, so a long history still counts in full.
+    """
     if not user or not summaries:
         return [_summary_response(s) for s in summaries]
-    rounds = await db.rounds.get_rounds_for_user(str(user.id), limit=500, offset=0)  # newest first
+    rounds = await db.rounds.get_round_summaries_for_user(  # newest first
+        str(user.id), limit=None, course_ids=[s.id for s in summaries]
+    )
     by_course: Dict[str, List[Round]] = {}
     for r in rounds:
         if r.course and r.course.id:

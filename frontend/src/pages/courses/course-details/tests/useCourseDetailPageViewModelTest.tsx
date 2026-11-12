@@ -25,7 +25,10 @@ describe("useCourseDetailPageViewModel", () => {
 
     expect(result.current.courseName).toBe("Half Moon Bay");
     expect(result.current.courseLine).toBe("Half Moon Bay, CA · Par 72");
-    expect(result.current.tees).toEqual(["Blue", "White"]);
+    expect(result.current.tees).toEqual([
+      { name: "Blue", yards: 6500 },
+      { name: "White", yards: 6100 },
+    ]);
     expect(result.current.teeLine).toBe("Blue tees · 6,500 yds · 72.4 / 130");
     expect(result.current.nines.map((nine) => nine.side)).toEqual(["front", "back"]);
     expect(result.current.played).toBe(false);

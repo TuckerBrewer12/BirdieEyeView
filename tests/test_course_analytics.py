@@ -93,3 +93,20 @@ def test_scorecard_nines_are_null_for_a_nine_not_played():
     assert response.hole_to_par_back_nine is None
     assert response.hole_to_par_total == 0.0
     assert response.gir_total is None  # no greens recorded
+
+
+def test_tees_list_longest_first_with_ties_by_colour():
+    from api.course_responses import course_detail
+    from models import Tee
+
+    course = Course(
+        id="c1", name="Half Moon Bay", holes=COURSE.holes,
+        tees=[
+            Tee(color="white", hole_yardages={1: 350}),
+            Tee(color="Red", hole_yardages={1: 300}),
+            Tee(color="Blue", hole_yardages={1: 400}),
+            Tee(color="Gold", hole_yardages={1: 350}),
+        ],
+    )
+    assert [t.color for t in course.tees_by_length()] == ["Blue", "Gold", "white", "Red"]
+    assert [t.color for t in course_detail(course).tees] == ["Blue", "Gold", "white", "Red"]

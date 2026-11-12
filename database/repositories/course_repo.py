@@ -31,7 +31,7 @@ def _summary_from_row(row) -> CourseSummary:
 
     The queries work par out the way Course.get_par() does: the stored par,
     else the sum of the hole pars when all 18 holes have one. The tee colours come
-    longest first, as the course page orders its tees.
+    longest first, ties by colour, as Course.tees_by_length() orders them.
     """
     return CourseSummary(
         id=str(row["id"]),
@@ -540,7 +540,7 @@ class CourseRepositoryDB:
                               SELECT t.color FROM courses.tees t
                               WHERE t.course_id = c.id
                               ORDER BY (SELECT COALESCE(SUM(y.yardage), 0) FROM courses.tee_yardages y
-                                        WHERE y.tee_id = t.id) DESC, t.color
+                                        WHERE y.tee_id = t.id) DESC, lower(t.color)
                           ) AS tee_colors
                    FROM (
                        SELECT * FROM courses.courses
@@ -570,7 +570,7 @@ class CourseRepositoryDB:
                               SELECT t.color FROM courses.tees t
                               WHERE t.course_id = c.id
                               ORDER BY (SELECT COALESCE(SUM(y.yardage), 0) FROM courses.tee_yardages y
-                                        WHERE y.tee_id = t.id) DESC, t.color
+                                        WHERE y.tee_id = t.id) DESC, lower(t.color)
                           ) AS tee_colors
                    FROM (
                        SELECT * FROM courses.courses

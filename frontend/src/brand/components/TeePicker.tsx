@@ -3,14 +3,13 @@ import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group
 import { cn } from "@/brand/cn";
 import { formatCount } from "@/domain/format";
 import { TeeSwatch } from "./TeeSwatch";
+import { ToggleGroup, ToggleGroupItem } from "./ToggleGroup";
 
 interface TeeOption {
   /** The tee's name as the course stores it ("Blue", "Back Gold"). */
   name: string;
-  /** Its total yardage, when every hole has one. */
+  /** Its total yardage, when every hole has one. The chips show it. */
   yards: number | null;
-  /** More about it after the yardage, worded by the caller: "72.4 / 130 · CH 12". */
-  detail?: string | null;
 }
 
 interface TeePickerProps {
@@ -18,20 +17,50 @@ interface TeePickerProps {
   /** The tee picked, by name; none is pressed when it matches no tee. */
   value: string;
   onChange: (name: string) => void;
-  /** Lets the picked chip be pressed again to pick none. Left out, a tee is always picked. */
-  onClear?: () => void;
   /** What the row picks, named for screen readers and shown before the chips. */
   label?: string;
+  /**
+   * `chips` (the default) picks the tee a round was played from, each chip with its yardage.
+   * `segmented` picks which tee a course's scorecard reads: a track of the tees' names, full
+   * width on a phone.
+   */
+  variant?: "chips" | "segmented";
   className?: string;
 }
 
 /**
- * Picks the tee a round was played from: a row of pill chips, each the tee's swatch, its name and
+ * Picks a tee. As chips (the default), the tee a round was played from: a row of pill chips, each the tee's swatch, its name and
  * its yardage, the picked one ringed. Built on the same toggle group as `ToggleGroup`, so arrow keys
  * move between the chips; only the look differs, a chip a tee rather than a segmented track.
  */
-function TeePicker({ tees, value, onChange, onClear, label = "Tee", className }: TeePickerProps) {
+function TeePicker({ tees, value, onChange, label = "Tee", variant = "chips", className }: TeePickerProps) {
   const picked = tees.find((tee) => tee.name.toLowerCase() === value.toLowerCase())?.name;
+
+  if (variant === "segmented") {
+    return (
+      <ToggleGroup
+        data-slot="tee-picker"
+        aria-label={label}
+        value={picked ? [picked] : []}
+        onValueChange={(values: string[]) => {
+          // Pressing the picked tee again keeps it: the card always reads one.
+          if (values[0]) onChange(values[0]);
+        }}
+        className={cn("w-full md:w-fit", className)}
+      >
+        {tees.map((tee) => (
+          <ToggleGroupItem
+            key={tee.name}
+            value={tee.name}
+            className="min-w-0 flex-1 basis-0 gap-1.5 md:flex-none md:basis-auto"
+          >
+            <TeeSwatch color={tee.name} className="size-2.5 shrink-0 rounded-full ring-1 ring-border-strong ring-inset" />
+            <span className="truncate capitalize">{tee.name}</span>
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    );
+  }
 
   return (
     <div data-slot="tee-picker" className={cn("flex flex-wrap items-center gap-2", className)}>
@@ -42,9 +71,8 @@ function TeePicker({ tees, value, onChange, onClear, label = "Tee", className }:
         aria-label={label}
         value={picked ? [picked] : []}
         onValueChange={(values: string[]) => {
-          // Pressing the picked chip again keeps it, unless the caller lets it clear.
+          // Pressing the picked chip again keeps it: a round is always played from a tee.
           if (values[0]) onChange(values[0]);
-          else onClear?.();
         }}
         className="flex flex-wrap items-center gap-2"
       >
@@ -59,7 +87,6 @@ function TeePicker({ tees, value, onChange, onClear, label = "Tee", className }:
             {tee.yards != null && (
               <span className="text-body-sm font-medium text-muted-foreground">{formatCount(tee.yards)}</span>
             )}
-            {tee.detail && <span className="text-body-sm font-medium text-muted-foreground">{tee.detail}</span>}
           </TogglePrimitive>
         ))}
       </ToggleGroupPrimitive>

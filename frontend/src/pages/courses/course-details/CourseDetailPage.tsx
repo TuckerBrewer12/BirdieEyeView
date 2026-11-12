@@ -12,9 +12,7 @@ import {
   LoadingState,
   PageTitle,
   RoundPreview,
-  TeeSwatch,
-  ToggleGroup,
-  ToggleGroupItem,
+  TeePicker,
 } from "@/brand";
 import { CourseRecordCard } from "./components/CourseRecordCard";
 import { CourseScorecard } from "./components/CourseScorecard";
@@ -52,21 +50,12 @@ export function CourseDetailPage({ userId }: { userId: string }) {
           )}
         </div>
         {viewModel.tees.length > 0 && (
-          <ToggleGroup
-            aria-label="Tee"
-            value={viewModel.selectedTee ? [viewModel.selectedTee] : []}
-            onValueChange={(values: string[]) => {
-              if (values[0]) viewModel.selectTee(values[0]);
-            }}
-            className="w-full md:w-fit"
-          >
-            {viewModel.tees.map((tee) => (
-              <ToggleGroupItem key={tee} value={tee} className="min-w-0 flex-1 basis-0 gap-1.5 md:flex-none md:basis-auto">
-                <TeeSwatch color={tee} className="size-2.5 shrink-0 rounded-full" />
-                <span className="truncate capitalize">{tee}</span>
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
+          <TeePicker
+            variant="segmented"
+            tees={viewModel.tees}
+            value={viewModel.selectedTee ?? ""}
+            onChange={viewModel.selectTee}
+          />
         )}
       </div>
 

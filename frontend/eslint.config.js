@@ -237,6 +237,8 @@ export default defineConfig([
       'kit/no-figure-type': 'error',
       'kit/no-button-size-override': 'error',
       'kit/no-handmade-radio': 'error',
+      'kit/no-to-par-tone': 'error',
+      'kit/no-raw-table': 'error',
     },
   },
   {

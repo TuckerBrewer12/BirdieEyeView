@@ -5,7 +5,6 @@ import {
   getHole,
   getTee,
   teeRatingLabel,
-  teesByLength,
 } from "@/domain/course";
 import type { CourseAnalytics, NineFigures } from "@/domain/courseAnalytics";
 import { formatDayShort } from "@/domain/date";
@@ -17,12 +16,17 @@ import type { CourseDto, TeeDto } from "@/types/api";
 /** How many of the golfer's latest rounds here the page lists. */
 export const RECENT_ROUNDS = 5;
 
+/** The course's named tees, longest first as the server sends them. */
+export function namedTees(course: CourseDto): TeeDto[] {
+  return course.tees.filter((tee) => !!tee.color);
+}
+
 /**
  * The tee the scorecard shows: the golfer's pick, or the longest until they pick one. A pick that
  * matches no tee falls back to the longest too.
  */
 export function selectedTee(course: CourseDto, picked: string | null): TeeDto | null {
-  return (picked != null ? getTee(course, picked) : null) ?? teesByLength(course)[0] ?? null;
+  return (picked != null ? getTee(course, picked) : null) ?? namedTees(course)[0] ?? null;
 }
 
 /** The scorecard's bar for a tee: "Blue tees · 6,500 yds · 72.4 / 130 · hcp 12". */
