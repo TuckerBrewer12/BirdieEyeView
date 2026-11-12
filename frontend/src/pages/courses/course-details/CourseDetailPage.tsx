@@ -14,6 +14,7 @@ import {
   RoundPreview,
   TeePicker,
 } from "@/brand";
+import { recordFigures, teeLine } from "./courseDetailModel";
 import { CourseRecordCard } from "./components/CourseRecordCard";
 import { CourseScorecard } from "./components/CourseScorecard";
 import { useCourseDetailPageViewModel } from "./useCourseDetailPageViewModel";
@@ -27,13 +28,17 @@ export function CourseDetailPage({ userId }: { userId: string }) {
     return <LoadingState>Loading course...</LoadingState>;
   }
 
-  if (viewModel.loadError || !viewModel.course) {
+  const course = viewModel.course;
+  if (viewModel.loadError || !course) {
     return (
       <Alert variant="destructive">
         <AlertDescription>{viewModel.loadError ?? "Course not found."}</AlertDescription>
       </Alert>
     );
   }
+
+  const courseLine =
+    [course.location, course.par != null ? `Par ${course.par}` : null].filter(Boolean).join(" · ") || null;
 
   return (
     <div className="flex flex-col gap-3.5 pb-6 md:gap-4">
@@ -45,25 +50,29 @@ export function CourseDetailPage({ userId }: { userId: string }) {
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3.5">
         <div data-slot="course-title" className="min-w-0">
           <PageTitle size="heading">{viewModel.courseName}</PageTitle>
-          {viewModel.courseLine && (
-            <div className="mt-0.5 text-body-sm text-muted-foreground md:mt-1 md:text-body">{viewModel.courseLine}</div>
+          {courseLine && (
+            <div className="mt-0.5 text-body-sm text-muted-foreground md:mt-1 md:text-body">{courseLine}</div>
           )}
         </div>
         {viewModel.tees.length > 0 && (
           <TeePicker
             variant="segmented"
             tees={viewModel.tees}
-            value={viewModel.selectedTee ?? ""}
+            value={viewModel.tee?.color ?? ""}
             onChange={viewModel.selectTee}
           />
         )}
       </div>
 
-      <CourseScorecard teeLine={viewModel.teeLine} nines={viewModel.nines} played={viewModel.played} />
+      <CourseScorecard
+        teeLine={viewModel.tee ? teeLine(viewModel.tee) : null}
+        nines={viewModel.nines}
+        played={viewModel.played}
+      />
 
       {viewModel.played ? (
         <div className="grid grid-cols-1 gap-3.5 md:grid-cols-course-record md:gap-4">
-          <CourseRecordCard figures={viewModel.record} />
+          <CourseRecordCard figures={viewModel.analytics ? recordFigures(viewModel.analytics) : []} />
           <Card data-slot="recent-rounds" className="gap-0 pt-4 pb-1 md:pb-2">
             <CardHeader className="px-4 md:px-5">
               <CardTitle level={2} className="text-body-lg font-semibold">

@@ -1,6 +1,7 @@
 import { ScorecardCard, ScorecardGrid, ToParFigure, type ScorecardRow } from "@/brand";
 import { formatPercent, formatScorecardFigure as show } from "@/domain/format";
-import type { AverageToPar, ScorecardHole, ScorecardNine } from "../courseDetailModel";
+import { formatAverageToParTenths } from "@/domain/score";
+import type { ScorecardHole, ScorecardNine } from "../courseDetailModel";
 
 interface CourseScorecardProps {
   /** The tee the card reads, as its bar names it. */
@@ -13,8 +14,14 @@ interface CourseScorecardProps {
 
 type Row = ScorecardRow<ScorecardHole, ScorecardNine>;
 
-function ToPar({ value }: { value: AverageToPar | null }) {
-  return <ToParFigure toPar={value?.value ?? null} label={value?.label} size="inherit" />;
+function ToPar({ value }: { value: number | null }) {
+  return (
+    <ToParFigure
+      toPar={value}
+      label={value != null ? formatAverageToParTenths(value) : undefined}
+      size="inherit"
+    />
+  );
 }
 
 const SMALL = "h-7 text-caption font-medium text-muted-foreground md:text-label";

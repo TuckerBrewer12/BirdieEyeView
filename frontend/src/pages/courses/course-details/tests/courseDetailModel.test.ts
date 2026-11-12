@@ -50,11 +50,11 @@ describe("nineFrom", () => {
     const front = nineFrom(halfMoonBayCourse, "front", null, analytics);
     const back = nineFrom(halfMoonBayCourse, "back", null, analytics);
 
-    expect(front.holes[0]?.averageToPar).toEqual({ value: -0.5, label: "\u22120.5" });
-    expect(front.holes[2]?.averageToPar).toEqual({ value: 0.5, label: "+0.5" });
+    expect(front.holes[0]?.averageToPar).toBe(-0.5);
+    expect(front.holes[2]?.averageToPar).toBe(0.5);
     expect([front.holes[0]?.greens, front.holes[1]?.greens]).toEqual([50, 100]);
-    expect(front.nine.averageToPar?.label).toBe("\u22121.5");
-    expect(back.course?.averageToPar?.label).toBe("\u22123.0");
+    expect(front.nine.averageToPar).toBe(-1.5);
+    expect(back.course?.averageToPar).toBe(-3);
     expect(back.course?.greens).toBe(75);
   });
 

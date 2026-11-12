@@ -24,15 +24,16 @@ describe("useCourseDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.courseName).toBe("Half Moon Bay");
-    expect(result.current.courseLine).toBe("Half Moon Bay, CA · Par 72");
+    expect(result.current.course?.location).toBe("Half Moon Bay, CA");
+    expect(result.current.course?.par).toBe(72);
     expect(result.current.tees).toEqual([
       { name: "Blue", yards: 6500 },
       { name: "White", yards: 6100 },
     ]);
-    expect(result.current.teeLine).toBe("Blue tees · 6,500 yds · 72.4 / 130");
+    expect(result.current.tee?.color).toBe("Blue");
     expect(result.current.nines.map((nine) => nine.side)).toEqual(["front", "back"]);
     expect(result.current.played).toBe(false);
-    expect(result.current.record).toEqual([]);
+    expect(result.current.analytics).toBeNull();
     expect(result.current.recentRounds).toEqual([]);
   });
 
@@ -43,8 +44,8 @@ describe("useCourseDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     act(() => result.current.selectTee("White"));
-    expect(result.current.selectedTee).toBe("White");
-    expect(result.current.teeLine).toBe("White tees · 6,100 yds · 70.1 / 122");
+    expect(result.current.tee?.color).toBe("White");
+    expect(result.current.tee?.total_yardage).toBe(6100);
   });
 
   it("adds the golfer's record, rows and latest rounds once they have played here", async () => {
@@ -54,14 +55,12 @@ describe("useCourseDetailPageViewModel", () => {
     const { result } = renderVm(repository);
     await waitFor(() => expect(result.current.played).toBe(true));
 
-    expect(result.current.record.map((figure) => [figure.label, figure.value])).toEqual([
-      ["Rounds", "2"],
-      ["Average", "75.0"],
-      ["Best", "72"],
-      ["Worst", "78"],
-    ]);
+    expect(result.current.analytics?.roundsPlayed).toBe(2);
+    expect(result.current.analytics?.scoringAverage).toBe(75);
+    expect(result.current.analytics?.bestRound?.score).toBe(72);
+    expect(result.current.analytics?.worstRound?.score).toBe(78);
     expect(result.current.recentRounds.map((round) => round.id)).toEqual(["round-1", "round-2"]);
-    expect(result.current.nines[0]?.holes[0]?.averageToPar?.label).toBe("\u22120.5");
+    expect(result.current.nines[0]?.holes[0]?.averageToPar).toBe(-0.5);
   });
 
   it("surfaces a load error when the course is missing", async () => {

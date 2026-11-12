@@ -42,14 +42,9 @@ export function teeLine(tee: TeeDto): string {
 }
 
 /** An average to par as the scorecard shows it: rounded to a tenth, so its colour follows what it reads. */
-export interface AverageToPar {
-  value: number;
-  label: string;
-}
-
-function averageToPar(value: number | null | undefined): AverageToPar | null {
+function averageToPar(value: number | null | undefined): number | null {
   if (value == null) return null;
-  return { value: roundAverageToParTenths(value), label: formatAverageToParTenths(value) };
+  return roundAverageToParTenths(value);
 }
 
 export interface ScorecardHole {
@@ -57,8 +52,8 @@ export interface ScorecardHole {
   par: number | null;
   handicap: number | null;
   yards: number | null;
-  /** The golfer's average here to par, once they have played the hole. */
-  averageToPar: AverageToPar | null;
+  /** The golfer's average here to par, to a tenth, once they have played the hole. */
+  averageToPar: number | null;
   /** The greens they have hit here (0-100), once one is recorded. */
   greens: number | null;
 }
@@ -67,7 +62,7 @@ export interface ScorecardHole {
 export interface ScorecardTotals {
   par: number | null;
   yards: number | null;
-  averageToPar: AverageToPar | null;
+  averageToPar: number | null;
   greens: number | null;
 }
 
@@ -148,7 +143,12 @@ export function recordFigures(analytics: CourseAnalytics): RecordFigure[] {
   const last = formatDayShort(analytics.lastPlayed);
   return [
     { label: "Rounds", value: String(analytics.roundsPlayed), toPar: null, note: last ? `last ${last}` : null },
-    { label: "Average", value: formatOneDecimal(analytics.scoringAverage), toPar: average, note: null },
+    {
+      label: "Average",
+      value: formatOneDecimal(analytics.scoringAverage),
+      toPar: average != null ? { value: average, label: formatAverageToParTenths(average) } : null,
+      note: null,
+    },
     round("Best", analytics.bestRound),
     round("Worst", analytics.worstRound),
   ];
