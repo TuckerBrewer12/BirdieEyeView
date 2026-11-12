@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { queryKeys } from "@/data/queryKeys";
-import { Round, roundLine } from "@/domain/round";
+import { Round } from "@/domain/round";
 import { formatTeeName, getTee, teeRatingLabel } from "@/domain/course";
 import { formatWeekday } from "@/domain/date";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
@@ -17,8 +17,6 @@ export interface RoundDetailUiState {
   played: Round | null;
   /** Over the course name: "Mon, Jun 15, 2026 · Blue tees · 72.4 / 130". */
   dateLine: string | null;
-  /** The round as the delete dialog names it: "Half Moon Bay · Jun 15 · 78". */
-  deleteLine: string;
   /** The course's tees as edit mode's chips; none when the course has no tees on file. */
   teeOptions: { name: string; yards: number | null }[];
   /** Edit mode. Start it with `enterEditMode`, which also closes the page's other panels. */
@@ -95,7 +93,6 @@ export function useRoundDetailPageViewModel(
       [formatWeekday(played?.date), played?.teeBox ? formatTeeName(played.teeBox) : null, teeRatingLabel(tee)]
         .filter(Boolean)
         .join(" · ") || null,
-    deleteLine: played ? roundLine(played) : "",
     teeOptions: teeOptions(editor.activeCourse),
     editor,
     confirmDelete,

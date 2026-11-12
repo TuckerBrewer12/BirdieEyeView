@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { useShareRound } from "@/platform/useShareRound";
 import { roundShareMessage } from "@/domain/share";
 import { courseLabel } from "@/domain/course";
+import { roundLine } from "@/domain/round";
 import {
   Alert,
   AlertDescription,
@@ -61,7 +62,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         confirmDelete={viewModel.confirmDelete}
         deleting={viewModel.deleting}
         sharing={sharing}
-        deleteLine={viewModel.deleteLine}
+        deleteLine={roundLine(played)}
         canLink={viewModel.canLink}
         onEdit={viewModel.enterEditMode}
         onSave={editor.save}
