@@ -1,7 +1,7 @@
 import { Card, ColumnBars, ShareBar, ShareLegend, StatTile, TrendAreaChart } from "@/brand";
 import { cn } from "@/brand/cn";
 import { averageLine, formatPercent } from "@/domain";
-import type { Analytics } from "../model";
+import type { Analytics, TrendWindow } from "../model";
 import {
   formatPutts,
   puttingFigures,
@@ -11,12 +11,6 @@ import {
   threePuttColumns,
 } from "../present";
 import { SectionCard } from "./SectionCard";
-
-interface TrendWindow {
-  /** How many of the latest rounds the trend shows; null is all of them. */
-  shown: number | null;
-  onShownChange: (shown: number) => void;
-}
 
 /** Putting: putts each round, the rounds' three-putts, and how the holes split by putts. */
 export function PuttingSection({ analytics, shown, onShownChange }: { analytics: Analytics } & TrendWindow) {

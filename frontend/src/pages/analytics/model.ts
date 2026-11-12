@@ -55,6 +55,13 @@ export type TrendLine = "score" | ScoreKind;
 /** The page's charts of a figure each round, each with its own rounds slider. */
 export type TrendChart = "score" | "greens" | "putts";
 
+/** A trend's rounds slider, as a section hands it to its chart. */
+export interface TrendWindow {
+  /** How many of the latest rounds the trend shows; null is all of them. */
+  shown: number | null;
+  onShownChange: (shown: number) => void;
+}
+
 /** Every trend shows every round the filters read until its slider moves. */
 export const ALL_ROUNDS_SHOWN: Record<TrendChart, number | null> = { score: null, greens: null, putts: null };
 

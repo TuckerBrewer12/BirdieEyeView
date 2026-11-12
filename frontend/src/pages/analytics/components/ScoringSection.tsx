@@ -1,6 +1,6 @@
 import { ColumnBars, LinePicker, Meter, ToggleGroup, ToggleGroupItem, TrendAreaChart } from "@/brand";
 import { averageLine } from "@/domain";
-import type { Analytics, TrendLine } from "../model";
+import type { Analytics, TrendLine, TrendWindow } from "../model";
 import {
   TREND_LINES_LABEL,
   TREND_LINES_OFF,
@@ -17,15 +17,12 @@ import type { ScoreReading } from "../useAnalyticsPageViewModel";
 import { ParTypeRow } from "./ParTypeRow";
 import { SectionCard } from "./SectionCard";
 
-interface ScoringSectionProps {
+interface ScoringSectionProps extends TrendWindow {
   analytics: Analytics;
   reading: ScoreReading;
   onReadingChange: (reading: ScoreReading) => void;
   lines: TrendLine[];
   onLinesChange: (lines: TrendLine[]) => void;
-  /** How many of the latest rounds the trend shows; null is all of them. */
-  shown: number | null;
-  onShownChange: (shown: number) => void;
 }
 
 const READINGS: { value: ScoreReading; label: string }[] = [
