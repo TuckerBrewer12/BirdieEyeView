@@ -9,7 +9,7 @@ import type { ScoreKind } from "@/domain/score";
 import { ChartTooltip } from "./ChartTooltip";
 import { AxisLabel, TooltipRow } from "./trendParts";
 import { useChartWidth } from "./useChartWidth";
-import { indexScale, knownValues, paddedExtent, tickIndexes } from "./scales";
+import { indexScale, knownValues, niceExtent, tickIndexes } from "./scales";
 
 type TrendAreaTone = "primary" | "birdie" | "bogey" | "eagle" | "neutral" | "contrast";
 
@@ -148,7 +148,8 @@ export function TrendAreaChart({
   const H = baseline + PAD.bottom;
 
   const all = points.flatMap((point) => point.values);
-  const extent = domain ?? paddedExtent(all, { ratio: layout.headroom })!;
+  // Out to the round numbers either side of the values, so the top and bottom rules enclose every dot.
+  const extent = domain ?? niceExtent(all, layout.yTicks, layout.flatSpan)!;
   const x = indexScale(points.length, PAD.left, W - PAD.right);
   const y = scaleLinear().domain(extent).range([seriesBottom, seriesTop]);
   const countMax = Math.max(layout.countFloor, ...counts.flatMap((count) => knownValues(count.values)));
@@ -264,6 +265,28 @@ export function TrendAreaChart({
 
         {showSeries && series[0].mark !== "dots" && <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />}
 
+        {/* The rounds' dots sit under the lines, so a dot never hides the average running through it. */}
+        {showSeries &&
+          series.map((s, i) =>
+            points.map((p, index) => {
+              const value = p.values[i];
+              const dotted = s.mark === "dots";
+              // Beside the rounds' own dots, a line marks only the round picked.
+              const lineDots = showDots && !hasDots;
+              if (value == null || (!dotted && !lineDots && active !== index)) return null;
+              return (
+                <circle
+                  key={`dot-${i}-${index}`}
+                  cx={x(index)}
+                  cy={y(value)}
+                  r={active === index ? layout.dotHover : layout.dot}
+                  fill={dotted && active !== index ? tokens.color.chart.axis : STROKE[s.tone ?? "primary"]}
+                  stroke={tokens.color.card}
+                  strokeWidth={tokens.lineWidth.outline}
+                />
+              );
+            }),
+          )}
         {showSeries &&
           series.map((s, i) =>
             s.mark === "dots" ? null : (
@@ -295,7 +318,7 @@ export function TrendAreaChart({
                   key={index}
                   cx={x(index)}
                   cy={yCount(value)}
-                  r={active === index ? layout.dotHover : layout.dot}
+                  r={active === index ? layout.countDotHover : layout.countDot}
                   fill={scoreMarkFill(count.kind)}
                   stroke={tokens.color.card}
                   strokeWidth={tokens.lineWidth.outline}
@@ -317,27 +340,6 @@ export function TrendAreaChart({
           />
         )}
 
-        {showSeries &&
-          series.map((s, i) =>
-            points.map((p, index) => {
-              const value = p.values[i];
-              const dotted = s.mark === "dots";
-              // Beside the rounds' own dots, a line marks only the round picked.
-              const lineDots = showDots && !hasDots;
-              if (value == null || (!dotted && !lineDots && active !== index)) return null;
-              return (
-                <circle
-                  key={`dot-${i}-${index}`}
-                  cx={x(index)}
-                  cy={y(value)}
-                  r={active === index ? layout.dotHover : layout.dot}
-                  fill={dotted && active !== index ? tokens.color.chart.axis : STROKE[s.tone ?? "primary"]}
-                  stroke={tokens.color.card}
-                  strokeWidth={tokens.lineWidth.outline}
-                />
-              );
-            }),
-          )}
       </svg>
 
       {showSeries && series.length > 1 && (

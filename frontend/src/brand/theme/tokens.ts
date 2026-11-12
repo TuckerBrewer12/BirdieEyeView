@@ -819,14 +819,16 @@ export const chart = {
     minWidth: 280,
     /** The series' plot with its padding; the counts' panel adds `panelGap` and `countHeight` under it. */
     height: 260,
-    pad: { top: 14, right: 16, bottom: 28, left: 44 },
-    /** Share of the span left either side of the values, so the line never touches the edge. */
-    headroom: 0.08,
+    /** The top only clears a dot sitting on the top rule. */
+    pad: { top: 10, right: 16, bottom: 28, left: 44 },
+    /** A run of one value still gets this much either side before the range rounds out. */
+    flatSpan: 1,
     stroke: 3,
     /** The second line is thinner, so the first reads as the figure. */
     strokeSecondary: 2.5,
-    dot: 4,
-    dotHover: 6,
+    /** A round's dot: big enough to pick out each round at a glance. */
+    dot: 8,
+    dotHover: 10,
     /** Past this many rounds the dots would crowd the line, so only the hovered one is drawn. */
     maxDots: 30,
     /** About this many round numbers along the bottom. */
@@ -834,6 +836,9 @@ export const chart = {
     yTicks: 4,
     /** Holes of a kind each round, in a panel under the series. */
     countHeight: 120,
+    /** The counts' dots stay small: several kinds often share a count in a short panel. */
+    countDot: 4,
+    countDotHover: 6,
     countTicks: 3,
     panelGap: 28,
     /** The counts' scale reaches at least this many holes, so one birdie doesn't fill the panel. */
