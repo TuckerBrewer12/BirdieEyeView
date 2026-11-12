@@ -1,10 +1,10 @@
-import { useId } from "react";
 import {
   Card,
   RadarChart,
   Stat,
   StatLabel,
   StatValue,
+  PickerMenu,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
@@ -62,7 +62,6 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
   const { mode, peak, comparison, selectedFriend, friendComparison, radar, compared, missingAxes } = props;
   const legend = compared ? benchmarkName(mode, comparison, selectedFriend) : null;
   const note = friendComparison ? friendNote(friendComparison, selectedFriend) : null;
-  const compareLabelId = useId();
 
   return (
     <Card data-slot="performance-shape" className="@container py-0">
@@ -74,22 +73,19 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
 
           <ToggleGroup
             aria-label="Shape to show"
-            variant="outline"
             size="sm"
-            spacing={0}
+            fill
             value={[mode]}
             onValueChange={(values) => {
               const next = MODES.find((m) => m.value === values[0]);
               if (next) props.onModeChange(next.value);
             }}
-            className="w-full"
           >
             {MODES.map((m) => (
               <ToggleGroupItem
                 key={m.value}
                 value={m.value}
                 disabled={m.value === "peak" && !peak}
-                className="flex-1"
               >
                 {m.label}
               </ToggleGroupItem>
@@ -143,49 +139,32 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
 
           {mode === "benchmark" && (
             <div className="flex flex-col gap-2">
-              <span
-                id={compareLabelId}
-                className="text-eyebrow uppercase text-muted-foreground"
-              >
+              <span aria-hidden className="text-eyebrow uppercase text-muted-foreground">
                 Compare vs.
               </span>
-              <ToggleGroup
-                data-slot="comparison-picker"
-                aria-labelledby={compareLabelId}
-                variant="outline"
-                size="sm"
-                value={[comparisonKey(comparison)]}
-                onValueChange={(values) => {
-                  const next = comparisonFromKey(values[0]);
-                  if (next) props.onComparisonChange(next.value);
-                }}
-                className="w-full flex-wrap"
-              >
-                {COMPARISON_OPTIONS.map((option) => (
-                  <ToggleGroupItem key={option.key} value={option.key}>
-                    {option.label}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
+              <div data-slot="comparison-picker">
+                <PickerMenu
+                  aria-label="Compare vs."
+                  label={COMPARISON_OPTIONS.find((option) => option.key === comparisonKey(comparison))?.label ?? ""}
+                  value={comparisonKey(comparison)}
+                  options={COMPARISON_OPTIONS.map((option) => ({ value: option.key, label: option.label }))}
+                  onChange={(key) => {
+                    const next = comparisonFromKey(key);
+                    if (next) props.onComparisonChange(next.value);
+                  }}
+                />
+              </div>
 
               {comparison === "friend" && props.friends.length > 0 && (
-                <ToggleGroup
-                  data-slot="friend-picker"
-                  aria-label="Friend to compare with"
-                  variant="outline"
-                  size="sm"
-                  value={selectedFriend ? [selectedFriend.id] : []}
-                  onValueChange={(values) => {
-                    if (values[0]) props.onSelectFriend(values[0]);
-                  }}
-                  className="w-full flex-wrap"
-                >
-                  {props.friends.map((friend) => (
-                    <ToggleGroupItem key={friend.id} value={friend.id}>
-                      {friendName(friend)}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
+                <div data-slot="friend-picker">
+                  <PickerMenu
+                    aria-label="Friend to compare with"
+                    label={selectedFriend ? friendName(selectedFriend) : "Pick a friend"}
+                    value={selectedFriend?.id ?? ""}
+                    options={props.friends.map((friend) => ({ value: friend.id, label: friendName(friend) }))}
+                    onChange={props.onSelectFriend}
+                  />
+                </div>
               )}
               {note && <p className="text-label text-muted-foreground">{note}</p>}
             </div>

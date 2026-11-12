@@ -12,8 +12,12 @@ export function toCourseSummary(course: CourseDto): CourseSummaryDto {
     par: course.par,
     total_holes: course.holes.length,
     tee_count: course.tees.length,
+    tees: course.tees.flatMap((tee) => (tee.color ? [tee.color] : [])),
     external_course_id: course.external_course_id,
     source: "local",
+    rounds_played: 0,
+    scoring_average: null,
+    best_score: null,
   };
 }
 
@@ -90,42 +94,69 @@ export const ratedPebbleBeachCourse: CourseDto = withCourseHandicaps(pebbleBeach
 /** Round 1 for the same golfer: off the Blue tee's 12, net 66. */
 export const ratedHalfMoonBayRound: RoundDto = roundResponse({ ...hmbRound, course: ratedHalfMoonBayCourse });
 
-/** Comparison cohorts for a round: this round first, then the baselines. */
+type ComparisonFigureDto = RoundComparisonDto["windows"][number]["metrics"][number];
+
+/** This round's figure against an average, with the difference and verdict the server works out. */
+function figure(
+  metric: ComparisonFigureDto["metric"],
+  value: number,
+  average: number,
+  lowerIsBetter: boolean,
+): ComparisonFigureDto {
+  const digits = metric === "putts_per_gir" ? 100 : 10;
+  const difference = Math.round((value - average) * digits) / digits;
+  const better = lowerIsBetter ? difference < 0 : difference > 0;
+  return { metric, value, average, difference, verdict: difference === 0 ? "neutral" : better ? "good" : "bad" };
+}
+
+function window(
+  name: RoundComparisonDto["windows"][number]["window"],
+  rounds: number,
+  [score, putts, greens, threePutts, puttsPerGir, scrambling]: number[],
+): RoundComparisonDto["windows"][number] {
+  return {
+    window: name,
+    rounds,
+    metrics: [
+      figure("score", 78, score, true),
+      figure("putts", 32, putts, true),
+      figure("greens", 7, greens, false),
+      figure("three_putts", 1, threePutts, true),
+      figure("putts_per_gir", 1.71, puttsPerGir, true),
+      figure("scrambling", 4, scrambling, false),
+    ],
+  };
+}
+
+/** Round detail's "vs your average" for the redesign board's round: the last 5, 20 and all before it. */
 export const roundComparison: RoundComparisonDto = {
-  score: [
-    { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 78, secondary_value: null },
-    { label: "Last 5", sample_size: 5, round_id: null, primary_value: 81.4, secondary_value: null },
-    { label: "Last 20", sample_size: 20, round_id: null, primary_value: 83.2, secondary_value: null },
-    { label: "All time", sample_size: 42, round_id: null, primary_value: 84.9, secondary_value: null },
-  ],
-  putts: [
-    { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 32, secondary_value: null },
-    { label: "Last 5", sample_size: 5, round_id: null, primary_value: 33.6, secondary_value: null },
-    { label: "Last 20", sample_size: 20, round_id: null, primary_value: 34.1, secondary_value: null },
-    { label: "All time", sample_size: 42, round_id: null, primary_value: 34.8, secondary_value: null },
-  ],
-  gir: [
-    { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 7, secondary_value: null },
-    { label: "Last 5", sample_size: 5, round_id: null, primary_value: 5.8, secondary_value: null },
-    { label: "Last 20", sample_size: 20, round_id: null, primary_value: 5.2, secondary_value: null },
-    { label: "All time", sample_size: 42, round_id: null, primary_value: 4.9, secondary_value: null },
-  ],
-  three_putts: [
-    { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 1, secondary_value: null },
-    { label: "Last 5", sample_size: 5, round_id: null, primary_value: 1.8, secondary_value: null },
-    { label: "Last 20", sample_size: 20, round_id: null, primary_value: 2.1, secondary_value: null },
-    { label: "All time", sample_size: 42, round_id: null, primary_value: 2.4, secondary_value: null },
-  ],
-  putts_per_gir: [
-    { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 1.7, secondary_value: null },
-    { label: "Last 5", sample_size: 5, round_id: null, primary_value: 1.9, secondary_value: null },
-    { label: "Last 20", sample_size: 20, round_id: null, primary_value: 2.0, secondary_value: null },
-    { label: "All time", sample_size: 42, round_id: null, primary_value: 2.1, secondary_value: null },
-  ],
-  scrambling: [
-    { label: "This round", sample_size: 1, round_id: "round-hmb", primary_value: 4, secondary_value: null },
-    { label: "Last 5", sample_size: 5, round_id: null, primary_value: 3.2, secondary_value: null },
-    { label: "Last 20", sample_size: 20, round_id: null, primary_value: 2.8, secondary_value: null },
-    { label: "All time", sample_size: 42, round_id: null, primary_value: 2.6, secondary_value: null },
+  windows: [
+    window("l5", 5, [81.4, 33.6, 5.8, 1.8, 1.9, 3.2]),
+    window("l20", 20, [80.4, 33.1, 4.9, 1.9, 1.95, 2.6]),
+    window("all", 42, [84.9, 34.8, 4.9, 2.4, 2.1, 2.6]),
   ],
 };
+
+/** The first round a golfer saved: nothing before it to compare with. */
+export const firstRoundComparison: RoundComparisonDto = {
+  windows: (["l5", "l20", "all"] as const).map((name) => ({
+    window: name,
+    rounds: 0,
+    metrics: [{ metric: "score", value: 78, average: null, difference: null, verdict: null }],
+  })),
+};
+
+const [flowTemplate, , flowBest] = storedRounds;
+const FLOW_PAR = [4, 4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 3, 5, 4, 4, 3, 4, 5];
+// The strokes on the redesign board's card: over par from the first hole, a rough stretch at
+// holes 4 to 7, and a birdie to finish.
+const FLOW_STROKES = [5, 4, 3, 6, 5, 4, 4, 4, 5, 4, 5, 3, 6, 4, 4, 4, 4, 4];
+
+/** A round that runs over par, with a worst stretch to bracket: the round flow board's round. */
+export const overParRound: RoundDto = roundResponse({
+  ...flowTemplate,
+  hole_scores: flowTemplate.hole_scores.map((hole, i) => ({ ...hole, par_played: FLOW_PAR[i], strokes: FLOW_STROKES[i] })),
+});
+
+/** Under par for most of the round, with one blow-up at the end. */
+export const underParRound: RoundDto = roundResponse(flowBest);

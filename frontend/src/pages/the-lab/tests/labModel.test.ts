@@ -131,10 +131,8 @@ describe("present", () => {
   });
 
   it("words strokes and trends with their sign", () => {
-    expect(signedStrokes(1.23)).toEqual({ text: "+1.2 strokes", tone: "text-score-birdie" });
-    expect(signedStrokes(-0.44)).toEqual({ text: "-0.4 strokes", tone: "text-score-bogey" });
-    expect(signedStrokes(0.04).tone).toBe("text-score-birdie");
-    expect(signedStrokes(0).tone).toBe("text-muted-foreground");
+    expect(signedStrokes(1.23)).toEqual({ text: "+1.2 strokes", toPar: -1.23 });
+    expect(signedStrokes(-0.44)).toEqual({ text: "\u22120.4 strokes", toPar: 0.44 });
     expect(recentTrendNote(0.5)).toBe("Trending 0.5 strokes above your 20-round average.");
     expect(recentTrendNote(-1)).toBe("Trending 1.0 strokes below your 20-round average.");
   });

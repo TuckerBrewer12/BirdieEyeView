@@ -2,6 +2,7 @@ import { useState, type PointerEvent } from "react";
 import { cn } from "@/brand/cn";
 import { scoreKindLabel, toParLabel, tokens } from "@/brand/theme";
 import { scoreKind, type ScoreKind } from "@/domain/score";
+import { ChartTooltip } from "./ChartTooltip";
 
 interface ScoreTargetShot {
   /** The hole's score to par. */
@@ -115,21 +116,21 @@ export function ScoreTargetChart({ shots, className, "aria-label": ariaLabel }: 
           <span className="rounded-md bg-card px-2 py-0.5 text-xs text-muted-foreground shadow-card">No holes yet</span>
         </div>
       )}
-      {shown && (
-        <div
-          data-slot="score-target-tooltip"
-          className={cn(
-            "pointer-events-none absolute z-10 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2 text-xs shadow-card",
-            shown.cx > c ? "-ml-3 -translate-x-full" : "ml-3",
-          )}
-          style={{ left: `${(shown.cx / size) * 100}%`, top: `${(shown.cy / size) * 100}%` }}
-        >
-          {shown.label && <div className="font-semibold text-card-foreground">{shown.label}</div>}
-          <div className="text-muted-foreground">
-            {scoreKindLabel(shown.kind)} · {toParLabel(shown.toPar)}
-          </div>
-        </div>
-      )}
+      <ChartTooltip
+        id={shown ? `${shown.cx}-${shown.cy}` : null}
+        at={{ x: shown ? shown.cx / size : 0, y: shown ? shown.cy / size : 0 }}
+        flipAt={0.5}
+        size="sm"
+      >
+        {shown && (
+          <>
+            {shown.label && <div className="font-semibold text-card-foreground">{shown.label}</div>}
+            <div className="text-muted-foreground">
+              {scoreKindLabel(shown.kind)} · {toParLabel(shown.toPar)}
+            </div>
+          </>
+        )}
+      </ChartTooltip>
     </div>
   );
 }

@@ -42,7 +42,7 @@ export function AnalyticsMobileLayout({ vm, analytics }: AnalyticsMobileLayoutPr
 
       <section data-slot="analytics-sections" className="flex flex-col gap-3">
         <TabBar
-          aria-label="Section"
+          aria-label="Analytics sections"
           tabs={ANALYTICS_TAB_OPTIONS.map((option) => ({ key: option.value, label: option.label }))}
           value={vm.tab}
           onValueChange={(key) => {

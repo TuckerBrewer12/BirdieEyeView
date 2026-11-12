@@ -1,47 +1,48 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { roundsRepository, type RoundsRepository } from "../../roundsRepository";
 import {
-  CHART_TABS,
-  chartsFrom,
-  type ChartTabItem,
-  type ChartTabKey,
-  type ComparisonChartItem,
+  COMPARISON_WINDOWS,
+  comparisonFrom,
+  type ComparisonRow,
+  type ComparisonWindow,
 } from "../roundDetailModel";
 
 export interface RoundComparisonViewModel {
   /** False until the comparison loads, and when there is none. */
   show: boolean;
-  charts: ComparisonChartItem[];
-  /** The active tab's charts, for the one-tab-at-a-time mobile layout. */
-  selectedCharts: ComparisonChartItem[];
-  chartTab: ChartTabKey;
-  chartTabs: ChartTabItem[];
-  selectChartTab: (key: string) => void;
+  window: ComparisonWindow;
+  windows: readonly { value: ComparisonWindow; label: string }[];
+  /** The window's figures; empty when no round came before this one. */
+  rows: ComparisonRow[];
+  /** The segmented control's pick. Tapping the pressed window again keeps it. */
+  pickWindow: (value: string | undefined) => void;
 }
 
-/** How this round compares with the golfer's others, one tab of charts at a time on mobile. */
+/** This round against the golfer's average over the rounds before it, one window at a time. */
 export function useRoundComparisonViewModel(
   userId: string,
   roundId: string,
   repository: RoundsRepository = roundsRepository,
 ): RoundComparisonViewModel {
-  const [chartTab, setChartTab] = useState<ChartTabKey>("score");
+  const [window, setWindow] = useState<ComparisonWindow>("l20");
   const { data: comparison } = useQuery({
     queryKey: queryKeys.roundComparison(userId, roundId),
     queryFn: () => repository.getRoundComparison(userId, roundId),
   });
+  const windows = useMemo(() => (comparison ? comparisonFrom(comparison) : {}), [comparison]);
 
-  const charts = comparison ? chartsFrom(comparison) : [];
+  const pickWindow = useCallback((value: string | undefined) => {
+    const picked = COMPARISON_WINDOWS.find((option) => option.value === value);
+    if (picked) setWindow(picked.value);
+  }, []);
+
   return {
     show: comparison != null,
-    charts,
-    selectedCharts: charts.filter((chart) => chart.group === chartTab),
-    chartTab,
-    chartTabs: CHART_TABS,
-    selectChartTab: (key) => {
-      if (CHART_TABS.some((tab) => tab.key === key)) setChartTab(key as ChartTabKey);
-    },
+    window,
+    windows: COMPARISON_WINDOWS,
+    rows: windows[window]?.rows ?? [],
+    pickWindow,
   };
 }

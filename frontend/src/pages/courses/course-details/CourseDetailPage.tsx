@@ -1,28 +1,36 @@
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
   AlertDescription,
   Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Collection,
   LoadingState,
   PageTitle,
-  TabBar,
+  RoundPreview,
+  TeePicker,
+  ToggleGroup,
+  ToggleGroupItem,
 } from "@/brand";
-import { CoursePerformanceSection } from "./components/CoursePerformanceSection";
-import { CourseScorecardSection } from "./components/CourseScorecardSection";
+import { CoursePerformance } from "./components/CoursePerformance";
+import { CourseRecordCard } from "./components/CourseRecordCard";
+import { CourseScorecard } from "./components/CourseScorecard";
 import { useCourseDetailPageViewModel } from "./useCourseDetailPageViewModel";
 
 export function CourseDetailPage({ userId }: { userId: string }) {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const viewModel = useCourseDetailPageViewModel(userId, courseId);
-  const { course } = viewModel;
 
   if (viewModel.loading) {
     return <LoadingState>Loading course...</LoadingState>;
   }
 
-  if (viewModel.loadError || !course || !courseId) {
+  if (viewModel.loadError || !viewModel.course) {
     return (
       <Alert variant="destructive">
         <AlertDescription>{viewModel.loadError ?? "Course not found."}</AlertDescription>
@@ -30,50 +38,78 @@ export function CourseDetailPage({ userId }: { userId: string }) {
     );
   }
 
-  const headerStats = [
-    { label: "Par", value: course.par ?? "—" },
-    { label: "Holes", value: course.holes.length },
-    { label: "Tees", value: course.tees.length },
-  ];
-
   return (
-    <div>
-      <Button
-        variant="linkMuted"
-        size="xs"
-        className="mb-4 h-auto gap-1.5 p-0 text-body"
-        onClick={() => void navigate("/courses")}
-      >
-        <ArrowLeft className="size-4" />
-        Back to courses
+    <div className="flex flex-col gap-3.5 pb-6 md:gap-4">
+      <Button variant="outline" size="toolbar" className="self-start" onClick={() => void navigate("/courses")}>
+        <ChevronLeft data-icon="inline-start" />
+        Courses
       </Button>
 
-      <PageTitle>{viewModel.courseName}</PageTitle>
-      {course.location && (
-        <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-          <MapPin className="size-3.5" />
-          {course.location}
-        </div>
-      )}
-      <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
-        {headerStats.map((stat) => (
-          <span key={stat.label}>
-            <span>{stat.label}</span>{" "}
-            <span className="font-semibold text-foreground">{stat.value}</span>
-          </span>
-        ))}
+      <div data-slot="course-title" className="min-w-0">
+        <PageTitle size="heading">{viewModel.courseName}</PageTitle>
+        {viewModel.courseLine && (
+          <div className="mt-0.5 text-body-sm text-muted-foreground md:mt-1 md:text-body">{viewModel.courseLine}</div>
+        )}
       </div>
 
-      <TabBar
-        aria-label="Course sections"
-        tabs={viewModel.pageTabs}
-        value={viewModel.activeTab}
-        onValueChange={viewModel.selectPageTab}
-        className="my-6"
-      />
+      {viewModel.played && (
+        <ToggleGroup
+          look="chips"
+          aria-label="View"
+          value={[viewModel.view]}
+          onValueChange={(values: string[]) => viewModel.pickView(values[0])}
+        >
+          {viewModel.views.map((option) => (
+            <ToggleGroupItem key={option.value} value={option.value}>
+              {option.label}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      )}
 
-      {viewModel.activeTab === "course" && <CourseScorecardSection userId={userId} courseId={courseId} />}
-      {viewModel.activeTab === "performance" && <CoursePerformanceSection userId={userId} courseId={courseId} />}
+      {viewModel.view === "performance" ? (
+        <CoursePerformance {...viewModel} />
+      ) : (
+        <>
+          {viewModel.tees.length > 0 && (
+            <TeePicker tees={viewModel.tees} value={viewModel.selectedTee ?? ""} onChange={viewModel.selectTee} />
+          )}
+
+          <CourseScorecard teeLine={viewModel.teeLine} nines={viewModel.nines} played={viewModel.played} />
+
+          {viewModel.played ? (
+            <div className="grid grid-cols-1 gap-3.5 md:grid-cols-course-record md:gap-4">
+              <CourseRecordCard figures={viewModel.record} onOpenRound={(id) => void navigate(`/rounds/${id}`)} />
+              <Card data-slot="recent-rounds" className="gap-0 pt-4 pb-1 md:pb-2">
+                <CardHeader className="px-4 md:px-5">
+                  <CardTitle level={2} className="text-body-lg font-semibold">
+                    Recent rounds
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-0">
+                  <Collection
+                    layout="divided"
+                    items={viewModel.recentRounds}
+                    keyFor={(round) => round.id}
+                    renderItem={(round) => (
+                      <RoundPreview
+                        variant="history"
+                        round={round}
+                        onClick={() => void navigate(`/rounds/${round.id}`)}
+                      />
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card data-slot="not-played" className="flex-row items-center justify-between gap-4 px-4 py-4 md:px-5">
+              <span className="text-body text-foreground-secondary">You haven’t played here yet.</span>
+              <Button onClick={() => void navigate("/scan")}>Scan a round</Button>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   );
 }

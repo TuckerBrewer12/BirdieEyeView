@@ -91,22 +91,25 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** The course filter's menu open: a dropdown on desktop, a bottom sheet on a phone. */
   async openCourseMenu(): Promise<this> {
-    await this.visible(this.page.getByRole("combobox", { name: "Course" })).click();
+    await this.visible(this.page.getByRole("button", { name: "Course", exact: true })).click();
     return this;
   }
 
   /** The course filter's menu, open. */
   async seesCourseMenu(): Promise<this> {
-    await expect(this.page.getByRole("listbox")).toBeVisible();
-    await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
+    await expect(this.page.locator("[data-slot=picker-options]")).toBeVisible();
     return this;
   }
 
   /** Picks a course from the course filter's menu, on either layout. */
   async pickCourse(name: string): Promise<this> {
-    await this.visible(this.page.getByRole("combobox", { name: "Course" })).click();
-    await this.page.getByRole("option", { name, exact: true }).click();
+    await this.openCourseMenu();
+    await this.page
+      .getByRole("menuitemradio", { name, exact: true })
+      .or(this.page.locator("[data-slot=sheet-option]").getByText(name, { exact: true }))
+      .click();
     return this;
   }
 
@@ -161,7 +164,7 @@ export class AnalyticsRobot {
 
   /** The phone's section tabs. */
   private sectionTab(label: TabLabel): Locator {
-    return this.visible(this.page.getByRole("tablist", { name: "Section" })).getByRole("tab", {
+    return this.visible(this.page.getByRole("tablist", { name: "Analytics sections" })).getByRole("tab", {
       name: label,
       exact: true,
     });

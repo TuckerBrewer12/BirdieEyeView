@@ -24,6 +24,10 @@ Checks:
      .espresso.spec.ts (behaviour) or a .capture.spec.ts (the landing demo's
      captures); no Playwright project matches anything else.
   5. No two files under src/brand/ export a component with the same name.
+  6. Every kit component and chart is used: its name appears in a file other
+     than its own, its preview, its tests and the kit's index. A piece kept
+     only for its preview is dead code knip can't see, since the preview
+     imports it.
 """
 from __future__ import annotations
 
@@ -157,12 +161,40 @@ def check_unique_kit_exports(src: Path) -> list[str]:
     ]
 
 
+def check_kit_in_use(src: Path) -> list[str]:
+    brand = src / "brand"
+    sources = [
+        p
+        for p in src.rglob("*.ts*")
+        if p.is_file()
+        and p.suffix in (".ts", ".tsx")
+        and not is_test_file(p)
+        and "tests" not in p.parts
+        and "previews" not in p.parts
+        and p != brand / "index.ts"
+    ]
+    texts = {p: COMMENT_RE.sub("", p.read_text()) for p in sources}
+    errors: list[str] = []
+    for kind in KIT_KINDS:
+        for component in sorted((brand / kind).glob("*.tsx")):
+            if not COMPONENT_FILE_RE.match(component.name) or is_test_file(component):
+                continue
+            used = re.compile(rf"\b{component.stem}\b")
+            if not any(used.search(text) for p, text in texts.items() if p != component):
+                errors.append(
+                    f"{rel(component, src)}: kit {kind[:-1]} `{component.stem}` is used only by its own preview "
+                    f"and tests. Delete it, with its preview and screenshot spec."
+                )
+    return errors
+
+
 CHECKS = (
     check_kit_coverage,
     check_page_tests,
     check_view_model_tests,
     check_spec_kinds,
     check_unique_kit_exports,
+    check_kit_in_use,
 )
 
 

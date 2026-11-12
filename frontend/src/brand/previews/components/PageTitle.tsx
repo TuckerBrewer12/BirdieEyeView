@@ -6,6 +6,9 @@ export default function PageTitlePreview() {
       <PageTitle size="compact">Compact</PageTitle>
       <PageTitle>Default</PageTitle>
       <PageTitle size="lg">Large</PageTitle>
+      <PageTitle size="heading">Half Moon Bay</PageTitle>
+      <PageTitle size="figure">Tucker</PageTitle>
+      <PageTitle size="display">Scan your scorecard.</PageTitle>
     </>
   );
 }

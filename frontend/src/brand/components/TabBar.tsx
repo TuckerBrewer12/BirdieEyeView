@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Tabs } from "@base-ui/react/tabs";
 import { cn } from "@/brand/cn";
 
+// The share of the row the end fade covers; a tab scrolled into view stops short of it.
+const FADE_SHARE = 0.15;
+
 interface TabBarProps {
   tabs: { key: string; label: string }[];
   value: string;
@@ -42,7 +45,7 @@ function TabBar({ tabs, value, onValueChange, "aria-label": ariaLabel, className
     const start = tab.offsetLeft;
     const end = start + tab.offsetWidth;
     // Keep clear of the fade at the right end, so the current tab never sits under it.
-    const margin = list.clientWidth * 0.15;
+    const margin = list.clientWidth * FADE_SHARE;
     if (start < list.scrollLeft) list.scrollLeft = start;
     else if (end > list.scrollLeft + list.clientWidth - margin) {
       list.scrollLeft = end - list.clientWidth + margin;
@@ -66,7 +69,7 @@ function TabBar({ tabs, value, onValueChange, "aria-label": ariaLabel, className
           <Tabs.Tab
             key={tab.key}
             value={tab.key}
-            className="h-10 shrink-0 cursor-pointer border-b-2 border-transparent text-sm font-medium text-foreground-secondary outline-none focus-visible:ring-3 focus-visible:ring-ring/half aria-selected:border-primary aria-selected:font-bold aria-selected:text-foreground"
+            className="h-tab shrink-0 cursor-pointer border-b-2 border-transparent text-sm font-medium text-foreground-secondary outline-none focus-visible:ring-3 focus-visible:ring-ring/half aria-selected:border-primary aria-selected:font-bold aria-selected:text-foreground"
           >
             {tab.label}
           </Tabs.Tab>
