@@ -147,9 +147,21 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** The scoring goal's menu open: a dropdown on desktop, a bottom sheet on a phone. */
+  async openGoalMenu(): Promise<this> {
+    await this.visible(this.page.getByRole("button", { name: "Scoring goal" })).click();
+    return this;
+  }
+
+  /** The scoring goal's menu, open. */
+  async seesGoalMenu(): Promise<this> {
+    await expect(this.page.locator("[data-slot=picker-options]")).toBeVisible();
+    return this;
+  }
+
   /** The goal menu: "Break 85"… */
   async pickGoal(label: string): Promise<this> {
-    await this.visible(this.page.getByRole("button", { name: "Scoring goal" })).click();
+    await this.openGoalMenu();
     await this.page
       .getByRole("menuitemradio", { name: label, exact: true })
       .or(this.page.locator("[data-slot=sheet-option]").getByText(label, { exact: true }))

@@ -27,6 +27,14 @@ test("course menu open", async ({ analytics }) => {
   await analytics.capture("analytics-course-menu.png", { fullPage: false });
 });
 
+test("scoring goal menu open", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.openTab("Profile");
+  await analytics.openGoalMenu();
+  await analytics.seesGoalMenu();
+  await analytics.capture("analytics-goal-menu.png", { fullPage: false });
+});
+
 test("a course with no rounds", async ({ analytics }) => {
   await analytics.open();
   await analytics.pickCourse(UNSEEDED_COURSE);
