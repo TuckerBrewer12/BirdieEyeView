@@ -1,16 +1,20 @@
 export * as tokens from "./tokens";
 export { fromBreakpoint } from "./breakpoints";
-export { chartTooltipStyle, chartTickStyle } from "./chart";
+export { chartTickStyle } from "./chart";
 export {
   SCORE_KEYS,
   scoreCountTextClass,
   scoreFillClass,
+  scoreMarkClass,
+  scoreMarkFill,
   scoreOnFillClass,
   scoreWashClass,
   scoreProfileHeightClass,
   toParFill,
   toParMarkFill,
   verdictFill,
+  verdictTextClass,
+  VERDICT_TEXT,
   toParLabel,
   scoreKindLabel,
   toParDisplay,

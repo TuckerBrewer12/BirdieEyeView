@@ -202,6 +202,14 @@ async def _responses() -> tuple[dict, dict]:
     # Analytics' course filter, for the course played least, so the figures plainly change.
     links_analytics = await stats.get_analytics(user_id, 50, HALF_MOON_BAY.id, None, db, USER)
 
+    # The profile's comparisons: every handicap benchmark, over the same
+    # rounds as `analytics` (the fake backend answers every round count with it), so the radar and
+    # its verdicts agree.
+    benchmarks = {
+        f"handicap:{handicap}": await stats.get_benchmark_comparison(user_id, "handicap", handicap, None, 50, db, USER)
+        for handicap in (0, 5, 10, 15, 20, 25)
+    }
+
     best = best_round(sorted(rounds, key=lambda r: r.date, reverse=True))
     profile = users.user_response(USER.model_copy(update={"handicap": dashboard.handicap_index}))
     seed = jsonable_encoder({
@@ -213,6 +221,7 @@ async def _responses() -> tuple[dict, dict]:
         "analyticsByCourse": {HALF_MOON_BAY.id: links_analytics},
         "playedCourses": played_courses,
         "goalReport": goal_report,
+        "benchmarks": benchmarks,
         # The tour's pages never ask for the round list; Analytics opens just the best round.
         "detailRounds": [round_detail(best, await player_handicap_index(db, USER))],
     })

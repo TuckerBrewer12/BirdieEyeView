@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Annotated, Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional
 
 from analytics.verdicts import ChangeVerdict
 from models import Hole, UserTee
@@ -12,10 +12,6 @@ from models.hole_score import ScoreKind
 class ResponseModel(BaseModel):
     # A field with a default is always present in the response, so the API schema marks it required.
     model_config = ConfigDict(json_schema_serialization_defaults_required=True)
-
-
-# How good an average is, as `analytics/insights.py` rates it.
-InsightRating = Literal["strong", "fair", "weak"]
 
 
 class ScoreCounts(ResponseModel):
@@ -207,6 +203,7 @@ class ScoreTrendRow(ResponseModel):
     par: Optional[int] = None  # the par to_par reads against: the holes played
     course_name: Optional[str] = None
     rolling_average: Optional[float] = None  # to a tenth; rounds without a score are skipped
+    score_counts: ScoreCounts = Field(default_factory=ScoreCounts)  # the round's holes of each kind
 
 
 class HandicapTrendRow(ResponseModel):
@@ -285,10 +282,7 @@ class AnalyticsKpis(ResponseModel):
     # Over the rounds with putts recorded, to a tenth: three-putts a round, and each round's rate averaged.
     three_putts_per_round: Optional[float] = None
     three_putt_rate: Optional[float] = None
-    # The last five scored rounds' average less every round's, to a tenth: negative when the
-    # recent rounds came in lower. Null under five scored rounds.
-    scoring_average_change: Optional[float] = None
-    scoring_average_verdict: Optional[ChangeVerdict] = None
+    # The scoring average's move is the headline's (`AnalyticsResponse.headline`), worked out once there.
 
 
 class NetScoreTrendRow(ResponseModel):
@@ -300,6 +294,7 @@ class NetScoreTrendRow(ResponseModel):
     net_score: Optional[int] = None
     course_name: Optional[str] = None
     to_par: Optional[int] = None
+    rolling_average: Optional[float] = None  # the net score over it and the four rated rounds before it, to a tenth
 
 
 class GirTrendRow(ResponseModel):
@@ -308,6 +303,7 @@ class GirTrendRow(ResponseModel):
     total_gir: Optional[int] = None
     holes_played: int
     gir_percentage: Optional[float] = None
+    rolling_average: Optional[float] = None  # over it and the four rounds before it with greens, to a tenth
 
 
 class PuttsTrendRow(ResponseModel):
@@ -315,6 +311,7 @@ class PuttsTrendRow(ResponseModel):
     round_id: Optional[str] = None
     total_putts: Optional[int] = None
     holes_played: int
+    rolling_average: Optional[float] = None  # over it and the four rounds before it with putts, to a tenth
 
 
 class ThreePuttsTrendRow(ResponseModel):
@@ -324,6 +321,7 @@ class ThreePuttsTrendRow(ResponseModel):
     three_putt_count: int
     holes_with_putt_data: int
     three_putt_percentage: float
+    costly: bool = False  # three or more three-putts: the rounds the page marks
 
 
 class ScoringByParRow(ResponseModel):
@@ -349,12 +347,14 @@ class ScoringByYardageRow(ResponseModel):
     sample_size: int
     score_mix: ScoreMix = Field(default_factory=ScoreMix)  # each score kind's share of the band's holes, to a hundredth
     raw_scores: List[YardageScore] = Field(default_factory=list)
+    worst: bool = False  # the band of its par the golfer scores worst from, when the par has two or more
 
 
 class ScoringByHandicapRow(ResponseModel):
     handicap: int
     average_to_par: float
     sample_size: int
+    hardest: bool = False  # among the three the golfer scores worst on, against par
 
 
 class GirVsNonGirRow(ResponseModel):
@@ -628,75 +628,6 @@ class NotableAchievements(ResponseModel):
     window_days: int = 365
 
 
-InsightTrend = Literal["up", "down", "flat"]  # which way the insight's arrow points
-
-
-class ScoringShiftInsight(ResponseModel):
-    """The scoring average moved between the earlier and later half of the rounds."""
-    kind: Literal["scoring_shift"]
-    category: Literal["scoring"]
-    trend: InsightTrend
-    strokes: float  # earlier half's average less the later half's: positive when scores came down
-    rounds: int
-
-
-class BestParInsight(ResponseModel):
-    """The par type the player scores best on."""
-    kind: Literal["best_par"]
-    category: Literal["scoring"]
-    trend: InsightTrend
-    par: int
-    average_to_par: float
-    holes: int
-
-
-class GirAverageInsight(ResponseModel):
-    """Each round's GIR%, averaged."""
-    kind: Literal["gir_average"]
-    category: Literal["gir"]
-    trend: InsightTrend
-    rating: InsightRating
-    percent: float
-
-
-class GirShiftInsight(ResponseModel):
-    """GIR% moved between the earlier and later half of the rounds."""
-    kind: Literal["gir_shift"]
-    category: Literal["gir"]
-    trend: InsightTrend
-    points: float  # later half's GIR% less the earlier half's: positive when more greens were hit
-
-
-class PuttsAverageInsight(ResponseModel):
-    """Putts per round, over the rounds with putts recorded."""
-    kind: Literal["putts_average"]
-    category: Literal["putting"]
-    trend: InsightTrend
-    rating: InsightRating
-    putts: float
-
-
-class PuttsShiftInsight(ResponseModel):
-    """Putts per round moved between the earlier and later half of the rounds."""
-    kind: Literal["putts_shift"]
-    category: Literal["putting"]
-    trend: InsightTrend
-    putts: float  # earlier half's putts per round less the later half's: positive when putts came down
-
-
-AnalyticsInsight = Annotated[
-    Union[
-        ScoringShiftInsight,
-        BestParInsight,
-        GirAverageInsight,
-        GirShiftInsight,
-        PuttsAverageInsight,
-        PuttsShiftInsight,
-    ],
-    Field(discriminator="kind"),
-]
-
-
 class PeakRound(ResponseModel):
     """One of the player's best rounds."""
     round_id: Optional[str] = None
@@ -720,6 +651,31 @@ class PeakGame(ResponseModel):
     impacts: List[PeakImpact] = Field(default_factory=list)  # birdies, bogeys, doubles; empty without pars
 
 
+class HeadlineFigure(ResponseModel):
+    """One of the analytics page's headline figures over the rounds asked for: its value, how far the
+    last five rounds' average sits from every round's (null under five rounds with it), whether that
+    move is for the better, and its five-round average after each round, oldest first."""
+    metric: Literal["scoring_average", "gir_percentage", "average_putts", "scrambling_percentage", "three_putt_rate"]
+    value: Optional[float] = None
+    change: Optional[float] = None
+    verdict: Optional[ChangeVerdict] = None
+    trend: List[float] = Field(default_factory=list)
+
+
+class PuttsPerHole(ResponseModel):
+    """How the holes with putts recorded split: one putt or none, two, three or more. Shares to a hundredth."""
+    holes: int = 0
+    one_or_fewer: float = 0.0
+    two: float = 0.0
+    three_or_more: float = 0.0
+
+
+class TourShortGame(ResponseModel):
+    """What tour players average around the green, for the short-game bars' marks."""
+    scrambling_percentage: float
+    up_and_down_percentage: float
+
+
 class AnalyticsResponse(ResponseModel):
     """The analytics page's figures over the rounds asked for. Every per-round series is oldest first."""
     kpis: AnalyticsKpis = Field(default_factory=AnalyticsKpis)
@@ -738,8 +694,15 @@ class AnalyticsResponse(ResponseModel):
     score_differentials: List[ScoreDifferentialRow] = Field(default_factory=list)
     notable_achievements: NotableAchievements = Field(default_factory=NotableAchievements)
     score_mix: ScoreMix = Field(default_factory=ScoreMix)  # each score kind's share of every counted hole, to a hundredth
-    insights: List[AnalyticsInsight] = Field(default_factory=list)  # scoring, then greens, then putting
     peak_game: Optional[PeakGame] = None  # null under two scored rounds
+    headline: List[HeadlineFigure] = Field(default_factory=list)  # scoring, greens, putts, scrambling, 3-putts
+    putts_per_hole: PuttsPerHole = Field(default_factory=PuttsPerHole)
+    tour_short_game: Optional[TourShortGame] = None
+    # The benchmark handicap a step better than the golfer's index: what the page compares with
+    # until they pick another. Null without an index.
+    next_level_handicap: Optional[int] = None
+    # Each par type against the next level's benchmark (none without an index): the scoring tab's ticks.
+    par_types: List["ParTypeComparison"] = Field(default_factory=list)
 
 
 class PlayedCourseResponse(ResponseModel):
@@ -834,6 +797,10 @@ class ParTypeComparison(ResponseModel):
     verdict: Optional[Literal["ahead", "even", "behind"]] = None
 
 
+# The analytics page's par types read the class above, which sits with the benchmark models.
+AnalyticsResponse.model_rebuild()
+
+
 class BenchmarkVerdicts(ResponseModel):
     """Each radar axis against the benchmark: ahead, even or behind. Null without both figures."""
     gir_percentage: Optional[Literal["ahead", "even", "behind"]] = None
@@ -846,10 +813,9 @@ class BenchmarkVerdicts(ResponseModel):
 
 class BenchmarkComparisonResponse(ResponseModel):
     """The player's last rounds held up against a benchmark, and which benchmark it was."""
-    against: Literal["handicap", "peak", "friend"]
+    against: Literal["handicap", "friend"]
     handicap: Optional[int] = None  # the handicap compared with
-    goal: Optional[int] = None  # for the peak: the goal, as stored, whose golfers score nearest it
-    # Null when the friend has no rounds or the player has no peak game.
+    # Null when the friend has no rounds.
     benchmark: Optional[BenchmarkShape] = None
     par_types: List[ParTypeComparison] = Field(default_factory=list)  # par 3, 4 and 5
     verdicts: BenchmarkVerdicts = Field(default_factory=BenchmarkVerdicts)  # the radar's axes

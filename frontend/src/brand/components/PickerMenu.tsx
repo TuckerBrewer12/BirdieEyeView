@@ -45,6 +45,8 @@ interface PickerMenuProps<T extends string> {
   variant?: "outline" | "ghost";
   /** `default` is 40 tall, beside a page's search field; `sm` is 32, in a card or a list's header. */
   size?: "sm" | "default";
+  /** Stretch to share the row with its neighbours, the pick at the start and the chevron at the end: a phone's row of menus. */
+  fill?: boolean;
   className?: string;
 }
 
@@ -65,6 +67,7 @@ function PickerMenu<T extends string>({
   compactIcon,
   variant = "outline",
   size = "sm",
+  fill = false,
   className,
 }: PickerMenuProps<T>) {
   // Which surface the options open in, not how the trigger looks.
@@ -72,10 +75,16 @@ function PickerMenu<T extends string>({
   const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
-    <div data-slot="picker-menu" className={cn("inline-flex items-center", className)}>
+    <div data-slot="picker-menu" className={cn("inline-flex items-center", fill && "min-w-0 flex-1", className)}>
       {wide ? (
         <DropdownMenu modal={false}>
-          <DropdownMenuTrigger aria-label={ariaLabel} variant={variant} size={size} disabled={disabled}>
+          <DropdownMenuTrigger
+            aria-label={ariaLabel}
+            variant={variant}
+            size={size}
+            disabled={disabled}
+            className={cn(fill && "w-full justify-between")}
+          >
             {prefix && <span className="font-medium text-muted-foreground">{prefix}</span>}
             {label}
           </DropdownMenuTrigger>
@@ -100,7 +109,7 @@ function PickerMenu<T extends string>({
               {compactIcon}
             </SheetTrigger>
           ) : (
-            <SheetTrigger aria-label={ariaLabel} disabled={disabled} render={<Button variant={variant} size={size} />}>
+            <SheetTrigger aria-label={ariaLabel} disabled={disabled} render={<Button variant={variant} size={size} className={cn(fill && "w-full justify-between")} />}>
               {compactLabel ?? label}
               <ChevronDown aria-hidden data-icon="inline-end" className="size-3" />
             </SheetTrigger>

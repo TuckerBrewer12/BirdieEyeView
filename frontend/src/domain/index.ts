@@ -5,7 +5,11 @@ export {
   playedScoreKinds,
   scoreKind,
   scoreKindCountLabel,
+  scoreKindLabel,
   scoreKindNoun,
+  FOLDED_SCORE_KINDS,
+  foldedCount,
+  foldedKindLabel,
   scoreMixFrom,
   strokesToPar,
   toParLabel,
@@ -15,12 +19,13 @@ export type { ScoreKind, ScoreMix, ScoreTypeShares } from "./score";
 export {
   GOAL_OPTIONS,
   COMPARISON_HANDICAPS,
-  TOUR_SHORT_GAME,
+  parTypesFrom,
   benchmarkComparisonFrom,
   benchmarkShapeFrom,
   goalAttemptsFrom,
   goalScoreToBreak,
   goalTargetLabel,
+  handicapName,
 } from "./benchmark";
 export type {
   BenchmarkComparison,
@@ -32,8 +37,8 @@ export type {
   ParTypeVerdict,
 } from "./benchmark";
 
-export { buildRadarData } from "./radar";
-export type { RadarEntry } from "./radar";
+export { buildRadarData, radarStanding } from "./radar";
+export type { RadarEntry, RadarGap, RadarStanding } from "./radar";
 
 export { courseLabel, courseSummaryFrom, formatCourseName, getTee, teeColors } from "./course";
 export type { CourseSummary } from "./course";
@@ -71,11 +76,12 @@ export type {
   RoundDetail,
   RoundEdits,
   RoundSummary,
+  ScoreCounts,
 } from "./round";
 
 export type { AnalyticsFilters } from "./analyticsFilters";
 
-export { shortGamePointsFrom, trendPointsFrom } from "./trend";
-export type { RoundTrendPoint, ShortGamePoint } from "./trend";
+export { averageLine, moveOf, shortGamePointsFrom, trendPointsFrom } from "./trend";
+export type { AverageLine, Move, RoundTrendPoint, ShortGamePoint } from "./trend";
 
 export { strokesToCheck } from "./scan";

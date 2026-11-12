@@ -58,6 +58,20 @@ function friendship(
   };
 }
 
+/** The same friendships as `populatedFriendships`, for a signed-in golfer other than the test user. */
+export function friendshipsOf(golfer: { id: string; name: string | null; email: string | null }): FriendshipDto[] {
+  const swap = (id: string) => (id === ME.id ? golfer.id : id);
+  return populatedFriendships.map((row) => ({
+    ...row,
+    requester_id: swap(row.requester_id),
+    requester_name: row.requester_id === ME.id ? golfer.name : row.requester_name,
+    requester_email: row.requester_id === ME.id ? golfer.email : row.requester_email,
+    addressee_id: swap(row.addressee_id),
+    addressee_name: row.addressee_id === ME.id ? golfer.name : row.addressee_name,
+    addressee_email: row.addressee_id === ME.id ? golfer.email : row.addressee_email,
+  }));
+}
+
 /** Newest change first, as the server lists them. */
 export const populatedFriendships: FriendshipDto[] = [
   friendship("friendship-riley", riley, ME, "pending", "2026-10-28T15:30:00"),

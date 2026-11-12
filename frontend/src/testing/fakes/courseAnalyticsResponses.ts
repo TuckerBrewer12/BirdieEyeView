@@ -74,6 +74,7 @@ function scoreTrend(rounds: CourseAnalyticsDto["rounds"]): CourseAnalyticsDto["s
       par: round.total_score != null && round.to_par != null ? round.total_score - round.to_par : null,
       course_name: round.course_name,
       rolling_average: average != null ? Math.round(average * 10) / 10 : null,
+      score_counts: round.score_counts,
     };
   });
 }

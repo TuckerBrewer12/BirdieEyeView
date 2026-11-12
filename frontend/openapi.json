@@ -330,33 +330,6 @@
             ],
             "title": "Scoring Average"
           },
-          "scoring_average_change": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scoring Average Change"
-          },
-          "scoring_average_verdict": {
-            "anyOf": [
-              {
-                "enum": [
-                  "good",
-                  "bad",
-                  "neutral"
-                ],
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scoring Average Verdict"
-          },
           "scrambling_percentage": {
             "anyOf": [
               {
@@ -420,9 +393,7 @@
           "best_round_course",
           "average_putts",
           "three_putts_per_round",
-          "three_putt_rate",
-          "scoring_average_change",
-          "scoring_average_verdict"
+          "three_putt_rate"
         ],
         "title": "AnalyticsKpis",
         "type": "object"
@@ -451,41 +422,11 @@
             "title": "Handicap Trend",
             "type": "array"
           },
-          "insights": {
+          "headline": {
             "items": {
-              "discriminator": {
-                "mapping": {
-                  "best_par": "#/components/schemas/BestParInsight",
-                  "gir_average": "#/components/schemas/GirAverageInsight",
-                  "gir_shift": "#/components/schemas/GirShiftInsight",
-                  "putts_average": "#/components/schemas/PuttsAverageInsight",
-                  "putts_shift": "#/components/schemas/PuttsShiftInsight",
-                  "scoring_shift": "#/components/schemas/ScoringShiftInsight"
-                },
-                "propertyName": "kind"
-              },
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/ScoringShiftInsight"
-                },
-                {
-                  "$ref": "#/components/schemas/BestParInsight"
-                },
-                {
-                  "$ref": "#/components/schemas/GirAverageInsight"
-                },
-                {
-                  "$ref": "#/components/schemas/GirShiftInsight"
-                },
-                {
-                  "$ref": "#/components/schemas/PuttsAverageInsight"
-                },
-                {
-                  "$ref": "#/components/schemas/PuttsShiftInsight"
-                }
-              ]
+              "$ref": "#/components/schemas/HeadlineFigure"
             },
-            "title": "Insights",
+            "title": "Headline",
             "type": "array"
           },
           "kpis": {
@@ -498,8 +439,26 @@
             "title": "Net Score Trend",
             "type": "array"
           },
+          "next_level_handicap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Level Handicap"
+          },
           "notable_achievements": {
             "$ref": "#/components/schemas/NotableAchievements"
+          },
+          "par_types": {
+            "items": {
+              "$ref": "#/components/schemas/ParTypeComparison"
+            },
+            "title": "Par Types",
+            "type": "array"
           },
           "peak_game": {
             "anyOf": [
@@ -510,6 +469,9 @@
                 "type": "null"
               }
             ]
+          },
+          "putts_per_hole": {
+            "$ref": "#/components/schemas/PuttsPerHole"
           },
           "putts_trend": {
             "items": {
@@ -570,6 +532,16 @@
             "title": "Three Putts Trend",
             "type": "array"
           },
+          "tour_short_game": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TourShortGame"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "up_and_down_trend": {
             "items": {
               "$ref": "#/components/schemas/UpAndDownTrendRow"
@@ -595,8 +567,12 @@
           "score_differentials",
           "notable_achievements",
           "score_mix",
-          "insights",
-          "peak_game"
+          "peak_game",
+          "headline",
+          "putts_per_hole",
+          "tour_short_game",
+          "next_level_handicap",
+          "par_types"
         ],
         "title": "AnalyticsResponse",
         "type": "object"
@@ -646,7 +622,6 @@
           "against": {
             "enum": [
               "handicap",
-              "peak",
               "friend"
             ],
             "title": "Against",
@@ -661,17 +636,6 @@
                 "type": "null"
               }
             ]
-          },
-          "goal": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Goal"
           },
           "handicap": {
             "anyOf": [
@@ -698,7 +662,6 @@
         "required": [
           "against",
           "handicap",
-          "goal",
           "benchmark",
           "par_types",
           "verdicts"
@@ -896,52 +859,6 @@
           "par5_to_par"
         ],
         "title": "BenchmarkVerdicts",
-        "type": "object"
-      },
-      "BestParInsight": {
-        "description": "The par type the player scores best on.",
-        "properties": {
-          "average_to_par": {
-            "title": "Average To Par",
-            "type": "number"
-          },
-          "category": {
-            "const": "scoring",
-            "title": "Category",
-            "type": "string"
-          },
-          "holes": {
-            "title": "Holes",
-            "type": "integer"
-          },
-          "kind": {
-            "const": "best_par",
-            "title": "Kind",
-            "type": "string"
-          },
-          "par": {
-            "title": "Par",
-            "type": "integer"
-          },
-          "trend": {
-            "enum": [
-              "up",
-              "down",
-              "flat"
-            ],
-            "title": "Trend",
-            "type": "string"
-          }
-        },
-        "required": [
-          "kind",
-          "category",
-          "trend",
-          "par",
-          "average_to_par",
-          "holes"
-        ],
-        "title": "BestParInsight",
         "type": "object"
       },
       "Body_extract_scan_api_scan_extract_post": {
@@ -2125,52 +2042,6 @@
         "title": "FriendshipStatusRequest",
         "type": "object"
       },
-      "GirAverageInsight": {
-        "description": "Each round's GIR%, averaged.",
-        "properties": {
-          "category": {
-            "const": "gir",
-            "title": "Category",
-            "type": "string"
-          },
-          "kind": {
-            "const": "gir_average",
-            "title": "Kind",
-            "type": "string"
-          },
-          "percent": {
-            "title": "Percent",
-            "type": "number"
-          },
-          "rating": {
-            "enum": [
-              "strong",
-              "fair",
-              "weak"
-            ],
-            "title": "Rating",
-            "type": "string"
-          },
-          "trend": {
-            "enum": [
-              "up",
-              "down",
-              "flat"
-            ],
-            "title": "Trend",
-            "type": "string"
-          }
-        },
-        "required": [
-          "kind",
-          "category",
-          "trend",
-          "rating",
-          "percent"
-        ],
-        "title": "GirAverageInsight",
-        "type": "object"
-      },
       "GirMilestoneEvents": {
         "properties": {
           "lifetime": {
@@ -2203,42 +2074,6 @@
         "title": "GirMilestones",
         "type": "object"
       },
-      "GirShiftInsight": {
-        "description": "GIR% moved between the earlier and later half of the rounds.",
-        "properties": {
-          "category": {
-            "const": "gir",
-            "title": "Category",
-            "type": "string"
-          },
-          "kind": {
-            "const": "gir_shift",
-            "title": "Kind",
-            "type": "string"
-          },
-          "points": {
-            "title": "Points",
-            "type": "number"
-          },
-          "trend": {
-            "enum": [
-              "up",
-              "down",
-              "flat"
-            ],
-            "title": "Trend",
-            "type": "string"
-          }
-        },
-        "required": [
-          "kind",
-          "category",
-          "trend",
-          "points"
-        ],
-        "title": "GirShiftInsight",
-        "type": "object"
-      },
       "GirTrendRow": {
         "properties": {
           "gir_percentage": {
@@ -2255,6 +2090,17 @@
           "holes_played": {
             "title": "Holes Played",
             "type": "integer"
+          },
+          "rolling_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolling Average"
           },
           "round_id": {
             "anyOf": [
@@ -2288,7 +2134,8 @@
           "round_id",
           "total_gir",
           "holes_played",
-          "gir_percentage"
+          "gir_percentage",
+          "rolling_average"
         ],
         "title": "GirTrendRow",
         "type": "object"
@@ -2679,6 +2526,76 @@
           "differential_status"
         ],
         "title": "HandicapTrendRow",
+        "type": "object"
+      },
+      "HeadlineFigure": {
+        "description": "One of the analytics page's headline figures over the rounds asked for: its value, how far the\nlast five rounds' average sits from every round's (null under five rounds with it), whether that\nmove is for the better, and its five-round average after each round, oldest first.",
+        "properties": {
+          "change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change"
+          },
+          "metric": {
+            "enum": [
+              "scoring_average",
+              "gir_percentage",
+              "average_putts",
+              "scrambling_percentage",
+              "three_putt_rate"
+            ],
+            "title": "Metric",
+            "type": "string"
+          },
+          "trend": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Trend",
+            "type": "array"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "good",
+                  "bad",
+                  "neutral"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          }
+        },
+        "required": [
+          "metric",
+          "value",
+          "change",
+          "verdict",
+          "trend"
+        ],
+        "title": "HeadlineFigure",
         "type": "object"
       },
       "Hole": {
@@ -4021,6 +3938,17 @@
             ],
             "title": "Net Score"
           },
+          "rolling_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolling Average"
+          },
           "round_id": {
             "anyOf": [
               {
@@ -4055,7 +3983,8 @@
           "course_handicap",
           "net_score",
           "course_name",
-          "to_par"
+          "to_par",
+          "rolling_average"
         ],
         "title": "NetScoreTrendRow",
         "type": "object"
@@ -4938,86 +4867,37 @@
         "title": "PuttingMilestones",
         "type": "object"
       },
-      "PuttsAverageInsight": {
-        "description": "Putts per round, over the rounds with putts recorded.",
+      "PuttsPerHole": {
+        "description": "How the holes with putts recorded split: one putt or none, two, three or more. Shares to a hundredth.",
         "properties": {
-          "category": {
-            "const": "putting",
-            "title": "Category",
-            "type": "string"
+          "holes": {
+            "default": 0,
+            "title": "Holes",
+            "type": "integer"
           },
-          "kind": {
-            "const": "putts_average",
-            "title": "Kind",
-            "type": "string"
-          },
-          "putts": {
-            "title": "Putts",
+          "one_or_fewer": {
+            "default": 0.0,
+            "title": "One Or Fewer",
             "type": "number"
           },
-          "rating": {
-            "enum": [
-              "strong",
-              "fair",
-              "weak"
-            ],
-            "title": "Rating",
-            "type": "string"
+          "three_or_more": {
+            "default": 0.0,
+            "title": "Three Or More",
+            "type": "number"
           },
-          "trend": {
-            "enum": [
-              "up",
-              "down",
-              "flat"
-            ],
-            "title": "Trend",
-            "type": "string"
+          "two": {
+            "default": 0.0,
+            "title": "Two",
+            "type": "number"
           }
         },
         "required": [
-          "kind",
-          "category",
-          "trend",
-          "rating",
-          "putts"
+          "holes",
+          "one_or_fewer",
+          "two",
+          "three_or_more"
         ],
-        "title": "PuttsAverageInsight",
-        "type": "object"
-      },
-      "PuttsShiftInsight": {
-        "description": "Putts per round moved between the earlier and later half of the rounds.",
-        "properties": {
-          "category": {
-            "const": "putting",
-            "title": "Category",
-            "type": "string"
-          },
-          "kind": {
-            "const": "putts_shift",
-            "title": "Kind",
-            "type": "string"
-          },
-          "putts": {
-            "title": "Putts",
-            "type": "number"
-          },
-          "trend": {
-            "enum": [
-              "up",
-              "down",
-              "flat"
-            ],
-            "title": "Trend",
-            "type": "string"
-          }
-        },
-        "required": [
-          "kind",
-          "category",
-          "trend",
-          "putts"
-        ],
-        "title": "PuttsShiftInsight",
+        "title": "PuttsPerHole",
         "type": "object"
       },
       "PuttsTrendRow": {
@@ -5025,6 +4905,17 @@
           "holes_played": {
             "title": "Holes Played",
             "type": "integer"
+          },
+          "rolling_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolling Average"
           },
           "round_id": {
             "anyOf": [
@@ -5057,7 +4948,8 @@
           "round_index",
           "round_id",
           "total_putts",
-          "holes_played"
+          "holes_played",
+          "rolling_average"
         ],
         "title": "PuttsTrendRow",
         "type": "object"
@@ -6420,6 +6312,9 @@
             "title": "Round Index",
             "type": "integer"
           },
+          "score_counts": {
+            "$ref": "#/components/schemas/ScoreCounts"
+          },
           "to_par": {
             "anyOf": [
               {
@@ -6450,7 +6345,8 @@
           "to_par",
           "par",
           "course_name",
-          "rolling_average"
+          "rolling_average",
+          "score_counts"
         ],
         "title": "ScoreTrendRow",
         "type": "object"
@@ -6465,6 +6361,11 @@
             "title": "Handicap",
             "type": "integer"
           },
+          "hardest": {
+            "default": false,
+            "title": "Hardest",
+            "type": "boolean"
+          },
           "sample_size": {
             "title": "Sample Size",
             "type": "integer"
@@ -6473,7 +6374,8 @@
         "required": [
           "handicap",
           "average_to_par",
-          "sample_size"
+          "sample_size",
+          "hardest"
         ],
         "title": "ScoringByHandicapRow",
         "type": "object"
@@ -6552,6 +6454,11 @@
           },
           "score_mix": {
             "$ref": "#/components/schemas/ScoreMix"
+          },
+          "worst": {
+            "default": false,
+            "title": "Worst",
+            "type": "boolean"
           }
         },
         "required": [
@@ -6563,7 +6470,8 @@
           "gir_percentage",
           "sample_size",
           "score_mix",
-          "raw_scores"
+          "raw_scores",
+          "worst"
         ],
         "title": "ScoringByYardageRow",
         "type": "object"
@@ -6598,47 +6506,6 @@
           "one_year"
         ],
         "title": "ScoringRecords",
-        "type": "object"
-      },
-      "ScoringShiftInsight": {
-        "description": "The scoring average moved between the earlier and later half of the rounds.",
-        "properties": {
-          "category": {
-            "const": "scoring",
-            "title": "Category",
-            "type": "string"
-          },
-          "kind": {
-            "const": "scoring_shift",
-            "title": "Kind",
-            "type": "string"
-          },
-          "rounds": {
-            "title": "Rounds",
-            "type": "integer"
-          },
-          "strokes": {
-            "title": "Strokes",
-            "type": "number"
-          },
-          "trend": {
-            "enum": [
-              "up",
-              "down",
-              "flat"
-            ],
-            "title": "Trend",
-            "type": "string"
-          }
-        },
-        "required": [
-          "kind",
-          "category",
-          "trend",
-          "strokes",
-          "rounds"
-        ],
-        "title": "ScoringShiftInsight",
         "type": "object"
       },
       "ScramblingTrendRow": {
@@ -6830,6 +6697,11 @@
       "ThreePuttsTrendRow": {
         "description": "Three-putts in a round, as a share of the holes with putts recorded (0 without any).",
         "properties": {
+          "costly": {
+            "default": false,
+            "title": "Costly",
+            "type": "boolean"
+          },
           "holes_with_putt_data": {
             "title": "Holes With Putt Data",
             "type": "integer"
@@ -6863,7 +6735,8 @@
           "round_id",
           "three_putt_count",
           "holes_with_putt_data",
-          "three_putt_percentage"
+          "three_putt_percentage",
+          "costly"
         ],
         "title": "ThreePuttsTrendRow",
         "type": "object"
@@ -6891,6 +6764,25 @@
           "achievement"
         ],
         "title": "ThresholdMilestone",
+        "type": "object"
+      },
+      "TourShortGame": {
+        "description": "What tour players average around the green, for the short-game bars' marks.",
+        "properties": {
+          "scrambling_percentage": {
+            "title": "Scrambling Percentage",
+            "type": "number"
+          },
+          "up_and_down_percentage": {
+            "title": "Up And Down Percentage",
+            "type": "number"
+          }
+        },
+        "required": [
+          "scrambling_percentage",
+          "up_and_down_percentage"
+        ],
+        "title": "TourShortGame",
         "type": "object"
       },
       "UnderParEvent": {
@@ -9316,7 +9208,7 @@
     },
     "/api/stats/{user_id}/benchmark": {
       "get": {
-        "description": "The player's last `limit` rounds against a handicap's shape, the golfers their peak\nrounds play like, or a friend's last `limit` rounds.",
+        "description": "The player's last `limit` rounds against a handicap's shape or a friend's last `limit` rounds.",
         "operationId": "get_benchmark_comparison_api_stats__user_id__benchmark_get",
         "parameters": [
           {
@@ -9336,7 +9228,6 @@
             "schema": {
               "enum": [
                 "handicap",
-                "peak",
                 "friend"
               ],
               "title": "Against",

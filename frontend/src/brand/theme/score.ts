@@ -21,6 +21,18 @@ const SCORE_FILL_CLASS: Record<ScoreKey, string> = {
   quad: "bg-score-quad-base",
 };
 
+/**
+ * A kind's colour for a line or a small mark: its base, but par's pale fill would fade on the card,
+ * so par reads as quiet ink. `scoreMarkClass` is the same for a swatch beside the line.
+ */
+export function scoreMarkFill(key: ScoreKey): string {
+  return key === "par" ? color.mutedForeground : color.score[key].base;
+}
+
+export function scoreMarkClass(key: ScoreKey): string {
+  return key === "par" ? "bg-muted-foreground" : SCORE_FILL_CLASS[key];
+}
+
 /** Tailwind background for a hole's score chip. */
 export function scoreFillClass(key: ScoreKey): string {
   return SCORE_FILL_CLASS[key];
@@ -101,6 +113,16 @@ function toParKind(toPar: number | null): "eagle" | "birdie" | "par" | "bogey" {
 /** A round's to-par as a fill colour, for SVG paint and chart-library props. */
 export function toParFill(toPar: number | null): string {
   return color.score[toParKind(toPar)].base;
+}
+
+/**
+ * A server verdict as text ink: good in the brand's green, as every figure card on the soft
+ * surface has it, bad like a bogey. Neutral, or no verdict, keeps the ink around it.
+ */
+export const VERDICT_TEXT = { good: "text-primary", bad: "text-score-bogey", neutral: "" } as const;
+
+export function verdictTextClass(verdict: "good" | "bad" | "neutral" | null | undefined): string {
+  return VERDICT_TEXT[verdict ?? "neutral"];
 }
 
 /** A server verdict as a fill, for SVG paint: good reads like a birdie, bad like a bogey, neutral as quiet ink. */

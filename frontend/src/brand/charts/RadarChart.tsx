@@ -23,6 +23,8 @@ interface RadarChartProps {
   empty?: string;
   /** A phone's width: a narrower drawing, so the labels scale down less. */
   compact?: boolean;
+  /** The comparison's outline: quiet ink for a benchmark, the friend's blue for a friend. */
+  benchmarkTone?: "benchmark" | "friend";
   className?: string;
   "aria-label"?: string;
 }
@@ -37,6 +39,7 @@ export function RadarChart({
   axes,
   empty = "Not enough data",
   compact = false,
+  benchmarkTone = "benchmark",
   className,
   "aria-label": ariaLabel,
 }: RadarChartProps) {
@@ -104,7 +107,7 @@ export function RadarChart({
             data-slot="radar-benchmark"
             points={outline(benchmarks)}
             fill="none"
-            stroke={tokens.color.mutedForeground}
+            stroke={benchmarkTone === "friend" ? tokens.color.chart.series2 : tokens.color.mutedForeground}
             strokeWidth={strokeSecondary}
             strokeDasharray={tokens.chart.guideDash}
             strokeLinejoin="round"

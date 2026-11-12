@@ -1,6 +1,5 @@
 export {
   tokens,
-  chartTooltipStyle,
   chartTickStyle,
   SCORE_KEYS,
   scoreFillClass,
@@ -81,6 +80,7 @@ export {
   StatUnit,
   StatNote,
   StatDelta,
+  StatTile,
   StatCard,
 } from "./components/Stat";
 export type { StatDirection, StatTone } from "./components/Stat";
@@ -102,13 +102,16 @@ export { RoundScorecard } from "./components/RoundScorecard";
 export { CoursePreview } from "./components/CoursePreview";
 export { TabBar } from "./components/TabBar";
 export type { TabBarProps } from "./components/TabBar";
-export { SectionLabel } from "./components/SectionLabel";
 export { SideNav } from "./components/SideNav";
 export type { SideNavProps, SideNavUser } from "./components/SideNav";
 export type { NavItem, RenderLink } from "./nav";
 export { ScoreCountChip } from "./components/ScoreCountChip";
 export { SearchField } from "./components/SearchField";
 export { TeePicker } from "./components/TeePicker";
+export { LinePicker } from "./components/LinePicker";
+export { SwatchChips } from "./components/SwatchChips";
+export { Slider } from "./components/Slider";
+export type { LineOption } from "./components/LinePicker";
 export { PickerMenu } from "./components/PickerMenu";
 export { CourseLinkSearch } from "./components/CourseLinkSearch";
 export {
@@ -144,7 +147,11 @@ export type { ConfirmDialogProps } from "./components/ConfirmDialog";
 // Charts
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
-export { ScoreMixBar } from "./charts/ScoreMixBar";
+export { ScoreMixBar, ScoreMixLegend } from "./charts/ScoreMixBar";
+export { ShareBar, ShareLegend } from "./charts/ShareBar";
+export type { ShareSegment, ShareLegendItem } from "./charts/ShareBar";
+export { ColumnBars } from "./charts/ColumnBars";
+export type { Column } from "./charts/ColumnBars";
 export { ScoreMixDonut } from "./charts/ScoreMixDonut";
 export { RunningToParLine } from "./charts/RunningToParLine";
 export { Sparkline } from "./charts/Sparkline";
@@ -156,12 +163,8 @@ export { RoundFlowChart, RoundFlowFigures } from "./charts/RoundFlowChart";
 export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
 export { HoleProfileChart } from "./charts/HoleProfileChart";
 export { HoleGreensPuttsChart } from "./charts/HoleGreensPuttsChart";
-export { ScoreTargetChart } from "./charts/ScoreTargetChart";
-export type { ScoreTargetShot } from "./charts/ScoreTargetChart";
-export { ToParBars } from "./charts/ToParBars";
-export type { ToParBar } from "./charts/ToParBars";
 export { TrendAreaChart } from "./charts/TrendAreaChart";
-export type { TrendAreaPoint, TrendAreaSeries, TrendAreaTone } from "./charts/TrendAreaChart";
+export type { TrendAreaCount, TrendAreaPoint, TrendAreaSeries, TrendAreaTone } from "./charts/TrendAreaChart";
 
 export { useFromBreakpoint } from "./useFromBreakpoint";
 export { ProgressRing } from "./components/ProgressRing";

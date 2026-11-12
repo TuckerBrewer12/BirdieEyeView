@@ -240,6 +240,10 @@ export default defineConfig([
       'kit/no-to-par-tone': 'error',
       'kit/no-raw-table': 'error',
       'kit/no-handmade-chart-tooltip': 'error',
+      'kit/no-loose-card-title': 'error',
+      'kit/no-handmade-stat-tile': 'error',
+      'kit/no-verdict-tone': 'error',
+      'kit/no-percent-template': 'error',
     },
   },
   {

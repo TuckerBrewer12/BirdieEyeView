@@ -50,3 +50,13 @@ export function niceExtent(values: readonly Maybe[], count: number, flat: number
   const [niceLo, niceHi] = scaleLinear().domain([lo, hi]).nice(count).domain();
   return [niceLo, niceHi];
 }
+
+/** About `count` evenly spaced indexes from the first, always ending on the last. */
+export function tickIndexes(length: number, count: number): number[] {
+  const step = Math.max(1, Math.ceil((length - 1) / (count - 1)));
+  const ticks = Array.from({ length: Math.ceil(length / step) }, (_, i) => i * step).filter((i) => i < length);
+  // Drop a tick that would crowd the last one.
+  if (ticks.length > 1 && length - 1 - ticks[ticks.length - 1] < step / 2) ticks.pop();
+  if (ticks[ticks.length - 1] !== length - 1) ticks.push(length - 1);
+  return ticks;
+}

@@ -130,7 +130,7 @@ export class DashboardRobot {
   }
 
   async isAtLab(): Promise<this> {
-    await expect(this.page).toHaveURL(/\/the-lab$/);
+    await expect(this.page).toHaveURL(/\/analytics\?tab=profile$/);
     return this;
   }
 

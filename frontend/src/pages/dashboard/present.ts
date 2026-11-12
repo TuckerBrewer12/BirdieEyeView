@@ -1,7 +1,6 @@
 import {
   formatCourseName,
   formatDayShort,
-  formatOneDecimal,
   formatSigned,
   formatWeekday,
   pluralNoun,
@@ -22,17 +21,6 @@ export function greetingFor(now: Date): string {
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
   return "Good evening";
-}
-
-/** A figure's move: which way, and how far, unsigned. No move shows nothing. */
-export interface Move {
-  direction: "up" | "down" | null;
-  amount: string;
-}
-
-export function moveOf(change: number | null): Move {
-  if (change == null || change === 0) return { direction: null, amount: "" };
-  return { direction: change < 0 ? "down" : "up", amount: formatOneDecimal(Math.abs(change)) };
 }
 
 /** "Last round · Sun, Jun 15" on a wide screen, "Last round · Jun 15" on a phone. */

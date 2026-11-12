@@ -6,7 +6,7 @@ import { cn } from "@/brand/cn";
 const FADE_SHARE = 0.15;
 
 interface TabBarProps {
-  tabs: { key: string; label: string }[];
+  tabs: readonly { key: string; label: string }[];
   value: string;
   onValueChange: (key: string) => void;
   /** What the tabs switch between, for screen readers. */

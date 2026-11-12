@@ -41,7 +41,7 @@
   --chart-series2: #3d6fb6;
   --chart-grid: #eceee9;
   --chart-reference: #9aa39d;
-  --chart-axis: var(--chart-reference);
+  --chart-axis: var(--foreground-secondary);
   --chart-muted: #e5e7eb;
   --chart-accent: #4ade80;
   --sidebar: #1e3d25;
@@ -177,7 +177,8 @@
   --brand-size-chart-flow: 30.75rem;
   --brand-size-sheet: 420px;
   --brand-size-sheet-tall: 640px;
-  --brand-size-target: 15rem;
+  --brand-size-radar: 28.75rem;
+  --brand-size-columns: 104px;
   --brand-size-tab: 42px;
   --brand-size-icon-xs: 11px;
   --brand-size-icon-sm: 13px;
@@ -419,7 +420,8 @@
   --spacing-chart-flow: var(--brand-size-chart-flow);
   --spacing-sheet: var(--brand-size-sheet);
   --spacing-sheet-tall: var(--brand-size-sheet-tall);
-  --spacing-target: var(--brand-size-target);
+  --spacing-radar: var(--brand-size-radar);
+  --spacing-columns: var(--brand-size-columns);
   --spacing-tab: var(--brand-size-tab);
   --spacing-icon-xs: var(--brand-size-icon-xs);
   --spacing-icon-sm: var(--brand-size-icon-sm);
@@ -499,5 +501,10 @@
   --grid-template-columns-versus-row: minmax(0, 1fr) 2.75rem 2.75rem 3.25rem;
   --grid-template-columns-course-row: minmax(0, 1fr) 9.375rem 10.625rem 1rem;
   --grid-template-columns-course-record: minmax(0, 1fr) minmax(0, 1.4fr);
+  --grid-template-columns-analytics-pair: minmax(0, 1fr) minmax(0, 1.6fr);
+  --grid-template-columns-analytics-putting: minmax(0, 1.4fr) minmax(0, 1fr);
+  --grid-template-columns-analytics-goal: 17.5rem minmax(0, 1fr);
+  --grid-template-columns-par-bar: 2.75rem minmax(0, 1fr) 2.75rem;
+  --grid-template-columns-peak-table: minmax(0, 1fr) 4.375rem 4.375rem 5rem;
   --grid-template-columns-state-grid: 6rem repeat(2, minmax(0, 1fr));
 }

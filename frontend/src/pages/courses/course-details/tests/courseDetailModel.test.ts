@@ -4,7 +4,6 @@ import { courseResponse } from "@/testing/fakes/courseResponses";
 import { emptyCourseAnalytics, halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
 import { halfMoonBayCourse } from "@/testing/fixtures/roundDetails";
 import {
-  averageLine,
   greensFigures,
   holesInOrder,
   nineFrom,
@@ -130,6 +129,5 @@ describe("trendPoints", () => {
       { tick: 1, title: "Round 1 here", values: [72, 72], notes: [{ label: "To par", value: "E" }] },
       { tick: 2, title: "Round 2 here", values: [78, 75], notes: [{ label: "To par", value: "+6" }] },
     ]);
-    expect(averageLine(null)).toBeNull();
   });
 });

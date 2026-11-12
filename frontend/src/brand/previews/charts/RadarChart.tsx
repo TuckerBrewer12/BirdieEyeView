@@ -2,7 +2,7 @@ import { RadarChart, type RadarAxis } from "@/brand/charts/RadarChart";
 import { benchmarkComparisonFrom, buildRadarData, type RadarEntry } from "@/domain";
 import { labAnalytics, labBenchmarks } from "@/testing/fixtures/lab";
 
-/** The Lab golfer's shape against a comparison, as The Lab's performance card draws it. */
+/** The Lab fixture's golfer against a comparison, as Profile's shape card draws it. */
 function axesAgainst(key: string | null): RadarAxis[] {
   const comparison = key ? benchmarkComparisonFrom(labBenchmarks[key]) : null;
   const entries = buildRadarData(labAnalytics.kpis, labAnalytics.scoring_by_par, comparison?.benchmark, comparison?.verdicts);

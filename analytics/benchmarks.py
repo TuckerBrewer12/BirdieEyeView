@@ -1,7 +1,6 @@
 """What golfers at each scoring level look like, and how a player's par types stand against them.
 
-The Lab holds a player's shape up against a benchmark: a handicap's, the scoring level their
-peak rounds play to, or a friend's. A shape is in golf terms (GIR%, scrambling%, putts per GIR,
+Profile holds a player's shape up against a benchmark: a handicap's or a friend's. A shape is in golf terms (GIR%, scrambling%, putts per GIR,
 and each par type's average to par); the page scales it for the radar. Every function takes the
 rounds oldest first.
 """
@@ -9,10 +8,9 @@ rounds oldest first.
 from typing import Any, Dict, List, Literal, Optional
 
 from analytics import stats as analytics
-from analytics.peak import peak_game
 from models import Round
 
-Against = Literal["handicap", "peak", "friend"]
+Against = Literal["handicap", "friend"]
 Verdict = Literal["ahead", "even", "behind"]
 PARS = (3, 4, 5)
 
@@ -36,6 +34,9 @@ BENCHMARKS: List[Dict[str, Any]] = [
      "par3_to_par": 0.975, "par4_to_par": 1.85, "par5_to_par": 2.0},
 ]
 
+# What tour players average around the green: the marks on the analytics page's short-game bars.
+TOUR_SHORT_GAME = {"scrambling_percentage": 57.0, "up_and_down_percentage": 50.0}
+
 SHAPE_FIELDS = (
     "gir_percentage", "scrambling_percentage", "putts_per_gir", "par3_to_par", "par4_to_par", "par5_to_par",
 )
@@ -51,13 +52,14 @@ def handicap_benchmark(handicap: int) -> Optional[Dict[str, Any]]:
     return _shape(row) if row else None
 
 
-def nearest_goal(average: float) -> int:
-    """The goal whose golfers score nearest `average`. A tie goes to the lower goal."""
-    return min((row["goal"] for row in BENCHMARKS), key=lambda goal: (abs(goal - average), goal))
-
-
-def goal_benchmark(goal: int) -> Dict[str, Any]:
-    return _shape(next(row for row in BENCHMARKS if row["goal"] == goal))
+def next_level_handicap(index: Optional[float]) -> Optional[int]:
+    """The benchmark handicap a step better than `index`: the highest one below it, scratch for an
+    index at or under scratch, the highest benchmark for one past it. Null without an index."""
+    if index is None:
+        return None
+    handicaps = sorted(row["handicap"] for row in BENCHMARKS if row["handicap"] is not None)
+    below = [h for h in handicaps if h < index]
+    return below[-1] if below else handicaps[0]
 
 
 def _rounded(value: Optional[float], digits: int) -> Optional[float]:
@@ -139,14 +141,12 @@ def comparison(
     against: Against,
     benchmark: Optional[Dict[str, Any]],
     handicap: Optional[int] = None,
-    goal: Optional[int] = None,
 ) -> Dict[str, Any]:
     """The player's par types and radar axes against `benchmark`, and which benchmark it was."""
     par_types = par_type_comparison(analytics.scoring_by_par(rounds), benchmark)
     return {
         "against": against,
         "handicap": handicap,
-        "goal": goal,
         "benchmark": benchmark,
         "par_types": par_types,
         "verdicts": shape_verdicts(player_shape(rounds), benchmark, par_types),
@@ -155,15 +155,6 @@ def comparison(
 
 def handicap_comparison(rounds: List[Round], handicap: int) -> Dict[str, Any]:
     return comparison(rounds, "handicap", handicap_benchmark(handicap), handicap=handicap)
-
-
-def peak_comparison(rounds: List[Round]) -> Dict[str, Any]:
-    """Against the golfers who score what the player's peak rounds average. No benchmark without a peak."""
-    peak = peak_game(rounds)
-    if peak is None:
-        return comparison(rounds, "peak", None)
-    goal = nearest_goal(peak["average"])
-    return comparison(rounds, "peak", goal_benchmark(goal), goal=goal)
 
 
 def friend_comparison(rounds: List[Round], friend_rounds: List[Round]) -> Dict[str, Any]:

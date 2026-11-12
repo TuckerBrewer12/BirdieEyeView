@@ -89,12 +89,18 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+/**
+ * A control or figure at the header's end. With `wrap`, a narrow header (under 24rem) drops it
+ * under the title, start-aligned, rather than squeezing the title: a menu and a switch together.
+ */
+function CardAction({ className, wrap = false, ...props }: React.ComponentProps<"div"> & { wrap?: boolean }) {
   return (
     <div
       data-slot="card-action"
       className={cn(
         "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
+        wrap &&
+          "@max-sm/card-header:col-start-1 @max-sm/card-header:row-span-1 @max-sm/card-header:row-start-auto @max-sm/card-header:justify-self-start @max-sm/card-header:mt-2",
         className,
       )}
       {...props}

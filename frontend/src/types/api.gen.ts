@@ -459,8 +459,7 @@ export interface paths {
         };
         /**
          * Get Benchmark Comparison
-         * @description The player's last `limit` rounds against a handicap's shape, the golfers their peak
-         *     rounds play like, or a friend's last `limit` rounds.
+         * @description The player's last `limit` rounds against a handicap's shape or a friend's last `limit` rounds.
          */
         get: operations["get_benchmark_comparison_api_stats__user_id__benchmark_get"];
         put?: never;
@@ -733,10 +732,6 @@ export interface components {
             putts_per_gir: number | null;
             /** Scoring Average */
             scoring_average: number | null;
-            /** Scoring Average Change */
-            scoring_average_change: number | null;
-            /** Scoring Average Verdict */
-            scoring_average_verdict: ("good" | "bad" | "neutral") | null;
             /** Scrambling Percentage */
             scrambling_percentage: number | null;
             /** Three Putt Rate */
@@ -762,13 +757,18 @@ export interface components {
             gir_vs_non_gir: components["schemas"]["GirVsNonGirRow"][];
             /** Handicap Trend */
             handicap_trend: components["schemas"]["HandicapTrendRow"][];
-            /** Insights */
-            insights: (components["schemas"]["ScoringShiftInsight"] | components["schemas"]["BestParInsight"] | components["schemas"]["GirAverageInsight"] | components["schemas"]["GirShiftInsight"] | components["schemas"]["PuttsAverageInsight"] | components["schemas"]["PuttsShiftInsight"])[];
+            /** Headline */
+            headline: components["schemas"]["HeadlineFigure"][];
             kpis: components["schemas"]["AnalyticsKpis"];
             /** Net Score Trend */
             net_score_trend: components["schemas"]["NetScoreTrendRow"][];
+            /** Next Level Handicap */
+            next_level_handicap: number | null;
             notable_achievements: components["schemas"]["NotableAchievements"];
+            /** Par Types */
+            par_types: components["schemas"]["ParTypeComparison"][];
             peak_game: components["schemas"]["PeakGame"] | null;
+            putts_per_hole: components["schemas"]["PuttsPerHole"];
             /** Putts Trend */
             putts_trend: components["schemas"]["PuttsTrendRow"][];
             /** Score Differentials */
@@ -786,6 +786,7 @@ export interface components {
             scrambling_trend: components["schemas"]["ScramblingTrendRow"][];
             /** Three Putts Trend */
             three_putts_trend: components["schemas"]["ThreePuttsTrendRow"][];
+            tour_short_game: components["schemas"]["TourShortGame"] | null;
             /** Up And Down Trend */
             up_and_down_trend: components["schemas"]["UpAndDownTrendRow"][];
         };
@@ -814,10 +815,8 @@ export interface components {
              * Against
              * @enum {string}
              */
-            against: "handicap" | "peak" | "friend";
+            against: "handicap" | "friend";
             benchmark: components["schemas"]["BenchmarkShape"] | null;
-            /** Goal */
-            goal: number | null;
             /** Handicap */
             handicap: number | null;
             /** Par Types */
@@ -859,33 +858,6 @@ export interface components {
             putts_per_gir: ("ahead" | "even" | "behind") | null;
             /** Scrambling Percentage */
             scrambling_percentage: ("ahead" | "even" | "behind") | null;
-        };
-        /**
-         * BestParInsight
-         * @description The par type the player scores best on.
-         */
-        BestParInsight: {
-            /** Average To Par */
-            average_to_par: number;
-            /**
-             * Category
-             * @constant
-             */
-            category: "scoring";
-            /** Holes */
-            holes: number;
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            kind: "best_par";
-            /** Par */
-            par: number;
-            /**
-             * Trend
-             * @enum {string}
-             */
-            trend: "up" | "down" | "flat";
         };
         /** Body_extract_scan_api_scan_extract_post */
         Body_extract_scan_api_scan_extract_post: {
@@ -1206,34 +1178,6 @@ export interface components {
              */
             status: "accepted" | "declined" | "blocked";
         };
-        /**
-         * GirAverageInsight
-         * @description Each round's GIR%, averaged.
-         */
-        GirAverageInsight: {
-            /**
-             * Category
-             * @constant
-             */
-            category: "gir";
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            kind: "gir_average";
-            /** Percent */
-            percent: number;
-            /**
-             * Rating
-             * @enum {string}
-             */
-            rating: "strong" | "fair" | "weak";
-            /**
-             * Trend
-             * @enum {string}
-             */
-            trend: "up" | "down" | "flat";
-        };
         /** GirMilestoneEvents */
         GirMilestoneEvents: {
             lifetime: components["schemas"]["LifetimeGirMilestoneEvents"];
@@ -1244,35 +1188,14 @@ export interface components {
             lifetime: components["schemas"]["LifetimeGirMilestones"];
             one_year: components["schemas"]["OneYearGirMilestones"];
         };
-        /**
-         * GirShiftInsight
-         * @description GIR% moved between the earlier and later half of the rounds.
-         */
-        GirShiftInsight: {
-            /**
-             * Category
-             * @constant
-             */
-            category: "gir";
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            kind: "gir_shift";
-            /** Points */
-            points: number;
-            /**
-             * Trend
-             * @enum {string}
-             */
-            trend: "up" | "down" | "flat";
-        };
         /** GirTrendRow */
         GirTrendRow: {
             /** Gir Percentage */
             gir_percentage: number | null;
             /** Holes Played */
             holes_played: number;
+            /** Rolling Average */
+            rolling_average: number | null;
             /** Round Id */
             round_id: string | null;
             /** Round Index */
@@ -1413,6 +1336,27 @@ export interface components {
             round_index: number;
             /** Used In Hi */
             used_in_hi: boolean | null;
+        };
+        /**
+         * HeadlineFigure
+         * @description One of the analytics page's headline figures over the rounds asked for: its value, how far the
+         *     last five rounds' average sits from every round's (null under five rounds with it), whether that
+         *     move is for the better, and its five-round average after each round, oldest first.
+         */
+        HeadlineFigure: {
+            /** Change */
+            change: number | null;
+            /**
+             * Metric
+             * @enum {string}
+             */
+            metric: "scoring_average" | "gir_percentage" | "average_putts" | "scrambling_percentage" | "three_putt_rate";
+            /** Trend */
+            trend: number[];
+            /** Value */
+            value: number | null;
+            /** Verdict */
+            verdict: ("good" | "bad" | "neutral") | null;
         };
         /**
          * Hole
@@ -1773,6 +1717,8 @@ export interface components {
             gross_score: number | null;
             /** Net Score */
             net_score: number | null;
+            /** Rolling Average */
+            rolling_average: number | null;
             /** Round Id */
             round_id: string | null;
             /** Round Index */
@@ -2071,60 +2017,37 @@ export interface components {
             one_year: components["schemas"]["OneYearPuttingMilestones"];
         };
         /**
-         * PuttsAverageInsight
-         * @description Putts per round, over the rounds with putts recorded.
+         * PuttsPerHole
+         * @description How the holes with putts recorded split: one putt or none, two, three or more. Shares to a hundredth.
          */
-        PuttsAverageInsight: {
+        PuttsPerHole: {
             /**
-             * Category
-             * @constant
+             * Holes
+             * @default 0
              */
-            category: "putting";
+            holes: number;
             /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
+             * One Or Fewer
+             * @default 0
              */
-            kind: "putts_average";
-            /** Putts */
-            putts: number;
+            one_or_fewer: number;
             /**
-             * Rating
-             * @enum {string}
+             * Three Or More
+             * @default 0
              */
-            rating: "strong" | "fair" | "weak";
+            three_or_more: number;
             /**
-             * Trend
-             * @enum {string}
+             * Two
+             * @default 0
              */
-            trend: "up" | "down" | "flat";
-        };
-        /**
-         * PuttsShiftInsight
-         * @description Putts per round moved between the earlier and later half of the rounds.
-         */
-        PuttsShiftInsight: {
-            /**
-             * Category
-             * @constant
-             */
-            category: "putting";
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            kind: "putts_shift";
-            /** Putts */
-            putts: number;
-            /**
-             * Trend
-             * @enum {string}
-             */
-            trend: "up" | "down" | "flat";
+            two: number;
         };
         /** PuttsTrendRow */
         PuttsTrendRow: {
             /** Holes Played */
             holes_played: number;
+            /** Rolling Average */
+            rolling_average: number | null;
             /** Round Id */
             round_id: string | null;
             /** Round Index */
@@ -2530,6 +2453,7 @@ export interface components {
             round_id: string | null;
             /** Round Index */
             round_index: number;
+            score_counts: components["schemas"]["ScoreCounts"];
             /** To Par */
             to_par: number | null;
             /** Total Score */
@@ -2541,6 +2465,11 @@ export interface components {
             average_to_par: number;
             /** Handicap */
             handicap: number;
+            /**
+             * Hardest
+             * @default false
+             */
+            hardest: boolean;
             /** Sample Size */
             sample_size: number;
         };
@@ -2574,6 +2503,11 @@ export interface components {
             /** Sample Size */
             sample_size: number;
             score_mix: components["schemas"]["ScoreMix"];
+            /**
+             * Worst
+             * @default false
+             */
+            worst: boolean;
         };
         /** ScoringRecordEvents */
         ScoringRecordEvents: {
@@ -2584,31 +2518,6 @@ export interface components {
         ScoringRecords: {
             lifetime: components["schemas"]["LifetimeScoringRecords"];
             one_year: components["schemas"]["OneYearScoringRecords"];
-        };
-        /**
-         * ScoringShiftInsight
-         * @description The scoring average moved between the earlier and later half of the rounds.
-         */
-        ScoringShiftInsight: {
-            /**
-             * Category
-             * @constant
-             */
-            category: "scoring";
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            kind: "scoring_shift";
-            /** Rounds */
-            rounds: number;
-            /** Strokes */
-            strokes: number;
-            /**
-             * Trend
-             * @enum {string}
-             */
-            trend: "up" | "down" | "flat";
         };
         /**
          * ScramblingTrendRow
@@ -2664,6 +2573,11 @@ export interface components {
          * @description Three-putts in a round, as a share of the holes with putts recorded (0 without any).
          */
         ThreePuttsTrendRow: {
+            /**
+             * Costly
+             * @default false
+             */
+            costly: boolean;
             /** Holes With Putt Data */
             holes_with_putt_data: number;
             /** Round Id */
@@ -2683,6 +2597,16 @@ export interface components {
             achievement: components["schemas"]["MilestoneAchievement"] | null;
             /** Threshold */
             threshold: number;
+        };
+        /**
+         * TourShortGame
+         * @description What tour players average around the green, for the short-game bars' marks.
+         */
+        TourShortGame: {
+            /** Scrambling Percentage */
+            scrambling_percentage: number;
+            /** Up And Down Percentage */
+            up_and_down_percentage: number;
         };
         /** UnderParEvent */
         UnderParEvent: {
@@ -3877,7 +3801,7 @@ export interface operations {
     get_benchmark_comparison_api_stats__user_id__benchmark_get: {
         parameters: {
             query: {
-                against: "handicap" | "peak" | "friend";
+                against: "handicap" | "friend";
                 handicap?: number | null;
                 friend_id?: string | null;
                 limit?: number;

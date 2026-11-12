@@ -48,7 +48,7 @@ test.describe("on a phone", () => {
     await dashboard.seesScoringAverage("74.7");
   });
 
-  test("tapping the goal card opens The Lab", async ({ dashboard }) => {
+  test("tapping the goal card opens Profile", async ({ dashboard }) => {
     await dashboard.open();
     await dashboard.tapGoal();
     await dashboard.isAtLab();

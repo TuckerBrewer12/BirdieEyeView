@@ -214,7 +214,7 @@ const noRawHeading = {
         "headline), so every page title follows the kit.",
       heading:
         "A raw <{{tag}}> in a page sets its own type. Head a card with <CardHeader><CardTitle render={<{{tag}} />}>, " +
-        "or a section with <SectionLabel>, so the heading follows the kit.",
+        "so the heading follows the kit.",
     },
   },
   create(context) {
@@ -419,6 +419,157 @@ const noHandmadeChartTooltip = {
   },
 };
 
+/** The name of a JSX element: `Card`, `CardTitle`, `div`. */
+const elementName = (node) => (node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null);
+
+/** The nearest JSX element around a node. */
+function parentElement(node) {
+  for (let up = node.parent; up; up = up.parent) if (up.type === "JSXElement") return up;
+  return null;
+}
+
+const noLooseCardTitle = {
+  meta: {
+    type: "problem",
+    docs: { description: "Head a card with CardHeader, not a CardTitle laid out by hand." },
+    schema: [],
+    messages: {
+      header:
+        "A <CardTitle> in a card sits in <CardHeader>, with a control beside it in <CardAction> and a line under it in " +
+        "<CardDescription>. A header row built by hand spaces and wraps its own way, and drifts from every other card's.",
+    },
+  },
+  create(context) {
+    if (inKit(context.filename)) return {};
+    return {
+      JSXElement(node) {
+        if (elementName(node) !== "CardTitle") return;
+        const parent = parentElement(node);
+        if (parent && elementName(parent) === "CardHeader") return;
+        // Only a title inside a card: a heading over a group of cards is the section's own.
+        for (let up = parent; up; up = parentElement(up)) {
+          if (elementName(up) === "Card") return context.report({ node, messageId: "header" });
+        }
+      },
+    };
+  },
+};
+
+/** The JSX element names under a node, a few levels down. */
+function namesWithin(node, depth, names = new Set()) {
+  if (depth < 0) return names;
+  for (const child of node.children ?? []) {
+    if (child.type === "JSXElement") {
+      const name = elementName(child);
+      if (name) names.add(name);
+      namesWithin(child, depth - 1, names);
+    } else if (child.type === "JSXExpressionContainer") {
+      // `{tile.trend && <Sparkline … />}`, `{cond ? <A /> : <B />}`
+      const stack = [child.expression];
+      while (stack.length) {
+        const e = stack.pop();
+        if (!e) continue;
+        if (e.type === "JSXElement") namesWithin({ children: [e] }, depth, names);
+        else if (e.type === "LogicalExpression") stack.push(e.left, e.right);
+        else if (e.type === "ConditionalExpression") stack.push(e.consequent, e.alternate);
+      }
+    }
+  }
+  return names;
+}
+
+const isHandmadeTile = (node) => {
+  const names = namesWithin(node, 2);
+  return names.has("StatValue") && names.has("StatLabel") && names.has("StatDelta");
+};
+
+const noHandmadeStatTile = {
+  meta: {
+    type: "problem",
+    docs: { description: "Use the kit's StatTile or StatCard instead of building a figure tile by hand." },
+    schema: [],
+    messages: {
+      tile:
+        "A label, a value and its move together are a figure tile built by hand. Use <StatTile> (`layout` " +
+        "card, strip or center) or <StatCard>, which colour the move and its line by the server's verdict one way.",
+    },
+  },
+  create(context) {
+    if (inKit(context.filename)) return {};
+    return {
+      JSXElement(node) {
+        if (!isHandmadeTile(node)) return;
+        // Report the innermost element that holds the whole tile.
+        const inner = node.children.some((child) => child.type === "JSXElement" && isHandmadeTile(child));
+        if (!inner) context.report({ node: node.openingElement, messageId: "tile" });
+      },
+    };
+  },
+};
+
+const SCORE_TEXT = /(?:^|[\s:])text-score-[a-z]+(?![\w-])/;
+
+const noVerdictTone = {
+  meta: {
+    type: "problem",
+    docs: { description: "Colour a verdict with the kit, not a score colour picked in a page." },
+    schema: [],
+    messages: {
+      tone:
+        "A score colour picked at runtime in a page is a verdict painted by hand. Use `tone` on <StatValue>, or " +
+        "verdictTextClass() from @/brand/theme for other text, so good and bad read in one pair of colours everywhere.",
+    },
+  },
+  create(context) {
+    if (inKit(context.filename)) return {};
+    const check = (node) => {
+      const text = node.type === "Literal" ? node.value : node.quasis.map((q) => q.value.cooked ?? "").join(" ");
+      if (typeof text !== "string" || !SCORE_TEXT.test(text)) return;
+      const { parent } = node;
+      const picked =
+        (parent.type === "ConditionalExpression" && parent.test !== node) ||
+        (parent.type === "LogicalExpression" && parent.right === node) ||
+        (parent.type === "Property" && parent.value === node);
+      if (picked) context.report({ node, messageId: "tone" });
+    };
+    return { Literal: check, TemplateLiteral: check };
+  },
+};
+
+/** Whether a node sits in JSX, outside a `style` prop (where `${x}%` is a length, not words). */
+function inShownJsx(node) {
+  let shown = false;
+  for (let up = node.parent; up; up = up.parent) {
+    if (up.type === "JSXAttribute" && up.name.name === "style") return false;
+    if (up.type === "JSXExpressionContainer") shown = true;
+  }
+  return shown;
+}
+
+const noPercentTemplate = {
+  meta: {
+    type: "problem",
+    docs: { description: "Word a percent shown in a page with formatPercent, not a template." },
+    schema: [],
+    messages: {
+      percent:
+        "A `%` after a figure in a template words a percent by hand. Use formatPercent() from @/domain, which rounds " +
+        "and shows a missing figure one way.",
+    },
+  },
+  create(context) {
+    if (inKit(context.filename)) return {};
+    return {
+      TemplateLiteral(node) {
+        if (!inShownJsx(node)) return;
+        if (node.quasis.slice(1).some((q) => (q.value.cooked ?? "").startsWith("%"))) {
+          context.report({ node, messageId: "percent" });
+        }
+      },
+    };
+  },
+};
+
 export default {
   rules: {
     "no-raw-heading": noRawHeading,
@@ -433,5 +584,9 @@ export default {
     "no-to-par-tone": noToParTone,
     "no-raw-table": noRawTable,
     "no-handmade-chart-tooltip": noHandmadeChartTooltip,
+    "no-loose-card-title": noLooseCardTitle,
+    "no-handmade-stat-tile": noHandmadeStatTile,
+    "no-verdict-tone": noVerdictTone,
+    "no-percent-template": noPercentTemplate,
   },
 };

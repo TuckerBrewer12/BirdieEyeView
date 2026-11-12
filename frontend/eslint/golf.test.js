@@ -112,5 +112,6 @@ tester.run("golf/no-course-fallback", golf.rules["no-course-fallback"], {
   invalid: [
     { code: 'const name = course ? formatCourseName(course) : "Unknown course";', errors: [{ messageId: "fallback" }] },
     { code: "const el = <span>{name ?? \"Unknown Course\"}</span>;", errors: [{ messageId: "fallback" }] },
+    { code: 'const label = course.name ?? "Unnamed course";', errors: [{ messageId: "fallback" }] },
   ],
 });

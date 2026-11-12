@@ -343,3 +343,67 @@ tester.run("kit/no-handmade-chart-tooltip", kit.rules["no-handmade-chart-tooltip
     },
   ],
 });
+
+tester.run("kit/no-loose-card-title", kit.rules["no-loose-card-title"], {
+  valid: [
+    { code: "<Card><CardHeader><CardTitle>Goal</CardTitle><CardAction><Menu /></CardAction></CardHeader></Card>;", filename: PAGE },
+    // A heading over a group of cards is the section's, not a card's.
+    { code: "<section><CardTitle level={2}>Where to find 3 strokes</CardTitle><Card /></section>;", filename: PAGE },
+    { code: "<Card><div><CardTitle>Kit</CardTitle></div></Card>;", filename: KIT },
+  ],
+  invalid: [
+    {
+      code: '<Card><div className="flex justify-between"><CardTitle>Goal</CardTitle><Menu /></div></Card>;',
+      filename: PAGE,
+      errors: [{ messageId: "header" }],
+    },
+  ],
+});
+
+tester.run("kit/no-handmade-stat-tile", kit.rules["no-handmade-stat-tile"], {
+  valid: [
+    { code: '<StatTile layout="strip" label="Greens" value="33%" delta="4" direction="up" tone="good" />;', filename: PAGE },
+    { code: "<Stat><StatLabel>Rounds</StatLabel><StatValue>12</StatValue></Stat>;", filename: PAGE },
+    { code: "<div><StatLabel>Kit</StatLabel><StatValue>1</StatValue><StatDelta direction='up' /></div>;", filename: KIT },
+  ],
+  invalid: [
+    {
+      code:
+        "<Card><div className='flex flex-col'><StatLabel>Putts</StatLabel><div><StatValue>31</StatValue>" +
+        "{change && <StatDelta direction='down' tone='good'>{change}</StatDelta>}</div></div></Card>;",
+      filename: PAGE,
+      errors: [{ messageId: "tile" }],
+    },
+  ],
+});
+
+tester.run("kit/no-verdict-tone", kit.rules["no-verdict-tone"], {
+  valid: [
+    { code: '<StatValue tone={figure.tone}>{figure.value}</StatValue>;', filename: PAGE },
+    { code: '<b className={verdictTextClass(group.tone)}>{gap}</b>;', filename: PAGE },
+    // A colour that doesn't change with the data is the design's, not a verdict.
+    { code: '<span className="text-score-bogey">Penalty</span>;', filename: PAGE },
+    { code: 'const TONE = { good: "text-primary", bad: "text-score-bogey" };', filename: KIT },
+  ],
+  invalid: [
+    { code: '<StatValue className={cn(worst && "text-score-bogey")} />;', filename: PAGE, errors: [{ messageId: "tone" }] },
+    { code: '<b className={met ? "text-primary" : "text-score-bogey"} />;', filename: PAGE, errors: [{ messageId: "tone" }] },
+    { code: 'const TONE = { good: "text-primary", bad: "text-score-bogey" };', filename: PAGE, errors: [{ messageId: "tone" }] },
+  ],
+});
+
+tester.run("kit/no-percent-template", kit.rules["no-percent-template"], {
+  valid: [
+    { code: "<Meter aria-label={saverShareLabel(saver)} />;", filename: PAGE },
+    // In a style it's a length, not words.
+    { code: "<div style={{ width: `${share}%` }} />;", filename: PAGE },
+    { code: "<Meter aria-label={`${value}%`} />;", filename: KIT },
+  ],
+  invalid: [
+    {
+      code: "<Meter aria-label={`${saver.headline}: ${saver.shareOfGap}% of the gap`} />;",
+      filename: PAGE,
+      errors: [{ messageId: "percent" }],
+    },
+  ],
+});

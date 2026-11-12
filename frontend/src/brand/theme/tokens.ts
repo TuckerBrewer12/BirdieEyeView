@@ -200,7 +200,8 @@ const light = {
     series2: denim[500],
     grid: sage[150],
     reference: sage[400],
-    axis: alias("chart-reference"),
+    // Ticks, labels and a round's own dots: dark enough to read at a glance.
+    axis: alias("foreground-secondary"),
     muted: gray[200],
     accent: green[400],
   },
@@ -417,7 +418,7 @@ export const type = {
   stat: { size: 32, weight: 700, tracking: tracking.stat, leading: leading.display },
   /** The smaller tracked capitals on a chip or a header strip. */
   kicker: { size: 9, weight: 700, tracking: tracking.kicker },
-  /** The label above a page section (`SectionLabel`). */
+  /** The tracked capitals above a group of rows. */
   section: { size: 11, weight: 700, tracking: tracking.section },
 } satisfies Record<string, TypeRole>;
 
@@ -477,8 +478,10 @@ export const size = {
   sheet: 420,
   /** A bottom sheet that holds a table, not a list of options: the handicap breakdown. */
   "sheet-tall": 640,
-  /** Widest a target of results grows. */
-  target: "15rem",
+  /** The widest the radar draws beside what goes with it. */
+  radar: "28.75rem",
+  /** A row of plain columns: the holes by difficulty, the rounds' three-putts. */
+  columns: 104,
   /** A page's section tab: the row's height, the underline included. */
   tab: 42,
   "icon-xs": 11,
@@ -579,6 +582,16 @@ export const gridColumns = {
   "course-row": "minmax(0, 1fr) 9.375rem 10.625rem 1rem",
   /** The course page's record beside the golfer's recent rounds there. */
   "course-record": "minmax(0, 1fr) minmax(0, 1.4fr)",
+  /** Analytics: a narrow card beside a wider one (by hole par beside by hole difficulty). */
+  "analytics-pair": "minmax(0, 1fr) minmax(0, 1.6fr)",
+  /** Analytics' putting: the three-putts beside the putts a hole. */
+  "analytics-putting": "minmax(0, 1.4fr) minmax(0, 1fr)",
+  /** Analytics' profile: the goal's figures or the radar, beside what goes with them. */
+  "analytics-goal": "17.5rem minmax(0, 1fr)",
+  /** A par type's bar: its name, the bar, its figure. */
+  "par-bar": "2.75rem minmax(0, 1fr) 2.75rem",
+  /** The peak game's table: the kind of hole, then peak, average and gained. */
+  "peak-table": "minmax(0, 1fr) 4.375rem 4.375rem 5rem",
   /** A label column, then two equal state columns (default, disabled). */
   "state-grid": "6rem repeat(2, minmax(0, 1fr))",
 };
@@ -655,24 +668,14 @@ function px(length: number | string): number {
   return Number(rem[1]) * 16;
 }
 
-type Corners = [number, number, number, number];
 
 /**
- * Chart geometry. Recharts and our SVG plots take numbers, so they read these.
- * SVG plots are unitless and scale to their container, keeping this shape.
+ * Chart geometry. The SVG charts take numbers, so they read these. Most draw at their box's width
+ * from a measured `width`; the rest scale to their container, keeping this shape.
  */
 export const chart = {
-  barRadius: [px(radius.md), px(radius.md), 0, 0] as Corners,
-  /** Rounded outer ends of a horizontal stacked bar. */
-  stackEndRadius: {
-    left: [px(radius.sm), 0, 0, px(radius.sm)] as Corners,
-    right: [0, px(radius.sm), px(radius.sm), 0] as Corners,
-  },
-  margin: { top: 4, right: 8, left: -20, bottom: 0 },
   /** The dotted guide lines charts draw behind their data: grid rings, reference lines, the hover crosshair. */
   guideDash: "3 3",
-  /** Widest a Recharts bar grows when there are few of them. */
-  barMaxWidth: 28,
   /**
    * Score over handicap index, stacked as two small multiples that share the round axis.
    * Unitless, scaled to the container. The grid ends `axis` short of the right edge,
@@ -796,11 +799,14 @@ export const chart = {
   },
   /** Scores against a goal: a short strip of dots, lower scores higher up, the goal dashed across. */
   goal: {
-    width: 560,
-    height: 96,
-    pad: { x: 8, y: 14 },
-    /** Room at the right end of the goal line for its label. */
-    labelRoom: 32,
+    /** Until its box is measured; it draws at the box's width, never under `minWidth`. */
+    width: 600,
+    minWidth: 240,
+    height: 150,
+    /** Room above the top dot for its score and below the lowest. */
+    pad: { x: 20, y: 28 },
+    /** Room at the right end of the goal line for its name, clear of the last round's dot. */
+    labelRoom: 64,
     /** The goal line, the line through the scores, and the ring round a score that missed. */
     stroke: 1.5,
     dot: 4,
@@ -808,32 +814,37 @@ export const chart = {
   },
   /** One figure per round over a soft fill, with a second line beside it if wanted. */
   trendArea: {
+    /** Until its box is measured; it draws at the box's width, never under `minWidth`. */
     width: 560,
-    height: size.chart,
-    pad: { top: 12, right: 16, bottom: 24, left: 40 },
-    /** Share of the span left either side of the values, so the line never touches the edge. */
-    headroom: 0.15,
-    stroke: 2,
+    minWidth: 280,
+    /** The series' plot with its padding; the counts' panel adds `panelGap` and `countHeight` under it. */
+    height: 260,
+    /** The top only clears a dot sitting on the top rule. */
+    pad: { top: 8, right: 16, bottom: 28, left: 44 },
+    /** A run of one value still gets this much either side before the range rounds out. */
+    flatSpan: 1,
+    stroke: 3,
     /** The second line is thinner, so the first reads as the figure. */
-    strokeSecondary: 1.5,
-    dot: 3,
-    dotHover: 5,
+    strokeSecondary: 2.5,
+    /** A round's dot: big enough to pick out each round at a glance. */
+    dot: 6.4,
+    dotHover: 8.5,
     /** Past this many rounds the dots would crowd the line, so only the hovered one is drawn. */
     maxDots: 30,
     /** About this many round numbers along the bottom. */
     xTicks: 6,
     yTicks: 4,
-  },
-  /** Holes as dots on a target, the better the score the nearer the middle. It fills `max-w-target`. */
-  target: {
-    size: 200,
-    /** Each score kind's ring, as a share of the radius from the middle out. Quads share the triple ring. */
-    rings: { eagle: 0.18, birdie: 0.35, par: 0.55, bogey: 0.7, double: 0.83, triple: 1 },
-    stroke: 1.5,
-    dot: 3.5,
-    dotHover: 5,
-    /** How near the pointer has to be to a dot, in the chart's units, to pick it. */
-    hitRadius: 10,
+    /** Holes of a kind each round, in a panel under the series. */
+    countHeight: 120,
+    /** The counts' dots stay small: several kinds often share a count in a short panel. */
+    countDot: 4,
+    countDotHover: 6,
+    countTicks: 3,
+    panelGap: 28,
+    /** The counts' scale reaches at least this many holes, so one birdie doesn't fill the panel. */
+    countFloor: 4,
+    /** The fewest rounds the slider shows; a trend this short or shorter has no slider. */
+    windowMin: 5,
   },
   /**
    * A figure per hole across a course (how each hole plays, greens and putts). Like the round flow it

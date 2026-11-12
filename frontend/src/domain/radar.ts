@@ -74,3 +74,42 @@ export function buildRadarData(
     verdict: verdicts?.[figure] ?? null,
   }));
 }
+
+/** One axis the golfer is ahead or behind on: both figures in the axis's own terms ("33%", "2.02/GIR"). */
+export interface RadarGap {
+  axis: string;
+  mine: string;
+  theirs: string;
+  /**
+   * How far apart they sit on the radar's 0–100 scale, which puts different measures on one footing:
+   * it orders the axes, biggest gap first, and is never shown.
+   */
+  points: number;
+}
+
+/** Where the golfer stands on the radar against the comparison, by the server's verdicts. */
+export interface RadarStanding {
+  /** Biggest lead first. */
+  ahead: RadarGap[];
+  /** Biggest deficit first. */
+  behind: RadarGap[];
+  /** The axes with a verdict. */
+  judged: number;
+}
+
+/** The axes the server judged ahead or behind, each with both figures, biggest gap first. */
+export function radarStanding(entries: readonly RadarEntry[]): RadarStanding {
+  const gap = (entry: RadarEntry): RadarGap => ({
+    axis: entry.axis,
+    mine: entry.userRaw,
+    theirs: entry.benchRaw,
+    points: entry.value - entry.benchmark,
+  });
+  const ahead = entries.filter((entry) => entry.verdict === "ahead").map(gap);
+  const behind = entries.filter((entry) => entry.verdict === "behind").map(gap);
+  return {
+    ahead: ahead.sort((a, b) => b.points - a.points),
+    behind: behind.sort((a, b) => a.points - b.points),
+    judged: entries.filter((entry) => entry.verdict != null).length,
+  };
+}

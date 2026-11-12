@@ -84,13 +84,8 @@ def goal_report(
                 "type": "three_putt_bleed",
                 "strokes_saved": round(avg_three_putts, 2),
                 "percentage_of_gap": round(min(pct, 999.0), 1),
-                "headline": f"Eliminate 3-putts → −{avg_three_putts:.1f} strokes/round",
-                "detail": (
-                    f"You average {avg_three_putts:.1f} three-putts per round. "
-                    f"Converting them to 2-putts closes {pct:.0f}% of your {gap:.1f}-stroke gap."
-                    if gap > 0 else
-                    f"You average {avg_three_putts:.1f} three-putts per round — keep eliminating them to push lower."
-                ),
+                "headline": "Cut out 3-putts",
+                "detail": f"{avg_three_putts:.1f} a round",
                 "data": {"avg_three_putts": round(avg_three_putts, 2)},
             })
 
@@ -117,11 +112,8 @@ def goal_report(
                 "type": "blowup_holes",
                 "strokes_saved": round(realistic_save, 2),
                 "percentage_of_gap": round(min(pct, 999.0), 1),
-                "headline": f"Tame blowup holes → −{realistic_save:.1f} strokes/round",
-                "detail": (
-                    f"You average {avg_doubles:.1f} doubles and {avg_triples_plus:.1f} triple+ per round. "
-                    f"Converting {realistic_doubles:.0f} doubles and {realistic_triples:.0f} triples to bogeys saves {realistic_save:.1f} strokes."
-                ),
+                "headline": "Turn doubles into bogeys",
+                "detail": f"{avg_doubles + avg_triples_plus:.1f} doubles or worse a round",
                 "data": {
                     "avg_doubles": round(avg_doubles, 2),
                     "avg_triples_plus": round(avg_triples_plus, 2),
@@ -141,11 +133,8 @@ def goal_report(
                 "type": "achilles_heel",
                 "strokes_saved": round(strokes_per_round, 2),
                 "percentage_of_gap": round(min(pct, 999.0), 1),
-                "headline": f"Par {worst_bucket['par']}s {worst_bucket['bucket_label']} → +{worst_bucket['average_to_par']:.1f} avg",
-                "detail": (
-                    f"Your weakest distance zone costs ~{strokes_per_round:.1f} strokes/round. "
-                    f"Improving your par {worst_bucket['par']} approach play here would directly close your gap."
-                ),
+                "headline": f"Par {worst_bucket['par']}s from {worst_bucket['bucket_label']} yds",
+                "detail": f"+{worst_bucket['average_to_par']:.1f} a hole from there",
                 "data": {
                     "par": worst_bucket["par"],
                     "bucket_label": worst_bucket["bucket_label"],
@@ -166,12 +155,9 @@ def goal_report(
                     "type": "home_course_demon",
                     "strokes_saved": round(strokes_per_round, 2),
                     "percentage_of_gap": round(min(pct, 999.0), 1),
-                    "headline": f"Hole #{hardest['hole_number']} on your home course → +{hardest['average_to_par']:.1f} avg",
-                    "detail": (
-                        f"Hole #{hardest['hole_number']} is your toughest hole at home, costing you "
-                        f"+{hardest['average_to_par']:.1f} strokes on average. Taming it adds up over every round."
-                    ),
-                    "data": {
+                    "headline": f"Hole {hardest['hole_number']} at home",
+                "detail": f"+{hardest['average_to_par']:.1f} a round on it",
+                "data": {
                         "hole_number": hardest["hole_number"],
                         "average_to_par": round(hardest["average_to_par"], 2),
                         "sample_size": hardest.get("sample_size", len(home_course_rounds)),
@@ -192,12 +178,8 @@ def goal_report(
                 "type": "gir_opportunity",
                 "strokes_saved": round(realistic_gir_gain, 2),
                 "percentage_of_gap": round(min(pct, 999.0), 1),
-                "headline": f"Hit more greens → GIR {gir_pct:.0f}% (avg is ~45%)",
-                "detail": (
-                    f"You're hitting {gir_pct:.0f}% of greens in regulation — "
-                    f"{45 - gir_pct:.0f} percentage points below average. "
-                    f"Every extra GIR eliminates a scramble attempt and typically saves 0.5–0.7 strokes."
-                ),
+                "headline": "Hit more greens",
+                "detail": f"{gir_pct:.0f}% of greens",
                 "data": {"gir_percentage": round(gir_pct, 1)},
             })
 
@@ -219,12 +201,9 @@ def goal_report(
                     "type": "scrambling_opportunity",
                     "strokes_saved": round(realistic_saves, 2),
                     "percentage_of_gap": round(min(pct, 999.0), 1),
-                    "headline": f"Improve scrambling → {avg_scrambling:.0f}% (target 50%)",
-                    "detail": (
-                        f"You scramble successfully {avg_scrambling:.0f}% of the time when missing greens. "
-                        f"Reaching 50% saves roughly {realistic_saves:.1f} strokes per round through better chip-and-putt."
-                    ),
-                    "data": {"scrambling_percentage": round(avg_scrambling, 1)},
+                    "headline": "Save more pars after a miss",
+                "detail": f"{avg_scrambling:.0f}% scrambling",
+                "data": {"scrambling_percentage": round(avg_scrambling, 1)},
                 })
 
     # G. Par 5 Opportunity
@@ -241,11 +220,8 @@ def goal_report(
                 "type": "par5_opportunity",
                 "strokes_saved": round(realistic_save, 2),
                 "percentage_of_gap": round(min(pct, 999.0), 1),
-                "headline": f"Attack par 5s → averaging +{par5_row['average_to_par']:.1f} on them",
-                "detail": (
-                    f"You're averaging +{par5_row['average_to_par']:.1f} on par 5s — these should be your scoring holes. "
-                    f"Better layup strategy and short-game around the green could realistically save {realistic_save:.1f} strokes/round."
-                ),
+                "headline": "Score on par 5s",
+                "detail": f"+{par5_row['average_to_par']:.1f} a hole on them",
                 "data": {
                     "average_to_par": round(par5_row["average_to_par"], 2),
                     "sample_size": par5_row["sample_size"],
