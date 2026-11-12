@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Card, CardAction, CardHeader, CardTitle, Collection, RoundPreview } from "@/brand";
+import { Button, Card, CardAction, CardHeader, CardTitle, Collection, RoundPreview } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { RoundSummary } from "@/domain";
 
@@ -19,9 +19,9 @@ export function RecentRounds({ rounds, compact = false }: RecentRoundsProps) {
           Recent rounds
         </CardTitle>
         <CardAction className="self-center">
-          <Link to="/rounds" className="text-sm font-semibold text-primary hover:underline">
+          <Button variant="link" size="inline" nativeButton={false} render={<Link to="/rounds" />}>
             See all
-          </Link>
+          </Button>
         </CardAction>
       </CardHeader>
       <Collection
