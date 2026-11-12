@@ -834,6 +834,16 @@ class ParTypeComparison(ResponseModel):
     verdict: Optional[Literal["ahead", "even", "behind"]] = None
 
 
+class BenchmarkVerdicts(ResponseModel):
+    """Each radar axis against the benchmark: ahead, even or behind. Null without both figures."""
+    gir_percentage: Optional[Literal["ahead", "even", "behind"]] = None
+    scrambling_percentage: Optional[Literal["ahead", "even", "behind"]] = None
+    putts_per_gir: Optional[Literal["ahead", "even", "behind"]] = None
+    par3_to_par: Optional[Literal["ahead", "even", "behind"]] = None
+    par4_to_par: Optional[Literal["ahead", "even", "behind"]] = None
+    par5_to_par: Optional[Literal["ahead", "even", "behind"]] = None
+
+
 class BenchmarkComparisonResponse(ResponseModel):
     """The player's last rounds held up against a benchmark, and which benchmark it was."""
     against: Literal["handicap", "peak", "friend"]
@@ -842,6 +852,7 @@ class BenchmarkComparisonResponse(ResponseModel):
     # Null when the friend has no rounds or the player has no peak game.
     benchmark: Optional[BenchmarkShape] = None
     par_types: List[ParTypeComparison] = Field(default_factory=list)  # par 3, 4 and 5
+    verdicts: BenchmarkVerdicts = Field(default_factory=BenchmarkVerdicts)  # the radar's axes
 
 
 class CourseHoleStatsRow(ResponseModel):

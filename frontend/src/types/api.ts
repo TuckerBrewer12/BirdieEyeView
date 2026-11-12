@@ -54,6 +54,7 @@ export type GoalSaverDto = Schemas["GoalSaver"];
 export type GoalAttemptDto = Schemas["GoalAttempt"];
 export type BenchmarkComparisonDto = Schemas["BenchmarkComparisonResponse"];
 export type BenchmarkShapeDto = Schemas["BenchmarkShape"];
+export type BenchmarkVerdictsDto = Schemas["BenchmarkVerdicts"];
 export type ParTypeComparisonDto = Schemas["ParTypeComparison"];
 export type FriendshipDto = Schemas["FriendshipResponse"];
 export type FriendshipStatusRequestDto = Schemas["FriendshipStatusRequest"];

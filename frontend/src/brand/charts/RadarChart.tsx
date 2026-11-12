@@ -1,5 +1,5 @@
 import { cn } from "@/brand/cn";
-import { chartTickStyle, tokens } from "@/brand/theme";
+import { tokens } from "@/brand/theme";
 
 interface RadarAxis {
   /** What the axis measures: "GIR", "Par 3s". */
@@ -8,7 +8,9 @@ interface RadarAxis {
   value: number;
   /** The comparison on the same 0–100 scale. Leave it off every axis to draw the shape alone. */
   benchmark?: number | null;
-  /** The figure under the label, in the shape's colour: "52%". */
+  /** The server's verdict against the comparison: ahead reads green and behind red; even, or none, the shape's colour. */
+  verdict?: "ahead" | "even" | "behind" | null;
+  /** The figure under the label: "52%", in the verdict's colour. */
   valueLabel?: string;
   /** The comparison's figure, after "vs". */
   benchmarkLabel?: string;
@@ -27,8 +29,9 @@ interface RadarChartProps {
 
 /**
  * A shape across a handful of measures: one spoke each, the value plotted out from the
- * centre, joined into a filled outline. A comparison, when every axis has one, is drawn
- * dashed behind it. Each spoke is labelled with its figures, so there is no tooltip.
+ * centre, joined into a lightly filled outline. A comparison, when every axis has one, is
+ * drawn as a dashed outline behind it, and each dot says whether the golfer is ahead of it.
+ * Each spoke is labelled with its figures, so there is no tooltip.
  */
 export function RadarChart({
   axes,
@@ -38,7 +41,8 @@ export function RadarChart({
   "aria-label": ariaLabel,
 }: RadarChartProps) {
   const layout = compact ? { ...tokens.chart.radar, ...tokens.chart.radarCompact } : tokens.chart.radar;
-  const { width: W, height: H, radius: R, labelGap, valueGap, rings, dot, stroke } = layout;
+  const { width: W, height: H, radius: R, labelGap, valueGap, rings, dot, stroke, strokeSecondary } = layout;
+  const textSize = tokens.type["body-sm"].size;
 
   if (axes.length < 3) {
     return <div className="py-8 text-center text-sm text-muted-foreground">{empty}</div>;
@@ -55,6 +59,13 @@ export function RadarChart({
 
   const benchmarks = axes.flatMap((axis) => (axis.benchmark != null ? [axis.benchmark] : []));
   const compared = benchmarks.length === axes.length;
+  // Ahead of the comparison reads as a birdie and behind it as a bogey; even, or no verdict, the shape's own colour.
+  const toneOf = (axis: RadarAxis) =>
+    axis.verdict === "ahead"
+      ? tokens.color.score.birdie.text
+      : axis.verdict === "behind"
+        ? tokens.color.score.bogey.text
+        : tokens.color.primary;
 
   return (
     <div data-slot="radar-chart" className={cn("w-full", className)}>
@@ -69,69 +80,79 @@ export function RadarChart({
             key={ring}
             points={outline(axes.map(() => ring))}
             fill="none"
-            stroke={tokens.color.chart.muted}
+            stroke={ring === 100 ? tokens.color.border : tokens.color.chart.grid}
             strokeWidth={tokens.lineWidth.border}
           />
         ))}
         {axes.map((axis, i) => {
           const [x, y] = point(i, 100);
-          return <line key={axis.label} x1={cx} y1={cy} x2={x} y2={y} stroke={tokens.color.chart.muted} strokeWidth={tokens.lineWidth.border} />;
+          return (
+            <line
+              key={axis.label}
+              x1={cx}
+              y1={cy}
+              x2={x}
+              y2={y}
+              stroke={tokens.color.chart.grid}
+              strokeWidth={tokens.lineWidth.border}
+            />
+          );
         })}
 
         {compared && (
-          <g data-slot="radar-benchmark">
-            <polygon
-              points={outline(benchmarks)}
-              fill={tokens.color.chart.axis}
-              fillOpacity={tokens.opacity.wash}
-              stroke={tokens.color.chart.axis}
-              strokeWidth={stroke * 0.75}
-              strokeDasharray={tokens.chart.guideDash}
-            />
-            {axes.map((axis, i) => {
-              const [x, y] = point(i, benchmarks[i]);
-              return <circle key={axis.label} cx={x} cy={y} r={dot * 0.75} fill={tokens.color.chart.axis} />;
-            })}
-          </g>
+          <polygon
+            data-slot="radar-benchmark"
+            points={outline(benchmarks)}
+            fill="none"
+            stroke={tokens.color.mutedForeground}
+            strokeWidth={strokeSecondary}
+            strokeDasharray={tokens.chart.guideDash}
+            strokeLinejoin="round"
+          />
         )}
 
         <polygon
           points={outline(axes.map((axis) => axis.value))}
           fill={tokens.color.primary}
-          fillOpacity={tokens.opacity.wash}
+          fillOpacity={tokens.opacity.faint}
           stroke={tokens.color.primary}
           strokeWidth={stroke}
           strokeLinejoin="round"
         />
         {axes.map((axis, i) => {
           const [x, y] = point(i, axis.value);
-          return <circle key={axis.label} cx={x} cy={y} r={dot} fill={tokens.color.primary} />;
+          return (
+            <circle
+              key={axis.label}
+              cx={x}
+              cy={y}
+              r={dot}
+              fill={toneOf(axis)}
+              stroke={tokens.color.card}
+              strokeWidth={tokens.lineWidth.outline}
+            />
+          );
         })}
 
         {axes.map((axis, i) => {
           const x = cx + (R + labelGap) * Math.cos(angle(i));
           const y = cy + (R + labelGap) * Math.sin(angle(i));
           const dx = x - cx;
-          const anchor = Math.abs(dx) < 1 ? "middle" : dx > 0 ? "start" : "end";
-          // Two lines of text: above the centre they end at the label point, below it they
-          // start there, and level with it they straddle it.
           const dy = y - cy;
-          const top = dy < -1 ? y - valueGap : dy > 1 ? y + valueGap / 2 : y - valueGap / 2 + valueGap / 4;
+          const anchor = Math.abs(dx) < 1 ? "middle" : dx > 0 ? "start" : "end";
+          // Two lines of text, each centred on its own y. On the vertical axis they sit clear
+          // of the point (above it going up, below it going down); at the sides they straddle it.
+          const lead = Math.abs(dx) < 1 ? (dy < 0 ? y - valueGap * 1.5 : y + valueGap / 2) : y - valueGap / 2;
           return (
-            <g key={axis.label}>
-              <text
-                x={x}
-                y={top}
-                textAnchor={anchor}
-                fontSize={chartTickStyle.fontSize}
-                fontWeight="600"
-                fill={tokens.color.mutedForeground}
-              >
+            <g key={axis.label} fontSize={textSize} dominantBaseline="central">
+              <text x={x} y={lead} textAnchor={anchor} fontWeight="600" fill={tokens.color.foreground}>
                 {axis.label}
               </text>
               {axis.valueLabel && (
-                <text x={x} y={top + valueGap} textAnchor={anchor} fontSize={chartTickStyle.fontSize} fontWeight="700">
-                  <tspan fill={tokens.color.primary}>{axis.valueLabel}</tspan>
+                <text x={x} y={lead + valueGap} textAnchor={anchor}>
+                  <tspan fontWeight="700" fill={toneOf(axis)}>
+                    {axis.valueLabel}
+                  </tspan>
                   {compared && axis.benchmarkLabel && (
                     <tspan fill={tokens.color.mutedForeground}> vs {axis.benchmarkLabel}</tspan>
                   )}

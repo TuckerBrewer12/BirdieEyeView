@@ -1,5 +1,5 @@
 import type { AnalyticsKpisDto, ScoringByParRowDto } from "@/types/api";
-import type { BenchmarkShape } from "./benchmark";
+import type { BenchmarkShape, BenchmarkVerdict, BenchmarkVerdicts } from "./benchmark";
 import { formatPercent, formatSigned, formatTwoDecimals } from "./format";
 
 export type RadarEntry = {
@@ -9,6 +9,8 @@ export type RadarEntry = {
   userRaw: string;
   benchRaw: string;
   hasData: boolean;
+  /** The server's verdict on this axis against the comparison. Null without one. */
+  verdict: BenchmarkVerdict | null;
 };
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
@@ -54,11 +56,12 @@ const AXES: Axis[] = [
   { axis: "Par 5s", figure: "par5ToPar", radius: parRadius, label: toParLabel },
 ];
 
-/** The golfer's shape on the radar, and the comparison's behind it when there is one. */
+/** The golfer's shape on the radar, the comparison's behind it when there is one, and the server's verdict on each axis. */
 export function buildRadarData(
   kpis: AnalyticsKpisDto,
   scoringByPar: ScoringByParRowDto[],
   benchmark?: BenchmarkShape | null,
+  verdicts?: BenchmarkVerdicts | null,
 ): RadarEntry[] {
   const mine = shapeOf(kpis, scoringByPar);
   return AXES.map(({ axis, figure, radius, label }) => ({
@@ -68,5 +71,6 @@ export function buildRadarData(
     userRaw: label(mine[figure]),
     benchRaw: label(benchmark?.[figure] ?? null),
     hasData: mine[figure] != null,
+    verdict: verdicts?.[figure] ?? null,
   }));
 }
