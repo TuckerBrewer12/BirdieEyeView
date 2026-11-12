@@ -104,6 +104,12 @@ test.describe("on a phone", () => {
     await analytics.seesRounds(4);
   });
 
+  test("picking a round count from the sheet loads it", async ({ analytics }) => {
+    await analytics.open();
+    await analytics.pickRoundCount("Last 10 rounds");
+    await analytics.askedFor({ limit: 10, courseId: "all" });
+  });
+
   test("each section tab opens its cards", async ({ analytics }) => {
     await analytics.open();
     await analytics.openTab("Putting");

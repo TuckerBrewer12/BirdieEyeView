@@ -126,9 +126,21 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** The rounds menu open: a dropdown on desktop, a bottom sheet on a phone. */
+  async openRoundsMenu(): Promise<this> {
+    await this.visible(this.page.getByRole("button", { name: "Rounds", exact: true })).click();
+    return this;
+  }
+
+  /** The rounds menu, open. */
+  async seesRoundsMenu(): Promise<this> {
+    await expect(this.page.locator("[data-slot=picker-options]")).toBeVisible();
+    return this;
+  }
+
   /** The round count menu: "Last 10 rounds", "All rounds"… */
   async pickRoundCount(label: string): Promise<this> {
-    await this.visible(this.page.getByRole("button", { name: "Rounds", exact: true })).click();
+    await this.openRoundsMenu();
     await this.page
       .getByRole("menuitemradio", { name: label, exact: true })
       .or(this.page.locator("[data-slot=sheet-option]").getByText(label, { exact: true }))
