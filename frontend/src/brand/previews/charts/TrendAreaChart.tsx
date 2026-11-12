@@ -21,8 +21,9 @@ const percent = (value: number) => `${Math.round(value)}%`;
 export default function TrendAreaChartPreview() {
   return (
     <>
-      {/* One figure over a fill, against its average. */}
+      {/* One figure over a fill, against its average, with the slider for how many rounds show. */}
       <TrendAreaChart
+        windowed
         points={girRates.map((rate, i) => round(i, [rate]))}
         series={[{ label: "GIR", tone: "birdie" }]}
         format={percent}
@@ -38,7 +39,7 @@ export default function TrendAreaChartPreview() {
         format={percent}
         domain={[0, 100]}
       />
-      {/* Scores under their average, with birdies and doubles each round on the counts' axis at the right. */}
+      {/* Scores under their average, with birdies and doubles each round in a panel of their own under them. */}
       <TrendAreaChart
         points={scores.map((score, i) => round(i, [score, fives[i]]))}
         series={[

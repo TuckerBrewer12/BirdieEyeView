@@ -41,7 +41,7 @@
   --chart-series2: #3d6fb6;
   --chart-grid: #eceee9;
   --chart-reference: #9aa39d;
-  --chart-axis: var(--chart-reference);
+  --chart-axis: var(--foreground-secondary);
   --chart-muted: #e5e7eb;
   --chart-accent: #4ade80;
   --sidebar: #1e3d25;

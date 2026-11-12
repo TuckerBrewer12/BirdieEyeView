@@ -71,3 +71,13 @@ def test_the_next_level_is_the_benchmark_a_step_better():
     assert benchmarks.next_level_handicap(-1.2) == 0
     assert benchmarks.next_level_handicap(36.0) == 25
     assert benchmarks.next_level_handicap(None) is None
+
+
+def test_greens_count_only_the_rounds_that_recorded_them():
+    """A round with no greens recorded says nothing about them, so its holes aren't misses."""
+    hit_half = Round(id="g", hole_scores=[
+        HoleScore(hole_number=n, strokes=4, par_played=4, green_in_regulation=n <= 9) for n in range(1, 19)
+    ])
+    unrecorded = Round(id="u", hole_scores=[HoleScore(hole_number=n, strokes=5, par_played=4) for n in range(1, 19)])
+    overall = analytics.overall_gir_percentage([hit_half, unrecorded])
+    assert (overall["gir_percentage"], overall["rounds_with_data"], overall["holes_played"]) == (50.0, 1.0, 18.0)

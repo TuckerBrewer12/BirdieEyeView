@@ -200,7 +200,8 @@ const light = {
     series2: denim[500],
     grid: sage[150],
     reference: sage[400],
-    axis: alias("chart-reference"),
+    // Ticks, labels and a round's own dots: dark enough to read at a glance.
+    axis: alias("foreground-secondary"),
     muted: gray[200],
     accent: green[400],
   },
@@ -816,24 +817,29 @@ export const chart = {
     /** Until its box is measured; it draws at the box's width, never under `minWidth`. */
     width: 560,
     minWidth: 280,
-    height: size.chart,
-    pad: { top: 12, right: 16, bottom: 24, left: 40 },
+    /** The series' plot with its padding; the counts' panel adds `panelGap` and `countHeight` under it. */
+    height: 260,
+    pad: { top: 14, right: 16, bottom: 28, left: 44 },
     /** Share of the span left either side of the values, so the line never touches the edge. */
-    headroom: 0.15,
-    stroke: 2,
+    headroom: 0.08,
+    stroke: 3,
     /** The second line is thinner, so the first reads as the figure. */
-    strokeSecondary: 1.5,
-    dot: 3,
-    dotHover: 5,
+    strokeSecondary: 2.5,
+    dot: 4,
+    dotHover: 6,
     /** Past this many rounds the dots would crowd the line, so only the hovered one is drawn. */
     maxDots: 30,
     /** About this many round numbers along the bottom. */
     xTicks: 6,
     yTicks: 4,
-    /** Room on the right for the counts' axis, when the chart draws holes of a kind each round. */
-    countAxis: 28,
-    /** The counts' scale reaches at least this many holes, so one birdie doesn't fill the chart. */
+    /** Holes of a kind each round, in a panel under the series. */
+    countHeight: 120,
+    countTicks: 3,
+    panelGap: 28,
+    /** The counts' scale reaches at least this many holes, so one birdie doesn't fill the panel. */
     countFloor: 4,
+    /** The fewest rounds the slider shows; a trend this short or shorter has no slider. */
+    windowMin: 5,
   },
   /**
    * A figure per hole across a course (how each hole plays, greens and putts). Like the round flow it

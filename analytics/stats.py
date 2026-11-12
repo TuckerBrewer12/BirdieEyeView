@@ -1261,7 +1261,7 @@ def overall_putts_per_gir(rounds: Iterable[Round]) -> Dict[str, Optional[float]]
 
 
 def overall_gir_percentage(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
-    """Aggregate GIR percentage across all rounds."""
+    """Aggregate GIR percentage across the rounds with greens recorded."""
     total_holes = 0
     total_gir = 0
     rounds_with_data = 0
@@ -1270,11 +1270,11 @@ def overall_gir_percentage(rounds: Iterable[Round]) -> Dict[str, Optional[float]
         hole_scores = _valid_hole_scores(round_obj)
         holes_played = len(hole_scores)
         gir = round_obj.get_total_gir()
-        if holes_played:
+        # A round with no greens recorded says nothing about them: its holes aren't misses.
+        if holes_played and gir is not None:
             total_holes += holes_played
-            if gir is not None:
-                total_gir += gir
-                rounds_with_data += 1
+            total_gir += gir
+            rounds_with_data += 1
 
     misses = total_holes - total_gir
     return {

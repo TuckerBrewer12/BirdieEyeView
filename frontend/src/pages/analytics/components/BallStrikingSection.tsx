@@ -16,6 +16,7 @@ export function BallStrikingSection({ analytics }: { analytics: Analytics }) {
     <div data-slot="ball-striking-section" className="flex flex-col gap-4">
       <SectionCard title="Greens in regulation">
         <TrendAreaChart
+          windowed
           aria-label="Greens hit each round"
           points={seriesPoints(analytics.girTrend, formatGreens)}
           series={[

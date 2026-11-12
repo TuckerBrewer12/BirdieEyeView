@@ -26,6 +26,7 @@ export function PuttingSection({ analytics }: { analytics: Analytics }) {
 
       <SectionCard title="Putts per round">
         <TrendAreaChart
+          windowed
           aria-label="Putts each round"
           points={seriesPoints(analytics.puttsTrend, formatPutts)}
           series={[

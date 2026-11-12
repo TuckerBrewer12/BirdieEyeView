@@ -109,6 +109,8 @@ export { ScoreCountChip } from "./components/ScoreCountChip";
 export { SearchField } from "./components/SearchField";
 export { TeePicker } from "./components/TeePicker";
 export { LinePicker } from "./components/LinePicker";
+export { SwatchChips } from "./components/SwatchChips";
+export { Slider } from "./components/Slider";
 export type { LineOption } from "./components/LinePicker";
 export { PickerMenu } from "./components/PickerMenu";
 export { CourseLinkSearch } from "./components/CourseLinkSearch";

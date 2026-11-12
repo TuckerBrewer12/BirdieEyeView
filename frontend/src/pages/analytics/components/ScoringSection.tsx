@@ -60,6 +60,7 @@ export function ScoringSection({ analytics, reading, onReadingChange, lines, onL
         }
       >
         <TrendAreaChart
+          windowed
           aria-label={reading === "net" ? "Net score each round" : "Score each round"}
           points={seriesPoints(series, formatScore)}
           series={[
