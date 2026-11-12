@@ -820,15 +820,15 @@ export const chart = {
     /** The series' plot with its padding; the counts' panel adds `panelGap` and `countHeight` under it. */
     height: 260,
     /** The top only clears a dot sitting on the top rule. */
-    pad: { top: 10, right: 16, bottom: 28, left: 44 },
+    pad: { top: 8, right: 16, bottom: 28, left: 44 },
     /** A run of one value still gets this much either side before the range rounds out. */
     flatSpan: 1,
     stroke: 3,
     /** The second line is thinner, so the first reads as the figure. */
     strokeSecondary: 2.5,
     /** A round's dot: big enough to pick out each round at a glance. */
-    dot: 8,
-    dotHover: 10,
+    dot: 6.4,
+    dotHover: 8.5,
     /** Past this many rounds the dots would crowd the line, so only the hovered one is drawn. */
     maxDots: 30,
     /** About this many round numbers along the bottom. */
