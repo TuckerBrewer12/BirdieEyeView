@@ -47,6 +47,16 @@ describe("filterRounds", () => {
     expect(filterRounds(rounds, query({ sort: "oldest" })).map((r) => r.course?.name)).toEqual(["C", "A", "B"]);
   });
 
+  it("Course A–Z lists names alphabetically, a round with no course name last", () => {
+    const rounds = [round("Rock Creek", 18), round(null, 8), round("Blue Rock", 8), round("Half Moon Bay", 13)];
+    expect(filterRounds(rounds, query({ sort: "course" })).map((r) => r.course?.name ?? null)).toEqual([
+      "Blue Rock",
+      "Half Moon Bay",
+      "Rock Creek",
+      null,
+    ]);
+  });
+
   it("Worst score follows the server's order, a full round ahead of a nine, unplaced rounds last", () => {
     // The nine is furthest over par, but the server ranks every full round ahead of it.
     const rounds = [round("A", null), round("Nine", 20, undefined, 3, 3), round("B", 18, undefined, 2, 1), round("C", 8, undefined, 1, 2)];
