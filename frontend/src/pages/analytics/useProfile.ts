@@ -77,7 +77,12 @@ export function useProfile(
   const updateUser = useUpdateUser(userId, repository);
 
   const analytics = mine.data ?? null;
-  const peak = useMemo(() => (analytics ? peakGameFrom(analytics, target, report) : null), [analytics, target, report]);
+  // The previous goal's report never fills a newly picked one: gap and attempts stay empty until this goal's report arrives.
+  const measured = report?.scoring_goal === target ? report : undefined;
+  const peak = useMemo(
+    () => (analytics ? peakGameFrom(analytics, target, measured) : null),
+    [analytics, target, measured],
+  );
   // Peak needs a goal and two rounds; without them the shape is the golfer's average.
   const mode: RadarMode = radarMode === "peak" && !peak ? "benchmark" : radarMode;
 
@@ -129,7 +134,7 @@ export function useProfile(
     error: mine.error,
     retry: () => void mine.refetch(),
 
-    goal: goalStandingFrom(target, report),
+    goal: goalStandingFrom(target, measured),
     setGoal,
     savingGoal: updateUser.isPending,
     goalSaveError: updateUser.error,

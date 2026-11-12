@@ -199,6 +199,19 @@ describe("useAnalyticsPageViewModel", () => {
       expect(result.current.profile.goal?.target).toBe(84);
     });
 
+    it("keeps a newly picked goal empty until its own report arrives", async () => {
+      const { repository, result } = await profileLoaded();
+
+      repository.holdGoalReport();
+      act(() => result.current.profile.setGoal(84));
+      await waitFor(() => expect(result.current.profile.goal?.target).toBe(84));
+      expect(result.current.profile.goal).toMatchObject({ average: null, gap: null, attempts: [] });
+
+      act(() => repository.finishGoalReport());
+      await waitFor(() => expect(result.current.profile.goal?.gap).toBe(labGoalReport.gap));
+      expect(result.current.profile.goal?.attempts).toHaveLength(labGoalReport.attempts.length);
+    });
+
     it("holds the shape up against the next level from the golfer's index until they pick another", async () => {
       const { repository, result } = await profileLoaded();
 
