@@ -163,7 +163,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       />
 
       {!editor.editing && (
-        <div className="grid grid-cols-1 items-start gap-3.5 md:grid-cols-round-detail md:gap-4">
+        <div className="grid grid-cols-1 gap-3.5 md:grid-cols-round-detail md:gap-4">
           {viewModel.showFlow && (
             <Card data-slot="round-flow" size="lg">
               <CardHeader>
