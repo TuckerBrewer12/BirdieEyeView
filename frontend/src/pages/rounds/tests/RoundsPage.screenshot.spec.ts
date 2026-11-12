@@ -44,3 +44,10 @@ test("sort menu open", async ({ rounds }) => {
   await rounds.seesSortMenu();
   await rounds.capture("rounds-sort-open.png", { fullPage: false });
 });
+
+test("course menu open", async ({ rounds }) => {
+  await rounds.open(storedRounds);
+  await rounds.openCourseMenu();
+  await rounds.seesCourseMenu();
+  await rounds.capture("rounds-course-open.png", { fullPage: false });
+});
