@@ -122,8 +122,8 @@ export function useLabPageViewModel(
   const benchmark = comparisonData?.benchmark ?? null;
 
   const radarAll = useMemo(
-    () => (analytics ? buildRadarData(analytics.kpis, analytics.scoring_by_par, benchmark) : []),
-    [analytics, benchmark],
+    () => (analytics ? buildRadarData(analytics.kpis, analytics.scoring_by_par, benchmark, comparisonData?.verdicts) : []),
+    [analytics, benchmark, comparisonData],
   );
 
   const friendComparison: FriendComparison | null = !comparingFriend

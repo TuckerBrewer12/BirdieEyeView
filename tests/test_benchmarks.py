@@ -80,6 +80,25 @@ def test_a_friend_is_held_up_by_their_own_figures():
     assert found["benchmark"]["par5_to_par"] is None
     assert [(r["gap"], r["verdict"]) for r in found["par_types"]] == [(1.0, "behind"), (-1.0, "ahead"), (None, None)]
     assert benchmarks.friend_comparison(mine, [])["benchmark"] is None
+    # The radar's par axes take the par rows' verdicts.
+    assert [found["verdicts"][f"par{par}_to_par"] for par in (3, 4, 5)] == ["behind", "ahead", None]
+
+
+def test_radar_axes_are_judged_with_higher_better_only_for_the_rates():
+    mine = {"gir_percentage": 40.0, "scrambling_percentage": 20.0, "putts_per_gir": 1.9,
+            "par3_to_par": None, "par4_to_par": None, "par5_to_par": None}
+    theirs = {"gir_percentage": 36, "scrambling_percentage": 31, "putts_per_gir": 1.9,
+              "par3_to_par": 0.3, "par4_to_par": 0.5, "par5_to_par": 0.6}
+    par_types = [{"par": 3, "verdict": "ahead"}, {"par": 4, "verdict": None}, {"par": 5, "verdict": "behind"}]
+    assert benchmarks.shape_verdicts(mine, theirs, par_types) == {
+        "gir_percentage": "ahead",
+        "scrambling_percentage": "behind",
+        "putts_per_gir": "even",
+        "par3_to_par": "ahead",
+        "par4_to_par": None,
+        "par5_to_par": "behind",
+    }
+    assert set(benchmarks.shape_verdicts(mine, None, par_types).values()) <= {None, "ahead", "behind"}
 
 
 def test_handicap_comparison_names_the_handicap():

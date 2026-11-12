@@ -195,6 +195,7 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
               label: entry.axis,
               value: entry.value,
               benchmark: compared ? entry.benchmark : null,
+              verdict: compared ? entry.verdict : null,
               valueLabel: entry.userRaw,
               benchmarkLabel: entry.benchRaw,
             }))}
