@@ -121,6 +121,21 @@ export class RoundDetailRobot {
     return this;
   }
 
+  /** Opens the More menu: Delete round, and Link to a course when the round has none. */
+  async openMore(): Promise<this> {
+    await this.page.getByRole("button", { name: "More actions" }).click();
+    return this;
+  }
+
+  /** The More menu, open. `link` is "Link to a course", offered when the round has no course. */
+  async seesMoreMenu({ link = false }: { link?: boolean } = {}): Promise<this> {
+    await expect(this.page.getByRole("menuitem", { name: "Delete round" })).toBeVisible();
+    if (link) {
+      await expect(this.page.getByRole("menuitem", { name: "Link to a course" })).toBeVisible();
+    }
+    return this;
+  }
+
   /** Delete sits in the More menu. */
   async tapDelete(): Promise<this> {
     await this.page.getByRole("button", { name: "More actions" }).click();
