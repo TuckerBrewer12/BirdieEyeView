@@ -74,10 +74,24 @@ function AnalyticsBody({ vm, analytics }: { vm: AnalyticsPageViewModel; analytic
             onReadingChange={vm.setScoreReading}
             lines={vm.trendLines}
             onLinesChange={vm.setTrendLines}
+            shown={vm.trendShown.score}
+            onShownChange={(shown) => vm.setTrendShown("score", shown)}
           />
         )}
-        {vm.tab === "ball-striking" && <BallStrikingSection analytics={analytics} />}
-        {vm.tab === "putting" && <PuttingSection analytics={analytics} />}
+        {vm.tab === "ball-striking" && (
+          <BallStrikingSection
+            analytics={analytics}
+            shown={vm.trendShown.greens}
+            onShownChange={(shown) => vm.setTrendShown("greens", shown)}
+          />
+        )}
+        {vm.tab === "putting" && (
+          <PuttingSection
+            analytics={analytics}
+            shown={vm.trendShown.putts}
+            onShownChange={(shown) => vm.setTrendShown("putts", shown)}
+          />
+        )}
         {vm.tab === "approach" && (
           <ApproachSection analytics={analytics} par={vm.approachPar} onParChange={vm.setApproachPar} />
         )}

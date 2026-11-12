@@ -23,6 +23,9 @@ interface ScoringSectionProps {
   onReadingChange: (reading: ScoreReading) => void;
   lines: TrendLine[];
   onLinesChange: (lines: TrendLine[]) => void;
+  /** How many of the latest rounds the trend shows; null is all of them. */
+  shown: number | null;
+  onShownChange: (shown: number) => void;
 }
 
 const READINGS: { value: ScoreReading; label: string }[] = [
@@ -34,7 +37,7 @@ const READINGS: { value: ScoreReading; label: string }[] = [
  * Scoring: the score each round with its five-round line, and the holes of each kind turned on
  * counted on it (any of them, the score too, can be off), then by par type and by hole difficulty.
  */
-export function ScoringSection({ analytics, reading, onReadingChange, lines, onLinesChange }: ScoringSectionProps) {
+export function ScoringSection({ analytics, reading, onReadingChange, lines, onLinesChange, shown, onShownChange }: ScoringSectionProps) {
   const series = reading === "net" ? analytics.netTrend : analytics.scoreTrend;
   const note = benchmarkNote(analytics.benchmarkHandicap);
   return (
@@ -60,7 +63,8 @@ export function ScoringSection({ analytics, reading, onReadingChange, lines, onL
         }
       >
         <TrendAreaChart
-          windowed
+          shown={shown}
+          onShownChange={onShownChange}
           aria-label={reading === "net" ? "Net score each round" : "Score each round"}
           points={seriesPoints(series, formatScore)}
           series={[

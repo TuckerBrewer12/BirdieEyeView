@@ -14,7 +14,9 @@ import {
   type AnalyticsTab,
   type ApproachPar,
   type PlayedCourse,
+  ALL_ROUNDS_SHOWN,
   DEFAULT_TREND_LINES,
+  type TrendChart,
   type TrendLine,
 } from "./model";
 import { useProfileViewModel, type ProfileViewModel } from "./useProfileViewModel";
@@ -36,6 +38,7 @@ export interface AnalyticsPageViewModel {
   showEmpty: boolean;
 
   filters: AnalyticsFilters;
+  /** A new rounds or course filter shows every round on each trend again. */
   setLimit: (limit: number) => void;
   setCourse: (courseId: string) => void;
   /** A course is narrowing the rounds. */
@@ -49,6 +52,9 @@ export interface AnalyticsPageViewModel {
 
   scoreReading: ScoreReading;
   setScoreReading: (reading: ScoreReading) => void;
+  /** How many of the latest rounds each trend shows; null is every round the filters read. */
+  trendShown: Record<TrendChart, number | null>;
+  setTrendShown: (chart: TrendChart, shown: number) => void;
   /** The lines the score trend draws: the score, and the kinds of hole counted each round. */
   trendLines: TrendLine[];
   setTrendLines: (lines: TrendLine[]) => void;
@@ -66,7 +72,13 @@ export function useAnalyticsPageViewModel(
   initialTab: AnalyticsTab = DEFAULT_TAB,
   repository: AnalyticsRepository = analyticsRepository,
 ): AnalyticsPageViewModel {
-  const [filters, setFilters] = useState<AnalyticsFilters>(DEFAULT_FILTERS);
+  const [filters, setFiltersState] = useState<AnalyticsFilters>(DEFAULT_FILTERS);
+  const [trendShown, setTrendShownState] = useState<Record<TrendChart, number | null>>(ALL_ROUNDS_SHOWN);
+  // New filters read new rounds, so each trend's slider starts over at all of them.
+  const setFilters = (update: (current: AnalyticsFilters) => AnalyticsFilters) => {
+    setFiltersState(update);
+    setTrendShownState(ALL_ROUNDS_SHOWN);
+  };
   const [tab, setTab] = useState<AnalyticsTab>(initialTab);
   const [scoreReading, setScoreReading] = useState<ScoreReading>("gross");
   const [trendLines, setTrendLines] = useState<TrendLine[]>(DEFAULT_TREND_LINES);
@@ -104,6 +116,8 @@ export function useAnalyticsPageViewModel(
     setScoreReading,
     trendLines,
     setTrendLines,
+    trendShown,
+    setTrendShown: (chart, shown) => setTrendShownState((current) => ({ ...current, [chart]: shown })),
     approachPar: pickedPar ?? defaultApproachPar(analytics?.yardageBuckets ?? []),
     setApproachPar,
     profile,

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import { TrendAreaChart } from "./TrendAreaChart";
 
@@ -6,7 +7,11 @@ const points = Array.from({ length: 12 }, (_, i) => ({ tick: i + 1, title: `Roun
 
 describe("TrendAreaChart", () => {
   it("shows every round, then fewer as the slider moves", () => {
-    render(<TrendAreaChart windowed points={points} series={[{ label: "Score" }]} />);
+    function Windowed() {
+      const [shown, setShown] = useState<number | null>(null);
+      return <TrendAreaChart shown={shown} onShownChange={setShown} points={points} series={[{ label: "Score" }]} />;
+    }
+    render(<Windowed />);
     expect(screen.getByText("All 12 rounds")).toBeInTheDocument();
 
     fireEvent.keyDown(screen.getByRole("slider", { name: "Rounds shown" }), { key: "ArrowLeft" });

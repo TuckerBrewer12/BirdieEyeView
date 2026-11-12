@@ -205,6 +205,19 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** Moves the open trend's rounds slider back by `rounds`. */
+  async showFewerRounds(rounds: number): Promise<this> {
+    const slider = this.visible(this.page.getByRole("slider", { name: "Rounds shown" }));
+    for (let i = 0; i < rounds; i++) await slider.press("ArrowLeft");
+    return this;
+  }
+
+  /** The open trend's slider reads, say, "Last 20 of 24". */
+  async seesRoundsShown(label: string): Promise<this> {
+    await expect(this.visible(this.page.locator("[data-slot=slider]")).first()).toContainText(label);
+    return this;
+  }
+
   /** The score trend draws a line of holes each round for these many kinds. */
   async seesCountLines(count: number): Promise<this> {
     await expect(this.page.locator("[data-slot=trend-area-count]")).toHaveCount(count);

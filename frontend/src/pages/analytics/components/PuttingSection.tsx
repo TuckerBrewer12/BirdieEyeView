@@ -12,8 +12,14 @@ import {
 } from "../present";
 import { SectionCard } from "./SectionCard";
 
+interface TrendWindow {
+  /** How many of the latest rounds the trend shows; null is all of them. */
+  shown: number | null;
+  onShownChange: (shown: number) => void;
+}
+
 /** Putting: putts each round, the rounds' three-putts, and how the holes split by putts. */
-export function PuttingSection({ analytics }: { analytics: Analytics }) {
+export function PuttingSection({ analytics, shown, onShownChange }: { analytics: Analytics } & TrendWindow) {
   const segments = puttsPerHoleSegments(analytics.puttsPerHole);
   return (
     <div data-slot="putting-section" className="flex flex-col gap-4">
@@ -26,7 +32,8 @@ export function PuttingSection({ analytics }: { analytics: Analytics }) {
 
       <SectionCard title="Putts per round">
         <TrendAreaChart
-          windowed
+          shown={shown}
+          onShownChange={onShownChange}
           aria-label="Putts each round"
           points={seriesPoints(analytics.puttsTrend, formatPutts)}
           series={[

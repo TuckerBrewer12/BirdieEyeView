@@ -52,6 +52,12 @@ export interface RoundSeriesPoint {
 /** A line the score trend can draw: the score with its five-round average, or holes of a kind each round. */
 export type TrendLine = "score" | ScoreKind;
 
+/** The page's charts of a figure each round, each with its own rounds slider. */
+export type TrendChart = "score" | "greens" | "putts";
+
+/** Every trend shows every round the filters read until its slider moves. */
+export const ALL_ROUNDS_SHOWN: Record<TrendChart, number | null> = { score: null, greens: null, putts: null };
+
 /** The score trend opens on the score alone. */
 export const DEFAULT_TREND_LINES: TrendLine[] = ["score"];
 

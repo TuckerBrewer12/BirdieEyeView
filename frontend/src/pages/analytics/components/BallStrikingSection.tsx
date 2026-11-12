@@ -10,13 +10,20 @@ import {
 } from "../present";
 import { SectionCard } from "./SectionCard";
 
+interface TrendWindow {
+  /** How many of the latest rounds the trend shows; null is all of them. */
+  shown: number | null;
+  onShownChange: (shown: number) => void;
+}
+
 /** Ball striking: greens hit each round, the short game against the tour's, and how holes go when the green is hit or missed. */
-export function BallStrikingSection({ analytics }: { analytics: Analytics }) {
+export function BallStrikingSection({ analytics, shown, onShownChange }: { analytics: Analytics } & TrendWindow) {
   return (
     <div data-slot="ball-striking-section" className="flex flex-col gap-4">
       <SectionCard title="Greens in regulation">
         <TrendAreaChart
-          windowed
+          shown={shown}
+          onShownChange={onShownChange}
           aria-label="Greens hit each round"
           points={seriesPoints(analytics.girTrend, formatGreens)}
           series={[

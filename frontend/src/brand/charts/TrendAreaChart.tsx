@@ -84,8 +84,12 @@ interface TrendAreaChartProps {
   /** False hides the series and its panel, leaving the counts. With nothing left, the chart says `offLabel`. */
   showSeries?: boolean;
   offLabel?: string;
-  /** A slider under the chart picks how many of the latest rounds to show, all to start. */
-  windowed?: boolean;
+  /**
+   * With `onShownChange`, a slider under the chart picks how many of the latest rounds to show: `shown`,
+   * or every one while it's null. The page holds the pick, so it lasts while the chart remounts.
+   */
+  shown?: number | null;
+  onShownChange?: (shown: number) => void;
   className?: string;
   "aria-label"?: string;
 }
@@ -106,7 +110,8 @@ export function TrendAreaChart({
   counts: allCounts = [],
   showSeries = true,
   offLabel = "Nothing turned on",
-  windowed = false,
+  shown: pickedShown = null,
+  onShownChange,
   className,
   "aria-label": ariaLabel,
 }: TrendAreaChartProps) {
@@ -115,11 +120,10 @@ export function TrendAreaChart({
   const [W, measureRef] = useChartWidth(layout.width, layout.minWidth);
   const gradientId = `trend-area-${useId().replace(/:/g, "")}`;
   const [active, setActive] = useState<number | null>(null);
-  const [picked, setPicked] = useState<number | null>(null);
 
   // The window: the latest `shown` rounds, every one until the slider says otherwise.
-  const canWindow = windowed && allPoints.length > layout.windowMin;
-  const shown = canWindow ? Math.min(picked ?? allPoints.length, allPoints.length) : allPoints.length;
+  const canWindow = onShownChange != null && allPoints.length > layout.windowMin;
+  const shown = canWindow ? Math.min(pickedShown ?? allPoints.length, allPoints.length) : allPoints.length;
   const from = allPoints.length - shown;
   const points = allPoints.slice(from);
   const counts = allCounts.map((count) => ({ ...count, values: count.values.slice(from) }));
@@ -353,7 +357,7 @@ export function TrendAreaChart({
           min={layout.windowMin}
           max={allPoints.length}
           value={shown}
-          onValueChange={setPicked}
+          onValueChange={onShownChange}
           valueLabel={shown === allPoints.length ? `All ${pluralize(shown, "round")}` : `Last ${shown} of ${allPoints.length}`}
         />
       )}

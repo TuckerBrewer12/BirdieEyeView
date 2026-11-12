@@ -69,6 +69,18 @@ test("the score can be turned off, leaving the counts", async ({ analytics }) =>
   await analytics.seesCountLines(1);
 });
 
+test("a trend's rounds slider holds across tabs", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.openTab("Ball striking");
+  await analytics.seesRoundsShown("All 24 rounds");
+  await analytics.showFewerRounds(4);
+  await analytics.seesRoundsShown("Last 20 of 24");
+  await analytics.openTab("Putting");
+  await analytics.seesRoundsShown("All 24 rounds");
+  await analytics.openTab("Ball striking");
+  await analytics.seesRoundsShown("Last 20 of 24");
+});
+
 test("each section tab opens its cards", async ({ analytics }) => {
   await analytics.open();
   await analytics.openTab("Ball striking");

@@ -138,6 +138,19 @@ describe("useAnalyticsPageViewModel", () => {
     expect(result.current.scoreReading).toBe("net");
   });
 
+  it("keeps each trend's rounds slider across tabs, and shows every round again on new filters", async () => {
+    const { result } = await loaded();
+
+    expect(result.current.trendShown).toEqual({ score: null, greens: null, putts: null });
+    act(() => result.current.setTrendShown("greens", 8));
+    act(() => result.current.setTab("putting"));
+    act(() => result.current.setTab("ball-striking"));
+    expect(result.current.trendShown.greens).toBe(8);
+
+    act(() => result.current.setLimit(20));
+    expect(result.current.trendShown.greens).toBeNull();
+  });
+
   it("draws the score alone on the trend until other lines are turned on, and can turn it off", async () => {
     const { result } = await loaded();
 
