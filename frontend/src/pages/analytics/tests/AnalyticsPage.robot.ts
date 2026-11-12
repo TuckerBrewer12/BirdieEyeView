@@ -64,6 +64,13 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** The sample golfer, with no scoring goal set. */
+  async openWithoutGoal(): Promise<this> {
+    await this.install({ profile: { ...sampleGolfer.profile, scoring_goal: null } });
+    await this.seesRounds(24);
+    return this;
+  }
+
   /** Analytics fails to load. */
   async openFailed(): Promise<this> {
     await this.install({ analytics: null });
@@ -160,6 +167,14 @@ export class AnalyticsRobot {
   /** The goal was saved to the golfer's profile. */
   async seesGoalSaved(goal: number): Promise<this> {
     await expect.poll(() => this.backend?.profile?.scoring_goal).toBe(goal);
+    return this;
+  }
+
+  /** The goal card's prompt when no score to break is set. */
+  async seesNoGoal(): Promise<this> {
+    await expect(
+      this.visible(this.page.getByText("Pick a score to break and see how far off it you are.")),
+    ).toBeVisible();
     return this;
   }
 

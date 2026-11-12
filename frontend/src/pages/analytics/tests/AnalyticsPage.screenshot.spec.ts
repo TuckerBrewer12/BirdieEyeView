@@ -70,6 +70,13 @@ for (const { tab, showing, file } of SECTIONS) {
   });
 }
 
+test("profile with no scoring goal", async ({ analytics }) => {
+  await analytics.openWithoutGoal();
+  await analytics.openTab("Profile");
+  await analytics.seesNoGoal();
+  await analytics.capture("analytics-profile-no-goal.png");
+});
+
 test("profile against a friend", async ({ analytics }) => {
   await analytics.open();
   await analytics.openTab("Profile");
