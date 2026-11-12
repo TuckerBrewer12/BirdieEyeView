@@ -207,6 +207,8 @@ tester.run("kit/no-breakpoint-styling", kit.rules["no-breakpoint-styling"], {
     // Which side a sheet opens from is behaviour the CSS can't change.
     'function S() { const wide = useFromBreakpoint("md"); return <Sheet side={wide ? "right" : "bottom"} />; }',
     'function S() { const wide = useFromBreakpoint("md"); return <div className="p-4 md:p-6" />; }',
+    // Picking what to render is what it's for.
+    'function S() { const wide = useFromBreakpoint("md"); return wide ? <Table /> : <><Table nine="front" /><Table nine="back" /></>; }',
   ],
   invalid: [
     {
@@ -216,6 +218,24 @@ tester.run("kit/no-breakpoint-styling", kit.rules["no-breakpoint-styling"], {
     {
       code: 'function S() { const wide = useFromBreakpoint("md"); const c = cn("flex", wide && "gap-4"); return c; }',
       errors: [{ messageId: "breakpoint" }],
+    },
+    // Handed on to a component, which could style by it out of sight.
+    {
+      code: 'function S() { const wide = useFromBreakpoint("md"); return <Table wide={wide} />; }',
+      errors: [{ messageId: "passThrough" }],
+    },
+    {
+      code: 'function S() { const wide = useFromBreakpoint("md"); return <Field focusOnOpen={!wide} />; }',
+      errors: [{ messageId: "passThrough" }],
+    },
+    // Words by breakpoint, outside a prop.
+    {
+      code: 'function S() { const wide = useFromBreakpoint("md"); return <th>{wide ? "Your avg" : "Avg"}</th>; }',
+      errors: [{ messageId: "words" }],
+    },
+    {
+      code: 'function S() { const wide = useFromBreakpoint("md"); const s = { label: wide ? "Avg differential" : "Avg diff" }; return s; }',
+      errors: [{ messageId: "words" }],
     },
   ],
 });
@@ -285,5 +305,41 @@ tester.run("kit/no-format-outside-domain", kit.rules["no-format-outside-domain"]
     { code: "const s = x.toFixed(2);", filename: PAGE, errors: [{ messageId: "format" }] },
     { code: 'const s = n.toLocaleString("en-US");', filename: "/app/src/brand/components/X.tsx", errors: [{ messageId: "format" }] },
     { code: 'const f = new Intl.NumberFormat("en-US");', filename: "/app/src/domain/handicap.ts", errors: [{ messageId: "format" }] },
+  ],
+});
+
+tester.run("kit/no-to-par-tone", kit.rules["no-to-par-tone"], {
+  valid: [
+    { code: '<ToParFigure toPar={-0.5} size="inherit" label="−0.5" />;', filename: PAGE },
+    // The kit is where to-par paint is applied.
+    { code: "const c = toParTextClass(toPar);", filename: KIT },
+  ],
+  invalid: [
+    { code: "<span className={toParTextClass(toPar)}>{label}</span>;", filename: PAGE, errors: [{ messageId: "tone" }] },
+    { code: "const tone = toParStatTextClass(toPar);", filename: PAGE, errors: [{ messageId: "tone" }] },
+  ],
+});
+
+tester.run("kit/no-raw-table", kit.rules["no-raw-table"], {
+  valid: [
+    { code: "<ScorecardGrid nines={nines} nineLabel={label} withTot rows={rows} />;", filename: PAGE },
+    { code: "<table className='w-full' />;", filename: KIT },
+  ],
+  invalid: [{ code: "<table><tbody /></table>;", filename: PAGE, errors: [{ messageId: "table" }] }],
+});
+
+tester.run("kit/no-handmade-chart-tooltip", kit.rules["no-handmade-chart-tooltip"], {
+  valid: [
+    { code: "<ChartTooltip id={hole} at={{ x: 0.4 }}>Hole 7</ChartTooltip>;", filename: KIT },
+    // A frosted bar that takes the pointer is not a hover card.
+    { code: '<nav className="sticky top-0 bg-card/glass backdrop-blur-sm" />;', filename: PAGE },
+    { code: '<div className="pointer-events-none absolute bg-card/glass" />;', filename: "/app/src/brand/charts/ChartTooltip.tsx" },
+  ],
+  invalid: [
+    {
+      code: '<div className={cn("pointer-events-none absolute z-10 rounded-xl bg-card/glass", flip && "-ml-3")} />;',
+      filename: "/app/src/brand/charts/TrendAreaChart.tsx",
+      errors: [{ messageId: "tooltip" }],
+    },
   ],
 });

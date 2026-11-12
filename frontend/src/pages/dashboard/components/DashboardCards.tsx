@@ -2,7 +2,6 @@ import { ArrowRight, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, ProgressRing, ScoreMixBar, ScoreMixDonut, Sparkline, StatLabel, StatValue, ToParFigure } from "@/brand";
 import { cn } from "@/brand/cn";
-import { toParTextClass } from "@/brand/theme";
 import { formatOneDecimal, goalTargetLabel, type ScoreMix } from "@/domain";
 import { hasScoreMix, type BestRound, type ChangeVerdict, type GoalProgress } from "../model";
 import { MoveDelta } from "./MoveDelta";
@@ -44,7 +43,7 @@ export function BestRoundCard({ best, compact = false }: { best: BestRound | nul
         {compact ? bestLabel(best) : "Best round"}
       </StatLabel>
       <StatValue size={compact ? "card-sm" : "card"} className={compact ? "gap-1.5" : "gap-2"}>
-        <span className={best ? toParTextClass(best.toPar) : undefined}>{best?.score ?? "—"}</span>
+        {best ? <ToParFigure toPar={best.toPar} size="inherit" label={best.score ?? "—"} /> : "—"}
         {best && !compact && <ToParFigure toPar={best.toPar} className="text-body font-semibold" />}
         {best?.roundId && compact && <ArrowRight aria-hidden className="size-3.5 text-primary" />}
       </StatValue>

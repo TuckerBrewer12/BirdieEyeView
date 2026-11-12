@@ -1,11 +1,11 @@
 import { useState, type PointerEvent, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { curveStepAfter, line } from "d3-shape";
 import { cn } from "@/brand/cn";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { differentialFill, tokens } from "@/brand/theme";
 import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
+import { ChartTooltip } from "./ChartTooltip";
 import { indexScale, knownValues, lastKnownIndex, niceExtent } from "./scales";
 
 type TrendSeries = "both" | "score" | "handicap";
@@ -285,21 +285,13 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
         )}
       </svg>
 
-      <AnimatePresence>
+      <ChartTooltip
+        id={point && active != null && pointY != null ? `${shown}-${active}` : null}
+        at={{ x: x(active ?? 0) / W, y: (pointY ?? 0) / H }}
+        className="min-w-32"
+      >
         {point && active != null && pointY != null && (
-          <motion.div
-            key={`${shown}-${active}`}
-            className={cn(
-              "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
-              // Past two thirds of the way across, the card opens to the left of the point.
-              x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
-            )}
-            style={{ left: `${(x(active) / W) * 100}%`, top: `${(pointY / H) * 100}%` }}
-            initial={{ opacity: 0, scale: tokens.motion.tapScale }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: tokens.motion.tapScale }}
-            transition={{ duration: tokens.motion.duration.collapse }}
-          >
+          <>
             <div className="mb-1 text-sm font-bold text-card-foreground">Round {point.roundIndex}</div>
             {point.courseName && (
               <div className="mb-1.5 max-w-40 truncate text-label text-muted-foreground">{point.courseName}</div>
@@ -319,9 +311,9 @@ export function SVGScoreHandicapTrend({ data, series = "both", compact = false }
                 <span className="font-semibold text-chart-series2">{formatHandicapIndex(point.handicapIndex)}</span>
               </div>
             )}
-          </motion.div>
+          </>
         )}
-      </AnimatePresence>
+      </ChartTooltip>
     </div>
   );
 }

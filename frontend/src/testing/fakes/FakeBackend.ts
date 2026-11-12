@@ -316,7 +316,8 @@ export class FakeBackend {
     if (verb === "GET" && path.includes("/api/courses/search")) {
       const q = parsed.searchParams.get("q") ?? "";
       try {
-        return { status: 200, body: this.store.searchCourses(q) };
+        const includeRecord = parsed.searchParams.get("include_record") === "true";
+        return { status: 200, body: this.store.searchCourses(q, includeRecord) };
       } catch (err) {
         const detail = err instanceof Error ? err.message : "Could not search courses.";
         return { status: this.store.searchError ? 500 : 404, body: { detail } };

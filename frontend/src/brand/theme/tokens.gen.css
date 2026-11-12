@@ -495,5 +495,7 @@
   --grid-template-columns-round-summary-phone: 1.3fr 1fr 1fr 1fr;
   --grid-template-columns-round-detail: minmax(0, 1.35fr) minmax(0, 1fr);
   --grid-template-columns-versus-row: minmax(0, 1fr) 2.75rem 2.75rem 3.25rem;
+  --grid-template-columns-course-row: minmax(0, 1fr) 9.375rem 10.625rem 1rem;
+  --grid-template-columns-course-record: minmax(0, 1fr) minmax(0, 1.4fr);
   --grid-template-columns-state-grid: 6rem repeat(2, minmax(0, 1fr));
 }

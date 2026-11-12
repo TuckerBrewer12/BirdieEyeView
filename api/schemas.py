@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
-from analytics.dashboard import ChangeVerdict
+from analytics.verdicts import ChangeVerdict
 from models import Hole, UserTee
 from models.hole_score import ScoreKind
 
@@ -52,7 +52,7 @@ class CourseResponse(ResponseModel):
     front_nine_par: Optional[int] = None  # null until all nine holes have a par
     back_nine_par: Optional[int] = None
     holes: List[Hole] = Field(default_factory=list)
-    tees: List[TeeResponse] = Field(default_factory=list)
+    tees: List[TeeResponse] = Field(default_factory=list)  # longest first, ties by colour (Course.tees_by_length)
 
 
 class HoleScoreResponse(ResponseModel):
@@ -844,93 +844,46 @@ class BenchmarkComparisonResponse(ResponseModel):
     par_types: List[ParTypeComparison] = Field(default_factory=list)  # par 3, 4 and 5
 
 
-class CourseScoreTrendRow(ResponseModel):
-    """One round at the course, oldest first."""
-    round_index: int
-    round_id: Optional[str] = None
-    date: Optional[datetime] = None
-    total_score: Optional[int] = None
-    to_par: Optional[int] = None
-
-
-class CourseHoleToParRow(ResponseModel):
+class CourseHoleStatsRow(ResponseModel):
+    """How one hole of a course plays for the golfer (`stats.course_hole_stats`)."""
     hole_number: int
     par: int
+    sample_size: int  # the rounds they've scored it in
     average_score: float
     average_to_par: float
-    sample_size: int
-
-
-class CourseHoleDifficultyRow(CourseHoleToParRow):
-    difficulty_rank: int  # 1 is the hardest hole by average to-par
-
-
-class CourseHoleGirRow(ResponseModel):
-    hole_number: int
-    par: int
-    gir_hits: int
-    sample_size: int
-    gir_percentage: float
-
-
-class CourseHolePuttsRow(ResponseModel):
-    hole_number: int
-    par: int
-    average_putts: float
-    sample_size: int
-
-
-class CourseHoleScoreTypeRow(ResponseModel):
-    """Percent of rounds that landed in each score type on the hole. `par` is the par percentage."""
-    hole_number: int
-    sample_size: int
-    eagle: float
-    birdie: float
-    par: float
-    bogey: float
-    double_bogey: float
-    triple_bogey: float
-    quad_bogey: float
-
-
-class CourseGirImpactRow(ResponseModel):
-    bucket: Literal["GIR", "No GIR"]
-    holes_counted: int
-    average_score: Optional[float] = None
-    average_to_par: Optional[float] = None
-
-
-class CourseHoleVarianceRow(ResponseModel):
-    hole_number: int
-    par: int
-    sample_size: int
-    average_score: Optional[float] = None
-    score_variance: Optional[float] = None
-    score_std_dev: Optional[float] = None
-    variance_rank: int  # 1 is the least consistent hole
+    difficulty_rank: int  # 1 is the hardest by average to par, ties by hole (stats.course_difficulty_profile_by_hole)
+    score_std_dev: Optional[float] = None  # how far the score swings; null under two rounds
+    gir_percentage: Optional[float] = None  # null when no green was recorded
+    average_putts: Optional[float] = None  # null when no putts were recorded
+    # Against two putts a hole, to a tenth: fewer is good, more is bad. Null with no putts recorded.
+    putts_verdict: Optional[ChangeVerdict] = None
+    score_mix: ScoreMix  # the share of each kind of score, 0-100
 
 
 class CourseAnalyticsResponse(ResponseModel):
     """The player's figures at one course. Every figure is worked out here, not on the client."""
     course_id: str
     rounds_played: int
+    last_played: Optional[datetime] = None
+    # Over the full rounds, or the nines when there is no full round (`stats.course_record`).
     scoring_average: Optional[float] = None
-    best_score: Optional[int] = None
-    worst_score: Optional[int] = None
+    scoring_average_to_par: Optional[float] = None
+    # The rounds the list ranks best and worst; both are in `rounds`.
+    best_round_id: Optional[str] = None
+    worst_round_id: Optional[str] = None
     rounds: List[RoundSummaryResponse] = Field(default_factory=list)  # newest first
-    score_trend_on_course: List[CourseScoreTrendRow] = Field(default_factory=list)
-    average_score_relative_to_par_by_hole: List[CourseHoleToParRow] = Field(default_factory=list)
-    # Those holes' average scores summed over each nine and every hole: the scorecard's Out, In
-    # and Total. Null for a nine with no hole played.
-    hole_averages_front_nine: Optional[float] = None
-    hole_averages_back_nine: Optional[float] = None
-    hole_averages_total: Optional[float] = None
-    gir_percentage_by_hole: List[CourseHoleGirRow] = Field(default_factory=list)
-    average_putts_by_hole: List[CourseHolePuttsRow] = Field(default_factory=list)
-    score_type_distribution_by_hole: List[CourseHoleScoreTypeRow] = Field(default_factory=list)
-    course_difficulty_profile_by_hole: List[CourseHoleDifficultyRow] = Field(default_factory=list)
-    average_score_when_gir_vs_missed: List[CourseGirImpactRow] = Field(default_factory=list)
-    score_variance_by_hole: List[CourseHoleVarianceRow] = Field(default_factory=list)
+    # The rounds the record counts (full rounds, or nines without one), oldest first, with each
+    # one's five-round average.
+    score_trend: List[ScoreTrendRow] = Field(default_factory=list)
+    holes: List[CourseHoleStatsRow] = Field(default_factory=list)  # in course order
+    # The scorecard's Out, In and Total for the golfer's rows: the holes' averages to par summed,
+    # and the greens hit over each nine as a share. Null for a nine with nothing recorded.
+    hole_to_par_front_nine: Optional[float] = None
+    hole_to_par_back_nine: Optional[float] = None
+    hole_to_par_total: Optional[float] = None
+    gir_front_nine: Optional[float] = None
+    gir_back_nine: Optional[float] = None
+    gir_total: Optional[float] = None
 
 
 class CourseSummaryResponse(ResponseModel):
@@ -943,6 +896,11 @@ class CourseSummaryResponse(ResponseModel):
     par: Optional[int] = None
     total_holes: int = 0
     tee_count: int = 0
+    tees: List[str] = Field(default_factory=list)  # the tee colours, longest first (Course.tees_by_length)
+    # The signed-in golfer's record here (`stats.course_record`); 0 and null when they haven't played it.
+    rounds_played: int = 0
+    scoring_average: Optional[float] = None
+    best_score: Optional[int] = None
 
 
 class AIComparisonItem(ResponseModel):

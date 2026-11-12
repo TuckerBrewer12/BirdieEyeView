@@ -151,10 +151,22 @@ const noBreakpointStyling = {
         "`{{name}}` comes from useFromBreakpoint(), which is for behaviour the CSS can't change (which side a " +
         "sheet opens from). Sizes, spacing and type by breakpoint are `md:` classes, so the first paint is right " +
         "and the page doesn't style the same thing two ways.",
+      passThrough:
+        "`{{name}}` from useFromBreakpoint() is handed to a prop, where the component can style by it out of " +
+        "this rule's sight. Pick what to render with it here, and let the component style by `md:` classes.",
+      words:
+        "Words picked by `{{name}}` from useFromBreakpoint() change after the first paint. Render both and show " +
+        "each with `md:hidden` / `hidden md:inline`.",
     },
   },
   create(context) {
     const fromBreakpoint = new Set();
+    /** The breakpoint value itself, or its negation. */
+    const isValue = (node) =>
+      (node.type === "Identifier" && fromBreakpoint.has(node.name)) ||
+      (node.type === "UnaryExpression" && node.operator === "!" && isValue(node.argument));
+    const nameOf = (node) => (node.type === "Identifier" ? node.name : nameOf(node.argument));
+    const isText = (node) => node.type === "Literal" && typeof node.value === "string";
     return {
       "VariableDeclarator[init.callee.name='useFromBreakpoint'] > Identifier.id"(node) {
         fromBreakpoint.add(node.name);
@@ -171,6 +183,18 @@ const noBreakpointStyling = {
           }
           if (at.type === "JSXOpeningElement" || at.type.startsWith("Function") || at.type === "ArrowFunctionExpression") return;
         }
+      },
+      // `<Table wide={wide} />`: the value passed on for the component to style by.
+      "JSXAttribute > JSXExpressionContainer"(node) {
+        if (node.parent.name.name === "className" || !isValue(node.expression)) return;
+        context.report({ node, messageId: "passThrough", data: { name: nameOf(node.expression) } });
+      },
+      // `wide ? "Your avg" : "Avg"`: words by breakpoint. A prop's value picked this way is behaviour
+      // (`side={wide ? "right" : "bottom"}`), so only words outside a prop are flagged.
+      ConditionalExpression(node) {
+        if (!isValue(node.test) || !isText(node.consequent) || !isText(node.alternate)) return;
+        if (node.parent.type === "JSXExpressionContainer" && node.parent.parent.type === "JSXAttribute") return;
+        context.report({ node, messageId: "words", data: { name: nameOf(node.test) } });
       },
     };
   },
@@ -325,6 +349,76 @@ const noFormatOutsideDomain = {
   },
 };
 
+const noToParTone = {
+  meta: {
+    type: "problem",
+    docs: { description: "Colour a to-par figure with ToParFigure, not toParTextClass() in a page." },
+    schema: [],
+    messages: {
+      tone:
+        "{{call}}() in a page paints a to-par figure by hand. Use <ToParFigure toPar={…} />: `size=\"inherit\"` " +
+        "takes the type around it, and `label` words it (a tenth, \"1.2 strokes behind\"), so every to-par " +
+        "reads and colours one way.",
+    },
+  },
+  create(context) {
+    if (inKit(context.filename)) return {};
+    return {
+      "CallExpression[callee.name=/^toPar(Stat)?TextClass$/]"(node) {
+        context.report({ node, messageId: "tone", data: { call: node.callee.name } });
+      },
+    };
+  },
+};
+
+const noRawTable = {
+  meta: {
+    type: "problem",
+    docs: { description: "Build a page's table on the kit, not a raw <table>." },
+    schema: [],
+    messages: {
+      table:
+        "A raw <table> in a page rebuilds the kit's grid, and the two drift. A scorecard is ScorecardGrid " +
+        "with its rows passed in (on ScorecardCard); anything else tabular belongs in the kit first.",
+    },
+  },
+  create(context) {
+    if (inKit(context.filename)) return {};
+    return {
+      "JSXOpeningElement[name.name='table']"(node) {
+        context.report({ node, messageId: "table" });
+      },
+    };
+  },
+};
+
+/** The file the chart hover card is built in. */
+const isChartTooltip = (filename) => /[\\/]brand[\\/]charts[\\/]ChartTooltip\.tsx$/.test(filename);
+
+const noHandmadeChartTooltip = {
+  meta: {
+    type: "problem",
+    docs: { description: "Build a chart's hover card with ChartTooltip, not its classes by hand." },
+    schema: [],
+    messages: {
+      tooltip:
+        "A frosted card that ignores the pointer is a chart's hover card built by hand. Use <ChartTooltip id at>, " +
+        "so every chart's card looks, flips and fades one way.",
+    },
+  },
+  create(context) {
+    if (isChartTooltip(context.filename)) return {};
+    return {
+      "JSXAttribute[name.name='className']"(node) {
+        const source = context.sourceCode.getText(node.value ?? node);
+        if (source.includes("bg-card/glass") && source.includes("pointer-events-none")) {
+          context.report({ node, messageId: "tooltip" });
+        }
+      },
+    };
+  },
+};
+
 export default {
   rules: {
     "no-raw-heading": noRawHeading,
@@ -336,5 +430,8 @@ export default {
     "no-tone-override": noToneOverride,
     "no-handmade-to-par-pill": noHandmadeToParPill,
     "no-breakpoint-styling": noBreakpointStyling,
+    "no-to-par-tone": noToParTone,
+    "no-raw-table": noRawTable,
+    "no-handmade-chart-tooltip": noHandmadeChartTooltip,
   },
 };

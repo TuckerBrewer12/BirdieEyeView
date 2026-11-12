@@ -9,6 +9,8 @@ export {
   scoreWashClass,
   scoreProfileHeightClass,
   toParFill,
+  toParMarkFill,
+  verdictFill,
   toParLabel,
   scoreKindLabel,
   toParDisplay,

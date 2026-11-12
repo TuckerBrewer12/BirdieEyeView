@@ -1,10 +1,12 @@
-import type { ReactNode } from "react";
 import { HoleShape } from "@/brand/charts/HoleScoreShapes";
 import { cn } from "@/brand/cn";
 import { Button } from "@/brand/components/Button";
 import { Input } from "@/brand/components/Input";
+import { ScorecardGrid, type ScorecardRow } from "@/brand/components/ScorecardGrid";
+import { formatScorecardFigure as show } from "@/domain/format";
 import { TeeSwatch } from "@/brand/components/TeeSwatch";
-import { scoreFillClass, scoreOnFillClass, toParDisplay, toParTextClass } from "@/brand/theme";
+import { scoreFillClass, scoreOnFillClass } from "@/brand/theme";
+import { ToParFigure } from "@/brand/components/ToParFigure";
 import type { HoleScore, Nine, Round } from "@/domain";
 
 export interface ScorecardEdits {
@@ -31,15 +33,7 @@ interface ScorecardTableProps {
 
 /** Row heights by what the row holds: the score's marks get the most room, the reference rows the least. */
 const ROW = { figures: "h-8", small: "h-7", score: "h-11" } as const;
-/** The type every label shares. */
-const LABEL = "pl-3 text-left text-label font-semibold whitespace-nowrap";
-/** Out, In and Tot sit on the page's own tone, apart from the holes. */
-const TOTAL = "bg-background p-0 text-center font-semibold";
 const SMALL = cn(ROW.small, "text-label font-medium text-muted-foreground");
-
-function show(value: number | null): string {
-  return value == null ? "-" : String(value);
-}
 
 /** "" clears a cell; anything that isn't a number leaves it as it was. */
 function parseCount(text: string): number | null | undefined {
@@ -108,19 +102,17 @@ function ScoreCell({
   hole,
   edits,
   check,
-  compact,
 }: {
   hole: HoleScore;
   edits?: ScorecardEdits;
   check: boolean;
-  /** A phone's nine, where a hole's column is too narrow for the large mark. */
-  compact: boolean;
 }) {
   if (!edits) {
     // The one hole mark the kit draws, so a score reads the same here as on the round flow.
     return (
       <span className={cn("inline-flex align-middle", check && cn("rounded-md", CHECK_RING))}>
-        <HoleShape hole={hole} square size={compact ? "default" : "lg"} />
+        {/* A phone's nine is too narrow for the large mark. */}
+        <HoleShape hole={hole} square size="scorecard" />
       </span>
     );
   }
@@ -142,59 +134,6 @@ function ScoreCell({
   );
 }
 
-interface LineProps {
-  /** The nines across, each closed by its total. */
-  nines: readonly Nine[];
-  /** Whether the row ends on the round's total, after both nines. */
-  withTot: boolean;
-  label: ReactNode;
-  /** The row's height and type, which its cells inherit. */
-  className?: string;
-  labelClassName?: string;
-  cell: (hole: HoleScore) => ReactNode;
-  /** Marks a hole's cell as one to check. */
-  isCheck?: (hole: HoleScore) => boolean;
-  /** The Out and In figures. Left out, those columns are blank. */
-  nineCell?: (nine: Nine) => ReactNode;
-  /** The Tot figure. */
-  totCell?: ReactNode;
-  totalClassName?: string;
-}
-
-/** One row: its label, a cell per hole, and the nine and round figures where the holes close. */
-function Line({
-  nines,
-  withTot,
-  label,
-  className,
-  labelClassName,
-  cell,
-  isCheck,
-  nineCell,
-  totCell,
-  totalClassName,
-}: LineProps) {
-  const holeCell = (hole: HoleScore) => (
-    <td key={hole.hole} data-check={isCheck?.(hole) || undefined} className="p-0 text-center">
-      {cell(hole)}
-    </td>
-  );
-  const total = (key: string, content: ReactNode) => (
-    <td key={key} className={cn(TOTAL, totalClassName)}>
-      {content}
-    </td>
-  );
-  return (
-    <tr className={className}>
-      <th scope="row" className={cn(LABEL, labelClassName)}>
-        {label}
-      </th>
-      {nines.flatMap((nine, i) => [...nine.holes.map(holeCell), total(`nine-${i}`, nineCell?.(nine))])}
-      {withTot && total("tot", totCell)}
-    </tr>
-  );
-}
-
 /**
  * A round as one scorecard: every hole across, with Out, In and Tot where the nines close. Par, the
  * score marked the way a card marks it, to par, and the totals. Every figure is the server's, or
@@ -208,186 +147,136 @@ function ScorecardTable({ round, teeBox, edits, toCheck, nine, className }: Scor
   const { frontNine, backNine } = round;
   const shown = nine === "front" ? [frontNine] : nine === "back" ? [backNine] : [frontNine, backNine];
   const nines = shown.filter((part) => part.holes.length > 0);
-  const nineNames = new Map<Nine, string>([
-    [frontNine, "Out"],
-    [backNine, "In"],
-  ]);
-  const withTot = nine == null;
   const holes = nines.flatMap((part) => part.holes);
-  const showYards = holes.some((hole) => hole.yardage != null);
-  // A phone's nine has no room for the stroke index; the wide card keeps it.
-  const showHandicap = withTot && holes.some((hole) => hole.handicap != null);
-  const showPutts = edits != null || holes.some((hole) => hole.putts != null);
-  const showGir = edits != null || holes.some((hole) => hole.gir != null);
-  const showFairway = holes.some((hole) => hole.fairway != null);
-  const showShots = holes.some((hole) => hole.shotsToGreen != null);
-  const line = { nines, withTot };
   const figures = "text-body-sm font-medium text-foreground-secondary";
+  const optional = {
+    yards: holes.some((hole) => hole.yardage != null),
+    handicap: holes.some((hole) => hole.handicap != null),
+    putts: edits != null || holes.some((hole) => hole.putts != null),
+    gir: edits != null || holes.some((hole) => hole.gir != null),
+    fairway: holes.some((hole) => hole.fairway != null),
+    shots: holes.some((hole) => hole.shotsToGreen != null),
+  };
+
+  const rows: (ScorecardRow<HoleScore, Nine> | false)[] = [
+    optional.yards && {
+      key: "yards",
+      label: teeBox ? (
+        <span className="inline-flex items-center gap-1.5 capitalize">
+          <TeeSwatch color={teeBox} className="size-2 shrink-0 rounded-full" />
+          {teeBox}
+        </span>
+      ) : (
+        "Yards"
+      ),
+      className: cn(SMALL, "text-caption md:text-label"),
+      labelClassName: "text-muted-foreground",
+      cell: (hole) => show(hole.yardage),
+      nine: (part) => show(part.yards),
+      tot: show(round.yards),
+    },
+    // A phone's nine has no room for the stroke index; the wide card keeps it.
+    optional.handicap && {
+      key: "handicap",
+      label: "Hcp",
+      wideOnly: true,
+      className: SMALL,
+      labelClassName: "text-muted-foreground",
+      cell: (hole) => show(hole.handicap),
+    },
+    {
+      key: "par",
+      label: "Par",
+      className: cn(ROW.figures, figures),
+      labelClassName: "text-foreground-secondary",
+      cell: (hole) => show(hole.par),
+      nine: (part) => show(part.par),
+      tot: show(round.par),
+    },
+    {
+      key: "score",
+      label: "Score",
+      className: cn(ROW.score, "text-body font-semibold text-foreground", edits && "bg-muted/recessed"),
+      labelClassName: "text-foreground",
+      cell: (hole) => <ScoreCell hole={hole} edits={edits} check={!!toCheck?.includes(hole.hole)} />,
+      isCheck: (hole) => !!toCheck?.includes(hole.hole),
+      nine: (part) => show(part.total),
+      tot: show(round.score),
+    },
+    {
+      key: "to-par",
+      label: "To par",
+      className: cn(ROW.small, "text-label font-semibold"),
+      labelClassName: "text-muted-foreground",
+      cell: (hole) => <ToParFigure toPar={hole.toPar} size="inherit" empty="-" />,
+      nine: (part) => <ToParFigure toPar={part.toPar} size="inherit" empty="-" />,
+      tot: <ToParFigure toPar={round.toPar} size="inherit" empty="-" />,
+    },
+    optional.putts && {
+      key: "putts",
+      label: "Putts",
+      className: cn(ROW.figures, figures, edits && "bg-muted/recessed"),
+      labelClassName: "text-foreground-secondary",
+      cell: (hole) =>
+        edits ? (
+          <CountInput
+            label={`Hole ${hole.hole} putts`}
+            value={hole.putts}
+            onChange={(putts) => edits.onPuttsChange(hole.hole, putts)}
+            className="h-6 w-6 text-xs font-normal"
+          />
+        ) : (
+          <span className={cn(hole.threePutt && "font-bold text-destructive")}>{hole.putts ?? "·"}</span>
+        ),
+      nine: (part) => show(part.putts),
+      tot: show(round.putts),
+    },
+    optional.gir && {
+      key: "gir",
+      label: "GIR",
+      className: cn(ROW.figures, figures),
+      labelClassName: "text-foreground-secondary",
+      cell: (hole) =>
+        edits ? (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Hole ${hole.hole} green: ${GIR_WORD.get(hole.gir)}`}
+            onClick={() => edits.onGirChange(hole.hole, NEXT_GIR.get(hole.gir) ?? null)}
+            className="mx-auto"
+          >
+            <HitMark hit={hole.gir} className="size-3" />
+          </Button>
+        ) : (
+          <HitMark hit={hole.gir} />
+        ),
+      nine: (part) => show(part.gir),
+      tot: show(round.gir),
+    },
+    optional.fairway && {
+      key: "fairway",
+      label: "Fairway",
+      className: cn(ROW.figures, figures),
+      labelClassName: "text-foreground-secondary",
+      cell: (hole) => <HitMark hit={hole.fairway} />,
+    },
+    optional.shots && {
+      key: "shots",
+      label: "S2G",
+      className: SMALL,
+      labelClassName: "text-muted-foreground",
+      cell: (hole) => show(hole.shotsToGreen),
+    },
+  ];
 
   return (
-    <table data-slot="scorecard-table" className={cn("w-full table-fixed border-collapse", className)}>
-      <colgroup>
-        <col className={withTot ? "w-16" : "w-14"} />
-        {/* A phone's nine gives its total room for a nine's yardage; the wide card shares it out. */}
-        {!withTot && (
-          <>
-            {holes.map((hole) => (
-              <col key={hole.hole} />
-            ))}
-            <col className="w-10" />
-          </>
-        )}
-      </colgroup>
-      <tbody className="divide-y divide-border border-b border-border">
-        <tr className={cn(ROW.figures, "bg-background text-label font-semibold text-foreground-secondary")}>
-          <th scope="row" className={LABEL}>
-            Hole
-          </th>
-          {nines.flatMap((part) => [
-            ...part.holes.map((hole) => (
-              <td key={hole.hole} className="p-0 text-center">
-                {hole.hole}
-              </td>
-            )),
-            <td key={`total-${nineNames.get(part)}`} className="p-0 text-center">
-              {nineNames.get(part)}
-            </td>,
-          ])}
-          {withTot && <td className="p-0 text-center">Tot</td>}
-        </tr>
-
-        {showYards && (
-          <Line
-            {...line}
-            label={
-              teeBox ? (
-                <span className="inline-flex items-center gap-1.5 capitalize">
-                  <TeeSwatch color={teeBox} className="size-2 shrink-0 rounded-full" />
-                  {teeBox}
-                </span>
-              ) : (
-                "Yards"
-              )
-            }
-            className={cn(SMALL, !withTot && "text-caption")}
-            labelClassName="text-muted-foreground"
-            cell={(hole) => show(hole.yardage)}
-            nineCell={(part) => show(part.yards)}
-            totCell={show(round.yards)}
-          />
-        )}
-
-        {showHandicap && (
-          <Line
-            {...line}
-            label="Hcp"
-            className={SMALL}
-            labelClassName="text-muted-foreground"
-            cell={(hole) => show(hole.handicap)}
-          />
-        )}
-
-        <Line
-          {...line}
-          label="Par"
-          className={cn(ROW.figures, figures)}
-          labelClassName="text-foreground-secondary"
-          cell={(hole) => show(hole.par)}
-          nineCell={(part) => show(part.par)}
-          totCell={show(round.par)}
-        />
-
-        <Line
-          {...line}
-          label="Score"
-          className={cn(ROW.score, "text-body font-semibold text-foreground", edits && "bg-muted/recessed")}
-          labelClassName="text-foreground"
-          cell={(hole) => <ScoreCell hole={hole} edits={edits} check={!!toCheck?.includes(hole.hole)} compact={!withTot} />}
-          isCheck={(hole) => !!toCheck?.includes(hole.hole)}
-          nineCell={(part) => show(part.total)}
-          totCell={show(round.score)}
-        />
-
-        <Line
-          {...line}
-          label="To par"
-          className={cn(ROW.small, "text-label font-semibold")}
-          labelClassName="text-muted-foreground"
-          cell={(hole) => <span className={toParTextClass(hole.toPar)}>{toParDisplay(hole.toPar, "-")}</span>}
-          nineCell={(part) => <span className={toParTextClass(part.toPar)}>{toParDisplay(part.toPar, "-")}</span>}
-          totCell={<span className={toParTextClass(round.toPar)}>{toParDisplay(round.toPar, "-")}</span>}
-        />
-
-        {showPutts && (
-          <Line
-            {...line}
-            label="Putts"
-            className={cn(ROW.figures, figures, edits && "bg-muted/recessed")}
-            labelClassName="text-foreground-secondary"
-            cell={(hole) =>
-              edits ? (
-                <CountInput
-                  label={`Hole ${hole.hole} putts`}
-                  value={hole.putts}
-                  onChange={(putts) => edits.onPuttsChange(hole.hole, putts)}
-                  className="h-6 w-6 text-xs font-normal"
-                />
-              ) : (
-                <span className={cn(hole.threePutt && "font-bold text-destructive")}>{hole.putts ?? "·"}</span>
-              )
-            }
-            nineCell={(part) => show(part.putts)}
-            totCell={show(round.putts)}
-          />
-        )}
-
-        {showGir && (
-          <Line
-            {...line}
-            label="GIR"
-            className={cn(ROW.figures, figures)}
-            labelClassName="text-foreground-secondary"
-            cell={(hole) =>
-              edits ? (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Hole ${hole.hole} green: ${GIR_WORD.get(hole.gir)}`}
-                  onClick={() => edits.onGirChange(hole.hole, NEXT_GIR.get(hole.gir) ?? null)}
-                  className="mx-auto"
-                >
-                  <HitMark hit={hole.gir} className="size-3" />
-                </Button>
-              ) : (
-                <HitMark hit={hole.gir} />
-              )
-            }
-            nineCell={(part) => show(part.gir)}
-            totCell={show(round.gir)}
-          />
-        )}
-
-        {showFairway && (
-          <Line
-            {...line}
-            label="Fairway"
-            className={cn(ROW.figures, figures)}
-            labelClassName="text-foreground-secondary"
-            cell={(hole) => <HitMark hit={hole.fairway} />}
-          />
-        )}
-
-        {showShots && (
-          <Line
-            {...line}
-            label="S2G"
-            className={SMALL}
-            labelClassName="text-muted-foreground"
-            cell={(hole) => show(hole.shotsToGreen)}
-          />
-        )}
-      </tbody>
-    </table>
+    <ScorecardGrid
+      nines={nines}
+      nineLabel={(part) => (part === backNine ? "In" : "Out")}
+      withTot={nine == null}
+      rows={rows.filter((row) => row !== false)}
+      className={className}
+    />
   );
 }
 

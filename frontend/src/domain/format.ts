@@ -51,3 +51,8 @@ export function formatCount(value: number | null | undefined): string {
 export function formatFileSize(bytes: number): string {
   return `${Math.round(bytes / 1024)} KB`;
 }
+
+/** A figure on a scorecard, or a dash where the card has none: "4", "-". */
+export function formatScorecardFigure(value: number | null | undefined): string {
+  return value == null ? "-" : String(value);
+}

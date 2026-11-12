@@ -33,18 +33,4 @@ describe("TeePicker", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Blue/ }));
     expect(change.calls).toEqual([]);
   });
-
-  it("clears the tee when the caller lets it and its chip is pressed again", () => {
-    const cleared = new FakeHandler();
-    render(<TeePicker tees={TEES} value="Blue" onChange={new FakeHandler().handle} onClear={cleared.handle} />);
-    fireEvent.click(screen.getByRole("button", { name: /^Blue/ }));
-    expect(cleared.calls).toHaveLength(1);
-  });
-
-  it("shows a tee's detail after its yardage", () => {
-    render(
-      <TeePicker tees={[{ name: "Blue", yards: 6697, detail: "72.4 / 130 · CH 12" }]} value="Blue" onChange={new FakeHandler().handle} />,
-    );
-    expect(screen.getByRole("button", { name: /^Blue/ })).toHaveTextContent("Blue6,69772.4 / 130 · CH 12");
-  });
 });

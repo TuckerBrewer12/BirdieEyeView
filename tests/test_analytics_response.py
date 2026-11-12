@@ -8,7 +8,7 @@ from uuid import UUID
 import pytest
 from fastapi.encoders import jsonable_encoder
 
-from analytics import dashboard as dashboard_figures
+from analytics.verdicts import change_verdict
 from analytics import handicap as hcap
 from analytics import stats as analytics
 from api.analytics_responses import analytics_response
@@ -149,7 +149,7 @@ async def test_dashboard_carries_the_trends_analytics_draws_for_the_last_20(seas
     assert all(row.differential_status != "unrated" for row in dashboard.handicap_trend)
     # The scoring average's move and the server's verdict on it, which the desktop tile shows.
     assert dashboard.scoring_average_change is not None
-    assert dashboard.scoring_average_verdict == dashboard_figures.change_verdict(dashboard.scoring_average_change)
+    assert dashboard.scoring_average_verdict == change_verdict(dashboard.scoring_average_change)
 
 
 @pytest.mark.asyncio

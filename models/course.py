@@ -21,6 +21,11 @@ class Course(BaseGolfModel):
     tees: List[Tee] = Field(default_factory=list)
     user_id: Optional[str] = None  # None = master course; set = user-owned custom course
 
+    def tees_by_length(self) -> List[Tee]:
+        """The tees longest first, ties by colour: the one order every screen lists them in. The
+        course list's summary query orders its tee colours the same way."""
+        return sorted(self.tees, key=lambda t: (-(t.get_total_yardage() or 0), (t.color or "").lower()))
+
     def get_tee(self, color: Optional[str]) -> Optional[Tee]:
         """Get a tee by its color."""
         if not color:
@@ -68,7 +73,8 @@ class Course(BaseGolfModel):
 
 
 class CourseSummary(BaseGolfModel):
-    """A course as lists show it: its par and how many holes and tees it has, without the holes and tees."""
+    """A course as lists show it: its par, how many holes it has and its tees' colours (longest
+    first), without the holes and tees."""
     id: str
     name: Optional[str] = None
     external_course_id: Optional[str] = None
@@ -76,3 +82,4 @@ class CourseSummary(BaseGolfModel):
     par: Optional[int] = None
     hole_count: int = 0
     tee_count: int = 0
+    tee_colors: List[str] = Field(default_factory=list)

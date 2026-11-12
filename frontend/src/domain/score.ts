@@ -1,4 +1,4 @@
-import { pluralNoun } from "./format";
+import { formatSigned, pluralNoun } from "./format";
 
 /** The seven score buckets the app uses. ≤ −2 is eagle (eagle+). ≥ +4 is quad. */
 export const SCORE_KINDS = [
@@ -111,6 +111,21 @@ export function roundAverageToPar(value: number): number {
 /** An average to par, as golfers write it, to two places: "+0.85", "E", "-0.1". */
 export function formatAverageToPar(value: number): string {
   return toParLabel(roundAverageToPar(value)) ?? "E";
+}
+
+/** An average to par to a tenth, halves away from level: -0.05 is -0.1, as +0.05 is +0.1. */
+export function roundAverageToParTenths(value: number): number {
+  return (Math.sign(value) * Math.round(Math.abs(value) * 10)) / 10;
+}
+
+/**
+ * An average to par to a tenth, as a course's scorecard row and the golfer's record there show it:
+ * "+0.5", "E", "−0.5", "+3.0". A dash when there is nothing to show.
+ */
+export function formatAverageToParTenths(value: number | null | undefined): string {
+  if (value == null) return "—";
+  const tenths = roundAverageToParTenths(value);
+  return tenths === 0 ? "E" : formatSigned(tenths, 1);
 }
 
 /**

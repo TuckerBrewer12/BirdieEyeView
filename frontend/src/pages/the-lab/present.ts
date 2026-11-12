@@ -1,5 +1,4 @@
 import { formatOneDecimal, formatSigned, formatTwoDecimals } from "@/domain/format";
-import { toParTextClass } from "@/brand";
 import {
   COMPARISON_HANDICAPS,
   formatAverageToPar,
@@ -148,13 +147,13 @@ export function parTypeGapNote(row: ParTypeRow, benchmarkName: string): { text: 
 }
 
 /**
- * A count of strokes with its sign, and the tone to paint it.
- * A gain is good, so the tone is to-par of the negation: "+1.2 strokes" reads birdie.
+ * A count of strokes with its sign, and the to par its colour follows.
+ * A gain is good, so the colour is the to par of the negation: "+1.2 strokes" reads birdie.
  */
-export function signedStrokes(strokes: number): { text: string; tone: string } {
+export function signedStrokes(strokes: number): { text: string; toPar: number } {
   return {
     text: `${formatSigned(Math.round(strokes * 10) / 10)} strokes`,
-    tone: toParTextClass(-strokes),
+    toPar: -strokes,
   };
 }
 

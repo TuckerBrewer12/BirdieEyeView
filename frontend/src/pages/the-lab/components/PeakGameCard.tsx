@@ -9,8 +9,8 @@ import {
   StatLabel,
   StatUnit,
   StatValue,
+  ToParFigure,
 } from "@/brand";
-import { cn } from "@/brand/cn";
 import { formatCourseName, formatOneDecimal, pluralize } from "@/domain";
 import type { PeakGame, PeakImpact } from "../model";
 import { PEAK_IMPACT_LABEL, peakGapNote, signedStrokes } from "../present";
@@ -73,9 +73,12 @@ export function PeakGameCard({ peak, impacts, goalLabel, className }: PeakGameCa
                 <div key={impact.kind} className="flex flex-col gap-1.5">
                   <div className="flex items-baseline justify-between text-label">
                     <span className="font-semibold text-card-foreground">{PEAK_IMPACT_LABEL[impact.kind]}</span>
-                    <span className={cn("font-bold", signed.tone)}>
-                      {signed.text} {impact.strokes >= 0 ? "gained" : "lost"}
-                    </span>
+                    <ToParFigure
+                      toPar={signed.toPar}
+                      size="inherit"
+                      label={`${signed.text} ${impact.strokes >= 0 ? "gained" : "lost"}`}
+                      className="font-bold"
+                    />
                   </div>
                   <Meter
                     value={(impact.peak / scale) * 100}

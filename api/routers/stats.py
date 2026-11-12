@@ -24,6 +24,7 @@ from analytics import stats as analytics
 from analytics import benchmarks
 from analytics import dashboard
 from analytics import round_comparison
+from analytics import verdicts
 from analytics import handicap as hcap
 from analytics.goals import goal_report
 
@@ -72,7 +73,7 @@ async def get_dashboard(
         recent_rounds=[round_summary(r) for r in summaries[:4]],
         scoring_average_l5=dashboard.scoring_average(last_20, dashboard.RECENT_ROUNDS),
         scoring_average_change=scoring_change,
-        scoring_average_verdict=dashboard.change_verdict(scoring_change),
+        scoring_average_verdict=verdicts.change_verdict(scoring_change),
         handicap_change=dashboard.handicap_change(last_20, handicap_trend, today),
         recent_score_mix=dashboard.score_mix(last_20[-dashboard.RECENT_ROUNDS:])["percentages"],
         whs=dashboard.whs_breakdown(

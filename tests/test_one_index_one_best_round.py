@@ -225,7 +225,7 @@ def test_the_course_page_best_round_is_never_a_nine():
     nine = _round("nine", 0, holes=9, day=1, course=course)
     from api.course_analytics_responses import course_analytics
 
-    assert course_analytics("home", [full, nine]).best_score == 77
+    assert course_analytics("home", [full, nine]).best_round_id == "full"
 
 
 def test_records_and_milestones_set_by_a_rounds_total_count_full_rounds_only():

@@ -573,6 +573,10 @@ export const gridColumns = {
   "round-detail": "minmax(0, 1.35fr) minmax(0, 1fr)",
   /** A row of "vs your average": the figure's name, this round, the average, the difference. */
   "versus-row": "minmax(0, 1fr) 2.75rem 2.75rem 3.25rem",
+  /** A course as one row of the course list: the course, its tees, the golfer's record there, the chevron. */
+  "course-row": "minmax(0, 1fr) 9.375rem 10.625rem 1rem",
+  /** The course page's record beside the golfer's recent rounds there. */
+  "course-record": "minmax(0, 1fr) minmax(0, 1.4fr)",
   /** A label column, then two equal state columns (default, disabled). */
   "state-grid": "6rem repeat(2, minmax(0, 1fr))",
 };
@@ -605,8 +609,6 @@ export const motion = {
   layout: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as Ease },
   /** A panel opening under the control that asked for it. */
   expand: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as Ease },
-  /** A section fading up as it scrolls into view (`Reveal`). */
-  reveal: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as Ease },
   /** The card being read while a scan runs: it breathes, a line sweeps it, its corners pulse, the step rail fills. */
   scanProgress: { breathe: 2.6, sweep: 1.6, pulse: 1.8, cornerStagger: 0.45, step: 0.4 },
   /** The try-it panel moving between its steps. */
@@ -828,6 +830,38 @@ export const chart = {
     dotHover: 5,
     /** How near the pointer has to be to a dot, in the chart's units, to pick it. */
     hitRadius: 10,
+  },
+  /**
+   * A figure per hole across a course (how each hole plays, greens and putts). Like the round flow it
+   * draws as wide as its card, `width` until measured, and scrolls sideways below `minWidth`.
+   */
+  /** A chart's hover card: past this share of the way across, it opens to the left of what it points at. */
+  tooltipFlip: 0.65,
+  holes: {
+    width: px(size["chart-wide"]),
+    minWidth: px(size["chart-flow"]),
+    /** The to-par chart's height, and its padding: `bottom` holds the hole numbers. */
+    height: 240,
+    pad: { top: 16, right: 12, bottom: 32, left: 40 },
+    /** A bar's share of its hole's column. */
+    bar: 0.56,
+    /** The bar's corner, and the height of a hole played at level. */
+    corner: 3,
+    level: 3,
+    /** The spread's whisker: its stroke and the half-width of its caps. */
+    whisker: 1.5,
+    cap: 4,
+    /** From an axis label to the grid, and from the plot to the hole numbers' baseline. */
+    labelGap: 10,
+    numberDrop: 20,
+    /** Greens over putts: each panel's top and bottom, and the hole numbers' baseline. */
+    greens: { top: 22, bottom: 112 },
+    putts: { top: 156, bottom: 226 },
+    pairedHeight: 260,
+    numbers: 252,
+    /** A putts dot, and its stem. */
+    dot: 4,
+    stem: 2,
   },
   /**
    * The running score through a round, a step per hole. It draws as wide as its card, `width` until

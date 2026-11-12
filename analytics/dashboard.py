@@ -5,17 +5,16 @@ them, so the dashboard and the analytics page read the same numbers.
 """
 
 from datetime import date, datetime, timezone
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Optional
 
 from analytics import stats as analytics
+from analytics.verdicts import change_verdict
 from models import Round
 from models.hole_score import ScoreKind
 
 RECENT_ROUNDS = 5
 SCORE_KINDS: List[ScoreKind] = ["eagle", "birdie", "par", "bogey", "double", "triple", "quad"]
 
-# Whether a figure's move is for the better (a score or a handicap falling is good): shown green, red or muted.
-ChangeVerdict = Literal["good", "bad", "neutral"]
 
 
 def scoring_average(rounds: List[Round], window: Optional[int] = None) -> Optional[float]:
@@ -39,16 +38,6 @@ def scoring_average_change(
     if full_window and sum(1 for r in rounds if r.calculate_total_score() is not None) < window:
         return None
     return analytics.round_half_up(recent - overall, 1)
-
-
-def change_verdict(change: Optional[float], lower_is_better: bool = True) -> Optional[ChangeVerdict]:
-    """Whether a move in a figure is for the better. Most improve as they fall (a score, a
-    handicap, putts); `lower_is_better=False` is for one that improves as it rises (greens hit)."""
-    if change is None:
-        return None
-    if change == 0:
-        return "neutral"
-    return "good" if (change < 0) == lower_is_better else "bad"
 
 
 def score_mix(rounds: List[Round]) -> Dict[str, Any]:

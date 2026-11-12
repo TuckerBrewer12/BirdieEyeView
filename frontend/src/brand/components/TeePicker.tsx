@@ -3,14 +3,13 @@ import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group
 import { cn } from "@/brand/cn";
 import { formatCount } from "@/domain/format";
 import { TeeSwatch } from "./TeeSwatch";
+import { toggleVariants } from "./variants";
 
 interface TeeOption {
   /** The tee's name as the course stores it ("Blue", "Back Gold"). */
   name: string;
-  /** Its total yardage, when every hole has one. */
+  /** Its total yardage, when every hole has one. The chips show it. */
   yards: number | null;
-  /** More about it after the yardage, worded by the caller: "72.4 / 130 · CH 12". */
-  detail?: string | null;
 }
 
 interface TeePickerProps {
@@ -18,19 +17,17 @@ interface TeePickerProps {
   /** The tee picked, by name; none is pressed when it matches no tee. */
   value: string;
   onChange: (name: string) => void;
-  /** Lets the picked chip be pressed again to pick none. Left out, a tee is always picked. */
-  onClear?: () => void;
   /** What the row picks, named for screen readers and shown before the chips. */
   label?: string;
   className?: string;
 }
 
 /**
- * Picks the tee a round was played from: a row of pill chips, each the tee's swatch, its name and
- * its yardage, the picked one ringed. Built on the same toggle group as `ToggleGroup`, so arrow keys
- * move between the chips; only the look differs, a chip a tee rather than a segmented track.
+ * Picks a tee: the one a round was played from, or the one a course's scorecard reads. A row of pill
+ * chips with a gap between them, each the tee's swatch, its name and its yardage, the picked one ringed. Built on the same toggle group and chip as `ToggleGroup look="chips"`, ringed rather than filled so the swatch reads, so arrow keys
+ * move between the chips; each chip also carries the tee's swatch and yardage.
  */
-function TeePicker({ tees, value, onChange, onClear, label = "Tee", className }: TeePickerProps) {
+function TeePicker({ tees, value, onChange, label = "Tee", className }: TeePickerProps) {
   const picked = tees.find((tee) => tee.name.toLowerCase() === value.toLowerCase())?.name;
 
   return (
@@ -42,9 +39,8 @@ function TeePicker({ tees, value, onChange, onClear, label = "Tee", className }:
         aria-label={label}
         value={picked ? [picked] : []}
         onValueChange={(values: string[]) => {
-          // Pressing the picked chip again keeps it, unless the caller lets it clear.
+          // Pressing the picked chip again keeps it: a round is played from a tee, a card reads one.
           if (values[0]) onChange(values[0]);
-          else onClear?.();
         }}
         className="flex flex-wrap items-center gap-2"
       >
@@ -52,14 +48,13 @@ function TeePicker({ tees, value, onChange, onClear, label = "Tee", className }:
           <TogglePrimitive
             key={tee.name}
             value={tee.name}
-            className="flex h-9 items-center gap-2 rounded-full bg-card pr-3 pl-2.5 text-body font-medium text-foreground ring-1 ring-input transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-pressed:font-bold data-pressed:ring-2 data-pressed:ring-foreground data-pressed:hover:bg-card"
+            className={cn(toggleVariants({ variant: "ringedChip" }), "pr-3 pl-2.5")}
           >
             <TeeSwatch color={tee.name} className="size-3.5 rounded-full ring-1 ring-border-strong ring-inset" />
             <span className="capitalize">{tee.name}</span>
             {tee.yards != null && (
               <span className="text-body-sm font-medium text-muted-foreground">{formatCount(tee.yards)}</span>
             )}
-            {tee.detail && <span className="text-body-sm font-medium text-muted-foreground">{tee.detail}</span>}
           </TogglePrimitive>
         ))}
       </ToggleGroupPrimitive>

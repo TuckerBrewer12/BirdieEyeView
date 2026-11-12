@@ -7,7 +7,7 @@ import {
   StatLabel,
   StatUnit,
   StatValue,
-  toParTextClass,
+  ToParFigure,
 } from "@/brand";
 import { formatAverageToPar, formatOneDecimal, formatPercent, pluralize } from "@/domain";
 import type { YardageBucket } from "../model";
@@ -37,8 +37,12 @@ export function YardageBucketCard({ bucket, className }: YardageBucketCardProps)
             </Stat>
             <Stat align="end">
               <StatLabel>To Par</StatLabel>
-              <StatValue size="sm" className={toParTextClass(bucket.averageToPar)}>
-                {formatAverageToPar(bucket.averageToPar)}
+              <StatValue size="sm">
+                <ToParFigure
+                  toPar={bucket.averageToPar}
+                  size="inherit"
+                  label={formatAverageToPar(bucket.averageToPar)}
+                />
               </StatValue>
             </Stat>
           </div>

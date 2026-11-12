@@ -26,7 +26,7 @@ export class CoursesRobot {
     await FakeSession.install(this.page, { courses, ...seed });
     await this.page.goto("/courses");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
-    await expect(this.page.getByPlaceholder("Search courses...")).toBeVisible();
+    await expect(this.page.getByPlaceholder("Search courses")).toBeVisible();
     return this;
   }
 
@@ -39,24 +39,24 @@ export class CoursesRobot {
   }
 
   async search(query: string): Promise<this> {
-    await this.page.getByPlaceholder("Search courses...").fill(query);
+    await this.page.getByPlaceholder("Search courses").fill(query);
     return this;
   }
 
   async tapCourse(name: string): Promise<this> {
-    await this.page.getByRole("button", { name: `View ${name} details` }).click();
+    await this.page.getByRole("button", { name: new RegExp(`^${name}`) }).click();
     return this;
   }
 
   async isAtCourse(id: string): Promise<this> {
     await expect(this.page).toHaveURL(new RegExp(`/courses/${id}`));
-    await expect(this.page.getByRole("button", { name: "Back to courses" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Courses", exact: true })).toBeVisible();
     return this;
   }
 
   async goBack(): Promise<this> {
-    await this.page.getByRole("button", { name: "Back to courses" }).click();
-    await expect(this.page.getByPlaceholder("Search courses...")).toBeVisible();
+    await this.page.getByRole("button", { name: "Courses", exact: true }).click();
+    await expect(this.page.getByPlaceholder("Search courses")).toBeVisible();
     return this;
   }
 
@@ -66,8 +66,14 @@ export class CoursesRobot {
   }
 
   async seesDetail(name: string): Promise<this> {
-    await expect(this.page.getByRole("button", { name: "Back to courses" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Courses", exact: true })).toBeVisible();
     await expect(this.page.getByRole("heading", { name })).toBeVisible();
+    return this;
+  }
+
+  /** A course's row, with what it says of the golfer's rounds there: "75.0", "Not played". */
+  async seesRecord(name: string, record: string): Promise<this> {
+    await expect(this.page.getByRole("button", { name: new RegExp(`^${name}.*${record}`) })).toBeVisible();
     return this;
   }
 

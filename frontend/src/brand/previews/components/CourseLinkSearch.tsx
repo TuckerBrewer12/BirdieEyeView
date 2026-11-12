@@ -9,6 +9,8 @@ const pebble: CourseSummary = {
   par: 72,
   holeCount: 18,
   teeCount: 4,
+  tees: [],
+  record: null,
   source: "local",
   externalId: null,
 };
@@ -20,6 +22,8 @@ const spyglass: CourseSummary = {
   par: 72,
   holeCount: 18,
   teeCount: 3,
+  tees: [],
+  record: null,
   source: "local",
   externalId: null,
 };

@@ -1,13 +1,4 @@
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  StatDelta,
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/brand";
+import { Card, CardAction, CardContent, CardHeader, CardTitle, StatDelta, ToggleGroup, ToggleGroupItem } from "@/brand";
 import { useRoundComparisonViewModel } from "./useRoundComparisonViewModel";
 
 interface RoundComparisonSectionProps {
@@ -17,11 +8,7 @@ interface RoundComparisonSectionProps {
 }
 
 /** "vs your average": each figure of this round beside the golfer's average and the difference. */
-export function RoundComparisonSection({
-  userId,
-  roundId,
-  className,
-}: RoundComparisonSectionProps) {
+export function RoundComparisonSection({ userId, roundId, className }: RoundComparisonSectionProps) {
   const viewModel = useRoundComparisonViewModel(userId, roundId);
   if (!viewModel.show) return null;
 
@@ -36,9 +23,7 @@ export function RoundComparisonSection({
             size="sm"
             aria-label="Compare with"
             value={[viewModel.window]}
-            onValueChange={(values: string[]) =>
-              viewModel.pickWindow(values[0])
-            }
+            onValueChange={(values: string[]) => viewModel.pickWindow(values[0])}
           >
             {viewModel.windows.map((option) => (
               <ToggleGroupItem key={option.value} value={option.value}>
@@ -50,9 +35,7 @@ export function RoundComparisonSection({
       </CardHeader>
       <CardContent>
         {viewModel.rows.length === 0 ? (
-          <p className="text-body text-muted-foreground">
-            No earlier rounds to compare with yet.
-          </p>
+          <p className="text-body text-muted-foreground">No earlier rounds to compare with yet.</p>
         ) : (
           <dl className="-mt-1 flex flex-col">
             {viewModel.rows.map((row) => (
@@ -61,19 +44,10 @@ export function RoundComparisonSection({
                 className="grid grid-cols-versus-row items-baseline gap-2 border-t border-border py-2.5 text-sm"
               >
                 <dt className="text-foreground-secondary">{row.label}</dt>
-                <dd className="text-right font-semibold text-foreground">
-                  {row.value}
-                </dd>
-                <dd className="text-right text-muted-foreground">
-                  {row.average}
-                </dd>
+                <dd className="text-right font-semibold text-foreground">{row.value}</dd>
+                <dd className="text-right text-muted-foreground">{row.average}</dd>
                 <dd className="text-right">
-                  <StatDelta
-                    direction={row.direction}
-                    tone={row.verdict}
-                    glyph={false}
-                    className="text-body"
-                  >
+                  <StatDelta direction={row.direction} tone={row.verdict} glyph={false} className="text-body">
                     {row.difference}
                   </StatDelta>
                 </dd>
