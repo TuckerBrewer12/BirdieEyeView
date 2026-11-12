@@ -177,4 +177,11 @@ test.describe("on a phone", () => {
     await analytics.pickGoal("Break 85");
     await analytics.seesGoalSaved(84);
   });
+
+  test("Profile compares with a friend from the sheet", async ({ analytics }) => {
+    await analytics.openWithFriends();
+    await analytics.openTab("Profile");
+    await analytics.compareWith("Avery Lin");
+    await analytics.seesComparedWith("Avery Lin");
+  });
 });

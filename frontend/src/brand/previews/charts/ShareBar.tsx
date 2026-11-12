@@ -1,3 +1,4 @@
+import { formatPercent } from "@/domain/format";
 import { ShareBar, ShareLegend } from "@/brand/charts/ShareBar";
 import { Card } from "@/brand/components/Card";
 
@@ -32,7 +33,7 @@ export default function ShareBarPreview() {
       <Card className="gap-3 px-4">
         <div className="text-label font-semibold text-muted-foreground">Putts a hole, the legend with figures</div>
         <ShareBar segments={[...putts]} />
-        <ShareLegend items={putts.map(({ key, tone, label, share }) => ({ key, tone, label, figure: `${share}%` }))} />
+        <ShareLegend items={putts.map(({ key, tone, label, share }) => ({ key, tone, label, figure: formatPercent(share) }))} />
       </Card>
       <Card className="gap-3 px-4">
         <div className="text-label font-semibold text-muted-foreground">Thin</div>
