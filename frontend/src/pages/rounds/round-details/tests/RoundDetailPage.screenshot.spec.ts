@@ -33,6 +33,13 @@ test("unlinked round", async ({ roundDetail }) => {
   await roundDetail.capture("round-detail-unlinked.png");
 });
 
+test("more menu open", async ({ roundDetail }) => {
+  await roundDetail.open(scannedRound);
+  await roundDetail.openMore();
+  await roundDetail.seesMoreMenu();
+  await roundDetail.capture("round-detail-more-open.png", { fullPage: false });
+});
+
 test("course link panel open", async ({ roundDetail }) => {
   await roundDetail.open(scannedRound, { courses: searchableCourses, fullCourses: [pebbleBeachCourse] });
   await roundDetail.tapLinkCourse();

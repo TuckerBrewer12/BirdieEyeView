@@ -121,6 +121,19 @@ export class RoundDetailRobot {
     return this;
   }
 
+  /** Opens More. An unlinked round lists Link to a course and Delete round. */
+  async openMore(): Promise<this> {
+    await this.page.getByRole("button", { name: "More actions" }).click();
+    return this;
+  }
+
+  /** An unlinked round's More menu shows Link to a course and Delete round. */
+  async seesMoreMenu(): Promise<this> {
+    await expect(this.page.getByRole("menuitem", { name: "Link to a course" })).toBeVisible();
+    await expect(this.page.getByRole("menuitem", { name: "Delete round" })).toBeVisible();
+    return this;
+  }
+
   /** Delete sits in the More menu. */
   async tapDelete(): Promise<this> {
     await this.page.getByRole("button", { name: "More actions" }).click();
