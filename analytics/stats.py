@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Optional, get_args
 
 from analytics.handicap import round_course_handicap, round_net_score
+from analytics.verdicts import ChangeVerdict, change_verdict
 from models.hole import BACK_NINE, FRONT_NINE, HOLES_PER_NINE, HOLES_PER_ROUND
 from models.hole_score import ScoreKind, score_kind
 from models.round import Round
@@ -1514,13 +1515,25 @@ def gir_percentage_nines(by_hole: List[Dict[str, Any]]) -> Dict[str, Optional[fl
     return {"front_nine": share(FRONT_NINE), "back_nine": share(BACK_NINE), "total": share(range(1, HOLES_PER_ROUND + 1))}
 
 
+# A hole's putts read against two.
+TWO_PUTTS = 2
+
+
+def putts_verdict(average_putts: Optional[float]) -> Optional[ChangeVerdict]:
+    """Whether a hole's average putts beat two a hole, to a tenth: fewer is good, more is bad."""
+    if average_putts is None:
+        return None
+    return change_verdict(round_half_up(average_putts - TWO_PUTTS, 1))
+
+
 def course_hole_stats(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     How each hole of one course plays for the golfer, one row a hole in course order: its par, how
     many times they've played it, their average score and to par on it, where it ranks by that to
     par (`course_difficulty_profile_by_hole`: 1 is the hardest), how far their score swings (the
-    standard deviation, null under two rounds), the greens they hit (0-100) and their average putts
-    (null where none were recorded), and the share of each kind of score (0-100).
+    standard deviation, null under two rounds), the greens they hit (0-100), their average putts
+    (null where none were recorded) and its verdict against two a hole (`putts_verdict`), and the
+    share of each kind of score (0-100).
 
     The course page's hole charts read these rows: one row a hole rather than a list per figure.
     """
@@ -1536,6 +1549,7 @@ def course_hole_stats(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
         row = to_par[hole_number]
         played = row["sample_size"]
         kinds = mix.get(hole_number)
+        average_putts = putts[hole_number]["average_putts"] if hole_number in putts else None
         rows.append(
             {
                 "hole_number": hole_number,
@@ -1546,7 +1560,8 @@ def course_hole_stats(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
                 "difficulty_rank": rank[hole_number],
                 "score_std_dev": spread[hole_number]["score_std_dev"] if played >= 2 and hole_number in spread else None,
                 "gir_percentage": greens[hole_number]["gir_percentage"] if hole_number in greens else None,
-                "average_putts": putts[hole_number]["average_putts"] if hole_number in putts else None,
+                "average_putts": average_putts,
+                "putts_verdict": putts_verdict(average_putts),
                 "score_mix": {
                     kind: kinds[name] if kinds else 0.0
                     for kind, name in zip(SCORE_KINDS, SCORE_TYPE_ORDER)

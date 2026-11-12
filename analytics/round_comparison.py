@@ -8,7 +8,7 @@ measured against the form it was played on. A round with no earlier rounds has n
 from typing import Any, Callable, Dict, List, Literal, Optional
 
 from analytics import stats
-from analytics.dashboard import change_verdict
+from analytics.verdicts import change_verdict
 from models import Round
 
 ComparisonWindow = Literal["l5", "l20", "all"]

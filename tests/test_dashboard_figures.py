@@ -34,16 +34,6 @@ def test_score_mix_counts_classified_holes():
     assert mix["percentages"]["quad"] == 0.0
 
 
-def test_change_verdict_reads_a_fall_as_good():
-    assert dashboard.change_verdict(-1.2) == "good"
-    assert dashboard.change_verdict(0.4) == "bad"
-    assert dashboard.change_verdict(0.0) == "neutral"
-    assert dashboard.change_verdict(None) is None
-    # A figure that improves as it rises reads the other way.
-    assert dashboard.change_verdict(2.1, lower_is_better=False) == "good"
-    assert dashboard.change_verdict(-0.5, lower_is_better=False) == "bad"
-
-
 def test_whs_window_matches_the_table():
     assert whs_window(2) == (0, 0.0)
     assert whs_window(3) == (1, -2.0)

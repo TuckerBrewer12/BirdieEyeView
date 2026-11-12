@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
-from analytics.dashboard import ChangeVerdict
+from analytics.verdicts import ChangeVerdict
 from models import Hole, UserTee
 from models.hole_score import ScoreKind
 

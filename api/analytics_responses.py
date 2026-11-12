@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from analytics import dashboard
 from analytics import handicap as hcap
 from analytics import stats as analytics
+from analytics import verdicts
 from analytics.benchmarks import player_shape
 from analytics.insights import insights
 from analytics.peak import peak_game
@@ -83,7 +84,7 @@ def analytics_response(
             three_putts_per_round=three_putts["per_round"],
             three_putt_rate=three_putts["rate"],
             scoring_average_change=scoring_change,
-            scoring_average_verdict=dashboard.change_verdict(scoring_change),
+            scoring_average_verdict=verdicts.change_verdict(scoring_change),
         ),
         score_trend=score_rows,
         net_score_trend=analytics.net_score_trend(rounds, player_index),

@@ -2,22 +2,10 @@
 
 from typing import List
 
-from analytics import dashboard
 from analytics import stats as analytics
 from api.round_responses import round_summary
 from api.schemas import CourseAnalyticsResponse
 from models import Round
-
-
-# Putts read against two a hole.
-TWO_PUTTS = 2
-
-
-def _putts_verdict(average_putts):
-    """Whether a hole's average putts beat two a hole, to a tenth: fewer is good, more is bad."""
-    if average_putts is None:
-        return None
-    return dashboard.change_verdict(analytics.round_half_up(average_putts - TWO_PUTTS, 1))
 
 
 def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResponse:
@@ -41,7 +29,7 @@ def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResp
         worst_round_id=str(worst.id) if worst and worst.id else None,
         rounds=[round_summary(r) for r in newest_first],
         score_trend=analytics.score_trend_with_rolling_average(trended),
-        holes=[{**hole, "putts_verdict": _putts_verdict(hole["average_putts"])} for hole in analytics.course_hole_stats(rounds)],
+        holes=analytics.course_hole_stats(rounds),
         hole_to_par_front_nine=to_par["front_nine"],
         hole_to_par_back_nine=to_par["back_nine"],
         hole_to_par_total=to_par["total"],
