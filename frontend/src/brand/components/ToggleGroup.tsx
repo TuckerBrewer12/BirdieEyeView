@@ -21,7 +21,7 @@ type ToggleGroupProps = ToggleGroupPrimitive.Props & {
   fill?: boolean;
   /**
    * `segmented` (the default) is options on a recessed pill track, for a view switched in place in a
-   * card. `chips` is a row of separate pills a gap apart, for a page's own switch or a pick like a tee.
+   * card. `chips` is a row of separate pills a gap apart, the picked one filled green, for a page's own switch.
    */
   look?: ToggleLook;
 };

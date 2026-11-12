@@ -2,7 +2,6 @@ import {
   Card,
   CardAction,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
   HoleGreensPuttsChart,
@@ -57,9 +56,8 @@ export function CoursePerformance({
       <Card size="lg" data-slot="hole-profile">
         <CardHeader>
           <CardTitle level={2} className="text-body-lg font-semibold">
-            Hole by hole
+            Hole by hole, average to par
           </CardTitle>
-          <CardDescription>Average to par, and how far it swings</CardDescription>
           <CardAction>
             <ToggleGroup
               size="sm"

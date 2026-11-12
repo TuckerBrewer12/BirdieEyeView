@@ -24,7 +24,7 @@ interface TeePickerProps {
 
 /**
  * Picks a tee: the one a round was played from, or the one a course's scorecard reads. A row of pill
- * chips with a gap between them, each the tee's swatch, its name and its yardage, the picked one ringed. Built on the same toggle group and chip look as `ToggleGroup look="chips"`, so arrow keys
+ * chips with a gap between them, each the tee's swatch, its name and its yardage, the picked one ringed. Built on the same toggle group and chip as `ToggleGroup look="chips"`, ringed rather than filled so the swatch reads, so arrow keys
  * move between the chips; each chip also carries the tee's swatch and yardage.
  */
 function TeePicker({ tees, value, onChange, label = "Tee", className }: TeePickerProps) {
@@ -48,7 +48,7 @@ function TeePicker({ tees, value, onChange, label = "Tee", className }: TeePicke
           <TogglePrimitive
             key={tee.name}
             value={tee.name}
-            className={cn(toggleVariants({ variant: "chip" }), "pr-3 pl-2.5")}
+            className={cn(toggleVariants({ variant: "ringedChip" }), "pr-3 pl-2.5")}
           >
             <TeeSwatch color={tee.name} className="size-3.5 rounded-full ring-1 ring-border-strong ring-inset" />
             <span className="capitalize">{tee.name}</span>
