@@ -1,6 +1,7 @@
 import { test } from "./RoundDetailPage.robot";
 import { searchableCourses } from "../../../../testing/fixtures/courses";
 import {
+  firstRoundComparison,
   halfMoonBayCourse,
   halfMoonBayRound,
   pebbleBeachCourse,
@@ -68,6 +69,15 @@ test("vs your average", async ({ roundDetail }) => {
   await roundDetail.seesCourse("Half Moon Bay");
   await roundDetail.seesComparison("L20", { label: "Score", average: "80.4", difference: "\u22122.4" });
   await roundDetail.capture("round-detail-comparison.png");
+});
+
+test("a first round has no average to compare with", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, {
+    fullCourses: [halfMoonBayCourse],
+    comparison: firstRoundComparison,
+  });
+  await roundDetail.seesNoComparisonYet();
+  await roundDetail.capture("round-detail-no-comparison.png");
 });
 
 test("edit mode", async ({ roundDetail }) => {
