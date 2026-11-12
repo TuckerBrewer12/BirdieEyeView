@@ -5,6 +5,7 @@ import {
   formatPercent,
   formatWhole,
   pluralize,
+  SCORE_KINDS,
   scoreKindLabel,
   type ParTypeComparison,
   type ScoreMix,
@@ -138,16 +139,18 @@ export const formatGreens = (value: number) => formatPercent(value);
 
 /** A score mix as share-bar segments; triples and worse fold into one, as the legend reads. */
 export function mixSegments(mix: ScoreMix): ShareSegment[] {
-  const worse = mix.triple + mix.quad;
-  return [
-    ...(["eagle", "birdie", "par", "bogey", "double"] as const).map((kind) => ({
-      key: kind,
-      share: mix[kind],
-      tone: kind,
-      label: scoreKindLabel(kind),
-    })),
-    { key: "triple", share: worse, tone: "triple", label: "Triple+" },
-  ];
+  return SCORE_KINDS.flatMap((kind) => {
+    if (kind === "quad") return [];
+    const folded = kind === "triple";
+    return [
+      {
+        key: kind,
+        share: folded ? mix.triple + mix.quad : mix[kind],
+        tone: kind,
+        label: folded ? `${scoreKindLabel(kind)}+` : scoreKindLabel(kind),
+      },
+    ];
+  });
 }
 
 /** The score mix's legend: each kind with its share, the empty ones left out. */
