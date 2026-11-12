@@ -1,9 +1,8 @@
 import { CircleDot, Flag, TrendingDown, Target, Ruler, Home, Shovel } from "lucide-react";
 import type { ComponentType } from "react";
 import { Card, CardTitle, Meter } from "@/brand";
-import { cn } from "@/brand/cn";
 import type { GoalStanding, Saver } from "../profileModel";
-import { saverStrokes, saversGoalNote, saversHeading } from "../profilePresent";
+import { saverShareLabel, saverStrokes, saversGoalNote, saversHeading } from "../profilePresent";
 
 /** Each kind of saver's mark. */
 const SAVER_ICON: Record<Saver["kind"], ComponentType<{ className?: string }>> = {
@@ -22,7 +21,7 @@ const SAVER_ICON: Record<Saver["kind"], ComponentType<{ className?: string }>> =
  */
 export function SaversCard({ goal, id }: { goal: GoalStanding; id: string }) {
   const heading = saversHeading(goal);
-  const savers = goal.savers.slice(0, 3);
+  const savers = goal.savers;
   if (!heading || savers.length === 0) return null;
   return (
     <section id={id} data-slot="savers" className="flex scroll-mt-6 flex-col gap-3">
@@ -47,12 +46,12 @@ export function SaversCard({ goal, id }: { goal: GoalStanding; id: string }) {
                 </div>
                 <b className="text-title whitespace-nowrap text-primary">{saverStrokes(saver)}</b>
               </div>
-              <span className={cn("hidden text-body text-muted-foreground md:block")}>{saver.detail}</span>
+              <span className="hidden text-body text-muted-foreground md:block">{saver.detail}</span>
               <Meter
                 className="hidden md:block"
                 size="sm"
                 value={saver.shareOfGap}
-                aria-label={`${saver.headline}: ${saver.shareOfGap}% of the gap`}
+                aria-label={saverShareLabel(saver)}
               />
             </div>
           );

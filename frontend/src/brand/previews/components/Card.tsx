@@ -24,6 +24,17 @@ export default function CardPreview() {
         <CardFooter>Link this round</CardFooter>
       </Card>
 
+      {/* A narrow header drops a wide action under its title. */}
+      <Card size="sm" className="max-w-xs">
+        <CardHeader>
+          <CardTitle>Player profile</CardTitle>
+          <CardAction wrap className="flex gap-2">
+            <Button variant="outline" size="xs">Average</Button>
+            <Button variant="outline" size="xs">vs 15 handicap</Button>
+          </CardAction>
+        </CardHeader>
+      </Card>
+
       <Card size="sm">
         <CardHeader>
           <CardTitle>Linked</CardTitle>

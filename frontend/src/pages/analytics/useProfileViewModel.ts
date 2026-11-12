@@ -25,7 +25,7 @@ import { useBenchmarkComparison } from "./useBenchmarkComparison";
 export type FriendComparison = "no-friends" | "loading" | "no-rounds" | "ready";
 
 /** The Profile section: the goal, the golfer's shape against a comparison, where to find strokes, and the peak game. */
-export interface Profile {
+export interface ProfileViewModel {
   /** True until the profile's last 20 rounds first load. */
   loading: boolean;
   error: Error | null;
@@ -61,11 +61,11 @@ export interface Profile {
 }
 
 /** `active` once the Profile section opens: until then its last 20 rounds aren't read. */
-export function useProfile(
+export function useProfileViewModel(
   userId: string,
   active: boolean,
   repository: AnalyticsRepository = analyticsRepository,
-): Profile {
+): ProfileViewModel {
   const [radarMode, setRadarModeState] = useState<RadarMode>("benchmark");
   const [picked, setPicked] = useState<{ value: ComparisonTargetValue; friendId: string | null } | null>(null);
 
@@ -129,7 +129,8 @@ export function useProfile(
     error: mine.error,
     retry: () => void mine.refetch(),
 
-    goal: goalStandingFrom(target, report),
+    // Until the report comes, Best falls back on the lowest round the analytics already have.
+    goal: goalStandingFrom(target, report, analytics?.lowestScore ?? null),
     setGoal,
     savingGoal: updateUser.isPending,
     goalSaveError: updateUser.error,

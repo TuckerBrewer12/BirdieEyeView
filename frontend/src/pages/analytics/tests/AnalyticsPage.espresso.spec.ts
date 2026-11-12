@@ -85,7 +85,7 @@ test("Profile shows where to find the strokes and the peak game", async ({ analy
   await analytics.open();
   await analytics.openTab("Profile");
   await analytics.seesSavers(/^Where to find [\d.]+ strokes/);
-  await analytics.seesPeakGame();
+  await analytics.seesPeakGame(/best \d · ([\d.]+ off|breaks) \d+/, ["Birdies", "Bogeys", "Doubles or worse"]);
 });
 
 test("Profile switches to the peak game and back", async ({ analytics }) => {

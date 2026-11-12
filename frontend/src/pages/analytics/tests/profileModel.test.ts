@@ -11,6 +11,7 @@ import {
   goalFigures,
   peakNote,
   peakRow,
+  saverShareLabel,
   saversHeading,
   saverStrokes,
 } from "../profilePresent";
@@ -28,10 +29,22 @@ describe("goalStandingFrom", () => {
       progressPct: null,
       onTrack: false,
       lowestScore: null,
-      roundsMeetingGoal: null,
       attempts: [],
       savers: [],
     });
+  });
+
+  it("shows the analytics' lowest round as Best until the report has its own", () => {
+    expect(goalStandingFrom(79, null, 86)?.lowestScore).toBe(86);
+    expect(goalStandingFrom(89, labGoalReport, 70)?.lowestScore).toBe(labGoalReport.lowest_score);
+  });
+
+  it("keeps the last twelve scores and the three biggest savings", () => {
+    const attempts = Array.from({ length: 15 }, (_, i) => ({ round_id: `r${i}`, score: 80 + i, met_goal: false }));
+    const savers = [...labGoalReport.savers, ...labGoalReport.savers];
+    const goal = goalStandingFrom(89, { ...labGoalReport, attempts, savers })!;
+    expect(goal.attempts.map((attempt) => attempt.score)).toEqual(attempts.slice(-12).map((attempt) => attempt.score));
+    expect(goal.savers.map((saver) => saver.kind)).toEqual(labGoalReport.savers.slice(0, 3).map((saver) => saver.type));
   });
 
   it("keeps the server's savers as they came", () => {
@@ -62,7 +75,6 @@ describe("the server's figures", () => {
     const peak = peakGameFrom(labAnalytics, 89, labGoalReport)!;
     expect(peak.rounds[0]).toEqual({ roundId: "lab-6", courseName: "Half Moon Bay", score: 89 });
     expect(peak.average).toBe(89.7);
-    expect(peak.overallAverage).toBe(91.7);
     expect(peak.gapToGoal).toBe(0.7);
     // Before the goal's report loads, the peak stands without a gap.
     expect(peakGameFrom(labAnalytics, 89, null)?.gapToGoal).toBeNull();
@@ -102,20 +114,23 @@ describe("profilePresent", () => {
   it("words the goal's figures and the strokes to find", () => {
     const goal = goalStandingFrom(89, labGoalReport)!;
     expect(goalFigures(goal)).toEqual([
-      { label: "Average", value: "91.7", tone: null },
+      { label: "Average", value: "91.7", tone: "neutral" },
       { label: "Best", value: "89", tone: "good" },
       { label: "To go", value: "2.7", tone: "bad" },
     ]);
-    expect(goalFigures({ ...goal, gap: -1.2 })[2]).toEqual({ label: "Under by", value: "1.2", tone: "good" });
+    // Met is the server's call: on track, the gap reads as how far under.
+    expect(goalFigures({ ...goal, gap: -1.2, onTrack: true })[2]).toEqual({ label: "Under by", value: "1.2", tone: "good" });
     expect(saversHeading(goal)).toBe("Where to find 2.7 strokes");
-    expect(saversHeading({ ...goal, gap: 0 })).toBeNull();
+    expect(saversHeading({ ...goal, gap: 0, onTrack: true })).toBeNull();
+    expect(saverShareLabel(goal.savers[1])).toBe(`${goal.savers[1].headline}: 33% of the gap`);
     expect(saverStrokes(goal.savers[0])).toMatch(/^\u2212/);
   });
 
   it("words the peak game against the goal", () => {
     const peak = peakGameFrom(labAnalytics, 89, labGoalReport)!;
-    expect(peakNote(peak, 89)).toEqual({ lead: "best 3", verdict: "0.7 off 90", met: false });
-    expect(peakNote({ ...peak, meetsGoal: true }, 89)).toEqual({ lead: "best 3", verdict: "breaks 90", met: true });
+    expect(peakNote(peak, 89)).toEqual({ lead: "best 3 · ", verdict: "0.7 off 90", tone: "bad" });
+    expect(peakNote({ ...peak, meetsGoal: true }, 89)).toEqual({ lead: "best 3 · ", verdict: "breaks 90", tone: "good" });
+    expect(peakNote({ ...peak, meetsGoal: null }, 89)).toEqual({ lead: "best 3", verdict: null, tone: "neutral" });
     expect(peakRow(labAnalytics.peak_game!.impacts[1])).toEqual({ label: "Bogeys", peak: "8.0", average: "9.2", gained: "+1.2" });
   });
 });

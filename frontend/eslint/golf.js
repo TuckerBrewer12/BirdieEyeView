@@ -217,7 +217,7 @@ const noShadowedGolfType = {
 };
 
 /** The words a missing course name falls back to. */
-const COURSE_FALLBACK = /^unknown course$/i;
+const COURSE_FALLBACK = /^(?:unknown|unnamed|untitled) course$/i;
 
 const noCourseFallback = {
   meta: {

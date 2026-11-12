@@ -123,3 +123,8 @@ export function parTypesFrom(rows: readonly ParTypeComparisonDto[]): ParTypeComp
     verdict: row.verdict,
   }));
 }
+
+/** A handicap benchmark by name: "Scratch" for 0, else "10 handicap". */
+export function handicapName(handicap: number): string {
+  return handicap === 0 ? "Scratch" : `${handicap} handicap`;
+}

@@ -264,8 +264,11 @@ export class AnalyticsRobot {
     return this;
   }
 
-  async seesPeakGame(): Promise<this> {
-    await expect(this.visible(this.page.locator("[data-slot=peak-card]"))).toBeVisible();
+  /** The peak card: its lead ("best 3 · breaks 90"), and a row each for the kinds of hole it weighs. */
+  async seesPeakGame(lead: RegExp, rows: string[]): Promise<this> {
+    const card = this.visible(this.page.locator("[data-slot=peak-card]"));
+    await expect(card).toContainText(lead);
+    await expect(card.locator("[data-slot=peak-row]")).toHaveText(rows.map((row) => new RegExp(`^${row}`)));
     return this;
   }
 

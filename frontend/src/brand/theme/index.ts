@@ -11,6 +11,8 @@ export {
   toParFill,
   toParMarkFill,
   verdictFill,
+  verdictTextClass,
+  VERDICT_TEXT,
   toParLabel,
   scoreKindLabel,
   toParDisplay,

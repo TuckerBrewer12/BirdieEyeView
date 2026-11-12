@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { populatedDashboard } from "@/testing/fixtures/dashboard";
-import { shortGamePointsFrom, trendPointsFrom } from "../trend";
+import { formatPercent } from "../format";
+import { averageLine, moveOf, shortGamePointsFrom, trendPointsFrom } from "../trend";
 
 describe("trendPointsFrom", () => {
   it("joins each round's score with the handicap after it", () => {
@@ -59,5 +60,22 @@ describe("shortGamePointsFrom", () => {
       { roundIndex: 2, roundId: "b", scrambling: null, upAndDown: null },
       { roundIndex: 3, roundId: "c", scrambling: 100, upAndDown: 0 },
     ]);
+  });
+});
+
+describe("averageLine", () => {
+  it("labels the average, in the trend's own figures", () => {
+    expect(averageLine(75)).toEqual({ value: 75, label: "Avg 75.0" });
+    expect(averageLine(41.6, formatPercent)).toEqual({ value: 41.6, label: "Avg 42%" });
+    expect(averageLine(null)).toBeNull();
+  });
+});
+
+describe("moveOf", () => {
+  it("gives the way a figure moved and how far, unsigned, and nothing for no move", () => {
+    expect(moveOf(-1.64)).toEqual({ direction: "down", amount: "1.6" });
+    expect(moveOf(3, String)).toEqual({ direction: "up", amount: "3" });
+    expect(moveOf(0)).toEqual({ direction: null, amount: "" });
+    expect(moveOf(null)).toEqual({ direction: null, amount: "" });
   });
 });

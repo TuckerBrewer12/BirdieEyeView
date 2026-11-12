@@ -38,8 +38,6 @@ export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
       average_putts: null,
       three_putts_per_round: null,
       three_putt_rate: null,
-      scoring_average_change: null,
-      scoring_average_verdict: null,
     },
     score_trend: [],
     net_score_trend: [],

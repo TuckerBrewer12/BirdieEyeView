@@ -47,21 +47,29 @@ export interface GoalStanding {
   /** Average minus goal, in strokes a round. Zero or less once the average meets it. */
   gap: number | null;
   progressPct: number | null;
+  /** The average meets the goal, as the server judged it. False before the report loads. */
   onTrack: boolean;
   /** The lowest full round in the window, a record: not the round list's best, which goes by to par. */
   lowestScore: number | null;
-  /** Rounds in the window at or under the goal. Null before the report loads. */
-  roundsMeetingGoal: number | null;
-  /** Each scored round in the window, oldest first, marked met or not. Empty before the report loads. */
+  /** The last {@link ATTEMPTS_SHOWN} scored rounds, oldest first, marked met or not. Empty before the report loads. */
   attempts: GoalAttempt[];
-  /** Biggest saving first, as the server ranked them. */
+  /** The {@link SAVERS_SHOWN} biggest savings, biggest first, as the server ranked them. */
   savers: Saver[];
 }
 
-/** Null until the golfer sets a goal. Before the report loads, the goal stands with no figures. */
+/** The scores the goal chart shows: the last twelve. */
+export const ATTEMPTS_SHOWN = 12;
+/** The places to find strokes the profile shows: the three biggest. */
+export const SAVERS_SHOWN = 3;
+
+/**
+ * Null until the golfer sets a goal. Before the report loads, the goal stands with no figures but
+ * `lowestScore`, the lowest full round the analytics already have, which needs no goal.
+ */
 export function goalStandingFrom(
   target: number | null | undefined,
   report: GoalReportDto | null | undefined,
+  lowestScore: number | null = null,
 ): GoalStanding | null {
   if (target == null) return null;
   return {
@@ -70,10 +78,9 @@ export function goalStandingFrom(
     gap: report?.gap ?? null,
     progressPct: report?.progress_pct ?? null,
     onTrack: report?.on_track ?? false,
-    lowestScore: report?.lowest_score ?? null,
-    roundsMeetingGoal: report?.rounds_meeting_goal ?? null,
-    attempts: goalAttemptsFrom(report?.attempts ?? []),
-    savers: (report?.savers ?? []).map((saver) => ({
+    lowestScore: report?.lowest_score ?? lowestScore,
+    attempts: goalAttemptsFrom(report?.attempts ?? []).slice(-ATTEMPTS_SHOWN),
+    savers: (report?.savers ?? []).slice(0, SAVERS_SHOWN).map((saver) => ({
       kind: saver.type,
       strokesSaved: saver.strokes_saved,
       shareOfGap: saver.percentage_of_gap,
@@ -109,7 +116,6 @@ export interface PeakRound {
 export interface PeakGame {
   rounds: PeakRound[];
   average: number;
-  overallAverage: number | null;
   /** The goal report's peak average less the goal. Null until it loads. */
   gapToGoal: number | null;
   /** Whether the best rounds' average already meets the goal, as the goal report judged it. Null until it loads. */
@@ -118,7 +124,7 @@ export interface PeakGame {
 
 /** Null until a goal is set and the server has a peak game, which takes two scored rounds. */
 export function peakGameFrom(
-  analytics: Pick<ProfileAnalytics, "peak_game" | "kpis">,
+  analytics: Pick<ProfileAnalytics, "peak_game">,
   target: number | null,
   report: GoalReportDto | null | undefined,
 ): PeakGame | null {
@@ -127,7 +133,6 @@ export function peakGameFrom(
   return {
     rounds: peak.rounds.map((round) => ({ roundId: round.round_id, courseName: round.course_name, score: round.score })),
     average: peak.average,
-    overallAverage: analytics.kpis.scoring_average,
     gapToGoal: report?.peak_gap ?? null,
     meetsGoal: report?.peak_meets_goal ?? null,
   };

@@ -1,42 +1,45 @@
 import { ArrowDown } from "lucide-react";
 import { cn } from "@/brand/cn";
-import { Button, Card, CardTitle, PickerMenu, RadarChart, StatValue, ToggleGroup, ToggleGroupItem } from "@/brand";
-import type { Profile } from "../useProfile";
+import { Button, Card, CardAction, CardHeader, CardTitle, PickerMenu, RadarChart, StatValue, ToggleGroup, ToggleGroupItem } from "@/brand";
+import { verdictTextClass } from "@/brand/theme";
+import type { ProfileViewModel } from "../useProfileViewModel";
 import {
   RADAR_MODES,
   comparisonFromKey,
   comparisonKey,
   comparisonName,
   comparisonOptions,
+  SHAPE_COPY,
   friendNote,
-  gapPoints,
+  shapeLabel,
   standingGroups,
+  standingLines,
 } from "../profilePresent";
-
-const GROUP_TONE = { good: "text-primary", bad: "text-score-bogey" } as const;
 
 /**
  * The golfer's shape on the radar against a handicap, a friend or their peak: the axes ahead and
  * behind beside it, and a way down to where the strokes are.
  */
-export function ShapeCard({ profile, improveId }: { profile: Profile; improveId: string | null }) {
+export function ShapeCard({ profile, improveId }: { profile: ProfileViewModel; improveId: string | null }) {
   const name = comparisonName(profile.radarMode, profile.comparison, profile.selectedFriend);
   const note = profile.friendComparison ? friendNote(profile.friendComparison, profile.selectedFriend) : null;
   const options = comparisonOptions(profile.friends);
   const { ahead, judged } = profile.standing;
   const showStanding = profile.compared && judged > 0;
+  const lines = standingLines(judged, name);
 
   return (
     <Card size="lg" data-slot="shape-card" className="@container gap-4 px-(--card-spacing)">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* The card's own padding holds the radar's container, so the header takes none of its own. */}
+      <CardHeader className="items-center px-0">
         <CardTitle level={2} className="text-body-lg font-semibold">
-          Player profile
+          {SHAPE_COPY.title}
         </CardTitle>
-        <div className="flex items-center gap-2">
+        <CardAction wrap className="flex items-center gap-2">
           {profile.peakAvailable && (
             <ToggleGroup
               size="sm"
-              aria-label="Your numbers"
+              aria-label={SHAPE_COPY.mode}
               value={[profile.radarMode]}
               onValueChange={(values: string[]) => {
                 const next = RADAR_MODES.find((mode) => mode.value === values[0]);
@@ -52,9 +55,9 @@ export function ShapeCard({ profile, improveId }: { profile: Profile; improveId:
           )}
           {profile.radarMode === "benchmark" && profile.comparison != null && (
             <PickerMenu
-              aria-label="Compare with"
+              aria-label={SHAPE_COPY.compareWith}
               size="sm"
-              prefix="vs"
+              prefix={SHAPE_COPY.compareWithPrefix}
               label={name ?? ""}
               value={comparisonKey(profile.comparison, profile.selectedFriend)}
               options={options}
@@ -64,15 +67,15 @@ export function ShapeCard({ profile, improveId }: { profile: Profile; improveId:
               }}
             />
           )}
-        </div>
-      </div>
+        </CardAction>
+      </CardHeader>
 
       {note && <p className="text-body text-muted-foreground">{note}</p>}
 
       <div className="flex flex-col gap-5 @3xl:flex-row @3xl:items-center @3xl:gap-8">
         <RadarChart
           className="@3xl:max-w-radar"
-          aria-label={name ? `Your shape against ${name}` : "Your shape"}
+          aria-label={shapeLabel(name)}
           benchmarkTone={profile.comparison === "friend" && profile.radarMode === "benchmark" ? "friend" : "benchmark"}
           axes={profile.radar.map((entry) => ({
             label: entry.axis,
@@ -82,7 +85,7 @@ export function ShapeCard({ profile, improveId }: { profile: Profile; improveId:
             valueLabel: entry.userRaw,
             benchmarkLabel: entry.benchRaw,
           }))}
-          empty="Play a few more rounds to see your shape."
+          empty={SHAPE_COPY.empty}
         />
 
         {showStanding && (
@@ -90,17 +93,17 @@ export function ShapeCard({ profile, improveId }: { profile: Profile; improveId:
             <div className="flex flex-col gap-1">
               <span className="flex items-baseline gap-1.5">
                 <StatValue size="card">{ahead.length}</StatValue>
-                <span className="text-body-lg font-semibold text-muted-foreground">of {judged}</span>
+                <span className="text-body-lg font-semibold text-muted-foreground">{lines.of}</span>
               </span>
-              <span className="text-body text-foreground-secondary">areas ahead of {name}</span>
+              <span className="text-body text-foreground-secondary">{lines.ahead}</span>
             </div>
             {standingGroups(profile.standing).map((group) => (
               <div key={group.title} className="flex flex-col gap-2 border-t border-border pt-3">
-                <span className={cn("text-eyebrow uppercase", GROUP_TONE[group.tone])}>{group.title}</span>
+                <span className={cn("text-eyebrow uppercase", verdictTextClass(group.tone))}>{group.title}</span>
                 {group.rows.map((row) => (
                   <div key={row.axis} className="flex justify-between text-body-lg">
                     <span>{row.axis}</span>
-                    <b className={GROUP_TONE[group.tone]}>{gapPoints(row)}</b>
+                    <b className={verdictTextClass(group.tone)}>{row.gap}</b>
                   </div>
                 ))}
               </div>
@@ -110,7 +113,7 @@ export function ShapeCard({ profile, improveId }: { profile: Profile; improveId:
                 className="self-start"
                 onClick={() => document.getElementById(improveId)?.scrollIntoView({ behavior: "smooth" })}
               >
-                See how to improve
+                {SHAPE_COPY.improve}
                 <ArrowDown data-icon="inline-end" />
               </Button>
             )}

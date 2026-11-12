@@ -20,7 +20,7 @@ export function ScoreMixDonut({ mix, className }: ScoreMixDonutProps) {
 
   // Slices keep score order, eagle first, clockwise from the top.
   const slices = pie<ScoreMixEntry>()
-    .value((entry) => mix[entry.kind])
+    .value((entry) => entry.value)
     .sortValues(null)
     .padAngle(padAngle)(entries);
   const slice = arc<PieArcDatum<ScoreMixEntry>>().innerRadius(inner).outerRadius(outer).cornerRadius(corner);

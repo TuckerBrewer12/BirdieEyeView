@@ -7,7 +7,7 @@ const LABEL_SHARE = 8;
 
 interface ShareSegment {
   key: string;
-  /** Percent of the whole, 0–100. */
+  /** Its part of the whole: a percent, or any measure the segments share, such as a count of holes. */
   share: number;
   /** The score colour it is painted in: a one-putt reads as a birdie, a three-putt as a bogey. */
   tone: ScoreKey;
@@ -19,6 +19,8 @@ interface ShareBarProps {
   segments: ShareSegment[];
   /** `sm` is a thin bar; `lg` is tall enough to print each share inside it. */
   size?: "sm" | "lg";
+  /** What the bar says to a screen reader, when the shares aren't percents: "Score mix: 10 pars, …". */
+  "aria-label"?: string;
   className?: string;
 }
 
@@ -27,14 +29,14 @@ interface ShareBarProps {
  * score, the putts on a hole. The tall bar prints each share inside its segment where it fits.
  * Shares of none are left out, so a seam never stands for nothing.
  */
-function ShareBar({ segments, size = "lg", className }: ShareBarProps) {
+function ShareBar({ segments, size = "lg", "aria-label": ariaLabel, className }: ShareBarProps) {
   const shown = segments.filter((segment) => segment.share > 0);
   if (shown.length === 0) return null;
   return (
     <div
       data-slot="share-bar"
       role="img"
-      aria-label={shown.map((segment) => `${segment.label} ${formatPercent(segment.share)}`).join(", ")}
+      aria-label={ariaLabel ?? shown.map((segment) => `${segment.label} ${formatPercent(segment.share)}`).join(", ")}
       className={cn(
         "flex gap-0.5 overflow-hidden",
         size === "lg" ? "h-6 rounded-md" : "h-2 rounded-sm",

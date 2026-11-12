@@ -1,4 +1,5 @@
 import { cva } from "class-variance-authority";
+import { VERDICT_TEXT } from "@/brand/theme/score";
 
 const statVariants = cva("flex flex-col gap-1", {
   variants: {
@@ -32,9 +33,16 @@ const statValueVariants = cva("flex items-baseline gap-1 leading-none tabular-nu
       /** The one number a screen leads with. */
       xl: "text-6xl font-bold tracking-hero",
     },
+    /** The server's verdict on the figure: met a goal, ahead of a mark. Neutral keeps the card's ink. */
+    tone: {
+      good: VERDICT_TEXT.good,
+      bad: VERDICT_TEXT.bad,
+      neutral: "",
+    },
   },
   defaultVariants: {
     size: "md",
+    tone: "neutral",
   },
 });
 
@@ -42,9 +50,8 @@ const statValueVariants = cva("flex items-baseline gap-1 leading-none tabular-nu
 const statDeltaVariants = cva("inline-flex items-center gap-1 text-body-sm font-bold whitespace-nowrap", {
   variants: {
     tone: {
-      // A good move reads in the brand's green, as every figure card on the soft surface has it.
-      good: "text-primary",
-      bad: "text-score-bogey",
+      good: VERDICT_TEXT.good,
+      bad: VERDICT_TEXT.bad,
       neutral: "text-muted-foreground",
     },
     pill: {

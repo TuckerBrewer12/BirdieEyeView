@@ -99,7 +99,7 @@ export const sampleGolfer = {
         "verdict": "good"
       }
     ],
-    "kpis": {"average_putts": 32.7, "best_round": 75, "best_round_course": "Presidio Golf Course", "best_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "gir_percentage": 33.1, "handicap_index": 7.0, "putts_per_gir": 2.02, "scoring_average": 82.9, "scoring_average_change": -3.9, "scoring_average_verdict": "good", "scrambling_percentage": 31.6, "three_putt_rate": 13.2, "three_putts_per_round": 2.4, "total_rounds": 24, "up_and_down_percentage": 39.5},
+    "kpis": {"average_putts": 32.7, "best_round": 75, "best_round_course": "Presidio Golf Course", "best_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "gir_percentage": 33.1, "handicap_index": 7.0, "putts_per_gir": 2.02, "scoring_average": 82.9, "scrambling_percentage": 31.6, "three_putt_rate": 13.2, "three_putts_per_round": 2.4, "total_rounds": 24, "up_and_down_percentage": 39.5},
     "net_score_trend": [
       {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 81, "net_score": 74, "rolling_average": 74.0, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "to_par": 9},
       {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 88, "net_score": 81, "rolling_average": 77.5, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "to_par": 16},
@@ -1099,7 +1099,7 @@ export const sampleGolfer = {
           "verdict": null
         }
       ],
-      "kpis": {"average_putts": 33.0, "best_round": 81, "best_round_course": "Half Moon Bay Golf Links", "best_round_id": "fab7f282-178f-506b-9713-9764f5104099", "gir_percentage": 29.2, "handicap_index": 7.0, "putts_per_gir": 2.19, "scoring_average": 85.0, "scoring_average_change": null, "scoring_average_verdict": null, "scrambling_percentage": 24.8, "three_putt_rate": 15.3, "three_putts_per_round": 2.8, "total_rounds": 4, "up_and_down_percentage": 40.5},
+      "kpis": {"average_putts": 33.0, "best_round": 81, "best_round_course": "Half Moon Bay Golf Links", "best_round_id": "fab7f282-178f-506b-9713-9764f5104099", "gir_percentage": 29.2, "handicap_index": 7.0, "putts_per_gir": 2.19, "scoring_average": 85.0, "scrambling_percentage": 24.8, "three_putt_rate": 15.3, "three_putts_per_round": 2.8, "total_rounds": 4, "up_and_down_percentage": 40.5},
       "net_score_trend": [
         {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 90, "net_score": 83, "rolling_average": 83.0, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "to_par": 18},
         {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 86, "net_score": 79, "rolling_average": 81.0, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "to_par": 14},

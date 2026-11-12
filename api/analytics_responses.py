@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional
 from analytics import dashboard
 from analytics import handicap as hcap
 from analytics import stats as analytics
-from analytics import verdicts
 from analytics import benchmarks
 from analytics.benchmarks import player_shape
 from analytics.headline import headline
@@ -65,7 +64,6 @@ def analytics_response(
     average_putts = _average([r["total_putts"] for r in putts_rows if r["total_putts"] is not None])
     three_putts = analytics.three_putt_averages(rounds)
     shape = player_shape(rounds) or {}
-    scoring_change = dashboard.scoring_average_change(rounds, full_window=True)
 
     next_level = benchmarks.next_level_handicap(player_index)
 
@@ -85,8 +83,6 @@ def analytics_response(
         average_putts=analytics.round_half_up(average_putts) if average_putts is not None else None,
         three_putts_per_round=three_putts["per_round"],
         three_putt_rate=three_putts["rate"],
-        scoring_average_change=scoring_change,
-        scoring_average_verdict=verdicts.change_verdict(scoring_change),
     )
 
     return AnalyticsResponse(

@@ -6,6 +6,8 @@ import {
   formatSigned,
   goalScoreToBreak,
   goalTargetLabel,
+  handicapName,
+  formatPercent,
   type ComparisonTargetValue,
   type RadarGap,
   type RadarStanding,
@@ -15,11 +17,6 @@ import type { FriendOption, GoalStanding, PeakGame, PeakImpact, RadarMode, Saver
 /** A friend's name, or a stand-in when the server has none. */
 export function friendName(friend: FriendOption | null): string {
   return friend?.name ?? "Unknown golfer";
-}
-
-/** A handicap benchmark by name: "Scratch", "10 handicap". */
-export function handicapName(handicap: number): string {
-  return handicap === 0 ? "Scratch" : `${handicap} handicap`;
 }
 
 /** The menu's key for a comparison: "handicap:10", "friend:<id>". */
@@ -65,21 +62,33 @@ export function goalLabel(target: number | null): string | null {
   return target != null ? goalTargetLabel(target) : null;
 }
 
-/** The goal card's three figures. `tone` colours the last: still to go, or met. */
-export function goalFigures(goal: GoalStanding): { label: string; value: string; tone: "good" | "bad" | null }[] {
+/** The goal card's words. */
+export const GOAL_COPY = {
+  title: "Goal",
+  pick: "Pick a goal",
+  empty: "Pick a score to break and see how far off it you are.",
+} as const;
+
+/** "Progress to Break 80", the meter's name. */
+export function goalProgressLabel(label: string | null): string {
+  return `Progress to ${label ?? "the goal"}`;
+}
+
+/** The goal card's three figures. `tone` colours the last: met, by the server's `on_track`, or still to go. */
+export function goalFigures(goal: GoalStanding): { label: string; value: string; tone: "good" | "bad" | "neutral" }[] {
   const gap = goal.gap;
   return [
-    { label: "Average", value: formatOneDecimal(goal.average), tone: null },
+    { label: "Average", value: formatOneDecimal(goal.average), tone: "neutral" },
     { label: "Best", value: goal.lowestScore != null ? String(goal.lowestScore) : "—", tone: "good" },
-    gap != null && gap <= 0
-      ? { label: "Under by", value: formatOneDecimal(Math.abs(gap)), tone: "good" }
-      : { label: "To go", value: formatOneDecimal(gap), tone: gap != null ? "bad" : null },
+    goal.onTrack
+      ? { label: "Under by", value: formatOneDecimal(gap != null ? Math.abs(gap) : null), tone: "good" }
+      : { label: "To go", value: formatOneDecimal(gap), tone: gap != null ? "bad" : "neutral" },
   ];
 }
 
-/** "Where to find 3.9 strokes", over the savers. Null once the goal is met. */
+/** "Where to find 3.9 strokes", over the savers. Null before the report, and once the goal is met. */
 export function saversHeading(goal: GoalStanding): string | null {
-  if (goal.gap == null || goal.gap <= 0) return null;
+  if (goal.gap == null || goal.onTrack) return null;
   return `Where to find ${formatOneDecimal(goal.gap)} strokes`;
 }
 
@@ -93,9 +102,29 @@ export function saverStrokes(saver: Saver): string {
   return formatSigned(-saver.strokesSaved);
 }
 
-/** "4 of 6", over "areas ahead of 10 handicap". */
-export function aheadHeadline(ahead: number, judged: number): { count: string; of: string } {
-  return { count: String(ahead), of: `of ${judged}` };
+/** "Cut out 3-putts: 40% of the gap", the saver's meter's name. */
+export function saverShareLabel(saver: Saver): string {
+  return `${saver.headline}: ${formatPercent(saver.shareOfGap)} of the gap`;
+}
+
+/** The shape card's words. */
+export const SHAPE_COPY = {
+  title: "Player profile",
+  mode: "Your numbers",
+  compareWith: "Compare with",
+  compareWithPrefix: "vs",
+  empty: "Play a few more rounds to see your shape.",
+  improve: "See how to improve",
+} as const;
+
+/** The radar's name: "Your shape against 15 handicap". */
+export function shapeLabel(name: string | null): string {
+  return name ? `Your shape against ${name}` : "Your shape";
+}
+
+/** Beside the axes ahead: "of 6", then "areas ahead of 15 handicap". */
+export function standingLines(judged: number, name: string | null): { of: string; ahead: string } {
+  return { of: `of ${judged}`, ahead: `areas ahead of ${name ?? "the comparison"}` };
 }
 
 /** "+19 pts". */
@@ -103,13 +132,22 @@ export function gapPoints(gap: RadarGap): string {
   return `${formatSigned(gap.points, 0)} pts`;
 }
 
+/** The peak card's words: its title, and the table's columns. */
+export const PEAK_COPY = {
+  title: "Peak game",
+  columns: ["Per round", "Peak", "Average", "Gained"],
+} as const;
+
 /** The peak card's headline: "best 3 · breaks 80", or how far off it is. */
-export function peakNote(peak: PeakGame, target: number): { lead: string; verdict: string | null; met: boolean } {
+export function peakNote(
+  peak: PeakGame,
+  target: number,
+): { lead: string; verdict: string | null; tone: "good" | "bad" | "neutral" } {
   const lead = `best ${peak.rounds.length}`;
-  if (peak.meetsGoal == null) return { lead, verdict: null, met: false };
+  if (peak.meetsGoal == null) return { lead, verdict: null, tone: "neutral" };
   return peak.meetsGoal
-    ? { lead, verdict: `breaks ${goalScoreToBreak(target)}`, met: true }
-    : { lead, verdict: `${formatOneDecimal(peak.gapToGoal)} off ${goalScoreToBreak(target)}`, met: false };
+    ? { lead: `${lead} · `, verdict: `breaks ${goalScoreToBreak(target)}`, tone: "good" }
+    : { lead: `${lead} · `, verdict: `${formatOneDecimal(peak.gapToGoal)} off ${goalScoreToBreak(target)}`, tone: "bad" };
 }
 
 /** A peak round's course. */
@@ -146,10 +184,14 @@ export function attemptsLabel(count: number, target: number): string {
   return `Last ${count} scores against the ${goalTargetLabel(target).toLowerCase()} goal`;
 }
 
-/** The axes ahead, then behind, each group with the tone its figures read in. Empty groups are left out. */
-export function standingGroups(standing: RadarStanding): { title: string; rows: RadarGap[]; tone: "good" | "bad" }[] {
+/** The axes ahead, then behind, each with its gap worded and the tone it reads in. Empty groups are left out. */
+export function standingGroups(
+  standing: RadarStanding,
+): { title: string; rows: { axis: string; gap: string }[]; tone: "good" | "bad" }[] {
   return [
     { title: "Ahead", rows: standing.ahead, tone: "good" as const },
     { title: "Behind", rows: standing.behind, tone: "bad" as const },
-  ].filter((group) => group.rows.length > 0);
+  ]
+    .filter((group) => group.rows.length > 0)
+    .map((group) => ({ ...group, rows: group.rows.map((row) => ({ axis: row.axis, gap: gapPoints(row) })) }));
 }

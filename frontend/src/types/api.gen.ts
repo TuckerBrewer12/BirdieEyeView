@@ -733,10 +733,6 @@ export interface components {
             putts_per_gir: number | null;
             /** Scoring Average */
             scoring_average: number | null;
-            /** Scoring Average Change */
-            scoring_average_change: number | null;
-            /** Scoring Average Verdict */
-            scoring_average_verdict: ("good" | "bad" | "neutral") | null;
             /** Scrambling Percentage */
             scrambling_percentage: number | null;
             /** Three Putt Rate */

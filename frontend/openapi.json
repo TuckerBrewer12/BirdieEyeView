@@ -330,33 +330,6 @@
             ],
             "title": "Scoring Average"
           },
-          "scoring_average_change": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scoring Average Change"
-          },
-          "scoring_average_verdict": {
-            "anyOf": [
-              {
-                "enum": [
-                  "good",
-                  "bad",
-                  "neutral"
-                ],
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scoring Average Verdict"
-          },
           "scrambling_percentage": {
             "anyOf": [
               {
@@ -420,9 +393,7 @@
           "best_round_course",
           "average_putts",
           "three_putts_per_round",
-          "three_putt_rate",
-          "scoring_average_change",
-          "scoring_average_verdict"
+          "three_putt_rate"
         ],
         "title": "AnalyticsKpis",
         "type": "object"

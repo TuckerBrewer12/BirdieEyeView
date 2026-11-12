@@ -1,12 +1,13 @@
-import type { Column, ShareLegendItem, ShareSegment, StatDirection, TrendAreaPoint } from "@/brand";
+import type { Column, ShareSegment, StatDirection, TrendAreaPoint } from "@/brand";
 import {
   formatAverageToPar,
   formatOneDecimal,
   formatPercent,
+  courseLabel,
   formatWhole,
+  handicapName,
+  moveOf,
   pluralize,
-  SCORE_KINDS,
-  scoreKindLabel,
   type ParTypeComparison,
   type ScoreMix,
 } from "@/domain";
@@ -51,7 +52,7 @@ export function courseOptions(playedCourses: readonly PlayedCourse[], hasHomeCou
   return [
     { value: "all", label: "All courses" },
     ...(hasHomeCourse ? [{ value: "home", label: "Home course" }] : []),
-    ...playedCourses.map((course) => ({ value: course.id, label: course.name ?? "Unnamed course" })),
+    ...playedCourses.map((course) => ({ value: course.id, label: courseLabel(course.name) })),
   ];
 }
 
@@ -69,8 +70,8 @@ export interface HeadlineTile {
   metric: HeadlineFigure["metric"];
   label: string;
   value: string;
-  /** The move, unsigned, beside the triangle; null under five rounds. */
-  change: string | null;
+  /** The move, unsigned, beside the triangle; empty under five rounds or when it didn't move. */
+  delta: string;
   direction: StatDirection | null;
   tone: "good" | "bad" | "neutral";
   trend: number[];
@@ -86,23 +87,17 @@ const HEADLINE_LABEL: Record<HeadlineFigure["metric"], string> = {
 
 const PERCENT_METRICS = new Set<HeadlineFigure["metric"]>(["gir_percentage", "scrambling_percentage", "three_putt_rate"]);
 
-function directionOf(change: number | null): StatDirection | null {
-  if (change == null) return null;
-  if (change === 0) return "flat";
-  return change > 0 ? "up" : "down";
-}
-
 /** The headline's tiles, in the server's order. */
 export function headlineTiles(figures: readonly HeadlineFigure[]): HeadlineTile[] {
   return figures.map((figure) => {
     const percent = PERCENT_METRICS.has(figure.metric);
-    const change = figure.change == null ? null : Math.abs(figure.change);
+    const move = moveOf(figure.change, percent ? formatWhole : formatOneDecimal);
     return {
       metric: figure.metric,
       label: HEADLINE_LABEL[figure.metric],
       value: percent ? formatPercent(figure.value) : formatOneDecimal(figure.value),
-      change: change == null || change === 0 ? null : percent ? formatWhole(change) : formatOneDecimal(change),
-      direction: directionOf(figure.change),
+      delta: move.amount,
+      direction: move.direction,
       tone: figure.verdict ?? "neutral",
       trend: figure.trend,
     };
@@ -110,8 +105,8 @@ export function headlineTiles(figures: readonly HeadlineFigure[]): HeadlineTile[
 }
 
 /** The phone shows four tiles: scrambling has its own bar under Ball striking. */
-export function onPhone(tile: HeadlineTile): boolean {
-  return tile.metric !== "scrambling_percentage";
+export function onPhone(metric: HeadlineTile["metric"]): boolean {
+  return metric !== "scrambling_percentage";
 }
 
 /** A figure each round for the trend chart: the round's figure, then its five-round average. */
@@ -125,53 +120,9 @@ export function seriesPoints(series: readonly RoundSeriesPoint[], format: (value
   }));
 }
 
-/** The dashed line across a trend: the average over every round shown. */
-export function averageLine(
-  average: number | null | undefined,
-  format: (value: number) => string,
-): { value: number; label: string } | null {
-  return average != null ? { value: average, label: `Avg ${format(average)}` } : null;
-}
-
 export const formatScore = formatOneDecimal;
 export const formatPutts = formatOneDecimal;
 export const formatGreens = (value: number) => formatPercent(value);
-
-/** A score mix as share-bar segments; triples and worse fold into one, as the legend reads. */
-export function mixSegments(mix: ScoreMix): ShareSegment[] {
-  return SCORE_KINDS.flatMap((kind) => {
-    if (kind === "quad") return [];
-    const folded = kind === "triple";
-    return [
-      {
-        key: kind,
-        share: folded ? mix.triple + mix.quad : mix[kind],
-        tone: kind,
-        label: folded ? `${scoreKindLabel(kind)}+` : scoreKindLabel(kind),
-      },
-    ];
-  });
-}
-
-/** The score mix's legend: each kind with its share, the empty ones left out. */
-export function mixLegend(mix: ScoreMix, withFigures: boolean): ShareLegendItem[] {
-  return mixSegments(mix)
-    .filter((segment) => segment.share > 0)
-    .map((segment) => ({
-      key: segment.key,
-      tone: segment.tone,
-      label: segment.label,
-      figure: withFigures ? formatPercent(segment.share) : undefined,
-    }));
-}
-
-/** The legend under the green and approach bars: the kinds any of them show. */
-export function mixesLegend(mixes: readonly ScoreMix[]): ShareLegendItem[] {
-  const shown = new Set(mixes.flatMap((mix) => mixSegments(mix).filter((s) => s.share > 0).map((s) => s.key)));
-  return mixSegments(mixes[0] ?? ({} as ScoreMix))
-    .filter((segment) => shown.has(segment.key))
-    .map((segment) => ({ key: segment.key, tone: segment.tone, label: segment.label }));
-}
 
 /** "Par 4". */
 export function parLabel(par: number): string {
@@ -214,10 +165,10 @@ export function parTypeBars(rows: readonly ParTypeComparison[]): ParTypeBar[] {
   );
 }
 
-/** "Tick = 10 handicap", under the par bars. */
+/** "Tick = 10 handicap", "Tick = scratch", under the par bars. */
 export function benchmarkNote(handicap: number | null): string | null {
   if (handicap == null) return null;
-  return handicap === 0 ? "Tick = scratch" : `Tick = ${handicap} handicap`;
+  return `Tick = ${handicapName(handicap).toLowerCase()}`;
 }
 
 /** The holes by handicap as columns, the server's hardest three marked. */
@@ -289,9 +240,9 @@ export interface BucketCard {
   /** "+0.56". */
   toPar: string;
   greens: string;
-  worst: boolean;
+  /** The band the golfer scores worst from, as the server marked it, reads bad. */
+  tone: "bad" | "neutral";
   mix: ScoreMix;
-  segments: ShareSegment[];
 }
 
 export function bucketCards(buckets: readonly YardageBucket[], par: number): BucketCard[] {
@@ -303,9 +254,8 @@ export function bucketCards(buckets: readonly YardageBucket[], par: number): Buc
       holes: holesLabel(bucket.holes),
       toPar: formatAverageToPar(bucket.averageToPar),
       greens: formatPercent(bucket.girPercent),
-      worst: bucket.worst,
+      tone: bucket.worst ? ("bad" as const) : ("neutral" as const),
       mix: bucket.mix,
-      segments: mixSegments(bucket.mix),
     }));
 }
 
@@ -317,14 +267,7 @@ export function threePuttAverage(perRound: number | null): string {
 }
 
 /** The phone's putting figures over the section: putts a round and three-putt rate with their moves, and putts a green. */
-export function puttingFigures(analytics: Analytics): {
-  key: string;
-  label: string;
-  value: string;
-  change: string | null;
-  direction: StatDirection | null;
-  tone: HeadlineTile["tone"];
-}[] {
+export function puttingFigures(analytics: Analytics): (Omit<HeadlineTile, "metric" | "trend"> & { key: string })[] {
   const tiles = headlineTiles(analytics.headline);
   const putts = tiles.find((tile) => tile.metric === "average_putts");
   const threes = tiles.find((tile) => tile.metric === "three_putt_rate");
@@ -334,7 +277,7 @@ export function puttingFigures(analytics: Analytics): {
       key: "putts_per_gir",
       label: "Putts / GIR",
       value: formatOneDecimal(analytics.kpis.putts_per_gir),
-      change: null,
+      delta: "",
       direction: null,
       tone: "neutral" as const,
     },

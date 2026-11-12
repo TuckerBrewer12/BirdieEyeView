@@ -103,6 +103,16 @@ export function toParFill(toPar: number | null): string {
   return color.score[toParKind(toPar)].base;
 }
 
+/**
+ * A server verdict as text ink: good in the brand's green, as every figure card on the soft
+ * surface has it, bad like a bogey. Neutral, or no verdict, keeps the ink around it.
+ */
+export const VERDICT_TEXT = { good: "text-primary", bad: "text-score-bogey", neutral: "" } as const;
+
+export function verdictTextClass(verdict: "good" | "bad" | "neutral" | null | undefined): string {
+  return VERDICT_TEXT[verdict ?? "neutral"];
+}
+
 /** A server verdict as a fill, for SVG paint: good reads like a birdie, bad like a bogey, neutral as quiet ink. */
 export function verdictFill(verdict: "good" | "bad" | "neutral" | null): string {
   if (verdict === "good") return color.score.birdie.base;

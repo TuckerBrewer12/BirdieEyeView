@@ -3,6 +3,7 @@ import type { CourseAnalytics } from "@/domain/courseAnalytics";
 import { formatCourseName } from "@/domain/course";
 import type { HoleStats } from "@/domain/courseAnalytics";
 import type { RoundSummary } from "@/domain/round";
+import { averageLine, type AverageLine } from "@/domain/trend";
 import { messageFrom } from "@/lib/userFacingErrors";
 import type { CourseDto } from "@/types/api";
 import { coursesRepository, type CoursesRepository } from "../coursesRepository";
@@ -12,7 +13,6 @@ import {
   COURSE_VIEWS,
   HOLE_ORDERS,
   RECENT_ROUNDS,
-  averageLine,
   greensFigures,
   holesInOrder,
   namedTees,
@@ -55,7 +55,7 @@ export interface CourseDetailPageViewModel {
   /** Their rounds here, oldest first: each one's score beside its five-round average. */
   scoreTrend: TrendPoint[];
   /** Their average here, drawn across the trend. */
-  averageLine: { value: number; label: string } | null;
+  averageLine: AverageLine | null;
   /** How each hole plays for them, in course order. */
   courseHoles: HoleStats[];
   /** The same, in the order picked for the hole-by-hole chart. */

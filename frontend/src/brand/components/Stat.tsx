@@ -33,10 +33,11 @@ function StatLabel({
 function StatValue({
   className,
   size = "md",
+  tone = "neutral",
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof statValueVariants>) {
   return (
-    <div data-slot="stat-value" className={cn(statValueVariants({ size, className }))} {...props} />
+    <div data-slot="stat-value" className={cn(statValueVariants({ size, tone, className }))} {...props} />
   );
 }
 
@@ -102,10 +103,10 @@ function StatDelta({
   );
 }
 
-interface StatCardProps extends Omit<React.ComponentProps<"div">, "children"> {
+interface StatTileProps extends Omit<React.ComponentProps<"div">, "children"> {
   label: React.ReactNode;
   value: React.ReactNode;
-  /** The figure across recent rounds, oldest first: drawn as a small line beside the value. */
+  /** The figure across recent rounds, oldest first: drawn as a small line in the tile. */
   trend?: (number | null)[] | null;
   /** The amount it moved, beside the triangle. */
   delta?: React.ReactNode;
@@ -114,12 +115,18 @@ interface StatCardProps extends Omit<React.ComponentProps<"div">, "children"> {
   tone?: StatTone;
   /** What the delta is against ("last 5 vs all"), or a quiet line under the figure. */
   note?: React.ReactNode;
+  /**
+   * `card`: the line beside the value, the delta under it (a {@link StatCard}). `strip`: the delta
+   * beside the value, the line across the tile under it, for a row of tiles in one card. `center`:
+   * the value over its label and delta, centred, no line.
+   */
+  layout?: "card" | "strip" | "center";
 }
 
 const TREND_TONE: Record<StatTone, SparklineTone> = { good: "good", bad: "bad", neutral: "primary" };
 
-/** A KPI tile: the figure, its trend line, and how it moved against the last stretch. */
-function StatCard({
+/** A figure with its label, how it moved, and its line: the inside of a KPI tile, framed by whatever holds it. */
+function StatTile({
   label,
   value,
   trend,
@@ -127,31 +134,70 @@ function StatCard({
   direction = null,
   tone = "neutral",
   note,
+  layout = "card",
   className,
   ...props
-}: StatCardProps) {
-  return (
-    <Card data-slot="stat-card" size="sm" className={className} {...props}>
-      <CardContent className="flex flex-col gap-2">
+}: StatTileProps) {
+  const moved = direction != null || note != null;
+  const move = moved && (
+    <StatDelta direction={direction} tone={tone}>
+      {delta}
+    </StatDelta>
+  );
+  const line = (classes: string) =>
+    trend &&
+    trend.length > 1 && <Sparkline size="compact" className={classes} series={[{ values: trend, tone: TREND_TONE[tone] }]} />;
+
+  if (layout === "center") {
+    return (
+      <div data-slot="stat-tile" className={cn("flex flex-col items-center gap-1", className)} {...props}>
+        <StatValue>{value}</StatValue>
         <StatLabel>{label}</StatLabel>
-        <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
+        {move}
+      </div>
+    );
+  }
+  if (layout === "strip") {
+    return (
+      <div data-slot="stat-tile" className={cn("flex min-w-0 flex-col gap-1.5", className)} {...props}>
+        <StatLabel>{label}</StatLabel>
+        <div className="flex items-baseline gap-2">
           <StatValue size="lg">{value}</StatValue>
-          {trend && (
-            <Sparkline size="compact" className="mb-1 w-24 shrink-0" series={[{ values: trend, tone: TREND_TONE[tone] }]} />
-          )}
+          {move}
         </div>
-        {(direction != null || note != null) && (
-          <div className="flex flex-wrap items-center gap-x-2">
-            <StatDelta direction={direction} tone={tone}>
-              {delta}
-            </StatDelta>
-            {note != null && <StatNote>{note}</StatNote>}
-          </div>
-        )}
+        {line("w-full")}
+      </div>
+    );
+  }
+  return (
+    <div data-slot="stat-tile" className={cn("flex flex-col gap-2", className)} {...props}>
+      <StatLabel>{label}</StatLabel>
+      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
+        <StatValue size="lg">{value}</StatValue>
+        {line("mb-1 w-24 shrink-0")}
+      </div>
+      {moved && (
+        <div className="flex flex-wrap items-center gap-x-2">
+          {move}
+          {note != null && <StatNote>{note}</StatNote>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+type StatCardProps = Omit<StatTileProps, "layout">;
+
+/** A KPI tile: the figure, its trend line, and how it moved against the last stretch. */
+function StatCard({ className, ...props }: StatCardProps) {
+  return (
+    <Card data-slot="stat-card" size="sm" className={className}>
+      <CardContent>
+        <StatTile {...props} />
       </CardContent>
     </Card>
   );
 }
 
-export { Stat, StatLabel, StatValue, StatUnit, StatNote, StatDelta, StatCard };
+export { Stat, StatLabel, StatValue, StatUnit, StatNote, StatDelta, StatTile, StatCard };
 export type { StatDirection, StatTone };

@@ -80,6 +80,7 @@ export {
   StatUnit,
   StatNote,
   StatDelta,
+  StatTile,
   StatCard,
 } from "./components/Stat";
 export type { StatDirection, StatTone } from "./components/Stat";
@@ -142,7 +143,7 @@ export type { ConfirmDialogProps } from "./components/ConfirmDialog";
 // Charts
 export { HoleScoreBars } from "./charts/HoleScoreBars";
 export { HoleScoreShapes } from "./charts/HoleScoreShapes";
-export { ScoreMixBar } from "./charts/ScoreMixBar";
+export { ScoreMixBar, ScoreMixLegend } from "./charts/ScoreMixBar";
 export { ShareBar, ShareLegend } from "./charts/ShareBar";
 export type { ShareSegment, ShareLegendItem } from "./charts/ShareBar";
 export { ColumnBars } from "./charts/ColumnBars";

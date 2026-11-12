@@ -1,6 +1,6 @@
 import { Alert, AlertAction, AlertDescription, Button, LoadingState } from "@/brand";
 import { saversHeading } from "../profilePresent";
-import type { Profile } from "../useProfile";
+import type { ProfileViewModel } from "../useProfileViewModel";
 import { GoalCard } from "./GoalCard";
 import { PeakCard } from "./PeakCard";
 import { SaversCard } from "./SaversCard";
@@ -12,7 +12,7 @@ const IMPROVE_ID = "improve";
  * Profile: the golfer's goal, their shape against a comparison, where to find the strokes to the
  * goal, and their peak game. It reads their last 20 rounds at every course, whatever the page's menus.
  */
-export function ProfileSection({ profile }: { profile: Profile }) {
+export function ProfileSection({ profile }: { profile: ProfileViewModel }) {
   if (profile.loading) return <LoadingState>Loading your profile...</LoadingState>;
   if (profile.error) {
     return (

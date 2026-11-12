@@ -1,12 +1,10 @@
-import { ColumnBars, Meter, ShareBar, ShareLegend, ToggleGroup, ToggleGroupItem, TrendAreaChart } from "@/brand";
+import { ColumnBars, Meter, ScoreMixBar, ToggleGroup, ToggleGroupItem, TrendAreaChart } from "@/brand";
+import { averageLine } from "@/domain";
 import type { Analytics } from "../model";
 import {
-  averageLine,
   benchmarkNote,
   difficultyColumns,
   formatScore,
-  mixLegend,
-  mixSegments,
   parTypeBars,
   seriesPoints,
 } from "../present";
@@ -62,8 +60,7 @@ export function ScoringSection({ analytics, reading, onReadingChange }: ScoringS
         />
         <div className="flex flex-col gap-2.5 border-t border-border pt-3.5 md:flex-row md:items-center md:gap-4">
           <span className="text-body font-semibold md:w-18">Score mix</span>
-          <ShareBar size="sm" segments={mixSegments(analytics.scoreMix)} className="md:flex-1" />
-          <ShareLegend items={mixLegend(analytics.scoreMix, true)} />
+          <ScoreMixBar mix={analytics.scoreMix} fold legend="key" inline className="md:flex-1" />
         </div>
       </SectionCard>
 

@@ -1,9 +1,8 @@
-import { Card, ColumnBars, ShareBar, ShareLegend, StatDelta, StatLabel, StatValue, TrendAreaChart } from "@/brand";
+import { Card, ColumnBars, ShareBar, ShareLegend, StatTile, TrendAreaChart } from "@/brand";
 import { cn } from "@/brand/cn";
-import { formatPercent } from "@/domain";
+import { averageLine, formatPercent } from "@/domain";
 import type { Analytics } from "../model";
 import {
-  averageLine,
   formatPutts,
   puttingFigures,
   puttsPerHoleSegments,
@@ -20,8 +19,8 @@ export function PuttingSection({ analytics }: { analytics: Analytics }) {
     <div data-slot="putting-section" className="flex flex-col gap-4">
       {/* A phone has no room for the headline's putting figures above, so they lead the section. */}
       <Card data-slot="putting-figures" className="grid grid-cols-3 gap-0 py-3.5 md:hidden">
-        {puttingFigures(analytics).map((figure, i) => (
-          <PuttingFigure {...figure} key={figure.key} className={cn(i > 0 && "border-l border-border")} />
+        {puttingFigures(analytics).map(({ key, ...figure }, i) => (
+          <StatTile {...figure} key={key} layout="center" className={cn(i > 0 && "border-l border-border")} />
         ))}
       </Card>
 
@@ -62,27 +61,6 @@ export function PuttingSection({ analytics }: { analytics: Analytics }) {
           />
         </SectionCard>
       </div>
-    </div>
-  );
-}
-
-function PuttingFigure({
-  label,
-  value,
-  change,
-  direction,
-  tone,
-  className,
-}: ReturnType<typeof puttingFigures>[number] & { className?: string }) {
-  return (
-    <div className={cn("flex flex-col items-center gap-1", className)}>
-      <StatValue>{value}</StatValue>
-      <StatLabel>{label}</StatLabel>
-      {change != null && (
-        <StatDelta direction={direction} tone={tone}>
-          {change}
-        </StatDelta>
-      )}
     </div>
   );
 }

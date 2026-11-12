@@ -1,4 +1,5 @@
-import { Stat, StatCard, StatDelta, StatLabel, StatUnit, StatValue } from "@/brand/components/Stat";
+import { Card } from "@/brand/components/Card";
+import { Stat, StatCard, StatDelta, StatLabel, StatTile, StatUnit, StatValue } from "@/brand/components/Stat";
 import { formatOneDecimal } from "@/domain";
 import { labAnalytics } from "@/testing/fixtures/lab";
 import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
@@ -8,8 +9,9 @@ const dashboard = sampleGolfer.dashboard;
 const scores = (rows: { total_score: number | null }[]) => rows.map((row) => row.total_score);
 /** How far a scoring average moved, unsigned, as its tile shows it. */
 const moved = (change: number | null | undefined) => formatOneDecimal(change != null ? Math.abs(change) : null);
-const golferTone = golfer.kpis.scoring_average_verdict ?? "neutral";
-const labTone = labAnalytics.kpis.scoring_average_verdict ?? "neutral";
+// The analytics page's scoring move is its headline's first figure.
+const golferMove = golfer.headline[0];
+const golferTone = golferMove.verdict ?? "neutral";
 const dashboardTone = dashboard.scoring_average_verdict ?? "neutral";
 
 export default function StatPreview() {
@@ -20,7 +22,7 @@ export default function StatPreview() {
           label="Scoring Avg"
           value={String(golfer.kpis.scoring_average)}
           trend={scores(golfer.score_trend)}
-          delta={moved(golfer.kpis.scoring_average_change)}
+          delta={moved(golferMove.change)}
           direction="down"
           tone={golferTone}
           note="last 5 vs all"
@@ -29,14 +31,35 @@ export default function StatPreview() {
           label="Scoring Avg"
           value={String(labAnalytics.kpis.scoring_average)}
           trend={scores(labAnalytics.score_trend)}
-          delta={moved(labAnalytics.kpis.scoring_average_change)}
+          delta="0.5"
           direction="up"
-          tone={labTone}
+          tone="bad"
           note="last 5 vs all"
         />
         <StatCard label="Best Round" value={String(dashboard.best_round)} note={dashboard.best_round_course} />
         <StatCard label="Rounds" value={String(golfer.kpis.total_rounds)} />
       </div>
+
+      {/* A row of tiles in one card: the delta beside the value, the line across. */}
+      <Card className="grid grid-cols-2 gap-px bg-border py-0">
+        <StatTile
+          layout="strip"
+          className="bg-card p-4"
+          label="Scoring avg"
+          value={String(golfer.kpis.scoring_average)}
+          trend={scores(golfer.score_trend)}
+          delta={moved(golferMove.change)}
+          direction="down"
+          tone={golferTone}
+        />
+        <StatTile layout="strip" className="bg-card p-4" label="Rounds" value={String(golfer.kpis.total_rounds)} />
+      </Card>
+
+      {/* Centred: the value over its label and move. */}
+      <Card className="grid grid-cols-2 gap-0 py-3.5">
+        <StatTile layout="center" label="Putts / round" value="31.4" delta="0.8" direction="down" tone="good" />
+        <StatTile layout="center" label="3-putt rate" value="9%" delta="2" direction="up" tone="bad" className="border-l border-border" />
+      </Card>
 
       <div className="flex items-end justify-between">
         <Stat>

@@ -1,7 +1,6 @@
-import { Card, ShareBar, ShareLegend, StatLabel, StatValue, ToggleGroup, ToggleGroupItem } from "@/brand";
-import { cn } from "@/brand/cn";
+import { Card, ScoreMixBar, ScoreMixLegend, StatLabel, StatValue, ToggleGroup, ToggleGroupItem } from "@/brand";
 import { APPROACH_PARS, type Analytics, type ApproachPar } from "../model";
-import { APPROACH_EMPTY, bucketCards, mixesLegend, parLabel } from "../present";
+import { APPROACH_EMPTY, bucketCards, parLabel } from "../present";
 
 interface ApproachSectionProps {
   analytics: Analytics;
@@ -51,7 +50,7 @@ export function ApproachSection({ analytics, par, onParChange }: ApproachSection
               <div className="flex items-baseline gap-5">
                 <div className="flex flex-col gap-1.5">
                   {/* The band the golfer scores worst from, as the server marked it, reads red. */}
-                  <StatValue size="card-sm" className={cn(card.worst && "text-score-bogey")}>
+                  <StatValue size="card-sm" tone={card.tone}>
                     {card.toPar}
                   </StatValue>
                   <StatLabel>Avg to par</StatLabel>
@@ -61,12 +60,12 @@ export function ApproachSection({ analytics, par, onParChange }: ApproachSection
                   <StatLabel>Greens hit</StatLabel>
                 </div>
               </div>
-              <ShareBar segments={card.segments} />
+              <ScoreMixBar mix={card.mix} fold size="lg" legend="none" />
             </Card>
           ))}
         </div>
       )}
-      {cards.length > 0 && <ShareLegend items={mixesLegend(cards.map((card) => card.mix))} />}
+      {cards.length > 0 && <ScoreMixLegend mixes={cards.map((card) => card.mix)} fold />}
     </div>
   );
 }

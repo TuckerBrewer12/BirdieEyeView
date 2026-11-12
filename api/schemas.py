@@ -281,10 +281,7 @@ class AnalyticsKpis(ResponseModel):
     # Over the rounds with putts recorded, to a tenth: three-putts a round, and each round's rate averaged.
     three_putts_per_round: Optional[float] = None
     three_putt_rate: Optional[float] = None
-    # The last five scored rounds' average less every round's, to a tenth: negative when the
-    # recent rounds came in lower. Null under five scored rounds.
-    scoring_average_change: Optional[float] = None
-    scoring_average_verdict: Optional[ChangeVerdict] = None
+    # The scoring average's move is the headline's (`AnalyticsResponse.headline`), worked out once there.
 
 
 class NetScoreTrendRow(ResponseModel):

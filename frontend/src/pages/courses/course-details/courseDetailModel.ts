@@ -211,8 +211,3 @@ export function trendPoints(trend: readonly RoundTrendPoint[]): TrendPoint[] {
     notes: [{ label: "To par", value: toParLabel(point.toPar) ?? "—" }],
   }));
 }
-
-/** The dashed line across the trend: the golfer's average here. */
-export function averageLine(average: number | null): { value: number; label: string } | null {
-  return average != null ? { value: average, label: `Avg ${formatOneDecimal(average)}` } : null;
-}

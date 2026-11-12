@@ -2,11 +2,9 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import type { ReactNode } from "react";
-import { queryKeys } from "@/data/queryKeys";
-import { benchmarkShapeFrom } from "@/domain";
 import { FakeAnalyticsRepository, type FakeAnalyticsSeed } from "@/testing/fakes/FakeAnalyticsRepository";
-import { avery, jordan, populatedFriendships } from "@/testing/fixtures/friendships";
-import { breaks90Shape, labAnalytics, labBenchmarks, labGoalReport, labUser } from "@/testing/fixtures/lab";
+import { populatedFriendships } from "@/testing/fixtures/friendships";
+import { labAnalytics, labBenchmarks, labGoalReport, labUser } from "@/testing/fixtures/lab";
 import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 import { DEFAULT_FILTERS, type AnalyticsTab } from "../model";
 import { PROFILE_FILTERS } from "../profileModel";
@@ -48,15 +46,6 @@ function setup(seed: FakeAnalyticsSeed = golfer, configure?: (repository: FakeAn
 async function loaded(seed?: FakeAnalyticsSeed, configure?: (repository: FakeAnalyticsRepository) => void) {
   const view = setup(seed, configure);
   await waitFor(() => expect(view.result.current.loading).toBe(false));
-  return view;
-}
-
-/** The Lab's golfer with their profile, goal report and default comparison loaded. */
-async function profileLoaded(seed: FakeAnalyticsSeed = labGolfer) {
-  const view = await loaded(seed);
-  act(() => view.result.current.setTab("profile"));
-  await waitFor(() => expect(view.result.current.profile.loading).toBe(false));
-  await waitFor(() => expect(view.result.current.profile.goal?.average).not.toBeNull());
   return view;
 }
 
@@ -155,113 +144,5 @@ describe("useAnalyticsPageViewModel", () => {
     expect(result.current.approachPar).toBe(4);
     act(() => result.current.setApproachPar(3));
     expect(result.current.approachPar).toBe(3);
-  });
-
-  describe("profile", () => {
-    it("reads the last 20 rounds at every course through the shared analytics query", async () => {
-      const { client, repository } = await profileLoaded();
-
-      expect(repository.requests).toContainEqual(PROFILE_FILTERS);
-      expect(client.getQueryData(queryKeys.analytics(labUser.id, PROFILE_FILTERS))).toBe(labAnalytics);
-    });
-
-    it("stands the goal on the server's report, savers in its order and words", async () => {
-      const { result } = await profileLoaded();
-
-      expect(result.current.profile.goal).toMatchObject({ target: 89, average: 91.7, gap: 2.7, lowestScore: 89 });
-      expect(result.current.profile.goal?.savers.map((s) => s.kind)).toEqual([
-        "three_putt_bleed",
-        "blowup_holes",
-        "gir_opportunity",
-      ]);
-    });
-
-    it("has no goal, and asks for no report, until one is set", async () => {
-      const { repository, result } = await loaded({ ...labGolfer, user: { ...labUser, scoring_goal: null } });
-      act(() => result.current.setTab("profile"));
-      await waitFor(() => expect(result.current.profile.loading).toBe(false));
-
-      expect(result.current.profile.goal).toBeNull();
-      expect(result.current.profile.peak).toBeNull();
-      expect(repository.goalReportRequests).toBe(0);
-    });
-
-    it("saves a goal picked, and keeps the old one when the save fails", async () => {
-      const { repository, result } = await profileLoaded();
-
-      act(() => result.current.profile.setGoal(84));
-      await waitFor(() => expect(result.current.profile.goal?.target).toBe(84));
-      expect(repository.updates).toEqual([{ scoring_goal: 84 }]);
-
-      repository.saveError = new Error("Forbidden");
-      act(() => result.current.profile.setGoal(79));
-      await waitFor(() => expect(result.current.profile.goalSaveError?.message).toBe("Forbidden"));
-      expect(result.current.profile.goal?.target).toBe(84);
-    });
-
-    it("never shows the last goal's figures against a newly picked goal", async () => {
-      const { repository, result } = await profileLoaded();
-      expect(result.current.profile.goal?.attempts.length).toBeGreaterThan(0);
-      repository.holdGoalReport();
-
-      act(() => result.current.profile.setGoal(84));
-      await waitFor(() => expect(result.current.profile.goal?.target).toBe(84));
-      // The new goal's report is still on its way: no figures, rather than the last goal's.
-      expect(result.current.profile.goal?.gap).toBeNull();
-      expect(result.current.profile.goal?.attempts).toEqual([]);
-      expect(result.current.profile.peak?.gapToGoal).toBeNull();
-
-      act(() => repository.finishGoalReport());
-      await waitFor(() => expect(result.current.profile.goal?.gap).not.toBeNull());
-    });
-
-    it("holds the shape up against the next level from the golfer's index until they pick another", async () => {
-      const { repository, result } = await profileLoaded();
-
-      // A 17.8 is compared with a 15 handicap.
-      expect(result.current.profile.comparison).toBe(15);
-      await waitFor(() => expect(result.current.profile.compared).toBe(true));
-      expect(repository.benchmarkRequests[0]).toBe("handicap:15");
-      expect(result.current.profile.standing.judged).toBe(6);
-
-      act(() => result.current.profile.pickComparison(5, null));
-      await waitFor(() => expect(repository.benchmarkRequests).toContain("handicap:5"));
-      expect(result.current.profile.comparison).toBe(5);
-      // Behind a 5 on every axis.
-      await waitFor(() => expect(result.current.profile.standing.ahead).toEqual([]));
-    });
-
-    it("compares with a friend picked, and says when one has too few rounds", async () => {
-      const { repository, result } = await profileLoaded();
-
-      act(() => result.current.profile.pickComparison("friend", avery.id));
-      expect(result.current.profile.friends.map((f) => f.name)).toEqual([avery.name, jordan.name]);
-      await waitFor(() => expect(result.current.profile.friendComparison).toBe("ready"));
-
-      act(() => result.current.profile.pickComparison("friend", jordan.id));
-      await waitFor(() => expect(result.current.profile.friendComparison).toBe("no-rounds"));
-      expect(result.current.profile.compared).toBe(false);
-      expect(repository.benchmarkRequests).toContain(`friend:${jordan.id}`);
-    });
-
-    it("switches to the peak game, drawn against the nearest goal's shape", async () => {
-      const { result } = await profileLoaded();
-
-      act(() => result.current.profile.setRadarMode("peak"));
-      expect(result.current.profile.radarMode).toBe("peak");
-      await waitFor(() => expect(result.current.profile.compared).toBe(true));
-      expect(result.current.profile.peakImpacts.map((impact) => impact.kind)).toEqual(["birdies", "bogeys", "doubles"]);
-      expect(breaks90Shape.gir_percentage).toBe(benchmarkShapeFrom(breaks90Shape).girPct);
-    });
-
-    it("stays on the average when there is no peak game to show", async () => {
-      const { result } = await loaded({ ...labGolfer, user: { ...labUser, scoring_goal: null } });
-      act(() => result.current.setTab("profile"));
-      await waitFor(() => expect(result.current.profile.loading).toBe(false));
-
-      act(() => result.current.profile.setRadarMode("peak"));
-      expect(result.current.profile.radarMode).toBe("benchmark");
-      expect(result.current.profile.peakAvailable).toBe(false);
-    });
   });
 });

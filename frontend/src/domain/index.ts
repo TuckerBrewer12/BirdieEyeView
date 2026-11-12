@@ -22,6 +22,7 @@ export {
   goalAttemptsFrom,
   goalScoreToBreak,
   goalTargetLabel,
+  handicapName,
 } from "./benchmark";
 export type {
   BenchmarkComparison,
@@ -76,7 +77,7 @@ export type {
 
 export type { AnalyticsFilters } from "./analyticsFilters";
 
-export { shortGamePointsFrom, trendPointsFrom } from "./trend";
-export type { RoundTrendPoint, ShortGamePoint } from "./trend";
+export { averageLine, moveOf, shortGamePointsFrom, trendPointsFrom } from "./trend";
+export type { AverageLine, Move, RoundTrendPoint, ShortGamePoint } from "./trend";
 
 export { strokesToCheck } from "./scan";

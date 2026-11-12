@@ -9,6 +9,7 @@ import {
   FieldLabel,
   Input,
 } from "@/brand";
+import { courseLabel } from "@/domain";
 import { useAuth } from "@/context/auth";
 import { AuthLink } from "../components/AuthLink";
 import { AuthNotice } from "../components/AuthNotice";
@@ -116,7 +117,7 @@ export function RegisterPage() {
             onQueryChange={viewModel.setCourseQuery}
             onSelectCourse={viewModel.pickHomeCourse}
             onClose={viewModel.clearHomeCourse}
-            linkedName={viewModel.homeCourse?.name}
+            linkedName={viewModel.homeCourse ? courseLabel(viewModel.homeCourse.name) : undefined}
             linkedTitle="Selected"
             onClear={viewModel.clearHomeCourse}
             clearLabel="Change home course"

@@ -1,7 +1,6 @@
 import { Card, PageTitle, RowButton, Sparkline, StatValue } from "@/brand";
-import { formatHandicapIndex } from "@/domain";
+import { formatHandicapIndex, moveOf } from "@/domain";
 import type { HandicapMonth } from "../model";
-import { moveOf } from "../present";
 import { MoveDelta } from "./MoveDelta";
 
 interface GreetingHeaderProps {

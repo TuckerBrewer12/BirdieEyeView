@@ -1,12 +1,10 @@
-import { Meter, ShareBar, ShareLegend, StatValue, TrendAreaChart } from "@/brand";
+import { Meter, ScoreMixBar, ScoreMixLegend, StatValue, TrendAreaChart } from "@/brand";
+import { averageLine } from "@/domain";
 import type { Analytics } from "../model";
 import {
   GIR_SPLIT_LABEL,
-  averageLine,
   formatGreens,
   holesLabel,
-  mixSegments,
-  mixesLegend,
   seriesPoints,
   shortGameBars,
 } from "../present";
@@ -52,10 +50,10 @@ export function BallStrikingSection({ analytics }: { analytics: Analytics }) {
                 <b className="font-semibold">{GIR_SPLIT_LABEL[split.bucket]}</b>
                 <span className="text-muted-foreground">{holesLabel(split.holes)}</span>
               </div>
-              <ShareBar segments={mixSegments(split.mix)} />
+              <ScoreMixBar mix={split.mix} fold size="lg" legend="none" />
             </div>
           ))}
-          <ShareLegend items={mixesLegend(analytics.girSplit.map((split) => split.mix))} />
+          <ScoreMixLegend mixes={analytics.girSplit.map((split) => split.mix)} fold />
         </SectionCard>
       </div>
     </div>

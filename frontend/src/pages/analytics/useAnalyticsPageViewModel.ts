@@ -15,7 +15,7 @@ import {
   type ApproachPar,
   type PlayedCourse,
 } from "./model";
-import { useProfile, type Profile } from "./useProfile";
+import { useProfileViewModel, type ProfileViewModel } from "./useProfileViewModel";
 import { usePlayedCourses } from "./usePlayedCourses";
 
 /** The score trend's two readings. */
@@ -53,7 +53,7 @@ export interface AnalyticsPageViewModel {
   setApproachPar: (par: ApproachPar) => void;
 
   /** The Profile section, over the golfer's last 20 rounds whatever the filters. */
-  profile: Profile;
+  profile: ProfileViewModel;
 }
 
 export function useAnalyticsPageViewModel(
@@ -71,7 +71,7 @@ export function useAnalyticsPageViewModel(
   const { data: user } = useUser(userId, repository);
   // Read once Profile has been opened, and kept while the golfer moves between sections.
   const [profileOpened, setProfileOpened] = useState(initialTab === "profile");
-  const profile = useProfile(userId, profileOpened, repository);
+  const profile = useProfileViewModel(userId, profileOpened, repository);
 
   const analytics = data ?? null;
   const loadError = isError ? messageFrom(error, "Could not load your analytics.") : null;
