@@ -52,7 +52,6 @@ export type NotableAchievementsDto = Schemas["NotableAchievements"];
 export type MilestoneEventDto = Schemas["MilestoneEvent"];
 export type MilestoneAchievementDto = Schemas["MilestoneAchievement"];
 export type PlayedCourseDto = Schemas["PlayedCourseResponse"];
-export type ComparisonRowDto = Schemas["ComparisonRow"];
 export type RoundComparisonDto = Schemas["RoundComparisonResponse"];
 export type PeakGameDto = Schemas["PeakGame"];
 export type PeakImpactDto = Schemas["PeakImpact"];

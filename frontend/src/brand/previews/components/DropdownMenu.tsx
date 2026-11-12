@@ -1,6 +1,8 @@
+import { Link2, MoreHorizontal, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
@@ -38,6 +40,26 @@ export default function DropdownMenuPreview() {
             </DropdownMenuTrigger>
           </DropdownMenu>
         </div>
+      </div>
+      <div className="text-label font-semibold text-muted-foreground">
+        Action menu · a "More" button&apos;s dots
+      </div>
+      <div className="flex h-36 items-start justify-end rounded-xl border border-border bg-card p-4">
+          <DropdownMenu defaultOpen modal={false}>
+            <DropdownMenuTrigger size="icon" chevron={false} aria-label="More actions">
+              <MoreHorizontal />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem>
+                <Link2 />
+                Link to a course
+              </DropdownMenuItem>
+              <DropdownMenuItem destructive>
+                <Trash2 />
+                Delete round
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
       </div>
     </div>
   );

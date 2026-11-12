@@ -84,6 +84,24 @@ export default function StatPreview() {
         ))}
       </div>
 
+      {/* Round detail's summary: the score, then figures that shrink on a phone. */}
+      <div className="flex items-end gap-6">
+        <Stat>
+          <StatLabel>Score</StatLabel>
+          <StatValue size="card">78</StatValue>
+        </Stat>
+        <Stat>
+          <StatLabel tone="quiet">Greens</StatLabel>
+          <StatValue size="summary">
+            7<StatUnit>/18</StatUnit>
+          </StatValue>
+        </Stat>
+        <Stat>
+          <StatLabel tone="quiet">Index</StatLabel>
+          <StatValue size="hero">12.4</StatValue>
+        </Stat>
+      </div>
+
       <div className="flex items-end gap-6">
         <Stat>
           <StatLabel>Up &amp; Down</StatLabel>

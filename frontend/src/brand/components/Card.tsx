@@ -63,14 +63,17 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+/** A card's title. `level` makes it a heading, for a card that heads a section of the page. */
+function CardTitle({
+  className,
+  level,
+  ...props
+}: React.ComponentProps<"div"> & { level?: 2 | 3 }) {
+  const Title = level === 2 ? "h2" : level === 3 ? "h3" : "div";
   return (
-    <div
+    <Title
       data-slot="card-title"
-      className={cn(
-        "text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
-        className,
-      )}
+      className={cn("text-base leading-snug font-medium group-data-[size=sm]/card:text-sm", className)}
       {...props}
     />
   );

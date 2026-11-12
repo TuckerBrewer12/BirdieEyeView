@@ -1,4 +1,5 @@
-import { BACK_HOLES, FRONT_HOLES, getHole, getTee, teesByLength } from "@/domain/course";
+import { BACK_HOLES, FRONT_HOLES, getHole, getTee, teeRatingLabel, teesByLength } from "@/domain/course";
+import { formatCourseHandicap } from "@/domain/handicap";
 import type { CourseAnalytics, HoleFigure, HoleScoreMix, HoleToPar, NineAverages } from "@/domain/courseAnalytics";
 import type { CourseDto, TeeDto } from "@/types/api";
 
@@ -23,10 +24,25 @@ export const CHART_TABS: TabItem<ChartTabKey>[] = [
 ];
 
 /** A tee button: the tee and what the golfer would play off it. */
-export interface TeeChip {
-  tee: TeeDto;
-  selected: boolean;
+/** A tee as the scorecard's picker shows it: its name, yardage, and rating, slope and course handicap. */
+export interface TeeOption {
+  name: string;
+  yards: number | null;
+  /** "72.4 / 130 · CH 12". */
+  detail: string | null;
+  /** The golfer's course handicap off it, as the server sent it. */
   courseHandicap: number | null;
+}
+
+export function teeOption(tee: TeeDto): TeeOption | null {
+  if (!tee.color) return null;
+  const handicap = tee.course_handicap != null ? `CH ${formatCourseHandicap(tee.course_handicap)}` : null;
+  return {
+    name: tee.color,
+    yards: tee.total_yardage,
+    detail: [teeRatingLabel(tee), handicap].filter(Boolean).join(" · ") || null,
+    courseHandicap: tee.course_handicap,
+  };
 }
 
 export interface ScorecardHole {

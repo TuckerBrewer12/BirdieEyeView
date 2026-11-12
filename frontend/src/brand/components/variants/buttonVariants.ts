@@ -31,6 +31,13 @@ const buttonVariants = cva(
           "size-6 rounded-md in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-8 rounded-lg",
         "icon-lg": "size-12 rounded-xl",
+        /* A link set in a line of text, with no box of its own: "Back to courses", "Sign in". */
+        inline: "h-auto gap-1.5 p-0 text-body [&_svg:not([class*='size-'])]:size-3.5",
+        /* A page's toolbar, as round detail's: 44 tall, between default and lg. */
+        toolbar: "h-11 gap-1.5 rounded-xl px-5 has-data-[icon=inline-start]:pl-3",
+        "toolbar-icon": "size-11 rounded-xl",
+        /* An icon alone on a phone, the icon and its word from md: Share, Edit. */
+        "toolbar-icon-phone": "size-11 rounded-xl md:w-auto md:gap-1.5 md:px-5",
         /* Marketing-sized. The landing page's calls to action sit alone on a
            wide section and have to carry it; the in-app sizes read as chrome
            at that scale. */

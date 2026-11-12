@@ -78,8 +78,8 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
         <div>
           <Button
             variant="linkMuted"
-            size="xs"
-            className="mb-4 h-auto gap-1.5 p-0 text-body"
+            size="inline"
+            className="mb-4"
             onClick={() => void navigate("/social")}
           >
             <ArrowLeft className="size-4" />

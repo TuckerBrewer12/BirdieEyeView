@@ -11,6 +11,7 @@ import {
   SheetClose,
   SheetContent,
   SheetTitle,
+  StatValue,
   useFromBreakpoint,
 } from "@/brand";
 import { cn } from "@/brand/cn";
@@ -60,7 +61,7 @@ export function HandicapBreakdownSheet({
 
   const index = (
     <div className="flex items-baseline gap-2.5">
-      <span className="text-hero leading-none font-semibold text-foreground">{formatHandicapIndex(handicapIndex)}</span>
+      <StatValue size="hero">{formatHandicapIndex(handicapIndex)}</StatValue>
       <MoveDelta change={handicapChange} verdict={handicapVerdict} className="text-body font-semibold" />
     </div>
   );
@@ -131,7 +132,7 @@ export function HandicapBreakdownSheet({
 
         <Collapsible>
           <CollapsibleTrigger
-            render={<Button variant="link" size="sm" className="group self-start px-0" />}
+            render={<Button variant="link" size="inline" className="group self-start" />}
           >
             How it’s calculated
             <ChevronDown aria-hidden className="size-3 transition-transform group-data-panel-open:rotate-180" />

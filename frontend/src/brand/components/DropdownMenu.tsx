@@ -24,8 +24,13 @@ function DropdownMenuTrigger({
   children,
   variant = "outline",
   size = "default",
+  chevron = true,
   ...props
-}: MenuPrimitive.Trigger.Props & Pick<ComponentProps<typeof Button>, "variant" | "size">) {
+}: MenuPrimitive.Trigger.Props &
+  Pick<ComponentProps<typeof Button>, "variant" | "size"> & {
+    /** Leave it off for an icon trigger, like a "More" button's dots. */
+    chevron?: boolean;
+  }) {
   return (
     <MenuPrimitive.Trigger
       data-slot="dropdown-menu-trigger"
@@ -34,7 +39,9 @@ function DropdownMenuTrigger({
       {...props}
     >
       {children}
-      <ChevronDown aria-hidden data-icon="inline-end" className="size-3 transition-transform group-data-popup-open:rotate-180" />
+      {chevron && (
+        <ChevronDown aria-hidden data-icon="inline-end" className="size-3 transition-transform group-data-popup-open:rotate-180" />
+      )}
     </MenuPrimitive.Trigger>
   );
 }
@@ -86,8 +93,28 @@ function DropdownMenuRadioItem({ className, children, ...props }: MenuPrimitive.
   );
 }
 
+/** A row that does something, like "Delete round": `destructive` for one that can't be undone. */
+function DropdownMenuItem({
+  className,
+  destructive = false,
+  ...props
+}: MenuPrimitive.Item.Props & { destructive?: boolean }) {
+  return (
+    <MenuPrimitive.Item
+      data-slot="dropdown-menu-item"
+      className={cn(
+        "flex h-10 w-full cursor-default items-center gap-2 rounded-lg px-2.5 text-sm font-medium outline-none select-none data-highlighted:bg-muted [&_svg]:size-4",
+        destructive ? "text-destructive" : "text-foreground",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
 export {
   DropdownMenu,
+  DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuRadioGroup,

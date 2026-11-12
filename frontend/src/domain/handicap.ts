@@ -1,7 +1,8 @@
+import { formatOneDecimal } from "./format";
 export function formatHandicapIndex(hi: number | null | undefined): string {
   if (hi == null) return "—";
-  if (hi < 0) return `+${Math.abs(hi).toFixed(1)}`;
-  return hi.toFixed(1);
+  // A plus handicap is below zero, and reads with its plus.
+  return hi < 0 ? `+${formatOneDecimal(Math.abs(hi))}` : formatOneDecimal(hi);
 }
 
 /** A course handicap as golfers write it: whole strokes, and "+2" for a plus handicap. */
@@ -30,7 +31,7 @@ export interface HandicapParseResult {
 
 function formatAbsOneDecimal(value: number): string {
   const abs = Math.abs(Math.round(value * 10) / 10);
-  return Number.isInteger(abs) ? String(abs) : abs.toFixed(1);
+  return Number.isInteger(abs) ? String(abs) : formatOneDecimal(abs);
 }
 
 /** An index as the player types it into a field: "+5" for a plus handicap, no trailing ".0". Empty when unset. */
