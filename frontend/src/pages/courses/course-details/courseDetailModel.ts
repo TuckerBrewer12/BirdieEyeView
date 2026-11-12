@@ -23,6 +23,13 @@ export const CHART_TABS: TabItem<ChartTabKey>[] = [
   { key: "variance", label: "Variance" },
 ];
 
+/** A tee the scorecard can be read from, with the course handicap the server sent. */
+export interface ScorecardTee {
+  tee: TeeDto;
+  /** The golfer's course handicap off it, as the server sent it. */
+  courseHandicap: number | null;
+}
+
 /** A tee button: the tee and what the golfer would play off it. */
 /** A tee as the scorecard's picker shows it: its name, yardage, and rating, slope and course handicap. */
 export interface TeeOption {

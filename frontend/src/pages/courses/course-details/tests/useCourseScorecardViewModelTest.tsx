@@ -36,14 +36,13 @@ describe("useCourseScorecardViewModel", () => {
 
   it("shows the course handicap the server sends on each tee", async () => {
     const vm = await renderVm(new FakeCoursesRepository(), ratedHalfMoonBayCourse);
-    expect(vm.current().teeOptions[0]?.courseHandicap).toBe(12);
-    expect(vm.current().teeOptions[1]?.courseHandicap).toBe(9);
-    expect(vm.current().teeOptions[0]?.detail).toMatch(/ · CH 12$/);
+    expect(vm.current().tees[0]?.courseHandicap).toBe(12);
+    expect(vm.current().tees[1]?.courseHandicap).toBe(9);
   });
 
   it("shows no course handicap on a tee the server sent none for", async () => {
     const vm = await renderVm(new FakeCoursesRepository());
-    expect(vm.current().teeOptions.map((tee) => tee.courseHandicap)).toEqual([null, null]);
+    expect(vm.current().tees.map((tee) => tee.courseHandicap)).toEqual([null, null]);
   });
 
   it("clears the tee when the golfer clears it, hiding the yards row", async () => {

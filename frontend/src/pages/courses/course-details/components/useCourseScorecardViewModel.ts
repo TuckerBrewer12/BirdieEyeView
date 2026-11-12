@@ -8,14 +8,13 @@ import {
   nineFrom,
   personalAverages,
   selectedTee,
-  teeOption,
   type ScorecardNine,
-  type TeeOption,
+  type ScorecardTee,
 } from "../courseDetailModel";
 
 export interface CourseScorecardViewModel {
   /** Longest tee first. */
-  teeOptions: TeeOption[];
+  tees: ScorecardTee[];
   /** The tee the scorecard reads, or null once the golfer clears it. */
   selectedTee: string | null;
   selectTee: (color: string) => void;
@@ -44,7 +43,7 @@ export function useCourseScorecardViewModel(
   const averages = personalAverages(analytics);
 
   return {
-    teeOptions: teesByLength(course).flatMap((t) => teeOption(t) ?? []),
+    tees: teesByLength(course).map((t) => ({ tee: t, courseHandicap: t.course_handicap })),
     selectedTee: tee?.color ?? null,
     selectTee: setPicked,
     clearTee: () => setPicked(null),

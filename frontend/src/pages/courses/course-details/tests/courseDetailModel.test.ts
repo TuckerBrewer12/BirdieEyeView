@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 import { courseAnalyticsFrom } from "@/domain/courseAnalytics";
 import { courseResponse } from "@/testing/fakes/courseResponses";
 import { emptyCourseAnalytics, halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
-import { halfMoonBayCourse } from "@/testing/fixtures/roundDetails";
+import { halfMoonBayCourse, ratedHalfMoonBayCourse } from "@/testing/fixtures/roundDetails";
 import {
   chartsFrom,
   nineFrom,
   personalAverages,
   selectedTee,
+  teeOption,
 } from "../courseDetailModel";
 
 const PARS = [4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5];
@@ -64,6 +65,13 @@ describe("nineFrom", () => {
 describe("personalAverages", () => {
   it("is null until the golfer has played the course", () => {
     expect(personalAverages(courseAnalyticsFrom(emptyCourseAnalytics("course-hmb")))).toBeNull();
+  });
+});
+
+describe("teeOption", () => {
+  it("words the rating, slope and course handicap for the picker", () => {
+    const blue = ratedHalfMoonBayCourse.tees[0];
+    expect(blue ? teeOption(blue)?.detail : null).toMatch(/ · CH 12$/);
   });
 });
 
