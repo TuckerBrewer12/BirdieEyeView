@@ -30,10 +30,7 @@ export default function ScoreMixBarPreview() {
         <ScoreMixBar mix={missed} fold size="lg" legend="none" />
         <ScoreMixLegend mixes={[hit, missed]} fold />
       </Card>
-      <Card className="gap-2 px-4">
-        <div className="text-label font-semibold text-muted-foreground">Inline from md, with a key</div>
-        <ScoreMixBar mix={missed} fold legend="key" inline />
-      </Card>
+
     </div>
   );
 }

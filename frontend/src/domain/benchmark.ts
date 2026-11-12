@@ -56,7 +56,6 @@ export interface BenchmarkShape {
 /** Who Profile asks the server to hold the golfer up against. */
 export type BenchmarkTarget =
   | { against: "handicap"; handicap: number }
-  | { against: "peak" }
   | { against: "friend"; friendId: string };
 
 /** Where the golfer's par type stands against the benchmark's, as the server judged it. */

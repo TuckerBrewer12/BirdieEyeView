@@ -68,7 +68,13 @@ function AnalyticsBody({ vm, analytics }: { vm: AnalyticsPageViewModel; analytic
       <div role="tabpanel" aria-label={ANALYTICS_TAB_OPTIONS.find((option) => option.key === vm.tab)?.label}>
         {vm.tab === "profile" && <ProfileSection profile={vm.profile} />}
         {vm.tab === "scoring" && (
-          <ScoringSection analytics={analytics} reading={vm.scoreReading} onReadingChange={vm.setScoreReading} />
+          <ScoringSection
+            analytics={analytics}
+            reading={vm.scoreReading}
+            onReadingChange={vm.setScoreReading}
+            lines={vm.trendLines}
+            onLinesChange={vm.setTrendLines}
+          />
         )}
         {vm.tab === "ball-striking" && <BallStrikingSection analytics={analytics} />}
         {vm.tab === "putting" && <PuttingSection analytics={analytics} />}

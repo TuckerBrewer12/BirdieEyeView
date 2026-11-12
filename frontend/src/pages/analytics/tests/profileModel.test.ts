@@ -12,6 +12,7 @@ import {
   peakNote,
   peakRow,
   saverShareLabel,
+  standingGroups,
   saversHeading,
   saverStrokes,
 } from "../profilePresent";
@@ -105,10 +106,9 @@ describe("profilePresent", () => {
   });
 
   it("names what the golfer is compared with", () => {
-    expect(comparisonName("peak", 5, avery)).toBe("your peak");
-    expect(comparisonName("benchmark", "friend", avery)).toBe("Avery Lin");
-    expect(comparisonName("benchmark", 0, null)).toBe("Scratch");
-    expect(comparisonName("benchmark", null, null)).toBeNull();
+    expect(comparisonName("friend", avery)).toBe("Avery Lin");
+    expect(comparisonName(0, null)).toBe("Scratch");
+    expect(comparisonName(null, null)).toBeNull();
   });
 
   it("words the goal's figures and the strokes to find", () => {
@@ -132,5 +132,27 @@ describe("profilePresent", () => {
     expect(peakNote({ ...peak, meetsGoal: true }, 89)).toEqual({ lead: "best 3 · ", verdict: "breaks 90", tone: "good" });
     expect(peakNote({ ...peak, meetsGoal: null }, 89)).toEqual({ lead: "best 3", verdict: null, tone: "neutral" });
     expect(peakRow(labAnalytics.peak_game!.impacts[1])).toEqual({ label: "Bogeys", peak: "8.0", average: "9.2", gained: "+1.2" });
+  });
+
+  it("gives each axis ahead or behind in its own terms, biggest gap first, with no radar points", () => {
+    const groups = standingGroups({
+      ahead: [{ axis: "GIR", mine: "33%", theirs: "24%", points: 9 }],
+      behind: [
+        { axis: "Par 3s", mine: "+0.6", theirs: "+0.2", points: -16 },
+        { axis: "Putting", mine: "2.02/GIR", theirs: "1.94/GIR", points: -4 },
+      ],
+      judged: 3,
+    });
+    expect(groups).toEqual([
+      { title: "Ahead", tone: "good", rows: [{ axis: "GIR", mine: "33%", against: "vs 24%" }] },
+      {
+        title: "Behind",
+        tone: "bad",
+        rows: [
+          { axis: "Par 3s", mine: "+0.6", against: "vs +0.2" },
+          { axis: "Putting", mine: "2.02/GIR", against: "vs 1.94/GIR" },
+        ],
+      },
+    ]);
   });
 });

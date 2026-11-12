@@ -10,10 +10,9 @@ from typing import Any, Dict, List, Optional
 from analytics import stats as analytics
 from analytics.verdicts import change_verdict
 from models import Round
-from models.hole_score import ScoreKind
 
 RECENT_ROUNDS = 5
-SCORE_KINDS: List[ScoreKind] = ["eagle", "birdie", "par", "bogey", "double", "triple", "quad"]
+SCORE_KINDS = analytics.SCORE_KINDS
 
 
 

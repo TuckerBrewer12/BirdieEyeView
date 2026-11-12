@@ -4,6 +4,9 @@ import { analyticsFrom, defaultApproachPar, isFiltered, tabFrom, yardageBucketsF
 import {
   benchmarkNote,
   bucketCards,
+  scoreShown,
+  trendLineOptions,
+  countLines,
   courseOptions,
   difficultyColumns,
   headlineTiles,
@@ -123,5 +126,35 @@ describe("present", () => {
       "Home course",
       "Unknown course",
     ]);
+  });
+
+  it("offers the score, then the kinds of hole any round shown had, and counts each round's, triples and worse as one", () => {
+    const counts = (birdie: number, triple: number, quad: number) => ({ eagle: 0, birdie, par: 10, bogey: 4, double: 2, triple, quad });
+    const points = [
+      { value: 84, rollingAverage: 84, course: null, counts: counts(1, 1, 0) },
+      { value: 86, rollingAverage: 85, course: null, counts: counts(0, 0, 1) },
+      { value: 90, rollingAverage: 86.7, course: null, counts: null },
+    ];
+    expect(trendLineOptions(points).map((option) => option.label)).toEqual([
+      "Score",
+      "Birdies",
+      "Pars",
+      "Bogeys",
+      "Doubles",
+      "Triples+",
+    ]);
+    expect(scoreShown(["birdie"])).toBe(false);
+    expect(countLines(points, ["triple", "score", "birdie", "eagle"])).toEqual([
+      { kind: "birdie", label: "Birdies", values: [1, 0, null] },
+      { kind: "triple", label: "Triples+", values: [1, 1, null] },
+    ]);
+  });
+
+  it("gives a net round the holes of its score row", () => {
+    const data = sampleGolfer.analytics;
+    const analytics = analyticsFrom(data);
+    const rated = data.net_score_trend.find((row) => row.net_score != null)!;
+    const scored = data.score_trend.find((row) => row.round_id === rated.round_id)!;
+    expect(analytics.netTrend[0].counts).toEqual(scored.score_counts);
   });
 });

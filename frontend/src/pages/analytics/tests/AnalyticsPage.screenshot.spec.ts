@@ -13,6 +13,23 @@ test("scoring in dark mode", async ({ analytics }) => {
   await analytics.capture("analytics-scoring-dark.png");
 });
 
+test("scoring with birdies and doubles counted each round", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.toggleLine("Birdies");
+  await analytics.toggleLine("Doubles");
+  await analytics.seesCountLines(2);
+  await analytics.capture("analytics-scoring-counts.png");
+});
+
+test("scoring with the score off, doubles alone", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.toggleLine("Score");
+  await analytics.toggleLine("Doubles");
+  await analytics.seesScoreLine(false);
+  await analytics.seesCountLines(1);
+  await analytics.capture("analytics-scoring-counts-only.png");
+});
+
 test("filtered to one course", async ({ analytics }) => {
   await analytics.open();
   await analytics.pickCourse(LINKS);
@@ -92,14 +109,6 @@ test("profile against a friend with too few rounds", async ({ analytics }) => {
   await analytics.compareWith("Jordan Castellanos");
   await analytics.seesFriendNote(/needs more rounds/);
   await analytics.capture("analytics-profile-friend-no-rounds.png");
-});
-
-test("profile against the peak game", async ({ analytics }) => {
-  await analytics.open();
-  await analytics.openTab("Profile");
-  await analytics.pickShape("Peak");
-  await analytics.seesComparedWith("your peak");
-  await analytics.capture("analytics-profile-peak.png");
 });
 
 test("profile with no goal set", async ({ analytics }) => {

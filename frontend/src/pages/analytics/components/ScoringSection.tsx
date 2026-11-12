@@ -1,12 +1,17 @@
-import { ColumnBars, Meter, ScoreMixBar, ToggleGroup, ToggleGroupItem, TrendAreaChart } from "@/brand";
+import { ColumnBars, LinePicker, Meter, ToggleGroup, ToggleGroupItem, TrendAreaChart } from "@/brand";
 import { averageLine } from "@/domain";
-import type { Analytics } from "../model";
+import type { Analytics, TrendLine } from "../model";
 import {
+  TREND_LINES_LABEL,
+  TREND_LINES_OFF,
   benchmarkNote,
+  countLines,
   difficultyColumns,
   formatScore,
   parTypeBars,
+  scoreShown,
   seriesPoints,
+  trendLineOptions,
 } from "../present";
 import type { ScoreReading } from "../useAnalyticsPageViewModel";
 import { ParTypeRow } from "./ParTypeRow";
@@ -16,6 +21,8 @@ interface ScoringSectionProps {
   analytics: Analytics;
   reading: ScoreReading;
   onReadingChange: (reading: ScoreReading) => void;
+  lines: TrendLine[];
+  onLinesChange: (lines: TrendLine[]) => void;
 }
 
 const READINGS: { value: ScoreReading; label: string }[] = [
@@ -23,8 +30,11 @@ const READINGS: { value: ScoreReading; label: string }[] = [
   { value: "net", label: "Net" },
 ];
 
-/** Scoring: the score each round with its five-round line and the mix of scores, then by par type and by hole difficulty. */
-export function ScoringSection({ analytics, reading, onReadingChange }: ScoringSectionProps) {
+/**
+ * Scoring: the score each round with its five-round line, and the holes of each kind turned on
+ * counted on it (any of them, the score too, can be off), then by par type and by hole difficulty.
+ */
+export function ScoringSection({ analytics, reading, onReadingChange, lines, onLinesChange }: ScoringSectionProps) {
   const series = reading === "net" ? analytics.netTrend : analytics.scoreTrend;
   const note = benchmarkNote(analytics.benchmarkHandicap);
   return (
@@ -57,11 +67,17 @@ export function ScoringSection({ analytics, reading, onReadingChange }: ScoringS
             { label: "5-round avg", tone: "primary" },
           ]}
           reference={reading === "gross" ? averageLine(analytics.kpis.scoring_average, formatScore) : null}
+          counts={countLines(series, lines)}
+          showSeries={scoreShown(lines)}
+          offLabel={TREND_LINES_OFF}
         />
-        <div className="flex flex-col gap-2.5 border-t border-border pt-3.5 md:flex-row md:items-center md:gap-4">
-          <span className="text-body font-semibold md:w-18">Score mix</span>
-          <ScoreMixBar mix={analytics.scoreMix} fold legend="key" inline className="md:flex-1" />
-        </div>
+        <LinePicker
+          label={TREND_LINES_LABEL}
+          options={trendLineOptions(series)}
+          value={lines}
+          onChange={onLinesChange}
+          className="border-t border-border pt-3.5"
+        />
       </SectionCard>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-analytics-pair">

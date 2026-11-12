@@ -2,10 +2,9 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { describe, expect, it } from "vitest";
-import { benchmarkShapeFrom } from "@/domain";
 import { FakeAnalyticsRepository, type FakeAnalyticsSeed } from "@/testing/fakes/FakeAnalyticsRepository";
 import { avery, jordan, populatedFriendships } from "@/testing/fixtures/friendships";
-import { breaks90Shape, labAnalytics, labBenchmarks, labGoalReport, labUser } from "@/testing/fixtures/lab";
+import { labAnalytics, labBenchmarks, labGoalReport, labUser } from "@/testing/fixtures/lab";
 import { PROFILE_FILTERS, profileAnalyticsFrom } from "../profileModel";
 import { useProfileViewModel } from "../useProfileViewModel";
 
@@ -150,21 +149,17 @@ describe("useProfileViewModel", () => {
     expect(repository.benchmarkRequests).toContain(`friend:${jordan.id}`);
   });
 
-  it("switches to the peak game, drawn against the nearest goal's shape", async () => {
+  it("hands over the peak game and what its rounds did differently once a goal is set", async () => {
     const { result } = await profileLoaded();
 
-    act(() => result.current.setRadarMode("peak"));
-    expect(result.current.radarMode).toBe("peak");
-    await waitFor(() => expect(result.current.compared).toBe(true));
+    expect(result.current.peak?.average).toBe(labAnalytics.peak_game?.average);
     expect(result.current.peakImpacts.map((impact) => impact.kind)).toEqual(["birdies", "bogeys", "doubles"]);
-    expect(breaks90Shape.gir_percentage).toBe(benchmarkShapeFrom(breaks90Shape).girPct);
   });
 
-  it("stays on the average when there is no peak game to show", async () => {
+  it("has no peak game without a goal", async () => {
     const { result } = await loaded({ ...labGolfer, user: { ...labUser, scoring_goal: null } });
 
-    act(() => result.current.setRadarMode("peak"));
-    expect(result.current.radarMode).toBe("benchmark");
-    expect(result.current.peakAvailable).toBe(false);
+    expect(result.current.peak).toBeNull();
+    expect(result.current.peakImpacts).toEqual([]);
   });
 });

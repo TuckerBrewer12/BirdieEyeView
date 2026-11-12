@@ -26,9 +26,6 @@ export function profileAnalyticsFrom(dto: AnalyticsDto): ProfileAnalytics {
   };
 }
 
-/** Whose shape the radar draws: the golfer's average, or held up against their peak game. */
-export type RadarMode = "benchmark" | "peak";
-
 /** One place to find strokes, in the server's words. */
 export interface Saver {
   kind: GoalSaverDto["type"];

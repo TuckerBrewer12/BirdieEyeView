@@ -203,6 +203,7 @@ class ScoreTrendRow(ResponseModel):
     par: Optional[int] = None  # the par to_par reads against: the holes played
     course_name: Optional[str] = None
     rolling_average: Optional[float] = None  # to a tenth; rounds without a score are skipped
+    score_counts: ScoreCounts = Field(default_factory=ScoreCounts)  # the round's holes of each kind
 
 
 class HandicapTrendRow(ResponseModel):
@@ -812,10 +813,9 @@ class BenchmarkVerdicts(ResponseModel):
 
 class BenchmarkComparisonResponse(ResponseModel):
     """The player's last rounds held up against a benchmark, and which benchmark it was."""
-    against: Literal["handicap", "peak", "friend"]
+    against: Literal["handicap", "friend"]
     handicap: Optional[int] = None  # the handicap compared with
-    goal: Optional[int] = None  # for the peak: the goal, as stored, whose golfers score nearest it
-    # Null when the friend has no rounds or the player has no peak game.
+    # Null when the friend has no rounds.
     benchmark: Optional[BenchmarkShape] = None
     par_types: List[ParTypeComparison] = Field(default_factory=list)  # par 3, 4 and 5
     verdicts: BenchmarkVerdicts = Field(default_factory=BenchmarkVerdicts)  # the radar's axes

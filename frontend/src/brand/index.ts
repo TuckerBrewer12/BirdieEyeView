@@ -108,6 +108,8 @@ export type { NavItem, RenderLink } from "./nav";
 export { ScoreCountChip } from "./components/ScoreCountChip";
 export { SearchField } from "./components/SearchField";
 export { TeePicker } from "./components/TeePicker";
+export { LinePicker } from "./components/LinePicker";
+export type { LineOption } from "./components/LinePicker";
 export { PickerMenu } from "./components/PickerMenu";
 export { CourseLinkSearch } from "./components/CourseLinkSearch";
 export {
@@ -160,7 +162,7 @@ export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
 export { HoleProfileChart } from "./charts/HoleProfileChart";
 export { HoleGreensPuttsChart } from "./charts/HoleGreensPuttsChart";
 export { TrendAreaChart } from "./charts/TrendAreaChart";
-export type { TrendAreaPoint, TrendAreaSeries, TrendAreaTone } from "./charts/TrendAreaChart";
+export type { TrendAreaCount, TrendAreaPoint, TrendAreaSeries, TrendAreaTone } from "./charts/TrendAreaChart";
 
 export { useFromBreakpoint } from "./useFromBreakpoint";
 export { ProgressRing } from "./components/ProgressRing";

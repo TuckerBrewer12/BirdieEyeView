@@ -7,6 +7,9 @@ export {
   scoreKindCountLabel,
   scoreKindLabel,
   scoreKindNoun,
+  FOLDED_SCORE_KINDS,
+  foldedCount,
+  foldedKindLabel,
   scoreMixFrom,
   strokesToPar,
   toParLabel,
@@ -73,6 +76,7 @@ export type {
   RoundDetail,
   RoundEdits,
   RoundSummary,
+  ScoreCounts,
 } from "./round";
 
 export type { AnalyticsFilters } from "./analyticsFilters";

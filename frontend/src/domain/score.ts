@@ -140,3 +140,17 @@ export function playedScoreKinds(
     return count > 0 ? [{ kind, count }] : [];
   });
 }
+
+/** The kinds holes are counted in when triples and worse read as one: eagle to "Triple+". */
+export const FOLDED_SCORE_KINDS: readonly ScoreKind[] = SCORE_KINDS.filter((kind) => kind !== "quad");
+
+/** A kind's holes, or share, with triples and worse together under `triple`. */
+export function foldedCount(counts: Record<ScoreKind, number>, kind: ScoreKind): number {
+  return kind === "triple" ? counts.triple + counts.quad : counts[kind];
+}
+
+/** A kind's name with triples and worse together: "Triple+"; with `many`, "Birdies", "Triples+". */
+export function foldedKindLabel(kind: ScoreKind, many = false): string {
+  const word = many ? SCORE_KIND_LABEL[kind].many : SCORE_KIND_LABEL[kind].one;
+  return kind === "triple" ? `${word}+` : word;
+}

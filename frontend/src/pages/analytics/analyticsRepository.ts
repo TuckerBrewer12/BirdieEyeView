@@ -22,7 +22,7 @@ export interface AnalyticsRepository
     Pick<FriendsRepository, "getFriendships"> {
   /** The courses the golfer has a round at, for the course menu. */
   getPlayedCourses(userId: string): Promise<PlayedCourse[]>;
-  /** The golfer's last 20 rounds against a handicap's shape, their peak's, or a friend's, as the server compared them. */
+  /** The golfer's last 20 rounds against a handicap's shape or a friend's, as the server compared them. */
   getBenchmarkComparison(userId: string, target: BenchmarkTarget): Promise<BenchmarkComparison>;
 }
 

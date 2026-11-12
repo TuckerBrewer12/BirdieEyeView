@@ -1,10 +1,9 @@
 import { ArrowDown } from "lucide-react";
 import { cn } from "@/brand/cn";
-import { Button, Card, CardAction, CardHeader, CardTitle, PickerMenu, RadarChart, StatValue, ToggleGroup, ToggleGroupItem } from "@/brand";
+import { Button, Card, CardAction, CardHeader, CardTitle, PickerMenu, RadarChart, StatValue } from "@/brand";
 import { verdictTextClass } from "@/brand/theme";
 import type { ProfileViewModel } from "../useProfileViewModel";
 import {
-  RADAR_MODES,
   comparisonFromKey,
   comparisonKey,
   comparisonName,
@@ -21,7 +20,7 @@ import {
  * behind beside it, and a way down to where the strokes are.
  */
 export function ShapeCard({ profile, improveId }: { profile: ProfileViewModel; improveId: string | null }) {
-  const name = comparisonName(profile.radarMode, profile.comparison, profile.selectedFriend);
+  const name = comparisonName(profile.comparison, profile.selectedFriend);
   const note = profile.friendComparison ? friendNote(profile.friendComparison, profile.selectedFriend) : null;
   const options = comparisonOptions(profile.friends);
   const { ahead, judged } = profile.standing;
@@ -36,24 +35,7 @@ export function ShapeCard({ profile, improveId }: { profile: ProfileViewModel; i
           {SHAPE_COPY.title}
         </CardTitle>
         <CardAction wrap className="flex items-center gap-2">
-          {profile.peakAvailable && (
-            <ToggleGroup
-              size="sm"
-              aria-label={SHAPE_COPY.mode}
-              value={[profile.radarMode]}
-              onValueChange={(values: string[]) => {
-                const next = RADAR_MODES.find((mode) => mode.value === values[0]);
-                if (next) profile.setRadarMode(next.value);
-              }}
-            >
-              {RADAR_MODES.map((mode) => (
-                <ToggleGroupItem key={mode.value} value={mode.value}>
-                  {mode.label}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          )}
-          {profile.radarMode === "benchmark" && profile.comparison != null && (
+          {profile.comparison != null && (
             <PickerMenu
               aria-label={SHAPE_COPY.compareWith}
               size="sm"
@@ -76,7 +58,7 @@ export function ShapeCard({ profile, improveId }: { profile: ProfileViewModel; i
         <RadarChart
           className="@3xl:max-w-radar"
           aria-label={shapeLabel(name)}
-          benchmarkTone={profile.comparison === "friend" && profile.radarMode === "benchmark" ? "friend" : "benchmark"}
+          benchmarkTone={profile.comparison === "friend" ? "friend" : "benchmark"}
           axes={profile.radar.map((entry) => ({
             label: entry.axis,
             value: entry.value,
@@ -103,7 +85,9 @@ export function ShapeCard({ profile, improveId }: { profile: ProfileViewModel; i
                 {group.rows.map((row) => (
                   <div key={row.axis} className="flex justify-between text-body-lg">
                     <span>{row.axis}</span>
-                    <b className={verdictTextClass(group.tone)}>{row.gap}</b>
+                    <span className="text-body text-muted-foreground">
+                      <b className={cn("text-body-lg", verdictTextClass(group.tone))}>{row.mine}</b> {row.against}
+                    </span>
                   </div>
                 ))}
               </div>

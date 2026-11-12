@@ -1,9 +1,12 @@
-import type { Column, ShareSegment, StatDirection, TrendAreaPoint } from "@/brand";
+import type { Column, LineOption, ShareSegment, StatDirection, TrendAreaCount, TrendAreaPoint } from "@/brand";
 import {
   formatAverageToPar,
   formatOneDecimal,
   formatPercent,
   courseLabel,
+  FOLDED_SCORE_KINDS,
+  foldedCount,
+  foldedKindLabel,
   formatWhole,
   handicapName,
   moveOf,
@@ -21,6 +24,8 @@ import {
   type PlayedCourse,
   type PuttsPerHole,
   type RoundSeriesPoint,
+  type ScorePoint,
+  type TrendLine,
   type ThreePuttRound,
   type YardageBucket,
 } from "./model";
@@ -119,6 +124,39 @@ export function seriesPoints(series: readonly RoundSeriesPoint[], format: (value
     notes: point.rollingAverage != null ? [{ label: "5-round avg", value: format(point.rollingAverage) }] : undefined,
   }));
 }
+
+/**
+ * The lines the score trend can draw: the score, then each kind of hole any round shown had, counted
+ * each round, triples and worse as one.
+ */
+export function trendLineOptions(points: readonly ScorePoint[]): LineOption<TrendLine>[] {
+  const kinds = FOLDED_SCORE_KINDS.filter((kind) => points.some((point) => point.counts && foldedCount(point.counts, kind) > 0));
+  return [
+    { value: "score", label: "Score", swatch: "primary" },
+    ...kinds.map((kind) => ({ value: kind, label: foldedKindLabel(kind, true), swatch: kind })),
+  ];
+}
+
+/** Whether the score and its five-round average are on. */
+export function scoreShown(lines: readonly TrendLine[]): boolean {
+  return lines.includes("score");
+}
+
+/** The kinds turned on, holes each round, for the chart's counts axis. A kind no round shown had is left out. */
+export function countLines(points: readonly ScorePoint[], lines: readonly TrendLine[]): TrendAreaCount[] {
+  const offered = new Set<TrendLine>(trendLineOptions(points).map((option) => option.value));
+  return FOLDED_SCORE_KINDS.filter((kind) => lines.includes(kind) && offered.has(kind)).map((kind) => ({
+    kind,
+    label: foldedKindLabel(kind, true),
+    values: points.map((point) => (point.counts ? foldedCount(point.counts, kind) : null)),
+  }));
+}
+
+/** Beside the score trend's lines. */
+export const TREND_LINES_LABEL = "Show";
+
+/** In place of the score trend with every line off. */
+export const TREND_LINES_OFF = "Turn on a line to see it.";
 
 export const formatScore = formatOneDecimal;
 export const formatPutts = formatOneDecimal;

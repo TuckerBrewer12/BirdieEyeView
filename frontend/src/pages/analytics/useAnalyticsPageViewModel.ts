@@ -14,6 +14,8 @@ import {
   type AnalyticsTab,
   type ApproachPar,
   type PlayedCourse,
+  DEFAULT_TREND_LINES,
+  type TrendLine,
 } from "./model";
 import { useProfileViewModel, type ProfileViewModel } from "./useProfileViewModel";
 import { usePlayedCourses } from "./usePlayedCourses";
@@ -47,6 +49,9 @@ export interface AnalyticsPageViewModel {
 
   scoreReading: ScoreReading;
   setScoreReading: (reading: ScoreReading) => void;
+  /** The lines the score trend draws: the score, and the kinds of hole counted each round. */
+  trendLines: TrendLine[];
+  setTrendLines: (lines: TrendLine[]) => void;
 
   /** The par type the approach section shows. Until one is picked, par 4s if there are any. */
   approachPar: ApproachPar;
@@ -64,6 +69,7 @@ export function useAnalyticsPageViewModel(
   const [filters, setFilters] = useState<AnalyticsFilters>(DEFAULT_FILTERS);
   const [tab, setTab] = useState<AnalyticsTab>(initialTab);
   const [scoreReading, setScoreReading] = useState<ScoreReading>("gross");
+  const [trendLines, setTrendLines] = useState<TrendLine[]>(DEFAULT_TREND_LINES);
   const [pickedPar, setApproachPar] = useState<ApproachPar | null>(null);
 
   const { data, isPending, isPlaceholderData, isError, error, refetch } = useAnalytics(userId, filters, analyticsFrom, repository);
@@ -96,6 +102,8 @@ export function useAnalyticsPageViewModel(
     },
     scoreReading,
     setScoreReading,
+    trendLines,
+    setTrendLines,
     approachPar: pickedPar ?? defaultApproachPar(analytics?.yardageBuckets ?? []),
     setApproachPar,
     profile,

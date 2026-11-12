@@ -5,6 +5,8 @@ export {
   SCORE_KEYS,
   scoreCountTextClass,
   scoreFillClass,
+  scoreMarkClass,
+  scoreMarkFill,
   scoreOnFillClass,
   scoreWashClass,
   scoreProfileHeightClass,

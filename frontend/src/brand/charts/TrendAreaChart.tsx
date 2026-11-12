@@ -1,8 +1,9 @@
 import { useId, useState, type PointerEvent, type ReactNode } from "react";
 import { scaleLinear } from "d3-scale";
-import { area, curveMonotoneX, line } from "d3-shape";
+import { area, curveLinear, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
-import { tokens } from "@/brand/theme";
+import { scoreMarkFill, tokens } from "@/brand/theme";
+import type { ScoreKind } from "@/domain/score";
 import { ChartTooltip } from "./ChartTooltip";
 import { useChartWidth } from "./useChartWidth";
 import { indexScale, knownValues, paddedExtent } from "./scales";
@@ -49,6 +50,15 @@ interface TrendAreaPoint {
   notes?: { label: string; value: string }[];
 }
 
+/** How many holes of one kind each round had, drawn on its own scale at the right. */
+interface TrendAreaCount {
+  kind: ScoreKind;
+  /** "Birdies", in the tooltip. */
+  label: string;
+  /** One per point, in the same order. Null leaves a gap. */
+  values: (number | null)[];
+}
+
 interface TrendAreaChartProps {
   /** One per round, oldest first. */
   points: TrendAreaPoint[];
@@ -63,6 +73,17 @@ interface TrendAreaChartProps {
   domain?: [number, number];
   /** A dashed line across at a value worth measuring against: the average, par. */
   reference?: { value: number; label: string } | null;
+  /**
+   * Holes of a kind each round, each a thin line in its score colour against a count axis on the
+   * right, from none: birdies, doubles. The main figure keeps its own scale on the left.
+   */
+  counts?: readonly TrendAreaCount[];
+  /**
+   * False hides the series, its axis and the reference, leaving the counts on their own: the score
+   * turned off. With nothing left to draw, the chart says `offLabel`.
+   */
+  showSeries?: boolean;
+  offLabel?: string;
   className?: string;
   "aria-label"?: string;
 }
@@ -79,6 +100,9 @@ export function TrendAreaChart({
   format = String,
   domain,
   reference,
+  counts = [],
+  showSeries = true,
+  offLabel = "Nothing turned on",
   className,
   "aria-label": ariaLabel,
 }: TrendAreaChartProps) {
@@ -89,21 +113,37 @@ export function TrendAreaChart({
   const [active, setActive] = useState<number | null>(null);
 
   const first = points.map((point) => point.values[0] ?? null);
-  if (points.length < 2 || knownValues(first).length < 2) {
+  const nothingOn = !showSeries && counts.length === 0;
+  if (nothingOn || points.length < 2 || knownValues(first).length < 2) {
     return (
-      <div data-slot="trend-area-chart" className="flex h-chart items-center justify-center text-sm text-muted-foreground">
-        Not enough data
+      <div
+        data-slot="trend-area-chart"
+        className="flex h-chart items-center justify-center text-sm text-muted-foreground"
+      >
+        {nothingOn ? offLabel : "Not enough data"}
       </div>
     );
   }
 
   const all = points.flatMap((point) => point.values);
   const extent = domain ?? paddedExtent([...all, reference?.value], { ratio: layout.headroom })!;
-  const x = indexScale(points.length, PAD.left, W - PAD.right);
-  const y = scaleLinear().domain(extent).range([H - PAD.bottom, PAD.top]);
+  // The counts' axis takes room on the right.
+  const right = W - PAD.right - (counts.length > 0 ? layout.countAxis : 0);
+  const x = indexScale(points.length, PAD.left, right);
+  const y = scaleLinear()
+    .domain(extent)
+    .range([H - PAD.bottom, PAD.top]);
   const baseline = H - PAD.bottom;
+  const countMax = Math.max(layout.countFloor, ...counts.flatMap((count) => knownValues(count.values)));
+  const yCount = scaleLinear().domain([0, countMax]).nice().range([baseline, PAD.top]);
+  const countTicks = yCount.ticks(layout.yTicks).filter((tick) => Number.isInteger(tick));
 
   const valuesOf = (i: number) => points.map((point) => point.values[i] ?? null);
+  const countTrace = line<number | null>()
+    .defined((v) => v != null)
+    .x((_, i) => x(i))
+    .y((v) => yCount(v!))
+    .curve(curveLinear);
   const trace = line<number | null>()
     .defined((v) => v != null)
     .x((_, i) => x(i))
@@ -130,11 +170,18 @@ export function TrendAreaChart({
   };
 
   const point = active != null ? points[active] : null;
-  const pointValue = point?.values.find((value) => value != null) ?? null;
-  const pointY = pointValue != null ? y(pointValue) : null;
+  // The hover card sits by the round's figure, or its first count with the series hidden.
+  const pointValue = showSeries ? point?.values.find((value) => value != null) ?? null : null;
+  const countValue =
+    active != null ? counts.map((count) => count.values[active]).find((value) => value != null) ?? null : null;
+  const pointY = pointValue != null ? y(pointValue) : countValue != null ? yCount(countValue) : null;
 
   return (
-    <div ref={measureRef} data-slot="trend-area-chart" className={cn("relative flex flex-col gap-2 select-none", className)}>
+    <div
+      ref={measureRef}
+      data-slot="trend-area-chart"
+      className={cn("relative flex flex-col gap-2 select-none", className)}
+    >
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full touch-pan-y overflow-visible"
@@ -160,14 +207,43 @@ export function TrendAreaChart({
           </linearGradient>
         </defs>
 
-        {y.ticks(layout.yTicks).map((tick) => (
-          <g key={`y-${tick}`}>
-            <line x1={PAD.left} x2={W - PAD.right} y1={y(tick)} y2={y(tick)} stroke={tokens.color.chart.muted} strokeWidth={tokens.lineWidth.border} />
-            <AxisLabel x={PAD.left - 8} y={y(tick) + 4} anchor="end">
-              {format(tick)}
+        {/* With the series hidden, the rules follow the counts' axis. */}
+        {!showSeries &&
+          countTicks.map((tick) => (
+            <line
+              key={`rule-${tick}`}
+              x1={PAD.left}
+              x2={right}
+              y1={yCount(tick)}
+              y2={yCount(tick)}
+              stroke={tokens.color.chart.muted}
+              strokeWidth={tokens.lineWidth.border}
+            />
+          ))}
+
+        {showSeries &&
+          y.ticks(layout.yTicks).map((tick) => (
+            <g key={`y-${tick}`}>
+              <line
+                x1={PAD.left}
+                x2={right}
+                y1={y(tick)}
+                y2={y(tick)}
+                stroke={tokens.color.chart.muted}
+                strokeWidth={tokens.lineWidth.border}
+              />
+              <AxisLabel x={PAD.left - 8} y={y(tick) + 4} anchor="end">
+                {format(tick)}
+              </AxisLabel>
+            </g>
+          ))}
+
+        {counts.length > 0 &&
+          countTicks.map((tick) => (
+            <AxisLabel key={`count-${tick}`} x={right + 8} y={yCount(tick) + 4} anchor="start">
+              {tick}
             </AxisLabel>
-          </g>
-        ))}
+          ))}
 
         {xTicks.map((i) => (
           <AxisLabel key={`x-${i}`} x={x(i)} y={baseline + 16} anchor="middle">
@@ -175,38 +251,67 @@ export function TrendAreaChart({
           </AxisLabel>
         ))}
 
-        {reference && (
+        {showSeries && reference && (
           <g data-slot="trend-area-reference">
             <line
               x1={PAD.left}
-              x2={W - PAD.right}
+              x2={right}
               y1={y(reference.value)}
               y2={y(reference.value)}
               stroke={tokens.color.chart.axis}
               strokeWidth={tokens.lineWidth.border}
               strokeDasharray={tokens.chart.guideDash}
             />
-            <AxisLabel x={W - PAD.right} y={y(reference.value) - 6} anchor="end">
+            <AxisLabel x={right} y={y(reference.value) - 6} anchor="end">
               {reference.label}
             </AxisLabel>
           </g>
         )}
 
-        {series[0].mark !== "dots" && <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />}
+        {showSeries && series[0].mark !== "dots" && (
+          <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />
+        )}
 
-        {series.map((s, i) =>
-          s.mark === "dots" ? null : (
+        {showSeries &&
+          series.map((s, i) =>
+            s.mark === "dots" ? null : (
+              <path
+                key={s.label}
+                d={trace(valuesOf(i)) ?? ""}
+                fill="none"
+                stroke={STROKE[s.tone ?? "primary"]}
+                strokeWidth={i === leadLine ? layout.stroke : layout.strokeSecondary}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )
+          )}
+
+        {counts.map((count) => (
+          <g key={`count-${count.kind}`} data-slot="trend-area-count">
             <path
-              key={s.label}
-              d={trace(valuesOf(i)) ?? ""}
+              d={countTrace(count.values) ?? ""}
               fill="none"
-              stroke={STROKE[s.tone ?? "primary"]}
-              strokeWidth={i === leadLine ? layout.stroke : layout.strokeSecondary}
+              stroke={scoreMarkFill(count.kind)}
+              strokeWidth={layout.strokeSecondary}
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-          ),
-        )}
+            {count.values.map((value, index) =>
+              value == null || (!showDots && active !== index) ? null : (
+                <circle
+                  key={index}
+                  cx={x(index)}
+                  cy={yCount(value)}
+                  r={active === index ? layout.dotHover : layout.dot}
+                  fill={scoreMarkFill(count.kind)}
+                  stroke={tokens.color.card}
+                  strokeWidth={tokens.lineWidth.outline}
+                />
+              )
+            )}
+          </g>
+        ))}
 
         {active != null && pointY != null && (
           <line
@@ -220,29 +325,30 @@ export function TrendAreaChart({
           />
         )}
 
-        {series.map((s, i) =>
-          points.map((p, index) => {
-            const value = p.values[i];
-            const dotted = s.mark === "dots";
-            // Beside the rounds' own dots, a line marks only the round picked.
-            const lineDots = showDots && !hasDots;
-            if (value == null || (!dotted && !lineDots && active !== index)) return null;
-            return (
-              <circle
-                key={`dot-${i}-${index}`}
-                cx={x(index)}
-                cy={y(value)}
-                r={active === index ? layout.dotHover : layout.dot}
-                fill={dotted && active !== index ? tokens.color.chart.axis : STROKE[s.tone ?? "primary"]}
-                stroke={tokens.color.card}
-                strokeWidth={tokens.lineWidth.outline}
-              />
-            );
-          }),
-        )}
+        {showSeries &&
+          series.map((s, i) =>
+            points.map((p, index) => {
+              const value = p.values[i];
+              const dotted = s.mark === "dots";
+              // Beside the rounds' own dots, a line marks only the round picked.
+              const lineDots = showDots && !hasDots;
+              if (value == null || (!dotted && !lineDots && active !== index)) return null;
+              return (
+                <circle
+                  key={`dot-${i}-${index}`}
+                  cx={x(index)}
+                  cy={y(value)}
+                  r={active === index ? layout.dotHover : layout.dot}
+                  fill={dotted && active !== index ? tokens.color.chart.axis : STROKE[s.tone ?? "primary"]}
+                  stroke={tokens.color.card}
+                  strokeWidth={tokens.lineWidth.outline}
+                />
+              );
+            })
+          )}
       </svg>
 
-      {series.length > 1 && (
+      {showSeries && series.length > 1 && (
         <div className="flex items-center justify-center gap-4">
           {series.map((s) => (
             <span key={s.label} className="flex items-center gap-1.5 text-caption text-muted-foreground">
@@ -265,11 +371,20 @@ export function TrendAreaChart({
               <div className="max-w-40 truncate text-label text-muted-foreground">{point.subtitle}</div>
             )}
             <div className="mt-1.5 flex flex-col gap-0.5">
-              {series.map((s, i) => {
-                const value = point.values[i];
+              {showSeries &&
+                series.map((s, i) => {
+                  const value = point.values[i];
+                  return (
+                    <TooltipRow key={s.label} label={s.label}>
+                      {value != null ? format(value) : "—"}
+                    </TooltipRow>
+                  );
+                })}
+              {counts.map((count) => {
+                const value = count.values[active];
                 return (
-                  <TooltipRow key={s.label} label={s.label}>
-                    {value != null ? format(value) : "—"}
+                  <TooltipRow key={count.kind} label={count.label}>
+                    {value != null ? value : "—"}
                   </TooltipRow>
                 );
               })}
@@ -335,4 +450,4 @@ function tickIndexes(length: number, count: number): number[] {
   return ticks;
 }
 
-export type { TrendAreaChartProps, TrendAreaPoint, TrendAreaSeries, TrendAreaTone };
+export type { TrendAreaChartProps, TrendAreaCount, TrendAreaPoint, TrendAreaSeries, TrendAreaTone };

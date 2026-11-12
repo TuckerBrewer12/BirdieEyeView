@@ -29,11 +29,9 @@ export interface FakeAnalyticsSeed {
   benchmarks?: Record<string, BenchmarkComparisonDto>;
 }
 
-/** How a comparison is keyed in the seed: "handicap:5", "peak", "friend:user-avery". */
+/** How a comparison is keyed in the seed: "handicap:5", "friend:user-avery". */
 export function benchmarkKey(target: BenchmarkTarget): string {
-  if (target.against === "handicap") return `handicap:${target.handicap}`;
-  if (target.against === "friend") return `friend:${target.friendId}`;
-  return "peak";
+  return target.against === "handicap" ? `handicap:${target.handicap}` : `friend:${target.friendId}`;
 }
 
 const DEFAULT_USER: UserDto = {

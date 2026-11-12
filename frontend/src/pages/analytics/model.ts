@@ -1,4 +1,4 @@
-import { parTypesFrom, scoreMixFrom, type ParTypeComparison, type ScoreMix } from "@/domain";
+import { parTypesFrom, scoreMixFrom, type ParTypeComparison, type ScoreCounts, type ScoreKind, type ScoreMix } from "@/domain";
 import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type {
   AnalyticsDto,
@@ -47,6 +47,17 @@ export interface RoundSeriesPoint {
   rollingAverage: number | null;
   /** Where the round was played, for the chart's hover card. */
   course: string | null;
+}
+
+/** A line the score trend can draw: the score with its five-round average, or holes of a kind each round. */
+export type TrendLine = "score" | ScoreKind;
+
+/** The score trend opens on the score alone. */
+export const DEFAULT_TREND_LINES: TrendLine[] = ["score"];
+
+/** A round on the score trend: its score (or net), and how many holes of each kind it had. */
+export interface ScorePoint extends RoundSeriesPoint {
+  counts: ScoreCounts | null;
 }
 
 /** How holes went when the green was hit, and when it was missed. */
@@ -108,10 +119,9 @@ export interface Analytics {
   roundCount: number;
   /** Scoring, greens, putts, scrambling and three-putts, each with its move and line. */
   headline: HeadlineFigure[];
-  scoreTrend: RoundSeriesPoint[];
+  scoreTrend: ScorePoint[];
   /** Rounds the golfer has a net score for. */
-  netTrend: RoundSeriesPoint[];
-  scoreMix: ScoreMix;
+  netTrend: ScorePoint[];
   /** Each par type against the next level's benchmark. */
   parTypes: ParTypeComparison[];
   /** The handicap the par types are held up against; null without an index. */
@@ -162,14 +172,30 @@ export function defaultApproachPar(buckets: readonly YardageBucket[]): ApproachP
 
 /** The page's figures from the server's response. */
 export function analyticsFrom(data: AnalyticsDto): Analytics {
+  // The net trend is the same rounds as the score trend, so a net round's holes are its score row's.
+  const countsByRound = new Map(data.score_trend.map((row) => [row.round_id, row.score_counts]));
   const withPutts = new Set(data.putts_trend.filter((row) => row.total_putts != null).map((row) => row.round_id));
   return {
     kpis: data.kpis,
     roundCount: data.kpis.total_rounds,
     headline: data.headline,
-    scoreTrend: seriesFrom(data.score_trend, (r) => r.total_score, (r) => r.rolling_average, (r) => r.course_name),
-    netTrend: seriesFrom(data.net_score_trend, (r) => r.net_score, (r) => r.rolling_average, (r) => r.course_name),
-    scoreMix: data.score_mix,
+    scoreTrend: data.score_trend.flatMap((row) =>
+      row.total_score == null
+        ? []
+        : [{ value: row.total_score, rollingAverage: row.rolling_average, course: row.course_name, counts: row.score_counts }],
+    ),
+    netTrend: data.net_score_trend.flatMap((row) =>
+      row.net_score == null
+        ? []
+        : [
+            {
+              value: row.net_score,
+              rollingAverage: row.rolling_average ?? null,
+              course: row.course_name ?? null,
+              counts: countsByRound.get(row.round_id) ?? null,
+            },
+          ],
+    ),
     parTypes: parTypesFrom(data.par_types),
     benchmarkHandicap: data.next_level_handicap,
     holeDifficulty: data.scoring_by_handicap.map((row) => ({

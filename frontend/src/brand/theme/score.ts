@@ -21,6 +21,18 @@ const SCORE_FILL_CLASS: Record<ScoreKey, string> = {
   quad: "bg-score-quad-base",
 };
 
+/**
+ * A kind's colour for a line or a small mark: its base, but par's pale fill would fade on the card,
+ * so par reads as quiet ink. `scoreMarkClass` is the same for a swatch beside the line.
+ */
+export function scoreMarkFill(key: ScoreKey): string {
+  return key === "par" ? color.mutedForeground : color.score[key].base;
+}
+
+export function scoreMarkClass(key: ScoreKey): string {
+  return key === "par" ? "bg-muted-foreground" : SCORE_FILL_CLASS[key];
+}
+
 /** Tailwind background for a hole's score chip. */
 export function scoreFillClass(key: ScoreKey): string {
   return SCORE_FILL_CLASS[key];

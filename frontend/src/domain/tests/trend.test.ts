@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { populatedDashboard } from "@/testing/fixtures/dashboard";
+import { NO_COUNTS } from "@/testing/fixtures/scoreCounts";
 import { formatPercent } from "../format";
 import { averageLine, moveOf, shortGamePointsFrom, trendPointsFrom } from "../trend";
 
@@ -22,7 +23,7 @@ describe("trendPointsFrom", () => {
   it("pairs by position when the handicap trend's round numbers run ahead", () => {
     const trends = {
       score_trend: [
-        { round_index: 1, round_id: "a", total_score: 80, to_par: 8, par: 72, course_name: null, rolling_average: 80 },
+        { round_index: 1, round_id: "a", total_score: 80, to_par: 8, par: 72, course_name: null, rolling_average: 80, score_counts: NO_COUNTS },
       ],
       handicap_trend: [{
         round_index: 21,

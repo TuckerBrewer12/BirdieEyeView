@@ -60,7 +60,7 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   /** `/api/stats/{id}/played-courses`: the courses the golfer has rounds at. */
   playedCourses?: PlayedCourseDto[];
   goalReport?: GoalReportDto | null;
-  /** `/api/stats/{id}/benchmark` by comparison: "handicap:5", "peak", "friend:{id}". One not here answers 422. */
+  /** `/api/stats/{id}/benchmark` by comparison: "handicap:5", "friend:{id}". One not here answers 422. */
   benchmarks?: Record<string, BenchmarkComparisonDto>;
   /** No one is signed in — `/api/auth/me` answers 401, as the real API does. */
   signedOut?: boolean;

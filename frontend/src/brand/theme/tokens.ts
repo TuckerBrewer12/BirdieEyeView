@@ -830,6 +830,10 @@ export const chart = {
     /** About this many round numbers along the bottom. */
     xTicks: 6,
     yTicks: 4,
+    /** Room on the right for the counts' axis, when the chart draws holes of a kind each round. */
+    countAxis: 28,
+    /** The counts' scale reaches at least this many holes, so one birdie doesn't fill the chart. */
+    countFloor: 4,
   },
   /**
    * A figure per hole across a course (how each hole plays, greens and putts). Like the round flow it

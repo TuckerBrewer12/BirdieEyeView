@@ -1,6 +1,6 @@
 import { SCORE_KEYS, scoreKindLabel } from "@/brand/theme";
 import { formatPercent } from "@/domain/format";
-import { scoreKindCountLabel, type ScoreKind, type ScoreMix } from "@/domain/score";
+import { FOLDED_SCORE_KINDS, foldedCount, foldedKindLabel, scoreKindCountLabel, type ScoreKind, type ScoreMix } from "@/domain/score";
 
 export interface ScoreMixEntry {
   kind: ScoreKind;
@@ -22,8 +22,7 @@ interface ScoreMixEntryOptions {
 }
 
 /** A kind's name; folded, triples stand for worse too: "Triple+". */
-const kindLabel = (kind: ScoreKind, fold: boolean) =>
-  fold && kind === "triple" ? `${scoreKindLabel(kind)}+` : scoreKindLabel(kind);
+const kindLabel = (kind: ScoreKind, fold: boolean) => (fold ? foldedKindLabel(kind) : scoreKindLabel(kind));
 
 /**
  * The kinds a mix has, in score order, each with its figure and word: the one place a mix becomes
@@ -31,10 +30,9 @@ const kindLabel = (kind: ScoreKind, fold: boolean) =>
  * draw as a seam, so they are skipped.
  */
 export function scoreMixEntries(mix: ScoreMix, { counted = false, fold = false }: ScoreMixEntryOptions = {}): ScoreMixEntry[] {
-  const kinds = fold ? SCORE_KEYS.filter((kind) => kind !== "quad") : SCORE_KEYS;
+  const kinds = fold ? FOLDED_SCORE_KINDS : SCORE_KEYS;
   return kinds.flatMap((kind) => {
-    const folded = fold && kind === "triple";
-    const value = folded ? mix.triple + mix.quad : mix[kind];
+    const value = fold ? foldedCount(mix, kind) : mix[kind];
     if (value <= 0.5) return [];
     const label = kindLabel(kind, fold);
     return [

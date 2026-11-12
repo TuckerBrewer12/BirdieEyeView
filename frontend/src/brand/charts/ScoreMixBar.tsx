@@ -13,12 +13,10 @@ interface ScoreMixBarProps {
   /** `sm` is the thin bar; `lg` prints each share inside it. */
   size?: "sm" | "lg";
   /**
-   * `figures`: each kind's figure and word after the bar ("**40%** par"). `key`: a swatch, the kind
-   * and its figure. `none`: the bar alone, for a stack of bars under one {@link ScoreMixLegend}.
+   * `figures`: each kind's figure and word after the bar ("**40%** par"). `none`: the bar alone, for
+   * a stack of bars under one {@link ScoreMixLegend}.
    */
-  legend?: "figures" | "key" | "none";
-  /** From `md`, the bar and its legend sit on one line. */
-  inline?: boolean;
+  legend?: "figures" | "none";
   className?: string;
 }
 
@@ -29,7 +27,6 @@ export function ScoreMixBar({
   fold = false,
   size = "sm",
   legend = "figures",
-  inline = false,
   className,
 }: ScoreMixBarProps) {
   const entries = scoreMixEntries(mix, { counted, fold });
@@ -38,13 +35,12 @@ export function ScoreMixBar({
   return (
     <div
       data-slot="score-mix-bar"
-      className={cn("flex flex-col gap-2", inline && "md:flex-row md:items-center md:gap-4", className)}
+      className={cn("flex flex-col gap-2", className)}
     >
       <ShareBar
         size={size}
         aria-label={`Score mix: ${entries.map((entry) => `${entry.figure} ${entry.word}`).join(", ")}`}
         segments={entries.map((entry) => ({ key: entry.kind, share: entry.value, tone: entry.kind, label: entry.label }))}
-        className={cn(inline && "md:flex-1")}
       />
       {legend === "figures" && (
         <div aria-hidden className="flex flex-wrap gap-x-3 gap-y-1 text-body text-foreground-secondary">
@@ -54,9 +50,6 @@ export function ScoreMixBar({
             </span>
           ))}
         </div>
-      )}
-      {legend === "key" && (
-        <ShareLegend items={entries.map((entry) => ({ key: entry.kind, tone: entry.kind, label: entry.label, figure: entry.figure }))} />
       )}
     </div>
   );

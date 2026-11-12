@@ -17,7 +17,6 @@ import {
   type GoalStanding,
   type PeakGame,
   type PeakImpact,
-  type RadarMode,
 } from "./profileModel";
 import { useBenchmarkComparison } from "./useBenchmarkComparison";
 
@@ -37,10 +36,6 @@ export interface ProfileViewModel {
   savingGoal: boolean;
   goalSaveError: Error | null;
 
-  radarMode: RadarMode;
-  setRadarMode: (mode: RadarMode) => void;
-  /** Peak needs a goal and two scored rounds. */
-  peakAvailable: boolean;
   /** The handicap, the friend, or null with nothing to compare (no index yet). */
   comparison: ComparisonTargetValue;
   selectedFriend: FriendOption | null;
@@ -66,7 +61,6 @@ export function useProfileViewModel(
   active: boolean,
   repository: AnalyticsRepository = analyticsRepository,
 ): ProfileViewModel {
-  const [radarMode, setRadarModeState] = useState<RadarMode>("benchmark");
   const [picked, setPicked] = useState<{ value: ComparisonTargetValue; friendId: string | null } | null>(null);
 
   const { data: user } = useUser(userId, repository);
@@ -78,8 +72,6 @@ export function useProfileViewModel(
 
   const analytics = mine.data ?? null;
   const peak = useMemo(() => (analytics ? peakGameFrom(analytics, target, report) : null), [analytics, target, report]);
-  // Peak needs a goal and two rounds; without them the shape is the golfer's average.
-  const mode: RadarMode = radarMode === "peak" && !peak ? "benchmark" : radarMode;
 
   const friends = useMemo(() => friendOptionsFrom(friendships ?? []), [friendships]);
   // Until the golfer picks, the next level up from their index.
@@ -88,10 +80,9 @@ export function useProfileViewModel(
   const selectedFriend = friends.find((f) => f.id === picked?.friendId) ?? friends.at(0) ?? null;
 
   const against = useMemo<BenchmarkTarget | null>(() => {
-    if (mode === "peak") return { against: "peak" };
     if (comparison === "friend") return selectedFriend ? { against: "friend", friendId: selectedFriend.id } : null;
     return comparison != null ? { against: "handicap", handicap: comparison } : null;
-  }, [mode, comparison, selectedFriend]);
+  }, [comparison, selectedFriend]);
   const compared = useBenchmarkComparison(userId, against, repository);
   const comparisonData = against ? (compared.data ?? null) : null;
   const benchmark = comparisonData?.benchmark ?? null;
@@ -103,7 +94,7 @@ export function useProfileViewModel(
   const radar = radarAll.filter((entry) => entry.hasData);
 
   const friendComparison: FriendComparison | null =
-    mode !== "benchmark" || comparison !== "friend"
+    comparison !== "friend"
       ? null
       : !selectedFriend
         ? "no-friends"
@@ -112,14 +103,6 @@ export function useProfileViewModel(
           : benchmark
             ? "ready"
             : "no-rounds";
-
-  const setRadarMode = useCallback(
-    (next: RadarMode) => {
-      if (next === "peak" && !peak) return;
-      setRadarModeState(next);
-    },
-    [peak],
-  );
 
   const { mutate } = updateUser;
   const setGoal = useCallback((next: number) => mutate({ scoring_goal: next }), [mutate]);
@@ -135,9 +118,6 @@ export function useProfileViewModel(
     savingGoal: updateUser.isPending,
     goalSaveError: updateUser.error,
 
-    radarMode: mode,
-    setRadarMode,
-    peakAvailable: peak != null,
     comparison,
     selectedFriend,
     pickComparison: (value, friendId) => setPicked({ value, friendId }),

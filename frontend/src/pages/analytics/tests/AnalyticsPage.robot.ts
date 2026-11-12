@@ -193,6 +193,24 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** Turns a line of the score trend on or off: "Score", "Birdies", "Doubles". */
+  async toggleLine(label: string): Promise<this> {
+    await this.visible(this.page.getByRole("group", { name: "Show" }).getByRole("button", { name: label, exact: true })).click();
+    return this;
+  }
+
+  /** Whether the score trend draws the scores, by their average's dashed line. */
+  async seesScoreLine(shown: boolean): Promise<this> {
+    await expect(this.page.locator("[data-slot=trend-area-reference]")).toHaveCount(shown ? 1 : 0);
+    return this;
+  }
+
+  /** The score trend draws a line of holes each round for these many kinds. */
+  async seesCountLines(count: number): Promise<this> {
+    await expect(this.page.locator("[data-slot=trend-area-count]")).toHaveCount(count);
+    return this;
+  }
+
   async seesScoreTrend(label: "Score each round" | "Net score each round"): Promise<this> {
     await expect(this.visible(this.page.getByRole("img", { name: label }))).toBeVisible();
     return this;
@@ -227,12 +245,6 @@ export class AnalyticsRobot {
 
   async openCompareMenu(): Promise<this> {
     await this.visible(this.page.getByRole("button", { name: "Compare with" })).click();
-    return this;
-  }
-
-  /** Average or Peak on the player profile. */
-  async pickShape(label: "Average" | "Peak"): Promise<this> {
-    await this.visible(this.page.getByRole("button", { name: label, exact: true })).click();
     return this;
   }
 

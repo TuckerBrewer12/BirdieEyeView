@@ -1005,6 +1005,7 @@ def score_trend(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     for index, round_obj in enumerate(rounds, start=1):
         total_score = round_obj.calculate_total_score()
         total_to_par = round_obj.total_to_par()
+        counts = round_obj.get_score_counts()
         course_name = (
             round_obj.course.name if round_obj.course else round_obj.course_name_played
         )
@@ -1016,6 +1017,7 @@ def score_trend(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
                 "to_par": total_to_par,
                 "par": round_obj.scored_par() if total_score is not None else None,
                 "course_name": course_name,
+                "score_counts": {kind: counts.get(kind, 0) for kind in SCORE_KINDS},
             }
         )
     return results

@@ -9,10 +9,9 @@ import {
   handicapName,
   formatPercent,
   type ComparisonTargetValue,
-  type RadarGap,
   type RadarStanding,
 } from "@/domain";
-import type { FriendOption, GoalStanding, PeakGame, PeakImpact, RadarMode, Saver } from "./profileModel";
+import type { FriendOption, GoalStanding, PeakGame, PeakImpact, Saver } from "./profileModel";
 
 /** A friend's name, or a stand-in when the server has none. */
 export function friendName(friend: FriendOption | null): string {
@@ -42,17 +41,11 @@ export function comparisonFromKey(key: string): { value: ComparisonTargetValue; 
   return null;
 }
 
-/** Who the shape is held up against, by name: "10 handicap", "Avery Lin", "your peak". */
-export function comparisonName(mode: RadarMode, value: ComparisonTargetValue, friend: FriendOption | null): string | null {
-  if (mode === "peak") return "your peak";
+/** Who the shape is held up against, by name: "10 handicap", "Avery Lin". */
+export function comparisonName(value: ComparisonTargetValue, friend: FriendOption | null): string | null {
   if (value === "friend") return friendName(friend);
   return value == null ? null : handicapName(value);
 }
-
-export const RADAR_MODES: { value: RadarMode; label: string }[] = [
-  { value: "benchmark", label: "Average" },
-  { value: "peak", label: "Peak" },
-];
 
 /** The goal menu's options. */
 export const GOAL_MENU_OPTIONS = GOAL_OPTIONS.map((option) => ({ value: String(option.value), label: option.label }));
@@ -110,7 +103,6 @@ export function saverShareLabel(saver: Saver): string {
 /** The shape card's words. */
 export const SHAPE_COPY = {
   title: "Player profile",
-  mode: "Your numbers",
   compareWith: "Compare with",
   compareWithPrefix: "vs",
   empty: "Play a few more rounds to see your shape.",
@@ -125,11 +117,6 @@ export function shapeLabel(name: string | null): string {
 /** Beside the axes ahead: "of 6", then "areas ahead of 15 handicap". */
 export function standingLines(judged: number, name: string | null): { of: string; ahead: string } {
   return { of: `of ${judged}`, ahead: `areas ahead of ${name ?? "the comparison"}` };
-}
-
-/** "+19 pts". */
-export function gapPoints(gap: RadarGap): string {
-  return `${formatSigned(gap.points, 0)} pts`;
 }
 
 /** The peak card's words: its title, and the table's columns. */
@@ -184,14 +171,17 @@ export function attemptsLabel(count: number, target: number): string {
   return `Last ${count} scores against the ${goalTargetLabel(target).toLowerCase()} goal`;
 }
 
-/** The axes ahead, then behind, each with its gap worded and the tone it reads in. Empty groups are left out. */
+/**
+ * The axes ahead, then behind, each with the golfer's figure and the comparison's in the axis's own
+ * terms ("33%", "vs 44%"), and the tone the group reads in. Empty groups are left out.
+ */
 export function standingGroups(
   standing: RadarStanding,
-): { title: string; rows: { axis: string; gap: string }[]; tone: "good" | "bad" }[] {
+): { title: string; rows: { axis: string; mine: string; against: string }[]; tone: "good" | "bad" }[] {
   return [
     { title: "Ahead", rows: standing.ahead, tone: "good" as const },
     { title: "Behind", rows: standing.behind, tone: "bad" as const },
   ]
     .filter((group) => group.rows.length > 0)
-    .map((group) => ({ ...group, rows: group.rows.map((row) => ({ axis: row.axis, gap: gapPoints(row) })) }));
+    .map((group) => ({ ...group, rows: group.rows.map(({ axis, mine, theirs }) => ({ axis, mine, against: `vs ${theirs}` })) }));
 }

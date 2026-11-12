@@ -11,6 +11,7 @@ import type {
 import { withoutRounds } from "../fakes/analyticsResponses";
 import { avery, jordan } from "./friendships";
 import { sampleGolfer } from "./sampleGolfer";
+import { countsFor } from "./scoreCounts";
 
 /** A 17.8 out to break 90: met it once in twelve rounds, three-putts the worst leak. */
 export const labUser: UserDto = {
@@ -101,6 +102,7 @@ export const labAnalytics: AnalyticsDto = {
     to_par: score - 72,
     par: 72,
     rolling_average: null,
+    score_counts: countsFor(score - 72),
   })),
   three_putts_trend: THREE_PUTTS.map((count, i) => ({
     round_index: i + 1,
@@ -260,7 +262,6 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
   "handicap:15": {
     against: "handicap",
     handicap: 15,
-    goal: null,
     benchmark: breaks90Shape,
     par_types: parTypes(breaks90Shape, BREAKS_90_JUDGED),
     verdicts: verdicts(["ahead", "ahead", "ahead"], parTypes(breaks90Shape, BREAKS_90_JUDGED)),
@@ -268,7 +269,6 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
   "handicap:5": {
     against: "handicap",
     handicap: 5,
-    goal: null,
     benchmark: breaks80Shape,
     par_types: parTypes(breaks80Shape, [[0.72, "behind"], [0.62, "behind"], [0.3, "behind"]]),
     verdicts: verdicts(
@@ -276,19 +276,9 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
       parTypes(breaks80Shape, [[0.72, "behind"], [0.62, "behind"], [0.3, "behind"]]),
     ),
   },
-  // The best three average 89.7, nearest the golfers who break 90.
-  peak: {
-    against: "peak",
-    handicap: null,
-    goal: 89,
-    benchmark: breaks90Shape,
-    par_types: parTypes(breaks90Shape, BREAKS_90_JUDGED),
-    verdicts: verdicts(["ahead", "ahead", "ahead"], parTypes(breaks90Shape, BREAKS_90_JUDGED)),
-  },
   [`friend:${avery.id}`]: {
     against: "friend",
     handicap: null,
-    goal: null,
     benchmark: averyShape,
     par_types: parTypes(averyShape, [[0.57, "behind"], [0.57, "behind"], [0.55, "behind"]]),
     verdicts: verdicts(
@@ -300,7 +290,6 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
   [`friend:${jordan.id}`]: {
     against: "friend",
     handicap: null,
-    goal: null,
     benchmark: null,
     par_types: parTypes(null, []),
     verdicts: verdicts([null, null, null], parTypes(null, [])),

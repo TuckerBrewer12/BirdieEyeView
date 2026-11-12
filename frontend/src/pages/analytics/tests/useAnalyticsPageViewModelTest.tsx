@@ -138,6 +138,14 @@ describe("useAnalyticsPageViewModel", () => {
     expect(result.current.scoreReading).toBe("net");
   });
 
+  it("draws the score alone on the trend until other lines are turned on, and can turn it off", async () => {
+    const { result } = await loaded();
+
+    expect(result.current.trendLines).toEqual(["score"]);
+    act(() => result.current.setTrendLines(["birdie", "double"]));
+    expect(result.current.trendLines).toEqual(["birdie", "double"]);
+  });
+
   it("opens Approach on par 4s and keeps the par type picked", async () => {
     const { result } = await loaded();
 

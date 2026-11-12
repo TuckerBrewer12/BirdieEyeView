@@ -622,7 +622,6 @@
           "against": {
             "enum": [
               "handicap",
-              "peak",
               "friend"
             ],
             "title": "Against",
@@ -637,17 +636,6 @@
                 "type": "null"
               }
             ]
-          },
-          "goal": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Goal"
           },
           "handicap": {
             "anyOf": [
@@ -674,7 +662,6 @@
         "required": [
           "against",
           "handicap",
-          "goal",
           "benchmark",
           "par_types",
           "verdicts"
@@ -6325,6 +6312,9 @@
             "title": "Round Index",
             "type": "integer"
           },
+          "score_counts": {
+            "$ref": "#/components/schemas/ScoreCounts"
+          },
           "to_par": {
             "anyOf": [
               {
@@ -6355,7 +6345,8 @@
           "to_par",
           "par",
           "course_name",
-          "rolling_average"
+          "rolling_average",
+          "score_counts"
         ],
         "title": "ScoreTrendRow",
         "type": "object"
@@ -9217,7 +9208,7 @@
     },
     "/api/stats/{user_id}/benchmark": {
       "get": {
-        "description": "The player's last `limit` rounds against a handicap's shape, the golfers their peak\nrounds play like, or a friend's last `limit` rounds.",
+        "description": "The player's last `limit` rounds against a handicap's shape or a friend's last `limit` rounds.",
         "operationId": "get_benchmark_comparison_api_stats__user_id__benchmark_get",
         "parameters": [
           {
@@ -9237,7 +9228,6 @@
             "schema": {
               "enum": [
                 "handicap",
-                "peak",
                 "friend"
               ],
               "title": "Against",

@@ -11,6 +11,11 @@ const round = (i: number, values: (number | null)[]): TrendAreaPoint => ({
   values,
 });
 
+const scores = [92, 88, 85, 90, 84, 86, 81, 87, 83, 82, 85, 80];
+const fives = [92, 90, 88.3, 88.8, 87.8, 86.6, 85.2, 85.6, 84.2, 83.8, 83.6, 83.4];
+const birdies = [0, 1, 1, 0, 2, 1, 2, 1, 1, 3, 1, 2];
+const doubles = [5, 3, 3, 4, 2, 3, 1, 3, 2, 2, 2, 1];
+
 const percent = (value: number) => `${Math.round(value)}%`;
 
 export default function TrendAreaChartPreview() {
@@ -32,6 +37,18 @@ export default function TrendAreaChartPreview() {
         ]}
         format={percent}
         domain={[0, 100]}
+      />
+      {/* Scores under their average, with birdies and doubles each round on the counts' axis at the right. */}
+      <TrendAreaChart
+        points={scores.map((score, i) => round(i, [score, fives[i]]))}
+        series={[
+          { label: "Score", tone: "neutral", mark: "dots" },
+          { label: "5-round avg", tone: "primary" },
+        ]}
+        counts={[
+          { kind: "birdie", label: "Birdies", values: birdies },
+          { kind: "double", label: "Doubles", values: doubles },
+        ]}
       />
       <TrendAreaChart points={[round(0, [31])]} series={[{ label: "Putts", tone: "neutral" }]} />
     </>

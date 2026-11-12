@@ -202,14 +202,13 @@ async def _responses() -> tuple[dict, dict]:
     # Analytics' course filter, for the course played least, so the figures plainly change.
     links_analytics = await stats.get_analytics(user_id, 50, HALF_MOON_BAY.id, None, db, USER)
 
-    # The profile's comparisons: every handicap benchmark, and the golfer's peak, over the same
+    # The profile's comparisons: every handicap benchmark, over the same
     # rounds as `analytics` (the fake backend answers every round count with it), so the radar and
     # its verdicts agree.
     benchmarks = {
         f"handicap:{handicap}": await stats.get_benchmark_comparison(user_id, "handicap", handicap, None, 50, db, USER)
         for handicap in (0, 5, 10, 15, 20, 25)
     }
-    benchmarks["peak"] = await stats.get_benchmark_comparison(user_id, "peak", None, None, 50, db, USER)
 
     best = best_round(sorted(rounds, key=lambda r: r.date, reverse=True))
     profile = users.user_response(USER.model_copy(update={"handicap": dashboard.handicap_index}))

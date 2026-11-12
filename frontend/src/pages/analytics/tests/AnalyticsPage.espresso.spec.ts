@@ -48,6 +48,27 @@ test("the score trend switches to net", async ({ analytics }) => {
   await analytics.seesScoreTrend("Net score each round");
 });
 
+test("the score trend counts the kinds of hole turned on, on gross and net", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.seesCountLines(0);
+  await analytics.toggleLine("Birdies");
+  await analytics.toggleLine("Doubles");
+  await analytics.seesCountLines(2);
+  await analytics.pickScoreReading("Net");
+  await analytics.seesCountLines(2);
+  await analytics.toggleLine("Birdies");
+  await analytics.seesCountLines(1);
+});
+
+test("the score can be turned off, leaving the counts", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.seesScoreLine(true);
+  await analytics.toggleLine("Doubles");
+  await analytics.toggleLine("Score");
+  await analytics.seesScoreLine(false);
+  await analytics.seesCountLines(1);
+});
+
 test("each section tab opens its cards", async ({ analytics }) => {
   await analytics.open();
   await analytics.openTab("Ball striking");
@@ -86,15 +107,6 @@ test("Profile shows where to find the strokes and the peak game", async ({ analy
   await analytics.openTab("Profile");
   await analytics.seesSavers(/^Where to find [\d.]+ strokes/);
   await analytics.seesPeakGame(/best \d · ([\d.]+ off|breaks) \d+/, ["Birdies", "Bogeys", "Doubles or worse"]);
-});
-
-test("Profile switches to the peak game and back", async ({ analytics }) => {
-  await analytics.open();
-  await analytics.openTab("Profile");
-  await analytics.pickShape("Peak");
-  await analytics.seesComparedWith("your peak");
-  await analytics.pickShape("Average");
-  await analytics.seesComparedWith("5 handicap");
 });
 
 test("Profile compares with a friend, and says when one has too few rounds", async ({ analytics }) => {

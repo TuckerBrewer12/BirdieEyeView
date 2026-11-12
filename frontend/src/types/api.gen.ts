@@ -459,8 +459,7 @@ export interface paths {
         };
         /**
          * Get Benchmark Comparison
-         * @description The player's last `limit` rounds against a handicap's shape, the golfers their peak
-         *     rounds play like, or a friend's last `limit` rounds.
+         * @description The player's last `limit` rounds against a handicap's shape or a friend's last `limit` rounds.
          */
         get: operations["get_benchmark_comparison_api_stats__user_id__benchmark_get"];
         put?: never;
@@ -816,10 +815,8 @@ export interface components {
              * Against
              * @enum {string}
              */
-            against: "handicap" | "peak" | "friend";
+            against: "handicap" | "friend";
             benchmark: components["schemas"]["BenchmarkShape"] | null;
-            /** Goal */
-            goal: number | null;
             /** Handicap */
             handicap: number | null;
             /** Par Types */
@@ -2456,6 +2453,7 @@ export interface components {
             round_id: string | null;
             /** Round Index */
             round_index: number;
+            score_counts: components["schemas"]["ScoreCounts"];
             /** To Par */
             to_par: number | null;
             /** Total Score */
@@ -3803,7 +3801,7 @@ export interface operations {
     get_benchmark_comparison_api_stats__user_id__benchmark_get: {
         parameters: {
             query: {
-                against: "handicap" | "peak" | "friend";
+                against: "handicap" | "friend";
                 handicap?: number | null;
                 friend_id?: string | null;
                 limit?: number;
