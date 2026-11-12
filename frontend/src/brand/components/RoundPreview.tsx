@@ -247,7 +247,7 @@ function RoundCompact({ round, layout = "inline", onClick }: Omit<RoundCompactPr
         <>
           <span className="text-body text-muted-foreground">{date}</span>
           <span className="min-w-0 truncate text-body-lg font-semibold text-foreground">{courseName}</span>
-          <span>{round.holes.length > 0 && <HoleScoreBars holes={round.holes} variant="strip" />}</span>
+          <span>{round.holes.length > 0 && <HoleScoreBars holes={round.holes} variant="strip" size="sm" />}</span>
         </>
       )}
       <span className={cn("shrink-0 text-xl font-semibold text-foreground", !stacked && "text-right")}>
