@@ -178,6 +178,7 @@
   --brand-size-sheet: 420px;
   --brand-size-sheet-tall: 640px;
   --brand-size-target: 15rem;
+  --brand-size-tab: 42px;
   --brand-size-icon-xs: 11px;
   --brand-size-icon-sm: 13px;
   --brand-size-icon-md: 18px;
@@ -419,6 +420,7 @@
   --spacing-sheet: var(--brand-size-sheet);
   --spacing-sheet-tall: var(--brand-size-sheet-tall);
   --spacing-target: var(--brand-size-target);
+  --spacing-tab: var(--brand-size-tab);
   --spacing-icon-xs: var(--brand-size-icon-xs);
   --spacing-icon-sm: var(--brand-size-icon-sm);
   --spacing-icon-md: var(--brand-size-icon-md);

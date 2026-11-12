@@ -479,6 +479,8 @@ export const size = {
   "sheet-tall": 640,
   /** Widest a target of results grows. */
   target: "15rem",
+  /** A page's section tab: the row's height, the underline included. */
+  tab: 42,
   "icon-xs": 11,
   "icon-sm": 13,
   /** A nav item's icon, a sheet's close, a card's chevron. */

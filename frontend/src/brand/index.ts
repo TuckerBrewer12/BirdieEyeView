@@ -100,6 +100,8 @@ export { RoundPreview } from "./components/RoundPreview";
 export { RoundShareCard } from "./components/RoundShareCard";
 export { RoundScorecard } from "./components/RoundScorecard";
 export { CoursePreview } from "./components/CoursePreview";
+export { TabBar } from "./components/TabBar";
+export type { TabBarProps } from "./components/TabBar";
 export { SectionLabel } from "./components/SectionLabel";
 export { SideNav } from "./components/SideNav";
 export type { SideNavProps, SideNavUser } from "./components/SideNav";
