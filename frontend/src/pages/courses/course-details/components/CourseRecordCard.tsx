@@ -48,7 +48,8 @@ export function CourseRecordCard({
   return (
     <Card
       data-slot="course-record"
-      className="gap-0 divide-y divide-border py-1 md:grid md:grid-cols-2 md:gap-1 md:divide-y-0 md:p-2"
+      // Beside a taller card the record keeps its figures together at the top, rather than spread down it.
+      className="gap-0 divide-y divide-border py-1 md:grid md:grid-cols-2 md:content-start md:gap-1 md:divide-y-0 md:p-2"
     >
       {figures.map((figure) => {
         const { roundId } = figure;

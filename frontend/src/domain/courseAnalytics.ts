@@ -3,6 +3,8 @@ import { Round, type RoundSummary } from "./round";
 import type { ScoreMix } from "./score";
 import { trendPointsFrom, type RoundTrendPoint } from "./trend";
 
+export type PuttsVerdict = NonNullable<CourseHoleStatsRowDto["putts_verdict"]>;
+
 /** How one hole of a course plays for the golfer, every figure the server's. */
 export interface HoleStats {
   hole: number;
@@ -11,12 +13,16 @@ export interface HoleStats {
   rounds: number;
   averageScore: number;
   averageToPar: number;
+  /** Where it ranks by average to par, as the server ranked it: 1 is the hardest. */
+  difficultyRank: number;
   /** How far their score swings on it (a standard deviation); null under two rounds. */
   spread: number | null;
   /** The greens they've hit on it, 0-100; null when none was recorded. */
   greens: number | null;
   /** Their average putts on it; null when none were recorded. */
   putts: number | null;
+  /** The server's read of those putts against two a hole: fewer is good, more is bad. */
+  puttsVerdict: PuttsVerdict | null;
   /** The share of each kind of score on it, 0-100. */
   mix: ScoreMix;
 }
@@ -71,9 +77,11 @@ function holeStats(row: CourseHoleStatsRowDto): HoleStats {
     rounds: row.sample_size,
     averageScore: row.average_score,
     averageToPar: row.average_to_par,
+    difficultyRank: row.difficulty_rank,
     spread: row.score_std_dev,
     greens: row.gir_percentage,
     putts: row.average_putts,
+    puttsVerdict: row.putts_verdict,
     mix: row.score_mix,
   };
 }

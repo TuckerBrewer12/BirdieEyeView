@@ -31,9 +31,11 @@ describe("courseAnalyticsFrom", () => {
       rounds: 2,
       averageScore: 3.5,
       averageToPar: 0.5,
+      difficultyRank: 1,
       spread: 0.5,
       greens: 50,
       putts: 2,
+      puttsVerdict: "neutral",
       mix: { eagle: 0, birdie: 0, par: 50, bogey: 50, double: 0, triple: 0, quad: 0 },
     });
     expect(analytics.nineToPar).toEqual({ front: -1.5, back: -1.5, total: -3 });

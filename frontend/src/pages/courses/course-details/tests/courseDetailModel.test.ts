@@ -105,9 +105,12 @@ describe("recordFigures", () => {
 describe("holesInOrder", () => {
   const holes = courseAnalyticsFrom(halfMoonBayAnalytics).holes;
 
-  it("keeps the course's order, or puts the highest average to par first with ties by hole", () => {
+  it("keeps the course's order, or follows the server's difficulty rank", () => {
     expect(holesInOrder(holes, "course").map((hole) => hole.hole)).toEqual(holes.map((hole) => hole.hole));
     expect(holesInOrder(holes, "hardest").map((hole) => hole.hole).slice(0, 6)).toEqual([3, 6, 9, 12, 15, 18]);
+    // The rank decides, not the figures: a hole the server ranks first leads whatever its average.
+    const reranked = holes.map((hole) => ({ ...hole, difficultyRank: hole.hole === 1 ? 0 : hole.difficultyRank }));
+    expect(holesInOrder(reranked, "hardest")[0]?.hole).toBe(1);
   });
 });
 

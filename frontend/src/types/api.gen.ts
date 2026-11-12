@@ -982,12 +982,16 @@ export interface components {
             average_score: number;
             /** Average To Par */
             average_to_par: number;
+            /** Difficulty Rank */
+            difficulty_rank: number;
             /** Gir Percentage */
             gir_percentage: number | null;
             /** Hole Number */
             hole_number: number;
             /** Par */
             par: number;
+            /** Putts Verdict */
+            putts_verdict: ("good" | "bad" | "neutral") | null;
             /** Sample Size */
             sample_size: number;
             score_mix: components["schemas"]["ScoreMix"];

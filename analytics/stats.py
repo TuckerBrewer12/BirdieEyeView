@@ -1517,14 +1517,16 @@ def gir_percentage_nines(by_hole: List[Dict[str, Any]]) -> Dict[str, Optional[fl
 def course_hole_stats(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     How each hole of one course plays for the golfer, one row a hole in course order: its par, how
-    many times they've played it, their average score and to par on it, how far their score swings
-    (the standard deviation, null under two rounds), the greens they hit (0-100) and their average
-    putts (null where none were recorded), and the share of each kind of score (0-100).
+    many times they've played it, their average score and to par on it, where it ranks by that to
+    par (`course_difficulty_profile_by_hole`: 1 is the hardest), how far their score swings (the
+    standard deviation, null under two rounds), the greens they hit (0-100) and their average putts
+    (null where none were recorded), and the share of each kind of score (0-100).
 
     The course page's hole charts read these rows: one row a hole rather than a list per figure.
     """
     rounds = list(rounds)
     to_par = {row["hole_number"]: row for row in average_score_relative_to_par_by_hole(rounds)}
+    rank = {row["hole_number"]: row["difficulty_rank"] for row in course_difficulty_profile_by_hole(rounds)}
     spread = {row["hole_number"]: row for row in score_variance_by_hole(rounds)}
     greens = {row["hole_number"]: row for row in gir_percentage_by_hole(rounds)}
     putts = {row["hole_number"]: row for row in average_putts_by_hole(rounds)}
@@ -1541,6 +1543,7 @@ def course_hole_stats(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
                 "sample_size": played,
                 "average_score": row["average_score"],
                 "average_to_par": row["average_to_par"],
+                "difficulty_rank": rank[hole_number],
                 "score_std_dev": spread[hole_number]["score_std_dev"] if played >= 2 and hole_number in spread else None,
                 "gir_percentage": greens[hole_number]["gir_percentage"] if hole_number in greens else None,
                 "average_putts": putts[hole_number]["average_putts"] if hole_number in putts else None,

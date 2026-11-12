@@ -58,6 +58,19 @@ def test_each_hole_carries_how_it_plays():
     assert (first.gir_percentage, first.average_putts) == (100.0, 2.0)
     assert (first.score_mix.par, first.score_mix.bogey) == (50.0, 50.0)
     assert response.holes[2].score_std_dev == 0.0
+    assert first.putts_verdict == "neutral"  # two putts a hole
+
+
+def test_each_hole_carries_its_difficulty_rank_and_putts_verdict():
+    # r1 is over on holes 1-3; hole 4 one-putts in both rounds and hole 5 three-putts.
+    holes = [
+        HoleScore(hole_number=i + 1, strokes=p + (1 if i < 3 else 0), putts=1 if i == 3 else 3 if i == 4 else 2)
+        for i, p in enumerate(PARS)
+    ]
+    r1 = Round(id="r1", course=COURSE, date=datetime(2026, 5, 1, tzinfo=timezone.utc), hole_scores=holes)
+    response = course_analytics("c1", [r1, _round("r2", 8, 0)])
+    assert [h.difficulty_rank for h in response.holes[:4]] == [1, 2, 3, 4]  # ties go by hole
+    assert [h.putts_verdict for h in response.holes[3:6]] == ["good", "bad", "neutral"]
     assert [hole.hole_number for hole in response.holes] == list(range(1, 19))
 
 

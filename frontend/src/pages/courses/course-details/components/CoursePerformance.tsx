@@ -11,7 +11,6 @@ import {
   ToggleGroupItem,
   TrendAreaChart,
 } from "@/brand";
-import { pluralize } from "@/domain/format";
 import type { CourseDetailPageViewModel } from "../useCourseDetailPageViewModel";
 
 type CoursePerformanceProps = Pick<
@@ -41,9 +40,6 @@ export function CoursePerformance({
           <CardTitle level={2} className="text-body-lg font-semibold">
             Score trend
           </CardTitle>
-          <CardDescription>
-            {pluralize(scoreTrend.length, "round")} here, with a five-round average
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <TrendAreaChart

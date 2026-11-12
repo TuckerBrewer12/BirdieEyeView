@@ -835,6 +835,8 @@ export const chart = {
    * A figure per hole across a course (how each hole plays, greens and putts). Like the round flow it
    * draws as wide as its card, `width` until measured, and scrolls sideways below `minWidth`.
    */
+  /** A chart's hover card: past this share of the way across, it opens to the left of what it points at. */
+  tooltipFlip: 0.65,
   holes: {
     width: px(size["chart-wide"]),
     minWidth: px(size["chart-flow"]),

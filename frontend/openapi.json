@@ -1253,6 +1253,10 @@
             "title": "Average To Par",
             "type": "number"
           },
+          "difficulty_rank": {
+            "title": "Difficulty Rank",
+            "type": "integer"
+          },
           "gir_percentage": {
             "anyOf": [
               {
@@ -1271,6 +1275,22 @@
           "par": {
             "title": "Par",
             "type": "integer"
+          },
+          "putts_verdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "good",
+                  "bad",
+                  "neutral"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Putts Verdict"
           },
           "sample_size": {
             "title": "Sample Size",
@@ -1297,9 +1317,11 @@
           "sample_size",
           "average_score",
           "average_to_par",
+          "difficulty_rank",
           "score_std_dev",
           "gir_percentage",
           "average_putts",
+          "putts_verdict",
           "score_mix"
         ],
         "title": "CourseHoleStatsRow",

@@ -3,6 +3,7 @@ import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group
 import { cn } from "@/brand/cn";
 import { formatCount } from "@/domain/format";
 import { TeeSwatch } from "./TeeSwatch";
+import { toggleVariants } from "./variants";
 
 interface TeeOption {
   /** The tee's name as the course stores it ("Blue", "Back Gold"). */
@@ -23,8 +24,8 @@ interface TeePickerProps {
 
 /**
  * Picks a tee: the one a round was played from, or the one a course's scorecard reads. A row of pill
- * chips with a gap between them, each the tee's swatch, its name and its yardage, the picked one ringed. Built on the same toggle group as `ToggleGroup`, so arrow keys
- * move between the chips; only the look differs, a chip a tee rather than a segmented track.
+ * chips with a gap between them, each the tee's swatch, its name and its yardage, the picked one ringed. Built on the same toggle group and chip look as `ToggleGroup look="chips"`, so arrow keys
+ * move between the chips; each chip also carries the tee's swatch and yardage.
  */
 function TeePicker({ tees, value, onChange, label = "Tee", className }: TeePickerProps) {
   const picked = tees.find((tee) => tee.name.toLowerCase() === value.toLowerCase())?.name;
@@ -47,7 +48,7 @@ function TeePicker({ tees, value, onChange, label = "Tee", className }: TeePicke
           <TogglePrimitive
             key={tee.name}
             value={tee.name}
-            className="flex h-9 items-center gap-2 rounded-full bg-card pr-3 pl-2.5 text-body font-medium text-foreground ring-1 ring-input transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-pressed:font-bold data-pressed:ring-2 data-pressed:ring-foreground data-pressed:hover:bg-card"
+            className={cn(toggleVariants({ variant: "chip" }), "pr-3 pl-2.5")}
           >
             <TeeSwatch color={tee.name} className="size-3.5 rounded-full ring-1 ring-border-strong ring-inset" />
             <span className="capitalize">{tee.name}</span>

@@ -179,10 +179,10 @@ export const HOLE_ORDERS: { value: HoleOrder; label: string }[] = [
   { value: "hardest", label: "Hardest first" },
 ];
 
-/** The holes in the order asked: as the course runs, or highest average to par first, ties by hole. */
+/** The holes in the order asked: as the course runs, or hardest first by the server's rank. */
 export function holesInOrder(holes: readonly HoleStats[], order: HoleOrder): HoleStats[] {
   if (order === "course") return [...holes];
-  return [...holes].sort((a, b) => b.averageToPar - a.averageToPar || a.hole - b.hole);
+  return [...holes].sort((a, b) => a.difficultyRank - b.difficultyRank);
 }
 
 /** The greens hit over each nine and the course, for the greens chart's header: "Out 72%". */

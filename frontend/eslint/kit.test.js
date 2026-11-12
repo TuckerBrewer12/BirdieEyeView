@@ -327,3 +327,19 @@ tester.run("kit/no-raw-table", kit.rules["no-raw-table"], {
   ],
   invalid: [{ code: "<table><tbody /></table>;", filename: PAGE, errors: [{ messageId: "table" }] }],
 });
+
+tester.run("kit/no-handmade-chart-tooltip", kit.rules["no-handmade-chart-tooltip"], {
+  valid: [
+    { code: "<ChartTooltip id={hole} at={{ x: 0.4 }}>Hole 7</ChartTooltip>;", filename: KIT },
+    // A frosted bar that takes the pointer is not a hover card.
+    { code: '<nav className="sticky top-0 bg-card/glass backdrop-blur-sm" />;', filename: PAGE },
+    { code: '<div className="pointer-events-none absolute bg-card/glass" />;', filename: "/app/src/brand/charts/ChartTooltip.tsx" },
+  ],
+  invalid: [
+    {
+      code: '<div className={cn("pointer-events-none absolute z-10 rounded-xl bg-card/glass", flip && "-ml-3")} />;',
+      filename: "/app/src/brand/charts/TrendAreaChart.tsx",
+      errors: [{ messageId: "tooltip" }],
+    },
+  ],
+});

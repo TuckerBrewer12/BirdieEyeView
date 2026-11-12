@@ -392,6 +392,33 @@ const noRawTable = {
   },
 };
 
+/** The file the chart hover card is built in. */
+const isChartTooltip = (filename) => /[\\/]brand[\\/]charts[\\/]ChartTooltip\.tsx$/.test(filename);
+
+const noHandmadeChartTooltip = {
+  meta: {
+    type: "problem",
+    docs: { description: "Build a chart's hover card with ChartTooltip, not its classes by hand." },
+    schema: [],
+    messages: {
+      tooltip:
+        "A frosted card that ignores the pointer is a chart's hover card built by hand. Use <ChartTooltip id at>, " +
+        "so every chart's card looks, flips and fades one way.",
+    },
+  },
+  create(context) {
+    if (isChartTooltip(context.filename)) return {};
+    return {
+      "JSXAttribute[name.name='className']"(node) {
+        const source = context.sourceCode.getText(node.value ?? node);
+        if (source.includes("bg-card/glass") && source.includes("pointer-events-none")) {
+          context.report({ node, messageId: "tooltip" });
+        }
+      },
+    };
+  },
+};
+
 export default {
   rules: {
     "no-raw-heading": noRawHeading,
@@ -405,5 +432,6 @@ export default {
     "no-breakpoint-styling": noBreakpointStyling,
     "no-to-par-tone": noToParTone,
     "no-raw-table": noRawTable,
+    "no-handmade-chart-tooltip": noHandmadeChartTooltip,
   },
 };

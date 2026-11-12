@@ -89,7 +89,6 @@ export function LabMobileLayout({ vm }: { vm: LabPageViewModel }) {
             <ToggleGroup
               data-slot="lab-panels"
               aria-label="Performance panel"
-              variant="outline"
               size="sm"
               value={[vm.panel]}
               onValueChange={(values) => {

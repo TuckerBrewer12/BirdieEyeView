@@ -1,7 +1,5 @@
-import { useState, type MouseEvent } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { scaleLinear } from "d3-scale";
-import { cn } from "@/brand/cn";
 import { ScoreMixBar } from "@/brand/charts/ScoreMixBar";
 import { paddedExtent } from "@/brand/charts/scales";
 import { ToParFigure } from "@/brand/components/ToParFigure";
@@ -9,7 +7,11 @@ import { toParMarkFill, tokens } from "@/brand/theme";
 import type { HoleStats } from "@/domain";
 import { formatOneDecimal, pluralize } from "@/domain/format";
 import { formatAverageToParTenths, roundAverageToParTenths } from "@/domain/score";
+import { ChartTooltip } from "./ChartTooltip";
+import { HoleColumn, HoleNumber, NineDivider } from "./holeAxis";
 import { useChartWidth } from "./useChartWidth";
+import { useColumnHover } from "./useColumnHover";
+import { useLayoutTransition } from "./useLayoutTransition";
 
 interface HoleProfileChartProps {
   /** In the order to draw them: course order, or hardest first. */
@@ -29,7 +31,8 @@ export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProp
   const { width, minWidth, height: H, pad: PAD, bar, corner, whisker, cap, labelGap, numberDrop, level } =
     tokens.chart.holes;
   const [W, measure] = useChartWidth(width, minWidth);
-  const [hovered, setHovered] = useState<number | null>(null);
+  const { hovered, track } = useColumnHover();
+  const move = useLayoutTransition();
   if (holes.length === 0) return null;
 
   const bottom = H - PAD.bottom;
@@ -47,12 +50,6 @@ export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProp
   // Course order is split at the turn, where hole 10 starts.
   const turn = ranked ? -1 : holes.findIndex((hole) => hole.hole === 10);
 
-  const handleMouseMove = (e: MouseEvent<SVGSVGElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const at = Math.floor(x.invert((e.clientX - rect.left) * (W / rect.width)));
-    setHovered(Math.max(0, Math.min(holes.length - 1, at)));
-  };
-
   return (
     <div data-slot="hole-profile-chart">
       <div ref={measure} className="overflow-x-auto">
@@ -62,19 +59,9 @@ export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProp
             role="img"
             aria-label={`Average to par on each hole${ranked ? ", hardest first" : ""}`}
             className="block w-full overflow-visible"
-            onMouseMove={handleMouseMove}
-            onMouseLeave={() => setHovered(null)}
+            {...track(x, 0, holes.length - 1, W)}
           >
-            {hovered != null && (
-              <rect
-                x={x(hovered)}
-                y={PAD.top}
-                width={column}
-                height={bottom - PAD.top}
-                rx={corner}
-                fill={tokens.color.chart.grid}
-              />
-            )}
+            {hovered != null && <HoleColumn x={x(hovered)} width={column} top={PAD.top} bottom={bottom} />}
             {ticks.map((tick) => (
               <g key={tick}>
                 <line
@@ -99,16 +86,7 @@ export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProp
                 </text>
               </g>
             ))}
-            {turn > 0 && (
-              <line
-                x1={x(turn)}
-                x2={x(turn)}
-                y1={PAD.top}
-                y2={H}
-                stroke={tokens.color.border}
-                strokeWidth={tokens.lineWidth.border}
-              />
-            )}
+            {turn > 0 && <NineDivider x={x(turn)} top={PAD.top} bottom={H} />}
 
             {holes.map((hole, i) => {
               const centre = x(i + 0.5);
@@ -126,13 +104,13 @@ export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProp
                     fill={fill}
                     initial={false}
                     animate={{ x: centre - (column * bar) / 2, y: top, height }}
-                    transition={tokens.motion.layout}
+                    transition={move}
                   />
                   {hole.spread != null && hole.spread > 0 && (
                     <motion.g
                       initial={false}
                       animate={{ x: centre }}
-                      transition={tokens.motion.layout}
+                      transition={move}
                       stroke={tokens.color.chart.reference}
                       strokeWidth={whisker}
                       strokeLinecap="round"
@@ -142,39 +120,17 @@ export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProp
                       <line x1={-cap} x2={cap} y1={y(hole.averageToPar - hole.spread)} y2={y(hole.averageToPar - hole.spread)} />
                     </motion.g>
                   )}
-                  <motion.text
-                    initial={false}
-                    animate={{ x: centre }}
-                    transition={tokens.motion.layout}
-                    y={bottom + numberDrop}
-                    textAnchor="middle"
-                    fontSize={tokens.type.meta.size}
-                    fontFamily={tokens.font.sans}
-                    fontWeight={hovered === i ? "600" : "400"}
-                    fill={hovered === i ? tokens.color.foreground : tokens.color.mutedForeground}
-                  >
+                  <HoleNumber x={centre} y={bottom + numberDrop} active={hovered === i} moving>
                     {hole.hole}
-                  </motion.text>
+                  </HoleNumber>
                 </g>
               );
             })}
           </svg>
 
-          <AnimatePresence>
-            {tipHole && hovered != null && (
-              <motion.div
-                key={tipHole.hole}
-                className={cn(
-                  "pointer-events-none absolute top-0 z-10 w-56 rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
-                  // Past the middle of the chart, the card opens to the left of the hole.
-                  x(hovered + 0.5) > W * 0.6 ? "-ml-6 -translate-x-full" : "ml-6",
-                )}
-                style={{ left: `${(x(hovered + 0.5) / W) * 100}%` }}
-                initial={{ opacity: 0, scale: tokens.motion.tapScale }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: tokens.motion.tapScale }}
-                transition={{ duration: tokens.motion.duration.collapse }}
-              >
+          <ChartTooltip id={tipHole?.hole ?? null} at={{ x: hovered != null ? x(hovered + 0.5) / W : 0 }} className="w-56">
+            {tipHole && (
+              <>
                 <div className="mb-1 flex items-baseline justify-between gap-3">
                   <span className="text-sm font-bold text-card-foreground">Hole {tipHole.hole}</span>
                   <span className="text-muted-foreground">Par {tipHole.par}</span>
@@ -192,9 +148,9 @@ export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProp
                   {pluralize(tipHole.rounds, "round")}
                 </div>
                 <ScoreMixBar mix={tipHole.mix} />
-              </motion.div>
+              </>
             )}
-          </AnimatePresence>
+          </ChartTooltip>
         </div>
       </div>
     </div>

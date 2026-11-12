@@ -54,13 +54,13 @@ export function CourseDetailPage({ userId }: { userId: string }) {
 
       {viewModel.played && (
         <ToggleGroup
+          look="chips"
           aria-label="View"
           value={[viewModel.view]}
           onValueChange={(values: string[]) => viewModel.pickView(values[0])}
-          className="w-full md:w-fit"
         >
           {viewModel.views.map((option) => (
-            <ToggleGroupItem key={option.value} value={option.value} className="min-w-0 flex-1 basis-0 md:flex-none md:basis-auto">
+            <ToggleGroupItem key={option.value} value={option.value}>
               {option.label}
             </ToggleGroupItem>
           ))}

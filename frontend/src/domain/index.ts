@@ -39,7 +39,7 @@ export { courseLabel, courseSummaryFrom, formatCourseName, getTee, teeColors } f
 export type { CourseSummary } from "./course";
 
 export { EMPTY_COURSE_ANALYTICS, courseAnalyticsFrom } from "./courseAnalytics";
-export type { CourseAnalytics, HoleStats, NineFigures } from "./courseAnalytics";
+export type { CourseAnalytics, HoleStats, NineFigures, PuttsVerdict } from "./courseAnalytics";
 
 export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekday, isoDay, parseDay } from "./date";
 export type { DayParts } from "./date";

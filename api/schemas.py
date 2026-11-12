@@ -851,9 +851,12 @@ class CourseHoleStatsRow(ResponseModel):
     sample_size: int  # the rounds they've scored it in
     average_score: float
     average_to_par: float
+    difficulty_rank: int  # 1 is the hardest by average to par, ties by hole (stats.course_difficulty_profile_by_hole)
     score_std_dev: Optional[float] = None  # how far the score swings; null under two rounds
     gir_percentage: Optional[float] = None  # null when no green was recorded
     average_putts: Optional[float] = None  # null when no putts were recorded
+    # Against two putts a hole, to a tenth: fewer is good, more is bad. Null with no putts recorded.
+    putts_verdict: Optional[ChangeVerdict] = None
     score_mix: ScoreMix  # the share of each kind of score, 0-100
 
 

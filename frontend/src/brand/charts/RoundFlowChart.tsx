@@ -1,5 +1,4 @@
-import { useState, type MouseEvent } from "react";
-import { AnimatePresence, motion, useReducedMotion, useReducedMotionConfig } from "framer-motion";
+import { motion, useReducedMotion, useReducedMotionConfig } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { curveStepAfter, line } from "d3-shape";
 import { cn } from "@/brand/cn";
@@ -10,7 +9,10 @@ import type { HoleScore, Round } from "@/domain";
 import { pluralize } from "@/domain/format";
 import type { ScoreKind } from "@/domain/score";
 import { HoleShape } from "./HoleScoreShapes";
+import { ChartTooltip } from "./ChartTooltip";
+import { HoleNumber, NineDivider } from "./holeAxis";
 import { useChartWidth } from "./useChartWidth";
+import { useColumnHover } from "./useColumnHover";
 
 interface RoundFlowChartProps {
   round: Round;
@@ -37,7 +39,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
   const prefersReduced = useReducedMotion();
   const configReduced = useReducedMotionConfig();
   const reduceMotion = prefersReduced || configReduced;
-  const [hovered, setHovered] = useState<FlowHole | null>(null);
+  const { hovered: hoveredHole, track } = useColumnHover();
 
   const steps = round.holes.filter(
     (hole): hole is FlowHole =>
@@ -48,6 +50,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
   const first = steps[0].hole;
   const last = steps[steps.length - 1].hole;
   const final = steps[steps.length - 1];
+  const hovered = steps.find((step) => step.hole === hoveredHole) ?? null;
 
   const bottom = H - PAD.bottom;
   // Each hole owns a column from x(hole) to x(hole + 1).
@@ -70,12 +73,6 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
   const bracketY = PAD.top - bracket.rise;
   const chipTop = bottom + chip.gap;
 
-  const handleMouseMove = (e: MouseEvent<SVGSVGElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const hole = Math.floor(x.invert((e.clientX - rect.left) * (W / rect.width)));
-    setHovered(steps.find((step) => step.hole === Math.max(first, Math.min(last, hole))) ?? null);
-  };
-
   const description =
     `Running score to par: ${toParLabel(final.runningToPar)} after hole ${last}` +
     (worst ? `, ${toParLabel(worst.toPar)} over holes ${worst.firstHole} to ${worst.lastHole}` : "");
@@ -89,8 +86,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
             role="img"
             aria-label={description}
             className="block w-full overflow-visible"
-            onMouseMove={handleMouseMove}
-            onMouseLeave={() => setHovered(null)}
+            {...track(x, first, last, W)}
           >
             {worst && (
               <g>
@@ -140,16 +136,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               </g>
             ))}
 
-            {first <= 9 && last > 9 && (
-              <line
-                x1={x(10)}
-                x2={x(10)}
-                y1={0}
-                y2={H}
-                stroke={tokens.color.border}
-                strokeWidth={tokens.lineWidth.border}
-              />
-            )}
+            {first <= 9 && last > 9 && <NineDivider x={x(10)} top={0} bottom={H} />}
 
             <motion.path
               d={path}
@@ -205,39 +192,20 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
                     <HoleShape hole={step} square />
                   </div>
                 </foreignObject>
-                <text
-                  x={mid(step.hole)}
-                  y={chipTop + holeH + chip.gap}
-                  textAnchor="middle"
-                  fontSize={tokens.type.meta.size}
-                  fontFamily={tokens.font.sans}
-                  fill={hovered?.hole === step.hole ? tokens.color.foreground : tokens.color.mutedForeground}
-                  fontWeight={hovered?.hole === step.hole ? "600" : "400"}
-                >
+                <HoleNumber x={mid(step.hole)} y={chipTop + holeH + chip.gap} active={hovered?.hole === step.hole}>
                   {step.hole}
-                </text>
+                </HoleNumber>
               </g>
             ))}
           </svg>
 
-          <AnimatePresence>
+          <ChartTooltip
+            id={hovered?.hole ?? null}
+            at={{ x: hovered ? mid(hovered.hole) / W : 0, y: hovered ? y(hovered.runningToPar) / H : 0 }}
+            className="min-w-32"
+          >
             {hovered && (
-              <motion.div
-                key={hovered.hole}
-                className={cn(
-                  "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
-                  // Past two thirds of the way across, the card opens to the left of the hole.
-                  mid(hovered.hole) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
-                )}
-                style={{
-                  left: `${(mid(hovered.hole) / W) * 100}%`,
-                  top: `${(y(hovered.runningToPar) / H) * 100}%`,
-                }}
-                initial={{ opacity: 0, scale: tokens.motion.tapScale }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: tokens.motion.tapScale }}
-                transition={{ duration: tokens.motion.duration.collapse }}
-              >
+              <>
                 <div className="mb-1.5 flex items-center justify-between gap-3">
                   <span className="text-sm font-bold text-card-foreground">Hole {hovered.hole}</span>
                   <span
@@ -263,9 +231,9 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
                 <div className="mt-1 text-muted-foreground">
                   Round <ToParFigure toPar={hovered.runningToPar} />
                 </div>
-              </motion.div>
+              </>
             )}
-          </AnimatePresence>
+          </ChartTooltip>
         </div>
       </div>
     </div>
