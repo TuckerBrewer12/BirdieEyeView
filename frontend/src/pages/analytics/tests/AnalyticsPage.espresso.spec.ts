@@ -81,6 +81,14 @@ test("Profile holds the shape up against the next level, then the one picked", a
   await analytics.seesComparedWith("Scratch");
 });
 
+test("tapping Peak holds the radar against your peak", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.openTab("Profile");
+  await analytics.seesComparedWith("5 handicap");
+  await analytics.pickNumbers("Peak");
+  await analytics.seesComparedWith("your peak");
+});
+
 test("Profile shows where to find the strokes and the peak game", async ({ analytics }) => {
   await analytics.open();
   await analytics.openTab("Profile");

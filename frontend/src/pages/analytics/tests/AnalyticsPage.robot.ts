@@ -163,6 +163,14 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** Average or Peak: whose numbers the radar draws. */
+  async pickNumbers(label: "Average" | "Peak"): Promise<this> {
+    await this.visible(
+      this.page.getByRole("group", { name: "Your numbers" }).getByRole("button", { name: label, exact: true }),
+    ).click();
+    return this;
+  }
+
   /** The comparison menu: "10 handicap", a friend's name. */
   async compareWith(label: string): Promise<this> {
     await this.visible(this.page.getByRole("button", { name: "Compare with" })).click();

@@ -77,3 +77,11 @@ test("profile against a friend", async ({ analytics }) => {
   await analytics.seesComparedWith("Scratch");
   await analytics.capture("analytics-profile-scratch.png");
 });
+
+test("profile against the peak game", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.openTab("Profile");
+  await analytics.pickNumbers("Peak");
+  await analytics.seesComparedWith("your peak");
+  await analytics.capture("analytics-profile-peak.png");
+});
