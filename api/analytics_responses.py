@@ -7,8 +7,9 @@ from analytics import dashboard
 from analytics import handicap as hcap
 from analytics import stats as analytics
 from analytics import verdicts
+from analytics import benchmarks
 from analytics.benchmarks import player_shape
-from analytics.insights import insights
+from analytics.headline import headline
 from analytics.peak import peak_game
 from api.round_responses import round_summary
 from api.schemas import AnalyticsKpis, AnalyticsResponse
@@ -66,30 +67,34 @@ def analytics_response(
     shape = player_shape(rounds) or {}
     scoring_change = dashboard.scoring_average_change(rounds, full_window=True)
 
+    next_level = benchmarks.next_level_handicap(player_index)
+
+    kpis = AnalyticsKpis(
+        scoring_average=_rounded(_average(scores), 1),
+        gir_percentage=shape.get("gir_percentage"),
+        putts_per_gir=shape.get("putts_per_gir"),
+        scrambling_percentage=shape.get("scrambling_percentage"),
+        up_and_down_percentage=_rounded(_average([
+            r["percentage"] for r in up_and_down_rows if r["opportunities"] > 0
+        ]), 1),
+        handicap_index=player_index,
+        total_rounds=len(rounds),
+        best_round=best.total_score if best else None,
+        best_round_id=best.id if best else None,
+        best_round_course=best.course_name if best else None,
+        average_putts=analytics.round_half_up(average_putts) if average_putts is not None else None,
+        three_putts_per_round=three_putts["per_round"],
+        three_putt_rate=three_putts["rate"],
+        scoring_average_change=scoring_change,
+        scoring_average_verdict=verdicts.change_verdict(scoring_change),
+    )
+
     return AnalyticsResponse(
-        kpis=AnalyticsKpis(
-            scoring_average=_rounded(_average(scores), 1),
-            gir_percentage=shape.get("gir_percentage"),
-            putts_per_gir=shape.get("putts_per_gir"),
-            scrambling_percentage=shape.get("scrambling_percentage"),
-            up_and_down_percentage=_rounded(_average([
-                r["percentage"] for r in up_and_down_rows if r["opportunities"] > 0
-            ]), 1),
-            handicap_index=player_index,
-            total_rounds=len(rounds),
-            best_round=best.total_score if best else None,
-            best_round_id=best.id if best else None,
-            best_round_course=best.course_name if best else None,
-            average_putts=analytics.round_half_up(average_putts) if average_putts is not None else None,
-            three_putts_per_round=three_putts["per_round"],
-            three_putt_rate=three_putts["rate"],
-            scoring_average_change=scoring_change,
-            scoring_average_verdict=verdicts.change_verdict(scoring_change),
-        ),
+        kpis=kpis,
         score_trend=score_rows,
-        net_score_trend=analytics.net_score_trend(rounds, player_index),
-        gir_trend=gir_rows,
-        putts_trend=putts_rows,
+        net_score_trend=analytics.with_rolling_average(analytics.net_score_trend(rounds, player_index), "net_score"),
+        gir_trend=analytics.with_rolling_average(gir_rows, "gir_percentage"),
+        putts_trend=analytics.with_rolling_average(putts_rows, "total_putts"),
         three_putts_trend=analytics.three_putts_per_round(rounds),
         scrambling_trend=scrambling_rows,
         up_and_down_trend=up_and_down_rows,
@@ -105,6 +110,12 @@ def analytics_response(
         score_mix={
             kind: analytics.round_half_up(share, 2) for kind, share in dashboard.score_mix(rounds)["percentages"].items()
         },
-        insights=insights(score_rows, gir_rows, scoring_by_par, putts_rows),
         peak_game=peak_game(rounds),
+        headline=headline(rounds, kpis.model_dump()),
+        putts_per_hole=analytics.putts_per_hole(rounds),
+        tour_short_game=benchmarks.TOUR_SHORT_GAME,
+        next_level_handicap=next_level,
+        par_types=benchmarks.par_type_comparison(
+            scoring_by_par, benchmarks.handicap_benchmark(next_level) if next_level is not None else None
+        ),
     )

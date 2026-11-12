@@ -36,6 +36,9 @@ BENCHMARKS: List[Dict[str, Any]] = [
      "par3_to_par": 0.975, "par4_to_par": 1.85, "par5_to_par": 2.0},
 ]
 
+# What tour players average around the green: the marks on the analytics page's short-game bars.
+TOUR_SHORT_GAME = {"scrambling_percentage": 57.0, "up_and_down_percentage": 50.0}
+
 SHAPE_FIELDS = (
     "gir_percentage", "scrambling_percentage", "putts_per_gir", "par3_to_par", "par4_to_par", "par5_to_par",
 )
@@ -49,6 +52,16 @@ def handicap_benchmark(handicap: int) -> Optional[Dict[str, Any]]:
     """The shape of a golfer playing to `handicap`. Null for a handicap with no benchmark."""
     row = next((r for r in BENCHMARKS if r["handicap"] == handicap), None)
     return _shape(row) if row else None
+
+
+def next_level_handicap(index: Optional[float]) -> Optional[int]:
+    """The benchmark handicap a step better than `index`: the highest one below it, scratch for an
+    index at or under scratch, the highest benchmark for one past it. Null without an index."""
+    if index is None:
+        return None
+    handicaps = sorted(row["handicap"] for row in BENCHMARKS if row["handicap"] is not None)
+    below = [h for h in handicaps if h < index]
+    return below[-1] if below else handicaps[0]
 
 
 def nearest_goal(average: float) -> int:

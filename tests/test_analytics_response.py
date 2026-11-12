@@ -49,10 +49,15 @@ def test_analytics_response_works_out_the_figures_the_page_shows():
     assert [row.rolling_average for row in response.score_trend] == [72.0, 76.5]
     # 36 holes: 6 birdies, 17 pars, 11 bogeys, 2 doubles.
     assert response.score_mix == ScoreMix(birdie=16.67, par=47.22, bogey=30.56, double=5.56)
-    assert [insight.model_dump() for insight in response.insights] == [
-        {"kind": "best_par", "category": "scoring", "trend": "down", "par": 5, "average_to_par": -0.75, "holes": 8},
-        {"kind": "gir_average", "category": "gir", "trend": "up", "rating": "fair", "percent": pytest.approx(52.78, abs=0.01)},
-        {"kind": "putts_average", "category": "putting", "trend": "down", "rating": "fair", "putts": 31.5},
+    # 36 holes with putts: nine one-putts, the rest two-putts.
+    assert response.putts_per_hole.model_dump() == {"holes": 36, "one_or_fewer": 25.0, "two": 75.0, "three_or_more": 0.0}
+    assert [row.rolling_average for row in response.putts_trend] == [36.0, 31.5]
+    # Under five rounds, no figure has a move yet; each still has its five-round line.
+    scoring = response.headline[0]
+    assert (scoring.metric, scoring.value, scoring.change, scoring.verdict) == ("scoring_average", 76.5, None, None)
+    assert scoring.trend == [72.0, 76.5]
+    assert [figure.metric for figure in response.headline] == [
+        "scoring_average", "gir_percentage", "average_putts", "scrambling_percentage", "three_putt_rate",
     ]
     assert response.notable_achievements.scoring_records.lifetime.lowest_round == 72
     assert (response.kpis.three_putts_per_round, response.kpis.three_putt_rate) == (0.0, 0.0)
@@ -108,9 +113,11 @@ async def test_analytics_sections_drop_nothing_the_stats_functions_return(season
     rounds, _, user = season
     sent = (await _analytics(season)).model_dump()
     assert sent["score_trend"] == analytics.score_trend_with_rolling_average(rounds)
-    assert sent["net_score_trend"] == analytics.net_score_trend(rounds, sent["kpis"]["handicap_index"])
-    assert sent["gir_trend"] == analytics.gir_per_round(rounds)
-    assert sent["putts_trend"] == analytics.putts_per_round(rounds)
+    assert sent["net_score_trend"] == analytics.with_rolling_average(
+        analytics.net_score_trend(rounds, sent["kpis"]["handicap_index"]), "net_score"
+    )
+    assert sent["gir_trend"] == analytics.with_rolling_average(analytics.gir_per_round(rounds), "gir_percentage")
+    assert sent["putts_trend"] == analytics.with_rolling_average(analytics.putts_per_round(rounds), "total_putts")
     assert sent["three_putts_trend"] == analytics.three_putts_per_round(rounds)
     assert sent["scrambling_trend"] == analytics.scrambling_per_round(rounds)
     assert sent["up_and_down_trend"] == analytics.up_and_down_trend(rounds)
