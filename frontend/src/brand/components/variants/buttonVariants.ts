@@ -6,9 +6,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary-hover",
-        /* The board's Secondary: outlined, the border darkening to the ink on hover. */
+        /* The board's Secondary: outlined on the card white, the border darkening to the ink on hover. */
         outline:
-          "border-input bg-transparent text-foreground hover:border-foreground aria-expanded:border-foreground",
+          "border-input bg-card text-foreground hover:border-foreground aria-expanded:border-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary-hover aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
