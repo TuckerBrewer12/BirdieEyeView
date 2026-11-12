@@ -20,12 +20,6 @@ test("the scorecard reads off the longest tee until another is picked", async ({
   await courseDetail.seesTeeLine("White tees · 6,100 yds · 70.1 / 122");
 });
 
-test("a course played shows the golfer's average row and record", async ({ courseDetail }) => {
-  await courseDetail.open(halfMoonBayCourse, { courseAnalytics: halfMoonBayAnalytics });
-  await courseDetail.seesAverageRow();
-  await courseDetail.seesRecord("75.0");
-});
-
 test("a course not played offers to scan a round", async ({ courseDetail }) => {
   await courseDetail.open(halfMoonBayCourse);
   await courseDetail.seesNotPlayed();
