@@ -2,6 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
+import { halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
 import { halfMoonBayCourse } from "@/testing/fixtures/roundDetails";
 import { FakeCoursesRepository } from "@/testing/fakes/FakeCoursesRepository";
 import { useCourseDetailPageViewModel } from "../useCourseDetailPageViewModel";
@@ -16,15 +17,48 @@ function renderVm(repository: FakeCoursesRepository, courseId = "course-hmb") {
 }
 
 describe("useCourseDetailPageViewModel", () => {
-  it("offers only the course tab until the golfer has played here", async () => {
+  it("shows the scorecard off the longest tee and the prompt to scan until the golfer has played here", async () => {
     const repository = new FakeCoursesRepository();
     repository.fullCourses = [halfMoonBayCourse];
     const { result } = renderVm(repository);
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.pageTabs.map((tab) => tab.key)).toEqual(["course"]);
 
-    act(() => result.current.selectPageTab("performance"));
-    expect(result.current.activeTab).toBe("course");
+    expect(result.current.courseName).toBe("Half Moon Bay");
+    expect(result.current.courseLine).toBe("Half Moon Bay, CA · Par 72");
+    expect(result.current.tees).toEqual(["Blue", "White"]);
+    expect(result.current.teeLine).toBe("Blue tees · 6,500 yds · 72.4 / 130");
+    expect(result.current.nines.map((nine) => nine.side)).toEqual(["front", "back"]);
+    expect(result.current.played).toBe(false);
+    expect(result.current.record).toEqual([]);
+    expect(result.current.recentRounds).toEqual([]);
+  });
+
+  it("reads the scorecard off the tee the golfer picks", async () => {
+    const repository = new FakeCoursesRepository();
+    repository.fullCourses = [halfMoonBayCourse];
+    const { result } = renderVm(repository);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => result.current.selectTee("White"));
+    expect(result.current.selectedTee).toBe("White");
+    expect(result.current.teeLine).toBe("White tees · 6,100 yds · 70.1 / 122");
+  });
+
+  it("adds the golfer's record, rows and latest rounds once they have played here", async () => {
+    const repository = new FakeCoursesRepository();
+    repository.fullCourses = [halfMoonBayCourse];
+    repository.analytics = halfMoonBayAnalytics;
+    const { result } = renderVm(repository);
+    await waitFor(() => expect(result.current.played).toBe(true));
+
+    expect(result.current.record.map((figure) => [figure.label, figure.value])).toEqual([
+      ["Rounds", "2"],
+      ["Average", "75.0"],
+      ["Best", "72"],
+      ["Worst", "78"],
+    ]);
+    expect(result.current.recentRounds.map((round) => round.id)).toEqual(["round-1", "round-2"]);
+    expect(result.current.nines[0]?.holes[0]?.averageToPar?.label).toBe("\u22120.5");
   });
 
   it("surfaces a load error when the course is missing", async () => {

@@ -27,6 +27,8 @@ export function useSaveRound(
         queryKeys.roundComparison(userId, round.id),
         queryKeys.analytics(userId),
         queryKeys.dashboard(userId),
+        queryKeys.allCourseLists(userId),
+        queryKeys.allCourseAnalytics(userId),
       ]) {
         void queryClient.invalidateQueries({ queryKey });
       }

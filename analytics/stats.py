@@ -1023,6 +1023,36 @@ def full_rounds(rounds: Iterable[Round]) -> List[Round]:
     return [r for r in rounds if r.holes_played() >= 18]
 
 
+def worst_round(rounds: List[Round]) -> Optional[Round]:
+    """The worst of `rounds`, the one `worst_round_ranks` puts first: the full round furthest over
+    par, or the worst nine when there is no full round. Ties go to the earlier round in the list."""
+    ranks = worst_round_ranks(rounds)
+    return next((rounds[i] for i, place in ranks.items() if place == 1), None)
+
+
+def course_record(rounds: List[Round]) -> Dict[str, Any]:
+    """
+    A golfer's record at one course, from their rounds there newest first: how many they have
+    played and when they last did, their average score and its average to par, and their best
+    and worst rounds. The average is over the full rounds, or over the nines when there is no
+    full round, so a nine's total never pulls an 18-hole average down; best and worst follow the
+    same rule (`best_round`, `worst_round`).
+    """
+    full = full_rounds(rounds)
+    counted = full or rounds
+    scores = [s for s in (r.calculate_total_score() for r in counted) if s is not None]
+    to_pars = [t for t in (r.total_to_par() for r in counted) if t is not None]
+    dates = [r.date for r in rounds if r.date is not None]
+    return {
+        "rounds_played": len(rounds),
+        "last_played": max(dates) if dates else None,
+        "scoring_average": sum(scores) / len(scores) if scores else None,
+        "scoring_average_to_par": sum(to_pars) / len(to_pars) if to_pars else None,
+        "best_round": best_round(rounds),
+        "worst_round": worst_round(rounds),
+    }
+
+
 def score_trend_with_rolling_average(rounds: Iterable[Round], window: int = 5) -> List[Dict[str, Any]]:
     """`score_trend`, with each round's average over it and the `window - 1` rounds before it."""
     rows = score_trend(rounds)
@@ -1455,18 +1485,33 @@ def average_score_relative_to_par_by_hole(rounds: Iterable[Round]) -> List[Dict[
     return results
 
 
-def hole_average_nines(by_hole: List[Dict[str, Any]]) -> Dict[str, Optional[float]]:
+def hole_to_par_nines(by_hole: List[Dict[str, Any]]) -> Dict[str, Optional[float]]:
     """
-    The player's per-hole average scores summed over the front nine, the back nine and every
+    The player's per-hole averages to par summed over the front nine, the back nine and every
     hole: the Out, In and Total of their row on the course scorecard. Takes the rows
     `average_score_relative_to_par_by_hole` builds; a nine with no hole played is null.
     """
 
     def total(holes: range) -> Optional[float]:
-        averages = [row["average_score"] for row in by_hole if row["hole_number"] in holes]
+        averages = [row["average_to_par"] for row in by_hole if row["hole_number"] in holes]
         return sum(averages) if averages else None
 
     return {"front_nine": total(FRONT_NINE), "back_nine": total(BACK_NINE), "total": total(range(1, HOLES_PER_ROUND + 1))}
+
+
+def gir_percentage_nines(by_hole: List[Dict[str, Any]]) -> Dict[str, Optional[float]]:
+    """
+    The share of greens hit (0-100) over the front nine, the back nine and every hole, pooling the
+    holes' greens rather than averaging their rates: the Greens row's Out, In and Total. Takes the
+    rows `gir_percentage_by_hole` builds; a nine with no green recorded is null.
+    """
+
+    def share(holes: range) -> Optional[float]:
+        rows = [row for row in by_hole if row["hole_number"] in holes]
+        samples = sum(row["sample_size"] for row in rows)
+        return sum(row["gir_hits"] for row in rows) / samples * 100.0 if samples else None
+
+    return {"front_nine": share(FRONT_NINE), "back_nine": share(BACK_NINE), "total": share(range(1, HOLES_PER_ROUND + 1))}
 
 
 def course_difficulty_profile_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:

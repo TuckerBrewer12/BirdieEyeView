@@ -26,52 +26,18 @@ const halfMoonBayHoleStats: CourseHoleStats = {
     average_to_par: toParOn(hole_number),
     sample_size: SAMPLE,
   })),
-  // Each nine is a par 36 with three holes half a stroke over and six half a stroke under.
-  hole_averages_front_nine: 34.5,
-  hole_averages_back_nine: 34.5,
-  hole_averages_total: 69,
+  // Each nine has three holes half a stroke over and six half a stroke under.
+  hole_to_par_front_nine: -1.5,
+  hole_to_par_back_nine: -1.5,
+  hole_to_par_total: -3,
   gir_percentage_by_hole: hole((hole_number, par) => {
     const gir_hits = hole_number % 2 === 0 ? 2 : 1;
     return { hole_number, par, gir_hits, sample_size: SAMPLE, gir_percentage: (gir_hits / SAMPLE) * 100 };
   }),
-  average_putts_by_hole: hole((hole_number, par) => ({
-    hole_number,
-    par,
-    average_putts: 1.5 + (hole_number % 2) * 0.5,
-    sample_size: SAMPLE,
-  })),
-  score_type_distribution_by_hole: hole((hole_number) => ({
-    hole_number,
-    sample_size: SAMPLE,
-    eagle: 0,
-    birdie: hole_number % 3 === 0 ? 0 : 50,
-    par: 50,
-    bogey: hole_number % 3 === 0 ? 50 : 0,
-    double_bogey: 0,
-    triple_bogey: 0,
-    quad_bogey: 0,
-  })),
-  course_difficulty_profile_by_hole: hole((hole_number, par) => ({
-    hole_number,
-    par,
-    average_score: par + toParOn(hole_number),
-    average_to_par: toParOn(hole_number),
-    sample_size: SAMPLE,
-    difficulty_rank: hole_number,
-  })),
-  average_score_when_gir_vs_missed: [
-    { bucket: "GIR", holes_counted: 27, average_score: 3.8, average_to_par: -0.2 },
-    { bucket: "No GIR", holes_counted: 9, average_score: 4.6, average_to_par: 0.6 },
-  ],
-  score_variance_by_hole: hole((hole_number, par) => ({
-    hole_number,
-    par,
-    sample_size: SAMPLE,
-    average_score: par + toParOn(hole_number),
-    score_variance: 0.25,
-    score_std_dev: 0.5,
-    variance_rank: hole_number,
-  })),
+  // Front: 4 even holes hit twice, 5 odd once, of 18 greens. Back: 5 and 4.
+  gir_front_nine: (13 / 18) * 100,
+  gir_back_nine: (14 / 18) * 100,
+  gir_total: (27 / 36) * 100,
 };
 
 /** The player's two stored rounds at Half Moon Bay, as GET /stats/course-analytics sends them. */

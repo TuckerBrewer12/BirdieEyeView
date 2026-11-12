@@ -12,8 +12,12 @@ export function toCourseSummary(course: CourseDto): CourseSummaryDto {
     par: course.par,
     total_holes: course.holes.length,
     tee_count: course.tees.length,
+    tees: course.tees.flatMap((tee) => (tee.color ? [tee.color] : [])),
     external_course_id: course.external_course_id,
     source: "local",
+    rounds_played: 0,
+    scoring_average: null,
+    best_score: null,
   };
 }
 

@@ -36,6 +36,11 @@ export class FakeCoursesRepository implements CoursesRepository {
       .map(courseSummaryFrom);
   }
 
+  /** The course list's search reads the same courses, records and all. */
+  async searchCourseList(query: string): Promise<CourseSummary[]> {
+    return this.searchCourses(query);
+  }
+
   async getCourse(courseId: string): Promise<CourseDto> {
     if (this.courseError) throw this.courseError;
     const full = this.fullCourses.find((course) => course.id === courseId);

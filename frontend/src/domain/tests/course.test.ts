@@ -78,6 +78,23 @@ describe("teesByLength", () => {
 });
 
 describe("courseSummaryFrom", () => {
+  it("carries the tees, and the golfer's record once they have played the course", () => {
+    const listed = {
+      id: "c1",
+      name: "Half Moon Bay",
+      location: "Half Moon Bay, CA",
+      par: 72,
+      total_holes: 18,
+      tee_count: 2,
+      tees: ["Blue", "White"],
+      source: "local" as const,
+      external_course_id: null,
+    };
+    const played = courseSummaryFrom({ ...listed, rounds_played: 2, scoring_average: 75, best_score: 72 });
+    expect([played.tees, played.record]).toEqual([["Blue", "White"], { roundsPlayed: 2, scoringAverage: 75, bestScore: 72 }]);
+    expect(courseSummaryFrom({ ...listed, rounds_played: 0, scoring_average: null, best_score: null }).record).toBeNull();
+  });
+
   it("reads a listed course, and keeps the provider's id for one found there", () => {
     expect(
       courseSummaryFrom({
@@ -87,8 +104,12 @@ describe("courseSummaryFrom", () => {
         par: 72,
         total_holes: 18,
         tee_count: 4,
+        tees: [],
         source: "external",
         external_course_id: "ext-9",
+        rounds_played: 0,
+        scoring_average: null,
+        best_score: null,
       }),
     ).toEqual({
       id: "external:9",
@@ -97,6 +118,8 @@ describe("courseSummaryFrom", () => {
       par: 72,
       holeCount: 18,
       teeCount: 4,
+      tees: [],
+      record: null,
       source: "external",
       externalId: "ext-9",
     });

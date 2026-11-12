@@ -268,6 +268,7 @@ def _course_summary_row(course_id, **overrides):
     row = {
         "id": course_id, "name": "Pebble Beach", "external_course_id": None,
         "location": "Monterey", "par": 72, "hole_count": 18, "tee_count": 3,
+        "tee_colors": ["Blue", "White", "Red"],
     }
     row.update(overrides)
     return row
@@ -287,9 +288,10 @@ async def test_course_repo_list_course_summaries_in_one_query(mock_pool):
     query, *params = conn.fetch.await_args.args
     assert params == [10, 20, user_id]
     assert "ORDER BY name LIMIT $1 OFFSET $2" in query
-    assert [(s.id, s.name, s.par, s.hole_count, s.tee_count) for s in summaries] == [
-        (str(course_id), "Pebble Beach", 72, 18, 3)
+    assert [(s.id, s.name, s.par, s.hole_count, s.tee_count, s.tee_colors) for s in summaries] == [
+        (str(course_id), "Pebble Beach", 72, 18, 3, ["Blue", "White", "Red"])
     ]
+    assert "ORDER BY (SELECT COALESCE(SUM(y.yardage), 0)" in query  # longest tee first
 
     await repo.list_course_summaries()
     _, *params = conn.fetch.await_args.args

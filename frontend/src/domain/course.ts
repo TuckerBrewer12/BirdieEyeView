@@ -8,10 +8,22 @@ export interface CourseSummary {
   par: number | null;
   holeCount: number;
   teeCount: number;
+  /** The tees' colours as the course names them, longest first. */
+  tees: string[];
+  /** The golfer's record here, or null until they have played it. */
+  record: CourseListRecord | null;
   /** Where it was found: saved here, or the course provider's and not saved yet. */
   source: "local" | "external";
   /** The course provider's id, for a course found there. Saving a round links it by this. */
   externalId: string | null;
+}
+
+/** What the course list shows of the golfer's rounds at a course. The server works out each figure. */
+export interface CourseListRecord {
+  roundsPlayed: number;
+  /** Over their full rounds there, or their nines when they have no full round. */
+  scoringAverage: number | null;
+  bestScore: number | null;
 }
 
 export function courseSummaryFrom(dto: CourseSummaryDto): CourseSummary {
@@ -22,6 +34,11 @@ export function courseSummaryFrom(dto: CourseSummaryDto): CourseSummary {
     par: dto.par,
     holeCount: dto.total_holes,
     teeCount: dto.tee_count,
+    tees: dto.tees,
+    record:
+      dto.rounds_played > 0
+        ? { roundsPlayed: dto.rounds_played, scoringAverage: dto.scoring_average, bestScore: dto.best_score }
+        : null,
     source: dto.source,
     externalId: dto.external_course_id,
   };

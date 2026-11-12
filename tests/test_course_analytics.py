@@ -22,16 +22,30 @@ def _round(round_id, day, over):
     )
 
 
-def test_hero_figures_and_history_come_from_the_rounds():
+def test_record_and_history_come_from_the_rounds():
     rounds = [_round("r1", 1, 6), _round("r2", 8, 0), _round("r3", 15, 3)]  # oldest first
     response = course_analytics("c1", rounds)
 
     assert response.rounds_played == 3
-    assert response.scoring_average == 75.0
-    assert (response.best_score, response.worst_score) == (72, 78)
+    assert response.last_played.day == 15
+    assert (response.scoring_average, response.scoring_average_to_par) == (75.0, 3.0)
+    assert (response.best_round_id, response.worst_round_id) == ("r2", "r1")
     assert [r.id for r in response.rounds] == ["r3", "r2", "r1"]
-    assert [row.total_score for row in response.score_trend_on_course] == [78, 72, 75]
-    assert [row.to_par for row in response.score_trend_on_course] == [6, 0, 3]
+
+
+def test_a_nine_stays_out_of_the_average_beside_full_rounds():
+    nine = Round(
+        id="n1", course=COURSE, date=datetime(2026, 5, 20, tzinfo=timezone.utc),
+        hole_scores=[HoleScore(hole_number=i + 1, strokes=p) for i, p in enumerate(PARS[:9])],
+    )
+    response = course_analytics("c1", [_round("r1", 1, 6), nine])
+    assert response.rounds_played == 2
+    assert response.scoring_average == 78.0
+    assert response.last_played.day == 20
+    assert (response.best_round_id, response.worst_round_id) == ("r1", "r1")
+
+    only_nines = course_analytics("c1", [nine])
+    assert (only_nines.scoring_average, only_nines.scoring_average_to_par) == (36.0, 0.0)
 
 
 def test_per_hole_rows_are_typed():
@@ -40,28 +54,33 @@ def test_per_hole_rows_are_typed():
     first = response.average_score_relative_to_par_by_hole[0]
     assert (first.hole_number, first.par, first.average_to_par, first.sample_size) == (1, 4, 0.5, 2)
     assert response.gir_percentage_by_hole[0].gir_percentage == 100.0
-    assert response.average_putts_by_hole[0].average_putts == 2.0
-    mix = response.score_type_distribution_by_hole[0]
-    assert (mix.par, mix.bogey) == (50.0, 50.0)
-    assert response.course_difficulty_profile_by_hole[0].difficulty_rank == 1
-    assert {row.bucket for row in response.average_score_when_gir_vs_missed} == {"GIR", "No GIR"}
 
 
 def test_no_rounds_leaves_the_figures_empty():
     response = course_analytics("c1", [])
     assert response.rounds_played == 0
+    assert response.last_played is None
     assert response.scoring_average is None
-    assert response.best_score is None
+    assert response.best_round_id is None
     assert response.rounds == []
+    assert response.hole_to_par_total is None
+    assert response.gir_total is None
 
 
-def test_scorecard_nines_sum_the_per_hole_averages():
+def test_scorecard_nines_sum_the_per_hole_averages_to_par():
     # r1 is a stroke over on holes 1-2, r2 is level: holes 1 and 2 average half a stroke over.
     response = course_analytics("c1", [_round("r1", 1, 2), _round("r2", 8, 0)])
-    front, back = sum(PARS[:9]), sum(PARS[9:])
-    assert response.hole_averages_front_nine == front + 1.0
-    assert response.hole_averages_back_nine == back
-    assert response.hole_averages_total == front + back + 1.0
+    assert response.hole_to_par_front_nine == 1.0
+    assert response.hole_to_par_back_nine == 0.0
+    assert response.hole_to_par_total == 1.0
+
+
+def test_greens_pool_each_nine():
+    # Greens on the odd holes: five of the front nine's, four of the back nine's, in every round.
+    response = course_analytics("c1", [_round("r1", 1, 0), _round("r2", 8, 0)])
+    assert response.gir_front_nine == 10 / 18 * 100
+    assert response.gir_back_nine == 8 / 18 * 100
+    assert response.gir_total == 50.0
 
 
 def test_scorecard_nines_are_null_for_a_nine_not_played():
@@ -70,7 +89,7 @@ def test_scorecard_nines_are_null_for_a_nine_not_played():
         hole_scores=[HoleScore(hole_number=i + 1, strokes=p) for i, p in enumerate(PARS[:9])],
     )
     response = course_analytics("c1", [front_only])
-    assert response.hole_averages_front_nine == sum(PARS[:9])
-    assert response.hole_averages_back_nine is None
-    assert response.hole_averages_total == sum(PARS[:9])
-    assert course_analytics("c1", []).hole_averages_total is None
+    assert response.hole_to_par_front_nine == 0.0
+    assert response.hole_to_par_back_nine is None
+    assert response.hole_to_par_total == 0.0
+    assert response.gir_total is None  # no greens recorded

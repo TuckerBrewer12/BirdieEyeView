@@ -6,6 +6,6 @@ import { coursesRepository, type CoursesRepository } from "./coursesRepository";
 export function useCourses(userId: string, search: string, repository: CoursesRepository = coursesRepository) {
   return useQuery({
     queryKey: queryKeys.courses(userId, search),
-    queryFn: () => (search ? repository.searchCourses(search, userId) : repository.getCourses(userId)),
+    queryFn: () => (search ? repository.searchCourseList(search, userId) : repository.getCourses(userId)),
   });
 }

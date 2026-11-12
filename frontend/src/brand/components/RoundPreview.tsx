@@ -4,14 +4,14 @@ import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { Button, RowButton } from "@/brand/components/Button";
 import { ToParPill } from "@/brand/components/ToParPill";
-import { toParBadgeClass, toParLabel, toParTextClass } from "@/brand/theme";
+import { toParLabel, toParTextClass } from "@/brand/theme";
 import type { RoundSummary } from "@/domain";
 import { courseLabel } from "@/domain/course";
 import { formatDay, formatDayShort, dayParts } from "@/domain/date";
 
 interface RoundListProps {
   round: RoundSummary;
-  /** Default is the dated row; `history` a plain line. */
+  /** Default is the dated row; `history` a round at a course the page already names: its day, its holes, its score. */
   variant?: "history";
   onClick?: () => void;
   onLinkClick?: () => void;
@@ -46,33 +46,29 @@ export function RoundPreview(props: RoundPreviewProps) {
   const { round, variant, onClick, onLinkClick } = props;
 
   if (variant === "history") {
-    const row = "flex items-center justify-between px-5 py-3";
-    const content = (
-      <>
-        <span className="text-sm text-muted-foreground">
-          {formatDay(round.date) ?? "—"}
-        </span>
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-foreground">{round.score ?? "—"}</span>
-          <span className={cn("rounded px-1.5 py-0.5 text-xs font-semibold", toParBadgeClass(round.toPar))}>
-            {toParLabel(round.toPar) ?? "—"}
-          </span>
-        </div>
-      </>
-    );
-    // A row that opens the round is a button, so a keyboard can reach and press it.
-    return onClick ? (
+    // One of the golfer's rounds at a course: the day over a cell per hole, then the score and its to-par.
+    return (
       <RowButton
         data-slot="round-preview"
-        className={cn(row, "w-full cursor-pointer hover:bg-muted")}
+        data-variant="history"
         onClick={onClick}
+        disabled={!onClick}
+        className={cn(
+          "flex w-full items-center gap-3 px-3.5 py-3 text-left md:gap-4 md:px-5",
+          onClick ? "cursor-pointer hover:bg-muted/half" : "cursor-default",
+        )}
       >
-        {content}
+        <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <span className="text-body font-semibold text-foreground md:text-body-sm">{formatDay(round.date) ?? "—"}</span>
+          {round.holes.length > 0 && (
+            <HoleScoreBars holes={round.holes} variant="strip" className="w-full md:max-w-70" />
+          )}
+        </span>
+        <span className="flex shrink-0 flex-col items-end gap-1 md:flex-row md:items-center md:gap-4">
+          <span className="text-xl leading-none font-bold text-foreground md:text-title">{round.score ?? "—"}</span>
+          <ToParPill toPar={round.toPar} size="row" ground="muted" />
+        </span>
       </RowButton>
-    ) : (
-      <div data-slot="round-preview" className={row}>
-        {content}
-      </div>
     );
   }
 

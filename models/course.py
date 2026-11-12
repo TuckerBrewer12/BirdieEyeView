@@ -68,7 +68,8 @@ class Course(BaseGolfModel):
 
 
 class CourseSummary(BaseGolfModel):
-    """A course as lists show it: its par and how many holes and tees it has, without the holes and tees."""
+    """A course as lists show it: its par, how many holes it has and its tees' colours (longest
+    first), without the holes and tees."""
     id: str
     name: Optional[str] = None
     external_course_id: Optional[str] = None
@@ -76,3 +77,4 @@ class CourseSummary(BaseGolfModel):
     par: Optional[int] = None
     hole_count: int = 0
     tee_count: int = 0
+    tee_colors: List[str] = Field(default_factory=list)

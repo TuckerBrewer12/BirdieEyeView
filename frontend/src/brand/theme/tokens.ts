@@ -573,6 +573,10 @@ export const gridColumns = {
   "round-detail": "minmax(0, 1.35fr) minmax(0, 1fr)",
   /** A row of "vs your average": the figure's name, this round, the average, the difference. */
   "versus-row": "minmax(0, 1fr) 2.75rem 2.75rem 3.25rem",
+  /** A course as one row of the course list: the course, its tees, the golfer's record there, the chevron. */
+  "course-row": "minmax(0, 1fr) 9.375rem 10.625rem 1rem",
+  /** The course page's record beside the golfer's recent rounds there. */
+  "course-record": "minmax(0, 1fr) minmax(0, 1.4fr)",
   /** A label column, then two equal state columns (default, disabled). */
   "state-grid": "6rem repeat(2, minmax(0, 1fr))",
 };
@@ -605,8 +609,6 @@ export const motion = {
   layout: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as Ease },
   /** A panel opening under the control that asked for it. */
   expand: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as Ease },
-  /** A section fading up as it scrolls into view (`Reveal`). */
-  reveal: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as Ease },
   /** The card being read while a scan runs: it breathes, a line sweeps it, its corners pulse, the step rail fills. */
   scanProgress: { breathe: 2.6, sweep: 1.6, pulse: 1.8, cornerStagger: 0.45, step: 0.4 },
   /** The try-it panel moving between its steps. */

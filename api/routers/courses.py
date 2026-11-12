@@ -4,7 +4,7 @@ import logging
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from typing import List, Optional
+from typing import Dict, List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from api.dependencies import get_db, get_optional_current_user, get_current_user
@@ -13,7 +13,8 @@ from api.error_responses import COURSE_SAVE_FAILED
 from api.input_validation import normalize_course_display_name, sanitize_search_query, sanitize_user_text
 from api.course_responses import course_detail
 from api.schemas import CourseResponse, CourseSummaryResponse
-from models import Course, Hole, Tee, User
+from analytics.stats import course_record
+from models import Course, Hole, Round, Tee, User
 from models.course import CourseSummary
 from services import GolfCourseAPIService
 from services.golfcourse_api_service import _normalize_course_name
@@ -115,10 +116,13 @@ def _summarize_course(c) -> CourseSummaryResponse:
         par=c.get_par(),
         total_holes=len(c.holes),
         tee_count=len(c.tees),
+        tees=[t.color for t in sorted(c.tees, key=lambda t: -(t.get_total_yardage() or 0)) if t.color],
     )
 
 
-def _summary_response(s: CourseSummary) -> CourseSummaryResponse:
+def _summary_response(s: CourseSummary, record: Optional[dict] = None) -> CourseSummaryResponse:
+    """A course for the list, with the signed-in golfer's record there when they have one."""
+    best = record["best_round"] if record else None
     return CourseSummaryResponse(
         id=s.id,
         name=s.name,
@@ -128,7 +132,28 @@ def _summary_response(s: CourseSummary) -> CourseSummaryResponse:
         par=s.par,
         total_holes=s.hole_count,
         tee_count=s.tee_count,
+        tees=s.tee_colors,
+        rounds_played=record["rounds_played"] if record else 0,
+        scoring_average=record["scoring_average"] if record else None,
+        best_score=best.calculate_total_score() if best else None,
     )
+
+
+async def _summary_responses(
+    db: DatabaseManager, summaries: List[CourseSummary], user: Optional[User]
+) -> List[CourseSummaryResponse]:
+    """The courses for the list, each with the golfer's record there (`stats.course_record`)."""
+    if not user or not summaries:
+        return [_summary_response(s) for s in summaries]
+    rounds = await db.rounds.get_rounds_for_user(str(user.id), limit=500, offset=0)  # newest first
+    by_course: Dict[str, List[Round]] = {}
+    for r in rounds:
+        if r.course and r.course.id:
+            by_course.setdefault(str(r.course.id), []).append(r)
+    return [
+        _summary_response(s, course_record(by_course[s.id]) if s.id in by_course else None)
+        for s in summaries
+    ]
 
 
 def _summarize_external_course(item: dict) -> CourseSummaryResponse:
@@ -165,7 +190,7 @@ async def list_courses(
     summaries = await db.courses.list_course_summaries(
         limit=limit, offset=offset, user_id=str(user_id) if user_id else None
     )
-    return [_summary_response(s) for s in summaries]
+    return await _summary_responses(db, summaries, current_user if user_id else None)
 
 
 @router.get("/search", response_model=List[CourseSummaryResponse])
@@ -175,6 +200,10 @@ async def search_courses(
     include_external: bool = Query(
         False,
         description="When true, include GolfCourseAPI fallback results after local search.",
+    ),
+    include_record: bool = Query(
+        False,
+        description="When true, each course carries the user's record there, as the course list shows it.",
     ),
     db: DatabaseManager = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_current_user),
@@ -191,7 +220,7 @@ async def search_courses(
         raise HTTPException(401, "Authentication required for external course lookup")
     effective_user_id = str(user_id) if user_id else (str(current_user.id) if current_user else None)
     summaries = await db.courses.search_course_summaries(q, user_id=effective_user_id)
-    out = [_summary_response(s) for s in summaries]
+    out = await _summary_responses(db, summaries, current_user if user_id and include_record else None)
     if not include_external:
         return out
 
