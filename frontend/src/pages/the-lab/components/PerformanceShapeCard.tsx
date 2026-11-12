@@ -4,7 +4,7 @@ import {
   Stat,
   StatLabel,
   StatValue,
-  SortControl,
+  PickerMenu,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
@@ -143,7 +143,7 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
                 Compare vs.
               </span>
               <div data-slot="comparison-picker">
-                <SortControl
+                <PickerMenu
                   aria-label="Compare vs."
                   label={COMPARISON_OPTIONS.find((option) => option.key === comparisonKey(comparison))?.label ?? ""}
                   value={comparisonKey(comparison)}
@@ -157,7 +157,7 @@ export function PerformanceShapeCard(props: PerformanceShapeCardProps) {
 
               {comparison === "friend" && props.friends.length > 0 && (
                 <div data-slot="friend-picker">
-                  <SortControl
+                  <PickerMenu
                     aria-label="Friend to compare with"
                     label={selectedFriend ? friendName(selectedFriend) : "Pick a friend"}
                     value={selectedFriend?.id ?? ""}

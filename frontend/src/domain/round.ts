@@ -8,7 +8,8 @@ import type {
   ScannedRoundDto,
   ScoreCountsDto,
 } from "@/types/api";
-import { BACK_HOLES, FRONT_HOLES, getHole, getTee } from "./course";
+import { BACK_HOLES, FRONT_HOLES, formatCourseName, getHole, getTee } from "./course";
+import { formatDayShort } from "./date";
 import { SCORE_KINDS, scoreKind, strokesToPar, type ScoreKind } from "./score";
 
 /** One hole as a round list marks it: what was taken, how it scored, and where the round stood after it. */
@@ -96,6 +97,8 @@ export interface RoundSummary {
   scoreCounts: ScoreCounts;
   /** Where the server places it in the Best order: full rounds by to par, then the rest. Null when unplaced. */
   bestRank: number | null;
+  /** The same place worst first: full rounds furthest over par, then nines. */
+  worstRank: number | null;
 }
 
 /** A round and its figures, as the server worked them out. */
@@ -202,6 +205,7 @@ function fromSummary(dto: RoundSummaryDto): RoundSummary {
     putts: dto.total_putts,
     scoreCounts: dto.score_counts,
     bestRank: dto.best_rank,
+    worstRank: dto.worst_rank,
   };
 }
 
@@ -231,6 +235,7 @@ function fromDto(dto: RoundDto): Round {
     courseHandicap: dto.course_handicap,
     netScore: dto.net_score,
     bestRank: null,
+    worstRank: null,
     worstStretch: dto.worst_stretch && {
       firstHole: dto.worst_stretch.first_hole,
       lastHole: dto.worst_stretch.last_hole,
@@ -397,6 +402,7 @@ function fromScan(scan: ScannedRoundDto): Round {
     yards: null,
     scoreCounts: Object.fromEntries(SCORE_KINDS.map((kind) => [kind, 0])) as ScoreCounts,
     bestRank: null,
+    worstRank: null,
     holesPlayed: 0,
     courseHandicap: null,
     netScore: null,
@@ -406,3 +412,12 @@ function fromScan(scan: ScannedRoundDto): Round {
 }
 
 export const Round = { fromSummary, fromDto, detailFromDto, fromScan, previewEdits };
+
+/**
+ * A round on one line, as a sheet or a dialog names it: "Half Moon Bay · Jun 15 · 78". Each part
+ * is left out when it is missing.
+ */
+export function roundLine(round: Pick<RoundSummary, "course" | "date" | "score">): string {
+  const course = round.course?.name ? formatCourseName(round.course.name) : null;
+  return [course, formatDayShort(round.date), round.score].filter((part) => part != null).join(" · ");
+}

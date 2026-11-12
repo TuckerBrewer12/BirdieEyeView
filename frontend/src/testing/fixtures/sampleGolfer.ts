@@ -1493,7 +1493,8 @@ export const sampleGolfer = {
         "tee_box": "Blue",
         "to_par": 7,
         "total_putts": 34,
-        "total_score": 79
+        "total_score": 79,
+        "worst_rank": null
       },
       {
         "back_nine": 42,
@@ -1527,7 +1528,8 @@ export const sampleGolfer = {
         "tee_box": "Blue",
         "to_par": 9,
         "total_putts": 35,
-        "total_score": 81
+        "total_score": 81,
+        "worst_rank": null
       },
       {
         "back_nine": 36,
@@ -1561,7 +1563,8 @@ export const sampleGolfer = {
         "tee_box": "Blue",
         "to_par": 3,
         "total_putts": 32,
-        "total_score": 75
+        "total_score": 75,
+        "worst_rank": null
       },
       {
         "back_nine": 39,
@@ -1595,7 +1598,8 @@ export const sampleGolfer = {
         "tee_box": "Blue",
         "to_par": 7,
         "total_putts": 34,
-        "total_score": 79
+        "total_score": 79,
+        "worst_rank": null
       }
     ],
     "recent_score_mix": {"birdie": 5.555555555555555, "bogey": 35.55555555555556, "double": 4.444444444444445, "eagle": 0.0, "par": 54.44444444444444, "quad": 0.0, "triple": 0.0},

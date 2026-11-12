@@ -998,6 +998,17 @@ def best_round_ranks(rounds: List[Round]) -> Dict[int, int]:
     return {i: place for place, i in enumerate(ranked, start=1)}
 
 
+def worst_round_ranks(rounds: List[Round]) -> Dict[int, int]:
+    """Each round's place among `rounds`, worst first: the full rounds furthest over par, then the
+    nines and rounds cut short the same way, so a nine is never the worst round. Like
+    `best_round_ranks`, a round with no to par has no place and ties keep the list's order."""
+    ranked = sorted(
+        (i for i, r in enumerate(rounds) if r.total_to_par() is not None),
+        key=lambda i: (rounds[i].holes_played() < 18, -rounds[i].total_to_par()),
+    )
+    return {i: place for place, i in enumerate(ranked, start=1)}
+
+
 def best_round(rounds: List[Round]) -> Optional[Round]:
     """The best of `rounds`, the one the round list puts first (`best_round_ranks`): the full
     round lowest to par, or the best nine when there is no full round. A nine never beats a full

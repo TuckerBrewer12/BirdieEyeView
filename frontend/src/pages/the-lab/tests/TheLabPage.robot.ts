@@ -126,7 +126,7 @@ export class TheLabRobot {
   /** A menu's options are showing: a dropdown on desktop, a bottom sheet on a phone. The last
    * menu may still be fading out, so only the open one counts. */
   async seesMenuOpen(): Promise<this> {
-    await expect(this.page.locator(":is([data-slot=sort-menu], [data-slot=sort-sheet])[data-open]")).toBeVisible();
+    await expect(this.page.locator(":is([data-slot=picker-options])[data-open]")).toBeVisible();
     return this;
   }
 

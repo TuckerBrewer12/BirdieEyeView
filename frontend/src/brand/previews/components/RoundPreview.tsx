@@ -14,9 +14,15 @@ export default function RoundPreviewPreview() {
       <RoundPreview round={evenPar} variant="highlight" onClick={() => {}} />
       <RoundPreview round={overPar} variant="highlight" onClick={() => {}} />
       <RoundPreview round={null} variant="highlight" />
-      <RoundPreview round={overPar} />
-      <RoundPreview round={evenPar} />
-      <RoundPreview round={unlinked} onLinkClick={() => {}} />
+      {/* The Rounds page's rows, divided in one card; the unlinked round offers Link. */}
+      <Card className="gap-0 py-0">
+        <Collection
+          layout="divided"
+          items={[overPar, evenPar, unlinked]}
+          keyFor={(round) => round.id}
+          renderItem={(round) => <RoundPreview round={round} onClick={() => {}} onLinkClick={() => {}} />}
+        />
+      </Card>
       <Collection
         layout="divided"
         className="overflow-hidden rounded-xl border border-border bg-card"

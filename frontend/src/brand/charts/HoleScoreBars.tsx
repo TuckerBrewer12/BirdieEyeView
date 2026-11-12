@@ -14,8 +14,9 @@ interface HoleScoreBarsProps {
    */
   variant?: "nine" | "strip" | "profile";
   /**
-   * Draws the cells as pills, par at full strength: `sm` 8px tall (a row in a list of rounds),
-   * `md` 12px (a phone's last round), `lg` 14px (the last round's nines). A strip is always pills.
+   * Draws the cells as pills, par at full strength: `sm` 8px tall (a dashboard row), `md` 12px (a
+   * phone's last round), `lg` 14px (the last round's nines). A strip with no size is the Rounds
+   * list's: squared-off cells 2px apart, 8px tall (6 on a phone).
    */
   size?: PillSize;
   className?: string;
@@ -28,14 +29,18 @@ export function HoleScoreBars({ holes, variant = "nine", size, className }: Hole
   if (holes.length === 0) return null;
   const profile = variant === "profile";
   const strip = variant === "strip";
-  const pill = strip ? (size ?? "sm") : size;
+  const pill = size;
 
   const layout = profile
     ? "flex h-6 items-end gap-bar"
     : cn(
         "grid",
         strip ? "grid-cols-18" : "grid-cols-9",
-        pill ? cn(PILL_HEIGHT[pill], pill === "lg" ? "gap-1" : "gap-chip") : "h-2 gap-chip",
+        pill
+          ? cn(PILL_HEIGHT[pill], pill === "lg" ? "gap-1" : "gap-chip")
+          : strip
+            ? "h-1.5 gap-0.5 md:h-2"
+            : "h-2 gap-chip",
       );
 
   return (
@@ -49,8 +54,8 @@ export function HoleScoreBars({ holes, variant = "nine", size, className }: Hole
             className={cn(
               scoreFillClass(kind),
               profile ? cn("flex-1 rounded-t-tick", scoreProfileHeightClass(kind)) : pill ? "rounded-full" : "rounded-tick",
-              // Pills keep par at full strength on a light card; a dark one would glare.
-              kind === "par" && (pill ? "dark:opacity-recessed" : "opacity-recessed"),
+              // A strip and pills keep par at full strength on a light card; a dark one would glare.
+              kind === "par" && (pill || strip ? "dark:opacity-recessed" : "opacity-recessed"),
             )}
           />
         );
