@@ -70,10 +70,71 @@ for (const { tab, showing, file } of SECTIONS) {
   });
 }
 
-test("profile against a friend", async ({ analytics }) => {
+test("profile against scratch", async ({ analytics }) => {
   await analytics.open();
   await analytics.openTab("Profile");
   await analytics.compareWith("Scratch");
   await analytics.seesComparedWith("Scratch");
   await analytics.capture("analytics-profile-scratch.png");
+});
+
+test("profile against a friend", async ({ analytics }) => {
+  await analytics.openWithFriends();
+  await analytics.openTab("Profile");
+  await analytics.compareWith("Avery Lin");
+  await analytics.seesComparedWith("Avery Lin");
+  await analytics.capture("analytics-profile-friend.png");
+});
+
+test("profile against a friend with too few rounds", async ({ analytics }) => {
+  await analytics.openWithFriends();
+  await analytics.openTab("Profile");
+  await analytics.compareWith("Jordan Castellanos");
+  await analytics.seesFriendNote(/needs more rounds/);
+  await analytics.capture("analytics-profile-friend-no-rounds.png");
+});
+
+test("profile against the peak game", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.openTab("Profile");
+  await analytics.pickShape("Peak");
+  await analytics.seesComparedWith("your peak");
+  await analytics.capture("analytics-profile-peak.png");
+});
+
+test("profile with no goal set", async ({ analytics }) => {
+  await analytics.openWithoutGoal();
+  await analytics.openTab("Profile");
+  await analytics.seesNoGoal();
+  await analytics.capture("analytics-profile-no-goal.png");
+});
+
+test("profile failed to load", async ({ analytics }) => {
+  await analytics.openWithProfileFailing();
+  await analytics.openTab("Profile");
+  await analytics.seesProfileError();
+  await analytics.capture("analytics-profile-failed.png");
+});
+
+test("rounds menu open", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.openRoundsMenu();
+  await analytics.seesMenuOpen();
+  await analytics.capture("analytics-rounds-menu.png", { fullPage: false });
+});
+
+test("goal menu open", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.openTab("Profile");
+  await analytics.openGoalMenu();
+  await analytics.seesMenuOpen();
+  await analytics.capture("analytics-goal-menu.png", { fullPage: false });
+});
+
+test("compare menu open", async ({ analytics }) => {
+  await analytics.openWithFriends();
+  await analytics.openTab("Profile");
+  await analytics.openCompareMenu();
+  await analytics.seesMenuOpen();
+  await analytics.capture("analytics-compare-menu.png", { fullPage: false });
 });

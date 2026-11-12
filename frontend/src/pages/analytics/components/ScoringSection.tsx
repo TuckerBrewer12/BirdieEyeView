@@ -74,7 +74,7 @@ export function ScoringSection({ analytics, reading, onReadingChange }: ScoringS
               <Meter
                 value={bar.fill}
                 marker={bar.mark}
-                tone={bar.verdict === "behind" ? "bad" : "success"}
+                tone={bar.tone}
                 aria-label={`${bar.label}: ${bar.value} a hole`}
               />
             </ParTypeRow>

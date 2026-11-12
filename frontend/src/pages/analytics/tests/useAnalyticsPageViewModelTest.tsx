@@ -199,6 +199,22 @@ describe("useAnalyticsPageViewModel", () => {
       expect(result.current.profile.goal?.target).toBe(84);
     });
 
+    it("never shows the last goal's figures against a newly picked goal", async () => {
+      const { repository, result } = await profileLoaded();
+      expect(result.current.profile.goal?.attempts.length).toBeGreaterThan(0);
+      repository.holdGoalReport();
+
+      act(() => result.current.profile.setGoal(84));
+      await waitFor(() => expect(result.current.profile.goal?.target).toBe(84));
+      // The new goal's report is still on its way: no figures, rather than the last goal's.
+      expect(result.current.profile.goal?.gap).toBeNull();
+      expect(result.current.profile.goal?.attempts).toEqual([]);
+      expect(result.current.profile.peak?.gapToGoal).toBeNull();
+
+      act(() => repository.finishGoalReport());
+      await waitFor(() => expect(result.current.profile.goal?.gap).not.toBeNull());
+    });
+
     it("holds the shape up against the next level from the golfer's index until they pick another", async () => {
       const { repository, result } = await profileLoaded();
 

@@ -4,6 +4,7 @@ import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { withoutRounds } from "../../../testing/fakes/analyticsResponses";
 import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
+import { avery, friendshipsOf } from "../../../testing/fixtures/friendships";
 import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
 
 // A few days after the sample golfer's last round, the way the demo tour sees them.
@@ -55,6 +56,45 @@ export class AnalyticsRobot {
   /** The Lab's old address, which now lands on Profile. */
   async openLab(): Promise<this> {
     await this.install({}, "/the-lab");
+    return this;
+  }
+
+  /** The sample golfer with Avery and Jordan as friends: Avery's rounds compare, Jordan has too few. */
+  async openWithFriends(): Promise<this> {
+    const me = sampleGolfer.profile;
+    await this.install({
+      friends: { friendships: friendshipsOf({ id: me.id, name: me.name, email: me.email }) },
+      benchmarks: {
+        ...sampleGolfer.benchmarks,
+        [`friend:${avery.id}`]: { ...sampleGolfer.benchmarks["handicap:10"], against: "friend", handicap: null },
+      },
+    });
+    await this.seesRounds(24);
+    return this;
+  }
+
+  /** A golfer who hasn't set a scoring goal. */
+  async openWithoutGoal(): Promise<this> {
+    await this.install({ profile: { ...sampleGolfer.profile, scoring_goal: null } });
+    await this.seesRounds(24);
+    return this;
+  }
+
+  /** Profile's last 20 rounds fail to load, though the page's own figures come in. */
+  async openWithProfileFailing(): Promise<this> {
+    await this.install({ analyticsFailsAtLimit: 20 });
+    await this.seesRounds(24);
+    return this;
+  }
+
+  /** Profile's next load succeeds. */
+  profileLoadsNext(): this {
+    if (this.backend) this.backend.analyticsFailsAtLimit = null;
+    return this;
+  }
+
+  async seesProfileError(): Promise<this> {
+    await expect(this.visible(this.page.getByRole("alert"))).toContainText("Could not load your profile.");
     return this;
   }
 
@@ -126,9 +166,20 @@ export class AnalyticsRobot {
     return this;
   }
 
+  async openRoundsMenu(): Promise<this> {
+    await this.visible(this.page.getByRole("button", { name: "Rounds", exact: true })).click();
+    return this;
+  }
+
+  /** Any of the page's menus, open: a dropdown on desktop, a bottom sheet on a phone. */
+  async seesMenuOpen(): Promise<this> {
+    await expect(this.page.locator("[data-slot=picker-options]")).toBeVisible();
+    return this;
+  }
+
   /** The round count menu: "Last 10 rounds", "All rounds"… */
   async pickRoundCount(label: string): Promise<this> {
-    await this.visible(this.page.getByRole("button", { name: "Rounds", exact: true })).click();
+    await this.openRoundsMenu();
     await this.page
       .getByRole("menuitemradio", { name: label, exact: true })
       .or(this.page.locator("[data-slot=sheet-option]").getByText(label, { exact: true }))
@@ -147,9 +198,20 @@ export class AnalyticsRobot {
     return this;
   }
 
+  async openGoalMenu(): Promise<this> {
+    await this.visible(this.page.getByRole("button", { name: "Scoring goal" })).click();
+    return this;
+  }
+
+  /** No goal set: the card asks for one. */
+  async seesNoGoal(): Promise<this> {
+    await expect(this.visible(this.page.getByText("Pick a score to break and see how far off it you are."))).toBeVisible();
+    return this;
+  }
+
   /** The goal menu: "Break 85"… */
   async pickGoal(label: string): Promise<this> {
-    await this.visible(this.page.getByRole("button", { name: "Scoring goal" })).click();
+    await this.openGoalMenu();
     await this.page
       .getByRole("menuitemradio", { name: label, exact: true })
       .or(this.page.locator("[data-slot=sheet-option]").getByText(label, { exact: true }))
@@ -163,9 +225,26 @@ export class AnalyticsRobot {
     return this;
   }
 
+  async openCompareMenu(): Promise<this> {
+    await this.visible(this.page.getByRole("button", { name: "Compare with" })).click();
+    return this;
+  }
+
+  /** Average or Peak on the player profile. */
+  async pickShape(label: "Average" | "Peak"): Promise<this> {
+    await this.visible(this.page.getByRole("button", { name: label, exact: true })).click();
+    return this;
+  }
+
+  /** The note in place of a friend's shape: too few rounds, no friends. */
+  async seesFriendNote(text: RegExp): Promise<this> {
+    await expect(this.visible(this.page.locator("[data-slot=shape-card]"))).toContainText(text);
+    return this;
+  }
+
   /** The comparison menu: "10 handicap", a friend's name. */
   async compareWith(label: string): Promise<this> {
-    await this.visible(this.page.getByRole("button", { name: "Compare with" })).click();
+    await this.openCompareMenu();
     await this.page
       .getByRole("menuitemradio", { name: label, exact: true })
       .or(this.page.locator("[data-slot=sheet-option]").getByText(label, { exact: true }))

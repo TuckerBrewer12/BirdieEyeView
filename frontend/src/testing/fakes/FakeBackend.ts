@@ -53,6 +53,8 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
    * A golfer with none here gets `analytics`.
    */
   analyticsByGolfer?: Record<string, AnalyticsDto>;
+  /** Analytics asked for this many rounds fails, as a server error would: Profile's last 20, say. */
+  analyticsFailsAtLimit?: number | null;
   /** `/api/stats/analytics/{id}?course_id=` per course. A course not here answers with no rounds. */
   analyticsByCourse?: Record<string, AnalyticsDto>;
   /** `/api/stats/{id}/played-courses`: the courses the golfer has rounds at. */
@@ -92,6 +94,7 @@ export class FakeBackend {
   profile: UserDto | undefined;
   dashboard: DashboardDto | undefined;
   analytics: AnalyticsDto | null | undefined;
+  analyticsFailsAtLimit: number | null;
   analyticsByGolfer: Partial<Record<string, AnalyticsDto>>;
   readonly analyticsByCourse: Record<string, AnalyticsDto>;
   readonly playedCourses: PlayedCourseDto[];
@@ -126,6 +129,7 @@ export class FakeBackend {
       profile,
       dashboard,
       analytics,
+      analyticsFailsAtLimit,
       analyticsByGolfer,
       analyticsByCourse,
       playedCourses,
@@ -152,6 +156,7 @@ export class FakeBackend {
     this.profile = profile;
     this.dashboard = dashboard;
     this.analytics = analytics;
+    this.analyticsFailsAtLimit = analyticsFailsAtLimit ?? null;
     this.analyticsByGolfer = analyticsByGolfer ?? {};
     this.analyticsByCourse = analyticsByCourse ?? {};
     this.playedCourses = playedCourses ?? [];
@@ -488,6 +493,9 @@ export class FakeBackend {
     });
     if (this.analytics == null) {
       return { status: 404, body: { detail: "Analytics failed to load." } };
+    }
+    if (this.analyticsFailsAtLimit != null && Number(params.get("limit") ?? 50) === this.analyticsFailsAtLimit) {
+      return { status: 500, body: { detail: "Analytics failed to load." } };
     }
     const body = analyticsForCourse(
       {

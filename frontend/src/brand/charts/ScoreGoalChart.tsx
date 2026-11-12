@@ -20,7 +20,7 @@ interface ScoreGoalChartProps {
 
 /**
  * Rounds against a scoring goal: one dot per round, lower scores higher up, joined by a
- * faint line, with the goal dashed across and named at its start. A round that met the goal is
+ * faint line, with the goal dashed across and named at its end, past the last round. A round that met the goal is
  * filled; with `scoreLabels` each dot carries its score. It draws at its box's width, so the labels keep their size.
  */
 export function ScoreGoalChart({
@@ -31,7 +31,7 @@ export function ScoreGoalChart({
   className,
   "aria-label": ariaLabel,
 }: ScoreGoalChartProps) {
-  const { width, minWidth, height: H, pad, stroke, dot, dotReached } = tokens.chart.goal;
+  const { width, minWidth, height: H, pad, labelRoom, stroke, dot, dotReached } = tokens.chart.goal;
   const [W, measureRef] = useChartWidth(width, minWidth);
 
   if (attempts.length < 2) {
@@ -39,12 +39,14 @@ export function ScoreGoalChart({
   }
 
   const scores = attempts.map((attempt) => attempt.score);
-  const x = indexScale(scores.length, pad.x, W - pad.x);
+  const x = indexScale(scores.length, pad.x, W - pad.x - labelRoom);
   // A stroke of room past the lowest and highest, so no dot sits on the edge.
   const y = scaleLinear()
     .domain(paddedExtent([...scores, goal], 1)!)
     .range([pad.y, H - pad.y]);
   const goalY = y(goal);
+  // The line runs just past the last round's dot; its name sits after it.
+  const lineEnd = W - pad.x - labelRoom + dotReached;
 
   return (
     <div ref={measureRef} data-slot="score-goal-chart" className={cn("w-full", className)}>
@@ -56,7 +58,7 @@ export function ScoreGoalChart({
       >
         <line
           x1={pad.x}
-          x2={W - pad.x}
+          x2={lineEnd}
           y1={goalY}
           y2={goalY}
           stroke={tokens.color.primary}
@@ -64,8 +66,8 @@ export function ScoreGoalChart({
           strokeDasharray={tokens.chart.guideDash}
         />
         <text
-          x={pad.x}
-          y={goalY - tokens.space.dot}
+          x={lineEnd + tokens.space.dot}
+          y={goalY + tokens.space.dot}
           textAnchor="start"
           fontSize={chartTickStyle.fontSize}
           fontWeight="700"

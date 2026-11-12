@@ -88,6 +88,33 @@ test("Profile shows where to find the strokes and the peak game", async ({ analy
   await analytics.seesPeakGame();
 });
 
+test("Profile switches to the peak game and back", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.openTab("Profile");
+  await analytics.pickShape("Peak");
+  await analytics.seesComparedWith("your peak");
+  await analytics.pickShape("Average");
+  await analytics.seesComparedWith("5 handicap");
+});
+
+test("Profile compares with a friend, and says when one has too few rounds", async ({ analytics }) => {
+  await analytics.openWithFriends();
+  await analytics.openTab("Profile");
+  await analytics.compareWith("Avery Lin");
+  await analytics.seesComparedWith("Avery Lin");
+  await analytics.compareWith("Jordan Castellanos");
+  await analytics.seesFriendNote(/Jordan Castellanos needs more rounds/);
+});
+
+test("a failed Profile load can be retried", async ({ analytics }) => {
+  await analytics.openWithProfileFailing();
+  await analytics.openTab("Profile");
+  await analytics.seesProfileError();
+  analytics.profileLoadsNext();
+  await analytics.retry();
+  await analytics.seesTabOpen("Profile", "Player profile");
+});
+
 test("picking a goal saves it", async ({ analytics }) => {
   await analytics.open();
   await analytics.openTab("Profile");
@@ -112,6 +139,12 @@ test.describe("on a phone", () => {
     await analytics.seesTabOpen("Approach", "Avg to par");
     await analytics.openTab("Profile");
     await analytics.seesTabOpen("Profile", "Player profile");
+  });
+
+  test("picking a round count from the sheet loads it", async ({ analytics }) => {
+    await analytics.open();
+    await analytics.pickRoundCount("Last 20 rounds");
+    await analytics.askedFor({ limit: 20, courseId: "all" });
   });
 
   test("Profile saves a goal picked from the sheet", async ({ analytics }) => {

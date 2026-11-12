@@ -183,8 +183,11 @@ export interface ParTypeBar {
   /** Percent along the track, 0–100. */
   fill: number;
   mark: number | null;
-  verdict: ParTypeComparison["verdict"];
+  /** The server's verdict as the bar's paint: ahead reads as a birdie, behind as a bogey, even or none the brand's. */
+  tone: "success" | "bad" | "primary";
 }
+
+const VERDICT_TONE = { ahead: "success", behind: "bad", even: "primary" } as const;
 
 /** The scale the par bars share: none to two over par. */
 const PAR_SCALE = 2;
@@ -202,7 +205,7 @@ export function parTypeBars(rows: readonly ParTypeComparison[]): ParTypeBar[] {
             value: formatAverageToPar(row.averageToPar),
             fill: along(row.averageToPar),
             mark: row.benchmarkToPar != null ? along(row.benchmarkToPar) : null,
-            verdict: row.verdict,
+            tone: row.verdict != null ? VERDICT_TONE[row.verdict] : "primary",
           },
         ],
   );

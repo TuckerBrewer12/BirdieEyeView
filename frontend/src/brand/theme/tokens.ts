@@ -804,6 +804,8 @@ export const chart = {
     height: 150,
     /** Room above the top dot for its score and below the lowest. */
     pad: { x: 20, y: 28 },
+    /** Room at the right end of the goal line for its name, clear of the last round's dot. */
+    labelRoom: 64,
     /** The goal line, the line through the scores, and the ring round a score that missed. */
     stroke: 1.5,
     dot: 4,

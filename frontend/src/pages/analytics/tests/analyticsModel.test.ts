@@ -99,7 +99,9 @@ describe("present", () => {
   it("puts each par type on one scale with the benchmark's tick", () => {
     const bars = parTypeBars(analytics.parTypes);
     expect(bars.map((bar) => bar.label)).toEqual(["Par 3", "Par 4", "Par 5"]);
-    expect(bars[0]).toMatchObject({ value: "+0.63", verdict: "behind", mark: 10 });
+    expect(bars[0]).toMatchObject({ value: "+0.63", tone: "bad", mark: 10 });
+    expect(parTypeBars([{ par: 4, averageToPar: 0.5, benchmarkToPar: 0.5, gap: 0, verdict: "even" }])[0].tone).toBe("primary");
+    expect(parTypeBars([{ par: 4, averageToPar: 0.4, benchmarkToPar: null, gap: null, verdict: null }])[0].tone).toBe("primary");
     expect(benchmarkNote(5)).toBe("Tick = 5 handicap");
     expect(benchmarkNote(0)).toBe("Tick = scratch");
     expect(benchmarkNote(null)).toBeNull();

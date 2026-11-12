@@ -1526,9 +1526,9 @@ export const sampleGolfer = {
       "goal": null,
       "handicap": 0,
       "par_types": [
-        {"average_to_par": 0.5375000000000001, "benchmark_to_par": -0.025, "gap": 0.56, "par": 3, "verdict": "behind"},
-        {"average_to_par": 0.5549999999999997, "benchmark_to_par": 0.175, "gap": 0.38, "par": 4, "verdict": "behind"},
-        {"average_to_par": 0.6500000000000004, "benchmark_to_par": 0.0, "gap": 0.65, "par": 5, "verdict": "behind"}
+        {"average_to_par": 0.625, "benchmark_to_par": -0.025, "gap": 0.65, "par": 3, "verdict": "behind"},
+        {"average_to_par": 0.5875000000000004, "benchmark_to_par": 0.175, "gap": 0.41, "par": 4, "verdict": "behind"},
+        {"average_to_par": 0.635416666666667, "benchmark_to_par": 0.0, "gap": 0.64, "par": 5, "verdict": "behind"}
       ],
       "verdicts": {"gir_percentage": "behind", "par3_to_par": "behind", "par4_to_par": "behind", "par5_to_par": "behind", "putts_per_gir": "behind", "scrambling_percentage": "behind"}
     },
@@ -1538,11 +1538,11 @@ export const sampleGolfer = {
       "goal": null,
       "handicap": 10,
       "par_types": [
-        {"average_to_par": 0.5375000000000001, "benchmark_to_par": 0.375, "gap": 0.16, "par": 3, "verdict": "behind"},
-        {"average_to_par": 0.5549999999999997, "benchmark_to_par": 0.65, "gap": -0.1, "par": 4, "verdict": "ahead"},
-        {"average_to_par": 0.6500000000000004, "benchmark_to_par": 0.725, "gap": -0.07, "par": 5, "verdict": "ahead"}
+        {"average_to_par": 0.625, "benchmark_to_par": 0.375, "gap": 0.25, "par": 3, "verdict": "behind"},
+        {"average_to_par": 0.5875000000000004, "benchmark_to_par": 0.65, "gap": -0.06, "par": 4, "verdict": "ahead"},
+        {"average_to_par": 0.635416666666667, "benchmark_to_par": 0.725, "gap": -0.09, "par": 5, "verdict": "ahead"}
       ],
-      "verdicts": {"gir_percentage": "ahead", "par3_to_par": "behind", "par4_to_par": "ahead", "par5_to_par": "ahead", "putts_per_gir": "behind", "scrambling_percentage": "ahead"}
+      "verdicts": {"gir_percentage": "behind", "par3_to_par": "behind", "par4_to_par": "ahead", "par5_to_par": "ahead", "putts_per_gir": "ahead", "scrambling_percentage": "ahead"}
     },
     "handicap:15": {
       "against": "handicap",
@@ -1550,11 +1550,11 @@ export const sampleGolfer = {
       "goal": null,
       "handicap": 15,
       "par_types": [
-        {"average_to_par": 0.5375000000000001, "benchmark_to_par": 0.6, "gap": -0.06, "par": 3, "verdict": "ahead"},
-        {"average_to_par": 0.5549999999999997, "benchmark_to_par": 1.025, "gap": -0.47, "par": 4, "verdict": "ahead"},
-        {"average_to_par": 0.6500000000000004, "benchmark_to_par": 1.1, "gap": -0.45, "par": 5, "verdict": "ahead"}
+        {"average_to_par": 0.625, "benchmark_to_par": 0.6, "gap": 0.03, "par": 3, "verdict": "behind"},
+        {"average_to_par": 0.5875000000000004, "benchmark_to_par": 1.025, "gap": -0.44, "par": 4, "verdict": "ahead"},
+        {"average_to_par": 0.635416666666667, "benchmark_to_par": 1.1, "gap": -0.46, "par": 5, "verdict": "ahead"}
       ],
-      "verdicts": {"gir_percentage": "ahead", "par3_to_par": "ahead", "par4_to_par": "ahead", "par5_to_par": "ahead", "putts_per_gir": "ahead", "scrambling_percentage": "ahead"}
+      "verdicts": {"gir_percentage": "ahead", "par3_to_par": "behind", "par4_to_par": "ahead", "par5_to_par": "ahead", "putts_per_gir": "ahead", "scrambling_percentage": "ahead"}
     },
     "handicap:20": {
       "against": "handicap",
@@ -1562,9 +1562,9 @@ export const sampleGolfer = {
       "goal": null,
       "handicap": 20,
       "par_types": [
-        {"average_to_par": 0.5375000000000001, "benchmark_to_par": 0.775, "gap": -0.24, "par": 3, "verdict": "ahead"},
-        {"average_to_par": 0.5549999999999997, "benchmark_to_par": 1.275, "gap": -0.72, "par": 4, "verdict": "ahead"},
-        {"average_to_par": 0.6500000000000004, "benchmark_to_par": 1.425, "gap": -0.77, "par": 5, "verdict": "ahead"}
+        {"average_to_par": 0.625, "benchmark_to_par": 0.775, "gap": -0.15, "par": 3, "verdict": "ahead"},
+        {"average_to_par": 0.5875000000000004, "benchmark_to_par": 1.275, "gap": -0.69, "par": 4, "verdict": "ahead"},
+        {"average_to_par": 0.635416666666667, "benchmark_to_par": 1.425, "gap": -0.79, "par": 5, "verdict": "ahead"}
       ],
       "verdicts": {"gir_percentage": "ahead", "par3_to_par": "ahead", "par4_to_par": "ahead", "par5_to_par": "ahead", "putts_per_gir": "ahead", "scrambling_percentage": "ahead"}
     },
@@ -1574,9 +1574,9 @@ export const sampleGolfer = {
       "goal": null,
       "handicap": 25,
       "par_types": [
-        {"average_to_par": 0.5375000000000001, "benchmark_to_par": 0.975, "gap": -0.44, "par": 3, "verdict": "ahead"},
-        {"average_to_par": 0.5549999999999997, "benchmark_to_par": 1.85, "gap": -1.3, "par": 4, "verdict": "ahead"},
-        {"average_to_par": 0.6500000000000004, "benchmark_to_par": 2.0, "gap": -1.35, "par": 5, "verdict": "ahead"}
+        {"average_to_par": 0.625, "benchmark_to_par": 0.975, "gap": -0.35, "par": 3, "verdict": "ahead"},
+        {"average_to_par": 0.5875000000000004, "benchmark_to_par": 1.85, "gap": -1.26, "par": 4, "verdict": "ahead"},
+        {"average_to_par": 0.635416666666667, "benchmark_to_par": 2.0, "gap": -1.36, "par": 5, "verdict": "ahead"}
       ],
       "verdicts": {"gir_percentage": "ahead", "par3_to_par": "ahead", "par4_to_par": "ahead", "par5_to_par": "ahead", "putts_per_gir": "ahead", "scrambling_percentage": "ahead"}
     },
@@ -1586,9 +1586,9 @@ export const sampleGolfer = {
       "goal": null,
       "handicap": 5,
       "par_types": [
-        {"average_to_par": 0.5375000000000001, "benchmark_to_par": 0.2, "gap": 0.34, "par": 3, "verdict": "behind"},
-        {"average_to_par": 0.5549999999999997, "benchmark_to_par": 0.5, "gap": 0.05, "par": 4, "verdict": "behind"},
-        {"average_to_par": 0.6500000000000004, "benchmark_to_par": 0.55, "gap": 0.1, "par": 5, "verdict": "behind"}
+        {"average_to_par": 0.625, "benchmark_to_par": 0.2, "gap": 0.43, "par": 3, "verdict": "behind"},
+        {"average_to_par": 0.5875000000000004, "benchmark_to_par": 0.5, "gap": 0.09, "par": 4, "verdict": "behind"},
+        {"average_to_par": 0.635416666666667, "benchmark_to_par": 0.55, "gap": 0.09, "par": 5, "verdict": "behind"}
       ],
       "verdicts": {"gir_percentage": "behind", "par3_to_par": "behind", "par4_to_par": "behind", "par5_to_par": "behind", "putts_per_gir": "behind", "scrambling_percentage": "behind"}
     },
@@ -1598,9 +1598,9 @@ export const sampleGolfer = {
       "goal": 79,
       "handicap": null,
       "par_types": [
-        {"average_to_par": 0.5375000000000001, "benchmark_to_par": 0.2, "gap": 0.34, "par": 3, "verdict": "behind"},
-        {"average_to_par": 0.5549999999999997, "benchmark_to_par": 0.5, "gap": 0.05, "par": 4, "verdict": "behind"},
-        {"average_to_par": 0.6500000000000004, "benchmark_to_par": 0.55, "gap": 0.1, "par": 5, "verdict": "behind"}
+        {"average_to_par": 0.625, "benchmark_to_par": 0.2, "gap": 0.43, "par": 3, "verdict": "behind"},
+        {"average_to_par": 0.5875000000000004, "benchmark_to_par": 0.5, "gap": 0.09, "par": 4, "verdict": "behind"},
+        {"average_to_par": 0.635416666666667, "benchmark_to_par": 0.55, "gap": 0.09, "par": 5, "verdict": "behind"}
       ],
       "verdicts": {"gir_percentage": "behind", "par3_to_par": "behind", "par4_to_par": "behind", "par5_to_par": "behind", "putts_per_gir": "behind", "scrambling_percentage": "behind"}
     }
