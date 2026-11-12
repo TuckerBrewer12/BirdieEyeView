@@ -832,6 +832,36 @@ export const chart = {
     hitRadius: 10,
   },
   /**
+   * A figure per hole across a course (how each hole plays, greens and putts). Like the round flow it
+   * draws as wide as its card, `width` until measured, and scrolls sideways below `minWidth`.
+   */
+  holes: {
+    width: px(size["chart-wide"]),
+    minWidth: px(size["chart-flow"]),
+    /** The to-par chart's height, and its padding: `bottom` holds the hole numbers. */
+    height: 240,
+    pad: { top: 16, right: 12, bottom: 32, left: 40 },
+    /** A bar's share of its hole's column. */
+    bar: 0.56,
+    /** The bar's corner, and the height of a hole played at level. */
+    corner: 3,
+    level: 3,
+    /** The spread's whisker: its stroke and the half-width of its caps. */
+    whisker: 1.5,
+    cap: 4,
+    /** From an axis label to the grid, and from the plot to the hole numbers' baseline. */
+    labelGap: 10,
+    numberDrop: 20,
+    /** Greens over putts: each panel's top and bottom, and the hole numbers' baseline. */
+    greens: { top: 22, bottom: 112 },
+    putts: { top: 156, bottom: 226 },
+    pairedHeight: 260,
+    numbers: 252,
+    /** A putts dot, and its stem. */
+    dot: 4,
+    stem: 2,
+  },
+  /**
    * The running score through a round, a step per hole. It draws as wide as its card, `width` until
    * it is measured, and scrolls sideways below `minWidth` (`min-w-chart-flow`).
    */

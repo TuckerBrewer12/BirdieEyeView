@@ -14,6 +14,8 @@ def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResp
     record = analytics.course_record(newest_first)
     by_hole = analytics.average_score_relative_to_par_by_hole(rounds)
     gir_by_hole = analytics.gir_percentage_by_hole(rounds)
+    # The trend follows the record: full rounds, or the nines when there is no full round.
+    trended = analytics.full_rounds(rounds) or rounds
     to_par = analytics.hole_to_par_nines(by_hole)
     greens = analytics.gir_percentage_nines(gir_by_hole)
     best, worst = record["best_round"], record["worst_round"]
@@ -26,8 +28,8 @@ def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResp
         best_round_id=str(best.id) if best and best.id else None,
         worst_round_id=str(worst.id) if worst and worst.id else None,
         rounds=[round_summary(r) for r in newest_first],
-        average_score_relative_to_par_by_hole=by_hole,
-        gir_percentage_by_hole=gir_by_hole,
+        score_trend=analytics.score_trend_with_rolling_average(trended),
+        holes=analytics.course_hole_stats(rounds),
         hole_to_par_front_nine=to_par["front_nine"],
         hole_to_par_back_nine=to_par["back_nine"],
         hole_to_par_total=to_par["total"],

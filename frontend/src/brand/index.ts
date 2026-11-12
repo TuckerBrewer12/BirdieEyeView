@@ -152,6 +152,8 @@ export type { RadarAxis } from "./charts/RadarChart";
 export { ScoreGoalChart } from "./charts/ScoreGoalChart";
 export { RoundFlowChart, RoundFlowFigures } from "./charts/RoundFlowChart";
 export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
+export { HoleProfileChart } from "./charts/HoleProfileChart";
+export { HoleGreensPuttsChart } from "./charts/HoleGreensPuttsChart";
 export { ScoreTargetChart } from "./charts/ScoreTargetChart";
 export type { ScoreTargetShot } from "./charts/ScoreTargetChart";
 export { ToParBars } from "./charts/ToParBars";

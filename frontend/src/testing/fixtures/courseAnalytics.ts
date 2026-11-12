@@ -19,21 +19,34 @@ function hole<T>(build: (hole: number, par: number) => T): T[] {
 const toParOn = (holeNumber: number) => (holeNumber % 3 === 0 ? 0.5 : -0.5);
 
 const halfMoonBayHoleStats: CourseHoleStats = {
-  average_score_relative_to_par_by_hole: hole((hole_number, par) => ({
-    hole_number,
-    par,
-    average_score: par + toParOn(hole_number),
-    average_to_par: toParOn(hole_number),
-    sample_size: SAMPLE,
-  })),
+  // Two rounds a hole, a stroke apart, so every hole's score swings half a stroke.
+  holes: hole((hole_number, par) => {
+    const toPar = toParOn(hole_number);
+    const gir_hits = hole_number % 2 === 0 ? 2 : 1;
+    return {
+      hole_number,
+      par,
+      sample_size: SAMPLE,
+      average_score: par + toPar,
+      average_to_par: toPar,
+      score_std_dev: 0.5,
+      gir_percentage: (gir_hits / SAMPLE) * 100,
+      average_putts: 1.5 + (hole_number % 2) * 0.5,
+      score_mix: {
+        eagle: 0,
+        birdie: toPar < 0 ? 50 : 0,
+        par: 50,
+        bogey: toPar > 0 ? 50 : 0,
+        double: 0,
+        triple: 0,
+        quad: 0,
+      },
+    };
+  }),
   // Each nine has three holes half a stroke over and six half a stroke under.
   hole_to_par_front_nine: -1.5,
   hole_to_par_back_nine: -1.5,
   hole_to_par_total: -3,
-  gir_percentage_by_hole: hole((hole_number, par) => {
-    const gir_hits = hole_number % 2 === 0 ? 2 : 1;
-    return { hole_number, par, gir_hits, sample_size: SAMPLE, gir_percentage: (gir_hits / SAMPLE) * 100 };
-  }),
   // Front: 4 even holes hit twice, 5 odd once, of 18 greens. Back: 5 and 4.
   gir_front_nine: (13 / 18) * 100,
   gir_back_nine: (14 / 18) * 100,

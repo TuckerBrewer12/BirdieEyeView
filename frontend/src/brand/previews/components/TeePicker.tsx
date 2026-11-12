@@ -10,14 +10,11 @@ const TEES = [
 
 export default function TeePickerPreview() {
   const [tee, setTee] = useState("Blue");
-  const [card, setCard] = useState("Blue");
   return (
     <>
       <TeePicker tees={TEES} value={tee} onChange={setTee} />
       {/* A tee with no yardage on file shows its name alone. */}
       <TeePicker tees={[{ name: "Gold", yards: null }, { name: "Combo", yards: 6420 }]} value="" onChange={() => {}} />
-      {/* The course page's: which tee its scorecard reads. */}
-      <TeePicker variant="segmented" tees={TEES} value={card} onChange={setCard} />
     </>
   );
 }

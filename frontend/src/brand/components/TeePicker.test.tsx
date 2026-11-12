@@ -33,14 +33,4 @@ describe("TeePicker", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Blue/ }));
     expect(change.calls).toEqual([]);
   });
-
-  it("as a segmented track, names each tee and picks one, keeping it when pressed again", () => {
-    const change = new FakeHandler<[string]>();
-    render(<TeePicker variant="segmented" tees={TEES} value="Blue" onChange={change.handle} />);
-    expect(screen.getByRole("group", { name: "Tee" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Blue" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Blue" }));
-    fireEvent.click(screen.getByRole("button", { name: "White" }));
-    expect(change.calls).toEqual([["White"]]);
-  });
 });

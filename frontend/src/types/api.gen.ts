@@ -929,8 +929,6 @@ export interface components {
          * @description The player's figures at one course. Every figure is worked out here, not on the client.
          */
         CourseAnalyticsResponse: {
-            /** Average Score Relative To Par By Hole */
-            average_score_relative_to_par_by_hole: components["schemas"]["CourseHoleToParRow"][];
             /** Best Round Id */
             best_round_id: string | null;
             /** Course Id */
@@ -939,8 +937,6 @@ export interface components {
             gir_back_nine: number | null;
             /** Gir Front Nine */
             gir_front_nine: number | null;
-            /** Gir Percentage By Hole */
-            gir_percentage_by_hole: components["schemas"]["CourseHoleGirRow"][];
             /** Gir Total */
             gir_total: number | null;
             /** Hole To Par Back Nine */
@@ -949,31 +945,22 @@ export interface components {
             hole_to_par_front_nine: number | null;
             /** Hole To Par Total */
             hole_to_par_total: number | null;
+            /** Holes */
+            holes: components["schemas"]["CourseHoleStatsRow"][];
             /** Last Played */
             last_played: string | null;
             /** Rounds */
             rounds: components["schemas"]["RoundSummaryResponse"][];
             /** Rounds Played */
             rounds_played: number;
+            /** Score Trend */
+            score_trend: components["schemas"]["ScoreTrendRow"][];
             /** Scoring Average */
             scoring_average: number | null;
             /** Scoring Average To Par */
             scoring_average_to_par: number | null;
             /** Worst Round Id */
             worst_round_id: string | null;
-        };
-        /** CourseHoleGirRow */
-        CourseHoleGirRow: {
-            /** Gir Hits */
-            gir_hits: number;
-            /** Gir Percentage */
-            gir_percentage: number;
-            /** Hole Number */
-            hole_number: number;
-            /** Par */
-            par: number;
-            /** Sample Size */
-            sample_size: number;
         };
         /** CourseHoleInput */
         CourseHoleInput: {
@@ -984,18 +971,28 @@ export interface components {
             /** Par */
             par?: number | null;
         };
-        /** CourseHoleToParRow */
-        CourseHoleToParRow: {
+        /**
+         * CourseHoleStatsRow
+         * @description How one hole of a course plays for the golfer (`stats.course_hole_stats`).
+         */
+        CourseHoleStatsRow: {
+            /** Average Putts */
+            average_putts: number | null;
             /** Average Score */
             average_score: number;
             /** Average To Par */
             average_to_par: number;
+            /** Gir Percentage */
+            gir_percentage: number | null;
             /** Hole Number */
             hole_number: number;
             /** Par */
             par: number;
             /** Sample Size */
             sample_size: number;
+            score_mix: components["schemas"]["ScoreMix"];
+            /** Score Std Dev */
+            score_std_dev: number | null;
         };
         /**
          * CourseResponse

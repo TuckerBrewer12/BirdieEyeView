@@ -55,12 +55,7 @@ export function CourseScorecard({ teeLine, nines, played }: CourseScorecardProps
     },
     played && {
       key: "average",
-      label: (
-        <>
-          <span className="md:hidden">Avg</span>
-          <span className="hidden md:inline">Your avg</span>
-        </>
-      ),
+      label: "Avg",
       className: "h-9 text-caption font-bold md:text-label",
       labelClassName: "text-foreground",
       cell: (hole) => <ToPar value={hole.averageToPar} />,

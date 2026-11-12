@@ -48,12 +48,33 @@ def test_a_nine_stays_out_of_the_average_beside_full_rounds():
     assert (only_nines.scoring_average, only_nines.scoring_average_to_par) == (36.0, 0.0)
 
 
-def test_per_hole_rows_are_typed():
+def test_each_hole_carries_how_it_plays():
     response = course_analytics("c1", [_round("r1", 1, 2), _round("r2", 8, 0)])
 
-    first = response.average_score_relative_to_par_by_hole[0]
-    assert (first.hole_number, first.par, first.average_to_par, first.sample_size) == (1, 4, 0.5, 2)
-    assert response.gir_percentage_by_hole[0].gir_percentage == 100.0
+    first = response.holes[0]
+    assert (first.hole_number, first.par, first.sample_size) == (1, 4, 2)
+    assert (first.average_score, first.average_to_par) == (4.5, 0.5)
+    assert first.score_std_dev == 0.5  # a 5 and a 4
+    assert (first.gir_percentage, first.average_putts) == (100.0, 2.0)
+    assert (first.score_mix.par, first.score_mix.bogey) == (50.0, 50.0)
+    assert response.holes[2].score_std_dev == 0.0
+    assert [hole.hole_number for hole in response.holes] == list(range(1, 19))
+
+
+def test_a_hole_played_once_has_no_spread():
+    response = course_analytics("c1", [_round("r1", 1, 2)])
+    assert response.holes[0].score_std_dev is None
+
+
+def test_the_trend_follows_the_record_oldest_first():
+    nine = Round(
+        id="n1", course=COURSE, date=datetime(2026, 5, 20, tzinfo=timezone.utc),
+        hole_scores=[HoleScore(hole_number=i + 1, strokes=p) for i, p in enumerate(PARS[:9])],
+    )
+    response = course_analytics("c1", [_round("r1", 1, 6), _round("r2", 8, 0), nine])
+    assert [row.round_id for row in response.score_trend] == ["r1", "r2"]  # the nine stays out
+    assert [row.total_score for row in response.score_trend] == [78, 72]
+    assert response.score_trend[-1].rolling_average == 75.0
 
 
 def test_no_rounds_leaves_the_figures_empty():
@@ -63,6 +84,7 @@ def test_no_rounds_leaves_the_figures_empty():
     assert response.scoring_average is None
     assert response.best_round_id is None
     assert response.rounds == []
+    assert (response.holes, response.score_trend) == ([], [])
     assert response.hole_to_par_total is None
     assert response.gir_total is None
 

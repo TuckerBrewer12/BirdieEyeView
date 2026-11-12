@@ -844,20 +844,17 @@ class BenchmarkComparisonResponse(ResponseModel):
     par_types: List[ParTypeComparison] = Field(default_factory=list)  # par 3, 4 and 5
 
 
-class CourseHoleToParRow(ResponseModel):
+class CourseHoleStatsRow(ResponseModel):
+    """How one hole of a course plays for the golfer (`stats.course_hole_stats`)."""
     hole_number: int
     par: int
+    sample_size: int  # the rounds they've scored it in
     average_score: float
     average_to_par: float
-    sample_size: int
-
-
-class CourseHoleGirRow(ResponseModel):
-    hole_number: int
-    par: int
-    gir_hits: int
-    sample_size: int
-    gir_percentage: float
+    score_std_dev: Optional[float] = None  # how far the score swings; null under two rounds
+    gir_percentage: Optional[float] = None  # null when no green was recorded
+    average_putts: Optional[float] = None  # null when no putts were recorded
+    score_mix: ScoreMix  # the share of each kind of score, 0-100
 
 
 class CourseAnalyticsResponse(ResponseModel):
@@ -872,8 +869,10 @@ class CourseAnalyticsResponse(ResponseModel):
     best_round_id: Optional[str] = None
     worst_round_id: Optional[str] = None
     rounds: List[RoundSummaryResponse] = Field(default_factory=list)  # newest first
-    average_score_relative_to_par_by_hole: List[CourseHoleToParRow] = Field(default_factory=list)
-    gir_percentage_by_hole: List[CourseHoleGirRow] = Field(default_factory=list)
+    # The rounds the record counts (full rounds, or nines without one), oldest first, with each
+    # one's five-round average.
+    score_trend: List[ScoreTrendRow] = Field(default_factory=list)
+    holes: List[CourseHoleStatsRow] = Field(default_factory=list)  # in course order
     # The scorecard's Out, In and Total for the golfer's rows: the holes' averages to par summed,
     # and the greens hit over each nine as a share. Null for a nine with nothing recorded.
     hole_to_par_front_nine: Optional[float] = None

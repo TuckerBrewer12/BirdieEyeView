@@ -103,6 +103,14 @@ export function toParFill(toPar: number | null): string {
   return color.score[toParKind(toPar)].base;
 }
 
+/**
+ * The same for a small mark on a chart (a sliver of bar, a dot): level reads as quiet ink rather
+ * than par's pale fill, which a mark that small would lose on the card.
+ */
+export function toParMarkFill(toPar: number | null): string {
+  return toParKind(toPar) === "par" ? color.mutedForeground : toParFill(toPar);
+}
+
 export function toParDisplay(toPar: number | null, empty = "—"): string {
   return toParLabel(toPar) ?? empty;
 }

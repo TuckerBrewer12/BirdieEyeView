@@ -1514,6 +1514,45 @@ def gir_percentage_nines(by_hole: List[Dict[str, Any]]) -> Dict[str, Optional[fl
     return {"front_nine": share(FRONT_NINE), "back_nine": share(BACK_NINE), "total": share(range(1, HOLES_PER_ROUND + 1))}
 
 
+def course_hole_stats(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
+    """
+    How each hole of one course plays for the golfer, one row a hole in course order: its par, how
+    many times they've played it, their average score and to par on it, how far their score swings
+    (the standard deviation, null under two rounds), the greens they hit (0-100) and their average
+    putts (null where none were recorded), and the share of each kind of score (0-100).
+
+    The course page's hole charts read these rows: one row a hole rather than a list per figure.
+    """
+    rounds = list(rounds)
+    to_par = {row["hole_number"]: row for row in average_score_relative_to_par_by_hole(rounds)}
+    spread = {row["hole_number"]: row for row in score_variance_by_hole(rounds)}
+    greens = {row["hole_number"]: row for row in gir_percentage_by_hole(rounds)}
+    putts = {row["hole_number"]: row for row in average_putts_by_hole(rounds)}
+    mix = {row["hole_number"]: row for row in score_type_distribution_by_hole(rounds)}
+    rows: List[Dict[str, Any]] = []
+    for hole_number in sorted(to_par):
+        row = to_par[hole_number]
+        played = row["sample_size"]
+        kinds = mix.get(hole_number)
+        rows.append(
+            {
+                "hole_number": hole_number,
+                "par": row["par"],
+                "sample_size": played,
+                "average_score": row["average_score"],
+                "average_to_par": row["average_to_par"],
+                "score_std_dev": spread[hole_number]["score_std_dev"] if played >= 2 and hole_number in spread else None,
+                "gir_percentage": greens[hole_number]["gir_percentage"] if hole_number in greens else None,
+                "average_putts": putts[hole_number]["average_putts"] if hole_number in putts else None,
+                "score_mix": {
+                    kind: kinds[name] if kinds else 0.0
+                    for kind, name in zip(SCORE_KINDS, SCORE_TYPE_ORDER)
+                },
+            }
+        )
+    return rows
+
+
 def course_difficulty_profile_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     Return hole difficulty sorted from hardest to easiest for a single course.

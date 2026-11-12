@@ -49,13 +49,42 @@ export class CourseDetailRobot {
 
   /** The scorecard's row of the golfer's average to par per hole. */
   async seesAverageRow(): Promise<this> {
-    await expect(this.page.getByRole("rowheader", { name: /^(Your avg|Avg)$/ }).first()).toBeVisible();
+    await expect(this.page.getByRole("rowheader", { name: /^Avg$/ }).first()).toBeVisible();
+    return this;
+  }
+
+  /** Best or Worst in the record, which opens that round. */
+  async tapRecord(label: "Best" | "Worst"): Promise<this> {
+    await this.page.locator("[data-slot=course-record]").getByRole("button", { name: new RegExp(`^${label}`) }).click();
+    return this;
+  }
+
+  async tapView(name: "Course" | "My performance"): Promise<this> {
+    await this.page.getByRole("group", { name: "View" }).getByRole("button", { name }).click();
+    return this;
+  }
+
+  /** The performance view: the score trend and both hole charts. */
+  async seesPerformance(): Promise<this> {
+    await expect(this.page.getByRole("heading", { name: "Score trend" })).toBeVisible();
+    await expect(this.page.getByRole("img", { name: "Average to par on each hole" })).toBeVisible();
+    await expect(this.page.getByRole("img", { name: "Greens hit and average putts on each hole" })).toBeVisible();
+    return this;
+  }
+
+  async tapHoleOrder(name: "By hole" | "Hardest first"): Promise<this> {
+    await this.page.getByRole("group", { name: "Order holes" }).getByRole("button", { name }).click();
+    return this;
+  }
+
+  async seesHolesHardestFirst(): Promise<this> {
+    await expect(this.page.getByRole("img", { name: "Average to par on each hole, hardest first" })).toBeVisible();
     return this;
   }
 
   async seesNotPlayed(): Promise<this> {
     await expect(this.page.getByText("You haven’t played here yet.")).toBeVisible();
-    await expect(this.page.getByRole("rowheader", { name: /^(Your avg|Avg)$/ })).toHaveCount(0);
+    await expect(this.page.getByRole("rowheader", { name: /^Avg$/ })).toHaveCount(0);
     return this;
   }
 
@@ -86,13 +115,13 @@ export class CourseDetailRobot {
   }
 
   async tapTee(color: string): Promise<this> {
-    await this.page.getByRole("group", { name: "Tee" }).getByRole("button", { name: color, exact: true }).click();
+    await this.page.getByRole("group", { name: "Tee" }).getByRole("button", { name: new RegExp(`^${color}\\b`) }).click();
     return this;
   }
 
   async seesSelectedTee(color: string): Promise<this> {
     await expect(
-      this.page.getByRole("group", { name: "Tee" }).getByRole("button", { name: color, exact: true }),
+      this.page.getByRole("group", { name: "Tee" }).getByRole("button", { name: new RegExp(`^${color}\\b`) }),
     ).toHaveAttribute("aria-pressed", "true");
     return this;
   }

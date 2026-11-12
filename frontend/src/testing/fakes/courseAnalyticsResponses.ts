@@ -10,8 +10,7 @@ import { listRanks, summaryResponse, type StoredRound } from "./roundResponses";
 
 export type CourseHoleStats = Pick<
   CourseAnalyticsDto,
-  | "average_score_relative_to_par_by_hole"
-  | "gir_percentage_by_hole"
+  | "holes"
   | "hole_to_par_front_nine"
   | "hole_to_par_back_nine"
   | "hole_to_par_total"
@@ -21,8 +20,7 @@ export type CourseHoleStats = Pick<
 >;
 
 const NO_HOLE_STATS: CourseHoleStats = {
-  average_score_relative_to_par_by_hole: [],
-  gir_percentage_by_hole: [],
+  holes: [],
   hole_to_par_front_nine: null,
   hole_to_par_back_nine: null,
   hole_to_par_total: null,
@@ -58,8 +56,26 @@ export function courseAnalyticsResponse(
     best_round_id: first("best"),
     worst_round_id: first("worst"),
     rounds,
+    score_trend: scoreTrend([...counted].reverse()),
     ...holeStats,
   };
+}
+
+/** `stats.score_trend_with_rolling_average`: each round oldest first, with its five-round average to a tenth. */
+function scoreTrend(rounds: CourseAnalyticsDto["rounds"]): CourseAnalyticsDto["score_trend"] {
+  return rounds.map((round, i) => {
+    const recent = rounds.slice(Math.max(0, i - 4), i + 1).flatMap((r) => (r.total_score != null ? [r.total_score] : []));
+    const average = mean(recent);
+    return {
+      round_index: i + 1,
+      round_id: round.id,
+      total_score: round.total_score,
+      to_par: round.to_par,
+      par: round.total_score != null && round.to_par != null ? round.total_score - round.to_par : null,
+      course_name: round.course_name,
+      rolling_average: average != null ? Math.round(average * 10) / 10 : null,
+    };
+  });
 }
 
 /** A listed course, carrying the golfer's record there from their stored rounds, as GET /courses sends it. */

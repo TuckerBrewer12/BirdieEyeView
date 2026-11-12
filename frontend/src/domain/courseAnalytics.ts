@@ -1,17 +1,24 @@
-import type { CourseAnalyticsDto, CourseHoleToParRowDto } from "@/types/api";
+import type { CourseAnalyticsDto, CourseHoleStatsRowDto } from "@/types/api";
 import { Round, type RoundSummary } from "./round";
+import type { ScoreMix } from "./score";
+import { trendPointsFrom, type RoundTrendPoint } from "./trend";
 
-/** A golfer's average score on one hole, and how far over or under par that is. */
-export interface HoleToPar {
+/** How one hole of a course plays for the golfer, every figure the server's. */
+export interface HoleStats {
   hole: number;
+  par: number;
+  /** The rounds they've scored it in. */
+  rounds: number;
   averageScore: number;
   averageToPar: number;
-}
-
-/** One figure on one hole: here, the share of greens hit (0-100). */
-export interface HoleFigure {
-  hole: number;
-  value: number | null;
+  /** How far their score swings on it (a standard deviation); null under two rounds. */
+  spread: number | null;
+  /** The greens they've hit on it, 0-100; null when none was recorded. */
+  greens: number | null;
+  /** Their average putts on it; null when none were recorded. */
+  putts: number | null;
+  /** The share of each kind of score on it, 0-100. */
+  mix: ScoreMix;
 }
 
 /** A figure over the front nine, the back nine and the course, as the server added it. Null for a nine with nothing recorded. */
@@ -33,10 +40,10 @@ export interface CourseAnalytics {
   worstRound: RoundSummary | null;
   /** The golfer's rounds here, newest first. */
   rounds: RoundSummary[];
+  /** The rounds the record counts, oldest first, each with its five-round average. */
+  scoreTrend: RoundTrendPoint[];
   /** In course order. */
-  holeToPar: HoleToPar[];
-  /** Greens hit per hole, in course order. */
-  greens: HoleFigure[];
+  holes: HoleStats[];
   /** The holes' averages to par summed by nine: the scorecard's Out, In and Tot. */
   nineToPar: NineFigures;
   /** The greens hit over each nine, as a share. */
@@ -51,14 +58,24 @@ export const EMPTY_COURSE_ANALYTICS: CourseAnalytics = {
   bestRound: null,
   worstRound: null,
   rounds: [],
-  holeToPar: [],
-  greens: [],
+  scoreTrend: [],
+  holes: [],
   nineToPar: { front: null, back: null, total: null },
   nineGreens: { front: null, back: null, total: null },
 };
 
-function holeToPar(row: CourseHoleToParRowDto): HoleToPar {
-  return { hole: row.hole_number, averageScore: row.average_score, averageToPar: row.average_to_par };
+function holeStats(row: CourseHoleStatsRowDto): HoleStats {
+  return {
+    hole: row.hole_number,
+    par: row.par,
+    rounds: row.sample_size,
+    averageScore: row.average_score,
+    averageToPar: row.average_to_par,
+    spread: row.score_std_dev,
+    greens: row.gir_percentage,
+    putts: row.average_putts,
+    mix: row.score_mix,
+  };
 }
 
 export function courseAnalyticsFrom(dto: CourseAnalyticsDto): CourseAnalytics {
@@ -72,8 +89,8 @@ export function courseAnalyticsFrom(dto: CourseAnalyticsDto): CourseAnalytics {
     bestRound: byId(dto.best_round_id),
     worstRound: byId(dto.worst_round_id),
     rounds,
-    holeToPar: dto.average_score_relative_to_par_by_hole.map(holeToPar),
-    greens: dto.gir_percentage_by_hole.map((row) => ({ hole: row.hole_number, value: row.gir_percentage })),
+    scoreTrend: trendPointsFrom({ score_trend: dto.score_trend, handicap_trend: [] }),
+    holes: dto.holes.map(holeStats),
     nineToPar: { front: dto.hole_to_par_front_nine, back: dto.hole_to_par_back_nine, total: dto.hole_to_par_total },
     nineGreens: { front: dto.gir_front_nine, back: dto.gir_back_nine, total: dto.gir_total },
   };

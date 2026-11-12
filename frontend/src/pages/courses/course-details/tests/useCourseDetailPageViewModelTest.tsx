@@ -64,6 +64,43 @@ describe("useCourseDetailPageViewModel", () => {
     expect(result.current.nines[0]?.holes[0]?.averageToPar?.label).toBe("\u22120.5");
   });
 
+  it("switches to the golfer's performance, with the holes in the order they pick", async () => {
+    const repository = new FakeCoursesRepository();
+    repository.fullCourses = [halfMoonBayCourse];
+    repository.analytics = halfMoonBayAnalytics;
+    const { result } = renderVm(repository);
+    await waitFor(() => expect(result.current.played).toBe(true));
+
+    expect(result.current.view).toBe("course");
+    act(() => result.current.pickView("performance"));
+    expect(result.current.view).toBe("performance");
+    expect(result.current.scoreTrend.map((point) => point.values)).toEqual([
+      [72, 72],
+      [78, 75],
+    ]);
+    expect(result.current.averageLine).toEqual({ value: 75, label: "Avg 75.0" });
+    expect(result.current.holes.map((hole) => hole.hole).slice(0, 3)).toEqual([1, 2, 3]);
+    expect(result.current.greens).toEqual([
+      { label: "Out", value: "72%" },
+      { label: "In", value: "78%" },
+      { label: "Total", value: "75%" },
+    ]);
+
+    act(() => result.current.pickHoleOrder("hardest"));
+    // Every third hole is half a stroke over, the rest half under: those come first, by hole.
+    expect(result.current.holes.map((hole) => hole.hole).slice(0, 7)).toEqual([3, 6, 9, 12, 15, 18, 1]);
+    expect(result.current.courseHoles.map((hole) => hole.hole).slice(0, 3)).toEqual([1, 2, 3]);
+  });
+
+  it("stays on the course until the golfer has played it", async () => {
+    const repository = new FakeCoursesRepository();
+    repository.fullCourses = [halfMoonBayCourse];
+    const { result } = renderVm(repository);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.pickView("performance"));
+    expect(result.current.view).toBe("course");
+  });
+
   it("surfaces a load error when the course is missing", async () => {
     const { result } = renderVm(new FakeCoursesRepository(), "missing");
     await waitFor(() => expect(result.current.loadError).toBe("Course not found."));

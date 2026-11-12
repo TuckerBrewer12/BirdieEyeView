@@ -1016,13 +1016,6 @@
       "CourseAnalyticsResponse": {
         "description": "The player's figures at one course. Every figure is worked out here, not on the client.",
         "properties": {
-          "average_score_relative_to_par_by_hole": {
-            "items": {
-              "$ref": "#/components/schemas/CourseHoleToParRow"
-            },
-            "title": "Average Score Relative To Par By Hole",
-            "type": "array"
-          },
           "best_round_id": {
             "anyOf": [
               {
@@ -1059,13 +1052,6 @@
               }
             ],
             "title": "Gir Front Nine"
-          },
-          "gir_percentage_by_hole": {
-            "items": {
-              "$ref": "#/components/schemas/CourseHoleGirRow"
-            },
-            "title": "Gir Percentage By Hole",
-            "type": "array"
           },
           "gir_total": {
             "anyOf": [
@@ -1111,6 +1097,13 @@
             ],
             "title": "Hole To Par Total"
           },
+          "holes": {
+            "items": {
+              "$ref": "#/components/schemas/CourseHoleStatsRow"
+            },
+            "title": "Holes",
+            "type": "array"
+          },
           "last_played": {
             "anyOf": [
               {
@@ -1133,6 +1126,13 @@
           "rounds_played": {
             "title": "Rounds Played",
             "type": "integer"
+          },
+          "score_trend": {
+            "items": {
+              "$ref": "#/components/schemas/ScoreTrendRow"
+            },
+            "title": "Score Trend",
+            "type": "array"
           },
           "scoring_average": {
             "anyOf": [
@@ -1177,8 +1177,8 @@
           "best_round_id",
           "worst_round_id",
           "rounds",
-          "average_score_relative_to_par_by_hole",
-          "gir_percentage_by_hole",
+          "score_trend",
+          "holes",
           "hole_to_par_front_nine",
           "hole_to_par_back_nine",
           "hole_to_par_total",
@@ -1187,39 +1187,6 @@
           "gir_total"
         ],
         "title": "CourseAnalyticsResponse",
-        "type": "object"
-      },
-      "CourseHoleGirRow": {
-        "properties": {
-          "gir_hits": {
-            "title": "Gir Hits",
-            "type": "integer"
-          },
-          "gir_percentage": {
-            "title": "Gir Percentage",
-            "type": "number"
-          },
-          "hole_number": {
-            "title": "Hole Number",
-            "type": "integer"
-          },
-          "par": {
-            "title": "Par",
-            "type": "integer"
-          },
-          "sample_size": {
-            "title": "Sample Size",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "hole_number",
-          "par",
-          "gir_hits",
-          "sample_size",
-          "gir_percentage"
-        ],
-        "title": "CourseHoleGirRow",
         "type": "object"
       },
       "CourseHoleInput": {
@@ -1264,8 +1231,20 @@
         "title": "CourseHoleInput",
         "type": "object"
       },
-      "CourseHoleToParRow": {
+      "CourseHoleStatsRow": {
+        "description": "How one hole of a course plays for the golfer (`stats.course_hole_stats`).",
         "properties": {
+          "average_putts": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Putts"
+          },
           "average_score": {
             "title": "Average Score",
             "type": "number"
@@ -1273,6 +1252,17 @@
           "average_to_par": {
             "title": "Average To Par",
             "type": "number"
+          },
+          "gir_percentage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gir Percentage"
           },
           "hole_number": {
             "title": "Hole Number",
@@ -1285,16 +1275,34 @@
           "sample_size": {
             "title": "Sample Size",
             "type": "integer"
+          },
+          "score_mix": {
+            "$ref": "#/components/schemas/ScoreMix"
+          },
+          "score_std_dev": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score Std Dev"
           }
         },
         "required": [
           "hole_number",
           "par",
+          "sample_size",
           "average_score",
           "average_to_par",
-          "sample_size"
+          "score_std_dev",
+          "gir_percentage",
+          "average_putts",
+          "score_mix"
         ],
-        "title": "CourseHoleToParRow",
+        "title": "CourseHoleStatsRow",
         "type": "object"
       },
       "CourseResponse": {

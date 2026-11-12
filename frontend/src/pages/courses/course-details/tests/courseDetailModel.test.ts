@@ -3,7 +3,16 @@ import { courseAnalyticsFrom } from "@/domain/courseAnalytics";
 import { courseResponse } from "@/testing/fakes/courseResponses";
 import { emptyCourseAnalytics, halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
 import { halfMoonBayCourse } from "@/testing/fixtures/roundDetails";
-import { nineFrom, recordFigures, selectedTee, teeLine } from "../courseDetailModel";
+import {
+  averageLine,
+  greensFigures,
+  holesInOrder,
+  nineFrom,
+  recordFigures,
+  selectedTee,
+  teeLine,
+  trendPoints,
+} from "../courseDetailModel";
 
 const PARS = [4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5];
 
@@ -85,10 +94,39 @@ describe("teeLine", () => {
 describe("recordFigures", () => {
   it("words the record: rounds and when last, the average and its to par, the best and worst with their day", () => {
     expect(recordFigures(courseAnalyticsFrom(halfMoonBayAnalytics))).toEqual([
-      { label: "Rounds", value: "2", toPar: null, note: "last Jun 15" },
-      { label: "Average", value: "75.0", toPar: { value: 3, label: "+3.0" }, note: null },
-      { label: "Best", value: "72", toPar: { value: 0, label: "E" }, note: "May 2" },
-      { label: "Worst", value: "78", toPar: { value: 6, label: "+6" }, note: "Jun 15" },
+      { label: "Rounds", value: "2", toPar: null, note: "last Jun 15", roundId: null },
+      { label: "Average", value: "75.0", toPar: { value: 3, label: "+3.0" }, note: null, roundId: null },
+      { label: "Best", value: "72", toPar: { value: 0, label: "E" }, note: "May 2", roundId: "round-2" },
+      { label: "Worst", value: "78", toPar: { value: 6, label: "+6" }, note: "Jun 15", roundId: "round-1" },
     ]);
+  });
+});
+
+describe("holesInOrder", () => {
+  const holes = courseAnalyticsFrom(halfMoonBayAnalytics).holes;
+
+  it("keeps the course's order, or puts the highest average to par first with ties by hole", () => {
+    expect(holesInOrder(holes, "course").map((hole) => hole.hole)).toEqual(holes.map((hole) => hole.hole));
+    expect(holesInOrder(holes, "hardest").map((hole) => hole.hole).slice(0, 6)).toEqual([3, 6, 9, 12, 15, 18]);
+  });
+});
+
+describe("greensFigures", () => {
+  it("words each nine's greens and the course's, with a dash for none", () => {
+    expect(greensFigures({ front: 72.2, back: null, total: 75 })).toEqual([
+      { label: "Out", value: "72%" },
+      { label: "In", value: "—" },
+      { label: "Total", value: "75%" },
+    ]);
+  });
+});
+
+describe("trendPoints", () => {
+  it("numbers the rounds here, with each score beside its five-round average and its to par", () => {
+    expect(trendPoints(courseAnalyticsFrom(halfMoonBayAnalytics).scoreTrend)).toEqual([
+      { tick: 1, title: "Round 1 here", values: [72, 72], notes: [{ label: "To par", value: "E" }] },
+      { tick: 2, title: "Round 2 here", values: [78, 75], notes: [{ label: "To par", value: "+6" }] },
+    ]);
+    expect(averageLine(null)).toBeNull();
   });
 });

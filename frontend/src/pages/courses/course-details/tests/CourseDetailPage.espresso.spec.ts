@@ -41,3 +41,19 @@ test("tapping a recent round opens its detail", async ({ courseDetail }) => {
   await courseDetail.tapRecentRound("Jun 15, 2026");
   await courseDetail.isAtRound("round-1");
 });
+
+test("the best round in the record opens that round", async ({ courseDetail }) => {
+  await courseDetail.open(halfMoonBayCourse, { courseAnalytics: halfMoonBayAnalytics, rounds: storedRounds });
+  await courseDetail.tapRecord("Best");
+  await courseDetail.isAtRound("round-2");
+});
+
+test("my performance shows the trend and the hole charts, and orders the holes hardest first", async ({ courseDetail }) => {
+  await courseDetail.open(halfMoonBayCourse, { courseAnalytics: halfMoonBayAnalytics });
+  await courseDetail.tapView("My performance");
+  await courseDetail.seesPerformance();
+  await courseDetail.tapHoleOrder("Hardest first");
+  await courseDetail.seesHolesHardestFirst();
+  await courseDetail.tapView("Course");
+  await courseDetail.seesAverageRow();
+});

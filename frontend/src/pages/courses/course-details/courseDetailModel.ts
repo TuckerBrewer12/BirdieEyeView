@@ -6,11 +6,12 @@ import {
   getTee,
   teeRatingLabel,
 } from "@/domain/course";
-import type { CourseAnalytics, NineFigures } from "@/domain/courseAnalytics";
+import type { CourseAnalytics, HoleStats, NineFigures } from "@/domain/courseAnalytics";
 import { formatDayShort } from "@/domain/date";
-import { formatCount, formatOneDecimal } from "@/domain/format";
+import { formatCount, formatOneDecimal, formatPercent } from "@/domain/format";
 import { formatCourseHandicap } from "@/domain/handicap";
 import { formatAverageToParTenths, roundAverageToParTenths, toParLabel } from "@/domain/score";
+import type { RoundTrendPoint } from "@/domain/trend";
 import type { CourseDto, TeeDto } from "@/types/api";
 
 /** How many of the golfer's latest rounds here the page lists. */
@@ -91,8 +92,7 @@ export function nineFrom(
   analytics: CourseAnalytics | null,
 ): ScorecardNine {
   const back = side === "back";
-  const toPar = new Map(analytics?.holeToPar.map((row) => [row.hole, row.averageToPar]));
-  const greens = new Map(analytics?.greens.map((row) => [row.hole, row.value]));
+  const stats = new Map(analytics?.holes.map((row) => [row.hole, row]));
   const nineToPar = analytics?.nineToPar ?? NO_NINES;
   const nineGreens = analytics?.nineGreens ?? NO_NINES;
   return {
@@ -105,8 +105,8 @@ export function nineFrom(
         par: getHole(course, n)?.par ?? null,
         handicap: getHole(course, n)?.handicap ?? null,
         yards: yards != null && yards > 0 ? yards : null,
-        averageToPar: averageToPar(toPar.get(n)),
-        greens: greens.get(n) ?? null,
+        averageToPar: averageToPar(stats.get(n)?.averageToPar),
+        greens: stats.get(n)?.greens ?? null,
       };
     }),
     nine: {
@@ -134,6 +134,8 @@ export interface RecordFigure {
   toPar: { value: number; label: string } | null;
   /** When, or how long ago: "Jun 15". */
   note: string | null;
+  /** The round the figure is, for a best or worst that opens it. */
+  roundId: string | null;
 }
 
 /** Rounds, average, best and worst: the golfer's record at the course, every figure the server's. */
@@ -143,13 +145,74 @@ export function recordFigures(analytics: CourseAnalytics): RecordFigure[] {
     value: played?.score != null ? String(played.score) : "—",
     toPar: played?.toPar != null ? { value: played.toPar, label: toParLabel(played.toPar) ?? "" } : null,
     note: formatDayShort(played?.date),
+    roundId: played?.id ?? null,
   });
   const average = averageToPar(analytics.scoringAverageToPar);
   const last = formatDayShort(analytics.lastPlayed);
   return [
-    { label: "Rounds", value: String(analytics.roundsPlayed), toPar: null, note: last ? `last ${last}` : null },
-    { label: "Average", value: formatOneDecimal(analytics.scoringAverage), toPar: average, note: null },
+    {
+      label: "Rounds",
+      value: String(analytics.roundsPlayed),
+      toPar: null,
+      note: last ? `last ${last}` : null,
+      roundId: null,
+    },
+    { label: "Average", value: formatOneDecimal(analytics.scoringAverage), toPar: average, note: null, roundId: null },
     round("Best", analytics.bestRound),
     round("Worst", analytics.worstRound),
   ];
+}
+
+/** The course page's two views: the card and the golfer's record, or how they play it hole by hole. */
+export type CourseView = "course" | "performance";
+
+export const COURSE_VIEWS: { value: CourseView; label: string }[] = [
+  { value: "course", label: "Course" },
+  { value: "performance", label: "My performance" },
+];
+
+/** The hole chart's two orders: 1 to 18, or the holes that cost the most first. */
+export type HoleOrder = "course" | "hardest";
+
+export const HOLE_ORDERS: { value: HoleOrder; label: string }[] = [
+  { value: "course", label: "By hole" },
+  { value: "hardest", label: "Hardest first" },
+];
+
+/** The holes in the order asked: as the course runs, or highest average to par first, ties by hole. */
+export function holesInOrder(holes: readonly HoleStats[], order: HoleOrder): HoleStats[] {
+  if (order === "course") return [...holes];
+  return [...holes].sort((a, b) => b.averageToPar - a.averageToPar || a.hole - b.hole);
+}
+
+/** The greens hit over each nine and the course, for the greens chart's header: "Out 72%". */
+export function greensFigures(nines: NineFigures): { label: string; value: string }[] {
+  return [
+    { label: "Out", value: formatPercent(nines.front) },
+    { label: "In", value: formatPercent(nines.back) },
+    { label: "Total", value: formatPercent(nines.total) },
+  ];
+}
+
+/** One round on the course's score trend, as the trend chart takes it. */
+export interface TrendPoint {
+  tick: number;
+  title: string;
+  values: (number | null)[];
+  notes: { label: string; value: string }[];
+}
+
+/** Each round here, oldest first: its score beside its five-round average, and its to par in the tooltip. */
+export function trendPoints(trend: readonly RoundTrendPoint[]): TrendPoint[] {
+  return trend.map((point, i) => ({
+    tick: i + 1,
+    title: `Round ${i + 1} here`,
+    values: [point.score, point.rollingAverage],
+    notes: [{ label: "To par", value: toParLabel(point.toPar) ?? "—" }],
+  }));
+}
+
+/** The dashed line across the trend: the golfer's average here. */
+export function averageLine(average: number | null): { value: number; label: string } | null {
+  return average != null ? { value: average, label: `Avg ${formatOneDecimal(average)}` } : null;
 }

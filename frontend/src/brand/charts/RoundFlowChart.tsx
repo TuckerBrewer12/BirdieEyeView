@@ -1,4 +1,4 @@
-import { useCallback, useState, type MouseEvent } from "react";
+import { useState, type MouseEvent } from "react";
 import { AnimatePresence, motion, useReducedMotion, useReducedMotionConfig } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { curveStepAfter, line } from "d3-shape";
@@ -10,6 +10,7 @@ import type { HoleScore, Round } from "@/domain";
 import { pluralize } from "@/domain/format";
 import type { ScoreKind } from "@/domain/score";
 import { HoleShape } from "./HoleScoreShapes";
+import { useChartWidth } from "./useChartWidth";
 
 interface RoundFlowChartProps {
   round: Round;
@@ -28,14 +29,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
   const { width, minWidth, height: H, pad: PAD, stroke, dot, labelGap, chip, bracket } = tokens.chart.flow;
   // The plot is drawn at the width it has, so its labels keep their size: a wide card spreads the
   // holes, a narrow one packs them down to `minWidth` and then scrolls.
-  const [measured, setMeasured] = useState<number | null>(null);
-  const measure = useCallback((node: HTMLDivElement | null) => {
-    if (!node || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(([entry]) => setMeasured(entry.contentRect.width));
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-  const W = Math.max(minWidth, measured ?? width);
+  const [W, measure] = useChartWidth(width, minWidth);
   // The strip's marks are square, a `hole-h` side.
   const holeW = tokens.size["hole-h"];
   const holeH = tokens.size["hole-h"];

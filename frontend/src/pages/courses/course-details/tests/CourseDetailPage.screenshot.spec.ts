@@ -29,6 +29,21 @@ test("a course played in dark mode", async ({ courseDetail }) => {
   await courseDetail.capture("course-detail-played-dark.png");
 });
 
+test("a course played: my performance", async ({ courseDetail }) => {
+  await courseDetail.open(halfMoonBayCourse, { courseAnalytics: halfMoonBayAnalytics });
+  await courseDetail.tapView("My performance");
+  await courseDetail.seesPerformance();
+  await courseDetail.capture("course-detail-performance.png");
+});
+
+test("a course played: my performance in dark mode", async ({ courseDetail }) => {
+  await courseDetail.dark();
+  await courseDetail.open(halfMoonBayCourse, { courseAnalytics: halfMoonBayAnalytics });
+  await courseDetail.tapView("My performance");
+  await courseDetail.seesPerformance();
+  await courseDetail.capture("course-detail-performance-dark.png");
+});
+
 test("missing course", async ({ courseDetail }) => {
   await courseDetail.openMissing();
   await courseDetail.seesNotFound();
