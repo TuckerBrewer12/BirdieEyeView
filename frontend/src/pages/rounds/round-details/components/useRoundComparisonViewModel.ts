@@ -1,21 +1,19 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { roundsRepository, type RoundsRepository } from "../../roundsRepository";
-import {
-  COMPARISON_WINDOWS,
-  comparisonFrom,
-  type ComparisonRow,
-  type ComparisonWindow,
-} from "../roundDetailModel";
+import { COMPARISON_WINDOWS, type ComparisonWindow } from "../roundDetailModel";
+
+/** The comparison as the server sent it, or null while it loads and when there is none. */
+type RoundComparison = Awaited<ReturnType<RoundsRepository["getRoundComparison"]>>;
 
 export interface RoundComparisonViewModel {
   /** False until the comparison loads, and when there is none. */
   show: boolean;
   window: ComparisonWindow;
   windows: readonly { value: ComparisonWindow; label: string }[];
-  /** The window's figures; empty when no round came before this one. */
-  rows: ComparisonRow[];
+  /** The comparison as the server sent it. The section words each window. */
+  comparison: RoundComparison;
   /** The segmented control's pick. Tapping the pressed window again keeps it. */
   pickWindow: (value: string | undefined) => void;
 }
@@ -31,7 +29,6 @@ export function useRoundComparisonViewModel(
     queryKey: queryKeys.roundComparison(userId, roundId),
     queryFn: () => repository.getRoundComparison(userId, roundId),
   });
-  const windows = useMemo(() => (comparison ? comparisonFrom(comparison) : {}), [comparison]);
 
   const pickWindow = useCallback((value: string | undefined) => {
     const picked = COMPARISON_WINDOWS.find((option) => option.value === value);
@@ -42,7 +39,7 @@ export function useRoundComparisonViewModel(
     show: comparison != null,
     window,
     windows: COMPARISON_WINDOWS,
-    rows: windows[window]?.rows ?? [],
+    comparison: comparison ?? null,
     pickWindow,
   };
 }

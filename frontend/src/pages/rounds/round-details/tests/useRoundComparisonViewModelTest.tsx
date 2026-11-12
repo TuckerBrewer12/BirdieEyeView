@@ -18,37 +18,31 @@ function renderVm(comparison: RoundComparisonDto | null) {
 }
 
 describe("useRoundComparisonViewModel", () => {
-  it("opens on the last 20, each figure worded with its difference and the server's verdict", async () => {
+  it("opens on the last 20 and keeps the comparison for the section to word", async () => {
     const { result } = renderVm(roundComparison);
     await waitFor(() => expect(result.current.show).toBe(true));
     expect(result.current.window).toBe("l20");
-    expect(result.current.rows.map((row) => [row.label, row.value, row.average, row.difference, row.verdict])).toEqual([
-      ["Score", "78", "80.4", "−2.4", "good"],
-      ["Putts", "32", "33.1", "−1.1", "good"],
-      ["Greens hit", "7", "4.9", "+2.1", "good"],
-      ["3-putts", "1", "1.9", "−0.9", "good"],
-      ["Putts / GIR", "1.71", "1.95", "−0.24", "good"],
-      ["Scrambling", "4", "2.6", "+1.4", "good"],
-    ]);
+    expect(result.current.comparison).toEqual(roundComparison);
   });
 
   it("switches window, and keeps it when the pressed one is tapped again", async () => {
     const { result } = renderVm(roundComparison);
     await waitFor(() => expect(result.current.show).toBe(true));
     act(() => result.current.pickWindow("l5"));
-    expect(result.current.rows[0]?.average).toBe("81.4");
+    expect(result.current.window).toBe("l5");
     act(() => result.current.pickWindow(undefined));
     expect(result.current.window).toBe("l5");
   });
 
-  it("has no rows for a round with nothing before it", async () => {
+  it("still shows a round with nothing before it", async () => {
     const { result } = renderVm(firstRoundComparison);
     await waitFor(() => expect(result.current.show).toBe(true));
-    expect(result.current.rows).toEqual([]);
+    expect(result.current.comparison).toEqual(firstRoundComparison);
   });
 
   it("stays hidden with no comparison", async () => {
     const { result } = renderVm(null);
     await waitFor(() => expect(result.current.show).toBe(false));
+    expect(result.current.comparison).toBeNull();
   });
 });

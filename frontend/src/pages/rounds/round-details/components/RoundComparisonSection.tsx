@@ -8,6 +8,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/brand";
+import { comparisonFrom } from "../roundDetailModel";
 import { useRoundComparisonViewModel } from "./useRoundComparisonViewModel";
 
 interface RoundComparisonSectionProps {
@@ -23,7 +24,8 @@ export function RoundComparisonSection({
   className,
 }: RoundComparisonSectionProps) {
   const viewModel = useRoundComparisonViewModel(userId, roundId);
-  if (!viewModel.show) return null;
+  if (!viewModel.show || viewModel.comparison == null) return null;
+  const rows = comparisonFrom(viewModel.comparison)[viewModel.window]?.rows ?? [];
 
   return (
     <Card data-slot="round-comparison" size="lg" className={className}>
@@ -49,13 +51,13 @@ export function RoundComparisonSection({
         </CardAction>
       </CardHeader>
       <CardContent>
-        {viewModel.rows.length === 0 ? (
+        {rows.length === 0 ? (
           <p className="text-body text-muted-foreground">
             No earlier rounds to compare with yet.
           </p>
         ) : (
           <dl className="-mt-1 flex flex-col">
-            {viewModel.rows.map((row) => (
+            {rows.map((row) => (
               <div
                 key={row.metric}
                 className="grid grid-cols-versus-row items-baseline gap-2 border-t border-border py-2.5 text-sm"
