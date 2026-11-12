@@ -71,9 +71,24 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** The page's analytics load; Profile's last 20 rounds do not. */
+  async openProfileFailed(): Promise<this> {
+    await this.install({ profileAnalyticsError: "Could not load your profile." });
+    await this.seesRounds(24);
+    await this.openTab("Profile");
+    await expect(this.page.getByRole("alert")).toBeVisible();
+    return this;
+  }
+
   /** The next load succeeds, as the API would once the failure has cleared. */
   nextLoadSucceeds(): this {
     if (this.backend) this.backend.analytics = sampleGolfer.analytics;
+    return this;
+  }
+
+  /** The next profile load succeeds, as the API would once the failure has cleared. */
+  nextProfileLoadSucceeds(): this {
+    if (this.backend) this.backend.profileAnalyticsError = null;
     return this;
   }
 
@@ -84,6 +99,11 @@ export class AnalyticsRobot {
 
   async seesLoadError(): Promise<this> {
     await expect(this.page.getByRole("alert")).toContainText("Analytics failed to load.");
+    return this;
+  }
+
+  async seesProfileError(): Promise<this> {
+    await expect(this.page.getByRole("alert")).toContainText("Could not load your profile.");
     return this;
   }
 

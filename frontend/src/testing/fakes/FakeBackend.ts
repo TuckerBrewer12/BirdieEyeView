@@ -55,6 +55,11 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   analyticsByGolfer?: Record<string, AnalyticsDto>;
   /** `/api/stats/analytics/{id}?course_id=` per course. A course not here answers with no rounds. */
   analyticsByCourse?: Record<string, AnalyticsDto>;
+  /**
+   * Why Profile's last 20 rounds fail (`GET /stats/analytics/{id}?limit=20` at every course).
+   * Unset, that load answers with `analytics`.
+   */
+  profileAnalyticsError?: string | null;
   /** `/api/stats/{id}/played-courses`: the courses the golfer has rounds at. */
   playedCourses?: PlayedCourseDto[];
   goalReport?: GoalReportDto | null;
@@ -94,6 +99,7 @@ export class FakeBackend {
   analytics: AnalyticsDto | null | undefined;
   analyticsByGolfer: Partial<Record<string, AnalyticsDto>>;
   readonly analyticsByCourse: Record<string, AnalyticsDto>;
+  profileAnalyticsError: string | null;
   readonly playedCourses: PlayedCourseDto[];
   /** What each analytics request asked for, in order. */
   readonly analyticsRequests: AnalyticsFilters[] = [];
@@ -128,6 +134,7 @@ export class FakeBackend {
       analytics,
       analyticsByGolfer,
       analyticsByCourse,
+      profileAnalyticsError,
       playedCourses,
       goalReport,
       benchmarks,
@@ -154,6 +161,7 @@ export class FakeBackend {
     this.analytics = analytics;
     this.analyticsByGolfer = analyticsByGolfer ?? {};
     this.analyticsByCourse = analyticsByCourse ?? {};
+    this.profileAnalyticsError = profileAnalyticsError ?? null;
     this.playedCourses = playedCourses ?? [];
     this.goalReport = goalReport;
     this.benchmarks = benchmarks ?? {};
@@ -481,11 +489,13 @@ export class FakeBackend {
   private getAnalytics(params: URLSearchParams): FakeReply {
     const timeframe = params.get("timeframe");
     const courseId = params.get("course_id") ?? "all";
-    this.analyticsRequests.push({
-      limit: Number(params.get("limit") ?? 50),
-      timeframe: timeframe === "ytd" || timeframe === "1y" ? timeframe : "all",
-      courseId,
-    });
+    const limit = Number(params.get("limit") ?? 50);
+    const resolvedTimeframe = timeframe === "ytd" || timeframe === "1y" ? timeframe : "all";
+    this.analyticsRequests.push({ limit, timeframe: resolvedTimeframe, courseId });
+    // Profile asks for the last 20 at every course on its own request, after the page's analytics.
+    if (this.profileAnalyticsError && limit === 20 && resolvedTimeframe === "all" && courseId === "all") {
+      return { status: 404, body: { detail: this.profileAnalyticsError } };
+    }
     if (this.analytics == null) {
       return { status: 404, body: { detail: "Analytics failed to load." } };
     }

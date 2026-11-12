@@ -41,6 +41,14 @@ test("a failed load can be retried", async ({ analytics }) => {
   await analytics.seesRounds(24);
 });
 
+test("a failed profile load can be retried", async ({ analytics }) => {
+  await analytics.openProfileFailed();
+  await analytics.seesProfileError();
+  analytics.nextProfileLoadSucceeds();
+  await analytics.retry();
+  await analytics.seesTabOpen("Profile", "Player profile");
+});
+
 test("the score trend switches to net", async ({ analytics }) => {
   await analytics.open();
   await analytics.seesScoreTrend("Score each round");

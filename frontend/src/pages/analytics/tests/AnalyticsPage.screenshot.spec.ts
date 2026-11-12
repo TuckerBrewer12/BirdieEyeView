@@ -46,6 +46,12 @@ test("load failed", async ({ analytics }) => {
   await analytics.capture("analytics-load-failed.png");
 });
 
+test("profile load failed", async ({ analytics }) => {
+  await analytics.openProfileFailed();
+  await analytics.seesProfileError();
+  await analytics.capture("analytics-profile-load-failed.png");
+});
+
 const SECTIONS = [
   { tab: "Profile", showing: "Player profile", file: "profile" },
   { tab: "Ball striking", showing: "Greens in regulation", file: "ball-striking" },
