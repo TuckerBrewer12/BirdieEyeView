@@ -2,7 +2,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { useShareRound } from "@/platform/useShareRound";
 import { roundShareMessage } from "@/domain/share";
-import { courseLabel } from "@/domain/course";
+import { courseLabel, formatTeeName, teeRatingLabel } from "@/domain/course";
+import { formatWeekday } from "@/domain/date";
 import {
   Alert,
   AlertDescription,
@@ -47,6 +48,10 @@ export function RoundDetailPage({ userId }: { userId: string }) {
 
   const played = viewModel.played;
   const editor = viewModel.editor;
+  const dateLine =
+    [formatWeekday(viewModel.date), viewModel.tee ? formatTeeName(viewModel.tee) : null, teeRatingLabel(viewModel.rating)]
+      .filter(Boolean)
+      .join(" · ") || null;
 
   return (
     <div className="flex flex-col gap-3.5 pb-6 md:gap-4">
@@ -81,7 +86,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       )}
 
       <div data-slot="round-title">
-        {viewModel.dateLine && <div className="text-body text-muted-foreground">{viewModel.dateLine}</div>}
+        {dateLine && <div className="text-body text-muted-foreground">{dateLine}</div>}
         <PageTitle size="heading" className="mt-0.5">
           {courseLabel(played.course?.name)}
         </PageTitle>

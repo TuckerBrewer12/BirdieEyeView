@@ -43,7 +43,9 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.played?.course?.name).toBe("Half Moon Bay");
     expect(result.current.played?.score).toBe(78);
     expect(result.current.played?.toPar).toBe(6);
-    expect(result.current.dateLine).toMatch(/^\w{3}, \w{3} \d{1,2}, \d{4} · Blue tees · 72.4 \/ 130$/);
+    expect(result.current.date).toBe("2026-06-15T18:00:00.000Z");
+    expect(result.current.tee).toBe("Blue");
+    expect(result.current.rating).toEqual({ course_rating: 72.4, slope_rating: 130 });
     expect(result.current.deleteLine).toMatch(/^Half Moon Bay · \w{3} \d{1,2} · 78$/);
     expect(result.current.teeOptions.map((tee) => tee.name)).toContain("Blue");
     expect(result.current.canLink).toBe(false);
