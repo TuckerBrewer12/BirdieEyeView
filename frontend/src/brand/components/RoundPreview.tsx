@@ -3,9 +3,10 @@ import { cn } from "@/brand/cn";
 import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { Button, RowButton } from "@/brand/components/Button";
+import { StatValue } from "@/brand/components/Stat";
 import { ToParPill } from "@/brand/components/ToParPill";
 import { toParLabel, toParTextClass } from "@/brand/theme";
-import type { RoundSummary } from "@/domain";
+import { roundDayAndTee, type RoundSummary } from "@/domain";
 import { courseLabel } from "@/domain/course";
 import { formatDay, formatDayShort, dayParts } from "@/domain/date";
 
@@ -33,7 +34,16 @@ interface RoundCompactProps {
   onClick?: () => void;
 }
 
-type RoundPreviewProps = RoundListProps | RoundHighlightProps | RoundCompactProps;
+interface RoundSummaryProps {
+  round: RoundSummary;
+  /**
+   * A round on its own, in a box of its own: the course with its day and tee, the score and its
+   * pill, and the two nines as pills under them. The scan's saved screen shows the round this way.
+   */
+  variant: "summary";
+}
+
+type RoundPreviewProps = RoundListProps | RoundHighlightProps | RoundCompactProps | RoundSummaryProps;
 
 export function RoundPreview(props: RoundPreviewProps) {
   if (props.variant === "highlight") {
@@ -41,6 +51,9 @@ export function RoundPreview(props: RoundPreviewProps) {
   }
   if (props.variant === "compact") {
     return <RoundCompact {...props} />;
+  }
+  if (props.variant === "summary") {
+    return <RoundSummaryBox round={props.round} />;
   }
 
   const { round, variant, onClick, onLinkClick } = props;
@@ -251,5 +264,27 @@ function RoundCompact({ round, layout = "inline", onClick }: Omit<RoundCompactPr
       </span>
       <ToParPill toPar={round.toPar} size="row" />
     </RowButton>
+  );
+}
+
+function RoundSummaryBox({ round }: { round: RoundSummary }) {
+  const when = roundDayAndTee(round);
+  return (
+    <div data-slot="round-preview" data-variant="summary" className="flex flex-col gap-3 rounded-xl border border-border p-4">
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-body-lg font-semibold text-foreground">{courseLabel(round.course?.name)}</p>
+          {when && <p className="mt-0.5 text-body-sm text-muted-foreground">{when}</p>}
+        </div>
+        <div className="flex items-baseline gap-1.5">
+          <StatValue size="lg">{round.score ?? "—"}</StatValue>
+          <ToParPill toPar={round.toPar} ground="muted" />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <HoleScoreBars holes={round.frontNine.holes} size="sm" className="flex-1" />
+        <HoleScoreBars holes={round.backNine.holes} size="sm" className="flex-1" />
+      </div>
+    </div>
   );
 }

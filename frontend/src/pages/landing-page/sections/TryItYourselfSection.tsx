@@ -5,10 +5,10 @@ import {
   Alert,
   AlertDescription,
   Button,
+  CardFactsForm,
   Dropzone,
   FileChip,
   ScanProgress,
-  ScorecardLayoutPicker,
   RoundScorecard,
 } from "@/brand";
 import { SCAN_STEPS } from "@/domain/scan";
@@ -50,7 +50,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
                   onClear={viewModel.reset}
                 />
 
-                <ScorecardLayoutPicker onContextChange={viewModel.setUserContext} />
+                <CardFactsForm card={viewModel.card} onChange={viewModel.setCard} idPrefix="try-it" />
 
                 {viewModel.error && (
                   <Alert tone="danger">

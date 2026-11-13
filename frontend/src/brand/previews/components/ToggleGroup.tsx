@@ -36,6 +36,13 @@ export default function ToggleGroupPreview() {
         </Card>
       </Demo>
 
+      <Demo label="Boxed · a form's choice or a page's mode">
+        <ToggleGroup look="boxed" aria-label="Entry method" defaultValue={["photo"]}>
+          <ToggleGroupItem value="photo">Photo</ToggleGroupItem>
+          <ToggleGroupItem value="hand">By hand</ToggleGroupItem>
+        </ToggleGroup>
+      </Demo>
+
       <Demo label="Chips · a page's own switch, a gap apart">
         <ToggleGroup look="chips" aria-label="View" defaultValue={["course"]}>
           <ToggleGroupItem value="course">Course</ToggleGroupItem>

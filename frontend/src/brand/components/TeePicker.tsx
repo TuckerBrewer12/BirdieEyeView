@@ -17,6 +17,8 @@ interface TeePickerProps {
   onChange: (name: string) => void;
   /** What the row picks, named for screen readers and shown before the chips. */
   label?: string;
+  /** Leaves the label for screen readers alone, when a `FieldLabel` above already shows it. */
+  hideLabel?: boolean;
   className?: string;
 }
 
@@ -25,11 +27,12 @@ interface TeePickerProps {
  * `SwatchChips`, each the tee's swatch, its name and its yardage. Pressing the picked tee keeps it:
  * a round is played from a tee, a card reads one.
  */
-function TeePicker({ tees, value, onChange, label = "Tee", className }: TeePickerProps) {
+function TeePicker({ tees, value, onChange, label = "Tee", hideLabel, className }: TeePickerProps) {
   const picked = tees.find((tee) => tee.name.toLowerCase() === value.toLowerCase())?.name;
   return (
     <SwatchChips
       label={label}
+      hideLabel={hideLabel}
       className={className}
       value={picked ? [picked] : []}
       onChange={(names) => {

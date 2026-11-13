@@ -56,12 +56,20 @@ function AlertDescription({ className, ...props }: React.ComponentProps<"div">) 
   );
 }
 
-/** A control pinned to the top right, such as a retry button. */
+/**
+ * What to do about it: a retry, another photo. From `md` it takes a column of its own at the
+ * alert's end, centred beside the title and description, which keep their stack (and the icon its
+ * column); on a phone it sits under them, in the text's column.
+ */
 function AlertAction({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-action"
-      className={cn("absolute top-2 right-2", className)}
+      className={cn(
+        "mt-1 justify-self-start group-has-[>svg]/alert:col-start-2",
+        "md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0 md:self-center md:justify-self-end md:group-has-[>svg]/alert:col-start-3",
+        className,
+      )}
       {...props}
     />
   );

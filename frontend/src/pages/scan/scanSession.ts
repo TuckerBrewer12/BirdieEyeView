@@ -1,5 +1,6 @@
 import { createContext, useContext, type Dispatch, type SetStateAction } from "react";
 import type { PickedPhoto } from "@/data/useCardText";
+import { NO_CARD_FACTS, type CardFacts } from "@/domain/scan";
 import { todayIso, type ManualSetup, type PickedCourse, type ScanMode, type ScanReviewDraft } from "./scanModel";
 
 /**
@@ -9,7 +10,8 @@ import { todayIso, type ManualSetup, type PickedCourse, type ScanMode, type Scan
 export interface ScanSession {
   mode: ScanMode;
   photo: PickedPhoto | null;
-  userContext: string;
+  /** What the golfer says is on the card. */
+  card: CardFacts;
   /** A course picked before scanning, so the card is read against it. */
   presetCourse: PickedCourse | null;
   setup: ManualSetup;
@@ -26,7 +28,7 @@ export function newScanSession(today: string = todayIso()): ScanSession {
   return {
     mode: "scan",
     photo: null,
-    userContext: "",
+    card: NO_CARD_FACTS,
     presetCourse: null,
     setup: { course: null, teeBox: "", date: today },
     review: null,

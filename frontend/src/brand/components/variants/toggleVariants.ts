@@ -12,6 +12,9 @@ const toggleVariants = cva(
         /* One option of a segmented control: bare until chosen, then a raised card-coloured pill. */
         segmented:
           "rounded-full font-semibold text-foreground-secondary hover:bg-transparent aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-sm data-[pressed]:bg-card data-[pressed]:text-foreground data-[pressed]:shadow-sm",
+        /* One option of a boxed control: square-cornered on a recessed rounded track, the chosen one a raised card. A form's choice, or a page's mode. */
+        boxed:
+          "h-9 rounded-lg px-4 text-body font-semibold text-foreground-secondary hover:bg-transparent aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-sm data-[pressed]:bg-card data-[pressed]:text-foreground data-[pressed]:shadow-sm",
         /* One of a row of chips, a gap apart: a white pill ringed in the input's line, the chosen one filled green. A page's own switch. */
         chip: `${chipBase} aria-pressed:bg-primary aria-pressed:font-semibold aria-pressed:text-primary-foreground aria-pressed:ring-primary aria-pressed:hover:bg-primary data-[pressed]:bg-primary data-[pressed]:font-semibold data-[pressed]:text-primary-foreground data-[pressed]:ring-primary data-[pressed]:hover:bg-primary`,
         /* A chip that carries its own colour, like a tee's swatch: the chosen one stays white, ringed in ink and bold, so the swatch reads. */

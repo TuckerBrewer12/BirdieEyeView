@@ -40,7 +40,8 @@ export type {
 export { buildRadarData, radarStanding } from "./radar";
 export type { RadarEntry, RadarGap, RadarStanding } from "./radar";
 
-export { courseLabel, courseSummaryFrom, formatCourseName, getTee, teeColors } from "./course";
+export { courseLabel, courseSummaryFrom, formatCourseName, getTee, teeColors, teeNameParts, teeOptions } from "./course";
+export type { TeeChoice } from "./course";
 export type { CourseSummary } from "./course";
 
 export { EMPTY_COURSE_ANALYTICS, courseAnalyticsFrom } from "./courseAnalytics";
@@ -66,7 +67,7 @@ export type { ShareMessage } from "./share";
 
 export { formatHandicapIndex, formatCourseHandicap } from "./handicap";
 
-export { Round, roundLine } from "./round";
+export { Round, roundDayAndTee, roundLine } from "./round";
 export type {
   CourseEdit,
   HoleEdits,
@@ -84,4 +85,5 @@ export type { AnalyticsFilters } from "./analyticsFilters";
 export { averageLine, moveOf, shortGamePointsFrom, trendPointsFrom } from "./trend";
 export type { AverageLine, Move, RoundTrendPoint, ShortGamePoint } from "./trend";
 
-export { strokesToCheck } from "./scan";
+export { NO_CARD_FACTS, cardContext, cardRows, nameRowOf, strokesToCheck } from "./scan";
+export type { CardFacts, CardRow, ScoresWrittenAs } from "./scan";

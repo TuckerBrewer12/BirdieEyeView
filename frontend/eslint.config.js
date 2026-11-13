@@ -244,6 +244,8 @@ export default defineConfig([
       'kit/no-handmade-stat-tile': 'error',
       'kit/no-verdict-tone': 'error',
       'kit/no-percent-template': 'error',
+      'kit/no-handmade-tee-picker': 'error',
+      'kit/no-handmade-check-chip': 'error',
     },
   },
   {

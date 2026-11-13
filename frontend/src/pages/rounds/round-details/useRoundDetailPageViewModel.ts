@@ -3,11 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { messageFrom } from "@/lib/userFacingErrors";
 import { queryKeys } from "@/data/queryKeys";
 import { Round, roundLine } from "@/domain/round";
-import { formatTeeName, getTee, teeRatingLabel } from "@/domain/course";
+import { formatTeeName, getTee, teeOptions, teeRatingLabel, type TeeChoice } from "@/domain/course";
 import { formatWeekday } from "@/domain/date";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
 import { useDeleteRound } from "../useDeleteRound";
-import { teeOptions } from "./roundDetailModel";
 import { useRoundEditorViewModel, type RoundEditorViewModel } from "./useRoundEditorViewModel";
 
 export interface RoundDetailUiState {
@@ -20,7 +19,7 @@ export interface RoundDetailUiState {
   /** The round as the delete dialog names it: "Half Moon Bay · Jun 15 · 78". */
   deleteLine: string;
   /** The course's tees as edit mode's chips; none when the course has no tees on file. */
-  teeOptions: { name: string; yards: number | null }[];
+  teeOptions: TeeChoice[];
   /** Edit mode. Start it with `enterEditMode`, which also closes the page's other panels. */
   editor: RoundEditorViewModel;
   confirmDelete: boolean;

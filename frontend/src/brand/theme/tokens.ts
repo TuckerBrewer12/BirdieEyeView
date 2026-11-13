@@ -442,6 +442,16 @@ export const space = {
   "nudge-sm": 3,
   /** What a bar pinned to the bottom pads past: the phone's home-indicator strip, never less than 22px. */
   "safe-bottom": "max(env(safe-area-inset-bottom, 0px), 22px)",
+  /** A phone's tab bar: its row of tabs with the padding over them. Its 1px rule sits on top. */
+  nav: 62,
+  /** Just clear of a phone's tab bar, its rule and the home-indicator strip under it: where `ActionBar` pins. */
+  "above-nav": "calc(var(--brand-space-nav) + 1px + var(--brand-space-safe-bottom))",
+  /** Where a phone page's content ends: a gap above the tab bar. `AppShell` pads to it. */
+  "page-end-phone": "calc(var(--brand-space-above-nav) + 1.5rem)",
+  /** `ActionBar` pinned on a phone: a large button with 12px over and under it, and its 1px rule. */
+  "action-bar": 73,
+  /** Where a phone page's content ends when an `ActionBar` is pinned over the tab bar. */
+  "page-end-action-bar": "calc(var(--brand-space-page-end-phone) + var(--brand-space-action-bar))",
 };
 
 /** Shadcn's base radius, `--radius`; the named steps below sit around it. */
@@ -476,6 +486,12 @@ export const size = {
   preview: 390,
   /** The scorecard photo while it is read: as wide as this, three by two. */
   "scan-photo": 360,
+  /** The scorecard photo beside its details, picked or under review. */
+  "card-photo": 300,
+  /** The scorecard photo as a row's thumbnail on a phone, four by three. */
+  "photo-thumb": 64,
+  /** The drop target for a scorecard photo. */
+  dropzone: 340,
   chart: 180,
   "chart-compact": 210,
   /** Width a hole-by-hole chart needs before it scrolls sideways. */
@@ -586,6 +602,12 @@ export const shadow = {
 
 /** Named grid column templates: `grid-cols-handicap-breakdown`. */
 export const gridColumns = {
+  /** Scan: the picked photo beside what's on the card. */
+  "scan-photo": "18.75rem minmax(0, 1fr)",
+  /** Scan's review: the photo, a little wider, beside the course, tee and date. */
+  "scan-review": "minmax(0, 1.15fr) minmax(0, 1fr)",
+  /** Scan by hand: the course, then the tee and the date. */
+  "scan-manual": "minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr)",
   "handicap-breakdown": "1fr auto auto auto",
   /** The dashboard's last round: the round, then how it went, as wide as its line is drawn. */
   "last-round": "minmax(0, 1fr) 23.75rem",

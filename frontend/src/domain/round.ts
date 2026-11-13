@@ -8,7 +8,7 @@ import type {
   ScannedRoundDto,
   ScoreCountsDto,
 } from "@/types/api";
-import { BACK_HOLES, FRONT_HOLES, formatCourseName, getHole, getTee } from "./course";
+import { BACK_HOLES, FRONT_HOLES, formatCourseName, formatTeeName, getHole, getTee } from "./course";
 import { formatDayShort } from "./date";
 import { SCORE_KINDS, scoreKind, strokesToPar, type ScoreKind } from "./score";
 
@@ -420,4 +420,11 @@ export const Round = { fromSummary, fromDto, detailFromDto, fromScan, previewEdi
 export function roundLine(round: Pick<RoundSummary, "course" | "date" | "score">): string {
   const course = round.course?.name ? formatCourseName(round.course.name) : null;
   return [course, formatDayShort(round.date), round.score].filter((part) => part != null).join(" · ");
+}
+
+/** When and from where a round was played, under its course: "Oct 15 · Blue tees". Either part may be missing. */
+export function roundDayAndTee(round: Pick<RoundSummary, "date" | "teeBox">): string | null {
+  const parts = [formatDayShort(round.date), round.teeBox ? formatTeeName(round.teeBox) : null];
+  const known = parts.filter((part) => part != null);
+  return known.length > 0 ? known.join(" · ") : null;
 }
