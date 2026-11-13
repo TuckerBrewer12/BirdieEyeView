@@ -9,3 +9,5 @@ class ScanExtractionError(HTTPException):
     def __init__(self, status_code: int, detail: str, *, category: FailureCategory, stage: FailureStage):
         super().__init__(status_code=status_code, detail=detail)
         self.failure = {"category": category, "stage": stage}
+        # Internal reasons for logs and the eval report; never part of the response body.
+        self.diagnostics: list[str] = []

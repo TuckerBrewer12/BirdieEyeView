@@ -4,6 +4,7 @@ import os
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from api.messages import INVALID_OR_EXPIRED_TOKEN, NOT_AUTHENTICATED, USER_NOT_FOUND
 from api.error_responses import SERVICE_UNAVAILABLE
 
 
@@ -66,14 +67,14 @@ async def get_current_user(
     """Decode the Bearer JWT and return the authenticated User."""
     token = credentials.credentials if credentials else request.cookies.get(get_access_token_cookie_name())
     if not token:
-        raise HTTPException(401, "Not authenticated")
+        raise HTTPException(401, NOT_AUTHENTICATED)
     payload = decode_access_token(token)
     if not payload:
-        raise HTTPException(401, "Invalid or expired token")
+        raise HTTPException(401, INVALID_OR_EXPIRED_TOKEN)
     user_id = payload.get("sub")
     user = await db.users.get_user(user_id)
     if not user:
-        raise HTTPException(401, "User not found")
+        raise HTTPException(401, USER_NOT_FOUND)
     return user
 
 

@@ -91,6 +91,9 @@ def normalize_handicap_value(value: object) -> object:
     """
     if value is None:
         return None
+    if isinstance(value, bool):
+        # bool is an int subclass, so true would otherwise become a 1.0 handicap.
+        raise ValueError("Handicap must be a number.")
     if isinstance(value, str):
         text = value.strip()
         if not text:

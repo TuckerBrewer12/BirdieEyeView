@@ -7,7 +7,15 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 
+from api.messages import (
+    ACCOUNT_CREATED, EMAIL_ALREADY_REGISTERED, EMAIL_NOT_VERIFIED, EMAIL_VERIFIED, HOME_COURSE_NOT_FOUND,
+    INVALID_CREDENTIALS, INVALID_RESET_TOKEN, INVALID_VERIFICATION_TOKEN, LOGGED_OUT, PASSWORD_RESET_COMPLETE,
+    RESET_LINK_SENT_IF_ACCOUNT_EXISTS, TOO_MANY_LOGIN_ATTEMPTS, TOO_MANY_LOGIN_REQUESTS, TOO_MANY_RESET_ATTEMPTS,
+    TOO_MANY_SIGNUPS, TOO_MANY_SIGNUPS_FOR_EMAIL, TOO_MANY_VERIFICATION_RESENDS,
+    TOO_MANY_VERIFICATION_RESENDS_FOR_EMAIL, VERIFICATION_SENT_IF_ACCOUNT_EXISTS,
+)
 from api.auth_notifications import send_password_reset_email, send_verification_email
+from api.course_access import load_linkable_course
 from api.auth_schemas import (
     AuthUserResponse,
     ForgotPasswordRequest,
@@ -168,14 +176,14 @@ async def register(req: RegisterRequest, request: Request, db: DatabaseManager =
         key=f"register:ip:{request_ip}",
         limit=_env_int("REGISTER_RATE_LIMIT_MAX_ATTEMPTS", 5),
         window_seconds=_env_int("REGISTER_RATE_LIMIT_WINDOW_SECONDS", 3600),
-        detail="Too many account creation attempts. Please try again later.",
+        detail=TOO_MANY_SIGNUPS,
     )
     _check_auth_rate_limit(
         limiter=register_rate_limiter,
         key=f"register:email:{_email_fingerprint(normalized_email)}",
         limit=_env_int("REGISTER_RATE_LIMIT_PER_EMAIL_ATTEMPTS", 3),
         window_seconds=_env_int("REGISTER_RATE_LIMIT_PER_EMAIL_WINDOW_SECONDS", 3600),
-        detail="Too many account creation attempts for this email. Please try again later.",
+        detail=TOO_MANY_SIGNUPS_FOR_EMAIL,
     )
     existing = await db.users.get_user_by_email(normalized_email)
     if existing:
@@ -184,12 +192,11 @@ async def register(req: RegisterRequest, request: Request, db: DatabaseManager =
             _email_fingerprint(normalized_email),
             request_ip,
         )
-        raise HTTPException(409, "An account with this email already exists")
+        raise HTTPException(409, EMAIL_ALREADY_REGISTERED)
 
     if req.home_course_id:
-        course = await db.courses.get_course(req.home_course_id)
-        if not course:
-            raise HTTPException(400, "Selected home course was not found")
+        # A new account owns no courses yet, so only a master course can be its home course.
+        await load_linkable_course(db, req.home_course_id, None, missing_detail=HOME_COURSE_NOT_FOUND)
 
     password_hash = hash_password(req.password)
     try:
@@ -204,7 +211,7 @@ async def register(req: RegisterRequest, request: Request, db: DatabaseManager =
             password_hash=password_hash,
         )
     except DuplicateError:
-        raise HTTPException(409, "An account with this email already exists")
+        raise HTTPException(409, EMAIL_ALREADY_REGISTERED)
 
     await _issue_verification_token(db, user, request)
     logger.info(
@@ -214,7 +221,7 @@ async def register(req: RegisterRequest, request: Request, db: DatabaseManager =
         request_ip,
     )
     return RegisterResponse(
-        message="Account created. Check your email to verify your account before signing in.",
+        message=ACCOUNT_CREATED,
         requires_email_verification=True,
     )
 
@@ -223,7 +230,7 @@ async def _verify_email_token(token: str, db: DatabaseManager) -> str:
     user_id = await db.users.consume_auth_token("email_verify", hash_one_time_token(token))
     if not user_id:
         logger.warning("Auth verify-email failed: reason=invalid_or_expired_token")
-        raise HTTPException(400, "Invalid or expired verification token")
+        raise HTTPException(400, INVALID_VERIFICATION_TOKEN)
     await db.users.mark_email_verified(user_id)
     logger.info("Auth verify-email success: user_id=%s", user_id)
     return user_id
@@ -233,7 +240,7 @@ async def _verify_email_token(token: str, db: DatabaseManager) -> str:
 async def verify_email(req: VerifyEmailRequest, response: Response, db: DatabaseManager = Depends(get_db)):
     user_id = await _verify_email_token(req.token, db)
     _set_auth_cookie(response, create_access_token(user_id))
-    return MessageResponse(message="Email verified. You can now sign in.")
+    return MessageResponse(message=EMAIL_VERIFIED)
 
 
 @router.get("/verify-email", response_model=MessageResponse)
@@ -244,7 +251,7 @@ async def verify_email_from_link(
 ):
     user_id = await _verify_email_token(token, db)
     _set_auth_cookie(response, create_access_token(user_id))
-    return MessageResponse(message="Email verified. You can now sign in.")
+    return MessageResponse(message=EMAIL_VERIFIED)
 
 
 @router.post("/resend-verification", response_model=MessageResponse)
@@ -260,14 +267,14 @@ async def resend_verification(
         key=f"resend:req:ip:{request_ip}",
         limit=_env_int("RESEND_VERIFICATION_RATE_LIMIT_MAX_ATTEMPTS", 10),
         window_seconds=_env_int("RESEND_VERIFICATION_RATE_LIMIT_WINDOW_SECONDS", 300),
-        detail="Too many verification resend attempts. Please try again later.",
+        detail=TOO_MANY_VERIFICATION_RESENDS,
     )
     _check_auth_rate_limit(
         limiter=auth_request_rate_limiter,
         key=f"resend:req:email:{_email_fingerprint(normalized_email)}",
         limit=_env_int("RESEND_VERIFICATION_RATE_LIMIT_PER_EMAIL_ATTEMPTS", 5),
         window_seconds=_env_int("RESEND_VERIFICATION_RATE_LIMIT_PER_EMAIL_WINDOW_SECONDS", 300),
-        detail="Too many verification resend attempts for this email. Please try again later.",
+        detail=TOO_MANY_VERIFICATION_RESENDS_FOR_EMAIL,
     )
     user = await db.users.get_user_by_email(normalized_email)
     if user and not user.email_verified:
@@ -298,7 +305,7 @@ async def resend_verification(
             _email_fingerprint(normalized_email),
             request_ip,
         )
-    return MessageResponse(message="If this account exists, a verification email has been sent.")
+    return MessageResponse(message=VERIFICATION_SENT_IF_ACCOUNT_EXISTS)
 
 
 @router.post("/login", response_model=AuthUserResponse)
@@ -315,7 +322,7 @@ async def login(
         key=f"login:req:ip:{request_ip}",
         limit=_env_int("LOGIN_REQUEST_RATE_LIMIT_MAX_ATTEMPTS", 30),
         window_seconds=_env_int("LOGIN_REQUEST_RATE_LIMIT_WINDOW_SECONDS", 60),
-        detail="Too many login requests. Please try again shortly.",
+        detail=TOO_MANY_LOGIN_REQUESTS,
     )
 
     ip_key = f"ip:{request_ip}"
@@ -333,7 +340,7 @@ async def login(
         )
         raise HTTPException(
             status_code=429,
-            detail="Too many login attempts. Please try again shortly.",
+            detail=TOO_MANY_LOGIN_ATTEMPTS,
             headers={"Retry-After": str(retry_after)},
         )
 
@@ -348,7 +355,7 @@ async def login(
             _email_fingerprint(normalized_email),
             request_ip,
         )
-        raise HTTPException(401, "Invalid email or password")
+        raise HTTPException(401, INVALID_CREDENTIALS)
 
     if not auth_user["email_verified"]:
         logger.warning(
@@ -357,7 +364,7 @@ async def login(
             _email_fingerprint(normalized_email),
             request_ip,
         )
-        raise HTTPException(403, "Email not verified. Please verify your email before signing in.")
+        raise HTTPException(403, EMAIL_NOT_VERIFIED)
 
     login_rate_limiter.register_success(ip_key)
     login_rate_limiter.register_success(email_key)
@@ -383,7 +390,7 @@ async def login(
 async def logout(request: Request, response: Response):
     _clear_auth_cookie(response)
     logger.info("Auth logout: ip=%s", client_ip(request))
-    return MessageResponse(message="Logged out.")
+    return MessageResponse(message=LOGGED_OUT)
 
 
 @router.post("/forgot-password", response_model=MessageResponse)
@@ -399,7 +406,7 @@ async def forgot_password(
         key=f"forgot:req:ip:{request_ip}",
         limit=_env_int("FORGOT_PASSWORD_RATE_LIMIT_MAX_ATTEMPTS", 10),
         window_seconds=_env_int("FORGOT_PASSWORD_RATE_LIMIT_WINDOW_SECONDS", 300),
-        detail="Too many reset attempts. Please try again later.",
+        detail=TOO_MANY_RESET_ATTEMPTS,
     )
     user = await db.users.get_user_by_email(normalized_email)
     if user and user.email_verified:
@@ -450,7 +457,7 @@ async def forgot_password(
         )
 
     # Always generic to avoid account enumeration.
-    return MessageResponse(message="If this account exists, a password reset link has been sent.")
+    return MessageResponse(message=RESET_LINK_SENT_IF_ACCOUNT_EXISTS)
 
 
 @router.post("/reset-password", response_model=MessageResponse)
@@ -458,12 +465,12 @@ async def reset_password(req: ResetPasswordRequest, request: Request, db: Databa
     user_id = await db.users.consume_auth_token("password_reset", hash_one_time_token(req.token))
     if not user_id:
         logger.warning("Auth reset-password failed: ip=%s reason=invalid_or_expired_token", client_ip(request))
-        raise HTTPException(400, "Invalid or expired reset token")
+        raise HTTPException(400, INVALID_RESET_TOKEN)
 
     new_hash = hash_password(req.new_password)
     await db.users.set_password_hash(user_id, new_hash)
     logger.info("Auth reset-password success: user_id=%s ip=%s", user_id, client_ip(request))
-    return MessageResponse(message="Password has been reset. You can now sign in.")
+    return MessageResponse(message=PASSWORD_RESET_COMPLETE)
 
 
 @router.get("/me", response_model=AuthUserResponse)

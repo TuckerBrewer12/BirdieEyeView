@@ -103,3 +103,33 @@ async def test_merge_discards_fully_empty_spacer_rows(monkeypatch):
     result = await gemini_merger.merge_split_tables("raw mistral")
 
     assert result == f"{CANONICAL_HEADER}\n{COMPLETE_ROW}"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("merged", "reason"),
+    [
+        (f"{CANONICAL_HEADER}\n| Tucker | 1 | 2 |", "line 2 has 3 columns, expected 22"),
+        (f"{CANONICAL_HEADER}\nnote from the model\n{COMPLETE_ROW}", "line 2 is text outside the table"),
+        (COMPLETE_ROW, "no canonical HOLE/1-9/OUT/10-18/IN/TOT header row"),
+        (
+            f"{CANONICAL_HEADER}\n| Tucker | 4 | 4 | 4 | 5 | 6 | 4 | 7 | 3 | 4 | 41 | | | | | | | | | | | |",
+            "line 2 fills one nine and leaves the other empty",
+        ),
+    ],
+)
+async def test_rejected_merges_record_the_rule_and_line(monkeypatch, merged, reason):
+    configure_gemini(monkeypatch, merged)
+    diagnostics = []
+
+    assert await gemini_merger.merge_split_tables("raw mistral", diagnostics=diagnostics) == "raw mistral"
+    assert diagnostics == [f"table merge rejected: {reason}"]
+
+
+@pytest.mark.asyncio
+async def test_accepted_merge_is_recorded(monkeypatch):
+    configure_gemini(monkeypatch, VALID_MERGE)
+    diagnostics = []
+
+    assert await gemini_merger.merge_split_tables("original", diagnostics=diagnostics) == VALID_MERGE
+    assert diagnostics == ["table merge accepted"]

@@ -1,5 +1,22 @@
+import asyncio
 import asyncpg
-from typing import Optional
+from contextlib import asynccontextmanager
+from typing import AsyncIterator, Optional
+
+
+@asynccontextmanager
+async def write_transaction(pool: asyncpg.Pool, connection=None) -> AsyncIterator:
+    """Join the caller's transaction (as a savepoint) or open a new one on a pooled connection.
+
+    Repository write methods accept an optional ``connection`` so a service can make several
+    writes one atomic unit; without it each method keeps its own transaction as before.
+    """
+    if connection is not None:
+        async with connection.transaction():
+            yield connection
+        return
+    async with pool.acquire() as conn, conn.transaction():
+        yield conn
 
 
 class DatabasePool:
@@ -7,6 +24,7 @@ class DatabasePool:
 
     def __init__(self):
         self._pool: Optional[asyncpg.Pool] = None
+        self._lifecycle_lock = asyncio.Lock()
 
     async def initialize(
         self,
@@ -22,36 +40,36 @@ class DatabasePool:
         connect_timeout: Optional[float] = None,
     ) -> None:
         """Create the connection pool. Call once at app startup."""
-        if self._pool is not None:
-            return
-        pool_kwargs = {}
-        if connect_timeout is not None:
-            pool_kwargs["timeout"] = max(float(connect_timeout), 1.0)
-        self._pool = await asyncpg.create_pool(
-            dsn=dsn,
-            host=None if dsn else host,
-            port=None if dsn else port,
-            database=None if dsn else database,
-            user=None if dsn else user,
-            password=None if dsn else password,
-            min_size=min_size,
-            max_size=max_size,
-            **pool_kwargs,
-        )
+        async with self._lifecycle_lock:
+            if self._pool is not None:
+                return
+            pool_kwargs = {}
+            if connect_timeout is not None:
+                pool_kwargs["timeout"] = max(float(connect_timeout), 1.0)
+            self._pool = await asyncpg.create_pool(
+                dsn=dsn,
+                host=None if dsn else host,
+                port=None if dsn else port,
+                database=None if dsn else database,
+                user=None if dsn else user,
+                password=None if dsn else password,
+                min_size=min_size,
+                max_size=max_size,
+                **pool_kwargs,
+            )
 
     async def close(self) -> None:
         """Close all connections. Call at app shutdown."""
-        if self._pool:
-            await self._pool.close()
-            self._pool = None
+        async with self._lifecycle_lock:
+            if self._pool is not None:
+                await self._pool.close()
+                self._pool = None
 
     @property
     def pool(self) -> asyncpg.Pool:
         """Get the pool, raising if not initialized."""
         if self._pool is None:
-            raise RuntimeError(
-                "Database pool not initialized. Call await db.initialize() first."
-            )
+            raise RuntimeError("Database pool not initialized. Call await db.initialize() first.")
         return self._pool
 
     @property

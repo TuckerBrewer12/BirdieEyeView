@@ -9,6 +9,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 from pydantic import Field
 
 from models.base import BaseGolfModel
+from services.mistral_ocr_service import MistralOCRService, align_rows_to_header
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,6 @@ class ParsedTeeRow(BaseGolfModel):
 class ParsedScorecardRows(BaseGolfModel):
     """Structured row extraction from raw OCR markdown/text."""
 
-    course_name: Optional[str] = None
     hole_numbers: List[int] = Field(default_factory=list)
     tee_rows: List[ParsedTeeRow] = Field(default_factory=list)
     par_row: List[Optional[int]] = Field(default_factory=list)
@@ -40,7 +40,12 @@ class ParsedScorecardRows(BaseGolfModel):
     raw_shots_to_green_row: List[Optional[int]] = Field(default_factory=list)
     raw_putts_row: List[Optional[int]] = Field(default_factory=list)
     sign_evidence_trusted: bool = False
+    # User-visible review notes (copied into fields_needing_review by the router).
     warnings: List[str] = Field(default_factory=list)
+    # Internal reasons for each decision or failure; logged, never shown to users.
+    diagnostics: List[str] = Field(default_factory=list)
+    # Whether a row matching the user's player name was found (False also when no name was given).
+    player_row_found: bool = False
     markdown: str = ""
     extraction_mode: str = "positional"
 
@@ -48,7 +53,6 @@ class ParsedScorecardRows(BaseGolfModel):
 _INT_RE = re.compile(r"(?<!\d)-?\d{1,4}(?!\d)")
 _ROMAN_RE = re.compile(r"^(?:i|ii|iii|iv|v|vi|vii|viii|ix|x)$", re.IGNORECASE)
 _HANDICAP_RE = re.compile(r"\b(handicap|hdcp|hcp|h\.c\.p)\b", re.IGNORECASE)
-_COURSE_RE = re.compile(r"^[A-Z0-9 '&.-]{3,}$")
 _NAME_RE = re.compile(r"\bmy name is\s+([a-z0-9][a-z0-9 '.\-]{0,40})\b", re.IGNORECASE)
 _ROW_NAME_RE = re.compile(r"\b(?:scan|read|use)\s+([a-z0-9][a-z0-9 '\-]{1,40})\s+row\b", re.IGNORECASE)
 _TO_PAR_TOKEN_RE = re.compile(r"[+\-−]?\d+|[①②③④⑤⑥⑦⑧⑨❶❷❸❹❺❻❼❽❾➀➁➂➃➄➅➆➇➈⓿⓪]|[eE]")
@@ -82,9 +86,15 @@ def _name_matches_tokens(candidate_text: str, preferred_name: str) -> bool:
     if not candidate_tokens or not preferred_tokens:
         return False
 
-    # Single-letter names (e.g. "T") must match an isolated token.
+    # Single-letter names (e.g. "T") must match an isolated token. A cell border is often
+    # read as a leading stroke ("IG", "lD", "1T"), so a two-character token with such a
+    # prefix also counts.
     if len(preferred_tokens) == 1 and len(preferred_tokens[0]) == 1:
-        return preferred_tokens[0] in candidate_tokens
+        letter = preferred_tokens[0]
+        return any(
+            token == letter or (len(token) == 2 and token[0] in "il1" and token[1] == letter)
+            for token in candidate_tokens
+        )
 
     width = len(preferred_tokens)
     return any(
@@ -93,7 +103,141 @@ def _name_matches_tokens(candidate_text: str, preferred_name: str) -> bool:
     )
 
 
+def _first_data_col(col_map: Dict[int, int]) -> int:
+    return min(col_map.values()) if col_map else 1
 
+
+def _label_cells(cells: List[str], col_map: Dict[int, int]) -> List[str]:
+    """Cells before the first hole column: the row label and, often, a separate name cell."""
+    return cells[: _first_data_col(col_map)]
+
+
+def _row_matches_name(cells: List[str], col_map: Dict[int, int], name: str) -> bool:
+    return any(_name_matches_tokens(cell, name) for cell in _label_cells(cells, col_map))
+
+
+def _label_has_name_text(cells: List[str], col_map: Dict[int, int]) -> bool:
+    """A label counts as a name only when it contains a letter (a lone digit is a misread or a value)."""
+    return any(any(ch.isalpha() for ch in cell) for cell in _label_cells(cells, col_map))
+
+
+def _par_row_evidence(cells: List[str], col_map: Dict[int, int]) -> Optional[str]:
+    """Return why this row looks like a par row from its values alone, or None.
+
+    Every mapped hole must be 3-6, the nine-hole sums must be plausible, and at least one
+    subtotal cell (OUT/IN/TOT) must follow a nine and equal its sum. Only meaningful on
+    to-par cards: on raw-strokes cards a player's row can satisfy all of this too.
+    """
+    values = _extract_values_by_col_map(cells, col_map, parse_fn=lambda c: _parse_int_cell(c, max_abs=10))
+    if len(values) < 9 or any(v is None or not 3 <= v <= 6 for v in values.values()):
+        return None
+    holes = sorted(values)
+    nines = [holes[i:i + 9] for i in range(0, len(holes), 9)]
+    if any(len(nine) != 9 for nine in nines):
+        return None
+    checked_subtotals = 0
+    for nine in nines:
+        total = sum(values[h] for h in nine)
+        if not 27 <= total <= 45:
+            return None
+        next_col = col_map[nine[-1]] + 1
+        if next_col < len(cells):
+            subtotal = _parse_int_cell(cells[next_col], max_abs=99)
+            if subtotal is not None:
+                if subtotal != total:
+                    return None
+                checked_subtotals += 1
+    if len(holes) == 18 and not 60 <= sum(values.values()) <= 80:
+        return None
+    if checked_subtotals == 0:
+        return None  # a shots-to-green row can also be all 3-6; a subtotal cell is what proves a par row
+    return f"values 3-6 with {checked_subtotals} matching subtotal(s)"
+
+
+def _is_candidate_row(
+    cells: List[str], col_map: Dict[int, int], *, to_par: bool, missing_allowed: int = 2
+) -> bool:
+    """A player-data row: small values under nearly every hole column, not a structural row."""
+    if max(col_map.values()) >= len(cells):
+        return False
+    if _identify_row_label(cells, _first_data_col(col_map)) in {"separator", "hole", "par", "handicap", "tee"}:
+        return False
+    if _looks_like_handicap_values(cells, col_map) or (to_par and _par_row_evidence(cells, col_map)):
+        return False
+    values = _extract_values_by_col_map(cells, col_map, parse_fn=lambda c: _parse_int_cell(c, max_abs=18))
+    if all(values[hole] == hole for hole in col_map):
+        return False  # the hole-number header itself (its label may be misread)
+    values = _extract_values_by_col_map(cells, col_map, parse_fn=lambda c: _parse_int_cell(c, max_abs=15))
+    return sum(v is not None for v in values.values()) >= len(col_map) - missing_allowed
+
+
+def _candidate_rows(
+    raw_lines: List[str], col_map: Dict[int, int], row_hints: dict
+) -> List[Tuple[int, List[str]]]:
+    """(raw line index, cells) for every candidate row, in order."""
+    to_par = bool(row_hints.get("score_to_par"))
+    out: List[Tuple[int, List[str]]] = []
+    for idx, line in enumerate(raw_lines):
+        cells = _split_pipe_row(line)
+        if cells and _is_candidate_row(cells, col_map, to_par=to_par):
+            out.append((idx, cells))
+    return out
+
+
+def _player_blocks(
+    candidates: List[Tuple[int, List[str]]],
+    raw_lines: List[str],
+    row_hints: dict,
+) -> List[List[Tuple[int, List[str]]]]:
+    """Group candidate rows into per-player blocks: runs of adjacent pipe rows, chunked by row order."""
+    pipe_indexes = [i for i, line in enumerate(raw_lines) if _split_pipe_row(line)]
+    position = {idx: n for n, idx in enumerate(pipe_indexes)}
+    runs: List[List[Tuple[int, List[str]]]] = []
+    for idx, cells in candidates:
+        if runs and position[idx] == position[runs[-1][-1][0]] + 1:
+            runs[-1].append((idx, cells))
+        else:
+            runs.append([(idx, cells)])
+    size = len(row_hints.get("row_order") or []) or 1  # no layout: every row is its own block
+    blocks: List[List[Tuple[int, List[str]]]] = []
+    for run in runs:
+        if len(run) > size:
+            blocks.extend(run[i:i + size] for i in range(0, len(run), size))
+        else:
+            blocks.append(run)
+    return blocks
+
+
+def _unlabeled_player_anchor(
+    raw_lines: List[str],
+    col_map: Dict[int, int],
+    row_hints: dict,
+    diagnostics: List[str],
+) -> Optional[int]:
+    """Gated fallback when the named row is missing: the only player block with no name label.
+
+    Returns the raw line index of the row that carries the name in the user's layout.
+    """
+    blocks = _player_blocks(_candidate_rows(raw_lines, col_map, row_hints), raw_lines, row_hints)
+    unlabeled = [b for b in blocks if not any(_label_has_name_text(cells, col_map) for _, cells in b)]
+    if len(unlabeled) != 1:
+        diagnostics.append(
+            f"missing-name fallback refused: {len(unlabeled)} unlabeled player block(s) among {len(blocks)}"
+        )
+        return None
+    block = unlabeled[0]
+    row_order = row_hints.get("row_order") or []
+    name_on_row = row_hints.get("name_on_row")
+    position = row_order.index(name_on_row) if name_on_row in row_order else 0
+    if position >= len(block):
+        diagnostics.append(
+            f"missing-name fallback refused: unlabeled block has {len(block)} row(s), layout needs {position + 1}"
+        )
+        return None
+    diagnostics.append(
+        f"missing-name fallback: used the only unlabeled player block ({len(block)} rows) at line {block[position][0]}"
+    )
+    return block[position][0]
 
 
 def parse_mistral_scorecard_rows(
@@ -126,44 +270,71 @@ def parse_mistral_scorecard_rows(
         row_hints_2d.get("row_order"),
     )
 
-    block_split_result = _extract_split_table_blocks(
-        raw_lines,
-        player_name_2d,
-        row_hints_2d,
-    )
-    if block_split_result is not None:
-        block_split_result.markdown = text
-        positional_par = _extract_par_row(_normalize_lines(text))
-        if positional_par and not block_split_result.par_row:
-            block_split_result.par_row = _coerce_18_ints(positional_par, max_abs=10)
-        _apply_field_suppression(block_split_result, row_hints_2d)
-        return block_split_result
+    diag: List[str] = []
 
-    split_maps = _find_split_col_maps(raw_lines)
-    if split_maps is not None:
-        (front_lines, front_map, front_hdr_idx), (back_lines, back_map, back_hdr_idx) = split_maps
+    def _finish(result: ParsedScorecardRows) -> ParsedScorecardRows:
+        result.markdown = text
+        result.diagnostics = diag + [d for d in result.diagnostics if d not in diag]
+        _apply_field_suppression(result, row_hints_2d)
+        return result
 
-        # Use require_name_match when a player name is given so we don't accidentally
-        # pick up a different player's row as the anchor (e.g. G's row for player T).
-        front_result, front_anchor_idx = _extract_2d_from_raw_lines(
-            front_lines, front_map, player_name_2d, row_hints_2d, min_scores=4,
-            require_name_match=bool(player_name_2d),
-        )
-        if front_result is not None and front_anchor_idx >= 0:
-            # Reuse the same row offset in the back-9 block.
-            # front_anchor_idx is absolute to front_lines. back_lines starts dynamically at its header.
-            # So offset = absolute - header.
-            header_offset = front_anchor_idx - front_hdr_idx
-
-            back_result, _ = _extract_2d_from_raw_lines(
-                back_lines, back_map, player_name_2d, row_hints_2d,
-                min_scores=len(back_map), forced_anchor_line_idx=header_offset,
+    def _extract_half(
+        lines: List[str],
+        col_map: Dict[int, int],
+        *,
+        min_scores: int,
+        anchor: Optional[int] = None,
+    ) -> Tuple[Optional[ParsedScorecardRows], int]:
+        """Named-row extraction, then the gated missing-name fallback, for one table or half."""
+        if anchor is not None:
+            return _extract_2d_from_raw_lines(
+                lines, col_map, player_name_2d, row_hints_2d, min_scores=min_scores,
+                forced_anchor_line_idx=anchor, exact_anchor=True, diagnostics=diag,
             )
+        result, anchor_idx = _extract_2d_from_raw_lines(
+            lines, col_map, player_name_2d, row_hints_2d, min_scores=min_scores,
+            require_name_match=bool(player_name_2d), diagnostics=diag,
+        )
+        if result is None and player_name_2d:
+            fallback = _unlabeled_player_anchor(lines, col_map, row_hints_2d, diag)
+            if fallback is not None:
+                result, anchor_idx = _extract_2d_from_raw_lines(
+                    lines, col_map, player_name_2d, row_hints_2d, min_scores=min_scores,
+                    forced_anchor_line_idx=fallback, exact_anchor=True, diagnostics=diag,
+                )
+                if result is not None:
+                    result.player_row_found = False
+        return result, anchor_idx
+
+    sections = _split_sections(raw_lines)
+    if sections is not None:
+        (front_lines, front_map, front_hdr_idx), (back_lines, back_map, back_hdr_idx) = sections
+        diag.append(
+            f"split tables: front {len(front_lines)} lines (holes {min(front_map)}-{max(front_map)}), "
+            f"back {len(back_lines)} lines (holes {min(back_map)}-{max(back_map)})"
+        )
+        front_result, front_anchor_idx = _extract_half(front_lines, front_map, min_scores=4)
+        if front_result is not None and front_anchor_idx >= 0:
+            back_min = max(4, len(back_map) - 2)
+            back_result: Optional[ParsedScorecardRows] = None
+            paired = _paired_back_anchor(
+                front_lines, front_map, front_anchor_idx, back_lines, back_map, row_hints_2d, diag
+            )
+            if paired is not None:
+                back_result, _ = _extract_half(back_lines, back_map, min_scores=back_min, anchor=paired)
+            if back_result is None:
+                # Same row offset from each half's header (works when both halves share one row layout).
+                header_offset = front_anchor_idx - front_hdr_idx
+                diag.append(f"back nine: trying the front row offset {header_offset} from the back header")
+                back_result, _ = _extract_2d_from_raw_lines(
+                    back_lines, back_map, player_name_2d, row_hints_2d,
+                    min_scores=back_min, forced_anchor_line_idx=back_hdr_idx + header_offset, diagnostics=diag,
+                )
             if back_result is not None:
                 merged = _merge_parsed_halves(front_result, back_result)
-                merged.markdown = text
-                _apply_field_suppression(merged, row_hints_2d)
-                return merged
+                merged.player_row_found = front_result.player_row_found
+                return _finish(merged)
+            diag.append("back nine could not be paired with the front nine")
 
         # Second-pass: player's 18-hole section is entirely within back_lines.
         # This happens when multiple scorecards share one page — the second player's
@@ -171,69 +342,54 @@ def parse_mistral_scorecard_rows(
         if player_name_2d and front_result is None:
             front_in_back, back_front_anchor = _extract_2d_from_raw_lines(
                 back_lines, front_map, player_name_2d, row_hints_2d, min_scores=4,
-                require_name_match=True,
+                require_name_match=True, diagnostics=diag,
             )
             if front_in_back is not None and back_front_anchor >= 0:
-                # Found player's front nine in back_lines. Now find their back nine
-                # which occupies a sub-section with a different (unlabeled) col_map.
                 unlabeled = _find_unlabeled_section_col_map(
                     back_lines, start_after_idx=back_front_anchor + 2, start_hole=10
                 )
                 if unlabeled is not None:
                     back_nine_col_map, par_row_idx = unlabeled
-                    # Score row is typically 1-2 rows after the par row (skip blank).
-                    back_nine_score_approx = par_row_idx + 2
                     back_in_back, _ = _extract_2d_from_raw_lines(
                         back_lines, back_nine_col_map, player_name_2d, row_hints_2d,
                         min_scores=len(back_nine_col_map),
-                        forced_anchor_line_idx=back_nine_score_approx,
+                        forced_anchor_line_idx=par_row_idx + 2, diagnostics=diag,
                     )
                     if back_in_back is not None:
                         merged = _merge_parsed_halves(front_in_back, back_in_back)
-                        merged.markdown = text
-                        _apply_field_suppression(merged, row_hints_2d)
-                        return merged
+                        merged.player_row_found = front_in_back.player_row_found
+                        return _finish(merged)
 
         # Once a front/back structure is proven, do not reinterpret one half as
         # a complete scorecard. A missing or shifted half must be surfaced for
         # review instead of silently assigning header values as player scores.
         if player_name_2d:
-            return ParsedScorecardRows(
+            return _finish(ParsedScorecardRows(
                 player_name=player_name_2d,
-                markdown=text,
+                player_row_found=front_result is not None and front_result.player_row_found,
                 warnings=["Player score row is incomplete across split tables"],
-            )
+            ))
 
     # Single full-table path.
     col_map = _find_hole_column_map(raw_lines)
     if col_map is not None:
-        result_2d, _ = _extract_2d_from_raw_lines(
-            raw_lines,
-            col_map,
-            player_name_2d,
-            row_hints_2d,
-            require_name_match=bool(player_name_2d),
-        )
+        result_2d, _ = _extract_half(raw_lines, col_map, min_scores=9)
         if result_2d is not None:
-            result_2d.markdown = text
-            _apply_field_suppression(result_2d, row_hints_2d)
-            return result_2d
+            return _finish(result_2d)
         if player_name_2d:
             named_row_present = any(
-                (cells := _split_pipe_row(line))
-                and _name_matches_tokens(cells[0], player_name_2d)
+                (cells := _split_pipe_row(line)) and _row_matches_name(cells, col_map, player_name_2d)
                 for line in raw_lines
             )
-            rejected = ParsedScorecardRows(
+            return _finish(ParsedScorecardRows(
                 player_name=player_name_2d,
-                markdown=text,
+                player_row_found=named_row_present,
                 warnings=[
                     "Named player row is incomplete"
                     if named_row_present
                     else "Could not detect player score row"
                 ],
-            )
-            return rejected
+            ))
 
     lines = _normalize_lines(text)
     parsed = ParsedScorecardRows(markdown=text)
@@ -244,7 +400,6 @@ def parse_mistral_scorecard_rows(
     row_hints = row_hints_2d
     parsed.player_name = player_name_2d
     parsed.score_to_par_hint = row_hints["score_to_par"]
-    parsed.course_name = _extract_course_name(lines)
     parsed.hole_numbers = _extract_hole_numbers(lines)
     if len(parsed.hole_numbers) < 9:
         parsed.warnings.append("Could not confidently detect hole header row")
@@ -266,10 +421,14 @@ def parse_mistral_scorecard_rows(
         handicap_idx,
         require_name_match=bool(parsed.player_name),
     )
+    parsed.diagnostics = diag
     if anchor_idx is None:
         parsed.warnings.append("Could not detect player score row")
+        diag.append("positional pass: no score row found")
         _apply_field_suppression(parsed, row_hints)
         return parsed
+    parsed.player_row_found = bool(parsed.player_name)
+    diag.append(f"positional pass: score row at text line {anchor_idx}")
 
     # Name-based row mapping: user told us which data row their name appears on.
     # This takes priority — we know exactly which OCR line is which.
@@ -547,140 +706,133 @@ def _looks_like_handicap_values(cells: List[str], col_map: Dict[int, int]) -> bo
     )
 
 
-def _score_candidates_for_block(
-    block: List[str],
-    col_map: Dict[int, int],
-) -> List[Tuple[List[str], int]]:
-    candidates: List[Tuple[List[str], int]] = []
-    for raw_idx, line in enumerate(block):
-        cells = _split_pipe_row(line)
-        if not cells or max(col_map.values()) >= len(cells):
-            continue
-        label = _identify_row_label(cells)
-        if label in {"separator", "hole", "par", "handicap", "tee"}:
-            continue
-        if _looks_like_handicap_values(cells, col_map):
-            continue
-        values = _extract_values_by_col_map(
-            cells,
-            col_map,
-            parse_fn=lambda cell: _parse_int_cell(cell, max_abs=15),
-        )
-        if sum(value is not None for value in values.values()) == len(col_map):
-            candidates.append((cells, raw_idx))
-    return candidates
-
-
-def _parsed_half_from_cells(
-    cells: List[str],
-    col_map: Dict[int, int],
-    player_name: Optional[str],
-    row_hints: dict,
-) -> ParsedScorecardRows:
-    parse_fn: Callable[[str], Optional[int]] = (
-        _parse_to_par_cell
-        if row_hints.get("score_to_par")
-        else lambda cell: _parse_int_cell(cell, max_abs=15)
-    )
-    parsed = ParsedScorecardRows(
-        player_name=player_name,
-        score_to_par_hint=True if row_hints.get("score_to_par") else None,
-        extraction_mode="2d_column",
-    )
-    parsed.score_row = _col_map_to_18_list(
-        _extract_values_by_col_map(cells, col_map, parse_fn=parse_fn)
-    )
-    return parsed
-
-
-def _extract_split_table_blocks(
-    raw_lines: List[str],
-    player_name: Optional[str],
-    row_hints: dict,
-) -> Optional[ParsedScorecardRows]:
-    """Pair front/back OCR tables by player ordinal when the match is provable."""
-    if not player_name:
-        return None
-
-    front: Optional[Tuple[List[str], Dict[int, int]]] = None
-    back: Optional[Tuple[List[str], Dict[int, int]]] = None
-    for block in _split_pipe_blocks(raw_lines):
-        col_map = _find_col_map_in_lines(block, min_holes=9)
-        if col_map is None:
-            continue
-        holes = sorted(col_map)
-        if holes == list(range(1, 10)) and front is None:
-            front = (block, col_map)
-        elif holes == list(range(10, 19)) and back is None:
-            back = (block, col_map)
-
-    if front is None or back is None:
-        return None
-
-    front_candidates = _score_candidates_for_block(*front)
-    back_candidates = _score_candidates_for_block(*back)
-    named_index = next(
-        (
-            idx
-            for idx, (cells, _raw_idx) in enumerate(front_candidates)
-            if _name_matches_tokens(cells[0], player_name)
-        ),
-        None,
-    )
-    if (
-        named_index is None
-        or len(front_candidates) != len(back_candidates)
-        or named_index >= len(back_candidates)
-    ):
-        return None
-
-    front_result = _parsed_half_from_cells(
-        front_candidates[named_index][0], front[1], player_name, row_hints
-    )
-    back_result = _parsed_half_from_cells(
-        back_candidates[named_index][0], back[1], player_name, row_hints
-    )
-    return _merge_parsed_halves(front_result, back_result)
-
-
-def _find_split_col_maps(
+def _split_sections(
     raw_lines: List[str],
 ) -> Optional[Tuple[Tuple[List[str], Dict[int, int], int], Tuple[List[str], Dict[int, int], int]]]:
-    """Detect the classic golf-scorecard split: front-9 table + back-9 table.
+    """Split the OCR text into front-nine and back-nine sections by table block.
 
-    Scorecards often have an empty pipe row (|  |  |  |) linking both halves,
-    so we can't split by blank lines. Instead, scan for two distinct hole-header
-    rows: one starting at hole 1, one starting at hole 10.
-
-    Returns ((front_lines, front_map), (back_lines, back_map)) if found, else None.
-    Front lines = all raw_lines up to (not including) the back header row.
-    Back lines  = all raw_lines from the back header row onward.
+    A section is the block holding a hole header (1..9 or 10..18) plus every following
+    block up to the other header's block, so fragmented tables (tees, handicap, par and
+    player rows as separate tables) stay with their half. Each section is returned as
+    (lines, col_map, header index within those lines).
     """
-    front_header_idx: Optional[int] = None
-    back_header_idx: Optional[int] = None
-    front_map: Optional[Dict[int, int]] = None
-    back_map: Optional[Dict[int, int]] = None
-
-    for i, line in enumerate(raw_lines):
-        col_map = _find_col_map_in_lines([line], min_holes=9)
-        if col_map is None:
-            continue
-        holes = sorted(col_map.keys())
-        if holes[0] == 1 and holes[-1] <= 9 and front_header_idx is None:
-            front_header_idx = i
-            front_map = col_map
-        elif holes[0] >= 10 and holes[-1] <= 18 and back_header_idx is None:
-            back_header_idx = i
-            back_map = col_map
-        if front_header_idx is not None and back_header_idx is not None:
-            break
-
-    if front_header_idx is None or back_header_idx is None:
+    blocks = _split_pipe_blocks(raw_lines)
+    front_at = back_at = None  # (block index, line index within the block)
+    front_map = back_map = None
+    for n, block in enumerate(blocks):
+        for m, line in enumerate(block):
+            col_map = _find_col_map_in_lines([line], min_holes=9)
+            if col_map is None:
+                continue
+            holes = sorted(col_map)
+            if holes[0] == 1 and holes[-1] <= 9 and front_at is None:
+                front_at, front_map = (n, m), col_map
+            elif holes[0] >= 10 and holes[-1] <= 18 and back_at is None:
+                back_at, back_map = (n, m), col_map
+    if front_at is None or back_at is None or front_map is None or back_map is None:
         return None
+    if front_at[0] == back_at[0]:
+        # One table carries both headers: split it at the later header line.
+        block = blocks[front_at[0]]
+        cut = max(front_at[1], back_at[1])
+        first, second = block[:cut], block[cut:]
+        if front_at[1] < back_at[1]:
+            front_blocks, back_blocks = [first], [second]
+        else:
+            front_blocks, back_blocks = [second], [first]
+        rest = blocks[front_at[0] + 1:]
+        headed = front_at[0]
+    else:
+        front_blocks, back_blocks = [blocks[front_at[0]]], [blocks[back_at[0]]]
+        rest = [block for n, block in enumerate(blocks) if n not in (front_at[0], back_at[0])]
+        headed = min(front_at[0], back_at[0])
+    # Headerless blocks (Mistral splits tees, par and player rows into their own tables):
+    # a block whose rows end in two subtotals (IN, TOT) belongs to the back nine, one subtotal
+    # (OUT) to the front; with no vote it follows the previous block.
+    current = "front" if front_at[0] <= back_at[0] else "back"
+    for n, block in enumerate(blocks):
+        if n < headed or block not in rest:
+            continue
+        vote = _half_vote(block)
+        if vote:
+            current = vote
+        (front_blocks if current == "front" else back_blocks).append(block)
+    front_header = _header_cells(front_blocks, front_map)
+    back_header = _header_cells(back_blocks, back_map)
+    front_blocks = [_align_block(block, front_header) for block in front_blocks]
+    back_blocks = [_align_block(block, back_header) for block in back_blocks]
 
-    front_lines = raw_lines[:back_header_idx]
-    back_lines = raw_lines[back_header_idx:]
-    return (front_lines, front_map, front_header_idx), (back_lines, back_map, back_header_idx)  # type: ignore[return-value]
+    def _section(section_blocks: List[List[str]], col_map: Dict[int, int]) -> Tuple[List[str], Dict[int, int], int]:
+        lines = [line for block in section_blocks for line in block]
+        header = next(i for i, line in enumerate(lines) if _find_col_map_in_lines([line], min_holes=9) == col_map)
+        return lines, col_map, header
+
+    return _section(front_blocks, front_map), _section(back_blocks, back_map)
+
+
+def _half_vote(block: List[str]) -> Optional[str]:
+    """Vote a headerless block to the front or back nine by its subtotal columns."""
+    front = back = 0
+    for line in block:
+        cells = _split_pipe_row(line)
+        run = 0
+        trailing = 0
+        for cell in cells:
+            value = _parse_int_cell(cell)
+            if run < 9:
+                run = run + 1 if value is not None else 0
+            elif value is not None:
+                trailing += 1
+        if run >= 9:
+            if trailing >= 2:
+                back += 1
+            elif trailing == 1:
+                front += 1
+    if front == back:
+        return None
+    return "front" if front > back else "back"
+
+
+def _header_cells(blocks: List[List[str]], col_map: Dict[int, int]) -> Optional[List[str]]:
+    for block in blocks:
+        for line in block:
+            if _find_col_map_in_lines([line], min_holes=9) == col_map:
+                return _split_pipe_row(line)
+    return None
+
+
+def _align_block(block: List[str], header: Optional[List[str]]) -> List[str]:
+    """Align a headerless block's rows to its section's header (same rule as the OCR clean-up)."""
+    if header is None or any(_split_pipe_row(line) == header for line in block):
+        return block
+    rows = [_split_pipe_row(line) for line in block]
+    aligned = align_rows_to_header(rows, header, None)
+    return MistralOCRService._rows_to_markdown(aligned).splitlines() if aligned else block
+
+
+def _paired_back_anchor(
+    front_lines: List[str],
+    front_map: Dict[int, int],
+    front_anchor: int,
+    back_lines: List[str],
+    back_map: Dict[int, int],
+    row_hints: dict,
+    diagnostics: List[str],
+) -> Optional[int]:
+    """Pair the back-nine row by ordinal among player rows when both halves have the same count."""
+    front_rows = _candidate_rows(front_lines, front_map, row_hints)
+    back_rows = _candidate_rows(back_lines, back_map, row_hints)
+    ordinal = next((n for n, (idx, _) in enumerate(front_rows) if idx == front_anchor), None)
+    if ordinal is None:
+        diagnostics.append("front score row is not a complete player row; ordinal pairing skipped")
+        return None
+    if len(front_rows) != len(back_rows):
+        diagnostics.append(
+            f"split halves have {len(front_rows)} vs {len(back_rows)} player rows; ordinal pairing refused"
+        )
+        return None
+    diagnostics.append(f"back nine row paired by ordinal {ordinal + 1} of {len(front_rows)}")
+    return back_rows[ordinal][0]
 
 
 def _find_unlabeled_section_col_map(
@@ -734,7 +886,6 @@ def _merge_parsed_halves(
         return a9 + b9
 
     merged = ParsedScorecardRows(extraction_mode="2d_column_split")
-    merged.course_name = front.course_name or back.course_name
     merged.player_name = front.player_name or back.player_name
     merged.score_to_par_hint = front.score_to_par_hint or back.score_to_par_hint
     merged.warnings = front.warnings + back.warnings
@@ -827,11 +978,11 @@ def _col_map_to_18_list(d: Dict[int, Optional[int]]) -> List[Optional[int]]:
     return out
 
 
-def _identify_row_label(cells: List[str]) -> str:
-    """Classify a pipe row by its label cell (cells[0])."""
+def _identify_row_label(cells: List[str], first_data_col: int = 1) -> str:
+    """Classify a pipe row by its label cells (those before the first hole column)."""
     if not cells:
         return "unknown"
-    label = cells[0].lower().strip()
+    label = " ".join(cells[:max(1, first_data_col)]).lower().strip()
     # A true separator row has only dashes/colons/spaces in the label cell (e.g. `---`).
     # An *empty* label cell is a nameless data row — treat as score_candidate, not separator.
     if label and set(label).issubset({"-", ":", " "}):
@@ -856,6 +1007,8 @@ def _extract_2d_from_raw_lines(
     min_scores: int = 9,
     forced_anchor_line_idx: Optional[int] = None,
     require_name_match: bool = False,
+    exact_anchor: bool = False,
+    diagnostics: Optional[List[str]] = None,
 ) -> Tuple[Optional[ParsedScorecardRows], int]:
     """Extract all scorecard data using hole-column alignment.
 
@@ -870,18 +1023,20 @@ def _extract_2d_from_raw_lines(
 
     Returns (None, -1) if fewer than min_scores values could be extracted.
     """
-    parsed = ParsedScorecardRows(extraction_mode="2d_column")
+    parsed = ParsedScorecardRows(extraction_mode="2d_column", player_name=player_name)
+    diag = diagnostics if diagnostics is not None else parsed.diagnostics
     preferred_name = (player_name or "").lower().strip()
+    first_data_col = _first_data_col(col_map)
 
     classified: List[Tuple[str, List[str], int]] = []  # (label, cells, raw_line_idx)
     for i, line in enumerate(raw_lines):
         cells = _split_pipe_row(line)
         if len(cells) < 2:
             continue
-        label = _identify_row_label(cells)
+        label = _identify_row_label(cells, first_data_col)
         classified.append((label, cells, i))
 
-    # Par row
+    # Par row: a labeled row first, otherwise a row whose values prove it (label misread or missing).
     for label, cells, _ in classified:
         if label == "par":
             d = _extract_values_by_col_map(cells, col_map, parse_fn=lambda c: _parse_int_cell(c, max_abs=10))
@@ -890,6 +1045,19 @@ def _extract_2d_from_raw_lines(
             if len(valid) >= (min_scores // 2 + 1):
                 parsed.par_row = vals
             break
+    if not parsed.par_row and row_hints.get("score_to_par"):
+        for label, cells, raw_idx in classified:
+            if label in ("separator", "hole", "handicap", "tee"):
+                continue
+            if preferred_name and _row_matches_name(cells, col_map, preferred_name):
+                continue
+            evidence = _par_row_evidence(cells, col_map)
+            if evidence:
+                parsed.par_row = _col_map_to_18_list(
+                    _extract_values_by_col_map(cells, col_map, parse_fn=lambda c: _parse_int_cell(c, max_abs=10))
+                )
+                diag.append(f"par row taken from line {raw_idx} by its values ({evidence}); label {cells[:first_data_col]!r}")
+                break
 
     # Handicap row
     for label, cells, _ in classified:
@@ -933,7 +1101,11 @@ def _extract_2d_from_raw_lines(
     if forced_anchor_line_idx is not None and forced_anchor_line_idx >= 0:
         best_cls_i: Optional[int] = None
         best_count: int = 0
-        window = range(max(0, forced_anchor_line_idx - 4), forced_anchor_line_idx + 5)
+        window = (
+            range(forced_anchor_line_idx, forced_anchor_line_idx + 1)
+            if exact_anchor
+            else range(max(0, forced_anchor_line_idx - 4), forced_anchor_line_idx + 5)
+        )
         for cls_i, (label, cells, raw_idx) in enumerate(classified):
             if raw_idx not in window:
                 continue
@@ -950,6 +1122,11 @@ def _extract_2d_from_raw_lines(
             anchor_classified_idx = best_cls_i
             anchor_cells = classified[best_cls_i][1]
             anchor_raw_line_idx = classified[best_cls_i][2]
+        else:
+            diag.append(
+                f"no usable row at forced anchor line {forced_anchor_line_idx} "
+                f"(best had {best_count} values, needed {min_scores})"
+            )
 
     if anchor_cells is None:
         # Find handicap row index in classified list (bounds anchor search below it)
@@ -958,22 +1135,29 @@ def _extract_2d_from_raw_lines(
         )
 
         if preferred_name:
-            for i, (_label, cells, _) in enumerate(classified):
-                label_cell = cells[0].strip()
-                name_matched = _name_matches_tokens(label_cell, preferred_name)
-                if not name_matched:
+            name_rows = 0
+            for i, (_label, cells, raw_idx) in enumerate(classified):
+                if not _row_matches_name(cells, col_map, preferred_name):
                     continue
+                name_rows += 1
                 # Validate: row must have at least a few parseable score-range values.
                 d = _extract_values_by_col_map(
                     cells, col_map, parse_fn=lambda c: _parse_int_cell(c, max_abs=15)
                 )
-                if sum(1 for v in d.values() if v is not None) >= max(2, min_scores // 2):
+                found = sum(1 for v in d.values() if v is not None)
+                if found >= max(2, min_scores // 2):
                     anchor_classified_idx = i
                     anchor_cells = cells
+                    parsed.player_row_found = True
                     break
+                diag.append(f"row at line {raw_idx} matches the name but has only {found} hole values")
+            if anchor_cells is None:
+                diag.append(
+                    f"no row labeled {player_name!r} with hole values ({name_rows} label match(es)) "
+                    f"among {len(classified)} table rows"
+                )
 
         if anchor_cells is None and require_name_match and preferred_name:
-            logger.info("2D extract: require_name_match=True but name not found — returning None")
             return None, -1
 
         if anchor_cells is None:
@@ -992,7 +1176,7 @@ def _extract_2d_from_raw_lines(
             anchor_raw_line_idx = classified[anchor_classified_idx][2]
 
     if anchor_cells is None:
-        logger.info("2D extract: no anchor found — returning None")
+        diag.append("no player score row found below the handicap row")
         return None, -1
 
     logger.info(
@@ -1118,10 +1302,8 @@ def _extract_2d_from_raw_lines(
     score_count = sum(1 for v in parsed.score_row if v is not None)
     required_scores = len(col_map) if require_name_match and player_name else min_scores
     if score_count < required_scores:
-        logger.debug(
-            "2D extract: score row has too few values (%d < %d)",
-            score_count,
-            required_scores,
+        diag.append(
+            f"score row at line {anchor_raw_line_idx} has {score_count} of {required_scores} required hole values"
         )
         return None, -1
 
@@ -1237,15 +1419,6 @@ def _apply_field_suppression(parsed: ParsedScorecardRows, row_hints: dict) -> No
         parsed.putts_row = []
     if row_hints.get("suppress_gir"):
         parsed.gir_row = []
-
-
-def _extract_course_name(lines: List[str]) -> Optional[str]:
-    for line in lines[:12]:
-        # Example: "FALLS Hole Location Hole Assignment ..."
-        first = line.split(" ", 1)[0].strip(":")
-        if _COURSE_RE.match(first) and first.lower() not in {"hole", "out", "in", "tot"}:
-            return first.title()
-    return None
 
 
 def _line_ints(line: str, *, max_abs: Optional[int] = None) -> List[int]:

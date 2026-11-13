@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from api.auth_schemas import RegisterRequest
-from api.routers.users import UpdateUserRequest
+from api.request_models import UpdateUserRequest
 from models import User
 
 

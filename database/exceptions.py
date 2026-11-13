@@ -12,3 +12,7 @@ class DuplicateError(DatabaseError):
 
 class IntegrityError(DatabaseError):
     """Foreign key or check constraint violation."""
+
+
+class ConflictError(IntegrityError):
+    """An existing reference prevents an otherwise permitted mutation."""

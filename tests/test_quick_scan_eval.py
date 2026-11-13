@@ -226,6 +226,26 @@ def test_report_includes_cumulative_counts_mismatches_errors_and_timing():
     assert "Total suite wall time: 7.00s" in report
 
 
+def test_report_shows_scan_diagnostics_under_each_case_and_counts_rejected_merges():
+    errored = make_result("errored_case", 0, error="Extraction failed: unreadable")
+    errored.diagnostics = ["no row labeled 'D' with hole values (0 label match(es)) among 9 table rows"]
+    run = SuiteRun(
+        case_results=[make_result("perfect_case", 10), errored],
+        ocr_seconds_by_image={"card.png": 2.25, "other.png": 1.0},
+        suite_seconds=7.0,
+        ocr_diagnostics_by_image={
+            "card.png": ["ocr table 0: expanded 2 merged cell(s) into the grid", "table merge rejected: line 7 has 23 columns, expected 22"],
+            "other.png": ["table merge accepted"],
+        },
+    )
+
+    report = render_report(run)
+
+    assert "1/2 images had the table merge rejected" in report
+    assert "    - table merge rejected: line 7 has 23 columns, expected 22" in report
+    assert "    - no row labeled 'D' with hole values" in report
+
+
 @pytest.mark.asyncio
 async def test_runner_prepares_shared_image_once_and_reuses_bytes(monkeypatch, tmp_path):
     image_path = tmp_path / "card.png"

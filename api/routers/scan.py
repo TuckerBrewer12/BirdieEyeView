@@ -10,23 +10,31 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from pydantic import BaseModel
 from PIL import Image, ImageOps
 
 logger = logging.getLogger(__name__)
 
 from database.db_manager import DatabaseManager
+from database.exceptions import IntegrityError
+from api.messages import (
+    COURSE_ID_NOT_FOUND, FILENAME_REQUIRED, FILE_TOO_LARGE, FORBIDDEN, HEIC_UNAVAILABLE, IMAGE_DIMENSIONS_TOO_LARGE,
+    IMAGE_PIXELS_TOO_MANY, INVALID_IMAGE_DIMENSIONS, INVALID_PDF, PLAYER_NAME_NOT_READ, UNCLEAR_PLAYER_NAME,
+    UNREADABLE_IMAGE,
+    UNREADABLE_SCORE_ROWS, UNSUPPORTED_CONTENT_TYPE, UNSUPPORTED_FILE_TYPE, UNSUPPORTED_IMAGE_FORMAT,
+    UPLOAD_NOT_PROCESSED,
+)
 from api.dependencies import get_current_user, get_optional_current_user, get_db
-from api.error_responses import ROUND_SAVE_FAILED, SCAN_FAILED
-from api.input_validation import ensure_uuid_str, normalize_course_display_name, sanitize_ocr_text, sanitize_user_text
+from api.error_responses import EXTRACTION_FAILED, OCR_FAILED, ROUND_SAVE_FAILED, SCAN_FAILED, SCAN_SAVE_FAILED
+from api.input_validation import ensure_uuid_str, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
+from api.schemas import ScanResponse
 from api.scan_errors import ScanExtractionError
 from models import User
 from services.gemini_table_merger import merge_split_tables
 from services.gemini_ocr_service import GeminiOCRService
 from services.mistral_ocr_service import MistralOCRService
 from services.mistral_scorecard_parser import ParsedScorecardRows, parse_mistral_scorecard_rows
-from services.scan_service import ScanService
+from services.scan_service import ScanSaveRejected, ScanService
 
 router = APIRouter()
 
@@ -41,6 +49,7 @@ MAX_IMAGE_SIDE = 12_000
 PREPROCESS_CACHE_DIR = Path(tempfile.gettempdir()) / "scanscore_ocr_cache"
 PREPROCESS_CACHE_ENABLED = False
 MISTRAL_OCR_MODEL = os.environ.get("MISTRAL_OCR_MODEL") or "mistral-ocr-latest"
+MIN_SCORE_BREAKDOWN_EVIDENCE_HOLES = 9
 
 
 def _initialize_heic_decoder() -> bool:
@@ -93,28 +102,23 @@ def _env_bool(name: str, default: bool = False) -> bool:
 LOG_SENSITIVE_OCR_DEBUG = _env_bool("LOG_SENSITIVE_OCR_DEBUG", False)
 
 
-class ScanResponse(BaseModel):
-    """Response from scorecard extraction."""
-    round: dict
-    confidence: dict
-    fields_needing_review: list
-
-
 def _extract_upload_suffix(file: UploadFile) -> str:
     filename = (file.filename or "").strip()
     if not filename:
-        raise HTTPException(400, "Filename is required.")
+        raise HTTPException(400, FILENAME_REQUIRED)
     suffix = Path(filename).suffix.lower()
     if suffix not in ALLOWED_UPLOAD_SUFFIXES:
         if suffix == ".heic" and not HEIC_DECODE_AVAILABLE:
             raise HTTPException(
                 400,
-                "HEIC uploads are temporarily unavailable on this server. Please convert to JPG/PNG and retry.",
+                HEIC_UNAVAILABLE,
             )
-        raise HTTPException(400, f"Unsupported file type: {suffix}. Allowed: {', '.join(sorted(ALLOWED_UPLOAD_SUFFIXES))}")
+        raise HTTPException(
+            400, UNSUPPORTED_FILE_TYPE.format(suffix=suffix, allowed=", ".join(sorted(ALLOWED_UPLOAD_SUFFIXES)))
+        )
     content_type = (file.content_type or "").lower().strip()
     if content_type and content_type not in ALLOWED_UPLOAD_MIME_TYPES:
-        raise HTTPException(400, f"Unsupported upload content type: {content_type}")
+        raise HTTPException(400, UNSUPPORTED_CONTENT_TYPE.format(content_type=content_type))
     return suffix
 
 
@@ -123,7 +127,7 @@ def _validate_upload_payload(path: Path, suffix: str) -> None:
         with open(path, "rb") as fh:
             header = fh.read(5)
         if header != b"%PDF-":
-            raise HTTPException(400, "Invalid PDF upload.")
+            raise HTTPException(400, INVALID_PDF)
         return
 
     try:
@@ -132,23 +136,23 @@ def _validate_upload_payload(path: Path, suffix: str) -> None:
         with Image.open(path) as img:
             fmt = (img.format or "").upper()
             if fmt not in ALLOWED_IMAGE_FORMATS:
-                raise HTTPException(400, f"Unsupported image format: {fmt or 'unknown'}")
+                raise HTTPException(400, UNSUPPORTED_IMAGE_FORMAT.format(format=fmt or "unknown"))
             width, height = img.size
             if width <= 0 or height <= 0:
-                raise HTTPException(400, "Invalid image dimensions.")
+                raise HTTPException(400, INVALID_IMAGE_DIMENSIONS)
             if width > MAX_IMAGE_SIDE or height > MAX_IMAGE_SIDE:
-                raise HTTPException(400, "Image dimensions exceed allowed size.")
+                raise HTTPException(400, IMAGE_DIMENSIONS_TOO_LARGE)
             if width * height > MAX_IMAGE_PIXELS:
-                raise HTTPException(400, "Image pixel count exceeds allowed size.")
+                raise HTTPException(400, IMAGE_PIXELS_TOO_MANY)
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
         if suffix == ".heic" and not HEIC_DECODE_AVAILABLE:
             raise HTTPException(
                 400,
-                "HEIC uploads are temporarily unavailable on this server. Please convert to JPG/PNG and retry.",
+                HEIC_UNAVAILABLE,
             ) from exc
-        raise HTTPException(400, "Invalid or unreadable image upload.") from exc
+        raise HTTPException(400, UNREADABLE_IMAGE) from exc
 
 
 def _confidence_level(score: float) -> str:
@@ -213,6 +217,24 @@ def _build_confidence_payload(
     }
 
 
+def _score_breakdown_rows_are_trusted(hole_scores: List[Dict]) -> bool:
+    """Return whether enough complete holes prove the auxiliary-row alignment."""
+    complete = [
+        score
+        for score in hole_scores
+        if score["strokes"] is not None
+        and score["putts"] is not None
+        and score["shots_to_green"] is not None
+    ]
+    return (
+        len(complete) >= MIN_SCORE_BREAKDOWN_EVIDENCE_HOLES
+        and all(
+            score["strokes"] == score["shots_to_green"] + score["putts"]
+            for score in complete
+        )
+    )
+
+
 def _build_round_from_parsed_rows(
     parsed: ParsedScorecardRows,
     *,
@@ -262,8 +284,8 @@ def _build_round_from_parsed_rows(
                 }
             )
     else:
-        # Unknown-course path uses parsed OCR rows.
-        course_name = normalize_course_display_name(parsed.course_name) if parsed.course_name else None
+        # Unknown-course path uses parsed OCR rows. The course name is never read from the
+        # scan: the user picks or enters it during review.
         parsed_pars = list(_safe_list_attr("par_row")[:hole_count])
         while len(parsed_pars) < hole_count:
             parsed_pars.append(None)
@@ -315,6 +337,7 @@ def _build_round_from_parsed_rows(
     effective_to_par = to_par_scoring if to_par_scoring is not None else (parsed.score_to_par_hint is True)
 
     hole_scores: List[Dict] = []
+    invalid_auxiliary_fields: Dict[int, Dict[str, str]] = {}
     for i in range(1, hole_count + 1):
         raw_score = score_vals[i - 1]
         sign_putts = raw_putt_vals[i - 1] if raw_putt_vals[i - 1] is not None else putt_vals[i - 1]
@@ -356,25 +379,26 @@ def _build_round_from_parsed_rows(
         else:
             strokes = raw_score if 1 <= raw_score <= 15 else None
 
+        invalid_fields: Dict[str, str] = {}
+
         putts = putt_vals[i - 1]
         if putts is not None and not (0 <= putts <= 10):
             putts = None
-            fields_needing_review.append(f"Hole {i} putts out of range")
+            invalid_fields["putts"] = f"Hole {i} putts out of range"
         if putts is not None and strokes is not None and putts > strokes:
             putts = None
-            fields_needing_review.append(f"Hole {i} putts exceed strokes")
-
-        gir_val = gir_vals[i - 1]
-        if gir_val is None and shots_vals[i - 1] is not None and hole_par_lookup.get(i) is not None:
-            # Derive GIR from shots-to-green row when present:
-            # GIR if reached green in <= par-2 strokes.
-            par_i = hole_par_lookup[i]  # guarded above
-            if par_i is not None:
-                gir_val = shots_vals[i - 1] <= max(1, par_i - 2)
+            invalid_fields["putts"] = f"Hole {i} putts exceed strokes"
 
         shots_val = shots_vals[i - 1]
         if shots_val is not None and not (1 <= shots_val <= 10):
             shots_val = None
+            invalid_fields["shots_to_green"] = f"Hole {i} shots to green out of range"
+        if shots_val is not None and strokes is not None and shots_val > strokes:
+            shots_val = None
+            invalid_fields["shots_to_green"] = f"Hole {i} shots to green exceed strokes"
+
+        if invalid_fields:
+            invalid_auxiliary_fields[i] = invalid_fields
 
         hole_scores.append(
             {
@@ -383,9 +407,49 @@ def _build_round_from_parsed_rows(
                 "putts": putts,
                 "shots_to_green": shots_val,
                 "fairway_hit": None,
-                "green_in_regulation": gir_val,
+                "green_in_regulation": gir_vals[i - 1],
             }
         )
+
+    rows_are_trusted = _score_breakdown_rows_are_trusted(hole_scores)
+    for score in hole_scores:
+        hole_number = score["hole_number"]
+        strokes = score["strokes"]
+        putts = score["putts"]
+        shots_val = score["shots_to_green"]
+
+        if rows_are_trusted and strokes is not None:
+            if putts is None and shots_val is not None:
+                recovered_putts = strokes - shots_val
+                if 0 <= recovered_putts <= 10:
+                    score["putts"] = recovered_putts
+                    putts = recovered_putts
+                    invalid_auxiliary_fields.get(hole_number, {}).pop("putts", None)
+            elif shots_val is None and putts is not None:
+                recovered_shots = strokes - putts
+                if 1 <= recovered_shots <= 10:
+                    score["shots_to_green"] = recovered_shots
+                    shots_val = recovered_shots
+                    invalid_auxiliary_fields.get(hole_number, {}).pop("shots_to_green", None)
+
+        if (
+            strokes is not None
+            and putts is not None
+            and shots_val is not None
+            and strokes != shots_val + putts
+        ):
+            fields_needing_review.append(
+                f"Hole {hole_number} score breakdown conflicts with total strokes"
+            )
+
+        unresolved_fields = invalid_auxiliary_fields.get(hole_number, {})
+        fields_needing_review.extend(unresolved_fields.values())
+
+        if score["green_in_regulation"] is None and shots_val is not None:
+            par_i = hole_par_lookup.get(hole_number)
+            if par_i is not None:
+                # GIR if the green was reached in no more than par minus two strokes.
+                score["green_in_regulation"] = shots_val <= max(1, par_i - 2)
 
     round_payload = {
         "course": {
@@ -415,14 +479,17 @@ def _save_upload_to_temp(file: UploadFile, suffix: str) -> tuple[Path, str]:
             total_bytes += len(chunk)
             if total_bytes > MAX_UPLOAD_BYTES:
                 Path(tmp.name).unlink(missing_ok=True)
-                raise HTTPException(413, "File too large. Maximum size is 20 MB.")
+                raise HTTPException(413, FILE_TOO_LARGE)
             tmp.write(chunk)
             hasher.update(chunk)
         return Path(tmp.name), hasher.hexdigest()
 
 
-async def _run_ocr_pipeline(ocr_path: Path) -> str:
-    """Gemini OCR (experiment, in place of Mistral) → Gemini merge → raw markdown string."""
+async def _run_ocr_pipeline(ocr_path: Path, diagnostics: Optional[List[str]] = None) -> str:
+    """Gemini OCR (experiment, in place of Mistral) → clean-up → Gemini merge → raw markdown string.
+
+    ``diagnostics`` collects what the clean-up and the merge did; it is logged, never returned.
+    """
     svc = GeminiOCRService()
     ocr_resp = await svc.ocr_file(ocr_path)
 
@@ -446,12 +513,17 @@ async def _run_ocr_pipeline(ocr_path: Path) -> str:
                         html_table,
                     )
 
-    raw_markdown = MistralOCRService.extract_markdown_text(ocr_resp)
+    raw_markdown = MistralOCRService.extract_markdown_text(ocr_resp, diagnostics)
     if LOG_SENSITIVE_OCR_DEBUG:
         logger.debug("Mistral raw markdown:\n%s", raw_markdown)
     else:
         logger.info("Mistral OCR produced markdown chars=%d", len(raw_markdown))
-    return await merge_split_tables(raw_markdown)
+    return await merge_split_tables(raw_markdown, diagnostics=diagnostics)
+
+
+def _log_diagnostics(stage: str, diagnostics: List[str]) -> None:
+    """One internal line per scan stage; positions and counts only, never cell values or names."""
+    logger.info("Scan diagnostics (%s): %s", stage, " | ".join(diagnostics) or "none")
 
 
 def _get_preprocess_cache_path(upload_digest: str) -> Path:
@@ -608,14 +680,16 @@ async def prefetch_ocr(
     try:
         _validate_upload_payload(original_tmp_path, suffix)
         ocr_path, cache_hit = _normalize_upload_for_ocr(original_tmp_path, upload_digest)
-        markdown_text = await _run_ocr_pipeline(ocr_path)
+        diagnostics: List[str] = []
+        markdown_text = await _run_ocr_pipeline(ocr_path, diagnostics)
+        _log_diagnostics("ocr", diagnostics)
         logger.info("Prefetch OCR complete: user=%s chars=%d", getattr(current_user, "id", "anonymous"), len(markdown_text))
         return {"ocr_text": markdown_text}
     except HTTPException:
         raise
     except Exception:
         logger.exception("Prefetch OCR failed")
-        raise HTTPException(500, "OCR failed. Please try again.")
+        raise HTTPException(500, OCR_FAILED)
     finally:
         if ocr_path != original_tmp_path and (not PREPROCESS_CACHE_ENABLED or not cache_hit):
             with contextlib.suppress(OSError):
@@ -678,6 +752,7 @@ async def extract_scan(
     ocr_path = original_tmp_path
     cache_hit = False
     failure_stage = "upload"
+    diagnostics: List[str] = []
 
     try:
         _validate_upload_payload(original_tmp_path, suffix)
@@ -705,9 +780,9 @@ async def extract_scan(
         if course_id:
             course_model = await db.courses.get_course(course_id)
             if course_model is None:
-                raise HTTPException(404, f"Course {course_id} not found")
+                raise HTTPException(404, COURSE_ID_NOT_FOUND.format(course_id=course_id))
             if course_model.user_id and (current_user is None or str(course_model.user_id) != str(current_user.id)):
-                raise HTTPException(403, "Forbidden")
+                raise HTTPException(403, FORBIDDEN)
         t_course_lookup_end = time.perf_counter()
         logger.info(
             "Scan stage complete: stage=course_lookup has_course_id=%s found=%s lookup_ms=%.1f",
@@ -722,7 +797,7 @@ async def extract_scan(
             markdown_text = ocr_text
             logger.info("Scan using prefetched OCR text: chars=%d", len(markdown_text))
         else:
-            markdown_text = await _run_ocr_pipeline(ocr_path)
+            markdown_text = await _run_ocr_pipeline(ocr_path, diagnostics)
             logger.info(
                 "Scan OCR+merge complete: extract_ms=%.1f chars=%d",
                 (time.perf_counter() - t_extract_start) * 1000.0,
@@ -737,28 +812,33 @@ async def extract_scan(
         failure_stage = "parse"
         t_parse_start = time.perf_counter()
         parsed_rows = parse_mistral_scorecard_rows(markdown_text, user_context=user_context)
+        diagnostics.extend(parsed_rows.diagnostics)
         failure_stage = "assembly"
         round_data, fields_needing_review = _build_round_from_parsed_rows(
             parsed_rows,
             course_model=course_model,
             to_par_scoring=to_par_scoring,
         )
+        name_missing = bool(parsed_rows.player_name) and not parsed_rows.player_row_found
 
         present_strokes = len(
             [h for h in round_data.get("hole_scores", []) if h.get("strokes") is not None]
         )
         if present_strokes == 0:
-            if parsed_rows.player_name:
-                raise ScanExtractionError(
-                    422,
-                    "Name is unclear in the scorecard image. Please upload a cleaner image with clearer handwriting and try again.",
-                    category="unreadable_scores", stage="parse",
-                )
-            raise ScanExtractionError(
+            diagnostics.append("assembly: no strokes could be assembled")
+            _log_diagnostics("extract", diagnostics)
+            # "Name is unclear" only when no row carried the given name; otherwise the rows
+            # themselves could not be read, and saying "name" would send the user the wrong way.
+            error = ScanExtractionError(
                 422,
-                "Unable to clearly read the score rows from this image. Please upload a cleaner image with clearer handwriting and better lighting, then try again.",
+                UNCLEAR_PLAYER_NAME if name_missing else UNREADABLE_SCORE_ROWS,
                 category="unreadable_scores", stage="parse",
             )
+            error.diagnostics = diagnostics
+            raise error
+        if name_missing:
+            fields_needing_review.append(PLAYER_NAME_NOT_READ)
+        _log_diagnostics("extract", diagnostics)
 
         confidence_data = _build_confidence_payload(round_data.get("hole_scores", []), fields_needing_review)
         t_parse_end = time.perf_counter()
@@ -781,7 +861,7 @@ async def extract_scan(
         )
 
     except FileNotFoundError:
-        raise ScanExtractionError(400, "Uploaded file could not be processed", category="invalid_upload", stage=failure_stage)
+        raise ScanExtractionError(400, UPLOAD_NOT_PROCESSED, category="invalid_upload", stage=failure_stage)
     except EnvironmentError:
         logger.exception("Scan extraction service unavailable")
         raise ScanExtractionError(500, SCAN_FAILED, category="service_unavailable", stage=failure_stage)
@@ -792,7 +872,7 @@ async def extract_scan(
         raise ScanExtractionError(exc.status_code, exc.detail, category=category, stage=failure_stage)
     except Exception:
         logger.exception("Scan extraction error")
-        raise ScanExtractionError(500, "Extraction failed. Please try again.", category="extraction_failed", stage=failure_stage)
+        raise ScanExtractionError(500, EXTRACTION_FAILED, category="extraction_failed", stage=failure_stage)
     finally:
         logger.info(
             "Scan extract request complete: total_ms=%.1f",
@@ -823,9 +903,12 @@ async def save_round(
         service = ScanService(db)
         saved = await service.save_reviewed_scan(req)
         return {"id": saved.id, "total_score": saved.calculate_total_score()}
-    except ValueError:
+    except ScanSaveRejected as exc:
+        # Nothing was written; tell the user what to fix in review.
+        raise HTTPException(422, " ".join(exc.reasons))
+    except (ValueError, IntegrityError):
         logger.exception("Save round validation failed")
         raise HTTPException(400, ROUND_SAVE_FAILED)
     except Exception:
         logger.exception("Save round error")
-        raise HTTPException(500, "Save failed. Please try again.")
+        raise HTTPException(500, SCAN_SAVE_FAILED)

@@ -38,12 +38,12 @@ Use focused test filters where appropriate. Vitest runs helper/hook tests in jsd
 
 ## Live checks
 
-The scan evaluator calls Mistral and Gemini and uses provider credits. Run it locally or add a supported label to a mergeable same-repository PR. The [live eval workflow](../../.github/workflows/scan-evals.yml) publishes a PR summary and a detailed report as an optional check. Failed-scan storage smoke and retrieval commands can access real object storage. These live operations are separate from ordinary deterministic validation. See [scan evaluation](../../README.md#scan-evaluation) and [report operations](../failed-scan-reports.md).
+The scan evaluator calls Mistral and Gemini and uses provider credits. Run it locally or add a supported label to a mergeable same-repository PR. Parser changes are gated offline first by the Mistral-capture scenarios in `tests/integration/test_api_e2e.py` (real provider output, no paid calls); refreshing a capture in `tests/integration/fixtures/mistral/` is itself a paid call. The [live eval workflow](../../.github/workflows/scan-evals.yml) publishes a PR summary and a detailed report as an optional check. Failed-scan storage smoke and retrieval commands can access real object storage. These live operations are separate from ordinary deterministic validation. See [scan evaluation](../../README.md#scan-evaluation) and [report operations](../failed-scan-reports.md).
 
 Report what was actually run and any limits. Passing existing tests is not proof that an uncovered edge case, live deployment, or migration is correct.
 
 ## Existing CI checks
 
-[tests.yml](../../.github/workflows/tests.yml) runs backend unit coverage, Ruff, advisory Pyright, high-severity Bandit checks, disposable PostgreSQL integration tests, frontend tests/lint/types/build, and repository invariants. Backend total and changed-line coverage gates are currently 75%; Pyright is explicitly non-blocking while existing errors are addressed. Check the workflow for exact commands instead of treating this guide as a second configuration file.
+[tests.yml](../../.github/workflows/tests.yml) runs backend unit coverage, Ruff, advisory Pyright, high-severity Bandit checks, disposable PostgreSQL integration tests, frontend tests/lint/types/build, and repository invariants. Backend total and changed-line coverage gates are currently 25%. They measure the unit suite only, and new behavior is tested end to end first, so these gates are a floor rather than a target; Pyright is explicitly non-blocking while existing errors are addressed. Check the workflow for exact commands instead of treating this guide as a second configuration file.
 
 Separate workflows run screenshot checks and the MVVM/brand-kit review bots. Those bots review added lines; their human-readable rules are linked in [frontend practices](frontend.md). A bot comment complements behavioral validation rather than proving correctness.

@@ -100,3 +100,67 @@ async def test_ocr_file_wraps_provider_failure(monkeypatch, tmp_path):
 
     with pytest.raises(RuntimeError, match="Mistral OCR failed"):
         await MistralOCRService(api_key="key").ocr_file(image)
+
+
+# Pure table rules with many boundary shapes (Testing Priority 3a); the E2E captures prove the
+# chain on real cards, these pin the individual rules.
+
+SPANNED_TABLE = (
+    "<table>"
+    "<tr><th colspan='2'>HOLE</th><th>1</th><th>2</th></tr>"
+    "<tr><td rowspan='2'>G</td><td>x</td><td>4</td><td>5</td></tr>"
+    "<tr><td>y</td><td>2</td><td>1</td></tr>"
+    "</table>"
+)
+
+
+@pytest.mark.parametrize("without_soup", [False, True])
+def test_merged_cells_are_expanded_into_the_grid(monkeypatch, without_soup):
+    if without_soup:
+        monkeypatch.setattr(ocr_module, "BeautifulSoup", None)
+    diagnostics = []
+
+    rows = MistralOCRService._html_to_rows(SPANNED_TABLE, diagnostics)
+
+    assert rows == [["HOLE", "", "1", "2"], ["G", "x", "4", "5"], ["", "y", "2", "1"]]
+    assert diagnostics == ["ocr table 0: expanded 2 merged cell(s) into the grid"]
+
+
+HEADER = ["HOLE", "1", "2", "3", "4", "5", "6", "7", "8", "9", "OUT", "INITIALS", "10", "11", "12", "13", "14", "15", "16", "17", "18", "IN", "TOT"]
+FRONT = ["3", "4", "3", "4", "5", "4", "3", "4", "4"]
+BACK = ["4", "3", "4", "4", "5", "4", "3", "4", "5"]
+
+
+@pytest.mark.parametrize(
+    ("row", "expected", "note"),
+    [
+        # wider by one: the player's name in its own cell
+        (["", "D", *FRONT, "", "", *BACK, "", ""], ["D", *FRONT, "", "", *BACK, "", ""], "dropped 1 extra leading cell(s)"),
+        # wider by one: a tee rating after the label
+        (["Blue", "72.2/135", *FRONT, "34", "", *BACK, "36", "70"], ["Blue", *FRONT, "34", "", *BACK, "36", "70"], "dropped 1 extra leading cell(s)"),
+        # wider, but the extra leading cell is a value: left alone
+        (["7", "3", *FRONT, "", "", *BACK, "", ""], ["7", "3", *FRONT, "", "", *BACK, "", ""], "left unaligned"),
+        # narrower by one: the separator column is missing from the data row
+        (["D", *FRONT, "", *BACK, "", ""], ["D", *FRONT, "", "", *BACK, "", ""], "separator column(s) at [11]"),
+        # same width, but the back nine sits one column early with a blank at the end
+        (["D", *FRONT, "", *BACK, "", "", ""], ["D", *FRONT, "", "", *BACK, "", ""], "shifted right past the separator"),
+        # narrower by three: the row stops at its last value
+        (["Red", *FRONT, "34", "", *BACK], ["Red", *FRONT, "34", "", *BACK, "", ""], "padded 2 missing trailing cell(s)"),
+    ],
+)
+def test_rows_are_aligned_to_the_hole_header(row, expected, note):
+    diagnostics = []
+
+    aligned = ocr_module.align_rows_to_header([HEADER, row], HEADER, diagnostics, where="t")
+
+    assert aligned == [HEADER, expected]
+    assert len(diagnostics) == 1 and note in diagnostics[0]
+
+
+def test_narrower_row_missing_its_label_cells_is_padded_in_front():
+    header = ["HOLE", "HDCP", "1", "2", "3", "4", "5", "6", "7", "8", "9", "OUT"]
+    row = ["Par", "5", "3", "4", "3", "4", "3", "5", "4", "5", "36"]
+
+    aligned = ocr_module.align_rows_to_header([header, row], header, None)
+
+    assert aligned[1] == ["Par", "", "5", "3", "4", "3", "4", "3", "5", "4", "5", "36"]

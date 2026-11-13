@@ -8,7 +8,7 @@ The root `tests/` directory covers Models, Analytics, services, API routes/secur
 |---|---|---|
 | Models | `test_models.py` | Validation, safe updates, coverage, and resolved calculations. |
 | Analytics | `test_analytics.py`, `test_handicap.py`, `test_goals.py` | Real observation denominators, history/format eligibility, and numerical results. |
-| API | `test_*_routes.py`, security/dependency tests | Authentication, ownership, status/schema contracts, and failure handling. |
+| API | `test_*_routes.py`, security/dependency tests, [`integration/test_api_e2e.py`](../../tests/integration/test_api_e2e.py) | Authentication, ownership, status/schema contracts, and failure handling. The end-to-end file drives the real app over HTTP on PostgreSQL, replacing only email, the OCR/merge providers and (for reports) the storage backend, and covers the auth lifecycle (including resend and the emailed link), cross-user ownership and visibility, the scan upload-to-save flow, the committed Mistral captures graded against the large eval answer keys (`fixtures/mistral/`, merge skipped, per-case minimums), the scan error-message choice, upload rejection, anonymous failed-scan reports, rate limits, and stats on seeded rounds. |
 | Services/parser | `test_scan_service.py`, OCR/parser/merger tests | Orchestration, stable fixtures, retries, and malformed/missing data. |
 | Reports | `test_scan_report_*.py` | Anonymous contract, sanitization, encryption, storage, and retrieval. |
 | Database | `test_database*.py`, `integration/` | SQL mapping/unit behavior and real PostgreSQL constraints/transactions. |

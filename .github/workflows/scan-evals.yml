@@ -70,7 +70,7 @@ jobs:
               r'\d+ images \| \d+ cases \| \d+/\d+ numeric cells correct|'
               r'\d+/\d+ (?:were (?:100% correct|(?:90|80)% or better)|'
               r'failed below 80% or had an operational error|had an operational error|'
-              r'are known scanner gaps)|'
+              r'are known scanner gaps|had the table merge rejected)|'
               r'Total suite wall time: \d+\.\d+s'
           )
           header, separator, details = stdout.partition('\nCases\n')

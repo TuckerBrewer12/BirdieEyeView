@@ -1,7 +1,8 @@
 """Unified database interface composing all repositories."""
 
 import asyncpg
-from typing import Optional
+from contextlib import asynccontextmanager
+from typing import AsyncIterator, Optional
 
 from models import Course, Round, User
 from database.repositories.course_repo import CourseRepositoryDB
@@ -12,7 +13,7 @@ from database.repositories.friendship_repo import FriendshipRepositoryDB
 
 
 class DatabaseManager:
-    """Facade over the three domain repositories.
+    """Facade over the five domain repositories.
 
     Usage:
         pool = await asyncpg.create_pool(dsn=...)
@@ -34,6 +35,15 @@ class DatabaseManager:
         self.user_tees = UserTeeRepositoryDB(pool)
         self.friendships = FriendshipRepositoryDB(pool)
 
+    @asynccontextmanager
+    async def transaction(self) -> AsyncIterator:
+        """One connection and transaction for a multi-repository write.
+
+        Pass the yielded connection as ``connection=`` to repository write methods.
+        """
+        async with self._pool.acquire() as conn, conn.transaction():
+            yield conn
+
     # ================================================================
     # Course delegates
     # ================================================================
@@ -41,9 +51,7 @@ class DatabaseManager:
     async def get_course(self, course_id: str) -> Optional[Course]:
         return await self.courses.get_course(course_id)
 
-    async def find_course_by_name(
-        self, name: str, location: Optional[str] = None
-    ) -> Optional[Course]:
+    async def find_course_by_name(self, name: str, location: Optional[str] = None) -> Optional[Course]:
         return await self.courses.find_course_by_name(name, location)
 
     async def create_course(self, course: Course) -> Course:
