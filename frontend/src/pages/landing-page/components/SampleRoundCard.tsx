@@ -1,4 +1,4 @@
-import { HoleScoreBars, StatValue, ToParPill } from "@/brand";
+import { Card, HoleScoreBars, StatValue, ToParPill } from "@/brand";
 import { cn } from "@/brand/cn";
 import type { SampleRound } from "../sampleRound";
 
@@ -14,10 +14,10 @@ interface SampleRoundCardProps {
  */
 export function SampleRoundCard({ round, className }: SampleRoundCardProps) {
   return (
-    <div
+    <Card
       aria-hidden
       data-slot="sample-round-card"
-      className={cn("flex flex-col gap-2.5 rounded-card bg-card p-3.5 shadow-lg md:p-4", className)}
+      className={cn("gap-2.5 p-3.5 md:p-4", className)}
     >
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
@@ -30,6 +30,6 @@ export function SampleRoundCard({ round, className }: SampleRoundCardProps) {
         </div>
       </div>
       <HoleScoreBars holes={round.holes} variant="strip" className="w-full" />
-    </div>
+    </Card>
   );
 }
