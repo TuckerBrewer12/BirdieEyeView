@@ -1,5 +1,6 @@
 import { scaleLinear } from "d3-scale";
 import { cn } from "@/brand/cn";
+import { EmptyNote } from "@/brand/components/EmptyNote";
 import type { GoalAttempt } from "@/domain/benchmark";
 import { chartTickStyle, tokens } from "@/brand/theme";
 import { indexScale, paddedExtent } from "./scales";
@@ -35,7 +36,7 @@ export function ScoreGoalChart({
   const [W, measureRef] = useChartWidth(width, minWidth);
 
   if (attempts.length < 2) {
-    return <div className="py-6 text-center text-sm text-muted-foreground">Not enough rounds yet</div>;
+    return <EmptyNote className="py-6">Not enough rounds yet</EmptyNote>;
   }
 
   const scores = attempts.map((attempt) => attempt.score);

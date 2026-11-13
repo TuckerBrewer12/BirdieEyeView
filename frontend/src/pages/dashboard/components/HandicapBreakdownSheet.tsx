@@ -7,6 +7,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
+  EmptyNote,
   Sheet,
   SheetClose,
   SheetContent,
@@ -133,7 +134,7 @@ export function HandicapBreakdownSheet({
             </div>
           )}
           {rows.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">No rounds yet</div>
+            <EmptyNote>No rounds yet</EmptyNote>
           ) : (
             rows.map((row) => <WhsRow key={row.roundIndex} row={row} />)
           )}
