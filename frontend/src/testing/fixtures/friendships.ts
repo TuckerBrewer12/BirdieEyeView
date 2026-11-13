@@ -76,7 +76,15 @@ export function friendshipsOf(golfer: { id: string; name: string | null; email: 
 export const populatedFriendships: FriendshipDto[] = [
   friendship("friendship-riley", riley, ME, "pending", "2026-10-28T15:30:00"),
   friendship("friendship-casey", ME, casey, "pending", "2026-10-26T09:00:00"),
-  friendship("friendship-avery", ME, avery, "accepted", "2026-10-20T18:45:00"),
-  friendship("friendship-jordan", jordan, ME, "accepted", "2026-10-12T12:00:00"),
+  {
+    ...friendship("friendship-avery", ME, avery, "accepted", "2026-10-20T18:45:00"),
+    friend_handicap_index: 8.2,
+    friend_last_played: "2026-10-28",
+  },
+  {
+    ...friendship("friendship-jordan", jordan, ME, "accepted", "2026-10-12T12:00:00"),
+    friend_handicap_index: 14.6,
+    friend_last_played: "2026-10-12",
+  },
   friendship("friendship-sam", sam, ME, "declined", "2026-09-30T08:15:00"),
 ];

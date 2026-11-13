@@ -19,7 +19,11 @@ const labGolfer: FakeAnalyticsSeed = {
 };
 
 /** The profile view model, closed until `open()`, as the page holds it until Profile's tab opens. */
-function setup(seed: FakeAnalyticsSeed = labGolfer, configure?: (repository: FakeAnalyticsRepository) => void) {
+function setup(
+  seed: FakeAnalyticsSeed = labGolfer,
+  configure?: (repository: FakeAnalyticsRepository) => void,
+  initialFriendId: string | null = null,
+) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   const repository = new FakeAnalyticsRepository(seed);
   configure?.(repository);
@@ -29,7 +33,7 @@ function setup(seed: FakeAnalyticsSeed = labGolfer, configure?: (repository: Fak
   const { result } = renderHook(
     () => {
       const [active, setActive] = useState(false);
-      return { ...useProfileViewModel(labUser.id, active, repository), open: () => setActive(true) };
+      return { ...useProfileViewModel(labUser.id, active, repository, initialFriendId), open: () => setActive(true) };
     },
     { wrapper },
   );
@@ -134,6 +138,13 @@ describe("useProfileViewModel", () => {
     expect(result.current.comparison).toBe(5);
     // Behind a 5 on every axis.
     await waitFor(() => expect(result.current.standing.ahead).toEqual([]));
+  });
+
+  it("starts against the friend it was opened for, as Social's Compare opens it", async () => {
+    const view = setup(labGolfer, undefined, jordan.id);
+    view.open();
+    await waitFor(() => expect(view.result.current.selectedFriend?.id).toBe(jordan.id));
+    expect(view.result.current.comparison).toBe("friend");
   });
 
   it("compares with a friend picked, and says when one has too few rounds", async () => {

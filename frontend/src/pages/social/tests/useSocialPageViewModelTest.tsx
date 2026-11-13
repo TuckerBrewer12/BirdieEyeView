@@ -27,6 +27,21 @@ describe("useSocialPageViewModel", () => {
     expect(result.current.showEmpty).toBe(false);
   });
 
+  it("counts the requests waiting for the golfer's answer, not the ones they sent", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.openRequests).toBe(1);
+  });
+
+  it("hands over the golfer's own code, or null before the server has one", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.myCode).toBe("TGOLF7Q2"));
+
+    const none = renderVm(new FakeFriendsRepository({ myCode: null }));
+    await waitFor(() => expect(none.result.current.loading).toBe(false));
+    expect(none.result.current.myCode).toBeNull();
+  });
+
   it("shows the empty copy only for a successful empty list", async () => {
     const { result } = renderVm(new FakeFriendsRepository());
     await waitFor(() => expect(result.current.loading).toBe(false));

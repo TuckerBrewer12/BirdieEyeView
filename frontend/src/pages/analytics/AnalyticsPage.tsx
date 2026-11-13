@@ -17,7 +17,12 @@ interface AnalyticsPageProps {
 
 export function AnalyticsPage({ userId }: AnalyticsPageProps) {
   const [params] = useSearchParams();
-  const vm = useAnalyticsPageViewModel(userId, tabFrom(params.get("tab")) ?? DEFAULT_TAB);
+  const vm = useAnalyticsPageViewModel(
+    userId,
+    tabFrom(params.get("tab")) ?? DEFAULT_TAB,
+    undefined,
+    params.get("friend"),
+  );
 
   if (vm.loading) {
     return <LoadingState>Loading analytics...</LoadingState>;

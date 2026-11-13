@@ -42,13 +42,13 @@ export class FriendsInboxRobot {
 
   async isOpen(): Promise<this> {
     await expect(this.page).toHaveURL(/\/inbox$/);
-    await expect(this.page.getByRole("heading", { name: "Inbox", level: 1 }).last()).toBeVisible();
-    await expect(this.page.getByText("Loading inbox…")).toHaveCount(0);
+    await expect(this.page.getByRole("heading", { name: "Requests", level: 1 }).last()).toBeVisible();
+    await expect(this.page.getByText("Loading requests…")).toHaveCount(0);
     return this;
   }
 
   async tapTab(tab: "Received" | "Sent"): Promise<this> {
-    const toggle = this.page.getByRole("button", { name: new RegExp(`^${tab} \\(`) });
+    const toggle = this.page.getByRole("button", { name: new RegExp(`^${tab} \\d`) });
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-pressed", "true");
     // Park the pointer so the capture doesn't catch the tab mid-hover.
@@ -67,7 +67,7 @@ export class FriendsInboxRobot {
   }
 
   async goBack(): Promise<SocialRobot> {
-    await this.page.getByRole("button", { name: "Back to social" }).click();
+    await this.page.getByRole("button", { name: "Social", exact: true }).click();
     return new SocialRobot(this.page).isOpen();
   }
 

@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -13,14 +13,14 @@ import {
   ToggleGroupItem,
 } from "@/brand";
 import { cn } from "@/brand/cn";
+import { useFromBreakpoint } from "@/brand/useFromBreakpoint";
 import type { Friendship, FriendshipStatus } from "@/data/friendsModel";
 import {
   ANSWERED_NOTICES,
   STATUS_LABELS,
-  personDetail,
   personInitials,
   personName,
-  updatedLabel,
+  requestDetail,
 } from "../present";
 import { useFriendsInboxPageViewModel, type InboxTab } from "./useFriendsInboxPageViewModel";
 
@@ -35,30 +35,16 @@ interface FriendsInboxPageProps { userId: string; }
 
 export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
   const navigate = useNavigate();
+  const wide = useFromBreakpoint("md");
   const viewModel = useFriendsInboxPageViewModel(userId);
 
-  const renderActions = (request: Friendship) => {
-    if (!viewModel.canRespond(request)) {
-      return (
-        <span className={cn("text-xs font-medium", STATUS_TONE[request.status])}>
-          {STATUS_LABELS[request.status]}
-        </span>
-      );
-    }
+  const renderAnswers = (request: Friendship, size: "sm" | "default") => {
     const busy = viewModel.isResponding(request.id);
     const name = personName(request.other);
     return (
       <>
         <Button
-          size="sm"
-          disabled={busy}
-          aria-label={`Accept ${name}`}
-          onClick={() => viewModel.respond(request.id, "accepted")}
-        >
-          Accept
-        </Button>
-        <Button
-          size="sm"
+          size={size}
           variant="outline"
           disabled={busy}
           aria-label={`Decline ${name}`}
@@ -66,39 +52,79 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
         >
           Decline
         </Button>
+        <Button
+          size={size}
+          disabled={busy}
+          aria-label={`Accept ${name}`}
+          onClick={() => viewModel.respond(request.id, "accepted")}
+        >
+          Accept
+        </Button>
       </>
+    );
+  };
+
+  const renderRequest = (request: Friendship) => {
+    const open = viewModel.canRespond(request);
+    const status = open ? null : (
+      <span className={cn("text-body font-semibold", STATUS_TONE[request.status])}>
+        {STATUS_LABELS[request.status]}
+      </span>
+    );
+    const row = (
+      <PersonRow
+        name={personName(request.other)}
+        initials={personInitials(request.other)}
+        detail={requestDetail(request.updatedAt)}
+        settled={request.status !== "pending"}
+        actions={open ? (wide ? renderAnswers(request, "sm") : null) : status}
+      />
+    );
+    // On a phone a request's answers sit under it, side by side and full width.
+    if (!open || wide) return row;
+    return (
+      <div>
+        {row}
+        <div className="grid grid-cols-2 gap-2 px-4 pb-3">{renderAnswers(request, "default")}</div>
+      </div>
     );
   };
 
   return (
     <div>
-      <PageHeader title="Inbox" subtitle="Friend requests" revealAt={100} />
+      <PageHeader title="Requests" subtitle="Friend requests" revealAt={100} />
 
       <div className="flex max-w-2xl flex-col gap-4 pb-6">
-        <div>
-          <Button
-            variant="linkMuted"
-            size="inline"
-            className="mb-4"
-            onClick={() => void navigate("/social")}
-          >
-            <ArrowLeft className="size-4" />
-            Back to social
-          </Button>
-          <PageTitle>Inbox</PageTitle>
-          <p className="mt-1 text-sm text-muted-foreground">Friend requests received and sent</p>
-        </div>
-
-        <ToggleGroup
-          value={[viewModel.tab]}
-          onValueChange={(values) => {
-            const next = values[0] as InboxTab | undefined;
-            if (next) viewModel.setTab(next);
-          }}
+        <Button
+          variant="linkMuted"
+          size="inline"
+          className="self-start text-body-lg md:text-sm"
+          onClick={() => void navigate("/social")}
         >
-          <ToggleGroupItem value="received">Received ({viewModel.receivedCount})</ToggleGroupItem>
-          <ToggleGroupItem value="sent">Sent ({viewModel.sentCount})</ToggleGroupItem>
-        </ToggleGroup>
+          <ChevronLeft className="size-4" />
+          Social
+        </Button>
+
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <PageTitle>Requests</PageTitle>
+          <ToggleGroup
+            look="boxed"
+            aria-label="Requests"
+            className="w-full md:w-fit"
+            value={[viewModel.tab]}
+            onValueChange={(values) => {
+              const next = values[0] as InboxTab | undefined;
+              if (next) viewModel.setTab(next);
+            }}
+          >
+            <ToggleGroupItem value="received" className="flex-1 md:flex-none">
+              Received <span className="text-muted-foreground">{viewModel.receivedCount}</span>
+            </ToggleGroupItem>
+            <ToggleGroupItem value="sent" className="flex-1 md:flex-none">
+              Sent <span className="text-muted-foreground">{viewModel.sentCount}</span>
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
 
         {viewModel.answered && (
           <Alert tone="success">
@@ -118,17 +144,9 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
             items={viewModel.requests}
             keyFor={(request) => request.id}
             loading={viewModel.loading}
-            loadingLabel="Loading inbox…"
+            loadingLabel="Loading requests…"
             empty={viewModel.showEmpty ? `No ${viewModel.tab} requests yet.` : undefined}
-            renderItem={(request) => (
-              <PersonRow
-                name={personName(request.other)}
-                initials={personInitials(request.other)}
-                detail={personDetail(request.other)}
-                meta={updatedLabel(request.updatedAt)}
-                actions={renderActions(request)}
-              />
-            )}
+            renderItem={renderRequest}
           />
         </Card>
       </div>

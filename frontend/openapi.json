@@ -1967,6 +1967,28 @@
             "title": "Created At",
             "type": "string"
           },
+          "friend_handicap_index": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Friend Handicap Index"
+          },
+          "friend_last_played": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Friend Last Played"
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -9475,7 +9497,7 @@
     },
     "/api/users/me/friends": {
       "get": {
-        "description": "List friendships for the current user.",
+        "description": "List friendships for the current user. An accepted friend carries their handicap index and\nthe day of their last round, as the friends list shows them.",
         "operationId": "list_friendships_api_users_me_friends_get",
         "parameters": [
           {

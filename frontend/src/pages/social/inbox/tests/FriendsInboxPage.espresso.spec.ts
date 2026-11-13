@@ -36,3 +36,14 @@ test("the sent tab lists requests the golfer sent, with no answer buttons", asyn
   await inbox.seesStatus("Casey Marsh", "Pending");
   await inbox.seesNoAnswerButtons("Casey Marsh");
 });
+
+test.describe("on a phone", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test("a request's answers sit under it", async ({ inbox }) => {
+    await inbox.open({ friendships: populatedFriendships, golfers });
+    await inbox.seesAnswerButtons("Riley Brooks");
+    await inbox.accept("Riley Brooks");
+    await inbox.seesStatus("Riley Brooks", "Friends");
+  });
+});

@@ -73,9 +73,11 @@ export {
   InputGroupInput,
 } from "./components/InputGroup";
 export { PageHeader } from "./components/PageHeader";
+export { CountBadge } from "./components/CountBadge";
 export { PersonRow } from "./components/PersonRow";
 export { SettingsGroup, SettingsRow } from "./components/SettingsRow";
 export { Switch } from "./components/Switch";
+export type { CountBadgeProps } from "./components/CountBadge";
 export type { PersonRowProps } from "./components/PersonRow";
 export { PageTitle } from "./components/PageTitle";
 export { Meter } from "./components/Meter";

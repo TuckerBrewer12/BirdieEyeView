@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing import List, Literal, Optional
+from analytics import handicap as hcap
 from database.db_manager import DatabaseManager
 from database.exceptions import AlreadyFriendsError, DuplicateError, FriendRequestBlockedError, NotFoundError
 from api.dependencies import get_current_user, get_db
@@ -133,6 +134,9 @@ class FriendshipResponse(BaseModel):
     requester_email: Optional[str] = None
     addressee_name: Optional[str] = None
     addressee_email: Optional[str] = None
+    # A friend's figures as the friends list shows them, for accepted friendships in the list.
+    friend_handicap_index: Optional[float] = None
+    friend_last_played: Optional[str] = None
 
 
 def user_response(user: User) -> UserResponse:
@@ -349,6 +353,29 @@ async def list_friendships(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """List friendships for the current user."""
-    rows = await db.friendships.list_for_user(str(current_user.id), status=status)
-    return [_friendship_row_to_response(r) for r in rows]
+    """List friendships for the current user. An accepted friend carries their handicap index and
+    the day of their last round, as the friends list shows them."""
+    viewer = str(current_user.id)
+    rows = await db.friendships.list_for_user(viewer, status=status)
+    responses = []
+    for row in rows:
+        response = _friendship_row_to_response(row)
+        if response.status == "accepted":
+            friend_id = response.addressee_id if response.requester_id == viewer else response.requester_id
+            index, last_played = await _friend_figures(db, friend_id)
+            response = response.model_copy(
+                update={"friend_handicap_index": index, "friend_last_played": last_played}
+            )
+        responses.append(response)
+    return responses
+
+
+async def _friend_figures(db: DatabaseManager, friend_id: str) -> tuple[Optional[float], Optional[str]]:
+    """A friend's handicap index (the same one their own screens show) and their last round's day."""
+    friend = await db.users.get_user(friend_id)
+    if friend is None:
+        return None, None
+    rounds = await db.rounds.get_rounds_for_user(friend_id, limit=20)
+    index = hcap.player_handicap_index(friend, list(reversed(rounds)))
+    last = rounds[0].date if rounds and rounds[0].date else None
+    return index, last.date().isoformat() if last else None
