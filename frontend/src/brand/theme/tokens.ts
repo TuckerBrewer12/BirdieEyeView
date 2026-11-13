@@ -577,6 +577,8 @@ export const opacity = {
   wash: "22%",
   /** Pushed back: a dimmed bar or mark, muted ink on the side rail, a scrim, a dark-mode field. */
   recessed: "35%",
+  /** Settled and receding: a request already answered, its avatar and name behind the open ones. */
+  settled: "75%",
   /** Half strength: the focus ring, a hovered muted fill, secondary ink. */
   half: "50%",
   /** Mostly there: a pressed or hovered solid, a table header's fill. */

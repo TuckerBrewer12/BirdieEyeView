@@ -216,6 +216,7 @@
   --brand-opacity-tint: 12%;
   --brand-opacity-wash: 22%;
   --brand-opacity-recessed: 35%;
+  --brand-opacity-settled: 75%;
   --brand-opacity-half: 50%;
   --brand-opacity-strong: 70%;
   --brand-opacity-glass: 90%;
@@ -474,6 +475,7 @@
   --opacity-tint: var(--brand-opacity-tint);
   --opacity-wash: var(--brand-opacity-wash);
   --opacity-recessed: var(--brand-opacity-recessed);
+  --opacity-settled: var(--brand-opacity-settled);
   --opacity-half: var(--brand-opacity-half);
   --opacity-strong: var(--brand-opacity-strong);
   --opacity-glass: var(--brand-opacity-glass);
