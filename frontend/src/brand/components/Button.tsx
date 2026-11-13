@@ -37,9 +37,10 @@ function RowButton({
     defaultTagName: "button",
     render,
     props: {
+      // A caller's data-slot (record-row, round-preview) names the row for its tests and styles.
+      "data-slot": "row-button",
       ...props,
       type: render ? undefined : type,
-      "data-slot": "row-button",
       className: cn("text-left transition-colors", className),
     },
   });
