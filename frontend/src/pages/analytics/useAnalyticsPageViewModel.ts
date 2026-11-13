@@ -67,10 +67,16 @@ export interface AnalyticsPageViewModel {
   profile: ProfileViewModel;
 }
 
+export interface AnalyticsPageOptions {
+  initialTab?: AnalyticsTab;
+  /** A friend to compare with on Profile from the start: Social's Compare opens Profile this way. */
+  initialFriendId?: string | null;
+  repository?: AnalyticsRepository;
+}
+
 export function useAnalyticsPageViewModel(
   userId: string,
-  initialTab: AnalyticsTab = DEFAULT_TAB,
-  repository: AnalyticsRepository = analyticsRepository,
+  { initialTab = DEFAULT_TAB, initialFriendId = null, repository = analyticsRepository }: AnalyticsPageOptions = {},
 ): AnalyticsPageViewModel {
   const [filters, setFiltersState] = useState<AnalyticsFilters>(DEFAULT_FILTERS);
   const [trendShown, setTrendShownState] = useState<Record<TrendChart, number | null>>(ALL_ROUNDS_SHOWN);
@@ -89,7 +95,7 @@ export function useAnalyticsPageViewModel(
   const { data: user } = useUser(userId, repository);
   // Read once Profile has been opened, and kept while the golfer moves between sections.
   const [profileOpened, setProfileOpened] = useState(initialTab === "profile");
-  const profile = useProfileViewModel(userId, profileOpened, repository);
+  const profile = useProfileViewModel(userId, profileOpened, repository, initialFriendId);
 
   const analytics = data ?? null;
   const loadError = isError ? messageFrom(error, "Could not load your analytics.") : null;

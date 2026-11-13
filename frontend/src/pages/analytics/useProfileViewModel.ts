@@ -60,8 +60,12 @@ export function useProfileViewModel(
   userId: string,
   active: boolean,
   repository: AnalyticsRepository = analyticsRepository,
+  /** A friend to compare with from the start, as Social's Compare asks. */
+  initialFriendId: string | null = null,
 ): ProfileViewModel {
-  const [picked, setPicked] = useState<{ value: ComparisonTargetValue; friendId: string | null } | null>(null);
+  const [picked, setPicked] = useState<{ value: ComparisonTargetValue; friendId: string | null } | null>(
+    initialFriendId ? { value: "friend", friendId: initialFriendId } : null,
+  );
 
   const { data: user } = useUser(userId, repository);
   const target = user?.scoring_goal ?? null;

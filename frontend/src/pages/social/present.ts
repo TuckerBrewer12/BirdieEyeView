@@ -1,4 +1,5 @@
-import { formatDay } from "@/domain";
+import { formatDayShort } from "@/domain";
+import { formatHandicapIndex } from "@/domain/handicap";
 import type { FriendshipAnswer, FriendshipStatus, Person } from "@/data/friendsModel";
 
 /** Wording for the social pages. */
@@ -12,14 +13,29 @@ export function personInitials(person: Person): string | undefined {
   return person.name ? undefined : "?";
 }
 
-export function personDetail(person: Person): string {
-  return person.email ?? "No email";
+/** A friend's line: "Handicap 8.2 · played Oct 28", what of it there is, or "No rounds yet". */
+export function friendDetail(person: Person): string {
+  const index = person.handicapIndex != null ? `Handicap ${formatHandicapIndex(person.handicapIndex)}` : null;
+  const played = formatDayShort(person.lastPlayed);
+  if (index && played) return `${index} · played ${played}`;
+  if (index) return index;
+  if (played) return `Played ${played}`;
+  return "No rounds yet";
 }
 
-/** "Updated Jun 15, 2026", or null when the date is missing or unreadable. */
-export function updatedLabel(updatedAt: string | null): string | null {
-  const day = formatDay(updatedAt);
-  return day ? `Updated ${day}` : null;
+/** A request's line: the day it was sent or last answered, "Oct 28". */
+export function requestDetail(updatedAt: string | null): string | null {
+  return formatDayShort(updatedAt);
+}
+
+/** Where Compare goes: Profile, set against this friend. */
+export function compareLink(friendId: string): string {
+  return `/analytics?tab=profile&friend=${encodeURIComponent(friendId)}`;
+}
+
+/** The Requests button as a screen reader hears it: "Requests, 1 new". */
+export function requestsLabel(open: number): string {
+  return open > 0 ? `Requests, ${open} new` : "Requests";
 }
 
 export const STATUS_LABELS: Record<FriendshipStatus, string> = {

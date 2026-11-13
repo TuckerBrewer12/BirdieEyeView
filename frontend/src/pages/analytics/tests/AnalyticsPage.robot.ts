@@ -60,7 +60,7 @@ export class AnalyticsRobot {
   }
 
   /** The sample golfer with Avery and Jordan as friends: Avery's rounds compare, Jordan has too few. */
-  async openWithFriends(): Promise<this> {
+  async openWithFriends(path = "/analytics"): Promise<this> {
     const me = sampleGolfer.profile;
     await this.install({
       friends: { friendships: friendshipsOf({ id: me.id, name: me.name, email: me.email }) },
@@ -68,7 +68,7 @@ export class AnalyticsRobot {
         ...sampleGolfer.benchmarks,
         [`friend:${avery.id}`]: { ...sampleGolfer.benchmarks["handicap:10"], against: "friend", handicap: null },
       },
-    });
+    }, path);
     await this.seesRounds(24);
     return this;
   }

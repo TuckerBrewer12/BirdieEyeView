@@ -533,7 +533,8 @@ export interface paths {
         };
         /**
          * List Friendships
-         * @description List friendships for the current user.
+         * @description List friendships for the current user. An accepted friend carries their handicap index and
+         *     the day of their last round, as the friends list shows them.
          */
         get: operations["list_friendships_api_users_me_friends_get"];
         put?: never;
@@ -1154,6 +1155,10 @@ export interface components {
             addressee_name?: string | null;
             /** Created At */
             created_at: string;
+            /** Friend Handicap Index */
+            friend_handicap_index?: number | null;
+            /** Friend Last Played */
+            friend_last_played?: string | null;
             /** Id */
             id: string;
             /** Requester Email */

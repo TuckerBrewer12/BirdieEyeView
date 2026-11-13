@@ -1,3 +1,4 @@
+import { avery } from "../../../testing/fixtures/friendships";
 import { LINKS, UNSEEDED_COURSE, test } from "./AnalyticsPage.robot";
 
 test("opens on Scoring over the last 50 rounds at every course", async ({ analytics }) => {
@@ -128,6 +129,11 @@ test("Profile compares with a friend, and says when one has too few rounds", asy
   await analytics.seesComparedWith("Avery Lin");
   await analytics.compareWith("Jordan Castellanos");
   await analytics.seesFriendNote(/Jordan Castellanos needs more rounds/);
+});
+
+test("Social's Compare opens Profile already set against that friend", async ({ analytics }) => {
+  await analytics.openWithFriends(`/analytics?tab=profile&friend=${avery.id}`);
+  await analytics.seesComparedWith("Avery Lin");
 });
 
 test("a failed Profile load can be retried", async ({ analytics }) => {
