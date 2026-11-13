@@ -5,13 +5,23 @@ test("the scanner is on screen without scrolling", async ({ landing }) => {
   await landing.seesScanner();
 });
 
-test("the demo stays while a card is chosen and steps aside once it is scanned", async ({ landing }) => {
+test("the hero's photo gives way to the card's setup, then to the scanned round", async ({ landing }) => {
   await landing.open();
+  await landing.seesHeroPhoto();
   await landing.chooseScorecard();
-  await landing.seesDemo();
+  await landing.seesChosenCard();
+  await landing.seesHeroPhoto(false);
   await landing.tapScan();
   await landing.seesScannedCard();
-  await landing.seesDemo(false);
+});
+
+test("Sign up free under the scanned round goes to register", async ({ landing }) => {
+  await landing.open();
+  await landing.chooseScorecard();
+  await landing.tapScan();
+  await landing.seesScannedCard();
+  await landing.tapSignUp("Sign up free");
+  await landing.goesTo("/register");
 });
 
 test("a failed scan keeps the photo and says why", async ({ landing }) => {
@@ -55,12 +65,9 @@ test.describe("on a phone", () => {
     await landing.seesScanner();
   });
 
-  test("the menu toggle opens and closes the menu", async ({ landing }) => {
+  test("or sign up free, under Try it, goes to register", async ({ landing }) => {
     await landing.open();
-    await landing.seesMenuOpen(false);
-    await landing.openMenu();
-    await landing.seesMenuOpen(true);
-    await landing.closeMenu();
-    await landing.seesMenuOpen(false);
+    await landing.tapSignUp("sign up free");
+    await landing.goesTo("/register");
   });
 });
