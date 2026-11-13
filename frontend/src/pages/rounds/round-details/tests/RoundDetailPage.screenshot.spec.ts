@@ -29,7 +29,7 @@ test("populated round in dark mode", async ({ roundDetail }) => {
 
 test("unlinked round", async ({ roundDetail }) => {
   await roundDetail.open(scannedRound);
-  await roundDetail.seesLinkCourse();
+  await roundDetail.seesCourse("Scanned Scorecard");
   await roundDetail.capture("round-detail-unlinked.png");
 });
 
@@ -57,16 +57,16 @@ test("delete confirmation", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
   await roundDetail.tapDelete();
   await roundDetail.seesDeleteConfirm();
-  await roundDetail.capture("round-detail-delete-confirm.png");
+  await roundDetail.capture("round-detail-delete-confirm.png", { fullPage: false });
 });
 
-test("comparison charts", async ({ roundDetail }) => {
+test("vs your average", async ({ roundDetail }) => {
   await roundDetail.open(halfMoonBayRound, {
     fullCourses: [halfMoonBayCourse],
     comparison: roundComparison,
   });
   await roundDetail.seesCourse("Half Moon Bay");
-  await roundDetail.seesComparison();
+  await roundDetail.seesComparison("L20", { label: "Score", average: "80.4", difference: "\u22122.4" });
   await roundDetail.capture("round-detail-comparison.png");
 });
 

@@ -5,16 +5,24 @@ import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
 import { indexScale, knownValues, lastKnownIndex, paddedExtent } from "./scales";
 
-type SparklineTone = "primary" | "contrast";
+/** `good` and `bad` carry the server's verdict on the move the line shows; `index` is the handicap's blue. */
+type SparklineTone = "primary" | "contrast" | "good" | "bad" | "index";
 
 const STROKE: Record<SparklineTone, string> = {
   primary: tokens.color.primary,
   contrast: tokens.color.score.triple.text,
+  // A good move is the brand's green, as StatDelta draws the verdict beside it.
+  good: tokens.color.primary,
+  bad: tokens.color.score.bogey.text,
+  index: tokens.color.chart.series2,
 };
 
 const SWATCH: Record<SparklineTone, string> = {
   primary: "bg-primary",
   contrast: "bg-score-triple",
+  good: "bg-primary",
+  bad: "bg-score-bogey",
+  index: "bg-chart-series2",
 };
 
 interface SparklineSeries {
@@ -33,13 +41,36 @@ interface SparklineProps {
   fill?: boolean;
   /** A dashed line at this value: the average the server worked out for the line. None without it. */
   reference?: number | null;
+  /**
+   * `compact` is the squatter 96 x 32 box beside a KPI tile's figure; `card` the flat 150 x 30
+   * line under a card's lead figure, with no end dot; `mini` the 44 x 30 one beside a figure in a
+   * phone's header card, its end dot filled. Each is drawn at its own size so its stroke holds.
+   */
+  size?: "default" | "compact" | "card" | "mini";
   className?: string;
 }
 
+// The card and mini lines are drawn at the size they show, so they keep it rather than fill the row.
+const OWN_WIDTH = { card: "w-sparkline-card", mini: "w-sparkline-mini shrink-0" } as const;
+
 /** Which way a figure has been heading: a small line, no axes, the latest value marked. */
-export function Sparkline({ series, domain, fill = false, reference = null, className }: SparklineProps) {
+export function Sparkline({
+  series,
+  domain,
+  fill = false,
+  reference = null,
+  size = "default",
+  className,
+}: SparklineProps) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
-  const { width: W, height: H, pad, stroke, dot } = tokens.chart.sparkline;
+  const { sparkline } = tokens.chart;
+  const { width: W, height: H } = size === "default" ? sparkline : sparkline[size];
+  // The card and mini lines sit on a card with no rim to clear, so a dot they draw is filled.
+  const own = size === "card" || size === "mini" ? sparkline[size] : null;
+  const filled = own != null;
+  const pad = own?.pad ?? sparkline.pad;
+  const dot = own?.dot ?? sparkline.dot;
+  const stroke = own?.stroke ?? sparkline.stroke;
 
   const length = Math.max(0, ...series.map((s) => s.values.length));
   const all = series.flatMap((s) => s.values);
@@ -70,7 +101,10 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
   const labelled = series.filter((s) => s.label);
 
   return (
-    <div data-slot="sparkline" className={cn("flex flex-col gap-1.5", className)}>
+    <div
+      data-slot="sparkline"
+      className={cn("flex flex-col gap-1.5", (size === "card" || size === "mini") && OWN_WIDTH[size], className)}
+    >
       <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full overflow-visible" aria-hidden>
         {fill && (
           <defs>
@@ -106,14 +140,14 @@ export function Sparkline({ series, domain, fill = false, reference = null, clas
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              {endValue != null && (
+              {endValue != null && dot > 0 && (
                 <circle
                   cx={x(end)}
                   cy={y(endValue)}
                   r={dot}
-                  fill={tokens.color.card}
-                  stroke={color}
-                  strokeWidth={stroke}
+                  fill={filled ? color : tokens.color.card}
+                  stroke={filled ? "none" : color}
+                  strokeWidth={filled ? 0 : stroke}
                 />
               )}
             </g>

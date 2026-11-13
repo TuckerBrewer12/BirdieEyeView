@@ -1,27 +1,15 @@
 import { ScanProgress } from "@/brand";
-
-const PHASES = [
-  { label: "Reading course details…", detail: "Identifying name, location & tee boxes" },
-  { label: "Extracting hole scores…", detail: "Parsing your scorecard row by row" },
-  { label: "Verifying yardages & par…", detail: "Cross-checking hole data" },
-  { label: "Calculating confidence…", detail: "Flagging fields that may need review" },
-] as const;
+import { SCAN_STEPS, scanStepAt } from "@/domain/scan";
 
 interface ScanProcessingStepProps {
-  /** Which phase of reading the card to show. */
+  /** The photo being read. */
+  photoUrl: string | null;
+  /** Which step of reading the card to show. */
   phase: number;
 }
 
-/** The card being read. The scan reports no progress, so the phases are paced, not measured. */
-export function ScanProcessingStep({ phase }: ScanProcessingStepProps) {
-  const shown = Math.min(Math.max(phase, 0), PHASES.length - 1);
-  return (
-    <ScanProgress
-      label={PHASES[shown].label}
-      detail={PHASES[shown].detail}
-      phase={shown}
-      phaseCount={PHASES.length}
-      className="py-16"
-    />
-  );
+/** The card being read. The scan reports no progress, so the steps are paced, not measured. */
+export function ScanProcessingStep({ photoUrl, phase }: ScanProcessingStepProps) {
+  const step = scanStepAt(phase);
+  return <ScanProgress photoUrl={photoUrl} label={step.label} steps={SCAN_STEPS.length} phase={step.phase} className="py-16" />;
 }

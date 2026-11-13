@@ -14,8 +14,8 @@ export function AuthLink({ to, state, children }: AuthLinkProps) {
   return (
     <Button
       variant="link"
-      size="sm"
-      className="h-auto px-0 font-semibold"
+      size="inline"
+      className="font-semibold"
       nativeButton={false}
       render={<Link to={to} state={state} />}
     >

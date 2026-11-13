@@ -7,7 +7,7 @@ export default function InputPreview() {
       <Input defaultValue="Pebble Beach Golf Links" />
       <Input placeholder="Disabled" disabled />
       <Input placeholder="Invalid" aria-invalid />
-      <Input size="cta" placeholder="you@example.com" />
+      <Input size="inline" placeholder="Inline, beside a button" />
       <div className="flex gap-4">
         <label className="flex items-center gap-2 text-sm text-foreground">
           <Checkbox defaultChecked />

@@ -1,16 +1,19 @@
 import type { ReactNode } from "react";
+import { cn } from "@/brand/cn";
 import { ListRow } from "./ListRow";
 
 interface PersonRowProps {
   name: string;
   /** Two letters for the avatar. Defaults to the first letters of the first two words of `name`. */
   initials?: string;
-  /** The line under the name: an email, a handicap. */
+  /** The line under the name: a handicap and when they last played, an email, a date. */
   detail?: ReactNode;
   /** A quieter third line, such as when the row last changed. Makes the row taller than 64. */
   meta?: ReactNode;
-  /** Buttons or a status at the end of the row. */
+  /** Buttons, a status or a chevron at the end of the row. */
   actions?: ReactNode;
+  /** A row that's settled (a request answered): its avatar and words recede, its status doesn't. */
+  settled?: boolean;
   className?: string;
 }
 
@@ -25,23 +28,26 @@ function initialsOf(name: string): string {
 }
 
 /**
- * One person in a list: a brand-green initials avatar, their name and a line
- * or two about them, with whatever can be done about them at the end. Built to
- * sit in a `Collection layout="divided"`, which draws the rules between rows.
+ * One person in a list: a quiet initials avatar, their name and a line or two about them, with
+ * whatever can be done about them at the end. Built on `ListRow`, so it sits in a
+ * `Collection layout="divided"`, which draws the rules between rows.
  */
-function PersonRow({ name, initials, detail, meta, actions, className }: PersonRowProps) {
+function PersonRow({ name, initials, detail, meta, actions, settled = false, className }: PersonRowProps) {
   return (
     <ListRow slot="person-row" className={className}>
       <span
         aria-hidden
-        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-body font-bold text-primary-foreground"
+        className={cn(
+          "flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-body font-bold text-foreground",
+          settled && "opacity-settled",
+        )}
       >
         {initials ?? initialsOf(name)}
       </span>
 
-      <div className="min-w-0 flex-1">
+      <div className={cn("min-w-0 flex-1", settled && "opacity-settled")}>
         <p className="truncate text-body-lg font-semibold text-foreground">{name}</p>
-        {detail != null && <p className="truncate text-body text-muted-foreground">{detail}</p>}
+        {detail != null && <p className="truncate text-body-sm text-muted-foreground">{detail}</p>}
         {meta != null && <p className="mt-0.5 truncate text-meta text-muted-foreground">{meta}</p>}
       </div>
 

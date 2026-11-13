@@ -1,15 +1,5 @@
 import { useState } from "react";
-import {
-  Alert,
-  AlertDescription,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  SettingsGroup,
-  SettingsRow,
-} from "@/brand";
+import { Alert, AlertDescription, SettingsGroup, SettingsRow } from "@/brand";
 
 interface FriendCodeSectionProps {
   /** Null until the server has given the player one. */
@@ -31,28 +21,22 @@ export function FriendCodeSection({ friendCode }: FriendCodeSectionProps) {
   };
 
   return (
-    <Card className="pb-0">
-      <CardHeader>
-        <CardTitle>Friend code</CardTitle>
-        <CardDescription>Share this code so other players can send you a friend request.</CardDescription>
-      </CardHeader>
-      <SettingsGroup>
+    <div className="flex flex-col gap-2">
+      <SettingsGroup title="Friends">
         <SettingsRow
           type="copy"
-          label="Your code"
+          label="Friend code"
           value={friendCode ?? "Unavailable"}
-          copied={copy === "copied"}
           disabled={!friendCode}
+          copied={copy === "copied"}
           onCopy={() => void copyCode()}
         />
       </SettingsGroup>
       {copy === "failed" && (
-        <CardContent className="pb-4">
-          <Alert variant="destructive">
-            <AlertDescription>Could not copy your friend code.</AlertDescription>
-          </Alert>
-        </CardContent>
+        <Alert tone="danger">
+          <AlertDescription>Could not copy your friend code.</AlertDescription>
+        </Alert>
       )}
-    </Card>
+    </div>
   );
 }

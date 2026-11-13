@@ -4,30 +4,23 @@ import { scanRepository, type ScanRepository } from "@/data/scanRepository";
 import { useCardText, type PickedPhoto } from "@/data/useCardText";
 import { Round } from "@/domain";
 import { useExtractScorecard } from "@/data/useExtractScorecard";
-
-const PHASES = [
-  { label: "Reading course details…", detail: "Identifying name, location & tee boxes" },
-  { label: "Extracting hole scores…", detail: "Parsing your scorecard row by row" },
-  { label: "Verifying yardages & par…", detail: "Cross-checking hole data" },
-  { label: "Calculating confidence…", detail: "Flagging fields that may need review" },
-] as const;
-
-const PHASE_HOLD_MS = 3500;
+import { NO_CARD_FACTS, SCAN_STEPS, SCAN_STEP_HOLD_MS, cardContext, scanStepAt, type CardFacts } from "@/domain/scan";
 
 export interface TryItYourselfViewModel {
   step: "upload" | "processing" | "review";
   /** The picked photo, readied for upload. */
   photo: File | null;
   error: string | null;
-  setUserContext: (context: string) => void;
+  /** What the golfer says is on the card. */
+  card: CardFacts;
+  setCard: (patch: Partial<CardFacts>) => void;
   pickPhoto: (photo: File) => void;
   extract: () => void;
   reset: () => void;
 
+  /** The step of reading the card showing, and its words. */
   phase: number;
-  phaseCount: number;
   phaseLabel: string;
-  phaseDetail: string;
 
   /** The scanned card as a round, its figures read the way an unsaved edit's are. */
   round: Round | null;
@@ -38,7 +31,11 @@ export function useTryItYourselfViewModel(
   repository: ScanRepository = scanRepository,
 ): TryItYourselfViewModel {
   const [photo, setPhoto] = useState<PickedPhoto | null>(null);
-  const [userContext, setUserContext] = useState("");
+  const [card, setCardFacts] = useState<CardFacts>(NO_CARD_FACTS);
+  const setCard = useCallback(
+    (patch: Partial<CardFacts>) => setCardFacts((current) => ({ ...current, ...patch })),
+    [],
+  );
   const [phase, setPhase] = useState(0);
   // A later pick wins over an earlier one still being readied.
   const latestPick = useRef(0);
@@ -50,12 +47,12 @@ export function useTryItYourselfViewModel(
 
   // The scan gives no progress events, so the phases are paced rather than
   // reported. Restarting at zero each time keeps a second scan from opening
-  // on "Calculating confidence…".
+  // on its last step.
   useEffect(() => {
     if (step !== "processing") return;
     const timer = setInterval(
-      () => setPhase((current) => Math.min(current + 1, PHASES.length - 1)),
-      PHASE_HOLD_MS,
+      () => setPhase((current) => Math.min(current + 1, SCAN_STEPS.length - 1)),
+      SCAN_STEP_HOLD_MS,
     );
     return () => {
       clearInterval(timer);
@@ -78,13 +75,13 @@ export function useTryItYourselfViewModel(
 
   const extract = useCallback(() => {
     if (!photo) return;
-    mutate({ photo: photo.file, userContext, ocrText: cardText });
-  }, [photo, userContext, cardText, mutate]);
+    mutate({ photo: photo.file, userContext: cardContext(card), ocrText: cardText });
+  }, [photo, card, cardText, mutate]);
 
   const reset = useCallback(() => {
     latestPick.current += 1;
     setPhoto(null);
-    setUserContext("");
+    setCardFacts(NO_CARD_FACTS);
     resetExtraction();
   }, [resetExtraction]);
 
@@ -95,15 +92,14 @@ export function useTryItYourselfViewModel(
     step,
     photo: photo?.file ?? null,
     error: extraction.error?.message ?? null,
-    setUserContext,
+    card,
+    setCard,
     pickPhoto,
     extract,
     reset,
 
     phase,
-    phaseCount: PHASES.length,
-    phaseLabel: PHASES[phase].label,
-    phaseDetail: PHASES[phase].detail,
+    phaseLabel: scanStepAt(phase).label,
 
     round,
     hasScores: (round?.holes.length ?? 0) > 0,

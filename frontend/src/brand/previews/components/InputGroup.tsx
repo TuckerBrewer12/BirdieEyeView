@@ -44,7 +44,7 @@ export default function InputGroupPreview() {
         </InputGroupAddon>
       </InputGroup>
 
-      <InputGroup size="cta">
+      <InputGroup size="inline">
         <InputGroupInput placeholder="you@example.com" defaultValue="tiger@example.com" />
       </InputGroup>
     </>

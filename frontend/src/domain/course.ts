@@ -1,4 +1,4 @@
-import type { CourseDto, CourseSummaryDto, TeeDto } from "@/types/api";
+import type { CourseDto, CourseSummaryDto } from "@/types/api";
 
 /** A course as a list or a search shows it. */
 export interface CourseSummary {
@@ -8,10 +8,22 @@ export interface CourseSummary {
   par: number | null;
   holeCount: number;
   teeCount: number;
+  /** The tees' colours as the course names them, longest first. */
+  tees: string[];
+  /** The golfer's record here, or null until they have played it. */
+  record: CourseListRecord | null;
   /** Where it was found: saved here, or the course provider's and not saved yet. */
   source: "local" | "external";
   /** The course provider's id, for a course found there. Saving a round links it by this. */
   externalId: string | null;
+}
+
+/** What the course list shows of the golfer's rounds at a course. The server works out each figure. */
+export interface CourseListRecord {
+  roundsPlayed: number;
+  /** Over their full rounds there, or their nines when they have no full round. */
+  scoringAverage: number | null;
+  bestScore: number | null;
 }
 
 export function courseSummaryFrom(dto: CourseSummaryDto): CourseSummary {
@@ -22,6 +34,11 @@ export function courseSummaryFrom(dto: CourseSummaryDto): CourseSummary {
     par: dto.par,
     holeCount: dto.total_holes,
     teeCount: dto.tee_count,
+    tees: dto.tees,
+    record:
+      dto.rounds_played > 0
+        ? { roundsPlayed: dto.rounds_played, scoringAverage: dto.scoring_average, bestScore: dto.best_score }
+        : null,
     source: dto.source,
     externalId: dto.external_course_id,
   };
@@ -33,6 +50,11 @@ export const BACK_HOLES = [10, 11, 12, 13, 14, 15, 16, 17, 18] as const;
 type HasTees<T extends { color: string | null }> = { tees: T[] };
 type HasHoles<T extends { number: number | null }> = { holes: T[] };
 
+/** A round's course as it reads on screen: its name formatted, or "Unknown course" when the card had none. */
+export function courseLabel(name: string | null | undefined): string {
+  return name ? formatCourseName(name) : "Unknown course";
+}
+
 /** A course name in title case, or "Unknown": "half moon BAY" reads "Half Moon Bay". */
 export function formatCourseName(name: string | null | undefined): string {
   if (!name) return "Unknown";
@@ -41,6 +63,31 @@ export function formatCourseName(name: string | null | undefined): string {
     .split(/\s+/)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
+}
+
+/** A tee as a round names it, whatever case it was stored in: "Blue tees", "Back Gold tees". */
+export function formatTeeName(tee: string): string {
+  return `${formatCourseName(tee)} tees`;
+}
+
+const TRAILING_RATING = /^(.*?)[\s,]*\(?(\d{2}(?:\.\d)?)\s*\/\s*(\d{2,3})\)?\s*$/;
+
+/**
+ * A tee as written on a card, split into its name and the rating and slope a card prints after it:
+ * "BLUE 70.8/123" is Blue over "70.8 / 123". A name with no rating after it comes back whole.
+ */
+export function teeNameParts(tee: string): { name: string; rating: string | null } {
+  const match = TRAILING_RATING.exec(tee.trim());
+  if (!match || !match[1]) return { name: formatCourseName(tee), rating: null };
+  return { name: formatCourseName(match[1]), rating: `${match[2]} / ${match[3]}` };
+}
+
+/** A tee's rating and slope, as a scorecard prints them: "72.4 / 130". Null without both. */
+export function teeRatingLabel(
+  tee: { course_rating: number | null; slope_rating: number | null } | null | undefined,
+): string | null {
+  if (tee?.course_rating == null || tee?.slope_rating == null) return null;
+  return `${tee.course_rating} / ${tee.slope_rating}`;
 }
 
 export function getTee<T extends { color: string | null }>(
@@ -57,6 +104,21 @@ export function getHole<T extends { number: number | null }>(
 ): T | null {
   if (!course) return null;
   return course.holes.find((hole) => hole.number === number) ?? null;
+}
+
+/** A tee to pick: its name and, once every hole has one, its total yardage. */
+export interface TeeChoice {
+  name: string;
+  yards: number | null;
+}
+
+/** A course's tees to pick from, as `TeePicker` shows them: each tee's name and its yardage. */
+export function teeOptions(course: CourseDto | null | undefined): TeeChoice[] {
+  const options: TeeChoice[] = [];
+  for (const tee of course?.tees ?? []) {
+    if (tee.color) options.push({ name: tee.color, yards: tee.total_yardage });
+  }
+  return options;
 }
 
 export function teeColors(course: CourseDto | null | undefined): string[] {
@@ -89,9 +151,3 @@ export function chooseCompatibleTee(current: string, teeColors: string[]): strin
   return teeColors.find((c) => extractTeeColorToken(c) === currentToken) ?? null;
 }
 
-/** Named tees, longest first by the total the server sends. Ties keep the course's order. */
-export function teesByLength(course: CourseDto): TeeDto[] {
-  return course.tees
-    .filter((tee) => !!tee.color)
-    .sort((a, b) => (b.total_yardage ?? 0) - (a.total_yardage ?? 0));
-}

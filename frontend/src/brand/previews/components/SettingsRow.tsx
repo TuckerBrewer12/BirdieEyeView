@@ -1,4 +1,5 @@
-import { Card, CardHeader, CardTitle } from "@/brand/components/Card";
+import { useState } from "react";
+import { Input } from "@/brand/components/Input";
 import { SettingsGroup, SettingsRow } from "@/brand/components/SettingsRow";
 
 const themes = [
@@ -9,25 +10,30 @@ const themes = [
 
 const noop = () => {};
 
-/**
- * Compose-style @Preview for SettingsRow: every kind the settings page uses,
- * in a card under its header: a switch on and off, a choice, and a copy row
- * before and after copying and with nothing to copy.
- */
+/** Every kind of row, as the settings page uses them: Golf, App, and Sign out on its own. */
 export default function SettingsRowPreview() {
+  const [updates, setUpdates] = useState(true);
+  const [theme, setTheme] = useState<(typeof themes)[number]["value"]>("system");
   return (
-    <Card className="pb-0">
-      <CardHeader>
-        <CardTitle>App</CardTitle>
-      </CardHeader>
-      <SettingsGroup>
-        <SettingsRow type="switch" label="Email updates" checked onCheckedChange={noop} />
-        <SettingsRow type="switch" label="Friend requests" checked={false} onCheckedChange={noop} />
-        <SettingsRow type="choose" label="Theme" options={themes} value="system" onValueChange={noop} />
+    <div className="flex max-w-2xl flex-col gap-5">
+      <SettingsGroup title="Golf">
+        <SettingsRow
+          type="field"
+          label="Handicap index"
+          controlId="preview-handicap"
+          control={<Input id="preview-handicap" size="inline" defaultValue="8.4" className="w-22 text-right" />}
+        />
+        <SettingsRow type="link" label="Home course" value="Pebble Beach" onClick={noop} />
         <SettingsRow type="copy" label="Friend code" value="BIRD-1234" onCopy={noop} />
         <SettingsRow type="copy" label="Copied" value="BIRD-1234" copied onCopy={noop} />
-        <SettingsRow type="copy" label="No code yet" value="Unavailable" disabled onCopy={noop} />
       </SettingsGroup>
-    </Card>
+      <SettingsGroup title="App">
+        <SettingsRow type="choose" label="Theme" options={themes} value={theme} onValueChange={setTheme} />
+        <SettingsRow type="switch" label="Email updates" checked={updates} onCheckedChange={setUpdates} />
+      </SettingsGroup>
+      <SettingsGroup>
+        <SettingsRow type="action" label="Sign out" tone="danger" onClick={noop} />
+      </SettingsGroup>
+    </div>
   );
 }

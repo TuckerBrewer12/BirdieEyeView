@@ -9,6 +9,7 @@ import {
   FieldLabel,
   Input,
 } from "@/brand";
+import { courseLabel } from "@/domain";
 import { useAuth } from "@/context/auth";
 import { AuthLink } from "../components/AuthLink";
 import { AuthNotice } from "../components/AuthNotice";
@@ -47,7 +48,7 @@ export function RegisterPage() {
           <FieldLabel htmlFor="register-name">Name</FieldLabel>
           <Input
             id="register-name"
-            size="cta"
+           
             value={viewModel.name}
             onChange={(event) => viewModel.setName(event.target.value)}
             required
@@ -61,7 +62,7 @@ export function RegisterPage() {
           <Input
             id="register-email"
             type="email"
-            size="cta"
+           
             value={viewModel.email}
             onChange={(event) => viewModel.setEmail(event.target.value)}
             required
@@ -95,7 +96,7 @@ export function RegisterPage() {
           <FieldLabel htmlFor="register-handicap">Handicap (optional)</FieldLabel>
           <Input
             id="register-handicap"
-            size="cta"
+           
             inputMode="decimal"
             value={viewModel.handicap}
             onChange={(event) => viewModel.setHandicap(event.target.value)}
@@ -116,7 +117,7 @@ export function RegisterPage() {
             onQueryChange={viewModel.setCourseQuery}
             onSelectCourse={viewModel.pickHomeCourse}
             onClose={viewModel.clearHomeCourse}
-            linkedName={viewModel.homeCourse?.name}
+            linkedName={viewModel.homeCourse ? courseLabel(viewModel.homeCourse.name) : undefined}
             linkedTitle="Selected"
             onClear={viewModel.clearHomeCourse}
             clearLabel="Change home course"

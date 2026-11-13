@@ -1,24 +1,34 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
-import type { RoundSummary } from "@/domain";
+import { roundLine, type RoundSummary } from "@/domain";
+import { formatCourseName } from "@/domain/course";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 import {
+  ALL_COURSES,
+  ALL_COURSES_LABEL,
+  SCOPE_OPTIONS,
   SORT_LABELS,
   SORT_OPTIONS,
-  courseChips,
+  courseOptions,
   effectiveSort,
   filterRounds,
-  modeAfterPickingSort,
-  sortAfterPicking,
-  type CourseFilterOption,
-  type FilterMode,
-  type Sort,
+  scopeAfterPickingSort,
+  type Option,
+  type Scope,
   type SortKey,
-  type SortOption,
 } from "./roundsModel";
 
-export type { CourseFilterOption, FilterMode, SortKey, SortOption };
+export type { Option, Scope, SortKey };
+
+/** The round a link sheet is for, worded: its title line and the button that keeps it as it is. */
+export interface LinkingRound {
+  id: string;
+  /** "Scanned Scorecard · Mar 9 · 85". */
+  line: string;
+  /** "Keep as “Scanned Scorecard”", or "Leave it unlinked" for a round with no name. */
+  keepLabel: string;
+}
 
 export interface RoundsUiState {
   loading: boolean;
@@ -27,25 +37,43 @@ export interface RoundsUiState {
   visibleRounds: RoundSummary[];
   remainingCount: number;
   search: string;
-  filterMode: FilterMode;
-  chips: CourseFilterOption[];
-  sortAsc: boolean;
+  /** The phone keeps its search behind an icon until it is opened, or while it holds a query. */
+  searchOpen: boolean;
+  scope: Scope;
+  scopeOptions: readonly Option<Scope>[];
+  course: string;
+  courseOptions: Option<string>[];
+  /** The course menu's trigger: the course picked, or "All courses". */
+  courseLabel: string;
+  sortKey: SortKey;
   sortLabel: string;
-  sortOptions: readonly SortOption[];
-  effectiveSortKey: SortKey;
-  sortLocked: boolean;
+  sortOptions: readonly Option<SortKey>[];
+  /** The round whose course-link panel or sheet is open. */
+  linking: LinkingRound | null;
 }
 
 export interface RoundsPageViewModel extends RoundsUiState {
   loadMore: () => void;
   setSearch: (q: string) => void;
-  setFilterMode: (mode: FilterMode) => void;
-  selectSortKey: (key: SortKey) => void;
-  toggleSortDirection: () => void;
+  toggleSearch: () => void;
+  setScope: (scope: Scope) => void;
+  /** The segmented control's pick. Tapping the pressed option again leaves it pressed. */
+  pickScope: (value: string | undefined) => void;
+  setCourse: (course: string) => void;
+  selectSort: (key: SortKey) => void;
   closeLink: () => void;
   /** Whether this round's course-link panel is the one showing. */
   isLinkOpen: (roundId: string) => boolean;
   toggleLink: (roundId: string) => void;
+}
+
+function linkingRound(round: RoundSummary): LinkingRound {
+  const name = round.course?.name;
+  return {
+    id: round.id,
+    line: roundLine(round),
+    keepLabel: name ? `Keep as “${formatCourseName(name)}”` : "Leave it unlinked",
+  };
 }
 
 export function useRoundsPageViewModel(
@@ -58,47 +86,48 @@ export function useRoundsPageViewModel(
   });
 
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<Sort>({ key: "date", ascending: false });
+  const [searchShown, setSearchShown] = useState(false);
+  const [sort, setSort] = useState<SortKey>("newest");
+  const [scope, setScope] = useState<Scope>("all");
+  const [course, setCourse] = useState(ALL_COURSES);
   const [visibleCount, setVisibleCount] = useState(20);
-  const [filterMode, setFilterMode] = useState<FilterMode>("all");
-
   const [linkingRoundId, setLinkingRoundId] = useState<string | null>(null);
 
-  const chips = useMemo(() => courseChips(rounds), [rounds]);
+  const courses = useMemo(() => courseOptions(rounds), [rounds]);
 
   const closeLink = useCallback(() => setLinkingRoundId(null), []);
+  const isLinkOpen = useCallback((roundId: string) => linkingRoundId === roundId, [linkingRoundId]);
 
-  const isLinkOpen = useCallback(
-    (roundId: string) => linkingRoundId === roundId,
-    [linkingRoundId],
-  );
-
-  // Only one panel is open at a time, so tapping the link icon on the open row
-  // closes it and tapping any other row moves the panel there.
+  // Only one panel is open at a time, so tapping Link on the open row closes it and tapping any
+  // other row moves the panel there.
   const toggleLink = useCallback((roundId: string) => {
     setLinkingRoundId((open) => (open === roundId ? null : roundId));
   }, []);
 
-  const selectSortKey = useCallback((key: SortKey) => {
-    setFilterMode(modeAfterPickingSort);
-    setSort((current) => sortAfterPicking(current, key));
+  const selectSort = useCallback((key: SortKey) => {
+    setScope(scopeAfterPickingSort);
+    setSort(key);
   }, []);
 
-  const toggleSortDirection = useCallback(() => {
-    setSort((current) => ({ ...current, ascending: !current.ascending }));
+  const pickScope = useCallback((value: string | undefined) => {
+    const picked = SCOPE_OPTIONS.find((option) => option.value === value);
+    if (picked) setScope(picked.value);
   }, []);
+
+  const toggleSearch = useCallback(() => setSearchShown((shown) => !shown), []);
 
   const loadMore = useCallback(() => {
     setVisibleCount((n) => n + 50);
   }, []);
 
   const filteredRounds = useMemo(
-    () => filterRounds(rounds, filterMode, search, sort),
-    [rounds, filterMode, search, sort],
+    () => filterRounds(rounds, { scope, course, search, sort }),
+    [rounds, scope, course, search, sort],
   );
   const visibleRounds = filteredRounds.slice(0, visibleCount);
   const remainingCount = Math.max(0, filteredRounds.length - visibleCount);
-  const effective = effectiveSort(filterMode, sort);
+  const sortKey = effectiveSort(scope, sort);
+  const linkingSummary = rounds.find((round) => round.id === linkingRoundId);
 
   return {
     loading,
@@ -109,16 +138,21 @@ export function useRoundsPageViewModel(
     loadMore,
     search,
     setSearch,
-    filterMode,
-    setFilterMode,
-    chips,
-    sortAsc: effective.ascending,
-    sortLabel: SORT_LABELS[effective.key],
+    searchOpen: searchShown || search !== "",
+    toggleSearch,
+    scope,
+    scopeOptions: SCOPE_OPTIONS,
+    setScope,
+    pickScope,
+    course,
+    courseOptions: courses,
+    courseLabel: courses.find((option) => option.value === course)?.label ?? ALL_COURSES_LABEL,
+    setCourse,
+    sortKey,
+    sortLabel: SORT_LABELS[sortKey],
     sortOptions: SORT_OPTIONS,
-    effectiveSortKey: effective.key,
-    sortLocked: effective.locked,
-    selectSortKey,
-    toggleSortDirection,
+    selectSort,
+    linking: linkingSummary ? linkingRound(linkingSummary) : null,
     closeLink,
     isLinkOpen,
     toggleLink,

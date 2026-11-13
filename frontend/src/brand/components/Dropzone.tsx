@@ -1,10 +1,14 @@
 import * as React from "react";
 import { Camera } from "lucide-react";
 import { cn } from "@/brand/cn";
+import { FileButton } from "./FileButton";
 
 interface DropzoneProps {
   title: string;
-  hint: string;
+  /** A line under the title: what can be dropped. */
+  hint?: string;
+  /** The button that opens the file picker. */
+  actionLabel?: string;
   /** Mime pattern for the file input, e.g. `image/*,application/pdf`. */
   accept?: string;
   onFile: (file: File) => void;
@@ -12,55 +16,52 @@ interface DropzoneProps {
 }
 
 /**
- * The drag-and-drop target for picking one file.
+ * The drag-and-drop target for picking one file: a dashed box with a camera, a line saying what to
+ * drop, and a button that opens the file picker.
  *
- * Owns only the hidden input and the pointer plumbing — which file was picked
- * and what happens to it belong to the caller. Clicking anywhere in the box
- * opens the picker, so the whole area is the control rather than just the text.
+ * Owns only the drop plumbing; the button is a `FileButton`. Which file was picked and what happens
+ * to it belong to the caller. The box lights up while a file is held over it.
  */
-function Dropzone({ title, hint, accept = "image/*,application/pdf", onFile, className }: DropzoneProps) {
-  const inputRef = React.useRef<HTMLInputElement>(null);
+function Dropzone({
+  title,
+  hint,
+  actionLabel = "Choose file",
+  accept = "image/*,application/pdf",
+  onFile,
+  className,
+}: DropzoneProps) {
+  const [over, setOver] = React.useState(false);
 
   return (
     <div
       data-slot="dropzone"
-      role="button"
-      tabIndex={0}
-      onClick={() => inputRef.current?.click()}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          inputRef.current?.click();
-        }
+      data-over={over || undefined}
+      onDragOver={(event) => {
+        event.preventDefault();
+        setOver(true);
       }}
-      onDragOver={(event) => event.preventDefault()}
+      onDragLeave={() => setOver(false)}
       onDrop={(event) => {
         event.preventDefault();
+        setOver(false);
         const file = event.dataTransfer.files.item(0);
         if (file) onFile(file);
       }}
       className={cn(
-        "flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-input p-8 transition-colors hover:border-primary/recessed hover:bg-primary/faint focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/half focus-visible:outline-none",
+        "flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-input p-8 text-center transition-colors data-over:border-primary data-over:bg-primary/faint",
         className,
       )}
     >
-      <div className="flex size-12 items-center justify-center rounded-full bg-primary/tint">
-        <Camera className="size-5 text-primary" />
+      <div className="flex size-14 items-center justify-center rounded-full bg-primary/tint">
+        <Camera aria-hidden className="size-6 text-primary" />
       </div>
-      <div className="text-center">
-        <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+      <div className="flex flex-col gap-1">
+        <p className="text-body-lg font-semibold text-foreground">{title}</p>
+        {hint && <p className="text-body text-muted-foreground">{hint}</p>}
       </div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        className="hidden"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) onFile(file);
-        }}
-      />
+      <FileButton accept={accept} onFile={onFile}>
+        {actionLabel}
+      </FileButton>
     </div>
   );
 }

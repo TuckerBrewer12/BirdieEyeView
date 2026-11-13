@@ -4,18 +4,21 @@ import { useLinkCoursePanelViewModel } from "./useLinkCoursePanelViewModel";
 interface LinkCoursePanelProps {
   userId: string;
   roundId: string;
-  title: string;
+  /** Heads the panel, with a close button beside it. */
+  title?: string;
   onClose: () => void;
   onLinked: () => void;
+  /** `plain` inside the phone's sheet, which is already the surface. */
+  surface?: "card" | "plain";
 }
 
-export function LinkCoursePanel({ userId, roundId, title, onClose, onLinked }: LinkCoursePanelProps) {
+export function LinkCoursePanel({ userId, roundId, title, onClose, onLinked, surface = "card" }: LinkCoursePanelProps) {
   const viewModel = useLinkCoursePanelViewModel(userId, roundId, onLinked);
 
   return (
     <div className="flex flex-col gap-2.5">
       {viewModel.error && (
-        <Alert variant="destructive">
+        <Alert tone="danger">
           <AlertDescription>{viewModel.error}</AlertDescription>
         </Alert>
       )}
@@ -28,6 +31,7 @@ export function LinkCoursePanel({ userId, roundId, title, onClose, onLinked }: L
         onQueryChange={viewModel.setQuery}
         onSelectCourse={viewModel.selectCourse}
         onClose={onClose}
+        surface={surface}
         focusOnOpen
       />
     </div>

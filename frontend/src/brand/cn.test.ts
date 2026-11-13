@@ -13,4 +13,12 @@ describe("cn", () => {
     const classes = cn(buttonVariants({ variant: "default", size: "sm", className: "px-3.5 text-[13px]" }));
     expect(classes).toContain("text-primary-foreground");
   });
+
+  it("keeps a callout border width beside a status border colour", () => {
+    expect(cn("border-callout", "border-status-info")).toBe("border-callout border-status-info");
+  });
+
+  it("takes a card's surface shadow off for shadow-none", () => {
+    expect(cn("shadow-surface", "shadow-none")).toBe("shadow-none");
+  });
 });

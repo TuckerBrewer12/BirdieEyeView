@@ -1,5 +1,13 @@
 import { Dropzone } from "@/brand/components/Dropzone";
 
 export default function DropzonePreview() {
-  return <Dropzone title="Upload a scorecard photo" hint="Drag & drop or click to browse" onFile={() => {}} />;
+  return (
+    <Dropzone
+      title="Drop a photo of your card"
+      hint="JPG, PNG, HEIC or PDF"
+      actionLabel="Choose photo"
+      onFile={() => {}}
+      className="min-h-dropzone"
+    />
+  );
 }

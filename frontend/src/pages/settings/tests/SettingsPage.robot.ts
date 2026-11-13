@@ -41,11 +41,11 @@ export class SettingsRobot {
   }
 
   private updatesSwitch() {
-    return this.page.getByRole("switch", { name: "Get updates" });
+    return this.page.getByRole("switch", { name: "Email updates" });
   }
 
   private copyButton() {
-    return this.page.getByRole("button", { name: /^Cop(y|ied)$/ });
+    return this.page.getByRole("button", { name: /^(Copy friend code|Copied)$/ });
   }
 
   private handicapField() {
@@ -152,7 +152,7 @@ export class SettingsRobot {
   }
 
   async turnOffUpdates(): Promise<this> {
-    await this.updatesSwitch().uncheck();
+    await this.updatesSwitch().click();
     return this;
   }
 
@@ -190,7 +190,7 @@ export class SettingsRobot {
 
   async seesCopyFailed(): Promise<this> {
     await expect(this.page.getByRole("alert").filter({ hasText: "Could not copy your friend code." })).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Copy", exact: true })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Copy friend code", exact: true })).toBeVisible();
     return this;
   }
 
@@ -216,12 +216,12 @@ export class SettingsRobot {
   }
 
   async pickHomeCourse(name: string): Promise<this> {
-    await this.homeCourseCard().getByRole("button", { name: new RegExp(name) }).click();
+    await this.homeCourseCard().getByRole("option", { name: new RegExp(name) }).click();
     return this;
   }
 
   async seesCourseResult(name: string): Promise<this> {
-    await expect(this.homeCourseCard().getByRole("button", { name: new RegExp(name) })).toBeVisible();
+    await expect(this.homeCourseCard().getByRole("option", { name: new RegExp(name) })).toBeVisible();
     return this;
   }
 

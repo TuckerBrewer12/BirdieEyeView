@@ -20,12 +20,12 @@ export default function AuthCardPreview() {
         </p>
       }
     >
-      <Alert variant="destructive">
+      <Alert tone="danger">
         <AlertDescription>We couldn't complete this account request. Please try again.</AlertDescription>
       </Alert>
       <Field>
         <FieldLabel htmlFor="auth-card-email">Email</FieldLabel>
-        <Input id="auth-card-email" type="email" size="cta" placeholder="you@example.com" />
+        <Input id="auth-card-email" type="email" placeholder="you@example.com" />
       </Field>
       <Button size="cta">Send reset link</Button>
     </AuthCard>

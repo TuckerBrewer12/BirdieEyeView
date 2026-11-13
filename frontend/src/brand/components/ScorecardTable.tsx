@@ -1,9 +1,13 @@
-import { cn } from "@/brand/cn";
 import { HoleShape } from "@/brand/charts/HoleScoreShapes";
+import { cn } from "@/brand/cn";
 import { Button } from "@/brand/components/Button";
 import { Input } from "@/brand/components/Input";
-import { scoreFillClass, scoreOnFillClass, toParDisplay, toParTextClass } from "@/brand/theme";
-import type { HoleScore, Nine, Round } from "@/domain";
+import { ScorecardGrid, type ScorecardRow } from "@/brand/components/ScorecardGrid";
+import { formatScorecardFigure as show } from "@/domain/format";
+import { TeeSwatch } from "@/brand/components/TeeSwatch";
+import { scoreFillClass, scoreOnFillClass } from "@/brand/theme";
+import { ToParFigure } from "@/brand/components/ToParFigure";
+import { teeNameParts, type HoleScore, type Nine, type Round } from "@/domain";
 
 export interface ScorecardEdits {
   onStrokesChange: (hole: number, strokes: number | null) => void;
@@ -12,28 +16,24 @@ export interface ScorecardEdits {
 }
 
 interface ScorecardTableProps {
-  nine: Nine;
-  /** The nine's own total column — "OUT" or "IN". */
-  label: string;
-  /** The round, when this nine closes it: adds the TOT column. */
-  round?: Round;
+  round: Round;
   /** The tee played, which names the yardage row. */
   teeBox?: string | null;
-  /** Makes scores, putts and greens editable. The nine shown should already carry the edits. */
+  /** Makes scores, putts and greens editable. The round shown should already carry the edits. */
   edits?: ScorecardEdits;
   /** Holes whose score is in doubt, like one a scan couldn't read for sure. Their score cell is ringed. */
   toCheck?: readonly number[];
+  /**
+   * Draws one nine, closed by its own total, as a phone shows the card: two of these stacked, front
+   * then back, in place of the one wide table. Left out, every hole is across with Out, In and Tot.
+   */
+  nine?: "front" | "back";
   className?: string;
 }
 
-const LABEL_CELL = "px-3 py-2 text-left font-bold";
-const CELL = "px-1 py-2 text-center";
-const NINE_CELL = "w-12 bg-muted px-2 py-2 text-center font-bold";
-const TOTAL_CELL = "w-12 bg-secondary px-2 py-2 text-center font-bold";
-
-function show(value: number | null): string {
-  return value == null ? "-" : String(value);
-}
+/** Row heights by what the row holds: the score's marks get the most room, the reference rows the least. */
+const ROW = { figures: "h-8", small: "h-7", score: "h-11" } as const;
+const SMALL = cn(ROW.small, "text-label font-medium text-muted-foreground");
 
 /** "" clears a cell; anything that isn't a number leaves it as it was. */
 function parseCount(text: string): number | null | undefined {
@@ -54,11 +54,16 @@ const GIR_WORD = new Map<boolean | null, string>([
   [null, "not recorded"],
 ]);
 
-function GirMark({ gir, className }: { gir: boolean | null; className?: string }) {
-  if (gir == null) return <span className="text-muted-foreground">·</span>;
+/** A green or fairway: filled when hit, ringed when missed, a dash when the card didn't say. */
+function HitMark({ hit, className }: { hit: boolean | null; className?: string }) {
+  if (hit == null) return <span className="text-muted-foreground">–</span>;
   return (
     <span
-      className={cn("inline-block size-2.5 rounded-sm", gir ? "bg-primary" : "bg-destructive/recessed", className)}
+      className={cn(
+        "inline-block size-icon-xs rounded-full align-middle",
+        hit ? "bg-primary" : "border-2 border-input",
+        className,
+      )}
     />
   );
 }
@@ -85,202 +90,206 @@ function CountInput({
         if (parsed !== undefined) onChange(parsed);
       }}
       // Block, so it centres under the hole number like the rest of the column.
-      className={cn("mx-auto block h-7 w-8 px-0 text-center text-sm font-semibold", className)}
+      className={cn("mx-auto block h-7 w-7 rounded-lg px-0 text-center text-sm font-semibold md:text-sm", className)}
     />
   );
 }
 
 /** Rings a score cell whose score is in doubt. */
-const CHECK_RING = "ring-2 ring-destructive ring-offset-1 ring-offset-card";
+const CHECK_RING = "ring-2 ring-status-warning ring-offset-1 ring-offset-card";
 
-function ScoreCell({ hole, edits, check }: { hole: HoleScore; edits?: ScorecardEdits; check: boolean }) {
+function ScoreCell({
+  hole,
+  edits,
+  check,
+}: {
+  hole: HoleScore;
+  edits?: ScorecardEdits;
+  check: boolean;
+}) {
   if (!edits) {
+    // The one hole mark the kit draws, so a score reads the same here as on the round flow.
     return (
-      <td className="px-1 py-1.5" data-check={check || undefined}>
-        <div className="flex justify-center">
-          {check ? (
-            <span className={cn("inline-flex rounded-md", CHECK_RING)}>
-              <HoleShape hole={hole} />
-            </span>
-          ) : (
-            <HoleShape hole={hole} />
-          )}
-        </div>
-      </td>
+      <span className={cn("inline-flex align-middle", check && cn("rounded-md", CHECK_RING))}>
+        {/* A phone's nine is too narrow for the large mark. */}
+        <HoleShape hole={hole} square size="scorecard" />
+      </span>
     );
   }
   return (
-    <td className="px-1 py-1" data-check={check || undefined}>
-      {/* The fill sits behind a clear input: an input's own dark background would cover it. */}
-      <div className={cn("mx-auto w-8 rounded-lg", hole.kind && scoreFillClass(hole.kind))}>
-        <CountInput
-          label={check ? `Hole ${hole.hole} strokes, to check` : `Hole ${hole.hole} strokes`}
-          value={hole.strokes}
-          onChange={(strokes) => edits.onStrokesChange(hole.hole, strokes)}
-          className={cn(
-            "bg-transparent dark:bg-transparent",
-            hole.kind ? cn("border-transparent", scoreOnFillClass(hole.kind)) : "border-dashed",
-            check && CHECK_RING,
-            check && !hole.kind && "border-destructive",
-          )}
-        />
-      </div>
-    </td>
+    // The fill sits behind a clear input: an input's own dark background would cover it.
+    <div className={cn("mx-auto w-7 rounded-lg", hole.kind && scoreFillClass(hole.kind))}>
+      <CountInput
+        label={check ? `Hole ${hole.hole} strokes, to check` : `Hole ${hole.hole} strokes`}
+        value={hole.strokes}
+        onChange={(strokes) => edits.onStrokesChange(hole.hole, strokes)}
+        className={cn(
+          "bg-transparent dark:bg-transparent",
+          hole.kind ? cn("border-transparent", scoreOnFillClass(hole.kind)) : "border-dashed",
+          check && CHECK_RING,
+          check && !hole.kind && "border-status-warning",
+        )}
+      />
+    </div>
   );
 }
 
 /**
- * One nine of a scorecard: par, the score marked the way a card marks it, and to par, with the
- * nine's totals (and the round's, on the closing nine). Every figure is the server's, or
+ * A round as one scorecard: every hole across, with Out, In and Tot where the nines close. Par, the
+ * score marked the way a card marks it, to par, and the totals. Every figure is the server's, or
  * Round.previewEdits' while editing or before a scan is saved.
  *
- * Yards, handicap, putts, greens and shots-to-green appear only when a hole has them (putts and
- * greens always do while editing), because a scanned card often has none, and a row of dashes
+ * Yards, handicap, putts, greens, fairways and shots-to-green appear only when a hole has them (putts
+ * and greens always do while editing), because a scanned card often has none, and a row of dashes
  * reads as a failed scan rather than a card that never held the data.
  */
-function ScorecardTable({ nine, label, round, teeBox, edits, toCheck, className }: ScorecardTableProps) {
-  const holes = nine.holes;
-  const showYards = holes.some((hole) => hole.yardage != null);
-  const showHandicap = holes.some((hole) => hole.handicap != null);
-  const showPutts = edits != null || holes.some((hole) => hole.putts != null);
-  const showGir = edits != null || holes.some((hole) => hole.gir != null);
-  const showShots = holes.some((hole) => hole.shotsToGreen != null);
+function ScorecardTable({ round, teeBox, edits, toCheck, nine, className }: ScorecardTableProps) {
+  const { frontNine, backNine } = round;
+  const shown = nine === "front" ? [frontNine] : nine === "back" ? [backNine] : [frontNine, backNine];
+  const nines = shown.filter((part) => part.holes.length > 0);
+  const holes = nines.flatMap((part) => part.holes);
+  const figures = "text-body-sm font-medium text-foreground-secondary";
+  const optional = {
+    yards: holes.some((hole) => hole.yardage != null),
+    handicap: holes.some((hole) => hole.handicap != null),
+    putts: edits != null || holes.some((hole) => hole.putts != null),
+    gir: edits != null || holes.some((hole) => hole.gir != null),
+    fairway: holes.some((hole) => hole.fairway != null),
+    shots: holes.some((hole) => hole.shotsToGreen != null),
+  };
+
+  const rows: (ScorecardRow<HoleScore, Nine> | false)[] = [
+    optional.yards && {
+      key: "yards",
+      label: teeBox ? <TeeLabel teeBox={teeBox} /> : "Yards",
+      className: cn(SMALL, "text-caption md:text-label"),
+      labelClassName: "text-muted-foreground",
+      cell: (hole) => show(hole.yardage),
+      nine: (part) => show(part.yards),
+      tot: show(round.yards),
+    },
+    // A phone's nine has no room for the stroke index; the wide card keeps it.
+    optional.handicap && {
+      key: "handicap",
+      label: "Hcp",
+      wideOnly: true,
+      className: SMALL,
+      labelClassName: "text-muted-foreground",
+      cell: (hole) => show(hole.handicap),
+    },
+    {
+      key: "par",
+      label: "Par",
+      className: cn(ROW.figures, figures),
+      labelClassName: "text-foreground-secondary",
+      cell: (hole) => show(hole.par),
+      nine: (part) => show(part.par),
+      tot: show(round.par),
+    },
+    {
+      key: "score",
+      label: "Score",
+      className: cn(ROW.score, "text-body font-semibold text-foreground", edits && "bg-muted/recessed"),
+      labelClassName: "text-foreground",
+      cell: (hole) => <ScoreCell hole={hole} edits={edits} check={!!toCheck?.includes(hole.hole)} />,
+      isCheck: (hole) => !!toCheck?.includes(hole.hole),
+      nine: (part) => show(part.total),
+      tot: show(round.score),
+    },
+    {
+      key: "to-par",
+      label: "To par",
+      className: cn(ROW.small, "text-label font-semibold"),
+      labelClassName: "text-muted-foreground",
+      cell: (hole) => <ToParFigure toPar={hole.toPar} size="inherit" empty="-" />,
+      nine: (part) => <ToParFigure toPar={part.toPar} size="inherit" empty="-" />,
+      tot: <ToParFigure toPar={round.toPar} size="inherit" empty="-" />,
+    },
+    optional.putts && {
+      key: "putts",
+      label: "Putts",
+      className: cn(ROW.figures, figures, edits && "bg-muted/recessed"),
+      labelClassName: "text-foreground-secondary",
+      cell: (hole) =>
+        edits ? (
+          <CountInput
+            label={`Hole ${hole.hole} putts`}
+            value={hole.putts}
+            onChange={(putts) => edits.onPuttsChange(hole.hole, putts)}
+            className="h-6 w-6 text-xs font-normal"
+          />
+        ) : (
+          <span className={cn(hole.threePutt && "font-bold text-destructive")}>{hole.putts ?? "·"}</span>
+        ),
+      nine: (part) => show(part.putts),
+      tot: show(round.putts),
+    },
+    optional.gir && {
+      key: "gir",
+      label: "GIR",
+      className: cn(ROW.figures, figures),
+      labelClassName: "text-foreground-secondary",
+      cell: (hole) =>
+        edits ? (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Hole ${hole.hole} green: ${GIR_WORD.get(hole.gir)}`}
+            onClick={() => edits.onGirChange(hole.hole, NEXT_GIR.get(hole.gir) ?? null)}
+            className="mx-auto"
+          >
+            <HitMark hit={hole.gir} className="size-3" />
+          </Button>
+        ) : (
+          <HitMark hit={hole.gir} />
+        ),
+      nine: (part) => show(part.gir),
+      tot: show(round.gir),
+    },
+    optional.fairway && {
+      key: "fairway",
+      label: "Fairway",
+      className: cn(ROW.figures, figures),
+      labelClassName: "text-foreground-secondary",
+      cell: (hole) => <HitMark hit={hole.fairway} />,
+    },
+    optional.shots && {
+      key: "shots",
+      label: "S2G",
+      className: SMALL,
+      labelClassName: "text-muted-foreground",
+      cell: (hole) => show(hole.shotsToGreen),
+    },
+  ];
 
   return (
-    <table data-slot="scorecard-table" className={cn("w-full border-collapse", className)}>
-      <thead>
-        <tr className="border-b border-border bg-muted text-xs font-bold text-muted-foreground uppercase">
-          <th className={cn(LABEL_CELL, "w-20")}>Hole</th>
-          {holes.map((hole) => (
-            <th key={hole.hole} className="w-10 px-1 py-2 text-center">{hole.hole}</th>
-          ))}
-          <th className="w-12 bg-secondary px-2 py-2 text-center text-foreground">{label}</th>
-          {round && <th className="w-12 bg-secondary px-2 py-2 text-center text-foreground">TOT</th>}
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-border">
-        {showYards && (
-          <tr className="text-xs text-muted-foreground">
-            <td className={cn(LABEL_CELL, "capitalize")}>{teeBox || "Yards"}</td>
-            {holes.map((hole) => (
-              <td key={hole.hole} className={CELL}>{show(hole.yardage)}</td>
-            ))}
-            <td className={NINE_CELL}>{show(nine.yards)}</td>
-            {round && <td className={TOTAL_CELL}>{show(round.yards)}</td>}
-          </tr>
-        )}
-
-        {showHandicap && (
-          <tr className="text-xs text-muted-foreground">
-            <td className={LABEL_CELL}>Hcp</td>
-            {holes.map((hole) => (
-              <td key={hole.hole} className={CELL}>{show(hole.handicap)}</td>
-            ))}
-            <td className={NINE_CELL} />
-            {round && <td className={TOTAL_CELL} />}
-          </tr>
-        )}
-
-        <tr className="text-sm text-foreground">
-          <td className={LABEL_CELL}>Par</td>
-          {holes.map((hole) => (
-            <td key={hole.hole} className={CELL}>{show(hole.par)}</td>
-          ))}
-          <td className={NINE_CELL}>{show(nine.par)}</td>
-          {round && <td className={TOTAL_CELL}>{show(round.par)}</td>}
-        </tr>
-
-        <tr className={cn("text-sm text-foreground", edits && "bg-muted/recessed")}>
-          <td className={LABEL_CELL}>Score</td>
-          {holes.map((hole) => (
-            <ScoreCell key={hole.hole} hole={hole} edits={edits} check={!!toCheck?.includes(hole.hole)} />
-          ))}
-          <td className={NINE_CELL}>{show(nine.total)}</td>
-          {round && <td className={cn(TOTAL_CELL, "text-base")}>{show(round.score)}</td>}
-        </tr>
-
-        <tr className="text-xs">
-          <td className={cn(LABEL_CELL, "text-muted-foreground")}>To Par</td>
-          {holes.map((hole) => (
-            <td key={hole.hole} className={cn(CELL, toParTextClass(hole.toPar))}>
-              {toParDisplay(hole.toPar, "-")}
-            </td>
-          ))}
-          <td className={cn(NINE_CELL, toParTextClass(nine.toPar))}>{toParDisplay(nine.toPar, "-")}</td>
-          {round && (
-            <td className={cn(TOTAL_CELL, "text-sm", toParTextClass(round.toPar))}>
-              {toParDisplay(round.toPar, "-")}
-            </td>
-          )}
-        </tr>
-
-        {showPutts && (
-          <tr className={cn("text-xs text-muted-foreground", edits && "bg-muted/recessed")}>
-            <td className={LABEL_CELL}>Putts</td>
-            {holes.map((hole) =>
-              edits ? (
-                <td key={hole.hole} className="px-1 py-1">
-                  <CountInput
-                    label={`Hole ${hole.hole} putts`}
-                    value={hole.putts}
-                    onChange={(putts) => edits.onPuttsChange(hole.hole, putts)}
-                    className="h-6 text-xs font-normal"
-                  />
-                </td>
-              ) : (
-                <td
-                  key={hole.hole}
-                  className={cn(CELL, hole.threePutt && "font-bold text-destructive")}
-                >
-                  {hole.putts ?? "·"}
-                </td>
-              ),
-            )}
-            <td className={NINE_CELL}>{show(nine.putts)}</td>
-            {round && <td className={TOTAL_CELL}>{show(round.putts)}</td>}
-          </tr>
-        )}
-
-        {showGir && (
-          <tr className="text-xs">
-            <td className={cn(LABEL_CELL, "text-primary")}>GIR</td>
-            {holes.map((hole) =>
-              edits ? (
-                <td key={hole.hole} className="px-1 py-1 text-center">
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={`Hole ${hole.hole} green: ${GIR_WORD.get(hole.gir)}`}
-                    onClick={() => edits.onGirChange(hole.hole, NEXT_GIR.get(hole.gir) ?? null)}
-                    className="mx-auto"
-                  >
-                    <GirMark gir={hole.gir} className="size-3" />
-                  </Button>
-                </td>
-              ) : (
-                <td key={hole.hole} className={CELL}>
-                  <GirMark gir={hole.gir} />
-                </td>
-              ),
-            )}
-            <td className={cn(NINE_CELL, "text-primary")}>{show(nine.gir)}</td>
-            {round && <td className={cn(TOTAL_CELL, "text-primary")}>{show(round.gir)}</td>}
-          </tr>
-        )}
-
-        {showShots && (
-          <tr className="text-xs text-muted-foreground">
-            <td className={LABEL_CELL}>S2G</td>
-            {holes.map((hole) => (
-              <td key={hole.hole} className={CELL}>{show(hole.shotsToGreen)}</td>
-            ))}
-            <td className={NINE_CELL} />
-            {round && <td className={TOTAL_CELL} />}
-          </tr>
-        )}
-      </tbody>
-    </table>
+    <ScorecardGrid
+      nines={nines}
+      nineLabel={(part) => (part === backNine ? "In" : "Out")}
+      withTot={nine == null}
+      rows={rows.filter((row) => row !== false)}
+      className={className}
+    />
   );
 }
 
 export { ScorecardTable };
+
+/**
+ * The tee row's label: the tee's swatch and name, with a rating and slope read off the card ("BLUE
+ * 70.8/123") on a line under the name from `md`, and left off a phone's nine, rather than running
+ * into the first hole.
+ */
+function TeeLabel({ teeBox }: { teeBox: string }) {
+  const { name, rating } = teeNameParts(teeBox);
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <TeeSwatch color={teeBox} className="size-2 shrink-0 rounded-full" />
+      <span className="flex flex-col leading-tight">
+        <span>{name}</span>
+        {/* A phone's nine has no room for it beside the first hole; the wide card has. */}
+        {rating && <span className="hidden text-caption font-medium text-muted-foreground md:block">{rating}</span>}
+      </span>
+    </span>
+  );
+}

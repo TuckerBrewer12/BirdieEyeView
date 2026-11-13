@@ -1,9 +1,10 @@
 import { test } from "./DashboardPage.robot";
 
-test("shows greeting and scoring average", async ({ dashboard }) => {
+test("leads with the last round", async ({ dashboard }) => {
   await dashboard.open();
   await dashboard.seesGreeting();
-  await dashboard.seesScoringAverage("76.8");
+  await dashboard.seesLastRound("Half Moon Bay", "78");
+  await dashboard.seesScoringAverage("74.7");
 });
 
 test("handicap sheet opens and closes", async ({ dashboard }) => {
@@ -14,28 +15,50 @@ test("handicap sheet opens and closes", async ({ dashboard }) => {
   await dashboard.doesNotSeeHandicapSheet();
 });
 
-test("tapping a milestone opens its round", async ({ dashboard }) => {
+test("the last round opens it", async ({ dashboard }) => {
   await dashboard.open();
-  await dashboard.tapMilestone("First round under par");
+  await dashboard.openLastRound();
+  await dashboard.isAtRound("round-1");
+});
+
+test("the best round opens it", async ({ dashboard }) => {
+  await dashboard.open();
+  await dashboard.openBestRound();
   await dashboard.isAtRound("round-3");
+});
+
+test("tapping a recent round opens it", async ({ dashboard }) => {
+  await dashboard.open();
+  await dashboard.openRecentRound("Blue Rock");
+  await dashboard.isAtRound("round-3");
+});
+
+test("see all opens the round list", async ({ dashboard }) => {
+  await dashboard.open();
+  await dashboard.seeAllRounds();
+  await dashboard.isAtRounds();
 });
 
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
-  test("tapping the goal card opens The Lab", async ({ dashboard }) => {
+  test("leads with the last round", async ({ dashboard }) => {
+    await dashboard.open();
+    await dashboard.seesLastRound("Half Moon Bay", "78");
+    await dashboard.seesScoringAverage("74.7");
+  });
+
+  test("tapping the goal card opens Profile", async ({ dashboard }) => {
     await dashboard.open();
     await dashboard.tapGoal();
     await dashboard.isAtLab();
   });
 
-  test("the trend switches to the handicap, and a tap picks a round", async ({ dashboard }) => {
+  test("the handicap opens its breakdown from the bottom", async ({ dashboard }) => {
     await dashboard.open();
-    await dashboard.showTrend("HCP");
-    await dashboard.seesTrendShowing("HCP");
-    // Round 3 of 5 sits just past the middle of the plot.
-    await dashboard.tapTrendAt(0.55);
-    await dashboard.seesTrendTooltip("Round 3");
-    await dashboard.seesTrendTooltip("HI");
+    await dashboard.openHandicapSheet();
+    await dashboard.seesHandicapSheet();
+    await dashboard.closeHandicapSheet();
+    await dashboard.doesNotSeeHandicapSheet();
   });
 });

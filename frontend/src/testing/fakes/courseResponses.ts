@@ -74,6 +74,9 @@ export function courseResponse(course: StoredCourse): CourseDto {
     front_nine_par: ninePar(course, 1),
     back_nine_par: ninePar(course, 10),
     holes: course.holes,
-    tees: course.tees.map(teeResponse),
+    // Longest first, ties by colour, as Course.tees_by_length() sends them.
+    tees: course.tees
+      .map(teeResponse)
+      .sort((a, b) => (b.total_yardage ?? 0) - (a.total_yardage ?? 0) || (a.color ?? "").toLowerCase().localeCompare((b.color ?? "").toLowerCase())),
   };
 }

@@ -3,7 +3,7 @@
 from typing import Dict, List, Optional
 
 from analytics.handicap import round_course_handicap, round_net_score
-from analytics.stats import best_round_ranks
+from analytics.stats import best_round_ranks, worst_round_ranks
 from api.course_responses import course_detail
 from api.schemas import (
     HoleScoreResponse,
@@ -19,6 +19,7 @@ from models import Round
 
 
 def _hole_scores(round_: Round) -> list[HoleScoreResponse]:
+    running = round_.running_to_par()
     return [
         HoleScoreResponse(
             **hs.model_dump(),
@@ -28,6 +29,7 @@ def _hole_scores(round_: Round) -> list[HoleScoreResponse]:
             to_par=round_.score_to_par(hs.hole_number),
             kind=round_.get_score_kind(hs.hole_number),
             three_putt=hs.is_three_putt(),
+            running_to_par=running.get(hs.hole_number),
         )
         for hs in round_.hole_scores
         if hs.hole_number is not None
@@ -61,8 +63,11 @@ def _figures(round_: Round) -> dict:
     ).model_dump()
 
 
-def round_summary(round_: Round, best_rank: Optional[int] = None) -> RoundSummaryResponse:
+def round_summary(
+    round_: Round, best_rank: Optional[int] = None, worst_rank: Optional[int] = None
+) -> RoundSummaryResponse:
     """A round for list views: only what a list draws, so a long list stays small."""
+    running = round_.running_to_par()
     return RoundSummaryResponse(
         id=str(round_.id),
         course_id=str(round_.course.id) if round_.course and round_.course.id else None,
@@ -80,18 +85,21 @@ def round_summary(round_: Round, best_rank: Optional[int] = None) -> RoundSummar
                 hole_number=hs.hole_number,
                 strokes=hs.strokes,
                 kind=round_.get_score_kind(hs.hole_number),
+                running_to_par=running.get(hs.hole_number),
             )
             for hs in round_.hole_scores
             if hs.hole_number is not None
         ],
         best_rank=best_rank,
+        worst_rank=worst_rank,
     )
 
 
 def round_list(rounds: List[Round]) -> List[RoundSummaryResponse]:
-    """The round list, each round placed among the others for the list's Best order."""
-    ranks: Dict[int, int] = best_round_ranks(rounds)
-    return [round_summary(r, ranks.get(i)) for i, r in enumerate(rounds)]
+    """The round list, each round placed among the others for the list's Best and Worst orders."""
+    best: Dict[int, int] = best_round_ranks(rounds)
+    worst: Dict[int, int] = worst_round_ranks(rounds)
+    return [round_summary(r, best.get(i), worst.get(i)) for i, r in enumerate(rounds)]
 
 
 def round_detail(round_: Round, handicap_index: Optional[float] = None) -> RoundResponse:
@@ -111,4 +119,5 @@ def round_detail(round_: Round, handicap_index: Optional[float] = None) -> Round
         hole_scores=_hole_scores(round_),
         course_handicap=round_course_handicap(round_, handicap_index),
         net_score=round_net_score(round_, handicap_index),
+        worst_stretch=round_.worst_stretch(),
     )

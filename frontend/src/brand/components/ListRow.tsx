@@ -1,34 +1,34 @@
 import type { ReactNode } from "react";
 import { cn } from "@/brand/cn";
 
-const heights = {
-  /** A person or a course: 64 tall. */
-  default: "min-h-16",
-  /** A settings row: 56 tall. */
-  sm: "min-h-14",
-};
-
-/**
- * The shell of a list row: a leading mark or label, one or two lines, and one
- * value or action at the end. Built to sit in a `Collection layout="divided"`
- * (or a `SettingsGroup`), which draws the rules between rows.
- */
-function ListRow({
-  slot = "list-row",
-  size = "default",
-  className,
-  children,
-}: {
+interface ListRowProps {
+  /** The `data-slot` the row answers to: `person-row`, `settings-row`. */
   slot?: string;
-  size?: keyof typeof heights;
+  /** `default` is at least 64 tall, for a row with two lines; `sm` is 56, for a settings row of one. */
+  size?: "default" | "sm";
   className?: string;
   children: ReactNode;
-}) {
+}
+
+/**
+ * The shell every list row is built on: a leading mark, a line or two, and one value or action at
+ * the end, in a row at least 64 tall (56 for `sm`). It draws no rule: rows sit in a
+ * `Collection layout="divided"` or a `SettingsGroup`, which draws the rules between them.
+ */
+function ListRow({ slot = "list-row", size = "default", className, children }: ListRowProps) {
   return (
-    <div data-slot={slot} className={cn("flex w-full items-center gap-3 py-2 pr-3 pl-4", heights[size], className)}>
+    <div
+      data-slot={slot}
+      className={cn(
+        "flex w-full items-center gap-3 pr-3 pl-4",
+        size === "sm" ? "min-h-14 py-1.5" : "min-h-16 py-2",
+        className,
+      )}
+    >
       {children}
     </div>
   );
 }
 
 export { ListRow };
+export type { ListRowProps };

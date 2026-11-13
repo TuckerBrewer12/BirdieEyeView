@@ -5,12 +5,13 @@ import {
   Alert,
   AlertDescription,
   Button,
+  CardFactsForm,
   Dropzone,
   FileChip,
   ScanProgress,
-  ScorecardLayoutPicker,
   RoundScorecard,
 } from "@/brand";
+import { SCAN_STEPS } from "@/domain/scan";
 import { useFilePreview } from "@/platform/useFilePreview";
 import { tokens } from "@/brand/theme";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
@@ -49,10 +50,10 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
                   onClear={viewModel.reset}
                 />
 
-                <ScorecardLayoutPicker onContextChange={viewModel.setUserContext} />
+                <CardFactsForm card={viewModel.card} onChange={viewModel.setCard} idPrefix="try-it" />
 
                 {viewModel.error && (
-                  <Alert variant="destructive">
+                  <Alert tone="danger">
                     <AlertDescription>{viewModel.error}</AlertDescription>
                   </Alert>
                 )}
@@ -65,7 +66,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
             )}
 
             {viewModel.error && !viewModel.photo && (
-              <Alert variant="destructive" className="mt-3">
+              <Alert tone="danger" className="mt-3">
                 <AlertDescription>{viewModel.error}</AlertDescription>
               </Alert>
             )}
@@ -81,10 +82,10 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
             transition={{ duration: tokens.motion.scanStep.processing }}
           >
             <ScanProgress
+              photoUrl={previewUrl}
               label={viewModel.phaseLabel}
-              detail={viewModel.phaseDetail}
+              steps={SCAN_STEPS.length}
               phase={viewModel.phase}
-              phaseCount={viewModel.phaseCount}
             />
           </motion.div>
         )}
@@ -101,8 +102,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
               <RoundScorecard
                 round={viewModel.round}
                 teeBox={viewModel.round.teeBox}
-                showTee
-                className="rounded-none border-0 shadow-none"
+                className="rounded-none shadow-none"
                 action={
                   <Button variant="secondary" size="xs" onClick={viewModel.reset}>
                     <RotateCcw data-icon="inline-start" />
