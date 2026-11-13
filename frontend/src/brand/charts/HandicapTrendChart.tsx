@@ -6,7 +6,7 @@ import { tokens } from "@/brand/theme";
 import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
 import { ChartTooltip } from "./ChartTooltip";
 import { indexScale, knownValues, lastKnownIndex, niceExtent } from "./scales";
-import { usePointPick } from "./useColumnHover";
+import { usePointPick } from "./usePointPick";
 
 interface HandicapTrendChartProps {
   data: RoundTrendPoint[];

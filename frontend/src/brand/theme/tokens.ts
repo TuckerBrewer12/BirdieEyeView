@@ -10,7 +10,7 @@
  * `npm run gen:tokens` turns this file into `tokens.gen.css`: the semantic
  * colours as custom properties on `:root` and `:root.dark`, the measures as
  * `--brand-*` properties, and the `@theme inline` block that gives each one its
- * Tailwind utility (`bg-card`, `text-caption`, `rounded-tooltip`, `h-chart`, …).
+ * Tailwind utility (`bg-card`, `text-caption`, `rounded-surface`, `h-chart`, …).
  *
  * In TypeScript, read everything as `tokens.*`. `tokens.color` is the semantic
  * colours as `var()` references (`tokens.color.score.birdie.base` is

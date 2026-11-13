@@ -9,7 +9,7 @@ import type { ScoreKind } from "@/domain/score";
 import { ChartTooltip } from "./ChartTooltip";
 import { AxisLabel, TooltipRow } from "./trendParts";
 import { useChartWidth } from "./useChartWidth";
-import { usePointPick } from "./useColumnHover";
+import { usePointPick } from "./usePointPick";
 import { indexScale, knownValues, niceExtent, tickIndexes } from "./scales";
 
 type TrendAreaTone = "primary" | "birdie" | "bogey" | "eagle" | "neutral" | "contrast";
