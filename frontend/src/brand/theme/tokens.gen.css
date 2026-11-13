@@ -177,6 +177,7 @@
   --brand-space-page-end-phone: calc(var(--brand-space-above-nav) + 1.5rem);
   --brand-space-action-bar: 73px;
   --brand-space-page-end-action-bar: calc(var(--brand-space-page-end-phone) + var(--brand-space-action-bar));
+  --brand-space-page-end-pinned: calc(var(--brand-space-action-bar) + 3rem);
   --brand-size-rail: 240px;
   --brand-size-preview: 390px;
   --brand-size-scan-photo: 360px;
@@ -436,6 +437,7 @@
   --spacing-page-end-phone: var(--brand-space-page-end-phone);
   --spacing-action-bar: var(--brand-space-action-bar);
   --spacing-page-end-action-bar: var(--brand-space-page-end-action-bar);
+  --spacing-page-end-pinned: var(--brand-space-page-end-pinned);
   --spacing-rail: var(--brand-size-rail);
   --spacing-preview: var(--brand-size-preview);
   --spacing-scan-photo: var(--brand-size-scan-photo);

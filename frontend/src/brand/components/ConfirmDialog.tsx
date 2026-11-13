@@ -20,8 +20,8 @@ type ConfirmDialogProps = Pick<AlertDialogPrimitive.Root.Props, "open" | "onOpen
      */
     tone?: "destructive" | "default";
     /**
-     * A second way through besides the confirm, such as "Discard" beside "Save". It sits between
-     * Cancel and the confirm, and reads in the destructive ink when stacked on a phone.
+     * A second way through besides the confirm, such as "Discard" beside "Save": red ink with no
+     * fill (`ghostDestructive`), between Cancel and the confirm.
      */
     alternative?: { label: string; onClick: () => void };
     /** Why the last try failed, shown above the buttons. */
@@ -38,8 +38,7 @@ type ConfirmDialogProps = Pick<AlertDialogPrimitive.Root.Props, "open" | "onOpen
  * it rises from the bottom with the buttons stacked, from there up it is
  * centred with the buttons in a row. The confirm is the kit's destructive
  * button (or the primary one, with `tone="default"`); Cancel is outlined beside
- * it and plain under it. With an `alternative`, Cancel goes quiet and the
- * alternative takes the outline.
+ * it and plain under it. An `alternative` sits between them in red ink.
  */
 function ConfirmDialog({
   open,
@@ -95,7 +94,7 @@ function ConfirmDialog({
               <AlertDialogPrimitive.Close
                 render={
                   <Button
-                    variant={alternative ? "ghost" : "outline"}
+                    variant="outline"
                     size="lg"
                     className="@max-md:border-transparent @max-md:bg-transparent @max-md:shadow-none"
                   />
@@ -104,13 +103,7 @@ function ConfirmDialog({
                 {cancelLabel}
               </AlertDialogPrimitive.Close>
               {alternative && (
-                <Button
-                  variant="outline"
-                  size="lg"
-                  disabled={pending}
-                  onClick={alternative.onClick}
-                  className="@max-md:border-transparent @max-md:bg-transparent @max-md:text-destructive @max-md:shadow-none"
-                >
+                <Button variant="ghostDestructive" size="lg" disabled={pending} onClick={alternative.onClick}>
                   {alternative.label}
                 </Button>
               )}

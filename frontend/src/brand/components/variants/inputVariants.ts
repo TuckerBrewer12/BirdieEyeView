@@ -15,6 +15,10 @@ const inputVariants = cva(
            button): the row carries the label. 40px, a default Button's height,
            so a field and its button line up. */
         inline: "h-10 rounded-card px-3",
+        /* A short value typed straight into a settings row (a handicap): it reads as the row's
+           value, right-aligned with no box, until it is hovered or focused. */
+        value:
+          "h-9 w-22 rounded-lg border-transparent px-2.5 text-right hover:border-input dark:bg-transparent",
       },
     },
     defaultVariants: {

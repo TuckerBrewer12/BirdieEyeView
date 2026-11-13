@@ -52,7 +52,7 @@ export class SettingsRobot {
     return this.page.getByLabel("Handicap index");
   }
 
-  /** Save: in the bar pinned at the foot on a computer, in the title row on a phone. */
+  /** Save, in the bar pinned at the foot while there are changes. */
   private saveButton() {
     return this.page.getByRole("button", { name: /^(Save|Saving…)$/ });
   }
@@ -260,7 +260,7 @@ export class SettingsRobot {
 
   /** Discard in the bar at the foot: the form goes back to what is saved. */
   async discard(): Promise<this> {
-    await this.page.locator("[data-slot=unsaved-bar]").getByRole("button", { name: "Discard" }).click();
+    await this.page.locator("[data-slot=action-bar]").getByRole("button", { name: "Discard" }).click();
     await expect(this.saveButton()).toHaveCount(0);
     return this;
   }

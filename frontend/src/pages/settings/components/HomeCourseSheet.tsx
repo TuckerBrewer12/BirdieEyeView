@@ -59,7 +59,7 @@ export function HomeCourseSheet({
             searching={searching}
             onQueryChange={onQueryChange}
             onSelectCourse={onPick}
-            onClose={onClear}
+            onClose={onClose}
             linkedTitle="Selected"
             linkedName={homeCourse ? courseLabel(homeCourse.name) : undefined}
             onClear={onClear}

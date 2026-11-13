@@ -452,6 +452,8 @@ export const space = {
   "action-bar": 73,
   /** Where a phone page's content ends when an `ActionBar` is pinned over the tab bar. */
   "page-end-action-bar": "calc(var(--brand-space-page-end-phone) + var(--brand-space-action-bar))",
+  /** Where a page's content ends from `md` when an `ActionBar` is pinned at every width: the bar, and the page's own 48px under it. */
+  "page-end-pinned": "calc(var(--brand-space-action-bar) + 3rem)",
 };
 
 /** Shadcn's base radius, `--radius`; the named steps below sit around it. */

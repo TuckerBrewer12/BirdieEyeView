@@ -8,6 +8,7 @@ const rows = [
   { name: "Secondary", variant: "outline", label: "Cancel" },
   { name: "Tonal", variant: "secondary", label: "Filter" },
   { name: "Ghost", variant: "ghost", label: "Skip" },
+  { name: "Ghost destructive", variant: "ghostDestructive", label: "Discard" },
   { name: "Text", variant: "link", label: "Edit" },
   { name: "Muted text", variant: "linkMuted", label: "Clear" },
   { name: "Danger", variant: "destructive", label: "Delete" },

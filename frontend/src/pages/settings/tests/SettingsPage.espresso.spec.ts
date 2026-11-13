@@ -170,7 +170,7 @@ test("Discard in the bar puts the form back", async ({ settings }) => {
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
-  test("Save sits in the title row once something changes", async ({ settings }) => {
+  test("Save in the pinned bar keeps the change on a phone", async ({ settings }) => {
     await settings.open();
     await settings.typeHandicap("+1.5");
     await settings.save();

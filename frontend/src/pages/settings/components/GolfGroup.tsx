@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { Alert, AlertDescription, FieldError, Input, SettingsGroup, SettingsRow } from "@/brand";
+import { useCopyText } from "@/platform/useCopyText";
 
 const HANDICAP_ID = "settings-handicap";
 
@@ -25,17 +25,7 @@ export function GolfGroup({
   onOpenHomeCourse,
   friendCode,
 }: GolfGroupProps) {
-  const [copy, setCopy] = useState<"copied" | "failed" | null>(null);
-
-  const copyCode = async () => {
-    if (!friendCode) return;
-    try {
-      await navigator.clipboard.writeText(friendCode);
-      setCopy("copied");
-    } catch {
-      setCopy("failed");
-    }
-  };
+  const { copy, copied, failed } = useCopyText();
 
   return (
     <div className="flex flex-col gap-2">
@@ -47,10 +37,9 @@ export function GolfGroup({
           control={
             <Input
               id={HANDICAP_ID}
-              size="inline"
+              size="value"
               type="text"
               inputMode="decimal"
-              className="w-22 text-right"
               value={handicap}
               onChange={(event) => onHandicapChange(event.target.value)}
               placeholder="None"
@@ -66,11 +55,13 @@ export function GolfGroup({
           label="Friend code"
           value={friendCode ?? "Unavailable"}
           disabled={!friendCode}
-          copied={copy === "copied"}
-          onCopy={() => void copyCode()}
+          copied={copied}
+          onCopy={() => {
+            if (friendCode) void copy(friendCode);
+          }}
         />
       </SettingsGroup>
-      {copy === "failed" && (
+      {failed && (
         <Alert tone="danger">
           <AlertDescription>Could not copy your friend code.</AlertDescription>
         </Alert>
