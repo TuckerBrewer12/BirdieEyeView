@@ -14,6 +14,20 @@ test("the demo stays while a card is chosen and steps aside once it is scanned",
   await landing.seesDemo(false);
 });
 
+test("the scan is told the visitor's name, the scores to par, and the rows on the card", async ({ landing }) => {
+  await landing.open();
+  await landing.chooseScorecard();
+  await landing.nameOnCard("Tucker");
+  await landing.scoresWrittenToPar();
+  await landing.markOnCard("Putts");
+  await landing.markOnCard("Shots to green");
+  await landing.tapScan();
+  await landing.seesScannedCard();
+  await landing.seesScanNote(
+    "my name is Tucker. scores written to par. name on score row. row order: score, putts, shots to green",
+  );
+});
+
 test("a failed scan keeps the photo and says why", async ({ landing }) => {
   await landing.open({ scanFails: true });
   await landing.chooseScorecard();

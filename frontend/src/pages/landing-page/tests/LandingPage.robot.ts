@@ -1,6 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
+import { type FakeBackend } from "../../../testing/fakes/FakeBackend";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import { SCANNED_COURSE_NAME, scannedCard } from "../../../testing/fixtures/scan";
 import { expectTheme } from "../../../testing/theme";
@@ -13,6 +14,7 @@ const DEMO_ALT = "A paper golf scorecard being scanned";
 /** Screen robot for the logged-out landing page at `/`. */
 export class LandingRobot {
   private readonly page: Page;
+  private backend: FakeBackend | null = null;
 
   constructor(page: Page) {
     this.page = page;
@@ -31,7 +33,7 @@ export class LandingRobot {
     // motion. Emulating it here is what makes the page deterministic enough to
     // have a baseline — `test.use({ reducedMotion })` does not reach the page.
     await this.page.emulateMedia({ reducedMotion: "reduce" });
-    await FakeSession.install(this.page, { signedOut: true, scan: scanFails ? undefined : scannedCard });
+    this.backend = await FakeSession.install(this.page, { signedOut: true, scan: scanFails ? undefined : scannedCard });
     await this.page.goto("/");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -94,6 +96,29 @@ export class LandingRobot {
   async chooseScorecard(): Promise<this> {
     await this.page.locator('input[type="file"]').setInputFiles(CARD_PHOTO);
     await expect(this.page.getByRole("button", { name: "Scan my scorecard" })).toBeVisible();
+    return this;
+  }
+
+  /** Says whose row is theirs on the card. */
+  async nameOnCard(name: string): Promise<this> {
+    await this.page.getByRole("textbox", { name: "Your name on the card" }).fill(name);
+    return this;
+  }
+
+  async scoresWrittenToPar(): Promise<this> {
+    await this.page.getByRole("group", { name: "Scores written as" }).getByRole("button", { name: /^To par/ }).click();
+    return this;
+  }
+
+  /** Says which other rows the card has: "Putts", "Shots to green". */
+  async markOnCard(row: string): Promise<this> {
+    await this.page.getByRole("group", { name: "Also on the card" }).getByRole("checkbox", { name: row }).click();
+    return this;
+  }
+
+  /** What the last scan request told the scan about the card. */
+  async seesScanNote(note: string): Promise<this> {
+    await expect.poll(() => this.backend?.scanRequests.at(-1)?.user_context).toBe(note);
     return this;
   }
 
