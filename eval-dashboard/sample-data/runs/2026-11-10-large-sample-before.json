@@ -1,0 +1,133 @@
+{
+ "cases": [
+  {
+   "diagnostics": [
+    "parser: player row matched"
+   ],
+   "effective_seconds": 6.15,
+   "extraction_seconds": 0.15,
+   "fingerprint": "a7f0cee57940f6801ce08d98f84047582d6fdfc7868b7432ab76d29f87cd1401",
+   "id": "bay_view_d",
+   "image": "bay_view.jpg",
+   "known_gap": null,
+   "matched_cells": 18,
+   "mismatches": [],
+   "operational_error": null,
+   "player": "D",
+   "status": "PERFECT",
+   "total_cells": 18
+  },
+  {
+   "diagnostics": [
+    "parser: player row matched"
+   ],
+   "effective_seconds": 7.15,
+   "extraction_seconds": 0.15,
+   "fingerprint": "8dbf2261927ad40c2e1f13f815f9731373c8f2257377a19d8cffbd5975444b81",
+   "id": "yocha_dehe_t",
+   "image": "yocha_dehe.jpg",
+   "known_gap": null,
+   "matched_cells": 14,
+   "mismatches": [
+    {
+     "actual": 5,
+     "expected": 4,
+     "field": "strokes",
+     "hole": 1
+    },
+    {
+     "actual": null,
+     "expected": 4,
+     "field": "strokes",
+     "hole": 2
+    },
+    {
+     "actual": 5,
+     "expected": 4,
+     "field": "strokes",
+     "hole": 3
+    },
+    {
+     "actual": null,
+     "expected": 4,
+     "field": "strokes",
+     "hole": 4
+    }
+   ],
+   "operational_error": null,
+   "player": "T",
+   "status": "FAILED",
+   "total_cells": 18
+  },
+  {
+   "diagnostics": [
+    "assembly: no strokes could be assembled"
+   ],
+   "effective_seconds": 8.15,
+   "extraction_seconds": 0.15,
+   "fingerprint": "492fdf3317e2986a9a4cb66f2f7fc1c1749dc1fc887bdb8f64fa15e4c391c6d7",
+   "id": "lake_chabot_g",
+   "image": "lake_chabot.jpg",
+   "known_gap": "No final score row; strokes require derived values.",
+   "matched_cells": 0,
+   "mismatches": [],
+   "operational_error": "Extraction failed: no final score row detected",
+   "player": "G",
+   "status": "ERROR",
+   "total_cells": 18
+  }
+ ],
+ "images": [
+  {
+   "diagnostics": [
+    "table merge rejected: hole coverage changed"
+   ],
+   "image": "bay_view.jpg",
+   "ocr_seconds": 6.0
+  },
+  {
+   "diagnostics": [
+    "table merge: original layout retained"
+   ],
+   "image": "yocha_dehe.jpg",
+   "ocr_seconds": 7.0
+  },
+  {
+   "diagnostics": [
+    "table merge: original layout retained"
+   ],
+   "image": "lake_chabot.jpg",
+   "ocr_seconds": 8.0
+  }
+ ],
+ "run": {
+  "branch": "parser-baseline",
+  "commit": "1111111111111111111111111111111111111111",
+  "created_at": "2026-11-10T12:30:00Z",
+  "dirty": false,
+  "head_commit": "4444444444444444444444444444444444444444",
+  "id": "sample-before",
+  "models": {
+   "merge": "gemini-3.1-flash-lite-preview",
+   "ocr": "mistral-ocr-latest"
+  },
+  "pr": null,
+  "run_url": null,
+  "suite": "large"
+ },
+ "schema_version": 1,
+ "summary": {
+  "at_least_80": 1,
+  "at_least_90": 1,
+  "cases": 3,
+  "failed": 2,
+  "images": 3,
+  "known_gaps": 1,
+  "matched_cells": 32,
+  "merge_rejected_images": 1,
+  "operational_errors": 1,
+  "perfect": 1,
+  "suite_seconds": 24.5,
+  "total_cells": 54
+ }
+}

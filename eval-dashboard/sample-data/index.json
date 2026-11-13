@@ -1,0 +1,143 @@
+{
+ "runs": [
+  {
+   "file": "runs/2026-11-12-large-sample-current.json",
+   "run": {
+    "branch": "parser-refinement",
+    "commit": "3333333333333333333333333333333333333333",
+    "created_at": "2026-11-12T12:30:00Z",
+    "dirty": false,
+    "head_commit": "6666666666666666666666666666666666666666",
+    "id": "sample-current",
+    "models": {
+     "merge": "gemini-3.1-flash-lite-preview",
+     "ocr": "mistral-ocr-latest"
+    },
+    "pr": null,
+    "run_url": null,
+    "suite": "large"
+   },
+   "summary": {
+    "at_least_80": 2,
+    "at_least_90": 2,
+    "cases": 3,
+    "failed": 1,
+    "images": 3,
+    "known_gaps": 1,
+    "matched_cells": 44,
+    "merge_rejected_images": 0,
+    "operational_errors": 0,
+    "perfect": 1,
+    "suite_seconds": 26.5,
+    "total_cells": 54
+   },
+   "without_known_gaps": {
+    "at_least_80": 2,
+    "at_least_90": 2,
+    "cases": 2,
+    "failed": 0,
+    "images": 2,
+    "known_gaps": 0,
+    "matched_cells": 35,
+    "merge_rejected_images": 0,
+    "operational_errors": 0,
+    "perfect": 1,
+    "suite_seconds": 26.5,
+    "total_cells": 36
+   }
+  },
+  {
+   "file": "runs/2026-11-11-large-sample-layout.json",
+   "run": {
+    "branch": "split-table-fix",
+    "commit": "2222222222222222222222222222222222222222",
+    "created_at": "2026-11-11T12:30:00Z",
+    "dirty": false,
+    "head_commit": "5555555555555555555555555555555555555555",
+    "id": "sample-layout",
+    "models": {
+     "merge": "gemini-3.1-flash-lite-preview",
+     "ocr": "mistral-ocr-latest"
+    },
+    "pr": null,
+    "run_url": null,
+    "suite": "large"
+   },
+   "summary": {
+    "at_least_80": 2,
+    "at_least_90": 1,
+    "cases": 3,
+    "failed": 1,
+    "images": 3,
+    "known_gaps": 1,
+    "matched_cells": 34,
+    "merge_rejected_images": 0,
+    "operational_errors": 1,
+    "perfect": 1,
+    "suite_seconds": 25.5,
+    "total_cells": 54
+   },
+   "without_known_gaps": {
+    "at_least_80": 2,
+    "at_least_90": 1,
+    "cases": 2,
+    "failed": 0,
+    "images": 2,
+    "known_gaps": 0,
+    "matched_cells": 34,
+    "merge_rejected_images": 0,
+    "operational_errors": 0,
+    "perfect": 1,
+    "suite_seconds": 25.5,
+    "total_cells": 36
+   }
+  },
+  {
+   "file": "runs/2026-11-10-large-sample-before.json",
+   "run": {
+    "branch": "parser-baseline",
+    "commit": "1111111111111111111111111111111111111111",
+    "created_at": "2026-11-10T12:30:00Z",
+    "dirty": false,
+    "head_commit": "4444444444444444444444444444444444444444",
+    "id": "sample-before",
+    "models": {
+     "merge": "gemini-3.1-flash-lite-preview",
+     "ocr": "mistral-ocr-latest"
+    },
+    "pr": null,
+    "run_url": null,
+    "suite": "large"
+   },
+   "summary": {
+    "at_least_80": 1,
+    "at_least_90": 1,
+    "cases": 3,
+    "failed": 2,
+    "images": 3,
+    "known_gaps": 1,
+    "matched_cells": 32,
+    "merge_rejected_images": 1,
+    "operational_errors": 1,
+    "perfect": 1,
+    "suite_seconds": 24.5,
+    "total_cells": 54
+   },
+   "without_known_gaps": {
+    "at_least_80": 1,
+    "at_least_90": 1,
+    "cases": 2,
+    "failed": 1,
+    "images": 2,
+    "known_gaps": 0,
+    "matched_cells": 32,
+    "merge_rejected_images": 1,
+    "operational_errors": 0,
+    "perfect": 1,
+    "suite_seconds": 24.5,
+    "total_cells": 36
+   }
+  }
+ ],
+ "schema_version": 1
+}
