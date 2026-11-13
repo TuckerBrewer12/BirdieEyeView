@@ -192,6 +192,8 @@ async def update_round(
 
         return round_detail(updated, await player_handicap_index(db, current_user))
 
+    except HTTPException:
+        raise
     except NotFoundError:
         raise HTTPException(404, "Round not found") from None
     except Exception:
