@@ -81,7 +81,7 @@ Open the static dashboard locally; no npm install or app server is needed:
 
 ```bash
 cd eval-dashboard
-python -m http.server 8080
+python3 -m http.server 8080
 ```
 
 Visit [http://localhost:8080/](http://localhost:8080/). It reads published history from the public `eval-results` branch. Add `?data=./sample-data/` to explore three illustrative runs without contacting providers. The dashboard includes suite filters, known-gap exclusion, case diagnostics/history, and two-run comparisons. Comparisons flag changed fixtures, hints, or answer keys instead of calling those scanner improvements. The data URL is shown in the footer; GitHub's raw-content cache may delay new results.

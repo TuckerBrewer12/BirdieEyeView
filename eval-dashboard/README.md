@@ -5,7 +5,7 @@ A static viewer for public scorecard-evaluation history. It has no build step, n
 From this directory:
 
 ```bash
-python -m http.server 8080
+python3 -m http.server 8080
 ```
 
 Open [http://localhost:8080/](http://localhost:8080/). The default data source is `https://raw.githubusercontent.com/TuckerBrewer12/BirdieEyeView/eval-results/`. The footer identifies the source. The viewer caps its index at 10,000 entries/20 MB and individual reports at 2 MB; older data remains stored even if a future archive exceeds viewer limits. Add `?data=./sample-data/` for three **illustrative** runs, or use another HTTP(S) directory with the same layout. Files must be served over HTTP; opening `index.html` as a local file is insufficient. A different origin must permit CORS. GitHub raw-content caching can delay newly published data; Refresh reloads the index.
