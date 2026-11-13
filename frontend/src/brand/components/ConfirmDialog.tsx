@@ -1,5 +1,6 @@
 import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog";
 import { cn } from "@/brand/cn";
+import { Alert, AlertDescription } from "./Alert";
 import { Button } from "./Button";
 import { SheetPortal } from "./Sheet";
 
@@ -13,6 +14,18 @@ type ConfirmDialogProps = Pick<AlertDialogPrimitive.Root.Props, "open" | "onOpen
     confirmLabel: string;
     cancelLabel?: string;
     onConfirm: () => void;
+    /**
+     * `destructive` (the default) for an action that loses something; `default` for one that keeps
+     * it, such as Save when leaving with unsaved changes.
+     */
+    tone?: "destructive" | "default";
+    /**
+     * A second way through besides the confirm, such as "Discard" beside "Save": red ink with no
+     * fill (`ghostDestructive`), between Cancel and the confirm.
+     */
+    alternative?: { label: string; onClick: () => void };
+    /** Why the last try failed, shown above the buttons. */
+    error?: string | null;
     /** Holds the confirm (and its label) while the action runs. */
     pending?: boolean;
     /** Hosts the dialog inside its nearest positioned parent instead of over the page. */
@@ -24,7 +37,8 @@ type ConfirmDialogProps = Pick<AlertDialogPrimitive.Root.Props, "open" | "onOpen
  * and dim, and lays out by the room it has (a container query): under `@md`
  * it rises from the bottom with the buttons stacked, from there up it is
  * centred with the buttons in a row. The confirm is the kit's destructive
- * button; Cancel is outlined beside it and plain under it.
+ * button (or the primary one, with `tone="default"`); Cancel is outlined beside
+ * it and plain under it. An `alternative` sits between them in red ink.
  */
 function ConfirmDialog({
   open,
@@ -34,6 +48,9 @@ function ConfirmDialog({
   confirmLabel,
   cancelLabel = "Cancel",
   onConfirm,
+  tone = "destructive",
+  alternative,
+  error,
   pending = false,
   contained = false,
   className,
@@ -67,6 +84,11 @@ function ConfirmDialog({
                 {detail}
               </AlertDialogPrimitive.Description>
             )}
+            {error && (
+              <Alert tone="danger" className="mt-2">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <div className="mt-3.5 flex flex-col-reverse gap-2 @md:flex-row @md:justify-end">
               {/* Outlined beside the confirm; on the sheet, under a full-width confirm, it is a plain line. */}
               <AlertDialogPrimitive.Close
@@ -80,7 +102,12 @@ function ConfirmDialog({
               >
                 {cancelLabel}
               </AlertDialogPrimitive.Close>
-              <Button variant="destructive" size="lg" disabled={pending} onClick={onConfirm}>
+              {alternative && (
+                <Button variant="ghostDestructive" size="lg" disabled={pending} onClick={alternative.onClick}>
+                  {alternative.label}
+                </Button>
+              )}
+              <Button variant={tone === "default" ? "default" : "destructive"} size="lg" disabled={pending} onClick={onConfirm}>
                 {confirmLabel}
               </Button>
             </div>

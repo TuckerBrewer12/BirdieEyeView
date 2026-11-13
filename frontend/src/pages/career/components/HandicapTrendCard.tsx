@@ -5,6 +5,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  EmptyNote,
   SVGScoreHandicapTrend,
   Stat,
   StatLabel,
@@ -14,21 +15,22 @@ import { formatHandicapIndex, type RoundTrendPoint } from "@/domain";
 import { pluralize } from "@/domain/format";
 
 interface HandicapTrendCardProps {
-  /** The index after each round, oldest first. */
+  /** The index after each round in the picked window, oldest first. */
   trend: RoundTrendPoint[];
-  /** The golfer's index now, as the server worked it out. */
+  /** The golfer's index now, as the server worked it out, whatever the window. */
   handicapIndex: number | null;
-  roundCount: number;
+  /** Shown in place of the line when the window has no rounds. */
+  empty: string;
   /** The phone's narrower drawing. */
   compact?: boolean;
   className?: string;
 }
 
-/** The golfer's handicap index now, and how it has moved round by round. */
+/** The golfer's handicap index now, and how it has moved round by round over the picked window. */
 export function HandicapTrendCard({
   trend,
   handicapIndex,
-  roundCount,
+  empty,
   compact = false,
   className,
 }: HandicapTrendCardProps) {
@@ -36,7 +38,7 @@ export function HandicapTrendCard({
     <Card data-slot="handicap-trend-card" className={className}>
       <CardHeader>
         <CardTitle>Handicap Index Trend</CardTitle>
-        <CardDescription>{pluralize(roundCount, "round")}</CardDescription>
+        <CardDescription>{pluralize(trend.length, "round")}</CardDescription>
         <CardAction>
           <Stat align="end">
             <StatLabel>HCP Index</StatLabel>
@@ -45,7 +47,11 @@ export function HandicapTrendCard({
         </CardAction>
       </CardHeader>
       <CardContent>
-        <SVGScoreHandicapTrend data={trend} series="handicap" compact={compact} />
+        {trend.length > 0 ? (
+          <SVGScoreHandicapTrend data={trend} series="handicap" compact={compact} />
+        ) : (
+          <EmptyNote>{empty}</EmptyNote>
+        )}
       </CardContent>
     </Card>
   );

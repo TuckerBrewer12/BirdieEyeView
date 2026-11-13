@@ -1,5 +1,5 @@
 import type { AnalyticsDto } from "../../types/api";
-import { achievementsAYearOn, sampleGolfer } from "../fixtures/sampleGolfer";
+import { achievementsAYearOn, handicapTrendAYearOn, sampleGolfer } from "../fixtures/sampleGolfer";
 
 /**
  * The fake backend's copy of `GET /stats/analytics/{id}`'s course filter. The figures themselves
@@ -80,4 +80,5 @@ export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
 export const sampleAnalyticsAYearOn: AnalyticsDto = {
   ...sampleGolfer.analytics,
   notable_achievements: achievementsAYearOn,
+  handicap_trend: handicapTrendAYearOn,
 };

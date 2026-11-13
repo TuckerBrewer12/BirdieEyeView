@@ -1,5 +1,6 @@
 import { ChevronRight, Trophy } from "lucide-react";
 import { cn } from "@/brand/cn";
+import { EmptyNote } from "./EmptyNote";
 import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { Button, RowButton } from "@/brand/components/Button";
@@ -173,9 +174,9 @@ function RoundHighlight({
 }) {
   if (!round) {
     return (
-      <div data-slot="round-preview" className="p-4 text-center text-sm text-muted-foreground">
+      <EmptyNote data-slot="round-preview" className="p-4">
         Play a round to unlock highlights!
-      </div>
+      </EmptyNote>
     );
   }
 

@@ -436,6 +436,8 @@ export const space = {
   dot: 3,
   /** A phone page's side margin. */
   "page-phone": 18,
+  /** A page's side padding from `md`, beside the rail. `AppShell` sets it; a bar pinned along the page's foot (`ActionBar`) lines up with it. */
+  page: 44,
   tight: 5,
   /** What a control's corner gives up inside its group, so the corners nest. */
   nudge: 5,
@@ -452,6 +454,8 @@ export const space = {
   "action-bar": 73,
   /** Where a phone page's content ends when an `ActionBar` is pinned over the tab bar. */
   "page-end-action-bar": "calc(var(--brand-space-page-end-phone) + var(--brand-space-action-bar))",
+  /** Where a page's content ends from `md` when an `ActionBar` is pinned at every width: the bar, and the page's own 48px under it. */
+  "page-end-pinned": "calc(var(--brand-space-action-bar) + 3rem)",
 };
 
 /** Shadcn's base radius, `--radius`; the named steps below sit around it. */

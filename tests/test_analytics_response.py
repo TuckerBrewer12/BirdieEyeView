@@ -11,7 +11,7 @@ from fastapi.encoders import jsonable_encoder
 from analytics.verdicts import change_verdict
 from analytics import handicap as hcap
 from analytics import stats as analytics
-from api.analytics_responses import analytics_response
+from api.analytics_responses import _handicap_trend, analytics_response
 from api.routers import stats
 from api.schemas import AnalyticsResponse, DashboardResponse, GoalReportResponse, ScoreMix
 from models import Course, Hole, HoleScore, Round
@@ -39,6 +39,23 @@ def _two_rounds():
         for i in range(1, 19)
     ])
     return [first, second]
+
+
+def test_each_handicap_trend_row_says_whether_its_round_falls_in_the_last_year():
+    rounds = _two_rounds()
+    # 2026-02-01 is 366 days before 2027-02-02, so only the second round is in the last year.
+    response = analytics_response(rounds, rounds, today=date(2027, 2, 2))
+    assert [row.in_window for row in response.handicap_trend] == [False, True]
+    assert response.notable_achievements.career_totals.one_year.rounds_played == 1
+
+
+def test_the_trend_is_marked_against_the_window_length_it_is_given():
+    rounds = _two_rounds()
+    # 2026-02-01 and 02-02 are 14 and 13 days before 02-15.
+    marks = lambda days: [row["in_window"] for row in _handicap_trend(None, rounds, rounds, date(2026, 2, 15), days)]
+    assert marks(14) == [True, True]
+    assert marks(13) == [False, True]
+    assert marks(10) == [False, False]
 
 
 def test_analytics_response_works_out_the_figures_the_page_shows():
@@ -123,7 +140,10 @@ async def test_analytics_sections_drop_nothing_the_stats_functions_return(season
     assert sent["scoring_by_yardage"] == analytics.scoring_by_yardage_buckets(rounds)
     assert sent["scoring_by_handicap"] == analytics.scoring_vs_hole_handicap(rounds)
     assert sent["gir_vs_non_gir"] == analytics.gir_vs_non_gir_score_distribution(rounds)
-    assert sent["handicap_trend"] == hcap.player_handicap_trend(user, rounds)
+    assert [{k: v for k, v in row.items() if k != "in_window"} for row in sent["handicap_trend"]] == (
+        hcap.player_handicap_trend(user, rounds)
+    )
+    assert [row["in_window"] for row in sent["handicap_trend"]] == [analytics.in_window(r) for r in rounds]
     assert sent["score_differentials"] == hcap.score_differentials_per_round(rounds)
     assert sent["notable_achievements"] == analytics.notable_achievements(
         rounds, home_course_id=user.home_course_id

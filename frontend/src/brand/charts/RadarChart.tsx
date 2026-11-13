@@ -1,4 +1,5 @@
 import { cn } from "@/brand/cn";
+import { EmptyNote } from "@/brand/components/EmptyNote";
 import { tokens } from "@/brand/theme";
 
 interface RadarAxis {
@@ -48,7 +49,7 @@ export function RadarChart({
   const textSize = tokens.type["body-sm"].size;
 
   if (axes.length < 3) {
-    return <div className="py-8 text-center text-sm text-muted-foreground">{empty}</div>;
+    return <EmptyNote>{empty}</EmptyNote>;
   }
 
   const cx = W / 2;

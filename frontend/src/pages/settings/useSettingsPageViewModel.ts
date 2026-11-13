@@ -19,6 +19,10 @@ export interface SettingsPageViewModel {
   setHandicapInput: (value: string) => void;
   /** The home course in the form; null shows the search. */
   homeCourse: HomeCourse | null;
+  /** The home course's sheet is open. */
+  homeCourseOpen: boolean;
+  openHomeCourse: () => void;
+  closeHomeCourse: () => void;
   courseQuery: string;
   courseResults: CourseSummary[];
   searchingCourses: boolean;
@@ -53,6 +57,7 @@ export function useSettingsPageViewModel(
   const courseSearch = useCourseSearch(userId, repository);
   const [device, setDevice] = useState(() => repository.readDevicePreferences());
   const [edits, setEdits] = useState<Partial<SettingsForm>>({});
+  const [homeCourseOpen, setHomeCourseOpen] = useState(false);
 
   const saved = useMemo<SettingsForm>(
     () => ({
@@ -75,6 +80,7 @@ export function useSettingsPageViewModel(
     (course: CourseSummary) => {
       edit({ homeCourse: { id: course.id, name: course.name } });
       resetSearch();
+      setHomeCourseOpen(false);
     },
     [edit, resetSearch],
   );
@@ -112,6 +118,12 @@ export function useSettingsPageViewModel(
     handicapError,
     setHandicapInput: (handicapInput) => edit({ handicapInput }),
     homeCourse: form.homeCourse,
+    homeCourseOpen,
+    openHomeCourse: () => setHomeCourseOpen(true),
+    closeHomeCourse: () => {
+      setHomeCourseOpen(false);
+      resetSearch();
+    },
     courseQuery: courseSearch.query,
     courseResults: courseSearch.results,
     searchingCourses: courseSearch.searching,
