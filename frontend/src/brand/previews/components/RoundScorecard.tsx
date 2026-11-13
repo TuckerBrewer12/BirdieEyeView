@@ -15,10 +15,10 @@ export default function RoundScorecardPreview() {
   return (
     <div data-testid="brand-frame" className="fixed inset-0 flex flex-col gap-6 overflow-auto bg-background p-6 *:shrink-0">
       <RoundScorecard round={linked} teeBox="Blue" />
-      {/* With an action on the course line. */}
+      {/* With an action on the course line, and the tee as read off a card: its rating goes under its name. */}
       <RoundScorecard
         round={linked}
-        teeBox="Blue"
+        teeBox="BLUE 70.8/123"
         action={
           <Button variant="secondary" size="xs">
             Scan another

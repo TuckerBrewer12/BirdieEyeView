@@ -70,6 +70,18 @@ export function formatTeeName(tee: string): string {
   return `${formatCourseName(tee)} tees`;
 }
 
+const TRAILING_RATING = /^(.*?)[\s,]*\(?(\d{2}(?:\.\d)?)\s*\/\s*(\d{2,3})\)?\s*$/;
+
+/**
+ * A tee as written on a card, split into its name and the rating and slope a card prints after it:
+ * "BLUE 70.8/123" is Blue over "70.8 / 123". A name with no rating after it comes back whole.
+ */
+export function teeNameParts(tee: string): { name: string; rating: string | null } {
+  const match = TRAILING_RATING.exec(tee.trim());
+  if (!match || !match[1]) return { name: formatCourseName(tee), rating: null };
+  return { name: formatCourseName(match[1]), rating: `${match[2]} / ${match[3]}` };
+}
+
 /** A tee's rating and slope, as a scorecard prints them: "72.4 / 130". Null without both. */
 export function teeRatingLabel(
   tee: { course_rating: number | null; slope_rating: number | null } | null | undefined,

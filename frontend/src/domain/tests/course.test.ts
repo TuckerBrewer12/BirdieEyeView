@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CourseDto } from "@/types/api";
 import { courseResponse, type StoredCourse, type StoredTee } from "@/testing/fakes/courseResponses";
 import {
+  teeNameParts,
   chooseCompatibleTee,
   courseSummaryFrom,
   extractTeeColorToken,
@@ -117,5 +118,17 @@ describe("courseSummaryFrom", () => {
       source: "external",
       externalId: "ext-9",
     });
+  });
+});
+
+describe("teeNameParts", () => {
+  it("splits a rating and slope read off the card from the tee's name", () => {
+    expect(teeNameParts("BLUE 70.8/123")).toEqual({ name: "Blue", rating: "70.8 / 123" });
+    expect(teeNameParts("White (68.9 / 118)")).toEqual({ name: "White", rating: "68.9 / 118" });
+  });
+
+  it("keeps a name with no rating whole", () => {
+    expect(teeNameParts("black")).toEqual({ name: "Black", rating: null });
+    expect(teeNameParts("Gold 2")).toEqual({ name: "Gold 2", rating: null });
   });
 });

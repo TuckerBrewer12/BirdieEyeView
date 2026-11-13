@@ -7,7 +7,7 @@ import { formatScorecardFigure as show } from "@/domain/format";
 import { TeeSwatch } from "@/brand/components/TeeSwatch";
 import { scoreFillClass, scoreOnFillClass } from "@/brand/theme";
 import { ToParFigure } from "@/brand/components/ToParFigure";
-import type { HoleScore, Nine, Round } from "@/domain";
+import { teeNameParts, type HoleScore, type Nine, type Round } from "@/domain";
 
 export interface ScorecardEdits {
   onStrokesChange: (hole: number, strokes: number | null) => void;
@@ -161,14 +161,7 @@ function ScorecardTable({ round, teeBox, edits, toCheck, nine, className }: Scor
   const rows: (ScorecardRow<HoleScore, Nine> | false)[] = [
     optional.yards && {
       key: "yards",
-      label: teeBox ? (
-        <span className="inline-flex items-center gap-1.5 capitalize">
-          <TeeSwatch color={teeBox} className="size-2 shrink-0 rounded-full" />
-          {teeBox}
-        </span>
-      ) : (
-        "Yards"
-      ),
+      label: teeBox ? <TeeLabel teeBox={teeBox} /> : "Yards",
       className: cn(SMALL, "text-caption md:text-label"),
       labelClassName: "text-muted-foreground",
       cell: (hole) => show(hole.yardage),
@@ -281,3 +274,22 @@ function ScorecardTable({ round, teeBox, edits, toCheck, nine, className }: Scor
 }
 
 export { ScorecardTable };
+
+/**
+ * The tee row's label: the tee's swatch and name, with a rating and slope read off the card ("BLUE
+ * 70.8/123") on a line under the name from `md`, and left off a phone's nine, rather than running
+ * into the first hole.
+ */
+function TeeLabel({ teeBox }: { teeBox: string }) {
+  const { name, rating } = teeNameParts(teeBox);
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <TeeSwatch color={teeBox} className="size-2 shrink-0 rounded-full" />
+      <span className="flex flex-col leading-tight">
+        <span>{name}</span>
+        {/* A phone's nine has no room for it beside the first hole; the wide card has. */}
+        {rating && <span className="hidden text-caption font-medium text-muted-foreground md:block">{rating}</span>}
+      </span>
+    </span>
+  );
+}

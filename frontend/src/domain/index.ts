@@ -40,7 +40,7 @@ export type {
 export { buildRadarData, radarStanding } from "./radar";
 export type { RadarEntry, RadarGap, RadarStanding } from "./radar";
 
-export { courseLabel, courseSummaryFrom, formatCourseName, getTee, teeColors, teeOptions } from "./course";
+export { courseLabel, courseSummaryFrom, formatCourseName, getTee, teeColors, teeNameParts, teeOptions } from "./course";
 export type { TeeChoice } from "./course";
 export type { CourseSummary } from "./course";
 
