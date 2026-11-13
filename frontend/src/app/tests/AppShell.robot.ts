@@ -59,9 +59,9 @@ export class AppShellRobot {
     return this;
   }
 
-  /** Taps the dimmed page above the More sheet. */
+  /** Taps the dimmed page above the More sheet: the backdrop's top corner, which a bottom sheet never covers. */
   async tapOutsideMenu(): Promise<this> {
-    await this.page.mouse.click(20, 20);
+    await this.page.locator('[data-slot="sheet-overlay"]').click({ position: { x: 8, y: 8 } });
     return this;
   }
 

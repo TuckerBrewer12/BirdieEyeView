@@ -37,6 +37,13 @@ export class FakeFriendsRepository implements SocialRepository {
     return this.store.list().map((dto) => friendshipFromDto(dto, userId));
   }
 
+  async getPendingFriendships(userId: string): Promise<Friendship[]> {
+    return this.store
+      .list()
+      .filter((dto) => dto.status === "pending")
+      .map((dto) => friendshipFromDto(dto, userId));
+  }
+
   async sendRequest(userId: string, friendCode: string): Promise<Friendship> {
     return friendshipFromDto(this.store.send(friendCode), userId);
   }

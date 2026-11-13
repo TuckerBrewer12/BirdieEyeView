@@ -4,6 +4,7 @@ import { NavLink, type NavItem, type RenderLink } from "@/brand/nav";
 import { CountBadge } from "./CountBadge";
 import { SheetTitle } from "./Sheet";
 import type { SideNavUser } from "./SideNav";
+import { Avatar } from "./Avatar";
 
 interface MoreMenuProps {
   items: NavItem[];
@@ -29,12 +30,7 @@ function MoreMenu({ items, user, title = "More", renderLink, onNavigate, classNa
 
       {user && (
         <div className="flex items-center gap-3 border-b border-border px-1 pt-1.5 pb-3.5">
-          <span
-            aria-hidden
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-foreground"
-          >
-            {user.initials}
-          </span>
+          <Avatar initials={user.initials} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold text-foreground">{user.name}</p>
             {user.detail && <p className="truncate text-body text-muted-foreground">{user.detail}</p>}

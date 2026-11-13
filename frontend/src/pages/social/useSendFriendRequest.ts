@@ -19,6 +19,9 @@ export function useSendFriendRequest(
       queryClient.setQueryData<Friendship[]>(queryKeys.friendships(userId), (prev) =>
         prev ? withFriendship(prev, sent) : prev,
       );
+      queryClient.setQueryData<Friendship[]>(queryKeys.pendingFriendships(userId), (prev) =>
+        prev ? withFriendship(prev, sent) : prev,
+      );
     },
   });
 }

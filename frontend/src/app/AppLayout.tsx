@@ -2,8 +2,7 @@ import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AppShell, BottomNav, SideNav, type RenderLink } from "@/brand";
 import { useAuth } from "@/context/auth";
-import { awaitsAnswer } from "@/data/friendsModel";
-import { useFriendships } from "@/data/useFriendships";
+import { useOpenRequestCount } from "@/data/useOpenRequestCount";
 import { initialsOf, navigationFor } from "./navigation";
 import { useSignOut } from "./useSignOut";
 
@@ -14,9 +13,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const auth = useAuth();
   const signOut = useSignOut(auth);
-  // Shared with Social's own read of the list, so the More sheet's count and the page's agree.
-  const { data: friendships = [] } = useFriendships(auth.userId ?? "");
-  const nav = navigationFor(pathname, friendships.filter(awaitsAnswer).length);
+  const { data: openRequests = 0 } = useOpenRequestCount(auth.userId ?? "");
+  const nav = navigationFor(pathname, openRequests);
   const user = {
     name: auth.name ?? "Golfer",
     initials: initialsOf(auth.name),

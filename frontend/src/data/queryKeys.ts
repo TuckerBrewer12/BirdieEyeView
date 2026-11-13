@@ -35,6 +35,8 @@ export const queryKeys = {
   scanText: (photoId: string | null) => ["scan-text", photoId] as const,
   /** Every friendship the golfer is part of, mapped to their side of it. */
   friendships: (userId: string) => ["friendships", userId] as const,
+  /** Only the golfer's pending friendships, sent or received: what the More menu counts. */
+  pendingFriendships: (userId: string) => ["pending-friendships", userId] as const,
   settings: (userId: string) => ["settings", userId] as const,
   /** One emailed verification token, spent once. */
   emailVerification: (token: string) => ["email-verification", token] as const,
