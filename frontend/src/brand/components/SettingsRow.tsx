@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from "react";
 import { Check, ChevronRight, Copy } from "lucide-react";
 import { cn } from "@/brand/cn";
-import { Button } from "./Button";
+import { Button, RowButton } from "./Button";
 import { Card } from "./Card";
 import { ListRow } from "./ListRow";
 import { Switch } from "./Switch";
@@ -181,18 +181,17 @@ function SettingsRow<V extends string = string>(props: SettingsRowProps<V>) {
       );
     case "action":
       return (
-        <button
-          type="button"
+        <RowButton
           data-slot="settings-row"
           onClick={props.onClick}
           disabled={props.disabled}
           className={cn(
-            "flex min-h-13 w-full cursor-pointer items-center px-4 text-left text-body-lg font-semibold transition-colors hover:bg-muted/half focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/half focus-visible:ring-inset disabled:cursor-default disabled:opacity-half",
+            "flex min-h-13 w-full cursor-pointer items-center px-4 text-body-lg font-semibold hover:bg-muted/half focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/half focus-visible:ring-inset disabled:cursor-default disabled:opacity-half",
             props.tone === "danger" ? "text-destructive" : "text-foreground",
           )}
         >
           {props.label}
-        </button>
+        </RowButton>
       );
   }
 }
