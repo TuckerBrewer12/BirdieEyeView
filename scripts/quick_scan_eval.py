@@ -18,10 +18,12 @@ import logging
 import mimetypes
 import os
 import statistics
+import subprocess
 import sys
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
@@ -604,10 +606,160 @@ def _validate_provider_keys() -> None:
         raise EvalConfigurationError(f"Missing required environment variables: {', '.join(missing)}")
 
 
+def results_metadata(environment=None):
+    """Metadata for the tested checkout, independent of the mutable PR head ref."""
+    environment = os.environ if environment is None else environment
+    now = datetime.now(timezone.utc)
+
+    def git(*args):
+        try:
+            result = subprocess.run(["git", *args], cwd=ROOT_DIR, capture_output=True, text=True, check=False)
+        except OSError:
+            return None
+        return result.stdout.strip() if result.returncode == 0 else None
+
+    from api.routers.scan import MISTRAL_OCR_MODEL
+    from services.gemini_table_merger import GEMINI_MERGE_MODEL
+
+    state = git("status", "--porcelain", "--untracked-files=normal", "--", "api", "services", "scripts", "models", "analytics", "database")
+    return {
+        "dirty": None if state is None else bool(state),
+        "id": environment.get("SCAN_EVAL_RUN_ID") or "local-" + now.strftime("%Y%m%dT%H%M%S%fZ"),
+        "suite": environment.get("SCAN_EVAL_SUITE", "quick"),
+        "created_at": now.isoformat(timespec="microseconds").replace("+00:00", "Z"),
+        "branch": environment.get("SCAN_EVAL_BRANCH") or git("branch", "--show-current") or None,
+        "commit": environment.get("SCAN_EVAL_COMMIT") or git("rev-parse", "HEAD"),
+        "head_commit": environment.get("SCAN_EVAL_HEAD_COMMIT") or None,
+        "pr": int(environment["SCAN_EVAL_PR"]) if environment.get("SCAN_EVAL_PR") else None,
+        "run_url": environment.get("SCAN_EVAL_RUN_URL") or None,
+        "models": {"ocr": MISTRAL_OCR_MODEL, "merge": GEMINI_MERGE_MODEL},
+    }
+
+
+def results_payload(run, *, suite, metadata, scorecard_dir=SCORECARD_DIR):
+    """Export existing grading outcomes; the archive validator reconciles all aggregates."""
+    import hashlib
+    from scripts.eval_results import validate
+
+    def short(value):
+        return value if value is None or len(value) <= 500 else value[:497] + "..."
+
+    def lines(values):
+        bounded = [short(value) for value in values[:200]]
+        if len(values) > 200:
+            bounded[-1] = "Additional diagnostics omitted (export limit)."
+        return bounded
+
+    cases = []
+    for result in run.case_results:
+        case = result.case
+        digest = hashlib.sha256((Path(scorecard_dir) / case.image).read_bytes())
+        digest.update(json.dumps({"expected": case.expected, "user_context": case.user_context,
+                                  "player": case.player_name, "source_score_format": case.source_score_format},
+                                 sort_keys=True, separators=(",", ":")).encode())
+        cases.append({
+            "id": case.case_id, "image": case.image, "player": case.player_name,
+            "fingerprint": digest.hexdigest(), "status": _case_status(result),
+            "matched_cells": result.matched_cells, "total_cells": result.total_cells,
+            "known_gap": short(case.known_gap), "operational_error": short(result.operational_error),
+            "extraction_seconds": result.extraction_seconds, "effective_seconds": result.effective_seconds,
+            "mismatches": [{"field": m.field_name, "hole": m.hole_number, "expected": m.expected,
+                            "actual": m.actual} for m in result.mismatches],
+            "diagnostics": lines(result.diagnostics),
+        })
+    summary = summarize(run.case_results)
+    payload = {
+        "schema_version": 1, "run": {**metadata, "suite": suite},
+        "summary": {
+            "images": len(run.ocr_seconds_by_image), "cases": summary.total,
+            "matched_cells": sum(r.matched_cells for r in run.case_results),
+            "total_cells": sum(r.total_cells for r in run.case_results),
+            "perfect": summary.perfect, "at_least_90": summary.at_least_90,
+            "at_least_80": summary.at_least_80, "failed": summary.failed,
+            "operational_errors": summary.total - run.completed_cases,
+            "known_gaps": sum(bool(r.case.known_gap) for r in run.case_results),
+            "merge_rejected_images": run.merge_rejected_images, "suite_seconds": run.suite_seconds,
+        },
+        "images": [{"image": image, "ocr_seconds": seconds,
+                    "diagnostics": lines(run.ocr_diagnostics_by_image.get(image, []))}
+                   for image, seconds in run.ocr_seconds_by_image.items()],
+        "cases": cases,
+    }
+    return validate(payload)
+
+
+def redact_payload(value, secrets):
+    """Redact decoded string values, so secret characters cannot corrupt JSON syntax."""
+    if isinstance(value, str):
+        for secret in secrets:
+            if secret:
+                value = value.replace(secret, "[REDACTED]")
+        return value
+    if isinstance(value, list):
+        return [redact_payload(item, secrets) for item in value]
+    if isinstance(value, dict):
+        return {key: redact_payload(item, secrets) for key, item in value.items()}
+    return value
+
+
+def render_markdown(run=None, payload=None):
+    """Readable Actions summary. Only fixed markup is HTML; all report text is escaped."""
+    import html
+
+    if payload is None:
+        payload = run
+
+    def escape(value):
+        text = html.escape(str(value), quote=True)
+        for char in "|`[]()@#*_~!":
+            text = text.replace(char, "&#" + str(ord(char)) + ";")
+        return text.replace("\r", " ").replace("\n", "<br>")
+
+    info = payload["run"]
+    lines = [f"# {info['suite'].capitalize()} scan evaluation", "",
+             "Branch: " + escape(info["branch"] or "unknown"), "",
+             "Tested commit: " + escape(info["commit"] or "unknown"), "",
+             "Working tree: " + ({True: "modified", False: "clean", None: "unknown"}[info["dirty"]]), "",
+             "Models: " + escape(info["models"]["ocr"]) + " / " + escape(info["models"]["merge"]), "",
+             "| Metric | Value |", "| --- | ---: |"]
+    lines += ["| " + escape(key.replace("_", " ")) + " | " + escape(value) + " |"
+              for key, value in payload["summary"].items()]
+    lines += ["", "## Cases", "", "| Status | Case | Cells | Accuracy | Time |", "| --- | --- | ---: | ---: | ---: |"]
+    for case in payload["cases"]:
+        percentage = 100 * case["matched_cells"] / case["total_cells"]
+        lines.append("| " + " | ".join([escape(case["status"]), escape(case["id"]),
+                     f"{case['matched_cells']}/{case['total_cells']}", f"{percentage:.1f}%",
+                     f"{case['effective_seconds']:.2f}s"]) + " |")
+    for case in payload["cases"]:
+        block = []
+        if case["status"] == "PERFECT" and not case["known_gap"]:
+            continue
+        block += ["", "<details>", "<summary>" + escape(case["id"]) + "</summary>", ""]
+        for value in (case["known_gap"], case["operational_error"]):
+            if value:
+                block += [escape(value), ""]
+        for cell in case["mismatches"]:
+            block.append("- " + escape(f"{cell['field']} hole {cell['hole']}: expected {cell['expected']}, got {cell['actual']}"))
+        image = next(image for image in payload["images"] if image["image"] == case["image"])
+        for line in [*image["diagnostics"], *case["diagnostics"]][:40]:
+            block.append("- " + escape(line))
+        if len(image["diagnostics"]) + len(case["diagnostics"]) > 40:
+            block.append("- Additional diagnostics are in results.json.")
+        block += ["", "</details>"]
+        if len(("\n".join(lines + block)).encode("utf-8")) > 900_000:
+            lines += ["", "Further case details are available in the structured results artifact."]
+            break
+        lines.extend(block)
+    return "\n".join(lines) + "\n"
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Run a live scorecard scan evaluation.")
     parser.add_argument("--suite", choices=SUITE_MANIFEST_PATHS, default="quick")
-    suite = parser.parse_args(argv).suite
+    parser.add_argument("--results-json", type=Path)
+    parser.add_argument("--summary-markdown", type=Path)
+    args = parser.parse_args(argv)
+    suite = args.suite
     load_dotenv(ROOT_DIR / ".env")
     try:
         _validate_provider_keys()
@@ -621,6 +773,23 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 130
 
     print(render_report(run, suite=suite))
+    if args.results_json or args.summary_markdown:
+        from scripts.eval_results import ResultsError, encode
+        try:
+            payload = results_payload(run, suite=suite, metadata=results_metadata())
+            payload = redact_payload(payload, [os.environ.get(key) for key in ("MISTRAL_API_KEY", "GOOGLE_API_KEY")])
+            if args.results_json:
+                args.results_json.parent.mkdir(parents=True, exist_ok=True)
+                args.results_json.write_bytes(encode(payload))
+            if args.summary_markdown:
+                args.summary_markdown.parent.mkdir(parents=True, exist_ok=True)
+                args.summary_markdown.write_text(render_markdown(payload), encoding="utf-8")
+        except (ResultsError, OSError, ValueError) as error:
+            # The scan results above are still valid; only the structured copy is skipped.
+            print(f"Warning: structured results not exported: {error}", file=sys.stderr)
+            for path in (args.results_json, args.summary_markdown):
+                if path:
+                    path.unlink(missing_ok=True)
     return exit_code_for_run(run)
 
 

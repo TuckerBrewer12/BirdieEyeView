@@ -63,6 +63,16 @@ jobs:
         if: matrix.check == 'security'
         run: bandit -c pyproject.toml -r api services database analytics models -lll
 
+  eval-dashboard:
+    name: Eval dashboard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: node --test eval-dashboard/*.test.js
+
   postgres-integration:
     name: PostgreSQL integration
     runs-on: ubuntu-latest
