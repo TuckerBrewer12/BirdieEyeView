@@ -49,6 +49,13 @@ test("answering the open request clears the Requests count", async ({ social }) 
   await back.seesFriend("Riley Brooks");
 });
 
+test("Copy puts the golfer's own code on the clipboard", async ({ social }) => {
+  await social.allowClipboard();
+  await social.open(seed);
+  await social.copyMyCode();
+  await social.seesCopied("TGOLF7Q2");
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 

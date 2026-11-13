@@ -77,6 +77,23 @@ export class SocialRobot {
     return this;
   }
 
+  /** Lets the page write to and read from the clipboard, as a golfer who allowed it would. */
+  async allowClipboard(): Promise<this> {
+    await this.page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    return this;
+  }
+
+  async copyMyCode(): Promise<this> {
+    await this.page.getByRole("button", { name: "Copy your code" }).click();
+    return this;
+  }
+
+  async seesCopied(code: string): Promise<this> {
+    await expect(this.page.getByRole("button", { name: "Copied" })).toBeVisible();
+    await expect.poll(() => this.page.evaluate(() => navigator.clipboard.readText())).toBe(code);
+    return this;
+  }
+
   async seesMyCode(code: string): Promise<this> {
     await expect(this.page.getByText(code, { exact: true })).toBeVisible();
     return this;

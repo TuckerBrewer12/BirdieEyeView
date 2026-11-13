@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { Button } from "@/brand";
+import { useCopyText } from "@/platform/useCopyText";
 
 interface YourCodeProps {
   /** The golfer's own friend code; null until the server has one. */
@@ -8,17 +8,7 @@ interface YourCodeProps {
 
 /** "Your code TGOLF7Q2" with a button to copy it, for the golfer to hand to a friend. */
 export function YourCode({ code }: YourCodeProps) {
-  const [copy, setCopy] = useState<"copied" | "failed" | null>(null);
-
-  const copyCode = async () => {
-    if (!code) return;
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopy("copied");
-    } catch {
-      setCopy("failed");
-    }
-  };
+  const { copy, copied, failed } = useCopyText();
 
   return (
     <div className="flex items-center gap-2 text-body text-muted-foreground">
@@ -31,10 +21,10 @@ export function YourCode({ code }: YourCodeProps) {
           variant="link"
           size="inline"
           className="ml-auto md:ml-1"
-          aria-label={copy === "copied" ? "Copied" : "Copy your code"}
-          onClick={() => void copyCode()}
+          aria-label={copied ? "Copied" : "Copy your code"}
+          onClick={() => void copy(code)}
         >
-          {copy === "copied" ? "Copied" : copy === "failed" ? "Couldn't copy" : "Copy"}
+          {copied ? "Copied" : failed ? "Couldn't copy" : "Copy"}
         </Button>
       )}
     </div>
