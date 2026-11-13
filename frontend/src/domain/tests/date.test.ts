@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekday, isoDay, parseDay } from "../date";
+import { dayParts, formatDay, formatDayShort, formatWeekday, isoDay, parseDay } from "../date";
 
 // vite.config.ts runs the unit tests in Los Angeles, where UTC midnight is the
 // evening before. A date read as UTC would show a day early in every case below.
@@ -97,17 +97,5 @@ describe("dayParts", () => {
   it("is null for a missing or unparseable date", () => {
     expect(dayParts(null)).toBeNull();
     expect(dayParts("not a date")).toBeNull();
-  });
-});
-
-describe("formatDayTick", () => {
-  it("reads MM-DD", () => {
-    expect(formatDayTick("2026-03-09")).toBe("03-09");
-    expect(formatDayTick("2026-03-09T00:00:00")).toBe("03-09");
-  });
-
-  it("is null for a missing or unparseable date", () => {
-    expect(formatDayTick(null)).toBeNull();
-    expect(formatDayTick("Monday")).toBeNull();
   });
 });

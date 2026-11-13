@@ -24,7 +24,7 @@ const parRadius = (averageToPar: number | null) => clamp(((2.0 - (averageToPar ?
 
 const percentLabel = (pct: number | null) => (pct != null ? formatPercent(pct) : "—");
 const puttsLabel = (puttsPerGir: number | null) => (puttsPerGir != null ? `${formatTwoDecimals(puttsPerGir)}/GIR` : "—");
-const toParLabel = (averageToPar: number | null) => (averageToPar != null ? formatSigned(averageToPar) : "—");
+const averageToParLabel = (averageToPar: number | null) => (averageToPar != null ? formatSigned(averageToPar) : "—");
 
 /** The golfer's own figures, on the radar's axes. */
 function shapeOf(kpis: AnalyticsKpisDto, scoringByPar: ScoringByParRowDto[]): BenchmarkShape {
@@ -51,9 +51,9 @@ const AXES: Axis[] = [
   { axis: "GIR", figure: "girPct", radius: percentRadius, label: percentLabel },
   { axis: "Scrambling", figure: "scramblingPct", radius: percentRadius, label: percentLabel },
   { axis: "Putting", figure: "puttsPerGir", radius: puttingRadius, label: puttsLabel },
-  { axis: "Par 3s", figure: "par3ToPar", radius: parRadius, label: toParLabel },
-  { axis: "Par 4s", figure: "par4ToPar", radius: parRadius, label: toParLabel },
-  { axis: "Par 5s", figure: "par5ToPar", radius: parRadius, label: toParLabel },
+  { axis: "Par 3s", figure: "par3ToPar", radius: parRadius, label: averageToParLabel },
+  { axis: "Par 4s", figure: "par4ToPar", radius: parRadius, label: averageToParLabel },
+  { axis: "Par 5s", figure: "par5ToPar", radius: parRadius, label: averageToParLabel },
 ];
 
 /** The golfer's shape on the radar, the comparison's behind it when there is one, and the server's verdict on each axis. */

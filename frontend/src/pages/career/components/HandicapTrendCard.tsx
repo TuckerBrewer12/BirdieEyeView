@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
   EmptyNote,
-  SVGScoreHandicapTrend,
+  HandicapTrendChart,
   Stat,
   StatLabel,
   StatValue,
@@ -48,7 +48,7 @@ export function HandicapTrendCard({
       </CardHeader>
       <CardContent>
         {trend.length > 0 ? (
-          <SVGScoreHandicapTrend data={trend} series="handicap" compact={compact} />
+          <HandicapTrendChart data={trend} compact={compact} />
         ) : (
           <EmptyNote>{empty}</EmptyNote>
         )}

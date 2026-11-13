@@ -211,7 +211,7 @@ class Round(BaseGolfModel):
         """The par `total_to_par` reads against: the par of the holes played, or the course's
         par for a full round whose holes have none."""
         par = self.played_par()
-        if par is None and self.holes_played() >= 18:
+        if par is None and self.holes_played() >= HOLES_PER_ROUND:
             par = self.get_par()
         return par
 

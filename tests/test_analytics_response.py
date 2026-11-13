@@ -134,8 +134,6 @@ async def test_analytics_sections_drop_nothing_the_stats_functions_return(season
     assert sent["gir_trend"] == analytics.with_rolling_average(analytics.gir_per_round(rounds), "gir_percentage")
     assert sent["putts_trend"] == analytics.with_rolling_average(analytics.putts_per_round(rounds), "total_putts")
     assert sent["three_putts_trend"] == analytics.three_putts_per_round(rounds)
-    assert sent["scrambling_trend"] == analytics.scrambling_per_round(rounds)
-    assert sent["up_and_down_trend"] == analytics.up_and_down_trend(rounds)
     assert sent["scoring_by_par"] == analytics.scoring_by_par(rounds)
     assert sent["scoring_by_yardage"] == analytics.scoring_by_yardage_buckets(rounds)
     assert sent["scoring_by_handicap"] == analytics.scoring_vs_hole_handicap(rounds)
@@ -144,7 +142,6 @@ async def test_analytics_sections_drop_nothing_the_stats_functions_return(season
         hcap.player_handicap_trend(user, rounds)
     )
     assert [row["in_window"] for row in sent["handicap_trend"]] == [analytics.in_window(r) for r in rounds]
-    assert sent["score_differentials"] == hcap.score_differentials_per_round(rounds)
     assert sent["notable_achievements"] == analytics.notable_achievements(
         rounds, home_course_id=user.home_course_id
     )

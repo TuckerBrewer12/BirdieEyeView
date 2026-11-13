@@ -20,7 +20,5 @@ export {
   toParDisplay,
   toParTextClass,
   toParStatTextClass,
-  toParBadgeClass,
 } from "./score";
 export type { ScoreKey } from "./score";
-export { differentialFill } from "./handicap";

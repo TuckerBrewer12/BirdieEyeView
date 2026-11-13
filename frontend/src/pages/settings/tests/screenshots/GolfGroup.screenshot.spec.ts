@@ -1,13 +1,3 @@
-import { test } from "@playwright/test";
-import { capturePreview, enableDark } from "../../../../brand/tests/previewScreenshot";
+import { previewScreenshots } from "../../../../brand/tests/previewScreenshot";
 
-test.describe("GolfGroup", () => {
-  test("light", async ({ page }) => {
-    await capturePreview(page, "GolfGroup", "golf-group.png");
-  });
-
-  test("dark", async ({ page }) => {
-    await enableDark(page);
-    await capturePreview(page, "GolfGroup", "golf-group-dark.png");
-  });
-});
+previewScreenshots("GolfGroup", "golf-group");

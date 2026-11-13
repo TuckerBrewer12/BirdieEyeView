@@ -42,16 +42,6 @@ function FieldLabel({
   );
 }
 
-function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
-  return (
-    <p
-      data-slot="field-description"
-      className={cn("text-body font-normal text-muted-foreground", className)}
-      {...props}
-    />
-  );
-}
-
 /**
  * Renders nothing when there is no message, so a view can hand it a view
  * model's nullable error straight through without a ternary in the JSX.
@@ -76,4 +66,4 @@ function FieldError({
   );
 }
 
-export { Field, FieldLabel, FieldDescription, FieldError };
+export { Field, FieldLabel, FieldError };

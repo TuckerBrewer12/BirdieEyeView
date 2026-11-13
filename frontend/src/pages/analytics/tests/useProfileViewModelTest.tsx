@@ -104,7 +104,7 @@ describe("useProfileViewModel", () => {
 
     repository.saveError = new Error("Forbidden");
     act(() => result.current.setGoal(79));
-    await waitFor(() => expect(result.current.goalSaveError?.message).toBe("Forbidden"));
+    await waitFor(() => expect(result.current.goalSaveError).toBe("Forbidden"));
     expect(result.current.goal?.target).toBe(84);
   });
 

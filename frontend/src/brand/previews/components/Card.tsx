@@ -3,11 +3,10 @@ import {
   CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/brand/components/Card";
-import { Button, ClearButton } from "@/brand/components/Button";
+import { Button } from "@/brand/components/Button";
 
 export default function CardPreview() {
   return (
@@ -21,7 +20,6 @@ export default function CardPreview() {
           </CardAction>
         </CardHeader>
         <CardContent>Four tees · Par 72</CardContent>
-        <CardFooter>Link this round</CardFooter>
       </Card>
 
       {/* A narrow header drops a wide action under its title. */}
@@ -31,26 +29,6 @@ export default function CardPreview() {
           <CardAction wrap className="flex gap-2">
             <Button variant="outline" size="xs">Average</Button>
             <Button variant="outline" size="xs">vs 15 handicap</Button>
-          </CardAction>
-        </CardHeader>
-      </Card>
-
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle>Linked</CardTitle>
-          <CardDescription>Pebble Beach Golf Links</CardDescription>
-          <CardAction>
-            <ClearButton label="Unlink course" />
-          </CardAction>
-        </CardHeader>
-      </Card>
-
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle>Muni Tuesday</CardTitle>
-          <CardDescription>Saving without a linked course</CardDescription>
-          <CardAction>
-            <ClearButton label="Edit name" />
           </CardAction>
         </CardHeader>
       </Card>

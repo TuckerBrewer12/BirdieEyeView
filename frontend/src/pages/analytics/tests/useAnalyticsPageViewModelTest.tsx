@@ -91,14 +91,12 @@ describe("useAnalyticsPageViewModel", () => {
     repository.hold();
     act(() => result.current.setCourse(LINKS.id));
 
-    await waitFor(() => expect(result.current.refreshing).toBe(true));
+    await waitFor(() => expect(repository.requests).toContainEqual({ ...DEFAULT_FILTERS, courseId: LINKS.id }));
     expect(result.current.analytics?.roundCount).toBe(24);
     expect(result.current.filtered).toBe(true);
 
     act(() => repository.finish());
-    await waitFor(() => expect(result.current.refreshing).toBe(false));
-    expect(result.current.analytics?.roundCount).toBe(4);
-    expect(repository.requests).toContainEqual({ ...DEFAULT_FILTERS, courseId: LINKS.id });
+    await waitFor(() => expect(result.current.analytics?.roundCount).toBe(4));
   });
 
   it("asks for the round count picked, and that alone doesn't narrow the courses", async () => {

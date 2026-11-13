@@ -220,25 +220,6 @@ class HandicapTrendRow(ResponseModel):
     in_window: bool = False  # the round falls in the records' last year (`notable_achievements.window_days`)
 
 
-class ScramblingTrendRow(ResponseModel):
-    """Missed greens saved with par. The percentage is null without a missed green on a linked course."""
-    round_index: int
-    round_id: Optional[str] = None
-    scramble_opportunities: int
-    scramble_successes: int
-    scramble_failures: int
-    scrambling_percentage: Optional[float] = None
-
-
-class UpAndDownTrendRow(ResponseModel):
-    """Missed greens finished in one putt or fewer. The percentage is null without a chance."""
-    round_index: int
-    round_id: Optional[str] = None
-    opportunities: int
-    successes: int
-    percentage: Optional[float] = None
-
-
 class DashboardResponse(ResponseModel):
     """What the dashboard shows. Every figure is worked out here, not on the client."""
     # The best round, the one the round list's Best puts first (`analytics.stats.best_round`):
@@ -369,15 +350,6 @@ class GirVsNonGirRow(ResponseModel):
     double_bogey: float
     triple_bogey: float
     quad_bogey: float
-
-
-class ScoreDifferentialRow(ResponseModel):
-    round_index: int
-    round_id: Optional[str] = None
-    score: Optional[int] = None
-    course_rating: Optional[float] = None
-    slope_rating: Optional[float] = None
-    differential: Optional[float] = None
 
 
 class MilestoneEvent(ResponseModel):
@@ -685,14 +657,11 @@ class AnalyticsResponse(ResponseModel):
     gir_trend: List[GirTrendRow] = Field(default_factory=list)
     putts_trend: List[PuttsTrendRow] = Field(default_factory=list)
     three_putts_trend: List[ThreePuttsTrendRow] = Field(default_factory=list)
-    scrambling_trend: List[ScramblingTrendRow] = Field(default_factory=list)
-    up_and_down_trend: List[UpAndDownTrendRow] = Field(default_factory=list)
     scoring_by_par: List[ScoringByParRow] = Field(default_factory=list)
     scoring_by_yardage: List[ScoringByYardageRow] = Field(default_factory=list)
     scoring_by_handicap: List[ScoringByHandicapRow] = Field(default_factory=list)
     gir_vs_non_gir: List[GirVsNonGirRow] = Field(default_factory=list)
     handicap_trend: List[HandicapTrendRow] = Field(default_factory=list)
-    score_differentials: List[ScoreDifferentialRow] = Field(default_factory=list)
     notable_achievements: NotableAchievements = Field(default_factory=NotableAchievements)
     score_mix: ScoreMix = Field(default_factory=ScoreMix)  # each score kind's share of every counted hole, to a hundredth
     peak_game: Optional[PeakGame] = None  # null under two scored rounds
