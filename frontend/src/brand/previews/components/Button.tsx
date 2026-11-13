@@ -94,6 +94,13 @@ function Panel({ theme }: { theme: "Light" | "Dark" }) {
           Sign in
         </Button>
       </div>
+      <div className="text-label font-semibold text-muted-foreground">On a green bar</div>
+      <div className="flex items-center justify-between rounded-lg bg-primary px-3 py-2">
+        <span className="text-sm font-semibold text-primary-foreground">Half Moon Bay Golf Links</span>
+        <Button variant="onPrimary" size="sm">
+          Scan another
+        </Button>
+      </div>
       <div className="text-label font-semibold text-muted-foreground">Row</div>
       <RowButton className="flex w-full items-center justify-between rounded-lg px-3 py-2 hover:bg-muted">
         <span className="text-sm font-medium text-foreground">Pebble Beach Golf Links</span>

@@ -42,6 +42,10 @@ interface RoundSummaryProps {
    * pill, and the two nines as pills under them. The scan's saved screen shows the round this way.
    */
   variant: "summary";
+  /** `nines` (the default): two nines of pills. `strip`: one thin cell a hole, for a small card. */
+  holes?: "nines" | "strip";
+  /** `outline` (the default): its own bordered box. `none`: no box, for a `Card` that already frames it. */
+  frame?: "outline" | "none";
 }
 
 type RoundPreviewProps = RoundListProps | RoundHighlightProps | RoundCompactProps | RoundSummaryProps;
@@ -54,7 +58,7 @@ export function RoundPreview(props: RoundPreviewProps) {
     return <RoundCompact {...props} />;
   }
   if (props.variant === "summary") {
-    return <RoundSummaryBox round={props.round} />;
+    return <RoundSummaryBox round={props.round} holes={props.holes} frame={props.frame} />;
   }
 
   const { round, variant, onClick, onLinkClick } = props;
@@ -268,10 +272,18 @@ function RoundCompact({ round, layout = "inline", onClick }: Omit<RoundCompactPr
   );
 }
 
-function RoundSummaryBox({ round }: { round: RoundSummary }) {
+function RoundSummaryBox({
+  round,
+  holes = "nines",
+  frame = "outline",
+}: Pick<RoundSummaryProps, "round" | "holes" | "frame">) {
   const when = roundDayAndTee(round);
   return (
-    <div data-slot="round-preview" data-variant="summary" className="flex flex-col gap-3 rounded-xl border border-border p-4">
+    <div
+      data-slot="round-preview"
+      data-variant="summary"
+      className={cn("flex flex-col gap-3", frame === "outline" && "rounded-xl border border-border p-4")}
+    >
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-body-lg font-semibold text-foreground">{courseLabel(round.course?.name)}</p>
@@ -282,10 +294,14 @@ function RoundSummaryBox({ round }: { round: RoundSummary }) {
           <ToParPill toPar={round.toPar} ground="muted" />
         </div>
       </div>
-      <div className="flex gap-2">
-        <HoleScoreBars holes={round.frontNine.holes} size="sm" className="flex-1" />
-        <HoleScoreBars holes={round.backNine.holes} size="sm" className="flex-1" />
-      </div>
+      {holes === "strip" ? (
+        <HoleScoreBars holes={round.holes} variant="strip" className="w-full" />
+      ) : (
+        <div className="flex gap-2">
+          <HoleScoreBars holes={round.frontNine.holes} size="sm" className="flex-1" />
+          <HoleScoreBars holes={round.backNine.holes} size="sm" className="flex-1" />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,67 +1,37 @@
-import { Menu, Moon, Sun, X } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
-import {
-  BrandMark,
-  Button,
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/brand";
+import { BrandMark, Button } from "@/brand";
 import { useTheme } from "@/context/theme";
 
+/**
+ * The signed-out header: the brand, then Sign in and Sign up. A phone keeps Sign in alone, in
+ * green, since the hero's "or sign up free" sits right under it. The theme toggle stays beside them.
+ */
 export function PublicNav() {
   const { toggle: toggleTheme } = useTheme();
 
   return (
-    <Collapsible
-      render={<nav />}
-      className="sticky top-0 z-50 border-b border-border bg-card/glass backdrop-blur-sm"
-    >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Link to="/" aria-label="BirdieEyeView home">
-          <BrandMark />
-        </Link>
+    <header className="mx-auto flex max-w-276 items-center justify-between px-5 pt-13 pb-3 md:px-6 md:py-5">
+      <Link to="/" aria-label="BirdieEyeView home">
+        <BrandMark size="sm" />
+      </Link>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <Button variant="outline" shape="pill" render={<Link to="/login" />}>
-            Sign In
-          </Button>
-          <Button shape="pill" render={<Link to="/register" />}>
-            Sign Up
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            shape="pill"
-            onClick={toggleTheme}
-            aria-label="Toggle dark mode"
-          >
-            <Moon className="dark:hidden" />
-            <Sun className="hidden dark:block" />
-          </Button>
-        </div>
-
-        <CollapsibleTrigger
-          render={<Button variant="ghost" size="icon" className="md:hidden" />}
-          aria-label="Toggle menu"
-        >
-          <Menu className="in-data-panel-open:hidden" />
-          <X className="hidden in-data-panel-open:block" />
-        </CollapsibleTrigger>
-      </div>
-
-      <CollapsibleContent className="flex flex-col gap-2 border-t border-border bg-card px-6 py-4 md:hidden">
-        <Button variant="outline" shape="pill" onClick={toggleTheme}>
-          <span className="dark:hidden">Dark Mode</span>
-          <span className="hidden dark:inline">Light Mode</span>
+      <nav className="flex items-center gap-1 md:gap-2">
+        <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle dark mode">
+          <Moon className="dark:hidden" />
+          <Sun className="hidden dark:block" />
         </Button>
-        <Button variant="outline" shape="pill" render={<Link to="/login" />}>
-          Sign In
+        {/* Sign in is ink beside Sign up from md, and the phone's one link, in green, without it. */}
+        <Button variant="ghost" className="max-md:hidden" render={<Link to="/login" />}>
+          Sign in
         </Button>
-        <Button shape="pill" render={<Link to="/register" />}>
-          Sign Up
+        <Button variant="link" className="md:hidden" render={<Link to="/login" />}>
+          Sign in
         </Button>
-      </CollapsibleContent>
-    </Collapsible>
+        <Button className="max-md:hidden" render={<Link to="/register" />}>
+          Sign up
+        </Button>
+      </nav>
+    </header>
   );
 }

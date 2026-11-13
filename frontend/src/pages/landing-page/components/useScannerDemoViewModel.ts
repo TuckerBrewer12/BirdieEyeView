@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
-import { scoreKind, strokesToPar, type ScoreKind } from "@/domain";
 import type { TourScreen } from "./demoTour";
 
 export type ScannerPhase =
@@ -12,7 +11,7 @@ export type ScannerPhase =
   | "handicapTap"
   | "handicap"
   | "analytics"
-  | "lab";
+  | "profile";
 
 interface ScannerStep {
   phase: ScannerPhase;
@@ -30,7 +29,7 @@ const STEPS: ScannerStep[] = [
   { phase: "handicapTap", label: "5. Your dashboard", holdMs: 1000 },
   { phase: "handicap", label: "6. Your handicap", holdMs: 3000 },
   { phase: "analytics", label: "7. Your analytics", holdMs: 3000 },
-  { phase: "lab", label: "8. The Lab", holdMs: 3000 },
+  { phase: "profile", label: "8. Your profile", holdMs: 3000 },
 ];
 
 /** The app screen each step of the tour shows, once the scan has landed in the app. */
@@ -39,50 +38,14 @@ const TOUR_SCREEN: Partial<Record<ScannerPhase, TourScreen>> = {
   handicapTap: "dashboard",
   handicap: "handicap",
   analytics: "analytics",
-  lab: "lab",
+  profile: "profile",
 };
 
 const RESULT_INDEX = STEPS.findIndex((step) => step.phase === "result");
 
-/** One hole of the sample card the demo resolves to, ready to render. */
-export interface DemoScorecardRow {
-  hole: number;
-  par: number;
-  strokes: number;
-  putts: number;
-  greenInRegulation: boolean;
-  toPar: number;
-  score: ScoreKind;
-}
-
-/**
- * The sample card the scan resolves to. To par and the score kind are worked out from
- * par and strokes, so this demo follows the same golf rules as a saved round.
- */
-const SCORECARD: DemoScorecardRow[] = [
-  { hole: 1, par: 4, strokes: 5, putts: 2, greenInRegulation: false },
-  { hole: 2, par: 4, strokes: 5, putts: 1, greenInRegulation: false },
-  { hole: 3, par: 3, strokes: 3, putts: 2, greenInRegulation: true },
-  { hole: 4, par: 5, strokes: 6, putts: 2, greenInRegulation: false },
-  { hole: 5, par: 4, strokes: 5, putts: 2, greenInRegulation: false },
-  { hole: 6, par: 4, strokes: 5, putts: 3, greenInRegulation: true },
-  { hole: 7, par: 3, strokes: 4, putts: 3, greenInRegulation: true },
-  { hole: 8, par: 5, strokes: 6, putts: 2, greenInRegulation: false },
-  { hole: 9, par: 3, strokes: 4, putts: 2, greenInRegulation: false },
-].map((hole) => {
-  const toPar = strokesToPar(hole.strokes, hole.par);
-  const score = scoreKind(hole.strokes, hole.par);
-  // Both helpers return null only when par or strokes is missing, which this card never is.
-  if (toPar == null || score == null) {
-    throw new Error(`Hole ${hole.hole} is missing par or strokes`);
-  }
-  return { ...hole, toPar, score };
-});
-
 export interface ScannerDemoViewModel {
   phase: ScannerPhase;
   label: string;
-  scorecard: DemoScorecardRow[];
   /** The app screen on show, or null while the card is still being scanned. */
   screen: TourScreen | null;
   /** The handicap is being tapped, about to open its breakdown. */
@@ -121,7 +84,6 @@ export function useScannerDemoViewModel(): ScannerDemoViewModel {
   return {
     phase: step.phase,
     label: step.label,
-    scorecard: SCORECARD,
     screen: TOUR_SCREEN[step.phase] ?? null,
     tapping: step.phase === "handicapTap",
     tourPrimed,

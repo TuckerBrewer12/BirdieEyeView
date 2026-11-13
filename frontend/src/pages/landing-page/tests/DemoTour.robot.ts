@@ -64,15 +64,15 @@ export class DemoTourRobot {
     return this;
   }
 
-  /** The Lab's old address, which opens the analytics page's Profile. */
-  async openLab(): Promise<this> {
-    await this.page.goto("/the-lab");
+  /** Analytics' Profile tab. */
+  async openProfile(): Promise<this> {
+    await this.page.goto("/analytics?tab=profile");
     await expect(this.page.getByRole("tab", { name: "Profile", selected: true }).locator("visible=true")).toBeVisible();
     return this;
   }
 
   /** The goal card and the shape, filled in from the golfer's rounds. */
-  async seesLab(): Promise<this> {
+  async seesProfile(): Promise<this> {
     await expect(this.page.locator("[data-slot=shape-card]").locator("visible=true").first()).toBeVisible();
     return this;
   }

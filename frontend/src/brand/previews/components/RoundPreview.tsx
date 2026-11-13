@@ -49,6 +49,10 @@ export default function RoundPreviewPreview() {
       <Card className="w-preview px-4">
         <RoundPreview variant="summary" round={overPar} />
       </Card>
+      {/* A cell a hole, in a Card that frames it: the landing page's sample round. */}
+      <Card className="w-preview px-4">
+        <RoundPreview variant="summary" holes="strip" frame="none" round={overPar} />
+      </Card>
     </>
   );
 }
