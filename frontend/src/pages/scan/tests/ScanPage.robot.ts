@@ -111,6 +111,20 @@ export class ScanRobot {
     return this;
   }
 
+  /** Opens the phone's photo of the card, full width under its thumbnail. */
+  async tapViewPhoto(): Promise<this> {
+    await this.page.getByRole("button", { name: "View", exact: true }).click();
+    return this;
+  }
+
+  /** The scorecard photo, opened under the thumbnail. */
+  async seesScorecardPhoto(): Promise<this> {
+    await expect(
+      this.page.locator("[data-slot=collapsible-content]").getByRole("img", { name: "Your scorecard" }),
+    ).toBeVisible();
+    return this;
+  }
+
   async tapSave(): Promise<this> {
     await this.page.getByRole("button", { name: "Save round" }).click();
     return this;

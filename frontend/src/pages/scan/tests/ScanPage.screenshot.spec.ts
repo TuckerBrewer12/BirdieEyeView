@@ -69,6 +69,17 @@ test("the scanned card under review", async ({ scan }) => {
   await scan.capture("scan-review.png");
 });
 
+// The photo row is phone-only (hidden from md). Tag @phone so only that project opens View.
+test("the scorecard photo open", { tag: "@phone" }, async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.tapViewPhoto();
+  await scan.seesScorecardPhoto();
+  await scan.capture("scan-review-photo.png");
+});
+
 test("the scanned card under review in dark mode", async ({ scan }) => {
   await scan.dark();
   await scan.open({ scan: unsureCard });
