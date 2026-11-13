@@ -406,7 +406,9 @@ def test_scan_extract_and_save_refuse_another_users_course(api, scan_providers):
 # ---- Real Mistral captures through the deterministic chain (clean-up → parse → assembly)
 
 MISTRAL_FIXTURES = Path(__file__).resolve().parent / "fixtures" / "mistral"
-LARGE_CASES = {case.case_id: case for case in load_cases(SUITE_MANIFEST_PATHS["large"])}
+EVAL_CASES = {
+    case.case_id: case for suite in ("quick", "large") for case in load_cases(SUITE_MANIFEST_PATHS[suite])
+}
 # Cells each case must reach on the committed capture (merge skipped, so this is the parser's
 # own floor). Raise a number when the parser improves; a drop is a regression.
 FIXTURE_MINIMUMS = {
@@ -417,7 +419,16 @@ FIXTURE_MINIMUMS = {
     "lake_chabot_d": 31, "lake_chabot_g": 33,  # known gap: no score row on the card
     "metropolitan_d": 54, "rancho_solano_d": 43, "rancho_solano_g": 54, "shadow_lakes_d": 54,
     "yocha_dehe_g": 49,
+    # quick suite
+    "blue_rock_tucker": 18, "eagle_vines_tucker": 18, "half_moon_bay_g": 54, "half_moon_bay_t": 54,
 }
+
+
+def test_every_eval_case_is_covered_by_a_capture_and_a_minimum():
+    # A card added to either manifest without a capture would never be checked offline.
+    assert set(FIXTURE_MINIMUMS) == set(EVAL_CASES)
+    for case in EVAL_CASES.values():
+        assert (MISTRAL_FIXTURES / f"{case.image.rsplit('.', 1)[0]}.json").is_file(), case.image
 
 
 @pytest.fixture
@@ -440,7 +451,7 @@ def mistral_capture(monkeypatch):
 
 
 def extract_case(api, mistral_capture, case_id: str):
-    case = LARGE_CASES[case_id]
+    case = EVAL_CASES[case_id]
     mistral_capture["image"] = case.image.rsplit(".", 1)[0]
     alice = api.user(f"{case_id}@example.com")
     ocr = api.client.post("/api/scan/ocr", headers=alice["headers"], files=upload(case.image))

@@ -254,6 +254,9 @@ def align_rows_to_header(
     Mistral often gives a row a different number of cells than the header:
     - wider by ``k``: an extra leading label cell (the player's name in its own cell, or a
       tee rating such as ``72.2/135``); dropped when the first ``k + 1`` cells are label-like;
+      or extra blank cells in the separator gap between OUT and hole 10, dropped when that gap
+      holds only blanks. Mistral sometimes marks the ``INITIALS`` cell with a ``rowspan`` one
+      row too long and also emits that row's own blank cell, so the expanded grid has two;
     - narrower by ``k``: a missing leading label cell (the row has fewer label cells than the
       header has before hole 1), padded with empty cells; or a missing separator column
       between OUT and hole 10 (``INITIALS``), padded at the header's separator columns.
@@ -278,6 +281,15 @@ def align_rows_to_header(
                 )
                 row = [label] + row[extra + 1 :]
                 note = f"dropped {extra} extra leading cell(s)"
+            elif (
+                separator_cols
+                # The front nine already lines up (same label cells as the header), so only the gap is wider.
+                and _leading_label_count(row) == label_count
+                and _blank(row[separator_cols[0] : separator_cols[-1] + 1 + extra])
+            ):
+                gap = separator_cols[0]
+                row = row[:gap] + row[gap + extra :]
+                note = f"dropped {extra} extra blank cell(s) in the separator gap at {separator_cols}"
             else:
                 note = f"{extra} cell(s) wider than the hole header but the leading cells hold values; left unaligned"
         elif extra < 0:
@@ -325,6 +337,10 @@ def _leading_label_count(row: List[str]) -> int:
         else:
             break
     return count
+
+
+def _blank(cells: List[str]) -> bool:
+    return all(not cell.strip() for cell in cells)
 
 
 def _separator_columns(header: List[str]) -> List[int]:
