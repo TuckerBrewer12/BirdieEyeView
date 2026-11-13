@@ -25,6 +25,10 @@ export function useRespondToRequest(
       queryClient.setQueryData<Friendship[]>(queryKeys.friendships(userId), (prev) =>
         prev ? withFriendship(prev, answered) : prev,
       );
+      // An answered request is no longer pending, so the More menu's count drops with it.
+      queryClient.setQueryData<Friendship[]>(queryKeys.pendingFriendships(userId), (prev) =>
+        prev?.filter((f) => f.id !== answered.id),
+      );
     },
   });
 }

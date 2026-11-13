@@ -2,6 +2,7 @@ import { FlagTriangleRight, LogOut } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { NavLink, type NavItem, type RenderLink } from "@/brand/nav";
 import { Button } from "./Button";
+import { Avatar } from "./Avatar";
 
 interface SideNavUser {
   name: string;
@@ -79,12 +80,7 @@ function SideNav({
       <div className="mx-1 my-2 h-px bg-sidebar-foreground/tint" />
 
       <div className="group flex items-center gap-2.5 pt-1.5 pr-1 pl-2">
-        <span
-          aria-hidden
-          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-foreground/tint text-xs font-bold"
-        >
-          {user.initials}
-        </span>
+        <Avatar initials={user.initials} size="sm" tone="rail" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{user.name}</p>
           {user.detail && (

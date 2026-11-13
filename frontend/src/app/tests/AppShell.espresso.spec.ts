@@ -1,3 +1,4 @@
+import { golfers, populatedFriendships } from "../../testing/fixtures/friendships";
 import { test } from "./AppShell.robot";
 
 test("the side rail moves between pages and marks the current one", async ({ shell }) => {
@@ -48,7 +49,17 @@ test.describe("on a phone", () => {
     await shell.isAt("/rounds");
   });
 
-  test("signing out from More returns to the landing page", async ({ shell }) => {
+  test("More shows the golfer, and Social counts the requests waiting for an answer", async ({ shell }) => {
+    await shell.open("/rounds", { friends: { friendships: populatedFriendships, golfers } });
+    await shell.openMore();
+    await shell.seesMenuGolfer("Test Golfer");
+    await shell.seesMenuCount("Social", 1);
+    await shell.tapMenuItem("Social, 1 new");
+    await shell.isAt("/social");
+    await shell.seesMoreLit();
+  });
+
+  test("signing out through More and Settings returns to the landing page", async ({ shell }) => {
     await shell.open("/rounds");
     await shell.signOut();
     await shell.seesSignedOut();

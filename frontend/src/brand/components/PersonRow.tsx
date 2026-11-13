@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/brand/cn";
 import { ListRow } from "./ListRow";
+import { Avatar } from "./Avatar";
 
 interface PersonRowProps {
   name: string;
@@ -35,15 +36,7 @@ function initialsOf(name: string): string {
 function PersonRow({ name, initials, detail, meta, actions, settled = false, className }: PersonRowProps) {
   return (
     <ListRow slot="person-row" className={className}>
-      <span
-        aria-hidden
-        className={cn(
-          "flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-body font-bold text-foreground",
-          settled && "opacity-settled",
-        )}
-      >
-        {initials ?? initialsOf(name)}
-      </span>
+      <Avatar initials={initials ?? initialsOf(name)} className={cn(settled && "opacity-settled")} />
 
       <div className={cn("min-w-0 flex-1", settled && "opacity-settled")}>
         <p className="truncate text-body-lg font-semibold text-foreground">{name}</p>

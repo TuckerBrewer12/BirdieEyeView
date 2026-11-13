@@ -78,10 +78,12 @@ export {
   InputGroupInput,
 } from "./components/InputGroup";
 export { PageHeader } from "./components/PageHeader";
+export { Avatar } from "./components/Avatar";
 export { CountBadge } from "./components/CountBadge";
 export { PersonRow } from "./components/PersonRow";
 export { SettingsGroup, SettingsRow } from "./components/SettingsRow";
 export { Switch } from "./components/Switch";
+export type { AvatarProps } from "./components/Avatar";
 export type { CountBadgeProps } from "./components/CountBadge";
 export type { PersonRowProps } from "./components/PersonRow";
 export { PageTitle } from "./components/PageTitle";

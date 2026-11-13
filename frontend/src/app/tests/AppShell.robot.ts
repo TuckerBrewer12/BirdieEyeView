@@ -59,8 +59,21 @@ export class AppShellRobot {
     return this;
   }
 
+  /** Taps the dimmed page above the More sheet: the backdrop's top corner, which a bottom sheet never covers. */
   async tapOutsideMenu(): Promise<this> {
-    await this.page.getByRole("button", { name: "Close menu" }).click({ position: { x: 20, y: 20 } });
+    await this.page.locator('[data-slot="sheet-overlay"]').click({ position: { x: 8, y: 8 } });
+    return this;
+  }
+
+  /** A More sheet row's count of what waits there, read as "Social, 1 new". */
+  async seesMenuCount(label: string, count: number): Promise<this> {
+    await expect(this.menu().getByRole("link", { name: `${label}, ${count} new`, exact: true })).toBeVisible();
+    return this;
+  }
+
+  /** The golfer at the top of the More sheet. */
+  async seesMenuGolfer(name: string): Promise<this> {
+    await expect(this.menu().getByText(name, { exact: true })).toBeVisible();
     return this;
   }
 
@@ -69,7 +82,7 @@ export class AppShellRobot {
     return this;
   }
 
-  /** The sign-out on the rail's account row shows on hover; on a phone it is in More. */
+  /** The sign-out on the rail's account row shows on hover; on a phone it is in Settings, through More. */
   async signOut(): Promise<this> {
     const account = this.page.locator("[data-slot=side-nav]");
     if (await account.isVisible()) {
@@ -77,7 +90,8 @@ export class AppShellRobot {
       await account.getByRole("button", { name: "Sign out" }).click();
     } else {
       await this.openMore();
-      await this.menu().getByRole("button", { name: "Sign out" }).click();
+      await this.tapMenuItem("Settings");
+      await this.page.locator("main").getByRole("button", { name: "Sign out" }).click();
     }
     return this;
   }
