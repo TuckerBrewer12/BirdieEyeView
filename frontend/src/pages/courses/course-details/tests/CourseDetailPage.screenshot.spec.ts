@@ -15,6 +15,15 @@ test("a course not played yet in dark mode", async ({ courseDetail }) => {
   await courseDetail.capture("course-detail-populated-dark.png");
 });
 
+test("a record that didn't load: an error with Retry in place of the prompt to scan", async ({ courseDetail }) => {
+  await courseDetail.open(halfMoonBayCourse, {
+    courseAnalytics: halfMoonBayAnalytics,
+    courseAnalyticsError: "Stats are down.",
+  });
+  await courseDetail.seesRecordError();
+  await courseDetail.capture("course-detail-record-failed.png");
+});
+
 test("a course played: the golfer's rows, record and recent rounds", async ({ courseDetail }) => {
   await courseDetail.open(halfMoonBayCourse, { courseAnalytics: halfMoonBayAnalytics });
   await courseDetail.seesAverageRow();
