@@ -64,6 +64,7 @@ export function SocialPage({ userId }: SocialPageProps) {
                 <div className="flex items-center gap-2">
                   <Input
                     id={CODE_INPUT}
+                    size="inline"
                     value={viewModel.friendCode}
                     onChange={(event) => viewModel.setFriendCode(event.target.value)}
                     placeholder="e.g. GCAB12CD34"

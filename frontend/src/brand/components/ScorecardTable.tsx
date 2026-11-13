@@ -90,7 +90,7 @@ function CountInput({
         if (parsed !== undefined) onChange(parsed);
       }}
       // Block, so it centres under the hole number like the rest of the column.
-      className={cn("mx-auto block h-7 w-7 px-0 text-center text-sm font-semibold", className)}
+      className={cn("mx-auto block h-7 w-7 rounded-lg px-0 text-center text-sm font-semibold md:text-sm", className)}
     />
   );
 }

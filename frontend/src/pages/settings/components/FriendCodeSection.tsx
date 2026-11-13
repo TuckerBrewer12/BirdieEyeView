@@ -30,6 +30,7 @@ export function FriendCodeSection({ friendCode }: FriendCodeSectionProps) {
       <CardContent className="flex flex-col gap-1.5">
         <div className="flex items-center gap-2">
           <Input
+            size="inline"
             readOnly
             aria-label="Friend code"
             value={friendCode ?? "Unavailable"}

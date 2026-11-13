@@ -48,7 +48,7 @@ export function RegisterPage() {
           <FieldLabel htmlFor="register-name">Name</FieldLabel>
           <Input
             id="register-name"
-            size="cta"
+           
             value={viewModel.name}
             onChange={(event) => viewModel.setName(event.target.value)}
             required
@@ -62,7 +62,7 @@ export function RegisterPage() {
           <Input
             id="register-email"
             type="email"
-            size="cta"
+           
             value={viewModel.email}
             onChange={(event) => viewModel.setEmail(event.target.value)}
             required
@@ -96,7 +96,7 @@ export function RegisterPage() {
           <FieldLabel htmlFor="register-handicap">Handicap (optional)</FieldLabel>
           <Input
             id="register-handicap"
-            size="cta"
+           
             inputMode="decimal"
             value={viewModel.handicap}
             onChange={(event) => viewModel.setHandicap(event.target.value)}

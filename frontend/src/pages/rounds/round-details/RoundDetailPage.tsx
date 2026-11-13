@@ -134,6 +134,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
                 Tee
               </span>
               <Input
+                size="inline"
                 aria-label="Tee"
                 autoComplete="off"
                 placeholder="e.g. White"
