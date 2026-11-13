@@ -11,6 +11,7 @@ import {
   ScorecardLayoutPicker,
   RoundScorecard,
 } from "@/brand";
+import { SCAN_STEPS } from "@/domain/scan";
 import { useFilePreview } from "@/platform/useFilePreview";
 import { tokens } from "@/brand/theme";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
@@ -81,10 +82,10 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
             transition={{ duration: tokens.motion.scanStep.processing }}
           >
             <ScanProgress
+              photoUrl={previewUrl}
               label={viewModel.phaseLabel}
-              detail={viewModel.phaseDetail}
+              steps={SCAN_STEPS.length}
               phase={viewModel.phase}
-              phaseCount={viewModel.phaseCount}
             />
           </motion.div>
         )}

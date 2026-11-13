@@ -68,7 +68,7 @@ export function ScanPage({ userId }: { userId: string }) {
         <div className="flex flex-col gap-2.5 pb-6">
           <PageHeader title={TITLE} revealAt={100} />
           <PageTitle>{TITLE}</PageTitle>
-          <ScanProcessingStep phase={viewModel.phase} />
+          <ScanProcessingStep photoUrl={previewUrl} phase={viewModel.phase} />
         </div>
       );
 

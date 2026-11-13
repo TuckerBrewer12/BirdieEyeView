@@ -234,6 +234,10 @@ const light = {
     shots: alias("score-quad-base"),
   },
   demoCardHeader: forest[750],
+  // A scan in flight: the photo shaded down to the line being read, the line lit. Over a
+  // photo, so the same in both modes.
+  scanLine: green[400],
+  scanShade: alpha(sage[900], 0.28),
 
   // Tee boxes. A tee's colour names a real marker on the course, so these do
   // not flip with the mode. `on` is the ink that reads on the swatch.
@@ -444,6 +448,8 @@ export const space = {
 export const radiusBase = "0.5rem";
 
 export const radius = {
+  /** A photo set on the page: the scorecard being read. */
+  photo: 14,
   sm: "0.25rem",
   md: "0.375rem",
   lg: "0.5rem",
@@ -468,6 +474,8 @@ export const size = {
   /** The side rail's width: `AppShell` sets it and clears the page past it. */
   rail: 240,
   preview: 390,
+  /** The scorecard photo while it is read: as wide as this, three by two. */
+  "scan-photo": 360,
   chart: 180,
   "chart-compact": 210,
   /** Width a hole-by-hole chart needs before it scrolls sideways. */
@@ -516,6 +524,12 @@ export const lineWidth = {
   outline: 1.5,
 };
 
+/** A scan in flight: where the read line sits on the photo at the first step and at the last, in percent from the top. */
+export const scan = {
+  lineFrom: 20,
+  lineTo: 86,
+};
+
 /** Border widths that are not Tailwind's own steps: `border-callout`, the edge of an `Alert`. */
 export const borderWidth = {
   callout: lineWidth.outline,
@@ -560,6 +574,10 @@ export const shadow = {
   card: "0 6px 20px var(--shadow)",
   /** A card resting on the page: no rule, lifted by a near and a far shadow. */
   surface: "0 1px 2px var(--surface-shadow-near), 0 8px 24px var(--surface-shadow-far)",
+  /** The read line's glow over a scorecard photo. */
+  "scan-line": "0 0 12px 2px var(--scan-line)",
+  /** A photo lifted off the page while it is read. */
+  photo: "0 12px 32px var(--shadow)",
   hairline: "0 1px 0 var(--shadow)",
   sm: "0 1px 3px 0 var(--shadow), 0 1px 2px -1px var(--shadow)",
   md: "0 4px 6px -1px var(--shadow), 0 2px 4px -2px var(--shadow)",
@@ -630,7 +648,8 @@ export const motion = {
   /** A panel opening under the control that asked for it. */
   expand: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as Ease },
   /** The card being read while a scan runs: it breathes, a line sweeps it, its corners pulse, the step rail fills. */
-  scanProgress: { breathe: 2.6, sweep: 1.6, pulse: 1.8, cornerStagger: 0.45, step: 0.4 },
+  /** The read line moving down the photo to the next step. */
+  scanLine: 0.8,
   /** The try-it panel moving between its steps. */
   scanStep: { upload: 0.3, processing: 0.25, review: 0.35 },
   /**

@@ -78,7 +78,7 @@ export class ScanRobot {
   /** The card being read, on its first phase. */
   async seesProcessing(): Promise<this> {
     await expect(
-      this.page.locator("[data-slot=scan-progress]").filter({ hasText: "Reading course details…" }),
+      this.page.locator("[data-slot=scan-progress]").filter({ hasText: "Finding the course…" }),
     ).toBeVisible();
     return this;
   }

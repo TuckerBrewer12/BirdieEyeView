@@ -1,5 +1,5 @@
 import { ScanProcessingStep } from "../components/ScanProcessingStep";
 
 export default function ScanProcessingStepPreview() {
-  return <ScanProcessingStep phase={1} />;
+  return <ScanProcessingStep photoUrl="/hero/physical-card.jpg" phase={1} />;
 }

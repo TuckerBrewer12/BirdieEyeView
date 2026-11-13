@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { scannedCard, UNSURE_HOLES, unsureCard } from "@/testing/fixtures/scan";
 import type { ScanDto } from "@/types/api";
-import { strokesToCheck } from "../scan";
+import { SCAN_STEPS, scanStepAt, strokesToCheck } from "../scan";
 
 describe("strokesToCheck", () => {
   it("is empty for a card the scan read cleanly", () => {
@@ -43,5 +43,13 @@ describe("strokesToCheck", () => {
   it("drops a hole once the golfer types a score into it, but not putts or a cleared cell", () => {
     expect(strokesToCheck(unsureCard, { 4: { strokes: 5 } })).toEqual([11]);
     expect(strokesToCheck(unsureCard, { 4: { putts: 2 }, 11: { strokes: null } })).toEqual(UNSURE_HOLES);
+  });
+});
+
+describe("scanStepAt", () => {
+  it("words each step of reading a card, and holds on the last", () => {
+    expect(scanStepAt(0)).toEqual({ label: "Finding the course…", phase: 0 });
+    expect(scanStepAt(2)).toEqual({ label: "Reading scores…", phase: 2 });
+    expect(scanStepAt(9)).toEqual({ label: SCAN_STEPS.at(-1), phase: SCAN_STEPS.length - 1 });
   });
 });
