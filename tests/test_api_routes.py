@@ -479,7 +479,7 @@ async def test_user_tee_crud_and_friendship_flows():
     # An accepted friend comes with their index and their last round's day.
     friend = User(id=str(other_id), name="Two", handicap=12.0)
     db.users.get_user = AsyncMock(return_value=friend)
-    last_round = Round(date=datetime(2026, 10, 28, 9, 30), hole_scores=[])
+    last_round = Round(date=datetime(2026, 10, 28, 9, 30, tzinfo=timezone.utc), hole_scores=[])
     db.rounds.get_rounds_for_user = AsyncMock(return_value=[last_round])
     friendship_responses = await users.list_friendships(None, db, user)
     assert [response.model_dump() for response in friendship_responses] == [

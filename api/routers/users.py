@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing import List, Literal, Optional
-from analytics import handicap as hcap
+from api.player_handicap import player_handicap_index_with_rounds
 from database.db_manager import DatabaseManager
 from database.exceptions import AlreadyFriendsError, DuplicateError, FriendRequestBlockedError, NotFoundError
 from api.dependencies import get_current_user, get_db
@@ -375,7 +375,6 @@ async def _friend_figures(db: DatabaseManager, friend_id: str) -> tuple[Optional
     friend = await db.users.get_user(friend_id)
     if friend is None:
         return None, None
-    rounds = await db.rounds.get_rounds_for_user(friend_id, limit=20)
-    index = hcap.player_handicap_index(friend, list(reversed(rounds)))
+    index, rounds = await player_handicap_index_with_rounds(db, friend)
     last = rounds[0].date if rounds and rounds[0].date else None
     return index, last.date().isoformat() if last else None

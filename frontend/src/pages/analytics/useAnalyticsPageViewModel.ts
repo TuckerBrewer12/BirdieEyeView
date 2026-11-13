@@ -67,12 +67,16 @@ export interface AnalyticsPageViewModel {
   profile: ProfileViewModel;
 }
 
+export interface AnalyticsPageOptions {
+  initialTab?: AnalyticsTab;
+  /** A friend to compare with on Profile from the start: Social's Compare opens Profile this way. */
+  initialFriendId?: string | null;
+  repository?: AnalyticsRepository;
+}
+
 export function useAnalyticsPageViewModel(
   userId: string,
-  initialTab: AnalyticsTab = DEFAULT_TAB,
-  repository: AnalyticsRepository = analyticsRepository,
-  /** A friend to compare with on Profile from the start: Social's Compare opens Profile this way. */
-  initialFriendId: string | null = null,
+  { initialTab = DEFAULT_TAB, initialFriendId = null, repository = analyticsRepository }: AnalyticsPageOptions = {},
 ): AnalyticsPageViewModel {
   const [filters, setFiltersState] = useState<AnalyticsFilters>(DEFAULT_FILTERS);
   const [trendShown, setTrendShownState] = useState<Record<TrendChart, number | null>>(ALL_ROUNDS_SHOWN);

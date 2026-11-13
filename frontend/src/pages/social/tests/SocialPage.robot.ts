@@ -94,8 +94,9 @@ export class SocialRobot {
     return this;
   }
 
+  /** The golfer's code where this width shows it: the card's header, or under the field on a phone. */
   async seesMyCode(code: string): Promise<this> {
-    await expect(this.page.getByText(code, { exact: true })).toBeVisible();
+    await expect(this.page.getByText(code, { exact: true }).filter({ visible: true })).toBeVisible();
     return this;
   }
 

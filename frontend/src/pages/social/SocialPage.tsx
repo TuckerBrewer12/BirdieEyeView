@@ -17,6 +17,7 @@ import {
   PageHeader,
   PageTitle,
   PersonRow,
+  RowButton,
 } from "@/brand";
 import { useFromBreakpoint } from "@/brand/useFromBreakpoint";
 import type { Friendship } from "@/data/friendsModel";
@@ -56,9 +57,13 @@ export function SocialPage({ userId }: SocialPageProps) {
     // On a phone the whole row opens the comparison, as a list of people does there.
     if (wide) return row;
     return (
-      <Link to={compareLink(friend.other.id)} aria-label={`Compare with ${name}`} className="block transition-colors active:bg-muted">
+      <RowButton
+        render={<Link to={compareLink(friend.other.id)} />}
+        aria-label={`Compare with ${name}`}
+        className="block w-full active:bg-muted"
+      >
         {row}
-      </Link>
+      </RowButton>
     );
   };
 
@@ -81,12 +86,11 @@ export function SocialPage({ userId }: SocialPageProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle level={2} className="text-body-lg font-semibold">Add a friend</CardTitle>
-            {wide && (
-              <CardAction className="self-center">
-                <YourCode code={viewModel.myCode} />
-              </CardAction>
-            )}
+            <CardTitle level={2}>Add a friend</CardTitle>
+            {/* Your code sits in the header from md, under the field on a phone. */}
+            <CardAction className="hidden self-center md:block">
+              <YourCode code={viewModel.myCode} />
+            </CardAction>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <form
@@ -122,20 +126,18 @@ export function SocialPage({ userId }: SocialPageProps) {
               </Alert>
             )}
 
-            {!wide && (
-              <div className="border-t border-border pt-3">
-                <YourCode code={viewModel.myCode} />
-              </div>
-            )}
+            <div className="border-t border-border pt-3 md:hidden">
+              <YourCode code={viewModel.myCode} />
+            </div>
           </CardContent>
         </Card>
 
         <Card className="pb-0">
           <CardHeader>
-            <CardTitle level={2} className="flex items-baseline gap-2 text-body-lg font-semibold">
+            <CardTitle level={2} className="flex items-baseline gap-2">
               Friends
               {viewModel.friends.length > 0 && (
-                <span className="text-body font-normal text-muted-foreground">{viewModel.friends.length}</span>
+                <span className="font-normal text-muted-foreground">{viewModel.friends.length}</span>
               )}
             </CardTitle>
           </CardHeader>
