@@ -22,6 +22,12 @@ test("no friends yet", async ({ social }) => {
   await social.capture("social-empty.png");
 });
 
+test("friend code unavailable", async ({ social }) => {
+  await social.openWithoutCode();
+  await social.seesCodeUnavailable();
+  await social.capture("social-code-unavailable.png");
+});
+
 test("request sent", async ({ social }) => {
   await social.open(seed);
   await social.typeCode("GCSAM00003");

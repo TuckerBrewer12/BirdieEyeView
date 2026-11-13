@@ -25,13 +25,24 @@ export class SocialRobot {
   }
 
   async open(friends: FakeBackendSeed["friends"] = {}): Promise<this> {
+    await this.install(friends, "TGOLF7Q2");
+    return this;
+  }
+
+  /** The server has no friend code yet: the line reads "unavailable" and Copy stays hidden. */
+  async openWithoutCode(friends: FakeBackendSeed["friends"] = {}): Promise<this> {
+    await this.install(friends, null);
+    return this;
+  }
+
+  private async install(friends: FakeBackendSeed["friends"], friendCode: string | null): Promise<void> {
     await FakeSession.install(this.page, {
       friends,
       profile: {
         id: TEST_USER.user_id,
         name: TEST_USER.name,
         email: TEST_USER.email,
-        friend_code: "TGOLF7Q2",
+        friend_code: friendCode,
         home_course_id: null,
         handicap: null,
         created_at: null,
@@ -42,7 +53,6 @@ export class SocialRobot {
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.codeInput).toBeVisible();
     await expect(this.page.getByText("Loading friends…")).toHaveCount(0);
-    return this;
   }
 
   async openFailed(message: string): Promise<this> {
@@ -97,6 +107,13 @@ export class SocialRobot {
   /** The golfer's code where this width shows it: the card's header, or under the field on a phone. */
   async seesMyCode(code: string): Promise<this> {
     await expect(this.page.getByText(code, { exact: true }).filter({ visible: true })).toBeVisible();
+    return this;
+  }
+
+  /** No code from the server: the line reads "unavailable" and Copy is hidden. */
+  async seesCodeUnavailable(): Promise<this> {
+    await expect(this.page.getByText("unavailable", { exact: true }).filter({ visible: true })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Copy your code" })).toHaveCount(0);
     return this;
   }
 
