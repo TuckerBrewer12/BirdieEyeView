@@ -68,7 +68,7 @@ export class LandingRobot {
   /** The hero's photo of a card, with the round it reads back floated over it. */
   async seesHeroPhoto(shown = true): Promise<this> {
     await expect(this.page.getByRole("img", { name: HERO_ALT })).toHaveCount(shown ? 1 : 0);
-    if (shown) await expect(this.page.locator("[data-slot=sample-round-card]")).toContainText("79");
+    if (shown) await expect(this.page.locator("[data-slot=sample-round]")).toContainText("79");
     return this;
   }
 

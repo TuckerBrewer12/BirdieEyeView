@@ -11,12 +11,12 @@ import {
   FileButton,
   FileChip,
   PageTitle,
+  RoundPreview,
   ScanProgress,
 } from "@/brand";
 import { tokens } from "@/brand/theme";
 import { SCAN_STEPS } from "@/domain/scan";
 import { useFilePreview } from "@/platform/useFilePreview";
-import { SampleRoundCard } from "../components/SampleRoundCard";
 import { SAMPLE_ROUND } from "../sampleRound";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
@@ -114,10 +114,16 @@ export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }
               alt="A paper scorecard held over a golf cart"
               className="block h-75 w-full rounded-2xl object-cover md:h-105 md:rounded-3xl"
             />
-            <SampleRoundCard
-              round={SAMPLE_ROUND}
-              className="absolute inset-x-3.5 bottom-3.5 md:inset-x-auto md:-bottom-6 md:-left-7 md:w-75"
-            />
+            {/* The round a scan of a card like this reads back, floated over the photo. Decoration. */}
+            <Card
+              aria-hidden
+              data-slot="sample-round"
+              className="absolute inset-x-3.5 bottom-3.5 md:inset-x-auto md:-bottom-6 md:-left-7 md:w-85"
+            >
+              <CardContent>
+                <RoundPreview variant="summary" holes="strip" frame="none" round={SAMPLE_ROUND} />
+              </CardContent>
+            </Card>
             {viewModel.error && (
               <Alert tone="danger" className="mt-4">
                 <AlertDescription>{viewModel.error}</AlertDescription>

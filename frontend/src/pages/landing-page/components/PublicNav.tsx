@@ -21,7 +21,11 @@ export function PublicNav() {
           <Moon className="dark:hidden" />
           <Sun className="hidden dark:block" />
         </Button>
-        <Button variant="ghost" className="max-md:text-primary" render={<Link to="/login" />}>
+        {/* Sign in is ink beside Sign up from md, and the phone's one link, in green, without it. */}
+        <Button variant="ghost" className="max-md:hidden" render={<Link to="/login" />}>
+          Sign in
+        </Button>
+        <Button variant="link" className="md:hidden" render={<Link to="/login" />}>
           Sign in
         </Button>
         <Button className="max-md:hidden" render={<Link to="/register" />}>

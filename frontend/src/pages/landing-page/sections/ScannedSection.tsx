@@ -1,7 +1,7 @@
 import { RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Button, Card, CardContent, PageTitle, RoundScorecard } from "@/brand";
+import { Button, Card, CardContent, EmptyNote, PageTitle, RoundScorecard } from "@/brand";
 import { tokens } from "@/brand/theme";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
@@ -21,7 +21,7 @@ export function ScannedSection({ viewModel }: { viewModel: TryItYourselfViewMode
           round={viewModel.round}
           teeBox={viewModel.round.teeBox}
           action={
-            <Button variant="outline" size="sm" className="border-primary-foreground/half bg-transparent text-primary-foreground hover:bg-primary-foreground/tint" onClick={viewModel.reset}>
+            <Button variant="onPrimary" size="sm" onClick={viewModel.reset}>
               <RotateCcw data-icon="inline-start" />
               Scan another
             </Button>
@@ -30,7 +30,7 @@ export function ScannedSection({ viewModel }: { viewModel: TryItYourselfViewMode
       )}
 
       {!viewModel.hasScores && (
-        <p className="py-6 text-center text-sm text-muted-foreground">No scores found. Try a clearer photo.</p>
+        <EmptyNote className="py-6">No scores found. Try a clearer photo.</EmptyNote>
       )}
 
       <Card>

@@ -15,6 +15,9 @@ const buttonVariants = cva(
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/half",
         destructive:
           "bg-destructive text-status-danger-on-base hover:bg-destructive-hover focus-visible:border-destructive/recessed focus-visible:ring-destructive/wash dark:focus-visible:ring-destructive/recessed",
+        /* On a green bar (a scorecard's): an outline in the bar's own ink. Scan another. */
+        onPrimary:
+          "border-primary-foreground/half bg-transparent text-primary-foreground hover:bg-primary-foreground/tint",
         /* A way out that loses something, beside the main action: Discard. Red ink, no fill. */
         ghostDestructive: "text-destructive hover:bg-destructive/tint",
         /* The board's Text: no fill, underlined on hover. */
