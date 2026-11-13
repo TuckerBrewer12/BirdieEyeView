@@ -74,6 +74,8 @@ export {
 } from "./components/InputGroup";
 export { PageHeader } from "./components/PageHeader";
 export { PersonRow } from "./components/PersonRow";
+export { SettingsGroup, SettingsRow } from "./components/SettingsRow";
+export { Switch } from "./components/Switch";
 export type { PersonRowProps } from "./components/PersonRow";
 export { PageTitle } from "./components/PageTitle";
 export { Meter } from "./components/Meter";

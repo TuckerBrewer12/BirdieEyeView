@@ -40,12 +40,12 @@ export class SettingsRobot {
     return this.themeControl().getByRole("button", { name: label, exact: true });
   }
 
-  private updatesCheckbox() {
-    return this.page.getByRole("checkbox", { name: "Get updates" });
+  private updatesSwitch() {
+    return this.page.getByRole("switch", { name: "Email updates" });
   }
 
   private copyButton() {
-    return this.page.getByRole("button", { name: /^Cop(y|ied)$/ });
+    return this.page.getByRole("button", { name: /^(Copy friend code|Copied)$/ });
   }
 
   private handicapField() {
@@ -152,12 +152,12 @@ export class SettingsRobot {
   }
 
   async turnOffUpdates(): Promise<this> {
-    await this.updatesCheckbox().uncheck();
+    await this.updatesSwitch().click();
     return this;
   }
 
   async seesUpdatesOff(): Promise<this> {
-    await expect(this.updatesCheckbox()).not.toBeChecked();
+    await expect(this.updatesSwitch()).not.toBeChecked();
     return this;
   }
 
@@ -190,7 +190,7 @@ export class SettingsRobot {
 
   async seesCopyFailed(): Promise<this> {
     await expect(this.page.getByRole("alert").filter({ hasText: "Could not copy your friend code." })).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Copy", exact: true })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Copy friend code", exact: true })).toBeVisible();
     return this;
   }
 
