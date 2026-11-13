@@ -295,7 +295,7 @@ def test_unknown_course_round_warns_about_invalid_scores():
 @pytest.mark.asyncio
 async def test_ocr_pipeline_merges_extracted_markdown(monkeypatch, tmp_path):
     ocr_service = SimpleNamespace(ocr_file=AsyncMock(return_value={"pages": [{"markdown": "raw markdown"}]}))
-    monkeypatch.setattr(scan, "MistralOCRService", lambda: ocr_service)
+    monkeypatch.setattr(scan, "GeminiOCRService", lambda: ocr_service)
     monkeypatch.setattr(
         scan.MistralOCRService,
         "extract_markdown_text",

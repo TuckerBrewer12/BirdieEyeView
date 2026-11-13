@@ -23,6 +23,7 @@ from api.request_models import SaveRoundRequest
 from api.scan_errors import ScanExtractionError
 from models import User
 from services.gemini_table_merger import merge_split_tables
+from services.gemini_ocr_service import GeminiOCRService
 from services.mistral_ocr_service import MistralOCRService
 from services.mistral_scorecard_parser import ParsedScorecardRows, parse_mistral_scorecard_rows
 from services.scan_service import ScanService
@@ -421,8 +422,8 @@ def _save_upload_to_temp(file: UploadFile, suffix: str) -> tuple[Path, str]:
 
 
 async def _run_ocr_pipeline(ocr_path: Path) -> str:
-    """Mistral OCR → Gemini merge → raw markdown string."""
-    svc = MistralOCRService()
+    """Gemini OCR (experiment, in place of Mistral) → Gemini merge → raw markdown string."""
+    svc = GeminiOCRService()
     ocr_resp = await svc.ocr_file(ocr_path)
 
     pages = ocr_resp.get("pages")
