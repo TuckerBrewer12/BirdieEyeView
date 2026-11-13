@@ -1,13 +1,4 @@
-import type { ReactNode } from "react";
-import {
-  Checkbox,
-  CourseLinkSearch,
-  Field,
-  FieldLabel,
-  Input,
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/brand";
+import { CourseLinkSearch, Field, FieldLabel, Input, ToggleGroup, ToggleGroupItem } from "@/brand";
 import { formatCourseName } from "@/domain/course";
 import type { ScanPageViewModel } from "../useScanPageViewModel";
 
@@ -74,30 +65,19 @@ export function ScanCardForm({ form }: { form: CardForm }) {
       </Field>
       <div className="flex flex-wrap items-center gap-2">
         <span className="w-full text-body font-semibold text-foreground md:mr-1 md:w-auto">Also on the card</span>
-        <CheckChip checked={card.putts} onChange={(putts) => setCard({ putts })}>
-          Putts
-        </CheckChip>
-        <CheckChip checked={card.shotsToGreen} onChange={(shotsToGreen) => setCard({ shotsToGreen })}>
-          Shots to green
-        </CheckChip>
+        <ToggleGroup
+          look="chips"
+          multiple
+          aria-label="Also on the card"
+          value={[...(card.putts ? ["putts"] : []), ...(card.shotsToGreen ? ["shotsToGreen"] : [])]}
+          onValueChange={(values) =>
+            setCard({ putts: values.includes("putts"), shotsToGreen: values.includes("shotsToGreen") })
+          }
+        >
+          <ToggleGroupItem value="putts">Putts</ToggleGroupItem>
+          <ToggleGroupItem value="shotsToGreen">Shots to green</ToggleGroupItem>
+        </ToggleGroup>
       </div>
     </div>
-  );
-}
-
-function CheckChip({
-  checked,
-  onChange,
-  children,
-}: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  children: ReactNode;
-}) {
-  return (
-    <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-3 text-body text-foreground">
-      <Checkbox checked={checked} onChange={(event) => onChange(event.target.checked)} />
-      {children}
-    </label>
   );
 }
