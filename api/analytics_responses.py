@@ -23,16 +23,22 @@ def _average(values: List[float]) -> Optional[float]:
     return sum(values) / len(values) if values else None
 
 
-def _handicap_trend(user: Optional[User], history: List[Round], rounds: List[Round]) -> List[Dict[str, Any]]:
+def _handicap_trend(
+    user: Optional[User], history: List[Round], rounds: List[Round], today: Optional[date] = None
+) -> List[Dict[str, Any]]:
     """The golfer's index after each of `rounds`, read off their whole `history`, so a page
     narrowed to a course or a timeframe still shows the golfer's own index after each round.
-    A round older than the history read has no index there (round_index 0)."""
+    A round older than the history read has no index there (round_index 0). Each row says
+    whether its round falls in the records' last year, so Career can narrow the line with them."""
     trend = hcap.player_handicap_trend(user, history)
     position = {r.id: i for i, r in enumerate(history) if r.id is not None}
     return [
-        trend[position[r.id]] if r.id in position else {
-            "round_index": 0, "round_id": r.id, "handicap_index": None, "differential": None,
-            "used_in_hi": None, "hi_threshold": None, "differential_status": "unrated",
+        {
+            **(trend[position[r.id]] if r.id in position else {
+                "round_index": 0, "round_id": r.id, "handicap_index": None, "differential": None,
+                "used_in_hi": None, "hi_threshold": None, "differential_status": "unrated",
+            }),
+            "in_window": analytics.in_window(r, reference_date=today),
         }
         for r in rounds
     ]
@@ -98,7 +104,7 @@ def analytics_response(
         scoring_by_yardage=analytics.scoring_by_yardage_buckets(rounds),
         scoring_by_handicap=analytics.scoring_vs_hole_handicap(rounds),
         gir_vs_non_gir=analytics.gir_vs_non_gir_score_distribution(rounds),
-        handicap_trend=_handicap_trend(user, history, rounds),
+        handicap_trend=_handicap_trend(user, history, rounds, today),
         score_differentials=hcap.score_differentials_per_round(rounds),
         notable_achievements=analytics.notable_achievements(
             rounds, reference_date=today, home_course_id=home_course_id

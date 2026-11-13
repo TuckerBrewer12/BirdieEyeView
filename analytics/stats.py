@@ -405,6 +405,20 @@ def _first_round_reaching_gir(round_set: List[Round], threshold: int) -> Optiona
     return None
 
 
+def in_window(
+    round_obj: Round,
+    *,
+    reference_date: Optional[date] = None,
+    days: int = 365,
+) -> bool:
+    """Whether a round falls in the records' last year: the `days` up to `reference_date` (today's
+    UTC date when omitted), counted in calendar days. A round with no date never does."""
+    today = reference_date or datetime.now(timezone.utc).date()
+    if round_obj.date is None:
+        return False
+    return today - timedelta(days=days) <= round_obj.date.date() <= today
+
+
 def notable_achievements(
     rounds: Iterable[Round],
     *,
@@ -422,7 +436,7 @@ def notable_achievements(
     cutoff = today - timedelta(days=days)
     rounds_list = list(rounds)
 
-    rounds_year = [r for r in rounds_list if r.date is not None and cutoff <= r.date.date() <= today]
+    rounds_year = [r for r in rounds_list if in_window(r, reference_date=today, days=days)]
     # A record or milestone set by a round's total (lowest, highest, fewest putts, most greens,
     # breaking a score) counts only full rounds: a nine's 40 is not a round of 40.
     full_list = full_rounds(rounds_list)
