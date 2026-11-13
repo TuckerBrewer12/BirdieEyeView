@@ -23,6 +23,14 @@ test("search with no hits shows the empty state", async ({ rounds }) => {
   await rounds.seesEmptyState();
 });
 
+test("a failed load says so, and Retry lists the rounds", async ({ rounds }) => {
+  await rounds.openFailing(storedRounds);
+  await rounds.seesLoadError();
+  rounds.listingRecovers();
+  await rounds.retry();
+  await rounds.seesCourse("Half Moon Bay");
+});
+
 test("the course menu filters to that course", async ({ rounds }) => {
   await rounds.open(storedRounds);
   await rounds.filterByCourse("Blue Rock");

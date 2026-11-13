@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/data/queryKeys";
 import { roundLine, type RoundSummary } from "@/domain";
 import { formatCourseName } from "@/domain/course";
+import { messageFrom } from "@/lib/userFacingErrors";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
 import {
   ALL_COURSES,
@@ -32,6 +33,8 @@ export interface LinkingRound {
 
 export interface RoundsUiState {
   loading: boolean;
+  /** Why the rounds didn't load; null once they have, even if a later refresh fails. */
+  loadError: string | null;
   rounds: RoundSummary[];
   filteredRounds: RoundSummary[];
   visibleRounds: RoundSummary[];
@@ -53,6 +56,7 @@ export interface RoundsUiState {
 }
 
 export interface RoundsPageViewModel extends RoundsUiState {
+  retry: () => void;
   loadMore: () => void;
   setSearch: (q: string) => void;
   toggleSearch: () => void;
@@ -79,10 +83,11 @@ export function useRoundsPageViewModel(
   userId: string,
   repository: RoundsRepository = roundsRepository,
 ): RoundsPageViewModel {
-  const { data: rounds = [], isLoading: loading } = useQuery({
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: queryKeys.rounds(userId),
     queryFn: () => repository.getRoundsForUser(userId, 100),
   });
+  const rounds = useMemo(() => data ?? [], [data]);
 
   const [search, setSearch] = useState("");
   const [searchShown, setSearchShown] = useState(false);
@@ -130,6 +135,8 @@ export function useRoundsPageViewModel(
 
   return {
     loading,
+    loadError: isError && !data ? messageFrom(error, "Could not load your rounds.") : null,
+    retry: () => void refetch(),
     rounds,
     filteredRounds,
     visibleRounds,

@@ -31,6 +31,9 @@ import {
 export interface CourseDetailPageViewModel {
   loading: boolean;
   loadError: string | null;
+  /** The golfer's record here didn't load: the course still shows, without "not played" in its place. */
+  recordError: string | null;
+  retryRecord: () => void;
   course: CourseDto | null;
   courseName: string;
   /** "Half Moon Bay, CA · Par 72". */
@@ -82,7 +85,13 @@ export function useCourseDetailPageViewModel(
   const [view, setView] = useState<CourseView>("course");
   const [holeOrder, setHoleOrder] = useState<HoleOrder>("course");
   const { data: course, isLoading: courseLoading, isError, error } = useCourse(courseId, repository);
-  const { data: analytics, isLoading: analyticsLoading } = useCourseAnalytics(userId, courseId, repository);
+  const {
+    data: analytics,
+    isLoading: analyticsLoading,
+    isError: recordFailed,
+    error: recordError,
+    refetch: refetchRecord,
+  } = useCourseAnalytics(userId, courseId, repository);
   const played = (analytics?.roundsPlayed ?? 0) > 0;
   const golfer: CourseAnalytics | null = played && analytics ? analytics : null;
   const tee = course ? selectedTee(course, picked) : null;
@@ -90,6 +99,8 @@ export function useCourseDetailPageViewModel(
   return {
     loading: !!courseId && (courseLoading || analyticsLoading),
     loadError: isError ? messageFrom(error, "Course not found.") : null,
+    recordError: recordFailed && !analytics ? messageFrom(recordError, "Could not load your rounds here.") : null,
+    retryRecord: () => void refetchRecord(),
     course: course ?? null,
     courseName: formatCourseName(course?.name),
     courseLine: course
