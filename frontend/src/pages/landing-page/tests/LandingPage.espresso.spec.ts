@@ -31,6 +31,12 @@ test("a failed scan keeps the photo and says why", async ({ landing }) => {
   await landing.seesScanFailed();
 });
 
+test("Sign up free beside Try it goes to register", async ({ landing }) => {
+  await landing.open();
+  await landing.tapSignUp("Sign up free");
+  await landing.goesTo("/register");
+});
+
 test("the nav's sign up goes to register", async ({ landing }) => {
   await landing.open();
   await landing.tapSignUp();
