@@ -106,7 +106,7 @@ export class LandingRobot {
 
   /** The scan failed: the reason shows, and the photo is still there to try again. */
   async seesScanFailed(): Promise<this> {
-    await expect(this.page.getByRole("alert")).toContainText("We couldn't scan this scorecard.");
+    await expect(this.page.getByRole("alert")).toContainText("Couldn't read this card.");
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Scan my scorecard" })).toBeVisible();
     return this;

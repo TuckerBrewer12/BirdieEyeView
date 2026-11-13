@@ -18,22 +18,26 @@ import type { ScanSetupViewModel } from "../useScanSetupViewModel";
  */
 export function ScanSetupStep({ setup }: { setup: ScanSetupViewModel }) {
   return (
-    <Card size="sm" data-slot="scan-setup">
-      <CardContent className="flex flex-col gap-4">
-        <CourseField setup={setup} />
-        <TeeField setup={setup} />
-        <Field>
-          <FieldLabel htmlFor="setup-date">Date played</FieldLabel>
-          <Input
-            id="setup-date"
-            type="date"
-            value={setup.date}
-            max={setup.today}
-            onChange={(e) => setup.setDate(e.target.value)}
-          />
-        </Field>
-        <Button size="lg" onClick={setup.start}>
-          Start Entering Scores
+    <Card data-slot="scan-setup">
+      <CardContent className="flex flex-col gap-5">
+        <div className="grid grid-cols-2 items-start gap-3 md:grid-cols-scan-manual">
+          <div className="col-span-2 md:col-span-1">
+            <CourseField setup={setup} />
+          </div>
+          <TeeField setup={setup} />
+          <Field>
+            <FieldLabel htmlFor="setup-date">Date</FieldLabel>
+            <Input
+              id="setup-date"
+              type="date"
+              value={setup.date}
+              max={setup.today}
+              onChange={(e) => setup.setDate(e.target.value)}
+            />
+          </Field>
+        </div>
+        <Button size="lg" className="md:self-end" onClick={setup.start}>
+          Enter scores
         </Button>
       </CardContent>
     </Card>
@@ -45,10 +49,11 @@ function CourseField({ setup }: { setup: ScanSetupViewModel }) {
   return (
     <Field>
       <FieldLabel htmlFor="setup-course">
-        Course <span className="font-normal text-muted-foreground">(optional)</span>
+        Course <span className="font-normal text-muted-foreground">· optional</span>
       </FieldLabel>
       <CourseLinkSearch
         inputId="setup-course"
+        surface="plain"
         query={courseSearch.query}
         results={courseSearch.results}
         searching={courseSearch.searching}
@@ -71,11 +76,11 @@ function TeeField({ setup }: { setup: ScanSetupViewModel }) {
   const pick = setup.tees.length > 0;
   return (
     <Field>
-      <FieldLabel htmlFor={pick ? undefined : "setup-tee"}>Tee played</FieldLabel>
+      <FieldLabel htmlFor={pick ? undefined : "setup-tee"}>Tee</FieldLabel>
       {pick ? (
         <ToggleGroup
           size="sm"
-          aria-label="Tee played"
+          aria-label="Tee"
           value={setup.teeBox ? [setup.teeBox] : []}
           onValueChange={(values) => setup.setTeeBox(values[0] ?? "")}
         >

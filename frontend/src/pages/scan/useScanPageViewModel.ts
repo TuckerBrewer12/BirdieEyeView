@@ -11,9 +11,11 @@ import { SCAN_STEPS, SCAN_STEP_HOLD_MS } from "@/domain/scan";
 import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
 import { roundsRepository, type RoundsRepository } from "../rounds/roundsRepository";
 import {
+  cardContext,
   courseQueryFrom,
   reviewFromScan,
   todayIso,
+  type CardFacts,
   type PickedCourse,
   type ScanMode,
   type ScanStep,
@@ -49,7 +51,10 @@ export interface ScanPageViewModel {
   photo: File | null;
   pickPhoto: (photo: File) => void;
   clearPhoto: () => void;
-  setUserContext: (context: string) => void;
+  /** What the golfer says is on the card: their name, how scores are written, which rows it has. */
+  card: CardFacts;
+  setCard: (patch: Partial<CardFacts>) => void;
+  /** Reads the picked photo. */
   extract: () => void;
   /** A saved course to read the card against, picked before scanning. */
   presetCourse: PickedCourse | null;
@@ -73,6 +78,8 @@ export interface ScanPageViewModel {
   // Success
   /** The round as saved, once it has loaded. */
   savedRound: RoundDetail | null;
+  /** Leaves the saved round for a fresh card. */
+  scanAnother: () => void;
   /** Ends the scan and hands the saved round's id to `open`. */
   openSavedRound: (open: (roundId: string) => void) => void;
 }
@@ -140,7 +147,7 @@ export function useScanPageViewModel(
   const setMode = useCallback(
     (mode: ScanMode) => {
       latestPick.current += 1;
-      setSession((current) => ({ ...newScanSession(), mode, userContext: current.userContext }));
+      setSession((current) => ({ ...newScanSession(), mode, card: current.card }));
       resetCourseSearch();
       resetSetup();
     },
@@ -164,8 +171,8 @@ export function useScanPageViewModel(
     setSession((current) => ({ ...current, photo: null, error: null }));
   }, [setSession]);
 
-  const setUserContext = useCallback(
-    (userContext: string) => setSession((current) => ({ ...current, userContext })),
+  const setCard = useCallback(
+    (patch: Partial<CardFacts>) => setSession((current) => ({ ...current, card: { ...current.card, ...patch } })),
     [setSession],
   );
 
@@ -183,12 +190,12 @@ export function useScanPageViewModel(
   );
 
   const extract = useCallback(() => {
-    const { photo, userContext, presetCourse } = session;
+    const { photo, card, presetCourse } = session;
     if (!photo) return;
     // Only the scan of the photo still picked may land, so starting over mid-scan sticks.
     const stillPicked = (current: typeof session) => current.photo?.id === photo.id;
     setSession((current) => ({ ...current, error: null }));
-    extractCard({ photo: photo.file, userContext, ocrText: cardText, courseId: presetCourse?.id ?? null })
+    extractCard({ photo: photo.file, userContext: cardContext(card), ocrText: cardText, courseId: presetCourse?.id ?? null })
       .then((result) => {
         setSession((current) =>
           stillPicked(current) ? { ...current, review: reviewFromScan(result, todayIso()) } : current,
@@ -225,7 +232,8 @@ export function useScanPageViewModel(
     photo: session.photo?.file ?? null,
     pickPhoto,
     clearPhoto,
-    setUserContext,
+    card: session.card,
+    setCard,
     extract,
     presetCourse: session.presetCourse,
     courseSearch,
@@ -239,6 +247,7 @@ export function useScanPageViewModel(
     review,
 
     savedRound: savedRound.data ?? null,
+    scanAnother: startOver,
     openSavedRound,
   };
 }

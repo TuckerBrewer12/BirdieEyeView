@@ -1,40 +1,41 @@
 import { useNavigate } from "react-router-dom";
-import { PenLine, ScanLine } from "lucide-react";
+import { Camera, PenLine } from "lucide-react";
 import {
-  Alert,
-  AlertDescription,
-  CourseLinkSearch,
   LoadingState,
   PageHeader,
   PageTitle,
   ToggleGroup,
   ToggleGroupItem,
+  useFromBreakpoint,
 } from "@/brand";
-import { formatCourseName } from "@/domain/course";
+import { isNative, pickImageNative } from "@/platform/nativeCamera";
 import { useFilePreview } from "@/platform/useFilePreview";
+import { ScanPhotoStepPhone, ScanPhotoStepWide } from "./components/ScanPhotoStep";
 import { ScanProcessingStep } from "./components/ScanProcessingStep";
 import { ScanReviewStep } from "./components/ScanReviewStep";
 import { ScanSetupStep } from "./components/ScanSetupStep";
 import { ScanSuccessStep } from "./components/ScanSuccessStep";
-import { ScanUploadStep } from "./components/ScanUploadStep";
 import { useScanPageViewModel } from "./useScanPageViewModel";
 
-const TITLE = "Scan Scorecard";
+const TITLE = "Scan";
 
 export function ScanPage({ userId }: { userId: string }) {
   const navigate = useNavigate();
   const viewModel = useScanPageViewModel(userId);
   const previewUrl = useFilePreview(viewModel.photo);
+  // A computer drops the photo first; a phone says what's on the card, then takes the photo.
+  const wide = useFromBreakpoint("md");
 
   switch (viewModel.step) {
     case "success":
       return (
         <div className="flex flex-col pb-6">
-          <PageHeader title={TITLE} revealAt={100} />
+          <PageHeader title="Round saved" revealAt={100} />
           {viewModel.savedRound ? (
             <ScanSuccessStep
               round={viewModel.savedRound}
               onView={() => viewModel.openSavedRound((roundId) => void navigate(`/rounds/${roundId}`))}
+              onScanAnother={viewModel.scanAnother}
             />
           ) : (
             <LoadingState>Loading…</LoadingState>
@@ -42,26 +43,22 @@ export function ScanPage({ userId }: { userId: string }) {
         </div>
       );
 
-    case "review":
+    case "review": {
+      const manual = viewModel.mode === "manual";
+      const title = manual ? "Enter your scores" : "Check your card";
       return (
-        <div className="flex flex-col gap-4 pb-6">
-          <PageHeader title={TITLE} revealAt={100} />
-          <div className="flex flex-col gap-1">
-            <PageTitle>{viewModel.mode === "manual" ? "Enter your scores" : "Check your card"}</PageTitle>
-            <p className="text-sm text-muted-foreground">
-              {viewModel.mode === "manual"
-                ? "Type your scores in hole by hole, then save the round."
-                : "Check each score against your card, fix any that are wrong, then save the round."}
-            </p>
-          </div>
+        <div className="flex flex-col pb-20 md:pb-6">
+          <PageHeader title={title} revealAt={100} />
           <ScanReviewStep
             review={viewModel.review}
-            manual={viewModel.mode === "manual"}
+            title={title}
+            manual={manual}
             photoUrl={previewUrl}
             onStartOver={viewModel.startOver}
           />
         </div>
       );
+    }
 
     case "processing":
       return (
@@ -74,71 +71,41 @@ export function ScanPage({ userId }: { userId: string }) {
 
     default:
       return (
-        <div className="flex flex-col gap-4 pb-6">
+        <div className="flex max-w-4xl flex-col gap-4 pb-20 md:gap-5 md:pb-6">
           <PageHeader title={TITLE} revealAt={100} />
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <PageTitle>{TITLE}</PageTitle>
-            <p className="text-sm text-muted-foreground">
-              Read a photo of your card, or type the scores in yourself.
-            </p>
+            <ToggleGroup
+              fill
+              aria-label="Entry method"
+              className="md:w-fit"
+              value={[viewModel.mode]}
+              onValueChange={(values) => {
+                // Pressing the chosen mode again would clear it; one is always chosen.
+                if (values[0] === "scan" || values[0] === "manual") viewModel.setMode(values[0]);
+              }}
+            >
+              <ToggleGroupItem value="scan">
+                <Camera data-icon="inline-start" />
+                Photo
+              </ToggleGroupItem>
+              <ToggleGroupItem value="manual">
+                <PenLine data-icon="inline-start" />
+                By hand
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
-
-          <ToggleGroup
-            aria-label="How to add the round"
-            value={[viewModel.mode]}
-            onValueChange={(values) => {
-              // Pressing the chosen mode again would clear it; one is always chosen.
-              if (values[0] === "scan" || values[0] === "manual") viewModel.setMode(values[0]);
-            }}
-          >
-            <ToggleGroupItem value="scan">
-              <ScanLine data-icon="inline-start" />
-              Scan a card
-            </ToggleGroupItem>
-            <ToggleGroupItem value="manual">
-              <PenLine data-icon="inline-start" />
-              Enter by hand
-            </ToggleGroupItem>
-          </ToggleGroup>
-
-          {viewModel.error && (
-            <Alert tone="danger">
-              <AlertDescription>{viewModel.error}</AlertDescription>
-            </Alert>
-          )}
 
           {viewModel.step === "setup" ? (
             <ScanSetupStep setup={viewModel.setup} />
+          ) : wide ? (
+            <ScanPhotoStepWide step={viewModel} previewUrl={previewUrl} />
           ) : (
-            <>
-              <div className="flex flex-col gap-2">
-                <p className="text-sm text-muted-foreground">
-                  Optional: pick the course first and the scan reads the card against it.
-                </p>
-                <CourseLinkSearch
-                  query={viewModel.courseSearch.query}
-                  results={viewModel.courseSearch.results}
-                  searching={viewModel.courseSearch.searching}
-                  onQueryChange={viewModel.courseSearch.setQuery}
-                  onSelectCourse={viewModel.pickPresetCourse}
-                  onClose={viewModel.courseSearch.reset}
-                  linkedName={viewModel.presetCourse ? formatCourseName(viewModel.presetCourse.name) : undefined}
-                  onClear={viewModel.clearPresetCourse}
-                  clearLabel="Clear course"
-                />
-              </div>
-              <ScanUploadStep
-                photo={
-                  viewModel.photo
-                    ? { name: viewModel.photo.name, sizeBytes: viewModel.photo.size, previewUrl }
-                    : null
-                }
-                onPick={viewModel.pickPhoto}
-                onClear={viewModel.clearPhoto}
-                onContextChange={viewModel.setUserContext}
-                onExtract={viewModel.extract}
-              />
-            </>
+            <ScanPhotoStepPhone
+              step={viewModel}
+              previewUrl={previewUrl}
+              pickNative={isNative ? pickImageNative : undefined}
+            />
           )}
         </div>
       );

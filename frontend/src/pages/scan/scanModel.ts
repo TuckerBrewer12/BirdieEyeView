@@ -14,6 +14,34 @@ export type ScanMode = "scan" | "manual";
 export type ScanStep = "upload" | "processing" | "setup" | "review" | "success";
 
 
+/** How the golfer's scores are written on the card. */
+export type ScoresWrittenAs = "strokes" | "toPar";
+
+/** What the golfer says is on the card, so the scan knows where to look. */
+export interface CardFacts {
+  /** The golfer's name as written on the card, so the scan reads their row. */
+  name: string;
+  writtenAs: ScoresWrittenAs;
+  putts: boolean;
+  shotsToGreen: boolean;
+}
+
+export const NO_CARD_FACTS: CardFacts = { name: "", writtenAs: "strokes", putts: false, shotsToGreen: false };
+
+/** The card's facts as the scan's note: whose row, how scores are written, which rows it has. */
+export function cardContext(facts: CardFacts): string {
+  const parts: string[] = [];
+  const name = facts.name.trim();
+  if (name) parts.push(`my name is ${name}`);
+  if (!facts.putts) parts.push("no putts recorded");
+  if (facts.writtenAs === "toPar") parts.push("scores written to par");
+  if (facts.putts || facts.shotsToGreen) {
+    const rows = ["score", ...(facts.putts ? ["putts"] : []), ...(facts.shotsToGreen ? ["shots to green"] : [])];
+    parts.push("name on score row", `row order: ${rows.join(", ")}`);
+  }
+  return parts.join(". ");
+}
+
 /** A course the golfer chose. No id means a name they typed for a course we don't have. */
 export interface PickedCourse {
   id: string | null;

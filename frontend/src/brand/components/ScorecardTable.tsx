@@ -96,7 +96,7 @@ function CountInput({
 }
 
 /** Rings a score cell whose score is in doubt. */
-const CHECK_RING = "ring-2 ring-destructive ring-offset-1 ring-offset-card";
+const CHECK_RING = "ring-2 ring-status-warning ring-offset-1 ring-offset-card";
 
 function ScoreCell({
   hole,
@@ -127,7 +127,7 @@ function ScoreCell({
           "bg-transparent dark:bg-transparent",
           hole.kind ? cn("border-transparent", scoreOnFillClass(hole.kind)) : "border-dashed",
           check && CHECK_RING,
-          check && !hole.kind && "border-destructive",
+          check && !hole.kind && "border-status-warning",
         )}
       />
     </div>

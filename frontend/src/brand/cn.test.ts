@@ -17,4 +17,8 @@ describe("cn", () => {
   it("keeps a callout border width beside a status border colour", () => {
     expect(cn("border-callout", "border-status-info")).toBe("border-callout border-status-info");
   });
+
+  it("takes a card's surface shadow off for shadow-none", () => {
+    expect(cn("shadow-surface", "shadow-none")).toBe("shadow-none");
+  });
 });

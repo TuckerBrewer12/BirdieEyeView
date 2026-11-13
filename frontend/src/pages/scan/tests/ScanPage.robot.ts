@@ -21,7 +21,12 @@ export class ScanRobot {
 
   /** The page's own title; the pinned header repeats it. */
   private title() {
-    return this.page.locator("[data-slot=page-title]").filter({ hasText: "Scan Scorecard" });
+    return this.page.locator("[data-slot=page-title]").filter({ hasText: /^Scan$/ });
+  }
+
+  /** A phone's screen: what's on the card first, the photo from a sheet, the actions pinned low. */
+  private phone() {
+    return (this.page.viewportSize()?.width ?? 1280) < 768;
   }
 
   async dark(): Promise<this> {
@@ -46,32 +51,41 @@ export class ScanRobot {
     return this;
   }
 
-  /** The upload step, before a photo is picked. */
+  /** The upload step, before a photo is picked: the drop zone, or on a phone, the button that adds one. */
   async seesUpload(): Promise<this> {
-    await expect(this.page.getByText("Drop your scorecard here")).toBeVisible();
+    await expect(
+      this.phone()
+        ? this.page.getByRole("button", { name: "Add scorecard photo" })
+        : this.page.getByText("Drop a photo of your card"),
+    ).toBeVisible();
     return this;
   }
 
+  /** Picks the card's photo: dropped on a computer, from the photo library on a phone. */
   async chooseScorecard(): Promise<this> {
-    await this.page.locator('input[type="file"]').setInputFiles(CARD_PHOTO);
-    await expect(this.page.getByRole("button", { name: "Extract Scorecard" })).toBeVisible();
+    await this.page.locator("[data-slot=dropzone-input], [data-slot=photo-source-library]").setInputFiles(CARD_PHOTO);
+    await expect(this.readButton()).toBeVisible();
     return this;
+  }
+
+  private readButton() {
+    return this.page.getByRole("button", { name: /^Read card/ });
   }
 
   /** The picked photo, as a thumbnail with its name, ready to scan. */
   async seesChosenCard(): Promise<this> {
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
-    await expect(this.page.locator('[data-slot=file-chip] img[src^="data:image/"]')).toBeVisible();
+    await expect(this.page.locator('[data-slot=scan-photo] img[src^="data:image/"]')).toBeVisible();
     return this;
   }
 
   async removeCard(): Promise<this> {
-    await this.page.getByRole("button", { name: `Remove ${CARD_NAME}` }).click();
+    await this.page.getByRole("button", { name: "Replace" }).click();
     return this;
   }
 
   async tapExtract(): Promise<this> {
-    await this.page.getByRole("button", { name: "Extract Scorecard" }).click();
+    await this.readButton().click();
     return this;
   }
 
@@ -92,23 +106,23 @@ export class ScanRobot {
   /** The scanned card, back to check before saving. */
   async seesReview(courseName: string): Promise<this> {
     await expect(this.page.locator("[data-slot=page-title]").filter({ hasText: "Check your card" })).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Save Round" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Save round" })).toBeVisible();
     await expect(this.page.getByText(courseName).first()).toBeVisible();
     return this;
   }
 
   async tapSave(): Promise<this> {
-    await this.page.getByRole("button", { name: "Save Round" }).click();
+    await this.page.getByRole("button", { name: "Save round" }).click();
     return this;
   }
 
   async tapStartOver(): Promise<this> {
-    await this.page.getByRole("button", { name: "Start Over" }).click();
+    await this.page.getByRole("button", { name: "Start over" }).click();
     return this;
   }
 
   async seesSaved(): Promise<this> {
-    await expect(this.page.getByRole("heading", { name: "Round saved!" })).toBeVisible();
+    await expect(this.page.getByRole("status").getByRole("heading", { name: "Round saved" })).toBeVisible();
     return this;
   }
 
@@ -116,7 +130,7 @@ export class ScanRobot {
   async seesSavedScore(score: number, toPar: string): Promise<this> {
     const saved = this.page.locator("[data-slot=scan-saved]");
     await expect(saved.locator("[data-slot=stat-value]")).toHaveText(String(score));
-    await expect(saved.locator("[data-slot=to-par-figure]")).toHaveText(toPar);
+    await expect(saved.locator("[data-slot=to-par-pill]")).toHaveText(toPar);
     return this;
   }
 
@@ -126,7 +140,7 @@ export class ScanRobot {
    */
   async tapShare(): Promise<this> {
     const download = this.page.waitForEvent("download");
-    await this.page.getByRole("button", { name: "Share Round" }).click();
+    await this.page.getByRole("button", { name: "Share" }).click();
     this.shared = await download;
     return this;
   }
@@ -134,12 +148,17 @@ export class ScanRobot {
   /** The round went out as an image named for its course. */
   async seesSharedImage(fileName: string): Promise<this> {
     expect(this.shared?.suggestedFilename()).toBe(fileName);
-    await expect(this.page.getByRole("button", { name: "Share Round" })).toBeEnabled();
+    await expect(this.page.getByRole("button", { name: "Share" })).toBeEnabled();
+    return this;
+  }
+
+  async tapScanAnother(): Promise<this> {
+    await this.page.getByRole("button", { name: "Scan another" }).click();
     return this;
   }
 
   async tapViewRound(): Promise<this> {
-    await this.page.getByRole("button", { name: "View Round" }).click();
+    await this.page.getByRole("button", { name: "View round" }).click();
     return this;
   }
 
@@ -170,15 +189,15 @@ export class ScanRobot {
   /** Saving failed: the reason shows, and the card is still there to save again. */
   async seesSaveFailed(message: string): Promise<this> {
     await expect(this.page.getByRole("alert")).toContainText(message);
-    await expect(this.page.getByRole("button", { name: "Save Round" })).toBeEnabled();
+    await expect(this.page.getByRole("button", { name: "Save round" })).toBeEnabled();
     return this;
   }
 
   /** The scan failed: the reason shows, and the photo is still there to try again. */
   async seesScanFailed(): Promise<this> {
-    await expect(this.page.getByRole("alert")).toContainText("We couldn't scan this scorecard.");
+    await expect(this.page.getByRole("alert")).toContainText("Couldn't read this card.");
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Extract Scorecard" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Read card again" })).toBeVisible();
     return this;
   }
 
@@ -206,19 +225,19 @@ export class ScanRobot {
   }
 
   async chooseManualEntry(): Promise<this> {
-    await this.page.getByRole("button", { name: "Enter by hand" }).click();
+    await this.page.getByRole("button", { name: "By hand" }).click();
     return this;
   }
 
   async chooseScanMode(): Promise<this> {
-    await this.page.getByRole("button", { name: "Scan a card" }).click();
+    await this.page.getByRole("button", { name: "Photo", exact: true }).click();
     return this;
   }
 
   /** The manual-entry form, before any scores. */
   async seesSetup(): Promise<this> {
-    await expect(this.page.getByRole("button", { name: "Start Entering Scores" })).toBeVisible();
-    await expect(this.page.getByText("Drop your scorecard here")).toHaveCount(0);
+    await expect(this.page.getByRole("button", { name: "Enter scores" })).toBeVisible();
+    await expect(this.page.getByText("Drop a photo of your card")).toHaveCount(0);
     return this;
   }
 
@@ -259,7 +278,7 @@ export class ScanRobot {
   }
 
   private setupSearch() {
-    return this.page.getByRole("combobox", { name: "Course (optional)" });
+    return this.page.getByRole("combobox", { name: /^Course/ });
   }
 
   /** Picks a tee from the chosen course's tees. */
@@ -285,11 +304,11 @@ export class ScanRobot {
   }
 
   private teeField() {
-    return this.page.getByRole("textbox", { name: "Tee played" });
+    return this.page.getByRole("textbox", { name: "Tee", exact: true });
   }
 
   private teeChip(color: string) {
-    return this.page.getByRole("group", { name: "Tee played" }).getByRole("button", { name: color, exact: true });
+    return this.page.getByRole("group", { name: "Tee", exact: true }).getByRole("button", { name: color, exact: true });
   }
 
   /** A hole's strokes cell on the card being checked, ringed or not. */
@@ -330,9 +349,11 @@ export class ScanRobot {
 
   /** The round's score so far, as the card being checked adds up. */
   async seesRoundScore(score: number): Promise<this> {
-    await expect(
-      this.page.locator("[data-slot=stat]").filter({ hasText: /^Score/ }).locator("[data-slot=stat-value]"),
-    ).toHaveText(String(score));
+    const scoreRow = this.page
+      .locator("[data-slot=round-scorecard] tr")
+      .filter({ has: this.page.locator("th", { hasText: /^Score$/ }) });
+    // The card's Tot: the last cell of its Score row.
+    await expect(scoreRow.locator("td").last()).toHaveText(String(score));
     return this;
   }
 
@@ -384,14 +405,14 @@ export class ScanRobot {
   }
 
   async startEntering(): Promise<this> {
-    await this.page.getByRole("button", { name: "Start Entering Scores" }).click();
+    await this.page.getByRole("button", { name: "Enter scores" }).click();
     return this;
   }
 
   /** A card with no scores yet, to type them into. */
   async seesBlankCard(): Promise<this> {
     await expect(this.page.locator("[data-slot=page-title]").filter({ hasText: "Enter your scores" })).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Save Round" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Save round" })).toBeVisible();
     await expect(this.strokesCell(1)).toHaveValue("");
     return this;
   }

@@ -172,9 +172,13 @@
   --brand-space-nudge: 5px;
   --brand-space-nudge-sm: 3px;
   --brand-space-safe-bottom: max(env(safe-area-inset-bottom, 0px), 22px);
+  --brand-space-above-nav: calc(63px + max(env(safe-area-inset-bottom, 0px), 22px));
   --brand-size-rail: 240px;
   --brand-size-preview: 390px;
   --brand-size-scan-photo: 360px;
+  --brand-size-card-photo: 300px;
+  --brand-size-photo-thumb: 64px;
+  --brand-size-dropzone: 340px;
   --brand-size-chart: 180px;
   --brand-size-chart-compact: 210px;
   --brand-size-chart-wide: 45rem;
@@ -422,9 +426,13 @@
   --spacing-nudge: var(--brand-space-nudge);
   --spacing-nudge-sm: var(--brand-space-nudge-sm);
   --spacing-safe-bottom: var(--brand-space-safe-bottom);
+  --spacing-above-nav: var(--brand-space-above-nav);
   --spacing-rail: var(--brand-size-rail);
   --spacing-preview: var(--brand-size-preview);
   --spacing-scan-photo: var(--brand-size-scan-photo);
+  --spacing-card-photo: var(--brand-size-card-photo);
+  --spacing-photo-thumb: var(--brand-size-photo-thumb);
+  --spacing-dropzone: var(--brand-size-dropzone);
   --spacing-chart: var(--brand-size-chart);
   --spacing-chart-compact: var(--brand-size-chart-compact);
   --spacing-chart-wide: var(--brand-size-chart-wide);
@@ -503,6 +511,9 @@
   --text-section--letter-spacing: 0.18em;
   --blur-xs: 4px;
   --ring-width-3: var(--brand-ring-width);
+  --grid-template-columns-scan-photo: 18.75rem minmax(0, 1fr);
+  --grid-template-columns-scan-review: minmax(0, 1.15fr) minmax(0, 1fr);
+  --grid-template-columns-scan-manual: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
   --grid-template-columns-handicap-breakdown: 1fr auto auto auto;
   --grid-template-columns-last-round: minmax(0, 1fr) 23.75rem;
   --grid-template-columns-round-row: 3.25rem minmax(0, 1fr) minmax(0, 1.3fr) 2.5rem 2.5rem;
