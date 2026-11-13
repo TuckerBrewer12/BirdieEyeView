@@ -14,7 +14,8 @@ test("populated career in dark mode", async ({ career }) => {
 });
 
 test("the last year's records", async ({ career }) => {
-  await career.open();
+  // A year on, so the handicap trend narrows to the last year's rounds.
+  await career.openLater();
   await career.pickWindow("Last 365 Days");
   await career.seesTotalsTitle("Year Totals");
   await career.capture("career-last-year.png");

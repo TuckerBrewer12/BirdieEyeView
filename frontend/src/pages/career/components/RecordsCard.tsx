@@ -1,7 +1,7 @@
-import { ChevronRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, Collection, RowButton } from "@/brand";
+import { Bird, ChevronRight, Flag, Flame, Medal, Target, Trophy, type LucideIcon } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, Collection, IconBadge, RowButton, type IconBadgeTone } from "@/brand";
 import { cn } from "@/brand/cn";
-import type { CareerRecord } from "../model";
+import type { CareerRecord, RecordKind } from "../model";
 import { RECORD_LABEL, eventDetail, recordValue } from "../present";
 
 interface RecordsCardProps {
@@ -13,7 +13,20 @@ interface RecordsCardProps {
 
 const ROW = "flex w-full items-center gap-3 py-2.5 text-left";
 
-/** The golfer's best rounds and streaks over the window, each opening the round it was set in. */
+/**
+ * Each record's mark and the colour of what it counts: scoring records take their score's (the lowest
+ * round the eagle's gold, birdies green, a par streak par's grey), greens the brand green, putts blue.
+ */
+const RECORD_MARK: Record<RecordKind, { icon: LucideIcon; tone: IconBadgeTone }> = {
+  "lowest-round": { icon: Trophy, tone: "eagle" },
+  "most-birdies": { icon: Bird, tone: "birdie" },
+  "most-gir": { icon: Target, tone: "primary" },
+  "fewest-putts": { icon: Flag, tone: "info" },
+  "birdie-streak": { icon: Flame, tone: "birdie" },
+  "par-streak": { icon: Medal, tone: "par" },
+};
+
+/** The golfer's best rounds and streaks over the window, each marked in its colour and opening the round it was set in. */
 export function RecordsCard({ records, onOpenRound, className }: RecordsCardProps) {
   return (
     <Card data-slot="records-card" className={className}>
@@ -27,8 +40,10 @@ export function RecordsCard({ records, onOpenRound, className }: RecordsCardProp
           keyFor={(record) => record.kind}
           renderItem={(record) => {
             const roundId = record.event?.roundId ?? null;
+            const mark = RECORD_MARK[record.kind];
             const body = (
               <>
+                <IconBadge icon={mark.icon} tone={mark.tone} />
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="text-sm font-medium text-foreground">{RECORD_LABEL[record.kind]}</span>
                   <span className="truncate text-xs text-muted-foreground">{eventDetail(record.event) ?? "—"}</span>

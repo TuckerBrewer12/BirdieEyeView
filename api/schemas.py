@@ -217,6 +217,7 @@ class HandicapTrendRow(ResponseModel):
     used_in_hi: Optional[bool] = None  # null without a differential
     hi_threshold: Optional[float] = None  # the highest differential that still counts
     differential_status: DifferentialStatus = "unrated"
+    in_window: bool = False  # the round falls in the records' last year (`notable_achievements.window_days`)
 
 
 class ScramblingTrendRow(ResponseModel):

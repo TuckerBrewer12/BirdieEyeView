@@ -21,8 +21,8 @@ describe("careerFrom", () => {
   });
 
   it("pairs the handicap trend round by round with the server's differential status", () => {
-    expect(career.handicapTrend).toHaveLength(dto.handicap_trend.length);
-    expect(career.handicapTrend.at(-1)).toMatchObject({ handicapIndex: 7, differentialStatus: "counting" });
+    expect(career.windows.lifetime.handicapTrend).toHaveLength(dto.handicap_trend.length);
+    expect(career.windows.lifetime.handicapTrend.at(-1)).toMatchObject({ handicapIndex: 7, differentialStatus: "counting" });
   });
 
   it("keeps only the radar axes the golfer has figures for", () => {
@@ -136,5 +136,13 @@ describe("careerFrom", () => {
     expect(later.windows.lifetime.gir.filter((m) => m.achieved)).toHaveLength(3);
     expect(later.windows.one_year.scoring.map(labelOf)).toEqual(["score-break:80"]);
     expect(later.windows.one_year.newRecords).toBe(1);
+  });
+
+  it("narrows the handicap trend to the rounds the server marks as in the last year", () => {
+    const later = careerFrom(sampleAnalyticsAYearOn);
+    expect(career.windows.one_year.handicapTrend).toHaveLength(24);
+    expect(later.windows.lifetime.handicapTrend).toHaveLength(24);
+    expect(later.windows.one_year.handicapTrend).toHaveLength(later.windows.one_year.totals[0].value);
+    expect(later.windows.one_year.handicapTrend.every((point) => point.inWindow)).toBe(true);
   });
 });

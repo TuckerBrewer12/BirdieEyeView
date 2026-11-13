@@ -1,6 +1,7 @@
 import { cn } from "@/brand/cn";
 import { scoreFillClass, scoreOnFillClass, type ScoreKey } from "@/brand/theme";
 import { formatPercent } from "@/domain/format";
+import { ScoreKindLabel } from "@/brand/components/ScoreKindLabel";
 
 // A share narrower than this would crowd its figure, so its segment draws without one.
 const LABEL_SHARE = 8;
@@ -77,11 +78,10 @@ function ShareLegend({ items, className }: { items: ShareLegendItem[]; className
       className={cn("flex flex-wrap gap-x-3 gap-y-1.5 text-body-sm text-foreground-secondary", className)}
     >
       {items.map((item) => (
-        <span key={item.key} className="flex items-center gap-1">
-          <span className={cn("size-2 rounded-xs", scoreFillClass(item.tone))} />
+        <ScoreKindLabel key={item.key} kind={item.tone} swatch="fill" ink="inherit" className="gap-1">
           {item.label}
           {item.figure && <b className="font-bold text-foreground">{item.figure}</b>}
-        </span>
+        </ScoreKindLabel>
       ))}
     </div>
   );

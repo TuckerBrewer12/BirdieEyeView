@@ -5,6 +5,7 @@ import {
   NO_NEW_RECORDS,
   PAGE_SUBTITLE,
   newRecordsNote,
+  noRoundsInWindow,
   totalsTitle,
 } from "../present";
 import type { CareerLayoutProps } from "./CareerDesktopLayout";
@@ -32,9 +33,9 @@ export function CareerMobileLayout({ vm, career, figures, onOpenRound }: CareerL
       </div>
 
       <HandicapTrendCard
-        trend={career.handicapTrend}
+        trend={figures.handicapTrend}
         handicapIndex={career.handicapIndex}
-        roundCount={career.roundCount}
+        empty={noRoundsInWindow(career.windowDays)}
         compact
       />
       <TotalsCard title={totalsTitle(vm.timeWindow)} totals={figures.totals} />
