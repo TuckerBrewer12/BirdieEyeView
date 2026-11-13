@@ -18,7 +18,8 @@ from database.db_manager import DatabaseManager
 from database.exceptions import IntegrityError
 from api.messages import (
     COURSE_ID_NOT_FOUND, FILENAME_REQUIRED, FILE_TOO_LARGE, FORBIDDEN, HEIC_UNAVAILABLE, IMAGE_DIMENSIONS_TOO_LARGE,
-    IMAGE_PIXELS_TOO_MANY, INVALID_IMAGE_DIMENSIONS, INVALID_PDF, UNCLEAR_PLAYER_NAME, UNREADABLE_IMAGE,
+    IMAGE_PIXELS_TOO_MANY, INVALID_IMAGE_DIMENSIONS, INVALID_PDF, PLAYER_NAME_NOT_READ, UNCLEAR_PLAYER_NAME,
+    UNREADABLE_IMAGE,
     UNREADABLE_SCORE_ROWS, UNSUPPORTED_CONTENT_TYPE, UNSUPPORTED_FILE_TYPE, UNSUPPORTED_IMAGE_FORMAT,
     UPLOAD_NOT_PROCESSED,
 )
@@ -483,8 +484,11 @@ def _save_upload_to_temp(file: UploadFile, suffix: str) -> tuple[Path, str]:
         return Path(tmp.name), hasher.hexdigest()
 
 
-async def _run_ocr_pipeline(ocr_path: Path) -> str:
-    """Mistral OCR → Gemini merge → raw markdown string."""
+async def _run_ocr_pipeline(ocr_path: Path, diagnostics: Optional[List[str]] = None) -> str:
+    """Mistral OCR → clean-up → Gemini merge → raw markdown string.
+
+    ``diagnostics`` collects what the clean-up and the merge did; it is logged, never returned.
+    """
     svc = MistralOCRService()
     ocr_resp = await svc.ocr_file(ocr_path)
 
@@ -508,12 +512,17 @@ async def _run_ocr_pipeline(ocr_path: Path) -> str:
                         html_table,
                     )
 
-    raw_markdown = MistralOCRService.extract_markdown_text(ocr_resp)
+    raw_markdown = MistralOCRService.extract_markdown_text(ocr_resp, diagnostics)
     if LOG_SENSITIVE_OCR_DEBUG:
         logger.debug("Mistral raw markdown:\n%s", raw_markdown)
     else:
         logger.info("Mistral OCR produced markdown chars=%d", len(raw_markdown))
-    return await merge_split_tables(raw_markdown)
+    return await merge_split_tables(raw_markdown, diagnostics=diagnostics)
+
+
+def _log_diagnostics(stage: str, diagnostics: List[str]) -> None:
+    """One internal line per scan stage; positions and counts only, never cell values or names."""
+    logger.info("Scan diagnostics (%s): %s", stage, " | ".join(diagnostics) or "none")
 
 
 def _get_preprocess_cache_path(upload_digest: str) -> Path:
@@ -670,7 +679,9 @@ async def prefetch_ocr(
     try:
         _validate_upload_payload(original_tmp_path, suffix)
         ocr_path, cache_hit = _normalize_upload_for_ocr(original_tmp_path, upload_digest)
-        markdown_text = await _run_ocr_pipeline(ocr_path)
+        diagnostics: List[str] = []
+        markdown_text = await _run_ocr_pipeline(ocr_path, diagnostics)
+        _log_diagnostics("ocr", diagnostics)
         logger.info("Prefetch OCR complete: user=%s chars=%d", getattr(current_user, "id", "anonymous"), len(markdown_text))
         return {"ocr_text": markdown_text}
     except HTTPException:
@@ -740,6 +751,7 @@ async def extract_scan(
     ocr_path = original_tmp_path
     cache_hit = False
     failure_stage = "upload"
+    diagnostics: List[str] = []
 
     try:
         _validate_upload_payload(original_tmp_path, suffix)
@@ -784,7 +796,7 @@ async def extract_scan(
             markdown_text = ocr_text
             logger.info("Scan using prefetched OCR text: chars=%d", len(markdown_text))
         else:
-            markdown_text = await _run_ocr_pipeline(ocr_path)
+            markdown_text = await _run_ocr_pipeline(ocr_path, diagnostics)
             logger.info(
                 "Scan OCR+merge complete: extract_ms=%.1f chars=%d",
                 (time.perf_counter() - t_extract_start) * 1000.0,
@@ -799,28 +811,33 @@ async def extract_scan(
         failure_stage = "parse"
         t_parse_start = time.perf_counter()
         parsed_rows = parse_mistral_scorecard_rows(markdown_text, user_context=user_context)
+        diagnostics.extend(parsed_rows.diagnostics)
         failure_stage = "assembly"
         round_data, fields_needing_review = _build_round_from_parsed_rows(
             parsed_rows,
             course_model=course_model,
             to_par_scoring=to_par_scoring,
         )
+        name_missing = bool(parsed_rows.player_name) and not parsed_rows.player_row_found
 
         present_strokes = len(
             [h for h in round_data.get("hole_scores", []) if h.get("strokes") is not None]
         )
         if present_strokes == 0:
-            if parsed_rows.player_name:
-                raise ScanExtractionError(
-                    422,
-                    UNCLEAR_PLAYER_NAME,
-                    category="unreadable_scores", stage="parse",
-                )
-            raise ScanExtractionError(
+            diagnostics.append("assembly: no strokes could be assembled")
+            _log_diagnostics("extract", diagnostics)
+            # "Name is unclear" only when no row carried the given name; otherwise the rows
+            # themselves could not be read, and saying "name" would send the user the wrong way.
+            error = ScanExtractionError(
                 422,
-                UNREADABLE_SCORE_ROWS,
+                UNCLEAR_PLAYER_NAME if name_missing else UNREADABLE_SCORE_ROWS,
                 category="unreadable_scores", stage="parse",
             )
+            error.diagnostics = diagnostics
+            raise error
+        if name_missing:
+            fields_needing_review.append(PLAYER_NAME_NOT_READ)
+        _log_diagnostics("extract", diagnostics)
 
         confidence_data = _build_confidence_payload(round_data.get("hole_scores", []), fields_needing_review)
         t_parse_end = time.perf_counter()

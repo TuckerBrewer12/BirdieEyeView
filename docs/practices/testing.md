@@ -38,7 +38,7 @@ Use focused test filters where appropriate. Vitest runs helper/hook tests in jsd
 
 ## Live checks
 
-`python -m scripts.quick_scan_eval` calls Mistral/Gemini and uses provider credits. Failed-scan storage smoke/retrieval commands can access real object storage. Both are separate from ordinary deterministic validation; run them only when the task calls for that integration and the environment is intentionally configured. See [scan evaluation](../../README.md#quick-scan-evaluation) and [report operations](../failed-scan-reports.md).
+The scan evaluator calls Mistral and Gemini and uses provider credits. Run it locally or add a supported label to a mergeable same-repository PR. Parser changes are gated offline first by the Mistral-capture scenarios in `tests/integration/test_api_e2e.py` (real provider output, no paid calls); refreshing a capture in `tests/integration/fixtures/mistral/` is itself a paid call. The [live eval workflow](../../.github/workflows/scan-evals.yml) publishes a PR summary and a detailed report as an optional check. Failed-scan storage smoke and retrieval commands can access real object storage. These live operations are separate from ordinary deterministic validation. See [scan evaluation](../../README.md#scan-evaluation) and [report operations](../failed-scan-reports.md).
 
 Report what was actually run and any limits. Passing existing tests is not proof that an uncovered edge case, live deployment, or migration is correct.
 

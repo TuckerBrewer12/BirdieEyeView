@@ -1,7 +1,8 @@
-"""Run the small live scorecard accuracy evaluation suite.
+"""Run a live scorecard accuracy evaluation suite.
 
 Usage:
     python -m scripts.quick_scan_eval
+    python -m scripts.quick_scan_eval --suite large
 
 The runner mirrors the production frontend flow: OCR each unique image once,
 then pass the prefetched OCR text through the production extract path for each
@@ -10,8 +11,10 @@ target player. Accuracy failures are reported but do not fail the process.
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
+import logging
 import mimetypes
 import os
 import statistics
@@ -33,6 +36,10 @@ from starlette.datastructures import Headers
 ROOT_DIR = Path(__file__).resolve().parents[1]
 SCORECARD_DIR = ROOT_DIR / "tests" / "test_scorecards"
 DEFAULT_MANIFEST_PATH = SCORECARD_DIR / "quick_eval_cases.json"
+SUITE_MANIFEST_PATHS = {
+    "quick": DEFAULT_MANIFEST_PATH,
+    "large": SCORECARD_DIR / "scan_eval_cases.json",
+}
 SUPPORTED_FIELDS = frozenset({"strokes", "putts", "shots_to_green"})
 SUPPORTED_SCORE_FORMATS = frozenset({"raw_strokes", "to_par"})
 ALL_HOLES = frozenset(range(1, 19))
@@ -55,6 +62,8 @@ class EvalCase:
     source_score_format: str
     user_context: str
     expected: Mapping[str, Mapping[int, int]]
+    # A layout the scanner doesn't support yet: still graded, but reported as a known gap.
+    known_gap: Optional[str] = None
 
     @property
     def expected_cells(self) -> int:
@@ -78,6 +87,8 @@ class CaseResult:
     effective_seconds: float = 0.0
     mismatches: list[CellMismatch] = field(default_factory=list)
     operational_error: Optional[str] = None
+    # Internal scan diagnostics captured from the production logs while this case ran.
+    diagnostics: list[str] = field(default_factory=list)
 
     @property
     def accuracy(self) -> float:
@@ -107,6 +118,15 @@ class SuiteRun:
     case_results: list[CaseResult]
     ocr_seconds_by_image: dict[str, float]
     suite_seconds: float
+    # OCR clean-up and table-merge diagnostics captured from the production logs, per image.
+    ocr_diagnostics_by_image: dict[str, list[str]] = field(default_factory=dict)
+
+    @property
+    def merge_rejected_images(self) -> int:
+        return sum(
+            any("table merge rejected" in line or "table merge failed" in line for line in lines)
+            for lines in self.ocr_diagnostics_by_image.values()
+        )
 
     @property
     def completed_cases(self) -> int:
@@ -166,6 +186,11 @@ def load_cases(
                 f"{label}: source_score_format must be one of {sorted(SUPPORTED_SCORE_FORMATS)}"
             )
         user_context = _require_string(raw, "user_context", label)
+        # `user_context` is exactly what the app would send. People-only remarks go in `notes`,
+        # which the scanner never sees; `known_gap` names an unsupported layout.
+        for optional in ("notes", "known_gap"):
+            if optional in raw and (not isinstance(raw[optional], str) or not raw[optional].strip()):
+                raise EvalConfigurationError(f"{label}: {optional} must be a non-empty string when present")
 
         raw_expected = raw.get("expected")
         if not isinstance(raw_expected, dict) or not raw_expected:
@@ -212,6 +237,7 @@ def load_cases(
                 source_score_format=source_score_format,
                 user_context=user_context,
                 expected=expected,
+                known_gap=raw.get("known_gap"),
             )
         )
 
@@ -319,6 +345,30 @@ def prepare_image_for_upload(image_name: str, image_bytes: bytes) -> tuple[str, 
     return f"{Path(image_name).stem}.jpg", output.getvalue()
 
 
+class _DiagnosticsCapture(logging.Handler):
+    """Collect the scan pipeline's internal diagnostics lines while a case runs."""
+
+    LOGGERS = ("api.routers.scan", "services.gemini_table_merger")
+
+    def __init__(self) -> None:
+        super().__init__(level=logging.INFO)
+        self.lines: list[str] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if not record.name.startswith(self.LOGGERS):
+            return
+        message = record.getMessage()
+        if "Scan diagnostics" in message:
+            _stage, _, body = message.partition("): ")
+            self.lines.extend(part.strip() for part in body.split(" | ") if part.strip() and part.strip() != "none")
+        elif "table merge" in message:
+            self.lines.append(message)
+
+    def take(self) -> list[str]:
+        lines, self.lines = self.lines, []
+        return lines
+
+
 def _error_text(exc: Exception) -> str:
     detail = getattr(exc, "detail", None)
     if isinstance(detail, str) and detail:
@@ -350,7 +400,38 @@ async def run_suite(
     suite_start = clock()
     results: list[CaseResult] = []
     ocr_seconds_by_image: dict[str, float] = {}
+    ocr_diagnostics_by_image: dict[str, list[str]] = {}
+    capture = _DiagnosticsCapture()
+    root = logging.getLogger()
+    root.addHandler(capture)
+    previous_levels = {name: logging.getLogger(name).level for name in capture.LOGGERS}
+    for name in capture.LOGGERS:
+        if not logging.getLogger(name).isEnabledFor(logging.INFO):
+            logging.getLogger(name).setLevel(logging.INFO)
 
+    try:
+        return await _run_grouped(
+            grouped, scorecard_dir, prefetch, extract, clock, suite_start,
+            results, ocr_seconds_by_image, ocr_diagnostics_by_image, capture,
+        )
+    finally:
+        root.removeHandler(capture)
+        for name, level in previous_levels.items():
+            logging.getLogger(name).setLevel(level)
+
+
+async def _run_grouped(
+    grouped: dict[str, list[EvalCase]],
+    scorecard_dir: Path,
+    prefetch: PrefetchCallable,
+    extract: ExtractCallable,
+    clock: Callable[[], float],
+    suite_start: float,
+    results: list[CaseResult],
+    ocr_seconds_by_image: dict[str, float],
+    ocr_diagnostics_by_image: dict[str, list[str]],
+    capture: _DiagnosticsCapture,
+) -> SuiteRun:
     for image_name, image_cases in grouped.items():
         image_path = scorecard_dir / image_name
         prepared_name, image_bytes = prepare_image_for_upload(
@@ -359,10 +440,12 @@ async def run_suite(
         )
         ocr_upload = _make_upload(prepared_name, image_bytes)
         ocr_start = clock()
+        capture.take()
         try:
             response = await prefetch(ocr_upload, current_user=None)
             ocr_seconds = clock() - ocr_start
             ocr_seconds_by_image[image_name] = ocr_seconds
+            ocr_diagnostics_by_image[image_name] = capture.take()
             if not isinstance(response, Mapping):
                 raise RuntimeError("OCR prefetch returned an invalid response")
             ocr_text = response.get("ocr_text")
@@ -370,6 +453,7 @@ async def run_suite(
                 raise RuntimeError("OCR prefetch returned empty text")
         except Exception as exc:  # noqa: BLE001 - provider failures belong in the report
             ocr_seconds_by_image[image_name] = clock() - ocr_start
+            ocr_diagnostics_by_image[image_name] = capture.take()
             error = _error_text(exc)
             for case in image_cases:
                 results.append(
@@ -388,6 +472,7 @@ async def run_suite(
         for case in image_cases:
             extract_upload = _make_upload(prepared_name, image_bytes)
             extract_start = clock()
+            capture.take()
             try:
                 response = await extract(
                     extract_upload,
@@ -404,14 +489,14 @@ async def run_suite(
                 hole_scores = round_payload.get("hole_scores")
                 if not isinstance(hole_scores, list):
                     raise RuntimeError("Extraction returned invalid hole scores")
-                results.append(
-                    grade_case(
-                        case,
-                        hole_scores,
-                        extraction_seconds=extraction_seconds,
-                        effective_seconds=ocr_seconds + extraction_seconds,
-                    )
+                graded = grade_case(
+                    case,
+                    hole_scores,
+                    extraction_seconds=extraction_seconds,
+                    effective_seconds=ocr_seconds + extraction_seconds,
                 )
+                graded.diagnostics = capture.take()
+                results.append(graded)
             except Exception as exc:  # noqa: BLE001 - keep evaluating other cases
                 extraction_seconds = clock() - extract_start
                 results.append(
@@ -422,6 +507,7 @@ async def run_suite(
                         extraction_seconds=extraction_seconds,
                         effective_seconds=ocr_seconds + extraction_seconds,
                         operational_error=f"Extraction failed: {_error_text(exc)}",
+                        diagnostics=capture.take(),
                     )
                 )
             finally:
@@ -431,6 +517,7 @@ async def run_suite(
         case_results=results,
         ocr_seconds_by_image=ocr_seconds_by_image,
         suite_seconds=clock() - suite_start,
+        ocr_diagnostics_by_image=ocr_diagnostics_by_image,
     )
 
 
@@ -446,12 +533,12 @@ def _case_status(result: CaseResult) -> str:
     return "FAILED"
 
 
-def render_report(run: SuiteRun) -> str:
+def render_report(run: SuiteRun, *, suite: str = "quick") -> str:
     summary = summarize(run.case_results)
     total_cells = sum(result.total_cells for result in run.case_results)
     matched_cells = sum(result.matched_cells for result in run.case_results)
     lines = [
-        "Quick scan evaluation",
+        f"{suite.capitalize()} scan evaluation",
         "=" * 72,
         f"{len(run.ocr_seconds_by_image)} images | {summary.total} cases | "
         f"{matched_cells}/{total_cells} numeric cells correct",
@@ -461,6 +548,9 @@ def render_report(run: SuiteRun) -> str:
         f"  {summary.at_least_90}/{summary.total} were 90% or better",
         f"  {summary.at_least_80}/{summary.total} were 80% or better",
         f"  {summary.failed}/{summary.total} failed below 80% or had an operational error",
+        f"  {summary.total - run.completed_cases}/{summary.total} had an operational error",
+        f"  {sum(1 for r in run.case_results if r.case.known_gap)}/{summary.total} are known scanner gaps",
+        f"  {run.merge_rejected_images}/{len(run.ocr_seconds_by_image)} images had the table merge rejected",
         "",
         "Cases",
     ]
@@ -472,6 +562,8 @@ def render_report(run: SuiteRun) -> str:
             f"{result.matched_cells}/{result.total_cells} ({accuracy:.1f}%) | "
             f"extract {result.extraction_seconds:.2f}s | effective {result.effective_seconds:.2f}s"
         )
+        if result.case.known_gap:
+            lines.append(f"    KNOWN GAP: {result.case.known_gap}")
         if result.operational_error:
             lines.append(f"    {result.operational_error}")
         for mismatch in result.mismatches:
@@ -479,6 +571,8 @@ def render_report(run: SuiteRun) -> str:
                 f"    {mismatch.field_name} hole {mismatch.hole_number}: "
                 f"expected {mismatch.expected}, got {mismatch.actual!r}"
             )
+        for line in [*run.ocr_diagnostics_by_image.get(result.case.image, []), *result.diagnostics]:
+            lines.append(f"    - {line}")
 
     lines.extend(["", "Timing"])
     for image_name, seconds in run.ocr_seconds_by_image.items():
@@ -510,20 +604,23 @@ def _validate_provider_keys() -> None:
         raise EvalConfigurationError(f"Missing required environment variables: {', '.join(missing)}")
 
 
-def main() -> int:
+def main(argv: Optional[list[str]] = None) -> int:
+    parser = argparse.ArgumentParser(description="Run a live scorecard scan evaluation.")
+    parser.add_argument("--suite", choices=SUITE_MANIFEST_PATHS, default="quick")
+    suite = parser.parse_args(argv).suite
     load_dotenv(ROOT_DIR / ".env")
     try:
         _validate_provider_keys()
-        cases = load_cases()
+        cases = load_cases(SUITE_MANIFEST_PATHS[suite])
         run = asyncio.run(run_suite(cases))
     except EvalConfigurationError as exc:
-        print(f"Quick scan evaluation could not start: {exc}", file=sys.stderr)
+        print(f"{suite.capitalize()} scan evaluation could not start: {exc}", file=sys.stderr)
         return 2
     except KeyboardInterrupt:
-        print("Quick scan evaluation interrupted.", file=sys.stderr)
+        print(f"{suite.capitalize()} scan evaluation interrupted.", file=sys.stderr)
         return 130
 
-    print(render_report(run))
+    print(render_report(run, suite=suite))
     return exit_code_for_run(run)
 
 

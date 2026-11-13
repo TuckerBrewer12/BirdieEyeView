@@ -209,3 +209,107 @@ def test_merge_parsed_halves_preserves_hidden_sign_evidence() -> None:
     assert merged.raw_putts_row == [2] * 18
     assert merged.raw_shots_to_green_row == [1] * 18
     assert merged.sign_evidence_trusted is True
+
+
+# ---- Line-up rules (pure parser rules with boundary cases; the E2E Mistral captures cover real cards)
+
+NAME_IN_SECOND_CELL = """
+| HOLE |  | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+| Par |  | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
+|  | d | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
+|  |  | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
+|  |  | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 |
+""".strip()
+
+TO_PAR_CONTEXT = "my name is D. scores written to par. name on shots to green row. row order: shots to green, putts, score."
+
+
+def test_player_name_is_found_in_a_second_label_cell() -> None:
+    parsed = parse_mistral_scorecard_rows(NAME_IN_SECOND_CELL, user_context=TO_PAR_CONTEXT)
+
+    assert parsed.player_row_found is True
+    assert parsed.score_row[:9] == [0, 1, 0, 1, 0, 1, 0, 1, 0]
+    assert parsed.shots_to_green_row[:9] == [2] * 9
+
+
+SPLIT_WITH_UNLABELED_BACK_PAR = """
+| HOLE | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | OUT |
+| R | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 36 |
+| G | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |  |
+|  | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |  |
+|  | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 4 |
+
+| INITIAL | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | IN | TOT |
+|  | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 36 | 72 |
+|  | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 |  |  |
+|  | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |  |  |
+|  | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 5 | 9 |
+""".strip()
+
+
+def test_to_par_card_takes_par_rows_from_their_values_when_the_label_is_wrong_or_missing() -> None:
+    parsed = parse_mistral_scorecard_rows(
+        SPLIT_WITH_UNLABELED_BACK_PAR,
+        user_context="my name is G. scores written to par. name on shots to green row. row order: shots to green, putts, score.",
+    )
+
+    assert parsed.par_row == [4] * 18
+    assert parsed.score_row == [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
+    assert any("paired by ordinal" in line for line in parsed.diagnostics)
+    assert sum("par row taken" in line for line in parsed.diagnostics) == 2
+
+
+def test_strokes_card_never_takes_a_player_row_as_par() -> None:
+    parsed = parse_mistral_scorecard_rows(BLUE_ROCK_SPLIT, user_context="my name is Tucker. no putts recorded")
+
+    assert all(par is None for par in parsed.par_row)  # VIC's 5,3,5,5,5,5,4,4,4 | 40 is a score row, not par
+
+
+def test_split_halves_with_different_player_row_counts_refuse_ordinal_pairing() -> None:
+    uneven = SPLIT_WITH_UNLABELED_BACK_PAR + "\n|  | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |  |  |"
+    parsed = parse_mistral_scorecard_rows(
+        uneven,
+        user_context="my name is G. scores written to par. name on shots to green row. row order: shots to green, putts, score.",
+    )
+
+    assert any("3 vs 4 player rows; ordinal pairing refused" in line for line in parsed.diagnostics)
+
+
+ONE_UNLABELED_BLOCK = """
+| HOLE | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+| Par | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
+| G | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
+|  | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
+|  | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 |
+| Handicap | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+| 0 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 |
+|  | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+|  | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+""".strip()
+
+
+def test_missing_name_uses_the_only_unlabeled_player_block_and_says_so() -> None:
+    parsed = parse_mistral_scorecard_rows(ONE_UNLABELED_BLOCK, user_context=TO_PAR_CONTEXT)
+
+    assert parsed.player_row_found is False
+    assert parsed.score_row[:9] == [1] * 9
+    assert parsed.shots_to_green_row[:9] == [3] * 9
+    assert any("missing-name fallback: used the only unlabeled player block" in line for line in parsed.diagnostics)
+
+
+def test_missing_name_with_two_unlabeled_blocks_is_refused() -> None:
+    two = ONE_UNLABELED_BLOCK.replace("| G | 2", "|  | 2", 1)
+    parsed = parse_mistral_scorecard_rows(two, user_context=TO_PAR_CONTEXT)
+
+    assert parsed.score_row == []
+    assert any("fallback refused: 2 unlabeled player block(s)" in line for line in parsed.diagnostics)
+    assert parsed.warnings == ["Could not detect player score row"]
+
+
+def test_single_letter_name_matches_a_border_stroke_misread() -> None:
+    parsed = parse_mistral_scorecard_rows(
+        NAME_IN_SECOND_CELL.replace("| d |", "| ID |"), user_context=TO_PAR_CONTEXT
+    )
+
+    assert parsed.player_row_found is True
+    assert parsed.score_row[:9] == [0, 1, 0, 1, 0, 1, 0, 1, 0]

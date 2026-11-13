@@ -1,0 +1,62 @@
+{
+ "document_annotation": null,
+ "model": "mistral-ocr-latest",
+ "pages": [
+  {
+   "blocks": [
+    {
+     "bottom_right_x": 1498,
+     "bottom_right_y": 1546,
+     "confidence_scores": null,
+     "content": "<table><tr><td colspan=\"2\">HOLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td><td>Int</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td></tr><tr><td>Blue</td><td>72.2/135</td><td>339</td><td>537</td><td>360</td><td>195</td><td>432</td><td>553</td><td>158</td><td>395</td><td>445</td><td>3414</td><td></td><td>367</td><td>206</td><td>354</td><td>439</td><td>182</td><td>530</td><td>376</td><td>178</td><td>559</td><td>3191</td><td>6605</td><td></td><td></td></tr><tr><td colspan=\"2\">Combo Tees</td><td>339</td><td>517</td><td>345</td><td>177</td><td>423</td><td>523</td><td>158</td><td>395</td><td>427</td><td>3304</td><td></td><td>367</td><td>190</td><td>354</td><td>421</td><td>165</td><td>530</td><td>376</td><td>164</td><td>538</td><td>3105</td><td>6409</td><td></td><td></td></tr><tr><td>White</td><td>70.6/133</td><td>317</td><td>517</td><td>345</td><td>177</td><td>423</td><td>523</td><td>148</td><td>358</td><td>427</td><td>3235</td><td></td><td>356</td><td>190</td><td>338</td><td>421</td><td>165</td><td>510</td><td>350</td><td>164</td><td>538</td><td>3032</td><td>6267</td><td></td><td></td></tr><tr><td>Silver</td><td>M: 69.0/130<br/>W: 74.2/134</td><td>303</td><td>492</td><td>333</td><td>160</td><td>396</td><td>514</td><td>135</td><td>350</td><td>403</td><td>3086</td><td></td><td>325</td><td>167</td><td>331</td><td>389</td><td>152</td><td>505</td><td>336</td><td>150</td><td>506</td><td>2861</td><td>5947</td><td></td><td></td></tr><tr><td>Red</td><td>70.9/124</td><td>265</td><td>467</td><td>313</td><td>141</td><td>369</td><td>448</td><td>118</td><td>332</td><td>354</td><td>2807</td><td></td><td>286</td><td>122</td><td>291</td><td>366</td><td>134</td><td>409</td><td>289</td><td>139</td><td>456</td><td>2492</td><td>5299</td><td></td><td></td></tr><tr><td></td><td>d</td><td>3</td><td>4</td><td>2</td><td>3</td><td>5</td><td>6</td><td>2</td><td>2</td><td>3</td><td></td><td></td><td>2</td><td>2</td><td>3</td><td>3</td><td>2</td><td>4</td><td>3</td><td>1</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td>1</td><td>1</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td>2</td><td>2</td><td>1</td><td>1</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td>0</td><td>0</td><td>0</td><td>2</td><td>2</td><td>3</td><td>1</td><td>0</td><td>1</td><td>7</td><td></td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td>4</td><td>82</td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td colspan=\"2\">Par</td><td>4</td><td>5</td><td>4</td><td>3</td><td>4</td><td>5</td><td>3</td><td>4</td><td>4</td><td>36</td><td></td><td>4</td><td>3</td><td>4</td><td>4</td><td>3</td><td>5</td><td>4</td><td>3</td><td>5</td><td>35</td><td>71</td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td colspan=\"2\">Men's Handicap</td><td>11</td><td>9</td><td>15</td><td>7</td><td>3</td><td>1</td><td>17</td><td>13</td><td>5</td><td></td><td></td><td>18</td><td>6</td><td>2</td><td>4</td><td>16</td><td>14</td><td>8</td><td>10</td><td>12</td><td></td><td></td><td></td><td></td></tr><tr><td colspan=\"2\">ladies' Handicap</td><td>13</td><td>3</td><td>9</td><td>15</td><td>5</td><td>1</td><td>17</td><td>11</td><td>7</td><td></td><td></td><td></td><td>18</td><td>8</td><td>10</td><td>16</td><td>2</td><td>6</td><td>14</td><td>4</td><td></td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-0.html",
+     "top_left_x": 0,
+     "top_left_y": 496,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 68,
+     "bottom_right_y": 1592,
+     "confidence_scores": null,
+     "content": "corer:",
+     "top_left_x": 0,
+     "top_left_y": 1564,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1347,
+     "bottom_right_y": 1586,
+     "confidence_scores": null,
+     "content": "Date:",
+     "top_left_x": 1276,
+     "top_left_y": 1556,
+     "type": "text"
+    }
+   ],
+   "confidence_scores": null,
+   "dimensions": {
+    "dpi": 200,
+    "height": 2000,
+    "width": 1500
+   },
+   "footer": null,
+   "header": null,
+   "hyperlinks": [],
+   "images": [],
+   "index": 0,
+   "markdown": "[tbl-0.html](tbl-0.html)\n\ncorer:\n\nDate:",
+   "tables": [
+    {
+     "content": "<table><tr><td colspan=\"2\">HOLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td><td>Int</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td></tr><tr><td>Blue</td><td>72.2/135</td><td>339</td><td>537</td><td>360</td><td>195</td><td>432</td><td>553</td><td>158</td><td>395</td><td>445</td><td>3414</td><td></td><td>367</td><td>206</td><td>354</td><td>439</td><td>182</td><td>530</td><td>376</td><td>178</td><td>559</td><td>3191</td><td>6605</td><td></td><td></td></tr><tr><td colspan=\"2\">Combo Tees</td><td>339</td><td>517</td><td>345</td><td>177</td><td>423</td><td>523</td><td>158</td><td>395</td><td>427</td><td>3304</td><td></td><td>367</td><td>190</td><td>354</td><td>421</td><td>165</td><td>530</td><td>376</td><td>164</td><td>538</td><td>3105</td><td>6409</td><td></td><td></td></tr><tr><td>White</td><td>70.6/133</td><td>317</td><td>517</td><td>345</td><td>177</td><td>423</td><td>523</td><td>148</td><td>358</td><td>427</td><td>3235</td><td></td><td>356</td><td>190</td><td>338</td><td>421</td><td>165</td><td>510</td><td>350</td><td>164</td><td>538</td><td>3032</td><td>6267</td><td></td><td></td></tr><tr><td>Silver</td><td>M: 69.0/130<br/>W: 74.2/134</td><td>303</td><td>492</td><td>333</td><td>160</td><td>396</td><td>514</td><td>135</td><td>350</td><td>403</td><td>3086</td><td></td><td>325</td><td>167</td><td>331</td><td>389</td><td>152</td><td>505</td><td>336</td><td>150</td><td>506</td><td>2861</td><td>5947</td><td></td><td></td></tr><tr><td>Red</td><td>70.9/124</td><td>265</td><td>467</td><td>313</td><td>141</td><td>369</td><td>448</td><td>118</td><td>332</td><td>354</td><td>2807</td><td></td><td>286</td><td>122</td><td>291</td><td>366</td><td>134</td><td>409</td><td>289</td><td>139</td><td>456</td><td>2492</td><td>5299</td><td></td><td></td></tr><tr><td></td><td>d</td><td>3</td><td>4</td><td>2</td><td>3</td><td>5</td><td>6</td><td>2</td><td>2</td><td>3</td><td></td><td></td><td>2</td><td>2</td><td>3</td><td>3</td><td>2</td><td>4</td><td>3</td><td>1</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td>1</td><td>1</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td>2</td><td>2</td><td>1</td><td>1</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td>0</td><td>0</td><td>0</td><td>2</td><td>2</td><td>3</td><td>1</td><td>0</td><td>1</td><td>7</td><td></td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td>4</td><td>82</td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td colspan=\"2\">Par</td><td>4</td><td>5</td><td>4</td><td>3</td><td>4</td><td>5</td><td>3</td><td>4</td><td>4</td><td>36</td><td></td><td>4</td><td>3</td><td>4</td><td>4</td><td>3</td><td>5</td><td>4</td><td>3</td><td>5</td><td>35</td><td>71</td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td colspan=\"2\">Men's Handicap</td><td>11</td><td>9</td><td>15</td><td>7</td><td>3</td><td>1</td><td>17</td><td>13</td><td>5</td><td></td><td></td><td>18</td><td>6</td><td>2</td><td>4</td><td>16</td><td>14</td><td>8</td><td>10</td><td>12</td><td></td><td></td><td></td><td></td></tr><tr><td colspan=\"2\">ladies' Handicap</td><td>13</td><td>3</td><td>9</td><td>15</td><td>5</td><td>1</td><td>17</td><td>11</td><td>7</td><td></td><td></td><td></td><td>18</td><td>8</td><td>10</td><td>16</td><td>2</td><td>6</td><td>14</td><td>4</td><td></td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-0.html",
+     "word_confidence_scores": null
+    }
+   ]
+  }
+ ],
+ "usage_info": {
+  "doc_size_bytes": 364606,
+  "pages_processed": 1
+ }
+}
