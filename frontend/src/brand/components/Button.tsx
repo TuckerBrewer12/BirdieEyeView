@@ -1,3 +1,4 @@
+import { useRender } from "@base-ui/react/use-render";
 import type * as React from "react";
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { type VariantProps } from "class-variance-authority";
@@ -23,17 +24,25 @@ function Button({
 
 /**
  * A whole list row that opens something: no box of its own, so the row lays itself out and
- * picks its hover. Left-aligned like the text it holds, with the hover fading in.
+ * picks its hover. Left-aligned like the text it holds, with the hover fading in. Pass `render`
+ * (`<Link to=… />`) for a row that goes somewhere rather than doing something.
  */
-function RowButton({ className, type = "button", ...props }: React.ComponentProps<"button">) {
-  return (
-    <button
-      data-slot="row-button"
-      type={type}
-      className={cn("text-left transition-colors", className)}
-      {...props}
-    />
-  );
+function RowButton({
+  className,
+  type = "button",
+  render,
+  ...props
+}: React.ComponentProps<"button"> & { render?: useRender.RenderProp }) {
+  return useRender({
+    defaultTagName: "button",
+    render,
+    props: {
+      ...props,
+      type: render ? undefined : type,
+      "data-slot": "row-button",
+      className: cn("text-left transition-colors", className),
+    },
+  });
 }
 
 /** A bare ✕ that closes or clears what it sits on, in a card's corner or beside a field. */

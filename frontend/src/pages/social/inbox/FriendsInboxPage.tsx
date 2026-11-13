@@ -13,7 +13,6 @@ import {
   ToggleGroupItem,
 } from "@/brand";
 import { cn } from "@/brand/cn";
-import { useFromBreakpoint } from "@/brand/useFromBreakpoint";
 import type { Friendship, FriendshipStatus } from "@/data/friendsModel";
 import {
   ANSWERED_NOTICES,
@@ -35,7 +34,6 @@ interface FriendsInboxPageProps { userId: string; }
 
 export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
   const navigate = useNavigate();
-  const wide = useFromBreakpoint("md");
   const viewModel = useFriendsInboxPageViewModel(userId);
 
   const renderAnswers = (request: Friendship, size: "sm" | "default") => {
@@ -71,21 +69,17 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
         {STATUS_LABELS[request.status]}
       </span>
     );
-    const row = (
-      <PersonRow
-        name={personName(request.other)}
-        initials={personInitials(request.other)}
-        detail={requestDetail(request.updatedAt)}
-        settled={request.status !== "pending"}
-        actions={open ? (wide ? renderAnswers(request, "sm") : null) : status}
-      />
-    );
-    // On a phone a request's answers sit under it, side by side and full width.
-    if (!open || wide) return row;
+    // A request's answers sit at the row's end from md, and under it, full width, on a phone.
     return (
       <div>
-        {row}
-        <div className="grid grid-cols-2 gap-2 px-4 pb-3">{renderAnswers(request, "default")}</div>
+        <PersonRow
+          name={personName(request.other)}
+          initials={personInitials(request.other)}
+          detail={requestDetail(request.updatedAt)}
+          settled={request.status !== "pending"}
+          actions={open ? <div className="hidden gap-2 md:flex">{renderAnswers(request, "sm")}</div> : status}
+        />
+        {open && <div className="grid grid-cols-2 gap-2 px-4 pb-3 md:hidden">{renderAnswers(request, "default")}</div>}
       </div>
     );
   };
@@ -98,7 +92,7 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
         <Button
           variant="linkMuted"
           size="inline"
-          className="self-start text-body-lg md:text-sm"
+          className="self-start"
           onClick={() => void navigate("/social")}
         >
           <ChevronLeft className="size-4" />

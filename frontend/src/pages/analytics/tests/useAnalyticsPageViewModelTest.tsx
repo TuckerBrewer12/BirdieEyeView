@@ -39,7 +39,7 @@ function setup(seed: FakeAnalyticsSeed = golfer, configure?: (repository: FakeAn
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
   const userId = seed.user?.id ?? USER_ID;
-  const { result } = renderHook(() => useAnalyticsPageViewModel(userId, tab, repository), { wrapper });
+  const { result } = renderHook(() => useAnalyticsPageViewModel(userId, { initialTab: tab, repository }), { wrapper });
   return { client, repository, result };
 }
 
