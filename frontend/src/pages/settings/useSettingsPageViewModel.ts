@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { useSignOut, type SignOutActions } from "@/app/useSignOut";
 import { useUpdateUser } from "@/data/useUpdateUser";
 import { formatHandicapInputValue, parseHandicapInput } from "@/domain/handicap";
 import { useCourseSearch } from "@/data/useCourseSearch";
@@ -42,6 +43,10 @@ export interface SettingsPageViewModel {
   save: (onSaved?: () => void) => void;
   /** Puts the form back to what is saved. */
   discard: () => void;
+  /** Signs the golfer out of this session. */
+  signOut: () => void;
+  /** The sign-out call is in flight. */
+  signingOut: boolean;
 }
 
 /**
@@ -50,11 +55,13 @@ export interface SettingsPageViewModel {
  */
 export function useSettingsPageViewModel(
   userId: string,
+  auth: SignOutActions,
   repository: SettingsRepository = settingsRepository,
 ): SettingsPageViewModel {
   const { data: settings, isLoading: loading, error: loadError, refetch } = useSettings(userId, repository);
   const updateUser = useUpdateUser(userId, repository);
   const courseSearch = useCourseSearch(userId, repository);
+  const { mutate: requestSignOut, isPending: signingOut } = useSignOut(auth);
   const [device, setDevice] = useState(() => repository.readDevicePreferences());
   const [edits, setEdits] = useState<Partial<SettingsForm>>({});
   const [homeCourseOpen, setHomeCourseOpen] = useState(false);
@@ -109,6 +116,10 @@ export function useSettingsPageViewModel(
     resetSave();
   }, [resetSearch, resetSave]);
 
+  const signOut = useCallback(() => {
+    if (!signingOut) requestSignOut();
+  }, [requestSignOut, signingOut]);
+
   return {
     loading,
     loadError: loadError ? messageFrom(loadError, "Could not load your settings.") : null,
@@ -139,5 +150,7 @@ export function useSettingsPageViewModel(
     saved: updateUser.isSuccess && !dirty,
     save,
     discard,
+    signOut,
+    signingOut,
   };
 }

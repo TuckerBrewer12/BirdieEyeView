@@ -17,7 +17,8 @@ function setup(seed: FakeSettingsSeed = {}, configure?: (repository: FakeSetting
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
-  const { result } = renderHook(() => useSettingsPageViewModel("user-1", repository), { wrapper });
+  const auth = { logout: () => Promise.resolve() };
+  const { result } = renderHook(() => useSettingsPageViewModel("user-1", auth, repository), { wrapper });
   return { client, repository, result };
 }
 

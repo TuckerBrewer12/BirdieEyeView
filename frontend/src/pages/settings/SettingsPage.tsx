@@ -11,7 +11,6 @@ import {
   SettingsGroup,
   SettingsRow,
 } from "@/brand";
-import { useSignOut } from "@/app/useSignOut";
 import { useAuth } from "@/context/auth";
 import { useTheme } from "@/context/theme";
 import { courseLabel } from "@/domain/course";
@@ -22,9 +21,8 @@ import { useLeaveGuard } from "./useLeaveGuard";
 import { useSettingsPageViewModel } from "./useSettingsPageViewModel";
 
 export function SettingsPage({ userId }: { userId: string }) {
-  const viewModel = useSettingsPageViewModel(userId);
+  const viewModel = useSettingsPageViewModel(userId, useAuth());
   const { preference: theme, setPreference: setTheme } = useTheme();
-  const signOut = useSignOut(useAuth());
   const guard = useLeaveGuard(viewModel.dirty);
 
   if (viewModel.loading) return <LoadingState>Loading settings…</LoadingState>;
@@ -77,10 +75,10 @@ export function SettingsPage({ userId }: { userId: string }) {
             <SettingsGroup>
               <SettingsRow
                 type="action"
-                label={signOut.isPending ? "Signing out…" : "Sign out"}
+                label={viewModel.signingOut ? "Signing out…" : "Sign out"}
                 tone="danger"
-                disabled={signOut.isPending}
-                onClick={() => signOut.mutate()}
+                disabled={viewModel.signingOut}
+                onClick={viewModel.signOut}
               />
             </SettingsGroup>
           </>
