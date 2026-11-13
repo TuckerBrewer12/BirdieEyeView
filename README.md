@@ -62,7 +62,7 @@ Both commands require `MISTRAL_API_KEY` and `GOOGLE_API_KEY`. The evaluator uses
 
 The answer key grades final numeric values by field and hole number. To-par handwriting is compared against normalized raw strokes. Cards with recorded putts and shots-to-green grade those fields too. Results are cumulative: a 100% case also counts in the 90%+ and 80%+ totals. Cases below 80% are labeled failed and list every mismatch, but accuracy failures do not make the command exit unsuccessfully.
 
-The report includes OCR/merge time per image, extraction and effective time per case, and total suite time. Provider latency varies across runs. Ordinary pytest uses deterministic provider replacements.
+The report includes OCR/merge time per image, extraction and effective time per case, and total suite time, plus how many images had the Gemini table merge rejected. Under each case it lists the scan's internal diagnostics: what the OCR clean-up changed, whether the merge was accepted or why it was rejected, and each parser decision or refusal (which row was taken as the player, how the back nine was paired, why a name was not found). Provider latency and Gemini output vary across runs; the deterministic regression gate is the Mistral-capture scenario in `tests/integration/test_api_e2e.py`.
 
 ### Run from a pull request
 

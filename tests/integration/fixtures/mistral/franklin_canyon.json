@@ -1,0 +1,180 @@
+{
+ "document_annotation": null,
+ "model": "mistral-ocr-latest",
+ "pages": [
+  {
+   "blocks": [
+    {
+     "bottom_right_x": 779,
+     "bottom_right_y": 537,
+     "confidence_scores": null,
+     "content": "![img-0.jpeg](img-0.jpeg)",
+     "image_id": "img-0.jpeg",
+     "top_left_x": 650,
+     "top_left_y": 430,
+     "type": "image"
+    },
+    {
+     "bottom_right_x": 872,
+     "bottom_right_y": 617,
+     "confidence_scores": null,
+     "content": "# FRANKLIN\nCANYON",
+     "top_left_x": 667,
+     "top_left_y": 537,
+     "type": "title"
+    },
+    {
+     "bottom_right_x": 854,
+     "bottom_right_y": 635,
+     "confidence_scores": null,
+     "content": "C O L F C O R S E",
+     "top_left_x": 688,
+     "top_left_y": 617,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 788,
+     "bottom_right_y": 1097,
+     "confidence_scores": null,
+     "content": "<table><tr><td>HOLE</td><td>HDEP. REC.<br/>MEN. WOMEN</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr><tr><td>Back</td><td>0-9 0-3</td><td>490</td><td>186</td><td>356</td><td>179</td><td>366</td><td>202</td><td>521</td><td>404</td><td>518</td><td>3222</td></tr><tr><td>Middle</td><td>10-24 4-10</td><td>464</td><td>163<br/>121</td><td>340</td><td>163</td><td>346</td><td>189</td><td>506</td><td>389</td><td>504</td><td>3064</td></tr><tr><td>Handicap</td><td></td><td>15</td><td>11</td><td>13</td><td>7</td><td>17</td><td>5</td><td>9</td><td>1</td><td>3</td><td></td></tr><tr><td></td><td>G</td><td>4</td><td>1</td><td>3</td><td>7</td><td>2</td><td>1</td><td>4</td><td>2</td><td>2</td><td></td></tr><tr><td></td><td></td><td>1</td><td>3</td><td>2</td><td>2</td><td>1</td><td>3</td><td>1</td><td>1</td><td>2</td><td>4</td></tr><tr><td></td><td></td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td></tr></table>",
+     "table_id": "tbl-0.html",
+     "top_left_x": 0,
+     "top_left_y": 607,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 788,
+     "bottom_right_y": 1345,
+     "confidence_scores": null,
+     "content": "<table><tr><td>Par</td><td>5</td><td>3</td><td>4</td><td>3</td><td>4</td><td>3</td><td>5</td><td>4</td><td>5</td><td>36</td></tr><tr><td>D</td><td>4</td><td>2</td><td>3</td><td>2</td><td>3</td><td>3</td><td>4</td><td>3</td><td>4</td><td></td></tr><tr><td>-6</td><td>2</td><td>2</td><td>3</td><td>2</td><td>1</td><td>1</td><td>2</td><td>2</td><td>2</td><td>177</td></tr><tr><td></td><td>1</td><td>1</td><td>2</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>9</td></tr></table>",
+     "table_id": "tbl-1.html",
+     "top_left_x": 0,
+     "top_left_y": 1099,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 788,
+     "bottom_right_y": 1473,
+     "confidence_scores": null,
+     "content": "<table><tr><td>Forward 25+</td><td>11+</td><td>439</td><td>125</td><td>322</td><td>148</td><td>326</td><td>168</td><td>491</td><td>325</td><td>418</td><td>2762</td></tr><tr><td>Handicap</td><td></td><td>7</td><td>17</td><td>9</td><td>15</td><td>3</td><td>13</td><td>1</td><td>11</td><td>5</td><td></td></tr></table>",
+     "table_id": "tbl-2.html",
+     "top_left_x": 0,
+     "top_left_y": 1349,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 788,
+     "bottom_right_y": 1528,
+     "confidence_scores": null,
+     "content": "Scorer: SHADED HOLES INDICATE\nCART PATH ONLY",
+     "top_left_x": 0,
+     "top_left_y": 1475,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1498,
+     "bottom_right_y": 1097,
+     "confidence_scores": null,
+     "content": "<table><tr><td rowspan=\"5\">I<br/>N<br/>I<br/>T<br/>I<br/>A<br/>L</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>RATING<br/>SLOPE</td></tr><tr><td>381</td><td>212</td><td>366</td><td>519</td><td>363</td><td>456</td><td>367</td><td>150</td><td>514</td><td>3328</td><td>6550</td><td>71.5/13</td></tr><tr><td>368</td><td>186<br/>158</td><td>339</td><td>502</td><td>329</td><td>385</td><td>344</td><td>126</td><td>502<br/>450</td><td>3081</td><td>6145</td><td>M: 69.2/<br/>W: 75.7/</td></tr><tr><td>8</td><td>2</td><td>14</td><td>4</td><td>10</td><td>6</td><td>16</td><td>12</td><td>18</td><td></td><td></td><td></td></tr><tr><td>2</td><td>1</td><td>2</td><td>3</td><td>4</td><td>3</td><td>2</td><td>2</td><td>3</td><td></td><td></td><td></td></tr><tr><td></td><td>4</td><td>2</td><td>1</td><td>2</td><td>1</td><td>1</td><td>3</td><td>1</td><td>2</td><td>17</td><td></td><td></td></tr><tr><td></td><td>2</td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>0</td><td>3</td><td>75</td><td></td></tr></table>",
+     "table_id": "tbl-3.html",
+     "top_left_x": 791,
+     "top_left_y": 635,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1498,
+     "bottom_right_y": 1345,
+     "confidence_scores": null,
+     "content": "<table><tr><td></td><td>4</td><td>3</td><td>4</td><td>5</td><td>4</td><td>4</td><td>4</td><td>3</td><td>5</td><td>36</td><td>72</td><td>HCP</td></tr><tr><td></td><td>2</td><td>2</td><td>3</td><td>5</td><td>3</td><td>2</td><td>3</td><td>2</td><td>3</td><td></td><td></td><td></td></tr><tr><td></td><td>3</td><td>2</td><td>1</td><td>2</td><td>2</td><td>3</td><td>2</td><td>2</td><td>2</td><td>19</td><td>36</td><td></td></tr><tr><td></td><td>1</td><td>1</td><td>0</td><td>2</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td></td><td>89</td><td></td></tr></table>",
+     "table_id": "tbl-4.html",
+     "top_left_x": 791,
+     "top_left_y": 1099,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1498,
+     "bottom_right_y": 1473,
+     "confidence_scores": null,
+     "content": "<table><tr><td></td><td>354</td><td>130</td><td>275</td><td>424</td><td>313</td><td>370</td><td>280</td><td>90</td><td>375</td><td>2611</td><td>5373</td><td>M: 65<br/>W: 71</td></tr><tr><td></td><td>2</td><td>10</td><td>12</td><td>6</td><td>8</td><td>4</td><td>14</td><td>18</td><td>16</td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-5.html",
+     "top_left_x": 791,
+     "top_left_y": 1349,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1498,
+     "bottom_right_y": 1528,
+     "confidence_scores": null,
+     "content": "Attest: Date:",
+     "top_left_x": 791,
+     "top_left_y": 1475,
+     "type": "text"
+    }
+   ],
+   "confidence_scores": null,
+   "dimensions": {
+    "dpi": 200,
+    "height": 2000,
+    "width": 1500
+   },
+   "footer": null,
+   "header": null,
+   "hyperlinks": [],
+   "images": [
+    {
+     "bottom_right_x": 779,
+     "bottom_right_y": 537,
+     "id": "img-0.jpeg",
+     "image_annotation": null,
+     "image_base64": null,
+     "top_left_x": 650,
+     "top_left_y": 430
+    }
+   ],
+   "index": 0,
+   "markdown": "![img-0.jpeg](img-0.jpeg)\n\n# FRANKLIN\nCANYON\n\nC O L F C O R S E\n\n[tbl-0.html](tbl-0.html)\n\n[tbl-1.html](tbl-1.html)\n\n[tbl-2.html](tbl-2.html)\n\nScorer: SHADED HOLES INDICATE\nCART PATH ONLY\n\n[tbl-3.html](tbl-3.html)\n\n[tbl-4.html](tbl-4.html)\n\n[tbl-5.html](tbl-5.html)\n\nAttest: Date:",
+   "tables": [
+    {
+     "content": "<table><tr><td>HOLE</td><td>HDEP. REC.<br/>MEN. WOMEN</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr><tr><td>Back</td><td>0-9 0-3</td><td>490</td><td>186</td><td>356</td><td>179</td><td>366</td><td>202</td><td>521</td><td>404</td><td>518</td><td>3222</td></tr><tr><td>Middle</td><td>10-24 4-10</td><td>464</td><td>163<br/>121</td><td>340</td><td>163</td><td>346</td><td>189</td><td>506</td><td>389</td><td>504</td><td>3064</td></tr><tr><td>Handicap</td><td></td><td>15</td><td>11</td><td>13</td><td>7</td><td>17</td><td>5</td><td>9</td><td>1</td><td>3</td><td></td></tr><tr><td></td><td>G</td><td>4</td><td>1</td><td>3</td><td>7</td><td>2</td><td>1</td><td>4</td><td>2</td><td>2</td><td></td></tr><tr><td></td><td></td><td>1</td><td>3</td><td>2</td><td>2</td><td>1</td><td>3</td><td>1</td><td>1</td><td>2</td><td>4</td></tr><tr><td></td><td></td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td></tr></table>",
+     "format": "html",
+     "id": "tbl-0.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>Par</td><td>5</td><td>3</td><td>4</td><td>3</td><td>4</td><td>3</td><td>5</td><td>4</td><td>5</td><td>36</td></tr><tr><td>D</td><td>4</td><td>2</td><td>3</td><td>2</td><td>3</td><td>3</td><td>4</td><td>3</td><td>4</td><td></td></tr><tr><td>-6</td><td>2</td><td>2</td><td>3</td><td>2</td><td>1</td><td>1</td><td>2</td><td>2</td><td>2</td><td>177</td></tr><tr><td></td><td>1</td><td>1</td><td>2</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>9</td></tr></table>",
+     "format": "html",
+     "id": "tbl-1.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>Forward 25+</td><td>11+</td><td>439</td><td>125</td><td>322</td><td>148</td><td>326</td><td>168</td><td>491</td><td>325</td><td>418</td><td>2762</td></tr><tr><td>Handicap</td><td></td><td>7</td><td>17</td><td>9</td><td>15</td><td>3</td><td>13</td><td>1</td><td>11</td><td>5</td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-2.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td rowspan=\"5\">I<br/>N<br/>I<br/>T<br/>I<br/>A<br/>L</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>RATING<br/>SLOPE</td></tr><tr><td>381</td><td>212</td><td>366</td><td>519</td><td>363</td><td>456</td><td>367</td><td>150</td><td>514</td><td>3328</td><td>6550</td><td>71.5/13</td></tr><tr><td>368</td><td>186<br/>158</td><td>339</td><td>502</td><td>329</td><td>385</td><td>344</td><td>126</td><td>502<br/>450</td><td>3081</td><td>6145</td><td>M: 69.2/<br/>W: 75.7/</td></tr><tr><td>8</td><td>2</td><td>14</td><td>4</td><td>10</td><td>6</td><td>16</td><td>12</td><td>18</td><td></td><td></td><td></td></tr><tr><td>2</td><td>1</td><td>2</td><td>3</td><td>4</td><td>3</td><td>2</td><td>2</td><td>3</td><td></td><td></td><td></td></tr><tr><td></td><td>4</td><td>2</td><td>1</td><td>2</td><td>1</td><td>1</td><td>3</td><td>1</td><td>2</td><td>17</td><td></td><td></td></tr><tr><td></td><td>2</td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>0</td><td>3</td><td>75</td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-3.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td></td><td>4</td><td>3</td><td>4</td><td>5</td><td>4</td><td>4</td><td>4</td><td>3</td><td>5</td><td>36</td><td>72</td><td>HCP</td></tr><tr><td></td><td>2</td><td>2</td><td>3</td><td>5</td><td>3</td><td>2</td><td>3</td><td>2</td><td>3</td><td></td><td></td><td></td></tr><tr><td></td><td>3</td><td>2</td><td>1</td><td>2</td><td>2</td><td>3</td><td>2</td><td>2</td><td>2</td><td>19</td><td>36</td><td></td></tr><tr><td></td><td>1</td><td>1</td><td>0</td><td>2</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td></td><td>89</td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-4.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td></td><td>354</td><td>130</td><td>275</td><td>424</td><td>313</td><td>370</td><td>280</td><td>90</td><td>375</td><td>2611</td><td>5373</td><td>M: 65<br/>W: 71</td></tr><tr><td></td><td>2</td><td>10</td><td>12</td><td>6</td><td>8</td><td>4</td><td>14</td><td>18</td><td>16</td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-5.html",
+     "word_confidence_scores": null
+    }
+   ]
+  }
+ ],
+ "usage_info": {
+  "doc_size_bytes": 394366,
+  "pages_processed": 1
+ }
+}

@@ -28,7 +28,9 @@ from api.routers import auth, scan, scan_reports
 from database import DatabaseManager
 from models import Course, Hole, Tee
 from tests.integration.conftest import SCHEMA_PATH, _get_test_database_url
-from tests.test_mistral_scorecard_parser import EAGLE_VINES_WITH_INITIALS
+from api.messages import PLAYER_NAME_NOT_READ, UNCLEAR_PLAYER_NAME, UNREADABLE_SCORE_ROWS
+from scripts.quick_scan_eval import SUITE_MANIFEST_PATHS, grade_case, load_cases
+from tests.test_mistral_scorecard_parser import EAGLE_VINES_WITH_INITIALS, INCOMPLETE_FULL_ROW
 
 pytestmark = pytest.mark.integration
 
@@ -318,7 +320,7 @@ def scan_providers(monkeypatch):
             calls["ocr"].append(image.format)
         return {"pages": [{"markdown": EAGLE_VINES_WITH_INITIALS}]}
 
-    async def fake_merge(markdown):
+    async def fake_merge(markdown, diagnostics=None):
         calls["merge"].append(markdown)
         return markdown
 
@@ -399,6 +401,101 @@ def test_scan_extract_and_save_refuse_another_users_course(api, scan_providers):
     assert api.client.post("/api/scan/save", headers=alice["headers"],
                            json={"course_id": private, "tee_box": "Blue", "hole_scores": scores}).status_code == 200
     assert scan_providers["ocr"] == []
+
+
+# ---- Real Mistral captures through the deterministic chain (clean-up → parse → assembly)
+
+MISTRAL_FIXTURES = Path(__file__).resolve().parent / "fixtures" / "mistral"
+LARGE_CASES = {case.case_id: case for case in load_cases(SUITE_MANIFEST_PATHS["large"])}
+# Cells each case must reach on the committed capture (merge skipped, so this is the parser's
+# own floor). Raise a number when the parser improves; a drop is a regression.
+FIXTURE_MINIMUMS = {
+    "360_ewa_beach_d": 17, "360_ewa_beach_g": 18, "bay_view_d": 52, "bay_view_g": 53,
+    "blackhawk_falls_derek": 51, "blue_rock_springs_west_g": 53, "boundary_oaks_d": 53,
+    "boundary_oaks_g": 53, "corica_park_south_d": 53, "diablo_creek_d": 54, "diablo_creek_g": 54,
+    "franklin_canyon_d": 54, "franklin_canyon_g": 54, "ko_olina_d": 53, "ko_olina_g": 54,
+    "lake_chabot_d": 31, "lake_chabot_g": 33,  # known gap: no score row on the card
+    "metropolitan_d": 54, "rancho_solano_d": 43, "rancho_solano_g": 54, "shadow_lakes_d": 54,
+    "yocha_dehe_g": 49,
+}
+
+
+@pytest.fixture
+def mistral_capture(monkeypatch):
+    """OCR answers with a committed Mistral capture; the table merge is skipped (pass-through)."""
+    state = {"image": None, "merge_diagnostics": []}
+
+    async def fake_ocr(self, file_path, **kwargs):
+        return json.loads((MISTRAL_FIXTURES / f"{state['image']}.json").read_text())
+
+    async def fake_merge(markdown, diagnostics=None):
+        if diagnostics is not None:
+            diagnostics.append("table merge skipped by the test")
+            state["merge_diagnostics"].append(diagnostics)
+        return markdown
+
+    monkeypatch.setattr(scan.MistralOCRService, "ocr_file", fake_ocr)
+    monkeypatch.setattr(scan, "merge_split_tables", fake_merge)
+    return state
+
+
+def extract_case(api, mistral_capture, case_id: str):
+    case = LARGE_CASES[case_id]
+    mistral_capture["image"] = case.image.rsplit(".", 1)[0]
+    alice = api.user(f"{case_id}@example.com")
+    ocr = api.client.post("/api/scan/ocr", headers=alice["headers"], files=upload(case.image))
+    assert ocr.status_code == 200, ocr.text
+    extract = api.client.post(
+        "/api/scan/extract",
+        headers=alice["headers"],
+        files=upload(case.image),
+        data={"ocr_text": ocr.json()["ocr_text"], "user_context": case.user_context},
+    )
+    return case, extract
+
+
+@pytest.mark.parametrize("case_id", sorted(FIXTURE_MINIMUMS))
+def test_mistral_captures_extract_the_expected_scores(api, mistral_capture, case_id):
+    case, extract = extract_case(api, mistral_capture, case_id)
+    assert extract.status_code == 200, extract.text
+    body = extract.json()
+    assert set(body) == {"round", "confidence", "fields_needing_review"}  # diagnostics stay internal
+
+    graded = grade_case(case, body["round"]["hole_scores"])
+    assert graded.matched_cells >= FIXTURE_MINIMUMS[case_id], graded.mismatches
+    assert mistral_capture["merge_diagnostics"]  # the merge step was reached with the diagnostics list
+
+
+def test_missing_name_fallback_flags_the_round_for_review(api, mistral_capture):
+    # Mistral read every digit of D's rows on this card but left the name cell blank.
+    _case, extract = extract_case(api, mistral_capture, "rancho_solano_d")
+    assert extract.status_code == 200, extract.text
+    body = extract.json()
+    assert sum(h["strokes"] is not None for h in body["round"]["hole_scores"]) >= 17
+    assert PLAYER_NAME_NOT_READ in body["fields_needing_review"]
+    # The same card with a name that is on it does not carry the warning.
+    _case, found = extract_case(api, mistral_capture, "rancho_solano_g")
+    assert PLAYER_NAME_NOT_READ not in found.json()["fields_needing_review"]
+
+
+def test_scan_error_message_matches_what_was_detected(api, scan_providers):
+    alice = api.user("alice@example.com")
+
+    def extract(ocr_text: str, name: str):
+        return api.client.post(
+            "/api/scan/extract", headers=alice["headers"], files=upload(),
+            data={"ocr_text": ocr_text, "user_context": f"my name is {name}. no putts recorded"},
+        )
+
+    nobody = extract(EAGLE_VINES_WITH_INITIALS, "Zed")  # no row carries the name
+    assert nobody.status_code == 422, nobody.text
+    assert nobody.json() == {"detail": UNCLEAR_PLAYER_NAME, "failure": {"category": "unreadable_scores", "stage": "parse"}}
+
+    unreadable = extract(INCOMPLETE_FULL_ROW, "Tucker")  # the name is there, the row is not readable
+    assert unreadable.status_code == 422, unreadable.text
+    assert unreadable.json() == {
+        "detail": UNREADABLE_SCORE_ROWS, "failure": {"category": "unreadable_scores", "stage": "parse"},
+    }
 
 
 # ================================================================

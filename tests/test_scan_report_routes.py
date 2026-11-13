@@ -216,7 +216,7 @@ def test_extraction_returns_safe_failure_category_without_changing_public_detail
     client.app.dependency_overrides[get_db] = lambda: SimpleNamespace()
     client.app.dependency_overrides[get_optional_current_user] = lambda: None
 
-    async def unavailable_provider(path):
+    async def unavailable_provider(path, diagnostics=None):
         raise EnvironmentError("MISTRAL_API_KEY=secret")
 
     monkeypatch.setattr(scan, "_run_ocr_pipeline", unavailable_provider)

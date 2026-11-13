@@ -95,6 +95,10 @@ UNREADABLE_SCORE_ROWS = (
     "Unable to clearly read the score rows from this image. Please upload a cleaner image with clearer handwriting "
     "and better lighting, then try again."
 )
+PLAYER_NAME_NOT_READ = (
+    "Your name could not be read on the card, so these scores come from the only unlabeled row. "
+    "Please check they are yours."
+)
 
 # Failed-scan reports
 REPORT_FIELDS_NOT_ALLOWED = "Only a scorecard and report metadata are accepted."
