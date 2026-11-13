@@ -177,6 +177,20 @@ test("removing the picked photo goes back to the drop zone", async ({ scan }) =>
   await scan.seesUpload();
 });
 
+test("a name, scores written to par, and the other rows are sent with the scan", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.nameYourRow("Tucker");
+  await scan.scoresWrittenToPar();
+  await scan.alsoOnTheCard("Putts");
+  await scan.alsoOnTheCard("Shots to green");
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.seesScanNote(
+    "my name is Tucker. scores written to par. name on score row. row order: score, putts, shots to green",
+  );
+});
+
 test("a course can be picked ahead of the scan, and cleared", async ({ scan }) => {
   await scan.open({ fullCourses: [pebbleBeachCourse] });
   await scan.searchCourse("Pebble");

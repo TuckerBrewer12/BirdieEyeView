@@ -103,6 +103,8 @@ export class FakeBackend {
   goalReport: GoalReportDto | null | undefined;
   readonly benchmarks: Partial<Record<string, BenchmarkComparisonDto>>;
   scan: ScanDto | undefined;
+  /** The note each `/api/scan/extract` was sent with, in the order they were read. */
+  readonly scanNotes: (string | null)[] = [];
   profileError: string | null;
   updateUserError: string | null;
   /** Flips to false when a sign-in or a verification link starts a session. */
@@ -304,6 +306,11 @@ export class FakeBackend {
     }
 
     if (verb === "POST" && path.includes("/api/scan/extract")) {
+      const note =
+        typeof body === "object" && body !== null && "user_context" in body
+          ? (body as { user_context?: unknown }).user_context
+          : null;
+      this.scanNotes.push(typeof note === "string" ? note : null);
       if (!this.scan) return { status: 500, body: { detail: "Could not read this scorecard." } };
       return { status: 200, body: this.scan };
     }

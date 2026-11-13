@@ -89,6 +89,36 @@ export class ScanRobot {
     return this;
   }
 
+  /** The golfer's name as written on their row, so the scan reads that one. */
+  async nameYourRow(name: string): Promise<this> {
+    const field = this.page.getByRole("textbox", { name: "Your name on the card" });
+    await field.fill(name);
+    await expect(field).toHaveValue(name);
+    return this;
+  }
+
+  /** The scores on the card are to par, not strokes. */
+  async scoresWrittenToPar(): Promise<this> {
+    const toPar = this.page
+      .getByRole("group", { name: "Scores written as" })
+      .getByRole("button", { name: /^To par/ });
+    await toPar.click();
+    await expect(toPar).toHaveAttribute("aria-pressed", "true");
+    return this;
+  }
+
+  /** Putts, or shots to green, are on the card too. */
+  async alsoOnTheCard(row: "Putts" | "Shots to green"): Promise<this> {
+    await this.page.getByRole("checkbox", { name: row, exact: true }).check();
+    return this;
+  }
+
+  /** The note the scan was sent with: whose row, how the scores are written, which rows it has. */
+  async seesScanNote(note: string): Promise<this> {
+    await expect.poll(() => this.backend?.scanNotes.at(-1)).toBe(note);
+    return this;
+  }
+
   /** The card being read, on its first phase. */
   async seesProcessing(): Promise<this> {
     await expect(
