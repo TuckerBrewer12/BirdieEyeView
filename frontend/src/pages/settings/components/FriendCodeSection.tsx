@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { Alert, AlertDescription, SettingsGroup, SettingsRow } from "@/brand";
+import { useCopyText } from "@/platform/useCopyText";
 
 interface FriendCodeSectionProps {
   /** Null until the server has given the player one. */
@@ -8,17 +8,7 @@ interface FriendCodeSectionProps {
 
 /** The code other players type to send a friend request, with a button to copy it. */
 export function FriendCodeSection({ friendCode }: FriendCodeSectionProps) {
-  const [copy, setCopy] = useState<"copied" | "failed" | null>(null);
-
-  const copyCode = async () => {
-    if (!friendCode) return;
-    try {
-      await navigator.clipboard.writeText(friendCode);
-      setCopy("copied");
-    } catch {
-      setCopy("failed");
-    }
-  };
+  const { copy, copied, failed } = useCopyText();
 
   return (
     <div className="flex flex-col gap-2">
@@ -28,11 +18,13 @@ export function FriendCodeSection({ friendCode }: FriendCodeSectionProps) {
           label="Friend code"
           value={friendCode ?? "Unavailable"}
           disabled={!friendCode}
-          copied={copy === "copied"}
-          onCopy={() => void copyCode()}
+          copied={copied}
+          onCopy={() => {
+            if (friendCode) void copy(friendCode);
+          }}
         />
       </SettingsGroup>
-      {copy === "failed" && (
+      {failed && (
         <Alert tone="danger">
           <AlertDescription>Could not copy your friend code.</AlertDescription>
         </Alert>
