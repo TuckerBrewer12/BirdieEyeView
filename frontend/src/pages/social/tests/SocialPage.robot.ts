@@ -17,6 +17,11 @@ export class SocialRobot {
     return this.page.getByLabel("Friend code");
   }
 
+  /** "Copy your code" until the write lands, then "Copied". A refusal keeps the first name. */
+  private copyButton() {
+    return this.page.getByRole("button", { name: /^(Copy your code|Copied)$/ });
+  }
+
   async dark(): Promise<this> {
     await this.page.addInitScript(() => {
       localStorage.setItem("theme", "dark");
@@ -79,6 +84,40 @@ export class SocialRobot {
 
   async seesMyCode(code: string): Promise<this> {
     await expect(this.page.getByText(code, { exact: true })).toBeVisible();
+    return this;
+  }
+
+  /** Lets the page write to and read from the clipboard, as a player who allowed it would. */
+  async allowClipboard(): Promise<this> {
+    await this.page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    return this;
+  }
+
+  /** The browser turns clipboard writes down, as it does without permission or focus. */
+  async blockClipboard(): Promise<this> {
+    await this.page.addInitScript(() => {
+      Object.defineProperty(navigator, "clipboard", {
+        value: { writeText: () => Promise.reject(new Error("Write permission denied.")) },
+      });
+    });
+    return this;
+  }
+
+  async tapCopy(): Promise<this> {
+    await this.copyButton().click();
+    return this;
+  }
+
+  /** Copy wrote the code, and the button reads Copied. */
+  async seesCopied(code: string): Promise<this> {
+    await expect(this.page.getByRole("button", { name: "Copied", exact: true })).toBeVisible();
+    await expect.poll(() => this.page.evaluate(() => navigator.clipboard.readText())).toBe(code);
+    return this;
+  }
+
+  /** A refused clipboard leaves Couldn't copy on the button. */
+  async seesCopyFailed(): Promise<this> {
+    await expect(this.copyButton()).toHaveText("Couldn't copy");
     return this;
   }
 

@@ -31,6 +31,20 @@ test("a blank friend code asks for one and leaves the field empty", async ({ soc
   await social.seesCode("");
 });
 
+test("Copy writes the friend code and the button reads Copied", async ({ social }) => {
+  await social.allowClipboard();
+  await social.open(seed);
+  await social.tapCopy();
+  await social.seesCopied("TGOLF7Q2");
+});
+
+test("a refused clipboard shows Couldn't copy", async ({ social }) => {
+  await social.blockClipboard();
+  await social.open(seed);
+  await social.tapCopy();
+  await social.seesCopyFailed();
+});
+
 test("each friend shows their index and last round, and Compare opens Profile against them", async ({ social }) => {
   await social.open(seed);
   await social.seesOpenRequests(1);
