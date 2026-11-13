@@ -91,7 +91,7 @@ export function SettingsPage({ userId }: { userId: string }) {
       {viewModel.dirty && (
         <ActionBar pinned="always" contentClassName="max-w-2xl">
           <span className="flex-1 text-sm text-foreground-secondary">Unsaved changes</span>
-          <Button variant="ghost" onClick={viewModel.discard} disabled={viewModel.saving}>
+          <Button variant="ghostDestructive" onClick={viewModel.discard} disabled={viewModel.saving}>
             Discard
           </Button>
           <Button onClick={() => viewModel.save()} disabled={!viewModel.canSave}>

@@ -168,6 +168,7 @@
   --brand-space-chip: 3px;
   --brand-space-dot: 3px;
   --brand-space-page-phone: 18px;
+  --brand-space-page: 44px;
   --brand-space-tight: 5px;
   --brand-space-nudge: 5px;
   --brand-space-nudge-sm: 3px;
@@ -428,6 +429,7 @@
   --spacing-chip: var(--brand-space-chip);
   --spacing-dot: var(--brand-space-dot);
   --spacing-page-phone: var(--brand-space-page-phone);
+  --spacing-page: var(--brand-space-page);
   --spacing-tight: var(--brand-space-tight);
   --spacing-nudge: var(--brand-space-nudge);
   --spacing-nudge-sm: var(--brand-space-nudge-sm);

@@ -436,6 +436,8 @@ export const space = {
   dot: 3,
   /** A phone page's side margin. */
   "page-phone": 18,
+  /** A page's side padding from `md`, beside the rail. `AppShell` sets it; a bar pinned along the page's foot (`ActionBar`) lines up with it. */
+  page: 44,
   tight: 5,
   /** What a control's corner gives up inside its group, so the corners nest. */
   nudge: 5,

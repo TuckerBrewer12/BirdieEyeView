@@ -38,6 +38,8 @@ export function GolfGroup({
             <Input
               id={HANDICAP_ID}
               size="value"
+              // Wide enough for the longest index a golfer types, "+5.6" or "54.0", and no more.
+              className="w-14"
               type="text"
               inputMode="decimal"
               value={handicap}

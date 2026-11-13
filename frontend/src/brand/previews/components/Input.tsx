@@ -10,7 +10,7 @@ export default function InputPreview() {
       <Input size="inline" placeholder="Inline, beside a button" />
       <div className="flex items-center justify-between rounded-xl bg-card px-4 py-2">
         <span className="text-body-lg font-medium text-foreground">Handicap index</span>
-        <Input size="value" aria-label="Handicap index" defaultValue="15" />
+        <Input size="value" className="w-14" aria-label="Handicap index" defaultValue="15" />
       </div>
       <div className="flex gap-4">
         <label className="flex items-center gap-2 text-sm text-foreground">

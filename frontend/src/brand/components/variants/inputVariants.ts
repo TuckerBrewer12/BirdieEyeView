@@ -16,9 +16,9 @@ const inputVariants = cva(
            so a field and its button line up. */
         inline: "h-10 rounded-card px-3",
         /* A short value typed straight into a settings row (a handicap): it reads as the row's
-           value, right-aligned with no box, until it is hovered or focused. */
-        value:
-          "h-9 w-22 rounded-lg border-transparent px-2.5 text-right hover:border-input dark:bg-transparent",
+           value, right-aligned with no box, until it is hovered or focused. Its width is the
+           caller's, as wide as the value it takes. */
+        value: "h-9 rounded-lg border-transparent px-2 text-right tabular-nums hover:border-input dark:bg-transparent",
       },
     },
     defaultVariants: {
