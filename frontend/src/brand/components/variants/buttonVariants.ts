@@ -40,10 +40,6 @@ const buttonVariants = cva(
         "toolbar-icon": "size-11 rounded-xl",
         /* An icon alone on a phone, the icon and its word from md: Share, Edit. */
         "toolbar-icon-phone": "size-11 rounded-xl md:w-auto md:gap-1.5 md:px-5",
-        /* Marketing-sized. The landing page's calls to action sit alone on a
-           wide section and have to carry it; the in-app sizes read as chrome
-           at that scale. */
-        cta: "h-12 gap-2 rounded-xl px-7 text-base has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5 [&_svg:not([class*='size-'])]:size-5",
       },
       /* Declared after size so the radius here wins the twMerge. */
       shape: {

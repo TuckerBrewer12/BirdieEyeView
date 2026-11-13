@@ -14,8 +14,7 @@ export function ResetPasswordPage() {
 
   return (
     <AuthCard
-      title="Reset password"
-      description="Choose a new password, then sign in with it."
+      title="New password"
       footer={
         <p>
           Remembered it? <AuthLink to="/login">Back to sign in</AuthLink>
@@ -23,7 +22,7 @@ export function ResetPasswordPage() {
       }
     >
       <form
-        className="flex flex-col gap-5"
+        className="flex flex-col gap-4"
         onSubmit={(event) => {
           event.preventDefault();
           viewModel.submit();
@@ -38,7 +37,7 @@ export function ResetPasswordPage() {
 
         {viewModel.done ? (
           <Button
-            size="cta"
+            size="lg"
             onClick={() => void navigate("/login", { state: { flash: viewModel.notice } })}
           >
             Continue to sign in
@@ -60,12 +59,11 @@ export function ResetPasswordPage() {
               value={viewModel.confirm}
               onChange={viewModel.setConfirm}
               autoComplete="new-password"
-              placeholder="••••••••"
               error={fieldErrors.confirm}
               revealName="confirm password"
             />
-            <Button type="submit" size="cta" disabled={!viewModel.canSubmit}>
-              {viewModel.submitting ? "Resetting…" : "Reset password"}
+            <Button type="submit" size="lg" className="mt-1" disabled={!viewModel.canSubmit}>
+              {viewModel.submitting ? "Saving…" : "Save password"}
             </Button>
           </>
         )}

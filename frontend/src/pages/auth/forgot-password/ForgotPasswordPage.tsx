@@ -9,8 +9,8 @@ export function ForgotPasswordPage() {
 
   return (
     <AuthCard
-      title="Forgot password"
-      description="Enter your email and we'll send a secure reset link."
+      title="Reset password"
+      description="We’ll email you a reset link."
       footer={
         <p>
           Remembered it? <AuthLink to="/login">Back to sign in</AuthLink>
@@ -18,7 +18,7 @@ export function ForgotPasswordPage() {
       }
     >
       <form
-        className="flex flex-col gap-5"
+        className="flex flex-col gap-4"
         onSubmit={(event) => {
           event.preventDefault();
           viewModel.submit();
@@ -32,16 +32,14 @@ export function ForgotPasswordPage() {
           <Input
             id="forgot-email"
             type="email"
-           
             value={viewModel.email}
             onChange={(event) => viewModel.setEmail(event.target.value)}
             required
             autoComplete="email"
-            placeholder="you@example.com"
           />
         </Field>
 
-        <Button type="submit" size="cta" disabled={viewModel.submitting}>
+        <Button type="submit" size="lg" className="mt-1" disabled={viewModel.submitting}>
           {viewModel.submitting ? "Sending link…" : "Send reset link"}
         </Button>
       </form>

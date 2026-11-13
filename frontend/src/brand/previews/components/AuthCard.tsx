@@ -4,30 +4,30 @@ import { Button } from "@/brand/components/Button";
 import { Field, FieldLabel } from "@/brand/components/Field";
 import { Input } from "@/brand/components/Input";
 
-/** The harness stage is a phone's width, so this is the card as a phone shows it. */
+/** The harness stage is a phone's width, so this is the screen as a phone shows it: no card edge. */
 export default function AuthCardPreview() {
   return (
     <AuthCard
-      className="min-h-0 py-0"
-      title="Forgot password"
-      description="Enter your email and we'll send a secure reset link."
+      className="min-h-0 pt-6 pb-6"
+      title="Reset password"
+      description="We’ll email you a reset link."
       footer={
         <p>
           Remembered it?{" "}
-          <Button variant="link" size="xs" className="px-0">
+          <Button variant="link" size="inline" className="font-semibold">
             Back to sign in
           </Button>
         </p>
       }
     >
       <Alert tone="danger">
-        <AlertDescription>We couldn't complete this account request. Please try again.</AlertDescription>
+        <AlertDescription>We couldn't send that link. Try again.</AlertDescription>
       </Alert>
       <Field>
         <FieldLabel htmlFor="auth-card-email">Email</FieldLabel>
-        <Input id="auth-card-email" type="email" placeholder="you@example.com" />
+        <Input id="auth-card-email" type="email" />
       </Field>
-      <Button size="cta">Send reset link</Button>
+      <Button size="lg">Send reset link</Button>
     </AuthCard>
   );
 }
