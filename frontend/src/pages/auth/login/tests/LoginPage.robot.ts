@@ -46,6 +46,23 @@ export class LoginRobot extends AuthScreenRobot {
     return this;
   }
 
+  /** After a refused sign-in both fields read as wrong; editing either clears that. */
+  async seesFieldsMarkedWrong(wrong: boolean): Promise<this> {
+    for (const label of ["Email", "Password"]) {
+      const field = this.page.getByLabel(label, { exact: true });
+      if (wrong) await expect(field).toHaveAttribute("aria-invalid", "true");
+      else await expect(field).not.toHaveAttribute("aria-invalid", "true");
+    }
+    return this;
+  }
+
+  /** "Forgot?" beside the password's label, to the reset screen. */
+  async tapForgot(): Promise<this> {
+    await this.tap("Forgot?");
+    await this.isAt("/forgot-password");
+    return this;
+  }
+
   async doesNotSeeResend(): Promise<this> {
     await expect(this.page.getByRole("button", { name: "Resend verification email" })).toHaveCount(0);
     return this;

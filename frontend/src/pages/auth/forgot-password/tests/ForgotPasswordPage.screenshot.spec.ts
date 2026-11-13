@@ -3,14 +3,14 @@ import { test } from "./ForgotPasswordPage.robot";
 
 test("forgot password", async ({ forgot }) => {
   await forgot.open();
-  await forgot.seesHeading("Forgot password");
+  await forgot.seesHeading("Reset password");
   await forgot.capture("forgot-password.png");
 });
 
 test("forgot password in dark mode", async ({ forgot }) => {
   await forgot.dark();
   await forgot.open();
-  await forgot.seesHeading("Forgot password");
+  await forgot.seesHeading("Reset password");
   await forgot.capture("forgot-password-dark.png");
 });
 

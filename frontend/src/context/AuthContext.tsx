@@ -108,19 +108,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const register = async (
-    name: string,
-    email: string,
-    password: string,
-    options?: { handicap?: number | null; home_course_id?: string | null },
-  ) => {
-    const data = await callAuth<RegisterDto>("/register", {
-      name,
-      email,
-      password,
-      handicap: options?.handicap ?? null,
-      home_course_id: options?.home_course_id ?? null,
-    });
+  const register = async (name: string, email: string, password: string) => {
+    const data = await callAuth<RegisterDto>("/register", { name, email, password });
     return data.message;
   };
 

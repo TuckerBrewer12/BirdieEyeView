@@ -14,15 +14,14 @@ export function LoginPage() {
   return (
     <AuthCard
       title="Sign in"
-      description="Pick up where you left off: your rounds, your stats, your game."
       footer={
         <p>
-          Don't have an account? <AuthLink to="/register">Create one</AuthLink>
+          New here? <AuthLink to="/register">Create an account</AuthLink>
         </p>
       }
     >
       <form
-        className="flex flex-col gap-5"
+        className="flex flex-col gap-4"
         onSubmit={(event) => {
           event.preventDefault();
           viewModel.submit(() => void navigate("/"));
@@ -36,12 +35,11 @@ export function LoginPage() {
           <Input
             id="login-email"
             type="email"
-           
             value={viewModel.email}
             onChange={(event) => viewModel.setEmail(event.target.value)}
             required
             autoComplete="email"
-            placeholder="you@example.com"
+            aria-invalid={viewModel.credentialsRefused ? true : undefined}
           />
         </Field>
 
@@ -51,24 +49,16 @@ export function LoginPage() {
           value={viewModel.password}
           onChange={viewModel.setPassword}
           autoComplete="current-password"
-          placeholder="••••••••"
-        >
-          <div className="text-right">
-            <AuthLink to="/forgot-password">Forgot password?</AuthLink>
-          </div>
-        </PasswordField>
+          invalid={viewModel.credentialsRefused}
+          labelAction={<AuthLink to="/forgot-password">Forgot?</AuthLink>}
+        />
 
-        <Button type="submit" size="cta" disabled={viewModel.submitting}>
+        <Button type="submit" size="lg" className="mt-1" disabled={viewModel.submitting}>
           {viewModel.submitting ? "Signing in…" : "Sign in"}
         </Button>
 
         {viewModel.canResendVerification && (
-          <Button
-            variant="outline"
-            size="cta"
-            disabled={viewModel.resending}
-            onClick={viewModel.resendVerification}
-          >
+          <Button variant="outline" size="lg" disabled={viewModel.resending} onClick={viewModel.resendVerification}>
             {viewModel.resending ? "Sending…" : "Resend verification email"}
           </Button>
         )}

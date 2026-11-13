@@ -21,6 +21,8 @@ export interface LoginViewModel {
   /** What went through: the arriving screen's line, or a resent link. */
   notice: string | null;
   error: string | null;
+  /** The email and password were refused: both fields read as wrong until either is edited. */
+  credentialsRefused: boolean;
 
   submitting: boolean;
   /** Signs in; `onSignedIn` runs only if it worked. */
@@ -39,6 +41,7 @@ export function useLoginViewModel(
   const [email, setEmail] = useState(() => (arrival.email ?? "").trim());
   const [password, setPassword] = useState("");
   const [missingEmail, setMissingEmail] = useState(false);
+  const [editedSinceSubmit, setEditedSinceSubmit] = useState(false);
   const login = useLogin(auth);
   const resend = useResendVerification(auth);
 
@@ -48,6 +51,7 @@ export function useLoginViewModel(
   const submit = useCallback(
     (onSignedIn: () => void) => {
       setMissingEmail(false);
+      setEditedSinceSubmit(false);
       resetResend();
       signIn({ email: email.trim(), password }, { onSuccess: onSignedIn });
     },
@@ -74,13 +78,18 @@ export function useLoginViewModel(
     setEmail: (next) => {
       setEmail(next);
       setMissingEmail(false);
+      setEditedSinceSubmit(true);
     },
     password,
-    setPassword,
+    setPassword: (next) => {
+      setPassword(next);
+      setEditedSinceSubmit(true);
+    },
     notice: resend.data ?? (login.isIdle ? (arrival.flash ?? null) : null),
     error: missingEmail
       ? "Enter your email first to resend verification."
       : (resendError ?? loginError),
+    credentialsRefused: loginError != null && !isUnverifiedSignIn(loginError) && !editedSinceSubmit,
     submitting: login.isPending,
     submit,
     canResendVerification: isUnverifiedSignIn(loginError),
