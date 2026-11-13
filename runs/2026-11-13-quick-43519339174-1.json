@@ -1,0 +1,130 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "effective_seconds": 9.566578174000028,
+   "extraction_seconds": 0.004758428000002368,
+   "fingerprint": "558cbc738240047e754c13a9683987c38ee5bdecc4198c202621748ed9f7f30c",
+   "id": "half_moon_bay_g",
+   "image": "half_moon_bay_round.png",
+   "known_gap": null,
+   "matched_cells": 54,
+   "mismatches": [],
+   "operational_error": null,
+   "player": "G",
+   "status": "PERFECT",
+   "total_cells": 54
+  },
+  {
+   "diagnostics": [],
+   "effective_seconds": 9.56611732600004,
+   "extraction_seconds": 0.004297580000013568,
+   "fingerprint": "1d4b9e822780c9276954cf562953cdf1fc780897ba8d464c32c6bafaea05af55",
+   "id": "half_moon_bay_t",
+   "image": "half_moon_bay_round.png",
+   "known_gap": null,
+   "matched_cells": 54,
+   "mismatches": [],
+   "operational_error": null,
+   "player": "T",
+   "status": "PERFECT",
+   "total_cells": 54
+  },
+  {
+   "diagnostics": [
+    "split tables: front 10 lines (holes 1-9), back 9 lines (holes 10-18)",
+    "back nine row paired by ordinal 2 of 4"
+   ],
+   "effective_seconds": 5.873397154999964,
+   "extraction_seconds": 0.005674245999955474,
+   "fingerprint": "845bc29681ec911c91554535483abcc400859e2ea9fee825c6bc805aeb5e50f0",
+   "id": "blue_rock_tucker",
+   "image": "blue_rock_round.png",
+   "known_gap": null,
+   "matched_cells": 18,
+   "mismatches": [],
+   "operational_error": null,
+   "player": "Tucker",
+   "status": "PERFECT",
+   "total_cells": 18
+  },
+  {
+   "diagnostics": [
+    "score row at line 18 has 17 of 18 required hole values",
+    "missing-name fallback refused: 0 unlabeled player block(s) among 2",
+    "assembly: no strokes could be assembled"
+   ],
+   "effective_seconds": 6.545984795000038,
+   "extraction_seconds": 0.005553296000016417,
+   "fingerprint": "9837c6b070bd9e03916e218bc15b1155667566b9f65083d8fdd6f49f08d1eff4",
+   "id": "eagle_vines_tucker",
+   "image": "eaglevins_90.jpg",
+   "known_gap": null,
+   "matched_cells": 0,
+   "mismatches": [],
+   "operational_error": "Extraction failed: ScanExtractionError: Unable to clearly read the score rows from this image. Please upload a cleaner image with clearer handwriting and better lighting, then try again.",
+   "player": "Tucker",
+   "status": "ERROR",
+   "total_cells": 18
+  }
+ ],
+ "images": [
+  {
+   "diagnostics": [
+    "Gemini table merge complete: input_chars=2586 output_chars=2341",
+    "ocr table 0: expanded 1 merged cell(s) into the grid",
+    "table merge accepted"
+   ],
+   "image": "half_moon_bay_round.png",
+   "ocr_seconds": 9.561819746000026
+  },
+  {
+   "diagnostics": [
+    "Gemini table merge rejected: line 8 fills one nine and leaves the other empty; using original markdown",
+    "table merge rejected: line 8 fills one nine and leaves the other empty"
+   ],
+   "image": "blue_rock_round.png",
+   "ocr_seconds": 5.867722909000008
+  },
+  {
+   "diagnostics": [
+    "Gemini table merge rejected: line 13 has 23 columns, expected 22; using original markdown",
+    "ocr table 2: expanded 1 merged cell(s) into the grid",
+    "ocr table 2 row 7: 1 cell(s) wider than the hole header but the leading cells hold values; left unaligned",
+    "table merge rejected: line 13 has 23 columns, expected 22"
+   ],
+   "image": "eaglevins_90.jpg",
+   "ocr_seconds": 6.540431499000022
+  }
+ ],
+ "run": {
+  "branch": "scan-eval-dashboard",
+  "commit": "3a0bdc8d1b411156bc54a85bdf3867dc367e54a2",
+  "created_at": "2026-11-13T22:27:41.502654Z",
+  "dirty": false,
+  "head_commit": "66174835304a1859d8df931cb64c4cf59cfb17f6",
+  "id": "43519339174-1",
+  "models": {
+   "merge": "gemini-3.1-flash-lite-preview",
+   "ocr": "mistral-ocr-latest"
+  },
+  "pr": 656,
+  "run_url": "https://github.com/TuckerBrewer12/BirdieEyeView/actions/runs/43519339174",
+  "suite": "quick"
+ },
+ "schema_version": 1,
+ "summary": {
+  "at_least_80": 3,
+  "at_least_90": 3,
+  "cases": 4,
+  "failed": 1,
+  "images": 3,
+  "known_gaps": 0,
+  "matched_cells": 126,
+  "merge_rejected_images": 2,
+  "operational_errors": 1,
+  "perfect": 3,
+  "suite_seconds": 22.594303266999987,
+  "total_cells": 144
+ }
+}
