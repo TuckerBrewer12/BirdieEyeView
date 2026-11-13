@@ -65,7 +65,6 @@ def analytics_response(
     gir_rows = analytics.gir_per_round(rounds)
     putts_rows = analytics.putts_per_round(rounds)
     scoring_by_par = analytics.scoring_by_par(rounds)
-    scrambling_rows = analytics.scrambling_per_round(rounds)
     up_and_down_rows = analytics.up_and_down_trend(rounds)
     player_index = hcap.player_handicap_index(user, history)
     # Newest first, so a tie goes to the newest, as on the round list and the dashboard.
@@ -104,14 +103,11 @@ def analytics_response(
         gir_trend=analytics.with_rolling_average(gir_rows, "gir_percentage"),
         putts_trend=analytics.with_rolling_average(putts_rows, "total_putts"),
         three_putts_trend=analytics.three_putts_per_round(rounds),
-        scrambling_trend=scrambling_rows,
-        up_and_down_trend=up_and_down_rows,
         scoring_by_par=scoring_by_par,
         scoring_by_yardage=analytics.scoring_by_yardage_buckets(rounds),
         scoring_by_handicap=analytics.scoring_vs_hole_handicap(rounds),
         gir_vs_non_gir=analytics.gir_vs_non_gir_score_distribution(rounds),
         handicap_trend=_handicap_trend(user, history, rounds, today, days=achievements["window_days"]),
-        score_differentials=hcap.score_differentials_per_round(rounds),
         notable_achievements=achievements,
         score_mix={
             kind: analytics.round_half_up(share, 2) for kind, share in dashboard.score_mix(rounds)["percentages"].items()

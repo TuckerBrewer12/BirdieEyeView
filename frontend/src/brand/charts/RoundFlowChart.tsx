@@ -1,4 +1,4 @@
-import { motion, useReducedMotion, useReducedMotionConfig } from "framer-motion";
+import { motion } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { curveStepAfter, line } from "d3-shape";
 import { cn } from "@/brand/cn";
@@ -13,6 +13,7 @@ import { ChartTooltip } from "./ChartTooltip";
 import { HoleNumber, NineDivider } from "./holeAxis";
 import { useChartWidth } from "./useChartWidth";
 import { useColumnHover } from "./useColumnHover";
+import { useStillMotion } from "./useLayoutTransition";
 
 interface RoundFlowChartProps {
   round: Round;
@@ -35,10 +36,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
   // The strip's marks are square, a `hole-h` side.
   const holeW = tokens.size["hole-h"];
   const holeH = tokens.size["hole-h"];
-  // The OS setting, or a MotionConfig asking for stillness (the kit's screenshot harness).
-  const prefersReduced = useReducedMotion();
-  const configReduced = useReducedMotionConfig();
-  const reduceMotion = prefersReduced || configReduced;
+  const reduceMotion = useStillMotion();
   const { hovered: hoveredHole, track } = useColumnHover();
 
   const steps = round.holes.filter(

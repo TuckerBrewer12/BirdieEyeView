@@ -256,6 +256,18 @@ export class AnalyticsRobot {
     return this;
   }
 
+  /** The next save fails with this message, as the API would answer. */
+  failSavesWith(detail: string): this {
+    if (this.backend) this.backend.updateUserError = detail;
+    return this;
+  }
+
+  /** The goal card says why the pick didn't save. */
+  async seesGoalNotSaved(message: string): Promise<this> {
+    await expect(this.visible(this.page.locator("[data-slot=goal-card]").getByRole("alert"))).toHaveText(message);
+    return this;
+  }
+
   async openCompareMenu(): Promise<this> {
     await this.visible(this.page.getByRole("button", { name: "Compare with" })).click();
     return this;

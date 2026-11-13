@@ -152,6 +152,14 @@ test("picking a goal saves it", async ({ analytics }) => {
   await analytics.seesGoalSaved(84);
 });
 
+test("a goal that doesn't save says why", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.openTab("Profile");
+  analytics.failSavesWith("Could not save your goal.");
+  await analytics.pickGoal("Break 85");
+  await analytics.seesGoalNotSaved("Could not save your goal.");
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 

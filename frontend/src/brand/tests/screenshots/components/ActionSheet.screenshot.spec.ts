@@ -1,13 +1,3 @@
-import { test } from "@playwright/test";
-import { capturePreview, enableDark } from "../../previewScreenshot";
+import { previewScreenshots } from "../../previewScreenshot";
 
-test.describe("ActionSheet", () => {
-  test("light", async ({ page }) => {
-    await capturePreview(page, "ActionSheet", "action-sheet.png");
-  });
-
-  test("dark", async ({ page }) => {
-    await enableDark(page);
-    await capturePreview(page, "ActionSheet", "action-sheet-dark.png");
-  });
-});
+previewScreenshots("ActionSheet", "action-sheet");

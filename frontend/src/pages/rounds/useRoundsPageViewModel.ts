@@ -56,7 +56,6 @@ export interface RoundsPageViewModel extends RoundsUiState {
   loadMore: () => void;
   setSearch: (q: string) => void;
   toggleSearch: () => void;
-  setScope: (scope: Scope) => void;
   /** The segmented control's pick. Tapping the pressed option again leaves it pressed. */
   pickScope: (value: string | undefined) => void;
   setCourse: (course: string) => void;
@@ -142,7 +141,6 @@ export function useRoundsPageViewModel(
     toggleSearch,
     scope,
     scopeOptions: SCOPE_OPTIONS,
-    setScope,
     pickScope,
     course,
     courseOptions: courses,

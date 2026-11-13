@@ -4,7 +4,6 @@ import {
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-  InputGroupText,
 } from "@/brand/components/InputGroup";
 
 export default function InputGroupPreview() {
@@ -14,16 +13,6 @@ export default function InputGroupPreview() {
         <InputGroupInput placeholder="Search courses…" defaultValue="peb" />
         <InputGroupAddon>
           <Search />
-        </InputGroupAddon>
-      </InputGroup>
-
-      <InputGroup>
-        <InputGroupInput placeholder="example.com" />
-        <InputGroupAddon>
-          <InputGroupText>https://</InputGroupText>
-        </InputGroupAddon>
-        <InputGroupAddon align="inline-end">
-          <InputGroupText>.com</InputGroupText>
         </InputGroupAddon>
       </InputGroup>
 

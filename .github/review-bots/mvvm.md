@@ -50,7 +50,7 @@ side for paint.
 groupings (`scoreKindLabel`, `groupScores`), to-par and handicap text ("E",
 "+2") live in `frontend/src/domain/`. WHS rules, like whether a differential
 counts or is close to counting, come from the server (`differential_status` on
-the analytics handicap trend) and are painted with `differentialFillClass`. Flag a local label map, an inline `` `+${…}` ``, or a colour function that
+the analytics handicap trend). Flag a local label map, an inline `` `+${…}` ``, or a colour function that
 re-decides a golf rule, and name the domain function to use.
 
 **Mobile and desktop that have drifted.** Paired `Mobile*`/`*Desktop*`

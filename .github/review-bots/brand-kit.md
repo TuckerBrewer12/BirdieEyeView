@@ -31,7 +31,7 @@ from a brand token: `px` / `rem` / `em` literals, arbitrary Tailwind values
 or `size={11}` on an icon. Tailwind *scale* classes are fine (`p-4`, `text-sm`,
 `gap-2`, `rounded-lg`, `h-8`, `size-4`). Named kit utilities are the fix
 (`text-caption`, `text-meta`, `text-label`, `text-body`, `text-title`,
-`text-hero`, `text-eyebrow`, `text-kicker`, `text-section`, `tracking-chip`,
+`text-hero`, `text-eyebrow`, `tracking-chip`,
 `rounded-card`, `rounded-bar`, `gap-tight`,
 `gap-bar`, `w-preview`, `h-chart`, `size-icon-xs`, `grid-cols-round-preview`).
 If no token matches, say so and name the closest one in `tokens.ts`.

@@ -8,7 +8,6 @@ export {
   scoreKindLabel,
   toParDisplay,
   toParTextClass,
-  toParBadgeClass,
   scoreOnFillClass,
 } from "./theme";
 export type { ScoreKey } from "./theme";
@@ -16,7 +15,6 @@ export { Alert, AlertTitle, AlertDescription, AlertAction } from "./components/A
 export {
   Card,
   CardHeader,
-  CardFooter,
   CardTitle,
   CardAction,
   CardDescription,
@@ -27,7 +25,7 @@ export type { AppShellProps } from "./components/AppShell";
 export { AuthCard } from "./components/AuthCard";
 export type { AuthCardProps } from "./components/AuthCard";
 export { BrandMark } from "./components/BrandMark";
-export { Button, ClearButton, RowButton } from "./components/Button";
+export { Button, RowButton } from "./components/Button";
 export { BottomNav } from "./components/BottomNav";
 export type { BottomNavProps } from "./components/BottomNav";
 export { ActionBar } from "./components/ActionBar";
@@ -42,9 +40,7 @@ export {
   Collapsible,
   CollapsibleTrigger,
   CollapsibleContent,
-  CollapsibleClose,
 } from "./components/Collapsible";
-export type { CollapsibleProps } from "./components/Collapsible";
 export { Collection } from "./components/Collection";
 export type { CollectionProps, CollectionLayout } from "./components/Collection";
 export {
@@ -62,7 +58,7 @@ export {
   teeSwatchVariants,
   toggleVariants,
 } from "./components/variants";
-export { Field, FieldLabel, FieldDescription, FieldError } from "./components/Field";
+export { Field, FieldLabel, FieldError } from "./components/Field";
 export { Checkbox, Input } from "./components/Input";
 export { LoadingState } from "./components/LoadingState";
 export { EmptyNote } from "./components/EmptyNote";
@@ -74,7 +70,6 @@ export {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
-  InputGroupText,
   InputGroupInput,
 } from "./components/InputGroup";
 export { PageHeader } from "./components/PageHeader";
@@ -96,7 +91,6 @@ export {
   StatNote,
   StatDelta,
   StatTile,
-  StatCard,
 } from "./components/Stat";
 export type { StatDirection, StatTone } from "./components/Stat";
 export { TeeSwatch } from "./components/TeeSwatch";
@@ -137,7 +131,6 @@ export {
   SheetClose,
   SheetContent,
   SheetHeader,
-  SheetFooter,
   SheetTitle,
   SheetDescription,
   SheetOptions,
@@ -177,7 +170,7 @@ export { RadarChart } from "./charts/RadarChart";
 export type { RadarAxis } from "./charts/RadarChart";
 export { ScoreGoalChart } from "./charts/ScoreGoalChart";
 export { RoundFlowChart, RoundFlowFigures } from "./charts/RoundFlowChart";
-export { SVGScoreHandicapTrend } from "./charts/SVGScoreHandicapTrend";
+export { HandicapTrendChart } from "./charts/HandicapTrendChart";
 export { HoleProfileChart } from "./charts/HoleProfileChart";
 export { HoleGreensPuttsChart } from "./charts/HoleGreensPuttsChart";
 export { TrendAreaChart } from "./charts/TrendAreaChart";

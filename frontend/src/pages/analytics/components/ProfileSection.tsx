@@ -31,7 +31,12 @@ export function ProfileSection({ profile }: { profile: ProfileViewModel }) {
   return (
     <div data-slot="profile-section" className="flex flex-col gap-4">
       <p className="px-1 text-body-sm text-muted-foreground">Your last 20 rounds at every course.</p>
-      <GoalCard goal={goal} onGoalChange={profile.setGoal} saving={profile.savingGoal} />
+      <GoalCard
+        goal={goal}
+        onGoalChange={profile.setGoal}
+        saving={profile.savingGoal}
+        saveError={profile.goalSaveError}
+      />
       <ShapeCard profile={profile} improveId={hasSavers ? IMPROVE_ID : null} />
       {goal && <SaversCard goal={goal} id={IMPROVE_ID} />}
       {goal && profile.peak && <PeakCard peak={profile.peak} impacts={profile.peakImpacts} target={goal.target} />}

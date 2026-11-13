@@ -155,9 +155,3 @@ export function toParStatTextClass(toPar: number): string {
   return toPar <= 0 ? "text-score-birdie" : "text-score-bogey";
 }
 
-/** Badge fill + text for a to-par figure on a history row. */
-export function toParBadgeClass(toPar: number | null): string {
-  if (toPar == null || toPar === 0) return "bg-muted text-muted-foreground";
-  if (toPar < 0) return "bg-accent text-score-birdie";
-  return "bg-destructive/10 text-score-bogey";
-}

@@ -1,4 +1,4 @@
-import { useId, useState, type PointerEvent } from "react";
+import { useId } from "react";
 import { scaleLinear } from "d3-scale";
 import { area, curveLinear, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
@@ -9,6 +9,7 @@ import type { ScoreKind } from "@/domain/score";
 import { ChartTooltip } from "./ChartTooltip";
 import { AxisLabel, TooltipRow } from "./trendParts";
 import { useChartWidth } from "./useChartWidth";
+import { usePointPick } from "./useColumnHover";
 import { indexScale, knownValues, niceExtent, tickIndexes } from "./scales";
 
 type TrendAreaTone = "primary" | "birdie" | "bogey" | "eagle" | "neutral" | "contrast";
@@ -119,7 +120,7 @@ export function TrendAreaChart({
   const PAD = layout.pad;
   const [W, measureRef] = useChartWidth(layout.width, layout.minWidth);
   const gradientId = `trend-area-${useId().replace(/:/g, "")}`;
-  const [active, setActive] = useState<number | null>(null);
+  const { active, track } = usePointPick();
 
   // The window: the latest `shown` rounds, every one until the slider says otherwise.
   const canWindow = onShownChange != null && allPoints.length > layout.windowMin;
@@ -181,12 +182,6 @@ export function TrendAreaChart({
   const showDots = points.length <= layout.maxDots;
   const xTicks = tickIndexes(points.length, layout.xTicks);
 
-  const indexAt = (event: PointerEvent<SVGSVGElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const index = Math.round(x.invert((event.clientX - rect.left) * (W / rect.width)));
-    return Math.max(0, Math.min(points.length - 1, index));
-  };
-
   const point = active != null ? points[active] : null;
   // The hover card sits by the round's figure, or its first count with the series hidden.
   const pointValue = showSeries ? (point?.values.find((value) => value != null) ?? null) : null;
@@ -200,18 +195,7 @@ export function TrendAreaChart({
         className="block h-auto w-full touch-pan-y overflow-visible"
         role="img"
         aria-label={ariaLabel}
-        onPointerMove={(event) => {
-          if (event.pointerType === "mouse") setActive(indexAt(event));
-        }}
-        onPointerLeave={(event) => {
-          if (event.pointerType === "mouse") setActive(null);
-        }}
-        onPointerDown={(event) => {
-          if (event.pointerType === "mouse") return;
-          // A tap picks a round and a second tap on it puts it down.
-          const index = indexAt(event);
-          setActive(active === index ? null : index);
-        }}
+        {...track(x, points.length, W)}
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">

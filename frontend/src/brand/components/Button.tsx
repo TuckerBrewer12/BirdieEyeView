@@ -2,7 +2,6 @@ import { useRender } from "@base-ui/react/use-render";
 import type * as React from "react";
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { type VariantProps } from "class-variance-authority";
-import { X } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { buttonVariants } from "./variants";
 
@@ -46,20 +45,4 @@ function RowButton({
   });
 }
 
-/** A bare ✕ that closes or clears what it sits on, in a card's corner or beside a field. */
-function ClearButton({ label, className, ...props }: Omit<React.ComponentProps<"button">, "children"> & { label: string }) {
-  return (
-    <button
-      data-slot="clear-button"
-      type="button"
-      title={label}
-      aria-label={label}
-      className={cn("inline-flex text-muted-foreground hover:text-foreground", className)}
-      {...props}
-    >
-      <X className="size-4" />
-    </button>
-  );
-}
-
-export { Button, ClearButton, RowButton };
+export { Button, RowButton };

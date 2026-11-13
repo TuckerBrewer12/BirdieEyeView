@@ -135,19 +135,6 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="sheet-footer"
-      className={cn(
-        "mt-auto flex flex-col gap-2 border-t border-border bg-muted/half p-4",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
 function SheetTitle({ className, ...props }: SheetPrimitive.Title.Props) {
   const side = React.useContext(SheetSideContext);
   return (
@@ -221,7 +208,6 @@ export {
   SheetPortal,
   SheetContent,
   SheetHeader,
-  SheetFooter,
   SheetTitle,
   SheetDescription,
   SheetOptions,

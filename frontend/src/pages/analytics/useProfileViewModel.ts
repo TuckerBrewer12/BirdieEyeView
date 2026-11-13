@@ -4,6 +4,7 @@ import { useFriendships } from "@/data/useFriendships";
 import { useGoalReport } from "@/data/useGoalReport";
 import { useUpdateUser } from "@/data/useUpdateUser";
 import { useUser } from "@/data/useUser";
+import { messageFrom } from "@/lib/userFacingErrors";
 import type { BenchmarkTarget, ComparisonTargetValue } from "@/domain/benchmark";
 import { buildRadarData, radarStanding, type RadarEntry, type RadarStanding } from "@/domain/radar";
 import { analyticsRepository, type AnalyticsRepository } from "./analyticsRepository";
@@ -34,7 +35,8 @@ export interface ProfileViewModel {
   goal: GoalStanding | null;
   setGoal: (target: number) => void;
   savingGoal: boolean;
-  goalSaveError: Error | null;
+  /** Why the last goal didn't save, until the next pick. */
+  goalSaveError: string | null;
 
   /** The handicap, the friend, or null with nothing to compare (no index yet). */
   comparison: ComparisonTargetValue;
@@ -120,7 +122,7 @@ export function useProfileViewModel(
     goal: goalStandingFrom(target, report, analytics?.lowestScore ?? null),
     setGoal,
     savingGoal: updateUser.isPending,
-    goalSaveError: updateUser.error,
+    goalSaveError: updateUser.error ? messageFrom(updateUser.error, "Could not save your goal.") : null,
 
     comparison,
     selectedFriend,

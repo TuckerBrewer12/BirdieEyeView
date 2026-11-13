@@ -360,9 +360,7 @@ export const tracking = {
   /** The last round's score: tight enough that two digits read as one mark. */
   scoreboard: -2.5,
   chip: 0.5,
-  kicker: 1,
   eyebrow: 1.4,
-  section: "0.18em",
 };
 
 /** A type role: a size in pixels, and the weight, tracking and line height that always go with it. */
@@ -419,10 +417,6 @@ export const type = {
   eyebrow: { size: 10, weight: 700, tracking: tracking.eyebrow },
   /** A card's headline figure: a KPI tile's. */
   stat: { size: 32, weight: 700, tracking: tracking.stat, leading: leading.display },
-  /** The smaller tracked capitals on a chip or a header strip. */
-  kicker: { size: 9, weight: 700, tracking: tracking.kicker },
-  /** The tracked capitals above a group of rows. */
-  section: { size: 11, weight: 700, tracking: tracking.section },
 } satisfies Record<string, TypeRole>;
 
 /** Space that is not on Tailwind's 4px scale. */
@@ -475,7 +469,6 @@ export const radius = {
   /** The card a page leads with, a step rounder than the cards under it. */
   lead: 24,
   "lead-phone": 26,
-  tooltip: 12,
   /** The top corners of a bottom sheet. */
   sheet: 20,
   addon: "calc(var(--radius) - var(--brand-space-nudge))",
@@ -666,15 +659,10 @@ export const motion = {
   duration: { collapse: 0.2 },
   /** A chart line drawing itself in. */
   draw: { duration: 1.4, ease: "easeInOut" as const },
-  /** Points popping in along a drawn line, one after another, once it has nearly finished. */
-  pop: { from: 0, delay: 1.2, stagger: 0.04, duration: 0.25, ease: "backOut" as const },
   /** Content arriving on load: a fast start and a long settle. */
   entrance: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as Ease },
   /** A block resizing into the space it has been given. */
   layout: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as Ease },
-  /** A panel opening under the control that asked for it. */
-  expand: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as Ease },
-  /** The card being read while a scan runs: it breathes, a line sweeps it, its corners pulse, the step rail fills. */
   /** The read line moving down the photo to the next step. */
   scanLine: 0.8,
   /** The try-it panel moving between its steps. */
@@ -716,14 +704,19 @@ export const chart = {
   /** The dotted guide lines charts draw behind their data: grid rings, reference lines, the hover crosshair. */
   guideDash: "3 3",
   /**
-   * Score over handicap index, stacked as two small multiples that share the round axis.
-   * Unitless, scaled to the container. The grid ends `axis` short of the right edge,
-   * where the tick labels sit.
+   * The handicap index as a step line. Unitless, scaled to the container. The grid ends `axis`
+   * short of the right edge, where the tick labels sit.
    */
-  stack: {
+  handicapTrend: {
     width: 544,
     /** A phone's narrower drawing. */
     widthCompact: 320,
+    height: 200,
+    compactHeight: 220,
+    /** The grid's top, and the room the grid and the round numbers leave at the foot. */
+    top: 12,
+    bottomRoom: 28,
+    ticksRoom: 6,
     /** Room right of the grid for tick labels, and the gap between the grid and them. */
     axis: 44,
     labelGap: 10,
@@ -731,31 +724,12 @@ export const chart = {
     labelDrop: 4,
     /** Slack at either end of the round axis, so a dot never sits on the plot's edge. */
     inset: 6,
-    /** Both panels: the drawing's height, each panel's title baseline, its grid's top and bottom, the round numbers' baseline. */
-    both: {
-      height: 320,
-      score: { title: 8, top: 22, bottom: 172 },
-      handicap: { title: 214, top: 226, bottom: 292 },
-      ticks: 314,
-    },
-    /** One panel alone: the card above it names the line, so there is no title. The rooms are what the grid and the round numbers leave at the foot. */
-    single: { height: 200, compactHeight: 220, top: 12, bottomRoom: 28, ticksRoom: 6 },
-    dot: 3.75,
-    dotCounts: 4.5,
     dotLast: 4,
     dotHover: 6,
-    /** The five-round average under the dots, and the handicap line. */
-    stroke: 2.5,
-    strokeHandicap: 2,
-    dash: "3 4",
-    /** The legend's swatch for the average line. */
-    legendLine: 16,
-    /** Where the handicap's last figure sits, up and to the left of its dot. */
+    stroke: 2,
+    /** Where the last figure sits, up and to the left of its dot. */
     lastLift: 8,
-    /** Where the last score sits, straight above its dot. */
-    scoreLift: 10,
   },
-  /** A figure's trend line. */
   /** The last round's running score to par, hole by hole: the dashboard's "How it went". */
   running: {
     width: 380,
@@ -782,8 +756,7 @@ export const chart = {
     closeLift: 14,
     levelDrop: 18,
   },
-  /** A goal's progress as a ring. */
-  /** `strokeThick` is the phone's: the ring is drawn smaller there, so its stroke grows to hold. */
+  /** A goal's progress as a ring. `strokeThick` is the phone's: the ring is drawn smaller there, so its stroke grows to hold. */
   progressRing: { size: 96, radius: 40, stroke: 10, strokeThick: 11 },
   /** A score mix as a ring of slices, in a `size` box centred on the origin: a hollow centre, a gap between slices. */
   donut: { size: 96, outer: 46, inner: 30, padAngle: 0.04, corner: 2 },
@@ -800,19 +773,7 @@ export const chart = {
     /** The small line beside a figure in a phone's header card: the handicap's. Its end dot filled. */
     mini: { width: size["sparkline-mini"], height: 30, pad: 3, stroke: 2.5, dot: 3 },
   },
-  /** A golfer's scores over time, one dot per round. */
-  trend: {
-    width: 560,
-    height: size.chart,
-    pad: { top: 16, right: 16, bottom: 28, left: 36 },
-    /** Room either side of the lowest and highest score, in strokes. */
-    headroom: 3,
-    stroke: 2.5,
-    dot: 4,
-    dotHover: 6,
-    /** Past this many rounds the date ticks would crowd, so they are left off. */
-    maxTicks: 12,
-  },
+
   /** A shape across a handful of measures, each axis 0–100 from the centre out. Labels sit past the rim. */
   radar: {
     width: 392,
@@ -885,12 +846,12 @@ export const chart = {
     /** The fewest rounds the slider shows; a trend this short or shorter has no slider. */
     windowMin: 5,
   },
+  /** A chart's hover card: past this share of the way across, it opens to the left of what it points at. */
+  tooltipFlip: 0.65,
   /**
    * A figure per hole across a course (how each hole plays, greens and putts). Like the round flow it
    * draws as wide as its card, `width` until measured, and scrolls sideways below `minWidth`.
    */
-  /** A chart's hover card: past this share of the way across, it opens to the left of what it points at. */
-  tooltipFlip: 0.65,
   holes: {
     width: px(size["chart-wide"]),
     minWidth: px(size["chart-flow"]),

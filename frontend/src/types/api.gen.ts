@@ -772,8 +772,6 @@ export interface components {
             putts_per_hole: components["schemas"]["PuttsPerHole"];
             /** Putts Trend */
             putts_trend: components["schemas"]["PuttsTrendRow"][];
-            /** Score Differentials */
-            score_differentials: components["schemas"]["ScoreDifferentialRow"][];
             score_mix: components["schemas"]["ScoreMix"];
             /** Score Trend */
             score_trend: components["schemas"]["ScoreTrendRow"][];
@@ -783,13 +781,9 @@ export interface components {
             scoring_by_par: components["schemas"]["ScoringByParRow"][];
             /** Scoring By Yardage */
             scoring_by_yardage: components["schemas"]["ScoringByYardageRow"][];
-            /** Scrambling Trend */
-            scrambling_trend: components["schemas"]["ScramblingTrendRow"][];
             /** Three Putts Trend */
             three_putts_trend: components["schemas"]["ThreePuttsTrendRow"][];
             tour_short_game: components["schemas"]["TourShortGame"] | null;
-            /** Up And Down Trend */
-            up_and_down_trend: components["schemas"]["UpAndDownTrendRow"][];
         };
         /** AuthUserResponse */
         AuthUserResponse: {
@@ -2392,21 +2386,6 @@ export interface components {
              */
             triple: number;
         };
-        /** ScoreDifferentialRow */
-        ScoreDifferentialRow: {
-            /** Course Rating */
-            course_rating: number | null;
-            /** Differential */
-            differential: number | null;
-            /** Round Id */
-            round_id: string | null;
-            /** Round Index */
-            round_index: number;
-            /** Score */
-            score: number | null;
-            /** Slope Rating */
-            slope_rating: number | null;
-        };
         /**
          * ScoreMix
          * @description Percent of classified holes in each score bucket.
@@ -2529,24 +2508,6 @@ export interface components {
             lifetime: components["schemas"]["LifetimeScoringRecords"];
             one_year: components["schemas"]["OneYearScoringRecords"];
         };
-        /**
-         * ScramblingTrendRow
-         * @description Missed greens saved with par. The percentage is null without a missed green on a linked course.
-         */
-        ScramblingTrendRow: {
-            /** Round Id */
-            round_id: string | null;
-            /** Round Index */
-            round_index: number;
-            /** Scramble Failures */
-            scramble_failures: number;
-            /** Scramble Opportunities */
-            scramble_opportunities: number;
-            /** Scramble Successes */
-            scramble_successes: number;
-            /** Scrambling Percentage */
-            scrambling_percentage: number | null;
-        };
         /** SendFriendRequest */
         SendFriendRequest: {
             /** Addressee Friend Code */
@@ -2633,22 +2594,6 @@ export interface components {
             round_id: string | null;
             /** Score */
             score: number;
-        };
-        /**
-         * UpAndDownTrendRow
-         * @description Missed greens finished in one putt or fewer. The percentage is null without a chance.
-         */
-        UpAndDownTrendRow: {
-            /** Opportunities */
-            opportunities: number;
-            /** Percentage */
-            percentage: number | null;
-            /** Round Id */
-            round_id: string | null;
-            /** Round Index */
-            round_index: number;
-            /** Successes */
-            successes: number;
         };
         /** UpdateCourseRequest */
         UpdateCourseRequest: {

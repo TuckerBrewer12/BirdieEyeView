@@ -183,20 +183,24 @@ tester.run("kit/no-tone-override", kit.rules["no-tone-override"], {
 
 tester.run("kit/no-handmade-to-par-pill", kit.rules["no-handmade-to-par-pill"], {
   valid: [
-    'const c = cn("rounded-full bg-primary", on && "px-2");',
-    'const c = cn("font-semibold", toParTextClass(toPar));',
+    { code: 'const c = cn("rounded-full bg-primary", on && "px-2");', filename: "/app/src/brand/components/Badge.tsx" },
+    { code: 'const c = cn("font-semibold", toParTextClass(toPar));', filename: "/app/src/brand/components/Badge.tsx" },
     {
       code: 'const c = cn("rounded-full", toParTextClass(toPar));',
       filename: "/app/src/brand/components/ToParPill.tsx",
     },
+    // A page is no-to-par-tone's to report.
+    { code: 'const c = cn("rounded-full", toParTextClass(toPar));', filename: "/app/src/pages/rounds/RoundsPage.tsx" },
   ],
   invalid: [
     {
       code: 'const c = cn("rounded-full bg-background px-3 py-1", toParTextClass(round.toPar));',
+      filename: "/app/src/brand/components/RoundPreview.tsx",
       errors: [{ messageId: "pill" }],
     },
     {
       code: 'const c = cn(compact ? "rounded-full px-2" : "rounded-full px-3", cn("font-semibold", toParTextClass(t)));',
+      filename: "/app/src/brand/components/RoundPreview.tsx",
       errors: [{ messageId: "pill" }],
     },
   ],
@@ -328,22 +332,6 @@ tester.run("kit/no-raw-table", kit.rules["no-raw-table"], {
   invalid: [{ code: "<table><tbody /></table>;", filename: PAGE, errors: [{ messageId: "table" }] }],
 });
 
-tester.run("kit/no-handmade-chart-tooltip", kit.rules["no-handmade-chart-tooltip"], {
-  valid: [
-    { code: "<ChartTooltip id={hole} at={{ x: 0.4 }}>Hole 7</ChartTooltip>;", filename: KIT },
-    // A frosted bar that takes the pointer is not a hover card.
-    { code: '<nav className="sticky top-0 bg-card/glass backdrop-blur-sm" />;', filename: PAGE },
-    { code: '<div className="pointer-events-none absolute bg-card/glass" />;', filename: "/app/src/brand/charts/ChartTooltip.tsx" },
-  ],
-  invalid: [
-    {
-      code: '<div className={cn("pointer-events-none absolute z-10 rounded-xl bg-card/glass", flip && "-ml-3")} />;',
-      filename: "/app/src/brand/charts/TrendAreaChart.tsx",
-      errors: [{ messageId: "tooltip" }],
-    },
-  ],
-});
-
 tester.run("kit/no-loose-card-title", kit.rules["no-loose-card-title"], {
   valid: [
     { code: "<Card><CardHeader><CardTitle>Goal</CardTitle><CardAction><Menu /></CardAction></CardHeader></Card>;", filename: PAGE },
@@ -404,34 +392,6 @@ tester.run("kit/no-percent-template", kit.rules["no-percent-template"], {
       code: "<Meter aria-label={`${saver.headline}: ${saver.shareOfGap}% of the gap`} />;",
       filename: PAGE,
       errors: [{ messageId: "percent" }],
-    },
-  ],
-});
-
-tester.run("kit/no-handmade-tee-picker", kit.rules["no-handmade-tee-picker"], {
-  valid: [
-    { code: '<TeePicker tees={tees} value={tee} onChange={setTee} />;', filename: PAGE },
-    { code: '<ToggleGroup aria-label="Scores written as" value={[v]} />;', filename: PAGE },
-    { code: '<ToggleGroup aria-label="Tee" value={[v]} />;', filename: KIT },
-  ],
-  invalid: [
-    { code: '<ToggleGroup size="sm" aria-label="Tee played" value={[tee]} />;', filename: PAGE, errors: [{ messageId: "tee" }] },
-    { code: '<ToggleGroup aria-label={"Tees"} value={[tee]} />;', filename: PAGE, errors: [{ messageId: "tee" }] },
-  ],
-});
-
-tester.run("kit/no-handmade-check-chip", kit.rules["no-handmade-check-chip"], {
-  valid: [
-    { code: '<CheckChip checked={on} onCheckedChange={setOn}>Putts</CheckChip>;', filename: PAGE },
-    // A plain checkbox and its words, as Settings lays one out.
-    { code: '<label className="flex items-center gap-2"><Checkbox />Get updates</label>;', filename: PAGE },
-    { code: '<label className="rounded-lg border"><Checkbox />Kit</label>;', filename: KIT },
-  ],
-  invalid: [
-    {
-      code: '<label className="inline-flex h-9 items-center rounded-lg border border-input px-3"><Checkbox checked={on} />Putts</label>;',
-      filename: PAGE,
-      errors: [{ messageId: "chip" }],
     },
   ],
 });

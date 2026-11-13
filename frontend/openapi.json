@@ -480,13 +480,6 @@
             "title": "Putts Trend",
             "type": "array"
           },
-          "score_differentials": {
-            "items": {
-              "$ref": "#/components/schemas/ScoreDifferentialRow"
-            },
-            "title": "Score Differentials",
-            "type": "array"
-          },
           "score_mix": {
             "$ref": "#/components/schemas/ScoreMix"
           },
@@ -518,13 +511,6 @@
             "title": "Scoring By Yardage",
             "type": "array"
           },
-          "scrambling_trend": {
-            "items": {
-              "$ref": "#/components/schemas/ScramblingTrendRow"
-            },
-            "title": "Scrambling Trend",
-            "type": "array"
-          },
           "three_putts_trend": {
             "items": {
               "$ref": "#/components/schemas/ThreePuttsTrendRow"
@@ -541,13 +527,6 @@
                 "type": "null"
               }
             ]
-          },
-          "up_and_down_trend": {
-            "items": {
-              "$ref": "#/components/schemas/UpAndDownTrendRow"
-            },
-            "title": "Up And Down Trend",
-            "type": "array"
           }
         },
         "required": [
@@ -557,14 +536,11 @@
           "gir_trend",
           "putts_trend",
           "three_putts_trend",
-          "scrambling_trend",
-          "up_and_down_trend",
           "scoring_by_par",
           "scoring_by_yardage",
           "scoring_by_handicap",
           "gir_vs_non_gir",
           "handicap_trend",
-          "score_differentials",
           "notable_achievements",
           "score_mix",
           "peak_game",
@@ -6165,79 +6141,6 @@
         "title": "ScoreCounts",
         "type": "object"
       },
-      "ScoreDifferentialRow": {
-        "properties": {
-          "course_rating": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Course Rating"
-          },
-          "differential": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Differential"
-          },
-          "round_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Round Id"
-          },
-          "round_index": {
-            "title": "Round Index",
-            "type": "integer"
-          },
-          "score": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Score"
-          },
-          "slope_rating": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Slope Rating"
-          }
-        },
-        "required": [
-          "round_index",
-          "round_id",
-          "score",
-          "course_rating",
-          "slope_rating",
-          "differential"
-        ],
-        "title": "ScoreDifferentialRow",
-        "type": "object"
-      },
       "ScoreMix": {
         "description": "Percent of classified holes in each score bucket.",
         "properties": {
@@ -6536,59 +6439,6 @@
         "title": "ScoringRecords",
         "type": "object"
       },
-      "ScramblingTrendRow": {
-        "description": "Missed greens saved with par. The percentage is null without a missed green on a linked course.",
-        "properties": {
-          "round_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Round Id"
-          },
-          "round_index": {
-            "title": "Round Index",
-            "type": "integer"
-          },
-          "scramble_failures": {
-            "title": "Scramble Failures",
-            "type": "integer"
-          },
-          "scramble_opportunities": {
-            "title": "Scramble Opportunities",
-            "type": "integer"
-          },
-          "scramble_successes": {
-            "title": "Scramble Successes",
-            "type": "integer"
-          },
-          "scrambling_percentage": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scrambling Percentage"
-          }
-        },
-        "required": [
-          "round_index",
-          "round_id",
-          "scramble_opportunities",
-          "scramble_successes",
-          "scramble_failures",
-          "scrambling_percentage"
-        ],
-        "title": "ScramblingTrendRow",
-        "type": "object"
-      },
       "SendFriendRequest": {
         "additionalProperties": false,
         "properties": {
@@ -6852,54 +6702,6 @@
           "score"
         ],
         "title": "UnderParEvent",
-        "type": "object"
-      },
-      "UpAndDownTrendRow": {
-        "description": "Missed greens finished in one putt or fewer. The percentage is null without a chance.",
-        "properties": {
-          "opportunities": {
-            "title": "Opportunities",
-            "type": "integer"
-          },
-          "percentage": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Percentage"
-          },
-          "round_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Round Id"
-          },
-          "round_index": {
-            "title": "Round Index",
-            "type": "integer"
-          },
-          "successes": {
-            "title": "Successes",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "round_index",
-          "round_id",
-          "opportunities",
-          "successes",
-          "percentage"
-        ],
-        "title": "UpAndDownTrendRow",
         "type": "object"
       },
       "UpdateCourseRequest": {

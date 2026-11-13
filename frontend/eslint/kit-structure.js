@@ -127,8 +127,8 @@ const noHandmadeToParPill = {
     },
   },
   create(context) {
-    // ToParPill is where the pill is built.
-    if (/[\\/]brand[\\/]components[\\/]ToParPill\.tsx$/.test(context.filename)) return {};
+    // Outside the kit, no-to-par-tone already reports any toParTextClass(). ToParPill is where the pill is built.
+    if (!inKit(context.filename) || /[\\/]brand[\\/]components[\\/]ToParPill\.tsx$/.test(context.filename)) return {};
     return {
       CallExpression(node) {
         if (node.callee.type !== "Identifier" || node.callee.name !== "cn") return;
@@ -392,33 +392,6 @@ const noRawTable = {
   },
 };
 
-/** The file the chart hover card is built in. */
-const isChartTooltip = (filename) => /[\\/]brand[\\/]charts[\\/]ChartTooltip\.tsx$/.test(filename);
-
-const noHandmadeChartTooltip = {
-  meta: {
-    type: "problem",
-    docs: { description: "Build a chart's hover card with ChartTooltip, not its classes by hand." },
-    schema: [],
-    messages: {
-      tooltip:
-        "A frosted card that ignores the pointer is a chart's hover card built by hand. Use <ChartTooltip id at>, " +
-        "so every chart's card looks, flips and fades one way.",
-    },
-  },
-  create(context) {
-    if (isChartTooltip(context.filename)) return {};
-    return {
-      "JSXAttribute[name.name='className']"(node) {
-        const source = context.sourceCode.getText(node.value ?? node);
-        if (source.includes("bg-card/glass") && source.includes("pointer-events-none")) {
-          context.report({ node, messageId: "tooltip" });
-        }
-      },
-    };
-  },
-};
-
 /** The name of a JSX element: `Card`, `CardTitle`, `div`. */
 const elementName = (node) => (node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null);
 
@@ -570,69 +543,6 @@ const noPercentTemplate = {
   },
 };
 
-/** A JSX attribute's string value, when it is a plain string. */
-function attrString(opening, name) {
-  const attr = opening.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
-  if (!attr?.value) return null;
-  if (attr.value.type === "Literal") return String(attr.value.value);
-  if (attr.value.type === "JSXExpressionContainer" && attr.value.expression.type === "Literal") {
-    return String(attr.value.expression.value);
-  }
-  return null;
-}
-
-const TEE_LABEL = /\btees?\b/i;
-
-const noHandmadeTeePicker = {
-  meta: {
-    type: "problem",
-    docs: { description: "Pick a tee with the kit's TeePicker, not a ToggleGroup of tee names." },
-    schema: [],
-    messages: {
-      tee:
-        "A tee is picked with <TeePicker>: each chip carries the tee's swatch and its yards, as round edit and " +
-        "the course page show them. A ToggleGroup of tee names is a second look for the same choice.",
-    },
-  },
-  create(context) {
-    if (inKit(context.filename)) return {};
-    return {
-      JSXOpeningElement(node) {
-        if (node.name.type !== "JSXIdentifier" || node.name.name !== "ToggleGroup") return;
-        const label = attrString(node, "aria-label");
-        if (label && TEE_LABEL.test(label)) context.report({ node, messageId: "tee" });
-      },
-    };
-  },
-};
-
-const CHIP_CLASS = /(?:^|[\s:])(border|rounded(?:-[\w]+)?)(?![\w-])/;
-
-const noHandmadeCheckChip = {
-  meta: {
-    type: "problem",
-    docs: { description: "Use the kit's CheckChip for a ticked box in a bordered chip, not a styled label and checkbox." },
-    schema: [],
-    messages: {
-      chip:
-        "A <label> with a border around a <Checkbox> is a check chip built by hand. Use <CheckChip>, " +
-        "which sizes, borders and labels one the same way everywhere.",
-    },
-  },
-  create(context) {
-    if (inKit(context.filename)) return {};
-    return {
-      JSXElement(node) {
-        if (elementName(node) !== "label") return;
-        const value = classNameOf(node.openingElement);
-        const classes = value ? classStrings(value.type === "JSXExpressionContainer" ? value.expression : value) : [];
-        if (!classes.some((c) => CHIP_CLASS.test(c))) return;
-        if (namesWithin(node, 1).has("Checkbox")) context.report({ node: node.openingElement, messageId: "chip" });
-      },
-    };
-  },
-};
-
 export default {
   rules: {
     "no-raw-heading": noRawHeading,
@@ -646,12 +556,9 @@ export default {
     "no-breakpoint-styling": noBreakpointStyling,
     "no-to-par-tone": noToParTone,
     "no-raw-table": noRawTable,
-    "no-handmade-chart-tooltip": noHandmadeChartTooltip,
     "no-loose-card-title": noLooseCardTitle,
     "no-handmade-stat-tile": noHandmadeStatTile,
     "no-verdict-tone": noVerdictTone,
     "no-percent-template": noPercentTemplate,
-    "no-handmade-tee-picker": noHandmadeTeePicker,
-    "no-handmade-check-chip": noHandmadeCheckChip,
   },
 };
