@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from "react";
 import { Check, ChevronRight, Copy } from "lucide-react";
 import { cn } from "@/brand/cn";
-import { Button } from "./Button";
+import { Button, RowButton } from "./Button";
 import { Card } from "./Card";
 import { ListRow } from "./ListRow";
 import { Switch } from "./Switch";
@@ -158,16 +158,15 @@ function SettingsRow<V extends string = string>(props: SettingsRowProps<V>) {
       );
     case "link":
       return (
-        <button
-          type="button"
+        <RowButton
           data-slot="settings-row"
           onClick={props.onClick}
-          className="flex min-h-14 w-full cursor-pointer items-center gap-3 pr-3 pl-4 text-left transition-colors hover:bg-muted/half focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/half focus-visible:ring-inset"
+          className="flex min-h-14 w-full cursor-pointer items-center gap-3 pr-3 pl-4 hover:bg-muted/half focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/half focus-visible:ring-inset"
         >
           <span className={LABEL}>{props.label}</span>
           <span className="min-w-0 truncate text-body-lg text-foreground-secondary">{props.value}</span>
           <ChevronRight aria-hidden className="size-4 shrink-0 text-muted-foreground" />
-        </button>
+        </RowButton>
       );
     case "field":
       return (
