@@ -26,6 +26,7 @@ const handicapTrend: HandicapTrendRowDto[] = scoreTrend.map((row, i) => ({
   hi_threshold: 6,
   // 8.0 sits two strokes off the 6 cut-off, so the server reads it as close.
   differential_status: (["out", "counting", "close", "out", "out"] as const)[i],
+  in_window: true,
 }));
 
 export const dashboardUser: UserDto = {

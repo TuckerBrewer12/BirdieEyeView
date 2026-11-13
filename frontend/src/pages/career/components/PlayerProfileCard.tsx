@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, RadarChart } from "@/brand";
+import { Card, CardContent, CardHeader, CardTitle, RadarChart } from "@/brand";
 import type { RadarEntry } from "@/domain";
 import { profileAxes } from "../present";
 
@@ -16,7 +16,6 @@ export function PlayerProfileCard({ profile, compact = false, className }: Playe
     <Card data-slot="player-profile-card" className={className}>
       <CardHeader>
         <CardTitle>Player Profile</CardTitle>
-        <CardDescription>Further out is better</CardDescription>
       </CardHeader>
       <CardContent>
         <RadarChart

@@ -55,6 +55,24 @@ test("a year on, a putting milestone first reached before the last year drops ou
   await career.seesMilestone("GIR Milestones", "9/18 GIR", true);
 });
 
+test("the handicap trend follows the window: every round, then only the last year's", async ({ career }) => {
+  await career.openLater();
+  await career.seesTrendRounds("24 rounds");
+
+  await career.pickWindow("Last 365 Days");
+  await career.seesTrendRounds("16 rounds");
+
+  await career.pickWindow("Lifetime");
+  await career.seesTrendRounds("24 rounds");
+});
+
+test("each score total is named in its colour", async ({ career }) => {
+  await career.open();
+  await career.seesTotalInColour("Birdies", "birdie");
+  await career.seesTotalInColour("Bogeys", "bogey");
+  await career.seesTotalInColour("Hole-in-Ones", "eagle");
+});
+
 test("a failed load offers a retry that brings the career in", async ({ career }) => {
   await career.openFailed();
   await career.seesLoadError();

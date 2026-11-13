@@ -65,6 +65,11 @@ export {
 export { Field, FieldLabel, FieldDescription, FieldError } from "./components/Field";
 export { Checkbox, Input } from "./components/Input";
 export { LoadingState } from "./components/LoadingState";
+export { EmptyNote } from "./components/EmptyNote";
+export { IconBadge } from "./components/IconBadge";
+export type { IconBadgeProps, IconBadgeTone } from "./components/IconBadge";
+export { ScoreKindLabel } from "./components/ScoreKindLabel";
+export type { ScoreKindLabelProps } from "./components/ScoreKindLabel";
 export {
   InputGroup,
   InputGroupAddon,

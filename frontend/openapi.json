@@ -2511,6 +2511,11 @@
             ],
             "title": "Hi Threshold"
           },
+          "in_window": {
+            "default": false,
+            "title": "In Window",
+            "type": "boolean"
+          },
           "round_id": {
             "anyOf": [
               {
@@ -2545,7 +2550,8 @@
           "differential",
           "used_in_hi",
           "hi_threshold",
-          "differential_status"
+          "differential_status",
+          "in_window"
         ],
         "title": "HandicapTrendRow",
         "type": "object"

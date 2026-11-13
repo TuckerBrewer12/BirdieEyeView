@@ -16,6 +16,7 @@ describe("trendPointsFrom", () => {
       handicapIndex: 14,
       courseName: "Scanned Scorecard",
       differentialStatus: "out",
+      inWindow: true,
     });
     expect(second.differentialStatus).toBe("counting");
   });
@@ -33,6 +34,7 @@ describe("trendPointsFrom", () => {
         used_in_hi: false,
         hi_threshold: 8.2,
         differential_status: "close" as const,
+        in_window: true,
       }],
     };
     expect(trendPointsFrom(trends)[0]).toMatchObject({ handicapIndex: 12.1, differentialStatus: "close" });

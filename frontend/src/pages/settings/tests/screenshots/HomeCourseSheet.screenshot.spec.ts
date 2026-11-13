@@ -1,13 +1,13 @@
 import { test } from "@playwright/test";
 import { capturePreview, enableDark } from "../../../../brand/tests/previewScreenshot";
 
-test.describe("UnsavedChangesSheet", () => {
+test.describe("HomeCourseSheet", () => {
   test("light", async ({ page }) => {
-    await capturePreview(page, "UnsavedChangesSheet", "unsaved-changes-sheet.png");
+    await capturePreview(page, "HomeCourseSheet", "home-course-sheet.png");
   });
 
   test("dark", async ({ page }) => {
     await enableDark(page);
-    await capturePreview(page, "UnsavedChangesSheet", "unsaved-changes-sheet-dark.png");
+    await capturePreview(page, "HomeCourseSheet", "home-course-sheet-dark.png");
   });
 });
