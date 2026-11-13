@@ -1,7 +1,7 @@
 import { useState, type MouseEvent } from "react";
 
 /** The x scale a chart's columns sit on: a column's value maps to its left edge. */
-type ColumnScale = { invert: (pixels: number) => number };
+export type ColumnScale = { invert: (pixels: number) => number };
 
 /**
  * Which column the pointer is over, for a chart drawn in columns (a hole each, or a round each).

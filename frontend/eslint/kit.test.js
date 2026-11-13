@@ -183,20 +183,24 @@ tester.run("kit/no-tone-override", kit.rules["no-tone-override"], {
 
 tester.run("kit/no-handmade-to-par-pill", kit.rules["no-handmade-to-par-pill"], {
   valid: [
-    'const c = cn("rounded-full bg-primary", on && "px-2");',
-    'const c = cn("font-semibold", toParTextClass(toPar));',
+    { code: 'const c = cn("rounded-full bg-primary", on && "px-2");', filename: "/app/src/brand/components/Badge.tsx" },
+    { code: 'const c = cn("font-semibold", toParTextClass(toPar));', filename: "/app/src/brand/components/Badge.tsx" },
     {
       code: 'const c = cn("rounded-full", toParTextClass(toPar));',
       filename: "/app/src/brand/components/ToParPill.tsx",
     },
+    // A page is no-to-par-tone's to report.
+    { code: 'const c = cn("rounded-full", toParTextClass(toPar));', filename: "/app/src/pages/rounds/RoundsPage.tsx" },
   ],
   invalid: [
     {
       code: 'const c = cn("rounded-full bg-background px-3 py-1", toParTextClass(round.toPar));',
+      filename: "/app/src/brand/components/RoundPreview.tsx",
       errors: [{ messageId: "pill" }],
     },
     {
       code: 'const c = cn(compact ? "rounded-full px-2" : "rounded-full px-3", cn("font-semibold", toParTextClass(t)));',
+      filename: "/app/src/brand/components/RoundPreview.tsx",
       errors: [{ messageId: "pill" }],
     },
   ],
@@ -326,22 +330,6 @@ tester.run("kit/no-raw-table", kit.rules["no-raw-table"], {
     { code: "<table className='w-full' />;", filename: KIT },
   ],
   invalid: [{ code: "<table><tbody /></table>;", filename: PAGE, errors: [{ messageId: "table" }] }],
-});
-
-tester.run("kit/no-handmade-chart-tooltip", kit.rules["no-handmade-chart-tooltip"], {
-  valid: [
-    { code: "<ChartTooltip id={hole} at={{ x: 0.4 }}>Hole 7</ChartTooltip>;", filename: KIT },
-    // A frosted bar that takes the pointer is not a hover card.
-    { code: '<nav className="sticky top-0 bg-card/glass backdrop-blur-sm" />;', filename: PAGE },
-    { code: '<div className="pointer-events-none absolute bg-card/glass" />;', filename: "/app/src/brand/charts/ChartTooltip.tsx" },
-  ],
-  invalid: [
-    {
-      code: '<div className={cn("pointer-events-none absolute z-10 rounded-xl bg-card/glass", flip && "-ml-3")} />;',
-      filename: "/app/src/brand/charts/TrendAreaChart.tsx",
-      errors: [{ messageId: "tooltip" }],
-    },
-  ],
 });
 
 tester.run("kit/no-loose-card-title", kit.rules["no-loose-card-title"], {

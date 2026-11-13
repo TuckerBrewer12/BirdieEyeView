@@ -127,8 +127,8 @@ const noHandmadeToParPill = {
     },
   },
   create(context) {
-    // ToParPill is where the pill is built.
-    if (/[\\/]brand[\\/]components[\\/]ToParPill\.tsx$/.test(context.filename)) return {};
+    // Outside the kit, no-to-par-tone already reports any toParTextClass(). ToParPill is where the pill is built.
+    if (!inKit(context.filename) || /[\\/]brand[\\/]components[\\/]ToParPill\.tsx$/.test(context.filename)) return {};
     return {
       CallExpression(node) {
         if (node.callee.type !== "Identifier" || node.callee.name !== "cn") return;
@@ -392,33 +392,6 @@ const noRawTable = {
   },
 };
 
-/** The file the chart hover card is built in. */
-const isChartTooltip = (filename) => /[\\/]brand[\\/]charts[\\/]ChartTooltip\.tsx$/.test(filename);
-
-const noHandmadeChartTooltip = {
-  meta: {
-    type: "problem",
-    docs: { description: "Build a chart's hover card with ChartTooltip, not its classes by hand." },
-    schema: [],
-    messages: {
-      tooltip:
-        "A frosted card that ignores the pointer is a chart's hover card built by hand. Use <ChartTooltip id at>, " +
-        "so every chart's card looks, flips and fades one way.",
-    },
-  },
-  create(context) {
-    if (isChartTooltip(context.filename)) return {};
-    return {
-      "JSXAttribute[name.name='className']"(node) {
-        const source = context.sourceCode.getText(node.value ?? node);
-        if (source.includes("bg-card/glass") && source.includes("pointer-events-none")) {
-          context.report({ node, messageId: "tooltip" });
-        }
-      },
-    };
-  },
-};
-
 /** The name of a JSX element: `Card`, `CardTitle`, `div`. */
 const elementName = (node) => (node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null);
 
@@ -646,7 +619,6 @@ export default {
     "no-breakpoint-styling": noBreakpointStyling,
     "no-to-par-tone": noToParTone,
     "no-raw-table": noRawTable,
-    "no-handmade-chart-tooltip": noHandmadeChartTooltip,
     "no-loose-card-title": noLooseCardTitle,
     "no-handmade-stat-tile": noHandmadeStatTile,
     "no-verdict-tone": noVerdictTone,

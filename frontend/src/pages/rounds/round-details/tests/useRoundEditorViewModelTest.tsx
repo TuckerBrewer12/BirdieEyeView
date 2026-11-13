@@ -39,7 +39,6 @@ describe("useRoundEditorViewModel", () => {
     expect(result.current.editing).toBe(true);
     expect(result.current.course).toEqual({ status: "linked", course: halfMoonBayCourse });
     expect(result.current.linkedName).toBe("Half Moon Bay");
-    expect(result.current.availableTees).toEqual(["Blue", "White"]);
   });
 
   it("a failed save says why and stays in edit mode", async () => {
@@ -68,7 +67,6 @@ describe("useRoundEditorViewModel", () => {
     act(() => result.current.changeCourse());
     expect(result.current.course).toEqual({ status: "picking" });
     expect(result.current.linkedName).toBeUndefined();
-    expect(result.current.availableTees).toEqual(["Blue", "White"]);
   });
 
   it("picking a course links that course and matches a compatible tee", async () => {

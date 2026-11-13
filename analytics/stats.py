@@ -250,7 +250,7 @@ def _round_total_par(round_obj: Round) -> Optional[int]:
 
 def usual_par(rounds: Iterable[Round]) -> int:
     """The par the golfer most often plays a full round against; 72 until they have one."""
-    pars = [p for p in (r.played_par() for r in rounds if r.holes_played() >= 18) if p is not None]
+    pars = [p for p in (r.played_par() for r in rounds if r.holes_played() >= HOLES_PER_ROUND) if p is not None]
     return Counter(pars).most_common(1)[0][0] if pars else 72
 
 
@@ -1049,7 +1049,7 @@ def best_round_ranks(rounds: List[Round]) -> Dict[int, int]:
     no place. Ties keep the list's order."""
     ranked = sorted(
         (i for i, r in enumerate(rounds) if r.total_to_par() is not None),
-        key=lambda i: (rounds[i].holes_played() < 18, rounds[i].total_to_par()),
+        key=lambda i: (rounds[i].holes_played() < HOLES_PER_ROUND, rounds[i].total_to_par()),
     )
     return {i: place for place, i in enumerate(ranked, start=1)}
 
@@ -1060,7 +1060,7 @@ def worst_round_ranks(rounds: List[Round]) -> Dict[int, int]:
     `best_round_ranks`, a round with no to par has no place and ties keep the list's order."""
     ranked = sorted(
         (i for i, r in enumerate(rounds) if r.total_to_par() is not None),
-        key=lambda i: (rounds[i].holes_played() < 18, -rounds[i].total_to_par()),
+        key=lambda i: (rounds[i].holes_played() < HOLES_PER_ROUND, -rounds[i].total_to_par()),
     )
     return {i: place for place, i in enumerate(ranked, start=1)}
 
@@ -1076,7 +1076,7 @@ def best_round(rounds: List[Round]) -> Optional[Round]:
 def full_rounds(rounds: Iterable[Round]) -> List[Round]:
     """The rounds of 18 holes or more: the ones a whole-round record, a score break or a
     per-round milestone is set in, so a nine's total is never read as a round's."""
-    return [r for r in rounds if r.holes_played() >= 18]
+    return [r for r in rounds if r.holes_played() >= HOLES_PER_ROUND]
 
 
 def worst_round(rounds: List[Round]) -> Optional[Round]:

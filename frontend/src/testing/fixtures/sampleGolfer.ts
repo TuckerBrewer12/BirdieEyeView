@@ -361,32 +361,6 @@ export const sampleGolfer = {
       {"holes_played": 18, "rolling_average": 32.6, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "total_putts": 35},
       {"holes_played": 18, "rolling_average": 33.6, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "total_putts": 34}
     ],
-    "score_differentials": [
-      {"course_rating": 70.8, "differential": 8.7, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "score": 81, "slope_rating": 133.0},
-      {"course_rating": 70.8, "differential": 14.6, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "score": 88, "slope_rating": 133.0},
-      {"course_rating": 70.6, "differential": 18.9, "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638", "round_index": 3, "score": 91, "slope_rating": 122.0},
-      {"course_rating": 70.8, "differential": 11.2, "round_id": "2579c7a3-a3b3-5d82-b538-61d2128a6e1f", "round_index": 4, "score": 84, "slope_rating": 133.0},
-      {"course_rating": 71.4, "differential": 16.4, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "score": 90, "slope_rating": 128.0},
-      {"course_rating": 70.8, "differential": 11.2, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "round_index": 6, "score": 84, "slope_rating": 133.0},
-      {"course_rating": 70.6, "differential": 17.0, "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d", "round_index": 7, "score": 89, "slope_rating": 122.0},
-      {"course_rating": 70.8, "differential": 10.4, "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c", "round_index": 8, "score": 83, "slope_rating": 133.0},
-      {"course_rating": 70.8, "differential": 8.7, "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab", "round_index": 9, "score": 81, "slope_rating": 133.0},
-      {"course_rating": 71.4, "differential": 12.9, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 10, "score": 86, "slope_rating": 128.0},
-      {"course_rating": 70.8, "differential": 10.4, "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b", "round_index": 11, "score": 83, "slope_rating": 133.0},
-      {"course_rating": 70.6, "differential": 9.6, "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab", "round_index": 12, "score": 81, "slope_rating": 122.0},
-      {"course_rating": 70.8, "differential": 13.8, "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a", "round_index": 13, "score": 87, "slope_rating": 133.0},
-      {"course_rating": 70.8, "differential": 7.8, "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc", "round_index": 14, "score": 80, "slope_rating": 133.0},
-      {"course_rating": 71.4, "differential": 10.2, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 15, "score": 83, "slope_rating": 128.0},
-      {"course_rating": 70.8, "differential": 12.1, "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc", "round_index": 16, "score": 85, "slope_rating": 133.0},
-      {"course_rating": 70.6, "differential": 9.6, "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff", "round_index": 17, "score": 81, "slope_rating": 122.0},
-      {"course_rating": 70.8, "differential": 9.5, "round_id": "5ba4527d-c48a-549c-a054-9306305065af", "round_index": 18, "score": 82, "slope_rating": 133.0},
-      {"course_rating": 70.8, "differential": 4.4, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "round_index": 19, "score": 76, "slope_rating": 133.0},
-      {"course_rating": 71.4, "differential": 8.5, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 20, "score": 81, "slope_rating": 128.0},
-      {"course_rating": 70.8, "differential": 7.0, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "round_index": 21, "score": 79, "slope_rating": 133.0},
-      {"course_rating": 70.8, "differential": 3.6, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "round_index": 22, "score": 75, "slope_rating": 133.0},
-      {"course_rating": 70.6, "differential": 9.6, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "score": 81, "slope_rating": 122.0},
-      {"course_rating": 70.8, "differential": 7.0, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "score": 79, "slope_rating": 133.0}
-    ],
     "score_mix": {"birdie": 5.32, "bogey": 39.58, "double": 11.81, "eagle": 0.0, "par": 42.36, "quad": 0.0, "triple": 0.93},
     "score_trend": [
       {
@@ -1180,32 +1154,6 @@ export const sampleGolfer = {
         "worst": false
       }
     ],
-    "scrambling_trend": [
-      {"round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "scramble_failures": 7, "scramble_opportunities": 13, "scramble_successes": 6, "scrambling_percentage": 46.15384615384615},
-      {"round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "scramble_failures": 13, "scramble_opportunities": 16, "scramble_successes": 3, "scrambling_percentage": 18.75},
-      {"round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638", "round_index": 3, "scramble_failures": 13, "scramble_opportunities": 16, "scramble_successes": 3, "scrambling_percentage": 18.75},
-      {"round_id": "2579c7a3-a3b3-5d82-b538-61d2128a6e1f", "round_index": 4, "scramble_failures": 10, "scramble_opportunities": 14, "scramble_successes": 4, "scrambling_percentage": 28.57142857142857},
-      {"round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "scramble_failures": 12, "scramble_opportunities": 14, "scramble_successes": 2, "scrambling_percentage": 14.285714285714285},
-      {"round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "round_index": 6, "scramble_failures": 7, "scramble_opportunities": 11, "scramble_successes": 4, "scrambling_percentage": 36.36363636363637},
-      {"round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d", "round_index": 7, "scramble_failures": 10, "scramble_opportunities": 14, "scramble_successes": 4, "scrambling_percentage": 28.57142857142857},
-      {"round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c", "round_index": 8, "scramble_failures": 11, "scramble_opportunities": 11, "scramble_successes": 0, "scrambling_percentage": 0.0},
-      {"round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab", "round_index": 9, "scramble_failures": 5, "scramble_opportunities": 13, "scramble_successes": 8, "scrambling_percentage": 61.53846153846154},
-      {"round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 10, "scramble_failures": 9, "scramble_opportunities": 12, "scramble_successes": 3, "scrambling_percentage": 25.0},
-      {"round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b", "round_index": 11, "scramble_failures": 8, "scramble_opportunities": 10, "scramble_successes": 2, "scrambling_percentage": 20.0},
-      {"round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab", "round_index": 12, "scramble_failures": 7, "scramble_opportunities": 13, "scramble_successes": 6, "scrambling_percentage": 46.15384615384615},
-      {"round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a", "round_index": 13, "scramble_failures": 11, "scramble_opportunities": 15, "scramble_successes": 4, "scrambling_percentage": 26.666666666666668},
-      {"round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc", "round_index": 14, "scramble_failures": 5, "scramble_opportunities": 10, "scramble_successes": 5, "scrambling_percentage": 50.0},
-      {"round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 15, "scramble_failures": 9, "scramble_opportunities": 15, "scramble_successes": 6, "scrambling_percentage": 40.0},
-      {"round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc", "round_index": 16, "scramble_failures": 12, "scramble_opportunities": 15, "scramble_successes": 3, "scrambling_percentage": 20.0},
-      {"round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff", "round_index": 17, "scramble_failures": 8, "scramble_opportunities": 11, "scramble_successes": 3, "scrambling_percentage": 27.27272727272727},
-      {"round_id": "5ba4527d-c48a-549c-a054-9306305065af", "round_index": 18, "scramble_failures": 8, "scramble_opportunities": 10, "scramble_successes": 2, "scrambling_percentage": 20.0},
-      {"round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "round_index": 19, "scramble_failures": 6, "scramble_opportunities": 11, "scramble_successes": 5, "scrambling_percentage": 45.45454545454545},
-      {"round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 20, "scramble_failures": 8, "scramble_opportunities": 10, "scramble_successes": 2, "scrambling_percentage": 20.0},
-      {"round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "round_index": 21, "scramble_failures": 4, "scramble_opportunities": 9, "scramble_successes": 5, "scrambling_percentage": 55.55555555555556},
-      {"round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "round_index": 22, "scramble_failures": 3, "scramble_opportunities": 7, "scramble_successes": 4, "scrambling_percentage": 57.14285714285714},
-      {"round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "scramble_failures": 8, "scramble_opportunities": 10, "scramble_successes": 2, "scrambling_percentage": 20.0},
-      {"round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "scramble_failures": 6, "scramble_opportunities": 9, "scramble_successes": 3, "scrambling_percentage": 33.33333333333333}
-    ],
     "three_putts_trend": [
       {"costly": false, "holes_with_putt_data": 18, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "three_putt_count": 0, "three_putt_percentage": 0.0},
       {"costly": false, "holes_with_putt_data": 18, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "three_putt_count": 2, "three_putt_percentage": 11.11111111111111},
@@ -1232,33 +1180,7 @@ export const sampleGolfer = {
       {"costly": true, "holes_with_putt_data": 18, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "three_putt_count": 3, "three_putt_percentage": 16.666666666666664},
       {"costly": false, "holes_with_putt_data": 18, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "three_putt_count": 2, "three_putt_percentage": 11.11111111111111}
     ],
-    "tour_short_game": {"scrambling_percentage": 57.0, "up_and_down_percentage": 50.0},
-    "up_and_down_trend": [
-      {"opportunities": 13, "percentage": 46.2, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "successes": 6},
-      {"opportunities": 16, "percentage": 43.8, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "successes": 7},
-      {"opportunities": 16, "percentage": 25.0, "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638", "round_index": 3, "successes": 4},
-      {"opportunities": 14, "percentage": 28.6, "round_id": "2579c7a3-a3b3-5d82-b538-61d2128a6e1f", "round_index": 4, "successes": 4},
-      {"opportunities": 14, "percentage": 28.6, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "successes": 4},
-      {"opportunities": 11, "percentage": 45.5, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "round_index": 6, "successes": 5},
-      {"opportunities": 14, "percentage": 42.9, "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d", "round_index": 7, "successes": 6},
-      {"opportunities": 11, "percentage": 0.0, "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c", "round_index": 8, "successes": 0},
-      {"opportunities": 13, "percentage": 61.5, "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab", "round_index": 9, "successes": 8},
-      {"opportunities": 12, "percentage": 50.0, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 10, "successes": 6},
-      {"opportunities": 10, "percentage": 40.0, "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b", "round_index": 11, "successes": 4},
-      {"opportunities": 13, "percentage": 53.8, "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab", "round_index": 12, "successes": 7},
-      {"opportunities": 15, "percentage": 40.0, "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a", "round_index": 13, "successes": 6},
-      {"opportunities": 10, "percentage": 50.0, "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc", "round_index": 14, "successes": 5},
-      {"opportunities": 15, "percentage": 53.3, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 15, "successes": 8},
-      {"opportunities": 15, "percentage": 40.0, "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc", "round_index": 16, "successes": 6},
-      {"opportunities": 11, "percentage": 36.4, "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff", "round_index": 17, "successes": 4},
-      {"opportunities": 10, "percentage": 20.0, "round_id": "5ba4527d-c48a-549c-a054-9306305065af", "round_index": 18, "successes": 2},
-      {"opportunities": 11, "percentage": 45.5, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "round_index": 19, "successes": 5},
-      {"opportunities": 10, "percentage": 30.0, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 20, "successes": 3},
-      {"opportunities": 9, "percentage": 55.6, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "round_index": 21, "successes": 5},
-      {"opportunities": 7, "percentage": 57.1, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "round_index": 22, "successes": 4},
-      {"opportunities": 10, "percentage": 20.0, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "successes": 2},
-      {"opportunities": 9, "percentage": 33.3, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "successes": 3}
-    ]
+    "tour_short_game": {"scrambling_percentage": 57.0, "up_and_down_percentage": 50.0}
   },
   "analyticsByCourse": {
     "3e9094df-7893-5663-8230-0334b2d440ec": {
@@ -1524,12 +1446,6 @@ export const sampleGolfer = {
         {"holes_played": 18, "rolling_average": 33.0, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "total_putts": 30},
         {"holes_played": 18, "rolling_average": 33.0, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "total_putts": 33}
       ],
-      "score_differentials": [
-        {"course_rating": 71.4, "differential": 16.4, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "score": 90, "slope_rating": 128.0},
-        {"course_rating": 71.4, "differential": 12.9, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "score": 86, "slope_rating": 128.0},
-        {"course_rating": 71.4, "differential": 10.2, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "score": 83, "slope_rating": 128.0},
-        {"course_rating": 71.4, "differential": 8.5, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "score": 81, "slope_rating": 128.0}
-      ],
       "score_mix": {"birdie": 2.78, "bogey": 48.61, "double": 11.11, "eagle": 0.0, "par": 36.11, "quad": 0.0, "triple": 1.39},
       "score_trend": [
         {
@@ -1750,25 +1666,13 @@ export const sampleGolfer = {
           "worst": false
         }
       ],
-      "scrambling_trend": [
-        {"round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "scramble_failures": 12, "scramble_opportunities": 14, "scramble_successes": 2, "scrambling_percentage": 14.285714285714285},
-        {"round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "scramble_failures": 9, "scramble_opportunities": 12, "scramble_successes": 3, "scrambling_percentage": 25.0},
-        {"round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "scramble_failures": 9, "scramble_opportunities": 15, "scramble_successes": 6, "scrambling_percentage": 40.0},
-        {"round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "scramble_failures": 8, "scramble_opportunities": 10, "scramble_successes": 2, "scrambling_percentage": 20.0}
-      ],
       "three_putts_trend": [
         {"costly": true, "holes_with_putt_data": 18, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "three_putt_count": 3, "three_putt_percentage": 16.666666666666664},
         {"costly": true, "holes_with_putt_data": 18, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "three_putt_count": 5, "three_putt_percentage": 27.77777777777778},
         {"costly": false, "holes_with_putt_data": 18, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "three_putt_count": 2, "three_putt_percentage": 11.11111111111111},
         {"costly": false, "holes_with_putt_data": 18, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "three_putt_count": 1, "three_putt_percentage": 5.555555555555555}
       ],
-      "tour_short_game": {"scrambling_percentage": 57.0, "up_and_down_percentage": 50.0},
-      "up_and_down_trend": [
-        {"opportunities": 14, "percentage": 28.6, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "successes": 4},
-        {"opportunities": 12, "percentage": 50.0, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "successes": 6},
-        {"opportunities": 15, "percentage": 53.3, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "successes": 8},
-        {"opportunities": 10, "percentage": 30.0, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "successes": 3}
-      ]
+      "tour_short_game": {"scrambling_percentage": 57.0, "up_and_down_percentage": 50.0}
     }
   },
   "benchmarks": {

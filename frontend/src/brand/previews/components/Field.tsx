@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/brand/components/Field";
+import { Field, FieldError, FieldLabel } from "@/brand/components/Field";
 import { Input } from "@/brand/components/Input";
 import {
   InputGroup,
@@ -25,11 +25,7 @@ export default function FieldPreview() {
           id="preview-course"
          
           placeholder="Type course name…"
-          aria-describedby="preview-course-description"
         />
-        <FieldDescription id="preview-course-description">
-          Leave it blank and set one later in Settings.
-        </FieldDescription>
       </Field>
 
       <Field>

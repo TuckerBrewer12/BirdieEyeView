@@ -1,9 +1,7 @@
-import { Button } from "@/brand/components/Button";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetOption,
   SheetOptions,
@@ -28,11 +26,6 @@ export default function SheetPreview() {
               <p className="px-4 py-4 text-sm text-muted-foreground">
                 Body copy sits in the page. The kit only paints the panel.
               </p>
-              <SheetFooter>
-                <Button variant="outline" size="sm">
-                  Done
-                </Button>
-              </SheetFooter>
             </SheetContent>
           </Sheet>
         </div>

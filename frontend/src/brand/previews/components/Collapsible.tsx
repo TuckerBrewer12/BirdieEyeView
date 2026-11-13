@@ -1,18 +1,10 @@
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/brand/components/Button";
-import {
-  Collapsible,
-  CollapsibleClose,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/brand/components/Collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/brand/components/Collapsible";
 
 function Panel({ label }: { label: string }) {
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted px-3 py-4 text-sm text-muted-foreground">
-      {label}
-      <CollapsibleClose render={<Button variant="outline" size="sm" />}>Done</CollapsibleClose>
-    </div>
+    <div className="rounded-lg border border-border bg-muted px-3 py-4 text-sm text-muted-foreground">{label}</div>
   );
 }
 

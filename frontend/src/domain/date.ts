@@ -58,12 +58,6 @@ export function formatDayShort(input: DayInput): string | null {
   return day ? day.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
 }
 
-/** "October 2026": the activity calendar's month. */
-export function formatMonth(input: DayInput): string | null {
-  const day = toDay(input);
-  return day ? day.toLocaleDateString("en-US", { month: "long", year: "numeric" }) : null;
-}
-
 /** "Jun 15, 2026": round history rows, career records, a friend request's last update. */
 export function formatDay(input: DayInput): string | null {
   const day = toDay(input);
@@ -99,10 +93,4 @@ export function dayParts(input: DayInput): DayParts | null {
     day: String(day.getDate()),
     year: `'${String(day.getFullYear()).slice(2)}`,
   };
-}
-
-/** "06-15": a chart tick. */
-export function formatDayTick(input: DayInput): string | null {
-  const day = toDay(input);
-  return day ? isoDay(day).slice(5) : null;
 }

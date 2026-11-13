@@ -1,5 +1,6 @@
-import { Card } from "@/brand/components/Card";
-import { Stat, StatCard, StatDelta, StatLabel, StatTile, StatUnit, StatValue } from "@/brand/components/Stat";
+import type { ComponentProps } from "react";
+import { Card, CardContent } from "@/brand/components/Card";
+import { Stat, StatDelta, StatLabel, StatTile, StatUnit, StatValue } from "@/brand/components/Stat";
 import { formatOneDecimal } from "@/domain";
 import { labAnalytics } from "@/testing/fixtures/lab";
 import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
@@ -14,11 +15,22 @@ const golferMove = golfer.headline[0];
 const golferTone = golferMove.verdict ?? "neutral";
 const dashboardTone = dashboard.scoring_average_verdict ?? "neutral";
 
+/** A KPI tile in its own card, as the pages hold one. */
+function TileCard(props: ComponentProps<typeof StatTile>) {
+  return (
+    <Card size="sm">
+      <CardContent>
+        <StatTile {...props} />
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function StatPreview() {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 gap-3">
-        <StatCard
+        <TileCard
           label="Scoring Avg"
           value={String(golfer.kpis.scoring_average)}
           trend={scores(golfer.score_trend)}
@@ -27,7 +39,7 @@ export default function StatPreview() {
           tone={golferTone}
           note="last 5 vs all"
         />
-        <StatCard
+        <TileCard
           label="Scoring Avg"
           value={String(labAnalytics.kpis.scoring_average)}
           trend={scores(labAnalytics.score_trend)}
@@ -36,8 +48,8 @@ export default function StatPreview() {
           tone="bad"
           note="last 5 vs all"
         />
-        <StatCard label="Best Round" value={String(dashboard.best_round)} note={dashboard.best_round_course} />
-        <StatCard label="Rounds" value={String(golfer.kpis.total_rounds)} />
+        <TileCard label="Best Round" value={String(dashboard.best_round)} note={dashboard.best_round_course} />
+        <TileCard label="Rounds" value={String(golfer.kpis.total_rounds)} />
       </div>
 
       {/* A row of tiles in one card: the delta beside the value, the line across. */}

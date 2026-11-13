@@ -2,7 +2,6 @@ import * as React from "react";
 import { type VariantProps } from "class-variance-authority";
 import { cn } from "@/brand/cn";
 import { Sparkline, type SparklineTone } from "@/brand/charts/Sparkline";
-import { Card, CardContent } from "./Card";
 import { statDeltaVariants, statLabelVariants, statValueVariants, statVariants } from "./variants";
 
 /**
@@ -10,7 +9,7 @@ import { statDeltaVariants, statLabelVariants, statValueVariants, statVariants }
  *
  * The parts compose like `Card`, so a caller can put the label above the
  * value or under it. The caller formats the value; this owns the type.
- * `StatCard` sets them as a KPI tile.
+ * `StatTile` sets them as a KPI tile.
  */
 function Stat({
   className,
@@ -116,7 +115,7 @@ interface StatTileProps extends Omit<React.ComponentProps<"div">, "children"> {
   /** What the delta is against ("last 5 vs all"), or a quiet line under the figure. */
   note?: React.ReactNode;
   /**
-   * `card`: the line beside the value, the delta under it (a {@link StatCard}). `strip`: the delta
+   * `card`: the line beside the value, the delta under it, as a KPI card holds it. `strip`: the delta
    * beside the value, the line across the tile under it, for a row of tiles in one card. `center`:
    * the value over its label and delta, centred, no line.
    */
@@ -186,18 +185,5 @@ function StatTile({
   );
 }
 
-type StatCardProps = Omit<StatTileProps, "layout">;
-
-/** A KPI tile: the figure, its trend line, and how it moved against the last stretch. */
-function StatCard({ className, ...props }: StatCardProps) {
-  return (
-    <Card data-slot="stat-card" size="sm" className={className}>
-      <CardContent>
-        <StatTile {...props} />
-      </CardContent>
-    </Card>
-  );
-}
-
-export { Stat, StatLabel, StatValue, StatUnit, StatNote, StatDelta, StatTile, StatCard };
+export { Stat, StatLabel, StatValue, StatUnit, StatNote, StatDelta, StatTile };
 export type { StatDirection, StatTone };

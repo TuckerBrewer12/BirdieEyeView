@@ -47,7 +47,7 @@ export type { CourseSummary } from "./course";
 export { EMPTY_COURSE_ANALYTICS, courseAnalyticsFrom } from "./courseAnalytics";
 export type { CourseAnalytics, HoleStats, NineFigures, PuttsVerdict } from "./courseAnalytics";
 
-export { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekday, isoDay, parseDay } from "./date";
+export { dayParts, formatDay, formatDayShort, formatWeekday, isoDay, parseDay } from "./date";
 export type { DayParts } from "./date";
 
 export {
@@ -82,8 +82,8 @@ export type {
 
 export type { AnalyticsFilters } from "./analyticsFilters";
 
-export { averageLine, moveOf, shortGamePointsFrom, trendPointsFrom } from "./trend";
-export type { AverageLine, Move, RoundTrendPoint, ShortGamePoint } from "./trend";
+export { averageLine, moveOf, trendPointsFrom } from "./trend";
+export type { AverageLine, Move, RoundTrendPoint } from "./trend";
 
 export { NO_CARD_FACTS, cardContext, cardRows, nameRowOf, strokesToCheck } from "./scan";
 export type { CardFacts, CardRow, ScoresWrittenAs } from "./scan";

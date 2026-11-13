@@ -28,8 +28,6 @@ export type ScoreReading = "gross" | "net";
 export interface AnalyticsPageViewModel {
   /** Nothing to show yet: the first load for this golfer. */
   loading: boolean;
-  /** New filters are loading; the last filters' figures stay up meanwhile. */
-  refreshing: boolean;
   loadError: string | null;
   retry: () => void;
   /** Null until the first load lands. */
@@ -90,7 +88,7 @@ export function useAnalyticsPageViewModel(
   const [trendLines, setTrendLines] = useState<TrendLine[]>(DEFAULT_TREND_LINES);
   const [pickedPar, setApproachPar] = useState<ApproachPar | null>(null);
 
-  const { data, isPending, isPlaceholderData, isError, error, refetch } = useAnalytics(userId, filters, analyticsFrom, repository);
+  const { data, isPending, isError, error, refetch } = useAnalytics(userId, filters, analyticsFrom, repository);
   const { data: playedCourses = [] } = usePlayedCourses(userId, repository);
   const { data: user } = useUser(userId, repository);
   // Read once Profile has been opened, and kept while the golfer moves between sections.
@@ -102,7 +100,6 @@ export function useAnalyticsPageViewModel(
 
   return {
     loading: isPending,
-    refreshing: isPlaceholderData,
     loadError,
     retry: () => void refetch(),
     analytics,

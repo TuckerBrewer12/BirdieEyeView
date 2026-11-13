@@ -1,5 +1,4 @@
 import { useCallback, useReducer, useState } from "react";
-import { teeColors } from "@/domain/course";
 import { useCourseSearch } from "@/data/useCourseSearch";
 import { messageFrom } from "@/lib/userFacingErrors";
 import type { CourseEdit, HoleEdits, RoundDetail } from "@/domain";
@@ -23,7 +22,6 @@ export interface RoundEditorViewModel {
   /** The course and tee the round is read against: the ones being edited in, else the round's own. */
   activeCourse: CourseDto | null;
   activeTeeBox: string | null;
-  availableTees: string[];
   linkedName: string | undefined;
   customName: string | undefined;
   /** The name the round was played under, offered while picking with an empty search. */
@@ -110,7 +108,6 @@ export function useRoundEditorViewModel(
     course,
     activeCourse,
     activeTeeBox: editor.editing ? editor.teeBox : round?.teeBox ?? null,
-    availableTees: teeColors(activeCourse),
     linkedName: course.status === "linked" ? course.course.name ?? undefined : undefined,
     customName: course.status === "custom" ? course.name : undefined,
     playedNameToKeep:

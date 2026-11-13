@@ -28,10 +28,10 @@ const COLOR_UTILITY =
   "(?:bg|text|border(?:-[xytblrse])?|ring(?:-offset)?|fill|stroke|from|via|to|divide|shadow|outline|placeholder|accent|decoration|caret)";
 
 /** A hex value or a colour function: #ef4444, rgba(, color-mix(. */
-export const COLOR_VALUE = /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch|color-mix)\(/g;
+const COLOR_VALUE = /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch|color-mix)\(/g;
 
 /** A raw Tailwind palette class: text-gray-400, border-t-emerald-100. */
-export const PALETTE_CLASS = new RegExp(
+const PALETTE_CLASS = new RegExp(
   `\\b${COLOR_UTILITY}-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\\d{2,3}\\b`,
   "g",
 );
@@ -40,13 +40,7 @@ export const PALETTE_CLASS = new RegExp(
  * Tailwind's white and black: bg-white, text-white/90, border-black. Only a utility counts, so
  * "white tee" in prose is left alone.
  */
-export const WHITE_BLACK_CLASS = new RegExp(`\\b${COLOR_UTILITY}-(?:white|black)(?![\\w-])`, "g");
-
-/** Every colour no-color-literal reports, as one pattern for tokens.test.ts to share. */
-export const COLOR_LITERAL = new RegExp(
-  [COLOR_VALUE, PALETTE_CLASS, WHITE_BLACK_CLASS].map((r) => r.source).join("|"),
-  "g",
-);
+const WHITE_BLACK_CLASS = new RegExp(`\\b${COLOR_UTILITY}-(?:white|black)(?![\\w-])`, "g");
 
 /** Where a class starts in a class string: the start, a space, a variant's colon, or `!important`. */
 const CLASS_START = "(?<=^|[\\s:!])";
