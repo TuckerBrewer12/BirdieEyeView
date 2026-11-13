@@ -85,5 +85,5 @@ export type { AnalyticsFilters } from "./analyticsFilters";
 export { averageLine, moveOf, shortGamePointsFrom, trendPointsFrom } from "./trend";
 export type { AverageLine, Move, RoundTrendPoint, ShortGamePoint } from "./trend";
 
-export { NO_CARD_FACTS, cardContext, cardRows, strokesToCheck } from "./scan";
+export { NO_CARD_FACTS, cardContext, cardRows, nameRowOf, strokesToCheck } from "./scan";
 export type { CardFacts, CardRow, ScoresWrittenAs } from "./scan";

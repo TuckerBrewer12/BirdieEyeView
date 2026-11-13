@@ -48,7 +48,7 @@ function AlertDescription({ className, ...props }: React.ComponentProps<"div">) 
     <div
       data-slot="alert-description"
       className={cn(
-        "leading-snug text-pretty group-has-[>svg]/alert:col-start-2 group-has-data-[slot=alert-action]/alert:min-w-0 group-has-data-[slot=alert-action]/alert:flex-1 group-has-data-[slot=alert-action]/alert:basis-40 [&_a]:underline [&_a]:underline-offset-2 [&_p:not(:last-child)]:mb-4",
+        "leading-snug text-pretty group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-2 [&_p:not(:last-child)]:mb-4",
         className,
       )}
       {...props}
@@ -57,11 +57,22 @@ function AlertDescription({ className, ...props }: React.ComponentProps<"div">) 
 }
 
 /**
- * What to do about it, at the alert's end: a retry, another photo. The alert lays its message and
- * the action in a row, the action wrapping under the message when there is no room beside it.
+ * What to do about it: a retry, another photo. From `md` it takes a column of its own at the
+ * alert's end, centred beside the title and description, which keep their stack (and the icon its
+ * column); on a phone it sits under them, in the text's column.
  */
 function AlertAction({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="alert-action" className={cn("ml-auto shrink-0", className)} {...props} />;
+  return (
+    <div
+      data-slot="alert-action"
+      className={cn(
+        "mt-1 justify-self-start group-has-[>svg]/alert:col-start-2",
+        "md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0 md:self-center md:justify-self-end md:group-has-[>svg]/alert:col-start-3",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 export { Alert, AlertTitle, AlertDescription, AlertAction };

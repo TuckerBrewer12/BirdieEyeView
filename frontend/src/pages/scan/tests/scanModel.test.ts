@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { pebbleBeachSummary } from "@/testing/fixtures/courses";
 import { SCANNED_COURSE_NAME, scannedCard } from "@/testing/fixtures/scan";
-import { holeList, ringedBelow } from "../present";
+import { holeList, ringedBelow, scanFailure } from "../present";
 import {
   reviewCourseFrom, reviewFromScan, reviewFromSetup, saveRequestFrom, todayIso,
   withHoleEdit,
@@ -60,5 +60,18 @@ describe("ringedBelow", () => {
   it("words where the scores to check are as a sentence", () => {
     expect(ringedBelow([4])).toBe("Hole 4 is ringed below.");
     expect(ringedBelow([4, 11])).toBe("Holes 4 and 11 are ringed below.");
+  });
+});
+
+describe("scanFailure", () => {
+  it("doesn't say the title twice when the message opens with it", () => {
+    expect(scanFailure("Couldn't read this card. Try a flatter, brighter photo.")).toEqual({
+      title: "Couldn't read this card.",
+      detail: "Try a flatter, brighter photo.",
+    });
+  });
+
+  it("keeps the server's own reason whole under the title", () => {
+    expect(scanFailure("No player row named Tucker.").detail).toBe("No player row named Tucker.");
   });
 });

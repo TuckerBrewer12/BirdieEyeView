@@ -52,6 +52,14 @@ export function cardRows(facts: CardFacts): CardRow[] {
 }
 
 /**
+ * The row the golfer's name sits beside, among the rows the card has: the one they put it on, or
+ * the score row when theirs is off the card. The form shows Name here and the note says the same.
+ */
+export function nameRowOf(facts: CardFacts): CardRow {
+  return facts.nameRow && cardRows(facts).includes(facts.nameRow) ? facts.nameRow : "score";
+}
+
+/**
  * The card's facts as the note the scan reads: whose row, how the scores are written, and, once
  * the card has more than scores, which row the name is on and the rows' order. The one place the
  * note is worded; the scan page and the landing page's try-it both send it.
@@ -64,8 +72,10 @@ export function cardContext(facts: CardFacts): string {
   if (facts.writtenAs === "toPar") parts.push("scores written to par");
   const rows = cardRows(facts);
   if (rows.length > 1) {
-    const nameRow = facts.nameRow && rows.includes(facts.nameRow) ? facts.nameRow : "score";
-    parts.push(`name on ${ROW_WORDS[nameRow]} row`, `row order: ${rows.map((row) => ROW_WORDS[row]).join(", ")}`);
+    parts.push(
+      `name on ${ROW_WORDS[nameRowOf(facts)]} row`,
+      `row order: ${rows.map((row) => ROW_WORDS[row]).join(", ")}`,
+    );
   }
   return parts.join(". ");
 }

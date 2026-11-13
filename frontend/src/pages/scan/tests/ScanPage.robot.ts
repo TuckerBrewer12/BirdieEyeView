@@ -66,13 +66,13 @@ export class ScanRobot {
 
   /** Picks the card's photo: dropped on a computer, from the photo library on a phone. */
   async chooseScorecard(): Promise<this> {
-    await this.page.locator("[data-slot=dropzone-input], [data-slot=photo-source-library]").setInputFiles(CARD_PHOTO);
+    await this.page.locator("[data-slot=dropzone] [data-slot=file-button-input], [data-slot=photo-source-library]").setInputFiles(CARD_PHOTO);
     await expect(this.readButton()).toBeVisible();
     return this;
   }
 
   private readButton() {
-    return this.page.getByRole("button", { name: /^Read card/ });
+    return this.page.getByRole("button", { name: "Read card", exact: true });
   }
 
   /** The picked photo, as a thumbnail with its name, ready to scan. */
@@ -99,7 +99,7 @@ export class ScanRobot {
 
   /** Says which other rows the card has: "Putts", "Shots to green". */
   async markOnCard(row: string): Promise<this> {
-    await this.page.getByRole("group", { name: "Also on the card" }).getByRole("button", { name: row }).click();
+    await this.page.getByRole("group", { name: "Also on the card" }).getByRole("checkbox", { name: row }).click();
     return this;
   }
 
@@ -107,6 +107,47 @@ export class ScanRobot {
   async seesRowOrder(rows: string[]): Promise<this> {
     const order = this.page.locator("[data-slot=card-row-order]");
     await expect(order.locator("[data-row-index]")).toHaveText(rows.map((row, i) => (i === 0 ? `Name${row}` : row)));
+    return this;
+  }
+
+  /** Says whose row is theirs on the card. */
+  async nameOnCard(name: string): Promise<this> {
+    await this.page.getByRole("textbox", { name: "Your name on the card" }).fill(name);
+    return this;
+  }
+
+  async scoresWrittenToPar(): Promise<this> {
+    await this.page.getByRole("group", { name: "Scores written as" }).getByRole("button", { name: /^To par/ }).click();
+    return this;
+  }
+
+  private rowOrder() {
+    return this.page.locator("[data-slot=card-row-order]");
+  }
+
+  /** Drags a row of the card onto another's place: "Shots to Green" onto "Putts". */
+  async dragRow(row: string, onto: string): Promise<this> {
+    const order = this.rowOrder();
+    await order.getByText(row, { exact: true }).dragTo(order.getByText(onto, { exact: true }));
+    return this;
+  }
+
+  /** Drags Name beside a row of the card. */
+  async dragNameTo(row: string): Promise<this> {
+    const order = this.rowOrder();
+    await order.getByText("Name", { exact: true }).dragTo(order.getByText(row, { exact: true }));
+    return this;
+  }
+
+  /** Name sits beside this row. */
+  async seesNameBeside(row: string): Promise<this> {
+    await expect(this.rowOrder().locator("[data-row-index]").filter({ hasText: "Name" })).toContainText(row);
+    return this;
+  }
+
+  /** What the last scan request told the scan about the card. */
+  async seesScanNote(note: string): Promise<this> {
+    await expect.poll(() => this.backend?.scanRequests.at(-1)?.user_context).toBe(note);
     return this;
   }
 
@@ -230,7 +271,7 @@ export class ScanRobot {
   async seesScanFailed(): Promise<this> {
     await expect(this.page.getByRole("alert")).toContainText("Couldn't read this card.");
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Read card again" })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Read card", exact: true })).toBeVisible();
     return this;
   }
 

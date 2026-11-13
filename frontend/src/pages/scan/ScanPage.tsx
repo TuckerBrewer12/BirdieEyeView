@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { Camera, PenLine } from "lucide-react";
 import {
   LoadingState,
   PageHeader,
@@ -76,6 +75,7 @@ export function ScanPage({ userId }: { userId: string }) {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <PageTitle>{TITLE}</PageTitle>
             <ToggleGroup
+              look="boxed"
               fill
               aria-label="Entry method"
               className="md:w-fit"
@@ -85,14 +85,8 @@ export function ScanPage({ userId }: { userId: string }) {
                 if (values[0] === "scan" || values[0] === "manual") viewModel.setMode(values[0]);
               }}
             >
-              <ToggleGroupItem value="scan">
-                <Camera data-icon="inline-start" />
-                Photo
-              </ToggleGroupItem>
-              <ToggleGroupItem value="manual">
-                <PenLine data-icon="inline-start" />
-                By hand
-              </ToggleGroupItem>
+              <ToggleGroupItem value="scan">Photo</ToggleGroupItem>
+              <ToggleGroupItem value="manual">By hand</ToggleGroupItem>
             </ToggleGroup>
           </div>
 

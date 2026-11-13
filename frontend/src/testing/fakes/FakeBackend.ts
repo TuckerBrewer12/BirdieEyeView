@@ -232,6 +232,9 @@ export class FakeBackend {
     return this.store.courses;
   }
 
+  /** Each `/api/scan/extract` request's text fields, oldest first: what was said about the card. */
+  scanRequests: Record<string, string>[] = [];
+
   /** Lets a held scan answer. */
   finishScan(): void {
     this.releaseScan?.();
@@ -304,6 +307,7 @@ export class FakeBackend {
     }
 
     if (verb === "POST" && path.includes("/api/scan/extract")) {
+      this.scanRequests = [...this.scanRequests, (body ?? {}) as Record<string, string>];
       if (!this.scan) return { status: 500, body: { detail: "Could not read this scorecard." } };
       return { status: 200, body: this.scan };
     }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { scannedCard, UNSURE_HOLES, unsureCard } from "@/testing/fixtures/scan";
 import type { ScanDto } from "@/types/api";
-import { NO_CARD_FACTS, SCAN_STEPS, cardContext, cardRows, scanStepAt, strokesToCheck } from "../scan";
+import { NO_CARD_FACTS, SCAN_STEPS, cardContext, cardRows, nameRowOf, scanStepAt, strokesToCheck } from "../scan";
 
 describe("strokesToCheck", () => {
   it("is empty for a card the scan read cleanly", () => {
@@ -86,5 +86,28 @@ describe("cardRows", () => {
   it("puts a row turned on after the others were ordered last", () => {
     const facts = { ...NO_CARD_FACTS, putts: true, shotsToGreen: true, rowOrder: ["putts", "score"] as const };
     expect(cardRows(facts)).toEqual(["putts", "score", "shots"]);
+  });
+});
+
+describe("nameRowOf", () => {
+  // Name dragged to shots to green, shots to green turned off, putts above the score.
+  const facts = {
+    ...NO_CARD_FACTS,
+    putts: true,
+    shotsToGreen: false,
+    rowOrder: ["putts", "score", "shots"] as const,
+    nameRow: "shots" as const,
+  };
+
+  it("is the score row when the name's row is off the card, not the first row", () => {
+    expect(nameRowOf(facts)).toBe("score");
+  });
+
+  it("is what the note says", () => {
+    expect(cardContext(facts)).toContain("name on score row");
+  });
+
+  it("keeps the golfer's row while the card has it", () => {
+    expect(nameRowOf({ ...facts, nameRow: "putts" })).toBe("putts");
   });
 });

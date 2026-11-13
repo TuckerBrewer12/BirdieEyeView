@@ -1,5 +1,6 @@
-import { CircleAlert, CircleCheck, Info } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/brand/components/Alert";
+import { ArrowRight, CircleAlert, CircleCheck, Info } from "lucide-react";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/brand/components/Alert";
+import { Button } from "@/brand/components/Button";
 
 const ALERTS = [
   { tone: "info", Icon: Info, title: "Course not linked", body: "Link it to see par-based stats." },
@@ -28,6 +29,36 @@ export default function AlertPreview() {
           <AlertDescription>{body}</AlertDescription>
         </Alert>
       ))}
+
+      <div className="mt-2 text-label font-semibold text-muted-foreground">Alert · with an action</div>
+      <Alert tone="danger">
+        <AlertDescription>We couldn&apos;t load your rounds.</AlertDescription>
+        <AlertAction>
+          <Button size="xs" variant="outline">
+            Retry
+          </Button>
+        </AlertAction>
+      </Alert>
+      <Alert tone="danger">
+        <CircleAlert />
+        <AlertTitle>Couldn&apos;t read this card</AlertTitle>
+        <AlertDescription>Try a flatter, brighter photo.</AlertDescription>
+        <AlertAction>
+          <Button variant="outline">
+            Try another photo
+            <ArrowRight data-icon="inline-end" />
+          </Button>
+        </AlertAction>
+      </Alert>
+      <Alert tone="info" variant="outline">
+        <AlertTitle>Course not linked</AlertTitle>
+        <AlertDescription>Link it to see par-based stats.</AlertDescription>
+        <AlertAction>
+          <Button size="sm" variant="secondary">
+            Link course
+          </Button>
+        </AlertAction>
+      </Alert>
     </>
   );
 }

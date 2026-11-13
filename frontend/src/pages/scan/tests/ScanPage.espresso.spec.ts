@@ -178,6 +178,39 @@ test("a card with putts and shots to green asks for its rows' order", async ({ s
   await scan.seesRowOrder(["Score", "Putts", "Shots to Green"]);
 });
 
+test("the scan is told the golfer's name, the scores to par, and the card's rows in order", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.nameOnCard("Tucker");
+  await scan.scoresWrittenToPar();
+  await scan.markOnCard("Putts");
+  await scan.markOnCard("Shots to green");
+  await scan.dragRow("Shots to Green", "Putts");
+  await scan.seesRowOrder(["Score", "Shots to Green", "Putts"]);
+  await scan.dragNameTo("Putts");
+  await scan.seesNameBeside("Putts");
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.seesScanNote(
+    "my name is Tucker. scores written to par. name on putts row. row order: score, shots to green, putts",
+  );
+});
+
+test("Name goes back beside the score when its row comes off the card, as the note says", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.markOnCard("Putts");
+  await scan.markOnCard("Shots to green");
+  await scan.dragRow("Putts", "Score");
+  await scan.dragNameTo("Shots to Green");
+  await scan.seesNameBeside("Shots to Green");
+  await scan.markOnCard("Shots to green");
+  await scan.seesNameBeside("Score");
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.seesScanNote("name on score row. row order: putts, score");
+});
+
 test("another photo takes the picked one's place", async ({ scan }) => {
   await scan.open();
   await scan.chooseScorecard();

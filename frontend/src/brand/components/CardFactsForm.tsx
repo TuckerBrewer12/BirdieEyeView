@@ -1,11 +1,9 @@
-import { cardRows, type CardFacts } from "@/domain";
+import { cardRows, nameRowOf, type CardFacts } from "@/domain";
 import { CardRowOrder } from "./CardRowOrder";
+import { CheckChip } from "./CheckChip";
 import { Field, FieldLabel } from "./Field";
 import { Input } from "./Input";
 import { ToggleGroup, ToggleGroupItem } from "./ToggleGroup";
-
-/** The rows a card can have besides the score, as the chips name them. */
-const EXTRA_ROWS = ["putts", "shotsToGreen"] as const;
 
 interface CardFactsFormProps {
   card: CardFacts;
@@ -37,6 +35,7 @@ function CardFactsForm({ card, onChange, idPrefix = "card" }: CardFactsFormProps
       <Field>
         <FieldLabel>Scores written as</FieldLabel>
         <ToggleGroup
+          look="boxed"
           fill
           aria-label="Scores written as"
           value={[card.writtenAs]}
@@ -53,25 +52,21 @@ function CardFactsForm({ card, onChange, idPrefix = "card" }: CardFactsFormProps
           </ToggleGroupItem>
         </ToggleGroup>
       </Field>
-      <Field>
-        <FieldLabel>Also on the card</FieldLabel>
-        <ToggleGroup
-          look="chips"
-          multiple
-          aria-label="Also on the card"
-          value={EXTRA_ROWS.filter((row) => card[row])}
-          onValueChange={(values: string[]) =>
-            onChange({ putts: values.includes("putts"), shotsToGreen: values.includes("shotsToGreen") })
-          }
-        >
-          <ToggleGroupItem value="putts">Putts</ToggleGroupItem>
-          <ToggleGroupItem value="shotsToGreen">Shots to green</ToggleGroupItem>
-        </ToggleGroup>
-      </Field>
+      <div role="group" aria-label="Also on the card" className="flex flex-wrap items-center gap-2">
+        <span aria-hidden className="w-full text-body font-semibold text-foreground md:mr-1 md:w-auto">
+          Also on the card
+        </span>
+        <CheckChip checked={card.putts} onCheckedChange={(putts) => onChange({ putts })}>
+          Putts
+        </CheckChip>
+        <CheckChip checked={card.shotsToGreen} onCheckedChange={(shotsToGreen) => onChange({ shotsToGreen })}>
+          Shots to green
+        </CheckChip>
+      </div>
       {rows.length > 1 && (
         <CardRowOrder
           rows={rows}
-          nameRow={card.nameRow ?? "score"}
+          nameRow={nameRowOf(card)}
           onChange={(rowOrder, nameRow) => onChange({ rowOrder, nameRow })}
         />
       )}

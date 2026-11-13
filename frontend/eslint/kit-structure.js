@@ -611,12 +611,12 @@ const CHIP_CLASS = /(?:^|[\s:])(border|rounded(?:-[\w]+)?)(?![\w-])/;
 const noHandmadeCheckChip = {
   meta: {
     type: "problem",
-    docs: { description: "Use ToggleGroup look=\"chips\" multiple for a row of on/off chips, not a styled label and checkbox." },
+    docs: { description: "Use the kit's CheckChip for a ticked box in a bordered chip, not a styled label and checkbox." },
     schema: [],
     messages: {
       chip:
-        "A <label> with a border around a <Checkbox> is an on/off chip built by hand. Use <ToggleGroup " +
-        "look=\"chips\" multiple>, which spaces, presses and names a row of them one way.",
+        "A <label> with a border around a <Checkbox> is a check chip built by hand. Use <CheckChip>, " +
+        "which sizes, borders and labels one the same way everywhere.",
     },
   },
   create(context) {

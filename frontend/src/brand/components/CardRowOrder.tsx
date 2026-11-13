@@ -12,7 +12,7 @@ const ROWS: Record<CardRow, { label: string; tone: string }> = {
 interface CardRowOrderProps {
   /** The card's rows, top to bottom (`cardRows()`): the score, and putts or shots to green. */
   rows: readonly CardRow[];
-  /** The row the golfer's name sits beside. */
+  /** The row the golfer's name sits beside, one of `rows` (`nameRowOf()`, which the scan's note uses too). */
   nameRow: CardRow;
   onChange: (rows: CardRow[], nameRow: CardRow) => void;
   className?: string;
@@ -27,7 +27,8 @@ type Drag = { type: "row"; from: number } | { type: "name" };
  */
 function CardRowOrder({ rows, nameRow, onChange, className }: CardRowOrderProps) {
   const dragging = useRef<Drag | null>(null);
-  const nameAt = Math.max(rows.indexOf(nameRow), 0);
+  // `nameRow` is one of `rows` (`nameRowOf()`); if not, Name sits by the score, as the note says.
+  const nameAt = rows.includes(nameRow) ? rows.indexOf(nameRow) : rows.indexOf("score");
 
   const moveTo = (to: number) => {
     const drag = dragging.current;

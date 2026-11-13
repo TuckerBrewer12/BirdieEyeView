@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Camera } from "lucide-react";
 import { cn } from "@/brand/cn";
-import { Button } from "./Button";
+import { FileButton } from "./FileButton";
 
 interface DropzoneProps {
   title: string;
@@ -19,8 +19,8 @@ interface DropzoneProps {
  * The drag-and-drop target for picking one file: a dashed box with a camera, a line saying what to
  * drop, and a button that opens the file picker.
  *
- * Owns only the hidden input and the pointer plumbing — which file was picked and what happens to
- * it belong to the caller. The box lights up while a file is held over it.
+ * Owns only the drop plumbing; the button is a `FileButton`. Which file was picked and what happens
+ * to it belong to the caller. The box lights up while a file is held over it.
  */
 function Dropzone({
   title,
@@ -30,7 +30,6 @@ function Dropzone({
   onFile,
   className,
 }: DropzoneProps) {
-  const inputRef = React.useRef<HTMLInputElement>(null);
   const [over, setOver] = React.useState(false);
 
   return (
@@ -60,19 +59,9 @@ function Dropzone({
         <p className="text-body-lg font-semibold text-foreground">{title}</p>
         {hint && <p className="text-body text-muted-foreground">{hint}</p>}
       </div>
-      <Button onClick={() => inputRef.current?.click()}>{actionLabel}</Button>
-      <input
-        ref={inputRef}
-        data-slot="dropzone-input"
-        type="file"
-        accept={accept}
-        className="hidden"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          event.target.value = "";
-          if (file) onFile(file);
-        }}
-      />
+      <FileButton accept={accept} onFile={onFile}>
+        {actionLabel}
+      </FileButton>
     </div>
   );
 }

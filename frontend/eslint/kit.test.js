@@ -422,7 +422,7 @@ tester.run("kit/no-handmade-tee-picker", kit.rules["no-handmade-tee-picker"], {
 
 tester.run("kit/no-handmade-check-chip", kit.rules["no-handmade-check-chip"], {
   valid: [
-    { code: '<ToggleGroup look="chips" multiple aria-label="Also on the card" />;', filename: PAGE },
+    { code: '<CheckChip checked={on} onCheckedChange={setOn}>Putts</CheckChip>;', filename: PAGE },
     // A plain checkbox and its words, as Settings lays one out.
     { code: '<label className="flex items-center gap-2"><Checkbox />Get updates</label>;', filename: PAGE },
     { code: '<label className="rounded-lg border"><Checkbox />Kit</label>;', filename: KIT },

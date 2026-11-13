@@ -93,6 +93,7 @@ export { ToParFigure } from "./components/ToParFigure";
 export { ToParPill } from "./components/ToParPill";
 export { ScanProgress } from "./components/ScanProgress";
 export { CardFactsForm } from "./components/CardFactsForm";
+export { CheckChip } from "./components/CheckChip";
 export { CardRowOrder } from "./components/CardRowOrder";
 export { ScorecardCard } from "./components/ScorecardCard";
 export { ScorecardGrid } from "./components/ScorecardGrid";
