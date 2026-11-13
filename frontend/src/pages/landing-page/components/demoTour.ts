@@ -5,7 +5,7 @@ import { fromBreakpoint } from "@/brand/theme";
  * taken by `tests/DemoTour.capture.spec.ts` against the sample golfer and served from
  * `public/demo-tour/`.
  */
-export const TOUR_SCREENS = ["dashboard", "handicap", "analytics", "lab"] as const;
+export const TOUR_SCREENS = ["dashboard", "handicap", "analytics", "profile"] as const;
 export type TourScreen = (typeof TOUR_SCREENS)[number];
 
 /** Wide captures fill the square desktop frame; narrow ones the portrait phone frame. */
@@ -27,6 +27,6 @@ export function tourImage(screen: TourScreen, layout: TourLayout): string {
  * height, so the demo's tap lands on it. The capture spec fails if the page moves it.
  */
 export const HANDICAP_TAP: Record<TourLayout, { x: number; y: number }> = {
-  wide: { x: 0.898, y: 0.115 },
-  narrow: { x: 0.869, y: 0.199 },
+  wide: { x: 0.3, y: 0.094 },
+  narrow: { x: 0.774, y: 0.192 },
 };

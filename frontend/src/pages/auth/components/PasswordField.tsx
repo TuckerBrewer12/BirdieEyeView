@@ -21,6 +21,12 @@ interface PasswordFieldProps {
   error?: string | null;
   /** What the reveal button shows, for its name: "Show password", "Show confirm password". */
   revealName?: string;
+  /** A link at the end of the label's row: sign in's "Forgot?". */
+  labelAction?: ReactNode;
+  /** Marks the field wrong without a message of its own, as a refused sign-in does. */
+  invalid?: boolean;
+  /** The id of a message elsewhere that says why it's wrong: a refused sign-in's alert. */
+  describedBy?: string;
   children?: ReactNode;
 }
 
@@ -37,6 +43,9 @@ export function PasswordField({
   placeholder,
   error,
   revealName = "password",
+  labelAction,
+  invalid = false,
+  describedBy,
   children,
 }: PasswordFieldProps) {
   const [revealed, setRevealed] = useState(false);
@@ -44,7 +53,14 @@ export function PasswordField({
 
   return (
     <Field>
-      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      {labelAction != null ? (
+        <div className="flex items-baseline justify-between gap-3">
+          <FieldLabel htmlFor={id}>{label}</FieldLabel>
+          {labelAction}
+        </div>
+      ) : (
+        <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      )}
       <InputGroup>
         <InputGroupInput
           id={id}
@@ -54,8 +70,8 @@ export function PasswordField({
           required
           autoComplete={autoComplete}
           placeholder={placeholder}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? errorId : undefined}
+          aria-invalid={error != null || invalid ? true : undefined}
+          aria-describedby={error ? errorId : describedBy}
         />
         <InputGroupAddon align="inline-end">
           <InputGroupButton

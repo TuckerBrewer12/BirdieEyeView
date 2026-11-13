@@ -97,4 +97,30 @@ describe("useLoginViewModel", () => {
     await waitFor(() => expect(result.current.error).toBe(AUTH_MESSAGES.badCredentials));
     expect(result.current.notice).toBeNull();
   });
+
+  it("marks both fields wrong after a refused sign-in until either is edited", async () => {
+    const { result } = renderVm(new FakeAuth().fail("login", AUTH_MESSAGES.badCredentials));
+    expect(result.current.credentialsRefused).toBe(false);
+
+    act(() => result.current.submit(() => {}));
+    await waitFor(() => expect(result.current.credentialsRefused).toBe(true));
+
+    act(() => result.current.setPassword("nope again"));
+    expect(result.current.credentialsRefused).toBe(false);
+
+    act(() => result.current.submit(() => {}));
+    await waitFor(() => expect(result.current.credentialsRefused).toBe(true));
+
+    act(() => result.current.setEmail("sam@example.com"));
+    expect(result.current.credentialsRefused).toBe(false);
+  });
+
+  it("leaves the fields unmarked when the account is unverified", async () => {
+    const { result } = renderVm(new FakeAuth().fail("login", AUTH_MESSAGES.unverified));
+
+    act(() => result.current.submit(() => {}));
+
+    await waitFor(() => expect(result.current.error).toBe(AUTH_MESSAGES.unverified));
+    expect(result.current.credentialsRefused).toBe(false);
+  });
 });

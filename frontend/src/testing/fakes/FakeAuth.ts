@@ -23,13 +23,7 @@ type Call = keyof Omit<AuthActions, "refreshSession">;
  */
 export class FakeAuth implements AuthActions {
   readonly logins: { email: string; password: string }[] = [];
-  readonly registrations: {
-    name: string;
-    email: string;
-    password: string;
-    handicap: number | null | undefined;
-    homeCourseId: string | null | undefined;
-  }[] = [];
+  readonly registrations: { name: string; email: string; password: string }[] = [];
   readonly resends: string[] = [];
   readonly verifiedTokens: string[] = [];
   readonly resetRequests: string[] = [];
@@ -72,19 +66,8 @@ export class FakeAuth implements AuthActions {
     return this.answer("login", undefined);
   };
 
-  register = async (
-    name: string,
-    email: string,
-    password: string,
-    options?: { handicap?: number | null; home_course_id?: string | null },
-  ): Promise<string> => {
-    this.registrations.push({
-      name,
-      email,
-      password,
-      handicap: options?.handicap,
-      homeCourseId: options?.home_course_id,
-    });
+  register = async (name: string, email: string, password: string): Promise<string> => {
+    this.registrations.push({ name, email, password });
     return this.answer("register", AUTH_MESSAGES.registered);
   };
 

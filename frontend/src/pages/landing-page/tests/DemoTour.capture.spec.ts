@@ -25,10 +25,10 @@ for (const layout of Object.keys(TOUR_LAYOUTS) as TourLayout[]) {
       await tour.capture(`analytics-${layout}.png`);
     });
 
-    test("the lab", async ({ tour }) => {
-      await tour.openLab();
-      await tour.seesLab();
-      await tour.capture(`lab-${layout}.png`);
+    test("profile", async ({ tour }) => {
+      await tour.openProfile();
+      await tour.seesProfile();
+      await tour.capture(`profile-${layout}.png`);
     });
   });
 }

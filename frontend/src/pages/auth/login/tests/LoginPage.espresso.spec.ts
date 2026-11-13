@@ -43,3 +43,17 @@ test("arriving from another screen carries its email and message", async ({ logi
   await login.seesEmail("new@example.com");
   await login.seesNotice(AUTH_MESSAGES.passwordReset);
 });
+
+test("a refused sign-in marks both fields wrong until one is edited", async ({ login }) => {
+  await login.open();
+  await login.signIn("test@example.com", "nope");
+  await login.seesFieldsMarkedWrong(true);
+  await login.typePassword("nope again");
+  await login.seesFieldsMarkedWrong(false);
+});
+
+test("Forgot? beside the password goes to Reset password", async ({ login }) => {
+  await login.open();
+  await login.tapForgot();
+  await login.seesHeading("Reset password");
+});

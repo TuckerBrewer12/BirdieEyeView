@@ -233,7 +233,6 @@ const light = {
     putts: sky[700],
     shots: alias("score-quad-base"),
   },
-  demoCardHeader: forest[750],
   // A scan in flight: the photo shaded down to the line being read, the line lit. Over a
   // photo, so the same in both modes.
   scanLine: green[400],
@@ -685,27 +684,15 @@ export const motion = {
    * one image replacing another, a finger pressing a button on a captured screen.
    */
   demo: {
-    /** One image replacing another: the card giving way to the scorecard. */
+    /** One image replacing another: the photo giving way to the round read off it, then the app. */
     crossfade: 0.8,
     /** The scan line's full travel, top to bottom. */
     sweep: 1.5,
-    /** A field or chip drawing the eye as the form fills itself in. */
-    emphasis: 0.3,
-    /** How far an emphasised choice swells before settling back. */
-    emphasisScale: 1.05,
-    /** One on/off of the text caret in the name field. */
-    caretBlink: 0.8,
-    /** Between the letters of a name typing itself in. */
-    typeStagger: 0.1,
-    /** Mapped rows sliding in, looser than `spring` so they overshoot into place. */
-    rowSpring: { type: "spring" as const, damping: 15 },
     /** One app screen giving way to the next on the tour. */
     screenChange: 0.5,
     /** The incoming screen settling from just past full size. */
     screenEnterScale: 1.02,
-    /** The read scorecard settling from past full size as it replaces the photo. */
-    scorecardEnterScale: 1.05,
-    /** Stepped back: the photo as the card replaces it, the panel as it leaves, a chip before it lights up. */
+    /** Stepped back: the photo as the app replaces it, the setup panel as it leaves. */
     recedeScale: 0.95,
     /** A finger pressing the handicap: the ring closing in from wide, pressing, then letting go. */
     tap: { duration: 0.7, reachScale: 1.6, pressScale: 0.8 },

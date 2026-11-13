@@ -23,13 +23,6 @@ describe("useScannerDemoViewModel", () => {
     expect(result.current.label).toBe("1. Snap a photo");
   });
 
-  it("labels each hole of the sample card with how it was scored", () => {
-    const { result } = renderHook(() => useScannerDemoViewModel());
-    expect(result.current.scorecard.map((row) => row.score)).toEqual([
-      "bogey", "bogey", "par", "bogey", "bogey", "bogey", "bogey", "bogey", "bogey",
-    ]);
-  });
-
   it("walks the scan, tours the app it lands in, and starts over", () => {
     const { result } = renderHook(() => useScannerDemoViewModel());
     const seen = [result.current.phase];
@@ -39,7 +32,7 @@ describe("useScannerDemoViewModel", () => {
     }
     expect(seen).toEqual([
       "photo", "mapping", "scanning", "result",
-      "dashboard", "handicapTap", "handicap", "analytics", "lab",
+      "dashboard", "handicapTap", "handicap", "analytics", "profile",
       "photo",
     ]);
   });

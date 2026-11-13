@@ -1,27 +1,8 @@
 import { useCallback, useState } from "react";
-import { parseHandicapInput } from "@/domain/handicap";
-import { useCourseSearch } from "@/data/useCourseSearch";
 import { messageFrom } from "@/lib/userFacingErrors";
-import type { CourseSearchRepository } from "@/pages/rounds/roundsRepository";
-import { coursesRepository } from "@/pages/courses/coursesRepository";
-import type { CourseSummary } from "@/domain/course";
 import type { AuthActions } from "../authActions";
-import { hasErrors, newPasswordErrors } from "../authModel";
+import { hasErrors, newPasswordErrors, type NewPasswordErrors } from "../authModel";
 import { useRegister } from "../useRegister";
-
-export interface RegisterErrors {
-  password: string | null;
-  confirm: string | null;
-  handicap: string | null;
-}
-
-const NO_ERRORS: RegisterErrors = { password: null, confirm: null, handicap: null };
-
-/** The course picked as home. The name is null when that course could not be read. */
-export interface HomeCourse {
-  id: string;
-  name: string | null;
-}
 
 export interface RegisterViewModel {
   name: string;
@@ -32,77 +13,44 @@ export interface RegisterViewModel {
   setPassword: (password: string) => void;
   confirm: string;
   setConfirm: (confirm: string) => void;
-  /** As typed: "+3.0" for a plus handicap. Read through `domain/handicap` on submit. */
-  handicap: string;
-  setHandicap: (handicap: string) => void;
 
-  courseQuery: string;
-  setCourseQuery: (query: string) => void;
-  courseResults: CourseSummary[];
-  searchingCourses: boolean;
-  homeCourse: HomeCourse | null;
-  pickHomeCourse: (course: CourseSummary) => void;
-  clearHomeCourse: () => void;
-
-  /** Why a field can't be sent, from the last submit; editing a field clears its own. */
-  fieldErrors: RegisterErrors;
+  /** Why the password or its confirmation can't be sent, from the last submit; editing a field clears its own. */
+  fieldErrors: NewPasswordErrors;
   /** The server's refusal, such as an email already in use. */
   error: string | null;
   submitting: boolean;
-  /** Checks the fields, then creates the account; `onRegistered` gets the email and the server's message. */
+  /** Checks the password, then creates the account; `onRegistered` gets the email and the server's message. */
   submit: (onRegistered: (email: string, message: string) => void) => void;
 }
 
-export function useRegisterViewModel(
-  auth: Pick<AuthActions, "register">,
-  courses: CourseSearchRepository = coursesRepository,
-): RegisterViewModel {
+const NO_ERRORS: NewPasswordErrors = { password: null, confirm: null };
+
+/**
+ * Create account: a name, an email, and a password typed twice. The handicap and home course are
+ * set later in Settings.
+ */
+export function useRegisterViewModel(auth: Pick<AuthActions, "register">): RegisterViewModel {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [handicap, setHandicap] = useState("");
-  const [homeCourse, setHomeCourse] = useState<HomeCourse | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<RegisterErrors>(NO_ERRORS);
-  const search = useCourseSearch(undefined, courses);
+  const [fieldErrors, setFieldErrors] = useState<NewPasswordErrors>(NO_ERRORS);
   const register = useRegister(auth);
   const { mutate: createAccount } = register;
-  const { reset: resetSearch } = search;
-
-  const clearError = (field: keyof RegisterErrors) =>
-    setFieldErrors((errors) => (errors[field] ? { ...errors, [field]: null } : errors));
-
-  const pickHomeCourse = useCallback(
-    (course: CourseSummary) => {
-      setHomeCourse({ id: course.id, name: course.name });
-      resetSearch();
-    },
-    [resetSearch],
-  );
 
   const submit = useCallback(
     (onRegistered: (email: string, message: string) => void) => {
-      const parsedHandicap = parseHandicapInput(handicap);
-      const errors: RegisterErrors = {
-        ...newPasswordErrors(password, confirm),
-        handicap: parsedHandicap.error,
-      };
+      const errors = newPasswordErrors(password, confirm);
       setFieldErrors(errors);
       if (hasErrors(errors)) return;
 
       const address = email.trim();
       createAccount(
-        {
-          name: name.trim(),
-          email: address,
-          password,
-          handicap: parsedHandicap.value,
-          homeCourseId: homeCourse?.id ?? null,
-        },
+        { name: name.trim(), email: address, password },
         { onSuccess: (message) => onRegistered(address, message) },
       );
     },
-    [name, email, password, confirm, handicap, homeCourse, createAccount],
+    [name, email, password, confirm, createAccount],
   );
 
   return {
@@ -113,27 +61,13 @@ export function useRegisterViewModel(
     password,
     setPassword: (next) => {
       setPassword(next);
-      clearError("password");
+      setFieldErrors((errors) => (errors.password ? { ...errors, password: null } : errors));
     },
     confirm,
     setConfirm: (next) => {
       setConfirm(next);
-      clearError("confirm");
+      setFieldErrors((errors) => (errors.confirm ? { ...errors, confirm: null } : errors));
     },
-    handicap,
-    setHandicap: (next) => {
-      setHandicap(next);
-      clearError("handicap");
-    },
-
-    courseQuery: search.query,
-    setCourseQuery: search.setQuery,
-    courseResults: search.results,
-    searchingCourses: search.searching,
-    homeCourse,
-    pickHomeCourse,
-    clearHomeCourse: () => setHomeCourse(null),
-
     fieldErrors,
     error: register.error ? messageFrom(register.error, "Registration failed") : null,
     submitting: register.isPending,

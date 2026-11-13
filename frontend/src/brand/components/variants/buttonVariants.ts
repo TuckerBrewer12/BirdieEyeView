@@ -15,6 +15,9 @@ const buttonVariants = cva(
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/half",
         destructive:
           "bg-destructive text-status-danger-on-base hover:bg-destructive-hover focus-visible:border-destructive/recessed focus-visible:ring-destructive/wash dark:focus-visible:ring-destructive/recessed",
+        /* On a green bar (a scorecard's): an outline in the bar's own ink. Scan another. */
+        onPrimary:
+          "border-primary-foreground/half bg-transparent text-primary-foreground hover:bg-primary-foreground/tint",
         /* A way out that loses something, beside the main action: Discard. Red ink, no fill. */
         ghostDestructive: "text-destructive hover:bg-destructive/tint",
         /* The board's Text: no fill, underlined on hover. */
@@ -40,10 +43,6 @@ const buttonVariants = cva(
         "toolbar-icon": "size-11 rounded-xl",
         /* An icon alone on a phone, the icon and its word from md: Share, Edit. */
         "toolbar-icon-phone": "size-11 rounded-xl md:w-auto md:gap-1.5 md:px-5",
-        /* Marketing-sized. The landing page's calls to action sit alone on a
-           wide section and have to carry it; the in-app sizes read as chrome
-           at that scale. */
-        cta: "h-12 gap-2 rounded-xl px-7 text-base has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5 [&_svg:not([class*='size-'])]:size-5",
       },
       /* Declared after size so the radius here wins the twMerge. */
       shape: {

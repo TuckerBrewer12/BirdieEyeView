@@ -6,13 +6,15 @@ export interface NewPasswordErrors {
   confirm: string | null;
 }
 
+/** Why a new password can't be sent yet: too short. */
+function newPasswordError(password: string): string | null {
+  return password.length < MIN_PASSWORD_LENGTH ? `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` : null;
+}
+
 /** Why a new password and its confirmation can't be sent yet, field by field. */
 export function newPasswordErrors(password: string, confirm: string): NewPasswordErrors {
   return {
-    password:
-      password.length < MIN_PASSWORD_LENGTH
-        ? `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`
-        : null,
+    password: newPasswordError(password),
     confirm: confirm !== password ? "Passwords do not match." : null,
   };
 }
