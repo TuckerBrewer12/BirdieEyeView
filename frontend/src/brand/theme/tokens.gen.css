@@ -85,7 +85,6 @@
   --scan-row-score: var(--primary);
   --scan-row-putts: #0369a1;
   --scan-row-shots: var(--score-quad-base);
-  --demo-card-header: #2d4c3b;
   --scan-line: #4ade80;
   --scan-shade: rgb(21 32 26 / 0.28);
   --tee-black: #15201a;
@@ -339,7 +338,6 @@
   --color-scan-row-score: var(--scan-row-score);
   --color-scan-row-putts: var(--scan-row-putts);
   --color-scan-row-shots: var(--scan-row-shots);
-  --color-demo-card-header: var(--demo-card-header);
   --color-scan-line: var(--scan-line);
   --color-scan-shade: var(--scan-shade);
   --color-tee-black: var(--tee-black);

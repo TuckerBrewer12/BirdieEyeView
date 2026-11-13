@@ -11,19 +11,18 @@ import {
   FileButton,
   FileChip,
   PageTitle,
-  RoundPreview,
   ScanProgress,
 } from "@/brand";
 import { tokens } from "@/brand/theme";
 import { SCAN_STEPS } from "@/domain/scan";
 import { useFilePreview } from "@/platform/useFilePreview";
-import { SAMPLE_ROUND } from "../sampleRound";
+import { ScannerDemo } from "../components/ScannerDemo";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
 /**
- * The hero: the headline, Try it with a photo and Sign up free, beside a photo of a card with the
- * round it reads back floated over it. Once a photo is picked, what's on the card and Scan my
- * scorecard take the photo's place; while it reads, the scan's progress does.
+ * The hero: the headline, Try it with a photo and Sign up free, beside the scanner demo: a photo of a
+ * card, read, then a tour of the app it lands in. Once a photo is picked, what's on the card and
+ * Scan my scorecard take the demo's place; while it reads, the scan's progress does.
  */
 export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }) {
   const previewUrl = useFilePreview(viewModel.photo);
@@ -109,21 +108,7 @@ export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }
             transition={{ ...tokens.motion.entrance, delay: 0.1 }}
             className="relative mt-2 md:mt-0"
           >
-            <img
-              src="/hero/physical-card.jpg"
-              alt="A paper scorecard held over a golf cart"
-              className="block h-75 w-full rounded-2xl object-cover md:h-105 md:rounded-3xl"
-            />
-            {/* The round a scan of a card like this reads back, floated over the photo. Decoration. */}
-            <Card
-              aria-hidden
-              data-slot="sample-round"
-              className="absolute inset-x-3.5 bottom-3.5 md:inset-x-auto md:-bottom-6 md:-left-7 md:w-85"
-            >
-              <CardContent>
-                <RoundPreview variant="summary" holes="strip" frame="none" round={SAMPLE_ROUND} />
-              </CardContent>
-            </Card>
+            <ScannerDemo />
             {viewModel.error && (
               <Alert tone="danger" className="mt-4">
                 <AlertDescription>{viewModel.error}</AlertDescription>
