@@ -1,5 +1,6 @@
 import {
   blur,
+  borderWidth,
   breakpoints,
   cssName,
   font,
@@ -27,7 +28,8 @@ import {
  * `npm run check:tokens` fails if the file on disk is not what it would write.
  *
  * Semantic colours sit on `:root` with their palette values resolved (only the
- * ones that change are repeated on `:root.dark`), measures sit on `:root` as
+ * ones that change are repeated on `:root.dark`, and on `.dark` so one panel
+ * of a page can be dark), measures sit on `:root` as
  * `--brand-*`, and `@theme inline` points each Tailwind namespace at them.
  * Inline keeps the `var()` live, so a utility follows the dark override; plain
  * `@theme` would bake in the light value.
@@ -82,6 +84,7 @@ const SECTIONS: Section[] = [
   { group: radius, prefix: "radius", theme: "radius", format: pixels },
   { group: space, prefix: "space", theme: "spacing", format: pixels },
   { group: size, prefix: "size", theme: "spacing", format: pixels },
+  { group: borderWidth, prefix: "border-width", theme: "border-width", format: pixels },
   { group: stroke, prefix: "stroke", theme: "stroke-width", format: unitless },
   { group: opacity, prefix: "opacity", theme: "opacity", format: unitless },
 ];
@@ -140,5 +143,5 @@ export function renderTokensCss(): string {
     ...Object.entries(gridColumns).map(([key, value]) => `--grid-template-columns-${key}: ${value};`),
   ];
 
-  return [HEADER, block(":root", root), block(":root.dark", darkLines), block("@theme inline", theme)].join("\n\n") + "\n";
+  return [HEADER, block(":root", root), block(":root.dark, .dark", darkLines), block("@theme inline", theme)].join("\n\n") + "\n";
 }

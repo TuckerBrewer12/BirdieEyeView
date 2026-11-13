@@ -27,6 +27,18 @@ test("a checked card saves as a round, and opens it", async ({ scan }) => {
   await scan.isAtSavedRound();
 });
 
+test("after a save, Scan another opens a fresh card", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.tapScanAnother();
+  await scan.seesUpload();
+  await scan.seesSavedRounds(1);
+});
+
 test("a failed save stays on the card and says why", async ({ scan }) => {
   await scan.open({ saveError: "That round could not be saved." });
   await scan.chooseScorecard();
@@ -158,11 +170,62 @@ test("starting over from the review goes back to an empty upload", async ({ scan
   await scan.seesUpload();
 });
 
-test("removing the picked photo goes back to the drop zone", async ({ scan }) => {
+test("a card with putts and shots to green asks for its rows' order", async ({ scan }) => {
   await scan.open();
   await scan.chooseScorecard();
-  await scan.removeCard();
-  await scan.seesUpload();
+  await scan.markOnCard("Putts");
+  await scan.markOnCard("Shots to green");
+  await scan.seesRowOrder(["Score", "Putts", "Shots to Green"]);
+});
+
+test("the scan is told the golfer's name, the scores to par, and the card's rows in order", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.nameOnCard("Tucker");
+  await scan.scoresWrittenToPar();
+  await scan.markOnCard("Putts");
+  await scan.markOnCard("Shots to green");
+  await scan.dragRow("Shots to Green", "Putts");
+  await scan.seesRowOrder(["Score", "Shots to Green", "Putts"]);
+  await scan.dragNameTo("Putts");
+  await scan.seesNameBeside("Putts");
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.seesScanNote(
+    "my name is Tucker. scores written to par. name on putts row. row order: score, shots to green, putts",
+  );
+});
+
+test("Name goes back beside the score when its row comes off the card, as the note says", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.markOnCard("Putts");
+  await scan.markOnCard("Shots to green");
+  await scan.dragRow("Putts", "Score");
+  await scan.dragNameTo("Shots to Green");
+  await scan.seesNameBeside("Shots to Green");
+  await scan.markOnCard("Shots to green");
+  await scan.seesNameBeside("Score");
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.seesScanNote("name on score row. row order: putts, score");
+});
+
+test("another photo takes the picked one's place", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.chooseAnotherPhoto();
+  await scan.seesChosenCard("another-card.jpg");
+});
+
+test("a failed read offers another photo from its banner, which clears it", async ({ scan }) => {
+  await scan.open({ scan: undefined });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesScanFailed();
+  await scan.chooseAnotherPhotoFromBanner();
+  await scan.seesChosenCard("another-card.jpg");
+  await scan.seesNoScanFailure();
 });
 
 test("a course can be picked ahead of the scan, and cleared", async ({ scan }) => {
@@ -239,7 +302,7 @@ test("a typed course name can be edited, and a picked course changed", async ({ 
   await scan.chooseManualEntry();
   await scan.searchSetupCourse("Muni Nine");
   await scan.keepTypedCourse("Muni Nine");
-  await scan.changeSetupCourse("Edit name");
+  await scan.changeSetupCourse("Link course");
   await scan.seesSetupSearch("Muni Nine");
   await scan.searchSetupCourse("Pebble");
   await scan.pickSetupCourse("Pebble Beach");

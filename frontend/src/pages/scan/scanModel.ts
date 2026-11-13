@@ -1,4 +1,4 @@
-import { Round, isoDay, type HoleEdits } from "@/domain";
+import { Round, isoDay, type HoleEdits, type TeeChoice } from "@/domain";
 import type { CourseSummary } from "@/domain/course";
 import type {
   CourseDto,
@@ -13,10 +13,6 @@ export type ScanMode = "scan" | "manual";
 
 export type ScanStep = "upload" | "processing" | "setup" | "review" | "success";
 
-/** How many phases the processing screen walks through while a scan is read. */
-export const SCAN_PHASE_COUNT = 4;
-/** The scan reports no progress, so each phase is held this long rather than reported. */
-export const SCAN_PHASE_HOLD_MS = 3500;
 
 /** A course the golfer chose. No id means a name they typed for a course we don't have. */
 export interface PickedCourse {
@@ -56,6 +52,18 @@ export interface ScanReviewDraft {
 /** Today as `YYYY-MM-DD`, the date a round defaults to: the golfer's day, not UTC's. */
 export function todayIso(now: Date = new Date()): string {
   return isoDay(now);
+}
+
+/**
+ * The tees read off the card, to pick from. The scan reads a tee's yards hole by hole and the
+ * server hasn't added them up yet, so a scanned tee shows its name alone.
+ */
+export function scannedTeeOptions(course: ScanDto["round"]["course"] | null | undefined): TeeChoice[] {
+  const options: TeeChoice[] = [];
+  for (const tee of course?.tees ?? []) {
+    if (tee.color) options.push({ name: tee.color, yards: null });
+  }
+  return options;
 }
 
 /** A course name as a search query: trimmed, single-spaced. */

@@ -6,7 +6,7 @@ export function messageFrom(err: unknown, fallback: string): string {
 export const USER_FACING_ERRORS = {
   request: "We couldn't complete your request. Please try again.",
   account: "We couldn't complete this account request. Please try again.",
-  scan: "We couldn't scan this scorecard. Please try again.",
+  scan: "Couldn't read this card. Try a flatter, brighter photo.",
   saveRound: "We couldn't save this round. Please try again.",
   deleteRound: "We couldn't delete this round. Please try again.",
 } as const;

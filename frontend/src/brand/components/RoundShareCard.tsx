@@ -7,7 +7,8 @@ import { Stat, StatLabel, StatValue } from "@/brand/components/Stat";
 import { ToParFigure } from "@/brand/components/ToParFigure";
 import { playedScoreKinds, scoreKindCountLabel, type Round } from "@/domain";
 import { formatCourseName } from "@/domain/course";
-import { formatWeekdayDay } from "@/domain/date";
+import { formatWeekday } from "@/domain/date";
+import { formatCount } from "@/domain/format";
 
 interface RoundShareCardProps extends React.ComponentProps<"div"> {
   round: Round;
@@ -20,7 +21,7 @@ interface RoundShareCardProps extends React.ComponentProps<"div"> {
  */
 const RoundShareCard = React.forwardRef<HTMLDivElement, RoundShareCardProps>(
   ({ round, className, ...props }, ref) => {
-    const date = formatWeekdayDay(round.date);
+    const date = formatWeekday(round.date);
     const played = playedScoreKinds(round.scoreCounts);
 
     return (
@@ -53,7 +54,7 @@ const RoundShareCard = React.forwardRef<HTMLDivElement, RoundShareCardProps>(
                 <div className="mt-0.5 flex items-center gap-1.5 text-label text-muted-foreground">
                   {round.par != null && <span>par {round.par}</span>}
                   {round.par != null && round.yards != null && <span>·</span>}
-                  {round.yards != null && <span>{round.yards.toLocaleString("en-US")} yds</span>}
+                  {round.yards != null && <span>{formatCount(round.yards)} yds</span>}
                 </div>
               )}
             </div>

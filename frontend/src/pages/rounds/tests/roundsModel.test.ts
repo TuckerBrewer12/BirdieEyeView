@@ -1,114 +1,117 @@
 import { describe, it, expect } from "vitest";
 import {
-  courseChips,
+  ALL_COURSES,
+  courseOptions,
   effectiveSort,
   filterRounds,
-  modeAfterPickingSort,
-  sortAfterPicking,
+  scopeAfterPickingSort,
   type ListedRound,
-  type Sort,
+  type RoundsQuery,
 } from "../roundsModel";
 
-function round(course: string | null, score: number | null, date = "2026-01-01", bestRank: number | null = null): ListedRound {
-  return {
-    course: course == null ? null : { name: course },
-    score,
-    toPar: score == null ? null : score - 72,
-    date,
-    bestRank,
-  };
+function round(
+  course: string | null,
+  toPar: number | null,
+  date = "2026-01-01",
+  bestRank: number | null = null,
+  worstRank: number | null = null,
+): ListedRound {
+  return { course: course == null ? null : { name: course }, toPar, date, bestRank, worstRank };
 }
 
-const byDate: Sort = { key: "date", ascending: false };
-const byScoreHighFirst: Sort = { key: "total_score", ascending: false };
-const byScoreLowFirst: Sort = { key: "total_score", ascending: true };
+const query = (over: Partial<RoundsQuery> = {}): RoundsQuery => ({
+  scope: "all",
+  course: ALL_COURSES,
+  search: "",
+  sort: "newest",
+  ...over,
+});
 
 describe("filterRounds", () => {
   it("matches the search anywhere in the course name, ignoring case", () => {
-    const rounds = [round("Blue Rock", 80), round("Half Moon Bay", 85), round("Rock Creek", 90)];
-    expect(filterRounds(rounds, "all", "ROCK", byDate).map((r) => r.course?.name)).toEqual([
+    const rounds = [round("Blue Rock", 8), round("Half Moon Bay", 13), round("Rock Creek", 18)];
+    expect(filterRounds(rounds, query({ search: "ROCK", sort: "course" })).map((r) => r.course?.name)).toEqual([
       "Blue Rock",
       "Rock Creek",
     ]);
   });
 
-  it("applies the search inside a course chip", () => {
-    const rounds = [round("Blue Rock", 80), round("Half Moon Bay", 85)];
-    expect(filterRounds(rounds, "Half Moon Bay", "rock", byDate)).toEqual([]);
+  it("applies the search inside the course picked", () => {
+    const rounds = [round("Blue Rock", 8), round("Half Moon Bay", 13)];
+    expect(filterRounds(rounds, query({ course: "Half Moon Bay", search: "rock" }))).toEqual([]);
   });
 
-  it("puts rounds with no score last in both directions", () => {
-    const rounds = [round("A", null), round("B", 90), round("C", 80)];
-    expect(filterRounds(rounds, "all", "", byScoreHighFirst).map((r) => r.score)).toEqual([90, 80, null]);
-    expect(filterRounds(rounds, "all", "", byScoreLowFirst).map((r) => r.score)).toEqual([80, 90, null]);
+  it("orders newest and oldest by date", () => {
+    const rounds = [round("A", 0, "2026-02-01"), round("B", 0, "2026-03-01"), round("C", 0, "2026-01-01")];
+    expect(filterRounds(rounds, query({ sort: "newest" })).map((r) => r.course?.name)).toEqual(["B", "A", "C"]);
+    expect(filterRounds(rounds, query({ sort: "oldest" })).map((r) => r.course?.name)).toEqual(["C", "A", "B"]);
   });
 
-  it("Best follows the server's order whatever sort was chosen, unplaced rounds last", () => {
-    // A nine of 38 has the lowest score, but the server ranks every full round ahead of it.
-    const rounds = [round("A", 85, undefined, 2), round("Nine", 38, undefined, 3), round("B", 74, undefined, 1), round("C", null)];
-    expect(filterRounds(rounds, "best", "", { key: "course_name", ascending: false }).map((r) => r.score))
-      .toEqual([74, 85, 38, null]);
+  it("Worst score follows the server's order, a full round ahead of a nine, unplaced rounds last", () => {
+    // The nine is furthest over par, but the server ranks every full round ahead of it.
+    const rounds = [round("A", null), round("Nine", 20, undefined, 3, 3), round("B", 18, undefined, 2, 1), round("C", 8, undefined, 1, 2)];
+    expect(filterRounds(rounds, query({ sort: "worst" })).map((r) => r.course?.name)).toEqual(["B", "C", "Nine", "A"]);
   });
 
-  it("L20 keeps the twenty most recent rounds, however they arrive", () => {
-    const rounds = Array.from({ length: 25 }, (_, i) =>
-      round(`Course ${i}`, 80, `2026-01-${String(25 - i).padStart(2, "0")}`),
-    ).reverse();
-    const kept = filterRounds(rounds, "l20", "", byDate);
+  it("Best score follows the server's order, unplaced rounds last", () => {
+    // A nine at +2 is the lowest to par, but the server ranks every full round ahead of it.
+    const rounds = [round("A", 13, undefined, 2), round("Nine", 2, undefined, 3), round("B", 2, undefined, 1), round("C", null)];
+    expect(filterRounds(rounds, query({ sort: "best" })).map((r) => r.course?.name)).toEqual(["B", "A", "Nine", "C"]);
+  });
+
+  it("the Best scope orders by the server's rank whatever sort was chosen", () => {
+    const rounds = [round("A", 13, "2026-03-01", 2), round("B", 2, "2026-01-01", 1)];
+    expect(filterRounds(rounds, query({ scope: "best", sort: "newest" })).map((r) => r.course?.name)).toEqual(["B", "A"]);
+  });
+
+  it("Last 20 keeps the twenty most recent rounds at the course picked, however they arrive", () => {
+    const rounds = [
+      ...Array.from({ length: 25 }, (_, i) => round("Home", 8, `2026-01-${String(i + 1).padStart(2, "0")}`)),
+      round("Away", 8, "2026-02-01"),
+    ];
+    const kept = filterRounds(rounds, query({ scope: "last20", course: "Home" }));
     expect(kept).toHaveLength(20);
-    expect(kept.map((r) => r.date).at(-1)).toBe("2026-01-06");
+    expect(kept.at(-1)?.date).toBe("2026-01-06");
   });
 
   it("does not reorder the list it was given", () => {
-    const rounds = [round("A", 90), round("B", 80)];
-    filterRounds(rounds, "all", "", byScoreLowFirst);
-    expect(rounds.map((r) => r.score)).toEqual([90, 80]);
+    const rounds = [round("A", 18, undefined, 2, 1), round("B", 8, undefined, 1, 2)];
+    filterRounds(rounds, query({ sort: "worst" }));
+    expect(rounds.map((r) => r.toPar)).toEqual([18, 8]);
   });
 });
 
-describe("sortAfterPicking", () => {
-  it("flips direction when the same key is picked again", () => {
-    expect(sortAfterPicking(byScoreHighFirst, "total_score")).toEqual(byScoreLowFirst);
-  });
-
-  it("starts a new key high-to-low", () => {
-    expect(sortAfterPicking(byDate, "to_par")).toEqual({ key: "to_par", ascending: false });
-  });
-
-  it("starts course names A–Z", () => {
-    expect(sortAfterPicking(byDate, "course_name")).toEqual({ key: "course_name", ascending: true });
-  });
-});
-
-describe("modeAfterPickingSort", () => {
+describe("scopeAfterPickingSort", () => {
   it("leaves Best, which would ignore the pick", () => {
-    expect(modeAfterPickingSort("best")).toBe("all");
+    expect(scopeAfterPickingSort("best")).toBe("all");
   });
 
-  it("keeps every other chip", () => {
-    expect(modeAfterPickingSort("l20")).toBe("l20");
-    expect(modeAfterPickingSort("Blue Rock")).toBe("Blue Rock");
+  it("keeps the other scopes", () => {
+    expect(scopeAfterPickingSort("last20")).toBe("last20");
   });
 });
 
 describe("effectiveSort", () => {
   it("passes the chosen sort through outside Best", () => {
-    expect(effectiveSort("all", byDate)).toEqual({ ...byDate, locked: false });
+    expect(effectiveSort("all", "oldest")).toBe("oldest");
   });
 
-  it("locks Best to to par, lowest first", () => {
-    expect(effectiveSort("best", byDate)).toEqual({ key: "to_par", ascending: true, locked: true });
+  it("is Best score in the Best scope", () => {
+    expect(effectiveSort("best", "oldest")).toBe("best");
   });
 });
 
-describe("courseChips", () => {
-  it("offers All, L20 and Best, then the six most-played courses", () => {
+describe("courseOptions", () => {
+  it("offers All courses, then every course, the most played first", () => {
     const rounds = [
-      ...["G", "F", "E", "D", "C", "B", "A"].flatMap((name, i) =>
-        Array.from({ length: i + 1 }, () => round(name, 80)),
-      ),
-      round(null, 80),
+      ...["c", "b", "a"].flatMap((name, i) => Array.from({ length: i + 1 }, () => round(name, 8))),
+      round(null, 8),
     ];
-    expect(courseChips(rounds).map((c) => c.mode)).toEqual(["all", "l20", "best", "A", "B", "C", "D", "E", "F"]);
+    expect(courseOptions(rounds)).toEqual([
+      { value: ALL_COURSES, label: "All courses" },
+      { value: "a", label: "A" },
+      { value: "b", label: "B" },
+      { value: "c", label: "C" },
+    ]);
   });
 });

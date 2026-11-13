@@ -32,7 +32,7 @@ export function ForgotPasswordPage() {
           <Input
             id="forgot-email"
             type="email"
-            size="cta"
+           
             value={viewModel.email}
             onChange={(event) => viewModel.setEmail(event.target.value)}
             required

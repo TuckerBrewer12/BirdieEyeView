@@ -1,4 +1,4 @@
-import { pluralNoun } from "./format";
+import { formatSigned, pluralNoun } from "./format";
 
 /** The seven score buckets the app uses. ≤ −2 is eagle (eagle+). ≥ +4 is quad. */
 export const SCORE_KINDS = [
@@ -82,6 +82,11 @@ export function scoreKindLabel(kind: ScoreKind): string {
   return SCORE_KIND_LABEL[kind].one;
 }
 
+/** The kind's word for `count` holes, without the count: "Birdie", "Pars". */
+export function scoreKindNoun(kind: ScoreKind, count: number): string {
+  return count === 1 ? SCORE_KIND_LABEL[kind].one : SCORE_KIND_LABEL[kind].many;
+}
+
 /** The word for `count` holes of one kind: "1 Birdie", "3 Birdies". */
 export function scoreKindCountLabel(kind: ScoreKind, count: number): string {
   return pluralNoun(count, SCORE_KIND_LABEL[kind].one, SCORE_KIND_LABEL[kind].many);
@@ -108,6 +113,21 @@ export function formatAverageToPar(value: number): string {
   return toParLabel(roundAverageToPar(value)) ?? "E";
 }
 
+/** An average to par to a tenth, halves away from level: -0.05 is -0.1, as +0.05 is +0.1. */
+export function roundAverageToParTenths(value: number): number {
+  return (Math.sign(value) * Math.round(Math.abs(value) * 10)) / 10;
+}
+
+/**
+ * An average to par to a tenth, as a course's scorecard row and the golfer's record there show it:
+ * "+0.5", "E", "−0.5", "+3.0". A dash when there is nothing to show.
+ */
+export function formatAverageToParTenths(value: number | null | undefined): string {
+  if (value == null) return "—";
+  const tenths = roundAverageToParTenths(value);
+  return tenths === 0 ? "E" : formatSigned(tenths, 1);
+}
+
 /**
  * The kinds a round had, in display order, with how many holes of each. Chips and
  * legends show one entry per kind, so they match the coloured segments one to one.
@@ -119,4 +139,18 @@ export function playedScoreKinds(
     const count = counts[kind] ?? 0;
     return count > 0 ? [{ kind, count }] : [];
   });
+}
+
+/** The kinds holes are counted in when triples and worse read as one: eagle to "Triple+". */
+export const FOLDED_SCORE_KINDS: readonly ScoreKind[] = SCORE_KINDS.filter((kind) => kind !== "quad");
+
+/** A kind's holes, or share, with triples and worse together under `triple`. */
+export function foldedCount(counts: Record<ScoreKind, number>, kind: ScoreKind): number {
+  return kind === "triple" ? counts.triple + counts.quad : counts[kind];
+}
+
+/** A kind's name with triples and worse together: "Triple+"; with `many`, "Birdies", "Triples+". */
+export function foldedKindLabel(kind: ScoreKind, many = false): string {
+  const word = many ? SCORE_KIND_LABEL[kind].many : SCORE_KIND_LABEL[kind].one;
+  return kind === "triple" ? `${word}+` : word;
 }

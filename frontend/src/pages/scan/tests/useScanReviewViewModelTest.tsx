@@ -83,7 +83,7 @@ describe("useScanReviewViewModel", () => {
 
     expect(result.current.linkedName).toBe(pebbleBeachSummary.name);
     expect(result.current.round?.course?.name).toBe(pebbleBeachSummary.name);
-    await waitFor(() => expect(result.current.tees).toEqual(["Blue"]));
+    await waitFor(() => expect(result.current.tees.map((tee) => tee.name)).toEqual(["Blue"]));
     expect(result.current.round?.holes.map((hole) => hole.par)).toEqual(
       pebbleBeachCourse.holes.map((hole) => hole.par),
     );

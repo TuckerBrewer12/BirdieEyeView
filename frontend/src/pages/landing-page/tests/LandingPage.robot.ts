@@ -106,7 +106,7 @@ export class LandingRobot {
 
   /** The scan failed: the reason shows, and the photo is still there to try again. */
   async seesScanFailed(): Promise<this> {
-    await expect(this.page.getByRole("alert")).toContainText("We couldn't scan this scorecard.");
+    await expect(this.page.getByRole("alert")).toContainText("Couldn't read this card.");
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Scan my scorecard" })).toBeVisible();
     return this;
@@ -127,7 +127,8 @@ export class LandingRobot {
 
   /** The visitor's own card, read back as a scorecard. */
   async seesScannedCard(): Promise<this> {
-    await expect(this.page.getByText(SCANNED_COURSE_NAME, { exact: true })).toBeVisible();
+    // The course leads the scorecard's course line, before where it is.
+    await expect(this.page.getByText(`${SCANNED_COURSE_NAME} ·`, { exact: false })).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Scan another" })).toBeVisible();
     return this;
   }

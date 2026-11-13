@@ -19,7 +19,6 @@ import { RoundsPage, RoundDetailPage } from "./pages/rounds";
 import { CoursesPage, CourseDetailPage } from "./pages/courses";
 import { AnalyticsPage } from "./pages/analytics";
 import { CareerPage } from "./pages/career";
-import { TheLabPage } from "./pages/the-lab";
 import { SettingsPage } from "./pages/settings";
 import { SocialPage, FriendsInboxPage } from "./pages/social";
 import { BrandHarness } from "./brand/BrandHarness";
@@ -103,7 +102,8 @@ function AppRoutes() {
           <Route path="/courses/:courseId" element={<CourseDetailPage userId={userId} />} />
           <Route path="/scan" element={<ScanPage userId={userId} />} />
           <Route path="/analytics" element={<AnalyticsPage userId={userId} />} />
-          <Route path="/the-lab" element={<TheLabPage userId={userId} />} />
+          {/* The Lab is the analytics page's Profile now. */}
+          <Route path="/the-lab" element={<Navigate to="/analytics?tab=profile" replace />} />
           <Route path="/social" element={<SocialPage userId={userId} />} />
           <Route path="/career" element={<CareerPage userId={userId} />} />
           <Route path="/inbox" element={<FriendsInboxPage userId={userId} />} />

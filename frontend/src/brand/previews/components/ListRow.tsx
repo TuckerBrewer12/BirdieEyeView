@@ -1,30 +1,23 @@
-import { Collection } from "@/brand/components/Collection";
+import { ChevronRight } from "lucide-react";
+import { Card } from "@/brand/components/Card";
 import { ListRow } from "@/brand/components/ListRow";
 
-const rows = [
-  { id: "a", title: "Two lines", detail: "64 tall, the rule drawn by the Collection" },
-  { id: "b", title: "A long title that runs past the width of the row and truncates", detail: "Second line" },
-];
-
-/** Compose-style @Preview for ListRow: the shell rows sit in, in a divided Collection. */
+/** The shell: a two-line row at 64, and a one-line settings row at 56. */
 export default function ListRowPreview() {
   return (
-    <>
-      <p className="text-label font-semibold text-muted-foreground">Rows</p>
-      <Collection
-        layout="divided"
-        className="overflow-hidden rounded-card border border-border bg-card"
-        items={rows}
-        keyFor={(row) => row.id}
-        renderItem={(row) => (
-          <ListRow>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-body-lg font-semibold text-foreground">{row.title}</p>
-              <p className="truncate text-body text-muted-foreground">{row.detail}</p>
-            </div>
-          </ListRow>
-        )}
-      />
-    </>
+    <Card className="divide-y divide-border py-0">
+      <ListRow>
+        <span aria-hidden className="size-10 rounded-full bg-muted" />
+        <div className="flex-1">
+          <p className="text-body-lg font-semibold">A row with two lines</p>
+          <p className="text-body-sm text-muted-foreground">Its detail under it</p>
+        </div>
+        <ChevronRight aria-hidden className="size-4 text-muted-foreground" />
+      </ListRow>
+      <ListRow size="sm">
+        <span className="flex-1 text-body-lg font-medium">A settings row</span>
+        <span className="text-body-lg text-muted-foreground">Its value</span>
+      </ListRow>
+    </Card>
   );
 }

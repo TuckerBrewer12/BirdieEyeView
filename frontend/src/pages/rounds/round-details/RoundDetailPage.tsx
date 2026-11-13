@@ -1,26 +1,30 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { Link2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useShareRound } from "@/platform/useShareRound";
 import { roundShareMessage } from "@/domain/share";
+import { courseLabel } from "@/domain/course";
 import {
   Alert,
   AlertDescription,
   Button,
   Card,
+  CardAction,
   CardContent,
+  CardHeader,
+  CardTitle,
   CourseLinkSearch,
   Input,
   LoadingState,
+  PageTitle,
   RoundFlowChart,
+  RoundFlowFigures,
   RoundScorecard,
   RoundShareCard,
-  SectionLabel,
-  ToggleGroup,
-  ToggleGroupItem,
+  TeePicker,
 } from "@/brand";
 import { LinkCoursePanel } from "../components/LinkCoursePanel";
 import { RoundComparisonSection } from "./components/RoundComparisonSection";
-import { RoundDetailHeader } from "./components/RoundDetailHeader";
+import { RoundSummaryCard } from "./components/RoundSummaryCard";
 import { RoundActions } from "./RoundActions";
 import { useRoundDetailPageViewModel } from "./useRoundDetailPageViewModel";
 
@@ -35,7 +39,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   }
   if (viewModel.loadError || !viewModel.played) {
     return (
-      <Alert variant="destructive">
+      <Alert tone="danger">
         <AlertDescription>{viewModel.loadError ?? "Could not load this round."}</AlertDescription>
       </Alert>
     );
@@ -45,17 +49,11 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const editor = viewModel.editor;
 
   return (
-    <div>
+    <div className="flex flex-col gap-3.5 pb-6 md:gap-4">
       {/* Rendered just off the right edge, so the share button can capture it as an image. */}
       <div aria-hidden className="pointer-events-none fixed top-0 left-full">
         <RoundShareCard ref={shareCardRef} round={played} />
       </div>
-
-      {viewModel.actionError && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertDescription>{viewModel.actionError}</AlertDescription>
-        </Alert>
-      )}
 
       <RoundActions
         editMode={editor.editing}
@@ -63,40 +61,38 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         confirmDelete={viewModel.confirmDelete}
         deleting={viewModel.deleting}
         sharing={sharing}
+        deleteLine={viewModel.deleteLine}
+        canLink={viewModel.canLink}
         onEdit={viewModel.enterEditMode}
         onSave={editor.save}
         onCancelEdit={editor.cancel}
         onShare={() => void shareRound(roundShareMessage(played))}
+        onLink={viewModel.openLinkCourse}
         onDelete={viewModel.requestDelete}
         onConfirmDelete={() => viewModel.confirmDeleteRound(() => void navigate("/rounds"))}
         onCancelDelete={viewModel.cancelDelete}
         onBack={() => void navigate(-1)}
       />
 
-      <RoundDetailHeader
-        round={played}
-        teeRating={viewModel.teeRating}
-      />
-
-      {viewModel.showLinkButton && (
-        <div className="mb-3 -mt-2">
-          <Button
-            variant="linkMuted"
-            size="xs"
-            className="h-auto p-0"
-            onClick={viewModel.openLinkCourse}
-          >
-            <Link2 />
-            Link course
-          </Button>
-        </div>
+      {viewModel.actionError && (
+        <Alert tone="danger">
+          <AlertDescription>{viewModel.actionError}</AlertDescription>
+        </Alert>
       )}
+
+      <div data-slot="round-title">
+        {viewModel.dateLine && <div className="text-body text-muted-foreground">{viewModel.dateLine}</div>}
+        <PageTitle size="heading" className="mt-0.5">
+          {courseLabel(played.course?.name)}
+        </PageTitle>
+      </div>
+
       {viewModel.showLinkCourse && (
-        <div className="mb-4">
+        <div className="max-w-130">
           <LinkCoursePanel
             userId={userId}
             roundId={played.id}
-            title="Link to a saved course"
+            title="Link to a course"
             onClose={viewModel.closeLinkCourse}
             onLinked={viewModel.closeLinkCourse}
           />
@@ -104,50 +100,41 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       )}
 
       {editor.editing && (
-        <div className="mb-4">
-          <CourseLinkSearch
-            query={editor.courseQuery}
-            results={editor.courseResults}
-            searching={editor.courseSearching}
-            onQueryChange={editor.searchCourses}
-            onSelectCourse={(c) => { void editor.pickCourse(c); }}
-            onClose={editor.closeCourseSearch}
-            reviewVariant
-            onUseCustomName={editor.setCustomName}
-            linkedName={editor.linkedName}
-            customName={editor.customName}
-            onClear={editor.changeCourse}
-            clearLabel="Change course"
-            focusOnOpen
-          />
-          {editor.playedNameToKeep && (
-            <Button
-              variant="linkMuted"
-              size="xs"
-              className="mt-1.5 h-auto p-0"
-              onClick={editor.keepPlayedName}
-            >
-              Keep "{editor.playedNameToKeep}" without linking →
-            </Button>
-          )}
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-xs font-semibold text-muted-foreground">Tee</span>
-            {editor.availableTees.length > 0 ? (
-              <ToggleGroup
-                variant="outline"
-                size="sm"
-                aria-label="Tee"
-                value={editor.teeBox ? [editor.teeBox] : []}
-                onValueChange={(values) => editor.setTeeBox(values[0] ?? "")}
-              >
-                {editor.availableTees.map((color) => (
-                  <ToggleGroupItem key={color} value={color}>
-                    {color}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            ) : (
+        <div className="flex flex-col gap-3">
+          <div className="max-w-130">
+            <CourseLinkSearch
+              query={editor.courseQuery}
+              results={editor.courseResults}
+              searching={editor.courseSearching}
+              onQueryChange={editor.searchCourses}
+              onSelectCourse={(c) => {
+                void editor.pickCourse(c);
+              }}
+              onClose={editor.closeCourseSearch}
+              reviewVariant
+              onUseCustomName={editor.setCustomName}
+              linkedName={editor.linkedName}
+              customName={editor.customName}
+              onClear={editor.changeCourse}
+              clearLabel="Change course"
+              focusOnOpen
+            />
+            {editor.playedNameToKeep && (
+              <Button variant="linkMuted" size="inline" className="mt-1.5" onClick={editor.keepPlayedName}>
+                Keep "{editor.playedNameToKeep}" without linking
+                <ArrowRight aria-hidden />
+              </Button>
+            )}
+          </div>
+          {viewModel.teeOptions.length > 0 ? (
+            <TeePicker tees={viewModel.teeOptions} value={editor.teeBox} onChange={editor.setTeeBox} />
+          ) : (
+            <div className="flex items-center gap-2">
+              <span aria-hidden className="text-body font-semibold text-foreground-secondary">
+                Tee
+              </span>
               <Input
+                size="inline"
                 aria-label="Tee"
                 autoComplete="off"
                 placeholder="e.g. White"
@@ -155,39 +142,47 @@ export function RoundDetailPage({ userId }: { userId: string }) {
                 onChange={(e) => editor.setTeeBox(e.target.value)}
                 className="w-28"
               />
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
-      <div className={!editor.editing ? "mt-2" : ""}>
-        <RoundScorecard
-          round={played}
-          teeBox={editor.activeTeeBox}
-          edits={
-            editor.editing
-              ? {
-                  onStrokesChange: (hole, strokes) => editor.setScore(hole, "strokes", strokes),
-                  onPuttsChange: (hole, putts) => editor.setScore(hole, "putts", putts),
-                  onGirChange: editor.setGir,
-                }
-              : undefined
-          }
-        />
-      </div>
+      <RoundSummaryCard round={played} />
 
-      {viewModel.showMomentum && (
-        <div className="mt-6">
-          <SectionLabel>Momentum</SectionLabel>
-          <Card>
-            <CardContent>
-              <RoundFlowChart round={played} />
-            </CardContent>
-          </Card>
+      <RoundScorecard
+        round={played}
+        teeBox={editor.activeTeeBox}
+        edits={
+          editor.editing
+            ? {
+                onStrokesChange: (hole, strokes) => editor.setScore(hole, "strokes", strokes),
+                onPuttsChange: (hole, putts) => editor.setScore(hole, "putts", putts),
+                onGirChange: editor.setGir,
+              }
+            : undefined
+        }
+      />
+
+      {!editor.editing && (
+        <div className="grid grid-cols-1 gap-3.5 md:grid-cols-round-detail md:gap-4">
+          {viewModel.showFlow && (
+            <Card data-slot="round-flow" size="lg">
+              <CardHeader>
+                <CardTitle level={2} className="text-body-lg font-semibold">
+                  Round flow
+                </CardTitle>
+                <CardAction>
+                  <RoundFlowFigures round={played} />
+                </CardAction>
+              </CardHeader>
+              <CardContent>
+                <RoundFlowChart round={played} />
+              </CardContent>
+            </Card>
+          )}
+          <RoundComparisonSection userId={userId} roundId={played.id} />
         </div>
       )}
-
-      <RoundComparisonSection userId={userId} roundId={played.id} />
     </div>
   );
 }

@@ -1,77 +1,77 @@
 import * as React from "react";
 import { Toggle as TogglePrimitive } from "@base-ui/react/toggle";
 import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group";
-import { type VariantProps } from "class-variance-authority";
 import { cn } from "@/brand/cn";
 import { toggleVariants } from "./variants";
 
-const ToggleGroupContext = React.createContext<
-  VariantProps<typeof toggleVariants> & {
-    spacing?: number;
-    orientation?: "horizontal" | "vertical";
-  }
->({
+type SegmentedSize = "default" | "sm";
+
+type ToggleLook = "segmented" | "boxed" | "chips";
+
+const ToggleGroupContext = React.createContext<{ size: SegmentedSize; fill: boolean; look: ToggleLook }>({
   size: "default",
-  variant: "default",
-  spacing: 2,
-  orientation: "horizontal",
+  fill: false,
+  look: "segmented",
 });
 
+type ToggleGroupProps = ToggleGroupPrimitive.Props & {
+  /** `default` is 32 on the page; `sm` is the compact 28 for a card header. */
+  size?: SegmentedSize;
+  /** Stretch to the row, the options sharing its width equally (a phone). */
+  fill?: boolean;
+  /**
+   * `segmented` (the default) is options on a recessed pill track, for a view switched in place in a
+   * card. `boxed` is the same on a rounded-rectangle track with square-cornered options, for a form's
+   * choice or a page's mode (Scan's Photo / By hand). `chips` is a row of separate pills a gap apart, the
+   * picked one filled green, for a page's own switch.
+   */
+  look?: ToggleLook;
+};
+
+/**
+ * One of a few options: two to four short ones on a recessed pill track, one raised (`segmented`), or a
+ * row of chips a gap apart (`chips`). More options, or long labels, belong in a menu.
+ */
 function ToggleGroup({
   className,
-  variant,
-  size,
-  spacing = 2,
-  orientation = "horizontal",
+  size = "default",
+  fill = false,
+  look = "segmented",
   children,
   ...props
-}: ToggleGroupPrimitive.Props &
-  VariantProps<typeof toggleVariants> & {
-    spacing?: number;
-  }) {
+}: ToggleGroupProps) {
+  const chips = look === "chips";
+  const boxed = look === "boxed";
   return (
     <ToggleGroupPrimitive
       data-slot="toggle-group"
-      data-variant={variant}
       data-size={size}
-      data-spacing={spacing}
-      data-orientation={orientation}
-      style={{ "--gap": spacing } as React.CSSProperties}
-      orientation={orientation}
       className={cn(
-        "group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] rounded-lg data-[size=sm]:rounded-md data-vertical:flex-col data-vertical:items-stretch",
+        chips && "flex flex-wrap items-center gap-2",
+        boxed && "flex items-center gap-0.5 rounded-xl bg-muted p-1",
+        look === "segmented" && ["flex items-center gap-0.5 rounded-full bg-muted", size === "sm" ? "p-0.5" : "p-chip"],
+        fill ? "w-full" : "w-fit",
         className,
       )}
       {...props}
     >
-      <ToggleGroupContext.Provider value={{ variant, size, spacing, orientation }}>
-        {children}
-      </ToggleGroupContext.Provider>
+      <ToggleGroupContext.Provider value={{ size, fill, look }}>{children}</ToggleGroupContext.Provider>
     </ToggleGroupPrimitive>
   );
 }
 
-function ToggleGroupItem({
-  className,
-  children,
-  variant = "default",
-  size = "default",
-  ...props
-}: TogglePrimitive.Props & VariantProps<typeof toggleVariants>) {
-  const context = React.useContext(ToggleGroupContext);
+function ToggleGroupItem({ className, children, ...props }: TogglePrimitive.Props) {
+  const { size, fill, look } = React.useContext(ToggleGroupContext);
 
   return (
     <TogglePrimitive
       data-slot="toggle-group-item"
-      data-variant={context.variant || variant}
-      data-size={context.size || size}
-      data-spacing={context.spacing}
+      data-size={size}
       className={cn(
-        "shrink-0 group-data-[spacing=0]/toggle-group:rounded-none group-data-[spacing=0]/toggle-group:px-2 focus:z-10 focus-visible:z-10 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-end]:pr-1.5 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-start]:pl-1.5 group-data-horizontal/toggle-group:data-[spacing=0]:first:rounded-l-lg group-data-vertical/toggle-group:data-[spacing=0]:first:rounded-t-lg group-data-horizontal/toggle-group:data-[spacing=0]:last:rounded-r-lg group-data-vertical/toggle-group:data-[spacing=0]:last:rounded-b-lg group-data-horizontal/toggle-group:data-[spacing=0]:data-[variant=outline]:border-l-0 group-data-vertical/toggle-group:data-[spacing=0]:data-[variant=outline]:border-t-0 group-data-horizontal/toggle-group:data-[spacing=0]:data-[variant=outline]:first:border-l group-data-vertical/toggle-group:data-[spacing=0]:data-[variant=outline]:first:border-t",
-        toggleVariants({
-          variant: context.variant || variant,
-          size: context.size || size,
-        }),
+        look === "chips" && toggleVariants({ variant: "chip" }),
+        look === "boxed" && toggleVariants({ variant: "boxed" }),
+        look === "segmented" && toggleVariants({ variant: "segmented", size }),
+        fill ? "min-w-0 flex-1 basis-0" : "shrink-0",
         className,
       )}
       {...props}

@@ -23,6 +23,7 @@ from analytics.stats import best_round
 from api.analytics_responses import analytics_response
 from api.player_handicap import player_handicap_index
 from api.round_responses import round_detail
+from analytics import dashboard as dashboard_module
 from api.routers import stats, users
 from models import Course, Hole, HoleScore, Round, Tee, User
 
@@ -189,6 +190,10 @@ async def _responses() -> tuple[dict, dict]:
     rounds = _season()
     db = _database(rounds)
     user_id = UUID(USER.id)
+    # "This month" and "this season" read against the day after the last round, not the day the
+    # script runs, so a re-run writes the same golfer.
+    last_day = max(r.date for r in rounds).date()
+    dashboard_module.today = lambda: last_day + timedelta(days=1)
 
     dashboard = await stats.get_dashboard(user_id, db, USER)
     analytics = await stats.get_analytics(user_id, 50, None, None, db, USER)
@@ -196,6 +201,14 @@ async def _responses() -> tuple[dict, dict]:
     played_courses = await stats.get_played_courses(user_id, db, USER)
     # Analytics' course filter, for the course played least, so the figures plainly change.
     links_analytics = await stats.get_analytics(user_id, 50, HALF_MOON_BAY.id, None, db, USER)
+
+    # The profile's comparisons: every handicap benchmark, over the same
+    # rounds as `analytics` (the fake backend answers every round count with it), so the radar and
+    # its verdicts agree.
+    benchmarks = {
+        f"handicap:{handicap}": await stats.get_benchmark_comparison(user_id, "handicap", handicap, None, 50, db, USER)
+        for handicap in (0, 5, 10, 15, 20, 25)
+    }
 
     best = best_round(sorted(rounds, key=lambda r: r.date, reverse=True))
     profile = users.user_response(USER.model_copy(update={"handicap": dashboard.handicap_index}))
@@ -208,6 +221,7 @@ async def _responses() -> tuple[dict, dict]:
         "analyticsByCourse": {HALF_MOON_BAY.id: links_analytics},
         "playedCourses": played_courses,
         "goalReport": goal_report,
+        "benchmarks": benchmarks,
         # The tour's pages never ask for the round list; Analytics opens just the best round.
         "detailRounds": [round_detail(best, await player_handicap_index(db, USER))],
     })

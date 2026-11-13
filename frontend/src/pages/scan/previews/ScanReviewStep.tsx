@@ -34,5 +34,5 @@ const review: ScanReviewViewModel = {
 };
 
 export default function ScanReviewStepPreview() {
-  return <ScanReviewStep review={review} manual={false} photoUrl="/hero/physical-card.jpg" onStartOver={noop} />;
+  return <ScanReviewStep review={review} title="Check your card" manual={false} photoUrl="/hero/physical-card.jpg" onStartOver={noop} />;
 }

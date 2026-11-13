@@ -54,7 +54,7 @@ export function VerifyPendingPage() {
           <Input
             id="verify-email"
             type="email"
-            size="cta"
+           
             value={viewModel.email}
             onChange={(event) => viewModel.setEmail(event.target.value)}
             autoComplete="email"

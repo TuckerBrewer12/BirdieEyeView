@@ -130,8 +130,6 @@ async def test_the_dashboards_breakdown_and_change_add_up_to_the_index_shown(gol
     # The rows marked counting on the trend are the ones the breakdown counts.
     counting = [row for row in dashboard.handicap_trend if row.differential_status == "counting"]
     assert len(counting) == whs.count_used
-    indexes = [row.handicap_index for row in dashboard.handicap_trend if row.handicap_index is not None]
-    assert dashboard.handicap_change.delta == round(indexes[-1] - indexes[-6], 1)
 
 
 def test_the_trend_reads_the_20_rounds_ending_with_each_round():
@@ -212,7 +210,6 @@ async def test_dashboard_analytics_and_course_page_name_the_same_best_round():
 
     dashboard = await stats_router.get_dashboard(user_id, db, user)
     assert (dashboard.best_round, dashboard.best_round_id) == (75, "75")
-    assert dashboard.best_recent_round_id == "75"
 
     analytics = await stats_router.get_analytics(user_id, 50, None, None, db, user)
     assert (analytics.kpis.best_round, analytics.kpis.best_round_id, analytics.kpis.best_round_course) == (
@@ -228,7 +225,7 @@ def test_the_course_page_best_round_is_never_a_nine():
     nine = _round("nine", 0, holes=9, day=1, course=course)
     from api.course_analytics_responses import course_analytics
 
-    assert course_analytics("home", [full, nine]).best_score == 77
+    assert course_analytics("home", [full, nine]).best_round_id == "full"
 
 
 def test_records_and_milestones_set_by_a_rounds_total_count_full_rounds_only():

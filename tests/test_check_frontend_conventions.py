@@ -20,7 +20,7 @@ COVERED = {
     "brand/charts/scales.ts": "export const yScale = 1;",
     "brand/previews/charts/Sparkline.tsx": "export default function SparklinePreview() {}",
     "brand/tests/screenshots/charts/Sparkline.screenshot.spec.ts": "",
-    "pages/rounds/RoundsPage.tsx": "",
+    "pages/rounds/RoundsPage.tsx": "import { Stat, Sparkline } from '@/brand';",
     "pages/rounds/useRoundsPageViewModel.ts": "",
     "pages/rounds/tests/RoundsPage.robot.ts": "",
     "pages/rounds/tests/RoundsPage.screenshot.spec.ts": "",
@@ -92,6 +92,7 @@ def test_flags_a_second_file_exporting_the_same_component(src):
     write(src, "brand/charts/StatTile.tsx", "export function Stat() {}")
     write(src, "brand/previews/charts/StatTile.tsx")
     write(src, "brand/tests/screenshots/charts/StatTile.screenshot.spec.ts")
+    write(src, "pages/rounds/RoundsPage.tsx", "import { Stat, Sparkline, StatTile } from '@/brand';")
     [problem] = find_problems(src)
     assert "`Stat`" in problem
 
@@ -99,4 +100,23 @@ def test_flags_a_second_file_exporting_the_same_component(src):
 def test_reexports_and_types_are_not_duplicates(src):
     write(src, "brand/index.ts", 'export { Stat, StatLabel } from "./components/Stat";')
     write(src, "brand/components/variants/statVariants.ts", "export type { Stat };\nexport const STAT = 1;")
+    assert find_problems(src) == []
+
+
+def test_flags_a_kit_component_only_its_preview_uses(src):
+    write(src, "brand/components/Orphan.tsx", "export function Orphan() {}")
+    write(src, "brand/previews/components/Orphan.tsx", "import { Orphan } from '@/brand/components/Orphan';")
+    write(src, "brand/tests/screenshots/components/Orphan.screenshot.spec.ts", "")
+    write(src, "brand/index.ts", "export { Orphan } from './components/Orphan';")
+    assert ["`Orphan` is used only by its own preview" in p for p in find_problems(src)] == [True]
+
+
+def test_a_kit_component_another_kit_component_uses_is_in_use(src):
+    write(src, "brand/components/Swatch.tsx", "export function Swatch() {}")
+    write(src, "brand/previews/components/Swatch.tsx", "")
+    write(src, "brand/tests/screenshots/components/Swatch.screenshot.spec.ts", "")
+    write(src, "brand/components/Picker.tsx", "import { Swatch } from './Swatch';")
+    write(src, "brand/previews/components/Picker.tsx", "")
+    write(src, "brand/tests/screenshots/components/Picker.screenshot.spec.ts", "")
+    write(src, "pages/rounds/RoundsPage.tsx", "import { Stat, Sparkline, Picker } from '@/brand';")
     assert find_problems(src) == []

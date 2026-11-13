@@ -1,16 +1,33 @@
 import { LINKS, UNSEEDED_COURSE, test } from "./AnalyticsPage.robot";
 
-test("populated analytics", async ({ analytics }) => {
+test("scoring", async ({ analytics }) => {
   await analytics.open();
-  await analytics.seesRounds(24);
-  await analytics.capture("analytics-populated.png");
+  await analytics.seesTabOpen("Scoring", "Score trend");
+  await analytics.capture("analytics-scoring.png");
 });
 
-test("populated analytics in dark mode", async ({ analytics }) => {
+test("scoring in dark mode", async ({ analytics }) => {
   await analytics.dark();
   await analytics.open();
-  await analytics.seesRounds(24);
-  await analytics.capture("analytics-populated-dark.png");
+  await analytics.seesTabOpen("Scoring", "Score trend");
+  await analytics.capture("analytics-scoring-dark.png");
+});
+
+test("scoring with birdies and doubles counted each round", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.toggleLine("Birdies");
+  await analytics.toggleLine("Doubles");
+  await analytics.seesCountLines(2);
+  await analytics.capture("analytics-scoring-counts.png");
+});
+
+test("scoring with the score off, doubles alone", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.toggleLine("Score");
+  await analytics.toggleLine("Doubles");
+  await analytics.seesScoreLine(false);
+  await analytics.seesCountLines(1);
+  await analytics.capture("analytics-scoring-counts-only.png");
 });
 
 test("filtered to one course", async ({ analytics }) => {
@@ -24,10 +41,10 @@ test("course menu open", async ({ analytics }) => {
   await analytics.open();
   await analytics.openCourseMenu();
   await analytics.seesCourseMenu();
-  await analytics.capture("analytics-course-menu.png");
+  await analytics.capture("analytics-course-menu.png", { fullPage: false });
 });
 
-test("no rounds match the filters", async ({ analytics }) => {
+test("a course with no rounds", async ({ analytics }) => {
   await analytics.open();
   await analytics.pickCourse(UNSEEDED_COURSE);
   await analytics.seesNoMatchingRounds();
@@ -46,30 +63,87 @@ test("load failed", async ({ analytics }) => {
   await analytics.capture("analytics-load-failed.png");
 });
 
-// A phone shows one part of the game at a time; desktop shows every section. Scoring opens first,
-// so the populated captures above already show it.
-const PHONE_TABS = [
-  { tab: "Ball Striking", showing: "GIR % per Round", file: "ball-striking" },
-  { tab: "Putting", showing: "Total Putts per Round", file: "putting" },
-  { tab: "Profile", showing: "Avg Score by Hole Difficulty", file: "profile" },
-  { tab: "Range View", showing: "Performance by yardage and par", file: "range" },
+const SECTIONS = [
+  { tab: "Profile", showing: "Player profile", file: "profile" },
+  { tab: "Ball striking", showing: "Greens in regulation", file: "ball-striking" },
+  { tab: "Putting", showing: "Putts per round", file: "putting" },
+  { tab: "Approach", showing: "Avg to par", file: "approach" },
 ] as const;
 
-test.describe("phone sections", { tag: "@phone" }, () => {
-  for (const { tab, showing, file } of PHONE_TABS) {
-    test(`${tab} section`, async ({ analytics }) => {
-      await analytics.open();
-      await analytics.openTab(tab);
-      await analytics.seesTabOpen(tab, showing);
-      await analytics.capture(`analytics-${file}.png`);
-    });
+for (const { tab, showing, file } of SECTIONS) {
+  test(`${tab} section`, async ({ analytics }) => {
+    await analytics.open();
+    await analytics.openTab(tab);
+    await analytics.seesTabOpen(tab, showing);
+    await analytics.capture(`analytics-${file}.png`);
+  });
 
-    test(`${tab} section in dark mode`, async ({ analytics }) => {
-      await analytics.dark();
-      await analytics.open();
-      await analytics.openTab(tab);
-      await analytics.seesTabOpen(tab, showing);
-      await analytics.capture(`analytics-${file}-dark.png`);
-    });
-  }
+  test(`${tab} section in dark mode`, async ({ analytics }) => {
+    await analytics.dark();
+    await analytics.open();
+    await analytics.openTab(tab);
+    await analytics.seesTabOpen(tab, showing);
+    await analytics.capture(`analytics-${file}-dark.png`);
+  });
+}
+
+test("profile against scratch", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.openTab("Profile");
+  await analytics.compareWith("Scratch");
+  await analytics.seesComparedWith("Scratch");
+  await analytics.capture("analytics-profile-scratch.png");
+});
+
+test("profile against a friend", async ({ analytics }) => {
+  await analytics.openWithFriends();
+  await analytics.openTab("Profile");
+  await analytics.compareWith("Avery Lin");
+  await analytics.seesComparedWith("Avery Lin");
+  await analytics.capture("analytics-profile-friend.png");
+});
+
+test("profile against a friend with too few rounds", async ({ analytics }) => {
+  await analytics.openWithFriends();
+  await analytics.openTab("Profile");
+  await analytics.compareWith("Jordan Castellanos");
+  await analytics.seesFriendNote(/needs more rounds/);
+  await analytics.capture("analytics-profile-friend-no-rounds.png");
+});
+
+test("profile with no goal set", async ({ analytics }) => {
+  await analytics.openWithoutGoal();
+  await analytics.openTab("Profile");
+  await analytics.seesNoGoal();
+  await analytics.capture("analytics-profile-no-goal.png");
+});
+
+test("profile failed to load", async ({ analytics }) => {
+  await analytics.openWithProfileFailing();
+  await analytics.openTab("Profile");
+  await analytics.seesProfileError();
+  await analytics.capture("analytics-profile-failed.png");
+});
+
+test("rounds menu open", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.openRoundsMenu();
+  await analytics.seesMenuOpen();
+  await analytics.capture("analytics-rounds-menu.png", { fullPage: false });
+});
+
+test("goal menu open", async ({ analytics }) => {
+  await analytics.open();
+  await analytics.openTab("Profile");
+  await analytics.openGoalMenu();
+  await analytics.seesMenuOpen();
+  await analytics.capture("analytics-goal-menu.png", { fullPage: false });
+});
+
+test("compare menu open", async ({ analytics }) => {
+  await analytics.openWithFriends();
+  await analytics.openTab("Profile");
+  await analytics.openCompareMenu();
+  await analytics.seesMenuOpen();
+  await analytics.capture("analytics-compare-menu.png", { fullPage: false });
 });

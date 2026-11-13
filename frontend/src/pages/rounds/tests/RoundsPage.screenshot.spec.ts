@@ -24,7 +24,7 @@ test("empty list", async ({ rounds }) => {
 test("course link panel open", async ({ rounds }) => {
   await rounds.open(storedRounds);
   await rounds.openLinkFor("Scanned Scorecard");
-  await rounds.seesLinkPanel("Scanned Scorecard");
+  await rounds.seesLinkPanel();
   await rounds.capture("rounds-link-open.png");
 });
 
@@ -34,7 +34,7 @@ test("course link failed", async ({ rounds }) => {
   await rounds.searchCourses("Pebble");
   await rounds.pickCourse("Pebble Beach");
   await rounds.seesLinkError("That course is not available.");
-  await rounds.seesLinkPanel("Scanned Scorecard");
+  await rounds.seesLinkPanel();
   await rounds.capture("rounds-link-error.png");
 });
 
@@ -42,5 +42,5 @@ test("sort menu open", async ({ rounds }) => {
   await rounds.open(storedRounds);
   await rounds.openSortMenu();
   await rounds.seesSortMenu();
-  await rounds.capture("rounds-sort-open.png");
+  await rounds.capture("rounds-sort-open.png", { fullPage: false });
 });
