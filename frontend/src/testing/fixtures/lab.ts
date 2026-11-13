@@ -2,6 +2,7 @@ import type {
   AnalyticsDto,
   BenchmarkComparisonDto,
   BenchmarkShapeDto,
+  BenchmarkVerdictsDto,
   GoalAttemptDto,
   GoalReportDto,
   ParTypeComparisonDto,
@@ -10,6 +11,7 @@ import type {
 import { withoutRounds } from "../fakes/analyticsResponses";
 import { avery, jordan } from "./friendships";
 import { sampleGolfer } from "./sampleGolfer";
+import { countsFor } from "./scoreCounts";
 
 /** A 17.8 out to break 90: met it once in twelve rounds, three-putts the worst leak. */
 export const labUser: UserDto = {
@@ -66,7 +68,6 @@ export const labAnalytics: AnalyticsDto = {
     three_putts_per_round: 2,
     three_putt_rate: 11.1,
     // The last five average 92.2 against 91.67 over all twelve.
-    scoring_average_change: 0.5,
   },
   peak_game: {
     rounds: [
@@ -99,7 +100,9 @@ export const labAnalytics: AnalyticsDto = {
     course_name: COURSES[i % COURSES.length],
     total_score: score,
     to_par: score - 72,
+    par: 72,
     rolling_average: null,
+    score_counts: countsFor(score - 72),
   })),
   three_putts_trend: THREE_PUTTS.map((count, i) => ({
     round_index: i + 1,
@@ -107,13 +110,17 @@ export const labAnalytics: AnalyticsDto = {
     three_putt_count: count,
     three_putt_percentage: pct(count),
     holes_with_putt_data: 18,
+    costly: count >= 3,
   })),
   putts_trend: PUTTS.map((putts, i) => ({
     round_index: i + 1,
     round_id: `lab-${i + 1}`,
     total_putts: putts,
     holes_played: 18,
+    rolling_average: null,
   })),
+  // A step better than 17.8.
+  next_level_handicap: 15,
 };
 
 /** Avery plays to about 81: more greens, better par 3s. Jordan has no rounds. */
@@ -133,7 +140,6 @@ export const averyLabAnalytics: AnalyticsDto = {
     average_putts: null,
     three_putts_per_round: null,
     three_putt_rate: null,
-    scoring_average_change: null,
   },
   scoring_by_par: [
     { par: 3, average_to_par: 0.35, average_strokes: 3.35, sample_size: 32 },
@@ -165,24 +171,24 @@ export const labGoalReport: GoalReportDto = {
       type: "three_putt_bleed",
       strokes_saved: 1.2,
       percentage_of_gap: 44,
-      headline: "You average 2.0 three-putts a round",
-      detail: "Halving them would save about 1.2 strokes a round.",
+      headline: "Cut out 3-putts",
+      detail: "2.0 a round",
       data: {},
     },
     {
       type: "blowup_holes",
       strokes_saved: 0.9,
       percentage_of_gap: 33,
-      headline: "3.6 holes a round end in double bogey or worse",
-      detail: "Turning one of them into a bogey saves about 0.9 strokes.",
+      headline: "Turn doubles into bogeys",
+      detail: "3.6 doubles or worse a round",
       data: {},
     },
     {
       type: "gir_opportunity",
       strokes_saved: 0.6,
       percentage_of_gap: 22,
-      headline: "You hit 28% of greens in regulation",
-      detail: "Two more greens a round is worth about 0.6 strokes.",
+      headline: "Hit more greens",
+      detail: "28% of greens",
       data: {},
     },
   ],
@@ -231,6 +237,24 @@ function parTypes(
   }));
 }
 
+type Verdict = ParTypeComparisonDto["verdict"];
+
+/**
+ * The radar's axes as the server judged them: GIR, scrambling and putts per GIR (the golfer's
+ * 28%, 22% and 2.05 against the shape's), then each par type's verdict from its row.
+ */
+function verdicts(rates: [Verdict, Verdict, Verdict], parRows: ParTypeComparisonDto[]): BenchmarkVerdictsDto {
+  const [par3, par4, par5] = parRows.map((row) => row.verdict);
+  return {
+    gir_percentage: rates[0],
+    scrambling_percentage: rates[1],
+    putts_per_gir: rates[2],
+    par3_to_par: par3,
+    par4_to_par: par4,
+    par5_to_par: par5,
+  };
+}
+
 const BREAKS_90_JUDGED: [number, ParTypeComparisonDto["verdict"]][] = [[0.32, "behind"], [0.1, "behind"], [-0.25, "ahead"]];
 
 /** `GET /stats/{id}/benchmark` for each comparison The Lab's tests make, keyed as FakeBackend looks them up. */
@@ -238,38 +262,36 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
   "handicap:15": {
     against: "handicap",
     handicap: 15,
-    goal: null,
     benchmark: breaks90Shape,
     par_types: parTypes(breaks90Shape, BREAKS_90_JUDGED),
+    verdicts: verdicts(["ahead", "ahead", "ahead"], parTypes(breaks90Shape, BREAKS_90_JUDGED)),
   },
   "handicap:5": {
     against: "handicap",
     handicap: 5,
-    goal: null,
     benchmark: breaks80Shape,
     par_types: parTypes(breaks80Shape, [[0.72, "behind"], [0.62, "behind"], [0.3, "behind"]]),
-  },
-  // The best three average 89.7, nearest the golfers who break 90.
-  peak: {
-    against: "peak",
-    handicap: null,
-    goal: 89,
-    benchmark: breaks90Shape,
-    par_types: parTypes(breaks90Shape, BREAKS_90_JUDGED),
+    verdicts: verdicts(
+      ["behind", "behind", "behind"],
+      parTypes(breaks80Shape, [[0.72, "behind"], [0.62, "behind"], [0.3, "behind"]]),
+    ),
   },
   [`friend:${avery.id}`]: {
     against: "friend",
     handicap: null,
-    goal: null,
     benchmark: averyShape,
     par_types: parTypes(averyShape, [[0.57, "behind"], [0.57, "behind"], [0.55, "behind"]]),
+    verdicts: verdicts(
+      ["behind", "behind", "behind"],
+      parTypes(averyShape, [[0.57, "behind"], [0.57, "behind"], [0.55, "behind"]]),
+    ),
   },
   // Jordan has no rounds: nothing to draw or compare with.
   [`friend:${jordan.id}`]: {
     against: "friend",
     handicap: null,
-    goal: null,
     benchmark: null,
     par_types: parTypes(null, []),
+    verdicts: verdicts([null, null, null], parTypes(null, [])),
   },
 };

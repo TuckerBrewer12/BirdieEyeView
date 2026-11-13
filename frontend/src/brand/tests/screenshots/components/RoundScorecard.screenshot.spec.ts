@@ -1,13 +1,32 @@
 import { test } from "@playwright/test";
-import { capturePreview, enableDark } from "../../previewScreenshot";
+import { BrandKitRobot } from "../../BrandKit.robot";
+import { enableDark } from "../../previewScreenshot";
 
 test.describe("RoundScorecard", () => {
+  // The board's width, with room for the variants under it.
+  test.use({ viewport: { width: 960, height: 1260 } });
+
   test("light", async ({ page }) => {
-    await capturePreview(page, "RoundScorecard", "round-scorecard.png");
+    const kit = new BrandKitRobot(page);
+    await kit.openFrame("RoundScorecard");
+    await kit.captureFrame("round-scorecard.png");
   });
 
   test("dark", async ({ page }) => {
     await enableDark(page);
-    await capturePreview(page, "RoundScorecard", "round-scorecard-dark.png");
+    const kit = new BrandKitRobot(page);
+    await kit.openFrame("RoundScorecard");
+    await kit.captureFrame("round-scorecard-dark.png");
+  });
+
+  // The kit runs at desktop only, so the phone capture sets its own viewport.
+  test.describe("on a phone", () => {
+    test.use({ viewport: { width: 390, height: 1260 }, hasTouch: true });
+
+    test("stacks the nines", async ({ page }) => {
+      const kit = new BrandKitRobot(page);
+      await kit.openFrame("RoundScorecard");
+      await kit.captureFrame("round-scorecard-phone.png");
+    });
   });
 });

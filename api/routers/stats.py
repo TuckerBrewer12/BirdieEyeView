@@ -23,6 +23,8 @@ from api.schemas import (
 from analytics import stats as analytics
 from analytics import benchmarks
 from analytics import dashboard
+from analytics import round_comparison
+from analytics import verdicts
 from analytics import handicap as hcap
 from analytics.goals import goal_report
 
@@ -47,18 +49,9 @@ async def get_dashboard(
     # One query for every round's hole scores; the Round model works out each figure.
     summaries = await db.rounds.get_round_summaries_for_user(str(user_id), limit=500, offset=0)
 
-    scored = [r for r in summaries if r.calculate_total_score() is not None]
-    scores = [r.calculate_total_score() for r in scored]
-    putts = [p for p in (r.get_total_putts() for r in summaries) if p is not None]
-    girs = [g for g in (r.get_total_gir() for r in summaries) if g is not None]
-
     # Best as the round list's Best ranks rounds; newest first, so a tie goes to the newest.
     best = analytics.best_round(summaries)
     best_summary = round_summary(best) if best else None
-
-    recent = summaries[:5]
-    recent_rounds = [round_summary(r) for r in recent]
-    best_recent = analytics.best_round(recent)
 
     # The last 20 rounds, plus 19 before them so the handicap trend has a full rolling window.
     hi_rounds = list(reversed(await db.rounds.get_rounds_for_user(str(user_id), limit=39, offset=0)))
@@ -67,43 +60,28 @@ async def get_dashboard(
     # last 20 rounds, held at the handicap they gave. The trend's last point is the same index.
     index_window = hcap.player_index_window(user, hi_rounds)
     handicap_trend = hcap.player_handicap_trend(user, hi_rounds)[-len(last_20):] if last_20 else []
-    mix = dashboard.score_mix(last_20)
-    recent_mix = dashboard.score_mix(last_20[-dashboard.RECENT_ROUNDS:])
-    form = dashboard.recent_form(last_20)
-    average_putts = round(sum(putts) / len(putts), 1) if putts else None
-    putts_shown = dashboard.putts_shown(form["putts_per_18"], average_putts)
+    scoring_change = dashboard.scoring_average_change(last_20)
+    today = dashboard.today()
 
     return DashboardResponse(
-        total_rounds=len(summaries),
-        scoring_average=round(sum(scores) / len(scores), 1) if scores else None,
         best_round=best_summary.total_score if best_summary else None,
         best_round_id=best_summary.id if best_summary else None,
         best_round_course=best_summary.course_name if best_summary else None,
+        best_round_to_par=best_summary.to_par if best_summary else None,
+        best_round_date=best_summary.date if best_summary else None,
         handicap_index=index_window["index"],
-        recent_rounds=recent_rounds,
-        best_recent_round_id=best_recent.id if best_recent else None,
-        average_putts=average_putts,
-        average_gir=round(sum(girs) / len(girs), 1) if girs else None,
-        putts_per_round=putts_shown["per_round"],
-        putts_rating=putts_shown["rating"],
-        scoring_average_l20=dashboard.scoring_average(last_20),
+        recent_rounds=[round_summary(r) for r in summaries[:4]],
         scoring_average_l5=dashboard.scoring_average(last_20, dashboard.RECENT_ROUNDS),
-        scoring_average_change=dashboard.scoring_average_change(last_20),
-        handicap_change=dashboard.handicap_change(handicap_trend),
-        recent_form=form,
-        score_mix=mix["percentages"],
-        recent_score_mix=recent_mix["percentages"],
-        score_mix_holes=mix["holes"],
-        milestones=dashboard.lifetime_milestones(
-            analytics.notable_achievements(last_20, home_course_id=user.home_course_id)
-        ),
+        scoring_average_change=scoring_change,
+        scoring_average_verdict=verdicts.change_verdict(scoring_change),
+        handicap_change=dashboard.handicap_change(last_20, handicap_trend, today),
+        recent_score_mix=dashboard.score_mix(last_20[-dashboard.RECENT_ROUNDS:])["percentages"],
         whs=dashboard.whs_breakdown(
             last_20, handicap_trend, hcap.score_differentials_per_round(last_20), index_window
         ),
-        score_trend=analytics.score_trend(last_20),
+        score_trend=analytics.score_trend_with_rolling_average(last_20),
         handicap_trend=handicap_trend,
-        scrambling_trend=analytics.scrambling_per_round(last_20),
-        up_and_down_trend=analytics.up_and_down_trend(last_20),
+        rounds_this_year=dashboard.rounds_this_year(summaries, today),
     )
 
 
@@ -212,15 +190,14 @@ async def get_goal_report(
 @router.get("/{user_id}/benchmark", response_model=BenchmarkComparisonResponse)
 async def get_benchmark_comparison(
     user_id: UUID,
-    against: Literal["handicap", "peak", "friend"],
+    against: Literal["handicap", "friend"],
     handicap: Optional[int] = Query(default=None),
     friend_id: Optional[UUID] = Query(default=None),
     limit: int = Query(default=20, ge=1, le=500),
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """The player's last `limit` rounds against a handicap's shape, the golfers their peak
-    rounds play like, or a friend's last `limit` rounds."""
+    """The player's last `limit` rounds against a handicap's shape or a friend's last `limit` rounds."""
     viewer_id = str(current_user.id)
     if viewer_id != str(user_id):
         raise HTTPException(403, "Forbidden")
@@ -230,9 +207,6 @@ async def get_benchmark_comparison(
         if handicap is None or benchmarks.handicap_benchmark(handicap) is None:
             raise HTTPException(422, "No benchmark for that handicap")
         return BenchmarkComparisonResponse.model_validate(benchmarks.handicap_comparison(rounds, handicap))
-    if against == "peak":
-        return BenchmarkComparisonResponse.model_validate(benchmarks.peak_comparison(rounds))
-
     if friend_id is None:
         raise HTTPException(422, "friend_id is required")
     if not await db.friendships.are_friends(viewer_id, str(friend_id)):
@@ -260,14 +234,7 @@ async def get_round_comparison(
     if round_index is None:
         raise HTTPException(404, "Round not found in user history")
 
-    return RoundComparisonResponse(
-        score=analytics.score_comparison(rounds, round_index=round_index),
-        putts=analytics.putts_comparison(rounds, round_index=round_index),
-        gir=analytics.gir_comparison(rounds, round_index=round_index),
-        three_putts=analytics.three_putts_comparison(rounds, round_index=round_index),
-        putts_per_gir=analytics.putts_per_gir_comparison(rounds, round_index=round_index),
-        scrambling=analytics.scrambling_comparison(rounds, round_index=round_index),
-    )
+    return RoundComparisonResponse.model_validate(round_comparison.round_vs_average(rounds, round_index))
 
 
 @router.get("/milestones/{user_id}")

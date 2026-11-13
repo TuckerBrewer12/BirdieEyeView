@@ -1,10 +1,12 @@
-import { CircleCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, Loader2, Share2 } from "lucide-react";
 import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
   Button,
+  Card,
+  CardContent,
+  PageTitle,
   RoundShareCard,
+  Stat,
+  StatLabel,
   StatValue,
   ToParFigure,
 } from "@/brand";
@@ -19,7 +21,7 @@ interface ScanSuccessStepProps {
   onView: () => void;
 }
 
-/** The card is saved: a success alert with its score against par, then the round to open or share. */
+/** The card is saved: its score against par, with the round to share or open. */
 export function ScanSuccessStep({ round, onView }: ScanSuccessStepProps) {
   const { cardRef, share, sharing } = useShareRound();
 
@@ -30,30 +32,36 @@ export function ScanSuccessStep({ round, onView }: ScanSuccessStepProps) {
         <RoundShareCard ref={cardRef} round={round} />
       </div>
 
-      <div data-slot="scan-saved" className="flex w-full max-w-sm flex-col gap-4">
-        <Alert tone="success" variant="outline">
-          <CircleCheck />
-          <AlertTitle>
-            <h2>Round saved</h2>
-          </AlertTitle>
-          <AlertDescription className="flex items-baseline justify-between gap-3">
-            <span className="min-w-0">{formatCourseName(round.course?.name)}</span>
-            <span className="flex shrink-0 items-baseline gap-1.5">
-              <StatValue size="lg">{round.score ?? "—"}</StatValue>
-              <ToParFigure toPar={round.toPar} />
-            </span>
-          </AlertDescription>
-        </Alert>
+      <Card data-slot="scan-saved" className="w-full max-w-sm">
+        <CardContent className="flex flex-col items-center gap-6 text-center">
+          <div className="flex flex-col items-center gap-2">
+            <CheckCircle2 aria-hidden className="size-12 stroke-icon text-primary" />
+            <PageTitle>Round saved!</PageTitle>
+            <p className="text-sm text-muted-foreground">{formatCourseName(round.course?.name)}</p>
+          </div>
 
-        <div className="flex gap-2">
-          <Button size="lg" className="flex-1" onClick={onView}>
-            View round
-          </Button>
-          <Button size="lg" variant="outline" disabled={sharing} onClick={() => void share(roundShareMessage(round))}>
-            {sharing ? "Preparing…" : "Share"}
-          </Button>
-        </div>
-      </div>
+          <Stat align="center">
+            <StatLabel>Score</StatLabel>
+            <StatValue size="xl">{round.score ?? "—"}</StatValue>
+            <ToParFigure toPar={round.toPar} />
+          </Stat>
+
+          <div className="flex w-full flex-col gap-2">
+            <Button size="lg" disabled={sharing} onClick={() => void share(roundShareMessage(round))}>
+              {sharing ? (
+                <Loader2 data-icon="inline-start" className="animate-spin" />
+              ) : (
+                <Share2 data-icon="inline-start" />
+              )}
+              {sharing ? "Preparing…" : "Share Round"}
+            </Button>
+            <Button size="lg" variant="outline" onClick={onView}>
+              View Round
+              <ArrowRight data-icon="inline-end" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

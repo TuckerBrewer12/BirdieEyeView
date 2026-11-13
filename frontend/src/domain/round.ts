@@ -8,14 +8,17 @@ import type {
   ScannedRoundDto,
   ScoreCountsDto,
 } from "@/types/api";
-import { BACK_HOLES, FRONT_HOLES, getHole, getTee } from "./course";
+import { BACK_HOLES, FRONT_HOLES, formatCourseName, getHole, getTee } from "./course";
+import { formatDayShort } from "./date";
 import { SCORE_KINDS, scoreKind, strokesToPar, type ScoreKind } from "./score";
 
-/** One hole as a round list marks it: what was taken and how it scored. */
+/** One hole as a round list marks it: what was taken, how it scored, and where the round stood after it. */
 export interface HoleSummary {
   hole: number;
   strokes: number | null;
   kind: ScoreKind | null;
+  /** The round's to par after this hole, as the server ran it. Null for a hole it can't read. */
+  runningToPar: number | null;
 }
 
 /** One hole as played. Par, handicap, yardage, to-par and kind come from the server. */
@@ -33,6 +36,22 @@ export interface HoleScore extends HoleSummary {
   toPar: number | null;
   /** Three or more putts, as the server marks it. */
   threePutt: boolean;
+  /** The round's to par after this hole, as the server ran it. Null for a hole it can't read. */
+  runningToPar: number | null;
+}
+
+/** The four holes in a row that lost the most to par, when they lost two or more. */
+export interface WorstStretch {
+  firstHole: number;
+  lastHole: number;
+  toPar: number;
+}
+
+/** The four holes in a row that lost the most to par, when they lost two or more. */
+export interface WorstStretch {
+  firstHole: number;
+  lastHole: number;
+  toPar: number;
 }
 
 export interface NineSummary {
@@ -78,6 +97,8 @@ export interface RoundSummary {
   scoreCounts: ScoreCounts;
   /** Where the server places it in the Best order: full rounds by to par, then the rest. Null when unplaced. */
   bestRank: number | null;
+  /** The same place worst first: full rounds furthest over par, then nines. */
+  worstRank: number | null;
 }
 
 /** A round and its figures, as the server worked them out. */
@@ -95,6 +116,8 @@ export interface Round extends RoundSummary {
   /** The golfer's strokes off the tee played, from their own index. Null without ratings, and for a nine. */
   courseHandicap: number | null;
   netScore: number | null;
+  /** The server's worst stretch. Null when no four straight holes lost two. */
+  worstStretch: WorstStretch | null;
 }
 
 /** Unsaved changes to holes. A field left undefined keeps the hole's own value. */
@@ -138,6 +161,7 @@ function holeScore(dto: HoleScoreDto): HoleScore {
     toPar: dto.to_par,
     kind: dto.kind,
     threePutt: dto.three_putt,
+    runningToPar: dto.running_to_par,
   };
 }
 
@@ -163,7 +187,7 @@ function nines(
 }
 
 function holeSummary(dto: HoleSummaryDto): HoleSummary {
-  return { hole: dto.hole_number, strokes: dto.strokes, kind: dto.kind };
+  return { hole: dto.hole_number, strokes: dto.strokes, kind: dto.kind, runningToPar: dto.running_to_par };
 }
 
 function fromSummary(dto: RoundSummaryDto): RoundSummary {
@@ -181,6 +205,7 @@ function fromSummary(dto: RoundSummaryDto): RoundSummary {
     putts: dto.total_putts,
     scoreCounts: dto.score_counts,
     bestRank: dto.best_rank,
+    worstRank: dto.worst_rank,
   };
 }
 
@@ -210,6 +235,12 @@ function fromDto(dto: RoundDto): Round {
     courseHandicap: dto.course_handicap,
     netScore: dto.net_score,
     bestRank: null,
+    worstRank: null,
+    worstStretch: dto.worst_stretch && {
+      firstHole: dto.worst_stretch.first_hole,
+      lastHole: dto.worst_stretch.last_hole,
+      toPar: dto.worst_stretch.to_par,
+    },
   };
 }
 
@@ -273,10 +304,14 @@ function previewEdits(round: Round, edits: HoleEdits, course?: CourseDto | null,
       threePutt: putts != null && putts >= 3,
     };
   });
+  // The round's flow (each hole's running to par, the worst stretch) is the server's alone. It
+  // stands while every hole reads as it did, and an edit that moves one clears it until the save.
+  const flowStands = holes.every((hole, i) => hole.toPar === round.holes[i].toPar);
+  const flowHoles = flowStands ? holes : holes.map((hole) => ({ ...hole, runningToPar: null }));
 
   // A picked course and tee send their own nine pars and yardages.
   const nine = (numbers: readonly number[], before: Nine, coursePar?: number | null, teeYards?: number | null): Nine => {
-    const onNine = holes.filter((hole) => numbers.includes(hole.hole));
+    const onNine = flowHoles.filter((hole) => numbers.includes(hole.hole));
     const total = nineTotal(onNine);
     const par = (course ? coursePar : before.par) ?? sumIfAll(onNine.length === 9 ? onNine.map((hole) => hole.par) : []);
     const yards = tee
@@ -300,7 +335,7 @@ function previewEdits(round: Round, edits: HoleEdits, course?: CourseDto | null,
   for (const hole of holes) if (hole.kind) scoreCounts[hole.kind] += 1;
   return {
     ...round,
-    holes,
+    holes: flowHoles,
     frontNine: nine(FRONT_HOLES, round.frontNine, course?.front_nine_par, tee?.front_nine_yardage),
     backNine: nine(BACK_HOLES, round.backNine, course?.back_nine_par, tee?.back_nine_yardage),
     score,
@@ -313,6 +348,7 @@ function previewEdits(round: Round, edits: HoleEdits, course?: CourseDto | null,
     holesPlayed: scored.length,
     courseHandicap,
     netScore: courseHandicap != null && score != null ? score - courseHandicap : null,
+    worstStretch: flowStands ? round.worstStretch : null,
   };
 }
 
@@ -336,6 +372,7 @@ function fromScan(scan: ScannedRoundDto): Round {
     toPar: null,
     kind: null,
     threePutt: false,
+    runningToPar: null,
   }));
   const scanned = scan.course;
   const course: CourseDto | null = scanned && {
@@ -365,11 +402,22 @@ function fromScan(scan: ScannedRoundDto): Round {
     yards: null,
     scoreCounts: Object.fromEntries(SCORE_KINDS.map((kind) => [kind, 0])) as ScoreCounts,
     bestRank: null,
+    worstRank: null,
     holesPlayed: 0,
     courseHandicap: null,
     netScore: null,
+    worstStretch: null,
   };
   return previewEdits(unread, {}, course, scan.tee_box);
 }
 
 export const Round = { fromSummary, fromDto, detailFromDto, fromScan, previewEdits };
+
+/**
+ * A round on one line, as a sheet or a dialog names it: "Half Moon Bay · Jun 15 · 78". Each part
+ * is left out when it is missing.
+ */
+export function roundLine(round: Pick<RoundSummary, "course" | "date" | "score">): string {
+  const course = round.course?.name ? formatCourseName(round.course.name) : null;
+  return [course, formatDayShort(round.date), round.score].filter((part) => part != null).join(" · ");
+}

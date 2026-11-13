@@ -78,7 +78,7 @@ export class ScanRobot {
   /** The card being read, on its first phase. */
   async seesProcessing(): Promise<this> {
     await expect(
-      this.page.locator("[data-slot=scan-progress]").filter({ hasText: "Reading your card" }),
+      this.page.locator("[data-slot=scan-progress]").filter({ hasText: "Finding the course…" }),
     ).toBeVisible();
     return this;
   }
@@ -108,7 +108,7 @@ export class ScanRobot {
   }
 
   async seesSaved(): Promise<this> {
-    await expect(this.page.getByRole("heading", { name: "Round saved" })).toBeVisible();
+    await expect(this.page.getByRole("heading", { name: "Round saved!" })).toBeVisible();
     return this;
   }
 
@@ -126,7 +126,7 @@ export class ScanRobot {
    */
   async tapShare(): Promise<this> {
     const download = this.page.waitForEvent("download");
-    await this.page.getByRole("button", { name: "Share", exact: true }).click();
+    await this.page.getByRole("button", { name: "Share Round" }).click();
     this.shared = await download;
     return this;
   }
@@ -134,12 +134,12 @@ export class ScanRobot {
   /** The round went out as an image named for its course. */
   async seesSharedImage(fileName: string): Promise<this> {
     expect(this.shared?.suggestedFilename()).toBe(fileName);
-    await expect(this.page.getByRole("button", { name: "Share", exact: true })).toBeEnabled();
+    await expect(this.page.getByRole("button", { name: "Share Round" })).toBeEnabled();
     return this;
   }
 
   async tapViewRound(): Promise<this> {
-    await this.page.getByRole("button", { name: "View round" }).click();
+    await this.page.getByRole("button", { name: "View Round" }).click();
     return this;
   }
 
@@ -235,7 +235,7 @@ export class ScanRobot {
 
   /** Keeps the typed name for a course the search doesn't have. */
   async keepTypedCourse(name: string): Promise<this> {
-    await this.page.getByRole("button", { name: `Save as "${name}"`, exact: true }).click();
+    await this.page.getByRole("button", { name: `Save as “${name}”`, exact: true }).click();
     return this;
   }
 
@@ -247,7 +247,7 @@ export class ScanRobot {
   }
 
   /** Opens the search again from the chosen course. */
-  async changeSetupCourse(label: "Change course" | "Edit name"): Promise<this> {
+  async changeSetupCourse(label: "Change course" | "Link course"): Promise<this> {
     await this.page.getByRole("button", { name: label }).click();
     return this;
   }
@@ -259,7 +259,7 @@ export class ScanRobot {
   }
 
   private setupSearch() {
-    return this.page.getByRole("searchbox", { name: "Course (optional)" });
+    return this.page.getByRole("combobox", { name: "Course (optional)" });
   }
 
   /** Picks a tee from the chosen course's tees. */
@@ -338,8 +338,8 @@ export class ScanRobot {
 
   /** Saves the round under the name read off the card, without linking a course. */
   async keepCardName(name: string): Promise<this> {
-    await this.page.getByRole("button", { name: `Save as "${name}" without linking →` }).click();
-    await expect(this.page.getByText("Saving without a linked course")).toBeVisible();
+    await this.page.getByRole("button", { name: `Save as "${name}" without linking` }).click();
+    await expect(this.page.getByText("Custom name · not linked to a course")).toBeVisible();
     return this;
   }
 

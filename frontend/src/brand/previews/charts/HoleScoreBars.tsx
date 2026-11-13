@@ -7,9 +7,21 @@ const [overPar, , best] = populatedRounds.map(Round.fromSummary);
 export default function HoleScoreBarsPreview() {
   return (
     <>
-      <HoleScoreBars holes={overPar.holes} />
-      <HoleScoreBars holes={best.holes} />
-      <HoleScoreBars holes={overPar.frontNine.holes} />
+      <div className="flex gap-3">
+        <HoleScoreBars holes={overPar.frontNine.holes} className="flex-1" />
+        <HoleScoreBars holes={overPar.backNine.holes} className="flex-1" />
+      </div>
+      <div className="flex gap-3">
+        <HoleScoreBars holes={best.frontNine.holes} className="flex-1" />
+        <HoleScoreBars holes={best.backNine.holes} className="flex-1" />
+      </div>
+      {/* Pills: the last round's nines, a phone's strip, a list row's strip. */}
+      <div className="flex gap-2.5">
+        <HoleScoreBars holes={overPar.frontNine.holes} size="lg" className="flex-1" />
+        <HoleScoreBars holes={overPar.backNine.holes} size="lg" className="flex-1" />
+      </div>
+      <HoleScoreBars holes={overPar.holes} variant="strip" size="md" />
+      <HoleScoreBars holes={best.holes} variant="strip" />
       <HoleScoreBars holes={overPar.frontNine.holes} variant="profile" />
       <HoleScoreBars holes={best.backNine.holes} variant="profile" />
     </>

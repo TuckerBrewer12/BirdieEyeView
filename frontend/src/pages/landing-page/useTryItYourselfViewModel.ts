@@ -3,8 +3,8 @@ import { preparePhotoForUpload } from "@/data/photoUpload";
 import { scanRepository, type ScanRepository } from "@/data/scanRepository";
 import { useCardText, type PickedPhoto } from "@/data/useCardText";
 import { Round } from "@/domain";
-import { SCAN_STEPS, SCAN_STEP_HOLD_MS } from "@/domain/scan";
 import { useExtractScorecard } from "@/data/useExtractScorecard";
+import { SCAN_STEPS, SCAN_STEP_HOLD_MS, scanStepAt } from "@/domain/scan";
 
 export interface TryItYourselfViewModel {
   step: "upload" | "processing" | "review";
@@ -16,7 +16,9 @@ export interface TryItYourselfViewModel {
   extract: () => void;
   reset: () => void;
 
+  /** The step of reading the card showing, and its words. */
   phase: number;
+  phaseLabel: string;
 
   /** The scanned card as a round, its figures read the way an unsaved edit's are. */
   round: Round | null;
@@ -90,6 +92,7 @@ export function useTryItYourselfViewModel(
     reset,
 
     phase,
+    phaseLabel: scanStepAt(phase).label,
 
     round,
     hasScores: (round?.holes.length ?? 0) > 0,

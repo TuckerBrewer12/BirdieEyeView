@@ -1,94 +1,63 @@
-import { Check } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
-import { Card } from "./Card";
 
 interface ScanProgressProps {
-  /** What is happening, as the card's title. */
+  /** The photo being read; a quiet panel stands in until there is one. */
+  photoUrl: string | null;
+  /** The step running, in words: "Reading scores…". */
   label: string;
-  /** The steps of reading a card, in order. */
-  steps: readonly string[];
-  /** Index of the step running: earlier ones are done, later ones still to come. */
+  /** How many steps reading a card takes, and which is running, from 0. */
+  steps: number;
   phase: number;
   className?: string;
 }
 
-type StepState = "done" | "now" | "next";
-
-const { box, radius } = tokens.spinner;
-const centre = box / 2;
-
-const STEP_TEXT: Record<StepState, string> = {
-  done: "font-medium text-foreground-secondary",
-  now: "font-semibold text-foreground",
-  next: "font-medium text-muted-foreground",
-};
-
-const STEP_MARK: Record<StepState, string> = {
-  done: "border-primary bg-primary text-primary-foreground",
-  now: "border-primary bg-card",
-  next: "border-border-strong bg-card",
-};
+const { lineFrom, lineTo } = tokens.scan;
 
 /**
- * A scan in flight: the card being read, and which step of reading it is running.
+ * A scan in flight: the golfer's photo, shaded down to a lit line that moves on with each step,
+ * the step in words, and a dash for each step with those done and running filled.
  *
- * Pure: which step is running is the caller's business, so the same card
- * serves the landing page's demo and the signed-in scan flow without either
- * owning a timer the other cannot see.
+ * Pure: which step is running is the caller's business, so the same view serves the landing
+ * page's demo and the signed-in scan flow without either owning a timer the other cannot see.
  */
-function ScanProgress({ label, steps, phase, className }: ScanProgressProps) {
+function ScanProgress({ photoUrl, label, steps, phase, className }: ScanProgressProps) {
+  const at = steps > 1 ? lineFrom + ((lineTo - lineFrom) * phase) / (steps - 1) : lineFrom;
+  const line = `${at}%`;
   return (
-    <Card
+    <div
       data-slot="scan-progress"
       role="status"
       aria-live="polite"
-      className={cn("gap-3 p-5", className)}
+      className={cn("flex flex-col items-center gap-5", className)}
     >
-      <div className="flex items-center gap-3">
-        <svg
+      <div className="relative aspect-3/2 w-full max-w-scan-photo overflow-hidden rounded-photo bg-muted shadow-photo">
+        {photoUrl && <img src={photoUrl} alt="Your scorecard" className="block size-full object-cover" />}
+        <motion.div
           aria-hidden
-          viewBox={`0 0 ${box} ${box}`}
-          className="size-9 shrink-0 animate-spin motion-reduce:animate-none"
-        >
-          <circle cx={centre} cy={centre} r={radius} fill="none" stroke={tokens.color.muted} strokeWidth={tokens.lineWidth.ring} />
-          <path
-            d={`M${centre} ${centre - radius} A${radius} ${radius} 0 0 1 ${centre + radius} ${centre}`}
-            fill="none"
-            stroke={tokens.color.primary}
-            strokeWidth={tokens.lineWidth.ring}
-            strokeLinecap="round"
-          />
-        </svg>
-        <p className="text-lg font-bold text-foreground">{label}</p>
+          className="absolute inset-x-0 top-0 bg-scan-shade"
+          initial={false}
+          animate={{ height: line }}
+          transition={{ duration: tokens.motion.scanLine, ease: "easeInOut" }}
+        />
+        <motion.div
+          aria-hidden
+          className="absolute inset-x-0 h-1 bg-scan-line shadow-scan-line"
+          initial={false}
+          animate={{ top: line }}
+          transition={{ duration: tokens.motion.scanLine, ease: "easeInOut" }}
+        />
       </div>
-
-      <ol className="flex flex-col gap-3">
-        {steps.map((step, i) => {
-          const state: StepState = i < phase ? "done" : i === phase ? "now" : "next";
-          return (
-            <li
-              key={step}
-              data-state={state}
-              aria-current={state === "now" ? "step" : undefined}
-              className={cn("flex items-center gap-2 text-sm", STEP_TEXT[state])}
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  "flex size-5 shrink-0 items-center justify-center rounded-full border-2",
-                  STEP_MARK[state],
-                )}
-              >
-                {state === "done" && <Check className="size-3 stroke-icon-active" />}
-              </span>
-              {step}
-            </li>
-          );
-        })}
-      </ol>
-    </Card>
+      <p className="text-body-lg font-semibold text-foreground">{label}</p>
+      <div aria-hidden className="flex gap-1.5">
+        {Array.from({ length: steps }, (_, i) => (
+          <span key={i} className={cn("h-1 w-9 rounded-xs md:w-10", i <= phase ? "bg-primary" : "bg-border-strong")} />
+        ))}
+      </div>
+    </div>
   );
 }
 
 export { ScanProgress };
+export type { ScanProgressProps };

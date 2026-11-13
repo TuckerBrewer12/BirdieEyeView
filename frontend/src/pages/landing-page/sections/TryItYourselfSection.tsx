@@ -11,8 +11,8 @@ import {
   ScorecardLayoutPicker,
   RoundScorecard,
 } from "@/brand";
+import { SCAN_STEPS } from "@/domain/scan";
 import { useFilePreview } from "@/platform/useFilePreview";
-import { SCAN_READING_LABEL, SCAN_STEPS } from "@/domain/scan";
 import { tokens } from "@/brand/theme";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
@@ -82,10 +82,10 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
             transition={{ duration: tokens.motion.scanStep.processing }}
           >
             <ScanProgress
-              label={SCAN_READING_LABEL}
-              steps={SCAN_STEPS}
+              photoUrl={previewUrl}
+              label={viewModel.phaseLabel}
+              steps={SCAN_STEPS.length}
               phase={viewModel.phase}
-              className="mx-auto max-w-sm"
             />
           </motion.div>
         )}
@@ -102,8 +102,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
               <RoundScorecard
                 round={viewModel.round}
                 teeBox={viewModel.round.teeBox}
-                showTee
-                className="rounded-none border-0 shadow-none"
+                className="rounded-none shadow-none"
                 action={
                   <Button variant="secondary" size="xs" onClick={viewModel.reset}>
                     <RotateCcw data-icon="inline-start" />

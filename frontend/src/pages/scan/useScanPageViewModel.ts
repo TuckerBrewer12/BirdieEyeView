@@ -59,7 +59,7 @@ export interface ScanPageViewModel {
   clearPresetCourse: () => void;
 
   // Processing
-  /** Which phase of reading the card is showing, from 0 to `SCAN_STEPS.length - 1`. */
+  /** Which step of reading the card is showing, from 0 to `SCAN_STEPS.length - 1`. */
   phase: number;
 
   // Setup

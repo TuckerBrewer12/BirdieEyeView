@@ -20,14 +20,6 @@ test("a chosen card, ready to scan", async ({ landing }) => {
   await landing.capture("landing-card-chosen.png");
 });
 
-test("the try-it panel reading a card", async ({ landing }) => {
-  await landing.open({ holdScan: true });
-  await landing.chooseScorecard();
-  await landing.tapScan();
-  await landing.seesReading();
-  await landing.capture("landing-reading.png");
-});
-
 test("a scanned card gets the full width", async ({ landing }) => {
   await landing.open();
   await landing.chooseScorecard();

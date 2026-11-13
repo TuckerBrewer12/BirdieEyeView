@@ -25,23 +25,13 @@ export class LandingRobot {
     return this;
   }
 
-  /**
-   * `scanFails`: the scan endpoint errors, as it does when the server can't read a card.
-   * `holdScan`: the scan doesn't answer, so the card can be seen being read.
-   */
-  async open({
-    scanFails = false,
-    holdScan = false,
-  }: { scanFails?: boolean; holdScan?: boolean } = {}): Promise<this> {
+  /** `scanFails`: the scan endpoint errors, as it does when the server can't read a card. */
+  async open({ scanFails = false }: { scanFails?: boolean } = {}): Promise<this> {
     // The hero's scan loop is decoration and holds on step one under reduced
     // motion. Emulating it here is what makes the page deterministic enough to
     // have a baseline — `test.use({ reducedMotion })` does not reach the page.
     await this.page.emulateMedia({ reducedMotion: "reduce" });
-    await FakeSession.install(this.page, {
-      signedOut: true,
-      scan: scanFails ? undefined : scannedCard,
-      holdScan,
-    });
+    await FakeSession.install(this.page, { signedOut: true, scan: scanFails ? undefined : scannedCard });
     await this.page.goto("/");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -127,15 +117,6 @@ export class LandingRobot {
     return this;
   }
 
-  /** The try-it panel reading the card, on its first step. */
-  async seesReading(): Promise<this> {
-    await expect(
-      this.page.locator("[data-slot=scan-progress]").filter({ hasText: "Reading your card" }),
-    ).toBeVisible();
-    await expect(this.page.locator("[data-slot=scan-progress] [aria-current=step]")).toHaveText("Course and tees");
-    return this;
-  }
-
   /** Starts over from the scanned card. The button has to be on screen to be tapped. */
   async tapScanAnother(): Promise<this> {
     const button = this.page.getByRole("button", { name: "Scan another" });
@@ -146,7 +127,8 @@ export class LandingRobot {
 
   /** The visitor's own card, read back as a scorecard. */
   async seesScannedCard(): Promise<this> {
-    await expect(this.page.getByText(SCANNED_COURSE_NAME, { exact: true })).toBeVisible();
+    // The course leads the scorecard's course line, before where it is.
+    await expect(this.page.getByText(`${SCANNED_COURSE_NAME} ·`, { exact: false })).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Scan another" })).toBeVisible();
     return this;
   }

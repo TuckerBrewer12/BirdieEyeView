@@ -2,16 +2,18 @@ import type { ScanDto } from "@/types/api";
 import type { HoleEdits } from "./round";
 
 /**
- * The steps of reading a card, in order, as the scan's progress card lists them. Both the scan
- * page and the landing page's try-it demo walk through these; their count paces them.
+ * The steps of reading a card, as the scan screens word them. The scan reports no progress, so
+ * each is held for `SCAN_STEP_HOLD_MS` rather than reported.
  */
-export const SCAN_STEPS = ["Course and tees", "Scores and putts", "Yardages and par", "Checking totals"] as const;
+export const SCAN_STEPS = ["Finding the course…", "Reading tees…", "Reading scores…", "Double-checking…"] as const;
 
-/** The progress card's title while those steps run. */
-export const SCAN_READING_LABEL = "Reading your card";
-
-/** The scan reports no progress, so each step is held this long rather than reported. */
 export const SCAN_STEP_HOLD_MS = 3500;
+
+/** The step showing `phase` steps in, held on the last once there are no more. */
+export function scanStepAt(phase: number): { label: string; phase: number } {
+  const shown = Math.min(Math.max(phase, 0), SCAN_STEPS.length - 1);
+  return { label: SCAN_STEPS[shown], phase: shown };
+}
 
 /** How sure the scan has to be of a score for it to pass without a second look. */
 const SURE = "high";

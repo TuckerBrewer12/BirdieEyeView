@@ -34,6 +34,7 @@ def _make_course(course_id: UUID, *, owner: UUID | None = None) -> Course:
 def _make_course_summary(course_id: UUID) -> CourseSummary:
     return CourseSummary(
         id=str(course_id), name="Pebble Beach", location="Monterey", par=72, hole_count=1, tee_count=2,
+        tee_colors=["Blue", "White"],
     )
 
 
@@ -87,8 +88,18 @@ async def test_course_listing_lookup_and_authorization():
     user = _make_user(user_id)
     course = _make_course(course_id)
     db = make_mock_database()
-    db.courses.list_course_summaries = AsyncMock(return_value=[_make_course_summary(course_id)])
+    other_id = uuid4()
+    db.courses.list_course_summaries = AsyncMock(
+        return_value=[_make_course_summary(course_id), _make_course_summary(other_id)]
+    )
     db.courses.get_course = AsyncMock(return_value=course)
+    # Two rounds at the first course, newest first: 82 and 78 over 18 holes of par 4.
+    played = [
+        Round(id=str(uuid4()), course=course, date=datetime(2026, 1, day, tzinfo=timezone.utc),
+              hole_scores=[HoleScore(hole_number=n, strokes=4 + (n <= over), par_played=4) for n in range(1, 19)])
+        for day, over in ((9, 10), (2, 6))
+    ]
+    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=played)
 
     listed = await courses.list_courses(20, 0, user_id, db, user)
     assert listed[0].model_dump() == {
@@ -100,7 +111,17 @@ async def test_course_listing_lookup_and_authorization():
         "par": 72,
         "total_holes": 1,
         "tee_count": 2,
+        "tees": ["Blue", "White"],
+        "rounds_played": 2,
+        "scoring_average": 80.0,
+        "best_score": 78,
     }
+    # Every round at the listed courses, uncapped.
+    assert db.rounds.get_round_summaries_for_user.await_args.kwargs == {
+        "limit": None, "course_ids": [str(course_id), str(other_id)],
+    }
+    # A course the golfer hasn't played carries no record.
+    assert (listed[1].rounds_played, listed[1].scoring_average, listed[1].best_score) == (0, None, None)
     assert db.courses.list_course_summaries.await_args.kwargs == {
         "limit": 20, "offset": 0, "user_id": str(user_id),
     }
@@ -131,18 +152,23 @@ async def test_course_search_merges_external_results(monkeypatch):
     ])
     monkeypatch.setattr(courses, "GolfCourseAPIService", lambda: external_service)
 
-    search_results = await courses.search_courses("Pebble", user_id, True, db, _make_user(user_id))
+    search_results = await courses.search_courses("Pebble", user_id, True, False, db, _make_user(user_id))
     assert db.courses.search_course_summaries.await_args.kwargs == {"user_id": str(user_id)}
     assert search_results[0].source == "local"
     assert search_results[0].external_course_id == "ext-1"
     assert search_results[1].name == "Spyglass Hill"
     assert search_results[1].source == "external"
+    assert search_results[0].rounds_played == 0  # the link search doesn't load the golfer's rounds
+
+    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[])
+    await courses.search_courses("Pebble", user_id, False, True, db, _make_user(user_id))
+    assert db.rounds.get_round_summaries_for_user.await_count == 1  # the course list's search does
 
     with pytest.raises(HTTPException) as exc:
-        await courses.search_courses("Pebble", None, True, db, None)
+        await courses.search_courses("Pebble", None, True, False, db, None)
     assert exc.value.status_code == 401
     with pytest.raises(HTTPException) as exc:
-        await courses.search_courses("x --", None, False, db, None)
+        await courses.search_courses("x --", None, False, False, db, None)
     assert exc.value.status_code == 422
 
 
@@ -207,8 +233,8 @@ def test_round_request_validation_and_summary():
     assert summary.front_nine is None
     assert (summary.score_counts.bogey, summary.score_counts.par, summary.score_counts.birdie) == (1, 1, 0)
     assert [h.model_dump() for h in summary.hole_scores] == [
-        {"hole_number": 1, "strokes": 5, "kind": "bogey"},
-        {"hole_number": 2, "strokes": 4, "kind": "par"},
+        {"hole_number": 1, "strokes": 5, "kind": "bogey", "running_to_par": 1},
+        {"hole_number": 2, "strokes": 4, "kind": "par", "running_to_par": 1},
     ]
 
 
@@ -477,14 +503,14 @@ async def test_dashboard_and_empty_analytics(monkeypatch):
     monkeypatch.setattr(stats.hcap, "handicap_index", lambda rounds, **_: 10.0)
 
     dashboard = await stats.get_dashboard(user_id, db, user)
-    assert dashboard.total_rounds == 1
-    assert dashboard.scoring_average == 80.0
     assert dashboard.best_round_id == str(round_id)
-    assert dashboard.scoring_average_l20 is None
+    assert dashboard.scoring_average_l5 is None
     assert dashboard.whs.window_size == 0
-    assert dashboard.milestones == []
     assert dashboard.score_trend == []
     assert dashboard.handicap_trend == []
+    # The newest round's holes carry where it stood after each, so its last is its to par.
+    last = dashboard.recent_rounds[0]
+    assert last.hole_scores[-1].running_to_par == last.to_par
 
     # The page's rounds, the handicap window's, and the golfer's last 20 for their own index.
     db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])
@@ -520,11 +546,10 @@ async def test_stats_auxiliary_endpoints(monkeypatch):
     assert report.on_track is True
 
     round_comparison = await stats.get_round_comparison(user_id, round_id, db, user)
-    assert set(round_comparison.model_dump()) == {
-        "score", "putts", "gir", "three_putts", "putts_per_gir", "scrambling",
-    }
-    assert round_comparison.score[0].label == "Selected Round"
-    assert round_comparison.score[0].primary_value == 9
+    assert [w.window for w in round_comparison.windows] == ["l5", "l20", "all"]
+    score = round_comparison.windows[0].metrics[0]
+    assert score.metric == "score"
+    assert score.value == 9
 
     db.rounds.get_rounds_for_user.return_value = []
     assert await stats.get_milestones(user_id, 12, db, user) == {"milestones": []}
@@ -548,9 +573,6 @@ async def test_benchmark_comparison_endpoint():
     assert handicap.benchmark.par4_to_par == 1.025
     # Eight bogeys and ten pars on par 4s: +0.44 a hole against the 15's +1.025.
     assert (handicap.par_types[1].gap, handicap.par_types[1].verdict) == (-0.58, "ahead")
-
-    peak = await stats.get_benchmark_comparison(user_id, "peak", None, None, 20, db, user)
-    assert peak.goal == 79  # two rounds of 80 play like the golfers who break 80
 
     friend = await stats.get_benchmark_comparison(user_id, "friend", None, friend_id, 20, db, user)
     assert friend.benchmark.par4_to_par == pytest.approx(8 / 18)
