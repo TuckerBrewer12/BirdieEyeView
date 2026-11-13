@@ -34,7 +34,7 @@ export default function ScanSetupStepPreview() {
         setup={{ ...blank, courseSearch: { ...blank.courseSearch, query: "Pebble", results: [pebbleBeachSummary] } }}
       />
       <ScanSetupStep
-        setup={{ ...blank, linkedName: pebbleBeachSummary.name ?? undefined, tees: ["Blue", "White", "Red"], teeBox: "White" }}
+        setup={{ ...blank, linkedName: pebbleBeachSummary.name ?? undefined, tees: [{ name: "Blue", yards: 6545 }, { name: "White", yards: 6120 }, { name: "Red", yards: 5310 }], teeBox: "White" }}
       />
       <ScanSetupStep setup={{ ...blank, customName: "Muni Nine", teeBox: "Gold" }} />
     </div>

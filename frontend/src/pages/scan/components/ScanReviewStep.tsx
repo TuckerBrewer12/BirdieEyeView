@@ -16,12 +16,11 @@ import {
   Input,
   PageTitle,
   RoundScorecard,
-  ToggleGroup,
-  ToggleGroupItem,
 } from "@/brand";
 import { formatCourseName } from "@/domain/course";
 import { pluralize } from "@/domain/format";
 import { ringedBelow } from "../present";
+import { TeeField } from "./TeeField";
 import type { ScanReviewViewModel } from "../useScanReviewViewModel";
 
 interface ScanReviewStepProps {
@@ -91,7 +90,7 @@ export function ScanReviewStep({ review, title, manual, photoUrl, onStartOver }:
             {showPhoto && <PhotoRow photoUrl={photoUrl} />}
             <CourseField review={review} />
             <div className="grid grid-cols-2 items-start gap-3">
-              <TeeField review={review} />
+              <TeeField id="review-tee" tees={review.tees} teeBox={review.teeBox} setTeeBox={review.setTeeBox} />
               <Field>
                 <FieldLabel htmlFor="review-date">Date</FieldLabel>
                 <Input
@@ -173,36 +172,6 @@ function CourseField({ review }: { review: ScanReviewViewModel }) {
           Save as "{formatCourseName(nameToKeep)}" without linking
           <ArrowRight aria-hidden />
         </Button>
-      )}
-    </Field>
-  );
-}
-
-function TeeField({ review }: { review: ScanReviewViewModel }) {
-  return (
-    <Field>
-      <FieldLabel htmlFor={review.tees.length > 0 ? undefined : "review-tee"}>Tee</FieldLabel>
-      {review.tees.length > 0 ? (
-        <ToggleGroup
-          size="sm"
-          aria-label="Tee"
-          value={review.teeBox ? [review.teeBox] : []}
-          onValueChange={(values) => review.setTeeBox(values[0] ?? "")}
-        >
-          {review.tees.map((color) => (
-            <ToggleGroupItem key={color} value={color}>
-              {color}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      ) : (
-        <Input
-          id="review-tee"
-          autoComplete="off"
-          placeholder="e.g. White"
-          value={review.teeBox}
-          onChange={(e) => review.setTeeBox(e.target.value)}
-        />
       )}
     </Field>
   );

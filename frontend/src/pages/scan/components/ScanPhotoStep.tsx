@@ -1,26 +1,27 @@
-import { Camera } from "lucide-react";
+import type { ReactNode } from "react";
+import { ArrowRight, Camera } from "lucide-react";
 import {
   ActionBar,
   Alert,
+  AlertAction,
   AlertDescription,
   Button,
   Card,
   CardContent,
-  CourseLinkSearch,
   Dropzone,
+  FileButton,
   PhotoSourceSheet,
   type PhotoSource,
 } from "@/brand";
-import { formatCourseName } from "@/domain/course";
 import { formatFileSize } from "@/domain";
 import type { ScanPageViewModel } from "../useScanPageViewModel";
 import { ScanCardForm } from "./ScanCardForm";
+import { PresetCourseField } from "./PresetCourseField";
 
 type PhotoStep = Pick<
   ScanPageViewModel,
   | "photo"
   | "pickPhoto"
-  | "clearPhoto"
   | "extract"
   | "error"
   | "card"
@@ -38,26 +39,30 @@ interface ScanPhotoStepProps {
 }
 
 const ACCEPT = "image/*,application/pdf";
+const ANOTHER_PHOTO = "Try another photo";
 
 function readLabel(step: PhotoStep) {
   return step.error ? "Read card again" : "Read card";
 }
 
-function ScanFailed({ error }: { error: string | null }) {
+/** Why the read failed, with the way to another photo at its end. */
+function ScanFailed({ error, action }: { error: string | null; action: ReactNode }) {
   if (!error) return null;
   return (
     <Alert tone="danger" data-slot="scan-failed">
       <AlertDescription>{error}</AlertDescription>
+      <AlertAction>{action}</AlertAction>
     </Alert>
   );
 }
 
 /**
- * A computer's scan: a drop zone with the course beside it, then once a photo is picked, the photo
- * beside what's on the card, and the button that reads it.
+ * A computer's scan: a drop zone with the course under it, then once a photo is picked, the photo
+ * beside what's on the card, and the button that reads it. Another photo comes from the button
+ * under the photo, or from the failed read's banner.
  */
 export function ScanPhotoStepWide({ step, previewUrl }: ScanPhotoStepProps) {
-  const { photo, courseSearch } = step;
+  const { photo } = step;
 
   if (!photo) {
     return (
@@ -72,34 +77,27 @@ export function ScanPhotoStepWide({ step, previewUrl }: ScanPhotoStepProps) {
             className="min-h-dropzone"
           />
           <div className="flex flex-col gap-2 border-t border-border pt-4">
-            <p className="text-body text-muted-foreground">
-              Optional: pick the course and the card is read against it.
-            </p>
-            <CourseLinkSearch
-              surface="plain"
-              query={courseSearch.query}
-              results={courseSearch.results}
-              searching={courseSearch.searching}
-              onQueryChange={courseSearch.setQuery}
-              onSelectCourse={step.pickPresetCourse}
-              onClose={courseSearch.reset}
-              linkedName={step.presetCourse ? formatCourseName(step.presetCourse.name) : undefined}
-              linkedTitle="Read against this course"
-              onClear={step.clearPresetCourse}
-              clearLabel="Clear course"
-            />
+            <p className="text-body text-muted-foreground">Optional: pick the course.</p>
+            <PresetCourseField course={step} />
           </div>
         </CardContent>
       </Card>
     );
   }
 
+  const anotherPhoto = (variant: "outline" | "secondary") => (
+    <FileButton variant={variant} accept={ACCEPT} onFile={step.pickPhoto}>
+      {ANOTHER_PHOTO}
+      <ArrowRight data-icon="inline-end" />
+    </FileButton>
+  );
+
   return (
     <>
-      <ScanFailed error={step.error} />
+      <ScanFailed error={step.error} action={anotherPhoto("outline")} />
       <Card data-slot="scan-upload">
         <CardContent className="grid grid-cols-scan-photo gap-6">
-          <div data-slot="scan-photo" className="flex flex-col gap-2.5">
+          <div data-slot="scan-photo" className="flex flex-col gap-3">
             {previewUrl && (
               <img
                 src={previewUrl}
@@ -107,14 +105,10 @@ export function ScanPhotoStepWide({ step, previewUrl }: ScanPhotoStepProps) {
                 className="aspect-4/3 w-card-photo rounded-photo bg-muted object-cover"
               />
             )}
-            <div className="flex items-center justify-between gap-2">
-              <span className="min-w-0 truncate text-body-sm text-muted-foreground">
-                {photo.name} · {formatFileSize(photo.size)}
-              </span>
-              <Button variant="link" size="inline" onClick={step.clearPhoto}>
-                Replace
-              </Button>
-            </div>
+            <span className="min-w-0 truncate text-body-sm text-muted-foreground">
+              {photo.name} · {formatFileSize(photo.size)}
+            </span>
+            {!step.error && anotherPhoto("secondary")}
           </div>
           <div className="flex flex-col gap-5">
             <ScanCardForm form={step} />
@@ -130,7 +124,8 @@ export function ScanPhotoStepWide({ step, previewUrl }: ScanPhotoStepProps) {
 
 /**
  * A phone's scan: what's on the card first, then the photo from the camera, the library or a
- * file, which shows above the form with the button that reads it.
+ * file, which shows above the form with the button that reads it. Retake opens the same sheet,
+ * from the photo's row or the failed read's banner.
  */
 export function ScanPhotoStepPhone({
   step,
@@ -138,9 +133,30 @@ export function ScanPhotoStepPhone({
   pickNative,
 }: ScanPhotoStepProps & { pickNative?: (source: PhotoSource) => Promise<File | null> }) {
   const { photo } = step;
+  const retake = (variant: "outline" | "secondary", label: ReactNode) => (
+    <PhotoSourceSheet
+      title="Retake scorecard photo"
+      trigger={<Button variant={variant} />}
+      onFile={step.pickPhoto}
+      pickNative={pickNative}
+      accept={ACCEPT}
+    >
+      {label}
+    </PhotoSourceSheet>
+  );
+
   return (
     <>
-      <ScanFailed error={step.error} />
+      <ScanFailed
+        error={step.error}
+        action={retake(
+          "outline",
+          <>
+            {ANOTHER_PHOTO}
+            <ArrowRight data-icon="inline-end" />
+          </>,
+        )}
+      />
       {photo && (
         <Card size="sm" data-slot="scan-photo">
           <CardContent className="flex items-center gap-3">
@@ -152,15 +168,7 @@ export function ScanPhotoStepPhone({
               />
             )}
             <span className="min-w-0 flex-1 truncate text-body font-semibold text-foreground">{photo.name}</span>
-            <PhotoSourceSheet
-              title="Retake scorecard photo"
-              trigger={<Button variant="ghost" />}
-              onFile={step.pickPhoto}
-              pickNative={pickNative}
-              accept={ACCEPT}
-            >
-              Retake
-            </PhotoSourceSheet>
+            {!step.error && retake("secondary", "Retake")}
           </CardContent>
         </Card>
       )}

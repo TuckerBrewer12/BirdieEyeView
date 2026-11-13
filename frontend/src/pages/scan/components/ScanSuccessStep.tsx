@@ -3,15 +3,11 @@ import {
   Button,
   Card,
   CardContent,
-  HoleScoreBars,
   PageTitle,
+  RoundPreview,
   RoundShareCard,
-  StatValue,
-  ToParPill,
 } from "@/brand";
 import type { Round } from "@/domain";
-import { courseLabel, formatTeeName } from "@/domain/course";
-import { formatDayShort } from "@/domain/date";
 import { roundShareMessage } from "@/domain/share";
 import { useShareRound } from "@/platform/useShareRound";
 
@@ -25,9 +21,6 @@ interface ScanSuccessStepProps {
 /** The card is saved: the round as a row of its holes, with it to open, share, or a new card to scan. */
 export function ScanSuccessStep({ round, onView, onScanAnother }: ScanSuccessStepProps) {
   const { cardRef, share, sharing } = useShareRound();
-  const day = formatDayShort(round.date);
-  const tee = round.teeBox ? formatTeeName(round.teeBox) : null;
-  const when = day && tee ? `${day} · ${tee}` : (day ?? tee);
 
   return (
     <div className="flex justify-center md:pt-14">
@@ -43,22 +36,7 @@ export function ScanSuccessStep({ round, onView, onScanAnother }: ScanSuccessSte
             <PageTitle size="compact">Round saved</PageTitle>
           </div>
 
-          <div className="flex flex-col gap-3 rounded-xl border border-border p-4">
-            <div className="flex items-end justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-body-lg font-semibold text-foreground">{courseLabel(round.course?.name)}</p>
-                {when && <p className="mt-0.5 text-body-sm text-muted-foreground">{when}</p>}
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <StatValue size="lg">{round.score ?? "—"}</StatValue>
-                <ToParPill toPar={round.toPar} ground="muted" />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <HoleScoreBars holes={round.frontNine.holes} size="sm" className="flex-1" />
-              <HoleScoreBars holes={round.backNine.holes} size="sm" className="flex-1" />
-            </div>
-          </div>
+          <RoundPreview round={round} variant="summary" />
 
           <div className="flex flex-col gap-2">
             <Button size="lg" onClick={onView}>

@@ -106,7 +106,8 @@ export function CourseLinkSearch({
     <div className="flex flex-col gap-2.5">
       <Card
         surface={plain ? "none" : "raised"}
-        className={cn("gap-0 p-0 text-foreground", !plain && results.length > 0 && "shadow-card")}
+        // Plain, nothing clips the field: its corners and its focus ring sit at the box's edge.
+        className={cn("gap-0 p-0 text-foreground", plain && "overflow-visible", !plain && results.length > 0 && "shadow-card")}
       >
         <div className={cn("flex flex-col gap-2.5", plain ? "pb-2.5" : "px-3.5 pt-3.5 pb-2.5")}>
           {title && (

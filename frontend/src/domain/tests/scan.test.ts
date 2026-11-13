@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { scannedCard, UNSURE_HOLES, unsureCard } from "@/testing/fixtures/scan";
 import type { ScanDto } from "@/types/api";
-import { SCAN_STEPS, scanStepAt, strokesToCheck } from "../scan";
+import { NO_CARD_FACTS, SCAN_STEPS, cardContext, cardRows, scanStepAt, strokesToCheck } from "../scan";
 
 describe("strokesToCheck", () => {
   it("is empty for a card the scan read cleanly", () => {
@@ -51,5 +51,40 @@ describe("scanStepAt", () => {
     expect(scanStepAt(0)).toEqual({ label: "Finding the course…", phase: 0 });
     expect(scanStepAt(2)).toEqual({ label: "Reading scores…", phase: 2 });
     expect(scanStepAt(9)).toEqual({ label: SCAN_STEPS.at(-1), phase: SCAN_STEPS.length - 1 });
+  });
+});
+
+describe("cardContext", () => {
+  it("says only that there are no putts, for a card the golfer said nothing about", () => {
+    expect(cardContext(NO_CARD_FACTS)).toBe("no putts recorded");
+  });
+
+  it("names the golfer's row, the scores to par, and the rows the card has", () => {
+    expect(cardContext({ name: " Tucker ", writtenAs: "toPar", putts: true, shotsToGreen: true })).toBe(
+      "my name is Tucker. scores written to par. name on score row. row order: score, putts, shots to green",
+    );
+  });
+
+  it("keeps the golfer's row order and name row, leaving out rows the card doesn't have", () => {
+    const facts = {
+      ...NO_CARD_FACTS,
+      putts: true,
+      rowOrder: ["shots", "putts", "score"] as const,
+      nameRow: "putts" as const,
+    };
+    expect(cardContext(facts)).toBe("name on putts row. row order: putts, score");
+  });
+
+  it("puts the name on the score row when its row isn't on the card", () => {
+    expect(cardContext({ ...NO_CARD_FACTS, putts: true, nameRow: "shots" })).toBe(
+      "name on score row. row order: score, putts",
+    );
+  });
+});
+
+describe("cardRows", () => {
+  it("puts a row turned on after the others were ordered last", () => {
+    const facts = { ...NO_CARD_FACTS, putts: true, shotsToGreen: true, rowOrder: ["putts", "score"] as const };
+    expect(cardRows(facts)).toEqual(["putts", "score", "shots"]);
   });
 });

@@ -1,4 +1,4 @@
-import { Round, isoDay, type HoleEdits } from "@/domain";
+import { Round, isoDay, type HoleEdits, type TeeChoice } from "@/domain";
 import type { CourseSummary } from "@/domain/course";
 import type {
   CourseDto,
@@ -13,34 +13,6 @@ export type ScanMode = "scan" | "manual";
 
 export type ScanStep = "upload" | "processing" | "setup" | "review" | "success";
 
-
-/** How the golfer's scores are written on the card. */
-export type ScoresWrittenAs = "strokes" | "toPar";
-
-/** What the golfer says is on the card, so the scan knows where to look. */
-export interface CardFacts {
-  /** The golfer's name as written on the card, so the scan reads their row. */
-  name: string;
-  writtenAs: ScoresWrittenAs;
-  putts: boolean;
-  shotsToGreen: boolean;
-}
-
-export const NO_CARD_FACTS: CardFacts = { name: "", writtenAs: "strokes", putts: false, shotsToGreen: false };
-
-/** The card's facts as the scan's note: whose row, how scores are written, which rows it has. */
-export function cardContext(facts: CardFacts): string {
-  const parts: string[] = [];
-  const name = facts.name.trim();
-  if (name) parts.push(`my name is ${name}`);
-  if (!facts.putts) parts.push("no putts recorded");
-  if (facts.writtenAs === "toPar") parts.push("scores written to par");
-  if (facts.putts || facts.shotsToGreen) {
-    const rows = ["score", ...(facts.putts ? ["putts"] : []), ...(facts.shotsToGreen ? ["shots to green"] : [])];
-    parts.push("name on score row", `row order: ${rows.join(", ")}`);
-  }
-  return parts.join(". ");
-}
 
 /** A course the golfer chose. No id means a name they typed for a course we don't have. */
 export interface PickedCourse {
@@ -80,6 +52,18 @@ export interface ScanReviewDraft {
 /** Today as `YYYY-MM-DD`, the date a round defaults to: the golfer's day, not UTC's. */
 export function todayIso(now: Date = new Date()): string {
   return isoDay(now);
+}
+
+/**
+ * The tees read off the card, to pick from. The scan reads a tee's yards hole by hole and the
+ * server hasn't added them up yet, so a scanned tee shows its name alone.
+ */
+export function scannedTeeOptions(course: ScanDto["round"]["course"] | null | undefined): TeeChoice[] {
+  const options: TeeChoice[] = [];
+  for (const tee of course?.tees ?? []) {
+    if (tee.color) options.push({ name: tee.color, yards: null });
+  }
+  return options;
 }
 
 /** A course name as a search query: trimmed, single-spaced. */

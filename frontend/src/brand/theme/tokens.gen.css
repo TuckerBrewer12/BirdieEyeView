@@ -172,7 +172,11 @@
   --brand-space-nudge: 5px;
   --brand-space-nudge-sm: 3px;
   --brand-space-safe-bottom: max(env(safe-area-inset-bottom, 0px), 22px);
-  --brand-space-above-nav: calc(63px + max(env(safe-area-inset-bottom, 0px), 22px));
+  --brand-space-nav: 62px;
+  --brand-space-above-nav: calc(var(--brand-space-nav) + 1px + var(--brand-space-safe-bottom));
+  --brand-space-page-end-phone: calc(var(--brand-space-above-nav) + 1.5rem);
+  --brand-space-action-bar: 73px;
+  --brand-space-page-end-action-bar: calc(var(--brand-space-page-end-phone) + var(--brand-space-action-bar));
   --brand-size-rail: 240px;
   --brand-size-preview: 390px;
   --brand-size-scan-photo: 360px;
@@ -426,7 +430,11 @@
   --spacing-nudge: var(--brand-space-nudge);
   --spacing-nudge-sm: var(--brand-space-nudge-sm);
   --spacing-safe-bottom: var(--brand-space-safe-bottom);
+  --spacing-nav: var(--brand-space-nav);
   --spacing-above-nav: var(--brand-space-above-nav);
+  --spacing-page-end-phone: var(--brand-space-page-end-phone);
+  --spacing-action-bar: var(--brand-space-action-bar);
+  --spacing-page-end-action-bar: var(--brand-space-page-end-action-bar);
   --spacing-rail: var(--brand-size-rail);
   --spacing-preview: var(--brand-size-preview);
   --spacing-scan-photo: var(--brand-size-scan-photo);

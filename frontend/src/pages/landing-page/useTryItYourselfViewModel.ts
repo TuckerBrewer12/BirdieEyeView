@@ -4,14 +4,16 @@ import { scanRepository, type ScanRepository } from "@/data/scanRepository";
 import { useCardText, type PickedPhoto } from "@/data/useCardText";
 import { Round } from "@/domain";
 import { useExtractScorecard } from "@/data/useExtractScorecard";
-import { SCAN_STEPS, SCAN_STEP_HOLD_MS, scanStepAt } from "@/domain/scan";
+import { NO_CARD_FACTS, SCAN_STEPS, SCAN_STEP_HOLD_MS, cardContext, scanStepAt, type CardFacts } from "@/domain/scan";
 
 export interface TryItYourselfViewModel {
   step: "upload" | "processing" | "review";
   /** The picked photo, readied for upload. */
   photo: File | null;
   error: string | null;
-  setUserContext: (context: string) => void;
+  /** What the golfer says is on the card. */
+  card: CardFacts;
+  setCard: (patch: Partial<CardFacts>) => void;
   pickPhoto: (photo: File) => void;
   extract: () => void;
   reset: () => void;
@@ -29,7 +31,11 @@ export function useTryItYourselfViewModel(
   repository: ScanRepository = scanRepository,
 ): TryItYourselfViewModel {
   const [photo, setPhoto] = useState<PickedPhoto | null>(null);
-  const [userContext, setUserContext] = useState("");
+  const [card, setCardFacts] = useState<CardFacts>(NO_CARD_FACTS);
+  const setCard = useCallback(
+    (patch: Partial<CardFacts>) => setCardFacts((current) => ({ ...current, ...patch })),
+    [],
+  );
   const [phase, setPhase] = useState(0);
   // A later pick wins over an earlier one still being readied.
   const latestPick = useRef(0);
@@ -69,13 +75,13 @@ export function useTryItYourselfViewModel(
 
   const extract = useCallback(() => {
     if (!photo) return;
-    mutate({ photo: photo.file, userContext, ocrText: cardText });
-  }, [photo, userContext, cardText, mutate]);
+    mutate({ photo: photo.file, userContext: cardContext(card), ocrText: cardText });
+  }, [photo, card, cardText, mutate]);
 
   const reset = useCallback(() => {
     latestPick.current += 1;
     setPhoto(null);
-    setUserContext("");
+    setCardFacts(NO_CARD_FACTS);
     resetExtraction();
   }, [resetExtraction]);
 
@@ -86,7 +92,8 @@ export function useTryItYourselfViewModel(
     step,
     photo: photo?.file ?? null,
     error: extraction.error?.message ?? null,
-    setUserContext,
+    card,
+    setCard,
     pickPhoto,
     extract,
     reset,

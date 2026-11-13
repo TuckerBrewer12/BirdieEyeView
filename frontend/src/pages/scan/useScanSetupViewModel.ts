@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { teeColors } from "@/domain";
+import { teeOptions, type TeeChoice } from "@/domain";
 import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
 import type { CourseSummary } from "@/domain/course";
 import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
@@ -20,8 +20,8 @@ export interface ScanSetupViewModel {
   /** Back to searching: empty after a picked course, on the name after a typed one. */
   clearCourse: () => void;
 
-  /** The picked course's tee colours, once it has loaded. Empty means the tee is typed. */
-  tees: string[];
+  /** The picked course's tees, once it has loaded. Empty means the tee is typed. */
+  tees: TeeChoice[];
   /** The picked course is still loading, so its tees aren't known yet. */
   loadingTees: boolean;
   teeBox: string;
@@ -96,7 +96,7 @@ export function useScanSetupViewModel(
     nameCourse,
     clearCourse,
 
-    tees: teeColors(pickedCourse),
+    tees: teeOptions(pickedCourse),
     loadingTees: courseQuery.isLoading,
     teeBox: setup.teeBox,
     setTeeBox: (teeBox) => update({ teeBox }),

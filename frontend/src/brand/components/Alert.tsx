@@ -48,7 +48,7 @@ function AlertDescription({ className, ...props }: React.ComponentProps<"div">) 
     <div
       data-slot="alert-description"
       className={cn(
-        "leading-snug text-pretty group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-2 [&_p:not(:last-child)]:mb-4",
+        "leading-snug text-pretty group-has-[>svg]/alert:col-start-2 group-has-data-[slot=alert-action]/alert:min-w-0 group-has-data-[slot=alert-action]/alert:flex-1 group-has-data-[slot=alert-action]/alert:basis-40 [&_a]:underline [&_a]:underline-offset-2 [&_p:not(:last-child)]:mb-4",
         className,
       )}
       {...props}
@@ -56,15 +56,12 @@ function AlertDescription({ className, ...props }: React.ComponentProps<"div">) 
   );
 }
 
-/** A control pinned to the top right, such as a retry button. */
+/**
+ * What to do about it, at the alert's end: a retry, another photo. The alert lays its message and
+ * the action in a row, the action wrapping under the message when there is no room beside it.
+ */
 function AlertAction({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="alert-action"
-      className={cn("absolute top-2 right-2", className)}
-      {...props}
-    />
-  );
+  return <div data-slot="alert-action" className={cn("ml-auto shrink-0", className)} {...props} />;
 }
 
 export { Alert, AlertTitle, AlertDescription, AlertAction };

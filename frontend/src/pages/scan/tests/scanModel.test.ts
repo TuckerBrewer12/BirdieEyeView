@@ -3,8 +3,6 @@ import { pebbleBeachSummary } from "@/testing/fixtures/courses";
 import { SCANNED_COURSE_NAME, scannedCard } from "@/testing/fixtures/scan";
 import { holeList, ringedBelow } from "../present";
 import {
-  NO_CARD_FACTS,
-  cardContext,
   reviewCourseFrom, reviewFromScan, reviewFromSetup, saveRequestFrom, todayIso,
   withHoleEdit,
 } from "../scanModel";
@@ -62,17 +60,5 @@ describe("ringedBelow", () => {
   it("words where the scores to check are as a sentence", () => {
     expect(ringedBelow([4])).toBe("Hole 4 is ringed below.");
     expect(ringedBelow([4, 11])).toBe("Holes 4 and 11 are ringed below.");
-  });
-});
-
-describe("cardContext", () => {
-  it("says nothing but that there are no putts, for a card the golfer said nothing about", () => {
-    expect(cardContext(NO_CARD_FACTS)).toBe("no putts recorded");
-  });
-
-  it("names the golfer's row, the scores to par, and the rows the card has", () => {
-    expect(cardContext({ name: " Tucker ", writtenAs: "toPar", putts: true, shotsToGreen: true })).toBe(
-      "my name is Tucker. scores written to par. name on score row. row order: score, putts, shots to green",
-    );
   });
 });

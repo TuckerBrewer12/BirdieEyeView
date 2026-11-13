@@ -182,7 +182,7 @@ describe("useScanPageViewModel", () => {
     const { result } = renderVm();
     act(() => result.current.setMode("manual"));
     act(() => result.current.setup.pickCourse(pebbleBeachSummary));
-    await waitFor(() => expect(result.current.setup.tees).toEqual(["Blue"]));
+    await waitFor(() => expect(result.current.setup.tees.map((tee) => tee.name)).toEqual(["Blue"]));
     act(() => result.current.setup.setTeeBox("Blue"));
     act(() => result.current.setup.setDate("2026-10-01"));
 

@@ -6,10 +6,9 @@ import {
   Field,
   FieldLabel,
   Input,
-  ToggleGroup,
-  ToggleGroupItem,
 } from "@/brand";
 import { formatCourseName } from "@/domain/course";
+import { TeeField } from "./TeeField";
 import type { ScanSetupViewModel } from "../useScanSetupViewModel";
 
 /**
@@ -24,7 +23,14 @@ export function ScanSetupStep({ setup }: { setup: ScanSetupViewModel }) {
           <div className="col-span-2 md:col-span-1">
             <CourseField setup={setup} />
           </div>
-          <TeeField setup={setup} />
+          <TeeField
+            id="setup-tee"
+            tees={setup.tees}
+            teeBox={setup.teeBox}
+            setTeeBox={setup.setTeeBox}
+            placeholder={setup.loadingTees ? "Loading tees…" : undefined}
+            disabled={setup.loadingTees}
+          />
           <Field>
             <FieldLabel htmlFor="setup-date">Date</FieldLabel>
             <Input
@@ -67,39 +73,6 @@ function CourseField({ setup }: { setup: ScanSetupViewModel }) {
         onClear={setup.clearCourse}
         clearLabel="Change course"
       />
-    </Field>
-  );
-}
-
-/** The picked course's tees to choose from, else a box to type the tee into. */
-function TeeField({ setup }: { setup: ScanSetupViewModel }) {
-  const pick = setup.tees.length > 0;
-  return (
-    <Field>
-      <FieldLabel htmlFor={pick ? undefined : "setup-tee"}>Tee</FieldLabel>
-      {pick ? (
-        <ToggleGroup
-          size="sm"
-          aria-label="Tee"
-          value={setup.teeBox ? [setup.teeBox] : []}
-          onValueChange={(values) => setup.setTeeBox(values[0] ?? "")}
-        >
-          {setup.tees.map((color) => (
-            <ToggleGroupItem key={color} value={color}>
-              {color}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      ) : (
-        <Input
-          id="setup-tee"
-          autoComplete="off"
-          placeholder={setup.loadingTees ? "Loading tees…" : "e.g. White"}
-          disabled={setup.loadingTees}
-          value={setup.teeBox}
-          onChange={(e) => setup.setTeeBox(e.target.value)}
-        />
-      )}
     </Field>
   );
 }

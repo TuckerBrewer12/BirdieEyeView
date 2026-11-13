@@ -24,6 +24,8 @@ interface SwatchChipsProps<T extends string> {
   multiple?: boolean;
   /** What the row picks, named for screen readers and shown before the chips. */
   label: string;
+  /** Leaves the label for screen readers alone, when a `FieldLabel` above already shows it. */
+  hideLabel?: boolean;
   className?: string;
 }
 
@@ -32,12 +34,22 @@ interface SwatchChipsProps<T extends string> {
  * the colour reads either way. `ToggleGroup look="chips"` is the filled kind, for chips without a
  * colour of their own. Arrow keys move between the chips. `TeePicker` and `LinePicker` sit on it.
  */
-function SwatchChips<T extends string>({ chips, value, onChange, multiple = false, label, className }: SwatchChipsProps<T>) {
+function SwatchChips<T extends string>({
+  chips,
+  value,
+  onChange,
+  multiple = false,
+  label,
+  hideLabel = false,
+  className,
+}: SwatchChipsProps<T>) {
   return (
     <div data-slot="swatch-chips" className={cn("flex flex-wrap items-center gap-2", className)}>
-      <span aria-hidden className="mr-0.5 text-body font-semibold text-foreground-secondary">
-        {label}
-      </span>
+      {!hideLabel && (
+        <span aria-hidden className="mr-0.5 text-body font-semibold text-foreground-secondary">
+          {label}
+        </span>
+      )}
       <ToggleGroupPrimitive
         aria-label={label}
         multiple={multiple}

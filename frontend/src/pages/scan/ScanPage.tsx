@@ -47,7 +47,7 @@ export function ScanPage({ userId }: { userId: string }) {
       const manual = viewModel.mode === "manual";
       const title = manual ? "Enter your scores" : "Check your card";
       return (
-        <div className="flex flex-col pb-20 md:pb-6">
+        <div className="flex flex-col pb-6">
           <PageHeader title={title} revealAt={100} />
           <ScanReviewStep
             review={viewModel.review}
@@ -71,7 +71,7 @@ export function ScanPage({ userId }: { userId: string }) {
 
     default:
       return (
-        <div className="flex max-w-4xl flex-col gap-4 pb-20 md:gap-5 md:pb-6">
+        <div className="flex max-w-4xl flex-col gap-4 pb-6 md:gap-5">
           <PageHeader title={TITLE} revealAt={100} />
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <PageTitle>{TITLE}</PageTitle>

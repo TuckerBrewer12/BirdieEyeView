@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { type Download, type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
@@ -8,6 +9,8 @@ import { scannedCard } from "../../../testing/fixtures/scan";
 /** A real card photo, so the chosen file has something in its thumbnail. */
 const CARD_PHOTO = fileURLToPath(new URL("../../../../public/hero/physical-card.jpg", import.meta.url));
 const CARD_NAME = "physical-card.jpg";
+/** The same card under another name, so a second pick can be told from the first. */
+const ANOTHER_PHOTO = { name: "another-card.jpg", mimeType: "image/jpeg", buffer: readFileSync(CARD_PHOTO) };
 
 /** Screen robot for `/scan` — same idea as an Android Espresso robot. */
 export class ScanRobot {
@@ -73,14 +76,44 @@ export class ScanRobot {
   }
 
   /** The picked photo, as a thumbnail with its name, ready to scan. */
-  async seesChosenCard(): Promise<this> {
-    await expect(this.page.getByText(CARD_NAME)).toBeVisible();
+  async seesChosenCard(name: string = CARD_NAME): Promise<this> {
+    await expect(this.page.getByText(name)).toBeVisible();
     await expect(this.page.locator('[data-slot=scan-photo] img[src^="data:image/"]')).toBeVisible();
     return this;
   }
 
-  async removeCard(): Promise<this> {
-    await this.page.getByRole("button", { name: "Replace" }).click();
+  /** Another photo of the card, from the button under the picked one. */
+  async chooseAnotherPhoto(): Promise<this> {
+    await expect(this.page.getByRole("button", { name: "Try another photo" })).toBeVisible();
+    await this.page.locator("[data-slot=file-button-input]").setInputFiles(ANOTHER_PHOTO);
+    return this;
+  }
+
+  /** Another photo of the card, from the failed read's banner. */
+  async chooseAnotherPhotoFromBanner(): Promise<this> {
+    const banner = this.page.locator("[data-slot=scan-failed]");
+    await expect(banner.getByRole("button", { name: "Try another photo" })).toBeVisible();
+    await this.page.locator("[data-slot=file-button-input]").setInputFiles(ANOTHER_PHOTO);
+    return this;
+  }
+
+  /** Says which other rows the card has: "Putts", "Shots to green". */
+  async markOnCard(row: string): Promise<this> {
+    await this.page.getByRole("group", { name: "Also on the card" }).getByRole("button", { name: row }).click();
+    return this;
+  }
+
+  /** The rows to drag into the card's order, top to bottom, with Name beside the score. */
+  async seesRowOrder(rows: string[]): Promise<this> {
+    const order = this.page.locator("[data-slot=card-row-order]");
+    await expect(order.locator("[data-row-index]")).toHaveText(rows.map((row, i) => (i === 0 ? `Name${row}` : row)));
+    return this;
+  }
+
+  /** The failed read's banner is gone: a new photo starts over. */
+  async seesNoScanFailure(): Promise<this> {
+    await expect(this.page.locator("[data-slot=scan-failed]")).toHaveCount(0);
+    await expect(this.page.getByRole("button", { name: "Read card", exact: true })).toBeVisible();
     return this;
   }
 
@@ -308,7 +341,10 @@ export class ScanRobot {
   }
 
   private teeChip(color: string) {
-    return this.page.getByRole("group", { name: "Tee", exact: true }).getByRole("button", { name: color, exact: true });
+    // A tee's chip reads its name, then its yards when the course has them.
+    return this.page
+      .getByRole("group", { name: "Tee", exact: true })
+      .getByRole("button", { name: new RegExp(`^${color}\\b`) });
   }
 
   /** A hole's strokes cell on the card being checked, ringed or not. */

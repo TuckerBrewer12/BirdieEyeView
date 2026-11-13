@@ -46,6 +46,9 @@ export default function RoundPreviewPreview() {
           renderItem={(round) => <RoundPreview variant="compact" layout="stacked" round={round} onClick={() => {}} />}
         />
       </Card>
+      <Card className="w-preview px-4">
+        <RoundPreview variant="summary" round={overPar} />
+      </Card>
     </>
   );
 }

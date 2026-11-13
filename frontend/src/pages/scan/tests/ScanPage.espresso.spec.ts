@@ -170,11 +170,29 @@ test("starting over from the review goes back to an empty upload", async ({ scan
   await scan.seesUpload();
 });
 
-test("removing the picked photo goes back to the drop zone", async ({ scan }) => {
+test("a card with putts and shots to green asks for its rows' order", async ({ scan }) => {
   await scan.open();
   await scan.chooseScorecard();
-  await scan.removeCard();
-  await scan.seesUpload();
+  await scan.markOnCard("Putts");
+  await scan.markOnCard("Shots to green");
+  await scan.seesRowOrder(["Score", "Putts", "Shots to Green"]);
+});
+
+test("another photo takes the picked one's place", async ({ scan }) => {
+  await scan.open();
+  await scan.chooseScorecard();
+  await scan.chooseAnotherPhoto();
+  await scan.seesChosenCard("another-card.jpg");
+});
+
+test("a failed read offers another photo from its banner, which clears it", async ({ scan }) => {
+  await scan.open({ scan: undefined });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesScanFailed();
+  await scan.chooseAnotherPhotoFromBanner();
+  await scan.seesChosenCard("another-card.jpg");
+  await scan.seesNoScanFailure();
 });
 
 test("a course can be picked ahead of the scan, and cleared", async ({ scan }) => {

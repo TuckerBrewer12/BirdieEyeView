@@ -7,15 +7,13 @@ import type { RoundDetail } from "@/domain";
 import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/domain/course";
-import { SCAN_STEPS, SCAN_STEP_HOLD_MS } from "@/domain/scan";
+import { SCAN_STEPS, SCAN_STEP_HOLD_MS, cardContext, type CardFacts } from "@/domain/scan";
 import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
 import { roundsRepository, type RoundsRepository } from "../rounds/roundsRepository";
 import {
-  cardContext,
   courseQueryFrom,
   reviewFromScan,
   todayIso,
-  type CardFacts,
   type PickedCourse,
   type ScanMode,
   type ScanStep,
@@ -50,7 +48,6 @@ export interface ScanPageViewModel {
   /** The picked photo, readied for upload. */
   photo: File | null;
   pickPhoto: (photo: File) => void;
-  clearPhoto: () => void;
   /** What the golfer says is on the card: their name, how scores are written, which rows it has. */
   card: CardFacts;
   setCard: (patch: Partial<CardFacts>) => void;
@@ -166,11 +163,6 @@ export function useScanPageViewModel(
     [setSession],
   );
 
-  const clearPhoto = useCallback(() => {
-    latestPick.current += 1;
-    setSession((current) => ({ ...current, photo: null, error: null }));
-  }, [setSession]);
-
   const setCard = useCallback(
     (patch: Partial<CardFacts>) => setSession((current) => ({ ...current, card: { ...current.card, ...patch } })),
     [setSession],
@@ -231,7 +223,6 @@ export function useScanPageViewModel(
 
     photo: session.photo?.file ?? null,
     pickPhoto,
-    clearPhoto,
     card: session.card,
     setCard,
     extract,

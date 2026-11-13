@@ -407,3 +407,31 @@ tester.run("kit/no-percent-template", kit.rules["no-percent-template"], {
     },
   ],
 });
+
+tester.run("kit/no-handmade-tee-picker", kit.rules["no-handmade-tee-picker"], {
+  valid: [
+    { code: '<TeePicker tees={tees} value={tee} onChange={setTee} />;', filename: PAGE },
+    { code: '<ToggleGroup aria-label="Scores written as" value={[v]} />;', filename: PAGE },
+    { code: '<ToggleGroup aria-label="Tee" value={[v]} />;', filename: KIT },
+  ],
+  invalid: [
+    { code: '<ToggleGroup size="sm" aria-label="Tee played" value={[tee]} />;', filename: PAGE, errors: [{ messageId: "tee" }] },
+    { code: '<ToggleGroup aria-label={"Tees"} value={[tee]} />;', filename: PAGE, errors: [{ messageId: "tee" }] },
+  ],
+});
+
+tester.run("kit/no-handmade-check-chip", kit.rules["no-handmade-check-chip"], {
+  valid: [
+    { code: '<ToggleGroup look="chips" multiple aria-label="Also on the card" />;', filename: PAGE },
+    // A plain checkbox and its words, as Settings lays one out.
+    { code: '<label className="flex items-center gap-2"><Checkbox />Get updates</label>;', filename: PAGE },
+    { code: '<label className="rounded-lg border"><Checkbox />Kit</label>;', filename: KIT },
+  ],
+  invalid: [
+    {
+      code: '<label className="inline-flex h-9 items-center rounded-lg border border-input px-3"><Checkbox checked={on} />Putts</label>;',
+      filename: PAGE,
+      errors: [{ messageId: "chip" }],
+    },
+  ],
+});

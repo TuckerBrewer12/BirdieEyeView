@@ -442,8 +442,16 @@ export const space = {
   "nudge-sm": 3,
   /** What a bar pinned to the bottom pads past: the phone's home-indicator strip, never less than 22px. */
   "safe-bottom": "max(env(safe-area-inset-bottom, 0px), 22px)",
-  /** Just clear of a phone's tab bar (its 62px row and rule over the home-indicator strip): where `ActionBar` pins. */
-  "above-nav": "calc(63px + max(env(safe-area-inset-bottom, 0px), 22px))",
+  /** A phone's tab bar: its row of tabs with the padding over them. Its 1px rule sits on top. */
+  nav: 62,
+  /** Just clear of a phone's tab bar, its rule and the home-indicator strip under it: where `ActionBar` pins. */
+  "above-nav": "calc(var(--brand-space-nav) + 1px + var(--brand-space-safe-bottom))",
+  /** Where a phone page's content ends: a gap above the tab bar. `AppShell` pads to it. */
+  "page-end-phone": "calc(var(--brand-space-above-nav) + 1.5rem)",
+  /** `ActionBar` pinned on a phone: a large button with 12px over and under it, and its 1px rule. */
+  "action-bar": 73,
+  /** Where a phone page's content ends when an `ActionBar` is pinned over the tab bar. */
+  "page-end-action-bar": "calc(var(--brand-space-page-end-phone) + var(--brand-space-action-bar))",
 };
 
 /** Shadcn's base radius, `--radius`; the named steps below sit around it. */

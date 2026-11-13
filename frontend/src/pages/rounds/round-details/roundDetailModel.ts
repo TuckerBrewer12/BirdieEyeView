@@ -1,5 +1,4 @@
 import type { RoundComparisonDto } from "@/types/api";
-import type { CourseDto } from "@/types/api";
 import { formatOneDecimal, formatSigned, formatTwoDecimals } from "@/domain/format";
 import type { Round } from "@/domain";
 
@@ -69,15 +68,6 @@ export function comparisonFrom(dto: RoundComparisonDto): Partial<Record<Comparis
     windows[window.window] = { rounds: window.rounds, rows };
   }
   return windows;
-}
-
-/** The course's tees as the edit mode's chips: each tee's name and its yardage. */
-export function teeOptions(course: CourseDto | null): { name: string; yards: number | null }[] {
-  const options: { name: string; yards: number | null }[] = [];
-  for (const tee of course?.tees ?? []) {
-    if (tee.color) options.push({ name: tee.color, yards: tee.total_yardage });
-  }
-  return options;
 }
 
 /** One figure beside the score in the summary card. */

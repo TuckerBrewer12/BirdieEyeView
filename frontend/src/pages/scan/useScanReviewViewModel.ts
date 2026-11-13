@@ -1,12 +1,20 @@
 import { useCallback, useMemo, useState } from "react";
 import { scanRepository, type ScanRepository } from "@/data/scanRepository";
-import { strokesToCheck, teeColors, type Round } from "@/domain";
+import { strokesToCheck, teeOptions, type Round, type TeeChoice } from "@/domain";
 import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/domain/course";
 import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
 import { useCourse } from "../courses/useCourse";
-import { reviewCourseFrom, reviewedRound, saveRequestFrom, todayIso, withHoleEdit, type ScanReviewDraft } from "./scanModel";
+import {
+  reviewCourseFrom,
+  reviewedRound,
+  saveRequestFrom,
+  scannedTeeOptions,
+  todayIso,
+  withHoleEdit,
+  type ScanReviewDraft,
+} from "./scanModel";
 import { newScanSession, useScanSession } from "./scanSession";
 import { useSaveScan } from "./useSaveScan";
 
@@ -44,7 +52,7 @@ export interface ScanReviewViewModel {
   changeCourse: () => void;
 
   /** The tees to choose from: the linked course's, else the ones read off the card. */
-  tees: string[];
+  tees: TeeChoice[];
   teeBox: string;
   setTeeBox: (teeBox: string) => void;
   /** `YYYY-MM-DD`. */
@@ -159,9 +167,7 @@ export function useScanReviewViewModel(
     nameCourse,
     changeCourse,
 
-    tees: linkedCourse
-      ? teeColors(linkedCourse)
-      : (scannedCourse?.tees ?? []).flatMap((scanned) => (scanned.color ? [scanned.color] : [])),
+    tees: linkedCourse ? teeOptions(linkedCourse) : scannedTeeOptions(scannedCourse),
     teeBox,
     setTeeBox: (next) => update((current) => ({ ...current, teeBox: next || null })),
     date: draft?.date ?? "",

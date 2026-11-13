@@ -70,8 +70,9 @@ function BottomNav({
       className={cn("relative", className)}
     >
       {/* Raised so the bar stays clear of the dimmed page while the menu is open. */}
-      <div className="relative z-10 border-t border-border bg-card px-2 pt-1.5 pb-safe-bottom">
-        <div className="flex h-14 items-stretch">
+      <div className="relative z-10 border-t border-border bg-card px-2 pb-safe-bottom">
+        {/* `h-nav` is the measure `ActionBar` and the shell's padding take the bar's height from. */}
+        <div className="flex h-nav items-stretch pt-1.5">
           {tabs.map((item) => (
             <NavLink key={item.href} item={item} renderLink={renderLink} onClick={close} className={tabClass}>
               <span className={cn(iconClass, item.href === featuredHref ? featuredIconClass : plainIconClass)}>

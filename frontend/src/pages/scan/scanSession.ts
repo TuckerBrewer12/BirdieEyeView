@@ -1,6 +1,7 @@
 import { createContext, useContext, type Dispatch, type SetStateAction } from "react";
 import type { PickedPhoto } from "@/data/useCardText";
-import { NO_CARD_FACTS, todayIso, type CardFacts, type ManualSetup, type PickedCourse, type ScanMode, type ScanReviewDraft } from "./scanModel";
+import { NO_CARD_FACTS, type CardFacts } from "@/domain/scan";
+import { todayIso, type ManualSetup, type PickedCourse, type ScanMode, type ScanReviewDraft } from "./scanModel";
 
 /**
  * The scan in progress. A scan takes a minute or two and a review can be long, so this

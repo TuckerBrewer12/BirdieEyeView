@@ -94,6 +94,21 @@ export function getHole<T extends { number: number | null }>(
   return course.holes.find((hole) => hole.number === number) ?? null;
 }
 
+/** A tee to pick: its name and, once every hole has one, its total yardage. */
+export interface TeeChoice {
+  name: string;
+  yards: number | null;
+}
+
+/** A course's tees to pick from, as `TeePicker` shows them: each tee's name and its yardage. */
+export function teeOptions(course: CourseDto | null | undefined): TeeChoice[] {
+  const options: TeeChoice[] = [];
+  for (const tee of course?.tees ?? []) {
+    if (tee.color) options.push({ name: tee.color, yards: tee.total_yardage });
+  }
+  return options;
+}
+
 export function teeColors(course: CourseDto | null | undefined): string[] {
   return course?.tees.map((tee) => tee.color).filter((color): color is string => !!color) ?? [];
 }
