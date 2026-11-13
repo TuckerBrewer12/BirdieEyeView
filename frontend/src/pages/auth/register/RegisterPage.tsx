@@ -62,7 +62,17 @@ export function RegisterPage() {
           onChange={viewModel.setPassword}
           autoComplete="new-password"
           placeholder="At least 8 characters"
-          error={viewModel.passwordError}
+          error={viewModel.fieldErrors.password}
+        />
+
+        <PasswordField
+          id="register-confirm"
+          label="Confirm password"
+          value={viewModel.confirm}
+          onChange={viewModel.setConfirm}
+          autoComplete="new-password"
+          error={viewModel.fieldErrors.confirm}
+          revealName="confirm password"
         />
 
         <Button type="submit" size="lg" className="mt-1" disabled={viewModel.submitting}>

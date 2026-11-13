@@ -7,7 +7,7 @@ export interface NewPasswordErrors {
 }
 
 /** Why a new password can't be sent yet: too short. */
-export function newPasswordError(password: string): string | null {
+function newPasswordError(password: string): string | null {
   return password.length < MIN_PASSWORD_LENGTH ? `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` : null;
 }
 

@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { messageFrom } from "@/lib/userFacingErrors";
 import type { AuthActions } from "../authActions";
-import { newPasswordError } from "../authModel";
+import { hasErrors, newPasswordErrors, type NewPasswordErrors } from "../authModel";
 import { useRegister } from "../useRegister";
 
 export interface RegisterViewModel {
@@ -11,9 +11,11 @@ export interface RegisterViewModel {
   setEmail: (email: string) => void;
   password: string;
   setPassword: (password: string) => void;
+  confirm: string;
+  setConfirm: (confirm: string) => void;
 
-  /** Why the password can't be sent, from the last submit; editing it clears this. */
-  passwordError: string | null;
+  /** Why the password or its confirmation can't be sent, from the last submit; editing a field clears its own. */
+  fieldErrors: NewPasswordErrors;
   /** The server's refusal, such as an email already in use. */
   error: string | null;
   submitting: boolean;
@@ -21,23 +23,26 @@ export interface RegisterViewModel {
   submit: (onRegistered: (email: string, message: string) => void) => void;
 }
 
+const NO_ERRORS: NewPasswordErrors = { password: null, confirm: null };
+
 /**
- * Create account: a name, an email and a password, as the frame has it. The handicap and home
- * course are set later in Settings.
+ * Create account: a name, an email, and a password typed twice. The handicap and home course are
+ * set later in Settings.
  */
 export function useRegisterViewModel(auth: Pick<AuthActions, "register">): RegisterViewModel {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<NewPasswordErrors>(NO_ERRORS);
   const register = useRegister(auth);
   const { mutate: createAccount } = register;
 
   const submit = useCallback(
     (onRegistered: (email: string, message: string) => void) => {
-      const problem = newPasswordError(password);
-      setPasswordError(problem);
-      if (problem) return;
+      const errors = newPasswordErrors(password, confirm);
+      setFieldErrors(errors);
+      if (hasErrors(errors)) return;
 
       const address = email.trim();
       createAccount(
@@ -45,7 +50,7 @@ export function useRegisterViewModel(auth: Pick<AuthActions, "register">): Regis
         { onSuccess: (message) => onRegistered(address, message) },
       );
     },
-    [name, email, password, createAccount],
+    [name, email, password, confirm, createAccount],
   );
 
   return {
@@ -56,9 +61,14 @@ export function useRegisterViewModel(auth: Pick<AuthActions, "register">): Regis
     password,
     setPassword: (next) => {
       setPassword(next);
-      setPasswordError(null);
+      setFieldErrors((errors) => (errors.password ? { ...errors, password: null } : errors));
     },
-    passwordError,
+    confirm,
+    setConfirm: (next) => {
+      setConfirm(next);
+      setFieldErrors((errors) => (errors.confirm ? { ...errors, confirm: null } : errors));
+    },
+    fieldErrors,
     error: register.error ? messageFrom(register.error, "Registration failed") : null,
     submitting: register.isPending,
     submit,

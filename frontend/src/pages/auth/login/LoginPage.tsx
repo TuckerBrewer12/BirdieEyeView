@@ -6,6 +6,9 @@ import { AuthNotice } from "../components/AuthNotice";
 import { PasswordField } from "../components/PasswordField";
 import { useLoginViewModel, type LoginArrival } from "./useLoginViewModel";
 
+/** The refusal's alert, which both fields point at while it stands. */
+const ERROR_ID = "login-error";
+
 export function LoginPage() {
   const navigate = useNavigate();
   const arrival = (useLocation().state ?? {}) as LoginArrival;
@@ -28,7 +31,9 @@ export function LoginPage() {
         }}
       >
         <AuthNotice tone="success">{viewModel.notice}</AuthNotice>
-        <AuthNotice tone="error">{viewModel.error}</AuthNotice>
+        <AuthNotice tone="error" id={ERROR_ID}>
+          {viewModel.error}
+        </AuthNotice>
 
         <Field>
           <FieldLabel htmlFor="login-email">Email</FieldLabel>
@@ -40,6 +45,7 @@ export function LoginPage() {
             required
             autoComplete="email"
             aria-invalid={viewModel.credentialsRefused ? true : undefined}
+            aria-describedby={viewModel.credentialsRefused ? ERROR_ID : undefined}
           />
         </Field>
 
@@ -50,6 +56,7 @@ export function LoginPage() {
           onChange={viewModel.setPassword}
           autoComplete="current-password"
           invalid={viewModel.credentialsRefused}
+          describedBy={viewModel.credentialsRefused ? ERROR_ID : undefined}
           labelAction={<AuthLink to="/forgot-password">Forgot?</AuthLink>}
         />
 

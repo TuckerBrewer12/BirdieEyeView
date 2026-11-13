@@ -50,8 +50,13 @@ export class LoginRobot extends AuthScreenRobot {
   async seesFieldsMarkedWrong(wrong: boolean): Promise<this> {
     for (const label of ["Email", "Password"]) {
       const field = this.page.getByLabel(label, { exact: true });
-      if (wrong) await expect(field).toHaveAttribute("aria-invalid", "true");
-      else await expect(field).not.toHaveAttribute("aria-invalid", "true");
+      if (wrong) {
+        await expect(field).toHaveAttribute("aria-invalid", "true");
+        // The field says why: a screen reader reads the alert's words as its description.
+        await expect(field).toHaveAccessibleDescription(/\S/);
+      } else {
+        await expect(field).not.toHaveAttribute("aria-invalid", "true");
+      }
     }
     return this;
   }

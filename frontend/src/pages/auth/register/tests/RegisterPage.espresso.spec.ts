@@ -31,3 +31,12 @@ test("a short password is caught before anything is sent", async ({ register }) 
   await register.seesFieldError("Password must be at least 8 characters.");
   expect(register.backend?.registrations).toEqual([]);
 });
+
+test("passwords that don't match are caught before anything is sent", async ({ register }) => {
+  await register.open();
+  await register.fillIn({ password: "birdie123", confirm: "birdie321" });
+  await register.submit();
+
+  await register.seesFieldError("Passwords do not match.");
+  expect(register.backend?.registrations).toEqual([]);
+});

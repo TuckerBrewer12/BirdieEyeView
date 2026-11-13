@@ -12,10 +12,11 @@ function renderVm(auth = new FakeAuth()) {
 
 type Vm = ReturnType<typeof useRegisterViewModel>;
 
-function fillIn(result: { current: Vm }, password = "birdie123") {
+function fillIn(result: { current: Vm }, password = "birdie123", confirm = password) {
   act(() => result.current.setName(" Sam Snead "));
   act(() => result.current.setEmail(" sam@example.com "));
   act(() => result.current.setPassword(password));
+  act(() => result.current.setConfirm(confirm));
 }
 
 describe("useRegisterViewModel", () => {
@@ -30,17 +31,23 @@ describe("useRegisterViewModel", () => {
     expect(auth.registrations).toEqual([{ name: "Sam Snead", email: "sam@example.com", password: "birdie123" }]);
   });
 
-  it("holds back a short password with a message, and clears it once the password is edited", () => {
+  it("holds back a short or unmatched password, each field with its message, cleared as it's edited", () => {
     const { auth, result } = renderVm();
-    fillIn(result, "short");
+    fillIn(result, "short", "shorter");
 
     act(() => result.current.submit(() => {}));
 
-    expect(result.current.passwordError).toBe("Password must be at least 8 characters.");
+    expect(result.current.fieldErrors).toEqual({
+      password: "Password must be at least 8 characters.",
+      confirm: "Passwords do not match.",
+    });
     expect(auth.registrations).toEqual([]);
 
+    act(() => result.current.setConfirm("short"));
+    expect(result.current.fieldErrors.confirm).toBeNull();
+    expect(result.current.fieldErrors.password).not.toBeNull();
     act(() => result.current.setPassword("shorter1"));
-    expect(result.current.passwordError).toBeNull();
+    expect(result.current.fieldErrors.password).toBeNull();
   });
 
   it("shows the server's refusal", async () => {

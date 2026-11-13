@@ -25,6 +25,8 @@ interface PasswordFieldProps {
   labelAction?: ReactNode;
   /** Marks the field wrong without a message of its own, as a refused sign-in does. */
   invalid?: boolean;
+  /** The id of a message elsewhere that says why it's wrong: a refused sign-in's alert. */
+  describedBy?: string;
   children?: ReactNode;
 }
 
@@ -43,6 +45,7 @@ export function PasswordField({
   revealName = "password",
   labelAction,
   invalid = false,
+  describedBy,
   children,
 }: PasswordFieldProps) {
   const [revealed, setRevealed] = useState(false);
@@ -68,7 +71,7 @@ export function PasswordField({
           autoComplete={autoComplete}
           placeholder={placeholder}
           aria-invalid={error != null || invalid ? true : undefined}
-          aria-describedby={error ? errorId : undefined}
+          aria-describedby={error ? errorId : describedBy}
         />
         <InputGroupAddon align="inline-end">
           <InputGroupButton

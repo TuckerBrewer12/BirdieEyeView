@@ -85,9 +85,9 @@ function Panel({ theme }: { theme: "Light" | "Dark" }) {
           Back to courses
         </Button>
       </div>
-      <div className="text-label font-semibold text-muted-foreground">Landing · cta, pill</div>
+      <div className="text-label font-semibold text-muted-foreground">Large, pill</div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="cta" shape="pill">
+        <Button size="lg" shape="pill">
           Start tracking
         </Button>
         <Button variant="outline" shape="pill">

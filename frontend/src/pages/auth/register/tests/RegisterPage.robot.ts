@@ -8,10 +8,12 @@ export class RegisterRobot extends AuthScreenRobot {
     return this;
   }
 
-  async fillIn(details: { name?: string; email?: string; password?: string }): Promise<this> {
+  async fillIn(details: { name?: string; email?: string; password?: string; confirm?: string }): Promise<this> {
+    const password = details.password ?? "birdie123";
     await this.fill("Name", details.name ?? "Sam Snead");
     await this.fill("Email", details.email ?? "sam@example.com");
-    await this.fill("Password", details.password ?? "birdie123");
+    await this.fill("Password", password);
+    await this.fill("Confirm password", details.confirm ?? password);
     return this;
   }
 
