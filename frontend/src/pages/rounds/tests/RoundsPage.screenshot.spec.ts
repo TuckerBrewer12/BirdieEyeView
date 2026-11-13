@@ -21,6 +21,12 @@ test("empty list", async ({ rounds }) => {
   await rounds.capture("rounds-empty.png");
 });
 
+test("failed load", async ({ rounds }) => {
+  await rounds.openFailing(storedRounds);
+  await rounds.seesLoadError();
+  await rounds.capture("rounds-load-error.png");
+});
+
 test("course link panel open", async ({ rounds }) => {
   await rounds.open(storedRounds);
   await rounds.openLinkFor("Scanned Scorecard");
