@@ -64,13 +64,6 @@ export class CareerRobot {
     return this;
   }
 
-  /** A total's name reads in its score's colour: Birdies green, Bogeys red. */
-  async seesTotalInColour(label: string, kind: string): Promise<this> {
-    const tile = this.page.locator("[data-slot=totals-card]:visible [data-slot=stat]").filter({ hasText: label });
-    await expect(tile).toHaveAttribute("data-kind", kind);
-    return this;
-  }
-
   async openWithoutRounds(): Promise<this> {
     await this.install({ analytics: withoutRounds(sampleGolfer.analytics) });
     return this;

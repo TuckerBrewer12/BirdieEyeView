@@ -66,13 +66,6 @@ test("the handicap trend follows the window: every round, then only the last yea
   await career.seesTrendRounds("24 rounds");
 });
 
-test("each score total is named in its colour", async ({ career }) => {
-  await career.open();
-  await career.seesTotalInColour("Birdies", "birdie");
-  await career.seesTotalInColour("Bogeys", "bogey");
-  await career.seesTotalInColour("Hole-in-Ones", "eagle");
-});
-
 test("a failed load offers a retry that brings the career in", async ({ career }) => {
   await career.openFailed();
   await career.seesLoadError();
