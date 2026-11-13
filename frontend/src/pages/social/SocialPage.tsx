@@ -63,8 +63,8 @@ export function SocialPage({ userId }: SocialPageProps) {
                 <FieldLabel htmlFor={CODE_INPUT}>Friend code</FieldLabel>
                 <div className="flex items-center gap-2">
                   <Input
-                    size="inline"
                     id={CODE_INPUT}
+                    size="inline"
                     value={viewModel.friendCode}
                     onChange={(event) => viewModel.setFriendCode(event.target.value)}
                     placeholder="e.g. GCAB12CD34"
@@ -85,7 +85,7 @@ export function SocialPage({ userId }: SocialPageProps) {
               </Field>
 
               {viewModel.sent && (
-                <Alert>
+                <Alert tone="success">
                   <AlertDescription>Friend request sent.</AlertDescription>
                 </Alert>
               )}
@@ -100,7 +100,7 @@ export function SocialPage({ userId }: SocialPageProps) {
 
           {viewModel.loadError && (
             <CardContent>
-              <Alert variant="destructive">
+              <Alert tone="danger">
                 <AlertDescription>{viewModel.loadError}</AlertDescription>
               </Alert>
             </CardContent>

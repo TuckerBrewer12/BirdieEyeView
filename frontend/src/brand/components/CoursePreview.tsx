@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { MapPin } from "lucide-react";
-import { motion } from "framer-motion";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/brand/cn";
-import { tokens } from "@/brand/theme";
+import { RowButton } from "@/brand/components/Button";
+import { TeeSwatch } from "@/brand/components/TeeSwatch";
 import { formatCourseName, type CourseSummary } from "@/domain/course";
+import { formatOneDecimal, pluralNoun, pluralize } from "@/domain/format";
 
 interface CoursePreviewProps {
   course: CourseSummary;
@@ -12,61 +12,93 @@ interface CoursePreviewProps {
   focused?: boolean;
 }
 
-function Stat({ label, value }: { label: string; value: string | number | null }) {
+/** The course's tees as a row of dots, longest first, named for a screen reader. */
+function TeeDots({ tees, className }: { tees: string[]; className?: string }) {
+  if (tees.length === 0) return <span className={className} />;
   return (
-    <div className="text-xs">
-      <span className="text-muted-foreground">{label} </span>
-      <span className="font-semibold text-foreground">{value ?? "—"}</span>
-    </div>
+    <span
+      role="img"
+      aria-label={`${pluralize(tees.length, "tee")}: ${tees.join(", ")}`}
+      className={cn("flex items-center gap-0.5 lg:gap-1", className)}
+    >
+      {tees.map((tee) => (
+        <TeeSwatch key={tee} color={tee} className="size-2.5 rounded-full lg:size-3.5" />
+      ))}
+    </span>
   );
 }
 
+/**
+ * A course as one row of the course list: its name and where it is, its tees as dots, and the
+ * golfer's average there with how many rounds and their best, or that they haven't played it. From
+ * `lg` the row is a grid whose columns line up row to row; narrower, the tees sit after the place and
+ * the figures shorten to "avg · 2 rds". Every figure is the server's.
+ */
 export function CoursePreview({ course, onClick, focused = false }: CoursePreviewProps) {
   const name = formatCourseName(course.name);
-  const [focus, setFocus] = useState(false);
-  const showFocus = focused || focus;
+  const { record } = course;
+  const facts = [
+    course.par != null ? `Par ${course.par}` : null,
+    course.holeCount > 0 ? pluralize(course.holeCount, "hole") : null,
+  ].filter(Boolean);
 
   return (
-    <motion.div
+    <RowButton
       data-slot="course-preview"
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      aria-label={onClick ? `View ${name} details` : undefined}
       onClick={onClick}
-      onFocus={onClick ? () => setFocus(true) : undefined}
-      onBlur={onClick ? () => setFocus(false) : undefined}
-      onKeyDown={onClick ? (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onClick();
-        }
-      } : undefined}
-      whileHover={onClick ? { scale: tokens.motion.hoverScale } : undefined}
-      whileTap={onClick ? { scale: tokens.motion.tapScale } : undefined}
-      transition={tokens.motion.spring}
+      disabled={!onClick}
       className={cn(
-        "flex flex-col gap-2 overflow-hidden rounded-card border border-border bg-card p-4 transition-shadow",
-        onClick ? "cursor-pointer hover:shadow-card" : "cursor-default",
-        onClick && "focus-visible:outline-none",
-        showFocus && "ring-2 ring-primary ring-offset-2",
+        "flex w-full items-center gap-3 px-3.5 py-3.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset lg:grid lg:grid-cols-course-row lg:gap-5 lg:px-5 lg:py-4",
+        onClick ? "cursor-pointer hover:bg-muted/half" : "cursor-default",
+        focused && "ring-2 ring-ring ring-inset",
       )}
     >
-      <span className="truncate text-base font-bold tracking-name text-foreground">
-        {name}
+      <span className="flex min-w-0 flex-1 flex-col gap-1.5 lg:gap-0.5">
+        <span className="truncate text-body-lg font-semibold text-foreground">{name}</span>
+        <span className="flex min-w-0 items-center gap-2 text-caption text-muted-foreground lg:text-body-sm">
+          {(course.location || facts.length > 0) && (
+            <span className="truncate">
+              {course.location}
+              {facts.length > 0 && (
+                <span className="hidden lg:inline">
+                  {course.location && " · "}
+                  {facts.join(" · ")}
+                </span>
+              )}
+            </span>
+          )}
+          <TeeDots tees={course.tees} className="shrink-0 lg:hidden" />
+        </span>
       </span>
 
-      {course.location && (
-        <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-          <MapPin className="size-3 shrink-0" />
-          <span className="truncate">{course.location}</span>
-        </div>
-      )}
+      <TeeDots tees={course.tees} className="hidden lg:flex" />
 
-      <div className="mt-1 flex gap-4">
-        <Stat label="Par" value={course.par} />
-        <Stat label="Holes" value={course.holeCount} />
-        <Stat label="Tees" value={course.teeCount} />
-      </div>
-    </motion.div>
+      <span className="flex shrink-0 flex-col items-end text-right">
+        {record ? (
+          <>
+            <span className="text-body-lg font-bold text-foreground lg:text-body">
+              {formatOneDecimal(record.scoringAverage)}
+              <span className="hidden text-caption font-medium text-muted-foreground lg:inline"> avg</span>
+            </span>
+            <span className="text-meta text-muted-foreground lg:hidden">
+              avg · {record.roundsPlayed} {pluralNoun(record.roundsPlayed, "rd")}
+            </span>
+            <span className="hidden text-caption text-muted-foreground lg:inline">
+              {pluralize(record.roundsPlayed, "round")}
+              {record.bestScore != null && ` · best ${record.bestScore}`}
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="text-body-lg font-bold text-foreground lg:hidden">—</span>
+            <span className="text-meta text-muted-foreground lg:text-body-sm">
+              Not played<span className="hidden lg:inline"> yet</span>
+            </span>
+          </>
+        )}
+      </span>
+
+      <ChevronRight aria-hidden className="size-3 shrink-0 text-muted-foreground lg:size-3.5" />
+    </RowButton>
   );
 }

@@ -1,121 +1,118 @@
 import { formatCourseName } from "@/domain/course";
 
-export type SortKey = "date" | "total_score" | "to_par" | "course_name";
-export type FilterMode = "all" | "l20" | "best" | string;
+/** Which rounds: every one, the twenty newest, or every one in the server's Best order. */
+export type Scope = "all" | "last20" | "best";
 
-export interface Sort {
-  key: SortKey;
-  ascending: boolean;
-}
+/** The five orders the sort menu offers; each names its own direction. */
+export type SortKey = "newest" | "oldest" | "best" | "worst" | "course";
 
-export interface CourseFilterOption {
-  key: string;
-  label: string;
-  mode: FilterMode;
-}
-
-export interface SortOption {
-  value: SortKey;
+export interface Option<T extends string> {
+  value: T;
   label: string;
 }
 
 /** The fields the rounds list reads, and nothing else. */
 export interface ListedRound {
   date: string | null;
-  score: number | null;
   toPar: number | null;
   course: { name: string | null } | null;
   /** The server's Best order: full rounds by to par, then nines and rounds cut short. */
   bestRank: number | null;
+  /** The server's Worst order: full rounds furthest over par, then nines and rounds cut short. */
+  worstRank: number | null;
 }
+
+export const SCOPE_OPTIONS: readonly Option<Scope>[] = [
+  { value: "all", label: "All" },
+  { value: "last20", label: "Last 20" },
+  { value: "best", label: "Best" },
+];
 
 /**
- * The one place a sort key's label is written. Typing it as Record<SortKey, …>
- * makes a new key a compile error until it is labelled here, and SORT_OPTIONS is
- * derived from it so the menu cannot drift from the label on the trigger.
+ * The one place a sort's label is written. Typing it as Record<SortKey, …> makes a new key a
+ * compile error until it is labelled here, and SORT_OPTIONS is derived from it.
  */
 export const SORT_LABELS: Record<SortKey, string> = {
-  date: "Date",
-  total_score: "Score",
-  to_par: "To Par",
-  course_name: "Course",
+  newest: "Newest",
+  oldest: "Oldest",
+  best: "Best score",
+  worst: "Worst score",
+  course: "Course A–Z",
 };
 
-export const SORT_OPTIONS: readonly SortOption[] = (
-  Object.keys(SORT_LABELS) as SortKey[]
-).map((value) => ({ value, label: SORT_LABELS[value] }));
+export const SORT_OPTIONS: readonly Option<SortKey>[] = (Object.keys(SORT_LABELS) as SortKey[]).map(
+  (value) => ({ value, label: SORT_LABELS[value] }),
+);
 
-/** Best always lists the best round first, by to par, whatever sort the golfer chose. */
-export function effectiveSort(mode: FilterMode, chosen: Sort): Sort & { locked: boolean } {
-  return mode === "best"
-    ? { key: "to_par", ascending: true, locked: true }
-    : { ...chosen, locked: false };
+/** The course menu's "every course" entry: its value, and the words for it. */
+export const ALL_COURSES = "";
+export const ALL_COURSES_LABEL = "All courses";
+
+/** Best always lists the best round first, whatever sort the golfer chose. */
+export function effectiveSort(scope: Scope, chosen: SortKey): SortKey {
+  return scope === "best" ? "best" : chosen;
 }
 
-/** Picking a sort key leaves Best, since Best would ignore it. */
-export function modeAfterPickingSort(mode: FilterMode): FilterMode {
-  return mode === "best" ? "all" : mode;
+/** Picking a sort leaves Best, since Best would ignore it. */
+export function scopeAfterPickingSort(scope: Scope): Scope {
+  return scope === "best" ? "all" : scope;
 }
 
-/** Picking the current key flips it. A new key starts high-to-low, except course names, which read A–Z. */
-export function sortAfterPicking(current: Sort, picked: SortKey): Sort {
-  return current.key === picked
-    ? { key: picked, ascending: !current.ascending }
-    : { key: picked, ascending: picked === "course_name" };
-}
-
-/** All, L20 and Best, then the six most-played courses. */
-export function courseChips(rounds: readonly ListedRound[]): CourseFilterOption[] {
+/** Every course in the golfer's rounds, the most played first, after "All courses". */
+export function courseOptions(rounds: readonly ListedRound[]): Option<string>[] {
   const counts = new Map<string, number>();
   for (const r of rounds) {
     const name = r.course?.name;
     if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
   }
-  const courses = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name]) => name);
-
+  const courses = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name);
   return [
-    { key: "all", label: "All", mode: "all" },
-    { key: "l20", label: "L20", mode: "l20" },
-    { key: "best", label: "Best", mode: "best" },
-    ...courses.map((name) => ({ key: name, label: formatCourseName(name), mode: name })),
+    { value: ALL_COURSES, label: ALL_COURSES_LABEL },
+    ...courses.map((name) => ({ value: name, label: formatCourseName(name) })),
   ];
 }
 
-function sortValue(round: ListedRound, key: SortKey): number | string | null {
-  switch (key) {
-    case "date":        return round.date ?? "";
-    case "total_score": return round.score;
-    case "to_par":      return round.toPar;
-    case "course_name": return round.course?.name ?? "";
-  }
+const newestFirst = (a: ListedRound, b: ListedRound) => ((b.date ?? "") > (a.date ?? "") ? 1 : -1);
+
+/** Each sort as a value and a direction; a round with no value sorts last either way. */
+const SORTS: Record<SortKey, { value: (round: ListedRound) => number | string | null; ascending: boolean }> = {
+  newest: { value: (r) => r.date ?? "", ascending: false },
+  oldest: { value: (r) => r.date ?? "", ascending: true },
+  best: { value: (r) => r.bestRank, ascending: true },
+  worst: { value: (r) => r.worstRank, ascending: true },
+  course: { value: (r) => r.course?.name?.toLowerCase() ?? null, ascending: true },
+};
+
+export interface RoundsQuery {
+  scope: Scope;
+  /** A course's name, or ALL_COURSES. */
+  course: string;
+  search: string;
+  sort: SortKey;
 }
 
 /**
- * The rounds a chip, a search and a sort leave on screen, in order. Rounds with no value sort last.
- * Best follows the server's order, which ranks every full round ahead of a nine.
+ * The rounds a scope, a course, a search and a sort leave on screen, in order. Last 20 is the
+ * twenty newest at the course picked. Best and Worst score follow the server's orders, which
+ * rank every full round ahead of a nine either way.
  */
-export function filterRounds<R extends ListedRound>(
-  rounds: readonly R[],
-  mode: FilterMode,
-  search: string,
-  chosen: Sort,
-): R[] {
+export function filterRounds<R extends ListedRound>(rounds: readonly R[], query: RoundsQuery): R[] {
   let result = [...rounds];
-  if (mode === "l20") {
-    result = result.sort((a, b) => ((b.date ?? "") > (a.date ?? "") ? 1 : -1)).slice(0, 20);
-  } else if (mode !== "all" && mode !== "best") {
-    result = result.filter((r) => r.course?.name === mode);
+  if (query.course !== ALL_COURSES) {
+    result = result.filter((r) => r.course?.name === query.course);
   }
-  if (search) {
-    const q = search.toLowerCase();
+  if (query.scope === "last20") {
+    result = result.sort(newestFirst).slice(0, 20);
+  }
+  if (query.search) {
+    const q = query.search.toLowerCase();
     result = result.filter((r) => r.course?.name?.toLowerCase().includes(q));
   }
-  const { key, ascending } = effectiveSort(mode, chosen);
-  const valueOf = (round: R) => (mode === "best" ? round.bestRank : sortValue(round, key));
+  const { value, ascending } = SORTS[effectiveSort(query.scope, query.sort)];
   return result.sort((a, b) => {
-    const av = valueOf(a);
-    const bv = valueOf(b);
-    if (av === null) return 1;
+    const av = value(a);
+    const bv = value(b);
+    if (av === null) return bv === null ? 0 : 1;
     if (bv === null) return -1;
     if (av < bv) return ascending ? -1 : 1;
     if (av > bv) return ascending ? 1 : -1;

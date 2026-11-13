@@ -68,7 +68,7 @@ export function ScanPage({ userId }: { userId: string }) {
         <div className="flex flex-col gap-2.5 pb-6">
           <PageHeader title={TITLE} revealAt={100} />
           <PageTitle>{TITLE}</PageTitle>
-          <ScanProcessingStep phase={viewModel.phase} />
+          <ScanProcessingStep photoUrl={previewUrl} phase={viewModel.phase} />
         </div>
       );
 
@@ -85,8 +85,6 @@ export function ScanPage({ userId }: { userId: string }) {
 
           <ToggleGroup
             aria-label="How to add the round"
-            variant="outline"
-            spacing={0}
             value={[viewModel.mode]}
             onValueChange={(values) => {
               // Pressing the chosen mode again would clear it; one is always chosen.
@@ -104,7 +102,7 @@ export function ScanPage({ userId }: { userId: string }) {
           </ToggleGroup>
 
           {viewModel.error && (
-            <Alert variant="destructive">
+            <Alert tone="danger">
               <AlertDescription>{viewModel.error}</AlertDescription>
             </Alert>
           )}

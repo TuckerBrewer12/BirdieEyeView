@@ -3,52 +3,44 @@ import { isoDay, parseDay } from "./date";
 export interface ActivityDay {
   date: string;
   dayNum: number;
-  count: number;
-  inFuture: boolean;
+  /** Ids of the rounds played that day, in the order given. */
+  roundIds: string[];
 }
 
-const WEEKS = 5;
-const DAYS_IN_WEEK = 7;
-const SATURDAY = 6;
+export interface ActivityMonth {
+  /** Blank cells before the 1st, so the 1st lands under its weekday (Sunday first). */
+  leading: number;
+  days: ActivityDay[];
+  /** Rounds played in the month. */
+  rounds: number;
+}
 
 /**
- * Counts rounds on each local calendar day in the 5-week window that ends
- * on the Saturday of this week. Days after today stay in the grid as future.
+ * One calendar month of play: every day of the month with the rounds played
+ * on it, by local calendar day. `monthIndex` is 0-11, as `Date` reads it.
  */
-export function activityDays(
-  rounds: { date: string | null }[],
-  todayInput: Date = new Date(),
-): ActivityDay[] {
-  const today = new Date(todayInput);
-  today.setHours(12, 0, 0, 0);
-
-  const counts = new Map<string, number>();
+export function activityMonth(
+  rounds: { id: string; date: string | null }[],
+  year: number,
+  monthIndex: number,
+): ActivityMonth {
+  const byDay = new Map<string, string[]>();
   for (const round of rounds) {
-    if (!round.date) continue;
     const parsed = parseDay(round.date);
     if (!parsed) continue;
-    const dateStr = isoDay(parsed);
-    counts.set(dateStr, (counts.get(dateStr) ?? 0) + 1);
+    const key = isoDay(parsed);
+    byDay.set(key, [...(byDay.get(key) ?? []), round.id]);
   }
 
-  const endDate = new Date(today);
-  endDate.setDate(endDate.getDate() + (SATURDAY - today.getDay()));
-
-  const daysOfHistory = WEEKS * DAYS_IN_WEEK;
-  const currentDay = new Date(endDate);
-  currentDay.setDate(currentDay.getDate() - daysOfHistory + 1);
-  currentDay.setHours(12, 0, 0, 0);
-
+  const dayCount = new Date(year, monthIndex + 1, 0).getDate();
   const days: ActivityDay[] = [];
-  for (let i = 0; i < daysOfHistory; i++) {
-    const dateStr = isoDay(currentDay);
-    days.push({
-      date: dateStr,
-      dayNum: currentDay.getDate(),
-      count: counts.get(dateStr) ?? 0,
-      inFuture: currentDay.getTime() > today.getTime(),
-    });
-    currentDay.setDate(currentDay.getDate() + 1);
+  let played = 0;
+  for (let dayNum = 1; dayNum <= dayCount; dayNum++) {
+    const date = isoDay(new Date(year, monthIndex, dayNum, 12));
+    const roundIds = byDay.get(date) ?? [];
+    played += roundIds.length;
+    days.push({ date, dayNum, roundIds });
   }
-  return days;
+
+  return { leading: new Date(year, monthIndex, 1, 12).getDay(), days, rounds: played };
 }

@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/brand/cn";
-import { scoreFillClass, toParDisplay, toParTextClass } from "@/brand";
+import { CardTitle, scoreFillClass, ToParFigure } from "@/brand";
 import { HANDICAP_TAP, TOUR_SCREENS, WIDE_FRAME_MEDIA, tourImage, type TourScreen } from "./demoTour";
 import { tokens } from "@/brand/theme";
 import { useScannerDemoViewModel, type DemoScorecardRow } from "./useScannerDemoViewModel";
@@ -61,12 +61,8 @@ function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
         <div className="grid grid-cols-11 items-center border-b border-border text-center">
           <div className="col-span-2 py-2 pl-3 text-left font-bold text-foreground">To Par</div>
           {rows.map((row) => (
-            <div
-              key={row.hole}
-              className={cn("py-2 font-semibold", toParTextClass(row.toPar))}
-
-            >
-              {toParDisplay(row.toPar)}
+            <div key={row.hole} className="py-2 font-semibold">
+              <ToParFigure toPar={row.toPar} size="inherit" empty="—" />
             </div>
           ))}
         </div>
@@ -116,7 +112,9 @@ function MappingPanel() {
     >
       <div className="flex w-full max-w-md flex-col overflow-hidden rounded-xl bg-card font-sans shadow-card">
         <div className="border-b border-border p-4">
-          <h3 className="mb-3 text-sm font-bold text-foreground">What's on your card?</h3>
+          <CardTitle level={3} className="mb-3 text-sm font-bold text-foreground">
+            What's on your card?
+          </CardTitle>
 
           <div className="mb-3">
             <div className="mb-1.5 flex items-center gap-1 text-caption font-bold uppercase tracking-chip text-muted-foreground">

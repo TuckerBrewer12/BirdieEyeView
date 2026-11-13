@@ -8,13 +8,15 @@ const attempts = (rounds: [number, boolean][]): GoalAttempt[] =>
 export default function ScoreGoalChartPreview() {
   return (
     <>
-      {/* Breaking 90: three rounds reach it. */}
+      {/* Breaking 90: three rounds reach it, each score over its dot. */}
       <ScoreGoalChart
         attempts={attempts([
           [96, false], [92, false], [89, true], [94, false], [91, false],
           [87, true], [93, false], [90, false], [88, true], [95, false],
         ])}
         goal={89}
+        goalLabel="Break 90"
+        scoreLabels
       />
       {/* Breaking 80 with nothing under it yet: the goal sits below every dot. */}
       <ScoreGoalChart attempts={attempts([[88, false], [85, false], [91, false], [86, false]])} goal={79} />

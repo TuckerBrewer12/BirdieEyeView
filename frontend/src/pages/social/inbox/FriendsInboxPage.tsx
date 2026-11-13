@@ -78,8 +78,8 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
         <div>
           <Button
             variant="linkMuted"
-            size="xs"
-            className="mb-4 h-auto gap-1.5 p-0 text-body"
+            size="inline"
+            className="mb-4"
             onClick={() => void navigate("/social")}
           >
             <ArrowLeft className="size-4" />
@@ -90,8 +90,6 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
         </div>
 
         <ToggleGroup
-          variant="outline"
-          spacing={2}
           value={[viewModel.tab]}
           onValueChange={(values) => {
             const next = values[0] as InboxTab | undefined;
@@ -103,13 +101,13 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
         </ToggleGroup>
 
         {viewModel.answered && (
-          <Alert>
+          <Alert tone="success">
             <AlertDescription>{ANSWERED_NOTICES[viewModel.answered]}</AlertDescription>
           </Alert>
         )}
 
         {(viewModel.loadError ?? viewModel.respondError) && (
-          <Alert variant="destructive">
+          <Alert tone="danger">
             <AlertDescription>{viewModel.loadError ?? viewModel.respondError}</AlertDescription>
           </Alert>
         )}

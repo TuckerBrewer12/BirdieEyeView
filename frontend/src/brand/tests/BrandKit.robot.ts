@@ -39,12 +39,6 @@ export class BrandKitRobot {
     return this;
   }
 
-  /** Focuses the field with this label, as a keyboard user tabbing to it would. */
-  async focus(label: string): Promise<this> {
-    await this.page.getByLabel(label, { exact: true }).focus();
-    return this;
-  }
-
   async hover(text: string): Promise<this> {
     await this.page.getByText(text, { exact: true }).first().hover();
     return this;

@@ -166,10 +166,12 @@ export const api = {
     return fetchJSON<CourseSummaryDto[]>(`/courses?${params}`);
   },
 
-  searchCourses: (query: string, userId?: string, includeExternal = false) => {
+  /** `includeRecord` adds the golfer's record at each course, as the course list shows it. */
+  searchCourses: (query: string, userId?: string, includeExternal = false, includeRecord = false) => {
     const params = new URLSearchParams({ q: query });
     if (userId) params.set("user_id", userId);
     if (includeExternal) params.set("include_external", "true");
+    if (includeRecord) params.set("include_record", "true");
     return fetchJSON<CourseSummaryDto[]>(`/courses/search?${params}`);
   },
 
@@ -198,7 +200,7 @@ export const api = {
     return fetchJSON<AnalyticsDto>(`/stats/analytics/${userId}?${p}`);
   },
 
-  /** The golfer's last `limit` rounds held up against a handicap's shape, their peak's, or a friend's. */
+  /** The golfer's last `limit` rounds held up against a handicap's shape or a friend's. */
   getBenchmarkComparison: (userId: string, target: BenchmarkTarget, limit = 20) => {
     const p = new URLSearchParams({ against: target.against, limit: String(limit) });
     if (target.against === "handicap") p.set("handicap", String(target.handicap));

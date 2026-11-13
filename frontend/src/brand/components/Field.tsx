@@ -34,7 +34,7 @@ function FieldLabel({
       htmlFor={htmlFor}
       data-slot="field-label"
       className={cn(
-        "text-body font-semibold text-foreground-secondary select-none group-has-disabled/field:opacity-50",
+        "text-body font-semibold text-foreground select-none group-has-disabled/field:opacity-50",
         className,
       )}
       {...props}

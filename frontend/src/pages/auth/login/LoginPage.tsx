@@ -36,6 +36,7 @@ export function LoginPage() {
           <Input
             id="login-email"
             type="email"
+           
             value={viewModel.email}
             onChange={(event) => viewModel.setEmail(event.target.value)}
             required

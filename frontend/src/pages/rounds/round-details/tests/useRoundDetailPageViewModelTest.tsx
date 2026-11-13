@@ -43,9 +43,11 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.played?.course?.name).toBe("Half Moon Bay");
     expect(result.current.played?.score).toBe(78);
     expect(result.current.played?.toPar).toBe(6);
-    expect(result.current.teeRating).toBe("72.4 / 130");
-    expect(result.current.showLinkButton).toBe(false);
-    expect(result.current.showMomentum).toBe(true);
+    expect(result.current.dateLine).toMatch(/^\w{3}, \w{3} \d{1,2}, \d{4} · Blue tees · 72.4 \/ 130$/);
+    expect(result.current.deleteLine).toMatch(/^Half Moon Bay · \w{3} \d{1,2} · 78$/);
+    expect(result.current.teeOptions.map((tee) => tee.name)).toContain("Blue");
+    expect(result.current.canLink).toBe(false);
+    expect(result.current.showFlow).toBe(true);
   });
 
   it("shows the course handicap and net score the server sent", async () => {
@@ -61,6 +63,8 @@ describe("useRoundDetailPageViewModel", () => {
     act(() => result.current.editor.setScore(1, "strokes", null));
     expect(result.current.played?.score).toBe(73);
     expect(result.current.played?.holes.find((h) => h.hole === 1)?.strokes).toBeNull();
+    // The running to par is the server's, so the flow chart waits for the save.
+    expect(result.current.showFlow).toBe(false);
   });
 
   it("live-totals putts and greens edited in edit mode", async () => {
@@ -146,16 +150,22 @@ describe("useRoundDetailPageViewModel", () => {
     expect(result.current.actionError).toBeNull();
   });
 
-  it("opening the link panel hides the link button until it closes", async () => {
+  it("a round with no course can be linked, and the panel opens and closes", async () => {
     const { result } = renderVm("round-4", { detailRounds: [scannedRound] });
     await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.canLink).toBe(true);
     act(() => result.current.openLinkCourse());
     expect(result.current.showLinkCourse).toBe(true);
-    expect(result.current.showLinkButton).toBe(false);
 
     act(() => result.current.closeLinkCourse());
     expect(result.current.showLinkCourse).toBe(false);
-    expect(result.current.showLinkButton).toBe(true);
+  });
+
+  it("edit mode offers no link: the course is picked in the editor", async () => {
+    const { result } = renderVm("round-4", { detailRounds: [scannedRound] });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.enterEditMode());
+    expect(result.current.canLink).toBe(false);
   });
 
   it("enter edit closes the view-mode link panel", async () => {

@@ -16,9 +16,15 @@ export function formatPercent(value: number | null | undefined, digits = 0): str
   return `${digits === 0 ? Math.round(value) : value.toFixed(digits)}%`;
 }
 
-/** A figure to one decimal with its sign, like a differential: "+1.2", "-0.4". */
-export function formatSignedOneDecimal(value: number): string {
-  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}`;
+/**
+ * A difference with its sign, to one decimal by default: "+1.2", "−0.4" (a true minus), "0.0". The
+ * figure it is set beside decides the decimals, as "−0.24" beside putts per green.
+ */
+export function formatSigned(value: number, digits = 1): string {
+  const amount = Math.abs(value).toFixed(digits);
+  if (value > 0) return `+${amount}`;
+  if (value < 0) return `\u2212${amount}`;
+  return amount;
 }
 
 /** A figure to one decimal, like a scoring average: "82.4". A dash when there is nothing to show. */
@@ -26,12 +32,27 @@ export function formatOneDecimal(value: number | null | undefined): string {
   return value != null ? value.toFixed(1) : "—";
 }
 
+/** A figure to two decimals, like putts per green: "1.71". A dash when there is nothing to show. */
+export function formatTwoDecimals(value: number | null | undefined): string {
+  return value != null ? value.toFixed(2) : "—";
+}
+
 /** A figure rounded to a whole number, for a rate shown beside its own unit: "31". A dash when there is nothing to show. */
 export function formatWhole(value: number | null | undefined): string {
   return value != null ? value.toFixed(0) : "—";
 }
 
+/** A count on its own, grouped by thousands: "6,697". A dash when there is nothing to show. */
+export function formatCount(value: number | null | undefined): string {
+  return value != null ? value.toLocaleString("en-US") : "—";
+}
+
 /** A file's size in whole kilobytes: "412 KB". */
 export function formatFileSize(bytes: number): string {
   return `${Math.round(bytes / 1024)} KB`;
+}
+
+/** A figure on a scorecard, or a dash where the card has none: "4", "-". */
+export function formatScorecardFigure(value: number | null | undefined): string {
+  return value == null ? "-" : String(value);
 }

@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { formatFileSize, formatOneDecimal, formatPercent, formatWhole, pluralize, pluralNoun } from "../format";
+import {
+  formatCount,
+  formatFileSize,
+  formatOneDecimal,
+  formatPercent,
+  formatSigned,
+  formatTwoDecimals,
+  formatWhole,
+  pluralize,
+  pluralNoun,
+} from "../format";
 
 describe("pluralNoun", () => {
   it("gives the bare noun, for callers that render the count themselves", () => {
@@ -75,5 +85,31 @@ describe("formatFileSize", () => {
   it("writes whole kilobytes", () => {
     expect(formatFileSize(421_888)).toBe("412 KB");
     expect(formatFileSize(300)).toBe("0 KB");
+  });
+});
+
+describe("formatSigned", () => {
+  it("signs a difference with a plus or a true minus, to one decimal", () => {
+    expect(formatSigned(2.1)).toBe("+2.1");
+    expect(formatSigned(-2.4)).toBe("\u22122.4");
+    expect(formatSigned(0)).toBe("0.0");
+  });
+
+  it("takes the decimals of the figure it sits beside", () => {
+    expect(formatSigned(-0.24, 2)).toBe("\u22120.24");
+  });
+});
+
+describe("formatTwoDecimals", () => {
+  it("reads to a hundredth, a dash when missing", () => {
+    expect(formatTwoDecimals(1.705)).toMatch(/^1\.7[01]$/);
+    expect(formatTwoDecimals(null)).toBe("—");
+  });
+});
+
+describe("formatCount", () => {
+  it("groups by thousands, a dash when missing", () => {
+    expect(formatCount(6697)).toBe("6,697");
+    expect(formatCount(undefined)).toBe("—");
   });
 });

@@ -13,10 +13,6 @@ export type ScanMode = "scan" | "manual";
 
 export type ScanStep = "upload" | "processing" | "setup" | "review" | "success";
 
-/** How many phases the processing screen walks through while a scan is read. */
-export const SCAN_PHASE_COUNT = 4;
-/** The scan reports no progress, so each phase is held this long rather than reported. */
-export const SCAN_PHASE_HOLD_MS = 3500;
 
 /** A course the golfer chose. No id means a name they typed for a course we don't have. */
 export interface PickedCourse {

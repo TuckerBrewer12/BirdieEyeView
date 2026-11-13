@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CourseLinkSearch } from "@/brand";
-import type { CourseSummary } from "@/domain/course";
+import { courseLabel, type CourseSummary } from "@/domain/course";
 import type { HomeCourse } from "../model";
 
 interface HomeCourseSectionProps {
@@ -38,7 +38,7 @@ export function HomeCourseSection({
           onSelectCourse={onPick}
           onClose={onClear}
           linkedTitle="Selected"
-          linkedName={homeCourse ? (homeCourse.name ?? "Unnamed course") : undefined}
+          linkedName={homeCourse ? courseLabel(homeCourse.name) : undefined}
           onClear={onClear}
           clearLabel="Remove home course"
         />

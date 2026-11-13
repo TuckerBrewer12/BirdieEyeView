@@ -7,13 +7,12 @@ import type { RoundDetail } from "@/domain";
 import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/domain/course";
+import { SCAN_STEPS, SCAN_STEP_HOLD_MS } from "@/domain/scan";
 import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
 import { roundsRepository, type RoundsRepository } from "../rounds/roundsRepository";
 import {
   courseQueryFrom,
   reviewFromScan,
-  SCAN_PHASE_COUNT,
-  SCAN_PHASE_HOLD_MS,
   todayIso,
   type PickedCourse,
   type ScanMode,
@@ -60,7 +59,7 @@ export interface ScanPageViewModel {
   clearPresetCourse: () => void;
 
   // Processing
-  /** Which phase of reading the card is showing, from 0 to `SCAN_PHASE_COUNT - 1`. */
+  /** Which step of reading the card is showing, from 0 to `SCAN_STEPS.length - 1`. */
   phase: number;
 
   // Setup
@@ -116,8 +115,8 @@ export function useScanPageViewModel(
   useEffect(() => {
     if (step !== "processing") return;
     const timer = setInterval(
-      () => setPhase((current) => Math.min(current + 1, SCAN_PHASE_COUNT - 1)),
-      SCAN_PHASE_HOLD_MS,
+      () => setPhase((current) => Math.min(current + 1, SCAN_STEPS.length - 1)),
+      SCAN_STEP_HOLD_MS,
     );
     return () => {
       clearInterval(timer);

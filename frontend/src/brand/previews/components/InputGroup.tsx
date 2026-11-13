@@ -10,14 +10,14 @@ import {
 export default function InputGroupPreview() {
   return (
     <>
-      <InputGroup size="inline">
+      <InputGroup>
         <InputGroupInput placeholder="Search courses…" defaultValue="peb" />
         <InputGroupAddon>
           <Search />
         </InputGroupAddon>
       </InputGroup>
 
-      <InputGroup size="inline">
+      <InputGroup>
         <InputGroupInput placeholder="example.com" />
         <InputGroupAddon>
           <InputGroupText>https://</InputGroupText>
@@ -27,7 +27,7 @@ export default function InputGroupPreview() {
         </InputGroupAddon>
       </InputGroup>
 
-      <InputGroup size="inline">
+      <InputGroup>
         <InputGroupInput placeholder="Search courses…" defaultValue="Half Moon" />
         <InputGroupAddon>
           <Search />
@@ -37,14 +37,14 @@ export default function InputGroupPreview() {
         </InputGroupAddon>
       </InputGroup>
 
-      <InputGroup size="inline">
+      <InputGroup>
         <InputGroupInput placeholder="Search courses…" />
         <InputGroupAddon align="inline-end">
           <InputGroupButton>Search</InputGroupButton>
         </InputGroupAddon>
       </InputGroup>
 
-      <InputGroup>
+      <InputGroup size="inline">
         <InputGroupInput placeholder="you@example.com" defaultValue="tiger@example.com" />
       </InputGroup>
     </>

@@ -13,7 +13,7 @@ export function CareerPage({ userId }: { userId: string }) {
 
   if (!vm.career || !vm.figures) {
     return (
-      <Alert variant="destructive">
+      <Alert tone="danger">
         <AlertDescription>{vm.loadError ?? "Could not load your career."}</AlertDescription>
         <AlertAction>
           <Button variant="outline" size="xs" onClick={vm.retry}>

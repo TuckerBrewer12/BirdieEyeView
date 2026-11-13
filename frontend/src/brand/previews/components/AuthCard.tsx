@@ -20,7 +20,7 @@ export default function AuthCardPreview() {
         </p>
       }
     >
-      <Alert variant="destructive">
+      <Alert tone="danger">
         <AlertDescription>We couldn't complete this account request. Please try again.</AlertDescription>
       </Alert>
       <Field>

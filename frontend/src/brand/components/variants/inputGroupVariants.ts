@@ -10,7 +10,8 @@ const inputGroupVariants = cva(
     variants: {
       size: {
         default: "h-11 rounded-card",
-        inline: "h-10 rounded-card",
+        /** A field that stands alone on a page, as search does: a button's height, the card's surface. */
+        inline: "h-10 rounded-card bg-card",
       },
     },
     defaultVariants: {

@@ -1,6 +1,6 @@
 import type { RoundSummaryDto } from "../../types/api";
 import type { StoredCourse } from "../fakes/courseResponses";
-import { summaryResponse, type StoredRound } from "../fakes/roundResponses";
+import { listRanks, summaryResponse, type StoredRound } from "../fakes/roundResponses";
 
 const STANDARD_PAR = [4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5];
 
@@ -80,7 +80,9 @@ export const storedRounds: StoredRound[] = [
 ];
 
 /** The round list as the server sends it. */
-export const populatedRounds: RoundSummaryDto[] = storedRounds.map(summaryResponse);
+const storedRanks = listRanks(storedRounds);
+/** The list as the server sends it, each round placed in the Best and Worst orders. */
+export const populatedRounds: RoundSummaryDto[] = storedRounds.map((round, i) => summaryResponse(round, storedRanks[i]));
 
 /** `count` rounds at different courses, scoring 70, 71, 72… by giving the first holes a shot back or extra. */
 export function nRounds(count: number): StoredRound[] {

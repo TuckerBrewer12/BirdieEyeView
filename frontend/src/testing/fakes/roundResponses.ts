@@ -133,10 +133,42 @@ function countTrue(values: (boolean | null)[]): number | null {
   return recorded.length > 0 ? recorded.filter(Boolean).length : null;
 }
 
+function holeToPar(round: StoredRound, hole: StoredHole): number | null {
+  const par = holePar(round, hole);
+  return hole.strokes != null && par != null ? hole.strokes - par : null;
+}
+
+/** Round.running_to_par: the round's to par after each hole, skipping holes without one. */
+function runningToPar(round: StoredRound): Map<number, number> {
+  const running = new Map<number, number>();
+  let total = 0;
+  for (const hole of [...round.hole_scores].sort((a, b) => a.hole_number - b.hole_number)) {
+    const toPar = holeToPar(round, hole);
+    if (toPar == null) continue;
+    total += toPar;
+    running.set(hole.hole_number, total);
+  }
+  return running;
+}
+
+/** Round.worst_stretch: four straight holes that lost the most, two or more; the earliest on a tie. */
+function worstStretch(round: StoredRound): RoundDto["worst_stretch"] {
+  const toPar = new Map(round.hole_scores.map((hole) => [hole.hole_number, holeToPar(round, hole)]));
+  let worst: RoundDto["worst_stretch"] = null;
+  for (const first of [...toPar.keys()].sort((a, b) => a - b)) {
+    const run = holeNumbers(first, first + 3).map((n) => toPar.get(n));
+    if (run.some((v) => v == null)) continue;
+    const over = sum(run as number[]);
+    if (over >= 2 && (worst == null || over > worst.to_par)) worst = { first_hole: first, last_hole: first + 3, to_par: over };
+  }
+  return worst;
+}
+
 function holeResponses(round: StoredRound): HoleScoreDto[] {
+  const running = runningToPar(round);
   return round.hole_scores.map((hole) => {
     const par = holePar(round, hole);
-    const toPar = hole.strokes != null && par != null ? hole.strokes - par : null;
+    const toPar = holeToPar(round, hole);
     return {
       ...hole,
       net_score: null,
@@ -147,6 +179,7 @@ function holeResponses(round: StoredRound): HoleScoreDto[] {
       to_par: toPar,
       kind: kindFor(toPar),
       three_putt: hole.putts != null && hole.putts >= 3,
+      running_to_par: running.get(hole.hole_number) ?? null,
     };
   });
 }
@@ -184,28 +217,38 @@ export function roundResponse(round: StoredRound): RoundDto {
     hole_scores: holes,
     course_handicap: handicap,
     net_score: handicap != null && figured.total_score != null ? figured.total_score - handicap : null,
+    worst_stretch: worstStretch(round),
   };
 }
 
 /**
- * Each round's place in the list's Best order, as `analytics.stats.best_round_ranks` gives it:
- * full rounds by to par, then nines and rounds cut short. Ties keep the list's order.
+ * Each round's place in the list's Best and Worst orders, as `analytics.stats.best_round_ranks`
+ * and `worst_round_ranks` give them: full rounds by to par, best or worst first, then nines and
+ * rounds cut short the same way. Ties keep the list's order.
  */
-export function bestRanks(rounds: StoredRound[]): (number | null)[] {
+export function listRanks(rounds: StoredRound[]): { best: number | null; worst: number | null }[] {
   const keyed = rounds.map((round, i) => {
     const scored = round.hole_scores.filter((h) => h.strokes != null);
     const total = scored.length > 0 ? sum(scored.map((h) => h.strokes!)) : null;
     return { i, short: holesPlayed(round) < 18, toPar: toPar(round, total) };
   });
-  const ranked = keyed
-    .filter((k) => k.toPar != null)
-    .sort((a, b) => Number(a.short) - Number(b.short) || a.toPar! - b.toPar! || a.i - b.i);
-  const ranks: (number | null)[] = rounds.map(() => null);
-  ranked.forEach((k, place) => (ranks[k.i] = place + 1));
-  return ranks;
+  const placed = keyed.filter((k) => k.toPar != null);
+  const place = (direction: 1 | -1) => {
+    const ranks: (number | null)[] = rounds.map(() => null);
+    [...placed]
+      .sort((a, b) => Number(a.short) - Number(b.short) || direction * (a.toPar! - b.toPar!) || a.i - b.i)
+      .forEach((k, at) => (ranks[k.i] = at + 1));
+    return ranks;
+  };
+  const best = place(1);
+  const worst = place(-1);
+  return rounds.map((_, i) => ({ best: best[i] ?? null, worst: worst[i] ?? null }));
 }
 
-export function summaryResponse(round: StoredRound, bestRank: number | null = null): RoundSummaryDto {
+export function summaryResponse(
+  round: StoredRound,
+  ranks: { best: number | null; worst: number | null } = { best: null, worst: null },
+): RoundSummaryDto {
   const holes = holeResponses(round);
   const { total_score, to_par, front_nine, back_nine, total_putts, score_counts } = figures(round, holes);
   return {
@@ -220,8 +263,9 @@ export function summaryResponse(round: StoredRound, bestRank: number | null = nu
     back_nine,
     total_putts,
     score_counts,
-    hole_scores: holes.map(({ hole_number, strokes, kind }) => ({ hole_number, strokes, kind })),
-    best_rank: bestRank,
+    hole_scores: holes.map(({ hole_number, strokes, kind, running_to_par }) => ({ hole_number, strokes, kind, running_to_par })),
+    best_rank: ranks.best,
+    worst_rank: ranks.worst,
   };
 }
 
