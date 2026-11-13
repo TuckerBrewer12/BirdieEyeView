@@ -21,6 +21,8 @@ export interface RoundTrendPoint {
   courseName: string | null;
   /** Where the round's differential stands in the WHS window, as the server read it. */
   differentialStatus: DifferentialStatus;
+  /** The round falls in the records' last year, as the server counts it. */
+  inWindow: boolean;
 }
 
 /** The two per-round series the dashboard and analytics responses both carry. */
@@ -47,6 +49,7 @@ export function trendPointsFrom(trends: ScoreAndHandicapTrends | null): RoundTre
       handicapIndex: handicap?.handicap_index ?? null,
       courseName: row.course_name ?? null,
       differentialStatus: handicap?.differential_status ?? "unrated",
+      inWindow: handicap?.in_window ?? false,
     };
   });
 }

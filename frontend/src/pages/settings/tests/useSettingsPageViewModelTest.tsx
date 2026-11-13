@@ -77,6 +77,23 @@ describe("useSettingsPageViewModel", () => {
     expect(result.current.dirty).toBe(true);
   });
 
+  it("closes the home course's sheet on a pick, and clears the search when closed without one", async () => {
+    const { result } = await loaded();
+
+    act(() => result.current.openHomeCourse());
+    expect(result.current.homeCourseOpen).toBe(true);
+    act(() => result.current.setCourseQuery("pebble"));
+    await waitFor(() => expect(result.current.courseResults).toHaveLength(1));
+    act(() => result.current.pickHomeCourse(result.current.courseResults[0]));
+    expect(result.current.homeCourseOpen).toBe(false);
+
+    act(() => result.current.openHomeCourse());
+    act(() => result.current.setCourseQuery("spy"));
+    act(() => result.current.closeHomeCourse());
+    expect(result.current.homeCourseOpen).toBe(false);
+    expect(result.current.courseQuery).toBe("");
+  });
+
   it("saves the form, keeps device choices, and comes back clean", async () => {
     const { repository, result } = await loaded({ user: { handicap: 12 } });
 

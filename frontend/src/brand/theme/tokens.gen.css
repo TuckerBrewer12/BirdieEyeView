@@ -168,6 +168,7 @@
   --brand-space-chip: 3px;
   --brand-space-dot: 3px;
   --brand-space-page-phone: 18px;
+  --brand-space-page: 44px;
   --brand-space-tight: 5px;
   --brand-space-nudge: 5px;
   --brand-space-nudge-sm: 3px;
@@ -177,6 +178,7 @@
   --brand-space-page-end-phone: calc(var(--brand-space-above-nav) + 1.5rem);
   --brand-space-action-bar: 73px;
   --brand-space-page-end-action-bar: calc(var(--brand-space-page-end-phone) + var(--brand-space-action-bar));
+  --brand-space-page-end-pinned: calc(var(--brand-space-action-bar) + 3rem);
   --brand-size-rail: 240px;
   --brand-size-preview: 390px;
   --brand-size-scan-photo: 360px;
@@ -427,6 +429,7 @@
   --spacing-chip: var(--brand-space-chip);
   --spacing-dot: var(--brand-space-dot);
   --spacing-page-phone: var(--brand-space-page-phone);
+  --spacing-page: var(--brand-space-page);
   --spacing-tight: var(--brand-space-tight);
   --spacing-nudge: var(--brand-space-nudge);
   --spacing-nudge-sm: var(--brand-space-nudge-sm);
@@ -436,6 +439,7 @@
   --spacing-page-end-phone: var(--brand-space-page-end-phone);
   --spacing-action-bar: var(--brand-space-action-bar);
   --spacing-page-end-action-bar: var(--brand-space-page-end-action-bar);
+  --spacing-page-end-pinned: var(--brand-space-page-end-pinned);
   --spacing-rail: var(--brand-size-rail);
   --spacing-preview: var(--brand-size-preview);
   --spacing-scan-photo: var(--brand-size-scan-photo);

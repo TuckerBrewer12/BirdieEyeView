@@ -80,7 +80,10 @@ async def get_dashboard(
             last_20, handicap_trend, hcap.score_differentials_per_round(last_20), index_window
         ),
         score_trend=analytics.score_trend_with_rolling_average(last_20),
-        handicap_trend=handicap_trend,
+        handicap_trend=[
+            {**row, "in_window": analytics.in_window(r, reference_date=today)}
+            for r, row in zip(last_20, handicap_trend)
+        ],
         rounds_this_year=dashboard.rounds_this_year(summaries, today),
     )
 

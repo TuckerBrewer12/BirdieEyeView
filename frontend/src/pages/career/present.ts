@@ -1,5 +1,6 @@
 import type { RadarAxis } from "@/brand";
 import { formatDay, pluralNoun, type RadarEntry } from "@/domain";
+import type { ScoreKind } from "@/domain/score";
 import {
   type CareerEvent,
   type CareerWindow,
@@ -38,6 +39,19 @@ export const TOTAL_LABEL: Record<TotalKind, string> = {
   gir: "GIR",
   "three-putts": "3-Putts",
   "hole-in-ones": "Hole-in-Ones",
+};
+
+/** The kind of hole a total counts, for its colour: birdies green, bogeys red. Rounds, greens and 3-putts have none. */
+export const TOTAL_SCORE_KIND: Partial<Record<TotalKind, ScoreKind>> = {
+  eagles: "eagle",
+  birdies: "birdie",
+  pars: "par",
+  bogeys: "bogey",
+  doubles: "double",
+  triples: "triple",
+  quads: "quad",
+  // An ace is the rarest score there is, so it takes the eagle's gold.
+  "hole-in-ones": "eagle",
 };
 
 export const MILESTONE_GROUP_LABEL: Record<MilestoneGroup, string> = {
@@ -88,6 +102,11 @@ export function recordValue(value: number | null): string {
 /** The note over the last year's score milestones. */
 export function newRecordsNote(count: number, windowDays: number): string {
   return `${count} new personal ${pluralNoun(count, "record")} in the last ${windowDays} days.`;
+}
+
+/** The handicap trend over a window with no rounds in it. */
+export function noRoundsInWindow(windowDays: number): string {
+  return `No rounds in the last ${windowDays} days.`;
 }
 
 export const NO_NEW_RECORDS = "No new records yet. Keep playing!";

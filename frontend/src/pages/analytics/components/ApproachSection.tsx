@@ -1,4 +1,4 @@
-import { Card, ScoreMixBar, ScoreMixLegend, StatLabel, StatValue, ToggleGroup, ToggleGroupItem } from "@/brand";
+import { Card, EmptyNote, ScoreMixBar, ScoreMixLegend, StatLabel, StatValue, ToggleGroup, ToggleGroupItem } from "@/brand";
 import { APPROACH_PARS, type Analytics, type ApproachPar } from "../model";
 import { APPROACH_EMPTY, bucketCards, parLabel } from "../present";
 
@@ -35,7 +35,7 @@ export function ApproachSection({ analytics, par, onParChange }: ApproachSection
 
       {cards.length === 0 ? (
         <Card size="lg">
-          <p className="text-center text-body text-muted-foreground">{APPROACH_EMPTY}</p>
+          <EmptyNote className="py-0">{APPROACH_EMPTY}</EmptyNote>
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-3.5 md:grid-cols-3 md:gap-4">

@@ -1330,6 +1330,11 @@ export interface components {
             handicap_index: number | null;
             /** Hi Threshold */
             hi_threshold: number | null;
+            /**
+             * In Window
+             * @default false
+             */
+            in_window: boolean;
             /** Round Id */
             round_id: string | null;
             /** Round Index */
