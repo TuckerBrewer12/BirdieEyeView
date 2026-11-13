@@ -142,6 +142,10 @@ BACK = ["4", "3", "4", "4", "5", "4", "3", "4", "5"]
         (["7", "3", *FRONT, "", "", *BACK, "", ""], ["7", "3", *FRONT, "", "", *BACK, "", ""], "left unaligned"),
         # narrower by one: the separator column is missing from the data row
         (["D", *FRONT, "", *BACK, "", ""], ["D", *FRONT, "", "", *BACK, "", ""], "separator column(s) at [11]"),
+        # wider by one: a duplicated blank in the separator gap (Eagle Vines: INITIALS rowspan one row too long)
+        (["Tucker", *FRONT, "43", "", "", *BACK, "47", "90"], ["Tucker", *FRONT, "43", "", *BACK, "47", "90"], "extra blank cell(s) in the separator gap"),
+        # wider by one, but the extra cell after OUT holds a value: left alone
+        (["Tucker", *FRONT, "43", "7", "", *BACK, "47", "90"], ["Tucker", *FRONT, "43", "7", "", *BACK, "47", "90"], "left unaligned"),
         # same width, but the back nine sits one column early with a blank at the end
         (["D", *FRONT, "", *BACK, "", "", ""], ["D", *FRONT, "", "", *BACK, "", ""], "shifted right past the separator"),
         # narrower by three: the row stops at its last value

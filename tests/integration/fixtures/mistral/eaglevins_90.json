@@ -1,0 +1,177 @@
+{
+ "document_annotation": null,
+ "model": "mistral-ocr-latest",
+ "pages": [
+  {
+   "blocks": [
+    {
+     "bottom_right_x": 474,
+     "bottom_right_y": 299,
+     "confidence_scores": null,
+     "content": "![img-0.jpeg](img-0.jpeg)",
+     "image_id": "img-0.jpeg",
+     "top_left_x": 262,
+     "top_left_y": 65,
+     "type": "image"
+    },
+    {
+     "bottom_right_x": 697,
+     "bottom_right_y": 113,
+     "confidence_scores": null,
+     "content": "MEN'S RATING/SLOPE",
+     "top_left_x": 484,
+     "top_left_y": 86,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 683,
+     "bottom_right_y": 255,
+     "confidence_scores": null,
+     "content": "<table><tr><td>BLACK</td><td>75.4/138</td></tr><tr><td>BLUE</td><td>73.7/135</td></tr><tr><td>MEMBER</td><td>72.5/132</td></tr><tr><td>WHITE</td><td>71.2/127</td></tr><tr><td>GOLD</td><td>69.1/122</td></tr><tr><td>RED</td><td>67.8/118</td></tr></table>",
+     "table_id": "tbl-0.html",
+     "top_left_x": 501,
+     "top_left_y": 119,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 951,
+     "bottom_right_y": 107,
+     "confidence_scores": null,
+     "content": "LADIES' RATING/SLOPE",
+     "top_left_x": 725,
+     "top_left_y": 83,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 927,
+     "bottom_right_y": 182,
+     "confidence_scores": null,
+     "content": "<table><tr><td>WHITE</td><td>76.7/135</td></tr><tr><td>GOLD</td><td>74.5/130</td></tr><tr><td>RED</td><td>72.9/125</td></tr></table>",
+     "table_id": "tbl-1.html",
+     "top_left_x": 749,
+     "top_left_y": 114,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1694,
+     "bottom_right_y": 140,
+     "confidence_scores": null,
+     "content": "# EAGLE VINES VINEYARDS & GOLF CLUB",
+     "top_left_x": 1019,
+     "top_left_y": 93,
+     "type": "title"
+    },
+    {
+     "bottom_right_x": 1646,
+     "bottom_right_y": 177,
+     "confidence_scores": null,
+     "content": "Mailing Address: P.O. Box 2398, Napa, CA 94558",
+     "top_left_x": 1067,
+     "top_left_y": 143,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1708,
+     "bottom_right_y": 212,
+     "confidence_scores": null,
+     "content": "Street Address: 580 South Kelly Road, American Canyon, CA 94503",
+     "top_left_x": 1011,
+     "top_left_y": 182,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1690,
+     "bottom_right_y": 248,
+     "confidence_scores": null,
+     "content": "PHONE: (707) 257-4470 \u2022 www.eaglevinesgolfclub.com",
+     "top_left_x": 1029,
+     "top_left_y": 215,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1732,
+     "bottom_right_y": 1087,
+     "confidence_scores": null,
+     "content": "<table><tr><td>HOLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td><td rowspan=\"8\">INITIALS</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td></tr><tr><td>BLACK</td><td>573</td><td>200</td><td>394</td><td>472</td><td>211</td><td>598</td><td>392</td><td>455</td><td>509</td><td>3804</td><td>499</td><td>528</td><td>361</td><td>447</td><td>165</td><td>396</td><td>198</td><td>454</td><td>445</td><td>3493</td><td>7297</td><td></td><td></td></tr><tr><td>BLUE</td><td>535</td><td>178</td><td>375</td><td>448</td><td>182</td><td>565</td><td>373</td><td>434</td><td>480</td><td>3570</td><td>465</td><td>510</td><td>338</td><td>417</td><td>166</td><td>376</td><td>185</td><td>432</td><td>420</td><td>3309</td><td>6879</td><td></td><td></td></tr><tr><td>WHITE</td><td>511</td><td>161</td><td>337</td><td>427</td><td>151</td><td>536</td><td>354</td><td>395</td><td>449</td><td>3321</td><td>423</td><td>491</td><td>326</td><td>361</td><td>150</td><td>370</td><td>170</td><td>371</td><td>388</td><td>3050</td><td>6371</td><td></td><td></td></tr><tr><td>MEMBER</td><td>535</td><td>178</td><td>394</td><td>427</td><td>182</td><td>565</td><td>373</td><td>395</td><td>480</td><td>3529</td><td>423</td><td>510</td><td>361</td><td>361</td><td>166</td><td>376</td><td>185</td><td>371</td><td>388</td><td>3141</td><td>6670</td><td></td><td></td></tr><tr><td>GOLD</td><td>499</td><td>135</td><td>309</td><td>375</td><td>146</td><td>442</td><td>344</td><td>355</td><td>443</td><td>3048</td><td>378</td><td>477</td><td>319</td><td>342</td><td>139</td><td>336</td><td>160</td><td>342</td><td>381</td><td>2874</td><td>5922</td><td></td><td></td></tr><tr><td>MEN'S HCP</td><td>10</td><td>8</td><td>18</td><td>2</td><td>12</td><td>4</td><td>16</td><td>6</td><td>14</td><td></td><td>1</td><td>13</td><td>9</td><td>5</td><td>17</td><td>15</td><td>11</td><td>3</td><td>7</td><td></td><td></td><td></td><td></td></tr><tr><td>Tucker</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>2</td><td>0</td><td>1</td><td>43</td><td></td><td>1</td><td>1</td><td>1</td><td>2</td><td>2</td><td>1</td><td>2</td><td>1</td><td>1</td><td>47</td><td>90</td><td></td><td></td></tr><tr><td>R</td><td>1</td><td>2</td><td>1</td><td>1</td><td>0</td><td>3</td><td>0</td><td>2</td><td>1</td><td>48</td><td></td><td>2</td><td>3</td><td>2</td><td>1</td><td>1</td><td>1</td><td>0</td><td>2</td><td>1</td><td>1</td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>PAR</td><td>5</td><td>3</td><td>4</td><td>4</td><td>3</td><td>5</td><td>4</td><td>4</td><td>5</td><td>37</td><td></td><td>4</td><td>5</td><td>4</td><td>4</td><td>3</td><td>4</td><td>3</td><td>4</td><td>4</td><td>35</td><td>72</td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>RED</td><td>480</td><td>128</td><td>306</td><td>371</td><td>116</td><td>438</td><td>295</td><td>351</td><td>395</td><td>2880</td><td></td><td>371</td><td>471</td><td>305</td><td>333</td><td>108</td><td>282</td><td>144</td><td>339</td><td>354</td><td>2707</td><td>5587</td><td></td><td></td></tr><tr><td>LADIES' HCP</td><td>10</td><td>14</td><td>18</td><td>6</td><td>12</td><td>2</td><td>16</td><td>8</td><td>4</td><td></td><td></td><td>1</td><td>17</td><td>5</td><td>7</td><td>13</td><td>9</td><td>15</td><td>11</td><td>3</td><td></td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-2.html",
+     "top_left_x": 238,
+     "top_left_y": 276,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 384,
+     "bottom_right_y": 1140,
+     "confidence_scores": null,
+     "content": "SCORER:",
+     "top_left_x": 268,
+     "top_left_y": 1108,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1129,
+     "bottom_right_y": 1117,
+     "confidence_scores": null,
+     "content": "ATTEST:",
+     "top_left_x": 1023,
+     "top_left_y": 1084,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1542,
+     "bottom_right_y": 1114,
+     "confidence_scores": null,
+     "content": "DATE:",
+     "top_left_x": 1459,
+     "top_left_y": 1081,
+     "type": "text"
+    }
+   ],
+   "confidence_scores": null,
+   "dimensions": {
+    "dpi": 200,
+    "height": 1500,
+    "width": 2000
+   },
+   "footer": null,
+   "header": null,
+   "hyperlinks": [],
+   "images": [
+    {
+     "bottom_right_x": 474,
+     "bottom_right_y": 299,
+     "id": "img-0.jpeg",
+     "image_annotation": null,
+     "image_base64": null,
+     "top_left_x": 262,
+     "top_left_y": 65
+    }
+   ],
+   "index": 0,
+   "markdown": "![img-0.jpeg](img-0.jpeg)\n\nMEN'S RATING/SLOPE\n\n[tbl-0.html](tbl-0.html)\n\nLADIES' RATING/SLOPE\n\n[tbl-1.html](tbl-1.html)\n\n# EAGLE VINES VINEYARDS & GOLF CLUB\n\nMailing Address: P.O. Box 2398, Napa, CA 94558\n\nStreet Address: 580 South Kelly Road, American Canyon, CA 94503\n\nPHONE: (707) 257-4470 \u2022 www.eaglevinesgolfclub.com\n\n[tbl-2.html](tbl-2.html)\n\nSCORER:\n\nATTEST:\n\nDATE:",
+   "tables": [
+    {
+     "content": "<table><tr><td>BLACK</td><td>75.4/138</td></tr><tr><td>BLUE</td><td>73.7/135</td></tr><tr><td>MEMBER</td><td>72.5/132</td></tr><tr><td>WHITE</td><td>71.2/127</td></tr><tr><td>GOLD</td><td>69.1/122</td></tr><tr><td>RED</td><td>67.8/118</td></tr></table>",
+     "format": "html",
+     "id": "tbl-0.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>WHITE</td><td>76.7/135</td></tr><tr><td>GOLD</td><td>74.5/130</td></tr><tr><td>RED</td><td>72.9/125</td></tr></table>",
+     "format": "html",
+     "id": "tbl-1.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>HOLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td><td rowspan=\"8\">INITIALS</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td></tr><tr><td>BLACK</td><td>573</td><td>200</td><td>394</td><td>472</td><td>211</td><td>598</td><td>392</td><td>455</td><td>509</td><td>3804</td><td>499</td><td>528</td><td>361</td><td>447</td><td>165</td><td>396</td><td>198</td><td>454</td><td>445</td><td>3493</td><td>7297</td><td></td><td></td></tr><tr><td>BLUE</td><td>535</td><td>178</td><td>375</td><td>448</td><td>182</td><td>565</td><td>373</td><td>434</td><td>480</td><td>3570</td><td>465</td><td>510</td><td>338</td><td>417</td><td>166</td><td>376</td><td>185</td><td>432</td><td>420</td><td>3309</td><td>6879</td><td></td><td></td></tr><tr><td>WHITE</td><td>511</td><td>161</td><td>337</td><td>427</td><td>151</td><td>536</td><td>354</td><td>395</td><td>449</td><td>3321</td><td>423</td><td>491</td><td>326</td><td>361</td><td>150</td><td>370</td><td>170</td><td>371</td><td>388</td><td>3050</td><td>6371</td><td></td><td></td></tr><tr><td>MEMBER</td><td>535</td><td>178</td><td>394</td><td>427</td><td>182</td><td>565</td><td>373</td><td>395</td><td>480</td><td>3529</td><td>423</td><td>510</td><td>361</td><td>361</td><td>166</td><td>376</td><td>185</td><td>371</td><td>388</td><td>3141</td><td>6670</td><td></td><td></td></tr><tr><td>GOLD</td><td>499</td><td>135</td><td>309</td><td>375</td><td>146</td><td>442</td><td>344</td><td>355</td><td>443</td><td>3048</td><td>378</td><td>477</td><td>319</td><td>342</td><td>139</td><td>336</td><td>160</td><td>342</td><td>381</td><td>2874</td><td>5922</td><td></td><td></td></tr><tr><td>MEN'S HCP</td><td>10</td><td>8</td><td>18</td><td>2</td><td>12</td><td>4</td><td>16</td><td>6</td><td>14</td><td></td><td>1</td><td>13</td><td>9</td><td>5</td><td>17</td><td>15</td><td>11</td><td>3</td><td>7</td><td></td><td></td><td></td><td></td></tr><tr><td>Tucker</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>2</td><td>0</td><td>1</td><td>43</td><td></td><td>1</td><td>1</td><td>1</td><td>2</td><td>2</td><td>1</td><td>2</td><td>1</td><td>1</td><td>47</td><td>90</td><td></td><td></td></tr><tr><td>R</td><td>1</td><td>2</td><td>1</td><td>1</td><td>0</td><td>3</td><td>0</td><td>2</td><td>1</td><td>48</td><td></td><td>2</td><td>3</td><td>2</td><td>1</td><td>1</td><td>1</td><td>0</td><td>2</td><td>1</td><td>1</td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>PAR</td><td>5</td><td>3</td><td>4</td><td>4</td><td>3</td><td>5</td><td>4</td><td>4</td><td>5</td><td>37</td><td></td><td>4</td><td>5</td><td>4</td><td>4</td><td>3</td><td>4</td><td>3</td><td>4</td><td>4</td><td>35</td><td>72</td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>RED</td><td>480</td><td>128</td><td>306</td><td>371</td><td>116</td><td>438</td><td>295</td><td>351</td><td>395</td><td>2880</td><td></td><td>371</td><td>471</td><td>305</td><td>333</td><td>108</td><td>282</td><td>144</td><td>339</td><td>354</td><td>2707</td><td>5587</td><td></td><td></td></tr><tr><td>LADIES' HCP</td><td>10</td><td>14</td><td>18</td><td>6</td><td>12</td><td>2</td><td>16</td><td>8</td><td>4</td><td></td><td></td><td>1</td><td>17</td><td>5</td><td>7</td><td>13</td><td>9</td><td>15</td><td>11</td><td>3</td><td></td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-2.html",
+     "word_confidence_scores": null
+    }
+   ]
+  }
+ ],
+ "usage_info": {
+  "doc_size_bytes": 485454,
+  "pages_processed": 1
+ }
+}
