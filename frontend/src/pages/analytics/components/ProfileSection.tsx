@@ -16,7 +16,7 @@ export function ProfileSection({ profile }: { profile: ProfileViewModel }) {
   if (profile.loading) return <LoadingState>Loading your profile...</LoadingState>;
   if (profile.error) {
     return (
-      <Alert variant="destructive">
+      <Alert tone="danger">
         <AlertDescription>Could not load your profile.</AlertDescription>
         <AlertAction>
           <Button variant="outline" size="xs" onClick={profile.retry}>

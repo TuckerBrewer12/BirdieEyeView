@@ -39,7 +39,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   }
   if (viewModel.loadError || !viewModel.played) {
     return (
-      <Alert variant="destructive">
+      <Alert tone="danger">
         <AlertDescription>{viewModel.loadError ?? "Could not load this round."}</AlertDescription>
       </Alert>
     );
@@ -75,7 +75,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
       />
 
       {viewModel.actionError && (
-        <Alert variant="destructive">
+        <Alert tone="danger">
           <AlertDescription>{viewModel.actionError}</AlertDescription>
         </Alert>
       )}

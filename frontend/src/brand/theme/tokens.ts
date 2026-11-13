@@ -516,6 +516,11 @@ export const lineWidth = {
   outline: 1.5,
 };
 
+/** Border widths that are not Tailwind's own steps: `border-callout`, the edge of an `Alert`. */
+export const borderWidth = {
+  callout: lineWidth.outline,
+};
+
 /** Icon line weights, unitless: lighter at rest, heavier on a current item. */
 export const stroke = {
   icon: 1.75,

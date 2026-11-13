@@ -84,7 +84,7 @@ export function SocialPage({ userId }: SocialPageProps) {
               </Field>
 
               {viewModel.sent && (
-                <Alert>
+                <Alert tone="success">
                   <AlertDescription>Friend request sent.</AlertDescription>
                 </Alert>
               )}
@@ -99,7 +99,7 @@ export function SocialPage({ userId }: SocialPageProps) {
 
           {viewModel.loadError && (
             <CardContent>
-              <Alert variant="destructive">
+              <Alert tone="danger">
                 <AlertDescription>{viewModel.loadError}</AlertDescription>
               </Alert>
             </CardContent>

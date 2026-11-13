@@ -50,7 +50,7 @@ export function UnsavedChangesSheet({
         </SheetHeader>
         {error && (
           <div className="p-4">
-            <Alert variant="destructive">
+            <Alert tone="danger">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           </div>

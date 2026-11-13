@@ -23,7 +23,7 @@ export function DashboardPage({ userId }: DashboardPageProps) {
 
   if (!vm.data) {
     return (
-      <Alert variant="destructive">
+      <Alert tone="danger">
         <AlertDescription>
           {vm.error?.message ?? "Dashboard data failed to load."}
         </AlertDescription>

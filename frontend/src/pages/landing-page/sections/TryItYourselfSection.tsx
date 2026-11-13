@@ -52,7 +52,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
                 <ScorecardLayoutPicker onContextChange={viewModel.setUserContext} />
 
                 {viewModel.error && (
-                  <Alert variant="destructive">
+                  <Alert tone="danger">
                     <AlertDescription>{viewModel.error}</AlertDescription>
                   </Alert>
                 )}
@@ -65,7 +65,7 @@ export function TryItYourselfSection({ viewModel }: { viewModel: TryItYourselfVi
             )}
 
             {viewModel.error && !viewModel.photo && (
-              <Alert variant="destructive" className="mt-3">
+              <Alert tone="danger" className="mt-3">
                 <AlertDescription>{viewModel.error}</AlertDescription>
               </Alert>
             )}

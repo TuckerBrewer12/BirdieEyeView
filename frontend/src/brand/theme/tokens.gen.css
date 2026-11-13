@@ -196,6 +196,7 @@
   --brand-size-profile-worse: 100%;
   --brand-size-scorecard: 43.75rem;
   --brand-size-scorecard-round: 54rem;
+  --brand-border-width-callout: 1.5px;
   --brand-stroke-icon: 1.75;
   --brand-stroke-icon-active: 2.25;
   --brand-stroke-check: 1.5;
@@ -439,6 +440,7 @@
   --spacing-profile-worse: var(--brand-size-profile-worse);
   --spacing-scorecard: var(--brand-size-scorecard);
   --spacing-scorecard-round: var(--brand-size-scorecard-round);
+  --border-width-callout: var(--brand-border-width-callout);
   --stroke-width-icon: var(--brand-stroke-icon);
   --stroke-width-icon-active: var(--brand-stroke-icon-active);
   --stroke-width-check: var(--brand-stroke-check);

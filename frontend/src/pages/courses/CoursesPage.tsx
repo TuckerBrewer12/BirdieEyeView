@@ -41,7 +41,7 @@ export function CoursesPage({ userId }: CoursesPageProps) {
         </div>
 
         {viewModel.error && (
-          <Alert variant="destructive">
+          <Alert tone="danger">
             <AlertDescription>{viewModel.error}</AlertDescription>
           </Alert>
         )}

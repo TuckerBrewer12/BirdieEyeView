@@ -114,7 +114,7 @@ export function HandicapBreakdownSheet({
         </Card>
 
         {!hasRatedRounds && (
-          <Alert>
+          <Alert tone="info" variant="outline">
             <AlertDescription>
               These rounds have no course rating or slope, so each differential is the score to par.
             </AlertDescription>
