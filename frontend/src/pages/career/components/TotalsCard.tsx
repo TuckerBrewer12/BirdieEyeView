@@ -1,7 +1,6 @@
 import { formatCount } from "@/domain/format";
-import { Card, CardContent, CardHeader, CardTitle, Stat, StatLabel, StatValue } from "@/brand";
+import { Card, CardContent, CardHeader, CardTitle, ScoreKindLabel, Stat, StatLabel, StatValue } from "@/brand";
 import { cn } from "@/brand/cn";
-import { scoreCountTextClass, scoreMarkClass } from "@/brand/theme";
 import type { CareerTotal } from "../model";
 import { TOTAL_LABEL, TOTAL_SCORE_KIND } from "../present";
 
@@ -23,9 +22,8 @@ export function TotalsCard({ title, totals, className }: TotalsCardProps) {
           const kind = TOTAL_SCORE_KIND[total.kind];
           return (
             <Stat key={total.kind} data-kind={kind} className="rounded-xl bg-muted p-3">
-              <StatLabel className={cn("flex items-center gap-1.5", kind && scoreCountTextClass(kind))}>
-                {kind && <span aria-hidden className={cn("size-2 shrink-0 rounded-full", scoreMarkClass(kind))} />}
-                {TOTAL_LABEL[total.kind]}
+              <StatLabel>
+                {kind ? <ScoreKindLabel kind={kind}>{TOTAL_LABEL[total.kind]}</ScoreKindLabel> : TOTAL_LABEL[total.kind]}
               </StatLabel>
               <StatValue>{formatCount(total.value)}</StatValue>
             </Stat>

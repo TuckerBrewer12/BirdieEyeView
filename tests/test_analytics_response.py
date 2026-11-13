@@ -11,7 +11,7 @@ from fastapi.encoders import jsonable_encoder
 from analytics.verdicts import change_verdict
 from analytics import handicap as hcap
 from analytics import stats as analytics
-from api.analytics_responses import analytics_response
+from api.analytics_responses import _handicap_trend, analytics_response
 from api.routers import stats
 from api.schemas import AnalyticsResponse, DashboardResponse, GoalReportResponse, ScoreMix
 from models import Course, Hole, HoleScore, Round
@@ -47,6 +47,15 @@ def test_each_handicap_trend_row_says_whether_its_round_falls_in_the_last_year()
     response = analytics_response(rounds, rounds, today=date(2027, 2, 2))
     assert [row.in_window for row in response.handicap_trend] == [False, True]
     assert response.notable_achievements.career_totals.one_year.rounds_played == 1
+
+
+def test_the_trend_is_marked_against_the_window_length_it_is_given():
+    rounds = _two_rounds()
+    # 2026-02-01 and 02-02 are 14 and 13 days before 02-15.
+    marks = lambda days: [row["in_window"] for row in _handicap_trend(None, rounds, rounds, date(2026, 2, 15), days)]
+    assert marks(14) == [True, True]
+    assert marks(13) == [False, True]
+    assert marks(10) == [False, False]
 
 
 def test_analytics_response_works_out_the_figures_the_page_shows():

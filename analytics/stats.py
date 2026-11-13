@@ -405,11 +405,16 @@ def _first_round_reaching_gir(round_set: List[Round], threshold: int) -> Optiona
     return None
 
 
+RECORDS_WINDOW_DAYS = 365
+"""How far back the records' "last year" reaches, in calendar days. One number for the records,
+the totals, the milestones and Career's handicap trend, so they can't drift apart."""
+
+
 def in_window(
     round_obj: Round,
     *,
     reference_date: Optional[date] = None,
-    days: int = 365,
+    days: int = RECORDS_WINDOW_DAYS,
 ) -> bool:
     """Whether a round falls in the records' last year: the `days` up to `reference_date` (today's
     UTC date when omitted), counted in calendar days. A round with no date never does."""
@@ -423,7 +428,7 @@ def notable_achievements(
     rounds: Iterable[Round],
     *,
     reference_date: Optional[date] = None,
-    days: int = 365,
+    days: int = RECORDS_WINDOW_DAYS,
     home_course_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """

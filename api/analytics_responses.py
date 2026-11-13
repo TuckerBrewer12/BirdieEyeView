@@ -24,7 +24,11 @@ def _average(values: List[float]) -> Optional[float]:
 
 
 def _handicap_trend(
-    user: Optional[User], history: List[Round], rounds: List[Round], today: Optional[date] = None
+    user: Optional[User],
+    history: List[Round],
+    rounds: List[Round],
+    today: Optional[date] = None,
+    days: int = analytics.RECORDS_WINDOW_DAYS,
 ) -> List[Dict[str, Any]]:
     """The golfer's index after each of `rounds`, read off their whole `history`, so a page
     narrowed to a course or a timeframe still shows the golfer's own index after each round.
@@ -38,7 +42,7 @@ def _handicap_trend(
                 "round_index": 0, "round_id": r.id, "handicap_index": None, "differential": None,
                 "used_in_hi": None, "hi_threshold": None, "differential_status": "unrated",
             }),
-            "in_window": analytics.in_window(r, reference_date=today),
+            "in_window": analytics.in_window(r, reference_date=today, days=days),
         }
         for r in rounds
     ]
@@ -70,6 +74,8 @@ def analytics_response(
     average_putts = _average([r["total_putts"] for r in putts_rows if r["total_putts"] is not None])
     three_putts = analytics.three_putt_averages(rounds)
     shape = player_shape(rounds) or {}
+    # The records' last year, and the handicap trend marked against the same one.
+    achievements = analytics.notable_achievements(rounds, reference_date=today, home_course_id=home_course_id)
 
     next_level = benchmarks.next_level_handicap(player_index)
 
@@ -104,11 +110,9 @@ def analytics_response(
         scoring_by_yardage=analytics.scoring_by_yardage_buckets(rounds),
         scoring_by_handicap=analytics.scoring_vs_hole_handicap(rounds),
         gir_vs_non_gir=analytics.gir_vs_non_gir_score_distribution(rounds),
-        handicap_trend=_handicap_trend(user, history, rounds, today),
+        handicap_trend=_handicap_trend(user, history, rounds, today, days=achievements["window_days"]),
         score_differentials=hcap.score_differentials_per_round(rounds),
-        notable_achievements=analytics.notable_achievements(
-            rounds, reference_date=today, home_course_id=home_course_id
-        ),
+        notable_achievements=achievements,
         score_mix={
             kind: analytics.round_half_up(share, 2) for kind, share in dashboard.score_mix(rounds)["percentages"].items()
         },

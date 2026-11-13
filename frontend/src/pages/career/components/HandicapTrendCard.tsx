@@ -5,6 +5,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  EmptyNote,
   SVGScoreHandicapTrend,
   Stat,
   StatLabel,
@@ -49,7 +50,7 @@ export function HandicapTrendCard({
         {trend.length > 0 ? (
           <SVGScoreHandicapTrend data={trend} series="handicap" compact={compact} />
         ) : (
-          <p className="py-8 text-center text-sm text-muted-foreground">{empty}</p>
+          <EmptyNote>{empty}</EmptyNote>
         )}
       </CardContent>
     </Card>
