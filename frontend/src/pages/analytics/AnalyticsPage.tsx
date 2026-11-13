@@ -1,5 +1,5 @@
 import { useSearchParams } from "react-router-dom";
-import { Alert, AlertAction, AlertDescription, Button, LoadingState, TabBar } from "@/brand";
+import { Alert, AlertAction, AlertDescription, Button, EmptyNote, LoadingState, TabBar } from "@/brand";
 import { AnalyticsHeader } from "./components/AnalyticsHeader";
 import { ApproachSection } from "./components/ApproachSection";
 import { BallStrikingSection } from "./components/BallStrikingSection";
@@ -40,9 +40,7 @@ export function AnalyticsPage({ userId }: AnalyticsPageProps) {
     <div data-slot="analytics-page" className="flex flex-col gap-3.5 pb-6 md:gap-4">
       <AnalyticsHeader vm={vm} roundCount={vm.analytics.roundCount} />
       {vm.showEmpty ? (
-        <p className="flex h-48 items-center justify-center text-center text-body text-muted-foreground">
-          {emptyMessage(vm.filtered)}
-        </p>
+        <EmptyNote className="flex h-48 items-center justify-center py-0">{emptyMessage(vm.filtered)}</EmptyNote>
       ) : (
         <AnalyticsBody vm={vm} analytics={vm.analytics} />
       )}
