@@ -28,6 +28,13 @@ test("a handicap that will not save", async ({ settings }) => {
   await settings.capture("settings-handicap-error.png");
 });
 
+test("unsaved changes", async ({ settings }) => {
+  await settings.open();
+  await settings.typeHandicap("7.9");
+  await settings.seesUnsaved();
+  await settings.capture("settings-unsaved.png");
+});
+
 test("leaving with unsaved changes", async ({ settings }) => {
   await settings.open();
   await settings.typeHandicap("6");

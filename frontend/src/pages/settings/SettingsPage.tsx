@@ -1,34 +1,47 @@
 import {
+  ActionBar,
   Alert,
   AlertAction,
   AlertDescription,
   Button,
+  ConfirmDialog,
   LoadingState,
   PageHeader,
   PageTitle,
+  SettingsGroup,
+  SettingsRow,
 } from "@/brand";
+import { useSignOut } from "@/app/useSignOut";
+import { useAuth } from "@/context/auth";
 import { useTheme } from "@/context/theme";
-import { FriendCodeSection } from "./components/FriendCodeSection";
-import { HandicapSection } from "./components/HandicapSection";
-import { HomeCourseSection } from "./components/HomeCourseSection";
+import { courseLabel } from "@/domain/course";
+import { GolfGroup } from "./components/GolfGroup";
+import { HomeCourseSheet } from "./components/HomeCourseSheet";
 import { PreferencesSection } from "./components/PreferencesSection";
-import { UnsavedChangesSheet } from "./components/UnsavedChangesSheet";
 import { useLeaveGuard } from "./useLeaveGuard";
 import { useSettingsPageViewModel } from "./useSettingsPageViewModel";
 
 export function SettingsPage({ userId }: { userId: string }) {
   const viewModel = useSettingsPageViewModel(userId);
   const { preference: theme, setPreference: setTheme } = useTheme();
+  const signOut = useSignOut(useAuth());
   const guard = useLeaveGuard(viewModel.dirty);
 
   if (viewModel.loading) return <LoadingState>Loading settings…</LoadingState>;
 
   return (
     <div>
-      <PageHeader title="Settings" subtitle="Manage account preferences" revealAt={100} />
+      <PageHeader title="Settings" revealAt={100} />
 
-      <div className="flex max-w-3xl flex-col gap-4 pb-6">
-        <PageTitle>Settings</PageTitle>
+      <div className="flex max-w-2xl flex-col gap-5 pb-6">
+        <div className="flex min-h-10 items-center justify-between gap-3">
+          <PageTitle>Settings</PageTitle>
+          {viewModel.saved && (
+            <span role="status" className="text-sm text-muted-foreground">
+              Settings saved.
+            </span>
+          )}
+        </div>
 
         {viewModel.loadError ? (
           <Alert tone="danger">
@@ -41,20 +54,19 @@ export function SettingsPage({ userId }: { userId: string }) {
           </Alert>
         ) : (
           <>
-            <FriendCodeSection friendCode={viewModel.friendCode} />
-            <HandicapSection
-              value={viewModel.handicapInput}
-              error={viewModel.handicapError}
-              onChange={viewModel.setHandicapInput}
-            />
-            <HomeCourseSection
-              homeCourse={viewModel.homeCourse}
-              query={viewModel.courseQuery}
-              results={viewModel.courseResults}
-              searching={viewModel.searchingCourses}
-              onQueryChange={viewModel.setCourseQuery}
-              onPick={viewModel.pickHomeCourse}
-              onClear={viewModel.clearHomeCourse}
+            {viewModel.saveError && !guard.blocked && (
+              <Alert tone="danger">
+                <AlertDescription>{viewModel.saveError}</AlertDescription>
+              </Alert>
+            )}
+
+            <GolfGroup
+              handicap={viewModel.handicapInput}
+              handicapError={viewModel.handicapError}
+              onHandicapChange={viewModel.setHandicapInput}
+              homeCourse={viewModel.homeCourse ? courseLabel(viewModel.homeCourse.name) : null}
+              onOpenHomeCourse={viewModel.openHomeCourse}
+              friendCode={viewModel.friendCode}
             />
             <PreferencesSection
               theme={theme}
@@ -62,32 +74,63 @@ export function SettingsPage({ userId }: { userId: string }) {
               getUpdates={viewModel.getUpdates}
               onGetUpdatesChange={viewModel.setGetUpdates}
             />
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Button onClick={() => viewModel.save()} disabled={!viewModel.canSave}>
-                {viewModel.saving ? "Saving…" : "Save settings"}
-              </Button>
-              {viewModel.saved && <span className="text-sm text-muted-foreground">Settings saved.</span>}
-              {viewModel.saveError && !guard.blocked && (
-                <span role="alert" className="text-sm font-medium text-destructive">
-                  {viewModel.saveError}
-                </span>
-              )}
-            </div>
+            <SettingsGroup>
+              <SettingsRow
+                type="action"
+                label={signOut.isPending ? "Signing out…" : "Sign out"}
+                tone="danger"
+                disabled={signOut.isPending}
+                onClick={() => signOut.mutate()}
+              />
+            </SettingsGroup>
           </>
         )}
       </div>
 
-      <UnsavedChangesSheet
+      {/* While something has changed: pinned at the foot, above the tab bar on a phone. */}
+      {viewModel.dirty && (
+        <ActionBar pinned="always" contentClassName="max-w-2xl">
+          <span className="flex-1 text-sm text-foreground-secondary">Unsaved changes</span>
+          <Button variant="ghostDestructive" onClick={viewModel.discard} disabled={viewModel.saving}>
+            Discard
+          </Button>
+          <Button onClick={() => viewModel.save()} disabled={!viewModel.canSave}>
+            {viewModel.saving ? "Saving…" : "Save"}
+          </Button>
+        </ActionBar>
+      )}
+
+      <HomeCourseSheet
+        open={viewModel.homeCourseOpen}
+        onClose={viewModel.closeHomeCourse}
+        homeCourse={viewModel.homeCourse}
+        query={viewModel.courseQuery}
+        results={viewModel.courseResults}
+        searching={viewModel.searchingCourses}
+        onQueryChange={viewModel.setCourseQuery}
+        onPick={viewModel.pickHomeCourse}
+        onClear={viewModel.clearHomeCourse}
+      />
+
+      <ConfirmDialog
         open={guard.blocked}
-        saving={viewModel.saving}
-        error={viewModel.saveError}
-        onSave={() => viewModel.save(guard.leave)}
-        onDiscard={() => {
-          viewModel.discard();
-          guard.leave();
+        onOpenChange={(open) => {
+          if (!open) guard.stay();
         }}
-        onStay={guard.stay}
+        title="Save changes before leaving?"
+        tone="default"
+        confirmLabel={viewModel.saving ? "Saving…" : "Save"}
+        pending={viewModel.saving}
+        onConfirm={() => viewModel.save(guard.leave)}
+        alternative={{
+          label: "Discard",
+          onClick: () => {
+            viewModel.discard();
+            guard.leave();
+          },
+        }}
+        cancelLabel="Keep editing"
+        error={viewModel.saveError}
       />
     </div>
   );

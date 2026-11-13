@@ -49,21 +49,31 @@ export class SettingsRobot {
   }
 
   private handicapField() {
-    return this.page.getByLabel("Manual handicap index");
+    return this.page.getByLabel("Handicap index");
   }
 
+  /** Save, in the bar pinned at the foot while there are changes. */
   private saveButton() {
-    return this.page.getByRole("button", { name: "Save settings" });
+    return this.page.getByRole("button", { name: /^(Save|Saving…)$/ });
   }
 
   private leavePrompt() {
-    return this.page.getByRole("dialog", { name: "Unsaved changes" });
+    return this.page.getByRole("alertdialog", { name: "Save changes before leaving?" });
   }
 
-  private homeCourseCard() {
-    return this.page.locator('[data-slot="card"]').filter({
-      has: this.page.getByText("Home course", { exact: true }),
-    });
+  /** The Golf group's Home course row, which shows the course and opens its sheet. */
+  private homeCourseRow() {
+    return this.page.locator("[data-slot=settings-row]").filter({ hasText: /^Home course/ });
+  }
+
+  private homeCourseSheet() {
+    return this.page.getByRole("dialog", { name: "Home course" });
+  }
+
+  private async openHomeCourse() {
+    if (await this.homeCourseSheet().isVisible()) return;
+    await this.homeCourseRow().click();
+    await expect(this.homeCourseSheet()).toBeVisible();
   }
 
   /** Starts the player on Dark; init scripts rerun on reload, so a later pick is left alone. */
@@ -120,7 +130,7 @@ export class SettingsRobot {
   async seesForm(): Promise<this> {
     await expect(this.page.getByRole("alert")).toHaveCount(0);
     await expect(this.themeControl()).toBeVisible();
-    await expect(this.saveButton()).toBeVisible();
+    await expect(this.page.locator("main").getByRole("button", { name: "Sign out" })).toBeVisible();
     return this;
   }
 
@@ -210,35 +220,60 @@ export class SettingsRobot {
     return this;
   }
 
+  /** Opens the home course's sheet and searches in it. */
   async searchHomeCourse(query: string): Promise<this> {
-    await this.homeCourseCard().getByPlaceholder("Search courses…").fill(query);
+    await this.openHomeCourse();
+    await this.homeCourseSheet().getByPlaceholder("Search courses…").fill(query);
     return this;
   }
 
+  /** Picks a result, which closes the sheet. */
   async pickHomeCourse(name: string): Promise<this> {
-    await this.homeCourseCard().getByRole("option", { name: new RegExp(name) }).click();
+    await this.homeCourseSheet().getByRole("option", { name: new RegExp(name) }).click();
+    await expect(this.homeCourseSheet()).toHaveCount(0);
     return this;
   }
 
   async seesCourseResult(name: string): Promise<this> {
-    await expect(this.homeCourseCard().getByRole("option", { name: new RegExp(name) })).toBeVisible();
+    await expect(this.homeCourseSheet().getByRole("option", { name: new RegExp(name) })).toBeVisible();
     return this;
   }
 
+  /** Opens the sheet, removes the course and closes the sheet again. */
   async removeHomeCourse(): Promise<this> {
-    await this.page.getByRole("button", { name: "Remove home course" }).click();
+    await this.openHomeCourse();
+    await this.homeCourseSheet().getByRole("button", { name: "Remove home course" }).click();
+    await this.page.keyboard.press("Escape");
+    await expect(this.homeCourseSheet()).toHaveCount(0);
     return this;
   }
 
   async seesHomeCourse(name: string): Promise<this> {
-    await expect(this.page.getByRole("button", { name: "Remove home course" })).toBeVisible();
-    await expect(this.homeCourseCard().getByText(name, { exact: true })).toBeVisible();
+    await expect(this.homeCourseRow()).toContainText(name);
     return this;
   }
 
   async seesNoHomeCourse(): Promise<this> {
-    await expect(this.homeCourseCard().getByPlaceholder("Search courses…")).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Remove home course" })).toHaveCount(0);
+    await expect(this.homeCourseRow()).toContainText("None");
+    return this;
+  }
+
+  /** Discard in the bar at the foot: the form goes back to what is saved. */
+  async discard(): Promise<this> {
+    await this.page.locator("[data-slot=action-bar]").getByRole("button", { name: "Discard" }).click();
+    await expect(this.saveButton()).toHaveCount(0);
+    return this;
+  }
+
+  async signOut(): Promise<this> {
+    await this.page.locator("main").getByRole("button", { name: "Sign out" }).click();
+    return this;
+  }
+
+  /** Signed out, the app falls back to the landing page at /. */
+  async seesSignedOut(): Promise<this> {
+    await expect(this.page).toHaveURL(/\/$/);
+    await expect.poll(() => this.backend?.signedOut).toBe(true);
     return this;
   }
 
@@ -254,6 +289,12 @@ export class SettingsRobot {
 
   async seesSaveError(message: string): Promise<this> {
     await expect(this.page.getByRole("alert").filter({ hasText: message })).toBeVisible();
+    return this;
+  }
+
+  /** Changes are waiting: Save is on screen and can be pressed. */
+  async seesUnsaved(): Promise<this> {
+    await expect(this.saveButton()).toBeEnabled();
     return this;
   }
 
@@ -286,17 +327,17 @@ export class SettingsRobot {
   }
 
   async saveAndLeave(): Promise<this> {
-    await this.leavePrompt().getByRole("button", { name: "Save and leave" }).click();
+    await this.leavePrompt().getByRole("button", { name: "Save", exact: true }).click();
     return this;
   }
 
   async discardAndLeave(): Promise<this> {
-    await this.leavePrompt().getByRole("button", { name: "Discard changes" }).click();
+    await this.leavePrompt().getByRole("button", { name: "Discard", exact: true }).click();
     return this;
   }
 
   async stay(): Promise<this> {
-    await this.leavePrompt().getByRole("button", { name: "Close" }).click();
+    await this.leavePrompt().getByRole("button", { name: "Keep editing" }).click();
     await expect(this.leavePrompt()).toHaveCount(0);
     return this;
   }

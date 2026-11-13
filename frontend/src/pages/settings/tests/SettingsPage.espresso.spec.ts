@@ -157,3 +157,38 @@ test("closing the prompt stays on the page with the edit", async ({ settings }) 
   await settings.isAt("/settings");
   await settings.seesHandicap("6");
 });
+
+test("Discard in the bar puts the form back", async ({ settings }) => {
+  await settings.open();
+  await settings.typeHandicap("6");
+  await settings.discard();
+  await settings.seesHandicap("8.4");
+  await settings.leaveTo("Dashboard");
+  await settings.isAt("/");
+});
+
+test.describe("on a phone", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test("Save in the pinned bar keeps the change on a phone", async ({ settings }) => {
+    await settings.open();
+    await settings.typeHandicap("+1.5");
+    await settings.save();
+    await settings.seesSaved();
+    await settings.reload();
+    await settings.seesHandicap("+1.5");
+  });
+
+  test("a home course is picked from the sheet", async ({ settings }) => {
+    await settings.open({ profile: settingsProfile({ home_course_id: null }) });
+    await settings.searchHomeCourse("Blue");
+    await settings.pickHomeCourse("Blue Rock");
+    await settings.seesHomeCourse("Blue Rock");
+  });
+});
+
+test("Sign out signs the golfer out", async ({ settings }) => {
+  await settings.open();
+  await settings.signOut();
+  await settings.seesSignedOut();
+});

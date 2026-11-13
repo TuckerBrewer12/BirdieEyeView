@@ -24,7 +24,7 @@ function AppShell({ sideNav, bottomNav, className, children, ...props }: AppShel
       {/* The padding clears the tab bar on phones, and an ActionBar pinned over it, and the rail on wide screens. */}
       <main
         data-slot="app-shell-main"
-        className="px-page-phone pt-15 pb-page-end-phone has-data-[slot=action-bar]:pb-page-end-action-bar md:ml-rail md:px-11 md:pt-11 md:pb-12 md:has-data-[slot=action-bar]:pb-12"
+        className="px-page-phone pt-15 pb-page-end-phone has-data-[slot=action-bar]:pb-page-end-action-bar md:ml-rail md:px-page md:pt-11 md:pb-12 md:has-data-[slot=action-bar]:pb-12 md:has-data-[pinned=always]:pb-page-end-pinned"
       >
         {children}
       </main>
