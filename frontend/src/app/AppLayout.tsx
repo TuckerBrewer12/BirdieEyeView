@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AppShell, BottomNav, SideNav, type RenderLink } from "@/brand";
 import { useAuth } from "@/context/auth";
+import { awaitsAnswer } from "@/data/friendsModel";
+import { useFriendships } from "@/data/useFriendships";
 import { initialsOf, navigationFor } from "./navigation";
 import { useSignOut } from "./useSignOut";
 
@@ -12,7 +14,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const auth = useAuth();
   const signOut = useSignOut(auth);
-  const nav = navigationFor(pathname);
+  // Shared with Social's own read of the list, so the More sheet's count and the page's agree.
+  const { data: friendships = [] } = useFriendships(auth.userId ?? "");
+  const nav = navigationFor(pathname, friendships.filter(awaitsAnswer).length);
+  const user = {
+    name: auth.name ?? "Golfer",
+    initials: initialsOf(auth.name),
+    detail: auth.email ?? undefined,
+  };
   const onSignOut = () => {
     if (!signOut.isPending) signOut.mutate();
   };
@@ -23,11 +32,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <SideNav
           items={nav.side}
           secondaryItems={nav.sideFooter}
-          user={{
-            name: auth.name ?? "Golfer",
-            initials: initialsOf(auth.name),
-            detail: auth.email ?? undefined,
-          }}
+          user={user}
           onSignOut={onSignOut}
           signingOut={signOut.isPending}
           renderLink={routerLink}
@@ -38,8 +43,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           tabs={nav.tabs}
           featuredHref="/scan"
           moreItems={nav.more}
-          onSignOut={onSignOut}
-          signingOut={signOut.isPending}
+          user={user}
           renderLink={routerLink}
         />
       }

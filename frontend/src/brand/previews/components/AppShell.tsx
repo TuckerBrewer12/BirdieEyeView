@@ -52,7 +52,7 @@ export default function AppShellPreview() {
             onSignOut={() => {}}
           />
         }
-        bottomNav={<BottomNav tabs={tabs} featuredHref="/scan" moreItems={more} onSignOut={() => {}} />}
+        bottomNav={<BottomNav tabs={tabs} featuredHref="/scan" moreItems={more} />}
       >
         <div className="flex flex-col gap-4">
           <PageTitle>Rounds</PageTitle>

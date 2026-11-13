@@ -10,6 +10,8 @@ interface NavItem {
   label: string;
   icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   active?: boolean;
+  /** Something waiting there, counted: friend requests to answer. Shown where the item is a row. */
+  badge?: number;
 }
 
 /**
