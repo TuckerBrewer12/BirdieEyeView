@@ -10,27 +10,30 @@ from models import Round
 
 def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResponse:
     """The player's figures at one course, from their rounds there (oldest first)."""
-    scores = [s for s in (r.calculate_total_score() for r in rounds) if s is not None]
+    newest_first = list(reversed(rounds))
+    record = analytics.course_record(newest_first)
     by_hole = analytics.average_score_relative_to_par_by_hole(rounds)
-    nines = analytics.hole_average_nines(by_hole)
-    # The best round as the round list ranks it, so a nine is never best over a full round.
-    best = analytics.best_round(list(reversed(rounds)))
+    gir_by_hole = analytics.gir_percentage_by_hole(rounds)
+    # The trend follows the record: full rounds, or the nines when there is no full round.
+    trended = analytics.full_rounds(rounds) or rounds
+    to_par = analytics.hole_to_par_nines(by_hole)
+    greens = analytics.gir_percentage_nines(gir_by_hole)
+    best, worst = record["best_round"], record["worst_round"]
     return CourseAnalyticsResponse(
         course_id=course_id,
-        rounds_played=len(rounds),
-        scoring_average=sum(scores) / len(scores) if scores else None,
-        best_score=best.calculate_total_score() if best else None,
-        worst_score=max(scores) if scores else None,
-        rounds=[round_summary(r) for r in reversed(rounds)],
-        score_trend_on_course=analytics.score_trend_on_this_course(rounds),
-        average_score_relative_to_par_by_hole=by_hole,
-        hole_averages_front_nine=nines["front_nine"],
-        hole_averages_back_nine=nines["back_nine"],
-        hole_averages_total=nines["total"],
-        gir_percentage_by_hole=analytics.gir_percentage_by_hole(rounds),
-        average_putts_by_hole=analytics.average_putts_by_hole(rounds),
-        score_type_distribution_by_hole=analytics.score_type_distribution_by_hole(rounds),
-        course_difficulty_profile_by_hole=analytics.course_difficulty_profile_by_hole(rounds),
-        average_score_when_gir_vs_missed=analytics.average_score_when_gir_vs_missed(rounds),
-        score_variance_by_hole=analytics.score_variance_by_hole(rounds),
+        rounds_played=record["rounds_played"],
+        last_played=record["last_played"],
+        scoring_average=record["scoring_average"],
+        scoring_average_to_par=record["scoring_average_to_par"],
+        best_round_id=str(best.id) if best and best.id else None,
+        worst_round_id=str(worst.id) if worst and worst.id else None,
+        rounds=[round_summary(r) for r in newest_first],
+        score_trend=analytics.score_trend_with_rolling_average(trended),
+        holes=analytics.course_hole_stats(rounds),
+        hole_to_par_front_nine=to_par["front_nine"],
+        hole_to_par_back_nine=to_par["back_nine"],
+        hole_to_par_total=to_par["total"],
+        gir_front_nine=greens["front_nine"],
+        gir_back_nine=greens["back_nine"],
+        gir_total=greens["total"],
     )

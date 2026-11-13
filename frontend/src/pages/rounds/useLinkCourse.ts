@@ -27,6 +27,9 @@ export function useLinkCourse(
       );
       void queryClient.invalidateQueries({ queryKey: queryKeys.rounds(userId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.round(updated.id) });
+      // The round now counts toward the course's record, on the list and the course's page.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.allCourseLists(userId) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.allCourseAnalytics(userId) });
     },
   });
 }

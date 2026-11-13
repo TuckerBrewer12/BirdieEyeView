@@ -17,9 +17,10 @@ export interface RegisterErrors {
 
 const NO_ERRORS: RegisterErrors = { password: null, confirm: null, handicap: null };
 
+/** The course picked as home. The name is null when that course could not be read. */
 export interface HomeCourse {
   id: string;
-  name: string;
+  name: string | null;
 }
 
 export interface RegisterViewModel {
@@ -73,7 +74,7 @@ export function useRegisterViewModel(
 
   const pickHomeCourse = useCallback(
     (course: CourseSummary) => {
-      setHomeCourse({ id: course.id, name: course.name ?? "Unnamed course" });
+      setHomeCourse({ id: course.id, name: course.name });
       resetSearch();
     },
     [resetSearch],

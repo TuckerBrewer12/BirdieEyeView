@@ -32,6 +32,7 @@ export const palette = {
   white: "#ffffff",
   black: "#000000",
   sage: {
+    25: "#f3f4ef",
     50: "#f5f6f3",
     100: "#eef0ec",
     150: "#eceee9",
@@ -40,6 +41,7 @@ export const palette = {
     400: "#9aa39d",
     500: "#69756d",
     600: "#4b5750",
+    800: "#1e2b24",
     900: "#15201a",
   },
   charcoal: {
@@ -61,7 +63,7 @@ export const palette = {
     900: "#17291d",
     950: "#08130c",
   },
-  forest: { 700: "#2d7a3a", 750: "#2d4c3b", 800: "#1e3d25", 900: "#152d1b" },
+  forest: { 700: "#2d7a3a", 750: "#2d4c3b", 800: "#1e3d25" },
   denim: { 500: "#3d6fb6", 700: "#2457a6" },
   gray: { 100: "#f3f4f6", 200: "#e5e7eb", 600: "#4b5563", 700: "#374151" },
   slate: { 600: "#475569", 900: "#0f172a" },
@@ -151,8 +153,9 @@ const status = (kind: string, base: string, text: ColorValue = alias(`status-${k
 });
 
 const light = {
-  background: sage[50],
-  foreground: sage[900],
+  // The soft surface: a warm page, ink a step off black, cards lifted by shadow rather than ruled.
+  background: sage[25],
+  foreground: sage[800],
   // Labels and body copy one step back from the page's ink.
   foregroundSecondary: sage[600],
   card: white,
@@ -178,6 +181,8 @@ const light = {
   destructiveHover: red[800],
   // Ambient shadow for lifted surfaces; alpha so it reads on any backdrop.
   shadow: alpha(slate[900], 0.1),
+  // A card's two-layer lift: a tight contact shadow and a wide, faint spread.
+  surfaceShadow: { near: alpha(sage[900], 0.04), far: alpha(sage[900], 0.06) },
 
   // Alerts and badges. Solid: `bg-status-info-base text-status-info-on-base`;
   // outline: `border-status-info text-status-info` on a card.
@@ -195,7 +200,8 @@ const light = {
     series2: denim[500],
     grid: sage[150],
     reference: sage[400],
-    axis: alias("chart-reference"),
+    // Ticks, labels and a round's own dots: dark enough to read at a glance.
+    axis: alias("foreground-secondary"),
     muted: gray[200],
     accent: green[400],
   },
@@ -203,7 +209,6 @@ const light = {
   // The app's side rail: the brand's own surface, the same in both modes.
   sidebar: {
     DEFAULT: forest[800],
-    end: forest[900],
     foreground: white,
   },
 
@@ -286,6 +291,7 @@ export const modes = {
     destructiveHover: red[700],
     // Black reads as nothing on a dark page, so lift with a stronger halo.
     shadow: alpha(black, 0.55),
+    surfaceShadow: { near: alpha(black, 0.3), far: alpha(black, 0.35) },
     // The fills stay; the ink on a dark card is a lighter step of each.
     status: {
       info: { text: blue[400] },
@@ -334,6 +340,8 @@ export const font = {
 /** Line heights, unitless. */
 export const leading = {
   display: 1.1,
+  /** The last round's score sits tight on the line under it. */
+  scoreboard: 0.9,
 };
 
 /**
@@ -346,6 +354,8 @@ export const tracking = {
   display: -0.6,
   stat: -0.8,
   hero: -1.8,
+  /** The last round's score: tight enough that two digits read as one mark. */
+  scoreboard: -2.5,
   chip: 0.5,
   kicker: 1,
   eyebrow: 1.4,
@@ -379,15 +389,36 @@ export const type = {
   body: { size: 13 },
   /** Large body copy: a list row's name, a large button's label, a field's value. */
   "body-lg": { size: 15 },
+  /** A card's heading on the soft surface: "Recent rounds", the goal on a phone. */
+  subhead: { size: 17, weight: 600 },
   /** A page's title. */
   title: { size: 26, weight: 700, tracking: tracking.title },
+  /** A page's heading at 30, lighter than a title: the dashboard's greeting, a round's course. Set through PageTitle. */
+  heading: { size: 30, weight: 600, tracking: tracking.title },
+  /** A card's lead figure on the soft surface: the scoring average, the best round. */
+  figure: { size: 34, weight: 600, tracking: tracking.display },
+  /** The same on a phone, and a phone's greeting. */
+  "figure-sm": { size: 28, weight: 600, tracking: tracking.display },
+  /** A round's score set large in a list row or ticket. */
+  "figure-lg": { size: 36, weight: 600, tracking: tracking.display },
+  /** The landing page's headline, stepping up with the screen. */
+  "display-sm": { size: 36, weight: 800, tracking: tracking.hero, leading: leading.display },
+  display: { size: 48, weight: 800, tracking: tracking.hero, leading: leading.display },
+  "display-lg": { size: 60, weight: 800, tracking: tracking.hero, leading: leading.display },
+  /** The last round's course on the dashboard. */
+  name: { size: 22, weight: 600, tracking: tracking.name },
+  /** The last round's score, the biggest number on the dashboard. */
+  scoreboard: { size: 76, weight: 600, tracking: tracking.scoreboard, leading: leading.scoreboard },
+  "scoreboard-sm": { size: 52, weight: 600, tracking: tracking.scoreboard, leading: leading.scoreboard },
   /** The one big figure on a card: a round's score. */
   hero: { size: 44, weight: 700, tracking: tracking.hero, leading: 1 },
   /** The tracked capitals above a figure or a group of rows. */
   eyebrow: { size: 10, weight: 700, tracking: tracking.eyebrow },
+  /** A card's headline figure: a KPI tile's. */
+  stat: { size: 32, weight: 700, tracking: tracking.stat, leading: leading.display },
   /** The smaller tracked capitals on a chip or a header strip. */
   kicker: { size: 9, weight: 700, tracking: tracking.kicker },
-  /** The label above a page section (`SectionLabel`). */
+  /** The tracked capitals above a group of rows. */
   section: { size: 11, weight: 700, tracking: tracking.section },
 } satisfies Record<string, TypeRole>;
 
@@ -399,12 +430,14 @@ export const space = {
   hair: 2.5,
   chip: 3,
   dot: 3,
+  /** A phone page's side margin. */
+  "page-phone": 18,
   tight: 5,
   /** What a control's corner gives up inside its group, so the corners nest. */
   nudge: 5,
   "nudge-sm": 3,
-  /** The phone's home-indicator strip, which a bar pinned to the bottom pads past. */
-  "safe-bottom": "env(safe-area-inset-bottom, 0px)",
+  /** What a bar pinned to the bottom pads past: the phone's home-indicator strip, never less than 22px. */
+  "safe-bottom": "max(env(safe-area-inset-bottom, 0px), 22px)",
 };
 
 /** Shadcn's base radius, `--radius`; the named steps below sit around it. */
@@ -418,28 +451,50 @@ export const radius = {
   bar: 1.5,
   tick: 2,
   card: 10,
-  /** A panel: `Card`'s corner. */
-  panel: 14,
+  /** A card on the page: the soft surface's large corner. */
+  surface: 22,
+  /** The card a page leads with, a step rounder than the cards under it. */
+  lead: 24,
+  "lead-phone": 26,
   tooltip: 12,
+  /** The top corners of a bottom sheet. */
+  sheet: 20,
   addon: "calc(var(--radius) - var(--brand-space-nudge))",
   control: "calc(var(--radius) - var(--brand-space-nudge-sm))",
 };
 
 /** Widths and heights that are not on the 4px scale. */
 export const size = {
-  "date-rail": 54,
+  /** The side rail's width: `AppShell` sets it and clears the page past it. */
+  rail: 240,
   preview: 390,
   chart: 180,
   "chart-compact": 210,
   /** Width a hole-by-hole chart needs before it scrolls sideways. */
   "chart-wide": "45rem",
-  sheet: "28rem",
-  /** Widest a target of results grows. */
-  target: "15rem",
+  /** The narrowest the round flow draws, a 24px column a hole, before it scrolls sideways. */
+  "chart-flow": "30.75rem",
+  /** A side sheet's width. */
+  sheet: 420,
+  /** A bottom sheet that holds a table, not a list of options: the handicap breakdown. */
+  "sheet-tall": 640,
+  /** The widest the radar draws beside what goes with it. */
+  radar: "28.75rem",
+  /** A row of plain columns: the holes by difficulty, the rounds' three-putts. */
+  columns: 104,
+  /** A page's section tab: the row's height, the underline included. */
+  tab: 42,
   "icon-xs": 11,
   "icon-sm": 13,
+  /** A nav item's icon, a sheet's close, a card's chevron. */
+  "icon-md": 18,
+  /** The lines drawn at their own size, under a card's figure and beside a phone's handicap. */
+  "sparkline-card": 150,
+  "sparkline-mini": 44,
   "hole-w": 30,
   "hole-h": 22,
+  /** A scorecard's score mark, square. */
+  "hole-lg": 28,
   // A profile bar's height in its row, by score: the worse the hole, the taller.
   "profile-eagle": "28%",
   "profile-birdie": "40%",
@@ -447,8 +502,10 @@ export const size = {
   "profile-bogey": "72%",
   "profile-double": "92%",
   "profile-worse": "100%",
-  /** Width a full scorecard needs before it scrolls sideways. */
+  /** Width a course's scorecard needs before it scrolls sideways. */
   scorecard: "43.75rem",
+  /** Width a round's scorecard, all 18 holes in one table, needs before it scrolls sideways. */
+  "scorecard-round": "54rem",
 };
 
 /** Line widths, in pixels. */
@@ -464,7 +521,7 @@ export const borderWidth = {
   callout: lineWidth.outline,
 };
 
-/** Icon line weights, unitless. The tab bar's are lighter at rest, heavier on the current tab. */
+/** Icon line weights, unitless: lighter at rest, heavier on a current item. */
 export const stroke = {
   icon: 1.75,
   "icon-active": 2.25,
@@ -501,17 +558,47 @@ export const opacity = {
 /** Shadows follow `--shadow`, so they deepen in dark mode. sm/md/lg keep Tailwind's geometry. */
 export const shadow = {
   card: "0 6px 20px var(--shadow)",
+  /** A card resting on the page: no rule, lifted by a near and a far shadow. */
+  surface: "0 1px 2px var(--surface-shadow-near), 0 8px 24px var(--surface-shadow-far)",
   hairline: "0 1px 0 var(--shadow)",
   sm: "0 1px 3px 0 var(--shadow), 0 1px 2px -1px var(--shadow)",
   md: "0 4px 6px -1px var(--shadow), 0 2px 4px -2px var(--shadow)",
   lg: "0 10px 15px -3px var(--shadow), 0 4px 6px -4px var(--shadow)",
 };
 
-/** Named grid column templates: `grid-cols-round-preview`. */
+/** Named grid column templates: `grid-cols-handicap-breakdown`. */
 export const gridColumns = {
-  "round-preview": "var(--brand-size-date-rail) 1fr auto",
   "handicap-breakdown": "1fr auto auto auto",
-  "recent-rounds": "1fr auto auto",
+  /** The dashboard's last round: the round, then how it went, as wide as its line is drawn. */
+  "last-round": "minmax(0, 1fr) 23.75rem",
+  /** A round as one row of a card's list: date, course, a cell per hole (a little wider), score, to-par. */
+  "round-row": "3.25rem minmax(0, 1fr) minmax(0, 1.3fr) 2.5rem 2.5rem",
+  /** The dashboard's row of cards: three figures, then the goal a little wider. */
+  "dashboard-cards": "repeat(3, minmax(0, 1fr)) 1.15fr",
+  /** Round detail's summary: the score, net, putts and greens, then the score mix. */
+  "round-summary": "1.1fr 1fr 1fr 1fr 1.6fr",
+  /** The same on a phone: the score, then net, putts and greens, the mix under them. */
+  "round-summary-phone": "1.3fr 1fr 1fr 1fr",
+  /** Round detail's round flow beside how the round compares with the golfer's average. */
+  "round-detail": "minmax(0, 1.35fr) minmax(0, 1fr)",
+  /** A row of "vs your average": the figure's name, this round, the average, the difference. */
+  "versus-row": "minmax(0, 1fr) 2.75rem 2.75rem 3.25rem",
+  /** A course as one row of the course list: the course, its tees, the golfer's record there, the chevron. */
+  "course-row": "minmax(0, 1fr) 9.375rem 10.625rem 1rem",
+  /** The course page's record beside the golfer's recent rounds there. */
+  "course-record": "minmax(0, 1fr) minmax(0, 1.4fr)",
+  /** Analytics: a narrow card beside a wider one (by hole par beside by hole difficulty). */
+  "analytics-pair": "minmax(0, 1fr) minmax(0, 1.6fr)",
+  /** Analytics' putting: the three-putts beside the putts a hole. */
+  "analytics-putting": "minmax(0, 1.4fr) minmax(0, 1fr)",
+  /** Analytics' profile: the goal's figures or the radar, beside what goes with them. */
+  "analytics-goal": "17.5rem minmax(0, 1fr)",
+  /** A par type's bar: its name, the bar, its figure. */
+  "par-bar": "2.75rem minmax(0, 1fr) 2.75rem",
+  /** The peak game's table: the kind of hole, then peak, average and gained. */
+  "peak-table": "minmax(0, 1fr) 4.375rem 4.375rem 5rem",
+  /** A label column, then two equal state columns (default, disabled). */
+  "state-grid": "6rem repeat(2, minmax(0, 1fr))",
 };
 
 /**
@@ -520,6 +607,8 @@ export const gridColumns = {
  */
 export const breakpoints = {
   sm: 40,
+  /** Tailwind's own: the side rail and the desktop layouts start here. */
+  md: 48,
 };
 
 type Ease = [number, number, number, number];
@@ -540,8 +629,6 @@ export const motion = {
   layout: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as Ease },
   /** A panel opening under the control that asked for it. */
   expand: { duration: 0.25, ease: [0.22, 1, 0.36, 1] as Ease },
-  /** A section fading up as it scrolls into view (`Reveal`). */
-  reveal: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as Ease },
   /** The card being read while a scan runs: it breathes, a line sweeps it, its corners pulse, the step rail fills. */
   scanProgress: { breathe: 2.6, sweep: 1.6, pulse: 1.8, cornerStagger: 0.45, step: 0.4 },
   /** The try-it panel moving between its steps. */
@@ -586,51 +673,98 @@ function px(length: number | string): number {
   return Number(rem[1]) * 16;
 }
 
-type Corners = [number, number, number, number];
 
 /**
- * Chart geometry. Recharts and our SVG plots take numbers, so they read these.
- * SVG plots are unitless and scale to their container, keeping this shape.
+ * Chart geometry. The SVG charts take numbers, so they read these. Most draw at their box's width
+ * from a measured `width`; the rest scale to their container, keeping this shape.
  */
 export const chart = {
-  barRadius: [px(radius.md), px(radius.md), 0, 0] as Corners,
-  /** Rounded outer ends of a horizontal stacked bar. */
-  stackEndRadius: {
-    left: [px(radius.sm), 0, 0, px(radius.sm)] as Corners,
-    right: [0, px(radius.sm), px(radius.sm), 0] as Corners,
-  },
-  margin: { top: 4, right: 8, left: -20, bottom: 0 },
   /** The dotted guide lines charts draw behind their data: grid rings, reference lines, the hover crosshair. */
   guideDash: "3 3",
-  /** Widest a Recharts bar grows when there are few of them. */
-  barMaxWidth: 28,
-  /** A full ring sized to fill the chart height. */
-  ring: { inner: 50, outer: 68 },
-  /** A half gauge drawn up from the bottom edge of its box. */
-  gauge: { inner: 52, outer: 72 },
-  plot: {
-    width: 560,
-    height: size.chart,
-    pad: { top: 12, right: 64, bottom: 20, left: 52 },
-    barMin: 4,
-    barMax: 14,
-    barGap: 2,
-    dot: 3.5,
+  /**
+   * Score over handicap index, stacked as two small multiples that share the round axis.
+   * Unitless, scaled to the container. The grid ends `axis` short of the right edge,
+   * where the tick labels sit.
+   */
+  stack: {
+    width: 544,
+    /** A phone's narrower drawing. */
+    widthCompact: 320,
+    /** Room right of the grid for tick labels, and the gap between the grid and them. */
+    axis: 44,
+    labelGap: 10,
+    /** How far a tick label's baseline sits below its line, so the figure centres on it. */
+    labelDrop: 4,
+    /** Slack at either end of the round axis, so a dot never sits on the plot's edge. */
+    inset: 6,
+    /** Both panels: the drawing's height, each panel's title baseline, its grid's top and bottom, the round numbers' baseline. */
+    both: {
+      height: 320,
+      score: { title: 8, top: 22, bottom: 172 },
+      handicap: { title: 214, top: 226, bottom: 292 },
+      ticks: 314,
+    },
+    /** One panel alone: the card above it names the line, so there is no title. The rooms are what the grid and the round numbers leave at the foot. */
+    single: { height: 200, compactHeight: 220, top: 12, bottomRoom: 28, ticksRoom: 6 },
+    dot: 3.75,
+    dotCounts: 4.5,
+    dotLast: 4,
     dotHover: 6,
-  },
-  /** The same plot on a phone: narrower and taller, one series at a time, so no right-hand axis. */
-  plotCompact: {
-    width: 320,
-    height: size["chart-compact"],
-    pad: { top: 16, right: 16, bottom: 32, left: 44 },
+    /** The five-round average under the dots, and the handicap line. */
+    stroke: 2.5,
+    strokeHandicap: 2,
+    dash: "3 4",
+    /** The legend's swatch for the average line. */
+    legendLine: 16,
+    /** Where the handicap's last figure sits, up and to the left of its dot. */
+    lastLift: 8,
+    /** Where the last score sits, straight above its dot. */
+    scoreLift: 10,
   },
   /** A figure's trend line. */
+  /** The last round's running score to par, hole by hole: the dashboard's "How it went". */
+  running: {
+    width: 380,
+    height: 150,
+    /** Where the first hole and the last sit, from the left; the line starts at level on the edge. */
+    first: 12,
+    last: 368,
+    top: 18,
+    bottom: 134,
+    widthCompact: 314,
+    heightCompact: 92,
+    firstCompact: 10,
+    lastCompact: 304,
+    topCompact: 10,
+    bottomCompact: 82,
+    stroke: 3,
+    level: 1.5,
+    levelDash: "2 6",
+    dot: 6,
+    dotCompact: 5,
+    rim: 3,
+    rimCompact: 2.5,
+    /** How far the closing figure sits above the last point, and level's "E" below the line. */
+    closeLift: 14,
+    levelDrop: 18,
+  },
+  /** A goal's progress as a ring. */
+  /** `strokeThick` is the phone's: the ring is drawn smaller there, so its stroke grows to hold. */
+  progressRing: { size: 96, radius: 40, stroke: 10, strokeThick: 11 },
+  /** A score mix as a ring of slices, in a `size` box centred on the origin: a hollow centre, a gap between slices. */
+  donut: { size: 96, outer: 46, inner: 30, padAngle: 0.04, corner: 2 },
   sparkline: {
     width: 300,
     height: 56,
     pad: space.tight,
     stroke: 2,
     dot: space.dot,
+    /** The compact line beside a KPI tile's figure, drawn at its own size so the stroke stays 2px. */
+    compact: { width: 96, height: 32 },
+    /** The flat line under a card's lead figure: the scoring average's. No end dot. */
+    card: { width: size["sparkline-card"], height: 30, pad: 4, stroke: 2.5, dot: 0 },
+    /** The small line beside a figure in a phone's header card: the handicap's. Its end dot filled. */
+    mini: { width: size["sparkline-mini"], height: 30, pad: 3, stroke: 2.5, dot: 3 },
   },
   /** A golfer's scores over time, one dot per round. */
   trend: {
@@ -647,16 +781,18 @@ export const chart = {
   },
   /** A shape across a handful of measures, each axis 0–100 from the centre out. Labels sit past the rim. */
   radar: {
-    width: 560,
-    height: 340,
-    radius: 118,
+    width: 392,
+    height: 324,
+    radius: 96,
     /** From the rim to an axis label, and from the label down to its figures. */
-    labelGap: 18,
+    labelGap: 16,
     valueGap: 16,
     /** Rings drawn at these shares of the rim, in percent. */
     rings: [25, 50, 75, 100],
-    dot: 4,
-    stroke: 2,
+    dot: 5,
+    stroke: 2.5,
+    /** The comparison's outline is thinner, so the golfer's own shape reads first. */
+    strokeSecondary: 1.5,
   },
   /** The same shape on a phone: a narrower drawing, so its labels stay readable at a phone's width. */
   radarCompact: {
@@ -668,11 +804,14 @@ export const chart = {
   },
   /** Scores against a goal: a short strip of dots, lower scores higher up, the goal dashed across. */
   goal: {
-    width: 560,
-    height: 96,
-    pad: { x: 8, y: 14 },
-    /** Room at the right end of the goal line for its label. */
-    labelRoom: 32,
+    /** Until its box is measured; it draws at the box's width, never under `minWidth`. */
+    width: 600,
+    minWidth: 240,
+    height: 150,
+    /** Room above the top dot for its score and below the lowest. */
+    pad: { x: 20, y: 28 },
+    /** Room at the right end of the goal line for its name, clear of the last round's dot. */
+    labelRoom: 64,
     /** The goal line, the line through the scores, and the ring round a score that missed. */
     stroke: 1.5,
     dot: 4,
@@ -680,47 +819,94 @@ export const chart = {
   },
   /** One figure per round over a soft fill, with a second line beside it if wanted. */
   trendArea: {
+    /** Until its box is measured; it draws at the box's width, never under `minWidth`. */
     width: 560,
-    height: size.chart,
-    pad: { top: 12, right: 16, bottom: 24, left: 40 },
-    /** Share of the span left either side of the values, so the line never touches the edge. */
-    headroom: 0.15,
-    stroke: 2,
+    minWidth: 280,
+    /** The series' plot with its padding; the counts' panel adds `panelGap` and `countHeight` under it. */
+    height: 260,
+    /** The top only clears a dot sitting on the top rule. */
+    pad: { top: 8, right: 16, bottom: 28, left: 44 },
+    /** A run of one value still gets this much either side before the range rounds out. */
+    flatSpan: 1,
+    stroke: 3,
     /** The second line is thinner, so the first reads as the figure. */
-    strokeSecondary: 1.5,
-    dot: 3,
-    dotHover: 5,
+    strokeSecondary: 2.5,
+    /** A round's dot: big enough to pick out each round at a glance. */
+    dot: 6.4,
+    dotHover: 8.5,
     /** Past this many rounds the dots would crowd the line, so only the hovered one is drawn. */
     maxDots: 30,
     /** About this many round numbers along the bottom. */
     xTicks: 6,
     yTicks: 4,
+    /** Holes of a kind each round, in a panel under the series. */
+    countHeight: 120,
+    /** The counts' dots stay small: several kinds often share a count in a short panel. */
+    countDot: 4,
+    countDotHover: 6,
+    countTicks: 3,
+    panelGap: 28,
+    /** The counts' scale reaches at least this many holes, so one birdie doesn't fill the panel. */
+    countFloor: 4,
+    /** The fewest rounds the slider shows; a trend this short or shorter has no slider. */
+    windowMin: 5,
   },
-  /** Holes as dots on a target, the better the score the nearer the middle. It fills `max-w-target`. */
-  target: {
-    size: 200,
-    /** Each score kind's ring, as a share of the radius from the middle out. Quads share the triple ring. */
-    rings: { eagle: 0.18, birdie: 0.35, par: 0.55, bogey: 0.7, double: 0.83, triple: 1 },
-    stroke: 1.5,
-    dot: 3.5,
-    dotHover: 5,
-    /** How near the pointer has to be to a dot, in the chart's units, to pick it. */
-    hitRadius: 10,
+  /**
+   * A figure per hole across a course (how each hole plays, greens and putts). Like the round flow it
+   * draws as wide as its card, `width` until measured, and scrolls sideways below `minWidth`.
+   */
+  /** A chart's hover card: past this share of the way across, it opens to the left of what it points at. */
+  tooltipFlip: 0.65,
+  holes: {
+    width: px(size["chart-wide"]),
+    minWidth: px(size["chart-flow"]),
+    /** The to-par chart's height, and its padding: `bottom` holds the hole numbers. */
+    height: 240,
+    pad: { top: 16, right: 12, bottom: 32, left: 40 },
+    /** A bar's share of its hole's column. */
+    bar: 0.56,
+    /** The bar's corner, and the height of a hole played at level. */
+    corner: 3,
+    level: 3,
+    /** The spread's whisker: its stroke and the half-width of its caps. */
+    whisker: 1.5,
+    cap: 4,
+    /** From an axis label to the grid, and from the plot to the hole numbers' baseline. */
+    labelGap: 10,
+    numberDrop: 20,
+    /** Greens over putts: each panel's top and bottom, and the hole numbers' baseline. */
+    greens: { top: 22, bottom: 112 },
+    putts: { top: 156, bottom: 226 },
+    pairedHeight: 260,
+    numbers: 252,
+    /** A putts dot, and its stem. */
+    dot: 4,
+    stem: 2,
   },
-  /** A round hole by hole, as wide as `w-chart-wide`, which it scrolls at. */
+  /**
+   * The running score through a round, a step per hole. It draws as wide as its card, `width` until
+   * it is measured, and scrolls sideways below `minWidth` (`min-w-chart-flow`).
+   */
   flow: {
     width: px(size["chart-wide"]),
-    height: 220,
-    pad: { top: 28, right: 16, bottom: 36, left: 40 },
-    /** To-par beyond this is drawn at the edge, so one blow-up hole cannot flatten the rest. */
-    extent: 5,
-    stroke: 2.5,
-    /** The dashed line at par. */
-    parLine: { stroke: 1.5, dash: "5 4" },
+    minWidth: px(size["chart-flow"]),
+    height: 270,
+    /** `top` leaves room above the plot for the worst-stretch bracket; `bottom` for the hole strip under it. */
+    pad: { top: 32, right: 24, bottom: 74, left: 36 },
+    stroke: 2,
+    /** The dot where the line ends. */
     dot: 4,
-    dotHover: 6,
+    /** From an axis label, or the end dot's label, to what it labels. */
+    labelGap: 10,
+    /** The strip of hole marks under the plot: its gap from the plot and from the hole numbers. */
+    chip: { gap: 20 },
+    /** The bracket over the worst stretch: its height above the plot, and its end ticks. */
+    bracket: { rise: 7, tick: 5 },
   },
-  /** A hole's score marked the way a scorecard marks it, in a `w-hole-w h-hole-h` box: circles under par, boxes over. */
+  /**
+   * A hole's score marked the way a scorecard marks it, in a `w-hole-w h-hole-h` box (`size-hole-h`
+   * when square): circles under par, boxes over.
+   */
   holeShape: {
     width: size["hole-w"],
     height: size["hole-h"],
@@ -741,6 +927,14 @@ export const chart = {
       [0, 18, 18, 0],
       [0, size["hole-h"], size["hole-w"], 0],
       [14, size["hole-h"], size["hole-w"], 8],
+    ],
+    /** The same hatching across the square mark, `hole-h` a side. */
+    squareHatch: [
+      [0, 7, 7, 0],
+      [0, 15, 15, 0],
+      [0, size["hole-h"], size["hole-h"], 0],
+      [7, size["hole-h"], size["hole-h"], 7],
+      [15, size["hole-h"], size["hole-h"], 15],
     ],
   },
 };

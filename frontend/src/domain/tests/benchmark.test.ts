@@ -7,7 +7,7 @@ import {
   goalScoreToBreak,
   goalTargetLabel,
 } from "@/domain";
-import { averyLabAnalytics, labBenchmarks, labGoalReport } from "@/testing/fixtures/lab";
+import { averyLabAnalytics, labAnalytics, labBenchmarks, labGoalReport } from "@/testing/fixtures/lab";
 
 describe("goals", () => {
   it("reads a stored goal as the score to break", () => {
@@ -52,5 +52,12 @@ describe("radar scale", () => {
     const par5 = buildRadarData(averyLabAnalytics.kpis, averyLabAnalytics.scoring_by_par, shape)[5];
     expect(par5.benchmark).toBe(0);
     expect(par5.benchRaw).toBe("—");
+  });
+
+  it("carries the server's verdict on each axis, and none without a comparison", () => {
+    const comparison = benchmarkComparisonFrom(labBenchmarks["handicap:15"]);
+    const entries = buildRadarData(labAnalytics.kpis, labAnalytics.scoring_by_par, comparison.benchmark, comparison.verdicts);
+    expect(entries.map((entry) => entry.verdict)).toEqual(["ahead", "ahead", "ahead", "behind", "behind", "ahead"]);
+    expect(buildRadarData(labAnalytics.kpis, labAnalytics.scoring_by_par).every((entry) => entry.verdict === null)).toBe(true);
   });
 });

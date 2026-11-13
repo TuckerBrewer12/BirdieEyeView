@@ -1,4 +1,4 @@
-import { CircleAlert, Loader2 } from "lucide-react";
+import { ArrowRight, CircleAlert, Loader2 } from "lucide-react";
 import {
   Alert,
   AlertDescription,
@@ -18,8 +18,7 @@ import {
   StatValue,
   ToggleGroup,
   ToggleGroupItem,
-  toParDisplay,
-  toParTextClass,
+  ToParFigure,
 } from "@/brand";
 import { formatCourseHandicap, type Round } from "@/domain";
 import { formatCourseName } from "@/domain/course";
@@ -107,7 +106,6 @@ export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanRe
       <RoundScorecard
         round={round}
         teeBox={review.teeBox || null}
-        showTee
         toCheck={toCheck}
         edits={{
           onStrokesChange: review.setStrokes,
@@ -130,7 +128,9 @@ function RoundFigures({ round }: { round: Pick<Round, "score" | "toPar" | "cours
       </Stat>
       <Stat>
         <StatLabel>To par</StatLabel>
-        <StatValue className={toParTextClass(toPar)}>{toParDisplay(toPar)}</StatValue>
+        <StatValue>
+          <ToParFigure toPar={toPar} size="inherit" empty="—" />
+        </StatValue>
       </Stat>
       <Stat>
         <StatLabel>{courseHandicap != null ? `Net · hcp ${formatCourseHandicap(courseHandicap)}` : "Net"}</StatLabel>
@@ -163,11 +163,12 @@ function CourseField({ review }: { review: ScanReviewViewModel }) {
       {nameToKeep && (
         <Button
           variant="linkMuted"
-          size="xs"
-          className="h-auto self-start p-0"
+          size="inline"
+          className="self-start"
           onClick={() => review.nameCourse(nameToKeep)}
         >
-          Save as "{formatCourseName(nameToKeep)}" without linking →
+          Save as "{formatCourseName(nameToKeep)}" without linking
+          <ArrowRight aria-hidden />
         </Button>
       )}
     </Field>
@@ -180,7 +181,6 @@ function TeeField({ review }: { review: ScanReviewViewModel }) {
       <FieldLabel htmlFor={review.tees.length > 0 ? undefined : "review-tee"}>Tee played</FieldLabel>
       {review.tees.length > 0 ? (
         <ToggleGroup
-          variant="outline"
           size="sm"
           aria-label="Tee played"
           value={review.teeBox ? [review.teeBox] : []}

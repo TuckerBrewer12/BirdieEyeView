@@ -10,7 +10,7 @@ export interface RespondVariables {
 
 /**
  * Accepts, declines or blocks a request the golfer received. The answered
- * friendship replaces its cached copy, which The Lab reads too, so an
+ * friendship replaces its cached copy, which Profile reads too, so an
  * accepted request is a friend to compare against straight away.
  */
 export function useRespondToRequest(

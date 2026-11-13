@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { PageTitle } from "@/brand";
 import { tokens } from "@/brand/theme";
 import { ScannerDemo } from "../components/ScannerDemo";
 import { useTryItYourselfViewModel } from "../useTryItYourselfViewModel";
@@ -20,9 +21,9 @@ export function HeroSection() {
             transition={tokens.motion.entrance}
             className="mb-8 text-center lg:text-left"
           >
-            <h1 className="mb-5 text-4xl text-balance leading-display font-extrabold tracking-hero text-foreground md:text-5xl lg:text-6xl">
+            <PageTitle size="display" className="mb-5">
               Scan your scorecard.
-            </h1>
+            </PageTitle>
             <div className="flex flex-col gap-2 text-lg text-balance text-muted-foreground">
               <p>One photo captures the course, tees, yardages, slope, and every score on the card.</p>
               <p>Track your handicap, scores, stats, and more!</p>

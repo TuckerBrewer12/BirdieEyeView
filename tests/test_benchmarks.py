@@ -23,17 +23,7 @@ def test_each_handicap_and_goal_has_one_shape():
         "gir_percentage": 24, "scrambling_percentage": 21, "putts_per_gir": 2.1,
         "par3_to_par": 0.6, "par4_to_par": 1.025, "par5_to_par": 1.1,
     }
-    # A handicap is the goal its golfers break: a 15 breaks 90.
-    assert benchmarks.handicap_benchmark(15) == benchmarks.goal_benchmark(89)
     assert benchmarks.handicap_benchmark(7) is None
-
-
-def test_nearest_goal_takes_the_lower_on_a_tie():
-    assert benchmarks.nearest_goal(88.4) == 89
-    assert benchmarks.nearest_goal(76.5) == 74
-    assert benchmarks.nearest_goal(86.5) == 84
-    assert benchmarks.nearest_goal(120) == 99
-    assert benchmarks.nearest_goal(60) == 71
 
 
 def test_par_types_are_judged_on_the_gap_as_shown():
@@ -58,18 +48,6 @@ def test_par_types_are_judged_on_the_gap_as_shown():
     assert all(r["gap"] is None and r["benchmark_to_par"] is None for r in alone)
 
 
-def test_the_peak_is_held_against_the_goal_its_average_plays_to():
-    rounds = [_scored(s, str(i)) for i, s in enumerate([95, 88, 91, 86, 99])]
-    # The best three (86, 88, 91) average 88.3, nearest breaking 90.
-    found = benchmarks.peak_comparison(rounds)
-    assert (found["against"], found["goal"], found["handicap"]) == ("peak", 89, None)
-    assert found["benchmark"] == benchmarks.goal_benchmark(89)
-    assert found["par_types"][1]["benchmark_to_par"] == 1.025
-
-    none = benchmarks.peak_comparison([_scored(90, "only")])
-    assert none["benchmark"] is None and none["goal"] is None
-
-
 def test_a_friend_is_held_up_by_their_own_figures():
     mine = [_round([(3, 4), (4, 4), (5, 5)])]
     theirs = [_round([(3, 3), (4, 5)])]
@@ -80,9 +58,28 @@ def test_a_friend_is_held_up_by_their_own_figures():
     assert found["benchmark"]["par5_to_par"] is None
     assert [(r["gap"], r["verdict"]) for r in found["par_types"]] == [(1.0, "behind"), (-1.0, "ahead"), (None, None)]
     assert benchmarks.friend_comparison(mine, [])["benchmark"] is None
+    # The radar's par axes take the par rows' verdicts.
+    assert [found["verdicts"][f"par{par}_to_par"] for par in (3, 4, 5)] == ["behind", "ahead", None]
+
+
+def test_radar_axes_are_judged_with_higher_better_only_for_the_rates():
+    mine = {"gir_percentage": 40.0, "scrambling_percentage": 20.0, "putts_per_gir": 1.9,
+            "par3_to_par": None, "par4_to_par": None, "par5_to_par": None}
+    theirs = {"gir_percentage": 36, "scrambling_percentage": 31, "putts_per_gir": 1.9,
+              "par3_to_par": 0.3, "par4_to_par": 0.5, "par5_to_par": 0.6}
+    par_types = [{"par": 3, "verdict": "ahead"}, {"par": 4, "verdict": None}, {"par": 5, "verdict": "behind"}]
+    assert benchmarks.shape_verdicts(mine, theirs, par_types) == {
+        "gir_percentage": "ahead",
+        "scrambling_percentage": "behind",
+        "putts_per_gir": "even",
+        "par3_to_par": "ahead",
+        "par4_to_par": None,
+        "par5_to_par": "behind",
+    }
+    assert set(benchmarks.shape_verdicts(mine, None, par_types).values()) <= {None, "ahead", "behind"}
 
 
 def test_handicap_comparison_names_the_handicap():
     found = benchmarks.handicap_comparison([_round([(4, 5)])], 5)
-    assert (found["against"], found["handicap"], found["goal"]) == ("handicap", 5, None)
+    assert (found["against"], found["handicap"]) == ("handicap", 5)
     assert found["par_types"][1]["gap"] == 0.5

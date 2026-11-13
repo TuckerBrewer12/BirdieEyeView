@@ -131,8 +131,9 @@ async def test_a_course_sends_the_signed_in_golfers_course_handicap_per_tee():
     db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
 
     signed_in = await courses.get_course(UUID(course.id), db, user)
-    # 10.4 × 124 / 113 + (70.1 − 72) = 9.51
-    assert [t.course_handicap for t in signed_in.tees] == [12, 10, None]
+    # No tee has yardages, so they list by colour: Blue, Red, White. 10.4 × 124 / 113 + (70.1 − 72) = 9.51
+    assert [t.color for t in signed_in.tees] == ["Blue", "Red", "White"]
+    assert [t.course_handicap for t in signed_in.tees] == [12, None, 10]
 
     signed_out = await courses.get_course(UUID(course.id), db, None)
     assert [t.course_handicap for t in signed_out.tees] == [None, None, None]
@@ -190,6 +191,8 @@ def test_best_puts_full_rounds_first_by_to_par_then_nines():
     listed = [level_par_nine, seventy_four_at_par_70, unrated, seventy_five_at_par_72]
 
     assert [r.best_rank for r in round_list(listed)] == [3, 2, None, 1]
+    # Worst first, a full round is still ahead of the nine.
+    assert [r.worst_rank for r in round_list(listed)] == [3, 1, None, 2]
 
 
 def test_a_round_under_par_reads_after_the_score_breaks_above_the_golfers_usual_par():

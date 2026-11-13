@@ -22,32 +22,64 @@ function renderVm(seed: FakeRoundsRepositorySeed = { rounds: storedRounds }) {
 }
 
 describe("useRoundsPageViewModel", () => {
-  it("puts the most-played course first among the course chips", async () => {
+  it("puts the most-played course first after All courses", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    const courseChips = result.current.chips
-      .filter((chip) => chip.mode !== "all" && chip.mode !== "l20" && chip.mode !== "best")
-      .map((chip) => chip.label);
-    expect(courseChips[0]).toBe("Half Moon Bay");
+    expect(result.current.courseOptions.map((option) => option.label).slice(0, 2)).toEqual([
+      "All courses",
+      "Half Moon Bay",
+    ]);
+    expect(result.current.courseLabel).toBe("All courses");
   });
 
-  it("Best mode follows the server's to-par order and locks sort", async () => {
+  it("the Best scope follows the server's order and shows Best score as the sort", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));
-    act(() => result.current.setFilterMode("best"));
+    act(() => result.current.pickScope("best"));
     expect(result.current.filteredRounds.map((r) => r.score)).toEqual([69, 72, 78, 85]);
-    expect(result.current.sortLocked).toBe(true);
-    expect(result.current.effectiveSortKey).toBe("to_par");
-    expect(result.current.sortLabel).toBe("To Par");
-    expect(result.current.sortAsc).toBe(true);
+    expect(result.current.sortKey).toBe("best");
+    expect(result.current.sortLabel).toBe("Best score");
   });
 
-  it("L20 keeps the 20 most recent rounds", async () => {
+  it("picking a sort leaves the Best scope", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.pickScope("best"));
+    act(() => result.current.selectSort("oldest"));
+    expect(result.current.scope).toBe("all");
+    expect(result.current.sortLabel).toBe("Oldest");
+  });
+
+  it("tapping the pressed scope again keeps it", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.pickScope("last20"));
+    act(() => result.current.pickScope(undefined));
+    expect(result.current.scope).toBe("last20");
+  });
+
+  it("Last 20 keeps the 20 most recent rounds", async () => {
     const { result } = renderVm({ rounds: nRounds(25) });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    act(() => result.current.setFilterMode("l20"));
+    act(() => result.current.pickScope("last20"));
     expect(result.current.filteredRounds).toHaveLength(20);
     expect(result.current.filteredRounds[0]?.course?.name).toBe("Course 25");
+  });
+
+  it("a course narrows the list and names the menu", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.setCourse("Blue Rock"));
+    expect(result.current.filteredRounds.map((r) => r.course?.name)).toEqual(["Blue Rock"]);
+    expect(result.current.courseLabel).toBe("Blue Rock");
+  });
+
+  it("keeps the phone's search open while it holds a query", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.searchOpen).toBe(false);
+    act(() => result.current.setSearch("blue"));
+    expect(result.current.searchOpen).toBe(true);
   });
 
   it("keeps the unfiltered list available after search", async () => {
@@ -68,5 +100,12 @@ describe("useRoundsPageViewModel", () => {
 
     expect(result.current.isLinkOpen("round-4")).toBe(false);
     expect(result.current.isLinkOpen("round-1")).toBe(true);
+  });
+
+  it("words the round being linked for the sheet's title", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.toggleLink("round-4"));
+    expect(result.current.linking?.line).toMatch(/^Scanned Scorecard · \w{3} \d{1,2} · 85$/);
   });
 });
