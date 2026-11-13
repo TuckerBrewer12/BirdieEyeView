@@ -32,7 +32,7 @@ function SetupPanel() {
       inert
       className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 pt-4 pb-16 sm:px-6"
     >
-      <Card className="w-full max-w-md max-sm:scale-80">
+      <Card className="w-full max-w-md max-sm:scale-75">
         <CardContent>
           <CardFactsForm card={DEMO_FACTS} onChange={noop} idPrefix="demo" />
         </CardContent>
