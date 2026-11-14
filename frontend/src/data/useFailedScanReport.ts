@@ -1,6 +1,8 @@
-import { useCallback, useRef, useState } from "react";
+import { useMutation, useMutationState, useQueryClient, type MutationState } from "@tanstack/react-query";
 import type { FailedScanAttempt, ScanReportStatus } from "@/domain/scanReport";
-import { REPORT_NOT_SAVED, scanReportRepository, type ScanReportRepository } from "./scanReportRepository";
+import { USER_FACING_ERRORS } from "@/lib/userFacingErrors";
+import { queryKeys } from "./queryKeys";
+import { scanReportRepository, type ScanReportRepository } from "./scanReportRepository";
 
 export interface FailedScanReport {
   available: boolean;
@@ -9,43 +11,45 @@ export interface FailedScanReport {
   submit: () => void;
 }
 
-interface Submission {
-  attempt: FailedScanAttempt;
-  status: ScanReportStatus;
-  error: string | null;
-}
+const SENT_REPORT_KEPT_MS = 30 * 60 * 1000;
+
+const STATUS: Record<MutationState["status"], ScanReportStatus> = {
+  idle: "idle",
+  pending: "sending",
+  success: "sent",
+  error: "failed",
+};
 
 export function useFailedScanReport(
   attempt: FailedScanAttempt | null,
   repository: ScanReportRepository = scanReportRepository,
 ): FailedScanReport {
-  const [submission, setSubmission] = useState<Submission | null>(null);
-  const pending = useRef(new Set<FailedScanAttempt>());
-  const sent = useRef(new WeakSet<FailedScanAttempt>());
-  const current = submission?.attempt === attempt ? submission : null;
+  const queryClient = useQueryClient();
+  const mutationKey = queryKeys.scanReport(attempt?.retryKey ?? null);
+  const { mutate } = useMutation({
+    mutationKey,
+    mutationFn: (sent: FailedScanAttempt) => repository.submit(sent),
+    gcTime: SENT_REPORT_KEPT_MS,
+  });
+  const latest = useMutationState({
+    filters: { mutationKey, exact: true },
+    select: (mutation) => mutation.state,
+  }).at(-1);
+  const status = attempt && latest ? STATUS[latest.status] : "idle";
 
-  const submit = useCallback(() => {
-    if (!attempt || pending.current.has(attempt) || sent.current.has(attempt)) return;
-    pending.current.add(attempt);
-    setSubmission({ attempt, status: "sending", error: null });
-    repository.submit(attempt).then(
-      () => {
-        pending.current.delete(attempt);
-        sent.current.add(attempt);
-        setSubmission((prev) => (prev?.attempt === attempt ? { attempt, status: "sent", error: null } : prev));
-      },
-      (error: unknown) => {
-        pending.current.delete(attempt);
-        const message = error instanceof Error ? error.message : REPORT_NOT_SAVED;
-        setSubmission((prev) => (prev?.attempt === attempt ? { attempt, status: "failed", error: message } : prev));
-      },
-    );
-  }, [attempt, repository]);
+  const submit = () => {
+    if (!attempt) return;
+    const underway = queryClient
+      .getMutationCache()
+      .findAll({ mutationKey, exact: true })
+      .some((mutation) => mutation.state.status === "pending" || mutation.state.status === "success");
+    if (!underway) mutate(attempt);
+  };
 
   return {
     available: attempt !== null,
-    status: current?.status ?? "idle",
-    error: current?.error ?? null,
+    status,
+    error: status === "failed" ? (latest?.error?.message ?? USER_FACING_ERRORS.reportNotSaved) : null,
     submit,
   };
 }

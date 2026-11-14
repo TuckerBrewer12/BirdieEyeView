@@ -22,6 +22,7 @@ export const queryKeys = {
   benchmarkComparison: (userId: string, target: unknown) => ["analytics", userId, "benchmark", target] as const,
   playedCourses: (userId: string) => ["played-courses", userId] as const,
   scanText: (photoId: string | null) => ["scan-text", photoId] as const,
+  scanReport: (retryKey: string | null) => ["scan-report", retryKey] as const,
   friendships: (userId: string) => ["friendships", userId] as const,
   pendingFriendships: (userId: string) => ["pending-friendships", userId] as const,
   settings: (userId: string) => ["settings", userId] as const,

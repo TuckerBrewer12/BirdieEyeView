@@ -91,13 +91,19 @@ export class LandingRobot {
   }
 
   async tapReportScan(): Promise<this> {
-    await this.page.getByRole("group", { name: "Scan report" }).getByRole("button", { name: "Report failed scan" }).click();
+    await this.page.getByRole("alert").getByRole("button", { name: "Report scan" }).click();
+    return this;
+  }
+
+  async tapSendReport(): Promise<this> {
+    const dialog = this.page.getByRole("alertdialog", { name: "Report this scan?" });
+    await expect(dialog).toContainText("Nothing about your account goes with it.");
+    await dialog.getByRole("button", { name: "Send report" }).click();
     return this;
   }
 
   async seesReportSent(): Promise<this> {
-    const report = this.page.getByRole("group", { name: "Scan report" });
-    await expect(report.getByRole("button", { name: "Report sent" })).toBeDisabled();
+    await expect(this.page.getByRole("alert").getByRole("button", { name: "Report sent" })).toBeVisible();
     const sent = this.backend?.reportRequests ?? [];
     expect(sent).toHaveLength(1);
     expect(sent[0].metadata).not.toContain(CARD_NAME);

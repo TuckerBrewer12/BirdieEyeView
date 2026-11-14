@@ -63,5 +63,7 @@ export type ScannedHoleScoreDto = Schemas["ScannedHoleScore"];
 export type FieldConfidenceDto = Schemas["FieldConfidence"];
 export type OcrTextDto = Schemas["OcrTextResponse"];
 export type SaveScanDto = Schemas["SaveScanResponse"];
+export type ScanReportDto = Schemas["ScanReportResponse"];
+export type ScanReportErrorDto = Schemas["ScanReportErrorResponse"];
 
 export type SaveScanRequestDto = Schemas["SaveRoundRequest"];

@@ -79,11 +79,17 @@ function ConfirmDialog({
                 {cancelLabel}
               </AlertDialogPrimitive.Close>
               {alternative && (
-                <Button variant="ghostDestructive" size="lg" disabled={pending} onClick={alternative.onClick}>
+                <Button variant="ghostDestructive" size="lg" disabled={pending} focusableWhenDisabled onClick={alternative.onClick}>
                   {alternative.label}
                 </Button>
               )}
-              <Button variant={tone === "default" ? "default" : "destructive"} size="lg" disabled={pending} onClick={onConfirm}>
+              <Button
+                variant={tone === "default" ? "default" : "destructive"}
+                size="lg"
+                disabled={pending}
+                focusableWhenDisabled
+                onClick={onConfirm}
+              >
                 {confirmLabel}
               </Button>
             </div>

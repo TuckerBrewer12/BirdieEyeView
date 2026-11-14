@@ -1,6 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { createScanReportRepository, REPORT_NOT_SAVED, REPORT_UNAVAILABLE } from "../scanReportRepository";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { scanReportRepository } from "../scanReportRepository";
 import { failedScanAttempt, readScanFailure } from "@/lib/scanReports";
+import { USER_FACING_ERRORS } from "@/lib/userFacingErrors";
+
+const REPORT_NOT_SAVED = USER_FACING_ERRORS.reportNotSaved;
+const REPORT_UNAVAILABLE = USER_FACING_ERRORS.reportUnavailable;
 
 class FakeReportTransport {
   readonly requests: RequestInit[] = [];
@@ -8,12 +12,20 @@ class FakeReportTransport {
   payload: unknown = { status: "saved" };
   offline = false;
 
+  constructor() {
+    vi.stubGlobal("fetch", this.send);
+  }
+
   send: typeof fetch = async (_url, options) => {
     this.requests.push(options ?? {});
     if (this.offline) throw new Error("private-host.internal");
     return Response.json(this.payload, { status: this.status });
   };
 }
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 function attempt() {
   return failedScanAttempt(new File(["failed image"], "alice-private.png", { type: "image/png" }), {
@@ -25,7 +37,7 @@ describe("anonymous report transport", () => {
   it("sends only allowlisted metadata and a generically named image without credentials or referrer", async () => {
     const transport = new FakeReportTransport();
     const failed = attempt();
-    await createScanReportRepository(transport.send).submit(failed);
+    await scanReportRepository.submit(failed);
     const request = transport.requests[0];
     expect(request.credentials).toBe("omit");
     expect(request.referrerPolicy).toBe("no-referrer");
@@ -51,18 +63,25 @@ describe("anonymous report transport", () => {
   it("does not claim success without a saved acknowledgement", async () => {
     const transport = new FakeReportTransport();
     transport.payload = { status: "queued" };
-    await expect(createScanReportRepository(transport.send).submit(attempt())).rejects.toThrow(REPORT_NOT_SAVED);
+    await expect(scanReportRepository.submit(attempt())).rejects.toThrow(REPORT_NOT_SAVED);
   });
 
   it("makes missing storage explicit and never echoes server details", async () => {
     const transport = new FakeReportTransport();
     transport.status = 503;
     transport.payload = { code: "report_storage_unavailable", detail: "secret-user@example.com" };
-    await expect(createScanReportRepository(transport.send).submit(attempt())).rejects.toThrow(REPORT_UNAVAILABLE);
+    await expect(scanReportRepository.submit(attempt())).rejects.toThrow(REPORT_UNAVAILABLE);
     transport.payload = { detail: "secret-user@example.com" };
-    await expect(createScanReportRepository(transport.send).submit(attempt())).rejects.toThrow(REPORT_NOT_SAVED);
+    await expect(scanReportRepository.submit(attempt())).rejects.toThrow(REPORT_NOT_SAVED);
     transport.offline = true;
-    await expect(createScanReportRepository(transport.send).submit(attempt())).rejects.toThrow(REPORT_NOT_SAVED);
+    await expect(scanReportRepository.submit(attempt())).rejects.toThrow(REPORT_NOT_SAVED);
+  });
+
+  it("asks the golfer to wait after too many reports", async () => {
+    const transport = new FakeReportTransport();
+    transport.status = 429;
+    transport.payload = { detail: "rate limited" };
+    await expect(scanReportRepository.submit(attempt())).rejects.toThrow(USER_FACING_ERRORS.tooManyReports);
   });
 });
 

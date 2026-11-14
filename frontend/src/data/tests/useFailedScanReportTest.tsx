@@ -1,4 +1,6 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 import { useFailedScanReport } from "../useFailedScanReport";
 import { FakeScanReportRepository } from "@/testing/fakes/FakeScanReportRepository";
@@ -11,33 +13,39 @@ function attempt() {
   });
 }
 
+function queryWrapper(client = new QueryClient()) {
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+}
+
 describe("failed scan reporting", () => {
   it("requires an explicit click and prevents repeated submissions", async () => {
     const repository = new FakeScanReportRepository();
     const failed = attempt();
-    const { result } = renderHook(() => useFailedScanReport(failed, repository));
+    const { result } = renderHook(() => useFailedScanReport(failed, repository), { wrapper: queryWrapper() });
     expect(repository.attempts).toHaveLength(0);
-    act(() => { result.current.submit(); result.current.submit(); });
+    await act(async () => { result.current.submit(); result.current.submit(); });
     expect(repository.attempts).toHaveLength(1);
-    expect(result.current.status).toBe("sending");
+    await waitFor(() => expect(result.current.status).toBe("sending"));
     await act(async () => repository.saveNext());
-    expect(result.current.status).toBe("sent");
-    act(() => result.current.submit());
+    await waitFor(() => expect(result.current.status).toBe("sent"));
+    await act(async () => result.current.submit());
     expect(repository.attempts).toHaveLength(1);
   });
 
   it("retries a failed submission with the same image and retry key", async () => {
     const repository = new FakeScanReportRepository();
     const failed = attempt();
-    const { result } = renderHook(() => useFailedScanReport(failed, repository));
-    act(() => result.current.submit());
+    const { result } = renderHook(() => useFailedScanReport(failed, repository), { wrapper: queryWrapper() });
+    await act(async () => result.current.submit());
     await act(async () => repository.failNext());
-    expect(result.current.status).toBe("failed");
+    await waitFor(() => expect(result.current.status).toBe("failed"));
     expect(result.current.error).toContain("wasn't saved");
-    act(() => result.current.submit());
+    await act(async () => result.current.submit());
     expect(repository.attempts).toEqual([failed, failed]);
     await act(async () => repository.saveNext());
-    expect(result.current.status).toBe("sent");
+    await waitFor(() => expect(result.current.status).toBe("sent"));
     expect(result.current.error).toBeNull();
   });
 
@@ -47,18 +55,34 @@ describe("failed scan reporting", () => {
     const second = attempt();
     const { result, rerender } = renderHook(
       ({ failed }: { failed: FailedScanAttempt | null }) => useFailedScanReport(failed, repository),
-      { initialProps: { failed: first as FailedScanAttempt | null } },
+      { initialProps: { failed: first as FailedScanAttempt | null }, wrapper: queryWrapper() },
     );
-    act(() => result.current.submit());
+    await act(async () => result.current.submit());
     rerender({ failed: second });
     expect(result.current.status).toBe("idle");
-    act(() => result.current.submit());
+    await act(async () => result.current.submit());
     await act(async () => repository.saveNext());
-    expect(result.current.status).toBe("sending");
+    await waitFor(() => expect(result.current.status).toBe("sending"));
     await act(async () => repository.failNext());
-    expect(result.current.status).toBe("failed");
+    await waitFor(() => expect(result.current.status).toBe("failed"));
     rerender({ failed: null });
     expect(result.current.available).toBe(false);
     expect(result.current.error).toBeNull();
+  });
+
+  it("still shows a sent report after leaving the page and coming back", async () => {
+    const repository = new FakeScanReportRepository();
+    const failed = attempt();
+    const wrapper = queryWrapper();
+    const first = renderHook(() => useFailedScanReport(failed, repository), { wrapper });
+    await act(async () => first.result.current.submit());
+    await act(async () => repository.saveNext());
+    await waitFor(() => expect(first.result.current.status).toBe("sent"));
+    first.unmount();
+
+    const { result } = renderHook(() => useFailedScanReport(failed, repository), { wrapper });
+    expect(result.current.status).toBe("sent");
+    await act(async () => result.current.submit());
+    expect(repository.attempts).toHaveLength(1);
   });
 });

@@ -85,15 +85,20 @@ export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }
                 <CardFactsForm card={viewModel.card} onChange={viewModel.setCard} idPrefix="try-it" />
                 {viewModel.error && (
                   <Alert tone="danger">
-                    <AlertDescription>{viewModel.error}</AlertDescription>
+                    <AlertDescription>
+                      {viewModel.error}
+                      {viewModel.report.available && (
+                        <>
+                          {" "}
+                          <ScanReport
+                            status={viewModel.report.status}
+                            error={viewModel.report.error}
+                            onSend={viewModel.report.submit}
+                          />
+                        </>
+                      )}
+                    </AlertDescription>
                   </Alert>
-                )}
-                {viewModel.report.available && (
-                  <ScanReport
-                    status={viewModel.report.status}
-                    error={viewModel.report.error}
-                    onReport={viewModel.report.submit}
-                  />
                 )}
                 <Button size="lg" onClick={viewModel.extract}>
                   <Upload data-icon="inline-start" />

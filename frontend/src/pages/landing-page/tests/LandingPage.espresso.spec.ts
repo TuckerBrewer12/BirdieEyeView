@@ -37,6 +37,7 @@ test("a failed scan can be reported without an account", async ({ landing }) => 
   await landing.tapScan();
   await landing.seesScanFailed();
   await landing.tapReportScan();
+  await landing.tapSendReport();
   await landing.seesReportSent();
 });
 

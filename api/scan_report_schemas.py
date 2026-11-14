@@ -15,3 +15,15 @@ class ScanReportMetadata(BaseModel):
     category: FailureCategory
     stage: FailureStage = "unknown"
     http_status: int | None = Field(default=None, ge=100, le=599, strict=True)
+
+
+class ScanReportResponse(BaseModel):
+    status: Literal["saved"]
+
+
+ReportErrorCode = Literal["report_storage_unavailable", "report_not_saved"]
+
+
+class ScanReportErrorResponse(BaseModel):
+    code: ReportErrorCode
+    detail: str | None = None

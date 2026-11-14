@@ -50,16 +50,19 @@ function ScanFailed({ step, action }: { step: PhotoStep; action: ReactNode }) {
   const { title, detail } = scanFailure(step.error);
   const { report } = step;
   return (
-    <div className="flex flex-col gap-3">
-      <Alert tone="danger" data-slot="scan-failed" className="px-4 py-3.5 text-body-lg">
-        <CircleAlert className="size-5" />
-        <AlertDescription>
-          <strong className="block font-semibold md:inline">{title}</strong> {detail}
-        </AlertDescription>
-        <AlertAction>{action}</AlertAction>
-      </Alert>
-      {report.available && <ScanReport status={report.status} error={report.error} onReport={report.submit} />}
-    </div>
+    <Alert tone="danger" data-slot="scan-failed" className="px-4 py-3.5 text-body-lg">
+      <CircleAlert className="size-5" />
+      <AlertDescription>
+        <strong className="block font-semibold md:inline">{title}</strong> {detail}
+        {report.available && (
+          <>
+            {" "}
+            <ScanReport status={report.status} error={report.error} onSend={report.submit} />
+          </>
+        )}
+      </AlertDescription>
+      <AlertAction>{action}</AlertAction>
+    </Alert>
   );
 }
 

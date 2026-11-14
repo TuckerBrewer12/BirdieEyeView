@@ -15,7 +15,7 @@ Reads a photographed scorecard into a round to review and save, or takes scores 
 
 ## How it works
 
-Photo: the photo and what's on the card (`CardFactsForm`, sent as the scan's note by `cardContext()`), then Read card → processing (`ScanProgress`) → review (unsure scores ringed) → saved. By hand: course, tee and date, then a blank card. The scan session lives above the routes (`ScanSessionProvider`), so a scan outlives navigation. A failed read keeps the photo and offers another photo and, through `ScanReport`, an anonymous report of the failed scan.
+Photo: the photo and what's on the card (`CardFactsForm`, sent as the scan's note by `cardContext()`), then Read card → processing (`ScanProgress`) → review (unsure scores ringed) → saved. By hand: course, tee and date, then a blank card. The scan session lives above the routes (`ScanSessionProvider`), so a scan outlives navigation. A failed read keeps the photo; its banner offers another photo and, as a small link, Report scan (`ScanReport`), which opens a dialog before sending an anonymous report.
 
 ## Boundaries and checks when changing it
 

@@ -170,11 +170,11 @@ describe("useScanPageViewModel", () => {
     await waitFor(() => expect(result.current.report.available).toBe(true));
     expect(reports.attempts).toHaveLength(0);
 
-    act(() => result.current.report.submit());
-    expect(result.current.report.status).toBe("sending");
+    await act(async () => result.current.report.submit());
+    await waitFor(() => expect(result.current.report.status).toBe("sending"));
     await act(async () => reports.saveNext());
 
-    expect(result.current.report.status).toBe("sent");
+    await waitFor(() => expect(result.current.report.status).toBe("sent"));
     const [sent] = reports.attempts;
     expect(sent.failure).toEqual({ category: "extraction_failed", stage: "parse", http_status: 500 });
     expect(sent.image.size).toBe(file.size);

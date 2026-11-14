@@ -5739,6 +5739,48 @@
         "title": "ScanConfidence",
         "type": "object"
       },
+      "ScanReportErrorResponse": {
+        "properties": {
+          "code": {
+            "enum": [
+              "report_storage_unavailable",
+              "report_not_saved"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "ScanReportErrorResponse",
+        "type": "object"
+      },
+      "ScanReportResponse": {
+        "properties": {
+          "status": {
+            "const": "saved",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ScanReportResponse",
+        "type": "object"
+      },
       "ScanResponse": {
         "properties": {
           "confidence": {
@@ -8638,7 +8680,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ScanReportResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -8652,6 +8696,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanReportErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
           }
         },
         "summary": "Report Failed Scan",

@@ -1,49 +1,53 @@
-import { Flag } from "lucide-react";
+import { useState } from "react";
+import { Check } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { Button } from "@/brand/components/Button";
+import { ConfirmDialog } from "@/brand/components/ConfirmDialog";
 import type { ScanReportStatus } from "@/domain/scanReport";
 
 interface ScanReportProps {
   status: ScanReportStatus;
   error: string | null;
-  onReport: () => void;
+  onSend: () => void;
   className?: string;
 }
 
-const BUTTON_LABEL: Record<ScanReportStatus, string> = {
-  idle: "Report failed scan",
-  failed: "Report failed scan",
-  sending: "Sending report…",
-  sent: "Report sent",
-};
+const DISCLAIMER =
+  "We'll get the photo and why it couldn't be read, so we can learn to read cards like it. Nothing about your account goes with it.";
 
-function ScanReport({ status, error, onReport, className }: ScanReportProps) {
+function ScanReport({ status, error, onSend, className }: ScanReportProps) {
+  const [open, setOpen] = useState(false);
+  const sent = status === "sent";
+  const sending = status === "sending";
+
   return (
-    <div
-      role="group"
-      aria-label="Scan report"
-      data-slot="scan-report"
-      className={cn("flex flex-col gap-2 text-body-sm", className)}
-    >
-      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-muted-foreground">
-          Help us read cards like this one: send the photo and why it failed. Nothing about your account goes with
-          it.
-        </p>
-        <Button
-          variant="outline"
-          className="shrink-0"
-          onClick={onReport}
-          disabled={status === "sending" || status === "sent"}
-        >
-          <Flag data-icon="inline-start" />
-          {BUTTON_LABEL[status]}
-        </Button>
-      </div>
-      <p role="status" aria-live="polite" className={cn(error ? "text-destructive" : "text-muted-foreground")}>
-        {status === "sent" ? "Thanks. Your report was saved." : error}
-      </p>
-    </div>
+    <>
+      <Button
+        variant="link"
+        size="inline"
+        data-slot="scan-report"
+        aria-disabled={sent || undefined}
+        onClick={sent ? undefined : () => setOpen(true)}
+        className={cn(
+          "font-normal text-current underline decoration-1 aria-disabled:cursor-default aria-disabled:no-underline",
+          className,
+        )}
+      >
+        {sent && <Check data-icon="inline-start" />}
+        {sent ? "Report sent" : "Report scan"}
+      </Button>
+      <ConfirmDialog
+        open={open && !sent}
+        onOpenChange={setOpen}
+        tone="default"
+        title="Report this scan?"
+        detail={DISCLAIMER}
+        confirmLabel={sending ? "Sending report…" : "Send report"}
+        pending={sending}
+        error={error}
+        onConfirm={onSend}
+      />
+    </>
   );
 }
 

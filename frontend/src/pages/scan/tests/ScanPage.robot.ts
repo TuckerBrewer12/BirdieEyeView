@@ -244,30 +244,48 @@ export class ScanRobot {
   }
 
   async tapReportScan(): Promise<this> {
-    await this.page.getByRole("group", { name: "Scan report" }).getByRole("button", { name: "Report failed scan" }).click();
+    await this.page.getByRole("alert").getByRole("button", { name: "Report scan" }).click();
+    return this;
+  }
+
+  async seesReportDisclaimer(): Promise<this> {
+    const dialog = this.page.getByRole("alertdialog", { name: "Report this scan?" });
+    await expect(dialog).toContainText("Nothing about your account goes with it.");
+    expect(this.backend?.reportRequests ?? []).toHaveLength(0);
+    return this;
+  }
+
+  async tapSendReport(): Promise<this> {
+    await this.page.getByRole("alertdialog").getByRole("button", { name: "Send report" }).click();
     return this;
   }
 
   async seesReportSent(): Promise<this> {
-    const report = this.page.getByRole("group", { name: "Scan report" });
-    await expect(report.getByRole("button", { name: "Report sent" })).toBeDisabled();
-    await expect(report.getByRole("status")).toHaveText("Thanks. Your report was saved.");
-    const sent = this.backend?.reportRequests ?? [];
-    expect(sent).toHaveLength(1);
-    expect(JSON.parse(sent[0].metadata)).toMatchObject({ category: "extraction_failed", stage: "parse" });
-    expect(sent[0].metadata).not.toContain(CARD_NAME);
+    await expect(this.page.getByRole("alertdialog")).toHaveCount(0);
+    const sent = this.page.getByRole("alert").getByRole("button", { name: "Report sent" });
+    await expect(sent).toHaveAttribute("aria-disabled", "true");
+    await expect(sent).toBeFocused();
+    const requests = this.backend?.reportRequests ?? [];
+    expect(requests).toHaveLength(1);
+    expect(JSON.parse(requests[0].metadata)).toMatchObject({ category: "extraction_failed", stage: "parse" });
+    expect(requests[0].metadata).not.toContain(CARD_NAME);
+    return this;
+  }
+
+  async seesReportStillSent(): Promise<this> {
+    await expect(this.page.getByRole("alert").getByRole("button", { name: "Report sent" })).toBeVisible();
     return this;
   }
 
   async seesReportNotSaved(message: string): Promise<this> {
-    const report = this.page.getByRole("group", { name: "Scan report" });
-    await expect(report.getByRole("status")).toHaveText(message);
-    await expect(report.getByRole("button", { name: "Report failed scan" })).toBeEnabled();
+    const dialog = this.page.getByRole("alertdialog", { name: "Report this scan?" });
+    await expect(dialog.getByRole("alert")).toHaveText(message);
+    await expect(dialog.getByRole("button", { name: "Send report" })).toBeEnabled();
     return this;
   }
 
   async seesNoReport(): Promise<this> {
-    await expect(this.page.getByRole("group", { name: "Scan report" })).toHaveCount(0);
+    await expect(this.page.getByRole("button", { name: /^Report (scan|sent)$/ })).toHaveCount(0);
     return this;
   }
 

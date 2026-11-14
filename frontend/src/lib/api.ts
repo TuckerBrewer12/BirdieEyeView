@@ -19,10 +19,13 @@ import type {
   SaveScanDto,
   SaveScanRequestDto,
   ScanDto,
+  ScanReportDto,
+  ScanReportErrorDto,
   UserDto,
 } from "@/types/api";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
+import type { FailedScanAttempt } from "@/domain/scanReport";
 import { readScanFailure, ScanFailedError } from "@/lib/scanReports";
 import {
   fetchWithUserFacingError,
@@ -65,6 +68,18 @@ async function postForm(path: string, fields: Record<string, string | File>, fal
     headers: withAuthHeaders(),
     body: form,
   }, fallback);
+}
+
+function isReportError(payload: unknown): payload is ScanReportErrorDto {
+  return typeof payload === "object" && payload !== null && "code" in payload;
+}
+
+async function reportFailure(res: Response): Promise<string> {
+  if (res.status === 429) return USER_FACING_ERRORS.tooManyReports;
+  const payload: unknown = await res.json().catch(() => null);
+  return isReportError(payload) && payload.code === "report_storage_unavailable"
+    ? USER_FACING_ERRORS.reportUnavailable
+    : USER_FACING_ERRORS.reportNotSaved;
 }
 
 async function putJSON<T>(path: string, body: unknown): Promise<T> {
@@ -133,6 +148,29 @@ export const api = {
         category: "invalid_response", stage: "unknown", http_status: res.status,
       });
     }
+  },
+
+  reportFailedScan: async (attempt: FailedScanAttempt): Promise<ScanReportDto> => {
+    const form = new FormData();
+    form.append("file", attempt.image, `scorecard.${attempt.extension}`);
+    form.append("metadata", JSON.stringify({
+      schema_version: 1,
+      retry_key: attempt.retryKey,
+      category: attempt.failure.category,
+      stage: attempt.failure.stage,
+      http_status: attempt.failure.http_status,
+    }));
+    const res = await fetchWithUserFacingError(apiUrl("/api/scan/reports"), {
+      method: "POST",
+      credentials: "omit",
+      referrerPolicy: "no-referrer",
+      cache: "no-store",
+      body: form,
+    }, USER_FACING_ERRORS.reportNotSaved);
+    if (!res.ok) throw new Error(await reportFailure(res));
+    const report = await parseJsonResponse<ScanReportDto>(res, USER_FACING_ERRORS.reportNotSaved);
+    if (report.status !== "saved") throw new Error(USER_FACING_ERRORS.reportNotSaved);
+    return report;
   },
 
   saveScan: (request: SaveScanRequestDto) =>

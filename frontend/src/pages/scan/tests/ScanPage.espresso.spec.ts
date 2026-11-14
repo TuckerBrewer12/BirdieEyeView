@@ -156,7 +156,21 @@ test("a failed scan can be reported, and the report says why it failed", async (
   await scan.tapExtract();
   await scan.seesScanFailed();
   await scan.tapReportScan();
+  await scan.seesReportDisclaimer();
+  await scan.tapSendReport();
   await scan.seesReportSent();
+});
+
+test("a sent report still shows as sent after leaving the page", async ({ scan }) => {
+  await scan.open({ scan: undefined, reportStorage: true });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.tapReportScan();
+  await scan.tapSendReport();
+  await scan.seesReportSent();
+  await scan.leaveTo("Rounds");
+  await scan.returnToScan();
+  await scan.seesReportStillSent();
 });
 
 test("a report that can't be stored says so, and can be sent again", async ({ scan }) => {
@@ -164,6 +178,7 @@ test("a report that can't be stored says so, and can be sent again", async ({ sc
   await scan.chooseScorecard();
   await scan.tapExtract();
   await scan.tapReportScan();
+  await scan.tapSendReport();
   await scan.seesReportNotSaved("Reporting isn't available yet. Your report wasn't saved.");
 });
 

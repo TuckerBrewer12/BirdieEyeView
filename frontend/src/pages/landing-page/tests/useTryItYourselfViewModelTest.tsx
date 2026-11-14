@@ -110,9 +110,9 @@ describe("useTryItYourselfViewModel", () => {
     act(() => result.current.extract());
     await waitFor(() => expect(result.current.report.available).toBe(true));
 
-    act(() => result.current.report.submit());
+    await act(async () => result.current.report.submit());
     await act(async () => reports.saveNext());
-    expect(result.current.report.status).toBe("sent");
+    await waitFor(() => expect(result.current.report.status).toBe("sent"));
 
     await pick(result);
     expect(result.current.report.available).toBe(false);
